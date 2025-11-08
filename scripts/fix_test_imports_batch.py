@@ -6,7 +6,7 @@ Batch Fix Test Import Errors
 
 import os
 import re
-from pathlib import Path
+
 
 def fix_import_errors():
     """批量修复测试文件导入错误"""
@@ -28,12 +28,10 @@ def fix_import_errors():
 
     for file_path in problematic_files:
         if not os.path.exists(file_path):
-            print(f"文件不存在: {file_path}")
             continue
 
-        print(f"修复文件: {file_path}")
 
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -140,8 +138,8 @@ except ImportError:
         # 模式6: 修复数据库模型导入
         content = re.sub(
             r'from src\.database\.models\.(user|predictions|match|team|league) import.*?\n',
-    
-    
+
+
             '''try:
     from src.database.models.\\1 import \\2
 except ImportError:
@@ -158,11 +156,9 @@ except ImportError:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             fixed_count += 1
-            print(f"  ✅ 已修复: {file_path}")
         else:
-            print(f"  ⚠️ 无需修改: {file_path}")
+            pass
 
-    print(f"\n总计修复文件数: {fixed_count}")
     return fixed_count
 
 if __name__ == "__main__":

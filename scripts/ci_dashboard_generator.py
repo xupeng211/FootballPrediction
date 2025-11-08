@@ -10,12 +10,11 @@ CI/CD Monitoring Dashboard Generator
 创建时间: 2025-11-03
 """
 
-import json
 import sys
-from pathlib import Path
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Any
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent.parent
@@ -31,7 +30,7 @@ class DashboardMetrics:
     slowest_run: float
     cache_hit_rate: float
     parallel_efficiency: float
-    coverage_trend: List[Dict[str, Any]]
+    coverage_trend: list[dict[str, Any]]
     quality_score: float
     issues_detected: int
 
@@ -40,9 +39,9 @@ class DashboardReport:
     """仪表板报告数据结构"""
     timestamp: str
     metrics: DashboardMetrics
-    recommendations: List[str]
-    alerts: List[str]
-    charts: Dict[str, Any]
+    recommendations: list[str]
+    alerts: list[str]
+    charts: dict[str, Any]
     summary: str
 
 class CICDDashboard:
@@ -79,7 +78,7 @@ class CICDDashboard:
             issues_detected=issues_detected
         )
 
-    def _analyze_ci_history(self) -> Dict[str, Any]:
+    def _analyze_ci_history(self) -> dict[str, Any]:
         """分析CI历史数据"""
         # 模拟CI历史数据分析
         # 在实际环境中，这里会连接GitHub API获取真实数据
@@ -94,7 +93,7 @@ class CICDDashboard:
             "parallel_efficiency": 85.3
         }
 
-    def _analyze_coverage_trends(self) -> List[Dict[str, Any]]:
+    def _analyze_coverage_trends(self) -> list[dict[str, Any]]:
         """分析覆盖率趋势"""
         # 模拟覆盖率趋势数据
         trends = []
@@ -276,7 +275,7 @@ class CICDDashboard:
         else:
             return "🔴 需优化"
 
-    def _generate_coverage_chart(self, coverage_trend: List[Dict[str, Any]]) -> str:
+    def _generate_coverage_chart(self, coverage_trend: list[dict[str, Any]]) -> str:
         """生成覆盖率图表"""
         # 获取最近7天的数据
         recent_data = coverage_trend[-7:]
@@ -378,7 +377,7 @@ class CICDDashboard:
 
     def export_dashboard_report(self,
     dashboard_content: str,
-    output_file: Optional[Path] = None) -> Path:
+    output_file: Path | None = None) -> Path:
         """导出仪表板报告"""
         if output_file is None:
             output_file = self.project_root / "docs" / "reports" / "ci_dashboard.md"
@@ -487,37 +486,24 @@ def main():
         if args.generate_dashboard:
             # 生成完整仪表板
             dashboard_content = dashboard.generate_dashboard_markdown(metrics)
-            dashboard_file = dashboard.export_dashboard_report(dashboard_content,
+            dashboard.export_dashboard_report(dashboard_content,
     args.output_file)
 
-            print(f"📊 CI/CD仪表板已生成: {dashboard_file}")
-            print(f"📈 关键指标:")
-            print(f"   CI成功率: {metrics.success_rate:.1f}%")
-            print(f"   平均执行时间: {metrics.avg_duration/60:.1f}分钟")
-            print(f"   测试覆盖率: {metrics.coverage_trend[-1]['coverage']:.1f}%")
-            print(f"   质量分数: {metrics.quality_score:.1f}/100")
 
         if args.create_issue:
             # 创建GitHub Issue内容
-            issue_content = dashboard.create_github_issue_dashboard(metrics)
+            dashboard.create_github_issue_dashboard(metrics)
 
-            print(f"📝 GitHub Issue仪表板内容:")
-            print(issue_content)
-            print(f"\n💡 使用此内容创建GitHub Issue进行团队协作")
 
         if not any([args.generate_dashboard, args.create_issue]):
             # 默认生成完整仪表板
             dashboard_content = dashboard.generate_dashboard_markdown(metrics)
-            dashboard_file = dashboard.export_dashboard_report(dashboard_content)
+            dashboard.export_dashboard_report(dashboard_content)
 
-            print(f"📊 CI/CD仪表板已生成: {dashboard_file}")
-            print(f"🎯 建议定期查看仪表板以跟踪CI/CD性能趋势")
 
     except KeyboardInterrupt:
-        print("\n👋 用户中断，退出程序")
         sys.exit(130)
-    except Exception as e:
-        print(f"❌ 程序执行出错: {e}")
+    except Exception:
         import traceback
         traceback.print_exc()
         sys.exit(1)

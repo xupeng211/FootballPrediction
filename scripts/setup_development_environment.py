@@ -4,15 +4,15 @@
 一键设置完整的开发环境，包括Docker、IDE配置、依赖安装等
 """
 
-import os
-import sys
-import subprocess
 import json
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+import os
 import platform
 import shutil
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
+
 
 class DevelopmentEnvironmentSetup:
     """开发环境设置器"""
@@ -25,26 +25,22 @@ class DevelopmentEnvironmentSetup:
 
     def log_info(self, message: str):
         """输出信息"""
-        print(f"ℹ️  {message}")
 
     def log_success(self, message: str):
         """输出成功信息"""
-        print(f"✅ {message}")
 
     def log_warning(self, message: str):
         """输出警告信息"""
-        print(f"⚠️  {message}")
         self.warnings.append(message)
 
     def log_error(self, message: str):
         """输出错误信息"""
-        print(f"❌ {message}")
         self.errors.append(message)
 
     def run_command(self,
-    command: List[str],
+    command: list[str],
     check: bool = True,
-    capture: bool = False) -> Optional[str]:
+    capture: bool = False) -> str | None:
         """运行命令"""
         try:
             if capture:
@@ -140,10 +136,10 @@ class DevelopmentEnvironmentSetup:
         # 激活虚拟环境并安装依赖
         if self.platform == 'windows':
             pip_path = venv_path / 'Scripts' / 'pip'
-            python_path = venv_path / 'Scripts' / 'python'
+            venv_path / 'Scripts' / 'python'
         else:
             pip_path = venv_path / 'bin' / 'pip'
-            python_path = venv_path / 'bin' / 'python'
+            venv_path / 'bin' / 'python'
 
         # 升级pip
         self.log_info("升级pip...")
@@ -511,7 +507,7 @@ AUTO_RESTART=true
 help:		## 显示帮助信息
 	@echo "Available commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\\033[36m%-20s\\033[0m %s\\n",
-    
+
     $$1,
     $$2}'
 
@@ -619,7 +615,7 @@ env-check:	## 检查环境配置
 
 ## 📊 设置统计
 
-**成功步骤**: {len([w for w in []])}
+**成功步骤**: {len([])}
 **警告数量**: {len(self.warnings)}
 **错误数量**: {len(self.errors)}
 
@@ -674,8 +670,6 @@ make test
 
     def run_full_setup(self) -> bool:
         """运行完整的环境设置"""
-        print("🚀 开始开发环境自动化设置")
-        print("=" * 50)
 
         steps = [
             ("检查系统要求", self.check_system_requirements),
@@ -690,40 +684,30 @@ make test
         success_count = 0
         total_steps = len(steps)
 
-        for step_name, step_func in steps:
-            print(f"\n📋 {step_name}...")
+        for _step_name, step_func in steps:
             try:
                 if step_func():
                     success_count += 1
-                    print(f"✅ {step_name} 完成")
                 else:
-                    print(f"❌ {step_name} 失败")
-            except Exception as e:
-                print(f"❌ {step_name} 出错: {e}")
+                    pass
+            except Exception:
+                pass
 
-        print("\n" + "=" * 50)
-        print(f"📊 设置完成: {success_count}/{total_steps}")
 
         # 生成报告
-        report = self.generate_setup_report()
-        print("\n📄 设置报告已保存到 setup_report.md")
+        self.generate_setup_report()
 
         if success_count == total_steps and not self.errors:
-            print("🎉 开发环境设置完成！")
             return True
         else:
-            print("⚠️  设置过程中遇到一些问题，请查看报告了解详情")
             return False
 
 
 def main():
     """主函数"""
-    print("🛠️ 开发环境自动化设置工具")
-    print("=" * 40)
 
     # 检查是否在正确的目录
     if not Path("pyproject.toml").exists():
-        print("❌ 请在项目根目录运行此脚本")
         sys.exit(1)
 
     # 创建设置器
@@ -736,10 +720,8 @@ def main():
             success = setup.run_full_setup()
             sys.exit(0 if success else 1)
         else:
-            print("取消设置")
             sys.exit(0)
     except KeyboardInterrupt:
-        print("\n\n取消设置")
         sys.exit(0)
 
 

@@ -8,15 +8,13 @@ Batch B904 Exception Fixer for API Modules
 
 import re
 import subprocess
-import sys
-from pathlib import Path
+
 
 def fix_b904_in_file(file_path):
     """修复单个文件中的B904错误"""
-    print(f"🔧 修复文件: {file_path}")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 修复模式: 在HTTPException后添加 from e
@@ -27,7 +25,6 @@ def fix_b904_in_file(file_path):
         matches = list(re.finditer(pattern, content, re.MULTILINE))
 
         if not matches:
-            print("  ⚪ 没有找到可修复的raise HTTPException语句")
             return 0
 
         fixed_count = 0
@@ -42,19 +39,15 @@ def fix_b904_in_file(file_path):
                 modified = original.rstrip() + ' from e'
                 content = content[:start] + modified + content[end:]
                 fixed_count += 1
-                print(f"  ✅ 修复HTTPException语句 (位置 {start}:{end})")
 
         if fixed_count > 0:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"🎉 成功修复 {fixed_count} 个B904错误")
             return fixed_count
         else:
-            print("  ⚠️ 没有找到需要修复的HTTPException")
             return 0
 
-    except Exception as e:
-        print(f"❌ 修复失败: {e}")
+    except Exception:
         return 0
 
 def get_b904_files(directory):
@@ -76,15 +69,12 @@ def get_b904_files(directory):
                     if file_path.startswith(directory + '/'):
                         files.add(file_path)
 
-        return sorted(list(files))
-    except Exception as e:
-        print(f"获取B904文件列表失败: {e}")
+        return sorted(files)
+    except Exception:
         return []
 
 def main():
     """主函数"""
-    print("🚀 API模块B904异常处理批量修复工具")
-    print("=" * 50)
 
     api_directory = "src/api"
 
@@ -92,10 +82,8 @@ def main():
     files = get_b904_files(api_directory)
 
     if not files:
-        print("✅ API模块没有发现B904错误")
         return
 
-    print(f"📊 发现 {len(files)} 个API文件需要修复")
 
     # 统计初始错误数量
     try:
@@ -106,15 +94,12 @@ def main():
             cwd="/home/user/projects/FootballPrediction"
         )
         initial_count = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
-        print(f"📈 初始B904错误数量: {initial_count}")
     except:
         initial_count = 0
-        print("📈 无法统计初始错误数量")
 
     # 批量修复
     total_fixed = 0
-    for i, file_path in enumerate(files, 1):
-        print(f"\n[{i}/{len(files)}] 处理: {file_path}")
+    for _i, file_path in enumerate(files, 1):
         fixed = fix_b904_in_file(file_path)
         total_fixed += fixed
 
@@ -127,24 +112,17 @@ def main():
             cwd="/home/user/projects/FootballPrediction"
         )
         final_count = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
-        print(f"\n📈 最终B904错误数量: {final_count}")
     except:
         final_count = 0
-        print("📈 无法统计最终错误数量")
 
-    print("\n" + "=" * 50)
-    print("🎉 API模块B904异常处理修复完成!")
-    print(f"📊 修复文件数量: {len(files)}")
-    print(f"📈 修复错误数量: {total_fixed}")
 
     if initial_count > 0:
-        improvement_rate = ((initial_count - final_count) / initial_count) * 100
-        print(f"📊 改进率: {improvement_rate:.1f}%")
+        ((initial_count - final_count) / initial_count) * 100
 
     if final_count > 0:
-        print(f"\n⚠️ API模块仍有 {final_count} 个B904错误需要处理")
+        pass
     else:
-        print("\n✅ API模块B904错误已完全修复!")
+        pass
 
 if __name__ == "__main__":
     main()

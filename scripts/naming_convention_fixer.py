@@ -4,19 +4,18 @@
 Naming Convention Fixer - Fix N801 class names and N802 function names
 """
 
-import re
 import os
-from pathlib import Path
+import re
+
 
 def fix_class_naming(file_path: str) -> int:
     """修复类名命名规范 (N801) - 将下划线命名改为驼峰命名"""
 
     if not os.path.exists(file_path):
-        print(f"文件不存在: {file_path}")
         return 0
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -62,13 +61,11 @@ def fix_class_naming(file_path: str) -> int:
 
         return fixes_count
 
-    except Exception as e:
-        print(f"修复文件 {file_path} 时出错: {e}")
+    except Exception:
         return 0
 
 def main():
     """主函数"""
-    print("开始修复命名规范问题...")
 
     # 需要修复的文件列表
     files_to_fix = [
@@ -86,14 +83,11 @@ def main():
 
     for file_path in files_to_fix:
         if os.path.exists(file_path):
-            print(f"\n处理文件: {file_path}")
             fixes = fix_class_naming(file_path)
             total_fixes += fixes
-            print(f"修复了 {fixes} 个命名规范问题")
         else:
-            print(f"\n跳过不存在的文件: {file_path}")
+            pass
 
-    print(f"\n总计修复 {total_fixes} 个命名规范问题")
 
 if __name__ == "__main__":
     main()

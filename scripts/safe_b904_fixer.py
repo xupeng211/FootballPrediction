@@ -4,19 +4,18 @@
 Safe B904 Exception Handling Fixer - Specifically for HTTPException
 """
 
-import re
 import os
-from pathlib import Path
+import re
+
 
 def fix_http_exception_b904_safely(file_path: str) -> int:
     """安全地修复文件中的HTTPException B904错误"""
 
     if not os.path.exists(file_path):
-        print(f"文件不存在: {file_path}")
         return 0
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -70,13 +69,11 @@ def fix_http_exception_b904_safely(file_path: str) -> int:
 
         return fixes_count
 
-    except Exception as e:
-        print(f"修复文件 {file_path} 时出错: {e}")
+    except Exception:
         return 0
 
 def main():
     """主函数"""
-    print("开始安全修复HTTPException B904错误...")
 
     # 要修复的API文件列表
     api_files = [
@@ -90,12 +87,9 @@ def main():
     total_fixes = 0
 
     for file_path in api_files:
-        print(f"\n处理文件: {file_path}")
         fixes = fix_http_exception_b904_safely(file_path)
         total_fixes += fixes
-        print(f"修复了 {fixes} 个B904错误")
 
-    print(f"\n总计修复 {total_fixes} 个B904错误")
 
 if __name__ == "__main__":
     main()

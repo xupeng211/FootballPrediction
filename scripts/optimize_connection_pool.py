@@ -9,11 +9,9 @@ Database Connection Pool Optimization Script
 import asyncio
 import logging
 import time
-from contextlib import asynccontextmanager
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.pool import NullPool
 
 from src.core.config import get_settings
 
@@ -341,13 +339,13 @@ class ConnectionPoolOptimizer:
                 'summary': {
                     'total_configs_tested': len(comparison_results),
                     'successful_configs': len([r for r in comparison_results.values() if 'error' not in r]),
-    
-    
+
+
                     'best_config': max(
                         [(name,
     results) for name,
     results in comparison_results.items() if 'error' not in results],
-    
+
                         key=lambda x: x[1]['successful_connections']
                     )[0] if comparison_results else None
                 }
@@ -389,22 +387,12 @@ async def main():
         logger.info("📄 优化报告已保存到 connection_pool_optimization_report.json")
 
         # 输出摘要
-        print("\n" + "="*60)
-        print("🎯 连接池优化分析摘要")
-        print("="*60)
-        print(f"✅ 测试配置数量: {report['summary']['total_configs_tested']}")
-        print(f"✅ 成功配置数量: {report['summary']['successful_configs']}")
         if report['summary']['best_config']:
-            best_name = report['summary']['best_config'][0]
-            print(f"🏆 最佳配置: {best_name}")
-        print(f"⏰ 分析完成时间: {report['timestamp']}")
-        print(f"📊 总分析时间: {report['analysis_time']:.2f}s")
-        print("="*60)
+            report['summary']['best_config'][0]
 
         # 输出优化建议
-        print("\n💡 优化建议:")
-        for i, rec in enumerate(report['recommendations'], 1):
-            print(f"{i}. {rec}")
+        for _i, _rec in enumerate(report['recommendations'], 1):
+            pass
 
     except Exception as e:
         logger.error(f"❌ 优化分析过程失败: {e}")

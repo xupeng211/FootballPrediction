@@ -13,7 +13,6 @@ try:
     from git_library import quick_git_commit
     from logging_library import get_logger
 except ImportError:
-    print("请先运行优化器创建库文件")
     sys.exit(1)
 
 def main():

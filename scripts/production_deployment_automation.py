@@ -12,18 +12,15 @@ Production Deployment Automation Tool
 """
 
 import json
+import secrets as secrets_module
+import subprocess
 import sys
 import time
-import os
-import subprocess
-import hashlib
-import secrets as secrets_module
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from enum import Enum
-import tempfile
+from pathlib import Path
+from typing import Any
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).resolve().parent.parent
@@ -64,16 +61,16 @@ class DeploymentConfig:
     auto_rollback_enabled: bool
     deployment_strategy: str
     max_downtime_seconds: int
-    resource_limits: Dict[str, Any]
+    resource_limits: dict[str, Any]
 
 @dataclass
 class SecurityConfig:
     """安全配置数据结构"""
-    ssl_certificate_path: Optional[str]
-    ssl_key_path: Optional[str]
+    ssl_certificate_path: str | None
+    ssl_key_path: str | None
     letsencrypt_enabled: bool
     ssl_auto_renew: bool
-    secret_management: Dict[str, Any]
+    secret_management: dict[str, Any]
     container_security_scan: bool
     vulnerability_scan: bool
     runtime_monitoring: bool
@@ -87,8 +84,8 @@ class MonitoringConfig:
     alertmanager_enabled: bool
     metrics_port: int
     log_level: str
-    alert_rules: List[Dict[str, Any]]
-    dashboards: List[Dict[str, Any]]
+    alert_rules: list[dict[str, Any]]
+    dashboards: list[dict[str, Any]]
 
 @dataclass
 class DeploymentResult:
@@ -99,12 +96,12 @@ class DeploymentResult:
     status: DeploymentStatus
     duration_seconds: float
     success: bool
-    error_message: Optional[str]
-    health_check_results: Dict[str, bool]
-    security_scan_results: Dict[str, Any]
-    performance_metrics: Dict[str, float]
+    error_message: str | None
+    health_check_results: dict[str, bool]
+    security_scan_results: dict[str, Any]
+    performance_metrics: dict[str, float]
     rollback_performed: bool
-    deployment_log: List[str]
+    deployment_log: list[str]
 
 class ProductionDeploymentAutomation:
     """生产环境部署自动化系统"""
@@ -157,7 +154,7 @@ class ProductionDeploymentAutomation:
         return f"deploy_{timestamp}_{random_suffix}"
 
     def create_production_deployment_config(self,
-    environment: Environment) -> Dict[str,
+    environment: Environment) -> dict[str,
     Any]:
         """创建生产环境部署配置"""
         base_config = self.default_configs.get(environment,
@@ -201,7 +198,7 @@ class ProductionDeploymentAutomation:
 
         return full_config
 
-    def _generate_alert_rules(self) -> List[Dict[str, Any]]:
+    def _generate_alert_rules(self) -> list[dict[str, Any]]:
         """生成告警规则"""
         return [
             {
@@ -248,7 +245,7 @@ class ProductionDeploymentAutomation:
             }
         ]
 
-    def _generate_monitoring_dashboards(self) -> List[Dict[str, Any]]:
+    def _generate_monitoring_dashboards(self) -> list[dict[str, Any]]:
         """生成监控仪表板配置"""
         return [
             {
@@ -280,7 +277,7 @@ class ProductionDeploymentAutomation:
         ]
 
     def _get_environment_specific_config(self,
-    environment: Environment) -> Dict[str,
+    environment: Environment) -> dict[str,
     Any]:
         """获取环境特定配置"""
         configs = {
@@ -325,7 +322,7 @@ class ProductionDeploymentAutomation:
         }
         return configs.get(environment, configs[Environment.STAGING])
 
-    def generate_production_docker_compose(self, config: Dict[str, Any]) -> str:
+    def generate_production_docker_compose(self, config: dict[str, Any]) -> str:
         """生成生产环境Docker Compose配置"""
         env = config["deployment"]["environment"]
         env_config = config["environment_specific"]
@@ -554,7 +551,7 @@ networks:
 
         return compose_content
 
-    def generate_ssl_automation_script(self, config: Dict[str, Any]) -> str:
+    def generate_ssl_automation_script(self, config: dict[str, Any]) -> str:
         """生成SSL自动化脚本"""
         domain = config["environment_specific"]["domain"]
 
@@ -742,7 +739,7 @@ main "$@"
 
         return script_content
 
-    def generate_deployment_verification_script(self, config: Dict[str, Any]) -> str:
+    def generate_deployment_verification_script(self, config: dict[str, Any]) -> str:
         """生成部署验证脚本"""
         env = config["deployment"]["environment"]
         domain = config["environment_specific"]["domain"]
@@ -991,7 +988,7 @@ main "$@"
 
         return script_content
 
-    def create_secrets_files(self, config: Dict[str, Any]) -> Dict[str, str]:
+    def create_secrets_files(self, config: dict[str, Any]) -> dict[str, str]:
         """创建secrets文件"""
         secrets = {}
         secrets_dir = self.project_root / "secrets"
@@ -1028,7 +1025,6 @@ main "$@"
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             log_entry = f"[{timestamp}] {message}"
             deployment_log.append(log_entry)
-            print(log_entry)
 
         try:
             log_message(f"开始 {environment.value} 环境部署...")
@@ -1040,7 +1036,7 @@ main "$@"
 
             # 2. 创建secrets
             log_message("创建安全secrets...")
-            secrets = self.create_secrets_files(config)
+            self.create_secrets_files(config)
 
             # 3. 生成配置文件
             log_message("生成Docker Compose配置...")
@@ -1068,7 +1064,7 @@ main "$@"
 
             # 6. 生成监控配置
             log_message("生成监控配置...")
-            monitoring_configs = self._generate_monitoring_configs(config)
+            self._generate_monitoring_configs(config)
 
             # 7. 健康检查
             log_message("执行部署前健康检查...")
@@ -1111,12 +1107,12 @@ main "$@"
                 deployment_log=deployment_log
             )
 
-    def _generate_monitoring_configs(self, config: Dict[str, Any]) -> Dict[str, str]:
+    def _generate_monitoring_configs(self, config: dict[str, Any]) -> dict[str, str]:
         """生成监控配置文件"""
         configs = {}
 
         # Prometheus配置
-        prometheus_config = f'''global:
+        prometheus_config = '''global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
@@ -1216,7 +1212,7 @@ limits_config:
 
         return configs
 
-    def _run_pre_deployment_checks(self) -> Dict[str, bool]:
+    def _run_pre_deployment_checks(self) -> dict[str, bool]:
         """运行部署前检查"""
         results = {}
 
@@ -1253,7 +1249,7 @@ limits_config:
 
     def export_deployment_report(self,
     result: DeploymentResult,
-    output_file: Optional[Path] = None) -> Path:
+    output_file: Path | None = None) -> Path:
         """导出部署报告"""
         if output_file is None:
             output_file = self.project_root / "reports" / f"deployment_report_{result.deployment_id}.json"
@@ -1313,22 +1309,18 @@ def main():
         environment = Environment(args.environment)
 
         if args.generate_configs or args.execute_deployment:
-            print(f"🚀 开始 {environment.value.upper()} 环境部署准备...")
 
             # 生成配置
             config = deployment.create_production_deployment_config(environment)
-            print(f"📋 部署配置已生成")
 
             # 创建secrets
-            secrets = deployment.create_secrets_files(config)
-            print(f"🔒 安全secrets已创建")
+            deployment.create_secrets_files(config)
 
             # 生成Docker Compose配置
             compose_content = deployment.generate_production_docker_compose(config)
             compose_file = project_root / "docker-compose.production.yml"
             with open(compose_file, 'w') as f:
                 f.write(compose_content)
-            print(f"🐳 Docker Compose配置已生成: {compose_file}")
 
             # 生成SSL管理脚本
             ssl_script_content = deployment.generate_ssl_automation_script(config)
@@ -1337,7 +1329,6 @@ def main():
             with open(ssl_script_file, 'w') as f:
                 f.write(ssl_script_content)
             ssl_script_file.chmod(0o755)
-            print(f"🔐 SSL管理脚本已生成: {ssl_script_file}")
 
             # 生成部署验证脚本
             verify_script_content = deployment.generate_deployment_verification_script(config)
@@ -1345,7 +1336,6 @@ def main():
             with open(verify_script_file, 'w') as f:
                 f.write(verify_script_content)
             verify_script_file.chmod(0o755)
-            print(f"✅ 部署验证脚本已生成: {verify_script_file}")
 
             # 生成监控配置
             monitoring_configs = deployment._generate_monitoring_configs(config)
@@ -1355,45 +1345,28 @@ def main():
                 config_file = monitoring_dir / filename
                 with open(config_file, 'w') as f:
                     f.write(content)
-                print(f"📊 监控配置已生成: {config_file}")
 
         if args.execute_deployment:
             # 执行完整部署
-            print(f"🎯 执行 {environment.value.upper()} 环境部署...")
             result = deployment.execute_deployment(environment)
 
             if args.output_report:
-                report_file = deployment.export_deployment_report(result)
-                print(f"📄 部署报告已生成: {report_file}")
+                deployment.export_deployment_report(result)
 
             # 显示结果
-            print(f"\n📊 部署结果:")
-            print(f"   状态: {result.status.value.upper()}")
-            print(f"   耗时: {result.duration_seconds:.1f}秒")
-            print(f"   成功: {result.success}")
 
             if result.success:
-                print(f"\n🎉 部署成功！")
-                print(f"📋 下一步:")
-                print(f"   1. 运行SSL管理: ./scripts/ssl_manager.sh generate")
-                print(f"   2. 启动服务: docker-compose -f docker-compose.production.yml up -d")
-                print(f"   3. 验证部署: ./scripts/deploy_verify.sh")
+                pass
             else:
-                print(f"\n❌ 部署失败:")
-                print(f"   错误: {result.error_message}")
-                print(f"   请检查部署日志并重试")
+                pass
 
         if not any([args.generate_configs, args.execute_deployment]):
             # 默认生成配置文件
             config = deployment.create_production_deployment_config(environment)
-            print(f"📋 {environment.value.upper()} 环境部署配置已准备完成")
-            print(f"💡 使用 --execute-deployment 执行完整部署")
 
     except KeyboardInterrupt:
-        print("\n👋 用户中断，退出程序")
         sys.exit(130)
-    except Exception as e:
-        print(f"❌ 程序执行出错: {e}")
+    except Exception:
         import traceback
         traceback.print_exc()
         sys.exit(1)

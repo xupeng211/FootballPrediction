@@ -8,9 +8,9 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List
 
-def run_command(command: str, timeout: int = 60) -> Dict[str, str]:
+
+def run_command(command: str, timeout: int = 60) -> dict[str, str]:
     """运行命令并返回结果"""
     try:
         result = subprocess.run(
@@ -48,41 +48,30 @@ def quick_checks():
         ("🔒 安全检查", "bandit -r src/ -f json -q"),
     ]
 
-    print("⚡ 开始快速代码审查...")
-    print("=" * 50)
 
     all_passed = True
 
-    for name, command in checks:
-        print(f"\n{name} 检查中...")
+    for _name, command in checks:
         start_time = time.time()
 
         result = run_command(command)
-        duration = time.time() - start_time
+        time.time() - start_time
 
         if result["success"]:
-            print(f"✅ {name} - 通过 ({duration:.2f}s)")
+            pass
         else:
-            print(f"❌ {name} - 失败 ({duration:.2f}s)")
             if result["stderr"]:
                 # 只显示关键的错误信息
                 error_lines = result["stderr"].strip().split('\n')[:3]
                 for line in error_lines:
                     if line.strip():
-                        print(f"   {line}")
+                        pass
             all_passed = False
 
-    print("\n" + "=" * 50)
 
     if all_passed:
-        print("🎉 所有检查通过！可以提交代码了。")
         return 0
     else:
-        print("⚠️  存在问题，请修复后重试。")
-        print("\n💡 快速修复建议:")
-        print("   python3 scripts/smart_quality_fixer.py")
-        print("   ruff check src/ tests/ --fix")
-        print("   ruff format src/ tests/")
         return 1
 
 if __name__ == "__main__":

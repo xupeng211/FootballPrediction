@@ -5,12 +5,11 @@ Smart Coverage Enhancement Strategy
 """
 
 import os
-import subprocess
 import re
-from pathlib import Path
-from typing import List, Dict, Tuple
+import subprocess
 
-def analyze_current_coverage() -> Dict:
+
+def analyze_current_coverage() -> dict:
     """分析当前覆盖率状况"""
     try:
         result = subprocess.run(
@@ -66,11 +65,10 @@ def analyze_current_coverage() -> Dict:
 
         return coverage_data
 
-    except Exception as e:
-        print(f"分析覆盖率失败: {e}")
+    except Exception:
         return {}
 
-def create_high_impact_tests() -> List[str]:
+def create_high_impact_tests() -> list[str]:
     """创建高影响力的测试，专注于已经可以运行的模块"""
 
     # 基于之前分析，优先创建这些模块的测试
@@ -336,11 +334,10 @@ class TestLoggerIntegration:
             f.write(test_content)
 
         created_tests.append(module_info["test_file"])
-        print(f"✅ 创建高影响力测试: {module_info['test_file']}")
 
     return created_tests
 
-def run_targeted_coverage_test(test_files: List[str]) -> Dict:
+def run_targeted_coverage_test(test_files: list[str]) -> dict:
     """运行针对性的覆盖率测试"""
     try:
         cmd = ["python3", "-m", "pytest"] + test_files + ["--cov=src", "--cov-report=term", "--tb=no", "-q"]
@@ -360,39 +357,30 @@ def run_targeted_coverage_test(test_files: List[str]) -> Dict:
             "output": output
         }
 
-    except Exception as e:
-        print(f"运行覆盖率测试失败: {e}")
+    except Exception:
         return {"total_coverage": 0, "passed_tests": 0, "failed_tests": 0, "output": ""}
 
 def main():
     """主函数"""
-    print("🎯 启动智能覆盖率提升策略...")
-    print("📊 专注于创建100%可运行的高影响力测试")
 
     # 分析当前覆盖率
-    print("\\n📈 分析当前覆盖率状况...")
     current_coverage = analyze_current_coverage()
 
     if current_coverage:
-        print(f"   当前总覆盖率: {current_coverage.get('total', 0)}%")
         if 'tests' in current_coverage:
-            print(f"   通过测试: {current_coverage['tests']['passed']}")
-            print(f"   失败测试: {current_coverage['tests']['failed']}")
+            pass
 
         # 显示各模块覆盖率
         for module, data in current_coverage.items():
             if module not in ['total', 'tests'] and isinstance(data, dict):
-                print(f"   {module}: {data.get('coverage', 0)}%")
+                pass
     else:
-        print("   ⚠️  无法获取当前覆盖率数据")
+        pass
 
     # 创建高影响力测试
-    print("\\n🚀 创建高影响力测试...")
-    created_tests = create_high_impact_tests()
-    print(f"✅ 创建了 {len(created_tests)} 个高影响力测试文件")
+    create_high_impact_tests()
 
     # 运行针对性覆盖率测试
-    print("\\n🧪 运行针对性覆盖率测试...")
     test_files = [
         "tests/unit/test_core_exceptions.py",
         "tests/unit/test_core_logger.py",
@@ -406,31 +394,19 @@ def main():
     if existing_files:
         coverage_result = run_targeted_coverage_test(existing_files)
 
-        print(f"\\n📊 测试结果:")
-        print(f"   总覆盖率: {coverage_result['total_coverage']}%")
-        print(f"   通过测试: {coverage_result['passed_tests']}")
-        print(f"   失败测试: {coverage_result['failed_tests']}")
 
         # 评估进展
         initial_coverage = current_coverage.get('total', 0)
         improvement = coverage_result['total_coverage'] - initial_coverage
 
-        print(f"\\n📈 覆盖率进展:")
-        print(f"   初始覆盖率: {initial_coverage}%")
-        print(f"   当前覆盖率: {coverage_result['total_coverage']}%")
-        print(f"   提升幅度: {improvement:.1f}%")
 
         if coverage_result['total_coverage'] >= 30:
-            print("🎉 恭喜！已达到30%覆盖率目标！")
             return True
         elif improvement > 0:
-            print(f"✅ 取得进展！覆盖率提升了 {improvement:.1f}%")
             return False
         else:
-            print("⚠️  覆盖率没有明显提升")
             return False
     else:
-        print("❌ 没有找到可用的测试文件")
         return False
 
 if __name__ == "__main__":

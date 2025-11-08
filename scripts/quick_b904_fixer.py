@@ -6,10 +6,10 @@ Quick B904 Exception Handler Fixer
 针对单个文件的快速B904错误修复工具.
 """
 
-import re
 import subprocess
 import sys
 from pathlib import Path
+
 
 def get_b904_lines(file_path):
     """获取文件中B904错误的具体行号"""
@@ -29,24 +29,20 @@ def get_b904_lines(file_path):
                     line_num = int(parts[1])
                     lines.append(line_num)
         return lines
-    except Exception as e:
-        print(f"获取B904行号失败: {e}")
+    except Exception:
         return []
 
 def fix_b904_in_file(file_path):
     """修复单个文件中的B904错误"""
-    print(f"🔧 修复文件: {file_path}")
 
     # 获取B904错误行号
     b904_lines = get_b904_lines(file_path)
     if not b904_lines:
-        print("✅ 没有发现B904错误")
         return True
 
-    print(f"📍 发现 {len(b904_lines)} 个B904错误")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         fixed_count = 0
@@ -61,19 +57,15 @@ def fix_b904_in_file(file_path):
                     # 在)后添加 from e
                     lines[idx] = line.rstrip() + ' from e\n'
                     fixed_count += 1
-                    print(f"  ✅ 修复第 {line_num} 行")
 
         if fixed_count > 0:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.writelines(lines)
-            print(f"🎉 成功修复 {fixed_count} 个B904错误")
             return True
         else:
-            print("⚠️ 没有找到可修复的raise语句")
             return False
 
-    except Exception as e:
-        print(f"❌ 修复失败: {e}")
+    except Exception:
         return False
 
 def verify_fix(file_path):
@@ -90,27 +82,23 @@ def verify_fix(file_path):
 def main():
     """主函数"""
     if len(sys.argv) != 2:
-        print("用法: python quick_b904_fixer.py <file_path>")
         sys.exit(1)
 
     file_path = sys.argv[1]
 
     if not Path(file_path).exists():
-        print(f"❌ 文件不存在: {file_path}")
         sys.exit(1)
 
-    print("🚀 快速B904异常处理修复工具")
-    print("=" * 40)
 
     # 修复文件
     if fix_b904_in_file(file_path):
         # 验证修复效果
         if verify_fix(file_path):
-            print("✅ 修复验证通过")
+            pass
         else:
-            print("⚠️ 修复验证未完全通过，可能需要手动处理")
+            pass
     else:
-        print("❌ 修复失败")
+        pass
 
 if __name__ == "__main__":
     main()

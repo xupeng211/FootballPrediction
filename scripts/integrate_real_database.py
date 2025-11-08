@@ -6,12 +6,13 @@
 """
 
 import asyncio
-import json
 import time
 from datetime import datetime, timedelta
+
 import httpx
 from sqlalchemy import text
-from src.database.connection import get_async_session 
+
+from src.database.connection import get_async_session
 
 
 class DatabaseIntegrator:
@@ -37,16 +38,13 @@ class DatabaseIntegrator:
         }
         self.test_results.append(result)
 
-        status = "✅" if success else "❌"
-        print(f"{status} {test_name}")
         if details:
-            print(f"   📝 {details}")
+            pass
         if duration > 0:
-            print(f"   ⏱️  耗时: {duration:.2f}秒")
+            pass
 
     async def test_database_connection(self):
         """测试数据库连接"""
-        print("\n🔗 步骤1: 测试数据库连接")
 
         start_time = time.time()
         try:
@@ -70,7 +68,6 @@ class DatabaseIntegrator:
 
     async def check_existing_data(self):
         """检查现有数据"""
-        print("\n📊 步骤2: 检查现有数据库数据")
 
         tables_to_check = [
             ("teams", "球队表"),
@@ -106,12 +103,10 @@ class DatabaseIntegrator:
                 self.log_test(f"{display_name}数据检查", False, f"查询错误: {str(e)}", duration)
                 existing_data[table_name] = 0
 
-        print(f"\n   📈 数据库总记录数: {total_records}")
         return existing_data, total_records
 
     async def create_sample_data_if_needed(self, existing_data):
         """如果需要，创建示例数据"""
-        print("\n🌱 步骤3: 创建示例数据（如果需要）")
 
         # 检查是否需要创建数据
         tables_needing_data = [table for table,
@@ -121,7 +116,6 @@ class DatabaseIntegrator:
             self.log_test("示例数据创建", True, "数据库已有数据，跳过创建")
             return True
 
-        print(f"   📝 需要创建数据的表: {tables_needing_data}")
 
         try:
             async with get_async_session() as session:
@@ -251,7 +245,7 @@ class DatabaseIntegrator:
         predictions = []
 
         # 为最近的比赛创建预测
-        for i in range(10):
+        for _i in range(10):
             match_id = random.randint(1, 20)
             home_win_prob = round(random.uniform(0.3, 0.7), 2)
             draw_prob = round(random.uniform(0.2, 0.4), 2)
@@ -284,7 +278,6 @@ class DatabaseIntegrator:
 
     async def test_data_apis_with_real_data(self):
         """测试数据API与真实数据"""
-        print("\n🔍 步骤4: 测试数据API与真实数据集成")
 
         data_endpoints = [
             ("球队数据API", "/api/v1/data/teams"),
@@ -342,7 +335,6 @@ class DatabaseIntegrator:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)
 
-        print(f"\n   📈 数据API测试结果: {success_count}/{len(data_endpoints)} 成功")
         return success_count >= 3  # 至少3个数据API正常
 
     def check_if_real_data(self, data_item, api_name):
@@ -376,7 +368,6 @@ class DatabaseIntegrator:
 
     async def optimize_data_quality(self):
         """优化数据质量"""
-        print("\n🎯 步骤5: 优化数据质量")
 
         optimization_tasks = [
             ("数据完整性检查", self.check_data_integrity),
@@ -397,7 +388,6 @@ class DatabaseIntegrator:
             except Exception as e:
                 self.log_test(task_name, False, f"优化错误: {str(e)}")
 
-        print(f"\n   📈 数据质量优化: {completed_tasks}/{len(optimization_tasks)} 成功")
         return completed_tasks >= 2
 
     async def check_data_integrity(self):
@@ -421,10 +411,8 @@ class DatabaseIntegrator:
                 if invalid_matches == 0:
                     return True
                 else:
-                    print(f"   ⚠️ 发现 {invalid_matches} 条无效的比赛记录")
                     return False
-        except Exception as e:
-            print(f"   ❌ 完整性检查错误: {str(e)}")
+        except Exception:
             return False
 
     async def check_data_consistency(self):
@@ -447,10 +435,8 @@ class DatabaseIntegrator:
                 if orphaned_predictions == 0:
                     return True
                 else:
-                    print(f"   ⚠️ 发现 {orphaned_predictions} 条孤立的预测记录")
                     return False
-        except Exception as e:
-            print(f"   ❌ 一致性检查错误: {str(e)}")
+        except Exception:
             return False
 
     async def optimize_query_performance(self):
@@ -475,19 +461,12 @@ class DatabaseIntegrator:
                 if duration < 1.0 and len(teams) > 0:
                     return True
                 else:
-                    print(f"   ⚠️ 查询性能较慢: {duration:.2f}秒")
                     return False
-        except Exception as e:
-            print(f"   ❌ 性能测试错误: {str(e)}")
+        except Exception:
             return False
 
     async def run_database_integration(self):
         """运行完整的数据库集成"""
-        print("🗄️ 开始真实数据库集成")
-        print("=" * 60)
-        print(f"📅 集成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"🔗 API地址: {self.api_base_url}")
-        print("=" * 60)
 
         integration_results = {}
 
@@ -505,23 +484,14 @@ class DatabaseIntegrator:
 
     def generate_integration_report(self, results, total_records):
         """生成数据库集成报告"""
-        print("\n" + "=" * 60)
-        print("📊 数据库集成报告")
-        print("=" * 60)
 
         total_tests = len(self.test_results)
         successful_tests = len([r for r in self.test_results if r["success"]])
         failed_tests = total_tests - successful_tests
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print("📈 集成测试统计:")
-        print(f"   总测试数: {total_tests}")
-        print(f"   成功测试: {successful_tests}")
-        print(f"   失败测试: {failed_tests}")
-        print(f"   成功率: {success_rate:.1f}%")
 
         # 集成步骤结果
-        print("\n🎯 集成步骤结果:")
         steps = [
             ("数据库连接", results["db_connection"]),
             ("数据创建", results["data_creation"]),
@@ -530,63 +500,37 @@ class DatabaseIntegrator:
         ]
 
         completed_steps = 0
-        for step_name, success in steps:
-            status = "✅" if success else "❌"
-            print(f"   {status} {step_name}")
+        for _step_name, success in steps:
             if success:
                 completed_steps += 1
 
         integration_completion = (completed_steps / len(steps)) * 100
-        print(f"\n   集成完成率: {completed_steps}/{len(steps)} ({integration_completion:.1f}%)")
 
         # 数据统计
-        print("\n📊 数据库统计:")
-        print(f"   总记录数: {total_records}")
         if total_records > 0:
-            print("   🟢 数据库状态: 健康，包含真实数据")
+            pass
         else:
-            print("   🔴 数据库状态: 空，需要创建数据")
+            pass
 
         # 系统评估
-        print("\n🎯 数据库集成评估:")
         if success_rate >= 85 and integration_completion >= 75:
-            print("   🟢 优秀: 数据库集成成功，数据质量良好")
-            system_status = "优秀"
             deployment_ready = True
         elif success_rate >= 70 and integration_completion >= 60:
-            print("   🟡 良好: 数据库基本集成，存在少量问题")
-            system_status = "良好"
             deployment_ready = True
         elif success_rate >= 60 and integration_completion >= 50:
-            print("   🟡 一般: 数据库部分集成，需要改进")
-            system_status = "一般"
             deployment_ready = False
         else:
-            print("   🔴 需要改进: 数据库集成存在较多问题")
-            system_status = "需要改进"
             deployment_ready = False
 
         # 下一步建议
-        print("\n🚀 下一步建议:")
         if deployment_ready:
-            print("   ✨ 数据库已准备就绪，可以进行生产部署")
-            print("   📋 后续工作:")
-            print("      1. 配置数据备份策略")
-            print("      2. 设置数据监控告警")
-            print("      3. 优化查询性能")
-            print("      4. 建立数据更新机制")
+            pass
         else:
-            print("   🔧 建议优先解决:")
             failed_tests = [r for r in self.test_results if not r["success"]]
             if failed_tests:
-                print("      关键问题:")
-                for result in failed_tests[:3]:  # 显示前3个问题
-                    print(f"      • {result['test_name']}: {result['details']}")
+                for _result in failed_tests[:3]:  # 显示前3个问题
+                    pass
 
-        print("\n🎊 数据库集成完成!")
-        print(f"   系统状态: {system_status}")
-        print(f"   集成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("=" * 60)
 
 
 async def main():

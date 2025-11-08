@@ -4,14 +4,12 @@
 优化各个脚本工具之间的依赖关系和集成
 """
 
-import os
-import sys
-import json
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Any, Set
-from dataclasses import dataclass
 import ast
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -19,8 +17,8 @@ class ToolInfo:
     """工具信息"""
     name: str
     path: Path
-    dependencies: List[str]
-    dependents: List[str]
+    dependencies: list[str]
+    dependents: list[str]
     functionality: str
     status: str  # working, broken, needs_improvement
 
@@ -32,11 +30,10 @@ class ToolIntegrationOptimizer:
         self.project_root = project_root or Path(__file__).parent.parent
         self.scripts_dir = self.project_root / "scripts"
         self.src_dir = self.project_root / "src"
-        self.tools: Dict[str, ToolInfo] = {}
+        self.tools: dict[str, ToolInfo] = {}
 
-    def discover_tools(self) -> Dict[str, ToolInfo]:
+    def discover_tools(self) -> dict[str, ToolInfo]:
         """发现所有工具脚本"""
-        print("🔍 发现工具脚本...")
 
         for script_file in self.scripts_dir.glob("*.py"):
             if script_file.name.startswith("__"):
@@ -45,14 +42,13 @@ class ToolIntegrationOptimizer:
             tool_info = self._analyze_tool(script_file)
             if tool_info:
                 self.tools[tool_info.name] = tool_info
-                print(f"   ✅ 发现工具: {tool_info.name}")
 
         return self.tools
 
     def _analyze_tool(self, script_path: Path) -> ToolInfo:
         """分析工具脚本"""
         try:
-            with open(script_path, 'r', encoding='utf-8') as f:
+            with open(script_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 解析AST
@@ -77,11 +73,10 @@ class ToolIntegrationOptimizer:
                 status=status
             )
 
-        except Exception as e:
-            print(f"❌ 分析工具失败 {script_path}: {e}")
+        except Exception:
             return None
 
-    def _extract_imports(self, tree: ast.AST) -> List[str]:
+    def _extract_imports(self, tree: ast.AST) -> list[str]:
         """提取导入语句"""
         imports = []
 
@@ -95,7 +90,7 @@ class ToolIntegrationOptimizer:
 
         return imports
 
-    def _identify_dependencies(self, imports: List[str]) -> List[str]:
+    def _identify_dependencies(self, imports: list[str]) -> list[str]:
         """识别工具依赖"""
         dependencies = []
 
@@ -162,21 +157,19 @@ class ToolIntegrationOptimizer:
 
     def calculate_dependents(self):
         """计算工具的依赖关系"""
-        print("🔗 计算依赖关系...")
 
         for tool_name, tool_info in self.tools.items():
             tool_info.dependents = []
 
         for tool_name, tool_info in self.tools.items():
-            for dep in tool_info.dependencies:
+            for _dep in tool_info.dependencies:
                 # 检查是否有其他工具依赖此工具
                 for other_name, other_info in self.tools.items():
                     if other_name != tool_name and tool_name in other_info.dependencies:
                         tool_info.dependents.append(other_name)
 
-    def analyze_integration(self) -> Dict[str, Any]:
+    def analyze_integration(self) -> dict[str, Any]:
         """分析工具集成情况"""
-        print("📊 分析工具集成...")
 
         # 统计工具状态
         status_counts = {}
@@ -213,7 +206,7 @@ class ToolIntegrationOptimizer:
             } for name, tool in self.tools.items()}
         }
 
-    def _find_dependency_chains(self) -> List[List[str]]:
+    def _find_dependency_chains(self) -> list[list[str]]:
         """找出依赖链"""
         chains = []
 
@@ -250,8 +243,8 @@ class ToolIntegrationOptimizer:
         return unique_chains[:10]  # 返回前10条链
 
     def generate_optimization_suggestions(self,
-    analysis: Dict[str,
-    Any]) -> List[Dict[str,
+    analysis: dict[str,
+    Any]) -> list[dict[str,
     Any]]:
         """生成优化建议"""
         suggestions = []
@@ -305,7 +298,7 @@ class ToolIntegrationOptimizer:
 
         return suggestions
 
-    def create_integration_workflow(self) -> Dict[str, List[str]]:
+    def create_integration_workflow(self) -> dict[str, list[str]]:
         """创建集成工作流"""
         workflow = {
             'quality_improvement': [
@@ -398,23 +391,19 @@ class ToolIntegrationOptimizer:
 
 def main():
     """主函数"""
-    print("🔧 工具集成优化器")
-    print("=" * 40)
 
     optimizer = ToolIntegrationOptimizer()
     report = optimizer.generate_report()
 
     # 输出报告
-    print(report)
 
     # 保存报告
     report_file = optimizer.project_root / "tool_integration_report.md"
     try:
         with open(report_file, 'w', encoding='utf-8') as f:
             f.write(report)
-        print(f"\n✅ 报告已保存: {report_file}")
-    except Exception as e:
-        print(f"❌ 保存报告失败: {e}")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

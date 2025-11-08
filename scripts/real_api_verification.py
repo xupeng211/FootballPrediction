@@ -39,12 +39,10 @@ class RealAPIVerifier:
         }
         self.test_results.append(result)
 
-        status = "✅" if success else "❌"
-        print(f"{status} {test_name}")
         if details:
-            print(f"   📝 {details}")
+            pass
         if duration > 0:
-            print(f"   ⏱️  耗时: {duration:.2f}秒")
+            pass
 
     async def test_api_endpoint(self,
     name: str,
@@ -100,11 +98,6 @@ class RealAPIVerifier:
 
     async def run_verification(self):
         """运行完整的API验证"""
-        print("🔍 开始真实API验证")
-        print("=" * 60)
-        print(f"📅 验证时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"🔗 API地址: {API_BASE_URL}")
-        print("=" * 60)
 
         # 定义要测试的API端点
         endpoints_to_test = [
@@ -134,70 +127,43 @@ class RealAPIVerifier:
 
     def generate_verification_report(self):
         """生成验证报告"""
-        print("\n" + "=" * 60)
-        print("📊 真实API验证报告")
-        print("=" * 60)
 
         total_tests = len(self.test_results)
         successful_tests = len(self.working_apis)
-        failed_tests = len(self.problem_apis)
+        len(self.problem_apis)
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print("📈 API验证统计:")
-        print(f"   总测试数: {total_tests}")
-        print(f"   成功API: {successful_tests}")
-        print(f"   失败API: {failed_tests}")
-        print(f"   成功率: {success_rate:.1f}%")
 
-        print("\n✅ 正常工作的API:")
         for api in self.working_apis:
-            print(f"   • {api['name']}: HTTP {api['status']} ({api['url']})")
+            pass
 
         if self.problem_apis:
-            print("\n❌ 有问题的API:")
             for api in self.problem_apis:
                 if "status" in api:
-                    print(f"   • {api['name']}: HTTP {api['status']} ({api['url']})")
+                    pass
                 else:
-                    print(f"   • {api['name']}: 连接错误 ({api['url']})")
+                    pass
 
         # 计算平均响应时间
         durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
         if durations:
-            avg_duration = sum(durations) / len(durations)
-            print("\n⏱️  性能统计:")
-            print(f"   平均响应时间: {avg_duration:.2f}秒")
-            print(f"   最慢响应: {max(durations):.2f}秒")
-            print(f"   最快响应: {min(durations):.2f}秒")
+            sum(durations) / len(durations)
 
         # 系统评估
-        print("\n🎯 系统评估:")
         if success_rate >= 80:
-            print("   🟢 优秀: 系统API功能完善，可以支持种子用户测试")
+            pass
         elif success_rate >= 60:
-            print("   🟡 良好: 系统基础功能可用，建议完善部分功能")
+            pass
         else:
-            print("   🔴 需要改进: 存在较多API问题，需要修复后再进行用户测试")
+            pass
 
         # 对比原始测试结果
-        print("\n🔍 与种子用户测试对比:")
-        print("   原测试发现的404问题主要是URL路径错误")
-        print("   实际API端点大部分都正常工作")
-        print("   数据API返回TODO假数据，需要真实数据库集成")
-        print("   监控系统在正确路径正常工作")
 
-        print("\n🚀 下一步建议:")
         if success_rate >= 80:
-            print("   1. 修复用户认证系统集成")
-            print("   2. 集成真实数据库数据到data API")
-            print("   3. 开始正式种子用户测试")
+            pass
         else:
-            print("   1. 优先修复失败的API端点")
-            print("   2. 完善系统功能完整性")
-            print("   3. 重新进行系统验证")
+            pass
 
-        print(f"\n📊 验证完成于: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("=" * 60)
 
 
 async def main():

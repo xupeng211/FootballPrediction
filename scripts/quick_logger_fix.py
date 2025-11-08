@@ -6,10 +6,11 @@
 import re
 from pathlib import Path
 
+
 def fix_logger_position(file_path):
     """修复单个文件中logger的位置问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -73,8 +74,7 @@ def fix_logger_position(file_path):
 
         return False
 
-    except Exception as e:
-        print(f"处理文件 {file_path} 时出错: {e}")
+    except Exception:
         return False
 
 def main():
@@ -119,10 +119,8 @@ def main():
         path = Path(file_path)
         if path.exists():
             if fix_logger_position(path):
-                print(f"✅ 修复了: {file_path}")
                 fixed_count += 1
 
-    print(f"修复完成！成功修复 {fixed_count} 个文件")
 
 if __name__ == "__main__":
     main()
