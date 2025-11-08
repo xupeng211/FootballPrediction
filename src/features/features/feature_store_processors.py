@@ -69,3 +69,14 @@ class MockValueType:
 
     pass  # 添加pass语句
     pass  # TODO: 实现类逻辑
+
+
+class FeatureProcessor:
+    """特征处理器"""
+
+    def __init__(self):
+        pass
+
+    def process(self, data):
+        """处理特征数据"""
+        return data

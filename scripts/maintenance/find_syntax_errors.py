@@ -9,15 +9,14 @@ Find Syntax Errors Tool
 import ast
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 
-def check_syntax(file_path: Path) -> List[str]:
+def check_syntax(file_path: Path) -> list[str]:
     """检查单个文件的语法错误"""
     errors = []
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 尝试解析AST
@@ -33,7 +32,7 @@ def check_syntax(file_path: Path) -> List[str]:
     return errors
 
 
-def find_python_files(directory: Path) -> List[Path]:
+def find_python_files(directory: Path) -> list[Path]:
     """查找所有Python文件"""
     python_files = []
 
@@ -79,7 +78,7 @@ def main():
             for error in errors:
                 print(f"   {error}")
 
-    print(f"\n📊 检查结果:")
+    print("\n📊 检查结果:")
     print(f"   总文件数: {total_files}")
     print(f"   错误文件: {error_files}")
     print(f"   错误总数: {total_errors}")
@@ -88,7 +87,7 @@ def main():
         print(f"\n❌ 发现 {total_errors} 个语法错误")
         sys.exit(1)
     else:
-        print(f"\n✅ 所有文件语法检查通过")
+        print("\n✅ 所有文件语法检查通过")
         sys.exit(0)
 
 

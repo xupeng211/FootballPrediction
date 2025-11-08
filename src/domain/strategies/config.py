@@ -21,13 +21,11 @@ class HistoricalConfig:
     """历史配置 - 占位符实现"""
 
 
-
 class MLModelConfig:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """机器学习模型配置 - 占位符实现"""
-
 
 
 class StatisticalConfig:
@@ -37,13 +35,11 @@ class StatisticalConfig:
     """统计配置 - 占位符实现"""
 
 
-
 class EnsembleConfig:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """集成配置 - 占位符实现"""
-
 
 
 # 为了保持向后兼容,提供StrategyConfig别名
@@ -52,7 +48,6 @@ class StrategyConfig:
 
     pass  # 添加pass语句
     """策略配置 - 占位符实现"""
-
 
 
 # 导出所有公共接口

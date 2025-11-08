@@ -17,12 +17,7 @@ class UserProfile:
     pass  # 添加pass语句
 
     def __init__(
-        self,
-    user_id: str,
-    display_name: str,
-    email: str,
-    preferences: dict[str,
-    Any]
+        self, user_id: str, display_name: str, email: str, preferences: dict[str, Any]
     ):
         self.user_id = user_id
         self.display_name = display_name
@@ -96,38 +91,28 @@ class UserProfileService(SimpleService):
         content_preferences = self._analyze_content_preferences(user)
         profile = UserProfile(
             user_id=user.id,
-    display_name=getattr(user,
-    "display_name",
-    user.username),
-
+            display_name=getattr(user, "display_name", user.username),
             email=(
                 getattr(user.profile, "email", "") if hasattr(user, "profile") else ""
             ),
             preferences={
                 "interests": interests,
-                "content_type": content_preferences.get("preferred_type",
-    "text"),
-    "language": content_preferences.get("language",
-    "zh"),
-
+                "content_type": content_preferences.get("preferred_type", "text"),
+                "language": content_preferences.get("language", "zh"),
                 "behavior_patterns": behavior_patterns,
                 "notification_settings": self._get_notification_settings(user),
-    "created_at": datetime.now(),
-    },
-    )
+                "created_at": datetime.now(),
+            },
+        )
         self._user_profiles[user.id] = profile
         return profile
 
-    async def get_profile(self,
-    user_id: str) -> UserProfile | None:
+    async def get_profile(self, user_id: str) -> UserProfile | None:
         """获取用户画像"""
         return self._user_profiles.get(user_id)
 
     async def update_profile(
-        self,
-    user_id: str,
-    updates: dict[str,
-    Any]
+        self, user_id: str, updates: dict[str, Any]
     ) -> UserProfile | None:
         """更新用户画像"""
         profile = await self.get_profile(user_id)
@@ -164,20 +149,14 @@ class UserProfileService(SimpleService):
         interests = user_data.get("interests", ["足球", "体育"])
         preferences = {
             "interests": interests,
-            "language": user_data.get("language",
-    "zh"),
-    "content_type": user_data.get("content_type",
-    "text"),
-
+            "language": user_data.get("language", "zh"),
+            "content_type": user_data.get("content_type", "text"),
             "behavior_patterns": {"active_hours": [9, 10, 11, 14, 15, 16]},
         }
         profile = UserProfile(
             user_id=user_id,
-    display_name=user_data.get("name",
-    "Anonymous"),
-    email=user_data.get("email",
-    ""),
-
+            display_name=user_data.get("name", "Anonymous"),
+            email=user_data.get("email", ""),
             preferences={
                 **preferences,
                 "created_at": datetime.now(),

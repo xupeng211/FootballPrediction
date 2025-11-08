@@ -17,9 +17,7 @@ logger = logging.getLogger(__name__)
 class CacheEntry:
     """缓存条目"""
 
-    def __init__(self,
-    value: Any,
-    ttl: float | None = None):
+    def __init__(self, value: Any, ttl: float | None = None):
         self.value = value
         self.created_at = time.time()
         self.ttl = ttl
@@ -38,8 +36,7 @@ class CacheEntry:
             return None
         elapsed = time.time() - self.created_at
         remaining = self.ttl - elapsed
-        return max(0,
-    remaining)
+        return max(0, remaining)
 
 
 class TTLCache:
@@ -47,7 +44,6 @@ class TTLCache:
 
     def __init__(
         self,
-
         max_size: int = 1000,
         default_ttl: float | None = None,
         cleanup_interval: float = 60.0,
@@ -77,9 +73,7 @@ class TTLCache:
         # 启动自动清理
         self.start_auto_cleanup()
 
-    def get(self,
-    key: str,
-    default: Any = None) -> Any:
+    def get(self, key: str, default: Any = None) -> Any:
         """
         获取缓存值
 
@@ -107,10 +101,7 @@ class TTLCache:
             self._hits += 1
             return entry.value
 
-    def set(self,
-    key: str,
-    value: Any,
-    ttl: float | None = None) -> None:
+    def set(self, key: str, value: Any, ttl: float | None = None) -> None:
         """
         设置缓存值
 
@@ -125,13 +116,11 @@ class TTLCache:
                 self._evict_lru()
 
             ttl = ttl or self.default_ttl
-            entry = CacheEntry(value,
-    ttl)
+            entry = CacheEntry(value, ttl)
             self._cache[key] = entry
             self._sets += 1
 
-    def delete(self,
-    key: str) -> bool:
+    def delete(self, key: str) -> bool:
         """
         删除缓存项
 
@@ -153,9 +142,7 @@ class TTLCache:
         with self._lock:
             self._cache.clear()
 
-    def pop(self,
-    key: str,
-    default: Any = None) -> Any:
+    def pop(self, key: str, default: Any = None) -> Any:
         """
         弹出并删除缓存项
 
@@ -167,8 +154,7 @@ class TTLCache:
             缓存值或默认值
         """
         with self._lock:
-            value = self.get(key,
-    default)
+            value = self.get(key, default)
             self.delete(key)
             return value
 
@@ -182,13 +168,10 @@ class TTLCache:
         with self._lock:
             return [entry.value for entry in self._cache.values()]
 
-    def items(self) -> list[tuple[str,
-    Any]]:
+    def items(self) -> list[tuple[str, Any]]:
         """获取所有键值对"""
         with self._lock:
-            return [(key,
-    entry.value) for key,
-    entry in self._cache.items()]
+            return [(key, entry.value) for key, entry in self._cache.items()]
 
     def get_many(self, keys: list[str]) -> dict[str, Any]:
         """
@@ -207,10 +190,7 @@ class TTLCache:
                 result[key] = value
         return result
 
-    def set_many(self,
-    mapping: dict[str,
-    Any],
-    ttl: float | None = None) -> None:
+    def set_many(self, mapping: dict[str, Any], ttl: float | None = None) -> None:
         """
         批量设置
 
@@ -237,10 +217,7 @@ class TTLCache:
                 count += 1
         return count
 
-    def increment(self,
-    key: str,
-    delta: int = 1,
-    default: int = 0) -> int:
+    def increment(self, key: str, delta: int = 1, default: int = 0) -> int:
         """
         递增数值
 
@@ -252,19 +229,14 @@ class TTLCache:
         Returns:
             递增后的值
         """
-        current = self.get(key,
-    default)
-        if not isinstance(current,
-    int):
+        current = self.get(key, default)
+        if not isinstance(current, int):
             current = default
         new_value = current + delta
-        self.set(key,
-    new_value)
+        self.set(key, new_value)
         return new_value
 
-    def touch(self,
-    key: str,
-    ttl: float | None = None) -> bool:
+    def touch(self, key: str, ttl: float | None = None) -> bool:
         """
         更新缓存项的TTL
 

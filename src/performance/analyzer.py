@@ -7,8 +7,8 @@ analyzer 主模块
 """
 
 # 导入拆分的模块
-from .performance.analyzer_core import *  # TODO: Convert to explicit imports
-from .performance.analyzer_models import *  # TODO: Convert to explicit imports
+from .performance.analyzer_core import *
+from .performance.analyzer_models import *
 
 # 导出所有公共接口
 __all__ = ["PerformanceAnalyzer", "PerformanceInsight", "PerformanceTrend"]

@@ -1,14 +1,14 @@
 from datetime import datetime
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
+
 """
 简化的用户认证API
 
 提供基本的用户认证功能,避免复杂依赖问题
 """
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
 
 # 简化的依赖,避免复杂导入
 # from src.database.connection import get_async_session
@@ -247,7 +247,9 @@ async def register_user(user_data: SimpleUserRegister):
         )
         return {"message": "用户注册成功", "user": user.dict()}
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.post("/login")

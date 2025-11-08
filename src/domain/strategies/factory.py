@@ -28,10 +28,8 @@ class StrategyCreationError(Exception):
     """策略创建错误"""
 
 
-
 class StrategyConfigurationError(Exception):
     """策略配置错误"""
-
 
 
 class PredictionStrategyFactory:
@@ -142,7 +140,7 @@ class PredictionStrategyFactory:
                 await strategy.initialize(config)
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            raise StrategyCreationError(f"创建策略 '{strategy_name}' 失败: {e}")
+            raise StrategyCreationError(f"创建策略 '{strategy_name}' 失败: {e}") from e
 
         # 缓存策略实例
         self._strategies[strategy_name] = strategy

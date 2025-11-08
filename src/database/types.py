@@ -56,7 +56,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             else:
                 return json.dumps(value)
 
-    def process_result_value(self, value: str) -> Any:
+    def process_result_value(self, value: str, dialect) -> Any:
         """处理结果值（数据库值 -> Python值）"""
         if value is None:
             return None

@@ -5,9 +5,8 @@
 
 import json
 import sys
-import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, ".")
@@ -16,7 +15,7 @@ sys.path.insert(0, ".")
 def load_validation_data():
     """加载最新验证数据"""
     try:
-        with open("validation_report.json", "r", encoding="utf-8") as f:
+        with open("validation_report.json", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         return None
@@ -27,7 +26,7 @@ def load_maintenance_logs():
     log_file = Path("maintenance_logs/maintenance_log.json")
     if log_file.exists():
         try:
-            with open(log_file, "r", encoding="utf-8") as f:
+            with open(log_file, encoding="utf-8") as f:
                 logs = json.load(f)
             return logs[-5:]  # 返回最近5条日志
         except Exception:

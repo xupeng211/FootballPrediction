@@ -4,9 +4,9 @@
 Naming Convention Fixer - Fix N801 class names and N802 function names
 """
 
-import re
 import os
-from pathlib import Path
+import re
+
 
 def fix_class_naming(file_path: str) -> int:
     """修复类名命名规范 (N801) - 将下划线命名改为驼峰命名"""
@@ -16,7 +16,7 @@ def fix_class_naming(file_path: str) -> int:
         return 0
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content

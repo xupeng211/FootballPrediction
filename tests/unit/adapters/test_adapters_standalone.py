@@ -48,10 +48,8 @@ class Adapter(Target):
     """适配器基类,将Adaptee接口转换为Target接口"""
 
 
-
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
-
 
 
 class DataTransformer(ABC):

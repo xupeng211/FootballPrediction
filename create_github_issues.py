@@ -7,7 +7,8 @@ Create Progressive Improvement Issues using GitHub CLI
 import json
 import subprocess
 import sys
-from typing import Dict, List, Any
+from typing import Any
+
 
 def run_command(cmd: str, description: str) -> bool:
     """运行命令并显示结果"""
@@ -29,7 +30,7 @@ def run_command(cmd: str, description: str) -> bool:
         print(f"❌ 执行失败: {e}")
         return False
 
-def create_issue_with_cli(issue_data: Dict[str, Any]) -> bool:
+def create_issue_with_cli(issue_data: dict[str, Any]) -> bool:
     """使用GitHub CLI创建单个Issue"""
     title = issue_data["title"]
     body = issue_data["body"]
@@ -65,7 +66,7 @@ def main():
 
     # 读取Issues数据
     try:
-        with open("progressive_improvement_issues.json", "r", encoding="utf-8") as f:
+        with open("progressive_improvement_issues.json", encoding="utf-8") as f:
             issues = json.load(f)
     except FileNotFoundError:
         print("❌ 找不到 progressive_improvement_issues.json 文件")
@@ -107,7 +108,7 @@ def main():
         os.remove("/tmp/issue_body.md")
 
     # 显示结果
-    print(f"\n📊 创建结果摘要")
+    print("\n📊 创建结果摘要")
     print("=" * 30)
     print(f"✅ 成功创建: {created_count} 个Issues")
     print(f"❌ 创建失败: {failed_count} 个Issues")

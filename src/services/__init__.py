@@ -4,6 +4,13 @@ from .base_unified import BaseService
 from .content_analysis import ContentAnalysisService
 from .data_processing import DataProcessingService
 from .manager import ServiceManager, service_manager
+from .prediction_service import (
+    PredictionResult,
+    PredictionService,
+    get_prediction_service,
+    predict_match,
+    predict_match_async,
+)
 from .user_profile import UserProfileService
 
 """
@@ -23,6 +30,12 @@ __all__ = [
     "ContentAnalysisService",
     "UserProfileService",
     "DataProcessingService",
+    "PredictionService",
+    # 预测相关
+    "PredictionResult",
+    "get_prediction_service",
+    "predict_match",
+    "predict_match_async",
     # 服务管理
     "ServiceManager",
     "service_manager",

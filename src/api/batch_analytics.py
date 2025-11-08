@@ -52,7 +52,7 @@ async def execute_batch_analytics_api(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=str(e)
-        ) from e  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量，B904 exception chaining
 
 
 @router.get("/batch_analytics_api/status/{job_id}")

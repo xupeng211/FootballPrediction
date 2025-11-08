@@ -421,7 +421,7 @@ class TestStringUtilsEnhanced:
         assert "user@domain.org" in result
 
         # 验证结果是布尔值
-        for email, is_valid in result.items():
+        for _email, is_valid in result.items():
             assert isinstance(is_valid, bool)
 
         # 空列表

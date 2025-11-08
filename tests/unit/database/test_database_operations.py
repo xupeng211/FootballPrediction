@@ -626,7 +626,7 @@ class TestDatabaseTransactions:
 
         except Exception:
             # 回滚事务
-            assert False, "事务不应该失败"
+            raise AssertionError("事务不应该失败")
 
     @pytest.mark.asyncio
     async def test_transaction_rollback(self, user_repository):
@@ -692,7 +692,7 @@ class TestDatabaseTransactions:
 
         except Exception:
             # 外层事务回滚
-            assert False, "外层事务不应该失败"
+            raise AssertionError("外层事务不应该失败")
 
 
 # 测试运行器

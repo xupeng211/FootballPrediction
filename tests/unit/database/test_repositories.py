@@ -26,7 +26,9 @@ try:
 
     CAN_IMPORT = True
 except ImportError as e:
-    logger.warning(f"Warning: 无法导入数据库模块: {e}")  # TODO: Add logger import if needed
+    logger.warning(
+        f"Warning: 无法导入数据库模块: {e}"
+    )  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 

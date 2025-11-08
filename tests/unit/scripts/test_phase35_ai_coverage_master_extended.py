@@ -33,7 +33,7 @@ class TestPhase35AICoverageMasterExtended:
 
         # 应该包含基本的覆盖率信息
         expected_keys = ["total_lines", "covered_lines", "coverage_percentage"]
-        for key in expected_keys:
+        for _key in expected_keys:
             # 如果数据可用，应该包含这些键
             # 在没有实际覆盖率数据的情况下，可能返回空字典
             if result:

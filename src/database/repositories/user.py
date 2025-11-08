@@ -476,7 +476,7 @@ class UserRepository(BaseRepository[User]):
                 return None
 
             result = await sess.execute(stmt)
-            result.scalar_one_or_none()
+            user = result.scalar_one_or_none()
 
             if user:
                 return getattr(user, relation_name, None)

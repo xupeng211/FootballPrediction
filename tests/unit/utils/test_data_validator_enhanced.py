@@ -340,5 +340,5 @@ class TestDataValidatorEnhanced:
         }
 
         # 所有结果都应该是布尔值
-        for field, result in results.items():
+        for _field, result in results.items():
             assert isinstance(result, bool)

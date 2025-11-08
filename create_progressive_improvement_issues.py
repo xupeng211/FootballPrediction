@@ -6,11 +6,9 @@ Create Progressive Improvement GitHub Issues Script
 基于已成熟的渐进式改进策略，创建细粒度的GitHub Issues。
 """
 
-import os
-import subprocess
 import json
-from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any
+
 
 class IssueCreator:
     """GitHub Issue 创建器"""
@@ -155,7 +153,7 @@ ruff check target_file.py
 **注意**: 此策略经过7轮实际验证，成功率100%，建议严格按照此策略执行改进。
 """
 
-    def create_issue(self, title: str, body: str, labels: List[str]) -> Dict[str, Any]:
+    def create_issue(self, title: str, body: str, labels: list[str]) -> dict[str, Any]:
         """创建一个Issue"""
         issue = {
             "title": title,
@@ -238,7 +236,7 @@ source .venv/bin/activate && ruff check {file_path} --output-format=concise
         """获取模块名"""
         return file_path.replace("src/", "").replace("/", ".").replace(".py", "")
 
-    def generate_batch_fix_issue(self, module_name: str, files: List[Dict[str, Any]]) -> None:
+    def generate_batch_fix_issue(self, module_name: str, files: list[dict[str, Any]]) -> None:
         """创建批量修复Issue"""
         total_errors = sum(f["errors"] for f in files)
 
@@ -375,7 +373,7 @@ source .venv/bin/activate && ruff check {file_path} --output-format=concise
 
     def print_summary(self) -> None:
         """打印Issues摘要"""
-        print(f"\n📊 GitHub Issues 创建摘要")
+        print("\n📊 GitHub Issues 创建摘要")
         print("=" * 50)
         print(f"总Issues数量: {len(self.issues)}")
 

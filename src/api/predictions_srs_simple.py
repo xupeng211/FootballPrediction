@@ -24,15 +24,13 @@ from src.cache.redis_manager import get_redis_manager
 from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
-router = APIRouter(prefix="/predictions-srs",
-    tags=["predictions-srs-simple"])
+router = APIRouter(prefix="/predictions-srs", tags=["predictions-srs-simple"])
 
 # JWT Token认证
 security = HTTPBearer()
 
 
-class PredictionResult(str,
-    Enum):
+class PredictionResult(str, Enum):
     """预测结果枚举"""
 
     HOME_WIN = "home_win"
@@ -44,75 +42,54 @@ class PredictionResult(str,
 class MatchInfo(BaseModel):
     """比赛信息模型"""
 
-    match_id: int = Field(...,
-    description="比赛ID")
+    match_id: int = Field(..., description="比赛ID")
     home_team: str = Field(
         ...,
-
         description="主队名称",
         max_length=100,  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     away_team: str = Field(
         ...,
-    description="客队名称",
-    max_length=100,
-    # TODO: 将魔法数字 100 提取为常量
+        description="客队名称",
+        max_length=100,
+        # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     league: str = Field(
         ...,
-
         description="联赛名称",
         max_length=100,  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
-    match_date: datetime = Field(...,
-    description="比赛时间")
+    match_date: datetime = Field(..., description="比赛时间")
     venue: str | None = Field(
         None,
-    description="比赛场地",
-    max_length=200,
-    # TODO: 将魔法数字 200 提取为常量
+        description="比赛场地",
+        max_length=200,
+        # TODO: 将魔法数字 200 提取为常量
     )  # TODO: 将魔法数字 200 提取为常量
 
 
 class PredictionRequest(BaseModel):
     """预测请求模型"""
 
-    match_info: MatchInfo = Field(...,
-    description="比赛信息")
-    include_confidence: bool = Field(True,
-    description="是否包含置信度")
-    include_features: bool = Field(False,
-    description="是否包含特征分析")
+    match_info: MatchInfo = Field(..., description="比赛信息")
+    include_confidence: bool = Field(True, description="是否包含置信度")
+    include_features: bool = Field(False, description="是否包含特征分析")
 
 
 class PredictionResponse(BaseModel):
     """预测响应模型"""
 
-    success: bool = Field(...,
-    description="预测是否成功")
-    match_id: int = Field(...,
-    description="比赛ID")
-    prediction: PredictionResult = Field(...,
-    description="预测结果")
-    probabilities: dict[str,
-    float] = Field(...,
-    description="胜平负概率")
-    confidence: float | None = Field(None,
-    description="置信度")
-    feature_analysis: dict[str,
-    float] | None = Field(None,
-    description="特征分析")
-    model_info: dict[str,
-    str] = Field(...,
-    description="模型信息")
-    processing_time_ms: float = Field(...,
-    description="处理时间(毫秒)")
-    timestamp: datetime = Field(default_factory=datetime.now,
-    description="预测时间")
-    srs_compliance: dict[str,
-    str | float | bool] = Field(
-        ...,
-    description="SRS合规性信息"
+    success: bool = Field(..., description="预测是否成功")
+    match_id: int = Field(..., description="比赛ID")
+    prediction: PredictionResult = Field(..., description="预测结果")
+    probabilities: dict[str, float] = Field(..., description="胜平负概率")
+    confidence: float | None = Field(None, description="置信度")
+    feature_analysis: dict[str, float] | None = Field(None, description="特征分析")
+    model_info: dict[str, str] = Field(..., description="模型信息")
+    processing_time_ms: float = Field(..., description="处理时间(毫秒)")
+    timestamp: datetime = Field(default_factory=datetime.now, description="预测时间")
+    srs_compliance: dict[str, str | float | bool] = Field(
+        ..., description="SRS合规性信息"
     )
 
 
@@ -121,19 +98,17 @@ class BatchPredictionRequest(BaseModel):
 
     matches: list[MatchInfo] = Field(
         ...,
-    description="比赛列表",
-    min_items=1,
-    max_items=1000,
-    # TODO: 将魔法数字 1000 提取为常量
+        description="比赛列表",
+        min_items=1,
+        max_items=1000,
+        # TODO: 将魔法数字 1000 提取为常量
     )  # TODO: 将魔法数字 1000 提取为常量
-    include_confidence: bool = Field(True,
-    description="是否包含置信度")
+    include_confidence: bool = Field(True, description="是否包含置信度")
     max_concurrent: int = Field(
         100,
-    # TODO: 将魔法数字 100 提取为常量
+        # TODO: 将魔法数字 100 提取为常量
         description="最大并发数",
-    ge=1,
-
+        ge=1,
         le=1000,  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
 
@@ -141,22 +116,14 @@ class BatchPredictionRequest(BaseModel):
 class BatchPredictionResponse(BaseModel):
     """批量预测响应模型"""
 
-    success: bool = Field(...,
-    description="批量预测是否成功")
-    total_matches: int = Field(...,
-    description="总比赛数")
-    successful_predictions: int = Field(...,
-    description="成功预测数")
-    failed_predictions: int = Field(...,
-    description="失败预测数")
-    predictions: list[PredictionResponse] = Field(...,
-    description="预测结果列表")
-    batch_processing_time_ms: float = Field(...,
-    description="批量处理时间")
-    average_response_time_ms: float = Field(...,
-    description="平均响应时间")
-    srs_compliance: dict[str,
-    str | float | bool] = Field(
+    success: bool = Field(..., description="批量预测是否成功")
+    total_matches: int = Field(..., description="总比赛数")
+    successful_predictions: int = Field(..., description="成功预测数")
+    failed_predictions: int = Field(..., description="失败预测数")
+    predictions: list[PredictionResponse] = Field(..., description="预测结果列表")
+    batch_processing_time_ms: float = Field(..., description="批量处理时间")
+    average_response_time_ms: float = Field(..., description="平均响应时间")
+    srs_compliance: dict[str, str | float | bool] = Field(
         ..., description="SRS合规性信息"
     )
 
@@ -305,9 +272,7 @@ class SimplePredictionService:
             * 0.1,  # TODO: 将魔法数字 100 提取为常量
         }
 
-    async def _predict_with_model(self,
-    features: dict,
-    match_info: MatchInfo) -> dict:
+    async def _predict_with_model(self, features: dict, match_info: MatchInfo) -> dict:
         """使用模型进行预测"""
         import numpy as np
 
@@ -322,9 +287,7 @@ class SimplePredictionService:
             features["recent_form_diff"] * 0.1 + features["h2h_advantage"] * 0.05
         )
         home_prob += features["match_id_factor"] * 0.02
-        home_prob = max(0.1,
-    min(0.9,
-    home_prob))  # 限制在0.1-0.9之间
+        home_prob = max(0.1, min(0.9, home_prob))  # 限制在0.1-0.9之间
 
         # 计算平局和客胜概率
         draw_prob = 0.25  # TODO: 将魔法数字 25 提取为常量
@@ -361,23 +324,21 @@ class SimplePredictionService:
                 "model_version": "v1.0-srs-simple",
                 "training_accuracy": "≥ 65%",  # TODO: 将魔法数字 65 提取为常量
                 "last_updated": datetime.now().isoformat(),
-    "database_independent": True,
-    },
-    }
+                "database_independent": True,
+            },
+        }
 
 
 # 创建简化版预测服务实例
 simple_prediction_service = SimplePredictionService()
 
 
-@router.post("/predict",
-    response_model=PredictionResponse)
+@router.post("/predict", response_model=PredictionResponse)
 async def predict_match_simple(
     request: PredictionRequest,
     background_tasks: BackgroundTasks,
     token: str = Depends(simple_prediction_service.verify_token),
     redis_client=Depends(get_redis_manager),
-
 ):
     """
     SRS规范简化预测接口 - 不依赖数据库
@@ -389,13 +350,13 @@ async def predict_match_simple(
     - 完全独立,不依赖数据库
     """
     # 检查请求频率限制
-    if not await simple_prediction_service.check_rate_limit(token,
-    redis_client):
+    if not await simple_prediction_service.check_rate_limit(token, redis_client):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-    detail="Rate limit exceeded: 100 requests per minute",
-    # TODO: 将魔法数字 100 提取为常量
+            detail="Rate limit exceeded: 100 requests per minute",
         )
+        # TODO: 将魔法数字 100 提取为常量
+        return True
 
     # 生成预测
     prediction_data = await simple_prediction_service.generate_prediction(
@@ -405,15 +366,14 @@ async def predict_match_simple(
     # 构建响应
     response = PredictionResponse(
         success=True,
-
         match_id=request.match_info.match_id,
         prediction=PredictionResult(prediction_data["prediction"]),
-    probabilities=prediction_data["probabilities"],
-    confidence=(
+        probabilities=prediction_data["probabilities"],
+        confidence=(
             prediction_data["confidence"] if request.include_confidence else None
         ),
-    feature_analysis=None,
-    # 可选实现
+        feature_analysis=None,
+        # 可选实现
         model_info=prediction_data["model_info"],
         processing_time_ms=prediction_data["processing_time_ms"],
         srs_compliance=prediction_data["srs_compliance"],
@@ -422,24 +382,21 @@ async def predict_match_simple(
     # 后台任务:记录预测日志
     background_tasks.add_task(
         log_prediction_simple,
-    request.match_info.match_id,
-    prediction_data["prediction"],
-    prediction_data["processing_time_ms"],
-
+        request.match_info.match_id,
+        prediction_data["prediction"],
+        prediction_data["processing_time_ms"],
     )
 
     return response
 
 
-@router.post("/predict/batch",
-    response_model=BatchPredictionResponse)
+@router.post("/predict/batch", response_model=BatchPredictionResponse)
 async def predict_batch_simple(
     request: BatchPredictionRequest,
     background_tasks: BackgroundTasks,
     token: str = Depends(simple_prediction_service.verify_token),
-
     redis_client=Depends(get_redis_manager),
-    ):
+):
     """
     批量预测接口 - 支持1000场比赛并发
 
@@ -456,8 +413,7 @@ async def predict_batch_simple(
     if len(request.matches) > 1000:  # TODO: 将魔法数字 1000 提取为常量
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-    detail="Batch size exceeds maximum limit of 1000 matches",
-    # TODO: 将魔法数字 1000 提取为常量
+            detail="Batch size exceeds maximum limit of 1000 matches",
         )
 
     # 并发预测处理
@@ -471,10 +427,9 @@ async def predict_batch_simple(
                 )
                 return PredictionResponse(
                     success=True,
-    match_id=match_info.match_id,
-    prediction=PredictionResult(prediction_data["prediction"]),
-    probabilities=prediction_data["probabilities"],
-
+                    match_id=match_info.match_id,
+                    prediction=PredictionResult(prediction_data["prediction"]),
+                    probabilities=prediction_data["probabilities"],
                     confidence=(
                         prediction_data["confidence"]
                         if request.include_confidence
@@ -490,16 +445,14 @@ async def predict_batch_simple(
 
     # 执行并发预测
     tasks = [predict_single(match) for match in request.matches]
-    results = await asyncio.gather(*tasks,
-    return_exceptions=True)
+    results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # 统计结果
     successful_predictions = []
     failed_predictions = 0
 
     for result in results:
-        if isinstance(result,
-    PredictionResponse):
+        if isinstance(result, PredictionResponse):
             successful_predictions.append(result)
         else:
             failed_predictions += 1
@@ -512,8 +465,7 @@ async def predict_batch_simple(
     # 构建响应
     response = BatchPredictionResponse(
         success=len(successful_predictions) > 0,
-    total_matches=len(request.matches),
-
+        total_matches=len(request.matches),
         successful_predictions=successful_predictions,
         failed_predictions=failed_predictions,
         avg_response_time=avg_response_time,
@@ -522,8 +474,8 @@ async def predict_batch_simple(
     # 后台任务:记录批量预测日志
     background_tasks.add_task(
         log_batch_prediction_simple,
-    len(successful_predictions),
-    batch_processing_time,
+        len(successful_predictions),
+        batch_processing_time,
     )
 
     return response
@@ -532,7 +484,6 @@ async def predict_batch_simple(
 @router.get("/metrics")
 async def get_prediction_metrics_simple(
     token: str = Depends(simple_prediction_service.verify_token),
-
 ):
     """获取预测性能指标"""
     return {
@@ -575,13 +526,11 @@ async def health_check():
         "service": "predictions-srs-simple",
         "database_independent": True,
         "timestamp": datetime.now().isoformat(),
-    "version": "v1.0-srs-simple",
+        "version": "v1.0-srs-simple",
     }
 
 
-async def log_prediction_simple(match_id: int,
-    prediction: str,
-    response_time: float):
+async def log_prediction_simple(match_id: int, prediction: str, response_time: float):
     """记录预测日志"""
     logger.info(
         f"Simple Prediction logged - Match: {match_id}, Result: {prediction}, Time: {response_time:.2f}ms"

@@ -5,11 +5,15 @@ API认证系统综合测试
 测试范围: 用户认证、JWT令牌管理、授权中间件、安全功能
 """
 
+import logging
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pytest
 from fastapi import HTTPException, status
+
+# 设置测试日志
+logger = logging.getLogger(__name__)
 
 try:
     from src.api.auth import (
@@ -26,8 +30,10 @@ try:
         create_user,
         get_user_by_id,
     )
+
+    logger.info("Successfully imported auth components")
 except ImportError as e:
-    logger.error(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
+    logger.error(f"Warning: Import failed: {e}")
     # Mock implementations
     MOCK_USERS = {}
 

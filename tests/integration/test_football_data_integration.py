@@ -136,7 +136,9 @@ async def test_database_model():
 
 async def main():
     """主测试函数"""
-    logger.debug("🚀 开始 Football-Data.org API 集成测试")  # TODO: Add logger import if needed
+    logger.debug(
+        "🚀 开始 Football-Data.org API 集成测试"
+    )  # TODO: Add logger import if needed
     logger.debug("=" * 60)  # TODO: Add logger import if needed
 
     start_time = datetime.now()
@@ -154,13 +156,19 @@ async def main():
         logger.debug(f"\n🔍 执行 {test_name}...")  # TODO: Add logger import if needed
         try:
             if await test_func():
-                logger.debug(f"✅ {test_name} 通过")  # TODO: Add logger import if needed
+                logger.debug(
+                    f"✅ {test_name} 通过"
+                )  # TODO: Add logger import if needed
                 passed += 1
             else:
-                logger.debug(f"❌ {test_name} 失败")  # TODO: Add logger import if needed
+                logger.debug(
+                    f"❌ {test_name} 失败"
+                )  # TODO: Add logger import if needed
                 failed += 1
         except Exception as e:
-            logger.debug(f"❌ {test_name} 异常: {e}")  # TODO: Add logger import if needed
+            logger.debug(
+                f"❌ {test_name} 异常: {e}"
+            )  # TODO: Add logger import if needed
             failed += 1
 
     end_time = datetime.now()
@@ -171,13 +179,19 @@ async def main():
     logger.debug(f"   通过: {passed}")  # TODO: Add logger import if needed
     logger.error(f"   失败: {failed}")  # TODO: Add logger import if needed
     logger.error(f"   总计: {passed + failed}")  # TODO: Add logger import if needed
-    logger.debug(f"   耗时: {duration.total_seconds():.2f} 秒")  # TODO: Add logger import if needed
+    logger.debug(
+        f"   耗时: {duration.total_seconds():.2f} 秒"
+    )  # TODO: Add logger import if needed
 
     if failed == 0:
-        logger.debug("🎉 所有测试通过！Football-Data.org API 集成基础功能正常")  # TODO: Add logger import if needed
+        logger.debug(
+            "🎉 所有测试通过！Football-Data.org API 集成基础功能正常"
+        )  # TODO: Add logger import if needed
         return True
     else:
-        logger.debug("⚠️  部分测试失败，请检查相关实现")  # TODO: Add logger import if needed
+        logger.debug(
+            "⚠️  部分测试失败，请检查相关实现"
+        )  # TODO: Add logger import if needed
         return False
 
 

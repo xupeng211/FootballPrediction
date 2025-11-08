@@ -1,16 +1,13 @@
 import os
-from datetime import datetime
+from datetime import date, datetime, timedelta
+
+from celery import Celery
 
 import redis
+from src.database.connection import DatabaseManager
 
 # mypy: ignore-errors
 """
-from datetime import datetime, timezone
-        from datetime import date
-        from datetime import datetime, timedelta
-
-        from src.database.connection import DatabaseManager
-
 Celery调度器配置
 
 配置Celery任务队列和定时任务,实现足球数据的自动化采集调度。
@@ -211,7 +208,7 @@ def should_collect_live_scores() -> bool:
         _matches = get_upcoming_matches(hours=2)
 
         # 如果有比赛,则需要采集实时比分
-        return len(matches) > 0
+        return len(_matches) > 0
 
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
         return False

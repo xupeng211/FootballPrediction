@@ -576,25 +576,20 @@ if __name__ == "__main__":
                 }
             )
 
-
         # 训练模型
         lstm_predictor.prepare_data(mock_data)
         X, y = lstm_predictor.prepare_data(mock_data)
-
 
         # 构建和训练模型
         lstm_predictor.build_model(input_shape=(X.shape[1], X.shape[2]))
         lstm_predictor.train(X, y)
 
-
         # 进行预测
         test_sequence = X[-1]  # 使用最后一个序列进行测试
         lstm_predictor.predict(test_sequence)
 
-
         # 保存模型
         lstm_predictor.save_model()
-
 
     # 运行测试
     asyncio.run(test_lstm_predictor())

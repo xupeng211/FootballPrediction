@@ -428,7 +428,7 @@ def simulate_backtest():
 
     random.seed(42)  # 固定种子以获得可重复结果
 
-    for i in range(100):
+    for _i in range(100):
         # 随机生成投注机会
         prob = random.uniform(0.3, 0.7)
         odds = random.uniform(1.5, 4.0)

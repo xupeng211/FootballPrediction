@@ -7,8 +7,6 @@ import logging
 import warnings
 from contextlib import asynccontextmanager
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,6 +21,7 @@ except ImportError:
     SLOWAPI_AVAILABLE = False
 
 from src.api.health import router as health_router
+from src.api.predictions.optimized_router import router as optimized_predictions_router
 from src.api.prometheus_metrics import router as prometheus_router
 from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi
@@ -34,6 +33,8 @@ from src.monitoring.metrics_collector import MetricsCollector
 from src.observers import ObserverManager
 from src.performance.integration import setup_performance_monitoring
 from src.performance.middleware import PerformanceMonitoringMiddleware
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # 配置日志
 logging.basicConfig(
@@ -88,8 +89,6 @@ app.add_middleware(
     track_memory=True,
     track_concurrency=True,
     sample_rate=1.0,
-    slow_request_threshold=500.0,  # TODO: 将魔法数字 500 提取为常量
-    enable_auto_optimization=True,
 )
 
 # 添加中间件
@@ -98,6 +97,7 @@ app.add_middleware(I18nMiddleware)
 # 注册路由
 app.include_router(health_router, prefix="/api", tags=["health"])
 app.include_router(prometheus_router, tags=["monitoring"])
+app.include_router(optimized_predictions_router, prefix="/api")
 
 # 配置OpenAPI
 setup_openapi(app)
@@ -114,7 +114,11 @@ if SLOWAPI_AVAILABLE:
 async def root():
     """根端点"""
     return RootResponse(
-        message="Football Prediction API", version="2.0.0", status="healthy"
+        service="Football Prediction API",
+        version="2.0.0",
+        status="healthy",
+        docs_url="/docs",
+        health_check="/health",
     )
 
 

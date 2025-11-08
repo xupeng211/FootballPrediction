@@ -9,8 +9,10 @@ from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
+
 def cache_result(ttl: int = 300, key_func: Callable | None = None):
     """缓存结果装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -23,10 +25,13 @@ def cache_result(ttl: int = 300, key_func: Callable | None = None):
             return await func(*args, **kwargs)
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+
     return decorator
+
 
 def invalidate_cache(pattern: str = "*"):
     """缓存失效装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -37,30 +42,39 @@ def invalidate_cache(pattern: str = "*"):
             except Exception as e:
                 logger.error(f"缓存失效错误: {e}")
                 raise
+
         return wrapper
+
     return decorator
+
 
 # 缓存装饰器类
 class CacheDecorator:
     """缓存装饰器基类"""
+
     def __init__(self, ttl: int = 300):
         self.ttl = ttl
 
     def __call__(self, func: Callable) -> Callable:
         return cache_result(self.ttl)(func)
 
+
 class InvalidateCacheDecorator:
     """缓存失效装饰器"""
+
     def __init__(self, pattern: str = "*"):
         self.pattern = pattern
 
     def __call__(self, func: Callable) -> Callable:
         return invalidate_cache(self.pattern)(func)
 
+
 class UserCacheDecorator(CacheDecorator):
     """用户缓存装饰器"""
+
     def __init__(self, ttl: int = 300):
         super().__init__(ttl)
+
 
 # 便捷装饰器函数
 cache_by_user = UserCacheDecorator

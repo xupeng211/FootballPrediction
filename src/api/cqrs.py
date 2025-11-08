@@ -77,7 +77,7 @@ async def create_prediction(
         result = await service.create_prediction(command)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/predictions/{prediction_id}", response_model=PredictionResponse)
@@ -90,7 +90,9 @@ async def get_prediction(
         result = await service.get_prediction(prediction_id)
         return result
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(
+            status_code=404, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/predictions/", response_model=list[PredictionResponse])
@@ -105,7 +107,7 @@ async def list_predictions(
         result = await service.list_predictions(user_id, limit, offset)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 # 比赛查询端点
@@ -135,7 +137,9 @@ async def get_match(
         result = await service.get_match(match_id)
         return result
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(
+            status_code=404, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/matches/", response_model=list[MatchResponse])
@@ -151,7 +155,7 @@ async def list_matches(
         result = await service.list_matches(date_from, date_to, limit, offset)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 # 用户查询端点
@@ -177,7 +181,9 @@ async def get_user(
         result = await service.get_user(user_id)
         return result
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(
+            status_code=404, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/users/", response_model=list[UserResponse])
@@ -191,7 +197,7 @@ async def list_users(
         result = await service.list_users(limit, offset)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 # 分析查询端点
@@ -218,4 +224,6 @@ async def get_analytics(
         result = await service.get_analytics(user_id, days)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=400, detail=str(e)
+        ) from e  # TODO: B904 exception chaining

@@ -99,9 +99,7 @@ class BaseModel(abc.ABC):
         self.last_training_time = None
 
     @abc.abstractmethod
-    def prepare_features(self,
-    match_data: dict[str,
-    Any]) -> np.ndarray:
+    def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
         """
         准备特征
 
@@ -115,8 +113,7 @@ class BaseModel(abc.ABC):
     @abc.abstractmethod
     def train(
         self,
-    training_data: pd.DataFrame,
-
+        training_data: pd.DataFrame,
         validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
         """
@@ -131,9 +128,7 @@ class BaseModel(abc.ABC):
         """
 
     @abc.abstractmethod
-    def predict(self,
-    match_data: dict[str,
-    Any]) -> PredictionResult:
+    def predict(self, match_data: dict[str, Any]) -> PredictionResult:
         """
         预测比赛结果
 
@@ -145,11 +140,7 @@ class BaseModel(abc.ABC):
         """
 
     @abc.abstractmethod
-    def predict_proba(self,
-    match_data: dict[str,
-    Any]) -> tuple[float,
-    float,
-    float]:
+    def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
         """
         预测概率分布
 
@@ -161,9 +152,7 @@ class BaseModel(abc.ABC):
         """
 
     @abc.abstractmethod
-    def evaluate(self,
-    test_data: pd.DataFrame) -> dict[str,
-    float]:
+    def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
         """
         评估模型性能
 
@@ -175,8 +164,7 @@ class BaseModel(abc.ABC):
         """
 
     @abc.abstractmethod
-    def save_model(self,
-    file_path: str) -> bool:
+    def save_model(self, file_path: str) -> bool:
         """
         保存模型
 
@@ -188,8 +176,7 @@ class BaseModel(abc.ABC):
         """
 
     @abc.abstractmethod
-    def load_model(self,
-    file_path: str) -> bool:
+    def load_model(self, file_path: str) -> bool:
         """
         加载模型
 
@@ -229,17 +216,14 @@ class BaseModel(abc.ABC):
             "model_version": self.model_version,
             "is_trained": self.is_trained,
             "feature_count": len(self.feature_names),
-    "feature_names": self.feature_names,
-    "hyperparameters": self.hyperparameters,
-    "last_training_time": self.last_training_time,
-
+            "feature_names": self.feature_names,
+            "hyperparameters": self.hyperparameters,
+            "last_training_time": self.last_training_time,
             "training_history_count": len(self.training_history),
-    "feature_importance": self.get_feature_importance(),
-    }
+            "feature_importance": self.get_feature_importance(),
+        }
 
-    def validate_prediction_input(self,
-    match_data: dict[str,
-    Any]) -> bool:
+    def validate_prediction_input(self, match_data: dict[str, Any]) -> bool:
         """
         验证预测输入数据
 
@@ -263,20 +247,17 @@ class BaseModel(abc.ABC):
 
         return True
 
-    def calculate_confidence(self,
-    probabilities: tuple[float,
-    float,
-    float]) -> float:
+    def calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
         """
-        计算预测置信度
+            计算预测置信度
 
-        Args:
-            probabilities: (主胜概率,
-    平局概率,
-    客胜概率)
+            Args:
+                probabilities: (主胜概率,
+        平局概率,
+        客胜概率)
 
-        Returns:
-            置信度 (0-1)
+            Returns:
+                置信度 (0-1)
         """
         # 使用最大概率作为置信度
         max_prob = max(probabilities)
@@ -293,15 +274,10 @@ class BaseModel(abc.ABC):
         # 综合最大概率和熵因子
         confidence = max_prob * 0.7 + confidence_factor * 0.3
 
-        return min(max(confidence,
-    0.1),
-    1.0)  # 限制在0.1-1.0之间
+        return min(max(confidence, 0.1), 1.0)  # 限制在0.1-1.0之间
 
     def get_outcome_from_probabilities(
-        self,
-    probabilities: tuple[float,
-    float,
-    float]
+        self, probabilities: tuple[float, float, float]
     ) -> str:
         """
         从概率分布获取预测结果

@@ -49,7 +49,7 @@ class TestWarningFiltersComplete:
             # 验证警告系统仍然可用
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                warnings.warn("Test warning", UserWarning)
+                warnings.warn("Test warning", UserWarning, stacklevel=2)
                 assert len(w) == 1
 
         finally:
@@ -63,7 +63,7 @@ class TestWarningFiltersComplete:
 
         try:
             # 多次调用应该不会出错
-            for i in range(3):
+            for _i in range(3):
                 setup_warning_filters()
                 assert True  # 没有异常抛出
 
@@ -112,13 +112,15 @@ class TestWarningFiltersComplete:
                 warnings.simplefilter("always")
 
                 # 测试UserWarning
-                warnings.warn("Test user warning", UserWarning)
+                warnings.warn("Test user warning", UserWarning, stacklevel=2)
 
                 # 测试DeprecationWarning
-                warnings.warn("Test deprecation warning", DeprecationWarning)
+                warnings.warn(
+                    "Test deprecation warning", DeprecationWarning, stacklevel=2
+                )
 
                 # 测试FutureWarning
-                warnings.warn("Test future warning", FutureWarning)
+                warnings.warn("Test future warning", FutureWarning, stacklevel=2)
 
                 # 验证警告被捕获（可能被过滤，但不应该出错）
                 assert isinstance(w, list)
@@ -199,7 +201,7 @@ class TestWarningFiltersComplete:
 
         try:
             # 测试在已经有很多过滤器的情况下调用
-            for i in range(10):
+            for _i in range(10):
                 warnings.filterwarnings("ignore", category=UserWarning)
 
             # 调用设置函数应该仍然正常工作
@@ -221,7 +223,7 @@ class TestWarningFiltersComplete:
             # 测试多次调用的性能
             start_time = time.time()
 
-            for i in range(100):
+            for _i in range(100):
                 setup_warning_filters()
 
             end_time = time.time()
@@ -249,7 +251,7 @@ class TestWarningFiltersComplete:
             # 3. 验证警告系统仍然工作
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                warnings.warn("Test warning", RuntimeWarning)
+                warnings.warn("Test warning", RuntimeWarning, stacklevel=2)
                 assert len(w) >= 0  # 可能为0（被过滤）或更多
 
             # 4. 测试不同级别的警告
@@ -265,7 +267,9 @@ class TestWarningFiltersComplete:
                 with warnings.catch_warnings(record=True) as w:
                     warnings.simplefilter("always")
                     try:
-                        warnings.warn(f"Test {warning_type.__name__}", warning_type)
+                        warnings.warn(
+                            f"Test {warning_type.__name__}", warning_type, stacklevel=2
+                        )
                         # 警告应该被处理，不抛出异常
                         assert isinstance(w, list)
                     except Exception:
@@ -291,7 +295,7 @@ class TestWarningFiltersComplete:
             # 验证外部上下文不受影响
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                warnings.warn("Isolation test", UserWarning)
+                warnings.warn("Isolation test", UserWarning, stacklevel=2)
                 assert len(w) >= 0
 
         finally:

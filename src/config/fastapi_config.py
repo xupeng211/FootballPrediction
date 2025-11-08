@@ -37,10 +37,8 @@ from src.utils.i18n import I18nUtils, init_i18n
 # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
 # TODO: 方法 def create_chinese_app 过长(25行)，建议拆分
 # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
-# TODO: 方法 def custom_openapi 过长(29行),
-    建议拆分
-# TODO: 方法 def create_chinese_app 过长(25行),
-    建议拆分
+# TODO: 方法 def custom_openapi 过长(29行)，建议拆分
+# TODO: 方法 def create_chinese_app 过长(25行)，建议拆分
 # TODO: 方法 def create_chinese_app 过长(28行)，建议拆分
 # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
 # TODO: 方法 def create_chinese_app 过长(29行)，建议拆分
@@ -143,10 +141,9 @@ def create_chinese_app() -> FastAPI:
 
     app = FastAPI(
         title=I18nUtils.translate("Football Prediction API"),
-    description=I18nUtils.translate(
+        description=I18nUtils.translate(
             "Machine Learning Based Football Match Prediction System"
         ),
-    
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",

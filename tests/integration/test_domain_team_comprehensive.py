@@ -226,7 +226,7 @@ class TestTeamFormComprehensive:
         form = TeamForm()
 
         # 添加12场比赛
-        for i in range(12):
+        for _i in range(12):
             form.add_result("W")
 
         # 应该只保留最近10场

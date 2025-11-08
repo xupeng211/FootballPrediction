@@ -14,98 +14,47 @@ from pydantic import BaseModel
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging",
-    # TODO: 将魔法数字 5433 提取为常量
 )
 
-# Redis 配置
-REDIS_URL = os.getenv(
-    "REDIS_URL",
-    "redis://:minimal_redis_password_2024@localhost:6379/0",
-    # TODO: 将魔法数字 6379 提取为常量
-)
-
-
-# 简单的数据模型
-class HealthResponse(BaseModel):
-    status: str
-    version: str
-    database: str
-    redis: str
+# 全局数据库连接池
+db_pool = None
 
 
 class PredictionResponse(BaseModel):
+    """预测响应模型"""
+
     id: int
     match_id: int
-    predicted_winner: str
+    home_team: str
+    away_team: str
+    prediction: str
     confidence: float
     created_at: str
-
-
-# 数据库连接池
-db_pool = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
+    # 启动时初始化数据库连接
     global db_pool
-
-
-    # 初始化数据库连接池
     try:
         db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
-
-        # 创建基础表结构
-        await create_tables()
-
+        yield
     except Exception:
-        pass
+        yield
+    finally:
+        # 关闭时清理连接池
+        if db_pool:
+            await db_pool.close()
 
 
-    yield
-
-    # 清理资源
-    if db_pool:
-        await db_pool.close()
-
-
-
-async def create_tables():
-    """创建基础表结构"""
-    if not db_pool:
-        return
-
-    async with db_pool.acquire() as conn:
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS predictions (
-                id SERIAL PRIMARY KEY,
-    match_id INTEGER NOT NULL,
-    predicted_winner VARCHAR(100) NOT NULL,
-    # TODO: 将魔法数字 100 提取为常量
-                confidence FLOAT NOT NULL,
-
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """
-        )
-
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS matches (
-                id SERIAL PRIMARY KEY,
-    home_team VARCHAR(100) NOT NULL,
-    # TODO: 将魔法数字 100 提取为常量
-                away_team VARCHAR(100) NOT NULL,
-    # TODO: 将魔法数字 100 提取为常量
-                match_date TIMESTAMP NOT NULL,
-
-                league VARCHAR(100),
-    # TODO: 将魔法数字 100 提取为常量
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """
-        )
+# 创建 FastAPI 应用
+app = FastAPI(
+    title="Football Prediction API - Enhanced",
+    description="增强版足球预测API，集成数据访问层",
+    version="2.0.0",
+    lifespan=lifespan,
+)
 
 
 async def get_db_connection():
@@ -113,199 +62,131 @@ async def get_db_connection():
     if not db_pool:
         raise HTTPException(
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
+        )
     return db_pool
 
 
-# 创建 FastAPI 应用
-app = FastAPI(
-    title="Football Prediction API - Enhanced",
-
-    description="Advanced football match prediction system with data access layer",
-    version="2.1.0",
-    lifespan=lifespan,
-)
-
-
-@app.get("/")
-async def root():
-    """根端点"""
-    return {
-        "message": "Football Prediction API - Enhanced",
-        "version": "2.1.0",
-        "status": "healthy",
-        "features": ["database", "redis", "predictions"],
-    }
-
-
-@app.get("/health",
-    response_model=HealthResponse)
+@app.get("/health")
 async def health_check():
-    """增强健康检查端点"""
-    db_status = "connected" if db_pool else "disconnected"
-
-    # 简单的 Redis 检查
-    redis_status = "connected"  # 这里可以添加实际的 Redis 检查
-
-    return HealthResponse(
-        status="healthy",
-    version="2.1.0",
-    database=db_status,
-    redis=redis_status
-    )
+    """健康检查"""
+    return {"status": "healthy", "database": "connected" if db_pool else "disconnected"}
 
 
-@app.get("/predictions",
-    response_model=list[PredictionResponse])
+@app.get("/predictions", response_model=list[PredictionResponse])
 async def get_predictions():
     """获取所有预测"""
-    if not db_pool:
+    pool = await get_db_connection()
+
+    try:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT id, match_id, home_team, away_team, prediction, confidence, created_at
+                FROM predictions
+                ORDER BY created_at DESC
+                LIMIT 10
+                """
+            )
+
+            return [
+                PredictionResponse(
+                    id=row["id"],
+                    match_id=row["match_id"],
+                    home_team=row["home_team"],
+                    away_team=row["away_team"],
+                    prediction=row["prediction"],
+                    confidence=row["confidence"],
+                    created_at=str(row["created_at"]),
+                )
+                for row in rows
+            ]
+    except Exception as e:
         raise HTTPException(
-            status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
-            detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
-
-    async with db_pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT * FROM predictions ORDER BY created_at DESC LIMIT 10"
-        )
-
-        return [
-            PredictionResponse(
-                id=row["id"],
-
-                match_id=row["match_id"],
-                predicted_winner=row["predicted_winner"],
-                confidence=row["confidence"],
-                created_at=row["created_at"].isoformat(),
-    )
-            for row in rows
-        ]
+            status_code=500, detail=f"Failed to fetch predictions: {str(e)}"
+        ) from e
 
 
-@app.post("/predictions",
-    response_model=PredictionResponse)
-async def create_prediction(match_id: int,
-    predicted_winner: str,
-    confidence: float):
+@app.post("/predictions", response_model=PredictionResponse)
+async def create_prediction(
+    match_id: int, home_team: str, away_team: str, prediction: str, confidence: float
+):
     """创建新预测"""
-    if not db_pool:
-        raise HTTPException(
-            status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
-            detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
-
+    # 验证confidence范围
     if confidence < 0 or confidence > 1:
         raise HTTPException(
-            status_code=400,
-    # TODO: 将魔法数字 400 提取为常量
-            detail="Confidence must be between 0 and 1",
-    # TODO: 将魔法数字 400 提取为常量
-        )  # TODO: 将魔法数字 400 提取为常量
-
-    async with db_pool.acquire() as conn:
-        row = await conn.fetchrow(
-            """
-            INSERT INTO predictions (match_id,
-    predicted_winner,
-    confidence)
-            VALUES ($1,
-    $2,
-    $3)
-            RETURNING id, match_id, predicted_winner, confidence, created_at
-            """,
-            match_id,
-            predicted_winner,
-            confidence,
+            status_code=400, detail="Confidence must be between 0 and 1"
         )
 
-        return PredictionResponse(
-            id=row["id"],
-    match_id=row["match_id"],
-    predicted_winner=row["predicted_winner"],
-    confidence=row["confidence"],
+    pool = await get_db_connection()
 
-            created_at=row["created_at"].isoformat(),
-        )
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO predictions (match_id, home_team, away_team, prediction, confidence)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id, match_id, home_team, away_team, prediction, confidence, created_at
+                """,
+                match_id,
+                home_team,
+                away_team,
+                prediction,
+                confidence,
+            )
+
+            return PredictionResponse(
+                id=row["id"],
+                match_id=row["match_id"],
+                home_team=row["home_team"],
+                away_team=row["away_team"],
+                prediction=row["prediction"],
+                confidence=row["confidence"],
+                created_at=str(row["created_at"]),
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create prediction: {str(e)}"
+        ) from e
 
 
 @app.get("/predictions/{prediction_id}", response_model=PredictionResponse)
 async def get_prediction(prediction_id: int):
-    """获取特定预测"""
-    if not db_pool:
+    """获取单个预测"""
+    pool = await get_db_connection()
+
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT id, match_id, home_team, away_team, prediction, confidence, created_at
+                FROM predictions
+                WHERE id = $1
+                """,
+                prediction_id,
+            )
+
+            if not row:
+                raise HTTPException(status_code=404, detail="Prediction not found")
+
+            return PredictionResponse(
+                id=row["id"],
+                match_id=row["match_id"],
+                home_team=row["home_team"],
+                away_team=row["away_team"],
+                prediction=row["prediction"],
+                confidence=row["confidence"],
+                created_at=str(row["created_at"]),
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
-            detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
-
-    async with db_pool.acquire() as conn:
-        row = await conn.fetchrow(
-            "SELECT * FROM predictions WHERE id = $1",
-    prediction_id
-        )
-
-        if not row:
-            raise HTTPException(
-                status_code=404,
-    # TODO: 将魔法数字 404 提取为常量
-                detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
-            )  # TODO: 将魔法数字 404 提取为常量
-
-        return PredictionResponse(
-            id=row["id"],
-    match_id=row["match_id"],
-    predicted_winner=row["predicted_winner"],
-    confidence=row["confidence"],
-
-            created_at=row["created_at"].isoformat(),
-        )
-
-
-@app.delete("/predictions/{prediction_id}")
-async def delete_prediction(prediction_id: int):
-    """删除预测"""
-    if not db_pool:
-        raise HTTPException(
-            status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
-            detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
-
-    async with db_pool.acquire() as conn:
-        result = await conn.execute(
-            "DELETE FROM predictions WHERE id = $1",
-    prediction_id
-        )
-
-        if result == "DELETE 0":
-            raise HTTPException(
-                status_code=404,
-    # TODO: 将魔法数字 404 提取为常量
-                detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
-            )  # TODO: 将魔法数字 404 提取为常量
-
-        return {"message": "Prediction deleted successfully"}
+            status_code=500, detail=f"Failed to fetch prediction: {str(e)}"
+        ) from e
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(
-        "app_enhanced:app",
-    host="0.0.0.0",
-    port=8000,
-    # TODO: 将魔法数字 8000 提取为常量
-        reload=True,
-
-        log_level="info",
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8001)

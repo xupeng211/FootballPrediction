@@ -8,6 +8,7 @@ from fastapi import APIRouter
 
 router = APIRouter(prefix="/adapters", tags=["adapters"])
 
+
 @router.get("/info")
 async def get_adapter_info() -> dict[str, Any]:
     """获取适配器信息"""
@@ -21,14 +22,10 @@ async def get_adapter_info() -> dict[str, Any]:
             "demo_transformation": "/demo/transformation",
             "health": "/health",
         },
-        "features": [
-            "多数据源适配",
-            "智能缓存",
-            "错误恢复",
-            "性能监控"
-        ],
-        "version": "1.0.0"
+        "features": ["多数据源适配", "智能缓存", "错误恢复", "性能监控"],
+        "version": "1.0.0",
     }
+
 
 @router.get("/health")
 async def adapter_health() -> dict[str, str]:

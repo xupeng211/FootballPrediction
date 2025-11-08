@@ -3,7 +3,6 @@
 Prediction Engine Configuration Module
 """
 
-
 from pydantic import BaseModel, Field
 
 

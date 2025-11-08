@@ -34,9 +34,8 @@ class SecuritySettings:
 
         # CORS设置
         self.cors_origins = (
-            os.getenv("CORS_ORIGINS",
-    "*").split(",
-    ") if os.getenv("CORS_ORIGINS") else ["*"]
+            os.getenv("CORS_ORIGINS", "*").split(",")
+            if os.getenv("CORS_ORIGINS") else ["*"]
         )
         self.cors_allow_credentials = os.getenv("CORS_ALLOW_CREDENTIALS",
     "false").lower() == "true"

@@ -7,13 +7,13 @@ Analytics Service
 生成时间: 2025-10-26 20:57:41
 """
 
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-import uvicorn
-from typing import Dict, Any, List
 import logging
 from datetime import datetime
+from typing import Any
+
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -82,7 +82,7 @@ async def get_metrics():
 
 # 主要业务逻辑端点（示例）
 @app.post("/process")
-async def process_request(request_data: Dict[str, Any]):
+async def process_request(request_data: dict[str, Any]):
     """处理请求"""
     try:
         logger.info(f"处理请求: {request_data}")
@@ -103,7 +103,7 @@ async def process_request(request_data: Dict[str, Any]):
 
 # 批量处理端点
 @app.post("/batch-process")
-async def batch_process(request_list: List[Dict[str, Any]]):
+async def batch_process(request_list: list[dict[str, Any]]):
     """批量处理请求"""
     try:
         logger.info(f"批量处理 {len(request_list)} 个请求")

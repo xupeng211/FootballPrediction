@@ -53,7 +53,7 @@ def validate_match_id(match_id: int) -> None:
         raise HTTPException(
             status_code=400,
             detail="比赛ID必须大于0",  # TODO: 将魔法数字 400 提取为常量
-        )  # TODO: 将魔法数字 400 提取为常量
+        ) from db_error  # TODO: B904 exception chaining
 
 
 def check_feature_store_availability() -> None:
@@ -63,7 +63,9 @@ def check_feature_store_availability() -> None:
         raise HTTPException(
             status_code=503,  # TODO: 将魔法数字 503 提取为常量
             detail="特征存储服务暂时不可用,请稍后重试",  # TODO: 将魔法数字 503 提取为常量
-        ) from e
+        )
+
+
 async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     """获取比赛基础信息"""
     logger.debug(f"查询比赛 {match_id} 的基础信息")
@@ -78,7 +80,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
             raise HTTPException(
                 status_code=404,  # TODO: 将魔法数字 404 提取为常量
                 detail=f"比赛 {match_id} 不存在",  # TODO: 将魔法数字 404 提取为常量
-            )  # TODO: 将魔法数字 404 提取为常量
+            ) from db_error  # TODO: B904 exception chaining
 
         logger.debug(f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}")
         return match
@@ -89,7 +91,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="数据库查询失败,请稍后重试",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from db_error  # TODO: B904 exception chaining
     except (
         ValueError,
         KeyError,
@@ -102,7 +104,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="查询比赛信息失败",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from db_error  # TODO: B904 exception chaining
 
 
 async def get_features_data(match_id: int, match: Match) -> tuple[dict[str, Any], str]:

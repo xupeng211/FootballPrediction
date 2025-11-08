@@ -73,6 +73,7 @@ class StreamConfig:
 
     def __init__(self):
         """函数文档字符串"""
+        pass
         # 添加pass语句
         self.kafka_config = self._load_kafka_config()
         self.topics = self._init_topics()
@@ -80,34 +81,22 @@ class StreamConfig:
     def _load_kafka_config(self) -> KafkaConfig:
         """从环境变量加载Kafka配置"""
         return KafkaConfig(
-            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS",
-    "localhost:9092"),
-    security_protocol=os.getenv("KAFKA_SECURITY_PROTOCOL",
-    "PLAINTEXT"),
-    
+            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
+            security_protocol=os.getenv("KAFKA_SECURITY_PROTOCOL", "PLAINTEXT"),
             producer_client_id=os.getenv(
-                "KAFKA_PRODUCER_CLIENT_ID",
-    "football-prediction-producer"
+                "KAFKA_PRODUCER_CLIENT_ID", "football-prediction-producer"
             ),
-    producer_acks=os.getenv("KAFKA_PRODUCER_ACKS",
-    "all"),
-    
-            producer_retries=int(os.getenv("KAFKA_PRODUCER_RETRIES",
-    "3")),
-    consumer_group_id=os.getenv(
-                "KAFKA_CONSUMER_GROUP_ID",
-    "football-prediction-consumers"
+            producer_acks=os.getenv("KAFKA_PRODUCER_ACKS", "all"),
+            producer_retries=int(os.getenv("KAFKA_PRODUCER_RETRIES", "3")),
+            consumer_group_id=os.getenv(
+                "KAFKA_CONSUMER_GROUP_ID", "football-prediction-consumers"
             ),
-    
             consumer_client_id=os.getenv(
-                "KAFKA_CONSUMER_CLIENT_ID",
-    "football-prediction-consumer"
+                "KAFKA_CONSUMER_CLIENT_ID", "football-prediction-consumer"
             ),
-    consumer_auto_offset_reset=os.getenv(
-                "KAFKA_CONSUMER_AUTO_OFFSET_RESET",
-    "latest"
+            consumer_auto_offset_reset=os.getenv(
+                "KAFKA_CONSUMER_AUTO_OFFSET_RESET", "latest"
             ),
-    
         )
 
     def _init_topics(self) -> dict[str, TopicConfig]:
@@ -116,36 +105,27 @@ class StreamConfig:
             # 比赛数据流
             "matches-stream": TopicConfig(
                 name="matches-stream",
-    partitions=3,
-    retention_ms=86400000,
-    # 1天
+                partitions=3,
+                retention_ms=86400000,  # 1天
             ),
-    
             # 赔率数据流
             "odds-stream": TopicConfig(
                 name="odds-stream",
-    partitions=6,
-    # 赔率数据量大,
-    更多分区
-                retention_ms=43200000,
-    # 12小时
+                partitions=6,  # 赔率数据量大,更多分区
+                retention_ms=43200000,  # 12小时
             ),
             # 比分数据流
             "scores-stream": TopicConfig(
                 name="scores-stream",
-    partitions=3,
-    retention_ms=21600000,
-    # 6小时
+                partitions=3,
+                retention_ms=21600000,  # 6小时
             ),
-    
             # 处理结果流
             "processed-data-stream": TopicConfig(
                 name="processed-data-stream",
-    partitions=3,
-    retention_ms=604800000,
-    # 7天
+                partitions=3,
+                retention_ms=604800000,  # 7天
             ),
-    
         }
 
     def get_producer_config(self) -> dict[str, Any]:

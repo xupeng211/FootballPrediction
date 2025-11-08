@@ -32,14 +32,13 @@ class QualityMonitorServer:
         # 添加pass语句
         self.app = FastAPI(
             title="实时质量监控服务",
-    description="Real-time Quality Monitoring WebSocket Server",
-    version="1.0.0",
-    )
+            description="Real-time Quality Monitoring WebSocket Server",
+            version="1.0.0",
+        )
 
         # 配置CORS
         self.app.add_middleware(
             CORSMiddleware,
-
             allow_origins=["*"],  # 生产环境应该限制具体域名
             allow_credentials=True,
             allow_methods=["*"],
@@ -178,11 +177,8 @@ class QualityMonitorServer:
             # 收集实时指标
             metrics = {
                 "timestamp": current_time.isoformat(),
-    "overall_score": quality_results.get("average_score",
-    0),
-    "overall_status": quality_results.get("overall_status",
-    "UNKNOWN"),
-
+                "overall_score": quality_results.get("average_score", 0),
+                "overall_status": quality_results.get("overall_status", "UNKNOWN"),
                 "gates_checked": quality_results.get("gates_checked", 0),
                 "summary": quality_results.get("summary", {}),
                 "detailed_results": quality_results.get("results", []),
@@ -192,12 +188,11 @@ class QualityMonitorServer:
                     "cpu_usage": 45.2,  # 模拟CPU使用率
                     "memory_usage": 68.5,  # 模拟内存使用率
                     "active_connections": len(self.active_connections),
-    },
-    # 趋势数据 (从Redis获取历史数据)
+                },
+                # 趋势数据 (从Redis获取历史数据)
                 "trends": await self.get_trend_data(),
-    # 告警信息
+                # 告警信息
                 "alerts": await self.get_active_alerts(),
-
                 # 系统健康状态
                 "system_health": {
                     "server_status": "healthy",
@@ -221,10 +216,9 @@ class QualityMonitorServer:
             self.logger.error(f"收集质量指标失败: {e}")
             return {
                 "timestamp": datetime.now().isoformat(),
-    "error": str(e),
-    "overall_score": 0,
-    "overall_status": "ERROR",
-
+                "error": str(e),
+                "overall_score": 0,
+                "overall_status": "ERROR",
             }
 
     async def get_trend_data(self, hours: int = 24) -> dict:
@@ -247,11 +241,8 @@ class QualityMonitorServer:
                     trend_data.append(
                         {
                             "timestamp": timestamp.isoformat(),
-    "score": metrics.get("overall_score",
-    0),
-    "status": metrics.get("overall_status",
-    "UNKNOWN"),
-
+                            "score": metrics.get("overall_score", 0),
+                            "status": metrics.get("overall_status", "UNKNOWN"),
                         }
                     )
 
@@ -287,11 +278,9 @@ class QualityMonitorServer:
                         "type": "quality",
                         "severity": "warning",
                         "title": "质量分数偏低",
-                        "message": f"当前质量分数: {current_metrics.get('overall_score',
-    0):.2f}",
-    "timestamp": datetime.now().isoformat(),
-    "active": True,
-
+                        "message": f"当前质量分数: {current_metrics.get('overall_score', 0):.2f}",
+                        "timestamp": datetime.now().isoformat(),
+                        "active": True,
                     }
                 )
 
@@ -373,11 +362,9 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": f"quality_critical_{datetime.now().strftime('%Y%m%d%H%M')}",
-
-    "type": "quality",
-    "severity": "critical",
-    "title": "质量分数严重偏低",
-
+                        "type": "quality",
+                        "severity": "critical",
+                        "title": "质量分数严重偏低",
                         "message": f"质量分数 {score:.2f} 低于临界值 7.0",
                         "timestamp": datetime.now().isoformat(),
                     }
@@ -386,11 +373,9 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": f"quality_warning_{datetime.now().strftime('%Y%m%d%H%M')}",
-
-    "type": "quality",
-    "severity": "warning",
-    "title": "质量分数偏低",
-
+                        "type": "quality",
+                        "severity": "warning",
+                        "title": "质量分数偏低",
                         "message": f"质量分数 {score:.2f} 低于目标值 8.0",
                         "timestamp": datetime.now().isoformat(),
                     }
@@ -402,11 +387,9 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": f"connections_high_{datetime.now().strftime('%Y%m%d%H%M')}",
-
-    "type": "system",
-    "severity": "warning",
-    "title": "连接数过高",
-
+                        "type": "system",
+                        "severity": "warning",
+                        "title": "连接数过高",
                         "message": f"活跃连接数 {active_connections} 超过阈值 50",
                         "timestamp": datetime.now().isoformat(),
                     }
@@ -478,12 +461,10 @@ async def shutdown_event():
 if __name__ == "__main__":
     import uvicorn
 
-
     uvicorn.run(
         "src.realtime.quality_monitor_server:app",
-    host="0.0.0.0",
-    port=8001,
-    reload=True,
-
+        host="0.0.0.0",
+        port=8001,
+        reload=True,
         log_level="info",
     )

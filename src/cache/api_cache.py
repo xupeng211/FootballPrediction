@@ -9,10 +9,12 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
+from typing import Any
 
 from .redis_enhanced import get_redis_manager
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ApiCacheConfig:
@@ -21,7 +23,7 @@ class ApiCacheConfig:
     # 基础配置
     default_ttl: int = 300  # 5分钟
     max_ttl: int = 3600  # 1小时
-    min_ttl: int = 60   # 1分钟
+    min_ttl: int = 60  # 1分钟
 
     # 缓存键配置
     key_prefix: str = "api_cache"
@@ -36,6 +38,7 @@ class ApiCacheConfig:
     # 失效策略
     cache_tags: list[str] = field(default_factory=list)
     invalidation_strategy: str = "ttl"  # ttl, manual, hybrid
+
 
 @dataclass
 class CacheMetrics:
@@ -56,10 +59,11 @@ class CacheMetrics:
         """重置指标"""
         self.hits = self.misses = self.sets = self.deletes = self.errors = 0
 
+
 class ApiCache:
     """高性能API缓存系统"""
 
-    def __init__(self, config: Optional[ApiCacheConfig] = None):
+    def __init__(self, config: ApiCacheConfig | None = None):
         self.config = config or ApiCacheConfig()
         self.redis_manager = get_redis_manager()
         self.metrics = CacheMetrics()
@@ -71,18 +75,14 @@ class ApiCache:
         self,
         endpoint: str,
         method: str = "GET",
-        params: Optional[dict] = None,
-        headers: Optional[dict] = None,
-        user_id: Optional[str] = None
+        params: dict | None = None,
+        headers: dict | None = None,
+        user_id: str | None = None,
     ) -> str:
         """生成缓存键"""
 
         # 基础键结构
-        key_parts = [
-            self.config.key_prefix,
-            method.lower(),
-            endpoint.lower()
-        ]
+        key_parts = [self.config.key_prefix, method.lower(), endpoint.lower()]
 
         # 添加用户ID（如果有）
         if user_id:
@@ -99,8 +99,9 @@ class ApiCache:
         if self.config.include_headers and headers:
             # 只包含影响缓存的关键头部
             cache_headers = {
-                k: v for k, v in headers.items()
-                if k.lower() in ['accept-language', 'accept-encoding']
+                k: v
+                for k, v in headers.items()
+                if k.lower() in ["accept-language", "accept-encoding"]
             }
             if cache_headers:
                 header_hash = hashlib.md5(
@@ -120,9 +121,10 @@ class ApiCache:
 
             if self._compression_enabled and len(data) > 1024:
                 import gzip
-                return gzip.compress(data.encode('utf-8'))
+
+                return gzip.compress(data.encode("utf-8"))
             else:
-                return data.encode('utf-8')
+                return data.encode("utf-8")
 
         except Exception as e:
             logger.error(f"序列化缓存值失败: {e}")
@@ -133,11 +135,12 @@ class ApiCache:
         """反序列化缓存值"""
         try:
             # 尝试解压缩
-            if self._compression_enabled and data.startswith(b'\x1f\x8b'):
+            if self._compression_enabled and data.startswith(b"\x1f\x8b"):
                 import gzip
+
                 data = gzip.decompress(data)
 
-            text = data.decode('utf-8')
+            text = data.decode("utf-8")
 
             # 尝试解析JSON
             try:
@@ -150,7 +153,7 @@ class ApiCache:
             self.metrics.errors += 1
             return None
 
-    def _calculate_ttl(self, base_ttl: Optional[int] = None) -> int:
+    def _calculate_ttl(self, base_ttl: int | None = None) -> int:
         """计算TTL"""
         if base_ttl is None:
             return self.config.default_ttl
@@ -163,14 +166,16 @@ class ApiCache:
         self,
         endpoint: str,
         method: str = "GET",
-        params: Optional[dict] = None,
-        headers: Optional[dict] = None,
-        user_id: Optional[str] = None
-    ) -> Optional[Any]:
+        params: dict | None = None,
+        headers: dict | None = None,
+        user_id: str | None = None,
+    ) -> Any | None:
         """获取缓存值"""
 
         try:
-            cache_key = self._generate_cache_key(endpoint, method, params, headers, user_id)
+            cache_key = self._generate_cache_key(
+                endpoint, method, params, headers, user_id
+            )
 
             # 从Redis获取缓存
             cached_data = await self.redis_manager.aget_cache(cache_key)
@@ -197,16 +202,18 @@ class ApiCache:
         endpoint: str,
         value: Any,
         method: str = "GET",
-        params: Optional[dict] = None,
-        headers: Optional[dict] = None,
-        user_id: Optional[str] = None,
-        ttl: Optional[int] = None,
-        tags: Optional[list[str]] = None
+        params: dict | None = None,
+        headers: dict | None = None,
+        user_id: str | None = None,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> bool:
         """设置缓存值"""
 
         try:
-            cache_key = self._generate_cache_key(endpoint, method, params, headers, user_id)
+            cache_key = self._generate_cache_key(
+                endpoint, method, params, headers, user_id
+            )
             calculated_ttl = self._calculate_ttl(ttl)
 
             # 检查值大小
@@ -217,9 +224,7 @@ class ApiCache:
 
             # 设置缓存
             success = await self.redis_manager.aset_cache(
-                cache_key,
-                serialized_value,
-                ttl=calculated_ttl
+                cache_key, serialized_value, ttl=calculated_ttl
             )
 
             if success:
@@ -244,14 +249,16 @@ class ApiCache:
         self,
         endpoint: str,
         method: str = "GET",
-        params: Optional[dict] = None,
-        headers: Optional[dict] = None,
-        user_id: Optional[str] = None
+        params: dict | None = None,
+        headers: dict | None = None,
+        user_id: str | None = None,
     ) -> bool:
         """删除缓存值"""
 
         try:
-            cache_key = self._generate_cache_key(endpoint, method, params, headers, user_id)
+            cache_key = self._generate_cache_key(
+                endpoint, method, params, headers, user_id
+            )
 
             success = await self.redis_manager.adelete_cache(cache_key)
 
@@ -280,7 +287,11 @@ class ApiCache:
                 # 获取该标签下的所有缓存键
                 cache_keys = await self.redis_manager.aget_cache(tag_key)
                 if cache_keys:
-                    keys_to_delete = json.loads(cache_keys) if isinstance(cache_keys, str) else cache_keys
+                    keys_to_delete = (
+                        json.loads(cache_keys)
+                        if isinstance(cache_keys, str)
+                        else cache_keys
+                    )
 
                     # 删除所有相关缓存
                     if keys_to_delete:
@@ -314,9 +325,7 @@ class ApiCache:
 
                 # 保存更新后的键列表
                 await self.redis_manager.aset_cache(
-                    tag_key,
-                    json.dumps(keys_list),
-                    ttl=self.config.max_ttl
+                    tag_key, json.dumps(keys_list), ttl=self.config.max_ttl
                 )
 
     async def get_metrics(self) -> dict:
@@ -332,7 +341,7 @@ class ApiCache:
             "deletes": self.metrics.deletes,
             "errors": self.metrics.errors,
             "hit_rate": self.metrics.get_hit_rate(),
-            "total_requests": self.metrics.hits + self.metrics.misses
+            "total_requests": self.metrics.hits + self.metrics.misses,
         }
 
     def reset_metrics(self) -> None:
@@ -355,10 +364,12 @@ class ApiCache:
             self.metrics.errors += 1
             return False
 
-# 全局缓存实例
-_api_cache_instance: Optional[ApiCache] = None
 
-def get_api_cache(config: Optional[ApiCacheConfig] = None) -> ApiCache:
+# 全局缓存实例
+_api_cache_instance: ApiCache | None = None
+
+
+def get_api_cache(config: ApiCacheConfig | None = None) -> ApiCache:
     """获取全局API缓存实例"""
     global _api_cache_instance
 
@@ -367,19 +378,20 @@ def get_api_cache(config: Optional[ApiCacheConfig] = None) -> ApiCache:
 
     return _api_cache_instance
 
+
 # 便捷装饰器
 def cache_api_response(
     ttl: int = 300,
-    tags: Optional[list[str]] = None,
-    key_params: Optional[list[str]] = None,
-    cache_user_specific: bool = False
+    tags: list[str] | None = None,
+    key_params: list[str] | None = None,
+    cache_user_specific: bool = False,
 ):
     """API响应缓存装饰器"""
 
     def decorator(func):
         async def wrapper(*args, **kwargs):
             # 提取请求上下文信息
-            request = kwargs.get('request')
+            request = kwargs.get("request")
             if not request:
                 return await func(*args, **kwargs)
 
@@ -392,8 +404,8 @@ def cache_api_response(
 
             # 获取用户ID
             user_id = None
-            if cache_user_specific and hasattr(request, 'user'):
-                user_id = getattr(request.user, 'id', None)
+            if cache_user_specific and hasattr(request, "user"):
+                user_id = getattr(request.user, "id", None)
 
             # 获取API缓存实例
             api_cache = get_api_cache()
@@ -405,7 +417,7 @@ def cache_api_response(
                 method=request.method,
                 params=params,
                 headers=dict(request.headers),
-                user_id=user_id
+                user_id=user_id,
             )
 
             if cached_response is not None:
@@ -423,13 +435,15 @@ def cache_api_response(
                 headers=dict(request.headers),
                 user_id=user_id,
                 ttl=ttl,
-                tags=tags
+                tags=tags,
             )
 
             return response
 
         return wrapper
+
     return decorator
+
 
 # 导出公共接口
 __all__ = [
@@ -437,7 +451,7 @@ __all__ = [
     "ApiCacheConfig",
     "CacheMetrics",
     "get_api_cache",
-    "cache_api_response"
+    "cache_api_response",
 ]
 
 __version__ = "1.0.0"

@@ -29,7 +29,9 @@ try:
 
     CAN_IMPORT = True
 except ImportError as e:
-    logger.warning(f"Warning: 无法导入Elo模型: {e}")  # TODO: Add logger import if needed
+    logger.warning(
+        f"Warning: 无法导入Elo模型: {e}"
+    )  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 
@@ -51,7 +53,7 @@ class TestEloModel:
         teams = [f"Team_{i}" for i in range(1, 21)]  # 20支球队
 
         data = []
-        for i in range(n_matches):
+        for _i in range(n_matches):
             home_team = np.random.choice(teams)
             away_team = np.random.choice([t for t in teams if t != home_team])
 
@@ -503,7 +505,7 @@ class TestEloModel:
         teams = [f"Team_{i}" for i in range(1, 51)]  # 50支球队
 
         data = []
-        for i in range(n_matches):
+        for _i in range(n_matches):
             home_team = np.random.choice(teams)
             away_team = np.random.choice([t for t in teams if t != home_team])
 

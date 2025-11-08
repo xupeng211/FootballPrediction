@@ -4,15 +4,15 @@
 一键设置完整的开发环境，包括Docker、IDE配置、依赖安装等
 """
 
-import os
-import sys
-import subprocess
 import json
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+import os
 import platform
 import shutil
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
+
 
 class DevelopmentEnvironmentSetup:
     """开发环境设置器"""
@@ -42,9 +42,9 @@ class DevelopmentEnvironmentSetup:
         self.errors.append(message)
 
     def run_command(self,
-    command: List[str],
+    command: list[str],
     check: bool = True,
-    capture: bool = False) -> Optional[str]:
+    capture: bool = False) -> str | None:
         """运行命令"""
         try:
             if capture:

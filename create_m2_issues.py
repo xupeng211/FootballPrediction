@@ -9,8 +9,8 @@ M2 GitHub Issues Creation Script
 import json
 import subprocess
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # 配置GitHub仓库信息
 REPO_OWNER = "xupeng211"
@@ -84,7 +84,7 @@ def main():
         sys.exit(1)
 
     # 加载Issues数据
-    with open("m2_github_issues.json", "r", encoding="utf-8") as f:
+    with open("m2_github_issues.json", encoding="utf-8") as f:
         data = json.load(f)
 
     issues = data["issues"]
@@ -139,8 +139,8 @@ def main():
         "failed_issues": len(failed_issues),
         "total_issues": total_issues,
         "success_rate": (len(created_issues) + len(skipped_issues)) / total_issues * 100,
-    
-    
+
+
         "created_at": datetime.now().isoformat(),
         "created": [
             {
@@ -171,10 +171,10 @@ def main():
     with open("m2_issues_creation_result.json", "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📄 详细结果已保存到: m2_issues_creation_result.json")
+    print("\n📄 详细结果已保存到: m2_issues_creation_result.json")
 
     if failed_issues:
-        print(f"\n❌ 以下Issues创建失败:")
+        print("\n❌ 以下Issues创建失败:")
         for issue in failed_issues:
             print(f"  - {issue['title']}")
 

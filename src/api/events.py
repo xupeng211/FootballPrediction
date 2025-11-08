@@ -110,7 +110,7 @@ async def restart_event_system() -> dict[str, str]:
         await app.initialize()
         return {"message": "事件系统已成功重启"}
     except (ValueError, KeyError, AttributeError, HTTPError) as e:
-        raise HTTPException(status_code=500, detail=f"重启失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"重启失败: {str(e)}") from e
 
 
 @router.get("/metrics", summary="获取详细指标")
@@ -144,7 +144,7 @@ async def get_recent_prediction_stats(
     """获取最近的预测统计信息"""
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if not analytics_handler:
-        raise HTTPException(status_code=404, detail="分析处理器未找到") from e
+        raise HTTPException(status_code=404, detail="分析处理器未找到")
     analytics_data = analytics_handler.get_analytics_data()
     daily_predictions = analytics_data.get("daily_predictions", {})
     cutoff_date = (datetime.utcnow() - timedelta(days=days)).date()
@@ -173,7 +173,7 @@ async def get_user_activity_stats(
     """获取用户活动统计"""
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if not analytics_handler:
-        raise HTTPException(status_code=404, detail="分析处理器未找到") from e
+        raise HTTPException(status_code=404, detail="分析处理器未找到")
     analytics_data = analytics_handler.get_analytics_data()
     user_activity = analytics_data.get("user_activity", {})
     sorted_users = sorted(

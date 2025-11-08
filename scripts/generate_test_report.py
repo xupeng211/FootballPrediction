@@ -10,16 +10,15 @@ Test Report Generator
 4. 历史数据对比
 """
 
-import json
-import subprocess
-import sys
-import time
 import argparse
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
+import json
+import sys
 import xml.etree.ElementTree as ET
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 import jinja2
 
 
@@ -42,8 +41,8 @@ class TestCaseResult:
     classname: str
     time: float
     status: str  # passed, failed, error, skipped
-    failure_message: Optional[str] = None
-    error_message: Optional[str] = None
+    failure_message: str | None = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -57,9 +56,9 @@ class TestReport:
     error_tests: int
     skipped_tests: int
     success_rate: float
-    test_suites: List[TestSuiteResult]
-    test_cases: List[TestCaseResult]
-    coverage_data: Optional[Dict[str, Any]] = None
+    test_suites: list[TestSuiteResult]
+    test_cases: list[TestCaseResult]
+    coverage_data: dict[str, Any] | None = None
 
 
 class TestReportGenerator:
@@ -233,7 +232,7 @@ class TestReportGenerator:
 
         print(f"✅ HTML模板已创建: {template_file}")
 
-    def parse_junit_xml(self) -> Optional[Dict[str, Any]]:
+    def parse_junit_xml(self) -> dict[str, Any] | None:
         """解析JUnit XML结果"""
         if not self.junit_file.exists():
             print("❌ test_results.xml文件不存在")
@@ -328,13 +327,13 @@ class TestReportGenerator:
             print(f"❌ 解析JUnit XML失败: {e}")
             return None
 
-    def load_coverage_data(self) -> Optional[Dict[str, Any]]:
+    def load_coverage_data(self) -> dict[str, Any] | None:
         """加载覆盖率数据"""
         if not self.coverage_file.exists():
             return None
 
         try:
-            with open(self.coverage_file, 'r', encoding='utf-8') as f:
+            with open(self.coverage_file, encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
             print(f"⚠️ 加载覆盖率数据失败: {e}")
@@ -440,14 +439,14 @@ class TestReportGenerator:
     def generate_markdown_report(self, report: TestReport):
         """生成Markdown格式报告"""
         markdown_lines = [
-            f"# 🧪 测试报告",
-            f"",
+            "# 🧪 测试报告",
+            "",
             f"**生成时间**: {report.timestamp[:19]}",
-            f"",
-            f"## 📊 测试统计",
-            f"",
-            f"| 指标 | 数值 |",
-            f"|------|------|",
+            "",
+            "## 📊 测试统计",
+            "",
+            "| 指标 | 数值 |",
+            "|------|------|",
             f"| 总测试数 | {report.total_tests} |",
             f"| 通过 | {report.passed_tests} |",
             f"| 失败 | {report.failed_tests} |",
@@ -455,13 +454,13 @@ class TestReportGenerator:
             f"| 跳过 | {report.skipped_tests} |",
             f"| 成功率 | {report.success_rate:.1f}% |",
             f"| 执行时间 | {report.execution_time:.2f}s |",
-            f"",
-            f"## 📈 进度",
-            f"",
+            "",
+            "## 📈 进度",
+            "",
             f"![Progress](https://progress-bar.dev/{int(report.success_rate)}?scale=100&title=Success%20Rate)",
-    
-    
-            f""
+
+
+            ""
         ]
 
         # 添加覆盖率信息
@@ -469,21 +468,21 @@ class TestReportGenerator:
             coverage_totals = report.coverage_data.get("totals", {})
             coverage_percent = coverage_totals.get("percent_covered", 0)
             markdown_lines.extend([
-                f"## 📊 覆盖率",
-                f"",
+                "## 📊 覆盖率",
+                "",
                 f"- **总体覆盖率**: {coverage_percent:.1f}%",
                 f"- **已覆盖语句**: {coverage_totals.get('covered_lines', 0)}",
                 f"- **总语句数**: {coverage_totals.get('num_statements', 0)}",
-                f""
+                ""
             ])
 
         # 添加测试套件详情
         if report.test_suites:
             markdown_lines.extend([
-                f"## 📋 测试套件详情",
-                f"",
-                f"| 套件名称 | 总数 | 通过 | 失败 | 错误 | 跳过 | 耗时(s) |",
-                f"|----------|------|------|------|------|------|----------|"
+                "## 📋 测试套件详情",
+                "",
+                "| 套件名称 | 总数 | 通过 | 失败 | 错误 | 跳过 | 耗时(s) |",
+                "|----------|------|------|------|------|------|----------|"
             ])
 
             for suite in report.test_suites:
@@ -498,10 +497,10 @@ class TestReportGenerator:
         failed_cases = [case for case in report.test_cases if case.status in ["failed", "error"]]
         if failed_cases:
             markdown_lines.extend([
-                f"## ❌ 失败的测试用例",
-                f"",
-                f"| 测试用例 | 类名 | 状态 | 错误信息 |",
-                f"|----------|------|------|----------|"
+                "## ❌ 失败的测试用例",
+                "",
+                "| 测试用例 | 类名 | 状态 | 错误信息 |",
+                "|----------|------|------|----------|"
             ])
 
             for case in failed_cases[:10]:  # 只显示前10个
@@ -515,11 +514,11 @@ class TestReportGenerator:
         # 添加结论
         status = "✅ 通过" if report.failed_tests == 0 and report.error_tests == 0 else "❌ 失败"
         markdown_lines.extend([
-            f"## 🎯 结论",
-            f"",
+            "## 🎯 结论",
+            "",
             f"**状态**: {status}",
             f"**成功率**: {report.success_rate:.1f}%",
-            f""
+            ""
         ])
 
         # 保存Markdown报告

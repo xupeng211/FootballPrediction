@@ -5,15 +5,13 @@
 目标：实现企业级代码质量标准和自动化质量监控
 """
 
-import ast
-import time
-import json
-from pathlib import Path
-from typing import Dict, List, Set, Optional, Tuple, Any
-from dataclasses import dataclass, field
-from enum import Enum
 import threading
-from datetime import datetime, timedelta
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
 
 class QualityLevel(Enum):
     """质量等级"""
@@ -37,8 +35,8 @@ class QualityIssue:
     level: QualityLevel
     category: str
     description: str
-    file_path: Optional[str] = None
-    line_number: Optional[int] = None
+    file_path: str | None = None
+    line_number: int | None = None
     rule_name: str = ""
     suggestion: str = ""
     effort_estimate: str = "5min"
@@ -65,11 +63,11 @@ class QualityGateResult:
     gate_name: str
     status: QualityStatus
     metrics: QualityMetrics
-    issues: List[QualityIssue]
+    issues: list[QualityIssue]
     passed_checks: int
     total_checks: int
     execution_time: float
-    recommendations: List[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 class QualityRule:
     """质量规则基类"""
@@ -80,7 +78,7 @@ class QualityRule:
         self.level = level
         self.enabled = True
 
-    def check(self, context: Dict[str, Any]) -> List[QualityIssue]:
+    def check(self, context: dict[str, Any]) -> list[QualityIssue]:
         """执行质量检查"""
         raise NotImplementedError
 
@@ -95,7 +93,7 @@ class CoverageRule(QualityRule):
         )
         self.min_coverage = 68.0  # 最低覆盖率要求 (基于Issue #159 70.1%成就调整)
 
-    def check(self, context: Dict[str, Any]) -> List[QualityIssue]:
+    def check(self, context: dict[str, Any]) -> list[QualityIssue]:
         issues = []
         coverage_data = context.get('coverage_data', {})
 
@@ -124,7 +122,7 @@ class TestQualityRule(QualityRule):
             level=QualityLevel.MEDIUM
         )
 
-    def check(self, context: Dict[str, Any]) -> List[QualityIssue]:
+    def check(self, context: dict[str, Any]) -> list[QualityIssue]:
         issues = []
         test_analysis = context.get('test_analysis', {})
 
@@ -165,7 +163,7 @@ class CodeComplexityRule(QualityRule):
         )
         self.max_complexity = 10
 
-    def check(self, context: Dict[str, Any]) -> List[QualityIssue]:
+    def check(self, context: dict[str, Any]) -> list[QualityIssue]:
         issues = []
         # 这里简化处理，实际应该计算真实的复杂度指标
         # 基于测试文件数量和模块数量估算复杂度
@@ -198,7 +196,7 @@ class SecurityRule(QualityRule):
             level=QualityLevel.CRITICAL
         )
 
-    def check(self, context: Dict[str, Any]) -> List[QualityIssue]:
+    def check(self, context: dict[str, Any]) -> list[QualityIssue]:
         issues = []
         test_files = context.get('test_analysis', {}).get('test_files', [])
 
@@ -233,7 +231,7 @@ class PerformanceRule(QualityRule):
             level=QualityLevel.MEDIUM
         )
 
-    def check(self, context: Dict[str, Any]) -> List[QualityIssue]:
+    def check(self, context: dict[str, Any]) -> list[QualityIssue]:
         issues = []
         test_files = context.get('test_analysis', {}).get('test_files', [])
 
@@ -282,7 +280,7 @@ class QualityGateSystem:
         """移除质量规则"""
         self.rules = [rule for rule in self.rules if rule.name != rule_name]
 
-    def run_quality_gate(self, context: Dict[str, Any]) -> QualityGateResult:
+    def run_quality_gate(self, context: dict[str, Any]) -> QualityGateResult:
         """运行质量门禁检查"""
         start_time = time.time()
 
@@ -341,9 +339,9 @@ class QualityGateSystem:
         return result
 
     def _calculate_metrics(self,
-    context: Dict[str,
+    context: dict[str,
     Any],
-    issues: List[QualityIssue]) -> QualityMetrics:
+    issues: list[QualityIssue]) -> QualityMetrics:
         """计算质量指标"""
         coverage_data = context.get('coverage_data', {})
         test_analysis = context.get('test_analysis', {})
@@ -384,7 +382,7 @@ class QualityGateSystem:
         )
 
     def _determine_status(self,
-    issues: List[QualityIssue],
+    issues: list[QualityIssue],
     metrics: QualityMetrics) -> QualityStatus:
         """确定质量状态"""
         critical_issues = [i for i in issues if i.level == QualityLevel.CRITICAL]
@@ -400,8 +398,8 @@ class QualityGateSystem:
             return QualityStatus.PASSED
 
     def _generate_recommendations(self,
-    issues: List[QualityIssue],
-    metrics: QualityMetrics) -> List[str]:
+    issues: list[QualityIssue],
+    metrics: QualityMetrics) -> list[str]:
         """生成改进建议"""
         recommendations = []
 

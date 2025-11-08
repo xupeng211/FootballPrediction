@@ -122,7 +122,9 @@ class EventBus:
         if queue:
             await queue.put(event)
 
-    async def subscribe(self, event_type: str, handler: EventHandler, filters: dict | None = None) -> None:
+    async def subscribe(
+        self, event_type: str, handler: EventHandler, filters: dict | None = None
+    ) -> None:
         """订阅事件"""
         async with self._lock:
             if event_type not in self._subscribers:
@@ -151,7 +153,10 @@ class EventBus:
     async def unsubscribe(self, event_type: str, handler: EventHandler) -> None:
         """取消订阅事件"""
         async with self._lock:
-            if event_type in self._subscribers and handler in self._subscribers[event_type]:
+            if (
+                event_type in self._subscribers
+                and handler in self._subscribers[event_type]
+            ):
                 self._subscribers[event_type].remove(handler)
 
                 # 移除过滤器
@@ -160,7 +165,9 @@ class EventBus:
 
                 logger.info(f"Handler {handler.name} unsubscribed from {event_type}")
 
-    async def _run_handler(self, handler: EventHandler, event_type: str, queue: Any) -> None:
+    async def _run_handler(
+        self, handler: EventHandler, event_type: str, queue: Any
+    ) -> None:
         """运行事件处理器"""
         while self._running:
             try:
@@ -202,9 +209,7 @@ class EventBus:
             # 检查是否需要在线程池中执行
             if hasattr(handler.handle, "_blocking"):
                 loop = asyncio.get_event_loop()
-                await loop.run_in_executor(
-                    self._executor, handler.handle, event
-                )
+                await loop.run_in_executor(self._executor, handler.handle, event)
             else:
                 await handler.handle(event)
 

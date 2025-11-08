@@ -242,7 +242,7 @@ class TestPathManagerEnhanced:
 
         # 创建多个线程同时访问路径管理器
         threads = []
-        for i in range(5):
+        for _i in range(5):
             thread = threading.Thread(target=worker)
             threads.append(thread)
             thread.start()
