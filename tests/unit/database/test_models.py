@@ -3,6 +3,7 @@
 Database Models Test
 """
 
+import logging
 import os
 
 # 模拟导入，避免循环依赖问题
@@ -13,6 +14,8 @@ import pytest
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+
+logger = logging.getLogger(__name__)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 

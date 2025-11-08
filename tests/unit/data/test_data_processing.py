@@ -20,6 +20,9 @@ from src.data.processing.football_data_cleaner import (
     clean_football_data,
 )
 from src.data.processing.missing_data_handler import (
+import logging
+
+logger = logging.getLogger(__name__)
     MissingDataHandler,
     handle_missing_data,
 )

@@ -5,12 +5,15 @@ Basic Adapter Tests
 测试适配器模式的基础功能，避免有语法错误的模块。
 """
 
+import logging
 import os
 import sys
 from datetime import datetime
 from typing import Any
 
 import pytest
+
+logger = logging.getLogger(__name__)
 
 # 添加adapters路径并直接导入
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/adapters"))

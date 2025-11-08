@@ -19,6 +19,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 # 直接导入predictions路由器
 import importlib.util
+import logging
+
+logger = logging.getLogger(__name__)
 
 spec = importlib.util.spec_from_file_location(
     "predictions_module",

@@ -13,11 +13,14 @@ Prediction Domain Service Tests
 目标覆盖率: 领域服务模块覆盖率≥45%
 """
 
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
 import pytest
+
+logger = logging.getLogger(__name__)
 
 # 导入领域模型和服务
 try:

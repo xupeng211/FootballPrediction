@@ -11,6 +11,7 @@ ML Prediction Service Tests
 - 性能监控
 """
 
+import logging
 import os
 
 # 导入ML模块
@@ -20,6 +21,8 @@ from unittest.mock import Mock
 
 import pandas as pd
 import pytest
+
+logger = logging.getLogger(__name__)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 

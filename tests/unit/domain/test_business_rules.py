@@ -6,11 +6,14 @@
 """
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 
 import pytest
+
+logger = logging.getLogger(__name__)
 
 
 # 业务规则引擎

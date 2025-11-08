@@ -5,6 +5,7 @@ AutoBinding 综合测试
 新增测试: 20个测试用例
 """
 
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TypeVar
@@ -22,6 +23,8 @@ from src.core.auto_binding import (
 )
 from src.core.di import DIContainer, ServiceLifetime
 from src.core.exceptions import DependencyInjectionError
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 

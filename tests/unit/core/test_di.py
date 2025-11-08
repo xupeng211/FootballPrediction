@@ -6,6 +6,7 @@ Dependency Injection System Tests
 Tests the integrity and correctness of core dependency injection functionality.
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 from unittest.mock import Mock, patch
@@ -24,6 +25,8 @@ from src.core.di import (
     inject,
     resolve,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # 测试接口和实现类

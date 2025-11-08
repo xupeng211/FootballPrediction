@@ -11,6 +11,9 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from src.core.service_lifecycle import (
+import logging
+
+logger = logging.getLogger(__name__)
     ServiceInfo,
     ServiceLifecycleError,
     ServiceLifecycleManager,

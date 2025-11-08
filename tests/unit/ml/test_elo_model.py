@@ -11,6 +11,7 @@ Elo Rating Model Tests
 - 模型训练和评估
 """
 
+import logging
 import os
 
 # 导入ML模块
@@ -20,6 +21,8 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 import pytest
+
+logger = logging.getLogger(__name__)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 

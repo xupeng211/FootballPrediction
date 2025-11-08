@@ -15,7 +15,11 @@ import pytest
 # 添加src到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
+import logging
+
 from src.security.jwt_auth import JWTAuthManager, TokenData, UserAuth
+
+logger = logging.getLogger(__name__)
 
 
 class TestJWTAuthManagerInitialization:

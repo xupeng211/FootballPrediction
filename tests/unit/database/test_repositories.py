@@ -6,6 +6,7 @@
 """
 
 import asyncio
+import logging
 import os
 
 # 模拟导入，避免循环依赖问题
@@ -16,6 +17,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from sqlalchemy import exc as SQLAlchemyExc
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 

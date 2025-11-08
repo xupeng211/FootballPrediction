@@ -8,6 +8,7 @@
 
 import asyncio
 import json
+import logging
 import os
 
 # 模拟导入，避免循环依赖问题
@@ -19,6 +20,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+
+logger = logging.getLogger(__name__)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 

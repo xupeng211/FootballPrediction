@@ -3,12 +3,15 @@
 专注于100%可运行的测试用例
 """
 
+import logging
 from unittest.mock import Mock, patch
 
 import pytest
 
 # 导入目标模块
 from src.core.logger import Logger, get_logger
+
+logger = logging.getLogger(__name__)
 
 
 class TestLoggerFunctionality:

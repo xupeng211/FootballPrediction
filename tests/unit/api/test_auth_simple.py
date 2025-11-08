@@ -29,7 +29,11 @@ auth_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(auth_module)
 
 # 直接导入jwt_auth模块
+import logging
+
 from src.security.jwt_auth import JWTAuthManager, TokenData, UserAuth
+
+logger = logging.getLogger(__name__)
 
 
 class TestAuthModels:

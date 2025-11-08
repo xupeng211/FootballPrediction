@@ -17,7 +17,11 @@ from fastapi import HTTPException, status
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 # 直接导入auth模块，避免复杂的包导入
+import logging
+
 from src.api.auth.models import UserRegisterRequest as UserRegister
+
+logger = logging.getLogger(__name__)
 
 # 其他类暂时使用简化定义，避免复杂依赖
 
