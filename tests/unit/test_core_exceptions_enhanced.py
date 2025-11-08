@@ -3,11 +3,17 @@
 专注于100%可运行的测试用例
 """
 
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 # 导入目标模块
-from core.exceptions import FootballPredictionError, ConfigError, DataError, ValidationError, DependencyInjectionError
+from core.exceptions import (
+    ConfigError,
+    DataError,
+    DependencyInjectionError,
+    FootballPredictionError,
+    ValidationError,
+)
 
 
 class TestExceptionHierarchy:
@@ -75,12 +81,13 @@ class TestExceptionHierarchy:
             ConfigError("Config"),
             DataError("Data"),
             ValidationError("Validation"),
-            DependencyInjectionError("DI")
+            DependencyInjectionError("DI"),
         ]
 
         for i, error in enumerate(exceptions):
             assert isinstance(error, FootballPredictionError)
             assert str(error)  # 确保字符串表示不为空
+
 
 class TestExceptionUsagePatterns:
     """异常使用模式测试"""
@@ -119,7 +126,7 @@ class TestExceptionUsagePatterns:
         """测试自定义异常属性（如果存在）"""
         error = FootballPredictionError("Test")
         # 基础异常属性测试
-        assert hasattr(error, 'args')
+        assert hasattr(error, "args")
         assert error.args == ("Test",)
 
     def test_exception_equality(self):
@@ -141,6 +148,7 @@ class TestExceptionUsagePatterns:
     def test_exception_pickling(self):
         """测试异常序列化"""
         import pickle
+
         error = ValidationError("Test message")
 
         # 测试pickle序列化和反序列化

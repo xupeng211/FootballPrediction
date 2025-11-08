@@ -211,7 +211,7 @@ async def get_redis_cluster_status():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取Redis集群状态失败: {str(e)}",
-        )
+        ) from None
 
 
 @router.post("/cluster/nodes")
