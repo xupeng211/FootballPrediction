@@ -54,7 +54,7 @@ class TestPerformanceMetrics:
         assert stats["request_count"] == 5
         assert stats["avg_response_time"] == 0.2  # (0.1 + 0.15 + 0.2 + 0.25 + 0.3) / 5
         assert stats["min_response_time"] == 0.1
-        assert stats["max_response_time"] == 0.3
+        assert stats["max_response_time"] == pytest.approx(0.3)
         assert stats["error_rate"] == 0.0
 
     def test_error_rate_calculation(self):
