@@ -23,7 +23,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
         config: ApiCacheConfig | None = None,
         cacheable_methods: list[str] = None,
         cacheable_status_codes: list[int] = None,
-        skip_cache_paths: list[str] = None
+        skip_cache_paths: list[str] = None,
     ):
         super().__init__(app)
         self.api_cache = get_api_cache(config)
@@ -33,7 +33,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
             "/health",
             "/metrics",
             "/cache",
-            "/admin"
+            "/admin",
         ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -50,7 +50,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
             method=request.method,
             params=dict(request.query_params),
             headers=dict(request.headers),
-            user_id=self._get_user_id(request)
+            user_id=self._get_user_id(request),
         )
 
         if cached_response:
@@ -66,8 +66,8 @@ class CacheMiddleware(BaseHTTPMiddleware):
             response_data = {
                 "status_code": response.status_code,
                 "headers": dict(response.headers),
-                "body": response.body.decode('utf-8') if response.body else None,
-                "process_time": process_time
+                "body": response.body.decode("utf-8") if response.body else None,
+                "process_time": process_time,
             }
 
             await self.api_cache.set(
@@ -77,7 +77,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
                 params=dict(request.query_params),
                 headers=dict(request.headers),
                 user_id=self._get_user_id(request),
-                ttl=self._calculate_ttl(request, response)
+                ttl=self._calculate_ttl(request, response),
             )
 
         return response
@@ -108,11 +108,11 @@ class CacheMiddleware(BaseHTTPMiddleware):
     def _get_user_id(self, request: Request) -> str | None:
         """获取用户ID"""
         # 从请求状态或头部获取用户信息
-        if hasattr(request.state, 'user_id'):
+        if hasattr(request.state, "user_id"):
             return request.state.user_id
 
-        if 'x-user-id' in request.headers:
-            return request.headers['x-user-id']
+        if "x-user-id" in request.headers:
+            return request.headers["x-user-id"]
 
         return None
 
@@ -123,9 +123,9 @@ class CacheMiddleware(BaseHTTPMiddleware):
             return False
 
         # 检查响应头
-        if 'cache-control' in response.headers:
-            cache_control = response.headers['cache-control'].lower()
-            if 'no-cache' in cache_control or 'private' in cache_control:
+        if "cache-control" in response.headers:
+            cache_control = response.headers["cache-control"].lower()
+            if "no-cache" in cache_control or "private" in cache_control:
                 return False
 
         # 检查响应大小
@@ -137,23 +137,23 @@ class CacheMiddleware(BaseHTTPMiddleware):
     def _calculate_ttl(self, request: Request, response: Response) -> int:
         """计算TTL"""
         # 从响应头获取缓存控制信息
-        if 'cache-control' in response.headers:
-            cache_control = response.headers['cache-control']
-            if 'max-age=' in cache_control:
+        if "cache-control" in response.headers:
+            cache_control = response.headers["cache-control"]
+            if "max-age=" in cache_control:
                 try:
-                    max_age = int(cache_control.split('max-age=')[1].split(',')[0])
+                    max_age = int(cache_control.split("max-age=")[1].split(",")[0])
                     return max_age
                 except (ValueError, IndexError):
                     pass
 
         # 根据内容类型设置默认TTL
-        content_type = response.headers.get('content-type', '').lower()
+        content_type = response.headers.get("content-type", "").lower()
 
-        if 'application/json' in content_type:
+        if "application/json" in content_type:
             return 300  # 5分钟
-        elif 'text/html' in content_type:
+        elif "text/html" in content_type:
             return 600  # 10分钟
-        elif 'image' in content_type:
+        elif "image" in content_type:
             return 3600  # 1小时
         else:
             return 180  # 3分钟
@@ -161,14 +161,14 @@ class CacheMiddleware(BaseHTTPMiddleware):
     def _build_response_from_cache(self, cached_data: dict) -> Response:
         """从缓存数据构建响应"""
         response = Response(
-            content=cached_data.get('body'),
-            status_code=cached_data.get('status_code', 200),
-            headers=cached_data.get('headers', {})
+            content=cached_data.get("body"),
+            status_code=cached_data.get("status_code", 200),
+            headers=cached_data.get("headers", {}),
         )
 
         # 添加缓存标识头
-        response.headers['X-Cache'] = 'HIT'
-        response.headers['X-Cache-TTL'] = str(cached_data.get('process_time', 0))
+        response.headers["X-Cache"] = "HIT"
+        response.headers["X-Cache-TTL"] = str(cached_data.get("process_time", 0))
 
         return response
 
@@ -179,10 +179,7 @@ def add_cache_middleware(app, config: ApiCacheConfig | None = None) -> None:
 
 
 # 导出公共接口
-__all__ = [
-    "CacheMiddleware",
-    "add_cache_middleware"
-]
+__all__ = ["CacheMiddleware", "add_cache_middleware"]
 
 __version__ = "1.0.0"
 __description__ = "FastAPI缓存中间件"

@@ -74,9 +74,9 @@ class TestRetryExports:
     def test_circuit_state_enum(self):
         """测试熔断状态枚举"""
         # 验证枚举值存在
-        assert hasattr(CircuitState, 'CLOSED')
-        assert hasattr(CircuitState, 'OPEN')
-        assert hasattr(CircuitState, 'HALF_OPEN')
+        assert hasattr(CircuitState, "CLOSED")
+        assert hasattr(CircuitState, "OPEN")
+        assert hasattr(CircuitState, "HALF_OPEN")
 
         # 验证枚举值可以比较
         states = [CircuitState.CLOSED, CircuitState.OPEN, CircuitState.HALF_OPEN]
@@ -94,19 +94,19 @@ class TestRetryExports:
         # 验证__all__存在且包含预期的符号
         import src.utils.retry as retry_module
 
-        assert hasattr(retry_module, '__all__')
+        assert hasattr(retry_module, "__all__")
         expected_symbols = {
-            'RetryConfig',
-            'BackoffStrategy',
-            'ExponentialBackoffStrategy',
-            'FixedBackoffStrategy',
-            'LinearBackoffStrategy',
-            'PolynomialBackoffStrategy',
-            'retry',
-            'retry_async',
-            'retry_sync',
-            'CircuitState',
-            'CircuitBreaker',
+            "RetryConfig",
+            "BackoffStrategy",
+            "ExponentialBackoffStrategy",
+            "FixedBackoffStrategy",
+            "LinearBackoffStrategy",
+            "PolynomialBackoffStrategy",
+            "retry",
+            "retry_async",
+            "retry_sync",
+            "CircuitState",
+            "CircuitBreaker",
         }
 
         all_symbols = set(retry_module.__all__)
@@ -138,6 +138,7 @@ class TestRetryExports:
         # 这个测试验证重新导出机制工作正常
         try:
             from src.utils._retry import RetryConfig as DirectRetryConfig
+
             assert DirectRetryConfig is not None
             assert RetryConfig is DirectRetryConfig  # 应该是同一个对象
         except ImportError:
@@ -198,39 +199,41 @@ class TestRetryBasicFunctionality:
         breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=1)
 
         # 验证初始状态
-        assert hasattr(breaker, 'state')
+        assert hasattr(breaker, "state")
         initial_state = breaker.state
 
         # 熔断器应该有基本的状态管理
-        assert hasattr(breaker, 'failure_threshold')
-        assert hasattr(breaker, 'recovery_timeout')
+        assert hasattr(breaker, "failure_threshold")
+        assert hasattr(breaker, "recovery_timeout")
         assert breaker.failure_threshold == 3
         assert breaker.recovery_timeout == 1
 
     def test_backoff_strategies_creation(self):
         """测试退避策略创建"""
         strategies = {
-            'fixed': FixedBackoffStrategy(delay=1.0),
-            'linear': LinearBackoffStrategy(initial_delay=1.0, increment=0.5),
-            'exponential': ExponentialBackoffStrategy(initial_delay=1.0, multiplier=2.0),
-            'polynomial': PolynomialBackoffStrategy(initial_delay=1.0, exponent=2.0),
+            "fixed": FixedBackoffStrategy(delay=1.0),
+            "linear": LinearBackoffStrategy(initial_delay=1.0, increment=0.5),
+            "exponential": ExponentialBackoffStrategy(
+                initial_delay=1.0, multiplier=2.0
+            ),
+            "polynomial": PolynomialBackoffStrategy(initial_delay=1.0, exponent=2.0),
         }
 
         for name, strategy in strategies.items():
             assert strategy is not None
-            assert hasattr(strategy, 'delay') or hasattr(strategy, 'get_delay')
+            assert hasattr(strategy, "delay") or hasattr(strategy, "get_delay")
 
     def test_retry_config_creation(self):
         """测试重试配置创建"""
         configs = [
             RetryConfig(max_attempts=3, delay=1.0),
-            RetryConfig(max_attempts=5, delay=0.5, backoff_strategy='fixed'),
+            RetryConfig(max_attempts=5, delay=0.5, backoff_strategy="fixed"),
             RetryConfig(max_attempts=1, delay=0.1),  # 最小配置
         ]
 
         for config in configs:
             assert config is not None
-            assert hasattr(config, 'max_attempts')
+            assert hasattr(config, "max_attempts")
             assert config.max_attempts >= 1
 
 
@@ -243,8 +246,8 @@ class TestRetryIntegration:
         from src.utils.retry import __all__ as exported_symbols
 
         assert len(exported_symbols) > 0
-        assert 'RetryConfig' in exported_symbols
-        assert 'retry' in exported_symbols
+        assert "RetryConfig" in exported_symbols
+        assert "retry" in exported_symbols
 
     def test_cross_module_compatibility(self):
         """测试跨模块兼容性"""
@@ -258,4 +261,5 @@ class TestRetryIntegration:
         except ImportError:
             # 如果直接导入失败，重新导出仍然应该工作
             from src.utils.retry import RetryConfig
+
             assert RetryConfig is not None

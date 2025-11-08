@@ -21,8 +21,7 @@ from src.middleware.tenant_middleware import (
 )
 from src.services.tenant_service import TenantCreationRequest, TenantService
 
-router = APIRouter(prefix="/api/v1/tenants",
-    tags=["多租户管理"])
+router = APIRouter(prefix="/api/v1/tenants", tags=["多租户管理"])
 
 
 # ==================== 请求/响应模型 ==================== None
@@ -33,65 +32,60 @@ class TenantCreationRequestModel(BaseModel):
 
     name: str = Field(
         ...,
-    min_length=1,
-    max_length=100,
-    # TODO: 将魔法数字 100 提取为常量
+        min_length=1,
+        max_length=100,
+        # TODO: 将魔法数字 100 提取为常量
         description="租户名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     slug: str = Field(
         ...,
-    min_length=1,
-    max_length=50,
-    # TODO: 将魔法数字 50 提取为常量
+        min_length=1,
+        max_length=50,
+        # TODO: 将魔法数字 50 提取为常量
         description="租户标识符",
-    # TODO: 将魔法数字 50 提取为常量
+        # TODO: 将魔法数字 50 提取为常量
     )  # TODO: 将魔法数字 50 提取为常量
-    contact_email: str = Field(...,
-    description="联系邮箱")
+    contact_email: str = Field(..., description="联系邮箱")
     company_name: str | None = Field(
         None,
-    max_length=100,
-    # TODO: 将魔法数字 100 提取为常量
+        max_length=100,
+        # TODO: 将魔法数字 100 提取为常量
         description="公司名称",
-    # TODO: 将魔法数字 100 提取为常量
+        # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     description: str | None = Field(
         None,
-    max_length=500,
-    # TODO: 将魔法数字 500 提取为常量
+        max_length=500,
+        # TODO: 将魔法数字 500 提取为常量
         description="租户描述",
-    # TODO: 将魔法数字 500 提取为常量
+        # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
-    plan: TenantPlan = Field(TenantPlan.BASIC,
-    description="租户计划")
+    plan: TenantPlan = Field(TenantPlan.BASIC, description="租户计划")
     max_users: int = Field(
         10,
-    ge=1,
-    le=10000,
-    # TODO: 将魔法数字 10000 提取为常量
+        ge=1,
+        le=10000,
+        # TODO: 将魔法数字 10000 提取为常量
         description="最大用户数",
-    # TODO: 将魔法数字 10000 提取为常量
+        # TODO: 将魔法数字 10000 提取为常量
     )  # TODO: 将魔法数字 10000 提取为常量
     trial_days: int = Field(
         30,
-    # TODO: 将魔法数字 30 提取为常量
+        # TODO: 将魔法数字 30 提取为常量
         ge=1,
-    le=365,
-    # TODO: 将魔法数字 365 提取为常量
+        le=365,
+        # TODO: 将魔法数字 365 提取为常量
         description="试用天数",
-    # TODO: 将魔法数字 30 提取为常量
+        # TODO: 将魔法数字 30 提取为常量
     )  # TODO: 将魔法数字 30 提取为常量
-    custom_settings: dict[str, Any] | None = Field(None,
-    description="自定义设置")
+    custom_settings: dict[str, Any] | None = Field(None, description="自定义设置")
 
     @validator("slug")
-    def validate_slug(self,
-    v):
+    def validate_slug(self, v):
         """TODO: 添加函数文档"""
         """TODO: 添加函数文档"""  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """验证租户标识符"""
-        if not re.match(r"^[a-z0-9-]+$",
-    v):
+        if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("租户标识符只能包含小写字母、数字和连字符")
         return v
 
@@ -101,48 +95,40 @@ class TenantUpdateRequestModel(BaseModel):
 
     name: str | None = Field(
         None,
-
         min_length=1,
         max_length=100,  # TODO: 将魔法数字 100 提取为常量
         description="租户名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     description: str | None = Field(
         None,
-    max_length=500,
-    # TODO: 将魔法数字 500 提取为常量
+        max_length=500,
+        # TODO: 将魔法数字 500 提取为常量
         description="租户描述",
-    # TODO: 将魔法数字 500 提取为常量
+        # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
-    contact_email: str | None = Field(None,
-    description="联系邮箱")
+    contact_email: str | None = Field(None, description="联系邮箱")
     contact_phone: str | None = Field(
         None,
-    max_length=50,
-    # TODO: 将魔法数字 50 提取为常量
+        max_length=50,
+        # TODO: 将魔法数字 50 提取为常量
         description="联系电话",
-    # TODO: 将魔法数字 50 提取为常量
+        # TODO: 将魔法数字 50 提取为常量
     )  # TODO: 将魔法数字 50 提取为常量
     company_name: str | None = Field(
         None,
-
         max_length=100,  # TODO: 将魔法数字 100 提取为常量
         description="公司名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     company_address: str | None = Field(
         None,
-    max_length=500,
-    # TODO: 将魔法数字 500 提取为常量
+        max_length=500,
+        # TODO: 将魔法数字 500 提取为常量
         description="公司地址",
-    # TODO: 将魔法数字 500 提取为常量
+        # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
-    settings: dict[str,
-    Any] | None = Field(None,
-    description="租户设置")
-    features: dict[str, bool] | None = Field(None,
-    description="功能配置")
-    branding: dict[str,
-    Any] | None = Field(None,
-    description="品牌定制")
+    settings: dict[str, Any] | None = Field(None, description="租户设置")
+    features: dict[str, bool] | None = Field(None, description="功能配置")
+    branding: dict[str, Any] | None = Field(None, description="品牌定制")
 
 
 class TenantResponseModel(BaseModel):
@@ -177,20 +163,15 @@ class TenantResponseModel(BaseModel):
 class RoleAssignmentRequestModel(BaseModel):
     """角色分配请求模型"""
 
-    role_code: str = Field(...,
-    description="角色代码")
-    expires_at: datetime | None = Field(None,
-    description="过期时间")
+    role_code: str = Field(..., description="角色代码")
+    expires_at: datetime | None = Field(None, description="过期时间")
 
 
 class PermissionCheckRequestModel(BaseModel):
     """权限检查请求模型"""
 
-    permission_code: str = Field(...,
-    description="权限代码")
-    resource_context: dict[str,
-    Any] | None = Field(None,
-    description="资源上下文")
+    permission_code: str = Field(..., description="权限代码")
+    resource_context: dict[str, Any] | None = Field(None, description="资源上下文")
 
 
 class QuotaCheckResponseModel(BaseModel):
@@ -206,14 +187,10 @@ class QuotaCheckResponseModel(BaseModel):
 class TenantStatisticsResponseModel(BaseModel):
     """租户统计响应模型"""
 
-    tenant_info: dict[str,
-    Any]
-    user_statistics: dict[str,
-    Any]
-    prediction_statistics: dict[str,
-    Any]
-    api_statistics: dict[str,
-    Any]
+    tenant_info: dict[str, Any]
+    user_statistics: dict[str, Any]
+    prediction_statistics: dict[str, Any]
+    api_statistics: dict[str, Any]
     quota_status: dict[str, QuotaCheckResponseModel]
 
 
@@ -221,13 +198,10 @@ class TenantStatisticsResponseModel(BaseModel):
 
 
 @router.post(
-    "/",
-    response_model=TenantResponseModel,
-    status_code=status.HTTP_201_CREATED
+    "/", response_model=TenantResponseModel, status_code=status.HTTP_201_CREATED
 )
 @require_permission("tenant.create")
-async def create_tenant(request: Request,
-    tenant_data: TenantCreationRequestModel):
+async def create_tenant(request: Request, tenant_data: TenantCreationRequestModel):
     """
     创建新租户
 
@@ -243,7 +217,6 @@ async def create_tenant(request: Request,
         # 创建租户
         creation_request = TenantCreationRequest(
             name=tenant_data.name,
-
             slug=tenant_data.slug,
             contact_email=tenant_data.contact_email,
             company_name=tenant_data.company_name,
@@ -354,7 +327,6 @@ async def assign_user_role(
     user_id: int,
     role_data: RoleAssignmentRequestModel,
     request: Request,
-
 ):
     """
     为用户分配角色
@@ -367,10 +339,9 @@ async def assign_user_role(
 
         assignment = await tenant_service.assign_user_role(
             user_id=user_id,
-    tenant_id=tenant_id,
-    role_code=role_data.role_code,
-    assigned_by=tenant_context.user_id,
-
+            tenant_id=tenant_id,
+            role_code=role_data.role_code,
+            assigned_by=tenant_context.user_id,
             expires_at=role_data.expires_at,
         )
 
@@ -379,9 +350,7 @@ async def assign_user_role(
 
 @router.delete("/{tenant_id}/users/{user_id}/roles/{role_code}")
 @require_permission("roles.manage")
-async def revoke_user_role(tenant_id: int,
-    user_id: int,
-    role_code: str):
+async def revoke_user_role(tenant_id: int, user_id: int, role_code: str):
     """
     撤销用户角色
 
@@ -389,9 +358,7 @@ async def revoke_user_role(tenant_id: int,
     """
     async with get_db_session() as db:
         tenant_service = TenantService(db)
-        success = await tenant_service.revoke_user_role(user_id,
-    tenant_id,
-    role_code)
+        success = await tenant_service.revoke_user_role(user_id, tenant_id, role_code)
 
         if not success:
             raise HTTPException(
@@ -404,9 +371,7 @@ async def revoke_user_role(tenant_id: int,
 @router.post("/{tenant_id}/permissions/check")
 @require_permission("permissions.check")
 async def check_permission(
-    tenant_id: int,
-    permission_data: PermissionCheckRequestModel,
-    request: Request
+    tenant_id: int, permission_data: PermissionCheckRequestModel, request: Request
 ):
     """
     检查用户权限
@@ -415,14 +380,12 @@ async def check_permission(
     """
     tenant_context = get_tenant_context(request)
     if not tenant_context:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="未认证")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="未认证")
 
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         result = await tenant_service.check_user_permission(
             user_id=tenant_context.user_id,
-
             tenant_id=tenant_id,
             permission_code=permission_data.permission_code,
             resource_context=permission_data.resource_context,
@@ -446,10 +409,7 @@ async def check_permission(
 async def check_resource_quota(
     tenant_id: int,
     resource_type: str,
-    amount: int = Query(1,
-    ge=1,
-    description="需要的资源量"),
-
+    amount: int = Query(1, ge=1, description="需要的资源量"),
 ):
     """
     检查资源配额
@@ -459,15 +419,12 @@ async def check_resource_quota(
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         quota_check = await tenant_service.check_resource_quota(
-            tenant_id=tenant_id,
-    resource_type=resource_type,
-    additional_amount=amount
+            tenant_id=tenant_id, resource_type=resource_type, additional_amount=amount
         )
 
         return QuotaCheckResponseModel(
             can_access=quota_check.can_access,
-    current_usage=quota_check.current_usage,
-
+            current_usage=quota_check.current_usage,
             max_limit=quota_check.max_limit,
             usage_percentage=quota_check.usage_percentage,
             reason=quota_check.reason,
@@ -491,28 +448,21 @@ async def update_usage_metrics(tenant_id: int, metrics: dict[str, Any]):
 # ==================== 租户列表和搜索 ==================== None
 
 
-@router.get("/",
-    response_model=list[TenantResponseModel])
+@router.get("/", response_model=list[TenantResponseModel])
 @require_permission("tenant.list")
 async def list_tenants(
-    skip: int = Query(0,
-    ge=0,
-    description="跳过数量"),
-
+    skip: int = Query(0, ge=0, description="跳过数量"),
     limit: int = Query(
         50,
-    # TODO: 将魔法数字 50 提取为常量
+        # TODO: 将魔法数字 50 提取为常量
         ge=1,
-    le=100,
-    # TODO: 将魔法数字 100 提取为常量
+        le=100,
+        # TODO: 将魔法数字 100 提取为常量
         description="返回数量",
-    # TODO: 将魔法数字 50 提取为常量
+        # TODO: 将魔法数字 50 提取为常量
     ),  # TODO: 将魔法数字 50 提取为常量
-    status: TenantStatus | None = Query(None,
-    description="状态筛选"),
-    plan: TenantPlan | None = Query(None,
-    description="计划筛选"),
-
+    status: TenantStatus | None = Query(None, description="状态筛选"),
+    plan: TenantPlan | None = Query(None, description="计划筛选"),
     search: str | None = Query(None, description="搜索关键词"),
 ):
     """

@@ -186,8 +186,7 @@ class Prediction:
     cancellation_reason: str | None = None
 
     # 领域事件
-    _domain_events: list[Any] = field(default_factory=list,
-    init=False)
+    _domain_events: list[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
         """函数文档字符串"""
@@ -204,9 +203,8 @@ class Prediction:
 
     def make_prediction(
         self,
-    predicted_home: int,
-    predicted_away: int,
-
+        predicted_home: int,
+        predicted_away: int,
         confidence: float | None = None,
         model_version: str | None = None,
     ) -> None:
@@ -215,8 +213,7 @@ class Prediction:
             raise DomainError(f"预测状态为 {self.status.value},无法修改")
 
         self.score = PredictionScore(
-            predicted_home=predicted_home,
-    predicted_away=predicted_away
+            predicted_home=predicted_home, predicted_away=predicted_away
         )
 
         if confidence is not None:
@@ -231,20 +228,18 @@ class Prediction:
         self._add_domain_event(
             PredictionCreatedEvent(
                 prediction_id=self.id or 0,
-    user_id=self.user_id,
-    match_id=self.match_id,
-
+                user_id=self.user_id,
+                match_id=self.match_id,
                 predicted_home=self.score.predicted_home,
                 predicted_away=self.score.predicted_away,
                 confidence=float(self.confidence.value) if self.confidence else None,
-    )
+            )
         )
 
     def evaluate(
         self,
-    actual_home: int,
-    actual_away: int,
-
+        actual_home: int,
+        actual_away: int,
         scoring_rules: dict[str, Decimal] | None = None,
     ) -> None:
         """评估预测结果"""
@@ -271,22 +266,19 @@ class Prediction:
         self._add_domain_event(
             PredictionEvaluatedEvent(
                 prediction_id=self.id or 0,
-    actual_home=actual_home,
-    actual_away=actual_away,
-    is_correct=self.score.is_correct_score,
-
+                actual_home=actual_home,
+                actual_away=actual_away,
+                is_correct=self.score.is_correct_score,
                 points_earned=(
                     int(self.points.total) if self.points is not None else None
                 ),
-    accuracy_score=self.accuracy_score,
-    )
+                accuracy_score=self.accuracy_score,
+            )
         )
 
-    def cancel(self,
-    reason: str | None = None) -> None:
+    def cancel(self, reason: str | None = None) -> None:
         """取消预测"""
-        if self.status in [PredictionStatus.EVALUATED,
-    PredictionStatus.CANCELLED]:
+        if self.status in [PredictionStatus.EVALUATED, PredictionStatus.CANCELLED]:
             raise DomainError(f"预测状态为 {self.status.value},无法取消")
 
         self.status = PredictionStatus.CANCELLED
@@ -305,16 +297,14 @@ class Prediction:
         """默认积分规则"""
         return {
             "exact_score": Decimal("10"),
-    # 精确比分
+            # 精确比分
             "correct_result": Decimal("3"),
-    # 正确结果
+            # 正确结果
             "confidence_multiplier": Decimal("1"),
-    # 置信度倍数
+            # 置信度倍数
         }
 
-    def _calculate_points(self,
-    rules: dict[str,
-    Decimal]) -> PredictionPoints:
+    def _calculate_points(self, rules: dict[str, Decimal]) -> PredictionPoints:
         """计算积分"""
         points = PredictionPoints()
 
@@ -393,14 +383,13 @@ class Prediction:
                 else None
             ),
             "confidence": str(self.confidence) if self.confidence else None,
-    "points": float(self.points.total) if self.points else None,
-    "is_correct_score": (
+            "points": float(self.points.total) if self.points else None,
+            "is_correct_score": (
                 self.score.is_correct_score if self.score.is_evaluated else None
             ),
-    "is_correct_result": (
+            "is_correct_result": (
                 self.score.is_correct_result if self.score.is_evaluated else None
             ),
-
             "accuracy": self.accuracy_score,
         }
 
@@ -447,51 +436,43 @@ class Prediction:
                 {
                     "total": float(self.points.total),
                     "breakdown": {
-                        k: float(v) for k,
-    v in self.points.breakdown.items()
+                        k: float(v) for k, v in self.points.breakdown.items()
                     },
-    }
+                }
                 if self.points
                 else None
             ),
-    "created_at": self.created_at.isoformat(),
-
+            "created_at": self.created_at.isoformat(),
             "evaluated_at": (
                 self.evaluated_at.isoformat() if self.evaluated_at else None
             ),
-    "cancelled_at": (
+            "cancelled_at": (
                 self.cancelled_at.isoformat() if self.cancelled_at else None
             ),
-    "cancellation_reason": self.cancellation_reason,
-    }
+            "cancellation_reason": self.cancellation_reason,
+        }
 
     @classmethod
-    def from_dict(cls,
-    data: dict[str,
-    Any]) -> "Prediction":
+    def from_dict(cls, data: dict[str, Any]) -> "Prediction":
         """从字典创建实例"""
-        score_data = data.pop("score",
-    None)
+        score_data = data.pop("score", None)
         score = PredictionScore(**score_data) if score_data else None
 
-        confidence_data = data.pop("confidence",
-    None)
+        confidence_data = data.pop("confidence", None)
         confidence = (
             ConfidenceScore(Decimal(str(confidence_data))) if confidence_data else None
         )
 
-        points_data = data.pop("points",
-    None)
+        points_data = data.pop("points", None)
         points = (
             PredictionPoints(
                 total=Decimal(str(points_data["total"])),
-
                 score_bonus=Decimal(str(points_data["breakdown"]["score_bonus"])),
-    result_bonus=Decimal(str(points_data["breakdown"]["result_bonus"])),
-    confidence_bonus=Decimal(
+                result_bonus=Decimal(str(points_data["breakdown"]["result_bonus"])),
+                confidence_bonus=Decimal(
                     str(points_data["breakdown"]["confidence_bonus"])
                 ),
-    )
+            )
             if points_data
             else None
         )
@@ -508,10 +489,7 @@ class Prediction:
         if data.get("status"):
             data["status"] = PredictionStatus(data["status"])
 
-        return cls(score=score,
-    confidence=confidence,
-    points=points,
-    **data)
+        return cls(score=score, confidence=confidence, points=points, **data)
 
     def __str__(self) -> str:
         score_str = str(self.score) if self.score else "未预测"

@@ -114,6 +114,7 @@ def create_access_token(data: dict, expires_delta: Optional = None):
 
 def get_user_management_service():
     """获取用户管理服务"""
+
     # 这里应该返回用户管理服务的实例
     # 为了测试目的，返回一个简单的模拟对象
     class MockUserManagementService:

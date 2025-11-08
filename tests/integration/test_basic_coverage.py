@@ -7,7 +7,9 @@
 
 def test_utils_dict_utils_basic():
     """测试dict_utils基础功能"""
-    logger.debug("🧪 测试 utils.dict_utils 基础功能...")  # TODO: Add logger import if needed
+    logger.debug(
+        "🧪 测试 utils.dict_utils 基础功能..."
+    )  # TODO: Add logger import if needed
 
     try:
         from src.utils.dict_utils import DictUtils
@@ -28,18 +30,24 @@ def test_utils_dict_utils_basic():
         # 测试嵌套字典
         result = utils.get_nested_value(test_dict, "level1.level2")
         assert result == "deep_value", f"Expected 'deep_value', got {result}"
-        logger.debug("✅ get_nested_value 功能正常")  # TODO: Add logger import if needed
+        logger.debug(
+            "✅ get_nested_value 功能正常"
+        )  # TODO: Add logger import if needed
 
         return True
 
     except Exception as e:
-        logger.debug(f"❌ utils.dict_utils 测试失败: {e}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"❌ utils.dict_utils 测试失败: {e}"
+        )  # TODO: Add logger import if needed
         return False
 
 
 def test_utils_response_basic():
     """测试response基础功能"""
-    logger.debug("🧪 测试 utils.response 基础功能...")  # TODO: Add logger import if needed
+    logger.debug(
+        "🧪 测试 utils.response 基础功能..."
+    )  # TODO: Add logger import if needed
 
     try:
         from src.utils.response import ResponseUtils
@@ -49,25 +57,33 @@ def test_utils_response_basic():
         assert (
             response.get("data") == "test"
         ), f"Expected 'test', got {response.get('data')}"
-        logger.debug("✅ create_success_response 功能正常")  # TODO: Add logger import if needed
+        logger.debug(
+            "✅ create_success_response 功能正常"
+        )  # TODO: Add logger import if needed
 
         # 测试错误响应
         error_response = ResponseUtils.create_error_response("test error", 400)
         assert (
             error_response.get("error") == "test error"
         ), f"Expected 'test error', got {error_response.get('error')}"
-        logger.error("✅ create_error_response 功能正常")  # TODO: Add logger import if needed
+        logger.error(
+            "✅ create_error_response 功能正常"
+        )  # TODO: Add logger import if needed
 
         return True
 
     except Exception as e:
-        logger.debug(f"❌ utils.response 测试失败: {e}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"❌ utils.response 测试失败: {e}"
+        )  # TODO: Add logger import if needed
         return False
 
 
 def test_utils_string_utils_basic():
     """测试string_utils基础功能"""
-    logger.debug("🧪 测试 utils.string_utils 基础功能...")  # TODO: Add logger import if needed
+    logger.debug(
+        "🧪 测试 utils.string_utils 基础功能..."
+    )  # TODO: Add logger import if needed
 
     try:
         from src.utils.string_utils import StringUtils
@@ -86,7 +102,9 @@ def test_utils_string_utils_basic():
         return True
 
     except Exception as e:
-        logger.debug(f"❌ utils.string_utils 测试失败: {e}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"❌ utils.string_utils 测试失败: {e}"
+        )  # TODO: Add logger import if needed
         return False
 
 
@@ -104,13 +122,19 @@ def test_crypto_utils_import():
     except ImportError as e:
         # 如果是因为缺少依赖，这是预期的
         if "yaml" in str(e).lower() or "cryptography" in str(e).lower():
-            logger.debug("⚠️  crypto_utils 导入失败（缺少依赖，这是预期的）")  # TODO: Add logger import if needed
+            logger.debug(
+                "⚠️  crypto_utils 导入失败（缺少依赖，这是预期的）"
+            )  # TODO: Add logger import if needed
             return True
         else:
-            logger.debug(f"❌ crypto_utils 导入失败: {e}")  # TODO: Add logger import if needed
+            logger.debug(
+                f"❌ crypto_utils 导入失败: {e}"
+            )  # TODO: Add logger import if needed
             return False
     except Exception as e:
-        logger.debug(f"❌ crypto_utils 导入失败: {e}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"❌ crypto_utils 导入失败: {e}"
+        )  # TODO: Add logger import if needed
         return False
 
 
@@ -162,17 +186,25 @@ def run_coverage_tests():
         try:
             if test_func():
                 passed += 1
-                logger.debug(f"✅ {test_name} - 通过")  # TODO: Add logger import if needed
+                logger.debug(
+                    f"✅ {test_name} - 通过"
+                )  # TODO: Add logger import if needed
             else:
-                logger.debug(f"❌ {test_name} - 失败")  # TODO: Add logger import if needed
+                logger.debug(
+                    f"❌ {test_name} - 失败"
+                )  # TODO: Add logger import if needed
         except Exception as e:
-            logger.debug(f"❌ {test_name} - 异常: {e}")  # TODO: Add logger import if needed
+            logger.debug(
+                f"❌ {test_name} - 异常: {e}"
+            )  # TODO: Add logger import if needed
 
     success_rate = (passed / total) * 100
     logger.debug("\n📊 覆盖率测试结果:")  # TODO: Add logger import if needed
     logger.debug(f"   - 总测试数: {total}")  # TODO: Add logger import if needed
     logger.debug(f"   - 通过数: {passed}")  # TODO: Add logger import if needed
-    logger.debug(f"   - 成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
+    logger.debug(
+        f"   - 成功率: {success_rate:.1f}%"
+    )  # TODO: Add logger import if needed
 
     return passed, total, success_rate
 
@@ -195,9 +227,15 @@ def estimate_coverage():
     tested_modules = len(modules_tested)
     coverage_rate = (tested_modules / estimated_modules) * 100
 
-    logger.debug(f"   - 估算总模块数: {estimated_modules}")  # TODO: Add logger import if needed
-    logger.debug(f"   - 已测试模块数: {tested_modules}")  # TODO: Add logger import if needed
-    logger.debug(f"   - 估算覆盖率: {coverage_rate:.1f}%")  # TODO: Add logger import if needed
+    logger.debug(
+        f"   - 估算总模块数: {estimated_modules}"
+    )  # TODO: Add logger import if needed
+    logger.debug(
+        f"   - 已测试模块数: {tested_modules}"
+    )  # TODO: Add logger import if needed
+    logger.debug(
+        f"   - 估算覆盖率: {coverage_rate:.1f}%"
+    )  # TODO: Add logger import if needed
 
     return coverage_rate
 
@@ -210,8 +248,12 @@ if __name__ == "__main__":
     estimated_coverage = estimate_coverage()
 
     logger.debug("\n🎯 总体评估:")  # TODO: Add logger import if needed
-    logger.debug(f"   - 测试成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
-    logger.debug(f"   - 估算覆盖率: {estimated_coverage:.1f}%")  # TODO: Add logger import if needed
+    logger.debug(
+        f"   - 测试成功率: {success_rate:.1f}%"
+    )  # TODO: Add logger import if needed
+    logger.debug(
+        f"   - 估算覆盖率: {estimated_coverage:.1f}%"
+    )  # TODO: Add logger import if needed
 
     if success_rate >= 80:
         logger.debug("🎉 测试成功率优秀！")  # TODO: Add logger import if needed

@@ -122,10 +122,9 @@ def get_database_config(environment: str | None = None) -> DatabaseConfig:
 
     return DatabaseConfig(
         host=host,
-    port=port,
-    database=database,
-    username=username,
-
+        port=port,
+        database=database,
+        username=username,
         password=password,
         pool_size=pool_size,
         max_overflow=max_overflow,

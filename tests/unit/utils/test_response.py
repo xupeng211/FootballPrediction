@@ -118,7 +118,7 @@ class TestAPIResponse:
         model = APIResponseModel(
             success=response_data["success"],
             message=response_data["message"],
-            data=response_data["data"]
+            data=response_data["data"],
         )
 
         assert model.success is True
@@ -171,13 +171,10 @@ class TestResponseIntegration:
             "id": 123,
             "username": "testuser",
             "email": "test@example.com",
-            "created_at": "2023-01-01T00:00:00"
+            "created_at": "2023-01-01T00:00:00",
         }
 
-        success_response = APIResponse.success(
-            data=user_data,
-            message="用户创建成功"
-        )
+        success_response = APIResponse.success(data=user_data, message="用户创建成功")
 
         assert success_response["success"] is True
         assert success_response["message"] == "用户创建成功"
@@ -186,13 +183,11 @@ class TestResponseIntegration:
         # 模拟验证失败场景
         validation_errors = {
             "username": ["用户名不能为空"],
-            "email": ["邮箱格式不正确"]
+            "email": ["邮箱格式不正确"],
         }
 
         error_response = APIResponse.error(
-            message="数据验证失败",
-            code=422,
-            data=validation_errors
+            message="数据验证失败", code=422, data=validation_errors
         )
 
         assert error_response["success"] is False

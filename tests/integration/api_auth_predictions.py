@@ -47,11 +47,15 @@ class AuthPredictionIntegrationTester:
         self.test_results.append(result)
 
         status_symbol = "✅" if success else "❌"
-        logger.debug(f"{status_symbol} {test_name}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"{status_symbol} {test_name}"
+        )  # TODO: Add logger import if needed
         if details:
             logger.debug(f"   📝 {details}")  # TODO: Add logger import if needed
         if duration > 0:
-            logger.debug(f"   ⏱️  耗时: {duration:.2f}秒")  # TODO: Add logger import if needed
+            logger.debug(
+                f"   ⏱️  耗时: {duration:.2f}秒"
+            )  # TODO: Add logger import if needed
 
     async def test_health_endpoints(self) -> bool:
         """测试健康检查端点"""
@@ -368,7 +372,9 @@ class AuthPredictionIntegrationTester:
 
     async def run_all_tests(self) -> dict[str, Any]:
         """运行所有集成测试"""
-        logger.debug("🚀 开始API集成测试：认证与预测服务集成")  # TODO: Add logger import if needed
+        logger.debug(
+            "🚀 开始API集成测试：认证与预测服务集成"
+        )  # TODO: Add logger import if needed
         logger.debug("=" * 60)  # TODO: Add logger import if needed
 
         test_methods = [
@@ -411,8 +417,12 @@ class AuthPredictionIntegrationTester:
         logger.debug("📊 测试完成！")  # TODO: Add logger import if needed
         logger.debug(f"总测试数: {total_tests}")  # TODO: Add logger import if needed
         logger.debug(f"通过测试: {passed_tests}")  # TODO: Add logger import if needed
-        logger.debug(f"失败测试: {total_tests - passed_tests}")  # TODO: Add logger import if needed
-        logger.debug(f"成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
+        logger.debug(
+            f"失败测试: {total_tests - passed_tests}"
+        )  # TODO: Add logger import if needed
+        logger.debug(
+            f"成功率: {success_rate:.1f}%"
+        )  # TODO: Add logger import if needed
 
         return report
 
@@ -488,13 +498,17 @@ async def main():
     report = await tester.run_all_tests()
 
     logger.debug("\n🎯 集成测试结果:")  # TODO: Add logger import if needed
-    logger.debug(f"成功率: {report['success_rate']:.1f}%")  # TODO: Add logger import if needed
+    logger.debug(
+        f"成功率: {report['success_rate']:.1f}%"
+    )  # TODO: Add logger import if needed
 
     if report["success_rate"] >= 80:
         logger.debug("🎉 集成测试通过！")  # TODO: Add logger import if needed
         return 0
     else:
-        logger.debug("❌ 集成测试失败，成功率不足80%")  # TODO: Add logger import if needed
+        logger.debug(
+            "❌ 集成测试失败，成功率不足80%"
+        )  # TODO: Add logger import if needed
         return 1
 
 

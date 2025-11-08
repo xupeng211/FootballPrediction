@@ -330,6 +330,8 @@ async def prometheus_metrics():
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取Prometheus指标失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="获取监控指标失败") from e
+
+
 @router.get("/collector/health")
 async def collector_health() -> dict[str, Any]:
     try:
@@ -365,6 +367,8 @@ async def collector_status() -> dict[str, Any]:
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取收集器状态失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="获取状态失败") from e
+
+
 @router.post("/collector/start")
 async def start_collector() -> dict[str, str]:
     try:

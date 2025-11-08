@@ -23,7 +23,9 @@ try:
 
     CAN_IMPORT = True
 except ImportError as e:
-    logger.warning(f"Warning: 无法导入Elo模型: {e}")  # TODO: Add logger import if needed
+    logger.warning(
+        f"Warning: 无法导入Elo模型: {e}"
+    )  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 

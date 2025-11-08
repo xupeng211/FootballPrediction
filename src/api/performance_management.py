@@ -536,7 +536,6 @@ async def _clear_cache_by_keys(keys: list[str]):
             cleared_count += 1
 
 
-
 async def _clear_all_cache():
     """清理所有缓存"""
     await _clear_cache_by_pattern("*")

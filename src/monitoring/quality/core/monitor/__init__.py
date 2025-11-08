@@ -5,6 +5,7 @@
 
 # 桩实现
 
+
 class QualityMonitor:
     """质量监控器桩实现"""
 

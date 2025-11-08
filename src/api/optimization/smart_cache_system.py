@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from src.cache.redis_enhanced import EnhancedRedisClient
+from src.cache.redis_enhanced import EnhancedRedisManager
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class CacheEntry:
 class SmartCacheManager:
     """智能缓存管理器"""
 
-    def __init__(self, redis_client: Optional[EnhancedRedisClient] = None,
+    def __init__(self, redis_client: Optional[EnhancedRedisManager] = None,
                  max_memory_size: int = 100 * 1024 * 1024):  # 100MB
         self.redis_client = redis_client
         self.max_memory_size = max_memory_size
@@ -411,7 +411,7 @@ def get_cache_middleware() -> Optional[CacheMiddleware]:
     return _cache_middleware
 
 
-async def initialize_cache_system(redis_client: Optional[EnhancedRedisClient] = None) -> SmartCacheManager:
+async def initialize_cache_system(redis_client: Optional[EnhancedRedisManager] = None) -> SmartCacheManager:
     """初始化缓存系统"""
     global _cache_manager, _cache_middleware
 

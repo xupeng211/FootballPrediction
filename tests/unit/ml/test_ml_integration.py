@@ -185,7 +185,9 @@ class TestMLWorkflowIntegration:
                 predictions.append(prediction)
             except Exception as e:
                 # 记录预测失败的情况
-                logger.error(f"Prediction failed for {request['match_id']}: {e}")  # TODO: Add logger import if needed
+                logger.error(
+                    f"Prediction failed for {request['match_id']}: {e}"
+                )  # TODO: Add logger import if needed
 
         # 6. 验证预测结果
         assert len(predictions) > 0

@@ -50,7 +50,6 @@ async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     global db_pool
 
-
     # 初始化数据库连接池
     try:
         db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
@@ -61,13 +60,11 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
-
     yield
 
     # 清理资源
     if db_pool:
         await db_pool.close()
-
 
 
 async def create_tables():
@@ -113,9 +110,9 @@ async def get_db_connection():
     if not db_pool:
         raise HTTPException(
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
     return db_pool
 
@@ -123,7 +120,6 @@ async def get_db_connection():
 # 创建 FastAPI 应用
 app = FastAPI(
     title="Football Prediction API - Enhanced",
-
     description="Advanced football match prediction system with data access layer",
     version="2.1.0",
     lifespan=lifespan,
@@ -141,8 +137,7 @@ async def root():
     }
 
 
-@app.get("/health",
-    response_model=HealthResponse)
+@app.get("/health", response_model=HealthResponse)
 async def health_check():
     """增强健康检查端点"""
     db_status = "connected" if db_pool else "disconnected"
@@ -151,23 +146,19 @@ async def health_check():
     redis_status = "connected"  # 这里可以添加实际的 Redis 检查
 
     return HealthResponse(
-        status="healthy",
-    version="2.1.0",
-    database=db_status,
-    redis=redis_status
+        status="healthy", version="2.1.0", database=db_status, redis=redis_status
     )
 
 
-@app.get("/predictions",
-    response_model=list[PredictionResponse])
+@app.get("/predictions", response_model=list[PredictionResponse])
 async def get_predictions():
     """获取所有预测"""
     if not db_pool:
         raise HTTPException(
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
@@ -178,36 +169,32 @@ async def get_predictions():
         return [
             PredictionResponse(
                 id=row["id"],
-
                 match_id=row["match_id"],
                 predicted_winner=row["predicted_winner"],
                 confidence=row["confidence"],
                 created_at=row["created_at"].isoformat(),
-    )
+            )
             for row in rows
         ]
 
 
-@app.post("/predictions",
-    response_model=PredictionResponse)
-async def create_prediction(match_id: int,
-    predicted_winner: str,
-    confidence: float):
+@app.post("/predictions", response_model=PredictionResponse)
+async def create_prediction(match_id: int, predicted_winner: str, confidence: float):
     """创建新预测"""
     if not db_pool:
         raise HTTPException(
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
 
     if confidence < 0 or confidence > 1:
         raise HTTPException(
             status_code=400,
-    # TODO: 将魔法数字 400 提取为常量
+            # TODO: 将魔法数字 400 提取为常量
             detail="Confidence must be between 0 and 1",
-    # TODO: 将魔法数字 400 提取为常量
+            # TODO: 将魔法数字 400 提取为常量
         )  # TODO: 将魔法数字 400 提取为常量
 
     async with db_pool.acquire() as conn:
@@ -228,10 +215,9 @@ async def create_prediction(match_id: int,
 
         return PredictionResponse(
             id=row["id"],
-    match_id=row["match_id"],
-    predicted_winner=row["predicted_winner"],
-    confidence=row["confidence"],
-
+            match_id=row["match_id"],
+            predicted_winner=row["predicted_winner"],
+            confidence=row["confidence"],
             created_at=row["created_at"].isoformat(),
         )
 
@@ -242,30 +228,28 @@ async def get_prediction(prediction_id: int):
     if not db_pool:
         raise HTTPException(
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT * FROM predictions WHERE id = $1",
-    prediction_id
+            "SELECT * FROM predictions WHERE id = $1", prediction_id
         )
 
         if not row:
             raise HTTPException(
                 status_code=404,
-    # TODO: 将魔法数字 404 提取为常量
+                # TODO: 将魔法数字 404 提取为常量
                 detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
             )  # TODO: 将魔法数字 404 提取为常量
 
         return PredictionResponse(
             id=row["id"],
-    match_id=row["match_id"],
-    predicted_winner=row["predicted_winner"],
-    confidence=row["confidence"],
-
+            match_id=row["match_id"],
+            predicted_winner=row["predicted_winner"],
+            confidence=row["confidence"],
             created_at=row["created_at"].isoformat(),
         )
 
@@ -276,21 +260,20 @@ async def delete_prediction(prediction_id: int):
     if not db_pool:
         raise HTTPException(
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
+            # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
         result = await conn.execute(
-            "DELETE FROM predictions WHERE id = $1",
-    prediction_id
+            "DELETE FROM predictions WHERE id = $1", prediction_id
         )
 
         if result == "DELETE 0":
             raise HTTPException(
                 status_code=404,
-    # TODO: 将魔法数字 404 提取为常量
+                # TODO: 将魔法数字 404 提取为常量
                 detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
             )  # TODO: 将魔法数字 404 提取为常量
 
@@ -302,10 +285,9 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "app_enhanced:app",
-    host="0.0.0.0",
-    port=8000,
-    # TODO: 将魔法数字 8000 提取为常量
+        host="0.0.0.0",
+        port=8000,
+        # TODO: 将魔法数字 8000 提取为常量
         reload=True,
-
         log_level="info",
     )

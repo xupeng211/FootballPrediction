@@ -66,6 +66,8 @@ async def get_match_features(
     except Exception as e:
         logger.error(f"未知错误: {e}")
         raise HTTPException(status_code=500, detail="服务器内部错误") from e
+
+
 @router.get("/health", response_model=dict[str, str])
 async def health_check() -> dict[str, str]:
     """
@@ -80,6 +82,8 @@ async def health_check() -> dict[str, str]:
     except Exception as e:
         logger.error(f"健康检查失败: {e}")
         raise HTTPException(status_code=500, detail="健康检查失败") from e
+
+
 @router.get("/", response_model=dict[str, Any])
 async def get_features_info() -> dict[str, Any]:
     """

@@ -122,10 +122,9 @@ class LeagueCollector(FootballDataCollector):
 
             result = {
                 "league": self.normalize_league_data(competition),
-    "standings": normalized_standings,
-    "current_matches": matches,
-    "timestamp": datetime.utcnow().isoformat(),
-
+                "standings": normalized_standings,
+                "current_matches": matches,
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             logger.info(f"Collected complete data for {competition_code}")
@@ -150,10 +149,10 @@ class LeagueCollector(FootballDataCollector):
         try:
             return {
                 "external_id": str(competition.get("id")),
-    "name": competition.get("name"),
-    "code": competition.get("code"),
-    "type": competition.get("type"),
-    # LEAGUE, CUP, etc.
+                "name": competition.get("name"),
+                "code": competition.get("code"),
+                "type": competition.get("type"),
+                # LEAGUE, CUP, etc.
                 "emblem": competition.get("emblem"),
                 "area": {
                     "id": competition.get("area", {}).get("id"),
@@ -168,19 +167,13 @@ class LeagueCollector(FootballDataCollector):
         except Exception as e:
             logger.error(f"Error normalizing league data: {e}")
             return {
-                "external_id": str(competition.get("id",
-    "")),
-    "name": competition.get("name",
-    "Unknown League"),
-
+                "external_id": str(competition.get("id", "")),
+                "name": competition.get("name", "Unknown League"),
                 "error": str(e),
-    "raw_data": competition,
-    }
+                "raw_data": competition,
+            }
 
-    def _normalize_season_data(self,
-    season: dict[str,
-    Any]) -> dict[str,
-    Any]:
+    def _normalize_season_data(self, season: dict[str, Any]) -> dict[str, Any]:
         """标准化赛季数据"""
         if not season:
             return {}
@@ -188,10 +181,9 @@ class LeagueCollector(FootballDataCollector):
         try:
             return {
                 "id": season.get("id"),
-    "start_date": season.get("startDate"),
-    "end_date": season.get("endDate"),
-    "current_matchday": season.get("currentMatchday"),
-
+                "start_date": season.get("startDate"),
+                "end_date": season.get("endDate"),
+                "current_matchday": season.get("currentMatchday"),
                 "winner": season.get("winner"),
             }
         except Exception as e:
@@ -199,11 +191,7 @@ class LeagueCollector(FootballDataCollector):
             return {}
 
     def normalize_standings_data(
-        self,
-    standings: list[dict[str,
-    Any]],
-    competition: dict[str,
-    Any]
+        self, standings: list[dict[str, Any]], competition: dict[str, Any]
     ) -> list[dict[str, Any]]:
         """
         标准化积分榜数据格式
@@ -222,14 +210,10 @@ class LeagueCollector(FootballDataCollector):
                 return normalized_standings
 
             for standing in standings:
-                table = standing.get("table",
-    [])
-                group = standing.get("group",
-    None)
-                stage = standing.get("stage",
-    None)
-                table_type = standing.get("type",
-    "TOTAL")
+                table = standing.get("table", [])
+                group = standing.get("group", None)
+                stage = standing.get("stage", None)
+                table_type = standing.get("type", "TOTAL")
 
                 for idx, team_standing in enumerate(table):
                     normalized_team = {
@@ -242,27 +226,21 @@ class LeagueCollector(FootballDataCollector):
                             ),
                             "crest": team_standing.get("team", {}).get("crest"),
                             "tla": team_standing.get("team", {}).get("tla"),
-    },
-    "played_games": team_standing.get("playedGames",
-    0),
-
+                        },
+                        "played_games": team_standing.get("playedGames", 0),
                         "form": team_standing.get("form", None),
                         "won": team_standing.get("won", 0),
                         "draw": team_standing.get("draw", 0),
                         "lost": team_standing.get("lost", 0),
                         "points": team_standing.get("points", 0),
                         "goals_for": team_standing.get("goalsFor", 0),
-                        "goals_against": team_standing.get("goalsAgainst",
-    0),
-    "goal_difference": team_standing.get("goalDifference",
-    0),
-
+                        "goals_against": team_standing.get("goalsAgainst", 0),
+                        "goal_difference": team_standing.get("goalDifference", 0),
                         "competition": {
                             "id": competition.get("id"),
-    "name": competition.get("name"),
-    "code": competition.get("code"),
-    },
-
+                            "name": competition.get("name"),
+                            "code": competition.get("code"),
+                        },
                         "group": group,
                         "stage": stage,
                         "table_type": table_type,
@@ -308,28 +286,22 @@ class LeagueCollector(FootballDataCollector):
                     "total_goals": total_goals_for + total_goals_against,
                     "average_goals_per_game": round(
                         (total_goals_for + total_goals_against)
-                        / max(total_games_played,
-    1),
-    2,
-    ),
-
-                    "average_points_per_game": round(
-                        total_points / max(total_games_played,
-    1),
-    2
+                        / max(total_games_played, 1),
+                        2,
                     ),
-    "highest_points": (
+                    "average_points_per_game": round(
+                        total_points / max(total_games_played, 1), 2
+                    ),
+                    "highest_points": (
                         max(team["points"] for team in standings) if standings else 0
                     ),
-
                     "lowest_points": (
                         min(team["points"] for team in standings) if standings else 0
                     ),
-    },
-    "top_scorers": standings[:5],
-    # 积分榜前5名
+                },
+                "top_scorers": standings[:5],
+                # 积分榜前5名
                 "timestamp": datetime.utcnow().isoformat(),
-
             }
 
             logger.info(f"Collected statistics for {competition_code}")
@@ -342,11 +314,8 @@ class LeagueCollector(FootballDataCollector):
             return {}
 
     async def collect_top_teams(
-        self,
-    competition_code: str,
-    limit: int = 10
-    ) -> list[dict[str,
-    Any]]:
+        self, competition_code: str, limit: int = 10
+    ) -> list[dict[str, Any]]:
         """
         收集联赛排名靠前的球队
 
@@ -359,8 +328,7 @@ class LeagueCollector(FootballDataCollector):
         """
         try:
             league_details = await self.collect_league_details(competition_code)
-            standings = league_details.get("standings",
-    [])
+            standings = league_details.get("standings", [])
 
             # 按积分排序并返回前N名
             top_teams = sorted(standings, key=lambda x: x["points"], reverse=True)[
@@ -375,11 +343,8 @@ class LeagueCollector(FootballDataCollector):
             return []
 
     async def collect_league_matches_by_round(
-        self,
-    competition_code: str,
-    matchday: int | None = None
-    ) -> dict[str,
-    Any]:
+        self, competition_code: str, matchday: int | None = None
+    ) -> dict[str, Any]:
         """
         收集特定轮次的比赛
 
@@ -399,7 +364,6 @@ class LeagueCollector(FootballDataCollector):
                     for comp in all_competitions
                     if comp.get("code") == competition_code
                 ),
-
                 None,
             )
 
@@ -414,7 +378,7 @@ class LeagueCollector(FootballDataCollector):
 
             if not matchday:
                 raise ValueError(
-                                        f"No matchday specified and no current matchday found for {competition_code}"
+                    f"No matchday specified and no current matchday found for {competition_code}"
                 )
 
             # 获取比赛数据
@@ -422,10 +386,9 @@ class LeagueCollector(FootballDataCollector):
 
             result = {
                 "competition": self.normalize_league_data(competition),
-    "matchday": matchday,
-    "matches": matches,
-    "total_matches": len(matches),
-
+                "matchday": matchday,
+                "matches": matches,
+                "total_matches": len(matches),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -440,9 +403,7 @@ class LeagueCollector(FootballDataCollector):
             )
             return {}
 
-    async def search_competitions(self,
-    search_term: str) -> list[dict[str,
-    Any]]:
+    async def search_competitions(self, search_term: str) -> list[dict[str, Any]]:
         """
         搜索联赛
 
@@ -458,10 +419,8 @@ class LeagueCollector(FootballDataCollector):
             matching_competitions = []
 
             for competition in all_competitions:
-                name = competition.get("name",
-    "").lower()
-                code = competition.get("code",
-    "").lower()
+                name = competition.get("name", "").lower()
+                code = competition.get("code", "").lower()
 
                 if (
                     search_term_lower in name

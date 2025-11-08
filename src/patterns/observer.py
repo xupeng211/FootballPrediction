@@ -238,7 +238,6 @@ class ConcreteObserver(Observer):
             except Exception:
                 pass
 
-
     def get_observer_id(self) -> str:
         """获取观察者ID"""
         return self.observer_id
