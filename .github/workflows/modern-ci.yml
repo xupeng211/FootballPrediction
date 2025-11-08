@@ -8,6 +8,17 @@ on:
   schedule:
     # 每天凌晨2点运行质量检查
     - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: '测试模式'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+          - standard
+          - quick
+          - full
 
 env:
   PYTHON_VERSION: "3.11"
