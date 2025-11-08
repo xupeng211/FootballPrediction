@@ -1,7 +1,7 @@
 # 简化版 exception_handler 模块
 
 
-class Exception_Handler:
+class ExceptionHandler:
     def __init__(self):
         pass
 

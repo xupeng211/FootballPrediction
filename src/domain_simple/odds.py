@@ -1,10 +1,10 @@
-"""
-赔率领域模型
-"""
-
 from datetime import datetime
 from enum import Enum
 from typing import Any
+
+"""
+赔率领域模型
+"""
 
 
 class MarketType(Enum):

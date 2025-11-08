@@ -1,9 +1,9 @@
+from .base import Adapter
+
 """
 适配器注册表模块
 Adapter Registry Module
 """
-
-from .base import Adapter
 
 
 class AdapterError(Exception):
@@ -47,7 +47,6 @@ class AdapterRegistry:
         return self.groups.get(group, [])
 
 
-# 全局注册表实例
 _global_registry = AdapterRegistry()
 
 

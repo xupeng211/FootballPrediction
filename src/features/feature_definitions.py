@@ -1,4 +1,9 @@
-# mypy: ignore-errors
+from datetime import datetime
+from decimal import Decimal
+from typing import Any
+
+from .entities import MatchEntity, TeamEntity
+
 """
 特征定义
 
@@ -8,15 +13,7 @@
 - 赔率特征:implied_probability, bookmaker_consensus
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from decimal import Decimal
-from typing import Any
 
-from .entities import MatchEntity, TeamEntity
-
-
-@dataclass
 class RecentPerformanceFeatures:
     """类文档字符串"""
 
@@ -78,7 +75,6 @@ class RecentPerformanceFeatures:
         }
 
 
-@dataclass
 class HistoricalMatchupFeatures:
     """类文档字符串"""
 
@@ -155,7 +151,6 @@ class HistoricalMatchupFeatures:
         }
 
 
-@dataclass
 class OddsFeatures:
     """类文档字符串"""
 
@@ -264,7 +259,6 @@ class OddsFeatures:
         }
 
 
-@dataclass
 class AllMatchFeatures:
     """类文档字符串"""
 
@@ -292,7 +286,6 @@ class AllMatchFeatures:
         }
 
 
-@dataclass
 class AllTeamFeatures:
     """类文档字符串"""
 

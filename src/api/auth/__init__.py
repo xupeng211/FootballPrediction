@@ -1,3 +1,5 @@
+from .router import router
+
 """
 用户认证API包
 
@@ -8,9 +10,6 @@
 - 权限控制
 """
 
-from .router import router
-
-# 测试用的模拟用户数据
 MOCK_USERS = {
     "test@example.com": {
         "id": 1,
@@ -30,7 +29,6 @@ MOCK_USERS = {
 }
 
 
-# 模拟的Pydantic模型（用于测试）
 class UserRegister:
     def __init__(self, email: str, password: str, full_name: str = None):
         self.email = email
@@ -90,7 +88,6 @@ class PasswordChangeRequest:
         self.new_password = new_password
 
 
-# 模拟的认证函数（用于测试）
 def authenticate_user(email: str, password: str):
     """模拟用户认证函数"""
     user = MOCK_USERS.get(email)

@@ -1,3 +1,11 @@
+from src.core import logger
+from src.core.config import get_settings
+
+from .base_unified import BaseService
+from .content_analysis import ContentAnalysisService
+from .data_processing import DataProcessingService
+from .user_profile import UserProfileService
+
 """
 Manager - 服务模块
 
@@ -12,20 +20,6 @@ Manager - 服务模块
 
 注意事项:
 - [待补充 - 使用注意事项]
-"""
-
-from src.core import logger
-from src.core.config import get_settings
-
-from .base_unified import BaseService
-from .content_analysis import ContentAnalysisService
-from .data_processing import DataProcessingService
-from .user_profile import UserProfileService
-
-"""
-足球预测系统服务管理器模块
-
-统一管理所有业务服务的生命周期和依赖关系.
 """
 
 
@@ -97,9 +91,7 @@ class ServiceManager:
                 self.logger.error(f"服务关闭异常: {service.name}, {e}")
 
 
-# 全局服务管理器实例
 service_manager = ServiceManager()
-
 _SERVICE_FACTORIES = {
     "ContentAnalysisService": ContentAnalysisService,
     "UserProfileService": UserProfileService,

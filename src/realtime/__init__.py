@@ -1,15 +1,3 @@
-"""
-实时模块 - 足球预测系统WebSocket实时通信
-
-Realtime Module - Football Prediction System WebSocket Real-time Communication
-
-提供完整的WebSocket实时通信功能,包括:
-- WebSocket连接管理
-- 事件定义和处理
-- 订阅管理
-- 实时数据推送
-"""
-
 from .events import (
     AnalyticsEvent,
     EventType,
@@ -64,10 +52,20 @@ from .subscriptions import (
     subscribe_to_system_alerts,
 )
 
+"""
+实时模块 - 足球预测系统WebSocket实时通信
+
+Realtime Module - Football Prediction System WebSocket Real-time Communication
+
+提供完整的WebSocket实时通信功能,包括:
+- WebSocket连接管理
+- 事件定义和处理
+- 订阅管理
+- 实时数据推送
+"""
+
 __version__ = "1.0.0"
 __author__ = "Football Prediction Team"
-
-# 导出主要类和函数
 __all__ = [
     # 路由
     "router",

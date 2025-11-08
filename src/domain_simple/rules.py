@@ -1,11 +1,11 @@
-"""
-业务规则和验证引擎
-"""
-
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
+
+"""
+业务规则和验证引擎
+"""
 
 
 class ValidationResult:
@@ -334,7 +334,6 @@ class BusinessRules:
         return rules
 
 
-# 全局验证引擎实例
 _validation_engine = None
 
 

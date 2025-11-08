@@ -1,11 +1,3 @@
-"""
-预测仓储
-Prediction Repository
-
-实现预测相关的数据访问逻辑.
-Implements data access logic for predictions.
-"""
-
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
@@ -15,6 +7,14 @@ from sqlalchemy import delete, func, select, update
 from src.database.models import Prediction
 
 from .base import BaseRepository, QuerySpec
+
+"""
+预测仓储
+Prediction Repository
+
+实现预测相关的数据访问逻辑.
+Implements data access logic for predictions.
+"""
 
 
 class PredictionRepositoryInterface(BaseRepository[Prediction, int]):

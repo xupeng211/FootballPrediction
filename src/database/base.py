@@ -1,9 +1,3 @@
-"""
-SQLAlchemy基础模型和数据库连接
-
-提供所有数据模型的基础类,包含通用字段和方法，以及数据库连接函数。
-"""
-
 from collections.abc import AsyncGenerator, Generator
 from datetime import datetime
 from typing import Any
@@ -11,6 +5,12 @@ from typing import Any
 from sqlalchemy import Column, DateTime, Integer, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+
+"""
+SQLAlchemy基础模型和数据库连接
+
+提供所有数据模型的基础类,包含通用字段和方法，以及数据库连接函数。
+"""
 
 
 class Base(DeclarativeBase):
@@ -113,15 +113,10 @@ class BaseModel(Base, TimestampMixin):
         return f"<{self.__class__.__name__}(id={getattr(self, 'id', None)})>"
 
 
-# 数据库连接配置
 DATABASE_URL = "sqlite:///./football_prediction.db"
 ASYNC_DATABASE_URL = "sqlite+aiosqlite:///./football_prediction.db"
-
-# 同步数据库引擎和会话
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# 异步数据库引擎和会话
 async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(
     bind=async_engine, class_=AsyncSession, expire_on_commit=False
@@ -158,5 +153,4 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-# 导出基础类,供其他模型使用
 __all__ = ["Base", "BaseModel", "TimestampMixin"]

@@ -31,6 +31,6 @@ def format_percentage(value: float, decimals: int = 2) -> str:
     # 使用Decimal进行精确的四舍五入
     decimal_value = Decimal(str(value))
     rounded_value = decimal_value.quantize(
-        Decimal(f"0.{'0' * (decimals-1)}1"), rounding=ROUND_HALF_UP
+        Decimal(f"0.{'0' * (decimals - 1)}1"), rounding=ROUND_HALF_UP
     )
     return f"{rounded_value:.{decimals}f}%"

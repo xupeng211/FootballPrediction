@@ -1,11 +1,3 @@
-"""
-用户仓储
-User Repository
-
-提供用户数据的访问操作,实现Repository模式.
-Provides user data access operations, implementing the Repository pattern.
-"""
-
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -16,6 +8,14 @@ from sqlalchemy.orm import selectinload
 from src.database.models.user import User
 
 from .base import BaseRepository
+
+"""
+用户仓储
+User Repository
+
+提供用户数据的访问操作,实现Repository模式.
+Provides user data access operations, implementing the Repository pattern.
+"""
 
 
 class UserRepository(BaseRepository[User]):

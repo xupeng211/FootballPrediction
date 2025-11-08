@@ -1,10 +1,10 @@
+from src.database.base import BaseModel
+
 """
 联赛模型
 
 存储足球联赛的基础信息,如英超,西甲等.
 """
-
-from src.database.base import BaseModel
 
 
 class League(BaseModel):

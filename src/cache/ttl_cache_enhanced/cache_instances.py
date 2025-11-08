@@ -1,3 +1,5 @@
+from .ttl_cache import TTLCache
+
 """
 预定义的缓存实例
 Predefined Cache Instances
@@ -6,31 +8,12 @@ Predefined Cache Instances
 Provides commonly used cache instances, ready to use.
 """
 
-from .ttl_cache import TTLCache
-
-# 预定义的缓存实例
-# Predefined cache instances
-
-# 预测缓存 - 30分钟过期
 prediction_cache = TTLCache(max_size=10000, default_ttl=1800)
-
-# 特征缓存 - 1小时过期
 feature_cache = TTLCache(max_size=5000, default_ttl=3600)
-
-# 赔率缓存 - 5分钟过期
 odds_cache = TTLCache(max_size=20000, default_ttl=300)
-
-# 会话缓存 - 2小时过期
 session_cache = TTLCache(max_size=1000, default_ttl=7200)
-
-# 配置缓存 - 24小时过期
 config_cache = TTLCache(max_size=500, default_ttl=86400)
-
-# 临时缓存 - 5分钟过期
 temp_cache = TTLCache(max_size=1000, default_ttl=300)
-
-# 所有缓存的字典,方便统一管理
-# Dictionary of all caches for easy management
 CACHES = {
     "prediction": prediction_cache,
     "feature": feature_cache,
@@ -103,6 +86,4 @@ def cleanup_all_expired():
     return total_cleaned
 
 
-# 启动自动清理
-# Start auto cleanup
 start_auto_cleanup()

@@ -1,10 +1,3 @@
-"""
-多租户权限管理中间件
-Multi-Tenant Permission Management Middleware
-
-提供HTTP层面的多租户权限控制和访问管理.
-"""
-
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
@@ -17,6 +10,13 @@ from starlette.responses import Response
 from src.database.models.tenant import Tenant
 from src.services.auth_service import AuthService
 from src.services.tenant_service import TenantService
+
+"""
+多租户权限管理中间件
+Multi-Tenant Permission Management Middleware
+
+提供HTTP层面的多租户权限控制和访问管理.
+"""
 
 security = HTTPBearer()
 
@@ -231,9 +231,6 @@ class TenantMiddleware(BaseHTTPMiddleware):
             response.headers["X-Tenant-Plan"] = tenant_context.tenant.plan
 
 
-# ==================== 权限装饰器 ====================
-
-
 def require_permission(
     permission_code: str, resource_context: dict[str, Any] | None = None
 ):
@@ -430,9 +427,6 @@ def check_resource_quota(resource_type: str, amount: int = 1):
         return wrapper
 
     return decorator
-
-
-# ==================== 辅助函数 ====================
 
 
 def get_tenant_context(request: Request) -> TenantContext | None:

@@ -1,11 +1,3 @@
-"""
-预测仓储
-Prediction Repository
-
-提供预测数据的访问操作,实现Repository模式.
-Provides prediction data access operations, implementing the Repository pattern.
-"""
-
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -17,11 +9,17 @@ from src.database.models.predictions import Predictions
 
 from .base import BaseRepository
 
-# 类型别名
+"""
+预测仓储
+Prediction Repository
+
+提供预测数据的访问操作,实现Repository模式.
+Provides prediction data access operations, implementing the Repository pattern.
+"""
+
 Prediction = Predictions
 
 
-# 预测状态常量
 class PredictionStatus:
     """类文档字符串"""
 

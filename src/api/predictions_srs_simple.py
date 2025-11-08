@@ -1,4 +1,14 @@
+import asyncio
+import time
 from datetime import datetime
+from enum import Enum
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, Field
+
+from src.cache.redis_manager import get_redis_manager
+from src.core.logging_system import get_logger
 
 """
 SRS规范简化预测API - 不依赖数据库
@@ -11,17 +21,6 @@ SRS Compliant Simple Prediction API - Database Independent
 - 支持1000场比赛并发请求
 - Token校验与请求频率限制
 """
-
-import asyncio
-import time
-from enum import Enum
-
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, Field
-
-from src.cache.redis_manager import get_redis_manager
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/predictions-srs", tags=["predictions-srs-simple"])

@@ -1,11 +1,3 @@
-"""
-仓储模式实现
-Repository Pattern Implementation
-
-提供数据访问的抽象层.
-Provides abstraction layer for data access.
-"""
-
 from .base import (
     BaseRepository,
     QuerySpec,
@@ -42,6 +34,14 @@ from .provider import (
     set_repository_provider,
 )
 from .user import ReadOnlyUserRepository, UserRepository, UserRepositoryInterface
+
+"""
+仓储模式实现
+Repository Pattern Implementation
+
+提供数据访问的抽象层.
+Provides abstraction layer for data access.
+"""
 
 __all__ = [
     # Base classes

@@ -1,10 +1,10 @@
-"""
-OpenAPI 配置和文档增强
-"""
-
 from typing import Any
 
 from fastapi import FastAPI
+
+"""
+OpenAPI 配置和文档增强
+"""
 
 
 class OpenAPIConfig:

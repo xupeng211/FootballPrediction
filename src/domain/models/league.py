@@ -1,3 +1,11 @@
+from dataclasses import field
+from datetime import datetime
+from decimal import Decimal
+from enum import Enum
+from typing import Any
+
+from src.core.exceptions import DomainError
+
 """
 联赛领域模型
 League Domain Model
@@ -5,14 +13,6 @@ League Domain Model
 封装联赛相关的业务逻辑和不变性约束.
 Encapsulates league-related business logic and invariants.
 """
-
-from dataclasses import dataclass, field
-from datetime import datetime
-from decimal import Decimal
-from enum import Enum
-from typing import Any
-
-from src.core.exceptions import DomainError
 
 
 class LeagueType(Enum):
@@ -33,7 +33,6 @@ class LeagueStatus(Enum):
     SUSPENDED = "suspended"  # 暂停
 
 
-@dataclass
 class LeagueSeason:
     """类文档字符串"""
 
@@ -103,7 +102,6 @@ class LeagueSeason:
         return f"{self.season} - 第 {self.current_round}/{self.total_rounds} 轮"
 
 
-@dataclass
 class LeagueSettings:
     """类文档字符串"""
 
@@ -163,7 +161,6 @@ class LeagueSettings:
         )
 
 
-@dataclass
 class League:
     """类文档字符串"""
 

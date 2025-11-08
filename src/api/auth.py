@@ -1,17 +1,16 @@
-"""
-认证API模块
-"""
-
 from typing import Any
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+"""
+认证API模块
+"""
+
 router = APIRouter(prefix="/auth", tags=["authentication"])
 security = HTTPBearer()
 
 
-@router.post("/login")
 async def login(username: str, password: str) -> dict[str, Any]:
     """用户登录"""
     # 简化的登录逻辑
@@ -23,7 +22,6 @@ async def login(username: str, password: str) -> dict[str, Any]:
     }
 
 
-@router.get("/me")
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict[str, Any]:
@@ -37,7 +35,6 @@ async def get_current_user(
     }
 
 
-@router.post("/logout")
 async def logout() -> dict[str, str]:
     """用户登出"""
     return {"message": "Successfully logged out"}

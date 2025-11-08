@@ -1,13 +1,3 @@
-"""
-足球预测系统核心功能模块
-
-提供系统核心功能,包括:
-- 配置管理
-- 日志系统
-- 异常处理
-- 基础工具类
-"""
-
 from .config_di import ConfigurationBinder
 from .di import (
     DIContainer,
@@ -27,6 +17,16 @@ from .exceptions import (
 )
 from .logger import Logger, logger
 from .service_lifecycle import ServiceLifecycleManager, get_lifecycle_manager
+
+"""
+足球预测系统核心功能模块
+
+提供系统核心功能,包括:
+- 配置管理
+- 日志系统
+- 异常处理
+- 基础工具类
+"""
 
 __all__ = [
     # 配置管理

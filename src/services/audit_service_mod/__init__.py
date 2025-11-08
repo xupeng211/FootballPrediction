@@ -1,19 +1,15 @@
-"""
-审计服务模块（兼容版本）
-Audit Service Module (Compatibility Version)
-"""
-
-from dataclasses import dataclass
 from datetime import datetime
-
-# 添加缺失的类定义
 from typing import Any
 
 from .audit_service import AuditService, DataSanitizer, SeverityAnalyzer
 from .models import AuditAction, AuditEvent, AuditSeverity
 
+"""
+审计服务模块（兼容版本）
+Audit Service Module (Compatibility Version)
+"""
 
-@dataclass
+
 class AuditContext:
     """类文档字符串"""
 
@@ -28,7 +24,6 @@ class AuditContext:
     metadata: dict[str, Any] | None = None
 
 
-@dataclass
 class AuditLog:
     """类文档字符串"""
 
@@ -46,7 +41,6 @@ class AuditLog:
     metadata: dict[str, Any] | None = None
 
 
-@dataclass
 class AuditLogSummary:
     """类文档字符串"""
 

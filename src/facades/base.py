@@ -1,14 +1,14 @@
+from abc import ABC, abstractmethod
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
 """
 外观模式基类模块
 Facade Base Module
 
 提供外观模式的核心抽象基类和状态管理.
 """
-
-from abc import ABC, abstractmethod
-from datetime import datetime
-from enum import Enum
-from typing import Any
 
 
 class SubsystemStatus(Enum):
@@ -120,7 +120,6 @@ class Facade:
             subsystem.set_error(error_message)
 
 
-# 简化版的子系统管理器和系统外观类
 class SubsystemManager:
     """子系统管理器"""
 
@@ -186,5 +185,4 @@ class SystemFacade(Facade):
         return results
 
 
-# 导出的公共接口
 __all__ = ["SubsystemStatus", "Subsystem", "Facade", "SubsystemManager", "SystemFacade"]

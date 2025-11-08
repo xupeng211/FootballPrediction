@@ -214,7 +214,6 @@ class MetricsMiddleware:
 
         time.time()
 
-        type(message).__name__
         if isinstance(message, Command):
             self._metrics["commands_processed"] += 1
         elif isinstance(message, Query):

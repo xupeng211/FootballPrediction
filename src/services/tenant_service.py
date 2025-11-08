@@ -1,12 +1,3 @@
-"""
-企业级多租户管理服务
-Enterprise Multi-Tenant Management Service
-
-提供多租户架构的核心管理功能,包括租户生命周期管理,
-权限控制,资源配额管理等.
-"""
-
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -24,12 +15,19 @@ from src.database.models.tenant import (
     UserRoleAssignment,
 )
 
+"""
+企业级多租户管理服务
+Enterprise Multi-Tenant Management Service
+
+提供多租户架构的核心管理功能,包括租户生命周期管理,
+权限控制,资源配额管理等.
+"""
+
 
 class TenantManagementError(Exception):
     """租户管理异常"""
 
 
-@dataclass
 class TenantCreationRequest:
     """类文档字符串"""
 
@@ -47,7 +45,6 @@ class TenantCreationRequest:
     custom_settings: dict[str, Any] | None = None
 
 
-@dataclass
 class ResourceQuotaCheck:
     """类文档字符串"""
 
@@ -61,7 +58,6 @@ class ResourceQuotaCheck:
     reason: str | None = None
 
 
-@dataclass
 class PermissionCheckResult:
     """类文档字符串"""
 
@@ -698,9 +694,6 @@ class TenantService:
             "average_response_time_ms": 120,
             "success_rate": 98.5,
         }
-
-
-# ==================== 租户工厂 ====================
 
 
 class TenantServiceFactory:

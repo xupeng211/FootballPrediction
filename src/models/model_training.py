@@ -37,11 +37,11 @@ except ImportError:
 
     class MockPandas:
         @staticmethod
-        def DataFrame(data):
+        def data_frame(data):
             return data
 
         @staticmethod
-        def Series(data):
+        def series(data):
             return data
 
     np = MockNumpy()
@@ -80,7 +80,7 @@ except ImportError:
         def log_artifacts(self, *args, **kwargs):
             """Log mock artifacts"""
 
-        class sklearn:
+        class Sklearn:
             """Mock sklearn module"""
 
             @staticmethod
@@ -157,7 +157,7 @@ class BaselineModelTrainer:
 
     def prepare_data(
         self,
-        X: pd.DataFrame,
+        x: pd.DataFrame,
         y: pd.Series,
         test_size: float = 0.2,
         random_state: int = 42,
@@ -165,39 +165,39 @@ class BaselineModelTrainer:
         """准备训练和测试数据"""
         if not HAS_SCIPY:
             # 简单的模拟数据分割
-            data_size = len(X) if hasattr(X, "__len__") else 1
+            data_size = len(x) if hasattr(x, "__len__") else 1
             test_count = int(data_size * test_size)
             train_count = data_size - test_count
 
             # 简单分割 - 实际使用中应该用更复杂的方法
-            if hasattr(X, "iloc"):
-                X_train = X.iloc[:train_count]
-                X_test = X.iloc[train_count:]
+            if hasattr(x, "iloc"):
+                x_train = x.iloc[:train_count]
+                x_test = x.iloc[train_count:]
                 y_train = y.iloc[:train_count]
                 y_test = y.iloc[train_count:]
             else:
-                X_train = X[:train_count]
-                X_test = X[train_count:]
+                x_train = x[:train_count]
+                x_test = x[train_count:]
                 y_train = y[:train_count]
                 y_test = y[train_count:]
 
             logger.info(f"Data split (mock) - Train: {train_count}, Test: {test_count}")
-            return X_train, X_test, y_train, y_test
+            return x_train, x_test, y_train, y_test
 
         from sklearn.model_selection import train_test_split
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state, stratify=y
+        x_train, x_test, y_train, y_test = train_test_split(
+            x, y, test_size=test_size, random_state=random_state, stratify=y
         )
 
-        logger.info(f"Data split - Train: {len(X_train)}, Test: {len(X_test)}")
-        return X_train, X_test, y_train, y_test
+        logger.info(f"Data split - Train: {len(x_train)}, Test: {len(x_test)}")
+        return x_train, x_test, y_train, y_test
 
     def train(
         self,
-        X_train: pd.DataFrame,
+        x_train: pd.DataFrame,
         y_train: pd.Series,
-        X_val: pd.DataFrame | None = None,
+        x_val: pd.DataFrame | None = None,
         y_val: pd.Series | None = None,
         **model_params,
     ) -> dict[str, Any]:
@@ -208,11 +208,11 @@ class BaselineModelTrainer:
                     run_name=f"{self.model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                 ) as run:
                     return self._train_with_mlflow(
-                        X_train, y_train, X_val, y_val, run.run_id, **model_params
+                        x_train, y_train, x_val, y_val, run.run_id, **model_params
                     )
             else:
                 return self._train_without_mlflow(
-                    X_train, y_train, X_val, y_val, **model_params
+                    x_train, y_train, x_val, y_val, **model_params
                 )
 
         except Exception as e:
@@ -221,9 +221,9 @@ class BaselineModelTrainer:
 
     def _train_without_mlflow(
         self,
-        X_train: pd.DataFrame,
+        x_train: pd.DataFrame,
         y_train: pd.Series,
-        X_val: pd.DataFrame | None,
+        x_val: pd.DataFrame | None,
         y_val: pd.Series | None,
         **model_params,
     ) -> dict[str, Any]:
@@ -232,12 +232,12 @@ class BaselineModelTrainer:
         self.model = self._create_model(**model_params)
 
         # 训练模型
-        self.model.fit(X_train, y_train)
+        self.model.fit(x_train, y_train)
 
         # 验证模型
         metrics = {}
-        if X_val is not None and y_val is not None:
-            metrics = self._evaluate_model(X_val, y_val)
+        if x_val is not None and y_val is not None:
+            metrics = self._evaluate_model(x_val, y_val)
 
         # 标记为已训练
         self.is_trained = True
@@ -269,15 +269,15 @@ class BaselineModelTrainer:
                     self.params = params
                     self.is_trained = False
 
-                def fit(self, X, y):
+                def fit(self, x, y):
                     self.is_trained = True
                     return self
 
-                def predict(self, X):
-                    return [0] * len(X) if hasattr(X, "__len__") else [0]
+                def predict(self, x):
+                    return [0] * len(x) if hasattr(x, "__len__") else [0]
 
-                def predict_proba(self, X):
-                    return [[0.5, 0.5]] * (len(X) if hasattr(X, "__len__") else 1)
+                def predict_proba(self, x):
+                    return [[0.5, 0.5]] * (len(x) if hasattr(x, "__len__") else 1)
 
             return MockModel(**params)
 
@@ -295,7 +295,7 @@ class BaselineModelTrainer:
             raise ValueError(f"Unsupported model type: {self.model_type}")
 
     def _evaluate_model(
-        self, X_test: pd.DataFrame, y_test: pd.Series
+        self, x_test: pd.DataFrame, y_test: pd.Series
     ) -> dict[str, float]:
         """评估模型性能"""
         if not HAS_SCIPY:
@@ -309,7 +309,7 @@ class BaselineModelTrainer:
             recall_score,
         )
 
-        y_pred = self.model.predict(X_test)
+        y_pred = self.model.predict(x_test)
 
         return {
             "accuracy": accuracy_score(y_test, y_pred),
@@ -344,20 +344,20 @@ class BaselineModelTrainer:
         logger.info(f"Model loaded from {model_path}")
         return self.model
 
-    def predict(self, X: pd.DataFrame) -> np.ndarray:
+    def predict(self, x: pd.DataFrame) -> np.ndarray:
         """使用模型进行预测"""
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
 
-        return self.model.predict(X)
+        return self.model.predict(x)
 
-    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+    def predict_proba(self, x: pd.DataFrame) -> np.ndarray:
         """获取预测概率"""
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
 
         if hasattr(self.model, "predict_proba"):
-            return self.model.predict_proba(X)
+            return self.model.predict_proba(x)
         else:
             raise ValueError("Model does not support probability predictions")
 

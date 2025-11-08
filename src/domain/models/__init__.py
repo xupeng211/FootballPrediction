@@ -1,11 +1,3 @@
-"""
-领域模型
-Domain Models
-
-包含足球预测系统的核心领域模型.
-Contains core domain models for the football prediction system.
-"""
-
 from src.domain.models.league import League, LeagueSeason, LeagueSettings
 from src.domain.models.match import Match, MatchResult, MatchScore, MatchStatus
 from src.domain.models.prediction import (
@@ -16,6 +8,14 @@ from src.domain.models.prediction import (
     PredictionStatus,
 )
 from src.domain.models.team import Team, TeamForm, TeamStats
+
+"""
+领域模型
+Domain Models
+
+包含足球预测系统的核心领域模型.
+Contains core domain models for the football prediction system.
+"""
 
 __all__ = [
     # 比赛

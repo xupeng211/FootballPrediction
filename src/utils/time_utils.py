@@ -1,10 +1,10 @@
+from datetime import UTC, datetime, timedelta
+
 """
 足球预测系统时间处理工具模块
 
 提供时间和日期处理相关的工具函数.
 """
-
-from datetime import UTC, datetime, timedelta
 
 try:
     from zoneinfo import ZoneInfo
@@ -230,7 +230,6 @@ class TimeUtils:
             return f"{secs}s"
 
 
-# 为了向后兼容,添加常用函数别名
 def utc_now() -> datetime:
     """获取当前UTC时间（向后兼容性函数）"""
     return datetime.now(UTC)

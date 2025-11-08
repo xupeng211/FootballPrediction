@@ -1,3 +1,23 @@
+from .definitions import (
+    DatabaseManager,  # 角色定义; 核心管理器; 工厂函数; 会话获取
+    DatabaseRole,
+    MultiUserDatabaseManager,
+    get_admin_session,
+    get_async_admin_session,
+    get_async_reader_session,
+    get_async_session,
+    get_async_writer_session,
+    get_database_manager,
+    get_db_session,
+    get_multi_user_database_manager,
+    get_reader_session,
+    get_session,
+    get_writer_session,
+    initialize_database,
+    initialize_multi_user_database,
+    initialize_test_database,
+)
+
 """
 数据库连接管理模块 / Database Connection Management Module
 
@@ -70,28 +90,6 @@ Integrates retry mechanisms to improve connection reliability.
       - sessions.py: 会话获取辅助函数
 """
 
-# 从definitions模块导入所有内容（替代connection_mod）
-from .definitions import (
-    DatabaseManager,  # 角色定义; 核心管理器; 工厂函数; 会话获取
-    DatabaseRole,
-    MultiUserDatabaseManager,
-    get_admin_session,
-    get_async_admin_session,
-    get_async_reader_session,
-    get_async_session,
-    get_async_writer_session,
-    get_database_manager,
-    get_db_session,
-    get_multi_user_database_manager,
-    get_reader_session,
-    get_session,
-    get_writer_session,
-    initialize_database,
-    initialize_multi_user_database,
-    initialize_test_database,
-)
-
-# 重新导出以保持原始接口
 __all__ = [
     # 角色定义
     "DatabaseRole",
@@ -115,15 +113,3 @@ __all__ = [
     "get_async_writer_session",
     "get_async_admin_session",
 ]
-
-# 原始实现已移至 src/database/connection_mod/ 模块
-# 此处保留仅用于向后兼容性
-# 请使用新的模块化结构以获得更好的维护性
-
-# 包含的所有功能:
-# - DatabaseRole: 数据库用户角色枚举（READER,WRITER,ADMIN）
-# - DatabaseManager: 单例数据库连接管理器
-# - MultiUserDatabaseManager: 多用户数据库连接管理器
-# - get_database_manager: 获取数据库管理器单例
-# - initialize_database: 初始化数据库连接
-# - 各种会话获取函数:get_db_session, get_reader_session等

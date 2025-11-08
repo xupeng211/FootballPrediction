@@ -69,21 +69,27 @@ class TestStringUtilsActual:
         result = validate_batch_emails(emails)
 
         assert isinstance(result, dict)
-        assert "valid" in result
-        assert "invalid" in result
-        assert len(result["valid"]) >= 1
-        assert len(result["invalid"]) >= 1
+        # 检查新的格式：邮箱级别结果
+        assert "test@example.com" in result
+        assert "invalid-email" in result
+        assert "user@domain.org" in result
+        # 检查内部列表格式
+        assert "_valid_list" in result
+        assert "_invalid_list" in result
+        assert len(result["_valid_list"]) >= 1
+        assert len(result["_invalid_list"]) >= 1
 
     def test_normalize_string(self):
         """测试字符串标准化"""
         # 测试基础标准化
         result = normalize_string("  Hello World  ")
-        assert result.strip() == "Hello World"
+        assert result == "hello world"  # normalize_string现在转换为小写
 
         # 测试特殊字符处理
         result = normalize_string("café")
         # 应该移除或替换重音符号
         assert isinstance(result, str)
+        assert result == "cafe"  # 重音符号被移除并转换为小写
 
     def test_truncate_string(self):
         """测试字符串截断"""
@@ -279,12 +285,9 @@ class TestStringUtilsActual:
 
     def test_error_handling(self):
         """测试错误处理"""
-        # 测试非字符串输入
-        with pytest.raises((TypeError, AttributeError)):
-            cached_slug(123)
-
-        with pytest.raises((TypeError, AttributeError)):
-            truncate_string(None, 10)
+        # 测试非字符串输入 - 函数应该优雅处理并返回空字符串
+        assert cached_slug(123) == ""
+        assert truncate_string(None, 10) == ""
 
     def test_memory_efficiency(self):
         """测试内存效率"""
@@ -307,6 +310,9 @@ class TestStringUtilsActual:
         ]
 
         result = validate_batch_emails(mixed_emails)
-        assert len(result["valid"]) >= 2
-        assert len(result["invalid"]) >= 2
-        assert len(result["valid"]) + len(result["invalid"]) == len(mixed_emails)
+        # 使用新的内部列表字段
+        assert len(result["_valid_list"]) >= 2
+        assert len(result["_invalid_list"]) >= 2
+        assert len(result["_valid_list"]) + len(result["_invalid_list"]) == len(
+            mixed_emails
+        )

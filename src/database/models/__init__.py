@@ -1,9 +1,3 @@
-"""
-足球预测系统数据模型
-
-包含所有SQLAlchemy数据模型定义.
-"""
-
 from src.database.base import Base
 
 from .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
@@ -28,10 +22,13 @@ from .tenant import (
 )
 from .user import User
 
-# 为API兼容性创建别名
-Prediction = Predictions
+"""
+足球预测系统数据模型
 
-# 导出所有模型和枚举类
+包含所有SQLAlchemy数据模型定义.
+"""
+
+Prediction = Predictions
 __all__ = [
     # 基础类
     "Base",

@@ -1,3 +1,5 @@
+from .predictions.router import router
+
 """
 预测API端点 / Prediction API Endpoints
 
@@ -50,10 +52,6 @@ Provides API endpoints for match prediction:
 基于 API_DESIGN.md 第3.1节设计.
 """
 
-# 为了向后兼容,从新的模块化实现重新导出路由器
-from .predictions.router import router
-
-# 保持原有的导出
 __all__ = [
     "router",
 ]

@@ -1,3 +1,8 @@
+from .base_collector import BaseCollector
+from .fixtures_collector import FixturesCollector
+from .odds_collector import OddsCollector
+from .scores_collector import ScoresCollector
+
 """
 数据采集器模块
 
@@ -9,11 +14,6 @@
 
 基于 DATA_DESIGN.md 第1节设计实现.
 """
-
-from .base_collector import BaseCollector
-from .fixtures_collector import FixturesCollector
-from .odds_collector import OddsCollector
-from .scores_collector import ScoresCollector
 
 __all__ = [
     "BaseCollector",

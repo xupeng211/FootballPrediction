@@ -1,30 +1,8 @@
-"""
-缓存模块 - 提供统一的缓存管理功能
-
-提供Redis缓存功能,支持:
-- Redis连接池管理
-- 同步和异步操作
-- 缓存Key命名规范
-- TTL过期策略
-- 缓存装饰器
-- 内存缓存（TTL Cache）
-- 缓存一致性管理
-
-统一接口:
-- redis_manager: Redis缓存管理
-- ttl_cache: 高性能内存缓存
-- decorators: 缓存装饰器
-- consistency_manager: 缓存一致性
-"""
-
-# 缓存一致性管理
 from .consistency_manager import (
     CacheConsistencyManager,
     invalidate_entity_cache,
     sync_entity_cache,
 )
-
-# 缓存装饰器
 from .decorators import (
     CacheDecorator,
     InvalidateCacheDecorator,
@@ -37,8 +15,6 @@ from .decorators import (
     cache_user_predictions,
     cache_with_ttl,
 )
-
-# Redis缓存管理
 from .redis_manager import (
     CacheKeyManager,  # 便捷函数 - 异步; 便捷函数 - 同步; 其他功能
     RedisManager,
@@ -59,8 +35,6 @@ from .redis_manager import (
     startup_warmup,
     ttl_cache,
 )
-
-# TTL缓存（内存缓存）
 from .ttl_cache import (
     CACHES,
     AsyncTTLCache,
@@ -81,8 +55,25 @@ from .ttl_cache import (
 )
 from .ttl_cache import get_cache as get_ttl_cache
 
-# 向后兼容别名
-# 为了保持向后兼容,提供一些常用别名
+"""
+缓存模块 - 提供统一的缓存管理功能
+
+提供Redis缓存功能,支持:
+- Redis连接池管理
+- 同步和异步操作
+- 缓存Key命名规范
+- TTL过期策略
+- 缓存装饰器
+- 内存缓存（TTL Cache）
+- 缓存一致性管理
+
+统一接口:
+- redis_manager: Redis缓存管理
+- ttl_cache: 高性能内存缓存
+- decorators: 缓存装饰器
+- consistency_manager: 缓存一致性
+"""
+
 TTLCacheEntry = CacheEntry
 
 

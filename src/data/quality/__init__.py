@@ -1,3 +1,8 @@
+from .data_quality_monitor import DataQualityMonitor
+from .exception_handler import DataQualityExceptionHandler
+from .ge_prometheus_exporter import GEPrometheusExporter
+from .great_expectations_config import GreatExpectationsConfig
+
 """
 数据质量监控模块
 
@@ -12,25 +17,10 @@
 - AdvancedAnomalyDetector: 高级异常检测器（统计学+机器学习）
 """
 
-# 暂时禁用problematic imports
-# from .anomaly_detector import (  # AnomalyDetector,  # Simple version  # 未使用
-#     AdvancedAnomalyDetector,
-#     AnomalyDetectionResult,
-#     MachineLearningAnomalyDetector,
-#     StatisticalAnomalyDetector,
-# )
-
-# 如果 AdvancedAnomalyDetector 不存在,创建一个简单的实现
 try:
     from .advanced_anomaly_detector import AdvancedAnomalyDetector
 except ImportError:
     from .anomaly_detector import AnomalyDetector as AdvancedAnomalyDetector
-
-from .data_quality_monitor import DataQualityMonitor
-from .exception_handler import DataQualityExceptionHandler
-from .ge_prometheus_exporter import GEPrometheusExporter
-from .great_expectations_config import GreatExpectationsConfig
-
 __all__ = [
     "DataQualityMonitor",
     "DataQualityExceptionHandler",

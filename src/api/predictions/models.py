@@ -1,8 +1,8 @@
+from pydantic import BaseModel, Field
+
 """
 预测API模型定义
 """
-
-from pydantic import BaseModel, Field
 
 
 class MatchInfo(BaseModel):

@@ -1,3 +1,8 @@
+from abc import ABC
+from datetime import datetime
+from typing import Any
+from uuid import uuid4
+
 """
 基础领域事件
 Base Domain Event
@@ -5,11 +10,6 @@ Base Domain Event
 定义领域事件的基础结构.
 Defines the base structure for domain events.
 """
-
-from abc import ABC
-from datetime import datetime
-from typing import Any
-from uuid import uuid4
 
 
 class DomainEvent(ABC):

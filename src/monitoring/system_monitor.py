@@ -1,11 +1,11 @@
+from typing import Any
+
 """
 系统监控器
 System Monitor
 
 统一系统监控入口,向后兼容原有接口.
 """
-
-from typing import Any
 
 
 class SystemMonitor:
@@ -68,7 +68,6 @@ class SystemMonitor:
         return self.metrics.copy()
 
 
-# 全局监控器实例
 _global_monitor = None
 
 
@@ -80,7 +79,6 @@ def get_system_monitor() -> SystemMonitor:
     return _global_monitor
 
 
-# 便捷函数 - 直接实现以保持向后兼容
 def record_http_request(method: str, endpoint: str, status_code: int, duration: float):
     """函数文档字符串"""
     pass  # 添加pass语句

@@ -1,11 +1,3 @@
-"""
-领域事件
-Domain Events
-
-定义领域事件类,用于记录和传播领域中的重要事件.
-Defines domain event classes for recording and propagating important events in the domain.
-"""
-
 from src.domain.events.match_events import (
     MatchCancelledEvent,
     MatchFinishedEvent,
@@ -20,6 +12,14 @@ from src.domain.events.prediction_events import (
     PredictionPointsAdjustedEvent,
     PredictionUpdatedEvent,
 )
+
+"""
+领域事件
+Domain Events
+
+定义领域事件类,用于记录和传播领域中的重要事件.
+Defines domain event classes for recording and propagating important events in the domain.
+"""
 
 __all__ = [
     # 比赛事件

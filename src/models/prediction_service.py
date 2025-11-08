@@ -1,3 +1,14 @@
+from .prediction import (
+    PredictionCache,  # 数据模型; 核心服务; 缓存; 监控指标
+    PredictionResult,
+    PredictionService,
+    cache_hit_ratio,
+    model_load_duration_seconds,
+    prediction_accuracy,
+    prediction_duration_seconds,
+    predictions_total,
+)
+
 """
 模型预测服务 / Model Prediction Service
 
@@ -69,19 +80,6 @@ Provides real-time match prediction functionality, including:
       - service.py: 核心预测服务
 """
 
-# 为了向后兼容性,从新的模块化结构中导入所有内容
-from .prediction import (
-    PredictionCache,  # 数据模型; 核心服务; 缓存; 监控指标
-    PredictionResult,
-    PredictionService,
-    cache_hit_ratio,
-    model_load_duration_seconds,
-    prediction_accuracy,
-    prediction_duration_seconds,
-    predictions_total,
-)
-
-# 重新导出以保持原始接口
 __all__ = [
     # 数据模型
     "PredictionResult",
@@ -96,19 +94,3 @@ __all__ = [
     "model_load_duration_seconds",
     "cache_hit_ratio",
 ]
-
-# 原始实现已移至 src/models/prediction/ 模块
-# 此处保留仅用于向后兼容性
-# 请使用新的模块化结构以获得更好的维护性
-
-# 包含的所有功能:
-# - PredictionResult: 预测结果数据类
-# - PredictionService: 核心预测服务类
-#   - predict_match: 预测单场比赛
-#   - batch_predict_matches: 批量预测比赛
-#   - verify_prediction: 验证预测结果
-#   - get_prediction_statistics: 获取预测统计信息
-# - PredictionCache: 预测缓存管理器
-# - MLflowModelClient: MLflow客户端封装
-# - FeatureProcessor: 特征处理器
-# - Prometheus监控指标:predictions_total, prediction_duration_seconds等

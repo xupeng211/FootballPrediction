@@ -1,13 +1,4 @@
-"""
-仓储提供者
-BaseRepository Provider
-
-提供仓储实例的创建和依赖注入配置.
-Provides creation and dependency injection configuration for repository instances.
-"""
-
-from functools import lru_cache
-from typing import Protocol, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,11 +9,18 @@ from .match import MatchRepository, ReadOnlyMatchRepository
 from .prediction import PredictionRepository, ReadOnlyPredictionRepository
 from .user import ReadOnlyUserRepository, UserRepository
 
+"""
+仓储提供者
+BaseRepository Provider
+
+提供仓储实例的创建和依赖注入配置.
+Provides creation and dependency injection configuration for repository instances.
+"""
+
 T = TypeVar("T")
 ID = TypeVar("ID")
 
 
-@runtime_checkable
 class BaseRepositoryFactory(Protocol):
     """仓储工厂协议"""
 
@@ -139,7 +137,6 @@ class BaseRepositoryProvider:
         self.clear_cache()
 
 
-# 全局仓储提供者实例
 _provider: BaseRepositoryProvider = None
 
 
@@ -159,7 +156,6 @@ def set_repository_provider(provider: BaseRepositoryProvider):
     _provider = provider
 
 
-@lru_cache(maxsize=32)
 def _get_repository_cached(
     repository_type: str, session_id: int, read_only: bool
 ) -> type[BaseRepository]:
@@ -174,7 +170,6 @@ def _get_repository_cached(
         raise ValueError(f"Unknown repository type: {repository_type}")
 
 
-# 便捷函数
 def get_prediction_repository(
     session: AsyncSession, read_only: bool = False
 ) -> BaseRepository[Prediction, int]:
@@ -196,7 +191,6 @@ def get_match_repository(
     return get_repository_provider().get_match_repository(session, read_only)
 
 
-# 为向后兼容性提供别名
 RepositoryProvider = BaseRepositoryProvider
 RepositoryFactory = BaseRepositoryFactory  # 添加别名以支持旧的导入
 DefaultRepositoryFactory = DefaultBaseRepositoryFactory  # 添加别名以支持旧的导入

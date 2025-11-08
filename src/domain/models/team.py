@@ -1,3 +1,10 @@
+from dataclasses import field
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
+from src.core.exceptions import DomainError
+
 """
 球队领域模型
 Team Domain Model
@@ -5,13 +12,6 @@ Team Domain Model
 封装球队相关的业务逻辑和不变性约束.
 Encapsulates team-related business logic and invariants.
 """
-
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Any
-
-from src.core.exceptions import DomainError
 
 
 class TeamType(Enum):
@@ -21,7 +21,6 @@ class TeamType(Enum):
     NATIONAL = "national"  # 国家队
 
 
-@dataclass
 class TeamStats:
     """类文档字符串"""
 
@@ -95,7 +94,6 @@ class TeamStats:
         return f"{self.matches_played}场 {self.wins}胜 {self.draws}平 {self.losses}负"
 
 
-@dataclass
 class TeamForm:
     """类文档字符串"""
 
@@ -182,7 +180,6 @@ class TeamForm:
         return f"状态: {self.recent_form_string} ({streak_str})"
 
 
-@dataclass
 class Team:
     """类文档字符串"""
 

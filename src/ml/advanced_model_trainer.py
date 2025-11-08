@@ -1,5 +1,3 @@
-# 简化版 advanced_model_trainer 模块
-
 from enum import Enum
 
 
@@ -14,7 +12,7 @@ class ModelType(Enum):
     NEURAL_NETWORK = "neural_network"
 
 
-class Advanced_Model_Trainer:
+class AdvancedModelTrainer:
     def __init__(self):
         pass
 

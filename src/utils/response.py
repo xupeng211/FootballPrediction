@@ -1,13 +1,13 @@
+from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel
+
 """
 API响应工具类
 
 提供统一的API响应格式
 """
-
-from datetime import datetime
-from typing import Any
-
-from pydantic import BaseModel
 
 
 class APIResponseModel(BaseModel):
@@ -89,5 +89,4 @@ class APIResponse:
         return APIResponse.error(message, code, data)
 
 
-# 为了向后兼容,提供一个ResponseUtils别名
 ResponseUtils = APIResponse

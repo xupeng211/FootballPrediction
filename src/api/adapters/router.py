@@ -1,15 +1,14 @@
-"""
-适配器API路由
-"""
-
 from typing import Any
 
 from fastapi import APIRouter
 
+"""
+适配器API路由
+"""
+
 router = APIRouter(prefix="/adapters", tags=["adapters"])
 
 
-@router.get("/info")
 async def get_adapter_info() -> dict[str, Any]:
     """获取适配器信息"""
     return {
@@ -27,7 +26,6 @@ async def get_adapter_info() -> dict[str, Any]:
     }
 
 
-@router.get("/health")
 async def adapter_health() -> dict[str, str]:
     """适配器健康检查"""
     return {"status": "healthy", "service": "adapters"}

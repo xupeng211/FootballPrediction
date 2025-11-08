@@ -1,11 +1,10 @@
-"""
-API schemas package
-"""
-
-# 简单导入,避免循环导入
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+"""
+API schemas package
+"""
 
 
 class APIResponse(BaseModel):

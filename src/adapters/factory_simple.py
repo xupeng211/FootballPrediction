@@ -1,11 +1,11 @@
+from typing import Any
+
+from .base import Adapter
+
 """
 简单的适配器工厂实现
 Simple Adapter Factory Implementation
 """
-
-from typing import Any
-
-from .base import Adapter
 
 try:
     from .registry import AdapterError
@@ -46,7 +46,6 @@ class AdapterFactory:
         return adapter
 
 
-# 预定义的适配器名称
 class AdapterNames:
     """预定义的适配器名称常量"""
 
@@ -57,7 +56,6 @@ class AdapterNames:
     FILE_STORAGE = "file_storage"
 
 
-# 全局工厂实例
 _global_factory = AdapterFactory()
 
 

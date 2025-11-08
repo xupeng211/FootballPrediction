@@ -1,9 +1,9 @@
+from pydantic import BaseModel, Field
+
 """
 球队相关模型
 Team Related Models
 """
-
-from pydantic import BaseModel, Field
 
 
 class TeamQueryParams(BaseModel):

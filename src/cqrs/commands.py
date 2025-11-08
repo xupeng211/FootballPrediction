@@ -1,3 +1,10 @@
+from datetime import datetime
+from typing import Any
+
+from src.database.models import Match, Prediction, User
+
+from .base import ValidatableCommand, ValidationResult
+
 """
 命令定义
 Command Definitions
@@ -5,13 +12,6 @@ Command Definitions
 定义所有写操作命令.
 Defines all write operation commands.
 """
-
-from datetime import datetime
-from typing import Any
-
-from src.database.models import Match, Prediction, User
-
-from .base import ValidatableCommand, ValidationResult
 
 
 class CreatePredictionCommand(ValidatableCommand):

@@ -1,9 +1,9 @@
+from pydantic import BaseModel, Field
+
 """
 赔率相关模型
 Odds Related Models
 """
-
-from pydantic import BaseModel, Field
 
 
 class OddsQueryParams(BaseModel):

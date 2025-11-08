@@ -1,12 +1,3 @@
-"""
-重试机制（向后兼容）
-Retry Mechanism (Backward Compatible)
-
-为了保持向后兼容性,此文件重新导出新的模块化重试系统.
-
-Provides backward compatible exports for the modular retry system.
-"""
-
 from ._retry import (
     BackoffStrategy,
     CircuitBreaker,  # 重新导出主要类和函数
@@ -21,7 +12,15 @@ from ._retry import (
     retry_sync,
 )
 
-# 导出所有符号
+"""
+重试机制（向后兼容）
+Retry Mechanism (Backward Compatible)
+
+为了保持向后兼容性,此文件重新导出新的模块化重试系统.
+
+Provides backward compatible exports for the modular retry system.
+"""
+
 __all__ = [
     "RetryConfig",
     "BackoffStrategy",

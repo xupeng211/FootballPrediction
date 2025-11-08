@@ -1,10 +1,10 @@
-"""
-简化的流处理器实现
-"""
-
 from collections.abc import AsyncIterator, Callable
 from datetime import datetime, timedelta
 from typing import Any
+
+"""
+简化的流处理器实现
+"""
 
 
 class StreamProcessor:

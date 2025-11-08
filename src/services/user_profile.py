@@ -1,16 +1,15 @@
+from datetime import datetime
+from typing import Any
+
+from .base_unified import SimpleService
+
 """
 足球预测系统用户画像服务模块
 
 提供用户画像生成和管理功能.
 """
 
-from datetime import datetime
-from typing import Any
 
-from .base_unified import SimpleService
-
-
-# 简化的UserProfile类定义
 class UserProfile:
     """类文档字符串"""
 
@@ -34,7 +33,6 @@ class UserProfile:
         }
 
 
-# 简化的User类定义
 class User:
     """类文档字符串"""
 

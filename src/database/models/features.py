@@ -1,3 +1,13 @@
+from datetime import datetime
+from decimal import Decimal
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Optional
+
+from sqlalchemy import DECIMAL, DateTime, Index, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.database.base import BaseModel
+
 """
 Features - 数据库模块
 
@@ -16,20 +26,9 @@ Features - 数据库模块
 - 使用SQLAlchemy 2.0语法
 """
 
-from typing import TYPE_CHECKING, Any, Optional
-
 if TYPE_CHECKING:
     from .match import Match
     from .team import Team
-
-from datetime import datetime
-from decimal import Decimal
-from enum import Enum
-
-from sqlalchemy import DECIMAL, DateTime, Index, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from src.database.base import BaseModel
 
 
 class TeamType(str, Enum):

@@ -1,9 +1,9 @@
+from datetime import datetime
+from typing import Any
+
 """
 球队领域模型
 """
-
-from datetime import datetime
-from typing import Any
 
 
 class TeamStatistics:

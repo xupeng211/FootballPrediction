@@ -1,11 +1,3 @@
-"""
-事件驱动架构模块
-Event-Driven Architecture Module
-
-提供事件系统基础设施,实现松耦合的组件通信.
-Provides event system infrastructure for loosely coupled component communication.
-"""
-
 from .base import Event, EventData, EventHandler
 from .bus import EventBus, get_event_bus, start_event_bus, stop_event_bus
 from .handlers import (
@@ -31,6 +23,14 @@ from .types import (
     UserRegisteredEvent,
     UserRegisteredEventData,
 )
+
+"""
+事件驱动架构模块
+Event-Driven Architecture Module
+
+提供事件系统基础设施,实现松耦合的组件通信.
+Provides event system infrastructure for loosely coupled component communication.
+"""
 
 __all__ = [
     # 基础类

@@ -1,12 +1,11 @@
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
 """
 审计服务模型（兼容版本）
 Audit Service Models (Compatibility Version)
 """
-
-from dataclasses import dataclass
-from datetime import datetime
-from enum import Enum
-from typing import Any
 
 
 class AuditAction(Enum):
@@ -30,7 +29,6 @@ class AuditSeverity(Enum):
     CRITICAL = "critical"
 
 
-@dataclass
 class AuditEvent:
     """类文档字符串"""
 

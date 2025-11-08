@@ -1,13 +1,3 @@
-"""
-队列系统模块
-
-提供任务队列管理和调度功能：
-- FIFO队列实现（内存和Redis）
-- 任务调度器
-- 优先级管理
-- 队列监控
-"""
-
 from .fifo_queue import (
     FIFOQueue,
     MemoryFIFOQueue,
@@ -31,6 +21,16 @@ from .task_scheduler import (
     register_task_handler,
     schedule_task,
 )
+
+"""
+队列系统模块
+
+提供任务队列管理和调度功能：
+- FIFO队列实现（内存和Redis）
+- 任务调度器
+- 优先级管理
+- 队列监控
+"""
 
 __all__ = [
     # 核心队列类

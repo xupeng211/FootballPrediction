@@ -1,12 +1,10 @@
+from typing import Any
+
 """
 Team model for data collection
 """
 
-from dataclasses import dataclass
-from typing import Any
 
-
-@dataclass
 class Team:
     """类文档字符串"""
 

@@ -1,3 +1,5 @@
+from .adapters.router import router
+
 """
 adapters 主模块
 
@@ -5,8 +7,4 @@ adapters 主模块
 Provides external API adapter interfaces.
 """
 
-# 从子模块导入路由器
-from .adapters.router import router
-
-# 导出所有公共接口
 __all__ = ["router"]

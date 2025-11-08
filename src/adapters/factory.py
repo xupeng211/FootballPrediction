@@ -1,12 +1,12 @@
+from dataclasses import field
+from typing import Any
+
+from .base import Adapter
+
 """
 适配器工厂模块
 Adapter Factory Module
 """
-
-from dataclasses import dataclass, field
-from typing import Any
-
-from .base import Adapter
 
 
 class AdapterError(Exception):
@@ -27,7 +27,6 @@ except ImportError:
         pass
 
 
-@dataclass
 class AdapterConfig:
     """适配器配置"""
 
@@ -46,7 +45,6 @@ class AdapterConfig:
     retry_config: Any = None
 
 
-@dataclass
 class AdapterGroupConfig:
     """适配器组配置"""
 
@@ -104,10 +102,7 @@ class AdapterFactory:
         self.register_adapter("opta_data", OptaDataAdapter)
 
 
-# 全局适配器工厂实例
 _global_factory = AdapterFactory()
-
-# 导出全局工厂实例，兼容测试期望
 adapter_factory = _global_factory
 
 

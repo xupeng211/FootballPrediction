@@ -3,8 +3,6 @@ from fastapi import APIRouter, Query
 router = APIRouter()
 
 
-# 1. ✅ 修复后的 FastAPI Query 参数
-@router.get("/fixed_query")
 async def fixed_query(
     limit: int = Query(
         default=10,
@@ -23,8 +21,6 @@ async def fixed_query(
     return {"limit": limit, "type": type(limit).__name__}
 
 
-# ✅ 修复后的版本 - 原来的 buggy_query
-@router.get("/buggy_query")
 async def buggy_query(
     limit: int = Query(
         default=10,
@@ -56,7 +52,6 @@ class SomeAsyncService:
 service = SomeAsyncService()
 
 
-@router.get("/buggy_async")
 async def buggy_async():
     status = await service.get_status()
     return {"status": status}

@@ -1,13 +1,13 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.database.models.user import User
+
 """
 认证用户仓储
 
 专门用于认证服务的简化用户数据访问
 """
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.database.models.user import User
 
 
 class AuthUserRepository:

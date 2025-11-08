@@ -2,6 +2,7 @@ import os
 from datetime import date, datetime, timedelta
 
 from celery import Celery
+from celery.schedules import crontab
 
 import redis
 from src.database.connection import DatabaseManager
@@ -22,7 +23,6 @@ Celery调度器配置
 基于 DATA_DESIGN.md 第3节设计.
 """
 
-from celery.schedules import crontab
 
 # Celery应用配置
 app = Celery("football_data_scheduler")

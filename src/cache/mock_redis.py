@@ -187,16 +187,6 @@ class MockRedisManager:
         """设置键的毫秒过期时间"""
         return self.expire(key, milliseconds / 1000)
 
-    def keys(self, pattern: str = "*") -> list[str]:
-        """获取匹配模式的所有键"""
-        self._cleanup_expired()
-        if "*" in pattern:
-            import fnmatch
-
-            return [k for k in self.data.keys() if fnmatch.fnmatch(k, pattern)]
-        else:
-            return [k for k in self.data.keys() if k == pattern]
-
     def mget(self, keys: list[str]) -> list[str | None]:
         """批量获取缓存值"""
         return [self.get(k) for k in keys]

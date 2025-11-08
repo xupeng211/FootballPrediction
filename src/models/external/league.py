@@ -1,8 +1,3 @@
-"""
-外部联赛数据模型
-External League Data Model
-"""
-
 from datetime import datetime
 from typing import Any
 
@@ -18,6 +13,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+
+"""
+外部联赛数据模型
+External League Data Model
+"""
 
 Base = declarative_base()
 
@@ -351,7 +351,6 @@ class ExternalLeague(Base):
         self.updated_at = datetime.utcnow()
 
 
-# 联赛积分榜模型
 class ExternalLeagueStandings(Base):
     """外部联赛积分榜模型"""
 

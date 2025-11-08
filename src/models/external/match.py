@@ -1,12 +1,12 @@
-"""
-外部比赛数据模型
-External Match Data Model
-"""
-
 from datetime import datetime
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
+
+"""
+外部比赛数据模型
+External Match Data Model
+"""
 
 Base = declarative_base()
 

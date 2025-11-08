@@ -1,8 +1,8 @@
+from fastapi import Request
+
 """
 i18n utilities
 """
-
-from fastapi import Request
 
 
 def get_language_from_request(request: Request) -> str:

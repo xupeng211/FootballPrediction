@@ -135,12 +135,12 @@ class LSTMPredictor:
             target_scaled = self.scaler_y.fit_transform(target)
 
             # 创建序列数据
-            X, y = self._create_sequences(features_scaled, target_scaled)
+            x, y = self._create_sequences(features_scaled, target_scaled)
 
             self.logger.info(
-                f"数据准备完成: 特征维度={features.shape}, 序列数量={len(X)}"
+                f"数据准备完成: 特征维度={features.shape}, 序列数量={len(x)}"
             )
-            return X, y
+            return x, y
 
         except Exception as e:
             self.logger.error(f"数据准备失败: {e}")
@@ -150,7 +150,7 @@ class LSTMPredictor:
         self, features: np.ndarray, target: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
         """创建时间序列数据"""
-        X, y = [], []
+        x, y = [], []
 
         for i in range(
             len(features)
@@ -159,7 +159,7 @@ class LSTMPredictor:
             + 1
         ):
             # 输入序列
-            X.append(features[i : i + self.config.sequence_length])
+            x.append(features[i : i + self.config.sequence_length])
             # 目标序列
             y.append(
                 target[
@@ -170,7 +170,7 @@ class LSTMPredictor:
                 ]
             )
 
-        return np.array(X), np.array(y)
+        return np.array(x), np.array(y)
 
     def build_model(self, input_shape: tuple[int, int]) -> None:
         """构建LSTM模型"""
@@ -215,23 +215,23 @@ class LSTMPredictor:
 
     def train(
         self,
-        X: np.ndarray,
+        x: np.ndarray,
         y: np.ndarray,
         validation_data: tuple[np.ndarray, np.ndarray] | None = None,
     ) -> dict[str, Any]:
         """训练LSTM模型"""
         if self.model is None:
-            self.build_model(input_shape=(X.shape[1], X.shape[2]))
+            self.build_model(input_shape=(x.shape[1], x.shape[2]))
 
         try:
             # 分割训练和验证数据
             if validation_data is None:
-                split_idx = int(len(X) * (1 - self.config.validation_split))
-                X_train, X_val = X[:split_idx], X[split_idx:]
+                split_idx = int(len(x) * (1 - self.config.validation_split))
+                x_train, x_val = x[:split_idx], x[split_idx:]
                 y_train, y_val = y[:split_idx], y[split_idx:]
-                validation_data = (X_val, y_val)
+                validation_data = (x_val, y_val)
             else:
-                X_train, y_train = X, y
+                x_train, y_train = x, y
 
             # 设置回调函数
             callbacks = [
@@ -248,7 +248,7 @@ class LSTMPredictor:
 
             # 训练模型
             history = self.model.fit(
-                X_train,
+                x_train,
                 y_train,
                 validation_data=validation_data,
                 epochs=self.config.epochs,
@@ -258,11 +258,11 @@ class LSTMPredictor:
             )
 
             self.is_trained = True
-            self.training_data = (X_train, y_train)
+            self.training_data = (x_train, y_train)
             self.validation_data = validation_data
 
             # 评估模型
-            train_loss, train_mae = self.model.evaluate(X_train, y_train, verbose=0)
+            train_loss, train_mae = self.model.evaluate(x_train, y_train, verbose=0)
             val_loss, val_mae = self.model.evaluate(
                 validation_data[0], validation_data[1], verbose=0
             )
@@ -311,8 +311,8 @@ class LSTMPredictor:
             confidence_intervals = []
             if return_confidence and self.validation_data:
                 # 在验证集上计算预测误差
-                val_X, val_y = self.validation_data
-                val_pred_scaled = self.model.predict(val_X, verbose=0)
+                val_x, val_y = self.validation_data
+                val_pred_scaled = self.model.predict(val_x, verbose=0)
                 val_pred = self.scaler_y.inverse_transform(val_pred_scaled)
 
                 # 计算每个时间点的预测误差标准差
@@ -412,12 +412,12 @@ class LSTMPredictor:
             raise
 
     def evaluate_model(
-        self, test_X: np.ndarray, test_y: np.ndarray
+        self, test_x: np.ndarray, test_y: np.ndarray
     ) -> dict[str, float]:
         """评估模型性能"""
         try:
             # 预测
-            predictions_scaled = self.model.predict(test_X, verbose=0)
+            predictions_scaled = self.model.predict(test_x, verbose=0)
             predictions = self.scaler_y.inverse_transform(predictions_scaled)
             actuals = self.scaler_y.inverse_transform(test_y)
 
@@ -505,19 +505,19 @@ class LSTMPredictor:
                 raise ValueError(f"历史数据不足,只有 {len(historical_data)} 个数据点")
 
             # 准备数据
-            X, y = self.prepare_data(historical_data)
+            x, y = self.prepare_data(historical_data)
 
-            if len(X) < 50:
+            if len(x) < 50:
                 raise ValueError("准备后的训练数据不足")
 
             # 训练模型
-            training_stats = self.train(X, y)
+            training_stats = self.train(x, y)
 
             # 保存模型
             self.save_model()
 
             # 评估模型
-            metrics = self.evaluate_model(X, y)
+            metrics = self.evaluate_model(x, y)
             training_stats.update(metrics)
 
             self.logger.info(f"历史数据训练完成: {training_stats}")
@@ -578,14 +578,14 @@ if __name__ == "__main__":
 
         # 训练模型
         lstm_predictor.prepare_data(mock_data)
-        X, y = lstm_predictor.prepare_data(mock_data)
+        x, y = lstm_predictor.prepare_data(mock_data)
 
         # 构建和训练模型
-        lstm_predictor.build_model(input_shape=(X.shape[1], X.shape[2]))
-        lstm_predictor.train(X, y)
+        lstm_predictor.build_model(input_shape=(x.shape[1], x.shape[2]))
+        lstm_predictor.train(x, y)
 
         # 进行预测
-        test_sequence = X[-1]  # 使用最后一个序列进行测试
+        test_sequence = x[-1]  # 使用最后一个序列进行测试
         lstm_predictor.predict(test_sequence)
 
         # 保存模型

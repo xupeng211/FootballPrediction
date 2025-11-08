@@ -1,3 +1,5 @@
+from .data_lake_storage import DataLakeStorage
+
 """
 数据存储模块
 
@@ -6,7 +8,5 @@
 
 基于 DATA_DESIGN.md 第2节数据存储设计.
 """
-
-from .data_lake_storage import DataLakeStorage
 
 __all__ = ["DataLakeStorage"]

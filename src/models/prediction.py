@@ -1,3 +1,8 @@
+from datetime import datetime
+from typing import Any
+
+from src.services.base_unified import SimpleService
+
 """
 预测模块
 Prediction Module
@@ -6,17 +11,7 @@ Prediction Module
 Provides prediction-related data models and services.
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
 
-from src.services.base_unified import SimpleService
-
-# mypy: ignore-errors
-# 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑
-
-
-@dataclass
 class PredictionResult:
     """类文档字符串"""
 
@@ -102,7 +97,6 @@ class PredictionService(SimpleService):
         return {"total_predictions": 0, "accuracy": 0.0, "model_version": "v1.0.0"}
 
 
-# Prometheus 监控指标（简单实现）
 class Counter:
     """类文档字符串"""
 
@@ -172,7 +166,6 @@ class Gauge:
         return self.value
 
 
-# 监控指标实例
 predictions_total = Counter("predictions_total", "Total number of predictions")
 prediction_duration_seconds = Histogram(
     "prediction_duration_seconds", "Prediction duration in seconds"

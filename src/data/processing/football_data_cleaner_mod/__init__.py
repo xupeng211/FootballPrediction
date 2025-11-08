@@ -1,7 +1,7 @@
 # 简化版 __init__ 模块
 
 
-class __Init__:
+class Init:
     def __init__(self):
         pass
 

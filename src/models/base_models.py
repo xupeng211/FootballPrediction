@@ -1,7 +1,7 @@
 # 简化版 base_models 模块
 
 
-class Base_Models:
+class BaseModels:
     def __init__(self):
         pass
 

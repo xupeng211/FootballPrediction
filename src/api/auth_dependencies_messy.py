@@ -1,13 +1,12 @@
+from fastapi import HTTPException, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 """
 认证依赖模块 (测试版本)
 Authentication Dependencies Module (Test Version)
 """
 
-from fastapi import HTTPException, Security, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-
-# 简单的token数据类
 class TokenData:
     def __init__(self, user_id: int = None, username: str = None, role: str = None):
         self.user_id = user_id
@@ -15,7 +14,6 @@ class TokenData:
         self.role = role
 
 
-# 简单的速率限制器
 class RateLimiter:
     """简单的速率限制器"""
 
@@ -28,7 +26,6 @@ class RateLimiter:
         return True
 
 
-# 安全头部配置
 class SecurityHeaders:
     """安全头部配置"""
 
@@ -42,7 +39,6 @@ class SecurityHeaders:
         }
 
 
-# 认证上下文管理器
 class AuthContext:
     """认证上下文管理器"""
 
@@ -57,7 +53,6 @@ class AuthContext:
         }
 
 
-# 全局实例
 rate_limiter_messy = RateLimiter()
 security_headers_messy = SecurityHeaders()
 security_messy = HTTPBearer()

@@ -1,12 +1,4 @@
-"""
-仓储基类模块 - 重写版本
-
-定义仓储模式的基础接口和实现
-Repository Base Classes - Rewritten Version
-"""
-
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Any, Generic, TypeVar
 
 from sqlalchemy import select
@@ -14,12 +6,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
 
-# 泛型类型
+"""
+仓储基类模块 - 重写版本
+
+定义仓储模式的基础接口和实现
+Repository Base Classes - Rewritten Version
+"""
+
 T = TypeVar("T")
 ID = TypeVar("ID")
 
 
-@dataclass
 class QuerySpec:
     """查询规范 - 简化版本"""
 

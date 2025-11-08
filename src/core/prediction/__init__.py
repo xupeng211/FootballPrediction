@@ -1,11 +1,11 @@
+from .config import PredictionConfig
+
 """
 预测模块
 Prediction Module
 
 提供预测引擎和相关功能.
 """
-
-from .config import PredictionConfig
 
 
 class PredictionStatistics:

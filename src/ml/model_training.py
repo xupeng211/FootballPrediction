@@ -143,7 +143,7 @@ class ModelTrainer:
         if feature_columns is None:
             feature_columns = [col for col in data.columns if col != target_column]
 
-        X = data[feature_columns]
+        x = data[feature_columns]
         y = data[target_column]
 
         # 模拟数据预处理
@@ -164,36 +164,36 @@ class ModelTrainer:
         train_indices = indices[:-test_size]
         test_indices = indices[-test_size:]
 
-        X_train = X.iloc[train_indices]
-        X_test = X.iloc[test_indices]
+        x_train = x.iloc[train_indices]
+        x_test = x.iloc[test_indices]
         y_train = y.iloc[train_indices]
         y_test = y.iloc[test_indices]
 
         self.logger.info(
-            f"Data prepared: {len(X_train)} train samples, {len(X_test)} test samples"
+            f"Data prepared: {len(x_train)} train samples, {len(x_test)} test samples"
         )
-        return X_train, X_test, y_train, y_test
+        return x_train, x_test, y_train, y_test
 
     async def train(
         self,
-        X_train: pd.DataFrame,
+        x_train: pd.DataFrame,
         y_train: pd.Series,
-        X_val: pd.DataFrame | None = None,
+        x_val: pd.DataFrame | None = None,
         y_val: pd.Series | None = None,
     ) -> dict[str, Any]:
         """
         训练模型
 
         Args:
-            X_train: 训练特征
+            x_train: 训练特征
             y_train: 训练标签
-            X_val: 验证特征
+            x_val: 验证特征
             y_val: 验证标签
 
         Returns:
             训练结果
         """
-        self.logger.info(f"Starting model training with {len(X_train)} samples...")
+        self.logger.info(f"Starting model training with {len(x_train)} samples...")
         self.status = TrainingStatus.TRAINING
         self.start_time = datetime.now()
 
@@ -223,7 +223,7 @@ class ModelTrainer:
                 await asyncio.sleep(0.01)
 
             # 实际调用训练（桩实现）
-            metrics = self.model.train(X_train, y_train)
+            metrics = self.model.train(x_train, y_train)
 
             # 计算特征重要性
             self.feature_importance = self.model.get_feature_importance()
@@ -239,8 +239,8 @@ class ModelTrainer:
                 "training_time": training_time,
                 "metrics": metrics,
                 "feature_importance": self.feature_importance,
-                "training_samples": len(X_train),
-                "validation_samples": len(X_val) if X_val is not None else 0,
+                "training_samples": len(x_train),
+                "validation_samples": len(x_val) if x_val is not None else 0,
                 "start_time": self.start_time.isoformat(),
                 "end_time": self.end_time.isoformat(),
             }
@@ -258,13 +258,13 @@ class ModelTrainer:
             }
 
     async def evaluate(
-        self, X_test: pd.DataFrame, y_test: pd.Series
+        self, x_test: pd.DataFrame, y_test: pd.Series
     ) -> dict[str, float]:
         """
         评估模型
 
         Args:
-            X_test: 测试特征
+            x_test: 测试特征
             y_test: 测试标签
 
         Returns:
@@ -542,15 +542,15 @@ async def train_football_model(
     trainer = ModelTrainer()
 
     # 准备数据
-    X_train, X_test, y_train, y_test = await trainer.prepare_data(
+    x_train, x_test, y_train, y_test = await trainer.prepare_data(
         data, target_column, feature_columns
     )
 
     # 训练模型
-    training_result = await trainer.train(X_train, y_train, X_test, y_test)
+    training_result = await trainer.train(x_train, y_train, x_test, y_test)
 
     # 评估模型
-    evaluation_metrics = await trainer.evaluate(X_test, y_test)
+    evaluation_metrics = await trainer.evaluate(x_test, y_test)
 
     # 保存模型
     model_path = f"models/{model_name}.pkl"

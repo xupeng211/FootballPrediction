@@ -1,12 +1,12 @@
+import json
+import logging
+from typing import Any
+
 from redis.exceptions import RedisError
 
 """
 Redis synchronous operations
 """
-
-import json
-import logging
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

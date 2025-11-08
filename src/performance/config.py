@@ -1,3 +1,5 @@
+from typing import Any
+
 """
 性能配置管理
 Performance Configuration Management
@@ -6,11 +8,7 @@ Performance Configuration Management
 Defines performance monitoring and optimization related configuration parameters.
 """
 
-from dataclasses import dataclass
-from typing import Any
 
-
-@dataclass
 class CacheConfig:
     """缓存配置"""
 
@@ -37,7 +35,6 @@ class CacheConfig:
     redis_max_connections: int = 10
 
 
-@dataclass
 class MonitoringConfig:
     """监控配置"""
 
@@ -66,7 +63,6 @@ class MonitoringConfig:
     connection_critical: int = 200
 
 
-@dataclass
 class OptimizationConfig:
     """优化配置"""
 
@@ -207,7 +203,6 @@ class PerformanceConfig:
                 setattr(self.optimization, key, value)
 
 
-# 全局配置实例
 _performance_config: PerformanceConfig = None
 
 
@@ -219,15 +214,12 @@ def get_performance_config() -> PerformanceConfig:
     return _performance_config
 
 
-# 预定义的缓存TTL配置
 CACHE_TTL_CONFIG = {
     "short": 300,  # 5分钟 - 高频变化数据
     "medium": 1800,  # 30分钟 - 中频变化数据
     "long": 3600,  # 1小时 - 低频变化数据
     "daily": 86400,  # 24小时 - 每日更新数据
 }
-
-# 预定义的性能阈值
 PERFORMANCE_THRESHOLDS = {
     "excellent": {"cpu": 50, "memory": 60, "response_time": 0.5, "error_rate": 0.01},
     "good": {"cpu": 70, "memory": 75, "response_time": 1.0, "error_rate": 0.02},

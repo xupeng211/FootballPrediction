@@ -254,13 +254,17 @@ class TestFormatPercentage:
 
     def test_format_percentage_edge_cases(self):
         """测试百分比格式化边界情况"""
-        # 测试整数百分比
-        result = format_percentage(25.0, 0)
+        # 测试整数百分比（25表示25%）
+        result = format_percentage(25, 0)
         assert result == "25%"
 
-        # 测试科学计数法数字
-        result = format_percentage(1.23e-4, 4)
+        # 测试科学计数法数字（已经是百分比形式）：1.23e-2 = 0.0123%
+        result = format_percentage(1.23e-2, 4)
         assert result == "0.0123%"
+
+        # 测试极小数字（已经是百分比形式）：1.23e-4 = 0.000123%
+        result = format_percentage(1.23e-4, 6)
+        assert result == "0.000123%"
 
 
 class TestFormattersIntegration:
@@ -300,8 +304,8 @@ class TestFormattersIntegration:
             "metrics": {
                 "success_rate": 0.8547,
                 "error_rate": 0.1453,
-                "formatted_success": format_percentage(0.8547, 1),
-                "formatted_error": format_percentage(0.1453, 1),
+                "formatted_success": format_percentage(0.8547, 1, as_decimal=True),
+                "formatted_error": format_percentage(0.1453, 1, as_decimal=True),
             }
         }
 
@@ -321,7 +325,7 @@ class TestFormattersIntegration:
                 "revenue": 1234567.89,
                 "formatted_revenue": format_currency(1234567.89, "CNY"),
                 "profit_margin": 0.2345,
-                "formatted_margin": format_percentage(0.2345, 2),
+                "formatted_margin": format_percentage(0.2345, 2, as_decimal=True),
             },
             "metadata": {"version": "1.0.0", "author": "测试用户"},
         }

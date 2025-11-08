@@ -92,3 +92,55 @@ class TestPathManager:
             except ImportError:
                 # 允许某些模块不存在
                 pass
+
+
+class TestPathManagerExtended:
+    """扩展的路径管理器测试 - 提升覆盖率"""
+
+    def test_path_manager_with_custom_root(self):
+        """测试自定义项目根目录"""
+        from src.core.path_manager import PathManager
+
+        # 使用当前目录作为项目根目录
+        pm = PathManager(project_root=".")
+
+        assert pm.project_root.exists()
+        assert pm.src_path.exists()
+
+    def test_path_manager_setup_methods(self):
+        """测试路径管理器设置方法"""
+        from src.core.path_manager import PathManager
+
+        pm = PathManager()
+
+        # 测试src路径设置
+        result = pm.setup_src_path()
+        assert isinstance(result, bool)
+
+        # 测试环境信息获取
+        env_info = pm.get_environment_info()
+        assert isinstance(env_info, dict)
+
+    def test_path_manager_environment_setup(self):
+        """测试环境路径设置"""
+        from src.core.path_manager import PathManager
+
+        pm = PathManager()
+
+        # 测试环境路径设置
+        setup_results = pm.setup_environment_paths()
+        assert isinstance(setup_results, dict)
+
+        # 测试src导入确保
+        importable = pm.ensure_src_importable()
+        assert isinstance(importable, bool)
+
+    def test_path_manager_verification(self):
+        """测试路径管理器验证功能"""
+        from src.core.path_manager import PathManager
+
+        pm = PathManager()
+
+        # 测试src导入验证
+        verified = pm._verify_src_import()
+        assert isinstance(verified, bool)

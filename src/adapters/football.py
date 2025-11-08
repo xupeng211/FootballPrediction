@@ -1,12 +1,3 @@
-"""
-football 主模块
-
-此文件由长文件拆分工具自动生成
-
-拆分策略: complexity_split
-"""
-
-# 导入拆分的模块
 from .adapters.football_models import (
     ApiFootballAdaptee,
     ApiFootballAdapter,
@@ -23,7 +14,14 @@ from .adapters.football_models import (
     OptaDataAdapter,
 )
 
-# 导出所有公共接口
+"""
+football 主模块
+
+此文件由长文件拆分工具自动生成
+
+拆分策略: complexity_split
+"""
+
 __all__ = [
     "MatchStatus",
     "FootballMatch",

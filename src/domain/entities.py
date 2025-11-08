@@ -1,10 +1,9 @@
+from datetime import datetime
+from enum import Enum
+
 """
 领域实体模块 - 简化版本
 """
-
-from dataclasses import dataclass
-from datetime import datetime
-from enum import Enum
 
 
 class MatchStatus(Enum):
@@ -25,7 +24,6 @@ class TeamStatus(Enum):
     SUSPENDED = "SUSPENDED"
 
 
-@dataclass
 class Team:
     """类文档字符串"""
 
@@ -39,7 +37,6 @@ class Team:
     created_at: datetime | None = None
 
 
-@dataclass
 class Match:
     """类文档字符串"""
 
@@ -58,7 +55,6 @@ class Match:
     away_score: int | None = 0
 
 
-@dataclass
 class League:
     """类文档字符串"""
 
@@ -72,7 +68,6 @@ class League:
     is_active: bool = True
 
 
-@dataclass
 class Prediction:
     """类文档字符串"""
 
@@ -88,7 +83,6 @@ class Prediction:
     is_correct: bool | None = None
 
 
-# 导出常用函数
 def create_test_team(item_id: int, name: str) -> Team:
     """创建测试用队伍"""
     return Team(id=item_id, name=name, status=TeamStatus.ACTIVE)

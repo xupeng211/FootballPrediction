@@ -1,10 +1,10 @@
-"""
-简化的适配器注册表
-"""
-
 from typing import Any
 
 from src.core.exceptions import AdapterError
+
+"""
+简化的适配器注册表
+"""
 
 
 class AdapterRegistry:
@@ -107,7 +107,6 @@ class AdapterRegistry:
         self._instances.clear()
 
 
-# 全局注册表实例
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
     global _global_registry

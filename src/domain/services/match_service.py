@@ -1,11 +1,3 @@
-"""
-比赛领域服务
-Match Domain Service
-
-处理比赛相关的复杂业务逻辑.
-Handles complex business logic related to matches.
-"""
-
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -17,6 +9,14 @@ from src.domain.events.match_events import (
 )
 from src.domain.models.match import Match, MatchResult, MatchStatus
 from src.domain.models.team import Team
+
+"""
+比赛领域服务
+Match Domain Service
+
+处理比赛相关的复杂业务逻辑.
+Handles complex business logic related to matches.
+"""
 
 
 class MatchDomainService:

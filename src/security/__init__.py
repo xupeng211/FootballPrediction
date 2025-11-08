@@ -1,3 +1,13 @@
+from .middleware import (
+    AuditLoggingMiddleware,
+    CSPMiddleware,
+    RateLimitMiddleware,
+    SecurityConfig,
+    SecurityHeadersMiddleware,
+    security_config,
+    setup_security_middleware,
+)
+
 """
 安全模块
 Security Module
@@ -8,16 +18,6 @@ Security Module
 - 会话管理
 - 审计日志
 """
-
-from .middleware import (
-    AuditLoggingMiddleware,
-    CSPMiddleware,
-    RateLimitMiddleware,
-    SecurityConfig,
-    SecurityHeadersMiddleware,
-    security_config,
-    setup_security_middleware,
-)
 
 __all__ = [
     "SecurityHeadersMiddleware",

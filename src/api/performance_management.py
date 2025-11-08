@@ -1,10 +1,3 @@
-"""
-性能管理API
-Performance Management API
-
-提供系统性能监控,优化和管理的API接口.
-"""
-
 from datetime import datetime
 from typing import Any
 
@@ -13,16 +6,18 @@ from pydantic import BaseModel, Field
 
 from src.database.base import get_db_session
 from src.database.performance import DatabaseOptimizer
-from src.middleware.tenant_middleware import require_permission
 from src.optimizations.api_optimizations import APIOptimizer
 from src.optimizations.database_optimizations import DatabaseOptimizerFactory
 
+"""
+性能管理API
+Performance Management API
+
+提供系统性能监控,优化和管理的API接口.
+"""
+
 router = APIRouter(prefix="/api/v1/performance", tags=["性能管理"])
-
-# 全局API优化器实例
 api_optimizer = APIOptimizer()
-
-# ==================== 请求/响应模型 ====================
 
 
 class OptimizationRequestModel(BaseModel):
@@ -58,11 +53,6 @@ class DatabaseOptimizationModel(BaseModel):
     refresh_views: bool = Field(True, description="刷新物化视图")
 
 
-# ==================== 性能监控端点 ====================
-
-
-@router.get("/metrics")
-@require_permission("performance.view")
 async def get_performance_metrics(
     time_range_minutes: int = Query(60, ge=1, le=1440, description="时间范围（分钟）"),
     endpoint_filter: str | None = Query(None, description="端点过滤"),
@@ -118,8 +108,6 @@ async def get_performance_metrics(
     return metrics_summary
 
 
-@router.get("/dashboard")
-@require_permission("performance.view")
 async def get_performance_dashboard():
     """
     获取性能仪表板数据
@@ -170,8 +158,6 @@ async def get_performance_dashboard():
     return dashboard_data
 
 
-@router.get("/alerts")
-@require_permission("performance.view")
 async def get_performance_alerts(
     severity: str | None = Query(None, description="严重级别过滤"),
     status_filter: str | None = Query(None, description="状态过滤"),
@@ -232,11 +218,6 @@ async def get_performance_alerts(
     }
 
 
-# ==================== 数据库优化端点 ====================
-
-
-@router.post("/database/optimize")
-@require_permission("performance.optimize")
 async def optimize_database(
     optimization_config: DatabaseOptimizationModel, background_tasks: BackgroundTasks
 ):
@@ -265,8 +246,6 @@ async def optimize_database(
     }
 
 
-@router.get("/database/analysis")
-@require_permission("performance.view")
 async def get_database_analysis():
     """
     获取数据库分析结果
@@ -304,8 +283,6 @@ async def get_database_analysis():
             await db_optimizer.db.close()
 
 
-@router.get("/database/optimization/{optimization_id}")
-@require_permission("performance.view")
 async def get_optimization_status(optimization_id: str):
     """
     获取优化任务状态
@@ -331,11 +308,6 @@ async def get_optimization_status(optimization_id: str):
     }
 
 
-# ==================== 缓存管理端点 ====================
-
-
-@router.post("/cache/manage")
-@require_permission("performance.manage")
 async def manage_cache(
     cache_operation: CacheOperationModel, background_tasks: BackgroundTasks
 ):
@@ -386,8 +358,6 @@ async def manage_cache(
         )
 
 
-@router.get("/cache/statistics")
-@require_permission("performance.view")
 async def get_cache_statistics():
     """
     获取缓存统计信息
@@ -430,11 +400,6 @@ async def get_cache_statistics():
     return cache_stats
 
 
-# ==================== API优化端点 ====================
-
-
-@router.post("/api/optimize")
-@require_permission("performance.optimize")
 async def optimize_api_performance(optimization_request: OptimizationRequestModel):
     """
     优化API性能
@@ -470,8 +435,6 @@ async def optimize_api_performance(optimization_request: OptimizationRequestMode
         )
 
 
-@router.get("/api/analysis")
-@require_permission("performance.view")
 async def get_api_performance_analysis():
     """
     获取API性能分析
@@ -480,9 +443,6 @@ async def get_api_performance_analysis():
     """
     performance_report = await api_optimizer.generate_performance_report()
     return performance_report
-
-
-# ==================== 后台任务函数 ====================
 
 
 async def _run_database_optimization(
@@ -542,7 +502,6 @@ async def _clear_all_cache():
 
 async def _warm_cache(warm_config: dict[str, Any]):
     """缓存预热"""
-    # 这里应该实现具体的缓存预热逻辑
 
 
 async def _analyze_cache_performance() -> dict[str, Any]:
@@ -584,10 +543,6 @@ def _generate_database_recommendations(
     return recommendations
 
 
-# ==================== 健康检查端点 ====================
-
-
-@router.get("/health", tags=["健康检查"])
 async def performance_management_health():
     """性能管理健康检查"""
     return {

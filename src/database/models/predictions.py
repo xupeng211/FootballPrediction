@@ -1,3 +1,7 @@
+from enum import Enum
+
+from src.database.base import BaseModel
+
 """
 Predictions - 数据库模块
 
@@ -14,16 +18,6 @@ Predictions - 数据库模块
 - [待补充 - 使用注意事项]
 """
 
-from enum import Enum
-
-from src.database.base import BaseModel
-
-"""
-预测结果数据模型
-
-存储机器学习模型的预测结果,包括胜负概率,比分预测等.
-"""
-
 
 class PredictedResult(Enum):
     """预测结果枚举"""
@@ -38,5 +32,4 @@ class Predictions(BaseModel):
     __tablename__ = "predictions"
 
 
-# 为向后兼容性提供别名
 Prediction = Predictions

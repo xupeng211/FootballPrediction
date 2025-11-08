@@ -1,13 +1,11 @@
+from typing import Any
+
 """
 内容分析服务
 Content Analysis Service
 """
 
-from dataclasses import dataclass
-from typing import Any
 
-
-@dataclass
 class ContentAnalysisResult:
     """内容分析结果"""
 

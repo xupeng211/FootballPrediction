@@ -1,3 +1,6 @@
+from .async_cache import AsyncTTLCache
+from .ttl_cache import TTLCache
+
 """
 缓存工厂类
 Cache Factory
@@ -5,9 +8,6 @@ Cache Factory
 提供创建不同类型缓存的工厂方法.
 Provides factory methods for creating different types of caches.
 """
-
-from .async_cache import AsyncTTLCache
-from .ttl_cache import TTLCache
 
 
 class CacheFactory:

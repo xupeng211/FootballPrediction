@@ -1,10 +1,3 @@
-"""
-数据收集任务
-Data Collection Tasks
-
-提供各种数据收集任务的定义和执行.
-"""
-
 from .data_collection_core import (
     DataCollectionTask,
     collect_fixtures_task,
@@ -15,8 +8,6 @@ from .data_collection_core import (
     manual_collect_all_data,
     validate_collected_data,
 )
-
-# 导入所有必要的类,保持向后兼容
 from .data_collectors import (
     DataCollectionOrchestrator,
     DataCollector,
@@ -24,7 +15,13 @@ from .data_collectors import (
     HistoricalDataCollector,
 )
 
-# 导出所有公共接口
+"""
+数据收集任务
+Data Collection Tasks
+
+提供各种数据收集任务的定义和执行.
+"""
+
 __all__ = [
     # 类
     "DataCollectionTask",

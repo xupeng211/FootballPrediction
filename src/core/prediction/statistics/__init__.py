@@ -1,9 +1,9 @@
+from datetime import datetime
+
 """
 预测统计模块
 Prediction Statistics Module
 """
-
-from datetime import datetime
 
 
 class PredictionStatistics:

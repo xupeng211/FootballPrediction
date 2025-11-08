@@ -20,12 +20,10 @@ warnings.warn(
 
 # 从新模块导入所有内容
 try:
-    from ..streaming.kafka_collector import KafkaCollector as kafka_collector
-    from ..streaming.manager import StreamManager as manager
-    from ..streaming.processor import StreamProcessor as processor
-    from ..streaming.websocket_collector import (
-        WebSocketCollector as websocket_collector,
-    )
+    from ..streaming.kafka_collector import KafkaCollector  # noqa: F401
+    from ..streaming.manager import StreamManager  # noqa: F401
+    from ..streaming.processor import StreamProcessor  # noqa: F401
+    from ..streaming.websocket_collector import WebSocketCollector  # noqa: F401
 except ImportError:
     # 如果新模块不存在,创建空的占位符
     kafka_collector = None

@@ -1,9 +1,3 @@
-"""
-用户认证API的依赖项
-
-提供获取当前用户,认证服务等依赖函数
-"""
-
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +5,12 @@ from src.api.auth.oauth2_scheme import oauth2_scheme
 from src.database.connection import get_async_session
 from src.database.models.user import User
 from src.services.auth_service import AuthService
+
+"""
+用户认证API的依赖项
+
+提供获取当前用户,认证服务等依赖函数
+"""
 
 
 async def get_auth_service(
@@ -161,7 +161,6 @@ def require_permissions(required_roles: list | None = None):
     return permission_dependency
 
 
-# 预定义的权限依赖
 RequireAdmin = require_permissions(["admin"])
 RequirePremiumOrAdmin = require_permissions(["premium", "admin", "analyst"])
 RequireAnalystOrAdmin = require_permissions(["analyst", "admin"])
@@ -206,5 +205,4 @@ class OptionalAuth:
             return None
 
 
-# 创建可选认证依赖实例
 optional_auth = OptionalAuth()

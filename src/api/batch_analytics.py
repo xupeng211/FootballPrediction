@@ -1,16 +1,15 @@
-#!/usr/bin/env python3
+from datetime import datetime
+from typing import Any
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+from pydantic import BaseModel
+
 """
 Batch Analytics API
 批量分析API,支持大数据处理
 
 生成时间: 2025-10-26 20:57:38  # TODO: 将魔法数字 2025 提取为常量
 """
-
-from datetime import datetime
-from typing import Any
-
-from fastapi import APIRouter, BackgroundTasks, HTTPException
-from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -31,7 +30,6 @@ class BatchAnalyticsAPIResponse(BaseModel):
     timestamp: datetime
 
 
-@router.post("/batch_analytics_api/execute")
 async def execute_batch_analytics_api(
     request: BatchAnalyticsAPIRequest, background_tasks: BackgroundTasks
 ) -> BatchAnalyticsAPIResponse:
@@ -55,7 +53,6 @@ async def execute_batch_analytics_api(
         ) from e  # TODO: 将魔法数字 500 提取为常量，B904 exception chaining
 
 
-@router.get("/batch_analytics_api/status/{job_id}")
 async def get_batch_analytics_api_status(job_id: str):
     """获取Batch Analytics API执行状态"""
     # TODO: 实现状态查询逻辑
@@ -67,7 +64,6 @@ async def get_batch_analytics_api_status(job_id: str):
     }
 
 
-@router.get("/batch_analytics_api/health")
 async def health_check():
     """健康检查"""
     return {

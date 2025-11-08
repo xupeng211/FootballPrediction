@@ -1,21 +1,18 @@
-"""
-预测模块简化健康检查端点
-Simplified Predictions Health Check Endpoint
-"""
-
 from datetime import datetime
 from logging import getLogger
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-logger = getLogger(__name__)
+"""
+预测模块简化健康检查端点
+Simplified Predictions Health Check Endpoint
+"""
 
-# 创建子路由器
+logger = getLogger(__name__)
 health_router = APIRouter(prefix="/predictions", tags=["predictions"])
 
 
-@health_router.get("/health", summary="预测服务健康检查")
 async def health_check() -> dict[str, Any]:
     """
     检查预测服务的健康状态

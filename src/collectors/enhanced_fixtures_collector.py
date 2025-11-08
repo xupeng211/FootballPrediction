@@ -1,8 +1,3 @@
-"""
-增强版比赛赛程收集器
-集成新的数据源管理器,支持多种数据源
-"""
-
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -14,6 +9,11 @@ from src.database.models.match import Match
 from src.database.models.team import Team
 
 from .data_sources import MatchData, TeamData, data_source_manager
+
+"""
+增强版比赛赛程收集器
+集成新的数据源管理器,支持多种数据源
+"""
 
 logger = get_logger(__name__)
 

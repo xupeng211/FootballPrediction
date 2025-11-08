@@ -1,5 +1,13 @@
+import json
 from datetime import datetime
+from enum import Enum
+from pathlib import Path
 from typing import Any
+
+from scripts.quality_guardian import QualityGuardian
+from src.core.logging_system import get_logger
+from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
+from src.metrics.quality_integration import QualityMetricsIntegrator
 
 #!/usr/bin/env python3
 """
@@ -9,14 +17,6 @@ Quality Gate System
 提供自动化的质量检查和门禁控制,确保代码质量标准
 """
 
-import json
-from enum import Enum
-from pathlib import Path
-
-from scripts.quality_guardian import QualityGuardian
-from src.core.logging_system import get_logger
-from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
-from src.metrics.quality_integration import QualityMetricsIntegrator
 
 logger = get_logger(__name__)
 

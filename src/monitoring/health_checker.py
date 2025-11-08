@@ -1,15 +1,15 @@
+from datetime import datetime
+from typing import Any
+
+from src.cache.redis.core.connection_manager import RedisConnectionManager
+from src.database.connection import DatabaseManager
+
 """
 健康检查器
 Health Checker
 
 检查各个系统的健康状态.
 """
-
-from datetime import datetime
-from typing import Any
-
-from src.cache.redis.core.connection_manager import RedisConnectionManager
-from src.database.connection import DatabaseManager
 
 
 class HealthStatus:

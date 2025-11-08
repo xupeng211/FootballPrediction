@@ -8,8 +8,6 @@ from src.database.base import BaseModel
 存储足球队伍的基础信息,如曼联,巴塞罗那等.
 """
 
-# Match model imported locally to avoid circular imports
-
 
 class TeamForm(Enum):
     """球队状态枚举"""

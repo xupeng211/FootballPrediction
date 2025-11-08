@@ -1,7 +1,7 @@
 # 简化版 enhanced_feature_engineering 模块
 
 
-class Enhanced_Feature_Engineering:
+class EnhancedFeatureEngineering:
     def __init__(self):
         pass
 

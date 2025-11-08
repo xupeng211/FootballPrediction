@@ -1,11 +1,11 @@
+from datetime import datetime
+
+from pydantic import BaseModel, Field
+
 """
 比赛相关模型
 Match Related Models
 """
-
-from datetime import datetime
-
-from pydantic import BaseModel, Field
 
 
 class MatchQueryParams(BaseModel):

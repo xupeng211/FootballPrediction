@@ -1,3 +1,10 @@
+from .monitoring.anomaly_detector_anomaly_detection import (
+    AnomalyDetector,
+    AnomalyResult,
+    AnomalySeverity,
+    AnomalyType,
+)
+
 """
 anomaly_detector 主模块
 
@@ -6,13 +13,4 @@ anomaly_detector 主模块
 拆分策略: domain_split
 """
 
-# 导入拆分的模块
-from .monitoring.anomaly_detector_anomaly_detection import (
-    AnomalyDetector,
-    AnomalyResult,
-    AnomalySeverity,
-    AnomalyType,
-)
-
-# 导出所有公共接口
 __all__ = ["AnomalyType", "AnomalySeverity", "AnomalyResult", "AnomalyDetector"]

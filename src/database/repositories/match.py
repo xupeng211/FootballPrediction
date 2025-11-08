@@ -1,11 +1,3 @@
-"""
-比赛仓储
-Match Repository
-
-提供比赛数据的访问操作,实现Repository模式.
-Provides match data access operations, implementing the Repository pattern.
-"""
-
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -16,6 +8,14 @@ from sqlalchemy.orm import selectinload
 from src.database.models.match import Match, MatchResult, MatchStatus
 
 from .base import BaseRepository
+
+"""
+比赛仓储
+Match Repository
+
+提供比赛数据的访问操作,实现Repository模式.
+Provides match data access operations, implementing the Repository pattern.
+"""
 
 
 class MatchRepository(BaseRepository[Match]):

@@ -1,11 +1,11 @@
+from datetime import datetime
+
+from pydantic import BaseModel, Field
+
 """
 联赛相关模型
 League Related Models
 """
-
-from datetime import datetime
-
-from pydantic import BaseModel, Field
 
 
 class LeagueQueryParams(BaseModel):

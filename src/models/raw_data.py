@@ -1,7 +1,7 @@
 # 简化版 raw_data 模块
 
 
-class Raw_Data:
+class RawData:
     def __init__(self):
         pass
 

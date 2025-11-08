@@ -1,8 +1,8 @@
+from datetime import datetime, timedelta
+
 """
 简化版日期工具类
 """
-
-from datetime import datetime, timedelta
 
 
 class DateUtils:

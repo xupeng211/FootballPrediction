@@ -1,3 +1,10 @@
+from datetime import date, datetime
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from src.cqrs.application import CQRSServiceFactory
+
 """
 CQRS API端点
 CQRS API Endpoints
@@ -5,13 +12,6 @@ CQRS API Endpoints
 提供CQRS模式的HTTP接口.
 Provides HTTP interface for CQRS pattern.
 """
-
-from datetime import date, datetime
-
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-
-from src.cqrs.application import CQRSServiceFactory
 
 router = APIRouter(prefix="/cqrs", tags=["CQRS"])
 
@@ -34,9 +34,6 @@ def get_user_cqrs_service():
 def get_analytics_cqrs_service():
     """获取分析CQRS服务"""
     return CQRSServiceFactory.create_analytics_service()
-
-
-# 预测命令端点
 
 
 class PredictionCreateCommand(BaseModel):
@@ -66,7 +63,6 @@ class PredictionResponse(BaseModel):
     updated_at: datetime
 
 
-@router.post("/predictions/", response_model=PredictionResponse)
 async def create_prediction(
     command: PredictionCreateCommand,
     background_tasks: BackgroundTasks,
@@ -80,7 +76,6 @@ async def create_prediction(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-@router.get("/predictions/{prediction_id}", response_model=PredictionResponse)
 async def get_prediction(
     prediction_id: int,
     service=Depends(get_prediction_cqrs_service),
@@ -95,7 +90,6 @@ async def get_prediction(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/predictions/", response_model=list[PredictionResponse])
 async def list_predictions(
     user_id: int | None = Query(None, description="用户ID"),
     limit: int = Query(10, ge=1, le=100, description="限制数量"),
@@ -108,9 +102,6 @@ async def list_predictions(
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-
-
-# 比赛查询端点
 
 
 class MatchResponse(BaseModel):
@@ -127,7 +118,6 @@ class MatchResponse(BaseModel):
     updated_at: datetime
 
 
-@router.get("/matches/{match_id}", response_model=MatchResponse)
 async def get_match(
     match_id: int,
     service=Depends(get_match_cqrs_service),
@@ -142,7 +132,6 @@ async def get_match(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/matches/", response_model=list[MatchResponse])
 async def list_matches(
     date_from: date | None = Query(None, description="开始日期"),
     date_to: date | None = Query(None, description="结束日期"),
@@ -158,9 +147,6 @@ async def list_matches(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-# 用户查询端点
-
-
 class UserResponse(BaseModel):
     """用户响应"""
 
@@ -171,7 +157,6 @@ class UserResponse(BaseModel):
     updated_at: datetime
 
 
-@router.get("/users/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: int,
     service=Depends(get_user_cqrs_service),
@@ -186,7 +171,6 @@ async def get_user(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/users/", response_model=list[UserResponse])
 async def list_users(
     limit: int = Query(10, ge=1, le=100, description="限制数量"),
     offset: int = Query(0, ge=0, description="偏移量"),
@@ -200,9 +184,6 @@ async def list_users(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-# 分析查询端点
-
-
 class AnalyticsResponse(BaseModel):
     """分析响应"""
 
@@ -213,7 +194,6 @@ class AnalyticsResponse(BaseModel):
     recent_predictions: list[dict]
 
 
-@router.get("/analytics/", response_model=AnalyticsResponse)
 async def get_analytics(
     user_id: int | None = Query(None, description="用户ID"),
     days: int = Query(30, ge=1, le=365, description="分析天数"),

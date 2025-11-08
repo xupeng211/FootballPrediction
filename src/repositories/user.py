@@ -1,10 +1,3 @@
-"""
-用户仓储模块 - 重写版本
-
-实现用户相关的数据访问逻辑
-User Repository - Rewritten Version
-"""
-
 from datetime import datetime
 from typing import Any, Optional
 
@@ -13,6 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database.models import User
 from .base import BaseRepository, QuerySpec
+
+"""
+用户仓储模块 - 重写版本
+
+实现用户相关的数据访问逻辑
+User Repository - Rewritten Version
+"""
 
 
 class UserRepositoryInterface:

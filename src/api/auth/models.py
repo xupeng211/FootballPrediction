@@ -1,12 +1,12 @@
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
 """
 用户认证API的数据模型
 
 定义认证相关的请求和响应模型
 """
-
-from typing import Any
-
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserRegisterRequest(BaseModel):

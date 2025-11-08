@@ -221,7 +221,10 @@ class DIContainer:
                 param_type = param.annotation
 
                 # 对于*args和**kwargs参数，跳过处理（Mock对象通常有这些参数）
-                if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+                if param.kind in (
+                    inspect.Parameter.VAR_POSITIONAL,
+                    inspect.Parameter.VAR_KEYWORD,
+                ):
                     continue
 
                 if param_type == inspect.Parameter.empty:
@@ -255,7 +258,9 @@ class DIContainer:
                 instance = descriptor.implementation(**constructor_params)
                 return instance
             except TypeError as e:
-                raise DependencyInjectionError(f"无法实例化类型: {descriptor.implementation.__name__}。错误: {str(e)}") from e
+                raise DependencyInjectionError(
+                    f"无法实例化类型: {descriptor.implementation.__name__}。错误: {str(e)}"
+                ) from e
             except Exception as e:
                 raise DependencyInjectionError(f"创建实例时发生错误: {str(e)}") from e
             finally:
@@ -285,7 +290,7 @@ class DIContainer:
         params = {}
 
         # 检查是否有自定义的__init__方法
-        if '__init__' not in cls.__dict__:
+        if "__init__" not in cls.__dict__:
             # 使用默认的__init__方法，不需要参数
             return params
 
@@ -299,8 +304,14 @@ class DIContainer:
             param_type = self._resolve_type_annotation(cls, param.annotation)
 
             # 对于*args和**kwargs参数，检查是否有类型注解
-            if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
-                if param_type == inspect.Parameter.empty and param.default == inspect.Parameter.empty:
+            if param.kind in (
+                inspect.Parameter.VAR_POSITIONAL,
+                inspect.Parameter.VAR_KEYWORD,
+            ):
+                if (
+                    param_type == inspect.Parameter.empty
+                    and param.default == inspect.Parameter.empty
+                ):
                     raise DependencyInjectionError(
                         f"参数 {param_name} 没有类型注解且没有默认值"
                     )

@@ -1,13 +1,5 @@
-"""
-预测策略基础接口
-Prediction Strategy Base Interface
-
-定义预测策略的抽象基类和相关数据结构.
-Defines abstract base classes and data structures for prediction strategies.
-"""
-
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import field
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -15,6 +7,14 @@ from typing import Any
 from src.domain.models.match import Match
 from src.domain.models.prediction import Prediction
 from src.domain.models.team import Team
+
+"""
+预测策略基础接口
+Prediction Strategy Base Interface
+
+定义预测策略的抽象基类和相关数据结构.
+Defines abstract base classes and data structures for prediction strategies.
+"""
 
 
 class StrategyType(Enum):
@@ -26,7 +26,6 @@ class StrategyType(Enum):
     ENSEMBLE = "ensemble"
 
 
-@dataclass
 class PredictionInput:
     """类文档字符串"""
 
@@ -41,7 +40,6 @@ class PredictionInput:
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
 
-@dataclass
 class PredictionOutput:
     """类文档字符串"""
 
@@ -58,7 +56,6 @@ class PredictionOutput:
     execution_time_ms: float | None = None
 
 
-@dataclass
 class StrategyMetrics:
     """类文档字符串"""
 
@@ -195,7 +192,6 @@ class PredictionStrategy(ABC):
         return self.__str__()
 
 
-@dataclass
 class PredictionContext:
     """类文档字符串"""
 

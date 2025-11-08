@@ -1,7 +1,7 @@
 # 简化版 feature_store 模块
 
 
-class Feature_Store:
+class FeatureStore:
     def __init__(self):
         pass
 

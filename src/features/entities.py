@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Any
+
 """
 特征实体定义
 
@@ -6,12 +9,7 @@
 - TeamEntity: 球队实体,用于球队级别的特征
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
 
-
-@dataclass
 class FeatureEntity:
     """类文档字符串"""
 
@@ -25,7 +23,6 @@ class FeatureEntity:
     updated_at: datetime | None = None
 
 
-@dataclass
 class MatchEntity:
     """类文档字符串"""
 
@@ -67,7 +64,6 @@ class MatchEntity:
         )
 
 
-@dataclass
 class TeamEntity:
     """类文档字符串"""
 
@@ -103,7 +99,6 @@ class TeamEntity:
         )
 
 
-@dataclass
 class FeatureKey:
     """类文档字符串"""
 

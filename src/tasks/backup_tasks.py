@@ -1,3 +1,28 @@
+from .backup import (
+    DatabaseBackupTask,  # 基础类和指标; 数据库备份任务; 维护任务; 服务备份任务; 手动任务
+    backup_config_task,
+    backup_database_task,
+    backup_failures_total,
+    backup_last_success,
+    backup_logs_task,
+    backup_redis_task,
+    backup_size_bytes,
+    backup_task_duration,
+    backup_tasks_total,
+    check_backup_storage_task,
+    cleanup_old_backups_task,
+    daily_full_backup_task,
+    get_backup_metrics,
+    get_backup_status,
+    hourly_incremental_backup_task,
+    list_backup_files,
+    manual_backup_task,
+    restore_backup,
+    verify_backup_integrity_task,
+    verify_backup_task,
+    weekly_wal_archive_task,
+)
+
 """
 数据库备份任务 / Database Backup Tasks
 
@@ -63,33 +88,6 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
       - manual.py: 手动备份和状态查询
 """
 
-# 为了向后兼容性,从新的模块化结构中导入所有内容
-from .backup import (
-    DatabaseBackupTask,  # 基础类和指标; 数据库备份任务; 维护任务; 服务备份任务; 手动任务
-    backup_config_task,
-    backup_database_task,
-    backup_failures_total,
-    backup_last_success,
-    backup_logs_task,
-    backup_redis_task,
-    backup_size_bytes,
-    backup_task_duration,
-    backup_tasks_total,
-    check_backup_storage_task,
-    cleanup_old_backups_task,
-    daily_full_backup_task,
-    get_backup_metrics,
-    get_backup_status,
-    hourly_incremental_backup_task,
-    list_backup_files,
-    manual_backup_task,
-    restore_backup,
-    verify_backup_integrity_task,
-    verify_backup_task,
-    weekly_wal_archive_task,
-)
-
-# 重新导出以保持原始接口
 __all__ = [
     # 基础类和指标
     "DatabaseBackupTask",
@@ -119,26 +117,3 @@ __all__ = [
     "list_backup_files",
     "restore_backup",
 ]
-
-# 原始实现已移至 src/tasks/backup/ 模块
-# 此处保留仅用于向后兼容性
-# 请使用新的模块化结构以获得更好的维护性
-
-# 包含的所有功能:
-# - DatabaseBackupTask: 数据库备份任务基类
-# - get_backup_metrics: 获取备份相关指标
-# - daily_full_backup_task: 每日完整数据库备份任务
-# - hourly_incremental_backup_task: 每小时增量备份任务（基于WAL归档）
-# - weekly_wal_archive_task: 每周WAL归档任务
-# - backup_database_task: 通用数据库备份任务
-# - verify_backup_task: 验证备份文件完整性
-# - cleanup_old_backups_task: 清理旧备份文件任务
-# - verify_backup_integrity_task: 验证备份完整性任务
-# - check_backup_storage_task: 检查备份存储空间任务
-# - backup_redis_task: Redis备份任务
-# - backup_logs_task: 日志备份任务
-# - backup_config_task: 配置文件备份任务
-# - manual_backup_task: 手动备份任务
-# - get_backup_status: 获取备份状态
-# - list_backup_files: 列出备份文件
-# - restore_backup: 恢复备份（紧急情况）

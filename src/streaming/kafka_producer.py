@@ -1,7 +1,7 @@
 # 简化版 kafka_producer 模块
 
 
-class Kafka_Producer:
+class KafkaProducer:
     def __init__(self):
         pass
 

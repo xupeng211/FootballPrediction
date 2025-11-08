@@ -1,7 +1,7 @@
 # 简化版 enhanced_real_model_training 模块
 
 
-class Enhanced_Real_Model_Training:
+class EnhancedRealModelTraining:
     def __init__(self):
         pass
 

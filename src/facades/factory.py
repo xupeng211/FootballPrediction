@@ -1,13 +1,13 @@
+from typing import Any
+
+from .base import Facade, Subsystem, SystemFacade
+
 """
 外观模式工厂模块
 Facade Factory Module
 
 提供外观和子系统的工厂创建功能.
 """
-
-from typing import Any
-
-from .base import Facade, Subsystem, SystemFacade
 
 
 class FacadeConfig:
@@ -167,11 +167,9 @@ class FacadeFactory:
         self._created_instances.clear()
 
 
-# 全局工厂实例
 facade_factory = FacadeFactory()
 
 
-# 便捷函数
 def create_facade(
     name: str,
     subsystem_configs: dict[str, dict[str, Any]] | None = None,
@@ -206,7 +204,6 @@ def create_system_facade(
     return facade_factory.create_system_facade(name, config)
 
 
-# 导出的公共接口
 __all__ = [
     "FacadeConfig",
     "FacadeFactory",

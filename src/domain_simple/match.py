@@ -1,12 +1,12 @@
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
 """
 比赛领域模型
 
 封装比赛的核心业务逻辑和规则.
 """
-
-from datetime import datetime
-from enum import Enum
-from typing import Any
 
 
 class MatchStatus(Enum):

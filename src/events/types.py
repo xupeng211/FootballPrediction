@@ -1,4 +1,8 @@
-# mypy: ignore-errors
+from datetime import datetime
+from typing import Any
+
+from .base import Event, EventData
+
 """
 from typing import Dict, Optional
 核心事件类型定义
@@ -8,13 +12,7 @@ Core Event Types
 Defines core event types in the system.
 """
 
-from datetime import datetime
-from typing import Any
 
-from .base import Event, EventData
-
-
-# 比赛相关事件数据
 class MatchEventData(EventData):
     """比赛事件数据"""
 
@@ -93,7 +91,6 @@ class MatchUpdatedEventData(MatchEventData):
         self.previous_status = previous_status
 
 
-# 预测相关事件数据
 class PredictionEventData(EventData):
     """预测事件数据"""
 
@@ -178,7 +175,6 @@ class PredictionUpdatedEventData(PredictionEventData):
         self.update_reason = update_reason
 
 
-# 用户相关事件数据
 class UserEventData(EventData):
     """用户事件数据"""
 
@@ -223,7 +219,6 @@ class UserRegisteredEventData(UserEventData):
         self.user_agent = user_agent
 
 
-# 球队统计事件数据
 class TeamStatsEventData(EventData):
     """球队统计事件数据"""
 
@@ -254,7 +249,6 @@ class TeamStatsEventData(EventData):
         self.last_updated = last_updated
 
 
-# 事件类定义
 class MatchCreatedEvent(Event):
     """比赛创建事件"""
 

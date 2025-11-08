@@ -415,17 +415,26 @@ class TestStringUtilsEnhanced:
         result = validate_batch_emails(emails)
 
         assert isinstance(result, dict)
-        assert len(result) == 3
+        # 检查新的格式：邮箱级别结果
         assert "test@example.com" in result
         assert "invalid-email" in result
         assert "user@domain.org" in result
+        assert result["test@example.com"] is True
+        assert result["user@domain.org"] is True
+        assert result["invalid-email"] is False
 
-        # 验证结果是布尔值
-        for _email, is_valid in result.items():
-            assert isinstance(is_valid, bool)
+        # 检查内部列表格式
+        assert "_valid_list" in result
+        assert "_invalid_list" in result
+        assert len(result["_valid_list"]) == 2
+        assert len(result["_invalid_list"]) == 1
+        assert "test@example.com" in result["_valid_list"]
+        assert "user@domain.org" in result["_valid_list"]
+        assert "invalid-email" in result["_invalid_list"]
 
         # 空列表
-        assert validate_batch_emails([]) == {}
+        empty_result = validate_batch_emails([])
+        assert empty_result == {"_valid_list": [], "_invalid_list": []}
 
     def test_string_utils_comprehensive_workflow(self):
         """测试字符串工具的完整工作流程"""

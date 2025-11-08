@@ -1,9 +1,18 @@
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+from src.domain.events.base import DomainEvent
+from src.domain.models.match import MatchResult, MatchScore
 
-@dataclass
+"""
+比赛领域事件
+Match Domain Events
+
+定义与比赛相关的领域事件.
+Defines domain events related to matches.
+"""
+
+
 class MatchEvent:
     """比赛事件基类"""
 
@@ -17,7 +26,6 @@ class MatchEvent:
             self.data = {}
 
 
-@dataclass
 class MatchStartedEvent(MatchEvent):
     """比赛开始事件"""
 
@@ -26,46 +34,12 @@ class MatchStartedEvent(MatchEvent):
     away_team: str = ""
 
 
-@dataclass
 class MatchEndedEvent(MatchEvent):
     """比赛结束事件"""
 
     event_type: str = "match_ended"
     final_score: str = ""
     winner: str | None = None
-
-
-"""
-比赛领域事件
-Match Domain Events
-
-定义与比赛相关的领域事件.
-Defines domain events related to matches.
-"""
-
-from typing import Any
-
-from src.domain.events.base import DomainEvent
-from src.domain.models.match import MatchResult, MatchScore
-
-
-class MatchStartedEvent(DomainEvent):
-    """比赛开始事件"""
-
-    def __init__(self, match_id: int, home_team_id: int, away_team_id: int, **kwargs):
-        """函数文档字符串"""
-        # 添加pass语句
-        super().__init__(aggregate_id=match_id)
-        self.match_id = match_id
-        self.home_team_id = home_team_id
-        self.away_team_id = away_team_id
-
-    def _get_event_data(self) -> dict[str, Any]:
-        return {
-            "match_id": self.match_id,
-            "home_team_id": self.home_team_id,
-            "away_team_id": self.away_team_id,
-        }
 
 
 class MatchFinishedEvent(DomainEvent):

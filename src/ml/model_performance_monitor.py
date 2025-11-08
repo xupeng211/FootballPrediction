@@ -41,7 +41,7 @@ class ModelPerformanceMonitor:
 
     async def train_model(
         self,
-        X: pd.DataFrame,
+        x: pd.DataFrame,
         y: pd.Series,
         model_type: str = "random_forest",
         hyperparameter_tuning: bool = True,
@@ -51,8 +51,8 @@ class ModelPerformanceMonitor:
             logger.info(f"开始训练模型: {model_type}")
 
             # 数据分割
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.2, random_state=42
+            x_train, x_test, y_train, y_test = train_test_split(
+                x, y, test_size=0.2, random_state=42
             )
 
             # 模型选择
@@ -78,16 +78,16 @@ class ModelPerformanceMonitor:
                 grid_search = GridSearchCV(
                     model, param_grid, cv=3, scoring="accuracy", n_jobs=-1
                 )
-                grid_search.fit(X_train, y_train)
+                grid_search.fit(x_train, y_train)
                 self.model = grid_search.best_estimator_
                 best_params = grid_search.best_params_
             else:
                 self.model = model
-                self.model.fit(X_train, y_train)
+                self.model.fit(x_train, y_train)
                 best_params = model.get_params()
 
             # 评估模型
-            y_pred = self.model.predict(X_test)
+            y_pred = self.model.predict(x_test)
 
             if hasattr(self.model, "predict_proba"):
                 accuracy = accuracy_score(y_test, y_pred)
@@ -104,8 +104,8 @@ class ModelPerformanceMonitor:
                 "model_type": model_type,
                 "best_params": best_params,
                 f"{metric_name}_test": metric_value,
-                "training_samples": len(X_train),
-                "test_samples": len(X_test),
+                "training_samples": len(x_train),
+                "test_samples": len(x_test),
             }
 
             self.training_history.append(training_record)
@@ -120,8 +120,8 @@ class ModelPerformanceMonitor:
                 "metric_name": metric_name,
                 "metric_value": metric_value,
                 "best_params": best_params,
-                "training_samples": len(X_train),
-                "test_samples": len(X_test),
+                "training_samples": len(x_train),
+                "test_samples": len(x_test),
             }
 
         except Exception as e:
@@ -252,7 +252,7 @@ async def main():
     """主函数示例"""
     # 示例数据
     np.random.seed(42)
-    X = pd.DataFrame(
+    x = pd.DataFrame(
         np.random.randn(100, 5), columns=[f"feature_{i}" for i in range(5)]
     )
     y = pd.Series(np.random.choice([0, 1], 100))
@@ -260,7 +260,7 @@ async def main():
     trainer = ModelPerformanceMonitor()
 
     # 训练模型
-    await trainer.train_model(X, y)
+    await trainer.train_model(x, y)
 
     # 预测
     test_features = pd.DataFrame(
@@ -269,7 +269,7 @@ async def main():
     await trainer.predict(test_features)
 
     # 性能监控
-    await trainer.monitor_performance(X, y)
+    await trainer.monitor_performance(x, y)
 
 
 if __name__ == "__main__":

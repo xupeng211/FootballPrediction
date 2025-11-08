@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Any
+
 """
 数据传输对象
 Data Transfer Objects
@@ -6,12 +9,7 @@ Data Transfer Objects
 Defines DTOs used in CQRS pattern.
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
 
-
-@dataclass
 class PredictionDTO:
     """类文档字符串"""
 
@@ -51,7 +49,6 @@ class PredictionDTO:
         }
 
 
-@dataclass
 class UserDTO:
     """类文档字符串"""
 
@@ -83,7 +80,6 @@ class UserDTO:
         }
 
 
-@dataclass
 class MatchDTO:
     """类文档字符串"""
 
@@ -119,7 +115,6 @@ class MatchDTO:
         }
 
 
-@dataclass
 class PredictionStatsDTO:
     """类文档字符串"""
 
@@ -149,7 +144,6 @@ class PredictionStatsDTO:
         }
 
 
-@dataclass
 class MatchStatsDTO:
     """类文档字符串"""
 
@@ -177,7 +171,6 @@ class MatchStatsDTO:
         }
 
 
-@dataclass
 class CommandResult:
     """类文档字符串"""
 

@@ -1,3 +1,10 @@
+from dataclasses import field
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
+from src.core.exceptions import DomainError
+
 """
 比赛领域模型
 Match Domain Model
@@ -5,13 +12,6 @@ Match Domain Model
 封装比赛相关的业务逻辑和不变性约束.
 Encapsulates match-related business logic and invariants.
 """
-
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Any
-
-from src.core.exceptions import DomainError
 
 
 class MatchStatus(Enum):
@@ -32,7 +32,6 @@ class MatchResult(Enum):
     DRAW = "draw"  # 平局
 
 
-@dataclass
 class MatchScore:
     """类文档字符串"""
 
@@ -71,7 +70,6 @@ class MatchScore:
         return f"{self.home_score}-{self.away_score}"
 
 
-@dataclass
 class Match:
     """类文档字符串"""
 

@@ -1,9 +1,3 @@
-"""
-用户认证API路由
-
-提供用户注册,登录,令牌管理等认证相关的API端点
-"""
-
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -11,25 +5,20 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.auth.models import (
-    MessageResponse,
     PasswordChangeRequest,
     PasswordResetConfirm,
     PasswordResetRequest,
-    TokenResponse,
     UserRegisterRequest,
-    UserResponse,
 )
 from src.database.connection import get_async_session
 from src.database.models.user import User
 from src.services.auth_service import AuthService
 
-# 暂时移除监控指标,避免导入问题
-# from src.monitoring.metrics_collector import (
-#     increase_user_registrations,
-#     increase_user_logins,
-#     increase_password_changes,
-#     increase_password_resets,
-# )
+"""
+用户认证API路由
+
+提供用户注册,登录,令牌管理等认证相关的API端点
+"""
 
 router = APIRouter(prefix="/auth", tags=["认证"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
@@ -69,12 +58,6 @@ async def get_current_user(
     return user
 
 
-@router.post(
-    "/register",
-    response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="用户注册",
-)
 async def register(
     user_data: UserRegisterRequest,
     auth_service: AuthService = Depends(get_auth_service),
@@ -113,11 +96,6 @@ async def register(
         ) from e
 
 
-@router.post(
-    "/login",
-    response_model=TokenResponse,
-    summary="用户登录",
-)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthService = Depends(get_auth_service),
@@ -147,11 +125,6 @@ async def login(
     return login_result
 
 
-@router.post(
-    "/refresh",
-    response_model=dict[str, str],
-    summary="刷新访问令牌",
-)
 async def refresh_token(
     refresh_token: str,
     auth_service: AuthService = Depends(get_auth_service),
@@ -171,11 +144,6 @@ async def refresh_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get(
-    "/me",
-    response_model=UserResponse,
-    summary="获取当前用户信息",
-)
 async def get_current_user_info(
     current_user: User = Depends(get_current_user),
 ) -> User:
@@ -185,11 +153,6 @@ async def get_current_user_info(
     return current_user
 
 
-@router.put(
-    "/me",
-    response_model=UserResponse,
-    summary="更新当前用户信息",
-)
 async def update_current_user(
     user_update: dict[str, Any],
     current_user: User = Depends(get_current_user),
@@ -219,11 +182,6 @@ async def update_current_user(
     return updated_user
 
 
-@router.post(
-    "/change-password",
-    response_model=MessageResponse,
-    summary="修改密码",
-)
 async def change_password(
     password_data: PasswordChangeRequest,
     current_user: User = Depends(get_current_user),
@@ -251,11 +209,6 @@ async def change_password(
     return {"message": "密码修改成功"}
 
 
-@router.post(
-    "/reset-password-request",
-    response_model=MessageResponse,
-    summary="请求密码重置",
-)
 async def request_password_reset(
     reset_request: PasswordResetRequest,
     auth_service: AuthService = Depends(get_auth_service),
@@ -280,11 +233,6 @@ async def request_password_reset(
     return {"message": "密码重置链接已发送到您的邮箱"}
 
 
-@router.post(
-    "/reset-password",
-    response_model=MessageResponse,
-    summary="确认密码重置",
-)
 async def reset_password(
     reset_data: PasswordResetConfirm,
     auth_service: AuthService = Depends(get_auth_service),
@@ -308,11 +256,6 @@ async def reset_password(
     return {"message": "密码重置成功"}
 
 
-@router.post(
-    "/verify-email",
-    response_model=MessageResponse,
-    summary="验证邮箱",
-)
 async def verify_email(
     verification_token: str,
     auth_service: AuthService = Depends(get_auth_service),
@@ -333,11 +276,6 @@ async def verify_email(
     return {"message": "邮箱验证成功"}
 
 
-@router.post(
-    "/resend-verification",
-    response_model=MessageResponse,
-    summary="重新发送验证邮件",
-)
 async def resend_verification_email(
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service),
@@ -358,11 +296,6 @@ async def resend_verification_email(
     return {"message": "验证邮件已发送"}
 
 
-@router.post(
-    "/logout",
-    response_model=MessageResponse,
-    summary="用户登出",
-)
 async def logout(
     current_user: User = Depends(get_current_user),
 ) -> dict[str, str]:
@@ -376,5 +309,4 @@ async def logout(
     return {"message": "登出成功"}
 
 
-# 导出router供其他模块使用
 __all__ = ["router"]

@@ -1,9 +1,3 @@
-"""
-设计模式实现模块
-
-包含各种设计模式的实现,用于提升代码的可维护性和扩展性.
-"""
-
 from .adapter import (
     AdapterFactory,
     APIAdapter,
@@ -37,6 +31,12 @@ from .observer import (
     create_observer_system,
     setup_service_observers,
 )
+
+"""
+设计模式实现模块
+
+包含各种设计模式的实现,用于提升代码的可维护性和扩展性.
+"""
 
 __all__ = [
     # Observer Pattern

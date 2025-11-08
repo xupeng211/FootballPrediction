@@ -1,12 +1,12 @@
-"""
-观察者模式基础实现
-Observer Pattern Base Implementation
-"""
-
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from typing import Any
+
+"""
+观察者模式基础实现
+Observer Pattern Base Implementation
+"""
 
 
 class ObservableEventType(Enum):
@@ -151,7 +151,6 @@ class EventManager:
         return self._subjects.copy()
 
 
-# 导出的公共接口
 __all__ = [
     "ObservableEventType",
     "ObservableEvent",

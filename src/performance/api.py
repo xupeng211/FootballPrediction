@@ -121,9 +121,7 @@ async def start_profiling(config: PerformanceRequest):
         profiler = get_profiler()
 
         if profiler.active_profiling:
-            raise HTTPException(
-                status_code=400, detail="Profiling is already active"
-            ) from e  # TODO: B904 exception chaining
+            raise HTTPException(status_code=400, detail="Profiling is already active")
 
         # 启动分析
         profiler.start_profiling()
@@ -158,9 +156,7 @@ async def stop_profiling():
         profiler = get_profiler()
 
         if not profiler.active_profiling:
-            raise HTTPException(
-                status_code=400, detail="No active profiling session"
-            ) from e  # TODO: B904 exception chaining
+            raise HTTPException(status_code=400, detail="No active profiling session")
 
         # 停止分析并获取结果
         results = profiler.stop_profiling()

@@ -1,17 +1,16 @@
-#!/usr/bin/env python3
-"""
-高级质量度量集成
-Advanced Quality Metrics Integration
-
-将高级度量指标集成到现有质量监控系统中
-"""
-
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from src.core.logging_system import get_logger
 from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
+
+"""
+高级质量度量集成
+Advanced Quality Metrics Integration
+
+将高级度量指标集成到现有质量监控系统中
+"""
 
 logger = get_logger(__name__)
 

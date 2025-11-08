@@ -641,7 +641,7 @@ class ObservableService(Subject):
         return self._metrics.copy()
 
 
-def create_observer_system(service_name: str) -> dict[str, Any]:
+def create_service_observer_system(service_name: str) -> dict[str, Any]:
     """创建观察者系统
 
     Args:

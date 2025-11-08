@@ -1,3 +1,6 @@
+from datetime import datetime
+from enum import Enum
+
 """
 audit 模块
 
@@ -8,9 +11,6 @@ audit 模块
 - audit_models: 审计相关的数据模型
 - audit_repository: 审计数据访问层
 """
-
-from datetime import datetime
-from enum import Enum
 
 
 class AuditAction(Enum):

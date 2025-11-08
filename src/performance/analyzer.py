@@ -1,3 +1,6 @@
+from .performance.analyzer_core import PerformanceAnalyzer
+from .performance.analyzer_models import PerformanceInsight, PerformanceTrend
+
 """
 analyzer 主模块
 
@@ -6,9 +9,4 @@ analyzer 主模块
 拆分策略: complexity_split
 """
 
-# 导入拆分的模块
-from .performance.analyzer_core import *
-from .performance.analyzer_models import *
-
-# 导出所有公共接口
 __all__ = ["PerformanceAnalyzer", "PerformanceInsight", "PerformanceTrend"]

@@ -1,3 +1,6 @@
+from datetime import timedelta
+from typing import Optional
+
 """
 足球预测系统特征定义
 
@@ -6,9 +9,6 @@
 
 基于 DATA_DESIGN.md 第6.1节特征仓库设计.
 """
-
-from datetime import timedelta
-from typing import Optional
 
 
 class FeatureDefinitions:
@@ -67,7 +67,6 @@ class FeatureDefinitions:
     }
 
 
-# 为了兼容性,提供简化的模拟对象
 class MockEntity:
     """类文档字符串"""
 
@@ -110,39 +109,30 @@ class MockFileSource:
         self.timestamp_field = timestamp_field
 
 
-# 实体定义
 match_entity = MockEntity(
     name="match_id", description="比赛唯一标识符", join_keys=["match_id"]
 )
-
 team_entity = MockEntity(
     name="team_id", description="球队唯一标识符", join_keys=["team_id"]
 )
-
 league_entity = MockEntity(
     name="league_id", description="联赛唯一标识符", join_keys=["league_id"]
 )
-
-# 数据源定义
 match_features_source = MockFileSource(
     name="match_features_source",
     path="data/match_features.parquet",
     timestamp_field="event_timestamp",
 )
-
 team_stats_source = MockFileSource(
     name="team_recent_stats_source",
     path="data/team_stats.parquet",
     timestamp_field="event_timestamp",
 )
-
 odds_features_source = MockFileSource(
     name="odds_features_source",
     path="data/odds_features.parquet",
     timestamp_field="event_timestamp",
 )
-
-# 特征视图定义
 match_features_view = MockFeatureView(
     name="match_features",
     entities=[match_entity],
@@ -150,7 +140,6 @@ match_features_view = MockFeatureView(
     source=match_features_source,
     tags={"team": "data", "type": "match_context"},
 )
-
 team_recent_stats_view = MockFeatureView(
     name="team_recent_stats",
     entities=[team_entity],
@@ -158,7 +147,6 @@ team_recent_stats_view = MockFeatureView(
     source=team_stats_source,
     tags={"team": "data", "type": "team_performance"},
 )
-
 odds_features_view = MockFeatureView(
     name="odds_features",
     entities=[match_entity],
@@ -166,7 +154,6 @@ odds_features_view = MockFeatureView(
     source=odds_features_source,
     tags={"team": "data", "type": "betting_odds"},
 )
-
 head_to_head_features_view = MockFeatureView(
     name="head_to_head_features",
     entities=[match_entity],
@@ -176,7 +163,6 @@ head_to_head_features_view = MockFeatureView(
 )
 
 
-# 特征服务定义（简化版本）
 class FeatureServices:
     """类文档字符串"""
 

@@ -1,16 +1,16 @@
+from __future__ import annotations
+
+from dataclasses import field
+from datetime import datetime
+from typing import Any, Protocol
+
+from src.domain.models.team import Team, TeamForm, TeamStats
+
 """球队领域服务"
 
 提供围绕球队聚合的高级业务操作,例如比赛结果更新,
 球队信息维护以及联赛积分榜计算.
 """
-
-from __future__ import annotations
-
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Protocol
-
-from src.domain.models.team import Team, TeamForm, TeamStats
 
 
 class TeamRepositoryProtocol(Protocol):
@@ -23,7 +23,6 @@ class TeamRepositoryProtocol(Protocol):
         ...
 
 
-@dataclass(frozen=True)
 class TeamStatsEvent:
     """类文档字符串"""
 
@@ -39,7 +38,6 @@ class TeamStatsEvent:
     occurred_at: datetime = field(default_factory=datetime.utcnow)
 
 
-@dataclass(frozen=True)
 class TeamProfileUpdatedEvent:
     """类文档字符串"""
 
@@ -51,7 +49,6 @@ class TeamProfileUpdatedEvent:
     occurred_at: datetime = field(default_factory=datetime.utcnow)
 
 
-@dataclass(frozen=True)
 class TeamPerformanceResetEvent:
     """类文档字符串"""
 

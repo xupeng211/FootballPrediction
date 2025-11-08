@@ -1,10 +1,10 @@
-"""
-联赛领域模型
-"""
-
 from datetime import datetime
 from enum import Enum
 from typing import Any
+
+"""
+联赛领域模型
+"""
 
 
 class LeagueStatus(Enum):

@@ -1,3 +1,8 @@
+from datetime import datetime
+from typing import Any
+
+from src.domain.events.base import DomainEvent
+
 """
 预测领域事件
 Prediction Domain Events
@@ -5,11 +10,6 @@ Prediction Domain Events
 定义与预测相关的领域事件.
 Defines domain events related to predictions.
 """
-
-from datetime import datetime
-from typing import Any
-
-from src.domain.events.base import DomainEvent
 
 
 class PredictionEvent(DomainEvent):

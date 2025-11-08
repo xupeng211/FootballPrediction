@@ -1,12 +1,11 @@
+from datetime import date, datetime, timedelta
+from typing import Any
+
 """
 日期时间工具模块 - 重写版本
 
 提供核心的日期时间处理功能
 """
-
-from datetime import date, datetime, timedelta
-from functools import lru_cache
-from typing import Any
 
 
 class DateUtils:
@@ -291,14 +290,11 @@ class DateUtils:
             return "0秒"
 
 
-# 缓存版本的函数
-@lru_cache(maxsize=128)
 def cached_format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
     """缓存版本的日期格式化"""
     return DateUtils.format_datetime(dt, format_str)
 
 
-@lru_cache(maxsize=256)
 def cached_time_ago(dt: datetime, reference: datetime | None = None) -> str:
     """缓存版本的时间差格式化"""
     return DateUtils.time_ago(dt)

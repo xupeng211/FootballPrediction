@@ -1,10 +1,10 @@
+from typing import Any
+
 """
 足球预测系统字典处理工具模块
 
 提供字典操作相关的工具函数.
 """
-
-from typing import Any
 
 
 class DictUtils:
@@ -251,7 +251,6 @@ class DictUtils:
         return {k: v for k, v in d.items() if filter_func(k)}
 
 
-# 顶级函数，用于直接导入
 def deep_merge(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
     """深度合并字典 - 递归合并嵌套字典,dict2的值会覆盖dict1中的同名键"""
     return DictUtils.deep_merge(dict1, dict2)

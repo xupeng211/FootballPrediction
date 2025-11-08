@@ -1,14 +1,14 @@
-"""
-足球预测系统内容分析服务模块
-
-提供内容分析和处理功能.
-"""
-
 from datetime import datetime
 from enum import Enum
 from typing import Any
 
 from .base_unified import SimpleService
+
+"""
+足球预测系统内容分析服务模块
+
+提供内容分析和处理功能.
+"""
 
 
 class ContentType(Enum):

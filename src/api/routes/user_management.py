@@ -1,10 +1,3 @@
-"""
-用户管理API路由
-User Management API Routes
-
-提供用户管理的REST API端点。
-"""
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel
@@ -21,6 +14,13 @@ from src.services.user_management_service import (
     UserResponse,
     UserUpdateRequest,
 )
+
+"""
+用户管理API路由
+User Management API Routes
+
+提供用户管理的REST API端点。
+"""
 
 router = APIRouter(prefix="/api/v1/users", tags=["用户管理"])
 security = HTTPBearer()
@@ -40,7 +40,6 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
-@router.post("/register", response_model=UserResponse, status_code=201)
 async def register_user(
     request: UserCreateRequest,
     user_service=Depends(get_user_management_service),
@@ -57,7 +56,6 @@ async def register_user(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.post("/login", response_model=UserAuthResponse)
 async def login_user(
     request: LoginRequest,
     user_service=Depends(get_user_management_service),
@@ -74,7 +72,6 @@ async def login_user(
         ) from e
 
 
-@router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
@@ -89,7 +86,6 @@ async def get_current_user_info(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: int,
     user_service=Depends(get_user_management_service),
@@ -102,7 +98,6 @@ async def get_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
-@router.put("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: int,
     request: UserUpdateRequest,
@@ -129,7 +124,6 @@ async def update_user(
         ) from e
 
 
-@router.delete("/{user_id}", status_code=204)
 async def delete_user(
     user_id: int,
     current_user: dict = Depends(get_current_user),
@@ -150,7 +144,6 @@ async def delete_user(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/", response_model=list[UserResponse])
 async def get_users(
     skip: int = 0,
     limit: int = 100,
@@ -176,7 +169,6 @@ async def get_users(
         ) from e
 
 
-@router.get("/search/{query}", response_model=list[UserResponse])
 async def search_users(
     query: str,
     limit: int = 20,
@@ -199,7 +191,6 @@ async def search_users(
         ) from e
 
 
-@router.post("/change-password", status_code=200)
 async def change_password(
     request: ChangePasswordRequest,
     current_user: dict = Depends(get_current_user),
@@ -223,7 +214,6 @@ async def change_password(
         ) from e
 
 
-@router.post("/{user_id}/deactivate", response_model=UserResponse)
 async def deactivate_user(
     user_id: int,
     current_user: dict = Depends(get_current_user),
@@ -245,7 +235,6 @@ async def deactivate_user(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.post("/{user_id}/activate", response_model=UserResponse)
 async def activate_user(
     user_id: int,
     current_user: dict = Depends(get_current_user),
@@ -267,7 +256,6 @@ async def activate_user(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/stats", response_model=dict)
 async def get_user_stats(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),

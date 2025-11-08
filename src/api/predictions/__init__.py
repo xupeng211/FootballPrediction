@@ -1,7 +1,3 @@
-"""
-预测API模块
-"""
-
 from .models import (
     BatchPredictionRequest,
     BatchPredictionResponse,
@@ -20,6 +16,10 @@ from .models import (
     VerificationResponse,
 )
 from .router import router
+
+"""
+预测API模块
+"""
 
 __all__ = [
     "PredictionRequest",

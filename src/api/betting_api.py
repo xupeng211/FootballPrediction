@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+from datetime import datetime
+from typing import Any
+
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from src.core.logging_system import get_logger
+from src.services.betting.betting_service import BettingService, create_betting_service
+
 """
 投注API模块
 Betting API Module
@@ -14,22 +22,10 @@ Betting API Module
 Issue: #116 EV计算和投注策略
 """
 
-from datetime import datetime
-from typing import Any
-
-from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, HTTPException, Query
-from pydantic import BaseModel, Field
-
-from src.core.logging_system import get_logger
-from src.services.betting.betting_service import BettingService, create_betting_service
-
 logger = get_logger(__name__)
-
-# 创建路由器
 router = APIRouter(prefix="/betting", tags=["betting"])
 
 
-# Pydantic模型定义
 class BettingOddsRequest(BaseModel):
     """赔率请求模型"""
 
@@ -73,7 +69,6 @@ class PerformanceAnalysisRequest(BaseModel):
     strategy_name: str = Field("srs_compliant", description="策略名称")
 
 
-# 响应模型
 class BaseResponse(BaseModel):
     """基础响应模型"""
 
@@ -116,21 +111,11 @@ class PerformanceAnalysisResponse(BaseResponse):
     improvement_suggestions: list[str]
 
 
-# 依赖注入
 async def get_betting_service() -> BettingService:
     """获取投注服务实例"""
     return create_betting_service()
 
 
-# API端点实现
-
-
-@router.get(
-    "/recommendations/{match_id}",
-    response_model=BettingRecommendationResponse,
-    summary="获取比赛投注建议",
-    description="为指定比赛生成详细的投注建议,包括EV计算,Kelly准则和风险评估",
-)
 async def get_match_recommendations(
     match_id: str,
     strategy_name: str = Query("srs_compliant", description="投注策略名称"),
@@ -183,12 +168,6 @@ async def get_match_recommendations(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.post(
-    "/portfolio/recommendations",
-    response_model=PortfolioRecommendationResponse,
-    summary="获取组合投注建议",
-    description="为多场比赛生成优化的组合投注建议",
-)
 async def get_portfolio_recommendations(
     request: PortfolioRequest,
     background_tasks: BackgroundTasks,
@@ -242,12 +221,6 @@ async def get_portfolio_recommendations(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get(
-    "/performance/analysis",
-    response_model=PerformanceAnalysisResponse,
-    summary="获取历史表现分析",
-    description="分析指定时间段内的历史投注表现",
-)
 async def get_performance_analysis(
     days_back: int = Query(
         30,  # TODO: 将魔法数字 30 提取为常量
@@ -295,12 +268,6 @@ async def get_performance_analysis(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.post(
-    "/odds/update",
-    response_model=BaseResponse,
-    summary="更新比赛赔率",
-    description="更新指定比赛的赔率数据",
-)
 async def update_match_odds(
     request: OddsUpdateRequest,
     background_tasks: BackgroundTasks,
@@ -344,11 +311,6 @@ async def update_match_odds(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get(
-    "/strategies",
-    summary="获取可用策略列表",
-    description="获取所有可用的投注策略及其配置",
-)
 async def get_available_strategies(
     betting_service: BettingService = Depends(get_betting_service),
 ):
@@ -408,11 +370,6 @@ async def get_available_strategies(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get(
-    "/srs/compliance/check/{match_id}",
-    summary="检查SRS合规性",
-    description="检查指定比赛的预测数据是否符合SRS要求",
-)
 async def check_srs_compliance(
     match_id: str, betting_service: BettingService = Depends(get_betting_service)
 ):
@@ -449,7 +406,6 @@ async def check_srs_compliance(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/health", summary="投注服务健康检查", description="检查投注服务的运行状态")
 async def health_check(betting_service: BettingService = Depends(get_betting_service)):
     """健康检查端点"""
     try:
@@ -487,9 +443,6 @@ async def health_check(betting_service: BettingService = Depends(get_betting_ser
         }
 
 
-@router.get(
-    "/metrics", summary="获取投注服务指标", description="获取投注服务的性能和使用指标"
-)
 async def get_metrics(betting_service: BettingService = Depends(get_betting_service)):
     """获取服务指标"""
     try:
@@ -530,8 +483,6 @@ async def get_metrics(betting_service: BettingService = Depends(get_betting_serv
         ) from e  # TODO: B904 exception chaining
 
 
-# 错误处理器
-@router.exception_handler(422)  # TODO: 将魔法数字 422 提取为常量
 async def validation_exception_handler(request, exc):
     """验证异常处理器"""
     return {
@@ -542,7 +493,6 @@ async def validation_exception_handler(request, exc):
     }
 
 
-@router.exception_handler(404)  # TODO: 将魔法数字 404 提取为常量
 async def not_found_exception_handler(request, exc):
     """404异常处理器"""
     return {
@@ -552,8 +502,6 @@ async def not_found_exception_handler(request, exc):
     }
 
 
-# 注册路由
-# 导出
 __all__ = [
     "router",
     "register_betting_api",

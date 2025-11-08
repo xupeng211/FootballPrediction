@@ -1,16 +1,15 @@
-#!/usr/bin/env python3
+from datetime import datetime
+from typing import Any
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+from pydantic import BaseModel
+
 """
 Advanced Prediction API
 高级预测API,支持多种预测模型
 
 生成时间: 2025-10-26 20:57:38  # TODO: 将魔法数字 2025 提取为常量
 """
-
-from datetime import datetime
-from typing import Any
-
-from fastapi import APIRouter, BackgroundTasks, HTTPException
-from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -31,7 +30,6 @@ class AdvancedPredictionAPIResponse(BaseModel):
     timestamp: datetime
 
 
-@router.post("/advanced_prediction_api/execute")
 async def execute_advanced_prediction_api(
     request: AdvancedPredictionAPIRequest, background_tasks: BackgroundTasks
 ) -> AdvancedPredictionAPIResponse:
@@ -56,7 +54,6 @@ async def execute_advanced_prediction_api(
         ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
-@router.get("/advanced_prediction_api/status/{job_id}")
 async def get_advanced_prediction_api_status(job_id: str):
     """获取Advanced Prediction API执行状态"""
     # TODO: 实现状态查询逻辑
@@ -68,7 +65,6 @@ async def get_advanced_prediction_api_status(job_id: str):
     }
 
 
-@router.get("/advanced_prediction_api/health")
 async def health_check():
     """健康检查"""
     return {

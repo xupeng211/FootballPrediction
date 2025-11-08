@@ -1,10 +1,10 @@
-"""
-用户领域模型
-"""
-
 from datetime import datetime
 from enum import Enum
 from typing import Any
+
+"""
+用户领域模型
+"""
 
 
 class UserRole(Enum):

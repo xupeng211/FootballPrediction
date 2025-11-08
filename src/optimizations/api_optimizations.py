@@ -1,7 +1,7 @@
 # 简化版 api_optimizations 模块
 
 
-class Api_Optimizations:
+class ApiOptimizations:
     def __init__(self):
         pass
 

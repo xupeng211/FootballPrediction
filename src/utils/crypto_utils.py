@@ -29,12 +29,11 @@ class CryptoUtils:
     def hash_password(password: str) -> str:
         """密码哈希"""
         try:
-
-            HAS_BCRYPT = True
+            has_bcrypt = True
         except ImportError:
-            HAS_BCRYPT = False
+            has_bcrypt = False
 
-        if HAS_BCRYPT:
+        if has_bcrypt:
             password_bytes = (
                 password.encode("utf-8") if isinstance(password, str) else password
             )
@@ -52,7 +51,6 @@ class CryptoUtils:
     def _verify_password_handle_error():
         """处理bcrypt导入错误"""
         try:
-
             pass
         except ImportError:
             pass
@@ -69,10 +67,9 @@ class CryptoUtils:
     def verify_password(password: str, hashed_password: str) -> bool:
         """验证密码"""
         try:
-
-            HAS_BCRYPT = True
+            has_bcrypt = True
         except ImportError:
-            HAS_BCRYPT = False
+            has_bcrypt = False
 
         # 基本条件检查
         if not CryptoUtils._verify_password_check_condition(password, hashed_password):
@@ -80,7 +77,7 @@ class CryptoUtils:
 
         # bcrypt格式密码验证
         if (
-            HAS_BCRYPT
+            has_bcrypt
             and hashed_password.startswith("$2b$")
             and hashed_password.count("$") == 3
         ):

@@ -1,3 +1,7 @@
+from typing import Any
+
+from .ttl_cache import TTLCache
+
 """
 异步TTL缓存包装器
 Async TTL Cache Wrapper
@@ -5,10 +9,6 @@ Async TTL Cache Wrapper
 为TTLCache提供异步接口.
 Provides async interface for TTLCache.
 """
-
-from typing import Any
-
-from .ttl_cache import TTLCache
 
 
 class AsyncTTLCache:

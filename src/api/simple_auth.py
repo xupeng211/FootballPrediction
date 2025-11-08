@@ -10,14 +10,10 @@ from pydantic import BaseModel
 提供基本的用户认证功能,避免复杂依赖问题
 """
 
-# 简化的依赖,避免复杂导入
-# from src.database.connection import get_async_session
-
 router = APIRouter(prefix="/auth", tags=["认证"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 
-# 简化的用户数据结构
 class SimpleUser(BaseModel):
     id: int
     username: str
@@ -33,21 +29,18 @@ class SimpleUser(BaseModel):
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
-# 简化的用户注册请求
 class SimpleUserRegister(BaseModel):
     username: str
     email: str
     password: str
 
 
-# 简化的令牌响应
 class SimpleTokenResponse(BaseModel):
     access_token: str
     token_type: str
     expires_in: int
 
 
-# 简化的认证服务
 class SimpleAuthService:
     """类文档字符串"""
 
@@ -206,11 +199,9 @@ class SimpleAuthService:
         )
 
 
-# 全局认证服务实例
 auth_service = SimpleAuthService()
 
 
-# 依赖函数
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
     """获取当前用户（简化版本,不验证令牌）"""
     # 简化实现:从令牌中提取用户名
@@ -237,8 +228,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
     return user
 
 
-# API端点
-@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_data: SimpleUserRegister):
     """用户注册"""
     try:
@@ -252,7 +241,6 @@ async def register_user(user_data: SimpleUserRegister):
         ) from e  # TODO: B904 exception chaining
 
 
-@router.post("/login")
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
     """用户登录"""
     user = auth_service.authenticate_user(form_data.username, form_data.password)
@@ -271,17 +259,14 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
     )
 
 
-@router.get("/me")
 async def get_current_user_info(current_user: SimpleUser = Depends(get_current_user)):
     """获取当前用户信息"""
     return {"user": current_user.dict(), "message": "用户信息获取成功"}
 
 
-@router.post("/logout")
 async def logout_user():
     """用户登出"""
     return {"message": "登出成功"}
 
 
-# 导出router
 __all__ = ["router"]

@@ -1,9 +1,9 @@
+from pydantic import BaseModel, Field
+
 """
 预测引擎配置模块
 Prediction Engine Configuration Module
 """
-
-from pydantic import BaseModel, Field
 
 
 class PredictionConfig(BaseModel):

@@ -1,3 +1,13 @@
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar
+
+from sqlalchemy import delete, select, update
+from sqlalchemy import exc as sqlalchemy_exc
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.database.connection import DatabaseManager
+
 """
 基础仓储接口
 Base Repository Interface
@@ -6,17 +16,6 @@ Base Repository Interface
 Defines the base interface for the Repository pattern, providing standard CRUD operations.
 """
 
-from abc import ABC, abstractmethod
-from collections.abc import Callable
-from typing import Any, Generic, TypeVar
-
-from sqlalchemy import delete, select, update
-from sqlalchemy import exc as SQLAlchemyExc
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.database.connection import DatabaseManager
-
-# 类型变量
 T = TypeVar("T")
 
 
@@ -406,8 +405,8 @@ class BaseRepository(ABC, Generic[T]):
                 await sess.commit()
                 return results
             except (
-                SQLAlchemyExc.SQLAlchemyError,
-                SQLAlchemyExc.DatabaseError,
+                sqlalchemy_exc.SQLAlchemyError,
+                sqlalchemy_exc.DatabaseError,
                 ConnectionError,
                 TimeoutError,
             ):

@@ -1,10 +1,10 @@
-"""数据库相关的定义,用于替代connection_mod"""
-
 from enum import Enum
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
+
+"""数据库相关的定义,用于替代connection_mod"""
 
 
 class DatabaseRole(Enum):
@@ -97,7 +97,6 @@ class MultiUserDatabaseManager(DatabaseManager):
         self.admins = []
 
 
-# 工厂函数
 def get_database_manager() -> DatabaseManager:
     """获取数据库管理器单例"""
     return DatabaseManager()
@@ -108,7 +107,6 @@ def get_multi_user_database_manager() -> MultiUserDatabaseManager:
     return MultiUserDatabaseManager()
 
 
-# 初始化函数
 def initialize_database(database_url: str | None = None):
     """初始化数据库"""
     manager = get_database_manager()
@@ -123,10 +121,8 @@ def initialize_multi_user_database(database_url: str | None = None):
 
 def initialize_test_database():
     """初始化测试数据库"""
-    # 测试数据库的特殊初始化
 
 
-# 会话获取函数
 def get_db_session() -> Session:
     """获取数据库会话"""
     manager = get_database_manager()
@@ -139,7 +135,6 @@ def get_async_session() -> AsyncSession:
     return manager.get_async_session()
 
 
-# 其他会话函数的简化实现
 def get_reader_session() -> Session:
     return get_db_session()
 
@@ -164,5 +159,4 @@ def get_async_admin_session() -> AsyncSession:
     return get_async_session()
 
 
-# 兼容性别名
 get_session = get_db_session

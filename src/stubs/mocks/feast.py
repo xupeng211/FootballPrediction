@@ -1,4 +1,3 @@
-# 简化版模块: feast
 from datetime import datetime
 from typing import Any
 
@@ -30,11 +29,9 @@ class Feast:
         return self.id is not None
 
 
-# 模块级函数
 def helper_function(data: Any) -> str:
     """辅助函数"""
     return f"processed_{data}"
 
 
-# 模块常量
 FEAST_VERSION = "1.0.0"

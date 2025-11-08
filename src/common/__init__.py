@@ -1,10 +1,4 @@
-"""
-Common utilities and shared components
-"""
-
 from src.api import data as api_models
-
-# Import from actual modules
 from src.utils.formatters import (
     format_currency,
     format_datetime,
@@ -25,6 +19,10 @@ from src.utils.validators import (
     validate_data_types,
     validate_required_fields,
 )
+
+"""
+Common utilities and shared components
+"""
 
 __all__ = [
     # Formatters

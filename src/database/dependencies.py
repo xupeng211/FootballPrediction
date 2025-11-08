@@ -1,10 +1,3 @@
-"""
-FastAPI 依赖注入模块
-
-提供数据库会话的依赖注入函数,用于替换全局会话模式。
-支持同步和异步会话管理.
-"""
-
 from collections.abc import AsyncGenerator, Generator
 
 from fastapi import Depends
@@ -19,6 +12,13 @@ from src.database.definitions import (
     get_reader_session,
     get_writer_session,
 )
+
+"""
+FastAPI 依赖注入模块
+
+提供数据库会话的依赖注入函数,用于替换全局会话模式。
+支持同步和异步会话管理.
+"""
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -119,12 +119,9 @@ async def get_async_writer_db() -> AsyncGenerator[AsyncSession, None]:
         await session.close()
 
 
-# 为了向后兼容,保留原有的函数名
-get_db_session = get_db
 get_async_db_session = get_async_db
 
 
-# 测试专用的依赖注入函数
 def get_test_db() -> Generator[Session, None, None]:
     """
     测试用的数据库会话依赖注入函数
@@ -159,18 +156,14 @@ async def get_test_async_db() -> AsyncGenerator[AsyncSession, None]:
         await session.close()
 
 
-# 便捷的依赖注入对象,可以直接在路由中使用
 db_session = Depends(get_db)
 async_db_session = Depends(get_async_db)
 reader_db = Depends(get_reader_db)
 writer_db = Depends(get_writer_db)
 async_reader_db = Depends(get_async_reader_db)
 async_writer_db = Depends(get_async_writer_db)
-
-# 测试用的便捷依赖
 test_db = Depends(get_test_db)
 test_async_db = Depends(get_test_async_db)
-
 __all__ = [
     # 同步依赖注入函数
     "get_db",

@@ -3,10 +3,7 @@
 Cache Configuration
 """
 
-from dataclasses import dataclass
 
-
-@dataclass
 class CacheConfig:
     """类文档字符串"""
 
@@ -42,7 +39,6 @@ class CacheConfig:
             }
 
 
-# 全局缓存配置实例
 CACHE_CONFIG = CacheConfig()
 
 

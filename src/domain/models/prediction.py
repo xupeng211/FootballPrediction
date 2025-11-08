@@ -1,3 +1,11 @@
+from dataclasses import field
+from datetime import datetime
+from decimal import Decimal
+from enum import Enum
+from typing import Any
+
+from src.core.exceptions import DomainError
+
 """
 预测领域模型
 Prediction Domain Model
@@ -5,14 +13,6 @@ Prediction Domain Model
 封装预测相关的业务逻辑和不变性约束.
 Encapsulates prediction-related business logic and invariants.
 """
-
-from dataclasses import dataclass, field
-from datetime import datetime
-from decimal import Decimal
-from enum import Enum
-from typing import Any
-
-from src.core.exceptions import DomainError
 
 
 class PredictionStatus(Enum):
@@ -24,7 +24,6 @@ class PredictionStatus(Enum):
     EXPIRED = "expired"  # 已过期
 
 
-@dataclass
 class ConfidenceScore:
     """类文档字符串"""
 
@@ -54,7 +53,6 @@ class ConfidenceScore:
         return f"{self.value:.2f} ({self.level})"
 
 
-@dataclass
 class PredictionScore:
     """类文档字符串"""
 
@@ -126,7 +124,6 @@ class PredictionScore:
         return f"{self.predicted_home}-{self.predicted_away}"
 
 
-@dataclass
 class PredictionPoints:
     """预测积分值对象"""
 
@@ -159,7 +156,6 @@ class PredictionPoints:
         return f"{self.total} 分"
 
 
-@dataclass
 class Prediction:
     """类文档字符串"""
 

@@ -1,11 +1,3 @@
-"""
-装饰器模式实现
-Decorator Pattern Implementation
-
-用于功能增强和横切关注点.
-Used for functionality enhancement and cross-cutting concerns.
-"""
-
 from .base import Decorator, DecoratorComponent
 from .decorators import (
     AuthDecorator,
@@ -19,6 +11,14 @@ from .decorators import (
 )
 from .factory import DecoratorFactory
 from .service import DecoratorService
+
+"""
+装饰器模式实现
+Decorator Pattern Implementation
+
+用于功能增强和横切关注点.
+Used for functionality enhancement and cross-cutting concerns.
+"""
 
 __all__ = [
     # Base classes

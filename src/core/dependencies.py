@@ -1,11 +1,3 @@
-"""
-核心依赖注入模块
-Core Dependencies Module
-
-提供FastAPI应用的核心依赖注入函数。
-Provides core dependency injection functions for FastAPI applications.
-"""
-
 from collections.abc import AsyncGenerator, Generator
 
 from fastapi import Depends, HTTPException, status
@@ -16,9 +8,15 @@ from sqlalchemy.orm import Session
 from ..database.base import get_async_db, get_db
 from .logging_system import get_logger
 
-logger = get_logger(__name__)
+"""
+核心依赖注入模块
+Core Dependencies Module
 
-# HTTP Bearer 认证方案
+提供FastAPI应用的核心依赖注入函数。
+Provides core dependency injection functions for FastAPI applications.
+"""
+
+logger = get_logger(__name__)
 security = HTTPBearer()
 
 
@@ -112,7 +110,6 @@ async def get_admin_user(
     return current_user
 
 
-# 数据库连接池依赖
 async def get_db_pool() -> AsyncGenerator[async_sessionmaker, None]:
     """
     获取数据库连接池
@@ -134,7 +131,6 @@ async def get_db_pool() -> AsyncGenerator[async_sessionmaker, None]:
         pass
 
 
-# 缓存依赖
 async def get_cache_manager():
     """
     获取缓存管理器
@@ -148,7 +144,6 @@ async def get_cache_manager():
     return get_cache_manager()
 
 
-# 性能监控依赖
 async def get_performance_monitor():
     """
     获取性能监控器
@@ -162,7 +157,6 @@ async def get_performance_monitor():
     return get_system_monitor()
 
 
-# 日志记录器依赖
 def get_request_logger():
     """
     获取请求日志记录器
@@ -174,7 +168,6 @@ def get_request_logger():
     return get_logger(__name__)
 
 
-# 测试依赖
 async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
     """
     测试数据库会话依赖
@@ -192,7 +185,6 @@ async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-# 依赖注入函数映射
 DEPENDENCIES = {
     "current_user_optional": get_current_user_optional,
     "current_user_required": get_current_user_required,

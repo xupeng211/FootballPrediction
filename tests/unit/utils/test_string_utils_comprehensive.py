@@ -222,9 +222,15 @@ class TestStringUtilsComprehensive:
         # 测试批量邮箱验证
         emails = ["test@example.com", "invalid", "user@domain.org"]
         results = validate_batch_emails(emails)
-        assert len(results) == 3
+        # 验证邮箱级别的结果（3个邮箱 + 2个列表字段 = 5个键）
+        assert len(results) == 5
         assert results["test@example.com"] is True
         assert results["invalid"] is False
+        # 验证内部列表字段
+        assert "_valid_list" in results
+        assert "_invalid_list" in results
+        assert len(results["_valid_list"]) == 2
+        assert len(results["_invalid_list"]) == 1
 
     def test_cached_slug_function(self):
         """测试缓存的slug生成函数"""
@@ -355,8 +361,13 @@ class TestStringUtilsPerformance:
 
         # 验证结果
         assert len(cleaned_strings) == 1000
-        assert len(email_results) == 1000
-        assert sum(email_results.values()) == 500  # 一半有效邮箱
+        # 邮箱结果包含1000个邮箱 + 2个列表字段 = 1002个键
+        assert len(email_results) == 1002
+        # 计算有效邮箱数量（排除列表字段）
+        valid_emails = [
+            k for k, v in email_results.items() if k.startswith("user") and v is True
+        ]
+        assert len(valid_emails) == 500  # 一半有效邮箱
 
         # 验证性能
         assert (end_time - start_time) < 1.0  # 应该在1秒内完成

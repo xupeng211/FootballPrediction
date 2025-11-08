@@ -1,11 +1,3 @@
-"""
-观察者系统API端点
-Observer System API Endpoints
-
-提供观察者系统的管理和监控接口.
-Provides management and monitoring interfaces for the observer system.
-"""
-
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -15,9 +7,13 @@ from pydantic import BaseModel
 from src.observers import get_observer_manager
 from src.observers.base import ObservableEventType
 
-# mypy: ignore-errors
-# 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑
+"""
+观察者系统API端点
+Observer System API Endpoints
 
+提供观察者系统的管理和监控接口.
+Provides management and monitoring interfaces for the observer system.
+"""
 
 router = APIRouter(prefix="/observers", tags=["观察者系统"])
 
@@ -40,7 +36,6 @@ class MetricUpdateRequest(BaseModel):
     metric_type: str = "gauge"
 
 
-@router.get("/", summary="观察者系统根路径")
 async def get_observers_root():
     """观察者系统根路径"""
     return {
@@ -71,21 +66,18 @@ async def get_observers_root():
     }
 
 
-@router.get("/status", summary="获取观察者系统状态")
 async def get_observer_status() -> dict[str, Any]:
     """获取观察者系统的整体状态"""
     manager = get_observer_manager()
     return manager.get_system_status()
 
 
-@router.get("/metrics", summary="获取所有指标")
 async def get_all_metrics() -> dict[str, Any]:
     """获取所有观察者收集的指标"""
     manager = get_observer_manager()
     return manager.get_all_metrics()
 
 
-@router.get("/observers", summary="获取所有观察者")
 async def get_observers() -> dict[str, Any]:
     """获取所有观察者的信息"""
     manager = get_observer_manager()
@@ -104,7 +96,6 @@ async def get_observers() -> dict[str, Any]:
     }
 
 
-@router.get("/subjects", summary="获取所有被观察者")
 async def get_subjects() -> dict[str, Any]:
     """获取所有被观察者的信息"""
     manager = get_observer_manager()
@@ -120,7 +111,6 @@ async def get_subjects() -> dict[str, Any]:
     }
 
 
-@router.get("/alerts", summary="获取告警历史")
 async def get_alerts(
     severity: str | None = Query(None, description="告警严重性过滤"),
     hours: int = Query(24, ge=1, le=168, description="查询时间范围（小时）"),
@@ -149,7 +139,6 @@ async def get_alerts(
     }
 
 
-@router.post("/alerts", summary="手动触发告警")
 async def trigger_alert(
     request: AlertRequest, background_tasks: BackgroundTasks
 ) -> dict[str, str]:
@@ -169,7 +158,6 @@ async def trigger_alert(
     return {"message": "告警已触发", "alert_type": request.alert_type}
 
 
-@router.get("/alerts/rules", summary="获取告警规则")
 async def get_alert_rules() -> dict[str, Any]:
     """获取所有告警规则"""
     manager = get_observer_manager()
@@ -184,7 +172,6 @@ async def get_alert_rules() -> dict[str, Any]:
     }
 
 
-@router.post("/metrics/update", summary="更新指标")
 async def update_metric(
     request: MetricUpdateRequest, background_tasks: BackgroundTasks
 ) -> dict[str, str]:
@@ -205,7 +192,6 @@ async def update_metric(
     }
 
 
-@router.get("/predictions", summary="获取预测统计")
 async def get_prediction_metrics() -> dict[str, Any]:
     """获取预测相关的统计信息"""
     manager = get_observer_manager()
@@ -217,7 +203,6 @@ async def get_prediction_metrics() -> dict[str, Any]:
     return prediction_subject.get_prediction_metrics()
 
 
-@router.post("/predictions/record", summary="记录预测事件")
 async def record_prediction(
     strategy_name: str,
     response_time_ms: float,
@@ -252,7 +237,6 @@ async def record_prediction(
     }
 
 
-@router.get("/cache", summary="获取缓存统计")
 async def get_cache_statistics() -> dict[str, Any]:
     """获取缓存统计信息"""
     manager = get_observer_manager()
@@ -264,7 +248,6 @@ async def get_cache_statistics() -> dict[str, Any]:
     return cache_subject.get_cache_statistics()
 
 
-@router.post("/cache/hit", summary="记录缓存命中")
 async def record_cache_hit(
     cache_name: str, key: str, background_tasks: BackgroundTasks = None
 ) -> dict[str, str]:
@@ -287,7 +270,6 @@ async def record_cache_hit(
     }
 
 
-@router.post("/cache/miss", summary="记录缓存未命中")
 async def record_cache_miss(
     cache_name: str, key: str, background_tasks: BackgroundTasks = None
 ) -> dict[str, str]:
@@ -310,7 +292,6 @@ async def record_cache_miss(
     }
 
 
-@router.get("/performance", summary="获取性能指标")
 async def get_performance_metrics() -> dict[str, Any]:
     """获取性能指标"""
     manager = get_observer_manager()
@@ -322,7 +303,6 @@ async def get_performance_metrics() -> dict[str, Any]:
     return performance_observer.get_performance_metrics()
 
 
-@router.post("/system/collect", summary="触发系统指标收集")
 async def trigger_system_metrics_collection(
     background_tasks: BackgroundTasks,
 ) -> dict[str, str]:
@@ -339,7 +319,6 @@ async def trigger_system_metrics_collection(
     return {"message": "系统指标收集已触发"}
 
 
-@router.post("/system/check", summary="触发性能检查")
 async def trigger_performance_check(
     background_tasks: BackgroundTasks,
 ) -> dict[str, str]:
@@ -356,13 +335,11 @@ async def trigger_performance_check(
     return {"message": "性能检查已触发"}
 
 
-@router.get("/event-types", summary="获取所有事件类型")
 async def get_event_types() -> list[str]:
     """获取所有可用的事件类型"""
     return [et.value for et in ObservableEventType]
 
 
-@router.post("/observer/{observer_name}/enable", summary="启用观察者")
 async def enable_observer(observer_name: str) -> dict[str, str]:
     """启用指定的观察者"""
     manager = get_observer_manager()
@@ -375,7 +352,6 @@ async def enable_observer(observer_name: str) -> dict[str, str]:
     return {"message": f"观察者 {observer_name} 已启用"}
 
 
-@router.post("/observer/{observer_name}/disable", summary="禁用观察者")
 async def disable_observer(observer_name: str) -> dict[str, str]:
     """禁用指定的观察者"""
     manager = get_observer_manager()
@@ -388,7 +364,6 @@ async def disable_observer(observer_name: str) -> dict[str, str]:
     return {"message": f"观察者 {observer_name} 已禁用"}
 
 
-@router.post("/subject/{subject_name}/clear-history", summary="清空事件历史")
 async def clear_subject_history(subject_name: str) -> dict[str, str]:
     """清空指定被观察者的事件历史"""
     manager = get_observer_manager()

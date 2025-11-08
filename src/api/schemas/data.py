@@ -1,10 +1,10 @@
-"""
-数据集成相关的Pydantic模型
-"""
-
 from datetime import datetime
 
 from pydantic import BaseModel, Field
+
+"""
+数据集成相关的Pydantic模型
+"""
 
 
 class DataCollectionRequest(BaseModel):

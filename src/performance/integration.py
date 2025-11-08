@@ -1,4 +1,8 @@
-# mypy: ignore-errors
+from fastapi import FastAPI
+
+from src.core.config import get_settings
+from src.core.logging import get_logger
+
 """
 性能监控集成模块
 Performance Monitoring Integration Module
@@ -9,12 +13,6 @@ Performance Monitoring Integration Module
 - 启动/停止控制
 - 性能监控初始化
 """
-
-
-from fastapi import FastAPI
-
-from src.core.config import get_settings
-from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -256,7 +254,6 @@ class PerformanceMonitoringIntegration:
             logger.error(f"Failed to cleanup performance monitoring: {str(e)}")
 
 
-# 全局集成实例
 _integration = None
 
 
@@ -293,7 +290,6 @@ def setup_performance_monitoring(
     return integration
 
 
-# 便捷函数
 def integrate_performance_monitoring(app: FastAPI) -> None:
     """集成性能监控到FastAPI应用（便捷函数）"""
     setup_performance_monitoring(app)

@@ -1,10 +1,4 @@
-"""
-数据集成API端点
-提供数据收集和管理的API接口
-"""
-
 from datetime import datetime, timedelta
-from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
@@ -26,11 +20,15 @@ from .schemas.data import (
     TeamResponse,
 )
 
+"""
+数据集成API端点
+提供数据收集和管理的API接口
+"""
+
 logger = get_logger(__name__)
 router = APIRouter(prefix="/data", tags=["data-integration"])
 
 
-@router.post("/collect/matches", response_model=DataCollectionResponse)
 async def collect_matches(
     request: DataCollectionRequest,
     background_tasks: BackgroundTasks,
@@ -83,7 +81,6 @@ async def collect_matches(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.post("/collect/teams", response_model=DataCollectionResponse)
 async def collect_teams(
     request: DataCollectionRequest,
     background_tasks: BackgroundTasks,
@@ -117,7 +114,6 @@ async def collect_teams(
         ) from e
 
 
-@router.post("/collect/all", response_model=DataCollectionResponse)
 async def collect_all_data(
     background_tasks: BackgroundTasks,
     db_session: AsyncSession = Depends(get_async_session),
@@ -161,7 +157,6 @@ async def collect_all_data(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/sources/status", response_model=DataSourceStatusResponse)
 async def get_data_source_status(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client: RedisManager = Depends(get_redis_manager),
@@ -202,7 +197,6 @@ async def get_data_source_status(
         ) from e
 
 
-@router.get("/matches", response_model=list[MatchResponse])
 async def get_matches(
     league: str | None = None,
     team: str | None = None,
@@ -255,7 +249,6 @@ async def get_matches(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/teams", response_model=list[TeamResponse])
 async def get_teams(
     league: str | None = None,
     limit: int = 100,
@@ -296,7 +289,6 @@ async def get_teams(
         ) from e
 
 
-@router.get("/stats", response_model=dict[str, Any])
 async def get_data_stats(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client: RedisManager = Depends(get_redis_manager),
@@ -357,7 +349,6 @@ async def get_data_stats(
         ) from e  # TODO: B904 exception chaining
 
 
-@router.post("/test-data-source")
 async def test_data_source(
     data_source: str = "mock",
     db_session: AsyncSession = Depends(get_async_session),

@@ -1,3 +1,9 @@
+from datetime import datetime, timedelta
+
+from sqlalchemy import text
+
+from src.database.connection import DatabaseManager
+
 """
 任务工具函数
 
@@ -6,12 +12,6 @@
 - 数据采集条件判断
 - 任务状态管理
 """
-
-from datetime import datetime, timedelta
-
-from sqlalchemy import text
-
-from src.database.connection import DatabaseManager
 
 
 async def should_collect_live_scores() -> bool:

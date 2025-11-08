@@ -1,10 +1,3 @@
-"""
-企业级多租户系统数据模型
-Enterprise Multi-Tenant System Data Models
-
-提供多租户架构的核心数据模型,包括租户,权限,角色等.
-"""
-
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -26,6 +19,13 @@ from sqlalchemy.orm import Mapped, relationship
 
 from src.database.base import BaseModel
 from src.database.models.user import User
+
+"""
+企业级多租户系统数据模型
+Enterprise Multi-Tenant System Data Models
+
+提供多租户架构的核心数据模型,包括租户,权限,角色等.
+"""
 
 
 class TenantStatus(str, Enum):

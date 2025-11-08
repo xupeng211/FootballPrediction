@@ -1,3 +1,8 @@
+from decimal import Decimal
+from typing import Any
+
+from src.domain.models.prediction import PredictionPoints
+
 """
 计分领域服务
 Scoring Domain Service
@@ -5,11 +10,6 @@ Scoring Domain Service
 处理预测计分相关的复杂业务逻辑.
 Handles complex business logic related to prediction scoring.
 """
-
-from decimal import Decimal
-from typing import Any
-
-from src.domain.models.prediction import PredictionPoints
 
 
 class ScoringService:

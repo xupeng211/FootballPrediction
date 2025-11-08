@@ -1,11 +1,9 @@
+from datetime import datetime
+
 """
 数据模型类 - 足球相关数据结构
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-
-# 常量
 SCHEDULED = "SCHEDULED"
 LIVE = "LIVE"
 FINISHED = "FINISHED"
@@ -13,7 +11,6 @@ POSTPONED = "POSTPONED"
 CANCELLED = "CANCELLED"
 
 
-@dataclass
 class MatchStatus:
     """比赛状态枚举类"""
 
@@ -32,7 +29,6 @@ class MatchStatus:
         return cls(FINISHED)
 
 
-@dataclass
 class FootballTeam:
     """足球队数据模型"""
 
@@ -47,7 +43,6 @@ class FootballTeam:
             self.name = "Unknown Team"
 
 
-@dataclass
 class FootballPlayer:
     """足球运动员数据模型"""
 
@@ -63,7 +58,6 @@ class FootballPlayer:
             self.name = "Unknown Player"
 
 
-@dataclass
 class FootballMatch:
     """足球比赛数据模型"""
 

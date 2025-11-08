@@ -1,11 +1,3 @@
-"""
-监控指标收集器
-Metrics Collector
-
-统一指标收集入口,向后兼容原有接口.
-"""
-
-# 为了向后兼容，从增强的模块化实现重新导出
 from .metrics_collector_enhanced import EnhancedMetricsCollector as MetricsCollector
 from .metrics_collector_enhanced import (
     MetricPoint,
@@ -15,7 +7,13 @@ from .metrics_collector_enhanced import (
     track_prediction_performance,
 )
 
-# 为了向后兼容,也导出一些原有的类名
+"""
+监控指标收集器
+Metrics Collector
+
+统一指标收集入口,向后兼容原有接口.
+"""
+
 try:
     # from .metrics_collector_enhanced_mod.collector import EnhancedMetricsCollector
     # from .metrics_collector_enhanced_mod.aggregator import MetricsAggregator
@@ -26,7 +24,6 @@ except ImportError:
     pass
 
 
-# 便捷函数 - 直接实现以保持向后兼容
 def start_metrics_collection():
     """函数文档字符串"""
     pass  # 添加pass语句

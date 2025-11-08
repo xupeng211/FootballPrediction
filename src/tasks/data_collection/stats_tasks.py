@@ -1,3 +1,5 @@
+from src.core.logging import get_logger
+
 """
 Statistics Data Collection Tasks
 
@@ -11,7 +13,5 @@ Statistics Data Collection Tasks
 # - stats_tasks.py - 统计数据收集
 
 """
-
-from src.core.logging import get_logger
 
 logger = get_logger(__name__)

@@ -1,17 +1,14 @@
+from collections.abc import Callable
+from typing import Any, TypeVar
+
 """
 缓存装饰器
 """
 
-# 导入
-from collections.abc import Callable
-from typing import Any, TypeVar
-
-# 常量
 F = TypeVar("F", bound=Callable[..., Any])
 T = TypeVar("T")
 
 
-# 类定义
 class CacheDecorator:
     """类文档字符串"""
 

@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 """Merge multiple migration heads"
 
 Revision ID: 9ac2aff86228
@@ -6,11 +8,6 @@ Create Date: 2025-09-25 14:22:58.998396
 
 """
 
-# mypy: ignore-errors
-
-from collections.abc import Sequence
-
-# revision identifiers, used by Alembic.
 revision: str = "9ac2aff86228"
 down_revision: str | Sequence[str] = (
     "002_add_raw_scores_data_and_upgrade_jsonb",

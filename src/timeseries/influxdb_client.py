@@ -1,9 +1,8 @@
-# 简化版模块: influxdb_client
 from datetime import datetime
 from typing import Any
 
 
-class Influxdb_Client:
+class InfluxdbClient:
     """简化的influxdb_client类"""
 
     def __init__(self, **kwargs):
@@ -30,11 +29,9 @@ class Influxdb_Client:
         return self.id is not None
 
 
-# 模块级函数
 def helper_function(data: Any) -> str:
     """辅助函数"""
     return f"processed_{data}"
 
 
-# 模块常量
 INFLUXDB_CLIENT_VERSION = "1.0.0"

@@ -1,7 +1,7 @@
 # 简化版 database_optimizations 模块
 
 
-class Database_Optimizations:
+class DatabaseOptimizations:
     def __init__(self):
         pass
 

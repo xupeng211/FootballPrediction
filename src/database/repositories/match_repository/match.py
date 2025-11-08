@@ -1,13 +1,13 @@
-"""
-比赛仓储实现
-Match Repository Implementation
-"""
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models.match import Match
 from .repositories.base import AbstractRepository
+
+"""
+比赛仓储实现
+Match Repository Implementation
+"""
 
 
 class MatchRepository(AbstractRepository[Match]):

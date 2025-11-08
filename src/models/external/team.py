@@ -1,13 +1,13 @@
-"""
-外部球队数据模型
-External Team Data Model
-"""
-
 from datetime import datetime
 from typing import Any
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
+
+"""
+外部球队数据模型
+External Team Data Model
+"""
 
 Base = declarative_base()
 

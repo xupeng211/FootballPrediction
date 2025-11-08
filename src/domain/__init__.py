@@ -1,18 +1,3 @@
-"""
-领域层
-Domain Layer
-
-实现领域驱动设计（DDD）的核心概念,包含:
-- 领域模型（Entities, Value Objects）
-- 领域服务（Domain Services）
-- 领域事件（Domain Events）
-
-Implements core concepts of Domain-Driven Design (DDD), including:
-- Domain models (Entities, Value Objects)
-- Domain services
-- Domain events
-"""
-
 from src.domain.events import (
     MatchCancelledEvent,
     MatchFinishedEvent,
@@ -61,6 +46,21 @@ from src.domain.strategies import (
     StrategyMetrics,
     StrategyType,
 )
+
+"""
+领域层
+Domain Layer
+
+实现领域驱动设计（DDD）的核心概念,包含:
+- 领域模型（Entities, Value Objects）
+- 领域服务（Domain Services）
+- 领域事件（Domain Events）
+
+Implements core concepts of Domain-Driven Design (DDD), including:
+- Domain models (Entities, Value Objects)
+- Domain services
+- Domain events
+"""
 
 __all__ = [
     # 领域模型

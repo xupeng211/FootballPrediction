@@ -1,10 +1,3 @@
-"""
-比赛仓储模块 - 重写版本
-
-实现比赛相关的数据访问逻辑
-Match Repository - Rewritten Version
-"""
-
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Optional
@@ -14,6 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database.models import Match
 from .base import BaseRepository, QuerySpec
+
+"""
+比赛仓储模块 - 重写版本
+
+实现比赛相关的数据访问逻辑
+Match Repository - Rewritten Version
+"""
 
 
 class MatchRepositoryInterface:

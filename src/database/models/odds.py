@@ -1,16 +1,16 @@
-"""
-数据库赔率模型
-Database Odds Models
-
-定义赔率相关的数据库模型和操作
-"""
-
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, Text
 from sqlalchemy.ext.declarative import declarative_base
+
+"""
+数据库赔率模型
+Database Odds Models
+
+定义赔率相关的数据库模型和操作
+"""
 
 Base = declarative_base()
 
@@ -120,5 +120,4 @@ class MarketAnalysis(Base):
         return float((self.max_odds - self.min_odds) / self.average_odds)
 
 
-# 导出的类列表
 __all__ = ["BetType", "Odds", "OddsHistory", "MarketAnalysis"]

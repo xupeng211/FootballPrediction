@@ -1,11 +1,3 @@
-"""
-装饰器服务
-Decorator Service
-
-提供装饰器的高层管理和服务.
-Provides high-level management and services for decorators.
-"""
-
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -14,6 +6,14 @@ from src.core.logger import get_logger
 
 from .base import ConcreteComponent, DecoratorComponent, DecoratorContext
 from .factory import DecoratorConfig, DecoratorFactory
+
+"""
+装饰器服务
+Decorator Service
+
+提供装饰器的高层管理和服务.
+Provides high-level management and services for decorators.
+"""
 
 logger = get_logger(__name__)
 
@@ -190,7 +190,6 @@ class DecoratorService:
                 self._global_decorators.append(config)
 
 
-# 便捷装饰器函数
 def decorate(decorator_names: list[str] | None = None, **decorator_kwargs) -> Callable:
     """装饰器工厂函数,用于装饰其他函数"""
 
@@ -280,5 +279,4 @@ def with_all(
     )
 
 
-# 创建全局装饰器服务实例
 decorator_service = DecoratorService()

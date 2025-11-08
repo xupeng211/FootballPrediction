@@ -1,11 +1,10 @@
+from fastapi import FastAPI
+
 """
 简化的 FastAPI 应用入口
 Simplified FastAPI Application Entry Point
 """
 
-from fastapi import FastAPI
-
-# 创建简化的FastAPI应用
 app = FastAPI(
     title="Football Prediction API",
     description="Advanced football match prediction system",
@@ -13,7 +12,6 @@ app = FastAPI(
 )
 
 
-@app.get("/")
 async def root():
     """根端点"""
     return {
@@ -23,7 +21,6 @@ async def root():
     }
 
 
-@app.get("/health")
 async def health_check():
     """健康检查端点"""
     return {"status": "healthy", "version": "2.0.0"}

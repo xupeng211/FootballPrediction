@@ -1,3 +1,7 @@
+from enum import Enum
+
+from src.database.base import BaseModel
+
 """
 Match - 数据库模块
 
@@ -12,16 +16,6 @@ Match - 数据库模块
 
 注意事项:
 - [待补充 - 使用注意事项]
-"""
-
-from enum import Enum
-
-from src.database.base import BaseModel
-
-"""
-比赛模型
-
-存储足球比赛的详细信息,包括比赛时间,比分,状态等.
 """
 
 
