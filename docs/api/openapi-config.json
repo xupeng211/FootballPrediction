@@ -1,15 +1,54 @@
 {
   "title": "足球预测系统 API",
-  "description": "基于现代Python技术栈的足球预测RESTful API",
-  "version": "1.0.0",
+  "description": "基于机器学习的足球比赛结果预测系统RESTful API。提供比赛预测、数据分析、用户管理等核心功能，采用FastAPI框架构建，支持自动API文档生成和交互式测试。",
+  "version": "2.0.0",
   "contact": {
-    "name": "API支持",
-    "email": "support@example.com"
+    "name": "API支持团队",
+    "email": "api-support@footballprediction.com",
+    "url": "https://footballprediction.com/support"
+  },
+  "license": {
+    "name": "MIT",
+    "url": "https://opensource.org/licenses/MIT"
   },
   "servers": [
     {
       "url": "http://localhost:8000",
-      "description": "开发环境"
+      "description": "开发环境 - 本地开发和测试"
+    },
+    {
+      "url": "https://api.footballprediction.com",
+      "description": "生产环境 - 正式服务"
+    },
+    {
+      "url": "https://staging-api.footballprediction.com",
+      "description": "预发布环境 - 生产前验证"
+    }
+  ],
+  "tags": [
+    {
+      "name": "预测",
+      "description": "比赛预测相关操作 - 创建、查询、更新预测结果"
+    },
+    {
+      "name": "数据",
+      "description": "数据管理相关操作 - 比赛、球队、球员数据"
+    },
+    {
+      "name": "分析",
+      "description": "数据分析相关操作 - 统计、趋势、报告"
+    },
+    {
+      "name": "健康检查",
+      "description": "系统健康检查 - 状态监控、性能指标"
+    },
+    {
+      "name": "用户管理",
+      "description": "用户相关操作 - 认证、授权、个人信息"
+    },
+    {
+      "name": "实时数据",
+      "description": "实时数据流 - 比赛直播、比分更新"
     }
   ]
 }
