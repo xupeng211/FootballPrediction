@@ -238,7 +238,7 @@ async def add_redis_node(node_config: dict[str, Any]):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"添加Redis节点失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.delete("/cluster/nodes/{node_id}")
@@ -266,7 +266,7 @@ async def remove_redis_node(node_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"移除Redis节点失败: {str(e)}",
-        )
+        ) from e
 
 
 # ==================== 分布式缓存管理端点 ====================
@@ -291,7 +291,7 @@ async def get_distributed_cache_status():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取分布式缓存状态失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/distributed/invalidate")
@@ -317,7 +317,7 @@ async def invalidate_cache_pattern(pattern: str = Query(..., description="失效
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"缓存失效失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/distributed/warmup")
@@ -351,7 +351,7 @@ async def warmup_cache(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"缓存预热失败: {str(e)}",
-        )
+        ) from e
 
 
 # ==================== 缓存一致性管理端点 ====================
@@ -397,7 +397,7 @@ async def consistency_operation(request: ConsistencyRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"一致性操作失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/consistency/statistics")
@@ -419,7 +419,7 @@ async def get_consistency_statistics():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取一致性统计失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.delete("/consistency/sessions/{session_id}")
@@ -441,7 +441,7 @@ async def cleanup_consistency_session(session_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"清理会话失败: {str(e)}",
-        )
+        ) from e
 
 
 # ==================== 智能预热管理端点 ====================
@@ -498,7 +498,7 @@ async def create_warmup_plan(request: WarmupRequest, background_tasks: Backgroun
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"创建预热计划失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/warmup/plans/{plan_id}/status")
@@ -539,7 +539,7 @@ async def get_warmup_plan_status(plan_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取预热计划状态失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/warmup/plans/{plan_id}/execute")
@@ -571,7 +571,7 @@ async def execute_warmup_plan(plan_id: str, background_tasks: BackgroundTasks):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"执行预热计划失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.delete("/warmup/plans/{plan_id}")
@@ -601,7 +601,7 @@ async def cancel_warmup_plan(plan_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"取消预热计划失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/warmup/statistics")
@@ -623,7 +623,7 @@ async def get_warmup_statistics():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取预热统计失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/warmup/record-access")
@@ -649,7 +649,7 @@ async def record_cache_access(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"记录访问失败: {str(e)}",
-        )
+        ) from e
 
 
 # ==================== 缓存分析和优化端点 ====================
@@ -719,7 +719,7 @@ async def analyze_cache_performance(request: CacheAnalysisRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"缓存分析失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/optimization")
@@ -789,7 +789,7 @@ async def optimize_cache_system(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"缓存优化失败: {str(e)}",
-        )
+        ) from e
 
 
 # ==================== 健康检查端点 ====================

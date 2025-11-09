@@ -216,7 +216,7 @@ async def change_password(
     except (UserNotFoundError, InvalidCredentialsError) as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from None
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)

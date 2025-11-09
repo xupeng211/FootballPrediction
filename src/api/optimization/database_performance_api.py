@@ -157,7 +157,7 @@ async def analyze_query_performance(request: QueryAnalysisRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"查询分析失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/queries/slow")
@@ -180,7 +180,7 @@ async def get_slow_queries(limit: int = Query(20, ge=1, le=100)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取慢查询失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/queries/frequent")
@@ -202,7 +202,7 @@ async def get_frequent_queries(limit: int = Query(20, ge=1, le=100)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取频繁查询失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/queries/errors")
@@ -227,7 +227,7 @@ async def get_high_error_queries(min_error_rate: float = Query(5.0, ge=0.0, le=1
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取高错误率查询失败: {str(e)}",
-        )
+        ) from e
 
 
 # ==================== 连接池监控端点 ====================
@@ -248,7 +248,7 @@ async def get_connection_pools_status():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取连接池状态失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/pools/{pool_name}/status")
@@ -274,7 +274,7 @@ async def get_specific_pool_status(pool_name: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取连接池状态失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/pools/{pool_name}/optimize")
@@ -303,7 +303,7 @@ async def optimize_connection_pool(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"连接池优化失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/pools/optimization/history")
@@ -325,7 +325,7 @@ async def get_pool_optimization_history(limit: int = Query(50, ge=1, le=200)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取优化历史失败: {str(e)}",
-        )
+        ) from e
 
 
 # ==================== 性能优化端点 ====================
@@ -408,7 +408,7 @@ async def optimize_database_performance(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"数据库优化失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/optimization/{optimization_id}/status")
@@ -473,7 +473,7 @@ async def configure_performance_monitoring(request: PerformanceMonitorRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"配置性能监控失败: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/monitoring/metrics")
@@ -490,12 +490,13 @@ async def get_current_metrics():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取性能指标失败: {str(e)}",
-        )
+        ) from None
 
 
 # ==================== 性能报告端点 ====================
 
 
+@router.get("/reports/performance")
 @router.get("/reports/performance")
 async def get_performance_report(
     time_range_hours: int = Query(24, ge=1, le=168),  # 1小时到7天
@@ -546,7 +547,7 @@ async def get_performance_report(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"生成性能报告失败: {str(e)}",
-        )
+        ) from e
 
 
 def _assess_database_health(report: dict[str, Any]) -> dict[str, Any]:

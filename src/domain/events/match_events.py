@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+from src.domain.events.base import DomainEvent
+from src.domain.models.match import MatchResult, MatchScore
+
 
 @dataclass
 class MatchEvent:
@@ -42,11 +45,6 @@ Match Domain Events
 定义与比赛相关的领域事件.
 Defines domain events related to matches.
 """
-
-from typing import Any
-
-from src.domain.events.base import DomainEvent
-from src.domain.models.match import MatchResult, MatchScore
 
 
 class MatchStartedEvent(DomainEvent):

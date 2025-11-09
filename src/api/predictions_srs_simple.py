@@ -1,6 +1,19 @@
 from datetime import datetime
+from enum import Enum
+import asyncio
+import time
+
+        import numpy as np
+        import numpy as np
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, Field
+
+from src.cache.redis_manager import get_redis_manager
+from src.core.logging_system import get_logger
 
 """
+
 SRS规范简化预测API - 不依赖数据库
 SRS Compliant Simple Prediction API - Database Independent
 
@@ -12,16 +25,6 @@ SRS Compliant Simple Prediction API - Database Independent
 - Token校验与请求频率限制
 """
 
-import asyncio
-import time
-from enum import Enum
-
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, Field
-
-from src.cache.redis_manager import get_redis_manager
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/predictions-srs", tags=["predictions-srs-simple"])
@@ -247,7 +250,6 @@ class SimplePredictionService:
 
     async def _extract_features(self, match_info: MatchInfo) -> dict:
         """提取比赛特征"""
-        import numpy as np
 
         # 基于队名生成模拟特征
         home_strength = (
@@ -274,7 +276,6 @@ class SimplePredictionService:
 
     async def _predict_with_model(self, features: dict, match_info: MatchInfo) -> dict:
         """使用模型进行预测"""
-        import numpy as np
 
         home_strength = features["home_team_strength"] + features["home_advantage"]
         away_strength = features["away_team_strength"]

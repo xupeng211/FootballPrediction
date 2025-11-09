@@ -1,6 +1,15 @@
+import logging
+from datetime import datetime
 from typing import Any
 
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from .manager import get_websocket_manager
+from .match_service import MatchStatus, get_realtime_match_service
+
 """
+
 实时比赛状态API端点
 
 Realtime Match Status API Endpoints
@@ -9,14 +18,6 @@ Realtime Match Status API Endpoints
 Provides HTTP API endpoints for real-time match status functionality
 """
 
-import logging
-from datetime import datetime
-
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
-from pydantic import BaseModel, Field
-
-from .manager import get_websocket_manager
-from .match_service import MatchStatus, get_realtime_match_service
 
 router = APIRouter(prefix="/matches", tags=["realtime-matches"])
 logger = logging.getLogger(__name__)
@@ -218,7 +219,7 @@ async def update_match_score(
         logger.error(f"Failed to update match score: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to update match score"
-        )  # TODO: B904 exception chaining
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.put("/{match_id}/status", summary="更新比赛状态")
@@ -363,7 +364,7 @@ async def get_league_matches(
         logger.error(f"Failed to get league matches: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to get league matches"
-        )  # TODO: B904 exception chaining
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/live", summary="获取直播比赛")
@@ -423,7 +424,7 @@ async def get_match_service_stats():
         logger.error(f"Failed to get service stats: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to get service stats"
-        )  # TODO: B904 exception chaining
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.post("/{match_id}/subscribe", summary="订阅比赛更新")
@@ -551,7 +552,7 @@ async def broadcast_match_alert(
         logger.error(f"Failed to broadcast match alert: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to broadcast match alert"
-        )  # TODO: B904 exception chaining
+        ) from e  # TODO: B904 exception chaining
 
 
 # ============================================================================

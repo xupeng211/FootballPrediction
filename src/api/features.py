@@ -91,7 +91,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="数据库查询失败,请稍后重试",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: B904 exception chaining
+        ) from None
     except (
         ValueError,
         KeyError,
@@ -104,7 +104,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="查询比赛信息失败",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: B904 exception chaining
+        ) from None
 
 
 async def get_features_data(match_id: int, match: Match) -> tuple[dict[str, Any], str]:
