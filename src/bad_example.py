@@ -1,10 +1,28 @@
-# 简化版 bad_example 模块
+"""
+简化版 bad_example 模块
+Simplified bad_example module
 
-    """示例类"""
-    """TODO: 添加函数文档"""
+提供示例功能，用于演示和测试。
+Provides example functionality for demonstration and testing.
+"""
+
+
 class BadExample:
+    """示例类"""
+
     EXAMPLE = "value"
-def __init__(self):
+
+    def __init__(self):
+        """初始化方法"""
         pass
-def example():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+
+
+def example() -> None:
+    """示例函数"""
     return None
+
+
+__all__ = [
+    "BadExample",
+    "example",
+]
