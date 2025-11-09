@@ -968,7 +968,7 @@ def test_league_domain_comprehensive_suite():
     revenue = league.calculate_revenue_sharing(1, 10)
     assert revenue > Decimal("1000000")
 
-    logger.debug("✅ 联赛领域模型综合测试套件通过")  # TODO: Add logger import if needed
+    print("✅ 联赛领域模型综合测试套件通过")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

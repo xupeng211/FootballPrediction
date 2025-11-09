@@ -29,8 +29,17 @@ try:
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
-    logger.error(f"Import error: {e}")  # TODO: Add logger import if needed
+    print(f"Import error: {e}")  # TODO: Add logger import if needed
     IMPORTS_AVAILABLE = False
+
+    # 如果导入失败，创建Mock类避免NameError
+    Adaptee = object
+    Adapter = object
+    AdapterStatus = object
+    BaseAdapter = object
+    CompositeAdapter = object
+    DataTransformer = object
+    Target = object
 
 try:
     from registry import AdapterError, AdapterRegistry

@@ -33,4 +33,4 @@ if __name__ == "__main__":
     test_basic_math()
     test_string_operations()
     test_list_operations()
-    logger.debug("✅ 所有测试通过！")  # TODO: Add logger import if needed
+    print("✅ 所有测试通过！")  # TODO: Add logger import if needed

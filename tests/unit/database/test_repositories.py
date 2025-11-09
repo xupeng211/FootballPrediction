@@ -26,9 +26,7 @@ try:
 
     CAN_IMPORT = True
 except ImportError as e:
-    logger.warning(
-        f"Warning: 无法导入数据库模块: {e}"
-    )  # TODO: Add logger import if needed
+    print(f"Warning: 无法导入数据库模块: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 
@@ -508,12 +506,12 @@ class TestDatabaseConnection:
 # 测试运行器
 async def run_database_tests():
     """运行数据库测试套件"""
-    logger.debug("🗄️ 开始数据库操作测试")  # TODO: Add logger import if needed
-    logger.debug("=" * 60)  # TODO: Add logger import if needed
+    print("🗄️ 开始数据库操作测试")  # TODO: Add logger import if needed
+    print("=" * 60)  # TODO: Add logger import if needed
 
     # 这里可以添加更复杂的集成测试逻辑
 
-    logger.debug("✅ 数据库操作测试完成")  # TODO: Add logger import if needed
+    print("✅ 数据库操作测试完成")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

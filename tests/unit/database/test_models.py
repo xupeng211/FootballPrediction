@@ -23,7 +23,7 @@ try:
     from src.database.models.team import Team
     from src.database.models.user import User
 except ImportError as e:
-    logger.error(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
+    print(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
     # Mock implementation will be used
 
     Base = declarative_base()

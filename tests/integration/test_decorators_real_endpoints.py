@@ -17,16 +17,14 @@ def test_decorators_stats():
     """测试获取装饰器统计信息端点"""
     response = client.get("/api/v1/decorators/stats")
     assert response.status_code in [200, 500]
-    logger.debug(
-        f"Stats response: {response.json()}"
-    )  # TODO: Add logger import if needed
+    print(f"Stats response: {response.json()}")  # TODO: Add logger import if needed
 
 
 def test_decorators_stats_clear():
     """测试清空统计信息端点"""
     response = client.post("/api/v1/decorators/stats/clear")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Clear stats response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -35,7 +33,7 @@ def test_decorators_demo_logging():
     """测试日志装饰器演示端点"""
     response = client.get("/api/v1/decorators/demo/logging")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo logging response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -44,7 +42,7 @@ def test_decorators_demo_retry():
     """测试重试装饰器演示端点"""
     response = client.get("/api/v1/decorators/demo/retry")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo retry response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -53,7 +51,7 @@ def test_decorators_demo_cache():
     """测试缓存装饰器演示端点"""
     response = client.get("/api/v1/decorators/demo/cache")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo cache response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -62,7 +60,7 @@ def test_decorators_demo_timeout():
     """测试超时装饰器演示端点"""
     response = client.get("/api/v1/decorators/demo/timeout")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo timeout response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -71,7 +69,7 @@ def test_decorators_demo_metrics():
     """测试指标装饰器演示端点"""
     response = client.get("/api/v1/decorators/demo/metrics")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo metrics response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -80,7 +78,7 @@ def test_decorators_demo_combo():
     """测试组合装饰器演示端点"""
     response = client.get("/api/v1/decorators/demo/combo")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo combo response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -89,25 +87,21 @@ def test_decorators_configs():
     """测试获取装饰器配置端点"""
     response = client.get("/api/v1/decorators/configs")
     assert response.status_code in [200, 500]
-    logger.debug(
-        f"Configs response: {response.json()}"
-    )  # TODO: Add logger import if needed
+    print(f"Configs response: {response.json()}")  # TODO: Add logger import if needed
 
 
 def test_decorators_reload():
     """测试重新加载装饰器配置端点"""
     response = client.post("/api/v1/decorators/reload")
     assert response.status_code in [200, 500]
-    logger.debug(
-        f"Reload response: {response.json()}"
-    )  # TODO: Add logger import if needed
+    print(f"Reload response: {response.json()}")  # TODO: Add logger import if needed
 
 
 def test_decorators_demo_context():
     """测试装饰器上下文演示端点"""
     response = client.get("/api/v1/decorators/demo/context")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo context response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -146,15 +140,15 @@ def test_all_decorators_endpoints():
             if response.status_code == expected_status:
                 success_count += 1
 
-        logger.debug(
+        print(
             f"{method} {endpoint}: {response.status_code}"
         )  # TODO: Add logger import if needed
 
-    logger.debug(
+    print(
         f"成功端点数: {success_count}/{total_endpoints}"
     )  # TODO: Add logger import if needed
     success_rate = (success_count / total_endpoints) * 100
-    logger.debug(f"成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
+    print(f"成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

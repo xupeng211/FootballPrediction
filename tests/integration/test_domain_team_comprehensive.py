@@ -791,7 +791,7 @@ def test_team_domain_comprehensive_suite():
     strength = team.calculate_strength()
     assert 0 <= strength <= 100
 
-    logger.debug("✅ 球队领域模型综合测试套件通过")  # TODO: Add logger import if needed
+    print("✅ 球队领域模型综合测试套件通过")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":
