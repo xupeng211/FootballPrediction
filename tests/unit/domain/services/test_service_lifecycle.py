@@ -28,7 +28,7 @@ try:
 
     CAN_IMPORT = True
 except ImportError as e:
-    logger.error(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
+    print(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
     # Mock implementations for testing

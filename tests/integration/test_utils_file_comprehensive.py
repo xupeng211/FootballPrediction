@@ -242,7 +242,7 @@ def test_file_utils_comprehensive_suite():
         result_data = FileUtils.read_json(test_file)
         assert result_data == test_data
 
-    logger.debug("✅ FileUtils综合测试套件通过")  # TODO: Add logger import if needed
+    print("✅ FileUtils综合测试套件通过")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

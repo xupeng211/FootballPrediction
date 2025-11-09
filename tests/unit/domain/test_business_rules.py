@@ -897,11 +897,11 @@ class TestDomainModels:
 # 测试运行器
 async def run_business_rules_tests():
     """运行业务规则测试套件"""
-    logger.debug("🧮 开始业务规则测试")  # TODO: Add logger import if needed
-    logger.debug("=" * 60)  # TODO: Add logger import if needed
+    print("🧮 开始业务规则测试")  # TODO: Add logger import if needed
+    print("=" * 60)  # TODO: Add logger import if needed
 
     # 这里可以添加更复杂的业务规则测试逻辑
-    logger.debug("✅ 业务规则测试完成")  # TODO: Add logger import if needed
+    print("✅ 业务规则测试完成")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

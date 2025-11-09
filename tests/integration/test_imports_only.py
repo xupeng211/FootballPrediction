@@ -12,8 +12,8 @@ sys.path.insert(0, ".")
 
 def test_critical_imports():
     """测试关键模块导入"""
-    logger.debug("🧪 测试关键模块导入")  # TODO: Add logger import if needed
-    logger.debug("=" * 50)  # TODO: Add logger import if needed
+    print("🧪 测试关键模块导入")  # TODO: Add logger import if needed
+    print("=" * 50)  # TODO: Add logger import if needed
 
     critical_modules = [
         ("src.monitoring.anomaly_detector", "AnomalyDetector"),
@@ -35,44 +35,42 @@ def test_critical_imports():
         try:
             module = __import__(module_name, fromlist=[expected_class])
             if hasattr(module, expected_class):
-                logger.debug(
+                print(
                     f"✅ {module_name} - {expected_class} 可用"
                 )  # TODO: Add logger import if needed
                 success_count += 1
             else:
-                logger.debug(
+                print(
                     f"⚠️ {module_name} - {expected_class} 不可用"
                 )  # TODO: Add logger import if needed
                 failed_modules.append((module_name, f"缺少 {expected_class}"))
         except ImportError as e:
-            logger.debug(
+            print(
                 f"❌ {module_name} - 导入失败: {str(e)[:50]}..."
             )  # TODO: Add logger import if needed
             failed_modules.append((module_name, str(e)))
         except Exception as e:
-            logger.debug(
+            print(
                 f"❌ {module_name} - 其他错误: {str(e)[:50]}..."
             )  # TODO: Add logger import if needed
             failed_modules.append((module_name, str(e)))
 
-    logger.debug(
+    print(
         f"\n📊 导入测试结果: {success_count}/{len(critical_modules)} 成功"
     )  # TODO: Add logger import if needed
 
     if failed_modules:
-        logger.debug("\n❌ 失败的模块:")  # TODO: Add logger import if needed
+        print("\n❌ 失败的模块:")  # TODO: Add logger import if needed
         for module, error in failed_modules:
-            logger.error(
-                f"  - {module}: {error[:60]}..."
-            )  # TODO: Add logger import if needed
+            print(f"  - {module}: {error[:60]}...")  # TODO: Add logger import if needed
 
     return success_count == len(critical_modules)
 
 
 def test_pytest_availability():
     """测试pytest是否可用"""
-    logger.debug("\n🧪 测试pytest可用性")  # TODO: Add logger import if needed
-    logger.debug("=" * 30)  # TODO: Add logger import if needed
+    print("\n🧪 测试pytest可用性")  # TODO: Add logger import if needed
+    print("=" * 30)  # TODO: Add logger import if needed
 
     try:
         import subprocess
@@ -84,50 +82,48 @@ def test_pytest_availability():
             timeout=5,
         )
         if result.returncode == 0:
-            logger.debug(
+            print(
                 f"✅ pytest可用: {result.stdout.strip()}"
             )  # TODO: Add logger import if needed
             return True
         else:
-            logger.debug(
+            print(
                 f"❌ pytest版本检查失败: {result.stderr}"
             )  # TODO: Add logger import if needed
             return False
     except Exception as e:
-        logger.debug(f"❌ pytest测试失败: {e}")  # TODO: Add logger import if needed
+        print(f"❌ pytest测试失败: {e}")  # TODO: Add logger import if needed
         return False
 
 
 def test_basic_functionality():
     """测试基本功能"""
-    logger.debug("\n🧪 测试基本功能")  # TODO: Add logger import if needed
-    logger.debug("=" * 30)  # TODO: Add logger import if needed
+    print("\n🧪 测试基本功能")  # TODO: Add logger import if needed
+    print("=" * 30)  # TODO: Add logger import if needed
 
     try:
         # 测试一个简单的类实例化
         from src.monitoring.anomaly_detector import AnomalyDetector
 
         AnomalyDetector()
-        logger.debug(
-            "✅ AnomalyDetector 实例化成功"
-        )  # TODO: Add logger import if needed
+        print("✅ AnomalyDetector 实例化成功")  # TODO: Add logger import if needed
 
         # 测试一个简单的方法调用
 
-        logger.debug("✅ cache_result 装饰器可用")  # TODO: Add logger import if needed
+        print("✅ cache_result 装饰器可用")  # TODO: Add logger import if needed
 
         return True
     except Exception as e:
-        logger.debug(f"❌ 基本功能测试失败: {e}")  # TODO: Add logger import if needed
+        print(f"❌ 基本功能测试失败: {e}")  # TODO: Add logger import if needed
         return False
 
 
 def main():
     """主函数"""
-    logger.debug(
+    print(
         "🚀 Issue #88 阶段1验证: 导入路径修复效果"
     )  # TODO: Add logger import if needed
-    logger.debug("=" * 60)  # TODO: Add logger import if needed
+    print("=" * 60)  # TODO: Add logger import if needed
 
     # 1. 测试关键模块导入
     imports_ok = test_critical_imports()
@@ -139,27 +135,27 @@ def main():
     functionality_ok = test_basic_functionality()
 
     # 总结
-    logger.debug("\n🎯 阶段1验证总结:")  # TODO: Add logger import if needed
-    logger.debug(
+    print("\n🎯 阶段1验证总结:")  # TODO: Add logger import if needed
+    print(
         f"✅ 关键模块导入: {'通过' if imports_ok else '失败'}"
     )  # TODO: Add logger import if needed
-    logger.debug(
+    print(
         f"✅ pytest可用性: {'通过' if pytest_ok else '失败'}"
     )  # TODO: Add logger import if needed
-    logger.debug(
+    print(
         f"✅ 基本功能测试: {'通过' if functionality_ok else '失败'}"
     )  # TODO: Add logger import if needed
 
     if imports_ok and pytest_ok and functionality_ok:
-        logger.debug(
+        print(
             "\n🎉 阶段1完成! 基础导入问题已解决。"
         )  # TODO: Add logger import if needed
-        logger.debug(
+        print(
             "📈 下一步: 可以开始运行基础测试了。"
         )  # TODO: Add logger import if needed
         return True
     else:
-        logger.debug(
+        print(
             "\n⚠️ 阶段1部分完成，仍有问题需要解决。"
         )  # TODO: Add logger import if needed
         return False

@@ -570,7 +570,7 @@ def test_prediction_domain_comprehensive_suite(client):
     assert prediction.is_evaluated
     assert prediction.points is not None
 
-    logger.debug("✅ 预测领域模型综合测试套件通过")  # TODO: Add logger import if needed
+    print("✅ 预测领域模型综合测试套件通过")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

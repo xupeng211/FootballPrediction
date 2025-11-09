@@ -17,7 +17,7 @@ def test_adapters_registry_status():
     """测试适配器注册表状态端点"""
     response = client.get("/api/v1/adapters/registry/status")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Registry status response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -26,7 +26,7 @@ def test_adapters_registry_initialize():
     """测试适配器注册表初始化端点"""
     response = client.post("/api/v1/adapters/registry/initialize")
     assert response.status_code in [200, 201, 500]
-    logger.debug(
+    print(
         f"Registry initialize response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -35,7 +35,7 @@ def test_adapters_registry_shutdown():
     """测试适配器注册表关闭端点"""
     response = client.post("/api/v1/adapters/registry/shutdown")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Registry shutdown response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -44,16 +44,14 @@ def test_adapters_configs():
     """测试适配器配置端点"""
     response = client.get("/api/v1/adapters/configs")
     assert response.status_code in [200, 500]
-    logger.debug(
-        f"Configs response: {response.json()}"
-    )  # TODO: Add logger import if needed
+    print(f"Configs response: {response.json()}")  # TODO: Add logger import if needed
 
 
 def test_adapters_configs_load():
     """测试适配器配置加载端点"""
     response = client.post("/api/v1/adapters/configs/load")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Configs load response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -62,7 +60,7 @@ def test_adapters_football_matches():
     """测试足球比赛端点"""
     response = client.get("/api/v1/adapters/football/matches")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Football matches response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -71,7 +69,7 @@ def test_adapters_football_matches_with_id():
     """测试特定足球比赛端点"""
     response = client.get("/api/v1/adapters/football/matches/123")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Football match response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -80,7 +78,7 @@ def test_adapters_football_teams():
     """测试足球队端点"""
     response = client.get("/api/v1/adapters/football/teams")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Football teams response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -89,7 +87,7 @@ def test_adapters_football_teams_players():
     """测试球队球员端点"""
     response = client.get("/api/v1/adapters/football/teams/456/players")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Team players response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -98,7 +96,7 @@ def test_adapters_demo_comparison():
     """测试演示比较端点"""
     response = client.get("/api/v1/adapters/demo/comparison")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo comparison response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -107,7 +105,7 @@ def test_adapters_demo_fallback():
     """测试演示回退端点"""
     response = client.get("/api/v1/adapters/demo/fallback")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo fallback response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -116,7 +114,7 @@ def test_adapters_demo_transformation():
     """测试演示转换端点"""
     response = client.get("/api/v1/adapters/demo/transformation")
     assert response.status_code in [200, 500]
-    logger.debug(
+    print(
         f"Demo transformation response: {response.json()}"
     )  # TODO: Add logger import if needed
 
@@ -128,7 +126,7 @@ def test_adapters_health():
     data = response.json()
     assert "status" in data
     assert data["status"] == "ok"
-    logger.debug(f"Health response: {data}")  # TODO: Add logger import if needed
+    print(f"Health response: {data}")  # TODO: Add logger import if needed
 
 
 def test_all_adapters_endpoints():
@@ -165,11 +163,11 @@ def test_all_adapters_endpoints():
             if response.status_code == expected_status:
                 success_count += 1
 
-        logger.debug(
+        print(
             f"{method} {endpoint}: {response.status_code}"
         )  # TODO: Add logger import if needed
 
-    logger.debug(
+    print(
         f"成功端点数: {success_count}/{len(endpoints)}"
     )  # TODO: Add logger import if needed
 

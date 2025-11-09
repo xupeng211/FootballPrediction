@@ -116,7 +116,7 @@ class TestCoverageImprovementIntegration:
 
         except Exception as e:
             tools_working = False
-            logger.debug(f"工具加载失败: {e}")  # TODO: Add logger import if needed
+            print(f"工具加载失败: {e}")  # TODO: Add logger import if needed
 
         assert tools_working, "所有恢复的工具应该能正常工作"
 

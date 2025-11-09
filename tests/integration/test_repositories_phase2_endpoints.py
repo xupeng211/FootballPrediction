@@ -17,7 +17,7 @@ def test_repositories_health_check():
     """测试repository健康检查端点"""
     response = client.get("/api/v1/repositories/health")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository health check: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -26,7 +26,7 @@ def test_repositories_status():
     """测试repository状态端点"""
     response = client.get("/api/v1/repositories/status")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository status: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -35,7 +35,7 @@ def test_repositories_metrics():
     """测试repository指标端点"""
     response = client.get("/api/v1/repositories/metrics")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository metrics: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -44,7 +44,7 @@ def test_repositories_info():
     """测试repository信息端点"""
     response = client.get("/api/v1/repositories/info")
     assert response.status_code in [200, 404, 500]
-    logger.info(
+    print(
         f"Repository info: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -53,7 +53,7 @@ def test_repositories_config():
     """测试repository配置端点"""
     response = client.get("/api/v1/repositories/config")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository config: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -62,7 +62,7 @@ def test_repositories_reload():
     """测试repository重新加载端点"""
     response = client.post("/api/v1/repositories/reload")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository reload: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -71,7 +71,7 @@ def test_repositories_stats():
     """测试repository统计端点"""
     response = client.get("/api/v1/repositories/stats")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository stats: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -80,7 +80,7 @@ def test_repositories_ping():
     """测试repository ping端点"""
     response = client.get("/api/v1/repositories/ping")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository ping: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -89,7 +89,7 @@ def test_repositories_version():
     """测试repository版本端点"""
     response = client.get("/api/v1/repositories/version")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository version: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -98,7 +98,7 @@ def test_repositories_uptime():
     """测试repository运行时间端点"""
     response = client.get("/api/v1/repositories/uptime")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository uptime: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -107,7 +107,7 @@ def test_repositories_database_status():
     """测试repository数据库状态端点"""
     response = client.get("/api/v1/repositories/database/status")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository database status: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -116,7 +116,7 @@ def test_repositories_connection_pool():
     """测试repository连接池状态端点"""
     response = client.get("/api/v1/repositories/database/connection-pool")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository connection pool: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -125,7 +125,7 @@ def test_repositories_cache_status():
     """测试repository缓存状态端点"""
     response = client.get("/api/v1/repositories/cache/status")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository cache status: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -134,7 +134,7 @@ def test_repositories_performance_metrics():
     """测试repository性能指标端点"""
     response = client.get("/api/v1/repositories/performance/metrics")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository performance metrics: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -143,7 +143,7 @@ def test_repositories_error_rates():
     """测试repository错误率端点"""
     response = client.get("/api/v1/repositories/error-rates")
     assert response.status_code in [200, 404, 500]
-    logger.error(
+    print(
         f"Repository error rates: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -152,7 +152,7 @@ def test_repositories_slow_queries():
     """测试repository慢查询端点"""
     response = client.get("/api/v1/repositories/slow-queries")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository slow queries: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -161,7 +161,7 @@ def test_repositories_operation_stats():
     """测试repository操作统计端点"""
     response = client.get("/api/v1/repositories/operation-stats")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository operation stats: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -170,7 +170,7 @@ def test_repositories_data_quality():
     """测试repository数据质量端点"""
     response = client.get("/api/v1/repositories/data-quality")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository data quality: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -179,7 +179,7 @@ def test_repositories_index_usage():
     """测试repository索引使用情况端点"""
     response = client.get("/api/v1/repositories/index-usage")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository index usage: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -188,7 +188,7 @@ def test_repositories_table_stats():
     """测试repository表统计端点"""
     response = client.get("/api/v1/repositories/table-stats")
     assert response.status_code in [200, 404, 500]
-    logger.debug(
+    print(
         f"Repository table stats: {response.status_code}"
     )  # TODO: Add logger import if needed
 
@@ -240,15 +240,15 @@ def test_all_repository_endpoints():
             if response.status_code == expected_status:
                 success_count += 1
 
-        logger.debug(
+        print(
             f"{method} {endpoint}: {response.status_code}"
         )  # TODO: Add logger import if needed
 
-    logger.debug(
+    print(
         f"成功端点数: {success_count}/{total_endpoints}"
     )  # TODO: Add logger import if needed
     success_rate = (success_count / total_endpoints) * 100
-    logger.debug(f"成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
+    print(f"成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

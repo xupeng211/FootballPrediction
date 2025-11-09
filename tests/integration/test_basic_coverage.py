@@ -7,9 +7,7 @@
 
 def test_utils_dict_utils_basic():
     """测试dict_utils基础功能"""
-    logger.debug(
-        "🧪 测试 utils.dict_utils 基础功能..."
-    )  # TODO: Add logger import if needed
+    print("🧪 测试 utils.dict_utils 基础功能...")  # TODO: Add logger import if needed
 
     try:
         from src.utils.dict_utils import DictUtils
@@ -20,34 +18,28 @@ def test_utils_dict_utils_basic():
         test_dict = {"key1": "value1", "key2": 2}
         result = utils.get_value(test_dict, "key1")
         assert result == "value1", f"Expected 'value1', got {result}"
-        logger.debug("✅ get_value 功能正常")  # TODO: Add logger import if needed
+        print("✅ get_value 功能正常")  # TODO: Add logger import if needed
 
         # 测试安全访问
         result = utils.get_value_safe(test_dict, "missing", "default")
         assert result == "default", f"Expected 'default', got {result}"
-        logger.debug("✅ get_value_safe 功能正常")  # TODO: Add logger import if needed
+        print("✅ get_value_safe 功能正常")  # TODO: Add logger import if needed
 
         # 测试嵌套字典
         result = utils.get_nested_value(test_dict, "level1.level2")
         assert result == "deep_value", f"Expected 'deep_value', got {result}"
-        logger.debug(
-            "✅ get_nested_value 功能正常"
-        )  # TODO: Add logger import if needed
+        print("✅ get_nested_value 功能正常")  # TODO: Add logger import if needed
 
         return True
 
     except Exception as e:
-        logger.debug(
-            f"❌ utils.dict_utils 测试失败: {e}"
-        )  # TODO: Add logger import if needed
+        print(f"❌ utils.dict_utils 测试失败: {e}")  # TODO: Add logger import if needed
         return False
 
 
 def test_utils_response_basic():
     """测试response基础功能"""
-    logger.debug(
-        "🧪 测试 utils.response 基础功能..."
-    )  # TODO: Add logger import if needed
+    print("🧪 测试 utils.response 基础功能...")  # TODO: Add logger import if needed
 
     try:
         from src.utils.response import ResponseUtils
@@ -57,7 +49,7 @@ def test_utils_response_basic():
         assert (
             response.get("data") == "test"
         ), f"Expected 'test', got {response.get('data')}"
-        logger.debug(
+        print(
             "✅ create_success_response 功能正常"
         )  # TODO: Add logger import if needed
 
@@ -66,24 +58,18 @@ def test_utils_response_basic():
         assert (
             error_response.get("error") == "test error"
         ), f"Expected 'test error', got {error_response.get('error')}"
-        logger.error(
-            "✅ create_error_response 功能正常"
-        )  # TODO: Add logger import if needed
+        print("✅ create_error_response 功能正常")  # TODO: Add logger import if needed
 
         return True
 
     except Exception as e:
-        logger.debug(
-            f"❌ utils.response 测试失败: {e}"
-        )  # TODO: Add logger import if needed
+        print(f"❌ utils.response 测试失败: {e}")  # TODO: Add logger import if needed
         return False
 
 
 def test_utils_string_utils_basic():
     """测试string_utils基础功能"""
-    logger.debug(
-        "🧪 测试 utils.string_utils 基础功能..."
-    )  # TODO: Add logger import if needed
+    print("🧪 测试 utils.string_utils 基础功能...")  # TODO: Add logger import if needed
 
     try:
         from src.utils.string_utils import StringUtils
@@ -91,18 +77,18 @@ def test_utils_string_utils_basic():
         # 测试字符串验证
         assert StringUtils.is_valid_email("test@example.com")
         assert not StringUtils.is_valid_email("invalid-email")
-        logger.debug("✅ email验证功能正常")  # TODO: Add logger import if needed
+        print("✅ email验证功能正常")  # TODO: Add logger import if needed
 
         # 测试字符串清理
         test_string = "  hello world  "
         cleaned = StringUtils.clean_string(test_string)
         assert cleaned == "hello world", f"Expected 'hello world', got '{cleaned}'"
-        logger.debug("✅ 字符串清理功能正常")  # TODO: Add logger import if needed
+        print("✅ 字符串清理功能正常")  # TODO: Add logger import if needed
 
         return True
 
     except Exception as e:
-        logger.debug(
+        print(
             f"❌ utils.string_utils 测试失败: {e}"
         )  # TODO: Add logger import if needed
         return False
@@ -110,65 +96,61 @@ def test_utils_string_utils_basic():
 
 def test_crypto_utils_import():
     """测试crypto_utils导入（跳过需要特殊依赖的功能）"""
-    logger.debug("🧪 测试 crypto_utils 导入...")  # TODO: Add logger import if needed
+    print("🧪 测试 crypto_utils 导入...")  # TODO: Add logger import if needed
 
     try:
         # 尝试导入，但可能失败因为缺少依赖
         pass
 
-        logger.debug("✅ crypto_utils 导入成功")  # TODO: Add logger import if needed
+        print("✅ crypto_utils 导入成功")  # TODO: Add logger import if needed
         return True
 
     except ImportError as e:
         # 如果是因为缺少依赖，这是预期的
         if "yaml" in str(e).lower() or "cryptography" in str(e).lower():
-            logger.debug(
+            print(
                 "⚠️  crypto_utils 导入失败（缺少依赖，这是预期的）"
             )  # TODO: Add logger import if needed
             return True
         else:
-            logger.debug(
-                f"❌ crypto_utils 导入失败: {e}"
-            )  # TODO: Add logger import if needed
+            print(f"❌ crypto_utils 导入失败: {e}")  # TODO: Add logger import if needed
             return False
     except Exception as e:
-        logger.debug(
-            f"❌ crypto_utils 导入失败: {e}"
-        )  # TODO: Add logger import if needed
+        print(f"❌ crypto_utils 导入失败: {e}")  # TODO: Add logger import if needed
         return False
 
 
 def test_basic_python_functionality():
     """测试基础Python功能"""
-    logger.debug("🧪 测试基础Python功能...")  # TODO: Add logger import if needed
+    print("🧪 测试基础Python功能...")  # TODO: Add logger import if needed
 
     # 测试数据类型
     assert isinstance("test", str)
     assert isinstance(123, int)
     assert isinstance([1, 2, 3], list)
-    logger.debug("✅ 数据类型测试正常")  # TODO: Add logger import if needed
+    print("✅ 数据类型测试正常")  # TODO: Add logger import if needed
 
     # 测试数学运算
     assert 2 + 2 == 4
     assert 10 - 5 == 5
     assert 3 * 3 == 9
     assert 8 / 2 == 4.0
-    logger.debug("✅ 数学运算测试正常")  # TODO: Add logger import if needed
+    print("✅ 数学运算测试正常")  # TODO: Add logger import if needed
 
     # 测试字符串操作
     text = "Hello, World!"
     assert text.upper() == "HELLO, WORLD!"
     assert text.lower() == "hello, world!"
     assert "Hello" in text
-    logger.debug("✅ 字符串操作测试正常")  # TODO: Add logger import if needed
+    print("✅ 字符串操作测试正常")  # TODO: Add logger import if needed
 
     return True
 
 
 def run_coverage_tests():
     """运行所有覆盖率测试"""
-    logger.debug("🚀 运行基础覆盖率测试")  # TODO: Add logger import if needed
-    logger.debug("=" * 50)  # TODO: Add logger import if needed
+    print("🚀 运行基础覆盖率测试")  # TODO: Add logger import if needed
+    print("=" * 50)  # TODO: Add logger import if needed
 
     tests = [
         ("DictUtils基础功能", test_utils_dict_utils_basic),
@@ -182,36 +164,28 @@ def run_coverage_tests():
     total = len(tests)
 
     for test_name, test_func in tests:
-        logger.debug(f"\n🧪 {test_name}")  # TODO: Add logger import if needed
+        print(f"\n🧪 {test_name}")  # TODO: Add logger import if needed
         try:
             if test_func():
                 passed += 1
-                logger.debug(
-                    f"✅ {test_name} - 通过"
-                )  # TODO: Add logger import if needed
+                print(f"✅ {test_name} - 通过")  # TODO: Add logger import if needed
             else:
-                logger.debug(
-                    f"❌ {test_name} - 失败"
-                )  # TODO: Add logger import if needed
+                print(f"❌ {test_name} - 失败")  # TODO: Add logger import if needed
         except Exception as e:
-            logger.debug(
-                f"❌ {test_name} - 异常: {e}"
-            )  # TODO: Add logger import if needed
+            print(f"❌ {test_name} - 异常: {e}")  # TODO: Add logger import if needed
 
     success_rate = (passed / total) * 100
-    logger.debug("\n📊 覆盖率测试结果:")  # TODO: Add logger import if needed
-    logger.debug(f"   - 总测试数: {total}")  # TODO: Add logger import if needed
-    logger.debug(f"   - 通过数: {passed}")  # TODO: Add logger import if needed
-    logger.debug(
-        f"   - 成功率: {success_rate:.1f}%"
-    )  # TODO: Add logger import if needed
+    print("\n📊 覆盖率测试结果:")  # TODO: Add logger import if needed
+    print(f"   - 总测试数: {total}")  # TODO: Add logger import if needed
+    print(f"   - 通过数: {passed}")  # TODO: Add logger import if needed
+    print(f"   - 成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
 
     return passed, total, success_rate
 
 
 def estimate_coverage():
     """估算测试覆盖率"""
-    logger.debug("\n📈 覆盖率估算...")  # TODO: Add logger import if needed
+    print("\n📈 覆盖率估算...")  # TODO: Add logger import if needed
 
     # 基于测试文件数量和成功率估算
 
@@ -227,15 +201,11 @@ def estimate_coverage():
     tested_modules = len(modules_tested)
     coverage_rate = (tested_modules / estimated_modules) * 100
 
-    logger.debug(
+    print(
         f"   - 估算总模块数: {estimated_modules}"
     )  # TODO: Add logger import if needed
-    logger.debug(
-        f"   - 已测试模块数: {tested_modules}"
-    )  # TODO: Add logger import if needed
-    logger.debug(
-        f"   - 估算覆盖率: {coverage_rate:.1f}%"
-    )  # TODO: Add logger import if needed
+    print(f"   - 已测试模块数: {tested_modules}")  # TODO: Add logger import if needed
+    print(f"   - 估算覆盖率: {coverage_rate:.1f}%")  # TODO: Add logger import if needed
 
     return coverage_rate
 
@@ -247,22 +217,20 @@ if __name__ == "__main__":
     # 估算覆盖率
     estimated_coverage = estimate_coverage()
 
-    logger.debug("\n🎯 总体评估:")  # TODO: Add logger import if needed
-    logger.debug(
-        f"   - 测试成功率: {success_rate:.1f}%"
-    )  # TODO: Add logger import if needed
-    logger.debug(
+    print("\n🎯 总体评估:")  # TODO: Add logger import if needed
+    print(f"   - 测试成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
+    print(
         f"   - 估算覆盖率: {estimated_coverage:.1f}%"
     )  # TODO: Add logger import if needed
 
     if success_rate >= 80:
-        logger.debug("🎉 测试成功率优秀！")  # TODO: Add logger import if needed
+        print("🎉 测试成功率优秀！")  # TODO: Add logger import if needed
     elif success_rate >= 60:
-        logger.debug("✅ 测试成功率良好")  # TODO: Add logger import if needed
+        print("✅ 测试成功率良好")  # TODO: Add logger import if needed
     else:
-        logger.debug("⚠️  测试成功率需要改进")  # TODO: Add logger import if needed
+        print("⚠️  测试成功率需要改进")  # TODO: Add logger import if needed
 
     if estimated_coverage >= 15:
-        logger.debug("🎉 覆盖率达标！")  # TODO: Add logger import if needed
+        print("🎉 覆盖率达标！")  # TODO: Add logger import if needed
     else:
-        logger.debug("📈 覆盖率仍需提升")  # TODO: Add logger import if needed
+        print("📈 覆盖率仍需提升")  # TODO: Add logger import if needed
