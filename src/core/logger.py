@@ -35,5 +35,10 @@ def get_logger(name: str, level: str = "INFO") -> logging.Logger:
     return Logger.setup_logger(name, level)
 
 
+def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
+    """设置日志器 - 模块级别函数,方便使用"""
+    return Logger.setup_logger(name, level)
+
+
 # 默认日志器
 logger = Logger.setup_logger("footballprediction")

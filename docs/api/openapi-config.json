@@ -1,0 +1,15 @@
+{
+  "title": "足球预测系统 API",
+  "description": "基于现代Python技术栈的足球预测RESTful API",
+  "version": "1.0.0",
+  "contact": {
+    "name": "API支持",
+    "email": "support@example.com"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "开发环境"
+    }
+  ]
+}

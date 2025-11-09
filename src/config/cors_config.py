@@ -1,12 +1,10 @@
-"""CORS配置管理"""
-
 import os
 
-
-def get_cors_origins() -> list[str]:
+"""CORS配置管理"""
     """获取CORS允许的源"""
+    """获取完整的CORS配置"""
+def get_cors_origins() -> list[str]:
     env = os.getenv("ENVIRONMENT", "development")
-
     if env == "production":
         return os.getenv("CORS_ORIGINS", "https://yourdomain.com").split(",")
     elif env == "staging":
@@ -20,10 +18,7 @@ def get_cors_origins() -> list[str]:
             "http://localhost:8080",  # TODO: 将魔法数字 8080 提取为常量
             "http://localhost:8000",  # TODO: 将魔法数字 8000 提取为常量
         ]
-
-
 def get_cors_config() -> dict:
-    """获取完整的CORS配置"""
     return {
         "allow_origins": get_cors_origins(),
         "allow_credentials": True,

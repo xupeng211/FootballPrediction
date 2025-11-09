@@ -83,9 +83,7 @@ async def health_check() -> dict[str, str]:
         }
     except Exception as e:
         logger.error(f"健康检查失败: {e}")
-        raise HTTPException(
-            status_code=500, detail="健康检查失败"
-        ) from e  # TODO: B904 exception chaining
+        raise HTTPException(status_code=500, detail="健康检查失败") from None
 
 
 @router.get("/", response_model=dict[str, Any])

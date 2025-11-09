@@ -3,7 +3,6 @@
 专注于100%可运行的测试用例
 """
 
-
 import pytest
 
 # 导入目标模块
@@ -84,7 +83,7 @@ class TestExceptionHierarchy:
             DependencyInjectionError("DI"),
         ]
 
-        for i, error in enumerate(exceptions):
+        for _i, error in enumerate(exceptions):
             assert isinstance(error, FootballPredictionError)
             assert str(error)  # 确保字符串表示不为空
 

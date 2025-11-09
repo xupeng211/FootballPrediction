@@ -369,7 +369,9 @@ async def test_data_source(
     try:
         adapter = data_source_manager.get_adapter(data_source)
         if not adapter:
-            raise HTTPException(status_code=404, detail=f"数据源 {data_source} 不可用")
+            raise HTTPException(
+                status_code=404, detail=f"数据源 {data_source} 不可用"
+            ) from None
         # 测试获取少量数据
         matches = await adapter.get_matches()
         teams = await adapter.get_teams()

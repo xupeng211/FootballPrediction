@@ -8,13 +8,9 @@ from fastapi import FastAPI
 
 
 class OpenAPIConfig:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """OpenAPI 配置管理类"""
 
     @staticmethod
-    # TODO: 方法 def get_tags_metadata 过长(22行),建议拆分
     def configure_openapi(app: FastAPI) -> None:
         """配置OpenAPI文档"""
         app.title = "足球预测系统 API"
@@ -30,8 +26,6 @@ class OpenAPIConfig:
         }
 
     @staticmethod
-    # TODO: 方法 def get_tags_metadata 过长(22行),建议拆分
-    # TODO: 方法 def get_tags_metadata 过长(22行),建议拆分
     def get_tags_metadata() -> list[dict[str, Any]]:
         """获取API标签元数据"""
         return [
@@ -46,9 +40,9 @@ class OpenAPIConfig:
         """设置文档服务器信息"""
         app.servers = [
             {
-                "url": "http://localhost:8000",  # TODO: 将魔法数字 8000 提取为常量
+                "url": "http://localhost:8000",
                 "description": "开发环境",
-            },  # TODO: 将魔法数字 8000 提取为常量
+            },
             {"url": "https://api.footballprediction.com", "description": "生产环境"},
         ]
 

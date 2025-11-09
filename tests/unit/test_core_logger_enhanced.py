@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 # 导入目标模块
-from core.logger import get_logger, setup_logger
+from src.core.logger import get_logger, setup_logger
 
 
 class TestLoggerFunctionality:
@@ -39,8 +39,8 @@ class TestLoggerFunctionality:
         mock_logger = Mock()
         mock_get_logger.return_value = mock_logger
 
-        logger1 = get_logger("test1")
-        logger2 = get_logger("test2")
+        get_logger("test1")
+        get_logger("test2")
 
         assert mock_get_logger.call_count == 2
         assert mock_get_logger.call_args_list[0][0][0] == "test1"

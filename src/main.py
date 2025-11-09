@@ -5,8 +5,10 @@ Football Prediction FastAPI Application
 
 import logging
 import warnings
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,6 +22,7 @@ try:
 except ImportError:
     SLOWAPI_AVAILABLE = False
 
+# 导入项目模块
 from src.api.health import router as health_router
 from src.api.predictions.optimized_router import router as optimized_predictions_router
 from src.api.prometheus_metrics import router as prometheus_router
@@ -29,47 +32,68 @@ from src.core.event_application import initialize_event_system, shutdown_event_s
 from src.cqrs.application import initialize_cqrs
 from src.database.definitions import initialize_database
 from src.middleware.i18n import I18nMiddleware
-from src.monitoring.metrics_collector import MetricsCollector
 from src.observers import ObserverManager
 from src.performance.integration import setup_performance_monitoring
 from src.performance.middleware import PerformanceMonitoringMiddleware
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 # 配置日志
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """应用生命周期管理"""
-    logger.info("🚀 Starting Football Prediction API...")
+    logger.info("启动足球预测系统...")
 
     # 初始化各个系统
-    initialize_database()
-    initialize_event_system()
-    initialize_cqrs()
-    ObserverManager.initialize()
-    MetricsCollector.initialize()
-    setup_performance_monitoring()
+    try:
+        # 初始化数据库
+        await initialize_database()
+        logger.info("✅ 数据库初始化完成")
 
-    logger.info("✅ All systems initialized successfully")
+        # 初始化事件系统
+        await initialize_event_system()
+        logger.info("✅ 事件系统初始化完成")
+
+        # 初始化CQRS系统
+        await initialize_cqrs()
+        logger.info("✅ CQRS系统初始化完成")
+
+        # 初始化观察者系统
+        ObserverManager.initialize()
+        logger.info("✅ 观察者系统初始化完成")
+
+        # 设置性能监控
+        setup_performance_monitoring(app)
+        logger.info("✅ 性能监控设置完成")
+
+        logger.info("🚀 足球预测系统启动完成!")
+
+    except Exception as e:
+        logger.error(f"❌ 系统初始化失败: {e}")
+        raise
 
     yield
 
     # 清理资源
-    logger.info("🔄 Shutting down...")
-    shutdown_event_system()
-    logger.info("✅ Shutdown complete")
+    logger.info("正在关闭足球预测系统...")
+    try:
+        await shutdown_event_system()
+        logger.info("✅ 事件系统已关闭")
+        logger.info("👋 足球预测系统已安全关闭")
+    except Exception as e:
+        logger.error(f"❌ 系统关闭时出错: {e}")
 
 
 # 创建FastAPI应用
 app = FastAPI(
-    title="Football Prediction API",
-    description="Advanced football match prediction system",
+    title="足球预测系统 API",
+    description="基于机器学习的足球比赛结果预测系统",
     version="2.0.0",
     lifespan=lifespan,
 )
@@ -77,64 +101,60 @@ app = FastAPI(
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # 生产环境应该限制具体域名
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # 添加性能监控中间件
-app.add_middleware(
-    PerformanceMonitoringMiddleware,
-    track_memory=True,
-    track_concurrency=True,
-    sample_rate=1.0,
-)
+app.add_middleware(PerformanceMonitoringMiddleware)
 
 # 添加中间件
 app.add_middleware(I18nMiddleware)
 
-# 注册路由
-app.include_router(health_router, prefix="/api", tags=["health"])
-app.include_router(prometheus_router, tags=["monitoring"])
-app.include_router(optimized_predictions_router, prefix="/api")
-
-# 配置OpenAPI
-setup_openapi(app)
-
-
-# 配置速率限制（如果可用）
+# 配置速率限制(如果可用)
 if SLOWAPI_AVAILABLE:
     limiter = Limiter(key_func=get_remote_address)
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# 注册路由
+app.include_router(health_router, prefix="/health", tags=["健康检查"])
+app.include_router(
+    optimized_predictions_router, prefix="/api/v2/predictions", tags=["预测"]
+)
+app.include_router(prometheus_router, prefix="/metrics", tags=["监控"])
 
-@app.get("/", response_model=RootResponse)
-async def root():
+# 配置OpenAPI
+setup_openapi(app)
+
+
+@app.get("/", response_model=RootResponse, tags=["根端点"])
+async def root() -> RootResponse:
     """根端点"""
     return RootResponse(
-        service="Football Prediction API",
+        message="足球预测系统 API",
         version="2.0.0",
-        status="healthy",
-        docs_url="/docs",
-        health_check="/health",
+        status="running",
     )
 
 
-@app.get("/health")
-async def health_check():
+@app.get("/health", tags=["健康检查"])
+async def health_check() -> dict:
     """健康检查端点"""
-    return {"status": "healthy", "version": "2.0.0"}
+    return {
+        "status": "healthy",
+        "version": "2.0.0",
+        "service": "football-prediction-api",
+    }
 
 
 if __name__ == "__main__":
-    import uvicorn
-
     uvicorn.run(
-        "main:app",
+        "src.main:app",
         host="0.0.0.0",
-        port=8000,  # TODO: 将魔法数字 8000 提取为常量
+        port=8000,
         reload=True,
         log_level="info",
     )

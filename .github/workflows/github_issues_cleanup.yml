@@ -1,0 +1,194 @@
+name: GitHub Issues定期清理
+
+on:
+  # 每周一早上8点自动执行
+  schedule:
+    - cron: '0 8 * * 1'
+
+  # 支持手动触发
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '试运行模式 (不实际修改Issues)'
+        required: false
+        default: 'true'
+        type: boolean
+      execute_cleanup:
+        description: '执行实际清理操作'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  # Issues清理任务
+  cleanup-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: 验证GitHub CLI
+        run: |
+          gh --version
+          echo "✅ GitHub CLI已安装"
+
+      - name: 创建报告目录
+        run: |
+          mkdir -p reports
+
+      - name: 运行Issue状态检查
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 确定运行模式
+          if [ "${{ github.event.inputs.execute_cleanup }}" = "true" ]; then
+            echo "🔧 执行模式 - 将实际清理Issues"
+            python scripts/github_issue_cleaner.py --repo ${{ github.repository }} --execute
+          else
+            echo "🔍 试运行模式 - 仅生成报告"
+            python scripts/github_issue_cleaner.py --repo ${{ github.repository }} --dry-run
+          fi
+
+      - name: 运行标签修正
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 确定运行模式
+          if [ "${{ github.event.inputs.execute_cleanup }}" = "true" ]; then
+            echo "🔧 执行模式 - 将实际修正标签"
+            python scripts/github_label_fixer.py --repo ${{ github.repository }} --execute
+          else
+            echo "🔍 试运行模式 - 仅生成报告"
+            python scripts/github_label_fixer.py --repo ${{ github.repository }} --dry-run
+          fi
+
+      - name: 生成综合报告
+        run: |
+          python scripts/generate_cleanup_summary.py --repo ${{ github.repository }}
+
+      - name: 上传清理报告
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cleanup-reports-${{ github.run_number }}
+          path: |
+            reports/github_issues_cleanup_report.md
+            reports/github_label_fix_report.md
+            reports/cleanup_summary_report.md
+          retention-days: 30
+
+      - name: 创建Issue并附加报告 (如果发现问题)
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+
+            try {
+              const cleanupReport = fs.readFileSync('reports/github_issues_cleanup_report.md', 'utf8');
+              const labelReport = fs.readFileSync('reports/github_label_fix_report.md', 'utf8');
+
+              const issueBody = `
+## 🚨 GitHub Issues清理任务发现问题
+
+**执行时间**: ${new Date().toISOString()}
+**工作流运行**: #${{ github.run_number }}
+**仓库**: ${{ github.repository }}
+
+### 📋 Issues清理报告
+${cleanupReport}
+
+### 🏷️ 标签修正报告
+${labelReport}
+
+### 🔧 需要人工处理
+请查看上述报告，手动处理需要干预的Issues。
+
+---
+*此Issue由GitHub Actions自动创建*
+              `;
+
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 GitHub Issues清理发现问题 - 需要人工处理',
+                body: issueBody,
+                labels: ['maintenance', 'automated', 'priority/medium']
+              });
+
+            } catch (error) {
+              console.log('无法读取报告文件:', error.message);
+            }
+
+  # 每月深度清理任务
+  deep-cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    # 每月1号执行
+    if: github.event_name == 'schedule' && github.event.schedule == '0 8 1 * *'
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 运行深度清理
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🧹 开始月度深度清理..."
+          python scripts/deep_cleanup.py --repo ${{ github.repository }} --execute
+
+      - name: 生成月度报告
+        run: |
+          python scripts/generate_monthly_report.py --repo ${{ github.repository }}
+
+  # Issue生命周期监控
+  lifecycle-monitoring:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: read
+      contents: read
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 运行生命周期监控
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📊 分析Issue生命周期..."
+          python scripts/issue_lifecycle_monitor.py --repo ${{ github.repository }}
+
+      - name: 更新生命周期仪表板
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "📈 更新生命周期仪表板..."
+          # 这里可以添加更新README或Wiki的代码

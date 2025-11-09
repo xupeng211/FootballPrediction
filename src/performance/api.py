@@ -276,4 +276,4 @@ async def get_performance_report(
         logger.error(f"Failed to generate performance report: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to generate performance report"
-        )  # TODO: B904 exception chaining
+        ) from e  # B904 exception chaining

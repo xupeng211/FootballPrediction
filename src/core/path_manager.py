@@ -94,6 +94,18 @@ class PathManager:
             logger.error(f"配置src路径失败: {e}")
             return False
 
+    def setup_paths(self, force: bool = False) -> bool:
+        """
+        设置所有路径配置（兼容方法）
+
+        Args:
+            force: 是否强制重新配置
+
+        Returns:
+            bool: 配置是否成功
+        """
+        return self.setup_src_path(force)
+
     def _verify_src_import(self) -> bool:
         """验证src模块是否可以导入"""
         try:

@@ -47,12 +47,10 @@ class DataConsistencyTester:
         }
         self.test_results.append(result)
 
-        status_symbol = "✅" if success else "❌"
-        print(f"{status_symbol} {test_name}")
         if details:
-            print(f"   📝 {details}")
+            pass
         if duration > 0:
-            print(f"   ⏱️  耗时: {duration:.2f}秒")
+            pass
 
     def log_consistency_error(self, error_msg: str):
         """记录一致性错误"""
@@ -408,7 +406,7 @@ class DataConsistencyTester:
                 ("大部分操作成功", len(successful_predictions) >= len(match_ids) * 0.8),
                 (
                     "没有重复的match_id",
-                    len(set(p.get("match_id") for p in successful_predictions))
+                    len({p.get("match_id") for p in successful_predictions})
                     == len(successful_predictions),
                 ),
                 (
@@ -511,8 +509,6 @@ class DataConsistencyTester:
 
     async def run_all_consistency_tests(self) -> dict[str, Any]:
         """运行所有数据一致性测试"""
-        print("🔍 开始API数据一致性集成测试")
-        print("=" * 60)
 
         # 首先设置测试用户
         if not await self.setup_test_user():
@@ -562,18 +558,9 @@ class DataConsistencyTester:
             "timestamp": datetime.now().isoformat(),
         }
 
-        print("=" * 60)
-        print("📊 数据一致性测试完成！")
-        print(f"总测试数: {total_tests}")
-        print(f"通过测试: {passed_tests}")
-        print(f"失败测试: {total_tests - passed_tests}")
-        print(f"成功率: {success_rate:.1f}%")
-        print(f"一致性错误数: {len(self.consistency_errors)}")
-
         if self.consistency_errors:
-            print("\n❌ 发现的一致性问题:")
-            for error in self.consistency_errors:
-                print(f"   • {error}")
+            for _error in self.consistency_errors:
+                pass
 
         return report
 
@@ -630,15 +617,9 @@ async def main():
     tester = DataConsistencyTester()
     report = await tester.run_all_consistency_tests()
 
-    print("\n🎯 数据一致性集成测试结果:")
-    print(f"成功率: {report['success_rate']:.1f}%")
-    print(f"一致性错误: {len(report['consistency_errors'])}")
-
     if report["success_rate"] >= 80 and len(report["consistency_errors"]) == 0:
-        print("🎉 数据一致性集成测试通过！")
         return 0
     else:
-        print("❌ 数据一致性集成测试失败")
         return 1
 
 
