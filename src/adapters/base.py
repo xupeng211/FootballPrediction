@@ -106,25 +106,25 @@ class BaseAdapter(Adaptee, Target, ABC):
             self.status = AdapterStatus.INACTIVE
 
 
-class AdapterException(Exception):
+class AdapterError(Exception):
     """适配器异常基类"""
 
     pass
 
 
-class AdapterInitializationError(AdapterException):
+class AdapterInitializationError(AdapterError):
     """适配器初始化错误"""
 
     pass
 
 
-class AdapterConnectionError(AdapterException):
+class AdapterConnectionError(AdapterError):
     """适配器连接错误"""
 
     pass
 
 
-class AdapterDataError(AdapterException):
+class AdapterDataError(AdapterError):
     """适配器数据错误"""
 
     pass
@@ -135,7 +135,7 @@ __all__ = [
     "Adaptee",
     "Target",
     "BaseAdapter",
-    "AdapterException",
+    "AdapterError",
     "AdapterInitializationError",
     "AdapterConnectionError",
     "AdapterDataError",

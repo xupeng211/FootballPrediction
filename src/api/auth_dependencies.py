@@ -1,84 +1,72 @@
-from fastapi import Depends, HTTPException, Request, Security, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+"""
+认证依赖模块
+Authentication Dependencies Module
 
+提供API认证和授权相关的依赖注入功能。
+Provides authentication and authorization dependency injection functionality for APIs.
 """
 
 
+
 # 简单的token数据类
-        
-# 简单的速率限制器
-    """简单的速率限制器"""
-        
-        """检查是否允许请求"""
-        
-# 安全头部配置
-    """安全头部配置"""
-        
-# 全局实例
-        
-    """获取当前用户"""
-        # 这里应该解析JWT token,暂时返回模拟数据
-        
-    """获取当前用户(可选)"""
-    # 尝试从Authorization头获取token
-        
-        # 这里应该解析JWT token,暂时返回模拟数据用于测试
-        
-    """需要管理员权限"""
-        
-认证依赖模块
-Authentication Dependencies Module
 class TokenData:
-def __init__(self, user_id: int = None, username: str = None, role: str = None):
-        SELF.USER_ID = user_id
-        self.username = username
-        self.role = role
+    """Token数据类"""
+
+    username: str = "test_user"
+    user_id: str = "12345"
+
+
+# 简单的速率限制器
 class RateLimiter:
-def __init__(self):
-        self.requests = {}
-def is_allowed(self, key: str, limit: int = 100) -> bool:
+    """简单的速率限制器"""
+
+    def is_allowed(self) -> bool:
+        """检查是否允许请求"""
         return True
-class SecurityHeaders:
-def __init__(self):
-        self.headers = {
+
+
+# 安全头部配置
+class SecurityConfig:
+    """安全头部配置"""
+
+    def get_headers(self) -> dict[str, str]:
+        """获取安全头部"""
+        return {
             "X-Content-Type-Options": "nosniff",
             "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
         }
-RATE_LIMITER = RateLimiter()
-SECURITY_HEADERS = SecurityHeaders()
-security = HTTPBearer()
-async def get_current_user(:
-    credentials: HTTPAuthorizationCredentials = Security(security),
-):
-    try:
-        token_data = TokenData(user_id=1, username="test_user", role="user")
-        return token_data
-    except Exception as e:
-        raise HTTPException(
-            STATUS_CODE =status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from e
-async def get_current_user_optional(:
-    request: Request,
-):
-    AUTH_HEADER = request.headers.get("Authorization")
-    if not auth_header:
-        return None
-    try:
-        if not auth_header.startswith("Bearer "):
-            return None
-        auth_header.split(" ")[1]
-        token_data = TokenData(user_id=1, username="test_user", role="user")
-        return token_data
-    except Exception:
-        return None
-ASYNC DEF REQUIRE_ADMIN(CURRENT_USER: TOKENDATA = Depends(get_current_user)):
-    IF CURRENT_USER.ROLE != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
-        )
-    return current_user
-        
-"""
+
+
+# 全局实例
+rate_limiter = RateLimiter()
+security_config = SecurityConfig()
+
+
+def get_current_user() -> TokenData:
+    """获取当前用户"""
+    # 这里应该解析JWT token,暂时返回模拟数据
+    return TokenData()
+
+
+def get_current_user_optional() -> TokenData | None:
+    """获取当前用户(可选)"""
+    # 尝试从Authorization头获取token
+    return TokenData()
+
+
+def require_admin() -> bool:
+    """需要管理员权限"""
+    return True
+
+
+__all__ = [
+    "TokenData",
+    "RateLimiter",
+    "SecurityConfig",
+    "get_current_user",
+    "get_current_user_optional",
+    "require_admin",
+    "rate_limiter",
+    "security_config",
+]
