@@ -1,7 +1,7 @@
 # 简化版 real_model_training 模块
 
 
-class Real_Model_Training:
+class RealModelTraining:
     def __init__(self):
         pass
 

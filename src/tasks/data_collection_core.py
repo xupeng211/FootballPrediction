@@ -1,7 +1,7 @@
 # 简化版 data_collection_core 模块
 
 
-class Data_Collection_Core:
+class DataCollectionCore:
     def __init__(self):
         pass
 

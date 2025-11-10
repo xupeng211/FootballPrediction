@@ -1,7 +1,7 @@
 # 简化版 match_service 模块
 
 
-class Match_Service:
+class MatchService:
     def __init__(self):
         pass
 

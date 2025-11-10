@@ -1,7 +1,7 @@
 # 简化版 kafka_components_simple 模块
 
 
-class Kafka_Components_Simple:
+class KafkaComponentsSimple:
     def __init__(self):
         pass
 

@@ -20,7 +20,6 @@ try:
 except ImportError:
     APP_AVAILABLE = False
     # 使用print代替logger，因为测试环境中logger不可用
-    print("⚠️ 主应用不可用，跳过健康检查测试")
 
 
 @pytest.mark.health

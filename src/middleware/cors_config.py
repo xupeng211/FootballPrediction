@@ -1,7 +1,7 @@
 # 简化版 cors_config 模块
 
 
-class Cors_Config:
+class CorsConfig:
     def __init__(self):
         pass
 

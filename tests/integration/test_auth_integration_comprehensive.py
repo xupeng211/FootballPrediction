@@ -458,18 +458,18 @@ class TestAuthSecurityIntegration:
         """测试安全HTTP头部"""
         # 1. 定义安全头部
         security_headers = {
-            "X-Content-Type-Options": "nosniff",
-            "X-Frame-Options": "DENY",
-            "X-XSS-Protection": "1; mode=block",
+            "x-Content-Type-Options": "nosniff",
+            "x-Frame-Options": "DENY",
+            "x-XSS-Protection": "1; mode=block",
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
             "Content-Security-Policy": "default-src 'self'",
         }
 
         # 2. 验证所有必需头部存在
         required_headers = [
-            "X-Content-Type-Options",
-            "X-Frame-Options",
-            "X-XSS-Protection",
+            "x-Content-Type-Options",
+            "x-Frame-Options",
+            "x-XSS-Protection",
         ]
 
         for header in required_headers:

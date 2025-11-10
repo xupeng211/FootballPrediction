@@ -114,9 +114,8 @@ class TestCoverageImprovementIntegration:
             CoverageImprovementExecutor()
             Phase35AICoverageMaster()
 
-        except Exception as e:
+        except Exception:
             tools_working = False
-            print(f"工具加载失败: {e}")  # TODO: Add logger import if needed
 
         assert tools_working, "所有恢复的工具应该能正常工作"
 

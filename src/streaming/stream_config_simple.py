@@ -1,7 +1,7 @@
 # 简化版 stream_config_simple 模块
 
 
-class Stream_Config_Simple:
+class StreamConfigSimple:
     def __init__(self):
         pass
 

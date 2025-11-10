@@ -28,8 +28,7 @@ try:
     from ml.models.elo_model import EloModel
 
     CAN_IMPORT = True
-except ImportError as e:
-    print(f"Warning: 无法导入Elo模型: {e}")  # TODO: Add logger import if needed
+except ImportError:
     CAN_IMPORT = False
 
 

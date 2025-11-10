@@ -8,7 +8,7 @@ Tests core functionality of data quality monitor service.
 
 import asyncio
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -37,7 +37,7 @@ class TestDataQualityMonitorBasic:
             "batch_size": 100,
             "timeout": 30,
             "retry_count": 3,
-            "validation_rules": ["required_fields", "data_types"]
+            "validation_rules": ["required_fields", "data_types"],
         }
         monitor = DataQualityMonitor(custom_config)
 
@@ -118,13 +118,13 @@ class TestDataProcessing:
             assert len(items) == 10
 
     @pytest.mark.asyncio
-    @patch('src.services.data_quality_monitor.logger')
+    @patch("src.services.data_quality_monitor.logger")
     async def test_process_data_with_exception(self, mock_logger):
         """测试处理数据时的异常"""
         monitor = DataQualityMonitor()
 
         # 模拟异常
-        with patch.object(monitor, 'process_data') as mock_process:
+        with patch.object(monitor, "process_data") as mock_process:
             mock_process.side_effect = Exception("Processing failed")
 
             with pytest.raises(Exception, match="Processing failed"):
@@ -162,7 +162,7 @@ class TestDataValidation:
             "id": 123,
             "name": "Test Prediction",
             "confidence": 0.85,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         result = await monitor.validate_data(test_data)
@@ -195,13 +195,13 @@ class TestDataValidation:
         assert result["score"] == 0.98
 
     @pytest.mark.asyncio
-    @patch('src.services.data_quality_monitor.logger')
+    @patch("src.services.data_quality_monitor.logger")
     async def test_validate_data_with_exception(self, mock_logger):
         """测试验证数据时的异常"""
         monitor = DataQualityMonitor()
 
         # 模拟异常
-        with patch.object(monitor, 'validate_data') as mock_validate:
+        with patch.object(monitor, "validate_data") as mock_validate:
             mock_validate.side_effect = Exception("Validation failed")
 
             result = await monitor.validate_data({"test": "data"})
@@ -256,6 +256,7 @@ class TestMetricsCalculation:
 
         # 模拟1秒内处理100个项目
         import time
+
         time.sleep(0.1)  # 确保有一些时间差
 
         monitor.metrics["processed_items"] = 100
@@ -327,11 +328,11 @@ class TestDataQualityMonitorIntegration:
         # 模拟处理失败的数据
         try:
             await monitor.validate_data(None)  # 可能导致异常
-        except:
+        except Exception:
             pass
 
         # 尝试验证会产生异常的数据
-        with patch.object(monitor, 'validate_data') as mock_validate:
+        with patch.object(monitor, "validate_data") as mock_validate:
             mock_validate.side_effect = Exception("Test error")
 
             result = await monitor.validate_data({"test": "data"})
@@ -357,7 +358,7 @@ class TestDataQualityMonitorIntegration:
         tasks = [
             process_source("source1"),
             process_source("source2"),
-            process_source("source3")
+            process_source("source3"),
         ]
 
         results = await asyncio.gather(*tasks)

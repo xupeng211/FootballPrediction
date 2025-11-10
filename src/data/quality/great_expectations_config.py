@@ -1,7 +1,7 @@
 # 简化版 great_expectations_config 模块
 
 
-class Great_Expectations_Config:
+class GreatExpectationsConfig:
     def __init__(self):
         pass
 

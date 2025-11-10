@@ -7,19 +7,21 @@ Tests integration and collaboration between services.
 """
 
 import asyncio
-import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from src.services.audit_service import AuditService, AuditSeverity
 from src.services.auth_service import AuthService
 from src.services.data_quality_monitor import DataQualityMonitor
-from src.services.prediction_service import PredictionService
 from src.services.manager.manager import ServiceManager
+from src.services.prediction_service import PredictionService
 
 
 class MockUser:
     """模拟用户对象"""
+
     def __init__(self, user_id=1, username="testuser", email="test@example.com"):
         self.id = user_id
         self.username = username
@@ -36,7 +38,7 @@ class MockUser:
             "id": self.id,
             "username": self.username,
             "email": self.email,
-            "role": self.role
+            "role": self.role,
         }
 
     def update_last_login(self):
@@ -54,7 +56,7 @@ class TestAuthServiceIntegration:
     @pytest.fixture
     def auth_service(self, mock_db):
         """认证服务实例"""
-        with patch('src.services.auth_service.AuthUserRepository') as mock_repo_class:
+        with patch("src.services.auth_service.AuthUserRepository") as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             service = AuthService(mock_db)
@@ -72,7 +74,9 @@ class TestAuthServiceIntegration:
         return MockUser()
 
     @pytest.mark.asyncio
-    async def test_user_registration_with_audit(self, auth_service, audit_service, mock_user):
+    async def test_user_registration_with_audit(
+        self, auth_service, audit_service, mock_user
+    ):
         """测试用户注册与审计集成"""
         # 模拟用户注册
         auth_service.user_repo.get_by_username.return_value = None
@@ -81,16 +85,14 @@ class TestAuthServiceIntegration:
 
         # 执行用户注册
         user = await auth_service.register_user(
-            username="testuser",
-            email="test@example.com",
-            password="password123"
+            username="testuser", email="test@example.com", password="password123"
         )
 
         # 记录审计事件
         audit_event = audit_service.log_event(
             "user_registration",
             "system",
-            {"username": "testuser", "email": "test@example.com", "user_id": user.id}
+            {"username": "testuser", "email": "test@example.com", "user_id": user.id},
         )
 
         # 验证结果
@@ -117,7 +119,7 @@ class TestAuthServiceIntegration:
         audit_event = audit_service.log_event(
             "user_login",
             mock_user.username,
-            {"user_id": mock_user.id, "timestamp": datetime.now().isoformat()}
+            {"user_id": mock_user.id, "timestamp": datetime.now().isoformat()},
         )
 
         # 验证结果
@@ -138,7 +140,7 @@ class TestAuthServiceIntegration:
         audit_event = audit_service.log_event(
             "failed_login_attempt",
             "anonymous",
-            {"username": "nonexistent", "reason": "user_not_found"}
+            {"username": "nonexistent", "reason": "user_not_found"},
         )
 
         # 验证结果
@@ -166,7 +168,7 @@ class TestPredictionServiceIntegration:
             "match_id": 12345,
             "home_team_id": 1,
             "away_team_id": 2,
-            "league_id": 39
+            "league_id": 39,
         }
 
         # 执行预测
@@ -180,8 +182,8 @@ class TestPredictionServiceIntegration:
                 "match_id": prediction.match_id,
                 "model": "test_model",
                 "predicted_outcome": prediction.predicted_outcome,
-                "confidence": prediction.confidence_score
-            }
+                "confidence": prediction.confidence_score,
+            },
         )
 
         # 验证结果
@@ -194,7 +196,7 @@ class TestPredictionServiceIntegration:
         batch_data = [
             {"match_id": 1, "home_team_id": 1, "away_team_id": 2},
             {"match_id": 2, "home_team_id": 3, "away_team_id": 4},
-            {"match_id": 3, "home_team_id": 5, "away_team_id": 6}
+            {"match_id": 3, "home_team_id": 5, "away_team_id": 6},
         ]
 
         # 执行批量预测
@@ -207,8 +209,8 @@ class TestPredictionServiceIntegration:
             {
                 "batch_size": len(predictions),
                 "model": "batch_model",
-                "successful_predictions": len(predictions)
-            }
+                "successful_predictions": len(predictions),
+            },
         )
 
         # 验证结果
@@ -221,7 +223,9 @@ class TestPredictionServiceIntegration:
         match_data = {"match_id": 12345, "home_team_id": 1, "away_team_id": 2}
 
         # 执行预测
-        prediction = prediction_service.predict_match(match_data, "high_confidence_model")
+        prediction = prediction_service.predict_match(
+            match_data, "high_confidence_model"
+        )
 
         # 检查置信度
         confidence_analysis = prediction_service.get_prediction_confidence(prediction)
@@ -234,8 +238,8 @@ class TestPredictionServiceIntegration:
                 {
                     "match_id": prediction.match_id,
                     "confidence": prediction.confidence_score,
-                    "outcome": prediction.predicted_outcome
-                }
+                    "outcome": prediction.predicted_outcome,
+                },
             )
             assert audit_event.action == "high_confidence_prediction"
 
@@ -254,7 +258,9 @@ class TestDataQualityIntegration:
         return AuditService()
 
     @pytest.mark.asyncio
-    async def test_data_processing_with_audit(self, data_quality_monitor, audit_service):
+    async def test_data_processing_with_audit(
+        self, data_quality_monitor, audit_service
+    ):
         """测试数据处理与审计集成"""
         processed_items = []
         quality_issues = []
@@ -276,8 +282,8 @@ class TestDataQualityIntegration:
                 "source": "test_source",
                 "processed_items": len(processed_items),
                 "quality_issues": len(quality_issues),
-                "processing_time": data_quality_monitor.get_metrics()["duration"]
-            }
+                "processing_time": data_quality_monitor.get_metrics()["duration"],
+            },
         )
 
         # 验证结果
@@ -301,8 +307,8 @@ class TestDataQualityIntegration:
                 {
                     "issues": validation["issues"],
                     "recommendations": validation["recommendations"],
-                    "data_sample": str(invalid_data)[:100]  # 限制长度
-                }
+                    "data_sample": str(invalid_data)[:100],  # 限制长度
+                },
             )
             assert audit_event.action == "data_quality_issue_detected"
             assert audit_event.severity >= AuditSeverity.MEDIUM
@@ -324,6 +330,7 @@ class TestServiceManagerIntegration:
     @pytest.mark.asyncio
     async def test_service_lifecycle_with_audit(self, service_manager, audit_service):
         """测试服务生命周期与审计集成"""
+
         class TestService:
             def __init__(self, name):
                 self.name = name
@@ -344,14 +351,14 @@ class TestServiceManagerIntegration:
         audit_event1 = audit_service.log_event(
             "service_registered",
             "service_manager",
-            {"service_name": "service1", "service_type": "TestService"}
+            {"service_name": "service1", "service_type": "TestService"},
         )
 
         service_manager.register_service("service2", service2)
         audit_event2 = audit_service.log_event(
             "service_registered",
             "service_manager",
-            {"service_name": "service2", "service_type": "TestService"}
+            {"service_name": "service2", "service_type": "TestService"},
         )
 
         # 初始化所有服务
@@ -359,7 +366,7 @@ class TestServiceManagerIntegration:
         audit_event3 = audit_service.log_event(
             "services_initialized",
             "service_manager",
-            {"success": init_success, "service_count": len(service_manager.services)}
+            {"success": init_success, "service_count": len(service_manager.services)},
         )
 
         # 关闭所有服务
@@ -367,7 +374,7 @@ class TestServiceManagerIntegration:
         audit_event4 = audit_service.log_event(
             "services_shutdown",
             "service_manager",
-            {"service_count": len(service_manager.services)}
+            {"service_count": len(service_manager.services)},
         )
 
         # 验证审计事件
@@ -379,6 +386,7 @@ class TestServiceManagerIntegration:
     @pytest.mark.asyncio
     async def test_service_failure_with_audit(self, service_manager, audit_service):
         """测试服务失败与审计集成"""
+
         class FailingService:
             def __init__(self, name):
                 self.name = name
@@ -403,8 +411,8 @@ class TestServiceManagerIntegration:
             {
                 "service_name": "failing_service",
                 "failure_reason": "Service failing_service failed to initialize",
-                "recovery_attempted": False
-            }
+                "recovery_attempted": False,
+            },
         )
 
         # 验证结果
@@ -431,18 +439,16 @@ class TestCompleteWorkflowIntegration:
         auth_service.get_current_user = AsyncMock(return_value=mock_user)
 
         # 1. 用户登录审计
-        login_audit = audit_service.log_event(
+        audit_service.log_event(
             "user_login",
             mock_user.username,
-            {"user_id": mock_user.id, "login_time": datetime.now().isoformat()}
+            {"user_id": mock_user.id, "login_time": datetime.now().isoformat()},
         )
 
         # 2. 数据质量监控
         data_quality_metrics = data_quality_monitor.get_metrics()
-        quality_audit = audit_service.log_event(
-            "data_quality_check",
-            "system",
-            {"metrics": data_quality_metrics}
+        audit_service.log_event(
+            "data_quality_check", "system", {"metrics": data_quality_metrics}
         )
 
         # 3. 执行预测
@@ -450,7 +456,7 @@ class TestCompleteWorkflowIntegration:
         prediction = prediction_service.predict_match(match_data, "integration_model")
 
         # 4. 预测审计
-        prediction_audit = audit_service.log_event(
+        audit_service.log_event(
             "prediction_created",
             mock_user.username,
             {
@@ -458,8 +464,8 @@ class TestCompleteWorkflowIntegration:
                 "model": "integration_model",
                 "outcome": prediction.predicted_outcome,
                 "confidence": prediction.confidence_score,
-                "user_id": mock_user.id
-            }
+                "user_id": mock_user.id,
+            },
         )
 
         # 5. 置信度分析
@@ -471,21 +477,21 @@ class TestCompleteWorkflowIntegration:
                 {
                     "match_id": prediction.match_id,
                     "confidence": confidence_analysis["confidence_score"],
-                    "recommended": confidence_analysis["recommended"]
-                }
+                    "recommended": confidence_analysis["recommended"],
+                },
             )
             assert high_conf_audit.action == "high_confidence_prediction_alert"
 
         # 6. 工作流完成审计
-        workflow_audit = audit_service.log_event(
+        audit_service.log_event(
             "prediction_workflow_completed",
             "system",
             {
                 "user_id": mock_user.id,
                 "predictions_made": 1,
                 "workflow_duration": "1.2s",  # 模拟
-                "data_quality_pass": True
-            }
+                "data_quality_pass": True,
+            },
         )
 
         # 验证所有审计事件
@@ -499,25 +505,25 @@ class TestCompleteWorkflowIntegration:
     async def test_error_handling_workflow_integration(self):
         """测试错误处理工作流集成"""
         audit_service = AuditService()
-        data_quality_monitor = DataQualityMonitor()
+        DataQualityMonitor()
 
         # 模拟错误场景
         error_scenarios = [
             {
                 "type": "data_validation_error",
                 "description": "Invalid match data format",
-                "severity": AuditSeverity.MEDIUM
+                "severity": AuditSeverity.MEDIUM,
             },
             {
                 "type": "prediction_model_error",
                 "description": "Model prediction failed",
-                "severity": AuditSeverity.HIGH
+                "severity": AuditSeverity.HIGH,
             },
             {
                 "type": "database_connection_error",
                 "description": "Could not save prediction result",
-                "severity": AuditSeverity.CRITICAL
-            }
+                "severity": AuditSeverity.CRITICAL,
+            },
         ]
 
         # 记录错误审计事件
@@ -529,20 +535,20 @@ class TestCompleteWorkflowIntegration:
                     "error_description": scenario["description"],
                     "timestamp": datetime.now().isoformat(),
                     "error_code": f"ERR_{scenario['type'].upper()}",
-                    "recovery_attempted": True
-                }
+                    "recovery_attempted": True,
+                },
             )
             assert error_audit.severity == scenario["severity"]
 
         # 模拟错误恢复
-        recovery_audit = audit_service.log_event(
+        audit_service.log_event(
             "error_recovery_completed",
             "system",
             {
                 "errors_resolved": len(error_scenarios),
                 "recovery_time": "5.3s",
-                "system_health": "restored"
-            }
+                "system_health": "restored",
+            },
         )
 
         # 验证错误处理审计
@@ -555,7 +561,6 @@ class TestCompleteWorkflowIntegration:
     @pytest.mark.asyncio
     async def test_concurrent_operations_integration(self):
         """测试并发操作集成"""
-        import asyncio
 
         audit_service = AuditService()
         prediction_service = PredictionService()
@@ -567,9 +572,11 @@ class TestCompleteWorkflowIntegration:
                 match_data = {
                     "match_id": batch_id * 1000 + i,
                     "home_team_id": (batch_id * 2 + i) % 10 + 1,
-                    "away_team_id": (batch_id * 3 + i) % 10 + 1
+                    "away_team_id": (batch_id * 3 + i) % 10 + 1,
                 }
-                prediction = prediction_service.predict_match(match_data, f"batch_{batch_id}")
+                prediction = prediction_service.predict_match(
+                    match_data, f"batch_{batch_id}"
+                )
                 predictions.append(prediction)
 
                 # 记录预测审计
@@ -579,8 +586,8 @@ class TestCompleteWorkflowIntegration:
                     {
                         "match_id": prediction.match_id,
                         "batch_id": batch_id,
-                        "prediction_index": i
-                    }
+                        "prediction_index": i,
+                    },
                 )
 
                 # 小延迟模拟真实处理
@@ -592,7 +599,7 @@ class TestCompleteWorkflowIntegration:
         tasks = [
             create_prediction_batch(1, 5),
             create_prediction_batch(2, 3),
-            create_prediction_batch(3, 7)
+            create_prediction_batch(3, 7),
         ]
 
         results = await asyncio.gather(*tasks)
@@ -605,8 +612,8 @@ class TestCompleteWorkflowIntegration:
                 "batches_processed": len(results),
                 "total_predictions": sum(len(batch) for batch in results),
                 "concurrent_tasks": len(tasks),
-                "processing_time": "2.1s"
-            }
+                "processing_time": "2.1s",
+            },
         )
 
         # 验证并发操作审计

@@ -25,10 +25,47 @@ class MatchDomainService:
     pass  # 添加pass语句
     """比赛领域服务"""
 
-    def __init__(self):
+    def __init__(self, config: dict[str, Any] | None = None):
         """函数文档字符串"""
         # 添加pass语句
+        self.config = config or {}
+        self._config = self.config  # 兼容测试期望
         self._events: list[Any] = []
+        self._is_initialized = False
+        self._disposed = False
+        self._created_at = datetime.utcnow()
+
+    def initialize(self) -> bool:
+        """初始化服务"""
+        self._is_initialized = True
+        return True
+
+    def dispose(self) -> None:
+        """销毁服务"""
+        self._disposed = True
+        self._is_initialized = False
+
+    def is_disposed(self) -> bool:
+        """检查是否已销毁"""
+        return self._disposed
+
+    def is_initialized(self) -> bool:
+        """检查是否已初始化"""
+        return self._is_initialized
+
+    def get_created_at(self) -> datetime:
+        """获取创建时间"""
+        return self._created_at
+
+    def get_service_info(self) -> dict[str, Any]:
+        """获取服务信息"""
+        return {
+            "name": self.__class__.__name__,
+            "initialized": self._is_initialized,
+            "disposed": self._disposed,
+            "created_at": self._created_at.isoformat(),
+            "config": self._config,
+        }
 
     def schedule_match(
         self,

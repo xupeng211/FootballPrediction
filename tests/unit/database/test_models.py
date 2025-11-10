@@ -22,8 +22,7 @@ try:
     from src.database.models.predictions import Prediction
     from src.database.models.team import Team
     from src.database.models.user import User
-except ImportError as e:
-    print(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
+except ImportError:
     # Mock implementation will be used
 
     Base = declarative_base()

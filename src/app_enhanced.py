@@ -126,7 +126,7 @@ async def get_predictions():
             ]
             return predictions
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"查询失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"查询失败: {str(e)}") from e
 
 
 @app.post("/predictions", response_model=PredictionResponse)
@@ -146,7 +146,7 @@ async def create_prediction(request: PredictionRequest):
             )
             return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"创建失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"创建失败: {str(e)}") from e
 
 
 if __name__ == "__main__":

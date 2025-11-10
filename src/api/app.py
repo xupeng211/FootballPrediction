@@ -139,7 +139,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 f"status={response.status_code} "
                 f"duration={process_time:.3f}s"
             )
-            response.headers["X-Process-Time"] = str(process_time)
+            response.headers["x-Process-Time"] = str(process_time)
             return response
         except (ValueError, KeyError, AttributeError, HTTPError) as e:
             process_time = time.time() - start_time if start_time else 0

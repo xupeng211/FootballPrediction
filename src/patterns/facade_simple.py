@@ -1,7 +1,7 @@
 # 简化版 facade_simple 模块
 
 
-class Facade_Simple:
+class FacadeSimple:
     def __init__(self):
         pass
 

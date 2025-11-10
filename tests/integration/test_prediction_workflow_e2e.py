@@ -5,15 +5,11 @@ Prediction Workflow End-to-End Tests
 完整测试足球预测系统的预测工作流，从用户登录到预测完成的整个流程
 """
 
-import asyncio
 import json
 from datetime import datetime, timedelta
-from decimal import Decimal
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 # 标记测试
@@ -25,8 +21,13 @@ class TestPredictionWorkflowE2E:
 
     @pytest.mark.asyncio
     async def test_complete_prediction_journey(
-        self, async_client: AsyncClient, sample_teams, sample_league, test_user_data,
-        mock_external_services, mock_redis
+        self,
+        async_client: AsyncClient,
+        sample_teams,
+        sample_league,
+        test_user_data,
+        mock_external_services,
+        mock_redis,
     ):
         """测试完整的预测旅程"""
         if not sample_teams or len(sample_teams) < 2:
@@ -51,7 +52,7 @@ class TestPredictionWorkflowE2E:
                 "email": user_data["email"],
                 "is_active": True,
                 "is_verified": True,
-            }
+            },
         }
 
         auth_headers = {"Authorization": "Bearer test_jwt_token"}
@@ -68,8 +69,8 @@ class TestPredictionWorkflowE2E:
             "away_team_id": away_team.id,
             "match_date": (datetime.utcnow() + timedelta(days=2)).isoformat(),
             "venue": "Old Trafford",
-            "league_id": sample_league.id if hasattr(sample_league, 'id') else 1,
-            "status": "SCHEDULED"
+            "league_id": sample_league.id if hasattr(sample_league, "id") else 1,
+            "status": "SCHEDULED",
         }
 
         mock_match_service = AsyncMock()
@@ -86,7 +87,9 @@ class TestPredictionWorkflowE2E:
             "away_team": {"id": away_team.id, "name": away_team.name},
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post("/api/matches/", json=match_data)
 
             if response.status_code == 200:
@@ -102,23 +105,25 @@ class TestPredictionWorkflowE2E:
                 "recent_form": ["W", "D", "W", "L", "W"],
                 "goals_scored": 15,
                 "goals_conceded": 8,
-                "home_record": {"played": 5, "won": 4, "drawn": 1, "lost": 0}
+                "home_record": {"played": 5, "won": 4, "drawn": 1, "lost": 0},
             },
             "away_team_stats": {
                 "recent_form": ["D", "L", "W", "D", "L"],
                 "goals_scored": 10,
                 "goals_conceded": 12,
-                "away_record": {"played": 5, "won": 1, "drawn": 2, "lost": 2}
+                "away_record": {"played": 5, "won": 1, "drawn": 2, "lost": 2},
             },
             "head_to_head": {
                 "total_matches": 10,
                 "home_wins": 6,
                 "away_wins": 2,
-                "draws": 2
-            }
+                "draws": 2,
+            },
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.get(f"/api/matches/{match_id}/details")
 
             if response.status_code == 200:
@@ -139,20 +144,20 @@ class TestPredictionWorkflowE2E:
                     "score": "2-1",
                     "confidence": 0.75,
                     "probability": 0.35,
-                    "reasoning": "Home team has strong home record and recent form"
+                    "reasoning": "Home team has strong home record and recent form",
                 },
                 {
                     "score": "1-1",
                     "confidence": 0.65,
                     "probability": 0.25,
-                    "reasoning": "Both teams have balanced scoring ability"
+                    "reasoning": "Both teams have balanced scoring ability",
                 },
                 {
                     "score": "2-0",
                     "confidence": 0.60,
                     "probability": 0.20,
-                    "reasoning": "Home team defense has been solid recently"
-                }
+                    "reasoning": "Home team defense has been solid recently",
+                },
             ],
             "statistical_analysis": {
                 "expected_goals_home": 1.8,
@@ -160,14 +165,16 @@ class TestPredictionWorkflowE2E:
                 "over_2_5_probability": 0.65,
                 "home_win_probability": 0.55,
                 "draw_probability": 0.25,
-                "away_win_probability": 0.20
-            }
+                "away_win_probability": 0.20,
+            },
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.get(
-                f"/api/predictions/suggestions/{match_id}",
-                headers=auth_headers
+                f"/api/predictions/suggestions/{match_id}", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -186,7 +193,7 @@ class TestPredictionWorkflowE2E:
             "predicted_home": 2,
             "predicted_away": 1,
             "confidence": 0.85,
-            "reasoning": "Home team has better form and home advantage"
+            "reasoning": "Home team has better form and home advantage",
         }
 
         mock_prediction_service.create_prediction.return_value = {
@@ -203,17 +210,20 @@ class TestPredictionWorkflowE2E:
                 "id": match_id,
                 "home_team": {"name": home_team.name},
                 "away_team": {"name": away_team.name},
-                "match_date": match_data["match_date"]
-            }
+                "match_date": match_data["match_date"],
+            },
         }
 
         # 模拟领域事件发布
-        with patch('src.domain.events.event_bus', mock_external_services["audit_service"]):
-            with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.domain.events.event_bus", mock_external_services["audit_service"]
+        ):
+            with patch(
+                "src.api.routes.predictions.PredictionService",
+                return_value=mock_prediction_service,
+            ):
                 response = await async_client.post(
-                    "/api/predictions/",
-                    json=prediction_data,
-                    headers=auth_headers
+                    "/api/predictions/", json=prediction_data, headers=auth_headers
                 )
 
                 if response.status_code in [200, 201]:
@@ -240,15 +250,17 @@ class TestPredictionWorkflowE2E:
                 "exact_score": 10,
                 "correct_result": 3,
                 "confidence_bonus": 1.5,
-                "total_possible": 14.5
+                "total_possible": 14.5,
             },
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.get(
-                f"/api/predictions/{prediction_id}",
-                headers=auth_headers
+                f"/api/predictions/{prediction_id}", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -265,10 +277,12 @@ class TestPredictionWorkflowE2E:
             "id": match_id,
             "status": "IN_PROGRESS",
             "started_at": datetime.utcnow().isoformat(),
-            "current_score": {"home": 0, "away": 0}
+            "current_score": {"home": 0, "away": 0},
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post(f"/api/matches/{match_id}/start")
 
             if response.status_code == 200:
@@ -280,12 +294,12 @@ class TestPredictionWorkflowE2E:
             "match_id": match_id,
             "minute": 45,
             "score": {"home": 1, "away": 0},
-            "scorers": [
-                {"player": "Player A", "team": "home", "minute": 23}
-            ]
+            "scorers": [{"player": "Player A", "team": "home", "minute": 23}],
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.get(f"/api/matches/{match_id}/live")
 
             if response.status_code == 200:
@@ -307,14 +321,15 @@ class TestPredictionWorkflowE2E:
             "match_events": [
                 {"minute": 23, "type": "goal", "team": "home"},
                 {"minute": 67, "type": "goal", "team": "away"},
-                {"minute": 89, "type": "goal", "team": "home"}
-            ]
+                {"minute": 89, "type": "goal", "team": "home"},
+            ],
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post(
-                f"/api/matches/{match_id}/finish",
-                json=final_score
+                f"/api/matches/{match_id}/finish", json=final_score
             )
 
             if response.status_code == 200:
@@ -333,23 +348,28 @@ class TestPredictionWorkflowE2E:
             "points_earned": {
                 "base_points": 10,
                 "confidence_bonus": 2.5,
-                "total": 12.5
+                "total": 12.5,
             },
             "accuracy_score": 1.0,
-            "evaluated_at": datetime.utcnow().isoformat()
+            "evaluated_at": datetime.utcnow().isoformat(),
         }
 
         # 模拟事件发布
-        with patch('src.domain.events.event_bus', mock_external_services["analytics_service"]):
-            with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.domain.events.event_bus", mock_external_services["analytics_service"]
+        ):
+            with patch(
+                "src.api.routes.predictions.PredictionService",
+                return_value=mock_prediction_service,
+            ):
                 response = await async_client.post(
                     f"/api/predictions/{prediction_id}/evaluate",
-                    json={"actual_home": 2, "actual_away": 1}
+                    json={"actual_home": 2, "actual_away": 1},
                 )
 
                 if response.status_code == 200:
                     evaluation = response.json()
-                    assert evaluation["is_correct_score"] == True
+                    assert evaluation["is_correct_score"]
                     assert evaluation["points_earned"]["total"] == 12.5
 
         # ================================
@@ -363,22 +383,19 @@ class TestPredictionWorkflowE2E:
             "total_points": 12.5,
             "weekly_points": 12.5,
             "monthly_points": 12.5,
-            "ranking": {
-                "overall": 1,
-                "weekly": 1,
-                "monthly": 1
-            },
+            "ranking": {"overall": 1, "weekly": 1, "monthly": 1},
             "accuracy_stats": {
                 "total_predictions": 1,
                 "correct_predictions": 1,
-                "accuracy_rate": 1.0
-            }
+                "accuracy_rate": 1.0,
+            },
         }
 
-        with patch('src.api.routes.scoring.ScoringService', return_value=mock_scoring_service):
+        with patch(
+            "src.api.routes.scoring.ScoringService", return_value=mock_scoring_service
+        ):
             response = await async_client.post(
-                f"/api/users/{user_id}/update-points",
-                headers=auth_headers
+                f"/api/users/{user_id}/update-points", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -397,13 +414,16 @@ class TestPredictionWorkflowE2E:
             "user_id": user_id,
             "type": "prediction_result",
             "status": "sent",
-            "sent_at": datetime.utcnow().isoformat()
+            "sent_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.notifications.NotificationService', return_value=mock_notification_service):
+        with patch(
+            "src.api.routes.notifications.NotificationService",
+            return_value=mock_notification_service,
+        ):
             response = await async_client.post(
                 f"/api/notifications/prediction-result/{prediction_id}",
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
@@ -433,7 +453,7 @@ class TestPredictionWorkflowE2E:
                     "points_earned": 12.5,
                     "is_correct": True,
                     "created_at": datetime.utcnow().isoformat(),
-                    "evaluated_at": datetime.utcnow().isoformat()
+                    "evaluated_at": datetime.utcnow().isoformat(),
                 }
             ],
             "summary": {
@@ -441,14 +461,16 @@ class TestPredictionWorkflowE2E:
                 "correct_predictions": 1,
                 "accuracy_rate": 1.0,
                 "total_points": 12.5,
-                "average_points_per_prediction": 12.5
-            }
+                "average_points_per_prediction": 12.5,
+            },
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.get(
-                f"/api/users/{user_id}/predictions/history",
-                headers=auth_headers
+                f"/api/users/{user_id}/predictions/history", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -458,8 +480,11 @@ class TestPredictionWorkflowE2E:
 
     @pytest.mark.asyncio
     async def test_multiple_predictions_workflow(
-        self, async_client: AsyncClient, sample_teams, test_user_data,
-        mock_external_services
+        self,
+        async_client: AsyncClient,
+        sample_teams,
+        test_user_data,
+        mock_external_services,
     ):
         """测试多个预测的工作流"""
         if not sample_teams or len(sample_teams) < 4:
@@ -483,7 +508,7 @@ class TestPredictionWorkflowE2E:
                 "away_team_id": away_team.id,
                 "match_date": (datetime.utcnow() + timedelta(days=i + 1)).isoformat(),
                 "venue": f"Stadium {i + 1}",
-                "status": "SCHEDULED"
+                "status": "SCHEDULED",
             }
 
             mock_match_service.create_match.return_value = {
@@ -493,7 +518,9 @@ class TestPredictionWorkflowE2E:
                 "away_team": {"name": away_team.name},
             }
 
-            with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+            with patch(
+                "src.api.routes.matches.MatchService", return_value=mock_match_service
+            ):
                 response = await async_client.post("/api/matches/", json=match_data)
                 if response.status_code == 200:
                     matches.append(response.json())
@@ -516,11 +543,12 @@ class TestPredictionWorkflowE2E:
                 "created_at": datetime.utcnow().isoformat(),
             }
 
-            with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+            with patch(
+                "src.api.routes.predictions.PredictionService",
+                return_value=mock_prediction_service,
+            ):
                 response = await async_client.post(
-                    "/api/predictions/",
-                    json=prediction_data,
-                    headers=auth_headers
+                    "/api/predictions/", json=prediction_data, headers=auth_headers
                 )
                 if response.status_code == 200:
                     predictions.append(response.json())
@@ -539,17 +567,29 @@ class TestPredictionWorkflowE2E:
                 "actual_away": evaluation_data["actual_away"],
                 "predicted_home": prediction["predicted_home"],
                 "predicted_away": prediction["predicted_away"],
-                "is_correct_score": evaluation_data["actual_home"] == prediction["predicted_home"] and
-                                  evaluation_data["actual_away"] == prediction["predicted_away"],
+                "is_correct_score": evaluation_data["actual_home"]
+                == prediction["predicted_home"]
+                and evaluation_data["actual_away"] == prediction["predicted_away"],
                 "is_correct_result": True,  # 简化逻辑
-                "points_earned": 10 if evaluation_data["actual_home"] == prediction["predicted_home"] else 3,
-                "accuracy_score": 1.0 if evaluation_data["actual_home"] == prediction["predicted_home"] else 0.7,
+                "points_earned": (
+                    10
+                    if evaluation_data["actual_home"] == prediction["predicted_home"]
+                    else 3
+                ),
+                "accuracy_score": (
+                    1.0
+                    if evaluation_data["actual_home"] == prediction["predicted_home"]
+                    else 0.7
+                ),
             }
 
-            with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+            with patch(
+                "src.api.routes.predictions.PredictionService",
+                return_value=mock_prediction_service,
+            ):
                 response = await async_client.post(
                     f"/api/predictions/{prediction['id']}/evaluate",
-                    json=evaluation_data
+                    json=evaluation_data,
                 )
                 if response.status_code == 200:
                     evaluation_results.append(response.json())
@@ -560,7 +600,9 @@ class TestPredictionWorkflowE2E:
 
         # 获取用户总体统计
         total_points = sum(r["points_earned"] for r in evaluation_results)
-        correct_predictions = sum(1 for r in evaluation_results if r["is_correct_score"])
+        correct_predictions = sum(
+            1 for r in evaluation_results if r["is_correct_score"]
+        )
 
         assert total_points > 0
         assert correct_predictions >= 0
@@ -591,10 +633,12 @@ class TestPredictionWorkflowE2E:
         mock_match_service.create_match.return_value = {
             "id": 1,
             **match_data,
-            "status": "SCHEDULED"
+            "status": "SCHEDULED",
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post("/api/matches/", json=match_data)
             match_id = 1 if response.status_code != 200 else response.json()["id"]
 
@@ -605,22 +649,22 @@ class TestPredictionWorkflowE2E:
                 "predicted": {"home": 2, "away": 1},
                 "actual": {"home": 2, "away": 1},
                 "expected_points": 10,
-                "expected_accuracy": 1.0
+                "expected_accuracy": 1.0,
             },
             {
                 "name": "Result Only Correct",
                 "predicted": {"home": 3, "away": 1},
                 "actual": {"home": 2, "away": 0},
                 "expected_points": 3,
-                "expected_accuracy": 0.7
+                "expected_accuracy": 0.7,
             },
             {
                 "name": "Incorrect Prediction",
                 "predicted": {"home": 1, "away": 2},
                 "actual": {"home": 2, "away": 1},
                 "expected_points": 0,
-                "expected_accuracy": 0.0
-            }
+                "expected_accuracy": 0.0,
+            },
         ]
 
         mock_prediction_service = AsyncMock()
@@ -642,13 +686,18 @@ class TestPredictionWorkflowE2E:
                 "created_at": datetime.utcnow().isoformat(),
             }
 
-            with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+            with patch(
+                "src.api.routes.predictions.PredictionService",
+                return_value=mock_prediction_service,
+            ):
                 response = await async_client.post(
-                    "/api/predictions/",
-                    json=prediction_data,
-                    headers=auth_headers
+                    "/api/predictions/", json=prediction_data, headers=auth_headers
                 )
-                prediction_id = len(prediction_scenarios) if response.status_code != 200 else response.json()["id"]
+                prediction_id = (
+                    len(prediction_scenarios)
+                    if response.status_code != 200
+                    else response.json()["id"]
+                )
 
             # 评估预测
             mock_prediction_service.evaluate_prediction.return_value = {
@@ -659,27 +708,44 @@ class TestPredictionWorkflowE2E:
                 "predicted_away": scenario["predicted"]["away"],
                 "is_correct_score": scenario["predicted"] == scenario["actual"],
                 "is_correct_result": (
-                    (scenario["predicted"]["home"] > scenario["predicted"]["away"] and
-                     scenario["actual"]["home"] > scenario["actual"]["away"]) or
-                    (scenario["predicted"]["home"] < scenario["predicted"]["away"] and
-                     scenario["actual"]["home"] < scenario["actual"]["away"]) or
-                    (scenario["predicted"]["home"] == scenario["predicted"]["away"] and
-                     scenario["actual"]["home"] == scenario["actual"]["away"])
+                    (
+                        scenario["predicted"]["home"] > scenario["predicted"]["away"]
+                        and scenario["actual"]["home"] > scenario["actual"]["away"]
+                    )
+                    or (
+                        scenario["predicted"]["home"] < scenario["predicted"]["away"]
+                        and scenario["actual"]["home"] < scenario["actual"]["away"]
+                    )
+                    or (
+                        scenario["predicted"]["home"] == scenario["predicted"]["away"]
+                        and scenario["actual"]["home"] == scenario["actual"]["away"]
+                    )
                 ),
                 "points_earned": scenario["expected_points"],
                 "accuracy_score": scenario["expected_accuracy"],
             }
 
-            with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+            with patch(
+                "src.api.routes.predictions.PredictionService",
+                return_value=mock_prediction_service,
+            ):
                 response = await async_client.post(
                     f"/api/predictions/{prediction_id}/evaluate",
-                    json={"actual_home": scenario["actual"]["home"], "actual_away": scenario["actual"]["away"]}
+                    json={
+                        "actual_home": scenario["actual"]["home"],
+                        "actual_away": scenario["actual"]["away"],
+                    },
                 )
 
                 if response.status_code == 200:
                     evaluation = response.json()
                     assert evaluation["points_earned"] == scenario["expected_points"]
-                    assert abs(evaluation["accuracy_score"] - scenario["expected_accuracy"]) < 0.01
+                    assert (
+                        abs(
+                            evaluation["accuracy_score"] - scenario["expected_accuracy"]
+                        )
+                        < 0.01
+                    )
 
     @pytest.mark.asyncio
     async def test_prediction_deadline_workflow(
@@ -696,10 +762,16 @@ class TestPredictionWorkflowE2E:
         # 创建即将开始的比赛
         match_data = {
             "home_team_id": sample_teams[0].id,
-            "away_team_id": sample_teams[1].id if len(sample_teams) > 1 else sample_teams[0].id,
-            "match_date": (datetime.utcnow() + timedelta(minutes=5)).isoformat(),  # 5分钟后开始
+            "away_team_id": (
+                sample_teams[1].id if len(sample_teams) > 1 else sample_teams[0].id
+            ),
+            "match_date": (
+                datetime.utcnow() + timedelta(minutes=5)
+            ).isoformat(),  # 5分钟后开始
             "venue": "Test Stadium",
-            "prediction_deadline": (datetime.utcnow() + timedelta(minutes=3)).isoformat(),  # 3分钟后截止
+            "prediction_deadline": (
+                datetime.utcnow() + timedelta(minutes=3)
+            ).isoformat(),  # 3分钟后截止
         }
 
         mock_match_service = AsyncMock()
@@ -707,10 +779,12 @@ class TestPredictionWorkflowE2E:
             "id": 1,
             **match_data,
             "status": "SCHEDULED",
-            "prediction_deadline": match_data["prediction_deadline"]
+            "prediction_deadline": match_data["prediction_deadline"],
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post("/api/matches/", json=match_data)
             match_id = 1 if response.status_code != 200 else response.json()["id"]
 
@@ -731,11 +805,12 @@ class TestPredictionWorkflowE2E:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post(
-                "/api/predictions/",
-                json=prediction_data,
-                headers=auth_headers
+                "/api/predictions/", json=prediction_data, headers=auth_headers
             )
 
             if response.status_code in [200, 201]:
@@ -749,7 +824,9 @@ class TestPredictionWorkflowE2E:
             "started_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post(f"/api/matches/{match_id}/start")
 
             # 尝试在比赛开始后创建预测（应该失败）
@@ -761,13 +838,16 @@ class TestPredictionWorkflowE2E:
             "confidence": 0.70,
         }
 
-        mock_prediction_service.create_prediction.side_effect = Exception("Match has already started - predictions closed")
+        mock_prediction_service.create_prediction.side_effect = Exception(
+            "Match has already started - predictions closed"
+        )
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post(
-                "/api/predictions/",
-                json=late_prediction_data,
-                headers=auth_headers
+                "/api/predictions/", json=late_prediction_data, headers=auth_headers
             )
 
             # 应该返回错误
@@ -776,8 +856,13 @@ class TestPredictionWorkflowE2E:
 
     @pytest.mark.asyncio
     async def test_prediction_with_cache_and_performance(
-        self, async_client: AsyncClient, sample_teams, test_user_data,
-        cache_test_data, mock_redis, performance_benchmarks
+        self,
+        async_client: AsyncClient,
+        sample_teams,
+        test_user_data,
+        cache_test_data,
+        mock_redis,
+        performance_benchmarks,
     ):
         """测试预测缓存的性能优化"""
         if not sample_teams:
@@ -791,22 +876,23 @@ class TestPredictionWorkflowE2E:
 
         # 测试缓存命中性能
         cache_key = f"user_predictions_{user_id}"
-        cached_predictions = json.dumps([
-            {
-                "id": 1,
-                "match_id": 1,
-                "predicted_home": 2,
-                "predicted_away": 1,
-                "status": "PENDING"
-            }
-        ])
+        cached_predictions = json.dumps(
+            [
+                {
+                    "id": 1,
+                    "match_id": 1,
+                    "predicted_home": 2,
+                    "predicted_away": 1,
+                    "status": "PENDING",
+                }
+            ]
+        )
 
         mock_redis.get.return_value = cached_predictions
 
         start_time = time.time()
         response = await async_client.get(
-            f"/api/users/{user_id}/predictions",
-            headers=auth_headers
+            f"/api/users/{user_id}/predictions", headers=auth_headers
         )
         cache_hit_time = time.time() - start_time
 
@@ -833,31 +919,37 @@ class TestPredictionWorkflowE2E:
         }
 
         start_time = time.time()
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post(
-                "/api/predictions/",
-                json=new_prediction_data,
-                headers=auth_headers
+                "/api/predictions/", json=new_prediction_data, headers=auth_headers
             )
         cache_write_time = time.time() - start_time
 
         # 验证缓存更新
         if response.status_code in [200, 201]:
-            assert cache_write_time < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            assert (
+                cache_write_time
+                < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            )
             # 验证缓存被更新（通过Redis调用）
-            if hasattr(mock_redis, 'set') and mock_redis.set.called:
+            if hasattr(mock_redis, "set") and mock_redis.set.called:
                 pass
 
         # 测试批量操作性能
         bulk_predictions = []
         for i in range(10):
-            bulk_predictions.append({
-                "user_id": user_id,
-                "match_id": i + 1,
-                "predicted_home": (i % 3) + 1,
-                "predicted_away": ((i + 1) % 3) + 1,
-                "confidence": 0.6 + (i * 0.03),
-            })
+            bulk_predictions.append(
+                {
+                    "user_id": user_id,
+                    "match_id": i + 1,
+                    "predicted_home": (i % 3) + 1,
+                    "predicted_away": ((i + 1) % 3) + 1,
+                    "confidence": 0.6 + (i * 0.03),
+                }
+            )
 
         start_time = time.time()
         mock_prediction_service.create_bulk_predictions.return_value = {
@@ -865,21 +957,27 @@ class TestPredictionWorkflowE2E:
             "predictions": [
                 {"id": i + 3, **pred, "status": "PENDING"}
                 for i, pred in enumerate(bulk_predictions)
-            ]
+            ],
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post(
                 "/api/predictions/bulk",
                 json={"predictions": bulk_predictions},
-                headers=auth_headers
+                headers=auth_headers,
             )
         bulk_time = time.time() - start_time
 
         # 验证批量性能
         if response.status_code == 200:
             avg_time_per_prediction = bulk_time / len(bulk_predictions)
-            assert avg_time_per_prediction < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            assert (
+                avg_time_per_prediction
+                < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            )
 
 
 class TestPredictionErrorHandlingE2E:
@@ -914,21 +1012,22 @@ class TestPredictionErrorHandlingE2E:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post(
-                "/api/predictions/",
-                json=prediction_data,
-                headers=auth_headers
+                "/api/predictions/", json=prediction_data, headers=auth_headers
             )
 
             if response.status_code in [200, 201]:
                 # 尝试为同一场比赛创建第二个预测（应该失败）
-                mock_prediction_service.create_prediction.side_effect = Exception("User has already predicted this match")
+                mock_prediction_service.create_prediction.side_effect = Exception(
+                    "User has already predicted this match"
+                )
 
                 response = await async_client.post(
-                    "/api/predictions/",
-                    json=prediction_data,
-                    headers=auth_headers
+                    "/api/predictions/", json=prediction_data, headers=auth_headers
                 )
 
                 # 应该返回冲突错误
@@ -954,13 +1053,16 @@ class TestPredictionErrorHandlingE2E:
         }
 
         mock_prediction_service = AsyncMock()
-        mock_prediction_service.create_prediction.side_effect = Exception("Match not found")
+        mock_prediction_service.create_prediction.side_effect = Exception(
+            "Match not found"
+        )
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post(
-                "/api/predictions/",
-                json=invalid_prediction_data,
-                headers=auth_headers
+                "/api/predictions/", json=invalid_prediction_data, headers=auth_headers
             )
 
             # 应该返回404错误
@@ -984,12 +1086,16 @@ class TestPredictionErrorHandlingE2E:
         }
 
         mock_prediction_service = AsyncMock()
-        mock_prediction_service.evaluate_prediction.side_effect = Exception("Prediction has already been evaluated")
+        mock_prediction_service.evaluate_prediction.side_effect = Exception(
+            "Prediction has already been evaluated"
+        )
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post(
-                f"/api/predictions/{prediction.id}/evaluate",
-                json=evaluation_data
+                f"/api/predictions/{prediction.id}/evaluate", json=evaluation_data
             )
 
             # 应该返回错误
@@ -998,18 +1104,26 @@ class TestPredictionErrorHandlingE2E:
 
 
 # 测试辅助函数
-def create_test_match_data(home_team_id: int, away_team_id: int, days_ahead: int = 1) -> dict:
+def create_test_match_data(
+    home_team_id: int, away_team_id: int, days_ahead: int = 1
+) -> dict:
     """创建测试比赛数据的辅助函数"""
     return {
         "home_team_id": home_team_id,
         "away_team_id": away_team_id,
         "match_date": (datetime.utcnow() + timedelta(days=days_ahead)).isoformat(),
         "venue": f"Test Stadium {days_ahead}",
-        "status": "SCHEDULED"
+        "status": "SCHEDULED",
     }
 
 
-def create_test_prediction_data(user_id: int, match_id: int, home_score: int, away_score: int, confidence: float = 0.8) -> dict:
+def create_test_prediction_data(
+    user_id: int,
+    match_id: int,
+    home_score: int,
+    away_score: int,
+    confidence: float = 0.8,
+) -> dict:
     """创建测试预测数据的辅助函数"""
     return {
         "user_id": user_id,
@@ -1020,10 +1134,14 @@ def create_test_prediction_data(user_id: int, match_id: int, home_score: int, aw
     }
 
 
-async def verify_workflow_completion(async_client: AsyncClient, user_id: int, auth_headers: dict):
+async def verify_workflow_completion(
+    async_client: AsyncClient, user_id: int, auth_headers: dict
+):
     """验证工作流完成的辅助函数"""
     # 检查用户统计
-    response = await async_client.get(f"/api/users/{user_id}/statistics", headers=auth_headers)
+    response = await async_client.get(
+        f"/api/users/{user_id}/statistics", headers=auth_headers
+    )
 
     if response.status_code == 200:
         stats = response.json()

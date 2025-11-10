@@ -146,10 +146,10 @@ async def add_match_to_monitoring(
             "added_at": datetime.now().isoformat(),
         }
 
-    except ValueError:
+    except ValueError as ve:
         raise HTTPException(
             status_code=400, detail=f"Invalid status: {request.status}"
-        )  # TODO: B904 exception chaining
+        ) from ve
     except Exception as e:
         logger.error(f"Failed to add match to monitoring: {e}")
         raise HTTPException(
@@ -283,10 +283,10 @@ async def update_match_status(
             "match_info": match_info,
         }
 
-    except ValueError:
+    except ValueError as ve:
         raise HTTPException(
             status_code=400, detail=f"Invalid status: {request.status}"
-        )  # TODO: B904 exception chaining
+        ) from ve
     except Exception as e:
         logger.error(f"Failed to update match status: {e}")
         raise HTTPException(

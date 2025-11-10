@@ -1,7 +1,7 @@
 # 简化版 alert_manager 模块
 
 
-class Alert_Manager:
+class AlertManager:
     def __init__(self):
         pass
 

@@ -7,11 +7,9 @@ API and Services Module Integration Tests
 
 import json
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 # 标记测试
@@ -50,8 +48,12 @@ class TestPredictionAPIServiceIntegration:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_service):
-            response = await async_client.post("/api/predictions/", json=prediction_data)
+        with patch(
+            "src.api.routes.predictions.PredictionService", return_value=mock_service
+        ):
+            response = await async_client.post(
+                "/api/predictions/", json=prediction_data
+            )
 
             if response.status_code == 200:
                 result = response.json()
@@ -83,8 +85,12 @@ class TestPredictionAPIServiceIntegration:
         mock_service = AsyncMock()
         mock_service.create_prediction.side_effect = Exception("Service error")
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_service):
-            response = await async_client.post("/api/predictions/", json=prediction_data)
+        with patch(
+            "src.api.routes.predictions.PredictionService", return_value=mock_service
+        ):
+            response = await async_client.post(
+                "/api/predictions/", json=prediction_data
+            )
 
             # 应该返回错误响应
             if response.status_code != 404:  # 如果端点存在
@@ -101,9 +107,9 @@ class TestPredictionAPIServiceIntegration:
         # 测试获取预测缓存
         cache_key = cache_test_data["prediction_cache_key"]
 
-        with patch('src.api.routes.predictions.redis_client', mock_redis):
+        with patch("src.api.routes.predictions.redis_client", mock_redis):
             # 首次请求（缓存未命中）
-            response = await async_client.get(f"/api/predictions/cache/{cache_key}")
+            await async_client.get(f"/api/predictions/cache/{cache_key}")
 
             # 第二次请求（缓存命中）
             if mock_redis.get.called:
@@ -134,13 +140,14 @@ class TestPredictionAPIServiceIntegration:
                     "confidence": pred["confidence"],
                 }
                 for i, pred in enumerate(bulk_predictions)
-            ]
+            ],
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService", return_value=mock_service
+        ):
             response = await async_client.post(
-                "/api/predictions/bulk",
-                json={"predictions": bulk_predictions}
+                "/api/predictions/bulk", json={"predictions": bulk_predictions}
             )
 
             if response.status_code == 200:
@@ -187,7 +194,7 @@ class TestMatchAPIServiceIntegration:
             "away_score": 0,
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_service):
+        with patch("src.api.routes.matches.MatchService", return_value=mock_service):
             response = await async_client.post("/api/matches/", json=match_data)
 
             if response.status_code == 200:
@@ -216,7 +223,7 @@ class TestMatchAPIServiceIntegration:
             "started_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_service):
+        with patch("src.api.routes.matches.MatchService", return_value=mock_service):
             response = await async_client.post(f"/api/matches/{sample_match.id}/start")
 
             if response.status_code == 200:
@@ -253,7 +260,7 @@ class TestMatchAPIServiceIntegration:
             "ranking": 3,
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_service):
+        with patch("src.api.routes.matches.MatchService", return_value=mock_service):
             response = await async_client.get(f"/api/teams/{team.id}/statistics")
 
             if response.status_code == 200:
@@ -295,8 +302,10 @@ class TestUserAPIServiceIntegration:
             "created_at": user_data["created_at"].isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_service):
-            response = await async_client.post("/api/users/register", json=registration_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_service):
+            response = await async_client.post(
+                "/api/users/register", json=registration_data
+            )
 
             if response.status_code in [200, 201]:
                 result = response.json()
@@ -330,10 +339,10 @@ class TestUserAPIServiceIntegration:
                 "username": user_data["username"],
                 "email": user_data["email"],
                 "is_active": user_data["is_active"],
-            }
+            },
         }
 
-        with patch('src.api.routes.auth.UserService', return_value=mock_service):
+        with patch("src.api.routes.auth.UserService", return_value=mock_service):
             response = await async_client.post("/api/auth/login", json=login_data)
 
             if response.status_code == 200:
@@ -362,20 +371,21 @@ class TestUserAPIServiceIntegration:
             {
                 "id": pred.id,
                 "match_id": pred.match_id,
-                "predicted_home": getattr(pred, 'predicted_home', 2),
-                "predicted_away": getattr(pred, 'predicted_away', 1),
-                "confidence": getattr(pred, 'confidence', 0.85),
+                "predicted_home": getattr(pred, "predicted_home", 2),
+                "predicted_away": getattr(pred, "predicted_away", 1),
+                "confidence": getattr(pred, "confidence", 0.85),
                 "status": pred.status,
-                "created_at": getattr(pred, 'created_at', datetime.utcnow()).isoformat(),
+                "created_at": getattr(
+                    pred, "created_at", datetime.utcnow()
+                ).isoformat(),
             }
             for pred in sample_predictions
             if pred.user_id == user_id
         ]
 
-        with patch('src.api.routes.users.UserService', return_value=mock_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_service):
             response = await async_client.get(
-                f"/api/users/{user_id}/predictions",
-                headers=auth_headers
+                f"/api/users/{user_id}/predictions", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -418,10 +428,11 @@ class TestAnalyticsAPIServiceIntegration:
             ],
         }
 
-        with patch('src.api.routes.analytics.AnalyticsService', return_value=mock_service):
+        with patch(
+            "src.api.routes.analytics.AnalyticsService", return_value=mock_service
+        ):
             response = await async_client.get(
-                "/api/analytics/predictions",
-                headers=auth_headers
+                "/api/analytics/predictions", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -461,10 +472,11 @@ class TestAnalyticsAPIServiceIntegration:
             ],
         }
 
-        with patch('src.api.routes.analytics.AnalyticsService', return_value=mock_service):
+        with patch(
+            "src.api.routes.analytics.AnalyticsService", return_value=mock_service
+        ):
             response = await async_client.get(
-                f"/api/analytics/users/{user_data['id']}",
-                headers=auth_headers
+                f"/api/analytics/users/{user_data['id']}", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -506,8 +518,13 @@ class TestNotificationAPIServiceIntegration:
             "sent_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.notifications.NotificationService', return_value=mock_service):
-            response = await async_client.post("/api/notifications/", json=notification_data)
+        with patch(
+            "src.api.routes.notifications.NotificationService",
+            return_value=mock_service,
+        ):
+            response = await async_client.post(
+                "/api/notifications/", json=notification_data
+            )
 
             if response.status_code == 200:
                 result = response.json()
@@ -534,8 +551,8 @@ class TestCacheIntegration:
         # 设置Redis模拟返回缓存值
         mock_redis.get.return_value = cached_value
 
-        with patch('src.api.middleware.cache.redis_client', mock_redis):
-            response = await async_client.get(f"/api/cache/{cache_key}")
+        with patch("src.api.middleware.cache.redis_client", mock_redis):
+            await async_client.get(f"/api/cache/{cache_key}")
 
             # 验证缓存读取
             mock_redis.get.assert_called_with(cache_key)
@@ -547,8 +564,8 @@ class TestCacheIntegration:
         """测试API缓存失效服务"""
         cache_key = cache_test_data["match_stats_key"]
 
-        with patch('src.api.middleware.cache.redis_client', mock_redis):
-            response = await async_client.delete(f"/api/cache/{cache_key}")
+        with patch("src.api.middleware.cache.redis_client", mock_redis):
+            await async_client.delete(f"/api/cache/{cache_key}")
 
             # 验证缓存删除
             mock_redis.delete.assert_called_with(cache_key)
@@ -558,15 +575,17 @@ class TestAPIErrorHandling:
     """API错误处理测试"""
 
     @pytest.mark.asyncio
-    async def test_service_unavailable_handling(
-        self, async_client: AsyncClient
-    ):
+    async def test_service_unavailable_handling(self, async_client: AsyncClient):
         """测试服务不可用处理"""
         # 模拟服务不可用
         mock_service = AsyncMock()
-        mock_service.get_predictions.side_effect = ConnectionError("Service unavailable")
+        mock_service.get_predictions.side_effect = ConnectionError(
+            "Service unavailable"
+        )
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService", return_value=mock_service
+        ):
             response = await async_client.get("/api/predictions/")
 
             # 应该返回503或适当的错误码
@@ -574,15 +593,17 @@ class TestAPIErrorHandling:
                 assert response.status_code >= 500
 
     @pytest.mark.asyncio
-    async def test_service_timeout_handling(
-        self, async_client: AsyncClient
-    ):
+    async def test_service_timeout_handling(self, async_client: AsyncClient):
         """测试服务超时处理"""
         # 模拟服务超时
         mock_service = AsyncMock()
-        mock_service.get_predictions.side_effect = asyncio.TimeoutError("Service timeout")
+        mock_service.get_predictions.side_effect = asyncio.TimeoutError(
+            "Service timeout"
+        )
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService", return_value=mock_service
+        ):
             response = await async_client.get("/api/predictions/")
 
             # 应该返回超时错误
@@ -590,9 +611,7 @@ class TestAPIErrorHandling:
                 assert response.status_code in [408, 504]
 
     @pytest.mark.asyncio
-    async def test_invalid_data_handling(
-        self, async_client: AsyncClient
-    ):
+    async def test_invalid_data_handling(self, async_client: AsyncClient):
         """测试无效数据处理"""
         invalid_data = {
             "user_id": "invalid",  # 应该是数字
@@ -621,9 +640,7 @@ class TestAPIPerformanceIntegration:
         start_time = time.time()
 
         # 发送多个并发请求
-        tasks = [
-            async_client.get("/api/health") for _ in range(20)
-        ]
+        tasks = [async_client.get("/api/health") for _ in range(20)]
 
         responses = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -632,32 +649,32 @@ class TestAPIPerformanceIntegration:
 
         # 验证并发性能
         avg_response_time = total_time / len(tasks)
-        assert avg_response_time < performance_benchmarks["response_time_limits"]["health_check"]
+        assert (
+            avg_response_time
+            < performance_benchmarks["response_time_limits"]["health_check"]
+        )
 
         # 验证大部分请求成功
-        successful_responses = [r for r in responses if not isinstance(r, Exception) and r.status_code == 200]
+        successful_responses = [
+            r
+            for r in responses
+            if not isinstance(r, Exception) and r.status_code == 200
+        ]
         success_rate = len(successful_responses) / len(tasks)
         assert success_rate > 0.8
 
     @pytest.mark.asyncio
-    async def test_request_rate_limiting(
-        self, async_client: AsyncClient
-    ):
+    async def test_request_rate_limiting(self, async_client: AsyncClient):
         """测试请求速率限制"""
         import asyncio
 
         # 快速发送多个请求
-        tasks = [
-            async_client.get("/api/predictions/") for _ in range(10)
-        ]
+        tasks = [async_client.get("/api/predictions/") for _ in range(10)]
 
         responses = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 检查是否有速率限制响应
-        rate_limited_responses = [
-            r for r in responses
-            if not isinstance(r, Exception) and r.status_code == 429
-        ]
+        [r for r in responses if not isinstance(r, Exception) and r.status_code == 429]
 
         # 如果实现了速率限制，应该有一些请求被限制
         # 这个测试是可选的，取决于是否实现了速率限制

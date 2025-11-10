@@ -1,7 +1,7 @@
 # 简化版 job_manager 模块
 
 
-class Job_Manager:
+class JobManager:
     def __init__(self):
         pass
 

@@ -28,8 +28,7 @@ try:
     )
 
     IMPORTS_AVAILABLE = True
-except ImportError as e:
-    print(f"Import error: {e}")  # TODO: Add logger import if needed
+except ImportError:
     IMPORTS_AVAILABLE = False
 
     # 如果导入失败，创建Mock类避免NameError

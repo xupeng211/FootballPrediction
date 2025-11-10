@@ -5,14 +5,10 @@ User Management End-to-End Tests
 完整测试用户管理工作流，从注册到认证、资料管理、权限控制等
 """
 
-import asyncio
-import json
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 # 标记测试
@@ -42,7 +38,7 @@ class TestUserRegistrationE2E:
             "date_of_birth": "1990-01-01",
             "country": "United Kingdom",
             "accept_terms": True,
-            "marketing_consent": False
+            "marketing_consent": False,
         }
 
         # 模拟用户服务
@@ -56,17 +52,19 @@ class TestUserRegistrationE2E:
             "is_active": True,
             "is_verified": False,
             "created_at": user_data["created_at"].isoformat(),
-            "verification_required": True
+            "verification_required": True,
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/register", json=registration_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/register", json=registration_data
+            )
 
             assert response.status_code in [200, 201]
             registered_user = response.json()
             assert registered_user["username"] == user_data["username"]
             assert registered_user["email"] == user_data["email"]
-            assert registered_user["is_verified"] == False
+            assert not registered_user["is_verified"]
             user_id = registered_user["id"]
 
         # ================================
@@ -78,13 +76,13 @@ class TestUserRegistrationE2E:
         mock_email_service.send_verification_email.return_value = {
             "message": "Verification email sent",
             "verification_token": "verify_token_12345",
-            "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+            "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat(),
         }
 
-        with patch('src.services.email.EmailService', return_value=mock_email_service):
+        with patch("src.services.email.EmailService", return_value=mock_email_service):
             response = await async_client.post(
                 f"/api/users/{user_id}/send-verification",
-                json={"email": user_data["email"]}
+                json={"email": user_data["email"]},
             )
 
             if response.status_code == 200:
@@ -92,24 +90,23 @@ class TestUserRegistrationE2E:
                 assert "verification_token" in email_result
 
         # 验证邮箱
-        verification_data = {
-            "token": "verify_token_12345",
-            "email": user_data["email"]
-        }
+        verification_data = {"token": "verify_token_12345", "email": user_data["email"]}
 
         mock_user_service.verify_email.return_value = {
             "user_id": user_id,
             "is_verified": True,
             "verified_at": datetime.utcnow().isoformat(),
-            "message": "Email verified successfully"
+            "message": "Email verified successfully",
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/verify-email", json=verification_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/verify-email", json=verification_data
+            )
 
             assert response.status_code == 200
             verification_result = response.json()
-            assert verification_result["is_verified"] == True
+            assert verification_result["is_verified"]
 
         # ================================
         # 第三阶段: 完善用户资料
@@ -125,16 +122,13 @@ class TestUserRegistrationE2E:
             "phone_number": "+44 20 7123 4567",
             "location": "London, UK",
             "website": "https://johndoe.com",
-            "social_links": {
-                "twitter": "@johndoe",
-                "instagram": "johndoe_football"
-            },
+            "social_links": {"twitter": "@johndoe", "instagram": "johndoe_football"},
             "preferences": {
                 "language": "en",
                 "timezone": "Europe/London",
                 "date_format": "DD/MM/YYYY",
-                "time_format": "24h"
-            }
+                "time_format": "24h",
+            },
         }
 
         mock_user_service.update_user_profile.return_value = {
@@ -143,21 +137,21 @@ class TestUserRegistrationE2E:
             "email": user_data["email"],
             "is_verified": True,
             "profile": profile_data,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat(),
         }
 
         auth_headers = {"Authorization": "Bearer test_jwt_token"}
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.put(
-                f"/api/users/{user_id}/profile",
-                json=profile_data,
-                headers=auth_headers
+                f"/api/users/{user_id}/profile", json=profile_data, headers=auth_headers
             )
 
             if response.status_code == 200:
                 updated_profile = response.json()
-                assert updated_profile["profile"]["favorite_team"] == "Manchester United"
+                assert (
+                    updated_profile["profile"]["favorite_team"] == "Manchester United"
+                )
 
         # ================================
         # 第四阶段: 设置通知偏好
@@ -169,40 +163,42 @@ class TestUserRegistrationE2E:
                 "prediction_results": True,
                 "weekly_summary": True,
                 "special_offers": False,
-                "system_updates": True
+                "system_updates": True,
             },
             "push_notifications": {
                 "match_start": True,
                 "final_results": True,
-                "leaderboard_changes": True
+                "leaderboard_changes": True,
             },
             "sms_notifications": {
                 "important_updates": False,
-                "high_stakes_predictions": False
+                "high_stakes_predictions": False,
             },
             "frequency": {
                 "daily_digest": False,
                 "weekly_digest": True,
-                "monthly_summary": True
-            }
+                "monthly_summary": True,
+            },
         }
 
         mock_user_service.update_notification_preferences.return_value = {
             "user_id": user_id,
             "preferences": notification_preferences,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.put(
                 f"/api/users/{user_id}/notification-preferences",
                 json=notification_preferences,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
                 preferences_result = response.json()
-                assert preferences_result["preferences"]["email_notifications"]["match_reminders"] == True
+                assert preferences_result["preferences"]["email_notifications"][
+                    "match_reminders"
+                ]
 
     @pytest.mark.asyncio
     async def test_registration_validation_errors(
@@ -216,22 +212,22 @@ class TestUserRegistrationE2E:
                 "email": "invalid-email",  # 无效邮箱
                 "password": "123",  # 密码太短
                 "confirm_password": "456",  # 密码不匹配
-                "accept_terms": False  # 未接受条款
+                "accept_terms": False,  # 未接受条款
             },
             {
                 "username": "ab",  # 用户名太短
                 "email": "test@example.com",
                 "password": "password",  # 弱密码
                 "confirm_password": "password",
-                "accept_terms": True
+                "accept_terms": True,
             },
             {
                 "username": "user_that_is_way_too_long_for_system_validation",
                 "email": "test@example.com",
                 "password": "SecurePassword123!",
                 "confirm_password": "SecurePassword123!",
-                "accept_terms": True
-            }
+                "accept_terms": True,
+            },
         ]
 
         for invalid_data in invalid_registrations:
@@ -252,7 +248,7 @@ class TestUserRegistrationE2E:
             "email": user_data["email"],
             "password": "SecurePassword123!",
             "confirm_password": "SecurePassword123!",
-            "accept_terms": True
+            "accept_terms": True,
         }
 
         # 第一次注册应该成功（模拟）
@@ -261,18 +257,24 @@ class TestUserRegistrationE2E:
             "id": user_data["id"],
             **registration_data,
             "is_active": True,
-            "is_verified": False
+            "is_verified": False,
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/register", json=registration_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/register", json=registration_data
+            )
             # 第一次成功
 
         # 第二次使用相同用户名应该失败
-        mock_user_service.register_user.side_effect = Exception("Username already exists")
+        mock_user_service.register_user.side_effect = Exception(
+            "Username already exists"
+        )
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/register", json=registration_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/register", json=registration_data
+            )
 
             if response.status_code != 404:
                 assert response.status_code in [409, 400]
@@ -281,10 +283,14 @@ class TestUserRegistrationE2E:
         duplicate_email_data = registration_data.copy()
         duplicate_email_data["username"] = "different_username"
 
-        mock_user_service.register_user.side_effect = Exception("Email already registered")
+        mock_user_service.register_user.side_effect = Exception(
+            "Email already registered"
+        )
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/register", json=duplicate_email_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/register", json=duplicate_email_data
+            )
 
             if response.status_code != 404:
                 assert response.status_code in [409, 400]
@@ -307,7 +313,7 @@ class TestUserAuthenticationE2E:
         login_data = {
             "username": user_data["username"],
             "password": "SecurePassword123!",
-            "remember_me": False
+            "remember_me": False,
         }
 
         mock_auth_service = AsyncMock()
@@ -322,11 +328,11 @@ class TestUserAuthenticationE2E:
                 "email": user_data["email"],
                 "is_active": True,
                 "is_verified": True,
-                "role": "user"
-            }
+                "role": "user",
+            },
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.post("/api/auth/login", json=login_data)
 
             assert response.status_code == 200
@@ -347,31 +353,29 @@ class TestUserAuthenticationE2E:
             "valid": True,
             "user_id": user_data["id"],
             "username": user_data["username"],
-            "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.get("/api/auth/verify", headers=auth_headers)
 
             if response.status_code == 200:
                 verification_result = response.json()
-                assert verification_result["valid"] == True
+                assert verification_result["valid"]
 
         # ================================
         # 第三阶段: 刷新token
         # ================================
 
-        refresh_data = {
-            "refresh_token": refresh_token
-        }
+        refresh_data = {"refresh_token": refresh_token}
 
         mock_auth_service.refresh_token.return_value = {
             "access_token": "new_jwt_access_token_12345",
             "refresh_token": "new_jwt_refresh_token_67890",
-            "expires_in": 3600
+            "expires_in": 3600,
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.post("/api/auth/refresh", json=refresh_data)
 
             if response.status_code == 200:
@@ -386,10 +390,10 @@ class TestUserAuthenticationE2E:
 
         mock_auth_service.logout_user.return_value = {
             "message": "Logged out successfully",
-            "revoked_tokens": [access_token, refresh_token]
+            "revoked_tokens": [access_token, refresh_token],
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.post("/api/auth/logout", headers=auth_headers)
 
             if response.status_code == 200:
@@ -402,10 +406,10 @@ class TestUserAuthenticationE2E:
 
         mock_auth_service.verify_token.return_value = {
             "valid": False,
-            "reason": "Token has been revoked"
+            "reason": "Token has been revoked",
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.get("/api/auth/verify", headers=auth_headers)
 
             if response.status_code != 404:
@@ -422,19 +426,19 @@ class TestUserAuthenticationE2E:
         # 第一阶段: 请求密码重置
         # ================================
 
-        reset_request_data = {
-            "email": user_data["email"]
-        }
+        reset_request_data = {"email": user_data["email"]}
 
         mock_user_service = AsyncMock()
         mock_user_service.initiate_password_reset.return_value = {
             "message": "Password reset email sent",
             "reset_token": "reset_token_abcdef123456",
-            "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/reset-password", json=reset_request_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/reset-password", json=reset_request_data
+            )
 
             if response.status_code == 200:
                 reset_request_result = response.json()
@@ -444,26 +448,23 @@ class TestUserAuthenticationE2E:
         # 第二阶段: 验证重置token
         # ================================
 
-        token_verification_data = {
-            "token": "reset_token_abcdef123456"
-        }
+        token_verification_data = {"token": "reset_token_abcdef123456"}
 
         mock_user_service.verify_reset_token.return_value = {
             "valid": True,
             "user_id": user_data["id"],
             "email": user_data["email"],
-            "expires_at": (datetime.utcnow() + timedelta(minutes=59)).isoformat()
+            "expires_at": (datetime.utcnow() + timedelta(minutes=59)).isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
-                "/api/users/verify-reset-token",
-                json=token_verification_data
+                "/api/users/verify-reset-token", json=token_verification_data
             )
 
             if response.status_code == 200:
                 token_result = response.json()
-                assert token_result["valid"] == True
+                assert token_result["valid"]
 
         # ================================
         # 第三阶段: 确认密码重置
@@ -472,19 +473,18 @@ class TestUserAuthenticationE2E:
         password_reset_data = {
             "token": "reset_token_abcdef123456",
             "new_password": "NewSecurePassword456!",
-            "confirm_password": "NewSecurePassword456!"
+            "confirm_password": "NewSecurePassword456!",
         }
 
         mock_user_service.confirm_password_reset.return_value = {
             "message": "Password reset successful",
             "user_id": user_data["id"],
-            "reset_at": datetime.utcnow().isoformat()
+            "reset_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
-                "/api/users/confirm-password-reset",
-                json=password_reset_data
+                "/api/users/confirm-password-reset", json=password_reset_data
             )
 
             if response.status_code == 200:
@@ -497,7 +497,7 @@ class TestUserAuthenticationE2E:
 
         login_with_new_password = {
             "username": user_data["username"],
-            "password": "NewSecurePassword456!"
+            "password": "NewSecurePassword456!",
         }
 
         mock_auth_service = AsyncMock()
@@ -507,12 +507,14 @@ class TestUserAuthenticationE2E:
             "user": {
                 "id": user_data["id"],
                 "username": user_data["username"],
-                "email": user_data["email"]
-            }
+                "email": user_data["email"],
+            },
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
-            response = await async_client.post("/api/auth/login", json=login_with_new_password)
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
+            response = await async_client.post(
+                "/api/auth/login", json=login_with_new_password
+            )
 
             if response.status_code == 200:
                 login_result = response.json()
@@ -531,24 +533,30 @@ class TestUserAuthenticationE2E:
 
         login_data = {
             "username": user_data["username"],
-            "password": "WrongPassword123!"
+            "password": "WrongPassword123!",
         }
 
         mock_auth_service = AsyncMock()
         # 模拟多次失败登录
-        for attempt in range(5):
-            mock_auth_service.authenticate_user.side_effect = Exception("Invalid credentials")
+        for _attempt in range(5):
+            mock_auth_service.authenticate_user.side_effect = Exception(
+                "Invalid credentials"
+            )
 
-            with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+            with patch(
+                "src.api.routes.auth.AuthService", return_value=mock_auth_service
+            ):
                 response = await async_client.post("/api/auth/login", json=login_data)
 
                 if response.status_code != 404:
                     assert response.status_code in [401, 429]
 
         # 第6次尝试应该触发账户锁定
-        mock_auth_service.authenticate_user.side_effect = Exception("Account locked due to too many failed attempts")
+        mock_auth_service.authenticate_user.side_effect = Exception(
+            "Account locked due to too many failed attempts"
+        )
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.post("/api/auth/login", json=login_data)
 
             if response.status_code != 404:
@@ -566,21 +574,22 @@ class TestUserAuthenticationE2E:
                     "ip_address": "192.168.1.100",
                     "user_agent": "TestClient/1.0",
                     "success": False,
-                    "reason": "Invalid password"
+                    "reason": "Invalid password",
                 }
-            ] * 5,
+            ]
+            * 5,
             "is_locked": True,
-            "lock_expires_at": (datetime.utcnow() + timedelta(minutes=30)).isoformat()
+            "lock_expires_at": (datetime.utcnow() + timedelta(minutes=30)).isoformat(),
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.get(
                 f"/api/users/{user_data['id']}/login-attempts"
             )
 
             if response.status_code == 200:
                 attempts_result = response.json()
-                assert attempts_result["is_locked"] == True
+                assert attempts_result["is_locked"]
                 assert len(attempts_result["attempts"]) == 5
 
         # ================================
@@ -589,7 +598,7 @@ class TestUserAuthenticationE2E:
 
         unlock_data = {
             "user_id": user_data["id"],
-            "unlock_reason": "User requested unlock"
+            "unlock_reason": "User requested unlock",
         }
 
         mock_user_service = AsyncMock()
@@ -597,15 +606,17 @@ class TestUserAuthenticationE2E:
             "user_id": user_data["id"],
             "unlocked": True,
             "unlocked_at": datetime.utcnow().isoformat(),
-            "message": "Account unlocked successfully"
+            "message": "Account unlocked successfully",
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/unlock-account", json=unlock_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/unlock-account", json=unlock_data
+            )
 
             if response.status_code == 200:
                 unlock_result = response.json()
-                assert unlock_result["unlocked"] == True
+                assert unlock_result["unlocked"]
 
 
 class TestUserProfileManagementE2E:
@@ -641,14 +652,13 @@ class TestUserProfileManagementE2E:
                 "accuracy_rate": 0.68,
                 "total_points": 1250,
                 "current_ranking": 15,
-                "best_streak": 8
-            }
+                "best_streak": 8,
+            },
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.get(
-                f"/api/users/{user_data['id']}/profile",
-                headers=auth_headers
+                f"/api/users/{user_data['id']}/profile", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -665,7 +675,7 @@ class TestUserProfileManagementE2E:
             "last_name": "Smith",
             "bio": "Passionate football fan and prediction expert with 5+ years experience",
             "favorite_team": "Liverpool",
-            "phone_number": "+44 20 7123 4567"
+            "phone_number": "+44 20 7123 4567",
         }
 
         mock_user_service.update_basic_info.return_value = {
@@ -673,14 +683,14 @@ class TestUserProfileManagementE2E:
             "username": user_data["username"],
             "email": user_data["email"],
             **basic_update_data,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.put(
                 f"/api/users/{user_data['id']}/basic-info",
                 json=basic_update_data,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
@@ -696,20 +706,20 @@ class TestUserProfileManagementE2E:
         avatar_data = {
             "file": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...",
             "filename": "new_avatar.jpg",
-            "content_type": "image/jpeg"
+            "content_type": "image/jpeg",
         }
 
         mock_user_service.upload_avatar.return_value = {
             "avatar_url": "https://cdn.example.com/avatars/new_avatar.jpg",
             "thumbnail_url": "https://cdn.example.com/avatars/thumbnails/new_avatar_thumb.jpg",
-            "uploaded_at": datetime.utcnow().isoformat()
+            "uploaded_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
                 f"/api/users/{user_data['id']}/avatar",
                 json=avatar_data,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
@@ -725,25 +735,28 @@ class TestUserProfileManagementE2E:
             "instagram": "https://instagram.com/johnsmith_football",
             "facebook": "https://facebook.com/johnsmith",
             "youtube": "https://youtube.com/c/johnsmithpredictions",
-            "website": "https://johnsmithpredictions.com"
+            "website": "https://johnsmithpredictions.com",
         }
 
         mock_user_service.update_social_links.return_value = {
             "user_id": user_data["id"],
             "social_links": social_links_data,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.put(
                 f"/api/users/{user_data['id']}/social-links",
                 json=social_links_data,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
                 social_result = response.json()
-                assert social_result["social_links"]["twitter"] == "https://twitter.com/johnsmith"
+                assert (
+                    social_result["social_links"]["twitter"]
+                    == "https://twitter.com/johnsmith"
+                )
 
     @pytest.mark.asyncio
     async def test_user_preferences_management(
@@ -764,20 +777,20 @@ class TestUserProfileManagementE2E:
             "time_format": "24h",
             "theme": "dark",
             "currency": "GBP",
-            "odds_format": "decimal"  # decimal, fractional, american
+            "odds_format": "decimal",  # decimal, fractional, american
         }
 
         mock_user_service.update_display_preferences.return_value = {
             "user_id": user_data["id"],
             "preferences": display_preferences,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.put(
                 f"/api/users/{user_data['id']}/display-preferences",
                 json=display_preferences,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
@@ -797,21 +810,21 @@ class TestUserProfileManagementE2E:
             "data_sharing": {
                 "analytics": True,
                 "marketing": False,
-                "third_party": False
-            }
+                "third_party": False,
+            },
         }
 
         mock_user_service.update_privacy_preferences.return_value = {
             "user_id": user_data["id"],
             "privacy": privacy_preferences,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.put(
                 f"/api/users/{user_data['id']}/privacy-preferences",
                 json=privacy_preferences,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
@@ -827,33 +840,30 @@ class TestUserProfileManagementE2E:
             "auto_save_drafts": True,
             "show_prediction_tips": True,
             "confidence_warnings": True,
-            "deadline_reminders": {
-                "enabled": True,
-                "hours_before": 24
-            },
+            "deadline_reminders": {"enabled": True, "hours_before": 24},
             "result_notifications": {
                 "enabled": True,
                 "immediate": True,
-                "daily_summary": False
-            }
+                "daily_summary": False,
+            },
         }
 
         mock_user_service.update_prediction_preferences.return_value = {
             "user_id": user_data["id"],
             "predictions": prediction_preferences,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.put(
                 f"/api/users/{user_data['id']}/prediction-preferences",
                 json=prediction_preferences,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
                 pred_pref_result = response.json()
-                assert pred_pref_result["predictions"]["auto_save_drafts"] == True
+                assert pred_pref_result["predictions"]["auto_save_drafts"]
 
 
 class TestUserActivityAndEngagementE2E:
@@ -881,8 +891,8 @@ class TestUserActivityAndEngagementE2E:
                     "details": {
                         "match_id": 123,
                         "predicted_score": "2-1",
-                        "confidence": 0.85
-                    }
+                        "confidence": 0.85,
+                    },
                 },
                 {
                     "type": "profile_updated",
@@ -890,27 +900,26 @@ class TestUserActivityAndEngagementE2E:
                     "details": {
                         "field": "favorite_team",
                         "old_value": "Manchester United",
-                        "new_value": "Liverpool"
-                    }
+                        "new_value": "Liverpool",
+                    },
                 },
                 {
                     "type": "login",
                     "timestamp": (datetime.utcnow() - timedelta(days=1)).isoformat(),
                     "details": {
                         "ip_address": "192.168.1.100",
-                        "user_agent": "Mozilla/5.0..."
-                    }
-                }
+                        "user_agent": "Mozilla/5.0...",
+                    },
+                },
             ],
             "total_activities": 25,
             "page": 1,
-            "per_page": 10
+            "per_page": 10,
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.get(
-                f"/api/users/{user_data['id']}/activities",
-                headers=auth_headers
+                f"/api/users/{user_data['id']}/activities", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -928,34 +937,38 @@ class TestUserActivityAndEngagementE2E:
                 "login_frequency": {
                     "last_7_days": 5,
                     "last_30_days": 18,
-                    "average_streak": 3.2
+                    "average_streak": 3.2,
                 },
                 "prediction_activity": {
                     "total_predictions": 150,
                     "last_week_predictions": 12,
                     "accuracy_rate": 0.68,
-                    "average_confidence": 0.76
+                    "average_confidence": 0.76,
                 },
                 "social_engagement": {
                     "friends_count": 25,
                     "predictions_shared": 45,
                     "comments_made": 78,
-                    "likes_given": 156
+                    "likes_given": 156,
                 },
                 "platform_usage": {
-                    "features_used": ["predictions", "leaderboard", "statistics", "forums"],
+                    "features_used": [
+                        "predictions",
+                        "leaderboard",
+                        "statistics",
+                        "forums",
+                    ],
                     "most_used_feature": "predictions",
-                    "session_duration_avg": "15 minutes"
-                }
+                    "session_duration_avg": "15 minutes",
+                },
             },
             "engagement_score": 78.5,
-            "activity_level": "high"
+            "activity_level": "high",
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.get(
-                f"/api/users/{user_data['id']}/engagement",
-                headers=auth_headers
+                f"/api/users/{user_data['id']}/engagement", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -986,7 +999,7 @@ class TestUserActivityAndEngagementE2E:
                     "badge_url": "https://example.com/badges/first_prediction.png",
                     "earned_at": (datetime.utcnow() - timedelta(days=30)).isoformat(),
                     "category": "milestone",
-                    "rarity": "common"
+                    "rarity": "common",
                 },
                 {
                     "id": "accurate_week",
@@ -995,7 +1008,7 @@ class TestUserActivityAndEngagementE2E:
                     "badge_url": "https://example.com/badges/accurate_week.png",
                     "earned_at": (datetime.utcnow() - timedelta(days=7)).isoformat(),
                     "category": "skill",
-                    "rarity": "rare"
+                    "rarity": "rare",
                 },
                 {
                     "id": "top_10",
@@ -1004,18 +1017,17 @@ class TestUserActivityAndEngagementE2E:
                     "badge_url": "https://example.com/badges/top_10.png",
                     "earned_at": (datetime.utcnow() - timedelta(days=2)).isoformat(),
                     "category": "competition",
-                    "rarity": "epic"
-                }
+                    "rarity": "epic",
+                },
             ],
             "total_achievements": 15,
             "total_badges": 12,
-            "achievement_points": 1250
+            "achievement_points": 1250,
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.get(
-                f"/api/users/{user_data['id']}/achievements",
-                headers=auth_headers
+                f"/api/users/{user_data['id']}/achievements", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -1038,14 +1050,10 @@ class TestUserActivityAndEngagementE2E:
                     "rarity": "legendary",
                     "requirements": {
                         "consecutive_correct_predictions": 10,
-                        "minimum_confidence": 0.7
+                        "minimum_confidence": 0.7,
                     },
-                    "progress": {
-                        "current": 7,
-                        "required": 10,
-                        "percentage": 70
-                    },
-                    "status": "in_progress"
+                    "progress": {"current": 7, "required": 10, "percentage": 70},
+                    "status": "in_progress",
                 },
                 {
                     "id": "perfect_month",
@@ -1054,30 +1062,25 @@ class TestUserActivityAndEngagementE2E:
                     "badge_url": "https://example.com/badges/perfect_month.png",
                     "category": "skill",
                     "rarity": "legendary",
-                    "requirements": {
-                        "predictions_in_month": 20,
-                        "accuracy_rate": 1.0
-                    },
-                    "progress": {
-                        "current": 15,
-                        "required": 20,
-                        "percentage": 75
-                    },
-                    "status": "in_progress"
-                }
+                    "requirements": {"predictions_in_month": 20, "accuracy_rate": 1.0},
+                    "progress": {"current": 15, "required": 20, "percentage": 75},
+                    "status": "in_progress",
+                },
             ]
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.get(
                 f"/api/users/{user_data['id']}/achievements/available",
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
                 available_achievements = response.json()
                 assert len(available_achievements["achievements"]) == 2
-                assert available_achievements["achievements"][0]["status"] == "in_progress"
+                assert (
+                    available_achievements["achievements"][0]["status"] == "in_progress"
+                )
 
 
 class TestUserManagementSecurityE2E:
@@ -1099,21 +1102,21 @@ class TestUserManagementSecurityE2E:
             "reason": "Privacy concerns",
             "feedback": "Great service, but I need to reduce my digital footprint",
             "confirm_identity": True,
-            "understand_consequences": True
+            "understand_consequences": True,
         }
 
         mock_user_service = AsyncMock()
         mock_user_service.request_account_deletion.return_value = {
             "deletion_token": "deletion_token_123456",
             "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat(),
-            "message": "Account deletion request received. Please confirm using the link sent to your email."
+            "message": "Account deletion request received. Please confirm using the link sent to your email.",
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
                 f"/api/users/{user_data['id']}/request-deletion",
                 json=deletion_request_data,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
@@ -1126,20 +1129,19 @@ class TestUserManagementSecurityE2E:
 
         deletion_confirmation_data = {
             "token": "deletion_token_123456",
-            "password": "SecurePassword123!"  # 需要密码确认
+            "password": "SecurePassword123!",  # 需要密码确认
         }
 
         mock_user_service.confirm_account_deletion.return_value = {
             "message": "Account deletion confirmed. Your account will be permanently deleted within 30 days.",
             "deletion_scheduled_at": datetime.utcnow().isoformat(),
             "final_deletion_date": (datetime.utcnow() + timedelta(days=30)).isoformat(),
-            "cancellation_token": "cancel_token_789012"
+            "cancellation_token": "cancel_token_789012",
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
-                "/api/users/confirm-deletion",
-                json=deletion_confirmation_data
+                "/api/users/confirm-deletion", json=deletion_confirmation_data
             )
 
             if response.status_code == 200:
@@ -1150,20 +1152,17 @@ class TestUserManagementSecurityE2E:
         # 第三阶段: 取消账户删除
         # ================================
 
-        cancellation_data = {
-            "token": "cancel_token_789012"
-        }
+        cancellation_data = {"token": "cancel_token_789012"}
 
         mock_user_service.cancel_account_deletion.return_value = {
             "message": "Account deletion cancelled successfully",
             "cancelled_at": datetime.utcnow().isoformat(),
-            "account_status": "active"
+            "account_status": "active",
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
-                "/api/users/cancel-deletion",
-                json=cancellation_data
+                "/api/users/cancel-deletion", json=cancellation_data
             )
 
             if response.status_code == 200:
@@ -1186,20 +1185,25 @@ class TestUserManagementSecurityE2E:
         mock_user_service.enable_two_factor.return_value = {
             "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?data=otpauth%3A%2F%2F...",
             "backup_codes": [
-                "123456", "789012", "345678", "901234",
-                "567890", "234567", "890123", "456789"
+                "123456",
+                "789012",
+                "345678",
+                "901234",
+                "567890",
+                "234567",
+                "890123",
+                "456789",
             ],
             "setup_instructions": [
                 "Scan the QR code with your authenticator app",
                 "Enter the verification code to confirm setup",
-                "Save your backup codes in a secure location"
-            ]
+                "Save your backup codes in a secure location",
+            ],
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
-                f"/api/users/{user_data['id']}/enable-2fa",
-                headers=auth_headers
+                f"/api/users/{user_data['id']}/enable-2fa", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -1211,20 +1215,18 @@ class TestUserManagementSecurityE2E:
         # 第二阶段: 验证2FA设置
         # ================================
 
-        verification_data = {
-            "verification_code": "123456"
-        }
+        verification_data = {"verification_code": "123456"}
 
         mock_user_service.verify_two_factor_setup.return_value = {
             "message": "2FA enabled successfully",
-            "enabled_at": datetime.utcnow().isoformat()
+            "enabled_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
                 f"/api/users/{user_data['id']}/verify-2fa-setup",
                 json=verification_data,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             if response.status_code == 200:
@@ -1237,42 +1239,42 @@ class TestUserManagementSecurityE2E:
 
         login_data = {
             "username": user_data["username"],
-            "password": "SecurePassword123!"
+            "password": "SecurePassword123!",
         }
 
         mock_auth_service = AsyncMock()
         mock_auth_service.authenticate_user.return_value = {
             "requires_2fa": True,
             "temp_token": "temp_token_for_2fa",
-            "message": "Please enter your 2FA code"
+            "message": "Please enter your 2FA code",
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.post("/api/auth/login", json=login_data)
 
             if response.status_code == 200:
                 login_result = response.json()
-                assert login_result["requires_2fa"] == True
+                assert login_result["requires_2fa"]
 
         # 提供2FA代码
         two_fa_data = {
             "temp_token": "temp_token_for_2fa",
-            "verification_code": "123456"
+            "verification_code": "123456",
         }
 
         mock_auth_service.verify_two_factor.return_value = {
             "access_token": "jwt_token_with_2fa",
             "refresh_token": "refresh_token_with_2fa",
             "token_type": "bearer",
-            "two_factor_verified": True
+            "two_factor_verified": True,
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.post("/api/auth/verify-2fa", json=two_fa_data)
 
             if response.status_code == 200:
                 final_login_result = response.json()
-                assert final_login_result["two_factor_verified"] == True
+                assert final_login_result["two_factor_verified"]
 
 
 # 测试辅助函数
@@ -1286,7 +1288,7 @@ def create_test_registration_data(base_user_data: dict) -> dict:
         "first_name": "Test",
         "last_name": "User",
         "accept_terms": True,
-        "marketing_consent": False
+        "marketing_consent": False,
     }
 
 
@@ -1299,21 +1301,27 @@ def create_test_profile_data() -> dict:
         "favorite_team": "Manchester United",
         "favorite_league": "Premier League",
         "phone_number": "+44 20 7123 4567",
-        "location": "London, UK"
+        "location": "London, UK",
     }
 
 
-async def verify_user_state(async_client: AsyncClient, user_id: int, expected_state: dict):
+async def verify_user_state(
+    async_client: AsyncClient, user_id: int, expected_state: dict
+):
     """验证用户状态的辅助函数"""
     auth_headers = {"Authorization": "Bearer test_jwt_token"}
 
-    response = await async_client.get(f"/api/users/{user_id}/status", headers=auth_headers)
+    response = await async_client.get(
+        f"/api/users/{user_id}/status", headers=auth_headers
+    )
 
     if response.status_code == 200:
         actual_state = response.json()
 
         for key, expected_value in expected_state.items():
-            assert actual_state.get(key) == expected_value, f"User state mismatch for {key}"
+            assert (
+                actual_state.get(key) == expected_value
+            ), f"User state mismatch for {key}"
 
         return True
 

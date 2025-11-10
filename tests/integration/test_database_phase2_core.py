@@ -252,8 +252,6 @@ def test_all_database_core_functionality():
     # 测试混入类
     assert TimestampMixin is not None
 
-    print("✅ 所有database核心功能测试通过")  # TODO: Add logger import if needed
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

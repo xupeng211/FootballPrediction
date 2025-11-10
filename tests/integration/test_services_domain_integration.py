@@ -8,10 +8,9 @@ Services and Domain Module Integration Tests
 import asyncio
 from datetime import datetime, timedelta
 from decimal import Decimal
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import patch
 
 import pytest
-import pytest_asyncio
 
 # 标记测试
 pytestmark = [pytest.mark.integration, pytest.mark.services, pytest.mark.domain]
@@ -26,8 +25,8 @@ class TestPredictionServiceDomainIntegration:
     ):
         """测试预测服务创建领域对象"""
         try:
-            from src.domain.services.prediction_service import PredictionService
             from src.domain.models.prediction import Prediction, PredictionStatus
+            from src.domain.services.prediction_service import PredictionService
 
             service = PredictionService(test_db_session)
 
@@ -55,7 +54,9 @@ class TestPredictionServiceDomainIntegration:
 
             # 验证置信度已设置
             if prediction.confidence:
-                assert prediction.confidence.value == Decimal(str(prediction_data["confidence"]))
+                assert prediction.confidence.value == Decimal(
+                    str(prediction_data["confidence"])
+                )
 
         except ImportError:
             pytest.skip("Prediction service or domain models not available")
@@ -66,8 +67,8 @@ class TestPredictionServiceDomainIntegration:
     ):
         """测试预测服务使用领域验证"""
         try:
-            from src.domain.services.prediction_service import PredictionService
             from src.core.exceptions import DomainError
+            from src.domain.services.prediction_service import PredictionService
 
             service = PredictionService(test_db_session)
 
@@ -100,7 +101,8 @@ class TestPredictionServiceDomainIntegration:
 
             service = PredictionService(test_db_session)
             pending_prediction = next(
-                (p for p in sample_predictions if p.status in ["pending", "PENDING"]), None
+                (p for p in sample_predictions if p.status in ["pending", "PENDING"]),
+                None,
             )
 
             if not pending_prediction:
@@ -108,9 +110,7 @@ class TestPredictionServiceDomainIntegration:
 
             # 评估预测
             evaluation_result = await service.evaluate_prediction(
-                pending_prediction.id,
-                actual_home=2,
-                actual_away=1
+                pending_prediction.id, actual_home=2, actual_away=1
             )
 
             # 验证领域逻辑执行
@@ -133,7 +133,10 @@ class TestPredictionServiceDomainIntegration:
             service = PredictionService(test_db_session)
 
             # 模拟事件发布
-            with patch('src.core.event_application.event_bus', mock_external_services["audit_service"]):
+            with patch(
+                "src.core.event_application.event_bus",
+                mock_external_services["audit_service"],
+            ):
                 prediction_data = {
                     "user_id": 1,
                     "match_id": sample_match.id if sample_match else 1,
@@ -142,10 +145,10 @@ class TestPredictionServiceDomainIntegration:
                     "confidence": 0.85,
                 }
 
-                prediction = await service.create_prediction(prediction_data)
+                await service.create_prediction(prediction_data)
 
                 # 验证领域事件发布
-                if hasattr(mock_external_services["audit_service"], 'log_event'):
+                if hasattr(mock_external_services["audit_service"], "log_event"):
                     assert mock_external_services["audit_service"].log_event.called
 
         except ImportError:
@@ -161,8 +164,8 @@ class TestMatchServiceDomainIntegration:
     ):
         """测试比赛服务管理领域状态"""
         try:
-            from src.domain.services.match_service import MatchService
             from src.domain.models.match import Match, MatchStatus
+            from src.domain.services.match_service import MatchService
 
             if not sample_teams or len(sample_teams) < 2:
                 pytest.skip("Sample teams not available")
@@ -206,8 +209,8 @@ class TestMatchServiceDomainIntegration:
     ):
         """测试比赛服务强制执行领域规则"""
         try:
-            from src.domain.services.match_service import MatchService
             from src.core.exceptions import DomainError
+            from src.domain.services.match_service import MatchService
 
             if not sample_teams or len(sample_teams) < 2:
                 pytest.skip("Sample teams not available")
@@ -276,8 +279,8 @@ class TestTeamServiceDomainIntegration:
     ):
         """测试球队服务管理领域实体"""
         try:
-            from src.domain.services.team_service import TeamService
             from src.domain.models.team import Team
+            from src.domain.services.team_service import TeamService
 
             service = TeamService(test_db_session)
 
@@ -327,9 +330,14 @@ class TestTeamServiceDomainIntegration:
 
             # 验证性能指标
             expected_metrics = [
-                "home_form", "away_form", "overall_form",
-                "scoring_rate", "conceding_rate", "clean_sheets",
-                "win_percentage", "recent_trend"
+                "home_form",
+                "away_form",
+                "overall_form",
+                "scoring_rate",
+                "conceding_rate",
+                "clean_sheets",
+                "win_percentage",
+                "recent_trend",
             ]
 
             for metric in expected_metrics:
@@ -409,9 +417,7 @@ class TestDomainServiceIntegration:
     """领域服务集成测试"""
 
     @pytest.mark.asyncio
-    async def test_prediction_factory_creates_domain_strategies(
-        self, test_db_session
-    ):
+    async def test_prediction_factory_creates_domain_strategies(self, test_db_session):
         """测试预测工厂创建领域策略"""
         try:
             from src.domain.strategies.factory import PredictionStrategyFactory
@@ -423,9 +429,11 @@ class TestDomainServiceIntegration:
 
             for strategy_type in strategies:
                 try:
-                    strategy = await factory.create_strategy(strategy_type, test_db_session)
+                    strategy = await factory.create_strategy(
+                        strategy_type, test_db_session
+                    )
                     assert strategy is not None
-                    assert hasattr(strategy, 'predict')
+                    assert hasattr(strategy, "predict")
                 except Exception:
                     # 如果特定策略不可用，跳过
                     continue
@@ -439,8 +447,8 @@ class TestDomainServiceIntegration:
     ):
         """测试领域服务协调"""
         try:
-            from src.domain.services.prediction_service import PredictionService
             from src.domain.services.match_service import MatchService
+            from src.domain.services.prediction_service import PredictionService
             from src.domain.services.scoring_service import ScoringService
 
             prediction_service = PredictionService(test_db_session)
@@ -461,7 +469,9 @@ class TestDomainServiceIntegration:
                 prediction = await prediction_service.create_prediction(prediction_data)
 
                 # 2. 结束比赛
-                await match_service.finish_match(sample_match.id, home_score=2, away_score=1)
+                await match_service.finish_match(
+                    sample_match.id, home_score=2, away_score=1
+                )
 
                 # 3. 评估预测
                 evaluation = await prediction_service.evaluate_prediction(
@@ -483,13 +493,11 @@ class TestServiceErrorHandlingIntegration:
     """服务错误处理集成测试"""
 
     @pytest.mark.asyncio
-    async def test_service_handles_domain_errors_gracefully(
-        self, test_db_session
-    ):
+    async def test_service_handles_domain_errors_gracefully(self, test_db_session):
         """测试服务优雅处理领域错误"""
         try:
-            from src.domain.services.prediction_service import PredictionService
             from src.core.exceptions import DomainError
+            from src.domain.services.prediction_service import PredictionService
 
             service = PredictionService(test_db_session)
 
@@ -518,16 +526,14 @@ class TestServiceErrorHandlingIntegration:
             pytest.skip("Prediction service not available")
 
     @pytest.mark.asyncio
-    async def test_service_transaction_rollback_on_domain_error(
-        self, test_db_session
-    ):
+    async def test_service_transaction_rollback_on_domain_error(self, test_db_session):
         """测试领域错误时服务事务回滚"""
         try:
-            from src.domain.services.prediction_service import PredictionService
             from src.domain.services.match_service import MatchService
+            from src.domain.services.prediction_service import PredictionService
 
             prediction_service = PredictionService(test_db_session)
-            match_service = MatchService(test_db_session)
+            MatchService(test_db_session)
 
             # 记录操作前的状态
             initial_predictions = await prediction_service.get_user_predictions(1)
@@ -571,6 +577,7 @@ class TestServicePerformanceIntegration:
             service = PredictionService(test_db_session)
 
             import time
+
             start_time = time.time()
 
             # 创建多个预测
@@ -598,8 +605,13 @@ class TestServicePerformanceIntegration:
             duration = end_time - start_time
 
             # 验证性能
-            avg_time_per_prediction = duration / len(created_predictions) if created_predictions else 0
-            assert avg_time_per_prediction < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            avg_time_per_prediction = (
+                duration / len(created_predictions) if created_predictions else 0
+            )
+            assert (
+                avg_time_per_prediction
+                < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            )
 
             # 验证成功率
             success_rate = len(created_predictions) / len(predictions_data)
@@ -634,14 +646,14 @@ class TestServicePerformanceIntegration:
                     return None
 
             # 并发创建预测
-            tasks = [
-                create_prediction_async(i) for i in range(1, 21)  # 20个并发预测
-            ]
+            tasks = [create_prediction_async(i) for i in range(1, 21)]  # 20个并发预测
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # 验证并发处理
-            successful_results = [r for r in results if r is not None and not isinstance(r, Exception)]
+            successful_results = [
+                r for r in results if r is not None and not isinstance(r, Exception)
+            ]
             assert len(successful_results) > 0
 
         except ImportError:
@@ -649,7 +661,14 @@ class TestServicePerformanceIntegration:
 
 
 # 测试辅助函数
-async def create_test_prediction(service, user_id: int, match_id: int, home_score: int, away_score: int, confidence: float = 0.85):
+async def create_test_prediction(
+    service,
+    user_id: int,
+    match_id: int,
+    home_score: int,
+    away_score: int,
+    confidence: float = 0.85,
+):
     """创建测试预测的辅助函数"""
     prediction_data = {
         "user_id": user_id,
@@ -662,7 +681,9 @@ async def create_test_prediction(service, user_id: int, match_id: int, home_scor
     return await service.create_prediction(prediction_data)
 
 
-async def create_test_match(service, home_team_id: int, away_team_id: int, match_date: datetime = None):
+async def create_test_match(
+    service, home_team_id: int, away_team_id: int, match_date: datetime = None
+):
     """创建测试比赛的辅助函数"""
     if match_date is None:
         match_date = datetime.utcnow() + timedelta(days=1)

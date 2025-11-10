@@ -311,7 +311,7 @@ class FixturesCollector(BaseCollector):
         """
         try:
             url = f"{self.base_url}/competitions/{league_code}/matches"
-            headers = {"X-Auth-Token": self.api_key} if self.api_key else {}
+            headers = {"x-Auth-Token": self.api_key} if self.api_key else {}
 
             params = {
                 "dateFrom": date_from.strftime("%Y-%m-%d"),

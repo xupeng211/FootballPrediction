@@ -5,29 +5,32 @@ Health Check API Endpoints Comprehensive Test Suite
 专门测试健康检查相关API端点的功能，包括基础健康检查、详细健康检查、组件状态监控等。
 """
 
-import pytest
-import json
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
-from unittest.mock import Mock, AsyncMock, patch
+from typing import Any
+
+import pytest
 
 # FastAPI和相关组件
 try:
-    from fastapi import FastAPI, HTTPException, Query, Path, BackgroundTasks
+    import asyncio
+    from enum import Enum
+
+    from fastapi import BackgroundTasks, FastAPI, HTTPException, Path, Query
     from fastapi.testclient import TestClient
     from pydantic import BaseModel, Field
-    from enum import Enum
-    import asyncio
+
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False
     pytest.skip("FastAPI not available", allow_module_level=True)
 
+
 # 安全的Mock类
 class HealthSafeMock:
     """健康检查专用的安全Mock类"""
+
     def __init__(self, *args, **kwargs):
         # 直接设置属性，避免使用hasattr
         self._attributes = set(kwargs.keys())
@@ -35,16 +38,18 @@ class HealthSafeMock:
             object.__setattr__(self, key, value)
 
         # 设置默认属性
-        if 'status' not in self._attributes:
-            object.__setattr__(self, 'status', "healthy")
-            self._attributes.add('status')
+        if "status" not in self._attributes:
+            object.__setattr__(self, "status", "healthy")
+            self._attributes.add("status")
 
     def __call__(self, *args, **kwargs):
         return HealthSafeMock(*args, **kwargs)
 
     def __getattr__(self, name):
-        if name.startswith('__') and name.endswith('__'):
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(
+                f"'{self.__class__.__name__}' object has no attribute '{name}'"
+            )
         return HealthSafeMock(name=name)
 
     def __bool__(self):
@@ -59,6 +64,7 @@ class HealthSafeMock:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
+
 # 枚举定义
 class HealthStatus(str, Enum):
     HEALTHY = "healthy"
@@ -66,6 +72,7 @@ class HealthStatus(str, Enum):
     DEGRADED = "degraded"
     MAINTENANCE = "maintenance"
     UNKNOWN = "unknown"
+
 
 class ComponentType(str, Enum):
     DATABASE = "database"
@@ -77,27 +84,31 @@ class ComponentType(str, Enum):
     CPU = "cpu"
     NETWORK = "network"
 
+
 class SeverityLevel(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
+
 # Pydantic模型定义
 class ComponentHealth(BaseModel):
     name: str
     status: HealthStatus
-    response_time_ms: Optional[float] = None
+    response_time_ms: float | None = None
     last_check: datetime
-    error_message: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    error_message: str | None = None
+    metadata: dict[str, Any] | None = None
+
 
 class DetailedComponentHealth(ComponentHealth):
-    uptime_percentage: Optional[float] = None
-    total_requests: Optional[int] = None
-    error_rate: Optional[float] = None
-    last_error: Optional[datetime] = None
-    dependencies: Optional[List[str]] = None
+    uptime_percentage: float | None = None
+    total_requests: int | None = None
+    error_rate: float | None = None
+    last_error: datetime | None = None
+    dependencies: list[str] | None = None
+
 
 class HealthResponse(BaseModel):
     status: HealthStatus
@@ -107,15 +118,18 @@ class HealthResponse(BaseModel):
     uptime_seconds: float
     environment: str
 
+
 class DetailedHealthResponse(HealthResponse):
-    components: Dict[str, DetailedComponentHealth]
-    system_metrics: Optional[Dict[str, Any]] = None
-    alerts: Optional[List[Dict[str, Any]]] = None
+    components: dict[str, DetailedComponentHealth]
+    system_metrics: dict[str, Any] | None = None
+    alerts: list[dict[str, Any]] | None = None
+
 
 class HealthHistory(BaseModel):
     timestamp: datetime
     status: HealthStatus
-    component_health: Dict[str, ComponentHealth]
+    component_health: dict[str, ComponentHealth]
+
 
 class MockHealthChecker:
     """Mock健康检查器"""
@@ -131,7 +145,7 @@ class MockHealthChecker:
                 "uptime_percentage": 99.9,
                 "total_requests": 15420,
                 "error_rate": 0.001,
-                "metadata": {"connection_pool": "8/20", "slow_queries": 2}
+                "metadata": {"connection_pool": "8/20", "slow_queries": 2},
             },
             ComponentType.CACHE: {
                 "name": "Redis Cache",
@@ -143,7 +157,7 @@ class MockHealthChecker:
                 "error_rate": 0.0001,
                 "hit_rate": 0.85,
                 "memory_usage": "256MB/1GB",
-                "metadata": {"hit_rate": 0.85, "memory_usage": "25%"}
+                "metadata": {"hit_rate": 0.85, "memory_usage": "25%"},
             },
             ComponentType.EXTERNAL_API: {
                 "name": "External Football API",
@@ -154,7 +168,7 @@ class MockHealthChecker:
                 "total_requests": 3421,
                 "error_rate": 0.015,
                 "last_error": datetime.now() - timedelta(minutes=15),
-                "metadata": {"rate_limit_remaining": 4500, "rate_limit_total": 5000}
+                "metadata": {"rate_limit_remaining": 4500, "rate_limit_total": 5000},
             },
             ComponentType.MESSAGE_QUEUE: {
                 "name": "RabbitMQ",
@@ -165,22 +179,22 @@ class MockHealthChecker:
                 "total_requests": 12450,
                 "error_rate": 0.002,
                 "queue_count": 23,
-                "metadata": {"queues": 5, "messages": 145}
+                "metadata": {"queues": 5, "messages": 145},
             },
             ComponentType.FILESYSTEM: {
                 "name": "Local Filesystem",
                 "status": HealthStatus.HEALTHY,
                 "response_time_ms": 0.5,
                 "last_check": datetime.now(),
-                "metadata": {"disk_usage": "45GB/100GB", "free_space": "55GB"}
+                "metadata": {"disk_usage": "45GB/100GB", "free_space": "55GB"},
             },
             ComponentType.MEMORY: {
                 "name": "System Memory",
                 "status": HealthStatus.HEALTHY,
                 "response_time_ms": 1.2,
                 "last_check": datetime.now(),
-                "metadata": {"usage": "2.1GB/8GB", "free": "5.9GB"}
-            }
+                "metadata": {"usage": "2.1GB/8GB", "free": "5.9GB"},
+            },
         }
         self.health_history = []
         self.alerts = [
@@ -189,11 +203,13 @@ class MockHealthChecker:
                 "component": "External API",
                 "severity": SeverityLevel.MEDIUM,
                 "message": "Response time above threshold",
-                "timestamp": datetime.now() - timedelta(minutes=10)
+                "timestamp": datetime.now() - timedelta(minutes=10),
             }
         ]
 
-    async def check_component_health(self, component_type: ComponentType) -> DetailedComponentHealth:
+    async def check_component_health(
+        self, component_type: ComponentType
+    ) -> DetailedComponentHealth:
         """检查单个组件健康状态"""
         if component_type in self.components:
             component_data = self.components[component_type]
@@ -210,13 +226,13 @@ class MockHealthChecker:
                 total_requests=component_data.get("total_requests"),
                 error_rate=component_data.get("error_rate"),
                 last_error=component_data.get("last_error"),
-                metadata=component_data.get("metadata", {})
+                metadata=component_data.get("metadata", {}),
             )
         else:
             return DetailedComponentHealth(
                 name=f"Unknown Component ({component_type})",
                 status=HealthStatus.UNKNOWN,
-                last_check=datetime.now()
+                last_check=datetime.now(),
             )
 
     async def check_overall_health(self) -> HealthStatus:
@@ -232,30 +248,27 @@ class MockHealthChecker:
         else:
             return HealthStatus.UNKNOWN
 
-    async def get_system_metrics(self) -> Dict[str, Any]:
+    async def get_system_metrics(self) -> dict[str, Any]:
         """获取系统指标"""
         return {
             "cpu_usage_percent": 45.2,
             "memory_usage_percent": 26.3,
             "disk_usage_percent": 45.0,
-            "network_io": {
-                "bytes_sent": 1048576,
-                "bytes_received": 2097152
-            },
+            "network_io": {"bytes_sent": 1048576, "bytes_received": 2097152},
             "process_count": 156,
-            "load_average": [0.5, 0.8, 0.6]
+            "load_average": [0.5, 0.8, 0.6],
         }
 
     def get_uptime_seconds(self) -> float:
         """获取运行时间（秒）"""
         return (datetime.now() - self.start_time).total_seconds()
 
-    def add_health_snapshot(self, status: HealthStatus, components: Dict[str, ComponentHealth]):
+    def add_health_snapshot(
+        self, status: HealthStatus, components: dict[str, ComponentHealth]
+    ):
         """添加健康快照到历史记录"""
         snapshot = HealthHistory(
-            timestamp=datetime.now(),
-            status=status,
-            component_health=components
+            timestamp=datetime.now(), status=status, component_health=components
         )
         self.health_history.append(snapshot)
 
@@ -268,7 +281,9 @@ class MockHealthChecker:
         if component_type in self.components:
             self.components[component_type]["status"] = HealthStatus.UNHEALTHY
             self.components[component_type]["last_error"] = datetime.now()
-            self.components[component_type]["error_message"] = "Simulated failure for testing"
+            self.components[component_type][
+                "error_message"
+            ] = "Simulated failure for testing"
 
     async def simulate_component_recovery(self, component_type: ComponentType):
         """模拟组件恢复"""
@@ -277,13 +292,12 @@ class MockHealthChecker:
             self.components[component_type]["error_message"] = None
             self.components[component_type]["response_time_ms"] = 10.0
 
+
 # 创建FastAPI应用
 def create_health_test_app() -> FastAPI:
     """创建健康检查测试用FastAPI应用"""
     app = FastAPI(
-        title="Health Check API",
-        description="健康检查API测试应用",
-        version="1.0.0"
+        title="Health Check API", description="健康检查API测试应用", version="1.0.0"
     )
 
     health_checker = MockHealthChecker()
@@ -301,7 +315,7 @@ def create_health_test_app() -> FastAPI:
             version="1.0.0",
             timestamp=datetime.now(),
             uptime_seconds=uptime,
-            environment="test"
+            environment="test",
         )
 
     # 详细健康检查端点
@@ -315,7 +329,9 @@ def create_health_test_app() -> FastAPI:
         # 检查所有组件
         detailed_components = {}
         for component_type in ComponentType:
-            component_health = await health_checker.check_component_health(component_type)
+            component_health = await health_checker.check_component_health(
+                component_type
+            )
             detailed_components[component_type.value] = component_health
 
         return DetailedHealthResponse(
@@ -327,21 +343,29 @@ def create_health_test_app() -> FastAPI:
             environment="test",
             components=detailed_components,
             system_metrics=system_metrics,
-            alerts=health_checker.alerts
+            alerts=health_checker.alerts,
         )
 
     # 单个组件健康检查
-    @app.get("/health/components/{component_type}", response_model=DetailedComponentHealth, tags=["Health"])
+    @app.get(
+        "/health/components/{component_type}",
+        response_model=DetailedComponentHealth,
+        tags=["Health"],
+    )
     async def get_component_health(
         component_type: str = Path(..., description="组件类型")
     ):
         """获取单个组件健康状态"""
         try:
             component_enum = ComponentType(component_type)
-            component_health = await health_checker.check_component_health(component_enum)
+            component_health = await health_checker.check_component_health(
+                component_enum
+            )
             return component_health
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid component type: {component_type}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid component type: {component_type}"
+            )
 
     # 组件列表
     @app.get("/health/components", tags=["Health"])
@@ -351,7 +375,9 @@ def create_health_test_app() -> FastAPI:
             "components": [
                 {
                     "type": comp.value,
-                    "name": health_checker.components.get(comp, {}).get("name", comp.value)
+                    "name": health_checker.components.get(comp, {}).get(
+                        "name", comp.value
+                    ),
                 }
                 for comp in ComponentType
             ]
@@ -369,11 +395,11 @@ def create_health_test_app() -> FastAPI:
                 {
                     "timestamp": snapshot.timestamp.isoformat(),
                     "status": snapshot.status,
-                    "component_count": len(snapshot.component_health)
+                    "component_count": len(snapshot.component_health),
                 }
                 for snapshot in history
             ],
-            "total_count": len(health_checker.health_history)
+            "total_count": len(health_checker.health_history),
         }
 
     # 系统指标
@@ -381,10 +407,7 @@ def create_health_test_app() -> FastAPI:
     async def get_system_metrics():
         """获取系统指标"""
         metrics = await health_checker.get_system_metrics()
-        return {
-            "metrics": metrics,
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"metrics": metrics, "timestamp": datetime.now().isoformat()}
 
     # 活跃告警
     @app.get("/health/alerts", tags=["Health"])
@@ -392,7 +415,7 @@ def create_health_test_app() -> FastAPI:
         """获取活跃告警"""
         return {
             "alerts": health_checker.alerts,
-            "total_count": len(health_checker.alerts)
+            "total_count": len(health_checker.alerts),
         }
 
     # 测试端点 - 模拟故障（仅用于测试）
@@ -406,7 +429,9 @@ def create_health_test_app() -> FastAPI:
             await health_checker.simulate_component_failure(component_enum)
             return {"message": f"Simulated failure for component: {component_type}"}
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid component type: {component_type}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid component type: {component_type}"
+            )
 
     # 测试端点 - 模拟恢复（仅用于测试）
     @app.post("/health/test/recover/{component_type}", tags=["Health", "Test"])
@@ -419,7 +444,9 @@ def create_health_test_app() -> FastAPI:
             await health_checker.simulate_component_recovery(component_enum)
             return {"message": f"Simulated recovery for component: {component_type}"}
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid component type: {component_type}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid component type: {component_type}"
+            )
 
     # 健康检查触发器
     @app.post("/health/refresh", tags=["Health"])
@@ -436,7 +463,9 @@ def create_health_test_app() -> FastAPI:
             # 检查所有组件
             components = {}
             for component_type in ComponentType:
-                component_health = await health_checker_instance.check_component_health(component_type)
+                component_health = await health_checker_instance.check_component_health(
+                    component_type
+                )
                 components[component_type.value] = component_health
 
             # 获取整体状态
@@ -451,6 +480,7 @@ def create_health_test_app() -> FastAPI:
 
     return app
 
+
 # 创建测试应用和客户端
 health_app = create_health_test_app()
 health_client = TestClient(health_app)
@@ -458,6 +488,7 @@ health_client = TestClient(health_app)
 logger = logging.getLogger(__name__)
 
 # ==================== 测试用例 ====================
+
 
 class TestBasicHealthCheck:
     """基础健康检查测试类"""
@@ -470,7 +501,14 @@ class TestBasicHealthCheck:
         data = response.json()
 
         # 验证响应结构
-        required_fields = ["status", "service", "version", "timestamp", "uptime_seconds", "environment"]
+        required_fields = [
+            "status",
+            "service",
+            "version",
+            "timestamp",
+            "uptime_seconds",
+            "environment",
+        ]
         for field in required_fields:
             assert field in data
 
@@ -505,6 +543,7 @@ class TestBasicHealthCheck:
         response = health_client.get("/health")
         assert response.status_code == 200
 
+
 class TestDetailedHealthCheck:
     """详细健康检查测试类"""
 
@@ -516,8 +555,15 @@ class TestDetailedHealthCheck:
         data = response.json()
 
         # 验证基础字段
-        required_fields = ["status", "service", "version", "timestamp", "uptime_seconds",
-                         "environment", "components"]
+        required_fields = [
+            "status",
+            "service",
+            "version",
+            "timestamp",
+            "uptime_seconds",
+            "environment",
+            "components",
+        ]
         for field in required_fields:
             assert field in data
 
@@ -526,7 +572,7 @@ class TestDetailedHealthCheck:
         assert len(data["components"]) > 0
 
         # 验证每个组件的结构
-        for component_key, component in data["components"].items():
+        for _component_key, component in data["components"].items():
             self._validate_component_structure(component)
 
     def _validate_component_structure(self, component):
@@ -543,7 +589,10 @@ class TestDetailedHealthCheck:
             assert isinstance(component["response_time_ms"], (int, float))
             assert component["response_time_ms"] >= 0
 
-        if "uptime_percentage" in component and component["uptime_percentage"] is not None:
+        if (
+            "uptime_percentage" in component
+            and component["uptime_percentage"] is not None
+        ):
             assert isinstance(component["uptime_percentage"], (int, float))
             assert 0 <= component["uptime_percentage"] <= 100
 
@@ -562,7 +611,11 @@ class TestDetailedHealthCheck:
         metrics = data["system_metrics"]
 
         # 验证系统指标结构
-        expected_metrics = ["cpu_usage_percent", "memory_usage_percent", "disk_usage_percent"]
+        expected_metrics = [
+            "cpu_usage_percent",
+            "memory_usage_percent",
+            "disk_usage_percent",
+        ]
         for metric in expected_metrics:
             assert metric in metrics
             assert isinstance(metrics[metric], (int, float))
@@ -588,6 +641,7 @@ class TestDetailedHealthCheck:
 
             assert alert["severity"] in [severity.value for severity in SeverityLevel]
 
+
 class TestComponentHealthCheck:
     """组件健康检查测试类"""
 
@@ -601,11 +655,17 @@ class TestComponentHealthCheck:
         assert isinstance(component["name"], str)
 
         # 可选字段验证
-        if "response_time_ms" in component and component["response_time_ms"] is not None:
+        if (
+            "response_time_ms" in component
+            and component["response_time_ms"] is not None
+        ):
             assert isinstance(component["response_time_ms"], (int, float))
             assert component["response_time_ms"] >= 0
 
-        if "uptime_percentage" in component and component["uptime_percentage"] is not None:
+        if (
+            "uptime_percentage" in component
+            and component["uptime_percentage"] is not None
+        ):
             assert isinstance(component["uptime_percentage"], (int, float))
             assert 0 <= component["uptime_percentage"] <= 100
 
@@ -656,6 +716,7 @@ class TestComponentHealthCheck:
             assert "type" in component
             assert "name" in component
 
+
 class TestHealthHistory:
     """健康历史测试类"""
 
@@ -699,6 +760,7 @@ class TestHealthHistory:
         response = health_client.get("/health/history?limit=-1")
         assert response.status_code in [200, 422]
 
+
 class TestSystemMetrics:
     """系统指标测试类"""
 
@@ -715,7 +777,11 @@ class TestSystemMetrics:
         metrics = data["metrics"]
 
         # 验证基础指标
-        required_metrics = ["cpu_usage_percent", "memory_usage_percent", "disk_usage_percent"]
+        required_metrics = [
+            "cpu_usage_percent",
+            "memory_usage_percent",
+            "disk_usage_percent",
+        ]
         for metric in required_metrics:
             assert metric in metrics
             assert isinstance(metrics[metric], (int, float))
@@ -737,9 +803,10 @@ class TestSystemMetrics:
         timestamp_str = data["timestamp"]
         # 验证时间戳格式（ISO格式）
         try:
-            datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+            datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
         except ValueError:
             pytest.fail(f"Invalid timestamp format: {timestamp_str}")
+
 
 class TestAlerts:
     """告警测试类"""
@@ -766,6 +833,7 @@ class TestAlerts:
 
             assert alert["severity"] in [severity.value for severity in SeverityLevel]
 
+
 class TestHealthSimulation:
     """健康状态模拟测试类"""
 
@@ -773,7 +841,7 @@ class TestHealthSimulation:
         """测试模拟组件故障"""
         # 先检查组件当前状态
         response = health_client.get("/health/components/database")
-        original_status = response.json()["status"]
+        response.json()["status"]
 
         # 模拟故障
         response = health_client.post("/health/test/fail/database")
@@ -798,6 +866,7 @@ class TestHealthSimulation:
         assert response.status_code == 400
         assert "Invalid component type" in response.json()["detail"]
 
+
 class TestHealthRefresh:
     """健康检查刷新测试类"""
 
@@ -811,6 +880,7 @@ class TestHealthRefresh:
         assert "message" in data
         assert "timestamp" in data
         assert "Health check refresh started" in data["message"]
+
 
 class TestHealthCheckPerformance:
     """健康检查性能测试类"""
@@ -826,10 +896,12 @@ class TestHealthCheckPerformance:
             start_time = time.time()
             response = health_client.get("/health")
             end_time = time.time()
-            results.append({
-                "status_code": response.status_code,
-                "response_time": end_time - start_time
-            })
+            results.append(
+                {
+                    "status_code": response.status_code,
+                    "response_time": end_time - start_time,
+                }
+            )
 
         # 创建多个并发请求
         threads = []
@@ -852,7 +924,9 @@ class TestHealthCheckPerformance:
         # 验证响应时间
         response_times = [result["response_time"] for result in results]
         avg_response_time = sum(response_times) / len(response_times)
-        assert avg_response_time < 1.0, f"Average response time too slow: {avg_response_time}s"
+        assert (
+            avg_response_time < 1.0
+        ), f"Average response time too slow: {avg_response_time}s"
 
         # 验证总体执行时间
         total_time = end_time - start_time
@@ -868,6 +942,7 @@ class TestHealthCheckPerformance:
 
         assert response.status_code == 200
         assert response_time < 2.0, f"Detailed health check too slow: {response_time}s"
+
 
 class TestHealthCheckReliability:
     """健康检查可靠性测试类"""
@@ -899,6 +974,7 @@ class TestHealthCheckReliability:
 
         # 等待一秒后再次获取
         import time
+
         time.sleep(1)
 
         response = health_client.get("/health/components/database")
@@ -911,6 +987,7 @@ class TestHealthCheckReliability:
         # 验证时间戳更新
         assert later_data["last_check"] != initial_data["last_check"]
 
+
 class TestHealthCheckErrorHandling:
     """健康检查错误处理测试类"""
 
@@ -922,7 +999,7 @@ class TestHealthCheckErrorHandling:
             "/health/detailed",
             "/health/components/database",
             "/health/metrics",
-            "/health/alerts"
+            "/health/alerts",
         ]
 
         for endpoint in test_cases:
@@ -940,12 +1017,13 @@ class TestHealthCheckErrorHandling:
         invalid_endpoints = [
             "/health/invalid",
             "/health/components/invalid_component",
-            "/health/unknown_endpoint"
+            "/health/unknown_endpoint",
         ]
 
         for endpoint in invalid_endpoints:
             response = health_client.get(endpoint)
             assert response.status_code in [400, 404]
+
 
 class TestHealthCheckIntegration:
     """健康检查集成测试类"""
@@ -975,7 +1053,9 @@ class TestHealthCheckIntegration:
         expected_component_types = [comp.value for comp in ComponentType]
         for component_type in expected_component_types:
             if component_type in components:
-                component_response = health_client.get(f"/health/components/{component_type}")
+                component_response = health_client.get(
+                    f"/health/components/{component_type}"
+                )
                 assert component_response.status_code == 200
 
         # 6. 获取系统指标
@@ -1013,6 +1093,7 @@ class TestHealthCheckIntegration:
         component_response = health_client.get("/health/components/external_api")
         component_data = component_response.json()
         assert component_data["status"] == "healthy"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

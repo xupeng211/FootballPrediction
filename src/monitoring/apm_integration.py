@@ -1,7 +1,7 @@
 # 简化版 apm_integration 模块
 
 
-class Apm_Integration:
+class ApmIntegration:
     def __init__(self):
         pass
 

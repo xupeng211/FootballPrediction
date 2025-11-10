@@ -179,7 +179,7 @@ class TestFootballDataCleanerSimple:
             try:
                 pd.to_datetime(date_str)
                 return True
-            except:
+            except Exception:
                 return False
 
         valid_dates = ["2024-01-01", "2024/01/01", "01-01-2024"]
