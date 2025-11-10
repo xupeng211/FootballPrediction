@@ -226,9 +226,10 @@ class DataPreprocessor:
                 issues.append(f"发现 {len(same_team_matches)} 条主客队相同的比赛")
 
         if "match_date" in data.columns and "status" in data.columns:
+            # 确保match_date是datetime类型，避免字符串与Timestamp比较错误
+            dates = pd.to_datetime(data["match_date"], errors="coerce")
             future_finished = data[
-                (data["match_date"] > pd.Timestamp.now())
-                & (data["status"] == "FINISHED")
+                (dates > pd.Timestamp.now()) & (data["status"] == "FINISHED")
             ]
             if not future_finished.empty:
                 issues.append(f"发现 {len(future_finished)} 条未来的已完成比赛")

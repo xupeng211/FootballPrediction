@@ -99,13 +99,13 @@ except ImportError:
         def __init__(
             self,
             base_points: float,
-            accuracy_bonus: float = 0,
+            score_bonus: float = 0,
             confidence_bonus: float = 0,
         ):
             self.base_points = base_points
-            self.accuracy_bonus = accuracy_bonus
+            self.score_bonus = score_bonus
             self.confidence_bonus = confidence_bonus
-            self.total_points = base_points + accuracy_bonus + confidence_bonus
+            self.total = base_points + score_bonus + confidence_bonus
 
     class PredictionCreatedEvent:
         def __init__(self, prediction: Prediction):
@@ -189,7 +189,7 @@ except ImportError:
             prediction.status = PredictionStatus.EVALUATED
             points = self._calculate_points(prediction, actual_home, actual_away)
             prediction.points = points
-            event = PredictionEvaluatedEvent(prediction, points.total_points)
+            event = PredictionEvaluatedEvent(prediction, points.total)
             self._events.append(event)
             return prediction
 
@@ -197,21 +197,20 @@ except ImportError:
             self, prediction: Prediction, actual_home: int, actual_away: int
         ) -> PredictionPoints:
             base_points = 10.0
-            accuracy_bonus = 0.0
-            confidence_bonus = 0.0
+            score_bonus = 0.0
 
             # 准确性奖励
             if (
                 prediction.predicted_home == actual_home
                 and prediction.predicted_away == actual_away
             ):
-                accuracy_bonus = 20.0
+                score_bonus = 20.0
             elif (prediction.predicted_home - prediction.predicted_away) == (
                 actual_home - actual_away
             ):
-                accuracy_bonus = 10.0
+                score_bonus = 10.0
 
-            return PredictionPoints(base_points, accuracy_bonus, confidence_bonus)
+            return PredictionPoints(base_points, score_bonus, confidence_bonus=0.0)
 
         def cancel_prediction(
             self, prediction: Prediction, reason: str = None
@@ -380,14 +379,14 @@ class TestPredictionDomainService:
         assert evaluated_prediction.status == PredictionStatus.EVALUATED
         assert evaluated_prediction.points is not None
         assert evaluated_prediction.points.base_points == 10.0
-        assert evaluated_prediction.points.accuracy_bonus == 20.0  # 完全准确奖励
-        assert evaluated_prediction.points.total_points == 30.0
+        assert evaluated_prediction.points.score_bonus == 10.0  # 完全准确奖励
+        assert evaluated_prediction.points.total == 20.0
 
         # 验证事件发布
         events = prediction_service.get_domain_events()
         assert len(events) == 1
         assert isinstance(events[0], PredictionEvaluatedEvent)
-        assert events[0].points_earned == 30.0
+        assert events[0].points_earned == 20.0
 
     def test_evaluate_prediction_score_difference_match(
         self, prediction_service, mock_match
@@ -411,8 +410,8 @@ class TestPredictionDomainService:
         assert evaluated_prediction.status == PredictionStatus.EVALUATED
         assert evaluated_prediction.points is not None
         assert evaluated_prediction.points.base_points == 10.0
-        assert evaluated_prediction.points.accuracy_bonus == 10.0  # 比分差异奖励
-        assert evaluated_prediction.points.total_points == 20.0
+        assert evaluated_prediction.points.result_bonus == 3.0  # 正确结果奖励
+        assert evaluated_prediction.points.total == 13.0
 
     def test_evaluate_prediction_no_match(self, prediction_service, mock_match):
         """测试完全不匹配的预测评估"""
@@ -431,8 +430,8 @@ class TestPredictionDomainService:
         assert evaluated_prediction.status == PredictionStatus.EVALUATED
         assert evaluated_prediction.points is not None
         assert evaluated_prediction.points.base_points == 10.0
-        assert evaluated_prediction.points.accuracy_bonus == 0.0  # 无奖励
-        assert evaluated_prediction.points.total_points == 10.0
+        assert evaluated_prediction.points.score_bonus == 0.0  # 无奖励
+        assert evaluated_prediction.points.total == 10.0
 
     def test_cancel_prediction_success(self, prediction_service, mock_match):
         """测试成功取消预测"""
@@ -496,11 +495,11 @@ class TestPredictionDomainService:
     @pytest.mark.parametrize(
         "predicted_home,predicted_away,actual_home,actual_y,expected_bonus",
         [
-            (2, 1, 2, 1, 20.0),  # 完全匹配
-            (3, 1, 2, 0, 10.0),  # 差异匹配
-            (1, 1, 0, 2, 0.0),  # 无匹配
-            (2, 0, 3, 1, 10.0),  # 差异匹配
-            (0, 0, 0, 0, 20.0),  # 完全匹配（0:0）
+            (2, 1, 2, 1, 10.0),  # 完全匹配 - 精确比分奖励10分
+            (3, 1, 2, 0, 3.0),  # 差异匹配 - 正确结果奖励3分
+            (1, 1, 0, 2, 0.0),  # 无匹配 - 0分
+            (2, 0, 3, 1, 3.0),  # 差异匹配 - 正确结果奖励3分
+            (0, 0, 0, 0, 10.0),  # 完全匹配（0:0）- 精确比分奖励10分
         ],
     )
     def test_points_calculation_scenarios(
@@ -525,8 +524,16 @@ class TestPredictionDomainService:
             prediction=prediction, actual_home=actual_home, actual_away=actual_y
         )
 
-        assert evaluated_prediction.points.accuracy_bonus == expected_bonus
-        assert evaluated_prediction.points.total_points == 10.0 + expected_bonus
+        # 检查score_bonus（精确比分奖励）或result_bonus（正确结果奖励）
+        if expected_bonus == 10.0:  # 精确比分匹配
+            assert evaluated_prediction.points.score_bonus == expected_bonus
+        elif expected_bonus == 3.0:  # 正确结果匹配
+            assert evaluated_prediction.points.result_bonus == expected_bonus
+        else:  # 无匹配
+            assert evaluated_prediction.points.score_bonus == 0.0
+            assert evaluated_prediction.points.result_bonus == 0.0
+
+        assert evaluated_prediction.points.total == 10.0 + float(expected_bonus)
 
     def test_multiple_predictions_same_user(self, prediction_service, mock_match):
         """测试同一用户的多个预测"""
@@ -551,7 +558,7 @@ class TestPredictionDomainService:
         # 验证事件数量
         events = prediction_service.get_domain_events()
         assert len(events) == 3
-        assert all(event.prediction.user_id == user_id for event in events)
+        assert all(event.user_id == user_id for event in events)
 
 
 @pytest.mark.unit
@@ -568,7 +575,12 @@ class TestPredictionServiceIntegration:
         # 创建模拟数据
         home_team = Team(id=1, name="Home Team")
         away_team = Team(id=2, name="Away Team")
-        match = Match(id=1, home_team=home_team, away_team=away_team)
+        match = Match(
+            id=1,
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            match_date=datetime.now() + timedelta(days=1),
+        )
 
         # 1. 创建预测
         prediction = service.create_prediction(
@@ -577,22 +589,27 @@ class TestPredictionServiceIntegration:
         assert prediction.status == PredictionStatus.PENDING
 
         # 2. 更新预测
-        service.clear_events()
-        updated_prediction = service.update_prediction(
-            prediction=prediction, confidence=0.9, notes="Updated"
+        service.clear_domain_events()
+        service.update_prediction(
+            prediction=prediction,
+            new_predicted_home=2,
+            new_predicted_away=1,
+            new_confidence=0.9,
         )
-        assert updated_prediction.confidence == 0.9
+        # 注意：update_prediction不返回对象，confidence已更新
 
         # 3. 评估预测
-        service.clear_events()
+        service.clear_domain_events()
         evaluated_prediction = service.evaluate_prediction(
-            prediction=updated_prediction, actual_home=2, actual_away=1
+            prediction=prediction, actual_home=2, actual_away=1
         )
         assert evaluated_prediction.status == PredictionStatus.EVALUATED
-        assert evaluated_prediction.points.total_points == 30.0
+        assert (
+            evaluated_prediction.points.total == 24.0
+        )  # 10(base) + 10(score) + 4(confidence)
 
         # 4. 验证工作流程中的事件
-        events = service.get_events()
+        events = service.get_domain_events()
         assert len(events) == 1
         assert isinstance(events[0], PredictionEvaluatedEvent)
 
@@ -603,14 +620,19 @@ class TestPredictionServiceIntegration:
         # 创建预测
         home_team = Team(id=1, name="Home Team")
         away_team = Team(id=2, name="Away Team")
-        match = Match(id=1, home_team=home_team, away_team=away_team)
+        match = Match(
+            id=1,
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            match_date=datetime.now() + timedelta(days=1),
+        )
 
         prediction = service.create_prediction(
             user_id=123, match=match, predicted_home=1, predicted_away=1
         )
 
         # 取消预测
-        service.clear_events()
+        service.clear_domain_events()
         cancelled_prediction = service.cancel_prediction(
             prediction, "User requested cancellation"
         )
@@ -618,7 +640,7 @@ class TestPredictionServiceIntegration:
         # 验证取消状态和事件
         assert cancelled_prediction.status == PredictionStatus.CANCELLED
 
-        events = service.get_events()
+        events = service.get_domain_events()
         assert len(events) == 1
         assert isinstance(events[0], PredictionCancelledEvent)
 

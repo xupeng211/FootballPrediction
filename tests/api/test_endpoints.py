@@ -7,12 +7,16 @@ Version: 1.0
 Coverage Goal: Test all critical API endpoints
 """
 
+import os
 import time
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
+
+# 设置测试环境变量
+os.environ["TESTING"] = "true"
 
 # Import application modules
 try:

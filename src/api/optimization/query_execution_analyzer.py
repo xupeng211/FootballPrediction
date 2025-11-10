@@ -636,7 +636,7 @@ class QueryExecutionAnalyzer:
 
         # 标准化查询文本
         normalized_query = " ".join(query.strip().split()).lower()
-        return hashlib.md5(normalized_query.encode()).hexdigest()
+        return hashlib.sha256(normalized_query.encode()).hexdigest()
 
     def get_cached_analysis(self, query_hash: str) -> ExecutionPlanAnalysis | None:
         """获取缓存的分析结果"""

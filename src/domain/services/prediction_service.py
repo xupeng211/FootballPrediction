@@ -28,10 +28,43 @@ class PredictionDomainService:
     pass  # 添加pass语句
     """预测领域服务"""
 
-    def __init__(self):
+    def __init__(self, config: dict[str, Any] | None = None):
         """函数文档字符串"""
-        # 添加pass语句
-        self._events: list[Any] = []
+        self._config = config or {}
+        self._events = []
+        self._is_initialized = False
+        self._is_disposed = False
+        self._health_status = "healthy"
+        self._created_at = datetime.utcnow()
+
+    def initialize(self) -> bool:
+        """初始化服务"""
+        if self._is_disposed:
+            raise RuntimeError("Cannot initialize disposed service")
+        self._is_initialized = True
+        return True
+
+    def dispose(self) -> None:
+        """销毁服务"""
+        self._is_disposed = True
+        self._is_initialized = False
+        self._events.clear()
+
+    def is_healthy(self) -> bool:
+        """检查服务健康状态"""
+        return self._health_status == "healthy" and not self._is_disposed
+
+    def get_service_info(self) -> dict[str, Any]:
+        """获取服务信息"""
+        return {
+            "name": "PredictionDomainService",
+            "initialized": self._is_initialized,
+            "disposed": self._is_disposed,
+            "healthy": self.is_healthy(),
+            "created_at": self._created_at.isoformat() if self._created_at else None,
+            "event_count": len(self._events),
+            "config": self._config,
+        }
 
     def create_prediction(
         self,
@@ -172,7 +205,7 @@ class PredictionDomainService:
 
     def cancel_prediction(
         self, prediction: Prediction, reason: str = "用户取消"
-    ) -> None:
+    ) -> Prediction:
         """取消预测"""
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能取消待处理的预测")
@@ -185,6 +218,8 @@ class PredictionDomainService:
 
         event = PredictionCancelledEvent(prediction_id=prediction.id, reason=reason)
         self._events.append(event)
+
+        return prediction
 
     def expire_prediction(self, prediction: Prediction) -> None:
         """使预测过期"""
