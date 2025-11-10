@@ -15,6 +15,7 @@ from src.services.prediction_service import (
     PredictionResult,
     PredictionService,
     predict_match,
+    predict_match_async,
 )
 
 
@@ -294,6 +295,19 @@ class TestPredictionService:
 class TestConvenienceFunctions:
     """便捷函数测试类"""
 
+    @pytest.fixture
+    def sample_match_data(self):
+        """示例比赛数据"""
+        return {
+            "match_id": 12345,
+            "home_team_id": 1,
+            "away_team_id": 2,
+            "league_id": 39,
+            "match_date": "2024-01-15T15:00:00Z",
+            "home_team_form": ["W", "D", "W"],
+            "away_team_form": ["L", "D", "L"],
+        }
+
     def test_predict_match_function(self, sample_match_data):
         """测试便捷的预测函数"""
         result = predict_match(sample_match_data, "test_model")
@@ -316,6 +330,20 @@ class TestConvenienceFunctions:
 
 class TestPredictionServiceIntegration:
     """预测服务集成测试类"""
+
+    @pytest.fixture
+    def prediction_service(self):
+        """预测服务实例"""
+        return PredictionService()
+
+    @pytest.fixture
+    def batch_match_data(self):
+        """批量比赛数据"""
+        return [
+            {"match_id": 12345, "home_team_id": 1, "away_team_id": 2, "league_id": 39},
+            {"match_id": 12346, "home_team_id": 3, "away_team_id": 4, "league_id": 39},
+            {"match_id": 12347, "home_team_id": 5, "away_team_id": 6, "league_id": 39},
+        ]
 
     def test_service_dependency_injection(self):
         """测试服务依赖注入"""
