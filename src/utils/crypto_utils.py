@@ -96,6 +96,35 @@ class CryptoUtils:
             return ""
 
     @staticmethod
+    def create_checksum(data: str) -> str:
+        """创建校验和"""
+        import hashlib
+
+        try:
+            if data is None:
+                return ""
+            return hashlib.sha256(str(data).encode("utf-8")).hexdigest()
+        except Exception:
+            return hashlib.sha256(b"").hexdigest()
+
+    @staticmethod
+    def generate_random_string(length: int = 32) -> str:
+        """生成随机字符串"""
+        try:
+            return secrets.token_urlsafe(length)[:length]
+        except Exception:
+            return ""
+
+    @staticmethod
+    def generate_api_key(prefix: str = "api") -> str:
+        """生成API密钥"""
+        try:
+            random_part = secrets.token_urlsafe(24)
+            return f"{prefix}_{random_part}"
+        except Exception:
+            return f"{prefix}_default"
+
+    @staticmethod
     def encode_url(data: str) -> str:
         """URL编码 - 别名方法"""
         try:

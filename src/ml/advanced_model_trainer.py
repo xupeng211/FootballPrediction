@@ -14,7 +14,7 @@ class ModelType(Enum):
     NEURAL_NETWORK = "neural_network"
 
 
-class Advanced_Model_Trainer:
+class AdvancedModelTrainer:
     def __init__(self):
         pass
 

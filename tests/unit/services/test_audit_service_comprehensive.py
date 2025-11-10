@@ -17,8 +17,8 @@ from src.services.audit_service import (
     AuditEvent,
     AuditLog,
     AuditLogSummary,
-    AuditSeverity,
     AuditService,
+    AuditSeverity,
     DataSanitizer,
     SeverityAnalyzer,
 )
@@ -47,9 +47,7 @@ class TestDataStructures:
     def test_audit_context_creation(self):
         """测试审计上下文创建"""
         context = AuditContext(
-            user_id="user123",
-            session_id="session456",
-            ip_address="192.168.1.1"
+            user_id="user123", session_id="session456", ip_address="192.168.1.1"
         )
 
         assert context.user_id == "user123"
@@ -73,7 +71,7 @@ class TestDataStructures:
             action=AuditAction.CREATE,
             context=context,
             severity=AuditSeverity.HIGH,
-            details={"resource": "prediction", "id": 123}
+            details={"resource": "prediction", "id": 123},
         )
 
         assert log.action == AuditAction.CREATE
@@ -96,7 +94,7 @@ class TestDataStructures:
             action="create_prediction",
             user="user123",
             severity=AuditSeverity.MEDIUM,
-            details={"prediction_id": 456, "confidence": 0.85}
+            details={"prediction_id": 456, "confidence": 0.85},
         )
 
         assert event.action == "create_prediction"
@@ -136,7 +134,7 @@ class TestDataSanitizer:
             "username": "john",
             "password": "secret",
             "token": "abc123",
-            "normal_field": "preserve_me"
+            "normal_field": "preserve_me",
         }
         result = sanitizer.sanitize(data)
 
@@ -236,12 +234,12 @@ class TestAuditService:
     def test_audit_service_initialization(self, audit_service):
         """测试审计服务初始化"""
         assert audit_service.events == []
-        assert hasattr(audit_service, 'sanitizer')
-        assert hasattr(audit_service, 'analyzer')
+        assert hasattr(audit_service, "sanitizer")
+        assert hasattr(audit_service, "analyzer")
         assert isinstance(audit_service.sanitizer, DataSanitizer)
         assert isinstance(audit_service.analyzer, SeverityAnalyzer)
 
-    @patch('src.services.audit_service.logger')
+    @patch("src.services.audit_service.logger")
     def test_log_event_basic(self, mock_logger, audit_service):
         """测试基础事件记录"""
         details = {"action": "create_prediction", "prediction_id": 123}
@@ -252,9 +250,11 @@ class TestAuditService:
         assert event._user == "user123"
         assert event.details["prediction_id"] == 123
         assert isinstance(event.timestamp, datetime)
-        mock_logger.info.assert_called_once_with("Audit event logged: create_prediction by user123")
+        mock_logger.info.assert_called_once_with(
+            "Audit event logged: create_prediction by user123"
+        )
 
-    @patch('src.services.audit_service.logger')
+    @patch("src.services.audit_service.logger")
     def test_log_event_with_sensitive_data(self, mock_logger, audit_service):
         """测试包含敏感数据的事件记录"""
         details = {"username": "john", "password": "secret123", "token": "abc123"}
@@ -370,51 +370,43 @@ class TestAuditServiceIntegration:
 
         # 模拟用户会话
         context = AuditContext(
-            user_id="user123",
-            session_id="session456",
-            ip_address="192.168.1.100"
+            user_id="user123", session_id="session456", ip_address="192.168.1.100"
         )
 
         # 1. 用户登录
         login_event = audit_service.log_event(
             AuditAction.LOGIN,
             context.user_id,
-            {"session_id": context.session_id, "ip": context.ip_address}
+            {"session_id": context.session_id, "ip": context.ip_address},
         )
 
         # 2. 创建预测
-        prediction_event = audit_service.log_event(
+        audit_service.log_event(
             "create_prediction",
             context.user_id,
-            {"prediction_id": 789, "confidence": 0.92}
+            {"prediction_id": 789, "confidence": 0.92},
         )
 
         # 3. 读取预测
-        read_event = audit_service.log_event(
-            AuditAction.READ,
-            context.user_id,
-            {"prediction_id": 789}
+        audit_service.log_event(
+            AuditAction.READ, context.user_id, {"prediction_id": 789}
         )
 
         # 4. 更新预测
         update_event = audit_service.log_event(
             "modify_prediction",
             context.user_id,
-            {"prediction_id": 789, "new_confidence": 0.95}
+            {"prediction_id": 789, "new_confidence": 0.95},
         )
 
         # 5. 删除预测
         delete_event = audit_service.log_event(
-            AuditAction.DELETE,
-            context.user_id,
-            {"prediction_id": 789}
+            AuditAction.DELETE, context.user_id, {"prediction_id": 789}
         )
 
         # 6. 用户登出
         logout_event = audit_service.log_event(
-            AuditAction.LOGOUT,
-            context.user_id,
-            {"session_id": context.session_id}
+            AuditAction.LOGOUT, context.user_id, {"session_id": context.session_id}
         )
 
         # 验证所有事件都被记录
@@ -438,7 +430,6 @@ class TestAuditServiceIntegration:
     def test_concurrent_logging(self):
         """测试并发日志记录"""
         import threading
-        import time
 
         audit_service = AuditService()
         results = []
@@ -447,19 +438,14 @@ class TestAuditServiceIntegration:
             """为用户记录事件"""
             for i in range(event_count):
                 event = audit_service.log_event(
-                    f"action_{i}",
-                    user_id,
-                    {"iteration": i}
+                    f"action_{i}", user_id, {"iteration": i}
                 )
                 results.append(event)
 
         # 创建多个线程同时记录事件
         threads = []
         for user_id in ["user1", "user2", "user3"]:
-            thread = threading.Thread(
-                target=log_user_events,
-                args=(user_id, 5)
-            )
+            thread = threading.Thread(target=log_user_events, args=(user_id, 5))
             threads.append(thread)
             thread.start()
 

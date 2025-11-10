@@ -122,18 +122,18 @@ class TenantMiddleware(BaseHTTPMiddleware):
         支持多种租户识别方式:
         1. 子域名 (tenant.example.com)
         2. 自定义域名
-        3. Header (X-Tenant-ID 或 X-Tenant-Slug)
+        3. Header (x-Tenant-ID 或 x-Tenant-Slug)
         4. URL路径参数 (/api/v1/{tenant_slug}/...)
         """
         # 1. 从Header中获取
-        tenant_id = request.headers.get("X-Tenant-ID")
+        tenant_id = request.headers.get("x-Tenant-ID")
         if tenant_id:
             try:
                 return await self.tenant_service.get_tenant_by_id(int(tenant_id))
             except (ValueError, TypeError):
                 pass
 
-        tenant_slug = request.headers.get("X-Tenant-Slug")
+        tenant_slug = request.headers.get("x-Tenant-Slug")
         if tenant_slug:
             return await self.tenant_service.get_tenant_by_slug(tenant_slug)
 
@@ -213,7 +213,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         # 尝试从API Key获取用户信息
         if not context["user_id"]:
-            api_key = request.headers.get("X-API-Key")
+            api_key = request.headers.get("x-API-Key")
             if api_key:
                 # 这里应该实现API Key验证逻辑
                 # 暂时跳过
@@ -226,9 +226,9 @@ class TenantMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """添加租户相关的响应头"""
         if tenant_context.tenant:
-            response.headers["X-Tenant-ID"] = str(tenant_context.tenant_id)
-            response.headers["X-Tenant-Slug"] = tenant_context.tenant_slug or ""
-            response.headers["X-Tenant-Plan"] = tenant_context.tenant.plan
+            response.headers["x-Tenant-ID"] = str(tenant_context.tenant_id)
+            response.headers["x-Tenant-Slug"] = tenant_context.tenant_slug or ""
+            response.headers["x-Tenant-Plan"] = tenant_context.tenant.plan
 
 
 # ==================== 权限装饰器 ====================

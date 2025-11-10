@@ -126,8 +126,8 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
                 self.request_times = self.request_times[-1000:]
 
             # 添加性能头部
-            response.headers["X-Process-Time"] = f"{duration:.4f}"
-            response.headers["X-Request-ID"] = request_id
+            response.headers["x-Process-Time"] = f"{duration:.4f}"
+            response.headers["x-Request-ID"] = request_id
 
             if self.track_memory and start_memory:
                 import psutil
@@ -135,7 +135,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
                 process = psutil.Process()
                 end_memory = process.memory_info().rss / 1024 / 1024
                 memory_delta = end_memory - start_memory
-                response.headers["X-Memory-Delta"] = f"{memory_delta:.2f}MB"
+                response.headers["x-Memory-Delta"] = f"{memory_delta:.2f}MB"
 
             # 记录慢请求
             if duration > 1.0:  # 超过1秒的请求

@@ -7,12 +7,9 @@ Full Workflow Integration Tests
 
 import asyncio
 from datetime import datetime, timedelta
-from decimal import Decimal
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 # 标记测试
@@ -24,7 +21,11 @@ class TestCompletePredictionWorkflow:
 
     @pytest.mark.asyncio
     async def test_end_to_end_prediction_workflow(
-        self, async_client: AsyncClient, sample_teams, test_user_data, mock_external_services
+        self,
+        async_client: AsyncClient,
+        sample_teams,
+        test_user_data,
+        mock_external_services,
     ):
         """测试端到端预测工作流"""
         if not sample_teams or len(sample_teams) < 2:
@@ -49,8 +50,10 @@ class TestCompletePredictionWorkflow:
             "created_at": user_data["created_at"].isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/register", json=registration_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/register", json=registration_data
+            )
 
             if response.status_code in [200, 201]:
                 user = response.json()
@@ -60,7 +63,7 @@ class TestCompletePredictionWorkflow:
                 user_id = user_data["id"]
 
         # 工作流步骤2: 用户登录获取token
-        login_data = {
+        {
             "username": user_data["username"],
             "password": "SecurePassword123!",
         }
@@ -82,7 +85,7 @@ class TestCompletePredictionWorkflow:
             "away_team_id": away_team.id,
             "match_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
             "venue": "Test Stadium",
-            "league_id": home_team.league_id if hasattr(home_team, 'league_id') else 1,
+            "league_id": home_team.league_id if hasattr(home_team, "league_id") else 1,
         }
 
         mock_match_service = AsyncMock()
@@ -97,7 +100,9 @@ class TestCompletePredictionWorkflow:
             "away_score": 0,
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post("/api/matches/", json=match_data)
 
             if response.status_code == 200:
@@ -127,8 +132,13 @@ class TestCompletePredictionWorkflow:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
-            response = await async_client.post("/api/predictions/", json=prediction_data)
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
+            response = await async_client.post(
+                "/api/predictions/", json=prediction_data
+            )
 
             if response.status_code == 200:
                 prediction = response.json()
@@ -139,10 +149,9 @@ class TestCompletePredictionWorkflow:
         # 工作流步骤5: 获取预测历史
         mock_user_service.get_user_predictions.return_value = [prediction]
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.get(
-                f"/api/users/{user_id}/predictions",
-                headers=auth_headers
+                f"/api/users/{user_id}/predictions", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -164,15 +173,17 @@ class TestCompletePredictionWorkflow:
             "accuracy_score": 1.0,
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post(
-                f"/api/predictions/{prediction_id}/evaluate",
-                json=evaluation_data
+                f"/api/predictions/{prediction_id}/evaluate", json=evaluation_data
             )
 
             if response.status_code == 200:
                 evaluation = response.json()
-                assert evaluation["is_correct"] == True
+                assert evaluation["is_correct"]
                 assert evaluation["points_earned"] > 0
 
         # 工作流步骤7: 更新用户积分
@@ -184,9 +195,14 @@ class TestCompletePredictionWorkflow:
         }
 
         # 工作流步骤8: 发送通知
-        with patch('src.domain.events.event_bus', mock_external_services["notification_service"]):
+        with patch(
+            "src.domain.events.event_bus",
+            mock_external_services["notification_service"],
+        ):
             # 验证通知服务被调用
-            if hasattr(mock_external_services["notification_service"], 'send_notification'):
+            if hasattr(
+                mock_external_services["notification_service"], "send_notification"
+            ):
                 pass  # 在实际实现中会验证调用
 
         # 验证完整工作流成功
@@ -216,7 +232,9 @@ class TestCompletePredictionWorkflow:
             }
             prediction_data.update(invalid_prediction)
 
-            response = await async_client.post("/api/predictions/", json=prediction_data)
+            response = await async_client.post(
+                "/api/predictions/", json=prediction_data
+            )
 
             # 应该返回验证错误
             if response.status_code != 404:  # 如果端点存在
@@ -251,19 +269,23 @@ class TestCompletePredictionWorkflow:
                 "status": "pending",
             }
 
-            with patch('src.api.routes.predictions.PredictionService', return_value=mock_service):
-                return await async_client.post("/api/predictions/", json=prediction_data)
+            with patch(
+                "src.api.routes.predictions.PredictionService",
+                return_value=mock_service,
+            ):
+                return await async_client.post(
+                    "/api/predictions/", json=prediction_data
+                )
 
         # 并发创建多个用户预测
-        tasks = [
-            create_user_prediction(i) for i in range(1, 11)  # 10个用户
-        ]
+        tasks = [create_user_prediction(i) for i in range(1, 11)]  # 10个用户
 
         responses = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 验证并发处理结果
         successful_responses = [
-            r for r in responses
+            r
+            for r in responses
             if not isinstance(r, Exception) and r.status_code == 200
         ]
 
@@ -289,7 +311,7 @@ class TestMatchManagementWorkflow:
             "away_team_id": away_team.id,
             "match_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
             "venue": "Test Stadium",
-            "league_id": home_team.league_id if hasattr(home_team, 'league_id') else 1,
+            "league_id": home_team.league_id if hasattr(home_team, "league_id") else 1,
         }
 
         mock_match_service = AsyncMock()
@@ -304,7 +326,9 @@ class TestMatchManagementWorkflow:
             "away_score": 0,
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post("/api/matches/", json=match_data)
 
             if response.status_code == 200:
@@ -334,8 +358,13 @@ class TestMatchManagementWorkflow:
             "status": "pending",
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
-            response = await async_client.post("/api/predictions/", json=prediction_data)
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
+            response = await async_client.post(
+                "/api/predictions/", json=prediction_data
+            )
 
             # 步骤3: 开始比赛
             mock_match_service.start_match.return_value = {
@@ -344,7 +373,9 @@ class TestMatchManagementWorkflow:
                 "started_at": datetime.utcnow().isoformat(),
             }
 
-            with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+            with patch(
+                "src.api.routes.matches.MatchService", return_value=mock_match_service
+            ):
                 response = await async_client.post(f"/api/matches/{match_id}/start")
 
                 if response.status_code == 200:
@@ -365,10 +396,11 @@ class TestMatchManagementWorkflow:
             "finished_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post(
-                f"/api/matches/{match_id}/finish",
-                json=finish_data
+                f"/api/matches/{match_id}/finish", json=finish_data
             )
 
             if response.status_code == 200:
@@ -384,7 +416,10 @@ class TestMatchManagementWorkflow:
             "total_points_awarded": 10,
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post(
                 f"/api/matches/{match_id}/evaluate-predictions"
             )
@@ -415,7 +450,9 @@ class TestMatchManagementWorkflow:
             },
         }
 
-        with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+        with patch(
+            "src.api.routes.matches.MatchService", return_value=mock_match_service
+        ):
             response = await async_client.post(
                 f"/api/matches/{match_id}/update-statistics"
             )
@@ -450,7 +487,9 @@ class TestMatchManagementWorkflow:
                 "status": "scheduled",
             }
 
-            with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+            with patch(
+                "src.api.routes.matches.MatchService", return_value=mock_match_service
+            ):
                 response = await async_client.post("/api/matches/", json=match_data)
                 if response.status_code == 200:
                     match = response.json()
@@ -471,10 +510,11 @@ class TestMatchManagementWorkflow:
                 "finished_at": datetime.utcnow().isoformat(),
             }
 
-            with patch('src.api.routes.matches.MatchService', return_value=mock_match_service):
+            with patch(
+                "src.api.routes.matches.MatchService", return_value=mock_match_service
+            ):
                 response = await async_client.post(
-                    f"/api/matches/{match['id']}/finish",
-                    json=finish_data
+                    f"/api/matches/{match['id']}/finish", json=finish_data
                 )
 
         # 步骤3: 批量评估预测
@@ -484,7 +524,10 @@ class TestMatchManagementWorkflow:
             "total_points_awarded": len(created_matches) * 15,  # 平均每场15分
         }
 
-        with patch('src.api.routes.predictions.PredictionService', return_value=mock_prediction_service):
+        with patch(
+            "src.api.routes.predictions.PredictionService",
+            return_value=mock_prediction_service,
+        ):
             response = await async_client.post("/api/predictions/evaluate-all")
 
             if response.status_code == 200:
@@ -520,14 +563,16 @@ class TestUserManagementWorkflow:
             "created_at": user_data["created_at"].isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/register", json=registration_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/register", json=registration_data
+            )
 
             if response.status_code in [200, 201]:
                 user = response.json()
                 user_id = user["id"]
-                assert user["is_active"] == True
-                assert user["is_verified"] == False
+                assert user["is_active"]
+                assert not user["is_verified"]
             else:
                 user_id = user_data["id"]
 
@@ -540,15 +585,14 @@ class TestUserManagementWorkflow:
             "verified_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
-                f"/api/users/verify-email",
-                json={"token": verification_token}
+                "/api/users/verify-email", json={"token": verification_token}
             )
 
             if response.status_code == 200:
                 verification_result = response.json()
-                assert verification_result["is_verified"] == True
+                assert verification_result["is_verified"]
 
         # 步骤3: 用户登录
         login_data = {
@@ -564,7 +608,7 @@ class TestUserManagementWorkflow:
             "user": user,
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
             response = await async_client.post("/api/auth/login", json=login_data)
 
             if response.status_code == 200:
@@ -592,11 +636,9 @@ class TestUserManagementWorkflow:
             "updated_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.put(
-                f"/api/users/{user_id}/profile",
-                json=profile_data,
-                headers=auth_headers
+                f"/api/users/{user_id}/profile", json=profile_data, headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -615,10 +657,9 @@ class TestUserManagementWorkflow:
             "last_prediction": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.get(
-                f"/api/users/{user_id}/statistics",
-                headers=auth_headers
+                f"/api/users/{user_id}/statistics", headers=auth_headers
             )
 
             if response.status_code == 200:
@@ -636,8 +677,10 @@ class TestUserManagementWorkflow:
             "reset_token": "reset_token_123",
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
-            response = await async_client.post("/api/users/reset-password", json=reset_data)
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
+            response = await async_client.post(
+                "/api/users/reset-password", json=reset_data
+            )
 
             if response.status_code == 200:
                 reset_result = response.json()
@@ -654,10 +697,9 @@ class TestUserManagementWorkflow:
             "message": "Password reset successful",
         }
 
-        with patch('src.api.routes.users.UserService', return_value=mock_user_service):
+        with patch("src.api.routes.users.UserService", return_value=mock_user_service):
             response = await async_client.post(
-                "/api/users/confirm-password-reset",
-                json=confirm_reset_data
+                "/api/users/confirm-password-reset", json=confirm_reset_data
             )
 
             if response.status_code == 200:
@@ -668,11 +710,8 @@ class TestUserManagementWorkflow:
             "message": "Logged out successfully",
         }
 
-        with patch('src.api.routes.auth.AuthService', return_value=mock_auth_service):
-            response = await async_client.post(
-                "/api/auth/logout",
-                headers=auth_headers
-            )
+        with patch("src.api.routes.auth.AuthService", return_value=mock_auth_service):
+            response = await async_client.post("/api/auth/logout", headers=auth_headers)
 
             if response.status_code == 200:
                 logout_result = response.json()
@@ -684,7 +723,10 @@ class TestDataProcessingWorkflow:
 
     @pytest.mark.asyncio
     async def test_external_data_sync_workflow(
-        self, async_client: AsyncClient, mock_external_api_responses, mock_external_services
+        self,
+        async_client: AsyncClient,
+        mock_external_api_responses,
+        mock_external_services,
     ):
         """测试外部数据同步工作流"""
         # 步骤1: 同步比赛数据
@@ -696,7 +738,7 @@ class TestDataProcessingWorkflow:
             "sync_time": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.data.DataService', return_value=mock_data_service):
+        with patch("src.api.routes.data.DataService", return_value=mock_data_service):
             response = await async_client.post("/api/data/sync/matches")
 
             if response.status_code == 200:
@@ -711,7 +753,7 @@ class TestDataProcessingWorkflow:
             "sync_time": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.data.DataService', return_value=mock_data_service):
+        with patch("src.api.routes.data.DataService", return_value=mock_data_service):
             response = await async_client.post("/api/data/sync/odds")
 
             if response.status_code == 200:
@@ -730,7 +772,7 @@ class TestDataProcessingWorkflow:
             ],
         }
 
-        with patch('src.api.routes.data.DataService', return_value=mock_data_service):
+        with patch("src.api.routes.data.DataService", return_value=mock_data_service):
             response = await async_client.get("/api/data/quality-check")
 
             if response.status_code == 200:
@@ -750,7 +792,10 @@ class TestDataProcessingWorkflow:
             "updated_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.analytics.AnalyticsService', return_value=mock_analytics_service):
+        with patch(
+            "src.api.routes.analytics.AnalyticsService",
+            return_value=mock_analytics_service,
+        ):
             response = await async_client.post("/api/analytics/update/predictions")
 
             if response.status_code == 200:
@@ -764,7 +809,10 @@ class TestDataProcessingWorkflow:
             "updated_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.routes.analytics.AnalyticsService', return_value=mock_analytics_service):
+        with patch(
+            "src.api.routes.analytics.AnalyticsService",
+            return_value=mock_analytics_service,
+        ):
             response = await async_client.post("/api/analytics/update/users")
 
             if response.status_code == 200:
@@ -783,10 +831,13 @@ class TestDataProcessingWorkflow:
             },
         }
 
-        with patch('src.api.routes.analytics.AnalyticsService', return_value=mock_analytics_service):
+        with patch(
+            "src.api.routes.analytics.AnalyticsService",
+            return_value=mock_analytics_service,
+        ):
             response = await async_client.post(
                 "/api/analytics/reports",
-                json={"type": "weekly", "period": "last_7_days"}
+                json={"type": "weekly", "period": "last_7_days"},
             )
 
             if response.status_code == 200:
@@ -813,7 +864,7 @@ class TestErrorHandlingWorkflow:
             "last_check": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.health.HealthService', return_value=mock_health_service):
+        with patch("src.api.health.HealthService", return_value=mock_health_service):
             response = await async_client.get("/api/health/detailed")
 
             if response.status_code == 200:
@@ -822,9 +873,11 @@ class TestErrorHandlingWorkflow:
 
         # 步骤2: 模拟数据库连接失败
         mock_db_service = AsyncMock()
-        mock_db_service.check_connection.side_effect = ConnectionError("Database connection failed")
+        mock_db_service.check_connection.side_effect = ConnectionError(
+            "Database connection failed"
+        )
 
-        with patch('src.api.health.HealthService', return_value=mock_db_service):
+        with patch("src.api.health.HealthService", return_value=mock_db_service):
             response = await async_client.get("/api/health/database")
 
             # 应该返回错误状态
@@ -838,17 +891,15 @@ class TestErrorHandlingWorkflow:
             "recovery_time": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.health.HealthService', return_value=mock_health_service):
+        with patch("src.api.health.HealthService", return_value=mock_health_service):
             response = await async_client.post("/api/health/recover")
 
             if response.status_code == 200:
                 recovery_result = response.json()
-                assert recovery_result["recovery_successful"] == True
+                assert recovery_result["recovery_successful"]
 
     @pytest.mark.asyncio
-    async def test_data_consistency_workflow(
-        self, async_client: AsyncClient
-    ):
+    async def test_data_consistency_workflow(self, async_client: AsyncClient):
         """测试数据一致性工作流"""
         # 步骤1: 检查数据一致性
         mock_consistency_service = AsyncMock()
@@ -861,17 +912,19 @@ class TestErrorHandlingWorkflow:
                 {
                     "type": "orphaned_predictions",
                     "count": 1,
-                    "description": "Predictions without corresponding matches"
+                    "description": "Predictions without corresponding matches",
                 },
                 {
                     "type": "inconsistent_scores",
                     "count": 1,
-                    "description": "Mismatch between home/away scores"
-                }
+                    "description": "Mismatch between home/away scores",
+                },
             ],
         }
 
-        with patch('src.api.data.ConsistencyService', return_value=mock_consistency_service):
+        with patch(
+            "src.api.data.ConsistencyService", return_value=mock_consistency_service
+        ):
             response = await async_client.get("/api/data/consistency-check")
 
             if response.status_code == 200:
@@ -886,7 +939,9 @@ class TestErrorHandlingWorkflow:
             "fix_time": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.api.data.ConsistencyService', return_value=mock_consistency_service):
+        with patch(
+            "src.api.data.ConsistencyService", return_value=mock_consistency_service
+        ):
             response = await async_client.post("/api/data/fix-consistency")
 
             if response.status_code == 200:
@@ -927,7 +982,10 @@ class TestPerformanceWorkflow:
                     "status": "pending",
                 }
 
-                with patch('src.api.routes.predictions.PredictionService', return_value=mock_service):
+                with patch(
+                    "src.api.routes.predictions.PredictionService",
+                    return_value=mock_service,
+                ):
                     task = async_client.post("/api/predictions/", json=prediction_data)
                     tasks.append(task)
 
@@ -939,12 +997,19 @@ class TestPerformanceWorkflow:
         batch_time = time.time() - start_time
 
         # 验证性能
-        successful_responses = [r for r in batch_responses if not isinstance(r, Exception) and hasattr(r, 'status_code')]
+        successful_responses = [
+            r
+            for r in batch_responses
+            if not isinstance(r, Exception) and hasattr(r, "status_code")
+        ]
         success_count = len([r for r in successful_responses if r.status_code == 200])
 
         if success_count > 0:
             avg_time_per_prediction = batch_time / len(batch_responses)
-            assert avg_time_per_prediction < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            assert (
+                avg_time_per_prediction
+                < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            )
 
             # 验证成功率
             success_rate = success_count / len(batch_responses)
@@ -952,7 +1017,11 @@ class TestPerformanceWorkflow:
 
     @pytest.mark.asyncio
     async def test_cache_performance_workflow(
-        self, async_client: AsyncClient, cache_test_data, mock_redis, performance_benchmarks
+        self,
+        async_client: AsyncClient,
+        cache_test_data,
+        mock_redis,
+        performance_benchmarks,
     ):
         """测试缓存性能工作流"""
         import time
@@ -977,7 +1046,9 @@ class TestPerformanceWorkflow:
         # 测试缓存写入性能
         start_time = time.time()
         new_cache_data = {"test": "data", "timestamp": time.time()}
-        response = await async_client.post(f"/api/cache/{cache_key}", json=new_cache_data)
+        response = await async_client.post(
+            f"/api/cache/{cache_key}", json=new_cache_data
+        )
         cache_write_time = time.time() - start_time
 
         # 验证缓存写入性能
@@ -1003,8 +1074,10 @@ async def create_test_user(async_client: AsyncClient, user_data: dict):
         "is_active": True,
     }
 
-    with patch('src.api.routes.users.UserService', return_value=mock_service):
-        response = await async_client.post("/api/users/register", json=registration_data)
+    with patch("src.api.routes.users.UserService", return_value=mock_service):
+        response = await async_client.post(
+            "/api/users/register", json=registration_data
+        )
         return response.json() if response.status_code in [200, 201] else None
 
 
@@ -1017,7 +1090,7 @@ async def create_test_match(async_client: AsyncClient, match_data: dict):
         "status": "scheduled",
     }
 
-    with patch('src.api.routes.matches.MatchService', return_value=mock_service):
+    with patch("src.api.routes.matches.MatchService", return_value=mock_service):
         response = await async_client.post("/api/matches/", json=match_data)
         return response.json() if response.status_code == 200 else None
 
@@ -1031,6 +1104,8 @@ async def create_test_prediction(async_client: AsyncClient, prediction_data: dic
         "status": "pending",
     }
 
-    with patch('src.api.routes.predictions.PredictionService', return_value=mock_service):
+    with patch(
+        "src.api.routes.predictions.PredictionService", return_value=mock_service
+    ):
         response = await async_client.post("/api/predictions/", json=prediction_data)
         return response.json() if response.status_code == 200 else None

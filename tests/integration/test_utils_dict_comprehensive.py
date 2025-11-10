@@ -315,8 +315,6 @@ def test_dict_utils_comprehensive_suite(client):
     assert DictUtils.is_empty({}) is True
     assert DictUtils.count_values({"a": 1, "b": 2}) == 2
 
-    print("✅ DictUtils综合测试套件通过")  # TODO: Add logger import if needed
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

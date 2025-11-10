@@ -7,48 +7,52 @@ Enhanced fixtures and configuration for integration and E2E testing
 """
 
 import asyncio
+
+# 添加项目根目录到Python路径
+import sys
 import tempfile
 from collections.abc import AsyncGenerator
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Generator, List
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, text
 
-# 添加项目根目录到Python路径
-import sys
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # 导入应用模块 - 使用更灵活的导入方式
 try:
-    from src.main import app
     from src.database.models import Base
+    from src.main import app
 except ImportError:
     # 备用导入路径
     try:
-        from src.app_enhanced import app
         from src.database.database_service import Base
+
+        from src.app_enhanced import app
     except ImportError:
-        from src.main_simple import app
         # 创建基础模型类用于测试
         from sqlalchemy.orm import DeclarativeBase
+
+        from src.main_simple import app
+
         class Base(DeclarativeBase):
             pass
 
+
 # 导入领域模型
 try:
-    from src.domain.models.prediction import Prediction, PredictionStatus
-    from src.domain.models.match import Match, MatchStatus
-    from src.domain.models.team import Team
     from src.domain.models.league import League
+    from src.domain.models.match import Match, MatchStatus
+    from src.domain.models.prediction import Prediction, PredictionStatus
+    from src.domain.models.team import Team
 except ImportError:
     # 备用导入或创建简化的测试模型
     Prediction = None
@@ -144,8 +148,9 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
     except TypeError:
         # 如果AsyncClient API不同，使用备用方法
         from fastapi.testclient import TestClient
-        import httpx
+
         client = TestClient(app)
+
         # 创建一个简单的包装器
         class AsyncClientWrapper:
             def __init__(self, test_client):
@@ -199,28 +204,28 @@ async def sample_teams(test_db_session: AsyncSession, sample_league):
             short_name="MUN",
             country="England",
             founded_year=1878,
-            league_id=sample_league.id if hasattr(sample_league, 'id') else None,
+            league_id=sample_league.id if hasattr(sample_league, "id") else None,
         ),
         Team(
             name="Liverpool",
             short_name="LIV",
             country="England",
             founded_year=1892,
-            league_id=sample_league.id if hasattr(sample_league, 'id') else None,
+            league_id=sample_league.id if hasattr(sample_league, "id") else None,
         ),
         Team(
             name="Chelsea",
             short_name="CHE",
             country="England",
             founded_year=1905,
-            league_id=sample_league.id if hasattr(sample_league, 'id') else None,
+            league_id=sample_league.id if hasattr(sample_league, "id") else None,
         ),
         Team(
             name="Arsenal",
             short_name="ARS",
             country="England",
             founded_year=1886,
-            league_id=sample_league.id if hasattr(sample_league, 'id') else None,
+            league_id=sample_league.id if hasattr(sample_league, "id") else None,
         ),
     ]
 
@@ -247,9 +252,9 @@ async def sample_match(test_db_session: AsyncSession, sample_teams):
     match = Match(
         home_team_id=home_team.id,
         away_team_id=away_team.id,
-        league_id=home_team.league_id if hasattr(home_team, 'league_id') else None,
+        league_id=home_team.league_id if hasattr(home_team, "league_id") else None,
         match_date=datetime.utcnow() + timedelta(days=1),
-        status="SCHEDULED" if hasattr(Match, 'status') else "upcoming",
+        status="SCHEDULED" if hasattr(Match, "status") else "upcoming",
         venue="Old Trafford",
         home_score=0,
         away_score=0,
@@ -272,24 +277,40 @@ async def sample_predictions(test_db_session: AsyncSession, sample_match):
         Prediction(
             user_id=1,
             match_id=sample_match.id,
-            status=PredictionStatus.PENDING.value if hasattr(PredictionStatus, 'value') else "pending",
+            status=(
+                PredictionStatus.PENDING.value
+                if hasattr(PredictionStatus, "value")
+                else "pending"
+            ),
         ),
         Prediction(
             user_id=2,
             match_id=sample_match.id,
-            status=PredictionStatus.PENDING.value if hasattr(PredictionStatus, 'value') else "pending",
+            status=(
+                PredictionStatus.PENDING.value
+                if hasattr(PredictionStatus, "value")
+                else "pending"
+            ),
         ),
         Prediction(
             user_id=3,
             match_id=sample_match.id,
-            status=PredictionStatus.EVALUATED.value if hasattr(PredictionStatus, 'value') else "evaluated",
+            status=(
+                PredictionStatus.EVALUATED.value
+                if hasattr(PredictionStatus, "value")
+                else "evaluated"
+            ),
         ),
     ]
 
     # 为已评估的预测设置比分
-    if hasattr(predictions[2], 'make_prediction') and hasattr(predictions[2], 'evaluate'):
+    if hasattr(predictions[2], "make_prediction") and hasattr(
+        predictions[2], "evaluate"
+    ):
         try:
-            predictions[2].make_prediction(predicted_home=2, predicted_away=1, confidence=0.85)
+            predictions[2].make_prediction(
+                predicted_home=2, predicted_away=1, confidence=0.85
+            )
             predictions[2].evaluate(actual_home=2, actual_away=1)
         except Exception:
             # 如果领域方法不可用，手动设置属性
@@ -355,7 +376,7 @@ def mock_external_api_responses():
                 "is_active": True,
                 "role": "user",
             }
-        }
+        },
     }
 
 
@@ -379,7 +400,7 @@ def performance_benchmarks():
         "memory_limits": {
             "max_memory_mb": 512,
             "memory_leak_threshold_mb": 50,
-        }
+        },
     }
 
 
@@ -419,7 +440,7 @@ def test_user_data():
                 "is_active": False,
                 "role": "user",
                 "created_at": datetime.utcnow() - timedelta(days=10),
-            }
+            },
         ]
     }
 
@@ -463,7 +484,7 @@ def cache_test_data():
             "predicted_away": 1,
             "confidence": 0.85,
             "created_at": datetime.utcnow().isoformat(),
-        }
+        },
     }
 
 
@@ -518,7 +539,7 @@ def bulk_test_data():
                 "status": "SCHEDULED",
             }
             for i in range(1, 51)  # 50场比赛
-        ]
+        ],
     }
 
 
@@ -545,7 +566,7 @@ def error_test_data():
             "constraint_violation",
             "deadlock",
             "query_timeout",
-        ]
+        ],
     }
 
 

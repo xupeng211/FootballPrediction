@@ -37,6 +37,45 @@ class PredictionService:
         """初始化预测服务"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
+    def get_predictions(self, limit: int = 10, offset: int = 0) -> list[dict[str, Any]]:
+        """
+        获取预测列表
+        Get predictions list
+
+        Args:
+            limit: 返回数量限制
+            offset: 偏移量
+
+        Returns:
+            预测列表
+        """
+        # 模拟返回一些预测数据
+        sample_predictions = [
+            {
+                "id": "pred_12345",
+                "match_id": 12345,
+                "home_team": "Team A",
+                "away_team": "Team B",
+                "predicted_outcome": "home_win",
+                "confidence": 0.75,
+                "created_at": "2025-11-06T08:00:00.000Z",
+            },
+            {
+                "id": "pred_12346",
+                "match_id": 12346,
+                "home_team": "Team C",
+                "away_team": "Team D",
+                "predicted_outcome": "draw",
+                "confidence": 0.60,
+                "created_at": "2025-11-06T09:00:00.000Z",
+            },
+        ]
+
+        # 应用分页
+        start = offset
+        end = start + limit
+        return sample_predictions[start:end]
+
     def predict_match(
         self, match_data: dict[str, Any], model_name: str = "default"
     ) -> PredictionResult:

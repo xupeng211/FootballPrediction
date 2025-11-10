@@ -27,8 +27,7 @@ try:
     from src.domain.services.team_service import TeamDomainService
 
     CAN_IMPORT = True
-except ImportError as e:
-    print(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
+except ImportError:
     CAN_IMPORT = False
 
     # Mock implementations for testing

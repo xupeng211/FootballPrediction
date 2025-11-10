@@ -167,8 +167,8 @@ class CacheMiddleware(BaseHTTPMiddleware):
         )
 
         # 添加缓存标识头
-        response.headers["X-Cache"] = "HIT"
-        response.headers["X-Cache-TTL"] = str(cached_data.get("process_time", 0))
+        response.headers["x-Cache"] = "HIT"
+        response.headers["x-Cache-TTL"] = str(cached_data.get("process_time", 0))
 
         return response
 

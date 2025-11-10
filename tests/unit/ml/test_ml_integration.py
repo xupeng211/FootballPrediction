@@ -28,8 +28,7 @@ try:
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
-except ImportError as e:
-    print(f"Warning: 无法导入ML模块: {e}")  # TODO: Add logger import if needed
+except ImportError:
     CAN_IMPORT = False
 
 
@@ -183,11 +182,9 @@ class TestMLWorkflowIntegration:
             try:
                 prediction = poisson_model.predict(request)
                 predictions.append(prediction)
-            except Exception as e:
+            except Exception:
                 # 记录预测失败的情况
-                print(
-                    f"Prediction failed for {request['match_id']}: {e}"
-                )  # TODO: Add logger import if needed
+                pass  # TODO: Add logger import if needed
 
         # 6. 验证预测结果
         assert len(predictions) > 0
@@ -784,11 +781,8 @@ class TestMLDataPipeline:
 # 测试运行器
 async def run_ml_integration_tests():
     """运行ML集成测试套件"""
-    print("🤖 开始ML集成测试")  # TODO: Add logger import if needed
-    print("=" * 60)  # TODO: Add logger import if needed
 
     # 这里可以添加更复杂的ML集成测试逻辑
-    print("✅ ML集成测试完成")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

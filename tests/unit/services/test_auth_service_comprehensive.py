@@ -6,9 +6,10 @@ Auth Service Tests
 Tests core functionality of authentication service.
 """
 
-import pytest
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from src.database.models.user import User, UserRole
 from src.services.auth_service import AuthService
@@ -25,7 +26,7 @@ class TestAuthServicePassword:
     @pytest.fixture
     def auth_service(self, mock_db):
         """认证服务实例"""
-        with patch('src.services.auth_service.AuthUserRepository'):
+        with patch("src.services.auth_service.AuthUserRepository"):
             return AuthService(mock_db)
 
     def test_verify_password_correct(self, auth_service):
@@ -76,7 +77,7 @@ class TestAuthServiceTokens:
     @pytest.fixture
     def auth_service(self, mock_db):
         """认证服务实例"""
-        with patch('src.services.auth_service.AuthUserRepository'):
+        with patch("src.services.auth_service.AuthUserRepository"):
             return AuthService(mock_db)
 
     def test_create_access_token_default_expiry(self, auth_service):
@@ -173,7 +174,7 @@ class TestAuthServiceUserRegistration:
     @pytest.fixture
     def auth_service(self, mock_db):
         """认证服务实例"""
-        with patch('src.services.auth_service.AuthUserRepository') as mock_repo_class:
+        with patch("src.services.auth_service.AuthUserRepository") as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             service = AuthService(mock_db)
@@ -194,7 +195,7 @@ class TestAuthServiceUserRegistration:
             email="test@example.com",
             password="password123",
             first_name="Test",
-            last_name="User"
+            last_name="User",
         )
 
         # 验证用户创建
@@ -222,7 +223,7 @@ class TestAuthServiceUserRegistration:
             await auth_service.register_user(
                 username="existing_user",
                 email="new@example.com",
-                password="password123"
+                password="password123",
             )
 
     @pytest.mark.asyncio
@@ -236,7 +237,7 @@ class TestAuthServiceUserRegistration:
             await auth_service.register_user(
                 username="new_user",
                 email="existing@example.com",
-                password="password123"
+                password="password123",
             )
 
     @pytest.mark.asyncio
@@ -247,9 +248,7 @@ class TestAuthServiceUserRegistration:
         auth_service.user_repo.create.return_value = Mock()
 
         await auth_service.register_user(
-            username="testuser",
-            email="test@example.com",
-            password="password123"
+            username="testuser", email="test@example.com", password="password123"
         )
 
         # 验证默认偏好设置
@@ -271,9 +270,7 @@ class TestAuthServiceUserRegistration:
         auth_service.user_repo.create.return_value = Mock()
 
         await auth_service.register_user(
-            username="testuser",
-            email="test@example.com",
-            password="password123"
+            username="testuser", email="test@example.com", password="password123"
         )
 
         # 验证默认统计设置
@@ -299,7 +296,7 @@ class TestAuthServiceAuthentication:
     @pytest.fixture
     def auth_service(self, mock_db):
         """认证服务实例"""
-        with patch('src.services.auth_service.AuthUserRepository') as mock_repo_class:
+        with patch("src.services.auth_service.AuthUserRepository") as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             service = AuthService(mock_db)
@@ -320,7 +317,7 @@ class TestAuthServiceAuthentication:
             "id": 1,
             "username": "testuser",
             "email": "test@example.com",
-            "role": UserRole.USER.value
+            "role": UserRole.USER.value,
         }
         user.update_last_login = Mock()
         return user
@@ -401,7 +398,7 @@ class TestAuthServicePasswordManagement:
     @pytest.fixture
     def auth_service(self, mock_db):
         """认证服务实例"""
-        with patch('src.services.auth_service.AuthUserRepository') as mock_repo_class:
+        with patch("src.services.auth_service.AuthUserRepository") as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             service = AuthService(mock_db)
@@ -422,7 +419,9 @@ class TestAuthServicePasswordManagement:
     @pytest.mark.asyncio
     async def test_change_password_success(self, auth_service, mock_user):
         """测试成功修改密码"""
-        success = await auth_service.change_password(mock_user, "old_password", "new_password")
+        success = await auth_service.change_password(
+            mock_user, "old_password", "new_password"
+        )
 
         assert success is True
         assert mock_user.password_hash != AuthService.get_password_hash("old_password")
@@ -431,7 +430,9 @@ class TestAuthServicePasswordManagement:
     @pytest.mark.asyncio
     async def test_change_password_wrong_current(self, auth_service, mock_user):
         """测试使用错误当前密码修改密码"""
-        success = await auth_service.change_password(mock_user, "wrong_password", "new_password")
+        success = await auth_service.change_password(
+            mock_user, "wrong_password", "new_password"
+        )
 
         assert success is False
 
@@ -458,11 +459,7 @@ class TestAuthServicePasswordManagement:
     async def test_reset_password_success(self, auth_service, mock_user):
         """测试成功重置密码"""
         # 创建重置令牌
-        reset_data = {
-            "sub": "testuser",
-            "user_id": 1,
-            "type": "password_reset"
-        }
+        reset_data = {"sub": "testuser", "user_id": 1, "type": "password_reset"}
         reset_token = auth_service.create_access_token(reset_data, timedelta(hours=1))
 
         auth_service.user_repo.get_by_username.return_value = mock_user
@@ -502,7 +499,7 @@ class TestAuthServiceEmailVerification:
     @pytest.fixture
     def auth_service(self, mock_db):
         """认证服务实例"""
-        with patch('src.services.auth_service.AuthUserRepository') as mock_repo_class:
+        with patch("src.services.auth_service.AuthUserRepository") as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             service = AuthService(mock_db)
@@ -534,9 +531,11 @@ class TestAuthServiceEmailVerification:
         verification_data = {
             "sub": "testuser",
             "user_id": 1,
-            "type": "email_verification"
+            "type": "email_verification",
         }
-        verification_token = auth_service.create_access_token(verification_data, timedelta(hours=24))
+        verification_token = auth_service.create_access_token(
+            verification_data, timedelta(hours=24)
+        )
 
         auth_service.user_repo.get_by_username.return_value = mock_user
 
@@ -559,9 +558,11 @@ class TestAuthServiceEmailVerification:
         verification_data = {
             "sub": "nonexistent",
             "user_id": 999,
-            "type": "email_verification"
+            "type": "email_verification",
         }
-        verification_token = auth_service.create_access_token(verification_data, timedelta(hours=24))
+        verification_token = auth_service.create_access_token(
+            verification_data, timedelta(hours=24)
+        )
 
         auth_service.user_repo.get_by_username.return_value = None
 
@@ -581,7 +582,7 @@ class TestAuthServiceTokenRefresh:
     @pytest.fixture
     def auth_service(self, mock_db):
         """认证服务实例"""
-        with patch('src.services.auth_service.AuthUserRepository') as mock_repo_class:
+        with patch("src.services.auth_service.AuthUserRepository") as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             service = AuthService(mock_db)
@@ -641,7 +642,7 @@ class TestAuthServiceTokenRefresh:
             "sub": "testuser",
             "user_id": 1,
             "role": "user",
-            "email": "test@example.com"
+            "email": "test@example.com",
         }
         access_token = auth_service.create_access_token(access_data)
 
@@ -683,7 +684,7 @@ class TestAuthServiceIntegration:
     @pytest.fixture
     def auth_service(self, mock_db):
         """认证服务实例"""
-        with patch('src.services.auth_service.AuthUserRepository') as mock_repo_class:
+        with patch("src.services.auth_service.AuthUserRepository") as mock_repo_class:
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             service = AuthService(mock_db)
@@ -705,7 +706,7 @@ class TestAuthServiceIntegration:
             "id": 1,
             "username": "testuser",
             "email": "test@example.com",
-            "role": UserRole.USER.value
+            "role": UserRole.USER.value,
         }
         user.update_last_login = Mock()
         return user
@@ -725,10 +726,12 @@ class TestAuthServiceIntegration:
             "sub": "testuser",
             "user_id": 1,
             "role": "user",
-            "email": "test@example.com"
+            "email": "test@example.com",
         }
         access_token = auth_service.create_access_token(access_data)
-        refresh_token = auth_service.create_refresh_token({"sub": "testuser", "user_id": 1})
+        refresh_token = auth_service.create_refresh_token(
+            {"sub": "testuser", "user_id": 1}
+        )
 
         # 4. 验证令牌
         access_payload = auth_service.verify_token(access_token, "access")
@@ -748,15 +751,15 @@ class TestAuthServiceIntegration:
         auth_service.user_repo.create.return_value = mock_user
 
         registered_user = await auth_service.register_user(
-            username="testuser",
-            email="test@example.com",
-            password="password123"
+            username="testuser", email="test@example.com", password="password123"
         )
         assert registered_user is not None
 
         # 2. 用户认证
         auth_service.user_repo.get_by_username.return_value = mock_user
-        authenticated_user = await auth_service.authenticate_user("testuser", "password123")
+        authenticated_user = await auth_service.authenticate_user(
+            "testuser", "password123"
+        )
         assert authenticated_user == mock_user
 
         # 3. 用户登录
@@ -772,7 +775,7 @@ class TestAuthServiceIntegration:
 
         # 5. 邮箱验证
         verification_token = auth_service.create_email_verification_token(mock_user)
-        email_verified = await auth_service.verify_email(verification_token)
+        await auth_service.verify_email(verification_token)
         # 注意：由于模拟设置，这个测试可能需要调整
 
     def test_token_security_features(self, auth_service):
@@ -781,12 +784,14 @@ class TestAuthServiceIntegration:
             "sub": "testuser",
             "user_id": 1,
             "role": "user",
-            "email": "test@example.com"
+            "email": "test@example.com",
         }
 
         # 测试不同类型的令牌
         access_token = auth_service.create_access_token(user_data)
-        refresh_token = auth_service.create_refresh_token({"sub": "testuser", "user_id": 1})
+        refresh_token = auth_service.create_refresh_token(
+            {"sub": "testuser", "user_id": 1}
+        )
 
         # 验证令牌类型区分
         access_payload = auth_service.verify_token(access_token, "access")
@@ -802,6 +807,7 @@ class TestAuthServiceIntegration:
         # 验证过期时间
         short_expiry = auth_service.create_access_token(user_data, timedelta(seconds=1))
         import time
+
         time.sleep(2)  # 等待令牌过期
         expired_payload = auth_service.verify_token(short_expiry)
         assert expired_payload is None

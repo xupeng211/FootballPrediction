@@ -36,9 +36,9 @@ class SecurityHeaders:
     def get_headers() -> dict:
         """获取安全头部"""
         return {
-            "X-Content-Type-Options": "nosniff",
-            "X-Frame-Options": "DENY",
-            "X-XSS-Protection": "1; mode=block",
+            "x-Content-Type-Options": "nosniff",
+            "x-Frame-Options": "DENY",
+            "x-XSS-Protection": "1; mode=block",
         }
 
 

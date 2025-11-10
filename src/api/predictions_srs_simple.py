@@ -1,7 +1,7 @@
-from datetime import datetime
-from enum import Enum
 import asyncio
 import time
+from datetime import datetime
+from enum import Enum
 
 import numpy as np
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status

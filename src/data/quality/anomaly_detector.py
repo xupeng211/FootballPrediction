@@ -1,7 +1,7 @@
 # 简化版 anomaly_detector 模块
 
 
-class Anomaly_Detector:
+class AnomalyDetector:
     def __init__(self):
         pass
 

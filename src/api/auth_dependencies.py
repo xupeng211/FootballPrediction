@@ -7,7 +7,6 @@ Provides authentication and authorization dependency injection functionality for
 """
 
 
-
 # 简单的token数据类
 class TokenData:
     """Token数据类"""
@@ -32,9 +31,9 @@ class SecurityConfig:
     def get_headers(self) -> dict[str, str]:
         """获取安全头部"""
         return {
-            "X-Content-Type-Options": "nosniff",
-            "X-Frame-Options": "DENY",
-            "X-XSS-Protection": "1; mode=block",
+            "x-Content-Type-Options": "nosniff",
+            "x-Frame-Options": "DENY",
+            "x-XSS-Protection": "1; mode=block",
         }
 
 

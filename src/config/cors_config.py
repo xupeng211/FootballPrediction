@@ -2,6 +2,7 @@ import os
 
 """CORS配置管理"""
 
+
 def get_cors_origins() -> list[str]:
     """获取CORS允许的源"""
     env = os.getenv("ENVIRONMENT", "development")
@@ -18,6 +19,7 @@ def get_cors_origins() -> list[str]:
             "http://localhost:8080",  # TODO: 将魔法数字 8080 提取为常量
             "http://localhost:8000",  # TODO: 将魔法数字 8000 提取为常量
         ]
+
 
 def get_cors_config() -> dict:
     """获取完整的CORS配置"""

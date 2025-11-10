@@ -5,13 +5,10 @@ API and Domain Module Integration Tests
 测试API层与Domain层的集成，确保领域模型正确暴露给API接口
 """
 
-import json
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
-import pytest_asyncio
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 # 标记测试
@@ -68,12 +65,18 @@ class TestPredictionAPIDomainIntegration:
             "confidence": 1.5,  # 超出有效范围
         }
 
-        response = await async_client.post("/api/predictions/", json=invalid_prediction_data)
+        response = await async_client.post(
+            "/api/predictions/", json=invalid_prediction_data
+        )
 
         if response.status_code == 422:
             # 验证错误响应包含验证信息
             errors = response.json()
-            assert any("confidence" in str(errors).lower() for errors in [errors] if isinstance(errors, dict))
+            assert any(
+                "confidence" in str(errors).lower()
+                for errors in [errors]
+                if isinstance(errors, dict)
+            )
         elif response.status_code == 404:
             pytest.skip("Prediction API endpoint not available")
 
@@ -145,7 +148,7 @@ class TestPredictionAPIDomainIntegration:
         # 测试取消预测
         response = await async_client.post(
             f"/api/predictions/{pending_prediction.id}/cancel",
-            json={"reason": "User requested cancellation"}
+            json={"reason": "User requested cancellation"},
         )
 
         if response.status_code == 200:
@@ -162,8 +165,14 @@ class TestPredictionAPIDomainIntegration:
         """测试预测积分计算的领域逻辑"""
         # 直接测试领域模型的积分计算
         try:
-            from src.domain.models.prediction import Prediction, PredictionStatus, PredictionScore, ConfidenceScore
             from decimal import Decimal
+
+            from src.domain.models.prediction import (
+                ConfidenceScore,
+                Prediction,
+                PredictionScore,
+                PredictionStatus,
+            )
 
             # 创建预测
             prediction = Prediction(
@@ -173,7 +182,9 @@ class TestPredictionAPIDomainIntegration:
             )
 
             # 进行预测
-            prediction.make_prediction(predicted_home=2, predicted_away=1, confidence=0.85)
+            prediction.make_prediction(
+                predicted_home=2, predicted_away=1, confidence=0.85
+            )
 
             # 评估预测（精确比分）
             prediction.evaluate(actual_home=2, actual_away=1)
@@ -205,7 +216,7 @@ class TestMatchAPIDomainIntegration:
             "away_team_id": away_team.id,
             "match_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
             "venue": "Test Stadium",
-            "league_id": home_team.league_id if hasattr(home_team, 'league_id') else 1,
+            "league_id": home_team.league_id if hasattr(home_team, "league_id") else 1,
         }
 
         response = await async_client.post("/api/matches/", json=match_data)
@@ -270,7 +281,7 @@ class TestTeamAPIDomainIntegration:
             "short_name": "TFC",
             "country": "Test Country",
             "founded_year": 2020,
-            "league_id": sample_league.id if hasattr(sample_league, 'id') else 1,
+            "league_id": sample_league.id if hasattr(sample_league, "id") else 1,
         }
 
         response = await async_client.post("/api/teams/", json=team_data)
@@ -301,9 +312,15 @@ class TestTeamAPIDomainIntegration:
             stats = response.json()
             # 验证统计字段存在
             expected_fields = [
-                "matches_played", "wins", "draws", "losses",
-                "goals_for", "goals_against", "goal_difference",
-                "points", "ranking"
+                "matches_played",
+                "wins",
+                "draws",
+                "losses",
+                "goals_for",
+                "goals_against",
+                "goal_difference",
+                "points",
+                "ranking",
             ]
 
             for field in expected_fields:
@@ -348,13 +365,19 @@ class TestUserPredictionDomainIntegration:
         """测试用户预测统计的领域逻辑"""
         user_id = 1
 
-        response = await async_client.get(f"/api/users/{user_id}/predictions/statistics")
+        response = await async_client.get(
+            f"/api/users/{user_id}/predictions/statistics"
+        )
 
         if response.status_code == 200:
             stats = response.json()
             expected_fields = [
-                "total_predictions", "correct_predictions", "accuracy_rate",
-                "total_points", "average_confidence", "best_streak"
+                "total_predictions",
+                "correct_predictions",
+                "accuracy_rate",
+                "total_points",
+                "average_confidence",
+                "best_streak",
             ]
 
             for field in expected_fields:
@@ -384,12 +407,17 @@ class TestDomainEventIntegration:
         }
 
         # 模拟外部服务以捕获事件
-        with patch('src.domain.events.prediction_events.event_bus', mock_external_services["audit_service"]):
-            response = await async_client.post("/api/predictions/", json=prediction_data)
+        with patch(
+            "src.domain.events.prediction_events.event_bus",
+            mock_external_services["audit_service"],
+        ):
+            response = await async_client.post(
+                "/api/predictions/", json=prediction_data
+            )
 
             if response.status_code == 200:
                 # 验证事件服务被调用
-                if hasattr(mock_external_services["audit_service"], 'log_event'):
+                if hasattr(mock_external_services["audit_service"], "log_event"):
                     assert mock_external_services["audit_service"].log_event.called
             elif response.status_code == 404:
                 pytest.skip("Prediction API endpoint not available")
@@ -414,15 +442,21 @@ class TestDomainEventIntegration:
             "actual_away": 1,
         }
 
-        with patch('src.domain.events.prediction_events.event_bus', mock_external_services["analytics_service"]):
+        with patch(
+            "src.domain.events.prediction_events.event_bus",
+            mock_external_services["analytics_service"],
+        ):
             response = await async_client.post(
-                f"/api/predictions/{pending_prediction.id}/evaluate", json=evaluation_data
+                f"/api/predictions/{pending_prediction.id}/evaluate",
+                json=evaluation_data,
             )
 
             if response.status_code == 200:
                 # 验证分析事件被记录
-                if hasattr(mock_external_services["analytics_service"], 'track_event'):
-                    assert mock_external_services["analytics_service"].track_event.called
+                if hasattr(mock_external_services["analytics_service"], "track_event"):
+                    assert mock_external_services[
+                        "analytics_service"
+                    ].track_event.called
             elif response.status_code == 404:
                 pytest.skip("Prediction evaluation API endpoint not available")
 
@@ -431,7 +465,9 @@ class TestValidationErrorIntegration:
     """验证错误集成测试"""
 
     @pytest.mark.asyncio
-    async def test_domain_validation_error_format(self, async_client: AsyncClient, sample_match):
+    async def test_domain_validation_error_format(
+        self, async_client: AsyncClient, sample_match
+    ):
         """测试领域验证错误的格式"""
         if not sample_match:
             pytest.skip("Sample match not available")
@@ -455,13 +491,16 @@ class TestValidationErrorIntegration:
             pytest.skip("Prediction API endpoint not available")
 
     @pytest.mark.asyncio
-    async def test_business_rule_validation(self, async_client: AsyncClient, sample_predictions):
+    async def test_business_rule_validation(
+        self, async_client: AsyncClient, sample_predictions
+    ):
         """测试业务规则验证"""
         if not sample_predictions:
             pytest.skip("Sample predictions not available")
 
         evaluated_prediction = next(
-            (p for p in sample_predictions if p.status in ["evaluated", "EVALUATED"]), None
+            (p for p in sample_predictions if p.status in ["evaluated", "EVALUATED"]),
+            None,
         )
 
         if not evaluated_prediction:
@@ -482,7 +521,10 @@ class TestValidationErrorIntegration:
             error_response = response.json()
             # 验证业务规则错误信息
             error_message = str(error_response.get("detail", ""))
-            assert any(keyword in error_message.lower() for keyword in ["evaluated", "cannot", "modify"])
+            assert any(
+                keyword in error_message.lower()
+                for keyword in ["evaluated", "cannot", "modify"]
+            )
         elif response.status_code == 404:
             pytest.skip("Prediction update API endpoint not available")
 
@@ -515,14 +557,19 @@ class TestPerformanceIntegration:
         start_time = time.time()
 
         # 如果支持批量创建
-        response = await async_client.post("/api/predictions/bulk", json={"predictions": bulk_data})
+        response = await async_client.post(
+            "/api/predictions/bulk", json={"predictions": bulk_data}
+        )
 
         end_time = time.time()
         duration = end_time - start_time
 
         if response.status_code == 200:
             # 验证性能基准
-            assert duration < performance_benchmarks["response_time_limits"]["bulk_predictions"]
+            assert (
+                duration
+                < performance_benchmarks["response_time_limits"]["bulk_predictions"]
+            )
 
             result = response.json()
             assert "created_count" in result
@@ -534,17 +581,22 @@ class TestPerformanceIntegration:
 
             for prediction_data in bulk_data[:10]:  # 只测试前10个
                 start_time = time.time()
-                response = await async_client.post("/api/predictions/", json=prediction_data)
+                response = await async_client.post(
+                    "/api/predictions/", json=prediction_data
+                )
                 end_time = time.time()
 
                 if response.status_code == 200:
                     success_count += 1
 
-                total_time += (end_time - start_time)
+                total_time += end_time - start_time
 
             # 验证平均时间
             avg_time = total_time / 10
-            assert avg_time < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            assert (
+                avg_time
+                < performance_benchmarks["response_time_limits"]["prediction_creation"]
+            )
 
 
 # 测试辅助类和函数
@@ -598,7 +650,13 @@ def api_domain_test_config():
             {"user_id": -1, "expected_error": "invalid_user_id"},
         ],
         "business_rule_test_cases": [
-            {"operation": "modify_evaluated", "expected_error": "cannot_modify_evaluated"},
-            {"operation": "duplicate_prediction", "expected_error": "already_predicted"},
+            {
+                "operation": "modify_evaluated",
+                "expected_error": "cannot_modify_evaluated",
+            },
+            {
+                "operation": "duplicate_prediction",
+                "expected_error": "already_predicted",
+            },
         ],
     }

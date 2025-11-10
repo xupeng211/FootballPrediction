@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 
 
-class Confluent_Kafka:
+class ConfluentKafka:
     """简化的confluent_kafka类"""
 
     def __init__(self, **kwargs):

@@ -757,7 +757,7 @@ class TestEndToEndErrorHandling:
                             # 尝试解析字符串格式的列表
                             try:
                                 fixed_value[sub_key] = eval(sub_value)
-                            except:
+                            except Exception:
                                 fixed_value[sub_key] = [
                                     "D",
                                     "D",

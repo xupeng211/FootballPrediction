@@ -6,7 +6,6 @@
 """
 
 import asyncio
-from datetime import datetime
 
 import httpx
 from passlib.context import CryptContext
@@ -27,24 +26,18 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def print_test_header(test_name: str):
     """打印测试标题"""
-    print(f"\n{'='*60}")  # TODO: Add logger import if needed
-    print(f"🧪 测试: {test_name}")  # TODO: Add logger import if needed
-    print(f"{'='*60}")  # TODO: Add logger import if needed
 
 
 def print_success(message: str):
     """打印成功消息"""
-    print(f"✅ {message}")  # TODO: Add logger import if needed
 
 
 def print_error(message: str):
     """打印错误消息"""
-    print(f"❌ {message}")  # TODO: Add logger import if needed
 
 
 def print_info(message: str):
     """打印信息消息"""
-    print(f"ℹ️  {message}")  # TODO: Add logger import if needed
 
 
 async def test_api_health():
@@ -184,15 +177,9 @@ async def test_existing_users():
 
 async def main():
     """主测试函数"""
-    print("🚀 开始用户认证系统测试")  # TODO: Add logger import if needed
-    print(
-        f"📅 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    )  # TODO: Add logger import if needed
-    print(f"🔗 API地址: {API_BASE_URL}")  # TODO: Add logger import if needed
 
     # 测试API健康状态
     if not await test_api_health():
-        print("\n❌ API服务不可用，测试终止")  # TODO: Add logger import if needed
         return
 
     # 测试现有用户
@@ -208,10 +195,6 @@ async def main():
         if access_token:
             # 测试获取当前用户信息
             await test_get_current_user(access_token)
-
-    print(f"\n{'='*60}")  # TODO: Add logger import if needed
-    print("🎉 用户认证系统测试完成")  # TODO: Add logger import if needed
-    print(f"{'='*60}")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

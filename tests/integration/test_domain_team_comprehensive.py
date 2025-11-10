@@ -181,7 +181,7 @@ class TestTeamFormComprehensive:
     def test_team_form_invalid_result_validation(self):
         """测试无效比赛结果验证"""
         with pytest.raises(DomainError, match="比赛结果只能是 W/D/L"):
-            TeamForm(last_matches=["X"])
+            TeamForm(last_matches=["x"])
 
         with pytest.raises(DomainError, match="比赛结果只能是 W/D/L"):
             TeamForm(last_matches=["W", "D", "A"])
@@ -216,7 +216,7 @@ class TestTeamFormComprehensive:
         form = TeamForm()
 
         with pytest.raises(DomainError, match="比赛结果只能是 W/D/L"):
-            form.add_result("X")
+            form.add_result("x")
 
         with pytest.raises(DomainError, match="比赛结果只能是 W/D/L"):
             form.add_result("win")
@@ -790,8 +790,6 @@ def test_team_domain_comprehensive_suite():
 
     strength = team.calculate_strength()
     assert 0 <= strength <= 100
-
-    print("✅ 球队领域模型综合测试套件通过")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

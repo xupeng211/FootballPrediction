@@ -1,7 +1,7 @@
 # 简化版 advanced_analyzer 模块
 
 
-class Advanced_Analyzer:
+class AdvancedAnalyzer:
     def __init__(self):
         pass
 

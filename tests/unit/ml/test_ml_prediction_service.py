@@ -34,8 +34,7 @@ try:
     )
 
     CAN_IMPORT = True
-except ImportError as e:
-    print(f"Warning: 无法导入ML模块: {e}")  # TODO: Add logger import if needed
+except ImportError:
     CAN_IMPORT = False
 
 

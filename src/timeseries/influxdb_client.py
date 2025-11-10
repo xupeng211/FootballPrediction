@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 
 
-class Influxdb_Client:
+class InfluxdbClient:
     """简化的influxdb_client类"""
 
     def __init__(self, **kwargs):

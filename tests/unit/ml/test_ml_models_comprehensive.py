@@ -29,8 +29,7 @@ try:
     from ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
-except ImportError as e:
-    print(f"Warning: 无法导入ML模型: {e}")  # TODO: Add logger import if needed
+except ImportError:
     CAN_IMPORT = False
 
 

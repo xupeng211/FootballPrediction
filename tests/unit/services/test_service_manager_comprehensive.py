@@ -6,10 +6,15 @@ Service Manager Tests
 Tests core functionality of service manager.
 """
 
-import pytest
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
-from src.services.manager.manager import ServiceManager, service_manager, _ensure_default_services
+import pytest
+
+from src.services.manager.manager import (
+    ServiceManager,
+    _ensure_default_services,
+    service_manager,
+)
 
 
 class MockBaseService:
@@ -55,7 +60,7 @@ class TestServiceManagerBasic:
         manager = ServiceManager()
 
         assert manager.services == {}
-        assert hasattr(manager, 'logger')
+        assert hasattr(manager, "logger")
         assert len(manager.services) == 0
 
     def test_register_service_success(self):
@@ -337,28 +342,37 @@ class TestServiceManagerEdgeCases:
         class ValueErrorService:
             def __init__(self):
                 self.name = "value_error_service"
+
             async def initialize(self):
                 raise ValueError("Value error")
 
         class TypeErrorService:
             def __init__(self):
                 self.name = "type_error_service"
+
             async def initialize(self):
                 raise TypeError("Type error")
 
         class KeyErrorService:
             def __init__(self):
                 self.name = "key_error_service"
+
             async def initialize(self):
                 raise KeyError("Key error")
 
         class RuntimeErrorService:
             def __init__(self):
                 self.name = "runtime_error_service"
+
             async def initialize(self):
                 raise RuntimeError("Runtime error")
 
-        services = [ValueErrorService(), TypeErrorService(), KeyErrorService(), RuntimeErrorService()]
+        services = [
+            ValueErrorService(),
+            TypeErrorService(),
+            KeyErrorService(),
+            RuntimeErrorService(),
+        ]
         for service in services:
             manager.register_service(service.name, service)
 
@@ -374,16 +388,20 @@ class TestServiceManagerEdgeCases:
         class ValueErrorShutdownService:
             def __init__(self):
                 self.name = "value_error_shutdown_service"
+
             async def initialize(self):
                 return True
+
             async def shutdown(self):
                 raise ValueError("Value error during shutdown")
 
         class TypeErrorShutdownService:
             def __init__(self):
                 self.name = "type_error_shutdown_service"
+
             async def initialize(self):
                 return True
+
             async def shutdown(self):
                 raise TypeError("Type error during shutdown")
 
@@ -419,7 +437,7 @@ class TestServiceManagerIntegration:
         tasks = [
             register_service_batch(0, 5),
             register_service_batch(5, 5),
-            register_service_batch(10, 5)
+            register_service_batch(10, 5),
         ]
 
         await asyncio.gather(*tasks)
@@ -438,10 +456,12 @@ class TestServiceManagerIntegration:
             def __init__(self):
                 self.name = "database"
                 self.connected = False
+
             async def initialize(self):
                 await asyncio.sleep(0.1)  # 模拟数据库连接
                 self.connected = True
                 return True
+
             async def shutdown(self):
                 self.connected = False
 
@@ -449,10 +469,12 @@ class TestServiceManagerIntegration:
             def __init__(self):
                 self.name = "cache"
                 self.connected = False
+
             async def initialize(self):
                 await asyncio.sleep(0.05)  # 模拟缓存连接
                 self.connected = True
                 return True
+
             async def shutdown(self):
                 self.connected = False
 
@@ -460,10 +482,12 @@ class TestServiceManagerIntegration:
             def __init__(self):
                 self.name = "api"
                 self.running = False
+
             async def initialize(self):
                 await asyncio.sleep(0.02)  # 模拟API服务启动
                 self.running = True
                 return True
+
             async def shutdown(self):
                 self.running = False
 
@@ -514,12 +538,12 @@ class TestServiceManagerIntegration:
         assert len(manager.services) == 11
         assert "new_service" in manager.services
 
-    @patch('src.services.manager.manager.logger')
+    @patch("src.services.manager.manager.logger")
     def test_logging_behavior(self, mock_logger):
         """测试日志记录行为"""
         manager = ServiceManager()
         service1 = MockBaseService("service1")
-        service2 = MockBaseService("service2")
+        MockBaseService("service2")
 
         # 测试注册日志
         manager.register_service("service1", service1)
@@ -561,14 +585,12 @@ class TestGlobalServiceManager:
 
     def test_global_service_manager_instance(self):
         """测试全局服务管理器实例"""
-        from src.services.manager.manager import service_manager
 
         assert isinstance(service_manager, ServiceManager)
         assert service_manager.services is not None
 
     def test_global_service_manager_singleton(self):
         """测试全局服务管理器单例"""
-        from src.services.manager.manager import service_manager
 
         # 获取多次应该是同一个实例
         manager1 = service_manager
@@ -576,7 +598,7 @@ class TestGlobalServiceManager:
 
         assert manager1 is manager2
 
-    @patch('src.services.manager.manager.get_settings')
+    @patch("src.services.manager.manager.get_settings")
     def test_ensure_default_services_empty_config(self, mock_get_settings):
         """测试空配置下的默认服务确保"""
         mock_settings = Mock()
@@ -586,12 +608,15 @@ class TestGlobalServiceManager:
         # 应该不抛出异常
         _ensure_default_services()
 
-    @patch('src.services.manager.manager.get_settings')
-    @patch('src.services.manager.manager.service_manager')
+    @patch("src.services.manager.manager.get_settings")
+    @patch("src.services.manager.manager.service_manager")
     def test_ensure_default_services_with_config(self, mock_manager, mock_get_settings):
         """测试有配置的默认服务确保"""
         mock_settings = Mock()
-        mock_settings.enabled_services = ["ContentAnalysisService", "UserProfileService"]
+        mock_settings.enabled_services = [
+            "ContentAnalysisService",
+            "UserProfileService",
+        ]
         mock_get_settings.return_value = mock_settings
 
         # 模拟服务管理器
@@ -605,9 +630,11 @@ class TestGlobalServiceManager:
         # 验证注册调用
         assert mock_manager.register_service.call_count == 2
 
-    @patch('src.services.manager.manager.get_settings')
-    @patch('src.services.manager.manager.service_manager')
-    def test_ensure_default_services_unknown_service(self, mock_manager, mock_get_settings):
+    @patch("src.services.manager.manager.get_settings")
+    @patch("src.services.manager.manager.service_manager")
+    def test_ensure_default_services_unknown_service(
+        self, mock_manager, mock_get_settings
+    ):
         """测试未知服务名称的处理"""
         mock_settings = Mock()
         mock_settings.enabled_services = ["UnknownService"]

@@ -1,37 +1,45 @@
+import asyncio
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-import asyncio
-import time
 
+import numpy as np
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-import numpy as np
+
 
 # Mock implementations for missing dependencies
 class MockAdvancedModelTrainer:
     def __init__(self):
         pass
 
+
 class MockAutoMLPipeline:
     def __init__(self):
         pass
+
 
 class MockRedisManager:
     def __init__(self):
         pass
 
+
 def get_mock_redis_manager():
     return MockRedisManager()
+
 
 def get_mock_async_session():
     return None
 
+
 def get_mock_logger():
     import logging
+
     return logging.getLogger(__name__)
+
 
 # Replace imports with mocks
 get_redis_manager = get_mock_redis_manager
@@ -44,15 +52,19 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/predictions", tags=["predictions-srs"])
 security = HTTPBearer()
 
+
 class PredictionResult(str, Enum):
     """预测结果枚举"""
+
     HOME_WIN = "home_win"
     DRAW = "draw"
     AWAY_WIN = "away_win"
 
+
 @dataclass
 class PredictionMetrics:
     """预测性能指标"""
+
     accuracy: float = 0.0
     precision: float = 0.0
     recall: float = 0.0
@@ -60,8 +72,10 @@ class PredictionMetrics:
     auc_roc: float = 0.0
     response_time_ms: float = 0.0
 
+
 class MatchInfo(BaseModel):
     """比赛信息模型"""
+
     match_id: int = Field(..., description="比赛ID")
     home_team: str = Field(..., description="主队名称", max_length=100)
     away_team: str = Field(..., description="客队名称", max_length=100)
@@ -69,14 +83,18 @@ class MatchInfo(BaseModel):
     match_date: datetime = Field(..., description="比赛时间")
     venue: str | None = Field(None, description="比赛场地", max_length=200)
 
+
 class PredictionRequest(BaseModel):
     """预测请求模型"""
+
     match_info: MatchInfo = Field(..., description="比赛信息")
     include_confidence: bool = Field(True, description="是否包含置信度")
     include_features: bool = Field(False, description="是否包含特征分析")
 
+
 class PredictionResponse(BaseModel):
     """预测响应模型"""
+
     success: bool = Field(..., description="预测是否成功")
     match_id: int = Field(..., description="比赛ID")
     prediction: PredictionResult = Field(..., description="预测结果")
@@ -90,16 +108,20 @@ class PredictionResponse(BaseModel):
         ..., description="SRS合规性信息"
     )
 
+
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模型"""
+
     matches: list[MatchInfo] = Field(
         ..., description="比赛列表", min_items=1, max_items=1000
     )
     include_confidence: bool = Field(True, description="是否包含置信度")
     max_concurrent: int = Field(100, description="最大并发数", ge=1, le=1000)
 
+
 class BatchPredictionResponse(BaseModel):
     """批量预测响应模型"""
+
     success: bool = Field(..., description="批量预测是否成功")
     total_matches: int = Field(..., description="总比赛数")
     successful_predictions: int = Field(..., description="成功预测数")
@@ -110,6 +132,7 @@ class BatchPredictionResponse(BaseModel):
     srs_compliance: dict[str, str | float | bool] = Field(
         ..., description="SRS合规性信息"
     )
+
 
 class EnhancedPredictionService:
     """增强版预测服务"""
@@ -268,8 +291,10 @@ class EnhancedPredictionService:
             },
         }
 
+
 # 创建预测服务实例
 prediction_service = EnhancedPredictionService()
+
 
 @router.post("/predict", response_model=PredictionResponse)
 async def predict_match(
@@ -277,7 +302,7 @@ async def predict_match(
     background_tasks: BackgroundTasks,
     token: str = Depends(prediction_service.verify_token),
     db_session: AsyncSession = Depends(get_async_session),
-    redis_client = Depends(get_redis_manager),
+    redis_client=Depends(get_redis_manager),
 ):
     """
     SRS规范预测接口
@@ -321,13 +346,14 @@ async def predict_match(
 
     return response
 
+
 @router.post("/predict/batch", response_model=BatchPredictionResponse)
 async def predict_batch(
     request: BatchPredictionRequest,
     background_tasks: BackgroundTasks,
     token: str = Depends(prediction_service.verify_token),
     db_session: AsyncSession = Depends(get_async_session),
-    redis_client = Depends(get_redis_manager),
+    redis_client=Depends(get_redis_manager),
 ):
     """
     批量预测接口 - 支持1000场比赛并发
@@ -404,7 +430,7 @@ async def predict_batch(
             "meets_srs_requirement": avg_response_time <= 200,
             "batch_size": len(request.matches),
             "success_rate": len(successful_predictions) / len(request.matches),
-        }
+        },
     )
 
     # 后台任务:记录批量预测日志
@@ -416,10 +442,9 @@ async def predict_batch(
 
     return response
 
+
 @router.get("/metrics")
-async def get_prediction_metrics(
-    token: str = Depends(prediction_service.verify_token)
-):
+async def get_prediction_metrics(token: str = Depends(prediction_service.verify_token)):
     """获取预测性能指标"""
     return {
         "model_metrics": {
@@ -444,17 +469,20 @@ async def get_prediction_metrics(
         },
     }
 
+
 async def log_prediction(match_id: int, prediction: str, response_time: float):
     """记录预测日志"""
     logger.info(
         f"Prediction logged - Match: {match_id}, Result: {prediction}, Time: {response_time:.2f}ms"
     )
 
+
 async def log_batch_prediction(total: int, successful: int, total_time: float):
     """记录批量预测日志"""
     logger.info(
         f"Batch prediction - Total: {total}, Successful: {successful}, Total time: {total_time:.2f}ms"
     )
+
 
 """
 增强版预测API - 符合SRS规范

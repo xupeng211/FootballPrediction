@@ -5,15 +5,11 @@ Data Pipeline End-to-End Tests
 完整测试数据处理流水线，从外部数据获取到存储、处理、分析和展示的整个流程
 """
 
-import asyncio
-import json
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch, MagicMock
-from typing import Dict, List, Any
+from typing import Any
+from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 # 标记测试
@@ -25,7 +21,10 @@ class TestExternalDataSyncE2E:
 
     @pytest.mark.asyncio
     async def test_complete_football_data_sync_workflow(
-        self, async_client: AsyncClient, mock_external_api_responses, mock_external_services
+        self,
+        async_client: AsyncClient,
+        mock_external_api_responses,
+        mock_external_services,
     ):
         """测试完整的足球数据同步工作流"""
         # ================================
@@ -44,11 +43,7 @@ class TestExternalDataSyncE2E:
                     "date": "2024-12-01T20:00:00Z",
                     "status": "SCHEDULED",
                     "venue": "Old Trafford",
-                    "odds": {
-                        "home_win": 2.10,
-                        "draw": 3.40,
-                        "away_win": 3.20
-                    }
+                    "odds": {"home_win": 2.10, "draw": 3.40, "away_win": 3.20},
                 },
                 {
                     "id": 12346,
@@ -58,15 +53,11 @@ class TestExternalDataSyncE2E:
                     "date": "2024-12-02T15:00:00Z",
                     "status": "SCHEDULED",
                     "venue": "Stamford Bridge",
-                    "odds": {
-                        "home_win": 1.95,
-                        "draw": 3.60,
-                        "away_win": 3.80
-                    }
-                }
+                    "odds": {"home_win": 1.95, "draw": 3.60, "away_win": 3.80},
+                },
             ],
             "total": 2,
-            "page": 1
+            "page": 1,
         }
 
         # 模拟数据同步服务
@@ -77,11 +68,16 @@ class TestExternalDataSyncE2E:
             "updated_matches": 0,
             "skipped_matches": 0,
             "sync_time": datetime.utcnow().isoformat(),
-            "next_sync": (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            "next_sync": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
         }
 
-        with patch('src.services.football_api.FootballAPIClient', return_value=mock_football_api):
-            with patch('src.api.routes.data.DataSyncService', return_value=mock_data_service):
+        with patch(
+            "src.services.football_api.FootballAPIClient",
+            return_value=mock_football_api,
+        ):
+            with patch(
+                "src.api.routes.data.DataSyncService", return_value=mock_data_service
+            ):
                 response = await async_client.post("/api/data/sync/football-matches")
 
                 assert response.status_code == 200
@@ -108,10 +104,10 @@ class TestExternalDataSyncE2E:
                                 "over_2_5": 1.85,
                                 "under_2_5": 1.95,
                                 "both_teams_score": 1.80,
-                                "no_both_teams_score": 2.00
-                            }
+                                "no_both_teams_score": 2.00,
+                            },
                         }
-                    ]
+                    ],
                 }
             ]
         }
@@ -120,11 +116,13 @@ class TestExternalDataSyncE2E:
             "synced_odds": 1,
             "new_odds": 1,
             "updated_odds": 0,
-            "sync_time": datetime.utcnow().isoformat()
+            "sync_time": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.services.odds_api.OddsAPIClient', return_value=mock_odds_api):
-            with patch('src.api.routes.data.DataSyncService', return_value=mock_data_service):
+        with patch("src.services.odds_api.OddsAPIClient", return_value=mock_odds_api):
+            with patch(
+                "src.api.routes.data.DataSyncService", return_value=mock_data_service
+            ):
                 response = await async_client.post("/api/data/sync/odds")
 
                 if response.status_code == 200:
@@ -149,8 +147,8 @@ class TestExternalDataSyncE2E:
                     "statistics": {
                         "possession": {"home": 58, "away": 42},
                         "shots": {"home": 15, "away": 8},
-                        "corners": {"home": 6, "away": 3}
-                    }
+                        "corners": {"home": 6, "away": 3},
+                    },
                 }
             ]
         }
@@ -158,11 +156,16 @@ class TestExternalDataSyncE2E:
         mock_data_service.sync_historical_data.return_value = {
             "synced_results": 1,
             "synced_statistics": 1,
-            "sync_time": datetime.utcnow().isoformat()
+            "sync_time": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.services.historical_api.HistoricalAPIClient', return_value=mock_historical_api):
-            with patch('src.api.routes.data.DataSyncService', return_value=mock_data_service):
+        with patch(
+            "src.services.historical_api.HistoricalAPIClient",
+            return_value=mock_historical_api,
+        ):
+            with patch(
+                "src.api.routes.data.DataSyncService", return_value=mock_data_service
+            ):
                 response = await async_client.post("/api/data/sync/historical")
 
                 if response.status_code == 200:
@@ -182,30 +185,32 @@ class TestExternalDataSyncE2E:
                 "data_completeness": {
                     "matches": 0.98,
                     "odds": 0.92,
-                    "historical_data": 0.96
-                }
+                    "historical_data": 0.96,
+                },
             },
             "issues_found": [
                 {
                     "type": "missing_data",
                     "severity": "medium",
                     "count": 3,
-                    "description": "Some matches missing venue information"
+                    "description": "Some matches missing venue information",
                 },
                 {
                     "type": "inconsistent_format",
                     "severity": "low",
                     "count": 2,
-                    "description": "Date format inconsistencies in historical data"
-                }
+                    "description": "Date format inconsistencies in historical data",
+                },
             ],
             "recommendations": [
                 "Update missing venue information",
-                "Standardize date format across all data sources"
-            ]
+                "Standardize date format across all data sources",
+            ],
         }
 
-        with patch('src.api.routes.data.DataSyncService', return_value=mock_data_service):
+        with patch(
+            "src.api.routes.data.DataSyncService", return_value=mock_data_service
+        ):
             response = await async_client.get("/api/data/quality-report")
 
             if response.status_code == 200:
@@ -226,7 +231,7 @@ class TestExternalDataSyncE2E:
             "data_types": ["live_scores", "match_events", "odds_updates"],
             "competitions": ["Premier League", "Champions League"],
             "update_frequency": 30,  # seconds
-            "webhook_url": "https://api.footballprediction.com/webhooks/realtime"
+            "webhook_url": "https://api.footballprediction.com/webhooks/realtime",
         }
 
         mock_realtime_service = AsyncMock()
@@ -235,11 +240,16 @@ class TestExternalDataSyncE2E:
             "status": "active",
             "webhook_registered": True,
             "subscribed_events": ["match_start", "goal", "red_card", "match_end"],
-            "next_update": (datetime.utcnow() + timedelta(seconds=30)).isoformat()
+            "next_update": (datetime.utcnow() + timedelta(seconds=30)).isoformat(),
         }
 
-        with patch('src.services.realtime.RealtimeDataService', return_value=mock_realtime_service):
-            response = await async_client.post("/api/data/realtime/setup", json=realtime_config)
+        with patch(
+            "src.services.realtime.RealtimeDataService",
+            return_value=mock_realtime_service,
+        ):
+            response = await async_client.post(
+                "/api/data/realtime/setup", json=realtime_config
+            )
 
             if response.status_code == 200:
                 setup_result = response.json()
@@ -259,19 +269,15 @@ class TestExternalDataSyncE2E:
                     "team": "home",
                     "player": "Bruno Fernandes",
                     "minute": 23,
-                    "score": {"home": 1, "away": 0}
-                }
+                    "score": {"home": 1, "away": 0},
+                },
             },
             {
                 "event_type": "red_card",
                 "match_id": 12345,
                 "timestamp": datetime.utcnow().isoformat(),
-                "data": {
-                    "team": "away",
-                    "player": "Virgil van Dijk",
-                    "minute": 67
-                }
-            }
+                "data": {"team": "away", "player": "Virgil van Dijk", "minute": 67},
+            },
         ]
 
         mock_realtime_service.process_realtime_update.return_value = {
@@ -279,13 +285,15 @@ class TestExternalDataSyncE2E:
             "updated_matches": 1,
             "cache_updated": True,
             "notifications_sent": 2,
-            "processing_time_ms": 45
+            "processing_time_ms": 45,
         }
 
-        with patch('src.services.realtime.RealtimeDataService', return_value=mock_realtime_service):
+        with patch(
+            "src.services.realtime.RealtimeDataService",
+            return_value=mock_realtime_service,
+        ):
             response = await async_client.post(
-                "/api/data/realtime/update",
-                json={"updates": realtime_updates}
+                "/api/data/realtime/update", json={"updates": realtime_updates}
             )
 
             if response.status_code == 200:
@@ -305,13 +313,16 @@ class TestExternalDataSyncE2E:
                 "updates_processed": 1248,
                 "processing_errors": 2,
                 "average_processing_time": 38.5,  # ms
-                "last_update": (datetime.utcnow() - timedelta(minutes=2)).isoformat()
+                "last_update": (datetime.utcnow() - timedelta(minutes=2)).isoformat(),
             },
             "active_subscriptions": 15,
-            "data_freshness": "2 minutes"
+            "data_freshness": "2 minutes",
         }
 
-        with patch('src.services.realtime.RealtimeDataService', return_value=mock_realtime_service):
+        with patch(
+            "src.services.realtime.RealtimeDataService",
+            return_value=mock_realtime_service,
+        ):
             response = await async_client.get("/api/data/realtime/status")
 
             if response.status_code == 200:
@@ -340,7 +351,7 @@ class TestDataProcessingE2E:
                     "awayTeam": "LFC",
                     "date": "01/12/2024 20:00",  # 不同的日期格式
                     "venue": "",  # 缺失数据
-                    "status": None  # 空值
+                    "status": None,  # 空值
                 }
             ]
         }
@@ -354,7 +365,7 @@ class TestDataProcessingE2E:
                     "away_team": "Liverpool",
                     "match_date": "2024-12-01T20:00:00Z",  # ISO格式
                     "venue": "Old Trafford",  # 填充的默认值
-                    "status": "SCHEDULED"  # 推断的状态
+                    "status": "SCHEDULED",  # 推断的状态
                 }
             ],
             "cleaning_statistics": {
@@ -362,14 +373,13 @@ class TestDataProcessingE2E:
                 "standardized_fields": 3,
                 "filled_missing_values": 2,
                 "removed_duplicates": 0,
-                "quality_score": 0.85
-            }
+                "quality_score": 0.85,
+            },
         }
 
-        with patch('src.services.data.DataProcessor', return_value=mock_processor):
+        with patch("src.services.data.DataProcessor", return_value=mock_processor):
             response = await async_client.post(
-                "/api/data/process/clean",
-                json={"raw_data": raw_data_sample}
+                "/api/data/process/clean", json={"raw_data": raw_data_sample}
             )
 
             if response.status_code == 200:
@@ -385,12 +395,12 @@ class TestDataProcessingE2E:
             "data_types": {
                 "match_date": "datetime",
                 "home_score": "integer",
-                "away_score": "integer"
+                "away_score": "integer",
             },
             "value_constraints": {
                 "home_score": {"min": 0, "max": 99},
-                "away_score": {"min": 0, "max": 99}
-            }
+                "away_score": {"min": 0, "max": 99},
+            },
         }
 
         mock_processor.validate_data.return_value = {
@@ -398,29 +408,26 @@ class TestDataProcessingE2E:
                 "total_records": 100,
                 "valid_records": 95,
                 "invalid_records": 5,
-                "validation_score": 0.95
+                "validation_score": 0.95,
             },
             "validation_errors": [
                 {
                     "record_id": 15,
                     "field": "match_date",
                     "error": "Invalid date format",
-                    "severity": "high"
+                    "severity": "high",
                 }
             ],
             "recommendations": [
                 "Fix date format in 3 records",
-                "Remove records with invalid team names"
-            ]
+                "Remove records with invalid team names",
+            ],
         }
 
-        with patch('src.services.data.DataProcessor', return_value=mock_processor):
+        with patch("src.services.data.DataProcessor", return_value=mock_processor):
             response = await async_client.post(
                 "/api/data/process/validate",
-                json={
-                    "validation_rules": validation_rules,
-                    "data": raw_data_sample
-                }
+                json={"validation_rules": validation_rules, "data": raw_data_sample},
             )
 
             if response.status_code == 200:
@@ -437,18 +444,18 @@ class TestDataProcessingE2E:
                 "away_team_form",
                 "head_to_head_stats",
                 "venue_impact",
-                "weather_conditions"
+                "weather_conditions",
             ],
             "team_features": [
                 "recent_performance",
                 "player_injuries",
-                "season_statistics"
+                "season_statistics",
             ],
             "historical_features": [
                 "h2h_record",
                 "goal_trends",
-                "performance_patterns"
-            ]
+                "performance_patterns",
+            ],
         }
 
         mock_processor.extract_features.return_value = {
@@ -462,7 +469,7 @@ class TestDataProcessingE2E:
                     "home_advantage_score": 0.75,
                     "team_strength_difference": 0.23,
                     "recent_goal_average": 2.8,
-                    "weather_impact": 0.1
+                    "weather_impact": 0.1,
                 }
             },
             "feature_statistics": {
@@ -473,15 +480,14 @@ class TestDataProcessingE2E:
                 "feature_correlations": {
                     "home_team_form": 0.65,
                     "h2h_home_wins": 0.78,
-                    "team_strength_difference": 0.71
-                }
-            }
+                    "team_strength_difference": 0.71,
+                },
+            },
         }
 
-        with patch('src.services.data.DataProcessor', return_value=mock_processor):
+        with patch("src.services.data.DataProcessor", return_value=mock_processor):
             response = await async_client.post(
-                "/api/data/process/features",
-                json={"feature_config": feature_config}
+                "/api/data/process/features", json={"feature_config": feature_config}
             )
 
             if response.status_code == 200:
@@ -503,7 +509,7 @@ class TestDataProcessingE2E:
             "home_team": "Manchester United",
             "away_team": "Liverpool",
             "match_date": "2024-12-01T20:00:00Z",
-            "venue": "Old Trafford"
+            "venue": "Old Trafford",
         }
 
         mock_enrichment_service = AsyncMock()
@@ -515,49 +521,51 @@ class TestDataProcessingE2E:
                     "humidity": 78,
                     "wind_speed": 15,
                     "precipitation_chance": 0.2,
-                    "condition": "cloudy"
+                    "condition": "cloudy",
                 },
                 "team_form": {
                     "home_team": {
                         "last_5_matches": [1, 0, 1, 1, 0],
                         "goals_scored": 8,
                         "goals_conceded": 4,
-                        "league_position": 3
+                        "league_position": 3,
                     },
                     "away_team": {
                         "last_5_matches": [1, 1, 0, 0, 1],
                         "goals_scored": 7,
                         "goals_conceded": 6,
-                        "league_position": 5
-                    }
+                        "league_position": 5,
+                    },
                 },
                 "player_info": {
                     "home_injuries": ["Rashford", "Varane"],
                     "away_injuries": ["Alisson"],
                     "key_players_home": ["Fernandes", "Højlund"],
-                    "key_players_away": ["Salah", "Núñez"]
+                    "key_players_away": ["Salah", "Núñez"],
                 },
                 "historical_h2h": {
                     "total_matches": 10,
                     "home_wins": 6,
                     "away_wins": 2,
                     "draws": 2,
-                    "avg_goals_per_match": 3.2
-                }
+                    "avg_goals_per_match": 3.2,
+                },
             },
             "enrichment_sources": [
                 "weather_api",
                 "team_statistics_db",
                 "player_injury_data",
-                "historical_records"
+                "historical_records",
             ],
-            "enrichment_timestamp": datetime.utcnow().isoformat()
+            "enrichment_timestamp": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.services.enrichment.DataEnrichmentService', return_value=mock_enrichment_service):
+        with patch(
+            "src.services.enrichment.DataEnrichmentService",
+            return_value=mock_enrichment_service,
+        ):
             response = await async_client.post(
-                "/api/data/enrich/match",
-                json={"match_data": base_match_data}
+                "/api/data/enrich/match", json={"match_data": base_match_data}
             )
 
             if response.status_code == 200:
@@ -579,7 +587,7 @@ class TestDataProcessingE2E:
             "h2h_home_advantage",
             "venue_neutral_factor",
             "weather_impact",
-            "importance_factor"
+            "importance_factor",
         ]
 
         mock_enrichment_service.generate_model_features.return_value = {
@@ -599,7 +607,7 @@ class TestDataProcessingE2E:
                     "predicted_goals_away": 1.3,
                     "win_probability_home": 0.62,
                     "draw_probability": 0.22,
-                    "win_probability_away": 0.16
+                    "win_probability_away": 0.16,
                 }
             },
             "feature_importance": {
@@ -608,15 +616,18 @@ class TestDataProcessingE2E:
                 "home_attack_strength": 0.14,
                 "away_defense_strength": 0.12,
                 "h2h_home_advantage": 0.11,
-                "weather_impact": 0.05
+                "weather_impact": 0.05,
             },
-            "model_confidence": 0.78
+            "model_confidence": 0.78,
         }
 
-        with patch('src.services.enrichment.DataEnrichmentService', return_value=mock_enrichment_service):
+        with patch(
+            "src.services.enrichment.DataEnrichmentService",
+            return_value=mock_enrichment_service,
+        ):
             response = await async_client.post(
                 "/api/data/enrich/model-features",
-                json={"features": model_features, "match_id": 12345}
+                json={"features": model_features, "match_id": 12345},
             )
 
             if response.status_code == 200:
@@ -643,12 +654,12 @@ class TestAnalyticsAndReportingE2E:
                 "confidence_distribution",
                 "league_performance",
                 "team_performance",
-                "score_distribution"
+                "score_distribution",
             ],
             "filters": {
                 "min_predictions": 10,
-                "leagues": ["Premier League", "Champions League"]
-            }
+                "leagues": ["Premier League", "Champions League"],
+            },
         }
 
         mock_analytics_service = AsyncMock()
@@ -658,31 +669,33 @@ class TestAnalyticsAndReportingE2E:
                 "exact_score_accuracy": 0.15,
                 "result_accuracy": 0.72,
                 "confidence_correlation": 0.73,
-                "total_predictions_analyzed": 15420
+                "total_predictions_analyzed": 15420,
             },
             "accuracy_by_league": {
                 "Premier League": 0.71,
                 "Champions League": 0.65,
                 "La Liga": 0.69,
-                "Serie A": 0.66
+                "Serie A": 0.66,
             },
             "accuracy_by_confidence": {
                 "high_confidence_80_100": 0.82,
                 "medium_confidence_60_80": 0.68,
                 "low_confidence_40_60": 0.45,
-                "very_low_confidence_0_40": 0.28
+                "very_low_confidence_0_40": 0.28,
             },
             "trends": {
                 "weekly_accuracy": [0.65, 0.72, 0.68, 0.70, 0.75],
                 "accuracy_trend": "improving",
-                "improvement_rate": 0.03
-            }
+                "improvement_rate": 0.03,
+            },
         }
 
-        with patch('src.services.analytics.AnalyticsService', return_value=mock_analytics_service):
+        with patch(
+            "src.services.analytics.AnalyticsService",
+            return_value=mock_analytics_service,
+        ):
             response = await async_client.post(
-                "/api/analytics/prediction-accuracy",
-                json=analytics_config
+                "/api/analytics/prediction-accuracy", json=analytics_config
             )
 
             if response.status_code == 200:
@@ -700,8 +713,8 @@ class TestAnalyticsAndReportingE2E:
                 "prediction_patterns",
                 "engagement_metrics",
                 "retention_analysis",
-                "feature_usage"
-            ]
+                "feature_usage",
+            ],
         }
 
         mock_analytics_service.analyze_user_behavior.return_value = {
@@ -709,7 +722,7 @@ class TestAnalyticsAndReportingE2E:
                 "power_users": {"count": 1250, "avg_predictions": 45},
                 "regular_users": {"count": 8900, "avg_predictions": 12},
                 "casual_users": {"count": 23400, "avg_predictions": 3},
-                "inactive_users": {"count": 18450, "avg_predictions": 0}
+                "inactive_users": {"count": 18450, "avg_predictions": 0},
             },
             "engagement_metrics": {
                 "daily_active_users": 3450,
@@ -717,20 +730,22 @@ class TestAnalyticsAndReportingE2E:
                 "monthly_active_users": 28750,
                 "average_session_duration": "12 minutes",
                 "retention_rate_day_7": 0.68,
-                "retention_rate_day_30": 0.42
+                "retention_rate_day_30": 0.42,
             },
             "prediction_patterns": {
                 "most_predicted_scores": ["1-1", "2-1", "1-0"],
                 "average_confidence": 0.73,
                 "peak_prediction_times": ["Friday 18:00", "Saturday 14:00"],
-                "favorite_teams": ["Manchester United", "Liverpool", "Chelsea"]
-            }
+                "favorite_teams": ["Manchester United", "Liverpool", "Chelsea"],
+            },
         }
 
-        with patch('src.services.analytics.AnalyticsService', return_value=mock_analytics_service):
+        with patch(
+            "src.services.analytics.AnalyticsService",
+            return_value=mock_analytics_service,
+        ):
             response = await async_client.post(
-                "/api/analytics/user-behavior",
-                json=user_analytics_config
+                "/api/analytics/user-behavior", json=user_analytics_config
             )
 
             if response.status_code == 200:
@@ -748,59 +763,62 @@ class TestAnalyticsAndReportingE2E:
                 "error_rates",
                 "throughput",
                 "database_performance",
-                "cache_hit_rates"
-            ]
+                "cache_hit_rates",
+            ],
         }
 
         mock_analytics_service.analyze_system_performance.return_value = {
             "performance_metrics": {
-                "api_response_times": {
-                    "average": 145,  # ms
-                    "p95": 280,
-                    "p99": 450
-                },
+                "api_response_times": {"average": 145, "p95": 280, "p99": 450},  # ms
                 "error_rates": {
                     "overall": 0.002,  # 0.2%
                     "4xx_errors": 0.0015,
-                    "5xx_errors": 0.0005
+                    "5xx_errors": 0.0005,
                 },
                 "throughput": {
                     "requests_per_second": 125,
                     "peak_rps": 340,
-                    "total_requests": 78900000
+                    "total_requests": 78900000,
                 },
                 "database_performance": {
                     "query_time_avg": 25,
                     "connections_active": 45,
-                    "slow_queries": 12
+                    "slow_queries": 12,
                 },
                 "cache_performance": {
                     "hit_rate": 0.92,
                     "miss_rate": 0.08,
-                    "eviction_rate": 0.03
-                }
+                    "eviction_rate": 0.03,
+                },
             },
             "performance_trends": {
                 "response_time_trend": "stable",
                 "error_rate_trend": "decreasing",
-                "throughput_trend": "increasing"
+                "throughput_trend": "increasing",
             },
             "recommendations": [
                 "Optimize slow queries identified in database performance",
                 "Consider increasing cache size for better hit rates",
-                "Monitor memory usage during peak hours"
-            ]
+                "Monitor memory usage during peak hours",
+            ],
         }
 
-        with patch('src.services.analytics.AnalyticsService', return_value=mock_analytics_service):
+        with patch(
+            "src.services.analytics.AnalyticsService",
+            return_value=mock_analytics_service,
+        ):
             response = await async_client.post(
-                "/api/analytics/system-performance",
-                json=performance_config
+                "/api/analytics/system-performance", json=performance_config
             )
 
             if response.status_code == 200:
                 performance_analysis = response.json()
-                assert performance_analysis["performance_metrics"]["error_rates"]["overall"] < 0.01
+                assert (
+                    performance_analysis["performance_metrics"]["error_rates"][
+                        "overall"
+                    ]
+                    < 0.01
+                )
 
     @pytest.mark.asyncio
     async def test_automated_report_generation(
@@ -817,31 +835,31 @@ class TestAnalyticsAndReportingE2E:
                 "frequency": "weekly",
                 "day": "monday",
                 "time": "09:00",
-                "timezone": "UTC"
+                "timezone": "UTC",
             },
             "recipients": [
                 "admin@footballprediction.com",
-                "analytics@footballprediction.com"
+                "analytics@footballprediction.com",
             ],
             "sections": [
                 {
                     "name": "prediction_accuracy",
                     "include_charts": True,
-                    "include_tables": True
+                    "include_tables": True,
                 },
                 {
                     "name": "user_engagement",
                     "include_charts": True,
-                    "include_tables": True
+                    "include_tables": True,
                 },
                 {
                     "name": "system_performance",
                     "include_charts": True,
-                    "include_tables": False
-                }
+                    "include_tables": False,
+                },
             ],
             "format": "pdf",
-            "delivery_method": "email"
+            "delivery_method": "email",
         }
 
         mock_report_service = AsyncMock()
@@ -849,13 +867,14 @@ class TestAnalyticsAndReportingE2E:
             "schedule_id": "weekly_report_001",
             "status": "active",
             "next_run": (datetime.utcnow() + timedelta(days=7)).isoformat(),
-            "config": report_config
+            "config": report_config,
         }
 
-        with patch('src.services.reporting.ReportService', return_value=mock_report_service):
+        with patch(
+            "src.services.reporting.ReportService", return_value=mock_report_service
+        ):
             response = await async_client.post(
-                "/api/reports/schedule",
-                json=report_config
+                "/api/reports/schedule", json=report_config
             )
 
             if response.status_code == 200:
@@ -875,24 +894,25 @@ class TestAnalyticsAndReportingE2E:
                 "total_pages": 15,
                 "prediction_accuracy": 0.71,
                 "active_users": 28750,
-                "system_uptime": 0.999
+                "system_uptime": 0.999,
             },
             "delivery_status": {
                 "email_sent": True,
                 "recipients_notified": 2,
-                "delivery_time": "2 minutes"
-            }
+                "delivery_time": "2 minutes",
+            },
         }
 
-        with patch('src.services.reporting.ReportService', return_value=mock_report_service):
+        with patch(
+            "src.services.reporting.ReportService", return_value=mock_report_service
+        ):
             response = await async_client.post(
-                "/api/reports/generate",
-                json={"schedule_id": "weekly_report_001"}
+                "/api/reports/generate", json={"schedule_id": "weekly_report_001"}
             )
 
             if response.status_code == 200:
                 report_result = response.json()
-                assert report_result["delivery_status"]["email_sent"] == True
+                assert report_result["delivery_status"]["email_sent"]
 
         # ================================
         # 第三阶段: 获取报告历史
@@ -905,22 +925,26 @@ class TestAnalyticsAndReportingE2E:
                     "generated_at": (datetime.utcnow() - timedelta(days=7)).isoformat(),
                     "file_url": "https://cdn.footballprediction.com/reports/weekly_performance_2024_47.pdf",
                     "download_count": 45,
-                    "status": "completed"
+                    "status": "completed",
                 },
                 {
                     "report_id": "report_2024_46_001",
-                    "generated_at": (datetime.utcnow() - timedelta(days=14)).isoformat(),
+                    "generated_at": (
+                        datetime.utcnow() - timedelta(days=14)
+                    ).isoformat(),
                     "file_url": "https://cdn.footballprediction.com/reports/weekly_performance_2024_46.pdf",
                     "download_count": 38,
-                    "status": "completed"
-                }
+                    "status": "completed",
+                },
             ],
             "total_reports": 24,
             "page": 1,
-            "per_page": 10
+            "per_page": 10,
         }
 
-        with patch('src.services.reporting.ReportService', return_value=mock_report_service):
+        with patch(
+            "src.services.reporting.ReportService", return_value=mock_report_service
+        ):
             response = await async_client.get("/api/reports/history")
 
             if response.status_code == 200:
@@ -946,39 +970,44 @@ class TestDataPipelineMonitoringE2E:
             "components": {
                 "data_sync": {
                     "status": "healthy",
-                    "last_sync": (datetime.utcnow() - timedelta(minutes=15)).isoformat(),
+                    "last_sync": (
+                        datetime.utcnow() - timedelta(minutes=15)
+                    ).isoformat(),
                     "sync_success_rate": 0.998,
-                    "errors_last_hour": 0
+                    "errors_last_hour": 0,
                 },
                 "data_processing": {
                     "status": "healthy",
                     "processing_queue_size": 23,
                     "avg_processing_time": 125,  # ms
-                    "errors_last_hour": 1
+                    "errors_last_hour": 1,
                 },
                 "database": {
                     "status": "healthy",
                     "connection_pool": {"active": 12, "idle": 38, "max": 50},
-                    "query_performance": {"avg_time": 25, "slow_queries": 2}
+                    "query_performance": {"avg_time": 25, "slow_queries": 2},
                 },
                 "cache": {
                     "status": "healthy",
                     "hit_rate": 0.94,
                     "memory_usage": 0.67,  # 67%
-                    "eviction_rate": 0.02
+                    "eviction_rate": 0.02,
                 },
                 "external_apis": {
                     "status": "healthy",
                     "football_api": {"response_time": 145, "success_rate": 0.999},
                     "odds_api": {"response_time": 89, "success_rate": 0.997},
-                    "weather_api": {"response_time": 234, "success_rate": 0.995}
-                }
+                    "weather_api": {"response_time": 234, "success_rate": 0.995},
+                },
             },
             "alerts": [],
-            "last_health_check": datetime.utcnow().isoformat()
+            "last_health_check": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.services.monitoring.PipelineMonitoringService', return_value=mock_monitoring_service):
+        with patch(
+            "src.services.monitoring.PipelineMonitoringService",
+            return_value=mock_monitoring_service,
+        ):
             response = await async_client.get("/api/monitoring/pipeline-health")
 
             assert response.status_code == 200
@@ -994,13 +1023,13 @@ class TestDataPipelineMonitoringE2E:
                 "throughput": {
                     "data_sync_records_per_hour": 1250,
                     "predictions_processed_per_hour": 8900,
-                    "api_requests_per_minute": 145
+                    "api_requests_per_minute": 145,
                 },
                 "latency": {
                     "avg_data_sync_latency": 2.3,  # seconds
                     "avg_api_response_time": 145,  # ms
                     "p95_api_response_time": 280,  # ms
-                    "database_query_avg_time": 25  # ms
+                    "database_query_avg_time": 25,  # ms
                 },
                 "errors": {
                     "error_rate_last_hour": 0.001,
@@ -1008,25 +1037,31 @@ class TestDataPipelineMonitoringE2E:
                     "error_types": {
                         "timeout_errors": 8,
                         "connection_errors": 12,
-                        "validation_errors": 3
-                    }
+                        "validation_errors": 3,
+                    },
                 },
                 "resource_usage": {
                     "cpu_usage": 0.45,  # 45%
                     "memory_usage": 0.68,  # 68%
                     "disk_usage": 0.34,  # 34%
-                    "network_io": 0.12  # 12%
-                }
+                    "network_io": 0.12,  # 12%
+                },
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.services.monitoring.PipelineMonitoringService', return_value=mock_monitoring_service):
+        with patch(
+            "src.services.monitoring.PipelineMonitoringService",
+            return_value=mock_monitoring_service,
+        ):
             response = await async_client.get("/api/monitoring/performance-metrics")
 
             if response.status_code == 200:
                 metrics = response.json()
-                assert metrics["metrics"]["throughput"]["data_sync_records_per_hour"] > 1000
+                assert (
+                    metrics["metrics"]["throughput"]["data_sync_records_per_hour"]
+                    > 1000
+                )
 
         # ================================
         # 第三阶段: 处理告警
@@ -1042,14 +1077,17 @@ class TestDataPipelineMonitoringE2E:
                     "component": "api",
                     "timestamp": (datetime.utcnow() - timedelta(minutes=5)).isoformat(),
                     "acknowledged": False,
-                    "actions_taken": []
+                    "actions_taken": [],
                 }
             ],
             "total_alerts": 1,
-            "unacknowledged_alerts": 1
+            "unacknowledged_alerts": 1,
         }
 
-        with patch('src.services.monitoring.PipelineMonitoringService', return_value=mock_monitoring_service):
+        with patch(
+            "src.services.monitoring.PipelineMonitoringService",
+            return_value=mock_monitoring_service,
+        ):
             response = await async_client.get("/api/monitoring/alerts")
 
             if response.status_code == 200:
@@ -1061,17 +1099,20 @@ class TestDataPipelineMonitoringE2E:
             "alert_id": "alert_001",
             "acknowledged": True,
             "acknowledged_by": "admin",
-            "acknowledged_at": datetime.utcnow().isoformat()
+            "acknowledged_at": datetime.utcnow().isoformat(),
         }
 
-        with patch('src.services.monitoring.PipelineMonitoringService', return_value=mock_monitoring_service):
+        with patch(
+            "src.services.monitoring.PipelineMonitoringService",
+            return_value=mock_monitoring_service,
+        ):
             response = await async_client.post(
                 "/api/monitoring/alerts/alert_001/acknowledge"
             )
 
             if response.status_code == 200:
                 ack_result = response.json()
-                assert ack_result["acknowledged"] == True
+                assert ack_result["acknowledged"]
 
     @pytest.mark.asyncio
     async def test_data_quality_monitoring(
@@ -1091,32 +1132,39 @@ class TestDataPipelineMonitoringE2E:
                 "accuracy": 0.93,
                 "consistency": 0.95,
                 "timeliness": 0.92,
-                "validity": 0.97
+                "validity": 0.97,
             },
             "data_sources": {
                 "football_api": {
                     "quality_score": 0.98,
-                    "last_update": (datetime.utcnow() - timedelta(minutes=10)).isoformat(),
-                    "issues_count": 0
+                    "last_update": (
+                        datetime.utcnow() - timedelta(minutes=10)
+                    ).isoformat(),
+                    "issues_count": 0,
                 },
                 "odds_api": {
                     "quality_score": 0.91,
-                    "last_update": (datetime.utcnow() - timedelta(minutes=5)).isoformat(),
-                    "issues_count": 2
+                    "last_update": (
+                        datetime.utcnow() - timedelta(minutes=5)
+                    ).isoformat(),
+                    "issues_count": 2,
                 },
                 "historical_data": {
                     "quality_score": 0.96,
                     "last_update": (datetime.utcnow() - timedelta(hours=1)).isoformat(),
-                    "issues_count": 1
-                }
+                    "issues_count": 1,
+                },
             },
             "quality_trends": {
                 "last_7_days": [0.92, 0.93, 0.94, 0.93, 0.95, 0.94, 0.94],
-                "trend": "stable"
-            }
+                "trend": "stable",
+            },
         }
 
-        with patch('src.services.data_quality.DataQualityService', return_value=mock_quality_service):
+        with patch(
+            "src.services.data_quality.DataQualityService",
+            return_value=mock_quality_service,
+        ):
             response = await async_client.get("/api/monitoring/data-quality")
 
             if response.status_code == 200:
@@ -1138,7 +1186,7 @@ class TestDataPipelineMonitoringE2E:
                     "affected_records": 15,
                     "detected_at": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
                     "status": "open",
-                    "auto_fix_available": True
+                    "auto_fix_available": True,
                 },
                 {
                     "id": "issue_002",
@@ -1149,15 +1197,18 @@ class TestDataPipelineMonitoringE2E:
                     "affected_records": 48,
                     "detected_at": (datetime.utcnow() - timedelta(hours=6)).isoformat(),
                     "status": "investigating",
-                    "auto_fix_available": True
-                }
+                    "auto_fix_available": True,
+                },
             ],
             "total_issues": 2,
             "open_issues": 1,
-            "investigating_issues": 1
+            "investigating_issues": 1,
         }
 
-        with patch('src.services.data_quality.DataQualityService', return_value=mock_quality_service):
+        with patch(
+            "src.services.data_quality.DataQualityService",
+            return_value=mock_quality_service,
+        ):
             response = await async_client.get("/api/monitoring/data-quality/issues")
 
             if response.status_code == 200:
@@ -1175,10 +1226,13 @@ class TestDataPipelineMonitoringE2E:
             "failed_records": 1,
             "fix_method": "data_interpolation",
             "fix_applied_at": datetime.utcnow().isoformat(),
-            "validation_passed": True
+            "validation_passed": True,
         }
 
-        with patch('src.services.data_quality.DataQualityService', return_value=mock_quality_service):
+        with patch(
+            "src.services.data_quality.DataQualityService",
+            return_value=mock_quality_service,
+        ):
             response = await async_client.post(
                 "/api/monitoring/data-quality/issues/issue_001/fix"
             )
@@ -1189,7 +1243,7 @@ class TestDataPipelineMonitoringE2E:
 
 
 # 测试辅助函数
-def create_test_football_match_data() -> Dict[str, Any]:
+def create_test_football_match_data() -> dict[str, Any]:
     """创建测试足球比赛数据的辅助函数"""
     return {
         "id": 12345,
@@ -1198,11 +1252,11 @@ def create_test_football_match_data() -> Dict[str, Any]:
         "competition": {"id": 1, "name": "Premier League"},
         "date": "2024-12-01T20:00:00Z",
         "status": "SCHEDULED",
-        "venue": "Old Trafford"
+        "venue": "Old Trafford",
     }
 
 
-def create_test_odds_data(match_id: int) -> Dict[str, Any]:
+def create_test_odds_data(match_id: int) -> dict[str, Any]:
     """创建测试赔率数据的辅助函数"""
     return {
         "match_id": match_id,
@@ -1214,30 +1268,24 @@ def create_test_odds_data(match_id: int) -> Dict[str, Any]:
                     "draw": 3.40,
                     "away_win": 3.20,
                     "over_2_5": 1.85,
-                    "under_2_5": 1.95
-                }
+                    "under_2_5": 1.95,
+                },
             }
-        ]
+        ],
     }
 
 
-def create_quality_check_config() -> Dict[str, Any]:
+def create_quality_check_config() -> dict[str, Any]:
     """创建质量检查配置的辅助函数"""
     return {
-        "checks": [
-            "completeness",
-            "accuracy",
-            "consistency",
-            "validity",
-            "timeliness"
-        ],
+        "checks": ["completeness", "accuracy", "consistency", "validity", "timeliness"],
         "thresholds": {
             "min_quality_score": 0.8,
             "max_missing_data_percentage": 0.05,
-            "max_inconsistency_rate": 0.02
+            "max_inconsistency_rate": 0.02,
         },
         "auto_fix": True,
-        "notification_on_failure": True
+        "notification_on_failure": True,
     }
 
 
@@ -1247,18 +1295,21 @@ async def verify_pipeline_integrity(async_client: AsyncClient) -> bool:
 
     if response.status_code == 200:
         health_status = response.json()
-        return (
-            health_status["overall_status"] == "healthy" and
-            all(component["status"] == "healthy"
-                for component in health_status["components"].values())
+        return health_status["overall_status"] == "healthy" and all(
+            component["status"] == "healthy"
+            for component in health_status["components"].values()
         )
 
     return False
 
 
-async def monitor_data_quality_trends(async_client: AsyncClient, hours: int = 24) -> Dict[str, Any]:
+async def monitor_data_quality_trends(
+    async_client: AsyncClient, hours: int = 24
+) -> dict[str, Any]:
     """监控数据质量趋势的辅助函数"""
-    response = await async_client.get(f"/api/monitoring/data-quality/trends?hours={hours}")
+    response = await async_client.get(
+        f"/api/monitoring/data-quality/trends?hours={hours}"
+    )
 
     if response.status_code == 200:
         return response.json()

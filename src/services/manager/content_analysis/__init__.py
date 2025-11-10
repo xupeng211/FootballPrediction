@@ -1,6 +1,29 @@
-"""src.services.manager.content_analysis 模块 - 桩实现"
+"""
+Content Analysis Service Module
+内容分析服务模块
 
-临时创建的桩模块,用于解决导入错误.
+提供内容分析相关功能。
 """
 
-# 桩实现
+from ..base import BaseService
+
+
+class ContentAnalysisService(BaseService):
+    """内容分析服务"""
+
+    def __init__(self, name: str = "ContentAnalysisService"):
+        super().__init__(name)
+
+    async def initialize(self) -> bool:
+        """初始化服务"""
+        self._initialized = True
+        return True
+
+    async def shutdown(self) -> None:
+        """关闭服务"""
+        self._initialized = False
+
+
+__all__ = [
+    "ContentAnalysisService",
+]

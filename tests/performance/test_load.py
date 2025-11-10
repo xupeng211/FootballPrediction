@@ -512,6 +512,6 @@ pytest.mark.load(TestQueuePerformance)
 pytest.mark.load(TestSystemResourcePerformance)
 
 # Critical performance markers
-pytest.mark.critical(test_health_check_response_time)
-pytest.mark.critical(test_queue_throughput)
-pytest.mark.critical(test_memory_usage_stability)
+# pytest.mark.critical(test_health_check_response_time)  # 注释掉未定义的函数引用
+# pytest.mark.critical(test_queue_throughput)  # 注释掉未定义的函数引用
+# pytest.mark.critical(test_memory_usage_stability)  # 注释掉未定义的函数引用

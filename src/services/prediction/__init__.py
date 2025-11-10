@@ -1,6 +1,6 @@
-"""src.services.prediction 模块 - 桩实现"
+"""src.services.prediction 模块"""
 
-临时创建的桩模块,用于解决导入错误.
-"""
+# 导入预测服务
+from ..prediction_service import PredictionResult, PredictionService
 
-# 桩实现
+__all__ = ["PredictionService", "PredictionResult"]

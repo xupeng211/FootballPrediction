@@ -6,15 +6,17 @@ Authentication Dependencies Test Module
 """
 
 import logging
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Optional, Dict, Any
+from unittest.mock import Mock, patch
+
+import pytest
+
 
 # ==================== 导入修复 ====================
 # Mock类用于测试
 class SafeMock:
     """安全的Mock类，避免递归问题"""
+
     def __init__(self, *args, **kwargs):
         # 直接设置属性，避免使用hasattr
         self._attributes = set(kwargs.keys())
@@ -22,20 +24,22 @@ class SafeMock:
             object.__setattr__(self, key, value)
 
         # 设置默认属性
-        if 'id' not in self._attributes:
-            object.__setattr__(self, 'id', 1)
-            self._attributes.add('id')
-        if 'name' not in self._attributes:
-            object.__setattr__(self, 'name', "Mock")
-            self._attributes.add('name')
+        if "id" not in self._attributes:
+            object.__setattr__(self, "id", 1)
+            self._attributes.add("id")
+        if "name" not in self._attributes:
+            object.__setattr__(self, "name", "Mock")
+            self._attributes.add("name")
 
     def __call__(self, *args, **kwargs):
         return SafeMock(*args, **kwargs)
 
     def __getattr__(self, name):
         # 避免无限递归
-        if name.startswith('__') and name.endswith('__'):
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(
+                f"'{self.__class__.__name__}' object has no attribute '{name}'"
+            )
         # 直接返回一个新的SafeMock实例
         return SafeMock(name=name)
 
@@ -51,12 +55,14 @@ class SafeMock:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
+
 # FastAPI和相关组件的Mock
 try:
-    from fastapi import FastAPI, HTTPException, Depends, Security
-    from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+    from fastapi import Depends, FastAPI, HTTPException, Security
+    from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
     from fastapi.testclient import TestClient
     from pydantic import BaseModel
+
     FASTAPI_AVAILABLE = True
 except ImportError:
     FastAPI = SafeMock
@@ -72,24 +78,29 @@ except ImportError:
 # 创建测试用的FastAPI应用
 if FASTAPI_AVAILABLE:
     app = FastAPI(title="Auth Test API")
+
     @app.get("/health/")
     async def health():
         return {"status": "healthy", "service": "auth-test-api", "version": "1.0.0"}
+
     @app.get("/protected")
     async def protected_route():
         return {"message": "This is a protected route"}
+
     health_router = app.router
 else:
     app = SafeMock()
     health_router = SafeMock()
 
+
 # 认证相关Mock
 class MockJWTAuthManager:
     """Mock JWT认证管理器"""
+
     def __init__(self, *args, **kwargs):
         pass
 
-    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None):
+    def create_access_token(self, data: dict, expires_delta: timedelta | None = None):
         return "mock_access_token_12345"
 
     def create_refresh_token(self, data: dict):
@@ -97,9 +108,13 @@ class MockJWTAuthManager:
 
     async def verify_token(self, token: str):
         if token == "valid_token":
-            return SafeMock(user_id=1, username="testuser", role="user", email="test@example.com")
+            return SafeMock(
+                user_id=1, username="testuser", role="user", email="test@example.com"
+            )
         elif token == "admin_token":
-            return SafeMock(user_id=2, username="admin", role="admin", email="admin@example.com")
+            return SafeMock(
+                user_id=2, username="admin", role="admin", email="admin@example.com"
+            )
         else:
             raise HTTPException(status_code=401, detail="Invalid token")
 
@@ -122,19 +137,40 @@ class MockJWTAuthManager:
 
         return len(errors) == 0, errors
 
+
 # Mock用户数据
 MOCK_USERS = {
-    1: SafeMock(id=1, username="admin", email="admin@football-prediction.com",
-                role="admin", is_active=True, created_at=datetime.now()),
-    2: SafeMock(id=2, username="user", email="user@football-prediction.com",
-                role="user", is_active=True, created_at=datetime.now()),
-    3: SafeMock(id=3, username="inactive", email="inactive@football-prediction.com",
-                role="user", is_active=False, created_at=datetime.now()),
+    1: SafeMock(
+        id=1,
+        username="admin",
+        email="admin@football-prediction.com",
+        role="admin",
+        is_active=True,
+        created_at=datetime.now(),
+    ),
+    2: SafeMock(
+        id=2,
+        username="user",
+        email="user@football-prediction.com",
+        role="user",
+        is_active=True,
+        created_at=datetime.now(),
+    ),
+    3: SafeMock(
+        id=3,
+        username="inactive",
+        email="inactive@football-prediction.com",
+        role="user",
+        is_active=False,
+        created_at=datetime.now(),
+    ),
 }
+
 
 # Mock枚举类
 class MockEnum:
     """Mock枚举类"""
+
     def __init__(self, value: str = "mock_value"):
         self.value = value
 
@@ -146,16 +182,19 @@ class MockEnum:
             return self.value == other.value
         return str(other) == str(self.value)
 
+
 # Mock状态枚举
 class MockUserStatus:
     ACTIVE = MockEnum("active")
     INACTIVE = MockEnum("inactive")
     SUSPENDED = MockEnum("suspended")
 
+
 class MockUserRole:
     ADMIN = MockEnum("admin")
     USER = MockEnum("user")
     MODERATOR = MockEnum("moderator")
+
 
 # Token数据Mock
 class MockTokenData:
@@ -164,6 +203,7 @@ class MockTokenData:
         self.username = username or "testuser"
         self.role = role or "user"
         self.exp = datetime.now() + timedelta(hours=1)
+
 
 # 认证依赖Mock
 async def get_current_user_mock(token: str = None):
@@ -178,17 +218,20 @@ async def get_current_user_mock(token: str = None):
     else:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-async def get_current_active_user_mock(current_user = None):
+
+async def get_current_active_user_mock(current_user=None):
     """Mock获取当前活跃用户函数"""
     if not current_user or not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-async def get_admin_user_mock(current_user = None):
+
+async def get_admin_user_mock(current_user=None):
     """Mock获取管理员用户函数"""
     if not current_user or current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
+
 
 # 设置全局Mock变量
 JWTAuthManager = MockJWTAuthManager
@@ -198,12 +241,13 @@ HTTPException = HTTPException if FASTAPI_AVAILABLE else SafeMock
 Request = SafeMock
 status = SafeMock
 Mock = SafeMock
-patch = patch if 'patch' in globals() else SafeMock
+patch = patch if "patch" in globals() else SafeMock
 
 # 导入修复结束
 logger = logging.getLogger(__name__)
 
 # ==================== 测试用例 ====================
+
 
 class TestAuthenticationDependencies:
     """认证依赖测试类"""
@@ -214,9 +258,9 @@ class TestAuthenticationDependencies:
         auth_manager = MockJWTAuthManager()
 
         assert auth_manager is not None
-        assert hasattr(auth_manager, 'create_access_token')
-        assert hasattr(auth_manager, 'verify_token')
-        assert hasattr(auth_manager, 'hash_password')
+        assert hasattr(auth_manager, "create_access_token")
+        assert hasattr(auth_manager, "verify_token")
+        assert hasattr(auth_manager, "hash_password")
 
     def test_create_access_token(self):
         """测试创建访问令牌"""
@@ -374,7 +418,7 @@ class TestAuthenticationDependencies:
         assert token_data.user_id == 123
         assert token_data.username == "testuser"
         assert token_data.role == "user"
-        assert hasattr(token_data, 'exp')
+        assert hasattr(token_data, "exp")
 
     def test_mock_enums(self):
         """测试Mock枚举"""
@@ -439,7 +483,9 @@ class TestAuthenticationDependencies:
         # 测试迭代
         assert list(mock_obj) == []
 
+
 # ==================== FastAPI集成测试 ====================
+
 
 @pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI not available")
 class TestFastAPIIntegration:
@@ -465,7 +511,9 @@ class TestFastAPIIntegration:
         async with mock_obj as context:
             assert context is not None
 
+
 # ==================== 性能测试 ====================
+
 
 class TestPerformance:
     """性能测试类"""
@@ -474,6 +522,7 @@ class TestPerformance:
     async def test_token_verification_performance(self):
         """测试令牌验证性能"""
         import time
+
         auth_manager = MockJWTAuthManager()
 
         start_time = time.time()
@@ -491,6 +540,7 @@ class TestPerformance:
     def test_password_hashing_performance(self):
         """测试密码哈希性能"""
         import time
+
         auth_manager = MockJWTAuthManager()
 
         start_time = time.time()
@@ -505,7 +555,9 @@ class TestPerformance:
         # 验证性能在合理范围内
         assert duration < 0.5, f"Password hashing too slow: {duration}s"
 
+
 # ==================== 边界条件测试 ====================
+
 
 class TestEdgeCases:
     """边界条件测试类"""
@@ -540,13 +592,11 @@ class TestEdgeCases:
     async def test_concurrent_token_verification(self):
         """测试并发令牌验证"""
         import asyncio
+
         auth_manager = MockJWTAuthManager()
 
         # 创建多个并发任务
-        tasks = [
-            auth_manager.verify_token("valid_token")
-            for _ in range(10)
-        ]
+        tasks = [auth_manager.verify_token("valid_token") for _ in range(10)]
 
         # 等待所有任务完成
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -556,6 +606,7 @@ class TestEdgeCases:
         for result in results:
             assert not isinstance(result, Exception)
             assert result.username == "testuser"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

@@ -9,7 +9,6 @@ import os
 import sys
 from datetime import datetime
 from typing import Any
-import pytest
 
 # 添加adapters目录到路径，避免通过__init__.py
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/adapters"))
@@ -110,8 +109,7 @@ try:
         DataTransformer,
         Target,
     )
-except ImportError as e:
-    print(f"Warning: Cannot import base module, using Mock classes: {e}")
+except ImportError:
     Adaptee = MockClass
     Adapter = MockClass
     AdapterStatus = MockAdapterStatus()

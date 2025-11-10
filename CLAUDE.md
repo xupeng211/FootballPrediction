@@ -29,13 +29,15 @@ make test.unit        # 运行单元测试
 make coverage         # 查看覆盖率报告
 make fix-code         # 一键修复代码质量问题
 make prepush          # 提交前完整验证
+make ci-check         # CI/CD质量检查
+make context          # 加载项目上下文（AI开发必用）
 ```
 
 ### 🚨 紧急修复
 
 ```bash
 # 当测试大量失败时
-python3 scripts/fix_test_crisis.py
+make solve-test-crisis    # 完整测试危机解决方案
 python3 scripts/smart_quality_fixer.py
 make test.unit
 ```
@@ -119,29 +121,36 @@ await event_bus.publish(event)
 
 **按类型执行**
 ```bash
-pytest -m "unit"              # 仅单元测试
-pytest -m "integration"       # 仅集成测试
-pytest -m "not slow"          # 排除慢速测试
+make test.unit          # 仅单元测试
+make test.int           # 仅集成测试
+pytest -m "not slow"    # 排除慢速测试
+make test.smart         # 优化的Smart Tests组合
 ```
 
 **按功能域执行**
 ```bash
-pytest -m "api and critical"  # API关键功能测试
-pytest -m "domain or services" # 业务逻辑测试
-pytest -m "ml"                 # 机器学习模块测试
+pytest -m "api and critical"     # API关键功能测试
+pytest -m "domain or services"   # 业务逻辑测试
+pytest -m "ml"                   # 机器学习模块测试
+pytest -m "database"             # 数据库相关测试
+pytest -m "cache"                # 缓存相关测试
 ```
 
 **调试特定测试**
 ```bash
 pytest tests/unit/api/test_predictions.py::test_prediction_simple -v
-pytest -m "unit and api" -v   # 功能域测试
+pytest -m "unit and api" -v      # 功能域测试
 pytest --cov=src --cov-report=term-missing  # 查看覆盖详情
+make coverage-unit               # 单元测试覆盖率
+make cov.html                    # 生成HTML覆盖率报告
 ```
 
 ### ⚠️ 重要测试规则
 - **永远不要**对单个文件使用 `--cov-fail-under`
 - **覆盖率阈值**: 30%（pytest.ini配置，渐进式改进策略）
 - **优先使用**: Makefile命令而非直接pytest
+- **测试危机**: 使用 `make solve-test-crisis` 解决大量测试失败
+- **智能修复**: 使用 `python3 scripts/smart_quality_fixer.py` 自动修复
 
 ---
 
@@ -186,19 +195,35 @@ flake8 src/ tests/           # 代码检查
 
 ### 📋 推荐开发流程
 1. **环境启动**: `make install && make env-check`
-2. **智能修复**: `python3 scripts/smart_quality_fixer.py`
-3. **开发**: 编写代码和测试
-4. **质量检查**: `make ci-check`
-5. **测试验证**: `make test.unit && make coverage`
-6. **提交**: `make prepush`
+2. **加载上下文**: `make context` (AI开发必备)
+3. **智能修复**: `python3 scripts/smart_quality_fixer.py`
+4. **开发**: 编写代码和测试
+5. **质量检查**: `make ci-check`
+6. **测试验证**: `make test.unit && make coverage`
+7. **提交**: `make prepush`
 
 ### 🎯 渐进式改进策略
 当遇到大量质量问题时：
 1. **语法修复** - 运行 `make ci-auto-fix` 修复语法错误
 2. **功能重建** - 恢复影响测试的核心功能
-3. **测试验证** - 运行 `make test-crisis-fix` 解决测试危机
+3. **测试危机解决** - 运行 `make solve-test-crisis` 完整解决方案
 4. **质量提升** - 执行 `make improve-test-quality`
 5. **成果提交** - 记录改进成果
+
+### 🚨 问题解决优先级
+```bash
+# 1级: 紧急修复 (测试大量失败)
+make solve-test-crisis
+
+# 2级: 智能修复 (代码质量问题)
+make smart-fix
+
+# 3级: 质量检查 (验证修复效果)
+make ci-check
+
+# 4级: 渐进式改进 (持续优化)
+make continuous-improvement
+```
 
 ### 📈 质量监控和CI/CD
 ```bash
@@ -316,6 +341,9 @@ make test-m2-toolchain
 - **关键规则**: 永远不要对单个文件使用 `--cov-fail-under`
 - 使用Makefile命令而非直接调用工具
 - 优先使用 `make ci-check` 进行质量验证
+- **AI开发**: 始终以 `make context` 开始，获取项目上下文
+- **渐进式改进**: 优先保证测试通过，再逐步提升质量
+- **智能工具**: 充分利用 `scripts/smart_quality_fixer.py` 等自动化工具
 
 ### 🎯 成功标准
 - **测试通过**: 单元测试和集成测试正常运行
@@ -568,4 +596,20 @@ make claude-sync
 
 ---
 
-*文档版本: v16.0 (Claude Code优化版) | 维护者: Claude Code | 更新时间: 2025-11-09*
+*文档版本: v17.0 (Claude Code 2025优化版) | 维护者: Claude Code | 更新时间: 2025-11-10*
+
+---
+
+## 🔄 重要更新说明 (v17.0)
+
+### 新增功能
+- **优化测试命令**: 增加 `make test.smart` Smart Tests组合
+- **问题解决优先级**: 明确1-4级问题解决路径
+- **AI开发流程**: 强调 `make context` 的重要性
+- **智能工具集成**: 更详细的自动化工具使用指南
+
+### 关键改进
+- **测试危机解决**: `make solve-test-crisis` 完整解决方案
+- **渐进式改进**: 更清晰的改进策略和执行步骤
+- **质量监控**: 增强的CI/CD监控和报告工具
+- **开发效率**: 优化的开发工作流程和最佳实践

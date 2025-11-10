@@ -47,9 +47,9 @@ class TestAPIHealthExtended:
 
     def test_health_check_with_middleware(self, client):
         """测试带中间件的健康检查"""
-        response = client.get("/api/health", headers={"X-Request-ID": "test-123"})
+        response = client.get("/api/health", headers={"x-Request-ID": "test-123"})
         assert response.status_code == 200
-        assert "X-Request-ID" in response.headers
+        assert "x-Request-ID" in response.headers
 
     def test_health_metrics(self, client):
         """测试健康指标端点"""

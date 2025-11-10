@@ -4,17 +4,21 @@ from fastapi import FastAPI
 FastAPI 中文配置
 """
 
+
 # Mock implementation for missing I18nUtils
 class MockI18nUtils:
     @staticmethod
     def translate(text: str) -> str:
         return text
 
+
 def init_i18n():
     pass
 
+
 # Replace imports with mocks
 I18nUtils = MockI18nUtils
+
 
 def create_chinese_app() -> FastAPI:
     """创建中文界面的 FastAPI 应用"""
