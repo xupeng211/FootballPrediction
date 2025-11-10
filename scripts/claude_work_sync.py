@@ -215,6 +215,87 @@ class ClaudeWorkSynchronizer:
         except Exception as e:
             print(f"❌ 保存同步日志失败: {e}")
 
+    def get_existing_open_issues(self) -> list[dict[str, Any]]:
+        """获取当前所有open状态的Issues"""
+        try:
+            result = self.run_gh_command([
+                "issue", "list",
+                "--repo", "xupeng211/FootballPrediction",
+                "--state", "open",
+                "--limit", "100"
+            ])
+
+            if not result["success"]:
+                print(f"❌ 获取现有Issues失败: {result['stderr']}")
+                return []
+
+            issues = []
+            lines = result["stdout"].split('\n')
+
+            for line in lines:
+                if not line.strip():
+                    continue
+
+                parts = line.split('\t')
+                if len(parts) >= 3:
+                    issue_number = int(parts[0].replace('#', ''))
+                    title = parts[1]
+                    labels = parts[2] if len(parts) > 2 else ""
+
+                    issues.append({
+                        "number": issue_number,
+                        "title": title,
+                        "labels": labels
+                    })
+
+            return issues
+
+        except Exception as e:
+            print(f"❌ 获取现有Issues异常: {e}")
+            return []
+
+    def is_similar_issue(self, work_item: 'WorkItem', existing_issue: dict[str, Any]) -> bool:
+        """检查工作项目是否与现有Issue相似"""
+        # 规则1: 完全相同的标题
+        if work_item.title == existing_issue["title"]:
+            return True
+
+        # 规则2: 包含相同的关键词（Phase、P编号等）
+        work_keywords = set()
+        issue_keywords = set()
+
+        # 提取工作项目关键词
+        import re
+        work_patterns = [
+            r'Phase\s+\d+\.\d+',  # Phase 8.1, Phase 9.2
+            r'P\d+\.\d+',         # P2.2, P3.2
+            r'Phase\s+\d+',       # Phase 8, Phase 9
+            r'API文档',           # API文档相关
+            r'测试系统',          # 测试系统相关
+            r'覆盖率',           # 覆盖率相关
+            r'代码质量',         # 代码质量相关
+        ]
+
+        issue_patterns = work_patterns  # 使用相同的模式
+
+        for pattern in work_patterns:
+            matches = re.findall(pattern, work_item.title)
+            work_keywords.update(matches)
+
+        for pattern in issue_patterns:
+            matches = re.findall(pattern, existing_issue["title"])
+            issue_keywords.update(matches)
+
+        # 如果有共同的关键词，认为相似
+        common_keywords = work_keywords & issue_keywords
+        if len(common_keywords) > 0:
+            # 特别严格的检查：如果Phase编号相同，认为是重复
+            for keyword in common_keywords:
+                if re.match(r'Phase\s+\d+\.\d+', keyword) or re.match(r'P\d+\.\d+', keyword):
+                    return True
+
+        return False
+
     def add_work_item(self, work_item: WorkItem):
         """添加新的作业项目"""
         work_items = self.load_work_log()
@@ -549,16 +630,76 @@ class ClaudeWorkSynchronizer:
 
         print(f"📋 找到 {len(work_items)} 个作业项目")
 
+        # 🚨 ISSUE管理危机防护：数量监控和去重检查
+        print("🔍 执行Issue数量监控...")
+
+        # 检查当前Issue数量
+        current_open_count = len(self.get_existing_open_issues())
+        MAX_ISSUES_LIMIT = 25  # 设置最大Issue数量限制（健康阈值）
+
+        print(f"   📊 当前Open Issues数量: {current_open_count}")
+
+        if current_open_count >= MAX_ISSUES_LIMIT:
+            print(f"   🚨 警告: Issue数量已达上限 ({current_open_count}/{MAX_ISSUES_LIMIT})")
+            print("   ❌ 暂停同步，请先清理现有Issues")
+            return {
+                "success": False,
+                "error": f"Issue count limit reached ({current_open_count}/{MAX_ISSUES_LIMIT})",
+                "action_required": "Please clean up existing issues before syncing"
+            }
+        elif current_open_count >= MAX_ISSUES_LIMIT * 0.6:  # 60%警告
+            print(f"   ⚠️ 警告: Issue数量接近健康阈值 ({current_open_count}/{MAX_ISSUES_LIMIT})")
+
+        print("🔍 执行去重检查，防止重复创建...")
+        existing_issues = self.get_existing_open_issues()
+        duplicate_count = 0
+        filtered_work_items = []
+
+        for work_item in work_items:
+            # 检查是否已存在相似的Issue
+            is_duplicate = False
+            for issue in existing_issues:
+                if self.is_similar_issue(work_item, issue):
+                    # 检查现有Issue是否已完成
+                    issue_labels = [label["name"] for label in issue.get("labels", [])]
+                    if "status/completed" in issue_labels:
+                        print(f"   ✅ 跳过已完成Issue: {work_item.title} 与Issue #{issue['number']} 相似（已完成）")
+                    else:
+                        print(f"   ⚠️ 发现重复: {work_item.title} 与现有Issue #{issue['number']} 相似")
+                    is_duplicate = True
+                    duplicate_count += 1
+                    break
+
+            if not is_duplicate:
+                filtered_work_items.append(work_item)
+
+        if duplicate_count > 0:
+            print(f"   🚫 过滤了 {duplicate_count} 个重复作业项目")
+            print(f"   ✅ 实际处理 {len(filtered_work_items)} 个非重复项目")
+
+        # 再次检查添加新Issues后是否会超过限制
+        projected_count = current_open_count + len(filtered_work_items)
+        if projected_count > MAX_ISSUES_LIMIT:
+            over_limit = projected_count - MAX_ISSUES_LIMIT
+            print(f"   🚨 错误: 添加新Issues后将超过限制 ({projected_count}/{MAX_ISSUES_LIMIT})")
+            print(f"   📉 需要减少 {over_limit} 个项目")
+            # 保留最新的项目
+            filtered_work_items = filtered_work_items[:-over_limit] if over_limit > 0 else filtered_work_items
+            print(f"   ✅ 调整后处理 {len(filtered_work_items)} 个项目")
+
         results = {
+            "success": True,
             "total_items": len(work_items),
+            "filtered_items": len(filtered_work_items),
+            "duplicates_filtered": duplicate_count,
             "sync_results": [],
             "successful_syncs": 0,
             "failed_syncs": 0,
             "sync_timestamp": datetime.now().isoformat()
         }
 
-        for i, work_item in enumerate(work_items, 1):
-            print(f"\n📝 [{i}/{len(work_items)}] 处理作业项目: {work_item.id}")
+        for i, work_item in enumerate(filtered_work_items, 1):
+            print(f"\n📝 [{i}/{len(filtered_work_items)}] 处理作业项目: {work_item.id}")
             print(f"   标题: {work_item.title}")
             print(f"   状态: {work_item.status} ({work_item.completion_percentage}%)")
 
@@ -782,7 +923,7 @@ def main():
                 # 同步到GitHub
                 results = synchronizer.sync_all_work_items()
 
-                if results["success"]:
+                if results.get("success", False):
                     print("\n🎉 同步完成！")
                 else:
                     print(f"\n❌ 同步失败: {results.get('error', 'Unknown error')}")
