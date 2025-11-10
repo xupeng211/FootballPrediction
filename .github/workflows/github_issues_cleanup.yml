@@ -50,17 +50,17 @@ jobs:
         run: |
           mkdir -p reports
 
-      - name: 运行Issue状态检查
+      - name: 运行每周Issue清理
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 确定运行模式
           if [ "${{ github.event.inputs.execute_cleanup }}" = "true" ]; then
             echo "🔧 执行模式 - 将实际清理Issues"
-            python scripts/github_issue_cleaner.py --repo ${{ github.repository }} --execute
+            python scripts/weekly_issues_cleanup.py --repo ${{ github.repository }} --execute
           else
             echo "🔍 试运行模式 - 仅生成报告"
-            python scripts/github_issue_cleaner.py --repo ${{ github.repository }} --dry-run
+            python scripts/weekly_issues_cleanup.py --repo ${{ github.repository }} --dry-run
           fi
 
       - name: 运行标签修正
@@ -86,7 +86,7 @@ jobs:
         with:
           name: cleanup-reports-${{ github.run_number }}
           path: |
-            reports/github_issues_cleanup_report.md
+            reports/weekly_issues_cleanup_*.md
             reports/github_label_fix_report.md
             reports/cleanup_summary_report.md
           retention-days: 30

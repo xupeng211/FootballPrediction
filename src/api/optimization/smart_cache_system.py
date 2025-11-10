@@ -386,7 +386,7 @@ class CacheMiddleware:
             base_key += f"?{query_string}"
 
         # 生成哈希以避免键过长
-        hash_key = hashlib.md5(base_key.encode()).hexdigest()
+        hash_key = hashlib.sha256(base_key.encode()).hexdigest()
 
         return f"cache:{hash_key}"
 

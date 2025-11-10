@@ -373,13 +373,14 @@ class FeatureCalculator:
 
             # 创建比赛实体
             match_entity = MatchEntity(
-                id=match.id,
+                match_id=match.id,
                 home_team_id=match.home_team_id,
                 away_team_id=match.away_team_id,
-                match_date=match.match_date,
-                home_score=match.home_score,
-                away_score=match.away_score,
-                status=match.status,
+                league_id=getattr(match, "league_id", 1),  # 使用默认值1如果字段不存在
+                match_time=match.match_date,
+                season=getattr(
+                    match, "season", "2024-2025"
+                ),  # 使用默认值如果字段不存在
             )
 
             # 计算各部分特征

@@ -55,8 +55,7 @@ except ImportError:
     FACTORY_AVAILABLE = False
 
 
-# 跳过测试的条件
-pytest.importorskip("adapters.base")
+# 移除skip条件，允许测试运行
 
 
 class MockAdaptee(Adaptee):
@@ -168,6 +167,8 @@ class TestAdaptee:
         assert adaptee.name == "TestAdaptee"
         assert isinstance(adaptee.data_store, dict)
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_mock_adaptee_get_data(self):
         """测试模拟被适配者获取数据"""
         adaptee = MockAdaptee()
@@ -179,6 +180,8 @@ class TestAdaptee:
         result = await adaptee.get_data(key="custom_key")
         assert result == "custom_value"
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_mock_adaptee_send_data(self):
         """测试模拟被适配者发送数据"""
         adaptee = MockAdaptee()
@@ -205,6 +208,7 @@ class TestTarget:
         assert target.name == "TestTarget"
         assert target.request_count == 0
 
+    @pytest.mark.asyncio
     async def test_mock_target_request(self):
         """测试模拟目标接口请求"""
         target = MockTarget()
@@ -233,12 +237,14 @@ class TestAdapter:
         assert adapter.request_count == 0
         assert isinstance(adapter.adaptee, MockAdaptee)
 
+    @pytest.mark.asyncio
     async def test_mock_adapter_request_get_action(self):
         """测试模拟适配器获取动作请求"""
         adapter = MockAdapter()
         result = await adapter.request(action="get", key="test_key")
         assert result == "mock_data_test_key"
 
+    @pytest.mark.asyncio
     async def test_mock_adapter_request_send_action(self):
         """测试模拟适配器发送动作请求"""
         adapter = MockAdapter()
@@ -246,6 +252,7 @@ class TestAdapter:
         result = await adapter.request(action="send", data=test_data)
         assert result["status"] == "success"
 
+    @pytest.mark.asyncio
     async def test_mock_adapter_request_default_action(self):
         """测试模拟适配器默认动作请求"""
         adapter = MockAdapter()
@@ -274,6 +281,7 @@ class TestDataTransformer:
         assert transformer.name == "TestTransformer"
         assert transformer.transform_count == 0
 
+    @pytest.mark.asyncio
     async def test_mock_data_transformer_transform_dict(self):
         """测试模拟数据转换器转换字典数据"""
         transformer = MockDataTransformer()
@@ -285,6 +293,7 @@ class TestDataTransformer:
         assert result["transformed_by"] == "TestTransformer"
         assert result["transform_count"] == 1
 
+    @pytest.mark.asyncio
     async def test_mock_data_transformer_transform_string(self):
         """测试模拟数据转换器转换字符串数据"""
         transformer = MockDataTransformer()
@@ -368,12 +377,14 @@ class TestCompositeAdapter:
         retrieved = composite.get_adapter("NonExistent")
         assert retrieved is None
 
+    @pytest.mark.asyncio
     async def test_composite_adapter_request_with_no_adapters(self):
         """测试组合适配器无子适配器时的请求"""
         composite = CompositeAdapter()
         result = await composite.request()
         assert result == {"adapter_name": "CompositeAdapter", "results": []}
 
+    @pytest.mark.asyncio
     async def test_composite_adapter_request_with_single_adapter(self):
         """测试组合适配器单个子适配器的请求"""
         composite = CompositeAdapter()
@@ -385,6 +396,7 @@ class TestCompositeAdapter:
         assert len(result["results"]) == 1
         assert result["results"][0] == "mock_data_test"
 
+    @pytest.mark.asyncio
     async def test_composite_adapter_request_with_multiple_adapters(self):
         """测试组合适配器多个子适配器的请求"""
         composite = CompositeAdapter()
@@ -397,6 +409,7 @@ class TestCompositeAdapter:
         assert result["adapter_name"] == "CompositeAdapter"
         assert len(result["results"]) == 2
 
+    @pytest.mark.asyncio
     async def test_composite_adapter_request_with_exception_handling(self):
         """测试组合适配器请求时的异常处理"""
         composite = CompositeAdapter()
@@ -591,6 +604,7 @@ class TestAdapterFactory:
 class TestAdapterIntegration:
     """适配器集成测试"""
 
+    @pytest.mark.asyncio
     async def test_full_adapter_workflow(self):
         """测试完整的适配器工作流程"""
         # 1. 创建数据转换器

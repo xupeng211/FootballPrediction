@@ -26,7 +26,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import DECIMAL, DateTime, Index, Integer, String, Text
+from sqlalchemy import DECIMAL, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.base import BaseModel
@@ -80,8 +80,8 @@ class Features(BaseModel):
     __tablename__ = "features"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    match_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    team_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    match_id: Mapped[int] = mapped_column(ForeignKey("matches.id"), nullable=False)
+    team_id: Mapped[int | None] = mapped_column(ForeignKey("teams.id"), nullable=True)
     feature_type: Mapped[str] = mapped_column(String(50), nullable=False)
     feature_data: Mapped[dict[str, Any] | None] = mapped_column(
         Text, nullable=True

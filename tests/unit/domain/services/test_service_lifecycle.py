@@ -363,11 +363,12 @@ class TestServiceLifecycle:
 
     def test_service_creation_timestamp(self):
         """测试服务创建时间戳"""
-        before_creation = datetime.now()
+        # 使用UTC时间以保持一致性，应用已验证的成功模式
+        before_creation = datetime.utcnow()
         service = ScoringService()
-        after_creation = datetime.now()
+        after_creation = datetime.utcnow()
 
-        # 验证创建时间戳
+        # 验证创建时间戳（考虑时区一致性）
         assert before_creation <= service._created_at <= after_creation
 
     def test_multiple_services_lifecycle(self):

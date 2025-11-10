@@ -68,9 +68,47 @@ class TeamDomainService:
     pass  # 添加pass语句
     """球队领域服务"""
 
-    def __init__(self, repository: TeamRepositoryProtocol | None = None) -> None:
+    def __init__(
+        self,
+        config: dict[str, Any] | None = None,
+        repository: TeamRepositoryProtocol | None = None,
+    ) -> None:
         self._events: list[Any] = []
         self._repository = repository
+        self._config = config or {}
+        self._is_initialized = False
+        self._is_disposed = False
+        self._health_status = "healthy"
+        self._created_at = datetime.utcnow()
+
+    def initialize(self) -> bool:
+        """初始化服务"""
+        if self._is_disposed:
+            raise RuntimeError("Cannot initialize disposed service")
+        self._is_initialized = True
+        return True
+
+    def dispose(self) -> None:
+        """销毁服务"""
+        self._is_disposed = True
+        self._is_initialized = False
+        self._events.clear()
+
+    def is_healthy(self) -> bool:
+        """检查服务健康状态"""
+        return self._health_status == "healthy" and not self._is_disposed
+
+    def get_service_info(self) -> dict[str, Any]:
+        """获取服务信息"""
+        return {
+            "name": "TeamDomainService",
+            "initialized": self._is_initialized,
+            "disposed": self._is_disposed,
+            "healthy": self.is_healthy(),
+            "created_at": self._created_at.isoformat() if self._created_at else None,
+            "event_count": len(self._events),
+            "config": self._config,
+        }
 
     def attach_repository(self, repository: TeamRepositoryProtocol) -> None:
         """绑定仓储实现."""

@@ -194,9 +194,9 @@ class FootballDataCleaner:
             mode_value = series.mode()[0] if not series.mode().empty else "Unknown"
             return series.fillna(mode_value)
         elif strategy == "forward_fill":
-            return series.fillna(method="ffill")
+            return series.ffill()
         elif strategy == "backward_fill":
-            return series.fillna(method="bfill")
+            return series.bfill()
         elif strategy == "interpolate" and series.dtype in ["int64", "float64"]:
             return series.interpolate()
         else:
@@ -232,12 +232,12 @@ class FootballDataCleaner:
     def _detect_outliers_iqr(self, series: pd.Series) -> pd.Series:
         """使用IQR方法检测异常值"""
         try:
-            Q1 = series.quantile(0.25)
-            Q3 = series.quantile(0.75)
-            IQR = Q3 - Q1
+            q1 = series.quantile(0.25)
+            q3 = series.quantile(0.75)
+            iqr = q3 - q1
 
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
 
             outliers = (series < lower_bound) | (series > upper_bound)
             return outliers
@@ -250,12 +250,12 @@ class FootballDataCleaner:
     ) -> pd.DataFrame:
         """处理异常值"""
         try:
-            Q1 = data[column].quantile(0.25)
-            Q3 = data[column].quantile(0.75)
-            IQR = Q3 - Q1
+            q1 = data[column].quantile(0.25)
+            q3 = data[column].quantile(0.75)
+            iqr = q3 - q1
 
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
 
             # 将异常值限制在边界范围内
             data.loc[data[column] < lower_bound, column] = lower_bound

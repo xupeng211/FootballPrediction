@@ -306,6 +306,9 @@ class Prediction:
         """计算积分"""
         points = PredictionPoints()
 
+        # 基础参与积分
+        points.base_points = rules.get("base_points", Decimal("10"))
+
         # 精确比分奖励
         if self.score.is_correct_score:
             points.score_bonus = rules["exact_score"]
@@ -315,18 +318,21 @@ class Prediction:
 
         # 置信度奖励
         if self.confidence:
-            base_points = points.score_bonus + points.result_bonus
+            bonus_points = points.score_bonus + points.result_bonus
             confidence_multiplier = (
                 Decimal("1")
                 + (self.confidence.value - Decimal("0.5"))
                 * rules["confidence_multiplier"]
             )
-            confidence_bonus = base_points * confidence_multiplier - base_points
+            confidence_bonus = bonus_points * confidence_multiplier - bonus_points
             points.confidence_bonus = confidence_bonus.quantize(Decimal("0.01"))
 
         # 计算总积分
         points.total = (
-            points.score_bonus + points.result_bonus + points.confidence_bonus
+            points.base_points
+            + points.score_bonus
+            + points.result_bonus
+            + points.confidence_bonus
         )
         points.total = points.total.quantize(Decimal("0.01"))
 

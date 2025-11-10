@@ -6,6 +6,7 @@ Scoring Domain Service
 Handles complex business logic related to prediction scoring.
 """
 
+from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
@@ -17,7 +18,46 @@ class ScoringService:
 
     def __init__(self, scoring_config: dict[str, Any] | None = None):
         """初始化计分服务"""
-        self.config = scoring_config or self._default_scoring_config()
+        self._config = scoring_config or self._default_scoring_config()
+        self.config = self._config  # 保持向后兼容性
+        self._events = []
+        self._is_initialized = False
+        self._is_disposed = False
+        self._health_status = "healthy"
+        self._created_at = datetime.utcnow()
+
+    def initialize(self) -> bool:
+        """初始化服务"""
+        if self._is_disposed:
+            raise RuntimeError("Cannot initialize disposed service")
+        self._is_initialized = True
+        return True
+
+    def dispose(self) -> None:
+        """销毁服务"""
+        self._is_disposed = True
+        self._is_initialized = False
+        self._events.clear()
+
+    def is_healthy(self) -> bool:
+        """检查服务健康状态"""
+        return (
+            self._health_status == "healthy"
+            and not self._is_disposed
+            and self._is_initialized
+        )
+
+    def get_service_info(self) -> dict[str, Any]:
+        """获取服务信息"""
+        return {
+            "name": "ScoringService",
+            "initialized": self._is_initialized,
+            "disposed": self._is_disposed,
+            "healthy": self.is_healthy(),
+            "created_at": self._created_at.isoformat() if self._created_at else None,
+            "event_count": len(self._events),
+            "config": self.config,
+        }
 
     def _default_scoring_config(self) -> dict[str, Any]:
         """默认计分配置"""

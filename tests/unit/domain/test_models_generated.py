@@ -28,24 +28,26 @@ class TestDomainModels:
         """测试比赛创建"""
         if Match:
             match = Match(
-                home_team="Team A",
-                away_team="Team B",
+                home_team_id=1,
+                away_team_id=2,
                 match_date=datetime.now(),
                 venue="Test Stadium",
             )
-            assert match.home_team == "Team A"
-            assert match.away_team == "Team B"
+            assert match.home_team_id == 1
+            assert match.away_team_id == 2
 
     def test_team_creation(self):
         """测试队伍创建"""
         if Team:
-            team = Team(name="Test Team", founded_year=2020, league="Test League")
+            team = Team(name="Test Team", founded_year=2020, country="Test Country")
             assert team.name == "Test Team"
             assert team.founded_year == 2020
 
     def test_league_creation(self):
         """测试联赛创建"""
         if League:
-            league = League(name="Test League", country="Test Country", season="2024")
+            league = League(
+                name="Test League", country="Test Country", founded_year=2020
+            )
             assert league.name == "Test League"
             assert league.country == "Test Country"

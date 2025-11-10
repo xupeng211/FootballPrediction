@@ -1,0 +1,12 @@
+{
+  "total_score": 8610.29702970297,
+  "max_score": 100,
+  "grade": "A",
+  "breakdown": {
+    "complexity": 60,
+    "documentation": 1470.2970297029703,
+    "modularity": 90,
+    "performance": 6990,
+    "efficiency": 0
+  }
+}

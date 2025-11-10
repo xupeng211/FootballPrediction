@@ -115,11 +115,17 @@ class SeverityAnalyzer:
 
     def analyze(self, event: "AuditEvent") -> AuditSeverity:
         """分析事件严重程度"""
-        # 简化的分析逻辑
-        if "delete" in event.action.lower():
+        action = event.action.lower()
+
+        # 高严重程度操作
+        if any(keyword in action for keyword in ["delete", "remove", "admin", "security"]):
             return AuditSeverity.HIGH
-        elif "modify" in event.action.lower():
+
+        # 中等严重程度操作
+        elif any(keyword in action for keyword in ["update", "modify", "change", "edit"]):
             return AuditSeverity.MEDIUM
+
+        # 低严重程度操作
         return AuditSeverity.LOW
 
 

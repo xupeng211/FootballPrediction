@@ -133,7 +133,7 @@ class DatabasePerformanceAnalyzer:
 
         # 标准化查询文本（移除多余空格、统一大小写）
         normalized_query = " ".join(query_text.strip().split()).lower()
-        return hashlib.md5(normalized_query.encode()).hexdigest()
+        return hashlib.sha256(normalized_query.encode()).hexdigest()
 
     async def analyze_query(
         self,
