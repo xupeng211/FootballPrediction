@@ -19,7 +19,7 @@ from .feature_definitions import (
     team_entity,
     team_recent_stats_view,
 )
-from .feature_store import Feature_Store as FootballFeatureStore
+from .feature_store import FeatureStore as FootballFeatureStore
 
 __all__ = [
     "FootballFeatureStore",
