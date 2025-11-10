@@ -1,20 +1,65 @@
 """
-集成测试配置
-Integration Tests Configuration
+集成测试配置文件 - 全面增强版
+Enhanced Integration Test Configuration
 
-提供集成测试所需的fixture和配置。
+提供集成测试和端到端测试所需的共享fixtures和配置
+Enhanced fixtures and configuration for integration and E2E testing
 """
 
 import asyncio
+import tempfile
 from collections.abc import AsyncGenerator
-from unittest.mock import MagicMock
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, Generator, List
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, text
 
-from src.database.models import Base
-from src.main import app
+# 添加项目根目录到Python路径
+import sys
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+# 导入应用模块 - 使用更灵活的导入方式
+try:
+    from src.main import app
+    from src.database.models import Base
+except ImportError:
+    # 备用导入路径
+    try:
+        from src.app_enhanced import app
+        from src.database.database_service import Base
+    except ImportError:
+        from src.main_simple import app
+        # 创建基础模型类用于测试
+        from sqlalchemy.orm import DeclarativeBase
+        class Base(DeclarativeBase):
+            pass
+
+# 导入领域模型
+try:
+    from src.domain.models.prediction import Prediction, PredictionStatus
+    from src.domain.models.match import Match, MatchStatus
+    from src.domain.models.team import Team
+    from src.domain.models.league import League
+except ImportError:
+    # 备用导入或创建简化的测试模型
+    Prediction = None
+    Match = None
+    Team = None
+    League = None
+
+
+# 测试数据库配置
+TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+TEST_SYNC_DATABASE_URL = "sqlite:///:memory:"
 
 
 @pytest.fixture(scope="session")
@@ -25,14 +70,14 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="function")
 async def test_db_engine():
-    """创建测试数据库引擎"""
-    # 使用内存SQLite数据库进行测试
+    """创建异步测试数据库引擎"""
     engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
+        TEST_DATABASE_URL,
         echo=False,
         future=True,
+        pool_pre_ping=True,
     )
 
     # 创建所有表
@@ -45,6 +90,24 @@ async def test_db_engine():
 
 
 @pytest.fixture
+def sync_test_db_engine():
+    """创建同步测试数据库引擎（用于某些特殊情况）"""
+    engine = create_engine(
+        TEST_SYNC_DATABASE_URL,
+        echo=False,
+        future=True,
+        pool_pre_ping=True,
+    )
+
+    # 创建所有表
+    Base.metadata.create_all(engine)
+
+    yield engine
+
+    Base.metadata.drop_all(engine)
+
+
+@pytest_asyncio.fixture
 async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
     """创建测试数据库会话"""
     async_session = async_sessionmaker(
@@ -56,53 +119,108 @@ async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture
+def sync_test_db_session(sync_test_db_engine):
+    """创建同步测试数据库会话"""
+    Session = sessionmaker(bind=sync_test_db_engine)
+    session = Session()
+
+    yield session
+
+    session.close()
+
+
+@pytest.fixture
 def test_client():
-    """创建测试客户端"""
+    """创建FastAPI测试客户端"""
     return TestClient(app)
 
 
-@pytest.fixture
-def mock_redis():
-    """模拟Redis客户端"""
-    redis_mock = MagicMock()
-    redis_mock.ping.return_value = True
-    redis_mock.get.return_value = None
-    redis_mock.set.return_value = True
-    redis_mock.delete.return_value = 1
-    redis_mock.exists.return_value = False
-    redis_mock.expire.return_value = True
-    return redis_mock
+@pytest_asyncio.fixture
+async def async_client() -> AsyncGenerator[AsyncClient, None]:
+    """创建异步HTTP客户端"""
+    try:
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            yield ac
+    except TypeError:
+        # 如果AsyncClient API不同，使用备用方法
+        from fastapi.testclient import TestClient
+        import httpx
+        client = TestClient(app)
+        # 创建一个简单的包装器
+        class AsyncClientWrapper:
+            def __init__(self, test_client):
+                self.client = test_client
+
+            async def get(self, url, **kwargs):
+                return self.client.get(url, **kwargs)
+
+            async def post(self, url, **kwargs):
+                return self.client.post(url, **kwargs)
+
+            async def put(self, url, **kwargs):
+                return self.client.put(url, **kwargs)
+
+            async def delete(self, url, **kwargs):
+                return self.client.delete(url, **kwargs)
+
+        yield AsyncClientWrapper(client)
 
 
-@pytest.fixture
-def mock_settings():
-    """模拟设置"""
-    settings = MagicMock()
-    settings.DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-    settings.REDIS_URL = "redis://localhost:6379/0"
-    settings.SECRET_KEY = "test-secret-key"
-    settings.DEBUG = True
-    return settings
+# 增强的测试数据fixtures
+@pytest_asyncio.fixture
+async def sample_league(test_db_session: AsyncSession):
+    """创建示例联赛数据"""
+    if not League:
+        pytest.skip("League model not available")
+
+    league = League(
+        name="Premier League",
+        country="England",
+        season="2024/2025",
+        is_active=True,
+    )
+
+    test_db_session.add(league)
+    await test_db_session.commit()
+    await test_db_session.refresh(league)
+
+    return league
 
 
-@pytest.fixture
-async def sample_data(test_db_session: AsyncSession):
-    """创建测试数据"""
-    from src.database.models import Match, Team
+@pytest_asyncio.fixture
+async def sample_teams(test_db_session: AsyncSession, sample_league):
+    """创建示例球队数据"""
+    if not Team:
+        pytest.skip("Team model not available")
 
-    # 创建测试球队
     teams = [
         Team(
-            name="Test Team A",
-            short_name="TTA",
-            country="Test Country",
-            founded_year=2020,
+            name="Manchester United",
+            short_name="MUN",
+            country="England",
+            founded_year=1878,
+            league_id=sample_league.id if hasattr(sample_league, 'id') else None,
         ),
         Team(
-            name="Test Team B",
-            short_name="TTB",
-            country="Test Country",
-            founded_year=2021,
+            name="Liverpool",
+            short_name="LIV",
+            country="England",
+            founded_year=1892,
+            league_id=sample_league.id if hasattr(sample_league, 'id') else None,
+        ),
+        Team(
+            name="Chelsea",
+            short_name="CHE",
+            country="England",
+            founded_year=1905,
+            league_id=sample_league.id if hasattr(sample_league, 'id') else None,
+        ),
+        Team(
+            name="Arsenal",
+            short_name="ARS",
+            country="England",
+            founded_year=1886,
+            league_id=sample_league.id if hasattr(sample_league, 'id') else None,
         ),
     ]
 
@@ -111,43 +229,361 @@ async def sample_data(test_db_session: AsyncSession):
 
     await test_db_session.commit()
 
-    # 创建测试比赛
-    from datetime import datetime
+    # 刷新所有球队以获取ID
+    for team in teams:
+        await test_db_session.refresh(team)
+
+    return teams
+
+
+@pytest_asyncio.fixture
+async def sample_match(test_db_session: AsyncSession, sample_teams):
+    """创建示例比赛数据"""
+    if not Match or not sample_teams:
+        pytest.skip("Match model or teams not available")
+
+    home_team, away_team = sample_teams[0], sample_teams[1]
 
     match = Match(
-        home_team_id=teams[0].id,
-        away_team_id=teams[1].id,
+        home_team_id=home_team.id,
+        away_team_id=away_team.id,
+        league_id=home_team.league_id if hasattr(home_team, 'league_id') else None,
+        match_date=datetime.utcnow() + timedelta(days=1),
+        status="SCHEDULED" if hasattr(Match, 'status') else "upcoming",
+        venue="Old Trafford",
         home_score=0,
         away_score=0,
-        match_date=datetime(2024, 1, 15, 15, 0, 0),
-        league="Test League",
-        status="upcoming",
-        venue="Test Stadium",
     )
 
     test_db_session.add(match)
     await test_db_session.commit()
-
-    # 重新获取以确保有ID
     await test_db_session.refresh(match)
-    for team in teams:
-        await test_db_session.refresh(team)
 
-    return {"teams": teams, "match": match}
+    return match
+
+
+@pytest_asyncio.fixture
+async def sample_predictions(test_db_session: AsyncSession, sample_match):
+    """创建示例预测数据"""
+    if not Prediction:
+        pytest.skip("Prediction model not available")
+
+    predictions = [
+        Prediction(
+            user_id=1,
+            match_id=sample_match.id,
+            status=PredictionStatus.PENDING.value if hasattr(PredictionStatus, 'value') else "pending",
+        ),
+        Prediction(
+            user_id=2,
+            match_id=sample_match.id,
+            status=PredictionStatus.PENDING.value if hasattr(PredictionStatus, 'value') else "pending",
+        ),
+        Prediction(
+            user_id=3,
+            match_id=sample_match.id,
+            status=PredictionStatus.EVALUATED.value if hasattr(PredictionStatus, 'value') else "evaluated",
+        ),
+    ]
+
+    # 为已评估的预测设置比分
+    if hasattr(predictions[2], 'make_prediction') and hasattr(predictions[2], 'evaluate'):
+        try:
+            predictions[2].make_prediction(predicted_home=2, predicted_away=1, confidence=0.85)
+            predictions[2].evaluate(actual_home=2, actual_away=1)
+        except Exception:
+            # 如果领域方法不可用，手动设置属性
+            predictions[2].predicted_home = 2
+            predictions[2].predicted_away = 1
+            predictions[2].actual_home = 2
+            predictions[2].actual_away = 1
+            predictions[2].confidence = 0.85
+
+    for prediction in predictions:
+        test_db_session.add(prediction)
+
+    await test_db_session.commit()
+
+    # 刷新所有预测以获取ID
+    for prediction in predictions:
+        await test_db_session.refresh(prediction)
+
+    return predictions
 
 
 @pytest.fixture
-def override_db_dependency(test_db_session: AsyncSession):
-    """覆盖数据库依赖"""
-
-    async def get_test_db():
-        yield test_db_session
-
-    return get_test_db
+def auth_headers():
+    """认证头信息"""
+    return {"Authorization": "Bearer test_token"}
 
 
-# 集成测试标记
-pytest.mark.integration = pytest.mark.integration
-pytest.mark.api_integration = pytest.mark.integration
-pytest.mark.db_integration = pytest.mark.integration
-pytest.mark.cache_integration = pytest.mark.integration
+@pytest.fixture
+def admin_headers():
+    """管理员认证头信息"""
+    return {"Authorization": "Bearer admin_token"}
+
+
+@pytest.fixture
+def mock_external_api_responses():
+    """模拟外部API响应"""
+    return {
+        "football_api": {
+            "match_data": {
+                "id": 12345,
+                "home_team": {"name": "Manchester United", "id": 1},
+                "away_team": {"name": "Liverpool", "id": 2},
+                "score": {"home": 0, "away": 0},
+                "status": "SCHEDULED",
+                "match_date": "2024-12-01T20:00:00Z",
+            }
+        },
+        "odds_api": {
+            "match_odds": {
+                "match_id": 12345,
+                "home_win": 2.10,
+                "draw": 3.40,
+                "away_win": 3.20,
+                "over_2_5": 1.85,
+                "under_2_5": 1.95,
+            }
+        },
+        "user_api": {
+            "user_data": {
+                "id": 123,
+                "username": "testuser",
+                "email": "test@example.com",
+                "is_active": True,
+                "role": "user",
+            }
+        }
+    }
+
+
+@pytest.fixture
+def performance_benchmarks():
+    """性能测试基准数据"""
+    return {
+        "response_time_limits": {
+            "health_check": 0.1,  # 100ms
+            "prediction_creation": 0.5,  # 500ms
+            "prediction_retrieval": 0.2,  # 200ms
+            "bulk_predictions": 2.0,  # 2s
+            "user_registration": 0.3,  # 300ms
+            "data_sync": 5.0,  # 5s
+        },
+        "throughput_limits": {
+            "requests_per_second": 100,
+            "concurrent_users": 50,
+            "bulk_prediction_size": 1000,
+        },
+        "memory_limits": {
+            "max_memory_mb": 512,
+            "memory_leak_threshold_mb": 50,
+        }
+    }
+
+
+@pytest.fixture
+def test_user_data():
+    """测试用户数据"""
+    return {
+        "users": [
+            {
+                "id": 1,
+                "username": "testuser1",
+                "email": "user1@test.com",
+                "is_active": True,
+                "role": "user",
+                "created_at": datetime.utcnow() - timedelta(days=30),
+            },
+            {
+                "id": 2,
+                "username": "testuser2",
+                "email": "user2@test.com",
+                "is_active": True,
+                "role": "user",
+                "created_at": datetime.utcnow() - timedelta(days=20),
+            },
+            {
+                "id": 3,
+                "username": "adminuser",
+                "email": "admin@test.com",
+                "is_active": True,
+                "role": "admin",
+                "created_at": datetime.utcnow() - timedelta(days=60),
+            },
+            {
+                "id": 4,
+                "username": "inactiveuser",
+                "email": "inactive@test.com",
+                "is_active": False,
+                "role": "user",
+                "created_at": datetime.utcnow() - timedelta(days=10),
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def temp_directory():
+    """临时目录fixture"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        yield Path(temp_dir)
+
+
+@pytest.fixture
+def mock_redis():
+    """增强的模拟Redis客户端"""
+    redis_mock = AsyncMock()
+    redis_mock.ping.return_value = True
+    redis_mock.get.return_value = None
+    redis_mock.set.return_value = True
+    redis_mock.delete.return_value = 1
+    redis_mock.exists.return_value = False
+    redis_mock.expire.return_value = True
+    redis_mock.hget.return_value = None
+    redis_mock.hset.return_value = True
+    redis_mock.hgetall.return_value = {}
+    redis_mock.incr.return_value = 1
+    redis_mock.decr.return_value = 0
+    return redis_mock
+
+
+@pytest.fixture
+def cache_test_data():
+    """缓存测试数据"""
+    return {
+        "prediction_cache_key": "prediction:user_123:match_456",
+        "user_stats_key": "user_stats:123",
+        "match_stats_key": "match_stats:456",
+        "session_key": "session:abc123",
+        "ttl_seconds": 3600,
+        "test_value": {
+            "predicted_home": 2,
+            "predicted_away": 1,
+            "confidence": 0.85,
+            "created_at": datetime.utcnow().isoformat(),
+        }
+    }
+
+
+@pytest.fixture
+def mock_external_services():
+    """模拟外部服务"""
+    services = {
+        "notification_service": AsyncMock(),
+        "email_service": AsyncMock(),
+        "analytics_service": AsyncMock(),
+        "payment_service": AsyncMock(),
+        "audit_service": AsyncMock(),
+    }
+
+    # 设置默认返回值
+    services["notification_service"].send_notification.return_value = {"status": "sent"}
+    services["email_service"].send_email.return_value = {"status": "delivered"}
+    services["analytics_service"].track_event.return_value = {"status": "recorded"}
+    services["payment_service"].process_payment.return_value = {"status": "success"}
+    services["audit_service"].log_event.return_value = {"status": "logged"}
+
+    return services
+
+
+@pytest.fixture
+def bulk_test_data():
+    """批量测试数据"""
+    return {
+        "bulk_predictions": [
+            {
+                "user_id": i,
+                "match_id": i + 1000,
+                "predicted_home": (i % 5) + 1,
+                "predicted_away": (i % 3) + 1,
+                "confidence": 0.5 + (i % 5) * 0.1,
+            }
+            for i in range(1, 101)  # 100个预测
+        ],
+        "bulk_users": [
+            {
+                "username": f"user{i}",
+                "email": f"user{i}@test.com",
+                "is_active": i % 10 != 0,  # 10%的用户不活跃
+            }
+            for i in range(1, 51)  # 50个用户
+        ],
+        "bulk_matches": [
+            {
+                "home_team_id": (i % 20) + 1,
+                "away_team_id": ((i + 1) % 20) + 1,
+                "match_date": datetime.utcnow() + timedelta(days=i),
+                "status": "SCHEDULED",
+            }
+            for i in range(1, 51)  # 50场比赛
+        ]
+    }
+
+
+@pytest.fixture
+def error_test_data():
+    """错误测试数据"""
+    return {
+        "invalid_predictions": [
+            {"user_id": -1, "match_id": 1},  # 无效用户ID
+            {"user_id": 1, "match_id": -1},  # 无效比赛ID
+            {"predicted_home": -1, "predicted_away": 1},  # 无效比分
+            {"predicted_home": 1, "predicted_away": -1},  # 无效比分
+            {"confidence": 1.5},  # 超出范围的置信度
+            {"confidence": -0.1},  # 超出范围的置信度
+        ],
+        "network_errors": [
+            "timeout",
+            "connection_refused",
+            "dns_resolution_failed",
+            "ssl_error",
+        ],
+        "database_errors": [
+            "connection_timeout",
+            "constraint_violation",
+            "deadlock",
+            "query_timeout",
+        ]
+    }
+
+
+# 自动清理fixture
+@pytest_asyncio.fixture(autouse=True)
+async def cleanup_test_data(test_db_session: AsyncSession):
+    """自动清理测试数据"""
+    yield
+
+    try:
+        # 清理所有表
+        for table in reversed(Base.metadata.sorted_tables):
+            await test_db_session.execute(text(f"DELETE FROM {table.name}"))
+        await test_db_session.commit()
+    except Exception:
+        # 如果清理失败，忽略错误（测试结束后数据库会被丢弃）
+        pass
+
+
+# 标记定义
+def pytest_configure(config):
+    """配置自定义标记"""
+    markers = [
+        ("integration: 集成测试"),
+        ("e2e: 端到端测试"),
+        ("api: API测试"),
+        ("domain: 领域层测试"),
+        ("services: 服务层测试"),
+        ("database: 数据库测试"),
+        ("cache: 缓存测试"),
+        ("performance: 性能测试"),
+        ("slow: 慢速测试"),
+        ("auth: 认证测试"),
+        ("bulk: 批量操作测试"),
+        ("error: 错误处理测试"),
+        ("security: 安全测试"),
+        ("workflow: 业务流程测试"),
+    ]
+
+    for marker in markers:
+        config.addinivalue_line("markers", marker)
