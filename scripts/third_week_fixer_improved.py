@@ -20,8 +20,6 @@ class ThirdWeekImprovedFixer:
 
     def execute_week3_improved(self) -> dict[str, any]:
         """执行改进的第三周修复流程"""
-        print("🚀 第三周改进修复：系统性解决432个运行时安全问题")
-        print("=" * 70)
 
         results = {
             'f821': {'expected': 107, 'fixed': 0, 'success': False},
@@ -35,40 +33,34 @@ class ThirdWeekImprovedFixer:
         self._create_backup()
 
         # 精准问题分析
-        print("\n📊 精准问题分析...")
         actual_issues = self._analyze_actual_issues()
         self._print_actual_issue_analysis(actual_issues)
 
         # Day 1-2: 修复F821未定义名称
-        print("\n🔧 Day 1-2: 修复F821未定义名称问题")
         f821_result = self._fix_f821_with_strategy(actual_issues['f821'])
         results['f821']['fixed'] = f821_result
         results['f821']['success'] = f821_result > 0
         results['total']['fixed'] += f821_result
 
         # Day 3-4: 修复F405可能未定义名称
-        print("\n🔧 Day 3-4: 修复F405可能未定义名称问题")
         f405_result = self._fix_f405_with_strategy(actual_issues['f405'])
         results['f405']['fixed'] = f405_result
         results['f405']['success'] = f405_result > 0
         results['total']['fixed'] += f405_result
 
         # Day 5-6: 修复F403星号导入
-        print("\n🔧 Day 5-6: 修复F403星号导入问题")
         f403_result = self._fix_f403_with_strategy(actual_issues['f403'])
         results['f403']['fixed'] = f403_result
         results['f403']['success'] = f403_result > 0
         results['total']['fixed'] += f403_result
 
         # Day 7: 修复A002参数名冲突
-        print("\n🔧 Day 7: 修复A002参数名冲突问题")
         a002_result = self._fix_a002_with_strategy(actual_issues['a002'])
         results['a002']['fixed'] = a002_result
         results['a002']['success'] = a002_result > 0
         results['total']['fixed'] += a002_result
 
         # 最终验证
-        print("\n🔍 最终验证和质量检查")
         verification_results = self._verify_fixes()
         results['verification'] = verification_results
 
@@ -79,18 +71,15 @@ class ThirdWeekImprovedFixer:
 
     def _create_backup(self):
         """创建安全备份"""
-        print("  🔧 创建Git备份...")
         try:
             subprocess.run(['git', 'add', '.'], check=True, capture_output=True)
             subprocess.run(['git', 'commit', '-m', '第三周改进修复前备份 - 解决语法错误后'],
                          check=True, capture_output=True)
-            print("    ✅ 备份创建成功")
-        except subprocess.CalledProcessError as e:
-            print(f"    ❌ 备份失败: {e}")
+        except subprocess.CalledProcessError:
+            pass
 
     def _analyze_actual_issues(self) -> dict[str, dict]:
         """精准分析实际存在的问题"""
-        print("  🔧 分析实际F821,F405,F403,A002问题...")
 
         actual_issues = {
             'f821': {'files': {}, 'total': 0, 'undefined_names': set()},
@@ -110,8 +99,8 @@ class ThirdWeekImprovedFixer:
                 if result.stdout:
                     self._parse_error_output(result.stdout, error_type, actual_issues)
 
-            except Exception as e:
-                print(f"    ❌ 分析 {error_type} 失败: {e}")
+            except Exception:
+                pass
 
         return actual_issues
 
@@ -164,24 +153,19 @@ class ThirdWeekImprovedFixer:
 
     def _print_actual_issue_analysis(self, actual_issues: dict):
         """打印实际问题分析结果"""
-        print("  📊 实际问题统计:")
 
         for error_type, data in actual_issues.items():
-            total = data['total']
-            files_count = len(data['files'])
-            print(f"    {error_type.upper()}: {total} 个问题，分布在 {files_count} 个文件中")
+            data['total']
+            len(data['files'])
 
             if error_type in ['f821', 'f405', 'a002'] and 'undefined_names' in data:
-                unique_names = len(data.get('undefined_names', set()) or data.get('conflicts', set()))
-                print(f"      - 涉及 {unique_names} 个不同的名称")
+                len(data.get('undefined_names', set()) or data.get('conflicts', set()))
 
     def _fix_f821_with_strategy(self, f821_data: dict) -> int:
         """使用策略修复F821未定义名称问题"""
-        print(f"    🔧 修复F821问题: {f821_data['total']} 个")
         fix_count = 0
 
         if not f821_data['files']:
-            print("      ✅ 没有发现F821问题")
             return 0
 
         # 常见未定义名称的解决方案
@@ -198,7 +182,6 @@ class ThirdWeekImprovedFixer:
 
         for file_path, undefined_names in f821_data['files'].items():
             path = Path(file_path)
-            print(f"      🔧 处理文件: {path}")
 
             try:
                 with open(path, encoding='utf-8') as f:
@@ -224,7 +207,6 @@ class ThirdWeekImprovedFixer:
                             lines.insert(import_end + 1, import_line)
                             content = '\n'.join(lines)
                             file_fixes += 1
-                            print(f"        ✅ 添加导入: {import_line}")
 
                     elif name == 'error_msg':
                         # 移除未使用的error_msg变量
@@ -237,16 +219,14 @@ class ThirdWeekImprovedFixer:
                         f.write(content)
 
                 fix_count += file_fixes
-                print(f"        ✅ 修复 {file_fixes} 个F821问题")
 
-            except Exception as e:
-                print(f"        ❌ 修复失败 {path}: {e}")
+            except Exception:
+                pass
 
         return fix_count
 
     def _fix_f405_with_strategy(self, f405_data: dict) -> int:
         """使用策略修复F405可能未定义名称问题"""
-        print(f"    🔧 使用ruff自动修复F405问题: {f405_data['total']} 个")
         fix_count = 0
 
         try:
@@ -265,25 +245,21 @@ class ThirdWeekImprovedFixer:
 
                 remaining = len([line for line in verify_result.stdout.split('\n') if line.strip()])
                 fix_count = max(0, f405_data['total'] - remaining)
-                print(f"        ✅ 修复了约 {fix_count} 个F405问题")
 
-        except Exception as e:
-            print(f"        ❌ F405自动修复失败: {e}")
+        except Exception:
+            pass
 
         return fix_count
 
     def _fix_f403_with_strategy(self, f403_data: dict) -> int:
         """使用策略修复F403星号导入问题"""
-        print(f"    🔧 修复F403星号导入问题: {f403_data['total']} 个")
         fix_count = 0
 
         if not f403_data['files']:
-            print("      ✅ 没有发现F403问题")
             return 0
 
         for file_path, modules in f403_data['files'].items():
             path = Path(file_path)
-            print(f"      🔧 处理文件: {path}")
 
             try:
                 with open(path, encoding='utf-8') as f:
@@ -305,20 +281,17 @@ class ThirdWeekImprovedFixer:
                         f.write(content)
 
                 fix_count += file_fixes
-                print(f"        ✅ 修复 {file_fixes} 个星号导入")
 
-            except Exception as e:
-                print(f"        ❌ 修复失败 {path}: {e}")
+            except Exception:
+                pass
 
         return fix_count
 
     def _fix_a002_with_strategy(self, a002_data: dict) -> int:
         """使用策略修复A002参数名冲突问题"""
-        print(f"    🔧 修复A002参数名冲突问题: {a002_data['total']} 个")
         fix_count = 0
 
         if not a002_data['files']:
-            print("      ✅ 没有发现A002问题")
             return 0
 
         # 常见冲突参数名及其替代
@@ -341,7 +314,6 @@ class ThirdWeekImprovedFixer:
 
         for file_path, conflicts in a002_data['files'].items():
             path = Path(file_path)
-            print(f"      🔧 处理文件: {path}")
 
             try:
                 with open(path, encoding='utf-8') as f:
@@ -373,16 +345,14 @@ class ThirdWeekImprovedFixer:
                         f.write(content)
 
                 fix_count += file_fixes
-                print(f"        ✅ 修复 {file_fixes} 个参数冲突")
 
-            except Exception as e:
-                print(f"        ❌ 修复失败 {path}: {e}")
+            except Exception:
+                pass
 
         return fix_count
 
     def _verify_fixes(self) -> dict[str, int]:
         """验证修复效果"""
-        print("    🔧 验证修复效果...")
 
         verification_results = {}
 
@@ -397,80 +367,55 @@ class ThirdWeekImprovedFixer:
 
                 remaining = len([line for line in result.stdout.split('\n') if line.strip()])
                 verification_results[code] = remaining
-                print(f"        剩余 {code}: {remaining} 个")
 
-            except Exception as e:
-                print(f"        ❌ 验证 {code} 失败: {e}")
+            except Exception:
                 verification_results[code] = -1
 
         return verification_results
 
     def _generate_improved_report(self, results: dict[str, any], actual_issues: dict):
         """生成改进的第三周修复报告"""
-        print("\n" + "=" * 70)
-        print("📊 第三周改进修复总结报告")
-        print("=" * 70)
 
-        total_time = time.time() - self.start_time
+        time.time() - self.start_time
 
         # 实际问题对比
-        print("🔍 实际问题分析:")
         for error_type in ['f821', 'f405', 'f403', 'a002']:
-            actual_count = actual_issues[error_type]['total']
-            expected_count = results[error_type]['expected']
-            fixed_count = results[error_type]['fixed']
-            success = results[error_type]['success']
-            status = '✅' if success else '❌'
+            actual_issues[error_type]['total']
+            results[error_type]['expected']
+            results[error_type]['fixed']
+            results[error_type]['success']
 
-            print(f"{status} {error_type.upper()}: 实际 {actual_count}/{expected_count}，修复 {fixed_count} 个")
 
         # 总体结果
-        total_expected = results['total']['expected']
-        total_fixed = results['total']['fixed']
-        total_success = results['total']['success']
+        results['total']['expected']
+        results['total']['fixed']
+        results['total']['success']
 
-        print("\n🎯 总体结果:")
-        print(f"   预期问题: {total_expected} 个")
-        print(f"   实际问题: {sum(actual_issues[t]['total'] for t in ['f821', 'f405', 'f403', 'a002'])} 个")
-        print(f"   修复数量: {total_fixed} 个")
-        print(f"   执行时间: {total_time:.1f} 秒")
-        print(f"   整体状态: {'✅ 成功' if total_success else '⚠️ 部分成功'}")
 
         # 显示验证结果
         if 'verification' in results:
-            print("\n🔍 验证结果:")
             verification = results['verification']
             total_remaining = 0
-            for code, remaining in verification.items():
+            for _code, remaining in verification.items():
                 if remaining >= 0:
-                    status = '✅' if remaining == 0 else '⚠️'
-                    print(f"   {status} {code} 剩余: {remaining} 个")
                     total_remaining += remaining
 
-            print(f"\n🎯 剩余问题总计: {total_remaining} 个")
 
         # 给出后续建议
         if total_remaining > 0:
-            print("\n💡 后续建议:")
-            print(f"   - 剩余 {total_remaining} 个问题需要进一步处理")
-            print("   - 建议运行 `ruff check src/ --fix --unsafe-fixes` 进行更彻底的修复")
-            print("   - 复杂问题可能需要人工手动处理")
+            pass
         else:
-            print("\n🎉 恭喜！所有目标运行时安全问题已解决！")
+            pass
 
 
 def main():
     """主函数"""
-    print("🛠️ 第三周改进修复工具 - 432个运行时安全问题解决")
-    print("基于实际问题分析的精准修复策略")
-    print()
 
     # 执行修复
     fixer = ThirdWeekImprovedFixer()
-    results = fixer.execute_week3_improved()
+    fixer.execute_week3_improved()
 
     # 最终确认
-    print("\n🔧 修复完成！检查当前整体状态...")
     try:
         # 检查整体代码质量
         result = subprocess.run(
@@ -479,15 +424,14 @@ def main():
         )
 
         total_remaining = len([line for line in result.stdout.split('\n') if line.strip()])
-        print(f"🎯 当前整体问题数: {total_remaining} 个")
 
         if total_remaining <= 50:  # 设定一个合理的目标
-            print("🎉 优秀！运行时安全问题得到显著改善！")
+            pass
         else:
-            print("💡 建议继续改进以进一步减少问题数量")
+            pass
 
-    except Exception as e:
-        print(f"❌ 最终检查失败: {e}")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

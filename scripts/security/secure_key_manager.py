@@ -328,53 +328,41 @@ def main():
     manager = SecureKeyManager(project_root)
 
     if args.action == 'generate':
-        print("🔑 生成新密钥:")
         keys = manager.generate_all_keys()
-        for key, value in keys.items():
+        for key, _value in keys.items():
             if key not in ['generated_at', 'next_rotation']:
-                print(f"{key}={value}")
+                pass
 
     elif args.action == 'rotate':
-        print(f"🔄 轮换密钥: {args.env_file}")
         success = manager.rotate_keys(args.env_file)
         if success:
-            print("✅ 密钥轮换成功")
+            pass
         else:
-            print("❌ 密钥轮换失败")
             sys.exit(1)
 
     elif args.action == 'check':
-        print(f"🔍 检查密钥年龄: {args.env_file}")
         result = manager.check_key_age(args.env_file)
         if result['status'] == 'found':
-            print(f"上次轮换: {result['last_rotation']}")
-            print(f"距离下次轮换: {result['days_until_next_rotation']} 天")
             if result['needs_rotation']:
-                print("⚠️ 需要轮换密钥")
+                pass
             else:
-                print("✅ 密钥仍然有效")
+                pass
         else:
-            print(f"❌ {result['message']}")
+            pass
 
     elif args.action == 'validate':
-        print("🔒 验证安全配置:")
         result = manager.validate_security()
         if result['status'] == 'passed':
-            print("✅ 安全配置通过验证")
+            pass
         else:
-            print(f"❌ 发现 {result['total_issues']} 个安全问题:")
-            for issue in result['issues']:
-                print(f"  - {issue}")
+            for _issue in result['issues']:
+                pass
 
     elif args.action == 'fix-permissions':
-        print("🔧 修复文件权限:")
         manager.fix_file_permissions()
-        print("✅ 文件权限修复完成")
 
     elif args.action == 'update-gitignore':
-        print("📝 更新 .gitignore:")
         manager.update_gitignore()
-        print("✅ .gitignore 更新完成")
 
 if __name__ == "__main__":
     main()

@@ -53,7 +53,6 @@ def fix_logger_imports(file_path):
             # 添加logger定义 - 确保在所有imports之后
             lines = content.split('\n')
             logger_line = 'logger = logging.getLogger(__name__)'
-            added = False
             last_import_line = -1
 
             # 找到最后一个import语句的行号
@@ -70,7 +69,6 @@ def fix_logger_imports(file_path):
 
                 lines.insert(insert_pos, logger_line)
                 lines.insert(insert_pos + 1, '')  # 添加空行
-                added = True
             else:
                 # 如果没有找到import，在文档字符串后添加
                 docstring_end = -1
@@ -89,14 +87,12 @@ def fix_logger_imports(file_path):
                     lines.insert(insert_pos, '')
                     lines.insert(insert_pos + 1, 'import logging')
                     lines.insert(insert_pos + 2, logger_line)
-                    added = True
                 else:
                     # 在文件开头添加
                     lines.insert(0, 'import logging')
                     lines.insert(1, '')
                     lines.insert(2, logger_line)
                     lines.insert(3, '')
-                    added = True
 
             content = '\n'.join(lines)
 
@@ -108,8 +104,7 @@ def fix_logger_imports(file_path):
 
         return False
 
-    except Exception as e:
-        print(f"处理文件 {file_path} 时出错: {e}")
+    except Exception:
         return False
 
 def main():
@@ -151,24 +146,19 @@ def main():
     ]
 
     fixed_count = 0
-    total_count = len(files_to_fix)
+    len(files_to_fix)
 
-    print(f"开始修复 {total_count} 个文件中的logger导入问题...")
 
     for file_path in files_to_fix:
         full_path = Path(file_path)
         if full_path.exists():
             if fix_logger_imports(full_path):
-                print(f"✅ 修复了: {file_path}")
                 fixed_count += 1
             else:
-                print(f"⏭️  跳过（无需修复）: {file_path}")
+                pass
         else:
-            print(f"❌ 文件不存在: {file_path}")
+            pass
 
-    print("\n修复完成！")
-    print(f"总共处理: {total_count} 个文件")
-    print(f"成功修复: {fixed_count} 个文件")
 
 if __name__ == "__main__":
     main()

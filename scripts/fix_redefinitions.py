@@ -3,8 +3,8 @@
 修复重复定义问题的脚本
 """
 
-import re
 from pathlib import Path
+
 
 def fix_redefinitions():
     """修复重复定义"""
@@ -12,7 +12,7 @@ def fix_redefinitions():
     # 修复cqrs/queries.py中的重复定义
     queries_file = Path("/home/user/projects/FootballPrediction/src/cqrs/queries.py")
     if queries_file.exists():
-        with open(queries_file, 'r', encoding='utf-8') as f:
+        with open(queries_file, encoding='utf-8') as f:
             content = f.read()
 
         # 注释掉第102行及之后的重复定义
@@ -31,7 +31,6 @@ def fix_redefinitions():
         with open(queries_file, 'w', encoding='utf-8') as f:
             f.write('\n'.join(lines))
 
-        print("修复了queries.py中的重复定义")
 
     # 修复其他文件的重复定义
     other_files = [
@@ -46,7 +45,7 @@ def fix_redefinitions():
     for file_path, line_num, name in other_files:
         file = Path(file_path)
         if file.exists():
-            with open(file, 'r', encoding='utf-8') as f:
+            with open(file, encoding='utf-8') as f:
                 lines = f.readlines()
 
             if line_num <= len(lines):
@@ -58,7 +57,6 @@ def fix_redefinitions():
                 with open(file, 'w', encoding='utf-8') as f:
                     f.writelines(lines)
 
-                print(f"修复了{file_path}中的重复定义: {name}")
 
 if __name__ == "__main__":
     fix_redefinitions()

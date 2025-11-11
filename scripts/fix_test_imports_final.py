@@ -6,9 +6,6 @@ Final Test Import Error Fixer
 智能识别和修复测试文件中的导入问题，确保正确的语法和缩进。
 """
 
-import os
-import re
-import sys
 from pathlib import Path
 
 
@@ -259,7 +256,7 @@ def apply_smart_import_fixing(content, file_path):
 def final_fix_test_file(file_path):
     """最终修复测试文件"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             original_content = f.read()
 
         # 应用修复
@@ -271,8 +268,7 @@ def final_fix_test_file(file_path):
 
         return True
 
-    except Exception as e:
-        print(f"  ✗ 修复失败: {file_path} - {e}")
+    except Exception:
         return False
 
 
@@ -289,26 +285,18 @@ def main():
     # 获取项目根目录
     project_root = Path(__file__).parent.parent
     success_count = 0
-    total_count = len(test_files)
+    len(test_files)
 
-    print("🛠️  开始最终修复测试文件导入错误...")
-    print(f"📊 共需修复 {total_count} 个文件")
-    print()
 
     for file_path in test_files:
         full_path = project_root / file_path
 
         if not full_path.exists():
-            print(f"  ⚠️  文件不存在: {file_path}")
             continue
 
-        print(f"🔧 最终修复: {file_path}")
         if final_fix_test_file(full_path):
             success_count += 1
-            print(f"  ✓ 修复成功")
-        print()
 
-    print(f"✅ 最终修复完成! 成功: {success_count}/{total_count}")
 
 
 if __name__ == "__main__":

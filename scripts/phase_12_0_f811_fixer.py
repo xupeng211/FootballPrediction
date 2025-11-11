@@ -6,10 +6,8 @@ Phase 12.0 F811 Redefinition Fixer
 专门用于修复F811重复定义错误
 """
 
-import ast
-import re
 from pathlib import Path
-from typing import List, Tuple, Dict
+
 
 class F811RedefinitionFixer:
     """F811重复定义修复工具"""
@@ -20,7 +18,7 @@ class F811RedefinitionFixer:
         self.fixes_applied = 0
         self.fixes_details = []
 
-    def find_redefinitions(self) -> List[Tuple[str, int, str]]:
+    def find_redefinitions(self) -> list[tuple[str, int, str]]:
         """查找所有F811重复定义"""
         redefinitions = []
 
@@ -53,7 +51,7 @@ class F811RedefinitionFixer:
         full_path = self.src_dir / file_path
 
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 lines = f.readlines()
 
             if line_num > len(lines):
@@ -89,12 +87,12 @@ class F811RedefinitionFixer:
                 self.fixes_details.append(f"F811修复: {file_path}:{line_num} - 注释重复变量{name}")
                 return True
 
-        except Exception as e:
-            print(f"修复失败 {file_path}:{line_num} - {e}")
+        except Exception:
+            pass
 
         return False
 
-    def find_definition_end(self, lines: List[str], start_line: int) -> int:
+    def find_definition_end(self, lines: list[str], start_line: int) -> int:
         """找到定义块的结束行"""
         start_content = lines[start_line].strip()
         indent_level = len(lines[start_line]) - len(lines[start_line].lstrip())
@@ -125,7 +123,7 @@ class F811RedefinitionFixer:
 
         return start_line
 
-    def fix_all_redefinitions(self) -> Dict[str, int]:
+    def fix_all_redefinitions(self) -> dict[str, int]:
         """修复所有重复定义"""
         redefinitions = self.find_redefinitions()
         results = {
@@ -134,10 +132,8 @@ class F811RedefinitionFixer:
             'failed': 0
         }
 
-        print(f"发现 {len(redefinitions)} 个F811重复定义错误")
 
         for file_path, line_num, name in redefinitions:
-            print(f"修复: {file_path}:{line_num} - {name}")
             if self.fix_redefinition(file_path, line_num, name):
                 results['successfully_fixed'] += 1
             else:
@@ -152,7 +148,7 @@ class F811RedefinitionFixer:
         # 特殊处理: cqrs/queries.py 有大量重复的GetUserByIdQuery
         queries_file = self.src_dir / "cqrs" / "queries.py"
         if queries_file.exists():
-            with open(queries_file, 'r', encoding='utf-8') as f:
+            with open(queries_file, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -166,7 +162,6 @@ class F811RedefinitionFixer:
                 if 'class GetUserByIdQuery(ValidatableQuery):' in line:
                     if not first_def_found:
                         first_def_found = True
-                        print(f"保留第一个GetUserByIdQuery定义在第{i+1}行")
                     else:
                         # 注释掉重复的定义
                         lines[i] = '# ' + lines[i]
@@ -187,7 +182,7 @@ class F811RedefinitionFixer:
 
         return fixes
 
-    def generate_fix_report(self, results: Dict[str, int]) -> str:
+    def generate_fix_report(self, results: dict[str, int]) -> str:
         """生成修复报告"""
         report = f"""
 # Phase 12.0 F811 重复定义修复报告
@@ -204,7 +199,7 @@ class F811RedefinitionFixer:
         for detail in self.fixes_details:
             report += f"- {detail}\n"
 
-        report += f"""
+        report += """
 ## 修复策略
 1. **简单重复定义**: 注释掉重复的函数/类定义
 2. **变量重复定义**: 注释掉重复的变量赋值
@@ -226,7 +221,6 @@ class F811RedefinitionFixer:
 
 def main():
     """主函数"""
-    print("🚀 启动Phase 12.0 F811重复定义修复...")
 
     fixer = F811RedefinitionFixer()
 
@@ -238,10 +232,6 @@ def main():
     results['successfully_fixed'] += complex_fixes
     fixer.fixes_applied += complex_fixes
 
-    print(f"\n✅ F811修复完成!")
-    print(f"   总计修复: {fixer.fixes_applied} 个错误")
-    print(f"   成功修复: {results['successfully_fixed']} 个")
-    print(f"   修复失败: {results['failed']} 个")
 
     # 生成报告
     report = fixer.generate_fix_report(results)
@@ -250,7 +240,6 @@ def main():
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(report)
 
-    print(f"📄 报告已保存至: {report_path}")
 
 if __name__ == "__main__":
     main()

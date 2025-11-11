@@ -297,36 +297,20 @@ class QualityMonitor:
 
 def main():
     """主函数"""
-    print("🚀 启动代码质量监控系统...")
 
     monitor = QualityMonitor()
 
     # 收集当前指标
-    print("📊 收集质量指标...")
-    current_metrics = monitor.record_metrics()
+    monitor.record_metrics()
 
-    print(f"✅ 质量指标已记录: {current_metrics['timestamp']}")
-    print(f"   - 语法错误: {current_metrics['syntax_errors']}")
-    print(f"   - B904错误: {current_metrics['b904_errors']}")
-    print(f"   - E402错误: {current_metrics['e402_errors']}")
-    print(f"   - 类型错误: {current_metrics['type_errors']}")
-    print(f"   - 测试覆盖率: {current_metrics['test_coverage']}%")
-    print(f"   - 代码行数: {current_metrics['code_lines']}")
 
     # 生成趋势报告
-    print("📈 生成趋势报告...")
-    report = monitor.generate_trend_report()
+    monitor.generate_trend_report()
 
-    print(f"🎯 综合质量分数: {report['overall_quality_score']:.1f}/100")
 
     # 生成HTML dashboard
-    print("🌐 生成监控面板...")
     monitor.generate_dashboard_html()
 
-    print("✅ 质量监控完成")
-    print("📄 文件生成:")
-    print("   - quality_metrics_history.json (历史数据)")
-    print("   - quality_dashboard.html (可视化面板)")
 
 if __name__ == "__main__":
     main()

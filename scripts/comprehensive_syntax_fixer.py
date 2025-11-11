@@ -4,20 +4,19 @@
 专门处理缩进、导入语句和语法结构问题
 """
 
-import os
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+
 
 class ComprehensiveSyntaxFixer:
     def __init__(self):
         self.files_fixed = 0
         self.errors_fixed = 0
 
-    def fix_import_and_indentation(self, file_path: str) -> Dict[str, int]:
+    def fix_import_and_indentation(self, file_path: str) -> dict[str, int]:
         """修复导入语句和缩进问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -88,13 +87,11 @@ class ComprehensiveSyntaxFixer:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
 
-                print(f"  ✅ 修复 {file_path}: {fixes_count} 个语法问题")
                 self.errors_fixed += fixes_count
 
             return {"syntax_fixes": fixes_count}
 
-        except Exception as e:
-            print(f"  ❌ 处理文件 {file_path} 时出错: {e}")
+        except Exception:
             return {"syntax_fixes": 0}
 
     def _fix_docstrings(self, content: str) -> str:
@@ -112,7 +109,6 @@ class ComprehensiveSyntaxFixer:
                 stripped = line.strip()
                 if stripped and not stripped.startswith('#'):
                     fixed_lines.append(f'    {stripped}')
-                    fixes_count = 1
                 else:
                     fixed_lines.append(line)
             else:
@@ -124,8 +120,6 @@ class ComprehensiveSyntaxFixer:
 
     def fix_problematic_files(self):
         """修复有问题的文件"""
-        print("🔧 全面语法修复工具")
-        print("=" * 50)
 
         # 问题文件列表
         problematic_files = [
@@ -142,17 +136,12 @@ class ComprehensiveSyntaxFixer:
 
         for file_path in problematic_files:
             if Path(file_path).exists():
-                print(f"🔧 修复文件: {file_path}")
                 result = self.fix_import_and_indentation(file_path)
                 total_fixes += result.get("syntax_fixes", 0)
                 self.files_fixed += 1
             else:
-                print(f"  ⚠️ 文件不存在: {file_path}")
+                pass
 
-        print(f"\n📊 修复统计:")
-        print(f"  🔧 修复文件数: {self.files_fixed}")
-        print(f"  ✅ 修复问题数: {self.errors_fixed}")
-        print(f"  📈 总修复量: {total_fixes}")
 
     def quick_syntax_check(self) -> int:
         """快速语法检查"""
@@ -176,19 +165,14 @@ def main():
     """主函数"""
     fixer = ComprehensiveSyntaxFixer()
 
-    print("🔍 检查当前语法错误数量...")
     initial_errors = fixer.quick_syntax_check()
-    print(f"  📊 初始语法错误: {initial_errors}")
 
     fixer.fix_problematic_files()
 
-    print("\n🔍 验证修复效果...")
     final_errors = fixer.quick_syntax_check()
-    print(f"  📊 修复后语法错误: {final_errors}")
 
     if initial_errors > 0 and final_errors >= 0:
-        improvement = initial_errors - final_errors
-        print(f"\n🎉 语法修复成果: 减少了 {improvement} 个语法错误")
+        initial_errors - final_errors
 
 if __name__ == "__main__":
     main()

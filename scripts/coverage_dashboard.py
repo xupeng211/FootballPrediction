@@ -37,7 +37,6 @@ class CoverageDashboard:
     def get_current_coverage(self) -> CoverageSnapshot | None:
         """获取当前覆盖率数据"""
         if not self.coverage_file.exists():
-            print("❌ coverage.json文件不存在，请先运行测试生成覆盖率报告")
             return None
 
         try:
@@ -74,8 +73,7 @@ class CoverageDashboard:
                 top_files=top_files
             )
 
-        except Exception as e:
-            print(f"❌ 解析覆盖率数据失败: {e}")
+        except Exception:
             return None
 
     def save_snapshot(self, snapshot: CoverageSnapshot):
@@ -97,10 +95,9 @@ class CoverageDashboard:
             with open(self.data_file, 'w', encoding='utf-8') as f:
                 json.dump(history, f, indent=2, ensure_ascii=False)
 
-            print(f"✅ 覆盖率快照已保存 ({snapshot.timestamp})")
 
-        except Exception as e:
-            print(f"❌ 保存快照失败: {e}")
+        except Exception:
+            pass
 
     def load_history(self) -> list[CoverageSnapshot]:
         """加载历史覆盖率数据"""
@@ -113,14 +110,11 @@ class CoverageDashboard:
 
             return [CoverageSnapshot(**item) for item in data]
 
-        except Exception as e:
-            print(f"❌ 加载历史数据失败: {e}")
+        except Exception:
             return []
 
     def show_dashboard(self):
         """显示仪表板"""
-        print("📊 覆盖率仪表板")
-        print("=" * 50)
 
         # 获取当前覆盖率
         current = self.get_current_coverage()
@@ -130,57 +124,42 @@ class CoverageDashboard:
         # 加载历史数据
         history = self.load_history()
 
-        print(f"\n🎯 当前状态 ({current.timestamp[:19]}):")
-        print(f"   总覆盖率: {current.total_coverage:.2f}%")
-        print(f"   语句覆盖: {current.covered_statements:,} / {current.total_statements:,}")
-        print(f"   文件覆盖: {current.covered_files_count:,} / {current.src_files_count:,}")
 
         # 计算进展
         if len(history) >= 2:
             previous = history[-2]
-            coverage_change = current.total_coverage - previous.total_coverage
-            statements_change = current.covered_statements - previous.covered_statements
+            current.total_coverage - previous.total_coverage
+            current.covered_statements - previous.covered_statements
 
-            print("\n📈 自上次记录以来的进展:")
-            print(f"   覆盖率变化: {coverage_change:+.2f}%")
-            print(f"   新增覆盖语句: {statements_change:+,}")
 
             # 显示趋势
             if len(history) >= 5:
                 recent = history[-5:]
-                avg_change = sum(
+                sum(
                     recent[i].total_coverage - recent[i-1].total_coverage
                     for i in range(1, len(recent))
                 ) / (len(recent) - 1)
 
-                print(f"   平均变化趋势: {avg_change:+.2f}%/次")
 
         # 目标进度
         targets = [5, 10, 15, 25, 50]
-        print("\n🎯 目标进度:")
         for target in targets:
             if current.total_coverage >= target:
-                print(f"   ✅ {target}% - 已达成")
+                pass
             else:
-                remaining = target - current.total_coverage
-                print(f"   📈 {target}% - 还需 {remaining:.2f}%")
+                target - current.total_coverage
 
         # 覆盖率最高的文件
         if current.top_files:
-            print("\n🏆 覆盖率最高的文件:")
-            for i, file_info in enumerate(current.top_files[:5], 1):
-                filename = file_info['file'].replace('src/', '')
-                coverage = file_info['coverage']
-                statements = file_info['statements']
-                print(f"   {i}. {filename}")
-                print(f"      覆盖率: {coverage:.1f}% ({statements} 语句)")
+            for _i, file_info in enumerate(current.top_files[:5], 1):
+                file_info['file'].replace('src/', '')
+                file_info['coverage']
+                file_info['statements']
 
         # 历史趋势
         if len(history) >= 3:
-            print("\n📊 历史趋势 (最近5次记录):")
             for snapshot in history[-5:]:
-                time_str = snapshot.timestamp[:19].replace('T', ' ')
-                print(f"   {time_str} - {snapshot.total_coverage:.2f}%")
+                snapshot.timestamp[:19].replace('T', ' ')
 
     def generate_report(self, output_file: str = None):
         """生成详细报告"""
@@ -236,19 +215,15 @@ class CoverageDashboard:
         try:
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(report_content)
-            print(f"✅ 报告已生成: {output_path}")
-        except Exception as e:
-            print(f"❌ 生成报告失败: {e}")
+        except Exception:
+            pass
 
     def watch_mode(self, interval: int = 30):
         """监控模式"""
-        print(f"👁️  开始监控覆盖率变化 (每{interval}秒检查一次)")
-        print("按 Ctrl+C 停止监控\n")
 
         try:
             while True:
                 # 清屏
-                print("\033[2J\033[H", end="")
 
                 # 显示仪表板
                 self.show_dashboard()
@@ -262,7 +237,7 @@ class CoverageDashboard:
                 time.sleep(interval)
 
         except KeyboardInterrupt:
-            print("\n👋 监控已停止")
+            pass
 
 
 def main():
@@ -287,12 +262,10 @@ def main():
     elif args.history:
         history = dashboard.load_history()
         if history:
-            print("📊 历史覆盖率记录:")
-            for i, snapshot in enumerate(history, 1):
-                time_str = snapshot.timestamp[:19].replace('T', ' ')
-                print(f"   {i:2d}. {time_str} - {snapshot.total_coverage:.2f}%")
+            for _i, snapshot in enumerate(history, 1):
+                snapshot.timestamp[:19].replace('T', ' ')
         else:
-            print("📝 暂无历史记录")
+            pass
     elif args.report is not None:
         output_file = args.report if args.report else None
         dashboard.generate_report(output_file)

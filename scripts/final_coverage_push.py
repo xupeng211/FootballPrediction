@@ -641,7 +641,6 @@ class Test{module_name.split('.')[-1].title()}Integration:
             f.write(test_content)
 
         created_files.append(file_path)
-        print(f"✅ 创建大规模测试: {file_path} ({test_count} 个测试)")
 
     return created_files
 
@@ -671,42 +670,24 @@ def run_massive_coverage_test(test_files: list[str]) -> dict:
             "output": output
         }
 
-    except Exception as e:
-        print(f"运行大规模测试失败: {e}")
+    except Exception:
         return {"total_coverage": 0, "passed_tests": 0, "failed_tests": 0, "output": ""}
 
 def main():
     """主函数"""
-    print("🚀 启动最终覆盖率冲刺...")
-    print("📊 目标: 达到30%覆盖率")
-    print("🧪 策略: 创建大量可运行的测试")
 
     # 创建大规模测试套件
-    print("\\n📝 创建大规模测试套件...")
     created_files = create_massive_test_suite()
-    print(f"✅ 创建了 {len(created_files)} 个大规模测试文件")
 
     # 运行覆盖率测试
-    print("\\n🧪 运行大规模覆盖率测试...")
     coverage_result = run_massive_coverage_test(created_files)
 
-    print("\\n📊 最终测试结果:")
-    print(f"   总覆盖率: {coverage_result['total_coverage']}%")
-    print(f"   通过测试: {coverage_result['passed_tests']}")
-    print(f"   失败测试: {coverage_result['failed_tests']}")
 
     # 评估结果
     if coverage_result['total_coverage'] >= 30:
-        print("\\n🎉 恭喜！已成功达到30%覆盖率目标！")
-        print(f"   ✅ 最终覆盖率: {coverage_result['total_coverage']}%")
-        print(f"   ✅ 通过测试: {coverage_result['passed_tests']}")
         return True
     else:
-        gap = 30 - coverage_result['total_coverage']
-        print(f"\\n📈 距离目标还差 {gap}%")
-        print(f"   📊 当前覆盖率: {coverage_result['total_coverage']}%")
-        print(f"   🧪 通过测试: {coverage_result['passed_tests']}")
-        print("   💡 建议: 需要更多模块的测试来进一步提升覆盖率")
+        30 - coverage_result['total_coverage']
         return False
 
 if __name__ == "__main__":

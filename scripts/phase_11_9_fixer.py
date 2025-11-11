@@ -7,11 +7,9 @@ Phase 11.9: Type Annotation Modernization and Code Quality Fixes
 修复策略: 手动修复61个ruff检测到的代码质量问题
 """
 
-import os
-import re
 import logging
+import re
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,7 +24,7 @@ class Phase11_9Fixer:
         self.fixes_applied = 0
         self.fixes_details = []
 
-    def fix_all_errors(self) -> Dict[str, int]:
+    def fix_all_errors(self) -> dict[str, int]:
         """修复所有错误"""
         logger.info("开始Phase 11.9: 类型注解现代化和代码质量修复")
 
@@ -106,7 +104,7 @@ class Phase11_9Fixer:
             if not full_path.exists():
                 continue
 
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 替换裸except为except Exception
@@ -143,12 +141,12 @@ class Phase11_9Fixer:
             ("src/database/models/data_collection_log.py", "Enum", 6)
         ]
 
-        for file_path, name, line_num in redefinition_files:
+        for file_path, _name, line_num in redefinition_files:
             full_path = self.src_dir / file_path
             if not full_path.exists():
                 continue
 
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 lines = f.readlines()
 
             if len(lines) >= line_num:
@@ -172,7 +170,7 @@ class Phase11_9Fixer:
         full_path = self.src_dir / file_path
 
         if full_path.exists():
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 移除未使用的导入
@@ -196,7 +194,7 @@ class Phase11_9Fixer:
         full_path = self.src_dir / file_path
 
         if full_path.exists():
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 修改方法名避免遮蔽内置set
@@ -232,7 +230,7 @@ class Phase11_9Fixer:
             if not full_path.exists():
                 continue
 
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -260,7 +258,7 @@ class Phase11_9Fixer:
         full_path = self.src_dir / file_path
 
         if full_path.exists():
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 重命名TimeoutError类避免遮蔽内置异常
@@ -288,7 +286,7 @@ class Phase11_9Fixer:
         full_path = self.src_dir / file_path
 
         if full_path.exists():
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 修改导入常量命名
@@ -317,7 +315,7 @@ class Phase11_9Fixer:
         full_path = self.src_dir / file_path
 
         if full_path.exists():
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 移除无用的属性访问
@@ -353,7 +351,7 @@ class Phase11_9Fixer:
             if not full_path.exists():
                 continue
 
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -391,7 +389,7 @@ class Phase11_9Fixer:
             if not full_path.exists():
                 continue
 
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -425,7 +423,7 @@ class Phase11_9Fixer:
             if not full_path.exists():
                 continue
 
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -456,7 +454,7 @@ class Phase11_9Fixer:
         full_path = self.src_dir / file_path
 
         if full_path.exists():
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -491,7 +489,7 @@ class Phase11_9Fixer:
         full_path = self.src_dir / file_path
 
         if full_path.exists():
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -519,7 +517,7 @@ class Phase11_9Fixer:
         full_path = self.src_dir / file_path
 
         if full_path.exists():
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -539,7 +537,7 @@ class Phase11_9Fixer:
 
         return fixes
 
-    def generate_fix_report(self, error_counts: Dict[str, int]) -> str:
+    def generate_fix_report(self, error_counts: dict[str, int]) -> str:
         """生成修复报告"""
         report = f"""
 # Phase 11.9 修复报告
@@ -558,7 +556,7 @@ class Phase11_9Fixer:
         for detail in self.fixes_details:
             report += f"- {detail}\n"
 
-        report += f"""
+        report += """
 ### 修复策略
 1. **E722**: 将裸except替换为except Exception
 2. **F811**: 注释重复定义的函数和类
@@ -596,8 +594,6 @@ def main():
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(report)
 
-    print(f"Phase 11.9修复完成! 报告已保存至: {report_path}")
-    print(f"总计修复: {fixer.fixes_applied} 个错误")
 
 if __name__ == "__main__":
     main()

@@ -39,8 +39,7 @@ class EmergencyQualityFixer:
 
             return list(error_files)
 
-        except Exception as e:
-            print(f"错误检查失败: {e}")
+        except Exception:
             return []
 
     def analyze_missing_imports(self, file_path: Path) -> set[str]:
@@ -63,8 +62,7 @@ class EmergencyQualityFixer:
 
             return missing_names
 
-        except Exception as e:
-            print(f"分析文件失败 {file_path}: {e}")
+        except Exception:
             return set()
 
     def fix_file_imports(self, file_path: Path) -> bool:
@@ -132,12 +130,10 @@ class EmergencyQualityFixer:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(lines))
 
-            print(f"✅ 修复文件: {file_path} (添加了 {len(imports_to_add)} 个导入)")
             self.fix_count += 1
             return True
 
-        except Exception as e:
-            print(f"❌ 修复文件失败 {file_path}: {e}")
+        except Exception:
             return False
 
     def fix_fastapi_specific_issues(self, file_path: Path) -> bool:
@@ -227,40 +223,31 @@ class EmergencyQualityFixer:
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print(f"✅ 修复FastAPI导入: {file_path}")
                 self.fix_count += 1
                 return True
 
             return True
 
-        except Exception as e:
-            print(f"❌ 修复FastAPI导入失败 {file_path}: {e}")
+        except Exception:
             return False
 
     def run_emergency_fix(self) -> dict:
         """运行紧急修复"""
-        print("🚨 开始紧急代码质量修复...")
 
         # 查找有错误的文件
         error_files = self.find_files_with_errors()
-        print(f"📊 发现 {len(error_files)} 个文件有错误")
 
         if not error_files:
-            print("✅ 没有发现需要修复的错误")
             return {"fixed_files": 0, "total_files": 0}
 
         # 逐个修复文件
         fixed_count = 0
         for file_path in error_files:
-            print(f"\n🔧 修复文件: {file_path}")
 
             # 修复FastAPI特定问题
             if self.fix_fastapi_specific_issues(file_path):
                 fixed_count += 1
 
-        print("\n📊 修复完成:")
-        print(f"  修复文件数: {fixed_count}/{len(error_files)}")
-        print(f"  总修复操作: {self.fix_count}")
 
         return {
             "fixed_files": fixed_count,
@@ -270,7 +257,6 @@ class EmergencyQualityFixer:
 
     def verify_fixes(self) -> bool:
         """验证修复结果"""
-        print("\n🔍 验证修复结果...")
 
         try:
             result = subprocess.run(
@@ -283,14 +269,11 @@ class EmergencyQualityFixer:
             remaining_errors = len([line for line in result.stdout.split('\n') if 'F821' in line])
 
             if remaining_errors == 0:
-                print("✅ 所有F821错误已修复!")
                 return True
             else:
-                print(f"⚠️  还有 {remaining_errors} 个F821错误需要处理")
                 return False
 
-        except Exception as e:
-            print(f"❌ 验证失败: {e}")
+        except Exception:
             return False
 
 
@@ -318,16 +301,15 @@ def main():
         fixer.verify_fixes()
     else:
         # 运行修复
-        result = fixer.run_emergency_fix()
+        fixer.run_emergency_fix()
 
         # 验证结果
         success = fixer.verify_fixes()
 
         if success:
-            print("\n🎉 紧急修复完成!")
-            print("💡 建议运行: ruff check src/ --fix 来修复其他格式问题")
+            pass
         else:
-            print("\n⚠️ 部分问题未能自动修复，建议手动检查")
+            pass
 
 
 if __name__ == "__main__":

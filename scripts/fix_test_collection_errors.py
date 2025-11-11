@@ -4,19 +4,18 @@
 解决NameError、RecursionError等问题
 """
 
-import os
 import re
 from pathlib import Path
+
 
 def fix_adapter_pattern_test():
     """修复test_adapter_pattern.py中的作用域问题"""
     file_path = Path("tests/unit/adapters/test_adapter_pattern.py")
 
     if not file_path.exists():
-        print(f"❌ 文件不存在: {file_path}")
         return False
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding='utf-8') as f:
         content = f.read()
 
     # 找到CompositeAdapter类定义并将其移到模块级别
@@ -24,13 +23,12 @@ def fix_adapter_pattern_test():
     class_match = re.search(r'(\s+class CompositeAdapter:.*?)(?=\n    class|\nclass|\ndef|\Z)', content, re.DOTALL)
 
     if not class_match:
-        print("❌ 未找到CompositeAdapter类定义")
         return False
 
     composite_class_def = class_match.group(1).strip()
 
     # 将类定义格式化为模块级别
-    module_level_class = f"\n\nclass CompositeAdapter:\n"
+    module_level_class = "\n\nclass CompositeAdapter:\n"
     class_body = re.sub(r'^\s+', '', composite_class_def.replace('class CompositeAdapter:', ''))
     module_level_class += class_body
 
@@ -54,7 +52,6 @@ def fix_adapter_pattern_test():
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(content)
 
-    print(f"✅ 修复完成: {file_path}")
     return True
 
 def fix_api_comprehensive_test():
@@ -62,10 +59,9 @@ def fix_api_comprehensive_test():
     file_path = Path("tests/unit/api/test_api_comprehensive.py")
 
     if not file_path.exists():
-        print(f"❌ 文件不存在: {file_path}")
         return False
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding='utf-8') as f:
         content = f.read()
 
     # 检查是否存在无限递归的MockClass
@@ -84,10 +80,8 @@ def fix_api_comprehensive_test():
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
 
-        print(f"✅ 修复完成: {file_path}")
         return True
     else:
-        print(f"ℹ️ 无需修复: {file_path}")
         return True
 
 def fix_pytest_collection_warnings():
@@ -103,12 +97,11 @@ def fix_pytest_collection_warnings():
         if not path.exists():
             continue
 
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, encoding='utf-8') as f:
             content = f.read()
 
         # 查找重复的类定义
         lines = content.split('\n')
-        seen_classes = set()
         fixed_lines = []
 
         for line in lines:
@@ -128,11 +121,9 @@ def fix_pytest_collection_warnings():
         with open(path, 'w', encoding='utf-8') as f:
             f.write(fixed_content)
 
-        print(f"✅ 修复完成: {file_path}")
 
 def main():
     """主函数"""
-    print("🔧 开始修复测试收集错误...")
 
     fixes = [
         ("适配器模式测试", fix_adapter_pattern_test),
@@ -141,17 +132,13 @@ def main():
     ]
 
     fixed_count = 0
-    for name, fix_func in fixes:
-        print(f"\n📝 修复{name}...")
+    for _name, fix_func in fixes:
         try:
             if fix_func():
                 fixed_count += 1
-        except Exception as e:
-            print(f"❌ 修复失败: {e}")
+        except Exception:
+            pass
 
-    print(f"\n📊 修复统计:")
-    print(f"  - 修复项目: {fixed_count}/{len(fixes)}")
-    print(f"✅ 测试错误修复完成！")
 
 if __name__ == "__main__":
     main()

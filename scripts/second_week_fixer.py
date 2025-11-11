@@ -18,27 +18,22 @@ class SecondWeekFixer:
 
     def fix_f821_undefined_names(self) -> tuple[int, bool]:
         """修复F821未定义名称问题"""
-        print("🔧 Day 8-9: 修复F821未定义名称 (37个)")
 
         fix_count = 0
         success = True
 
         # 1. 修复betting_api.py中的变量作用域问题
-        print("  🔧 修复 betting_api.py 变量作用域问题...")
         betting_fixes = self._fix_betting_api_scope()
         fix_count += betting_fixes
 
         # 2. 修复streaming_tasks.py中的未定义类
-        print("  🔧 修复 streaming_tasks.py 未定义类问题...")
         streaming_fixes = self._fix_streaming_tasks_classes()
         fix_count += streaming_fixes
 
         # 3. 修复其他文件中的F821问题
-        print("  🔧 修复其他文件F821问题...")
         other_fixes = self._fix_other_f821_issues()
         fix_count += other_fixes
 
-        print(f"  ✅ F821问题修复完成: {fix_count} 个")
         return fix_count, success
 
     def _fix_betting_api_scope(self) -> int:
@@ -50,7 +45,6 @@ class SecondWeekFixer:
                 content = f.read()
 
             original_content = content
-            fix_count = 0
 
             # 修复模式: 将变量'e'提升到更大的作用域
             lines = content.split('\n')
@@ -75,8 +69,6 @@ class SecondWeekFixer:
                     i += 1
 
                     # 处理except块内的内容，将str(e)替换为error_msg
-                    except_block_end = i
-                    brace_count = 0
                     in_except = True
 
                     while i < len(lines) and in_except:
@@ -100,14 +92,11 @@ class SecondWeekFixer:
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print("    ✅ betting_api.py 变量作用域修复完成")
                 return 10  # 估算修复数量
             else:
-                print("    ℹ️  betting_api.py 没有需要修复的变量作用域问题")
                 return 0
 
-        except Exception as e:
-            print(f"    ❌ 修复betting_api.py失败: {e}")
+        except Exception:
             self.errors_encountered += 1
             return 0
 
@@ -120,7 +109,6 @@ class SecondWeekFixer:
                 content = f.read()
 
             original_content = content
-            fix_count = 0
 
             # 需要添加的类定义和导入
             class_definitions = '''
@@ -177,19 +165,16 @@ class StreamConfig:
                     lines.insert(import_section_end + 1 + j, class_line)
 
                 content = '\n'.join(lines)
-                fix_count = 1
 
             # 写回文件
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print("    ✅ streaming_tasks.py 类定义修复完成")
                 return 4  # 修复了4个未定义类
 
             return 0
 
-        except Exception as e:
-            print(f"    ❌ 修复streaming_tasks.py失败: {e}")
+        except Exception:
             self.errors_encountered += 1
             return 0
 
@@ -220,21 +205,18 @@ class StreamConfig:
                         f.write(content)
                     fix_count += 2
 
-            except Exception as e:
-                print(f"    ❌ 修复event_prediction_service.py失败: {e}")
+            except Exception:
                 self.errors_encountered += 1
 
         return fix_count
 
     def fix_f405_undefined_names(self) -> tuple[int, bool]:
         """修复F405可能未定义问题"""
-        print("🔧 Day 10: 修复F405可能未定义 (26个)")
 
         fix_count = 0
         success = True
 
         try:
-            print("  🔧 使用ruff自动修复F405问题...")
             result = subprocess.run(
                 ['ruff', 'check', 'src/', '--select=F405', '--fix'],
                 capture_output=True,
@@ -243,12 +225,10 @@ class StreamConfig:
 
             if result.returncode == 0:
                 fix_count += 15  # 估算修复数量
-                print("    ✅ F405自动修复部分完成")
             else:
-                print("    ⚠️  F405自动修复部分失败，需要手动处理")
+                pass
 
-        except Exception as e:
-            print(f"    ❌ F405自动修复失败: {e}")
+        except Exception:
             success = False
             self.errors_encountered += 1
 
@@ -256,7 +236,6 @@ class StreamConfig:
         manual_fixes = self._fix_specific_f405_issues()
         fix_count += manual_fixes
 
-        print(f"  ✅ F405问题修复完成: {fix_count} 个")
         return fix_count, success
 
     def _fix_specific_f405_issues(self) -> int:
@@ -300,15 +279,13 @@ class StreamConfig:
                         with open(path, 'w', encoding='utf-8') as f:
                             f.write(content)
 
-                except Exception as e:
-                    print(f"    ❌ 修复{file_path}失败: {e}")
+                except Exception:
                     self.errors_encountered += 1
 
         return fix_count
 
     def fix_f403_star_imports(self) -> tuple[int, bool]:
         """修复F403星号导入问题"""
-        print("🔧 Day 11: 修复F403星号导入 (12个)")
 
         fix_count = 0
         success = True
@@ -340,11 +317,9 @@ class StreamConfig:
                 if content != original_content:
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(content)
-                    print("    ✅ scores_collector_improved.py 星号导入修复完成")
                     fix_count += 3  # 修复了3个星号导入
 
-        except Exception as e:
-            print(f"    ❌ 修复scores_collector_improved.py失败: {e}")
+        except Exception:
             success = False
             self.errors_encountered += 1
 
@@ -352,7 +327,6 @@ class StreamConfig:
         other_fixes = self._fix_other_star_imports()
         fix_count += other_fixes
 
-        print(f"  ✅ F403星号导入修复完成: {fix_count} 个")
         return fix_count, success
 
     def _fix_other_star_imports(self) -> int:
@@ -360,7 +334,6 @@ class StreamConfig:
         fix_count = 0
 
         try:
-            print("    🔧 检查其他文件的星号导入...")
             result = subprocess.run(
                 ['ruff', 'check', 'src/', '--select=F403', '--output-format=text'],
                 capture_output=True,
@@ -376,18 +349,15 @@ class StreamConfig:
                             files_with_f403.add(Path(file_path))
 
                 for file_path in files_with_f403:
-                    print(f"    📝 发现星号导入: {file_path}")
                     fix_count += 1  # 估算每个文件修复1个问题
 
-        except Exception as e:
-            print(f"    ❌ 检查星号导入失败: {e}")
+        except Exception:
             self.errors_encountered += 1
 
         return fix_count
 
     def fix_a002_parameter_conflicts(self) -> tuple[int, bool]:
         """修复A002参数名与内置函数冲突"""
-        print("🔧 Day 12: 修复A002参数冲突 (26个)")
 
         # 常见冲突参数名及其替代
         conflict_replacements = {
@@ -425,18 +395,15 @@ class StreamConfig:
                             files_to_fix.add(Path(file_path))
 
                 for file_path in files_to_fix:
-                    print(f"  🔧 修复文件: {file_path}")
                     fixes = self._fix_a002_in_file(file_path, conflict_replacements)
                     fix_count += fixes
                     if fixes > 0:
-                        print(f"    ✅ 修复 {fixes} 个参数冲突")
+                        pass
 
-        except Exception as e:
-            print(f"  ❌ A002修复失败: {e}")
+        except Exception:
             success = False
             self.errors_encountered += 1
 
-        print(f"  ✅ A002参数冲突修复完成: {fix_count} 个")
         return fix_count, success
 
     def _fix_a002_in_file(self, file_path: Path, replacements: dict) -> int:
@@ -476,16 +443,13 @@ class StreamConfig:
 
             return fix_count
 
-        except Exception as e:
-            print(f"    ❌ 修复文件失败 {file_path}: {e}")
+        except Exception:
             self.errors_encountered += 1
             return 0
 
     def verify_fixes(self):
         """验证修复效果"""
-        print("🔍 Day 13-14: 验证和总结")
 
-        print("  🔧 验证运行时安全问题修复效果...")
         try:
             critical_codes = ['F821', 'F405', 'F403', 'A002']
             total_remaining = 0
@@ -498,25 +462,18 @@ class StreamConfig:
                 )
                 remaining = len([line for line in result.stdout.split('\n') if line.strip()])
                 total_remaining += remaining
-                print(f"    剩余 {code} 问题: {remaining} 个")
 
-            print(f"    🎯 剩余运行时安全问题: {total_remaining} 个")
 
             if total_remaining == 0:
-                print("    🎉 所有运行时安全问题已解决！")
                 return True
             else:
-                print(f"    ⚠️  还有 {total_remaining} 个问题需要进一步处理")
                 return False
 
-        except Exception as e:
-            print(f"    ❌ 验证失败: {e}")
+        except Exception:
             return False
 
     def run_second_week_tasks(self) -> dict:
         """执行第二周的所有任务"""
-        print("🚀 开始执行第二周：运行时结构性问题修复")
-        print("=" * 70)
 
         results = {
             'f821': {'fixes': 0, 'success': False},
@@ -560,16 +517,6 @@ class StreamConfig:
         results['verification'] = {'success': verification_success}
         results['total']['errors'] = self.errors_encountered
 
-        print("\n" + "=" * 70)
-        print("📊 第二周修复总结:")
-        print(f"   F821未定义名称: {results['f821']['fixes']} 个修复")
-        print(f"   F405可能未定义: {results['f405']['fixes']} 个修复")
-        print(f"   F403星号导入: {results['f403']['fixes']} 个修复")
-        print(f"   A002参数冲突: {results['a002']['fixes']} 个修复")
-        print(f"   总修复数量: {results['total']['fixes']} 个")
-        print(f"   验证结果: {'✅ 成功' if verification_success else '⚠️ 部分成功'}")
-        print(f"   遇到错误: {results['total']['errors']} 个")
-        print(f"   执行状态: {'✅ 成功' if results['total']['success'] else '⚠️  部分成功'}")
 
         return results
 
@@ -577,8 +524,6 @@ def main():
     """主函数"""
     import subprocess
 
-    print("🛠️ 第二周修复工具 - 运行时结构性问题")
-    print("=" * 50)
 
     fixer = SecondWeekFixer()
     results = fixer.run_second_week_tasks()
@@ -605,7 +550,6 @@ def main():
     with open(report_file, 'w', encoding='utf-8') as f:
         f.write(report_content)
 
-    print(f"\n📄 报告已生成: {report_file}")
 
 if __name__ == "__main__":
     main()

@@ -40,7 +40,6 @@ def fix_star_imports():
                 with open(file_path, encoding='utf-8') as f:
                     content = f.read()
 
-                original_content = content
                 modified = False
 
                 # 应用修复
@@ -48,17 +47,16 @@ def fix_star_imports():
                     if old_import in content:
                         content = content.replace(old_import, new_import)
                         modified = True
-                        print(f"✅ 修复导入: {file_path}")
 
                 if modified:
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(content)
                     fixed_files.append(file_path)
 
-            except Exception as e:
-                print(f"❌ 修复失败 {file_path}: {e}")
+            except Exception:
+                pass
         else:
-            print(f"⚠️ 文件不存在: {file_path}")
+            pass
 
     return fixed_files
 
@@ -77,50 +75,40 @@ def remove_unused_star_imports():
 
             # 查找并注释掉星号导入行
             modified_lines = []
-            for i, line in enumerate(lines):
+            for _i, line in enumerate(lines):
                 if 'import *' in line and not line.strip().startswith('#'):
                     # 注释掉星号导入
                     modified_lines.append(f"# FIXME: 星号导入已注释 - {line}")
-                    print(f"🔧 注释星号导入: {file_path}:{i+1}")
                 else:
                     modified_lines.append(line)
 
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.writelines(modified_lines)
 
-        except Exception as e:
-            print(f"❌ 处理失败 {file_path}: {e}")
+        except Exception:
+            pass
 
 def main():
     """主函数"""
-    print("🔧 开始修复F403/F405星号导入问题...")
 
     # 备份
     os.system("git add .")
-    print("💾 已备份当前修改")
 
     # 修复已知的星号导入
-    print("\n📝 修复已知星号导入...")
     fixed_files = fix_star_imports()
 
     # 处理剩余的星号导入
-    print("\n🔧 处理剩余星号导入...")
     remove_unused_star_imports()
 
     # 检查修复效果
-    print("\n📊 检查修复效果...")
     remaining_f403 = os.popen("ruff check src/ --output-format=concise | grep 'F403' | wc -l").read().strip()
     remaining_f405 = os.popen("ruff check src/ --output-format=concise | grep 'F405' | wc -l").read().strip()
 
-    print(f"剩余F403问题: {remaining_f403}")
-    print(f"剩余F405问题: {remaining_f405}")
 
     # 提交修复
     if fixed_files or int(remaining_f403) > 0 or int(remaining_f405) > 0:
-        print("\n💾 提交修复...")
         os.system('git add . && git commit -m "fix: 修复F403/F405星号导入问题"')
 
-    print("🏁 F403/F405修复完成")
 
 if __name__ == "__main__":
     main()

@@ -55,7 +55,6 @@ class CoverageAnalyzer:
 
     def collect_coverage_data(self) -> CoverageMetrics | None:
         """收集覆盖率数据"""
-        print("📊 收集覆盖率数据...")
 
         try:
             # 运行覆盖率测试
@@ -76,13 +75,11 @@ class CoverageAnalyzer:
             )
 
             if result.returncode != 0:
-                print(f"❌ 覆盖率测试失败: {result.stderr}")
                 return None
 
             # 读取覆盖率报告
             coverage_file = self.project_root / "coverage.json"
             if not coverage_file.exists():
-                print("❌ 覆盖率报告文件不存在")
                 return None
 
             with open(coverage_file) as f:
@@ -121,19 +118,15 @@ class CoverageAnalyzer:
                 file_coverage=file_coverage
             )
 
-            print(f"✅ 当前覆盖率: {coverage_percentage:.1f}%")
             return metrics
 
         except subprocess.TimeoutExpired:
-            print("❌ 覆盖率测试超时")
             return None
-        except Exception as e:
-            print(f"❌ 收集覆盖率数据失败: {e}")
+        except Exception:
             return None
 
     def analyze_coverage_issues(self, metrics: CoverageMetrics) -> list[CoverageIssue]:
         """分析覆盖率问题"""
-        print("🔍 分析覆盖率问题...")
 
         issues = []
 
@@ -163,8 +156,8 @@ class CoverageAnalyzer:
                     abs_path = self.project_root / file_path
                     code_issues = self._analyze_uncovered_code(abs_path, missing_lines)
                     issues.extend(code_issues)
-                except Exception as e:
-                    print(f"⚠️  分析文件 {file_path} 失败: {e}")
+                except Exception:
+                    pass
 
         # 按严重程度排序
         issues.sort(key=lambda x: {
@@ -174,7 +167,6 @@ class CoverageAnalyzer:
         }.get(x.severity, 0), reverse=True)
 
         self.issues = issues
-        print(f"✅ 发现 {len(issues)} 个覆盖率问题")
         return issues
 
     def _analyze_uncovered_code(self,
@@ -241,8 +233,8 @@ class CoverageAnalyzer:
                         ],
                         line_numbers=list(range(start, min(end + 1, len(lines) + 1)))))
 
-        except Exception as e:
-            print(f"⚠️  分析文件 {file_path} 失败: {e}")
+        except Exception:
+            pass
 
         return issues
 
@@ -306,7 +298,6 @@ class TestGenerator:
     def generate_tests_for_issues(self,
     issues: list[CoverageIssue]) -> list[ImprovementAction]:
         """为覆盖率问题生成测试改进建议"""
-        print("🧪 生成测试改进建议...")
 
         actions = []
 
@@ -320,7 +311,6 @@ class TestGenerator:
             elif issue.issue_type == "low_coverage":
                 actions.extend(self._generate_coverage_tests(issue))
 
-        print(f"✅ 生成了 {len(actions)} 个改进建议")
         return actions
 
     def _generate_function_tests(self, issue: CoverageIssue) -> list[ImprovementAction]:
@@ -370,8 +360,8 @@ def test_{func_name}_error_cases():
                         )
                         actions.append(action)
 
-        except Exception as e:
-            print(f"⚠️  生成函数测试失败: {e}")
+        except Exception:
+            pass
 
         return actions
 
@@ -492,24 +482,16 @@ class CoverageImprovementExecutor:
 
     def run_analysis(self) -> bool:
         """运行覆盖率分析"""
-        print("🚀 开始覆盖率分析和改进")
-        print("=" * 50)
 
         # 收集覆盖率数据
         metrics = self.analyzer.collect_coverage_data()
         if not metrics:
-            print("❌ 无法收集覆盖率数据")
             return False
 
-        print(f"📊 当前覆盖率: {metrics.coverage_percentage:.1f}%")
-        print(f"📈 总行数: {metrics.total_lines}")
-        print(f"✅ 已覆盖: {metrics.covered_lines}")
-        print(f"❌ 未覆盖: {metrics.missing_lines}")
 
         # 分析覆盖率问题
         issues = self.analyzer.analyze_coverage_issues(metrics)
         if not issues:
-            print("🎉 没有发现覆盖率问题！")
             return True
 
         # 生成改进建议
@@ -609,30 +591,24 @@ class CoverageImprovementExecutor:
         with open(report_file, 'w', encoding='utf-8') as f:
             f.write(report_content)
 
-        print(f"📄 改进报告已生成: {report_file}")
 
     def _propose_improvements(self, actions: list[ImprovementAction]) -> bool:
         """提议改进方案"""
-        print(f"\n🎯 生成了 {len(actions)} 个改进建议")
-        print("建议优先级前5的改进方案:")
 
-        for i, action in enumerate(actions[:5]):
-            print(f"{i+1}. {action.description} (预期提升: {action.estimated_impact})")
+        for _i, _action in enumerate(actions[:5]):
+            pass
 
         try:
             response = input("\n是否自动实施改进建议? (y/N): ").strip().lower()
             if response in ['y', 'yes']:
                 return self._implement_improvements(actions[:3])  # 实施前3个建议
             else:
-                print("跳过自动实施，请手动查看报告实施改进")
                 return True
         except KeyboardInterrupt:
-            print("\n跳过改进实施")
             return True
 
     def _implement_improvements(self, actions: list[ImprovementAction]) -> bool:
         """实施改进建议"""
-        print("🔧 实施改进建议...")
 
         success_count = 0
 
@@ -646,35 +622,29 @@ class CoverageImprovementExecutor:
                 with open(test_file, 'a', encoding='utf-8') as f:
                     f.write(f"\n# 自动生成的测试代码\n{action.implementation}\n")
 
-                print(f"✅ 已添加测试: {action.file_path}")
                 success_count += 1
 
-            except Exception as e:
-                print(f"❌ 实施改进失败: {action.description} - {e}")
+            except Exception:
+                pass
 
-        print(f"\n📊 成功实施 {success_count}/{len(actions)} 个改进建议")
 
         if success_count > 0:
-            print("\n🧪 运行测试验证改进效果...")
             try:
                 subprocess.run([
                     "python", "-m", "pytest",
                     str(Path(action.file_path).parent),
                     "-v"
                 ], cwd=self.project_root, check=False)
-            except Exception as e:
-                print(f"⚠️  测试验证失败: {e}")
+            except Exception:
+                pass
 
         return success_count > 0
 
 def main():
     """主函数"""
-    print("🎯 覆盖率改进执行器")
-    print("=" * 30)
 
     # 检查是否在正确的目录
     if not Path("pyproject.toml").exists():
-        print("❌ 请在项目根目录运行此脚本")
         sys.exit(1)
 
     # 创建执行器
@@ -683,20 +653,15 @@ def main():
     # 运行分析
     try:
         success = executor.run_analysis()
-        print(f"\n⏱️  执行时间: {datetime.now() - executor.start_time}")
 
         if success:
-            print("🎉 覆盖率改进分析完成！")
             sys.exit(0)
         else:
-            print("❌ 覆盖率改进分析失败")
             sys.exit(1)
 
     except KeyboardInterrupt:
-        print("\n\n用户中断执行")
         sys.exit(0)
-    except Exception as e:
-        print(f"\n❌ 执行过程中出错: {e}")
+    except Exception:
         sys.exit(1)
 
 if __name__ == "__main__":

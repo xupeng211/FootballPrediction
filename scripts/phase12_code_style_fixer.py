@@ -8,7 +8,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import List, Tuple, Dict
+
 
 class CodeStyleFixer:
     def __init__(self):
@@ -16,10 +16,10 @@ class CodeStyleFixer:
         self.files_processed = 0
         self.errors_fixed = 0
 
-    def fix_import_order_issues(self, file_path: str) -> Dict[str, int]:
+    def fix_import_order_issues(self, file_path: str) -> dict[str, int]:
         """修复导入顺序问题 (E402)"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -31,7 +31,6 @@ class CodeStyleFixer:
                 f.write(content)
 
             lines = content.split('\n')
-            fixed_lines = []
             imports_section = []
             other_code = []
             in_imports_section = False
@@ -82,18 +81,16 @@ class CodeStyleFixer:
                     f.write(fixed_content)
 
                 fixes_count = len([line for line in imports_only if line.strip()])
-                print(f"  ✅ 修复 {file_path}: {fixes_count} 个导入语句")
 
             return {"import_fixes": fixes_count}
 
-        except Exception as e:
-            print(f"  ❌ 处理文件 {file_path} 时出错: {e}")
+        except Exception:
             return {"import_fixes": 0}
 
-    def fix_import_format_issues(self, file_path: str) -> Dict[str, int]:
+    def fix_import_format_issues(self, file_path: str) -> dict[str, int]:
         """修复导入格式问题 (I001)"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -138,18 +135,16 @@ class CodeStyleFixer:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(fixed_content)
 
-                print(f"  ✅ 修复 {file_path}: {fixes_count} 个格式问题")
 
             return {"format_fixes": fixes_count}
 
-        except Exception as e:
-            print(f"  ❌ 处理文件 {file_path} 时出错: {e}")
+        except Exception:
             return {"format_fixes": 0}
 
-    def fix_naming_conventions(self, file_path: str) -> Dict[str, int]:
+    def fix_naming_conventions(self, file_path: str) -> dict[str, int]:
         """修复命名约定问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -197,12 +192,10 @@ class CodeStyleFixer:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(fixed_content)
 
-                print(f"  ✅ 修复 {file_path}: {fixes_count} 个命名约定问题")
 
             return {"naming_fixes": fixes_count}
 
-        except Exception as e:
-            print(f"  ❌ 处理文件 {file_path} 时出错: {e}")
+        except Exception:
             return {"naming_fixes": 0}
 
     def _to_snake_case(self, name: str) -> str:
@@ -211,9 +204,8 @@ class CodeStyleFixer:
         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
-    def fix_file(self, file_path: str) -> Dict[str, int]:
+    def fix_file(self, file_path: str) -> dict[str, int]:
         """修复单个文件的所有代码风格问题"""
-        print(f"🔧 修复文件: {file_path}")
 
         total_fixes = 0
         fix_details = {}
@@ -241,9 +233,8 @@ class CodeStyleFixer:
             "details": fix_details
         }
 
-    def analyze_current_errors(self) -> Dict[str, int]:
+    def analyze_current_errors(self) -> dict[str, int]:
         """分析当前的代码风格错误"""
-        print("🔍 分析当前代码风格错误...")
 
         error_counts = {}
 
@@ -262,23 +253,20 @@ class CodeStyleFixer:
                     else:
                         error_counts[error_code] = 1
 
-        except Exception as e:
-            print(f"  ❌ 分析错误失败: {e}")
+        except Exception:
+            pass
 
         return error_counts
 
 def main():
     """主函数"""
-    print("🎨 Phase 12 代码风格错误修复工具")
-    print("=" * 50)
 
     fixer = CodeStyleFixer()
 
     # 分析当前错误状态
     current_errors = fixer.analyze_current_errors()
-    print(f"\n📊 当前错误统计:")
     for error_code, count in current_errors.items():
-        print(f"  {error_code}: {count} 个")
+        pass
 
     # 重点关注E402和I001错误
     high_priority_files = [
@@ -293,20 +281,18 @@ def main():
 
     total_fixes = 0
 
-    print(f"\n🔧 开始修复高优先级文件...")
     for file_path in high_priority_files:
         if Path(file_path).exists():
             result = fixer.fix_file(file_path)
             total_fixes += result["total_fixes"]
         else:
-            print(f"  ⚠️ 文件不存在: {file_path}")
+            pass
 
     # 修复其他文件中的导入问题
-    print(f"\n🔧 批量修复导入问题...")
 
     # 查找所有Python文件
     python_files = []
-    for root, dirs, files in os.walk("src"):
+    for root, _dirs, files in os.walk("src"):
         for file in files:
             if file.endswith('.py') and not file.startswith('.') and 'test' not in file:
                 python_files.append(os.path.join(root, file))
@@ -319,28 +305,21 @@ def main():
         try:
             result = fixer.fix_file(file_path)
             total_fixes += result["total_fixes"]
-        except Exception as e:
-            print(f"  ⚠️ 处理文件 {file_path} 时出错: {e}")
+        except Exception:
+            pass
 
-    print(f"\n📊 修复统计:")
-    print(f"  🔧 处理文件数: {fixer.files_processed}")
-    print(f"  ✅ 修复问题数: {fixer.errors_fixed}")
-    print(f"  📈 总修复量: {total_fixes}")
 
     # 验证修复效果
-    print(f"\n🔍 验证修复效果...")
     final_errors = fixer.analyze_current_errors()
 
-    print(f"📊 修复后错误统计:")
     for error_code, count in final_errors.items():
         reduction = current_errors.get(error_code, 0) - count
         if reduction > 0:
-            print(f"  {error_code}: {count} 个 (减少了 {reduction} 个)")
+            pass
         else:
-            print(f"  {error_code}: {count} 个")
+            pass
 
-    improvement = sum(current_errors.values()) - sum(final_errors.values())
-    print(f"\n🎉 总体改进: 减少了 {improvement} 个代码风格错误")
+    sum(current_errors.values()) - sum(final_errors.values())
 
 if __name__ == "__main__":
     main()

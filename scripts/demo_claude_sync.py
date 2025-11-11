@@ -29,16 +29,10 @@ from claude_work_sync import ClaudeWorkSynchronizer, WorkItem
 
 def demo_workflow():
     """演示完整的工作流程"""
-    print("🎭 Claude Code 作业同步系统演示")
-    print("=" * 60)
-    print("这个演示将展示系统的完整使用流程")
-    print("=" * 60)
 
     synchronizer = ClaudeWorkSynchronizer()
 
     # 步骤1: 模拟开始新作业
-    print("\n📝 步骤1: 开始新的作业项目")
-    print("-" * 40)
 
     # 创建示例作业项目
     work_item = WorkItem(
@@ -65,17 +59,8 @@ def demo_workflow():
     )
 
     synchronizer.add_work_item(work_item)
-    print("✅ 作业项目已创建")
-    print(f"   ID: {work_item.id}")
-    print(f"   标题: {work_item.title}")
-    print(f"   类型: {work_item.work_type}")
-    print(f"   优先级: {work_item.priority}")
-    print(f"   状态: {work_item.status}")
-    print(f"   修改文件: {len(work_item.files_modified)}个")
 
     # 步骤2: 模拟开发过程
-    print("\n⚙️ 步骤2: 模拟开发过程")
-    print("-" * 40)
 
     development_steps = [
         "设计数据库用户表结构",
@@ -87,17 +72,13 @@ def demo_workflow():
         "编写单元测试用例"
     ]
 
-    for i, step in enumerate(development_steps, 1):
-        print(f"   {i}. {step}")
+    for _i, _step in enumerate(development_steps, 1):
         # 模拟开发时间
         import time
         time.sleep(0.5)
 
-    print("✅ 开发过程完成")
 
     # 步骤3: 完成作业
-    print("\n✅ 步骤3: 完成作业项目")
-    print("-" * 40)
 
     # 模拟交付成果
     deliverables = [
@@ -161,15 +142,9 @@ def demo_workflow():
     )
 
     if success:
-        print("✅ 作业项目完成")
-        print(f"   交付成果: {len(deliverables)}项")
-        print(f"   测试结果: {test_results['unit_tests']['passed']}/{test_results['unit_tests']['total']} 单元测试通过")
-        print(f"   代码覆盖率: {test_results['unit_tests']['coverage']}")
-        print(f"   安全测试: {len(test_results['security_tests'])}项通过")
+        pass
 
     # 步骤4: 生成GitHub Issue预览
-    print("\n📄 步骤4: 生成GitHub Issue内容预览")
-    print("-" * 40)
 
     # 重新加载更新后的作业项目
     work_items = synchronizer.load_work_log()
@@ -178,48 +153,22 @@ def demo_workflow():
     if completed_item:
         issue_body = synchronizer.generate_issue_body(completed_item)
 
-        print("📋 GitHub Issue内容预览:")
-        print("=" * 50)
         # 只显示前几行
         lines = issue_body.split('\n')
-        for i, line in enumerate(lines[:30]):  # 显示前30行
-            print(line)
+        for _i, _line in enumerate(lines[:30]):  # 显示前30行
+            pass
         if len(lines) > 30:
-            print("...")
-            print(f"(总长度: {len(issue_body)} 字符)")
-        print("=" * 50)
+            pass
 
     # 步骤5: 显示工作统计
-    print("\n📊 步骤5: 工作统计信息")
-    print("-" * 40)
 
     if completed_item and completed_item.time_spent_minutes > 0:
-        hours = completed_item.time_spent_minutes // 60
-        minutes = completed_item.time_spent_minutes % 60
-        print(f"⏱️ 工作时长: {hours}小时{minutes}分钟")
+        completed_item.time_spent_minutes // 60
+        completed_item.time_spent_minutes % 60
 
-    print(f"📁 修改文件: {len(completed_item.files_modified) if completed_item else 0}个")
-    print(f"🎯 交付成果: {len(deliverables)}项")
-    print(f"🧪 测试覆盖: {test_results['unit_tests']['coverage']}")
-    print(f"🔧 技术栈: {', '.join(completed_item.technical_details.get('tech_stack', [])) if completed_item else 'N/A'}")
 
     # 步骤6: 同步建议
-    print("\n🚀 步骤6: 同步到GitHub")
-    print("-" * 40)
 
-    print("💡 现在你可以执行以下命令来同步到GitHub:")
-    print()
-    print("   make claude-sync")
-    print()
-    print("这将自动:")
-    print("   • 在GitHub上创建或更新Issue")
-    print("   • 添加适当的标签 (feature, priority/high, status/completed)")
-    print("   • 包含完整的技术细节和交付成果")
-    print("   • 由于作业已完成，Issue会自动关闭")
-    print()
-    print("📋 或者查看当前所有作业:")
-    print()
-    print("   make claude-list-work")
 
     # 保存演示结果
     demo_result = {
@@ -238,28 +187,16 @@ def demo_workflow():
     with open(demo_file, 'w', encoding='utf-8') as f:
         json.dump(demo_result, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📄 演示结果已保存到: {demo_file}")
 
     # 清理演示数据
-    print("\n🧹 清理演示数据")
-    print("-" * 40)
 
     # 移除演示作业
     work_items = synchronizer.load_work_log()
     work_items = [item for item in work_items if not item.id.startswith("demo_")]
     synchronizer.save_work_log(work_items)
 
-    print("✅ 演示数据已清理")
 
-    print("\n" + "=" * 60)
-    print("🎉 演示完成！现在你可以开始使用实际的作业记录功能")
-    print("=" * 60)
 
-    print("🚀 下一步操作建议:")
-    print("   1. 开始你的真实作业: make claude-start-work")
-    print("   2. 完成开发工作后: make claude-complete-work")
-    print("   3. 同步到GitHub: make claude-sync")
-    print("   4. 查看你的作业记录: make claude-list-work")
 
     return demo_result
 
@@ -267,25 +204,18 @@ def demo_workflow():
 def main():
     """主函数"""
     try:
-        print("🎭 准备开始Claude Code作业同步系统演示...")
 
         # 确保环境就绪
-        synchronizer = ClaudeWorkSynchronizer()
+        ClaudeWorkSynchronizer()
 
-        print("✅ 环境检查完成，开始演示...")
-        result = demo_workflow()
+        demo_workflow()
 
-        print("\n🎯 演示成功完成！")
-        print(f"   演示作业ID: {result['demo_id']}")
-        print(f"   生成的Issue内容长度: {result['issue_length']}字符")
 
         return 0
 
     except KeyboardInterrupt:
-        print("\n⚠️ 演示被用户中断")
         return 130
-    except Exception as e:
-        print(f"\n❌ 演示失败: {e}")
+    except Exception:
         import traceback
         traceback.print_exc()
         return 1

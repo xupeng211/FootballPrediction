@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """GitHub Issues定期清理工具"""
 
-import subprocess
 import json
-import re
+import subprocess
 from datetime import datetime, timedelta
-from typing import List, Dict, Tuple
+
 
 class GitHubIssuesCleaner:
     def __init__(self, repo_path=None):
         self.repo_path = repo_path or "xupeng211/FootballPrediction"
         self.cleanup_actions = []
 
-    def get_open_issues(self) -> List[Dict]:
+    def get_open_issues(self) -> list[dict]:
         """获取所有开放Issues"""
         try:
             result = subprocess.run(
@@ -24,13 +23,11 @@ class GitHubIssuesCleaner:
             if result.returncode == 0:
                 return json.loads(result.stdout)
             else:
-                print(f"获取Issues失败: {result.stderr}")
                 return []
-        except Exception as e:
-            print(f"获取Issues异常: {e}")
+        except Exception:
             return []
 
-    def detect_duplicate_issues(self, issues: List[Dict]) -> List[Tuple[Dict, Dict]]:
+    def detect_duplicate_issues(self, issues: list[dict]) -> list[tuple[dict, dict]]:
         """检测重复Issues"""
         duplicates = []
 
@@ -54,7 +51,7 @@ class GitHubIssuesCleaner:
 
         return len(intersection) / len(union) if union else 0
 
-    def detect_stale_issues(self, issues: List[Dict], days_threshold=30) -> List[Dict]:
+    def detect_stale_issues(self, issues: list[dict], days_threshold=30) -> list[dict]:
         """检测过期Issues"""
         stale_issues = []
         cutoff_date = datetime.now() - timedelta(days=days_threshold)
@@ -85,7 +82,7 @@ class GitHubIssuesCleaner:
 
         return False
 
-    def detect_completed_issues(self, issues: List[Dict]) -> List[Dict]:
+    def detect_completed_issues(self, issues: list[dict]) -> list[dict]:
         """检测已完成但未关闭的Issues"""
         completed_keywords = [
             '完成', 'finished', 'completed', 'done', '✅',
@@ -104,7 +101,7 @@ class GitHubIssuesCleaner:
 
         return completed_issues
 
-    def verify_issue_completion(self, issue: Dict) -> bool:
+    def verify_issue_completion(self, issue: dict) -> bool:
         """验证Issue是否真的完成"""
         # 检查标签
         labels = [label['name'] for label in issue['labels']]
@@ -128,7 +125,7 @@ class GitHubIssuesCleaner:
 
         return False
 
-    def generate_cleanup_plan(self, issues: List[Dict]) -> Dict:
+    def generate_cleanup_plan(self, issues: list[dict]) -> dict:
         """生成清理计划"""
         duplicates = self.detect_duplicate_issues(issues)
         stale_issues = self.detect_stale_issues(issues)
@@ -143,7 +140,7 @@ class GitHubIssuesCleaner:
 
         return plan
 
-    def execute_cleanup_action(self, action_type: str, issue: Dict, reason: str = "") -> bool:
+    def execute_cleanup_action(self, action_type: str, issue: dict, reason: str = "") -> bool:
         """执行清理操作"""
         try:
             if action_type == 'close_completed':
@@ -168,28 +165,18 @@ class GitHubIssuesCleaner:
                 ], check=True)
 
             return True
-        except subprocess.CalledProcessError as e:
-            print(f"执行清理操作失败: {e}")
+        except subprocess.CalledProcessError:
             return False
 
-    def run_cleanup(self, dry_run=True) -> Dict:
+    def run_cleanup(self, dry_run=True) -> dict:
         """执行清理流程"""
-        print("🔍 获取开放Issues...")
         issues = self.get_open_issues()
 
-        print(f"📊 找到 {len(issues)} 个开放Issues")
 
-        print("🧹 生成清理计划...")
         plan = self.generate_cleanup_plan(issues)
 
-        print(f"📋 清理计划:")
-        print(f"  重复Issues: {len(plan['duplicates'])} 组")
-        print(f"  过期Issues: {len(plan['stale_issues'])} 个")
-        print(f"  已完成Issues: {len(plan['completed_issues'])} 个")
-        print(f"  总操作数: {plan['total_actions']}")
 
         if dry_run:
-            print("\n🔍 这是一个试运行，没有实际执行任何操作")
             return plan
 
         # 执行清理操作
@@ -198,7 +185,6 @@ class GitHubIssuesCleaner:
 
         # 关闭已完成的Issues
         for issue in plan['completed_issues']:
-            print(f"✅ 关闭已完成Issue: #{issue['number']} - {issue['title']}")
             if self.execute_cleanup_action('close_completed', issue):
                 executed += 1
             else:
@@ -206,7 +192,6 @@ class GitHubIssuesCleaner:
 
         # 标记过期Issues
         for issue in plan['stale_issues']:
-            print(f"⏰ 标记过期Issue: #{issue['number']} - {issue['title']}")
             if self.execute_cleanup_action('mark_stale', issue):
                 executed += 1
             else:
@@ -214,7 +199,6 @@ class GitHubIssuesCleaner:
 
         # 处理重复Issues
         for issue1, issue2 in plan['duplicates']:
-            print(f"🔄 处理重复Issues: #{issue1['number']} 和 #{issue2['number']}")
             reason = f"可能与Issue #{issue2['number']}重复: {issue2['title']}"
             if self.execute_cleanup_action('request_merge_duplicate', issue1, reason):
                 executed += 1
@@ -228,10 +212,6 @@ class GitHubIssuesCleaner:
             'total_issues': len(issues)
         }
 
-        print(f"\n📊 清理结果:")
-        print(f"  成功执行: {executed}")
-        print(f"  执行失败: {failed}")
-        print(f"  剩余开放Issues: {len(issues) - executed}")
 
         return result
 
@@ -252,8 +232,6 @@ if __name__ == '__main__':
     with open('github_issues_cleanup_report.json', 'w') as f:
         json.dump(report, f, indent=2)
 
-    print(f"\n📄 报告已保存到 github_issues_cleanup_report.json")
 
     if not dry_run:
-        print("💡 建议设置定期执行:")
-        print("   0 2 * * * cd /path/to/project && python3 scripts/github_issues_cleaner.py")
+        pass

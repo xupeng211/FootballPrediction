@@ -4,24 +4,21 @@
 自动为业务服务生成完整的单元测试和集成测试
 """
 
-import os
-import sys
 import ast
-import json
 import inspect
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Set
+import sys
 from dataclasses import dataclass
-from collections import defaultdict
-import re
 from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 
 @dataclass
 class TestConfig:
     """测试配置"""
     target_module: str
     output_file: str
-    test_types: List[str]
+    test_types: list[str]
     include_mocks: bool = True
     include_fixtures: bool = True
     include_parametrized: bool = True
@@ -33,9 +30,8 @@ class ServiceAnalyzer:
         self.project_root = project_root
         self.src_dir = project_root / "src"
 
-    def analyze_service_module(self, module_path: str) -> Dict[str, Any]:
+    def analyze_service_module(self, module_path: str) -> dict[str, Any]:
         """分析服务模块"""
-        print(f"🔍 分析服务模块: {module_path}")
 
         try:
             # 导入模块
@@ -53,7 +49,7 @@ class ServiceAnalyzer:
             # 分析AST结构
             module_file = self.src_dir / f"{module_path.replace('.', '/')}.py"
             if module_file.exists():
-                with open(module_file, 'r', encoding='utf-8') as f:
+                with open(module_file, encoding='utf-8') as f:
                     content = f.read()
                 tree = ast.parse(content)
 
@@ -83,14 +79,12 @@ class ServiceAnalyzer:
                         func_info = self._analyze_runtime_function(obj)
                         analysis['functions'].append(func_info)
 
-            print(f"✅ 发现 {len(analysis['classes'])} 个类, {len(analysis['functions'])} 个函数")
             return analysis
 
-        except Exception as e:
-            print(f"❌ 分析模块失败: {e}")
+        except Exception:
             return {}
 
-    def _analyze_class(self, node: ast.ClassDef, module) -> Dict[str, Any]:
+    def _analyze_class(self, node: ast.ClassDef, module) -> dict[str, Any]:
         """分析类定义"""
         methods = []
         properties = []
@@ -115,7 +109,7 @@ class ServiceAnalyzer:
     ast.Name) else str(base) for base in node.bases]
         }
 
-    def _analyze_function(self, node: ast.FunctionDef) -> Dict[str, Any]:
+    def _analyze_function(self, node: ast.FunctionDef) -> dict[str, Any]:
         """分析函数定义"""
         args = []
         returns = None
@@ -156,7 +150,7 @@ class ServiceAnalyzer:
     ast.Name)]
         }
 
-    def _analyze_runtime_class(self, cls) -> Dict[str, Any]:
+    def _analyze_runtime_class(self, cls) -> dict[str, Any]:
         """分析运行时类"""
         methods = []
         dependencies = set()
@@ -176,7 +170,7 @@ class ServiceAnalyzer:
             'base_classes': [base.__name__ for base in cls.__bases__]
         }
 
-    def _analyze_runtime_function(self, func) -> Dict[str, Any]:
+    def _analyze_runtime_function(self, func) -> dict[str, Any]:
         """分析运行时函数"""
         try:
             sig = inspect.signature(func)
@@ -198,8 +192,7 @@ class ServiceAnalyzer:
                 'is_async': inspect.iscoroutinefunction(func),
                 'decorators': []
             }
-        except Exception as e:
-            print(f"⚠️  分析函数失败: {func.__name__} - {e}")
+        except Exception:
             return {
                 'name': func.__name__,
                 'type': 'function',
@@ -219,11 +212,10 @@ class ServiceTestGenerator:
         self.test_dir = project_root / "tests"
 
     def generate_tests_for_service(self,
-    analysis: Dict[str,
+    analysis: dict[str,
     Any],
     config: TestConfig) -> str:
         """为服务生成测试"""
-        print(f"🧪 为服务 {analysis['module_name']} 生成测试...")
 
         test_content = f'''"""
 自动生成的服务测试
@@ -269,7 +261,7 @@ from typing import Any, Dict, List
 
         return test_content
 
-    def _generate_fixtures(self, analysis: Dict[str, Any]) -> str:
+    def _generate_fixtures(self, analysis: dict[str, Any]) -> str:
         """生成测试fixtures"""
         fixtures = '''
 @pytest.fixture
@@ -303,7 +295,7 @@ def mock_service():
 '''
         return fixtures
 
-    def _generate_class_tests(self, cls: Dict[str, Any], config: TestConfig) -> str:
+    def _generate_class_tests(self, cls: dict[str, Any], config: TestConfig) -> str:
         """为类生成测试"""
         class_name = cls['name']
         tests = f"""
@@ -333,7 +325,7 @@ class Test{class_name}:
 
     def _generate_method_tests(self,
     class_name: str,
-    method: Dict[str,
+    method: dict[str,
     Any],
     config: TestConfig) -> str:
         """为方法生成测试"""
@@ -385,7 +377,7 @@ class Test{class_name}:
 
         return tests
 
-    def _generate_function_tests(self, func: Dict[str, Any], config: TestConfig) -> str:
+    def _generate_function_tests(self, func: dict[str, Any], config: TestConfig) -> str:
         """为函数生成测试"""
         func_name = func['name']
         tests = f"""
@@ -449,9 +441,8 @@ class ServiceTestExecutor:
         self.analyzer = ServiceAnalyzer(self.project_root)
         self.generator = ServiceTestGenerator(self.project_root)
 
-    def discover_services(self) -> List[str]:
+    def discover_services(self) -> list[str]:
         """发现服务模块"""
-        print("🔍 发现服务模块...")
 
         services = []
         src_dir = self.project_root / "src"
@@ -482,17 +473,14 @@ class ServiceTestExecutor:
                 if module_name not in services:
                     services.append(module_name)
 
-        print(f"✅ 发现 {len(services)} 个服务模块")
         return sorted(services)
 
     def generate_tests_for_service(self, service_module: str) -> bool:
         """为指定服务生成测试"""
-        print(f"🎯 为服务 {service_module} 生成测试...")
 
         # 分析服务模块
         analysis = self.analyzer.analyze_service_module(service_module)
         if not analysis:
-            print(f"❌ 无法分析服务模块: {service_module}")
             return False
 
         # 创建测试配置
@@ -515,22 +503,17 @@ class ServiceTestExecutor:
         try:
             with open(test_file, 'w', encoding='utf-8') as f:
                 f.write(test_content)
-            print(f"✅ 测试文件已生成: {test_file}")
             return True
-        except Exception as e:
-            print(f"❌ 保存测试文件失败: {e}")
+        except Exception:
             return False
 
-    def generate_all_service_tests(self) -> Dict[str, bool]:
+    def generate_all_service_tests(self) -> dict[str, bool]:
         """为所有服务生成测试"""
-        print("🚀 开始为所有服务生成测试")
-        print("=" * 50)
 
         services = self.discover_services()
         results = {}
 
         for service in services:
-            print(f"\n📋 处理服务: {service}")
             success = self.generate_tests_for_service(service)
             results[service] = success
 
@@ -539,7 +522,7 @@ class ServiceTestExecutor:
 
         return results
 
-    def _generate_generation_report(self, results: Dict[str, bool]):
+    def _generate_generation_report(self, results: dict[str, bool]):
         """生成测试生成报告"""
         total_services = len(results)
         successful_services = sum(1 for success in results.values() if success)
@@ -568,7 +551,7 @@ class ServiceTestExecutor:
                 if not success:
                     report += f"- {service}\n"
 
-        report += f"""
+        report += """
 ## 🚀 下一步行动
 
 1. **检查生成的测试**: 查看生成的测试文件，根据实际业务逻辑调整
@@ -593,7 +576,6 @@ class ServiceTestExecutor:
         with open(report_file, 'w', encoding='utf-8') as f:
             f.write(report)
 
-        print(f"\n📄 生成报告已保存: {report_file}")
 
 def create_prediction_service_test():
     """创建预测服务测试"""
@@ -805,7 +787,6 @@ class TestPredictionService:
     file_path = Path("tests/unit/services/test_prediction_service.py")
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(content)
-    print(f"✅ 创建文件: {file_path}")
 
 
 def create_data_processing_service_test():
@@ -1030,7 +1011,6 @@ class TestDataProcessingService:
     file_path = Path("tests/unit/services/test_data_processing_service.py")
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(content)
-    print(f"✅ 创建文件: {file_path}")
 
 
 def create_monitoring_service_test():
@@ -1314,12 +1294,10 @@ class TestMetricsCollector:
     file_path = Path("tests/unit/services/test_monitoring_service.py")
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(content)
-    print(f"✅ 创建文件: {file_path}")
 
 
 def main():
     """主函数"""
-    print("🚀 开始创建服务层测试文件...")
 
     # 创建服务测试目录
     service_test_dir = Path("tests/unit/services")
@@ -1332,13 +1310,9 @@ def main():
 
     # 使用自动化生成器
     executor = ServiceTestExecutor()
-    results = executor.generate_all_service_tests()
+    executor.generate_all_service_tests()
 
-    print(f"\n✅ 已创建服务测试文件!")
-    print(f"\n📝 自动生成结果: {sum(1 for success in results.values() if success)}/{len(results)}")
 
-    print("\n🏃 运行测试:")
-    print("   make test.unit")
 
 
 if __name__ == "__main__":

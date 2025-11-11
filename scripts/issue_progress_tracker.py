@@ -9,7 +9,6 @@ Purpose: Monitor issue progress and identify bottlenecks
 """
 
 import argparse
-import json
 import os
 import sys
 from datetime import datetime, timedelta
@@ -71,8 +70,7 @@ class IssueProgressTracker:
 
                 page += 1
 
-            except requests.exceptions.RequestException as e:
-                print(f"获取Issues失败: {e}")
+            except requests.exceptions.RequestException:
                 break
 
         return all_issues
@@ -87,8 +85,7 @@ class IssueProgressTracker:
             response.raise_for_status()
             return response.json()
 
-        except requests.exceptions.RequestException as e:
-            print(f"获取Issue #{issue_number} 事件失败: {e}")
+        except requests.exceptions.RequestException:
             return []
 
     def analyze_issue_progress(self, issue: dict) -> dict:
@@ -327,27 +324,24 @@ class IssueProgressTracker:
             "",
             "### 📊 进度指标",
             "",
-            f"- **平均处理时间**: 计算中...",
-            f"- **Issue完成率**: 计算中...",
-            f"- **团队响应速度**: 计算中...",
+            "- **平均处理时间**: 计算中...",
+            "- **Issue完成率**: 计算中...",
+            "- **团队响应速度**: 计算中...",
             "",
             "---",
             f"*报告生成时间: {datetime.now().isoformat()}*",
-            f"*工具: Issue Progress Tracker v1.0*"
+            "*工具: Issue Progress Tracker v1.0*"
         ])
 
         return "\n".join(report_lines)
 
     def run_progress_analysis(self) -> tuple:
         """运行进度分析"""
-        print("🔍 开始分析Issue进度...")
 
         issues = self.get_all_open_issues()
         if not issues:
-            print("✅ 没有开放的Issues")
             return [], {}
 
-        print(f"📋 分析 {len(issues)} 个开放Issues...")
 
         # 分析每个Issue
         issues_analysis = []
@@ -358,12 +352,6 @@ class IssueProgressTracker:
         # 分类Issues
         categories = self.categorize_issues(issues_analysis)
 
-        print(f"✅ 分析完成!")
-        print(f"📊 统计结果:")
-        print(f"  - 正常: {len(categories['normal'])}")
-        print(f"  - 停滞: {len(categories['stale'])}")
-        print(f"  - 逾期: {len(categories['overdue'])}")
-        print(f"  - 严重逾期: {len(categories['critical_overdue'])}")
 
         return issues_analysis, categories
 
@@ -373,7 +361,6 @@ class IssueProgressTracker:
             output_path = Path(output_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(report_content, encoding='utf-8')
-            print(f"📄 进度报告已保存到: {output_path}")
         else:
             # 使用默认文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -381,7 +368,6 @@ class IssueProgressTracker:
             output_path = Path(default_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(report_content, encoding='utf-8')
-            print(f"📄 进度报告已保存到: {output_path}")
 
 
 def main():
@@ -398,7 +384,7 @@ def main():
     github_token = args.token or os.environ.get("GITHUB_TOKEN")
 
     if not github_token:
-        print("⚠️ 警告: 未提供GitHub令牌，API调用可能受限")
+        pass
 
     # 创建跟踪器
     tracker = IssueProgressTracker(args.repo, github_token)

@@ -4,15 +4,15 @@
 Batch fix syntax errors in __init__.py files
 """
 
-import os
 import re
 from pathlib import Path
+
 
 def fix_init_file(file_path: Path) -> bool:
     """修复单个__init__.py文件的语法错误"""
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -101,17 +101,15 @@ def fix_init_file(file_path: Path) -> bool:
 
         return False
 
-    except Exception as e:
-        print(f"修复文件 {file_path} 时出错: {e}")
+    except Exception:
         return False
 
 def main():
     """主函数"""
 
-    print("🔧 开始批量修复__init__.py文件语法错误...")
 
     # 查找所有有问题的__init__.py文件
-    src_path = Path("src")
+    Path("src")
     fixed_files = []
     error_files = []
 
@@ -149,24 +147,17 @@ def main():
     for file_path_str in problem_files:
         file_path = Path(file_path_str)
         if file_path.exists():
-            print(f"🔧 修复文件: {file_path}")
             if fix_init_file(file_path):
                 fixed_files.append(file_path)
-                print(f"✅ 已修复: {file_path}")
             else:
-                print(f"⚪ 无需修复: {file_path}")
+                pass
         else:
-            print(f"❌ 文件不存在: {file_path}")
             error_files.append(file_path)
 
-    print(f"\n📊 修复结果:")
-    print(f"✅ 成功修复: {len(fixed_files)} 个文件")
-    print(f"❌ 错误文件: {len(error_files)} 个文件")
 
     if fixed_files:
-        print(f"\n🎯 修复的文件:")
         for file_path in fixed_files:
-            print(f"   - {file_path}")
+            pass
 
 if __name__ == "__main__":
     main()

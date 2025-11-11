@@ -4,8 +4,8 @@
 import json
 import subprocess
 import sys
-from pathlib import Path
 from datetime import datetime
+
 
 def load_daily_target(target_minutes=60):
     """加载每日任务目标"""
@@ -28,15 +28,11 @@ def load_daily_target(target_minutes=60):
                 total_time += task['estimated_time']
 
         return daily_tasks
-    except Exception as e:
-        print(f"加载计划失败: {e}")
+    except Exception:
         return []
 
 def execute_task(task):
     """执行单个质量改进任务"""
-    print(f"🔧 执行任务: {task['description']}")
-    print(f"📁 文件: {task['file_path']}")
-    print(f"⏱️ 预估时间: {task['estimated_time']} 分钟")
 
     # 使用智能修复工具
     try:
@@ -47,41 +43,29 @@ def execute_task(task):
         ], capture_output=True, text=True, timeout=task['estimated_time']*60)
 
         if result.returncode == 0:
-            print(f"✅ 任务完成: {task['task_id']}")
             return True
         else:
-            print(f"❌ 任务失败: {task['task_id']}")
-            print(f"错误: {result.stderr}")
             return False
     except subprocess.TimeoutExpired:
-        print(f"⏰ 任务超时: {task['task_id']}")
         return False
-    except Exception as e:
-        print(f"❌ 任务异常: {task['task_id']} - {e}")
+    except Exception:
         return False
 
 def main():
     target_minutes = int(sys.argv[1]) if len(sys.argv) > 1 else 60
 
-    print(f"🚀 开始每日质量改进 (目标: {target_minutes} 分钟)")
-    print(f"⏰ 执行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     daily_tasks = load_daily_target(target_minutes)
 
     if not daily_tasks:
-        print("📋 暂无待执行任务")
         return
 
-    print(f"📋 今日任务数: {len(daily_tasks)}")
 
     completed_tasks = 0
     for task in daily_tasks:
         if execute_task(task):
             completed_tasks += 1
 
-    print(f"\n📊 今日执行结果:")
-    print(f"✅ 完成任务: {completed_tasks}/{len(daily_tasks)}")
-    print(f"📈 完成率: {completed_tasks/len(daily_tasks)*100:.1f}%")
 
     # 更新执行记录
     record = {

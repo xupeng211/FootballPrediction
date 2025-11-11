@@ -22,8 +22,6 @@ class ComprehensiveIntelligentFixer:
 
     def run_pip_audit_fix(self):
         """运行pip-audit修复"""
-        print("🔒 步骤1: 修复pip-audit安全漏洞")
-        print("-" * 40)
 
         try:
             # 运行环境修复脚本
@@ -39,16 +37,12 @@ class ComprehensiveIntelligentFixer:
             else:
                 self.fix_results['pip_audit'] = "PARTIAL: 部分修复成功"
 
-            print(f"✅ pip-audit修复完成: {self.fix_results['pip_audit']}")
 
         except Exception as e:
             self.fix_results['pip_audit'] = f"ERROR: {e}"
-            print(f"❌ pip-audit修复失败: {e}")
 
     def run_quality_fix(self):
         """运行代码质量修复"""
-        print("\n🔧 步骤2: 运行代码质量修复")
-        print("-" * 40)
 
         try:
             # 运行智能质量修复器
@@ -64,16 +58,12 @@ class ComprehensiveIntelligentFixer:
             else:
                 self.fix_results['quality'] = "PARTIAL: 部分修复完成"
 
-            print(f"✅ 代码质量修复完成: {self.fix_results['quality']}")
 
         except Exception as e:
             self.fix_results['quality'] = f"ERROR: {e}"
-            print(f"❌ 代码质量修复失败: {e}")
 
     def run_quality_enhance(self):
         """运行质量增强"""
-        print("\n📈 步骤3: 运行质量增强")
-        print("-" * 40)
 
         try:
             # 运行简单质量增强器
@@ -89,16 +79,12 @@ class ComprehensiveIntelligentFixer:
             else:
                 self.fix_results['enhance'] = "PARTIAL: 部分增强完成"
 
-            print(f"✅ 质量增强完成: {self.fix_results['enhance']}")
 
         except Exception as e:
             self.fix_results['enhance'] = f"ERROR: {e}"
-            print(f"❌ 质量增强失败: {e}")
 
     def run_ruff_fix(self):
         """运行Ruff代码检查和修复"""
-        print("\n🛠️ 步骤4: 运行Ruff代码修复")
-        print("-" * 40)
 
         try:
             # 检查Ruff错误数量
@@ -113,7 +99,7 @@ class ComprehensiveIntelligentFixer:
 
             if error_count > 0:
                 # 尝试自动修复
-                fix_result = subprocess.run(
+                subprocess.run(
                     ["ruff", "check", "src/", "--fix"],
                     capture_output=True,
                     text=True,
@@ -133,16 +119,12 @@ class ComprehensiveIntelligentFixer:
             else:
                 self.fix_results['ruff'] = "SUCCESS: 没有Ruff错误"
 
-            print(f"✅ Ruff修复完成: {self.fix_results['ruff']}")
 
         except Exception as e:
             self.fix_results['ruff'] = f"ERROR: {e}"
-            print(f"❌ Ruff修复失败: {e}")
 
     def generate_fix_report(self):
         """生成修复报告"""
-        print("\n📋 步骤5: 生成修复报告")
-        print("-" * 40)
 
         end_time = datetime.now()
         duration = end_time - self.start_time
@@ -152,16 +134,16 @@ class ComprehensiveIntelligentFixer:
 # Comprehensive Intelligent Fix Report
 
 ## 📊 修复概要
-**修复时间**: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}  
-**修复时长**: {duration.total_seconds():.1f}秒  
-**项目根目录**: {self.project_root}  
+**修复时间**: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}
+**修复时长**: {duration.total_seconds():.1f}秒
+**项目根目录**: {self.project_root}
 
 ## ✅ 修复结果
 
 ### 🔒 安全漏洞修复
 {self.fix_results.get('pip_audit', 'N/A')}
 
-### 📊 代码质量修复  
+### 📊 代码质量修复
 {self.fix_results.get('quality', 'N/A')}
 
 ### 📈 质量增强
@@ -204,13 +186,10 @@ class ComprehensiveIntelligentFixer:
         with open(report_path, 'w', encoding='utf-8') as f:
             f.write(report_content)
 
-        print(f"✅ 修复报告已生成: {report_path}")
         return report_path
 
     def run_comprehensive_fix(self):
         """运行综合智能修复"""
-        print("🚀 启动综合智能修复流程")
-        print("=" * 50)
 
         # 执行所有修复步骤
         self.run_pip_audit_fix()
@@ -221,9 +200,6 @@ class ComprehensiveIntelligentFixer:
         # 生成报告
         report_path = self.generate_fix_report()
 
-        print("\n🎉 综合智能修复完成!")
-        print(f"📊 详细报告: {report_path}")
-        print(f"⏱️ 总耗时: {(datetime.now() - self.start_time).total_seconds():.1f}秒")
 
         return report_path
 

@@ -4,10 +4,10 @@
 建立标准的语法检查和验证流程
 """
 
-import os
 import subprocess
 import sys
 from pathlib import Path
+
 
 def check_file_syntax(file_path):
     """检查单个文件的语法"""
@@ -36,11 +36,10 @@ def get_syntax_error_files():
             if file_path:
                 syntax_files.add(file_path)
 
-    return sorted(list(syntax_files))
+    return sorted(syntax_files)
 
 def validate_syntax_quality():
     """验证语法质量状态"""
-    print("🔍 开始语法质量验证...")
 
     # 1. 获取语法错误统计
     try:
@@ -65,21 +64,13 @@ def validate_syntax_quality():
         )
         f821_count = len([line for line in f821_count.stdout.split('\n') if 'F821' in line])
 
-        print(f"📊 错误统计:")
-        print(f"  总错误数: {total_count}")
-        print(f"  语法错误: {syntax_count}")
-        print(f"  F821错误: {f821_count}")
 
         # 2. 获取语法错误文件列表
         syntax_files = get_syntax_error_files()
-        print(f"  语法错误文件数: {len(syntax_files)}")
 
         if syntax_files:
-            print(f"\n📁 前10个语法错误文件:")
             for file_path in syntax_files[:10]:
                 is_valid, _, _ = check_file_syntax(file_path)
-                status = "✅" if is_valid else "❌"
-                print(f"  {status} {file_path}")
 
         # 3. 验证关键修复文件
         critical_files = [
@@ -90,18 +81,13 @@ def validate_syntax_quality():
             "src/domain/events/__init__.py"
         ]
 
-        print(f"\n🧪 关键文件语法验证:")
         critical_valid = 0
         for file_path in critical_files:
             if Path(file_path).exists():
                 is_valid, stdout, stderr = check_file_syntax(file_path)
-                status = "✅" if is_valid else "❌"
-                print(f"  {status} {file_path}")
                 if is_valid:
                     critical_valid += 1
 
-        print(f"\n📈 语法质量评估:")
-        print(f"  关键文件通过率: {critical_valid}/{len(critical_files)} ({critical_valid/len(critical_files)*100:.1f}%)")
 
         # 4. 计算质量分数
         if total_count == 0:
@@ -109,7 +95,6 @@ def validate_syntax_quality():
         else:
             quality_score = max(0, 100 - (syntax_count / total_count * 100))
 
-        print(f"  语法质量分数: {quality_score:.1f}/100")
 
         return {
             'total_errors': total_count,
@@ -121,8 +106,7 @@ def validate_syntax_quality():
             'quality_score': quality_score
         }
 
-    except Exception as e:
-        print(f"❌ 验证过程出错: {e}")
+    except Exception:
         return None
 
 def generate_syntax_report():
@@ -175,7 +159,6 @@ def generate_syntax_report():
     with open('reports/phase_11_5_syntax_report.md', 'w', encoding='utf-8') as f:
         f.write(report_content)
 
-    print(f"\n📄 语法报告已生成: reports/phase_11_5_syntax_report.md")
 
 if __name__ == "__main__":
     generate_syntax_report()

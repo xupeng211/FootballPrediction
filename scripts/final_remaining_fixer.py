@@ -20,14 +20,11 @@ class FinalRemainingFixer:
 
     def execute_final_fix(self) -> dict[str, any]:
         """执行最终的71个问题修复"""
-        print("🚀 最终解决：71个剩余运行时安全问题")
-        print("=" * 60)
 
         # 创建备份
         self._create_backup()
 
         # 分析问题分布
-        print("\n📊 分析问题分布...")
         issues_by_type = self._analyze_issues_by_type()
 
         # 按类型修复
@@ -41,30 +38,24 @@ class FinalRemainingFixer:
 
         # 1. 修复F821未定义名称（最高优先级）
         if issues_by_type['f821'] > 0:
-            print(f"\n🔧 修复F821未定义名称问题: {issues_by_type['f821']} 个")
             fix_results['f821_undefined_names'] = self._fix_f821_undefined_names()
 
         # 2. 修复A002参数名冲突
         if issues_by_type['a002'] > 0:
-            print(f"\n🔧 修复A002参数名冲突问题: {issues_by_type['a002']} 个")
             fix_results['a002_parameter_conflicts'] = self._fix_a002_parameter_conflicts()
 
         # 3. 修复F403星号导入
         if issues_by_type['f403'] > 0:
-            print(f"\n🔧 修复F403星号导入问题: {issues_by_type['f403']} 个")
             fix_results['f403_star_imports'] = self._fix_f403_star_imports()
 
         # 4. 修复F405可能未定义名称
         if issues_by_type['f405'] > 0:
-            print(f"\n🔧 修复F405可能未定义问题: {issues_by_type['f405']} 个")
             fix_results['f405_potentially_undefined'] = self._fix_f405_potentially_undefined()
 
         # 使用ruff进行最终清理
-        print("\n🔧 使用ruff进行最终清理...")
         self._ruff_final_cleanup()
 
         # 验证结果
-        print("\n🔍 验证最终修复结果...")
         final_verification = self._verify_final_results()
 
         fix_results['total'] = sum(fix_results.values())
@@ -76,18 +67,15 @@ class FinalRemainingFixer:
 
     def _create_backup(self):
         """创建安全备份"""
-        print("  🔧 创建最终修复备份...")
         try:
             subprocess.run(['git', 'add', '.'], check=True, capture_output=True)
             subprocess.run(['git', 'commit', '-m', '最终71个问题修复前备份'],
                          check=True, capture_output=True)
-            print("    ✅ 备份创建成功")
-        except subprocess.CalledProcessError as e:
-            print(f"    ❌ 备份失败: {e}")
+        except subprocess.CalledProcessError:
+            pass
 
     def _analyze_issues_by_type(self) -> dict[str, int]:
         """分析问题类型分布"""
-        print("  🔧 分析F821,F405,F403,A002问题分布...")
 
         issues_count = {
             'f821': 0,
@@ -106,10 +94,9 @@ class FinalRemainingFixer:
                 count = len([line for line in result.stdout.split('\n') if line.strip()])
                 key = error_type.lower()
                 issues_count[key] = count
-                print(f"    {error_type}: {count} 个")
 
-            except Exception as e:
-                print(f"    ❌ 分析 {error_type} 失败: {e}")
+            except Exception:
+                pass
 
         return issues_count
 
@@ -130,18 +117,16 @@ class FinalRemainingFixer:
 
                 for file_path, undefined_names in f821_issues.items():
                     path = Path(file_path)
-                    print(f"      🔧 处理文件: {path}")
 
                     try:
                         file_fixes = self._fix_f821_in_file(path, undefined_names)
                         fix_count += file_fixes
-                        print(f"        ✅ 修复 {file_fixes} 个F821问题")
 
-                    except Exception as e:
-                        print(f"        ❌ 修复失败 {path}: {e}")
+                    except Exception:
+                        pass
 
-        except Exception as e:
-            print(f"    ❌ F821修复失败: {e}")
+        except Exception:
+            pass
 
         return fix_count
 
@@ -198,14 +183,12 @@ class FinalRemainingFixer:
 
             return fix_count
 
-        except Exception as e:
-            print(f"        ❌ 文件修复失败 {file_path}: {e}")
+        except Exception:
             return 0
 
     def _fix_prediction_undefined(self, content: str) -> str:
         """修复prediction未定义问题"""
         # 寻找可能需要赋值的地方
-        pattern = r'(\s+)(?:await self\._publish_prediction_made_event\(prediction,|return prediction)'
 
         # 在publish之前添加赋值
         content = re.sub(
@@ -276,8 +259,8 @@ class FinalRemainingFixer:
                     file_fixes = self._fix_a002_in_file(path)
                     fix_count += file_fixes
 
-        except Exception as e:
-            print(f"    ❌ A002修复失败: {e}")
+        except Exception:
+            pass
 
         return fix_count
 
@@ -307,8 +290,7 @@ class FinalRemainingFixer:
 
             return fix_count
 
-        except Exception as e:
-            print(f"        ❌ A002文件修复失败 {file_path}: {e}")
+        except Exception:
             return 0
 
     def _fix_f403_star_imports(self) -> int:
@@ -327,17 +309,16 @@ class FinalRemainingFixer:
 
                 for file_path in f403_files:
                     path = Path(file_path)
-                    print(f"      🔧 处理F403文件: {path}")
 
                     try:
                         file_fixes = self._fix_f403_in_file(path)
                         fix_count += file_fixes
 
-                    except Exception as e:
-                        print(f"        ❌ F403修复失败 {path}: {e}")
+                    except Exception:
+                        pass
 
-        except Exception as e:
-            print(f"    ❌ F403修复失败: {e}")
+        except Exception:
+            pass
 
         return fix_count
 
@@ -384,8 +365,7 @@ class FinalRemainingFixer:
 
             return fix_count
 
-        except Exception as e:
-            print(f"        ❌ F403文件修复失败 {file_path}: {e}")
+        except Exception:
             return 0
 
     def _fix_f405_potentially_undefined(self) -> int:
@@ -407,24 +387,22 @@ class FinalRemainingFixer:
                 )
 
                 remaining = len([line for line in verify_result.stdout.split('\n') if line.strip()])
-                print(f"        ✅ F405自动修复完成，剩余: {remaining} 个")
                 fix_count = max(0, 10 - remaining)  # 估算修复数量
 
-        except Exception as e:
-            print(f"    ❌ F405修复失败: {e}")
+        except Exception:
+            pass
 
         return fix_count
 
     def _ruff_final_cleanup(self):
         """使用ruff进行最终清理"""
         try:
-            result = subprocess.run(
+            subprocess.run(
                 ['ruff', 'check', 'src/', '--fix'],
                 capture_output=True, text=True
             )
-            print("    ✅ ruff最终清理完成")
-        except Exception as e:
-            print(f"    ❌ ruff清理失败: {e}")
+        except Exception:
+            pass
 
     def _verify_final_results(self) -> dict[str, int]:
         """验证最终修复结果"""
@@ -442,75 +420,51 @@ class FinalRemainingFixer:
                 remaining = len([line for line in result.stdout.split('\n') if line.strip()])
                 verification[code] = remaining
                 total_remaining += remaining
-                status = '✅' if remaining == 0 else '⚠️'
-                print(f"    {status} {code}: {remaining} 个")
 
-            except Exception as e:
-                print(f"    ❌ 验证 {code} 失败: {e}")
+            except Exception:
                 verification[code] = -1
 
         verification['total'] = total_remaining
-        print(f"  🎯 总剩余问题: {total_remaining} 个")
 
         return verification
 
     def _generate_final_report(self, fix_results: dict, verification: dict):
         """生成最终报告"""
-        print("\n" + "=" * 60)
-        print("📊 最终71个问题解决报告")
-        print("=" * 60)
 
-        total_time = time.time() - self.start_time
-        total_fixed = fix_results['total']
+        time.time() - self.start_time
+        fix_results['total']
 
         # 修复结果统计
-        print("🔧 修复结果统计:")
         for fix_type, count in fix_results.items():
             if fix_type != 'total' and count > 0:
-                print(f"   {fix_type}: {count} 个")
+                pass
 
-        print("\n🎯 总体结果:")
-        print(f"   总修复数量: {total_fixed} 个")
-        print(f"   执行时间: {total_time:.1f} 秒")
 
         # 最终状态评估
         remaining = verification.get('total', 0)
         original_problems = 71
-        solved = original_problems - remaining
+        original_problems - remaining
 
-        print("\n📈 问题改善:")
-        print(f"   原始问题: {original_problems} 个")
-        print(f"   解决问题: {solved} 个")
-        print(f"   剩余问题: {remaining} 个")
-        print(f"   解决率: {(solved/original_problems*100):.1f}%")
 
         # 状态评估
         if remaining == 0:
-            print("\n🎉 完美！所有71个问题已完全解决！")
-            print("✅ 状态: 完美 - 零运行时安全问题")
+            pass
         elif remaining <= 10:
-            print("\n🟢 优秀！剩余问题极少")
-            print("✅ 状态: 优秀 - 接近零问题")
+            pass
         elif remaining <= 25:
-            print("\n🟡 良好！大幅改善")
-            print("📊 状态: 良好 - 显著进步")
+            pass
         else:
-            print("\n🟠 有待改善")
-            print("📊 状态: 有待改善 - 需要进一步处理")
+            pass
 
 
 def main():
     """主函数"""
-    print("🛠️ 最终71个问题彻底解决工具")
-    print("目标：完全消除F821,F405,F403,A002问题")
-    print()
 
     # 执行修复
     fixer = FinalRemainingFixer()
-    results = fixer.execute_final_fix()
+    fixer.execute_final_fix()
 
     # 最终检查
-    print("\n🔧 执行最终质量检查...")
     try:
         # 检查整体代码质量
         result = subprocess.run(
@@ -519,17 +473,16 @@ def main():
         )
 
         total_remaining = len([line for line in result.stdout.split('\n') if line.strip()])
-        print(f"🎯 最终整体问题数: {total_remaining} 个")
 
         if total_remaining <= 100:
-            print("🎉 优秀！代码质量显著提升！")
+            pass
         elif total_remaining <= 200:
-            print("👍 良好！代码质量明显改善！")
+            pass
         else:
-            print("💡 建议继续改进")
+            pass
 
-    except Exception as e:
-        print(f"❌ 最终检查失败: {e}")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

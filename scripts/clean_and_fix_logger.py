@@ -106,8 +106,7 @@ def clean_and_fix_logger(file_path):
 
         return False
 
-    except Exception as e:
-        print(f"处理文件 {file_path} 时出错: {e}")
+    except Exception:
         return False
 
 def main():
@@ -130,20 +129,15 @@ def main():
         except:
             continue
 
-    print(f"发现 {len(problem_files)} 个需要修复的logger问题文件")
 
     fixed_count = 0
 
     for file_path in problem_files:
         if clean_and_fix_logger(Path(file_path)):
-            print(f"✅ 修复了: {file_path}")
             fixed_count += 1
         else:
-            print(f"⏭️  跳过（无需修复）: {file_path}")
+            pass
 
-    print("\n修复完成！")
-    print(f"总共处理: {len(problem_files)} 个文件")
-    print(f"成功修复: {fixed_count} 个文件")
 
 if __name__ == "__main__":
     main()

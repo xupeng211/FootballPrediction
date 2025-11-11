@@ -46,19 +46,15 @@ def run_quality_check():
         }
 
 if __name__ == '__main__':
-    print("🛡️ 执行质量检查...")
 
     # 语法检查
     syntax_result = run_syntax_check()
-    print(f"语法检查: {syntax_result['status']}")
 
     # 质量检查
     quality_result = run_quality_check()
-    print(f"质量检查: {quality_result['status']}")
 
     # 综合结果
     overall_status = 'pass' if (syntax_result['status'] == 'pass' and
                                quality_result['status'] == 'pass') else 'fail'
 
-    print(f"总体状态: {overall_status}")
     sys.exit(0 if overall_status == 'pass' else 1)

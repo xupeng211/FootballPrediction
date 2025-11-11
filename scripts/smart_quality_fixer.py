@@ -6,15 +6,11 @@ Smart Quality Fixer - Simplified Version
 临时修复版本，恢复基本的智能修复功能
 """
 
-import os
-import sys
-import json
-import subprocess
-import re
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime
 import logging
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
 
 # 设置日志
 logging.basicConfig(level=logging.INFO,
@@ -41,7 +37,6 @@ class SmartQualityFixer:
 
     def run_syntax_fixes(self) -> int:
         """运行语法修复"""
-        print("🔧 运行语法修复...")
 
         try:
             # 使用 ruff 进行语法修复
@@ -50,22 +45,17 @@ class SmartQualityFixer:
             ], capture_output=True, text=True, cwd=self.project_root)
 
             if result.returncode == 0:
-                print("✅ 语法修复完成")
                 return 0
             else:
-                print(f"⚠️ 语法修复遇到问题: {result.stderr}")
                 return 1
 
         except FileNotFoundError:
-            print("❌ ruff 工具未找到，请先安装")
             return 1
-        except Exception as e:
-            print(f"❌ 语法修复失败: {e}")
+        except Exception:
             return 1
 
     def run_import_fixes(self) -> int:
         """运行导入修复"""
-        print("🔧 运行导入修复...")
 
         try:
             # 使用 ruff 进行导入修复
@@ -74,19 +64,15 @@ class SmartQualityFixer:
             ], capture_output=True, text=True, cwd=self.project_root)
 
             if result.returncode == 0:
-                print("✅ 导入修复完成")
                 return 0
             else:
-                print(f"⚠️ 导入修复遇到问题: {result.stderr}")
                 return 1
 
-        except Exception as e:
-            print(f"❌ 导入修复失败: {e}")
+        except Exception:
             return 1
 
     def run_formatting(self) -> int:
         """运行代码格式化"""
-        print("🔧 运行代码格式化...")
 
         try:
             # 使用 black 进行格式化
@@ -95,22 +81,17 @@ class SmartQualityFixer:
             ], capture_output=True, text=True, cwd=self.project_root)
 
             if result.returncode == 0:
-                print("✅ 代码格式化完成")
                 return 0
             else:
-                print(f"⚠️ 格式化遇到问题: {result.stderr}")
                 return 1
 
         except FileNotFoundError:
-            print("⚠️ black 工具未找到，跳过格式化")
             return 0
-        except Exception as e:
-            print(f"❌ 格式化失败: {e}")
+        except Exception:
             return 1
 
-    def fix_critical_issues(self) -> Dict[str, int]:
+    def fix_critical_issues(self) -> dict[str, int]:
         """修复关键问题"""
-        print("🚨 修复关键问题...")
 
         results = {
             "syntax_fixes": self.run_syntax_fixes(),
@@ -138,11 +119,9 @@ Generated: {self.fix_results['timestamp']}
 
     def run_all_fixes(self, syntax_only: bool = False) -> bool:
         """运行所有修复"""
-        print("🚀 启动智能质量修复...")
 
         try:
             if syntax_only:
-                print("📝 仅运行语法修复...")
                 result = self.run_syntax_fixes()
                 return result == 0
             else:
@@ -152,14 +131,13 @@ Generated: {self.fix_results['timestamp']}
                 all_success = all(result == 0 for result in results.values())
 
                 if all_success:
-                    print("✅ 所有修复完成")
+                    pass
                 else:
-                    print("⚠️ 部分修复遇到问题")
+                    pass
 
                 return all_success
 
-        except Exception as e:
-            print(f"❌ 修复过程失败: {e}")
+        except Exception:
             return False
 
 
@@ -183,14 +161,12 @@ def main():
 
     # 生成报告
     report = fixer.generate_report()
-    print(report)
 
     # 保存报告
     report_path = Path("smart_fix_report.md")
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
 
-    print(f"📄 报告已保存到: {report_path}")
 
     return 0 if success else 1
 

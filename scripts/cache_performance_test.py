@@ -320,51 +320,27 @@ class CachePerformanceTester:
 
     def print_results(self, result: TestResult):
         """打印测试结果"""
-        print("\n" + "="*60)
-        print("📊 Redis缓存性能测试结果")
-        print("="*60)
 
-        print("📈 请求统计:")
-        print(f"  总请求数: {result.total_requests}")
-        print(f"  成功请求: {result.successful_requests}")
-        print(f"  失败请求: {result.failed_requests}")
-        print(f"  成功率: {(1 - result.error_rate) * 100:.2f}%")
 
-        print("\n🎯 缓存性能:")
-        print(f"  缓存命中: {result.cache_hits}")
-        print(f"  缓存未命中: {result.cache_misses}")
-        print(f"  命中率: {result.cache_hit_rate * 100:.2f}%")
 
-        print("\n⚡ 响应时间:")
-        print(f"  平均响应时间: {result.avg_response_time * 1000:.2f}ms")
-        print(f"  最小响应时间: {result.min_response_time * 1000:.2f}ms")
-        print(f"  最大响应时间: {result.max_response_time * 1000:.2f}ms")
-        print(f"  P95响应时间: {result.p95_response_time * 1000:.2f}ms")
-        print(f"  P99响应时间: {result.p99_response_time * 1000:.2f}ms")
 
-        print("\n🚀 吞吐量:")
-        print(f"  每秒请求数: {result.requests_per_second:.2f} RPS")
 
         # 性能评级
         if result.cache_hit_rate >= 0.8:
-            cache_grade = "🟢 优秀"
+            pass
         elif result.cache_hit_rate >= 0.6:
-            cache_grade = "🟡 良好"
+            pass
         else:
-            cache_grade = "🔴 需要改进"
+            pass
 
         if result.avg_response_time <= 0.1:
-            speed_grade = "🟢 优秀"
+            pass
         elif result.avg_response_time <= 0.5:
-            speed_grade = "🟡 良好"
+            pass
         else:
-            speed_grade = "🔴 需要改进"
+            pass
 
-        print("\n🏆 性能评级:")
-        print(f"  缓存效果: {cache_grade}")
-        print(f"  响应速度: {speed_grade}")
 
-        print("="*60)
 
     async def run_warmup_test(self, warmup_requests: int = 100):
         """运行预热测试"""

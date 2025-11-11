@@ -382,26 +382,16 @@ async def test_cache_performance():
     # 再次获取已存在的缓存（应该命中）
     cached_value4 = await cache.get("test_key_1")
 
-    test_time = time.time() - start_time
+    time.time() - start_time
 
     # 输出测试结果
-    print("\n" + "="*60)
-    print("🎯 缓存性能测试结果")
-    print("="*60)
-    print("✅ 缓存设置功能: 正常")
-    print("✅ 缓存获取功能: 正常")
-    print(f"⏰ 总测试时间: {test_time:.3f}s")
-    print(f"📈 缓存统计: {cache.get_cache_stats()}")
-    print(f"🎯 缓存命中率: {cache.get_hit_rate():.2f}%")
 
     # 验证缓存数据
     assert cached_value1 == {"data": "value1"}
     assert cached_value2 == {"data": "value2"}
     assert cached_value3 is None
     assert cached_value4 == {"data": "value1"}
-    print("✅ 缓存数据验证通过")
 
-    print("="*60)
 
     await cache.close()
 

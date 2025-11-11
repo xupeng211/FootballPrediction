@@ -4,7 +4,6 @@
 Generate Cleanup Summary Report
 """
 
-import json
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -100,7 +99,6 @@ def generate_summary(repo: str):
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(summary)
 
-    print(f"📊 清理汇总报告已保存到: {report_path}")
     return str(report_path)
 
 
@@ -111,9 +109,7 @@ def main():
 
     args = parser.parse_args()
 
-    print("🚀 生成清理汇总报告...")
-    report_path = generate_summary(args.repo)
-    print("✅ 汇总报告生成完成")
+    generate_summary(args.repo)
 
 
 if __name__ == "__main__":

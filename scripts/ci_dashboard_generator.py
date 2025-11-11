@@ -486,37 +486,24 @@ def main():
         if args.generate_dashboard:
             # 生成完整仪表板
             dashboard_content = dashboard.generate_dashboard_markdown(metrics)
-            dashboard_file = dashboard.export_dashboard_report(dashboard_content,
+            dashboard.export_dashboard_report(dashboard_content,
     args.output_file)
 
-            print(f"📊 CI/CD仪表板已生成: {dashboard_file}")
-            print("📈 关键指标:")
-            print(f"   CI成功率: {metrics.success_rate:.1f}%")
-            print(f"   平均执行时间: {metrics.avg_duration/60:.1f}分钟")
-            print(f"   测试覆盖率: {metrics.coverage_trend[-1]['coverage']:.1f}%")
-            print(f"   质量分数: {metrics.quality_score:.1f}/100")
 
         if args.create_issue:
             # 创建GitHub Issue内容
-            issue_content = dashboard.create_github_issue_dashboard(metrics)
+            dashboard.create_github_issue_dashboard(metrics)
 
-            print("📝 GitHub Issue仪表板内容:")
-            print(issue_content)
-            print("\n💡 使用此内容创建GitHub Issue进行团队协作")
 
         if not any([args.generate_dashboard, args.create_issue]):
             # 默认生成完整仪表板
             dashboard_content = dashboard.generate_dashboard_markdown(metrics)
-            dashboard_file = dashboard.export_dashboard_report(dashboard_content)
+            dashboard.export_dashboard_report(dashboard_content)
 
-            print(f"📊 CI/CD仪表板已生成: {dashboard_file}")
-            print("🎯 建议定期查看仪表板以跟踪CI/CD性能趋势")
 
     except KeyboardInterrupt:
-        print("\n👋 用户中断，退出程序")
         sys.exit(130)
-    except Exception as e:
-        print(f"❌ 程序执行出错: {e}")
+    except Exception:
         import traceback
         traceback.print_exc()
         sys.exit(1)

@@ -6,7 +6,9 @@ GitHub Issues 清理工具
 
 import json
 import subprocess
-from typing import Dict, List, Any
+from datetime import UTC
+from typing import Any
+
 
 class GitHubIssuesCleaner:
     def __init__(self, repo: str):
@@ -14,7 +16,7 @@ class GitHubIssuesCleaner:
         self.issues = []
         self.cleaned_count = 0
 
-    def load_issues(self) -> List[Dict[str, Any]]:
+    def load_issues(self) -> list[dict[str, Any]]:
         """加载所有Issues"""
         try:
             result = subprocess.run([
@@ -27,17 +29,14 @@ class GitHubIssuesCleaner:
 
             if result.returncode == 0:
                 self.issues = json.loads(result.stdout)
-                print(f"📋 加载了 {len(self.issues)} 个Issues")
                 return self.issues
             else:
-                print(f"❌ 加载Issues失败: {result.stderr}")
                 return []
 
-        except Exception as e:
-            print(f"❌ 加载Issues时出错: {e}")
+        except Exception:
             return []
 
-    def find_duplicate_issues(self) -> Dict[str, List[Dict[str, Any]]]:
+    def find_duplicate_issues(self) -> dict[str, list[dict[str, Any]]]:
         """查找重复的Issues"""
         duplicates = {}
 
@@ -73,12 +72,12 @@ class GitHubIssuesCleaner:
         similarity = len(intersection) / len(union)
         return similarity > 0.6  # 60%相似度阈值
 
-    def find_stale_issues(self, days: int = 30) -> List[Dict[str, Any]]:
+    def find_stale_issues(self, days: int = 30) -> list[dict[str, Any]]:
         """查找过时的Issues"""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         stale_issues = []
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
 
         for issue in self.issues:
             # 处理不同的时间格式
@@ -93,7 +92,7 @@ class GitHubIssuesCleaner:
 
         return stale_issues
 
-    def find_completed_issues_to_close(self) -> List[Dict[str, Any]]:
+    def find_completed_issues_to_close(self) -> list[dict[str, Any]]:
         """查找应该关闭的已完成Issues"""
         completed_to_close = []
 
@@ -111,7 +110,7 @@ class GitHubIssuesCleaner:
 
         return completed_to_close
 
-    def generate_cleanup_report(self) -> Dict[str, Any]:
+    def generate_cleanup_report(self) -> dict[str, Any]:
         """生成清理报告"""
         duplicates = self.find_duplicate_issues()
         stale_issues = self.find_stale_issues(30)
@@ -134,26 +133,16 @@ class GitHubIssuesCleaner:
         """打印清理报告"""
         report = self.generate_cleanup_report()
 
-        print("📊 GitHub Issues 清理报告")
-        print("=" * 50)
-        print(f"📋 总Issues数: {report['total_issues']}")
-        print(f"🔄 重复Issues组: {report['duplicate_groups']}")
-        print(f"📊 重复Issues总数: {report['total_duplicates']}")
-        print(f"⏰ 过时Issues数 (30天): {report['stale_issues']}")
-        print(f"✅ 应关闭的已完成Issues: {report['completed_to_close']}")
 
-        print(f"\n🔄 重复Issues组详情:")
-        for title, issues in report['duplicate_details'].items():
-            print(f"  - {title}: {len(issues)} 个重复")
-            for issue in issues:
-                print(f"    #{issue['number']} ({issue['state']})")
+        for _title, issues in report['duplicate_details'].items():
+            for _issue in issues:
+                pass
 
         if report['completed_to_close'] > 0:
-            print(f"\n✅ 应关闭的已完成Issues:")
-            for issue in report['completed_details']:
-                print(f"  - #{issue['number']}: {issue['title']}")
+            for _issue in report['completed_details']:
+                pass
 
-    def create_cleanup_suggestions(self) -> List[str]:
+    def create_cleanup_suggestions(self) -> list[str]:
         """创建清理建议"""
         suggestions = []
         report = self.generate_cleanup_report()
@@ -174,8 +163,6 @@ class GitHubIssuesCleaner:
 
 def main():
     """主函数"""
-    print("🧹 GitHub Issues 清理工具")
-    print("=" * 50)
 
     # 获取仓库信息
     try:
@@ -186,12 +173,9 @@ def main():
         if result.returncode == 0:
             repo_info = json.loads(result.stdout)
             repo = f"{repo_info['owner']['login']}/{repo_info['name']}"
-            print(f"📂 仓库: {repo}")
         else:
-            print("❌ 无法获取仓库信息")
             return
-    except Exception as e:
-        print(f"❌ 获取仓库信息失败: {e}")
+    except Exception:
         return
 
     # 创建清理器
@@ -208,15 +192,9 @@ def main():
     # 打印清理建议
     suggestions = cleaner.create_cleanup_suggestions()
     if suggestions:
-        print(f"\n💡 清理建议:")
-        for suggestion in suggestions:
-            print(f"  {suggestion}")
+        for _suggestion in suggestions:
+            pass
 
-    print(f"\n🎯 下一步操作建议:")
-    print(f"  1. 手动审查重复Issues，合并或关闭重复项")
-    print(f"  2. 关闭已标记为完成的Issues")
-    print(f"  3. 审查过时Issues，更新或关闭")
-    print(f"  4. 创建新的Issue跟踪当前状态")
 
 if __name__ == "__main__":
     main()

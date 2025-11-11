@@ -7,17 +7,15 @@ Safe B904 Fix Tool
 """
 
 import re
-import sys
 from pathlib import Path
 
 
 def fix_b904_in_file_safe(file_path: str) -> int:
     """安全地修复单个文件中的B904错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
-    except Exception as e:
-        print(f"❌ 读取文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
     # 使用正则表达式匹配except块中缺少from None的HTTPException
@@ -58,15 +56,12 @@ def fix_b904_in_file_safe(file_path: str) -> int:
                         for idx, replacement in enumerate(raise_lines):
                             lines[i + idx] = replacement
                         fixed_count += 1
-                        print(f"✅ 修复了 {file_path} 第{i+1}行的B904错误")
 
     if fixed_count > 0:
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(lines))
-            print(f"✅ 修复了 {file_path} 中的 {fixed_count} 个B904错误")
-        except Exception as e:
-            print(f"❌ 写入文件失败 {file_path}: {e}")
+        except Exception:
             return 0
 
     return fixed_count
@@ -74,8 +69,6 @@ def fix_b904_in_file_safe(file_path: str) -> int:
 
 def main():
     """主函数"""
-    print("🚀 安全B904修复工具")
-    print("=" * 50)
 
     # 要修复的文件列表（基于ruff检查结果）
     files_to_fix = [
@@ -95,13 +88,8 @@ def main():
             if fixed > 0:
                 processed_files += 1
         else:
-            print(f"⚠️  文件不存在: {file_path}")
+            pass
 
-    print("=" * 50)
-    print(f"📊 修复统计:")
-    print(f"   ✅ 总计修复: {total_fixed} 个B904错误")
-    print(f"   📁 处理文件: {processed_files} 个文件")
-    print(f"   ✨ 安全修复完成!")
 
 
 if __name__ == "__main__":

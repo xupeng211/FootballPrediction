@@ -34,30 +34,24 @@ def get_coverage_data():
         ], capture_output=True, text=True, timeout=60)
 
         if result.returncode == 0:
-            print("✅ 覆盖率数据获取成功")
             return {}
         else:
-            print("⚠️ 覆盖率数据获取失败")
             return {}
-    except Exception as e:
-        print(f"❌ 覆盖率分析失败: {e}")
+    except Exception:
         return {}
 
 def main():
     """主函数"""
-    print("🚀 开始覆盖率分析...")
 
     # 计算代码行数
     src_dir = Path("src")
     if src_dir.exists():
         py_files = list(src_dir.rglob("*.py"))
-        total_lines = sum(count_lines_of_code(str(f)) for f in py_files)
-        print(f"📊 项目总代码行数: {total_lines}")
+        sum(count_lines_of_code(str(f)) for f in py_files)
 
     # 获取覆盖率数据
     get_coverage_data()
 
-    print("✅ 覆盖率分析完成")
     return 0
 
 if __name__ == '__main__':

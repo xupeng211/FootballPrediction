@@ -7,6 +7,7 @@
 import re
 from pathlib import Path
 
+
 def fix_duplicate_brackets():
     """修复重复的右括号问题"""
 
@@ -21,13 +22,11 @@ def fix_duplicate_brackets():
 
     for file_path in target_files:
         if not Path(file_path).exists():
-            print(f"⚠️ 文件不存在: {file_path}")
             continue
 
-        print(f"🔧 修复文件: {file_path}")
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 备份原文件
@@ -67,13 +66,11 @@ def fix_duplicate_brackets():
                     prev_line = lines[i-1].strip()
                     # 如果前一行以 from e 结束，则删除当前行
                     if prev_line.endswith(') from e'):
-                        print(f"  ✅ 删除多余的右括号: 行 {i+1}")
                         total_fixes += 1
                         i += 1
                         continue
                     # 如果前一行是完整的raise语句，也删除
                     elif 'raise HTTPException(' in prev_line and ')' in prev_line:
-                        print(f"  ✅ 删除多余的右括号: 行 {i+1}")
                         total_fixes += 1
                         i += 1
                         continue
@@ -87,20 +84,17 @@ def fix_duplicate_brackets():
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print(f"💾 已保存修复后的文件")
             else:
-                print(f"ℹ️ 文件无需修改")
                 # 删除不需要的备份
                 Path(backup_path).unlink(missing_ok=True)
 
-        except Exception as e:
-            print(f"❌ 修复文件 {file_path} 时出错: {e}")
+        except Exception:
+            pass
 
     return total_fixes
 
 def verify_syntax_fixes():
     """验证语法修复效果"""
-    print("\n🔍 验证语法修复效果...")
 
     target_files = [
         "src/api/optimization/cache_performance_api.py",
@@ -116,38 +110,30 @@ def verify_syntax_fixes():
 
         try:
             # 尝试编译文件
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             compile(content, file_path, 'exec')
-            print(f"✅ {file_path}: 语法正确")
 
-        except SyntaxError as e:
-            print(f"❌ {file_path}: 语法错误 - {e}")
+        except SyntaxError:
             syntax_errors += 1
-        except Exception as e:
-            print(f"⚠️ {file_path}: 其他错误 - {e}")
+        except Exception:
+            pass
 
     return syntax_errors
 
 def main():
     """主函数"""
-    print("🚨 紧急语法错误修复工具")
-    print("=" * 40)
 
-    print("🔧 开始修复语法错误...")
-    fix_count = fix_duplicate_brackets()
+    fix_duplicate_brackets()
 
-    print(f"\n📊 修复统计:")
-    print(f"  🔧 修复操作: {fix_count} 次")
 
-    print("\n🔍 验证修复效果...")
     syntax_errors = verify_syntax_fixes()
 
     if syntax_errors == 0:
-        print("🎉 所有语法错误已修复!")
+        pass
     else:
-        print(f"⚠️ 还有 {syntax_errors} 个文件存在语法错误")
+        pass
 
 if __name__ == "__main__":
     main()

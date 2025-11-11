@@ -119,8 +119,7 @@ class MaintenanceLogger:
             conn.close()
             return True
 
-        except Exception as e:
-            print(f"❌ 记录维护日志失败: {e}")
+        except Exception:
             return False
 
     def log_health_snapshot(self, health_report: dict[str, Any]):
@@ -151,8 +150,8 @@ class MaintenanceLogger:
             conn.commit()
             conn.close()
 
-        except Exception as e:
-            print(f"❌ 记录健康快照失败: {e}")
+        except Exception:
+            pass
 
     def get_maintenance_history(self, days: int = 30) -> list[dict[str, Any]]:
         """获取维护历史记录"""
@@ -168,13 +167,12 @@ class MaintenanceLogger:
             ''', (cutoff_date,))
 
             columns = [desc[0] for desc in cursor.description]
-            records = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            records = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
 
             conn.close()
             return records
 
-        except Exception as e:
-            print(f"❌ 获取维护历史失败: {e}")
+        except Exception:
             return []
 
     def get_health_trends(self, days: int = 30) -> list[dict[str, Any]]:
@@ -191,13 +189,12 @@ class MaintenanceLogger:
             ''', (cutoff_date,))
 
             columns = [desc[0] for desc in cursor.description]
-            trends = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            trends = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
 
             conn.close()
             return trends
 
-        except Exception as e:
-            print(f"❌ 获取健康趋势失败: {e}")
+        except Exception:
             return []
 
     def generate_maintenance_report(self, days: int = 7) -> dict[str, Any]:
@@ -285,10 +282,9 @@ class MaintenanceLogger:
             conn.commit()
             conn.close()
 
-        except Exception as e:
-            print(f"❌ 清理数据库记录失败: {e}")
+        except Exception:
+            pass
 
-        print(f"🗑️  清理了 {cleaned_count} 个旧日志文件")
 
 def main():
     """主函数 - 用于测试"""
@@ -315,10 +311,8 @@ def main():
 
     # 生成报告
     report = logger.generate_maintenance_report(7)
-    report_file = logger.save_maintenance_report(report)
+    logger.save_maintenance_report(report)
 
-    print("📝 测试维护日志记录完成")
-    print(f"📊 维护报告已生成: {report_file}")
 
 if __name__ == "__main__":
     main()

@@ -8,7 +8,6 @@ Batch Test Import Error Fixer
 """
 
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -245,12 +244,11 @@ except ImportError:
 def fix_test_file(file_path):
     """修复单个测试文件的导入错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             original_content = f.read()
 
         # 如果已经有try-except包装，跳过
         if 'except ImportError' in original_content:
-            print(f"  ✓ 跳过 {file_path} (已经包含异常处理)")
             return True
 
         # 应用修复
@@ -263,14 +261,11 @@ def fix_test_file(file_path):
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"  ✓ 修复完成: {file_path}")
             return True
         else:
-            print(f"  - 无需修复: {file_path}")
             return True
 
-    except Exception as e:
-        print(f"  ✗ 修复失败: {file_path} - {e}")
+    except Exception:
         return False
 
 
@@ -290,28 +285,20 @@ def main():
     # 获取项目根目录
     project_root = Path(__file__).parent.parent
     success_count = 0
-    total_count = len(test_files)
+    len(test_files)
 
-    print("🛠️  开始批量修复测试文件导入错误...")
-    print(f"📊 共需修复 {total_count} 个文件")
-    print()
 
     for file_path in test_files:
         full_path = project_root / file_path
 
         if not full_path.exists():
-            print(f"  ⚠️  文件不存在: {file_path}")
             continue
 
-        print(f"🔧 修复: {file_path}")
         if fix_test_file(full_path):
             success_count += 1
-        print()
 
-    print(f"✅ 修复完成! 成功: {success_count}/{total_count}")
 
     if success_count > 0:
-        print("\n🧪 验证修复效果...")
         # 运行一个简单的pytest收集测试
         try:
             import subprocess
@@ -320,12 +307,11 @@ def main():
             ], capture_output=True, text=True, timeout=30)
 
             if result.returncode == 0:
-                print("✅ 测试文件收集成功，导入错误已修复!")
+                pass
             else:
-                print("⚠️  仍有导入问题，需要进一步检查:")
-                print(result.stderr[:500])
-        except Exception as e:
-            print(f"⚠️  无法验证修复效果: {e}")
+                pass
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

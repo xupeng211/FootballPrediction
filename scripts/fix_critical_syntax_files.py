@@ -8,10 +8,11 @@ import os
 import re
 from pathlib import Path
 
+
 def fix_syntax_file(file_path):
     """修复单个文件的语法错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -80,19 +81,15 @@ def fix_syntax_file(file_path):
         if fixed_content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(fixed_content)
-            print(f"✅ 修复 {file_path}")
             return True
         else:
-            print(f"⚠️  {file_path} 无需修复")
             return False
 
-    except Exception as e:
-        print(f"❌ 修复 {file_path} 失败: {e}")
+    except Exception:
         return False
 
 def main():
     """主函数"""
-    print("🔧 开始修复关键语法文件...")
 
     # 需要修复的文件列表
     critical_files = [
@@ -115,7 +112,7 @@ def main():
     ]
 
     fixed_count = 0
-    total_count = len(critical_files)
+    len(critical_files)
 
     for file_path in critical_files:
         full_path = Path(file_path)
@@ -123,25 +120,21 @@ def main():
             if fix_syntax_file(full_path):
                 fixed_count += 1
         else:
-            print(f"⚠️  文件不存在: {file_path}")
+            pass
 
-    print(f"\n📊 修复完成: {fixed_count}/{total_count} 个文件")
 
     # 验证修复效果
-    print("\n🔍 验证修复效果...")
-    syntax_errors_before = os.popen("ruff check src/ --output-format=concise | grep 'invalid-syntax' | wc -l").read().strip()
-    print(f"当前语法错误数: {syntax_errors_before}")
+    os.popen("ruff check src/ --output-format=concise | grep 'invalid-syntax' | wc -l").read().strip()
 
     # 尝试重新格式化以验证语法
-    print("\n🧪 验证语法修复...")
     for file_path in critical_files[:3]:  # 测试前3个文件
         full_path = Path(file_path)
         if full_path.exists():
             try:
                 # 尝试编译验证
                 os.system(f"python3 -m py_compile {file_path} 2>/dev/null && echo '✅ {file_path} 语法正确' || echo '❌ {file_path} 仍有语法错误'")
-            except Exception as e:
-                print(f"⚠️  无法验证 {file_path}: {e}")
+            except Exception:
+                pass
 
 if __name__ == "__main__":
     main()

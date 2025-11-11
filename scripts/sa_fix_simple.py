@@ -12,7 +12,7 @@ files_to_fix = [
 
 for file_path in files_to_fix:
     if os.path.exists(file_path):
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 检查是否已有sa导入
@@ -24,8 +24,6 @@ for file_path in files_to_fix:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(lines))
 
-            print(f"✅ 修复 {file_path}")
         else:
-            print(f"⚠️  {file_path} 不需要修复")
+            pass
 
-print("🔧 SQLAlchemy别名修复完成")

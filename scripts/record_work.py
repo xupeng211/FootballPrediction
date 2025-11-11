@@ -34,12 +34,6 @@ def start_work(title, description, work_type, priority="medium"):
         priority=priority
     )
 
-    print("✅ 作业记录已创建")
-    print(f"   ID: {work_item.id}")
-    print(f"   标题: {work_item.title}")
-    print(f"   类型: {work_item.work_type}")
-    print(f"   优先级: {work_item.priority}")
-    print(f"   状态: {work_item.status}")
 
     return work_item.id
 
@@ -59,7 +53,7 @@ def complete_work(work_id, deliverables=None, test_results_json=None):
         try:
             test_results = json.loads(test_results_json)
         except json.JSONDecodeError:
-            print("⚠️ 测试结果JSON格式无效，将忽略")
+            pass
 
     success = synchronizer.complete_work_item(
         work_id=work_id,
@@ -69,13 +63,12 @@ def complete_work(work_id, deliverables=None, test_results_json=None):
     )
 
     if success:
-        print(f"✅ 作业 {work_id} 已完成")
         if deliverables_list:
-            print(f"   交付成果: {len(deliverables_list)}项")
+            pass
         if test_results:
-            print("   测试结果: 已记录")
+            pass
     else:
-        print(f"❌ 完成作业 {work_id} 失败")
+        pass
 
     return success
 
@@ -86,32 +79,18 @@ def list_work():
     work_items = synchronizer.load_work_log()
 
     if not work_items:
-        print("📝 没有找到作业记录")
         return
 
-    print(f"📋 找到 {len(work_items)} 个作业项目:")
-    print("-" * 60)
 
-    for i, item in enumerate(work_items, 1):
-        status_emoji = {
-            "pending": "⏳",
-            "in_progress": "🔄",
-            "completed": "✅",
-            "review": "👀"
-        }
+    for _i, item in enumerate(work_items, 1):
 
-        print(f"{i:2d}. {status_emoji.get(item.status, '❓')} {item.id}")
-        print(f"    标题: {item.title}")
-        print(f"    类型: {item.work_type} | 优先级: {item.priority}")
-        print(f"    状态: {item.status} ({item.completion_percentage}%)")
         if item.time_spent_minutes > 0:
             hours = item.time_spent_minutes // 60
-            minutes = item.time_spent_minutes % 60
+            item.time_spent_minutes % 60
             if hours > 0:
-                print(f"    工作时长: {hours}小时{minutes}分钟")
+                pass
             else:
-                print(f"    工作时长: {minutes}分钟")
-        print()
+                pass
 
 
 def main():
@@ -153,7 +132,7 @@ def main():
     complete_parser.add_argument('--test-results', '-t', help='测试结果，JSON格式')
 
     # list-work 命令
-    list_parser = subparsers.add_parser('list-work', help='列出所有作业记录')
+    subparsers.add_parser('list-work', help='列出所有作业记录')
 
     args = parser.parse_args()
 
@@ -163,14 +142,12 @@ def main():
 
     try:
         if args.command == 'start-work':
-            work_id = start_work(
+            start_work(
                 title=args.title,
                 description=args.description,
                 work_type=args.work_type,
                 priority=args.priority
             )
-            print("\n💡 下一步使用以下命令完成这个作业:")
-            print(f"   python record_work.py complete-work {work_id} --deliverables \"交付成果1,交付成果2\"")
 
         elif args.command == 'complete-work':
             complete_work(
@@ -178,17 +155,13 @@ def main():
                 deliverables=args.deliverables,
                 test_results_json=args.test_results
             )
-            print("\n💡 下一步同步到GitHub:")
-            print("   make claude-sync")
 
         elif args.command == 'list-work':
             list_work()
 
     except KeyboardInterrupt:
-        print("\n⚠️ 操作被用户中断")
         sys.exit(130)
-    except Exception as e:
-        print(f"\n❌ 操作失败: {e}")
+    except Exception:
         import traceback
         traceback.print_exc()
         sys.exit(1)

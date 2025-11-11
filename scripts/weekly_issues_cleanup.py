@@ -6,12 +6,12 @@ Weekly GitHub Issues Cleanup Tool
 用于每周自动检查和清理GitHub Issues，保持项目管理健康状态。
 """
 
-import json
-import subprocess
-from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Any
 import argparse
+import json
 import os
+import subprocess
+from datetime import UTC, datetime
+from typing import Any
 
 
 class WeeklyIssuesCleanup:
@@ -28,7 +28,7 @@ class WeeklyIssuesCleanup:
             "health_score": 0
         }
 
-    def run_gh_command(self, command: str) -> Dict[str, Any]:
+    def run_gh_command(self, command: str) -> dict[str, Any]:
         """运行GitHub CLI命令"""
         try:
             result = subprocess.run(
@@ -48,9 +48,8 @@ class WeeklyIssuesCleanup:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def get_issues_summary(self) -> Dict[str, Any]:
+    def get_issues_summary(self) -> dict[str, Any]:
         """获取Issues概要信息"""
-        print("📊 获取Issues概要信息...")
 
         # 获取开放Issues
         open_command = f"gh issue list --repo {self.repo} --limit 100 --state open --json number,title,labels,createdAT,updatedAt"
@@ -88,7 +87,7 @@ class WeeklyIssuesCleanup:
 
                     # 按年龄分类
                     created_at = datetime.fromisoformat(issue['createdAt'].replace('Z', '+00:00'))
-                    now = datetime.now(timezone.utc)
+                    now = datetime.now(UTC)
                     age_days = (now - created_at).days
 
                     if age_days <= 7:
@@ -99,7 +98,7 @@ class WeeklyIssuesCleanup:
                         summary["issues_by_age"]["old"] += 1
 
             except json.JSONDecodeError:
-                print("❌ 解析开放Issues数据失败")
+                pass
 
         if closed_result["success"]:
             try:
@@ -107,22 +106,21 @@ class WeeklyIssuesCleanup:
                 summary["closed_issues"] = closed_issues
                 summary["total_closed"] = len(closed_issues)
             except json.JSONDecodeError:
-                print("❌ 解析关闭Issues数据失败")
+                pass
 
         self.weekly_report["issues_analyzed"] = summary["total_open"] + summary["total_closed"]
         return summary
 
-    def find_issues_needing_attention(self, summary: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def find_issues_needing_attention(self, summary: dict[str, Any]) -> list[dict[str, Any]]:
         """查找需要关注的Issues"""
         issues_needing_attention = []
 
-        print("🔍 查找需要关注的Issues...")
 
         # 查找过时的开放Issues
         for issue in summary["open_issues"]:
             labels = [label['name'] for label in issue.get('labels', [])]
             created_at = datetime.fromisoformat(issue['createdAt'].replace('Z', '+00:00'))
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             age_days = (now - created_at).days
 
             # 检查是否需要关注
@@ -131,13 +129,13 @@ class WeeklyIssuesCleanup:
 
             if age_days > 30:
                 needs_attention = True
-                reason = f"超过30天未更新"
+                reason = "超过30天未更新"
             elif 'status/in-progress' in labels and age_days > 14:
                 needs_attention = True
-                reason = f"进行中超过14天"
+                reason = "进行中超过14天"
             elif age_days > 7 and not any(label.startswith('status/') for label in labels):
                 needs_attention = True
-                reason = f"超过7天无状态标签"
+                reason = "超过7天无状态标签"
 
             if needs_attention:
                 issues_needing_attention.append({
@@ -149,9 +147,8 @@ class WeeklyIssuesCleanup:
 
         return issues_needing_attention
 
-    def find_duplicate_titles(self) -> List[List[Dict[str, Any]]]:
+    def find_duplicate_titles(self) -> list[list[dict[str, Any]]]:
         """查找重复标题的Issues"""
-        print("🔍 查找重复标题的Issues...")
 
         duplicate_groups = []
         title_map = {}
@@ -189,11 +186,11 @@ class WeeklyIssuesCleanup:
                 duplicate_groups = [group for group in title_map.values() if len(group) > 1]
 
             except json.JSONDecodeError:
-                print("❌ 解析Issues数据失败")
+                pass
 
         return duplicate_groups
 
-    def calculate_health_score(self, summary: Dict[str, Any], attention_issues: List[Dict[str, Any]], duplicates: List[List[Dict[str, Any]]]) -> int:
+    def calculate_health_score(self, summary: dict[str, Any], attention_issues: list[dict[str, Any]], duplicates: list[list[dict[str, Any]]]) -> int:
         """计算项目健康分数 (0-100)"""
         score = 100
 
@@ -218,7 +215,7 @@ class WeeklyIssuesCleanup:
 
         return max(0, min(100, score))
 
-    def generate_weekly_recommendations(self, summary: Dict[str, Any], attention_issues: List[Dict[str, Any]], duplicates: List[List[Dict[str, Any]]]) -> List[str]:
+    def generate_weekly_recommendations(self, summary: dict[str, Any], attention_issues: list[dict[str, Any]], duplicates: list[list[dict[str, Any]]]) -> list[str]:
         """生成每周建议"""
         recommendations = []
 
@@ -247,7 +244,6 @@ class WeeklyIssuesCleanup:
 
     def generate_weekly_report(self) -> str:
         """生成每周清理报告"""
-        print("📄 生成每周清理报告...")
 
         # 获取分析数据
         summary = self.get_issues_summary()
@@ -325,7 +321,7 @@ class WeeklyIssuesCleanup:
         for i, rec in enumerate(recommendations):
             report += f"{i+1}. {rec}\n"
 
-        report += f"""
+        report += """
 ## 🎯 行动计划
 
 ### 立即行动 (本周内)
@@ -378,18 +374,13 @@ class WeeklyIssuesCleanup:
             with open(json_filename, 'w', encoding='utf-8') as f:
                 json.dump(self.weekly_report, f, indent=2, ensure_ascii=False)
 
-            print(f"📝 报告已保存到: {filename}")
-            print(f"📊 数据已保存到: {json_filename}")
 
             return filename
-        except Exception as e:
-            print(f"❌ 保存报告失败: {e}")
+        except Exception:
             return ""
 
-    def run_weekly_cleanup(self) -> Dict[str, Any]:
+    def run_weekly_cleanup(self) -> dict[str, Any]:
         """执行每周清理流程"""
-        print("🚀 开始每周GitHub Issues清理流程")
-        print("=" * 60)
 
         # 生成报告
         report = self.generate_weekly_report()
@@ -397,19 +388,15 @@ class WeeklyIssuesCleanup:
         # 保存报告
         report_file = self.save_weekly_report(report)
 
-        print("\n" + "=" * 60)
-        print("✅ 每周清理流程完成!")
 
         # 打印健康分数和建议
         health_score = self.weekly_report["health_score"]
-        health_emoji = "🟢" if health_score >= 80 else "🟡" if health_score >= 60 else "🔴"
-        print(f"📊 健康分数: {health_score}/100 {health_emoji}")
 
         if self.weekly_report["attention_issues"] > 0:
-            print(f"⚠️  有 {self.weekly_report['attention_issues']} 个Issues需要关注")
+            pass
 
         if self.weekly_report["duplicate_groups"] > 0:
-            print(f"🔄 发现 {self.weekly_report['duplicate_groups']} 组重复Issues")
+            pass
 
         return {
             "report_file": report_file,
@@ -426,30 +413,22 @@ def main():
 
     args = parser.parse_args()
 
-    print("🧹 每周GitHub Issues清理工具")
-    print(f"📂 仓库: {args.repo}")
-    print(f"📅 清理日期: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
 
     if args.dry_run:
-        print("🔍 预览模式 - 只进行分析，不执行实际操作")
+        pass
 
     # 创建清理器
     cleanup = WeeklyIssuesCleanup(args.repo)
 
     try:
         # 执行清理
-        result = cleanup.run_weekly_cleanup()
+        cleanup.run_weekly_cleanup()
 
-        print(f"\n💡 下一步建议:")
-        print(f"  1. 查看详细报告: {result['report_file']}")
-        print(f"  2. 根据建议执行相应的清理操作")
-        print(f"  3. 更新项目管理流程")
 
     except KeyboardInterrupt:
-        print("\n❌ 用户取消操作")
-    except Exception as e:
-        print(f"\n❌ 清理过程出错: {e}")
+        pass
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

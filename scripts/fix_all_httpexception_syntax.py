@@ -101,8 +101,6 @@ def fix_httpexception_syntax(content):
 
 def main():
     """主函数"""
-    print("🔧 批量修复HTTPException语法错误...")
-    print("=" * 50)
 
     # 有语法问题的文件列表（基于coverage.py警告）
     problem_files = [
@@ -139,19 +137,15 @@ def main():
     for file_path in problem_files:
         full_path = Path(file_path)
         if not full_path.exists():
-            print(f"⚠️  文件不存在: {file_path}")
             continue
 
-        print(f"\n🔍 检查文件: {file_path}")
 
         # 先检查当前语法状态
         is_valid, error_msg = check_syntax(str(full_path))
         if is_valid:
-            print("✅ 语法正确，无需修复")
             already_good_count += 1
             continue
 
-        print(f"❌ 语法错误: {error_msg[:100]}...")
 
         try:
             # 读取文件内容
@@ -169,31 +163,20 @@ def main():
                 # 验证修复效果
                 is_valid_after, error_msg_after = check_syntax(str(full_path))
                 if is_valid_after:
-                    print("✅ 修复成功")
                     fixed_count += 1
                 else:
-                    print(f"❌ 修复失败: {error_msg_after[:100]}...")
                     error_count += 1
             else:
-                print("⚪ 内容无变化")
                 error_count += 1
 
-        except Exception as e:
-            print(f"❌ 处理文件失败 {file_path}: {e}")
+        except Exception:
             error_count += 1
 
-    print("\n" + "=" * 50)
-    print("🎉 HTTPException语法修复完成!")
-    print("📊 修复统计:")
-    print(f"   修复成功: {fixed_count} 个文件")
-    print(f"   已经正确: {already_good_count} 个文件")
-    print(f"   修复失败: {error_count} 个文件")
-    print(f"   总文件数: {len(problem_files)} 个文件")
 
     if error_count > 0:
-        print(f"\n⚠️  有 {error_count} 个文件需要手动处理")
+        pass
     else:
-        print("\n✅ 所有文件语法修复成功!")
+        pass
 
 if __name__ == "__main__":
     main()

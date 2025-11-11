@@ -41,7 +41,7 @@ def fix_indentation_errors(content: str) -> tuple[str, int]:
     fixed_lines = []
     fixes_count = 0
 
-    for i, line in enumerate(lines):
+    for _i, line in enumerate(lines):
         # 检查HTTPException参数行的缩进问题
         if ('status_code=' in line or 'detail=' in line) and not line.startswith(' ' * 8):
             # 如果参数行缩进不足，补充到8个空格
@@ -129,8 +129,6 @@ def main():
         'src/api/auth/router.py'
     ]
 
-    print("🔧 简单缩进错误修复工具")
-    print("=" * 40)
 
     results = []
     success_count = 0
@@ -138,24 +136,17 @@ def main():
     for file_path_str in files_to_fix:
         file_path = Path(file_path_str)
         if file_path.exists():
-            print(f"🔍 修复: {file_path_str}")
             result = fix_file(file_path)
             results.append(result)
 
             if result['success']:
-                print(f"  ✅ {result['message']}")
                 if result['fixes'] > 0:
                     success_count += 1
             else:
-                print(f"  ❌ {result['message']}")
+                pass
         else:
-            print(f"⚠️  文件不存在: {file_path_str}")
+            pass
 
-    print()
-    print("📊 修复统计:")
-    print(f"  处理文件: {len(results)}")
-    print(f"  成功修复: {success_count}")
-    print(f"  仍有问题: {len(results) - success_count}")
 
     return success_count > 0
 

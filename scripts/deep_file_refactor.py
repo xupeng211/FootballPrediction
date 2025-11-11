@@ -4,8 +4,8 @@
 专门用于重构复杂的语法错误文件，采用重写而非修复的策略
 """
 
-import os
 from pathlib import Path
+
 
 def refactor_statistical_strategy():
     """重构统计分析策略文件"""
@@ -608,7 +608,6 @@ class EnhancedMLModelStrategy(PredictionStrategy):
 
 def main():
     """主函数"""
-    print("🔧 开始深度重构顽固文件...")
 
     # 重构文件映射
     refactor_functions = {
@@ -623,7 +622,6 @@ def main():
         full_path = Path(file_path)
         if full_path.exists():
             try:
-                print(f"🔧 重构文件: {file_path}")
 
                 # 生成新的内容
                 new_content = refactor_func()
@@ -642,20 +640,17 @@ def main():
                 )
 
                 if result.returncode == 0:
-                    print(f"✅ {file_path} 重构成功")
                     refactored_count += 1
                 else:
-                    print(f"❌ {file_path} 重构后仍有语法错误")
+                    pass
 
-            except Exception as e:
-                print(f"❌ 重构 {file_path} 失败: {e}")
+            except Exception:
+                pass
         else:
-            print(f"⚠️  文件不存在: {file_path}")
+            pass
 
-    print(f"\n📊 重构完成: {refactored_count}/{len(refactor_functions)} 个文件")
 
     # 验证总体效果
-    print("\n🔍 验证重构效果...")
     try:
         import subprocess
         result = subprocess.run(
@@ -664,11 +659,10 @@ def main():
             text=True
         )
 
-        syntax_errors = len([line for line in result.stdout.split('\n') if 'invalid-syntax' in line])
-        print(f"📈 重构后语法错误数: {syntax_errors}")
+        len([line for line in result.stdout.split('\n') if 'invalid-syntax' in line])
 
-    except Exception as e:
-        print(f"⚠️  无法验证重构效果: {e}")
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     main()

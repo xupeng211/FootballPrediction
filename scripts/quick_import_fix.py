@@ -4,16 +4,15 @@
 Quick import fix script - fix np/pd/sa import issues
 """
 
-import os
 from pathlib import Path
+
 
 def add_imports_to_file(file_path: Path, needed_imports: list) -> bool:
     """向文件添加需要的导入"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
-        original_content = content
         lines = content.split('\n')
 
         # 找到插入位置（现有导入之后，代码之前）
@@ -46,22 +45,16 @@ def add_imports_to_file(file_path: Path, needed_imports: list) -> bool:
 
         return False
 
-    except Exception as e:
-        print(f"修复文件 {file_path} 时出错: {e}")
+    except Exception:
         return False
 
 def main():
     """主函数"""
-    print("🚀 快速导入修复开始...")
 
     src_path = Path("src")
     fixed_count = 0
 
     # 定义需要检查的文件模式和对应的导入
-    import_patterns = [
-        ('*.py', ['pandas as pd'], ['pd.']),
-        ('*.py', ['numpy as np'], ['np.']),
-    ]
 
     for py_file in src_path.rglob("*.py"):
         # 跳过__init__.py文件
@@ -69,7 +62,7 @@ def main():
             continue
 
         try:
-            with open(py_file, 'r', encoding='utf-8') as f:
+            with open(py_file, encoding='utf-8') as f:
                 content = f.read()
 
             needed_imports = []
@@ -90,13 +83,10 @@ def main():
             if needed_imports:
                 if add_imports_to_file(py_file, needed_imports):
                     fixed_count += 1
-                    print(f"✅ 修复: {py_file} (添加: {', '.join(needed_imports)})")
 
-        except Exception as e:
-            print(f"❌ 处理文件 {py_file} 时出错: {e}")
+        except Exception:
+            pass
 
-    print(f"\n📊 修复完成:")
-    print(f"✅ 修复文件数: {fixed_count}")
 
 if __name__ == "__main__":
     main()

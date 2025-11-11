@@ -14,14 +14,13 @@ def fix_long_lines_in_file(file_path: str, max_length: int = 88) -> int:
     try:
         with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
-    except Exception as e:
-        print(f"读取文件 {file_path} 失败: {e}")
+    except Exception:
         return 0
 
     fixed_count = 0
     new_lines = []
 
-    for i, line in enumerate(lines):
+    for _i, line in enumerate(lines):
         # 跳过注释行和已经合适长度的行
         if len(line.rstrip()) <= max_length or line.strip().startswith('#'):
             new_lines.append(line)
@@ -51,9 +50,7 @@ def fix_long_lines_in_file(file_path: str, max_length: int = 88) -> int:
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.writelines(new_lines)
-            print(f"修复 {file_path} 中的 {fixed_count} 个长行问题")
-        except Exception as e:
-            print(f"写入文件 {file_path} 失败: {e}")
+        except Exception:
             return 0
 
     return fixed_count
@@ -138,11 +135,10 @@ def fix_python_long_line(line: str, max_length: int) -> list:
 
 def fix_all_e501_errors(project_root: str = ".") -> int:
     """修复整个项目的E501错误"""
-    project_path = Path(project_root)
+    Path(project_root)
     total_fixed = 0
 
     # 获取所有有E501错误的文件
-    print("正在分析项目中的E501错误...")
     import subprocess
 
     try:
@@ -160,7 +156,6 @@ def fix_all_e501_errors(project_root: str = ".") -> int:
                 file_path = line.split(':')[0]
                 files_with_errors.add(file_path)
 
-        print(f"发现 {len(files_with_errors)} 个文件存在E501错误")
 
         # 逐个修复文件
         for file_path in sorted(files_with_errors):
@@ -168,31 +163,27 @@ def fix_all_e501_errors(project_root: str = ".") -> int:
                 fixed = fix_long_lines_in_file(file_path)
                 total_fixed += fixed
 
-    except Exception as e:
-        print(f"运行ruff检查失败: {e}")
+    except Exception:
+        pass
 
     return total_fixed
 
 def main():
     """主函数"""
-    print("开始修复E501格式错误...")
 
-    total_fixed = fix_all_e501_errors()
+    fix_all_e501_errors()
 
-    print(f"\n总共修复了 {total_fixed} 个长行问题")
 
     # 再次运行检查验证结果
-    print("\n验证修复结果...")
     try:
         result = subprocess.run(
             ['ruff', 'check', '--select=E501', '--output-format=concise', '.'],
             capture_output=True,
             text=True
         )
-        remaining_errors = len([line for line in result.stdout.split('\n') if line.strip()])
-        print(f"剩余 E501 错误: {remaining_errors}")
-    except Exception as e:
-        print(f"验证失败: {e}")
+        len([line for line in result.stdout.split('\n') if line.strip()])
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     import subprocess

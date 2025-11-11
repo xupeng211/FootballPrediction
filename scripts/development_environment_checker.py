@@ -26,7 +26,6 @@ class Colors:
 
 def color_print(message: str, color: str = Colors.WHITE):
     """彩色打印"""
-    print(f"{color}{message}{Colors.END}")
 
 class DevelopmentEnvironmentChecker:
     """开发环境检查器"""
@@ -75,7 +74,6 @@ class DevelopmentEnvironmentChecker:
     def check_system_requirements(self) -> bool:
         """检查系统要求"""
         color_print("\n🔍 系统要求检查", Colors.BLUE + Colors.BOLD)
-        print("-" * 60)
 
         success = True
 
@@ -129,7 +127,6 @@ class DevelopmentEnvironmentChecker:
     def check_required_tools(self) -> bool:
         """检查必需工具"""
         color_print("\n🛠️  必需工具检查", Colors.BLUE + Colors.BOLD)
-        print("-" * 60)
 
         tools = [
             ("Git", "git --version"),
@@ -158,7 +155,6 @@ class DevelopmentEnvironmentChecker:
     def check_optional_tools(self) -> bool:
         """检查可选工具"""
         color_print("\n💡 可选工具检查", Colors.BLUE + Colors.BOLD)
-        print("-" * 60)
 
         tools = [
             ("Docker", "docker --version"),
@@ -184,7 +180,6 @@ class DevelopmentEnvironmentChecker:
     def check_python_packages(self) -> bool:
         """检查Python包"""
         color_print("\n🐍 Python包检查", Colors.BLUE + Colors.BOLD)
-        print("-" * 60)
 
         critical_packages = [
             ("fastapi", "FastAPI"),
@@ -230,7 +225,6 @@ class DevelopmentEnvironmentChecker:
     def check_project_structure(self) -> bool:
         """检查项目结构"""
         color_print("\n📁 项目结构检查", Colors.BLUE + Colors.BOLD)
-        print("-" * 60)
 
         required_dirs = [
             "src",
@@ -278,7 +272,6 @@ class DevelopmentEnvironmentChecker:
     def check_configuration_files(self) -> bool:
         """检查配置文件"""
         color_print("\n⚙️  配置文件检查", Colors.BLUE + Colors.BOLD)
-        print("-" * 60)
 
         config_files = [
             (".env", "环境变量配置"),
@@ -305,7 +298,6 @@ class DevelopmentEnvironmentChecker:
     def check_git_configuration(self) -> bool:
         """检查Git配置"""
         color_print("\n🔧 Git配置检查", Colors.BLUE + Colors.BOLD)
-        print("-" * 60)
 
         git_dir = self.project_root / ".git"
         if not git_dir.exists():
@@ -336,7 +328,6 @@ class DevelopmentEnvironmentChecker:
     def check_docker_environment(self) -> bool:
         """检查Docker环境"""
         color_print("\n🐳 Docker环境检查", Colors.BLUE + Colors.BOLD)
-        print("-" * 60)
 
         # 检查Docker是否运行
         success_flag, stdout, stderr = self.run_command("docker info")
@@ -379,7 +370,6 @@ class DevelopmentEnvironmentChecker:
     def run_functional_tests(self) -> bool:
         """运行功能测试"""
         color_print("\n🧪 功能测试", Colors.BLUE + Colors.BOLD)
-        print("-" * 60)
 
         tests = []
 
@@ -518,7 +508,6 @@ python3 scripts/development_environment_checker.py
     def run_all_checks(self) -> bool:
         """运行所有检查"""
         color_print("🔍 开始开发环境全面检查", Colors.CYAN + Colors.BOLD)
-        print("=" * 60)
 
         # 运行所有检查
         checks = [
@@ -541,9 +530,7 @@ python3 scripts/development_environment_checker.py
                 self.failed += 1
 
         # 生成总结
-        print("\n" + "=" * 60)
         color_print("📊 检查总结", Colors.CYAN + Colors.BOLD)
-        print("-" * 60)
 
         total = self.passed + self.failed + self.warnings
         color_print(f"✅ 通过: {self.passed}", Colors.GREEN)
@@ -552,7 +539,7 @@ python3 scripts/development_environment_checker.py
         color_print(f"📋 总计: {total}", Colors.WHITE)
 
         # 生成报告
-        report = self.generate_report()
+        self.generate_report()
         report_path = self.project_root / "environment_check_report.md"
         color_print(f"\n📄 详细报告已保存: {report_path}", Colors.BLUE)
 

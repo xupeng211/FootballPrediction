@@ -10,7 +10,6 @@ from pathlib import Path
 
 def fix_f821_issues() -> tuple[int, bool]:
     """修复F821未定义名称问题 - 最安全的方式"""
-    print("🔧 修复F821未定义名称问题")
 
     fix_count = 0
 
@@ -51,14 +50,12 @@ def fix_f821_issues() -> tuple[int, bool]:
                         files_to_fix.add(Path(file_path))
 
             for file_path in files_to_fix:
-                print(f"  🔧 处理文件: {file_path}")
                 fixes = fix_f821_in_file(file_path, common_fixes, common_imports)
                 fix_count += fixes
                 if fixes > 0:
-                    print(f"    ✅ 修复 {fixes} 个问题")
+                    pass
 
-    except Exception as e:
-        print(f"❌ F821修复失败: {e}")
+    except Exception:
         return 0, False
 
     return fix_count, True
@@ -85,7 +82,7 @@ def fix_f821_in_file(file_path: Path, common_fixes: dict, common_imports: dict) 
 
         # 检查哪些导入需要添加
         needed_imports = set()
-        content_lower = content.lower()
+        content.lower()
 
         for old_name, new_name in common_fixes.items():
             if old_name in content:
@@ -114,13 +111,11 @@ def fix_f821_in_file(file_path: Path, common_fixes: dict, common_imports: dict) 
 
         return fix_count
 
-    except Exception as e:
-        print(f"❌ 修复文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
 def fix_f405_issues() -> tuple[int, bool]:
     """修复F405可能未定义名称问题"""
-    print("🔧 修复F405可能未定义名称问题")
 
     fix_count = 0
 
@@ -136,18 +131,14 @@ def fix_f405_issues() -> tuple[int, bool]:
         if result.returncode == 0:
             # 估算修复数量
             fix_count = 10  # 简化计数
-            print(f"  ✅ 修复约 {fix_count} 个F405问题")
             return fix_count, True
         else:
-            print("  ⚠️  F405自动修复部分失败")
             return 5, True  # 部分成功
-    except Exception as e:
-        print(f"❌ F405修复失败: {e}")
+    except Exception:
         return 0, False
 
 def fix_a002_issues() -> tuple[int, bool]:
     """修复A002参数名与内置函数冲突"""
-    print("🔧 修复A002参数名冲突问题")
 
     fix_count = 0
 
@@ -180,14 +171,12 @@ def fix_a002_issues() -> tuple[int, bool]:
                         files_to_fix.add(Path(file_path))
 
             for file_path in files_to_fix:
-                print(f"  🔧 处理文件: {file_path}")
                 fixes = fix_a002_in_file(file_path, conflict_fixes)
                 fix_count += fixes
                 if fixes > 0:
-                    print(f"    ✅ 修复 {fixes} 个问题")
+                    pass
 
-    except Exception as e:
-        print(f"❌ A002修复失败: {e}")
+    except Exception:
         return 0, False
 
     return fix_count, True
@@ -222,56 +211,43 @@ def fix_a002_in_file(file_path: Path, conflict_fixes: dict) -> int:
 
         return fix_count
 
-    except Exception as e:
-        print(f"    ❌ 修复文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
 def main():
     """主函数"""
-    print("🛠️ 关键问题修复工具")
-    print("=" * 50)
 
     total_fixes = 0
-    success = True
 
     # 1. 修复F821未定义名称（最关键）
     f821_fixes, f821_success = fix_f821_issues()
     total_fixes += f821_fixes
     if not f821_success:
-        success = False
+        pass
 
     # 2. 修复F405可能未定义名称
     f405_fixes, f405_success = fix_f405_issues()
     total_fixes += f405_fixes
     if not f405_success:
-        success = False
+        pass
 
     # 3. 修复A002参数名冲突
     a002_fixes, a002_success = fix_a002_issues()
     total_fixes += a002_fixes
     if not a002_success:
-        success = False
+        pass
 
-    print("\n" + "=" * 50)
-    print("📊 修复总结:")
-    print(f"   F821未定义名称: {f821_fixes} 个")
-    print(f"   F405可能未定义: {f405_fixes} 个")
-    print(f"   A002参数冲突: {a002_fixes} 个")
-    print(f"   总修复数量: {total_fixes} 个")
-    print(f"   执行状态: {'✅ 成功' if success else '⚠️  部分成功'}")
 
     # 验证修复效果
-    print("\n🔍 验证修复效果...")
     try:
         result = subprocess.run(
             ['ruff', 'check', '--select=F821,F405,A002', '--output-format=concise'],
             capture_output=True,
             text=True
         )
-        remaining = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
-        print(f"   剩余关键问题: {remaining}个")
-    except Exception as e:
-        print(f"   ❌ 验证失败: {e}")
+        len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     import subprocess

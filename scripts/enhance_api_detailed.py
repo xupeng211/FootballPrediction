@@ -4,9 +4,8 @@ API文档详细化工具
 为API端点添加详细的说明、模型和示例
 """
 
-import os
-import json
 from pathlib import Path
+
 
 def create_detailed_api_docs():
     """创建详细的API文档"""
@@ -659,7 +658,6 @@ const predictions = await client.getPredictions({
     with open(api_docs_dir / "errors.md", 'w', encoding='utf-8') as f:
         f.write(errors_doc)
 
-    print("✅ 创建详细API文档")
 
 def update_main_readme():
     """更新API文档主索引"""
@@ -744,32 +742,15 @@ curl -X GET "http://localhost:8000/api/predictions" \\
     with open(api_docs_dir / "README.md", 'w', encoding='utf-8') as f:
         f.write(readme_content)
 
-    print("✅ 更新API文档主索引")
 
 def main():
     """主函数"""
-    print("📚 API文档详细化工具")
-    print("=" * 40)
 
-    print("🏗️ 创建详细API文档...")
     create_detailed_api_docs()
 
-    print("📝 更新文档索引...")
     update_main_readme()
 
-    print("\n🎉 API文档详细化完成!")
-    print("\n📁 生成的文档:")
-    print("  📄 docs/api/predictions.md - 预测API详细说明")
-    print("  🏥 docs/api/health.md - 健康检查API")
-    print("  🚨 docs/api/errors.md - 错误代码参考")
-    print("  📋 docs/api/README.md - 文档索引更新")
 
-    print("\n🚀 文档特色:")
-    print("  ✅ 详细的端点说明和示例")
-    print("  ✅ 完整的请求/响应模型")
-    print("  ✅ 错误处理和代码参考")
-    print("  ✅ 多语言SDK示例")
-    print("  ✅ 最佳实践指导")
 
 if __name__ == "__main__":
     main()

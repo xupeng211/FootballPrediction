@@ -31,11 +31,9 @@ def fix_file(file_path: str) -> int:
         else:
             return 0
 
-    except Exception as e:
-        print(f"❌ 修复文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
 # 修复data_router.py
 file_path = "src/api/data_router.py"
 fixes = fix_file(file_path)
-print(f"✅ {file_path}: 修复了 {fixes} 个B904错误")

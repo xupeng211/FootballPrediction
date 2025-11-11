@@ -64,8 +64,7 @@ def complete_fix_file(file_path):
         else:
             return False
 
-    except Exception as e:
-        print(f"修复失败 {file_path}: {e}")
+    except Exception:
         return False
 
 def main():
@@ -84,31 +83,20 @@ def main():
         "src/api/routes/user_management.py"
     ]
 
-    print("🔧 完整HTTPException修复器启动...")
-    print(f"📁 目标文件: {len(api_files)} 个")
 
     fixed_count = 0
 
     for file_path in api_files:
         if os.path.exists(file_path):
-            print(f"\n🔧 处理: {file_path}")
             if complete_fix_file(file_path):
-                print("  ✅ 修复完成")
                 fixed_count += 1
             else:
-                print("  ℹ️  无需修复")
+                pass
         else:
-            print(f"\n⚠️  文件不存在: {file_path}")
+            pass
 
-    print(f"\n{'='*50}")
-    print("📊 修复统计:")
-    print(f"  ✅ 成功修复: {fixed_count} 个文件")
-    print(f"  📁 总文件数: {len(api_files)} 个文件")
 
-    print("\n🎯 验证修复效果:")
-    print("  ruff check src/api/betting_api.py --output-format=concise")
 
-    print("\n✨ 完整修复完成!")
 
 if __name__ == "__main__":
     main()

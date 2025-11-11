@@ -6,11 +6,9 @@
 
 import os
 import re
-import ast
 import subprocess
-import sys
 from pathlib import Path
-from typing import List, Tuple
+
 
 class SimpleStyleFixer:
     def __init__(self):
@@ -20,7 +18,7 @@ class SimpleStyleFixer:
     def fix_file(self, file_path: str) -> bool:
         """修复单个文件的代码风格问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 original_content = f.read()
 
             fixed_content = self._apply_fixes(original_content)
@@ -32,8 +30,7 @@ class SimpleStyleFixer:
                 return True
             return False
 
-        except Exception as e:
-            print(f"⚠️ 修复文件 {file_path} 时出错: {e}")
+        except Exception:
             return False
 
     def _apply_fixes(self, content: str) -> str:
@@ -87,14 +84,12 @@ class SimpleStyleFixer:
 
     def fix_directory(self, directory: str, pattern: str = "*.py") -> int:
         """修复目录中的所有Python文件"""
-        print(f"🔧 修复目录: {directory}")
 
         py_files = list(Path(directory).rglob(pattern))
-        total_files = len(py_files)
+        len(py_files)
         fixed_count = 0
 
-        for i, py_file in enumerate(py_files, 1):
-            print(f"  [{i}/{total_files}] 修复: {py_file}")
+        for _i, py_file in enumerate(py_files, 1):
             if self.fix_file(str(py_file)):
                 fixed_count += 1
 
@@ -103,45 +98,36 @@ class SimpleStyleFixer:
 
     def run_ruff_fix(self, directory: str) -> bool:
         """运行ruff自动修复"""
-        print(f"🔧 运行ruff自动修复: {directory}")
         try:
             result = subprocess.run([
                 'ruff', 'check', directory, '--fix', '--unsafe-fixes'
             ], capture_output=True, text=True)
 
             if result.returncode == 0:
-                print("✅ ruff修复成功")
                 return True
             else:
-                print(f"⚠️ ruff修复部分问题: {result.stderr}")
                 return False
 
-        except Exception as e:
-            print(f"❌ ruff修复失败: {e}")
+        except Exception:
             return False
 
     def run_black_format(self, directory: str) -> bool:
         """运行black格式化"""
-        print(f"🔧 运行black格式化: {directory}")
         try:
             result = subprocess.run([
                 'black', directory
             ], capture_output=True, text=True)
 
             if result.returncode == 0:
-                print("✅ black格式化成功")
                 return True
             else:
-                print(f"⚠️ black格式化部分问题: {result.stderr}")
                 return False
 
-        except Exception as e:
-            print(f"❌ black格式化失败: {e}")
+        except Exception:
             return False
 
 def main():
     """主函数"""
-    print("🚀 开始简单代码风格修复...")
 
     fixer = SimpleStyleFixer()
 
@@ -152,7 +138,6 @@ def main():
 
     for target_dir in target_dirs:
         if os.path.exists(target_dir):
-            print(f"\n📁 处理目录: {target_dir}")
 
             # 1. 运行ruff修复
             fixer.run_ruff_fix(target_dir)
@@ -164,20 +149,14 @@ def main():
             fixes = fixer.fix_directory(target_dir)
             total_fixes += fixes
 
-            print(f"✅ {target_dir}: 修复了 {fixes} 个文件")
         else:
-            print(f"⚠️ 目录不存在: {target_dir}")
+            pass
 
-    print(f"\n📊 总修复统计:")
-    print(f"  - 修复文件数: {len(fixer.fixed_files)}")
-    print(f"  - 总修复数: {total_fixes}")
 
     if fixer.fixed_files:
-        print(f"\n📄 修复的文件:")
-        for file_path in fixer.fixed_files:
-            print(f"  - {file_path}")
+        for _file_path in fixer.fixed_files:
+            pass
 
-    print(f"\n✅ 代码风格修复完成！")
 
 if __name__ == "__main__":
     main()

@@ -22,7 +22,6 @@ class QualityGate:
 
     def run_command(self, cmd, description):
         """运行命令并返回结果"""
-        print(f"🔍 {description}...")
         try:
             result = subprocess.run(
                 cmd,
@@ -129,8 +128,6 @@ class QualityGate:
 
     def run_all_checks(self):
         """运行所有质量检查"""
-        print("🚀 启动代码质量门禁检查...")
-        print("=" * 50)
 
         checks = [
             ('syntax_errors', self.check_syntax_errors),
@@ -142,24 +139,18 @@ class QualityGate:
         all_passed = True
         for check_name, check_func in checks:
             passed = check_func()
-            status = "✅ PASS" if passed else "❌ FAIL"
             result = self.results[check_name]
-            print(f"{status} {check_name}: {result['count']}/{result['threshold']}")
 
             if not passed:
                 all_passed = False
 
-        print("=" * 50)
 
         if all_passed:
-            print("🎉 所有质量检查通过！代码质量门禁PASS")
             return 0
         else:
-            print("🚫 质量检查失败！代码质量门禁FAIL")
-            print("\n📊 详细结果:")
             for check_name, result in self.results.items():
                 if not result['passed']:
-                    print(f"  - {check_name}: {result['count']} > {result['threshold']}")
+                    pass
             return 1
 
     def generate_report(self):
@@ -179,7 +170,6 @@ class QualityGate:
         with open(report_file, 'w') as f:
             json.dump(report, f, indent=2)
 
-        print(f"📄 质量报告已生成: {report_file}")
         return report
 
 def main():

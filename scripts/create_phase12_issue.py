@@ -3,9 +3,8 @@
 创建Phase 12.0 Issue跟踪器
 """
 
-import json
 import subprocess
-from datetime import datetime
+
 
 def create_phase12_issue():
     """创建Phase 12.0 Issue"""
@@ -113,30 +112,20 @@ def create_phase12_issue():
 
         if result.returncode == 0:
             issue_url = result.stdout.strip()
-            print(f"✅ Phase 12.0 Issue创建成功: {issue_url}")
             return issue_url
         else:
-            print(f"❌ 创建Issue失败: {result.stderr}")
             return None
 
-    except Exception as e:
-        print(f"❌ 创建Issue时出错: {e}")
+    except Exception:
         return None
 
 def main():
     """主函数"""
-    print("📝 创建Phase 12.0 Issue跟踪器")
-    print("=" * 50)
 
     issue_url = create_phase12_issue()
 
     if issue_url:
-        print(f"\n🎉 Phase 12.0跟踪器创建完成!")
-        print(f"📋 Issue链接: {issue_url}")
-        print(f"\n💡 下一步:")
-        print(f"  1. 开始Phase 12.1: 导入语句优化")
-        print(f"  2. 使用ruff --fix进行自动修复")
-        print(f"  3. 验证语法错误减少到150个以下")
+        pass
 
 if __name__ == "__main__":
     main()

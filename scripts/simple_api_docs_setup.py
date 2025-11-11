@@ -3,9 +3,9 @@
 简化API文档设置工具
 """
 
-import os
 import json
 from pathlib import Path
+
 
 def setup_api_docs():
     """设置API文档基础结构"""
@@ -75,11 +75,6 @@ curl -X GET "http://localhost:8000/api/predictions" \\
     with open(api_docs_dir / "openapi-config.json", 'w', encoding='utf-8') as f:
         json.dump(openapi_config, f, indent=2, ensure_ascii=False)
 
-    print("✅ API文档基础结构创建完成")
-    print(f"📁 目录: {api_docs_dir.absolute()}")
-    print("📄 生成文件:")
-    print("  - README.md")
-    print("  - openapi-config.json")
 
 if __name__ == "__main__":
     setup_api_docs()

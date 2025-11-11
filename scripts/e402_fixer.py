@@ -93,14 +93,11 @@ def fix_e402_in_file(file_path):
         if new_content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(new_content)
-            print(f"✅ 修复了E402问题: {file_path}")
             return len(imports)
         else:
-            print(f"ℹ️  没有发现E402问题: {file_path}")
             return 0
 
-    except Exception as e:
-        print(f"❌ 修复文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
 def main():
@@ -114,8 +111,6 @@ def main():
     ]
 
     total_fixes = 0
-    print("🚀 开始修复E402模块导入位置问题...")
-    print("=" * 60)
 
     for file_path in target_files:
         path = Path(file_path)
@@ -123,15 +118,10 @@ def main():
             fixes = fix_e402_in_file(path)
             total_fixes += fixes
         else:
-            print(f"⚠️  文件不存在: {file_path}")
+            pass
 
-    print("=" * 60)
-    print("📊 修复完成:")
-    print(f"   总共修复: {total_fixes} 个导入位置问题")
-    print(f"   处理文件: {len(target_files)} 个")
 
     # 验证修复效果
-    print("\n🔍 验证修复效果...")
     import subprocess
 
     try:
@@ -143,15 +133,14 @@ def main():
         )
 
         remaining = int(result.stdout.strip()) if result.stdout.strip() else 0
-        print(f"   main.py 剩余E402错误: {remaining}个")
 
         if remaining == 0:
-            print("✅ main.py的所有E402问题已修复")
+            pass
         else:
-            print("⚠️  main.py仍有E402问题需要进一步处理")
+            pass
 
-    except Exception as e:
-        print(f"❌ 验证失败: {e}")
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     main()

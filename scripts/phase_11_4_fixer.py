@@ -7,7 +7,7 @@ Phase 11.4 深度错误清理工具
 import os
 import re
 import subprocess
-from pathlib import Path
+
 
 def get_syntax_error_files():
     """获取有语法错误的文件列表"""
@@ -24,8 +24,7 @@ def get_syntax_error_files():
                     syntax_files.append(file_path)
 
         return syntax_files
-    except Exception as e:
-        print(f"❌ 获取语法错误文件失败: {e}")
+    except Exception:
         return []
 
 def get_f821_error_details():
@@ -57,19 +56,16 @@ def get_f821_error_details():
                     })
 
         return f821_errors
-    except Exception as e:
-        print(f"❌ 获取F821错误详情失败: {e}")
+    except Exception:
         return []
 
 def fix_syntax_error_file(file_path):
     """修复单个文件的语法错误"""
-    print(f"🔧 修复语法错误文件: {file_path}")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
-    except Exception as e:
-        print(f"❌ 读取文件失败: {e}")
+    except Exception:
         return False
 
     original_content = content
@@ -108,7 +104,7 @@ def fix_syntax_error_file(file_path):
         close_brackets = sum(fixed_line.count(b) for b in ')}]')
         if open_brackets > close_brackets:
             # 添加缺失的闭合括号
-            needed_brackets = open_brackets - close_brackets
+            open_brackets - close_brackets
             stack = []
             for char in reversed(fixed_line):
                 if char in '({[':
@@ -143,18 +139,14 @@ def fix_syntax_error_file(file_path):
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(fixed_content)
-            print(f"✅ 修复完成: {file_path}")
             return True
-        except Exception as e:
-            print(f"❌ 写入文件失败: {e}")
+        except Exception:
             return False
     else:
-        print(f"ℹ️  无需修复: {file_path}")
         return True
 
 def fix_f821_errors(f821_errors):
     """修复F821未定义名称错误"""
-    print(f"🔧 修复 {len(f821_errors)} 个F821错误...")
 
     # 按文件分组
     errors_by_file = {}
@@ -167,13 +159,11 @@ def fix_f821_errors(f821_errors):
     fixed_count = 0
 
     for file_path, errors in errors_by_file.items():
-        print(f"\n📁 处理文件: {file_path}")
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
-        except Exception as e:
-            print(f"❌ 读取文件失败: {e}")
+        except Exception:
             continue
 
         original_content = content
@@ -193,15 +183,12 @@ def fix_f821_errors(f821_errors):
                     # SQLAlchemy别名，添加导入
                     if 'import sqlalchemy as sa' not in content:
                         fixed_lines.insert(0, 'import sqlalchemy as sa')
-                        print(f"  ✅ 添加SQLAlchemy导入: {undefined_name}")
                 elif undefined_name in ['np', 'pd']:
                     # numpy/pandas别名
                     if undefined_name == 'np' and 'import numpy as np' not in content:
                         fixed_lines.insert(0, 'import numpy as np')
-                        print(f"  ✅ 添加numpy导入: {undefined_name}")
                     elif undefined_name == 'pd' and 'import pandas as pd' not in content:
                         fixed_lines.insert(0, 'import pandas as pd')
-                        print(f"  ✅ 添加pandas导入: {undefined_name}")
                 elif undefined_name in ['List', 'Dict', 'Optional', 'Any', 'Union']:
                     # typing模块
                     if 'from typing import' not in content:
@@ -210,12 +197,10 @@ def fix_f821_errors(f821_errors):
                         missing_typing = [t for t in typing_imports if t not in existing_typing and t == undefined_name]
                         if missing_typing:
                             fixed_lines.insert(0, f'from typing import {", ".join(missing_typing)}')
-                            print(f"  ✅ 添加typing导入: {undefined_name}")
                 else:
                     # 其他未定义名称，尝试注释掉相关行
                     if undefined_name in line:
                         fixed_lines[line_num] = f"# {line}"
-                        print(f"  ⚠️  注释掉未定义名称的使用: {undefined_name}")
 
         # 写入修复后的内容
         fixed_content = '\n'.join(fixed_lines)
@@ -223,24 +208,19 @@ def fix_f821_errors(f821_errors):
             try:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(fixed_content)
-                print(f"✅ 修复完成: {file_path}")
                 fixed_count += 1
-            except Exception as e:
-                print(f"❌ 写入文件失败: {e}")
+            except Exception:
+                pass
         else:
-            print(f"ℹ️  无需修复: {file_path}")
+            pass
 
     return fixed_count
 
 def main():
     """主函数"""
-    print("🚀 Phase 11.4 深度错误清理工具")
-    print("=" * 50)
 
     # 1. 修复语法错误
-    print("\n📋 第一阶段：修复语法错误")
     syntax_files = get_syntax_error_files()
-    print(f"发现 {len(syntax_files)} 个语法错误文件")
 
     fixed_syntax_files = 0
     for file_path in syntax_files:
@@ -249,43 +229,31 @@ def main():
                 fixed_syntax_files += 1
 
     # 2. 修复F821错误
-    print(f"\n📋 第二阶段：修复F821未定义名称错误")
     f821_errors = get_f821_error_details()
-    print(f"发现 {len(f821_errors)} 个F821错误")
 
-    fixed_f821_files = fix_f821_errors(f821_errors)
+    fix_f821_errors(f821_errors)
 
     # 3. 验证修复结果
-    print(f"\n📊 修复结果总结:")
-    print(f"   语法错误文件: {fixed_syntax_files}/{len(syntax_files)}")
-    print(f"   F821错误文件: {fixed_f821_files}")
 
     # 4. 检查剩余错误
-    print(f"\n🔍 检查剩余错误...")
     try:
         result = subprocess.run([
             'ruff', 'check', 'src/', '--output-format=concise'
         ], capture_output=True, text=True, timeout=30)
 
         total_errors = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
-        syntax_errors = result.stdout.count('invalid-syntax')
+        result.stdout.count('invalid-syntax')
         f821_errors = result.stdout.count('F821')
 
-        print(f"   总错误数: {total_errors}")
-        print(f"   语法错误: {syntax_errors}")
-        print(f"   F821错误: {f821_errors}")
 
         if total_errors < 530:
-            reduction = 530 - total_errors
-            print(f"   🎉 错误减少: {reduction} 个")
+            530 - total_errors
         else:
-            print(f"   ⚠️  错误未减少，可能需要进一步处理")
+            pass
 
-    except Exception as e:
-        print(f"❌ 验证失败: {e}")
+    except Exception:
+        pass
 
-    print(f"\n🎯 Phase 11.4 完成!")
-    print(f"   下一步: 运行 make ci-check 进行完整验证")
 
 if __name__ == "__main__":
     main()

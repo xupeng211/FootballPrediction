@@ -6,11 +6,11 @@ GitHub Issue Label Auto-Fixer
 自动修正GitHub Issues的标签，确保标签使用规范化
 """
 
+import argparse
 import json
 import sys
-import argparse
-from typing import List, Dict, Any, Set
 from pathlib import Path
+from typing import Any
 
 
 class GitHubLabelFixer:
@@ -76,11 +76,10 @@ class GitHubLabelFixer:
             "wontfix",
             "invalid",
             "wont do",
-            "wontfix",
             "question"  # 如果不是真正的疑问
         }
 
-    def run_command(self, command: str) -> Dict[str, Any]:
+    def run_command(self, command: str) -> dict[str, Any]:
         """运行shell命令并返回结果"""
         import subprocess
         try:
@@ -103,22 +102,20 @@ class GitHubLabelFixer:
                 "stderr": e.stderr.strip() if e.stderr else str(e)
             }
 
-    def get_issues(self, state: str = "open") -> List[Dict[str, Any]]:
+    def get_issues(self, state: str = "open") -> list[dict[str, Any]]:
         """获取Issues列表"""
         command = f"gh issue list --repo {self.repo} --state {state} --limit 100 --json number,title,labels"
         result = self.run_command(command)
 
         if not result["success"]:
-            print(f"❌ 获取Issues失败: {result['stderr']}")
             return []
 
         try:
             return json.loads(result["stdout"])
-        except json.JSONDecodeError as e:
-            print(f"❌ 解析Issues数据失败: {e}")
+        except json.JSONDecodeError:
             return []
 
-    def normalize_labels(self, labels: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def normalize_labels(self, labels: list[dict[str, Any]]) -> dict[str, Any]:
         """
         标准化标签
 
@@ -170,11 +167,11 @@ class GitHubLabelFixer:
             "final_labels": list(final_labels)
         }
 
-    def fix_issue_labels(self, issue: Dict[str, Any]) -> bool:
+    def fix_issue_labels(self, issue: dict[str, Any]) -> bool:
         """修正单个Issue的标签"""
         number = issue["number"]
-        title = issue["title"]
-        current_labels = [label["name"] for label in issue.get("labels", [])]
+        issue["title"]
+        [label["name"] for label in issue.get("labels", [])]
 
         # 标准化标签
         normalization = self.normalize_labels(issue.get("labels", []))
@@ -183,19 +180,15 @@ class GitHubLabelFixer:
             # 无需修正
             return False
 
-        print(f"🔧 Issue #{number}: {title}")
-        print(f"   当前标签: {', '.join(current_labels)}")
 
         if normalization["to_remove"]:
-            print(f"   移除标签: {', '.join(normalization['to_remove'])}")
+            pass
 
         if normalization["to_add"]:
-            print(f"   添加标签: {', '.join(normalization['to_add'])}")
+            pass
 
-        print(f"   最终标签: {', '.join(normalization['final_labels'])}")
 
         if self.dry_run:
-            print(f"   🔍 [试运行] 将修正标签")
             return True
 
         # 执行标签修正
@@ -206,7 +199,6 @@ class GitHubLabelFixer:
                 remove_cmd = f'gh issue edit {number} --repo {self.repo} --remove-label {remove_labels}'
                 result = self.run_command(remove_cmd)
                 if not result["success"]:
-                    print(f"   ❌ 移除标签失败: {result['stderr']}")
                     return False
 
             # 再添加标签
@@ -215,17 +207,14 @@ class GitHubLabelFixer:
                 add_cmd = f'gh issue edit {number} --repo {self.repo} --add-label {add_labels}'
                 result = self.run_command(add_cmd)
                 if not result["success"]:
-                    print(f"   ❌ 添加标签失败: {result['stderr']}")
                     return False
 
-            print(f"   ✅ 标签修正成功")
             return True
 
-        except Exception as e:
-            print(f"   ❌ 标签修正失败: {e}")
+        except Exception:
             return False
 
-    def analyze_label_usage(self, issues: List[Dict[str, Any]]) -> Dict[str, int]:
+    def analyze_label_usage(self, issues: list[dict[str, Any]]) -> dict[str, int]:
         """分析标签使用情况"""
         label_count = {}
 
@@ -236,7 +225,7 @@ class GitHubLabelFixer:
 
         return label_count
 
-    def generate_label_report(self, issues: List[Dict[str, Any]], fixed_count: int) -> str:
+    def generate_label_report(self, issues: list[dict[str, Any]], fixed_count: int) -> str:
         """生成标签修正报告"""
         report = []
         report.append("# GitHub Issue标签修正报告")
@@ -308,28 +297,20 @@ class GitHubLabelFixer:
 
         return "\n".join(report)
 
-    def run_label_fix(self) -> Dict[str, Any]:
+    def run_label_fix(self) -> dict[str, Any]:
         """执行标签修正"""
-        print(f"🚀 开始GitHub Issue标签修正...")
-        print(f"仓库: {self.repo}")
-        print(f"模式: {'试运行' if self.dry_run else '执行模式'}")
-        print("")
 
         # 获取所有开放Issues
         issues = self.get_issues("open")
         if not issues:
-            print("❌ 无法获取Issues列表")
             return {"success": False}
 
-        print(f"📊 找到 {len(issues)} 个开放Issues")
-        print("")
 
         # 修正标签
         fixed_count = 0
         for issue in issues:
             if self.fix_issue_labels(issue):
                 fixed_count += 1
-            print("")
 
         # 生成报告
         report = self.generate_label_report(issues, fixed_count)
@@ -340,14 +321,8 @@ class GitHubLabelFixer:
         with open(report_path, 'w', encoding='utf-8') as f:
             f.write(report)
 
-        print(f"📋 标签修正报告已保存到: {report_path}")
-        print("")
 
         # 输出总结
-        print("🎉 标签修正完成!")
-        print(f"- 总Issues数: {len(issues)}")
-        print(f"- 需要修正: {fixed_count}")
-        print(f"- 修正模式: {'试运行' if self.dry_run else '执行模式'}")
 
         return {
             "success": True,

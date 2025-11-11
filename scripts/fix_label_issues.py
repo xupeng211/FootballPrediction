@@ -9,7 +9,6 @@ Purpose: Fix inconsistent label usage automatically
 """
 
 import argparse
-import json
 import os
 import sys
 from datetime import datetime
@@ -111,8 +110,7 @@ class LabelIssueFixer:
 
             return labels
 
-        except requests.exceptions.RequestException as e:
-            print(f"获取标签失败: {e}")
+        except requests.exceptions.RequestException:
             return {}
 
     def create_label(self, name: str, color: str, description: str = "") -> bool:
@@ -127,11 +125,9 @@ class LabelIssueFixer:
         try:
             response = requests.post(url, headers=self.headers, json=data)
             response.raise_for_status()
-            print(f"✅ 创建标签: {name}")
             return True
 
-        except requests.exceptions.RequestException as e:
-            print(f"❌ 创建标签 {name} 失败: {e}")
+        except requests.exceptions.RequestException:
             return False
 
     def update_label(self, name: str, color: str, description: str = "") -> bool:
@@ -145,16 +141,13 @@ class LabelIssueFixer:
         try:
             response = requests.patch(url, headers=self.headers, json=data)
             response.raise_for_status()
-            print(f"✅ 更新标签: {name}")
             return True
 
-        except requests.exceptions.RequestException as e:
-            print(f"❌ 更新标签 {name} 失败: {e}")
+        except requests.exceptions.RequestException:
             return False
 
     def fix_label_colors(self) -> dict:
         """修复标签颜色"""
-        print("🎨 开始修复标签颜色...")
 
         repo_labels = self.get_repo_labels()
         fixes_applied = []
@@ -169,7 +162,6 @@ class LabelIssueFixer:
                     break
 
             if expected_color and label_info["color"] != expected_color:
-                print(f"🔧 修复标签颜色: {label_name} ({label_info['color']} → {expected_color})")
 
                 if self.update_label(label_name, expected_color, label_info["description"]):
                     fixes_applied.append({
@@ -214,8 +206,7 @@ class LabelIssueFixer:
 
             return problematic_issues
 
-        except requests.exceptions.RequestException as e:
-            print(f"获取Issues失败: {e}")
+        except requests.exceptions.RequestException:
             return []
 
     def _analyze_label_problems(self, labels: list) -> list:
@@ -278,7 +269,6 @@ class LabelIssueFixer:
                     converted_label = self._convert_label_format(label)
                     if converted_label:
                         fixed_labels.append(converted_label)
-                        print(f"  🔧 转换标签: {label} → {converted_label}")
 
             if should_keep:
                 fixed_labels.append(label)
@@ -287,10 +277,8 @@ class LabelIssueFixer:
         for problem in problems:
             if problem["type"] == "missing_status":
                 fixed_labels.append("status/pending")
-                print(f"  ➕ 添加状态标签: status/pending")
             elif problem["type"] == "missing_priority":
                 fixed_labels.append("priority/medium")
-                print(f"  ➕ 添加优先级标签: priority/medium")
 
         # 去重
         fixed_labels = list(set(fixed_labels))
@@ -298,11 +286,9 @@ class LabelIssueFixer:
         try:
             response = requests.put(url, headers=self.headers, json={"labels": fixed_labels})
             response.raise_for_status()
-            print(f"✅ Issue #{issue_number} 标签已修复")
             return True
 
-        except requests.exceptions.RequestException as e:
-            print(f"❌ 修复Issue #{issue_number} 标签失败: {e}")
+        except requests.exceptions.RequestException:
             return False
 
     def _convert_label_format(self, label: str) -> str:
@@ -341,7 +327,6 @@ class LabelIssueFixer:
 
     def run_label_fixes(self, execute: bool = False) -> dict:
         """运行标签修复"""
-        print("🔍 开始分析标签问题...")
 
         # 修复标签颜色
         color_fixes = self.fix_label_colors()
@@ -349,14 +334,10 @@ class LabelIssueFixer:
         # 获取有标签问题的Issues
         problematic_issues = self.get_issues_with_label_issues()
 
-        print(f"📋 发现 {len(problematic_issues)} 个有标签问题的Issues")
 
         issue_fixes = []
 
         for issue in problematic_issues:
-            print(f"\n🔧 处理Issue #{issue['issue_number']}: {issue['title']}")
-            print(f"  当前标签: {', '.join(issue['current_labels'])}")
-            print(f"  问题: {', '.join([p['description'] for p in issue['problems']])}")
 
             if execute:
                 if self.fix_issue_labels(issue["issue_number"], issue["current_labels"], issue["problems"]):
@@ -367,7 +348,7 @@ class LabelIssueFixer:
                         "url": issue["url"]
                     })
             else:
-                print("  🔍 试运行模式 - 跳过实际修复")
+                pass
 
         return {
             "color_fixes": color_fixes,
@@ -445,7 +426,7 @@ class LabelIssueFixer:
             "",
             "---",
             f"*报告生成时间: {datetime.now().isoformat()}*",
-            f"*工具: Label Issue Fixer v1.0*"
+            "*工具: Label Issue Fixer v1.0*"
         ])
 
         return "\n".join(report_lines)
@@ -458,7 +439,6 @@ class LabelIssueFixer:
             output_path = Path(output_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(report_content, encoding='utf-8')
-            print(f"📄 修复报告已保存到: {output_path}")
         else:
             # 使用默认文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -466,7 +446,6 @@ class LabelIssueFixer:
             output_path = Path(default_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(report_content, encoding='utf-8')
-            print(f"📄 修复报告已保存到: {output_path}")
 
 
 def main():
@@ -485,15 +464,15 @@ def main():
     github_token = args.token or os.environ.get("GITHUB_TOKEN")
 
     if not github_token:
-        print("⚠️ 警告: 未提供GitHub令牌，API调用可能受限")
+        pass
 
     # 确定执行模式
     execute = args.execute and not args.dry_run
 
     if execute:
-        print("🔧 执行模式 - 将实际修复标签问题")
+        pass
     else:
-        print("🔍 试运行模式 - 仅生成报告")
+        pass
 
     # 创建修复器
     fixer = LabelIssueFixer(args.repo, github_token)
@@ -505,10 +484,7 @@ def main():
     fixer.save_fix_report(fix_results, args.output)
 
     if args.verbose:
-        print(f"\n📊 修复完成!")
-        print(f"🎨 标签颜色修复: {len(fix_results['color_fixes'])}")
-        print(f"🔧 Issue标签修复: {len(fix_results['issue_fixes'])}")
-        print(f"📋 处理Issues: {fix_results['total_issues_processed']}")
+        pass
 
     return 0
 
