@@ -66,9 +66,9 @@ jobs:
           exit 1
         fi
 
-    - name: 🧪 Test Suite
-      name: 🧪 Test Execution
-      runs-on: ubuntu-latest
+  test-suite:
+    name: 🧪 Test Execution
+    runs-on: ubuntu-latest
 
     steps:
     - name: 🚀 Checkout Code
@@ -108,9 +108,9 @@ jobs:
           # codecov -f coverage.xml  # 如果有codecov token可以取消注释
         fi
 
-    - name: 🔒 Security Scan
-      name: 🔒 Security Assessment
-      runs-on: ubuntu-latest
+    security-scan:
+    name: 🔒 Security Assessment
+    runs-on: ubuntu-latest
 
     steps:
     - name: 🚀 Checkout Code
@@ -151,9 +151,9 @@ jobs:
           cat pip-audit-report.json
         fi
 
-    - name: 🏷️ Version Tag Check
-      name: 🏷️ Version and Tag Validation
-      runs-on: ubuntu-latest
+    version-tag-check:
+    name: 🏷️ Version and Tag Validation
+    runs-on: ubuntu-latest
 
     steps:
     - name: 🚀 Checkout Code
@@ -187,9 +187,9 @@ jobs:
           echo "ℹ️  未发现零错误成就标签"
         fi
 
-    - name: 📊 Quality Metrics
-      name: 📊 Quality Metrics Collection
-      runs-on: ubuntu-latest
+    quality-metrics:
+    name: 📊 Quality Metrics Collection
+    runs-on: ubuntu-latest
 
     steps:
     - name: 🚀 Checkout Code
@@ -296,20 +296,3 @@ jobs:
         echo "make fix-code  # 一键修复常见问题"
         echo "make test.unit # 运行单元测试"
         echo "ruff check src/ tests/ --fix  # 自动修复"
-
-# 工作流配置
-  # 并行执行以提高效率
-  strategy:
-    fail-fast: false  # 允许其他作业继续执行
-    matrix:
-      # 可以在这里添加不同Python版本的测试矩阵
-      python-version: ['3.9', '3.10', '3.11']
-
-  # 超时设置
-  timeout-minutes: 30
-
-  # 权限
-  permissions:
-    contents: read
-    checks: write
-    pull-requests: write
