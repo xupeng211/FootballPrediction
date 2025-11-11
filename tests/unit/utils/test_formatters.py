@@ -6,6 +6,8 @@ Data Formatters Test
 import json
 from datetime import datetime
 
+import pytest
+
 from src.utils.formatters import (
     format_currency,
     format_datetime,

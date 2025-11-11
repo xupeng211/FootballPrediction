@@ -6,6 +6,7 @@ Service Manager Tests
 Tests core functionality of service manager.
 """
 
+import asyncio
 from unittest.mock import Mock, patch
 
 import pytest

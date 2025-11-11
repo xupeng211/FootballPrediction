@@ -64,15 +64,19 @@ except ImportError:
             self.timestamp = datetime.now()
 
     class Team:
-        def __init__(self, id: int, name: str):
-            self.id = id
+        def __init__(self, team_id: int, name: str):
+            self.id = team_id
             self.name = name
 
     class Match:
         def __init__(
-            self, id: int, home_team: Team, away_team: Team, start_time: datetime = None
+            self,
+            match_id: int,
+            home_team: Team,
+            away_team: Team,
+            start_time: datetime = None,
         ):
-            self.id = id
+            self.id = match_id
             self.home_team = home_team
             self.away_team = away_team
             self.start_time = start_time or datetime.now()

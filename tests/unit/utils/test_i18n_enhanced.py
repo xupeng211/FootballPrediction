@@ -40,7 +40,7 @@ class TestI18nEnhanced:
             init_i18n()
             assert True  # 如果到达这里说明初始化成功
         except Exception:
-            raise AssertionError("init_i18n不应该抛出异常")
+            raise AssertionError("init_i18n不应该抛出异常") from None
 
         # 多次调用应该也是安全的
         try:
@@ -49,7 +49,7 @@ class TestI18nEnhanced:
             init_i18n()
             assert True
         except Exception:
-            raise AssertionError("多次调用init_i18n应该是安全的")
+            raise AssertionError("多次调用init_i18n应该是安全的") from None
 
     def test_get_text_with_default(self):
         """测试带默认值的获取翻译文本"""

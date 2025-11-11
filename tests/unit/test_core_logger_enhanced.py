@@ -26,12 +26,12 @@ class TestLoggerFunctionality:
         assert logger == mock_logger
 
     @patch("logging.basicConfig")
-    def test_setup_logger_with_mock(self, mock_basicConfig):
+    def test_setup_logger_with_mock(self, mock_basic_config):
         """测试设置日志器（使用mock）"""
         setup_logger("test_setup")
 
         # 验证logging.basicConfig被调用
-        mock_basicConfig.assert_called_once()
+        mock_basic_config.assert_called_once()
 
     @patch("logging.getLogger")
     def test_multiple_logger_calls(self, mock_get_logger):
@@ -64,7 +64,7 @@ class TestLoggerFunctionality:
         """测试日志器错误处理"""
         mock_get_logger.side_effect = Exception("Logging error")
 
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, RuntimeError)):
             get_logger("error_logger")
 
 

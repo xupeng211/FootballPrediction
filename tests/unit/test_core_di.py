@@ -9,7 +9,11 @@ from unittest.mock import Mock
 import pytest
 
 # 导入目标模块
-from core.di import *  # TODO: Convert to explicit imports
+from src.core.di import (
+    DIContainer,
+    ServiceDescriptor,
+    ServiceLifetime,
+)
 
 
 class TestDIContainer:
@@ -24,7 +28,7 @@ class TestDIContainer:
     def test_service_descriptor_creation(self):
         """测试服务描述符创建"""
         descriptor = ServiceDescriptor(str, "test_service", ServiceLifetime.SINGLETON)
-        assert descriptor.interface == str
+        assert descriptor.interface is str
         assert descriptor.implementation == "test_service"
         assert descriptor.lifetime == ServiceLifetime.SINGLETON
 
@@ -70,5 +74,5 @@ class TestDIContainer:
         """测试解析未注册服务"""
         container = DIContainer()
 
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, KeyError)):
             container.resolve(int)

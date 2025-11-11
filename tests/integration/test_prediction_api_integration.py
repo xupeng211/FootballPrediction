@@ -725,8 +725,8 @@ class TestPredictionAPIAdvancedFeatures:
             sensitivity_analysis[scenario] = changes
 
         # 4. 验证敏感性分析结果
-        for scenario, changes in sensitivity_analysis.items():
-            for outcome, metrics in changes.items():
+        for _scenario, changes in sensitivity_analysis.items():
+            for _outcome, metrics in changes.items():
                 assert "absolute_change" in metrics
                 assert "percentage_change" in metrics
                 assert isinstance(metrics["absolute_change"], (int, float))

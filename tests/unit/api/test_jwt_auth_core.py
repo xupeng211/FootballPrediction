@@ -674,7 +674,7 @@ class TestEdgeCases:
 
     def test_create_token_with_empty_data(self, auth_manager):
         """测试创建空数据的令牌"""
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, TypeError)):
             auth_manager.create_access_token({})
 
     def test_create_token_with_none_data(self, auth_manager):

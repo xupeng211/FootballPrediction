@@ -9,7 +9,18 @@ import pytest
 
 # 导入目标模块
 try:
-    from core.exceptions import *  # TODO: Convert to explicit imports
+    from src.core.exceptions import (
+        CacheError,
+        ConfigError,
+        DatabaseError,
+        DataError,
+        DependencyInjectionError,
+        FootballPredictionError,
+        ModelError,
+        PredictionError,
+        ServiceError,
+        ValidationError,
+    )
 except ImportError as e:
     # 如果导入失败，创建一个跳过所有测试的标记
     pytest.skip(f"无法导入模块 core.exceptions: {e}", allow_module_level=True)
@@ -144,7 +155,7 @@ class TestExceptionsAdvanced:
         try:
             raise RuntimeError("Context")
         except RuntimeError:
-            raise ValidationError("Validation failed")
+            raise ValidationError("Validation failed") from None
 
     def test_exception_context_2(self):
         """测试异常上下文 - 自动设置"""
@@ -152,7 +163,7 @@ class TestExceptionsAdvanced:
             try:
                 raise TypeError("Type error")
             except TypeError:
-                raise DataError("Data error")
+                raise DataError("Data error") from None
         except DataError as e:
             assert e.__context__ is not None
 
@@ -224,7 +235,7 @@ class TestExceptionsIntegration:
         async def async_function():
             raise PredictionError("Async error")
 
-        with pytest.raises(Exception):
+        with pytest.raises(PredictionError):
             asyncio.run(async_function())
 
     def test_exception_pickling_1(self):
@@ -234,7 +245,7 @@ class TestExceptionsIntegration:
         error = FootballPredictionError("Pickle test")
         pickled = pickle.dumps(error)
         unpickled = pickle.loads(pickled)
-        assert type(unpickled) == type(error)
+        assert type(unpickled) is type(error)
         assert str(unpickled) == str(error)
 
     def test_exception_pickling_2(self):

@@ -51,6 +51,11 @@ class Adapter(Target):
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
+    @abstractmethod
+    def connect(self) -> bool:
+        """连接方法"""
+        pass
+
 
 class DataTransformer(ABC):
     """数据转换器基类"""

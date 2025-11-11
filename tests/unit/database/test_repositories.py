@@ -17,7 +17,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import exc as SQLAlchemyExc
+from sqlalchemy import exc as sqlalchemy_exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
@@ -280,11 +280,11 @@ class TestBaseRepository:
 
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock(
-            side_effect=SQLAlchemyExc.IntegrityError("stmt", "params", "orig")
+            side_effect=sqlalchemy_exc.IntegrityError("stmt", "params", "orig")
         )
         mock_session.rollback = AsyncMock()
 
-        with pytest.raises(SQLAlchemyExc.IntegrityError):
+        with pytest.raises(sqlalchemy_exc.IntegrityError):
             await repository.create(obj_data, session=mock_session)
 
         # 验证异常时不会调用rollback（由调用者处理）
@@ -654,13 +654,13 @@ class TestDatabaseConnection:
                 self.session = None
 
             def get_session(self):
-                raise SQLAlchemyExc.DBAPIError("Connection failed", {}, None)
+                raise sqlalchemy_exc.DBAPIError("Connection failed", {}, None)
 
         # 执行连接失败测试
         db_manager = FailingMockDatabaseManager()
 
         # 验证连接失败处理
-        with pytest.raises(SQLAlchemyExc.DBAPIError):
+        with pytest.raises(sqlalchemy_exc.DBAPIError):
             db_manager.get_session()
 
     @pytest.mark.asyncio

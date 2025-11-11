@@ -5,7 +5,18 @@
 """
 
 # 导入目标模块
-from core.exceptions import *  # TODO: Convert to explicit imports
+from src.core.exceptions import (
+    CacheError,
+    ConfigError,
+    DatabaseError,
+    DataError,
+    DependencyInjectionError,
+    FootballPredictionError,
+    ModelError,
+    PredictionError,
+    ServiceError,
+    ValidationError,
+)
 
 
 class TestExceptions:

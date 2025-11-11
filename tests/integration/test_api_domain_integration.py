@@ -165,12 +165,10 @@ class TestPredictionAPIDomainIntegration:
         """测试预测积分计算的领域逻辑"""
         # 直接测试领域模型的积分计算
         try:
-            from decimal import Decimal
+            # from decimal import Decimal
 
             from src.domain.models.prediction import (
-                ConfidenceScore,
                 Prediction,
-                PredictionScore,
                 PredictionStatus,
             )
 

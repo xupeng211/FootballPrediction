@@ -317,7 +317,7 @@ class TestDataCollectorsIntegrationSimple:
         with patch.object(collector, "collect") as mock_collect:
             mock_collect.side_effect = Exception("Network error")
 
-            with pytest.raises(Exception):
+            with pytest.raises((ConnectionError, IOError, RuntimeError)):
                 await collector.collect()
 
         # 模拟成功恢复

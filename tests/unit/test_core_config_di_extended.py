@@ -518,7 +518,7 @@ class TestConfigurationValidationBoundaryConditions:
         assert len(binder.config.services) == 2
 
         # 尝试应用配置时应该检测到循环依赖
-        with pytest.raises(Exception):  # 具体异常类型取决于实现
+        with pytest.raises((ValueError, RuntimeError)):  # 具体异常类型取决于实现
             binder.apply_configuration()
 
     def test_missing_dependency_in_config(self):

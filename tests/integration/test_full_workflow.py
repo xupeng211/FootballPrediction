@@ -6,11 +6,14 @@ Full Workflow Integration Tests
 """
 
 import asyncio
+import json
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import AsyncClient
+
+from tests.integration.test_full_workflow import cache_test_data, mock_redis
 
 # 标记测试
 pytestmark = [pytest.mark.integration, pytest.mark.workflow, pytest.mark.e2e]
@@ -1024,36 +1027,39 @@ class TestPerformanceWorkflow:
         performance_benchmarks,
     ):
         """测试缓存性能工作流"""
-        import time
 
-        cache_key = cache_test_data["user_stats_key"]
-        cached_value = json.dumps(cache_test_data["test_value"])
 
-        # 设置Redis模拟
-        mock_redis.get.return_value = cached_value
-        mock_redis.set.return_value = True
-        mock_redis.exists.return_value = True
+@pytest.mark.asyncio
+async def test_cache_workflow(self, async_client: AsyncClient):
+    """测试缓存工作流"""
+    import time
 
-        # 测试缓存读取性能
-        start_time = time.time()
-        response = await async_client.get(f"/api/cache/{cache_key}")
-        cache_read_time = time.time() - start_time
+    cache_key = cache_test_data["user_stats_key"]
+    cached_value = json.dumps(cache_test_data["test_value"])
 
-        # 验证缓存读取性能
-        if response.status_code == 200:
-            assert cache_read_time < 0.1  # 缓存读取应该很快
+    # 设置Redis模拟
+    mock_redis.get.return_value = cached_value
+    mock_redis.set.return_value = True
+    mock_redis.exists.return_value = True
 
-        # 测试缓存写入性能
-        start_time = time.time()
-        new_cache_data = {"test": "data", "timestamp": time.time()}
-        response = await async_client.post(
-            f"/api/cache/{cache_key}", json=new_cache_data
-        )
-        cache_write_time = time.time() - start_time
+    # 测试缓存读取性能
+    start_time = time.time()
+    response = await async_client.get(f"/api/cache/{cache_key}")
+    cache_read_time = time.time() - start_time
 
-        # 验证缓存写入性能
-        if response.status_code == 200:
-            assert cache_write_time < 0.1  # 缓存写入也应该很快
+    # 验证缓存读取性能
+    if response.status_code == 200:
+        assert cache_read_time < 0.1  # 缓存读取应该很快
+
+    # 测试缓存写入性能
+    start_time = time.time()
+    new_cache_data = {"test": "data", "timestamp": time.time()}
+    response = await async_client.post(f"/api/cache/{cache_key}", json=new_cache_data)
+    cache_write_time = time.time() - start_time
+
+    # 验证缓存写入性能
+    if response.status_code == 200:
+        assert cache_write_time < 0.1  # 缓存写入也应该很快
 
 
 # 工作流测试辅助函数

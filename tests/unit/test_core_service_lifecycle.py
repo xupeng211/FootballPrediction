@@ -42,7 +42,7 @@ class TestModuleFunctionality:
         mock_service = Mock()
         mock_service.process.side_effect = Exception("Test error")
 
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, RuntimeError)):
             mock_service.process()
 
     def test_async_functionality(self):

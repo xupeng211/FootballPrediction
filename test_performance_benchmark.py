@@ -7,18 +7,14 @@ Author: Claude Code
 Version: 1.0.0
 """
 
-import os
-import time
 import json
-import traceback
-import subprocess
-import sys
+import os
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, timedelta
+
 
 def test_code_complexity_metrics():
     """测试代码复杂度指标"""
-    print("📊 测试代码复杂度指标...")
 
     try:
         complexity_metrics = {
@@ -35,13 +31,13 @@ def test_code_complexity_metrics():
         total_lines = 0
         nested_blocks = 0
 
-        for root, dirs, files in os.walk('src'):
+        for root, _dirs, files in os.walk('src'):
             for file in files:
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
                     total_files += 1
 
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding='utf-8') as f:
                         content = f.read()
                         lines = content.split('\n')
                         total_lines += len(lines)
@@ -66,38 +62,25 @@ def test_code_complexity_metrics():
 
         # 估算复杂度指标
         avg_functions_per_file = total_functions / total_files if total_files > 0 else 0
-        avg_classes_per_file = total_classes / total_files if total_files > 0 else 0
+        total_classes / total_files if total_files > 0 else 0
         complexity_score = (nested_blocks / total_lines * 100) if total_lines > 0 else 0
 
-        print(f"📈 复杂度指标:")
-        print(f"   总文件数: {total_files}")
-        print(f"   总函数数: {total_functions}")
-        print(f"   总类数: {total_classes}")
-        print(f"   总代码行数: {total_lines:,}")
-        print(f"   平均函数/文件: {avg_functions_per_file:.1f}")
-        print(f"   平均类/文件: {avg_classes_per_file:.1f}")
-        print(f"   嵌套块比例: {complexity_score:.2f}%")
 
         # 评估复杂度等级
         if avg_functions_per_file < 5 and complexity_score < 15:
-            print("✅ 代码复杂度: 优秀")
             complexity_metrics['cyclomatic_complexity'] = 5
         elif avg_functions_per_file < 10 and complexity_score < 25:
-            print("⚠️ 代码复杂度: 良好")
             complexity_metrics['cyclomatic_complexity'] = 4
         else:
-            print("❌ 代码复杂度: 需要改进")
             complexity_metrics['cyclomatic_complexity'] = 3
 
         return complexity_metrics
 
-    except Exception as e:
-        print(f"❌ 复杂度测试失败: {e}")
+    except Exception:
         return {}
 
 def test_documentation_coverage():
     """测试文档覆盖率"""
-    print("\n📚 测试文档覆盖率...")
 
     try:
         doc_coverage = {
@@ -117,13 +100,13 @@ def test_documentation_coverage():
         documented_files = 0
         total_docstrings = 0
 
-        for root, dirs, files in os.walk('src'):
+        for root, _dirs, files in os.walk('src'):
             for file in files:
                 if file.endswith('.py'):
                     total_py_files += 1
                     file_path = os.path.join(root, file)
 
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding='utf-8') as f:
                         content = f.read()
                         docstrings = content.count('"""')
                         total_docstrings += docstrings
@@ -139,35 +122,27 @@ def test_documentation_coverage():
             if os.path.exists(doc):
                 doc_coverage['sdk_docs'] += 1
 
-        print(f"📊 文档覆盖率:")
-        print(f"   API文档: {doc_coverage['api_docs']}/{len(api_docs)}")
-        print(f"   代码文档覆盖率: {doc_coverage['code_docs']:.1f}%")
-        print(f"   SDK文档: {doc_coverage['sdk_docs']}/{len(sdk_docs)}")
-        print(f"   总文档字符串: {total_docstrings}")
 
         # 计算总体覆盖率
         total_docs = doc_coverage['api_docs'] + (doc_coverage['code_docs'] / 100) + doc_coverage['sdk_docs']
         max_docs = len(api_docs) + 1 + len(sdk_docs)
         overall_coverage = (total_docs / max_docs) * 100
 
-        print(f"   总体文档覆盖率: {overall_coverage:.1f}%")
 
         if overall_coverage >= 80:
-            print("✅ 文档覆盖率: 优秀")
+            pass
         elif overall_coverage >= 60:
-            print("⚠️ 文档覆盖率: 良好")
+            pass
         else:
-            print("❌ 文档覆盖率: 需要改进")
+            pass
 
         return overall_coverage
 
-    except Exception as e:
-        print(f"❌ 文档覆盖率测试失败: {e}")
+    except Exception:
         return 0
 
 def test_modularity_metrics():
     """测试模块化指标"""
-    print("\n🧩 测试模块化指标...")
 
     try:
         modularity_metrics = {
@@ -179,7 +154,7 @@ def test_modularity_metrics():
 
         # 统计模块数量
         modules = set()
-        for root, dirs, files in os.walk('src'):
+        for root, _dirs, files in os.walk('src'):
             if '__init__.py' in files:
                 module_name = os.path.relpath(root, 'src').replace('/', '.')
                 modules.add(module_name)
@@ -191,11 +166,11 @@ def test_modularity_metrics():
         from_count = 0
         class_count = 0
 
-        for root, dirs, files in os.walk('src'):
+        for root, _dirs, files in os.walk('src'):
             for file in files:
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding='utf-8') as f:
                         content = f.read()
                         import_count += content.count('import ')
                         from_count += content.count('from ')
@@ -215,22 +190,14 @@ def test_modularity_metrics():
             modularity_metrics['interface_segregation'] = 3
             modularity_metrics['single_responsibility'] = 3
 
-        print(f"🏗️ 模块化指标:")
-        print(f"   模块数量: {modularity_metrics['module_count']}")
-        print(f"   依赖耦合度: {modularity_metrics['dependency_coupling']:.1f}")
-        print(f"   接口分离度: {modularity_metrics['interface_segregation']}/5")
-        print(f"   单一职责度: {modularity_metrics['single_responsibility']}/5")
-        print(f"   平均类/模块: {avg_classes_per_module:.1f}")
 
         return modularity_metrics
 
-    except Exception as e:
-        print(f"❌ 模块化测试失败: {e}")
+    except Exception:
         return {}
 
 def test_reusability_metrics():
     """测试可重用性指标"""
-    print("\n🔄 测试可重用性指标...")
 
     try:
         reusability_metrics = {
@@ -245,11 +212,11 @@ def test_reusability_metrics():
         class_names = {}
         utility_keywords = ['utils', 'helper', 'common', 'shared', 'base']
 
-        for root, dirs, files in os.walk('src'):
+        for root, _dirs, files in os.walk('src'):
             for file in files:
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding='utf-8') as f:
                         content = f.read()
 
                         # 统计函数名频率
@@ -287,21 +254,14 @@ def test_reusability_metrics():
             if pattern.lower() in Path('src').read_text().lower():
                 reusability_metrics['design_patterns'] += 1
 
-        print(f"🔄 可重用性指标:")
-        print(f"   函数重用率: {reusability_metrics['function_reuse']:.1f}%")
-        print(f"   类重用率: {reusability_metrics['class_reuse']:.1f}%")
-        print(f"   工具函数数量: {reusability_metrics['utility_functions']}")
-        print(f"   设计模式数量: {reusability_metrics['design_patterns']}")
 
         return reusability_metrics
 
-    except Exception as e:
-        print(f"❌ 可重用性测试失败: {e}")
+    except Exception:
         return {}
 
 def test_performance_characteristics():
     """测试性能特征"""
-    print("\n⚡ 测试性能特征...")
 
     try:
         performance_characteristics = {
@@ -311,11 +271,11 @@ def test_performance_characteristics():
             'resource_optimization': 0
         }
 
-        for root, dirs, files in os.walk('src'):
+        for root, _dirs, files in os.walk('src'):
             for file in files:
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding='utf-8') as f:
                         content = f.read()
 
                         # 检查异步使用
@@ -337,29 +297,22 @@ def test_performance_characteristics():
                         if any(keyword in content for keyword in resource_keywords):
                             performance_characteristics['resource_optimization'] += 1
 
-        print(f"⚡ 性能特征统计:")
-        print(f"   异步使用: {performance_characteristics['async_usage']} 个文件")
-        print(f"   缓存使用: {performance_characteristics['caching']} 个文件")
-        print(f"   批处理: {performance_characteristics['batch_processing']} 个文件")
-        print(f"   资源优化: {performance_characteristics['resource_optimization']} 个文件")
 
         total_features = sum(performance_characteristics.values())
         if total_features >= 50:
-            print("✅ 性能特征: 优秀")
+            pass
         elif total_features >= 30:
-            print("⚠️ 性能特征: 良好")
+            pass
         else:
-            print("❌ 性能特征: 需要改进")
+            pass
 
         return total_features
 
-    except Exception as e:
-        print(f"❌ 性能特征测试失败: {e}")
+    except Exception:
         return 0
 
 def test_file_size_efficiency():
     """测试文件大小效率"""
-    print("\n📁 测试文件大小效率...")
 
     try:
         size_metrics = {
@@ -370,7 +323,7 @@ def test_file_size_efficiency():
         }
 
         file_sizes = []
-        for root, dirs, files in os.walk('src'):
+        for root, _dirs, files in os.walk('src'):
             for file in files:
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
@@ -390,33 +343,25 @@ def test_file_size_efficiency():
                 'large (>10KB)': sum(1 for size in file_sizes if size > 10240)
             }
 
-        print(f"📊 文件大小统计:")
-        print(f"   总文件数: {len(file_sizes)}")
-        print(f"   总大小: {size_metrics['total_size']:,} 字节")
-        print(f"   平均大小: {size_metrics['average_size']:.0f} 字节")
-        print(f"   大文件数量: {size_metrics['large_files']}")
 
-        print(f"📏 文件大小分布:")
-        for category, count in size_metrics['size_distribution'].items():
-            print(f"   {category}: {count} 个文件")
+        for _category, _count in size_metrics['size_distribution'].items():
+            pass
 
         # 评估效率
         if size_metrics['large_files'] / len(file_sizes) < 0.1:
-            print("✅ 文件大小效率: 优秀")
+            pass
         elif size_metrics['large_files'] / len(file_sizes) < 0.2:
-            print("⚠️ 文件大小效率: 良好")
+            pass
         else:
-            print("❌ 文件大小效率: 需要改进")
+            pass
 
         return size_metrics
 
-    except Exception as e:
-        print(f"❌ 文件大小测试失败: {e}")
+    except Exception:
         return {}
 
 def calculate_overall_score():
     """计算总体分数"""
-    print("\n🎯 计算总体性能分数...")
 
     scores = {}
 
@@ -466,23 +411,17 @@ def calculate_overall_score():
     total_score = sum(scores.values())
     max_score = 100
 
-    print(f"📊 性能基准测试分数汇总:")
-    for category, score in scores.items():
-        print(f"   {category}: {score}/{max_score}")
+    for _category, _score in scores.items():
+        pass
 
-    print(f"\n🎯 总体性能分数: {total_score}/{max_score}")
 
     if total_score >= 85:
-        print("🎉 性能基准测试优秀！")
         grade = "A"
     elif total_score >= 70:
-        print("⚠️ 性能基准测试良好")
         grade = "B"
     elif total_score >= 60:
-        print("📈 性能基准测试合格")
         grade = "C"
     else:
-        print("❌ 性能基准测试需要改进")
         grade = "D"
 
     return {
@@ -494,8 +433,6 @@ def calculate_overall_score():
 
 def main():
     """主测试函数"""
-    print("🚀 性能基准测试开始")
-    print("=" * 60)
 
     # 计算总体分数
     result = calculate_overall_score()
@@ -512,5 +449,4 @@ if __name__ == "__main__":
     with open(report_path, 'w', encoding='utf-8') as f:
         json.dump(result, f, indent=2, default=str)
 
-    print(f"\n📄 详细报告已保存: {report_path}")
     exit(0 if result['grade'] in ['A', 'B'] else 1)

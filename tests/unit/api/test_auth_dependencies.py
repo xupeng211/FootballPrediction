@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 认证依赖模块测试
 Authentication Dependencies Test Module
@@ -6,6 +7,8 @@ Authentication Dependencies Test Module
 """
 
 import logging
+
+import pytest
 
 # ==================== 导入修复 ====================
 # 为确保测试文件能够正常运行，我们为可能失败的导入创建Mock
@@ -222,9 +225,6 @@ MOCK_USERS = {
 
 # ==================== 导入修复结束 ====================
 
-from unittest.mock import Mock, patch
-
-import pytest
 
 logger = logging.getLogger(__name__)
 
@@ -284,14 +284,6 @@ async def require_admin(user):
     if hasattr(user, "role") and user.role == "admin":
         return user
     raise HTTPException(status_code=403, detail="Admin access required")
-
-
-class HTTPException(Exception):
-    def __init__(self, status_code, detail="", headers=None):
-        super().__init__()
-        self.status_code = status_code
-        self.detail = detail
-        self.headers = headers or {}
 
 
 class TestTokenData:

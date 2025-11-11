@@ -94,16 +94,16 @@ class TestWarningFiltersInitialization:
             assert len(calls) == 4
 
             # 检查第一次调用 (UserWarning, tensorflow.*)
-            assert calls[0][1]["category"] == UserWarning
+            assert calls[0][1]["category"] is UserWarning
             assert "tensorflow" in str(calls[0][1]["module"])
 
             # 检查第二次调用 (DeprecationWarning, sklearn.*)
-            assert calls[1][1]["category"] == DeprecationWarning
+            assert calls[1][1]["category"] is DeprecationWarning
             assert "sklearn" in str(calls[1][1]["module"])
 
             # 检查第三次调用 (FutureWarning, pandas.*)
-            assert calls[2][1]["category"] == FutureWarning
+            assert calls[2][1]["category"] is FutureWarning
             assert "pandas" in str(calls[2][1]["module"])
 
             # 检查第四次调用 (PendingDeprecationWarning)
-            assert calls[3][1]["category"] == PendingDeprecationWarning
+            assert calls[3][1]["category"] is PendingDeprecationWarning

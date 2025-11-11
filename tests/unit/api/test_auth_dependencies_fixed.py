@@ -7,7 +7,7 @@ Authentication Dependencies Test Module
 
 import logging
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -240,7 +240,6 @@ UserAuth = SafeMock
 HTTPException = HTTPException if FASTAPI_AVAILABLE else SafeMock
 Request = SafeMock
 status = SafeMock
-Mock = SafeMock
 patch = patch if "patch" in globals() else SafeMock
 
 # 导入修复结束
@@ -303,7 +302,8 @@ class TestAuthenticationDependencies:
         """测试验证无效令牌"""
         auth_manager = MockJWTAuthManager()
 
-        with pytest.raises(Exception):  # 应该抛出HTTPException
+        with pytest.raises(HTTPException):
+            # 应该抛出HTTPException
             await auth_manager.verify_token("invalid_token")
 
     def test_password_hashing(self):
@@ -347,13 +347,13 @@ class TestAuthenticationDependencies:
     @pytest.mark.asyncio
     async def test_get_current_user_without_token(self):
         """测试无令牌时获取当前用户"""
-        with pytest.raises(Exception):  # 应该抛出HTTPException
+        with pytest.raises(HTTPException):  # 应该抛出HTTPException
             await get_current_user_mock(None)
 
     @pytest.mark.asyncio
     async def test_get_current_user_with_invalid_token(self):
         """测试使用无效令牌获取当前用户"""
-        with pytest.raises(Exception):  # 应该抛出HTTPException
+        with pytest.raises(HTTPException):  # 应该抛出HTTPException
             await get_current_user_mock("invalid_token")
 
     @pytest.mark.asyncio
@@ -370,7 +370,7 @@ class TestAuthenticationDependencies:
         """测试获取非活跃用户"""
         inactive_user = SafeMock(is_active=False)
 
-        with pytest.raises(Exception):  # 应该抛出HTTPException
+        with pytest.raises(HTTPException):  # 应该抛出HTTPException
             await get_current_active_user_mock(inactive_user)
 
     @pytest.mark.asyncio
@@ -387,7 +387,7 @@ class TestAuthenticationDependencies:
         """测试非管理员用户访问管理员功能"""
         regular_user = await get_current_user_mock("valid_token")  # 普通用户
 
-        with pytest.raises(Exception):  # 应该抛出HTTPException
+        with pytest.raises(HTTPException):  # 应该抛出HTTPException
             await get_admin_user_mock(regular_user)
 
     def test_mock_users_data_integrity(self):

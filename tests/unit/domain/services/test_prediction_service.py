@@ -58,12 +58,12 @@ except ImportError:
     class Match:
         def __init__(
             self,
-            id: int,
+            match_id: int,
             home_team: Any,
             away_team: Any,
             status: str = MatchStatus.SCHEDULED,
         ):
-            self.id = id
+            self.id = match_id
             self.home_team = home_team
             self.away_team = away_team
             self.status = status
@@ -71,20 +71,20 @@ except ImportError:
             self.result = None
 
     class Team:
-        def __init__(self, id: int, name: str):
-            self.id = id
+        def __init__(self, team_id: int, name: str):
+            self.id = team_id
             self.name = name
 
     class Prediction:
         def __init__(
             self,
-            id: int,
+            prediction_id: int,
             user_id: int,
             match: Match,
             predicted_home: int,
             predicted_away: int,
         ):
-            self.id = id
+            self.id = prediction_id
             self.user_id = user_id
             self.match = match
             self.predicted_home = predicted_home
