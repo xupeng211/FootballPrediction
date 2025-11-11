@@ -33,6 +33,18 @@ class MetricsCollector:
         self.metrics[name] = value
 
 
+# 全局指标收集器实例
+_metrics_collector = None
+
+def get_metrics_collector():
+    """获取全局指标收集器实例"""
+    global _metrics_collector
+    if _metrics_collector is None:
+        _metrics_collector = MetricsCollector()
+        _metrics_collector.initialize()
+    return _metrics_collector
+
+
 # 便捷函数 - 直接实现以保持向后兼容
 def start_metrics_collection():
     """开始指标收集"""
