@@ -1,0 +1,76 @@
+name: GitHub Issues Cleanup
+
+on:
+  schedule:
+    # 每周一凌晨2点执行
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '试运行模式'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+        - 'true'
+        - 'false'
+
+jobs:
+  cleanup-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install GitHub CLI
+      run: |
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt update
+        sudo apt install gh
+
+    - name: Authenticate GitHub CLI
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+    - name: Run Issues Cleanup
+      run: |
+        if [ "${{ github.event.inputs.dry_run || 'true' }}" = "true" ]; then
+          python3 scripts/github_issues_cleaner.py --dry-run
+        else
+          python3 scripts/github_issues_cleaner.py
+        fi
+
+    - name: Upload Cleanup Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: cleanup-report
+        path: github_issues_cleanup_report.json
+
+    - name: Comment on Issue if Actions Taken
+      if: github.event.inputs.dry_run == 'false'
+      run: |
+        python3 -c "
+        import json
+        with open('github_issues_cleanup_report.json', 'r') as f:
+            report = json.load(f)
+
+        executed = report['result']['executed']
+        if executed > 0:
+            print(f'✅ 执行了 {executed} 个清理操作')
+
+            # 在Phase 9.0总览Issue中添加评论
+            subprocess.run([
+                'gh', 'issue', 'comment', '964',
+                '--repo', 'xupeng211/FootballPrediction',
+                '--body', f'🤖 **自动化GitHub Issues清理执行完成**\n\n📊 **清理结果**:\n- 执行操作数: {executed}\n- 执行时间: {report[\"timestamp\"]}\n- 详细报告: [查看清理报告](https://github.com/xupeng211/FootballPrediction/actions/runs/${{ github.run_id }})\n\n---\n*由GitHub Actions自动执行*'
+            ])
+        "
