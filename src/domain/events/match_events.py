@@ -52,6 +52,9 @@ class MatchStartedEvent(DomainEvent):
         self.home_team_id = home_team_id
         self.away_team_id = away_team_id
 
+    def get_event_type(self) -> str:
+        return "match_started"
+
     def _get_event_data(self) -> dict[str, Any]:
         return {
             "match_id": self.match_id,
@@ -79,6 +82,9 @@ class MatchFinishedEvent(DomainEvent):
         self.final_score = final_score
         self.result = result
 
+    def get_event_type(self) -> str:
+        return "match_finished"
+
     def _get_event_data(self) -> dict[str, Any]:
         return {
             "match_id": self.match_id,
@@ -102,6 +108,9 @@ class MatchCancelledEvent(DomainEvent):
         self.match_id = match_id
         self.reason = reason
 
+    def get_event_type(self) -> str:
+        return "match_cancelled"
+
     def _get_event_data(self) -> dict[str, Any]:
         return {"match_id": self.match_id, "reason": self.reason}
 
@@ -116,6 +125,9 @@ class MatchPostponedEvent(DomainEvent):
         self.match_id = match_id
         self.new_date = new_date
         self.reason = reason
+
+    def get_event_type(self) -> str:
+        return "match_postponed"
 
     def _get_event_data(self) -> dict[str, Any]:
         return {

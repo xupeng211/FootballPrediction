@@ -18,18 +18,26 @@ from .base import (
 # 导入具体策略实现
 try:
     from .enhanced_ml_model import EnhancedMLModel
-    from .ml_model import MLModel
+    from .ml_model import MLModelStrategy
     from .statistical import (
         EloStrategy,
         PoissonStrategy,
         StatisticalStrategy,
     )
+    from .historical import HistoricalStrategy
+    from .ensemble import EnsembleStrategy
+    from .factory import PredictionStrategyFactory
+    from .config import StrategyConfig
 except ImportError:
     EnhancedMLModel = None
-    MLModel = None
+    MLModelStrategy = None
     EloStrategy = None
     PoissonStrategy = None
     StatisticalStrategy = None
+    HistoricalStrategy = None
+    EnsembleStrategy = None
+    PredictionStrategyFactory = None
+    StrategyConfig = None
 
 __all__ = [
     # 基础类
@@ -39,10 +47,16 @@ __all__ = [
     "PredictionStrategy",
     "StrategyMetrics",
     "StrategyType",
+    # 配置
+    "StrategyConfig",
+    # 工厂
+    "PredictionStrategyFactory",
     # 具体策略
     "EnhancedMLModel",
-    "MLModel",
+    "MLModelStrategy",
     "EloStrategy",
     "PoissonStrategy",
     "StatisticalStrategy",
+    "HistoricalStrategy",
+    "EnsembleStrategy",
 ]
