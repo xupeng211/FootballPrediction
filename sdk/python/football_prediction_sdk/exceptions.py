@@ -7,7 +7,7 @@ Author: Claude Code
 Version: 1.0.0
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 
 
 class FootballPredictionError(Exception):
@@ -16,9 +16,9 @@ class FootballPredictionError(Exception):
     def __init__(
         self,
         message: str,
-        error_code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        response: Optional[Any] = None
+        error_code: str | None = None,
+        details: dict[str, Any] | None = None,
+        response: Any | None = None
     ):
         super().__init__(message)
         self.message = message
@@ -31,7 +31,7 @@ class FootballPredictionError(Exception):
             return f"[{self.error_code}] {self.message}"
         return self.message
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "error_type": self.__class__.__name__,
@@ -75,9 +75,9 @@ class RateLimitError(FootballPredictionError):
     def __init__(
         self,
         message: str = "请求频率超限",
-        retry_after: Optional[int] = None,
-        limit: Optional[int] = None,
-        window: Optional[int] = None,
+        retry_after: int | None = None,
+        limit: int | None = None,
+        window: int | None = None,
         **kwargs
     ):
         super().__init__(message, **kwargs)
@@ -91,7 +91,7 @@ class RateLimitError(FootballPredictionError):
                 "retry_after_human": f"{retry_after}秒"
             })
 
-    def get_retry_after_seconds(self) -> Optional[int]:
+    def get_retry_after_seconds(self) -> int | None:
         """获取重试等待时间（秒）"""
         return self.retry_after
 
@@ -166,7 +166,7 @@ ERROR_CODE_MAP = {
 }
 
 
-def create_exception_from_response(response_data: Dict[str, Any], response: Any = None) -> FootballPredictionError:
+def create_exception_from_response(response_data: dict[str, Any], response: Any = None) -> FootballPredictionError:
     """
     从API响应创建对应的异常实例
 

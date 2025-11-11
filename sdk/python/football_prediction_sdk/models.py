@@ -9,8 +9,8 @@ Version: 1.0.0
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
 from enum import Enum
+from typing import Any
 
 
 class MatchStatus(Enum):
@@ -42,18 +42,18 @@ class Team:
     """球队模型"""
     team_id: str
     name: str
-    short_name: Optional[str] = None
-    league: Optional[str] = None
-    country: Optional[str] = None
-    founded_year: Optional[int] = None
-    stadium: Optional[str] = None
-    current_form: Optional[List[str]] = None
-    position: Optional[int] = None
-    points: Optional[int] = None
-    logo_url: Optional[str] = None
+    short_name: str | None = None
+    league: str | None = None
+    country: str | None = None
+    founded_year: int | None = None
+    stadium: str | None = None
+    current_form: list[str] | None = None
+    position: int | None = None
+    points: int | None = None
+    logo_url: str | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Team":
+    def from_dict(cls, data: dict[str, Any]) -> "Team":
         """从字典创建Team实例"""
         return cls(
             team_id=data.get("team_id", ""),
@@ -69,7 +69,7 @@ class Team:
             logo_url=data.get("logo_url")
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "team_id": self.team_id,
@@ -90,15 +90,15 @@ class Team:
 class Match:
     """比赛模型"""
     match_id: str
-    home_team: Union[Team, Dict[str, Any]]
-    away_team: Union[Team, Dict[str, Any]]
+    home_team: Team | dict[str, Any]
+    away_team: Team | dict[str, Any]
     league: str
     match_date: datetime
     status: MatchStatus
-    venue: Optional[str] = None
-    score: Optional[Dict[str, int]] = None
-    weather: Optional[str] = None
-    odds: Optional[Dict[str, float]] = None
+    venue: str | None = None
+    score: dict[str, int] | None = None
+    weather: str | None = None
+    odds: dict[str, float] | None = None
 
     def __post_init__(self):
         """后处理：确保team字段是Team对象"""
@@ -116,7 +116,7 @@ class Match:
             self.match_date = datetime.fromisoformat(self.match_date.replace("Z", "+00:00"))
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Match":
+    def from_dict(cls, data: dict[str, Any]) -> "Match":
         """从字典创建Match实例"""
         return cls(
             match_id=data.get("match_id", ""),
@@ -131,7 +131,7 @@ class Match:
             odds=data.get("odds")
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "match_id": self.match_id,
@@ -152,16 +152,16 @@ class Prediction:
     """预测模型"""
     prediction_id: str
     match_id: str
-    probabilities: Dict[str, float]
+    probabilities: dict[str, float]
     recommended_bet: str
     confidence_score: float
     model_version: str
     created_at: datetime
     status: PredictionStatus = PredictionStatus.PROCESSING
-    actual_result: Optional[str] = None
-    is_correct: Optional[bool] = None
-    features_used: Optional[List[str]] = None
-    explanation: Optional[str] = None
+    actual_result: str | None = None
+    is_correct: bool | None = None
+    features_used: list[str] | None = None
+    explanation: str | None = None
 
     def __post_init__(self):
         """后处理：确保字段类型正确"""
@@ -174,7 +174,7 @@ class Prediction:
             self.created_at = datetime.fromisoformat(self.created_at.replace("Z", "+00:00"))
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Prediction":
+    def from_dict(cls, data: dict[str, Any]) -> "Prediction":
         """从字典创建Prediction实例"""
         return cls(
             prediction_id=data.get("prediction_id", ""),
@@ -191,7 +191,7 @@ class Prediction:
             explanation=data.get("explanation")
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "prediction_id": self.prediction_id,
@@ -217,7 +217,7 @@ class PredictionRequest:
     away_team: str
     match_date: datetime
     league: str
-    features: Optional[Dict[str, Any]] = None
+    features: dict[str, Any] | None = None
     priority: str = "normal"
     include_explanation: bool = False
 
@@ -226,7 +226,7 @@ class PredictionRequest:
         if isinstance(self.match_date, str):
             self.match_date = datetime.fromisoformat(self.match_date.replace("Z", "+00:00"))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为请求字典"""
         data = {
             "match_id": self.match_id,
@@ -252,12 +252,12 @@ class PredictionRequest:
 class PredictionResponse:
     """预测响应模型"""
     success: bool
-    prediction: Optional[Prediction] = None
-    error: Optional[Dict[str, Any]] = None
-    meta: Optional[Dict[str, Any]] = None
+    prediction: Prediction | None = None
+    error: dict[str, Any] | None = None
+    meta: dict[str, Any] | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PredictionResponse":
+    def from_dict(cls, data: dict[str, Any]) -> "PredictionResponse":
         """从字典创建PredictionResponse实例"""
         prediction_data = data.get("data")
         prediction = None
@@ -291,12 +291,12 @@ class PredictionResponse:
 class MatchListResponse:
     """比赛列表响应模型"""
     success: bool
-    matches: List[Match] = field(default_factory=list)
-    pagination: Optional[Dict[str, Any]] = None
-    meta: Optional[Dict[str, Any]] = None
+    matches: list[Match] = field(default_factory=list)
+    pagination: dict[str, Any] | None = None
+    meta: dict[str, Any] | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MatchListResponse":
+    def from_dict(cls, data: dict[str, Any]) -> "MatchListResponse":
         """从字典创建MatchListResponse实例"""
         matches_data = data.get("data", [])
         matches = [Match.from_dict(match_data) for match_data in matches_data]
@@ -313,8 +313,8 @@ class MatchListResponse:
 class SubscriptionInfo:
     """订阅信息模型"""
     plan: SubscriptionPlan
-    expires_at: Optional[datetime] = None
-    features: List[str] = field(default_factory=list)
+    expires_at: datetime | None = None
+    features: list[str] = field(default_factory=list)
     auto_renew: bool = False
 
     def __post_init__(self):
@@ -328,7 +328,7 @@ class SubscriptionInfo:
             self.expires_at = datetime.fromisoformat(self.expires_at.replace("Z", "+00:00"))
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SubscriptionInfo":
+    def from_dict(cls, data: dict[str, Any]) -> "SubscriptionInfo":
         """从字典创建SubscriptionInfo实例"""
         return cls(
             plan=data.get("plan", "free"),
@@ -341,13 +341,13 @@ class SubscriptionInfo:
 @dataclass
 class UserPreferences:
     """用户偏好设置模型"""
-    favorite_teams: List[str] = field(default_factory=list)
-    notification_settings: Dict[str, bool] = field(default_factory=dict)
+    favorite_teams: list[str] = field(default_factory=list)
+    notification_settings: dict[str, bool] = field(default_factory=dict)
     language: str = "zh-CN"
     timezone: str = "UTC+8"
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "UserPreferences":
+    def from_dict(cls, data: dict[str, Any]) -> "UserPreferences":
         """从字典创建UserPreferences实例"""
         return cls(
             favorite_teams=data.get("favorite_teams", []),
@@ -365,8 +365,8 @@ class User:
     email: str
     subscription: SubscriptionInfo
     preferences: UserPreferences
-    created_at: Optional[datetime] = None
-    last_login: Optional[datetime] = None
+    created_at: datetime | None = None
+    last_login: datetime | None = None
 
     def __post_init__(self):
         """后处理：确保字段类型正确"""
@@ -385,7 +385,7 @@ class User:
             self.last_login = datetime.fromisoformat(self.last_login.replace("Z", "+00:00"))
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "User":
+    def from_dict(cls, data: dict[str, Any]) -> "User":
         """从字典创建User实例"""
         return cls(
             user_id=data.get("user_id", ""),
@@ -402,12 +402,12 @@ class User:
 class UserProfileResponse:
     """用户配置响应模型"""
     success: bool
-    user: Optional[User] = None
-    error: Optional[Dict[str, Any]] = None
-    meta: Optional[Dict[str, Any]] = None
+    user: User | None = None
+    error: dict[str, Any] | None = None
+    meta: dict[str, Any] | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "UserProfileResponse":
+    def from_dict(cls, data: dict[str, Any]) -> "UserProfileResponse":
         """从字典创建UserProfileResponse实例"""
         user_data = data.get("data")
         user = None
@@ -429,8 +429,8 @@ class UserStatistics:
     total_predictions: int
     successful_predictions: int
     success_rate: float
-    favorite_league: Optional[str] = None
-    monthly_stats: List[Dict[str, Any]] = field(default_factory=list)
+    favorite_league: str | None = None
+    monthly_stats: list[dict[str, Any]] = field(default_factory=list)
     average_confidence: float = 0.0
     best_streak: int = 0
     current_streak: int = 0
@@ -446,7 +446,7 @@ class UserStatistics:
         return f"{self.success_rate * 100:.1f}%"
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "UserStatistics":
+    def from_dict(cls, data: dict[str, Any]) -> "UserStatistics":
         """从字典创建UserStatistics实例"""
         return cls(
             total_predictions=data.get("total_predictions", 0),

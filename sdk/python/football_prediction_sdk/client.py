@@ -7,25 +7,24 @@ Author: Claude Code
 Version: 1.0.0
 """
 
-import json
+import builtins
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Union
+from typing import Any
 
 import requests
 
 from .auth import AuthManager
+from .exceptions import FootballPredictionError, create_exception_from_response
 from .models import (
-    Prediction, PredictionRequest, PredictionResponse,
-    Match, MatchListResponse, User, UserProfileResponse, UserStatistics
+    Match,
+    MatchListResponse,
+    Prediction,
+    PredictionRequest,
+    PredictionResponse,
+    UserProfileResponse,
+    UserStatistics,
 )
-from .exceptions import (
-    FootballPredictionError, create_exception_from_response,
-    RateLimitError
-)
-from .utils import (
-    retry_with_backoff, validate_request_data, parse_api_error,
-    rate_limit_handler, Timer, generate_request_id
-)
+from .utils import parse_api_error, rate_limit_handler, retry_with_backoff
 
 
 class PredictionAPI:
@@ -82,7 +81,7 @@ class PredictionAPI:
             raise FootballPredictionError(f"创建预测失败: {str(e)}")
 
     @retry_with_backoff(max_retries=2)
-    def get(self, prediction_id: str) -> Optional[Prediction]:
+    def get(self, prediction_id: str) -> Prediction | None:
         """
         获取预测结果
 
@@ -118,12 +117,12 @@ class PredictionAPI:
     @retry_with_backoff(max_retries=2)
     def list(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         page: int = 1,
         page_size: int = 20,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None
-    ) -> List[Prediction]:
+        date_from: datetime | None = None,
+        date_to: datetime | None = None
+    ) -> list[Prediction]:
         """
         获取预测历史列表
 
@@ -173,7 +172,7 @@ class PredictionAPI:
             raise FootballPredictionError(f"获取预测列表失败: {str(e)}")
 
     @retry_with_backoff(max_retries=3)
-    def batch_create(self, requests: List[PredictionRequest]) -> Dict[str, Any]:
+    def batch_create(self, requests: builtins.list[PredictionRequest]) -> dict[str, Any]:
         """
         批量创建预测
 
@@ -223,7 +222,7 @@ class MatchAPI:
         self.client = client
 
     @retry_with_backoff(max_retries=2)
-    def get(self, match_id: str) -> Optional[Match]:
+    def get(self, match_id: str) -> Match | None:
         """
         获取比赛详情
 
@@ -259,10 +258,10 @@ class MatchAPI:
     @retry_with_backoff(max_retries=2)
     def list(
         self,
-        league: Optional[str] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        status: Optional[str] = None,
+        league: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        status: str | None = None,
         page: int = 1,
         page_size: int = 20
     ) -> MatchListResponse:
@@ -317,7 +316,7 @@ class MatchAPI:
             raise FootballPredictionError(f"获取比赛列表失败: {str(e)}")
 
     @retry_with_backoff(max_retries=2)
-    def get_leagues(self) -> List[Dict[str, Any]]:
+    def get_leagues(self) -> builtins.list[dict[str, Any]]:
         """
         获取联赛列表
 
@@ -378,7 +377,7 @@ class UserAPI:
             raise FootballPredictionError(f"获取用户配置失败: {str(e)}")
 
     @retry_with_backoff(max_retries=2)
-    def update_profile(self, preferences: Dict[str, Any]) -> bool:
+    def update_profile(self, preferences: dict[str, Any]) -> bool:
         """
         更新用户配置信息
 
@@ -502,8 +501,7 @@ class FootballPredictionClient:
         if not offline_mode:
             try:
                 self.authenticate()
-            except Exception as e:
-                print(f"⚠️ 认证失败，SDK将在离线模式下工作: {e}")
+            except Exception:
                 self.offline_mode = True
 
     def authenticate(self, username: str = None, password: str = None) -> bool:
@@ -539,7 +537,7 @@ class FootballPredictionClient:
         """检查是否已认证"""
         return self.auth.is_authenticated
 
-    def get(self, endpoint: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    def get(self, endpoint: str, params: dict[str, Any] = None) -> dict[str, Any]:
         """
         通用GET请求
 
@@ -552,7 +550,7 @@ class FootballPredictionClient:
         """
         return self._make_request("GET", endpoint, params=params)
 
-    def post(self, endpoint: str, data: Dict[str, Any] = None) -> Dict[str, Any]:
+    def post(self, endpoint: str, data: dict[str, Any] = None) -> dict[str, Any]:
         """
         通用POST请求
 
@@ -565,7 +563,7 @@ class FootballPredictionClient:
         """
         return self._make_request("POST", endpoint, json=data)
 
-    def put(self, endpoint: str, data: Dict[str, Any] = None) -> Dict[str, Any]:
+    def put(self, endpoint: str, data: dict[str, Any] = None) -> dict[str, Any]:
         """
         通用PUT请求
 
@@ -578,7 +576,7 @@ class FootballPredictionClient:
         """
         return self._make_request("PUT", endpoint, json=data)
 
-    def delete(self, endpoint: str) -> Dict[str, Any]:
+    def delete(self, endpoint: str) -> dict[str, Any]:
         """
         通用DELETE请求
 
@@ -594,10 +592,10 @@ class FootballPredictionClient:
         self,
         method: str,
         endpoint: str,
-        params: Dict[str, Any] = None,
-        json: Dict[str, Any] = None,
+        params: dict[str, Any] = None,
+        json: dict[str, Any] = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         发起HTTP请求
 
@@ -655,7 +653,7 @@ class FootballPredictionClient:
                 raise FootballPredictionError(f"请求失败: {str(e)}")
             raise
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """
         健康检查
 
@@ -678,7 +676,7 @@ class FootballPredictionClient:
         except requests.exceptions.RequestException:
             return {"status": "unhealthy", "error": "连接失败"}
 
-    def get_api_info(self) -> Dict[str, Any]:
+    def get_api_info(self) -> dict[str, Any]:
         """
         获取API信息
 

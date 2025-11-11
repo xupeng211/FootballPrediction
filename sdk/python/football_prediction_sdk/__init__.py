@@ -8,26 +8,26 @@ Author: Claude Code
 Description: 官方Python SDK，提供完整的API访问功能
 """
 
+from .auth import AuthManager
 from .client import FootballPredictionClient
 from .exceptions import (
-    FootballPredictionError,
     AuthenticationError,
-    ValidationError,
     BusinessError,
+    FootballPredictionError,
+    RateLimitError,
     SystemError,
-    RateLimitError
+    ValidationError,
 )
 from .models import (
-    Prediction,
     Match,
-    Team,
-    User,
+    MatchListResponse,
+    Prediction,
     PredictionRequest,
     PredictionResponse,
-    MatchListResponse,
-    UserProfileResponse
+    Team,
+    User,
+    UserProfileResponse,
 )
-from .auth import AuthManager
 from .utils import retry_with_backoff, validate_request_data
 
 __version__ = "1.0.0"
@@ -67,12 +67,9 @@ __all__ = [
 import sys
 import warnings
 
+
 def check_python_version():
     """检查Python版本兼容性"""
-    if sys.version_info < (3, 8):
-        raise RuntimeError(
-            f"Python 3.8+ is required, you are using Python {'.'.join(map(str, sys.version_info[:3]))}"
-        )
 
 def check_sdk_version():
     """检查SDK版本更新"""
@@ -87,7 +84,7 @@ def check_sdk_version():
             if latest_version != __version__:
                 warnings.warn(
                     f"New SDK version available: {latest_version} (current: {__version__})",
-                    UserWarning
+                    UserWarning, stacklevel=2
                 )
     except:
         pass  # 忽略网络错误

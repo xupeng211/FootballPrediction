@@ -7,13 +7,14 @@ Author: Claude Code
 Version: 1.0.0
 """
 
-import time
-import random
-import json
 import hashlib
-from datetime import datetime, timedelta
-from typing import Dict, Any, Callable, Optional, Union, List
+import json
+import random
+import time
+from collections.abc import Callable
+from datetime import datetime
 from functools import wraps
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -27,7 +28,7 @@ def retry_with_backoff(
     max_delay: float = 60.0,
     exponential_base: float = 2.0,
     jitter: bool = True,
-    retryable_status_codes: Optional[List[int]] = None
+    retryable_status_codes: list[int] | None = None
 ):
     """
     带退避策略的重试装饰器
@@ -78,7 +79,6 @@ def retry_with_backoff(
                             retry_after = extract_retry_after(e.response)
                             if retry_after:
                                 delay = min(retry_after, max_delay)
-                                print(f"限流中，{delay}秒后重试... (尝试 {attempt + 1}/{max_retries})")
                                 time.sleep(delay)
                                 continue
 
@@ -96,7 +96,6 @@ def retry_with_backoff(
                         jitter_amount = delay * 0.1 * random.random()
                         delay = delay + jitter_amount
 
-                    print(f"请求失败，{delay:.1f}秒后重试... (尝试 {attempt + 1}/{max_retries})")
                     time.sleep(delay)
 
             raise last_exception
@@ -105,7 +104,7 @@ def retry_with_backoff(
     return decorator
 
 
-def extract_retry_after(response: requests.Response) -> Optional[int]:
+def extract_retry_after(response: requests.Response) -> int | None:
     """
     从响应中提取重试等待时间
 
@@ -154,7 +153,7 @@ def extract_retry_after(response: requests.Response) -> Optional[int]:
     return None
 
 
-def validate_request_data(data: Dict[str, Any], required_fields: List[str] = None) -> None:
+def validate_request_data(data: dict[str, Any], required_fields: list[str] = None) -> None:
     """
     验证请求数据
 
@@ -297,7 +296,7 @@ def build_url(base_url: str, path: str) -> str:
     return urljoin(base_url.rstrip('/') + '/', path.lstrip('/'))
 
 
-def parse_api_error(response: requests.Response) -> Dict[str, Any]:
+def parse_api_error(response: requests.Response) -> dict[str, Any]:
     """
     解析API错误响应
 
@@ -391,7 +390,7 @@ def calculate_hash(data: Any, algorithm: str = "sha256") -> str:
     return hash_obj.hexdigest()
 
 
-def chunk_list(items: List[Any], chunk_size: int) -> List[List[Any]]:
+def chunk_list(items: list[Any], chunk_size: int) -> list[list[Any]]:
     """
     将列表分割成块
 
@@ -405,7 +404,7 @@ def chunk_list(items: List[Any], chunk_size: int) -> List[List[Any]]:
     return [items[i:i + chunk_size] for i in range(0, len(items), chunk_size)]
 
 
-def merge_dicts(*dicts: Dict[str, Any]) -> Dict[str, Any]:
+def merge_dicts(*dicts: dict[str, Any]) -> dict[str, Any]:
     """
     合并多个字典
 
@@ -422,7 +421,7 @@ def merge_dicts(*dicts: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def safe_get_nested_value(data: Dict[str, Any], key_path: str, default: Any = None) -> Any:
+def safe_get_nested_value(data: dict[str, Any], key_path: str, default: Any = None) -> Any:
     """
     安全获取嵌套字典的值
 
@@ -452,7 +451,7 @@ def safe_get_nested_value(data: Dict[str, Any], key_path: str, default: Any = No
         return default
 
 
-def rate_limit_handler(response: requests.Response) -> Optional[RateLimitError]:
+def rate_limit_handler(response: requests.Response) -> RateLimitError | None:
     """
     处理限流响应
 
@@ -505,7 +504,7 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
-def convert_timestamp(timestamp: Union[str, int, float, datetime]) -> datetime:
+def convert_timestamp(timestamp: str | int | float | datetime) -> datetime:
     """
     转换时间戳为datetime对象
 
