@@ -7,9 +7,9 @@ services:
       - "8000:8000"
     environment:
       - ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/football_prediction
-      - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=dev-secret-key-change-in-production
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/football_prediction}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-development-only}
     depends_on:
       - db
       - redis
@@ -21,9 +21,9 @@ services:
   db:
     image: postgres:15
     environment:
-      - POSTGRES_DB=football_prediction
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-football_prediction}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres-dev-password}
     ports:
       - "5432:5432"
     volumes:

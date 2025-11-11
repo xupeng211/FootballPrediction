@@ -344,23 +344,17 @@ class GitHubIssuesCreator:
 
     def generate_issues(self) -> list[IssueData]:
         """生成所有Issues"""
-        print("🔍 分析项目质量问题...")
         analysis = self.analyze_quality_issues()
 
-        print(f"📊 发现 {analysis['total_errors']} 个质量问题")
-        print(f"📈 错误分布: {analysis['error_stats']}")
 
         # 创建语法修复Issues
-        print("🛠️ 创建语法修复类Issues...")
         syntax_issues = self.create_syntax_fix_issues(analysis)
 
         # 创建代码质量Issues
-        print("✨ 创建代码质量类Issues...")
         quality_issues = self.create_code_quality_issues(analysis)
 
         all_issues = syntax_issues + quality_issues
 
-        print(f"✅ 共生成 {len(all_issues)} 个Issues")
         return all_issues
 
     def save_issues_to_file(self, issues: list[IssueData], filename: str = "generated_issues.json"):
@@ -377,46 +371,30 @@ class GitHubIssuesCreator:
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(issues_data, f, ensure_ascii=False, indent=2)
 
-        print(f"💾 Issues已保存到 {filename}")
 
     def print_issues_summary(self, issues: list[IssueData]):
         """打印Issues摘要"""
-        print("\n" + "="*60)
-        print("📋 生成的GitHub Issues摘要")
-        print("="*60)
 
         # 按类型统计
-        syntax_count = sum(1 for i in issues if i.issue_type == "syntax_fix")
-        quality_count = sum(1 for i in issues if i.issue_type == "code_quality")
+        sum(1 for i in issues if i.issue_type == "syntax_fix")
+        sum(1 for i in issues if i.issue_type == "code_quality")
 
-        print(f"🚨 语法修复类: {syntax_count}个")
-        print(f"🔍 代码质量类: {quality_count}个")
-        print(f"📊 总计: {len(issues)}个")
 
-        print("\n🎯 优先级分布:")
-        critical_count = sum(1 for i in issues if "critical" in i.labels)
-        high_count = sum(1 for i in issues if "high" in i.labels)
-        medium_count = sum(1 for i in issues if "medium" in i.labels)
-        low_count = sum(1 for i in issues if "low" in i.labels)
+        sum(1 for i in issues if "critical" in i.labels)
+        sum(1 for i in issues if "high" in i.labels)
+        sum(1 for i in issues if "medium" in i.labels)
+        sum(1 for i in issues if "low" in i.labels)
 
-        print(f"   Critical: {critical_count}个")
-        print(f"   High: {high_count}个")
-        print(f"   Medium: {medium_count}个")
-        print(f"   Low: {low_count}个")
 
-        print("\n📝 前5个Issues预览:")
-        for i, issue in enumerate(issues[:5], 1):
-            print(f"{i}. {issue.title}")
-            print(f"   标签: {', '.join(issue.labels)}")
+        for _i, _issue in enumerate(issues[:5], 1):
+            pass
 
         if len(issues) > 5:
-            print(f"... 还有 {len(issues) - 5} 个Issues")
+            pass
 
 
 def main():
     """主函数"""
-    print("🚀 GitHub Issues 批量生成工具")
-    print("="*50)
 
     creator = GitHubIssuesCreator()
     issues = creator.generate_issues()
@@ -427,11 +405,6 @@ def main():
     # 打印摘要
     creator.print_issues_summary(issues)
 
-    print("\n✅ Issues生成完成！")
-    print("💡 使用方法:")
-    print("   1. 查看 generated_issues.json 文件")
-    print("   2. 手动在GitHub上创建Issues，或使用GitHub CLI批量创建")
-    print("   3. 参考 GITHUB_ISSUES_STANDARD_GUIDE.md 执行任务")
 
 
 if __name__ == "__main__":

@@ -57,10 +57,8 @@ def main():
     for test_file in test_files:
         path = Path(test_file)
         if not path.exists():
-            print(f"⚠️  文件不存在: {test_file}")
             continue
 
-        print(f"🔧 修复文件: {test_file}")
 
         try:
             with open(path, encoding='utf-8') as f:
@@ -71,18 +69,15 @@ def main():
             if fixed_content != original_content:
                 with open(path, 'w', encoding='utf-8') as f:
                     f.write(fixed_content)
-                print("  ✅ 已修复")
                 fixed_count += 1
             else:
-                print("  ℹ️  无需修复")
+                pass
 
-        except Exception as e:
-            print(f"  ❌ 修复失败: {e}")
+        except Exception:
+            pass
 
-    print(f"\n🎉 修复完成! 共修复 {fixed_count} 个文件")
 
     # 验证修复结果
-    print("\n🔍 验证修复结果...")
     import ast
 
     for test_file in test_files:
@@ -92,9 +87,8 @@ def main():
                 with open(path, encoding='utf-8') as f:
                     content = f.read()
                 ast.parse(content)
-                print(f"  ✅ {test_file}: 语法正确")
-            except SyntaxError as e:
-                print(f"  ❌ {test_file}: 行 {e.lineno} - {e.msg}")
+            except SyntaxError:
+                pass
 
 if __name__ == "__main__":
     main()

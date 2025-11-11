@@ -101,7 +101,6 @@ def main():
     test_dir = Path("tests")
     test_files = list(test_dir.rglob("test_*.py")) + list(test_dir.rglob("*_test.py"))
 
-    print(f"🔍 找到 {len(test_files)} 个测试文件")
 
     fixed_count = 0
     failed_count = 0
@@ -113,7 +112,6 @@ def main():
             with open(test_file, encoding='utf-8') as f:
                 content = f.read()
             ast.parse(content)
-            print(f"✅ {test_file}: 语法正确")
             skipped_count += 1
             continue
         except SyntaxError:
@@ -121,17 +119,10 @@ def main():
 
         success, message = fix_test_file(test_file)
         if success:
-            print(f"✅ {test_file}: {message}")
             fixed_count += 1
         else:
-            print(f"❌ {test_file}: {message}")
             failed_count += 1
 
-    print("\n📊 修复统计:")
-    print(f"  ✅ 修复成功: {fixed_count}")
-    print(f"  ❌ 修复失败: {failed_count}")
-    print(f"  ⚠️  跳过(已正确): {skipped_count}")
-    print(f"  📁 总文件数: {len(test_files)}")
 
     return fixed_count, failed_count, skipped_count
 

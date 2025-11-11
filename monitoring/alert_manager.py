@@ -41,4 +41,3 @@ class AlertManager:
 
 if __name__ == "__main__":
     service = AlertManager()
-    print("🚀 monitoring特性初始化完成: Alert Manager")

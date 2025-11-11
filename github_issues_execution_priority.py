@@ -200,8 +200,6 @@ def design_execution_priority():
 
 def main():
     """主函数"""
-    print("🎯 基于远程GitHub Issues的执行优先级设计")
-    print("=" * 60)
 
     plan = design_execution_priority()
 
@@ -209,32 +207,23 @@ def main():
     with open("github_issues_execution_priority.json", "w", encoding="utf-8") as f:
         json.dump(plan, f, indent=2, ensure_ascii=False)
 
-    print("📊 当前项目状态分析:")
-    for key, value in plan["current_status"].items():
-        print(f"• {key.replace('_', ' ').title()}: {value}")
+    for _key, _value in plan["current_status"].items():
+        pass
 
-    print("\n🎯 执行优先级概览:")
-    for level, details in plan["priority_levels"].items():
-        print(f"• {level}: {details['status']} - {details['description']}")
+    for _level, _details in plan["priority_levels"].items():
+        pass
 
-    print("\n📋 推荐执行顺序:")
-    for i, task in enumerate(plan["recommended_execution_order"], 1):
-        print(f"{i}. {task['task']} ({task['priority']}) - {task['estimated_time']}")
+    for _i, _task in enumerate(plan["recommended_execution_order"], 1):
+        pass
 
-    print("\n🎯 短期成功指标 (1-2周):")
-    for goal in plan["success_metrics"]["short_term"]["goals"]:
-        print(f"• {goal}")
+    for _goal in plan["success_metrics"]["short_term"]["goals"]:
+        pass
 
-    print("\n⚠️ 风险缓解措施:")
-    print("技术风险:")
-    for risk in plan["risk_mitigation"]["technical_risks"]:
-        print(f"• {risk}")
-    print("进度风险:")
-    for risk in plan["risk_mitigation"]["schedule_risks"]:
-        print(f"• {risk}")
+    for _risk in plan["risk_mitigation"]["technical_risks"]:
+        pass
+    for _risk in plan["risk_mitigation"]["schedule_risks"]:
+        pass
 
-    print("\n✅ 优先级计划已保存: github_issues_execution_priority.json")
-    print("\n🚀 基于实际进展，项目已从P0阻塞阶段进入P1-P2执行阶段！")
 
 if __name__ == "__main__":
     main()

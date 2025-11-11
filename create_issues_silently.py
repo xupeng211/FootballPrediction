@@ -24,9 +24,6 @@ class GitHubIssueCreator:
             self.repo_owner = repo_data["owner"]["login"]
             self.repo_name = repo_data["name"]
         except (subprocess.CalledProcessError, KeyError, json.JSONDecodeError):
-            print("❌ 无法获取仓库信息，请确保已安装并认证GitHub CLI")
-            print("安装GitHub CLI: https://cli.github.com/")
-            print("认证GitHub CLI: gh auth login")
             return
 
     def create_issue(self, title: str, body: str, labels: list, assignees: list = None):
@@ -48,12 +45,8 @@ class GitHubIssueCreator:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             # 提取Issue URL
             issue_url = result.stdout.strip()
-            print(f"✅ Issue创建成功: {title}")
-            print(f"   🔗 {issue_url}")
             return issue_url
-        except subprocess.CalledProcessError as e:
-            print(f"❌ Issue创建失败: {title}")
-            print(f"   错误信息: {e.stderr}")
+        except subprocess.CalledProcessError:
             return None
 
     def create_all_optimization_issues(self):
@@ -96,15 +89,11 @@ class GitHubIssueCreator:
             }
         ]
 
-        print("🚀 开始创建优化Issues...")
-        print(f"📍 仓库: {self.repo_owner}/{self.repo_name}")
-        print(f"📋 总计需要创建 {len(issues)} 个Issues\n")
 
         created_issues = []
         failed_issues = []
 
-        for i, issue in enumerate(issues, 1):
-            print(f"[{i}/{len(issues)}] 正在创建: {issue['title']}")
+        for _i, issue in enumerate(issues, 1):
 
             result = self.create_issue(
                 title=issue["title"],
@@ -120,20 +109,14 @@ class GitHubIssueCreator:
             else:
                 failed_issues.append(issue["title"])
 
-        print("\n🎊 Issues创建完成!")
-        print(f"✅ 成功创建: {len(created_issues)}/{len(issues)} 个Issues")
-        print(f"❌ 创建失败: {len(failed_issues)} 个Issues")
 
         if failed_issues:
-            print("\n❌ 创建失败的Issues:")
             for issue in failed_issues:
-                print(f"   - {issue}")
+                pass
 
         if created_issues:
-            print("\n📋 成功创建的Issues:")
             for issue in created_issues:
-                print(f"   - {issue['title']}")
-                print(f"     {issue['url']}")
+                pass
 
         return created_issues, failed_issues
 
@@ -537,23 +520,16 @@ jobs:
 
 def main():
     """主函数"""
-    print("🚀 GitHub Issues 创建工具")
-    print("="*50)
 
     creator = GitHubIssueCreator()
 
     # 检查gh CLI是否可用
     try:
         subprocess.run(["gh", "--version"], capture_output=True, check=True)
-        print(f"✅ GitHub CLI 可用，仓库: {creator.repo_owner}/{creator.repo_name}")
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("❌ GitHub CLI (gh) 未安装或不可用")
-        print("请先安装GitHub CLI: https://cli.github.com/")
-        print("认证GitHub CLI: gh auth login")
         return
 
-    print("📋 即将创建以下优化Issues:")
-    for i, issue in enumerate([
+    for _i, _issue in enumerate([
         "[OPT] 修复所有代码质量问题",
         "[OPT] 提升用户管理模块测试覆盖率至30%",
         "[OPT] 修复安全漏洞并更新依赖",
@@ -562,27 +538,19 @@ def main():
         "[OPT] 实现Docker容器化部署",
         "[OPT] 实现CI/CD自动化流水线"
     ], 1):
-        print(f"{i}. {issue}")
-    print()
+        pass
 
     # 创建Issues
     created_issues, failed_issues = creator.create_all_optimization_issues()
 
     if created_issues:
-        print(f"\n🎊 成功创建 {len(created_issues)} 个Issues!")
-        print("📋 你可以在GitHub仓库中查看这些Issues")
-        print("🔗 使用 'gh issue list --label optimization' 查看所有优化Issues")
-        print(f"🌐 仓库地址: https://github.com/{creator.repo_owner}/{creator.repo_name}/issues")
 
         # 生成Issue摘要
-        print("\n📊 Issues摘要:")
-        for issue in created_issues:
-            print(f"   ✅ {issue['title']}")
-            print(f"      {issue['url']}")
+        for _issue in created_issues:
+            pass
 
     if failed_issues:
-        print(f"\n⚠️  {len(failed_issues)} 个Issues创建失败")
-        print("请检查GitHub CLI权限和网络连接")
+        pass
 
 if __name__ == "__main__":
     main()

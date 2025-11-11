@@ -41,4 +41,3 @@ class GrafanaDashboards:
 
 if __name__ == "__main__":
     service = GrafanaDashboards()
-    print("🚀 monitoring特性初始化完成: Grafana Dashboards")

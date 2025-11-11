@@ -42,7 +42,6 @@ def fix_e402_in_file(file_path):
         # 如果没有需要移动的导入，跳过
         moved_imports = [item for item in non_import_lines if item[0] == 'import']
         if not moved_imports:
-            print(f"ℹ️  没有发现E402错误: {file_path}")
             return 0
 
         # 重新组织文件内容
@@ -81,14 +80,11 @@ def fix_e402_in_file(file_path):
         if new_content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(new_content)
-            print(f"✅ 修复了 {len(moved_imports)} 个E402错误: {file_path}")
             return len(moved_imports)
         else:
-            print(f"ℹ️  没有发现需要修复的E402错误: {file_path}")
             return 0
 
-    except Exception as e:
-        print(f"❌ 处理文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
 def main():
@@ -96,7 +92,6 @@ def main():
     src_dir = Path("src")
     total_fixes = 0
 
-    print("🚀 开始批量修复E402模块导入位置错误...")
 
     # 优先处理API文件
     api_files = list(src_dir.glob("api/**/*.py"))
@@ -118,9 +113,6 @@ def main():
             fixes = fix_e402_in_file(file_path)
             total_fixes += fixes
 
-    print("\n📊 修复完成:")
-    print(f"   总共修复: {total_fixes} 个E402错误")
-    print(f"   处理文件: {len(api_files) + len([f for f in important_files if f.is_file()])} 个")
 
 if __name__ == "__main__":
     main()

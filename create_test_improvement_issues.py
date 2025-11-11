@@ -102,7 +102,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 
         try:
             # 尝试运行pytest获取覆盖率信息
-            result = subprocess.run(
+            subprocess.run(
                 ["pytest", "tests/unit/", "--cov=src", "--cov-report=json", "--tb=no"],
                 capture_output=True,
                 text=True,
@@ -316,45 +316,27 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(issues_data, f, ensure_ascii=False, indent=2)
 
-        print(f"💾 测试改进Issues已保存到 {filename}")
 
     def print_test_issues_summary(self, issues: list[TestIssueData]):
         """打印测试Issues摘要"""
-        print("\n" + "="*60)
-        print("🧪 生成的测试改进Issues摘要")
-        print("="*60)
 
         priority_count = {"critical": 0, "high": 0, "medium": 0, "low": 0}
         for issue in issues:
             priority_count[issue.priority] += 1
 
-        print(f"📊 总计: {len(issues)}个测试改进Issues")
-        print(f"🚨 Critical: {priority_count['critical']}个")
-        print(f"🔥 High: {priority_count['high']}个")
-        print(f"⚡ Medium: {priority_count['medium']}个")
-        print(f"💡 Low: {priority_count['low']}个")
 
-        print("\n📝 Issues列表:")
-        for i, issue in enumerate(issues, 1):
-            print(f"{i}. {issue.title}")
-            print(f"   优先级: {issue.priority}")
-            print(f"   标签: {', '.join(issue.labels)}")
+        for _i, issue in enumerate(issues, 1):
+            pass
 
 
 def main():
     """主函数"""
-    print("🧪 测试改进Issues生成工具")
-    print("="*50)
 
     creator = TestIssuesCreator()
 
-    print("📊 分析测试状态...")
     analysis = creator.analyze_test_status()
 
-    print(f"📈 当前覆盖率: {analysis['overall_coverage']:.1f}%")
-    print(f"❌ 失败测试: {len(analysis['failed_tests'])}个")
 
-    print("🛠️ 创建测试改进Issues...")
     issues = creator.create_test_improvement_issues(analysis)
 
     # 保存到文件
@@ -363,8 +345,6 @@ def main():
     # 打印摘要
     creator.print_test_issues_summary(issues)
 
-    print("\n✅ 测试改进Issues生成完成！")
-    print("💡 这些Issues将帮助系统性地提升测试质量和覆盖率")
 
 
 if __name__ == "__main__":
