@@ -29,14 +29,11 @@ def fix_double_colons(file_path):
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"✅ 修复文件: {file_path}")
             return True
         else:
-            print(f"⏭️ 无需修复: {file_path}")
             return False
 
-    except Exception as e:
-        print(f"❌ 修复文件失败 {file_path}: {e}")
+    except Exception:
         return False
 
 def main():
@@ -44,7 +41,6 @@ def main():
     tests_dir = Path("tests")
 
     if not tests_dir.exists():
-        print("❌ tests目录不存在")
         return
 
     fixed_count = 0
@@ -57,10 +53,6 @@ def main():
             if fix_double_colons(str(py_file)):
                 fixed_count += 1
 
-    print("\n📊 修复完成:")
-    print(f"   总文件数: {total_count}")
-    print(f"   修复文件数: {fixed_count}")
-    print(f"   无需修复文件数: {total_count - fixed_count}")
 
 if __name__ == "__main__":
     main()

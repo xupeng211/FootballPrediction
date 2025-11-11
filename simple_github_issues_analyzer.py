@@ -12,7 +12,6 @@ from datetime import datetime
 
 def analyze_m2_planning():
     """分析M2规划"""
-    print("📊 分析当前M2规划...")
 
     # 当前M2规划分析
     analysis = {
@@ -68,7 +67,6 @@ def analyze_m2_planning():
 
 def define_best_practices():
     """定义最佳实践"""
-    print("📋 定义GitHub Issues最佳实践...")
 
     principles = [
         {
@@ -100,7 +98,6 @@ def define_best_practices():
 
 def create_issue_recommendations():
     """创建Issue推荐"""
-    print("💡 创建Issue推荐...")
 
     recommendations = [
         {
@@ -135,7 +132,6 @@ def create_issue_recommendations():
 
 def create_management_strategy():
     """创建管理策略"""
-    print("🗂️ 创建管理策略...")
 
     strategy = {
         "milestone": {
@@ -160,11 +156,10 @@ def create_management_strategy():
 
 def generate_report():
     """生成分析报告"""
-    print("📄 生成分析报告...")
 
     analysis = analyze_m2_planning()
-    principles = define_best_practices()
-    recommendations = create_issue_recommendations()
+    define_best_practices()
+    create_issue_recommendations()
     strategy = create_management_strategy()
 
     report = f"""# GitHub Issues最佳实践分析报告
@@ -323,7 +318,6 @@ M2-P1, core, testing, dependency-injection
 
 def main():
     """主函数"""
-    print("🚀 启动GitHub Issues最佳实践分析器...")
 
     # 执行分析
     report = generate_report()
@@ -347,14 +341,6 @@ def main():
     with open("github_issues_analysis_data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False, default=str)
 
-    print("\\n🎉 GitHub Issues最佳实践分析完成!")
-    print(f"   当前规划: {analysis['phases']}个阶段")
-    print(f"   任务数量: {analysis['total_current_tasks']}个")
-    print(f"   粒度评估: {analysis['granularity']}")
-    print(f"   推荐Issue: {sum(len(phase['issues']) for phase in analysis['issues'])}个")
-    print("\\n📄 报告已保存:")
-    print("   - github_issues_best_practices_report.md")
-    print("   - github_issues_analysis_data.json")
 
 if __name__ == "__main__":
     main()

@@ -11,47 +11,32 @@ from typing import Any
 
 def main():
     """主函数"""
-    print("🚀 综合GitHub Issues创建工具")
-    print("=" * 50)
 
     # 检查是否已生成Issues文件
     try:
         with open("generated_issues.json", encoding='utf-8') as f:
             main_issues = json.load(f)
-        print(f"✅ 加载主要Issues: {len(main_issues)}个")
     except FileNotFoundError:
-        print("❌ 未找到 generated_issues.json，请先运行创建工具")
         return
 
     try:
         with open("test_improvement_issues.json", encoding='utf-8') as f:
             test_issues = json.load(f)
-        print(f"✅ 加载测试Issues: {len(test_issues)}个")
     except FileNotFoundError:
-        print("❌ 未找到 test_improvement_issues.json，请先运行创建工具")
         return
 
     all_issues = main_issues + test_issues
-    print(f"📊 总计Issues: {len(all_issues)}个")
 
     # 生成手动创建指南
     guide = generate_manual_guide(all_issues)
     with open("COMPREHENSIVE_ISSUES_GUIDE.md", 'w', encoding='utf-8') as f:
         f.write(guide)
-    print("✅ 生成综合指南: COMPREHENSIVE_ISSUES_GUIDE.md")
 
     # 生成执行总结
     summary = generate_execution_summary(all_issues)
     with open("COMPREHENSIVE_EXECUTION_SUMMARY.md", 'w', encoding='utf-8') as f:
         f.write(summary)
-    print("✅ 生成执行总结: COMPREHENSIVE_EXECUTION_SUMMARY.md")
 
-    print("\n🎯 综合Issues创建完成！")
-    print("📚 生成的文档:")
-    print("- COMPREHENSIVE_ISSUES_GUIDE.md: 详细的手动创建指南")
-    print("- COMPREHENSIVE_EXECUTION_SUMMARY.md: 执行总结和策略")
-    print("- QUALITY_IMPROVEMENT_ROADMAP.md: 质量改进路线图")
-    print("- GITHUB_ISSUES_STANDARD_GUIDE.md: 标准执行指南")
 
 
 def generate_manual_guide(issues: list[dict[str, Any]]) -> str:

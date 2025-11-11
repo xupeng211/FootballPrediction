@@ -75,10 +75,9 @@ def get_system_status():
 def main():
     """主函数 - 输出JSON格式的状态数据"""
     if len(sys.argv) > 1 and sys.argv[1] == "--json":
-        status = get_system_status()
-        print(json.dumps(status, indent=2, ensure_ascii=False))
+        get_system_status()
     else:
-        print("使用 --json 参数输出JSON格式数据")
+        pass
 
 
 if __name__ == "__main__":

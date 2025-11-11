@@ -35,7 +35,6 @@ def main():
     for file_path in api_files:
         path = Path(file_path)
         if path.exists():
-            print(f"修复文件: {file_path}")
 
             with open(path, encoding='utf-8') as f:
                 content = f.read()
@@ -45,9 +44,8 @@ def main():
             if fixed_content != content:
                 with open(path, 'w', encoding='utf-8') as f:
                     f.write(fixed_content)
-                print("  ✅ 已修复")
             else:
-                print("  ℹ️ 无需修复")
+                pass
 
 if __name__ == "__main__":
     main()

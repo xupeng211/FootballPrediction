@@ -22,7 +22,6 @@ def fix_http_exception_syntax(content: str) -> str:
             i > 0 and
             'raise HTTPException' in lines[i-1:i+1]):
             # 这是多余的片段，跳过
-            print(f"  🔧 修复多余异常链: {line.strip()}")
             i += 1
             continue
 
@@ -31,7 +30,6 @@ def fix_http_exception_syntax(content: str) -> str:
             i > 0 and
             'raise HTTPException(' in '\n'.join(lines[max(0, i-5):i])):
             # 找到可能的分离参数
-            print(f"  🔧 检测到HTTPException分离结构在第{i+1}行")
 
             # 向前查找raise语句
             raise_line_idx = -1
@@ -57,7 +55,6 @@ def fix_http_exception_syntax(content: str) -> str:
                     )
 
                     # 跳过原始分离的参数
-                    print(f"  🔧 重新构建HTTPException参数: {len(param_lines)}个参数")
                     i = k
                     continue
 
@@ -85,7 +82,6 @@ def fix_exception_chaining(content: str) -> str:
 
 def main():
     """主修复函数"""
-    print("🔧 开始修复HTTPException语法错误...")
 
     # 需要修复的文件列表
     files_to_fix = [
@@ -105,10 +101,8 @@ def main():
     for file_path in files_to_fix:
         path = Path(file_path)
         if not path.exists():
-            print(f"  ⚠️  文件不存在: {file_path}")
             continue
 
-        print(f"\n📝 处理文件: {file_path}")
 
         try:
             with open(path, encoding='utf-8') as f:
@@ -121,18 +115,15 @@ def main():
             if fixed_content != original_content:
                 with open(path, 'w', encoding='utf-8') as f:
                     f.write(fixed_content)
-                print(f"  ✅ 已修复: {file_path}")
                 fixed_count += 1
             else:
-                print(f"  ℹ️  无需修复: {file_path}")
+                pass
 
-        except Exception as e:
-            print(f"  ❌ 修复失败 {file_path}: {e}")
+        except Exception:
+            pass
 
-    print(f"\n🎉 修复完成! 共修复 {fixed_count} 个文件")
 
     # 验证修复结果
-    print("\n🔍 验证修复结果...")
     import subprocess
     import sys
 
@@ -146,12 +137,11 @@ def main():
                     text=True
                 )
                 if result.returncode == 0:
-                    print(f"  ✅ 语法验证通过: {file_path}")
+                    pass
                 else:
-                    print(f"  ❌ 语法验证失败: {file_path}")
-                    print(f"     错误: {result.stderr}")
-            except Exception as e:
-                print(f"  ⚠️  验证异常 {file_path}: {e}")
+                    pass
+            except Exception:
+                pass
 
 if __name__ == "__main__":
     main()

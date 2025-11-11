@@ -241,18 +241,12 @@ python3 scripts/tool_chains/deployment_tool_chain.py
     with open('github_issue_191_update.json', 'w', encoding='utf-8') as f:
         json.dump(update_data, f, indent=2, ensure_ascii=False)
 
-    print("📋 GitHub Issue #191 更新内容准备完成")
-    print("🎯 状态: ✅ 阶段完成 - 建立完整工具体系")
-    print("📊 成果: 102个脚本分析，3个共享库，2个工具链")
-    print("🛠️ 工具: 智能分析器，标准化库，工具链系统")
-    print("✅ 更新报告已保存: github_issue_191_update.json")
-    print("🎉 Issue #191 更新完成！")
 
     return True
 
 if __name__ == "__main__":
     success = update_github_issue_191()
     if success:
-        print("🚀 GitHub Issue #191 更新成功！")
+        pass
     else:
-        print("❌ GitHub Issue #191 更新失败！")
+        pass

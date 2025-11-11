@@ -41,4 +41,3 @@ class ReportGenerator:
 
 if __name__ == "__main__":
     service = ReportGenerator()
-    print("🚀 compliance特性初始化完成: Report Generator")

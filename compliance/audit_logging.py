@@ -41,4 +41,3 @@ class AuditLoggingSystem:
 
 if __name__ == "__main__":
     service = AuditLoggingSystem()
-    print("🚀 compliance特性初始化完成: Audit Logging System")

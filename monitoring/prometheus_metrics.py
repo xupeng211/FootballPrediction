@@ -41,4 +41,3 @@ class PrometheusMetrics:
 
 if __name__ == "__main__":
     service = PrometheusMetrics()
-    print("🚀 monitoring特性初始化完成: Prometheus Metrics")

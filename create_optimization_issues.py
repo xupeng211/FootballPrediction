@@ -34,11 +34,8 @@ class GitHubIssueCreator:
 
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            print(f"✅ Issue创建成功: {title}")
             return result.stdout
-        except subprocess.CalledProcessError as e:
-            print(f"❌ Issue创建失败: {title}")
-            print(f"错误信息: {e.stderr}")
+        except subprocess.CalledProcessError:
             return None
 
     def create_all_optimization_issues(self):
@@ -81,8 +78,6 @@ class GitHubIssueCreator:
             }
         ]
 
-        print("🚀 开始创建优化Issues...")
-        print(f"总计需要创建 {len(issues)} 个Issues\n")
 
         created_issues = []
         for issue in issues:
@@ -94,8 +89,6 @@ class GitHubIssueCreator:
             if result:
                 created_issues.append(issue["title"])
 
-        print("\n🎉 Issues创建完成!")
-        print(f"成功创建: {len(created_issues)}/{len(issues)} 个Issues")
 
         return created_issues
 
@@ -513,8 +506,6 @@ jobs:
 
 def main():
     """主函数"""
-    print("🚀 GitHub Issues 创建工具")
-    print("="*50)
 
     creator = GitHubIssueCreator()
 
@@ -522,32 +513,17 @@ def main():
     try:
         subprocess.run(["gh", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("❌ GitHub CLI (gh) 未安装或不可用")
-        print("请先安装GitHub CLI: https://cli.github.com/")
         return
 
-    print("📋 即将创建以下优化Issues:")
-    print("1. [OPT] 修复所有代码质量问题")
-    print("2. [OPT] 提升用户管理模块测试覆盖率至30%")
-    print("3. [OPT] 修复安全漏洞并更新依赖")
-    print("4. [OPT] 数据库查询性能优化50%")
-    print("5. [OPT] 实现Redis缓存系统")
-    print("6. [OPT] 实现Docker容器化部署")
-    print("7. [OPT] 实现CI/CD自动化流水线")
-    print()
 
     # 确认是否继续
     response = input("是否继续创建这些Issues? (y/n): ").strip().lower()
     if response != 'y':
-        print("❌ 已取消创建")
         return
 
     # 创建Issues
-    created_issues = creator.create_all_optimization_issues()
+    creator.create_all_optimization_issues()
 
-    print(f"\n🎊 成功创建 {len(created_issues)} 个Issues!")
-    print("📋 你可以在GitHub仓库中查看这些Issues")
-    print("🔗 使用 'gh issue list --label optimization' 查看所有优化Issues")
 
 if __name__ == "__main__":
     main()

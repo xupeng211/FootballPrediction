@@ -41,4 +41,3 @@ class ComplianceChecker:
 
 if __name__ == "__main__":
     service = ComplianceChecker()
-    print("🚀 compliance特性初始化完成: Compliance Checker")

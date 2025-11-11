@@ -109,7 +109,7 @@ async def batch_process(request_list: list[dict[str, Any]]):
         logger.info(f"批量处理 {len(request_list)} 个请求")
 
         results = []
-        for i, request_data in enumerate(request_list):
+        for i, _request_data in enumerate(request_list):
             # TODO: 实现批量处理逻辑
             result = {"index": i, "processed": True, "result": f"processed_item_{i}"}
             results.append(result)

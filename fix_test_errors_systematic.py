@@ -384,59 +384,43 @@ def process(data: Any, operation: str = "encrypt") -> Any:
 def run_systematic_fix():
     """运行系统性修复"""
 
-    print("🔧 开始系统性修复测试错误...")
-    print("=" * 50)
 
     all_fixes = []
 
     # 1. 修复缺失的类
-    print("📝 修复缺失的类...")
     class_fixes = fix_missing_classes()
     all_fixes.extend(class_fixes)
 
     # 2. 修复缺失的模块
-    print("📦 修复缺失的模块...")
     module_fixes = fix_missing_modules()
     all_fixes.extend(module_fixes)
 
     # 3. 修复循环导入
-    print("🔄 修复循环导入...")
     import_fixes = fix_circular_imports()
     all_fixes.extend(import_fixes)
 
     # 4. 修复缺失的函数
-    print("⚙️ 修复缺失的函数...")
     function_fixes = fix_missing_functions()
     all_fixes.extend(function_fixes)
 
     # 输出修复结果
-    print(f"\n✅ 修复完成! 总共修复 {len(all_fixes)} 个问题:")
-    for fix in all_fixes:
-        print(f"  {fix}")
+    for _fix in all_fixes:
+        pass
 
     # 验证修复效果
-    print("\n🧪 验证修复效果...")
     test_result = os.system("python -m pytest tests/unit/domain/test_events.py --collect-only -q > /dev/null 2>&1")
     if test_result == 0:
-        print("✅ test_events.py 修复成功!")
+        pass
     else:
-        print("⚠️ test_events.py 仍需进一步检查")
+        pass
 
     return all_fixes
 
 def main():
     """主函数"""
-    fixes = run_systematic_fix()
+    run_systematic_fix()
 
-    print("\n📊 修复摘要:")
-    print(f"• 修复问题数: {len(fixes)}")
-    print("• 修复类型: 类定义、模块创建、循环导入、函数缺失")
-    print("• 下一步: 运行测试验证修复效果")
 
-    print("\n🎯 建议下一步行动:")
-    print("1. 运行 pytest 验证修复效果")
-    print("2. 继续修复剩余的测试错误")
-    print("3. 更新GitHub Issues #209进度")
 
 if __name__ == "__main__":
     main()

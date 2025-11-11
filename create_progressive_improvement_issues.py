@@ -369,23 +369,15 @@ source .venv/bin/activate && ruff check {file_path} --output-format=concise
         """导出Issues到JSON文件"""
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(self.issues, f, ensure_ascii=False, indent=2)
-        print(f"✅ 已导出 {len(self.issues)} 个Issues到 {filename}")
 
     def print_summary(self) -> None:
         """打印Issues摘要"""
-        print("\n📊 GitHub Issues 创建摘要")
-        print("=" * 50)
-        print(f"总Issues数量: {len(self.issues)}")
 
-        for i, issue in enumerate(self.issues, 1):
-            print(f"{i}. {issue['title']}")
-            print(f"   标签: {', '.join(issue['labels'])}")
-            print()
+        for _i, _issue in enumerate(self.issues, 1):
+            pass
 
 def main():
     """主函数"""
-    print("🚀 创建渐进式改进GitHub Issues")
-    print("=" * 50)
 
     creator = IssueCreator()
 
@@ -408,7 +400,6 @@ def main():
     ]
 
     # 创建高优先级文件Issues
-    print("🔴 创建高优先级语法修复Issues...")
     for file_info in high_priority_files:
         creator.create_syntax_fix_issue(
             file_info["path"],
@@ -417,7 +408,6 @@ def main():
         )
 
     # 创建中优先级文件Issues
-    print("🟡 创建中优先级语法修复Issues...")
     for file_info in medium_priority_files:
         creator.create_syntax_fix_issue(
             file_info["path"],
@@ -426,7 +416,6 @@ def main():
         )
 
     # 创建批量修复Issues
-    print("🚀 创建模块级批量修复Issues...")
     creator.generate_batch_fix_issue("Services", [
         {"path": "src/services/processing/caching/processing_cache.py", "errors": 62, "priority": "high"},
         {"path": "src/services/processing/caching/processing_cache_fixed.py", "errors": 62, "priority": "high"},
@@ -449,7 +438,6 @@ def main():
     ])
 
     # 创建策略优化Issue
-    print("📈 创建策略优化Issue...")
     creator.create_strategy_improvement_issue()
 
     # 导出Issues
@@ -458,9 +446,6 @@ def main():
     # 打印摘要
     creator.print_summary()
 
-    print("🎯 所有Issues已创建完成！")
-    print("💡 提示: 使用 'gh issue create' 命令或GitHub网页界面创建这些Issues")
-    print("📋 每个Issue都包含详细的渐进式改进策略指南")
 
 if __name__ == "__main__":
     main()
