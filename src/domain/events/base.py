@@ -12,14 +12,26 @@ from typing import Any
 from uuid import uuid4
 
 
-class DomainEvent(ABC):
-    """领域事件基类"""
+# 兼容性别名将在文件末尾定义
+
+
+class EventData:
+    """事件数据容器"""
+    def __init__(self, data: dict[str, Any] | None = None):
+        self.data = data or {}
+        self.timestamp = datetime.utcnow()
+
+
+class EventHandler(ABC):
+    """事件处理器基类"""
 
     @abstractmethod
-    def get_event_type(self) -> str:
-        """获取事件类型 - 子类必须实现"""
+    async def handle(self, event: 'DomainEvent') -> None:
+        """处理事件"""
         pass
 
+
+class DomainEvent(ABC):
     """
     领域事件基类
 
@@ -27,39 +39,35 @@ class DomainEvent(ABC):
     All domain events should inherit from this class.
     """
 
+    @abstractmethod
+    def get_event_type(self) -> str:
+        """获取事件类型 - 子类必须实现"""
+        pass
+
     def __init__(self, aggregate_id: int | None = None):
-        """函数文档字符串"""
-        # 添加pass语句
         """
         初始化领域事件
 
         Args:
             aggregate_id: 聚合根ID
         """
-        self.event_id = str(uuid4())
+        self.id = str(uuid4())
         self.aggregate_id = aggregate_id
-        self.occurred_at = datetime.utcnow()
-        self.version = 1
+        self.timestamp = datetime.utcnow()
+        self.data: dict[str, Any] = {}
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典格式"""
         return {
-            "event_id": self.event_id,
-            "event_type": self.__class__.__name__,
+            "id": self.id,
+            "type": self.get_event_type(),
             "aggregate_id": self.aggregate_id,
-            "occurred_at": self.occurred_at.isoformat(),
-            "version": self.version,
-            "data": self._get_event_data(),
+            "timestamp": self.timestamp.isoformat(),
+            "data": self.data,
         }
 
-    def _get_event_data(self) -> dict[str, Any]:
-        """
-        获取事件特定数据
 
-        子类应该重写此方法来提供事件特定的数据.
-        Subclasses should override this method to provide event-specific data.
-        """
-        return {}
+# 兼容性别名 - 保持向后兼容
+Event = DomainEvent
 
-    def __str__(self) -> str:
-        return f"{self.__class__.__name__}({self.event_id})"
+__all__ = ["Event", "DomainEvent", "EventData", "EventHandler"]

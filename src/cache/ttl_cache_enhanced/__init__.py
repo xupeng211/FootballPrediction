@@ -34,6 +34,7 @@ try:
         api_response_cache,
         config_cache,
         feature_cache,
+        get_cache,
         prediction_cache,
         user_session_cache,
     )
@@ -44,6 +45,9 @@ except ImportError:
     user_session_cache = None
     api_response_cache = None
     prediction_cache = None
+
+    def get_cache(name: str):
+        return None
 
 try:
     from .async_cache import (
@@ -58,12 +62,13 @@ except ImportError:
     def clear_all_caches():
         return None
 
+
 # 添加 get_all_stats 函数
 def get_all_stats():
     """获取所有缓存的统计信息"""
     stats = {}
     for name, cache in CACHES.items():
-        if hasattr(cache, 'stats'):
+        if hasattr(cache, "stats"):
             stats[name] = cache.stats
         else:
             stats[name] = {"status": "unknown"}
@@ -83,5 +88,6 @@ __all__ = [
     "prediction_cache",
     "cleanup_all_expired",
     "clear_all_caches",
+    "get_cache",
     "get_all_stats",
 ]
