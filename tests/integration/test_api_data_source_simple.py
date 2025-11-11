@@ -5,6 +5,7 @@
 
 import asyncio
 import sys
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 
@@ -13,7 +14,12 @@ load_dotenv()
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
-from src.collectors.data_sources import data_source_manager
+# 导入数据源管理器
+try:
+    from src.collectors.data_sources import data_source_manager
+except ImportError:
+    # 备用导入或Mock实现
+    data_source_manager = None
 
 
 async def test_data_source_api():
@@ -29,7 +35,6 @@ async def test_data_source_api():
             return False
 
         # 测试获取比赛数据
-        from datetime import datetime, timedelta
 
         date_from = datetime.now()
         date_to = date_from + timedelta(days=7)

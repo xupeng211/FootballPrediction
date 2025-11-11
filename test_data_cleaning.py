@@ -107,16 +107,11 @@ def test_football_data_cleaner():
             'match_date': ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-01']
         })
 
-        print("✅ FootballDataCleaner 类创建成功")
 
         # 测试功能
         cleaner = FootballDataCleaner()
         cleaned_data = cleaner.clean_dataset(test_data, 'matches')
 
-        print(f"原始数据形状: {test_data.shape}")
-        print(f"清洗后数据形状: {cleaned_data.shape}")
-        print(f"原始缺失值: {test_data.isnull().sum().sum()}")
-        print(f"清洗后缺失值: {cleaned_data.isnull().sum().sum()}")
 
         # 验证清洗效果
         assert len(cleaned_data) < len(test_data) or cleaned_data.isnull().sum().sum() < test_data.isnull().sum().sum()
@@ -125,11 +120,9 @@ def test_football_data_cleaner():
         assert 'original_shape' in report
         assert 'cleaned_shape' in report
 
-        print("✅ FootballDataCleaner 功能测试通过")
         return True
 
-    except Exception as e:
-        print(f"❌ FootballDataCleaner 测试失败: {e}")
+    except Exception:
         return False
 
 def test_missing_data_handler():
@@ -191,7 +184,6 @@ def test_missing_data_handler():
 
                 return data
 
-        print("✅ MissingDataHandler 类创建成功")
 
         # 测试数据
         test_data = pd.DataFrame({
@@ -207,19 +199,15 @@ def test_missing_data_handler():
         assert 'numeric_col' in analysis['missing_by_column']
         assert 'text_col' in analysis['missing_by_column']
 
-        print(f"缺失值分析: {analysis['total_missing']} 个缺失值")
 
         # 测试插补功能
         imputed_data = handler.impute_missing_data(test_data, 'mean')
 
         assert imputed_data['numeric_col'].isnull().sum() == 0
 
-        print(f"插补后缺失值: {imputed_data.isnull().sum().sum()}")
-        print("✅ MissingDataHandler 功能测试通过")
         return True
 
-    except Exception as e:
-        print(f"❌ MissingDataHandler 测试失败: {e}")
+    except Exception:
         return False
 
 def test_data_preprocessor():
@@ -261,7 +249,6 @@ def test_data_preprocessor():
 
                 return result
 
-        print("✅ DataPreprocessor 类创建成功")
 
         # 测试数据
         test_data = pd.DataFrame({
@@ -279,21 +266,13 @@ def test_data_preprocessor():
         assert 'reports' in result
         assert len(preprocessor.processing_history) == 1
 
-        print(f"预处理成功: {result['success']}")
-        print(f"处理步骤: {result['processing_steps']}")
-        print(f"原始形状: {result['original_data'].shape}")
-        print(f"最终形状: {result['final_data'].shape}")
-        print("✅ DataPreprocessor 功能测试通过")
         return True
 
-    except Exception as e:
-        print(f"❌ DataPreprocessor 测试失败: {e}")
+    except Exception:
         return False
 
 def main():
     """主测试函数"""
-    print("🧪 开始数据清洗模块功能验证")
-    print("=" * 50)
 
     results = []
 
@@ -302,25 +281,18 @@ def main():
     results.append(("MissingDataHandler", test_missing_data_handler()))
     results.append(("DataPreprocessor", test_data_preprocessor()))
 
-    print("=" * 50)
-    print("📊 测试结果汇总:")
 
     passed = 0
     total = len(results)
 
-    for name, result in results:
-        status = "✅ 通过" if result else "❌ 失败"
-        print(f"  {name}: {status}")
+    for _name, result in results:
         if result:
             passed += 1
 
-    print(f"\n📈 总体结果: {passed}/{total} 个测试通过")
 
     if passed == total:
-        print("🎉 所有测试通过！数据清洗和预处理功能实现成功！")
         return True
     else:
-        print("⚠️ 部分测试失败，需要检查实现")
         return False
 
 if __name__ == "__main__":

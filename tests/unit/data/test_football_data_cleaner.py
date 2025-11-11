@@ -152,10 +152,10 @@ class TestFootballDataCleaner:
         # 异常值应该被替换为边界值
         assert processed_data.loc[5, "values"] < 100
         # 检查替换的值是否合理（应该是上边界）
-        Q1 = data["values"].quantile(0.25)
-        Q3 = data["values"].quantile(0.75)
-        IQR = Q3 - Q1
-        upper_bound = Q3 + 1.5 * IQR
+        q1 = data["values"].quantile(0.25)
+        q3 = data["values"].quantile(0.75)
+        iqr = q3 - q1
+        upper_bound = q3 + 1.5 * iqr
         assert processed_data.loc[5, "values"] == upper_bound
 
     def test_clean_dataset_complete_workflow(self, cleaner, sample_data_with_missing):

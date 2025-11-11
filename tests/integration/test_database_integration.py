@@ -7,6 +7,7 @@ Database Integration Tests
 
 import pytest
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Match, Prediction, Team
@@ -277,7 +278,8 @@ class TestDatabaseConstraints:
         test_db_session.add(team2)
 
         # 应该抛出约束违反异常
-        with pytest.raises(Exception):  # 具体异常类型可能因数据库而异
+        with pytest.raises((IntegrityError, OperationalError)):
+            # 数据库约束违反异常
             await test_db_session.commit()
 
     async def test_foreign_key_constraints(self, test_db_session: AsyncSession):
@@ -296,7 +298,8 @@ class TestDatabaseConstraints:
         test_db_session.add(prediction)
 
         # 应该抛出外键约束违反异常
-        with pytest.raises(Exception):  # 具体异常类型可能因数据库而异
+        with pytest.raises((IntegrityError, OperationalError)):
+            # 数据库约束违反异常
             await test_db_session.commit()
 
     async def test_not_null_constraints(self, test_db_session: AsyncSession):
@@ -306,7 +309,8 @@ class TestDatabaseConstraints:
         test_db_session.add(team)
 
         # 应该抛出非空约束违反异常
-        with pytest.raises(Exception):  # 具体异常类型可能因数据库而异
+        with pytest.raises((IntegrityError, OperationalError)):
+            # 数据库约束违反异常
             await test_db_session.commit()
 
 

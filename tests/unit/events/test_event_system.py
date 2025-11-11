@@ -533,7 +533,7 @@ class TestEventPerformance:
 
         # 创建多个处理器
         handlers = []
-        for i in range(10):
+        for _ in range(10):
             handler = Mock(spec=EventHandler)
             handler.handle = Mock()
             handlers.append(handler)

@@ -19,7 +19,7 @@ try:
 
     from fastapi import BackgroundTasks, FastAPI, HTTPException, Path, Query
     from fastapi.testclient import TestClient
-    from pydantic import BaseModel, Field
+    from pydantic import BaseModel
 
     FASTAPI_AVAILABLE = True
 except ImportError:
@@ -365,7 +365,7 @@ def create_health_test_app() -> FastAPI:
         except ValueError:
             raise HTTPException(
                 status_code=400, detail=f"Invalid component type: {component_type}"
-            )
+            ) from None
 
     # 组件列表
     @app.get("/health/components", tags=["Health"])
@@ -431,7 +431,7 @@ def create_health_test_app() -> FastAPI:
         except ValueError:
             raise HTTPException(
                 status_code=400, detail=f"Invalid component type: {component_type}"
-            )
+            ) from None
 
     # 测试端点 - 模拟恢复（仅用于测试）
     @app.post("/health/test/recover/{component_type}", tags=["Health", "Test"])
@@ -446,7 +446,7 @@ def create_health_test_app() -> FastAPI:
         except ValueError:
             raise HTTPException(
                 status_code=400, detail=f"Invalid component type: {component_type}"
-            )
+            ) from None
 
     # 健康检查触发器
     @app.post("/health/refresh", tags=["Health"])

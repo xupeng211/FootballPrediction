@@ -5,6 +5,7 @@ API and Services Module Integration Tests
 测试API层与服务层的集成，确保API正确调用业务服务
 """
 
+import asyncio
 import json
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, patch
@@ -597,9 +598,7 @@ class TestAPIErrorHandling:
         """测试服务超时处理"""
         # 模拟服务超时
         mock_service = AsyncMock()
-        mock_service.get_predictions.side_effect = asyncio.TimeoutError(
-            "Service timeout"
-        )
+        mock_service.get_predictions.side_effect = TimeoutError("Service timeout")
 
         with patch(
             "src.api.routes.predictions.PredictionService", return_value=mock_service
@@ -634,7 +633,6 @@ class TestAPIPerformanceIntegration:
         self, async_client: AsyncClient, performance_benchmarks
     ):
         """测试并发请求处理"""
-        import asyncio
         import time
 
         start_time = time.time()
@@ -666,7 +664,6 @@ class TestAPIPerformanceIntegration:
     @pytest.mark.asyncio
     async def test_request_rate_limiting(self, async_client: AsyncClient):
         """测试请求速率限制"""
-        import asyncio
 
         # 快速发送多个请求
         tasks = [async_client.get("/api/predictions/") for _ in range(10)]

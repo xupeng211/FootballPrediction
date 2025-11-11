@@ -362,58 +362,6 @@ class TestStringUtilsPerformance:
         assert (end_time - start_time) < 1.0  # 应该在1秒内完成
 
 
-# 需要先定义这些缺失的函数
-def find_substring_positions(text: str, substring: str) -> list[int]:
-    """查找子字符串位置（模块级别包装函数，符合测试期望）"""
-    if not isinstance(text, str) or not isinstance(substring, str):
-        return []
-
-    positions = []
-    start = 0
-    while True:
-        pos = text.find(substring, start)
-        if pos == -1:
-            break
-        positions.append(pos)
-        start = pos + 1
-    return positions
-
-
-def replace_multiple(text: str, replacements: dict[str, str]) -> str:
-    """批量替换文本（模块级别包装函数）"""
-    result = text
-    for old, new in replacements.items():
-        result = result.replace(old, new)
-    return result
-
-
-def split_text(text: str, separator=None, maxsplit: int = -1) -> list[str]:
-    """分割文本（模块级别包装函数，符合测试期望）"""
-    if not isinstance(text, str):
-        text = str(text)
-
-    if isinstance(separator, list):
-        # 多分隔符情况：使用正则表达式
-        import re
-
-        # 转义所有分隔符
-        escaped_separators = [re.escape(sep) for sep in separator]
-        pattern = "|".join(escaped_separators)
-        result = re.split(pattern, text)
-        return result
-    else:
-        # 单分隔符情况
-        if maxsplit != -1:
-            return text.split(separator, maxsplit)
-        else:
-            return text.split(separator)
-
-
-def join_text(texts: list[str], separator: str = ",") -> str:
-    """连接文本（模块级别包装函数，符合测试期望）"""
-    return separator.join(str(text) for text in texts)
-
-
 @pytest.mark.parametrize(
     "input_text,expected_length",
     [

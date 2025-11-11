@@ -33,7 +33,12 @@ class TestBindingRule:
         """测试绑定规则创建"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation:
             pass
@@ -54,7 +59,12 @@ class TestBindingRule:
         """测试绑定规则默认值"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation:
             pass
@@ -87,7 +97,12 @@ class TestAutoBinder:
         """测试添加绑定规则"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation:
             pass
@@ -161,7 +176,12 @@ class TestAutoBinder:
         """测试绑定接口到单个实现"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation(TestInterface):
             pass
@@ -177,7 +197,12 @@ class TestAutoBinder:
         """测试绑定接口到多个实现"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation1(TestInterface):
             pass
@@ -206,7 +231,12 @@ class TestAutoBinder:
         """测试绑定接口到无实现"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         with patch.object(self.binder, "_find_implementations", return_value=[]):
             with patch("src.core.auto_binding.logger") as mock_logger:
@@ -219,7 +249,12 @@ class TestAutoBinder:
         """测试自动绑定成功"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation(TestInterface):
             pass
@@ -239,7 +274,12 @@ class TestAutoBinder:
         """测试带条件的自动绑定"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation(TestInterface):
             pass
@@ -260,7 +300,12 @@ class TestAutoBinder:
         """测试作用域生命周期自动绑定"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation(TestInterface):
             pass
@@ -317,7 +362,12 @@ class TestAutoBinder:
         """测试从缓存查找实现"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation(TestInterface):
             pass
@@ -334,7 +384,12 @@ class TestAutoBinder:
         """测试检查实现成功"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation(TestInterface):
             pass
@@ -346,7 +401,12 @@ class TestAutoBinder:
         """测试检查实现失败"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class UnrelatedClass:
             pass
@@ -358,7 +418,12 @@ class TestAutoBinder:
         """测试按名称后缀选择主要实现"""
 
         class ITestService(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestService(ITestService):
             pass
@@ -377,7 +442,12 @@ class TestAutoBinder:
         """测试按默认名称选择主要实现"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class DefaultTestService(TestInterface):
             pass
@@ -396,7 +466,12 @@ class TestAutoBinder:
         """测试选择主要实现的回退策略"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestService1(TestInterface):
             pass
@@ -415,7 +490,12 @@ class TestAutoBinder:
         """测试应用默认约定"""
 
         class ITestService(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestService(ITestService):
             pass
@@ -431,7 +511,12 @@ class TestAutoBinder:
         """测试应用仓储约定"""
 
         class IRepository(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class Repository(IRepository):
             pass
@@ -447,7 +532,12 @@ class TestAutoBinder:
         """测试应用服务约定"""
 
         class IService(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class Service(IService):
             pass
@@ -514,7 +604,12 @@ class TestAutoBindingDecorators:
         """测试绑定到接口装饰器"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         @bind_to(TestInterface)
         class TestClass:
@@ -555,7 +650,12 @@ class TestAutoBinderEdgeCases:
         """测试查找实现时的模块错误处理"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         self.binder._scanned_modules.append("error.module")
 
@@ -598,7 +698,12 @@ class TestAutoBinderEdgeCases:
         """测试选择主要实现时空列表处理"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         result = self.binder._select_primary_implementation(TestInterface, [])
         assert result is None
@@ -607,7 +712,12 @@ class TestAutoBinderEdgeCases:
         """测试应用默认约定时无实现处理"""
 
         class ITestService(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class UnrelatedService:
             pass
@@ -623,7 +733,12 @@ class TestAutoBinderEdgeCases:
         """测试绑定接口实现时处理异常"""
 
         class TestInterface(ABC):
-            pass
+            """测试接口"""
+
+            @abstractmethod
+            def test_method(self) -> None:
+                """测试方法"""
+                pass
 
         class TestImplementation(TestInterface):
             pass

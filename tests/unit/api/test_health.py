@@ -175,7 +175,7 @@ class TestHealthAPI:
             result2 = health_check()
 
             # 基本验证两个结果都有相同结构
-            assert type(result1) == type(result2)
+            assert isinstance(result1, type)(result2)
             assert "status" in result1 and "status" in result2
         else:
             pytest.skip("health_check function not available")

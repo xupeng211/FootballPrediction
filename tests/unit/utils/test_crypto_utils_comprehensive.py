@@ -352,7 +352,7 @@ class TestCryptoUtilsComprehensive:
         # 测试大量生成的性能
         start_time = time.time()
 
-        for i in range(100):
+        for _ in range(100):
             CryptoUtils.generate_short_id()
             CryptoUtils.generate_uuid()
             CryptoUtils.generate_random_string(16)

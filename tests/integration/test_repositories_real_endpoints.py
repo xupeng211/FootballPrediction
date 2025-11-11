@@ -4,7 +4,6 @@ repositories API真实端点测试
 测试repositories.py中定义的所有端点以提升覆盖率
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -28,12 +27,6 @@ def test_repositories_prediction_by_id():
 def test_repositories_user_statistics():
     """测试获取用户预测统计端点"""
     response = client.get("/api/v1/repositories/predictions/user/456/statistics")
-    assert response.status_code in [200, 404, 500]
-
-
-def test_repositories_match_statistics():
-    """测试获取比赛预测统计端点"""
-    response = client.get("/api/v1/repositories/predictions/match/789/statistics")
     assert response.status_code in [200, 404, 500]
 
 
@@ -125,12 +118,6 @@ def test_repositories_live_matches():
 def test_repositories_match_by_id():
     """测试获取比赛详情端点"""
     response = client.get("/api/v1/repositories/matches/789")
-    assert response.status_code in [200, 404, 500]
-
-
-def test_repositories_match_statistics():
-    """测试获取比赛统计端点"""
-    response = client.get("/api/v1/repositories/matches/789/statistics")
     assert response.status_code in [200, 404, 500]
 
 

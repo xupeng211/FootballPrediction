@@ -405,7 +405,7 @@ class TestDataQualitySimple:
             completeness_scores[column] = completeness_score
 
         # 验证完整性分数
-        for column, score in completeness_scores.items():
+        for _column, score in completeness_scores.items():
             assert 0 <= score <= 1
 
         overall_completeness = np.mean(list(completeness_scores.values()))

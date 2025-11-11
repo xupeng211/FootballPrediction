@@ -326,5 +326,5 @@ unclosed: [1, 2, 3
             finally:
                 try:
                     os.unlink(temp_path)
-                except:
+                except OSError:
                     pass  # 忽略删除错误

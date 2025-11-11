@@ -154,5 +154,5 @@ class TestExceptionUsagePatterns:
         pickled = pickle.dumps(error)
         unpickled = pickle.loads(pickled)
 
-        assert type(unpickled) == type(error)
+        assert type(unpickled) is type(error)
         assert str(unpickled) == str(error)

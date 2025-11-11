@@ -602,7 +602,7 @@ class TestServiceLifecycleIntegration:
         ServiceContainer()
 
         # 测试无效配置
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, TypeError, KeyError)):
             MatchDomainService({"invalid_key": "value"})
             # 这里可能需要实现实际的配置验证逻辑
 

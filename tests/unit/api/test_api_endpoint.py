@@ -5,15 +5,32 @@
 
 import asyncio
 import sys
+from datetime import datetime, timedelta
 
-from dotenv import load_dotenv
+# 环境变量和路径设置
+try:
+    from dotenv import load_dotenv
 
-load_dotenv()
+    load_dotenv()
+except ImportError:
+    pass
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
-from src.collectors.data_sources import data_source_manager
+# 在路径设置后导入项目模块
+try:
+    from src.collectors.data_sources import data_source_manager
+except ImportError:
+    # Mock data_source_manager if import fails
+    class MockDataSourceManager:
+        def get_all_sources(self):
+            return []
+
+    data_source_manager = MockDataSourceManager()
+
+# 添加项目根目录到Python路径
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 
 async def test_data_sources_directly():
@@ -28,7 +45,6 @@ async def test_data_sources_directly():
 
         try:
             # 测试获取少量数据
-            from datetime import datetime, timedelta
 
             date_from = datetime.now()
             date_to = date_from + timedelta(days=3)

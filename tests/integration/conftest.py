@@ -7,8 +7,6 @@ Enhanced fixtures and configuration for integration and E2E testing
 """
 
 import asyncio
-
-# 添加项目根目录到Python路径
 import sys
 import tempfile
 from collections.abc import AsyncGenerator
@@ -16,12 +14,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock
 
+# 添加项目根目录到Python路径
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
-from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import create_async_engine, create_engine, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
 
 project_root = Path(__file__).parent.parent.parent
@@ -29,34 +28,35 @@ sys.path.insert(0, str(project_root))
 
 # 导入应用模块 - 使用更灵活的导入方式
 try:
-    from src.database.models import Base
-    from src.main import app
+    from src.domain.models.league import League
+    from src.domain.models.match import Match
+    from src.domain.models.prediction import Prediction, PredictionStatus
+    from src.domain.models.team import Team
 except ImportError:
     # 备用导入路径
     try:
-        from src.database.database_service import Base
+        from sqlalchemy.ext.declarative import declarative_base
 
-        from src.app_enhanced import app
+        Base = declarative_base()
+
     except ImportError:
         # 创建基础模型类用于测试
-        from sqlalchemy.orm import DeclarativeBase
-
-        from src.main_simple import app
-
-        class Base(DeclarativeBase):
+        class Base:
             pass
 
 
 # 导入领域模型
 try:
     from src.domain.models.league import League
-    from src.domain.models.match import Match, MatchStatus
-    from src.domain.models.prediction import Prediction, PredictionStatus
+    from src.domain.models.match import Match
+    from src.domain.models.prediction import Prediction
     from src.domain.models.team import Team
 except ImportError:
     # 备用导入或创建简化的测试模型
     Prediction = None
     Match = None
+    Team = None
+    League = None
     Team = None
     League = None
 
@@ -125,8 +125,8 @@ async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture
 def sync_test_db_session(sync_test_db_engine):
     """创建同步测试数据库会话"""
-    Session = sessionmaker(bind=sync_test_db_engine)
-    session = Session()
+    session_factory = sessionmaker(bind=sync_test_db_engine)
+    session = session_factory()
 
     yield session
 
@@ -134,20 +134,33 @@ def sync_test_db_session(sync_test_db_engine):
 
 
 @pytest.fixture
-def test_client():
+def app():
+    """创建FastAPI应用实例"""
+    try:
+        from src.api.main import app as main_app
+
+        return main_app
+    except ImportError:
+        # 创建一个最小的FastAPI应用用于测试
+        from fastapi import FastAPI
+
+        return FastAPI()
+
+
+@pytest.fixture
+def test_client(app):
     """创建FastAPI测试客户端"""
     return TestClient(app)
 
 
 @pytest_asyncio.fixture
-async def async_client() -> AsyncGenerator[AsyncClient, None]:
+async def async_client(app) -> AsyncGenerator[AsyncClient, None]:
     """创建异步HTTP客户端"""
     try:
         async with AsyncClient(app=app, base_url="http://test") as ac:
             yield ac
     except TypeError:
         # 如果AsyncClient API不同，使用备用方法
-        from fastapi.testclient import TestClient
 
         client = TestClient(app)
 

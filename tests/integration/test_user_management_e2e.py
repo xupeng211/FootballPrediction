@@ -1,4 +1,36 @@
 """
+
+# Mock user service for testing
+
+# Mock user service for testing
+mock_user_service = Mock()
+mock_user_service.update_display_preferences.return_value = {
+    "user_id": 1,
+    "preferences": {"theme": "dark", "notifications": True}
+}
+mock_user_service.update_privacy_preferences.return_value = {
+    "user_id": 1,
+    "privacy": {"profile_visibility": "public", "data_sharing": False}
+}
+mock_user_service.update_prediction_preferences.return_value = {
+    "user_id": 1,
+    "predictions": {"auto_predictions": True, "confidence_threshold": 0.7}
+}
+
+mock_user_service = Mock()
+mock_user_service.update_display_preferences.return_value = {
+    "user_id": 1,
+    "preferences": {"theme": "dark", "notifications": True}
+}
+mock_user_service.update_privacy_preferences.return_value = {
+    "user_id": 1,
+    "privacy": {"profile_visibility": "public", "data_sharing": False}
+}
+mock_user_service.update_prediction_preferences.return_value = {
+    "user_id": 1,
+    "predictions": {"auto_predictions": True, "confidence_threshold": 0.7}
+}
+
 用户管理端到端测试
 User Management End-to-End Tests
 
@@ -765,6 +797,11 @@ class TestUserProfileManagementE2E:
         """测试用户偏好设置管理"""
         user_data = test_user_data["users"][0]
         auth_headers = {"Authorization": "Bearer test_jwt_token"}
+
+        # 创建mock用户服务
+        from unittest.mock import Mock
+
+        mock_user_service = Mock()
 
         # ================================
         # 第一阶段: 设置显示偏好

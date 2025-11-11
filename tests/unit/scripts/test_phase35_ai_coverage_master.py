@@ -1,20 +1,22 @@
-#!/usr/bin/env python3
-"""
-Phase35AICoverageMaster单元测试
-验证AI覆盖率大师的核心功能
-"""
-
 import sys
 from pathlib import Path
 
 import pytest
+from phase35_ai_coverage_master import Phase35AICoverageMaster
+
+#!/usr/bin/env python3
+"""
+
+
+Phase35AICoverageMaster单元测试
+验证AI覆盖率大师的核心功能
+"""
+
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "scripts"))
-
-from phase35_ai_coverage_master import Phase35AICoverageMaster
 
 
 class TestPhase35AICoverageMaster:
