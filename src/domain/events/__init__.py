@@ -6,17 +6,6 @@ Domain Events
 Defines domain event classes for recording and propagating important events in the domain.
 """
 
-# 注释掉不存在的类
-# MatchCancelledEvent,
-# MatchFinishedEvent,
-# MatchPostponedEvent,
-# MatchStartedEvent,
-# PredictionCancelledEvent,
-# PredictionCreatedEvent,
-# PredictionEvaluatedEvent,
-# PredictionExpiredEvent,
-# PredictionPointsAdjustedEvent,
-# PredictionUpdatedEvent,
 
 from .base import Event, EventData, EventHandler
 from .bus import EventBus, get_event_bus, start_event_bus, stop_event_bus
@@ -28,6 +17,20 @@ from .handlers import (
     MetricsEventHandler,
     NotificationEventHandler,
     register_default_handlers,
+)
+from .match_events import (
+    MatchCancelledEvent,
+    MatchFinishedEvent,
+    MatchPostponedEvent,
+    MatchStartedEvent,
+)
+from .prediction_events import (
+    PredictionCancelledEvent,
+    PredictionCreatedEvent,
+    PredictionEvaluatedEvent,
+    PredictionExpiredEvent,
+    PredictionPointsAdjustedEvent,
+    PredictionUpdatedEvent,
 )
 from .types import (
     MatchCreatedEventData,
@@ -49,7 +52,18 @@ __all__ = [
     "MatchCreatedEventData",
     "MatchUpdatedEventData",
     "PredictionMadeEventData",
-    "",
+    # 比赛事件
+    "MatchStartedEvent",
+    "MatchFinishedEvent",
+    "MatchCancelledEvent",
+    "MatchPostponedEvent",
+    # 预测事件
+    "PredictionCreatedEvent",
+    "PredictionUpdatedEvent",
+    "PredictionEvaluatedEvent",
+    "PredictionCancelledEvent",
+    "PredictionExpiredEvent",
+    "PredictionPointsAdjustedEvent",
     # 事件处理器
     "MetricsEventHandler",
     "LoggingEventHandler",

@@ -27,13 +27,17 @@ class PredictionEvent(DomainEvent):
         if data is None:
             data = {}
 
-        super().__init__(
-            event_id=f"prediction_{prediction_id}_{event_type}",
-            aggregate_id=prediction_id,
-            event_type=event_type,
-            data=data,
-            timestamp=timestamp,
-        )
+        # 调用父类构造函数，只传递aggregate_id参数
+        super().__init__(aggregate_id=int(prediction_id))
+
+        # 手动设置其他属性
+        self.event_type = event_type
+        self.data = data
+        self.timestamp = timestamp
+
+    def get_event_type(self) -> str:
+        """获取事件类型"""
+        return self.event_type
 
 
 class PredictionCreatedEvent(DomainEvent):
@@ -56,6 +60,10 @@ class PredictionCreatedEvent(DomainEvent):
         self.predicted_home = predicted_home
         self.predicted_away = predicted_away
         self.confidence = confidence
+
+    def get_event_type(self) -> str:
+        """获取事件类型"""
+        return "prediction_created"
 
     def _get_event_data(self) -> dict[str, Any]:
         return {
@@ -86,6 +94,10 @@ class PredictionUpdatedEvent(DomainEvent):
         self.old_predicted_away = old_predicted_away
         self.new_predicted_home = new_predicted_home
         self.new_predicted_away = new_predicted_away
+
+    def get_event_type(self) -> str:
+        """获取事件类型"""
+        return "prediction_updated"
 
     def _get_event_data(self) -> dict[str, Any]:
         return {
@@ -122,6 +134,10 @@ class PredictionEvaluatedEvent(DomainEvent):
         self.points_earned = points_earned
         self.accuracy_score = accuracy_score
 
+    def get_event_type(self) -> str:
+        """获取事件类型"""
+        return "prediction_evaluated"
+
     def _get_event_data(self) -> dict[str, Any]:
         return {
             "prediction_id": self.prediction_id,
@@ -147,6 +163,10 @@ class PredictionCancelledEvent(DomainEvent):
         self.reason = reason
         self.cancelled_by = cancelled_by
 
+    def get_event_type(self) -> str:
+        """获取事件类型"""
+        return "prediction_cancelled"
+
     def _get_event_data(self) -> dict[str, Any]:
         return {
             "prediction_id": self.prediction_id,
@@ -159,12 +179,14 @@ class PredictionExpiredEvent(DomainEvent):
     """预测过期事件"""
 
     def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs):
-        """函数文档字符串"""
-        # 添加pass语句
         super().__init__(aggregate_id=prediction_id)
         self.prediction_id = prediction_id
         self.match_id = match_id
         self.expired_at = expired_at
+
+    def get_event_type(self) -> str:
+        """获取事件类型"""
+        return "prediction_expired"
 
     def _get_event_data(self) -> dict[str, Any]:
         return {
@@ -192,6 +214,10 @@ class PredictionPointsAdjustedEvent(DomainEvent):
         self.old_points = old_points
         self.new_points = new_points
         self.adjustment_reason = adjustment_reason
+
+    def get_event_type(self) -> str:
+        """获取事件类型"""
+        return "prediction_points_adjusted"
 
     def _get_event_data(self) -> dict[str, Any]:
         return {
