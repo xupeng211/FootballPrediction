@@ -133,19 +133,22 @@ class TestCachePerformanceAPIBasic:
         # 测试超出范围的值
         with pytest.raises(ValidationError):
             CacheAnalysisRequest(
-                analysis_type="performance", time_range_hours=200  # 超出范围 (1-168)
+                analysis_type="performance",
+                time_range_hours=200,  # 超出范围 (1-168)
             )
 
         # 测试低于范围的值
         with pytest.raises(ValidationError):
             CacheAnalysisRequest(
-                analysis_type="performance", time_range_hours=0  # 低于范围 (1-168)
+                analysis_type="performance",
+                time_range_hours=0,  # 低于范围 (1-168)
             )
 
         # 测试错误的数据类型
         with pytest.raises(ValidationError):
             CacheAnalysisRequest(
-                analysis_type="performance", time_range_hours="invalid"  # 错误类型
+                analysis_type="performance",
+                time_range_hours="invalid",  # 错误类型
             )
 
     def test_model_serialization(self):

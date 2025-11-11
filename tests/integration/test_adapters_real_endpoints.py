@@ -4,7 +4,6 @@ adapters API真实端点测试
 测试adapters/router.py中实际定义的所有端点以提升覆盖率
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 

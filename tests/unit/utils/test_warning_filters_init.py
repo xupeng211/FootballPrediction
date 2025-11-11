@@ -23,7 +23,6 @@ class TestWarningFiltersInitialization:
 
             # 验证导入不会抛出异常（错误被正确处理）
             try:
-
                 # 如果能到达这里说明错误处理工作正常
                 assert True
             except Exception:
@@ -45,7 +44,6 @@ class TestWarningFiltersInitialization:
 
                 # 验证导入不会抛出异常（错误被正确处理）
                 try:
-
                     # 如果能到达这里说明错误处理工作正常
                     assert True
                 except Exception:

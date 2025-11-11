@@ -102,7 +102,6 @@ class TestSystemMonitor:
             patch("psutil.disk_usage") as mock_disk,
             patch("psutil.net_connections") as mock_connections,
         ):
-
             # 模拟内存数据
             mock_memory_obj = Mock()
             mock_memory_obj.total = 8589934592
@@ -249,7 +248,6 @@ class TestSystemMonitor:
             patch("psutil.virtual_memory") as mock_memory,
             patch("psutil.disk_usage") as mock_disk,
         ):
-
             mock_memory_obj = Mock()
             mock_memory_obj.percent = 50.0
             mock_memory.return_value = mock_memory_obj
@@ -271,7 +269,6 @@ class TestSystemMonitor:
             patch("psutil.virtual_memory") as mock_memory,
             patch("psutil.disk_usage") as mock_disk,
         ):
-
             mock_memory_obj = Mock()
             mock_memory_obj.percent = 60.0
             mock_memory.return_value = mock_memory_obj
@@ -299,7 +296,6 @@ class TestSystemMonitor:
             patch("psutil.virtual_memory") as mock_memory,
             patch("psutil.disk_usage") as mock_disk,
         ):
-
             mock_memory_obj = Mock()
             mock_memory_obj.percent = 60.0
             mock_memory.return_value = mock_memory_obj
@@ -325,7 +321,6 @@ class TestSystemMonitor:
             patch("psutil.virtual_memory"),
             patch("psutil.disk_usage"),
         ):
-
             mock_memory_obj = Mock()
             mock_memory_obj.percent = 90.0
             mock_disk_obj = Mock()
@@ -349,7 +344,6 @@ class TestSystemMonitor:
             patch("psutil.virtual_memory") as mock_memory,
             patch("psutil.disk_usage") as mock_disk,
         ):
-
             mock_memory_obj = Mock()
             mock_memory_obj.percent = 60.0
             mock_memory.return_value = mock_memory_obj

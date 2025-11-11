@@ -339,7 +339,7 @@ class TestDataCollectorsIntegrationSimple:
                 match = {
                     "match_id": i,
                     "home_team": f"Team {i}",
-                    "away_team": f"Team {i+1}",
+                    "away_team": f"Team {i + 1}",
                     "date": "2024-01-15T15:00:00Z",
                 }
                 data.append(match)

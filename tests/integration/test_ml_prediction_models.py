@@ -329,7 +329,7 @@ def main():
     failed = 0
 
     for test_name, test_func in tests:
-        logger.debug(f"\n{'='*60}")  # TODO: Add logger import if needed
+        logger.debug(f"\n{'=' * 60}")  # TODO: Add logger import if needed
         logger.debug(f"🧪 {test_name}")  # TODO: Add logger import if needed
         logger.debug("=" * 60)  # TODO: Add logger import if needed
 

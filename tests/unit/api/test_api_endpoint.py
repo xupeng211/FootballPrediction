@@ -42,7 +42,6 @@ async def test_data_sources_directly():
     # 测试Football-Data.org适配器
     adapter = data_source_manager.get_adapter("football_data_org")
     if adapter:
-
         try:
             # 测试获取少量数据
 

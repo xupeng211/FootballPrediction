@@ -444,7 +444,7 @@ def compare_with_original():
             comparison_results.append(comparison)
 
             logger.info(
-                f"  案例{i+1}: 原始EV={original_ev:.3f}, 增强EV={enhanced_result.ev:.3f}, "
+                f"  案例{i + 1}: 原始EV={original_ev:.3f}, 增强EV={enhanced_result.ev:.3f}, "
                 f"原始Kelly={original_kelly:.3f}, 增强Kelly={enhanced_result.kelly_fraction:.3f}"
             )
 

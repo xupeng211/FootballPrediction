@@ -403,7 +403,9 @@ class TestPredictionDomainService:
 
         # 评估预测（比分差异正确但具体比分不同）
         evaluated_prediction = prediction_service.evaluate_prediction(
-            prediction=prediction, actual_home=2, actual_away=0  # 实际净胜2球
+            prediction=prediction,
+            actual_home=2,
+            actual_away=0,  # 实际净胜2球
         )
 
         # 验证评估结果

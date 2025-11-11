@@ -233,7 +233,6 @@ class TestDataProcessingFlow:
             patch("src.ml.features.calculate_h2h_stats") as mock_h2h,
             patch("src.ml.features.calculate_home_advantage") as mock_advantage,
         ):
-
             mock_form.return_value = {"home_form": 0.75, "away_form": 0.65}
             mock_h2h.return_value = {"h2h_win_rate": 0.6, "h2h_goals": 2.5}
             mock_advantage.return_value = {"home_advantage": 0.15}

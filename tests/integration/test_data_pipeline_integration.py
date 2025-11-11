@@ -332,7 +332,7 @@ class TestDataPipelineIntegration:
                     "away_team_id": np.random.randint(1, 1000, 1000),
                     "home_score": np.random.randint(0, 10, 1000),
                     "away_score": np.random.randint(0, 10, 1000),
-                    "match_date": [f"2024-01-{i%30+1:02d}" for i in range(1000)],
+                    "match_date": [f"2024-01-{i % 30 + 1:02d}" for i in range(1000)],
                 }
             )
 

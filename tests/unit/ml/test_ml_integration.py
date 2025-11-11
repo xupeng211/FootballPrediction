@@ -140,9 +140,9 @@ def create_batch_prediction_data(num_predictions: int = 10) -> list[dict[str, An
             {
                 "home_team": home_team,
                 "away_team": away_team,
-                "match_id": f"batch_match_{i+1:03d}",
+                "match_id": f"batch_match_{i + 1:03d}",
                 "match_date": datetime.now() + timedelta(days=i + 1),
-                "venue": f"Stadium_{i+1}",
+                "venue": f"Stadium_{i + 1}",
             }
         )
 
@@ -217,7 +217,7 @@ class TestMLWorkflowIntegration:
         # 创建多个模型实例
         models = []
         for i in range(3):
-            model = PoissonModel(f"ensemble_v{i+1}")
+            model = PoissonModel(f"ensemble_v{i + 1}")
             # 使用不同的数据子集训练
             subset_data = training_data.sample(frac=0.8, random_state=i)
             model.train(subset_data)

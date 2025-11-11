@@ -601,7 +601,6 @@ class TestCachePerformanceAPIIntegration:
                 "src.api.optimization.cache_performance_api.get_intelligent_warmup_manager"
             ) as mock_warmup,
         ):
-
             # 设置模拟
             mock_consistency.return_value.get_status.return_value = {
                 "status": "healthy"

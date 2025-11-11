@@ -150,7 +150,8 @@ class TestDatabasePerformanceAnalyzer:
         )
         for i in range(10):
             analyzer.query_metrics[error_query_hash].record_execution(
-                0.1, error=(i % 2 == 0)  # 50%错误率
+                0.1,
+                error=(i % 2 == 0),  # 50%错误率
             )
 
         suggestions = await analyzer.get_optimization_suggestions()
@@ -564,7 +565,9 @@ class TestQueryExecutionAnalyzer:
 
         # 创建全表扫描节点
         seq_scan_node = ExecutionPlanNode(
-            node_type="Seq Scan", relation_name="large_table", rows=5000  # 大表
+            node_type="Seq Scan",
+            relation_name="large_table",
+            rows=5000,  # 大表
         )
 
         execution_plan = [seq_scan_node]
@@ -585,7 +588,8 @@ class TestQueryExecutionAnalyzer:
 
         # 创建慢查询节点
         slow_node = ExecutionPlanNode(
-            node_type="Seq Scan", actual_total_time=6.0  # 超过5秒阈值
+            node_type="Seq Scan",
+            actual_total_time=6.0,  # 超过5秒阈值
         )
 
         execution_plan = [slow_node]

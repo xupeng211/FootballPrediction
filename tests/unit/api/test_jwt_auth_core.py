@@ -272,7 +272,8 @@ class TestTokenVerification:
 
         # 使用不同的算法创建验证器
         wrong_algorithm_manager = JWTAuthManager(
-            secret_key="test-secret-key", algorithm="HS384"  # 不同的算法
+            secret_key="test-secret-key",
+            algorithm="HS384",  # 不同的算法
         )
 
         with pytest.raises(ValueError):
