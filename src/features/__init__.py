@@ -13,7 +13,6 @@ from .feature_calculator import FeatureCalculator
 
 # 导入__init__相关类
 try:
-    from .__init__ import (
         AllMatchFeatures,
         AllTeamFeatures,
         HistoricalMatchupFeatures,

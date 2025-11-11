@@ -10,7 +10,6 @@ from .base import Decorator, DecoratorComponent
 
 # 导入__init__相关类
 try:
-    from .__init__ import (
         AuthDecorator,
         CacheDecorator,
         LoggingDecorator,

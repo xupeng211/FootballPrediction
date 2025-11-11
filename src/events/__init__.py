@@ -8,7 +8,6 @@ Provides event system infrastructure for loosely coupled component communication
 
 from .base import Event, EventData, EventHandler
 from .bus import EventBus, get_event_bus, start_event_bus, stop_event_bus
-from .handlers import (
     AlertEventHandler,
     AnalyticsEventHandler,
     CacheInvalidationHandler,
@@ -17,7 +16,6 @@ from .handlers import (
     NotificationEventHandler,
     register_default_handlers,
 )
-from .types import (
     MatchCreatedEvent,
     MatchCreatedEventData,
     MatchUpdatedEvent,

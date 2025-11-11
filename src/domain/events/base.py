@@ -19,6 +19,7 @@ class DomainEvent(ABC):
     def get_event_type(self) -> str:
         """获取事件类型 - 子类必须实现"""
         pass
+
     """
     领域事件基类
 

@@ -10,7 +10,6 @@ Create Date: 2025-10-30 16:53:00.000000
 
 from collections.abc import Sequence
 
-import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 

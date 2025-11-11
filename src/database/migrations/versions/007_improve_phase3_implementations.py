@@ -1,5 +1,4 @@
 # mypy: ignore-errors
-import sqlalchemy as sa
 from alembic import op
 
 """Phase 3 改进迁移"

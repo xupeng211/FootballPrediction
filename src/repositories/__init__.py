@@ -6,11 +6,9 @@ Repository Pattern Implementation
 Provides abstraction layer for data access.
 """
 
-from .base import (
     BaseRepository,
     QuerySpec,
 )
-from .di import (
     MatchRepoDep,
     PredictionRepoDep,
     ReadOnlyMatchRepoDep,
@@ -26,12 +24,10 @@ from .di import get_match_repository as get_match_repo_dep
 from .di import get_prediction_repository as get_prediction_repo_dep
 from .di import get_user_repository as get_user_repo_dep
 from .match import MatchRepository, MatchRepositoryInterface, ReadOnlyMatchRepository
-from .prediction import (
     PredictionRepository,
     PredictionRepositoryInterface,
     ReadOnlyPredictionRepository,
 )
-from .provider import (
     DefaultRepositoryFactory,
     RepositoryFactory,
     RepositoryProvider,

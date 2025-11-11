@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Sequence
 
-import sqlalchemy as sa
 from alembic import op
 
 # mypy: ignore-errors
