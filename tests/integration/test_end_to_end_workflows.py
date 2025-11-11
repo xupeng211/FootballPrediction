@@ -286,7 +286,6 @@ class TestBusinessLogicIntegration:
             stats_response.status_code == 200
             and predictions_response.status_code == 200
         ):
-
             stats_data = stats_response.json()
             predictions_data = predictions_response.json()
 
@@ -349,9 +348,9 @@ class TestPerformanceIntegration:
 
         # 验证所有端点都在合理时间内响应
         for result in response_times:
-            assert result["response_time"] < 2.0, (
-                f"Endpoint {result['endpoint']} took " f"{result['response_time']:.2f}s"
-            )
+            assert (
+                result["response_time"] < 2.0
+            ), f"Endpoint {result['endpoint']} took {result['response_time']:.2f}s"
 
     def test_concurrent_request_handling(self, test_client: TestClient):
         """测试并发请求处理"""

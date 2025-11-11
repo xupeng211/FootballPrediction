@@ -105,7 +105,7 @@ def create_integration_test_report():
     report_content = f"""# 集成测试扩展报告
 
 ## 📊 测试执行时间
-**执行时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**执行时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## 🧪 测试套件概述
 
@@ -233,7 +233,7 @@ def create_integration_test_report():
 
 ---
 
-**报告生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**报告生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 **Issue状态**: Issue #344 - 集成测试扩展 (进行中)
 **项目状态**: 集成测试框架已建立，正在执行覆盖率提升
 """
@@ -254,7 +254,6 @@ def main():
 
     # 运行集成测试
     if run_integration_tests():
-
         # 生成覆盖率报告
         generate_coverage_report()
 

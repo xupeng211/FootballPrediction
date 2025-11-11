@@ -25,7 +25,6 @@ async def test_data_sources():
     # 测试mock数据源
     mock_adapter = data_source_manager.get_adapter("mock")
     if mock_adapter:
-
         # 测试获取比赛数据
         matches = await mock_adapter.get_matches()
 

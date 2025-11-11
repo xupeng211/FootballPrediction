@@ -353,7 +353,7 @@ def create_health_test_app() -> FastAPI:
         tags=["Health"],
     )
     async def get_component_health(
-        component_type: str = Path(..., description="组件类型")
+        component_type: str = Path(..., description="组件类型"),
     ):
         """获取单个组件健康状态"""
         try:
@@ -386,7 +386,7 @@ def create_health_test_app() -> FastAPI:
     # 健康历史
     @app.get("/health/history", tags=["Health"])
     async def get_health_history(
-        limit: int = Query(10, ge=1, le=100, description="返回记录数限制")
+        limit: int = Query(10, ge=1, le=100, description="返回记录数限制"),
     ):
         """获取健康检查历史"""
         history = health_checker.health_history[-limit:]
@@ -421,7 +421,7 @@ def create_health_test_app() -> FastAPI:
     # 测试端点 - 模拟故障（仅用于测试）
     @app.post("/health/test/fail/{component_type}", tags=["Health", "Test"])
     async def simulate_component_failure(
-        component_type: str = Path(..., description="要模拟故障的组件类型")
+        component_type: str = Path(..., description="要模拟故障的组件类型"),
     ):
         """模拟组件故障（仅用于测试）"""
         try:
@@ -436,7 +436,7 @@ def create_health_test_app() -> FastAPI:
     # 测试端点 - 模拟恢复（仅用于测试）
     @app.post("/health/test/recover/{component_type}", tags=["Health", "Test"])
     async def simulate_component_recovery(
-        component_type: str = Path(..., description="要模拟恢复的组件类型")
+        component_type: str = Path(..., description="要模拟恢复的组件类型"),
     ):
         """模拟组件恢复（仅用于测试）"""
         try:

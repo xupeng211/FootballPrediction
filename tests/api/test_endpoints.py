@@ -105,7 +105,6 @@ class TestHealthEndpoints:
             patch("psutil.virtual_memory") as mock_memory,
             patch("psutil.cpu_percent") as mock_cpu,
         ):
-
             mock_memory.return_value.percent = 45.2
             mock_cpu.return_value = 25.8
 

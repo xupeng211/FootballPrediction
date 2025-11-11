@@ -175,6 +175,7 @@ class TestDatabasePerformance:
                     await mock_db.fetch(q)
                     end_time = time.time()
                     return (end_time - start_time) * 1000
+
                 return simulate_query  # noqa: B023
 
             # Get the simulator function

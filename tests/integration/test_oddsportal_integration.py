@@ -244,9 +244,9 @@ async def run_all_tests():
     total = len(tests)
 
     for test_name, test_func in tests:
-        logger.info(f"\n{'='*50}")
+        logger.info(f"\n{'=' * 50}")
         logger.info(f"Running Test: {test_name}")
-        logger.info(f"{'='*50}")
+        logger.info(f"{'=' * 50}")
 
         try:
             result = await test_func()
@@ -261,13 +261,13 @@ async def run_all_tests():
             results[test_name] = False
 
     # 测试总结
-    logger.info(f"\n{'='*50}")
+    logger.info(f"\n{'=' * 50}")
     logger.info("TEST SUMMARY")
-    logger.info(f"{'='*50}")
+    logger.info(f"{'=' * 50}")
     logger.info(f"Total Tests: {total}")
     logger.info(f"Passed: {passed}")
     logger.info(f"Failed: {total - passed}")
-    logger.info(f"Success Rate: {passed/total*100:.1f}%")
+    logger.info(f"Success Rate: {passed / total * 100:.1f}%")
 
     for test_name, result in results.items():
         status = "✅ PASSED" if result else "❌ FAILED"

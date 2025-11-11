@@ -23,7 +23,6 @@ class TestAPIHealthExtended:
             patch("src.api.health.check_redis_health") as mock_redis,
             patch("src.api.health.check_kafka_health") as mock_kafka,
         ):
-
             mock_db.return_value = {"status": "healthy", "latency_ms": 10}
             mock_redis.return_value = {"status": "healthy", "latency_ms": 5}
             mock_kafka.return_value = {"status": "healthy", "latency_ms": 20}

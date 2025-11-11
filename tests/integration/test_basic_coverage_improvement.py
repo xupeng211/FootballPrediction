@@ -30,7 +30,6 @@ def run_coverage_test():
         )
 
         if result.returncode == 0:
-
             # 提取覆盖率数据
             lines = result.stdout.split("\n")
             for line in lines:

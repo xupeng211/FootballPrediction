@@ -265,7 +265,6 @@ class TestMetricsCollector:
             patch.object(collector, "collect_memory_usage", return_value=60),
             patch.object(collector, "collect_disk_usage", return_value=30),
         ):
-
             # 调用方法
             metrics = collector.collect_all()
 

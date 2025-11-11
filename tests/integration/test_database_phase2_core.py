@@ -125,7 +125,6 @@ class TestDatabaseOperationsPhase2:
             patch.object(manager, "_async_engine"),
             patch.object(manager, "_async_session_factory") as mock_factory,
         ):
-
             mock_session = AsyncMock(spec=AsyncSession)
             mock_factory.return_value = mock_session
 
@@ -146,7 +145,6 @@ class TestDatabaseOperationsPhase2:
             patch.object(manager, "_engine"),
             patch.object(manager, "_session_factory") as mock_factory,
         ):
-
             mock_session = MagicMock(spec=Session)
             mock_factory.return_value = mock_session
 

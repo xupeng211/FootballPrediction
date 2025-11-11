@@ -74,7 +74,7 @@ async def test_data_normalization():
                 for i, match in enumerate(upcoming_matches[:3]):
                     normalized = collector.normalize_match_data(match)
                     logger.info(
-                        f"✅ 比赛 {i+1} 标准化成功: {normalized.get('match_title', 'Unknown')}"
+                        f"✅ 比赛 {i + 1} 标准化成功: {normalized.get('match_title', 'Unknown')}"
                     )
 
             return True

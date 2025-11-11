@@ -3,7 +3,6 @@
 简单的repositories测试，用于验证基本功能
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 

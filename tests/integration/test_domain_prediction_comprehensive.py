@@ -266,7 +266,9 @@ class TestPredictionDomainComprehensive:
 
         with pytest.raises(DomainError):
             prediction.make_prediction(
-                predicted_home=2, predicted_away=1, confidence=1.5  # 超出范围
+                predicted_home=2,
+                predicted_away=1,
+                confidence=1.5,  # 超出范围
             )
 
     def test_make_prediction_non_pending_status(self):

@@ -4,7 +4,6 @@ observers API真实端点测试
 测试observers.py中定义的所有端点以提升覆盖率
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 

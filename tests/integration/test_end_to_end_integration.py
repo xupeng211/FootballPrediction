@@ -260,8 +260,8 @@ class TestEndToEndPredictionWorkflow:
         teams_data = []
         for i in range(4):
             team_data = {
-                "name": f"Batch Team {i+1} FC",
-                "short_name": f"BT{i+1}",
+                "name": f"Batch Team {i + 1} FC",
+                "short_name": f"BT{i + 1}",
                 "country": "Test Country",
                 "founded_year": 2020 + i,
             }
@@ -862,8 +862,8 @@ class TestEndToEndPerformance:
         for i in range(10):
             team = await mock_services["database"].create_team(
                 {
-                    "name": f"Perf Team {i+1}",
-                    "short_name": f"PT{i+1}",
+                    "name": f"Perf Team {i + 1}",
+                    "short_name": f"PT{i + 1}",
                     "country": "Test Country",
                 }
             )
@@ -986,8 +986,8 @@ class TestEndToEndPerformance:
         batch_size = 50
         teams_data = [
             {
-                "name": f"Batch Team {i+1}",
-                "short_name": f"BT{i+1}",
+                "name": f"Batch Team {i + 1}",
+                "short_name": f"BT{i + 1}",
                 "country": "Batch Country",
             }
             for i in range(batch_size)

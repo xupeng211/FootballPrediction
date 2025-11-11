@@ -58,7 +58,6 @@ class TestPredictionsOptimizedRouter:
             patch("src.api.predictions.optimized_router.get_cache_manager"),
             patch("src.api.predictions.optimized_router.get_system_monitor"),
         ):
-
             response = self.client.get("/api/predictions/v2/health")
 
             expected_keys = {"status", "timestamp", "service", "components"}
@@ -73,7 +72,6 @@ class TestPredictionsOptimizedRouter:
             patch("src.api.predictions.optimized_router.get_cache_manager"),
             patch("src.api.predictions.optimized_router.get_system_monitor"),
         ):
-
             response = self.client.get("/api/predictions/v2/health")
             data = response.json()
 
@@ -88,7 +86,6 @@ class TestPredictionsOptimizedRouter:
             patch("src.api.predictions.optimized_router.get_cache_manager"),
             patch("src.api.predictions.optimized_router.get_system_monitor"),
         ):
-
             response = self.client.get("/api/predictions/v2/health")
             data = response.json()
 
@@ -109,7 +106,6 @@ class TestPredictionsOptimizedRouter:
             patch("src.api.predictions.optimized_router.get_cache_manager"),
             patch("src.api.predictions.optimized_router.get_system_monitor"),
         ):
-
             # 模拟服务异常
             mock_service.side_effect = Exception("Service unavailable")
 
@@ -142,7 +138,6 @@ class TestPredictionsOptimizedRouter:
             patch("src.api.predictions.optimized_router.get_cache_manager"),
             patch("src.api.predictions.optimized_router.get_system_monitor"),
         ):
-
             start_time = time.time()
             response = self.client.get("/api/predictions/v2/health")
             end_time = time.time()
@@ -157,7 +152,6 @@ class TestPredictionsOptimizedRouter:
             patch("src.api.predictions.optimized_router.get_cache_manager"),
             patch("src.api.predictions.optimized_router.get_system_monitor"),
         ):
-
             response = self.client.get("/api/predictions/v2/health")
 
             assert response.status_code == 200
@@ -171,7 +165,6 @@ class TestPredictionsOptimizedRouter:
             patch("src.api.predictions.optimized_router.get_cache_manager"),
             patch("src.api.predictions.optimized_router.get_system_monitor"),
         ):
-
             responses = []
             for _ in range(3):
                 response = self.client.get("/api/predictions/v2/health")
@@ -192,7 +185,6 @@ class TestPredictionsOptimizedRouter:
             patch("src.api.predictions.optimized_router.get_cache_manager"),
             patch("src.api.predictions.optimized_router.get_system_monitor"),
         ):
-
             from datetime import datetime
 
             response = self.client.get("/api/predictions/v2/health")
@@ -214,7 +206,6 @@ class TestPredictionsOptimizedRouter:
             patch("src.api.predictions.optimized_router.get_cache_manager"),
             patch("src.api.predictions.optimized_router.get_system_monitor"),
         ):
-
             # 检查路由标签
             routes = [route for route in router.routes if str(route.path) == "/health"]
             assert len(routes) > 0
