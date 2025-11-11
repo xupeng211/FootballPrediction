@@ -36,8 +36,12 @@ try:
     odds_cache = None
     session_cache = None
     temp_cache = None
-    start_auto_cleanup = lambda: None
-    stop_auto_cleanup = lambda: None
+
+    def start_auto_cleanup():
+        return None
+
+    def stop_auto_cleanup():
+        return None
 except ImportError:
     # 如果导入失败,提供错误信息
     import logging
