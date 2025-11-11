@@ -13,8 +13,8 @@ def test_python_environment():
     """测试Python基础环境"""
 
     # 检查基础库
-    基础库 = ["os", "sys", "json", "pathlib", "datetime"]
-    for lib in 基础库:
+    basic_libs = ["os", "sys", "json", "pathlib", "datetime"]
+    for lib in basic_libs:
         try:
             importlib.import_module(lib)
         except ImportError:
@@ -24,23 +24,23 @@ def test_python_environment():
 def test_core_dependencies():
     """测试核心依赖"""
 
-    依赖列表 = [
+    dependency_list = [
         ("pydantic", "2.3.0"),
         ("fastapi", None),
         ("sqlalchemy", None),
         ("redis", None),
     ]
 
-    for 依赖名, 最低版本 in 依赖列表:
+    for dependency_name, min_version in dependency_list:
         try:
-            模块 = importlib.import_module(依赖名)
-            版本 = getattr(模块, "__version__", "unknown")
+            module = importlib.import_module(dependency_name)
+            version = getattr(module, "__version__", "unknown")
 
-            if 最低版本 and 版本 != "unknown":
+            if min_version and version != "unknown":
                 try:
                     from packaging import version as pkg_version
 
-                    if pkg_version.parse(版本) < pkg_version.parse(最低版本):
+                    if pkg_version.parse(version) < pkg_version.parse(min_version):
                         pass  # TODO: Add logger import if needed
                 except ImportError:
                     pass  # TODO: Add logger import if needed
@@ -52,17 +52,17 @@ def test_core_dependencies():
 def test_project_structure():
     """测试项目结构"""
 
-    关键目录 = ["src", "tests", "scripts", ".github"]
-    关键文件 = ["pyproject.toml", "pytest.ini", "CLAUDE.md"]
+    key_directories = ["src", "tests", "scripts", ".github"]
+    key_files = ["pyproject.toml", "pytest.ini", "CLAUDE.md"]
 
-    for 目录 in 关键目录:
-        if Path(目录).exists():
+    for directory in key_directories:
+        if Path(directory).exists():
             pass  # TODO: Add logger import if needed
         else:
             pass  # TODO: Add logger import if needed
 
-    for 文件 in 关键文件:
-        if Path(文件).exists():
+    for file in key_files:
+        if Path(file).exists():
             pass  # TODO: Add logger import if needed
         else:
             pass  # TODO: Add logger import if needed
@@ -112,11 +112,11 @@ def test_import_issues():
         pass  # TODO: Add logger import if needed
 
     # 测试其他工具
-    工具列表 = ["ruff", "mypy", "bandit"]
-    for 工具 in 工具列表:
+    tool_list = ["ruff", "mypy", "bandit"]
+    for tool in tool_list:
         try:
             result = subprocess.run(
-                [工具, "--version"], capture_output=True, text=True, timeout=5
+                [tool, "--version"], capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0:
                 pass  # TODO: Add logger import if needed

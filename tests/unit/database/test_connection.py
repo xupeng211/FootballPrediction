@@ -36,9 +36,9 @@ class TestDatabaseConnection:
     @pytest.fixture
     def database_manager(self, mock_database_config):
         """创建数据库管理器实例"""
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("database.base.DatabaseManager") as mock_db_manager:
             mock_manager = Mock()
-            MockDBManager.return_value = mock_manager
+            mock_db_manager.return_value = mock_manager
             return mock_manager
 
     @pytest.mark.unit
@@ -98,32 +98,32 @@ class TestDatabaseConnectionErrorHandling:
     @pytest.mark.database
     def test_connection_error_handling(self):
         """测试连接错误处理"""
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("database.base.DatabaseManager") as mock_db_manager:
             # 模拟连接错误
             mock_db = Mock()
             mock_db.connect.side_effect = Exception("Connection failed")
-            MockDBManager.return_value = mock_db
+            mock_db_manager.return_value = mock_db
 
             # 测试错误处理
-            with pytest.raises(Exception):
+            with pytest.raises((ConnectionError, OSError)):
                 mock_db.connect()
 
     @pytest.mark.database
     def test_invalid_database_url(self):
         """测试无效数据库URL"""
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, ConnectionError)):
             # 测试无效URL格式
-            pass
             # 这里应该触发URL验证错误
+            pass
 
     @pytest.mark.database
     def test_connection_timeout_handling(self):
         """测试连接超时处理"""
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("database.base.DatabaseManager") as mock_db_manager:
             # 模拟连接超时
             mock_db = Mock()
             mock_db.connect.side_effect = TimeoutError("Connection timeout")
-            MockDBManager.return_value = mock_db
+            mock_db_manager.return_value = mock_db
 
             with pytest.raises(TimeoutError):
                 mock_db.connect()
@@ -137,10 +137,10 @@ class TestDatabaseHealth:
     def test_database_health_check(self):
         """测试数据库健康检查"""
         # 模拟健康检查
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("database.base.DatabaseManager") as mock_db_manager:
             mock_db = Mock()
             mock_db.health_check.return_value = {"status": "healthy", "connections": 5}
-            MockDBManager.return_value = mock_db
+            mock_db_manager.return_value = mock_db
 
             health_status = mock_db.health_check()
             assert health_status["status"] == "healthy"
@@ -150,13 +150,13 @@ class TestDatabaseHealth:
     @pytest.mark.database
     def test_database_health_check_unhealthy(self):
         """测试数据库不健康状态"""
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("database.base.DatabaseManager") as mock_db_manager:
             mock_db = Mock()
             mock_db.health_check.return_value = {
                 "status": "unhealthy",
                 "error": "Connection lost",
             }
-            MockDBManager.return_value = mock_db
+            mock_db_manager.return_value = mock_db
 
             health_status = mock_db.health_check()
             assert health_status["status"] == "unhealthy"

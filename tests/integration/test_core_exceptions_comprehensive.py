@@ -15,6 +15,7 @@ from src.core.exceptions import (
     CacheError,
     ConfigError,
     ConsistencyError,
+    CustomCustomTimeout,
     DatabaseError,
     DataError,
     DataProcessingError,
@@ -32,10 +33,12 @@ from src.core.exceptions import (
     StreamingError,
     TaskExecutionError,
     TaskRetryError,
-    TimeoutError,
     TrackingError,
     ValidationError,
 )
+
+# 别名以避免冲突
+CustomTimeout = CustomCustomTimeout
 
 
 class TestCoreExceptionsComprehensive:
@@ -203,7 +206,7 @@ class TestCoreExceptionsComprehensive:
         assert isinstance(rate_exc, FootballPredictionError)
 
         # 超时异常
-        timeout_exc = TimeoutError("操作超时")
+        timeout_exc = CustomTimeout("操作超时")
         assert str(timeout_exc) == "操作超时"
         assert isinstance(timeout_exc, FootballPredictionError)
 
@@ -276,7 +279,7 @@ class TestCoreExceptionsComprehensive:
             AuthenticationError,
             AuthorizationError,
             RateLimitError,
-            TimeoutError,
+            CustomTimeout,
             AdapterError,
             StreamingError,
         ]

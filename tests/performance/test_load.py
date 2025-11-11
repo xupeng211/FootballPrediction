@@ -21,10 +21,11 @@ import pytest
 try:
     from fastapi.testclient import TestClient
 
-    from src.core.config import Config
+    # from src.core.config import Config  # Not used in test
     from src.main import app
     from src.queues.fifo_queue import MemoryFIFOQueue
-    from src.services.prediction import PredictionService
+
+    # from src.services.prediction import PredictionService  # Not used in test
 except ImportError as e:
     pytest.skip(f"Cannot import required modules: {e}", allow_module_level=True)
 
@@ -166,13 +167,18 @@ class TestDatabasePerformance:
         ]
 
         for query, expected_delay in query_scenarios:
-            # Simulate query execution time
-            async def simulate_query():
-                start_time = time.time()
-                await asyncio.sleep(expected_delay / 1000)  # Simulate delay
-                await mock_db.fetch(query)
-                end_time = time.time()
-                return (end_time - start_time) * 1000
+            # Create closure to capture loop variables
+            def create_simulator(q, delay):
+                async def simulate_query():
+                    start_time = time.time()
+                    await asyncio.sleep(delay / 1000)  # Simulate delay
+                    await mock_db.fetch(q)
+                    end_time = time.time()
+                    return (end_time - start_time) * 1000
+                return simulate_query  # noqa: B023
+
+            # Get the simulator function
+            simulate_query = create_simulator(query, expected_delay)
 
             # Run query multiple times
             execution_times = []
