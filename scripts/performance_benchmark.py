@@ -100,7 +100,7 @@ class PerformanceBenchmark:
 
         for query_type, cache_key, delay in test_queries:
             query_start = time.time()
-            result = await simulate_query(query_type, cache_key, delay)
+            await simulate_query(query_type, cache_key, delay)
             query_time = time.time() - query_start
 
             query_results.append({
@@ -337,8 +337,7 @@ class PerformanceBenchmark:
                 json.dump(report, f, ensure_ascii=False, indent=2, default=str)
 
             # 生成并输出报告
-            performance_report = self.generate_performance_report(report)
-            print(performance_report)
+            self.generate_performance_report(report)
 
             logger.info("📄 详细报告已保存到 database_performance_benchmark.json")
 

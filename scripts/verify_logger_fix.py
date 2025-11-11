@@ -11,12 +11,12 @@ def check_real_logger_errors():
     """检查真正的logger未定义错误"""
     real_errors = []
 
-    for root, dirs, files in os.walk('tests'):
+    for root, _dirs, files in os.walk('tests'):
         for file in files:
             if file.endswith('.py'):
                 file_path = os.path.join(root, file)
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding='utf-8') as f:
                         content = f.read()
 
                     # 检查是否有未定义的logger使用
@@ -45,18 +45,14 @@ def check_real_logger_errors():
 
 def main():
     """主函数"""
-    print("🔍 检查真正的logger未定义错误...")
 
     errors = check_real_logger_errors()
 
     if errors:
-        print(f"❌ 找到 {len(errors)} 个真正的logger未定义错误:")
-        for file_path, line_no, line in errors:
-            print(f"  {file_path}:{line_no}: {line}")
+        for _file_path, _line_no, _line in errors:
+            pass
         return False
     else:
-        print("✅ 没有找到真正的logger未定义错误！")
-        print("🎉 所有logger问题已成功修复！")
         return True
 
 

@@ -65,7 +65,6 @@ class APISyntaxFixer:
 
     def fix_http_exception_syntax(self, content: str) -> tuple[str, int]:
         """修复HTTPException语法错误"""
-        original_content = content
         fixes_count = 0
 
         for pattern, replacement in self.fix_patterns:
@@ -170,41 +169,34 @@ class APISyntaxFixer:
 
     def fix_all_api_files(self) -> dict[str, any]:
         """修复所有API文件"""
-        print("🔧 开始扫描API文件...")
         python_files = self.scan_api_directory()
 
-        print(f"📁 发现 {len(python_files)} 个Python文件")
 
         results = []
 
         for file_path in python_files:
             try:
-                rel_path = file_path.relative_to(Path.cwd())
+                file_path.relative_to(Path.cwd())
             except ValueError:
-                rel_path = file_path
-            print(f"🔍 检查文件: {rel_path}")
+                pass
 
             # 检查是否有语法错误
             errors = self.check_syntax_errors(file_path)
 
             if errors:
-                print(f"  ❌ 发现 {len(errors)} 个语法错误:")
-                for error in errors:
-                    print(f"    - {error}")
+                for _error in errors:
+                    pass
 
                 # 尝试修复
-                print("  🔧 尝试修复...")
                 result = self.fix_file(file_path)
                 results.append(result)
 
                 if result['success']:
-                    print(f"  ✅ {result['message']}")
                     self.fixed_files.append(file_path)
                 else:
-                    print(f"  ❌ {result['message']}")
                     self.failed_files.append(file_path)
             else:
-                print("  ✅ 文件语法正确")
+                pass
 
         return {
             'total_files': len(python_files),
@@ -275,21 +267,12 @@ class APISyntaxFixer:
 
 def main():
     """主函数"""
-    print("🔧 API语法错误批量修复工具 - Issue #345")
-    print("=" * 50)
-    print()
 
     fixer = APISyntaxFixer()
 
     # 修复所有API文件
     results = fixer.fix_all_api_files()
 
-    print()
-    print("📊 修复完成统计:")
-    print(f"  总文件数: {results['total_files']}")
-    print(f"  有错误文件: {results['files_with_errors']}")
-    print(f"  成功修复: {results['successfully_fixed']}")
-    print(f"  修复失败: {results['failed_to_fix']}")
 
     # 生成报告
     report = fixer.generate_report(results)
@@ -299,14 +282,11 @@ def main():
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(report)
 
-    print(f"📝 详细报告已保存到: {report_path}")
 
     # 返回状态码
     if fixer.failed_files:
-        print(f"\n⚠️  有 {len(fixer.failed_files)} 个文件需要手动修复")
         return 1
     else:
-        print("\n✅ 所有语法错误已成功修复！")
         return 0
 
 

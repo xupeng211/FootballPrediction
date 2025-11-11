@@ -5,10 +5,11 @@
 
 import re
 
+
 def fix_b904_in_file(file_path: str):
     """修复单个文件中的B904错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 备份原文件
@@ -18,7 +19,6 @@ def fix_b904_in_file(file_path: str):
 
         # 简单的正则表达式修复
         # 查找并修复except块中的raise HTTPException
-        pattern = r'(\s+)(.*?)(except\s+\S+\s+as\s+(\w+):.*?raise\s+HTTPException\([^)]+\))'
 
         def replacement(match):
             indent = match.group(1)
@@ -74,7 +74,6 @@ def fix_b904_in_file(file_path: str):
                             if ')' in next_line:
                                 # 在结束行添加异常链
                                 fixed_lines[-1] = next_line.rstrip() + f' from {exception_var}'
-                                print(f"✅ 修复 {file_path} 行 {i+1}")
                                 break
                             i += 1
                     else:
@@ -92,22 +91,18 @@ def fix_b904_in_file(file_path: str):
         if fixed_content != content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(fixed_content)
-            print(f"💾 已修复 {file_path}")
             return True
         else:
-            print(f"ℹ️ {file_path} 无需修改")
             os.remove(backup_path)
             return False
 
-    except Exception as e:
-        print(f"❌ 修复 {file_path} 时出错: {e}")
+    except Exception:
         return False
 
 import os
 
+
 def main():
-    print("🔧 修复剩余B904错误")
-    print("=" * 30)
 
     # 需要修复的文件
     files_to_fix = [
@@ -122,9 +117,8 @@ def main():
             if fix_b904_in_file(file_path):
                 total_fixed += 1
         else:
-            print(f"⚠️ 文件不存在: {file_path}")
+            pass
 
-    print(f"\n🎉 修复完成! 修复了 {total_fixed} 个文件")
 
 if __name__ == "__main__":
     main()

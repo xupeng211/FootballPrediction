@@ -4,8 +4,8 @@
 Simple fix for __init__.py syntax errors
 """
 
-import os
 from pathlib import Path
+
 
 def create_simple_init(file_path: Path):
     """为有问题的__init__.py创建简单的内容"""
@@ -33,7 +33,6 @@ __all__ = []
 def main():
     """主函数"""
 
-    print("🔧 开始简单修复__init__.py文件...")
 
     # 需要简单处理的文件列表
     problem_files = [
@@ -51,15 +50,11 @@ def main():
     for file_path_str in problem_files:
         file_path = Path(file_path_str)
         if file_path.exists():
-            print(f"🔧 修复文件: {file_path}")
             create_simple_init(file_path)
             fixed_count += 1
-            print(f"✅ 已修复: {file_path}")
         else:
-            print(f"❌ 文件不存在: {file_path}")
+            pass
 
-    print(f"\n📊 修复结果:")
-    print(f"✅ 成功修复: {fixed_count} 个文件")
 
 if __name__ == "__main__":
     main()

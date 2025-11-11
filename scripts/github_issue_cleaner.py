@@ -6,12 +6,11 @@ GitHub Issues Automated Cleaner
 定期检查GitHub Issues状态，自动识别需要清理的Issues
 """
 
-import json
-import sys
 import argparse
+import json
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
 from pathlib import Path
+from typing import Any
 
 
 class GitHubIssueCleaner:
@@ -29,7 +28,7 @@ class GitHubIssueCleaner:
         self.dry_run = dry_run
         self.now = datetime.now()
 
-    def run_command(self, command: str) -> Dict[str, Any]:
+    def run_command(self, command: str) -> dict[str, Any]:
         """运行shell命令并返回结果"""
         import subprocess
         try:
@@ -52,19 +51,17 @@ class GitHubIssueCleaner:
                 "stderr": e.stderr.strip() if e.stderr else str(e)
             }
 
-    def get_issues(self, state: str = "open") -> List[Dict[str, Any]]:
+    def get_issues(self, state: str = "open") -> list[dict[str, Any]]:
         """获取Issues列表"""
         command = f"gh issue list --repo {self.repo} --state {state} --limit 100 --json number,title,labels,state,createdAt,updatedAt,author,assignees"
         result = self.run_command(command)
 
         if not result["success"]:
-            print(f"❌ 获取Issues失败: {result['stderr']}")
             return []
 
         try:
             return json.loads(result["stdout"])
-        except json.JSONDecodeError as e:
-            print(f"❌ 解析Issues数据失败: {e}")
+        except json.JSONDecodeError:
             return []
 
     def parse_date(self, date_str: str) -> datetime:
@@ -76,24 +73,23 @@ class GitHubIssueCleaner:
             dt = datetime.fromisoformat(date_str)
             # 转换为无时区的datetime以便比较
             return dt.replace(tzinfo=None)
-        except (ValueError, AttributeError) as e:
-            print(f"⚠️  日期解析失败 {date_str}: {e}")
+        except (ValueError, AttributeError):
             return self.now
 
-    def is_stale(self, issue: Dict[str, Any], days: int = 30) -> bool:
+    def is_stale(self, issue: dict[str, Any], days: int = 30) -> bool:
         """检查Issue是否过期"""
         updated_at = self.parse_date(issue["updatedAt"])
         return (self.now - updated_at) > timedelta(days=days)
 
-    def is_inactive(self, issue: Dict[str, Any], days: int = 60) -> bool:
+    def is_inactive(self, issue: dict[str, Any], days: int = 60) -> bool:
         """检查Issue是否长期无活动"""
         return self.is_stale(issue, days)
 
-    def has_label(self, issue: Dict[str, Any], label: str) -> bool:
+    def has_label(self, issue: dict[str, Any], label: str) -> bool:
         """检查Issue是否有指定标签"""
         return any(label_info["name"] == label for label_info in issue.get("labels", []))
 
-    def extract_status_from_labels(self, issue: Dict[str, Any]) -> Optional[str]:
+    def extract_status_from_labels(self, issue: dict[str, Any]) -> str | None:
         """从标签中提取状态信息"""
         status_labels = ["status/completed", "status/resolved", "status/in-progress", "status/cancelled"]
         for label in issue.get("labels", []):
@@ -101,7 +97,7 @@ class GitHubIssueCleaner:
                 return label["name"].replace("status/", "")
         return None
 
-    def categorize_issues(self, issues: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def categorize_issues(self, issues: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         """对Issues进行分类"""
         categories = {
             "completed_but_open": [],
@@ -147,7 +143,7 @@ class GitHubIssueCleaner:
 
         return categories
 
-    def generate_cleanup_report(self, categories: Dict[str, List[Dict[str, Any]]]) -> str:
+    def generate_cleanup_report(self, categories: dict[str, list[dict[str, Any]]]) -> str:
         """生成清理报告"""
         report = []
         report.append("# GitHub Issues清理报告")
@@ -157,7 +153,7 @@ class GitHubIssueCleaner:
         report.append("")
 
         total_issues = sum(len(issues) for issues in categories.values())
-        report.append(f"## 📊 总体统计")
+        report.append("## 📊 总体统计")
         report.append(f"- 总Issues数: {total_issues}")
         report.append("")
 
@@ -216,58 +212,48 @@ class GitHubIssueCleaner:
 
         return "\n".join(report)
 
-    def close_completed_issues(self, issues: List[Dict[str, Any]]) -> int:
+    def close_completed_issues(self, issues: list[dict[str, Any]]) -> int:
         """关闭已完成的Issues"""
         closed_count = 0
 
         for issue in issues:
             if self.dry_run:
-                print(f"🔍 [试运行] 将关闭已完成的Issue #{issue['number']}: {issue['title']}")
                 closed_count += 1
             else:
                 command = f"gh issue close {issue['number']} --repo {self.repo} --comment 'Issue已完成，自动关闭'"
                 result = self.run_command(command)
                 if result["success"]:
-                    print(f"✅ 已关闭Issue #{issue['number']}: {issue['title']}")
                     closed_count += 1
                 else:
-                    print(f"❌ 关闭Issue #{issue['number']}失败: {result['stderr']}")
+                    pass
 
         return closed_count
 
-    def add_missing_priority_labels(self, issues: List[Dict[str, Any]]) -> int:
+    def add_missing_priority_labels(self, issues: list[dict[str, Any]]) -> int:
         """为缺少优先级标签的Issues添加默认标签"""
         labeled_count = 0
 
         for issue in issues:
             if self.dry_run:
-                print(f"🔍 [试运行] 将为Issue #{issue['number']}添加 priority/medium 标签")
                 labeled_count += 1
             else:
                 command = f"gh issue edit {issue['number']} --repo {self.repo} --add-label 'priority/medium'"
                 result = self.run_command(command)
                 if result["success"]:
-                    print(f"✅ 已为Issue #{issue['number']}添加优先级标签")
                     labeled_count += 1
                 else:
-                    print(f"❌ 为Issue #{issue['number']}添加标签失败: {result['stderr']}")
+                    pass
 
         return labeled_count
 
-    def run_cleanup(self) -> Dict[str, int]:
+    def run_cleanup(self) -> dict[str, int]:
         """执行清理操作"""
-        print(f"🚀 开始GitHub Issues清理...")
-        print(f"仓库: {self.repo}")
-        print(f"模式: {'试运行' if self.dry_run else '执行模式'}")
-        print("")
 
         # 获取所有开放Issues
         issues = self.get_issues("open")
         if not issues:
-            print("❌ 无法获取Issues列表")
             return {}
 
-        print(f"📊 找到 {len(issues)} 个开放Issues")
 
         # 分类Issues
         categories = self.categorize_issues(issues)
@@ -281,14 +267,11 @@ class GitHubIssueCleaner:
         with open(report_path, 'w', encoding='utf-8') as f:
             f.write(report)
 
-        print(f"📋 清理报告已保存到: {report_path}")
-        print("")
 
         # 执行清理操作
         results = {}
 
         if not self.dry_run:
-            print("🔧 开始执行清理操作...")
 
             if categories["completed_but_open"]:
                 results["closed_completed"] = self.close_completed_issues(categories["completed_but_open"])
@@ -296,10 +279,8 @@ class GitHubIssueCleaner:
             if categories["missing_priority_labels"]:
                 results["added_priority_labels"] = self.add_missing_priority_labels(categories["missing_priority_labels"])
 
-            print("")
-            print("✅ 清理操作完成")
         else:
-            print("🔍 试运行模式，未执行实际清理操作")
+            pass
 
         return results
 
@@ -324,13 +305,11 @@ def main():
 
     # 输出结果统计
     if results:
-        print("\n📊 清理结果统计:")
-        for operation, count in results.items():
-            operation_name = {
+        for operation, _count in results.items():
+            {
                 "closed_completed": "关闭已完成Issues",
                 "added_priority_labels": "添加优先级标签"
             }.get(operation, operation)
-            print(f"- {operation_name}: {count}个")
 
 
 if __name__ == "__main__":

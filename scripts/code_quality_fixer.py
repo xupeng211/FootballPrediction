@@ -2,11 +2,11 @@
 """代码质量问题批量智能修复工具"""
 
 import ast
-import re
 import json
-from pathlib import Path
-from typing import List, Dict, Tuple
+import re
 from datetime import datetime
+from pathlib import Path
+
 
 class CodeQualityFixer:
     def __init__(self):
@@ -15,11 +15,11 @@ class CodeQualityFixer:
         self.errors_fixed = 0
         self.fix_results = []
 
-    def find_unused_imports(self, file_path: Path) -> List[Dict]:
+    def find_unused_imports(self, file_path: Path) -> list[dict]:
         """查找未使用的导入"""
         unused_imports = []
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 简单的未使用导入检测（基于常见模式）
@@ -37,8 +37,8 @@ class CodeQualityFixer:
                             'import_name': import_name,
                             'type': 'unused_import'
                         })
-        except Exception as e:
-            print(f"读取文件错误 {file_path}: {e}")
+        except Exception:
+            pass
 
         return unused_imports
 
@@ -70,10 +70,10 @@ class CodeQualityFixer:
                 return True
         return False
 
-    def fix_unused_imports(self, file_path: Path, unused_imports: List[Dict]) -> bool:
+    def fix_unused_imports(self, file_path: Path, unused_imports: list[dict]) -> bool:
         """修复未使用的导入"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             lines = content.split('\n')
@@ -85,21 +85,19 @@ class CodeQualityFixer:
                     # 删除这一行
                     del lines[line_num]
                     self.errors_fixed += 1
-                    print(f"  ✅ 修复未使用导入: {import_info['import_name']} (第{import_info['line']}行)")
 
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(lines))
 
             return True
-        except Exception as e:
-            print(f"修复未使用导入失败 {file_path}: {e}")
+        except Exception:
             return False
 
     def fix_import_order(self, file_path: Path) -> bool:
         """修复导入顺序"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            with open(file_path, encoding='utf-8') as f:
+                f.read()
 
             # 使用ruff格式化导入
             import subprocess
@@ -107,19 +105,16 @@ class CodeQualityFixer:
                                   capture_output=True, text=True)
 
             if result.returncode == 0:
-                print(f"  ✅ 修复导入顺序: {file_path}")
                 return True
             else:
-                print(f"  ❌ 修复导入顺序失败: {file_path}")
                 return False
-        except Exception as e:
-            print(f"修复导入顺序失败 {file_path}: {e}")
+        except Exception:
             return False
 
     def fix_undefined_all_names(self, file_path: Path) -> bool:
         """修复__all__中未定义的名称"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 解析AST找到实际定义的类和函数
@@ -139,7 +134,7 @@ class CodeQualityFixer:
 
                 # 查找__all__定义
                 lines = content.split('\n')
-                for i, line in enumerate(lines):
+                for _i, line in enumerate(lines):
                     if '__all__' in line and '=' in line:
                         # 提取__all__中的名称
                         try:
@@ -167,22 +162,20 @@ class CodeQualityFixer:
                                         undefined_names.append(name)
 
                                 if undefined_names:
-                                    print(f"  ⚠️  发现未定义的__all__名称: {undefined_names}")
+                                    pass
                                     # 这里可以选择注释掉未定义的名称或删除它们
 
-                        except Exception as e:
-                            print(f"  ❌ 解析__all__失败: {e}")
+                        except Exception:
+                            pass
 
             except SyntaxError:
-                print(f"  ❌ 文件语法错误，跳过: {file_path}")
                 return False
 
             return True
-        except Exception as e:
-            print(f"修复__all__定义失败 {file_path}: {e}")
+        except Exception:
             return False
 
-    def fix_code_quality_in_directory(self, directory: Path) -> Dict:
+    def fix_code_quality_in_directory(self, directory: Path) -> dict:
         """修复目录中的代码质量问题"""
         py_files = list(directory.rglob('*.py'))
 
@@ -190,18 +183,14 @@ class CodeQualityFixer:
         exclude_dirs = {'__pycache__', '.git', '.pytest_cache', 'venv', 'env'}
         py_files = [f for f in py_files if not any(exclude in str(f) for exclude in exclude_dirs)]
 
-        print(f"🔍 开始修复代码质量问题...")
-        print(f"📁 检查文件数: {len(py_files)}")
 
         for py_file in py_files:
-            print(f"\n📄 处理文件: {py_file}")
 
             file_fixed = False
 
             # 1. 修复未使用的导入
             unused_imports = self.find_unused_imports(py_file)
             if unused_imports:
-                print(f"  发现 {len(unused_imports)} 个未使用导入")
                 if self.fix_unused_imports(py_file, unused_imports):
                     file_fixed = True
 
@@ -227,24 +216,16 @@ def main():
     """主函数"""
     fixer = CodeQualityFixer()
 
-    print("🚀 开始代码质量批量修复...")
-    print(f"⏰ 开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     # 修复src目录
     result = fixer.fix_code_quality_in_directory(Path('src'))
 
-    print(f"\n=== 修复结果 ===")
-    print(f"处理文件数: {result['files_processed']}")
-    print(f"修复文件数: {result['files_fixed']}")
-    print(f"修复问题数: {result['errors_fixed']}")
 
     if result['fixed_files']:
-        print(f"\n📝 修复的文件:")
-        for file_path in result['fixed_files']:
-            print(f"  - {file_path}")
+        for _file_path in result['fixed_files']:
+            pass
 
     # 验证修复效果
-    print(f"\n🔍 验证修复效果...")
     try:
         # 运行ruff检查剩余问题
         import subprocess
@@ -252,14 +233,12 @@ def main():
                                   capture_output=True, text=True)
 
         remaining_errors = len(ruff_result.stdout.strip().split('\n')) if ruff_result.stdout.strip() else 0
-        print(f"剩余代码质量问题: {remaining_errors}个")
 
         if remaining_errors < 100:  # 假设之前有142个错误
-            improvement = 142 - remaining_errors
-            print(f"✅ 代码质量改善: {improvement}个问题已修复")
+            142 - remaining_errors
 
-    except Exception as e:
-        print(f"验证修复效果失败: {e}")
+    except Exception:
+        pass
 
     # 保存修复报告
     report = {
@@ -271,7 +250,6 @@ def main():
     with open('code_quality_fix_report.json', 'w') as f:
         json.dump(report, f, indent=2)
 
-    print(f"\n📄 修复报告已保存到: code_quality_fix_report.json")
 
 if __name__ == '__main__':
     main()

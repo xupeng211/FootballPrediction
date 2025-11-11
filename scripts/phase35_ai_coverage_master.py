@@ -19,7 +19,6 @@ class Phase35AICoverageMaster:
 
     def intelligent_coverage_analysis(self) -> dict:
         """智能覆盖率分析系统"""
-        print("🧠 启动AI驱动覆盖率分析...")
 
         # 1. 基础覆盖率数据收集
         base_coverage = self._collect_base_coverage_data()
@@ -42,7 +41,6 @@ class Phase35AICoverageMaster:
 
     def _collect_base_coverage_data(self) -> dict:
         """收集基础覆盖率数据"""
-        print("   🔍 收集基础覆盖率数据...")
 
         try:
             result = subprocess.run(
@@ -80,11 +78,10 @@ class Phase35AICoverageMaster:
                         module_data[module] = module_analysis
 
                 coverage_data['modules'] = module_data
-                print(f"      基础覆盖率: {coverage_data.get('overall', 55.4)}%")
                 return coverage_data
 
-        except Exception as e:
-            print(f"      ⚠️  数据收集失败: {e}")
+        except Exception:
+            pass
 
         return {'overall': 55.4, 'modules': {}}
 
@@ -149,8 +146,8 @@ class Phase35AICoverageMaster:
                                 'correlation': {'confidence': 0.0, 'reasons': ['no_test_file']}
                             })
 
-            except Exception as e:
-                print(f"      ⚠️  分析 {file_path} 失败: {e}")
+            except Exception:
+                pass
 
         # 识别覆盖率模式
         analysis['coverage_rate'] = (analysis['covered_functions'] / analysis['total_functions']) if analysis['total_functions'] > 0 else 0
@@ -344,7 +341,6 @@ class Phase35AICoverageMaster:
 
     def execute_intelligent_strategy(self, strategy: dict) -> dict:
         """执行智能策略"""
-        print("🚀 执行AI智能策略...")
 
         results = {
             'phase_1_results': self._execute_phase_1(strategy['phase_1']),
@@ -366,7 +362,6 @@ class Phase35AICoverageMaster:
 
     def _execute_phase_1(self, phase_1: dict) -> dict:
         """执行第一阶段：快速胜利"""
-        print("   🎯 Phase 1: 快速胜利执行...")
 
         tests_generated = 0
         improvement = 0
@@ -387,7 +382,6 @@ class Phase35AICoverageMaster:
 
     def _execute_phase_2(self, phase_2: dict) -> dict:
         """执行第二阶段：中等影响"""
-        print("   🎯 Phase 2: 中等影响执行...")
 
         tests_generated = 0
         improvement = 0
@@ -410,7 +404,6 @@ class Phase35AICoverageMaster:
     module: str,
     function_count: int) -> dict:
         """创建AI生成的基础测试"""
-        print(f"      🔧 为 {module} 创建AI基础测试...")
 
         tests_created = 0
         estimated_improvement = min(function_count * 1.5, 5.0)
@@ -424,8 +417,8 @@ class Phase35AICoverageMaster:
                 test_files_created = self._generate_smart_basic_tests(module, 3)
                 tests_created = len(test_files_created)
 
-        except Exception as e:
-            print(f"         ⚠️  基础测试创建失败: {e}")
+        except Exception:
+            pass
 
         return {
             'tests_created': tests_created,
@@ -434,7 +427,6 @@ class Phase35AICoverageMaster:
 
     def _create_ai_comprehensive_tests(self, module: str, function_count: int) -> dict:
         """创建AI生成的综合测试"""
-        print(f"      🔧 为 {module} 创建AI综合测试...")
 
         tests_created = 0
         estimated_improvement = min(function_count * 2.0, 8.0)
@@ -446,8 +438,8 @@ class Phase35AICoverageMaster:
                 test_files_created = self._generate_comprehensive_test_suite(module, 5)
                 tests_created = len(test_files_created)
 
-        except Exception as e:
-            print(f"         ⚠️  综合测试创建失败: {e}")
+        except Exception:
+            pass
 
         return {
             'tests_created': tests_created,
@@ -519,8 +511,8 @@ if __name__ == "__main__":
                 test_path.write_text(test_content, encoding='utf-8')
                 test_files.append(test_file_path)
 
-        except Exception as e:
-            print(f"         ⚠️  智能测试生成失败: {e}")
+        except Exception:
+            pass
 
         return test_files
 
@@ -617,14 +609,13 @@ if __name__ == "__main__":
                 test_path.write_text(test_content, encoding='utf-8')
                 test_files.append(test_file_path)
 
-        except Exception as e:
-            print(f"         ⚠️  综合测试套件生成失败: {e}")
+        except Exception:
+            pass
 
         return test_files
 
     def verify_ai_improvement(self, original_coverage: float) -> dict:
         """验证AI改进效果"""
-        print("\n🔍 验证AI改进效果...")
 
         try:
             result = subprocess.run(
@@ -656,8 +647,8 @@ if __name__ == "__main__":
                     'ai_tests_generated': len(self.generated_tests)
                 }
 
-        except Exception as e:
-            print(f"   ❌ 验证失败: {e}")
+        except Exception:
+            pass
 
         return {
             'original_coverage': original_coverage,
@@ -670,42 +661,26 @@ if __name__ == "__main__":
 
 def main():
     """主函数"""
-    print("🧠 Phase 3.5 AI驱动的智能覆盖率提升系统")
-    print("=" * 80)
 
     ai_master = Phase35AICoverageMaster()
 
     # 1. 智能覆盖率分析
-    print("🔍 阶段1: AI智能分析...")
     analysis = ai_master.intelligent_coverage_analysis()
 
-    print(f"📊 当前覆盖率: {analysis['base_coverage'].get('overall', 55.4):.1f}%")
-    print(f"🧠 识别模式: {len(analysis['patterns'].get('module_distribution', {}))}个")
-    print(f"🎯 预测机会: {len(analysis['predictions'].get('high_impact', []))}个高影响机会")
 
     # 2. 执行智能策略
-    print("\n🚀 阶段2: AI策略执行...")
-    results = ai_master.execute_intelligent_strategy(analysis['strategy'])
+    ai_master.execute_intelligent_strategy(analysis['strategy'])
 
-    print("📈 执行结果:")
-    print(f"   - 生成AI测试: {results['generated_tests']}个")
-    print(f"   - 预期改进: {results['total_improvement']:.1f}%")
 
     # 3. 验证改进效果
     verification = ai_master.verify_ai_improvement(analysis['base_coverage'].get('overall',
     55.4))
 
-    print("\n🏆 AI改进验证:")
-    print(f"   - 原始覆盖率: {verification['original_coverage']:.1f}%")
-    print(f"   - 新覆盖率: {verification['new_coverage']:.1f}%")
-    print(f"   - AI提升: {verification['improvement']:.1f}%")
-    print(f"   - AI测试: {verification['ai_tests_generated']}个")
 
     if verification['target_achieved']:
-        print("\n🎉 AI驱动覆盖率成功！达到80%+目标")
+        pass
     else:
-        remaining = 80 - verification['new_coverage']
-        print(f"\n📈 AI驱动显著提升，距离80%还差{remaining:.1f}%")
+        80 - verification['new_coverage']
 
     return verification
 

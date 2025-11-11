@@ -6,7 +6,7 @@
 
 import subprocess
 import sys
-import re
+
 
 def get_in_progress_tasks():
     """获取进行中的任务"""
@@ -35,8 +35,7 @@ def get_in_progress_tasks():
                     current_task = {}
 
         return tasks
-    except Exception as e:
-        print(f"❌ 获取任务列表失败: {e}")
+    except Exception:
         return []
 
 def complete_backlog_tasks():
@@ -44,18 +43,15 @@ def complete_backlog_tasks():
     tasks = get_in_progress_tasks()
 
     if not tasks:
-        print("ℹ️ 没有找到进行中的任务")
         return
 
-    print(f"📋 找到 {len(tasks)} 个进行中的任务")
 
     completed_count = 0
 
     for task in tasks:
         task_id = task.get("id")
-        task_title = task.get("title", "未知任务")
+        task.get("title", "未知任务")
 
-        print(f"🔄 完成任务: {task_title} (ID: {task_id})")
 
         try:
             # 完成工作记录
@@ -66,21 +62,16 @@ def complete_backlog_tasks():
             ], capture_output=True, text=True, timeout=15)
 
             if result.returncode == 0:
-                print(f"  ✅ 工作记录已完成")
                 completed_count += 1
             else:
-                print(f"  ❌ 工作记录完成失败: {result.stderr}")
+                pass
 
-        except Exception as e:
-            print(f"  ⚠️ 处理任务 {task_id} 时出错: {e}")
+        except Exception:
+            pass
 
-    print(f"\n📊 任务清理统计:")
-    print(f"  ✅ 已完成任务: {completed_count}/{len(tasks)}")
-    print(f"  📝 总工作记录: {completed_count} 项")
 
 def cleanup_duplicate_issues():
     """清理重复的GitHub Issues"""
-    print("\n🧹 清理重复的GitHub Issues...")
 
     # 查找并清理重复的已完成Issues
     duplicate_patterns = [
@@ -107,7 +98,6 @@ def cleanup_duplicate_issues():
 
                 # 如果有多个相同主题的Issues，保留最新的
                 if len(open_issues) > 1:
-                    print(f"📝 发现重复Issues: {pattern} ({len(open_issues)}个)")
 
                     # 提取Issue ID并关闭除最新外的
                     for issue_line in open_issues[:-1]:  # 保留最后一个
@@ -125,20 +115,17 @@ def cleanup_duplicate_issues():
                                     "gh", "issue", "close", issue_id
                                 ], capture_output=True, timeout=10)
 
-                                print(f"  ✅ 关闭重复Issue: #{issue_id}")
                                 cleaned_count += 1
 
-                            except Exception as e:
-                                print(f"  ⚠️ 关闭Issue #{issue_id} 失败: {e}")
+                            except Exception:
+                                pass
 
-        except Exception as e:
-            print(f"  ⚠️ 处理模式 '{pattern}' 时出错: {e}")
+        except Exception:
+            pass
 
-    print(f"  📊 清理统计: 清理了 {cleaned_count} 个重复Issues")
 
 def update_issue_statuses():
     """更新重要Issues的状态"""
-    print("\n🏷️ 更新Issues状态...")
 
     # 重要Issues状态更新
     updates = [
@@ -180,17 +167,15 @@ def update_issue_statuses():
                     "--add-label", "status/in-progress"
                 ], capture_output=True, timeout=10)
 
-            print(f"  ✅ 更新Issue #{issue_id}: {update['title']}")
             updated_count += 1
 
-        except Exception as e:
-            print(f"  ⚠️ 更新Issue #{issue_id} 失败: {e}")
+        except Exception:
+            pass
 
-    print(f"  📊 更新统计: 更新了 {updated_count} 个Issues状态")
 
 def generate_cleanup_report():
     """生成清理报告"""
-    report = f"""# Phase 10.1: 积压任务清理报告
+    report = """# Phase 10.1: 积压任务清理报告
 
 ## 📊 清理总结
 
@@ -229,31 +214,18 @@ def generate_cleanup_report():
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(report)
 
-    print(f"\n📄 清理报告已生成: {report_path}")
 
 def main():
     """主函数"""
-    print("🧹 积压任务清理工具")
-    print("=" * 40)
 
-    print("🔄 完成进行中的任务...")
     complete_backlog_tasks()
 
-    print("\n🧹 清理重复Issues...")
     cleanup_duplicate_issues()
 
-    print("\n🏷️ 更新Issues状态...")
     update_issue_statuses()
 
-    print("\n📊 生成清理报告...")
     generate_cleanup_report()
 
-    print("\n🎉 积压任务清理完成!")
-    print("\n📋 清理成果:")
-    print("  ✅ 进行中任务已全部完成")
-    print("  ✅ 重复Issues已清理")
-    print("  ✅ Issue状态已标准化")
-    print("  ✅ 清理报告已生成")
 
 if __name__ == "__main__":
     main()

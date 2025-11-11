@@ -6,23 +6,19 @@ Quick B904 Batch Fix Tool
 快速修复HTTPException异常处理中的B904问题
 """
 
-import re
-import sys
 from pathlib import Path
 
 
 def fix_b904_in_file(file_path: str) -> int:
     """修复单个文件中的B904错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
-    except Exception as e:
-        print(f"❌ 读取文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
     # 使用正则表达式匹配HTTPException raise语句
     # 匹配模式：raise HTTPException(...) 后面跟着换行，在except块中
-    pattern = r'(\s+raise HTTPException\([^)]+\)\s*\n'
 
     # 检查这些raise语句是否在except块中
     lines = content.split('\n')
@@ -49,9 +45,7 @@ def fix_b904_in_file(file_path: str) -> int:
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(lines))
-            print(f"✅ 修复了 {file_path} 中的 {fixed_count} 个B904错误")
-        except Exception as e:
-            print(f"❌ 写入文件失败 {file_path}: {e}")
+        except Exception:
             return 0
 
     return fixed_count
@@ -59,8 +53,6 @@ def fix_b904_in_file(file_path: str) -> int:
 
 def main():
     """主函数"""
-    print("🚀 快速B904批量修复工具")
-    print("=" * 50)
 
     # 查找所有Python文件
     src_path = Path("src")
@@ -72,7 +64,7 @@ def main():
     for file_path in python_files:
         # 检查文件是否包含HTTPException
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
             if 'HTTPException' in content and 'raise' in content:
                 fixed = fix_b904_in_file(str(file_path))
@@ -82,11 +74,6 @@ def main():
         except Exception:
             continue
 
-    print("=" * 50)
-    print(f"📊 修复统计:")
-    print(f"   ✅ 总计修复: {total_fixed} 个B904错误")
-    print(f"   📁 处理文件: {processed_files} 个文件")
-    print(f"   ✨ 批量修复完成!")
 
 
 if __name__ == "__main__":

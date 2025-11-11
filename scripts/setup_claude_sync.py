@@ -171,9 +171,7 @@ class ClaudeSyncSetup:
             full_path = self.project_root / dir_path
             try:
                 full_path.mkdir(parents=True, exist_ok=True)
-                print(f"✅ 目录已创建: {full_path}")
-            except Exception as e:
-                print(f"❌ 创建目录失败 {full_path}: {e}")
+            except Exception:
                 success = False
         return success
 
@@ -253,8 +251,6 @@ If you see this issue, the setup is working correctly! You can safely close this
 
     def run_full_setup(self, test_issue: bool = False) -> dict[str, Any]:
         """运行完整的环境检查和设置"""
-        print("🔧 Claude Code 作业同步环境设置")
-        print("=" * 60)
 
         results = {
             "timestamp": self.get_timestamp(),
@@ -270,103 +266,81 @@ If you see this issue, the setup is working correctly! You can safely close this
         }
 
         # 1. 检查Python版本
-        print("\n🐍 检查Python环境...")
         python_check = self.check_python_version()
         results["python"] = python_check
 
         if python_check["valid"]:
-            print(f"✅ {python_check['message']}")
+            pass
         else:
-            print(f"❌ Python版本过低: {python_check['version']} (需要3.8+)")
             results["recommendations"].append("请升级Python到3.8或更高版本")
 
         # 2. 检查Git环境
-        print("\n📦 检查Git环境...")
         git_check = self.check_git()
         results["git"] = git_check
 
         if git_check["installed"]:
-            print(f"✅ Git已安装: {git_check['version']}")
             if git_check["configured"]:
-                print("✅ Git配置正确")
+                pass
             else:
-                print("⚠️ Git配置不完整")
                 results["recommendations"].append("请配置Git用户信息: git config --global user.name 'Your Name' 和 git config --global user.email 'your.email@example.com'")
         else:
-            print("❌ Git未安装")
             results["recommendations"].append("请安装Git: https://git-scm.com/downloads")
 
         # 3. 检查GitHub CLI
-        print("\n🔗 检查GitHub CLI...")
         gh_check = self.check_github_cli()
         results["github_cli"] = gh_check
 
         if gh_check["installed"]:
-            print(f"✅ GitHub CLI已安装: {gh_check['version']}")
             if gh_check["authenticated"]:
-                print("✅ GitHub CLI已认证")
                 if gh_check["auth_status"]:
-                    print(f"   认证信息: {gh_check['auth_status']}")
+                    pass
             else:
-                print("❌ GitHub CLI未认证")
                 results["recommendations"].append("请认证GitHub CLI: gh auth login")
         else:
-            print("❌ GitHub CLI未安装")
             results["recommendations"].append("请安装GitHub CLI: https://cli.github.com/manual/installation")
 
         # 4. 检查仓库访问权限
         if gh_check.get("authenticated"):
-            print("\n🏠 检查仓库访问权限...")
             repo_check = self.check_repository_access()
             results["repository"] = repo_check
 
             if repo_check["access"]:
-                print("✅ 仓库访问正常")
                 if repo_check.get("repo_info"):
                     repo_info = repo_check["repo_info"]
                     if isinstance(repo_info, dict) and "name" in repo_info:
-                        print(f"   仓库: {repo_info.get('owner', {}).get('login', 'Unknown')}/{repo_info['name']}")
-                        print(f"   可见性: {'Private' if repo_info.get('isPrivate') else 'Public'}")
+                        pass
             else:
-                print("❌ 无法访问仓库")
                 results["recommendations"].append(f"仓库访问失败: {repo_check.get('error', 'Unknown error')}")
 
             # 5. 检查Issues权限
-            print("\n📝 检查Issues管理权限...")
             perm_check = self.check_permissions()
             results["permissions"] = perm_check
 
             if perm_check["can_manage_issues"]:
-                print("✅ Issues管理权限正常")
+                pass
             else:
-                print("❌ Issues管理权限不足")
                 results["recommendations"].append(f"Issues权限问题: {perm_check.get('error', 'Unknown error')}")
 
         # 6. 创建目录结构
-        print("\n📁 创建目录结构...")
         dirs_created = self.create_directories()
         results["directories"] = dirs_created
 
         if dirs_created:
-            print("✅ 目录结构创建完成")
+            pass
         else:
-            print("❌ 目录创建失败")
+            pass
 
         # 7. 测试Issue创建（可选）
         if test_issue and gh_check.get("authenticated") and results.get("permissions", {}).get("can_manage_issues"):
-            print("\n🧪 测试Issue创建...")
             test_result = self.test_issue_creation(dry_run=False)
             results["test_issue"] = test_result
 
             if test_result["success"]:
-                print(f"✅ 测试Issue创建成功: {test_result['issue_url']}")
+                pass
             else:
-                print(f"❌ 测试Issue创建失败: {test_result.get('error', 'Unknown error')}")
+                pass
 
         # 8. 总体状态评估
-        print("\n" + "=" * 60)
-        print("📊 环境设置总结")
-        print("=" * 60)
 
         critical_issues = []
         warnings = []
@@ -391,41 +365,25 @@ If you see this issue, the setup is working correctly! You can safely close this
         if not critical_issues:
             if not warnings:
                 results["overall_status"] = "excellent"
-                print("🎉 环境设置完美！Claude Code作业同步已准备就绪")
             else:
                 results["overall_status"] = "good"
-                print("✅ 环境设置良好，但有一些小问题需要注意")
         else:
             results["overall_status"] = "needs_attention"
-            print("⚠️ 环境设置需要处理一些问题才能正常使用")
 
         # 输出详细状态
-        print("\n📈 组件状态:")
-        print(f"   Python: {'✅' if python_check['valid'] else '❌'}")
-        print(f"   Git: {'✅' if git_check['installed'] and git_check['configured'] else '⚠️' if git_check['installed'] else '❌'}")
-        print(f"   GitHub CLI: {'✅' if gh_check.get('authenticated') else '⚠️' if gh_check.get('installed') else '❌'}")
-        print(f"   仓库访问: {'✅' if results.get('repository', {}).get('access') else '❌'}")
-        print(f"   Issues权限: {'✅' if results.get('permissions', {}).get('can_manage_issues') else '❌'}")
-        print(f"   目录结构: {'✅' if dirs_created else '❌'}")
 
         # 输出建议
         if results["recommendations"]:
-            print("\n💡 改进建议:")
-            for i, rec in enumerate(results["recommendations"], 1):
-                print(f"   {i}. {rec}")
+            for _i, _rec in enumerate(results["recommendations"], 1):
+                pass
 
         # 输出下一步操作
-        print("\n🚀 下一步操作:")
         if results["overall_status"] == "excellent":
-            print("   🎯 开始使用: make claude-start-work")
-            print("   📋 查看帮助: make claude-list-work")
-            print("   🔗 同步作业: make claude-sync")
+            pass
         elif results["overall_status"] == "good":
-            print("   🔧 解决警告问题后即可正常使用")
-            print("   🎯 尝试使用: make claude-start-work")
+            pass
         else:
-            print("   🔧 请先解决上述关键问题")
-            print("   📖 重新运行设置: python3 scripts/setup_claude_sync.py")
+            pass
 
         return results
 
@@ -527,9 +485,8 @@ def main():
             try:
                 with open(args.report, 'w', encoding='utf-8') as f:
                     f.write(report)
-                print(f"\n📄 设置报告已保存到: {args.report}")
-            except Exception as e:
-                print(f"\n❌ 保存报告失败: {e}")
+            except Exception:
+                pass
 
         # 返回适当的退出码
         if results["overall_status"] == "excellent":
@@ -540,10 +497,8 @@ def main():
             sys.exit(1)
 
     except KeyboardInterrupt:
-        print("\n⚠️ 设置过程被用户中断")
         sys.exit(130)
-    except Exception as e:
-        print(f"\n❌ 设置过程失败: {e}")
+    except Exception:
         import traceback
         traceback.print_exc()
         sys.exit(1)

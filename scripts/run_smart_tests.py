@@ -4,31 +4,18 @@ Smart Tests优化运行脚本
 基于优化的测试组合，确保快速、稳定的测试执行
 """
 
-import os
-import sys
 import subprocess
+import sys
 import time
 from pathlib import Path
+
 
 def run_smart_tests():
     """运行优化的Smart Tests组合"""
 
     # 核心稳定测试模块
-    test_paths = [
-        "tests/unit/utils",
-        "tests/unit/cache",
-        "tests/unit/core"
-    ]
 
     # 排除的问题测试文件
-    ignore_files = [
-        "tests/unit/services/test_prediction_service.py",
-        "tests/unit/core/test_di.py",
-        "tests/unit/core/test_path_manager_enhanced.py",
-        "tests/unit/core/test_config_new.py",
-        "tests/unit/scripts/test_create_service_tests.py",
-        "tests/unit/test_core_logger_enhanced.py"
-    ]
 
     # 构建pytest命令 - 使用已验证的组合
     cmd = [
@@ -52,10 +39,6 @@ def run_smart_tests():
         "--no-header"
     ]
 
-    print("🚀 运行Smart Tests优化组合...")
-    print(f"📁 测试路径: {', '.join(test_paths)}")
-    print(f"🚫 排除文件: {len(ignore_files)} 个问题测试")
-    print("=" * 60)
 
     # 记录开始时间
     start_time = time.time()
@@ -91,29 +74,19 @@ def run_smart_tests():
         total_tests = passed_tests + failed_tests + error_tests + skipped_tests
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"⏱️  执行时间: {duration:.2f}秒")
-        print(f"📊 测试统计: {total_tests} 个测试")
-        print(f"✅ 通过: {passed_tests}")
-        print(f"❌ 失败: {failed_tests}")
-        print(f"🚫 错误: {error_tests}")
-        print(f"⏭️  跳过: {skipped_tests}")
-        print(f"📈 通过率: {success_rate:.1f}%")
 
-    
+
         # 判断是否达到目标
         if success_rate >= 90 and duration <= 120:
-            print("🎉 Smart Tests目标达成！")
             return True
         else:
-            print("⚠️  Smart Tests目标未完全达成")
             if success_rate < 90:
-                print(f"   通过率不足: {success_rate:.1f}% < 90%")
+                pass
             if duration > 120:
-                print(f"   执行时间过长: {duration:.2f}s > 120s")
+                pass
             return False
 
-    except Exception as e:
-        print(f"❌ Smart Tests执行失败: {e}")
+    except Exception:
         return False
 
 if __name__ == "__main__":

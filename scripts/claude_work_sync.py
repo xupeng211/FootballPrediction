@@ -183,8 +183,7 @@ class ClaudeWorkSynchronizer:
             with open(self.work_log_file, encoding='utf-8') as f:
                 data = json.load(f)
                 return [WorkItem(**item) for item in data]
-        except Exception as e:
-            print(f"❌ 加载作业日志失败: {e}")
+        except Exception:
             return []
 
     def save_work_log(self, work_items: list[WorkItem]):
@@ -192,8 +191,8 @@ class ClaudeWorkSynchronizer:
         try:
             with open(self.work_log_file, 'w', encoding='utf-8') as f:
                 json.dump([asdict(item) for item in work_items], f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"❌ 保存作业日志失败: {e}")
+        except Exception:
+            pass
 
     def load_sync_log(self) -> dict[str, Any]:
         """加载同步日志"""
@@ -203,8 +202,7 @@ class ClaudeWorkSynchronizer:
         try:
             with open(self.sync_log_file, encoding='utf-8') as f:
                 return json.load(f)
-        except Exception as e:
-            print(f"❌ 加载同步日志失败: {e}")
+        except Exception:
             return {}
 
     def save_sync_log(self, sync_data: dict[str, Any]):
@@ -212,8 +210,8 @@ class ClaudeWorkSynchronizer:
         try:
             with open(self.sync_log_file, 'w', encoding='utf-8') as f:
                 json.dump(sync_data, f, indent=2, ensure_ascii=False, default=str)
-        except Exception as e:
-            print(f"❌ 保存同步日志失败: {e}")
+        except Exception:
+            pass
 
     def get_existing_open_issues(self) -> list[dict[str, Any]]:
         """获取当前所有open状态的Issues"""
@@ -226,7 +224,6 @@ class ClaudeWorkSynchronizer:
             ])
 
             if not result["success"]:
-                print(f"❌ 获取现有Issues失败: {result['stderr']}")
                 return []
 
             issues = []
@@ -250,8 +247,7 @@ class ClaudeWorkSynchronizer:
 
             return issues
 
-        except Exception as e:
-            print(f"❌ 获取现有Issues异常: {e}")
+        except Exception:
             return []
 
     def is_similar_issue(self, work_item: 'WorkItem', existing_issue: dict[str, Any]) -> bool:
@@ -305,11 +301,9 @@ class ClaudeWorkSynchronizer:
         if existing_item:
             # 更新现有项目
             work_items[work_items.index(existing_item)] = work_item
-            print(f"📝 更新作业项目: {work_item.id}")
         else:
             # 添加新项目
             work_items.append(work_item)
-            print(f"➕ 添加新作业项目: {work_item.id}")
 
         self.save_work_log(work_items)
 
@@ -367,7 +361,6 @@ class ClaudeWorkSynchronizer:
 
         work_item = next((item for item in work_items if item.id == work_id), None)
         if not work_item:
-            print(f"❌ 未找到作业项目: {work_id}")
             return False
 
         # 更新项目状态
@@ -393,7 +386,6 @@ class ClaudeWorkSynchronizer:
             work_item.time_spent_minutes = int((completed - started).total_seconds() / 60)
 
         self.save_work_log(work_items)
-        print(f"✅ 作业项目已完成: {work_id}")
         return True
 
     def generate_issue_body(self, work_item: WorkItem) -> str:
@@ -610,47 +602,35 @@ class ClaudeWorkSynchronizer:
 
     def sync_all_work_items(self) -> dict[str, Any]:
         """同步所有作业项目到GitHub Issues"""
-        print("🚀 开始同步Claude Code作业到GitHub Issues")
-        print("=" * 80)
 
         # 检查GitHub CLI认证
-        print("🔍 检查GitHub CLI认证...")
         auth_check = self.run_gh_command(["auth", "status"])
         if not auth_check["success"]:
-            print("❌ GitHub CLI未认证，请先运行: gh auth login")
             return {"success": False, "error": "GitHub CLI not authenticated"}
 
-        print("✅ GitHub CLI认证成功")
 
         # 加载作业项目
         work_items = self.load_work_log()
         if not work_items:
-            print("📝 没有找到作业项目")
             return {"success": True, "message": "No work items found"}
 
-        print(f"📋 找到 {len(work_items)} 个作业项目")
 
         # 🚨 ISSUE管理危机防护：数量监控和去重检查
-        print("🔍 执行Issue数量监控...")
 
         # 检查当前Issue数量
         current_open_count = len(self.get_existing_open_issues())
         MAX_ISSUES_LIMIT = 25  # 设置最大Issue数量限制（健康阈值）
 
-        print(f"   📊 当前Open Issues数量: {current_open_count}")
 
         if current_open_count >= MAX_ISSUES_LIMIT:
-            print(f"   🚨 警告: Issue数量已达上限 ({current_open_count}/{MAX_ISSUES_LIMIT})")
-            print("   ❌ 暂停同步，请先清理现有Issues")
             return {
                 "success": False,
                 "error": f"Issue count limit reached ({current_open_count}/{MAX_ISSUES_LIMIT})",
                 "action_required": "Please clean up existing issues before syncing"
             }
         elif current_open_count >= MAX_ISSUES_LIMIT * 0.6:  # 60%警告
-            print(f"   ⚠️ 警告: Issue数量接近健康阈值 ({current_open_count}/{MAX_ISSUES_LIMIT})")
+            pass
 
-        print("🔍 执行去重检查，防止重复创建...")
         existing_issues = self.get_existing_open_issues()
         duplicate_count = 0
         filtered_work_items = []
@@ -663,9 +643,9 @@ class ClaudeWorkSynchronizer:
                     # 检查现有Issue是否已完成
                     issue_labels = [label["name"] for label in issue.get("labels", [])]
                     if "status/completed" in issue_labels:
-                        print(f"   ✅ 跳过已完成Issue: {work_item.title} 与Issue #{issue['number']} 相似（已完成）")
+                        pass
                     else:
-                        print(f"   ⚠️ 发现重复: {work_item.title} 与现有Issue #{issue['number']} 相似")
+                        pass
                     is_duplicate = True
                     duplicate_count += 1
                     break
@@ -674,18 +654,14 @@ class ClaudeWorkSynchronizer:
                 filtered_work_items.append(work_item)
 
         if duplicate_count > 0:
-            print(f"   🚫 过滤了 {duplicate_count} 个重复作业项目")
-            print(f"   ✅ 实际处理 {len(filtered_work_items)} 个非重复项目")
+            pass
 
         # 再次检查添加新Issues后是否会超过限制
         projected_count = current_open_count + len(filtered_work_items)
         if projected_count > MAX_ISSUES_LIMIT:
             over_limit = projected_count - MAX_ISSUES_LIMIT
-            print(f"   🚨 错误: 添加新Issues后将超过限制 ({projected_count}/{MAX_ISSUES_LIMIT})")
-            print(f"   📉 需要减少 {over_limit} 个项目")
             # 保留最新的项目
             filtered_work_items = filtered_work_items[:-over_limit] if over_limit > 0 else filtered_work_items
-            print(f"   ✅ 调整后处理 {len(filtered_work_items)} 个项目")
 
         results = {
             "success": True,
@@ -699,9 +675,6 @@ class ClaudeWorkSynchronizer:
         }
 
         for i, work_item in enumerate(filtered_work_items, 1):
-            print(f"\n📝 [{i}/{len(filtered_work_items)}] 处理作业项目: {work_item.id}")
-            print(f"   标题: {work_item.title}")
-            print(f"   状态: {work_item.status} ({work_item.completion_percentage}%)")
 
             sync_result = self.create_or_update_github_issue(work_item)
             results["sync_results"].append({
@@ -712,18 +685,10 @@ class ClaudeWorkSynchronizer:
 
             if sync_result["success"]:
                 results["successful_syncs"] += 1
-                action_desc = {
-                    "created": "✅ 创建新Issue",
-                    "updated": "🔄 更新Issue",
-                    "completed_and_closed": "✅ 完成并关闭Issue",
-                    "already_closed": "ℹ️ Issue已关闭"
-                }
-                print(f"   {action_desc.get(sync_result['action'], '✅ 处理成功')}")
                 if sync_result.get("issue_number"):
-                    print(f"   Issue #{sync_result['issue_number']}")
+                    pass
             else:
                 results["failed_syncs"] += 1
-                print(f"   ❌ 同步失败: {sync_result.get('action', 'Unknown error')}")
 
             # 添加延迟避免API限制
             if i < len(work_items):
@@ -798,64 +763,37 @@ class ClaudeWorkSynchronizer:
         try:
             with open(report_file, 'w', encoding='utf-8') as f:
                 f.write(report_content)
-            print(f"📄 同步报告已保存到: {report_file}")
-        except Exception as e:
-            print(f"❌ 保存同步报告失败: {e}")
+        except Exception:
+            pass
 
     def print_sync_summary(self, results: dict[str, Any]):
         """打印同步总结"""
-        print("\n" + "=" * 80)
-        print("📊 Claude Code 作业同步总结")
-        print("=" * 80)
 
-        print("📈 同步统计:")
-        print(f"   总作业项目: {results['total_items']}")
-        print(f"   成功同步: {results['successful_syncs']}")
-        print(f"   同步失败: {results['failed_syncs']}")
 
-        success_rate = (results['successful_syncs'] / results['total_items']) * 100 if results['total_items'] > 0 else 0
-        print(f"   成功率: {success_rate:.1f}%")
+        (results['successful_syncs'] / results['total_items']) * 100 if results['total_items'] > 0 else 0
 
         if results['successful_syncs'] > 0:
-            print("\n✅ 成功同步的Issues:")
             for sync_result in results["sync_results"]:
                 if sync_result["result"]["success"]:
-                    issue_num = sync_result["result"].get("issue_number", "N/A")
-                    title = sync_result["title"][:40] + "..." if len(sync_result["title"]) > 40 else sync_result["title"]
-                    action = sync_result["result"]["action"]
-                    action_desc = {
-                        "created": "➕ 创建",
-                        "updated": "🔄 更新",
-                        "completed_and_closed": "✅ 完成",
-                        "already_closed": "ℹ️ 已关闭"
-                    }
-                    print(f"   Issue #{issue_num} ({title}): {action_desc.get(action, '处理')}")
+                    sync_result["result"].get("issue_number", "N/A")
+                    sync_result["title"][:40] + "..." if len(sync_result["title"]) > 40 else sync_result["title"]
+                    sync_result["result"]["action"]
 
         if results['failed_syncs'] > 0:
-            print("\n❌ 同步失败的项目:")
             for sync_result in results["sync_results"]:
                 if not sync_result["result"]["success"]:
-                    title = sync_result["title"][:40] + "..." if len(sync_result["title"]) > 40 else sync_result["title"]
-                    action = sync_result["result"]["action"]
-                    print(f"   {title}: {action}")
+                    sync_result["title"][:40] + "..." if len(sync_result["title"]) > 40 else sync_result["title"]
+                    sync_result["result"]["action"]
 
-        print("\n🎯 建议:")
         if results['failed_syncs'] == 0:
-            print("   🎉 所有作业项目都已成功同步！")
-            print("   📄 建议查看GitHub仓库确认所有Issues状态")
+            pass
         else:
-            print(f"   ⚠️  有 {results['failed_syncs']} 个项目同步失败")
-            print("   🔧 建议检查GitHub CLI认证和网络连接")
-            print("   📝 可以手动创建失败的Issues")
+            pass
 
-        print(f"\n🕐 完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("=" * 80)
 
 
 def main():
     """主函数"""
-    print("🔗 Claude Code 作业同步工具 v2.0.0")
-    print("=" * 60)
 
     synchronizer = ClaudeWorkSynchronizer()
 
@@ -872,7 +810,6 @@ def main():
                     work_type = input("🏷️ 输入作业类型 (development/testing/documentation/bugfix/feature): ")
                     priority = input("⚡ 输入优先级 (low/medium/high/critical, 默认medium): ") or "medium"
                 except EOFError:
-                    print("❌ 交互式输入被中断，请确保在终端中运行")
                     return
 
                 work_item = synchronizer.create_work_item_from_current_work(
@@ -881,7 +818,6 @@ def main():
                     work_type=work_type,
                     priority=priority
                 )
-                print(f"✅ 作业已创建: {work_item.id}")
 
             elif command == "complete-work":
                 # 完成作业
@@ -891,7 +827,6 @@ def main():
                 work_item = next((item for item in work_items if item.id == work_id), None)
 
                 if work_item:
-                    print(f"📋 找到作业: {work_item.title}")
 
                     # 询问交付成果
                     deliverables_input = input("🎯 输入交付成果 (用逗号分隔，可选): ")
@@ -903,42 +838,39 @@ def main():
                     )
 
                     if success:
-                        print("✅ 作业已完成，将自动同步到GitHub")
+                        pass
                     else:
-                        print("❌ 完成作业失败")
+                        pass
                 else:
-                    print(f"❌ 未找到作业: {work_id}")
+                    pass
 
             elif command == "list-work":
                 # 列出所有作业
                 work_items = synchronizer.load_work_log()
                 if work_items:
-                    print(f"\n📋 找到 {len(work_items)} 个作业项目:")
-                    for i, item in enumerate(work_items, 1):
-                        print(f"{i}. {item.id} - {item.title} ({item.status}, {item.completion_percentage}%)")
+                    for _i, _item in enumerate(work_items, 1):
+                        pass
                 else:
-                    print("📝 没有找到作业项目")
+                    pass
 
             elif command == "sync":
                 # 同步到GitHub
                 results = synchronizer.sync_all_work_items()
 
                 if results.get("success", False):
-                    print("\n🎉 同步完成！")
+                    pass
                 else:
-                    print(f"\n❌ 同步失败: {results.get('error', 'Unknown error')}")
+                    pass
 
             else:
-                print(f"❌ 未知命令: {command}")
-                print("可用命令: start-work, complete-work, list-work, sync")
+                pass
         else:
             # 默认执行同步
             results = synchronizer.sync_all_work_items()
 
     except KeyboardInterrupt:
-        print("\n⚠️ 操作被用户中断")
-    except Exception as e:
-        print(f"\n❌ 程序执行失败: {e}")
+        pass
+    except Exception:
         import traceback
         traceback.print_exc()
 

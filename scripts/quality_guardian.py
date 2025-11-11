@@ -20,8 +20,7 @@ try:
     # 尝试导入智能质量修复器
     sys.path.insert(0, str(Path(__file__).parent))
     from smart_quality_fixer import SmartQualityFixer
-except ImportError as e:
-    print(f"导入smart_quality_fixer失败: {e}")
+except ImportError:
     SmartQualityFixer = None
 
 # QualityStandardsOptimizer不存在，稍后实现简单的替代
@@ -77,41 +76,28 @@ class QualityGuardian:
 
     def run_full_quality_check(self) -> dict[str, Any]:
         """运行完整的质量检查"""
-        print("🛡️ 质量守护系统")
-        print("=" * 60)
-        print("📊 执行全面质量检查...")
-        print()
 
         # 1. 基础质量指标收集
-        print("1️⃣ 收集质量指标...")
         metrics = self._collect_quality_metrics()
 
         # 2. 代码质量分析
-        print("2️⃣ 分析代码质量...")
         code_quality = self._analyze_code_quality()
 
         # 3. 测试健康度检查
-        print("3️⃣ 检查测试健康度...")
         test_health = self._check_test_health()
 
         # 4. 安全性检查
-        print("4️⃣ 执行安全性检查...")
         security = self._check_security()
 
         # 5. 综合评估
-        print("5️⃣ 综合质量评估...")
         self._assess_overall_quality(metrics, code_quality, test_health, security)
 
         # 6. 生成报告
-        print("6️⃣ 生成质量报告...")
         self._generate_quality_report()
 
         # 7. 提供行动建议
-        print("7️⃣ 生成行动建议...")
         self._generate_action_items()
 
-        print()
-        print("✅ 质量检查完成！")
         self._print_quality_summary()
 
         return self.quality_status
@@ -466,90 +452,64 @@ class QualityGuardian:
 
     def _print_quality_summary(self):
         """打印质量摘要"""
-        print("\n" + "=" * 60)
-        print("📊 质量检查摘要")
-        print("=" * 60)
 
-        print(f"📈 综合质量分数: {self.quality_status['overall_score']}/10")
-        print(f"🧪 测试覆盖率: {self.quality_status.get('coverage', 0):.1f}%")
-        print(f"🔍 代码质量分数: {self.quality_status.get('code_quality', 0):.1f}/10")
-        print(f"🛡️ 安全分数: {self.quality_status.get('security', 0):.1f}/10")
 
-        print("\n🎯 关键指标:")
-        print(f"  - Ruff错误: {self.quality_status.get('ruff_errors', 0)}")
-        print(f"  - MyPy错误: {self.quality_status.get('mypy_errors', 0)}")
-        print(f"  - 文件数量: {self.quality_status.get('files_count', 0)}")
 
         if self.quality_status.get("recommendations"):
-            print("\n💡 主要建议:")
-            for rec in self.quality_status["recommendations"][:3]:
-                print(f"  • {rec}")
+            for _rec in self.quality_status["recommendations"][:3]:
+                pass
 
         if self.quality_status.get("action_items"):
-            print("\n📋 高优先级行动项:")
             high_priority_items = [
                 item for item in self.quality_status["action_items"] if item["priority"] == "HIGH"
             ]
-            for item in high_priority_items[:3]:
-                print(f"  🚨 {item['action']}: {item['details']}")
+            for _item in high_priority_items[:3]:
+                pass
 
-        print("\n" + "=" * 60)
 
     def run_auto_fix(self, fix_types: list[str] = None) -> dict[str, Any]:
         """运行自动修复"""
         if fix_types is None:
             fix_types = ["syntax", "imports", "mypy", "ruff", "tests"]
 
-        print("🔧 启动自动修复...")
         fix_results = {}
 
         if "syntax" in fix_types:
-            print("修复语法错误...")
             fix_results["syntax"] = self.fixer.fix_syntax_errors()
 
         if "imports" in fix_types:
-            print("修复导入错误...")
             fix_results["imports"] = self.fixer.fix_import_errors()
 
         if "mypy" in fix_types:
-            print("修复MyPy错误...")
             fix_results["mypy"] = self.fixer.fix_mypy_errors()
 
         if "ruff" in fix_types:
-            print("修复Ruff问题...")
             fix_results["ruff"] = self.fixer.fix_ruff_issues()
 
         if "tests" in fix_types:
-            print("修复测试问题...")
             fix_results["tests"] = self.fixer.fix_test_issues()
 
-        total_fixes = sum(fix_results.values())
-        print(f"\n✅ 自动修复完成！总修复数: {total_fixes}")
+        sum(fix_results.values())
 
         return fix_results
 
     def optimize_quality_standards(self) -> bool:
         """优化质量标准"""
-        print("🎯 优化质量标准...")
         return self.optimizer.run_optimization()
 
     def run_guardian_cycle(self) -> dict[str, Any]:
         """运行完整的守护周期"""
-        print("🛡️ 启动质量守护周期")
-        print("=" * 60)
 
         # 1. 质量检查
         quality_status = self.run_full_quality_check()
 
         # 2. 自动修复（可选）
         if quality_status["overall_score"] < 6:
-            print("\n🔧 质量分数较低，启动自动修复...")
             fix_results = self.run_auto_fix()
             quality_status["auto_fixes"] = fix_results
 
         # 3. 标准优化（如需要）
         if quality_status.get("mypy_errors", 0) > 1000 or quality_status.get("coverage", 0) < 15:
-            print("\n🎯 质量标准需要调整...")
             optimization_success = self.optimize_quality_standards()
             quality_status["standards_optimized"] = optimization_success
 

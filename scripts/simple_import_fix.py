@@ -6,7 +6,6 @@ Simple Test Import Fixer
 专门用于快速修复测试文件的导入问题，使用简单的try-except包装。
 """
 
-import sys
 from pathlib import Path
 
 
@@ -100,12 +99,11 @@ MOCK_USERS = {
 def fix_file_imports(file_path):
     """修复单个文件的导入问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 如果已经有修复头部，跳过
         if '导入修复' in content:
-            print(f"  ✓ 跳过 {file_path} (已修复)")
             return True
 
         # 在第一个import之前插入修复头部
@@ -125,11 +123,9 @@ def fix_file_imports(file_path):
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write('\n'.join(lines))
 
-        print(f"  ✓ 修复完成: {file_path}")
         return True
 
-    except Exception as e:
-        print(f"  ✗ 修复失败: {file_path} - {e}")
+    except Exception:
         return False
 
 
@@ -147,18 +143,14 @@ def main():
     project_root = Path(__file__).parent.parent
     success_count = 0
 
-    print("🔧 简化修复测试文件导入问题...")
-    print()
 
     for file_path in files_to_fix:
         full_path = project_root / file_path
         if full_path.exists():
             success_count += fix_file_imports(full_path)
         else:
-            print(f"  ⚠️  文件不存在: {file_path}")
+            pass
 
-    print()
-    print(f"✅ 修复完成! 成功: {success_count}/{len(files_to_fix)}")
 
 
 if __name__ == "__main__":

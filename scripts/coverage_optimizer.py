@@ -38,7 +38,6 @@ class CoverageOptimizer:
 
     def run_coverage_analysis(self, test_pattern: str = None) -> CoverageReport:
         """运行覆盖率分析"""
-        print("🔍 开始覆盖率分析...")
 
         # 清理旧的覆盖率数据
         self._cleanup_coverage_files()
@@ -57,8 +56,7 @@ class CoverageOptimizer:
             cmd.append(test_pattern)
 
         try:
-            print(f"📊 执行命令: {' '.join(cmd)}")
-            result = subprocess.run(
+            subprocess.run(
                 cmd,
                 cwd=self.project_root,
                 capture_output=True,
@@ -71,14 +69,11 @@ class CoverageOptimizer:
             if coverage_file.exists():
                 return self._parse_coverage_report()
             else:
-                print(f"❌ 覆盖率分析失败: {result.stderr}")
                 return self._get_empty_report()
 
         except subprocess.TimeoutExpired:
-            print("⏰ 覆盖率分析超时")
             return self._get_empty_report()
-        except Exception as e:
-            print(f"❌ 覆盖率分析异常: {e}")
+        except Exception:
             return self._get_empty_report()
 
     def _parse_coverage_report(self) -> CoverageReport:
@@ -119,8 +114,7 @@ class CoverageOptimizer:
                 file_reports=file_reports
             )
 
-        except Exception as e:
-            print(f"❌ 解析覆盖率报告失败: {e}")
+        except Exception:
             return self._get_empty_report()
 
     def _get_empty_report(self) -> CoverageReport:
@@ -150,7 +144,6 @@ class CoverageOptimizer:
 
     def analyze_coverage_gaps(self, report: CoverageReport) -> list[dict[str, Any]]:
         """分析覆盖率缺口"""
-        print("🔍 分析覆盖率缺口...")
 
         gaps = []
 
@@ -233,7 +226,6 @@ class CoverageOptimizer:
     coverage_report: CoverageReport) -> dict[str,
     Any]:
         """生成覆盖率改进计划"""
-        print("📋 生成覆盖率改进计划...")
 
         gaps = self.analyze_coverage_gaps(coverage_report)
 
@@ -293,7 +285,6 @@ class CoverageOptimizer:
     Any]],
     max_tests: int = 5) -> list[str]:
         """为高优先级缺口创建针对性测试"""
-        print(f"🎯 为前{max_tests}个高优先级文件创建测试...")
 
         created_tests = []
         high_priority_gaps = [g for g in gaps if g['priority'] == 'high'][:max_tests]
@@ -321,9 +312,8 @@ class CoverageOptimizer:
                 with open(test_path, 'w', encoding='utf-8') as f:
                     f.write(test_content)
                 created_tests.append(str(test_path))
-                print(f"✅ 创建测试文件: {test_path}")
-            except Exception as e:
-                print(f"❌ 创建测试失败 {test_path}: {e}")
+            except Exception:
+                pass
 
         return created_tests
 
@@ -405,63 +395,40 @@ def main():
 
     optimizer = CoverageOptimizer()
 
-    print("🚀 启动覆盖率测量和优化工具")
-    print("=" * 50)
 
     # 1. 运行覆盖率分析
     coverage_report = optimizer.run_coverage_analysis(args.test_pattern)
 
-    print("\n📊 当前覆盖率状态:")
-    print(f"   总覆盖率: {coverage_report.coverage_percent:.2f}%")
-    print(f"   总语句数: {coverage_report.total_statements}")
-    print(f"   已覆盖语句: {coverage_report.covered_statements}")
-    print(f"   测试文件数: {len(coverage_report.file_reports)}")
 
     if coverage_report.coverage_percent == 0:
-        print("\n⚠️  当前无覆盖率，需要从零开始建立测试体系")
         return
 
     # 2. 生成改进计划
     improvement_plan = optimizer.generate_improvement_plan(coverage_report)
 
-    print("\n📋 改进计划:")
-    print(f"   当前覆盖率: {improvement_plan['current_status']['total_coverage']:.2f}%")
-    print(f"   目标覆盖率: {improvement_plan['targets']['target_coverage']:.2f}%")
-    print(f"   需要提升: {improvement_plan['targets']['coverage_needed']:.2f}%")
-    print(f"   预计需要测试: {improvement_plan['targets']['estimated_tests_needed']}个")
 
     # 3. 分析覆盖率缺口
     gaps = optimizer.analyze_coverage_gaps(coverage_report)
-    high_priority_count = len([g for g in gaps if g['priority'] == 'high'])
-    medium_priority_count = len([g for g in gaps if g['priority'] == 'medium'])
+    len([g for g in gaps if g['priority'] == 'high'])
+    len([g for g in gaps if g['priority'] == 'medium'])
 
-    print("\n🎯 覆盖率缺口分析:")
-    print(f"   高优先级文件: {high_priority_count}个")
-    print(f"   中等优先级文件: {medium_priority_count}个")
 
     if improvement_plan['priority_files']:
-        print("\n🔥 优先处理文件:")
-        for i, file_info in enumerate(improvement_plan['priority_files'][:3], 1):
-            print(f"   {i}. {file_info['file']} (覆盖率: {file_info['coverage']:.1f}%)")
+        for _i, _file_info in enumerate(improvement_plan['priority_files'][:3], 1):
+            pass
 
     # 4. 创建针对性测试（如果需要）
     if not args.analyze_only and args.create_tests and gaps:
         created_tests = optimizer.create_targeted_tests(gaps, args.max_tests)
-        print(f"\n✅ 创建了 {len(created_tests)} 个测试文件:")
-        for test_path in created_tests:
-            print(f"   📝 {test_path}")
+        for _test_path in created_tests:
+            pass
 
-    print("\n💡 推荐下一步行动:")
-    for action in improvement_plan['action_plan']['immediate_actions'][:3]:
-        print(f"   • {action}")
+    for _action in improvement_plan['action_plan']['immediate_actions'][:3]:
+        pass
 
-    print("\n🛠️  推荐工具:")
-    for tool in improvement_plan['recommended_tools'][:3]:
-        print(f"   • {tool}")
+    for _tool in improvement_plan['recommended_tools'][:3]:
+        pass
 
-    print("\n📊 详细报告已生成:")
-    print(f"   HTML报告: {optimizer.coverage_dir}/index.html")
-    print(f"   JSON报告: {optimizer.project_root}/coverage.json")
 
 
 if __name__ == "__main__":

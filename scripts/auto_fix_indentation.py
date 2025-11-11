@@ -20,11 +20,8 @@ def fix_indentation():
         return False
 
 if __name__ == '__main__':
-    print("🔧 开始缩进修复...")
 
     if fix_indentation():
-        print("✅ 缩进修复完成")
         sys.exit(0)
     else:
-        print("❌ 缩进修复失败")
         sys.exit(1)

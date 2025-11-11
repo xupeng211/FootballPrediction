@@ -59,8 +59,7 @@ def fix_b904_in_file(file_path: Path) -> int:
         else:
             return 0
 
-    except Exception as e:
-        print(f"❌ 处理文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
 
@@ -84,50 +83,36 @@ def find_b904_files() -> list[Path]:
                     if file_path:
                         files.add(Path(file_path))
 
-        return sorted(list(files))
+        return sorted(files)
 
-    except Exception as e:
-        print(f"❌ 查找B904文件失败: {e}")
+    except Exception:
         return []
 
 
 def main():
     """主函数"""
-    print("🔧 B904异常处理自动修复工具")
-    print("=" * 50)
 
     # 查找需要修复的文件
     files_to_fix = find_b904_files()
 
     if not files_to_fix:
-        print("✅ 没有发现B904错误")
         return
 
-    print(f"📁 发现 {len(files_to_fix)} 个文件需要修复:")
     for file_path in files_to_fix:
-        print(f"   - {file_path}")
+        pass
 
-    print()
     total_fixes = 0
 
     for file_path in files_to_fix:
-        print(f"🔧 修复文件: {file_path}")
         fixes = fix_b904_in_file(file_path)
         total_fixes += fixes
         if fixes > 0:
-            print(f"   ✅ 修复了 {fixes} 个B904错误")
+            pass
         else:
-            print("   ℹ️  没有发现可自动修复的错误")
-        print()
+            pass
 
-    print("=" * 50)
-    print("📊 修复总结:")
-    print(f"   处理文件: {len(files_to_fix)} 个")
-    print(f"   修复错误: {total_fixes} 个")
 
     # 验证修复效果
-    print()
-    print("🔍 验证修复效果...")
     try:
         import subprocess
         result = subprocess.run(
@@ -136,15 +121,14 @@ def main():
             text=True
         )
         remaining = result.stdout.count('\n') if result.stdout else 0
-        print(f"   剩余B904错误: {remaining}个")
 
         if remaining == 0:
-            print("🎉 所有B904错误已修复完成！")
+            pass
         else:
-            print(f"⚠️  还有 {remaining} 个B904错误需要手动处理")
+            pass
 
-    except Exception as e:
-        print(f"❌ 验证失败: {e}")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

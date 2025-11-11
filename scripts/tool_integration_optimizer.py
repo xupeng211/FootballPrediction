@@ -34,7 +34,6 @@ class ToolIntegrationOptimizer:
 
     def discover_tools(self) -> dict[str, ToolInfo]:
         """发现所有工具脚本"""
-        print("🔍 发现工具脚本...")
 
         for script_file in self.scripts_dir.glob("*.py"):
             if script_file.name.startswith("__"):
@@ -43,7 +42,6 @@ class ToolIntegrationOptimizer:
             tool_info = self._analyze_tool(script_file)
             if tool_info:
                 self.tools[tool_info.name] = tool_info
-                print(f"   ✅ 发现工具: {tool_info.name}")
 
         return self.tools
 
@@ -75,8 +73,7 @@ class ToolIntegrationOptimizer:
                 status=status
             )
 
-        except Exception as e:
-            print(f"❌ 分析工具失败 {script_path}: {e}")
+        except Exception:
             return None
 
     def _extract_imports(self, tree: ast.AST) -> list[str]:
@@ -160,13 +157,12 @@ class ToolIntegrationOptimizer:
 
     def calculate_dependents(self):
         """计算工具的依赖关系"""
-        print("🔗 计算依赖关系...")
 
         for tool_name, tool_info in self.tools.items():
             tool_info.dependents = []
 
         for tool_name, tool_info in self.tools.items():
-            for dep in tool_info.dependencies:
+            for _dep in tool_info.dependencies:
                 # 检查是否有其他工具依赖此工具
                 for other_name, other_info in self.tools.items():
                     if other_name != tool_name and tool_name in other_info.dependencies:
@@ -174,7 +170,6 @@ class ToolIntegrationOptimizer:
 
     def analyze_integration(self) -> dict[str, Any]:
         """分析工具集成情况"""
-        print("📊 分析工具集成...")
 
         # 统计工具状态
         status_counts = {}
@@ -396,23 +391,19 @@ class ToolIntegrationOptimizer:
 
 def main():
     """主函数"""
-    print("🔧 工具集成优化器")
-    print("=" * 40)
 
     optimizer = ToolIntegrationOptimizer()
     report = optimizer.generate_report()
 
     # 输出报告
-    print(report)
 
     # 保存报告
     report_file = optimizer.project_root / "tool_integration_report.md"
     try:
         with open(report_file, 'w', encoding='utf-8') as f:
             f.write(report)
-        print(f"\n✅ 报告已保存: {report_file}")
-    except Exception as e:
-        print(f"❌ 保存报告失败: {e}")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

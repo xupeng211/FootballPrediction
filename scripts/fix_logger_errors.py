@@ -9,13 +9,12 @@ Fix logger undefined errors in test files
 import os
 import re
 import sys
-from pathlib import Path
 
 
 def fix_logger_in_file(file_path):
     """修复单个文件中的logger问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -63,23 +62,21 @@ def fix_logger_in_file(file_path):
 
         return 0
 
-    except Exception as e:
-        print(f"处理文件 {file_path} 时出错: {e}")
+    except Exception:
         return -1
 
 
 def main():
     """主函数"""
-    print("🔧 开始修复测试文件中的logger未定义错误...")
 
     # 找到所有有logger问题的文件
     problem_files = []
-    for root, dirs, files in os.walk('tests'):
+    for root, _dirs, files in os.walk('tests'):
         for file in files:
             if file.endswith('.py'):
                 file_path = os.path.join(root, file)
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding='utf-8') as f:
                         content = f.read()
                     # 检查是否有logger使用但没有导入
                     if re.search(r'logger\.', content):
@@ -89,27 +86,20 @@ def main():
                 except Exception:
                     pass
 
-    print(f"📋 找到 {len(problem_files)} 个文件需要修复")
 
     total_fixes = 0
     successful_files = 0
 
     for file_path in problem_files:
-        print(f"🔧 修复: {file_path}")
         fixes = fix_logger_in_file(file_path)
         if fixes > 0:
             total_fixes += fixes
             successful_files += 1
-            print(f"  ✅ 修复了 {fixes} 个logger调用")
         elif fixes == 0:
-            print(f"  ⚠️  没有找到需要修复的logger调用")
+            pass
         else:
-            print(f"  ❌ 修复失败")
+            pass
 
-    print(f"\n📊 修复完成:")
-    print(f"  📁 成功修复文件: {successful_files}")
-    print(f"  🔧 总共修复调用: {total_fixes}")
-    print(f"  📋 处理文件总数: {len(problem_files)}")
 
     return successful_files > 0
 

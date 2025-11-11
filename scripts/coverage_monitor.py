@@ -12,18 +12,18 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any
 
 
 class CoverageMonitor:
     """测试覆盖率监控器"""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path(__file__).parent.parent
         self.report_dir = self.project_root / "reports"
         self.report_dir.mkdir(exist_ok=True)
 
-    def run_coverage_test(self) -> Dict[str, Any]:
+    def run_coverage_test(self) -> dict[str, Any]:
         """运行覆盖率测试并返回结果"""
         try:
             cmd = [
@@ -47,7 +47,7 @@ class CoverageMonitor:
             # 读取覆盖率JSON报告
             coverage_file = self.project_root / "coverage.json"
             if coverage_file.exists():
-                with open(coverage_file, 'r') as f:
+                with open(coverage_file) as f:
                     coverage_data = json.load(f)
 
                 total_coverage = coverage_data.get('totals', {}).get('percent_covered', 0)
@@ -82,7 +82,7 @@ class CoverageMonitor:
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _analyze_coverage_details(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_coverage_details(self, coverage_data: dict[str, Any]) -> dict[str, Any]:
         """分析覆盖率详情"""
         files = coverage_data.get('files', {})
 
@@ -117,7 +117,7 @@ class CoverageMonitor:
             "no_coverage": sorted(no_coverage, key=lambda x: x['path'])
         }
 
-    def check_target_achievement(self, target_coverage: float = 30.0) -> Dict[str, Any]:
+    def check_target_achievement(self, target_coverage: float = 30.0) -> dict[str, Any]:
         """检查覆盖率目标达成情况"""
         coverage_result = self.run_coverage_test()
 
@@ -224,27 +224,20 @@ def main():
     """主函数"""
     monitor = CoverageMonitor()
 
-    print("🔍 开始测试覆盖率监控...")
 
     # 生成报告
     report = monitor.generate_report()
 
     # 保存报告
-    report_file = monitor.save_report(report)
+    monitor.save_report(report)
 
-    print(f"✅ 覆盖率监控报告已生成:")
-    print(f"   📄 详细报告: {report_file}")
-    print(f"   📄 最新报告: {monitor.report_dir}/latest_coverage_report.md")
 
     # 检查目标达成情况
     target_check = monitor.check_target_achievement(30.0)
 
     if target_check['target_achieved']:
-        print("🎉 恭喜！测试覆盖率已达到30%目标！")
         return 0
     else:
-        print(f"⚠️ 测试覆盖率未达到目标，当前: {target_check['current_coverage']:.2f}%, 目标: 30%")
-        print(f"📈 还需要提升 {target_check['gap']:.2f}%")
         return 1
 
 

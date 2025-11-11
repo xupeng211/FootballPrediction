@@ -171,7 +171,7 @@ def test_xgboost(
     accuracy = accuracy_score(y_test_encoded, y_pred)
 
     # 特征重要性
-    feature_importance = dict(zip(X_train.columns, model.feature_importances_))
+    feature_importance = dict(zip(X_train.columns, model.feature_importances_, strict=False))
     top_features = sorted(feature_importance.items(),
     key=lambda x: x[1],
     reverse=True)[:10]
@@ -225,7 +225,7 @@ def test_lightgbm(
     accuracy = accuracy_score(y_test_encoded, y_pred)
 
     # 特征重要性
-    feature_importance = dict(zip(X_train.columns, model.feature_importances_))
+    feature_importance = dict(zip(X_train.columns, model.feature_importances_, strict=False))
     top_features = sorted(feature_importance.items(),
     key=lambda x: x[1],
     reverse=True)[:10]

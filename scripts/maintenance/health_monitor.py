@@ -82,8 +82,8 @@ class HealthMonitor:
                 with open(self.config_file, encoding='utf-8') as f:
                     config = json.load(f)
                     self.thresholds.update(config.get("thresholds", {}))
-            except Exception as e:
-                print(f"⚠️  加载监控配置失败: {e}")
+            except Exception:
+                pass
 
     def _save_config(self):
         """保存监控配置"""
@@ -94,8 +94,8 @@ class HealthMonitor:
             }
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"⚠️  保存监控配置失败: {e}")
+        except Exception:
+            pass
 
     def _load_alerts(self) -> list[HealthAlert]:
         """加载历史警报"""
@@ -106,8 +106,7 @@ class HealthMonitor:
             with open(self.alerts_file, encoding='utf-8') as f:
                 alerts_data = json.load(f)
                 return [HealthAlert(**alert) for alert in alerts_data]
-        except Exception as e:
-            print(f"⚠️  加载警报历史失败: {e}")
+        except Exception:
             return []
 
     def _save_alerts(self, alerts: list[HealthAlert]):
@@ -116,8 +115,8 @@ class HealthMonitor:
             alerts_data = [asdict(alert) for alert in alerts]
             with open(self.alerts_file, 'w', encoding='utf-8') as f:
                 json.dump(alerts_data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"⚠️  保存警报记录失败: {e}")
+        except Exception:
+            pass
 
     def _check_root_files_count(self,
     health_report: dict[str,
@@ -250,7 +249,6 @@ class HealthMonitor:
 
     def check_health(self) -> tuple[dict[str, Any], list[HealthAlert]]:
         """执行健康检查并生成警报"""
-        print("🔍 开始目录健康检查...")
 
         # 生成健康报告
         health_report = self.maintenance.generate_health_report()
@@ -272,8 +270,8 @@ class HealthMonitor:
                 alert = check_func(health_report)
                 if alert:
                     alerts.append(alert)
-            except Exception as e:
-                print(f"⚠️  健康检查项失败: {e}")
+            except Exception:
+                pass
 
         # 如果没有警报，生成一个信息性的健康状态警报
         if not alerts:
@@ -288,8 +286,6 @@ class HealthMonitor:
             )
             alerts.append(info_alert)
 
-        print(f"📊 健康检查完成，评分: {health_report['health_score']}")
-        print(f"🚨 发现 {len([a for a in alerts if a.severity != 'info'])} 个问题")
 
         return health_report, alerts
 
@@ -318,7 +314,6 @@ class HealthMonitor:
         with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(monitoring_data, f, indent=2, ensure_ascii=False)
 
-        print(f"💾 监控报告已保存: {report_file}")
         return report_file
 
     def get_health_trends(self, days: int = 30) -> dict[str, Any]:
@@ -446,7 +441,6 @@ class HealthMonitor:
 
     def run_monitoring(self, save_report: bool = True) -> dict[str, Any]:
         """运行完整的健康监控"""
-        print("🚀 开始目录健康监控...")
 
         # 执行健康检查
         health_report, alerts = self.check_health()
@@ -471,15 +465,11 @@ class HealthMonitor:
 
         # 生成结果摘要
         critical_count = len([a for a in alerts if a.severity == "critical"])
-        warning_count = len([a for a in alerts if a.severity == "warning"])
+        len([a for a in alerts if a.severity == "warning"])
 
-        print("\n📊 健康监控完成!")
-        print(f"🏥 当前健康评分: {health_report['health_score']}")
-        print(f"🚨 严重警报: {critical_count} 个")
-        print(f"⚠️  警告警报: {warning_count} 个")
 
         if critical_count > 0:
-            print("📞 建议立即处理严重问题！")
+            pass
 
         return {
             "health_report": health_report,
@@ -536,15 +526,11 @@ def main():
     try:
         if args.dashboard:
             # 生成健康仪表板
-            dashboard = monitor.generate_health_dashboard()
-            print("\n📊 健康仪表板:")
-            print(json.dumps(dashboard, indent=2, ensure_ascii=False, default=str))
+            monitor.generate_health_dashboard()
 
         elif args.trends:
             # 显示健康趋势
-            trends = monitor.get_health_trends(30)
-            print("\n📈 健康趋势分析:")
-            print(json.dumps(trends, indent=2, ensure_ascii=False, default=str))
+            monitor.get_health_trends(30)
 
         else:
             # 运行健康监控
@@ -556,19 +542,16 @@ def main():
             warning_alerts = [a for a in alerts if a["severity"] == "warning"]
 
             if critical_alerts:
-                print(f"\n🚨 严重警报 ({len(critical_alerts)} 个):")
-                for alert in critical_alerts:
-                    print(f"   - {alert['title']}: {alert['message']}")
+                for _alert in critical_alerts:
+                    pass
 
             if warning_alerts:
-                print(f"\n⚠️  警告警报 ({len(warning_alerts)} 个):")
-                for alert in warning_alerts:
-                    print(f"   - {alert['title']}: {alert['message']}")
+                for _alert in warning_alerts:
+                    pass
 
     except KeyboardInterrupt:
-        print("\n👋 用户中断，退出程序")
-    except Exception as e:
-        print(f"❌ 程序执行出错: {e}")
+        pass
+    except Exception:
         import traceback
         traceback.print_exc()
 

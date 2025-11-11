@@ -26,13 +26,11 @@ def fix_file_a002(file_path, replacements):
                 f.write(content)
             return True
         return False
-    except Exception as e:
-        print(f"❌ 修复失败 {file_path}: {e}")
+    except Exception:
         return False
 
 def main():
     """主函数"""
-    print("🔧 开始简单A002修复...")
 
     # 需要修复的文件列表
     files_to_fix = [
@@ -53,24 +51,20 @@ def main():
         ]
 
         if fix_file_a002(file_path, replacements):
-            print(f"✅ 修复完成: {file_path}")
             total_fixed += 1
         else:
-            print(f"⚪ 无需修复: {file_path}")
+            pass
 
     if total_fixed > 0:
-        print(f"\n🎉 修复了 {total_fixed} 个文件")
 
         # 检查剩余A002问题
-        remaining = os.popen("ruff check src/ --output-format=concise | grep 'A002' | wc -l").read().strip()
-        print(f"剩余A002问题数量: {remaining}")
+        os.popen("ruff check src/ --output-format=concise | grep 'A002' | wc -l").read().strip()
 
         # 提交修复
         os.system('git add . && git commit -m "fix: 修复剩余的A002参数冲突问题"')
     else:
-        print("⚠️ 没有文件需要修复")
+        pass
 
-    print("🏁 A002修复完成")
 
 if __name__ == "__main__":
     main()

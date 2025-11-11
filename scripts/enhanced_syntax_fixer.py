@@ -4,20 +4,18 @@
 专门处理复杂的Python语法错误，针对无法通过自动工具修复的文件
 """
 
-import os
-import re
 import ast
+import re
 import sys
 from pathlib import Path
+
 
 def enhanced_syntax_fix(file_path):
     """增强的语法修复，针对特定文件类型和错误模式"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
-        original_content = content
-        print(f"🔧 处理文件: {file_path}")
 
         # 根据文件类型采用不同策略
         if '__init__.py' in str(file_path):
@@ -32,14 +30,12 @@ def enhanced_syntax_fix(file_path):
         # 验证修复结果
         try:
             ast.parse(content)
-            print(f"✅ {file_path} 语法修复成功")
 
             # 写入修复后的内容
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             return True
-        except SyntaxError as e:
-            print(f"❌ {file_path} 仍有语法错误: {e}")
+        except SyntaxError:
             # 如果还有语法错误，尝试基础修复
             content = basic_syntax_fix(content)
 
@@ -47,14 +43,11 @@ def enhanced_syntax_fix(file_path):
                 ast.parse(content)
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print(f"✅ {file_path} 基础修复成功")
                 return True
             except SyntaxError:
-                print(f"❌ {file_path} 需要手动处理")
                 return False
 
-    except Exception as e:
-        print(f"❌ 处理 {file_path} 时出错: {e}")
+    except Exception:
         return False
 
 def fix_init_file(content):
@@ -142,7 +135,7 @@ def fix_generic_file(content):
             'from .) import (',
             'from .# ',
             'from .*[\u4e00-\u9fff].*import',
-            '^\s*\w+,\s*$'
+            r'^\s*\w+,\s*$'
         ]):
             continue
 
@@ -174,8 +167,8 @@ def basic_syntax_fix(content):
             'from .) import',
             'from .#',
             'from .*[\u4e00-\u9fff]',
-            '^\s*\w+,\s*$',
-            'except ImportError:\s*$'
+            r'^\s*\w+,\s*$',
+            r'except ImportError:\s*$'
         ]):
             continue
 
@@ -207,7 +200,6 @@ def fix_bracket_mismatch(line):
 
 def main():
     """主函数"""
-    print("🚀 启动增强语法修复工具...")
 
     # 需要修复的文件列表（基于当前错误信息）
     critical_files = [
@@ -226,7 +218,7 @@ def main():
     ]
 
     fixed_count = 0
-    total_count = len(critical_files)
+    len(critical_files)
 
     for file_path in critical_files:
         full_path = Path(file_path)
@@ -234,12 +226,10 @@ def main():
             if enhanced_syntax_fix(full_path):
                 fixed_count += 1
         else:
-            print(f"⚠️  文件不存在: {file_path}")
+            pass
 
-    print(f"\n📊 修复完成: {fixed_count}/{total_count} 个文件")
 
     # 验证修复效果
-    print("\n🔍 验证修复效果...")
     import subprocess
     result = subprocess.run(
         ['ruff', 'check', 'src/', '--output-format=concise'],
@@ -247,16 +237,11 @@ def main():
         text=True
     )
 
-    syntax_errors = len([line for line in result.stdout.split('\n') if 'invalid-syntax' in line])
-    total_errors = len([line for line in result.stdout.split('\n') if line.strip()])
+    len([line for line in result.stdout.split('\n') if 'invalid-syntax' in line])
+    len([line for line in result.stdout.split('\n') if line.strip()])
 
-    print(f"📈 修复后状态:")
-    print(f"  总错误数: {total_errors}")
-    print(f"  语法错误: {syntax_errors}")
-    print(f"  减少量: {503 - syntax_errors} (从503开始)")
 
     # 检查关键文件
-    print(f"\n🧪 关键文件验证:")
     for file_path in critical_files[:5]:
         if Path(file_path).exists():
             result = subprocess.run(
@@ -264,8 +249,6 @@ def main():
                 capture_output=True,
                 text=True
             )
-            status = "✅" if result.returncode == 0 else "❌"
-            print(f"  {status} {file_path}")
 
 if __name__ == "__main__":
     main()

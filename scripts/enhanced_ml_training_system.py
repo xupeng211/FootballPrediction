@@ -504,7 +504,7 @@ class EnhancedMLTrainingSystem:
                     "accuracy": accuracy,
                     "training_time": training_time,
                     "feature_importance": dict(zip(X_train.columns,
-    model.feature_importances_)),
+    model.feature_importances_, strict=False)),
 
                 }
 

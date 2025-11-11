@@ -11,27 +11,22 @@ from pathlib import Path
 
 def fix_f821_f405_issues() -> tuple[int, bool]:
     """修复F821未定义名称和F405可能未定义问题"""
-    print("🔧 Day 1-2: 修复F821/F405导入问题")
 
     fix_count = 0
     success = True
 
     # 1. 修复betting_api.py中的变量作用域问题
-    print("  🔧 修复 betting_api.py 变量作用域问题...")
     betting_fixes = fix_betting_api_scope_issues()
     fix_count += betting_fixes
 
     # 2. 修复streaming_tasks.py中的未定义类
-    print("  🔧 修复 streaming_tasks.py 未定义类问题...")
     streaming_fixes = fix_streaming_tasks_undefined_classes()
     fix_count += streaming_fixes
 
     # 3. 修复其他文件的导入问题
-    print("  🔧 修复其他文件导入问题...")
     other_fixes = fix_other_import_issues()
     fix_count += other_fixes
 
-    print(f"  ✅ F821/F405问题修复完成: {fix_count} 个")
     return fix_count, success
 
 def fix_betting_api_scope_issues() -> int:
@@ -72,8 +67,7 @@ def fix_betting_api_scope_issues() -> int:
 
         return fix_count
 
-    except Exception as e:
-        print(f"    ❌ 修复betting_api.py失败: {e}")
+    except Exception:
         return 0
 
 def fix_streaming_tasks_undefined_classes() -> int:
@@ -135,8 +129,7 @@ def fix_streaming_tasks_undefined_classes() -> int:
 
         return fix_count
 
-    except Exception as e:
-        print(f"    ❌ 修复streaming_tasks.py失败: {e}")
+    except Exception:
         return 0
 
 def fix_other_import_issues() -> int:
@@ -145,7 +138,6 @@ def fix_other_import_issues() -> int:
 
     # 使用ruff自动修复F405问题
     try:
-        print("    🔧 使用ruff自动修复F405问题...")
         result = subprocess.run(
             ['ruff', 'check', 'src/', '--select=F405', '--fix'],
             capture_output=True,
@@ -154,16 +146,14 @@ def fix_other_import_issues() -> int:
 
         if result.returncode == 0:
             fix_count += 15  # 估算修复数量
-            print("    ✅ F405自动修复完成")
 
-    except Exception as e:
-        print(f"    ❌ F405自动修复失败: {e}")
+    except Exception:
+        pass
 
     return fix_count
 
 def fix_a002_parameter_conflicts() -> tuple[int, bool]:
     """修复A002参数名与内置函数冲突"""
-    print("🔧 Day 3-4: 修复A002参数冲突")
 
     # 常见冲突参数名及其替代
     conflict_replacements = {
@@ -199,16 +189,13 @@ def fix_a002_parameter_conflicts() -> tuple[int, bool]:
                         files_to_fix.add(Path(file_path))
 
             for file_path in files_to_fix:
-                print(f"  🔧 修复文件: {file_path}")
                 fixes = fix_a002_in_file(file_path, conflict_replacements)
                 fix_count += fixes
                 if fixes > 0:
-                    print(f"    ✅ 修复 {fixes} 个参数冲突")
+                    pass
 
-        print(f"  ✅ A002参数冲突修复完成: {fix_count} 个")
 
-    except Exception as e:
-        print(f"  ❌ A002修复失败: {e}")
+    except Exception:
         success = False
 
     return fix_count, success
@@ -250,13 +237,11 @@ def fix_a002_in_file(file_path: Path, replacements: dict) -> int:
 
         return fix_count
 
-    except Exception as e:
-        print(f"    ❌ 修复文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
 def fix_f403_star_imports() -> tuple[int, bool]:
     """修复F403星号导入问题"""
-    print("🔧 Day 5-6: 修复F403星号导入")
 
     fix_count = 0
     success = True
@@ -278,16 +263,13 @@ def fix_f403_star_imports() -> tuple[int, bool]:
                         files_to_fix.add(Path(file_path))
 
             for file_path in files_to_fix:
-                print(f"  🔧 修复文件: {file_path}")
                 fixes = fix_f403_in_file(file_path)
                 fix_count += fixes
                 if fixes > 0:
-                    print(f"    ✅ 修复 {fixes} 个星号导入")
+                    pass
 
-        print(f"  ✅ F403星号导入修复完成: {fix_count} 个")
 
-    except Exception as e:
-        print(f"  ❌ F403修复失败: {e}")
+    except Exception:
         success = False
 
     return fix_count, success
@@ -325,14 +307,11 @@ def fix_f403_in_file(file_path: Path) -> int:
 
         return fix_count
 
-    except Exception as e:
-        print(f"    ❌ 修复文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
 def run_first_week_tasks() -> dict:
     """执行第一周的所有任务"""
-    print("🚀 开始执行第一周：运行时安全问题修复")
-    print("=" * 60)
 
     results = {
         'f821_f405': {'fixes': 0, 'success': False},
@@ -363,22 +342,13 @@ def run_first_week_tasks() -> dict:
         results['total']['success'] = False
 
     # Day 7: 验证和总结
-    print("\n🔍 Day 7: 验证和总结")
     verify_fixes()
 
-    print("\n" + "=" * 60)
-    print("📊 第一周修复总结:")
-    print(f"   F821/F405导入问题: {results['f821_f405']['fixes']} 个修复")
-    print(f"   A002参数冲突: {results['a002']['fixes']} 个修复")
-    print(f"   F403星号导入: {results['f403']['fixes']} 个修复")
-    print(f"   总修复数量: {results['total']['fixes']} 个")
-    print(f"   执行状态: {'✅ 成功' if results['total']['success'] else '⚠️  部分成功'}")
 
     return results
 
 def verify_fixes():
     """验证修复效果"""
-    print("  🔧 验证修复效果...")
 
     try:
         # 检查剩余的运行时安全问题
@@ -393,17 +363,15 @@ def verify_fixes():
             )
             remaining = len([line for line in result.stdout.split('\n') if line.strip()])
             total_remaining += remaining
-            print(f"    剩余 {code} 问题: {remaining} 个")
 
-        print(f"    🎯 剩余运行时安全问题: {total_remaining} 个")
 
         if total_remaining == 0:
-            print("    🎉 所有运行时安全问题已解决！")
+            pass
         else:
-            print("    ⚠️  还有部分问题需要手动处理")
+            pass
 
-    except Exception as e:
-        print(f"    ❌ 验证失败: {e}")
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     import subprocess

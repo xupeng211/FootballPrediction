@@ -4,20 +4,19 @@
 修复严重的语法错误，恢复代码可读性
 """
 
-import os
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+
 
 class EmergencySyntaxFixer:
     def __init__(self):
         self.files_fixed = 0
         self.errors_fixed = 0
 
-    def fix_file_syntax(self, file_path: str) -> Dict[str, int]:
+    def fix_file_syntax(self, file_path: str) -> dict[str, int]:
         """修复单个文件的语法错误"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -76,16 +75,14 @@ class EmergencySyntaxFixer:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
 
-                print(f"  ✅ 修复 {file_path}: {fixes_count} 个语法问题")
                 self.errors_fixed += fixes_count
 
             return {"syntax_fixes": fixes_count}
 
-        except Exception as e:
-            print(f"  ❌ 处理文件 {file_path} 时出错: {e}")
+        except Exception:
             return {"syntax_fixes": 0}
 
-    def _is_inside_class_or_function(self, lines: List[str], current_line: int) -> bool:
+    def _is_inside_class_or_function(self, lines: list[str], current_line: int) -> bool:
         """检查当前行是否在类或函数内部"""
         # 简单检查：查看前面的行是否有类或函数定义
         for i in range(max(0, current_line - 10), current_line):
@@ -130,8 +127,6 @@ class EmergencySyntaxFixer:
 
     def fix_critical_files(self):
         """修复关键的语法错误文件"""
-        print("🚨 紧急语法修复工具")
-        print("=" * 50)
 
         # 高优先级文件列表
         critical_files = [
@@ -149,25 +144,18 @@ class EmergencySyntaxFixer:
 
         for file_path in critical_files:
             if Path(file_path).exists():
-                print(f"🔧 修复文件: {file_path}")
                 result = self.fix_file_syntax(file_path)
                 total_fixes += result.get("syntax_fixes", 0)
                 self.files_fixed += 1
             else:
-                print(f"  ⚠️ 文件不存在: {file_path}")
+                pass
 
-        print(f"\n📊 修复统计:")
-        print(f"  🔧 修复文件数: {self.files_fixed}")
-        print(f"  ✅ 修复问题数: {self.errors_fixed}")
-        print(f"  📈 总修复量: {total_fixes}")
 
 def main():
     """主函数"""
     fixer = EmergencySyntaxFixer()
     fixer.fix_critical_files()
 
-    print(f"\n🎉 紧急语法修复完成！")
-    print(f"建议运行: ruff check src/ --output-format=concise | head -10")
 
 if __name__ == "__main__":
     main()

@@ -8,18 +8,19 @@ import os
 import re
 from pathlib import Path
 
+
 def fix_init_file_syntax(file_path):
     """修复__init__.py文件的语法错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 如果文件为空或只有注释，创建基本的__init__.py
         if not content.strip() or content.strip().startswith('#'):
-            content = '''"""
-{}模块初始化文件
+            content = f'''"""
+{str(file_path)}模块初始化文件
 """
-'''.format(str(file_path))
+'''
 
         # 修复常见的语法问题
         # 1. 移除不完整的import语句
@@ -58,17 +59,15 @@ def fix_init_file_syntax(file_path):
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(fixed_content)
 
-        print(f"✅ 修复 {file_path}")
         return True
 
-    except Exception as e:
-        print(f"❌ 修复 {file_path} 失败: {e}")
+    except Exception:
         return False
 
 def fix_migration_file_syntax(file_path):
     """修复数据库迁移文件的语法错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 确保有必要的导入
@@ -80,7 +79,6 @@ def fix_migration_file_syntax(file_path):
         ]
 
         lines = content.split('\n')
-        fixed_lines = []
         import_section = []
         main_section = []
 
@@ -114,16 +112,13 @@ def fix_migration_file_syntax(file_path):
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(fixed_content)
 
-        print(f"✅ 修复迁移文件 {file_path}")
         return True
 
-    except Exception as e:
-        print(f"❌ 修复迁移文件 {file_path} 失败: {e}")
+    except Exception:
         return False
 
 def main():
     """主函数"""
-    print("🔧 开始语法错误批量修复...")
 
     # 需要修复的文件列表
     files_to_fix = [
@@ -149,13 +144,12 @@ def main():
     ]
 
     fixed_count = 0
-    total_count = len(files_to_fix)
+    len(files_to_fix)
 
     for file_path in files_to_fix:
         full_path = Path(file_path)
 
         if not full_path.exists():
-            print(f"⚠️  文件不存在: {file_path}")
             continue
 
         # 根据文件类型选择修复策略
@@ -168,7 +162,7 @@ def main():
         else:
             # 其他文件的通用修复
             try:
-                with open(full_path, 'r', encoding='utf-8') as f:
+                with open(full_path, encoding='utf-8') as f:
                     content = f.read()
 
                 # 基本清理：移除明显错误的行
@@ -188,16 +182,13 @@ def main():
                 with open(full_path, 'w', encoding='utf-8') as f:
                     f.write('\n'.join(fixed_lines))
 
-                print(f"✅ 修复 {file_path}")
                 fixed_count += 1
 
-            except Exception as e:
-                print(f"❌ 修复 {file_path} 失败: {e}")
+            except Exception:
+                pass
 
-    print(f"\n📊 修复完成: {fixed_count}/{total_count} 个文件")
 
     # 运行语法检查
-    print("\n🔍 运行语法检查...")
     os.system("python3 -m py_compile src/data/features/__init__.py 2>/dev/null && echo '✅ features/__init__.py 语法正确' || echo '❌ features/__init__.py 仍有语法错误'")
     os.system("python3 -m py_compile src/domain/events/__init__.py 2>/dev/null && echo '✅ events/__init__.py 语法正确' || echo '❌ events/__init__.py 仍有语法错误'")
 

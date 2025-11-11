@@ -3,14 +3,13 @@
 
 import json
 import sys
-from pathlib import Path
-from typing import Dict, List, Any
 from datetime import datetime
+from pathlib import Path
+
 
 def generate_api_documentation():
     """生成完整的API文档"""
 
-    print("🚀 开始生成API文档...")
 
     # API架构分析
     api_endpoints = [
@@ -433,7 +432,6 @@ else:
 def main():
     """主函数：生成完整的API文档"""
 
-    print("🚀 开始生成API文档...")
 
     # 创建文档目录
     docs_dir = Path("docs")
@@ -527,7 +525,7 @@ def main():
     # 添加API使用示例
     api_docs += "## 🚀 API使用示例\n\n"
 
-    for example_name, example in api_examples.items():
+    for _example_name, example in api_examples.items():
         api_docs += f"### {example['title']}\n\n"
         api_docs += f"**描述**: {example['description']}\n\n"
 
@@ -604,7 +602,7 @@ def main():
 
     # 保存API示例
     examples_content = "# 🚀 API使用示例\n\n"
-    for example_name, example in api_examples.items():
+    for _example_name, example in api_examples.items():
         examples_content += f"## {example['title']}\n\n"
         examples_content += f"{example['description']}\n\n"
         examples_content += "### Curl\n```bash\n"
@@ -618,12 +616,6 @@ def main():
     with open(docs_dir / "api_examples.md", "w", encoding="utf-8") as f:
         f.write(examples_content)
 
-    print(f"✅ API文档生成完成!")
-    print(f"📄 完整文档: docs/api_documentation.md")
-    print(f"📋 OpenAPI规范: docs/api_openapi.json")
-    print(f"🚀 使用示例: docs/api_examples.md")
-    print(f"📊 覆盖端点: {len(api_endpoints)}个")
-    print(f"🎯 覆盖率: 39% (基于实际API测试覆盖率)")
 
     return {
         "endpoints_count": len(api_endpoints),
@@ -639,7 +631,5 @@ def main():
 if __name__ == "__main__":
     try:
         result = main()
-        print(f"\n🎉 文档生成成功! {result}")
-    except Exception as e:
-        print(f"❌ 文档生成失败: {e}")
+    except Exception:
         sys.exit(1)

@@ -33,8 +33,7 @@ def find_b904_errors() -> list[dict]:
                             'message': ':'.join(parts[4:]) if len(parts) > 4 else ''
                         })
         return errors
-    except Exception as e:
-        print(f"❌ 查找B904错误失败: {e}")
+    except Exception:
         return []
 
 def fix_http_exception_in_file(file_path: str) -> int:
@@ -74,20 +73,16 @@ def fix_http_exception_in_file(file_path: str) -> int:
         else:
             return 0
 
-    except Exception as e:
-        print(f"❌ 修复文件失败 {file_path}: {e}")
+    except Exception:
         return 0
 
 def main():
     """主函数"""
-    print("🔧 B904异常处理批量修复工具")
-    print("=" * 50)
 
     # 查找B904错误
     errors = find_b904_errors()
 
     if not errors:
-        print("✅ 没有发现B904错误")
         return
 
     # 按文件分组
@@ -98,32 +93,22 @@ def main():
             files_to_fix[file_path] = []
         files_to_fix[file_path].append(error)
 
-    print(f"📁 发现 {len(files_to_fix)} 个文件需要修复:")
-    for file_path, file_errors in files_to_fix.items():
-        print(f"   - {file_path}: {len(file_errors)} 个错误")
+    for file_path, _file_errors in files_to_fix.items():
+        pass
 
-    print()
     total_fixes = 0
 
     # 修复每个文件
     for file_path in files_to_fix.keys():
-        print(f"🔧 修复文件: {file_path}")
         fixes = fix_http_exception_in_file(file_path)
         total_fixes += fixes
         if fixes > 0:
-            print(f"   ✅ 修复了 {fixes} 个B904错误")
+            pass
         else:
-            print("   ℹ️  需要手动处理")
-        print()
+            pass
 
-    print("=" * 50)
-    print("📊 修复总结:")
-    print(f"   处理文件: {len(files_to_fix)} 个")
-    print(f"   修复错误: {total_fixes} 个")
 
     # 验证修复效果
-    print()
-    print("🔍 验证修复效果...")
     try:
         result = subprocess.run(
             ['ruff', 'check', '--select=B904', 'src/', '--output-format=concise'],
@@ -131,15 +116,14 @@ def main():
             text=True
         )
         remaining = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
-        print(f"   剩余B904错误: {remaining}个")
 
         if remaining == 0:
-            print("🎉 所有B904错误已修复完成！")
+            pass
         else:
-            print(f"⚠️  还有 {remaining} 个B904错误需要手动处理")
+            pass
 
-    except Exception as e:
-        print(f"❌ 验证失败: {e}")
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     main()

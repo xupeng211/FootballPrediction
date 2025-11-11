@@ -9,10 +9,9 @@ Purpose: Automated issue assignment and progress tracking
 """
 
 import argparse
-import json
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -85,8 +84,7 @@ class IssueAssignmentTracker:
             response.raise_for_status()
             return response.json()
 
-        except requests.exceptions.RequestException as e:
-            print(f"获取未分配Issues失败: {e}")
+        except requests.exceptions.RequestException:
             return []
 
     def get_team_member_assignments(self, member: str) -> int:
@@ -103,8 +101,7 @@ class IssueAssignmentTracker:
             response.raise_for_status()
             return len(response.json())
 
-        except requests.exceptions.RequestException as e:
-            print(f"获取成员{member}分配失败: {e}")
+        except requests.exceptions.RequestException:
             return 0
 
     def analyze_issue_content(self, issue: dict) -> dict:
@@ -112,7 +109,7 @@ class IssueAssignmentTracker:
         title = issue.get("title", "").lower()
         body = issue.get("body", "").lower()
         content = f"{title} {body}"
-        labels = [label["name"].lower() for label in issue.get("labels", [])]
+        [label["name"].lower() for label in issue.get("labels", [])]
 
         analysis = {
             "expertise_areas": [],
@@ -219,11 +216,9 @@ class IssueAssignmentTracker:
         try:
             response = requests.post(url, headers=self.headers, json=data)
             response.raise_for_status()
-            print(f"✅ Issue #{issue_number} 已分配给 {assignee}")
             return True
 
-        except requests.exceptions.RequestException as e:
-            print(f"❌ 分配Issue #{issue_number} 失败: {e}")
+        except requests.exceptions.RequestException:
             return False
 
     def update_issue_status(self, issue_number: int, status: str) -> bool:
@@ -251,11 +246,9 @@ class IssueAssignmentTracker:
             data = {"labels": new_labels}
             response = requests.put(url, headers=self.headers, json=data)
             response.raise_for_status()
-            print(f"✅ Issue #{issue_number} 状态已更新为: status/{status}")
             return True
 
-        except requests.exceptions.RequestException as e:
-            print(f"❌ 更新Issue #{issue_number} 状态失败: {e}")
+        except requests.exceptions.RequestException:
             return False
 
     def generate_assignment_report(self, assignments: list) -> str:
@@ -309,24 +302,21 @@ class IssueAssignmentTracker:
             "",
             "---",
             f"*报告生成时间: {datetime.now().isoformat()}*",
-            f"*工具: Issue Assignment Tracker v1.0*"
+            "*工具: Issue Assignment Tracker v1.0*"
         ])
 
         return "\n".join(report_lines)
 
     def run_auto_assignment(self, dry_run: bool = True) -> list:
         """运行自动分配"""
-        print("🔍 开始分析未分配的Issues...")
 
         unassigned_issues = self.get_unassigned_issues()
         if not unassigned_issues:
-            print("✅ 没有需要分配的Issues")
             return []
 
         assignments = []
 
         for issue in unassigned_issues:
-            print(f"\n📋 分析Issue #{issue['number']}: {issue['title']}")
 
             # 分析Issue内容
             analysis = self.analyze_issue_content(issue)
@@ -350,16 +340,15 @@ class IssueAssignmentTracker:
                     if self.assign_issue(issue["number"], best_assignee):
                         self.update_issue_status(issue["number"], "in-progress")
                 else:
-                    print(f"  🔍 建议分配给: {best_assignee} (试运行模式)")
+                    pass
             else:
-                print(f"  ⚠️ 未找到合适的分配人选")
+                pass
 
         return assignments
 
     def save_assignment_report(self, assignments: list, output_file: str = None):
         """保存分配报告"""
         if not assignments:
-            print("📄 没有分配记录，跳过报告生成")
             return
 
         report_content = self.generate_assignment_report(assignments)
@@ -368,7 +357,6 @@ class IssueAssignmentTracker:
             output_path = Path(output_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(report_content, encoding='utf-8')
-            print(f"📄 分配报告已保存到: {output_path}")
         else:
             # 使用默认文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -376,7 +364,6 @@ class IssueAssignmentTracker:
             output_path = Path(default_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(report_content, encoding='utf-8')
-            print(f"📄 分配报告已保存到: {output_path}")
 
 
 def main():
@@ -394,7 +381,7 @@ def main():
     github_token = args.token or os.environ.get("GITHUB_TOKEN")
 
     if not github_token:
-        print("⚠️ 警告: 未提供GitHub令牌，API调用可能受限")
+        pass
 
     # 创建跟踪器
     tracker = IssueAssignmentTracker(args.repo, github_token)
@@ -406,11 +393,9 @@ def main():
     tracker.save_assignment_report(assignments, args.output)
 
     if args.verbose:
-        print(f"\n📊 分配完成! 总计: {len(assignments)}个Issues")
         if assignments:
-            print("分配统计:")
-            for assignment in assignments:
-                print(f"  - #{assignment['issue_number']} → {assignment['assignee']}")
+            for _assignment in assignments:
+                pass
 
     return 0
 

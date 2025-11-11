@@ -116,8 +116,6 @@ def analyze_key_files():
         'files': {}
     }
 
-    print("🔍 分析关键文件的导入问题...")
-    print("=" * 60)
 
     for file_path in key_files:
         path = Path(file_path)
@@ -125,17 +123,12 @@ def analyze_key_files():
             plan = optimizer.generate_import_fix_plan(path)
             report['files'][file_path] = plan
 
-            print(f"\n📁 {file_path}")
-            print(f"   优先级: {plan['priority']}")
-            print(f"   总导入数: {plan['analysis'].get('total_imports', 0)}")
-            print(f"   函数内导入: {plan['analysis'].get('function_imports', 0)}")
 
-            for suggestion in plan['suggestions'][:3]:  # 只显示前3个建议
-                print(f"   {suggestion}")
+            for _suggestion in plan['suggestions'][:3]:  # 只显示前3个建议
+                pass
         else:
-            print(f"\n⚠️  文件不存在: {file_path}")
+            pass
 
-    print("\n" + "=" * 60)
 
     # 生成修复建议
     high_priority_files = [
@@ -144,22 +137,16 @@ def analyze_key_files():
     ]
 
     if high_priority_files:
-        print(f"\n🚨 高优先级修复文件 ({len(high_priority_files)}个):")
         for file_path in high_priority_files:
-            print(f"   - {file_path}")
+            pass
 
-        print("\n💡 推荐修复顺序:")
-        print("   1. 先修复 main.py (影响启动)")
-        print("   2. 修复服务层文件 (核心业务)")
-        print("   3. 修复工具和任务文件")
     else:
-        print("\n✅ 没有发现高优先级的导入问题")
+        pass
 
     return report
 
 def main():
     """主函数"""
-    print("🚀 启动模块导入优化分析...")
 
     report = analyze_key_files()
 
@@ -168,7 +155,6 @@ def main():
     with open('import_analysis_report.json', 'w', encoding='utf-8') as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
-    print("\n📄 详细报告已保存: import_analysis_report.json")
 
 if __name__ == "__main__":
     main()

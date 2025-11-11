@@ -5,7 +5,7 @@
 
 import os
 import re
-from pathlib import Path
+
 
 def fix_b904_in_optimization_modules():
     """修复API优化模块中的B904错误"""
@@ -20,13 +20,11 @@ def fix_b904_in_optimization_modules():
 
     for file_path in target_files:
         if not os.path.exists(file_path):
-            print(f"⚠️ 文件不存在: {file_path}")
             continue
 
-        print(f"📝 处理文件: {file_path}")
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 备份原文件
@@ -71,7 +69,6 @@ def fix_b904_in_optimization_modules():
                                     # 单行raise语句
                                     fixed_line = current_line.rstrip() + f' from {exception_var}'
                                     fixed_lines.append(fixed_line)
-                                    print(f"  ✅ 修复: {current_line.strip()} -> {fixed_line.strip()}")
                                     total_fixed += 1
                                 else:
                                     # 多行raise语句，需要找到结束行
@@ -83,14 +80,12 @@ def fix_b904_in_optimization_modules():
                                         if next_line.rstrip().endswith(')'):
                                             # 在结束行添加异常链
                                             fixed_lines[-1] = next_line.rstrip() + f' from {exception_var}'
-                                            print(f"  ✅ 修复多行raise语句")
                                             total_fixed += 1
                                             break
                                         i += 1
                                     i -= 1  # 调整索引，因为外层循环会+1
                             else:
                                 fixed_lines.append(current_line)
-                                print(f"  ⚠️ 已有异常链，跳过: {current_line.strip()}")
                         else:
                             fixed_lines.append(current_line)
 
@@ -105,27 +100,20 @@ def fix_b904_in_optimization_modules():
             if original_content != '\n'.join(fixed_lines):
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write('\n'.join(fixed_lines))
-                print(f"💾 已保存修复后的文件")
             else:
-                print(f"ℹ️ 文件无需修改")
                 os.remove(backup_path)  # 删除不需要的备份
 
-        except Exception as e:
-            print(f"❌ 处理文件 {file_path} 时出错: {e}")
+        except Exception:
+            pass
 
     return total_fixed
 
 def main():
-    print("🔧 简单B904修复工具 - API优化模块专项")
-    print("=" * 50)
 
-    fixed_count = fix_b904_in_optimization_modules()
+    fix_b904_in_optimization_modules()
 
-    print(f"\n🎉 修复完成!")
-    print(f"📊 总共修复了 {fixed_count} 个B904错误")
 
     # 验证修复效果
-    print("\n🔍 验证修复效果...")
     remaining_b904 = 0
 
     target_files = [
@@ -135,18 +123,17 @@ def main():
 
     for file_path in target_files:
         if os.path.exists(file_path):
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 统计剩余的B904错误
             b904_count = len(re.findall(r'except\s+.*?\s+as\s+\w+.*?raise\s+HTTPException\(', content, re.DOTALL))
             remaining_b904 += b904_count
-            print(f"📄 {file_path}: {b904_count} 个剩余B904错误")
 
     if remaining_b904 == 0:
-        print("✅ API优化模块的所有B904错误已修复!")
+        pass
     else:
-        print(f"⚠️ 还有 {remaining_b904} 个B904错误需要进一步处理")
+        pass
 
 if __name__ == "__main__":
     main()

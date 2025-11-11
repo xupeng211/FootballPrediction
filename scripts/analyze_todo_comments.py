@@ -28,8 +28,8 @@ def analyze_todos():
                     todo_types[todo] += 1
                     total_todos += 1
 
-        except Exception as e:
-            print(f"❌ 处理文件失败 {py_file}: {e}")
+        except Exception:
+            pass
 
     return total_todos, todo_types, todo_files
 
@@ -63,30 +63,22 @@ def categorize_todos(todo_types):
 
 def main():
     """主函数"""
-    print("🔍 分析TODO注释...")
     total_todos, todo_types, todo_files = analyze_todos()
 
-    print("\n📊 TODO注释统计:")
-    print(f"   总数量: {total_todos}")
-    print(f"   涉及文件: {len(todo_files)}")
 
-    print("\n🏆 最常见的TODO类型 (前10):")
-    for todo, count in todo_types.most_common(10):
-        print(f"   {count:3d}: {todo}")
+    for _todo, _count in todo_types.most_common(10):
+        pass
 
-    print("\n📁 TODO最多的文件 (前10):")
-    for file_path, count in todo_files.most_common(10):
-        print(f"   {count:3d}: {file_path}")
+    for _file_path, _count in todo_files.most_common(10):
+        pass
 
     # 分类显示
     categories = categorize_todos(todo_types)
-    print("\n📋 TODO分类统计:")
-    for category, items in categories.items():
-        total = sum(count for _, count in items)
-        print(f"   {category}: {total} 项")
+    for _category, items in categories.items():
+        sum(count for _, count in items)
         if items and len(items) <= 5:  # 只显示少于5项的详细内容
-            for todo, count in items[:3]:
-                print(f"      - {todo} ({count})")
+            for _todo, _count in items[:3]:
+                pass
 
 if __name__ == "__main__":
     main()

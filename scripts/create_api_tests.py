@@ -64,7 +64,6 @@ class TestAPIHealthExtended:
     file_path = Path("tests/unit/api/test_health_extended.py")
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(content)
-    print(f"✅ 创建文件: {file_path}")
 
 
 def create_api_predictions_test():
@@ -170,7 +169,6 @@ class TestAPIPredictions:
     file_path = Path("tests/unit/api/test_predictions_new.py")
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(content)
-    print(f"✅ 创建文件: {file_path}")
 
 
 def create_api_data_test():
@@ -271,7 +269,6 @@ class TestAPIDataExtended:
     file_path = Path("tests/unit/api/test_data_extended.py")
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(content)
-    print(f"✅ 创建文件: {file_path}")
 
 
 def create_api_features_test():
@@ -378,7 +375,6 @@ class TestAPIFeatures:
     file_path = Path("tests/unit/api/test_features_new.py")
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(content)
-    print(f"✅ 创建文件: {file_path}")
 
 
 def create_api_monitoring_test():
@@ -502,12 +498,10 @@ class TestAPIMonitoring:
     file_path = Path("tests/unit/api/test_monitoring_new.py")
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(content)
-    print(f"✅ 创建文件: {file_path}")
 
 
 def main():
     """创建所有API测试文件"""
-    print("🚀 开始创建API端点测试文件...")
 
     # 创建API测试目录
     api_test_dir = Path("tests/unit/api")
@@ -520,13 +514,9 @@ def main():
     create_api_features_test()
     create_api_monitoring_test()
 
-    print("\n✅ 已创建5个API测试文件!")
-    print("\n📝 测试文件列表:")
-    for file in api_test_dir.glob("test_*.py"):
-        print(f"   - {file}")
+    for _file in api_test_dir.glob("test_*.py"):
+        pass
 
-    print("\n🏃 运行测试:")
-    print("   make test-unit")
 
 
 if __name__ == "__main__":

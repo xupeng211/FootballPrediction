@@ -6,11 +6,11 @@ GitHub Issue Lifecycle Monitor
 监控和分析Issue的生命周期数据
 """
 
-import json
 import argparse
-from datetime import datetime, timedelta
-from typing import List, Dict, Any
+import json
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 
 class IssueLifecycleMonitor:
@@ -19,7 +19,7 @@ class IssueLifecycleMonitor:
     def __init__(self, repo: str):
         self.repo = repo
 
-    def run_command(self, command: str) -> Dict[str, Any]:
+    def run_command(self, command: str) -> dict[str, Any]:
         """运行shell命令并返回结果"""
         import subprocess
         try:
@@ -42,7 +42,7 @@ class IssueLifecycleMonitor:
                 "stderr": e.stderr.strip() if e.stderr else str(e)
             }
 
-    def get_all_issues(self) -> List[Dict[str, Any]]:
+    def get_all_issues(self) -> list[dict[str, Any]]:
         """获取所有Issues（包括已关闭的）"""
         # 获取开放Issues
         open_cmd = f"gh issue list --repo {self.repo} --state open --limit 100 --json number,title,labels,state,createdAt,updatedAt,closedAt,author,assignees"
@@ -80,7 +80,7 @@ class IssueLifecycleMonitor:
         except (ValueError, AttributeError):
             return None
 
-    def calculate_lifecycle_metrics(self, issues: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def calculate_lifecycle_metrics(self, issues: list[dict[str, Any]]) -> dict[str, Any]:
         """计算生命周期指标"""
         now = datetime.now()
         metrics = {
@@ -164,7 +164,7 @@ class IssueLifecycleMonitor:
 
         return metrics
 
-    def generate_lifecycle_dashboard(self, metrics: Dict[str, Any]) -> str:
+    def generate_lifecycle_dashboard(self, metrics: dict[str, Any]) -> str:
         """生成生命周期仪表板"""
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -210,7 +210,7 @@ class IssueLifecycleMonitor:
             percentage = (count / metrics["total_issues"]) * 100
             dashboard += f"- **{label}**: {count}次 ({percentage:.1f}%)\n"
 
-        dashboard += f"""
+        dashboard += """
 
 ## 🎯 健康度评估
 
@@ -222,7 +222,7 @@ class IssueLifecycleMonitor:
             dashboard += f"- ✅ 过期Issues控制在10%以内 ({metrics['stale_issues']}个)\n"
 
         if metrics["issues_without_priority"] < metrics["total_issues"] * 0.2:
-            dashboard += f"- ✅ 大部分Issues有优先级标签\n"
+            dashboard += "- ✅ 大部分Issues有优先级标签\n"
 
         if metrics["average_lifetime_days"] < 30:
             dashboard += f"- ✅ 平均生命周期较短 ({metrics['average_lifetime_days']:.1f}天)\n"
@@ -233,10 +233,10 @@ class IssueLifecycleMonitor:
             dashboard += f"- ⚠️ 有 {metrics['stale_issues']} 个过期Issues需要处理\n"
 
         if metrics['issues_without_priority'] > metrics['total_issues'] * 0.3:
-            dashboard += f"- ⚠️ 超过30%的Issues缺少优先级标签\n"
+            dashboard += "- ⚠️ 超过30%的Issues缺少优先级标签\n"
 
         if metrics['unassigned_issues'] > metrics['total_issues'] * 0.5:
-            dashboard += f"- ⚠️ 超过50%的Issues未分配负责人\n"
+            dashboard += "- ⚠️ 超过50%的Issues未分配负责人\n"
 
         dashboard += "\n### 🔴 严重问题\n"
 
@@ -246,7 +246,7 @@ class IssueLifecycleMonitor:
         if metrics["average_lifetime_days"] > 90:
             dashboard += f"- 🚨 平均生命周期过长 ({metrics['average_lifetime_days']:.1f}天)\n"
 
-        dashboard += f"""
+        dashboard += """
 
 ## 💡 改进建议
 
@@ -276,18 +276,14 @@ class IssueLifecycleMonitor:
 
         return dashboard
 
-    def run_monitoring(self) -> Dict[str, Any]:
+    def run_monitoring(self) -> dict[str, Any]:
         """执行监控"""
-        print(f"🔍 开始Issue生命周期监控...")
-        print(f"仓库: {self.repo}")
 
         # 获取所有Issues
         issues = self.get_all_issues()
         if not issues:
-            print("❌ 无法获取Issues数据")
             return {"success": False}
 
-        print(f"📊 获取到 {len(issues)} 个Issues")
 
         # 计算指标
         metrics = self.calculate_lifecycle_metrics(issues)
@@ -303,15 +299,8 @@ class IssueLifecycleMonitor:
         with open(dashboard_path, 'w', encoding='utf-8') as f:
             f.write(dashboard)
 
-        print(f"📈 生命周期仪表板已保存到: {dashboard_path}")
 
         # 输出关键指标
-        print("\n📊 关键指标:")
-        print(f"- 总Issues数: {metrics['total_issues']}")
-        print(f"- 开放Issues: {metrics['open_issues']} ({metrics['open_issues']/metrics['total_issues']*100:.1f}%)")
-        print(f"- 平均生命周期: {metrics['average_lifetime_days']:.1f}天")
-        print(f"- 过期Issues: {metrics['stale_issues']}")
-        print(f"- 缺少优先级: {metrics['issues_without_priority']}")
 
         return {
             "success": True,

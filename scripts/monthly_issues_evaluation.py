@@ -9,12 +9,11 @@ Purpose: Monthly evaluation of issues management effectiveness
 """
 
 import argparse
-import json
 import os
 import sys
+from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from collections import defaultdict
 
 import requests
 
@@ -59,7 +58,7 @@ class MonthlyIssuesEvaluator:
 
         # 格式化日期
         start_str = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-        end_str = end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         while True:
             url = f"https://api.github.com/repos/{self.repo}/issues"
@@ -113,8 +112,7 @@ class MonthlyIssuesEvaluator:
 
                 page += 1
 
-            except requests.exceptions.RequestException as e:
-                print(f"获取{date_type}Issues失败: {e}")
+            except requests.exceptions.RequestException:
                 break
 
         return issues
@@ -343,7 +341,7 @@ class MonthlyIssuesEvaluator:
         period_days = (period_end - period_start).days
 
         report_lines = [
-            f"# Issues管理月度评估报告",
+            "# Issues管理月度评估报告",
             "",
             f"**评估期间**: {period_start.strftime('%Y-%m-%d')} 至 {period_end.strftime('%Y-%m-%d')}",
             f"**评估天数**: {period_days} 天",
@@ -359,7 +357,7 @@ class MonthlyIssuesEvaluator:
         resolution = metrics["resolution_metrics"]
 
         report_lines.extend([
-            f"### 🎯 创建与解决",
+            "### 🎯 创建与解决",
             f"- **新建Issues**: {creation['total_created']} (日均: {creation['daily_avg_created']:.1f})",
             f"- **关闭Issues**: {resolution['total_closed']} (日均: {resolution['daily_avg_closed']:.1f})",
             f"- **解决率**: {resolution['closure_rate']:.1f}%",
@@ -370,7 +368,7 @@ class MonthlyIssuesEvaluator:
         # 活跃度指标
         activity = metrics["activity_metrics"]
         report_lines.extend([
-            f"### 📈 活跃度指标",
+            "### 📈 活跃度指标",
             f"- **活跃Issues**: {activity['total_active']}",
             f"- **日均更新**: {activity['daily_avg_updates']:.1f}",
             f"- **最活跃日期**: {activity['most_active_day']}",
@@ -381,7 +379,7 @@ class MonthlyIssuesEvaluator:
         # 标签指标
         label = metrics["label_metrics"]
         report_lines.extend([
-            f"### 🏷️ 标签使用情况",
+            "### 🏷️ 标签使用情况",
             f"- **使用标签数**: {label['total_labels_used']}",
             f"- **标签覆盖率**: {label['label_coverage']['coverage_rate']:.1f}%",
             f"- **最常用标签**: {', '.join([f'{name}({count})' for name, count in label['most_used_labels'][:5]])}",
@@ -391,7 +389,7 @@ class MonthlyIssuesEvaluator:
         # 分配指标
         assignment = metrics["assignment_metrics"]
         report_lines.extend([
-            f"### 👥 分配情况",
+            "### 👥 分配情况",
             f"- **已分配Issues**: {assignment['assigned_issues']}",
             f"- **分配率**: {assignment['assignment_rate']:.1f}%",
             f"- **主要贡献者**: {', '.join([f'{user}({count})' for user, count in assignment['top_assignees'][:3]])}",
@@ -401,7 +399,7 @@ class MonthlyIssuesEvaluator:
         # 时间效率指标
         time_metrics = metrics["time_metrics"]
         report_lines.extend([
-            f"### ⏱️ 时间效率",
+            "### ⏱️ 时间效率",
             f"- **平均解决时间**: {time_metrics['avg_resolution_time']['days']} 天",
             f"- **平均首次响应**: {time_metrics['avg_first_response_time']['hours']} 小时",
             f"- **解决趋势**: {time_metrics['resolution_trend']}",
@@ -480,7 +478,7 @@ class MonthlyIssuesEvaluator:
             "",
             "---",
             f"*报告生成时间: {datetime.now().isoformat()}*",
-            f"*工具: Monthly Issues Evaluator v1.0*"
+            "*工具: Monthly Issues Evaluator v1.0*"
         ])
 
         return "\n".join(report_lines)
@@ -615,20 +613,14 @@ class MonthlyIssuesEvaluator:
             period_end = datetime(year, month + 1, 1) - timedelta(days=1)
         period_end = period_end.replace(hour=23, minute=59, second=59)
 
-        print(f"📊 开始月度评估: {period_start.strftime('%Y-%m')}")
 
         # 获取Issues数据
         issues_data = self.get_issues_in_date_range(period_start, period_end)
 
-        print(f"📋 数据收集完成:")
-        print(f"  - 新建Issues: {len(issues_data['created'])}")
-        print(f"  - 关闭Issues: {len(issues_data['closed'])}")
-        print(f"  - 更新Issues: {len(issues_data['updated'])}")
 
         # 计算指标
         metrics = self.calculate_metrics(issues_data, (period_end - period_start).days + 1)
 
-        print("✅ 指标计算完成")
 
         return metrics, period_start, period_end
 
@@ -641,14 +633,12 @@ class MonthlyIssuesEvaluator:
             output_path = Path(output_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(report_content, encoding='utf-8')
-            print(f"📄 评估报告已保存到: {output_path}")
         else:
             # 使用默认文件名
             filename = f"monthly_issues_evaluation_{period_start.strftime('%Y%m')}.md"
             output_path = Path("reports") / filename
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(report_content, encoding='utf-8')
-            print(f"📄 评估报告已保存到: {output_path}")
 
 
 def main():
@@ -667,7 +657,7 @@ def main():
     github_token = args.token or os.environ.get("GITHUB_TOKEN")
 
     if not github_token:
-        print("⚠️ 警告: 未提供GitHub令牌，API调用可能受限")
+        pass
 
     # 处理月份参数
     if args.month is None:
@@ -689,8 +679,7 @@ def main():
     evaluator.save_evaluation_report(metrics, period_start, period_end, args.output)
 
     if args.verbose:
-        score = evaluator._calculate_performance_score(metrics)
-        print(f"\n🏆 月度管理评分: {score['total']}/100")
+        evaluator._calculate_performance_score(metrics)
 
     return 0
 

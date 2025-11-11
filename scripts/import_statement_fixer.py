@@ -4,18 +4,16 @@
 专门处理E402和I001导入问题
 """
 
-import os
-import re
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
+
 
 class ImportStatementFixer:
     def __init__(self):
         self.files_fixed = 0
         self.errors_fixed = 0
 
-    def get_files_with_import_issues(self) -> List[Tuple[str, int]]:
+    def get_files_with_import_issues(self) -> list[tuple[str, int]]:
         """获取有导入问题的文件列表"""
         try:
             result = subprocess.run([
@@ -34,14 +32,13 @@ class ImportStatementFixer:
             sorted_files = sorted(error_files.items(), key=lambda x: x[1], reverse=True)
             return sorted_files
 
-        except Exception as e:
-            print(f"获取导入问题文件列表失败: {e}")
+        except Exception:
             return []
 
-    def fix_import_statements(self, file_path: str) -> Dict[str, int]:
+    def fix_import_statements(self, file_path: str) -> dict[str, int]:
         """修复单个文件的导入语句"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -62,13 +59,11 @@ class ImportStatementFixer:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
 
-                print(f"  ✅ 修复 {file_path}: 导入语句问题")
                 self.errors_fixed += 1
 
             return {"import_fixes": fixes_count}
 
-        except Exception as e:
-            print(f"  ❌ 处理文件 {file_path} 时出错: {e}")
+        except Exception:
             return {"import_fixes": 0}
 
     def _fix_e402_imports(self, content: str) -> str:
@@ -118,7 +113,7 @@ class ImportStatementFixer:
         # 重新组合内容
         return '\n'.join(imports + other_lines)
 
-    def _is_safe_to_move_import(self, line: str, all_lines: List[str], current_index: int) -> bool:
+    def _is_safe_to_move_import(self, line: str, all_lines: list[str], current_index: int) -> bool:
         """检查导入语句是否可以安全移动到文件顶部"""
         # 简单的安全性检查
         stripped = line.strip()
@@ -163,7 +158,7 @@ class ImportStatementFixer:
 
         return '\n'.join(sorted_imports + other_lines)
 
-    def _sort_imports(self, imports: List[str]) -> List[str]:
+    def _sort_imports(self, imports: list[str]) -> list[str]:
         """排序导入语句"""
         # 分离不同类型的导入
         std_lib_imports = []
@@ -256,53 +251,39 @@ class ImportStatementFixer:
 
     def batch_fix_import_statements(self, limit: int = 20):
         """批量修复导入语句"""
-        print("🔧 导入语句修复工具")
-        print("=" * 50)
-        print("🎯 专门处理E402和I001导入问题")
 
         # 获取有导入问题的文件
         problem_files = self.get_files_with_import_issues()
         if not problem_files:
-            print("📊 没有发现导入语句问题")
             return
 
-        print(f"📋 发现 {len(problem_files)} 个有导入问题的文件")
 
         # 显示前10个问题最多的文件
-        print(f"\n📊 导入问题最多的文件 (前10个):")
-        for file_path, error_count in problem_files[:10]:
-            print(f"  - {file_path}: {error_count} 个问题")
+        for file_path, _error_count in problem_files[:10]:
+            pass
 
         # 获取当前的E402和I001错误数量
         initial_errors = self.get_current_import_errors()
-        print(f"\n📊 当前导入错误数: {initial_errors}")
 
         # 处理文件
         files_to_process = problem_files[:limit]
-        print(f"\n🔧 开始处理前 {len(files_to_process)} 个文件...")
 
-        for file_path, error_count in files_to_process:
+        for file_path, _error_count in files_to_process:
             if Path(file_path).exists():
-                print(f"\n🔧 处理文件: {file_path} (预计 {error_count} 个问题)")
-                result = self.fix_import_statements(file_path)
+                self.fix_import_statements(file_path)
                 self.files_fixed += 1
             else:
-                print(f"  ⚠️ 文件不存在: {file_path}")
+                pass
 
         # 验证修复效果
         final_errors = self.get_current_import_errors()
         improvement = initial_errors - final_errors
 
-        print(f"\n📊 修复结果:")
-        print(f"  🔧 处理文件数: {self.files_fixed}")
-        print(f"  ✅ 导入错误改善: {improvement} 个")
-        print(f"  📈 初始错误: {initial_errors}")
-        print(f"  📉 修复后错误: {final_errors}")
 
         if improvement > 0:
-            print(f"\n🎉 导入语句优化成功! 减少了 {improvement} 个导入错误")
+            pass
         else:
-            print(f"\n⚠️ 导入语句改善有限，可能需要手动处理")
+            pass
 
     def get_current_import_errors(self) -> int:
         """获取当前导入错误数量"""

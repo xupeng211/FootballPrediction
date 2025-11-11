@@ -230,12 +230,10 @@ class TestReportGenerator:
         with open(template_file, 'w', encoding='utf-8') as f:
             f.write(html_template)
 
-        print(f"✅ HTML模板已创建: {template_file}")
 
     def parse_junit_xml(self) -> dict[str, Any] | None:
         """解析JUnit XML结果"""
         if not self.junit_file.exists():
-            print("❌ test_results.xml文件不存在")
             return None
 
         try:
@@ -323,8 +321,7 @@ class TestReportGenerator:
                 "total_time": total_time
             }
 
-        except Exception as e:
-            print(f"❌ 解析JUnit XML失败: {e}")
+        except Exception:
             return None
 
     def load_coverage_data(self) -> dict[str, Any] | None:
@@ -335,13 +332,11 @@ class TestReportGenerator:
         try:
             with open(self.coverage_file, encoding='utf-8') as f:
                 return json.load(f)
-        except Exception as e:
-            print(f"⚠️ 加载覆盖率数据失败: {e}")
+        except Exception:
             return None
 
     def generate_report(self) -> TestReport:
         """生成测试报告"""
-        print("🚀 开始生成测试报告...")
 
         # 解析JUnit XML
         junit_data = self.parse_junit_xml()
@@ -384,7 +379,6 @@ class TestReportGenerator:
         with open(json_file, 'w', encoding='utf-8') as f:
             json.dump(report_data, f, indent=2, ensure_ascii=False)
 
-        print(f"📊 JSON报告已保存: {json_file}")
         return json_file
 
     def generate_html_report(self, report: TestReport):
@@ -429,11 +423,9 @@ class TestReportGenerator:
             with open(html_file, 'w', encoding='utf-8') as f:
                 f.write(html_content)
 
-            print(f"🌐 HTML报告已保存: {html_file}")
             return html_file
 
-        except Exception as e:
-            print(f"❌ 生成HTML报告失败: {e}")
+        except Exception:
             return None
 
     def generate_markdown_report(self, report: TestReport):
@@ -527,40 +519,23 @@ class TestReportGenerator:
         with open(markdown_file, 'w', encoding='utf-8') as f:
             f.write(markdown_content)
 
-        print(f"📝 Markdown报告已保存: {markdown_file}")
         return markdown_file
 
     def generate_report_summary(self, report: TestReport):
         """生成报告摘要"""
-        print("\n" + "="*60)
-        print("📊 测试报告摘要")
-        print("="*60)
-        print(f"📅 时间: {report.timestamp[:19]}")
-        print(f"🧪 总测试数: {report.total_tests}")
-        print(f"✅ 通过: {report.passed_tests}")
-        print(f"❌ 失败: {report.failed_tests}")
-        print(f"⚠️ 错误: {report.error_tests}")
-        print(f"⏭️ 跳过: {report.skipped_tests}")
-        print(f"📈 成功率: {report.success_rate:.1f}%")
-        print(f"⏱️ 执行时间: {report.execution_time:.2f}秒")
 
         if report.coverage_data:
             coverage_totals = report.coverage_data.get("totals", {})
-            coverage_percent = coverage_totals.get("percent_covered", 0)
-            print(f"📊 覆盖率: {coverage_percent:.1f}%")
+            coverage_totals.get("percent_covered", 0)
 
         if report.test_suites:
-            print(f"\n📋 测试套件 ({len(report.test_suites)}个):")
             for suite in report.test_suites:
-                passed = suite.tests - suite.failures - suite.errors - suite.skipped
-                status = "✅" if suite.failures == 0 and suite.errors == 0 else "❌"
-                print(f"  {status} {suite.name}: {passed}/{suite.tests} ({suite.time:.2f}s)")
+                suite.tests - suite.failures - suite.errors - suite.skipped
 
         failed_count = report.failed_tests + report.error_tests
         if failed_count > 0:
-            print(f"\n⚠️ 有 {failed_count} 个测试失败，详见完整报告")
+            pass
 
-        print("="*60)
 
 
 def main():
@@ -610,13 +585,11 @@ def main():
         if args.format in ["all", "markdown"]:
             generator.generate_markdown_report(report)
 
-        print(f"\n🎉 报告生成完成！输出目录: {generator.output_dir}")
 
         # 返回状态
         return 0 if report.failed_tests == 0 and report.error_tests == 0 else 1
 
-    except Exception as e:
-        print(f"❌ 生成报告失败: {e}")
+    except Exception:
         return 1
 
 

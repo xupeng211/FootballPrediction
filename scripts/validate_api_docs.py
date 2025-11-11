@@ -5,11 +5,10 @@ API文档验证脚本
 """
 
 import ast
-import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Set
+
 
 class APIEndpointValidator:
     def __init__(self, api_dir: str = "src/api", docs_dir: str = "docs/api"):
@@ -20,11 +19,10 @@ class APIEndpointValidator:
 
     def extract_endpoints_from_code(self):
         """从Python代码中提取API端点"""
-        print("🔍 从代码中提取API端点...")
 
         for py_file in self.api_dir.rglob("*.py"):
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, encoding='utf-8') as f:
                     content = f.read()
 
                 # 解析AST
@@ -35,8 +33,8 @@ class APIEndpointValidator:
                     # 如果AST解析失败，使用正则表达式
                     self._extract_with_regex(content, py_file)
 
-            except Exception as e:
-                print(f"⚠️ 处理文件 {py_file} 时出错: {e}")
+            except Exception:
+                pass
 
     def _extract_from_ast(self, tree: ast.AST, file_path: Path):
         """从AST中提取API端点"""
@@ -84,14 +82,13 @@ class APIEndpointValidator:
 
     def extract_endpoints_from_docs(self):
         """从文档中提取API端点"""
-        print("🔍 从文档中提取API端点...")
 
         complete_api_ref = self.docs_dir / "COMPLETE_API_REFERENCE.md"
         getting_started = self.docs_dir / "GETTING_STARTED_GUIDE.md"
 
         for doc_file in [complete_api_ref, getting_started]:
             if doc_file.exists():
-                with open(doc_file, 'r', encoding='utf-8') as f:
+                with open(doc_file, encoding='utf-8') as f:
                     content = f.read()
 
                 # 提取API端点模式
@@ -111,9 +108,8 @@ class APIEndpointValidator:
                         if path and not path.startswith('http'):
                             self.endpoints_in_docs.add(f"{method} {path}")
 
-    def validate_coverage(self) -> Dict[str, Set[str]]:
+    def validate_coverage(self) -> dict[str, set[str]]:
         """验证API端点覆盖率"""
-        print("📊 验证API端点覆盖率...")
 
         code_only = self.endpoints_in_code - self.endpoints_in_docs
         docs_only = self.endpoints_in_docs - self.endpoints_in_code
@@ -127,7 +123,7 @@ class APIEndpointValidator:
             "total_docs": self.endpoints_in_docs
         }
 
-    def generate_report(self, results: Dict[str, Set[str]]) -> str:
+    def generate_report(self, results: dict[str, set[str]]) -> str:
         """生成验证报告"""
         report = f"""
 # API文档验证报告
@@ -145,12 +141,12 @@ class APIEndpointValidator:
             report += f"- {endpoint}\n"
 
         if results['code_only']:
-            report += f"\n## ⚠️ 代码中有但文档中缺失的端点\n"
+            report += "\n## ⚠️ 代码中有但文档中缺失的端点\n"
             for endpoint in sorted(results['code_only']):
                 report += f"- {endpoint}\n"
 
         if results['docs_only']:
-            report += f"\n## 📝 文档中有但代码中不存在的端点\n"
+            report += "\n## 📝 文档中有但代码中不存在的端点\n"
             for endpoint in sorted(results['docs_only']):
                 report += f"- {endpoint}\n"
 
@@ -158,7 +154,6 @@ class APIEndpointValidator:
 
 def main():
     """主函数"""
-    print("🚀 开始API文档验证...")
 
     validator = APIEndpointValidator()
 
@@ -177,16 +172,12 @@ def main():
     with open(report_file, 'w', encoding='utf-8') as f:
         f.write(report)
 
-    print(f"📄 验证报告已保存到: {report_file}")
-    print(f"📊 覆盖率: {len(results['common']) / max(len(results['total_code']), 1) * 100:.1f}%")
 
     # 如果覆盖率低于90%，返回错误代码
     coverage_rate = len(results['common']) / max(len(results['total_code']), 1) * 100
     if coverage_rate < 90:
-        print("⚠️ API文档覆盖率低于90%，建议完善文档")
         sys.exit(1)
     else:
-        print("✅ API文档覆盖率良好")
         sys.exit(0)
 
 if __name__ == "__main__":

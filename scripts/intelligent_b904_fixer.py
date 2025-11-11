@@ -27,7 +27,6 @@ def fix_b904_intelligently(file_path: str) -> int:
     """智能修复文件中的B904错误"""
 
     if not os.path.exists(file_path):
-        print(f"文件不存在: {file_path}")
         return 0
 
     try:
@@ -91,13 +90,11 @@ def fix_b904_intelligently(file_path: str) -> int:
 
         return fixes_count
 
-    except Exception as e:
-        print(f"修复文件 {file_path} 时出错: {e}")
+    except Exception:
         return 0
 
 def main():
     """主函数"""
-    print("开始智能修复B904错误...")
 
     # 需要修复的文件
     files_to_fix = [
@@ -111,12 +108,9 @@ def main():
     total_fixes = 0
 
     for file_path in files_to_fix:
-        print(f"\n处理文件: {file_path}")
         fixes = fix_b904_intelligently(file_path)
         total_fixes += fixes
-        print(f"修复了 {fixes} 个B904错误")
 
-    print(f"\n总计修复 {total_fixes} 个B904错误")
 
 if __name__ == "__main__":
     main()

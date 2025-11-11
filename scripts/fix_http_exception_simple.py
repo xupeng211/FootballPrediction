@@ -14,20 +14,17 @@ def run_sed_command(pattern, file_path):
     """运行sed命令"""
     try:
         cmd = ['sed', '-i', pattern, file_path]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        subprocess.run(cmd, capture_output=True, text=True, check=True)
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"sed命令失败: {e}")
+    except subprocess.CalledProcessError:
         return False
 
 def fix_http_exception_file(file_path):
     """修复单个HTTPException文件"""
 
     if not os.path.exists(file_path):
-        print(f"⚠️  文件不存在: {file_path}")
         return False
 
-    print(f"🔧 修复文件: {file_path}")
     changes_made = False
 
     # 修复模式1: 删除空的HTTPException括号行
@@ -45,7 +42,7 @@ def fix_http_exception_file(file_path):
         (r'/^$/N;/^\n$/d', "删除连续空行"),
     ]
 
-    for pattern, description in patterns_to_fix:
+    for pattern, _description in patterns_to_fix:
         try:
             # 备份原文件
             backup_file = file_path + '.backup'
@@ -54,10 +51,9 @@ def fix_http_exception_file(file_path):
 
             # 运行sed命令
             if run_sed_command(pattern, file_path):
-                print(f"  ✅ {description}")
                 changes_made = True
-        except Exception as e:
-            print(f"  ❌ {description} 失败: {e}")
+        except Exception:
+            pass
 
     return changes_made
 
@@ -123,14 +119,11 @@ def manual_fix_file(file_path):
         if fixed_content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(fixed_content)
-            print("  ✅ 手动修复完成")
             return True
         else:
-            print("  ℹ️  无需手动修复")
             return False
 
-    except Exception as e:
-        print(f"  ❌ 手动修复失败: {e}")
+    except Exception:
         return False
 
 def main():
@@ -150,15 +143,12 @@ def main():
         "src/api/routes/user_management.py"
     ]
 
-    print("🔧 开始简单HTTPException语法修复...")
-    print(f"📁 目标文件数量: {len(api_files)}")
 
     fixed_count = 0
     manual_fixed_count = 0
 
     for file_path in api_files:
         if os.path.exists(file_path):
-            print(f"\n📝 处理文件: {file_path}")
 
             # 首先尝试sed修复
             if fix_http_exception_file(file_path):
@@ -169,21 +159,10 @@ def main():
                 manual_fixed_count += 1
 
         else:
-            print(f"⚠️  文件不存在: {file_path}")
+            pass
 
-    print("\n" + "="*60)
-    print("📊 修复统计:")
-    print(f"  🔧 sed修复: {fixed_count} 个文件")
-    print(f"  ✋ 手动修复: {manual_fixed_count} 个文件")
-    print(f"  📁 总文件数: {len(api_files)} 个文件")
 
-    print("\n🎯 建议下一步操作:")
-    print("  1. 验证修复效果:")
-    print("     ruff check src/api/betting_api.py --output-format=concise")
-    print("  2. 测试功能完整性:")
-    print("     python -c \"import src.api.betting_api; print('✅ 导入成功')\"")
 
-    print("\n✨ 修复完成!")
 
 if __name__ == "__main__":
     main()

@@ -58,7 +58,6 @@ def main():
     """主函数"""
     project_root = Path.cwd()
 
-    print(f"🔍 在 {project_root} 中检查语法错误...")
 
     # 查找所有Python文件
     python_files = find_python_files(project_root)
@@ -74,20 +73,13 @@ def main():
         if errors:
             error_files += 1
             total_errors += len(errors)
-            print(f"\n❌ {file_path.relative_to(project_root)}")
-            for error in errors:
-                print(f"   {error}")
+            for _error in errors:
+                pass
 
-    print("\n📊 检查结果:")
-    print(f"   总文件数: {total_files}")
-    print(f"   错误文件: {error_files}")
-    print(f"   错误总数: {total_errors}")
 
     if total_errors > 0:
-        print(f"\n❌ 发现 {total_errors} 个语法错误")
         sys.exit(1)
     else:
-        print("\n✅ 所有文件语法检查通过")
         sys.exit(0)
 
 

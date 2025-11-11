@@ -12,7 +12,6 @@ def fix_date_utils_tests():
     test_file = Path("tests/unit/utils/test_date_utils_enhanced_final.py")
 
     if not test_file.exists():
-        print("❌ 测试文件不存在")
         return False
 
     with open(test_file, encoding='utf-8') as f:
@@ -39,13 +38,11 @@ def fix_date_utils_tests():
     with open(test_file, 'w', encoding='utf-8') as f:
         f.write(content)
 
-    print("✅ 已修复date_utils测试文件")
     return True
 
 
 def run_tests():
     """运行测试验证修复效果"""
-    print("🔍 运行utils模块测试...")
 
     import subprocess
     import sys
@@ -57,24 +54,20 @@ def run_tests():
         '-v', '--tb=no', '--no-cov'
     ], capture_output=True, text=True)
 
-    print(result.stdout)
     if result.stderr:
-        print("错误输出:", result.stderr)
+        pass
 
     return result.returncode == 0
 
 
 if __name__ == "__main__":
-    print("🔧 快速测试修复工具")
-    print("=" * 30)
 
     if fix_date_utils_tests():
-        print("\n🧪 运行测试验证...")
         success = run_tests()
 
         if success:
-            print("\n✅ 测试修复成功！")
+            pass
         else:
-            print("\n❌ 测试仍有问题，需要手动修复")
+            pass
     else:
-        print("\n❌ 修复失败")
+        pass

@@ -13,7 +13,7 @@ from pathlib import Path
 def clean_test_file(file_path):
     """清理单个测试文件"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 移除错误代码片段
@@ -54,11 +54,9 @@ def clean_test_file(file_path):
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(clean_content)
 
-        print(f"  ✓ 清理完成: {file_path}")
         return True
 
-    except Exception as e:
-        print(f"  ✗ 清理失败: {file_path} - {e}")
+    except Exception:
         return False
 
 
@@ -76,18 +74,14 @@ def main():
     project_root = Path(__file__).parent.parent
     success_count = 0
 
-    print("🧹 清理测试文件中的错误代码片段...")
-    print()
 
     for file_path in files_to_clean:
         full_path = project_root / file_path
         if full_path.exists():
             success_count += clean_test_file(full_path)
         else:
-            print(f"  ⚠️  文件不存在: {file_path}")
+            pass
 
-    print()
-    print(f"✅ 清理完成! 成功: {success_count}/{len(files_to_clean)}")
 
 
 if __name__ == "__main__":

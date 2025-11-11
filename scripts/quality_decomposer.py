@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """代码质量系统性改进分解工具"""
 
-import subprocess
 import json
-import re
-from pathlib import Path
-from typing import List, Dict, Tuple
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime
+
 
 @dataclass
 class QualityIssue:
@@ -21,10 +19,10 @@ class QualityIssue:
 
 class QualityDecomposer:
     def __init__(self):
-        self.issues: List[QualityIssue] = []
-        self.categories: Dict[str, List[QualityIssue]] = {}
+        self.issues: list[QualityIssue] = []
+        self.categories: dict[str, list[QualityIssue]] = {}
 
-    def run_quality_checks(self) -> Dict[str, str]:
+    def run_quality_checks(self) -> dict[str, str]:
         """运行各种质量检查工具"""
         results = {}
 
@@ -35,8 +33,7 @@ class QualityDecomposer:
                 capture_output=True, text=True
             )
             results['ruff'] = ruff_result.stdout
-        except Exception as e:
-            print(f"Ruff检查失败: {e}")
+        except Exception:
             results['ruff'] = "[]"
 
         # MyPy检查
@@ -46,8 +43,7 @@ class QualityDecomposer:
                 capture_output=True, text=True
             )
             results['mypy'] = mypy_result.stdout
-        except Exception as e:
-            print(f"MyPy检查失败: {e}")
+        except Exception:
             results['mypy'] = ""
 
         # Flake8检查
@@ -57,13 +53,12 @@ class QualityDecomposer:
                 capture_output=True, text=True
             )
             results['flake8'] = flake8_result.stdout
-        except Exception as e:
-            print(f"Flake8检查失败: {e}")
+        except Exception:
             results['flake8'] = ""
 
         return results
 
-    def parse_ruff_issues(self, ruff_output: str) -> List[QualityIssue]:
+    def parse_ruff_issues(self, ruff_output: str) -> list[QualityIssue]:
         """解析Ruff输出"""
         issues = []
         try:
@@ -83,7 +78,7 @@ class QualityDecomposer:
             pass
         return issues
 
-    def parse_mypy_issues(self, mypy_output: str) -> List[QualityIssue]:
+    def parse_mypy_issues(self, mypy_output: str) -> list[QualityIssue]:
         """解析MyPy输出"""
         issues = []
         lines = mypy_output.split('\n')
@@ -113,7 +108,7 @@ class QualityDecomposer:
 
         return issues
 
-    def categorize_issues(self) -> Dict[str, List[QualityIssue]]:
+    def categorize_issues(self) -> dict[str, list[QualityIssue]]:
         """将问题分类"""
         categories = {
             'import_errors': [],
@@ -149,7 +144,7 @@ class QualityDecomposer:
 
         return categories
 
-    def create_execution_plan(self, categories: Dict[str, List[QualityIssue]]) -> List[Dict]:
+    def create_execution_plan(self, categories: dict[str, list[QualityIssue]]) -> list[dict]:
         """创建执行计划"""
         plan = []
 
@@ -204,7 +199,7 @@ class QualityDecomposer:
 
         return plan
 
-    def generate_plan_report(self, plan: List[Dict]) -> str:
+    def generate_plan_report(self, plan: list[dict]) -> str:
         """生成计划报告"""
         report = []
         report.append("# 📊 代码质量系统性改进计划\n")
@@ -235,24 +230,18 @@ class QualityDecomposer:
 
         return '\n'.join(report)
 
-    def decompose_and_plan(self) -> Dict:
+    def decompose_and_plan(self) -> dict:
         """执行完整的分解和计划流程"""
-        print("🔍 开始质量检查...")
         results = self.run_quality_checks()
 
-        print("📊 解析检查结果...")
         self.issues = self.parse_ruff_issues(results['ruff'])
         self.issues.extend(self.parse_mypy_issues(results['mypy']))
 
-        print(f"📋 发现 {len(self.issues)} 个质量问题")
 
-        print("🗂️ 问题分类...")
         self.categories = self.categorize_issues()
 
-        print("📝 创建执行计划...")
         plan = self.create_execution_plan(self.categories)
 
-        print("📄 生成计划报告...")
         report = self.generate_plan_report(plan)
 
         return {
@@ -267,12 +256,8 @@ if __name__ == '__main__':
     decomposer = QualityDecomposer()
     result = decomposer.decompose_and_plan()
 
-    print(f"\n=== 分解结果 ===")
-    print(f"总问题数: {result['total_issues']}")
-    print(f"任务数: {result['tasks_count']}")
-    print("\n分类统计:")
-    for category, count in result['categories'].items():
-        print(f"  {category}: {count}")
+    for _category, _count in result['categories'].items():
+        pass
 
     # 保存报告
     with open('docs/quality_improvement_plan.md', 'w', encoding='utf-8') as f:
@@ -289,5 +274,3 @@ if __name__ == '__main__':
             'plan': result['plan']
         }, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📄 计划报告已保存到 docs/quality_improvement_plan.md")
-    print(f"📊 详细计划已保存到 quality_plan.json")

@@ -354,7 +354,6 @@ class TestModuleFunctionality:
             f.write(enhanced_content)
 
         created_tests.append(test_file)
-        print(f"✅ 增强测试文件: {test_file} (目标覆盖率: {module_info['target']}%)")
 
     return created_tests
 
@@ -385,41 +384,27 @@ def run_coverage_test() -> tuple[float, int]:
 
         return coverage, passed_tests
 
-    except Exception as e:
-        print(f"运行覆盖率测试失败: {e}")
+    except Exception:
         return 0.0, 0
 
 def main():
     """主函数"""
-    print("🚀 启动覆盖率提升工具...")
-    print("📊 目标: 从3%提升到30%")
 
     # 获取初始覆盖率
-    initial_coverage = get_current_coverage()
-    print(f"📈 初始覆盖率: {initial_coverage}%")
+    get_current_coverage()
 
     # 创建增强测试
-    print("\\n🔧 创建增强测试文件...")
-    created_tests = create_targeted_tests()
-    print(f"✅ 创建了 {len(created_tests)} 个增强测试文件")
+    create_targeted_tests()
 
     # 运行覆盖率测试
-    print("\\n🧪 运行覆盖率测试...")
     final_coverage, passed_tests = run_coverage_test()
 
-    print("\\n📊 覆盖率提升结果:")
-    print(f"   初始覆盖率: {initial_coverage}%")
-    print(f"   最终覆盖率: {final_coverage}%")
-    print(f"   提升幅度: {final_coverage - initial_coverage:.1f}%")
-    print(f"   通过测试: {passed_tests}")
 
     # 检查是否达到目标
     if final_coverage >= 30:
-        print("🎉 恭喜！已达到30%覆盖率目标！")
         return True
     else:
-        gap = 30 - final_coverage
-        print(f"📈 距离目标还差 {gap:.1f}%，需要进一步优化")
+        30 - final_coverage
         return False
 
 if __name__ == "__main__":

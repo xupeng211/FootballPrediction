@@ -146,8 +146,7 @@ class GitHubIssueSynchronizer:
                         })
 
             return commits
-        except Exception as e:
-            print(f"获取提交历史失败: {e}")
+        except Exception:
             return []
 
     def generate_issue_update_comment(self, issue: dict[str, Any]) -> str:
@@ -237,11 +236,9 @@ class GitHubIssueSynchronizer:
             with open(report_path, 'w', encoding='utf-8') as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
 
-            print(f"📄 GitHub Issues同步报告已保存到: {report_path}")
             return str(report_path)
 
-        except Exception as e:
-            print(f"❌ 保存同步报告失败: {e}")
+        except Exception:
             raise
 
     def create_update_instructions(self) -> str:
@@ -370,59 +367,45 @@ class GitHubIssueSynchronizer:
             with open(instructions_path, 'w', encoding='utf-8') as f:
                 f.write(instructions)
 
-            print(f"📝 GitHub Issues更新指南已保存到: {instructions_path}")
             return str(instructions_path)
 
-        except Exception as e:
-            print(f"❌ 保存更新指南失败: {e}")
+        except Exception:
             raise
 
     def run_synchronization(self) -> dict[str, Any]:
         """运行完整的同步流程"""
-        print("🚀 开始GitHub Issues同步...")
-        print("=" * 60)
 
         try:
             # 1. 检查Git状态
-            print("1️⃣ 检查Git状态...")
             git_status = self.check_git_status()
 
             if git_status.get("has_uncommitted_changes"):
-                print("⚠️  检测到未提交的更改，建议先提交所有更改")
+                pass
             else:
-                print("✅ Git状态良好，所有更改已提交")
+                pass
 
-            print(f"   当前分支: {git_status.get('current_branch', 'unknown')}")
 
             # 2. 获取提交历史
-            print("\n2️⃣ 分析最近的提交历史...")
             commits = self.get_commit_history(5)
-            print(f"   最近提交数: {len(commits)}")
 
-            for i, commit in enumerate(commits[:3], 1):
-                print(f"   {i}. {commit['hash'][:8]} - {commit['message'][:50]}...")
+            for _i, _commit in enumerate(commits[:3], 1):
+                pass
 
             # 3. 生成同步报告
-            print("\n3️⃣ 生成同步报告...")
             sync_report = self.generate_sync_report()
             report_path = self.save_sync_report(sync_report)
 
-            print(f"   总完成Issues数: {sync_report['total_issues_completed']}")
-            print(f"   需要更新的Issues: {len([a for a in sync_report['sync_actions'] if a['action_required'] == '更新GitHub Issue并关闭'])}")
 
             # 4. 生成更新指南
-            print("\n4️⃣ 生成手动更新指南...")
             instructions = self.create_update_instructions()
             instructions_path = self.save_update_instructions(instructions)
 
             # 5. 生成每个Issue的评论
-            print("\n5️⃣ 生成Issue评论内容...")
             comments = {}
             for issue in self.completed_issues:
                 if issue['status'] == 'completed':
                     comment = self.generate_issue_update_comment(issue)
                     comments[issue['number']] = comment
-                    print(f"   ✅ Issue #{issue['number']} 评论已生成")
 
             # 保存评论到文件
             comments_dir = self.project_root / "reports" / "github" / "comments"
@@ -433,13 +416,7 @@ class GitHubIssueSynchronizer:
                 with open(comment_file, 'w', encoding='utf-8') as f:
                     f.write(f"<!-- Issue #{issue_number} 完成评论 -->\n\n")
                     f.write(comment)
-                print(f"   📝 Issue #{issue_number} 评论已保存到: {comment_file}")
 
-            print("\n" + "=" * 60)
-            print("✅ GitHub Issues同步流程完成!")
-            print(f"📄 同步报告: {report_path}")
-            print(f"📝 更新指南: {instructions_path}")
-            print(f"💬 评论文件: {comments_dir}")
 
             return {
                 "status": "success",
@@ -450,7 +427,6 @@ class GitHubIssueSynchronizer:
             }
 
         except Exception as e:
-            print(f"\n❌ 同步过程中出现错误: {e}")
             return {
                 "status": "error",
                 "error": str(e)
@@ -459,8 +435,6 @@ class GitHubIssueSynchronizer:
 
 def main():
     """主函数"""
-    print("🔗 GitHub Issues 同步更新工具")
-    print("=" * 50)
 
     synchronizer = GitHubIssueSynchronizer()
 
@@ -468,20 +442,15 @@ def main():
         result = synchronizer.run_synchronization()
 
         if result["status"] == "success":
-            print("\n🎉 同步成功完成!")
-            print("\n📋 下一步操作:")
-            print("1. 查看生成的更新指南")
-            print("2. 按照指南手动更新GitHub Issues")
-            print("3. 验证所有Issues都已正确关闭")
-            print("4. 检查远程仓库状态")
+            pass
 
         else:
-            print(f"\n❌ 同步失败: {result.get('error', '未知错误')}")
+            pass
 
     except KeyboardInterrupt:
-        print("\n⚠️ 同步过程被用户中断")
-    except Exception as e:
-        print(f"\n❌ 程序执行失败: {e}")
+        pass
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

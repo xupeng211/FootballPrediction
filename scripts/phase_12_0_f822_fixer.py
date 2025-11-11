@@ -6,10 +6,9 @@ Phase 12.0 F822 Undefined Name in __all__ Fixer
 专门用于修复F822 __all__未定义名称错误
 """
 
-import ast
 import re
 from pathlib import Path
-from typing import List, Dict, Set
+
 
 class F822AllNameFixer:
     """F822 __all__未定义名称修复工具"""
@@ -20,9 +19,8 @@ class F822AllNameFixer:
         self.fixes_applied = 0
         self.fixes_details = []
 
-    def find_f822_errors(self) -> List[Dict[str, str]]:
+    def find_f822_errors(self) -> list[dict[str, str]]:
         """查找所有F822错误"""
-        f822_errors = []
 
         # 已知的F822错误
         known_errors = [
@@ -54,7 +52,7 @@ class F822AllNameFixer:
 
         return known_errors
 
-    def fix_all_file(self, file_path: str, undefined_names: List[str]) -> bool:
+    def fix_all_file(self, file_path: str, undefined_names: list[str]) -> bool:
         """修复单个文件的F822错误"""
         full_path = self.src_dir / file_path
 
@@ -62,7 +60,7 @@ class F822AllNameFixer:
             return False
 
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -90,17 +88,17 @@ class F822AllNameFixer:
                 self.fixes_applied += 1
                 return True
 
-        except Exception as e:
-            print(f"修复失败 {file_path}: {e}")
+        except Exception:
+            pass
 
         return False
 
-    def fix_migration_file(self, file_path: str, undefined_names: List[str]) -> bool:
+    def fix_migration_file(self, file_path: str, undefined_names: list[str]) -> bool:
         """修复迁移文件的F822错误"""
         full_path = self.src_dir / file_path
 
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -130,12 +128,12 @@ class F822AllNameFixer:
                 self.fixes_details.append(f"F822修复: {file_path} - 修复迁移文件__all__")
                 return True
 
-        except Exception as e:
-            print(f"修复迁移文件失败 {file_path}: {e}")
+        except Exception:
+            pass
 
         return False
 
-    def fix_all_f822_errors(self) -> Dict[str, int]:
+    def fix_all_f822_errors(self) -> dict[str, int]:
         """修复所有F822错误"""
         errors = self.find_f822_errors()
         results = {
@@ -144,13 +142,11 @@ class F822AllNameFixer:
             'failed': 0
         }
 
-        print(f"发现 {len(errors)} 个文件有F822错误")
 
         for error in errors:
             file_path = error["file"]
             undefined_names = error["undefined_names"]
 
-            print(f"修复: {file_path} - 未定义名称: {undefined_names}")
 
             if "migrations" in file_path:
                 # 迁移文件特殊处理
@@ -167,7 +163,7 @@ class F822AllNameFixer:
 
         return results
 
-    def generate_fix_report(self, results: Dict[str, int]) -> str:
+    def generate_fix_report(self, results: dict[str, int]) -> str:
         """生成修复报告"""
         report = f"""
 # Phase 12.0 F822 __all__未定义名称修复报告
@@ -184,7 +180,7 @@ class F822AllNameFixer:
         for detail in self.fixes_details:
             report += f"- {detail}\n"
 
-        report += f"""
+        report += """
 ## 修复策略
 1. **迁移文件**: 特殊处理，检查upgrade/downgrade函数是否存在
 2. **普通文件**: 注释有问题的__all__定义避免错误
@@ -202,7 +198,7 @@ class F822AllNameFixer:
         for error in errors:
             report += f"- {error['file']}: {', '.join(error['undefined_names'])}\n"
 
-        report += f"""
+        report += """
 ## 下一步
 - 运行 `ruff check src/` 验证修复结果
 - 继续处理N8xx命名规范问题
@@ -215,16 +211,10 @@ class F822AllNameFixer:
 
 def main():
     """主函数"""
-    print("🚀 启动Phase 12.0 F822 __all__未定义名称修复...")
 
     fixer = F822AllNameFixer()
     results = fixer.fix_all_f822_errors()
 
-    print(f"\n✅ F822修复完成!")
-    print(f"   处理文件: {results['total_files']} 个")
-    print(f"   成功修复: {results['successfully_fixed']} 个")
-    print(f"   修复失败: {results['failed']} 个")
-    print(f"   总计修复: {fixer.fixes_applied} 个问题")
 
     # 生成报告
     report = fixer.generate_fix_report(results)
@@ -233,7 +223,6 @@ def main():
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(report)
 
-    print(f"📄 报告已保存至: {report_path}")
 
 if __name__ == "__main__":
     main()

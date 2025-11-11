@@ -13,12 +13,9 @@ class DeploymentPreparation:
 
     def __init__(self):
         self.project_root = Path(__file__).resolve().parent.parent
-        print("🚀 开始部署准备工作...")
-        print("=" * 50)
 
     def create_pyproject_toml(self):
         """创建pyproject.toml配置文件"""
-        print("📝 创建 pyproject.toml...")
 
         config = '''[build-system]
 requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
@@ -163,11 +160,9 @@ exclude_lines = [
 
         pyproject_path = self.project_root / "pyproject.toml"
         pyproject_path.write_text(config, encoding='utf-8')
-        print("✅ pyproject.toml 创建完成")
 
     def create_requirements_txt(self):
         """创建requirements.txt文件"""
-        print("📦 创建 requirements.txt...")
 
         requirements = '''# Core dependencies
 fastapi>=0.104.0,<0.105.0
@@ -200,11 +195,9 @@ pip-audit>=2.6.0,<3.0.0
 
         requirements_path = self.project_root / "requirements.txt"
         requirements_path.write_text(requirements, encoding='utf-8')
-        print("✅ requirements.txt 创建完成")
 
     def create_docker_compose(self):
         """创建docker-compose.yml文件"""
-        print("🐳 创建 docker-compose.yml...")
 
         compose_config = '''version: '3.8'
 
@@ -264,11 +257,9 @@ volumes:
 
         compose_path = self.project_root / "docker-compose.yml"
         compose_path.write_text(compose_config, encoding='utf-8')
-        print("✅ docker-compose.yml 创建完成")
 
     def create_env_example(self):
         """创建环境变量示例文件"""
-        print("⚙️ 创建 .env.example...")
 
         env_config = '''# 环境配置
 ENV=development
@@ -316,17 +307,14 @@ AUTO_RESTART=true
 
         env_example_path = self.project_root / ".env.example"
         env_example_path.write_text(env_config, encoding='utf-8')
-        print("✅ .env.example 创建完成")
 
         # 创建实际的.env文件
         env_path = self.project_root / ".env"
         if not env_path.exists():
             env_path.write_text(env_config, encoding='utf-8')
-            print("✅ .env 创建完成")
 
     def create_nginx_config(self):
         """创建Nginx配置文件"""
-        print("🌐 创建 nginx.conf...")
 
         nginx_config = '''events {
     worker_connections 1024;
@@ -364,11 +352,9 @@ http {
 
         nginx_path = self.project_root / "nginx.conf"
         nginx_path.write_text(nginx_config, encoding='utf-8')
-        print("✅ nginx.conf 创建完成")
 
     def create_db_init_script(self):
         """创建数据库初始化脚本"""
-        print("🗄️ 创建数据库初始化脚本...")
 
         db_script_dir = self.project_root / "scripts"
         db_script_dir.mkdir(exist_ok=True)
@@ -419,11 +405,9 @@ ON CONFLICT DO NOTHING;
 
         init_script_path = db_script_dir / "init_db.sql"
         init_script_path.write_text(init_script, encoding='utf-8')
-        print("✅ 数据库初始化脚本创建完成")
 
     def create_deployment_scripts(self):
         """创建部署脚本"""
-        print("🚀 创建部署脚本...")
 
         scripts_dir = self.project_root / "scripts"
         deploy_script = '''#!/bin/bash
@@ -466,11 +450,9 @@ echo "🎉 部署完成！"
         deploy_script_path = scripts_dir / "deploy.sh"
         deploy_script_path.write_text(deploy_script, encoding='utf-8')
         deploy_script_path.chmod(0o755)
-        print("✅ 部署脚本创建完成")
 
     def create_health_check(self):
         """创建健康检查端点"""
-        print("❤️ 创建健康检查端点...")
 
         health_endpoint = '''from fastapi import APIRouter
 from datetime import datetime
@@ -525,11 +507,9 @@ async def detailed_health_check():
 
         health_file = health_dir / "routes.py"
         health_file.write_text(health_endpoint, encoding='utf-8')
-        print("✅ 健康检查端点创建完成")
 
     def run_preparation(self):
         """运行所有部署准备工作"""
-        print("🔧 开始执行部署准备工作...")
 
         try:
             self.create_pyproject_toml()
@@ -541,17 +521,8 @@ async def detailed_health_check():
             self.create_deployment_scripts()
             self.create_health_check()
 
-            print("\n" + "=" * 50)
-            print("🎉 部署准备完成！")
-            print("\n📋 下一步操作:")
-            print("1. 检查生成的配置文件")
-            print("2. 根据需要修改环境变量")
-            print("3. 运行部署脚本: ./scripts/deploy.sh")
-            print("4. 验证服务: curl http://localhost:8000/health")
-            print("\n🚀 项目现在已准备好进行基础部署！")
 
-        except Exception as e:
-            print(f"\n❌ 部署准备失败: {e}")
+        except Exception:
             sys.exit(1)
 
 def main():

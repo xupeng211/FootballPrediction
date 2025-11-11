@@ -11,14 +11,13 @@ import json
 import subprocess
 import sys
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 
 class GitHubIssuesMaintenance:
     """GitHub Issues 维护工具类"""
 
     def __init__(self):
-        self.issues: List[Dict] = []
+        self.issues: list[dict] = []
         self.stats = {
             "total_open": 0,
             "completed_not_closed": 0,
@@ -39,31 +38,24 @@ class GitHubIssuesMaintenance:
                 check=True
             )
             return result.stdout.strip()
-        except subprocess.CalledProcessError as e:
-            print(f"❌ 命令执行失败: {command}")
-            print(f"错误: {e.stderr}")
+        except subprocess.CalledProcessError:
             return ""
 
     def fetch_open_issues(self) -> None:
         """获取所有开放的Issues"""
-        print("🔍 获取开放Issues...")
         output = self.run_command("gh issue list --state open --json number,title,labels,createdAt,state")
 
         if output:
             try:
                 self.issues = json.loads(output)
                 self.stats["total_open"] = len(self.issues)
-                print(f"✅ 找到 {self.stats['total_open']} 个开放Issues")
-            except json.JSONDecodeError as e:
-                print(f"❌ 解析GitHub Issues数据失败: {e}")
+            except json.JSONDecodeError:
                 self.issues = []
         else:
-            print("❌ 未能获取Issues数据")
             self.issues = []
 
     def analyze_issues(self) -> None:
         """分析Issues状态"""
-        print("\n📊 分析Issues状态...")
 
         for issue in self.issues:
             labels = [label["name"] for label in issue.get("labels", [])]
@@ -87,7 +79,6 @@ class GitHubIssuesMaintenance:
 
     def detect_duplicates(self) -> None:
         """检测重复的Issues"""
-        print("🔍 检测重复Issues...")
 
         title_counts = {}
         for issue in self.issues:
@@ -102,9 +93,8 @@ class GitHubIssuesMaintenance:
         self.stats["duplicates"] = len(duplicates)
 
         if duplicates:
-            print(f"⚠️ 发现 {self.stats['duplicates']} 组重复Issues:")
             for title in duplicates:
-                print(f"   - {title}")
+                pass
 
     def generate_report(self) -> str:
         """生成维护报告"""
@@ -163,7 +153,7 @@ class GitHubIssuesMaintenance:
         else:
             report += "## ✅ 未发现问题，GitHub Issues管理状态良好！\n"
 
-        report += f"""
+        report += """
 ## 💡 建议的行动
 1. **定期维护**: 建议每周运行一次此检查
 2. **及时关闭**: 完成任务后立即关闭对应Issues
@@ -189,53 +179,29 @@ class GitHubIssuesMaintenance:
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write(report)
-            print(f"📄 报告已保存到: {filename}")
-        except Exception as e:
-            print(f"❌ 保存报告失败: {e}")
+        except Exception:
+            pass
 
     def run_maintenance(self) -> None:
         """运行完整的维护流程"""
-        print("🚀 开始GitHub Issues维护检查...")
-        print("=" * 50)
 
         self.fetch_open_issues()
 
         if not self.issues:
-            print("❌ 无法获取Issues数据，退出维护流程")
             return
 
         self.analyze_issues()
         self.detect_duplicates()
 
         report = self.generate_report()
-        print(report)
 
         self.save_report(report)
 
-        print("\n" + "=" * 50)
-        print("✅ GitHub Issues维护检查完成！")
 
 
 def main():
     """主函数"""
     if len(sys.argv) > 1 and sys.argv[1] == "--help":
-        print("""
-GitHub Issues 维护工具
-
-使用方法:
-  python github_issues_maintenance.py
-
-功能:
-  - 检查开放Issues数量
-  - 分析Issues标签完整性
-  - 检测重复Issues
-  - 生成健康状态报告
-  - 保存维护报告
-
-要求:
-  - 安装并配置GitHub CLI (gh)
-  - 确保有仓库访问权限
-        """)
         return
 
     maintenance = GitHubIssuesMaintenance()

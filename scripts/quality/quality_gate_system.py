@@ -288,24 +288,18 @@ class QualityGateSystem:
         passed_checks = 0
         total_checks = len(self.rules)
 
-        print("🏛️ 执行质量门禁检查...")
-        print(f"📋 总检查项: {total_checks}个")
 
         for rule in self.rules:
             if not rule.enabled:
-                print(f"  ⏭️  跳过: {rule.name} (已禁用)")
                 continue
 
             try:
                 rule_issues = rule.check(context)
                 if rule_issues:
-                    print(f"  ❌ 失败: {rule.name} - 发现 {len(rule_issues)} 个问题")
                     all_issues.extend(rule_issues)
                 else:
-                    print(f"  ✅ 通过: {rule.name}")
                     passed_checks += 1
-            except Exception as e:
-                print(f"  ⚠️ 错误: {rule.name} - {e}")
+            except Exception:
                 all_issues.append(QualityIssue(
                     issue_id=f"rule_error_{int(time.time())}",
                     level=QualityLevel.CRITICAL,
@@ -427,7 +421,6 @@ class QualityGateSystem:
 
 def main():
     """主函数"""
-    print("🏛️ 启动企业级质量保障系统")
 
     # 创建质量门禁系统
     quality_gate = QualityGateSystem()
@@ -450,36 +443,20 @@ def main():
     result = quality_gate.run_quality_gate(context)
 
     # 输出结果
-    print("\n" + "="*80)
-    print("🏛️ 企业级质量保障系统 - 质量门禁检查结果")
-    print("="*80)
 
-    print("\n📊 质量指标:")
-    print(f"  🎯 覆盖率: {result.metrics.coverage_percentage:.1f}%")
-    print(f"  🧪 测试数量: {result.metrics.test_count}")
-    print(f"  ✅ 成功率: {result.metrics.test_success_rate:.1f}%")
-    print(f"  🔒 安全问题: {result.metrics.security_issues_count}")
-    print(f"  ⚡ 性能问题: {result.metrics.performance_issues_count}")
-    print(f"  📈 综合质量分数: {result.metrics.overall_quality_score:.1f}/100")
 
-    print(f"\n🎯 质量门禁状态: {result.status.value}")
-    print(f"  ✅ 通过检查: {result.passed_checks}/{result.total_checks}")
-    print(f"  ⏱️ 执行时间: {result.execution_time:.2f}秒")
 
     if result.issues:
-        print(f"\n⚠️ 发现问题 ({len(result.issues)}个):")
-        for issue in result.issues[:10]:  # 显示前10个问题
-            print(f"  [{issue.level.value}] {issue.description}")
+        for _issue in result.issues[:10]:  # 显示前10个问题
+            pass
 
         if len(result.issues) > 10:
-            print(f"  ... 还有 {len(result.issues) - 10} 个问题")
+            pass
 
     if result.recommendations:
-        print("\n💡 改进建议:")
-        for rec in result.recommendations:
-            print(f"  {rec}")
+        for _rec in result.recommendations:
+            pass
 
-    print("\n" + "="*80)
 
     return result
 

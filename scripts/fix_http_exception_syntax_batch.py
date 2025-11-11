@@ -88,14 +88,11 @@ def fix_http_exception_syntax(file_path):
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"✅ 修复完成: {file_path}")
             return True
         else:
-            print(f"ℹ️  无需修复: {file_path}")
             return False
 
-    except Exception as e:
-        print(f"❌ 修复失败: {file_path} - 错误: {e}")
+    except Exception:
         return False
 
 def main():
@@ -115,8 +112,6 @@ def main():
         "src/api/routes/user_management.py"
     ]
 
-    print("🔧 开始批量修复HTTPException语法错误...")
-    print(f"📁 目标文件数量: {len(api_files)}")
 
     fixed_count = 0
     failed_count = 0
@@ -126,27 +121,14 @@ def main():
             if fix_http_exception_syntax(file_path):
                 fixed_count += 1
             else:
-                print(f"ℹ️  文件无需修复: {file_path}")
+                pass
         else:
-            print(f"⚠️  文件不存在: {file_path}")
             failed_count += 1
 
-    print("\n" + "="*60)
-    print("📊 修复统计:")
-    print(f"  ✅ 修复成功: {fixed_count} 个文件")
-    print(f"  ❌ 修复失败: {failed_count} 个文件")
-    print(f"  📁 总文件数: {len(api_files)} 个文件")
 
     if fixed_count > 0:
-        print("\n🎯 建议下一步操作:")
-        print("  1. 运行语法检查验证修复效果:")
-        print("     ruff check src/api/ --output-format=concise")
-        print("  2. 运行测试验证功能完整性:")
-        print("     python -m pytest tests/unit/api/ -v")
-        print("  3. 提交修复结果:")
-        print("     git add src/api/ && git commit -m 'fix: 批量修复HTTPException语法错误'")
+        pass
 
-    print("\n✨ 批量修复完成!")
 
 if __name__ == "__main__":
     main()

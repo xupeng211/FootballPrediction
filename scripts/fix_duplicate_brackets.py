@@ -19,7 +19,6 @@ def fix_duplicate_brackets(content):
 
 def main():
     """主函数"""
-    print("🔧 修复HTTPException重复括号问题...")
 
     fixed_files = 0
     for py_file in Path("src").rglob("*.py"):
@@ -34,12 +33,10 @@ def main():
                 if content != fixed_content:
                     with open(py_file, 'w', encoding='utf-8') as f:
                         f.write(fixed_content)
-                    print(f"✅ 修复了: {py_file}")
                     fixed_files += 1
-        except Exception as e:
-            print(f"❌ 处理文件失败 {py_file}: {e}")
+        except Exception:
+            pass
 
-    print(f"🎉 总共修复了 {fixed_files} 个文件")
 
 if __name__ == "__main__":
     main()

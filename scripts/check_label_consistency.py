@@ -9,8 +9,6 @@ Purpose: Validate label consistency and generate reports
 """
 
 import argparse
-import json
-import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -74,8 +72,7 @@ class LabelConsistencyChecker:
                 if len(page_issues) < per_page:
                     break
 
-            except requests.exceptions.RequestException as e:
-                print(f"获取Issues失败: {e}")
+            except requests.exceptions.RequestException:
                 break
 
         return issues
@@ -97,13 +94,11 @@ class LabelConsistencyChecker:
 
             return labels
 
-        except requests.exceptions.RequestException as e:
-            print(f"获取标签失败: {e}")
+        except requests.exceptions.RequestException:
             return {}
 
     def analyze_label_consistency(self) -> dict:
         """分析标签一致性"""
-        print("🔍 分析Issue标签一致性...")
 
         issues = self.get_issues()
         repo_labels = self.get_repo_labels()
@@ -284,7 +279,7 @@ class LabelConsistencyChecker:
             "",
             "---",
             f"*报告生成时间: {datetime.now().isoformat()}*",
-            f"*工具: Label Consistency Checker v1.0*"
+            "*工具: Label Consistency Checker v1.0*"
         ])
 
         report_content = "\n".join(report_lines)
@@ -294,7 +289,6 @@ class LabelConsistencyChecker:
             output_path = Path(output_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(report_content, encoding='utf-8')
-            print(f"📄 报告已保存到: {output_path}")
 
         return report_content
 
@@ -313,7 +307,7 @@ def main():
     github_token = args.token or os.environ.get("GITHUB_TOKEN")
 
     if not github_token:
-        print("⚠️ 警告: 未提供GitHub令牌，API调用可能受限")
+        pass
 
     # 创建检查器
     checker = LabelConsistencyChecker(args.repo, github_token)
@@ -322,14 +316,10 @@ def main():
     analysis = checker.analyze_label_consistency()
 
     # 生成报告
-    report = checker.generate_report(analysis, args.output)
+    checker.generate_report(analysis, args.output)
 
     if args.verbose:
-        print("\n" + "="*50)
-        print("检查完成!")
-        print(f"📊 总Issues: {analysis['total_issues']}")
-        print(f"🏷️ 标签覆盖率: {analysis['issues_with_labels'] / analysis['total_issues'] * 100:.1f}%")
-        print(f"⚠️ 发现问题: {len(analysis['missing_required_labels']) + len(analysis['label_inconsistencies']) + len(analysis['label_format_issues'])}")
+        pass
 
     return 0
 

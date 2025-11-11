@@ -3,9 +3,8 @@
 创建Phase 11.0 Issue跟踪器
 """
 
-import json
 import subprocess
-from datetime import datetime
+
 
 def create_phase11_issue():
     """创建Phase 11.0 Issue"""
@@ -107,30 +106,20 @@ def create_phase11_issue():
 
         if result.returncode == 0:
             issue_url = result.stdout.strip()
-            print(f"✅ Phase 11.0 Issue创建成功: {issue_url}")
             return issue_url
         else:
-            print(f"❌ 创建Issue失败: {result.stderr}")
             return None
 
-    except Exception as e:
-        print(f"❌ 创建Issue时出错: {e}")
+    except Exception:
         return None
 
 def main():
     """主函数"""
-    print("📝 创建Phase 11.0 Issue跟踪器")
-    print("=" * 50)
 
     issue_url = create_phase11_issue()
 
     if issue_url:
-        print(f"\n🎉 Phase 11.0跟踪器创建完成!")
-        print(f"📋 Issue链接: {issue_url}")
-        print(f"\n💡 建议:")
-        print(f"  1. 访问Issue查看详细进展")
-        print(f"  2. 使用评论更新各阶段完成状态")
-        print(f"  3. 关联相关的GitHub Issues")
+        pass
 
 if __name__ == "__main__":
     main()

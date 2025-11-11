@@ -51,7 +51,7 @@ class GitFlowAutomation:
         """执行Git命令"""
         try:
             if show_output:
-                print(f"🔄 执行: {' '.join(command)}")
+                pass
 
             result = subprocess.run(
                 command,
@@ -61,14 +61,13 @@ class GitFlowAutomation:
             )
 
             if show_output and result.stdout:
-                print(result.stdout)
+                pass
 
             return True
         except subprocess.CalledProcessError as e:
             if show_output:
-                print(f"❌ 命令失败: {' '.join(command)}")
                 if e.stderr:
-                    print(f"错误信息: {e.stderr}")
+                    pass
             return False
 
     def validate_branch_name(self, name: str, prefix: str) -> bool:
@@ -87,39 +86,25 @@ class GitFlowAutomation:
     def start_feature(self, name: str) -> bool:
         """开始功能开发"""
         if not self.validate_branch_name(name, self.config["feature_prefix"]):
-            print(f"❌ 无效的功能分支名称: {name}")
-            print("分支名称应该只包含字母、数字、连字符和下划线")
             return False
 
         feature_branch = f"{self.config['feature_prefix']}{name}"
 
         if self.current_branch != self.config["develop_branch"]:
-            print(f"🔄 切换到 {self.config['develop_branch']} 分支...")
             if not self.run_git_command(['git',
     'checkout',
     self.config['develop_branch']]):
                 return False
 
-        print(f"📥 拉取最新的 {self.config['develop_branch']} 分支...")
         if not self.run_git_command(['git',
     'pull',
     'origin',
     self.config['develop_branch']]):
             return False
 
-        print(f"🚀 创建功能分支: {feature_branch}")
         if not self.run_git_command(['git', 'checkout', '-b', feature_branch]):
             return False
 
-        print(f"✅ 功能分支 {feature_branch} 创建成功！")
-        print("\n📝 后续步骤:")
-        print("1. 进行功能开发")
-        print("2. 定期提交代码:")
-        print("   git add .")
-        print("   git commit -m 'feat: 描述你的变更'")
-        print("3. 开发完成后推送分支:")
-        print(f"   git push origin {feature_branch}")
-        print("4. 创建Pull Request到develop分支")
 
         return True
 
@@ -128,70 +113,52 @@ class GitFlowAutomation:
         feature_branch = f"{self.config['feature_prefix']}{name}"
 
         if self.current_branch == feature_branch:
-            print("🔄 切换到develop分支...")
             if not self.run_git_command(['git',
     'checkout',
     self.config['develop_branch']]):
                 return False
 
-        print("📥 拉取最新的develop分支...")
         if not self.run_git_command(['git',
     'pull',
     'origin',
     self.config['develop_branch']]):
             return False
 
-        print(f"🔄 合并功能分支 {feature_branch} 到 develop...")
         if not self.run_git_command(['git', 'merge', feature_branch, '--no-ff']):
             return False
 
-        print(f"🗑️  删除功能分支 {feature_branch}...")
         self.run_git_command(['git', 'branch', '-d', feature_branch])
 
-        print("📤 推送更新到远程develop分支...")
         if not self.run_git_command(['git',
     'push',
     'origin',
     self.config['develop_branch']]):
             return False
 
-        print("✅ 功能开发完成！")
         return True
 
     def start_release(self, version: str) -> bool:
         """开始发布准备"""
         if not re.match(r'^v\d+\.\d+\.\d+(-.+)?$', version):
-            print(f"❌ 无效的版本号格式: {version}")
-            print("版本号格式示例: v1.0.0, v1.2.3-beta.1")
             return False
 
         release_branch = f"{self.config['release_prefix']}{version}"
 
         if self.current_branch != self.config["develop_branch"]:
-            print(f"🔄 切换到 {self.config['develop_branch']} 分支...")
             if not self.run_git_command(['git',
     'checkout',
     self.config['develop_branch']]):
                 return False
 
-        print("📥 拉取最新的develop分支...")
         if not self.run_git_command(['git',
     'pull',
     'origin',
     self.config['develop_branch']]):
             return False
 
-        print(f"🚀 创建发布分支: {release_branch}")
         if not self.run_git_command(['git', 'checkout', '-b', release_branch]):
             return False
 
-        print(f"✅ 发布分支 {release_branch} 创建成功！")
-        print("\n📝 后续步骤:")
-        print("1. 更新版本号和CHANGELOG")
-        print("2. 修复发现的发布问题")
-        print("3. 进行最终测试")
-        print("4. 完成发布:")
-        print(f"   python3 {__file__} release-finish {version}")
 
         return True
 
@@ -199,26 +166,21 @@ class GitFlowAutomation:
         """完成发布"""
         release_branch = f"{self.config['release_prefix']}{version}"
 
-        print(f"🔄 切换到 {self.config['main_branch']} 分支...")
         if not self.run_git_command(['git', 'checkout', self.config['main_branch']]):
             return False
 
-        print(f"📥 拉取最新的 {self.config['main_branch']} 分支...")
         if not self.run_git_command(['git',
     'pull',
     'origin',
     self.config['main_branch']]):
             return False
 
-        print(f"🔄 合并发布分支 {release_branch} 到 main...")
         if not self.run_git_command(['git', 'merge', release_branch, '--no-ff']):
             return False
 
-        print(f"🏷️  创建标签 {version}...")
         if not self.run_git_command(['git', 'tag', version]):
             return False
 
-        print("📤 推送main分支和标签到远程...")
         if not self.run_git_command(['git',
     'push',
     'origin',
@@ -227,7 +189,6 @@ class GitFlowAutomation:
         if not self.run_git_command(['git', 'push', 'origin', version]):
             return False
 
-        print("🔄 同步到develop分支...")
         if not self.run_git_command(['git', 'checkout', self.config['develop_branch']]):
             return False
         if not self.run_git_command(['git', 'merge', release_branch, '--no-ff']):
@@ -238,44 +199,32 @@ class GitFlowAutomation:
     self.config['develop_branch']]):
             return False
 
-        print(f"🗑️  删除发布分支 {release_branch}...")
         self.run_git_command(['git', 'branch', '-d', release_branch])
 
-        print(f"✅ 版本 {version} 发布完成！")
         return True
 
     def start_hotfix(self, name: str) -> bool:
         """开始热修复"""
         if not self.validate_branch_name(name, self.config["hotfix_prefix"]):
-            print(f"❌ 无效的热修复分支名称: {name}")
             return False
 
         hotfix_branch = f"{self.config['hotfix_prefix']}{name}"
 
         if self.current_branch != self.config["main_branch"]:
-            print(f"🔄 切换到 {self.config['main_branch']} 分支...")
             if not self.run_git_command(['git',
     'checkout',
     self.config['main_branch']]):
                 return False
 
-        print(f"📥 拉取最新的 {self.config['main_branch']} 分支...")
         if not self.run_git_command(['git',
     'pull',
     'origin',
     self.config['main_branch']]):
             return False
 
-        print(f"🚀 创建热修复分支: {hotfix_branch}")
         if not self.run_git_command(['git', 'checkout', '-b', hotfix_branch]):
             return False
 
-        print(f"✅ 热修复分支 {hotfix_branch} 创建成功！")
-        print("\n📝 后续步骤:")
-        print("1. 快速修复问题")
-        print("2. 本地测试验证")
-        print("3. 完成热修复:")
-        print(f"   python3 {__file__} hotfix-finish {name}")
 
         return True
 
@@ -283,18 +232,15 @@ class GitFlowAutomation:
         """完成热修复"""
         hotfix_branch = f"{self.config['hotfix_prefix']}{name}"
 
-        print(f"🔄 切换到 {self.config['main_branch']} 分支...")
         if not self.run_git_command(['git', 'checkout', self.config['main_branch']]):
             return False
 
-        print(f"📥 拉取最新的 {self.config['main_branch']} 分支...")
         if not self.run_git_command(['git',
     'pull',
     'origin',
     self.config['main_branch']]):
             return False
 
-        print(f"🔄 合并热修复分支 {hotfix_branch} 到 main...")
         if not self.run_git_command(['git', 'merge', hotfix_branch, '--no-ff']):
             return False
 
@@ -303,11 +249,9 @@ class GitFlowAutomation:
         today = datetime.datetime.now().strftime("%Y.%m.%d")
         patch_version = f"v{today}-hotfix"
 
-        print(f"🏷️  创建热修复标签 {patch_version}...")
         if not self.run_git_command(['git', 'tag', patch_version]):
             return False
 
-        print("📤 紧急推送到远程...")
         if not self.run_git_command(['git',
     'push',
     'origin',
@@ -316,7 +260,6 @@ class GitFlowAutomation:
         if not self.run_git_command(['git', 'push', 'origin', patch_version]):
             return False
 
-        print("🔄 同步到develop分支...")
         if not self.run_git_command(['git', 'checkout', self.config['develop_branch']]):
             return False
         if not self.run_git_command(['git', 'merge', hotfix_branch, '--no-ff']):
@@ -327,18 +270,12 @@ class GitFlowAutomation:
     self.config['develop_branch']]):
             return False
 
-        print(f"🗑️  删除热修复分支 {hotfix_branch}...")
         self.run_git_command(['git', 'branch', '-d', hotfix_branch])
 
-        print(f"✅ 热修复 {name} 完成并发布！")
-        print(f"🏷️  标签: {patch_version}")
         return True
 
     def show_status(self) -> bool:
         """显示当前Git状态"""
-        print("🌊 Git Flow 状态")
-        print("=" * 50)
-        print(f"当前分支: {self.current_branch}")
 
         # 获取所有分支
         try:
@@ -350,35 +287,32 @@ class GitFlowAutomation:
             )
             branches = result.stdout.strip().split('\n')
 
-            print("\n📋 分支状态:")
             for branch in branches:
                 branch = branch.replace('*', '').strip()
                 if branch.startswith('remotes/origin/'):
                     branch = branch[13:]  # 移除 'remotes/origin/'
 
                 if branch == self.config['main_branch']:
-                    print(f"  🔵 {branch} (main)")
+                    pass
                 elif branch == self.config['develop_branch']:
-                    print(f"  🟡 {branch} (develop)")
+                    pass
                 elif branch.startswith(self.config['feature_prefix']):
-                    print(f"  🟢 {branch} (feature)")
+                    pass
                 elif branch.startswith(self.config['release_prefix']):
-                    print(f"  🟠 {branch} (release)")
+                    pass
                 elif branch.startswith(self.config['hotfix_prefix']):
-                    print(f"  🔴 {branch} (hotfix)")
+                    pass
 
         except subprocess.CalledProcessError:
-            print("❌ 无法获取分支信息")
+            pass
 
         return True
 
     def init_git_flow(self) -> bool:
         """初始化Git Flow配置"""
-        print("🚀 初始化Git Flow配置...")
 
         # 检查是否为Git仓库
         if not Path('.git').exists():
-            print("❌ 当前目录不是Git仓库")
             return False
 
         # 创建配置文件
@@ -386,12 +320,9 @@ class GitFlowAutomation:
         with open(config_file, 'w', encoding='utf-8') as f:
             json.dump(self.config, f, indent=2, ensure_ascii=False)
 
-        print("✅ Git Flow配置初始化完成！")
-        print(f"配置文件: {config_file}")
 
-        print("\n📋 配置:")
-        for key, value in self.config.items():
-            print(f"  {key}: {value}")
+        for _key, _value in self.config.items():
+            pass
 
         return True
 
@@ -437,7 +368,6 @@ def main():
     elif args.command == 'status':
         success = automation.show_status()
     elif args.name is None:
-        print(f"❌ 命令 '{args.command}' 需要名称参数")
         parser.print_help()
         sys.exit(1)
     else:
@@ -453,7 +383,6 @@ def main():
         if args.command in command_map:
             success = command_map[args.command](args.name)
         else:
-            print(f"❌ 未知命令: {args.command}")
             sys.exit(1)
 
     sys.exit(0 if success else 1)
