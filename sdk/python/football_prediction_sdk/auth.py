@@ -7,11 +7,9 @@ Author: Claude Code
 Version: 1.0.0
 """
 
-import time
 import json
-import hashlib
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Any
 
 import requests
 
@@ -43,10 +41,10 @@ class AuthManager:
         self.auto_refresh = auto_refresh
 
         # Token缓存
-        self._access_token: Optional[str] = None
-        self._refresh_token: Optional[str] = None
-        self._token_expires_at: Optional[datetime] = None
-        self._refresh_token_expires_at: Optional[datetime] = None
+        self._access_token: str | None = None
+        self._refresh_token: str | None = None
+        self._token_expires_at: datetime | None = None
+        self._refresh_token_expires_at: datetime | None = None
 
         # 会话管理
         self._session = requests.Session()
@@ -67,13 +65,13 @@ class AuthManager:
         return now < (self._token_expires_at - expiry_buffer)
 
     @property
-    def access_token(self) -> Optional[str]:
+    def access_token(self) -> str | None:
         """获取访问token"""
         if self.auto_refresh and not self.is_authenticated:
             self.refresh_token_if_needed()
         return self._access_token
 
-    def get_auth_headers(self) -> Dict[str, str]:
+    def get_auth_headers(self) -> dict[str, str]:
         """
         获取认证头
 
@@ -89,7 +87,7 @@ class AuthManager:
 
         return {"Authorization": f"Bearer {token}"}
 
-    def authenticate_with_api_key(self, username: Optional[str] = None, password: Optional[str] = None) -> bool:
+    def authenticate_with_api_key(self, username: str | None = None, password: str | None = None) -> bool:
         """
         使用API密钥进行认证
 
@@ -158,7 +156,7 @@ class AuthManager:
         except requests.exceptions.RequestException as e:
             raise AuthenticationError(f"密码认证失败: {str(e)}")
 
-    def _process_auth_response(self, auth_data: Dict[str, Any]) -> None:
+    def _process_auth_response(self, auth_data: dict[str, Any]) -> None:
         """处理认证响应"""
         if not auth_data.get("success"):
             raise AuthenticationError("认证响应失败")
@@ -288,7 +286,7 @@ class AuthManager:
         except requests.exceptions.RequestException:
             return False
 
-    def get_user_info(self) -> Optional[Dict[str, Any]]:
+    def get_user_info(self) -> dict[str, Any] | None:
         """获取当前用户信息"""
         if not self.is_authenticated:
             raise AuthenticationError("未认证")
@@ -328,7 +326,7 @@ class AuthManager:
         except requests.exceptions.RequestException as e:
             raise SystemError(f"修改密码失败: {str(e)}")
 
-    def generate_api_key(self, name: str, description: str = None) -> Optional[str]:
+    def generate_api_key(self, name: str, description: str = None) -> str | None:
         """生成新的API密钥"""
         if not self.is_authenticated:
             raise AuthenticationError("未认证")

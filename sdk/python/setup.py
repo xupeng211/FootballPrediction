@@ -3,14 +3,16 @@
 Football Prediction SDK 安装配置
 """
 
-from setuptools import setup, find_packages
 import os
+
+from setuptools import find_packages, setup
+
 
 # 读取README文件
 def read_readme():
     readme_path = os.path.join(os.path.dirname(__file__), "README.md")
     if os.path.exists(readme_path):
-        with open(readme_path, "r", encoding="utf-8") as f:
+        with open(readme_path, encoding="utf-8") as f:
             return f.read()
     return "Football Prediction Python SDK"
 
@@ -18,7 +20,7 @@ def read_readme():
 def read_requirements():
     requirements_path = os.path.join(os.path.dirname(__file__), "requirements.txt")
     if os.path.exists(requirements_path):
-        with open(requirements_path, "r", encoding="utf-8") as f:
+        with open(requirements_path, encoding="utf-8") as f:
             return [line.strip() for line in f if line.strip() and not line.startswith("#")]
     return ["requests>=2.25.0", "python-dateutil>=2.8.0"]
 
