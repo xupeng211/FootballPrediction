@@ -1,0 +1,197 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "足球预测API",
+    "version": "1.0.0",
+    "description": "基于现代Python技术栈的企业级足球预测系统API",
+    "contact": {
+      "name": "API Support",
+      "email": "support@footballprediction.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "开发环境"
+    },
+    {
+      "url": "https://api.footballprediction.com",
+      "description": "生产环境"
+    }
+  ],
+  "paths": {
+    "/api/v1/health/": {
+      "get": {
+        "summary": "基础健康检查",
+        "description": "检查API服务的基本健康状态",
+        "tags": [
+          "健康检查"
+        ],
+        "responses": {
+          "200": {
+            "description": "服务健康",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "healthy"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predictions/{match_id}/predict": {
+      "post": {
+        "summary": "生成比赛预测",
+        "description": "为指定的比赛ID生成预测结果",
+        "tags": [
+          "预测服务"
+        ],
+        "parameters": [
+          {
+            "name": "match_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "比赛ID"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model_type": {
+                    "type": "string",
+                    "enum": [
+                      "ml",
+                      "statistical",
+                      "ensemble"
+                    ],
+                    "description": "预测模型类型"
+                  },
+                  "features": {
+                    "type": "object",
+                    "description": "预测特征数据"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "预测生成成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "prediction_id": {
+                      "type": "string"
+                    },
+                    "match_id": {
+                      "type": "integer"
+                    },
+                    "result": {
+                      "type": "string",
+                      "enum": [
+                        "win",
+                        "draw",
+                        "loss"
+                      ]
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/monitoring/metrics": {
+      "get": {
+        "summary": "获取系统指标",
+        "description": "获取包括系统、数据库、业务等各方面的监控指标",
+        "tags": [
+          "监控服务"
+        ],
+        "responses": {
+          "200": {
+            "description": "指标获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "response_time_ms": {
+                      "type": "number"
+                    },
+                    "system": {
+                      "type": "object"
+                    },
+                    "database": {
+                      "type": "object"
+                    },
+                    "business": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "健康检查",
+      "description": "API服务健康状态检查相关接口"
+    },
+    {
+      "name": "预测服务",
+      "description": "足球比赛预测相关接口"
+    },
+    {
+      "name": "数据服务",
+      "description": "足球数据查询相关接口"
+    },
+    {
+      "name": "监控服务",
+      "description": "系统监控和指标收集相关接口"
+    }
+  ]
+}
