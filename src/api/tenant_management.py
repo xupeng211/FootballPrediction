@@ -15,7 +15,6 @@ from pydantic import BaseModel, Field, validator
 from src.database.base import get_db_session
 from src.database.models.tenant import Tenant, TenantPlan, TenantStatus
 from src.middleware.tenant_middleware import (
-    check_resource_quota,
     get_tenant_context,
     require_permission,
 )
@@ -405,7 +404,7 @@ async def check_permission(
     "/{tenant_id}/quota/{resource_type}", response_model=QuotaCheckResponseModel
 )
 @require_permission("quota.view")
-async def check_resource_quota(
+async def check_tenant_resource_quota(
     tenant_id: int,
     resource_type: str,
     amount: int = Query(1, ge=1, description="需要的资源量"),

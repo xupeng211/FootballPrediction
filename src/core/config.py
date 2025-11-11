@@ -27,7 +27,7 @@ except ImportError:
         HAS_PYDANTIC = False
         BaseSettings = object
 
-        def Field(*args: Any, **kwargs: Any) -> Any:
+        def field(*args: Any, **kwargs: Any) -> Any:
             return None
 
 

@@ -7,16 +7,8 @@ Redis Cache Manager
 
 import logging
 
-from .mock_redis import CacheKeyManager
-from .redis_enhanced import EnhancedRedisManager, get_redis_manager
-
-logger = logging.getLogger(__name__)
-
-# 向后兼容别名
-RedisManager = EnhancedRedisManager
-
-# 从mock_redis导入便捷函数以确保向后兼容
 from .mock_redis import (
+    CacheKeyManager,
     adelete_cache,
     aexists_cache,
     aget_cache,
@@ -33,6 +25,12 @@ from .mock_redis import (
     startup_warmup,
     ttl_cache,
 )
+from .redis_enhanced import EnhancedRedisManager, get_redis_manager
+
+logger = logging.getLogger(__name__)
+
+# 向后兼容别名
+RedisManager = EnhancedRedisManager
 
 # 导出所有公共接口
 __all__ = [

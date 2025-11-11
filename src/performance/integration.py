@@ -10,7 +10,6 @@ Performance Monitoring Integration Module
 - 性能监控初始化
 """
 
-
 from fastapi import FastAPI
 
 from src.core.config import get_settings

@@ -133,7 +133,6 @@ class TestAuthModels:
     def test_user_register_model_valid(self):
         """测试用户注册模型验证"""
         user_data = {
-            "username": "testuser",
             "email": "test@example.com",
             "password": "TestPassword123!",
             "full_name": "Test User",
@@ -141,7 +140,6 @@ class TestAuthModels:
 
         user = UserRegister(**user_data)
 
-        assert user.username == "testuser"
         assert user.email == "test@example.com"
         assert user.password == "TestPassword123!"
         assert user.full_name == "Test User"

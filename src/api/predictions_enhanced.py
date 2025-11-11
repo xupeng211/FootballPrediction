@@ -35,10 +35,10 @@ def get_mock_async_session():
     return None
 
 
-def get_mock_logger():
+def get_mock_logger(name=None):
     import logging
 
-    return logging.getLogger(__name__)
+    return logging.getLogger(name)
 
 
 # Replace imports with mocks

@@ -38,7 +38,6 @@ try:
         RiskLevel,
     )
 except ImportError:
-
     # 如果导入失败,使用备用定义
     # 定义基础类型以防导入失败
     class BetType(Enum):

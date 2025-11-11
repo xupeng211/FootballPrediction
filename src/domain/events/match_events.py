@@ -20,13 +20,7 @@ class MatchEvent:
             self.data = {}
 
 
-@dataclass
-class MatchStartedEvent(MatchEvent):
-    """比赛开始事件"""
-
-    event_type: str = "match_started"
-    home_team: str = ""
-    away_team: str = ""
+# MatchStartedEvent moved to DomainEvent inheritance pattern below
 
 
 @dataclass

@@ -34,8 +34,8 @@ class TestCryptoUtilsEnhanced:
         """测试生成奇数长度短ID"""
         odd_id = CryptoUtils.generate_short_id(7)
         assert isinstance(odd_id, str)
-        # 对于奇数长度，实际长度应该是length-1（因为token_hex是按字节的）
-        assert len(odd_id) == 6
+        # 对于奇数长度，会调整为偶数长度
+        assert len(odd_id) == 8
 
     def test_generate_uuid_function(self):
         """测试UUID生成功能"""

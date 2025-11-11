@@ -812,7 +812,7 @@ async def cache_system_health():
             cluster_status = await redis_manager.get_cluster_status()
             if cluster_status["cluster_info"]["healthy_nodes"] == 0:
                 components["redis_cluster"] = "unhealthy"
-        except:
+        except Exception:
             components["redis_cluster"] = "error"
     else:
         components["redis_cluster"] = "disabled"

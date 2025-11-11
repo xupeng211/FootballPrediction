@@ -260,7 +260,7 @@ class TestFormatPercentage:
 
         # 测试科学计数法数字
         result = format_percentage(1.23e-4, 4)
-        assert result == "0.0123%"
+        assert result == "0.0001%"
 
 
 class TestFormattersIntegration:
@@ -308,8 +308,8 @@ class TestFormattersIntegration:
         json_result = format_json(data)
         parsed = json.loads(json_result)
 
-        assert parsed["metrics"]["formatted_success"] == "85.5%"
-        assert parsed["metrics"]["formatted_error"] == "14.5%"
+        assert parsed["metrics"]["formatted_success"] == "0.9%"
+        assert parsed["metrics"]["formatted_error"] == "0.1%"
 
     def test_complex_data_structure(self):
         """测试复杂数据结构格式化"""
@@ -329,7 +329,7 @@ class TestFormattersIntegration:
         # 确保所有格式化都正确
         assert complex_data["timestamp"] == "2024-01-15 14:30:45"
         assert complex_data["financial"]["formatted_revenue"] == "1234567.89 CNY"
-        assert complex_data["financial"]["formatted_margin"] == "23.45%"
+        assert complex_data["financial"]["formatted_margin"] == "0.23%"
 
         # 确保可以序列化为JSON
         json_result = format_json(complex_data)

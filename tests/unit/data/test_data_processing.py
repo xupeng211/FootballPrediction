@@ -297,10 +297,8 @@ class TestMissingDataHandler:
         )  # 60%缺失 -> 应该返回"extensive"
 
         # 额外测试数据来验证所有分类
-        data_low_missing = pd.Series([1, 2, 3, 4, np.nan])  # 20%缺失 - 边界情况
-        data_moderate_missing = pd.Series(
-            [1, np.nan, 3, 4, 5]
-        )  # 20%缺失 -> 同样是"substantial"
+        pd.Series([1, 2, 3, 4, np.nan])  # 20%缺失 - 边界情况
+        pd.Series([1, np.nan, 3, 4, 5])  # 20%缺失 -> 同样是"substantial"
 
         assert (
             handler._classify_missing_type(data_sporadic) == "substantial"

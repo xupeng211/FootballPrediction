@@ -11,7 +11,7 @@ from collections.abc import Callable
 from typing import Any, Generic, TypeVar
 
 from sqlalchemy import delete, select, update
-from sqlalchemy import exc as SQLAlchemyExc
+from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection import DatabaseManager
@@ -406,8 +406,8 @@ class BaseRepository(ABC, Generic[T]):
                 await sess.commit()
                 return results
             except (
-                SQLAlchemyExc.SQLAlchemyError,
-                SQLAlchemyExc.DatabaseError,
+                SQLAlchemyError,
+                DatabaseError,
                 ConnectionError,
                 TimeoutError,
             ):

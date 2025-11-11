@@ -19,9 +19,8 @@ from typing import Any
 
 try:
     import redis.asyncio as aioredis
-    from redis.cluster import RedisCluster
-    from redis.sentinel import Sentinel
 
+    # from redis.cluster import RedisCluster  # 暂时注释，未使用
     import redis
 
     REDIS_AVAILABLE = True
@@ -229,7 +228,6 @@ class RedisClusterManager:
         connection_timeout: int = 5,
         max_retries: int = 3,
     ):
-
         self.consistency_strategy = consistency_strategy
         self.replication_strategy = replication_strategy
         self.replication_factor = replication_factor

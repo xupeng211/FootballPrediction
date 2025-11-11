@@ -60,7 +60,9 @@ class EloModel(BaseModel):
         # 使用现有的期望得分计算方法
         return self._calculate_expected_score(rating_a, rating_b, is_home=False)
 
-    def _update_rating(self, old_rating: float, opponent_rating: float, actual_result: float) -> float:
+    def _update_rating(
+        self, old_rating: float, opponent_rating: float, actual_result: float
+    ) -> float:
         """
         更新评分（测试兼容方法）
 
@@ -100,7 +102,9 @@ class EloModel(BaseModel):
         else:
             raise ValueError(f"Invalid outcome: {outcome}")
 
-    def _calculate_match_probabilities(self, home_team: str, away_team: str) -> tuple[float, float, float]:
+    def _calculate_match_probabilities(
+        self, home_team: str, away_team: str
+    ) -> tuple[float, float, float]:
         """
         计算比赛概率（测试兼容方法）
 
@@ -115,7 +119,9 @@ class EloModel(BaseModel):
         away_elo = self.team_elos.get(away_team, self.initial_elo)
 
         home_expected = self._calculate_expected_score(home_elo, away_elo, is_home=True)
-        away_expected = self._calculate_expected_score(away_elo, home_elo, is_home=False)
+        away_expected = self._calculate_expected_score(
+            away_elo, home_elo, is_home=False
+        )
 
         return self._convert_expected_scores_to_probabilities(
             home_expected, away_expected, home_elo - away_elo
@@ -297,7 +303,9 @@ class EloModel(BaseModel):
         # 初始化ELO评分
         for team in all_teams:
             self.team_elos[team] = self.hyperparameters["initial_elo"]
-            self.team_ratings[team] = self.hyperparameters["initial_elo"]  # 同步兼容性属性
+            self.team_ratings[team] = self.hyperparameters[
+                "initial_elo"
+            ]  # 同步兼容性属性
             self.team_matches[team] = 0
             self.elo_history[team] = [self.hyperparameters["initial_elo"]]
 

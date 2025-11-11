@@ -107,7 +107,7 @@ class DataValidator:
         check_code = check_codes[total % 11]
 
         # 比较校验码（不区分大小写）
-        return id_card[17].upper() == check_code
+        return id_card[17].upper() == check_code.upper()
 
     @staticmethod
     def sanitize_input(input_data: Any) -> str:

@@ -45,6 +45,11 @@ class Subject(ABC):
         self._changed = False
         self._lock = threading.Lock()
 
+    @abstractmethod
+    def get_subject_id(self) -> str:
+        """获取主题ID - 子类必须实现"""
+        pass
+
     def attach(self, observer: Observer) -> None:
         """添加观察者
 
@@ -118,6 +123,10 @@ class ConcreteSubject(Subject):
         self.name = name
         self._state: dict[str, Any] = {}
         self._history: list[dict[str, Any]] = []
+
+    def get_subject_id(self) -> str:
+        """获取主题ID"""
+        return self.name
 
     def get_state(self, key: str) -> Any:
         """获取状态值
@@ -514,6 +523,10 @@ class AsyncSubject(Subject):
         self.name = name
         self.event_queue = EventQueue(queue_size)
 
+    def get_subject_id(self) -> str:
+        """获取主题ID"""
+        return self.name
+
     def start_async_notifications(self) -> None:
         """启动异步通知"""
         self.event_queue.start()
@@ -607,6 +620,10 @@ class ObservableService(Subject):
         self._status = "stopped"
         self._metrics = {}
 
+    def get_subject_id(self) -> str:
+        """获取主题ID"""
+        return self.service_name
+
     def start(self):
         """启动服务"""
         self._status = "running"
@@ -641,8 +658,8 @@ class ObservableService(Subject):
         return self._metrics.copy()
 
 
-def create_observer_system(service_name: str) -> dict[str, Any]:
-    """创建观察者系统
+def create_service_observer_system(service_name: str) -> dict[str, Any]:
+    """创建服务观察者系统
 
     Args:
         service_name: 服务名称

@@ -7,6 +7,8 @@ Model Training Module - Stub Implementation
 Temporary implementation to resolve import errors.
 """
 
+# ruff: noqa: N806, N803  # ML变量名和参数名约定 (X_train, X_test等) 是行业标准
+
 import asyncio
 import json
 import logging

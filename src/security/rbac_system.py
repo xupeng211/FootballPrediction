@@ -12,7 +12,7 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
-class Role_BasedAccessControl:
+class RoleBasedAccessControl:
     """类文档字符串"""
 
     pass  # 添加pass语句
@@ -45,4 +45,4 @@ class Role_BasedAccessControl:
 
 
 if __name__ == "__main__":
-    service = Role_BasedAccessControl()
+    service = RoleBasedAccessControl()

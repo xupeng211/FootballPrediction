@@ -44,6 +44,7 @@ from src.api.adapters.router import router as adapters_router
 from src.api.data_integration import router as data_integration_router
 from src.api.data_router import router as data_router
 from src.api.health import router as health_router
+from src.api.monitoring import router as monitoring_router
 from src.api.predictions import router as predictions_router
 
 # 导入并注册SRS规范增强预测路由
@@ -155,6 +156,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.include_router(health_router, prefix="/api/v1/health", tags=["health"])
 app.include_router(predictions_router)
 app.include_router(data_router)
+app.include_router(monitoring_router, prefix="/monitoring", tags=["monitoring"])
 app.include_router(adapters_router)
 app.include_router(data_integration_router, prefix="/api/v1", tags=["data-integration"])
 app.include_router(

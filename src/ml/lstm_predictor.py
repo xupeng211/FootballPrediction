@@ -6,6 +6,8 @@ LSTM Time Series Prediction Model
 基于长短期记忆网络的质量指标时间序列预测和异常检测
 """
 
+# ruff: noqa: N806, N803  # ML变量名和参数名约定 (X_train, X_test等) 是行业标准
+
 import pickle
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
@@ -18,7 +20,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import MinMaxScaler
 
 try:
-    import tensorflow as tf
     from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
     from tensorflow.keras.layers import LSTM, BatchNormalization, Dense, Dropout
     from tensorflow.keras.models import Sequential

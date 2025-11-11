@@ -159,8 +159,10 @@ class EventHandler(ABC):
             list[str]: 事件类型列表
         """
 
+    @abstractmethod
     async def start(self) -> None:
-        """启动处理器"""
+        """启动处理器 - 子类必须实现"""
+        pass
 
     async def stop(self) -> None:
         """停止处理器"""

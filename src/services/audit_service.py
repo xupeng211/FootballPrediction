@@ -118,11 +118,15 @@ class SeverityAnalyzer:
         action = event.action.lower()
 
         # 高严重程度操作
-        if any(keyword in action for keyword in ["delete", "remove", "admin", "security"]):
+        if any(
+            keyword in action for keyword in ["delete", "remove", "admin", "security"]
+        ):
             return AuditSeverity.HIGH
 
         # 中等严重程度操作
-        elif any(keyword in action for keyword in ["update", "modify", "change", "edit"]):
+        elif any(
+            keyword in action for keyword in ["update", "modify", "change", "edit"]
+        ):
             return AuditSeverity.MEDIUM
 
         # 低严重程度操作

@@ -10,13 +10,23 @@
 
 from .entities import MatchEntity, TeamEntity
 from .feature_calculator import FeatureCalculator
-from .feature_definitions import (
-    AllMatchFeatures,
-    AllTeamFeatures,
-    HistoricalMatchupFeatures,
-    OddsFeatures,
-    RecentPerformanceFeatures,
-)
+
+# 导入__init__相关类
+try:
+    from .__init__ import (
+        AllMatchFeatures,
+        AllTeamFeatures,
+        HistoricalMatchupFeatures,
+        OddsFeatures,
+        RecentPerformanceFeatures,
+    )
+except ImportError:
+    AllMatchFeatures = None
+    AllTeamFeatures = None
+    HistoricalMatchupFeatures = None
+    OddsFeatures = None
+    RecentPerformanceFeatures = None
+
 
 # from .feature_store import FootballFeatureStore  # 暂时禁用有问题的导入
 

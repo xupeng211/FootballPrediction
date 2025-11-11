@@ -153,7 +153,6 @@ def logging_decorator(log_level: str = "INFO") -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
-
             try:
                 result = func(*args, **kwargs)
                 return result

@@ -1,6 +1,6 @@
 """
 适配器工厂模块
-Adapter Factory Module
+BaseAdapter Factory Module
 
 提供适配器的创建、注册和管理功能。
 Provides adapter creation, registration, and management functionality.
@@ -10,37 +10,41 @@ from dataclasses import dataclass, field
 from typing import Any
 
 # 导入基础类
-from .base import BaseAdapter as Adapter
+from .base import BaseAdapter
 
 # 尝试导入具体适配器类，如果失败则创建Mock实现
 try:
-    from .football import ApiFootballAdapter, CompositeFootballAdapter, OptaDataAdapter
+    from .football import (
+        ApiFootballAdapter,
+        CompositeFootballAdapter,
+        OptaDataAdapter,
+    )
 except ImportError:
 
-    class ApiFootballAdapter(Adapter):
+    class ApiFootballAdapter(BaseAdapter):
         """Mock API Football适配器"""
 
         pass
 
-    class CompositeFootballAdapter(Adapter):
+    class CompositeFootballAdapter(BaseAdapter):
         """Mock Composite Football适配器"""
 
         pass
 
-    class OptaDataAdapter(Adapter):
+    class OptaDataAdapter(BaseAdapter):
         """Mock Opta Data适配器"""
 
         pass
 
 
-class AdapterError(Exception):
+class BaseAdapterError(Exception):
     """适配器错误"""
 
     pass
 
 
 @dataclass
-class AdapterConfig:
+class BaseAdapterConfig:
     """适配器配置"""
 
     name: str
@@ -60,7 +64,7 @@ class AdapterConfig:
 
 
 @dataclass
-class AdapterGroupConfig:
+class BaseAdapterGroupConfig:
     """适配器组配置"""
 
     name: str
@@ -74,38 +78,38 @@ class AdapterGroupConfig:
     FALLBACK_STRATEGY: str = "sequential"
 
 
-class AdapterFactory:
+class BaseAdapterFactory:
     """适配器工厂类"""
 
     def __init__(self):
         """初始化适配器工厂"""
-        self._adapters: dict[str, type[Adapter]] = {}
-        self._configs: dict[str, AdapterConfig] = {}
-        self._groups: dict[str, AdapterGroupConfig] = {}
+        self._adapters: dict[str, BaseAdapter] = {}
+        self._configs: dict[str, BaseAdapterConfig] = {}
+        self._groups: dict[str, BaseAdapterGroupConfig] = {}
         self._register_default_adapters()
 
     def create_adapter(
         self, name: str, config: dict[str, Any] | None = None, **kwargs
-    ) -> Adapter:
+    ) -> BaseAdapter:
         """创建适配器"""
         if name not in self._adapters:
             raise ValueError(f"Unknown adapter: {name}")
         adapter_class = self._adapters[name]
         return adapter_class(config or {}, **kwargs)
 
-    def register_adapter(self, name: str, adapter_class: type[Adapter]) -> None:
+    def register_adapter(self, name: str, adapter_class: type[BaseAdapter]) -> None:
         """注册适配器类"""
         self._adapters[name] = adapter_class
 
-    def register_config(self, name: str, config: AdapterConfig) -> None:
+    def register_config(self, name: str, config: BaseAdapterConfig) -> None:
         """注册适配器配置"""
         self._configs[name] = config
 
-    def register_group(self, name: str, group_config: AdapterGroupConfig) -> None:
+    def register_group(self, name: str, group_config: BaseAdapterGroupConfig) -> None:
         """注册适配器组"""
         self._groups[name] = group_config
 
-    def get_adapter(self, name: str) -> Adapter:
+    def get_adapter(self, name: str) -> BaseAdapter:
         """获取适配器"""
         return self.create_adapter(name)
 
@@ -118,32 +122,32 @@ class AdapterFactory:
 
 
 # 全局适配器工厂实例
-_global_factory = AdapterFactory()
+_global_factory = BaseAdapterFactory()
 adapter_factory = _global_factory  # 导出全局工厂实例,兼容测试期望
 
 
-def register_adapter(name: str, adapter_class: type[Adapter]) -> None:
+def register_adapter(name: str, adapter_class: type[BaseAdapter]) -> None:
     """注册适配器的便捷函数"""
     _global_factory.register_adapter(name, adapter_class)
 
 
 def create_adapter(
     name: str, config: dict[str, Any] | None = None, **kwargs
-) -> Adapter:
+) -> BaseAdapter:
     """创建适配器的便捷函数"""
     return _global_factory.create_adapter(name, config, **kwargs)
 
 
-def get_global_factory() -> AdapterFactory:
+def get_global_factory() -> BaseAdapterFactory:
     """获取全局工厂实例"""
     return _global_factory
 
 
 __all__ = [
-    "AdapterError",
-    "AdapterConfig",
-    "AdapterGroupConfig",
-    "AdapterFactory",
+    "BaseAdapterError",
+    "BaseAdapterConfig",
+    "BaseAdapterGroupConfig",
+    "BaseAdapterFactory",
     "adapter_factory",
     "register_adapter",
     "create_adapter",

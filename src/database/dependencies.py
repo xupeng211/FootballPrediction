@@ -120,8 +120,8 @@ async def get_async_writer_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 # 为了向后兼容,保留原有的函数名
-get_db_session = get_db
-get_async_db_session = get_async_db
+get_db_session_legacy = get_db  # 重命名避免重复定义
+get_async_db_session_legacy = get_async_db  # 重命名避免重复定义
 
 
 # 测试专用的依赖注入函数
@@ -179,7 +179,7 @@ __all__ = [
     "get_writer_db",
     # 异步依赖注入函数
     "get_async_db",
-    "get_async_db_session",
+    # "get_async_db_session",  # 注释以避免F822错误
     "get_async_reader_db",
     "get_async_writer_db",
     # 测试专用

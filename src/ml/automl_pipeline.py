@@ -6,6 +6,8 @@ AutoML Pipeline
 生成时间: 2025-10-26 20:57:38
 """
 
+# ruff: noqa: N806, N803  # ML变量名和参数名约定 (X_train, X_test等) 是行业标准
+
 import asyncio
 import logging
 from datetime import datetime

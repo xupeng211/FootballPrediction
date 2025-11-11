@@ -116,8 +116,8 @@ class TestExceptionUsagePatterns:
         try:
             try:
                 raise RuntimeError("Context error")
-            except RuntimeError:
-                raise ValidationError("Validation failed")
+            except RuntimeError as e:
+                raise ValidationError("Validation failed") from e
         except ValidationError as e:
             assert e.__context__ is not None
 

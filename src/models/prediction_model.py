@@ -7,6 +7,8 @@ Prediction Model Module - Stub Implementation
 Temporary implementation to resolve import errors.
 """
 
+# ruff: noqa: N803  # ML参数名约定 (X等) 是行业标准
+
 import logging
 from datetime import datetime
 from enum import Enum
