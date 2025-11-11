@@ -8,14 +8,23 @@
 - 权限控制
 """
 
+import os
+import secrets
 from .router import router
 
-# 测试用的模拟用户数据
+# 生产环境使用环境变量，测试环境使用安全的默认值
+TEST_USER_EMAIL = os.getenv("TEST_USER_EMAIL", "test@example.com")
+TEST_USER_PASSWORD_HASH = os.getenv(
+    "TEST_USER_PASSWORD_HASH",
+    "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4QF8xq4.8K"
+)
+
+# 测试用的模拟用户数据 (仅用于开发测试)
 MOCK_USERS = {
-    "test@example.com": {
+    TEST_USER_EMAIL: {
         "id": 1,
-        "email": "test@example.com",
-        "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4QF8xq4.8K",  # password123
+        "email": TEST_USER_EMAIL,
+        "password": TEST_USER_PASSWORD_HASH,
         "is_active": True,
         "created_at": "2024-01-01T00:00:00Z",
     },
