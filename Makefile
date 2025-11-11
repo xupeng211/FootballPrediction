@@ -1098,4 +1098,34 @@ claude-setup-test: ## Claude: 设置环境并测试Issue创建
 	@$(ACTIVATE) && \
 	python3 scripts/setup_claude_sync.py --test-issue
 
-.PHONY: improve-start improve-status improve-syntax improve-test improve-report improve-all claude-sync claude-start-work claude-complete-work claude-list-work claude-setup claude-setup-test
+# ============================================================================
+# 🛠️ GitHub Issues 维护
+# ============================================================================
+issues-maintenance: ## GitHub: 运行Issues维护检查
+	@echo "$(YELLOW)🔍 运行GitHub Issues维护检查...$(RESET)"
+	@$(ACTIVATE) && \
+	python3 scripts/github_issues_maintenance.py
+
+issues-health-check: ## GitHub: 快速健康检查
+	@echo "$(YELLOW)🏥 GitHub Issues快速健康检查...$(RESET)"
+	@$(ACTIVATE) && \
+	gh issue list --state open --json number,title,labels | jq length && \
+	echo "当前开放Issues数量: $$(gh issue list --state open | wc -l)" && \
+	if [ $$(gh issue list --state open | wc -l) -gt 5 ]; then \
+		echo "$(YELLOW)⚠️ 警告: Issues数量超过5个，建议清理$(RESET)"; \
+	else \
+		echo "$(GREEN)✅ Issues数量在合理范围内$(RESET)"; \
+	fi
+
+issues-status: ## GitHub: 显示Issues状态概览
+	@echo "$(BLUE)📊 GitHub Issues状态概览...$(RESET)"
+	@echo "$(CYAN)开放Issues列表:$(RESET)"
+	@gh issue list --state open --limit 10 | sed 's/^/  /'
+	@echo ""
+	@echo "$(CYAN)统计信息:$(RESET)"
+	@echo "  总数: $$(gh issue list --state open | wc -l)"
+	@echo "  已完成但未关闭: $$(gh issue list --label "status/completed" --state open | wc -l)"
+	@echo "  高优先级: $$(gh issue list --label "priority/high" --state open | wc -l)"
+	@echo "  关键优先级: $$(gh issue list --label "priority/critical" --state open | wc -l)"
+
+.PHONY: improve-start improve-status improve-syntax improve-test improve-report improve-all claude-sync claude-start-work claude-complete-work claude-list-work claude-setup claude-setup-test issues-maintenance issues-health-check issues-status
