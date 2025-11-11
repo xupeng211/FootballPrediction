@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
-
 # 兼容性别名将在文件末尾定义
 
 
