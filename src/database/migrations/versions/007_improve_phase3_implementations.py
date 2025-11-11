@@ -1,5 +1,6 @@
 # mypy: ignore-errors
 from alembic import op
+from sqlalchemy import text as sa
 
 """Phase 3 改进迁移"
 Phase 3 improvements migration

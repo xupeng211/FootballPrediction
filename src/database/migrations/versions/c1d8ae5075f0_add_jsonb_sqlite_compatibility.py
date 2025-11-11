@@ -3,6 +3,7 @@ import logging
 from collections.abc import Sequence
 
 from alembic import context, op
+from sqlalchemy import text as sa
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 # revision identifiers, used by Alembic.

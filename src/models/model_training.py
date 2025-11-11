@@ -15,7 +15,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
     HAS_SCIPY = True

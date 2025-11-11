@@ -3,6 +3,7 @@ import logging
 from collections.abc import Sequence
 
 from alembic import op
+from sqlalchemy import text as sa
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 

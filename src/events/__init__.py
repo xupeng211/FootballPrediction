@@ -8,6 +8,7 @@ Provides event system infrastructure for loosely coupled component communication
 
 from .base import Event, EventData, EventHandler
 from .bus import EventBus, get_event_bus, start_event_bus, stop_event_bus
+from .handlers import (
     AlertEventHandler,
     AnalyticsEventHandler,
     CacheInvalidationHandler,
@@ -16,18 +17,20 @@ from .bus import EventBus, get_event_bus, start_event_bus, stop_event_bus
     NotificationEventHandler,
     register_default_handlers,
 )
-    MatchCreatedEvent,
+from .types import (
     MatchCreatedEventData,
-    MatchUpdatedEvent,
     MatchUpdatedEventData,
-    PredictionMadeEvent,
     PredictionMadeEventData,
-    PredictionUpdatedEvent,
-    PredictionUpdatedEventData,
-    TeamStatsEventData,
-    TeamStatsUpdatedEvent,
-    UserRegisteredEvent,
-    UserRegisteredEventData,
+    # 注释掉不存在的类
+    # MatchCreatedEvent,
+    # MatchUpdatedEvent,
+    # PredictionMadeEvent,
+    # PredictionUpdatedEvent,
+    # PredictionUpdatedEventData,
+    # TeamStatsEventData,
+    # TeamStatsUpdatedEvent,
+    # UserRegisteredEvent,
+    # UserRegisteredEventData,
 )
 
 __all__ = [

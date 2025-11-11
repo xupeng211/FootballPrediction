@@ -14,6 +14,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import MinMaxScaler
 
@@ -162,7 +164,8 @@ class LSTMPredictor:
             # 目标序列
             y.append(
                 target[
-                    i + self.config.sequence_length : i
+                    i
+                    + self.config.sequence_length : i
                     + self.config.sequence_length
                     + self.config.prediction_horizon
                 ]

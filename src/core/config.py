@@ -47,8 +47,12 @@ class Config:
 
         # 添加测试期望的属性
         self.debug = False
-        self.secret_key = "default-secret-key-for-testing"
-        self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
+        self.secret_key = os.getenv(
+            "SECRET_KEY", os.getenv("FLASK_SECRET_KEY", "dev-secret-key-for-testing")
+        )
+        self.database_url = os.getenv(
+            "DATABASE_URL", "sqlite+aiosqlite:///./data/football_prediction.db"
+        )
 
         self._load_config()
 

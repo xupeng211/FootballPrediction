@@ -31,11 +31,11 @@ AsyncTTLCache = None
 try:
     from .cache_instances import (
         CACHES,
-        feature_cache,
-        config_cache,
-        user_session_cache,
         api_response_cache,
+        config_cache,
+        feature_cache,
         prediction_cache,
+        user_session_cache,
     )
 except ImportError:
     CACHES = {}
@@ -51,8 +51,13 @@ try:
         clear_all_caches,
     )
 except ImportError:
-    cleanup_all_expired = lambda: None
-    clear_all_caches = lambda: None
+
+    def cleanup_all_expired():
+        return None
+
+    def clear_all_caches():
+        return None
+
 
 __all__ = [
     "CacheEntry",

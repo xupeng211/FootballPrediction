@@ -9,34 +9,38 @@
 """
 
 from .entities import MatchEntity, TeamEntity
-from .feature_calculator import FeatureCalculator
+from .feature_store import FootballFeatureStore
 
-# 导入__init__相关类
+# 导入特征计算相关类
 try:
+    from .engineering import (
         AllMatchFeatures,
         AllTeamFeatures,
         HistoricalMatchupFeatures,
         OddsFeatures,
         RecentPerformanceFeatures,
     )
+    from .feature_calculator import FeatureCalculator
 except ImportError:
     AllMatchFeatures = None
     AllTeamFeatures = None
     HistoricalMatchupFeatures = None
     OddsFeatures = None
     RecentPerformanceFeatures = None
-
-
-# from .feature_store import FootballFeatureStore  # 暂时禁用有问题的导入
+    FeatureCalculator = None
 
 __all__ = [
+    # 实体
     "MatchEntity",
     "TeamEntity",
-    "RecentPerformanceFeatures",
-    "HistoricalMatchupFeatures",
-    "OddsFeatures",
+    # 特征存储
+    "FootballFeatureStore",
+    # 特征工程
     "AllMatchFeatures",
     "AllTeamFeatures",
-    # "FootballFeatureStore",  # 暂时禁用
+    "HistoricalMatchupFeatures",
+    "OddsFeatures",
+    "RecentPerformanceFeatures",
+    # 特征计算
     "FeatureCalculator",
 ]

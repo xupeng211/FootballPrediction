@@ -6,6 +6,7 @@ from .factory_simple import get_adapter
 
 # 导入适配器实现
 try:
+    from .football import (
         ApiFootballAdapter,
         CompositeFootballAdapter,
         FootballApiAdapter,
