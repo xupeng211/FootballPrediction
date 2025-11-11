@@ -7,11 +7,23 @@ anomaly_detector 主模块
 """
 
 # 导入拆分的模块
-    AnomalyDetector,
-    AnomalyResult,
-    AnomalySeverity,
-    AnomalyType,
-)
+try:
+    from .anomaly_detection_core import (
+        AnomalyDetector,
+        AnomalyResult,
+        AnomalySeverity,
+        AnomalyType,
+    )
+except ImportError:
+    AnomalyDetector = None
+    AnomalyResult = None
+    AnomalySeverity = None
+    AnomalyType = None
 
 # 导出所有公共接口
-__all__ = ["AnomalyType", "AnomalySeverity", "AnomalyResult", "AnomalyDetector"]
+__all__ = [
+    "AnomalyDetector",
+    "AnomalyResult",
+    "AnomalySeverity",
+    "AnomalyType",
+]

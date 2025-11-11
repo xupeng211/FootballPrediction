@@ -6,6 +6,7 @@ Prediction Strategies Module
 Provides strategy pattern implementation for various prediction algorithms.
 """
 
+from .base import (
     PredictionContext,
     PredictionInput,
     PredictionOutput,
@@ -13,27 +14,35 @@ Provides strategy pattern implementation for various prediction algorithms.
     StrategyMetrics,
     StrategyType,
 )
-from src.domain.strategies.config import StrategyConfig
-from src.domain.strategies.ensemble import EnsembleStrategy
-from src.domain.strategies.factory import PredictionStrategyFactory
-from src.domain.strategies.historical import HistoricalStrategy
-from src.domain.strategies.ml_model import MLModelStrategy
-from src.domain.strategies.statistical import StatisticalStrategy
+
+# 导入具体策略实现
+try:
+    from .enhanced_ml_model import EnhancedMLModel
+    from .ml_model import MLModel
+    from .statistical import (
+        EloStrategy,
+        PoissonStrategy,
+        StatisticalStrategy,
+    )
+except ImportError:
+    EnhancedMLModel = None
+    MLModel = None
+    EloStrategy = None
+    PoissonStrategy = None
+    StatisticalStrategy = None
 
 __all__ = [
-    # 基础接口
-    "PredictionStrategy",
+    # 基础类
     "PredictionContext",
     "PredictionInput",
     "PredictionOutput",
-    "StrategyType",
+    "PredictionStrategy",
     "StrategyMetrics",
+    "StrategyType",
     # 具体策略
-    "MLModelStrategy",
+    "EnhancedMLModel",
+    "MLModel",
+    "EloStrategy",
+    "PoissonStrategy",
     "StatisticalStrategy",
-    "HistoricalStrategy",
-    "EnsembleStrategy",
-    # 工厂和配置
-    "PredictionStrategyFactory",
-    "StrategyConfig",
 ]

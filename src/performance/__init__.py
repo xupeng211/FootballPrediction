@@ -11,44 +11,40 @@ Performance Monitoring Module
 
 from .analyzer import PerformanceAnalyzer, PerformanceInsight, PerformanceTrend
 from .api import router as performance_router
-    BackgroundTaskPerformanceMonitor,
-    CachePerformanceMiddleware,
-    DatabasePerformanceMiddleware,
-    PerformanceMonitoringMiddleware,
-)
-    APIEndpointProfiler,
-    DatabaseQueryProfiler,
-    MemoryProfiler,
-    PerformanceProfiler,
-    get_performance_report,
-    get_profiler,
-    profile_function,
-    profile_method,
-    start_profiling,
-    stop_profiling,
-)
+
+# 导入性能监控组件
+try:
+    from .middleware import (
+        BackgroundTaskPerformanceMonitor,
+        CachePerformanceMiddleware,
+        DatabasePerformanceMiddleware,
+        PerformanceMonitoringMiddleware,
+    )
+    from .profilers import (
+        APIEndpointProfiler,
+        DatabaseQueryProfiler,
+    )
+except ImportError:
+    BackgroundTaskPerformanceMonitor = None
+    CachePerformanceMiddleware = None
+    DatabasePerformanceMiddleware = None
+    PerformanceMonitoringMiddleware = None
+    APIEndpointProfiler = None
+    DatabaseQueryProfiler = None
 
 __all__ = [
-    # Profiler
-    "PerformanceProfiler",
-    "get_profiler",
-    "profile_function",
-    "profile_method",
-    "DatabaseQueryProfiler",
-    "APIEndpointProfiler",
-    "MemoryProfiler",
-    "start_profiling",
-    "stop_profiling",
-    "get_performance_report",
-    # Middleware
-    "PerformanceMonitoringMiddleware",
-    "DatabasePerformanceMiddleware",
-    "CachePerformanceMiddleware",
-    "BackgroundTaskPerformanceMonitor",
-    # Analyzer
+    # 分析器
     "PerformanceAnalyzer",
     "PerformanceInsight",
     "PerformanceTrend",
-    # API
+    # 路由
     "performance_router",
+    # 中间件
+    "BackgroundTaskPerformanceMonitor",
+    "CachePerformanceMiddleware",
+    "DatabasePerformanceMiddleware",
+    "PerformanceMonitoringMiddleware",
+    # 性能分析器
+    "APIEndpointProfiler",
+    "DatabaseQueryProfiler",
 ]

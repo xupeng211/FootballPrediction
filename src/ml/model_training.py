@@ -18,6 +18,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+import pandas as pd
 
 # 导入预测模型
 from src.models.prediction_model import FootballPredictionModel, PredictionModel

@@ -9,6 +9,8 @@ import pickle
 from datetime import datetime
 from typing import Any
 
+import numpy as np
+import pandas as pd
 
 from .base_model import BaseModel, PredictionResult, TrainingResult
 

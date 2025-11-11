@@ -16,8 +16,9 @@ from .predictions import PredictedResult, Predictions
 from .raw_data import RawMatchData, RawOddsData, RawScoresData
 from .team import Team
 
-# 导入__init__相关类
+# 导入多租户相关类
 try:
+    from .multi_tenant import (
         PermissionScope,
         ResourceType,
         RolePermission,

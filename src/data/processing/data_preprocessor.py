@@ -7,6 +7,7 @@
 import logging
 from typing import Any
 
+import pandas as pd
 
 from .football_data_cleaner import FootballDataCleaner
 from .missing_data_handler import MissingDataHandler
@@ -73,9 +74,9 @@ class DataPreprocessor:
             cleaned_data = self.cleaner.clean_dataset(raw_data, data_type)
             processing_result["cleaned_data"] = cleaned_data
             processing_result["processing_steps"].append("数据清洗")
-            processing_result["reports"]["cleaning"] = (
-                self.cleaner.get_cleaning_report()
-            )
+            processing_result["reports"][
+                "cleaning"
+            ] = self.cleaner.get_cleaning_report()
 
             # Step 2: 缺失值分析和处理
             if self.config["cleaning"]["handle_missing"]:
@@ -110,12 +111,12 @@ class DataPreprocessor:
                         cleaned_data, final_data
                     )
                 )
-                processing_result["reports"]["imputation_validation"] = (
-                    imputation_validation
-                )
-                processing_result["reports"]["missing_report"] = (
-                    self.missing_handler.get_missing_data_report()
-                )
+                processing_result["reports"][
+                    "imputation_validation"
+                ] = imputation_validation
+                processing_result["reports"][
+                    "missing_report"
+                ] = self.missing_handler.get_missing_data_report()
             else:
                 final_data = cleaned_data
                 processing_result["final_data"] = final_data
