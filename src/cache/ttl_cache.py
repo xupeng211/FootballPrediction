@@ -30,13 +30,14 @@ try:
         feature_cache,
         get_all_stats,
         get_cache,
-        odds_cache,
         prediction_cache,
-        session_cache,
-        start_auto_cleanup,
-        stop_auto_cleanup,
-        temp_cache,
     )
+    # 提供默认值给不存在的缓存实例
+    odds_cache = None
+    session_cache = None
+    temp_cache = None
+    start_auto_cleanup = lambda: None
+    stop_auto_cleanup = lambda: None
 except ImportError:
     # 如果导入失败,提供错误信息
     import logging
