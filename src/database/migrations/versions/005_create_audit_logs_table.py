@@ -2,7 +2,6 @@ import logging
 
 # from datetime import datetime, timezone  # Temporarily commented to fix F401
 # mypy: ignore-errors
-import sqlalchemy as sa
 from alembic import context, op
 from sqlalchemy import text
 from sqlalchemy.dialects import postgresql

@@ -280,9 +280,9 @@ class AnalyticsEventHandler(EventHandler):
                 "last_prediction": None,
             }
         self.analytics_data["user_activity"][user_id]["predictions_count"] += 1
-        self.analytics_data["user_activity"][user_id][
-            "last_prediction"
-        ] = event.timestamp
+        self.analytics_data["user_activity"][user_id]["last_prediction"] = (
+            event.timestamp
+        )
 
         # 按比赛统计预测
         match_id = event.data.match_id

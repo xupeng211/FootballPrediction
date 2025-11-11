@@ -21,6 +21,7 @@ warnings.warn(
 # 从新模块导入所有内容
 try:
     from ..streaming.websocket_collector import WebSocketCollector
+
     websocket_collector = WebSocketCollector  # 直接赋值
 except ImportError:
     # 如果新模块不存在,创建空的占位符

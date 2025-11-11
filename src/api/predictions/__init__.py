@@ -4,7 +4,6 @@
 
 # 导入预测API模块相关类
 try:
-    from .预测api模块 import (
         BatchPredictionRequest,
         BatchPredictionResponse,
         HistoryPrediction,

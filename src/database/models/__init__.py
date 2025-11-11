@@ -18,7 +18,6 @@ from .team import Team
 
 # 导入__init__相关类
 try:
-    from .__init__ import (
         PermissionScope,
         ResourceType,
         RolePermission,

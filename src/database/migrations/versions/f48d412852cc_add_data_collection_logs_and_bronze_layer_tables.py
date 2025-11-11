@@ -2,7 +2,6 @@
 import logging
 from collections.abc import Sequence
 
-import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 

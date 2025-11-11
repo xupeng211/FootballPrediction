@@ -11,7 +11,6 @@ import time
 from datetime import datetime
 from typing import Any
 
-import numpy as np
 
 from src.domain.models.prediction import (
     PredictionInput,

@@ -9,7 +9,6 @@ from .api_performance_optimizer import router as optimization_router
 
 # 导入连接池优化相关类
 try:
-    from .connection_pool_optimizer import (
         ConnectionPoolOptimizer,
         PoolMetrics,
         PoolOptimizationConfig,
@@ -27,7 +26,6 @@ from .database_performance_api import router as database_optimization_router
 
 # 导入数据库性能中间件相关类
 try:
-    from .database_performance_middleware import (
         DatabasePerformanceMiddleware,
         QueryOptimizationAdvisor,
         get_database_middleware,
@@ -43,7 +41,6 @@ except ImportError:
 
 # 导入数据库性能分析器相关类
 try:
-    from .database_performance_analyzer import (
         DatabasePerformanceAnalyzer,
         QueryMetrics,
         get_database_analyzer,
@@ -57,7 +54,6 @@ except ImportError:
 
 # 导入性能中间件相关类
 try:
-    from .performance_middleware import (
         EnhancedPerformanceMiddleware,
         create_performance_middleware,
         get_performance_middleware,
@@ -69,7 +65,6 @@ except ImportError:
 
 # 导入查询执行分析相关类
 try:
-    from .query_execution_analyzer import (
         ExecutionPlanAnalysis,
         ExecutionPlanNode,
         QueryExecutionAnalyzer,
@@ -85,7 +80,6 @@ except ImportError:
 
 # 导入缓存相关类
 try:
-    from .cache_middleware import (
         CacheMiddleware,
         SmartCacheManager,
         get_cache_manager,

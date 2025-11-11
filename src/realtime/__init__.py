@@ -10,7 +10,6 @@ Realtime Module - Football Prediction System WebSocket Real-time Communication
 - 实时数据推送
 """
 
-from .events import (
     AnalyticsEvent,
     EventType,
     MatchEvent,
@@ -25,7 +24,6 @@ from .events import (
     create_system_alert_event,
     validate_event,
 )
-from .manager import (
     WebSocketConnection,
     WebSocketManager,
     broadcast_to_all,
@@ -33,7 +31,6 @@ from .manager import (
     get_websocket_manager,
     send_to_user,
 )
-from .match_service import (
     MatchInfo,
     MatchStatus,
     RealtimeMatchService,
@@ -42,7 +39,6 @@ from .match_service import (
     get_realtime_match_service,
     update_match_score,
 )
-from .prediction_service import (
     PredictionStatus,
     PredictionTask,
     RealtimePredictionService,
@@ -52,7 +48,6 @@ from .prediction_service import (
     submit_prediction,
 )
 from .router import router
-from .subscriptions import (
     Subscription,
     SubscriptionFilter,
     SubscriptionManager,
