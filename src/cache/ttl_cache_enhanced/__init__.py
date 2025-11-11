@@ -1,6 +1,70 @@
 """
-Ttl_Cache_Enhanced module
+TTL缓存增强模块
+
+提供高性能的TTL缓存实现，支持：
+- 自动过期
+- LRU淘汰策略
+- 批量操作
+- 异步支持
+- 统计监控
 """
 
-# 模块导入将在需要时添加
-__all__ = []
+# 安全导入，处理模块可能不完整的情况
+try:
+    from .cache_entry import CacheEntry
+except ImportError:
+    CacheEntry = None
+
+try:
+    from .cache_factory import CacheFactory
+except ImportError:
+    CacheFactory = None
+
+try:
+    from .ttl_cache import TTLCache
+except ImportError:
+    TTLCache = None
+
+# AsyncTTLCache 可能不存在，使用占位符
+AsyncTTLCache = None
+
+try:
+    from .cache_instances import (
+        CACHES,
+        feature_cache,
+        config_cache,
+        user_session_cache,
+        api_response_cache,
+        prediction_cache,
+    )
+except ImportError:
+    CACHES = {}
+    feature_cache = None
+    config_cache = None
+    user_session_cache = None
+    api_response_cache = None
+    prediction_cache = None
+
+try:
+    from .async_cache import (
+        cleanup_all_expired,
+        clear_all_caches,
+    )
+except ImportError:
+    cleanup_all_expired = lambda: None
+    clear_all_caches = lambda: None
+
+__all__ = [
+    "CacheEntry",
+    "CacheFactory",
+    "TTLCache",
+    "AsyncTTLCache",
+    "CACHES",
+    "feature_cache",
+    "config_cache",
+    "user_session_cache",
+    "api_response_cache",
+    "prediction_cache",
+    "cleanup_all_expired",
+    "clear_all_caches",
+]
