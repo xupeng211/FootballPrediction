@@ -58,6 +58,17 @@ except ImportError:
     def clear_all_caches():
         return None
 
+# 添加 get_all_stats 函数
+def get_all_stats():
+    """获取所有缓存的统计信息"""
+    stats = {}
+    for name, cache in CACHES.items():
+        if hasattr(cache, 'stats'):
+            stats[name] = cache.stats
+        else:
+            stats[name] = {"status": "unknown"}
+    return stats
+
 
 __all__ = [
     "CacheEntry",
@@ -72,4 +83,5 @@ __all__ = [
     "prediction_cache",
     "cleanup_all_expired",
     "clear_all_caches",
+    "get_all_stats",
 ]
