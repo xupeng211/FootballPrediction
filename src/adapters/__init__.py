@@ -1,7 +1,7 @@
 from .base import Adaptee, BaseAdapter, Target
 
 # 重新启用的模块导入
-from .factory_simple import AdapterFactory as SimpleAdapterFactory
+from .factory_simple import BaseAdapterFactory as SimpleAdapterFactory
 from .factory_simple import get_adapter
 
 # 导入适配器实现
@@ -21,7 +21,7 @@ except ImportError:
     FootballDataAdapter = None
     OptaDataAdapter = None
 
-from .registry import AdapterError, AdapterRegistry
+from .registry import BaseAdapterError as AdapterError, BaseAdapterRegistry as AdapterRegistry
 
 # 为了向后兼容，提供AdapterFactory别名
 AdapterFactory = SimpleAdapterFactory
