@@ -4,6 +4,7 @@ Data formatters
 
 import json
 from datetime import datetime
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 
@@ -18,10 +19,19 @@ def format_json(data: Any, indent: int | None = None) -> str:
 
 
 def format_currency(amount: float, currency: str = "USD") -> str:
-    """Format currency amount"""
-    return f"{amount:.2f} {currency}"
+    """Format currency amount with proper rounding"""
+    # 使用Decimal进行精确的四舍五入
+    decimal_amount = Decimal(str(amount))
+    rounded_amount = decimal_amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return f"{float(rounded_amount):.2f} {currency}"
 
 
 def format_percentage(value: float, decimals: int = 2) -> str:
-    """Format as percentage"""
-    return f"{value:.{decimals}f}%"
+    """Format as percentage with proper rounding"""
+    # 使用Decimal进行精确的四舍五入
+    decimal_value = Decimal(str(value))
+    quantizer = (
+        Decimal("0." + "0" * (decimals - 1) + "1") if decimals > 0 else Decimal("1")
+    )
+    rounded_value = decimal_value.quantize(quantizer, rounding=ROUND_HALF_UP)
+    return f"{float(rounded_value):.{decimals}f}%"

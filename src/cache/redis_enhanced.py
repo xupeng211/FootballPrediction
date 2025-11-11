@@ -402,7 +402,7 @@ class EnhancedRedisManager:
         """从集合中删除"""
         return self.sync_client.srem(name, *values)
 
-    def smembers(self, name: str) -> set:
+    def smembers(self, name: str):
         """获取集合所有成员"""
         return self.sync_client.smembers(name)
 

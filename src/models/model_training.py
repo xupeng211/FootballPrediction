@@ -6,6 +6,8 @@ Phase G Week 5 Day 2 - 修复版本
 Fixed version for syntax errors
 """
 
+# ruff: noqa: N806, N803  # ML变量名和参数名约定 (X_train, X_test等) 是行业标准
+
 import json
 import logging
 import pickle
@@ -13,11 +15,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+import pandas as pd
+
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
-    import numpy as np
-    import pandas as pd
-
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
@@ -37,11 +39,11 @@ except ImportError:
 
     class MockPandas:
         @staticmethod
-        def DataFrame(data):
+        def dataframe(data):
             return data
 
         @staticmethod
-        def Series(data):
+        def series(data):
             return data
 
     np = MockNumpy()
@@ -80,7 +82,7 @@ except ImportError:
         def log_artifacts(self, *args, **kwargs):
             """Log mock artifacts"""
 
-        class sklearn:
+        class SklearnWrapper:
             """Mock sklearn module"""
 
             @staticmethod

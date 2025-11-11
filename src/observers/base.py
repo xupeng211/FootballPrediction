@@ -52,6 +52,11 @@ class Observer(ABC):
 class Subject(ABC):
     """被观察者抽象基类"""
 
+    @abstractmethod
+    def notify(self, event: ObservableEvent) -> None:
+        """通知观察者 - 子类必须实现"""
+        pass
+
     def __init__(self, name: str):
         self.name = name
         self._observers: list[Observer] = []
@@ -68,7 +73,7 @@ class Subject(ABC):
         if observer in self._observers:
             self._observers.remove(observer)
 
-    def notify(self, data: Any | None = None) -> None:
+    def notify_observers(self, data: Any | None = None) -> None:
         """通知所有观察者"""
         event = ObservableEvent(
             event_type=f"{self.name}_notification",

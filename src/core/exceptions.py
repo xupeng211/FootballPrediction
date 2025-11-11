@@ -131,7 +131,7 @@ class RateLimitError(FootballPredictionError):
     """限流异常"""
 
 
-class TimeoutError(FootballPredictionError):
+class FootballTimeoutError(FootballPredictionError):
     """超时异常"""
 
 

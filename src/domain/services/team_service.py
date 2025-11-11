@@ -4,8 +4,6 @@
 球队信息维护以及联赛积分榜计算.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Protocol

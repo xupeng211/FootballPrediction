@@ -12,7 +12,6 @@ from src.cache.redis_manager import get_redis_manager
 from src.core.logging_system import get_logger
 
 """
-
 SRS规范简化预测API - 不依赖数据库
 SRS Compliant Simple Prediction API - Database Independent
 
@@ -23,7 +22,6 @@ SRS Compliant Simple Prediction API - Database Independent
 - 支持1000场比赛并发请求
 - Token校验与请求频率限制
 """
-
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/predictions-srs", tags=["predictions-srs-simple"])
@@ -354,9 +352,8 @@ async def predict_match_simple(
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Rate limit exceeded: 100 requests per minute",
+            # TODO: 将魔法数字 100 提取为常量
         )
-        # TODO: 将魔法数字 100 提取为常量
-        return True
 
     # 生成预测
     prediction_data = await simple_prediction_service.generate_prediction(
@@ -414,6 +411,7 @@ async def predict_batch_simple(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Batch size exceeds maximum limit of 1000 matches",
+            # TODO: 将魔法数字 1000 提取为常量
         )
 
     # 并发预测处理

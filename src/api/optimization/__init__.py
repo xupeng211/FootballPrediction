@@ -6,46 +6,98 @@ API Performance Optimization Module
 """
 
 from .api_performance_optimizer import router as optimization_router
-from .connection_pool_optimizer import (
-    ConnectionPoolOptimizer,
-    PoolMetrics,
-    PoolOptimizationConfig,
-    get_connection_pool_optimizer,
-    initialize_connection_pool_optimizer,
-)
+
+# 导入连接池优化相关类
+try:
+    from .connection_pool_optimizer import (
+        ConnectionPoolOptimizer,
+        PoolMetrics,
+        PoolOptimizationConfig,
+        get_connection_pool_optimizer,
+        initialize_connection_pool_optimizer,
+    )
+except ImportError:
+    ConnectionPoolOptimizer = None
+    PoolMetrics = None
+    PoolOptimizationConfig = None
+    get_connection_pool_optimizer = None
+    initialize_connection_pool_optimizer = None
+
 from .database_performance_api import router as database_optimization_router
-from .database_performance_middleware import (
-    DatabasePerformanceMiddleware,
-    QueryOptimizationAdvisor,
-    get_database_middleware,
-    get_optimization_advisor,
-    initialize_database_monitoring,
-)
-from .database_query_optimizer import (
-    DatabasePerformanceAnalyzer,
-    QueryMetrics,
-    get_database_analyzer,
-    initialize_database_analyzer,
-)
-from .enhanced_performance_middleware import (
-    EnhancedPerformanceMiddleware,
-    create_performance_middleware,
-    get_performance_middleware,
-)
-from .query_execution_analyzer import (
-    ExecutionPlanAnalysis,
-    ExecutionPlanNode,
-    QueryExecutionAnalyzer,
-    get_query_execution_analyzer,
-    initialize_query_execution_analyzer,
-)
-from .smart_cache_system import (
-    CacheMiddleware,
-    SmartCacheManager,
-    get_cache_manager,
-    get_cache_middleware,
-    initialize_cache_system,
-)
+
+# 导入数据库性能中间件相关类
+try:
+    from .database_performance_middleware import (
+        DatabasePerformanceMiddleware,
+        QueryOptimizationAdvisor,
+        get_database_middleware,
+        get_optimization_advisor,
+        initialize_database_monitoring,
+    )
+except ImportError:
+    DatabasePerformanceMiddleware = None
+    QueryOptimizationAdvisor = None
+    get_database_middleware = None
+    get_optimization_advisor = None
+    initialize_database_monitoring = None
+
+# 导入数据库性能分析器相关类
+try:
+    from .database_performance_analyzer import (
+        DatabasePerformanceAnalyzer,
+        QueryMetrics,
+        get_database_analyzer,
+        initialize_database_analyzer,
+    )
+except ImportError:
+    DatabasePerformanceAnalyzer = None
+    QueryMetrics = None
+    get_database_analyzer = None
+    initialize_database_analyzer = None
+
+# 导入性能中间件相关类
+try:
+    from .performance_middleware import (
+        EnhancedPerformanceMiddleware,
+        create_performance_middleware,
+        get_performance_middleware,
+    )
+except ImportError:
+    EnhancedPerformanceMiddleware = None
+    create_performance_middleware = None
+    get_performance_middleware = None
+
+# 导入查询执行分析相关类
+try:
+    from .query_execution_analyzer import (
+        ExecutionPlanAnalysis,
+        ExecutionPlanNode,
+        QueryExecutionAnalyzer,
+        get_query_execution_analyzer,
+        initialize_query_execution_analyzer,
+    )
+except ImportError:
+    ExecutionPlanAnalysis = None
+    ExecutionPlanNode = None
+    QueryExecutionAnalyzer = None
+    get_query_execution_analyzer = None
+    initialize_query_execution_analyzer = None
+
+# 导入缓存相关类
+try:
+    from .cache_middleware import (
+        CacheMiddleware,
+        SmartCacheManager,
+        get_cache_manager,
+        get_cache_middleware,
+        initialize_cache_system,
+    )
+except ImportError:
+    CacheMiddleware = None
+    SmartCacheManager = None
+    get_cache_manager = None
+    get_cache_middleware = None
+    initialize_cache_system = None
 
 __all__ = [
     # API性能中间件

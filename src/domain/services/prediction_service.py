@@ -272,7 +272,7 @@ class PredictionDomainService:
     def calculate_prediction_confidence(
         self,
         user_history: dict[str, Any],
-        match重要性: float,
+        match_importance: float,
         team_form_diff: float | None = None,
     ) -> float:
         """计算预测信心度"""
@@ -284,7 +284,7 @@ class PredictionDomainService:
             base_confidence += (accuracy_rate - 0.5) * 0.3
 
         # 根据比赛重要性调整
-        base_confidence += (match重要性 - 0.5) * 0.2
+        base_confidence += (match_importance - 0.5) * 0.2
 
         # 根据球队状态差异调整
         if team_form_diff:

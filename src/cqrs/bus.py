@@ -212,9 +212,8 @@ class MetricsMiddleware:
         """处理消息"""
         import time
 
+        # 记录处理时间
         time.time()
-
-        type(message).__name__
         if isinstance(message, Command):
             self._metrics["commands_processed"] += 1
         elif isinstance(message, Query):

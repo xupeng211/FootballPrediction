@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import secrets
 import urllib.parse
 import uuid
@@ -31,6 +32,23 @@ class CryptoUtils:
         try:
             if not password or not hashed:
                 return False
+
+            # 检查是否是bcrypt格式
+            if hashed.startswith("$2b$") or hashed.startswith("$2a$"):
+                return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+
+            # 检查是否是sha256格式: sha256$salt$hash
+            elif hashed.startswith("sha256$") and hashed.count("$") == 2:
+                parts = hashed.split("$")
+                if len(parts) == 3:
+                    _, salt, expected_hash = parts
+                    salted_password = f"{password}{salt}"
+                    actual_hash = hashlib.sha256(
+                        salted_password.encode("utf-8")
+                    ).hexdigest()
+                    return actual_hash == expected_hash
+
+            # 默认使用bcrypt验证
             return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
         except Exception:
             return False
@@ -68,12 +86,14 @@ class CryptoUtils:
     # 添加测试期望的函数别名和方法
     @staticmethod
     def generate_short_id(length: int = 8) -> str:
-        """生成短ID"""
-        # 如果是奇数，使用token_hex并减半长度
-        if length % 2 == 1:
-            return secrets.token_hex(length // 2)
-        # 否则使用token_urlsafe
-        return secrets.token_urlsafe(length)[:length]
+        """生成短ID - 始终返回十六进制格式"""
+        try:
+            # 确保返回十六进制格式，长度需要是偶数
+            if length % 2 == 1:
+                length += 1  # 调整为偶数
+            return secrets.token_hex(length // 2)[:length]
+        except Exception:
+            return ""
 
     @staticmethod
     def encode_base64(data: str) -> str:
@@ -96,16 +116,18 @@ class CryptoUtils:
             return ""
 
     @staticmethod
-    def create_checksum(data: str) -> str:
+    def create_checksum(data) -> str:
         """创建校验和"""
         import hashlib
 
         try:
-            if data is None:
+            # 只接受字符串类型，其他类型返回空字符串
+            if not isinstance(data, str):
                 return ""
-            return hashlib.sha256(str(data).encode("utf-8")).hexdigest()
+            # 空字符串也要产生哈希值
+            return hashlib.sha256(data.encode("utf-8")).hexdigest()
         except Exception:
-            return hashlib.sha256(b"").hexdigest()
+            return ""
 
     @staticmethod
     def generate_random_string(length: int = 32) -> str:
@@ -116,7 +138,7 @@ class CryptoUtils:
             return ""
 
     @staticmethod
-    def generate_api_key(prefix: str = "api") -> str:
+    def generate_api_key(prefix: str = "fp") -> str:
         """生成API密钥"""
         try:
             random_part = secrets.token_urlsafe(24)

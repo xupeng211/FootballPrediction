@@ -15,17 +15,31 @@ from .odds import MarketType, Odds
 from .predictions import PredictedResult, Predictions
 from .raw_data import RawMatchData, RawOddsData, RawScoresData
 from .team import Team
-from .tenant import (
-    PermissionScope,
-    ResourceType,
-    RolePermission,
-    Tenant,
-    TenantPermission,
-    TenantPlan,
-    TenantRole,
-    TenantStatus,
-    UserRoleAssignment,
-)
+
+# 导入__init__相关类
+try:
+    from .__init__ import (
+        PermissionScope,
+        ResourceType,
+        RolePermission,
+        Tenant,
+        TenantPermission,
+        TenantPlan,
+        TenantRole,
+        TenantStatus,
+        UserRoleAssignment,
+    )
+except ImportError:
+    PermissionScope = None
+    ResourceType = None
+    RolePermission = None
+    Tenant = None
+    TenantPermission = None
+    TenantPlan = None
+    TenantRole = None
+    TenantStatus = None
+    UserRoleAssignment = None
+
 from .user import User
 
 # 为API兼容性创建别名

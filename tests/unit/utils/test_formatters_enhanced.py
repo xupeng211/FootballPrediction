@@ -122,8 +122,8 @@ class TestFormattersEnhanced:
         assert format_currency(123.456) == "123.46 USD"
         assert format_currency(123.454) == "123.45 USD"
 
-        # 测试边界情况 - Python的round函数在.5时使用银行家舍入法
-        assert format_currency(123.455) == "123.45 USD"  # 银行家舍入法，舍向偶数
+        # 测试边界情况 - 使用四舍五入法
+        assert format_currency(123.455) == "123.46 USD"  # 四舍五入法
 
     def test_format_percentage_default(self):
         """测试默认百分比格式化"""
@@ -157,8 +157,8 @@ class TestFormattersEnhanced:
         assert format_percentage(25.556) == "25.56%"
         assert format_percentage(25.554) == "25.55%"
 
-        # 测试边界情况 - Python的格式化使用银行家舍入法
-        assert format_percentage(25.555) == "25.55%"  # 银行家舍入法，舍向偶数
+        # 测试边界情况 - 使用四舍五入法
+        assert format_percentage(25.555) == "25.56%"  # 四舍五入法
 
     def test_formatters_integration_workflow(self):
         """测试格式化器集成工作流程"""

@@ -20,13 +20,13 @@ def _lazy_import():
     """延迟导入以避免循环导入"""
     global PredictionEngine, PredictionConfig, PredictionStatistics
     if PredictionEngine is None:
-        from .prediction import PredictionEngine as _PE
-        from .prediction.config import PredictionConfig as _PC
-        from .prediction.statistics import PredictionStatistics as _PS
+        from .prediction import PredictionEngine
+        from .prediction.config import PredictionConfig
+        from .prediction.statistics import PredictionStatistics
 
-        PredictionEngine = _PE
-        PredictionConfig = _PC
-        PredictionStatistics = _PS
+        # PredictionEngine = PredictionEngine  # 直接赋值
+        # PredictionConfig = PredictionConfig  # 直接赋值
+        # PredictionStatistics = PredictionStatistics  # 直接赋值
 
 
 # 单例实例

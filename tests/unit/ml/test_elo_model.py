@@ -247,13 +247,15 @@ class TestEloModel:
         ratings = elo_model.team_ratings
 
         # 验证基本功能：所有队伍都有评级，且评级在合理范围内
-        for team, rating in ratings.items():
+        for _team, rating in ratings.items():
             assert isinstance(rating, (int, float))
             assert 1000 <= rating <= 2000  # 典型的ELO评级范围
 
         # 验证至少有一支队伍的评级与初始评级不同
         initial_rating = 1500.0
-        has_changed = any(abs(rating - initial_rating) > 1 for rating in ratings.values())
+        has_changed = any(
+            abs(rating - initial_rating) > 1 for rating in ratings.values()
+        )
         assert has_changed, "至少应该有一支队伍的评级发生变化"
 
     def test_k_factor_optimization(self, elo_model):

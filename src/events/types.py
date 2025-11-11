@@ -1,6 +1,5 @@
 # mypy: ignore-errors
 """
-from typing import Dict, Optional
 核心事件类型定义
 Core Event Types
 

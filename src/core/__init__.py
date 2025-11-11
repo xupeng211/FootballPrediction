@@ -8,7 +8,10 @@
 - 基础工具类
 """
 
-from .config_di import ConfigurationBinder
+# 导入配置管理
+from .config import Config, Settings, config, get_settings
+
+# 导入依赖注入
 from .di import (
     DIContainer,
     ServiceCollection,
@@ -17,6 +20,8 @@ from .di import (
     inject,
     resolve,
 )
+
+# 导入异常类
 from .exceptions import (
     ConfigError,
     DataError,
@@ -53,5 +58,4 @@ __all__ = [
     "inject",
     "ServiceLifecycleManager",
     "get_lifecycle_manager",
-    "ConfigurationBinder",
 ]

@@ -6,13 +6,19 @@ Base Domain Event
 Defines the base structure for domain events.
 """
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
 
 class DomainEvent(ABC):
+    """领域事件基类"""
+
+    @abstractmethod
+    def get_event_type(self) -> str:
+        """获取事件类型 - 子类必须实现"""
+        pass
     """
     领域事件基类
 

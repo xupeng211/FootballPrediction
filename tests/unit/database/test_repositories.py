@@ -671,7 +671,7 @@ class TestDatabaseConnection:
 
         # 获取多个连接，模拟连接池使用
         sessions = []
-        for i in range(3):
+        for _i in range(3):
             session = db_manager.get_session()
             sessions.append(session)
 
@@ -680,7 +680,7 @@ class TestDatabaseConnection:
         assert len(db_manager.sessions) == 3
 
         # 验证所有连接都是有效的
-        for i, session in enumerate(sessions):
+        for _i, session in enumerate(sessions):
             assert session is not None
             assert session in db_manager.sessions
 

@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Any
 
 from sqlalchemy import Column, DateTime, Integer, String, Text, func
+from sqlalchemy.orm import validates
 
 from src.database.base import BaseModel
 
@@ -15,10 +16,6 @@ from src.database.base import BaseModel
 
 基于 DATA_DESIGN.md 第1.3节设计.
 """
-
-
-from sqlalchemy import Enum
-from sqlalchemy.orm import validates
 
 
 class CollectionStatus(Enum):

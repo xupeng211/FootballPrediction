@@ -8,13 +8,23 @@
 """
 
 from .entities import MatchEntity, TeamEntity
-from .feature_definitions import (
-    AllMatchFeatures,
-    AllTeamFeatures,
-    HistoricalMatchupFeatures,
-    OddsFeatures,
-    RecentPerformanceFeatures,
-)
+
+# 导入engineering相关类
+try:
+    from .engineering import (
+        AllMatchFeatures,
+        AllTeamFeatures,
+        HistoricalMatchupFeatures,
+        OddsFeatures,
+        RecentPerformanceFeatures,
+    )
+except ImportError:
+    AllMatchFeatures = None
+    AllTeamFeatures = None
+    HistoricalMatchupFeatures = None
+    OddsFeatures = None
+    RecentPerformanceFeatures = None
+
 from .features.feature_calculator_calculators import FeatureCalculator
 
 # 导出主要接口

@@ -1,6 +1,6 @@
 """
 简单的适配器工厂实现
-Simple Adapter Factory Implementation
+Simple BaseAdapter Factory Implementation
 
 提供轻量级的适配器创建和管理功能。
 Provides lightweight adapter creation and management functionality.
@@ -9,37 +9,37 @@ Provides lightweight adapter creation and management functionality.
 from typing import Any
 
 # 导入基础类
-from .base import BaseAdapter as Adapter
+from .base import BaseAdapter
 
-# 尝试导入AdapterError，如果失败则创建
+# 尝试导入BaseAdapterError，如果失败则创建
 try:
-    from .registry import AdapterError
+    from .registry import BaseAdapterError
 except ImportError:
 
-    class AdapterError(Exception):
+    class BaseAdapterError(Exception):
         """适配器错误"""
 
         pass
 
 
-class AdapterFactory:
+class BaseAdapterFactory:
     """适配器工厂类"""
 
     def __init__(self):
         """初始化工厂"""
-        self.adapters: dict[str, type[Adapter]] = {}
-        self.singletons: dict[str, Adapter] = {}
+        self.adapters: dict[str, type[BaseAdapter]] = {}
+        self.singletons: dict[str, BaseAdapter] = {}
 
-    def register_adapter(self, name: str, adapter_class: type[Adapter]) -> None:
+    def register_adapter(self, name: str, adapter_class: type[BaseAdapter]) -> None:
         """注册适配器类"""
         self.adapters[name] = adapter_class
 
     def create_adapter(
         self, name: str, config: dict[str, Any] | None = None, singleton: bool = True
-    ) -> Adapter:
+    ) -> BaseAdapter:
         """创建适配器实例"""
         if name not in self.adapters:
-            raise AdapterError(f"Adapter '{name}' not registered")
+            raise BaseAdapterError(f"BaseAdapter '{name}' not registered")
 
         if singleton and name in self.singletons:
             return self.singletons[name]
@@ -53,7 +53,7 @@ class AdapterFactory:
         return adapter
 
 
-class AdapterNames:
+class BaseAdapterNames:
     """预定义的适配器名称常量"""
 
     HTTP = "http"
@@ -64,12 +64,12 @@ class AdapterNames:
 
 
 # 全局工厂实例
-_global_factory = AdapterFactory()
+_global_factory = BaseAdapterFactory()
 
 
 def get_adapter(
     name: str, config: dict[str, Any] | None = None, singleton: bool = True
-) -> Adapter:
+) -> BaseAdapter:
     """
     获取适配器实例(便捷函数)
     Args:
@@ -82,15 +82,15 @@ def get_adapter(
     return _global_factory.create_adapter(name, config, singleton)
 
 
-def get_global_factory() -> AdapterFactory:
+def get_global_factory() -> BaseAdapterFactory:
     """获取全局工厂实例"""
     return _global_factory
 
 
 __all__ = [
-    "AdapterFactory",
-    "AdapterError",
-    "AdapterNames",
+    "BaseAdapterFactory",
+    "BaseAdapterError",
+    "BaseAdapterNames",
     "get_adapter",
     "get_global_factory",
 ]

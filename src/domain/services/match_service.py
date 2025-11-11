@@ -92,8 +92,8 @@ class MatchDomainService:
         if invalid_keys:
             raise ValueError(f"Invalid configuration keys: {invalid_keys}")
 
-    def get_service_info(self) -> dict[str, Any]:
-        """获取服务信息"""
+    def get_detailed_service_info(self) -> dict[str, Any]:
+        """获取详细服务信息"""
         return {
             "name": self.__class__.__name__,
             "initialized": self._is_initialized,

@@ -18,7 +18,7 @@ class TestAPIMonitoring:
 
     def test_get_metrics(self, client):
         """测试获取系统指标"""
-        with patch("src.api.monitoring.get_system_metrics") as mock_metrics:
+        with patch("src.api.monitoring.get_metrics") as mock_metrics:
             mock_metrics.return_value = {
                 "cpu_usage": 45.2,
                 "memory_usage": 68.5,
@@ -27,7 +27,7 @@ class TestAPIMonitoring:
                 "requests_per_second": 15.3,
             }
 
-            response = client.get("/api/monitoring/metrics")
+            response = client.get("/monitoring/metrics")
             assert response.status_code == 200
             data = response.json()
             assert "cpu_usage" in data
@@ -35,7 +35,7 @@ class TestAPIMonitoring:
 
     def test_get_performance_stats(self, client):
         """测试获取性能统计"""
-        with patch("src.api.monitoring.get_performance_stats") as mock_stats:
+        with patch("src.api.monitoring.get_monitoring_stats") as mock_stats:
             mock_stats.return_value = {
                 "avg_response_time": 0.125,
                 "p95_response_time": 0.250,

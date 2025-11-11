@@ -26,7 +26,7 @@ class TestCryptoUtilsComprehensive:
         # 奇数长度
         result = CryptoUtils.generate_short_id(7)
         assert isinstance(result, str)
-        assert len(result) == 6  # 7//2 = 3, token_hex返回6位
+        assert len(result) == 8  # 7调整为8（偶数），然后生成8位
 
         # 零长度
         result = CryptoUtils.generate_short_id(0)

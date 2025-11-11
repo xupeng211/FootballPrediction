@@ -1,6 +1,6 @@
 import os
 import time
-from asyncio import isawaitable
+from collections.abc import Awaitable
 from datetime import datetime
 from typing import Any
 
@@ -16,6 +16,11 @@ from src.core.logger import get_logger
 from src.database.dependencies import get_db
 from src.monitoring.metrics_collector import get_metrics_collector
 from src.monitoring.metrics_exporter import get_metrics_exporter
+
+
+def isawaitable(obj):
+    return isinstance(obj, Awaitable)
+
 
 # mypy: ignore-errors
 # 监控收集器与导出器（保留原功能,迁移到 /collector/* 与 /metrics/prometheus）
