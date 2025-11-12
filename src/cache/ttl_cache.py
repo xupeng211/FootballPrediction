@@ -32,6 +32,7 @@ try:
         get_cache,
         prediction_cache,
     )
+
     # 提供默认值给不存在的缓存实例
     odds_cache = None
     session_cache = None
@@ -42,6 +43,7 @@ try:
 
     def stop_auto_cleanup():
         return None
+
 except ImportError:
     # 如果导入失败,提供错误信息
     import logging
