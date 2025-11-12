@@ -2,7 +2,7 @@
 增强版 FastAPI 应用
 Enhanced FastAPI Application
 
-提供基础的应用结构，包含数据库连接和基本的预测功能。
+提供基础的应用结构,包含数据库连接和基本的预测功能.
 Provides basic application structure with database connection and basic prediction functionality.
 """
 
@@ -22,7 +22,6 @@ DATABASE_URL = os.getenv(
 # 全局数据库连接池
 db_pool = None
 
-
 async def init_db_pool():
     """启动时初始化数据库连接"""
     global db_pool
@@ -31,13 +30,11 @@ async def init_db_pool():
     except Exception:
         raise
 
-
 async def close_db_pool():
     """关闭时清理连接池"""
     global db_pool
     if db_pool:
         await db_pool.close()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -48,7 +45,6 @@ async def lifespan(app: FastAPI):
     # 关闭时清理
     await close_db_pool()
 
-
 # 创建 FastAPI 应用
 app = FastAPI(
     title="足球预测系统 - 增强版",
@@ -56,7 +52,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
-
 
 # 数据模型
 class PredictionRequest(BaseModel):
@@ -67,12 +62,11 @@ class PredictionRequest(BaseModel):
     away_team: str
     confidence: float | None = None
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        # 验证confidence范围
-        if self.confidence is not None and not (0 <= self.confidence <= 1):
-            raise HTTPException(status_code=400, detail="confidence必须在0-1之间")
-
+def __init__(self, **data):
+    super().__init__(**data)
+    # 验证confidence范围
+    if self.confidence is not None and not (0 <= self.confidence <= 1):
+        raise HTTPException(status_code=400, detail="confidence必须在0-1之间")
 
 class PredictionResponse(BaseModel):
     """预测响应模型"""
@@ -82,19 +76,16 @@ class PredictionResponse(BaseModel):
     confidence: float
     created_at: str
 
-
 # 路由端点
 @app.get("/")
 async def root():
     """根端点"""
     return {"message": "足球预测系统 API", "version": "1.0.0"}
 
-
 @app.get("/health")
 async def health_check():
     """健康检查"""
     return {"status": "healthy", "database": "connected" if db_pool else "disconnected"}
-
 
 @app.get("/db")
 async def get_db_connection():
@@ -105,7 +96,6 @@ async def get_db_connection():
     async with db_pool.acquire() as connection:
         result = await connection.fetchval("SELECT 1")
         return {"db_status": "connected", "test_result": result}
-
 
 @app.get("/predictions", response_model=list[PredictionResponse])
 async def get_predictions():
@@ -128,7 +118,6 @@ async def get_predictions():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"查询失败: {str(e)}") from e
 
-
 @app.post("/predictions", response_model=PredictionResponse)
 async def create_prediction(request: PredictionRequest):
     """创建新预测"""
@@ -147,7 +136,6 @@ async def create_prediction(request: PredictionRequest):
             return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"创建失败: {str(e)}") from e
-
 
 if __name__ == "__main__":
     uvicorn.run(
