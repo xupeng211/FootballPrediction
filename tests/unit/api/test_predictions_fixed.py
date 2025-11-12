@@ -13,15 +13,13 @@ class TestPredictionsAPI:
     def client(self):
         """创建测试客户端"""
         from src.api.app import app
+
         return TestClient(app)
 
     @pytest.fixture
     def sample_prediction_request(self):
         """示例预测请求数据"""
-        return {
-            "model_version": "v1.0",
-            "include_details": True
-        }
+        return {"model_version": "v1.0", "include_details": True}
 
     @pytest.fixture
     def sample_prediction_result(self):
@@ -34,7 +32,7 @@ class TestPredictionsAPI:
             "predicted_outcome": "home",
             "confidence": 0.75,
             "model_version": "v1.0",
-            "predicted_at": "2025-11-11T22:00:00Z"
+            "predicted_at": "2025-11-11T22:00:00Z",
         }
 
     def test_predictions_root_endpoint(self, client):
@@ -110,8 +108,7 @@ class TestPredictionsAPI:
 
         # 注意：当前的实现返回模拟数据，不需要Mock
         response = client.post(
-            f"/predictions/{match_id}/predict",
-            json=sample_prediction_request
+            f"/predictions/{match_id}/predict", json=sample_prediction_request
         )
         assert response.status_code == 201
 
@@ -139,10 +136,7 @@ class TestPredictionsAPI:
 
     def test_batch_predict(self, client):
         """测试批量预测"""
-        batch_request = {
-            "match_ids": [123, 456, 789],
-            "model_version": "v1.0"
-        }
+        batch_request = {"match_ids": [123, 456, 789], "model_version": "v1.0"}
 
         response = client.post("/predictions/batch", json=batch_request)
         assert response.status_code == 200
@@ -174,10 +168,7 @@ class TestPredictionsAPI:
     def test_batch_predict_invalid_match_ids(self, client):
         """测试批量预测 - 无效的match_ids"""
         # 空的match_ids列表
-        batch_request = {
-            "match_ids": [],
-            "model_version": "v1.0"
-        }
+        batch_request = {"match_ids": [], "model_version": "v1.0"}
 
         response = client.post("/predictions/batch", json=batch_request)
         # 应该返回422验证错误
@@ -188,7 +179,7 @@ class TestPredictionsAPI:
         # 超过100个match_ids
         batch_request = {
             "match_ids": list(range(101)),  # 0-100，共101个
-            "model_version": "v1.0"
+            "model_version": "v1.0",
         }
 
         response = client.post("/predictions/batch", json=batch_request)
@@ -214,8 +205,14 @@ class TestPredictionsAPI:
 
         # 验证必需字段
         required_fields = [
-            "match_id", "home_win_prob", "draw_prob", "away_win_prob",
-            "predicted_outcome", "confidence", "model_version", "predicted_at"
+            "match_id",
+            "home_win_prob",
+            "draw_prob",
+            "away_win_prob",
+            "predicted_outcome",
+            "confidence",
+            "model_version",
+            "predicted_at",
         ]
 
         for field in required_fields:
@@ -260,10 +257,7 @@ class TestPredictionModels:
         assert request.include_details is False
 
         # 测试自定义值
-        request = PredictionRequest(
-            model_version="v2.0",
-            include_details=True
-        )
+        request = PredictionRequest(model_version="v2.0", include_details=True)
         assert request.model_version == "v2.0"
         assert request.include_details is True
 
@@ -279,7 +273,7 @@ class TestPredictionModels:
             away_win_prob=0.15,
             predicted_outcome="home",
             confidence=0.75,
-            model_version="v1.0"
+            model_version="v1.0",
         )
 
         assert result.match_id == 123
@@ -296,8 +290,7 @@ class TestPredictionModels:
         from src.api.predictions.router import BatchPredictionRequest
 
         request = BatchPredictionRequest(
-            match_ids=[123, 456, 789],
-            model_version="v1.0"
+            match_ids=[123, 456, 789], model_version="v1.0"
         )
 
         assert request.match_ids == [123, 456, 789]
@@ -315,7 +308,7 @@ class TestPredictionModels:
                 away_win_prob=0.15,
                 predicted_outcome="home",
                 confidence=0.75,
-                model_version="v1.0"
+                model_version="v1.0",
             )
         ]
 
@@ -324,7 +317,7 @@ class TestPredictionModels:
             total=1,
             success_count=1,
             failed_count=0,
-            failed_match_ids=[]
+            failed_match_ids=[],
         )
 
         assert response.total == 1
