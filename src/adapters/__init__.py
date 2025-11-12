@@ -5,6 +5,7 @@ from .factory_simple import BaseAdapterFactory as SimpleAdapterFactory
 from .factory_simple import get_adapter
 
 # 导入适配器实现
+
 try:
     from .football import (
         ApiFootballAdapter,
@@ -14,16 +15,17 @@ try:
         OptaDataAdapter,
     )
 except ImportError:
-    # 如果某些适配器模块不存在，提供占位符
+    # 如果某些适配器模块不存在,提供占位符
     ApiFootballAdapter = None
     CompositeFootballAdapter = None
     FootballApiAdapter = None
     FootballDataAdapter = None
     OptaDataAdapter = None
 
-from .registry import BaseAdapterError as AdapterError, BaseAdapterRegistry as AdapterRegistry
+from .registry import BaseAdapterError as AdapterError
+from .registry import BaseAdapterRegistry as AdapterRegistry
 
-# 为了向后兼容，提供AdapterFactory别名
+# 为了向后兼容,提供AdapterFactory别名
 AdapterFactory = SimpleAdapterFactory
 
 # 适配器模式实现
@@ -49,5 +51,5 @@ __all__ = [
     "CompositeFootballAdapter",
 ]
 
-# 为了向后兼容，提供BaseAdapter的别名
+# 为了向后兼容,提供BaseAdapter的别名
 Adapter = BaseAdapter

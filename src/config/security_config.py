@@ -9,10 +9,10 @@ Security Configuration Management
 - 安全默认值
 """
 
+import logging
 import os
 import secrets
-from typing import Optional, Dict, Any
-import logging
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +43,16 @@ class SecurityConfig:
         # 安全密钥
         self.secret_key = os.getenv("SECRET_KEY")
         if not self.secret_key:
-            logger.warning("SECRET_KEY not found in environment, generating temporary key")
+            logger.warning(
+                "SECRET_KEY not found in environment, generating temporary key"
+            )
             self.secret_key = secrets.token_urlsafe(32)
 
         self.jwt_secret_key = os.getenv("JWT_SECRET_KEY")
         if not self.jwt_secret_key:
-            logger.warning("JWT_SECRET_KEY not found in environment, generating temporary key")
+            logger.warning(
+                "JWT_SECRET_KEY not found in environment, generating temporary key"
+            )
             self.jwt_secret_key = secrets.token_urlsafe(32)
 
         # API配置
@@ -76,7 +80,9 @@ class SecurityConfig:
             return self.redis_url
 
         if self.redis_password:
-            return f"redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/0"
+            return (
+                f"redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/0"
+            )
         else:
             return f"redis://{self.redis_host}:{self.redis_port}/0"
 
@@ -96,7 +102,9 @@ class SecurityConfig:
                 issues.append(f"{name} is missing or too short")
 
         # 检查数据库配置
-        if not self.database_url and not all([self.database_user, self.database_password]):
+        if not self.database_url and not all(
+            [self.database_user, self.database_password]
+        ):
             issues.append("Database configuration incomplete")
 
         # 检查安全性
@@ -110,7 +118,7 @@ class SecurityConfig:
             "valid": len(issues) == 0,
             "issues": issues,
             "warnings": warnings,
-            "status": "OK" if len(issues) == 0 else "NEEDS_ATTENTION"
+            "status": "OK" if len(issues) == 0 else "NEEDS_ATTENTION",
         }
 
     def get_safe_config(self) -> Dict[str, Any]:
@@ -161,5 +169,5 @@ __all__ = [
     "security_config",
     "validate_security_config",
     "get_database_url",
-    "get_redis_url"
+    "get_redis_url",
 ]

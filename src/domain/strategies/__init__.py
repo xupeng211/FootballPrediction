@@ -17,17 +17,17 @@ from .base import (
 
 # 导入具体策略实现
 try:
+    from .config import StrategyConfig
     from .enhanced_ml_model import EnhancedMLModel
+    from .ensemble import EnsembleStrategy
+    from .factory import PredictionStrategyFactory
+    from .historical import HistoricalStrategy
     from .ml_model import MLModelStrategy
     from .statistical import (
         EloStrategy,
         PoissonStrategy,
         StatisticalStrategy,
     )
-    from .historical import HistoricalStrategy
-    from .ensemble import EnsembleStrategy
-    from .factory import PredictionStrategyFactory
-    from .config import StrategyConfig
 except ImportError:
     EnhancedMLModel = None
     MLModelStrategy = None

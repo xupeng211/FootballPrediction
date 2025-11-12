@@ -10,13 +10,14 @@
 
 import os
 import secrets
+
 from .router import router
 
 # 生产环境使用环境变量，测试环境使用安全的默认值
 TEST_USER_EMAIL = os.getenv("TEST_USER_EMAIL", "test@example.com")
 TEST_USER_PASSWORD_HASH = os.getenv(
     "TEST_USER_PASSWORD_HASH",
-    "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4QF8xq4.8K"
+    "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4QF8xq4.8K",
 )
 
 # 测试用的模拟用户数据 (仅用于开发测试)
