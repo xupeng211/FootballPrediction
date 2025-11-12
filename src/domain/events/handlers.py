@@ -7,13 +7,10 @@ Defines handlers for various domain events.
 """
 
 import logging
-import asyncio
-from typing import Any, Dict, List, Optional
 from datetime import datetime
-from abc import ABC
+from typing import Any, Dict, List
 
-from .base import EventHandler, DomainEvent
-
+from .base import DomainEvent, EventHandler
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +32,9 @@ class MetricsEventHandler(EventHandler):
             self.metrics[event_type] = 0
         self.metrics[event_type] += 1
 
-        logger.debug(f"MetricsEventHandler: Processed {event_type} event (#{self.metrics_count})")
+        logger.debug(
+            f"MetricsEventHandler: Processed {event_type} event (#{self.metrics_count})"
+        )
 
 
 class LoggingEventHandler(EventHandler):
@@ -52,7 +51,7 @@ class LoggingEventHandler(EventHandler):
 
         logger.log(
             self.log_level,
-            f"LoggingEventHandler: {event.get_event_type()} - {event_data}"
+            f"LoggingEventHandler: {event.get_event_type()} - {event_data}",
         )
 
 
@@ -91,12 +90,14 @@ class NotificationEventHandler(EventHandler):
             "event_id": event.id,
             "aggregate_id": event.aggregate_id,
             "timestamp": event.timestamp,
-            "processed_at": datetime.utcnow()
+            "processed_at": datetime.utcnow(),
         }
 
         self.notification_queue.append(notification)
 
-        logger.info(f"NotificationEventHandler: Queued notification for {event.get_event_type()}")
+        logger.info(
+            f"NotificationEventHandler: Queued notification for {event.get_event_type()}"
+        )
 
 
 class AnalyticsEventHandler(EventHandler):
@@ -116,7 +117,7 @@ class AnalyticsEventHandler(EventHandler):
             self.analytics_data[event_type] = {
                 "count": 0,
                 "first_occurrence": datetime.utcnow(),
-                "last_occurrence": None
+                "last_occurrence": None,
             }
 
         self.analytics_data[event_type]["count"] += 1
@@ -132,7 +133,7 @@ class AlertEventHandler(EventHandler):
         self.alerts_triggered = 0
         self.alert_conditions: Dict[str, Any] = {
             "error_threshold": 10,
-            "warning_threshold": 5
+            "warning_threshold": 5,
         }
         self.alert_history: List[Dict[str, Any]] = []
 
@@ -148,7 +149,7 @@ class AlertEventHandler(EventHandler):
                 "event_type": event_type,
                 "event_id": event.id,
                 "triggered_at": datetime.utcnow(),
-                "severity": self._get_alert_severity(event_type)
+                "severity": self._get_alert_severity(event_type),
             }
 
             self.alert_history.append(alert)
@@ -205,7 +206,7 @@ def register_default_handlers(event_bus) -> None:
         "prediction_evaluated",
         "prediction_cancelled",
         "error_occurred",
-        "system_alert"
+        "system_alert",
     ]
 
     for event_type in event_types:
@@ -264,5 +265,5 @@ __all__ = [
     "create_cache_invalidation_handler",
     "create_notification_handler",
     "create_analytics_handler",
-    "create_alert_handler"
+    "create_alert_handler",
 ]

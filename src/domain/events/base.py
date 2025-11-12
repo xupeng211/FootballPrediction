@@ -16,6 +16,7 @@ from uuid import uuid4
 
 class EventData:
     """事件数据容器"""
+
     def __init__(self, data: dict[str, Any] | None = None):
         self.data = data or {}
         self.timestamp = datetime.utcnow()
@@ -25,7 +26,7 @@ class EventHandler(ABC):
     """事件处理器基类"""
 
     @abstractmethod
-    async def handle(self, event: 'DomainEvent') -> None:
+    async def handle(self, event: "DomainEvent") -> None:
         """处理事件"""
         pass
 

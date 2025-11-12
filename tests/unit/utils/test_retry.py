@@ -45,7 +45,7 @@ class TestRetryExports:
 
     def test_retry_config_instantiation(self):
         """测试RetryConfig可以实例化"""
-        config = RetryConfig(max_attempts=3, delay=1.0)
+        config = RetryConfig(max_attempts=3, initial_delay=1.0)
         assert config is not None
 
     def test_strategies_instantiation(self):
