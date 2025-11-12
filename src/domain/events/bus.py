@@ -6,11 +6,10 @@ Event Bus Module
 Provides domain event publishing and subscription functionality.
 """
 
-from typing import Dict, List, Callable, Any
-from abc import ABC, abstractmethod
 import asyncio
 import logging
 from dataclasses import dataclass
+from typing import Callable, Dict, List
 
 from .base import DomainEvent
 
@@ -142,5 +141,5 @@ __all__ = [
     "publish",
     "publish_async",
     "start_event_bus",
-    "TestEvent"
+    "TestEvent",
 ]

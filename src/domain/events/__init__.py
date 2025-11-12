@@ -1,15 +1,11 @@
-"""
 领域事件
 Domain Events
 
 定义领域事件类,用于记录和传播领域中的重要事件.
 Defines domain event classes for recording and propagating important events in the domain.
-"""
-
 
 from .base import Event, EventData, EventHandler
 from .bus import EventBus, get_event_bus, start_event_bus, stop_event_bus
-from .handlers import (
     AlertEventHandler,
     AnalyticsEventHandler,
     CacheInvalidationHandler,
@@ -18,13 +14,11 @@ from .handlers import (
     NotificationEventHandler,
     register_default_handlers,
 )
-from .match_events import (
     MatchCancelledEvent,
     MatchFinishedEvent,
     MatchPostponedEvent,
     MatchStartedEvent,
 )
-from .prediction_events import (
     PredictionCancelledEvent,
     PredictionCreatedEvent,
     PredictionEvaluatedEvent,
@@ -32,13 +26,11 @@ from .prediction_events import (
     PredictionPointsAdjustedEvent,
     PredictionUpdatedEvent,
 )
-from .types import (
     MatchCreatedEventData,
     MatchUpdatedEventData,
     PredictionMadeEventData,
 )
 
-__all__ = [
     # 基础类
     "Event",
     "EventHandler",
