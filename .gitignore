@@ -157,3 +157,31 @@ stress_test_report_*.json
 # Claude Code 日志文件
 claude_sync_log.json
 claude_work_log.json
+
+# Claude Code 和项目报告文件
+P*.*Report*.md
+P*.*_Triage*.md
+P*.*_Fix*.md
+P*.*_Analysis*.md
+CLAUDE_*_REPORT.md
+CLAUDE_*_VALIDATION*.md
+test_crisis_solution_report.md
+smart_fix_report.md
+*_diagnostic.json
+*_analysis.json
+*_verification.json
+*.baseline*
+
+# 测试和性能分析文件
+test_db/
+test_integration/
+test_redis/
+test_reports/
+simulate_*.py
+test_*.py
+
+# 临时配置文件
+config/integration.py
+docker-compose.integration.yml
+docker/Dockerfile.integration
+
