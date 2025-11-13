@@ -15,7 +15,6 @@ Provides system management API endpoints:
 - Health checks
 """
 
-from datetime import datetime
 from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException
