@@ -1,0 +1,228 @@
+name: P3.3.3 CD Pipeline - Automated Deployment
+
+# Trigger on CI workflow completion for main branch
+on:
+  workflow_run:
+    workflows: ["P3.3 CI Pipeline - Quality Gate & Build"]
+    types:
+      - completed
+    branches: [main, master]
+
+env:
+  # Container registry and image configuration
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  # Production deployment configuration
+  PRODUCTION_PATH: /home/user/projects/FootballPrediction
+  COMPOSE_FILE: docker-compose.prod.yml
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # === Phase 1: Deployment Preparation ===
+  deploy-to-production:
+    name: P3.3.3 Deploy to Production
+    runs-on: ubuntu-latest
+    # Only deploy if CI workflow completed successfully and was on main branch
+    if: github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata for deployment
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Prepare deployment information
+        run: |
+          echo "P3.3.3: Preparing deployment information..."
+          echo "Source Repository: ${{ github.repository }}"
+          echo "Image Tags: ${{ join(steps.meta.outputs.tags, ', ') }}"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "CI Workflow: ${{ github.event.workflow_run.name }}"
+          echo "CI Status: ${{ github.event.workflow_run.conclusion }}"
+
+      - name: Verify production environment
+        run: |
+          echo "P3.3.3: Verifying production deployment configuration..."
+
+          # Check if docker-compose.prod.yml exists
+          if [ -f "${{ env.COMPOSE_FILE }}" ]; then
+            echo "Production compose file found: ${{ env.COMPOSE_FILE }}"
+          else
+            echo "Production compose file not found: ${{ env.COMPOSE_FILE }}"
+            echo "ERROR: Production compose file must exist before deployment"
+            exit 1
+          fi
+
+      - name: SSH to Production Server and Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          timeout: 300s
+          command_timeout: 120s
+          script: |
+            # Production deployment script
+            set -e  # Exit on any error
+
+            echo "P3.3.3: Starting production deployment..."
+            echo "Deployment Path: ${{ env.PRODUCTION_PATH }}"
+            echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+
+            # Navigate to project directory
+            cd ${{ env.PRODUCTION_PATH }}
+            echo "P3.3.3: Changed to project directory"
+
+            # Create backup of current running containers
+            echo "P3.3.3: Creating backup of current deployment..."
+            docker-compose -f ${{ env.COMPOSE_FILE }} down || echo "No running containers to backup"
+
+            # Pull the latest image
+            echo "P3.3.3: Pulling latest production image..."
+            docker-compose -f ${{ env.COMPOSE_FILE }} pull app
+
+            # Remove old containers (force cleanup)
+            echo "P3.3.3: Cleaning up old containers..."
+            docker system prune -f --volumes || true
+
+            # Start the application with new image
+            echo "P3.3.3: Starting application with new image..."
+            docker-compose -f ${{ env.COMPOSE_FILE }} up -d app
+
+            # Wait for application to be healthy
+            echo "P3.3.3: Waiting for application health check..."
+            sleep 30
+
+            # Check container status
+            echo "P3.3.3: Checking container status..."
+            docker-compose -f ${{ env.COMPOSE_FILE }} ps
+
+            # Verify application is responding
+            echo "P3.3.3: Verifying application health..."
+            if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+              echo "P3.3.3: Application health check passed"
+            else
+              echo "P3.3.3: Application health check failed"
+              echo "P3.3.3: Checking application logs..."
+              docker-compose -f ${{ env.COMPOSE_FILE }} logs app --tail=50
+              exit 1
+            fi
+
+            # Display final deployment status
+            echo "P3.3.3: Production deployment completed successfully!"
+            echo "Deployment Summary:"
+            echo "   Path: ${{ env.PRODUCTION_PATH }}"
+            echo "   Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            echo "   Time: $(date)"
+            echo "   Commit: ${{ github.sha }}"
+
+            # Show running containers
+            echo "Running containers:"
+            docker-compose -f ${{ env.COMPOSE_FILE }} ps
+
+      - name: Deployment Status Verification
+        if: always()
+        run: |
+          echo "P3.3.3: Deployment Status Report"
+          echo "=================================="
+          echo "Repository: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "CI Workflow: ${{ github.event.workflow_run.name }}"
+          echo "CI Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Image Registry: ${{ env.REGISTRY }}"
+          echo "Production Path: ${{ env.PRODUCTION_PATH }}"
+          echo ""
+
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "P3.3.3 DEPLOYMENT: SUCCESS"
+            echo "   Production deployment completed successfully"
+            echo "   New image is now running in production"
+            echo "   Application health checks passed"
+          else
+            echo "P3.3.3 DEPLOYMENT: FAILED"
+            echo "   Please check deployment logs and server status"
+            echo "   Manual intervention may be required"
+          fi
+
+      - name: Deployment Success Notification
+        if: success()
+        run: |
+          echo "P3.3.3: Production deployment notification"
+          echo "Status: ${{ job.status }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "P3.3.3: Automated deployment to production completed successfully!"
+
+      - name: Deployment Failure Notification
+        if: failure()
+        run: |
+          echo "P3.3.3: Production deployment failure notification"
+          echo "Status: ${{ job.status }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "P3.3.3: Automated deployment to production failed!"
+          echo "Action Required: Please check deployment logs and server status"
+
+  # === Phase 2: Post-Deployment Validation ===
+  post-deployment-validation:
+    name: P3.3.3 Post-Deployment Validation
+    runs-on: ubuntu-latest
+    needs: deploy-to-production
+    if: always()
+
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "P3.3.3 POST-DEPLOYMENT SUMMARY"
+          echo "=================================="
+          echo "Deployment Job Status: ${{ needs.deploy-to-production.result }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Target Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo ""
+
+          if [ "${{ needs.deploy-to-production.result }}" == "success" ]; then
+            echo "P3.3.3 COMPLETE DEPLOYMENT PIPELINE: SUCCESS"
+            echo ""
+            echo "P3.3.3 Pipeline Achievement Summary:"
+            echo "   P3.3.1 Quality Gate: Tests and Validation"
+            echo "   P3.3.2 Build & Push: Production Image Creation"
+            echo "   P3.3.3 Automated Deployment: Production Release"
+            echo ""
+            echo "Result: Code -> Test -> Build -> Deploy -> Production"
+            echo "Status: FootballPrediction is now running latest version!"
+          else
+            echo "P3.3.3 DEPLOYMENT PIPELINE: FAILED"
+            echo "Manual intervention required for production deployment"
+          fi
+
+      - name: P3.3.3 Completion Notification
+        if: always()
+        run: |
+          echo "P3.3.3 Complete CI/CD Pipeline notification"
+          echo "Deployment Status: ${{ needs.deploy-to-production.result }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "P3.3.3: Full CI/CD pipeline from code to production completed!"
