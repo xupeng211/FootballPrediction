@@ -10,6 +10,7 @@ Predictions API Router
 
 import logging
 from datetime import datetime, timedelta
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -97,15 +98,26 @@ class PredictionVerification(BaseModel):
 # ============================================================================
 
 
-@router.get("/")
+class CreatePredictionRequest(BaseModel):
+    """创建预测请求模型"""
+
+    match_id: int = Field(..., description="比赛ID")
+    home_team: str = Field(..., description="主队名称")
+    away_team: str = Field(..., description="客队名称")
+    predicted_outcome: str = Field(..., description="预测结果: home|draw|away")
+    confidence: float = Field(..., ge=0, le=1, description="预测置信度")
+
+
+@router.get("/info")
 async def get_predictions_root():
-    """预测服务根路径"""
+    """预测服务根路径信息"""
     return {
         "service": "足球预测API",
         "module": "predictions",
         "version": "1.0.0",
         "status": "运行中",
         "endpoints": {
+            "list": "/",
             "recent": "/recent",
             "health": "/health",
             "prediction": "/{match_id}",
@@ -113,8 +125,77 @@ async def get_predictions_root():
             "predict": "/{match_id}/predict",
             "batch": "/batch",
             "verify": "/{match_id}/verify",
+            "create": "/",
         },
     }
+
+
+@router.get("/", response_model=dict[str, Any])
+async def get_predictions_list(
+    limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
+    offset: int = Query(0, ge=0, description="偏移量"),
+):
+    """
+    获取预测列表
+
+    返回分页的预测数据列表.
+    """
+    logger.info(f"获取预测列表: limit={limit}, offset={offset}")
+
+    try:
+        # 导入预测服务
+        from src.services.prediction_service import get_prediction_service
+
+        prediction_service = get_prediction_service()
+
+        # 获取预测列表
+        result = prediction_service.get_predictions(limit=limit, offset=offset)
+
+        logger.info(f"成功获取 {len(result['predictions'])} 条预测")
+        return result
+
+    except Exception as e:
+        logger.error(f"获取预测列表失败: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"获取预测列表失败: {str(e)}"
+        ) from e
+
+
+@router.post("/", response_model=dict[str, Any], status_code=201)
+async def create_prediction(request: CreatePredictionRequest):
+    """
+    创建新的预测
+
+    接收预测请求数据并创建新的预测记录.
+    """
+    logger.info(f"创建新预测: 比赛 {request.match_id}")
+
+    try:
+        # 导入预测服务
+        from src.services.prediction_service import get_prediction_service
+
+        prediction_service = get_prediction_service()
+
+        # 构建预测数据
+        prediction_data = {
+            "match_id": request.match_id,
+            "home_team": request.home_team,
+            "away_team": request.away_team,
+            "predicted_outcome": request.predicted_outcome,
+            "confidence": request.confidence,
+        }
+
+        # 创建预测
+        created_prediction = prediction_service.create_prediction(prediction_data)
+
+        logger.info(f"成功创建预测: {created_prediction['id']}")
+        return created_prediction
+
+    except Exception as e:
+        logger.error(f"创建预测失败: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"创建预测失败: {str(e)}"
+        ) from e
 
 
 @router.get("/health")
@@ -169,41 +250,64 @@ async def get_recent_predictions(
         ) from e
 
 
-@router.get("/{match_id}", response_model=PredictionResult)
-async def get_prediction(
-    match_id: int,
-    model_version: str = Query("default", description="模型版本"),
-    include_details: bool = Query(False, description="包含详细信息"),
-):
+@router.get("/{prediction_id}")
+async def get_prediction_by_id_endpoint(prediction_id: str):
     """
-    获取指定比赛的预测结果
+    根据预测ID获取预测
 
-    获取已缓存的预测结果,如果不存在则返回404。
-    使用 POST /predictions/{match_id}/predict 生成新的预测.
+    接受字符串ID并返回对应的预测数据.
     """
-    logger.info(f"获取比赛 {match_id} 的预测结果")
+    logger.info(f"获取预测ID: {prediction_id}")
 
     try:
-        # TODO: 从数据库或缓存中获取预测结果
-        # 这里返回模拟数据作为占位符
-        result = PredictionResult(
-            match_id=match_id,
-            home_win_prob=0.45,
-            draw_prob=0.30,
-            away_win_prob=0.25,
-            predicted_outcome="home",
-            confidence=0.75,
-            model_version=model_version,
-            predicted_at=datetime.utcnow(),
-        )
+        # 导入预测服务
+        from src.services.prediction_service import get_prediction_service
 
-        logger.info(f"成功获取比赛 {match_id} 的预测: {result.predicted_outcome}")
-        return result
+        prediction_service = get_prediction_service()
 
+        # 获取预测
+        prediction = prediction_service.get_prediction_by_id(prediction_id)
+
+        if prediction is None:
+            raise HTTPException(status_code=404, detail=f"预测ID {prediction_id} 不存在")
+
+        logger.info(f"成功获取预测: {prediction_id}")
+        return prediction
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"获取预测失败: {e}")
         raise HTTPException(
             status_code=500, detail=f"获取预测失败: {str(e)}"
+        ) from e
+
+
+@router.get("/match/{match_id}")
+async def get_match_predictions(match_id: int):
+    """
+    获取指定比赛的预测列表
+
+    返回指定比赛的所有预测记录，用于测试和数据验证.
+    """
+    logger.info(f"获取比赛 {match_id} 的预测列表")
+
+    try:
+        # 导入预测服务
+        from src.services.prediction_service import get_prediction_service
+
+        prediction_service = get_prediction_service()
+
+        # 获取比赛的预测列表
+        predictions = prediction_service.get_match_predictions(match_id)
+
+        logger.info(f"成功获取比赛 {match_id} 的 {len(predictions)} 条预测")
+        return predictions
+
+    except Exception as e:
+        logger.error(f"获取比赛 {match_id} 预测列表失败: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"获取预测列表失败: {str(e)}"
         ) from e  # TODO: B904 exception chaining
 
 
