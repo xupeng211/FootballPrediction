@@ -2,7 +2,7 @@
 服务管理器测试
 Service Manager Tests
 
-测试服务管理器的核心功能。
+测试服务管理器的核心功能.
 Tests core functionality of service manager.
 """
 

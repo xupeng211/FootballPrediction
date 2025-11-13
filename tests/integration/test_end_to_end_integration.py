@@ -2,7 +2,7 @@
 端到端集成测试
 End-to-End Integration Tests
 
-测试完整的业务流程，验证系统各组件的协作。
+测试完整的业务流程，验证系统各组件的协作.
 Tests complete business workflows, validating collaboration between system components.
 """
 
@@ -155,6 +155,8 @@ def mock_services():
 class TestEndToEndPredictionWorkflow:
     """端到端预测工作流测试"""
 
+    @pytest.mark.asyncio
+
     async def test_complete_prediction_pipeline(self, mock_services):
         """测试完整的预测流水线"""
         # 1. 创建球队
@@ -254,6 +256,8 @@ class TestEndToEndPredictionWorkflow:
         )
         assert abs(probability_sum - 1.0) < 0.01  # 允许小的浮点误差
 
+    @pytest.mark.asyncio
+
     async def test_batch_prediction_workflow(self, mock_services):
         """测试批量预测工作流"""
         # 1. 创建多个球队
@@ -318,6 +322,8 @@ class TestEndToEndPredictionWorkflow:
         # 不一定需要不同结果，但应该有合理的分布
         assert all(outcome in ["home_win", "draw", "away_win"] for outcome in outcomes)
 
+    @pytest.mark.asyncio
+
     async def test_prediction_model_comparison(self, mock_services):
         """测试预测模型比较"""
         # 创建测试数据
@@ -368,6 +374,8 @@ class TestEndToEndPredictionWorkflow:
 @pytest.mark.integration
 class TestEndToEndDataWorkflow:
     """端到端数据工作流测试"""
+
+    @pytest.mark.asyncio
 
     async def test_data_collection_and_processing(self, mock_services):
         """测试数据收集和处理工作流"""
@@ -455,6 +463,8 @@ class TestEndToEndDataWorkflow:
         assert stored_data["transformed_data"]["home_team_name"] == "External Team A"
         assert stored_data["extracted_features"]["has_odds"] is True
 
+    @pytest.mark.asyncio
+
     async def test_real_time_data_update_workflow(self, mock_services):
         """测试实时数据更新工作流"""
         # 1. 模拟初始比赛数据
@@ -541,6 +551,8 @@ class TestEndToEndDataWorkflow:
         # 验证事件顺序
         assert processed_events[0]["event_type"] == "match_start"
         assert processed_events[-1]["event_type"] == "match_end"
+
+    @pytest.mark.asyncio
 
     async def test_data_quality_monitoring_workflow(self, mock_services):
         """测试数据质量监控工作流"""
@@ -696,6 +708,8 @@ class TestEndToEndDataWorkflow:
 class TestEndToEndErrorHandling:
     """端到端错误处理测试"""
 
+    @pytest.mark.asyncio
+
     async def test_system_error_recovery(self, mock_services):
         """测试系统错误恢复"""
         # 1. 模拟服务故障
@@ -724,6 +738,8 @@ class TestEndToEndErrorHandling:
 
         # 3. 恢复原始服务
         mock_services["prediction"].predict_match = original_predict
+
+    @pytest.mark.asyncio
 
     async def test_data_corruption_handling(self, mock_services):
         """测试数据损坏处理"""
@@ -816,6 +832,8 @@ class TestEndToEndErrorHandling:
         assert "probabilities" in prediction
         assert prediction["confidence"] > 0
 
+    @pytest.mark.asyncio
+
     async def test_timeout_handling(self, mock_services):
         """测试超时处理"""
 
@@ -852,6 +870,8 @@ class TestEndToEndErrorHandling:
 @pytest.mark.integration
 class TestEndToEndPerformance:
     """端到端性能测试"""
+
+    @pytest.mark.asyncio
 
     async def test_concurrent_prediction_processing(self, mock_services):
         """测试并发预测处理"""
@@ -932,6 +952,8 @@ class TestEndToEndPerformance:
         avg_time_per_prediction = processing_time / len(predictions)
         assert avg_time_per_prediction < 0.5
 
+    @pytest.mark.asyncio
+
     async def test_memory_usage_simulation(self, mock_services):
         """测试内存使用模拟"""
         import gc
@@ -977,6 +999,8 @@ class TestEndToEndPerformance:
 
         # 对象增长应该在合理范围内
         assert object_increase < 1000  # 这是一个经验阈值
+
+    @pytest.mark.asyncio
 
     async def test_batch_operation_performance(self, mock_services):
         """测试批量操作性能"""

@@ -2,7 +2,7 @@
 简化的测试数据模型
 Simple Test Data Models
 
-为集成测试提供简化的数据模型，避免复杂的SQLAlchemy关系。
+为集成测试提供简化的数据模型，避免复杂的SQLAlchemy关系.
 """
 
 from datetime import datetime
@@ -15,12 +15,15 @@ from sqlalchemy.orm import DeclarativeBase
 class TestBase(AsyncAttrs, DeclarativeBase):
     """测试基础模型类"""
 
+    __test__ = False  # 告诉pytest这不是测试类
+
     pass
 
 
 class TestTeam(TestBase):
     """测试球队模型"""
 
+    __test__ = False  # 告诉pytest这不是测试类
     __tablename__ = "test_teams"
 
     id = Column(Integer, primary_key=True)
@@ -37,6 +40,7 @@ class TestTeam(TestBase):
 class TestMatch(TestBase):
     """测试比赛模型"""
 
+    __test__ = False  # 告诉pytest这不是测试类
     __tablename__ = "test_matches"
 
     id = Column(Integer, primary_key=True)
@@ -55,6 +59,7 @@ class TestMatch(TestBase):
 class TestPrediction(TestBase):
     """测试预测模型"""
 
+    __test__ = False  # 告诉pytest这不是测试类
     __tablename__ = "test_predictions"
 
     id = Column(Integer, primary_key=True)

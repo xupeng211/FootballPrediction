@@ -3,6 +3,8 @@
 测试Football-Data.org API连接
 """
 
+import pytest
+
 import asyncio
 import os
 import sys
@@ -17,6 +19,9 @@ sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 
 load_dotenv()
+
+
+@pytest.mark.asyncio
 
 
 async def test_football_data_api():

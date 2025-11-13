@@ -4,6 +4,8 @@
 用于验证数据源管理器和收集器功能
 """
 
+import pytest
+
 import asyncio
 import sys
 
@@ -14,6 +16,9 @@ from src.cache.redis_manager import get_redis_manager
 from src.collectors.data_sources import data_source_manager
 from src.collectors.enhanced_fixtures_collector import EnhancedFixturesCollector
 from src.database.connection import get_async_session
+
+
+@pytest.mark.asyncio
 
 
 async def test_data_sources():
@@ -43,6 +48,9 @@ async def test_data_sources():
                     pass  # TODO: Add logger import if needed
     else:
         pass  # TODO: Add logger import if needed
+
+
+@pytest.mark.asyncio
 
 
 async def test_collector():
@@ -77,6 +85,9 @@ async def test_collector():
         traceback.print_exc()
 
 
+@pytest.mark.asyncio
+
+
 async def test_specific_team():
     """测试指定球队的数据收集"""
 
@@ -108,6 +119,9 @@ async def test_specific_team():
         import traceback
 
         traceback.print_exc()
+
+
+@pytest.mark.asyncio
 
 
 async def test_league_data():

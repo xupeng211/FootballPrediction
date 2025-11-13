@@ -4,6 +4,8 @@ OddsPortal爬虫测试脚本
 测试OddsPortal数据抓取功能
 """
 
+import pytest
+
 import asyncio
 import sys
 from pathlib import Path as FilePath
@@ -39,6 +41,9 @@ except ImportError:
 logger = get_logger(__name__)
 
 
+@pytest.mark.asyncio
+
+
 async def test_scraper_initialization():
     """测试爬虫初始化"""
     try:
@@ -52,6 +57,9 @@ async def test_scraper_initialization():
         raise
 
 
+@pytest.mark.asyncio
+
+
 async def test_scraper_robots_parsing():
     """测试robots.txt解析"""
     try:
@@ -62,6 +70,9 @@ async def test_scraper_robots_parsing():
 
     except Exception:
         raise
+
+
+@pytest.mark.asyncio
 
 
 async def test_scraper_rate_limits():
@@ -82,6 +93,9 @@ async def test_scraper_rate_limits():
         raise
 
 
+@pytest.mark.asyncio
+
+
 async def test_scraper_error_handling():
     """测试错误处理机制"""
     try:
@@ -92,6 +106,9 @@ async def test_scraper_error_handling():
 
     except Exception:
         raise
+
+
+@pytest.mark.asyncio
 
 
 async def test_oddsportal_match_model():
@@ -111,6 +128,9 @@ async def test_oddsportal_match_model():
 
     except Exception:
         raise
+
+
+@pytest.mark.asyncio
 
 
 async def test_scraper_methods():

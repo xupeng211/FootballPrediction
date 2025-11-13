@@ -2,7 +2,7 @@
 统一缓存管理器测试
 Unified Cache Manager Tests
 
-测试统一缓存管理器的核心功能。
+测试统一缓存管理器的核心功能.
 Tests core functionality of unified cache manager.
 """
 

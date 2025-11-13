@@ -2,7 +2,7 @@
 预测服务测试
 Prediction Service Tests
 
-测试预测服务的核心功能。
+测试预测服务的核心功能.
 Tests core functionality of prediction service.
 """
 

@@ -2,8 +2,10 @@
 适配器基础模块测试
 Base Adapter Module Tests
 
-直接测试src/adapters/base.py模块的覆盖率，绕过其他模块的语法错误。
+直接测试src/adapters/base.py模块的覆盖率，绕过其他模块的语法错误.
 """
+
+import pytest
 
 import os
 import sys
@@ -241,6 +243,8 @@ class TestBasicFunctionality:
         assert adapter.request_count == 0
         assert isinstance(adapter.adaptee, MockAdaptee)
 
+    @pytest.mark.asyncio
+
     async def test_basic_adapter_request(self):
         """测试基础适配器请求"""
         adapter = MockAdapter()
@@ -252,6 +256,8 @@ class TestBasicFunctionality:
         transformer = MockDataTransformer("TestTransformer")
         assert transformer.name == "TestTransformer"
         assert transformer.transform_count == 0
+
+    @pytest.mark.asyncio
 
     async def test_data_transformation(self):
         """测试数据转换"""

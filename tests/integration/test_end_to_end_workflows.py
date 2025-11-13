@@ -2,7 +2,7 @@
 端到端业务流程集成测试
 End-to-End Business Logic Integration Tests
 
-测试完整的业务流程，从数据收集到预测生成的整个链条。
+测试完整的业务流程，从数据收集到预测生成的整个链条.
 """
 
 import pytest

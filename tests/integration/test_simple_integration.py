@@ -2,7 +2,7 @@
 简化集成测试
 Simple Integration Tests
 
-专注于测试基础功能和已验证可用的模块。
+专注于测试基础功能和已验证可用的模块.
 """
 
 import asyncio

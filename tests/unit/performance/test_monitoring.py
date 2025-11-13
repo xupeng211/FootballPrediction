@@ -2,7 +2,7 @@
 性能监控测试
 Performance Monitoring Tests
 
-测试性能监控系统的核心功能。
+测试性能监控系统的核心功能.
 Tests core functionality of performance monitoring system.
 """
 

@@ -2,13 +2,14 @@
 简化的端到端集成测试
 Simplified End-to-End Integration Tests
 
-避免依赖复杂的FastAPI应用，直接测试核心业务逻辑的端到端流程。
+避免依赖复杂的FastAPI应用，直接测试核心业务逻辑的端到端流程.
 """
 
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock
 
 import pytest
+import pytest_asyncio
 
 from .test_cache_mock import MockRedisManager
 from .test_models_simple import TestMatch, TestPrediction, TestTeam
@@ -19,17 +20,17 @@ from .test_models_simple import TestMatch, TestPrediction, TestTeam
 class TestSimplifiedEndToEndWorkflows:
     """简化的端到端工作流集成测试"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def mock_database(self):
         """创建模拟数据库"""
         return {"teams": {}, "matches": {}, "predictions": {}}
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def mock_cache(self):
         """创建模拟缓存"""
         return MockRedisManager()
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def mock_services(self, mock_database, mock_cache):
         """创建模拟的服务层"""
         return {
