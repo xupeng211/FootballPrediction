@@ -17,6 +17,11 @@ from typing import Any
 
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
+    import numpy as np
+    import pandas as pd
+    from sklearn.model_selection import train_test_split
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.metrics import accuracy_score, classification_report
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False

@@ -32,9 +32,19 @@ class MetricsCollector:
         """添加指标"""
         self.metrics[name] = value
 
+    def get_status(self) -> dict[str, Any]:
+        """获取收集器状态"""
+        return {
+            "status": "active",
+            "timestamp": datetime.utcnow(),
+            "metrics_count": len(self.metrics),
+            "collector_initialized": hasattr(self, "_initialized")
+        }
+
 
 # 全局指标收集器实例
 _metrics_collector = None
+
 
 def get_metrics_collector():
     """获取全局指标收集器实例"""
