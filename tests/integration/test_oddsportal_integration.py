@@ -4,6 +4,8 @@ OddsPortal集成测试脚本
 Test OddsPortal Integration
 """
 
+import pytest
+
 import asyncio
 import sys
 from pathlib import Path
@@ -37,6 +39,9 @@ except ImportError:
     logger = get_logger(__name__)
 
 
+@pytest.mark.asyncio
+
+
 async def test_integration_initialization():
     """测试集成初始化"""
     logger.info("Testing OddsPortal Integration Initialization...")
@@ -56,6 +61,9 @@ async def test_integration_initialization():
     except Exception as e:
         logger.error(f"❌ Integration initialization test failed: {e}")
         return False
+
+
+@pytest.mark.asyncio
 
 
 async def test_configuration_loading():
@@ -80,6 +88,9 @@ async def test_configuration_loading():
     except Exception as e:
         logger.error(f"❌ Configuration loading test failed: {e}")
         return False
+
+
+@pytest.mark.asyncio
 
 
 async def test_source_info():
@@ -113,6 +124,9 @@ async def test_source_info():
         return False
 
 
+@pytest.mark.asyncio
+
+
 async def test_health_check():
     """测试健康检查"""
     logger.info("Testing health check...")
@@ -136,6 +150,9 @@ async def test_health_check():
     except Exception as e:
         logger.error(f"❌ Health check test failed: {e}")
         return False
+
+
+@pytest.mark.asyncio
 
 
 async def test_adapter_interface():
@@ -163,6 +180,9 @@ async def test_adapter_interface():
     except Exception as e:
         logger.error(f"❌ Adapter interface test failed: {e}")
         return False
+
+
+@pytest.mark.asyncio
 
 
 async def test_data_conversion():
@@ -204,6 +224,9 @@ async def test_data_conversion():
     except Exception as e:
         logger.error(f"❌ Data conversion test failed: {e}")
         return False
+
+
+@pytest.mark.asyncio
 
 
 async def test_error_handling():

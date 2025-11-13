@@ -4,6 +4,8 @@
 Stage 3 Integration Test Script - Database Integration and Caching
 """
 
+import pytest
+
 import asyncio
 import logging
 import os
@@ -64,6 +66,8 @@ class Stage3IntegrationTester:
         except Exception as e:
             logger.error(f"❌ 初始化失败: {e}")
             self.test_results["errors"].append(f"初始化失败: {e}")
+
+    @pytest.mark.asyncio
 
     async def test_cache_functionality(self) -> bool:
         """测试缓存功能"""
@@ -165,6 +169,8 @@ class Stage3IntegrationTester:
         except Exception as e:
             logger.error(f"  ❌ 缓存功能测试失败: {e}")
             return False
+
+    @pytest.mark.asyncio
 
     async def test_data_models(self) -> bool:
         """测试数据模型"""
@@ -291,6 +297,8 @@ class Stage3IntegrationTester:
             logger.error(f"  ❌ 数据模型测试失败: {e}")
             return False
 
+    @pytest.mark.asyncio
+
     async def test_collector_integration(self) -> bool:
         """测试数据采集器集成"""
         try:
@@ -353,6 +361,8 @@ class Stage3IntegrationTester:
             logger.error(f"  ❌ 数据采集器集成测试失败: {e}")
             return False
 
+    @pytest.mark.asyncio
+
     async def test_cache_invalidations(self) -> bool:
         """测试缓存失效机制"""
         try:
@@ -404,6 +414,8 @@ class Stage3IntegrationTester:
         except Exception as e:
             logger.error(f"  ❌ 缓存失效机制测试失败: {e}")
             return False
+
+    @pytest.mark.asyncio
 
     async def test_sync_status_tracking(self) -> bool:
         """测试同步状态跟踪"""

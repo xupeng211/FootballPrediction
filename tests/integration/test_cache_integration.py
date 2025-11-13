@@ -2,7 +2,7 @@
 缓存集成测试
 Cache Integration Tests
 
-测试Redis缓存操作的完整功能，包括缓存读写、过期策略和数据一致性。
+测试Redis缓存操作的完整功能，包括缓存读写、过期策略和数据一致性.
 """
 
 import asyncio
@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.cache.decorators import cache_result
-from src.cache.redis_manager import RedisManager
+from src.cache.redis_enhanced import EnhancedRedisManager
 from src.cache.unified_cache import UnifiedCacheManager
 
 
@@ -146,7 +146,7 @@ class TestCachePerformance:
     @pytest.mark.asyncio
     async def test_cache_performance(self, mock_redis):
         """测试缓存性能"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         # 模拟高性能Redis操作
         mock_redis.set.return_value = True
@@ -183,7 +183,7 @@ class TestCachePerformance:
     @pytest.mark.asyncio
     async def test_cache_concurrent_operations(self, mock_redis):
         """测试缓存并发操作"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         # 模拟并发安全的Redis操作
         mock_redis.set.return_value = True
@@ -219,7 +219,7 @@ class TestCacheReliability:
     @pytest.mark.asyncio
     async def test_cache_error_handling(self, mock_redis):
         """测试缓存错误处理"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         # 模拟Redis连接错误
         mock_redis.set.side_effect = Exception("Redis connection error")
@@ -236,7 +236,7 @@ class TestCacheReliability:
     @pytest.mark.asyncio
     async def test_cache_reconnection(self, mock_redis):
         """测试缓存重连机制"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         # 第一次操作失败
         mock_redis.set.side_effect = Exception("Connection lost")
@@ -257,7 +257,7 @@ class TestCacheReliability:
     @pytest.mark.asyncio
     async def test_cache_memory_usage(self, mock_redis):
         """测试缓存内存使用"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         # 模拟内存使用监控
         mock_redis.info.return_value = {
@@ -279,7 +279,7 @@ class TestCacheBusinessLogic:
     @pytest.mark.asyncio
     async def test_user_session_caching(self, mock_redis):
         """测试用户会话缓存"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         user_id = "user_123"
         session_data = {
@@ -307,7 +307,7 @@ class TestCacheBusinessLogic:
     @pytest.mark.asyncio
     async def test_api_response_caching(self, mock_redis):
         """测试API响应缓存"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         cache_key = "api_response:/api/matches/123"
         api_response = {
@@ -337,7 +337,7 @@ class TestCacheBusinessLogic:
     @pytest.mark.asyncio
     async def test_prediction_result_caching(self, mock_redis):
         """测试预测结果缓存"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         match_id = 456
         prediction_data = {
@@ -375,7 +375,7 @@ class TestCacheDataConsistency:
     @pytest.mark.asyncio
     async def test_cache_database_sync(self, mock_redis):
         """测试缓存与数据库同步"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         # 模拟数据库数据
         db_data = {"id": 1, "name": "Test Team", "updated_at": str(datetime.now())}
@@ -406,7 +406,7 @@ class TestCacheDataConsistency:
     @pytest.mark.asyncio
     async def test_cache_invalidation(self, mock_redis):
         """测试缓存失效策略"""
-        redis_manager = RedisManager(mock_redis)
+        redis_manager = EnhancedRedisManager(use_mock=True)
 
         # 设置相关缓存键
         cache_keys = [
@@ -452,8 +452,10 @@ class TestCacheL1L2Integration:
     def cache_manager(self, mock_redis):
         """创建缓存管理器"""
         return UnifiedCacheManager(
-            redis_client=mock_redis, local_cache_size=10, default_ttl=300
+            redis_client=mock_redis, local_cache_size=10
         )
+
+    @pytest.mark.asyncio
 
     async def test_l1_l2_cache_hierarchy(self, cache_manager, mock_redis):
         """测试L1和L2缓存层次结构"""
@@ -481,6 +483,8 @@ class TestCacheL1L2Integration:
         recovered_value = await cache_manager.get(key)
         assert recovered_value is not None
 
+    @pytest.mark.asyncio
+
     async def test_cache_fallback_mechanism(self, cache_manager, mock_redis):
         """测试缓存降级机制"""
         key = "test:fallback:key"
@@ -496,6 +500,8 @@ class TestCacheL1L2Integration:
         l1_value = await cache_manager.get(key, l1_only=True)
         assert l1_value is not None
         assert l1_value["data"] == "fallback_test"
+
+    @pytest.mark.asyncio
 
     async def test_cache_invalidation_propagation(self, cache_manager, mock_redis):
         """测试缓存失效传播"""
@@ -556,6 +562,8 @@ class TestCacheDecoratorIntegration:
         # 验证结果格式一致
         assert isinstance(result1, (int, float))
         assert isinstance(result2, (int, float))
+
+    @pytest.mark.asyncio
 
     async def test_async_cache_decorator(self, cache_manager):
         """测试异步缓存装饰器"""
@@ -630,8 +638,10 @@ class TestCacheRealWorldScenarios:
     def cache_manager(self, mock_redis):
         """创建缓存管理器"""
         return UnifiedCacheManager(
-            redis_client=mock_redis, local_cache_size=20, default_ttl=600
+            redis_client=mock_redis, local_cache_size=20
         )
+
+    @pytest.mark.asyncio
 
     async def test_database_query_caching(self, cache_manager):
         """测试数据库查询缓存场景"""
@@ -667,6 +677,8 @@ class TestCacheRealWorldScenarios:
         await cached_query("SELECT * FROM teams", {"filter": "inactive"})
         assert query_call_count == 2
 
+    @pytest.mark.asyncio
+
     async def test_api_response_caching(self, cache_manager):
         """测试API响应缓存场景"""
         api_call_count = 0
@@ -699,6 +711,8 @@ class TestCacheRealWorldScenarios:
         assert api_call_count == 1
         assert result1["data"] == result2["data"]
 
+    @pytest.mark.asyncio
+
     async def test_cache_warming_strategy(self, cache_manager):
         """测试缓存预热策略"""
         # 模拟预热数据
@@ -717,6 +731,8 @@ class TestCacheRealWorldScenarios:
             cached_data = await cache_manager.get(key, l1_only=True)
             assert cached_data is not None
             assert len(cached_data) > 0
+
+    @pytest.mark.asyncio
 
     async def test_cache_invalidation_on_update(self, cache_manager):
         """测试更新时缓存失效"""

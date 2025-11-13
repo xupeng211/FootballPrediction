@@ -2,7 +2,7 @@
 数据质量监控服务测试
 Data Quality Monitor Service Tests
 
-测试数据质量监控服务的核心功能。
+测试数据质量监控服务的核心功能.
 Tests core functionality of data quality monitor service.
 """
 

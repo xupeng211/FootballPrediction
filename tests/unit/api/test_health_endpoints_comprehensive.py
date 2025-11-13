@@ -2,7 +2,7 @@
 健康检查API端点综合测试套件
 Health Check API Endpoints Comprehensive Test Suite
 
-专门测试健康检查相关API端点的功能，包括基础健康检查、详细健康检查、组件状态监控等。
+专门测试健康检查相关API端点的功能，包括基础健康检查、详细健康检查、组件状态监控等.
 """
 
 import logging

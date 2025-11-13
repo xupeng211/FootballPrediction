@@ -97,11 +97,12 @@ def test_adapters_with_mock_registry():
 
 def test_adapters_with_mock_factory():
     """使用Mock测试适配器工厂功能"""
-    with patch("src.api.adapters.router.get_factory") as mock_factory:
-        # 创建mock工厂实例
-        mock_factory_instance = MagicMock()
-        mock_factory_instance.create_adapter.return_value = MagicMock()
-        mock_factory.return_value = mock_factory_instance
+    # 修复Mock路径：使用get_registry而不是不存在的get_factory
+    with patch("src.api.adapters.router.get_registry") as mock_registry:
+        # 创建mock注册表实例
+        mock_registry_instance = MagicMock()
+        mock_registry_instance.register_adapter.return_value = {"id": "test_adapter", "status": "registered"}
+        mock_registry.return_value = mock_registry_instance
 
         response = client.post("/api/v1/adapters/register", json={"name": "test"})
         assert response.status_code in [200, 404, 405, 500]

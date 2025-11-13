@@ -2,7 +2,7 @@
 健康检查API测试
 Health Check API Tests
 
-测试健康检查相关的API端点。
+测试健康检查相关的API端点.
 """
 
 from datetime import datetime

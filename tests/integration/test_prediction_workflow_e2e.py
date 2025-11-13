@@ -88,7 +88,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.matches.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService", return_value=mock_match_service
         ):
             response = await async_client.post("/api/matches/", json=match_data)
 
@@ -122,7 +122,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.matches.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService", return_value=mock_match_service
         ):
             response = await async_client.get(f"/api/matches/{match_id}/details")
 
@@ -170,7 +170,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.get(
@@ -219,7 +219,7 @@ class TestPredictionWorkflowE2E:
             "src.domain.events.event_bus", mock_external_services["audit_service"]
         ):
             with patch(
-                "src.api.routes.predictions.PredictionService",
+                "src.domain.services.prediction_service.PredictionService",
                 return_value=mock_prediction_service,
             ):
                 response = await async_client.post(
@@ -256,7 +256,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.get(
@@ -281,7 +281,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.matches.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService", return_value=mock_match_service
         ):
             response = await async_client.post(f"/api/matches/{match_id}/start")
 
@@ -298,7 +298,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.matches.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService", return_value=mock_match_service
         ):
             response = await async_client.get(f"/api/matches/{match_id}/live")
 
@@ -326,7 +326,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.matches.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService", return_value=mock_match_service
         ):
             response = await async_client.post(
                 f"/api/matches/{match_id}/finish", json=final_score
@@ -359,7 +359,7 @@ class TestPredictionWorkflowE2E:
             "src.domain.events.event_bus", mock_external_services["analytics_service"]
         ):
             with patch(
-                "src.api.routes.predictions.PredictionService",
+                "src.domain.services.prediction_service.PredictionService",
                 return_value=mock_prediction_service,
             ):
                 response = await async_client.post(
@@ -392,7 +392,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.scoring.ScoringService", return_value=mock_scoring_service
+            "src.domain.services.scoring_service.ScoringService", return_value=mock_scoring_service
         ):
             response = await async_client.post(
                 f"/api/users/{user_id}/update-points", headers=auth_headers
@@ -418,7 +418,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.notifications.NotificationService",
+            "src.domain.services.notification_service.NotificationService",
             return_value=mock_notification_service,
         ):
             response = await async_client.post(
@@ -466,7 +466,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.get(
@@ -519,7 +519,7 @@ class TestPredictionWorkflowE2E:
             }
 
             with patch(
-                "src.api.routes.matches.MatchService", return_value=mock_match_service
+                "src.domain.services.match_service.MatchService", return_value=mock_match_service
             ):
                 response = await async_client.post("/api/matches/", json=match_data)
                 if response.status_code == 200:
@@ -544,7 +544,7 @@ class TestPredictionWorkflowE2E:
             }
 
             with patch(
-                "src.api.routes.predictions.PredictionService",
+                "src.domain.services.prediction_service.PredictionService",
                 return_value=mock_prediction_service,
             ):
                 response = await async_client.post(
@@ -584,7 +584,7 @@ class TestPredictionWorkflowE2E:
             }
 
             with patch(
-                "src.api.routes.predictions.PredictionService",
+                "src.domain.services.prediction_service.PredictionService",
                 return_value=mock_prediction_service,
             ):
                 response = await async_client.post(
@@ -637,7 +637,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.matches.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService", return_value=mock_match_service
         ):
             response = await async_client.post("/api/matches/", json=match_data)
             match_id = 1 if response.status_code != 200 else response.json()["id"]
@@ -687,7 +687,7 @@ class TestPredictionWorkflowE2E:
             }
 
             with patch(
-                "src.api.routes.predictions.PredictionService",
+                "src.domain.services.prediction_service.PredictionService",
                 return_value=mock_prediction_service,
             ):
                 response = await async_client.post(
@@ -726,7 +726,7 @@ class TestPredictionWorkflowE2E:
             }
 
             with patch(
-                "src.api.routes.predictions.PredictionService",
+                "src.domain.services.prediction_service.PredictionService",
                 return_value=mock_prediction_service,
             ):
                 response = await async_client.post(
@@ -783,7 +783,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.matches.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService", return_value=mock_match_service
         ):
             response = await async_client.post("/api/matches/", json=match_data)
             match_id = 1 if response.status_code != 200 else response.json()["id"]
@@ -806,7 +806,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.post(
@@ -825,7 +825,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.matches.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService", return_value=mock_match_service
         ):
             response = await async_client.post(f"/api/matches/{match_id}/start")
 
@@ -843,7 +843,7 @@ class TestPredictionWorkflowE2E:
         )
 
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.post(
@@ -920,7 +920,7 @@ class TestPredictionWorkflowE2E:
 
         start_time = time.time()
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.post(
@@ -961,7 +961,7 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.post(
@@ -1013,7 +1013,7 @@ class TestPredictionErrorHandlingE2E:
         }
 
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.post(
@@ -1058,7 +1058,7 @@ class TestPredictionErrorHandlingE2E:
         )
 
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.post(
@@ -1091,7 +1091,7 @@ class TestPredictionErrorHandlingE2E:
         )
 
         with patch(
-            "src.api.routes.predictions.PredictionService",
+            "src.domain.services.prediction_service.PredictionService",
             return_value=mock_prediction_service,
         ):
             response = await async_client.post(

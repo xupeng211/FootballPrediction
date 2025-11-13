@@ -2,7 +2,7 @@
 特征工程简化测试
 Feature Engineering Simple Tests
 
-测试特征工程系统的核心功能，基于实际模块结构。
+测试特征工程系统的核心功能，基于实际模块结构.
 Tests core functionality of feature engineering system based on actual module structure.
 """
 

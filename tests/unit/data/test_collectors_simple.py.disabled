@@ -2,7 +2,7 @@
 数据采集器简化测试
 Data Collectors Simple Tests
 
-测试数据采集系统的核心功能，基于实际模块结构。
+测试数据采集系统的核心功能，基于实际模块结构.
 Tests core functionality of data collection system based on actual module structure.
 """
 

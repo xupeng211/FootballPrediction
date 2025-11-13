@@ -76,7 +76,7 @@ class TestExternalDataSyncE2E:
             return_value=mock_football_api,
         ):
             with patch(
-                "src.api.routes.data.DataSyncService", return_value=mock_data_service
+                "src.services.data.DataSyncService", return_value=mock_data_service
             ):
                 response = await async_client.post("/api/data/sync/football-matches")
 
@@ -121,7 +121,7 @@ class TestExternalDataSyncE2E:
 
         with patch("src.services.odds_api.OddsAPIClient", return_value=mock_odds_api):
             with patch(
-                "src.api.routes.data.DataSyncService", return_value=mock_data_service
+                "src.services.data.DataSyncService", return_value=mock_data_service
             ):
                 response = await async_client.post("/api/data/sync/odds")
 
@@ -164,7 +164,7 @@ class TestExternalDataSyncE2E:
             return_value=mock_historical_api,
         ):
             with patch(
-                "src.api.routes.data.DataSyncService", return_value=mock_data_service
+                "src.services.data.DataSyncService", return_value=mock_data_service
             ):
                 response = await async_client.post("/api/data/sync/historical")
 
@@ -209,7 +209,7 @@ class TestExternalDataSyncE2E:
         }
 
         with patch(
-            "src.api.routes.data.DataSyncService", return_value=mock_data_service
+            "src.services.data.DataSyncService", return_value=mock_data_service
         ):
             response = await async_client.get("/api/data/quality-report")
 

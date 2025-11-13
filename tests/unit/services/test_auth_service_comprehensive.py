@@ -2,7 +2,7 @@
 认证服务测试
 Auth Service Tests
 
-测试认证服务的核心功能。
+测试认证服务的核心功能.
 Tests core functionality of authentication service.
 """
 

@@ -30,6 +30,8 @@ from src.core.di import (
 class TestService:
     """基础测试服务"""
 
+    __test__ = False  # 告诉pytest这不是测试类
+
     def __init__(self):
         self.name = "test"
 
@@ -56,6 +58,8 @@ class ITestService(Protocol):
 
 class TestServiceImpl(ITestService):
     """测试服务实现"""
+
+    __test__ = False  # 告诉pytest这不是测试类
 
     def __init__(self):
         self.prefix = "impl"

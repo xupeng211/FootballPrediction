@@ -2,7 +2,7 @@
 数据库集成测试
 Database Integration Tests
 
-测试数据库操作的完整功能，包括模型CRUD、事务处理和数据完整性。
+测试数据库操作的完整功能，包括模型CRUD、事务处理和数据完整性.
 """
 
 import pytest
@@ -17,6 +17,8 @@ from src.database.models import Match, Prediction, Team
 @pytest.mark.db_integration
 class TestDatabaseModels:
     """数据库模型集成测试"""
+
+    @pytest.mark.asyncio
 
     async def test_team_crud_operations(self, test_db_session: AsyncSession):
         """测试球队CRUD操作"""
@@ -60,6 +62,8 @@ class TestDatabaseModels:
         result = await test_db_session.execute(stmt)
         assert result.scalar_one_or_none() is None
 
+    @pytest.mark.asyncio
+
     async def test_match_crud_operations(
         self, test_db_session: AsyncSession, sample_data
     ):
@@ -90,6 +94,8 @@ class TestDatabaseModels:
         assert match_with_team is not None
         assert match_with_team[0].id == match.id
         assert match_with_team[1].id == teams[0].id
+
+    @pytest.mark.asyncio
 
     async def test_prediction_crud_operations(
         self, test_db_session: AsyncSession, sample_data
@@ -130,6 +136,8 @@ class TestDatabaseModels:
 class TestDatabaseTransactions:
     """数据库事务集成测试"""
 
+    @pytest.mark.asyncio
+
     async def test_transaction_commit(self, test_db_session: AsyncSession):
         """测试事务提交"""
         # 开始事务
@@ -146,6 +154,8 @@ class TestDatabaseTransactions:
         teams = result.scalars().all()
 
         assert len(teams) == 2
+
+    @pytest.mark.asyncio
 
     async def test_transaction_rollback(self, test_db_session: AsyncSession):
         """测试事务回滚"""
@@ -164,6 +174,8 @@ class TestDatabaseTransactions:
         stmt = select(Team).where(Team.short_name == "RT")
         result = await test_db_session.execute(stmt)
         assert result.scalar_one_or_none() is None
+
+    @pytest.mark.asyncio
 
     async def test_nested_transactions(self, test_db_session: AsyncSession):
         """测试嵌套事务"""
@@ -199,6 +211,8 @@ class TestDatabaseTransactions:
 class TestDatabaseRelationships:
     """数据库关系集成测试"""
 
+    @pytest.mark.asyncio
+
     async def test_match_team_relationship(
         self, test_db_session: AsyncSession, sample_data
     ):
@@ -219,6 +233,8 @@ class TestDatabaseRelationships:
         # 验证关系存在
         assert fetched_match.home_team_id == teams[0].id
         assert fetched_match.away_team_id == teams[1].id
+
+    @pytest.mark.asyncio
 
     async def test_prediction_match_relationship(
         self, test_db_session: AsyncSession, sample_data
@@ -266,6 +282,8 @@ class TestDatabaseRelationships:
 class TestDatabaseConstraints:
     """数据库约束集成测试"""
 
+    @pytest.mark.asyncio
+
     async def test_unique_constraints(self, test_db_session: AsyncSession):
         """测试唯一约束"""
         # 创建第一个球队
@@ -281,6 +299,8 @@ class TestDatabaseConstraints:
         with pytest.raises((IntegrityError, OperationalError)):
             # 数据库约束违反异常
             await test_db_session.commit()
+
+    @pytest.mark.asyncio
 
     async def test_foreign_key_constraints(self, test_db_session: AsyncSession):
         """测试外键约束"""
@@ -302,6 +322,8 @@ class TestDatabaseConstraints:
             # 数据库约束违反异常
             await test_db_session.commit()
 
+    @pytest.mark.asyncio
+
     async def test_not_null_constraints(self, test_db_session: AsyncSession):
         """测试非空约束"""
         # 尝试创建没有必需字段的球队
@@ -318,6 +340,8 @@ class TestDatabaseConstraints:
 @pytest.mark.db_integration
 class TestDatabasePerformance:
     """数据库性能集成测试"""
+
+    @pytest.mark.asyncio
 
     async def test_bulk_insert_performance(self, test_db_session: AsyncSession):
         """测试批量插入性能"""
@@ -352,6 +376,8 @@ class TestDatabasePerformance:
         inserted_teams = result.scalars().all()
 
         assert len(inserted_teams) == 100
+
+    @pytest.mark.asyncio
 
     async def test_query_performance(self, test_db_session: AsyncSession):
         """测试查询性能"""
