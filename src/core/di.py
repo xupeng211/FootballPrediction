@@ -148,7 +148,7 @@ class DIContainer:
             else str(implementation)
         )
         logger.debug(
-            f"注册服务: {interface.__name__} -> {impl_name if implementation else 'Factory'}"
+            f"注册服务: {self._get_type_name(interface)} -> {impl_name if implementation else 'Factory'}"
         )
 
         return self
@@ -156,14 +156,14 @@ class DIContainer:
     def resolve(self, interface: type[T]) -> T:
         """解析服务"""
         if interface not in self._services:
-            raise DependencyInjectionError(f"服务未注册: {interface.__name__}")
+            raise DependencyInjectionError(f"服务未注册: {self._get_type_name(interface)}")
 
         descriptor = self._services[interface]
 
         # 检测循环依赖
         if interface in self._building:
             raise DependencyInjectionError(
-                f"检测到循环依赖: {' -> '.join(str(t.__name__) for t in self._building)} -> {interface.__name__}"
+                f"检测到循环依赖: {' -> '.join(self._get_type_name(t) for t in self._building)} -> {self._get_type_name(interface)}"
             )
 
         # 根据生命周期返回实例
@@ -225,7 +225,7 @@ class DIContainer:
             finally:
                 self._building.pop()
 
-        raise DependencyInjectionError(f"无法创建实例: {descriptor.interface.__name__}")
+        raise DependencyInjectionError(f"无法创建实例: {self._get_type_name(descriptor.interface)}")
 
     def _analyze_dependencies(self, cls: type) -> list[type]:
         """分析类的依赖"""
@@ -268,11 +268,23 @@ class DIContainer:
                 params[param_name] = self.resolve(param_type)
             else:
                 # 尝试自动注册
-                logger.warning(f"自动注册类型: {param_type.__name__}")
+                type_name = self._get_type_name(param_type)
+                logger.warning(f"自动注册类型: {type_name}")
                 self.register_transient(param_type)
                 params[param_name] = self.resolve(param_type)
 
         return params
+
+    def _get_type_name(self, param_type) -> str:
+        """安全地获取类型名称"""
+        if hasattr(param_type, '__name__'):
+            return param_type.__name__
+        elif hasattr(param_type, '_name'):  # typing.Generic
+            return param_type._name
+        elif isinstance(param_type, str):
+            return param_type
+        else:
+            return str(param_type)
 
     def create_scope(self, scope_name: str | None = None) -> "DIScope":
         """创建新的作用域"""

@@ -71,6 +71,10 @@ class ValidationError(FootballPredictionError):
     """数据验证异常"""
 
 
+class ResponseValidationError(FootballPredictionError):
+    """API响应验证异常"""
+
+
 class DataQualityError(DataError):
     """数据质量异常"""
 

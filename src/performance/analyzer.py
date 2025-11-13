@@ -6,7 +6,7 @@ analyzer 主模块 - 性能分析器
 
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class PerformanceAnalyzer:
             "timestamp": datetime.utcnow(),
             "metrics": metrics,
             "insights": self._generate_insights(metrics),
-            "recommendations": self._generate_recommendations(metrics)
+            "recommendations": self._generate_recommendations(metrics),
         }
 
         self.metrics_history.append(analysis)
@@ -64,10 +64,12 @@ class PerformanceAnalyzer:
         previous = self.metrics_history[-2]
 
         return {
-            "trend": "improving" if latest["metrics"] != previous["metrics"] else "stable",
+            "trend": (
+                "improving" if latest["metrics"] != previous["metrics"] else "stable"
+            ),
             "period_start": previous["timestamp"],
             "period_end": latest["timestamp"],
-            "data_points": len(self.metrics_history)
+            "data_points": len(self.metrics_history),
         }
 
 
