@@ -31,6 +31,9 @@ class Team(BaseModel):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     short_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
     country: Mapped[str] = mapped_column(String(50), nullable=False)
+    founded_year: Mapped[int] = mapped_column(Integer, nullable=True)
+    venue: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    website: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # 关系
     features = relationship("Features", back_populates="team")
