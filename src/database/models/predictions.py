@@ -16,6 +16,9 @@ Predictions - 数据库模块
 
 from enum import Enum
 
+from sqlalchemy import Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy.orm import Mapped, mapped_column
+
 from src.database.base import BaseModel
 
 """
@@ -36,6 +39,16 @@ class PredictedResult(Enum):
 class Predictions(BaseModel):
     __table_args__ = {"extend_existing": True}
     __tablename__ = "predictions"
+
+    # 基本字段
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    match_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    score: Mapped[str] = mapped_column(Text)  # JSON或文本格式存储
+    confidence: Mapped[str] = mapped_column(Text)  # JSON或文本格式存储
+    status: Mapped[str] = mapped_column(String(50), default="pending")
+    created_at: Mapped[DateTime] = mapped_column(DateTime)
+    updated_at: Mapped[DateTime] = mapped_column(DateTime)
 
 
 # 为向后兼容性提供别名

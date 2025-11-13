@@ -98,14 +98,27 @@ class EnhancedRedisManager:
         try:
             if self.config.cluster_mode and self.config.cluster_nodes:
                 # 集群模式
-                from rediscluster import RedisCluster
+                try:
+                    from rediscluster import RedisCluster
 
-                client = RedisCluster(
-                    startup_nodes=self.config.cluster_nodes,
-                    decode_responses=self.config.decode_responses,
-                    skip_full_coverage_check=True,
-                    **(self.config.connection_pool_kwargs or {}),
-                )
+                    client = RedisCluster(
+                        startup_nodes=self.config.cluster_nodes,
+                        decode_responses=self.config.decode_responses,
+                        skip_full_coverage_check=True,
+                        **(self.config.connection_pool_kwargs or {}),
+                    )
+                except ImportError:
+                    # 如果rediscluster不可用，回退到单机模式
+                    logger.warning("rediscluster模块不可用，回退到单机Redis模式")
+                    import redis
+
+                    client = redis.Redis(
+                        host=self.config.host,
+                        port=self.config.port,
+                        db=self.config.db,
+                        decode_responses=self.config.decode_responses,
+                        **(self.config.connection_pool_kwargs or {}),
+                    )
             elif self.config.sentinel_mode and self.config.sentinel_servers:
                 # 哨兵模式
                 sentinel = redis.Sentinel(

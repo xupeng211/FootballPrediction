@@ -59,6 +59,7 @@ class Match(BaseModel):
     match_date = Column(DateTime, nullable=False)
     venue = Column(String(255))
     league_id = Column(Integer, ForeignKey("leagues.id"))
+    season = Column(String(20))
 
     # 关系
     home_team = relationship("Team", foreign_keys=[home_team_id])
