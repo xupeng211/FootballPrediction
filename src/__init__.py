@@ -8,7 +8,7 @@ from .utils.warning_filters import setup_warning_filters
 足球预测系统主模块
 Football Prediction System Main Module
 
-提供系统初始化和基础配置功能。
+提供系统初始化和基础配置功能.
 Provides system initialization and basic configuration functions.
 """
 
@@ -23,7 +23,7 @@ try:
     path_manager = PathManager()
     path_manager.setup_paths()
 except ImportError:
-    # 如果路径管理器不可用，至少保证基本路径配置
+    # 如果路径管理器不可用,至少保证基本路径配置
     pass
 
 # 配置警告过滤器
