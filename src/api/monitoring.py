@@ -294,7 +294,9 @@ async def get_metrics(db: AsyncSession = Depends(get_async_db)) -> dict[str, Any
 
 
 @router.get("/status")
-async def get_service_status(db: AsyncSession = Depends(get_async_db)) -> dict[str, Any]:
+async def get_service_status(
+    db: AsyncSession = Depends(get_async_db),
+) -> dict[str, Any]:
     """服务健康状态（JSON）."""
     api_health = True
     try:
