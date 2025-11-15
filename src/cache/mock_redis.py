@@ -184,6 +184,10 @@ class MockRedisManager:
     def __init__(self):
         self.redis = MockRedis.get_instance()
 
+    def ping(self):
+        """检查连接状态"""
+        return True
+
     def get(self, key: str, default=None):
         """获取值"""
         return self.redis.get(key) or default
