@@ -4,9 +4,8 @@ from .base import Adaptee, BaseAdapter, Target
 from .factory_simple import get_adapter
 
 # 导入适配器实现
-
 try:
-    from .football_adapters import (
+    from .adapters import (
         ApiFootballAdapter,
         CompositeFootballAdapter,
         FootballApiAdapter,
