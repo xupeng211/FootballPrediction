@@ -14,8 +14,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import MinMaxScaler
 
@@ -546,6 +544,8 @@ async def predict_quality_trend(hours_ahead: int = 6) -> PredictionResult:
 
 if __name__ == "__main__":
     import asyncio
+import numpy as np
+import pandas as pd
 
     async def test_lstm_predictor():
         """测试LSTM预测器"""

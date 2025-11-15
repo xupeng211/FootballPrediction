@@ -14,13 +14,13 @@ from .api import router as performance_router
 
 # 导入性能监控组件
 try:
-    from .middleware import (
+    from .monitoring import (
         BackgroundTaskPerformanceMonitor,
         CachePerformanceMiddleware,
         DatabasePerformanceMiddleware,
         PerformanceMonitoringMiddleware,
     )
-    from .profilers import (
+    from .profiling import (
         APIEndpointProfiler,
         DatabaseQueryProfiler,
     )

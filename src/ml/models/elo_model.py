@@ -9,9 +9,6 @@ import pickle
 from datetime import datetime
 from typing import Any
 
-import numpy as np
-import pandas as pd
-
 from .base_model import BaseModel, PredictionResult, TrainingResult
 
 logger = logging.getLogger(__name__)
@@ -631,6 +628,8 @@ class EloModel(BaseModel):
             平均评估指标
         """
         from sklearn.model_selection import KFold
+import numpy as np
+import pandas as pd
 
         # 确保折数不超过样本数量
         folds = min(folds, len(training_data))

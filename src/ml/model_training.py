@@ -18,9 +18,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-import pandas as pd
-
 # 导入预测模型
 from src.models.prediction_model import FootballPredictionModel, PredictionModel
 
@@ -108,6 +105,7 @@ class ModelTrainer:
         self.config = config or TrainingConfig()
         import logging
         from typing import Any
+import pandas as pd
 
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.model = None

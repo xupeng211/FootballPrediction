@@ -6,7 +6,7 @@ analyzer 主模块 - 性能分析器
 
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -19,19 +19,19 @@ class PerformanceAnalyzer:
         self.metrics_history = []
         self.analysis_results = {}
 
-    def analyze(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, metrics: dict[str, Any]) -> dict[str, Any]:
         """分析性能指标"""
         analysis = {
             "timestamp": datetime.utcnow(),
             "metrics": metrics,
             "insights": self._generate_insights(metrics),
-            "recommendations": self._generate_recommendations(metrics)
+            "recommendations": self._generate_recommendations(metrics),
         }
 
         self.metrics_history.append(analysis)
         return analysis
 
-    def _generate_insights(self, metrics: Dict[str, Any]) -> List[str]:
+    def _generate_insights(self, metrics: dict[str, Any]) -> list[str]:
         """生成性能洞察"""
         insights = []
 
@@ -43,7 +43,7 @@ class PerformanceAnalyzer:
 
         return insights
 
-    def _generate_recommendations(self, metrics: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self, metrics: dict[str, Any]) -> list[str]:
         """生成优化建议"""
         recommendations = []
 
@@ -55,7 +55,7 @@ class PerformanceAnalyzer:
 
         return recommendations
 
-    def get_trend_analysis(self) -> Dict[str, Any]:
+    def get_trend_analysis(self) -> dict[str, Any]:
         """获取趋势分析"""
         if len(self.metrics_history) < 2:
             return {"status": "insufficient_data"}
@@ -64,10 +64,12 @@ class PerformanceAnalyzer:
         previous = self.metrics_history[-2]
 
         return {
-            "trend": "improving" if latest["metrics"] != previous["metrics"] else "stable",
+            "trend": (
+                "improving" if latest["metrics"] != previous["metrics"] else "stable"
+            ),
             "period_start": previous["timestamp"],
             "period_end": latest["timestamp"],
-            "data_points": len(self.metrics_history)
+            "data_points": len(self.metrics_history),
         }
 
 
@@ -87,7 +89,7 @@ class PerformanceTrend:
     def __init__(self):
         self.data_points = []
 
-    def add_data_point(self, value: float, timestamp: Optional[datetime] = None):
+    def add_data_point(self, value: float, timestamp: datetime | None = None):
         """添加数据点"""
         if timestamp is None:
             timestamp = datetime.utcnow()
