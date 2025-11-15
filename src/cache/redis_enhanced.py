@@ -81,6 +81,7 @@ class EnhancedRedisManager:
 
         # 在测试环境中强制使用Mock（通过检测环境变量或运行时）
         import os
+
         if os.getenv("PYTEST_CURRENT_TEST") or os.getenv("TESTING"):
             use_mock = True
 

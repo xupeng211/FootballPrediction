@@ -7,7 +7,7 @@ Provides abstraction layer for data access.
 """
 
 from .base import BaseRepository, QuerySpec
-from .di import (
+from .dependencies import (
     MatchRepoDep,
     PredictionRepoDep,
     ReadOnlyMatchRepoDep,
