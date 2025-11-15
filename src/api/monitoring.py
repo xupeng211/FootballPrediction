@@ -9,11 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import PlainTextResponse
 from requests.exceptions import HTTPError, RequestException
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import redis
 from src.core.logger import get_logger
-from src.database.dependencies import get_db
+from src.database.dependencies import get_async_db
 from src.monitoring.metrics_collector import get_metrics_collector
 from src.monitoring.metrics_exporter import get_metrics_exporter
 
@@ -53,7 +53,7 @@ logger = get_logger(__name__)
 router = APIRouter(tags=["monitoring"])
 
 
-async def _get_database_metrics(db: Session) -> dict[str, Any]:
+async def _get_database_metrics(db: AsyncSession) -> dict[str, Any]:
     """获取数据库健康与统计指标."
     返回结构:
     {
@@ -73,11 +73,11 @@ async def _get_database_metrics(db: Session) -> dict[str, Any]:
         },
     }
     try:
-        db.execute(text("SELECT 1"))
-        _teams = db.execute(text("SELECT COUNT(*) FROM teams"))
-        _matches = db.execute(text("SELECT COUNT(*) FROM matches"))
-        predictions = db.execute(text("SELECT COUNT(*) FROM predictions"))
-        active = db.execute(
+        await db.execute(text("SELECT 1"))
+        _teams = await db.execute(text("SELECT COUNT(*) FROM teams"))
+        _matches = await db.execute(text("SELECT COUNT(*) FROM matches"))
+        predictions = await db.execute(text("SELECT COUNT(*) FROM predictions"))
+        active = await db.execute(
             text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'")
         )
 
@@ -104,7 +104,7 @@ async def _get_database_metrics(db: Session) -> dict[str, Any]:
     return stats
 
 
-async def _get_business_metrics(db: Session) -> dict[str, Any]:
+async def _get_business_metrics(db: AsyncSession) -> dict[str, Any]:
     """获取业务层关键指标。异常时各项返回 None."
     返回结构:
     {
@@ -158,9 +158,9 @@ async def _get_business_metrics(db: Session) -> dict[str, Any]:
             except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
                 return None
 
-        rp = db.execute(recent_predictions_q)
-        um = db.execute(upcoming_matches_q)
-        ar = db.execute(accuracy_rate_q)
+        rp = await db.execute(recent_predictions_q)
+        um = await db.execute(upcoming_matches_q)
+        ar = await db.execute(accuracy_rate_q)
         rp_v = _val(rp)
         um_v = _val(um)
         ar_v = _val(ar)
@@ -234,7 +234,7 @@ async def get_monitoring_stats():
 
 
 @router.get("/metrics")
-async def get_metrics(db: Session = Depends(get_db)) -> dict[str, Any]:
+async def get_metrics(db: AsyncSession = Depends(get_async_db)) -> dict[str, Any]:
     """应用综合指标（JSON）。异常时返回 status=error 但HTTP 200."""
     start = time.time()
     response: dict[str, Any] = {
@@ -294,11 +294,11 @@ async def get_metrics(db: Session = Depends(get_db)) -> dict[str, Any]:
 
 
 @router.get("/status")
-async def get_service_status(db: Session = Depends(get_db)) -> dict[str, Any]:
+async def get_service_status(db: AsyncSession = Depends(get_async_db)) -> dict[str, Any]:
     """服务健康状态（JSON）."""
     api_health = True
     try:
-        db.execute(text("SELECT 1"))
+        await db.execute(text("SELECT 1"))
         db_health = True
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"数据库健康检查失败: {e}")
@@ -350,7 +350,7 @@ async def collector_health() -> dict[str, Any]:
         }
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"健康检查失败: {e}", exc_info=True)
-        {"status": "unhealthy", "error": str(e), "message": "监控系统异常"}
+        return {"status": "unhealthy", "error": str(e), "message": "监控系统异常"}
 
 
 @router.post("/collector/collect")
