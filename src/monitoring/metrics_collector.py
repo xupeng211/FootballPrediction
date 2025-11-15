@@ -19,10 +19,12 @@ class MetricsCollector:
     def __init__(self):
         """初始化指标收集器"""
         self.metrics = {}
+        self.is_running = False
 
     def initialize(self):
         """初始化指标收集器"""
         logger.info("✅ MetricsCollector initialized successfully")
+        self.is_running = True
 
     def collect(self) -> dict[str, Any]:
         """收集指标"""
@@ -31,6 +33,29 @@ class MetricsCollector:
     def add_metric(self, name: str, value: Any):
         """添加指标"""
         self.metrics[name] = value
+
+    def get_status(self) -> dict[str, Any]:
+        """获取收集器状态"""
+        return {
+            "status": "running" if self.is_running else "stopped",
+            "timestamp": datetime.utcnow().isoformat(),
+            "metrics_count": len(self.metrics),
+            "collector_type": "MetricsCollector"
+        }
+
+    async def collect_once(self) -> dict[str, Any]:
+        """异步收集一次指标"""
+        return self.collect()
+
+    async def start(self):
+        """启动收集器"""
+        self.is_running = True
+        logger.info("📊 Metrics collector started")
+
+    async def stop(self):
+        """停止收集器"""
+        self.is_running = False
+        logger.info("📊 Metrics collector stopped")
 
 
 # 全局指标收集器实例

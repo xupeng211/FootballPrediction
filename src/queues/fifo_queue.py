@@ -159,7 +159,12 @@ class MemoryFIFOQueue(FIFOQueue):
         """清空队列"""
         try:
             while not self._queue.empty():
-                await self._queue.get_nowait()
+                try:
+                    # 尝试异步方式
+                    await self._queue.get_nowait()
+                except (TypeError, AttributeError):
+                    # 如果不是异步队列，使用同步方式
+                    self._queue.get_nowait()
             self.statistics["queue_size"] = 0
             logger.info(f"队列 {self.name} 已清空")
             return True
