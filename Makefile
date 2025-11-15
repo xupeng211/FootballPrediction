@@ -620,26 +620,81 @@ report-ci-metrics: ## Report: Generate CI/CD metrics dashboard
 	echo "$(GREEN)✅ CI/CD metrics dashboard generated$(RESET)"
 
 # ============================================================================
-# 🎯 高级质量工具
+# 🛡️ 核心质量工具 (精简优化后的核心工具集)
 # ============================================================================
-smart-fix: ## Quality: Run intelligent automated fixes
+smart-fix: ## Quality: 智能自动化修复 - 核心质量工具
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)🤖 Running intelligent automated fixes...$(RESET)" && \
 	$(PYTHON) scripts/smart_quality_fixer.py && \
 	echo "$(GREEN)✅ Intelligent fixes applied$(RESET)"
 
-quality-guardian: ## Quality: Run quality guardian check
+quality-guardian: ## Quality: 质量守护检查 - 核心监控工具
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)🛡️ Running quality guardian check...$(RESET)" && \
 	$(PYTHON) scripts/quality_guardian.py --check-only && \
 	echo "$(GREEN)✅ Quality guardian check completed$(RESET)"
 
-continuous-improvement: ## Quality: Run continuous improvement engine
+daily-quality: ## Quality: 每日质量改进 - 日常维护工具
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)🚀 Running continuous improvement engine...$(RESET)" && \
-	$(PYTHON) scripts/continuous_improvement_engine.py --automated --interval 30 &
-	echo "$(GREEN)✅ Continuous improvement engine started (PID: $!)" && \
-	echo "$(BLUE)💡 Check 'python scripts/improvement_monitor.py' for status"
+	echo "$(YELLOW)📅 Running daily quality improvement...$(RESET)" && \
+	$(PYTHON) scripts/daily_quality_improvement.py && \
+	echo "$(GREEN)✅ Daily quality improvement completed$(RESET)"
+
+emergency-fix: ## Quality: 紧急质量修复 - 危机处理工具
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🚨 Running emergency quality fixes...$(RESET)" && \
+	$(PYTHON) scripts/emergency_quality_fixer.py && \
+	echo "$(GREEN)✅ Emergency fixes completed$(RESET)"
+
+coverage-dashboard: ## Quality: 覆盖率仪表板 - 测试分析工具
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)📊 Running coverage dashboard...$(RESET)" && \
+	$(PYTHON) scripts/coverage_dashboard.py && \
+	echo "$(GREEN)✅ Coverage dashboard generated$(RESET)"
+
+test-crisis: ## Quality: 测试危机解决方案 - 测试修复工具
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🔧 Running test crisis solution...$(RESET)" && \
+	$(PYTHON) scripts/fix_test_crisis.py && \
+	echo "$(GREEN)✅ Test crisis solution completed$(RESET)"
+
+work-sync: ## Quality: 工作同步 - 项目管理工具
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🔄 Running work synchronization...$(RESET)" && \
+	$(PYTHON) scripts/claude_work_sync.py sync && \
+	echo "$(GREEN)✅ Work synchronization completed$(RESET)"
+
+load-context: ## Quality: 加载项目上下文 - AI开发工具
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)📋 Loading project context...$(RESET)" && \
+	$(PYTHON) scripts/context_loader.py --summary && \
+	echo "$(GREEN)✅ Project context loaded$(RESET)"
+
+# ============================================================================
+# 🎯 组合质量工具 (常用组合)
+# ============================================================================
+quality-all: ## Quality: 运行所有核心质量检查 (smart-fix + quality-guardian + daily-quality)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🛡️ Running complete quality check suite...$(RESET)" && \
+	$(MAKE) smart-fix && \
+	$(MAKE) quality-guardian && \
+	$(MAKE) daily-quality && \
+	echo "$(GREEN)✅ All quality checks completed$(RESET)"
+
+quality-monitor: ## Quality: 质量监控组合 (guardian + monitor + dashboard)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)📊 Running quality monitoring...$(RESET)" && \
+	$(PYTHON) scripts/quality_monitor.py && \
+	$(MAKE) quality-guardian && \
+	$(MAKE) coverage-dashboard && \
+	echo "$(GREEN)✅ Quality monitoring completed$(RESET)"
+
+emergency-suite: ## Quality: 紧急修复组合 (emergency-fix + smart-fix)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🚨 Running emergency fix suite...$(RESET)" && \
+	$(MAKE) emergency-fix && \
+	$(MAKE) smart-fix && \
+	echo "$(GREEN)✅ Emergency fixes applied$(RESET)"
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running mypy type checking...$(RESET)" && \
 	mypy src tests && \
