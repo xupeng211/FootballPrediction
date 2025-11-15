@@ -10,7 +10,6 @@ from .base import Subsystem, SubsystemManager, SystemFacade
 
 # 导入__init__相关类
 try:
-    from .system_facades import (
         AnalyticsFacade,
         DataCollectionFacade,
         MainSystemFacade,

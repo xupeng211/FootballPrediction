@@ -8,7 +8,6 @@ anomaly_detector 主模块
 
 # 导入拆分的模块
 try:
-    from .anomaly_detector_main import (
         AnomalyDetector,
         AnomalyResult,
         AnomalySeverity,

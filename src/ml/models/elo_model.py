@@ -628,8 +628,6 @@ class EloModel(BaseModel):
             平均评估指标
         """
         from sklearn.model_selection import KFold
-import numpy as np
-import pandas as pd
 
         # 确保折数不超过样本数量
         folds = min(folds, len(training_data))

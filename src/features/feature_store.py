@@ -8,7 +8,6 @@ feature_store 主模块
 
 # 导入拆分的模块
 try:
-    from .feature_store_main import (
         FootballFeatureStore,
         MockEntity,
         MockFeatureStore,

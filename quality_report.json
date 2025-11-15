@@ -2,9 +2,9 @@
   "timestamp": "2025-11-05 16:00",
   "results": {
     "syntax_errors": {
-      "count": 0,
+      "count": 1,
       "threshold": 0,
-      "passed": true
+      "passed": false
     },
     "b904_errors": {
       "count": 0,
@@ -24,7 +24,7 @@
   },
   "summary": {
     "total_checks": 4,
-    "passed_checks": 4,
-    "failed_checks": 0
+    "passed_checks": 3,
+    "failed_checks": 1
   }
 }

@@ -477,8 +477,6 @@ class PoissonModel(BaseModel):
             平均评估指标
         """
         from sklearn.model_selection import KFold
-import numpy as np
-import pandas as pd
 
         kf = KFold(n_splits=folds, shuffle=True, random_state=42)
         fold_metrics = []

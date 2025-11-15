@@ -162,8 +162,7 @@ class LSTMPredictor:
             # 目标序列
             y.append(
                 target[
-                    i
-                    + self.config.sequence_length : i
+                    i + self.config.sequence_length : i
                     + self.config.sequence_length
                     + self.config.prediction_horizon
                 ]
@@ -544,8 +543,6 @@ async def predict_quality_trend(hours_ahead: int = 6) -> PredictionResult:
 
 if __name__ == "__main__":
     import asyncio
-import numpy as np
-import pandas as pd
 
     async def test_lstm_predictor():
         """测试LSTM预测器"""
