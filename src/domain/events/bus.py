@@ -8,8 +8,8 @@ Provides domain event publishing and subscription functionality.
 
 import asyncio
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict, List
 
 from .base import DomainEvent
 
@@ -20,8 +20,8 @@ class EventBus:
     """简单的事件总线实现"""
 
     def __init__(self):
-        self._handlers: Dict[str, List[Callable]] = {}
-        self._middleware: List[Callable] = []
+        self._handlers: dict[str, list[Callable]] = {}
+        self._middleware: list[Callable] = []
 
     def subscribe(self, event_type: str, handler: Callable) -> None:
         """订阅事件"""
