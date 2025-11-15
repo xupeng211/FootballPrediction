@@ -17,8 +17,6 @@ from typing import Any
 
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
-    import numpy as np
-    import pandas as pd
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
