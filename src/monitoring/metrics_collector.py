@@ -40,7 +40,7 @@ class MetricsCollector:
             "status": "running" if self.is_running else "stopped",
             "timestamp": datetime.utcnow().isoformat(),
             "metrics_count": len(self.metrics),
-            "collector_type": "MetricsCollector"
+            "collector_type": "MetricsCollector",
         }
 
     async def collect_once(self) -> dict[str, Any]:
@@ -60,6 +60,7 @@ class MetricsCollector:
 
 # 全局指标收集器实例
 _metrics_collector = None
+
 
 def get_metrics_collector():
     """获取全局指标收集器实例"""
@@ -90,13 +91,8 @@ def stop_metrics_collection():
 
 
 __all__ = [
-    # "MetricsCollector",  # 注释以避免F822错误
-    # "EnhancedMetricsCollector",  # 模块不存在,暂时注释
-    "MetricsAggregator",
-    "MetricPoint",
+    "MetricsCollector",
     "get_metrics_collector",
-    "track_prediction_performance",
-    "track_cache_performance",
     "start_metrics_collection",
     "stop_metrics_collection",
 ]

@@ -11,9 +11,8 @@ import time
 from datetime import datetime
 from typing import Any
 
-import numpy as np
-
 from src.domain.strategies.base import (
+import numpy as np
     PredictionInput,
     PredictionOutput,
     PredictionStrategy,

@@ -5,9 +5,9 @@ Retry Mechanism Implementation
 
 import asyncio
 import time
+from collections.abc import Callable
 from enum import Enum
 from functools import wraps
-from typing import Callable, Optional
 
 
 class CircuitState(Enum):
@@ -205,7 +205,7 @@ def retry(
     initial_delay: float = None,
     backoff_factor: float = 2.0,
     exceptions: tuple = (Exception,),
-    strategy: Optional[BackoffStrategy] = None,
+    strategy: BackoffStrategy | None = None,
 ):
     """重试装饰器
 
@@ -252,7 +252,7 @@ def retry_sync(
     initial_delay: float = None,
     backoff_factor: float = 2.0,
     exceptions: tuple = (Exception,),
-    strategy: Optional[BackoffStrategy] = None,
+    strategy: BackoffStrategy | None = None,
 ):
     """同步重试装饰器"""
     # 支持delay作为initial_delay的别名
@@ -280,7 +280,7 @@ def retry_async(
     initial_delay: float = None,
     backoff_factor: float = 2.0,
     exceptions: tuple = (Exception,),
-    strategy: Optional[BackoffStrategy] = None,
+    strategy: BackoffStrategy | None = None,
 ):
     """异步重试装饰器"""
     # 支持delay作为initial_delay的别名
@@ -308,7 +308,7 @@ def _retry_sync(
     delay: float,
     backoff_factor: float,
     exceptions: tuple,
-    strategy: Optional[BackoffStrategy],
+    strategy: BackoffStrategy | None,
 ) -> Callable:
     """同步重试实现"""
 
@@ -344,7 +344,7 @@ def _retry_async(
     delay: float,
     backoff_factor: float,
     exceptions: tuple,
-    strategy: Optional[BackoffStrategy],
+    strategy: BackoffStrategy | None,
 ) -> Callable:
     """异步重试实现"""
 

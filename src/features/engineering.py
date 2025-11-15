@@ -11,7 +11,7 @@ from .entities import MatchEntity, TeamEntity
 
 # 导入engineering相关类
 try:
-    from .features.all_features import (
+    from .feature_types import (
         AllMatchFeatures,
         AllTeamFeatures,
         HistoricalMatchupFeatures,

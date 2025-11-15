@@ -13,14 +13,14 @@ from .feature_store import FootballFeatureStore
 
 # 导入特征计算相关类
 try:
-    from .engineering import (
+    from .feature_calculator import FeatureCalculator
+    from .feature_types import (
         AllMatchFeatures,
         AllTeamFeatures,
         HistoricalMatchupFeatures,
         OddsFeatures,
         RecentPerformanceFeatures,
     )
-    from .feature_calculator import FeatureCalculator
 except ImportError:
     AllMatchFeatures = None
     AllTeamFeatures = None

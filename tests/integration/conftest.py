@@ -20,8 +20,7 @@ import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 project_root = Path(__file__).parent.parent.parent
@@ -34,19 +33,21 @@ except ImportError:
     # 备用导入路径
     try:
         from sqlalchemy.ext.declarative import declarative_base
+
         Base = declarative_base()
     except ImportError:
         # 创建基础模型类用于测试
         class Base:
             pass
 
+
 # 导入应用模块 - 使用更灵活的导入方式
 try:
     from src.database.models.league import League
     from src.database.models.match import Match
     from src.database.models.predictions import Prediction
-    from src.domain.models.prediction import PredictionStatus
     from src.database.models.team import Team
+    from src.domain.models.prediction import PredictionStatus
 except ImportError:
     # 备用导入 - 设置为None
     League = None
