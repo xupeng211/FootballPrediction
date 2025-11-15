@@ -11,7 +11,6 @@ import time
 from datetime import datetime
 from typing import Any
 
-
 from src.domain.strategies.base import (
     PredictionInput,
     PredictionOutput,

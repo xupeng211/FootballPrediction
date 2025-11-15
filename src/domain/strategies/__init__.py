@@ -6,6 +6,7 @@ Prediction Strategies Module
 Provides strategy pattern implementation for various prediction algorithms.
 """
 
+from .base import (
     PredictionContext,
     PredictionInput,
     PredictionOutput,
@@ -22,6 +23,7 @@ try:
     from .factory import PredictionStrategyFactory
     from .historical import HistoricalStrategy
     from .ml_model import MLModelStrategy
+    from .statistical import (
         EloStrategy,
         PoissonStrategy,
         StatisticalStrategy,
