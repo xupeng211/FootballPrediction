@@ -10,10 +10,10 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
-from src.database.base import get_db_session
-from src.database.models.tenant import Tenant, TenantPlan, TenantStatus
+from src.database.definitions import get_db_session
+from src.database.models.tenant import Tenant
 from src.middleware.tenant_middleware import (
     get_tenant_context,
     require_permission,
@@ -58,7 +58,7 @@ class TenantCreationRequestModel(BaseModel):
         description="租户描述",
         # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
-    plan: TenantPlan = Field(TenantPlan.BASIC, description="租户计划")
+    plan: str = Field("basic", description="租户计划")
     max_users: int = Field(
         10,
         ge=1,
@@ -78,10 +78,9 @@ class TenantCreationRequestModel(BaseModel):
     )  # TODO: 将魔法数字 30 提取为常量
     custom_settings: dict[str, Any] | None = Field(None, description="自定义设置")
 
-    @validator("slug")
-    def validate_slug(self, v):
-        """TODO: 添加函数文档"""
-        """TODO: 添加函数文档"""  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    @field_validator("slug")
+    @classmethod
+    def validate_slug(cls, v):
         """验证租户标识符"""
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("租户标识符只能包含小写字母、数字和连字符")
@@ -139,8 +138,8 @@ class TenantResponseModel(BaseModel):
     description: str | None
     company_name: str | None
     contact_email: str
-    status: TenantStatus
-    plan: TenantPlan
+    status: str
+    plan: str
     max_users: int
     max_predictions_per_day: int
     max_api_calls_per_hour: int
@@ -288,7 +287,7 @@ async def suspend_tenant(
 @router.post("/{tenant_id}/activate")
 @require_permission("tenant.manage")
 async def activate_tenant(
-    tenant_id: int, plan: TenantPlan | None = Query(None, description="租户计划")
+    tenant_id: int, plan: str | None = Query(None, description="租户计划")
 ):
     """
     激活租户
@@ -459,8 +458,8 @@ async def list_tenants(
         description="返回数量",
         # TODO: 将魔法数字 50 提取为常量
     ),  # TODO: 将魔法数字 50 提取为常量
-    status: TenantStatus | None = Query(None, description="状态筛选"),
-    plan: TenantPlan | None = Query(None, description="计划筛选"),
+    status: str | None = Query(None, description="状态筛选"),
+    plan: str | None = Query(None, description="计划筛选"),
     search: str | None = Query(None, description="搜索关键词"),
 ):
     """
@@ -526,7 +525,7 @@ def _calculate_health_score(tenant: Tenant) -> float:
     score = 100.0  # TODO: 将魔法数字 100 提取为常量
 
     # 状态检查
-    if tenant.status != TenantStatus.ACTIVE:
+    if tenant.status != "active":
         score -= 50.0  # TODO: 将魔法数字 50 提取为常量
 
     # 订阅检查
