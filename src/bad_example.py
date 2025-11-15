@@ -6,18 +6,22 @@ Simplified bad_example module
 Provides example functionality for demonstration and testing.
 """
 
+
 class BadExample:
     """示例类"""
 
     EXAMPLE = "value"
 
+
 def __init__(self):
     """初始化方法"""
     pass
 
+
 def example() -> None:
     """示例函数"""
     return None
+
 
 __all__ = [
     "BadExample",
