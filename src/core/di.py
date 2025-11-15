@@ -268,7 +268,10 @@ class DIContainer:
                 params[param_name] = self.resolve(param_type)
             else:
                 # 尝试自动注册
-                logger.warning(f"自动注册类型: {param_type.__name__}")
+                if hasattr(param_type, '__name__'):
+                    logger.warning(f"自动注册类型: {param_type.__name__}")
+                else:
+                    logger.warning(f"自动注册类型: {param_type}")
                 self.register_transient(param_type)
                 params[param_name] = self.resolve(param_type)
 

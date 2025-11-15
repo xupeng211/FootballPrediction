@@ -743,12 +743,20 @@ class IntelligentCacheWarmupManager:
             start_time = time.time()
 
             # 执行数据加载
-            result = await task.data_loader(task.key)
+            try:
+                result = await task.data_loader(task.key)
+            except TypeError:
+                # 如果data_loader不是协程函数，直接调用
+                result = task.data_loader(task.key)
             task.result = result
 
             # 存储到缓存
             if result is not None:
-                success = await self.cache_manager.set(task.key, result, task.ttl)
+                try:
+                    success = await self.cache_manager.set(task.key, result, task.ttl)
+                except TypeError:
+                    # 如果cache_manager.set不是协程函数，直接调用
+                    success = self.cache_manager.set(task.key, result, task.ttl)
 
                 if success:
                     task.status = "completed"
