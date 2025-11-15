@@ -9,7 +9,6 @@ from .api_performance_optimizer import router as optimization_router
 
 # 导入连接池优化相关类
 try:
-    from .connection_pool_optimizer import (
         ConnectionPoolOptimizer,
         PoolMetrics,
         PoolOptimizationConfig,

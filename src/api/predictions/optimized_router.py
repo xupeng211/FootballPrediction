@@ -95,7 +95,7 @@ async def get_predictions_list(
         logger.error(f"获取预测列表时出错: {e}")
         raise HTTPException(
             status_code=500, detail={"error": "内部服务器错误", "message": str(e)}
-        )
+        ) from e
 
 
 @router.post(

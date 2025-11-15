@@ -11,7 +11,6 @@ from src.domain.models.match import Match, MatchResult, MatchScore, MatchStatus
 
 # 导入__init__相关类
 try:
-    from .prediction import (
         ConfidenceScore,
         Prediction,
         PredictionPoints,

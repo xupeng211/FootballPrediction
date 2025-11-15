@@ -14,7 +14,6 @@ from .subscriptions import SubscriptionManager
 
 # 导入实时事件相关类
 try:
-    from .events import (
         AnalyticsEvent,
         EventType,
         MatchEvent,

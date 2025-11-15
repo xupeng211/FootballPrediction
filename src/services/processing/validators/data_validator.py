@@ -9,8 +9,6 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-import pandas as pd
-
 
 class DataValidator:
     """数据验证器 - 简化版本

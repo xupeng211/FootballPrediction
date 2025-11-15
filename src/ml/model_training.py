@@ -105,7 +105,6 @@ class ModelTrainer:
         self.config = config or TrainingConfig()
         import logging
         from typing import Any
-import pandas as pd
 
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.model = None

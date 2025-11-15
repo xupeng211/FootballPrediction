@@ -9,8 +9,6 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-import pandas as pd
-
 
 class MatchProcessor:
     """比赛数据处理器 - 简化版本

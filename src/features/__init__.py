@@ -14,7 +14,6 @@ from .feature_store import FootballFeatureStore
 # 导入特征计算相关类
 try:
     from .feature_calculator import FeatureCalculator
-    from .feature_types import (
         AllMatchFeatures,
         AllTeamFeatures,
         HistoricalMatchupFeatures,
