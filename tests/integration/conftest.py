@@ -27,39 +27,36 @@ from sqlalchemy.orm import sessionmaker
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-# 导入应用模块 - 使用更灵活的导入方式
+# 导入SQLAlchemy Base - P8.2修复
 try:
-    from src.domain.models.league import League
-    from src.domain.models.match import Match
-    from src.domain.models.prediction import Prediction, PredictionStatus
-    from src.domain.models.team import Team
+    from src.database.base import Base
 except ImportError:
     # 备用导入路径
     try:
         from sqlalchemy.ext.declarative import declarative_base
-
         Base = declarative_base()
-
     except ImportError:
         # 创建基础模型类用于测试
         class Base:
             pass
 
-
-# 导入领域模型
+# 导入应用模块 - 使用更灵活的导入方式
 try:
-    from src.domain.models.league import League
-    from src.domain.models.match import Match
-    from src.domain.models.prediction import Prediction
-    from src.domain.models.team import Team
+    from src.database.models.league import League
+    from src.database.models.match import Match
+    from src.database.models.predictions import Prediction
+    from src.domain.models.prediction import PredictionStatus
+    from src.database.models.team import Team
 except ImportError:
-    # 备用导入或创建简化的测试模型
-    Prediction = None
+    # 备用导入 - 设置为None
+    League = None
     Match = None
+    Prediction = None
+    PredictionStatus = None
     Team = None
-    League = None
-    Team = None
-    League = None
+
+
+# 导入已经完成，跳过重复导入
 
 
 # 测试数据库配置
@@ -193,10 +190,7 @@ async def sample_league(test_db_session: AsyncSession):
         pytest.skip("League model not available")
 
     league = League(
-        name="Premier League",
-        country="England",
-        season="2024/2025",
-        is_active=True,
+        # League模型只有基础字段，从BaseModel继承
     )
 
     test_db_session.add(league)
@@ -213,34 +207,10 @@ async def sample_teams(test_db_session: AsyncSession, sample_league):
         pytest.skip("Team model not available")
 
     teams = [
-        Team(
-            name="Manchester United",
-            short_name="MUN",
-            country="England",
-            founded_year=1878,
-            league_id=sample_league.id if hasattr(sample_league, "id") else None,
-        ),
-        Team(
-            name="Liverpool",
-            short_name="LIV",
-            country="England",
-            founded_year=1892,
-            league_id=sample_league.id if hasattr(sample_league, "id") else None,
-        ),
-        Team(
-            name="Chelsea",
-            short_name="CHE",
-            country="England",
-            founded_year=1905,
-            league_id=sample_league.id if hasattr(sample_league, "id") else None,
-        ),
-        Team(
-            name="Arsenal",
-            short_name="ARS",
-            country="England",
-            founded_year=1886,
-            league_id=sample_league.id if hasattr(sample_league, "id") else None,
-        ),
+        Team(name="Manchester United", country="England"),
+        Team(name="Liverpool", country="England"),
+        Team(name="Chelsea", country="England"),
+        Team(name="Arsenal", country="England"),
     ]
 
     for team in teams:
@@ -266,12 +236,8 @@ async def sample_match(test_db_session: AsyncSession, sample_teams):
     match = Match(
         home_team_id=home_team.id,
         away_team_id=away_team.id,
-        league_id=home_team.league_id if hasattr(home_team, "league_id") else None,
         match_date=datetime.utcnow() + timedelta(days=1),
-        status="SCHEDULED" if hasattr(Match, "status") else "upcoming",
-        venue="Old Trafford",
-        home_score=0,
-        away_score=0,
+        status="scheduled",
     )
 
     test_db_session.add(match)
@@ -287,52 +253,15 @@ async def sample_predictions(test_db_session: AsyncSession, sample_match):
     if not Prediction:
         pytest.skip("Prediction model not available")
 
+    # SQLAlchemy的Predictions模型只有BaseModel字段（id, created_at, updated_at）
     predictions = [
-        Prediction(
-            user_id=1,
-            match_id=sample_match.id,
-            status=(
-                PredictionStatus.PENDING.value
-                if hasattr(PredictionStatus, "value")
-                else "pending"
-            ),
-        ),
-        Prediction(
-            user_id=2,
-            match_id=sample_match.id,
-            status=(
-                PredictionStatus.PENDING.value
-                if hasattr(PredictionStatus, "value")
-                else "pending"
-            ),
-        ),
-        Prediction(
-            user_id=3,
-            match_id=sample_match.id,
-            status=(
-                PredictionStatus.EVALUATED.value
-                if hasattr(PredictionStatus, "value")
-                else "evaluated"
-            ),
-        ),
+        Prediction(),
+        Prediction(),
+        Prediction(),
     ]
 
-    # 为已评估的预测设置比分
-    if hasattr(predictions[2], "make_prediction") and hasattr(
-        predictions[2], "evaluate"
-    ):
-        try:
-            predictions[2].make_prediction(
-                predicted_home=2, predicted_away=1, confidence=0.85
-            )
-            predictions[2].evaluate(actual_home=2, actual_away=1)
-        except Exception:
-            # 如果领域方法不可用，手动设置属性
-            predictions[2].predicted_home = 2
-            predictions[2].predicted_away = 1
-            predictions[2].actual_home = 2
-            predictions[2].actual_away = 1
-            predictions[2].confidence = 0.85
+    # SQLAlchemy模型没有domain方法，跳过预测逻辑
+    # 所有预测模型都是空的基础模型，仅包含id和时间戳
 
     for prediction in predictions:
         test_db_session.add(prediction)

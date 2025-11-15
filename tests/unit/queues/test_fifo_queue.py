@@ -272,15 +272,15 @@ class TestQueueManager:
         manager.create_queue("test_dequeue", "memory")
         task = create_task("test_task", {"data": "test"})
 
-        # 从空队列取出
-        result = await manager.dequeue_from_queue("test_dequeue")
+        # 从空队列取出 - 使用短超时避免无限阻塞
+        result = await manager.dequeue_from_queue("test_dequeue", timeout=0.1)
         assert result is None
 
-        # 先添加再取出
+        # 先添加再取出 - 测试有数据的队列
         await manager.enqueue_to_queue("test_dequeue", task)
-        result = await manager.dequeue_from_queue("test_dequeue")
-        assert result is not None
-        assert result.id == task.id
+        result_with_data = await manager.dequeue_from_queue("test_dequeue", timeout=1.0)
+        assert result_with_data is not None
+        assert result_with_data.id == task.id
 
     @pytest.mark.asyncio
     async def test_clear_all_queues(self, manager):

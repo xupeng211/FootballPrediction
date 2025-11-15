@@ -13,10 +13,34 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from httpx import AsyncClient
 
-from tests.integration.test_full_workflow import cache_test_data, mock_redis
+# P8.2修复：移除循环导入，fixtures将在下面定义
 
 # 标记测试
 pytestmark = [pytest.mark.integration, pytest.mark.workflow, pytest.mark.e2e]
+
+# P8.2修复：定义fixtures以解决循环导入问题
+@pytest.fixture
+def cache_test_data():
+    """缓存测试数据fixture"""
+    return {
+        "user_stats_key": "user:123:stats",
+        "test_value": {
+            "predictions_count": 10,
+            "success_rate": 0.75,
+            "last_updated": "2025-11-13T10:00:00Z"
+        }
+    }
+
+@pytest.fixture
+def mock_redis():
+    """Redis模拟fixture"""
+    from unittest.mock import AsyncMock
+    redis_mock = AsyncMock()
+    redis_mock.get.return_value = None
+    redis_mock.set.return_value = True
+    redis_mock.exists.return_value = False
+    redis_mock.delete.return_value = True
+    return redis_mock
 
 
 class TestCompletePredictionWorkflow:
@@ -1030,7 +1054,7 @@ class TestPerformanceWorkflow:
 
 
 @pytest.mark.asyncio
-async def test_cache_workflow(self, async_client: AsyncClient):
+async def test_cache_workflow(async_client: AsyncClient, cache_test_data, mock_redis):
     """测试缓存工作流"""
     import time
 

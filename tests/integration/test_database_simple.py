@@ -8,6 +8,7 @@ Simplified Database Integration Tests
 from datetime import datetime, timedelta
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -16,10 +17,11 @@ from .test_models_simple import TestBase, TestMatch, TestPrediction, TestTeam
 
 @pytest.mark.integration
 @pytest.mark.db_integration
+@pytest.mark.asyncio
 class TestSimpleDatabaseOperations:
     """简化的数据库操作集成测试"""
 
-    @pytest.fixture(scope="class")
+    @pytest_asyncio.fixture(scope="class")
     async def test_db_engine(self):
         """创建测试数据库引擎"""
         engine = create_async_engine(
@@ -34,7 +36,7 @@ class TestSimpleDatabaseOperations:
         yield engine
         await engine.dispose()
 
-    @pytest.fixture(scope="class")
+    @pytest_asyncio.fixture(scope="class")
     async def test_db_session(self, test_db_engine):
         """创建测试数据库会话"""
         async_session_maker = async_sessionmaker(
@@ -44,6 +46,7 @@ class TestSimpleDatabaseOperations:
         async with async_session_maker() as session:
             yield session
 
+    @pytest.mark.asyncio
     async def test_team_crud_operations(self, test_db_session: AsyncSession):
         """测试球队CRUD操作"""
         # Create
@@ -86,6 +89,7 @@ class TestSimpleDatabaseOperations:
         result = await test_db_session.execute(stmt)
         assert result.scalar_one_or_none() is None
 
+    @pytest.mark.asyncio
     async def test_match_crud_operations(self, test_db_session: AsyncSession):
         """测试比赛CRUD操作"""
         # Create teams first
@@ -124,6 +128,7 @@ class TestSimpleDatabaseOperations:
         assert match.away_score == 1
         assert match.status == "finished"
 
+    @pytest.mark.asyncio
     async def test_prediction_crud_operations(self, test_db_session: AsyncSession):
         """测试预测CRUD操作"""
         # Create match first
@@ -173,6 +178,7 @@ class TestSimpleDatabaseOperations:
         assert len(predictions) == 1
         assert predictions[0].predicted_outcome == "home"
 
+    @pytest.mark.asyncio
     async def test_transaction_commit(self, test_db_session: AsyncSession):
         """测试事务提交"""
         # 直接提交数据（session已经有事务）
@@ -189,6 +195,7 @@ class TestSimpleDatabaseOperations:
 
         assert len(teams) == 2
 
+    @pytest.mark.asyncio
     async def test_transaction_rollback(self, test_db_session: AsyncSession):
         """测试事务回滚"""
         try:
@@ -209,6 +216,7 @@ class TestSimpleDatabaseOperations:
         result = await test_db_session.execute(stmt)
         assert result.scalar_one_or_none() is None
 
+    @pytest.mark.asyncio
     async def test_bulk_operations_performance(self, test_db_session: AsyncSession):
         """测试批量操作性能"""
         import time

@@ -48,6 +48,49 @@ def client():
             return TestClient(app)
 
 
+# 新增的全局fixtures - 解决fixture缺失问题
+@pytest.fixture
+def access_token():
+    """测试用的access token fixture"""
+    # 返回一个测试用的JWT token或固定token
+    return "test_access_token_12345"
+
+
+@pytest.fixture
+def training_data():
+    """机器学习模型训练数据fixture"""
+    import numpy as np
+    import pandas as pd
+
+    # 创建基础的训练数据
+    features = np.array([
+        [1, 2, 3, 4, 5],      # 示例特征1
+        [2, 3, 4, 5, 6],      # 示例特征2
+        [3, 4, 5, 6, 7],      # 示例特征3
+        [4, 5, 6, 7, 8],      # 示例特征4
+        [5, 6, 7, 8, 9],      # 示例特征5
+    ])
+
+    labels = np.array([0, 1, 0, 1, 1])  # 对应的标签
+
+    # 转换为DataFrame以模拟真实数据
+    feature_names = ['home_goals', 'away_goals', 'home_shots', 'away_shots', 'possession']
+    X = pd.DataFrame(features, columns=feature_names)
+    y = pd.Series(labels, name='result')
+
+    return {
+        'features': X,
+        'labels': y,
+        'X_array': features,
+        'y_array': labels,
+        'match_data': [
+            {'home_team': 'Team A', 'away_team': 'Team B', 'features': features[0]},
+            {'home_team': 'Team C', 'away_team': 'Team D', 'features': features[1]},
+            {'home_team': 'Team E', 'away_team': 'Team F', 'features': features[2]},
+        ]
+    }
+
+
 @pytest.fixture(scope="session")
 def app():
     """FastAPI应用fixture"""

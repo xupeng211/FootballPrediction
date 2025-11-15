@@ -452,7 +452,7 @@ class TestCacheL1L2Integration:
     def cache_manager(self, mock_redis):
         """创建缓存管理器"""
         return UnifiedCacheManager(
-            redis_client=mock_redis, local_cache_size=10, default_ttl=300
+            redis_client=mock_redis, local_cache_size=10
         )
 
     async def test_l1_l2_cache_hierarchy(self, cache_manager, mock_redis):
@@ -630,7 +630,7 @@ class TestCacheRealWorldScenarios:
     def cache_manager(self, mock_redis):
         """创建缓存管理器"""
         return UnifiedCacheManager(
-            redis_client=mock_redis, local_cache_size=20, default_ttl=600
+            redis_client=mock_redis, local_cache_size=20
         )
 
     async def test_database_query_caching(self, cache_manager):
