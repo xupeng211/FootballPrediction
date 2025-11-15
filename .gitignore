@@ -185,3 +185,15 @@ config/integration.py
 docker-compose.integration.yml
 docker/Dockerfile.integration
 
+# Phase 2 临时文档
+P3-*.md
+P4*.md
+P5*.md
+P8*.md
+
+# 临时数据文件
+triage_*.txt
+coverage_raw.txt
+
+# GitHub 工作流临时文件
+.github/workflows/*.disabled
