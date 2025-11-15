@@ -1,13 +1,12 @@
 from .base import Adaptee, BaseAdapter, Target
 
 # 重新启用的模块导入
-from .factory_simple import BaseAdapterFactory as SimpleAdapterFactory
 from .factory_simple import get_adapter
 
 # 导入适配器实现
 
 try:
-    from .football import (
+    from .football_adapters import (
         ApiFootballAdapter,
         CompositeFootballAdapter,
         FootballApiAdapter,
@@ -22,11 +21,11 @@ except ImportError:
     FootballDataAdapter = None
     OptaDataAdapter = None
 
-from .registry import BaseAdapterError as AdapterError
-from .registry import BaseAdapterRegistry as AdapterRegistry
-
 # 为了向后兼容,提供AdapterFactory别名
-AdapterFactory = SimpleAdapterFactory
+try:
+    AdapterFactory = SimpleAdapterFactory
+except NameError:
+    AdapterFactory = None
 
 # 适配器模式实现
 # Adapter Pattern Implementation

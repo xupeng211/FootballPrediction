@@ -22,14 +22,13 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 # 添加项目根目录到Python路径
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
     from src.cache.redis_manager import get_redis_manager
     from src.services.betting.ev_calculator import (
+import numpy as np
         BettingOdds,
         BettingStrategy,
         BetType,

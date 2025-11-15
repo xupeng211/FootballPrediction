@@ -57,14 +57,17 @@ class Match:
 class FootballData:
     """足球API被适配者基类"""
 
-    def get_match_data(self, match_id: str) -> Match:
-        """获取比赛数据"""
-        raise NotImplementedError
 
-    def get_team_data(self, team_id: str) -> Team:
-        """获取球队数据"""
-        raise NotImplementedError
+def get_match_data(self, match_id: str) -> Match:
+    """获取比赛数据"""
+    raise NotImplementedError
 
-    def get_player_data(self, player_id: str) -> Player:
-        """获取球员数据"""
-        raise NotImplementedError
+
+def get_team_data(self, team_id: str) -> Team:
+    """获取球队数据"""
+    raise NotImplementedError
+
+
+def get_player_data(self, player_id: str) -> Player:
+    """获取球员数据"""
+    raise NotImplementedError

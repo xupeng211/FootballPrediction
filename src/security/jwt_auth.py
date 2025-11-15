@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import jwt
-from jwt import exceptions
 import redis.asyncio as redis
 from passlib.context import CryptContext
 
@@ -265,7 +264,12 @@ class JWTAuthManager:
 
         # 如果是完整JWT token，尝试解析获取JTI
         try:
-            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm], options={"verify_signature": False})
+            payload = jwt.decode(
+                token,
+                self.secret_key,
+                algorithms=[self.algorithm],
+                options={"verify_signature": False},
+            )
             jti = payload.get("jti")
             return await self._is_token_blacklisted(jti)
         except Exception:

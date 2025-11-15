@@ -12,7 +12,7 @@ Security Configuration Management
 import logging
 import os
 import secrets
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class SecurityConfig:
         else:
             return f"redis://{self.redis_host}:{self.redis_port}/0"
 
-    def validate(self) -> Dict[str, Any]:
+    def validate(self) -> dict[str, Any]:
         """验证配置完整性"""
         issues = []
         warnings = []
@@ -121,7 +121,7 @@ class SecurityConfig:
             "status": "OK" if len(issues) == 0 else "NEEDS_ATTENTION",
         }
 
-    def get_safe_config(self) -> Dict[str, Any]:
+    def get_safe_config(self) -> dict[str, Any]:
         """获取安全的配置信息（隐藏敏感信息）"""
         return {
             "database_host": self.database_host,
@@ -147,7 +147,7 @@ def get_security_config() -> SecurityConfig:
 
 
 # 便捷函数
-def validate_security_config() -> Dict[str, Any]:
+def validate_security_config() -> dict[str, Any]:
     """验证安全配置的便捷函数"""
     return security_config.validate()
 
