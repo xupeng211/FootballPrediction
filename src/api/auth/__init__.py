@@ -9,7 +9,6 @@
 """
 
 import os
-import secrets
 
 from .router import router
 

@@ -18,7 +18,7 @@ from .team import Team
 
 # 导入多租户相关类
 try:
-    from .multi_tenant import (
+    from .tenant import (
         PermissionScope,
         ResourceType,
         RolePermission,

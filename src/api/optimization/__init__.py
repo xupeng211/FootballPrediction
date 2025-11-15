@@ -27,7 +27,7 @@ from .database_performance_api import router as database_optimization_router
 
 # 导入数据库性能中间件相关类
 try:
-    from .database_performance_middleware import (
+    from .database_performance_api import (
         DatabasePerformanceMiddleware,
         QueryOptimizationAdvisor,
         get_database_middleware,
@@ -85,7 +85,7 @@ except ImportError:
 
 # 导入缓存相关类
 try:
-    from .cache_optimization import (
+    from .cache_optimizer import (
         CacheMiddleware,
         SmartCacheManager,
         get_cache_manager,
