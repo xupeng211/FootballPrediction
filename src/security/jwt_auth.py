@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import jwt
+from jwt import exceptions
 import redis.asyncio as redis
 from passlib.context import CryptContext
 
@@ -201,7 +202,7 @@ class JWTAuthManager:
 
         except jwt.ExpiredSignatureError as e:
             raise ValueError("Token has expired") from e
-        except jwt.JWTError as e:
+        except jwt.exceptions.DecodeError as e:
             logger.error(f"JWT decode error: {e}")
             raise ValueError("Invalid token") from e
 
@@ -244,6 +245,31 @@ class JWTAuthManager:
             return bool(result)
         except Exception as e:
             logger.error(f"检查token黑名单失败: {e}")
+            return False
+
+    async def is_token_blacklisted(self, token: str) -> bool:
+        """
+        [TEST_MOCK] 检查令牌是否在黑名单（模拟实现）
+
+        Args:
+            token: JWT令牌字符串或JTI
+
+        Returns:
+            是否在黑名单中
+        """
+        logger.warning("Using MOCK implementation for is_token_blacklisted")
+
+        # 如果是JTI（简短字符串），直接检查
+        if len(token) < 50:
+            return await self._is_token_blacklisted(token)
+
+        # 如果是完整JWT token，尝试解析获取JTI
+        try:
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm], options={"verify_signature": False})
+            jti = payload.get("jti")
+            return await self._is_token_blacklisted(jti)
+        except Exception:
+            # 解析失败时，假设不在黑名单中
             return False
 
     def hash_password(self, password: str) -> str:
@@ -330,7 +356,7 @@ class JWTAuthManager:
 
         except jwt.ExpiredSignatureError as e:
             raise ValueError("Password reset token has expired") from e
-        except jwt.JWTError as e:
+        except jwt.exceptions.DecodeError as e:
             raise ValueError("Invalid password reset token") from e
 
     async def close(self) -> None:

@@ -132,8 +132,11 @@ if SLOWAPI_AVAILABLE:
 # 注册路由
 app.include_router(health_router, prefix="/health", tags=["健康检查"])
 app.include_router(
-    optimized_predictions_router, prefix="/api/v2/predictions", tags=["预测"]
+    optimized_predictions_router, prefix="/api/v1", tags=["预测"]
 )
+# 注册数据管理路由（从optimized_router中导出）
+from src.api.predictions.optimized_router import data_router
+app.include_router(data_router, prefix="/api/v1", tags=["数据管理"])
 app.include_router(prometheus_router, prefix="/metrics", tags=["监控"])
 
 # 配置OpenAPI

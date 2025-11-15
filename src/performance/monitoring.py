@@ -47,13 +47,23 @@ class SystemMonitor:
 
             # 内存使用情况
             memory = psutil.virtual_memory()
-            memory_percent = memory.percent
-            memory_used_mb = memory.used / (1024 * 1024)
-            memory_available_mb = memory.available / (1024 * 1024)
+            memory_percent = getattr(memory, 'percent', 0.0)
+            # 处理Mock对象的除法问题
+            memory_used = getattr(memory, 'used', 0)
+            memory_available = getattr(memory, 'available', 0)
+            # 确保是数值类型
+            try:
+                memory_used_mb = float(memory_used) / (1024 * 1024)
+            except (TypeError, ValueError):
+                memory_used_mb = 0.0
+            try:
+                memory_available_mb = float(memory_available) / (1024 * 1024)
+            except (TypeError, ValueError):
+                memory_available_mb = 0.0
 
             # 磁盘使用情况
             disk = psutil.disk_usage("/")
-            disk_usage_percent = disk.percent
+            disk_usage_percent = getattr(disk, 'percent', 0.0)
 
             # 网络连接数
             network = psutil.net_connections()

@@ -160,3 +160,4 @@ class InvalidCredentialsError(FootballPredictionError):
 DataValidationError = ValidationError
 ConfigurationError = ConfigError
 ServiceUnavailableError = ServiceError
+CustomCustomTimeout = FootballTimeoutError
