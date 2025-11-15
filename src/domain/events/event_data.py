@@ -25,17 +25,21 @@ class MatchCreatedEventData(EventData):
     competition_id: int | None = None
 
     def __post_init__(self):
-        if not hasattr(self, 'data') or self.data is None:
+        if not hasattr(self, "data") or self.data is None:
             self.data = {}
 
-        self.data.update({
-            "match_id": self.match_id,
-            "home_team_id": self.home_team_id,
-            "away_team_id": self.away_team_id,
-            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
-            "venue": self.venue,
-            "competition_id": self.competition_id,
-        })
+        self.data.update(
+            {
+                "match_id": self.match_id,
+                "home_team_id": self.home_team_id,
+                "away_team_id": self.away_team_id,
+                "scheduled_at": (
+                    self.scheduled_at.isoformat() if self.scheduled_at else None
+                ),
+                "venue": self.venue,
+                "competition_id": self.competition_id,
+            }
+        )
 
 
 @dataclass
@@ -47,14 +51,16 @@ class MatchUpdatedEventData(EventData):
     updated_at: datetime
 
     def __post_init__(self):
-        if not hasattr(self, 'data') or self.data is None:
+        if not hasattr(self, "data") or self.data is None:
             self.data = {}
 
-        self.data.update({
-            "match_id": self.match_id,
-            "updated_fields": self.updated_fields,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-        })
+        self.data.update(
+            {
+                "match_id": self.match_id,
+                "updated_fields": self.updated_fields,
+                "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            }
+        )
 
 
 @dataclass
@@ -70,21 +76,25 @@ class PredictionMadeEventData(EventData):
     prediction_time: datetime = None
 
     def __post_init__(self):
-        if not hasattr(self, 'data') or self.data is None:
+        if not hasattr(self, "data") or self.data is None:
             self.data = {}
 
         if self.prediction_time is None:
             self.prediction_time = datetime.utcnow()
 
-        self.data.update({
-            "prediction_id": self.prediction_id,
-            "user_id": self.user_id,
-            "match_id": self.match_id,
-            "predicted_home_score": self.predicted_home_score,
-            "predicted_away_score": self.predicted_away_score,
-            "confidence": self.confidence,
-            "prediction_time": self.prediction_time.isoformat() if self.prediction_time else None,
-        })
+        self.data.update(
+            {
+                "prediction_id": self.prediction_id,
+                "user_id": self.user_id,
+                "match_id": self.match_id,
+                "predicted_home_score": self.predicted_home_score,
+                "predicted_away_score": self.predicted_away_score,
+                "confidence": self.confidence,
+                "prediction_time": (
+                    self.prediction_time.isoformat() if self.prediction_time else None
+                ),
+            }
+        )
 
 
 # 为了向后兼容，提供工厂函数

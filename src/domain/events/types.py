@@ -8,7 +8,7 @@ Defines event-related data types.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .base import EventData
 
@@ -22,7 +22,7 @@ class MatchCreatedEventData(EventData):
     away_team: str
     league: str
     scheduled_start: datetime
-    odds: Optional[Dict[str, float]] = None
+    odds: dict[str, float] | None = None
 
     def __post_init__(self):
         super().__init__(
@@ -42,9 +42,9 @@ class MatchUpdatedEventData(EventData):
     """比赛更新事件数据"""
 
     match_id: int
-    updated_fields: List[str]
-    previous_values: Dict[str, Any]
-    new_values: Dict[str, Any]
+    updated_fields: list[str]
+    previous_values: dict[str, Any]
+    new_values: dict[str, Any]
 
     def __post_init__(self):
         super().__init__(
@@ -88,9 +88,9 @@ class MatchFinishedEventData(EventData):
     """比赛结束事件数据"""
 
     match_id: int
-    final_score: Dict[str, int]  # {"home": 2, "away": 1}
-    winner: Optional[str]  # "home", "away", or "draw"
-    match_duration: Optional[int] = None  # 比赛时长（分钟）
+    final_score: dict[str, int]  # {"home": 2, "away": 1}
+    winner: str | None  # "home", "away", or "draw"
+    match_duration: int | None = None  # 比赛时长（分钟）
 
     def __post_init__(self):
         super().__init__(
@@ -139,7 +139,7 @@ class UserRegisteredEventData(EventData):
     email: str
     username: str
     registration_ip: str
-    referral_code: Optional[str] = None
+    referral_code: str | None = None
 
     def __post_init__(self):
         super().__init__(
@@ -161,8 +161,8 @@ class SystemErrorEventData(EventData):
     error_type: str
     error_message: str
     stack_trace: str
-    affected_user_id: Optional[int] = None
-    request_id: Optional[str] = None
+    affected_user_id: int | None = None
+    request_id: str | None = None
 
     def __post_init__(self):
         super().__init__(

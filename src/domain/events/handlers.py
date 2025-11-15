@@ -8,7 +8,7 @@ Defines handlers for various domain events.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from .base import DomainEvent, EventHandler
 
@@ -20,7 +20,7 @@ class MetricsEventHandler(EventHandler):
 
     def __init__(self):
         self.metrics_count = 0
-        self.metrics: Dict[str, Any] = {}
+        self.metrics: dict[str, Any] = {}
 
     async def handle(self, event: DomainEvent) -> None:
         """处理指标事件"""
@@ -59,7 +59,7 @@ class CacheInvalidationHandler(EventHandler):
     """缓存失效事件处理器"""
 
     def __init__(self):
-        self.invalidated_keys: List[str] = []
+        self.invalidated_keys: list[str] = []
         self.invalidation_count = 0
 
     async def handle(self, event: DomainEvent) -> None:
@@ -79,7 +79,7 @@ class NotificationEventHandler(EventHandler):
 
     def __init__(self):
         self.notifications_sent = 0
-        self.notification_queue: List[Dict[str, Any]] = []
+        self.notification_queue: list[dict[str, Any]] = []
 
     async def handle(self, event: DomainEvent) -> None:
         """处理通知事件"""
@@ -104,7 +104,7 @@ class AnalyticsEventHandler(EventHandler):
     """分析事件处理器"""
 
     def __init__(self):
-        self.analytics_data: Dict[str, Any] = {}
+        self.analytics_data: dict[str, Any] = {}
         self.events_tracked = 0
 
     async def handle(self, event: DomainEvent) -> None:
@@ -131,11 +131,11 @@ class AlertEventHandler(EventHandler):
 
     def __init__(self):
         self.alerts_triggered = 0
-        self.alert_conditions: Dict[str, Any] = {
+        self.alert_conditions: dict[str, Any] = {
             "error_threshold": 10,
             "warning_threshold": 5,
         }
-        self.alert_history: List[Dict[str, Any]] = []
+        self.alert_history: list[dict[str, Any]] = []
 
     async def handle(self, event: DomainEvent) -> None:
         """处理警报事件"""
