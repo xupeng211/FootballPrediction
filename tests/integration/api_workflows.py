@@ -239,7 +239,6 @@ class WorkflowTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_complete_user_workflow(self, user_id: str) -> bool:
         """测试完整用户工作流"""
         logger.debug(
@@ -280,7 +279,6 @@ class WorkflowTester:
         return success
 
     @pytest.mark.asyncio
-
     async def test_concurrent_users(self) -> bool:
         """测试并发用户访问"""
         start_time = time.time()
@@ -329,7 +327,6 @@ class WorkflowTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_invalid_token_handling(self) -> bool:
         """测试无效token处理"""
         start_time = time.time()
@@ -356,7 +353,6 @@ class WorkflowTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_expired_token_handling(self) -> bool:
         """测试过期token处理"""
         start_time = time.time()
@@ -457,35 +453,30 @@ class TestAPIWorkflows:
         return WorkflowTester()
 
     @pytest.mark.asyncio
-
     async def test_complete_user_workflow(self, workflow_tester):
         """测试完整用户工作流"""
         result = await workflow_tester.test_complete_user_workflow("test_user")
         assert result, "完整用户工作流测试失败"
 
     @pytest.mark.asyncio
-
     async def test_concurrent_users(self, workflow_tester):
         """测试并发用户访问"""
         result = await workflow_tester.test_concurrent_users()
         assert result, "并发用户测试失败"
 
     @pytest.mark.asyncio
-
     async def test_invalid_token_handling(self, workflow_tester):
         """测试无效token处理"""
         result = await workflow_tester.test_invalid_token_handling()
         assert result, "无效token处理测试失败"
 
     @pytest.mark.asyncio
-
     async def test_expired_token_handling(self, workflow_tester):
         """测试过期token处理"""
         result = await workflow_tester.test_expired_token_handling()
         assert result, "过期token处理测试失败"
 
     @pytest.mark.asyncio
-
     async def test_all_workflows(self, workflow_tester):
         """测试所有工作流"""
         report = await workflow_tester.run_all_workflow_tests()

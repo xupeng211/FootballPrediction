@@ -104,7 +104,6 @@ class DataConsistencyTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_prediction_creation_consistency(self) -> bool:
         """测试预测创建的数据一致性"""
         start_time = time.time()
@@ -205,7 +204,6 @@ class DataConsistencyTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_batch_prediction_consistency(self) -> bool:
         """测试批量预测的数据一致性"""
         start_time = time.time()
@@ -299,7 +297,6 @@ class DataConsistencyTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_history_data_consistency(self) -> bool:
         """测试历史数据的一致性"""
         start_time = time.time()
@@ -376,7 +373,6 @@ class DataConsistencyTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_concurrent_operations_consistency(self) -> bool:
         """测试并发操作的数据一致性"""
         start_time = time.time()
@@ -450,7 +446,6 @@ class DataConsistencyTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_data_format_consistency(self) -> bool:
         """测试数据格式的一致性"""
         start_time = time.time()
@@ -587,7 +582,6 @@ class TestDataConsistency:
         return DataConsistencyTester()
 
     @pytest.mark.asyncio
-
     async def test_prediction_creation_consistency(self, consistency_tester):
         """测试预测创建的数据一致性"""
         await consistency_tester.setup_test_user()
@@ -595,7 +589,6 @@ class TestDataConsistency:
         assert result, "预测创建一致性测试失败"
 
     @pytest.mark.asyncio
-
     async def test_batch_prediction_consistency(self, consistency_tester):
         """测试批量预测的数据一致性"""
         await consistency_tester.setup_test_user()
@@ -603,7 +596,6 @@ class TestDataConsistency:
         assert result, "批量预测一致性测试失败"
 
     @pytest.mark.asyncio
-
     async def test_history_data_consistency(self, consistency_tester):
         """测试历史数据的一致性"""
         await consistency_tester.setup_test_user()
@@ -611,7 +603,6 @@ class TestDataConsistency:
         assert result, "历史数据一致性测试失败"
 
     @pytest.mark.asyncio
-
     async def test_data_format_consistency(self, consistency_tester):
         """测试数据格式的一致性"""
         await consistency_tester.setup_test_user()
@@ -619,7 +610,6 @@ class TestDataConsistency:
         assert result, "数据格式一致性测试失败"
 
     @pytest.mark.asyncio
-
     async def test_all_consistency_checks(self, consistency_tester):
         """测试所有一致性检查"""
         report = await consistency_tester.run_all_consistency_tests()

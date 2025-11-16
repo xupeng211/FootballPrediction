@@ -58,7 +58,6 @@ class AuthPredictionIntegrationTester:
             )  # TODO: Add logger import if needed
 
     @pytest.mark.asyncio
-
     async def test_health_endpoints(self) -> bool:
         """测试健康检查端点"""
         start_time = time.time()
@@ -87,7 +86,6 @@ class AuthPredictionIntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_user_registration(self) -> bool:
         """测试用户注册"""
         start_time = time.time()
@@ -122,7 +120,6 @@ class AuthPredictionIntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_user_login(self) -> bool:
         """测试用户登录"""
         start_time = time.time()
@@ -159,7 +156,6 @@ class AuthPredictionIntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_unauthorized_prediction_access(self) -> bool:
         """测试未授权的预测API访问"""
         start_time = time.time()
@@ -181,7 +177,6 @@ class AuthPredictionIntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_authorized_prediction_access(self) -> bool:
         """测试授权后的预测API访问"""
         start_time = time.time()
@@ -214,7 +209,6 @@ class AuthPredictionIntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_create_prediction(self) -> bool:
         """测试创建预测"""
         start_time = time.time()
@@ -249,7 +243,6 @@ class AuthPredictionIntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_batch_prediction(self) -> bool:
         """测试批量预测"""
         start_time = time.time()
@@ -288,7 +281,6 @@ class AuthPredictionIntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_prediction_verification(self) -> bool:
         """测试预测验证"""
         start_time = time.time()
@@ -324,7 +316,6 @@ class AuthPredictionIntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_token_refresh(self) -> bool:
         """测试token刷新"""
         start_time = time.time()
@@ -359,7 +350,6 @@ class AuthPredictionIntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_logout(self) -> bool:
         """测试用户登出"""
         start_time = time.time()
@@ -459,70 +449,60 @@ class TestAuthPredictionIntegration:
         return AuthPredictionIntegrationTester()
 
     @pytest.mark.asyncio
-
     async def test_health_endpoints(self, tester):
         """测试健康检查端点"""
         result = await tester.test_health_endpoints()
         assert result, "健康检查端点测试失败"
 
     @pytest.mark.asyncio
-
     async def test_user_registration(self, tester):
         """测试用户注册"""
         result = await tester.test_user_registration()
         assert result, "用户注册测试失败"
 
     @pytest.mark.asyncio
-
     async def test_user_login(self, tester):
         """测试用户登录"""
         result = await tester.test_user_login()
         assert result, "用户登录测试失败"
 
     @pytest.mark.asyncio
-
     async def test_unauthorized_prediction_access(self, tester):
         """测试未授权的预测API访问"""
         result = await tester.test_unauthorized_prediction_access()
         assert result, "未授权预测访问测试失败"
 
     @pytest.mark.asyncio
-
     async def test_authorized_prediction_access(self, tester):
         """测试授权后的预测API访问"""
         result = await tester.test_authorized_prediction_access()
         assert result, "授权预测访问测试失败"
 
     @pytest.mark.asyncio
-
     async def test_create_prediction(self, tester):
         """测试创建预测"""
         result = await tester.test_create_prediction()
         assert result, "创建预测测试失败"
 
     @pytest.mark.asyncio
-
     async def test_batch_prediction(self, tester):
         """测试批量预测"""
         result = await tester.test_batch_prediction()
         assert result, "批量预测测试失败"
 
     @pytest.mark.asyncio
-
     async def test_prediction_verification(self, tester):
         """测试预测验证"""
         result = await tester.test_prediction_verification()
         assert result, "预测验证测试失败"
 
     @pytest.mark.asyncio
-
     async def test_token_refresh(self, tester):
         """测试token刷新"""
         result = await tester.test_token_refresh()
         assert result, "Token刷新测试失败"
 
     @pytest.mark.asyncio
-
     async def test_complete_workflow(self, tester):
         """测试完整工作流"""
         report = await tester.run_all_tests()
