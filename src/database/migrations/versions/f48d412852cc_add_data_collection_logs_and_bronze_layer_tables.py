@@ -2,8 +2,8 @@
 import logging
 from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 logger = logging.getLogger(__name__)

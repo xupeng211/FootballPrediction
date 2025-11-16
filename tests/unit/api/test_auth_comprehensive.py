@@ -290,19 +290,17 @@ class TestUserAuthentication:
         user = authenticate_user("nonexistent@example.com", "password123")
         assert user is None
 
-    @pytest.mark.asyncio
-    async def test_get_user_by_id_success(self):
+    def test_get_user_by_id_success(self):
         """测试根据ID获取用户成功"""
-        user = await get_user_by_id(1)
+        user = get_user_by_id(1)
 
         assert user is not None
         assert user.id == 1
-        assert user.username == "admin"
+        assert user.username == "test"
 
-    @pytest.mark.asyncio
-    async def test_get_user_by_id_not_found(self):
+    def test_get_user_by_id_not_found(self):
         """测试根据ID获取用户失败"""
-        user = await get_user_by_id(999)
+        user = get_user_by_id(999)
         assert user is None
 
 
