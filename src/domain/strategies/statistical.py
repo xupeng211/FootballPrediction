@@ -1,6 +1,5 @@
-"""
-import random
-import numpy as np
+"""import random
+import numpy as np.
 
 统计分析策略
 Statistical Strategy
@@ -24,7 +23,7 @@ from src.domain.strategies.base import (
 
 
 class StatisticalStrategy(PredictionStrategy):
-    """统计分析预测策略
+    """统计分析预测策略.
 
     基于历史数据的统计分析进行预测,包括:
     - 进球率统计
@@ -49,7 +48,7 @@ class StatisticalStrategy(PredictionStrategy):
         self.logger = logging.getLogger(__name__)
 
     async def predict(self, input_data: PredictionInput) -> PredictionOutput:
-        """执行预测
+        """执行预测.
 
         Args:
             input_data: 预测输入数据
@@ -111,7 +110,7 @@ class StatisticalStrategy(PredictionStrategy):
             raise
 
     async def _preprocess_input(self, input_data: PredictionInput) -> dict[str, Any]:
-        """预处理输入数据"""
+        """预处理输入数据."""
         return {
             "home_team": input_data.home_team,
             "away_team": input_data.away_team,
@@ -120,7 +119,7 @@ class StatisticalStrategy(PredictionStrategy):
         }
 
     async def _poisson_prediction(self, input_data: dict[str, Any]) -> list[int]:
-        """泊松分布预测"""
+        """泊松分布预测."""
         # 简化的泊松分布实现
         home_goals = np.random.poisson(1.5)
         away_goals = np.random.poisson(1.2)
@@ -129,24 +128,24 @@ class StatisticalStrategy(PredictionStrategy):
     async def _historical_average_prediction(
         self, input_data: dict[str, Any]
     ) -> list[int]:
-        """历史平均值预测"""
+        """历史平均值预测."""
         # 简化的历史平均值实现
         return [1, 1]
 
     async def _team_form_prediction(self, input_data: dict[str, Any]) -> list[int]:
-        """球队状态预测"""
+        """球队状态预测."""
         # 简化的状态分析实现
         return [2, 1]
 
     async def _head_to_head_prediction(self, input_data: dict[str, Any]) -> list[int]:
-        """对战历史预测"""
+        """对战历史预测."""
         # 简化的对战历史分析实现
         return [1, 2]
 
     async def _ensemble_predictions(
         self, predictions: dict[str, list[int]]
     ) -> list[int]:
-        """集成多个预测结果"""
+        """集成多个预测结果."""
         weights = self._model_params["model_weights"]
 
         weighted_home = (
@@ -168,7 +167,7 @@ class StatisticalStrategy(PredictionStrategy):
     async def _calculate_confidence(
         self, input_data: dict[str, Any], prediction: list[int]
     ) -> float:
-        """计算预测置信度"""
+        """计算预测置信度."""
         # 简化的置信度计算
         base_confidence = 0.7
 
@@ -181,7 +180,7 @@ class StatisticalStrategy(PredictionStrategy):
     async def _calculate_probability_distribution(
         self, input_data: dict[str, Any], prediction: list[int]
     ) -> dict[str, float]:
-        """计算概率分布"""
+        """计算概率分布."""
         # 简化的概率分布计算
         total_goals = sum(prediction)
 
@@ -194,7 +193,7 @@ class StatisticalStrategy(PredictionStrategy):
         }
 
     async def get_metrics(self) -> StrategyMetrics:
-        """获取策略指标"""
+        """获取策略指标."""
         return StrategyMetrics(
             accuracy=0.65,
             precision=0.63,

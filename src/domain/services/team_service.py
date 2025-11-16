@@ -1,4 +1,4 @@
-"""球队领域服务"
+"""球队领域服务".
 
 提供围绕球队聚合的高级业务操作,例如比赛结果更新,
 球队信息维护以及联赛积分榜计算.
@@ -23,7 +23,7 @@ class TeamRepositoryProtocol(Protocol):
 
 @dataclass(frozen=True)
 class TeamStatsEvent:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队统计更新事件快照."""
@@ -39,7 +39,7 @@ class TeamStatsEvent:
 
 @dataclass(frozen=True)
 class TeamProfileUpdatedEvent:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队资料更新事件."""
@@ -51,7 +51,7 @@ class TeamProfileUpdatedEvent:
 
 @dataclass(frozen=True)
 class TeamPerformanceResetEvent:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队表现重置事件."""
@@ -61,7 +61,7 @@ class TeamPerformanceResetEvent:
 
 
 class TeamDomainService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队领域服务"""
@@ -80,24 +80,24 @@ class TeamDomainService:
         self._created_at = datetime.utcnow()
 
     def initialize(self) -> bool:
-        """初始化服务"""
+        """初始化服务."""
         if self._is_disposed:
             raise RuntimeError("Cannot initialize disposed service")
         self._is_initialized = True
         return True
 
     def dispose(self) -> None:
-        """销毁服务"""
+        """销毁服务."""
         self._is_disposed = True
         self._is_initialized = False
         self._events.clear()
 
     def is_healthy(self) -> bool:
-        """检查服务健康状态"""
+        """检查服务健康状态."""
         return self._health_status == "healthy" and not self._is_disposed
 
     def get_service_info(self) -> dict[str, Any]:
-        """获取服务信息"""
+        """获取服务信息."""
         return {
             "name": "TeamDomainService",
             "initialized": self._is_initialized,

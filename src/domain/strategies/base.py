@@ -1,6 +1,5 @@
-"""
-预测策略基础接口
-Prediction Strategy Base Interface
+"""预测策略基础接口
+Prediction Strategy Base Interface.
 
 定义预测策略的抽象基类和相关数据结构.
 Defines abstract base classes and data structures for prediction strategies.
@@ -18,7 +17,7 @@ from src.domain.models.team import Team
 
 
 class StrategyType(Enum):
-    """策略类型枚举"""
+    """策略类型枚举."""
 
     ML_MODEL = "ml_model"
     STATISTICAL = "statistical"
@@ -28,7 +27,7 @@ class StrategyType(Enum):
 
 @dataclass
 class PredictionInput:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测输入数据"""
@@ -43,7 +42,7 @@ class PredictionInput:
 
 @dataclass
 class PredictionOutput:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测输出结果"""
@@ -60,7 +59,7 @@ class PredictionOutput:
 
 @dataclass
 class StrategyMetrics:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """策略性能指标"""
@@ -74,10 +73,10 @@ class StrategyMetrics:
 
 
 class PredictionStrategy(ABC):
-    """预测策略抽象基类"""
+    """预测策略抽象基类."""
 
     def __init__(self, name: str, strategy_type: StrategyType):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.name = name
         self.strategy_type = strategy_type
@@ -87,7 +86,7 @@ class PredictionStrategy(ABC):
 
     @abstractmethod
     async def initialize(self, config: dict[str, Any]) -> None:
-        """初始化策略"
+        """初始化策略".
 
         Args:
             config: 策略配置参数
@@ -95,7 +94,7 @@ class PredictionStrategy(ABC):
 
     @abstractmethod
     async def predict(self, input_data: PredictionInput) -> PredictionOutput:
-        """执行预测"
+        """执行预测".
 
         Args:
             input_data: 预测输入数据
@@ -108,7 +107,7 @@ class PredictionStrategy(ABC):
     async def batch_predict(
         self, inputs: list[PredictionInput]
     ) -> list[PredictionOutput]:
-        """批量预测"
+        """批量预测".
 
         Args:
             inputs: 预测输入数据列表
@@ -121,31 +120,31 @@ class PredictionStrategy(ABC):
     async def update_metrics(
         self, actual_results: list[tuple[Prediction, dict[str, Any]]]
     ) -> None:
-        """更新策略性能指标"
+        """更新策略性能指标".
 
-            Args:
+        Args:
                 actual_results: 实际结果列表,
         包含预测和实际比赛结果
         """
 
     def get_metrics(self) -> StrategyMetrics | None:
-        """获取策略性能指标"""
+        """获取策略性能指标."""
         return self._metrics
 
     def is_healthy(self) -> bool:
-        """检查策略是否健康可用"""
+        """检查策略是否健康可用."""
         return self._is_initialized and self._metrics is not None
 
     def get_config(self) -> dict[str, Any]:
-        """获取策略配置"""
+        """获取策略配置."""
         return self.config.copy()
 
     def update_config(self, new_config: dict[str, Any]) -> None:
-        """更新策略配置"""
+        """更新策略配置."""
         self.config.update(new_config)
 
     async def validate_input(self, input_data: PredictionInput) -> bool:
-        """验证输入数据有效性"
+        """验证输入数据有效性".
 
         Args:
             input_data: 预测输入数据
@@ -165,7 +164,7 @@ class PredictionStrategy(ABC):
         return True
 
     async def pre_process(self, input_data: PredictionInput) -> PredictionInput:
-        """预处理输入数据"
+        """预处理输入数据".
 
         Args:
             input_data: 原始输入数据
@@ -177,7 +176,7 @@ class PredictionStrategy(ABC):
         return input_data
 
     async def post_process(self, output: PredictionOutput) -> PredictionOutput:
-        """后处理预测结果"
+        """后处理预测结果".
 
         Args:
             output: 原始预测结果
@@ -197,7 +196,7 @@ class PredictionStrategy(ABC):
 
 @dataclass
 class PredictionContext:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测上下文"
@@ -225,7 +224,7 @@ class PredictionContext:
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def to_prediction_input(self) -> PredictionInput:
-        """转换为预测输入对象"""
+        """转换为预测输入对象."""
         return PredictionInput(
             match=self.match,
             home_team=self.home_team,

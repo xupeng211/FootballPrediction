@@ -1,5 +1,4 @@
-"""
-common_models.py
+"""common_models.py
 此文件已被拆分为多个模块以提供更好的组织结构。
 为了向后兼容,此文件重新导出所有模块中的类.
 """
@@ -41,28 +40,28 @@ __all__ = [
 
 
 class DataValidationResult(BaseModel):
-    """数据验证结果"""
+    """数据验证结果."""
 
     is_valid: bool
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 
     def add_error(self, error: str):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """添加错误"""
         self.errors.append(error)
         self.is_valid = False
 
     def add_warning(self, warning: str):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """添加警告"""
         self.warnings.append(warning)
 
 
 class FeatureVector(BaseModel):
-    """特征向量"""
+    """特征向量."""
 
     match_id: int
     features: dict[str, float]
@@ -70,11 +69,11 @@ class FeatureVector(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     def get_feature(self, name: str) -> float | None:
-        """获取特征值"""
+        """获取特征值."""
         return self.features.get(name)
 
     def set_feature(self, name: str, value: float):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """设置特征值"""
         self.features[name] = value
@@ -83,7 +82,7 @@ class FeatureVector(BaseModel):
 
 
 class MatchData(BaseModel):
-    """比赛数据"""
+    """比赛数据."""
 
     match_id: int
     home_team: str
@@ -98,7 +97,7 @@ class MatchData(BaseModel):
 
 
 class ModelMetrics(BaseModel):
-    """模型指标"""
+    """模型指标."""
 
     model_name: str
     model_version: str
@@ -112,11 +111,11 @@ class ModelMetrics(BaseModel):
 
     @property
     def error_rate(self) -> float:
-        """错误率"""
+        """错误率."""
         return 1 - self.accuracy
 
     def update_metrics(self, predictions: int, correct: int):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """更新指标"""
         self.total_predictions += predictions
@@ -126,7 +125,7 @@ class ModelMetrics(BaseModel):
 
 
 class APIResponse(BaseModel):
-    """通用API响应模型"""
+    """通用API响应模型."""
 
     success: bool = True
     message: str = "Success"
@@ -135,7 +134,7 @@ class APIResponse(BaseModel):
 
 
 class ErrorResponse(BaseModel):
-    """错误响应模型"""
+    """错误响应模型."""
 
     success: bool = False
     message: str

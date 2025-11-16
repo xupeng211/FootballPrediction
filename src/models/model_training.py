@@ -1,6 +1,5 @@
-"""
-机器学习模型训练模块
-Machine Learning Model Training Module
+"""机器学习模型训练模块
+Machine Learning Model Training Module.
 
 Phase G Week 5 Day 2 - 修复版本
 Fixed version for syntax errors
@@ -64,46 +63,46 @@ except ImportError:
 
     # 创建一个模拟的 mlflow 对象
     class MockMLflow:
-        """Mock MLflow class for environments without MLflow"""
+        """Mock MLflow class for environments without MLflow."""
 
         def start_run(self, **kwargs):
-            """Start a mock MLflow run"""
+            """Start a mock MLflow run."""
 
         def __enter__(self):
-            """Context manager entry"""
+            """Context manager entry."""
             return self
 
         def __exit__(self, *args):
-            """Context manager exit"""
+            """Context manager exit."""
 
         def log_metric(self, *args, **kwargs):
-            """Log a mock metric"""
+            """Log a mock metric."""
 
         def log_param(self, *args, **kwargs):
-            """Log a mock parameter"""
+            """Log a mock parameter."""
 
         def log_artifacts(self, *args, **kwargs):
-            """Log mock artifacts"""
+            """Log mock artifacts."""
 
         class SklearnWrapper:
-            """Mock sklearn module"""
+            """Mock sklearn module."""
 
             @staticmethod
             def log_model(*args, **kwargs):
-                """Log a mock sklearn model"""
+                """Log a mock sklearn model."""
 
     mlflow = MockMLflow()
     mlflow.sklearn = MockMLflow.sklearn()
 
     # 创建模拟客户端
     class MockMlflowClient:
-        """Mock MLflow client"""
+        """Mock MLflow client."""
 
         def __init__(self, *args, **kwargs):
-            """Initialize mock client"""
+            """Initialize mock client."""
 
         def get_latest_versions(self, *args, **kwargs):
-            """Get latest versions (mock)"""
+            """Get latest versions (mock)."""
             return []
 
     MlflowClient = MockMlflowClient
@@ -131,7 +130,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaselineModelTrainer:
-    """基础模型训练器"""
+    """基础模型训练器."""
 
     def __init__(
         self,
@@ -141,7 +140,7 @@ class BaselineModelTrainer:
         use_mlflow: bool = True,
         experiment_name: str = "football_predictions",
     ):
-        """初始化模型训练器"""
+        """初始化模型训练器."""
         self.model_name = model_name
         self.model_type = model_type
         self.output_dir = Path(output_dir)
@@ -167,7 +166,7 @@ class BaselineModelTrainer:
         test_size: float = 0.2,
         random_state: int = 42,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        """准备训练和测试数据"""
+        """准备训练和测试数据."""
         if not HAS_SCIPY:
             # 简单的模拟数据分割
             data_size = len(X) if hasattr(X, "__len__") else 1
@@ -206,7 +205,7 @@ class BaselineModelTrainer:
         y_val: pd.Series | None = None,
         **model_params,
     ) -> dict[str, Any]:
-        """训练模型"""
+        """训练模型."""
         try:
             if self.use_mlflow:
                 with mlflow.start_run(
@@ -232,7 +231,7 @@ class BaselineModelTrainer:
         y_val: pd.Series | None,
         **model_params,
     ) -> dict[str, Any]:
-        """不使用MLflow训练模型"""
+        """不使用MLflow训练模型."""
         # 根据模型类型创建模型
         self.model = self._create_model(**model_params)
 
@@ -266,7 +265,7 @@ class BaselineModelTrainer:
         }
 
     def _create_model(self, **params):
-        """创建模型实例"""
+        """创建模型实例."""
         if not HAS_SCIPY:
             # 返回模拟模型
             class MockModel:
@@ -302,7 +301,7 @@ class BaselineModelTrainer:
     def _evaluate_model(
         self, X_test: pd.DataFrame, y_test: pd.Series
     ) -> dict[str, float]:
-        """评估模型性能"""
+        """评估模型性能."""
         if not HAS_SCIPY:
             # 返回模拟评估结果
             return {"accuracy": 0.8, "precision": 0.8, "recall": 0.8, "f1": 0.8}
@@ -324,7 +323,7 @@ class BaselineModelTrainer:
         }
 
     def save_model(self) -> str:
-        """保存模型到文件"""
+        """保存模型到文件."""
         if not self.is_trained:
             raise ValueError("Model must be trained before saving")
 
@@ -341,7 +340,7 @@ class BaselineModelTrainer:
         return str(model_path)
 
     def load_model(self, model_path: str) -> Any:
-        """从文件加载模型"""
+        """从文件加载模型."""
         with open(model_path, "rb") as f:
             self.model = pickle.load(f)
 
@@ -350,14 +349,14 @@ class BaselineModelTrainer:
         return self.model
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
-        """使用模型进行预测"""
+        """使用模型进行预测."""
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
 
         return self.model.predict(X)
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
-        """获取预测概率"""
+        """获取预测概率."""
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
 

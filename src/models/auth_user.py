@@ -1,6 +1,5 @@
-"""
-认证用户数据库模型
-Authentication User Database Model
+"""认证用户数据库模型
+Authentication User Database Model.
 
 用于JWT认证的用户数据模型定义
 """
@@ -12,7 +11,7 @@ from src.database.base import Base
 
 
 class User(Base):
-    """用户模型"""
+    """用户模型."""
 
     __tablename__ = "users"
 
@@ -83,17 +82,17 @@ class User(Base):
 
     @property
     def is_admin(self) -> bool:
-        """是否为管理员"""
+        """是否为管理员."""
         return self.role == "admin"
 
     @property
     def is_manager(self) -> bool:
-        """是否为管理员或经理"""
+        """是否为管理员或经理."""
         return self.role in ["admin", "manager"]
 
     @property
     def is_locked(self) -> bool:
-        """是否被锁定"""
+        """是否被锁定."""
         if not self.locked_until:
             return False
         from datetime import datetime
@@ -101,7 +100,7 @@ class User(Base):
         return datetime.utcnow() < self.locked_until
 
     def to_dict(self) -> dict:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "username": self.username,
@@ -124,7 +123,7 @@ class User(Base):
 
 
 class UserSession(Base):
-    """用户会话模型"""
+    """用户会话模型."""
 
     __tablename__ = "user_sessions"
 
@@ -169,7 +168,7 @@ class UserSession(Base):
 
 
 class AuditLog(Base):
-    """审计日志模型"""
+    """审计日志模型."""
 
     __tablename__ = "audit_logs"
 

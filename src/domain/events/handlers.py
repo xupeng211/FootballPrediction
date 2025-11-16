@@ -1,6 +1,5 @@
-"""
-事件处理器模块
-Event Handlers Module
+"""事件处理器模块
+Event Handlers Module.
 
 定义各种领域事件的处理器
 Defines handlers for various domain events.
@@ -16,14 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 class MetricsEventHandler(EventHandler):
-    """指标事件处理器"""
+    """指标事件处理器."""
 
     def __init__(self):
         self.metrics_count = 0
         self.metrics: dict[str, Any] = {}
 
     async def handle(self, event: DomainEvent) -> None:
-        """处理指标事件"""
+        """处理指标事件."""
         self.metrics_count += 1
         event_type = event.get_event_type()
 
@@ -38,14 +37,14 @@ class MetricsEventHandler(EventHandler):
 
 
 class LoggingEventHandler(EventHandler):
-    """日志事件处理器"""
+    """日志事件处理器."""
 
     def __init__(self, log_level: int = logging.INFO):
         self.log_level = log_level
         self.events_processed = 0
 
     async def handle(self, event: DomainEvent) -> None:
-        """处理日志事件"""
+        """处理日志事件."""
         self.events_processed += 1
         event_data = event.to_dict()
 
@@ -56,14 +55,14 @@ class LoggingEventHandler(EventHandler):
 
 
 class CacheInvalidationHandler(EventHandler):
-    """缓存失效事件处理器"""
+    """缓存失效事件处理器."""
 
     def __init__(self):
         self.invalidated_keys: list[str] = []
         self.invalidation_count = 0
 
     async def handle(self, event: DomainEvent) -> None:
-        """处理缓存失效事件"""
+        """处理缓存失效事件."""
         self.invalidation_count += 1
         event_type = event.get_event_type()
 
@@ -75,14 +74,14 @@ class CacheInvalidationHandler(EventHandler):
 
 
 class NotificationEventHandler(EventHandler):
-    """通知事件处理器"""
+    """通知事件处理器."""
 
     def __init__(self):
         self.notifications_sent = 0
         self.notification_queue: list[dict[str, Any]] = []
 
     async def handle(self, event: DomainEvent) -> None:
-        """处理通知事件"""
+        """处理通知事件."""
         self.notifications_sent += 1
 
         notification = {
@@ -101,14 +100,14 @@ class NotificationEventHandler(EventHandler):
 
 
 class AnalyticsEventHandler(EventHandler):
-    """分析事件处理器"""
+    """分析事件处理器."""
 
     def __init__(self):
         self.analytics_data: dict[str, Any] = {}
         self.events_tracked = 0
 
     async def handle(self, event: DomainEvent) -> None:
-        """处理分析事件"""
+        """处理分析事件."""
         self.events_tracked += 1
         event_type = event.get_event_type()
 
@@ -127,7 +126,7 @@ class AnalyticsEventHandler(EventHandler):
 
 
 class AlertEventHandler(EventHandler):
-    """警报事件处理器"""
+    """警报事件处理器."""
 
     def __init__(self):
         self.alerts_triggered = 0
@@ -138,7 +137,7 @@ class AlertEventHandler(EventHandler):
         self.alert_history: list[dict[str, Any]] = []
 
     async def handle(self, event: DomainEvent) -> None:
-        """处理警报事件"""
+        """处理警报事件."""
         event_type = event.get_event_type()
 
         # 检查是否需要触发警报
@@ -157,7 +156,7 @@ class AlertEventHandler(EventHandler):
             logger.warning(f"AlertEventHandler: Triggered alert for {event_type}")
 
     def _should_trigger_alert(self, event_type: str) -> bool:
-        """判断是否应该触发警报"""
+        """判断是否应该触发警报."""
         # 简单的警报逻辑：错误事件总是触发警报
         if "error" in event_type.lower() or "failed" in event_type.lower():
             return True
@@ -166,7 +165,7 @@ class AlertEventHandler(EventHandler):
         return False
 
     def _get_alert_severity(self, event_type: str) -> str:
-        """获取警报严重程度"""
+        """获取警报严重程度."""
         if "critical" in event_type.lower():
             return "CRITICAL"
         elif "error" in event_type.lower():
@@ -179,7 +178,7 @@ class AlertEventHandler(EventHandler):
 
 # 事件处理器注册函数
 def register_default_handlers(event_bus) -> None:
-    """注册默认的事件处理器"""
+    """注册默认的事件处理器."""
     from .bus import EventBus
 
     if not isinstance(event_bus, EventBus):
@@ -222,32 +221,32 @@ def register_default_handlers(event_bus) -> None:
 
 # 便捷函数
 def create_metrics_handler() -> MetricsEventHandler:
-    """创建指标事件处理器"""
+    """创建指标事件处理器."""
     return MetricsEventHandler()
 
 
 def create_logging_handler(log_level: int = logging.INFO) -> LoggingEventHandler:
-    """创建日志事件处理器"""
+    """创建日志事件处理器."""
     return LoggingEventHandler(log_level)
 
 
 def create_cache_invalidation_handler() -> CacheInvalidationHandler:
-    """创建缓存失效事件处理器"""
+    """创建缓存失效事件处理器."""
     return CacheInvalidationHandler()
 
 
 def create_notification_handler() -> NotificationEventHandler:
-    """创建通知事件处理器"""
+    """创建通知事件处理器."""
     return NotificationEventHandler()
 
 
 def create_analytics_handler() -> AnalyticsEventHandler:
-    """创建分析事件处理器"""
+    """创建分析事件处理器."""
     return AnalyticsEventHandler()
 
 
 def create_alert_handler() -> AlertEventHandler:
-    """创建警报事件处理器"""
+    """创建警报事件处理器."""
     return AlertEventHandler()
 
 

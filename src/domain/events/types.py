@@ -1,6 +1,5 @@
-"""
-事件类型定义模块
-Event Types Module
+"""事件类型定义模块
+Event Types Module.
 
 定义事件相关的数据类型
 Defines event-related data types.
@@ -15,7 +14,7 @@ from .base import EventData
 
 @dataclass
 class MatchCreatedEventData(EventData):
-    """比赛创建事件数据"""
+    """比赛创建事件数据."""
 
     match_id: int
     home_team: str
@@ -39,7 +38,7 @@ class MatchCreatedEventData(EventData):
 
 @dataclass
 class MatchUpdatedEventData(EventData):
-    """比赛更新事件数据"""
+    """比赛更新事件数据."""
 
     match_id: int
     updated_fields: list[str]
@@ -59,7 +58,7 @@ class MatchUpdatedEventData(EventData):
 
 @dataclass
 class PredictionMadeEventData(EventData):
-    """预测事件数据"""
+    """预测事件数据."""
 
     prediction_id: str
     user_id: int
@@ -85,7 +84,7 @@ class PredictionMadeEventData(EventData):
 
 @dataclass
 class MatchFinishedEventData(EventData):
-    """比赛结束事件数据"""
+    """比赛结束事件数据."""
 
     match_id: int
     final_score: dict[str, int]  # {"home": 2, "away": 1}
@@ -105,7 +104,7 @@ class MatchFinishedEventData(EventData):
 
 @dataclass
 class PredictionEvaluatedEventData(EventData):
-    """预测评估事件数据"""
+    """预测评估事件数据."""
 
     prediction_id: str
     user_id: int
@@ -133,7 +132,7 @@ class PredictionEvaluatedEventData(EventData):
 
 @dataclass
 class UserRegisteredEventData(EventData):
-    """用户注册事件数据"""
+    """用户注册事件数据."""
 
     user_id: int
     email: str
@@ -155,7 +154,7 @@ class UserRegisteredEventData(EventData):
 
 @dataclass
 class SystemErrorEventData(EventData):
-    """系统错误事件数据"""
+    """系统错误事件数据."""
 
     error_id: str
     error_type: str
@@ -186,7 +185,7 @@ def create_match_created_data(
     scheduled_start: datetime,
     **kwargs,
 ) -> MatchCreatedEventData:
-    """创建比赛创建事件数据"""
+    """创建比赛创建事件数据."""
     return MatchCreatedEventData(
         match_id=match_id,
         home_team=home_team,
@@ -206,7 +205,7 @@ def create_prediction_made_data(
     stake: float,
     odds: float,
 ) -> PredictionMadeEventData:
-    """创建预测事件数据"""
+    """创建预测事件数据."""
     return PredictionMadeEventData(
         prediction_id=prediction_id,
         user_id=user_id,
@@ -221,7 +220,7 @@ def create_prediction_made_data(
 def create_system_error_data(
     error_id: str, error_type: str, error_message: str, stack_trace: str, **kwargs
 ) -> SystemErrorEventData:
-    """创建系统错误事件数据"""
+    """创建系统错误事件数据."""
     return SystemErrorEventData(
         error_id=error_id,
         error_type=error_type,

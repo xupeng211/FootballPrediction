@@ -1,6 +1,5 @@
-"""
-外部联赛数据模型
-External League Data Model
+"""外部联赛数据模型
+External League Data Model.
 """
 
 from datetime import datetime
@@ -23,7 +22,7 @@ Base = declarative_base()
 
 
 class ExternalLeague(Base):
-    """外部联赛数据模型"""
+    """外部联赛数据模型."""
 
     __tablename__ = "external_leagues"
 
@@ -75,12 +74,12 @@ class ExternalLeague(Base):
 
     @property
     def display_name(self) -> str:
-        """显示名称"""
+        """显示名称."""
         return self.name
 
     @property
     def is_current_season_active(self) -> bool:
-        """当前赛季是否活跃"""
+        """当前赛季是否活跃."""
         if not self.current_season_start or not self.current_season_end:
             return False
         now = datetime.utcnow()
@@ -88,7 +87,7 @@ class ExternalLeague(Base):
 
     @property
     def season_progress(self) -> float | None:
-        """赛季进度百分比"""
+        """赛季进度百分比."""
         if (
             not self.current_season_start
             or not self.current_season_end
@@ -102,7 +101,7 @@ class ExternalLeague(Base):
         return min(progress, 100.0)
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "external_id": self.external_id,
@@ -148,7 +147,7 @@ class ExternalLeague(Base):
     def from_api_data(
         cls, data: dict[str, Any], is_supported: bool = False
     ) -> "ExternalLeague":
-        """从API数据创建实例"""
+        """从API数据创建实例."""
         try:
             # 解析地区信息
             area = data.get("area", {})
@@ -226,7 +225,7 @@ class ExternalLeague(Base):
 
     @staticmethod
     def _calculate_data_quality_score(data: dict[str, Any]) -> int:
-        """计算数据质量评分"""
+        """计算数据质量评分."""
         score = 0
 
         # 基础信息 (40分)
@@ -252,7 +251,7 @@ class ExternalLeague(Base):
         return min(int(score), 100)  # 最高100分
 
     def update_from_api_data(self, data: dict[str, Any]) -> bool:
-        """从API数据更新实例"""
+        """从API数据更新实例."""
         try:
             # 检查外部ID是否匹配
             if str(data.get("id")) != self.external_id:
@@ -327,7 +326,7 @@ class ExternalLeague(Base):
     def update_statistics(
         self, total_teams: int = None, total_matches: int = None
     ) -> None:
-        """更新统计信息"""
+        """更新统计信息."""
         if total_teams is not None:
             self.total_teams = total_teams
         if total_matches is not None:
@@ -336,24 +335,24 @@ class ExternalLeague(Base):
         self.updated_at = datetime.utcnow()
 
     def mark_as_processed(self) -> None:
-        """标记为已处理"""
+        """标记为已处理."""
         self.is_processed = True
         self.updated_at = datetime.utcnow()
 
     def activate_support(self) -> None:
-        """激活支持"""
+        """激活支持."""
         self.is_supported = True
         self.updated_at = datetime.utcnow()
 
     def deactivate_support(self) -> None:
-        """取消支持"""
+        """取消支持."""
         self.is_supported = False
         self.updated_at = datetime.utcnow()
 
 
 # 联赛积分榜模型
 class ExternalLeagueStandings(Base):
-    """外部联赛积分榜模型"""
+    """外部联赛积分榜模型."""
 
     __tablename__ = "external_league_standings"
 
@@ -409,16 +408,16 @@ class ExternalLeagueStandings(Base):
 
     @property
     def display_record(self) -> str:
-        """显示战绩"""
+        """显示战绩."""
         return f"{self.won}胜{self.draw}平{self.lost}负"
 
     @property
     def goal_record(self) -> str:
-        """显示进球记录"""
+        """显示进球记录."""
         return f"{self.goals_for}:{self.goals_against}"
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "league_id": self.league_id,
@@ -456,7 +455,7 @@ class ExternalLeagueStandings(Base):
     def from_api_data(
         cls, data: dict[str, Any], league_id: int, external_league_id: str
     ) -> "ExternalLeagueStandings":
-        """从API数据创建实例"""
+        """从API数据创建实例."""
         try:
             team = data.get("team", {})
 

@@ -1,6 +1,5 @@
-"""
-预测策略模块
-Prediction Strategies Module
+"""预测策略模块
+Prediction Strategies Module.
 
 提供各种预测策略实现，包括：
 - 机器学习策略

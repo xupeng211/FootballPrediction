@@ -1,7 +1,6 @@
-"""
-import random
+"""import random
 import pandas as pd
-import numpy as np
+import numpy as np.
 
 预测模型模块 - 桩实现
 
@@ -25,7 +24,7 @@ import joblib
 
 
 class PredictionStatus(Enum):
-    """预测状态枚举"""
+    """预测状态枚举."""
 
     PENDING = "pending"
     PROCESSING = "processing"
@@ -35,7 +34,7 @@ class PredictionStatus(Enum):
 
 
 class PredictionType(Enum):
-    """预测类型枚举"""
+    """预测类型枚举."""
 
     MATCH_RESULT = "match_result"
     OVER_UNDER = "over_under"
@@ -44,7 +43,7 @@ class PredictionType(Enum):
 
 
 class PredictionModel:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -54,7 +53,7 @@ class PredictionModel:
     """
 
     def __init__(self, model_name: str, model_type: str = "classification"):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """
         初始化预测模型
@@ -78,8 +77,7 @@ class PredictionModel:
         self.logger.info(f"PredictionModel initialized: {model_name}")
 
     def train(self, X: pd.DataFrame, y: pd.Series, **kwargs) -> dict[str, Any]:
-        """
-        训练模型
+        """训练模型.
 
         Args:
             X: 特征数据
@@ -115,8 +113,7 @@ class PredictionModel:
         return metrics
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
-        """
-        预测
+        """预测.
 
         Args:
             X: 特征数据
@@ -139,8 +136,7 @@ class PredictionModel:
         return predictions
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
-        """
-        预测概率
+        """预测概率.
 
         Args:
             X: 特征数据
@@ -160,8 +156,7 @@ class PredictionModel:
         return proba
 
     def evaluate(self, X: pd.DataFrame, y: pd.Series) -> dict[str, float]:
-        """
-        评估模型
+        """评估模型.
 
         Args:
             X: 特征数据
@@ -187,8 +182,7 @@ class PredictionModel:
         return metrics
 
     def save_model(self, file_path: str) -> bool:
-        """
-        保存模型
+        """保存模型.
 
         Args:
             file_path: 文件路径
@@ -215,8 +209,7 @@ class PredictionModel:
             return False
 
     def load_model(self, file_path: str) -> bool:
-        """
-        加载模型
+        """加载模型.
 
         Args:
             file_path: 文件路径
@@ -241,8 +234,7 @@ class PredictionModel:
             return False
 
     def get_feature_importance(self) -> dict[str, float]:
-        """
-        获取特征重要性
+        """获取特征重要性.
 
         Returns:
             特征重要性字典
@@ -260,8 +252,7 @@ class PredictionModel:
         return importance
 
     def explain_prediction(self, X: pd.DataFrame) -> dict[str, Any]:
-        """
-        解释预测结果
+        """解释预测结果.
 
         Args:
             X: 特征数据
@@ -292,14 +283,13 @@ class PredictionModel:
 
 
 class FootballPredictionModel(PredictionModel):
-    """
-    足球预测模型（桩实现）
+    """足球预测模型（桩实现）.
 
     Football Prediction Model (Stub Implementation)
     """
 
     def __init__(self, model_name: str = "football_predictor"):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(model_name, "classification")
         self.prediction_type = PredictionType.MATCH_RESULT
@@ -308,8 +298,7 @@ class FootballPredictionModel(PredictionModel):
     def predict_match(
         self, home_team: str, away_team: str, features: dict[str, Any]
     ) -> dict[str, Any]:
-        """
-        预测比赛结果
+        """预测比赛结果.
 
         Args:
             home_team: 主队
@@ -342,8 +331,7 @@ class FootballPredictionModel(PredictionModel):
         return result
 
     def batch_predict(self, matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """
-        批量预测
+        """批量预测.
 
         Args:
             matches: 比赛列表
@@ -368,18 +356,18 @@ _model_registry: dict[str, PredictionModel] = {}
 
 
 def register_model(model: PredictionModel) -> None:
-    """注册模型"""
+    """注册模型."""
     _model_registry[model.model_name] = model
     logging.getLogger(__name__).info(f"Model registered: {model.model_name}")
 
 
 def get_model(model_name: str) -> PredictionModel | None:
-    """获取模型"""
+    """获取模型."""
     return _model_registry.get(model_name)
 
 
 def list_models() -> list[str]:
-    """列出所有模型"""
+    """列出所有模型."""
     return list(_model_registry.keys())
 
 

@@ -1,13 +1,11 @@
-"""
-历史数据策略
-"""
+"""历史数据策略."""
 
 # 导入
 
 
 # 类定义
 class HistoricalMatch:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """历史比赛数据结构"""
@@ -16,7 +14,7 @@ class HistoricalMatch:
 
 
 class HistoricalStrategy:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """历史数据预测策略"
