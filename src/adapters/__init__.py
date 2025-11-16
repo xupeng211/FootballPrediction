@@ -30,10 +30,13 @@ SimpleAdapterFactory = None
 # 用于集成外部系统和API.
 # Used to integrate external systems and APIs.
 
+
 # 适配器错误类
 class AdapterError(Exception):
     """适配器模式相关错误"""
+
     pass
+
 
 # 添加缺失的类到__all__
 __all__ = [

@@ -4,11 +4,11 @@ P3.2 性能测试脚本 - Locust负载测试
 定义三个核心测试场景：Cache Hit, Cache Miss, Cache Invalidation
 """
 
-from locust import HttpUser, task, between, events
 import random
 import time
-import json
 from datetime import datetime
+
+from locust import HttpUser, between, events, task
 
 # 全局配置
 BASE_URL = "http://app-integration:8001"  # 集成测试应用地址（注意：容器内部端口是8000，映射到外部8001）
@@ -272,7 +272,7 @@ class WriteInvalidateUser(PerformanceTestUser):
         ) as response:
             if response.status_code in [200, 201]:
                 response.success()
-                print(f"🔄 新预测创建成功")
+                print("🔄 新预测创建成功")
             else:
                 response.failure(f"预测创建失败: HTTP {response.status_code}")
 
