@@ -4,8 +4,10 @@ services:
   # 主应用服务
   app:
     build:
-      context: .
-      dockerfile: Dockerfile.production
+      context: ..  # (指向项目根目录)
+      dockerfile: Dockerfile  # (指向根 Dockerfile)
+      target: final  # (使用我们新的 'final' 生产阶段)
+    image: football-prediction-prod
     container_name: football-prediction-app
     restart: unless-stopped
     ports:
@@ -36,6 +38,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    command: ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.main:app", "-w", "4", "-b", "0.0.0.0:8000"]  # (与 Dockerfile 一致)
 
   # 实时质量监控WebSocket服务
   quality-monitor:

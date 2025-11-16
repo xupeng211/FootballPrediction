@@ -92,17 +92,6 @@ venv: ## Environment: Create and activate virtual environment
 		echo "$(BLUE)ℹ️  Virtual environment already exists$(RESET)"; \
 	fi
 
-install: venv ## Environment: Install dependencies from requirements.txt
-	@$(ACTIVATE) && \
-	if pip list | grep -F "$(shell head -n1 requirements.txt | cut -d'=' -f1)" > /dev/null 2>&1; then \
-		echo "$(BLUE)ℹ️  Dependencies appear to be installed$(RESET)"; \
-	else \
-		echo "$(YELLOW)Installing dependencies...$(RESET)"; \
-		pip install --upgrade pip && \
-		pip install -r requirements.txt && \
-		pip install -r requirements-dev.txt; \
-		echo "$(GREEN)✅ Dependencies installed$(RESET)"; \
-	fi
 
 fix-code: ## Quality: Fix code formatting and syntax issues (one-click fix)
 	@echo "$(YELLOW)🔧 Fixing code quality issues...$(RESET)"
@@ -200,8 +189,6 @@ fmt: ## Quality: Format code with ruff
 	ruff format src/ tests/ && \
 	echo "$(GREEN)✅ Code formatted$(RESET)"
 
-quality: lint fmt test ## Quality: Complete quality check (lint + format + test)
-	@echo "$(GREEN)✅ All quality checks passed$(RESET)"
 
 check: quality ## Quality: Alias for quality command
 	@echo "$(GREEN)✅ All quality checks passed$(RESET)"
@@ -229,56 +216,6 @@ syntax-validate: ## Quality: Validate test file executability
 
 # ============================================================================
 # 🧪 Testing - Unified Interface
-# ============================================================================
-test: ## Test: Unified test command with parameters
-	@echo "$(YELLOW)Running tests with parameters: $(RESET)"
-	@echo "$(BLUE)  Scope: $(TEST_SCOPE)$(RESET)"
-	@echo "$(BLUE)  Markers: $(TEST_MARKERS)$(RESET)"
-	@echo "$(BLUE)  Coverage: $(TEST_COVERAGE)$(RESET)"
-	@echo "$(BLUE)  Flags: $(TEST_FLAGS)$(RESET)"
-	@$(ACTIVATE) && \
-	$(call BUILD_PYTEST_CMD) && \
-	echo "$(GREEN)✅ Tests passed$(RESET)"
-
-# Convenience targets for common test scenarios
-# Legacy simplified targets (use detailed versions below)
-test.unit.legacy: ## Test: Unit tests only (legacy)
-	@$(MAKE) test.test.unit
-
-test.integration.legacy: ## Test: Integration tests (legacy)
-	@$(MAKE) test.test.integration
-
-test.critical: ## Test: Critical functionality tests
-	@$(MAKE) test TEST_SCOPE=all TEST_MARKERS="critical" TEST_COVERAGE=true TEST_FLAGS="--maxfail=5"
-
-test.fast: ## Test: Quick tests (no coverage, no slow)
-	@$(MAKE) test TEST_SCOPE=unit TEST_MARKERS="not slow" TEST_COVERAGE=false TEST_FLAGS="--maxfail=10"
-
-# Legacy test commands (backward compatibility)
-test.legacy: ## Test: Legacy pytest command (backward compatibility)
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running legacy tests...$(RESET)" && \
-	pytest tests/ -v --maxfail=5 --disable-warnings && \
-	echo "$(GREEN)✅ Legacy tests passed$(RESET)"
-
-coverage: ## Test: Run tests with coverage report (threshold: 80%)
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running coverage tests...$(RESET)" && \
-	pytest -m "unit" --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) && \
-	echo "$(GREEN)✅ Coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
-
-coverage-fast: ## Test: Run fast coverage (unit tests only, no slow tests)
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running fast coverage tests...$(RESET)" && \
-	pytest -m "unit and not slow" --cov=src --cov-report=term-missing --maxfail=5 && \
-	echo "$(GREEN)✅ Fast coverage passed$(RESET)"
-
-coverage-unit: ## Test: Unit test coverage only
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running unit test coverage...$(RESET)" && \
-	pytest -m "unit" --cov=src --cov-report=html --cov-report=term --maxfail=5 && \
-	echo "$(GREEN)✅ Unit coverage completed$(RESET)"
-
 # ============================================================================
 # 🔧 M2测试工具链 (Issue #214)
 # ============================================================================
@@ -390,34 +327,6 @@ improve-test-quality: test-quality-improve ## Quick: Improve test quality
 solve-test-crisis: test-crisis-solution ## Quick: Complete test crisis solution
 test-status-report: test-crisis-report ## Quick: Generate status report
 
-test.unit: ## Test: Run unit tests only (marked with 'unit')
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running unit tests only...$(RESET)" && \
-	pytest -m "unit" --cov=src --cov-report=term-missing:skip-covered && \
-	echo "$(GREEN)✅ Unit tests passed$(RESET)"
-
-test.int: ## Test: Run integration tests only (marked with 'integration')
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running integration tests only...$(RESET)" && \
-	pytest -m "integration" && \
-	echo "$(GREEN)✅ Integration tests passed$(RESET)"
-
-test.smart: ## Test: Run Smart Tests optimized组合 (通过率>90%, 执行时间<2分钟)
-	@$(ACTIVATE) && \
-	echo "$(BLUE)🚀 Running Smart Tests optimized组合...$(RESET)" && \
-	python3 scripts/run_smart_tests.py
-
-test.e2e: ## Test: Run end-to-end tests only (marked with 'e2e')
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running end-to-end tests only...$(RESET)" && \
-	pytest -m "e2e" && \
-	echo "$(GREEN)✅ End-to-end tests passed$(RESET)"
-
-test.slow: ## Test: Run slow tests only (marked with 'slow')
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running slow tests only...$(RESET)" && \
-	pytest -m "slow" && \
-	echo "$(GREEN)✅ Slow tests passed$(RESET)"
 
 cov.html: ## Test: Generate HTML coverage report
 	@$(ACTIVATE) && \
@@ -1429,3 +1338,181 @@ doctor: ## Development: Quick development health check
 	@echo "$(YELLOW)🩺 Quick Development Health Check$(RESET)"
 	@echo "$(GREEN)✓ Ready for development$(RESET)"
 
+
+# ============================================================================
+# === UNIFIED TESTING TARGETS (Single Source of Truth) ===
+# ============================================================================
+
+# 统一 Pytest 参数
+# -v: 详细输出
+# --tb=short: 简短的回溯信息
+# --cov=src: 覆盖率报告针对 src 目录
+# --cov-report=term-missing: 在终端显示缺失的行
+PYTEST_OPTS := -v --tb=short --cov=src --cov-report=term-missing
+
+.PHONY: test test.all test.smart test.unit test.integration quality
+
+test: test.unit ## Test: 默认运行单元测试 (等同于 'make test.unit')
+	@echo "$(GREEN)✅ 默认单元测试完成。如需运行所有测试, 请使用 'make test.all'。$(RESET)"
+
+test.all: test.unit test.integration ## Test: 运行所有测试 (Unit + Integration)
+	@echo "$(GREEN)✅ 所有测试 (Unit + Integration) 均已通过。$(RESET)"
+
+test.smart: ## Test: 运行快速冒烟测试 (对应 'smoke or critical' 标记)
+	@$(ACTIVATE) && \
+	echo "$(BLUE)🚀 Running Smart Tests (smoke or critical)...$(RESET)" && \
+	pytest $(PYTEST_OPTS) -m "smoke or critical" --maxfail=3
+
+test.unit: ## Test: 仅运行单元测试 (tests/unit/)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running Unit Tests...$(RESET)" && \
+	pytest $(PYTEST_OPTS) tests/unit/ --cov-fail-under=30
+
+test.integration: ## Test: 仅运行集成测试 (tests/integration/)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running Integration Tests...$(RESET)" && \
+	pytest $(PYTEST_OPTS) tests/integration/ --maxfail=5
+
+# ============================================================================
+# === UNIFIED QUALITY TARGET ===
+# ============================================================================
+
+quality: lint fmt test.all ## Quality: 完整的质量检查 (lint + format + all tests)
+	@echo "$(GREEN)✅ 所有质量检查 (lint, fmt, test.all) 均已通过。$(RESET)"
+
+# ============================================================================
+# === DEPRECATED TARGETS ===
+# ============================================================================
+
+test.integration.legacy:
+	@echo "$(RED)❌ 'test.integration.legacy' 已被废弃。$(RESET)"
+	@echo "$(YELLOW)请使用 'make test.integration' 代替。$(RESET)"
+	@exit 1
+
+# ============================================================================
+# === UNIFIED DEPENDENCY MANAGEMENT (pyproject.toml + pip-tools) ===
+# ============================================================================
+
+# 确保 venv 已激活，并且安装了 pip-tools
+define ENSURE_PIP_TOOLS
+	@$(ACTIVATE) && \
+	if ! pip list | grep "pip-tools" > /dev/null 2>&1; then \
+		echo "$(YELLOW)Installing pip-tools...$(RESET)"; \
+		pip install pip-tools; \
+	fi
+endef
+
+.PHONY: install lock lock-prod lock-dev
+
+# 默认安装目标：锁定并同步开发环境
+install: venv lock-dev ## Environment: Install dev dependencies using pip-sync
+	@$(ENSURE_PIP_TOOLS)
+	@$(ACTIVATE) && \
+	echo "$(GREEN)Syncing development environment... (using requirements/dev.txt)$(RESET)" && \
+	pip-sync requirements/dev.txt
+
+# 锁定所有依赖
+lock: lock-prod lock-dev ## Environment: Generate all lock files from pyproject.toml
+
+# 锁定生产依赖
+lock-prod: venv ## Environment: Generate production lock file (requirements/prod.txt)
+	@$(ENSURE_PIP_TOOLS)
+	@$(ACTIVATE) && \
+	echo "$(BLUE)Locking production dependencies...$(RESET)" && \
+	pip-compile --strip-extras \
+		pyproject.toml \
+		--output-file requirements/prod.txt \
+		--resolver=backtracking
+
+# 锁定开发依赖 (包括 'dev' 和 'test' extras)
+lock-dev: venv ## Environment: Generate development lock file (requirements/dev.txt)
+	@$(ENSURE_PIP_TOOLS)
+	@$(ACTIVATE) && \
+	echo "$(BLUE)Locking development dependencies...$(RESET)" && \
+	pip-compile --strip-extras \
+		pyproject.toml \
+		--extra=dev,test \
+		--output-file requirements/dev.txt \
+		--resolver=backtracking
+# ============================================================================
+# === UNIFIED DOCKER COMPOSE MANAGEMENT ===
+# ============================================================================
+
+# --- 变量定义 ---
+# (我们假设 $ACTIVATE, $BLUE, $GREEN, $YELLOW, $RESET 变量已在 Makefile 中定义)
+
+# 定义三个核心环境的 Compose 命令
+COMPOSE_DEV := docker-compose -f docker-compose.dev.yml
+COMPOSE_TEST := docker-compose -f docker-compose.integration.yml
+COMPOSE_PROD := docker-compose -f config/docker-compose.production.yml
+
+# --- Phony Targets ---
+.PHONY: docker.up.dev docker.down.dev docker.logs.dev docker.build.dev \
+        docker.up.admin docker.up.docs \
+        docker.test docker.test.down \
+        docker.build.prod docker.push.prod docker.clean
+
+# ==================================
+# === 开发环境 (Development) ===
+# ==================================
+
+docker.up.dev: ## Docker: 启动开发环境 (app, db, redis)
+	@echo "$(BLUE)Starting development services (app, db, redis)...$(RESET)"
+	@$(COMPOSE_DEV) up -d --remove-orphans
+
+docker.down.dev: ## Docker: 停止开发环境
+	@echo "$(YELLOW)Stopping development services...$(RESET)"
+	@$(COMPOSE_DEV) down
+
+docker.logs.dev: ## Docker: 查看开发环境 'app' 服务的日志
+	@echo "$(GREEN)Following app logs... (Ctrl+C to exit)$(RESET)"
+	@$(COMPOSE_DEV) logs -f app
+
+docker.build.dev: ## Docker: (重新)构建开发环境的镜像
+	@echo "$(BLUE)Building development images...$(RESET)"
+	@$(COMPOSE_DEV) build
+
+# --- 开发环境的 Profile ---
+
+docker.up.admin: ## Docker: 启动开发环境 + [admin] 工具 (pgAdmin, Redis-Commander)
+	@echo "$(BLUE)Starting development services + [admin] profile...$(RESET)"
+	@$(COMPOSE_DEV) --profile admin up -d --remove-orphans
+
+docker.up.docs: ## Docker: 启动开发环境 + [docs] 服务
+	@echo "$(BLUE)Starting development services + [docs] profile...$(RESET)"
+	@$(COMPOSE_DEV) --profile docs up -d --remove-orphans
+
+# ==================================
+# === 测试环境 (Testing) ===
+# ==================================
+
+docker.test: ## Docker: 运行集成测试 (builds, runs, and cleans up)
+	@echo "$(BLUE)Starting integration test run...$(RESET)"
+	@$(COMPOSE_TEST) up --build --abort-on-container-exit
+	@echo "$(GREEN)Integration test run complete. Cleaning up...$(RESET)"
+	@$(COMPOSE_TEST) down -v --remove-orphans
+
+docker.test.down: ## Docker: (手动) 强制停止并清理集成测试环境
+	@echo "$(YELLOW)Forcibly stopping and cleaning up test environment...$(RESET)"
+	@$(COMPOSE_TEST) down -v --remove-orphans
+
+# ==================================
+# === 生产环境 (Production) ===
+# ==================================
+
+docker.build.prod: ## Docker: 构建最终的生产环境 'app' 镜像
+	@echo "$(BLUE)Building final production 'app' image...$(RESET)"
+	@$(COMPOSE_PROD) build --pull app
+
+docker.push.prod: ## Docker: 推送生产环境 'app' 镜像 (假设已登录)
+	@echo "$(BLUE)Pushing production 'app' image...$(RESET)"
+	@$(COMPOSE_PROD) push app
+
+# ==================================
+# === 清理 (Utility) ===
+# ==================================
+
+docker.clean: ## Docker: 清理所有停止的容器、无用的网络和悬空的镜像
+	@echo "$(YELLOW)Cleaning up Docker system...$(RESET)"
+	@docker system prune -f
+	@docker volume prune -f
