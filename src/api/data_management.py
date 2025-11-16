@@ -1,6 +1,5 @@
-"""
-数据管理API路由
-Data Management API Router
+"""数据管理API路由
+Data Management API Router.
 
 提供数据管理相关的API端点：
 - 比赛数据管理
@@ -24,9 +23,8 @@ router = APIRouter(tags=["数据管理"])
 
 @router.get("/matches")
 async def get_matches_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
-    """
-    获取比赛列表
-    Get matches list
+    """获取比赛列表
+    Get matches list.
 
     Args:
         limit: 返回数量限制
@@ -51,9 +49,8 @@ async def get_matches_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
 
 @router.get("/matches/{match_id}")
 async def get_match_by_id(match_id: int) -> dict[str, Any]:
-    """
-    根据ID获取比赛信息
-    Get match information by ID
+    """根据ID获取比赛信息
+    Get match information by ID.
 
     Args:
         match_id: 比赛ID
@@ -82,9 +79,8 @@ async def get_match_by_id(match_id: int) -> dict[str, Any]:
 
 @router.get("/teams")
 async def get_teams_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
-    """
-    获取球队列表
-    Get teams list
+    """获取球队列表
+    Get teams list.
 
     Args:
         limit: 返回数量限制
@@ -109,9 +105,8 @@ async def get_teams_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
 
 @router.get("/teams/{team_id}")
 async def get_team_by_id(team_id: int) -> dict[str, Any]:
-    """
-    根据ID获取球队信息
-    Get team information by ID
+    """根据ID获取球队信息
+    Get team information by ID.
 
     Args:
         team_id: 球队ID
@@ -140,9 +135,8 @@ async def get_team_by_id(team_id: int) -> dict[str, Any]:
 
 @router.get("/leagues")
 async def get_leagues_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
-    """
-    获取联赛列表
-    Get leagues list
+    """获取联赛列表
+    Get leagues list.
 
     Args:
         limit: 返回数量限制
@@ -167,9 +161,8 @@ async def get_leagues_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
 
 @router.get("/odds")
 async def get_odds_data(match_id: int | None = None) -> dict[str, Any]:
-    """
-    获取赔率数据
-    Get odds data
+    """获取赔率数据
+    Get odds data.
 
     Args:
         match_id: 可选的比赛ID过滤

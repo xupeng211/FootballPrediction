@@ -1,6 +1,5 @@
-"""
-多租户管理API
-Multi-Tenant Management API
+"""多租户管理API
+Multi-Tenant Management API.
 
 提供企业级多租户系统的REST API接口.
 """
@@ -26,7 +25,7 @@ router = APIRouter(prefix="/api/v1/tenants", tags=["多租户管理"])
 
 
 class TenantCreationRequestModel(BaseModel):
-    """租户创建请求模型"""
+    """租户创建请求模型."""
 
     name: str = Field(
         ...,
@@ -81,14 +80,14 @@ class TenantCreationRequestModel(BaseModel):
     @field_validator("slug")
     @classmethod
     def validate_slug(cls, v):
-        """验证租户标识符"""
+        """验证租户标识符."""
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("租户标识符只能包含小写字母、数字和连字符")
         return v
 
 
 class TenantUpdateRequestModel(BaseModel):
-    """租户更新请求模型"""
+    """租户更新请求模型."""
 
     name: str | None = Field(
         None,
@@ -129,7 +128,7 @@ class TenantUpdateRequestModel(BaseModel):
 
 
 class TenantResponseModel(BaseModel):
-    """租户响应模型"""
+    """租户响应模型."""
 
     id: int
     name: str
@@ -152,27 +151,27 @@ class TenantResponseModel(BaseModel):
     updated_at: str
 
     class Config:
-        """Pydantic配置"""
+        """Pydantic配置."""
 
         from_attributes = True
 
 
 class RoleAssignmentRequestModel(BaseModel):
-    """角色分配请求模型"""
+    """角色分配请求模型."""
 
     role_code: str = Field(..., description="角色代码")
     expires_at: datetime | None = Field(None, description="过期时间")
 
 
 class PermissionCheckRequestModel(BaseModel):
-    """权限检查请求模型"""
+    """权限检查请求模型."""
 
     permission_code: str = Field(..., description="权限代码")
     resource_context: dict[str, Any] | None = Field(None, description="资源上下文")
 
 
 class QuotaCheckResponseModel(BaseModel):
-    """配额检查响应模型"""
+    """配额检查响应模型."""
 
     can_access: bool
     current_usage: int
@@ -182,7 +181,7 @@ class QuotaCheckResponseModel(BaseModel):
 
 
 class TenantStatisticsResponseModel(BaseModel):
-    """租户统计响应模型"""
+    """租户统计响应模型."""
 
     tenant_info: dict[str, Any]
     user_statistics: dict[str, Any]
@@ -199,8 +198,7 @@ class TenantStatisticsResponseModel(BaseModel):
 )
 @require_permission("tenant.create")
 async def create_tenant(request: Request, tenant_data: TenantCreationRequestModel):
-    """
-    创建新租户
+    """创建新租户.
 
     需要权限: tenant.create
     """
@@ -231,8 +229,7 @@ async def create_tenant(request: Request, tenant_data: TenantCreationRequestMode
 @router.get("/{tenant_id}", response_model=TenantResponseModel)
 @require_permission("tenant.view")
 async def get_tenant(tenant_id: int):
-    """
-    获取租户详情
+    """获取租户详情.
 
     需要权限: tenant.view
     """
@@ -251,8 +248,7 @@ async def get_tenant(tenant_id: int):
 @router.put("/{tenant_id}", response_model=TenantResponseModel)
 @require_permission("tenant.manage")
 async def update_tenant(tenant_id: int, update_data: TenantUpdateRequestModel):
-    """
-    更新租户信息
+    """更新租户信息.
 
     需要权限: tenant.manage
     """
@@ -273,8 +269,7 @@ async def update_tenant(tenant_id: int, update_data: TenantUpdateRequestModel):
 async def suspend_tenant(
     tenant_id: int, reason: str = Query(..., description="暂停原因")
 ):
-    """
-    暂停租户
+    """暂停租户.
 
     需要权限: tenant.manage
     """
@@ -289,8 +284,7 @@ async def suspend_tenant(
 async def activate_tenant(
     tenant_id: int, plan: str | None = Query(None, description="租户计划")
 ):
-    """
-    激活租户
+    """激活租户.
 
     需要权限: tenant.manage
     """
@@ -303,8 +297,7 @@ async def activate_tenant(
 @router.get("/{tenant_id}/statistics", response_model=TenantStatisticsResponseModel)
 @require_permission("tenant.analytics")
 async def get_tenant_statistics(tenant_id: int):
-    """
-    获取租户统计信息
+    """获取租户统计信息.
 
     需要权限: tenant.analytics
     """
@@ -325,8 +318,7 @@ async def assign_user_role(
     role_data: RoleAssignmentRequestModel,
     request: Request,
 ):
-    """
-    为用户分配角色
+    """为用户分配角色.
 
     需要权限: roles.manage
     """
@@ -348,8 +340,7 @@ async def assign_user_role(
 @router.delete("/{tenant_id}/users/{user_id}/roles/{role_code}")
 @require_permission("roles.manage")
 async def revoke_user_role(tenant_id: int, user_id: int, role_code: str):
-    """
-    撤销用户角色
+    """撤销用户角色.
 
     需要权限: roles.manage
     """
@@ -370,8 +361,7 @@ async def revoke_user_role(tenant_id: int, user_id: int, role_code: str):
 async def check_permission(
     tenant_id: int, permission_data: PermissionCheckRequestModel, request: Request
 ):
-    """
-    检查用户权限
+    """检查用户权限.
 
     需要权限: permissions.check
     """
@@ -408,8 +398,7 @@ async def check_tenant_resource_quota(
     resource_type: str,
     amount: int = Query(1, ge=1, description="需要的资源量"),
 ):
-    """
-    检查资源配额
+    """检查资源配额.
 
     需要权限: quota.view
     """
@@ -431,8 +420,7 @@ async def check_tenant_resource_quota(
 @router.post("/{tenant_id}/usage/update")
 @require_permission("usage.update")
 async def update_usage_metrics(tenant_id: int, metrics: dict[str, Any]):
-    """
-    更新使用指标
+    """更新使用指标.
 
     需要权限: usage.update
     """
@@ -462,8 +450,7 @@ async def list_tenants(
     plan: str | None = Query(None, description="计划筛选"),
     search: str | None = Query(None, description="搜索关键词"),
 ):
-    """
-    获取租户列表
+    """获取租户列表.
 
     需要权限: tenant.list
     """
@@ -482,7 +469,7 @@ async def list_tenants(
 
 @router.get("/health", tags=["健康检查"])
 async def tenant_management_health():
-    """多租户管理健康检查"""
+    """多租户管理健康检查."""
     return {
         "status": "healthy",
         "service": "tenant_management",
@@ -493,8 +480,7 @@ async def tenant_management_health():
 @router.get("/{tenant_id}/health")
 @require_permission("tenant.view")
 async def tenant_health_check(tenant_id: int):
-    """
-    租户健康检查
+    """租户健康检查.
 
     需要权限: tenant.view
     """
@@ -521,7 +507,7 @@ async def tenant_health_check(tenant_id: int):
 
 # 重复的类定义已清理
 def _calculate_health_score(tenant: Tenant) -> float:
-    """计算租户健康分数"""
+    """计算租户健康分数."""
     score = 100.0  # TODO: 将魔法数字 100 提取为常量
 
     # 状态检查

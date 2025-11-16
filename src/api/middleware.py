@@ -1,6 +1,5 @@
-"""
-API中间件模块
-API Middleware Module
+"""API中间件模块
+API Middleware Module.
 
 提供各种API中间件实现.
 Provides various API middleware implementations.
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class TimingMiddleware(BaseHTTPMiddleware):
-    """计时中间件,记录请求处理时间"""
+    """计时中间件,记录请求处理时间."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()
@@ -34,7 +33,7 @@ class TimingMiddleware(BaseHTTPMiddleware):
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    """日志中间件,记录请求信息"""
+    """日志中间件,记录请求信息."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         request_id = str(uuid.uuid4())
@@ -52,7 +51,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """简单的速率限制中间件"""
+    """简单的速率限制中间件."""
 
     def __init__(
         self,
@@ -92,10 +91,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):
-    """简单的认证中间件"""
+    """简单的认证中间件."""
 
     def __init__(self, app, public_paths: list = None):
-        """初始化认证中间件"""
+        """初始化认证中间件."""
         super().__init__(app)
         self.public_paths = public_paths or ["/health", "/docs", "/openapi.json"]
 
@@ -121,10 +120,10 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
 
 class CORSMiddleware(BaseHTTPMiddleware):
-    """CORS中间件"""
+    """CORS中间件."""
 
     def __init__(self, app, allow_origins: list = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(app)
         self.allow_origins = allow_origins or ["*"]
@@ -147,7 +146,7 @@ class CORSMiddleware(BaseHTTPMiddleware):
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """安全头中间件"""
+    """安全头中间件."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
@@ -164,7 +163,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 class CacheMiddleware(BaseHTTPMiddleware):
-    """简单的缓存中间件"""
+    """简单的缓存中间件."""
 
     def __init__(
         self,
@@ -207,7 +206,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
 
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
-    """错误处理中间件"""
+    """错误处理中间件."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         try:

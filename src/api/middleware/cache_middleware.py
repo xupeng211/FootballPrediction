@@ -1,6 +1,5 @@
-"""
-API缓存中间件
-API Cache Middleware
+"""API缓存中间件
+API Cache Middleware.
 
 为FastAPI应用提供自动缓存功能。
 """
@@ -15,7 +14,7 @@ from ...cache.api_cache import ApiCacheConfig, get_api_cache
 
 
 class CacheMiddleware(BaseHTTPMiddleware):
-    """API缓存中间件"""
+    """API缓存中间件."""
 
     def __init__(
         self,
@@ -83,7 +82,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
         return response
 
     def _should_skip_cache(self, request: Request) -> bool:
-        """检查是否应该跳过缓存"""
+        """检查是否应该跳过缓存."""
         # 检查请求方法
         if request.method not in self.cacheable_methods:
             return True
@@ -102,11 +101,11 @@ class CacheMiddleware(BaseHTTPMiddleware):
         return False
 
     def _generate_cache_key(self, request: Request) -> str:
-        """生成缓存键"""
+        """生成缓存键."""
         return f"{request.method}:{request.url.path}"
 
     def _get_user_id(self, request: Request) -> str | None:
-        """获取用户ID"""
+        """获取用户ID."""
         # 从请求状态或头部获取用户信息
         if hasattr(request.state, "user_id"):
             return request.state.user_id
@@ -117,7 +116,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
         return None
 
     def _should_cache_response(self, response: Response) -> bool:
-        """检查是否应该缓存响应"""
+        """检查是否应该缓存响应."""
         # 检查状态码
         if response.status_code not in self.cacheable_status_codes:
             return False
@@ -135,7 +134,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
         return True
 
     def _calculate_ttl(self, request: Request, response: Response) -> int:
-        """计算TTL"""
+        """计算TTL."""
         # 从响应头获取缓存控制信息
         if "cache-control" in response.headers:
             cache_control = response.headers["cache-control"]
@@ -159,7 +158,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
             return 180  # 3分钟
 
     def _build_response_from_cache(self, cached_data: dict) -> Response:
-        """从缓存数据构建响应"""
+        """从缓存数据构建响应."""
         response = Response(
             content=cached_data.get("body"),
             status_code=cached_data.get("status_code", 200),
@@ -174,7 +173,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
 
 
 def add_cache_middleware(app, config: ApiCacheConfig | None = None) -> None:
-    """为FastAPI应用添加缓存中间件"""
+    """为FastAPI应用添加缓存中间件."""
     app.add_middleware(CacheMiddleware, config=config)
 
 

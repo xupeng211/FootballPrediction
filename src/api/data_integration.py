@@ -1,6 +1,5 @@
-"""
-数据集成API端点
-提供数据收集和管理的API接口
+"""数据集成API端点
+提供数据收集和管理的API接口.
 """
 
 from datetime import datetime, timedelta
@@ -37,9 +36,7 @@ async def collect_matches(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client: RedisManager = Depends(get_redis_manager),
 ):
-    """
-    收集比赛数据
-    """
+    """收集比赛数据."""
     try:
         collector = EnhancedFixturesCollector(db_session, redis_client)
 
@@ -90,9 +87,7 @@ async def collect_teams(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client: RedisManager = Depends(get_redis_manager),
 ):
-    """
-    收集球队数据
-    """
+    """收集球队数据."""
     try:
         collector = EnhancedFixturesCollector(db_session, redis_client)
 
@@ -126,9 +121,7 @@ async def collect_all_data(
     force_refresh: bool = False,
     data_source: str = "mock",
 ):
-    """
-    收集所有数据（比赛和球队）
-    """
+    """收集所有数据（比赛和球队）."""
     try:
         collector = EnhancedFixturesCollector(db_session, redis_client)
 
@@ -166,9 +159,7 @@ async def get_data_source_status(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client: RedisManager = Depends(get_redis_manager),
 ):
-    """
-    获取数据源状态
-    """
+    """获取数据源状态."""
     try:
         collector = EnhancedFixturesCollector(db_session, redis_client)
         status = await collector.get_data_source_status()
@@ -211,9 +202,7 @@ async def get_matches(
     offset: int = 0,
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    """
-    获取比赛列表
-    """
+    """获取比赛列表."""
     try:
         query = select(Match)
 
@@ -262,9 +251,7 @@ async def get_teams(
     offset: int = 0,
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    """
-    获取球队列表
-    """
+    """获取球队列表."""
     try:
         query = select(Team)
 
@@ -301,9 +288,7 @@ async def get_data_stats(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client: RedisManager = Depends(get_redis_manager),
 ):
-    """
-    获取数据统计信息
-    """
+    """获取数据统计信息."""
     try:
         stats = {}
 
@@ -363,9 +348,7 @@ async def test_data_source(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client: RedisManager = Depends(get_redis_manager),
 ):
-    """
-    测试数据源连接
-    """
+    """测试数据源连接."""
     try:
         adapter = data_source_manager.get_adapter(data_source)
         if not adapter:

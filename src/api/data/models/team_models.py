@@ -1,13 +1,12 @@
-"""
-球队相关模型
-Team Related Models
+"""球队相关模型
+Team Related Models.
 """
 
 from pydantic import BaseModel, Field
 
 
 class TeamQueryParams(BaseModel):
-    """球队查询参数"""
+    """球队查询参数."""
 
     country: str | None = Field(None, description="国家")
     is_active: bool | None = Field(None, description="是否活跃")
@@ -17,7 +16,7 @@ class TeamQueryParams(BaseModel):
 
 
 class TeamCreateRequest(BaseModel):
-    """创建球队请求"""
+    """创建球队请求."""
 
     name: str = Field(..., min_length=1, max_length=100, description="球队名称")
     country: str | None = Field(None, max_length=50, description="国家")
@@ -27,7 +26,7 @@ class TeamCreateRequest(BaseModel):
 
 
 class TeamUpdateRequest(BaseModel):
-    """更新球队请求"""
+    """更新球队请求."""
 
     name: str | None = Field(None, min_length=1, max_length=100, description="球队名称")
     country: str | None = Field(None, max_length=50, description="国家")

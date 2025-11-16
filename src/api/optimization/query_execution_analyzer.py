@@ -1,6 +1,5 @@
-"""
-查询执行计划分析器
-Query Execution Plan Analyzer
+"""查询执行计划分析器
+Query Execution Plan Analyzer.
 
 提供SQL查询执行计划分析、索引使用检测和性能瓶颈识别功能。
 """
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ExecutionPlanNode:
-    """执行计划节点"""
+    """执行计划节点."""
 
     node_type: str
     relation_name: str | None = None
@@ -47,7 +46,7 @@ class ExecutionPlanNode:
 
 @dataclass
 class ExecutionPlanAnalysis:
-    """执行计划分析结果"""
+    """执行计划分析结果."""
 
     query_hash: str
     query_text: str
@@ -63,7 +62,7 @@ class ExecutionPlanAnalysis:
     analysis_timestamp: datetime
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "query_hash": self.query_hash,
             "query_text": (
@@ -86,7 +85,7 @@ class ExecutionPlanAnalysis:
     def _serialize_plan_nodes(
         self, nodes: list[ExecutionPlanNode]
     ) -> list[dict[str, Any]]:
-        """序列化执行计划节点"""
+        """序列化执行计划节点."""
         result = []
         for node in nodes:
             node_dict = {
@@ -114,7 +113,7 @@ class ExecutionPlanAnalysis:
 
 
 class QueryExecutionAnalyzer:
-    """查询执行分析器"""
+    """查询执行分析器."""
 
     def __init__(self):
         self.plan_cache: dict[str, ExecutionPlanAnalysis] = {}
@@ -127,7 +126,7 @@ class QueryExecutionAnalyzer:
         session: AsyncSession,
         analyze_options: dict[str, Any] | None = None,
     ) -> ExecutionPlanAnalysis:
-        """分析查询执行计划"""
+        """分析查询执行计划."""
         query_hash = self._generate_query_hash(query)
 
         # 检查缓存
@@ -177,7 +176,7 @@ class QueryExecutionAnalyzer:
         session: AsyncSession,
         options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """获取执行计划"""
+        """获取执行计划."""
         analyze_format = options.get("format", "JSON") if options else "JSON"
         analyze_options = (
             options.get("options", ["ANALYZE", "BUFFERS"])
@@ -217,7 +216,7 @@ class QueryExecutionAnalyzer:
             }
 
     def _parse_text_explain(self, explain_text: str) -> dict[str, Any]:
-        """解析文本格式的EXPLAIN输出"""
+        """解析文本格式的EXPLAIN输出."""
         lines = explain_text.strip().split("\n")
 
         # 查找执行时间信息
@@ -250,14 +249,14 @@ class QueryExecutionAnalyzer:
     def _parse_execution_plan(
         self, explain_data: dict[str, Any]
     ) -> list[ExecutionPlanNode]:
-        """解析执行计划"""
+        """解析执行计划."""
         if "Plan" not in explain_data:
             return []
 
         return [self._parse_plan_node(explain_data["Plan"])]
 
     def _parse_plan_node(self, node_data: dict[str, Any]) -> ExecutionPlanNode:
-        """解析单个执行计划节点"""
+        """解析单个执行计划节点."""
         node = ExecutionPlanNode(
             node_type=node_data.get("Node Type", "Unknown"),
             relation_name=node_data.get("Relation Name"),
@@ -293,7 +292,7 @@ class QueryExecutionAnalyzer:
         execution_plan: list[ExecutionPlanNode],
         explain_data: dict[str, Any],
     ) -> ExecutionPlanAnalysis:
-        """分析执行性能"""
+        """分析执行性能."""
         # 计算总成本
         total_cost = sum(node.total_cost for node in execution_plan)
         estimated_rows = sum(node.rows for node in execution_plan)
@@ -336,7 +335,7 @@ class QueryExecutionAnalyzer:
     def _identify_used_indexes(
         self, execution_plan: list[ExecutionPlanNode]
     ) -> list[str]:
-        """识别使用的索引"""
+        """识别使用的索引."""
         indexes = set()
 
         for node in execution_plan:
@@ -353,7 +352,7 @@ class QueryExecutionAnalyzer:
     async def _detect_missing_indexes(
         self, query: str, execution_plan: list[ExecutionPlanNode]
     ) -> list[dict[str, Any]]:
-        """检测缺失的索引"""
+        """检测缺失的索引."""
         missing_indexes = []
 
         for node in execution_plan:
@@ -396,7 +395,7 @@ class QueryExecutionAnalyzer:
         return missing_indexes
 
     def _extract_where_fields(self, query: str) -> list[str]:
-        """提取WHERE条件中的字段"""
+        """提取WHERE条件中的字段."""
         # 简化的字段提取逻辑
         where_pattern = r"WHERE\s+([^;]+)"
         match = re.search(where_pattern, query, re.IGNORECASE)
@@ -415,7 +414,7 @@ class QueryExecutionAnalyzer:
         return []
 
     def _extract_order_fields(self, query: str) -> list[str]:
-        """提取ORDER BY字段"""
+        """提取ORDER BY字段."""
         order_pattern = r"ORDER\s+BY\s+([^;\s]+(?:\s+(?:ASC|DESC))?)"
         matches = re.findall(order_pattern, query, re.IGNORECASE)
 
@@ -430,7 +429,7 @@ class QueryExecutionAnalyzer:
     def _identify_performance_issues(
         self, execution_plan: list[ExecutionPlanNode], execution_time: float
     ) -> list[dict[str, Any]]:
-        """识别性能问题"""
+        """识别性能问题."""
         issues = []
 
         # 检查执行时间
@@ -462,7 +461,7 @@ class QueryExecutionAnalyzer:
     def _check_node_performance_issues(
         self, node: ExecutionPlanNode, issues: list[dict[str, Any]]
     ):
-        """检查节点的性能问题"""
+        """检查节点的性能问题."""
         # 检查全表扫描
         if node.node_type == "Seq Scan" and node.rows > 10000:
             issues.append(
@@ -509,7 +508,7 @@ class QueryExecutionAnalyzer:
         performance_issues: list[dict[str, Any]],
         missing_indexes: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """生成优化建议"""
+        """生成优化建议."""
         suggestions = []
 
         # 基于缺失索引的建议
@@ -566,7 +565,7 @@ class QueryExecutionAnalyzer:
         )
 
     def _analyze_query_patterns(self, query: str) -> list[dict[str, Any]]:
-        """分析查询模式"""
+        """分析查询模式."""
         suggestions = []
         query_lower = query.lower()
 
@@ -617,7 +616,7 @@ class QueryExecutionAnalyzer:
     def _deduplicate_suggestions(
         self, suggestions: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """去重建议"""
+        """去重建议."""
         seen = set()
         unique_suggestions = []
 
@@ -631,7 +630,7 @@ class QueryExecutionAnalyzer:
         return unique_suggestions
 
     def _generate_query_hash(self, query: str) -> str:
-        """生成查询哈希值"""
+        """生成查询哈希值."""
         import hashlib
 
         # 标准化查询文本
@@ -639,16 +638,16 @@ class QueryExecutionAnalyzer:
         return hashlib.sha256(normalized_query.encode()).hexdigest()
 
     def get_cached_analysis(self, query_hash: str) -> ExecutionPlanAnalysis | None:
-        """获取缓存的分析结果"""
+        """获取缓存的分析结果."""
         return self.plan_cache.get(query_hash)
 
     def clear_cache(self):
-        """清空缓存"""
+        """清空缓存."""
         self.plan_cache.clear()
         logger.info("Execution plan cache cleared")
 
     def get_analysis_statistics(self) -> dict[str, Any]:
-        """获取分析统计信息"""
+        """获取分析统计信息."""
         if not self.analysis_history:
             return {
                 "total_analyzed": 0,
@@ -690,7 +689,7 @@ _execution_analyzer: QueryExecutionAnalyzer | None = None
 
 
 def get_query_execution_analyzer() -> QueryExecutionAnalyzer:
-    """获取全局查询执行分析器实例"""
+    """获取全局查询执行分析器实例."""
     global _execution_analyzer
     if _execution_analyzer is None:
         _execution_analyzer = QueryExecutionAnalyzer()
@@ -698,7 +697,7 @@ def get_query_execution_analyzer() -> QueryExecutionAnalyzer:
 
 
 async def initialize_query_execution_analyzer() -> QueryExecutionAnalyzer:
-    """初始化查询执行分析器"""
+    """初始化查询执行分析器."""
     global _execution_analyzer
     _execution_analyzer = QueryExecutionAnalyzer()
     logger.info("Query execution analyzer initialized")

@@ -1,6 +1,5 @@
-"""
-优化版预测路由
-Optimized Prediction Router
+"""优化版预测路由
+Optimized Prediction Router.
 
 提供高性能的预测API端点，包括缓存策略和性能监控。
 Provides high-performance prediction API endpoints with caching strategies and performance monitoring.
@@ -26,7 +25,7 @@ router = APIRouter(prefix="/predictions", tags=["optimized-predictions"])
 
 # Pydantic模型
 class PredictionCreateRequest(BaseModel):
-    """创建预测请求模型"""
+    """创建预测请求模型."""
 
     match_id: int
     features: dict[str, Any]
@@ -40,7 +39,7 @@ _system_monitor = get_system_monitor()
 
 
 def get_prediction_service() -> PredictionService:
-    """获取预测服务实例"""
+    """获取预测服务实例."""
     global _prediction_service
     if _prediction_service is None:
         _prediction_service = PredictionService()
@@ -73,7 +72,7 @@ async def get_predictions_list(
     offset: int = Query(default=0, ge=0),
     status: str = Query(default=None, description="预测状态过滤"),
 ):
-    """获取预测列表"""
+    """获取预测列表."""
     try:
         # 使用PredictionService以支持测试Mock
         service = get_prediction_service()
@@ -126,7 +125,7 @@ async def get_predictions_list(
 async def create_prediction(
     request: PredictionCreateRequest, background_tasks: BackgroundTasks
 ):
-    """创建预测"""
+    """创建预测."""
     try:
         # TODO: 实现完整的业务逻辑
         # 现在返回创建成功的响应以解决 405 错误
@@ -191,8 +190,7 @@ async def create_prediction(
     },
 )
 async def health_check():
-    """
-    预测服务健康检查
+    """预测服务健康检查.
 
     专门针对预测服务的健康状态检查，包括：
     - 缓存系统性能和命中率
@@ -336,8 +334,7 @@ async def get_optimized_prediction(
     ),
     current_user=Depends(get_current_user_optional),
 ):
-    """
-    获取优化的比赛预测结果
+    """获取优化的比赛预测结果.
 
     这是系统的核心预测API，基于机器学习模型提供高精度的比赛结果预测。
 
@@ -524,8 +521,7 @@ async def get_popular_predictions(
     ),
     current_user=Depends(get_current_user_optional),
 ):
-    """
-    获取热门预测
+    """获取热门预测.
 
     返回指定时间范围内的热门预测数据，基于用户关注度、讨论热度等因素排序。
 
@@ -718,8 +714,7 @@ async def get_user_prediction_history(
     ),
     current_user=Depends(get_current_user_optional),
 ):
-    """
-    获取用户预测历史
+    """获取用户预测历史.
 
     返回指定用户的预测历史记录，包含详细的预测结果、准确率统计等信息。
 
@@ -896,8 +891,7 @@ async def get_prediction_statistics(
     ),
     current_user=Depends(get_current_user_optional),
 ):
-    """
-    获取预测统计信息
+    """获取预测统计信息.
 
     返回系统预测服务的综合统计数据，用于性能监控、业务分析和用户洞察。
 
@@ -1047,8 +1041,7 @@ async def get_prediction_statistics(
 async def warmup_cache(
     background_tasks: BackgroundTasks, current_user=Depends(get_current_user_optional)
 ):
-    """
-    缓存预热
+    """缓存预热.
 
     异步预热系统缓存，提前加载常用的预测数据和统计信息，提高用户体验。
 
@@ -1193,8 +1186,7 @@ async def clear_cache(
     ),
     current_user=Depends(get_current_user_optional),
 ):
-    """
-    清除缓存
+    """清除缓存.
 
     清除指定模式或全部缓存数据，用于缓存管理、故障排除和数据更新。
 
@@ -1294,7 +1286,7 @@ async def clear_cache(
 # 添加缺少的预测端点
 @router.get("/match/{match_id}", tags=["predictions"])
 async def get_match_predictions(match_id: int):
-    """获取指定比赛的预测 - 测试支持端点"""
+    """获取指定比赛的预测 - 测试支持端点."""
     try:
         from src.services.prediction_service import get_match_predictions
 
@@ -1317,7 +1309,7 @@ data_router = APIRouter(tags=["data-management"])
 async def get_matches_list(
     limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0)
 ):
-    """获取比赛列表 - 测试支持端点"""
+    """获取比赛列表 - 测试支持端点."""
     try:
         # 使用我们创建的data服务
         from src.services.data import MatchService
@@ -1330,7 +1322,7 @@ async def get_matches_list(
 
 @data_router.get("/matches/{match_id}")
 async def get_match_by_id(match_id: int):
-    """获取单个比赛 - 测试支持端点"""
+    """获取单个比赛 - 测试支持端点."""
     try:
         from src.services.data import MatchService
 
@@ -1349,7 +1341,7 @@ async def get_match_by_id(match_id: int):
 async def get_teams_list(
     limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0)
 ):
-    """获取球队列表 - 测试支持端点"""
+    """获取球队列表 - 测试支持端点."""
     try:
         from src.services.data import TeamService
 
@@ -1361,7 +1353,7 @@ async def get_teams_list(
 
 @data_router.get("/teams/{team_id}")
 async def get_team_by_id(team_id: int):
-    """获取单个球队 - 测试支持端点"""
+    """获取单个球队 - 测试支持端点."""
     try:
         from src.services.data import TeamService
 
@@ -1380,7 +1372,7 @@ async def get_team_by_id(team_id: int):
 async def get_leagues_list(
     limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0)
 ):
-    """获取联赛列表 - 测试支持端点"""
+    """获取联赛列表 - 测试支持端点."""
     try:
         from src.services.data import LeagueService
 
@@ -1392,7 +1384,7 @@ async def get_leagues_list(
 
 @data_router.get("/odds")
 async def get_odds_data(match_id: int = Query(default=None)):
-    """获取赔率数据 - 测试支持端点"""
+    """获取赔率数据 - 测试支持端点."""
     try:
         from src.services.data import OddsService
 
@@ -1405,7 +1397,7 @@ async def get_odds_data(match_id: int = Query(default=None)):
 # 添加系统和监控端点
 @data_router.get("/stats")
 async def get_system_stats():
-    """获取系统统计 - 测试支持端点"""
+    """获取系统统计 - 测试支持端点."""
     try:
         from src.services.data import MonitoringService
 
@@ -1417,7 +1409,7 @@ async def get_system_stats():
 
 @data_router.get("/version")
 async def get_api_version():
-    """获取API版本 - 测试支持端点"""
+    """获取API版本 - 测试支持端点."""
     try:
         from src.services.data import VersionService
 
@@ -1429,7 +1421,7 @@ async def get_api_version():
 
 @data_router.post("/queue/status")
 async def get_queue_status():
-    """获取队列状态 - 测试支持端点"""
+    """获取队列状态 - 测试支持端点."""
     try:
         from src.services.data import QueueService
 
@@ -1443,7 +1435,7 @@ async def get_queue_status():
 async def _generate_prediction_data(
     match_id: int, include_details: bool
 ) -> dict[str, Any]:
-    """生成预测数据"""
+    """生成预测数据."""
     # 模拟预测算法
     import random
 
@@ -1480,7 +1472,7 @@ async def _generate_prediction_data(
 async def _get_popular_predictions_data(
     limit: int, time_delta: timedelta
 ) -> list[dict[str, Any]]:
-    """获取热门预测数据"""
+    """获取热门预测数据."""
     # 模拟热门预测
     import random
 
@@ -1505,7 +1497,7 @@ async def _get_popular_predictions_data(
 async def _get_user_prediction_history_data(
     user_id: int, page: int, size: int, status_filter: str | None
 ) -> list[dict[str, Any]]:
-    """获取用户预测历史数据"""
+    """获取用户预测历史数据."""
     # 模拟历史数据
     import random
 
@@ -1538,7 +1530,7 @@ async def _get_user_prediction_history_data(
 
 
 async def _get_prediction_statistics_data(time_delta: timedelta) -> dict[str, Any]:
-    """获取预测统计数据"""
+    """获取预测统计数据."""
     # 模拟统计数据
     import random
 
@@ -1564,7 +1556,7 @@ async def _get_prediction_statistics_data(time_delta: timedelta) -> dict[str, An
 
 
 async def _execute_cache_warmup():
-    """执行缓存预热"""
+    """执行缓存预热."""
     try:
         logger.info("Starting cache warmup...")
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Advanced Prediction API
-高级预测API,支持多种预测模型
+"""Advanced Prediction API
+高级预测API,支持多种预测模型.
 
 生成时间: 2025-10-26 20:57:38  # TODO: 将魔法数字 2025 提取为常量
 """
@@ -16,14 +15,14 @@ router = APIRouter()
 
 
 class AdvancedPredictionAPIRequest(BaseModel):
-    """请求模型"""
+    """请求模型."""
 
     config: dict[str, Any] = {}
     parameters: dict[str, Any] = {}
 
 
 class AdvancedPredictionAPIResponse(BaseModel):
-    """响应模型"""
+    """响应模型."""
 
     success: bool
     data: dict[str, Any] | None = None
@@ -35,7 +34,7 @@ class AdvancedPredictionAPIResponse(BaseModel):
 async def execute_advanced_prediction_api(
     request: AdvancedPredictionAPIRequest, background_tasks: BackgroundTasks
 ) -> AdvancedPredictionAPIResponse:
-    """执行Advanced Prediction API"""
+    """执行Advanced Prediction API."""
     try:
         # TODO: 实现具体的API逻辑
         result = {
@@ -58,7 +57,7 @@ async def execute_advanced_prediction_api(
 
 @router.get("/advanced_prediction_api/status/{job_id}")
 async def get_advanced_prediction_api_status(job_id: str):
-    """获取Advanced Prediction API执行状态"""
+    """获取Advanced Prediction API执行状态."""
     # TODO: 实现状态查询逻辑
     return {
         "job_id": job_id,
@@ -70,7 +69,7 @@ async def get_advanced_prediction_api_status(job_id: str):
 
 @router.get("/advanced_prediction_api/health")
 async def health_check():
-    """健康检查"""
+    """健康检查."""
     return {
         "status": "healthy",
         "service": "Advanced Prediction API",

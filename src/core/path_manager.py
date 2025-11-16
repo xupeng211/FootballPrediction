@@ -1,5 +1,4 @@
-"""
-路径管理器 - 统一Python路径配置
+"""路径管理器 - 统一Python路径配置.
 
 解决Python模块导入路径问题，支持多种环境配置。
 """
@@ -14,11 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class PathManager:
-    """统一路径管理器 - 解决Python路径配置问题"""
+    """统一路径管理器 - 解决Python路径配置问题."""
 
     def __init__(self, project_root: Path | None = None):
-        """
-        初始化路径管理器
+        """初始化路径管理器.
 
         Args:
             project_root: 项目根目录，如果为None则自动检测
@@ -35,7 +33,7 @@ class PathManager:
         logger.info(f"src路径: {self.src_path}")
 
     def _detect_project_root(self) -> Path:
-        """自动检测项目根目录"""
+        """自动检测项目根目录."""
         current = Path.cwd()
 
         # 查找项目根目录标记
@@ -53,8 +51,7 @@ class PathManager:
         return Path.cwd()
 
     def setup_src_path(self, force: bool = False) -> bool:
-        """
-        设置src路径到Python路径
+        """设置src路径到Python路径.
 
         Args:
             force: 是否强制重新配置
@@ -95,8 +92,7 @@ class PathManager:
             return False
 
     def setup_paths(self, force: bool = False) -> bool:
-        """
-        设置所有路径配置（兼容方法）
+        """设置所有路径配置（兼容方法）.
 
         Args:
             force: 是否强制重新配置
@@ -107,7 +103,7 @@ class PathManager:
         return self.setup_src_path(force)
 
     def _verify_src_import(self) -> bool:
-        """验证src模块是否可以导入"""
+        """验证src模块是否可以导入."""
         try:
             # 尝试导入src模块
             pass
@@ -118,7 +114,7 @@ class PathManager:
             return False
 
     def ensure_src_importable(self) -> bool:
-        """确保src可以正常导入"""
+        """确保src可以正常导入."""
         if self._verify_src_import():
             return True
 
@@ -126,7 +122,7 @@ class PathManager:
         return self.setup_src_path(force=True)
 
     def get_environment_info(self) -> dict[str, Any]:
-        """获取环境信息"""
+        """获取环境信息."""
         return {
             "project_root": str(self.project_root),
             "src_path": str(self.src_path),
@@ -138,7 +134,7 @@ class PathManager:
         }
 
     def setup_environment_paths(self) -> dict[str, bool]:
-        """设置多环境路径配置"""
+        """设置多环境路径配置."""
         results = {}
 
         # 1. 本地开发环境
@@ -153,7 +149,7 @@ class PathManager:
         return results
 
     def _setup_local_environment(self) -> bool:
-        """设置本地开发环境"""
+        """设置本地开发环境."""
         try:
             # 设置PYTHONPATH环境变量
             pythonpath = os.environ.get("PYTHONPATH", "")
@@ -172,7 +168,7 @@ class PathManager:
             return False
 
     def _detect_docker_environment(self) -> bool:
-        """检测Docker环境"""
+        """检测Docker环境."""
         docker_indicators = [
             "/.dockerenv",  # Docker容器标记文件
             os.path.exists("/proc/1/cgroup")
@@ -188,7 +184,7 @@ class PathManager:
         return is_docker
 
     def _detect_ide_environment(self) -> bool:
-        """检测IDE环境"""
+        """检测IDE环境."""
         ide_indicators = [
             os.environ.get("VS_CODE_PID"),  # VS Code
             os.environ.get("PYCHARM_HOSTED"),  # PyCharm
@@ -202,7 +198,7 @@ class PathManager:
         return is_ide
 
     def create_ide_config_files(self) -> dict[str, bool]:
-        """创建IDE配置文件"""
+        """创建IDE配置文件."""
         results = {}
 
         # VS Code配置
@@ -214,7 +210,7 @@ class PathManager:
         return results
 
     def _create_vscode_config(self) -> bool:
-        """创建VS Code配置"""
+        """创建VS Code配置."""
         try:
             vscode_dir = self.project_root / ".vscode"
             vscode_dir.mkdir(exist_ok=True)
@@ -241,7 +237,7 @@ class PathManager:
             return False
 
     def _create_pycharm_hints(self) -> bool:
-        """创建PyCharm配置提示"""
+        """创建PyCharm配置提示."""
         try:
             hints_file = self.project_root / ".idea" / "misc.xml"
             hints_file.parent.mkdir(exist_ok=True)
@@ -272,7 +268,7 @@ class PathManager:
             return False
 
     def validate_configuration(self) -> dict[str, Any]:
-        """验证路径配置"""
+        """验证路径配置."""
         validation_results = {
             "src_path_exists": self.src_path.exists(),
             "src_in_python_path": str(self.src_path) in sys.path,
@@ -300,7 +296,7 @@ _path_manager: PathManager | None = None
 
 
 def get_path_manager() -> PathManager:
-    """获取全局路径管理器实例"""
+    """获取全局路径管理器实例."""
     global _path_manager
     if _path_manager is None:
         _path_manager = PathManager()
@@ -309,13 +305,13 @@ def get_path_manager() -> PathManager:
 
 
 def setup_project_paths() -> bool:
-    """设置项目路径（便捷函数）"""
+    """设置项目路径（便捷函数）."""
     manager = get_path_manager()
     return manager.setup_src_path()
 
 
 def ensure_src_importable() -> bool:
-    """确保src可以导入（便捷函数）"""
+    """确保src可以导入（便捷函数）."""
     manager = get_path_manager()
     return manager.ensure_src_importable()
 

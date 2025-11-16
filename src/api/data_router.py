@@ -1,6 +1,5 @@
-"""
-数据API端点（向后兼容）
-Data API Endpoints (Backward Compatible)
+"""数据API端点（向后兼容）
+Data API Endpoints (Backward Compatible).
 
 Provides complete data management API endpoints, including:
 - 比赛数据查询
@@ -25,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class LeagueInfo(BaseModel):
-    """联赛信息"""
+    """联赛信息."""
 
     id: int
     name: str
@@ -35,7 +34,7 @@ class LeagueInfo(BaseModel):
 
 
 class TeamInfo(BaseModel):
-    """球队信息"""
+    """球队信息."""
 
     id: int
     name: str
@@ -52,7 +51,7 @@ class TeamInfo(BaseModel):
 
 
 class MatchInfo(BaseModel):
-    """比赛信息"""
+    """比赛信息."""
 
     id: int
     home_team_id: int
@@ -76,7 +75,7 @@ class MatchInfo(BaseModel):
 
 
 class OddsInfo(BaseModel):
-    """赔率信息"""
+    """赔率信息."""
 
     id: int
     match_id: int
@@ -88,7 +87,7 @@ class OddsInfo(BaseModel):
 
 
 class MatchStatistics(BaseModel):
-    """比赛统计"""
+    """比赛统计."""
 
     match_id: int
     possession_home: float | None = None
@@ -102,7 +101,7 @@ class MatchStatistics(BaseModel):
 
 
 class TeamStatistics(BaseModel):
-    """球队统计"""
+    """球队统计."""
 
     team_id: int
     matches_played: int
@@ -130,8 +129,7 @@ async def get_leagues(
         description="返回数量",  # TODO: 将魔法数字 20 提取为常量
     ),  # TODO: 将魔法数字 20 提取为常量
 ):
-    """
-    获取联赛列表
+    """获取联赛列表.
 
     支持按国家和赛季筛选联赛.
     """
@@ -162,7 +160,7 @@ async def get_leagues(
 
 @router.get("/leagues/{league_id}", response_model=LeagueInfo)
 async def get_league(league_id: int):
-    """获取单个联赛详情"""
+    """获取单个联赛详情."""
     logger.info(f"获取联赛 {league_id} 详情")
 
     try:
@@ -194,8 +192,7 @@ async def get_teams(
     search: str | None = Query(None, description="搜索关键词"),
     limit: int = Query(20, ge=1, le=100),  # TODO: 将魔法数字 20 提取为常量
 ):
-    """
-    获取球队列表
+    """获取球队列表.
 
     支持按联赛,国家筛选,或通过关键词搜索球队.
     """
@@ -238,7 +235,7 @@ async def get_teams(
 
 @router.get("/teams/{team_id}", response_model=TeamInfo)
 async def get_team(team_id: int):
-    """获取单个球队详情"""
+    """获取单个球队详情."""
     logger.info(f"获取球队 {team_id} 详情")
 
     try:
@@ -261,7 +258,7 @@ async def get_team(team_id: int):
 async def get_team_statistics(
     team_id: int, season: str | None = Query(None, description="赛季")
 ):
-    """获取球队统计数据"""
+    """获取球队统计数据."""
     logger.info(f"获取球队 {team_id} 统计")
 
     try:
@@ -298,8 +295,7 @@ async def get_matches(
     status: str | None = Query(None, description="比赛状态"),
     limit: int = Query(20, ge=1, le=100),  # TODO: 将魔法数字 20 提取为常量
 ):
-    """
-    获取比赛列表
+    """获取比赛列表.
 
     支持按联赛、球队,日期范围,状态筛选比赛.
     """
@@ -359,7 +355,7 @@ async def get_matches(
 
 @router.get("/matches/{match_id}", response_model=MatchInfo)
 async def get_match(match_id: int):
-    """获取单场比赛详情"""
+    """获取单场比赛详情."""
     logger.info(f"获取比赛 {match_id} 详情")
 
     try:
@@ -385,7 +381,7 @@ async def get_match(match_id: int):
 
 @router.get("/matches/{match_id}/statistics", response_model=MatchStatistics)
 async def get_match_statistics(match_id: int):
-    """获取比赛统计数据"""
+    """获取比赛统计数据."""
     logger.info(f"获取比赛 {match_id} 统计")
 
     try:
@@ -420,8 +416,7 @@ async def get_odds(
     bookmaker: str | None = Query(None, description="博彩公司"),
     limit: int = Query(20, ge=1, le=100),  # TODO: 将魔法数字 20 提取为常量
 ):
-    """
-    获取赔率数据
+    """获取赔率数据.
 
     支持按比赛和博彩公司筛选赔率.
     """
@@ -454,7 +449,7 @@ async def get_odds(
 
 @router.get("/odds/{match_id}", response_model=list[OddsInfo])
 async def get_match_odds(match_id: int):
-    """获取指定比赛的所有赔率"""
+    """获取指定比赛的所有赔率."""
     logger.info(f"获取比赛 {match_id} 的赔率")
 
     try:

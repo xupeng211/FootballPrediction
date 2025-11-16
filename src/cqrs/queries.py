@@ -1,6 +1,5 @@
-"""
-查询定义
-Query Definitions
+"""查询定义
+Query Definitions.
 
 定义所有读操作查询.
 Defines all read operation queries.
@@ -13,7 +12,7 @@ from .base import ValidatableQuery, ValidationResult
 
 
 class GetPredictionByIdQuery(ValidatableQuery):
-    """根据ID获取预测查询"""
+    """根据ID获取预测查询."""
 
     def __init__(
         self,
@@ -24,7 +23,7 @@ class GetPredictionByIdQuery(ValidatableQuery):
         self.prediction_id = prediction_id
 
     async def validate(self) -> ValidationResult:
-        """验证查询"""
+        """验证查询."""
         errors = []
 
         if self.prediction_id <= 0:
@@ -38,13 +37,13 @@ class GetPredictionByIdQuery(ValidatableQuery):
 
 
 class GetUserByIdQuery(ValidatableQuery):
-    """根据ID获取用户查询"""
+    """根据ID获取用户查询."""
 
     def __init__(self, user_id: int):
         self.user_id = user_id
 
     def validate(self) -> ValidationResult:
-        """验证查询参数"""
+        """验证查询参数."""
         errors = []
 
         if self.user_id is not None and self.user_id <= 0:
@@ -58,7 +57,7 @@ class GetUserByIdQuery(ValidatableQuery):
 
 
 class GetPredictionsByUserQuery(ValidatableQuery):
-    """获取用户的所有预测查询"""
+    """获取用户的所有预测查询."""
 
     def __init__(
         self,
@@ -77,7 +76,7 @@ class GetPredictionsByUserQuery(ValidatableQuery):
         self.end_date = end_date
 
     async def validate(self) -> ValidationResult:
-        """验证查询"""
+        """验证查询."""
         errors = []
 
         if self.user_id <= 0:
@@ -120,7 +119,7 @@ class GetPredictionsByUserQuery(ValidatableQuery):
 #
 #
 class GetMatchPredictionsQuery(ValidatableQuery):
-    """获取比赛的所有预测查询"""
+    """获取比赛的所有预测查询."""
 
     def __init__(
         self,
@@ -133,7 +132,7 @@ class GetMatchPredictionsQuery(ValidatableQuery):
         self.include_user_details = include_user_details
 
     async def validate(self) -> ValidationResult:
-        """验证查询"""
+        """验证查询."""
         errors = []
 
         if self.match_id <= 0:
@@ -167,7 +166,7 @@ class GetMatchPredictionsQuery(ValidatableQuery):
 #
 #
 class GetUserStatsQuery(ValidatableQuery):
-    """获取用户统计查询"""
+    """获取用户统计查询."""
 
     def __init__(
         self,
@@ -180,7 +179,7 @@ class GetUserStatsQuery(ValidatableQuery):
         self.include_predictions = include_predictions
 
     async def validate(self) -> ValidationResult:
-        """验证查询"""
+        """验证查询."""
         errors = []
 
         if self.user_id <= 0:
@@ -214,7 +213,7 @@ class GetUserStatsQuery(ValidatableQuery):
 #
 #
 class GetMatchByIdQuery(ValidatableQuery):
-    """根据ID获取比赛查询"""
+    """根据ID获取比赛查询."""
 
     def __init__(
         self,
@@ -227,7 +226,7 @@ class GetMatchByIdQuery(ValidatableQuery):
         self.include_predictions = include_predictions
 
     async def validate(self) -> ValidationResult:
-        """验证查询"""
+        """验证查询."""
         errors = []
 
         if self.match_id <= 0:
@@ -261,7 +260,7 @@ class GetMatchByIdQuery(ValidatableQuery):
 #
 #
 class GetUpcomingMatchesQuery(ValidatableQuery):
-    """获取即将到来的比赛查询"""
+    """获取即将到来的比赛查询."""
 
     def __init__(
         self,
@@ -278,7 +277,7 @@ class GetUpcomingMatchesQuery(ValidatableQuery):
         self.offset = offset
 
     async def validate(self) -> ValidationResult:
-        """验证查询"""
+        """验证查询."""
         errors = []
 
         if self.days_ahead <= 0:
@@ -318,7 +317,7 @@ class GetUpcomingMatchesQuery(ValidatableQuery):
 #
 #
 class GetPredictionAnalyticsQuery(ValidatableQuery):
-    """获取预测分析查询"""
+    """获取预测分析查询."""
 
     def __init__(
         self,
@@ -335,7 +334,7 @@ class GetPredictionAnalyticsQuery(ValidatableQuery):
         self.user_id = user_id
 
     async def validate(self) -> ValidationResult:
-        """验证查询"""
+        """验证查询."""
         errors = []
 
         if self.start_date and self.end_date and self.start_date > self.end_date:
@@ -372,7 +371,7 @@ class GetPredictionAnalyticsQuery(ValidatableQuery):
 #
 #
 class GetLeaderboardQuery(ValidatableQuery):
-    """获取排行榜查询"""
+    """获取排行榜查询."""
 
     def __init__(
         self,
@@ -387,7 +386,7 @@ class GetLeaderboardQuery(ValidatableQuery):
         self.offset = offset
 
     async def validate(self) -> ValidationResult:
-        """验证查询"""
+        """验证查询."""
         errors = []
 
         valid_periods = ["all_time", "monthly", "weekly"]

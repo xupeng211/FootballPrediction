@@ -1,6 +1,5 @@
-"""
-命令和查询总线
-Command and Query Bus
+"""命令和查询总线
+Command and Query Bus.
 
 实现命令和查询的分发机制.
 Implements dispatching mechanism for commands and queries.
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class CommandBus:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -25,7 +24,7 @@ class CommandBus:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self._handlers: dict[type[Command], CommandHandler] = {}
         self._middleware: list = []
@@ -33,18 +32,18 @@ class CommandBus:
     def register_handler(
         self, command_type: type[Command], handler: CommandHandler
     ) -> None:
-        """注册命令处理器"""
+        """注册命令处理器."""
         self._handlers[command_type] = handler
         logger.info(
             f"注册命令处理器: {command_type.__name__} -> {handler.__class__.__name__}"
         )
 
     def register_middleware(self, middleware) -> None:
-        """注册中间件"""
+        """注册中间件."""
         self._middleware.append(middleware)
 
     async def dispatch(self, command: Command) -> Any:
-        """分发命令"""
+        """分发命令."""
         command_type = type(command)
 
         if command_type not in self._handlers:
@@ -72,7 +71,7 @@ class CommandBus:
         return result
 
     def get_registered_commands(self) -> dict[str, str]:
-        """获取已注册的命令"""
+        """获取已注册的命令."""
         return {
             cmd_type.__name__: handler.__class__.__name__
             for cmd_type, handler in self._handlers.items()
@@ -80,7 +79,7 @@ class CommandBus:
 
 
 class QueryBus:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -90,24 +89,24 @@ class QueryBus:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self._handlers: dict[type[Query], QueryHandler] = {}
         self._middleware: list = []
 
     def register_handler(self, query_type: type[Query], handler: QueryHandler) -> None:
-        """注册查询处理器"""
+        """注册查询处理器."""
         self._handlers[query_type] = handler
         logger.info(
             f"注册查询处理器: {query_type.__name__} -> {handler.__class__.__name__}"
         )
 
     def register_middleware(self, middleware) -> None:
-        """注册中间件"""
+        """注册中间件."""
         self._middleware.append(middleware)
 
     async def dispatch(self, query: Query) -> Any:
-        """分发查询"""
+        """分发查询."""
         query_type = type(query)
 
         if query_type not in self._handlers:
@@ -135,7 +134,7 @@ class QueryBus:
         return result
 
     def get_registered_queries(self) -> dict[str, str]:
-        """获取已注册的查询"""
+        """获取已注册的查询."""
         return {
             query_type.__name__: handler.__class__.__name__
             for query_type, handler in self._handlers.items()
@@ -148,7 +147,7 @@ _query_bus: QueryBus | None = None
 
 
 def get_command_bus() -> CommandBus:
-    """获取命令总线实例"""
+    """获取命令总线实例."""
     global _command_bus
     if _command_bus is None:
         _command_bus = CommandBus()
@@ -156,7 +155,7 @@ def get_command_bus() -> CommandBus:
 
 
 def get_query_bus() -> QueryBus:
-    """获取查询总线实例"""
+    """获取查询总线实例."""
     global _query_bus
     if _query_bus is None:
         _query_bus = QueryBus()
@@ -165,26 +164,26 @@ def get_query_bus() -> QueryBus:
 
 # 中间件示例
 class LoggingMiddleware:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """日志中间件"""
 
     async def process(self, message):
-        """处理消息"""
+        """处理消息."""
         message_type = type(message).__name__
         logger.info(f"处理消息: {message_type} (ID: {message.message_id})")
         return message
 
 
 class ValidationMiddleware:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """验证中间件"""
 
     async def process(self, message):
-        """处理消息"""
+        """处理消息."""
         if hasattr(message, "validate"):
             validation_result = await message.validate()
             if not validation_result.is_valid:
@@ -194,13 +193,13 @@ class ValidationMiddleware:
 
 
 class MetricsMiddleware:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """指标中间件"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self._metrics = {
             "commands_processed": 0,
@@ -209,7 +208,7 @@ class MetricsMiddleware:
         }
 
     async def process(self, message):
-        """处理消息"""
+        """处理消息."""
         import time
 
         # 记录处理时间
@@ -222,5 +221,5 @@ class MetricsMiddleware:
         return message
 
     def get_metrics(self) -> dict[str, int]:
-        """获取处理指标"""
+        """获取处理指标."""
         return self._metrics

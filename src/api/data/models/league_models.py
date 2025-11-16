@@ -1,6 +1,5 @@
-"""
-联赛相关模型
-League Related Models
+"""联赛相关模型
+League Related Models.
 """
 
 from datetime import datetime
@@ -9,7 +8,7 @@ from pydantic import BaseModel, Field
 
 
 class LeagueQueryParams(BaseModel):
-    """联赛查询参数"""
+    """联赛查询参数."""
 
     country: str | None = Field(None, description="国家")
     season: str | None = Field(None, description="赛季")
@@ -20,7 +19,7 @@ class LeagueQueryParams(BaseModel):
 
 
 class LeagueCreateRequest(BaseModel):
-    """创建联赛请求"""
+    """创建联赛请求."""
 
     name: str = Field(..., min_length=1, max_length=100, description="联赛名称")
     country: str = Field(..., max_length=50, description="国家")

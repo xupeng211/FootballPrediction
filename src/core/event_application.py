@@ -1,6 +1,5 @@
-"""
-事件驱动应用程序初始化
-Event-Driven Application Initialization
+"""事件驱动应用程序初始化
+Event-Driven Application Initialization.
 
 提供事件系统的初始化和生命周期管理.
 Provides event system initialization and lifecycle management.
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class EventDrivenApplication:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """事件驱动应用程序"
@@ -27,7 +26,7 @@ class EventDrivenApplication:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化应用程序"""
         self._event_bus = get_event_bus()
@@ -35,7 +34,7 @@ class EventDrivenApplication:
         self._initialized = False
 
     async def initialize(self) -> None:
-        """初始化事件系统"""
+        """初始化事件系统."""
         if self._initialized:
             return None
         try:
@@ -58,7 +57,7 @@ class EventDrivenApplication:
             raise
 
     async def shutdown(self) -> None:
-        """关闭事件系统"""
+        """关闭事件系统."""
         if not self._initialized:
             return None
         try:
@@ -74,7 +73,7 @@ class EventDrivenApplication:
             logger.error(f"事件系统关闭失败: {e}")
 
     async def _register_custom_handlers(self) -> None:
-        """注册自定义事件处理器"""
+        """注册自定义事件处理器."""
         # 这里可以注册特定于应用程序的事件处理器
         # 例如:邮件发送处理器,WebSocket推送处理器等
 
@@ -82,15 +81,15 @@ class EventDrivenApplication:
         from ..events.base import Event, EventHandler
 
         class SimpleStatsHandler(EventHandler):
-            """简单统计处理器"""
+            """简单统计处理器."""
 
             def __init__(self):
-                """函数文档字符串"""
+                """函数文档字符串."""
                 super().__init__("SimpleStats")
                 self.stats = {}
 
             async def handle(self, event: Event) -> None:
-                """处理事件并更新统计"""
+                """处理事件并更新统计."""
                 event_type = event.get_event_type()
                 self.stats[event_type] = self.stats.get(event_type, 0) + 1
 
@@ -111,11 +110,11 @@ class EventDrivenApplication:
         logger.info("自定义事件处理器注册完成")
 
     def get_event_stats(self) -> dict:
-        """获取事件统计信息"""
+        """获取事件统计信息."""
         return self._event_bus.get_stats()
 
     async def health_check(self) -> dict:
-        """事件系统健康检查"""
+        """事件系统健康检查."""
         stats = self.get_event_stats()
 
         return {
@@ -134,7 +133,7 @@ _app_instance: EventDrivenApplication | None = None
 
 
 def get_event_application() -> EventDrivenApplication:
-    """获取全局事件应用程序实例"""
+    """获取全局事件应用程序实例."""
     global _app_instance
     if _app_instance is None:
         _app_instance = EventDrivenApplication()
@@ -143,18 +142,18 @@ def get_event_application() -> EventDrivenApplication:
 
 # 便捷函数
 async def initialize_event_system() -> None:
-    """初始化事件系统"""
+    """初始化事件系统."""
     app = get_event_application()
     await app.initialize()
 
 
 async def shutdown_event_system() -> None:
-    """关闭事件系统"""
+    """关闭事件系统."""
     app = get_event_application()
     await app.shutdown()
 
 
 async def get_event_system_health() -> dict:
-    """获取事件系统健康状态"""
+    """获取事件系统健康状态."""
     app = get_event_application()
     return await app.health_check()

@@ -1,5 +1,4 @@
-"""
-用户认证API路由
+"""用户认证API路由.
 
 提供用户注册,登录,令牌管理等认证相关的API端点
 """
@@ -38,7 +37,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 async def get_auth_service(
     db: AsyncSession = Depends(get_async_session),
 ) -> AuthService:
-    """获取认证服务实例"""
+    """获取认证服务实例."""
     return AuthService(db)
 
 
@@ -46,8 +45,7 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
-    """
-    获取当前登录用户
+    """获取当前登录用户.
 
     Args:
         token: JWT访问令牌
@@ -79,8 +77,7 @@ async def register(
     user_data: UserRegisterRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
-    """
-    用户注册接口
+    """用户注册接口.
 
     - **username**: 用户名（唯一）
     - **email**: 邮箱地址（唯一）
@@ -122,8 +119,7 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, Any]:
-    """
-    用户登录接口
+    """用户登录接口.
 
     - **username**: 用户名或邮箱
     - **password**: 密码
@@ -156,9 +152,7 @@ async def refresh_token(
     refresh_token: str,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, str]:
-    """
-    使用刷新令牌获取新的访问令牌
-    """
+    """使用刷新令牌获取新的访问令牌."""
     access_token = await auth_service.refresh_access_token(refresh_token)
 
     if not access_token:
@@ -179,9 +173,7 @@ async def refresh_token(
 async def get_current_user_info(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """
-    获取当前登录用户的详细信息
-    """
+    """获取当前登录用户的详细信息."""
     return current_user
 
 
@@ -195,9 +187,7 @@ async def update_current_user(
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
-    """
-    更新当前登录用户的信息
-    """
+    """更新当前登录用户的信息."""
     # 更新允许的字段
     allowed_fields = {"first_name", "last_name", "avatar_url", "bio", "preferences"}
 
@@ -229,8 +219,7 @@ async def change_password(
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, str]:
-    """
-    修改当前用户密码
+    """修改当前用户密码.
 
     - **current_password**: 当前密码
     - **new_password**: 新密码
@@ -260,8 +249,7 @@ async def request_password_reset(
     reset_request: PasswordResetRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, str]:
-    """
-    请求密码重置,发送重置令牌到用户邮箱
+    """请求密码重置,发送重置令牌到用户邮箱.
 
     - **email**: 用户邮箱
     """
@@ -289,8 +277,7 @@ async def reset_password(
     reset_data: PasswordResetConfirm,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, str]:
-    """
-    使用重置令牌设置新密码
+    """使用重置令牌设置新密码.
 
     - **token**: 重置令牌
     - **new_password**: 新密码
@@ -317,8 +304,7 @@ async def verify_email(
     verification_token: str,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, str]:
-    """
-    验证用户邮箱
+    """验证用户邮箱.
 
     - **token**: 邮箱验证令牌
     """
@@ -342,9 +328,7 @@ async def resend_verification_email(
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, str]:
-    """
-    为当前用户重新发送邮箱验证邮件
-    """
+    """为当前用户重新发送邮箱验证邮件."""
     if current_user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -366,8 +350,7 @@ async def resend_verification_email(
 async def logout(
     current_user: User = Depends(get_current_user),
 ) -> dict[str, str]:
-    """
-    用户登出接口
+    """用户登出接口.
 
     注意:由于JWT是无状态的,实际的令牌失效需要客户端删除
     这个接口主要用于记录登出事件和清理服务器端状态

@@ -1,5 +1,4 @@
-"""
-预测API端点 / Prediction API Endpoints
+"""预测API端点 / Prediction API Endpoints.
 
 提供比赛预测相关的API接口:
 - 获取比赛预测结果

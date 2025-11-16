@@ -1,6 +1,5 @@
-"""
-数据库性能监控API端点
-Database Performance Monitoring API Endpoints
+"""数据库性能监控API端点
+Database Performance Monitoring API Endpoints.
 
 提供完整的数据库性能监控、分析和优化功能的REST API接口。
 """
@@ -29,7 +28,7 @@ router = APIRouter(prefix="/api/v1/database", tags=["数据库性能监控"])
 
 
 class QueryAnalysisRequest(BaseModel):
-    """查询分析请求模型"""
+    """查询分析请求模型."""
 
     query_text: str = Field(..., description="要分析的SQL查询语句")
     analyze_execution_plan: bool = Field(True, description="是否分析执行计划")
@@ -37,7 +36,7 @@ class QueryAnalysisRequest(BaseModel):
 
 
 class DatabaseOptimizationRequest(BaseModel):
-    """数据库优化请求模型"""
+    """数据库优化请求模型."""
 
     optimization_type: str = Field(..., description="优化类型: query, pool, index, all")
     target_pool: str | None = Field(None, description="目标连接池名称")
@@ -45,7 +44,7 @@ class DatabaseOptimizationRequest(BaseModel):
 
 
 class PerformanceMonitorRequest(BaseModel):
-    """性能监控请求模型"""
+    """性能监控请求模型."""
 
     enable_monitoring: bool = Field(True, description="是否启用监控")
     slow_query_threshold: float = Field(1.0, description="慢查询阈值（秒）")
@@ -58,7 +57,7 @@ class PerformanceMonitorRequest(BaseModel):
 
 @router.get("/performance/status")
 async def get_database_performance_status():
-    """获取数据库性能监控状态"""
+    """获取数据库性能监控状态."""
     db_analyzer = get_database_analyzer()
     db_middleware = get_database_middleware()
     pool_optimizer = get_connection_pool_optimizer()
@@ -118,7 +117,7 @@ async def get_database_performance_status():
 
 @router.post("/queries/analyze")
 async def analyze_query_performance(request: QueryAnalysisRequest):
-    """分析查询性能"""
+    """分析查询性能."""
     execution_analyzer = get_query_execution_analyzer()
     optimization_advisor = get_optimization_advisor()
 
@@ -162,7 +161,7 @@ async def analyze_query_performance(request: QueryAnalysisRequest):
 
 @router.get("/queries/slow")
 async def get_slow_queries(limit: int = Query(20, ge=1, le=100)):
-    """获取慢查询列表"""
+    """获取慢查询列表."""
     db_analyzer = get_database_analyzer()
 
     try:
@@ -185,7 +184,7 @@ async def get_slow_queries(limit: int = Query(20, ge=1, le=100)):
 
 @router.get("/queries/frequent")
 async def get_frequent_queries(limit: int = Query(20, ge=1, le=100)):
-    """获取频繁执行的查询"""
+    """获取频繁执行的查询."""
     db_analyzer = get_database_analyzer()
 
     try:
@@ -207,7 +206,7 @@ async def get_frequent_queries(limit: int = Query(20, ge=1, le=100)):
 
 @router.get("/queries/errors")
 async def get_high_error_queries(min_error_rate: float = Query(5.0, ge=0.0, le=100.0)):
-    """获取高错误率查询"""
+    """获取高错误率查询."""
     db_analyzer = get_database_analyzer()
 
     try:
@@ -235,7 +234,7 @@ async def get_high_error_queries(min_error_rate: float = Query(5.0, ge=0.0, le=1
 
 @router.get("/pools/status")
 async def get_connection_pools_status():
-    """获取所有连接池状态"""
+    """获取所有连接池状态."""
     pool_optimizer = get_connection_pool_optimizer()
 
     try:
@@ -253,7 +252,7 @@ async def get_connection_pools_status():
 
 @router.get("/pools/{pool_name}/status")
 async def get_specific_pool_status(pool_name: str):
-    """获取特定连接池状态"""
+    """获取特定连接池状态."""
     pool_optimizer = get_connection_pool_optimizer()
 
     try:
@@ -281,7 +280,7 @@ async def get_specific_pool_status(pool_name: str):
 async def optimize_connection_pool(
     pool_name: str, optimization_type: str, parameters: dict[str, Any] | None = None
 ):
-    """优化特定连接池"""
+    """优化特定连接池."""
     pool_optimizer = get_connection_pool_optimizer()
 
     try:
@@ -308,7 +307,7 @@ async def optimize_connection_pool(
 
 @router.get("/pools/optimization/history")
 async def get_pool_optimization_history(limit: int = Query(50, ge=1, le=200)):
-    """获取连接池优化历史"""
+    """获取连接池优化历史."""
     pool_optimizer = get_connection_pool_optimizer()
 
     try:
@@ -335,7 +334,7 @@ async def get_pool_optimization_history(limit: int = Query(50, ge=1, le=200)):
 async def optimize_database_performance(
     request: DatabaseOptimizationRequest, background_tasks: BackgroundTasks
 ):
-    """优化数据库性能"""
+    """优化数据库性能."""
     optimization_id = f"db_opt_{int(datetime.utcnow().timestamp())}"
     result = {
         "optimization_id": optimization_id,
@@ -413,7 +412,7 @@ async def optimize_database_performance(
 
 @router.get("/optimization/{optimization_id}/status")
 async def get_optimization_status(optimization_id: str):
-    """获取优化任务状态"""
+    """获取优化任务状态."""
     # 这里应该从任务存储中获取实际状态
     # 暂时返回模拟状态
     return {
@@ -435,7 +434,7 @@ async def get_optimization_status(optimization_id: str):
 
 @router.post("/monitoring/configure")
 async def configure_performance_monitoring(request: PerformanceMonitorRequest):
-    """配置性能监控"""
+    """配置性能监控."""
     db_middleware = get_database_middleware()
     pool_optimizer = get_connection_pool_optimizer()
 
@@ -478,7 +477,7 @@ async def configure_performance_monitoring(request: PerformanceMonitorRequest):
 
 @router.get("/monitoring/metrics")
 async def get_current_metrics():
-    """获取当前性能指标"""
+    """获取当前性能指标."""
     db_middleware = get_database_middleware()
 
     try:
@@ -502,7 +501,7 @@ async def get_performance_report(
     time_range_hours: int = Query(24, ge=1, le=168),  # 1小时到7天
     include_details: bool = Query(True),
 ):
-    """获取数据库性能报告"""
+    """获取数据库性能报告."""
     db_analyzer = get_database_analyzer()
     pool_optimizer = get_connection_pool_optimizer()
 
@@ -551,7 +550,7 @@ async def get_performance_report(
 
 
 def _assess_database_health(report: dict[str, Any]) -> dict[str, Any]:
-    """评估数据库健康状态"""
+    """评估数据库健康状态."""
     health_score = 100
     issues = []
 
@@ -618,7 +617,7 @@ def _assess_database_health(report: dict[str, Any]) -> dict[str, Any]:
 async def _run_global_database_optimization(
     optimization_id: str, parameters: dict[str, Any] | None
 ):
-    """运行全局数据库优化"""
+    """运行全局数据库优化."""
     try:
         logger.info(f"Starting global database optimization: {optimization_id}")
 
@@ -648,7 +647,7 @@ async def _run_global_database_optimization(
 
 @router.get("/health", tags=["健康检查"])
 async def database_performance_health():
-    """数据库性能监控服务健康检查"""
+    """数据库性能监控服务健康检查."""
     db_middleware = get_database_middleware()
     pool_optimizer = get_connection_pool_optimizer()
     get_database_analyzer()

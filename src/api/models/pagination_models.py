@@ -1,5 +1,4 @@
-"""
-Pagination Models
+"""Pagination Models.
 
 分页模型
 """

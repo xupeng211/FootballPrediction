@@ -1,6 +1,5 @@
-"""
-核心依赖注入模块
-Core Dependencies Module
+"""核心依赖注入模块
+Core Dependencies Module.
 
 提供FastAPI应用的核心依赖注入函数。
 Provides core dependency injection functions for FastAPI applications.
@@ -25,9 +24,8 @@ security = HTTPBearer()
 async def get_current_user_optional(
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> dict | None:
-    """
-    可选的用户认证依赖
-    Optional user authentication dependency
+    """可选的用户认证依赖
+    Optional user authentication dependency.
 
     如果提供了token则验证用户，否则返回None。
     Validates user if token is provided, otherwise returns None.
@@ -50,9 +48,8 @@ async def get_current_user_optional(
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
-    """
-    获取数据库会话
-    Get database session
+    """获取数据库会话
+    Get database session.
 
     提供异步数据库会话的依赖注入。
     Provides dependency injection for async database sessions.
@@ -65,9 +62,8 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 def get_sync_db_session() -> Generator[Session, None, None]:
-    """
-    获取同步数据库会话
-    Get synchronous database session
+    """获取同步数据库会话
+    Get synchronous database session.
 
     提供同步数据库会话的依赖注入。
     Provides dependency injection for synchronous database sessions.
@@ -79,9 +75,8 @@ def get_sync_db_session() -> Generator[Session, None, None]:
 async def get_current_user_required(
     current_user: dict | None = Depends(get_current_user_optional),
 ) -> dict:
-    """
-    必需的用户认证依赖
-    Required user authentication dependency
+    """必需的用户认证依赖
+    Required user authentication dependency.
 
     如果用户未认证则抛出HTTP异常。
     Throws HTTP exception if user is not authenticated.
@@ -98,9 +93,8 @@ async def get_current_user_required(
 async def get_admin_user(
     current_user: dict = Depends(get_current_user_required),
 ) -> dict:
-    """
-    管理员用户依赖
-    Admin user dependency
+    """管理员用户依赖
+    Admin user dependency.
 
     检查用户是否具有管理员权限。
     Checks if user has admin privileges.
@@ -114,9 +108,8 @@ async def get_admin_user(
 
 # 数据库连接池依赖
 async def get_db_pool() -> AsyncGenerator[async_sessionmaker, None]:
-    """
-    获取数据库连接池
-    Get database connection pool
+    """获取数据库连接池
+    Get database connection pool.
 
     提供数据库连接池的依赖注入。
     Provides dependency injection for database connection pool.
@@ -136,9 +129,8 @@ async def get_db_pool() -> AsyncGenerator[async_sessionmaker, None]:
 
 # 缓存依赖
 async def get_cache_manager():
-    """
-    获取缓存管理器
-    Get cache manager
+    """获取缓存管理器
+    Get cache manager.
 
     提供缓存管理器的依赖注入。
     Provides dependency injection for cache manager.
@@ -150,9 +142,8 @@ async def get_cache_manager():
 
 # 性能监控依赖
 async def get_performance_monitor():
-    """
-    获取性能监控器
-    Get performance monitor
+    """获取性能监控器
+    Get performance monitor.
 
     提供性能监控器的依赖注入。
     Provides dependency injection for performance monitor.
@@ -164,9 +155,8 @@ async def get_performance_monitor():
 
 # 日志记录器依赖
 def get_request_logger():
-    """
-    获取请求日志记录器
-    Get request logger
+    """获取请求日志记录器
+    Get request logger.
 
     提供请求日志记录器的依赖注入。
     Provides dependency injection for request logger.
@@ -176,9 +166,8 @@ def get_request_logger():
 
 # 测试依赖
 async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    测试数据库会话依赖
-    Test database session dependency
+    """测试数据库会话依赖
+    Test database session dependency.
 
     为测试提供独立的数据库会话。
     Provides independent database session for testing.
@@ -208,9 +197,8 @@ DEPENDENCIES = {
 
 
 def get_dependency(dependency_name: str):
-    """
-    根据名称获取依赖函数
-    Get dependency function by name
+    """根据名称获取依赖函数
+    Get dependency function by name.
 
     Args:
         dependency_name: 依赖名称

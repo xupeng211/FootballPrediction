@@ -1,13 +1,12 @@
-"""
-赔率相关模型
-Odds Related Models
+"""赔率相关模型
+Odds Related Models.
 """
 
 from pydantic import BaseModel, Field
 
 
 class OddsQueryParams(BaseModel):
-    """赔率查询参数"""
+    """赔率查询参数."""
 
     bookmaker: str | None = Field(None, description="博彩公司")
     market_type: str | None = Field(None, description="市场类型")

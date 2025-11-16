@@ -1,7 +1,6 @@
 # mypy: ignore-errors
-"""
-自动绑定系统
-Auto Binding System
+"""自动绑定系统
+Auto Binding System.
 
 提供接口到实现的自动绑定功能.
 Provides automatic binding from interfaces to implementations.
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BindingRule:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """绑定规则"""
@@ -35,13 +34,13 @@ class BindingRule:
 
 
 class AutoBinder:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """自动绑定器"""
 
     def __init__(self, container: DIContainer):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.container = container
         self._binding_rules: list[BindingRule] = []
@@ -49,7 +48,7 @@ class AutoBinder:
         self._implementation_cache: dict[type, list[type]] = {}
 
     def add_binding_rule(self, rule: BindingRule) -> None:
-        """添加绑定规则"""
+        """添加绑定规则."""
         self._binding_rules.append(rule)
         logger.debug(
             f"添加绑定规则: {rule.interface.__name__} -> {rule.implementation.__name__}"
@@ -58,7 +57,7 @@ class AutoBinder:
     def bind_from_assembly(
         self, module_path: str, pattern: str = "*", recursive: bool = True
     ) -> None:
-        """从程序集绑定"""
+        """从程序集绑定."""
         logger.info(f"扫描模块 {module_path} 查找绑定")
 
         # 获取模块路径
@@ -75,7 +74,7 @@ class AutoBinder:
             self._scan_module(module)
 
     def bind_by_convention(self, convention: str = "default") -> None:
-        """按约定绑定"""
+        """按约定绑定."""
         if convention == "default":
             self._apply_default_convention()
         elif convention == "repository":
@@ -86,7 +85,7 @@ class AutoBinder:
             raise DependencyInjectionError(f"未知的绑定约定: {convention}")
 
     def bind_interface_to_implementations(self, interface: type[T]) -> None:
-        """绑定接口到所有实现"""
+        """绑定接口到所有实现."""
         implementations = self._find_implementations(interface)
 
         if not implementations:
@@ -118,7 +117,7 @@ class AutoBinder:
                         )
 
     def auto_bind(self) -> None:
-        """执行自动绑定"""
+        """执行自动绑定."""
         logger.info("开始自动绑定")
 
         # 应用绑定规则
@@ -140,7 +139,7 @@ class AutoBinder:
     def _scan_directory(
         self, directory: Path, module_prefix: str, pattern: str, recursive: bool
     ) -> None:
-        """扫描目录"""
+        """扫描目录."""
         for file_path in directory.glob(f"{pattern}.py"):
             if file_path.name.startswith("_"):
                 continue
@@ -167,7 +166,7 @@ class AutoBinder:
                     self._scan_directory(sub_dir, module_prefix, pattern, recursive)
 
     def _scan_module(self, module) -> None:
-        """扫描模块"""
+        """扫描模块."""
         for _name, obj in inspect.getmembers(module, inspect.isclass):
             # 跳过导入的类
             if obj.__module__ != module.__name__:
@@ -181,7 +180,7 @@ class AutoBinder:
                 self._check_class_implementations(obj)
 
     def _bind_interface_implementations(self, interface: type) -> None:
-        """绑定接口实现"""
+        """绑定接口实现."""
         implementations = self._find_implementations(interface)
 
         if implementations:
@@ -202,7 +201,7 @@ class AutoBinder:
                     )
 
     def _check_class_implementations(self, cls: type) -> None:
-        """检查类的实现"""
+        """检查类的实现."""
         # 获取类的所有父类
         bases = cls.__bases__
 
@@ -219,7 +218,7 @@ class AutoBinder:
                     logger.debug(f"自动绑定: {base.__name__} -> {cls.__name__}")
 
     def _find_implementations(self, interface: type) -> list[type]:
-        """查找接口的实现"""
+        """查找接口的实现."""
         implementations = []
 
         # 首先检查缓存
@@ -244,7 +243,7 @@ class AutoBinder:
         return implementations
 
     def _is_implementation(self, cls: type, interface: type) -> bool:
-        """检查是否是接口的实现"""
+        """检查是否是接口的实现."""
         try:
             return issubclass(cls, interface) and not inspect.isabstract(cls)
         except TypeError:
@@ -253,7 +252,7 @@ class AutoBinder:
     def _select_primary_implementation(
         self, interface: type, implementations: list[type]
     ) -> type | None:
-        """选择主要实现"""
+        """选择主要实现."""
         # 优先级规则：
         # 1. 类名以接口名结尾的
         # 2. 类名包含Default的
@@ -277,11 +276,11 @@ class AutoBinder:
     def _select_default_implementation(
         self, interface: type, implementations: list[type]
     ) -> type | None:
-        """选择默认实现"""
+        """选择默认实现."""
         return self._select_primary_implementation(interface, implementations)
 
     def _apply_default_convention(self) -> None:
-        """应用默认约定"""
+        """应用默认约定."""
         # 默认约定:接口名以I开头,实现名去掉I
         for interface in self._implementation_cache:
             if interface.__name__.startswith("I"):
@@ -295,7 +294,7 @@ class AutoBinder:
                         break
 
     def _apply_repository_convention(self) -> None:
-        """应用仓储约定"""
+        """应用仓储约定."""
         # 约定:IRepository -> Repository
         for interface in self._implementation_cache:
             if "Repository" in interface.__name__:
@@ -308,7 +307,7 @@ class AutoBinder:
                         break
 
     def _apply_service_convention(self) -> None:
-        """应用服务约定"""
+        """应用服务约定."""
         # 约定:IService -> Service
         for interface in self._implementation_cache:
             if interface.__name__.startswith("I") and "Service" in interface.__name__:
@@ -322,7 +321,7 @@ class AutoBinder:
 
 
 class ConventionBinder:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """约定绑定器"""
@@ -334,7 +333,7 @@ class ConventionBinder:
         implementation_pattern: str,
         lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
     ) -> None:
-        """按名称模式绑定"""
+        """按名称模式绑定."""
         # 这里可以实现更复杂的名称模式匹配
 
     @staticmethod
@@ -344,13 +343,13 @@ class ConventionBinder:
         implementation_namespace: str,
         lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
     ) -> None:
-        """按命名空间绑定"""
+        """按命名空间绑定."""
         # 这里可以实现命名空间绑定
 
 
 # 装饰器用于标记自动绑定
 def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """自动绑定装饰器"""
 
@@ -364,7 +363,7 @@ def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
 
 
 def bind_to(interface: type[T]):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """绑定到接口装饰器"""
 
@@ -377,7 +376,7 @@ def bind_to(interface: type[T]):
 
 
 def primary_implementation():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """主要实现装饰器"""
 

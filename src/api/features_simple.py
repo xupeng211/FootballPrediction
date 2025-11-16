@@ -1,5 +1,4 @@
-"""
-简化版特征获取API
+"""简化版特征获取API.
 
 提供基本的特征获取接口,避免复杂的Feast依赖问题.
 """
@@ -24,8 +23,7 @@ router = APIRouter(prefix="/features", tags=["特征管理"])
 async def get_match_features(
     match_id: int, db: AsyncSession = Depends(get_async_db)
 ) -> dict[str, Any]:
-    """
-    获取指定比赛的简单特征
+    """获取指定比赛的简单特征.
 
     Args:
         match_id: 比赛ID
@@ -72,9 +70,7 @@ async def get_match_features(
 
 @router.get("/health", response_model=dict[str, str])
 async def health_check() -> dict[str, str]:
-    """
-    简单的健康检查端点
-    """
+    """简单的健康检查端点."""
     try:
         return {
             "status": "healthy",
@@ -88,9 +84,7 @@ async def health_check() -> dict[str, str]:
 
 @router.get("/", response_model=dict[str, Any])
 async def get_features_info() -> dict[str, Any]:
-    """
-    获取特征服务信息
-    """
+    """获取特征服务信息."""
     try:
         return {
             "service": "features",

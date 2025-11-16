@@ -1,6 +1,5 @@
-"""
-API性能优化模块
-API Performance Optimization Module
+"""API性能优化模块
+API Performance Optimization Module.
 
 提供统一的API性能优化功能集成，包括缓存、数据库查询优化、连接池管理等。
 """

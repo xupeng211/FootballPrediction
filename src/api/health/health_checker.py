@@ -1,5 +1,4 @@
-"""
-Health Checker - API模块
+"""Health Checker - API模块.
 
 提供 health checker 相关的API功能.
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-API文档增强端点
-Enhanced API Documentation Endpoints
+"""API文档增强端点
+Enhanced API Documentation Endpoints.
 
 Author: Claude Code
 Version: 1.0.0
@@ -22,8 +21,7 @@ settings = get_settings()
 
 @router.get("/enhanced", response_class=HTMLResponse)
 async def enhanced_swagger_ui():
-    """
-    获取增强版Swagger UI页面
+    """获取增强版Swagger UI页面.
 
     提供了丰富的交互功能，包括：
     - 实时API状态监控
@@ -53,8 +51,7 @@ async def enhanced_swagger_ui():
 
 @router.get("/interactive", response_class=HTMLResponse)
 async def interactive_playground():
-    """
-    获取交互式API测试页面
+    """获取交互式API测试页面.
 
     提供专门用于API测试的界面，包括：
     - 一键测试功能
@@ -62,7 +59,6 @@ async def interactive_playground():
     - 性能基准测试
     - 批量API调用
     """
-
     interactive_html = """
 <!DOCTYPE html>
 <html>
@@ -538,8 +534,7 @@ async def interactive_playground():
 
 @router.get("/examples", response_class=HTMLResponse)
 async def api_examples():
-    """
-    获取API使用示例页面
+    """获取API使用示例页面.
 
     提供各种编程语言的使用示例，包括：
     - Python SDK使用
@@ -547,7 +542,6 @@ async def api_examples():
     - Java示例
     - cURL命令示例
     """
-
     examples_html = """
 <!DOCTYPE html>
 <html>
@@ -907,7 +901,7 @@ public class PredictionExample {
 
 @router.get("/openapi.json")
 async def get_openapi_spec() -> dict[str, Any]:
-    """获取OpenAPI规范JSON"""
+    """获取OpenAPI规范JSON."""
     # 这里应该从应用获取OpenAPI规范
     # 暂时返回基本结构
     return {
@@ -932,7 +926,7 @@ async def get_openapi_spec() -> dict[str, Any]:
 
 @router.get("/status")
 async def docs_status():
-    """获取文档系统状态"""
+    """获取文档系统状态."""
     return {
         "status": "active",
         "features": {
@@ -954,5 +948,5 @@ async def docs_status():
 
 
 def setup_docs_routes(app) -> None:
-    """设置文档路由"""
+    """设置文档路由."""
     app.include_router(router)

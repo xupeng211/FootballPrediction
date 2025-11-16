@@ -1,6 +1,5 @@
-"""
-预测API路由器
-Predictions API Router
+"""预测API路由器
+Predictions API Router.
 
 提供预测相关的API路由.
 """
@@ -26,14 +25,14 @@ logger = logging.getLogger(__name__)
 
 
 class PredictionRequest(BaseModel):
-    """预测请求模型"""
+    """预测请求模型."""
 
     model_version: str | None = Field("default", description="模型版本")
     include_details: bool = Field(False, description="是否包含详细信息")
 
 
 class PredictionResult(BaseModel):
-    """预测结果模型"""
+    """预测结果模型."""
 
     match_id: int
     home_win_prob: float = Field(..., ge=0, le=1, description="主队获胜概率")
@@ -46,7 +45,7 @@ class PredictionResult(BaseModel):
 
 
 class BatchPredictionRequest(BaseModel):
-    """批量预测请求"""
+    """批量预测请求."""
 
     match_ids: list[int] = Field(
         ..., min_length=1, max_length=100, description="比赛ID列表"
@@ -55,7 +54,7 @@ class BatchPredictionRequest(BaseModel):
 
 
 class BatchPredictionResponse(BaseModel):
-    """批量预测响应"""
+    """批量预测响应."""
 
     predictions: list[PredictionResult]
     total: int
@@ -65,7 +64,7 @@ class BatchPredictionResponse(BaseModel):
 
 
 class PredictionHistory(BaseModel):
-    """预测历史记录"""
+    """预测历史记录."""
 
     match_id: int
     predictions: list[PredictionResult]
@@ -73,7 +72,7 @@ class PredictionHistory(BaseModel):
 
 
 class RecentPrediction(BaseModel):
-    """最近的预测"""
+    """最近的预测."""
 
     id: int
     match_id: int
@@ -84,7 +83,7 @@ class RecentPrediction(BaseModel):
 
 
 class PredictionVerification(BaseModel):
-    """预测验证结果"""
+    """预测验证结果."""
 
     match_id: int
     prediction: PredictionResult
@@ -99,7 +98,7 @@ class PredictionVerification(BaseModel):
 
 
 class CreatePredictionRequest(BaseModel):
-    """创建预测请求模型"""
+    """创建预测请求模型."""
 
     match_id: int = Field(..., description="比赛ID")
     home_team: str = Field(..., description="主队名称")
@@ -110,7 +109,7 @@ class CreatePredictionRequest(BaseModel):
 
 @router.get("/info")
 async def get_predictions_root():
-    """预测服务根路径信息"""
+    """预测服务根路径信息."""
     return {
         "service": "足球预测API",
         "module": "predictions",
@@ -132,9 +131,7 @@ async def get_predictions_root():
 
 @router.get("/", response_model=dict[str, Any])
 async def get_predictions_root():
-    """
-    预测服务根路径信息
-    """
+    """预测服务根路径信息."""
     return {
         "service": "足球预测API",
         "module": "predictions",
@@ -157,8 +154,7 @@ async def get_predictions_list(
     limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
     offset: int = Query(0, ge=0, description="偏移量"),
 ):
-    """
-    获取预测列表
+    """获取预测列表.
 
     返回分页的预测数据列表.
     """
@@ -185,8 +181,7 @@ async def get_predictions_list(
 
 @router.post("/", response_model=dict[str, Any], status_code=201)
 async def create_prediction(request: CreatePredictionRequest):
-    """
-    创建新的预测
+    """创建新的预测.
 
     接收预测请求数据并创建新的预测记录.
     """
@@ -220,7 +215,7 @@ async def create_prediction(request: CreatePredictionRequest):
 
 @router.get("/health")
 async def health_check():
-    """健康检查"""
+    """健康检查."""
     return {"status": "healthy", "service": "predictions"}
 
 
@@ -229,8 +224,7 @@ async def get_recent_predictions(
     limit: int = Query(20, ge=1, le=100, description="返回数量"),
     hours: int = Query(24, ge=1, le=168, description="时间范围（小时）"),
 ):
-    """
-    获取最近的预测记录
+    """获取最近的预测记录.
 
     返回系统最近生成的预测,默认返回最近24小时内的预测.
     """
@@ -272,8 +266,7 @@ async def get_recent_predictions(
 
 @router.get("/{prediction_id}")
 async def get_prediction_by_id_endpoint(prediction_id: str):
-    """
-    根据预测ID获取预测
+    """根据预测ID获取预测.
 
     接受字符串ID并返回对应的预测数据.
     """
@@ -305,8 +298,7 @@ async def get_prediction_by_id_endpoint(prediction_id: str):
 
 @router.get("/match/{match_id}")
 async def get_match_predictions(match_id: int):
-    """
-    获取指定比赛的预测列表
+    """获取指定比赛的预测列表.
 
     返回指定比赛的所有预测记录，用于测试和数据验证.
     """
@@ -333,8 +325,7 @@ async def get_match_predictions(match_id: int):
 
 @router.post("/{match_id}/predict", response_model=PredictionResult, status_code=201)
 async def create_prediction(match_id: int, request: PredictionRequest | None = None):
-    """
-    实时生成比赛预测
+    """实时生成比赛预测.
 
     使用机器学习模型实时计算比赛结果预测。
     此操作会触发完整的预测流程,包括特征提取和模型推理.
@@ -370,8 +361,7 @@ async def create_prediction(match_id: int, request: PredictionRequest | None = N
 
 @router.post("/batch", response_model=BatchPredictionResponse)
 async def batch_predict(request: BatchPredictionRequest):
-    """
-    批量预测比赛结果
+    """批量预测比赛结果.
 
     一次性为多场比赛生成预测,适用于批处理场景。
     最多支持100场比赛的批量预测.
@@ -425,8 +415,7 @@ async def get_prediction_history(
     match_id: int,
     limit: int = Query(10, ge=1, le=100, description="返回的历史记录数量"),
 ):
-    """
-    获取比赛的历史预测记录
+    """获取比赛的历史预测记录.
 
     返回指定比赛的所有历史预测,按时间倒序排列。
     可用于分析预测准确性的变化趋势.
@@ -473,8 +462,7 @@ async def verify_prediction(
         ..., regex="^(home|draw|away)$", description="实际比赛结果"
     ),
 ):
-    """
-    验证预测结果的准确性
+    """验证预测结果的准确性.
 
     在比赛结束后,使用此端点验证预测的准确性。
     系统会自动计算准确性分数并更新模型统计.

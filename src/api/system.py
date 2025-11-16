@@ -1,6 +1,5 @@
-"""
-系统管理API路由
-System Management API Router
+"""系统管理API路由
+System Management API Router.
 
 提供系统管理相关的API端点：
 - 系统统计信息
@@ -24,9 +23,8 @@ router = APIRouter(tags=["系统管理"])
 
 @router.get("/stats")
 async def get_system_stats() -> dict[str, Any]:
-    """
-    获取系统统计信息
-    Get system statistics
+    """获取系统统计信息
+    Get system statistics.
 
     Returns:
         系统统计信息
@@ -47,9 +45,8 @@ async def get_system_stats() -> dict[str, Any]:
 
 @router.get("/version")
 async def get_api_version() -> dict[str, Any]:
-    """
-    获取API版本信息
-    Get API version information
+    """获取API版本信息
+    Get API version information.
 
     Returns:
         API版本信息
@@ -70,9 +67,8 @@ async def get_api_version() -> dict[str, Any]:
 
 @router.get("/queue")
 async def get_queue_status() -> dict[str, Any]:
-    """
-    获取队列状态信息
-    Get queue status information
+    """获取队列状态信息
+    Get queue status information.
 
     Returns:
         队列状态信息
@@ -93,9 +89,8 @@ async def get_queue_status() -> dict[str, Any]:
 
 @router.post("/queue/status")
 async def get_queue_status_post() -> dict[str, Any]:
-    """
-    获取队列状态信息 (POST端点)
-    Get queue status information (POST endpoint)
+    """获取队列状态信息 (POST端点)
+    Get queue status information (POST endpoint).
 
     Returns:
         队列状态信息
@@ -116,9 +111,8 @@ async def get_queue_status_post() -> dict[str, Any]:
 
 @router.get("/health")
 async def system_health_check() -> dict[str, Any]:
-    """
-    系统健康检查
-    System health check
+    """系统健康检查
+    System health check.
 
     Returns:
         健康状态信息

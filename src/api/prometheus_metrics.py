@@ -1,6 +1,5 @@
-"""
-Prometheus Metrics API
-Prometheus指标API端点
+"""Prometheus Metrics API
+Prometheus指标API端点.
 """
 
 import logging
@@ -56,9 +55,7 @@ system_memory_usage = Gauge(
 
 @router.get("/")
 async def prometheus_metrics():
-    """
-    Prometheus指标端点
-    """
+    """Prometheus指标端点."""
     try:
         # 更新系统指标
         await update_system_metrics()
@@ -72,7 +69,7 @@ async def prometheus_metrics():
 
 
 async def update_system_metrics():
-    """更新系统指标"""
+    """更新系统指标."""
     try:
         import psutil
 
@@ -93,7 +90,7 @@ async def update_system_metrics():
 
 
 def record_http_request(method: str, endpoint: str, status_code: int, duration: float):
-    """记录HTTP请求指标"""
+    """记录HTTP请求指标."""
     try:
         http_requests_total.labels(
             method=method, endpoint=endpoint, status_code=str(status_code)
@@ -108,7 +105,7 @@ def record_http_request(method: str, endpoint: str, status_code: int, duration: 
 
 
 def record_prediction_request(model_type: str, status: str):
-    """记录预测请求指标"""
+    """记录预测请求指标."""
     try:
         prediction_requests_total.labels(model_type=model_type, status=status).inc()
 
@@ -117,7 +114,7 @@ def record_prediction_request(model_type: str, status: str):
 
 
 def update_active_users(count: int):
-    """更新活跃用户数"""
+    """更新活跃用户数."""
     try:
         active_users.set(count)
     except Exception as e:
@@ -125,7 +122,7 @@ def update_active_users(count: int):
 
 
 def update_db_connections(count: int):
-    """更新数据库连接数"""
+    """更新数据库连接数."""
     try:
         db_connections_active.set(count)
     except Exception as e:
@@ -133,7 +130,7 @@ def update_db_connections(count: int):
 
 
 def update_redis_connections(count: int):
-    """更新Redis连接数"""
+    """更新Redis连接数."""
     try:
         redis_connections_active.set(count)
     except Exception as e:

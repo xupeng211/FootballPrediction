@@ -1,5 +1,4 @@
-"""
-Checks - API模块
+"""Checks - API模块.
 
 提供 checks 相关的API功能.
 

@@ -1,5 +1,4 @@
-"""
-改进版特征获取API
+"""改进版特征获取API.
 
 提供更可靠,更详细的特征获取接口,包含完善的错误处理和日志记录.
 """
@@ -47,7 +46,7 @@ def get_feature_store() -> FootballFeatureStore | None:
 
 
 def validate_match_id(match_id: int) -> None:
-    """验证比赛ID参数"""
+    """验证比赛ID参数."""
     if match_id <= 0:
         logger.warning(f"无效的比赛ID: {match_id}")
         raise HTTPException(
@@ -57,7 +56,7 @@ def validate_match_id(match_id: int) -> None:
 
 
 def check_feature_store_availability() -> None:
-    """检查特征存储服务可用性"""
+    """检查特征存储服务可用性."""
     if get_feature_store() is None:
         logger.error("特征存储服务不可用")
         raise HTTPException(
@@ -67,7 +66,7 @@ def check_feature_store_availability() -> None:
 
 
 async def get_match_info(session: AsyncSession, match_id: int) -> Match:
-    """获取比赛基础信息"""
+    """获取比赛基础信息."""
     logger.debug(f"查询比赛 {match_id} 的基础信息")
 
     try:
@@ -108,7 +107,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
 
 
 async def get_features_data(match_id: int, match: Match) -> tuple[dict[str, Any], str]:
-    """获取特征数据（支持优雅降级）"""
+    """获取特征数据（支持优雅降级）."""
     store = get_feature_store()
     if store is None:
         return {}, "feature store unavailable"
@@ -145,7 +144,7 @@ def build_response_data(
     features_error: str,
     include_raw: bool,
 ) -> dict[str, Any]:
-    """构造响应数据"""
+    """构造响应数据."""
     response_data = {
         "match_id": match.id,
         "home_team_id": match.home_team_id,
@@ -177,8 +176,7 @@ def build_response_data(
 async def get_match_features_improved(
     match_id: int, session: Session = Depends(get_db_session), include_raw: bool = False
 ) -> dict[str, Any]:
-    """
-    改进版本:获取比赛特征
+    """改进版本:获取比赛特征.
 
     改进点:
     1. ✅ 详细的日志记录
@@ -210,7 +208,7 @@ async def get_match_features_improved(
 
 @router.get("/health", summary="特征服务健康检查")
 async def health_check() -> dict[str, Any]:
-    """特征服务健康检查"""
+    """特征服务健康检查."""
     return {
         "service": "特征获取服务",
         "status": "healthy" if get_feature_store() else "unhealthy",
