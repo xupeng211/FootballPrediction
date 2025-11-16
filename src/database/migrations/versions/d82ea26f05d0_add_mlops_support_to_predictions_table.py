@@ -18,8 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    """添加MLOps支持到predictions表"""
-
+    """添加MLOps支持到predictions表."""
     # 添加验证相关字段
     op.add_column(
         "predictions",
@@ -67,8 +66,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """移除MLOps支持字段"""
-
+    """移除MLOps支持字段."""
     # 删除索引
     op.drop_index("idx_predictions_actual_result", table_name="predictions")
     op.drop_index("idx_predictions_verification", table_name="predictions")

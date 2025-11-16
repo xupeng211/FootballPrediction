@@ -1,6 +1,5 @@
-"""
-企业级多租户系统数据模型
-Enterprise Multi-Tenant System Data Models
+"""企业级多租户系统数据模型
+Enterprise Multi-Tenant System Data Models.
 
 提供多租户架构的核心数据模型,包括租户,权限,角色等.
 """
@@ -29,7 +28,7 @@ from src.database.models.user import User
 
 
 class TenantStatus(str, Enum):
-    """租户状态枚举"""
+    """租户状态枚举."""
 
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -39,7 +38,7 @@ class TenantStatus(str, Enum):
 
 
 class TenantPlan(str, Enum):
-    """租户计划枚举"""
+    """租户计划枚举."""
 
     BASIC = "basic"
     PROFESSIONAL = "professional"
@@ -48,8 +47,7 @@ class TenantPlan(str, Enum):
 
 
 class Tenant(BaseModel):
-    """
-    租户模型
+    """租户模型.
 
     支持多租户架构的核心租户管理
     """
@@ -134,12 +132,12 @@ class Tenant(BaseModel):
 
     @hybrid_property
     def is_trial(self) -> bool:
-        """是否为试用状态"""
+        """是否为试用状态."""
         return self.status == TenantStatus.TRIAL
 
     @hybrid_property
     def is_subscription_active(self) -> bool:
-        """订阅是否激活"""
+        """订阅是否激活."""
         if self.status != TenantStatus.ACTIVE:
             return False
         if self.subscription_ends_at is None:
@@ -148,7 +146,7 @@ class Tenant(BaseModel):
 
     @hybrid_property
     def days_until_expiry(self) -> int | None:
-        """距离过期的天数"""
+        """距离过期的天数."""
         if self.subscription_ends_at is None:
             return None
         delta = self.subscription_ends_at - datetime.utcnow()
@@ -156,7 +154,7 @@ class Tenant(BaseModel):
 
     @hybrid_property
     def usage_percentage(self) -> float:
-        """存储使用百分比"""
+        """存储使用百分比."""
         if self.storage_quota_mb <= 0:
             return 0.0
         used_mb = (
@@ -165,14 +163,14 @@ class Tenant(BaseModel):
         return min(100.0, (used_mb / self.storage_quota_mb) * 100)
 
     def can_add_user(self) -> bool:
-        """是否可以添加新用户"""
+        """是否可以添加新用户."""
         current_users = (
             self.usage_metrics.get("current_users", 0) if self.usage_metrics else 0
         )
         return current_users < self.max_users
 
     def can_make_prediction(self) -> bool:
-        """是否可以创建新预测"""
+        """是否可以创建新预测."""
         if not self.is_subscription_active:
             return False
 
@@ -182,7 +180,7 @@ class Tenant(BaseModel):
         return daily_predictions < self.max_predictions_per_day
 
     def can_make_api_call(self) -> bool:
-        """是否可以调用API"""
+        """是否可以调用API."""
         if not self.is_subscription_active:
             return False
 
@@ -192,19 +190,19 @@ class Tenant(BaseModel):
         return hourly_api_calls < self.max_api_calls_per_hour
 
     def get_feature_access(self, feature_name: str) -> bool:
-        """检查功能访问权限"""
+        """检查功能访问权限."""
         if not self.features:
             return False
         return self.features.get(feature_name, False)
 
     def update_usage_metrics(self, metrics: dict[str, Any]) -> None:
-        """更新使用指标"""
+        """更新使用指标."""
         if self.usage_metrics is None:
             self.usage_metrics = {}
         self.usage_metrics.update(metrics)
 
     def to_dict(self, exclude_fields: set | None = None) -> dict:
-        """转换为字典"""
+        """转换为字典."""
         result = super().to_dict(exclude_fields)
         # 添加计算属性
         result["is_trial"] = self.is_trial
@@ -215,7 +213,7 @@ class Tenant(BaseModel):
 
 
 class PermissionScope(str, Enum):
-    """权限范围枚举"""
+    """权限范围枚举."""
 
     GLOBAL = "global"  # 全局权限
     TENANT = "tenant"  # 租户权限
@@ -224,7 +222,7 @@ class PermissionScope(str, Enum):
 
 
 class ResourceType(str, Enum):
-    """资源类型枚举"""
+    """资源类型枚举."""
 
     PREDICTIONS = "predictions"
     MODELS = "models"
@@ -236,9 +234,8 @@ class ResourceType(str, Enum):
 
 
 class TenantPermission(BaseModel):
-    """
-    租户权限模型
-    定义租户级别的高层权限和资源访问控制
+    """租户权限模型
+    定义租户级别的高层权限和资源访问控制.
     """
 
     __tablename__ = "tenant_permissions"
@@ -286,7 +283,7 @@ class TenantPermission(BaseModel):
     def can_perform_action(
         self, action: str, resource_context: dict[str, Any] | None = None
     ) -> bool:
-        """检查是否可以执行指定动作"""
+        """检查是否可以执行指定动作."""
         if not self.is_active:
             return False
 
@@ -301,7 +298,7 @@ class TenantPermission(BaseModel):
         return True
 
     def _evaluate_conditions(self, context: dict[str, Any]) -> bool:
-        """评估权限条件"""
+        """评估权限条件."""
         # 简单的条件评估逻辑,可根据需要扩展
         for condition_key, condition_value in self.conditions.items():
             if condition_key not in context:
@@ -318,9 +315,8 @@ class TenantPermission(BaseModel):
 
 
 class TenantRole(BaseModel):
-    """
-    租户角色模型
-    定义租户内的角色和职责
+    """租户角色模型
+    定义租户内的角色和职责.
     """
 
     __tablename__ = "tenant_roles"
@@ -362,16 +358,15 @@ class TenantRole(BaseModel):
     )
 
     def has_permission(self, permission_code: str) -> bool:
-        """检查是否拥有指定权限"""
+        """检查是否拥有指定权限."""
         if not self.is_active:
             return False
         return permission_code in (self.permissions or [])
 
 
 class RolePermission(BaseModel):
-    """
-    角色权限关联模型
-    多对多关系表,连接角色和权限
+    """角色权限关联模型
+    多对多关系表,连接角色和权限.
     """
 
     __tablename__ = "role_permissions"
@@ -412,9 +407,8 @@ class RolePermission(BaseModel):
 
 
 class UserRoleAssignment(BaseModel):
-    """
-    用户角色分配模型
-    记录用户在租户内的角色分配
+    """用户角色分配模型
+    记录用户在租户内的角色分配.
     """
 
     __tablename__ = "user_role_assignments"
@@ -456,12 +450,12 @@ class UserRoleAssignment(BaseModel):
 
     @hybrid_property
     def is_expired(self) -> bool:
-        """是否已过期"""
+        """是否已过期."""
         if self.expires_at is None:
             return False
         return datetime.utcnow() > self.expires_at
 
     @hybrid_property
     def is_valid(self) -> bool:
-        """是否有效"""
+        """是否有效."""
         return self.is_active and not self.is_expired

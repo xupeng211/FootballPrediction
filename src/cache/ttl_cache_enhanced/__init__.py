@@ -1,5 +1,4 @@
-"""
-TTL缓存增强模块
+"""TTL缓存增强模块.
 
 提供高性能的TTL缓存实现，支持：
 - 自动过期
@@ -66,7 +65,7 @@ except ImportError:
 
 # 添加 get_all_stats 函数
 def get_all_stats():
-    """获取所有缓存的统计信息"""
+    """获取所有缓存的统计信息."""
     stats = {}
     for name, cache in CACHES.items():
         if hasattr(cache, "stats"):

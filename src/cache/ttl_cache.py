@@ -1,5 +1,4 @@
-"""
-TTL cache module - 使用增强版TTL缓存实现
+"""TTL cache module - 使用增强版TTL缓存实现.
 
 提供高性能的内存缓存功能,支持:
 - 自动过期

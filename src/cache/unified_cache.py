@@ -1,6 +1,5 @@
-"""
-统一缓存管理器
-Unified Cache Manager
+"""统一缓存管理器
+Unified Cache Manager.
 
 提供统一的多级缓存管理，包括本地缓存和Redis缓存。
 Provides unified multi-level cache management including local cache and Redis cache.
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class UnifiedCacheManager:
-    """统一缓存管理器 - 多级缓存实现"""
+    """统一缓存管理器 - 多级缓存实现."""
 
     def __init__(self, redis_client=None, local_cache_size: int = 1000):
         self.redis_client = redis_client
@@ -35,7 +34,7 @@ class UnifiedCacheManager:
         self.cache_config = self._get_cache_config()
 
     def _get_cache_config(self) -> dict[str, int]:
-        """获取统一的缓存配置"""
+        """获取统一的缓存配置."""
         return {
             # 预测相关缓存 - 高频访问
             "prediction_result": 3600,  # 1小时
@@ -61,11 +60,11 @@ class UnifiedCacheManager:
         }
 
     def _generate_cache_key(self, key: str, cache_type: str) -> str:
-        """生成缓存键"""
+        """生成缓存键."""
         return f"{cache_type}:{key}"
 
     def _update_local_cache(self, key: str, value: Any, ttl: int | None = None):
-        """更新本地缓存（LRU实现 + TTL支持）"""
+        """更新本地缓存（LRU实现 + TTL支持）."""
         if len(self.local_cache) >= self.local_cache_size:
             # 简单的LRU实现：删除最旧的条目
             oldest_key = min(
@@ -85,7 +84,7 @@ class UnifiedCacheManager:
         }
 
     def _serialize_data(self, data: Any) -> bytes:
-        """序列化数据"""
+        """序列化数据."""
         try:
             if isinstance(data, (str, int, float, bool)):
                 return str(data).encode("utf-8")
@@ -97,7 +96,7 @@ class UnifiedCacheManager:
             return b"{}"
 
     def _deserialize_data(self, data: bytes) -> Any:
-        """反序列化数据"""
+        """反序列化数据."""
         try:
             # 尝试反序列化为字符串
             return data.decode("utf-8")
@@ -110,7 +109,7 @@ class UnifiedCacheManager:
                 return None
 
     async def get(self, key: str, cache_type: str = "default") -> Any | None:
-        """获取缓存数据 - 多级缓存"""
+        """获取缓存数据 - 多级缓存."""
         time.time()
 
         # 生成缓存键
@@ -171,7 +170,7 @@ class UnifiedCacheManager:
         cache_type: str = "default",
         ttl: int | None = None,
     ) -> bool:
-        """设置缓存数据"""
+        """设置缓存数据."""
         time.time()
 
         try:
@@ -205,7 +204,7 @@ class UnifiedCacheManager:
             return False
 
     async def delete(self, key: str, cache_type: str = "default") -> bool:
-        """删除缓存数据"""
+        """删除缓存数据."""
         try:
             cache_key = self._generate_cache_key(key, cache_type)
 
@@ -232,7 +231,7 @@ class UnifiedCacheManager:
             return False
 
     async def invalidate_pattern(self, pattern: str, cache_type: str = None):
-        """批量删除匹配模式的缓存"""
+        """批量删除匹配模式的缓存."""
         try:
             # 删除本地缓存匹配项
             if cache_type:
@@ -276,7 +275,7 @@ class UnifiedCacheManager:
             logger.error(f"Cache invalidation error: {e}")
 
     async def get_cache_stats(self) -> dict[str, Any]:
-        """获取缓存统计信息"""
+        """获取缓存统计信息."""
         stats = self.cache_stats.copy()
 
         # 计算命中率
@@ -296,7 +295,7 @@ class UnifiedCacheManager:
         return stats
 
     async def cleanup_expired_entries(self):
-        """清理过期的本地缓存条目"""
+        """清理过期的本地缓存条目."""
         try:
             current_time = time.time()
             expired_keys = []
@@ -323,7 +322,7 @@ _cache_manager: UnifiedCacheManager | None = None
 
 
 def get_cache_manager() -> UnifiedCacheManager:
-    """获取全局缓存管理器实例"""
+    """获取全局缓存管理器实例."""
     global _cache_manager
     if _cache_manager is None:
         # 尝试初始化Redis客户端
@@ -349,7 +348,7 @@ def cached(
     ttl: int | None = None,
     key_func: Callable | None = None,
 ):
-    """缓存装饰器"""
+    """缓存装饰器."""
 
     def decorator(func):
         @wraps(func)
@@ -390,7 +389,7 @@ def cached(
 
 # 性能监控装饰器
 def performance_monitor(threshold: float = 1.0):
-    """性能监控装饰器"""
+    """性能监控装饰器."""
 
     def decorator(func):
         @wraps(func)

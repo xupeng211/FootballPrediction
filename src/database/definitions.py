@@ -1,4 +1,4 @@
-"""数据库相关的定义,用于替代connection_mod"""
+"""数据库相关的定义,用于替代connection_mod."""
 
 from enum import Enum
 
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 
 class DatabaseRole(Enum):
-    """数据库用户角色"""
+    """数据库用户角色."""
 
     READER = "reader"
     WRITER = "writer"
@@ -16,7 +16,7 @@ class DatabaseRole(Enum):
 
 
 class DatabaseManager:
-    """数据库管理器 - 简化版本"""
+    """数据库管理器 - 简化版本."""
 
     _instance = None
     _engine = None
@@ -25,18 +25,18 @@ class DatabaseManager:
     _async_session_factory = None
 
     def __new__(cls):
-        """函数文档字符串"""
+        """函数文档字符串."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         if not hasattr(self, "initialized"):
             self.initialized = False
 
     def initialize(self, database_url: str | None = None):
-        """初始化数据库连接"""
+        """初始化数据库连接."""
         if self.initialized:
             return None
         import os
@@ -70,7 +70,7 @@ class DatabaseManager:
         self.initialized = True
 
     def get_session(self) -> Session:
-        """获取同步会话"""
+        """获取同步会话."""
         if not self.initialized or not self._session_factory:
             raise RuntimeError(
                 "DatabaseManager is not initialized. Call initialize() first."
@@ -78,7 +78,7 @@ class DatabaseManager:
         return self._session_factory()
 
     def get_async_session(self) -> AsyncSession:
-        """获取异步会话"""
+        """获取异步会话."""
         if not self.initialized or not self._async_session_factory:
             raise RuntimeError(
                 "DatabaseManager is not initialized. Call initialize() first."
@@ -87,10 +87,10 @@ class DatabaseManager:
 
 
 class MultiUserDatabaseManager(DatabaseManager):
-    """多用户数据库管理器 - 简化版本"""
+    """多用户数据库管理器 - 简化版本."""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         super().__init__()
         self.readers = []
         self.writers = []
@@ -99,42 +99,42 @@ class MultiUserDatabaseManager(DatabaseManager):
 
 # 工厂函数
 def get_database_manager() -> DatabaseManager:
-    """获取数据库管理器单例"""
+    """获取数据库管理器单例."""
     return DatabaseManager()
 
 
 def get_multi_user_database_manager() -> MultiUserDatabaseManager:
-    """获取多用户数据库管理器"""
+    """获取多用户数据库管理器."""
     return MultiUserDatabaseManager()
 
 
 # 初始化函数
 def initialize_database(database_url: str | None = None):
-    """初始化数据库"""
+    """初始化数据库."""
     manager = get_database_manager()
     manager.initialize(database_url)
 
 
 def initialize_multi_user_database(database_url: str | None = None):
-    """初始化多用户数据库"""
+    """初始化多用户数据库."""
     manager = get_multi_user_database_manager()
     manager.initialize(database_url)
 
 
 def initialize_test_database():
-    """初始化测试数据库"""
+    """初始化测试数据库."""
     # 测试数据库的特殊初始化
 
 
 # 会话获取函数
 def get_db_session() -> Session:
-    """获取数据库会话"""
+    """获取数据库会话."""
     manager = get_database_manager()
     return manager.get_session()
 
 
 def get_async_session() -> AsyncSession:
-    """获取异步会话"""
+    """获取异步会话."""
     manager = get_database_manager()
     return manager.get_async_session()
 

@@ -1,6 +1,4 @@
-"""
-Redis cache warmup manager
-"""
+"""Redis cache warmup manager."""
 
 import asyncio
 import logging
@@ -12,13 +10,13 @@ logger = get_logger(__name__)
 
 
 class WarmupManager:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """Redis cache warmup manager"""
 
     def __init__(self, redis_manager=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """Initialize warmup manager"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -26,7 +24,7 @@ class WarmupManager:
         self.is_warming_up = False
 
     async def warmup_cache(self, patterns: list[str] | None = None) -> dict[str, Any]:
-        """Warm up cache with common data"""
+        """Warm up cache with common data."""
         if self.is_warming_up:
             return {"status": "already_warming"}
 
@@ -44,6 +42,6 @@ CacheWarmupManager = WarmupManager
 
 
 async def startup_warmup(patterns: list[str] | None = None) -> dict[str, Any]:
-    """启动时预热缓存的便捷函数"""
+    """启动时预热缓存的便捷函数."""
     manager = WarmupManager()
     return await manager.warmup_cache(patterns)

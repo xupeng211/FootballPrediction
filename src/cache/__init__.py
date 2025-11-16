@@ -1,5 +1,4 @@
-"""
-缓存模块 - 提供统一的缓存管理功能
+"""缓存模块 - 提供统一的缓存管理功能.
 
 提供Redis缓存功能,支持:
 - Redis连接池管理
@@ -87,19 +86,19 @@ TTLCacheEntry = CacheEntry
 
 
 def get_prediction_cache():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     return prediction_cache
 
 
 def get_feature_cache():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     return feature_cache
 
 
 def get_odds_cache():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     return odds_cache
 

@@ -1,6 +1,5 @@
-"""
-比赛仓储
-Match Repository
+"""比赛仓储
+Match Repository.
 
 提供比赛数据的访问操作,实现Repository模式.
 Provides match data access operations, implementing the Repository pattern.
@@ -19,16 +18,15 @@ from .base import BaseRepository
 
 
 class MatchRepository(BaseRepository[Match]):
-    """
-    比赛仓储类
-    Match Repository Class
+    """比赛仓储类
+    Match Repository Class.
 
     提供比赛数据的CRUD操作和复杂查询方法.
     Provides CRUD operations and complex query methods for match data.
     """
 
     def __init__(self, db_manager=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(Match, db_manager)
 
@@ -43,8 +41,7 @@ class MatchRepository(BaseRepository[Match]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[Match] | None:
-        """
-        获取指定日期范围内的比赛
+        """获取指定日期范围内的比赛.
 
         Args:
             start_date: 开始日期
@@ -79,8 +76,7 @@ class MatchRepository(BaseRepository[Match]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[Match] | None:
-        """
-        根据状态获取比赛
+        """根据状态获取比赛.
 
         Args:
             status: 比赛状态
@@ -100,8 +96,7 @@ class MatchRepository(BaseRepository[Match]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[Match] | None:
-        """
-        获取即将到来的比赛
+        """获取即将到来的比赛.
 
         Args:
             days: 未来多少天
@@ -139,8 +134,7 @@ class MatchRepository(BaseRepository[Match]):
     async def get_live_matches(
         self, session: AsyncSession | None = None
     ) -> list[Match] | None:
-        """
-        获取正在进行的比赛
+        """获取正在进行的比赛.
 
         Args:
             session: 数据库会话
@@ -156,8 +150,7 @@ class MatchRepository(BaseRepository[Match]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[Match] | None:
-        """
-        获取已结束的比赛
+        """获取已结束的比赛.
 
         Args:
             days: 过去多少天
@@ -197,8 +190,7 @@ class MatchRepository(BaseRepository[Match]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[Match] | None:
-        """
-        根据球队获取比赛
+        """根据球队获取比赛.
 
         Args:
             team_id: 球队ID
@@ -237,8 +229,7 @@ class MatchRepository(BaseRepository[Match]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[Match] | None:
-        """
-        获取两支球队的历史对战记录
+        """获取两支球队的历史对战记录.
 
         Args:
             team1_id: 第一支球队ID
@@ -283,8 +274,7 @@ class MatchRepository(BaseRepository[Match]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[Match] | None:
-        """
-        根据联赛获取比赛
+        """根据联赛获取比赛.
 
         Args:
             league_id: 联赛ID
@@ -309,8 +299,7 @@ class MatchRepository(BaseRepository[Match]):
         status: MatchStatus,
         session: AsyncSession | None = None,
     ) -> Match | None:
-        """
-        更新比赛状态
+        """更新比赛状态.
 
         Args:
             match_id: 比赛ID
@@ -331,8 +320,7 @@ class MatchRepository(BaseRepository[Match]):
         away_score: int | None,
         session: AsyncSession | None = None,
     ) -> Match | None:
-        """
-        更新比赛比分
+        """更新比赛比分.
 
         Args:
             match_id: 比赛ID
@@ -363,8 +351,7 @@ class MatchRepository(BaseRepository[Match]):
         result: MatchResult | None = None,
         session: AsyncSession | None = None,
     ) -> Match | None:
-        """
-        结束比赛
+        """结束比赛.
 
         Args:
             match_id: 比赛ID
@@ -406,8 +393,7 @@ class MatchRepository(BaseRepository[Match]):
         relation_name: str,
         session: AsyncSession | None = None,
     ) -> Any:
-        """
-        获取比赛的关联数据
+        """获取比赛的关联数据.
 
         Args:
             obj_id: 比赛ID
@@ -466,8 +452,7 @@ class MatchRepository(BaseRepository[Match]):
         last_matches: int = 5,
         session: AsyncSession | None = None,
     ) -> dict[str, Any]:
-        """
-        获取球队近期状态
+        """获取球队近期状态.
 
         Args:
             team_id: 球队ID

@@ -7,7 +7,7 @@ from src.database.base import BaseModel
 
 
 class UserRole(str, Enum):
-    """用户角色枚举"""
+    """用户角色枚举."""
 
     USER = "user"
     PREMIUM = "premium"
@@ -16,7 +16,7 @@ class UserRole(str, Enum):
 
 
 class User(BaseModel):
-    """用户数据模型"""
+    """用户数据模型."""
 
     __tablename__ = "users"
 
@@ -58,27 +58,27 @@ class User(BaseModel):
 
     @property
     def full_name(self) -> str:
-        """获取全名"""
+        """获取全名."""
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
         return self.username
 
     @property
     def is_premium(self) -> bool:
-        """是否为高级用户"""
+        """是否为高级用户."""
         return self.role in [UserRole.PREMIUM, UserRole.ADMIN, UserRole.ANALYST]
 
     @property
     def is_admin(self) -> bool:
-        """是否为管理员"""
+        """是否为管理员."""
         return self.role == UserRole.ADMIN
 
     def update_last_login(self) -> None:
-        """更新最后登录时间"""
+        """更新最后登录时间."""
         self.last_login = datetime.utcnow()
 
     def to_dict(self, exclude_fields: set | None = None) -> dict:
-        """转换为字典,排除敏感字段"""
+        """转换为字典,排除敏感字段."""
         if exclude_fields is None:
             exclude_fields = {"password_hash"}
 

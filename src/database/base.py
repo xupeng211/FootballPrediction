@@ -1,5 +1,4 @@
-"""
-SQLAlchemy基础模型和数据库连接
+"""SQLAlchemy基础模型和数据库连接.
 
 提供所有数据模型的基础类,包含通用字段和方法，以及数据库连接函数。
 """
@@ -14,11 +13,11 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 
 class Base(DeclarativeBase):
-    """SQLAlchemy基础模型类"""
+    """SQLAlchemy基础模型类."""
 
 
 class TimestampMixin:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """时间戳混入类,为模型添加创建时间和更新时间字段"""
@@ -37,8 +36,7 @@ class TimestampMixin:
 
 
 class BaseModel(Base, TimestampMixin):
-    """
-    基础模型类
+    """基础模型类.
 
     所有业务模型都应该继承此类,自动包含:
     - 主键ID字段
@@ -51,8 +49,7 @@ class BaseModel(Base, TimestampMixin):
     id = Column(Integer, primary_key=True, autoincrement=True, comment="主键ID")
 
     def to_dict(self, exclude_fields: set | None = None) -> dict[str, Any]:
-        """
-        将模型对象转换为字典
+        """将模型对象转换为字典.
 
         Args:
             exclude_fields: 需要排除的字段集合
@@ -77,7 +74,7 @@ class BaseModel(Base, TimestampMixin):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]):
-        """从字典创建模型实例
+        """从字典创建模型实例.
 
         Args:
             data: 包含模型数据的字典
@@ -95,8 +92,7 @@ class BaseModel(Base, TimestampMixin):
     def update_from_dict(
         self, data: dict[str, Any], exclude_fields: set[str] | None = None
     ) -> None:
-        """
-        从字典更新模型对象
+        """从字典更新模型对象.
 
         Args:
             data: 更新数据字典
@@ -109,7 +105,7 @@ class BaseModel(Base, TimestampMixin):
             setattr(self, key, value)
 
     def __repr__(self) -> str:
-        """对象的字符串表示"""
+        """对象的字符串表示."""
         return f"<{self.__class__.__name__}(id={getattr(self, 'id', None)})>"
 
 
@@ -129,9 +125,8 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 def get_db() -> Generator[Session, None, None]:
-    """
-    获取同步数据库会话
-    Get synchronous database session
+    """获取同步数据库会话
+    Get synchronous database session.
 
     用于FastAPI的依赖注入。
     Used for FastAPI dependency injection.
@@ -144,9 +139,8 @@ def get_db() -> Generator[Session, None, None]:
 
 
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    获取异步数据库会话
-    Get asynchronous database session
+    """获取异步数据库会话
+    Get asynchronous database session.
 
     用于异步操作的依赖注入。
     Used for async operation dependency injection.
@@ -159,20 +153,20 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 class DatabaseManager:
-    """数据库管理器 - 为测试提供mock接口"""
+    """数据库管理器 - 为测试提供mock接口."""
 
     def __init__(self, config: dict[str, Any] | None = None):
-        """初始化数据库管理器"""
+        """初始化数据库管理器."""
         self.config = config or {}
         self._connection = None
         self._initialized = False  # 向后兼容的初始化状态
 
     def initialize(self) -> None:
-        """初始化数据库管理器（向后兼容方法）"""
+        """初始化数据库管理器（向后兼容方法）."""
         self._initialized = True
 
     async def check_connection(self) -> dict[str, Any]:
-        """检查数据库连接"""
+        """检查数据库连接."""
         return {
             "status": "healthy",
             "response_time_ms": 12,
@@ -181,18 +175,18 @@ class DatabaseManager:
         }
 
     def get_connection_status(self) -> dict[str, Any]:
-        """获取连接状态"""
+        """获取连接状态."""
         return {
             "status": "healthy",
             "response_time_ms": 5,
         }
 
     async def connect(self) -> None:
-        """建立连接"""
+        """建立连接."""
         pass
 
     async def disconnect(self) -> None:
-        """断开连接"""
+        """断开连接."""
         pass
 
 

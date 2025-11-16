@@ -1,6 +1,5 @@
-"""
-TTL缓存实现
-TTL Cache Implementation
+"""TTL缓存实现
+TTL Cache Implementation.
 
 提供带有生存时间的内存缓存功能。
 Provides in-memory cache with time-to-live functionality.
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class CacheEntry:
-    """缓存条目"""
+    """缓存条目."""
 
     def __init__(self, value: Any, ttl: float | None = None):
         self.value = value
@@ -25,13 +24,13 @@ class CacheEntry:
         self.last_accessed = self.created_at
 
     def is_expired(self) -> bool:
-        """检查是否过期"""
+        """检查是否过期."""
         if self.ttl is None:
             return False
         return time.time() - self.created_at > self.ttl
 
     def get_ttl_remaining(self) -> float | None:
-        """获取剩余TTL"""
+        """获取剩余TTL."""
         if self.ttl is None:
             return None
         elapsed = time.time() - self.created_at
@@ -40,7 +39,7 @@ class CacheEntry:
 
 
 class TTLCache:
-    """带TTL的缓存"""
+    """带TTL的缓存."""
 
     def __init__(
         self,
@@ -48,8 +47,7 @@ class TTLCache:
         default_ttl: float | None = None,
         cleanup_interval: float = 60.0,
     ):
-        """
-        初始化TTL缓存
+        """初始化TTL缓存.
 
         Args:
             max_size: 最大缓存大小
@@ -74,8 +72,7 @@ class TTLCache:
         self.start_auto_cleanup()
 
     def get(self, key: str, default: Any = None) -> Any:
-        """
-        获取缓存值
+        """获取缓存值.
 
         Args:
             key: 缓存键
@@ -102,8 +99,7 @@ class TTLCache:
             return entry.value
 
     def set(self, key: str, value: Any, ttl: float | None = None) -> None:
-        """
-        设置缓存值
+        """设置缓存值.
 
         Args:
             key: 缓存键
@@ -121,8 +117,7 @@ class TTLCache:
             self._sets += 1
 
     def delete(self, key: str) -> bool:
-        """
-        删除缓存项
+        """删除缓存项.
 
         Args:
             key: 缓存键
@@ -138,13 +133,12 @@ class TTLCache:
             return False
 
     def clear(self) -> None:
-        """清空缓存"""
+        """清空缓存."""
         with self._lock:
             self._cache.clear()
 
     def pop(self, key: str, default: Any = None) -> Any:
-        """
-        弹出并删除缓存项
+        """弹出并删除缓存项.
 
         Args:
             key: 缓存键
@@ -159,23 +153,22 @@ class TTLCache:
             return value
 
     def keys(self) -> list[str]:
-        """获取所有键"""
+        """获取所有键."""
         with self._lock:
             return list(self._cache.keys())
 
     def values(self) -> list[Any]:
-        """获取所有值"""
+        """获取所有值."""
         with self._lock:
             return [entry.value for entry in self._cache.values()]
 
     def items(self) -> list[tuple[str, Any]]:
-        """获取所有键值对"""
+        """获取所有键值对."""
         with self._lock:
             return [(key, entry.value) for key, entry in self._cache.items()]
 
     def get_many(self, keys: list[str]) -> dict[str, Any]:
-        """
-        批量获取
+        """批量获取.
 
         Args:
             keys: 键列表
@@ -191,8 +184,7 @@ class TTLCache:
         return result
 
     def set_many(self, mapping: dict[str, Any], ttl: float | None = None) -> None:
-        """
-        批量设置
+        """批量设置.
 
         Args:
             mapping: 键值对字典
@@ -202,8 +194,7 @@ class TTLCache:
             self.set(key, value, ttl)
 
     def delete_many(self, keys: list[str]) -> int:
-        """
-        批量删除
+        """批量删除.
 
         Args:
             keys: 键列表
@@ -218,8 +209,7 @@ class TTLCache:
         return count
 
     def increment(self, key: str, delta: int = 1, default: int = 0) -> int:
-        """
-        递增数值
+        """递增数值.
 
         Args:
             key: 缓存键
@@ -237,8 +227,7 @@ class TTLCache:
         return new_value
 
     def touch(self, key: str, ttl: float | None = None) -> bool:
-        """
-        更新缓存项的TTL
+        """更新缓存项的TTL.
 
         Args:
             key: 缓存键
@@ -258,8 +247,7 @@ class TTLCache:
             return True
 
     def ttl(self, key: str) -> int | None:
-        """
-        获取剩余TTL
+        """获取剩余TTL.
 
         Args:
             key: 缓存键
@@ -276,18 +264,17 @@ class TTLCache:
             return int(remaining) if remaining is not None else None
 
     def size(self) -> int:
-        """获取缓存大小"""
+        """获取缓存大小."""
         with self._lock:
             return len(self._cache)
 
     def is_empty(self) -> bool:
-        """检查缓存是否为空"""
+        """检查缓存是否为空."""
         with self._lock:
             return len(self._cache) == 0
 
     def cleanup_expired(self) -> int:
-        """
-        清理过期项
+        """清理过期项.
 
         Returns:
             清理的数量
@@ -303,7 +290,7 @@ class TTLCache:
             return len(expired_keys)
 
     def get_stats(self) -> dict[str, Any]:
-        """获取统计信息"""
+        """获取统计信息."""
         with self._lock:
             total_requests = self._hits + self._misses
             hit_rate = self._hits / total_requests if total_requests > 0 else 0
@@ -319,7 +306,7 @@ class TTLCache:
             }
 
     def reset_stats(self) -> None:
-        """重置统计信息"""
+        """重置统计信息."""
         with self._lock:
             self._hits = 0
             self._misses = 0
@@ -327,7 +314,7 @@ class TTLCache:
             self._deletes = 0
 
     def _evict_lru(self) -> None:
-        """淘汰最近最少使用的项"""
+        """淘汰最近最少使用的项."""
         if not self._cache:
             return
 
@@ -335,7 +322,7 @@ class TTLCache:
         del self._cache[lru_key]
 
     def _cleanup_worker(self) -> None:
-        """清理工作线程"""
+        """清理工作线程."""
         while self._running:
             try:
                 self.cleanup_expired()
@@ -344,7 +331,7 @@ class TTLCache:
                 logger.error(f"缓存清理错误: {e}")
 
     def start_auto_cleanup(self) -> None:
-        """启动自动清理"""
+        """启动自动清理."""
         if self._cleanup_thread is None or not self._cleanup_thread.is_alive():
             self._running = True
             self._cleanup_thread = threading.Thread(
@@ -353,7 +340,7 @@ class TTLCache:
             self._cleanup_thread.start()
 
     def stop_auto_cleanup(self) -> None:
-        """停止自动清理"""
+        """停止自动清理."""
         self._running = False
         if self._cleanup_thread and self._cleanup_thread.is_alive():
             self._cleanup_thread.join(timeout=1.0)
