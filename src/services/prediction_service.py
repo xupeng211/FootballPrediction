@@ -360,6 +360,7 @@ class PredictionService:
         """
         # 生成新的预测ID
         import uuid
+
         new_id = f"pred_{str(uuid.uuid4())[:8]}"
 
         new_prediction = {
@@ -375,7 +376,9 @@ class PredictionService:
         self.logger.info(f"Created new prediction: {new_id}")
         return new_prediction
 
-    def update_prediction(self, prediction_id: str, update_data: dict[str, Any]) -> dict[str, Any] | None:
+    def update_prediction(
+        self, prediction_id: str, update_data: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """
         更新预测
         Update prediction

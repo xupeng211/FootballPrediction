@@ -155,25 +155,35 @@ class VectorClock:
         return clock
 
 
-@dataclass
 class CacheVersion:
     """缓存版本信息"""
 
-    key: str
-    version: int
-    timestamp: datetime
-    node_id: str
-    vector_clock: VectorClock | None = None
-    checksum: str = ""
-    metadata: dict[str, Any] = field(default_factory=dict)
-
-    def __post_init__(self):
-        if not self.checksum:
-            self.checksum = self._calculate_checksum()
+    def __init__(
+        self,
+        key: str = "",
+        version: int = 1,
+        timestamp: datetime | None = None,
+        node_id: str = "",
+        data: Any = None,
+        vector_clock: VectorClock | None = None,
+        checksum: str = "",
+        metadata: dict[str, Any] | None = None,
+        **kwargs
+    ):
+        self.key = key
+        self.version = version
+        self.timestamp = timestamp or datetime.utcnow()
+        self.node_id = node_id or kwargs.get("node_id", "")
+        self.data = data
+        self.vector_clock = vector_clock
+        self.metadata = metadata or {}
+        self.checksum = checksum or self._calculate_checksum()
 
     def _calculate_checksum(self) -> str:
         """计算校验和"""
         data = f"{self.key}{self.version}{self.timestamp}{self.node_id}"
+        if hasattr(self, 'data') and self.data:
+            data += str(self.data)
         if self.vector_clock:
             data += json.dumps(self.vector_clock.to_dict(), sort_keys=True)
         return hashlib.md5(data.encode()).hexdigest()

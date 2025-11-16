@@ -25,20 +25,20 @@ from .handlers import (
 
 # 比赛事件
 from .match_events import (
-    MatchStartedEvent,
-    MatchFinishedEvent,
     MatchCancelledEvent,
+    MatchFinishedEvent,
     MatchPostponedEvent,
+    MatchStartedEvent,
 )
 
 # 预测事件
 from .prediction_events import (
-    PredictionCreatedEvent,
-    PredictionUpdatedEvent,
-    PredictionEvaluatedEvent,
     PredictionCancelledEvent,
+    PredictionCreatedEvent,
+    PredictionEvaluatedEvent,
     PredictionExpiredEvent,
     PredictionPointsAdjustedEvent,
+    PredictionUpdatedEvent,
 )
 
 # 事件数据类型

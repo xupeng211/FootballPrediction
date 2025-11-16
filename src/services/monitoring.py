@@ -179,7 +179,7 @@ class SystemService:
                 "metrics": {
                     "cpu_usage": 0.45,  # 45%
                     "memory_usage": 0.62,  # 62%
-                    "disk_usage": 0.38,   # 38%
+                    "disk_usage": 0.38,  # 38%
                     "network_latency_ms": 25,
                 },
                 "checks": {

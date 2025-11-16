@@ -45,7 +45,7 @@ async def get_registry_status() -> dict[str, Any]:
             "total_adapters": 2,
             "active_adapters": 2,
             "inactive_adapters": 0,
-            "failed_adapters": 0
+            "failed_adapters": 0,
         },
         "adapters": [
             {
@@ -53,16 +53,16 @@ async def get_registry_status() -> dict[str, Any]:
                 "type": "data",
                 "status": "active",
                 "initialized": True,
-                "last_check": datetime.utcnow().isoformat() + "Z"
+                "last_check": datetime.utcnow().isoformat() + "Z",
             },
             {
                 "name": "demo_adapter",
                 "type": "demo",
                 "status": "active",
                 "initialized": True,
-                "last_check": datetime.utcnow().isoformat() + "Z"
-            }
-        ]
+                "last_check": datetime.utcnow().isoformat() + "Z",
+            },
+        ],
     }
 
 
@@ -75,12 +75,9 @@ async def initialize_registry() -> dict[str, Any]:
         "status": "success",
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "message": "适配器注册表初始化成功",
-        "initialized_adapters": [
-            "football_adapter",
-            "demo_adapter"
-        ],
+        "initialized_adapters": ["football_adapter", "demo_adapter"],
         "failed_adapters": [],
-        "warnings": []
+        "warnings": [],
     }
 
 
@@ -94,8 +91,8 @@ def get_registry() -> dict[str, Any]:
                 "endpoints": [
                     "/football/matches",
                     "/football/teams",
-                    "/football/teams/{team_id}/players"
-                ]
+                    "/football/teams/{team_id}/players",
+                ],
             },
             "demo_adapter": {
                 "name": "Demo Adapter",
@@ -103,10 +100,10 @@ def get_registry() -> dict[str, Any]:
                 "endpoints": [
                     "/demo/comparison",
                     "/demo/fallback",
-                    "/demo/transformation"
-                ]
-            }
+                    "/demo/transformation",
+                ],
+            },
         },
         "total_count": 2,
-        "active_count": 2
+        "active_count": 2,
     }

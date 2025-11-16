@@ -260,6 +260,36 @@ class AccessPatternAnalyzer:
         candidates.sort(key=lambda x: x[1], reverse=True)
         return candidates[:limit]
 
+    def predict_next_access(self, key: str) -> float:
+        """预测下一个访问时间（返回小时数）"""
+        if key not in self.patterns:
+            return 24.0  # 默认24小时后
+
+        pattern = self.patterns[key]
+        if not pattern.access_history:
+            return 24.0
+
+        # 简单的线性预测：基于最近访问间隔
+        now = datetime.utcnow()
+        recent_accesses = sorted(
+            [access for access in pattern.access_history if access >= now - timedelta(days=7)]
+        )
+
+        if len(recent_accesses) < 2:
+            return 24.0
+
+        # 计算平均访问间隔
+        intervals = []
+        for i in range(1, len(recent_accesses)):
+            interval = (recent_accesses[i] - recent_accesses[i-1]).total_seconds() / 3600
+            intervals.append(interval)
+
+        if intervals:
+            avg_interval = sum(intervals) / len(intervals)
+            return max(1.0, min(avg_interval, 168.0))  # 1小时到1周
+
+        return 24.0
+
 
 class PredictiveModel(ABC):
     """预测模型抽象类"""

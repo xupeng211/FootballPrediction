@@ -162,8 +162,7 @@ class LSTMPredictor:
             # 目标序列
             y.append(
                 target[
-                    i
-                    + self.config.sequence_length : i
+                    i + self.config.sequence_length : i
                     + self.config.sequence_length
                     + self.config.prediction_horizon
                 ]
