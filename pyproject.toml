@@ -77,8 +77,13 @@ line-length = 88
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "T20"]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "T20", "D"]
 ignore = ["E501", "B008"]
+
+[tool.ruff.lint.pydocstyle]
+# 我们将强制使用 Google 风格的 docstrings (例如 'Args:', 'Returns:')
+# 这与 mkdocstrings (一个流行的文档插件) 兼容
+convention = "google"
 exclude = [
     ".bzr",
     ".direnv",
