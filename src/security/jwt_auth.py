@@ -307,6 +307,15 @@ class JWTAuthManager:
             plain_password = plain_password[:72]
         return self.pwd_context.verify(plain_password, hashed_password)
 
+    def authenticate_user(self, *args, **kwargs):
+        """
+        认证用户（占位符方法）
+
+        TODO: 真正实现这个方法
+        """
+        print("WARNING: authenticate_user (stub) called")
+        return None
+
     def generate_password_reset_token(self, email: str) -> str:
         """
         生成密码重置令牌

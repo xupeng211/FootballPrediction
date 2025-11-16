@@ -83,7 +83,7 @@ class FootballDataCacheManager:
             key = self._make_key(self.prefixes["league"], str(league_id))
             ttl = self.config.league_cache_hours * 3600
 
-            success = await self.redis.aset(key, json.dumps(league_data), expire=ttl)
+            success = await self.redis.aset(key, json.dumps(league_data), ex=ttl)
 
             # 同时添加到联赛列表
             list_key = self._make_list_key(self.prefixes["league"])
@@ -124,7 +124,7 @@ class FootballDataCacheManager:
 
             # 序列化联赛数据
             serialized_data = json.dumps(leagues)
-            success = await self.redis.aset(list_key, serialized_data, expire=ttl)
+            success = await self.redis.aset(list_key, serialized_data, ex=ttl)
 
             if success:
                 logger.debug(f"Cached league list with {len(leagues)} items")
@@ -165,7 +165,7 @@ class FootballDataCacheManager:
             key = self._make_key(self.prefixes["team"], str(team_id))
             ttl = self.config.team_cache_hours * 3600
 
-            success = await self.redis.aset(key, json.dumps(team_data), expire=ttl)
+            success = await self.redis.aset(key, json.dumps(team_data), ex=ttl)
 
             # 如果有关联的联赛，添加到联赛的球队列表
             competition_id = team_data.get("competition_id")
@@ -209,7 +209,7 @@ class FootballDataCacheManager:
             ttl = self.config.team_cache_hours * 3600
 
             serialized_data = json.dumps(teams)
-            success = await self.redis.aset(key, serialized_data, expire=ttl)
+            success = await self.redis.aset(key, serialized_data, ex=ttl)
 
             if success:
                 logger.debug(
@@ -252,7 +252,7 @@ class FootballDataCacheManager:
             key = self._make_key(self.prefixes["match"], str(match_id))
             ttl = self.config.match_cache_minutes * 60
 
-            success = await self.redis.aset(key, json.dumps(match_data), expire=ttl)
+            success = await self.redis.aset(key, json.dumps(match_data), ex=ttl)
 
             if success:
                 logger.debug(f"Cached match data: {match_id}")
@@ -288,7 +288,7 @@ class FootballDataCacheManager:
             ttl = self.config.match_cache_minutes * 60
 
             serialized_data = json.dumps(matches)
-            success = await self.redis.aset(key, serialized_data, expire=ttl)
+            success = await self.redis.aset(key, serialized_data, ex=ttl)
 
             if success:
                 logger.debug(f"Cached team matches: {team_id}, {len(matches)} matches")
@@ -309,7 +309,7 @@ class FootballDataCacheManager:
             ttl = self.config.standings_cache_minutes * 60
 
             serialized_data = json.dumps(standings)
-            success = await self.redis.aset(key, serialized_data, expire=ttl)
+            success = await self.redis.aset(key, serialized_data, ex=ttl)
 
             if success:
                 logger.debug(
@@ -360,9 +360,7 @@ class FootballDataCacheManager:
                 "data": response_data,
             }
 
-            success = await self.redis.aset(
-                cache_key, json.dumps(cache_data), expire=ttl
-            )
+            success = await self.redis.aset(cache_key, json.dumps(cache_data), ex=ttl)
 
             if success:
                 logger.debug(f"Cached API response: {endpoint}")
@@ -403,9 +401,7 @@ class FootballDataCacheManager:
             cache_key = self._make_key(self.prefixes["statistics"], key)
             ttl = self.config.statistics_cache_hours * 3600
 
-            success = await self.redis.aset(
-                cache_key, json.dumps(statistics), expire=ttl
-            )
+            success = await self.redis.aset(cache_key, json.dumps(statistics), ex=ttl)
 
             if success:
                 logger.debug(f"Cached statistics: {key}")
@@ -443,7 +439,7 @@ class FootballDataCacheManager:
 
             status_data = {"timestamp": datetime.utcnow().isoformat(), "status": status}
 
-            success = await self.redis.aset(key, json.dumps(status_data), expire=ttl)
+            success = await self.redis.aset(key, json.dumps(status_data), ex=ttl)
 
             if success:
                 logger.debug(f"Set sync status: {sync_type}")
