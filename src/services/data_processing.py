@@ -165,15 +165,12 @@ class BronzeToSilverProcessor:
 
 
 class DataProcessingService:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """数据处理服务 - 简化版本"""
 
-    def __init__(self, session=None):
-        """函数文档字符串"""
-        # 添加pass语句
+    def __init__(self, repository=None, cache=None, session=None):
         """初始化服务"""
+        self.repository = repository
+        self.cache = cache
         self.session = session
         self.initialized = False
         self.processors = {

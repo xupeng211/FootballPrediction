@@ -532,6 +532,16 @@ class TestGlobalFunctions:
 class TestPerformanceMonitoringIntegration:
     """性能监控集成测试类"""
 
+    @pytest.fixture
+    def system_monitor(self):
+        """系统监控器实例"""
+        return SystemMonitor()
+
+    @pytest.fixture
+    def performance_analyzer(self):
+        """性能分析器实例"""
+        return PerformanceAnalyzer()
+
     def test_monitoring_workflow(self, system_monitor, performance_analyzer):
         """测试完整的监控工作流"""
         # 1. 收集指标
