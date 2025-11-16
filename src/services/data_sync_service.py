@@ -1,6 +1,5 @@
-"""
-数据同步服务
-Data Sync Service for Football-Data.org API
+"""数据同步服务
+Data Sync Service for Football-Data.org API.
 """
 
 import logging
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataSyncService:
-    """数据同步服务"""
+    """数据同步服务."""
 
     def __init__(self, database_url: str | None = None):
         self.database_url = database_url or os.getenv(
@@ -33,7 +32,7 @@ class DataSyncService:
         self.collector = MatchCollector()
 
     async def initialize(self):
-        """初始化数据库连接"""
+        """初始化数据库连接."""
         try:
             # 创建异步数据库引擎
             self.engine = create_async_engine(
@@ -52,25 +51,24 @@ class DataSyncService:
             raise
 
     async def close(self):
-        """关闭数据库连接"""
+        """关闭数据库连接."""
         if self.engine:
             await self.engine.dispose()
             logger.info("Database connection closed")
 
     async def __aenter__(self):
-        """异步上下文管理器入口"""
+        """异步上下文管理器入口."""
         await self.initialize()
         await self.collector.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """异步上下文管理器出口"""
+        """异步上下文管理器出口."""
         await self.collector.__aexit__(exc_type, exc_val, exc_tb)
         await self.close()
 
     async def sync_all_data(self) -> dict[str, Any]:
-        """
-        同步所有数据
+        """同步所有数据.
 
         Returns:
             同步结果统计
@@ -113,8 +111,7 @@ class DataSyncService:
         return results
 
     async def sync_upcoming_matches(self, days_ahead: int = 7) -> dict[str, int]:
-        """
-        同步即将开始的比赛
+        """同步即将开始的比赛.
 
         Args:
             days_ahead: 未来天数
@@ -160,8 +157,7 @@ class DataSyncService:
         return result
 
     async def sync_recent_matches(self, days_back: int = 7) -> dict[str, int]:
-        """
-        同步最近的比赛结果
+        """同步最近的比赛结果.
 
         Args:
             days_back: 过去天数
@@ -209,8 +205,7 @@ class DataSyncService:
     async def _process_match(
         self, session: AsyncSession, match_data: dict[str, Any]
     ) -> ExternalMatch:
-        """
-        处理单个比赛数据
+        """处理单个比赛数据.
 
         Args:
             session: 数据库会话
@@ -244,8 +239,7 @@ class DataSyncService:
     async def get_matches_by_status(
         self, status: str, limit: int = 50
     ) -> list[dict[str, Any]]:
-        """
-        根据状态获取比赛
+        """根据状态获取比赛.
 
         Args:
             status: 比赛状态
@@ -288,8 +282,7 @@ class DataSyncService:
             return []
 
     async def get_upcoming_matches(self, limit: int = 20) -> list[dict[str, Any]]:
-        """
-        获取即将开始的比赛
+        """获取即将开始的比赛.
 
         Args:
             limit: 限制数量
@@ -332,8 +325,7 @@ class DataSyncService:
     async def get_recent_finished_matches(
         self, limit: int = 20
     ) -> list[dict[str, Any]]:
-        """
-        获取最近已结束的比赛
+        """获取最近已结束的比赛.
 
         Args:
             limit: 限制数量
@@ -373,8 +365,7 @@ class DataSyncService:
             return []
 
     async def cleanup_old_matches(self, days_to_keep: int = 30) -> int:
-        """
-        清理旧的比赛数据
+        """清理旧的比赛数据.
 
         Args:
             days_to_keep: 保留天数
@@ -404,8 +395,7 @@ class DataSyncService:
             return 0
 
     async def get_sync_statistics(self) -> dict[str, Any]:
-        """
-        获取同步统计信息
+        """获取同步统计信息.
 
         Returns:
             统计信息

@@ -1,6 +1,5 @@
-"""
-预测服务
-Prediction Service
+"""预测服务
+Prediction Service.
 
 提供足球预测的核心业务逻辑。
 Provides core business logic for football predictions.
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PredictionResult:
-    """预测结果"""
+    """预测结果."""
 
     match_id: int
     home_team_id: int
@@ -31,16 +30,15 @@ class PredictionResult:
 
 
 class PredictionService:
-    """预测服务类"""
+    """预测服务类."""
 
     def __init__(self):
-        """初始化预测服务"""
+        """初始化预测服务."""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def get_predictions(self, limit: int = 10, offset: int = 0) -> dict[str, Any]:
-        """
-        获取预测列表
-        Get predictions list
+        """获取预测列表
+        Get predictions list.
 
         Args:
             limit: 返回数量限制
@@ -84,9 +82,8 @@ class PredictionService:
         }
 
     def get_match_predictions(self, match_id: int) -> list[dict[str, Any]]:
-        """
-        获取指定比赛的预测
-        Get predictions for a specific match
+        """获取指定比赛的预测
+        Get predictions for a specific match.
 
         Args:
             match_id: 比赛ID
@@ -112,9 +109,8 @@ class PredictionService:
     def predict_match(
         self, match_data: dict[str, Any], model_name: str = "default"
     ) -> PredictionResult:
-        """
-        预测单场比赛结果
-        Predict single match result
+        """预测单场比赛结果
+        Predict single match result.
 
         Args:
             match_data: 比赛数据
@@ -182,9 +178,8 @@ class PredictionService:
     async def predict_match_async(
         self, match_data: dict[str, Any], model_name: str = "default"
     ) -> PredictionResult:
-        """
-        异步预测单场比赛结果
-        Asynchronously predict single match result
+        """异步预测单场比赛结果
+        Asynchronously predict single match result.
 
         Args:
             match_data: 比赛数据
@@ -200,9 +195,8 @@ class PredictionService:
     def predict_batch(
         self, matches_data: list[dict[str, Any]], model_name: str = "default"
     ) -> list[PredictionResult]:
-        """
-        批量预测比赛结果
-        Batch predict match results
+        """批量预测比赛结果
+        Batch predict match results.
 
         Args:
             matches_data: 比赛数据列表
@@ -234,9 +228,8 @@ class PredictionService:
         model_name: str = "default",
         max_concurrent: int = 10,
     ) -> list[PredictionResult]:
-        """
-        异步批量预测比赛结果
-        Asynchronously batch predict match results
+        """异步批量预测比赛结果
+        Asynchronously batch predict match results.
 
         Args:
             matches_data: 比赛数据列表
@@ -268,9 +261,8 @@ class PredictionService:
     def get_prediction_confidence(
         self, prediction_result: PredictionResult
     ) -> dict[str, Any]:
-        """
-        获取预测置信度分析
-        Get prediction confidence analysis
+        """获取预测置信度分析
+        Get prediction confidence analysis.
 
         Args:
             prediction_result: 预测结果
@@ -298,9 +290,8 @@ class PredictionService:
         }
 
     def validate_prediction_input(self, match_data: dict[str, Any]) -> bool:
-        """
-        验证预测输入数据
-        Validate prediction input data
+        """验证预测输入数据
+        Validate prediction input data.
 
         Args:
             match_data: 比赛数据
@@ -318,9 +309,8 @@ class PredictionService:
         return True
 
     def get_prediction_by_id(self, prediction_id: str) -> dict[str, Any] | None:
-        """
-        根据ID获取预测
-        Get prediction by ID
+        """根据ID获取预测
+        Get prediction by ID.
 
         Args:
             prediction_id: 预测ID
@@ -348,9 +338,8 @@ class PredictionService:
         return None
 
     def create_prediction(self, prediction_data: dict[str, Any]) -> dict[str, Any]:
-        """
-        创建新预测
-        Create new prediction
+        """创建新预测
+        Create new prediction.
 
         Args:
             prediction_data: 预测数据
@@ -379,9 +368,8 @@ class PredictionService:
     def update_prediction(
         self, prediction_id: str, update_data: dict[str, Any]
     ) -> dict[str, Any] | None:
-        """
-        更新预测
-        Update prediction
+        """更新预测
+        Update prediction.
 
         Args:
             prediction_id: 预测ID
@@ -399,9 +387,8 @@ class PredictionService:
         return None
 
     def delete_prediction(self, prediction_id: str) -> bool:
-        """
-        删除预测
-        Delete prediction
+        """删除预测
+        Delete prediction.
 
         Args:
             prediction_id: 预测ID
@@ -422,7 +409,7 @@ _prediction_service: PredictionService | None = None
 
 
 def get_prediction_service() -> PredictionService:
-    """获取预测服务实例"""
+    """获取预测服务实例."""
     global _prediction_service
     if _prediction_service is None:
         _prediction_service = PredictionService()
@@ -433,9 +420,8 @@ def get_prediction_service() -> PredictionService:
 def predict_match(
     match_data: dict[str, Any], model_name: str = "default"
 ) -> PredictionResult:
-    """
-    便捷的预测函数
-    Convenience prediction function
+    """便捷的预测函数
+    Convenience prediction function.
 
     Args:
         match_data: 比赛数据
@@ -451,9 +437,8 @@ def predict_match(
 async def predict_match_async(
     match_data: dict[str, Any], model_name: str = "default"
 ) -> PredictionResult:
-    """
-    便捷的异步预测函数
-    Convenience async prediction function
+    """便捷的异步预测函数
+    Convenience async prediction function.
 
     Args:
         match_data: 比赛数据
@@ -468,9 +453,8 @@ async def predict_match_async(
 
 # 为测试添加缺少的方法
 def get_prediction_by_id(prediction_id: str) -> dict[str, Any] | None:
-    """
-    根据ID获取预测 - 为测试提供Mock接口
-    Get prediction by ID - Mock interface for testing
+    """根据ID获取预测 - 为测试提供Mock接口
+    Get prediction by ID - Mock interface for testing.
     """
     # 模拟返回一个预测数据
     if prediction_id == "pred_12345":
@@ -487,9 +471,8 @@ def get_prediction_by_id(prediction_id: str) -> dict[str, Any] | None:
 
 
 def get_match_predictions(match_id: int) -> list[dict[str, Any]]:
-    """
-    获取比赛的预测 - 为测试提供Mock接口
-    Get match predictions - Mock interface for testing
+    """获取比赛的预测 - 为测试提供Mock接口
+    Get match predictions - Mock interface for testing.
     """
     # 模拟返回比赛预测列表
     if match_id == 12345:

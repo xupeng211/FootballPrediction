@@ -1,6 +1,5 @@
-"""
-监控服务
-Monitoring Service
+"""监控服务
+Monitoring Service.
 
 提供系统监控、统计信息和状态检查的服务。
 Provides system monitoring, statistics, and status check services.
@@ -14,16 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class SystemService:
-    """系统服务类"""
+    """系统服务类."""
 
     def __init__(self):
-        """初始化系统服务"""
+        """初始化系统服务."""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def get_stats(self) -> dict[str, Any]:
-        """
-        获取系统统计信息
-        Get system statistics
+        """获取系统统计信息
+        Get system statistics.
 
         Returns:
             系统统计信息字典
@@ -66,9 +64,8 @@ class SystemService:
             raise
 
     def get_api_version(self) -> dict[str, Any]:
-        """
-        获取API版本信息
-        Get API version information
+        """获取API版本信息
+        Get API version information.
 
         Returns:
             API版本信息字典
@@ -106,9 +103,8 @@ class SystemService:
             raise
 
     def get_queue_status(self) -> dict[str, Any]:
-        """
-        获取队列状态信息
-        Get queue status information
+        """获取队列状态信息
+        Get queue status information.
 
         Returns:
             队列状态信息字典
@@ -160,9 +156,8 @@ class SystemService:
             raise
 
     def health_check(self) -> dict[str, Any]:
-        """
-        系统健康检查
-        System health check
+        """系统健康检查
+        System health check.
 
         Returns:
             健康状态信息
@@ -204,7 +199,7 @@ _system_service: SystemService | None = None
 
 
 def get_system_service() -> SystemService:
-    """获取系统服务实例"""
+    """获取系统服务实例."""
     global _system_service
     if _system_service is None:
         _system_service = SystemService()
@@ -213,9 +208,8 @@ def get_system_service() -> SystemService:
 
 # 便捷函数
 def get_system_stats() -> dict[str, Any]:
-    """
-    便捷的系统统计函数
-    Convenience system statistics function
+    """便捷的系统统计函数
+    Convenience system statistics function.
 
     Returns:
         系统统计信息
@@ -225,9 +219,8 @@ def get_system_stats() -> dict[str, Any]:
 
 
 def get_api_version_info() -> dict[str, Any]:
-    """
-    便捷的API版本信息函数
-    Convenience API version info function
+    """便捷的API版本信息函数
+    Convenience API version info function.
 
     Returns:
         API版本信息
@@ -237,9 +230,8 @@ def get_api_version_info() -> dict[str, Any]:
 
 
 def get_queue_status_info() -> dict[str, Any]:
-    """
-    便捷的队列状态函数
-    Convenience queue status function
+    """便捷的队列状态函数
+    Convenience queue status function.
 
     Returns:
         队列状态信息

@@ -1,5 +1,4 @@
-"""
-特征服务
+"""特征服务.
 
 提供特征计算、存储和管理的高级接口
 """
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class FeatureService:
-    """特征服务
+    """特征服务.
 
     提供特征计算和管理的高级接口
     """
@@ -33,7 +32,7 @@ class FeatureService:
     async def get_match_features(
         self, match_id: int, calculation_date: datetime | None = None
     ) -> AllMatchFeatures | None:
-        """获取比赛特征
+        """获取比赛特征.
 
         Args:
             match_id: 比赛ID
@@ -65,7 +64,7 @@ class FeatureService:
     async def get_team_features(
         self, team_id: int, calculation_date: datetime | None = None
     ) -> AllTeamFeatures | None:
-        """获取球队特征
+        """获取球队特征.
 
         Args:
             team_id: 球队ID
@@ -93,7 +92,7 @@ class FeatureService:
     async def batch_get_match_features(
         self, match_ids: list[int], calculation_date: datetime | None = None
     ) -> dict[int, AllMatchFeatures | None]:
-        """批量获取比赛特征
+        """批量获取比赛特征.
 
         Args:
             match_ids: 比赛ID列表
@@ -124,7 +123,7 @@ class FeatureService:
     async def get_recent_performance_features(
         self, team_id: int, calculation_date: datetime | None = None
     ) -> RecentPerformanceFeatures | None:
-        """获取球队近期战绩特征
+        """获取球队近期战绩特征.
 
         Args:
             team_id: 球队ID
@@ -155,7 +154,7 @@ class FeatureService:
         away_team_id: int,
         calculation_date: datetime | None = None,
     ) -> HistoricalMatchupFeatures | None:
-        """获取历史对战特征
+        """获取历史对战特征.
 
         Args:
             home_team_id: 主队ID
@@ -184,7 +183,7 @@ class FeatureService:
     async def get_odds_features(
         self, match_id: int, calculation_date: datetime | None = None
     ) -> OddsFeatures | None:
-        """获取赔率特征
+        """获取赔率特征.
 
         Args:
             match_id: 比赛ID
@@ -208,7 +207,7 @@ class FeatureService:
             return None
 
     async def validate_feature_data(self, features: AllMatchFeatures) -> bool:
-        """验证特征数据完整性
+        """验证特征数据完整性.
 
         Args:
             features: 比赛特征
@@ -269,7 +268,7 @@ class FeatureService:
     async def get_feature_summary(
         self, match_id: int, calculation_date: datetime | None = None
     ) -> dict | None:
-        """获取特征摘要信息
+        """获取特征摘要信息.
 
         Args:
             match_id: 比赛ID

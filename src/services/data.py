@@ -1,6 +1,5 @@
-"""
-数据服务模块
-Data Service Module
+"""数据服务模块
+Data Service Module.
 
 提供比赛数据管理的核心业务逻辑。
 Provides core business logic for match data management.
@@ -13,16 +12,15 @@ logger = logging.getLogger(__name__)
 
 
 class DataService:
-    """数据服务类 - 统一的数据管理服务"""
+    """数据服务类 - 统一的数据管理服务."""
 
     def __init__(self):
-        """初始化数据服务"""
+        """初始化数据服务."""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def get_matches_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
-        """
-        获取比赛列表
-        Get matches list
+        """获取比赛列表
+        Get matches list.
 
         Args:
             limit: 返回数量限制
@@ -73,9 +71,8 @@ class DataService:
         }
 
     def get_match_by_id(self, match_id: int) -> dict[str, Any] | None:
-        """
-        根据ID获取比赛信息
-        Get match information by ID
+        """根据ID获取比赛信息
+        Get match information by ID.
 
         Args:
             match_id: 比赛ID
@@ -117,9 +114,8 @@ class DataService:
         return sample_matches.get(match_id)
 
     def get_teams_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
-        """
-        获取球队列表
-        Get teams list
+        """获取球队列表
+        Get teams list.
 
         Args:
             limit: 返回数量限制
@@ -197,9 +193,8 @@ class DataService:
         }
 
     def get_team_by_id(self, team_id: int) -> dict[str, Any] | None:
-        """
-        根据ID获取球队信息
-        Get team information by ID
+        """根据ID获取球队信息
+        Get team information by ID.
 
         Args:
             team_id: 球队ID
@@ -247,9 +242,8 @@ class DataService:
         return sample_teams.get(team_id)
 
     def get_leagues_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
-        """
-        获取联赛列表
-        Get leagues list
+        """获取联赛列表
+        Get leagues list.
 
         Args:
             limit: 返回数量限制
@@ -309,9 +303,8 @@ class DataService:
         }
 
     def get_odds_data(self, match_id: int | None = None) -> dict[str, Any]:
-        """
-        获取赔率数据
-        Get odds data
+        """获取赔率数据
+        Get odds data.
 
         Args:
             match_id: 可选的比赛ID过滤
@@ -353,16 +346,15 @@ class DataService:
 
 
 class MatchService:
-    """比赛数据服务类"""
+    """比赛数据服务类."""
 
     def __init__(self):
-        """初始化比赛数据服务"""
+        """初始化比赛数据服务."""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def get_matches(self, limit: int = 10, offset: int = 0) -> dict[str, Any]:
-        """
-        获取比赛列表
-        Get matches list
+        """获取比赛列表
+        Get matches list.
 
         Args:
             limit: 返回数量限制
@@ -404,9 +396,8 @@ class MatchService:
         }
 
     def get_match_by_id(self, match_id: int) -> dict[str, Any]:
-        """
-        根据ID获取比赛
-        Get match by ID
+        """根据ID获取比赛
+        Get match by ID.
 
         Args:
             match_id: 比赛ID
@@ -434,7 +425,7 @@ _data_service: DataService | None = None
 
 
 def get_data_service() -> DataService:
-    """获取数据服务实例"""
+    """获取数据服务实例."""
     global _data_service
     if _data_service is None:
         _data_service = DataService()

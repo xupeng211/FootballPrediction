@@ -1,5 +1,4 @@
-"""
-数据处理缓存管理 - 重写版本
+"""数据处理缓存管理 - 重写版本.
 
 提供数据处理的缓存功能，避免重复计算
 Processing Cache Manager - Rewritten Version
@@ -15,13 +14,13 @@ from redis.exceptions import RedisError
 
 
 class ProcessingCache:
-    """数据处理缓存管理器 - 简化版本
+    """数据处理缓存管理器 - 简化版本.
 
     提供内存和Redis缓存功能，避免重复计算
     """
 
     def __init__(self, redis_client=None):
-        """初始化缓存管理器"""
+        """初始化缓存管理器."""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         self.redis_client = redis_client
         self.cache_enabled = True
@@ -32,7 +31,7 @@ class ProcessingCache:
         self._memory_cache_timestamps = {}
 
     async def get(self, cache_key: str) -> Any | None:
-        """获取缓存数据"""
+        """获取缓存数据."""
         if not self.cache_enabled:
             return None
 
@@ -57,7 +56,7 @@ class ProcessingCache:
             return None
 
     async def set(self, cache_key: str, data: Any, ttl: int | None = None) -> bool:
-        """设置缓存数据"""
+        """设置缓存数据."""
         if not self.cache_enabled:
             return False
 
@@ -80,7 +79,7 @@ class ProcessingCache:
             return False
 
     async def delete(self, cache_key: str) -> bool:
-        """删除缓存数据"""
+        """删除缓存数据."""
         try:
             success = True
 
@@ -105,7 +104,7 @@ class ProcessingCache:
             return False
 
     async def clear(self, pattern: str | None = None) -> int:
-        """清空缓存"""
+        """清空缓存."""
         try:
             cleared_count = 0
 
@@ -155,7 +154,7 @@ class ProcessingCache:
     async def get_or_compute(
         self, cache_key: str, compute_func, ttl: int | None = None, *args, **kwargs
     ) -> Any:
-        """获取缓存数据或计算新数据"""
+        """获取缓存数据或计算新数据."""
         # 尝试从缓存获取
         cached_data = await self.get(cache_key)
         if cached_data is not None:
@@ -181,7 +180,7 @@ class ProcessingCache:
             raise
 
     def generate_cache_key(self, prefix: str, *args, **kwargs) -> str:
-        """生成缓存键"""
+        """生成缓存键."""
         try:
             # 组合所有参数
             key_parts = [prefix]
@@ -203,7 +202,7 @@ class ProcessingCache:
             return f"{prefix}:{datetime.utcnow().timestamp()}"
 
     async def _get_from_memory(self, cache_key: str) -> Any | None:
-        """从内存缓存获取数据"""
+        """从内存缓存获取数据."""
         try:
             # 检查是否过期
             if cache_key in self._memory_cache_timestamps:
@@ -221,7 +220,7 @@ class ProcessingCache:
     async def _set_memory_cache(
         self, cache_key: str, data: Any, ttl: int | None = None
     ) -> None:
-        """设置内存缓存"""
+        """设置内存缓存."""
         try:
             self._memory_cache[cache_key] = data
             self._memory_cache_timestamps[cache_key] = datetime.utcnow()
@@ -240,7 +239,7 @@ class ProcessingCache:
             self.logger.warning(f"设置内存缓存失败: {e}")
 
     async def _get_from_redis(self, cache_key: str) -> Any | None:
-        """从Redis获取数据"""
+        """从Redis获取数据."""
         try:
             data = await self.redis_client.get(cache_key)
             if data:
@@ -252,7 +251,7 @@ class ProcessingCache:
             return None
 
     async def _set_to_redis(self, cache_key: str, data: Any, ttl: int) -> bool:
-        """设置Redis缓存"""
+        """设置Redis缓存."""
         try:
             serialized_data = json.dumps(data, default=str)
             await self.redis_client.setex(cache_key, ttl, serialized_data)
@@ -263,7 +262,7 @@ class ProcessingCache:
             return False
 
     async def get_cache_stats(self) -> dict[str, Any]:
-        """获取缓存统计信息"""
+        """获取缓存统计信息."""
         try:
             stats = {
                 "memory_cache_size": len(self._memory_cache),
@@ -294,17 +293,17 @@ class ProcessingCache:
             return {"error": str(e)}
 
     async def enable_cache(self) -> None:
-        """启用缓存"""
+        """启用缓存."""
         self.cache_enabled = True
         self.logger.info("缓存已启用")
 
     async def disable_cache(self) -> None:
-        """禁用缓存"""
+        """禁用缓存."""
         self.cache_enabled = False
         self.logger.info("缓存已禁用")
 
     async def cleanup_expired(self) -> int:
-        """清理过期的内存缓存"""
+        """清理过期的内存缓存."""
         try:
             current_time = datetime.utcnow()
             expired_keys = []
@@ -325,7 +324,7 @@ class ProcessingCache:
             return 0
 
     def __repr__(self) -> str:
-        """字符串表示"""
+        """字符串表示."""
         return (
             f"ProcessingCache(enabled={self.cache_enabled}, "
             f"memory_size={len(self._memory_cache)}, "
@@ -333,24 +332,24 @@ class ProcessingCache:
         )
 
     async def __aenter__(self):
-        """异步上下文管理器入口"""
+        """异步上下文管理器入口."""
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """异步上下文管理器出口"""
+        """异步上下文管理器出口."""
         # 清理资源
         await self.cleanup_expired()
 
 
 # 便利函数
 async def create_processing_cache(redis_client=None) -> ProcessingCache:
-    """创建处理缓存实例"""
+    """创建处理缓存实例."""
     return ProcessingCache(redis_client=redis_client)
 
 
 # 缓存装饰器
 def cache_result(ttl: int = 3600, key_prefix: str = None):
-    """缓存结果装饰器"""
+    """缓存结果装饰器."""
 
     def decorator(func):
         async def wrapper(*args, **kwargs):

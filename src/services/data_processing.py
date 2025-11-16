@@ -1,6 +1,5 @@
-"""
-数据处理服务
-Data Processing Service
+"""数据处理服务
+Data Processing Service.
 
 提供数据处理和转换功能.
 Provides data processing and transformation functionality.
@@ -15,66 +14,66 @@ logger = logging.getLogger(__name__)
 
 
 class DataProcessor(ABC):
-    """数据处理器基类"""
+    """数据处理器基类."""
 
     @abstractmethod
     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
-        """处理数据"""
+        """处理数据."""
 
 
 class MatchDataProcessor(DataProcessor):
-    """比赛数据处理器"""
+    """比赛数据处理器."""
 
     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
-        """处理比赛数据"""
+        """处理比赛数据."""
         logger.debug(f"Processing match data: {data.get('id')}")
 
         return {**data, "processed_at": datetime.utcnow(), "type": "match"}
 
 
 class OddsDataProcessor(DataProcessor):
-    """赔率数据处理器"""
+    """赔率数据处理器."""
 
     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
-        """处理赔率数据"""
+        """处理赔率数据."""
         logger.debug(f"Processing odds data: {data.get('match_id')}")
 
         return {**data, "processed_at": datetime.utcnow(), "type": "odds"}
 
 
 class ScoresDataProcessor(DataProcessor):
-    """比分数据处理器"""
+    """比分数据处理器."""
 
     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
-        """处理比分数据"""
+        """处理比分数据."""
         logger.debug(f"Processing scores data: {data.get('match_id')}")
 
         return {**data, "processed_at": datetime.utcnow(), "type": "scores"}
 
 
 class FeaturesDataProcessor(DataProcessor):
-    """特征数据处理器"""
+    """特征数据处理器."""
 
     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
-        """处理特征数据"""
+        """处理特征数据."""
         logger.debug(f"Processing features data: {data.get('match_id')}")
 
         return {**data, "processed_at": datetime.utcnow(), "type": "features"}
 
 
 class DataQualityValidator:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """数据质量验证器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.errors = []
 
     def validate(self, data: dict[str, Any]) -> bool:
-        """验证数据质量"""
+        """验证数据质量."""
         self.errors.clear()
 
         if not data:
@@ -91,18 +90,18 @@ class DataQualityValidator:
 
 
 class AnomalyDetector:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """异常检测器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.threshold = 3.0  # 标准差阈值
 
     def detect(self, data: dict[str, Any]) -> list[str]:
-        """检测异常"""
+        """检测异常."""
         anomalies = []
 
         # 简化的异常检测逻辑
@@ -117,13 +116,13 @@ class AnomalyDetector:
 
 
 class MissingDataHandler:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """缺失数据处理基类"""
 
     def handle(self, data: dict[str, Any]) -> dict[str, Any]:
-        """处理缺失球队信息"""
+        """处理缺失球队信息."""
         if "home_team" not in data:
             data["home_team"] = "Unknown"
         if "away_team" not in data:
@@ -132,20 +131,20 @@ class MissingDataHandler:
 
 
 class BronzeToSilverProcessor:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """青铜到银层数据处理器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.validators = [DataQualityValidator()]
         self.detectors = [AnomalyDetector()]
         self.handlers = [MissingDataHandler(), MissingDataHandler()]
 
     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
-        """处理数据从青铜层到银层"""
+        """处理数据从青铜层到银层."""
         # 验证数据
         for validator in self.validators:
             if not validator.validate(data):
@@ -165,10 +164,10 @@ class BronzeToSilverProcessor:
 
 
 class DataProcessingService:
-    """数据处理服务 - 简化版本"""
+    """数据处理服务 - 简化版本."""
 
     def __init__(self, repository=None, cache=None, session=None):
-        """初始化服务"""
+        """初始化服务."""
         self.repository = repository
         self.cache = cache
         self.session = session
@@ -182,14 +181,14 @@ class DataProcessingService:
         self.bronze_to_silver = BronzeToSilverProcessor()
 
     async def initialize(self):
-        """初始化服务"""
+        """初始化服务."""
         if self.initialized:
             return None
         self.initialized = True
         logger.info("DataProcessingService initialized")
 
     async def process_data(self, data: dict[str, Any]) -> dict[str, Any]:
-        """处理数据"""
+        """处理数据."""
         if not self.initialized:
             await self.initialize()
 
@@ -207,7 +206,7 @@ class DataProcessingService:
     async def batch_process(
         self, data_list: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """批量处理数据"""
+        """批量处理数据."""
         results = []
         for data in data_list:
             result = await self.process_data(data)
@@ -215,7 +214,7 @@ class DataProcessingService:
         return results
 
     async def cleanup(self):
-        """清理资源"""
+        """清理资源."""
         logger.info("DataProcessingService cleaned up")
 
 

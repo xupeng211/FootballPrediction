@@ -1,6 +1,5 @@
-"""
-用户管理服务
-User Management Service
+"""用户管理服务
+User Management Service.
 
 提供完整的用户管理功能，包括注册、登录、信息管理、权限控制等。
 遵循CLAUDE.md中的防呆约束。
@@ -24,7 +23,7 @@ from src.utils.data_validator import validate_email, validate_password_strength
 
 
 class UserCreateRequest(BaseModel):
-    """用户创建请求模型"""
+    """用户创建请求模型."""
 
     username: str
     email: EmailStr
@@ -33,7 +32,7 @@ class UserCreateRequest(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
-    """用户更新请求模型"""
+    """用户更新请求模型."""
 
     email: EmailStr | None = None
     full_name: str | None = None
@@ -41,7 +40,7 @@ class UserUpdateRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
-    """用户响应模型"""
+    """用户响应模型."""
 
     id: int
     username: str
@@ -53,7 +52,7 @@ class UserResponse(BaseModel):
 
 
 class UserAuthResponse(BaseModel):
-    """用户认证响应模型"""
+    """用户认证响应模型."""
 
     access_token: str
     token_type: str
@@ -62,13 +61,13 @@ class UserAuthResponse(BaseModel):
 
 
 class UserManagementService:
-    """用户管理服务类"""
+    """用户管理服务类."""
 
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
 
     async def create_user(self, request: UserCreateRequest) -> UserResponse:
-        """创建新用户"""
+        """创建新用户."""
         # 验证输入数据
         self._validate_create_request(request)
 
@@ -92,7 +91,7 @@ class UserManagementService:
         return self._convert_to_response(user)
 
     async def authenticate_user(self, email: str, password: str) -> UserAuthResponse:
-        """用户认证"""
+        """用户认证."""
         # 验证输入数据
         if not email or not password:
             raise InvalidCredentialsError("邮箱和密码不能为空")
@@ -117,7 +116,7 @@ class UserManagementService:
         )
 
     async def get_user_by_id(self, user_id: int) -> UserResponse:
-        """根据ID获取用户信息"""
+        """根据ID获取用户信息."""
         user = await self.user_repository.get_by_id(user_id)
         if not user:
             raise UserNotFoundError(f"用户ID {user_id} 不存在")
@@ -125,7 +124,7 @@ class UserManagementService:
         return self._convert_to_response(user)
 
     async def get_user_by_email(self, email: str) -> UserResponse:
-        """根据邮箱获取用户信息"""
+        """根据邮箱获取用户信息."""
         user = await self.user_repository.get_by_email(email)
         if not user:
             raise UserNotFoundError(f"用户邮箱 {email} 不存在")
@@ -135,7 +134,7 @@ class UserManagementService:
     async def update_user(
         self, user_id: int, request: UserUpdateRequest
     ) -> UserResponse:
-        """更新用户信息"""
+        """更新用户信息."""
         # 检查用户是否存在
         existing_user = await self.user_repository.get_by_id(user_id)
         if not existing_user:
@@ -155,7 +154,7 @@ class UserManagementService:
         return self._convert_to_response(updated_user)
 
     async def delete_user(self, user_id: int) -> bool:
-        """删除用户"""
+        """删除用户."""
         # 检查用户是否存在
         existing_user = await self.user_repository.get_by_id(user_id)
         if not existing_user:
@@ -166,21 +165,21 @@ class UserManagementService:
     async def get_users(
         self, skip: int = 0, limit: int = 100, active_only: bool = True
     ) -> list[UserResponse]:
-        """获取用户列表"""
+        """获取用户列表."""
         users = await self.user_repository.get_list(
             skip=skip, limit=limit, active_only=active_only
         )
         return [self._convert_to_response(user) for user in users]
 
     async def search_users(self, query: str, limit: int = 20) -> list[UserResponse]:
-        """搜索用户"""
+        """搜索用户."""
         users = await self.user_repository.search(query, limit)
         return [self._convert_to_response(user) for user in users]
 
     async def change_password(
         self, user_id: int, old_password: str, new_password: str
     ) -> bool:
-        """修改密码"""
+        """修改密码."""
         # 检查用户是否存在
         user = await self.user_repository.get_by_id(user_id)
         if not user:
@@ -203,7 +202,7 @@ class UserManagementService:
         return True
 
     async def deactivate_user(self, user_id: int) -> UserResponse:
-        """停用用户"""
+        """停用用户."""
         # 检查用户是否存在
         user = await self.user_repository.get_by_id(user_id)
         if not user:
@@ -218,7 +217,7 @@ class UserManagementService:
         return self._convert_to_response(updated_user)
 
     async def activate_user(self, user_id: int) -> UserResponse:
-        """激活用户"""
+        """激活用户."""
         # 检查用户是否存在
         user = await self.user_repository.get_by_id(user_id)
         if not user:
@@ -233,7 +232,7 @@ class UserManagementService:
         return self._convert_to_response(updated_user)
 
     def _validate_create_request(self, request: UserCreateRequest) -> None:
-        """验证创建用户请求"""
+        """验证创建用户请求."""
         # 验证用户名
         if not request.username or len(request.username.strip()) < 3:
             raise ValueError("用户名至少需要3个字符")
@@ -248,7 +247,7 @@ class UserManagementService:
         validate_password_strength(request.password)
 
     def _validate_update_request(self, request: UserUpdateRequest) -> dict[str, Any]:
-        """验证更新用户请求"""
+        """验证更新用户请求."""
         update_data = {}
 
         if request.email is not None:
@@ -267,7 +266,7 @@ class UserManagementService:
         return update_data
 
     def _convert_to_response(self, user) -> UserResponse:
-        """转换为响应模型"""
+        """转换为响应模型."""
         return UserResponse(
             id=user.id,
             username=user.username,
@@ -279,13 +278,13 @@ class UserManagementService:
         )
 
     def _generate_access_token(self, user) -> str:
-        """生成访问令牌"""
+        """生成访问令牌."""
         # 简单的令牌生成，实际项目中应该使用JWT
         token_data = f"{user.id}:{user.email}:{datetime.utcnow().timestamp()}"
         return hashlib.sha256(token_data.encode()).hexdigest()
 
     async def get_user_stats(self) -> dict[str, Any]:
-        """获取用户统计信息"""
+        """获取用户统计信息."""
         total_users = await self.user_repository.count()
         active_users = await self.user_repository.count(active_only=True)
 
