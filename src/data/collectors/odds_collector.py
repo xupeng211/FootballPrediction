@@ -1,5 +1,4 @@
-"""
-赔率收集器模块 (Odds Collector)
+"""赔率收集器模块 (Odds Collector).
 
 负责从各种数据源收集足球比赛赔率数据。
 Responsible for collecting football match odds data from various data sources.
@@ -14,7 +13,7 @@ from src.core.logging import get_logger
 
 
 class CollectionResult:
-    """数据收集结果类"""
+    """数据收集结果类."""
 
     def __init__(
         self,
@@ -35,7 +34,7 @@ class CollectionResult:
 
 
 class OddsCollector:
-    """赔率收集器类"""
+    """赔率收集器类."""
 
     def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
@@ -44,8 +43,7 @@ class OddsCollector:
         self.cache = {}
 
     async def collect_match_odds(self, match_id: int) -> CollectionResult:
-        """
-        收集指定比赛的赔率数据
+        """收集指定比赛的赔率数据.
 
         Args:
             match_id: 比赛ID
@@ -112,8 +110,7 @@ class OddsCollector:
             )
 
     async def collect_league_odds(self, league_id: int) -> CollectionResult:
-        """
-        收集指定联赛的赔率数据
+        """收集指定联赛的赔率数据.
 
         Args:
             league_id: 联赛ID
@@ -165,8 +162,7 @@ class OddsCollector:
             )
 
     def get_cache_stats(self) -> dict[str, Any]:
-        """
-        获取缓存统计信息
+        """获取缓存统计信息.
 
         Returns:
             Dict[str, Any]: 缓存统计数据
@@ -174,13 +170,12 @@ class OddsCollector:
         return {"cache_size": len(self.cache), "cache_keys": list(self.cache.keys())}
 
     def clear_cache(self) -> None:
-        """清空缓存"""
+        """清空缓存."""
         self.cache.clear()
         self.logger.info("Cache cleared")
 
     async def get_collection_stats(self) -> dict[str, Any]:
-        """
-        获取收集统计信息
+        """获取收集统计信息.
 
         Returns:
             Dict[str, Any]: 统计数据

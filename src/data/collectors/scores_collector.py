@@ -1,5 +1,4 @@
-"""
-比分数据采集器
+"""比分数据采集器.
 
 实现足球比赛实时比分和赛后数据采集逻辑。
 包含实时比分更新、比赛事件记录、统计数据收集等功能。
@@ -23,8 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class ScoresCollector(BaseCollector):
-    """
-    比分数据采集器
+    """比分数据采集器.
 
     负责从数据API采集足球比赛实时比分和赛后数据,
     包含比分更新、事件记录、统计数据收集等功能。
@@ -43,8 +41,7 @@ class ScoresCollector(BaseCollector):
         }
 
     async def collect_live_scores(self, match_ids: list[int]) -> CollectionResult:
-        """
-        采集多场比赛实时比分
+        """采集多场比赛实时比分.
 
         Args:
             match_ids: 比赛ID列表
@@ -82,8 +79,7 @@ class ScoresCollector(BaseCollector):
             )
 
     async def collect_match_score(self, match_id: int) -> CollectionResult:
-        """
-        采集单场比赛比分详情
+        """采集单场比赛比分详情.
 
         Args:
             match_id: 比赛ID
@@ -118,8 +114,7 @@ class ScoresCollector(BaseCollector):
             )
 
     async def collect_match_events(self, match_id: int) -> CollectionResult:
-        """
-        采集比赛事件
+        """采集比赛事件.
 
         Args:
             match_id: 比赛ID
@@ -154,8 +149,7 @@ class ScoresCollector(BaseCollector):
             )
 
     async def collect_match_statistics(self, match_id: int) -> CollectionResult:
-        """
-        采集比赛统计数据
+        """采集比赛统计数据.
 
         Args:
             match_id: 比赛ID
@@ -190,8 +184,7 @@ class ScoresCollector(BaseCollector):
             )
 
     async def collect_lineups(self, match_id: int) -> CollectionResult:
-        """
-        采集比赛阵容信息
+        """采集比赛阵容信息.
 
         Args:
             match_id: 比赛ID
@@ -226,7 +219,7 @@ class ScoresCollector(BaseCollector):
             )
 
     async def _collect_single_match_score(self, match_id: int) -> dict:
-        """采集单场比赛比分"""
+        """采集单场比赛比分."""
         endpoint = f"/matches/{match_id}"
         result = await self._make_request("GET", endpoint)
 
@@ -235,7 +228,7 @@ class ScoresCollector(BaseCollector):
         return {}
 
     def _process_match_score(self, raw_data: dict) -> dict:
-        """处理比分数据"""
+        """处理比分数据."""
         match = raw_data.get("match", {})
         score = match.get("score", {})
 
@@ -271,7 +264,7 @@ class ScoresCollector(BaseCollector):
         return processed
 
     def _process_match_events(self, raw_data: dict) -> dict:
-        """处理比赛事件数据"""
+        """处理比赛事件数据."""
         events = raw_data.get("events", [])
         processed_events = []
 
@@ -313,7 +306,7 @@ class ScoresCollector(BaseCollector):
         }
 
     def _process_match_statistics(self, raw_data: dict) -> dict:
-        """处理比赛统计数据"""
+        """处理比赛统计数据."""
         match = raw_data.get("match", {})
         statistics = raw_data.get("statistics", [])
 
@@ -352,7 +345,7 @@ class ScoresCollector(BaseCollector):
         return processed_stats
 
     def _process_lineups(self, raw_data: dict) -> dict:
-        """处理阵容数据"""
+        """处理阵容数据."""
         match = raw_data.get("match", {})
 
         processed_lineups = {"match_id": match.get("id"), "teams": {}}
@@ -400,7 +393,7 @@ class ScoresCollector(BaseCollector):
         return processed_lineups
 
     def _parse_event_timestamp(self, event: dict) -> str | None:
-        """解析事件时间戳"""
+        """解析事件时间戳."""
         # 这里可以根据实际API响应格式来解析时间戳
         if "timestamp" in event:
             return event["timestamp"]
@@ -413,8 +406,7 @@ class ScoresCollector(BaseCollector):
     async def monitor_live_match(
         self, match_id: int, update_interval: int = 60
     ) -> None:
-        """
-        监控单场实时比赛
+        """监控单场实时比赛.
 
         Args:
             match_id: 比赛ID
@@ -463,7 +455,7 @@ class ScoresCollector(BaseCollector):
                 await asyncio.sleep(30)  # 出错时等待30秒后重试
 
     async def get_live_matches_summary(self) -> dict:
-        """获取正在进行比赛的摘要"""
+        """获取正在进行比赛的摘要."""
         try:
             # 这里可以根据实际API获取正在进行的比赛列表
             # 示例实现
@@ -519,8 +511,7 @@ class ScoresCollector(BaseCollector):
 
 # 便捷函数
 async def get_match_score(match_id: int, api_key: str, base_url: str) -> dict:
-    """
-    获取比赛比分的便捷函数
+    """获取比赛比分的便捷函数.
 
     Args:
         match_id: 比赛ID

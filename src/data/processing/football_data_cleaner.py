@@ -1,5 +1,4 @@
-"""
-足球数据清洗器 - 完整实现
+"""足球数据清洗器 - 完整实现.
 
 提供专业的足球数据清洗功能，包括：
 - 数据验证和去重
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class FootballDataCleaner:
-    """足球数据清洗器 - 完整实现"""
+    """足球数据清洗器 - 完整实现."""
 
     def __init__(self, config: dict | None = None):
         self.config = config or self._get_default_config()
@@ -40,7 +39,7 @@ class FootballDataCleaner:
     def clean_dataset(
         self, raw_data: pd.DataFrame, data_type: str = "matches"
     ) -> pd.DataFrame:
-        """清洗完整数据集
+        """清洗完整数据集.
 
         Args:
             raw_data: 原始数据DataFrame
@@ -91,7 +90,7 @@ class FootballDataCleaner:
     def _validate_basic_structure(
         self, data: pd.DataFrame, data_type: str
     ) -> pd.DataFrame:
-        """基础数据结构验证"""
+        """基础数据结构验证."""
         required_columns = {
             "matches": ["match_id", "home_team_id", "away_team_id", "match_date"],
             "teams": ["team_id", "team_name"],
@@ -110,7 +109,7 @@ class FootballDataCleaner:
         return data
 
     def _remove_duplicates(self, data: pd.DataFrame, data_type: str) -> pd.DataFrame:
-        """移除重复数据"""
+        """移除重复数据."""
         initial_count = len(data)
 
         if data_type == "matches":
@@ -142,7 +141,7 @@ class FootballDataCleaner:
         return data_dedup
 
     def _handle_missing_values_adaptive(self, data: pd.DataFrame) -> pd.DataFrame:
-        """自适应缺失值处理"""
+        """自适应缺失值处理."""
         missing_info = {}
 
         for column in data.columns:
@@ -170,7 +169,7 @@ class FootballDataCleaner:
     def _determine_missing_strategy(
         self, column: str, series: pd.Series, missing_ratio: float
     ) -> str:
-        """确定缺失值处理策略"""
+        """确定缺失值处理策略."""
         if missing_ratio > 0.5:
             return "drop_column"  # 缺失值超过50%，考虑删除列
         elif missing_ratio > 0.3:
@@ -181,7 +180,7 @@ class FootballDataCleaner:
             return "mode"
 
     def _apply_missing_strategy(self, series: pd.Series, strategy: str) -> pd.Series:
-        """应用缺失值处理策略"""
+        """应用缺失值处理策略."""
         if strategy == "drop_column":
             return series  # 将在上层处理
         elif strategy == "drop_rows":
@@ -205,7 +204,7 @@ class FootballDataCleaner:
     def _detect_and_handle_outliers(
         self, data: pd.DataFrame, data_type: str
     ) -> pd.DataFrame:
-        """检测和处理异常值"""
+        """检测和处理异常值."""
         numeric_columns = data.select_dtypes(include=[np.number]).columns
         outliers_info = {}
 
@@ -230,7 +229,7 @@ class FootballDataCleaner:
         return data
 
     def _detect_outliers_iqr(self, series: pd.Series) -> pd.Series:
-        """使用IQR方法检测异常值"""
+        """使用IQR方法检测异常值."""
         try:
             q1 = series.quantile(0.25)
             q3 = series.quantile(0.75)
@@ -248,7 +247,7 @@ class FootballDataCleaner:
     def _handle_outliers(
         self, data: pd.DataFrame, column: str, outliers: pd.Series
     ) -> pd.DataFrame:
-        """处理异常值"""
+        """处理异常值."""
         try:
             q1 = data[column].quantile(0.25)
             q3 = data[column].quantile(0.75)
@@ -266,7 +265,7 @@ class FootballDataCleaner:
         return data
 
     def _convert_and_standardize(self, data: pd.DataFrame) -> pd.DataFrame:
-        """数据类型转换和标准化"""
+        """数据类型转换和标准化."""
         # 确保日期列格式正确
         date_columns = ["match_date", "created_at", "updated_at", "utc_date"]
         for col in date_columns:
@@ -288,7 +287,7 @@ class FootballDataCleaner:
         return data
 
     def _advanced_validation(self, data: pd.DataFrame, data_type: str) -> pd.DataFrame:
-        """高级数据验证"""
+        """高级数据验证."""
         validation_errors = []
 
         if data_type == "matches":
@@ -343,7 +342,7 @@ class FootballDataCleaner:
     def _generate_cleaning_report(
         self, raw_data: pd.DataFrame, cleaned_data: pd.DataFrame, steps: list[str]
     ):
-        """生成清洗报告"""
+        """生成清洗报告."""
         self.data_quality_report.update(
             {
                 "original_shape": raw_data.shape,
@@ -359,19 +358,19 @@ class FootballDataCleaner:
         logger.info(f"数据清洗报告生成完成: {self.data_quality_report}")
 
     def get_cleaning_report(self) -> dict[str, Any]:
-        """获取清洗报告"""
+        """获取清洗报告."""
         return self.data_quality_report.copy()
 
     def clean_match_data(self, raw_data: pd.DataFrame) -> pd.DataFrame:
-        """清洗比赛数据的便捷方法"""
+        """清洗比赛数据的便捷方法."""
         return self.clean_dataset(raw_data, "matches")
 
     def clean_team_data(self, raw_data: pd.DataFrame) -> pd.DataFrame:
-        """清洗球队数据的便捷方法"""
+        """清洗球队数据的便捷方法."""
         return self.clean_dataset(raw_data, "teams")
 
     def clean_odds_data(self, raw_data: pd.DataFrame) -> pd.DataFrame:
-        """清洗赔率数据的便捷方法"""
+        """清洗赔率数据的便捷方法."""
         return self.clean_dataset(raw_data, "odds")
 
 
@@ -379,8 +378,7 @@ class FootballDataCleaner:
 def clean_football_data(
     raw_data: pd.DataFrame, data_type: str = "matches", config: dict | None = None
 ) -> pd.DataFrame:
-    """
-    便捷的足球数据清洗函数
+    """便捷的足球数据清洗函数.
 
     Args:
         raw_data: 原始数据
