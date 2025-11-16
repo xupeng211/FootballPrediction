@@ -21,23 +21,23 @@ PredictionStatus = None
 from src.domain.models.team import Team, TeamForm, TeamStats
 
 __all__ = [
-# 比赛
-"Match",
-"MatchStatus",
-"MatchResult",
-"MatchScore",
-# 预测
-"Prediction",
-"PredictionStatus",
-"ConfidenceScore",
-"PredictionScore",
-"PredictionPoints",
-# 球队
-"Team",
-"TeamStats",
-"TeamForm",
-# 联赛
-"League",
-"LeagueSeason",
-"LeagueSettings",
+    # 比赛
+    "Match",
+    "MatchStatus",
+    "MatchResult",
+    "MatchScore",
+    # 预测
+    "Prediction",
+    "PredictionStatus",
+    "ConfidenceScore",
+    "PredictionScore",
+    "PredictionPoints",
+    # 球队
+    "Team",
+    "TeamStats",
+    "TeamForm",
+    # 联赛
+    "League",
+    "LeagueSeason",
+    "LeagueSettings",
 ]

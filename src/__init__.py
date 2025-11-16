@@ -26,7 +26,7 @@ except ImportError:
     # 如果路径管理器不可用,至少保证基本路径配置
     pass
 
-# 配置警告过滤器
+    # 配置警告过滤器
     setup_warning_filters()
 
 # 版本信息

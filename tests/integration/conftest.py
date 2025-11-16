@@ -21,8 +21,7 @@ import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 project_root = Path(__file__).parent.parent.parent
@@ -31,10 +30,10 @@ sys.path.insert(0, str(project_root))
 # 导入数据库Base类和模型
 try:
     from src.database.base import Base
-    from src.database.models.team import Team
+    from src.database.models.league import League
     from src.database.models.match import Match
     from src.database.models.predictions import Prediction
-    from src.database.models.league import League
+    from src.database.models.team import Team
 except ImportError as e:
     print(f"Warning: Could not import database models: {e}")
     # 使用SQLAlchemy Base作为后备
@@ -51,8 +50,8 @@ except ImportError as e:
 # 导入领域模型
 try:
     from src.domain.models.prediction import (
-        PredictionScore,
         ConfidenceScore,
+        PredictionScore,
         PredictionStatus,
     )
 except ImportError as e:

@@ -20,14 +20,14 @@ PredictionFacade = None
 from .factory import FacadeConfig, FacadeFactory
 
 __all__ = [
-"SystemFacade",
-"Subsystem",
-"SubsystemManager",
-"MainSystemFacade",
-"PredictionFacade",
-"DataCollectionFacade",
-"AnalyticsFacade",
-"NotificationFacade",
-"FacadeFactory",
-"FacadeConfig",
+    "SystemFacade",
+    "Subsystem",
+    "SubsystemManager",
+    "MainSystemFacade",
+    "PredictionFacade",
+    "DataCollectionFacade",
+    "AnalyticsFacade",
+    "NotificationFacade",
+    "FacadeFactory",
+    "FacadeConfig",
 ]
