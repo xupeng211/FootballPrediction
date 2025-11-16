@@ -11,8 +11,9 @@ from typing import Any
 class SystemMonitor:
     """系统监控器类"""
 
-    def __init__(self):
+    def __init__(self, metrics_collector=None):
         """初始化系统监控器"""
+        self.metrics_collector = metrics_collector
         self.metrics = {}
 
     def record_request(

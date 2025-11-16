@@ -21,8 +21,9 @@ class ContentAnalysisResult:
 class ContentAnalysisService:
     """内容分析服务"""
 
-    def __init__(self):
+    def __init__(self, session=None):
         """初始化内容分析服务"""
+        self.session = session
         self.analyzers = {}
 
     def analyze_text(
