@@ -30,8 +30,8 @@ from src.api.health import router as health_router
 from src.api.predictions import router as predictions_router
 from src.api.predictions.optimized_router import router as optimized_predictions_router
 from src.api.prometheus_metrics import router as prometheus_router
-from src.api.system import router as system_router
 from src.api.schemas import RootResponse
+from src.api.system import router as system_router
 from src.config.openapi_config import setup_openapi
 from src.config.swagger_ui_config import setup_enhanced_docs
 from src.core.event_application import initialize_event_system, shutdown_event_system
@@ -340,8 +340,9 @@ async def health_check_system() -> dict:
     import time
 
     try:
-        import psutil
         import os
+
+        import psutil
 
         # 在测试环境中使用默认值，避免性能问题
         if os.getenv("TESTING", "false").lower() == "true":
@@ -349,13 +350,17 @@ async def health_check_system() -> dict:
             # 创建完整的Mock对象，包含所有需要的属性
             total_memory = 8 * 1024**3  # 8GB
             used_memory = total_memory * 0.452  # 45.2%
-            memory = type('MockMemory', (), {
-                'percent': 45.2,
-                'total': total_memory,
-                'used': used_memory,
-                'available': total_memory - used_memory
-            })()
-            disk = type('MockDisk', (), {'percent': 60.1})()
+            memory = type(
+                "MockMemory",
+                (),
+                {
+                    "percent": 45.2,
+                    "total": total_memory,
+                    "used": used_memory,
+                    "available": total_memory - used_memory,
+                },
+            )()
+            disk = type("MockDisk", (), {"percent": 60.1})()
         else:
             # 获取系统信息
             cpu_percent = psutil.cpu_percent(interval=0.1)  # 减少等待时间
@@ -425,8 +430,6 @@ async def health_check_database() -> dict:
             "active_connections": 3,
         },
     }
-
-
 
 
 if __name__ == "__main__":

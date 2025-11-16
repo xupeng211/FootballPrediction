@@ -34,67 +34,31 @@ class DataService:
         sample_matches = [
             {
                 "id": 12345,
-                "home_team": {
-                    "id": 1,
-                    "name": "Manchester United",
-                    "short_name": "MU"
-                },
-                "away_team": {
-                    "id": 2,
-                    "name": "Liverpool",
-                    "short_name": "LIV"
-                },
+                "home_team": {"id": 1, "name": "Manchester United", "short_name": "MU"},
+                "away_team": {"id": 2, "name": "Liverpool", "short_name": "LIV"},
                 "date": "2025-11-10T15:00:00.000Z",
                 "status": "SCHEDULED",
                 "venue": "Old Trafford",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League",
-                    "country": "England"
-                }
+                "league": {"id": 39, "name": "Premier League", "country": "England"},
             },
             {
                 "id": 12346,
-                "home_team": {
-                    "id": 3,
-                    "name": "Chelsea",
-                    "short_name": "CHE"
-                },
-                "away_team": {
-                    "id": 4,
-                    "name": "Arsenal",
-                    "short_name": "ARS"
-                },
+                "home_team": {"id": 3, "name": "Chelsea", "short_name": "CHE"},
+                "away_team": {"id": 4, "name": "Arsenal", "short_name": "ARS"},
                 "date": "2025-11-11T17:30:00.000Z",
                 "status": "SCHEDULED",
                 "venue": "Stamford Bridge",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League",
-                    "country": "England"
-                }
+                "league": {"id": 39, "name": "Premier League", "country": "England"},
             },
             {
                 "id": 12347,
-                "home_team": {
-                    "id": 5,
-                    "name": "Barcelona",
-                    "short_name": "BAR"
-                },
-                "away_team": {
-                    "id": 6,
-                    "name": "Real Madrid",
-                    "short_name": "RMA"
-                },
+                "home_team": {"id": 5, "name": "Barcelona", "short_name": "BAR"},
+                "away_team": {"id": 6, "name": "Real Madrid", "short_name": "RMA"},
                 "date": "2025-11-12T20:00:00.000Z",
                 "status": "SCHEDULED",
                 "venue": "Camp Nou",
-                "league": {
-                    "id": 140,
-                    "name": "La Liga",
-                    "country": "Spain"
-                }
-            }
+                "league": {"id": 140, "name": "La Liga", "country": "Spain"},
+            },
         ]
 
         start = offset
@@ -105,7 +69,7 @@ class DataService:
             "matches": paginated_matches,
             "total": len(sample_matches),
             "limit": limit,
-            "offset": offset
+            "offset": offset,
         }
 
     def get_match_by_id(self, match_id: int) -> Dict[str, Any] | None:
@@ -122,56 +86,32 @@ class DataService:
         sample_matches = {
             12345: {
                 "id": 12345,
-                "home_team": {
-                    "id": 1,
-                    "name": "Manchester United",
-                    "short_name": "MU"
-                },
-                "away_team": {
-                    "id": 2,
-                    "name": "Liverpool",
-                    "short_name": "LIV"
-                },
+                "home_team": {"id": 1, "name": "Manchester United", "short_name": "MU"},
+                "away_team": {"id": 2, "name": "Liverpool", "short_name": "LIV"},
                 "date": "2025-11-10T15:00:00.000Z",
                 "status": "SCHEDULED",
                 "venue": "Old Trafford",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League",
-                    "country": "England"
-                },
+                "league": {"id": 39, "name": "Premier League", "country": "England"},
                 "statistics": {
                     "possession": {"home": 52, "away": 48},
                     "shots": {"home": 12, "away": 8},
-                    "corners": {"home": 6, "away": 4}
-                }
+                    "corners": {"home": 6, "away": 4},
+                },
             },
             12346: {
                 "id": 12346,
-                "home_team": {
-                    "id": 3,
-                    "name": "Chelsea",
-                    "short_name": "CHE"
-                },
-                "away_team": {
-                    "id": 4,
-                    "name": "Arsenal",
-                    "short_name": "ARS"
-                },
+                "home_team": {"id": 3, "name": "Chelsea", "short_name": "CHE"},
+                "away_team": {"id": 4, "name": "Arsenal", "short_name": "ARS"},
                 "date": "2025-11-11T17:30:00.000Z",
                 "status": "SCHEDULED",
                 "venue": "Stamford Bridge",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League",
-                    "country": "England"
-                },
+                "league": {"id": 39, "name": "Premier League", "country": "England"},
                 "statistics": {
                     "possession": {"home": 48, "away": 52},
                     "shots": {"home": 9, "away": 11},
-                    "corners": {"home": 5, "away": 7}
-                }
-            }
+                    "corners": {"home": 5, "away": 7},
+                },
+            },
         }
 
         return sample_matches.get(match_id)
@@ -196,10 +136,7 @@ class DataService:
                 "country": "England",
                 "founded": 1878,
                 "stadium": "Old Trafford",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League"
-                }
+                "league": {"id": 39, "name": "Premier League"},
             },
             {
                 "id": 2,
@@ -208,10 +145,7 @@ class DataService:
                 "country": "England",
                 "founded": 1892,
                 "stadium": "Anfield",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League"
-                }
+                "league": {"id": 39, "name": "Premier League"},
             },
             {
                 "id": 3,
@@ -220,10 +154,7 @@ class DataService:
                 "country": "England",
                 "founded": 1905,
                 "stadium": "Stamford Bridge",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League"
-                }
+                "league": {"id": 39, "name": "Premier League"},
             },
             {
                 "id": 4,
@@ -232,10 +163,7 @@ class DataService:
                 "country": "England",
                 "founded": 1886,
                 "stadium": "Emirates Stadium",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League"
-                }
+                "league": {"id": 39, "name": "Premier League"},
             },
             {
                 "id": 5,
@@ -244,10 +172,7 @@ class DataService:
                 "country": "Spain",
                 "founded": 1899,
                 "stadium": "Camp Nou",
-                "league": {
-                    "id": 140,
-                    "name": "La Liga"
-                }
+                "league": {"id": 140, "name": "La Liga"},
             },
             {
                 "id": 6,
@@ -256,11 +181,8 @@ class DataService:
                 "country": "Spain",
                 "founded": 1902,
                 "stadium": "Santiago Bernabéu",
-                "league": {
-                    "id": 140,
-                    "name": "La Liga"
-                }
-            }
+                "league": {"id": 140, "name": "La Liga"},
+            },
         ]
 
         start = offset
@@ -271,7 +193,7 @@ class DataService:
             "teams": paginated_teams,
             "total": len(sample_teams),
             "limit": limit,
-            "offset": offset
+            "offset": offset,
         }
 
     def get_team_by_id(self, team_id: int) -> Dict[str, Any] | None:
@@ -293,18 +215,15 @@ class DataService:
                 "country": "England",
                 "founded": 1878,
                 "stadium": "Old Trafford",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League"
-                },
+                "league": {"id": 39, "name": "Premier League"},
                 "statistics": {
                     "matches_played": 38,
                     "wins": 21,
                     "draws": 8,
                     "losses": 9,
                     "goals_for": 62,
-                    "goals_against": 38
-                }
+                    "goals_against": 38,
+                },
             },
             2: {
                 "id": 2,
@@ -313,19 +232,16 @@ class DataService:
                 "country": "England",
                 "founded": 1892,
                 "stadium": "Anfield",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League"
-                },
+                "league": {"id": 39, "name": "Premier League"},
                 "statistics": {
                     "matches_played": 38,
                     "wins": 25,
                     "draws": 7,
                     "losses": 6,
                     "goals_for": 68,
-                    "goals_against": 33
-                }
-            }
+                    "goals_against": 33,
+                },
+            },
         }
 
         return sample_teams.get(team_id)
@@ -350,7 +266,7 @@ class DataService:
                 "founded": 1992,
                 "teams": 20,
                 "season": "2024/2025",
-                "current_champion": "Manchester City"
+                "current_champion": "Manchester City",
             },
             {
                 "id": 140,
@@ -359,7 +275,7 @@ class DataService:
                 "founded": 1929,
                 "teams": 20,
                 "season": "2024/2025",
-                "current_champion": "Real Madrid"
+                "current_champion": "Real Madrid",
             },
             {
                 "id": 135,
@@ -368,7 +284,7 @@ class DataService:
                 "founded": 1898,
                 "teams": 20,
                 "season": "2024/2025",
-                "current_champion": "Inter Milan"
+                "current_champion": "Inter Milan",
             },
             {
                 "id": 78,
@@ -377,8 +293,8 @@ class DataService:
                 "founded": 1963,
                 "teams": 18,
                 "season": "2024/2025",
-                "current_champion": "Bayer Leverkusen"
-            }
+                "current_champion": "Bayer Leverkusen",
+            },
         ]
 
         start = offset
@@ -389,7 +305,7 @@ class DataService:
             "leagues": paginated_leagues,
             "total": len(sample_leagues),
             "limit": limit,
-            "offset": offset
+            "offset": offset,
         }
 
     def get_odds_data(self, match_id: int | None = None) -> Dict[str, Any]:
@@ -409,47 +325,31 @@ class DataService:
                 "bookmakers": [
                     {
                         "name": "Bet365",
-                        "odds": {
-                            "home_win": 2.10,
-                            "draw": 3.40,
-                            "away_win": 3.20
-                        }
+                        "odds": {"home_win": 2.10, "draw": 3.40, "away_win": 3.20},
                     },
                     {
                         "name": "William Hill",
-                        "odds": {
-                            "home_win": 2.05,
-                            "draw": 3.50,
-                            "away_win": 3.30
-                        }
-                    }
+                        "odds": {"home_win": 2.05, "draw": 3.50, "away_win": 3.30},
+                    },
                 ],
-                "last_updated": "2025-11-12T10:00:00.000Z"
+                "last_updated": "2025-11-12T10:00:00.000Z",
             },
             {
                 "match_id": 12346,
                 "bookmakers": [
                     {
                         "name": "Bet365",
-                        "odds": {
-                            "home_win": 1.95,
-                            "draw": 3.60,
-                            "away_win": 3.80
-                        }
+                        "odds": {"home_win": 1.95, "draw": 3.60, "away_win": 3.80},
                     }
                 ],
-                "last_updated": "2025-11-12T10:00:00.000Z"
-            }
+                "last_updated": "2025-11-12T10:00:00.000Z",
+            },
         ]
 
         if match_id is not None:
             sample_odds = [odds for odds in sample_odds if odds["match_id"] == match_id]
 
-        return {
-            "odds": sample_odds,
-            "total": len(sample_odds),
-            "filter": match_id
-        }
+        return {"odds": sample_odds, "total": len(sample_odds), "filter": match_id}
 
 
 class MatchService:
@@ -475,35 +375,19 @@ class MatchService:
         sample_matches = [
             {
                 "id": 12345,
-                "home_team": {
-                    "id": 1,
-                    "name": "Manchester United",
-                    "short_name": "MU"
-                },
-                "away_team": {
-                    "id": 2,
-                    "name": "Liverpool",
-                    "short_name": "LIV"
-                },
+                "home_team": {"id": 1, "name": "Manchester United", "short_name": "MU"},
+                "away_team": {"id": 2, "name": "Liverpool", "short_name": "LIV"},
                 "date": "2025-11-10T15:00:00.000Z",
                 "status": "SCHEDULED",
-                "venue": "Old Trafford"
+                "venue": "Old Trafford",
             },
             {
                 "id": 12346,
-                "home_team": {
-                    "id": 3,
-                    "name": "Chelsea",
-                    "short_name": "CHE"
-                },
-                "away_team": {
-                    "id": 4,
-                    "name": "Arsenal",
-                    "short_name": "ARS"
-                },
+                "home_team": {"id": 3, "name": "Chelsea", "short_name": "CHE"},
+                "away_team": {"id": 4, "name": "Arsenal", "short_name": "ARS"},
                 "date": "2025-11-11T17:30:00.000Z",
                 "status": "SCHEDULED",
-                "venue": "Stamford Bridge"
+                "venue": "Stamford Bridge",
             },
         ]
 
@@ -516,7 +400,7 @@ class MatchService:
             "matches": paginated_matches,
             "total": len(sample_matches),
             "limit": limit,
-            "offset": offset
+            "offset": offset,
         }
 
     def get_match_by_id(self, match_id: int) -> Dict[str, Any]:
@@ -534,24 +418,12 @@ class MatchService:
         if match_id == 12345:
             return {
                 "id": match_id,
-                "home_team": {
-                    "id": 1,
-                    "name": "Manchester United",
-                    "short_name": "MU"
-                },
-                "away_team": {
-                    "id": 2,
-                    "name": "Liverpool",
-                    "short_name": "LIV"
-                },
+                "home_team": {"id": 1, "name": "Manchester United", "short_name": "MU"},
+                "away_team": {"id": 2, "name": "Liverpool", "short_name": "LIV"},
                 "date": "2025-11-10T15:00:00.000Z",
                 "status": "SCHEDULED",
                 "venue": "Old Trafford",
-                "league": {
-                    "id": 39,
-                    "name": "Premier League",
-                    "country": "England"
-                }
+                "league": {"id": 39, "name": "Premier League", "country": "England"},
             }
         else:
             return None

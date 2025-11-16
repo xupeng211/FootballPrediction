@@ -38,7 +38,7 @@ class MetricsCollector:
             "status": "active",
             "timestamp": datetime.utcnow(),
             "metrics_count": len(self.metrics),
-            "collector_initialized": hasattr(self, "_initialized")
+            "collector_initialized": hasattr(self, "_initialized"),
         }
 
 

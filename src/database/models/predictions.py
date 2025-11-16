@@ -16,7 +16,7 @@ Predictions - 数据库模块
 
 from enum import Enum
 
-from sqlalchemy import Integer, String, DateTime, Text
+from sqlalchemy import DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database.base import BaseModel

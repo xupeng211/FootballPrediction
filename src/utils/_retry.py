@@ -44,8 +44,12 @@ class RetryConfig:
             self.delay = 1.0
 
         # 设置其他参数
-        self.backoff_factor = kwargs.get("backoff_factor", 2.0)
-        self.exceptions = kwargs.get("exceptions", (Exception,))
+        self.backoff_factor = backoff_factor
+        self.exceptions = exceptions
+
+        # 支持其他可能的参数
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
         # 验证参数
         if self.max_attempts < 1:

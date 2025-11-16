@@ -193,9 +193,7 @@ async def create_prediction(request: CreatePredictionRequest):
 
     except Exception as e:
         logger.error(f"创建预测失败: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"创建预测失败: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"创建预测失败: {str(e)}") from e
 
 
 @router.get("/health")
@@ -269,7 +267,9 @@ async def get_prediction_by_id_endpoint(prediction_id: str):
         prediction = prediction_service.get_prediction_by_id(prediction_id)
 
         if prediction is None:
-            raise HTTPException(status_code=404, detail=f"预测ID {prediction_id} 不存在")
+            raise HTTPException(
+                status_code=404, detail=f"预测ID {prediction_id} 不存在"
+            )
 
         logger.info(f"成功获取预测: {prediction_id}")
         return prediction
@@ -278,9 +278,7 @@ async def get_prediction_by_id_endpoint(prediction_id: str):
         raise
     except Exception as e:
         logger.error(f"获取预测失败: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"获取预测失败: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"获取预测失败: {str(e)}") from e
 
 
 @router.get("/match/{match_id}")
