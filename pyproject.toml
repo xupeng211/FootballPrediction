@@ -84,27 +84,9 @@ ignore = ["E501", "B008"]
 # 我们将强制使用 Google 风格的 docstrings (例如 'Args:', 'Returns:')
 # 这与 mkdocstrings (一个流行的文档插件) 兼容
 convention = "google"
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["D"]  # 忽略测试文件中的文档字符串检查
 
 [tool.ruff.format]
 quote-style = "double"
