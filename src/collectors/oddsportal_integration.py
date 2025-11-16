@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-OddsPortal爬虫集成模块
-OddsPortal Scraper Integration Module
+"""OddsPortal爬虫集成模块
+OddsPortal Scraper Integration Module.
 
 将OddsPortal爬虫集成到现有的数据源管理系统中
 """
@@ -21,16 +20,16 @@ logger = get_logger(__name__)
 
 
 class OddsPortalIntegration:
-    """OddsPortal集成器"""
+    """OddsPortal集成器."""
 
     def __init__(self, config_path: str = "config/oddsportal_config.yaml"):
-        """初始化OddsPortal集成"""
+        """初始化OddsPortal集成."""
         self.config = self._load_config(config_path)
         self.scraper = OddsPortalScraper()
         self.logger = logger
 
     def _load_config(self, config_path: str) -> dict[str, Any]:
-        """加载配置文件"""
+        """加载配置文件."""
         try:
             config_file = Path(config_path)
             if config_file.exists():
@@ -56,7 +55,7 @@ class OddsPortalIntegration:
             return {}
 
     async def collect_match_data(self, match_ids: list[str]) -> list[MatchData]:
-        """收集比赛数据"""
+        """收集比赛数据."""
         matches = []
 
         for match_id in match_ids:
@@ -78,7 +77,7 @@ class OddsPortalIntegration:
         return matches
 
     async def collect_odds_data(self, match_ids: list[str]) -> list[OddsData]:
-        """收集赔率数据"""
+        """收集赔率数据."""
         odds_list = []
 
         for match_id in match_ids:
@@ -100,7 +99,7 @@ class OddsPortalIntegration:
         return odds_list
 
     async def collect_team_data(self, team_ids: list[str]) -> list[TeamData]:
-        """收集队伍数据"""
+        """收集队伍数据."""
         teams = []
 
         for team_id in team_ids:
@@ -122,7 +121,7 @@ class OddsPortalIntegration:
         return teams
 
     def _convert_match_data(self, match: OddsPortalMatch) -> MatchData:
-        """转换比赛数据格式"""
+        """转换比赛数据格式."""
         return MatchData(
             match_id=match.match_id,
             home_team_id=match.home_team_id,
@@ -134,7 +133,7 @@ class OddsPortalIntegration:
         )
 
     def _convert_odds_data(self, match_id: str, odds: dict) -> OddsData:
-        """转换赔率数据格式"""
+        """转换赔率数据格式."""
         return OddsData(
             match_id=match_id,
             home_win=odds.get("home_win"),
@@ -149,7 +148,7 @@ class OddsPortalIntegration:
         )
 
     def _convert_team_data(self, team: dict) -> TeamData:
-        """转换队伍数据格式"""
+        """转换队伍数据格式."""
         return TeamData(
             team_id=team.get("team_id"),
             name=team.get("name"),
@@ -160,29 +159,29 @@ class OddsPortalIntegration:
 
 
 class OddsPortalAdapter(DataSourceAdapter):
-    """OddsPortal数据源适配器"""
+    """OddsPortal数据源适配器."""
 
     def __init__(self):
         super().__init__("oddsportal", priority=1)
         self.integration = OddsPortalIntegration()
 
     async def fetch_matches(self, **kwargs) -> list[MatchData]:
-        """获取比赛数据"""
+        """获取比赛数据."""
         match_ids = kwargs.get("match_ids", [])
         return await self.integration.collect_match_data(match_ids)
 
     async def fetch_odds(self, **kwargs) -> list[OddsData]:
-        """获取赔率数据"""
+        """获取赔率数据."""
         match_ids = kwargs.get("match_ids", [])
         return await self.integration.collect_odds_data(match_ids)
 
     async def fetch_teams(self, **kwargs) -> list[TeamData]:
-        """获取队伍数据"""
+        """获取队伍数据."""
         team_ids = kwargs.get("team_ids", [])
         return await self.integration.collect_team_data(team_ids)
 
     async def health_check(self) -> bool:
-        """健康检查"""
+        """健康检查."""
         try:
             # 简单的连接测试
             await self.integration.scraper.get_match_details("test")
@@ -194,14 +193,14 @@ class OddsPortalAdapter(DataSourceAdapter):
 
 # 工厂函数
 def create_oddsportal_adapter() -> OddsPortalAdapter:
-    """创建OddsPortal适配器实例"""
+    """创建OddsPortal适配器实例."""
     return OddsPortalAdapter()
 
 
 def create_oddsportal_integration(
     config_path: str = "config/oddsportal_config.yaml",
 ) -> OddsPortalIntegration:
-    """创建OddsPortal集成实例"""
+    """创建OddsPortal集成实例."""
     return OddsPortalIntegration(config_path)
 
 

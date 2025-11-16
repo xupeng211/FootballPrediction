@@ -1,5 +1,4 @@
-"""
-数据质量监控器
+"""数据质量监控器.
 
 实现数据质量检查与异常检测功能。
 监控数据新鲜度,完整性,一致性和异常值。
@@ -23,7 +22,7 @@ from src.database.connection import DatabaseManager
 
 
 class DataQualityMonitor:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -34,7 +33,7 @@ class DataQualityMonitor:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化数据质量监控器"""
         self.db_manager = DatabaseManager()
@@ -51,8 +50,7 @@ class DataQualityMonitor:
         }
 
     async def check_data_freshness(self) -> dict[str, Any]:
-        """
-        检查数据新鲜度
+        """检查数据新鲜度.
 
         Returns:
             Dict: 新鲜度检查结果
@@ -109,8 +107,7 @@ class DataQualityMonitor:
             }
 
     async def detect_anomalies(self) -> list[dict[str, Any]]:
-        """
-        异常检测
+        """异常检测.
 
         Returns:
             List[Dict]: 检测到的异常列表
@@ -145,7 +142,7 @@ class DataQualityMonitor:
             ]
 
     async def _check_fixtures_age(self, session) -> dict[str, Any]:
-        """检查赛程数据年龄"""
+        """检查赛程数据年龄."""
         try:
             # 查询最近的采集日志
             latest_log = await session.execute(
@@ -182,7 +179,7 @@ class DataQualityMonitor:
             return {"status": "error", "error": str(e)}
 
     async def _check_odds_age(self, session) -> dict[str, Any]:
-        """检查赔率数据年龄"""
+        """检查赔率数据年龄."""
         try:
             # 查询最近的赔率更新
             latest_odds = await session.execute(
@@ -215,7 +212,7 @@ class DataQualityMonitor:
             return {"status": "error", "error": str(e)}
 
     async def _find_missing_matches(self, session) -> dict[str, Any]:
-        """查找缺失的比赛"""
+        """查找缺失的比赛."""
         try:
             # 1. 根据联赛赛程规律检测缺失的比赛
             # 2. 对比不同数据源的比赛数量
@@ -227,7 +224,7 @@ class DataQualityMonitor:
             return {"count": 0, "error": str(e)}
 
     async def _find_suspicious_odds(self, session) -> list[dict[str, Any]]:
-        """查找可疑赔率"""
+        """查找可疑赔率."""
         suspicious_odds: list[Any] = []
 
         try:
@@ -284,7 +281,7 @@ class DataQualityMonitor:
             return []
 
     async def _find_unusual_scores(self, session) -> list[dict[str, Any]]:
-        """查找异常比分"""
+        """查找异常比分."""
         unusual_scores: list[Any] = []
 
         try:
@@ -328,7 +325,7 @@ class DataQualityMonitor:
             return []
 
     async def _check_data_consistency(self, session) -> list[dict[str, Any]]:
-        """检查数据一致性"""
+        """检查数据一致性."""
         consistency_issues: list[Any] = []
 
         try:
@@ -363,8 +360,7 @@ class DataQualityMonitor:
             return []
 
     async def generate_quality_report(self) -> dict[str, Any]:
-        """
-        生成完整的数据质量报告
+        """生成完整的数据质量报告.
 
         Returns:
             Dict: 质量报告
@@ -418,7 +414,7 @@ class DataQualityMonitor:
             }
 
     def _calculate_quality_score(self, freshness_check: dict, anomalies: list) -> float:
-        """计算质量评分（0-100）"""
+        """计算质量评分（0-100）."""
         score = 100.0
 
         # 根据新鲜度扣分
@@ -441,7 +437,7 @@ class DataQualityMonitor:
         return max(0.0, score)
 
     def _determine_overall_status(self, freshness_check: dict, anomalies: list) -> str:
-        """确定总体状态"""
+        """确定总体状态."""
         high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
 
         if freshness_check.get("status") == "error" or high_severity_count > 5:
@@ -454,7 +450,7 @@ class DataQualityMonitor:
     def _generate_recommendations(
         self, freshness_check: dict, anomalies: list
     ) -> list[str]:
-        """生成改进建议"""
+        """生成改进建议."""
         recommendations: list[Any] = []
 
         if freshness_check.get("status") in ["warning", "error"]:

@@ -1,5 +1,4 @@
-"""
-数据预处理器
+"""数据预处理器.
 
 提供完整的数据预处理流水线，整合数据清洗和缺失值处理功能
 """
@@ -16,11 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class DataPreprocessor:
-    """数据预处理器 - 整合清洗和缺失值处理功能"""
+    """数据预处理器 - 整合清洗和缺失值处理功能."""
 
     def __init__(self, config: dict | None = None):
-        """
-        初始化数据预处理器
+        """初始化数据预处理器.
 
         Args:
             config: 配置参数
@@ -31,7 +29,7 @@ class DataPreprocessor:
         self.processing_history = []
 
     def _get_default_config(self) -> dict:
-        """获取默认配置"""
+        """获取默认配置."""
         return {
             "cleaning": {
                 "remove_duplicates": True,
@@ -48,8 +46,7 @@ class DataPreprocessor:
     def preprocess_dataset(
         self, raw_data: pd.DataFrame, data_type: str = "matches"
     ) -> dict[str, Any]:
-        """
-        预处理完整数据集
+        """预处理完整数据集.
 
         Args:
             raw_data: 原始数据
@@ -155,7 +152,7 @@ class DataPreprocessor:
     def _assess_data_quality(
         self, original_data: pd.DataFrame, processed_data: pd.DataFrame, data_type: str
     ) -> dict[str, Any]:
-        """评估数据质量
+        """评估数据质量.
 
         Args:
             original_data: 原始数据
@@ -217,7 +214,7 @@ class DataPreprocessor:
         return assessment
 
     def _check_match_consistency(self, data: pd.DataFrame) -> list[str]:
-        """检查比赛数据一致性"""
+        """检查比赛数据一致性."""
         issues = []
 
         if "home_team_id" in data.columns and "away_team_id" in data.columns:
@@ -237,7 +234,7 @@ class DataPreprocessor:
         return issues
 
     def _check_data_validity(self, data: pd.DataFrame, data_type: str) -> list[str]:
-        """检查数据有效性"""
+        """检查数据有效性."""
         issues = []
 
         # 检查负值
@@ -270,7 +267,7 @@ class DataPreprocessor:
     def _generate_improvement_suggestions(
         self, assessment: dict[str, Any], data_type: str
     ) -> list[str]:
-        """生成数据改进建议"""
+        """生成数据改进建议."""
         suggestions = []
 
         if assessment["completeness_score"] < 0.9:
@@ -293,19 +290,19 @@ class DataPreprocessor:
         return suggestions
 
     def preprocess_matches(self, raw_data: pd.DataFrame) -> dict[str, Any]:
-        """预处理比赛数据的便捷方法"""
+        """预处理比赛数据的便捷方法."""
         return self.preprocess_dataset(raw_data, "matches")
 
     def preprocess_teams(self, raw_data: pd.DataFrame) -> dict[str, Any]:
-        """预处理球队数据的便捷方法"""
+        """预处理球队数据的便捷方法."""
         return self.preprocess_dataset(raw_data, "teams")
 
     def preprocess_odds(self, raw_data: pd.DataFrame) -> dict[str, Any]:
-        """预处理赔率数据的便捷方法"""
+        """预处理赔率数据的便捷方法."""
         return self.preprocess_dataset(raw_data, "odds")
 
     def get_processing_summary(self) -> dict[str, Any]:
-        """获取处理摘要"""
+        """获取处理摘要."""
         if not self.processing_history:
             return {"message": "还没有处理历史记录"}
 
@@ -325,7 +322,7 @@ class DataPreprocessor:
         }
 
     def _calculate_processing_stats(self) -> dict[str, Any]:
-        """计算处理统计信息"""
+        """计算处理统计信息."""
         if not self.processing_history:
             return {}
 
@@ -360,8 +357,7 @@ class DataPreprocessor:
 def preprocess_football_data(
     raw_data: pd.DataFrame, data_type: str = "matches", config: dict | None = None
 ) -> dict[str, Any]:
-    """
-    便捷的足球数据预处理函数
+    """便捷的足球数据预处理函数.
 
     Args:
         raw_data: 原始数据

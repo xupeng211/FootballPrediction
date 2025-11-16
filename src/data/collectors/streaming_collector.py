@@ -1,6 +1,5 @@
-"""
-streaming_collector.py
-streaming_collector
+"""streaming_collector.py
+streaming_collector.
 
 此文件已被拆分为多个模块以提供更好的组织结构。
 This file has been split into multiple modules for better organization.

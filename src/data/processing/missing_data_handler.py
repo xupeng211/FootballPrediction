@@ -1,5 +1,4 @@
-"""
-高级缺失数据处理器
+"""高级缺失数据处理器.
 
 提供专业的缺失数据分析、检测和处理功能，包括：
 - 缺失数据模式分析
@@ -18,14 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 class MissingDataHandler:
-    """高级缺失数据处理器"""
+    """高级缺失数据处理器."""
 
     def __init__(self):
         self.missing_patterns = {}
         self.imputation_history = {}
 
     def analyze_missing_patterns(self, data: pd.DataFrame) -> dict[str, Any]:
-        """分析缺失数据模式
+        """分析缺失数据模式.
 
         Args:
             data: 要分析的数据
@@ -61,7 +60,7 @@ class MissingDataHandler:
         return analysis
 
     def _classify_missing_type(self, series: pd.Series) -> str:
-        """分类缺失值类型"""
+        """分类缺失值类型."""
         missing_ratio = series.isnull().sum() / len(series)
 
         if missing_ratio < 0.05:
@@ -74,7 +73,7 @@ class MissingDataHandler:
             return "extensive"
 
     def _detect_missing_mechanism(self, data: pd.DataFrame) -> str:
-        """检测缺失机制（简化版）"""
+        """检测缺失机制（简化版）."""
         total_cells = data.shape[0] * data.shape[1]
         missing_cells = data.isnull().sum().sum()
         missing_ratio = missing_cells / total_cells
@@ -87,7 +86,7 @@ class MissingDataHandler:
             return "likely_mnar"
 
     def _analyze_missing_correlation(self, data: pd.DataFrame) -> dict[str, Any]:
-        """分析缺失值之间的相关性"""
+        """分析缺失值之间的相关性."""
         missing_indicators = data.isnull().astype(int)
         correlation_matrix = missing_indicators.corr()
 
@@ -113,7 +112,7 @@ class MissingDataHandler:
     def impute_missing_data(
         self, data: pd.DataFrame, strategy: str = "adaptive"
     ) -> pd.DataFrame:
-        """缺失数据插补
+        """缺失数据插补.
 
         Args:
             data: 包含缺失值的数据
@@ -160,7 +159,7 @@ class MissingDataHandler:
         return imputed_data
 
     def _select_optimal_strategy(self, data: pd.DataFrame, columns: list[str]) -> str:
-        """选择最优插补策略"""
+        """选择最优插补策略."""
         total_missing = data[columns].isnull().sum().sum()
         total_cells = len(data) * len(columns)
         missing_ratio = total_missing / total_cells
@@ -173,7 +172,7 @@ class MissingDataHandler:
             return "mode"
 
     def _impute_numeric(self, data: pd.DataFrame, strategy: str) -> pd.DataFrame:
-        """数值型数据插补"""
+        """数值型数据插补."""
         imputed_data = data.copy()
 
         if strategy == "mean":
@@ -202,7 +201,7 @@ class MissingDataHandler:
         return imputed_data
 
     def _impute_categorical(self, data: pd.DataFrame, strategy: str) -> pd.DataFrame:
-        """分类型数据插补"""
+        """分类型数据插补."""
         imputed_data = data.copy()
 
         if strategy == "mode":
@@ -226,7 +225,7 @@ class MissingDataHandler:
     def handle_columns_with_excessive_missing(
         self, data: pd.DataFrame, threshold: float = 0.5
     ) -> pd.DataFrame:
-        """处理缺失值过多的列
+        """处理缺失值过多的列.
 
         Args:
             data: 数据
@@ -254,7 +253,7 @@ class MissingDataHandler:
     def validate_imputation_quality(
         self, original_data: pd.DataFrame, imputed_data: pd.DataFrame
     ) -> dict[str, Any]:
-        """验证插补质量
+        """验证插补质量.
 
         Args:
             original_data: 原始数据（包含缺失值）
@@ -292,7 +291,7 @@ class MissingDataHandler:
         return validation
 
     def get_missing_data_report(self) -> dict[str, Any]:
-        """获取缺失数据处理报告"""
+        """获取缺失数据处理报告."""
         return {
             "latest_patterns": self.missing_patterns,
             "imputation_history": self.imputation_history,
@@ -300,7 +299,7 @@ class MissingDataHandler:
         }
 
     def _generate_recommendations(self) -> list[str]:
-        """生成缺失数据处理建议"""
+        """生成缺失数据处理建议."""
         recommendations = []
 
         if not self.missing_patterns:
@@ -337,8 +336,7 @@ class MissingDataHandler:
 def handle_missing_data(
     data: pd.DataFrame, strategy: str = "adaptive", drop_threshold: float = 0.5
 ) -> pd.DataFrame:
-    """
-    便捷的缺失数据处理函数
+    """便捷的缺失数据处理函数.
 
     Args:
         data: 包含缺失值的数据
