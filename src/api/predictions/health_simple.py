@@ -1,6 +1,5 @@
-"""
-预测模块简化健康检查端点
-Simplified Predictions Health Check Endpoint
+"""预测模块简化健康检查端点
+Simplified Predictions Health Check Endpoint.
 """
 
 from datetime import datetime
@@ -17,8 +16,7 @@ health_router = APIRouter(prefix="/predictions", tags=["predictions"])
 
 @health_router.get("/health", summary="预测服务健康检查")
 async def health_check() -> dict[str, Any]:
-    """
-    检查预测服务的健康状态
+    """检查预测服务的健康状态.
 
     Returns:
         Dict[str, Any]: 健康检查结果

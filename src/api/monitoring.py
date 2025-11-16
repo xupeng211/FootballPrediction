@@ -63,7 +63,7 @@ async def _get_database_metrics(db: AsyncSession) -> dict[str, Any]:
             "active_connections": int
         },
         "error": str
-    }
+    }.
     """
     start = time.time()
     stats: dict[str, Any] = {
@@ -112,7 +112,7 @@ async def _get_business_metrics(db: AsyncSession) -> dict[str, Any]:
         "upcoming_matches_7d": Optional[int],
         "model_accuracy_30d": Optional[float],
         "last_updated": str
-    }
+    }.
     """
     result: dict[str, Any] = {
         "24h_predictions": None,
@@ -175,7 +175,7 @@ async def _get_business_metrics(db: AsyncSession) -> dict[str, Any]:
 
 @router.get("/")
 async def get_monitoring_root():
-    """监控服务根路径"""
+    """监控服务根路径."""
     return {
         "service": "足球预测API",
         "module": "monitoring",
@@ -202,7 +202,7 @@ async def get_monitoring_root():
 
 @router.get("/stats")
 async def get_monitoring_stats():
-    """监控统计信息"""
+    """监控统计信息."""
     try:
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()

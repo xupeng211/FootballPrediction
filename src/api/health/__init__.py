@@ -1,6 +1,4 @@
-"""
-Health check module
-"""
+"""Health check module."""
 
 import time
 import warnings
@@ -22,34 +20,34 @@ __all__ = ["router", "get_database_status", "DatabaseManager"]
 
 # 添加DatabaseManager类以支持测试mock
 class DatabaseManager:
-    """数据库管理器 - 为测试提供mock接口"""
+    """数据库管理器 - 为测试提供mock接口."""
 
     @staticmethod
     def get_connection_status():
-        """获取数据库连接状态"""
+        """获取数据库连接状态."""
         return {"status": "healthy", "response_time_ms": 5}
 
     @staticmethod
     async def check_connection():
-        """检查数据库连接"""
+        """检查数据库连接."""
         return True
 
 
 def _check_database():
-    """检查数据库连接状态（内部函数）"""
+    """检查数据库连接状态（内部函数）."""
     # 这里应该有实际的数据库连接检查逻辑
     # 现在返回模拟数据
     return {"status": "healthy", "latency_ms": 10}
 
 
 def get_database_status():
-    """获取数据库状态 - 为测试提供mock接口"""
+    """获取数据库状态 - 为测试提供mock接口."""
     return _check_database()
 
 
 @router.get("/")
 async def health_check():
-    """Basic health check"""
+    """Basic health check."""
     try:
         # 执行数据库健康检查
         db_status = _check_database()
@@ -83,7 +81,7 @@ async def health_check():
 
 @router.get("/system")
 async def health_check_system():
-    """系统信息健康检查"""
+    """系统信息健康检查."""
     try:
         import psutil
 
@@ -122,7 +120,7 @@ async def health_check_system():
 
 @router.get("/liveness")
 async def liveness_check():
-    """存活检查 - 确认服务正在运行"""
+    """存活检查 - 确认服务正在运行."""
     try:
         # 安全地获取时间戳
         try:
@@ -150,7 +148,7 @@ async def liveness_check():
 
 @router.get("/readiness")
 async def readiness_check():
-    """就绪检查 - 确认服务准备好处理请求"""
+    """就绪检查 - 确认服务准备好处理请求."""
     # 简单检查数据库连接
     db_status = _check_database()
 
@@ -170,7 +168,7 @@ async def readiness_check():
 
 @router.get("/detailed")
 async def detailed_health():
-    """Detailed health check"""
+    """Detailed health check."""
     db_status = _check_database()
     # 标准化数据库状态为"ok"以匹配测试期望
     standardized_db_status = {

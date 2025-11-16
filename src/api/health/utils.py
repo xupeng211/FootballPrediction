@@ -1,5 +1,4 @@
-"""
-Health Utils - API模块
+"""Health Utils - API模块.
 
 提供健康检查相关的工具类.
 
@@ -24,7 +23,7 @@ from typing import Any
 
 
 class HealthChecker:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """健康检查器类"
@@ -36,12 +35,12 @@ class HealthChecker:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.timeout = 5.0  # 默认超时时间（秒）
 
     async def check_all_services(self) -> dict[str, Any]:
-        """检查所有服务的健康状态"
+        """检查所有服务的健康状态".
 
         Returns:
             包含所有服务健康状态的字典
@@ -85,7 +84,7 @@ class HealthChecker:
         }
 
     async def check_database(self) -> dict[str, Any]:
-        """检查数据库连接健康状态"
+        """检查数据库连接健康状态".
 
         Returns:
             数据库健康状态信息
@@ -113,7 +112,7 @@ class HealthChecker:
             }
 
     async def check_redis(self) -> dict[str, Any]:
-        """检查 Redis 连接健康状态"
+        """检查 Redis 连接健康状态".
 
         Returns:
             Redis 健康状态信息
@@ -141,7 +140,7 @@ class HealthChecker:
             }
 
     async def check_prediction_service(self) -> dict[str, Any]:
-        """检查预测服务健康状态"
+        """检查预测服务健康状态".
 
         Returns:
             预测服务健康状态信息

@@ -1,6 +1,4 @@
-"""
-Models package for API data models
-"""
+"""Models package for API data models."""
 
 try:
     from .league_models import LeagueQueryParams

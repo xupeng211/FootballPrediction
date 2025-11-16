@@ -1,5 +1,4 @@
-"""
-adapters 主模块
+"""adapters 主模块.
 
 外部API适配器接口
 Provides external API adapter interfaces.

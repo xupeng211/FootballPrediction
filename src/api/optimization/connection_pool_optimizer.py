@@ -1,6 +1,5 @@
-"""
-数据库连接池优化管理器
-Database Connection Pool Optimization Manager
+"""数据库连接池优化管理器
+Database Connection Pool Optimization Manager.
 
 提供智能的数据库连接池管理、监控和自动优化功能。
 """
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PoolMetrics:
-    """连接池指标"""
+    """连接池指标."""
 
     pool_size: int = 0
     checked_in: int = 0
@@ -35,7 +34,7 @@ class PoolMetrics:
 
 @dataclass
 class PoolOptimizationConfig:
-    """连接池优化配置"""
+    """连接池优化配置."""
 
     min_pool_size: int = 5
     max_pool_size: int = 20
@@ -50,7 +49,7 @@ class PoolOptimizationConfig:
 
 
 class ConnectionPoolOptimizer:
-    """连接池优化器"""
+    """连接池优化器."""
 
     def __init__(self, config: PoolOptimizationConfig | None = None):
         self.config = config or PoolOptimizationConfig()
@@ -61,7 +60,7 @@ class ConnectionPoolOptimizer:
         self.monitoring_task: asyncio.Task | None = None
 
     def register_pool(self, pool_name: str, pool: Pool):
-        """注册连接池"""
+        """注册连接池."""
         self.pools[pool_name] = pool
         self.pool_metrics[pool_name] = PoolMetrics(creation_time=datetime.utcnow())
 
@@ -71,7 +70,7 @@ class ConnectionPoolOptimizer:
         logger.info(f"Registered connection pool: {pool_name}")
 
     def _register_pool_events(self, pool_name: str, pool: Pool):
-        """注册连接池事件监听器"""
+        """注册连接池事件监听器."""
 
         @event.listens_for(pool, "connect")
         def on_connect(dbapi_connection, connection_record):
@@ -94,7 +93,7 @@ class ConnectionPoolOptimizer:
             logger.debug(f"Connection checked in to pool: {pool_name}")
 
     async def start_monitoring(self):
-        """开始监控"""
+        """开始监控."""
         if self.is_monitoring:
             return
 
@@ -103,7 +102,7 @@ class ConnectionPoolOptimizer:
         logger.info("Connection pool monitoring started")
 
     async def stop_monitoring(self):
-        """停止监控"""
+        """停止监控."""
         self.is_monitoring = False
         if self.monitoring_task:
             self.monitoring_task.cancel()
@@ -114,7 +113,7 @@ class ConnectionPoolOptimizer:
         logger.info("Connection pool monitoring stopped")
 
     async def _monitoring_loop(self):
-        """监控循环"""
+        """监控循环."""
         while self.is_monitoring:
             try:
                 await self._update_pool_metrics()
@@ -131,7 +130,7 @@ class ConnectionPoolOptimizer:
                 await asyncio.sleep(60)  # 错误时等待1分钟
 
     async def _update_pool_metrics(self):
-        """更新连接池指标"""
+        """更新连接池指标."""
         for pool_name, pool in self.pools.items():
             try:
                 metrics = self.pool_metrics[pool_name]
@@ -157,7 +156,7 @@ class ConnectionPoolOptimizer:
                 logger.error(f"Error updating metrics for pool {pool_name}: {e}")
 
     async def _auto_optimize_pools(self):
-        """自动优化连接池"""
+        """自动优化连接池."""
         for pool_name, metrics in self.pool_metrics.items():
             try:
                 pool = self.pools[pool_name]
@@ -174,7 +173,7 @@ class ConnectionPoolOptimizer:
                 logger.error(f"Error auto-optimizing pool {pool_name}: {e}")
 
     async def _scale_up_pool(self, pool_name: str, pool: Pool, metrics: PoolMetrics):
-        """扩大连接池"""
+        """扩大连接池."""
         try:
             # 对于QueuePool，可以调整max_overflow
             if isinstance(pool, QueuePool):
@@ -204,7 +203,7 @@ class ConnectionPoolOptimizer:
             logger.error(f"Error scaling up pool {pool_name}: {e}")
 
     async def _scale_down_pool(self, pool_name: str, pool: Pool, metrics: PoolMetrics):
-        """缩小连接池"""
+        """缩小连接池."""
         try:
             # 对于QueuePool，可以减少max_overflow
             if isinstance(pool, QueuePool):
@@ -232,7 +231,7 @@ class ConnectionPoolOptimizer:
             logger.error(f"Error scaling down pool {pool_name}: {e}")
 
     async def get_pool_status(self, pool_name: str) -> dict[str, Any] | None:
-        """获取连接池状态"""
+        """获取连接池状态."""
         if pool_name not in self.pools:
             return None
 
@@ -265,7 +264,7 @@ class ConnectionPoolOptimizer:
         return status
 
     def _get_pool_config(self, pool: Pool) -> dict[str, Any]:
-        """获取连接池配置"""
+        """获取连接池配置."""
         config = {}
 
         if isinstance(pool, QueuePool):
@@ -282,7 +281,7 @@ class ConnectionPoolOptimizer:
         return config
 
     def _evaluate_pool_health(self, metrics: PoolMetrics) -> dict[str, Any]:
-        """评估连接池健康状态"""
+        """评估连接池健康状态."""
         health_status = {"overall": "healthy", "issues": [], "warnings": []}
 
         # 检查利用率
@@ -315,7 +314,7 @@ class ConnectionPoolOptimizer:
         return health_status
 
     def _generate_pool_recommendations(self, metrics: PoolMetrics) -> list[str]:
-        """生成连接池优化建议"""
+        """生成连接池优化建议."""
         recommendations = []
 
         if metrics.utilization_rate > 85:
@@ -335,7 +334,7 @@ class ConnectionPoolOptimizer:
         return recommendations
 
     async def get_all_pools_status(self) -> dict[str, Any]:
-        """获取所有连接池状态"""
+        """获取所有连接池状态."""
         all_status = {
             "timestamp": datetime.utcnow().isoformat(),
             "monitoring_active": self.is_monitoring,
@@ -384,7 +383,7 @@ class ConnectionPoolOptimizer:
     async def optimize_pool_manually(
         self, pool_name: str, optimization_type: str, **kwargs
     ) -> dict[str, Any]:
-        """手动优化连接池"""
+        """手动优化连接池."""
         if pool_name not in self.pools:
             return {"error": f"Pool {pool_name} not found"}
 
@@ -448,7 +447,7 @@ class ConnectionPoolOptimizer:
         return result
 
     def get_optimization_history(self, limit: int = 50) -> list[dict[str, Any]]:
-        """获取优化历史"""
+        """获取优化历史."""
         return self.optimization_history[-limit:]
 
 
@@ -457,7 +456,7 @@ _pool_optimizer: ConnectionPoolOptimizer | None = None
 
 
 def get_connection_pool_optimizer() -> ConnectionPoolOptimizer:
-    """获取全局连接池优化器实例"""
+    """获取全局连接池优化器实例."""
     global _pool_optimizer
     if _pool_optimizer is None:
         _pool_optimizer = ConnectionPoolOptimizer()
@@ -467,7 +466,7 @@ def get_connection_pool_optimizer() -> ConnectionPoolOptimizer:
 async def initialize_connection_pool_optimizer(
     config: PoolOptimizationConfig | None = None,
 ) -> ConnectionPoolOptimizer:
-    """初始化连接池优化器"""
+    """初始化连接池优化器."""
     global _pool_optimizer
 
     _pool_optimizer = ConnectionPoolOptimizer(config)

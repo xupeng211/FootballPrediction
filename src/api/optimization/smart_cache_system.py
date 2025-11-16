@@ -1,6 +1,5 @@
-"""
-智能缓存系统
-Smart Cache System
+"""智能缓存系统
+Smart Cache System.
 
 提供多层缓存、智能预热、自动失效和性能优化的缓存系统。
 """
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class CacheEntry:
-    """缓存条目"""
+    """缓存条目."""
 
     def __init__(
         self,
@@ -40,30 +39,30 @@ class CacheEntry:
         self.size = self._calculate_size()
 
     def _calculate_size(self) -> int:
-        """计算条目大小"""
+        """计算条目大小."""
         try:
             return len(json.dumps(self.value, default=str))
         except Exception:
             return len(str(self.value))
 
     def is_expired(self) -> bool:
-        """检查是否过期"""
+        """检查是否过期."""
         return time.time() > self.expires_at
 
     def access(self) -> Any:
-        """访问缓存条目"""
+        """访问缓存条目."""
         self.access_count += 1
         self.last_accessed = time.time()
         return self.value
 
     def extend_ttl(self, additional_ttl: int):
-        """延长TTL"""
+        """延长TTL."""
         self.expires_at += additional_ttl
         self.ttl = self.expires_at - time.time()
 
 
 class SmartCacheManager:
-    """智能缓存管理器"""
+    """智能缓存管理器."""
 
     def __init__(
         self,
@@ -84,7 +83,7 @@ class SmartCacheManager:
         self.background_tasks: list[asyncio.Task] = []
 
     async def get(self, key: str, default: Any = None) -> Any:
-        """获取缓存值"""
+        """获取缓存值."""
         # 首先检查本地缓存
         if key in self.local_cache:
             entry = self.local_cache[key]
@@ -132,7 +131,7 @@ class SmartCacheManager:
         ttl: int = 3600,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
-        """设置缓存值"""
+        """设置缓存值."""
         try:
             # 创建缓存条目
             entry = CacheEntry(key, value, ttl, metadata)
@@ -163,7 +162,7 @@ class SmartCacheManager:
             return False
 
     async def delete(self, key: str) -> bool:
-        """删除缓存"""
+        """删除缓存."""
         try:
             # 删除本地缓存
             if key in self.local_cache:
@@ -181,7 +180,7 @@ class SmartCacheManager:
             return False
 
     async def clear(self, pattern: str = "*") -> int:
-        """清理缓存"""
+        """清理缓存."""
         cleared_count = 0
 
         try:
@@ -211,11 +210,11 @@ class SmartCacheManager:
             return 0
 
     def register_preload_handler(self, key_pattern: str, handler: Callable):
-        """注册预加载处理器"""
+        """注册预加载处理器."""
         self.preload_tasks[key_pattern] = handler
 
     async def _preload_cache(self, key: str):
-        """预加载缓存"""
+        """预加载缓存."""
         try:
             # 查找匹配的预加载处理器
             for pattern, handler in self.preload_tasks.items():
@@ -230,7 +229,7 @@ class SmartCacheManager:
             logger.error(f"Preload error for key {key}: {e}")
 
     async def _ensure_memory_limit(self, new_entry_size: int):
-        """确保内存限制"""
+        """确保内存限制."""
         current_size = sum(entry.size for entry in self.local_cache.values())
 
         while current_size + new_entry_size > self.max_memory_size and self.local_cache:
@@ -246,7 +245,7 @@ class SmartCacheManager:
             logger.debug(f"Evicted cache entry: {oldest_key}")
 
     async def warm_cache(self, keys: list[str], handler: Callable):
-        """批量预热缓存"""
+        """批量预热缓存."""
         for key in keys:
             if key not in self.local_cache:
                 try:
@@ -257,7 +256,7 @@ class SmartCacheManager:
                     logger.error(f"Cache warm error for key {key}: {e}")
 
     def get_cache_stats(self) -> dict[str, Any]:
-        """获取缓存统计信息"""
+        """获取缓存统计信息."""
         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
         hit_rate = (
             (self.cache_stats["hits"] / total_requests * 100)
@@ -282,7 +281,7 @@ class SmartCacheManager:
         }
 
     async def cleanup_expired(self) -> int:
-        """清理过期缓存"""
+        """清理过期缓存."""
         expired_keys = []
         time.time()
 
@@ -299,7 +298,7 @@ class SmartCacheManager:
         return len(expired_keys)
 
     async def optimize_cache(self) -> dict[str, Any]:
-        """优化缓存性能"""
+        """优化缓存性能."""
         optimization_result = {
             "cleaned_expired": 0,
             "evicted_lru": 0,
@@ -341,7 +340,7 @@ class SmartCacheManager:
 
 
 class CacheMiddleware:
-    """缓存中间件"""
+    """缓存中间件."""
 
     def __init__(self, cache_manager: SmartCacheManager):
         self.cache_manager = cache_manager
@@ -355,7 +354,7 @@ class CacheMiddleware:
         self.excluded_patterns = ["/api/v1/auth/", "/api/v1/users/", "/api/v1/admin/"]
 
     def should_cache(self, method: str, path: str) -> bool:
-        """判断是否应该缓存"""
+        """判断是否应该缓存."""
         if method != "GET":
             return False
 
@@ -374,7 +373,7 @@ class CacheMiddleware:
     def generate_cache_key(
         self, method: str, path: str, query_params: dict[str, Any]
     ) -> str:
-        """生成缓存键"""
+        """生成缓存键."""
         # 创建基础键
         base_key = f"{method}:{path}"
 
@@ -393,7 +392,7 @@ class CacheMiddleware:
     async def get_cached_response(
         self, method: str, path: str, query_params: dict[str, Any]
     ) -> dict[str, Any] | None:
-        """获取缓存的响应"""
+        """获取缓存的响应."""
         if not self.should_cache(method, path):
             return None
 
@@ -408,7 +407,7 @@ class CacheMiddleware:
         response_data: dict[str, Any],
         ttl: int = 300,
     ):
-        """缓存响应数据"""
+        """缓存响应数据."""
         if not self.should_cache(method, path):
             return
 
@@ -430,19 +429,19 @@ _cache_middleware: CacheMiddleware | None = None
 
 
 def get_cache_manager() -> SmartCacheManager | None:
-    """获取全局缓存管理器实例"""
+    """获取全局缓存管理器实例."""
     return _cache_manager
 
 
 def get_cache_middleware() -> CacheMiddleware | None:
-    """获取全局缓存中间件实例"""
+    """获取全局缓存中间件实例."""
     return _cache_middleware
 
 
 async def initialize_cache_system(
     redis_client: EnhancedRedisManager | None = None,
 ) -> SmartCacheManager:
-    """初始化缓存系统"""
+    """初始化缓存系统."""
     global _cache_manager, _cache_middleware
 
     cache_manager = SmartCacheManager(redis_client)
@@ -460,7 +459,7 @@ async def initialize_cache_system(
 
 
 async def _preload_matches(key: str) -> dict[str, Any] | None:
-    """预加载比赛数据"""
+    """预加载比赛数据."""
     # 这里应该从数据库获取比赛数据
     # 暂时返回模拟数据
     return {
@@ -482,7 +481,7 @@ async def _preload_matches(key: str) -> dict[str, Any] | None:
 
 
 async def _preload_teams(key: str) -> dict[str, Any] | None:
-    """预加载队伍数据"""
+    """预加载队伍数据."""
     # 这里应该从数据库获取队伍数据
     # 暂时返回模拟数据
     return {

@@ -1,5 +1,4 @@
-"""
-Models - API模块
+"""Models - API模块.
 
 提供 models 相关的API功能.
 

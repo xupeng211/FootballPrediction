@@ -1,5 +1,4 @@
-"""
-用户认证API包
+"""用户认证API包.
 
 提供完整的用户认证功能,包括:
 - 用户注册和登录
@@ -101,7 +100,7 @@ class PasswordChangeRequest:
 
 # 模拟的认证函数（用于测试）
 def authenticate_user(email: str, password: str):
-    """模拟用户认证函数"""
+    """模拟用户认证函数."""
     user = MOCK_USERS.get(email)
     if user and user["email"] == email:
         # 对于测试环境，我们简化密码验证
@@ -116,7 +115,7 @@ def authenticate_user(email: str, password: str):
 
 
 def create_user(email: str, password: str, **kwargs):
-    """模拟创建用户函数"""
+    """模拟创建用户函数."""
     user_id = max(user["id"] for user in MOCK_USERS.values()) + 1 if MOCK_USERS else 1
     return {
         "id": user_id,
@@ -128,7 +127,7 @@ def create_user(email: str, password: str, **kwargs):
 
 
 def get_user_by_id(user_id: int):
-    """模拟根据ID获取用户函数"""
+    """模拟根据ID获取用户函数."""
     for user in MOCK_USERS.values():
         if user["id"] == user_id:
             # 返回一个具有属性的对象，而不是字典

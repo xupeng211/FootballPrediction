@@ -1,6 +1,4 @@
-"""
-API Module
-"""
+"""API Module."""
 
 # 导入各个模块的路由器
 from .data_router import router as data_router

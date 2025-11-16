@@ -1,6 +1,5 @@
-"""
-增强性能监控中间件
-Enhanced Performance Monitoring Middleware
+"""增强性能监控中间件
+Enhanced Performance Monitoring Middleware.
 
 提供智能性能监控、自动优化建议和实时性能指标收集。
 """
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class PerformanceMetrics:
-    """性能指标收集器"""
+    """性能指标收集器."""
 
     def __init__(self, max_history: int = 1000):
         self.max_history = max_history
@@ -49,7 +48,7 @@ class PerformanceMetrics:
         process_time: float,
         endpoint: str,
     ):
-        """记录请求指标"""
+        """记录请求指标."""
         self.global_stats["total_requests"] += 1
         self.global_stats["total_time"] += process_time
 
@@ -80,7 +79,7 @@ class PerformanceMetrics:
         )
 
     def get_endpoint_stats(self, endpoint: str) -> dict[str, Any]:
-        """获取端点统计信息"""
+        """获取端点统计信息."""
         stats = self.endpoint_stats[endpoint]
         if stats["count"] == 0:
             return {}
@@ -108,7 +107,7 @@ class PerformanceMetrics:
         }
 
     def get_global_stats(self) -> dict[str, Any]:
-        """获取全局统计信息"""
+        """获取全局统计信息."""
         uptime = time.time() - self.global_stats["start_time"]
         total_requests = self.global_stats["total_requests"]
 
@@ -132,7 +131,7 @@ class PerformanceMetrics:
         }
 
     def _get_slow_endpoints(self, limit: int = 10) -> list[dict[str, Any]]:
-        """获取最慢的端点"""
+        """获取最慢的端点."""
         endpoints = []
         for endpoint, stats in self.endpoint_stats.items():
             if stats["count"] > 0:
@@ -150,7 +149,7 @@ class PerformanceMetrics:
         ]
 
     def _get_error_endpoints(self, limit: int = 10) -> list[dict[str, Any]]:
-        """获取错误率最高的端点"""
+        """获取错误率最高的端点."""
         endpoints = []
         for endpoint, stats in self.endpoint_stats.items():
             if stats["count"] > 0:
@@ -169,13 +168,13 @@ class PerformanceMetrics:
 
 
 class PerformanceOptimizer:
-    """性能优化器"""
+    """性能优化器."""
 
     def __init__(self):
         self.optimization_suggestions: list[dict[str, Any]] = []
 
     def analyze_performance(self, metrics: PerformanceMetrics) -> list[dict[str, Any]]:
-        """分析性能并提供优化建议"""
+        """分析性能并提供优化建议."""
         suggestions = []
         global_stats = metrics.get_global_stats()
 
@@ -262,7 +261,7 @@ class PerformanceOptimizer:
 
 
 class EnhancedPerformanceMiddleware(BaseHTTPMiddleware):
-    """增强性能监控中间件"""
+    """增强性能监控中间件."""
 
     def __init__(self, app, enabled: bool = True, detailed_logging: bool = False):
         super().__init__(app)
@@ -274,7 +273,7 @@ class EnhancedPerformanceMiddleware(BaseHTTPMiddleware):
         self.optimization_interval = 300  # 5分钟检查一次
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        """处理请求并记录性能指标"""
+        """处理请求并记录性能指标."""
         if not self.enabled:
             return await call_next(request)
 
@@ -328,7 +327,7 @@ class EnhancedPerformanceMiddleware(BaseHTTPMiddleware):
         return response
 
     def _extract_endpoint(self, request: Request) -> str:
-        """提取端点标识"""
+        """提取端点标识."""
         path = request.url.path
 
         # 简化端点路径，提取主要模式
@@ -341,7 +340,7 @@ class EnhancedPerformanceMiddleware(BaseHTTPMiddleware):
         return path
 
     async def _check_performance_optimizations(self):
-        """检查性能优化建议"""
+        """检查性能优化建议."""
         try:
             suggestions = self.optimizer.analyze_performance(self.metrics)
             if suggestions:
@@ -355,7 +354,7 @@ class EnhancedPerformanceMiddleware(BaseHTTPMiddleware):
             logger.error(f"Error checking performance optimizations: {str(e)}")
 
     def get_performance_report(self) -> dict[str, Any]:
-        """获取性能报告"""
+        """获取性能报告."""
         return {
             "timestamp": datetime.utcnow().isoformat(),
             "global_stats": self.metrics.get_global_stats(),
@@ -366,7 +365,7 @@ class EnhancedPerformanceMiddleware(BaseHTTPMiddleware):
         }
 
     def get_endpoint_report(self, endpoint: str) -> dict[str, Any]:
-        """获取特定端点的性能报告"""
+        """获取特定端点的性能报告."""
         return self.metrics.get_endpoint_stats(endpoint)
 
 
@@ -375,12 +374,12 @@ _performance_middleware: EnhancedPerformanceMiddleware | None = None
 
 
 def get_performance_middleware() -> EnhancedPerformanceMiddleware | None:
-    """获取全局性能中间件实例"""
+    """获取全局性能中间件实例."""
     return _performance_middleware
 
 
 def set_performance_middleware(middleware: EnhancedPerformanceMiddleware):
-    """设置全局性能中间件实例"""
+    """设置全局性能中间件实例."""
     global _performance_middleware
     _performance_middleware = middleware
 
@@ -388,7 +387,7 @@ def set_performance_middleware(middleware: EnhancedPerformanceMiddleware):
 def create_performance_middleware(
     app, enabled: bool = True, detailed_logging: bool = False
 ) -> EnhancedPerformanceMiddleware:
-    """创建性能中间件实例"""
+    """创建性能中间件实例."""
     middleware = EnhancedPerformanceMiddleware(app, enabled, detailed_logging)
     set_performance_middleware(middleware)
     return middleware

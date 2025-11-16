@@ -1,5 +1,4 @@
-"""
-用户认证API的数据模型
+"""用户认证API的数据模型.
 
 定义认证相关的请求和响应模型
 """
@@ -10,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserRegisterRequest(BaseModel):
-    """用户注册请求模型"""
+    """用户注册请求模型."""
 
     username: str = Field(..., min_length=3, max_length=50, description="用户名")
     email: EmailStr = Field(..., description="邮箱地址")
@@ -32,7 +31,7 @@ class UserRegisterRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
-    """用户响应模型"""
+    """用户响应模型."""
 
     id: int
     username: str
@@ -95,7 +94,7 @@ class UserResponse(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    """令牌响应模型"""
+    """令牌响应模型."""
 
     access_token: str
     refresh_token: str
@@ -122,7 +121,7 @@ class TokenResponse(BaseModel):
 
 
 class PasswordChangeRequest(BaseModel):
-    """密码修改请求模型"""
+    """密码修改请求模型."""
 
     current_password: str = Field(..., description="当前密码")
     new_password: str = Field(..., min_length=6, max_length=100, description="新密码")
@@ -138,7 +137,7 @@ class PasswordChangeRequest(BaseModel):
 
 
 class PasswordResetRequest(BaseModel):
-    """密码重置请求模型"""
+    """密码重置请求模型."""
 
     email: EmailStr = Field(..., description="邮箱地址")
 
@@ -148,7 +147,7 @@ class PasswordResetRequest(BaseModel):
 
 
 class PasswordResetConfirm(BaseModel):
-    """密码重置确认模型"""
+    """密码重置确认模型."""
 
     token: str = Field(..., description="重置令牌")
     new_password: str = Field(..., min_length=6, max_length=100, description="新密码")
@@ -164,7 +163,7 @@ class PasswordResetConfirm(BaseModel):
 
 
 class MessageResponse(BaseModel):
-    """通用消息响应模型"""
+    """通用消息响应模型."""
 
     message: str
 
@@ -172,7 +171,7 @@ class MessageResponse(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
-    """用户更新请求模型"""
+    """用户更新请求模型."""
 
     first_name: str | None = Field(None, max_length=50, description="名")
     last_name: str | None = Field(None, max_length=50, description="姓")
@@ -194,7 +193,7 @@ class UserUpdateRequest(BaseModel):
 
 
 class UserStatsResponse(BaseModel):
-    """用户统计响应模型"""
+    """用户统计响应模型."""
 
     total_predictions: int = Field(..., description="总预测次数")
     correct_predictions: int = Field(..., description="正确预测次数")

@@ -1,6 +1,5 @@
-"""
-数据库查询性能优化器
-Database Query Performance Optimizer
+"""数据库查询性能优化器
+Database Query Performance Optimizer.
 
 提供数据库查询性能分析、慢查询检测、索引优化建议等功能。
 """
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class QueryMetrics:
-    """查询指标类"""
+    """查询指标类."""
 
     def __init__(self, query_hash: str, query_text: str):
         self.query_hash = query_hash
@@ -41,7 +40,7 @@ class QueryMetrics:
         rows_examined: int = 0,
         error: bool = False,
     ):
-        """记录查询执行"""
+        """记录查询执行."""
         self.execution_count += 1
         self.last_executed = datetime.utcnow()
 
@@ -59,7 +58,7 @@ class QueryMetrics:
         self.rows_examined += rows_examined
 
     def get_p50(self) -> float:
-        """获取P50响应时间"""
+        """获取P50响应时间."""
         if not self.recent_times:
             return 0.0
         sorted_times = sorted(self.recent_times)
@@ -67,7 +66,7 @@ class QueryMetrics:
         return sorted_times[n // 2]
 
     def get_p95(self) -> float:
-        """获取P95响应时间"""
+        """获取P95响应时间."""
         if not self.recent_times:
             return 0.0
         sorted_times = sorted(self.recent_times)
@@ -75,7 +74,7 @@ class QueryMetrics:
         return sorted_times[int(n * 0.95)]
 
     def get_p99(self) -> float:
-        """获取P99响应时间"""
+        """获取P99响应时间."""
         if not self.recent_times:
             return 0.0
         sorted_times = sorted(self.recent_times)
@@ -83,13 +82,13 @@ class QueryMetrics:
         return sorted_times[int(n * 0.99)]
 
     def get_error_rate(self) -> float:
-        """获取错误率"""
+        """获取错误率."""
         if self.execution_count == 0:
             return 0.0
         return (self.error_count / self.execution_count) * 100
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "query_hash": self.query_hash,
             "query_text": (
@@ -115,7 +114,7 @@ class QueryMetrics:
 
 
 class DatabasePerformanceAnalyzer:
-    """数据库性能分析器"""
+    """数据库性能分析器."""
 
     def __init__(self, max_query_history: int = 1000):
         self.max_query_history = max_query_history
@@ -128,7 +127,7 @@ class DatabasePerformanceAnalyzer:
         self.analysis_start_time = datetime.utcnow()
 
     def generate_query_hash(self, query_text: str) -> str:
-        """生成查询哈希值"""
+        """生成查询哈希值."""
         import hashlib
 
         # 标准化查询文本（移除多余空格、统一大小写）
@@ -144,7 +143,7 @@ class DatabasePerformanceAnalyzer:
         rows_examined: int = 0,
         error: bool = False,
     ) -> str:
-        """分析查询性能"""
+        """分析查询性能."""
         query_hash = self.generate_query_hash(query_text)
 
         if query_hash not in self.query_metrics:
@@ -167,7 +166,7 @@ class DatabasePerformanceAnalyzer:
     async def _record_slow_query(
         self, query_hash: str, query_text: str, execution_time: float
     ):
-        """记录慢查询"""
+        """记录慢查询."""
         slow_query = {
             "query_hash": query_hash,
             "query_text": query_text,
@@ -191,7 +190,7 @@ class DatabasePerformanceAnalyzer:
     async def _generate_slow_query_suggestions(
         self, query_text: str, execution_time: float
     ) -> list[str]:
-        """生成慢查询优化建议"""
+        """生成慢查询优化建议."""
         suggestions = []
 
         query_lower = query_text.lower()
@@ -218,7 +217,7 @@ class DatabasePerformanceAnalyzer:
         return suggestions
 
     async def _check_performance_alerts(self, query_hash: str):
-        """检查性能警告"""
+        """检查性能警告."""
         metrics = self.query_metrics[query_hash]
 
         # 检查错误率
@@ -248,7 +247,7 @@ class DatabasePerformanceAnalyzer:
             self.performance_alerts = self.performance_alerts[-150:]
 
     async def analyze_connection_pool(self, pool: QueuePool) -> dict[str, Any]:
-        """分析连接池状态"""
+        """分析连接池状态."""
         if not pool:
             return {}
 
@@ -269,7 +268,7 @@ class DatabasePerformanceAnalyzer:
         return pool_stats
 
     async def get_top_slow_queries(self, limit: int = 10) -> list[dict[str, Any]]:
-        """获取最慢的查询"""
+        """获取最慢的查询."""
         sorted_queries = sorted(
             self.query_metrics.values(), key=lambda x: x.avg_time, reverse=True
         )
@@ -277,7 +276,7 @@ class DatabasePerformanceAnalyzer:
         return [query.to_dict() for query in sorted_queries[:limit]]
 
     async def get_most_frequent_queries(self, limit: int = 10) -> list[dict[str, Any]]:
-        """获取执行频率最高的查询"""
+        """获取执行频率最高的查询."""
         sorted_queries = sorted(
             self.query_metrics.values(), key=lambda x: x.execution_count, reverse=True
         )
@@ -287,7 +286,7 @@ class DatabasePerformanceAnalyzer:
     async def get_queries_with_high_error_rate(
         self, min_error_rate: float = 5.0
     ) -> list[dict[str, Any]]:
-        """获取错误率高的查询"""
+        """获取错误率高的查询."""
         high_error_queries = []
 
         for metrics in self.query_metrics.values():
@@ -301,7 +300,7 @@ class DatabasePerformanceAnalyzer:
         return sorted(high_error_queries, key=lambda x: x["error_rate"], reverse=True)
 
     def get_performance_summary(self) -> dict[str, Any]:
-        """获取性能摘要"""
+        """获取性能摘要."""
         if not self.query_metrics:
             return {
                 "total_queries": 0,
@@ -339,7 +338,7 @@ class DatabasePerformanceAnalyzer:
         }
 
     async def get_optimization_suggestions(self) -> list[dict[str, Any]]:
-        """获取优化建议"""
+        """获取优化建议."""
         suggestions = []
 
         # 分析慢查询
@@ -402,7 +401,7 @@ class DatabasePerformanceAnalyzer:
         )
 
     async def clear_old_data(self, days_to_keep: int = 7):
-        """清理旧数据"""
+        """清理旧数据."""
         cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
 
         # 清理旧的慢查询记录
@@ -442,7 +441,7 @@ _db_analyzer: DatabasePerformanceAnalyzer | None = None
 
 
 def get_database_analyzer() -> DatabasePerformanceAnalyzer:
-    """获取全局数据库性能分析器实例"""
+    """获取全局数据库性能分析器实例."""
     global _db_analyzer
     if _db_analyzer is None:
         _db_analyzer = DatabasePerformanceAnalyzer()
@@ -452,7 +451,7 @@ def get_database_analyzer() -> DatabasePerformanceAnalyzer:
 async def initialize_database_analyzer(
     max_query_history: int = 1000,
 ) -> DatabasePerformanceAnalyzer:
-    """初始化数据库性能分析器"""
+    """初始化数据库性能分析器."""
     global _db_analyzer
     _db_analyzer = DatabasePerformanceAnalyzer(max_query_history)
     logger.info("Database performance analyzer initialized")

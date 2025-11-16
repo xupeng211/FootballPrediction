@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Batch Analytics API
-批量分析API,支持大数据处理
+"""Batch Analytics API
+批量分析API,支持大数据处理.
 
 生成时间: 2025-10-26 20:57:38  # TODO: 将魔法数字 2025 提取为常量
 """
@@ -16,14 +15,14 @@ router = APIRouter()
 
 
 class BatchAnalyticsAPIRequest(BaseModel):
-    """请求模型"""
+    """请求模型."""
 
     config: dict[str, Any] = {}
     parameters: dict[str, Any] = {}
 
 
 class BatchAnalyticsAPIResponse(BaseModel):
-    """响应模型"""
+    """响应模型."""
 
     success: bool
     data: dict[str, Any] | None = None
@@ -35,7 +34,7 @@ class BatchAnalyticsAPIResponse(BaseModel):
 async def execute_batch_analytics_api(
     request: BatchAnalyticsAPIRequest, background_tasks: BackgroundTasks
 ) -> BatchAnalyticsAPIResponse:
-    """执行Batch Analytics API"""
+    """执行Batch Analytics API."""
     try:
         # TODO: 实现具体的API逻辑
         result = {
@@ -57,7 +56,7 @@ async def execute_batch_analytics_api(
 
 @router.get("/batch_analytics_api/status/{job_id}")
 async def get_batch_analytics_api_status(job_id: str):
-    """获取Batch Analytics API执行状态"""
+    """获取Batch Analytics API执行状态."""
     # TODO: 实现状态查询逻辑
     return {
         "job_id": job_id,
@@ -69,7 +68,7 @@ async def get_batch_analytics_api_status(job_id: str):
 
 @router.get("/batch_analytics_api/health")
 async def health_check():
-    """健康检查"""
+    """健康检查."""
     return {
         "status": "healthy",
         "service": "Batch Analytics API",

@@ -1,6 +1,5 @@
-"""
-命令定义
-Command Definitions
+"""命令定义
+Command Definitions.
 
 定义所有写操作命令.
 Defines all write operation commands.
@@ -15,7 +14,7 @@ from .base import ValidatableCommand, ValidationResult
 
 
 class CreatePredictionCommand(ValidatableCommand):
-    """创建预测命令"""
+    """创建预测命令."""
 
     def __init__(
         self,
@@ -38,7 +37,7 @@ class CreatePredictionCommand(ValidatableCommand):
         self.notes = notes
 
     async def validate(self) -> ValidationResult:
-        """验证命令"""
+        """验证命令."""
         errors = []
 
         # 验证预测值
@@ -63,7 +62,7 @@ class CreatePredictionCommand(ValidatableCommand):
 
 
 class UpdatePredictionCommand(ValidatableCommand):
-    """更新预测命令"""
+    """更新预测命令."""
 
     def __init__(
         self,
@@ -84,7 +83,7 @@ class UpdatePredictionCommand(ValidatableCommand):
         self.notes = notes
 
     async def validate(self) -> ValidationResult:
-        """验证命令"""
+        """验证命令."""
         errors = []
 
         # 验证预测是否存在
@@ -115,7 +114,7 @@ class UpdatePredictionCommand(ValidatableCommand):
 
 
 class DeletePredictionCommand(ValidatableCommand):
-    """删除预测命令"""
+    """删除预测命令."""
 
     def __init__(
         self,
@@ -126,7 +125,7 @@ class DeletePredictionCommand(ValidatableCommand):
         self.prediction_id = prediction_id
 
     async def validate(self) -> ValidationResult:
-        """验证命令"""
+        """验证命令."""
         errors = []
 
         # 验证预测是否存在
@@ -147,7 +146,7 @@ class DeletePredictionCommand(ValidatableCommand):
 
 
 class CreateUserCommand(ValidatableCommand):
-    """创建用户命令"""
+    """创建用户命令."""
 
     def __init__(
         self,
@@ -162,7 +161,7 @@ class CreateUserCommand(ValidatableCommand):
         self.password_hash = password_hash
 
     async def validate(self) -> ValidationResult:
-        """验证命令"""
+        """验证命令."""
         errors = []
 
         # 验证用户名
@@ -196,7 +195,7 @@ class CreateUserCommand(ValidatableCommand):
 
 
 class UpdateUserCommand(ValidatableCommand):
-    """更新用户命令"""
+    """更新用户命令."""
 
     def __init__(
         self,
@@ -213,7 +212,7 @@ class UpdateUserCommand(ValidatableCommand):
         self.is_active = is_active
 
     async def validate(self) -> ValidationResult:
-        """验证命令"""
+        """验证命令."""
         errors = []
 
         # 验证用户是否存在
@@ -232,7 +231,7 @@ class UpdateUserCommand(ValidatableCommand):
 
 
 class CreateMatchCommand(ValidatableCommand):
-    """创建比赛命令"""
+    """创建比赛命令."""
 
     def __init__(
         self,
@@ -251,7 +250,7 @@ class CreateMatchCommand(ValidatableCommand):
         self.venue = venue
 
     async def validate(self) -> ValidationResult:
-        """验证命令"""
+        """验证命令."""
         errors = []
 
         # 验证队伍名称
@@ -274,7 +273,7 @@ class CreateMatchCommand(ValidatableCommand):
 
 
 class UpdateMatchCommand(ValidatableCommand):
-    """更新比赛命令"""
+    """更新比赛命令."""
 
     def __init__(
         self,
@@ -295,7 +294,7 @@ class UpdateMatchCommand(ValidatableCommand):
         self.venue = venue
 
     async def validate(self) -> ValidationResult:
-        """验证命令"""
+        """验证命令."""
         errors = []
 
         # 验证比赛是否存在

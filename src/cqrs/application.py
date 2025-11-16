@@ -1,6 +1,5 @@
-"""
-CQRS应用服务
-CQRS Application Services
+"""CQRS应用服务
+CQRS Application Services.
 
 提供高级的CQRS操作接口.
 Provides high-level CQRS operation interfaces.
@@ -40,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 class PredictionCQRSService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测CQRS服务"
@@ -50,7 +49,7 @@ class PredictionCQRSService:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
@@ -66,7 +65,7 @@ class PredictionCQRSService:
         strategy_used: str | None = None,
         notes: str | None = None,
     ) -> CommandResult:
-        """创建预测"""
+        """创建预测."""
         command = CreatePredictionCommand(
             match_id=match_id,
             user_id=user_id,
@@ -87,7 +86,7 @@ class PredictionCQRSService:
         strategy_used: str | None = None,
         notes: str | None = None,
     ) -> CommandResult:
-        """更新预测"""
+        """更新预测."""
         command = UpdatePredictionCommand(
             prediction_id=prediction_id,
             predicted_home=predicted_home,
@@ -99,13 +98,13 @@ class PredictionCQRSService:
         return await self.command_bus.dispatch(command)
 
     async def delete_prediction(self, prediction_id: int) -> CommandResult:
-        """删除预测"""
+        """删除预测."""
         command = DeletePredictionCommand(prediction_id=prediction_id)
         return await self.command_bus.dispatch(command)
 
     # 查询操作
     async def get_prediction_by_id(self, prediction_id: int) -> PredictionDTO | None:
-        """根据ID获取预测"""
+        """根据ID获取预测."""
         query = GetPredictionByIdQuery(prediction_id=prediction_id)
         return await self.query_bus.dispatch(query)
 
@@ -117,7 +116,7 @@ class PredictionCQRSService:
         start_date: date | None = None,
         end_date: date | None = None,
     ) -> list[PredictionDTO]:
-        """获取用户的所有预测"""
+        """获取用户的所有预测."""
         query = GetPredictionsByUserQuery(
             user_id=user_id,
             limit=limit,
@@ -130,7 +129,7 @@ class PredictionCQRSService:
     async def get_user_stats(
         self, user_id: int, include_predictions: bool = False
     ) -> PredictionStatsDTO | None:
-        """获取用户统计"""
+        """获取用户统计."""
         query = GetUserStatsQuery(
             user_id=user_id, include_predictions=include_predictions
         )
@@ -138,7 +137,7 @@ class PredictionCQRSService:
 
 
 class MatchCQRSService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比赛CQRS服务"
@@ -148,7 +147,7 @@ class MatchCQRSService:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
@@ -162,7 +161,7 @@ class MatchCQRSService:
         competition: str | None = None,
         venue: str | None = None,
     ) -> CommandResult:
-        """创建比赛"""
+        """创建比赛."""
         command = CreateMatchCommand(
             home_team=home_team,
             away_team=away_team,
@@ -181,7 +180,7 @@ class MatchCQRSService:
         competition: str | None = None,
         venue: str | None = None,
     ) -> CommandResult:
-        """更新比赛"""
+        """更新比赛."""
         command = UpdateMatchCommand(
             match_id=match_id,
             home_score=home_score,
@@ -196,7 +195,7 @@ class MatchCQRSService:
     async def get_match_by_id(
         self, match_id: int, include_predictions: bool = False
     ) -> MatchDTO | None:
-        """根据ID获取比赛"""
+        """根据ID获取比赛."""
         query = GetMatchByIdQuery(
             match_id=match_id, include_predictions=include_predictions
         )
@@ -209,7 +208,7 @@ class MatchCQRSService:
         limit: int | None = None,
         offset: int | None = None,
     ) -> list[MatchDTO]:
-        """获取即将到来的比赛"""
+        """获取即将到来的比赛."""
         query = GetUpcomingMatchesQuery(
             days_ahead=days_ahead, competition=competition, limit=limit, offset=offset
         )
@@ -217,7 +216,7 @@ class MatchCQRSService:
 
 
 class UserCQRSService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户CQRS服务"
@@ -227,7 +226,7 @@ class UserCQRSService:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
@@ -239,7 +238,7 @@ class UserCQRSService:
         email: str,
         password_hash: str,
     ) -> CommandResult:
-        """创建用户"""
+        """创建用户."""
         command = CreateUserCommand(
             username=username, email=email, password_hash=password_hash
         )
@@ -252,7 +251,7 @@ class UserCQRSService:
         email: str | None = None,
         is_active: bool | None = None,
     ) -> CommandResult:
-        """更新用户"""
+        """更新用户."""
         command = UpdateUserCommand(
             user_id=user_id, username=username, email=email, is_active=is_active
         )
@@ -260,7 +259,7 @@ class UserCQRSService:
 
 
 class AnalyticsCQRSService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """分析CQRS服务"
@@ -270,7 +269,7 @@ class AnalyticsCQRSService:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.query_bus = get_query_bus()
 
@@ -281,7 +280,7 @@ class AnalyticsCQRSService:
         strategy_filter: str | None = None,
         user_id: int | None = None,
     ) -> dict[str, Any]:
-        """获取预测分析"""
+        """获取预测分析."""
         query = GetPredictionAnalyticsQuery(
             start_date=start_date,
             end_date=end_date,
@@ -296,42 +295,42 @@ class AnalyticsCQRSService:
         limit: int | None = 10,
         offset: int | None = None,
     ) -> list[dict[str, Any]]:
-        """获取排行榜"""
+        """获取排行榜."""
         query = GetLeaderboardQuery(period=period, limit=limit, offset=offset)
         return await self.query_bus.dispatch(query)
 
 
 # CQRS服务工厂
 class CQRSServiceFactory:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """CQRS服务工厂"""
 
     @staticmethod
     def create_prediction_service() -> PredictionCQRSService:
-        """创建预测服务"""
+        """创建预测服务."""
         return PredictionCQRSService()
 
     @staticmethod
     def create_match_service() -> MatchCQRSService:
-        """创建比赛服务"""
+        """创建比赛服务."""
         return MatchCQRSService()
 
     @staticmethod
     def create_user_service() -> UserCQRSService:
-        """创建用户服务"""
+        """创建用户服务."""
         return UserCQRSService()
 
     @staticmethod
     def create_analytics_service() -> AnalyticsCQRSService:
-        """创建分析服务"""
+        """创建分析服务."""
         return AnalyticsCQRSService()
 
 
 # 便捷函数
 async def initialize_cqrs():
-    """初始化CQRS系统"""
+    """初始化CQRS系统."""
     command_bus = get_command_bus()
     query_bus = get_query_bus()
 

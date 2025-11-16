@@ -1,5 +1,4 @@
-"""
-from src.core.config import
+"""from src.core.config import
 from src.core.config import
 from src.core.config import
 from src.core.config import
@@ -61,7 +60,7 @@ from src.core.config import
 from src.core.config import
 from src.core.config import
 命令和查询处理器
-Command and Query Handlers
+Command and Query Handlers.
 
 实现所有命令和查询的处理器.
 Implements handlers for all commands and queries.
@@ -100,16 +99,16 @@ logger = logging.getLogger(__name__)
 
 # 预测命令处理器
 class CreatePredictionHandler(CommandHandler):
-    """创建预测处理器"""
+    """创建预测处理器."""
 
     @property
     def command_type(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return CreatePredictionCommand
 
     async def handle(self, command: CreatePredictionCommand) -> CommandResult:
-        """处理创建预测命令"""
+        """处理创建预测命令."""
         try:
             async with get_session() as session:
                 # 检查是否已经存在预测
@@ -161,16 +160,16 @@ class CreatePredictionHandler(CommandHandler):
 
 
 class UpdatePredictionHandler(CommandHandler):
-    """更新预测处理器"""
+    """更新预测处理器."""
 
     @property
     def command_type(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return UpdatePredictionCommand
 
     async def handle(self, command: UpdatePredictionCommand) -> CommandResult:
-        """处理更新预测命令"""
+        """处理更新预测命令."""
         try:
             async with get_session() as session:
                 prediction = await session.get(Prediction, command.prediction_id)
@@ -218,16 +217,16 @@ class UpdatePredictionHandler(CommandHandler):
 
 
 class DeletePredictionHandler(CommandHandler):
-    """删除预测处理器"""
+    """删除预测处理器."""
 
     @property
     def command_type(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return DeletePredictionCommand
 
     async def handle(self, command: DeletePredictionCommand) -> CommandResult:
-        """处理删除预测命令"""
+        """处理删除预测命令."""
         try:
             async with get_session() as session:
                 prediction = await session.get(Prediction, command.prediction_id)
@@ -250,16 +249,16 @@ class DeletePredictionHandler(CommandHandler):
 
 # 用户命令处理器
 class CreateUserHandler(CommandHandler):
-    """创建用户处理器"""
+    """创建用户处理器."""
 
     @property
     def command_type(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return CreateUserCommand
 
     async def handle(self, command: CreateUserCommand) -> CommandResult:
-        """处理创建用户命令"""
+        """处理创建用户命令."""
         try:
             async with get_session() as session:
                 user = User(
@@ -298,16 +297,16 @@ class CreateUserHandler(CommandHandler):
 
 # 查询处理器
 class GetPredictionByIdHandler(QueryHandler):
-    """根据ID获取预测处理器"""
+    """根据ID获取预测处理器."""
 
     @property
     def query_type(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return GetPredictionByIdQuery
 
     async def handle(self, query: GetPredictionByIdQuery) -> PredictionDTO | None:
-        """处理获取预测查询"""
+        """处理获取预测查询."""
         try:
             async with get_session() as session:
                 prediction = await session.get(Prediction, query.prediction_id)
@@ -335,16 +334,16 @@ class GetPredictionByIdHandler(QueryHandler):
 
 
 class GetPredictionsByUserHandler(QueryHandler):
-    """获取用户预测列表处理器"""
+    """获取用户预测列表处理器."""
 
     @property
     def query_type(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return GetPredictionsByUserQuery
 
     async def handle(self, query: GetPredictionsByUserQuery) -> list[PredictionDTO]:
-        """处理获取用户预测列表查询"""
+        """处理获取用户预测列表查询."""
         try:
             async with get_session() as session:
                 # 构建查询
@@ -400,16 +399,16 @@ class GetPredictionsByUserHandler(QueryHandler):
 
 
 class GetUserStatsHandler(QueryHandler):
-    """获取用户统计处理器"""
+    """获取用户统计处理器."""
 
     @property
     def query_type(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return GetUserStatsQuery
 
     async def handle(self, query: GetUserStatsQuery) -> PredictionStatsDTO | None:
-        """处理获取用户统计查询"""
+        """处理获取用户统计查询."""
         try:
             async with get_session() as session:
                 # 获取基本统计
@@ -522,16 +521,16 @@ class GetUserStatsHandler(QueryHandler):
 
 
 class GetUpcomingMatchesHandler(QueryHandler):
-    """获取即将到来的比赛处理器"""
+    """获取即将到来的比赛处理器."""
 
     @property
     def query_type(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return GetUpcomingMatchesQuery
 
     async def handle(self, query: GetUpcomingMatchesQuery) -> list[MatchDTO]:
-        """处理获取即将到来的比赛查询"""
+        """处理获取即将到来的比赛查询."""
         try:
             async with get_session() as session:
                 # 构建查询
@@ -583,13 +582,13 @@ class GetUpcomingMatchesHandler(QueryHandler):
 
 # 处理器集合类
 class PredictionCommandHandlers:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测命令处理器集合"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.create = CreatePredictionHandler()
         self.update = UpdatePredictionHandler()
@@ -597,13 +596,13 @@ class PredictionCommandHandlers:
 
 
 class PredictionQueryHandlers:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测查询处理器集合"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.get_by_id = GetPredictionByIdHandler()
         self.get_by_user = GetPredictionsByUserHandler()
@@ -612,13 +611,13 @@ class PredictionQueryHandlers:
 
 
 class UserCommandHandlers:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户命令处理器集合"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.create = CreateUserHandler()
         # TODO: 实现UpdateUserHandler - 临时注释以解决启动问题
@@ -626,39 +625,39 @@ class UserCommandHandlers:
 
 
 class UserQueryHandlers:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户查询处理器集合"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.get_by_id = GetUserByIdHandler()
         self.get_stats = GetUserStatsHandler()
 
 
 class MatchCommandHandlers:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比赛命令处理器集合"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.create = CreateMatchHandler()
         self.update = UpdateMatchHandler()
 
 
 class MatchQueryHandlers:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比赛查询处理器集合"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.get_by_id = GetMatchByIdHandler()
         self.get_upcoming = GetUpcomingMatchesHandler()
@@ -669,10 +668,10 @@ class MatchQueryHandlers:
 
 
 class GetUserByIdHandler(QueryHandler):
-    """获取用户查询处理器"""
+    """获取用户查询处理器."""
 
     async def handle(self, query: GetUserByIdQuery) -> UserDTO | None:
-        """处理获取用户查询"""
+        """处理获取用户查询."""
         try:
             async with get_session() as session:
                 user = await session.get(User, query.user_id)
@@ -695,10 +694,10 @@ class GetUserByIdHandler(QueryHandler):
 
 
 class CreateMatchHandler(CommandHandler):
-    """创建比赛命令处理器"""
+    """创建比赛命令处理器."""
 
     async def handle(self, command: CreateMatchCommand) -> MatchDTO | None:
-        """处理创建比赛命令"""
+        """处理创建比赛命令."""
         try:
             async with get_session() as session:
                 match = Match(
@@ -733,10 +732,10 @@ class CreateMatchHandler(CommandHandler):
 
 
 class UpdateMatchHandler(CommandHandler):
-    """更新比赛命令处理器"""
+    """更新比赛命令处理器."""
 
     async def handle(self, command: UpdateMatchCommand) -> MatchDTO | None:
-        """处理更新比赛命令"""
+        """处理更新比赛命令."""
         try:
             async with get_session() as session:
                 match = await session.get(Match, command.match_id)
@@ -774,10 +773,10 @@ class UpdateMatchHandler(CommandHandler):
 
 
 class GetMatchByIdHandler(QueryHandler):
-    """获取比赛查询处理器"""
+    """获取比赛查询处理器."""
 
     async def handle(self, query: GetMatchByIdQuery) -> MatchDTO | None:
-        """处理获取比赛查询"""
+        """处理获取比赛查询."""
         try:
             async with get_session() as session:
                 match = await session.get(Match, query.match_id)
@@ -804,10 +803,10 @@ class GetMatchByIdHandler(QueryHandler):
 
 
 class GetMatchPredictionsHandler(QueryHandler):
-    """获取比赛预测查询处理器"""
+    """获取比赛预测查询处理器."""
 
     async def handle(self, query: GetMatchPredictionsQuery) -> list[PredictionDTO]:
-        """处理获取比赛预测查询"""
+        """处理获取比赛预测查询."""
         try:
             async with get_session() as session:
                 sql = """

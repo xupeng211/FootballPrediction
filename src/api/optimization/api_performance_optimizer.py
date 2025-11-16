@@ -1,6 +1,5 @@
-"""
-API性能优化器
-API Performance Optimizer
+"""API性能优化器
+API Performance Optimizer.
 
 集成所有性能优化功能，提供统一的API性能优化接口。
 """
@@ -30,7 +29,7 @@ router = APIRouter(prefix="/api/v1/optimization", tags=["API性能优化"])
 
 
 class PerformanceAnalysisRequest(BaseModel):
-    """性能分析请求模型"""
+    """性能分析请求模型."""
 
     time_range_minutes: int = Field(
         60, ge=1, le=1440, description="分析时间范围（分钟）"
@@ -40,7 +39,7 @@ class PerformanceAnalysisRequest(BaseModel):
 
 
 class CacheOptimizationRequest(BaseModel):
-    """缓存优化请求模型"""
+    """缓存优化请求模型."""
 
     operation: str = Field(..., description="操作类型: warm, clear, optimize, analyze")
     pattern: str | None = Field(None, description="缓存模式")
@@ -49,7 +48,7 @@ class CacheOptimizationRequest(BaseModel):
 
 
 class PerformanceOptimizationRequest(BaseModel):
-    """性能优化请求模型"""
+    """性能优化请求模型."""
 
     optimization_type: str = Field(
         ..., description="优化类型: response_time, cache, database, global"
@@ -65,7 +64,7 @@ class PerformanceOptimizationRequest(BaseModel):
 
 @router.get("/performance/status")
 async def get_performance_status():
-    """获取性能监控状态"""
+    """获取性能监控状态."""
     perf_middleware = get_performance_middleware()
     cache_manager = get_cache_manager()
 
@@ -98,7 +97,7 @@ async def get_performance_report(
     endpoint_filter: str | None = Query(None),
     include_details: bool = Query(True),
 ):
-    """获取性能报告"""
+    """获取性能报告."""
     perf_middleware = get_performance_middleware()
     if not perf_middleware:
         raise HTTPException(
@@ -133,7 +132,7 @@ async def get_performance_report(
 
 @router.get("/performance/endpoints/{endpoint:path}")
 async def get_endpoint_performance(endpoint: str):
-    """获取特定端点的性能统计"""
+    """获取特定端点的性能统计."""
     perf_middleware = get_performance_middleware()
     if not perf_middleware:
         raise HTTPException(
@@ -158,7 +157,7 @@ async def get_endpoint_performance(endpoint: str):
 async def optimize_cache(
     request: CacheOptimizationRequest, background_tasks: BackgroundTasks
 ):
-    """优化缓存性能"""
+    """优化缓存性能."""
     cache_manager = get_cache_manager()
     if not cache_manager:
         raise HTTPException(
@@ -221,7 +220,7 @@ async def optimize_cache(
 
 @router.get("/cache/statistics")
 async def get_cache_statistics():
-    """获取缓存统计信息"""
+    """获取缓存统计信息."""
     cache_manager = get_cache_manager()
     if not cache_manager:
         raise HTTPException(
@@ -253,7 +252,7 @@ async def get_cache_statistics():
 async def optimize_performance(
     request: PerformanceOptimizationRequest, background_tasks: BackgroundTasks
 ):
-    """优化API性能"""
+    """优化API性能."""
     perf_middleware = get_performance_middleware()
     if not perf_middleware:
         raise HTTPException(
@@ -318,7 +317,7 @@ async def optimize_performance(
 
 @router.get("/optimization/{optimization_id}/status")
 async def get_optimization_status(optimization_id: str):
-    """获取优化任务状态"""
+    """获取优化任务状态."""
     # 这里应该从任务存储中获取实际状态
     # 暂时返回模拟状态
     return {
@@ -339,7 +338,7 @@ async def get_optimization_status(optimization_id: str):
 
 
 async def _warm_cache_keys(cache_manager, keys: list[str]):
-    """预热缓存键"""
+    """预热缓存键."""
     warmed_count = 0
     for key in keys:
         try:
@@ -354,7 +353,7 @@ async def _warm_cache_keys(cache_manager, keys: list[str]):
 
 
 async def _optimize_cache_performance(cache_manager, operation_id: str):
-    """优化缓存性能"""
+    """优化缓存性能."""
     try:
         optimization_result = await cache_manager.optimize_cache()
         logger.info(
@@ -367,7 +366,7 @@ async def _optimize_cache_performance(cache_manager, operation_id: str):
 async def _run_global_optimization(
     perf_middleware, optimization_id: str, parameters: dict[str, Any] | None
 ):
-    """运行全局性能优化"""
+    """运行全局性能优化."""
     try:
         # 获取当前性能报告
         perf_middleware.get_performance_report()
@@ -390,7 +389,7 @@ async def _run_global_optimization(
 
 @router.get("/health", tags=["健康检查"])
 async def performance_optimization_health():
-    """性能优化服务健康检查"""
+    """性能优化服务健康检查."""
     perf_middleware = get_performance_middleware()
     cache_manager = get_cache_manager()
 

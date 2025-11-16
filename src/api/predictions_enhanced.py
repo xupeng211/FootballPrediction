@@ -54,7 +54,7 @@ security = HTTPBearer()
 
 
 class PredictionResult(str, Enum):
-    """预测结果枚举"""
+    """预测结果枚举."""
 
     HOME_WIN = "home_win"
     DRAW = "draw"
@@ -63,7 +63,7 @@ class PredictionResult(str, Enum):
 
 @dataclass
 class PredictionMetrics:
-    """预测性能指标"""
+    """预测性能指标."""
 
     accuracy: float = 0.0
     precision: float = 0.0
@@ -74,7 +74,7 @@ class PredictionMetrics:
 
 
 class MatchInfo(BaseModel):
-    """比赛信息模型"""
+    """比赛信息模型."""
 
     match_id: int = Field(..., description="比赛ID")
     home_team: str = Field(..., description="主队名称", max_length=100)
@@ -85,7 +85,7 @@ class MatchInfo(BaseModel):
 
 
 class PredictionRequest(BaseModel):
-    """预测请求模型"""
+    """预测请求模型."""
 
     match_info: MatchInfo = Field(..., description="比赛信息")
     include_confidence: bool = Field(True, description="是否包含置信度")
@@ -93,7 +93,7 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """预测响应模型"""
+    """预测响应模型."""
 
     success: bool = Field(..., description="预测是否成功")
     match_id: int = Field(..., description="比赛ID")
@@ -110,7 +110,7 @@ class PredictionResponse(BaseModel):
 
 
 class BatchPredictionRequest(BaseModel):
-    """批量预测请求模型"""
+    """批量预测请求模型."""
 
     matches: list[MatchInfo] = Field(
         ..., description="比赛列表", min_items=1, max_items=1000
@@ -120,7 +120,7 @@ class BatchPredictionRequest(BaseModel):
 
 
 class BatchPredictionResponse(BaseModel):
-    """批量预测响应模型"""
+    """批量预测响应模型."""
 
     success: bool = Field(..., description="批量预测是否成功")
     total_matches: int = Field(..., description="总比赛数")
@@ -135,7 +135,7 @@ class BatchPredictionResponse(BaseModel):
 
 
 class EnhancedPredictionService:
-    """增强版预测服务"""
+    """增强版预测服务."""
 
     def __init__(self):
         self.model_trainer = AdvancedModelTrainer()
@@ -147,7 +147,7 @@ class EnhancedPredictionService:
     async def verify_token(
         self, credentials: HTTPAuthorizationCredentials = Depends(security)
     ) -> str:
-        """验证JWT Token"""
+        """验证JWT Token."""
         try:
             token = credentials.credentials
             if not token or len(token) < 10:
@@ -166,7 +166,7 @@ class EnhancedPredictionService:
             ) from e
 
     async def check_rate_limit(self, token: str, redis_client) -> bool:
-        """检查请求频率限制"""
+        """检查请求频率限制."""
         try:
             key = f"rate_limit:{token}"
             current_time = int(time.time())
@@ -192,7 +192,7 @@ class EnhancedPredictionService:
             return True  # 如果redis出错,不限制请求
 
     async def generate_prediction(self, match_info: MatchInfo) -> dict:
-        """生成单个预测"""
+        """生成单个预测."""
         start_time = time.time()
         try:
             # 模拟特征提取
@@ -227,7 +227,7 @@ class EnhancedPredictionService:
             ) from e
 
     async def _extract_features(self, match_info: MatchInfo) -> dict:
-        """提取比赛特征"""
+        """提取比赛特征."""
         # 模拟特征提取
         return {
             "home_team_strength": np.random.uniform(0.3, 0.9),
@@ -239,7 +239,7 @@ class EnhancedPredictionService:
         }
 
     async def _predict_with_model(self, features: dict) -> dict:
-        """使用模型进行预测"""
+        """使用模型进行预测."""
         # 模拟预测逻辑
         home_strength = features["home_team_strength"] + features["home_advantage"]
         away_strength = features["away_team_strength"]
@@ -304,12 +304,11 @@ async def predict_match(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client=Depends(get_redis_manager),
 ):
-    """
-    SRS规范预测接口
+    """SRS规范预测接口
     功能:
     - 输入赛事信息返回胜/平/负概率
     - API响应时间 <= 200ms
-    - 支持Token校验与请求频率限制
+    - 支持Token校验与请求频率限制.
     """
     # 检查请求频率限制
     if not await prediction_service.check_rate_limit(token, redis_client):
@@ -355,12 +354,11 @@ async def predict_batch(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client=Depends(get_redis_manager),
 ):
-    """
-    批量预测接口 - 支持1000场比赛并发
+    """批量预测接口 - 支持1000场比赛并发
     功能:
     - 同时处理多场比赛预测
     - 支持并发控制
-    - 平均响应时间 < 200ms
+    - 平均响应时间 < 200ms.
     """
     # 检查批量请求限制
     if len(request.matches) > 1000:
@@ -445,7 +443,7 @@ async def predict_batch(
 
 @router.get("/metrics")
 async def get_prediction_metrics(token: str = Depends(prediction_service.verify_token)):
-    """获取预测性能指标"""
+    """获取预测性能指标."""
     return {
         "model_metrics": {
             "accuracy": ">= 65%",
@@ -471,14 +469,14 @@ async def get_prediction_metrics(token: str = Depends(prediction_service.verify_
 
 
 async def log_prediction(match_id: int, prediction: str, response_time: float):
-    """记录预测日志"""
+    """记录预测日志."""
     logger.info(
         f"Prediction logged - Match: {match_id}, Result: {prediction}, Time: {response_time:.2f}ms"
     )
 
 
 async def log_batch_prediction(total: int, successful: int, total_time: float):
-    """记录批量预测日志"""
+    """记录批量预测日志."""
     logger.info(
         f"Batch prediction - Total: {total}, Successful: {successful}, Total time: {total_time:.2f}ms"
     )

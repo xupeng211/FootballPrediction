@@ -1,12 +1,10 @@
-"""
-预测API模型定义
-"""
+"""预测API模型定义."""
 
 from pydantic import BaseModel, Field
 
 
 class MatchInfo(BaseModel):
-    """比赛信息模式"""
+    """比赛信息模式."""
 
     match_id: int
     home_team_id: int
@@ -18,7 +16,7 @@ class MatchInfo(BaseModel):
 
 
 class PredictionData(BaseModel):
-    """预测数据模式"""
+    """预测数据模式."""
 
     id: int | None = None
     model_version: str
@@ -34,7 +32,7 @@ class PredictionData(BaseModel):
 
 
 class PredictionRequest(BaseModel):
-    """预测请求模式"""
+    """预测请求模式."""
 
     match_id: int
     model_version: str | None = None
@@ -43,7 +41,7 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """预测响应模式"""
+    """预测响应模式."""
 
     match_id: int
     match_info: MatchInfo
@@ -52,7 +50,7 @@ class PredictionResponse(BaseModel):
 
 
 class BatchPredictionRequest(BaseModel):
-    """批量预测请求模式"""
+    """批量预测请求模式."""
 
     match_ids: list[int] = Field(max_length=50)
     model_version: str | None = None
@@ -61,7 +59,7 @@ class BatchPredictionRequest(BaseModel):
 
 
 class BatchPredictionResponse(BaseModel):
-    """批量预测响应模式"""
+    """批量预测响应模式."""
 
     total_requested: int
     valid_matches: int
@@ -71,7 +69,7 @@ class BatchPredictionResponse(BaseModel):
 
 
 class UpcomingMatchesRequest(BaseModel):
-    """即将到来的比赛请求模式"""
+    """即将到来的比赛请求模式."""
 
     league_id: int | None = None
     team_id: int | None = None
@@ -80,7 +78,7 @@ class UpcomingMatchesRequest(BaseModel):
 
 
 class UpcomingMatchesResponse(BaseModel):
-    """即将到来的比赛响应模式"""
+    """即将到来的比赛响应模式."""
 
     total_matches: int
     matches: list[MatchInfo]
@@ -88,7 +86,7 @@ class UpcomingMatchesResponse(BaseModel):
 
 
 class ModelStats(BaseModel):
-    """模型统计模式"""
+    """模型统计模式."""
 
     model_name: str
     model_version: str
@@ -99,14 +97,14 @@ class ModelStats(BaseModel):
 
 
 class ModelStatsResponse(BaseModel):
-    """模型统计响应模式"""
+    """模型统计响应模式."""
 
     models: list[ModelStats]
     total_models: int
 
 
 class HistoryPrediction(BaseModel):
-    """历史预测模式"""
+    """历史预测模式."""
 
     id: int
     model_version: str
@@ -123,7 +121,7 @@ class HistoryPrediction(BaseModel):
 
 
 class PredictionHistoryResponse(BaseModel):
-    """预测历史响应模式"""
+    """预测历史响应模式."""
 
     match_id: int
     total_predictions: int
@@ -131,7 +129,7 @@ class PredictionHistoryResponse(BaseModel):
 
 
 class RecentPrediction(BaseModel):
-    """最近预测模式"""
+    """最近预测模式."""
 
     id: int
     match_id: int
@@ -145,7 +143,7 @@ class RecentPrediction(BaseModel):
 
 
 class RecentPredictionsResponse(BaseModel):
-    """最近预测响应模式"""
+    """最近预测响应模式."""
 
     time_range_hours: int
     total_predictions: int
@@ -153,7 +151,7 @@ class RecentPredictionsResponse(BaseModel):
 
 
 class PredictionOverview(BaseModel):
-    """预测概览模式"""
+    """预测概览模式."""
 
     total_predictions: int
     correct_predictions: int
@@ -163,14 +161,14 @@ class PredictionOverview(BaseModel):
 
 
 class PredictionOverviewResponse(BaseModel):
-    """预测概览响应模式"""
+    """预测概览响应模式."""
 
     overview: PredictionOverview
     recent_predictions: list[RecentPrediction]
 
 
 class VerificationResponse(BaseModel):
-    """验证响应模式"""
+    """验证响应模式."""
 
     match_id: int
     verified: bool

@@ -1,6 +1,5 @@
-"""
-数据库性能监控中间件
-Database Performance Monitoring Middleware
+"""数据库性能监控中间件
+Database Performance Monitoring Middleware.
 
 提供实时的数据库查询性能监控和自动优化建议。
 """
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class DatabasePerformanceMiddleware:
-    """数据库性能监控中间件"""
+    """数据库性能监控中间件."""
 
     def __init__(
         self,
@@ -39,7 +38,7 @@ class DatabasePerformanceMiddleware:
         self.is_monitoring = False
 
     async def start_monitoring(self):
-        """开始监控"""
+        """开始监控."""
         if self.is_monitoring:
             return
 
@@ -55,13 +54,13 @@ class DatabasePerformanceMiddleware:
         logger.info("Database performance monitoring started")
 
     def stop_monitoring(self):
-        """停止监控"""
+        """停止监控."""
         self.is_monitoring = False
         # 这里可以添加事件监听器的注销逻辑
         logger.info("Database performance monitoring stopped")
 
     def _register_query_listeners(self):
-        """注册查询监听器"""
+        """注册查询监听器."""
 
         @event.listens_for(AsyncSession, "before_cursor_execute")
         def before_cursor_execute_async(
@@ -162,7 +161,7 @@ class DatabasePerformanceMiddleware:
                 )
 
     def _register_pool_listeners(self):
-        """注册连接池监听器"""
+        """注册连接池监听器."""
 
         @event.listens_for(Pool, "connect")
         def on_connect(dbapi_connection, connection_record):
@@ -180,7 +179,7 @@ class DatabasePerformanceMiddleware:
             pass
 
     def _estimate_rows_examined(self, statement: str, parameters: Any) -> int:
-        """估算检查的行数"""
+        """估算检查的行数."""
         # 这里可以实现更复杂的逻辑来估算检查的行数
         # 目前返回0表示无法估算
         return 0
@@ -188,7 +187,7 @@ class DatabasePerformanceMiddleware:
     def _handle_slow_query(
         self, statement: str, execution_time: float, parameters: Any
     ):
-        """处理慢查询"""
+        """处理慢查询."""
         logger.warning(
             f"Slow query detected: {execution_time:.4f}s - {statement[:200]}..."
         )
@@ -197,7 +196,7 @@ class DatabasePerformanceMiddleware:
         # 例如：发送警报、记录到专门的慢查询日志等
 
     async def get_real_time_metrics(self) -> dict[str, Any]:
-        """获取实时性能指标"""
+        """获取实时性能指标."""
         if not self.is_monitoring:
             return {"status": "monitoring_disabled"}
 
@@ -221,7 +220,7 @@ class DatabasePerformanceMiddleware:
         }
 
     async def analyze_current_performance(self) -> dict[str, Any]:
-        """分析当前性能状况"""
+        """分析当前性能状况."""
         if not self.is_monitoring:
             return {"error": "Monitoring is not enabled"}
 
@@ -250,13 +249,13 @@ class DatabasePerformanceMiddleware:
 
 
 class QueryOptimizationAdvisor:
-    """查询优化顾问"""
+    """查询优化顾问."""
 
     def __init__(self):
         self.optimization_rules = self._initialize_optimization_rules()
 
     def _initialize_optimization_rules(self) -> dict[str, Any]:
-        """初始化优化规则"""
+        """初始化优化规则."""
         return {
             "select_star": {
                 "pattern": r"SELECT\s+\*\s+FROM",
@@ -297,7 +296,7 @@ class QueryOptimizationAdvisor:
         }
 
     async def analyze_query_for_optimization(self, query_text: str) -> dict[str, Any]:
-        """分析查询并提供优化建议"""
+        """分析查询并提供优化建议."""
         import re
 
         suggestions = []
@@ -334,7 +333,7 @@ class QueryOptimizationAdvisor:
         }
 
     def _calculate_query_complexity(self, query_text: str) -> int:
-        """计算查询复杂度分数"""
+        """计算查询复杂度分数."""
         complexity = 0
         query_lower = query_text.lower()
 
@@ -359,7 +358,7 @@ class QueryOptimizationAdvisor:
         return complexity
 
     def _suggest_indexes(self, query_text: str) -> list[str]:
-        """建议索引"""
+        """建议索引."""
         import re
 
         suggestions = []
@@ -397,7 +396,7 @@ class QueryOptimizationAdvisor:
     def _determine_overall_priority(
         self, suggestions: list, complexity_score: int
     ) -> str:
-        """确定整体优先级"""
+        """确定整体优先级."""
         if any(s["priority"] == "high" for s in suggestions) or complexity_score > 10:
             return "high"
         elif (
@@ -414,7 +413,7 @@ _optimization_advisor: QueryOptimizationAdvisor | None = None
 
 
 def get_database_middleware() -> DatabasePerformanceMiddleware:
-    """获取全局数据库中间件实例"""
+    """获取全局数据库中间件实例."""
     global _db_middleware
     if _db_middleware is None:
         _db_middleware = DatabasePerformanceMiddleware()
@@ -422,7 +421,7 @@ def get_database_middleware() -> DatabasePerformanceMiddleware:
 
 
 def get_optimization_advisor() -> QueryOptimizationAdvisor:
-    """获取全局优化顾问实例"""
+    """获取全局优化顾问实例."""
     global _optimization_advisor
     if _optimization_advisor is None:
         _optimization_advisor = QueryOptimizationAdvisor()
@@ -434,7 +433,7 @@ async def initialize_database_monitoring(
     enable_slow_query_detection: bool = True,
     slow_query_threshold: float = 1.0,
 ) -> DatabasePerformanceMiddleware:
-    """初始化数据库监控"""
+    """初始化数据库监控."""
     global _db_middleware
 
     _db_middleware = DatabasePerformanceMiddleware(

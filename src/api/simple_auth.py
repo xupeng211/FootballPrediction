@@ -28,7 +28,7 @@ class SimpleUser(BaseModel):
     created_at: datetime
 
     class Config:
-        """Pydantic配置"""
+        """Pydantic配置."""
 
         json_encoders = {datetime: lambda v: v.isoformat()}
 
@@ -49,12 +49,12 @@ class SimpleTokenResponse(BaseModel):
 
 # 简化的认证服务
 class SimpleAuthService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         # 简化的用户存储（实际应用中应该使用数据库）
         self.users = {
@@ -75,11 +75,11 @@ class SimpleAuthService:
         }
 
     def verify_password(self, plain_password: str, stored_password: str) -> bool:
-        """简单密码验证（实际应用中应该使用bcrypt）"""
+        """简单密码验证（实际应用中应该使用bcrypt）."""
         return plain_password == stored_password
 
     def authenticate_user(self, username: str, password: str) -> SimpleUser | None:
-        """验证用户凭据"""
+        """验证用户凭据."""
         user_data = self.users.get(username)
         if not user_data:
             return None
@@ -97,7 +97,7 @@ class SimpleAuthService:
         )
 
     def create_user(self, username: str, email: str, password: str) -> SimpleUser:
-        """创建新用户"""
+        """创建新用户."""
         if username in self.users:
             raise ValueError("用户名已存在")
 
@@ -124,7 +124,7 @@ class SimpleAuthService:
         )
 
     def store_user(self, user: SimpleUser) -> None:
-        """存储用户对象"""
+        """存储用户对象."""
         self.users[user.username] = {
             "id": user.id,
             "username": user.username,
@@ -134,7 +134,7 @@ class SimpleAuthService:
         }
 
     def get_user(self, username: str) -> SimpleUser | None:
-        """获取用户对象"""
+        """获取用户对象."""
         user_data = self.users.get(username)
         if not user_data:
             return None
@@ -149,14 +149,14 @@ class SimpleAuthService:
         )
 
     def generate_token(self, user: SimpleUser) -> str:
-        """生成简单的访问令牌"""
+        """生成简单的访问令牌."""
         # 在实际应用中应该使用JWT或其他安全的令牌机制
         timestamp = datetime.utcnow().timestamp()
         token_data = f"{user.username}:{user.id}:{timestamp}"
         return f"Bearer {token_data}"
 
     def verify_token(self, token: str) -> SimpleUser | None:
-        """验证访问令牌"""
+        """验证访问令牌."""
         if not token.startswith("Bearer "):
             return None
 
@@ -191,7 +191,7 @@ class SimpleAuthService:
             return None
 
     def get_user_by_username(self, username: str) -> SimpleUser | None:
-        """根据用户名获取用户"""
+        """根据用户名获取用户."""
         user_data = self.users.get(username)
         if not user_data:
             return None
@@ -212,7 +212,7 @@ auth_service = SimpleAuthService()
 
 # 依赖函数
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
-    """获取当前用户（简化版本,不验证令牌）"""
+    """获取当前用户（简化版本,不验证令牌）."""
     # 简化实现:从令牌中提取用户名
     # 实际应用中应该验证JWT令牌
     if not token:
@@ -240,7 +240,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
 # API端点
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_data: SimpleUserRegister):
-    """用户注册"""
+    """用户注册."""
     try:
         user = auth_service.create_user(
             user_data.username, user_data.email, user_data.password
@@ -254,7 +254,7 @@ async def register_user(user_data: SimpleUserRegister):
 
 @router.post("/login")
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    """用户登录"""
+    """用户登录."""
     user = auth_service.authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -273,13 +273,13 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @router.get("/me")
 async def get_current_user_info(current_user: SimpleUser = Depends(get_current_user)):
-    """获取当前用户信息"""
+    """获取当前用户信息."""
     return {"user": current_user.dict(), "message": "用户信息获取成功"}
 
 
 @router.post("/logout")
 async def logout_user():
-    """用户登出"""
+    """用户登出."""
     return {"message": "登出成功"}
 
 

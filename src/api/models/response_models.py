@@ -1,5 +1,4 @@
-"""
-Response Models
+"""Response Models.
 
 响应模型
 """

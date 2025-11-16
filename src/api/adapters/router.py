@@ -1,6 +1,4 @@
-"""
-适配器API路由
-"""
+"""适配器API路由."""
 
 from typing import Any
 
@@ -11,7 +9,7 @@ router = APIRouter(prefix="/adapters", tags=["adapters"])
 
 @router.get("/info")
 async def get_adapter_info() -> dict[str, Any]:
-    """获取适配器信息"""
+    """获取适配器信息."""
     return {
         "endpoints": {
             "football_matches": "/football/matches",
@@ -29,13 +27,13 @@ async def get_adapter_info() -> dict[str, Any]:
 
 @router.get("/health")
 async def adapter_health() -> dict[str, str]:
-    """适配器健康检查"""
+    """适配器健康检查."""
     return {"status": "healthy", "service": "adapters"}
 
 
 @router.get("/registry/status")
 async def get_registry_status() -> dict[str, Any]:
-    """获取适配器注册表状态"""
+    """获取适配器注册表状态."""
     from datetime import datetime
 
     return {
@@ -68,7 +66,7 @@ async def get_registry_status() -> dict[str, Any]:
 
 @router.post("/registry/initialize")
 async def initialize_registry() -> dict[str, Any]:
-    """初始化适配器注册表"""
+    """初始化适配器注册表."""
     from datetime import datetime
 
     return {
@@ -82,7 +80,7 @@ async def initialize_registry() -> dict[str, Any]:
 
 
 def get_registry() -> dict[str, Any]:
-    """获取适配器注册表"""
+    """获取适配器注册表."""
     return {
         "adapters": {
             "football_adapter": {
