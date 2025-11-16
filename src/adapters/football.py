@@ -1,6 +1,5 @@
-"""
-football 主模块
-Football Main Module
+"""football 主模块
+Football Main Module.
 
 此文件由长文件拆分工具自动生成
 拆分策略: complexity_split
@@ -26,25 +25,25 @@ from .base import BaseAdapter
 
 
 class FootballDataAdapter(BaseAdapter):
-    """足球数据适配器基类"""
+    """足球数据适配器基类."""
 
     pass
 
 
 class ApiFootballAdapter(FootballDataAdapter):
-    """API Football适配器"""
+    """API Football适配器."""
 
     pass
 
 
 class OptaDataAdapter(FootballDataAdapter):
-    """Opta数据适配器"""
+    """Opta数据适配器."""
 
     pass
 
 
 class CompositeFootballAdapter(FootballDataAdapter):
-    """复合足球适配器"""
+    """复合足球适配器."""
 
     pass
 
@@ -67,7 +66,7 @@ class FootballApiAdaptee(FootballData):
 
 
 class FootballDataTransformer:
-    """足球数据转换器"""
+    """足球数据转换器."""
 
     pass
 

@@ -1,6 +1,5 @@
-"""
-足球数据模型
-Football Data Models
+"""足球数据模型
+Football Data Models.
 """
 
 from dataclasses import dataclass
@@ -9,7 +8,7 @@ from enum import Enum
 
 
 class MatchStatus(Enum):
-    """比赛状态枚举类"""
+    """比赛状态枚举类."""
 
     SCHEDULED = "scheduled"
     LIVE = "live"
@@ -20,7 +19,7 @@ class MatchStatus(Enum):
 
 @dataclass
 class Team:
-    """足球队数据模型"""
+    """足球队数据模型."""
 
     id: str
     name: str
@@ -31,7 +30,7 @@ class Team:
 
 @dataclass
 class Player:
-    """足球运动员数据模型"""
+    """足球运动员数据模型."""
 
     id: str
     name: str
@@ -42,7 +41,7 @@ class Player:
 
 @dataclass
 class Match:
-    """足球比赛数据模型"""
+    """足球比赛数据模型."""
 
     id: str
     home_team: Team
@@ -55,19 +54,19 @@ class Match:
 
 @dataclass
 class FootballData:
-    """足球API被适配者基类"""
+    """足球API被适配者基类."""
 
 
 def get_match_data(self, match_id: str) -> Match:
-    """获取比赛数据"""
+    """获取比赛数据."""
     raise NotImplementedError
 
 
 def get_team_data(self, team_id: str) -> Team:
-    """获取球队数据"""
+    """获取球队数据."""
     raise NotImplementedError
 
 
 def get_player_data(self, player_id: str) -> Player:
-    """获取球员数据"""
+    """获取球员数据."""
     raise NotImplementedError

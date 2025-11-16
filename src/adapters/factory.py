@@ -1,6 +1,5 @@
-"""
-适配器工厂模块
-BaseAdapter Factory Module
+"""适配器工厂模块
+BaseAdapter Factory Module.
 
 提供适配器的创建、注册和管理功能。
 Provides adapter creation, registration, and management functionality.
@@ -22,30 +21,30 @@ try:
 except ImportError:
 
     class ApiFootballAdapter(BaseAdapter):
-        """Mock API Football适配器"""
+        """Mock API Football适配器."""
 
         pass
 
     class CompositeFootballAdapter(BaseAdapter):
-        """Mock Composite Football适配器"""
+        """Mock Composite Football适配器."""
 
         pass
 
     class OptaDataAdapter(BaseAdapter):
-        """Mock Opta Data适配器"""
+        """Mock Opta Data适配器."""
 
         pass
 
 
 class BaseAdapterError(Exception):
-    """适配器错误"""
+    """适配器错误."""
 
     pass
 
 
 @dataclass
 class BaseAdapterConfig:
-    """适配器配置"""
+    """适配器配置."""
 
     name: str
     adapter_type: str
@@ -65,7 +64,7 @@ class BaseAdapterConfig:
 
 @dataclass
 class BaseAdapterGroupConfig:
-    """适配器组配置"""
+    """适配器组配置."""
 
     name: str
     description: str = ""
@@ -79,10 +78,10 @@ class BaseAdapterGroupConfig:
 
 
 class BaseAdapterFactory:
-    """适配器工厂类"""
+    """适配器工厂类."""
 
     def __init__(self):
-        """初始化适配器工厂"""
+        """初始化适配器工厂."""
         self._adapters: dict[str, BaseAdapter] = {}
         self._configs: dict[str, BaseAdapterConfig] = {}
         self._groups: dict[str, BaseAdapterGroupConfig] = {}
@@ -91,30 +90,30 @@ class BaseAdapterFactory:
     def create_adapter(
         self, name: str, config: dict[str, Any] | None = None, **kwargs
     ) -> BaseAdapter:
-        """创建适配器"""
+        """创建适配器."""
         if name not in self._adapters:
             raise ValueError(f"Unknown adapter: {name}")
         adapter_class = self._adapters[name]
         return adapter_class(config or {}, **kwargs)
 
     def register_adapter(self, name: str, adapter_class: type[BaseAdapter]) -> None:
-        """注册适配器类"""
+        """注册适配器类."""
         self._adapters[name] = adapter_class
 
     def register_config(self, name: str, config: BaseAdapterConfig) -> None:
-        """注册适配器配置"""
+        """注册适配器配置."""
         self._configs[name] = config
 
     def register_group(self, name: str, group_config: BaseAdapterGroupConfig) -> None:
-        """注册适配器组"""
+        """注册适配器组."""
         self._groups[name] = group_config
 
     def get_adapter(self, name: str) -> BaseAdapter:
-        """获取适配器"""
+        """获取适配器."""
         return self.create_adapter(name)
 
     def _register_default_adapters(self):
-        """注册默认适配器"""
+        """注册默认适配器."""
         # 注册足球数据适配器
         self.register_adapter("api_football", ApiFootballAdapter)
         self.register_adapter("composite_football", CompositeFootballAdapter)
@@ -127,19 +126,19 @@ adapter_factory = _global_factory  # 导出全局工厂实例,兼容测试期望
 
 
 def register_adapter(name: str, adapter_class: type[BaseAdapter]) -> None:
-    """注册适配器的便捷函数"""
+    """注册适配器的便捷函数."""
     _global_factory.register_adapter(name, adapter_class)
 
 
 def create_adapter(
     name: str, config: dict[str, Any] | None = None, **kwargs
 ) -> BaseAdapter:
-    """创建适配器的便捷函数"""
+    """创建适配器的便捷函数."""
     return _global_factory.create_adapter(name, config, **kwargs)
 
 
 def get_global_factory() -> BaseAdapterFactory:
-    """获取全局工厂实例"""
+    """获取全局工厂实例."""
     return _global_factory
 
 
