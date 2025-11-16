@@ -33,7 +33,7 @@ SimpleAdapterFactory = None
 
 # 适配器错误类
 class AdapterError(Exception):
-    """适配器模式相关错误"""
+    """适配器模式相关错误."""
 
     pass
 

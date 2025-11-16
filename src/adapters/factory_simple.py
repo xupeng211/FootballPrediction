@@ -1,6 +1,5 @@
-"""
-简单的适配器工厂实现
-Simple BaseAdapter Factory Implementation
+"""简单的适配器工厂实现
+Simple BaseAdapter Factory Implementation.
 
 提供轻量级的适配器创建和管理功能。
 Provides lightweight adapter creation and management functionality.
@@ -17,27 +16,27 @@ try:
 except ImportError:
 
     class BaseAdapterError(Exception):
-        """适配器错误"""
+        """适配器错误."""
 
         pass
 
 
 class BaseAdapterFactory:
-    """适配器工厂类"""
+    """适配器工厂类."""
 
     def __init__(self):
-        """初始化工厂"""
+        """初始化工厂."""
         self.adapters: dict[str, type[BaseAdapter]] = {}
         self.singletons: dict[str, BaseAdapter] = {}
 
     def register_adapter(self, name: str, adapter_class: type[BaseAdapter]) -> None:
-        """注册适配器类"""
+        """注册适配器类."""
         self.adapters[name] = adapter_class
 
     def create_adapter(
         self, name: str, config: dict[str, Any] | None = None, singleton: bool = True
     ) -> BaseAdapter:
-        """创建适配器实例"""
+        """创建适配器实例."""
         if name not in self.adapters:
             raise BaseAdapterError(f"BaseAdapter '{name}' not registered")
 
@@ -54,7 +53,7 @@ class BaseAdapterFactory:
 
 
 class BaseAdapterNames:
-    """预定义的适配器名称常量"""
+    """预定义的适配器名称常量."""
 
     HTTP = "http"
     DATABASE = "database"
@@ -70,8 +69,8 @@ _global_factory = BaseAdapterFactory()
 def get_adapter(
     name: str, config: dict[str, Any] | None = None, singleton: bool = True
 ) -> BaseAdapter:
-    """
-    获取适配器实例(便捷函数)
+    """获取适配器实例(便捷函数).
+
     Args:
         name: 适配器名称
         config: 配置参数
@@ -83,7 +82,7 @@ def get_adapter(
 
 
 def get_global_factory() -> BaseAdapterFactory:
-    """获取全局工厂实例"""
+    """获取全局工厂实例."""
     return _global_factory
 
 
