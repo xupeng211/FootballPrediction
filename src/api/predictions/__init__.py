@@ -2,7 +2,10 @@
 预测API模块
 """
 
-# 预测API模块相关类 - 模块暂未实现
+# 预测API模块相关类
+from src.services.prediction_service import PredictionService
+
+# 兼容性别名
 BatchPredictionRequest = None
 BatchPredictionResponse = None
 HistoryPrediction = None
@@ -22,6 +25,7 @@ VerificationResponse = None
 from .router import router
 
 __all__ = [
+    "PredictionService",
     "PredictionRequest",
     "PredictionResponse",
     "BatchPredictionRequest",

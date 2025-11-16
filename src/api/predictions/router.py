@@ -131,6 +131,28 @@ async def get_predictions_root():
 
 
 @router.get("/", response_model=dict[str, Any])
+async def get_predictions_root():
+    """
+    预测服务根路径信息
+    """
+    return {
+        "service": "足球预测API",
+        "module": "predictions",
+        "version": "1.0.0",
+        "status": "运行中",
+        "endpoints": [
+            "/",
+            "/info",
+            "/health",
+            "/recent",
+            "/match/{match_id}",
+            "/history/{match_id}",
+            "/{prediction_id}",
+        ],
+    }
+
+
+@router.get("/list", response_model=dict[str, Any])
 async def get_predictions_list(
     limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
     offset: int = Query(0, ge=0, description="偏移量"),

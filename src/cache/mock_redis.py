@@ -37,11 +37,15 @@ class MockRedis:
             return None
         return self._data.get(key)
 
-    def set(self, key: str, value: Any, ex: int | None = None) -> bool:
+    def set(
+        self, key: str, value: Any, ex: int | None = None, px: int | None = None
+    ) -> bool:
         """设置缓存值"""
         self._data[key] = value
         if ex:
             self._ttl[key] = time.time() + ex
+        elif px:
+            self._ttl[key] = time.time() + (px / 1000.0)  # px是毫秒，转换为秒
         return True
 
     def setex(self, key: str, seconds: int, value: Any) -> bool:
@@ -54,6 +58,31 @@ class MockRedis:
         self._data.pop(key, None)
         self._ttl.pop(key, None)
         return deleted
+
+    async def aset(
+        self, key: str, value: Any, expire: int | None = None, ex: int | None = None
+    ) -> bool:
+        """异步设置缓存值"""
+        return self.set(key, value, ex or expire)
+
+    async def asadd(self, key: str, *values) -> int:
+        """异步添加到集合"""
+        if key not in self._data:
+            self._data[key] = set()
+        elif not isinstance(self._data[key], set):
+            self._data[key] = set()
+
+        initial_count = len(self._data[key])
+        self._data[key].update(values)
+        return len(self._data[key]) - initial_count
+
+    async def aget(self, key: str, default=None):
+        """异步获取缓存值"""
+        return self.get(key) or default
+
+    async def amget(self, keys: list[str]):
+        """异步批量获取缓存值"""
+        return [self.get(key) for key in keys]
 
     def exists(self, key: str) -> bool:
         """检查键是否存在"""
@@ -192,9 +221,25 @@ class MockRedisManager:
         """获取值"""
         return self.redis.get(key) or default
 
-    def set(self, key: str, value, ex=None):
+    def set(self, key: str, value, ex=None, px=None, **kwargs):
         """设置值"""
-        return self.redis.set(key, value, ex)
+        return self.redis.set(key, value, ex=ex, px=px, **kwargs)
+
+    async def aset(self, key: str, value, expire=None, ex=None, px=None, **kwargs):
+        """异步设置值"""
+        return await self.redis.aset(key, value, ex or expire, px=px)
+
+    async def asadd(self, key: str, *values):
+        """异步添加到集合"""
+        return await self.redis.asadd(key, *values)
+
+    async def aget(self, key: str, default=None):
+        """异步获取值"""
+        return await self.redis.aget(key)
+
+    async def amget(self, keys: list[str]):
+        """异步批量获取值"""
+        return await self.redis.amget(keys)
 
     def delete(self, key: str):
         """删除键"""

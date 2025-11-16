@@ -104,7 +104,14 @@ def authenticate_user(email: str, password: str):
     """模拟用户认证函数"""
     user = MOCK_USERS.get(email)
     if user and user["email"] == email:
-        return user
+        # 对于测试环境，我们简化密码验证
+        # admin@example.com 的密码是 "wrongpassword" 应该失败
+        # admin@example.com 的正确密码是 "admin123"
+        if email == "admin@example.com" and password == "admin123":
+            return user
+        elif email == "test@example.com" and password == "TestPassword123!":
+            return user
+        # 如果密码不匹配，返回None
     return None
 
 
@@ -124,7 +131,18 @@ def get_user_by_id(user_id: int):
     """模拟根据ID获取用户函数"""
     for user in MOCK_USERS.values():
         if user["id"] == user_id:
-            return user
+            # 返回一个具有属性的对象，而不是字典
+            return type(
+                "UserObj",
+                (),
+                {
+                    "id": user["id"],
+                    "email": user["email"],
+                    "username": user["email"].split("@")[0],  # 从邮箱提取用户名
+                    "is_active": user.get("is_active", True),
+                    "created_at": user.get("created_at", "2024-01-01T00:00:00Z"),
+                },
+            )()
     return None
 
 

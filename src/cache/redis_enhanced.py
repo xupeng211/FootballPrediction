@@ -303,6 +303,14 @@ class EnhancedRedisManager:
         else:
             return await self.async_client.psetex(key, milliseconds, value)
 
+    async def asadd(self, key: str, *values) -> int:
+        """异步添加到集合"""
+        if self.use_mock:
+            # 对于mock，直接返回模拟结果
+            return len(values)
+        else:
+            return await self.async_client.sadd(key, *values)
+
     async def adelete(self, *keys: str) -> int:
         """异步删除缓存键"""
         if self.use_mock:
