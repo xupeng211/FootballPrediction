@@ -411,6 +411,8 @@ class TestGetCurrentUser:
         credentials.credentials = "valid_token_here"
         return credentials
 
+    @pytest.mark.asyncio
+
     async def test_get_current_user_success(self, mock_credentials):
         """测试成功获取当前用户"""
         with patch("src.api.auth_dependencies.TokenData") as mock_token_data:
@@ -425,6 +427,8 @@ class TestGetCurrentUser:
             assert result.username == "test_user"
             assert result.role == "user"
 
+    @pytest.mark.asyncio
+
     async def test_get_current_user_exception_handling(self, mock_credentials):
         """测试异常处理"""
         with patch(
@@ -437,6 +441,8 @@ class TestGetCurrentUser:
             assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
             assert "Could not validate credentials" in str(exc_info.value.detail)
             assert exc_info.value.headers["WWW-Authenticate"] == "Bearer"
+
+    @pytest.mark.asyncio
 
     async def test_get_current_user_different_credentials(self):
         """测试不同的认证凭据"""
@@ -476,11 +482,15 @@ class TestGetCurrentUserOptional:
         request.headers = {"Authorization": "Bearer valid_token"}
         return request
 
+    @pytest.mark.asyncio
+
     async def test_get_current_user_optional_no_auth_header(self, mock_request_no_auth):
         """测试没有认证头的情况"""
         result = await get_current_user_optional(mock_request_no_auth)
 
         assert result is None
+
+    @pytest.mark.asyncio
 
     async def test_get_current_user_optional_invalid_auth_format(
         self, mock_request_with_auth
@@ -493,6 +503,8 @@ class TestGetCurrentUserOptional:
 
         assert result is None
 
+    @pytest.mark.asyncio
+
     async def test_get_current_user_optional_success(self, mock_request_with_auth):
         """测试成功获取可选用户"""
         result = await get_current_user_optional(mock_request_with_auth)
@@ -502,6 +514,8 @@ class TestGetCurrentUserOptional:
         assert result.username == "test_user"
         assert result.role == "user"
 
+    @pytest.mark.asyncio
+
     async def test_get_current_user_optional_malformed_token(self):
         """测试格式错误的token"""
         request = Mock(spec=Request)
@@ -510,6 +524,8 @@ class TestGetCurrentUserOptional:
         result = await get_current_user_optional(request)
 
         assert result is None
+
+    @pytest.mark.asyncio
 
     async def test_get_current_user_optional_exception_handling(
         self, mock_request_with_auth
@@ -523,6 +539,8 @@ class TestGetCurrentUserOptional:
 
             # 在异常情况下应该返回None，而不是抛出异常
             assert result is None
+
+    @pytest.mark.asyncio
 
     async def test_get_current_user_optional_various_auth_schemes(self):
         """测试各种认证方案"""
@@ -563,12 +581,16 @@ class TestRequireAdmin:
         """创建版主用户"""
         return TokenData(user_id=3, username="moderator", role="moderator")
 
+    @pytest.mark.asyncio
+
     async def test_require_admin_success(self, admin_user):
         """测试管理员权限验证成功"""
         result = await require_admin(admin_user)
 
         assert result == admin_user
         assert result.role == "admin"
+
+    @pytest.mark.asyncio
 
     async def test_require_admin_regular_user_denied(self, regular_user):
         """测试普通用户被拒绝"""
@@ -578,6 +600,8 @@ class TestRequireAdmin:
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
         assert "Admin access required" in str(exc_info.value.detail)
 
+    @pytest.mark.asyncio
+
     async def test_require_admin_moderator_denied(self, moderator_user):
         """测试版主用户被拒绝"""
         with pytest.raises(HTTPException) as exc_info:
@@ -585,6 +609,8 @@ class TestRequireAdmin:
 
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
         assert "Admin access required" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
 
     async def test_require_admin_no_role(self):
         """测试没有role的用户被拒绝"""
@@ -595,6 +621,8 @@ class TestRequireAdmin:
 
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
         assert "Admin access required" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
 
     async def test_require_admin_case_sensitive(self):
         """测试role大小写敏感"""
@@ -632,6 +660,8 @@ class TestGlobalInstances:
 class TestIntegrationScenarios:
     """测试集成场景"""
 
+    @pytest.mark.asyncio
+
     async def test_full_authentication_flow(self):
         """测试完整认证流程"""
         # 1. 创建认证凭据
@@ -648,6 +678,8 @@ class TestIntegrationScenarios:
             await require_admin(current_user)
         assert exc_info.value.status_code == 403
 
+    @pytest.mark.asyncio
+
     async def test_admin_authentication_flow(self):
         """测试管理员认证流程"""
         # 模拟管理员认证
@@ -656,6 +688,8 @@ class TestIntegrationScenarios:
         # 管理员应该能够通过权限检查
         result = await require_admin(admin_user)
         assert result.role == "admin"
+
+    @pytest.mark.asyncio
 
     async def test_optional_authentication_scenarios(self):
         """测试可选认证的各种场景"""
@@ -688,6 +722,8 @@ class TestIntegrationScenarios:
         # 验证安全配置的一致性
         assert security_headers.headers["X-Frame-Options"] == "DENY"
         assert security_headers.headers["X-XSS-Protection"] == "1; mode=block"
+
+    @pytest.mark.asyncio
 
     async def test_error_handling_consistency(self):
         """测试错误处理一致性"""

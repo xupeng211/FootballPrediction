@@ -10,6 +10,8 @@ Issue #121: EV计算算法参数调优
 4. 风险管理效果评估
 """
 
+import pytest
+
 import asyncio
 import json
 import logging
@@ -266,6 +268,9 @@ def test_value_rating_enhancement():
         return {"status": "error", "message": str(e)}
 
 
+@pytest.mark.asyncio
+
+
 async def test_enhanced_ev_calculation():
     """测试增强EV计算"""
 
@@ -341,6 +346,9 @@ async def test_enhanced_ev_calculation():
     except Exception as e:
         logger.error(f"增强EV计算测试失败: {e}")
         return {"status": "error", "message": str(e)}
+
+
+@pytest.mark.asyncio
 
 
 async def test_strategy_backtesting():

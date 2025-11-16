@@ -123,6 +123,7 @@ class TestModelsPredictionFixed:
         service = PredictionService()
 
         # 测试异步方法（简单验证，不实际运行）
+        @pytest.mark.asyncio
         async def test_async_methods():
             # 这些方法存在且可调用
             assert callable(service.predict_match)

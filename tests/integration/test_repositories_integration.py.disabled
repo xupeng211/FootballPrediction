@@ -1,0 +1,833 @@
+#!/usr/bin/env python3
+"""
+P3.1.3 Repository层集成测试
+升级P2 Mock测试到真实数据库集成测试
+验证CRUD操作在真实PostgreSQL数据库中的工作情况
+"""
+
+import asyncio
+import pytest
+import pytest_asyncio
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+
+# 导入P3.1.2的真实数据库连接fixtures
+from tests.integration.conftest import (
+    integration_db_session,
+    integration_connection_pool,
+    database_transaction_manager,
+)
+
+# 导入真实的Repository实现
+from src.database.repositories.user import UserRepository
+from src.database.repositories.prediction import PredictionRepository
+from src.database.connection import DatabaseManager
+
+# 导入数据模型
+from src.database.models.user import User, UserRole
+from src.database.models.predictions import Predictions
+
+
+class TestUserRepositoryIntegration:
+    """UserRepository真实数据库集成测试"""
+
+    @pytest_asyncio.fixture
+    async def user_repository(
+        self, integration_db_session: AsyncSession
+    ) -> UserRepository:
+        """创建UserRepository实例，使用真实的数据库会话"""
+
+        # 创建临时的DatabaseManager用于测试
+        class TestDatabaseManager(DatabaseManager):
+            def __init__(self, session: AsyncSession):
+                self._session = session
+
+            async def get_async_session(self):
+                return self._session
+
+        test_db_manager = TestDatabaseManager(integration_db_session)
+        return UserRepository(test_db_manager)
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_user_create_real_database(
+        self, user_repository: UserRepository, integration_db_session: AsyncSession
+    ):
+        """测试用户创建 - 真实数据库插入"""
+        print("\n👤 测试用户创建 (真实数据库)...")
+
+        user_data = {
+            "username": "test_user_integration",
+            "email": "test@integration.com",
+            "password_hash": "hashed_password_123",
+            "first_name": "Test",
+            "last_name": "User",
+            "role": UserRole.USER,
+            "is_active": True,
+            "is_verified": False,
+        }
+
+        # 执行创建操作
+        created_user = await user_repository.create(user_data)
+
+        print(f"✅ 用户创建成功，ID: {created_user.id}")
+
+        # 验证数据库中真的插入了数据
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text("SELECT COUNT(*) FROM users WHERE username = :username"),
+                {"username": "test_user_integration"},
+            )
+            db_count = result.scalar()
+
+        print(f"📊 数据库中记录数: {db_count}")
+        assert db_count == 1, f"数据库中应该有1条记录，实际: {db_count}"
+
+        # 验证插入的数据完整性
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    SELECT username, email, first_name, last_name, role, is_active
+                    FROM users WHERE id = :user_id
+                """
+                ),
+                {"user_id": created_user.id},
+            )
+            db_user = result.fetchone()
+
+        assert db_user is not None, "数据库中应该找到用户记录"
+        assert db_user.username == "test_user_integration"
+        assert db_user.email == "test@integration.com"
+        assert db_user.first_name == "Test"
+        assert db_user.last_name == "User"
+        assert db_user.role == UserRole.USER
+        assert db_user.is_active is True
+
+        print("✅ 用户创建验证通过 - 数据真实存在于数据库中")
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_user_read_real_database(
+        self, user_repository: UserRepository, integration_db_session: AsyncSession
+    ):
+        """测试用户读取 - 从真实数据库获取"""
+        print("\n📖 测试用户读取 (真实数据库)...")
+
+        # 先在数据库中插入测试数据
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    INSERT INTO users (username, email, password_hash, first_name, last_name, role, created_at, updated_at)
+                    VALUES (:username, :email, :password_hash, :first_name, :last_name, :role, :created_at, :updated_at)
+                    RETURNING id
+                """
+                ),
+                {
+                    "username": "read_test_user",
+                    "email": "read@test.com",
+                    "password_hash": "hash_read_test",
+                    "first_name": "Read",
+                    "last_name": "Test",
+                    "role": UserRole.USER,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                },
+            )
+            user_id = result.scalar()
+
+        print(f"📝 插入测试用户，ID: {user_id}")
+
+        # 使用Repository读取数据
+        retrieved_user = await user_repository.get_by_id(user_id)
+
+        assert retrieved_user is not None, f"应该能读取到用户ID {user_id}"
+        assert retrieved_user.username == "read_test_user"
+        assert retrieved_user.email == "read@test.com"
+        assert retrieved_user.first_name == "Read"
+        assert retrieved_user.last_name == "Test"
+
+        print(f"✅ 用户读取成功: {retrieved_user.username}")
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_user_update_real_database(
+        self, user_repository: UserRepository, integration_db_session: AsyncSession
+    ):
+        """测试用户更新 - 真实数据库更新"""
+        print("\n✏️ 测试用户更新 (真实数据库)...")
+
+        # 先插入测试用户
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    INSERT INTO users (username, email, password_hash, first_name, last_name, role, created_at, updated_at)
+                    VALUES (:username, :email, :password_hash, :first_name, :last_name, :role, :created_at, :updated_at)
+                    RETURNING id
+                """
+                ),
+                {
+                    "username": "update_test_user",
+                    "email": "update@test.com",
+                    "password_hash": "hash_update_test",
+                    "first_name": "Update",
+                    "last_name": "Test",
+                    "role": UserRole.USER,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                },
+            )
+            user_id = result.scalar()
+
+        print(f"📝 插入测试用户，ID: {user_id}")
+
+        # 使用Repository更新用户
+        update_data = {
+            "first_name": "Updated",
+            "last_name": "Name",
+            "is_verified": True,
+            "last_login": datetime.utcnow(),
+        }
+
+        updated_user = await user_repository.update(user_id, update_data)
+
+        assert updated_user is not None, "用户更新应该成功"
+        assert updated_user.first_name == "Updated"
+        assert updated_user.last_name == "Name"
+        assert updated_user.is_verified is True
+        assert updated_user.last_login is not None
+
+        # 验证数据库中的数据确实更新了
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    SELECT first_name, last_name, is_verified, last_login
+                    FROM users WHERE id = :user_id
+                """
+                ),
+                {"user_id": user_id},
+            )
+            db_user = result.fetchone()
+
+        assert db_user is not None
+        assert db_user.first_name == "Updated"
+        assert db_user.last_name == "Name"
+        assert db_user.is_verified is True
+        assert db_user.last_login is not None
+
+        print("✅ 用户更新验证通过 - 数据库中数据已更新")
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_user_delete_real_database(
+        self, user_repository: UserRepository, integration_db_session: AsyncSession
+    ):
+        """测试用户删除 - 真实数据库删除"""
+        print("\n🗑️ 测试用户删除 (真实数据库)...")
+
+        # 先插入测试用户
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    INSERT INTO users (username, email, password_hash, first_name, last_name, role, created_at, updated_at)
+                    VALUES (:username, :email, :password_hash, :first_name, :last_name, :role, :created_at, :updated_at)
+                    RETURNING id
+                """
+                ),
+                {
+                    "username": "delete_test_user",
+                    "email": "delete@test.com",
+                    "password_hash": "hash_delete_test",
+                    "first_name": "Delete",
+                    "last_name": "Test",
+                    "role": UserRole.USER,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                },
+            )
+            user_id = result.scalar()
+
+        print(f"📝 插入测试用户，ID: {user_id}")
+
+        # 验证用户确实存在
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text("SELECT COUNT(*) FROM users WHERE id = :user_id"),
+                {"user_id": user_id},
+            )
+            count_before = result.scalar()
+
+        assert count_before == 1, "删除前用户应该存在"
+
+        # 使用Repository删除用户
+        deleted_user = await user_repository.delete(user_id)
+
+        assert deleted_user is not None, "用户删除应该成功"
+        assert deleted_user.username == "delete_test_user"
+
+        # 验证数据库中用户确实被删除了
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text("SELECT COUNT(*) FROM users WHERE id = :user_id"),
+                {"user_id": user_id},
+            )
+            count_after = result.scalar()
+
+        assert count_after == 0, "删除后用户应该不存在"
+
+        print("✅ 用户删除验证通过 - 数据库中数据已删除")
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_user_repository_special_methods(
+        self, user_repository: UserRepository, integration_db_session: AsyncSession
+    ):
+        """测试UserRepository特殊方法"""
+        print("\n🔍 测试UserRepository特殊方法...")
+
+        # 插入多个测试用户
+        test_users = [
+            ("special_user_1", "special1@test.com"),
+            ("special_user_2", "special2@test.com"),
+            ("special_user_3", "special3@test.com"),
+        ]
+
+        for username, email in test_users:
+            async with integration_db_session.begin():
+                await integration_db_session.execute(
+                    text(
+                        """
+                        INSERT INTO users (username, email, password_hash, first_name, last_name, role, created_at, updated_at)
+                        VALUES (:username, :email, :password_hash, :first_name, :last_name, :role, :created_at, :updated_at)
+                    """
+                    ),
+                    {
+                        "username": username,
+                        "email": email,
+                        "password_hash": "hash_special",
+                        "first_name": "Special",
+                        "last_name": "User",
+                        "role": UserRole.USER,
+                        "created_at": datetime.utcnow(),
+                        "updated_at": datetime.utcnow(),
+                    },
+                )
+
+        print("📝 插入多个测试用户")
+
+        # 测试get_by_username
+        user_by_username = await user_repository.get_by_username("special_user_1")
+        assert user_by_username is not None
+        assert user_by_username.email == "special1@test.com"
+        print("✅ get_by_username 方法测试通过")
+
+        # 测试get_by_email
+        user_by_email = await user_repository.get_by_email("special2@test.com")
+        assert user_by_email is not None
+        assert user_by_email.username == "special_user_2"
+        print("✅ get_by_email 方法测试通过")
+
+        # 测试username_exists
+        exists_true = await user_repository.username_exists("special_user_3")
+        assert exists_true is True
+
+        exists_false = await user_repository.username_exists("non_existent_user")
+        assert exists_false is False
+        print("✅ username_exists 方法测试通过")
+
+        # 测试email_exists
+        email_exists_true = await user_repository.email_exists("special3@test.com")
+        assert email_exists_true is True
+
+        email_exists_false = await user_repository.email_exists("non_existent@test.com")
+        assert email_exists_false is False
+        print("✅ email_exists 方法测试通过")
+
+
+class TestPredictionRepositoryIntegration:
+    """PredictionRepository真实数据库集成测试"""
+
+    @pytest_asyncio.fixture
+    async def prediction_repository(
+        self, integration_db_session: AsyncSession
+    ) -> PredictionRepository:
+        """创建PredictionRepository实例，使用真实的数据库会话"""
+
+        class TestDatabaseManager(DatabaseManager):
+            def __init__(self, session: AsyncSession):
+                self._session = session
+
+            async def get_async_session(self):
+                return self._session
+
+        test_db_manager = TestDatabaseManager(integration_db_session)
+        return PredictionRepository(test_db_manager)
+
+    @pytest_asyncio.fixture
+    async def test_user(self, integration_db_session: AsyncSession) -> int:
+        """创建测试用户"""
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    INSERT INTO users (username, email, password_hash, first_name, last_name, role, created_at, updated_at)
+                    VALUES (:username, :email, :password_hash, :first_name, :last_name, :role, :created_at, :updated_at)
+                    RETURNING id
+                """
+                ),
+                {
+                    "username": "prediction_test_user",
+                    "email": "prediction@test.com",
+                    "password_hash": "hash_prediction_test",
+                    "first_name": "Prediction",
+                    "last_name": "Tester",
+                    "role": UserRole.USER,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                },
+            )
+            return result.scalar()
+
+    @pytest_asyncio.fixture
+    async def test_match(self, integration_db_session: AsyncSession) -> int:
+        """创建测试比赛"""
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    INSERT INTO matches (home_team, away_team, match_date, status, created_at, updated_at)
+                    VALUES (:home_team, :away_team, :match_date, :status, :created_at, :updated_at)
+                    RETURNING id
+                """
+                ),
+                {
+                    "home_team": "Test Home Team",
+                    "away_team": "Test Away Team",
+                    "match_date": datetime.utcnow() + timedelta(days=1),
+                    "status": "scheduled",
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                },
+            )
+            return result.scalar()
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_prediction_create_real_database(
+        self,
+        prediction_repository: PredictionRepository,
+        integration_db_session: AsyncSession,
+        test_user: int,
+        test_match: int,
+    ):
+        """测试预测创建 - 真实数据库插入"""
+        print("\n🔮 测试预测创建 (真实数据库)...")
+
+        prediction_data = {
+            "user_id": test_user,
+            "match_id": test_match,
+            "predicted_home_score": 2,
+            "predicted_away_score": 1,
+            "confidence": 0.85,
+            "model_version": "v1.0",
+            "status": "pending",
+        }
+
+        # 执行创建操作
+        created_prediction = await prediction_repository.create(prediction_data)
+
+        print(f"✅ 预测创建成功，ID: {created_prediction.id}")
+
+        # 验证数据库中真的插入了数据
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    "SELECT COUNT(*) FROM predictions WHERE user_id = :user_id AND match_id = :match_id"
+                ),
+                {"user_id": test_user, "match_id": test_match},
+            )
+            db_count = result.scalar()
+
+        print(f"📊 数据库中记录数: {db_count}")
+        assert db_count == 1, f"数据库中应该有1条记录，实际: {db_count}"
+
+        # 验证插入的数据完整性
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    SELECT user_id, match_id, predicted_home_score, predicted_away_score, confidence, status
+                    FROM predictions WHERE id = :prediction_id
+                """
+                ),
+                {"prediction_id": created_prediction.id},
+            )
+            db_prediction = result.fetchone()
+
+        assert db_prediction is not None, "数据库中应该找到预测记录"
+        assert db_prediction.user_id == test_user
+        assert db_prediction.match_id == test_match
+        assert db_prediction.predicted_home_score == 2
+        assert db_prediction.predicted_away_score == 1
+        assert float(db_prediction.confidence) == 0.85
+        assert db_prediction.status == "pending"
+
+        print("✅ 预测创建验证通过 - 数据真实存在于数据库中")
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_prediction_read_real_database(
+        self,
+        prediction_repository: PredictionRepository,
+        integration_db_session: AsyncSession,
+        test_user: int,
+        test_match: int,
+    ):
+        """测试预测读取 - 从真实数据库获取"""
+        print("\n📖 测试预测读取 (真实数据库)...")
+
+        # 先在数据库中插入测试数据
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    INSERT INTO predictions (user_id, match_id, predicted_home_score, predicted_away_score, confidence, status, created_at, updated_at)
+                    VALUES (:user_id, :match_id, :predicted_home_score, :predicted_away_score, :confidence, :status, :created_at, :updated_at)
+                    RETURNING id
+                """
+                ),
+                {
+                    "user_id": test_user,
+                    "match_id": test_match,
+                    "predicted_home_score": 3,
+                    "predicted_away_score": 0,
+                    "confidence": 0.75,
+                    "status": "pending",
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                },
+            )
+            prediction_id = result.scalar()
+
+        print(f"📝 插入测试预测，ID: {prediction_id}")
+
+        # 使用Repository读取数据
+        retrieved_prediction = await prediction_repository.get_by_id(prediction_id)
+
+        assert retrieved_prediction is not None, f"应该能读取到预测ID {prediction_id}"
+        assert retrieved_prediction.user_id == test_user
+        assert retrieved_prediction.match_id == test_match
+        assert retrieved_prediction.predicted_home_score == 3
+        assert retrieved_prediction.predicted_away_score == 0
+        assert float(retrieved_prediction.confidence) == 0.75
+        assert retrieved_prediction.status == "pending"
+
+        print(
+            f"✅ 预测读取成功: 主队{retrieved_prediction.predicted_home_score} - 客队{retrieved_prediction.predicted_away_score}"
+        )
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_prediction_update_real_database(
+        self,
+        prediction_repository: PredictionRepository,
+        integration_db_session: AsyncSession,
+        test_user: int,
+        test_match: int,
+    ):
+        """测试预测更新 - 真实数据库更新"""
+        print("\n✏️ 测试预测更新 (真实数据库)...")
+
+        # 先插入测试预测
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    INSERT INTO predictions (user_id, match_id, predicted_home_score, predicted_away_score, confidence, status, created_at, updated_at)
+                    VALUES (:user_id, :match_id, :predicted_home_score, :predicted_away_score, :confidence, :status, :created_at, :updated_at)
+                    RETURNING id
+                """
+                ),
+                {
+                    "user_id": test_user,
+                    "match_id": test_match,
+                    "predicted_home_score": 1,
+                    "predicted_away_score": 1,
+                    "confidence": 0.60,
+                    "status": "pending",
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                },
+            )
+            prediction_id = result.scalar()
+
+        print(f"📝 插入测试预测，ID: {prediction_id}")
+
+        # 使用Repository更新预测（模拟比赛结果）
+        update_data = {
+            "actual_home_score": 2,
+            "actual_away_score": 1,
+            "is_correct": True,
+            "status": "completed",
+            "points_earned": 10.0,
+        }
+
+        updated_prediction = await prediction_repository.update(
+            prediction_id, update_data
+        )
+
+        assert updated_prediction is not None, "预测更新应该成功"
+        assert updated_prediction.actual_home_score == 2
+        assert updated_prediction.actual_away_score == 1
+        assert updated_prediction.is_correct is True
+        assert updated_prediction.status == "completed"
+        assert float(updated_prediction.points_earned) == 10.0
+
+        # 验证数据库中的数据确实更新了
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    SELECT actual_home_score, actual_away_score, is_correct, status, points_earned
+                    FROM predictions WHERE id = :prediction_id
+                """
+                ),
+                {"prediction_id": prediction_id},
+            )
+            db_prediction = result.fetchone()
+
+        assert db_prediction is not None
+        assert db_prediction.actual_home_score == 2
+        assert db_prediction.actual_away_score == 1
+        assert db_prediction.is_correct is True
+        assert db_prediction.status == "completed"
+        assert float(db_prediction.points_earned) == 10.0
+
+        print("✅ 预测更新验证通过 - 数据库中数据已更新")
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_prediction_delete_real_database(
+        self,
+        prediction_repository: PredictionRepository,
+        integration_db_session: AsyncSession,
+        test_user: int,
+        test_match: int,
+    ):
+        """测试预测删除 - 真实数据库删除"""
+        print("\n🗑️ 测试预测删除 (真实数据库)...")
+
+        # 先插入测试预测
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text(
+                    """
+                    INSERT INTO predictions (user_id, match_id, predicted_home_score, predicted_away_score, confidence, status, created_at, updated_at)
+                    VALUES (:user_id, :match_id, :predicted_home_score, :predicted_away_score, :confidence, :status, :created_at, :updated_at)
+                    RETURNING id
+                """
+                ),
+                {
+                    "user_id": test_user,
+                    "match_id": test_match,
+                    "predicted_home_score": 0,
+                    "predicted_away_score": 0,
+                    "confidence": 0.50,
+                    "status": "pending",
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                },
+            )
+            prediction_id = result.scalar()
+
+        print(f"📝 插入测试预测，ID: {prediction_id}")
+
+        # 验证预测确实存在
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text("SELECT COUNT(*) FROM predictions WHERE id = :prediction_id"),
+                {"prediction_id": prediction_id},
+            )
+            count_before = result.scalar()
+
+        assert count_before == 1, "删除前预测应该存在"
+
+        # 使用Repository删除预测
+        deleted_prediction = await prediction_repository.delete(prediction_id)
+
+        assert deleted_prediction is not None, "预测删除应该成功"
+        assert deleted_prediction.user_id == test_user
+        assert deleted_prediction.match_id == test_match
+
+        # 验证数据库中预测确实被删除了
+        async with integration_db_session.begin():
+            result = await integration_db_session.execute(
+                text("SELECT COUNT(*) FROM predictions WHERE id = :prediction_id"),
+                {"prediction_id": prediction_id},
+            )
+            count_after = result.scalar()
+
+        assert count_after == 0, "删除后预测应该不存在"
+
+        print("✅ 预测删除验证通过 - 数据库中数据已删除")
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_prediction_repository_special_methods(
+        self,
+        prediction_repository: PredictionRepository,
+        integration_db_session: AsyncSession,
+        test_user: int,
+        test_match: int,
+    ):
+        """测试PredictionRepository特殊方法"""
+        print("\n🔍 测试PredictionRepository特殊方法...")
+
+        # 插入多个测试预测
+        test_predictions = [
+            (test_user, test_match, 2, 1, 0.80),
+            (test_user, test_match, 3, 1, 0.90),
+            (test_user, test_match, 1, 2, 0.70),
+        ]
+
+        for i, (uid, mid, home_score, away_score, confidence) in enumerate(
+            test_predictions
+        ):
+            async with integration_db_session.begin():
+                await integration_db_session.execute(
+                    text(
+                        """
+                        INSERT INTO predictions (user_id, match_id, predicted_home_score, predicted_away_score, confidence, status, created_at, updated_at)
+                        VALUES (:user_id, :match_id, :predicted_home_score, :predicted_away_score, :confidence, :status, :created_at, :updated_at)
+                    """
+                    ),
+                    {
+                        "user_id": uid,
+                        "match_id": (
+                            mid + i if i > 0 else mid
+                        ),  # 为不同预测创建不同比赛ID
+                        "predicted_home_score": home_score,
+                        "predicted_away_score": away_score,
+                        "confidence": confidence,
+                        "status": "pending",
+                        "created_at": datetime.utcnow(),
+                        "updated_at": datetime.utcnow(),
+                    },
+                )
+
+        print("📝 插入多个测试预测")
+
+        # 测试get_by_user
+        user_predictions = await prediction_repository.get_by_user(test_user)
+        assert (
+            len(user_predictions) >= 3
+        ), f"应该至少有3个预测，实际: {len(user_predictions)}"
+        print(f"✅ get_by_user 方法测试通过，找到 {len(user_predictions)} 个预测")
+
+        # 测试get_by_match
+        match_predictions = await prediction_repository.get_by_match(test_match)
+        assert (
+            len(match_predictions) >= 1
+        ), f"应该至少有1个预测，实际: {len(match_predictions)}"
+        print(f"✅ get_by_match 方法测试通过，找到 {len(match_predictions)} 个预测")
+
+        # 测试get_by_status
+        pending_predictions = await prediction_repository.get_by_status("pending")
+        assert (
+            len(pending_predictions) >= 3
+        ), f"应该至少有3个待处理预测，实际: {len(pending_predictions)}"
+        print(
+            f"✅ get_by_status 方法测试通过，找到 {len(pending_predictions)} 个待处理预测"
+        )
+
+
+class TestRepositoryTransactionIntegration:
+    """Repository事务集成测试"""
+
+    @pytest_asyncio.fixture
+    async def user_repository(
+        self, integration_db_session: AsyncSession
+    ) -> UserRepository:
+        class TestDatabaseManager(DatabaseManager):
+            def __init__(self, session: AsyncSession):
+                self._session = session
+
+            async def get_async_session(self):
+                return self._session
+
+        test_db_manager = TestDatabaseManager(integration_db_session)
+        return UserRepository(test_db_manager)
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_repository_commit_transaction(
+        self, user_repository: UserRepository, database_transaction_manager
+    ):
+        """测试Repository事务提交"""
+        print("\n💾 测试Repository事务提交...")
+
+        transaction_result = (
+            await database_transaction_manager.test_commit_transaction()
+        )
+        assert transaction_result, "事务提交测试应该成功"
+
+        print("✅ Repository事务提交测试通过")
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.database
+    async def test_repository_rollback_transaction(
+        self, user_repository: UserRepository, database_transaction_manager
+    ):
+        """测试Repository事务回滚"""
+        print("\n🔄 测试Repository事务回滚...")
+
+        transaction_result = (
+            await database_transaction_manager.test_rollback_transaction()
+        )
+        assert transaction_result, "事务回滚测试应该成功"
+
+        print("✅ Repository事务回滚测试通过")
+
+
+# 集成测试清理夹具
+@pytest_asyncio.fixture(autouse=True)
+async def cleanup_test_data(integration_db_session: AsyncSession):
+    """清理测试数据的夹具"""
+    yield  # 执行测试
+
+    # 测试后清理
+    try:
+        await integration_db_session.execute(
+            text(
+                "DELETE FROM predictions WHERE user_id IN (SELECT id FROM users WHERE username LIKE '%test%')"
+            )
+        )
+        await integration_db_session.execute(
+            text("DELETE FROM users WHERE username LIKE '%test%'")
+        )
+        await integration_db_session.execute(
+            text("DELETE FROM matches WHERE home_team LIKE '%Test%'")
+        )
+        await integration_db_session.commit()
+        print("🧹 测试数据清理完成")
+    except Exception as e:
+        print(f"⚠️ 数据清理失败: {e}")

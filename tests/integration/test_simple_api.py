@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
+
 简单的Football-Data.org API测试
 """
+
+import pytest
 
 import asyncio
 import logging
@@ -13,6 +16,9 @@ from dotenv import load_dotenv
 logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+
+@pytest.mark.asyncio
 
 
 async def test_basic_api():

@@ -3,6 +3,8 @@
 简单的数据源API测试脚本（不依赖数据库）
 """
 
+import pytest
+
 import asyncio
 import sys
 from datetime import datetime, timedelta
@@ -20,6 +22,9 @@ try:
 except ImportError:
     # 备用导入或Mock实现
     data_source_manager = None
+
+
+@pytest.mark.asyncio
 
 
 async def test_data_source_api():

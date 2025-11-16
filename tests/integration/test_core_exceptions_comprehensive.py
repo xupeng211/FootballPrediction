@@ -15,7 +15,6 @@ from src.core.exceptions import (
     CacheError,
     ConfigError,
     ConsistencyError,
-    CustomCustomTimeout,
     DatabaseError,
     DataError,
     DataProcessingError,
@@ -23,6 +22,7 @@ from src.core.exceptions import (
     DependencyInjectionError,
     DomainError,
     FootballPredictionError,
+    FootballTimeoutError,
     LineageError,
     ModelError,
     PipelineError,
@@ -38,7 +38,7 @@ from src.core.exceptions import (
 )
 
 # 别名以避免冲突
-CustomTimeout = CustomCustomTimeout
+CustomTimeout = FootballTimeoutError
 
 
 class TestCoreExceptionsComprehensive:

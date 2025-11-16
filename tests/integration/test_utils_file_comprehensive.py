@@ -119,7 +119,7 @@ class TestFileUtilsComprehensive:
 
     def test_get_file_hash_success(self):
         """测试成功获取文件哈希值"""
-        test_content = "Hello, World! 这是一个测试文件。"
+        test_content = "Hello, World! 这是一个测试文件."
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf-8") as f:
             f.write(test_content)

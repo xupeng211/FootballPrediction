@@ -2,7 +2,7 @@
 核心模块集成测试
 Core Module Integration Tests
 
-测试核心业务模块的集成功能，包括配置、日志、验证等。
+测试核心业务模块的集成功能，包括配置、日志、验证等.
 """
 
 import asyncio

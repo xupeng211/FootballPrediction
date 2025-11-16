@@ -2,7 +2,7 @@
 简化的系统集成测试
 Simple Integration Tests
 
-测试系统基本功能，避免复杂依赖问题。
+测试系统基本功能，避免复杂依赖问题.
 """
 
 import asyncio
@@ -57,6 +57,8 @@ class TestSimpleEventSystem:
 
         return SimpleEventBus()
 
+    @pytest.mark.asyncio
+
     async def test_event_publish_and_subscribe(self, simple_event_bus):
         """测试事件发布和订阅"""
         received_events = []
@@ -76,6 +78,8 @@ class TestSimpleEventSystem:
         assert received_events[0]["type"] == "test_event"
         assert received_events[0]["data"]["message"] == "Hello World"
         assert received_events[0]["data"]["id"] == 123
+
+    @pytest.mark.asyncio
 
     async def test_multiple_subscribers(self, simple_event_bus):
         """测试多个订阅者"""
@@ -98,6 +102,8 @@ class TestSimpleEventSystem:
         assert received_counts["handler1"] == 1
         assert received_counts["handler2"] == 1
 
+    @pytest.mark.asyncio
+
     async def test_different_event_types(self, simple_event_bus):
         """测试不同事件类型"""
         received_events = []
@@ -117,6 +123,8 @@ class TestSimpleEventSystem:
         assert len(received_events) == 2
         assert received_events[0]["data"]["type"] == "A"
         assert received_events[1]["data"]["type"] == "B"
+
+    @pytest.mark.asyncio
 
     async def test_event_error_handling(self, simple_event_bus):
         """测试事件处理错误处理"""
@@ -157,6 +165,8 @@ class TestSimpleSystemIntegration:
         }
         return services
 
+    @pytest.mark.asyncio
+
     async def test_service_communication(self, mock_services):
         """测试服务间通信"""
         # 模拟服务通信流程
@@ -186,6 +196,8 @@ class TestSimpleSystemIntegration:
         mock_services["cache"].set.assert_called_once()
         mock_services["notification"].send.assert_called_once()
 
+    @pytest.mark.asyncio
+
     async def test_async_workflow(self, mock_services):
         """测试异步工作流"""
 
@@ -209,6 +221,8 @@ class TestSimpleSystemIntegration:
         assert result["data"]["original"] == test_data
         assert result["data"]["processed"] is True
         assert "timestamp" in result
+
+    @pytest.mark.asyncio
 
     async def test_error_recovery(self, mock_services):
         """测试错误恢复"""
@@ -255,6 +269,8 @@ class TestSimpleSystemIntegration:
 class TestSimplePerformanceIntegration:
     """简化性能集成测试"""
 
+    @pytest.mark.asyncio
+
     async def test_concurrent_operations(self):
         """测试并发操作"""
 
@@ -271,6 +287,8 @@ class TestSimplePerformanceIntegration:
         for i, result in enumerate(results):
             assert result["id"] == i
             assert result["completed"] is True
+
+    @pytest.mark.asyncio
 
     async def test_batch_processing(self):
         """测试批量处理"""
@@ -324,6 +342,8 @@ class TestSimpleDataIntegration:
         db.delete.return_value = True
         return db
 
+    @pytest.mark.asyncio
+
     async def test_data_crud_operations(self, mock_database):
         """测试数据CRUD操作"""
         # Create
@@ -345,6 +365,8 @@ class TestSimpleDataIntegration:
         await mock_database.delete("item:1")
         mock_database.delete.assert_called_once_with("item:1")
 
+    @pytest.mark.asyncio
+
     async def test_data_validation(self, mock_database):
         """测试数据验证"""
 
@@ -364,6 +386,8 @@ class TestSimpleDataIntegration:
         invalid_data = {"id": 1, "name": "test"}  # 缺少value字段
         with pytest.raises(ValueError):
             validate_data(invalid_data)
+
+    @pytest.mark.asyncio
 
     async def test_data_consistency(self, mock_database):
         """测试数据一致性"""

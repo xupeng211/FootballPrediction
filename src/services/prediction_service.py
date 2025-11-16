@@ -37,7 +37,7 @@ class PredictionService:
         """初始化预测服务"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def get_predictions(self, limit: int = 10, offset: int = 0) -> list[dict[str, Any]]:
+    def get_predictions(self, limit: int = 10, offset: int = 0) -> dict[str, Any]:
         """
         获取预测列表
         Get predictions list
@@ -47,7 +47,7 @@ class PredictionService:
             offset: 偏移量
 
         Returns:
-            预测列表
+            包含预测列表和分页信息的字典
         """
         # 模拟返回一些预测数据
         sample_predictions = [
@@ -74,7 +74,40 @@ class PredictionService:
         # 应用分页
         start = offset
         end = start + limit
-        return sample_predictions[start:end]
+        paginated_predictions = sample_predictions[start:end]
+
+        return {
+            "predictions": paginated_predictions,
+            "total": len(sample_predictions),
+            "limit": limit,
+            "offset": offset,
+        }
+
+    def get_match_predictions(self, match_id: int) -> list[dict[str, Any]]:
+        """
+        获取指定比赛的预测
+        Get predictions for a specific match
+
+        Args:
+            match_id: 比赛ID
+
+        Returns:
+            该比赛的预测列表
+        """
+        # 模拟返回指定比赛的预测数据
+        sample_predictions = [
+            {
+                "id": "pred_12345",
+                "match_id": match_id,
+                "home_team": "Team A",
+                "away_team": "Team B",
+                "predicted_outcome": "home_win",
+                "confidence": 0.75,
+                "created_at": "2025-11-06T08:00:00.000Z",
+            },
+        ]
+
+        return sample_predictions
 
     def predict_match(
         self, match_data: dict[str, Any], model_name: str = "default"
@@ -283,6 +316,102 @@ class PredictionService:
                 return False
 
         return True
+
+    def get_prediction_by_id(self, prediction_id: str) -> dict[str, Any] | None:
+        """
+        根据ID获取预测
+        Get prediction by ID
+
+        Args:
+            prediction_id: 预测ID
+
+        Returns:
+            预测数据，如果不存在则返回None
+        """
+        # 模拟数据库查询
+        sample_predictions = [
+            {
+                "id": "pred_12345",
+                "match_id": 12345,
+                "home_team": "Team A",
+                "away_team": "Team B",
+                "predicted_outcome": "home_win",
+                "confidence": 0.75,
+                "created_at": "2025-11-06T08:00:00.000Z",
+            },
+        ]
+
+        for prediction in sample_predictions:
+            if prediction["id"] == prediction_id:
+                return prediction
+
+        return None
+
+    def create_prediction(self, prediction_data: dict[str, Any]) -> dict[str, Any]:
+        """
+        创建新预测
+        Create new prediction
+
+        Args:
+            prediction_data: 预测数据
+
+        Returns:
+            创建的预测数据
+        """
+        # 生成新的预测ID
+        import uuid
+        new_id = f"pred_{str(uuid.uuid4())[:8]}"
+
+        new_prediction = {
+            "id": new_id,
+            "match_id": prediction_data.get("match_id"),
+            "home_team": prediction_data.get("home_team", "Unknown"),
+            "away_team": prediction_data.get("away_team", "Unknown"),
+            "predicted_outcome": prediction_data.get("predicted_outcome", "home_win"),
+            "confidence": prediction_data.get("confidence", 0.5),
+            "created_at": datetime.utcnow().isoformat() + "Z",
+        }
+
+        self.logger.info(f"Created new prediction: {new_id}")
+        return new_prediction
+
+    def update_prediction(self, prediction_id: str, update_data: dict[str, Any]) -> dict[str, Any] | None:
+        """
+        更新预测
+        Update prediction
+
+        Args:
+            prediction_id: 预测ID
+            update_data: 更新数据
+
+        Returns:
+            更新后的预测数据，如果不存在则返回None
+        """
+        prediction = self.get_prediction_by_id(prediction_id)
+        if prediction:
+            prediction.update(update_data)
+            self.logger.info(f"Updated prediction: {prediction_id}")
+            return prediction
+
+        return None
+
+    def delete_prediction(self, prediction_id: str) -> bool:
+        """
+        删除预测
+        Delete prediction
+
+        Args:
+            prediction_id: 预测ID
+
+        Returns:
+            删除是否成功
+        """
+        prediction = self.get_prediction_by_id(prediction_id)
+        if prediction:
+            self.logger.info(f"Deleted prediction: {prediction_id}")
+            return True
+
+        return False
 
 
 # 全局预测服务实例
