@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-EV计算和投注策略模块
-Expected Value Calculation and Betting Strategy Module
+"""EV计算和投注策略模块
+Expected Value Calculation and Betting Strategy Module.
 
 实现SRS要求的EV计算和投注建议功能:
 - 期望价值(Expected Value)计算
@@ -34,7 +33,7 @@ except ImportError:
 
 
 class BetType(Enum):
-    """投注类型枚举"""
+    """投注类型枚举."""
 
     HOME_WIN = "home_win"
     AWAY_WIN = "away_win"
@@ -47,7 +46,7 @@ class BetType(Enum):
 
 @dataclass
 class BetOdds:
-    """投注赔率"""
+    """投注赔率."""
 
     home_win: float
     draw: float
@@ -60,7 +59,7 @@ class BetOdds:
 
 @dataclass
 class ProbabilityEstimate:
-    """概率估算"""
+    """概率估算."""
 
     home_win: float
     draw: float
@@ -73,7 +72,7 @@ class ProbabilityEstimate:
 
 @dataclass
 class EVResult:
-    """EV计算结果"""
+    """EV计算结果."""
 
     bet_type: BetType
     odds: float
@@ -84,16 +83,15 @@ class EVResult:
 
 
 class EVCalculator:
-    """期望价值计算器"""
+    """期望价值计算器."""
 
     def __init__(self):
-        """初始化EV计算器"""
+        """初始化EV计算器."""
         self.config = get_config()
         self.logger = logger
 
     def calculate_ev(self, odds: float, probability: float) -> float:
-        """
-        计算期望价值
+        """计算期望价值.
 
         Args:
             odds: 赔率
@@ -105,8 +103,7 @@ class EVCalculator:
         return (odds - 1) * probability - (1 - probability)
 
     def calculate_kelly_fraction(self, ev: float, odds: float) -> float:
-        """
-        计算Kelly准则投注比例
+        """计算Kelly准则投注比例.
 
         Args:
             ev: 期望价值
@@ -134,8 +131,7 @@ class EVCalculator:
         min_ev: float = 0.05,
         min_kelly: float = 0.01,
     ) -> EVResult:
-        """
-        分析投注价值
+        """分析投注价值.
 
         Args:
             odds: 赔率
@@ -171,8 +167,7 @@ class EVCalculator:
     def analyze_full_market(
         self, bet_odds: BetOdds, probabilities: ProbabilityEstimate
     ) -> list[EVResult]:
-        """
-        分析完整市场
+        """分析完整市场.
 
         Args:
             bet_odds: 投注赔率
@@ -218,8 +213,7 @@ class EVCalculator:
         return results
 
     def get_best_bets(self, results: list[EVResult], top_n: int = 3) -> list[EVResult]:
-        """
-        获取最佳投注建议
+        """获取最佳投注建议.
 
         Args:
             results: EV分析结果列表
@@ -238,10 +232,10 @@ class EVCalculator:
 
 
 class BettingStrategy:
-    """投注策略管理器"""
+    """投注策略管理器."""
 
     def __init__(self):
-        """初始化投注策略"""
+        """初始化投注策略."""
         self.calculator = EVCalculator()
         self.logger = logger
 
@@ -252,8 +246,7 @@ class BettingStrategy:
         bankroll: float = 1000.0,
         max_simultaneous_bets: int = 5,
     ) -> dict[str, Any]:
-        """
-        生成投注建议
+        """生成投注建议.
 
         Args:
             bet_odds: 投注赔率
@@ -303,8 +296,7 @@ class BettingStrategy:
         return advice
 
     def calculate_portfolio_metrics(self, advice: dict[str, Any]) -> dict[str, float]:
-        """
-        计算投资组合指标
+        """计算投资组合指标.
 
         Args:
             advice: 投注建议
@@ -342,12 +334,12 @@ class BettingStrategy:
 
 # 便捷函数
 def create_ev_calculator() -> EVCalculator:
-    """创建EV计算器实例"""
+    """创建EV计算器实例."""
     return EVCalculator()
 
 
 def create_betting_strategy() -> BettingStrategy:
-    """创建投注策略实例"""
+    """创建投注策略实例."""
     return BettingStrategy()
 
 

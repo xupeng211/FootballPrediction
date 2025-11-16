@@ -1,6 +1,5 @@
-"""
-队列服务
-Queue Service
+"""队列服务
+Queue Service.
 
 提供队列管理和状态监控服务。
 Provides queue management and status monitoring services.
@@ -14,16 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class QueueService:
-    """队列服务类"""
+    """队列服务类."""
 
     def __init__(self):
-        """初始化队列服务"""
+        """初始化队列服务."""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def get_status(self) -> dict[str, Any]:
-        """
-        获取队列状态信息
-        Get queue status information
+        """获取队列状态信息
+        Get queue status information.
 
         Returns:
             队列状态信息字典
@@ -80,7 +78,7 @@ _queue_service: QueueService | None = None
 
 
 def get_queue_service() -> QueueService:
-    """获取队列服务实例"""
+    """获取队列服务实例."""
     global _queue_service
     if _queue_service is None:
         _queue_service = QueueService()

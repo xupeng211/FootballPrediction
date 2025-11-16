@@ -1,6 +1,5 @@
-"""
-版本服务
-Version Service
+"""版本服务
+Version Service.
 
 提供API版本信息和应用版本管理。
 Provides API version information and application version management.
@@ -14,16 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class VersionService:
-    """版本服务类"""
+    """版本服务类."""
 
     def __init__(self):
-        """初始化版本服务"""
+        """初始化版本服务."""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def get_version(self) -> dict[str, Any]:
-        """
-        获取版本信息
-        Get version information
+        """获取版本信息
+        Get version information.
 
         Returns:
             版本信息字典
@@ -66,7 +64,7 @@ _version_service: VersionService | None = None
 
 
 def get_version_service() -> VersionService:
-    """获取版本服务实例"""
+    """获取版本服务实例."""
     global _version_service
     if _version_service is None:
         _version_service = VersionService()

@@ -1,6 +1,5 @@
-"""
-Services Manager Module
-服务管理器模块
+"""Services Manager Module
+服务管理器模块.
 
 提供服务管理和生命周期管理功能。
 """

@@ -1,7 +1,6 @@
 # mypy: ignore-errors
-"""
-事件驱动的预测服务
-Event-Driven Prediction Service
+"""事件驱动的预测服务
+Event-Driven Prediction Service.
 
 集成事件系统的预测服务,发布预测相关事件.
 Prediction service integrated with event system, publishing prediction-related events.
@@ -28,14 +27,14 @@ logger = logging.getLogger(__name__)
 
 
 class EventDrivenPredictionService(StrategyPredictionService):
-    """事件驱动的预测服务"
+    """事件驱动的预测服务".
 
     继承自策略预测服务,添加事件发布功能.
     Inherits from strategy prediction service, adding event publishing capabilities.
     """
 
     def __init__(self, *args, **kwargs):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化事件驱动预测服务"""
         super().__init__(*args, **kwargs)
@@ -50,7 +49,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         confidence: float | None = None,
         notes: str | None = None,
     ) -> Prediction:
-        """预测单场比赛并发布事件"
+        """预测单场比赛并发布事件".
 
         Args:
             match_id: 比赛ID
@@ -82,7 +81,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         new_notes: str | None = None,
         update_reason: str | None = None,
     ) -> Prediction:
-        """更新预测并发布事件"
+        """更新预测并发布事件".
 
         Args:
             prediction_id: 预测ID
@@ -134,7 +133,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
     async def batch_predict(
         self, match_ids: list[int], user_id: int, strategy_name: str | None = None
     ) -> list[Prediction]:
-        """批量预测并发布事件"
+        """批量预测并发布事件".
 
         Args:
             match_ids: 比赛ID列表
@@ -156,7 +155,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
     async def _publish_prediction_made_event(
         self, prediction: Prediction, strategy_name: str | None
     ) -> None:
-        """发布预测创建事件"
+        """发布预测创建事件".
 
         Args:
             prediction: 创建的预测
@@ -208,7 +207,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         previous_prediction: dict[str, Any],
         update_reason: str | None,
     ) -> None:
-        """发布预测更新事件"
+        """发布预测更新事件".
 
         Args:
             prediction: 更新后的预测
@@ -260,7 +259,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
 
 # 事件驱动的比赛服务
 class EventDrivenMatchService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """事件驱动的比赛服务"
@@ -270,7 +269,7 @@ class EventDrivenMatchService:
     """
 
     def __init__(self, match_repository):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化比赛服务"
 
@@ -292,7 +291,7 @@ class EventDrivenMatchService:
         created_by: int | None = None,
         initial_odds: dict[str, float] | None = None,
     ) -> Match:
-        """创建比赛并发布事件"
+        """创建比赛并发布事件".
 
         Args:
             home_team_id: 主队ID
@@ -333,7 +332,7 @@ class EventDrivenMatchService:
         initial_odds: dict[str, float] | None,
         weather: dict[str, Any] | None,
     ) -> None:
-        """发布比赛创建事件"""
+        """发布比赛创建事件."""
         try:
             # 创建事件数据
             event_data = MatchCreatedEventData(
@@ -369,7 +368,7 @@ class EventDrivenMatchService:
 
 # 事件驱动的用户服务
 class EventDrivenUserService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """事件驱动的用户服务"
@@ -379,7 +378,7 @@ class EventDrivenUserService:
     """
 
     def __init__(self, user_repository):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化用户服务"
 
@@ -399,7 +398,7 @@ class EventDrivenUserService:
         ip_address: str | None = None,
         user_agent: str | None = None,
     ) -> Any:
-        """注册用户并发布事件"
+        """注册用户并发布事件".
 
         Args:
             username: 用户名
@@ -438,7 +437,7 @@ class EventDrivenUserService:
         ip_address: str | None,
         user_agent: str | None,
     ) -> None:
-        """发布用户注册事件"""
+        """发布用户注册事件."""
         try:
             # 创建事件数据
             event_data = UserRegisteredEventData(
@@ -471,8 +470,7 @@ class EventDrivenUserService:
 
 # 依赖注入配置
 def configure_event_driven_services(container: DIContainer) -> None:
-    """配置事件驱动服务的依赖注入"""
-
+    """配置事件驱动服务的依赖注入."""
     # 注册事件驱动的预测服务
     container.register_scoped(EventDrivenPredictionService)
 
