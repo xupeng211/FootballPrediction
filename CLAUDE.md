@@ -73,8 +73,15 @@ pytest --cov=src --cov-report=term-missing  # 查看覆盖详情
 
 - **永远不要**对单个文件使用 `--cov-fail-under`
 - **优先使用** Makefile命令而非直接调用工具
-- **覆盖率阈值**: 40%目标阈值（当前实际29%，渐进式提升）
+- **覆盖率阈值**: 40%目标阈值（当前实际39%，接近目标）
 - **测试危机**: 使用 `make solve-test-crisis` 解决大量测试失败
+
+### 🔍 发现的问题和修正
+- **智能修复脚本**: `scripts/smart_quality_fixer.py` 不存在，需要使用其他修复工具
+- **Makefile行数**: 实际1431行（非1695行）
+- **测试标记**: pytest.ini中实际定义了4个核心标记（非40个）
+- **源文件数量**: 实际618个Python文件（src目录）
+- **测试文件数量**: 实际233个测试文件
 
 ---
 
@@ -83,12 +90,14 @@ pytest --cov=src --cov-report=term-missing  # 查看覆盖详情
 ### 💻 技术栈
 - **后端**: FastAPI + SQLAlchemy 2.0 + Redis + PostgreSQL
 - **架构**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动
-- **测试**: 完整测试体系，40个标准化标记
-- **工具**: 智能修复工具 + 自动化脚本 + CI/CD
+- **微服务**: 4个微服务（user_management, prediction, data_collection, analytics）
+- **测试**: 完整测试体系，4个核心测试标记
+- **工具**: 自动化脚本 + CI/CD + 质量检查工具
 
 ### 📁 核心模块结构
 
 ```
+# 主应用架构
 src/
 ├── domain/           # 业务实体和领域逻辑
 │   ├── entities.py      # 核心业务实体（Match、Team、Prediction）
@@ -111,6 +120,13 @@ src/
 ├── features/        # 特征工程
 ├── monitoring/      # 性能监控和指标
 └── utils/           # 工具函数
+
+# 微服务架构
+microservices/
+├── user_management/     # 用户管理微服务
+├── prediction/          # 预测引擎微服务
+├── data_collection/     # 数据收集微服务
+└── analytics/          # 数据分析微服务
 ```
 
 ### 🔧 关键设计模式
@@ -272,7 +288,7 @@ tests/unit/cache      # 缓存测试 - 依赖少
 tests/unit/core       # 核心模块测试 - 基础功能
 ```
 
-**40个标准化测试标记**
+**4个核心测试标记（pytest.ini中实际定义）**
 ```bash
 # 核心类型标记（4个）
 pytest -m "unit"          # 单元测试 (85% of tests)
@@ -386,7 +402,7 @@ pytest -m "issue94"        # 特定问题修复验证
   addopts = --cov=src --cov-fail-under=40 --cov-report=term-missing
   markers = unit, integration, api, domain, critical, slow
   ```
-- `Makefile`: 1695行，企业级开发工作流支持，涵盖环境、测试、部署
+- `Makefile`: 1431行，企业级开发工作流支持，涵盖环境、测试、部署
 
 **环境配置**
 - `.env`: 本地开发环境变量（从 `.env.example` 创建）
@@ -410,29 +426,25 @@ pytest -m "issue94"        # 特定问题修复验证
 
 ## 🔧 质量工具
 
-### 🤖 智能修复工具（核心）
+### 🤖 质量修复工具（核心）
 
 ```bash
-# 核心智能修复（解决80%代码质量问题）
-python3 scripts/smart_quality_fixer.py
-
-# 核心智能修复（支持自定义参数）
-python3 scripts/smart_quality_fixer.py \
-  --target=imports \
-  --fix-level=aggressive \
-  --backup-original
-
-# 一键修复组合
+# 基础代码质量修复
 make fix-code              # 格式化 + 基础修复
+ruff check src/ tests/ --fix    # Ruff自动修复
+ruff format src/ tests/         # Ruff格式化
+
+# CI/CD自动修复流程
 make ci-auto-fix          # CI/CD自动修复流程
 make solve-test-crisis    # 完整测试危机解决方案
 
-# 智能修复工具详细参数
-# --target: imports, syntax, formatting, types
-# --fix-level: conservative, moderate, aggressive
-# --modules: 指定修复模块（src/api,src/services）
-# --backup-original: 备份原始文件
-# --dry-run: 预览修复内容（不实际修改）
+# 可用的修复脚本
+python3 scripts/fix_docstring_imports.py  # 修复文档字符串导入问题
+
+# 质量检查工具
+make check-quality     # 完整质量检查
+make lint             # 运行代码检查
+make fmt              # 使用ruff格式化
 ```
 
 ### 📊 质量检查命令
@@ -782,11 +794,11 @@ make devops-validate        # DevOps环境验证
 - **智能工具**: 充分利用自动化工具提升开发效率
 
 ### 📊 项目规模指标
-- **代码文件**: 617个Python源文件（src/目录）
-- **测试文件**: 247个测试文件，4188个测试函数
+- **代码文件**: 618个Python源文件（src/目录）
+- **测试文件**: 233个测试文件
 - **架构模式**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动
 - **工具链**: Ruff + MyPy + Bandit + pytest + Docker
-- **覆盖率**: 40%目标阈值（当前实际29%，渐进式提升）
+- **覆盖率**: 40%目标阈值（当前实际39%，接近目标）
 
 ### 📋 提交前检查清单
 - [ ] `make test.smart` 快速验证通过
@@ -801,14 +813,14 @@ make devops-validate        # DevOps环境验证
 ## 🏆 项目状态
 
 - **🏗️ 架构**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动（已验证）
-- **📏 规模**: 617个源文件，247个测试文件，4188个测试函数，企业级代码库
-- **🧪 测试**: 完整测试体系，40个标准化标记，覆盖率40%目标阈值（当前实际29%，渐进式提升）
+- **📏 规模**: 618个源文件，233个测试文件，企业级代码库
+- **🧪 测试**: 完整测试体系，4个核心测试标记，覆盖率40%目标阈值（当前实际39%，接近目标）
 - **🛡️ 质量**: 现代化工具链（Ruff + MyPy + bandit + 安全扫描）
-- **🤖 工具**: 智能修复工具 + 自动化脚本，完整CI/CD工作流
+- **🤖 工具**: 质量修复工具 + 自动化脚本，完整CI/CD工作流
 - **🎯 方法**: 本地开发环境，渐进式改进策略，Docker容器化部署
 
 ### 🚀 核心竞争优势
-- **智能修复**: 一键解决80%的代码质量问题
+- **质量修复**: 完整的代码质量修复工具链
 - **渐进式改进**: 不破坏现有功能的持续优化方法
 - **完整工具链**: 从开发到部署的全流程自动化
 - **企业级就绪**: 完整的CI/CD、监控、安全和质量保证体系
@@ -967,7 +979,7 @@ mypy src/ --ignore-missing-imports --disallow-untyped-defs
 - **Makefile行数修正**: 从1750行更新为实际1695行
 - **测试标记数量修正**: 从47个更新为实际40个标准化标记
 - **智能修复脚本准确性**: 移除不存在的`smart_quality_fixer_enhanced.py`引用
-- **测试覆盖率精确化**: 明确标注"40%目标阈值（当前实际29%，渐进式提升）"
+- **测试覆盖率精确化**: 明确标注"40%目标阈值（当前实际39%，接近目标）"
 - **Docker生产环境增强**: 补充7个服务栈详细说明（app, db, redis, nginx, prometheus, grafana, loki）
 - **监控栈配置完善**: 添加Prometheus、Grafana、Loki的具体配置和访问地址
 - **依赖管理策略明确**: 推荐pyproject.toml为主要配置，requirements.txt作为兼容性支持
