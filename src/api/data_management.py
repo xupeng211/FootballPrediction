@@ -15,7 +15,7 @@ Provides data management API endpoints:
 - Odds data management
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -23,7 +23,7 @@ router = APIRouter(tags=["数据管理"])
 
 
 @router.get("/matches")
-async def get_matches_list(limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+async def get_matches_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
     """
     获取比赛列表
     Get matches list
@@ -50,7 +50,7 @@ async def get_matches_list(limit: int = 20, offset: int = 0) -> Dict[str, Any]:
 
 
 @router.get("/matches/{match_id}")
-async def get_match_by_id(match_id: int) -> Dict[str, Any]:
+async def get_match_by_id(match_id: int) -> dict[str, Any]:
     """
     根据ID获取比赛信息
     Get match information by ID
@@ -81,7 +81,7 @@ async def get_match_by_id(match_id: int) -> Dict[str, Any]:
 
 
 @router.get("/teams")
-async def get_teams_list(limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+async def get_teams_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
     """
     获取球队列表
     Get teams list
@@ -108,7 +108,7 @@ async def get_teams_list(limit: int = 20, offset: int = 0) -> Dict[str, Any]:
 
 
 @router.get("/teams/{team_id}")
-async def get_team_by_id(team_id: int) -> Dict[str, Any]:
+async def get_team_by_id(team_id: int) -> dict[str, Any]:
     """
     根据ID获取球队信息
     Get team information by ID
@@ -139,7 +139,7 @@ async def get_team_by_id(team_id: int) -> Dict[str, Any]:
 
 
 @router.get("/leagues")
-async def get_leagues_list(limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+async def get_leagues_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
     """
     获取联赛列表
     Get leagues list
@@ -166,7 +166,7 @@ async def get_leagues_list(limit: int = 20, offset: int = 0) -> Dict[str, Any]:
 
 
 @router.get("/odds")
-async def get_odds_data(match_id: int | None = None) -> Dict[str, Any]:
+async def get_odds_data(match_id: int | None = None) -> dict[str, Any]:
     """
     获取赔率数据
     Get odds data

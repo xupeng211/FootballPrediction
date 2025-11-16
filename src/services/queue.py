@@ -8,7 +8,7 @@ Provides queue management and status monitoring services.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class QueueService:
         """初始化队列服务"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """
         获取队列状态信息
         Get queue status information

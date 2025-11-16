@@ -8,7 +8,7 @@ Provides API version information and application version management.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class VersionService:
         """初始化版本服务"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def get_version(self) -> Dict[str, Any]:
+    def get_version(self) -> dict[str, Any]:
         """
         获取版本信息
         Get version information

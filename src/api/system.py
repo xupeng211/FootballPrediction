@@ -15,7 +15,7 @@ Provides system management API endpoints:
 - Health checks
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -23,7 +23,7 @@ router = APIRouter(tags=["系统管理"])
 
 
 @router.get("/stats")
-async def get_system_stats() -> Dict[str, Any]:
+async def get_system_stats() -> dict[str, Any]:
     """
     获取系统统计信息
     Get system statistics
@@ -46,7 +46,7 @@ async def get_system_stats() -> Dict[str, Any]:
 
 
 @router.get("/version")
-async def get_api_version() -> Dict[str, Any]:
+async def get_api_version() -> dict[str, Any]:
     """
     获取API版本信息
     Get API version information
@@ -69,7 +69,7 @@ async def get_api_version() -> Dict[str, Any]:
 
 
 @router.get("/queue")
-async def get_queue_status() -> Dict[str, Any]:
+async def get_queue_status() -> dict[str, Any]:
     """
     获取队列状态信息
     Get queue status information
@@ -92,7 +92,7 @@ async def get_queue_status() -> Dict[str, Any]:
 
 
 @router.post("/queue/status")
-async def get_queue_status_post() -> Dict[str, Any]:
+async def get_queue_status_post() -> dict[str, Any]:
     """
     获取队列状态信息 (POST端点)
     Get queue status information (POST endpoint)
@@ -115,7 +115,7 @@ async def get_queue_status_post() -> Dict[str, Any]:
 
 
 @router.get("/health")
-async def system_health_check() -> Dict[str, Any]:
+async def system_health_check() -> dict[str, Any]:
     """
     系统健康检查
     System health check

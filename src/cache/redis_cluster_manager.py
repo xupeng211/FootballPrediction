@@ -30,7 +30,6 @@ except ImportError:
     aioredis = None
 
 # 始终导入MockRedisManager以供测试使用
-from .mock_redis import MockRedisManager
 
 logger = logging.getLogger(__name__)
 
