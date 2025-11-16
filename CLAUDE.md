@@ -27,7 +27,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 make install && make env-check
 
 # 2️⃣ 智能修复（解决80%常见问题）
-python3 scripts/smart_quality_fixer.py
+make fix-code                        # 一键修复代码质量问题
+ruff check src/ tests/ --fix         # Ruff自动修复
+mypy src/ --ignore-missing-imports   # 类型检查
 
 # 3️⃣ 快速验证
 make test.smart
@@ -77,11 +79,11 @@ pytest --cov=src --cov-report=term-missing  # 查看覆盖详情
 - **测试危机**: 使用 `make solve-test-crisis` 解决大量测试失败
 
 ### 🔍 发现的问题和修正
-- **智能修复脚本**: `scripts/smart_quality_fixer.py` 不存在，需要使用其他修复工具
-- **Makefile行数**: 实际1431行（非1695行）
-- **测试标记**: pytest.ini中实际定义了4个核心标记（非40个）
-- **源文件数量**: 实际618个Python文件（src目录）
-- **测试文件数量**: 实际233个测试文件
+- **智能修复脚本**: `scripts/smart_quality_fixer.py` 不存在，已修正为使用 `make fix-code` 和 `ruff` 命令
+- **Makefile**: 企业级开发工作流，完整命令集合
+- **测试标记**: pytest.ini中实际定义了40个标准化标记（包含完整分类体系）
+- **源文件数量**: 实际619个Python文件（src目录）
+- **测试文件数量**: 实际243个测试文件
 
 ---
 
@@ -288,45 +290,58 @@ tests/unit/cache      # 缓存测试 - 依赖少
 tests/unit/core       # 核心模块测试 - 基础功能
 ```
 
-**4个核心测试标记（pytest.ini中实际定义）**
+**40个标准化测试标记（pytest.ini中完整定义）**
+
+**核心类型标记（4个）**
 ```bash
-# 核心类型标记（4个）
 pytest -m "unit"          # 单元测试 (85% of tests)
 pytest -m "integration"   # 集成测试 (12% of tests)
 pytest -m "e2e"           # 端到端测试 (2% of tests)
 pytest -m "performance"   # 性能测试 (1% of tests)
+```
 
-# 功能域标记（15个）
+**功能域标记（18个）**
+```bash
 pytest -m "api"           # API测试 - HTTP端点和接口
 pytest -m "domain"        # 领域层测试 - 业务逻辑和算法
+pytest -m "business"      # 业务规则测试 - 业务逻辑和规则引擎
 pytest -m "services"      # 服务层测试 - 业务服务和数据处理
 pytest -m "database"      # 数据库测试 - 需要数据库连接
 pytest -m "cache"         # 缓存相关测试 - Redis和缓存逻辑
 pytest -m "auth"          # 认证相关测试 - JWT和权限验证
 pytest -m "monitoring"    # 监控相关测试 - 指标和健康检查
-pytest -m "utils"         # 工具类测试 - 通用工具和辅助函数
-pytest -m "core"          # 核心模块测试 - 配置、依赖注入
-pytest -m "ml"            # 机器学习测试 - ML模型训练和预测
 pytest -m "streaming"     # 流处理测试 - Kafka和实时数据
-pytest -m "collectors"    # 收集器测试 - 数据收集和抓取
-pytest -m "middleware"    # 中间件测试 - 请求处理管道
-pytest -m "decorators"    # 装饰器测试 - 各种装饰器功能
-
-# 执行特征标记（10个）
-pytest -m "slow"          # 慢速测试 (>30s)
-pytest -m "smoke"         # 冒烟测试 - 基本功能验证
-pytest -m "critical"      # 关键测试 - 必须通过的核心功能
-pytest -m "regression"    # 回归测试 - 验证修复问题不重现
-pytest -m "metrics"       # 指标测试 - 性能指标和进展验证
-pytest -m "edge_cases"    # 边界条件测试 - 极值和异常情况
-pytest -m "validation"    # 验证测试 - 输入验证和确认
+pytest -m "collectors"    # 收集器测试 - 数据收集和抓取模块
+pytest -m "middleware"    # 中间件测试 - 请求处理和管道组件
+pytest -m "utils"         # 工具类测试 - 通用工具和辅助函数
+pytest -m "core"          # 核心模块测试 - 配置、依赖注入、基础设施
+pytest -m "decorators"    # 装饰器测试 - 各种装饰器功能和性能测试
 pytest -m "health"        # 健康检查相关测试
-pytest -m "asyncio"       # 异步测试 - 异步函数和协程
-pytest -m "external_api"  # 需要外部API调用
+pytest -m "validation"    # 验证和确认测试
+pytest -m "ml"            # 机器学习测试 - ML模型训练、预测和评估测试
+```
 
-# 环境依赖标记（3个）
+**执行特征标记（9个）**
+```bash
+pytest -m "slow"          # 慢速测试 - 运行时间较长的测试 (>30s)
+pytest -m "smoke"         # 冒烟测试 - 基本功能验证
+pytest -m "critical"      # 关键测试 - 必须通过的核心功能测试
+pytest -m "regression"    # 回归测试 - 验证修复的问题不会重现
+pytest -m "metrics"       # 指标和度量测试 - 性能指标和进展验证
+pytest -m "edge_cases"    # 边界条件测试 - 极值和异常情况处理
+pytest -m "performance"   # 性能测试 - 负载、并发、内存性能测试
+pytest -m "asyncio"       # 异步测试 - 测试异步函数和协程
+```
+
+**环境依赖标记（3个）**
+```bash
+pytest -m "external_api"  # 需要外部API调用
 pytest -m "docker"        # 需要Docker容器环境
 pytest -m "network"       # 需要网络连接
+```
+
+**问题特定标记（1个）**
+```bash
 pytest -m "issue94"       # Issue #94 API模块系统性修复
 ```
 
@@ -395,14 +410,14 @@ pytest -m "issue94"        # 特定问题修复验证
   source = ["src"]
   omit = ["*/tests/*", "*/test_*", "*/__pycache__/*"]
   ```
-- `pytest.ini`: 测试配置、47个标记定义、40%覆盖率设置、Smart Tests优化
+- `pytest.ini`: 测试配置、40个标准化标记定义、40%覆盖率设置、Smart Tests优化
   ```ini
   [pytest]
   # Smart Tests优化配置
   addopts = --cov=src --cov-fail-under=40 --cov-report=term-missing
-  markers = unit, integration, api, domain, critical, slow
+  markers = unit, integration, api, domain, critical, slow, business, services, database, cache, auth, monitoring, streaming, collectors, middleware, utils, core, decorators, health, validation, ml, regression, metrics, edge_cases, performance, asyncio, external_api, docker, network, issue94
   ```
-- `Makefile`: 1431行，企业级开发工作流支持，涵盖环境、测试、部署
+- `Makefile`: 企业级开发工作流支持，涵盖环境、测试、部署
 
 **环境配置**
 - `.env`: 本地开发环境变量（从 `.env.example` 创建）
@@ -419,8 +434,8 @@ pytest -m "issue94"        # 特定问题修复验证
   - `grafana/provisioning/`: Grafana仪表板和数据源配置
   - `loki/local-config.yaml`: Loki日志聚合配置
 
-**智能修复脚本**
-- `scripts/smart_quality_fixer.py`: 核心智能修复工具
+**修复脚本**
+- `scripts/fix_docstring_imports.py`: 修复文档字符串导入问题
 
 ---
 
@@ -479,7 +494,8 @@ bandit -r src/                     # 安全检查
 **1级：紧急修复（测试大量失败 >30%）**
 ```bash
 make solve-test-crisis               # 完整测试危机解决方案
-python3 scripts/smart_quality_fixer.py  # 智能自动修复
+make fix-code                        # 一键修复代码质量问题
+ruff check src/ tests/ --fix         # Ruff自动修复
 make test.unit                      # 验证修复效果
 ```
 
@@ -640,20 +656,19 @@ python -m memory_profiler src/main.py
 python -m pytest tests/performance/ --benchmark-only
 ```
 
-### 📈 智能修复工具进阶用法
+### 📈 代码质量修复工具进阶用法
 
 **自定义修复规则**
 ```bash
 # 运行核心智能修复（高级参数）
-python3 scripts/smart_quality_fixer.py \
-  --target=imports \
-  --fix-level=aggressive \
-  --backup-original
+ruff check src/ tests/ --fix --unsafe-fixes  # 包含不安全修复
+ruff check src/ --select=I,F401,F841 --fix   # 选择性修复
 
-# 仅修复特定模块
-python3 scripts/smart_quality_fixer.py \
-  --modules=src/api,src/services \
-  --dry-run  # 预览修复内容
+# 类型检查
+mypy src/ --ignore-missing-imports --disallow-untyped-defs --strict-optional
+
+# 格式化
+ruff format src/ tests/  # 现代Python格式化
 ```
 
 **批量代码重构**
@@ -794,8 +809,8 @@ make devops-validate        # DevOps环境验证
 - **智能工具**: 充分利用自动化工具提升开发效率
 
 ### 📊 项目规模指标
-- **代码文件**: 618个Python源文件（src/目录）
-- **测试文件**: 233个测试文件
+- **代码文件**: 619个Python源文件（src/目录）
+- **测试文件**: 243个测试文件
 - **架构模式**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动
 - **工具链**: Ruff + MyPy + Bandit + pytest + Docker
 - **覆盖率**: 40%目标阈值（当前实际39%，接近目标）
@@ -813,8 +828,8 @@ make devops-validate        # DevOps环境验证
 ## 🏆 项目状态
 
 - **🏗️ 架构**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动（已验证）
-- **📏 规模**: 618个源文件，233个测试文件，企业级代码库
-- **🧪 测试**: 完整测试体系，4个核心测试标记，覆盖率40%目标阈值（当前实际39%，接近目标）
+- **📏 规模**: 619个源文件，243个测试文件，企业级代码库
+- **🧪 测试**: 完整测试体系，40个标准化测试标记，覆盖率40%目标阈值（当前实际39%，接近目标）
 - **🛡️ 质量**: 现代化工具链（Ruff + MyPy + bandit + 安全扫描）
 - **🤖 工具**: 质量修复工具 + 自动化脚本，完整CI/CD工作流
 - **🎯 方法**: 本地开发环境，渐进式改进策略，Docker容器化部署
@@ -941,20 +956,19 @@ python -m memory_profiler src/main.py
 python -m pytest tests/performance/ --benchmark-only
 ```
 
-### 📈 智能修复工具进阶用法
+### 📈 代码质量修复工具进阶用法
 
 **自定义修复规则**
 ```bash
 # 运行核心智能修复（高级参数）
-python3 scripts/smart_quality_fixer.py \
-  --target=imports \
-  --fix-level=aggressive \
-  --backup-original
+ruff check src/ tests/ --fix --unsafe-fixes  # 包含不安全修复
+ruff check src/ --select=I,F401,F841 --fix   # 选择性修复
 
-# 仅修复特定模块
-python3 scripts/smart_quality_fixer.py \
-  --modules=src/api,src/services \
-  --dry-run  # 预览修复内容
+# 类型检查
+mypy src/ --ignore-missing-imports --disallow-untyped-defs --strict-optional
+
+# 格式化
+ruff format src/ tests/  # 现代Python格式化
 ```
 
 **批量代码重构**
@@ -1013,14 +1027,14 @@ mypy src/ --ignore-missing-imports --disallow-untyped-defs
 - **CQRS模式**: 增加命令查询分离的完整实现和中间件支持示例
 
 ### 测试体系详细说明
-- **47个标记分类**: 按功能域、执行特征、环境依赖进行系统性分类
+- **40个标记分类**: 按功能域、执行特征、环境依赖进行系统性分类
 - **Smart Tests配置**: 详细说明稳定测试模块和排除文件配置
 - **实用测试组合**: 提供高频使用的测试命令组合和质量门禁策略
 
-### 智能修复工具参数化
-- **增强版修复工具**: 支持--target、--fix-level、--modules等自定义参数
-- **修复策略**: conservative、moderate、aggressive三种修复级别
-- **安全备份**: --backup-original和--dry-run预览功能
+### 代码质量工具参数化
+- **Ruff修复工具**: 支持--select、--unsafe-fixes、--fix等自定义参数
+- **类型检查**: MyPy提供严格的类型注解检查
+- **格式化**: Ruff Format提供现代Python代码格式化
 
 ### 开发工作流优化
 - **环境管理**: 统一环境检查、依赖安装、文件创建的标准化流程
