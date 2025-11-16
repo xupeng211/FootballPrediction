@@ -25,16 +25,16 @@ SystemAlertEvent = None
 create_analytics_updated_event = None
 
 __all__ = [
-# 订阅管理
-"SubscriptionManager",
-# 事件类型
-"AnalyticsEvent",
-"EventType",
-"MatchEvent",
-"OddsEvent",
-"PredictionEvent",
-"RealtimeEvent",
-"SystemAlertEvent",
-# 事件创建函数
-"create_analytics_updated_event",
+    # 订阅管理
+    "SubscriptionManager",
+    # 事件类型
+    "AnalyticsEvent",
+    "EventType",
+    "MatchEvent",
+    "OddsEvent",
+    "PredictionEvent",
+    "RealtimeEvent",
+    "SystemAlertEvent",
+    # 事件创建函数
+    "create_analytics_updated_event",
 ]

@@ -13,8 +13,10 @@ except ImportError:
     # 如果拆分模块不存在，提供一个简单的占位符
     class FeatureCalculator:
         """FeatureCalculator 占位符实现"""
+
         def __init__(self, *args, **kwargs):
             pass
+
 
 # 导出所有公共接口
 __all__ = ["FeatureCalculator"]

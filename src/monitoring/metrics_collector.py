@@ -45,21 +45,25 @@ class MetricsCollector:
     def collect_cpu_usage(self) -> float:
         """收集CPU使用率"""
         import psutil
+
         return psutil.cpu_percent(interval=1)
 
     def collect_memory_usage(self) -> float:
         """收集内存使用率"""
         import psutil
+
         return psutil.virtual_memory().percent
 
     def collect_disk_usage(self) -> float:
         """收集磁盘使用率"""
         import psutil
-        return psutil.disk_usage('/').percent
+
+        return psutil.disk_usage("/").percent
 
     def collect_network_stats(self) -> dict[str, Any]:
         """收集网络统计"""
         import psutil
+
         net_io = psutil.net_io_counters()
         return {
             "bytes_sent": net_io.bytes_sent,
@@ -71,16 +75,19 @@ class MetricsCollector:
     def collect_process_count(self) -> int:
         """收集进程数量"""
         import psutil
+
         return len(psutil.pids())
 
     def collect_active_connections(self) -> int:
         """收集活跃连接数"""
         import psutil
+
         return len(psutil.net_connections())
 
     def collect_system_load(self) -> dict[str, float]:
         """收集系统负载"""
         import psutil
+
         load = psutil.getloadavg()
         return {
             "load_1min": load[0],

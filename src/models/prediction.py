@@ -107,7 +107,7 @@ class PredictionService(SimpleService):
         """关闭服务时的清理工作"""
         self.logger.info("PredictionService is shutting down")
         # 清理缓存
-        if hasattr(self, 'cache'):
+        if hasattr(self, "cache"):
             self.cache.clear()
         # 可以在这里添加其他清理工作，如关闭数据库连接等
 

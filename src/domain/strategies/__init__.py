@@ -10,23 +10,23 @@ Prediction Strategies Module
 """
 
 from .base import (
+    PredictionContext,
+    PredictionInput,
+    PredictionOutput,
     PredictionStrategy,
     StrategyMetrics,
     StrategyType,
-    PredictionInput,
-    PredictionOutput,
-    PredictionContext,
 )
 
 # 导入具体策略实现
 try:
+    from .enhanced_ml_model import EnhancedMLModelStrategy
+    from .ensemble import EnsembleStrategy
+    from .factory import PredictionStrategyFactory
+    from .historical import HistoricalStrategy
     from .ml_model import MLModelStrategy
     from .statistical import StatisticalStrategy
-    from .historical import HistoricalStrategy
-    from .ensemble import EnsembleStrategy
-    from .enhanced_ml_model import EnhancedMLModelStrategy
-    from .factory import PredictionStrategyFactory
-except ImportError as e:
+except ImportError:
     # 如果某些策略模块不存在，提供占位符
     MLModelStrategy = None
     StatisticalStrategy = None
