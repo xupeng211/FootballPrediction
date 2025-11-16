@@ -675,8 +675,8 @@ make fix-code
 
 # 手动运行检查
 ruff check src/ --fix
-black src/
-isort src/
+ruff format src/
+ruff check src/
 ```
 
 #### Q: 类型检查错误

@@ -1,9 +1,9 @@
 # 性能监控中间件兼容性修复
 
-**Issue ID**: #XXX  
-**优先级**: High  
-**预计时间**: 3-4小时  
-**状态**: 待开始  
+**Issue ID**: #XXX
+**优先级**: High
+**预计时间**: 3-4小时
+**状态**: 待开始
 
 ## 🎯 问题描述
 
@@ -56,12 +56,12 @@ src/performance/middleware.py:112 in dispatch
 ```python
 class APIEndpointProfiler:
     """API端点性能分析器"""
-    
+
     def __init__(self):
         self.request_data = {}
         self.performance_metrics = {}
-    
-    def record_endpoint_request(self, endpoint: str, method: str, 
+
+    def record_endpoint_request(self, endpoint: str, method: str,
                               duration: float, status_code: int) -> None:
         """记录端点请求性能数据"""
         self.request_data[endpoint] = {
@@ -70,7 +70,7 @@ class APIEndpointProfiler:
             "status_code": status_code,
             "timestamp": time.time()
         }
-    
+
     def get_endpoint_stats(self, endpoint: str) -> Dict[str, Any]:
         """获取端点性能统计"""
         return self.performance_metrics.get(endpoint, {})
@@ -79,10 +79,10 @@ class APIEndpointProfiler:
 ### 实现模板
 ```python
 # ✅ 标准实现方式
-def record_endpoint_request(self, endpoint: str, method: str, 
+def record_endpoint_request(self, endpoint: str, method: str,
                           duration: float, status_code: int) -> None:
     """记录端点请求性能数据
-    
+
     Args:
         endpoint: API端点路径
         method: HTTP方法
@@ -90,18 +90,18 @@ def record_endpoint_request(self, endpoint: str, method: str,
         status_code: HTTP状态码
     """
     timestamp = time.time()
-    
+
     # 记录请求数据
     if endpoint not in self.request_data:
         self.request_data[endpoint] = []
-    
+
     self.request_data[endpoint].append({
         "timestamp": timestamp,
         "method": method,
         "duration": duration,
         "status_code": status_code
     })
-    
+
     # 更新性能统计
     self._update_performance_stats(endpoint, duration, status_code)
 ```
@@ -111,12 +111,12 @@ def record_endpoint_request(self, endpoint: str, method: str,
 # ✅ 中间件中的正确调用方式
 async def dispatch(self, request: Request, call_next):
     start_time = time.time()
-    
+
     response = await call_next(request)
-    
+
     end_time = time.time()
     duration = end_time - start_time
-    
+
     # 记录性能数据
     self.api_profiler.record_endpoint_request(
         endpoint=request.url.path,
@@ -124,7 +124,7 @@ async def dispatch(self, request: Request, call_next):
         duration=duration,
         status_code=response.status_code
     )
-    
+
     return response
 ```
 
@@ -181,8 +181,8 @@ async def dispatch(self, request: Request, call_next):
 
 ## 📞 联系人
 
-**负责人**: AI编程工具  
-**评审人**: 性能工程师  
+**负责人**: AI编程工具
+**评审人**: 性能工程师
 **相关团队**: 基础设施团队
 
 ## 📅 时间线

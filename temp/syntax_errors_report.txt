@@ -74,7 +74,7 @@ SyntaxError: closing parenthesis ')' does not match opening parenthesis '{' on l
 ----------------------------------------
 文件: src/monitoring/advanced_monitoring_system.py
 错误:   File "src/monitoring/advanced_monitoring_system.py", line 4
-    from src.core.config 
+    from src.core.config
                          ^
 SyntaxError: invalid syntax
 
@@ -141,7 +141,7 @@ SyntaxError: closing parenthesis ')' does not match opening parenthesis '{' on l
 ----------------------------------------
 文件: src/realtime/prediction_api.py
 错误:   File "src/realtime/prediction_api.py", line 16
-    from src.core.config 
+    from src.core.config
                          ^
 SyntaxError: invalid syntax
 
@@ -151,7 +151,7 @@ SyntaxError: invalid syntax
 ----------------------------------------
 文件: src/realtime/match_service.py
 错误:   File "src/realtime/match_service.py", line 19
-    from src.core.config 
+    from src.core.config
     ^^^^
 SyntaxError: invalid syntax
 
@@ -165,7 +165,7 @@ SyntaxError: unmatched ')'
 ----------------------------------------
 文件: src/realtime/handlers.py
 错误:   File "src/realtime/handlers.py", line 17
-    from src.core.config 
+    from src.core.config
     ^^^^
 SyntaxError: invalid syntax
 
@@ -250,7 +250,7 @@ SyntaxError: unmatched ')'
 ----------------------------------------
 文件: src/cache/examples.py
 错误:   File "src/cache/examples.py", line 12
-    from src.core.config 
+    from src.core.config
     ^^^^
 SyntaxError: invalid syntax
 
@@ -288,7 +288,7 @@ SyntaxError: unterminated string literal (detected at line 469)
 ----------------------------------------
 文件: src/collectors/fixtures_collector.py
 错误:   File "src/collectors/fixtures_collector.py", line 20
-    from src.core.config 
+    from src.core.config
                          ^
 SyntaxError: invalid syntax
 
@@ -388,7 +388,7 @@ SyntaxError: invalid character '（' (U+FF08)
 ----------------------------------------
 文件: src/data/collectors/scores_collector.py
 错误:   File "src/data/collectors/scores_collector.py", line 3
-    from src.core.config 
+    from src.core.config
                          ^
 SyntaxError: invalid syntax
 
@@ -427,4 +427,3 @@ SyntaxError: invalid decimal literal
 SyntaxError: closing parenthesis ']' does not match opening parenthesis '('
 
 ----------------------------------------
-

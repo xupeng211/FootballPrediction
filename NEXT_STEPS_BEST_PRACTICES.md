@@ -83,7 +83,7 @@ python3 scripts/record_work.py start-work \
 # 子任务3: 配置pre-commit hooks
 python3 scripts/record_work.py start-work \
   "配置pre-commit hooks" \
-  "设置pre-commit配置，包含black、isort、flake8等代码质量检查" \
+  "设置pre-commit配置，包含ruff等代码质量检查" \
   development --priority medium
 ```
 
@@ -98,7 +98,7 @@ python3 scripts/record_work.py start-work \
 # 子任务1: 分析异常处理问题
 python3 scripts/record_work.py start-work \
   "分析异常处理规范问题" \
-  "使用bandit和flake8分析90个异常处理问题，按优先级分类" \
+  "使用bandit和ruff分析90个异常处理问题，按优先级分类" \
   analysis --priority medium
 
 # 子任务2: 修复高优先级异常处理

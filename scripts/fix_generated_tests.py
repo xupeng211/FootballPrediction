@@ -350,10 +350,10 @@ def main():
         ('core.service_lifecycle', 'tests/unit/test_core_service_lifecycle.py'),
         ('ml.prediction.prediction_service',
     'tests/unit/test_ml_prediction_prediction_service.py'),
-    
+
         ('security.encryption_service',
     'tests/unit/test_security_encryption_service.py'),
-    
+
     ]
 
     fixed_count = 0

@@ -1026,13 +1026,13 @@ class QualityChecker:
             'checks': {}
         }
 
-    def run_flake8_check(self) -> Dict[str, Any]:
-        """运行flake8检查"""
-        print("Running flake8 checks...")
+    def run_ruff_check(self) -> Dict[str, Any]:
+        """运行ruff检查"""
+        print("Running ruff checks...")
 
         try:
             result = subprocess.run([
-                'flake8', 'src/', '--format=json', '--statistics'
+                'ruff', 'check', 'src/', '--format=json', '--statistics'
             ], capture_output=True, text=True)
 
             if result.stdout:
@@ -1047,95 +1047,6 @@ class QualityChecker:
                     'status': 'passed',
                     'issues': [],
                     'total_issues': 0
-                }
-
-        except Exception as e:
-            return {
-                'status': 'error',
-                'error': str(e)
-            }
-
-    def run_mypy_check(self) -> Dict[str, Any]:
-        """运行mypy类型检查"""
-        print("Running mypy checks...")
-
-        try:
-            result = subprocess.run([
-                'mypy', 'src/', '--show-error-codes', '--no-error-summary'
-            ], capture_output=True, text=True)
-
-            if result.returncode == 0:
-                return {
-                    'status': 'passed',
-                    'issues': []
-                }
-            else:
-                # 解析mypy输出
-                issues = []
-                for line in result.stdout.split('\n'):
-                    if line.strip():
-                        issues.append(line.strip())
-
-                return {
-                    'status': 'failed',
-                    'issues': issues,
-                    'total_issues': len(issues)
-                }
-
-        except Exception as e:
-            return {
-                'status': 'error',
-                'error': str(e)
-            }
-
-    def run_bandit_check(self) -> Dict[str, Any]:
-        """运行bandit安全检查"""
-        print("Running bandit security checks...")
-
-        try:
-            result = subprocess.run([
-                'bandit', '-r', 'src/', '-f', 'json'
-            ], capture_output=True, text=True)
-
-            if result.stdout:
-                report = json.loads(result.stdout)
-                return {
-                    'status': 'passed' if report['metrics']['_totals']['severity.UNDEFINED'] == 0 else 'failed',
-                    'issues': report.get('results', []),
-                    'metrics': report.get('metrics', {})
-                }
-            else:
-                return {
-                    'status': 'passed',
-                    'issues': [],
-                    'metrics': {}
-                }
-
-        except Exception as e:
-            return {
-                'status': 'error',
-                'error': str(e)
-            }
-
-    def run_black_check(self) -> Dict[str, Any]:
-        """运行black格式检查"""
-        print("Running black formatting checks...")
-
-        try:
-            result = subprocess.run([
-                'black', '--check', '--diff', 'src/'
-            ], capture_output=True, text=True)
-
-            if result.returncode == 0:
-                return {
-                    'status': 'passed',
-                    'issues': []
-                }
-            else:
-                return {
-                    'status': 'failed',
-                    'issues': [result.stdout],
-                    'needs_formatting': True
                 }
 
         except Exception as e:
@@ -1210,10 +1121,7 @@ class QualityChecker:
         print("Running all quality checks...")
 
         # 运行各项检查
-        self.results['checks']['flake8'] = self.run_flake8_check()
-        self.results['checks']['mypy'] = self.run_mypy_check()
-        self.results['checks']['bandit'] = self.run_bandit_check()
-        self.results['checks']['black'] = self.run_black_check()
+        self.results['checks']['ruff'] = self.run_ruff_check()
         self.results['checks']['safety'] = self.run_safety_check()
         self.results['checks']['complexity'] = self.run_complexity_check()
 
@@ -1244,15 +1152,8 @@ Generated on: {self.results['timestamp']}
             report += f"\n### {check_name.upper()}: {status.upper()}\n"
 
             if status == 'failed':
-                if check_name == 'flake8':
-                    report += f"- Total issues: {check_result.get('total_issues', 0)}\n"
-                elif check_name == 'mypy':
-                    report += f"- Type errors: {check_result.get('total_issues', 0)}\n"
-                elif check_name == 'bandit':
-                    report += f"- Security issues: {len(check_result.get('issues', []))}\n"
-                elif check_name == 'black':
-                    report += "- Code needs formatting\n"
-                elif check_name == 'safety':
+                            if check_name == 'ruff':
+                                report += f"- Total issues: {check_result.get('total_issues', 0)}\n"                elif check_name == 'safety':
                     report += f"- Vulnerabilities found: {len(check_result.get('vulnerabilities', []))}\n"
 
         return report
@@ -1454,7 +1355,7 @@ FROM ci-base as quality
 COPY src/ ./src/
 
 # 运行质量检查
-CMD ["sh", "-c", "flake8 src/ && mypy src/ && black --check src/"]
+CMD ["sh", "-c", "ruff check src/ && mypy src/"]
 
 # 构建阶段镜像
 FROM python:3.11-slim as build

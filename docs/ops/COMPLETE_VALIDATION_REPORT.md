@@ -234,7 +234,7 @@ collected 12738 items / 4 errors / 3683 deselected / 2 skipped / 9055 selected
    ```bash
    ruff check --fix .        # 继续修复剩余问题
    mypy src/                # 类型检查优化
-   black .                  # 代码格式化
+   ruff format .                  # 代码格式化
    ```
 
 2. **测试覆盖率提升**

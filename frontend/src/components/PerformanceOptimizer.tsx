@@ -37,7 +37,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
 }) => {
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  
+
   // 测量性能指标
   const measurePerformance = useCallback(() => {
     if (!window.performance) {

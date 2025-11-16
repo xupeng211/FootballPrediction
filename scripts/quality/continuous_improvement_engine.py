@@ -658,8 +658,8 @@ class ContinuousImprovementEngine:
                 "overall_status": quality_state["overall_status"]
             },
             "improvement_actions": [self._action_to_dict(action) for action in prioritized_actions],
-    
-    
+
+
             "trend_analysis": [asdict(trend) for trend in trends],
             "weekly_plan": self._plan_to_dict(weekly_plan),
             "monthly_plan": self._plan_to_dict(monthly_plan),

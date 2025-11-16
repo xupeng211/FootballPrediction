@@ -85,7 +85,7 @@ src/
    ```bash
    # Using Make (recommended):
    make up           # Start with docker-compose
-   
+
    # Or directly with Python:
    python -m src.main
    ```

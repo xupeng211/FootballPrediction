@@ -384,8 +384,8 @@ class TestHealthMonitor:
                 severity="info",
                 title="测试系统健康状态良好",
                 message=f"健康评分 {metrics.health_score}，覆盖率 {metrics.coverage_percentage:.1f}%，通过率 {(metrics.passed_tests/(metrics.passed_tests+metrics.failed_tests)*100 if metrics.passed_tests+metrics.failed_tests>0 else 0):.1f}%",
-    
-    
+
+
                 current_value=metrics.health_score,
                 threshold_value=100,
                 timestamp=datetime.now().isoformat()
@@ -535,7 +535,7 @@ class TestHealthMonitor:
                     "current": health_scores[-1] if health_scores else 0,
                     "average": round(sum(health_scores) / len(health_scores),
     1) if health_scores else 0,
-    
+
                     "min": min(health_scores) if health_scores else 0,
                     "max": max(health_scores) if health_scores else 0,
                     "trend": "improving" if len(health_scores) > 1 and health_scores[-1] > health_scores[0] else "stable"
@@ -544,7 +544,7 @@ class TestHealthMonitor:
                     "current": coverage_rates[-1] if coverage_rates else 0,
                     "average": round(sum(coverage_rates) / len(coverage_rates),
     1) if coverage_rates else 0,
-    
+
                     "min": min(coverage_rates) if coverage_rates else 0,
                     "max": max(coverage_rates) if coverage_rates else 0,
                     "trend": "improving" if len(coverage_rates) > 1 and coverage_rates[-1] > coverage_rates[0] else "stable"
@@ -553,7 +553,7 @@ class TestHealthMonitor:
                     "current": pass_rates[-1] if pass_rates else 0,
                     "average": round(sum(pass_rates) / len(pass_rates),
     1) if pass_rates else 0,
-    
+
                     "min": min(pass_rates) if pass_rates else 0,
                     "max": max(pass_rates) if pass_rates else 0,
                     "trend": "improving" if len(pass_rates) > 1 and pass_rates[-1] > pass_rates[0] else "stable"

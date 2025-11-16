@@ -26,4 +26,3 @@ for file_path in files_to_fix:
 
         else:
             pass
-

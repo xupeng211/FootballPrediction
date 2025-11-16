@@ -228,8 +228,8 @@ class CITestIntegration:
             results["bandit"] = {
                 "success": bandit_result.returncode == 0,
                 "issues": bandit_result.stdout.count('\n') if bandit_result.stdout else 0,
-    
-    
+
+
                 "execution_time": bandit_result.execution_time
             }
         except Exception as e:
@@ -303,11 +303,11 @@ class CITestIntegration:
             f"| 单元测试 | {'✅ 通过' if unit_success else '❌ 失败'} | {results['test_results'].get('unit',
     {}).get('execution_time',
     0):.2f}s |",
-    
+
             f"| 集成测试 | {'✅ 通过' if integration_success else '❌ 失败'} | {results['test_results'].get('integration',
     {}).get('execution_time',
     0):.2f}s |",
-    
+
             f""
         ])
 

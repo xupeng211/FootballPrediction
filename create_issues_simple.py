@@ -21,8 +21,7 @@ def create_issue(title, body, labels):
     with open('/tmp/issue_body.md', 'w', encoding='utf-8') as f:
         f.write(body)
 
-    cmd = f'gh issue create --title "{title}" --body-file /tmp/issue_body.md --label "{",
-    ".join(labels)}"'
+    cmd = f'gh issue create --title "{title}" --body-file /tmp/issue_body.md --label "{','.join(labels)}"'
     stdout, stderr, returncode = run_command(cmd)
 
     if returncode == 0:
@@ -39,7 +38,7 @@ def main():
     print("🚀 开始创建GitHub Issues...")
 
     # 获取当前错误统计
-    stdout, _, _ = run_command("flake8 src/ tests/ | wc -l")
+    stdout, _, _ = run_command("ruff check src/ tests/ | wc -l")
     total_errors = int(stdout)
 
     print(f"📊 当前总错误数: {total_errors}")
@@ -61,21 +60,15 @@ def main():
 
 **工具和方法**:
 ```bash
-# 方法1: 使用Black自动格式化
-black src/ tests/ --line-length 100
-
-# 方法2: 使用Ruff自动修复
+# 使用Ruff自动修复
 ruff check src/ tests/ --select E501 --fix
 ```
 
 ### 2. 空行和格式问题 (E302, E305)
 **工具和方法**:
 ```bash
-# 使用Black统一格式化
-black src/ tests/
-
-# 使用isort统一导入格式
-isort src/ tests/
+# 使用Ruff统一格式化
+ruff format src/ tests/
 ```
 
 ## 📁 涉及文件
@@ -87,12 +80,11 @@ isort src/ tests/
 ## 🔍 验证标准
 ```bash
 # 修复后验证
-flake8 src/ tests/ --select E501,E302,E305
+ruff check src/ tests/ --select E501,E302,E305
 # 应该返回0个错误
 
 # 格式化验证
-black --check src/ tests/
-isort --check-only src/ tests/
+ruff format --check src/ tests/
 ```
 
 ## ⏱️ 预估工作量
@@ -104,11 +96,11 @@ isort --check-only src/ tests/
 - [ ] 所有E501错误修复完成
 - [ ] 所有E302/E305错误修复完成
 - [ ] 代码格式统一，符合PEP8标准
-- [ ] 通过Black格式化检查
+- [ ] 通过Ruff格式化检查
 
 ---
 
-**工具链**: Black + isort + Ruff + flake8
+**工具链**: Ruff
 **优先级**: 高（影响代码可读性）
 **复杂度**: 低-中等
 """
@@ -131,7 +123,7 @@ isort --check-only src/ tests/
 **工具和方法**:
 ```bash
 # 查找复杂函数
-flake8 src/ tests/ --select C901
+ruff check src/ tests/ --select C901
 
 # 使用mccabe工具详细分析
 mccabe --min 10 src/
@@ -152,7 +144,7 @@ mccabe --min 10 src/
 ## 🔍 重构验证
 ```bash
 # 重构后验证
-flake8 src/ tests/ --select C901
+ruff check src/ tests/ --select C901
 # 应该返回0个错误
 
 # 单元测试确保功能不变
@@ -234,7 +226,7 @@ from .services import UserService, ProductService
 ## 🔍 修复验证
 ```bash
 # 修复后验证
-flake8 src/ tests/ --select F401,F403,F405,F821
+ruff check src/ tests/ --select F401,F403,F405,F821
 # 应该返回0个错误
 
 # 导入验证
@@ -283,14 +275,8 @@ python -c "import src; print('所有导入成功')"
 ### 2. 统一测试代码风格
 **工具和方法**:
 ```bash
-# 使用Black格式化测试代码
-black tests/ --line-length 100
-
-# 使用isort整理测试导入
-isort tests/
-
-# 使用Ruff修复常见问题
-ruff check tests/ --fix
+# 使用Ruff格式化测试代码
+ruff format tests/
 ```
 
 ### 3. 优化测试结构
@@ -308,7 +294,7 @@ ruff check tests/ --fix
 ## 🔍 测试验证
 ```bash
 # 修复后验证
-flake8 tests/ --select F821,F811
+ruff check tests/ --select F821,F811
 # 应该返回0个错误
 
 # 运行测试确保功能不变
@@ -326,7 +312,7 @@ pytest --cov=src tests/ --cov-report=term-missing
 - **总计**: 14-20小时
 
 ## 🏆 成功标准
-- [ ] 所有测试文件通过flake8检查
+- [ ] 所有测试文件通过ruff检查
 - [ ] 测试代码格式统一
 - [ ] 测试名称清晰描述
 - [ ] 测试结构符合最佳实践
@@ -335,13 +321,13 @@ pytest --cov=src tests/ --cov-report=term-missing
 
 ---
 
-**工具链**: Black + isort + Ruff + pytest + 手动重构
+**工具链**: Ruff + pytest + 手动重构
 **优先级**: 中等（影响测试质量）
 **复杂度**: 中等
 """
 
     # 创建Issues
-    print("\\n📝 开始创建GitHub Issues...")
+    print("\n📝 开始创建GitHub Issues...")
 
     issues = [
         (issue1_title, issue1_body, ["quality", "formatting", "high-priority"]),
@@ -353,7 +339,7 @@ pytest --cov=src tests/ --cov-report=term-missing
     created_issues = []
 
     for title, body, labels in issues:
-        print(f"\\n🔨 正在创建: {title}")
+        print(f"\n🔨 正在创建: {title}")
         issue_url = create_issue(title, body, labels)
         if issue_url:
             created_issues.append((title, issue_url))
@@ -365,7 +351,7 @@ pytest --cov=src tests/ --cov-report=term-missing
 基于当前代码质量分析，制定了系统性的改进计划，将{total_errors}个代码质量问题分解为4个可执行的子任务。
 
 ## 📈 当前状态
-- **总错误数**: {total_errors}个flake8错误
+- **总错误数**: {total_errors}个ruff错误
 - **主要问题类型**:
   - E501 行过长: 约111个
   - F405 未定义名称: 约170个
@@ -405,8 +391,8 @@ pytest --cov=src tests/ --cov-report=term-missing
 - **建议执行顺序**: 1→2→3→4
 - **并行执行**: 可同时进行2和3，1和4
 
-## 🛠️ 工具链
-- **自动修复**: Black, Ruff, autoflake, isort
+## 🛠️ 技术工具链
+- **自动修复**: Ruff, autoflake
 - **复杂度分析**: mccabe, radon
 - **测试验证**: pytest, coverage
 - **版本控制**: Git, GitHub Issues
@@ -414,7 +400,7 @@ pytest --cov=src tests/ --cov-report=term-missing
 ## 🏆 预期成果
 完成所有改进后：
 - 代码质量达到企业级标准
-- 0个flake8错误
+- 0个ruff错误
 - 代码可读性和可维护性显著提升
 - 完善的测试覆盖和质量保证
 
@@ -431,7 +417,7 @@ pytest --cov=src tests/ --cov-report=term-missing
 **状态**: 计划制定完成，等待执行
 """
 
-    print(f"\\n🔨 正在创建总结Issue...")
+    print(f"\n🔨 正在创建总结Issue...")
     summary_url = create_issue(summary_title,
     summary_body,
     ["quality",
@@ -440,13 +426,13 @@ pytest --cov=src tests/ --cov-report=term-missing
     if summary_url:
         created_issues.append((summary_title, summary_url))
 
-    print(f"\\n✅ 成功创建 {len(created_issues)} 个GitHub Issues")
-    print("\\n📋 创建的Issues:")
+    print(f"\n✅ 成功创建 {len(created_issues)} 个GitHub Issues")
+    print("\n📋 创建的Issues:")
     for title, url in created_issues:
         print(f"  - {title}")
         print(f"    {url}")
 
-    print(f"\\n🎯 改进计划制定完成！")
+    print(f"\n🎯 改进计划制定完成！")
     print(f"📊 总错误数: {total_errors}")
     print(f"⏱️ 总预估工作量: 45-65小时")
     print(f"🚀 建议按优先级顺序执行")

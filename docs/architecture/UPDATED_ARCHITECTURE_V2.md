@@ -339,8 +339,8 @@ class SecureKeyManager:
 #### Ruff (现代化代码检查)
 ```bash
 # 已配置的Ruff规则
-- 代码格式化 (black替代)
-- 导入排序 (isort替代)
+- 代码格式化 (ruff替代)
+- 导入排序 (ruff替代)
 - 类型检查 (mypy集成)
 - 安全检查 (bandit集成)
 ```

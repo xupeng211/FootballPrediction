@@ -102,7 +102,7 @@ class SeedUserTester:
     数据库延迟: {health_data.get('checks',
     {}).get('database',
     {}).get('latency_ms')}ms",
-    
+
                         duration,
                     )
                     return True
@@ -177,7 +177,7 @@ class SeedUserTester:
                         f"角色: {token_data.get('user',
     {}).get('role')},
     令牌有效期: {token_data.get('expires_in')}秒",
-    
+
                         duration,
                     )
                     return token_data.get("access_token")
@@ -216,7 +216,7 @@ class SeedUserTester:
                         f"用户ID: {user_data.get('id')},
     是否激活: {user_data.get('is_active')},
     是否验证: {user_data.get('is_verified')}",
-    
+
                         duration,
                     )
                     return True

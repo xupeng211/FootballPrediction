@@ -34,7 +34,7 @@
 - W504/W503 运算符位置: 10+ 处
 - E402 模块导入位置错误: 15+ 处
 
-**影响**: ❌ **CI必定失败** - flake8检查是CI流水线的第一道关卡
+**影响**: ❌ **CI必定失败** - ruff检查是CI流水线的第一道关卡
 
 **示例问题**:
 
@@ -111,8 +111,8 @@ find tests/ -name "*.py" -exec sed -i '1i from datetime import timedelta' {} \;
 autoflake --remove-all-unused-imports --recursive tests/ src/ --in-place
 
 # 3. 修复格式问题
-black tests/ src/
-isort tests/ src/
+ruff format tests/ src/
+ruff check tests/ src/
 
 # 4. 验证修复
 make lint

@@ -203,8 +203,8 @@ class TestMaintenanceAutomation:
                 "health_score": health_score,
                 "alerts_count": len(alerts),
                 "critical_alerts": len([a for a in alerts if a.get("severity") == "critical"]),
-    
-    
+
+
                 "timestamp": datetime.now().isoformat()
             }
 
@@ -362,7 +362,7 @@ class TestMaintenanceAutomation:
             data = {
                 "generated_reports": {format_type: str(file_path) for format_type,
     file_path in reports.items()},
-    
+
                 "report_count": len(reports),
                 "timestamp": datetime.now().isoformat()
             }

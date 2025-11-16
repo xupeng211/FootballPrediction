@@ -145,7 +145,7 @@ class DataIntegrityVerifier:
                                 "quality": quality,
                                 "data_count": len(data) if isinstance(data,
     list) else 0,
-    
+
                             }
                         )
                     else:
@@ -206,7 +206,7 @@ class DataIntegrityVerifier:
                                     True,
                                     f"HTTP {response.status_code},
     状态: {data.get('status')}",
-    
+
                                     duration,
                                 )
                                 success_count += 1

@@ -1,9 +1,9 @@
 # 端到端测试失败用例修复
 
-**Issue ID**: #XXX  
-**优先级**: Medium  
-**预计时间**: 2-3小时  
-**状态**: 待开始  
+**Issue ID**: #XXX
+**优先级**: Medium
+**预计时间**: 2-3小时
+**状态**: 待开始
 
 ## 🎯 问题描述
 
@@ -65,19 +65,19 @@ class MockDataCollector:
             "odds_portal": MockOddsPortal(),
             "sports_monitor": MockSportsMonitor()
         }
-    
+
     async def collect_match_data(self, match_id: int) -> Dict[str, Any]:
         """收集比赛数据，模拟真实API响应"""
         try:
             # 模拟API调用延迟
             await asyncio.sleep(0.1)
-            
+
             # 生成真实的比赛数据
             return self._generate_match_data(match_id)
         except Exception as e:
             # 模拟API错误
             raise DataCollectionError(f"Failed to collect data for match {match_id}: {e}")
-    
+
     def _generate_match_data(self, match_id: int) -> Dict[str, Any]:
         """生成真实的比赛数据结构"""
         return {
@@ -99,13 +99,13 @@ async def test_batch_prediction_workflow(self, mock_services):
     """测试批量预测工作流"""
     # 1. 创建多个比赛
     matches = self._create_test_matches(count=5)
-    
+
     # 2. 模拟批量预测API
     batch_predictions = []
     for match in matches:
         # 确保概率和为1
         probs = self._generate_valid_probabilities()
-        
+
         prediction_data = {
             "match_id": match.id,
             "home_win_prob": probs["home"],
@@ -116,10 +116,10 @@ async def test_batch_prediction_workflow(self, mock_services):
             "model_version": "v1.0"
         }
         batch_predictions.append(prediction_data)
-    
+
     # 3. 验证批量预测的一致性
     self._validate_batch_predictions(batch_predictions)
-    
+
     # 4. 模拟批量保存和缓存
     await self._batch_save_predictions(mock_services, batch_predictions)
 
@@ -129,10 +129,10 @@ def _validate_batch_predictions(self, predictions: List[Dict]) -> None:
         # 验证概率和
         prob_sum = pred["home_win_prob"] + pred["draw_prob"] + pred["away_win_prob"]
         assert abs(prob_sum - 1.0) < 0.01, f"Probability sum {prob_sum} not close to 1.0"
-        
+
         # 验证置信度
         assert 0.0 <= pred["confidence"] <= 1.0
-        
+
         # 验证预测结果
         assert pred["predicted_outcome"] in ["home", "draw", "away"]
 ```
@@ -150,7 +150,7 @@ class TestDataGenerator:
             "Old Trafford", "Anfield", "Stamford Bridge", "Emirates Stadium",
             "Etihad Stadium", "Tottenham Stadium", "King Power Stadium", "Goodison Park"
         ]
-    
+
     def generate_match_data(self, match_id: int) -> Dict[str, Any]:
         """生成动态比赛数据"""
         return {
@@ -232,8 +232,8 @@ class TestDataGenerator:
 
 ## 📞 联系人
 
-**负责人**: AI编程工具  
-**评审人**: 测试工程师  
+**负责人**: AI编程工具
+**评审人**: 测试工程师
 **相关团队**: QA团队
 
 ## 📅 时间线

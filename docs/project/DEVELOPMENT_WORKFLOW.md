@@ -41,7 +41,7 @@ make env-check
   "python.defaultInterpreterPath": ".venv/bin/python",
   "python.linting.enabled": true,
   "python.linting.ruffEnabled": true,
-  "python.formatting.provider": "black",
+  "python.formatting.provider": "ruff",
   "python.testing.pytestEnabled": true,
   "python.testing.pytestArgs": ["tests/unit"],
   "editor.formatOnSave": true,
@@ -55,7 +55,7 @@ make env-check
 
 1. 设置Python解释器：`.venv/bin/python`
 2. 启用Pytest作为测试运行器
-3. 配置Black作为格式化工具
+3. 配置Ruff作为格式化工具
 4. 启用MyPy类型检查
 
 ## Git工作流

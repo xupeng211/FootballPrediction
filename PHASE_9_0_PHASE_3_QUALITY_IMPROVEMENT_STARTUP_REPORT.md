@@ -27,7 +27,7 @@
 
 #### **问题检测结果**
 - **总问题数**: 1,190个质量问题
-- **问题来源**: Ruff + MyPy + Flake8 检测
+- **问题来源**: Ruff + MyPy 检测
 - **分解方法**: 按文件、优先级、类型分组
 
 #### **优先级分类统计**
@@ -49,7 +49,7 @@
 #### **1. 质量分解工具** (`scripts/quality_decomposer.py`)
 ```python
 # 核心功能
-- 自动运行Ruff、MyPy、Flake8检查
+- 自动运行Ruff、MyPy检查
 - 智能问题分类和优先级排序
 - 生成可执行的细粒度任务
 - 输出JSON格式结构化数据
@@ -124,7 +124,6 @@ python3 scripts/daily_quality_improvement.py 120
 # 支持的工具
 - Ruff: 代码风格和语法检查
 - MyPy: 类型检查
-- Flake8: 代码质量检查
 
 # 输出格式
 - JSON: 结构化数据

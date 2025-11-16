@@ -46,16 +46,6 @@ class QualityDecomposer:
         except Exception:
             results['mypy'] = ""
 
-        # Flake8检查
-        try:
-            flake8_result = subprocess.run(
-                ['flake8', 'src/', '--format=json'],
-                capture_output=True, text=True
-            )
-            results['flake8'] = flake8_result.stdout
-        except Exception:
-            results['flake8'] = ""
-
         return results
 
     def parse_ruff_issues(self, ruff_output: str) -> list[QualityIssue]:
@@ -273,4 +263,3 @@ if __name__ == '__main__':
             },
             'plan': result['plan']
         }, f, indent=2, ensure_ascii=False)
-

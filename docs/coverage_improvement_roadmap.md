@@ -313,7 +313,7 @@ pip install pytest pytest-cov pytest-mock
 pip install coverage coverage-badge
 
 # 质量检查
-pip install flake8 black mypy
+pip install ruff mypy
 
 # 性能分析
 pip install pytest-benchmark memory-profiler

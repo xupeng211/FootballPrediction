@@ -76,7 +76,7 @@ Makefile             # 依赖管理命令集合
 |------|------|----------|------|
 | `base.in` | 核心生产依赖定义 | 开发 | 定义 FastAPI、SQLAlchemy 等核心包 |
 | `base.lock` | 核心生产依赖锁定 | 生产/CI | 包含精确版本号，用于生产部署 |
-| `dev.in` | 开发工具依赖定义 | 开发 | 包含 pytest、black、mypy 等工具 |
+| `dev.in` | 开发工具依赖定义 | 开发 | 包含 pytest、ruff、mypy 等工具 |
 | `dev.lock` | 开发工具依赖锁定 | 开发/CI | 开发环境完整依赖列表 |
 | `requirements.lock` | 完整依赖锁定 | 备用 | 包含所有依赖的超级锁定文件 |
 

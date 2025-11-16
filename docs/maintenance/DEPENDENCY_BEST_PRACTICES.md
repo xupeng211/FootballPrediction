@@ -51,7 +51,7 @@ pydantic>=2.4.0,<3.0.0
 ```txt
 # 开发工具依赖
 -r requirements.txt
-black>=23.0.0
+ruff>=0.1.0
 ruff>=0.1.0
 mypy>=1.5.0
 pytest>=7.4.0
@@ -313,7 +313,7 @@ uvicorn[standard]>=0.24.0; environment == "production"
 
 # 开发环境
 pytest>=7.4.0; environment == "development"
-black>=23.0.0; environment == "development"
+ruff>=0.1.0; environment == "development"
 
 # 特定功能
 mlflow>=2.7.0; extra == "ml"
@@ -327,7 +327,7 @@ psycopg2-binary>=2.9.0; extra == "postgres"
 extras_require={
     "ml": ["mlflow>=2.7.0", "scikit-learn>=1.3.0"],
     "postgres": ["psycopg2-binary>=2.9.0"],
-    "dev": ["black>=23.0.0", "pytest>=7.4.0"],
+    "dev": ["ruff>=0.1.0", "pytest>=7.4.0"],
 }
 ```
 
@@ -351,8 +351,7 @@ pydantic>=2.4.0
 -r requirements.txt
 
 # 格式化工具
-black>=23.0.0
-isort>=5.12.0
+ruff>=0.1.0
 
 # 代码质量
 ruff>=0.1.0

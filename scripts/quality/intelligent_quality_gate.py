@@ -120,7 +120,7 @@ class IntelligentQualityGate:
             weight=self.config["weights"]["test_coverage"],
             status=self._get_quality_level(coverage_score,
     self.config["thresholds"]["test_coverage"]),
-    
+
             description="Test coverage percentage"
         ))
 
@@ -144,7 +144,7 @@ class IntelligentQualityGate:
             weight=self.config["weights"]["security"],
             status=self._get_quality_level(security_score,
     self.config["thresholds"]["security_score"]),
-    
+
             description="Security vulnerability assessment"
         ))
 
@@ -157,7 +157,7 @@ class IntelligentQualityGate:
             weight=self.config["weights"]["performance"],
             status=self._get_quality_level(performance_score,
     self.config["thresholds"]["performance_score"]),
-    
+
             description="Performance and efficiency"
         ))
 
