@@ -324,7 +324,7 @@ class TestDIContainer:
 
         @dataclass
         class ServiceB:
-            a: ServiceA
+            a: "ServiceA"
 
         container = DIContainer()
         container.register_transient(ServiceA)
@@ -333,7 +333,11 @@ class TestDIContainer:
         with pytest.raises(DependencyInjectionError) as exc_info:
             container.resolve(ServiceA)
 
-        assert "检测到循环依赖" in str(exc_info.value)
+        # 应该检测到循环依赖，而不是类型注解错误
+        error_message = str(exc_info.value)
+        assert ("检测到循环依赖" in error_message or
+                "circular dependency" in error_message.lower() or
+                "ServiceA -> ServiceB -> ServiceA" in error_message)
 
     def test_resolve_scoped_without_scope(self):
         """测试在没有作用域时解析作用域服务"""

@@ -39,8 +39,10 @@ except ImportError as e:
     print(f"Warning: Could not import database models: {e}")
     # 使用SQLAlchemy Base作为后备
     from sqlalchemy.orm import DeclarativeBase
+
     class Base(DeclarativeBase):
         pass
+
     Team = None
     Match = None
     Prediction = None
@@ -48,7 +50,11 @@ except ImportError as e:
 
 # 导入领域模型
 try:
-    from src.domain.models.prediction import PredictionScore, ConfidenceScore, PredictionStatus
+    from src.domain.models.prediction import (
+        PredictionScore,
+        ConfidenceScore,
+        PredictionStatus,
+    )
 except ImportError as e:
     print(f"Warning: Could not import domain models: {e}")
     PredictionScore = None
@@ -267,7 +273,11 @@ async def sample_predictions(test_db_session: AsyncSession, sample_match):
         Prediction(
             id=101,
             user_id=1,
-            match_id=sample_match.home_team_id if hasattr(sample_match, 'home_team_id') else 1,
+            match_id=(
+                sample_match.home_team_id
+                if hasattr(sample_match, "home_team_id")
+                else 1
+            ),
             score=PredictionScore(predicted_home=2, predicted_away=1),
             confidence=ConfidenceScore(value=Decimal("0.75")),
             status=PredictionStatus.PENDING,
@@ -275,7 +285,11 @@ async def sample_predictions(test_db_session: AsyncSession, sample_match):
         Prediction(
             id=102,
             user_id=2,
-            match_id=sample_match.away_team_id if hasattr(sample_match, 'away_team_id') else 2,
+            match_id=(
+                sample_match.away_team_id
+                if hasattr(sample_match, "away_team_id")
+                else 2
+            ),
             score=PredictionScore(predicted_home=1, predicted_away=2),
             confidence=ConfidenceScore(value=Decimal("0.65")),
             status=PredictionStatus.PENDING,
@@ -283,8 +297,12 @@ async def sample_predictions(test_db_session: AsyncSession, sample_match):
         Prediction(
             id=103,
             user_id=3,
-            match_id=sample_match.league_id if hasattr(sample_match, 'league_id') else 39,
-            score=PredictionScore(predicted_home=1, predicted_away=1, actual_home=2, actual_away=1),
+            match_id=(
+                sample_match.league_id if hasattr(sample_match, "league_id") else 39
+            ),
+            score=PredictionScore(
+                predicted_home=1, predicted_away=1, actual_home=2, actual_away=1
+            ),
             confidence=ConfidenceScore(value=Decimal("0.60")),
             status=PredictionStatus.EVALUATED,
         ),
@@ -331,7 +349,7 @@ async def sample_data(sample_teams, sample_match, sample_predictions):
     return {
         "teams": sample_teams,
         "match": sample_match,
-        "predictions": sample_predictions
+        "predictions": sample_predictions,
     }
 
 
@@ -341,18 +359,88 @@ def training_data():
     """提供ML模型训练所需的示例数据"""
     return {
         "matches": [
-            {"id": 1, "home_team": "Manchester United", "away_team": "Liverpool", "home_score": 2, "away_score": 1, "date": "2024-01-15"},
-            {"id": 2, "home_team": "Chelsea", "away_team": "Arsenal", "home_score": 0, "away_score": 0, "date": "2024-01-16"},
-            {"id": 3, "home_team": "Manchester City", "away_team": "Tottenham", "home_score": 3, "away_score": 1, "date": "2024-01-17"},
-            {"id": 4, "home_team": "Barcelona", "away_team": "Real Madrid", "home_score": 1, "away_score": 2, "date": "2024-01-18"},
-            {"id": 5, "home_team": "Bayern Munich", "away_team": "PSG", "home_score": 4, "away_score": 2, "date": "2024-01-19"},
+            {
+                "id": 1,
+                "home_team": "Manchester United",
+                "away_team": "Liverpool",
+                "home_score": 2,
+                "away_score": 1,
+                "date": "2024-01-15",
+            },
+            {
+                "id": 2,
+                "home_team": "Chelsea",
+                "away_team": "Arsenal",
+                "home_score": 0,
+                "away_score": 0,
+                "date": "2024-01-16",
+            },
+            {
+                "id": 3,
+                "home_team": "Manchester City",
+                "away_team": "Tottenham",
+                "home_score": 3,
+                "away_score": 1,
+                "date": "2024-01-17",
+            },
+            {
+                "id": 4,
+                "home_team": "Barcelona",
+                "away_team": "Real Madrid",
+                "home_score": 1,
+                "away_score": 2,
+                "date": "2024-01-18",
+            },
+            {
+                "id": 5,
+                "home_team": "Bayern Munich",
+                "away_team": "PSG",
+                "home_score": 4,
+                "away_score": 2,
+                "date": "2024-01-19",
+            },
         ],
         "features": [
-            {"match_id": 1, "home_strength": 0.85, "away_strength": 0.78, "home_form": 0.9, "away_form": 0.7, "h2h_home_advantage": 0.6},
-            {"match_id": 2, "home_strength": 0.82, "away_strength": 0.80, "home_form": 0.6, "away_form": 0.8, "h2h_home_advantage": 0.5},
-            {"match_id": 3, "home_strength": 0.90, "away_strength": 0.75, "home_form": 0.95, "away_form": 0.65, "h2h_home_advantage": 0.7},
-            {"match_id": 4, "home_strength": 0.88, "away_strength": 0.92, "home_form": 0.7, "away_form": 0.85, "h2h_home_advantage": 0.4},
-            {"match_id": 5, "home_strength": 0.93, "away_strength": 0.81, "home_form": 0.88, "away_form": 0.72, "h2h_home_advantage": 0.65},
+            {
+                "match_id": 1,
+                "home_strength": 0.85,
+                "away_strength": 0.78,
+                "home_form": 0.9,
+                "away_form": 0.7,
+                "h2h_home_advantage": 0.6,
+            },
+            {
+                "match_id": 2,
+                "home_strength": 0.82,
+                "away_strength": 0.80,
+                "home_form": 0.6,
+                "away_form": 0.8,
+                "h2h_home_advantage": 0.5,
+            },
+            {
+                "match_id": 3,
+                "home_strength": 0.90,
+                "away_strength": 0.75,
+                "home_form": 0.95,
+                "away_form": 0.65,
+                "h2h_home_advantage": 0.7,
+            },
+            {
+                "match_id": 4,
+                "home_strength": 0.88,
+                "away_strength": 0.92,
+                "home_form": 0.7,
+                "away_form": 0.85,
+                "h2h_home_advantage": 0.4,
+            },
+            {
+                "match_id": 5,
+                "home_strength": 0.93,
+                "away_strength": 0.81,
+                "home_form": 0.88,
+                "away_form": 0.72,
+                "h2h_home_advantage": 0.65,
+            },
         ],
         "targets": [
             {"match_id": 1, "result": "home_win", "home_goals": 2, "away_goals": 1},
@@ -360,7 +448,7 @@ def training_data():
             {"match_id": 3, "result": "home_win", "home_goals": 3, "away_goals": 1},
             {"match_id": 4, "result": "away_win", "home_goals": 1, "away_goals": 2},
             {"match_id": 5, "result": "home_win", "home_goals": 4, "away_goals": 2},
-        ]
+        ],
     }
 
 
