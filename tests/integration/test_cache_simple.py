@@ -2,7 +2,7 @@
 简化的缓存集成测试
 Simplified Cache Integration Tests
 
-使用改进的Mock策略进行缓存集成测试，避免依赖真实Redis。
+使用改进的Mock策略进行缓存集成测试，避免依赖真实Redis.
 """
 
 import asyncio
@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.cache.redis_manager import RedisManager
+from src.cache.redis_enhanced import EnhancedRedisManager
 
 
 @pytest.mark.integration
@@ -50,7 +50,7 @@ class TestSimplifiedCacheOperations:
             return_value=mock_redis,
         ):
             # 直接创建RedisManager实例
-            manager = RedisManager()
+            manager = EnhancedRedisManager(use_mock=True)
             manager._redis_client = mock_redis
             return manager
 

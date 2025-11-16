@@ -378,6 +378,8 @@ class TestQueueStatus:
 class TestAdvancedQueueOperations:
     """高级队列操作测试"""
 
+    @pytest.mark.asyncio
+
     async def test_concurrent_operations(self):
         """测试并发操作"""
         queue = MemoryFIFOQueue("concurrent_test")
@@ -400,6 +402,8 @@ class TestAdvancedQueueOperations:
 
         # 验证所有任务都被成功出队
         assert len([t for t in dequeued_tasks if t is not None]) == 10
+
+    @pytest.mark.asyncio
 
     async def test_task_timeout(self):
         """测试任务超时"""

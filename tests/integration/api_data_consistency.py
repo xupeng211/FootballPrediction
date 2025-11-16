@@ -103,6 +103,8 @@ class DataConsistencyTester:
             self.log_test("测试用户设置", False, f"异常: {str(e)}", duration)
             return False
 
+    @pytest.mark.asyncio
+
     async def test_prediction_creation_consistency(self) -> bool:
         """测试预测创建的数据一致性"""
         start_time = time.time()
@@ -202,6 +204,8 @@ class DataConsistencyTester:
             self.log_test("预测创建一致性", False, f"异常: {str(e)}", duration)
             return False
 
+    @pytest.mark.asyncio
+
     async def test_batch_prediction_consistency(self) -> bool:
         """测试批量预测的数据一致性"""
         start_time = time.time()
@@ -294,6 +298,8 @@ class DataConsistencyTester:
             self.log_test("批量预测一致性", False, f"异常: {str(e)}", duration)
             return False
 
+    @pytest.mark.asyncio
+
     async def test_history_data_consistency(self) -> bool:
         """测试历史数据的一致性"""
         start_time = time.time()
@@ -369,6 +375,8 @@ class DataConsistencyTester:
             self.log_test("历史数据一致性", False, f"异常: {str(e)}", duration)
             return False
 
+    @pytest.mark.asyncio
+
     async def test_concurrent_operations_consistency(self) -> bool:
         """测试并发操作的数据一致性"""
         start_time = time.time()
@@ -440,6 +448,8 @@ class DataConsistencyTester:
             duration = time.time() - start_time
             self.log_test("并发操作一致性", False, f"异常: {str(e)}", duration)
             return False
+
+    @pytest.mark.asyncio
 
     async def test_data_format_consistency(self) -> bool:
         """测试数据格式的一致性"""
@@ -576,11 +586,15 @@ class TestDataConsistency:
         """创建数据一致性测试器实例"""
         return DataConsistencyTester()
 
+    @pytest.mark.asyncio
+
     async def test_prediction_creation_consistency(self, consistency_tester):
         """测试预测创建的数据一致性"""
         await consistency_tester.setup_test_user()
         result = await consistency_tester.test_prediction_creation_consistency()
         assert result, "预测创建一致性测试失败"
+
+    @pytest.mark.asyncio
 
     async def test_batch_prediction_consistency(self, consistency_tester):
         """测试批量预测的数据一致性"""
@@ -588,17 +602,23 @@ class TestDataConsistency:
         result = await consistency_tester.test_batch_prediction_consistency()
         assert result, "批量预测一致性测试失败"
 
+    @pytest.mark.asyncio
+
     async def test_history_data_consistency(self, consistency_tester):
         """测试历史数据的一致性"""
         await consistency_tester.setup_test_user()
         result = await consistency_tester.test_history_data_consistency()
         assert result, "历史数据一致性测试失败"
 
+    @pytest.mark.asyncio
+
     async def test_data_format_consistency(self, consistency_tester):
         """测试数据格式的一致性"""
         await consistency_tester.setup_test_user()
         result = await consistency_tester.test_data_format_consistency()
         assert result, "数据格式一致性测试失败"
+
+    @pytest.mark.asyncio
 
     async def test_all_consistency_checks(self, consistency_tester):
         """测试所有一致性检查"""

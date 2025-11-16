@@ -50,7 +50,7 @@ class TestPredictionAPIServiceIntegration:
         }
 
         with patch(
-            "src.api.routes.predictions.PredictionService", return_value=mock_service
+            "src.api.predictions.router.PredictionService", return_value=mock_service
         ):
             response = await async_client.post(
                 "/api/predictions/", json=prediction_data
@@ -87,7 +87,7 @@ class TestPredictionAPIServiceIntegration:
         mock_service.create_prediction.side_effect = Exception("Service error")
 
         with patch(
-            "src.api.routes.predictions.PredictionService", return_value=mock_service
+            "src.api.predictions.router.PredictionService", return_value=mock_service
         ):
             response = await async_client.post(
                 "/api/predictions/", json=prediction_data
@@ -108,7 +108,7 @@ class TestPredictionAPIServiceIntegration:
         # 测试获取预测缓存
         cache_key = cache_test_data["prediction_cache_key"]
 
-        with patch("src.api.routes.predictions.redis_client", mock_redis):
+        with patch("src.cache.redis_enhanced.EnhancedRedisManager", mock_redis):
             # 首次请求（缓存未命中）
             await async_client.get(f"/api/predictions/cache/{cache_key}")
 
@@ -145,7 +145,7 @@ class TestPredictionAPIServiceIntegration:
         }
 
         with patch(
-            "src.api.routes.predictions.PredictionService", return_value=mock_service
+            "src.api.predictions.router.PredictionService", return_value=mock_service
         ):
             response = await async_client.post(
                 "/api/predictions/bulk", json={"predictions": bulk_predictions}
@@ -195,7 +195,7 @@ class TestMatchAPIServiceIntegration:
             "away_score": 0,
         }
 
-        with patch("src.api.routes.matches.MatchService", return_value=mock_service):
+        with patch("src.api.matches.router.MatchService", return_value=mock_service):
             response = await async_client.post("/api/matches/", json=match_data)
 
             if response.status_code == 200:
@@ -224,7 +224,7 @@ class TestMatchAPIServiceIntegration:
             "started_at": datetime.utcnow().isoformat(),
         }
 
-        with patch("src.api.routes.matches.MatchService", return_value=mock_service):
+        with patch("src.api.matches.router.MatchService", return_value=mock_service):
             response = await async_client.post(f"/api/matches/{sample_match.id}/start")
 
             if response.status_code == 200:
@@ -261,7 +261,7 @@ class TestMatchAPIServiceIntegration:
             "ranking": 3,
         }
 
-        with patch("src.api.routes.matches.MatchService", return_value=mock_service):
+        with patch("src.api.matches.router.MatchService", return_value=mock_service):
             response = await async_client.get(f"/api/teams/{team.id}/statistics")
 
             if response.status_code == 200:
@@ -303,7 +303,7 @@ class TestUserAPIServiceIntegration:
             "created_at": user_data["created_at"].isoformat(),
         }
 
-        with patch("src.api.routes.users.UserService", return_value=mock_service):
+        with patch("src.domain.services.user_service.UserService", return_value=mock_service):
             response = await async_client.post(
                 "/api/users/register", json=registration_data
             )
@@ -343,7 +343,7 @@ class TestUserAPIServiceIntegration:
             },
         }
 
-        with patch("src.api.routes.auth.UserService", return_value=mock_service):
+        with patch("src.domain.services.auth_service.AuthService", return_value=mock_service):
             response = await async_client.post("/api/auth/login", json=login_data)
 
             if response.status_code == 200:
@@ -384,7 +384,7 @@ class TestUserAPIServiceIntegration:
             if pred.user_id == user_id
         ]
 
-        with patch("src.api.routes.users.UserService", return_value=mock_service):
+        with patch("src.domain.services.user_service.UserService", return_value=mock_service):
             response = await async_client.get(
                 f"/api/users/{user_id}/predictions", headers=auth_headers
             )
@@ -430,7 +430,7 @@ class TestAnalyticsAPIServiceIntegration:
         }
 
         with patch(
-            "src.api.routes.analytics.AnalyticsService", return_value=mock_service
+            "src.domain.services.analytics_service.AnalyticsService", return_value=mock_service
         ):
             response = await async_client.get(
                 "/api/analytics/predictions", headers=auth_headers
@@ -474,7 +474,7 @@ class TestAnalyticsAPIServiceIntegration:
         }
 
         with patch(
-            "src.api.routes.analytics.AnalyticsService", return_value=mock_service
+            "src.domain.services.analytics_service.AnalyticsService", return_value=mock_service
         ):
             response = await async_client.get(
                 f"/api/analytics/users/{user_data['id']}", headers=auth_headers
@@ -520,7 +520,7 @@ class TestNotificationAPIServiceIntegration:
         }
 
         with patch(
-            "src.api.routes.notifications.NotificationService",
+            "src.domain.services.notification_service.NotificationService",
             return_value=mock_service,
         ):
             response = await async_client.post(
@@ -585,7 +585,7 @@ class TestAPIErrorHandling:
         )
 
         with patch(
-            "src.api.routes.predictions.PredictionService", return_value=mock_service
+            "src.api.predictions.router.PredictionService", return_value=mock_service
         ):
             response = await async_client.get("/api/predictions/")
 
@@ -601,7 +601,7 @@ class TestAPIErrorHandling:
         mock_service.get_predictions.side_effect = TimeoutError("Service timeout")
 
         with patch(
-            "src.api.routes.predictions.PredictionService", return_value=mock_service
+            "src.api.predictions.router.PredictionService", return_value=mock_service
         ):
             response = await async_client.get("/api/predictions/")
 

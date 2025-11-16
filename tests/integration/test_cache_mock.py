@@ -2,7 +2,7 @@
 完全Mock的缓存集成测试
 Complete Mock Cache Integration Tests
 
-使用完全独立的Mock实现进行缓存测试，不依赖真实的Redis实现。
+使用完全独立的Mock实现进行缓存测试，不依赖真实的Redis实现.
 """
 
 import asyncio

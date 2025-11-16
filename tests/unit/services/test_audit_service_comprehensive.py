@@ -2,7 +2,7 @@
 审计服务测试
 Audit Service Tests
 
-测试审计服务的核心功能。
+测试审计服务的核心功能.
 Tests core functionality of audit service.
 """
 

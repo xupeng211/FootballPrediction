@@ -3,6 +3,8 @@
 测试API端点的独立脚本
 """
 
+import pytest
+
 import asyncio
 import sys
 from datetime import datetime, timedelta
@@ -31,6 +33,9 @@ except ImportError:
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
+
+
+@pytest.mark.asyncio
 
 
 async def test_data_sources_directly():

@@ -4,6 +4,8 @@ Football-Data.org API 集成测试脚本
 Test script for Football-Data.org API integration
 """
 
+import pytest
+
 import asyncio
 import logging
 import os
@@ -25,6 +27,9 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+
+@pytest.mark.asyncio
 
 
 async def test_api_connection():
@@ -58,6 +63,9 @@ async def test_api_connection():
         return False
 
 
+@pytest.mark.asyncio
+
+
 async def test_data_normalization():
     """测试数据标准化"""
     try:
@@ -82,6 +90,9 @@ async def test_data_normalization():
     except Exception as e:
         logger.error(f"❌ 数据标准化测试失败: {e}")
         return False
+
+
+@pytest.mark.asyncio
 
 
 async def test_database_model():

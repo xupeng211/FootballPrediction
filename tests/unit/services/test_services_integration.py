@@ -2,7 +2,7 @@
 服务集成测试
 Services Integration Tests
 
-测试服务之间的集成和协作。
+测试服务之间的集成和协作.
 Tests integration and collaboration between services.
 """
 

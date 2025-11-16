@@ -2,7 +2,7 @@
 API集成测试
 API Integration Tests
 
-测试API端点的完整功能，包括请求响应、错误处理和业务逻辑。
+测试API端点的完整功能，包括请求响应、错误处理和业务逻辑.
 """
 
 from unittest.mock import AsyncMock, patch
@@ -64,7 +64,7 @@ class TestAPIIntegration:
         response = test_client.get("/api/monitoring/metrics")
         assert response.status_code in [200, 404]
 
-    @patch("src.cache.redis_manager.RedisManager")
+    @patch("src.cache.redis_enhanced.EnhancedRedisManager")
     def test_api_with_redis_integration(self, mock_redis, test_client: TestClient):
         """测试API与Redis集成"""
         # 模拟Redis连接

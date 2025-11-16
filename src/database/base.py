@@ -165,6 +165,11 @@ class DatabaseManager:
         """初始化数据库管理器"""
         self.config = config or {}
         self._connection = None
+        self._initialized = False  # 向后兼容的初始化状态
+
+    def initialize(self) -> None:
+        """初始化数据库管理器（向后兼容方法）"""
+        self._initialized = True
 
     async def check_connection(self) -> dict[str, Any]:
         """检查数据库连接"""

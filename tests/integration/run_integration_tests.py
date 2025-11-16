@@ -3,7 +3,7 @@
 集成测试运行器
 Integration Test Runner
 
-运行和验证集成测试套件。
+运行和验证集成测试套件.
 """
 
 import os

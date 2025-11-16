@@ -79,12 +79,6 @@ class EnhancedRedisManager:
         if use_mock is None:
             use_mock = not REDIS_AVAILABLE
 
-        # 在测试环境中强制使用Mock（通过检测环境变量或运行时）
-        import os
-
-        if os.getenv("PYTEST_CURRENT_TEST") or os.getenv("TESTING"):
-            use_mock = True
-
         self.use_mock = use_mock
         self._sync_client = None
         self._async_client = None
@@ -103,15 +97,28 @@ class EnhancedRedisManager:
 
         try:
             if self.config.cluster_mode and self.config.cluster_nodes:
-                # 集群模式 - 使用Redis 5.0+的集群支持
-                from redis.cluster import RedisCluster
+                # 集群模式
+                try:
+                    from rediscluster import RedisCluster
 
-                client = RedisCluster(
-                    startup_nodes=self.config.cluster_nodes,
-                    decode_responses=self.config.decode_responses,
-                    skip_full_coverage_check=True,
-                    **(self.config.connection_pool_kwargs or {}),
-                )
+                    client = RedisCluster(
+                        startup_nodes=self.config.cluster_nodes,
+                        decode_responses=self.config.decode_responses,
+                        skip_full_coverage_check=True,
+                        **(self.config.connection_pool_kwargs or {}),
+                    )
+                except ImportError:
+                    # 如果rediscluster不可用，回退到单机模式
+                    logger.warning("rediscluster模块不可用，回退到单机Redis模式")
+                    import redis
+
+                    client = redis.Redis(
+                        host=self.config.host,
+                        port=self.config.port,
+                        db=self.config.db,
+                        decode_responses=self.config.decode_responses,
+                        **(self.config.connection_pool_kwargs or {}),
+                    )
             elif self.config.sentinel_mode and self.config.sentinel_servers:
                 # 哨兵模式
                 sentinel = redis.Sentinel(

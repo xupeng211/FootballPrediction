@@ -2,7 +2,7 @@
 API测试简化版
 Simple API Test
 
-演示修复后的测试文件结构，确保可以被pytest正确收集。
+演示修复后的测试文件结构，确保可以被pytest正确收集.
 """
 
 import pytest
