@@ -1,6 +1,4 @@
-"""
-联赛领域模型
-"""
+"""联赛领域模型."""
 
 from datetime import datetime
 from enum import Enum
@@ -8,7 +6,7 @@ from typing import Any
 
 
 class LeagueStatus(Enum):
-    """联赛状态"""
+    """联赛状态."""
 
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -17,31 +15,31 @@ class LeagueStatus(Enum):
 
 
 class LeagueTable:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """联赛积分榜"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.standings: list[dict[str, Any]] = []
         self.last_updated = datetime.now()
 
     def update_table(self, match_results: list[dict[str, Any]]) -> None:
-        """更新积分榜"""
+        """更新积分榜."""
         # 简化实现,实际会更复杂
         self.last_updated = datetime.now()
 
     def get_position(self, team_id: int) -> int | None:
-        """获取球队排名"""
+        """获取球队排名."""
         for i, standing in enumerate(self.standings):
             if standing["team_id"] == team_id:
                 return i + 1
         return None
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "standings": self.standings,
             "last_updated": self.last_updated.isoformat(),
@@ -49,7 +47,7 @@ class LeagueTable:
 
 
 class League:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """联赛领域模型"""
@@ -86,34 +84,34 @@ class League:
         self.completed_matches = 0
 
     def activate(self) -> None:
-        """激活联赛"""
+        """激活联赛."""
         self.status = LeagueStatus.ACTIVE
         self.updated_at = datetime.now()
 
     def deactivate(self) -> None:
-        """停用联赛"""
+        """停用联赛."""
         self.status = LeagueStatus.INACTIVE
         self.updated_at = datetime.now()
 
     def complete(self) -> None:
-        """完成联赛"""
+        """完成联赛."""
         self.status = LeagueStatus.COMPLETED
         self.updated_at = datetime.now()
 
     def update_statistics(self, total_matches: int, completed_matches: int) -> None:
-        """更新统计"""
+        """更新统计."""
         self.total_matches = total_matches
         self.completed_matches = completed_matches
         self.updated_at = datetime.now()
 
     def get_completion_rate(self) -> float:
-        """获取完成率"""
+        """获取完成率."""
         if self.total_matches == 0:
             return 0.0
         return (self.completed_matches / self.total_matches) * 100
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "name": self.name,
@@ -134,7 +132,7 @@ class League:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "League":
-        """从字典创建实例"""
+        """从字典创建实例."""
         league = cls(
             id=data.get("id"),
             name=data.get("name", ""),

@@ -1,5 +1,4 @@
-"""
-analyzer 主模块 - 性能分析器
+"""analyzer 主模块 - 性能分析器.
 
 提供性能分析和优化建议功能
 """
@@ -12,15 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 class PerformanceAnalyzer:
-    """性能分析器 - 简化实现"""
+    """性能分析器 - 简化实现."""
 
     def __init__(self):
-        """初始化性能分析器"""
+        """初始化性能分析器."""
         self.metrics_history = []
         self.analysis_results = {}
 
     def analyze(self, metrics: dict[str, Any]) -> dict[str, Any]:
-        """分析性能指标"""
+        """分析性能指标."""
         analysis = {
             "timestamp": datetime.utcnow(),
             "metrics": metrics,
@@ -32,7 +31,7 @@ class PerformanceAnalyzer:
         return analysis
 
     def _generate_insights(self, metrics: dict[str, Any]) -> list[str]:
-        """生成性能洞察"""
+        """生成性能洞察."""
         insights = []
 
         if metrics.get("response_time", 0) > 1000:
@@ -44,7 +43,7 @@ class PerformanceAnalyzer:
         return insights
 
     def _generate_recommendations(self, metrics: dict[str, Any]) -> list[str]:
-        """生成优化建议"""
+        """生成优化建议."""
         recommendations = []
 
         if metrics.get("cpu_usage", 0) > 80:
@@ -56,7 +55,7 @@ class PerformanceAnalyzer:
         return recommendations
 
     def get_trend_analysis(self) -> dict[str, Any]:
-        """获取趋势分析"""
+        """获取趋势分析."""
         if len(self.metrics_history) < 2:
             return {"status": "insufficient_data"}
 
@@ -74,7 +73,7 @@ class PerformanceAnalyzer:
 
 
 class PerformanceInsight:
-    """性能洞察 - 简化实现"""
+    """性能洞察 - 简化实现."""
 
     def __init__(self, title: str, description: str, severity: str = "medium"):
         self.title = title
@@ -84,19 +83,19 @@ class PerformanceInsight:
 
 
 class PerformanceTrend:
-    """性能趋势 - 简化实现"""
+    """性能趋势 - 简化实现."""
 
     def __init__(self):
         self.data_points = []
 
     def add_data_point(self, value: float, timestamp: datetime | None = None):
-        """添加数据点"""
+        """添加数据点."""
         if timestamp is None:
             timestamp = datetime.utcnow()
         self.data_points.append({"value": value, "timestamp": timestamp})
 
     def get_trend(self) -> str:
-        """获取趋势"""
+        """获取趋势."""
         if len(self.data_points) < 2:
             return "insufficient_data"
 

@@ -1,5 +1,4 @@
-"""
-重试机制模块 / Retry Mechanism Module
+"""重试机制模块 / Retry Mechanism Module.
 
 包含所有重试相关的类和函数.
 """
@@ -15,7 +14,7 @@ T = TypeVar("T")
 
 
 class RetryConfig:
-    """重试配置类"""
+    """重试配置类."""
 
     def __init__(
         self,
@@ -60,7 +59,7 @@ class RetryConfig:
 
 
 class RetryError(Exception):
-    """重试失败异常"""
+    """重试失败异常."""
 
 
 # 策略类和枚举
@@ -68,7 +67,7 @@ from enum import Enum
 
 
 class CircuitState(Enum):
-    """熔断器状态"""
+    """熔断器状态."""
 
     CLOSED = "closed"
     OPEN = "open"
@@ -76,7 +75,7 @@ class CircuitState(Enum):
 
 
 class BackoffStrategy:
-    """退避策略基类"""
+    """退避策略基类."""
 
     def __init__(self, initial_delay: float = 1.0):
         self.initial_delay = initial_delay
@@ -86,7 +85,7 @@ class BackoffStrategy:
 
 
 class FixedBackoffStrategy(BackoffStrategy):
-    """固定退避策略"""
+    """固定退避策略."""
 
     def __init__(self, delay: float = 1.0):
         super().__init__(delay)
@@ -97,7 +96,7 @@ class FixedBackoffStrategy(BackoffStrategy):
 
 
 class LinearBackoffStrategy(BackoffStrategy):
-    """线性退避策略"""
+    """线性退避策略."""
 
     def __init__(self, initial_delay: float = 1.0, increment: float = 0.5):
         super().__init__(initial_delay)
@@ -108,7 +107,7 @@ class LinearBackoffStrategy(BackoffStrategy):
 
 
 class ExponentialBackoffStrategy(BackoffStrategy):
-    """指数退避策略"""
+    """指数退避策略."""
 
     def __init__(self, initial_delay: float = 1.0, multiplier: float = 2.0):
         super().__init__(initial_delay)
@@ -119,7 +118,7 @@ class ExponentialBackoffStrategy(BackoffStrategy):
 
 
 class PolynomialBackoffStrategy(BackoffStrategy):
-    """多项式退避策略"""
+    """多项式退避策略."""
 
     def __init__(self, initial_delay: float = 1.0, exponent: float = 2.0):
         super().__init__(initial_delay)
@@ -130,7 +129,7 @@ class PolynomialBackoffStrategy(BackoffStrategy):
 
 
 class CircuitBreaker:
-    """熔断器"""
+    """熔断器."""
 
     def __init__(
         self,
@@ -152,7 +151,7 @@ def retry_with_exponential_backoff(
     max_delay: float = 60.0,
     exceptions: tuple = (Exception,),
 ):
-    """重试装饰器（同步版本）"""
+    """重试装饰器（同步版本）."""
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
@@ -185,7 +184,7 @@ async def async_retry_with_exponential_backoff(
     max_delay: float = 60.0,
     exceptions: tuple = (Exception,),
 ):
-    """重试装饰器（异步版本）"""
+    """重试装饰器（异步版本）."""
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
@@ -220,7 +219,7 @@ def retry(
     exceptions: tuple = (Exception,),
     strategy: BackoffStrategy | None = None,
 ):
-    """重试装饰器"""
+    """重试装饰器."""
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
@@ -255,12 +254,12 @@ def retry(
 
 
 def retry_async(config: RetryConfig | None = None):
-    """异步重试装饰器别名"""
+    """异步重试装饰器别名."""
     return async_retry_with_exponential_backoff()
 
 
 def retry_sync(config: RetryConfig | None = None):
-    """同步重试装饰器别名"""
+    """同步重试装饰器别名."""
     return retry_with_exponential_backoff()
 
     def __init__(

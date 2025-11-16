@@ -1,6 +1,5 @@
-"""
-性能优化服务
-Performance Optimization Service
+"""性能优化服务
+Performance Optimization Service.
 
 提供系统性能优化功能。
 Provides system performance optimization features.
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class PerformanceOptimizer:
-    """性能优化器"""
+    """性能优化器."""
 
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
@@ -28,7 +27,7 @@ class PerformanceOptimizer:
         self.cache_manager = get_cache_manager()
 
     async def optimize_database_indexes(self) -> dict[str, Any]:
-        """优化数据库索引"""
+        """优化数据库索引."""
         logger.info("Starting database index optimization")
 
         indexes_to_create = [
@@ -145,7 +144,7 @@ class PerformanceOptimizer:
         return results
 
     async def optimize_slow_queries(self) -> dict[str, Any]:
-        """优化慢查询"""
+        """优化慢查询."""
         logger.info("Starting slow query optimization")
 
         # 分析慢查询
@@ -201,7 +200,7 @@ class PerformanceOptimizer:
         return query_results
 
     def _analyze_query_plan(self, plan_rows: list) -> list[str]:
-        """分析查询执行计划"""
+        """分析查询执行计划."""
         recommendations = []
 
         for row in plan_rows:
@@ -223,7 +222,7 @@ class PerformanceOptimizer:
         return recommendations
 
     async def implement_query_cache(self) -> dict[str, Any]:
-        """实现查询结果缓存"""
+        """实现查询结果缓存."""
         logger.info("Implementing query result caching")
 
         cacheable_queries = {
@@ -307,7 +306,7 @@ class PerformanceOptimizer:
         return cache_results
 
     async def optimize_cache_configuration(self) -> dict[str, Any]:
-        """优化缓存配置"""
+        """优化缓存配置."""
         logger.info("Optimizing cache configuration")
 
         # 获取当前缓存统计
@@ -338,7 +337,7 @@ class PerformanceOptimizer:
         }
 
     async def monitor_performance_improvements(self) -> dict[str, Any]:
-        """监控性能改进效果"""
+        """监控性能改进效果."""
         logger.info("Monitoring performance improvements")
 
         # 获取当前性能指标
@@ -370,7 +369,7 @@ class PerformanceOptimizer:
     def _calculate_improvement_status(
         self, performance_summary: dict[str, Any]
     ) -> dict[str, Any]:
-        """计算改进状态"""
+        """计算改进状态."""
         status = {
             "overall": "unknown",
             "cpu": "unknown",
@@ -433,7 +432,7 @@ _performance_optimizer: PerformanceOptimizer | None = None
 
 
 def get_performance_optimizer(db_session: AsyncSession) -> PerformanceOptimizer:
-    """获取性能优化器实例"""
+    """获取性能优化器实例."""
     global _performance_optimizer
     if _performance_optimizer is None:
         _performance_optimizer = PerformanceOptimizer(db_session)

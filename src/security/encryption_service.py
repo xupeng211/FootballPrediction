@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Encryption Service
-加密服务
+"""Encryption Service
+加密服务.
 
 生成时间: 2025-10-26 20:59:14
 """
@@ -13,19 +12,19 @@ logger = logging.getLogger(__name__)
 
 
 class EncryptionService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """Encryption Service"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.logger = logging.getLogger(__name__)
         self.logger.info("初始化security特性: Encryption Service")
 
     def process(self, data: dict) -> dict:
-        """处理数据"""
+        """处理数据."""
         result = {
             "status": "success",
             "feature": "Encryption Service",
@@ -35,7 +34,7 @@ class EncryptionService:
         return result
 
     def get_status(self) -> dict:
-        """获取状态"""
+        """获取状态."""
         return {
             "feature": "Encryption Service",
             "type": "security",

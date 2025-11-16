@@ -1,6 +1,5 @@
-"""
-具体观察者实现
-Concrete Observer Implementations
+"""具体观察者实现
+Concrete Observer Implementations.
 
 提供各种观察者的具体实现.
 Provides concrete implementations for various observers.
@@ -19,14 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 class MetricsObserver(Observer):
-    """指标收集观察者"
+    """指标收集观察者".
 
     收集和聚合系统指标数据.
     Collects and aggregates system metrics.
     """
 
     def __init__(self, aggregation_window: int = 60):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化指标观察者"
 
@@ -42,7 +41,7 @@ class MetricsObserver(Observer):
         self._last_cleanup = time.time()
 
     async def update(self, event: ObservableEvent) -> None:
-        """处理事件并更新指标"""
+        """处理事件并更新指标."""
         now = time.time()
 
         # 定期清理过期数据
@@ -63,7 +62,7 @@ class MetricsObserver(Observer):
             self._counters["errors"] += 1
 
     async def _handle_metric_update(self, event: ObservableEvent) -> None:
-        """处理指标更新事件"""
+        """处理指标更新事件."""
         metric_name = event.data.get("metric_name")
         metric_value = event.data.get("metric_value")
         metric_type = event.data.get("metric_type", "gauge")
@@ -84,7 +83,7 @@ class MetricsObserver(Observer):
                 self._histograms[metric_name] = self._histograms[metric_name][-5000:]
 
     async def _handle_prediction_completed(self, event: ObservableEvent) -> None:
-        """处理预测完成事件"""
+        """处理预测完成事件."""
         self._counters["predictions_completed"] += 1
 
         # 记录预测延迟
@@ -93,7 +92,7 @@ class MetricsObserver(Observer):
             self._metrics["prediction_latency"].append((time.time(), latency))
 
     async def _cleanup_old_metrics(self) -> None:
-        """清理过期的指标数据"""
+        """清理过期的指标数据."""
         cutoff_time = time.time() - self._aggregation_window
 
         for _metric_name, values in self._metrics.items():
@@ -101,7 +100,7 @@ class MetricsObserver(Observer):
                 values.popleft()
 
     def get_observed_event_types(self) -> list[ObservableEventType]:
-        """返回观察的事件类型"""
+        """返回观察的事件类型."""
         return [
             ObservableEventType.METRIC_UPDATE,
             ObservableEventType.PREDICTION_COMPLETED,
@@ -111,7 +110,7 @@ class MetricsObserver(Observer):
         ]
 
     def get_metrics(self) -> dict[str, Any]:
-        """获取聚合后的指标"""
+        """获取聚合后的指标."""
         result = {
             "counters": dict(self._counters),
             "gauges": dict(self._gauges),
@@ -153,7 +152,7 @@ class MetricsObserver(Observer):
         return result
 
     def get_stats(self) -> dict[str, Any]:
-        """获取观察者统计信息"""
+        """获取观察者统计信息."""
         stats = super().get_stats()
         stats.update(
             {
@@ -167,14 +166,14 @@ class MetricsObserver(Observer):
 
 
 class LoggingObserver(Observer):
-    """日志记录观察者"
+    """日志记录观察者".
 
     将事件记录到日志系统.
     Logs events to the logging system.
     """
 
     def __init__(self, log_level: int = logging.INFO):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化日志观察者"
 
@@ -187,7 +186,7 @@ class LoggingObserver(Observer):
         self._log_counts: dict[str, int] = defaultdict(int)
 
     async def update(self, event: ObservableEvent) -> None:
-        """记录事件到日志"""
+        """记录事件到日志."""
         # 更新计数
         self._log_counts[event.event_type.value] += 1
 
@@ -205,7 +204,7 @@ class LoggingObserver(Observer):
             self._logger.debug(f"Event details: {event.data}")
 
     def _get_log_method(self, severity: str) -> Callable:
-        """根据严重性获取日志方法"""
+        """根据严重性获取日志方法."""
         severity_map = {
             "debug": self._logger.debug,
             "info": self._logger.info,
@@ -216,7 +215,7 @@ class LoggingObserver(Observer):
         return severity_map.get(severity.lower(), self._logger.info)
 
     def _format_log_message(self, event: ObservableEvent) -> str:
-        """格式化日志消息"""
+        """格式化日志消息."""
         parts = [
             f"Event: {event.event_type.value}",
             f"Source: {event.source or 'Unknown'}",
@@ -235,16 +234,16 @@ class LoggingObserver(Observer):
         return " | ".join(parts)
 
     def get_observed_event_types(self) -> list[ObservableEventType]:
-        """返回观察的事件类型"""
+        """返回观察的事件类型."""
         # 日志观察者观察所有事件类型
         return list(ObservableEventType)
 
     def get_log_counts(self) -> dict[str, int]:
-        """获取日志计数统计"""
+        """获取日志计数统计."""
         return dict(self._log_counts)
 
     def get_stats(self) -> dict[str, Any]:
-        """获取观察者统计信息"""
+        """获取观察者统计信息."""
         stats = super().get_stats()
         stats.update(
             {
@@ -256,14 +255,14 @@ class LoggingObserver(Observer):
 
 
 class AlertingObserver(Observer):
-    """告警通知观察者"
+    """告警通知观察者".
 
     监控事件并触发告警.
     Monitors events and triggers alerts.
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化告警观察者"""
         super().__init__("AlertingObserver")
@@ -280,7 +279,7 @@ class AlertingObserver(Observer):
         message_template: str = None,
         cooldown_minutes: int = 5,
     ) -> None:
-        """添加告警规则"
+        """添加告警规则".
 
         Args:
             name: 规则名称
@@ -299,14 +298,14 @@ class AlertingObserver(Observer):
         }
 
     async def update(self, event: ObservableEvent) -> None:
-        """检查事件并触发告警"""
+        """检查事件并触发告警."""
         for rule_name, rule in self._alert_rules.items():
             await self._check_rule(rule_name, rule, event)
 
     async def _check_rule(
         self, rule_name: str, rule: dict[str, Any], event: ObservableEvent
     ) -> None:
-        """检查单个告警规则"""
+        """检查单个告警规则."""
         # 检查冷却时间
         if rule_name in self._alert_cooldown:
             if datetime.utcnow() < self._alert_cooldown[rule_name]:
@@ -318,7 +317,7 @@ class AlertingObserver(Observer):
     async def _trigger_alert(
         self, rule_name: str, rule: dict[str, Any], event: ObservableEvent
     ) -> None:
-        """触发告警"""
+        """触发告警."""
         # 更新规则统计
         rule["trigger_count"] += 1
         rule["last_triggered"] = datetime.utcnow()
@@ -348,7 +347,7 @@ class AlertingObserver(Observer):
         await self._send_alert(alert)
 
     async def _send_alert(self, alert: dict[str, Any]) -> None:
-        """发送告警通知"""
+        """发送告警通知."""
         # 这里可以集成各种通知渠道:
         # - 邮件
         # - 短信
@@ -367,7 +366,7 @@ class AlertingObserver(Observer):
             )
 
     def get_observed_event_types(self) -> list[ObservableEventType]:
-        """返回观察的事件类型"""
+        """返回观察的事件类型."""
         return [
             ObservableEventType.SYSTEM_ALERT,
             ObservableEventType.PERFORMANCE_DEGRADATION,
@@ -381,7 +380,7 @@ class AlertingObserver(Observer):
         since: datetime | None = None,
         limit: int = 50,
     ) -> list[dict[str, Any]]:
-        """获取告警历史"""
+        """获取告警历史."""
         history = list(self._alert_history)
 
         # 过滤严重性
@@ -397,7 +396,7 @@ class AlertingObserver(Observer):
         return history[:limit]
 
     def get_alert_rules(self) -> dict[str, dict[str, Any]]:
-        """获取所有告警规则"""
+        """获取所有告警规则."""
         return {
             name: {
                 "severity": rule["severity"],
@@ -409,7 +408,7 @@ class AlertingObserver(Observer):
         }
 
     def get_stats(self) -> dict[str, Any]:
-        """获取观察者统计信息"""
+        """获取观察者统计信息."""
         stats = super().get_stats()
         stats.update(
             {
@@ -422,14 +421,14 @@ class AlertingObserver(Observer):
 
 
 class PerformanceObserver(Observer):
-    """性能监控观察者"
+    """性能监控观察者".
 
     监控系统性能指标.
     Monitors system performance metrics.
     """
 
     def __init__(self, window_size: int = 100):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化性能观察者"
 
@@ -447,7 +446,7 @@ class PerformanceObserver(Observer):
         self._request_count = 0
 
     async def update(self, event: ObservableEvent) -> None:
-        """更新性能指标"""
+        """更新性能指标."""
         if event.event_type == ObservableEventType.PREDICTION_COMPLETED:
             response_time = event.data.get("response_time_ms")
             if response_time:
@@ -472,7 +471,7 @@ class PerformanceObserver(Observer):
             await self._handle_performance_degradation(event)
 
     async def _calculate_throughput(self) -> None:
-        """计算当前吞吐量"""
+        """计算当前吞吐量."""
         now = time.time()
         recent_requests = [t for t in self._throughput_data if now - t < 1]
 
@@ -482,7 +481,7 @@ class PerformanceObserver(Observer):
             self._current_throughput = throughput
 
     async def _handle_performance_degradation(self, event: ObservableEvent) -> None:
-        """处理性能下降事件"""
+        """处理性能下降事件."""
         degradation_type = event.data.get("type")
         degradation_value = event.data.get("value")
 
@@ -491,7 +490,7 @@ class PerformanceObserver(Observer):
         )
 
     def get_observed_event_types(self) -> list[ObservableEventType]:
-        """返回观察的事件类型"""
+        """返回观察的事件类型."""
         return [
             ObservableEventType.PREDICTION_COMPLETED,
             ObservableEventType.ERROR_OCCURRED,
@@ -499,7 +498,7 @@ class PerformanceObserver(Observer):
         ]
 
     def get_performance_metrics(self) -> dict[str, Any]:
-        """获取性能指标"""
+        """获取性能指标."""
         result = {}
 
         # 响应时间统计
@@ -535,7 +534,7 @@ class PerformanceObserver(Observer):
         return result
 
     def get_stats(self) -> dict[str, Any]:
-        """获取观察者统计信息"""
+        """获取观察者统计信息."""
         stats = super().get_stats()
         stats.update(
             {

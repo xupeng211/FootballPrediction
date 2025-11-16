@@ -1,6 +1,5 @@
-"""
-机器学习模块
-Machine Learning Module for Football Prediction
+"""机器学习模块
+Machine Learning Module for Football Prediction.
 """
 
 from .models.base_model import BaseModel

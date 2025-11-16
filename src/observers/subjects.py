@@ -1,6 +1,5 @@
-"""
-具体被观察者实现
-Concrete Subject Implementations
+"""具体被观察者实现
+Concrete Subject Implementations.
 
 提供各种被观察者的具体实现.
 Provides concrete implementations for various subjects.
@@ -16,14 +15,14 @@ from .base import ObservableEvent, ObservableEventType, Subject
 
 
 class SystemMetricsSubject(Subject):
-    """系统指标被观察者"
+    """系统指标被观察者".
 
     监控系统级别的指标变化.
     Monitors system-level metric changes.
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化系统指标被观察者"""
         super().__init__("SystemMetrics")
@@ -33,7 +32,7 @@ class SystemMetricsSubject(Subject):
         self._notification_interval = 60  # 秒
 
     def set_metric(self, name: str, value: float) -> None:
-        """设置指标值"
+        """设置指标值".
 
         Args:
             name: 指标名称
@@ -52,7 +51,7 @@ class SystemMetricsSubject(Subject):
         critical: float | None = None,
         direction: str = "above",
     ) -> None:
-        """设置指标阈值"
+        """设置指标阈值".
 
         Args:
             metric_name: 指标名称
@@ -69,7 +68,7 @@ class SystemMetricsSubject(Subject):
     async def _check_thresholds(
         self, metric_name: str, old_value: float | None, new_value: float
     ) -> None:
-        """检查指标是否超过阈值"""
+        """检查指标是否超过阈值."""
         if metric_name not in self._thresholds:
             return None
         threshold = self._thresholds[metric_name]
@@ -125,14 +124,14 @@ class SystemMetricsSubject(Subject):
     def _is_threshold_exceeded(
         self, value: float, threshold: float, direction: str
     ) -> bool:
-        """检查是否超过阈值"""
+        """检查是否超过阈值."""
         if direction == "above":
             return value > threshold
         else:
             return value < threshold
 
     async def collect_metrics(self) -> None:
-        """收集系统指标"""
+        """收集系统指标."""
         # 这里可以收集实际的系统指标
         # 例如:CPU,内存,磁盘使用率等
 
@@ -150,19 +149,19 @@ class SystemMetricsSubject(Subject):
             self.set_metric(name, value)
 
     def get_metrics(self) -> dict[str, float]:
-        """获取所有指标"""
+        """获取所有指标."""
         return dict(self._metrics)
 
 
 class PredictionMetricsSubject(Subject):
-    """预测指标被观察者"
+    """预测指标被观察者".
 
     监控预测相关的指标.
     Monitors prediction-related metrics.
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化预测指标被观察者"""
         super().__init__("PredictionMetrics")
@@ -179,7 +178,7 @@ class PredictionMetricsSubject(Subject):
         confidence: float | None = None,
         actual_result: dict[str, Any] | None = None,
     ) -> None:
-        """记录预测事件"
+        """记录预测事件".
 
         Args:
             strategy_name: 策略名称
@@ -228,7 +227,7 @@ class PredictionMetricsSubject(Subject):
         confidence: float | None,
         actual_result: dict[str, Any] | None,
     ) -> None:
-        """更新策略性能统计"""
+        """更新策略性能统计."""
         perf = self._strategy_performance[strategy_name]
 
         # 更新成功率
@@ -252,7 +251,7 @@ class PredictionMetricsSubject(Subject):
             perf["accuracy"] = perf.get("accuracy", 0.8)  # 模拟值
 
     async def check_performance_degradation(self) -> None:
-        """检查性能下降"""
+        """检查性能下降."""
         # 检查响应时间
         if self._response_times:
             recent_times = self._response_times[-100:]
@@ -289,7 +288,7 @@ class PredictionMetricsSubject(Subject):
                 await self.notify(event)
 
     def get_prediction_metrics(self) -> dict[str, Any]:
-        """获取预测指标"""
+        """获取预测指标."""
         result = {
             "total_predictions": sum(
                 count
@@ -314,14 +313,14 @@ class PredictionMetricsSubject(Subject):
 
 
 class AlertSubject(Subject):
-    """告警被观察者"
+    """告警被观察者".
 
     管理告警事件.
     Manages alert events.
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化告警被观察者"""
         super().__init__("AlertManager")
@@ -337,7 +336,7 @@ class AlertSubject(Subject):
         source: str | None = None,
         data: dict[str, Any] | None = None,
     ) -> None:
-        """触发告警"
+        """触发告警".
 
         Args:
             alert_type: 告警类型
@@ -373,7 +372,7 @@ class AlertSubject(Subject):
     async def _is_suppressed(
         self, alert_type: str, severity: str, source: str | None
     ) -> bool:
-        """检查告警是否被抑制"""
+        """检查告警是否被抑制."""
         key = f"{alert_type}:{severity}:{source or 'default'}"
 
         if key not in self._suppression_rules:
@@ -400,7 +399,7 @@ class AlertSubject(Subject):
         max_alerts: int = 5,
         time_window: int = 300,
     ) -> None:
-        """添加告警抑制规则"
+        """添加告警抑制规则".
 
         Args:
             alert_type: 告警类型
@@ -416,7 +415,7 @@ class AlertSubject(Subject):
         }
 
     def get_alert_statistics(self) -> dict[str, Any]:
-        """获取告警统计"""
+        """获取告警统计."""
         return {
             "alert_counts": dict(self._alert_counts),
             "alert_levels": {
@@ -427,14 +426,14 @@ class AlertSubject(Subject):
 
 
 class CacheSubject(Subject):
-    """缓存被观察者"
+    """缓存被观察者".
 
     监控缓存相关事件.
     Monitors cache-related events.
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化缓存被观察者"""
         super().__init__("CacheMonitor")
@@ -448,7 +447,7 @@ class CacheSubject(Subject):
         self._hit_rates: dict[str, float] = {}
 
     async def record_cache_hit(self, cache_name: str, key: str) -> None:
-        """记录缓存命中"""
+        """记录缓存命中."""
         self._cache_stats["hits"] += 1
         self._update_hit_rate(cache_name)
 
@@ -463,7 +462,7 @@ class CacheSubject(Subject):
         await self.notify(event)
 
     async def record_cache_miss(self, cache_name: str, key: str) -> None:
-        """记录缓存未命中"""
+        """记录缓存未命中."""
         self._cache_stats["misses"] += 1
         self._update_hit_rate(cache_name)
 
@@ -480,15 +479,15 @@ class CacheSubject(Subject):
     async def record_cache_set(
         self, cache_name: str, key: str, ttl: int | None = None
     ) -> None:
-        """记录缓存设置"""
+        """记录缓存设置."""
         self._cache_stats["sets"] += 1
 
     async def record_cache_delete(self, cache_name: str, key: str) -> None:
-        """记录缓存删除"""
+        """记录缓存删除."""
         self._cache_stats["deletes"] += 1
 
     def _update_hit_rate(self, cache_name: str) -> None:
-        """更新缓存命中率"""
+        """更新缓存命中率."""
         hits = self._cache_stats["hits"]
         misses = self._cache_stats["misses"]
         total = hits + misses
@@ -497,7 +496,7 @@ class CacheSubject(Subject):
             self._hit_rates[cache_name] = hits / total
 
     def get_cache_statistics(self) -> dict[str, Any]:
-        """获取缓存统计"""
+        """获取缓存统计."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
         hit_rate = (
             self._cache_stats["hits"] / total_requests if total_requests > 0 else 0

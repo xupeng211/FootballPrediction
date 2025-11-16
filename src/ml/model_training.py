@@ -1,7 +1,6 @@
-"""
-import random
+"""import random
 import pandas as pd
-import numpy as np
+import numpy as np.
 
 模型训练模块 - 桩实现
 
@@ -27,7 +26,7 @@ from src.models.prediction_model import FootballPredictionModel, PredictionModel
 
 
 class TrainingStatus(Enum):
-    """训练状态枚举"""
+    """训练状态枚举."""
 
     PENDING = "pending"
     PREPARING = "preparing"
@@ -39,7 +38,7 @@ class TrainingStatus(Enum):
 
 
 class ModelType(Enum):
-    """模型类型枚举"""
+    """模型类型枚举."""
 
     LINEAR_REGRESSION = "linear_regression"
     LOGISTIC_REGRESSION = "logistic_regression"
@@ -51,13 +50,13 @@ class ModelType(Enum):
 
 
 class TrainingConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """训练配置类"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化训练配置"""
         self.model_type = ModelType.RANDOM_FOREST
@@ -88,7 +87,7 @@ class TrainingConfig:
 
 
 class ModelTrainer:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -98,7 +97,7 @@ class ModelTrainer:
     """
 
     def __init__(self, config: TrainingConfig | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """
         初始化模型训练器
@@ -128,8 +127,7 @@ class ModelTrainer:
         target_column: str,
         feature_columns: list[str] | None = None,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        """
-        准备训练数据
+        """准备训练数据.
 
         Args:
             data: 原始数据
@@ -184,8 +182,7 @@ class ModelTrainer:
         X_val: pd.DataFrame | None = None,
         y_val: pd.Series | None = None,
     ) -> dict[str, Any]:
-        """
-        训练模型
+        """训练模型.
 
         Args:
             X_train: 训练特征
@@ -263,8 +260,7 @@ class ModelTrainer:
     async def evaluate(
         self, X_test: pd.DataFrame, y_test: pd.Series
     ) -> dict[str, float]:
-        """
-        评估模型
+        """评估模型.
 
         Args:
             X_test: 测试特征
@@ -294,8 +290,7 @@ class ModelTrainer:
         return metrics
 
     async def save_model(self, file_path: str) -> bool:
-        """
-        保存训练好的模型
+        """保存训练好的模型.
 
         Args:
             file_path: 保存路径
@@ -330,8 +325,7 @@ class ModelTrainer:
         return success
 
     async def load_model(self, file_path: str) -> bool:
-        """
-        加载训练好的模型
+        """加载训练好的模型.
 
         Args:
             file_path: 模型文件路径
@@ -361,8 +355,7 @@ class ModelTrainer:
         return success
 
     def get_training_summary(self) -> dict[str, Any]:
-        """
-        获取训练摘要
+        """获取训练摘要.
 
         Returns:
             训练摘要
@@ -392,13 +385,13 @@ class ModelTrainer:
 
 
 class ModelRegistry:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """模型注册表"""
 
     def __init__(self, registry_dir: str = "models/registry"):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """
         初始化模型注册表
@@ -418,8 +411,7 @@ class ModelRegistry:
         version: str = "1.0.0",
         metadata: dict[str, Any] | None = None,
     ) -> str:
-        """
-        注册模型
+        """注册模型.
 
         Args:
             model: 模型对象
@@ -454,8 +446,7 @@ class ModelRegistry:
         return model_id
 
     def list_models(self, name: str | None = None) -> list[dict[str, Any]]:
-        """
-        列出模型
+        """列出模型.
 
         Args:
             name: 模型名称过滤
@@ -471,8 +462,7 @@ class ModelRegistry:
         return sorted(models, key=lambda x: x["created_at"], reverse=True)
 
     def get_model(self, model_id: str) -> dict[str, Any] | None:
-        """
-        获取模型信息
+        """获取模型信息.
 
         Args:
             model_id: 模型ID
@@ -483,8 +473,7 @@ class ModelRegistry:
         return self._models.get(model_id)
 
     def delete_model(self, model_id: str) -> bool:
-        """
-        删除模型
+        """删除模型.
 
         Args:
             model_id: 模型ID
@@ -516,7 +505,7 @@ _global_registry: ModelRegistry | None = None
 
 
 def get_model_registry() -> ModelRegistry:
-    """获取全局模型注册表"""
+    """获取全局模型注册表."""
     global _global_registry
     if _global_registry is None:
         _global_registry = ModelRegistry()
@@ -530,8 +519,7 @@ async def train_football_model(
     feature_columns: list[str] | None = None,
     model_name: str = "football_prediction_model",
 ) -> tuple[PredictionModel, dict[str, Any]]:
-    """
-    训练足球预测模型
+    """训练足球预测模型.
 
     Args:
         data: 训练数据

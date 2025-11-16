@@ -1,13 +1,11 @@
-"""
-数据模型类
-"""
+"""数据模型类."""
 
 # 导入
 
 
 # 类定义
 class PerformanceInsight:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """性能洞察数据结构"""
@@ -16,7 +14,7 @@ class PerformanceInsight:
 
 
 class PerformanceTrend:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """性能趋势数据"""

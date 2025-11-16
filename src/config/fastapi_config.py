@@ -21,8 +21,7 @@ I18nUtils = MockI18nUtils
 
 
 def create_chinese_app() -> FastAPI:
-    """创建中文界面的 FastAPI 应用"""
-
+    """创建中文界面的 FastAPI 应用."""
     # 初始化中文
     init_i18n()
 
@@ -40,7 +39,7 @@ def create_chinese_app() -> FastAPI:
     original_openapi = app.openapi
 
     def custom_openapi():
-        """自定义OpenAPI文档"""
+        """自定义OpenAPI文档."""
         if app.openapi_schema:
             return app.openapi_schema
 

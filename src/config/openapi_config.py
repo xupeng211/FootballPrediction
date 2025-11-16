@@ -1,6 +1,5 @@
-"""
-OpenAPI 配置和文档增强
-Enhanced OpenAPI Configuration and Documentation
+"""OpenAPI 配置和文档增强
+Enhanced OpenAPI Configuration and Documentation.
 """
 
 from typing import Any
@@ -9,7 +8,7 @@ from fastapi import FastAPI
 
 
 class OpenAPIConfig:
-    """OpenAPI 配置管理类"""
+    """OpenAPI 配置管理类."""
 
     LICENSE_INFO = {
         "name": "MIT License",
@@ -24,7 +23,7 @@ class OpenAPIConfig:
 
     @staticmethod
     def configure_openapi(app: FastAPI) -> None:
-        """配置OpenAPI文档"""
+        """配置OpenAPI文档."""
         # 设置应用基本信息
         app.title = "Football Prediction System API"
         app.description = """
@@ -85,7 +84,7 @@ curl -X GET "https://api.footballprediction.com/health"
 
     @staticmethod
     def get_tags_metadata() -> list[dict[str, Any]]:
-        """获取API标签元数据"""
+        """获取API标签元数据."""
         return [
             {
                 "name": "根端点",
@@ -123,7 +122,7 @@ curl -X GET "https://api.footballprediction.com/health"
 
     @staticmethod
     def setup_docs_servers(app: FastAPI) -> None:
-        """设置文档服务器信息"""
+        """设置文档服务器信息."""
         app.servers = [
             {
                 "url": "http://localhost:8000",
@@ -141,20 +140,20 @@ curl -X GET "https://api.footballprediction.com/health"
 
     @staticmethod
     def setup_components(app: FastAPI) -> None:
-        """设置OpenAPI组件和模式"""
+        """设置OpenAPI组件和模式."""
         # 简化配置，避免复杂的OpenAPI操作
         pass
 
     @staticmethod
     def add_examples_to_schemas(app: FastAPI) -> None:
-        """为API模式添加示例"""
+        """为API模式添加示例."""
         # 这里可以为特定的Pydantic模型添加示例
         # 由于需要访问具体的模型，这里提供框架
         pass
 
 
 def setup_openapi(app: FastAPI) -> None:
-    """设置OpenAPI配置的便捷函数"""
+    """设置OpenAPI配置的便捷函数."""
     config = OpenAPIConfig()
 
     # 基础配置

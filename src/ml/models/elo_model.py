@@ -1,6 +1,5 @@
-"""
-ELO评分预测模型
-ELO Rating Model for Football Match Prediction
+"""ELO评分预测模型
+ELO Rating Model for Football Match Prediction.
 """
 
 import logging
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class EloModel(BaseModel):
-    """ELO评分预测模型"""
+    """ELO评分预测模型."""
 
     def __init__(self, version: str = "1.0"):
         super().__init__("EloModel", version)
@@ -47,8 +46,7 @@ class EloModel(BaseModel):
         }
 
     def _calculate_expectation(self, rating_a: float, rating_b: float) -> float:
-        """
-        计算期望得分（测试兼容方法）
+        """计算期望得分（测试兼容方法）.
 
         Args:
             rating_a: 队伍A的评分
@@ -63,8 +61,7 @@ class EloModel(BaseModel):
     def _update_rating(
         self, old_rating: float, opponent_rating: float, actual_result: float
     ) -> float:
-        """
-        更新评分（测试兼容方法）
+        """更新评分（测试兼容方法）.
 
         Args:
             old_rating: 原评分
@@ -84,8 +81,7 @@ class EloModel(BaseModel):
         return new_rating
 
     def _convert_outcome_to_score(self, outcome: str) -> float:
-        """
-        将比赛结果转换为得分（测试兼容方法）
+        """将比赛结果转换为得分（测试兼容方法）.
 
         Args:
             outcome: 比赛结果
@@ -105,8 +101,7 @@ class EloModel(BaseModel):
     def _calculate_match_probabilities(
         self, home_team: str, away_team: str
     ) -> tuple[float, float, float]:
-        """
-        计算比赛概率（测试兼容方法）
+        """计算比赛概率（测试兼容方法）.
 
         Args:
             home_team: 主队
@@ -128,8 +123,7 @@ class EloModel(BaseModel):
         )
 
     def calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
-        """
-        计算置信度
+        """计算置信度.
 
         Args:
             probabilities: 概率分布
@@ -152,8 +146,7 @@ class EloModel(BaseModel):
         return min(max(confidence, 0.1), 1.0)
 
     def update_hyperparameters(self, **kwargs):
-        """
-        更新超参数
+        """更新超参数.
 
         Args:
             **kwargs: 超参数键值对
@@ -180,7 +173,7 @@ class EloModel(BaseModel):
             self.home_advantage = kwargs["home_advantage"]
 
     def reset_model(self):
-        """重置模型"""
+        """重置模型."""
         self.team_elos.clear()
         self.team_ratings.clear()
         self.team_matches.clear()
@@ -189,13 +182,12 @@ class EloModel(BaseModel):
         self.last_training_time = None
 
     def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
-        """
-            准备ELO特征
+        """准备ELO特征.
 
-            Args:
+        Args:
                 match_data: 比赛数据
 
-            Returns:
+        Returns:
                 特征向量 [home_elo,
         away_elo,
         elo_difference,
@@ -217,10 +209,9 @@ class EloModel(BaseModel):
         training_data: pd.DataFrame,
         validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
-        """
-            训练ELO模型（计算历史ELO评分）
+        """训练ELO模型（计算历史ELO评分）.
 
-            Args:
+        Args:
                 training_data: 训练数据，必须包含 'home_team',
         'away_team',
         'home_score',
@@ -228,7 +219,7 @@ class EloModel(BaseModel):
         'result'
                 validation_data: 验证数据
 
-            Returns:
+        Returns:
                 训练结果
         """
         start_time = datetime.now()
@@ -289,8 +280,7 @@ class EloModel(BaseModel):
         return result
 
     def _initialize_team_elos(self, training_data: pd.DataFrame):
-        """
-        初始化所有球队的ELO评分
+        """初始化所有球队的ELO评分.
 
         Args:
             training_data: 训练数据
@@ -312,8 +302,7 @@ class EloModel(BaseModel):
         logger.info(f"Initialized ELO ratings for {len(all_teams)} teams")
 
     def _update_elo_after_match(self, match: pd.Series):
-        """
-        根据比赛结果更新ELO评分
+        """根据比赛结果更新ELO评分.
 
         Args:
             match: 比赛数据
@@ -373,8 +362,7 @@ class EloModel(BaseModel):
     def _calculate_expected_score(
         self, team_elo: float, opponent_elo: float, is_home: bool
     ) -> float:
-        """
-        计算期望得分
+        """计算期望得分.
 
         Args:
             team_elo: 球队ELO评分
@@ -399,8 +387,7 @@ class EloModel(BaseModel):
     def _get_actual_scores(
         self, home_score: int, away_score: int
     ) -> tuple[float, float]:
-        """
-        获取实际得分
+        """获取实际得分.
 
         Args:
             home_score: 主队进球
@@ -417,8 +404,7 @@ class EloModel(BaseModel):
             return 0.5, 0.5  # 平局
 
     def predict(self, match_data: dict[str, Any]) -> PredictionResult:
-        """
-        预测比赛结果
+        """预测比赛结果.
 
         Args:
             match_data: 比赛数据
@@ -482,8 +468,7 @@ class EloModel(BaseModel):
     def _convert_expected_scores_to_probabilities(
         self, home_expected: float, away_expected: float, elo_difference: float
     ) -> tuple[float, float, float]:
-        """
-        将期望得分转换为胜平负概率
+        """将期望得分转换为胜平负概率.
 
         Args:
             home_expected: 主队期望得分
@@ -524,8 +509,7 @@ class EloModel(BaseModel):
         return home_win_prob, draw_prob, away_win_prob
 
     def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
-        """
-        预测概率分布
+        """预测概率分布.
 
         Args:
             match_data: 比赛数据
@@ -552,8 +536,7 @@ class EloModel(BaseModel):
         )
 
     def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
-        """
-        评估模型性能
+        """评估模型性能.
 
         Args:
             test_data: 测试数据
@@ -620,8 +603,7 @@ class EloModel(BaseModel):
     def _cross_validate(
         self, training_data: pd.DataFrame, folds: int = 5
     ) -> dict[str, float]:
-        """
-        交叉验证
+        """交叉验证.
 
         Args:
             training_data: 训练数据
@@ -683,8 +665,7 @@ class EloModel(BaseModel):
         return avg_metrics
 
     def get_team_elo(self, team: str) -> float:
-        """
-        获取球队ELO评分
+        """获取球队ELO评分.
 
         Args:
             team: 球队名称
@@ -695,8 +676,7 @@ class EloModel(BaseModel):
         return self.team_elos.get(team, self.initial_elo)
 
     def get_team_elo_history(self, team: str) -> list[float]:
-        """
-        获取球队ELO历史
+        """获取球队ELO历史.
 
         Args:
             team: 球队名称
@@ -707,13 +687,12 @@ class EloModel(BaseModel):
         return self.elo_history.get(team, [self.initial_elo])
 
     def get_top_teams(self, limit: int = 20) -> list[tuple[str, float]]:
-        """
-            获取ELO评分最高的球队
+        """获取ELO评分最高的球队.
 
-            Args:
+        Args:
                 limit: 返回数量
 
-            Returns:
+        Returns:
                 (球队名称,
         ELO评分) 列表，按评分降序排列
         """
@@ -721,8 +700,7 @@ class EloModel(BaseModel):
         return sorted_teams[:limit]
 
     def save_model(self, file_path: str) -> bool:
-        """
-        保存模型
+        """保存模型.
 
         Args:
             file_path: 模型文件路径
@@ -757,8 +735,7 @@ class EloModel(BaseModel):
             return False
 
     def load_model(self, file_path: str) -> bool:
-        """
-        加载模型
+        """加载模型.
 
         Args:
             file_path: 模型文件路径
@@ -796,8 +773,7 @@ class EloModel(BaseModel):
             return False
 
     def validate_training_data(self, training_data: pd.DataFrame) -> bool:
-        """
-        验证训练数据
+        """验证训练数据.
 
         Args:
             training_data: 训练数据

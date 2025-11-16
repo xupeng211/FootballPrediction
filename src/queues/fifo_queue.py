@@ -1,5 +1,4 @@
-"""
-FIFO队列系统实现
+"""FIFO队列系统实现.
 
 提供先进先出的任务队列管理功能，支持：
 - Redis队列支持
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class QueueStatus(Enum):
-    """队列状态枚举"""
+    """队列状态枚举."""
 
     ACTIVE = "active"
     PAUSED = "paused"
@@ -29,7 +28,7 @@ class QueueStatus(Enum):
 
 
 class TaskPriority(Enum):
-    """任务优先级枚举"""
+    """任务优先级枚举."""
 
     LOW = 1
     NORMAL = 2
@@ -39,7 +38,7 @@ class TaskPriority(Enum):
 
 @dataclass
 class QueueTask:
-    """队列任务数据类"""
+    """队列任务数据类."""
 
     id: str
     task_type: str
@@ -52,7 +51,7 @@ class QueueTask:
     metadata: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         data = asdict(self)
         data["created_at"] = self.created_at.isoformat()
         data["scheduled_at"] = (
@@ -63,7 +62,7 @@ class QueueTask:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "QueueTask":
-        """从字典创建任务"""
+        """从字典创建任务."""
         data["created_at"] = datetime.fromisoformat(data["created_at"])
         if data["scheduled_at"]:
             data["scheduled_at"] = datetime.fromisoformat(data["scheduled_at"])
@@ -72,7 +71,7 @@ class QueueTask:
 
 
 class FIFOQueue:
-    """FIFO队列基类"""
+    """FIFO队列基类."""
 
     def __init__(self, name: str):
         self.name = name
@@ -86,28 +85,28 @@ class FIFOQueue:
         }
 
     async def enqueue(self, task: QueueTask) -> bool:
-        """将任务加入队列"""
+        """将任务加入队列."""
         raise NotImplementedError
 
     async def dequeue(self, timeout: int | None = None) -> QueueTask | None:
-        """从队列取出任务"""
+        """从队列取出任务."""
         raise NotImplementedError
 
     async def get_size(self) -> int:
-        """获取队列大小"""
+        """获取队列大小."""
         raise NotImplementedError
 
     async def clear(self) -> bool:
-        """清空队列"""
+        """清空队列."""
         raise NotImplementedError
 
     def get_statistics(self) -> dict[str, Any]:
-        """获取队列统计信息"""
+        """获取队列统计信息."""
         return self.statistics.copy()
 
 
 class MemoryFIFOQueue(FIFOQueue):
-    """内存FIFO队列实现"""
+    """内存FIFO队列实现."""
 
     def __init__(self, name: str, max_size: int = 10000):
         super().__init__(name)
@@ -115,7 +114,7 @@ class MemoryFIFOQueue(FIFOQueue):
         self._queue = asyncio.Queue(maxsize=max_size)
 
     async def enqueue(self, task: QueueTask) -> bool:
-        """将任务加入队列"""
+        """将任务加入队列."""
         try:
             # 将任务序列化后放入队列
             task_data = task.to_dict()
@@ -132,7 +131,7 @@ class MemoryFIFOQueue(FIFOQueue):
             return False
 
     async def dequeue(self, timeout: int | None = None) -> QueueTask | None:
-        """从队列取出任务"""
+        """从队列取出任务."""
         try:
             if timeout:
                 task_data = await asyncio.wait_for(self._queue.get(), timeout=timeout)
@@ -152,11 +151,11 @@ class MemoryFIFOQueue(FIFOQueue):
             return None
 
     async def get_size(self) -> int:
-        """获取队列大小"""
+        """获取队列大小."""
         return self._queue.qsize()
 
     async def clear(self) -> bool:
-        """清空队列"""
+        """清空队列."""
         try:
             while not self._queue.empty():
                 try:
@@ -174,7 +173,7 @@ class MemoryFIFOQueue(FIFOQueue):
 
 
 class RedisFIFOQueue(FIFOQueue):
-    """Redis FIFO队列实现"""
+    """Redis FIFO队列实现."""
 
     def __init__(self, name: str, redis_client=None, **redis_config):
         super().__init__(name)
@@ -185,7 +184,7 @@ class RedisFIFOQueue(FIFOQueue):
         self.failed_key = f"failed:{name}"
 
     async def _get_redis_client(self):
-        """获取Redis客户端"""
+        """获取Redis客户端."""
         if self.redis_client:
             return self.redis_client
 
@@ -206,7 +205,7 @@ class RedisFIFOQueue(FIFOQueue):
             return None
 
     async def enqueue(self, task: QueueTask) -> bool:
-        """将任务加入Redis队列"""
+        """将任务加入Redis队列."""
         try:
             redis = await self._get_redis_client()
             if not redis:
@@ -224,7 +223,7 @@ class RedisFIFOQueue(FIFOQueue):
             return False
 
     async def dequeue(self, timeout: int | None = None) -> QueueTask | None:
-        """从Redis队列取出任务"""
+        """从Redis队列取出任务."""
         try:
             redis = await self._get_redis_client()
             if not redis:
@@ -259,7 +258,7 @@ class RedisFIFOQueue(FIFOQueue):
             return None
 
     async def get_size(self) -> int:
-        """获取Redis队列大小"""
+        """获取Redis队列大小."""
         try:
             redis = await self._get_redis_client()
             if not redis:
@@ -271,7 +270,7 @@ class RedisFIFOQueue(FIFOQueue):
             return 0
 
     async def clear(self) -> bool:
-        """清空Redis队列"""
+        """清空Redis队列."""
         try:
             redis = await self._get_redis_client()
             if not redis:
@@ -291,7 +290,7 @@ class RedisFIFOQueue(FIFOQueue):
             return False
 
     async def complete_task(self, task_id: str) -> bool:
-        """标记任务完成，从处理队列移除"""
+        """标记任务完成，从处理队列移除."""
         try:
             redis = await self._get_redis_client()
             if not redis:
@@ -315,7 +314,7 @@ class RedisFIFOQueue(FIFOQueue):
             return False
 
     async def fail_task(self, task_id: str, error_message: str = None) -> bool:
-        """标记任务失败"""
+        """标记任务失败."""
         try:
             redis = await self._get_redis_client()
             if not redis:
@@ -362,7 +361,7 @@ class RedisFIFOQueue(FIFOQueue):
             return False
 
     async def get_failed_tasks(self, limit: int = 100) -> list[QueueTask]:
-        """获取失败的任务列表"""
+        """获取失败的任务列表."""
         try:
             redis = await self._get_redis_client()
             if not redis:
@@ -385,7 +384,7 @@ class RedisFIFOQueue(FIFOQueue):
 
 
 class QueueManager:
-    """队列管理器"""
+    """队列管理器."""
 
     def __init__(self):
         self.queues: dict[str, FIFOQueue] = {}
@@ -393,7 +392,7 @@ class QueueManager:
     def create_queue(
         self, name: str, queue_type: str = "memory", **kwargs
     ) -> FIFOQueue:
-        """创建队列"""
+        """创建队列."""
         if name in self.queues:
             logger.warning(f"队列 {name} 已存在")
             return self.queues[name]
@@ -410,11 +409,11 @@ class QueueManager:
         return queue
 
     def get_queue(self, name: str) -> FIFOQueue | None:
-        """获取队列"""
+        """获取队列."""
         return self.queues.get(name)
 
     def remove_queue(self, name: str) -> bool:
-        """移除队列"""
+        """移除队列."""
         if name in self.queues:
             del self.queues[name]
             logger.info(f"移除队列: {name}")
@@ -422,7 +421,7 @@ class QueueManager:
         return False
 
     async def enqueue_to_queue(self, queue_name: str, task: QueueTask) -> bool:
-        """向指定队列添加任务"""
+        """向指定队列添加任务."""
         queue = self.get_queue(queue_name)
         if not queue:
             logger.error(f"队列 {queue_name} 不存在")
@@ -432,7 +431,7 @@ class QueueManager:
     async def dequeue_from_queue(
         self, queue_name: str, timeout: int | None = None
     ) -> QueueTask | None:
-        """从指定队列取出任务"""
+        """从指定队列取出任务."""
         queue = self.get_queue(queue_name)
         if not queue:
             logger.error(f"队列 {queue_name} 不存在")
@@ -440,14 +439,14 @@ class QueueManager:
         return await queue.dequeue(timeout)
 
     def get_all_statistics(self) -> dict[str, Any]:
-        """获取所有队列的统计信息"""
+        """获取所有队列的统计信息."""
         return {
             queue_name: queue.get_statistics()
             for queue_name, queue in self.queues.items()
         }
 
     async def clear_all_queues(self) -> dict[str, bool]:
-        """清空所有队列"""
+        """清空所有队列."""
         results = {}
         for queue_name, queue in self.queues.items():
             results[queue_name] = await queue.clear()
@@ -465,7 +464,7 @@ def create_task(
     priority: TaskPriority = TaskPriority.NORMAL,
     **kwargs,
 ) -> QueueTask:
-    """创建队列任务"""
+    """创建队列任务."""
     return QueueTask(
         id=str(uuid.uuid4()),
         task_type=task_type,
@@ -482,11 +481,11 @@ async def enqueue_task(
     data: dict[str, Any],
     priority: TaskPriority = TaskPriority.NORMAL,
 ) -> bool:
-    """便捷的入队函数"""
+    """便捷的入队函数."""
     task = create_task(task_type, data, priority)
     return await queue_manager.enqueue_to_queue(queue_name, task)
 
 
 async def dequeue_task(queue_name: str, timeout: int | None = None) -> QueueTask | None:
-    """便捷的出队函数"""
+    """便捷的出队函数."""
     return await queue_manager.dequeue_from_queue(queue_name, timeout)

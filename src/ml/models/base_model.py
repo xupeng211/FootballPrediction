@@ -1,6 +1,5 @@
-"""
-基础预测模型
-Base Prediction Model for Football Matches
+"""基础预测模型
+Base Prediction Model for Football Matches.
 """
 
 import abc
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PredictionResult:
-    """预测结果"""
+    """预测结果."""
 
     match_id: str
     home_team: str
@@ -32,7 +31,7 @@ class PredictionResult:
     created_at: datetime
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "match_id": self.match_id,
             "home_team": self.home_team,
@@ -50,7 +49,7 @@ class PredictionResult:
 
 @dataclass
 class TrainingResult:
-    """训练结果"""
+    """训练结果."""
 
     model_name: str
     model_version: str
@@ -67,7 +66,7 @@ class TrainingResult:
     created_at: datetime
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "model_name": self.model_name,
             "model_version": self.model_version,
@@ -86,7 +85,7 @@ class TrainingResult:
 
 
 class BaseModel(abc.ABC):
-    """基础预测模型抽象类"""
+    """基础预测模型抽象类."""
 
     def __init__(self, model_name: str, version: str = "1.0"):
         self.model_name = model_name
@@ -100,8 +99,7 @@ class BaseModel(abc.ABC):
 
     @abc.abstractmethod
     def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
-        """
-        准备特征
+        """准备特征.
 
         Args:
             match_data: 比赛数据
@@ -116,8 +114,7 @@ class BaseModel(abc.ABC):
         training_data: pd.DataFrame,
         validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
-        """
-        训练模型
+        """训练模型.
 
         Args:
             training_data: 训练数据
@@ -129,8 +126,7 @@ class BaseModel(abc.ABC):
 
     @abc.abstractmethod
     def predict(self, match_data: dict[str, Any]) -> PredictionResult:
-        """
-        预测比赛结果
+        """预测比赛结果.
 
         Args:
             match_data: 比赛数据
@@ -141,8 +137,7 @@ class BaseModel(abc.ABC):
 
     @abc.abstractmethod
     def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
-        """
-        预测概率分布
+        """预测概率分布.
 
         Args:
             match_data: 比赛数据
@@ -153,8 +148,7 @@ class BaseModel(abc.ABC):
 
     @abc.abstractmethod
     def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
-        """
-        评估模型性能
+        """评估模型性能.
 
         Args:
             test_data: 测试数据
@@ -165,8 +159,7 @@ class BaseModel(abc.ABC):
 
     @abc.abstractmethod
     def save_model(self, file_path: str) -> bool:
-        """
-        保存模型
+        """保存模型.
 
         Args:
             file_path: 模型文件路径
@@ -177,8 +170,7 @@ class BaseModel(abc.ABC):
 
     @abc.abstractmethod
     def load_model(self, file_path: str) -> bool:
-        """
-        加载模型
+        """加载模型.
 
         Args:
             file_path: 模型文件路径
@@ -188,8 +180,7 @@ class BaseModel(abc.ABC):
         """
 
     def get_feature_importance(self) -> dict[str, float]:
-        """
-        获取特征重要性
+        """获取特征重要性.
 
         Returns:
             特征重要性字典
@@ -205,8 +196,7 @@ class BaseModel(abc.ABC):
         )
 
     def get_model_info(self) -> dict[str, Any]:
-        """
-        获取模型信息
+        """获取模型信息.
 
         Returns:
             模型信息字典
@@ -224,8 +214,7 @@ class BaseModel(abc.ABC):
         }
 
     def validate_prediction_input(self, match_data: dict[str, Any]) -> bool:
-        """
-        验证预测输入数据
+        """验证预测输入数据.
 
         Args:
             match_data: 比赛数据
@@ -248,15 +237,14 @@ class BaseModel(abc.ABC):
         return True
 
     def calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
-        """
-            计算预测置信度
+        """计算预测置信度.
 
-            Args:
+        Args:
                 probabilities: (主胜概率,
         平局概率,
         客胜概率)
 
-            Returns:
+        Returns:
                 置信度 (0-1)
         """
         # 使用最大概率作为置信度
@@ -279,8 +267,7 @@ class BaseModel(abc.ABC):
     def get_outcome_from_probabilities(
         self, probabilities: tuple[float, float, float]
     ) -> str:
-        """
-        从概率分布获取预测结果
+        """从概率分布获取预测结果.
 
         Args:
             probabilities: (主胜概率, 平局概率, 客胜概率)
@@ -293,8 +280,7 @@ class BaseModel(abc.ABC):
         return outcomes[max_index]
 
     def validate_training_data(self, training_data: pd.DataFrame) -> bool:
-        """
-        验证训练数据
+        """验证训练数据.
 
         Args:
             training_data: 训练数据
@@ -326,8 +312,7 @@ class BaseModel(abc.ABC):
         return True
 
     def log_training_step(self, step: int, metrics: dict[str, float]):
-        """
-        记录训练步骤
+        """记录训练步骤.
 
         Args:
             step: 训练步骤
@@ -339,8 +324,7 @@ class BaseModel(abc.ABC):
         logger.info(f"Training step {step}: {metrics}")
 
     def get_training_curve(self) -> dict[str, list[float]]:
-        """
-        获取训练曲线
+        """获取训练曲线.
 
         Returns:
             指标名称到值列表的映射
@@ -357,8 +341,7 @@ class BaseModel(abc.ABC):
         return curves
 
     def update_hyperparameters(self, **kwargs):
-        """
-        更新超参数
+        """更新超参数.
 
         Args:
             **kwargs: 超参数键值对
@@ -367,7 +350,7 @@ class BaseModel(abc.ABC):
         logger.info(f"Updated hyperparameters: {kwargs}")
 
     def reset_model(self):
-        """重置模型"""
+        """重置模型."""
         self.model = None
         self.is_trained = False
         self.training_history = []

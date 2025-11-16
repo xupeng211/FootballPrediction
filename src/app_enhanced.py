@@ -1,6 +1,5 @@
-"""
-增强版 FastAPI 应用
-Enhanced FastAPI Application
+"""增强版 FastAPI 应用
+Enhanced FastAPI Application.
 
 提供基础的应用结构,包含数据库连接和基本的预测功能.
 Provides basic application structure with database connection and basic prediction functionality.
@@ -24,7 +23,7 @@ db_pool = None
 
 
 async def init_db_pool():
-    """启动时初始化数据库连接"""
+    """启动时初始化数据库连接."""
     global db_pool
     try:
         db_pool = await asyncpg.create_pool(DATABASE_URL)
@@ -33,7 +32,7 @@ async def init_db_pool():
 
 
 async def close_db_pool():
-    """关闭时清理连接池"""
+    """关闭时清理连接池."""
     global db_pool
     if db_pool:
         await db_pool.close()
@@ -41,7 +40,7 @@ async def close_db_pool():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
+    """应用生命周期管理."""
     # 启动时初始化
     await init_db_pool()
     yield
@@ -60,7 +59,7 @@ app = FastAPI(
 
 # 数据模型
 class PredictionRequest(BaseModel):
-    """预测请求模型"""
+    """预测请求模型."""
 
     match_id: str
     home_team: str
@@ -74,7 +73,7 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """预测响应模型"""
+    """预测响应模型."""
 
     match_id: str
     prediction: str
@@ -85,19 +84,19 @@ class PredictionResponse(BaseModel):
 # 路由端点
 @app.get("/")
 async def root():
-    """根端点"""
+    """根端点."""
     return {"message": "足球预测系统 API", "version": "1.0.0"}
 
 
 @app.get("/health")
 async def health_check():
-    """健康检查"""
+    """健康检查."""
     return {"status": "healthy", "database": "connected" if db_pool else "disconnected"}
 
 
 @app.get("/db")
 async def get_db_connection():
-    """获取数据库连接"""
+    """获取数据库连接."""
     if not db_pool:
         raise HTTPException(status_code=500, detail="数据库连接未初始化")
 
@@ -108,7 +107,7 @@ async def get_db_connection():
 
 @app.get("/predictions", response_model=list[PredictionResponse])
 async def get_predictions():
-    """获取所有预测"""
+    """获取所有预测."""
     if not db_pool:
         raise HTTPException(status_code=500, detail="数据库连接未初始化")
 
@@ -130,7 +129,7 @@ async def get_predictions():
 
 @app.post("/predictions", response_model=PredictionResponse)
 async def create_prediction(request: PredictionRequest):
-    """创建新预测"""
+    """创建新预测."""
     if not db_pool:
         raise HTTPException(status_code=500, detail="数据库连接未初始化")
 

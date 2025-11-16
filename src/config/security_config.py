@@ -1,6 +1,5 @@
-"""
-安全配置管理
-Security Configuration Management
+"""安全配置管理
+Security Configuration Management.
 
 提供安全相关的配置管理功能:
 - 环境变量管理
@@ -18,14 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 class SecurityConfig:
-    """安全配置管理类"""
+    """安全配置管理类."""
 
     def __init__(self):
-        """初始化安全配置"""
+        """初始化安全配置."""
         self._load_config()
 
     def _load_config(self):
-        """加载安全配置"""
+        """加载安全配置."""
         # 数据库配置
         self.database_url = os.getenv("DATABASE_URL")
         self.database_host = os.getenv("DATABASE_HOST", "localhost")
@@ -65,7 +64,7 @@ class SecurityConfig:
         self.test_user_password_hash = os.getenv("TEST_USER_PASSWORD_HASH")
 
     def get_database_url(self) -> str:
-        """获取数据库连接URL"""
+        """获取数据库连接URL."""
         if self.database_url:
             return self.database_url
 
@@ -75,7 +74,7 @@ class SecurityConfig:
         return f"postgresql://{self.database_user}:{self.database_password}@{self.database_host}:{self.database_port}/{self.database_name}"
 
     def get_redis_url(self) -> str:
-        """获取Redis连接URL"""
+        """获取Redis连接URL."""
         if self.redis_url:
             return self.redis_url
 
@@ -87,7 +86,7 @@ class SecurityConfig:
             return f"redis://{self.redis_host}:{self.redis_port}/0"
 
     def validate(self) -> dict[str, Any]:
-        """验证配置完整性"""
+        """验证配置完整性."""
         issues = []
         warnings = []
 
@@ -122,7 +121,7 @@ class SecurityConfig:
         }
 
     def get_safe_config(self) -> dict[str, Any]:
-        """获取安全的配置信息（隐藏敏感信息）"""
+        """获取安全的配置信息（隐藏敏感信息）."""
         return {
             "database_host": self.database_host,
             "database_port": self.database_port,
@@ -142,23 +141,23 @@ security_config = SecurityConfig()
 
 
 def get_security_config() -> SecurityConfig:
-    """获取全局安全配置实例"""
+    """获取全局安全配置实例."""
     return security_config
 
 
 # 便捷函数
 def validate_security_config() -> dict[str, Any]:
-    """验证安全配置的便捷函数"""
+    """验证安全配置的便捷函数."""
     return security_config.validate()
 
 
 def get_database_url() -> str:
-    """获取数据库URL的便捷函数"""
+    """获取数据库URL的便捷函数."""
     return security_config.get_database_url()
 
 
 def get_redis_url() -> str:
-    """获取Redis URL的便捷函数"""
+    """获取Redis URL的便捷函数."""
     return security_config.get_redis_url()
 
 

@@ -1,5 +1,4 @@
-"""
-特征计算器实现
+"""特征计算器实现.
 
 足球预测系统的核心特征计算逻辑：
 - 近期战绩特征计算
@@ -29,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class FeatureCalculator:
-    """特征计算器
+    """特征计算器.
 
     负责计算足球预测所需的各种特征
     """
@@ -41,7 +40,7 @@ class FeatureCalculator:
     async def calculate_recent_performance_features(
         self, team_id: int, calculation_date: datetime, days_back: int = 30
     ) -> RecentPerformanceFeatures | None:
-        """计算球队近期战绩特征
+        """计算球队近期战绩特征.
 
         Args:
             team_id: 球队ID
@@ -145,7 +144,7 @@ class FeatureCalculator:
         calculation_date: datetime,
         years_back: int = 5,
     ) -> HistoricalMatchupFeatures | None:
-        """计算历史对战特征
+        """计算历史对战特征.
 
         Args:
             home_team_id: 主队ID
@@ -258,7 +257,7 @@ class FeatureCalculator:
     async def calculate_odds_features(
         self, match_id: int, calculation_date: datetime
     ) -> OddsFeatures | None:
-        """计算赔率特征
+        """计算赔率特征.
 
         Args:
             match_id: 比赛ID
@@ -349,7 +348,7 @@ class FeatureCalculator:
     async def calculate_all_match_features(
         self, match_id: int, calculation_date: datetime | None = None
     ) -> AllMatchFeatures | None:
-        """计算比赛的所有特征
+        """计算比赛的所有特征.
 
         Args:
             match_id: 比赛ID
@@ -420,7 +419,7 @@ class FeatureCalculator:
     async def calculate_team_features(
         self, team_id: int, calculation_date: datetime | None = None
     ) -> AllTeamFeatures | None:
-        """计算球队的所有特征
+        """计算球队的所有特征.
 
         Args:
             team_id: 球队ID
@@ -470,7 +469,7 @@ class FeatureCalculator:
     async def batch_calculate_match_features(
         self, match_ids: list[int], calculation_date: datetime | None = None
     ) -> dict[int, AllMatchFeatures | None]:
-        """批量计算比赛特征
+        """批量计算比赛特征.
 
         Args:
             match_ids: 比赛ID列表

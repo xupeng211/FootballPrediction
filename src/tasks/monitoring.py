@@ -1,5 +1,4 @@
-"""
-任务监控模块
+"""任务监控模块.
 
 提供任务调度系统的监控功能,包括:
 - 任务执行状态监控
@@ -25,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class TaskMonitor:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -36,7 +35,7 @@ class TaskMonitor:
     """
 
     def __init__(self, registry: CollectorRegistry | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass
         # 添加pass语句
         """
@@ -86,8 +85,7 @@ class TaskMonitor:
         )
 
     def _create_counter(self, name: str, description: str, labels: list) -> Counter:
-        """
-        创建 Counter 指标,避免重复注册
+        """创建 Counter 指标,避免重复注册.
 
         在测试环境中使用独立的注册表可以避免指标重复注册问题.
         """
@@ -107,9 +105,7 @@ class TaskMonitor:
             return cast(Counter, mock_counter)
 
     def _create_histogram(self, name: str, description: str, labels: list) -> Histogram:
-        """
-        创建 Histogram 指标,避免重复注册
-        """
+        """创建 Histogram 指标,避免重复注册."""
         try:
             return Histogram(name, description, labels, registry=self.registry)
         except ValueError:
@@ -121,9 +117,7 @@ class TaskMonitor:
             return mock_histogram
 
     def _create_gauge(self, name: str, description: str, labels: list) -> Gauge:
-        """
-        创建 Gauge 指标,避免重复注册
-        """
+        """创建 Gauge 指标,避免重复注册."""
         try:
             return Gauge(name, description, labels, registry=self.registry)
         except ValueError:
@@ -137,15 +131,14 @@ class TaskMonitor:
             return mock_gauge
 
     def record_task_start(self, task_name: str, task_id: str) -> None:
-        """记录任务开始"""
+        """记录任务开始."""
         self.active_tasks.labels(task_name=task_name).inc()
         logger.info(f"任务开始: {task_name} (ID: {task_id})")
 
     def record_task_completion(
         self, task_name: str, task_id: str, duration: float, status: str = "success"
     ) -> None:
-        """
-        记录任务完成
+        """记录任务完成.
 
         Args:
             task_name: 任务名称
@@ -163,18 +156,18 @@ class TaskMonitor:
         )
 
     def record_task_retry(self, task_name: str, retry_count: int) -> None:
-        """记录任务重试"""
+        """记录任务重试."""
         self.retry_counter.labels(
             task_name=task_name, retry_count=str(retry_count)
         ).inc()
         logger.warning(f"任务重试: {task_name}, 第 {retry_count} 次重试")
 
     def update_queue_size(self, queue_name: str, size: int) -> None:
-        """更新队列大小"""
+        """更新队列大小."""
         self.queue_size.labels(queue_name=queue_name).set(size)
 
     async def _get_db_type(self) -> str:
-        """获取数据库类型"""
+        """获取数据库类型."""
         if self._db_type is None:
             try:
                 db_manager = DatabaseManager()
@@ -188,15 +181,14 @@ class TaskMonitor:
         return self._db_type
 
     async def _get_query_builder(self) -> CompatibleQueryBuilder:
-        """获取兼容性查询构建器"""
+        """获取兼容性查询构建器."""
         if self._query_builder is None:
             db_type = await self._get_db_type()
             self._query_builder = CompatibleQueryBuilder(db_type)
         return self._query_builder
 
     async def calculate_error_rates(self) -> dict[str, float]:
-        """
-        计算各任务的错误率
+        """计算各任务的错误率.
 
         Returns:
             任务错误率字典
@@ -253,8 +245,7 @@ class TaskMonitor:
             return {}
 
     async def get_task_statistics(self, hours: int = 24) -> dict[str, Any]:
-        """
-        获取任务统计信息
+        """获取任务统计信息.
 
         Args:
             hours: 统计时间范围(小时)
@@ -329,8 +320,7 @@ class TaskMonitor:
             return {"error": str(e), "statistics": []}
 
     async def check_task_health(self) -> dict[str, Any]:
-        """
-        检查任务系统健康状态
+        """检查任务系统健康状态.
 
         Returns:
             健康状态信息
@@ -413,7 +403,7 @@ class TaskMonitor:
             }
 
     async def _get_queue_sizes(self) -> dict[str, int]:
-        """获取队列大小"""
+        """获取队列大小."""
         try:
             import os
 
@@ -442,7 +432,7 @@ class TaskMonitor:
             return {}
 
     async def _check_task_delays(self) -> dict[str, float]:
-        """检查任务延迟"""
+        """检查任务延迟."""
         try:
             db_manager = DatabaseManager()
             task_delays = {}
@@ -463,8 +453,7 @@ class TaskMonitor:
             return {}
 
     def generate_monitoring_report(self) -> dict[str, Any]:
-        """
-        生成监控报告
+        """生成监控报告.
 
         Returns:
             监控报告数据

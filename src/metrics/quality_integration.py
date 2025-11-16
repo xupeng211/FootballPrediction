@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-高级质量度量集成
-Advanced Quality Metrics Integration
+"""高级质量度量集成
+Advanced Quality Metrics Integration.
 
 将高级度量指标集成到现有质量监控系统中
 """
@@ -17,20 +16,20 @@ logger = get_logger(__name__)
 
 
 class QualityMetricsIntegrator:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """质量度量集成器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass
         # 添加pass语句
         self.analyzer = AdvancedMetricsAnalyzer()
         self.logger = get_logger(self.__class__.__name__)
 
     def enhance_quality_report(self, existing_report: dict[str, Any]) -> dict[str, Any]:
-        """增强现有质量报告"""
+        """增强现有质量报告."""
         try:
             # 获取高级度量数据
             project_root = Path(__file__).parent.parent.parent
@@ -59,7 +58,7 @@ class QualityMetricsIntegrator:
             return existing_report
 
     def _calculate_enhanced_overall_score(self, report: dict[str, Any]) -> float:
-        """计算增强的综合分数"""
+        """计算增强的综合分数."""
         scores = []
 
         # 原始质量分数
@@ -94,7 +93,7 @@ class QualityMetricsIntegrator:
     def _create_advanced_summary(
         self, advanced_metrics: dict[str, Any]
     ) -> dict[str, Any]:
-        """创建高级度量摘要"""
+        """创建高级度量摘要."""
         summary = {}
 
         # 复杂度摘要
@@ -144,7 +143,7 @@ class QualityMetricsIntegrator:
         return summary
 
     def _generate_recommendations(self, summary: dict[str, Any]) -> list:
-        """生成改进建议"""
+        """生成改进建议."""
         recommendations = []
 
         # 复杂度建议
@@ -211,7 +210,7 @@ class QualityMetricsIntegrator:
 
 
 def enhance_quality_guardian():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """为质量守护系统添加高级度量功能"""
     # 这里可以修改 scripts/quality_guardian.py 来集成高级度量
@@ -220,7 +219,7 @@ def enhance_quality_guardian():
 
 
 def main():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """主函数,用于测试集成"""
     integrator = QualityMetricsIntegrator()

@@ -1,5 +1,4 @@
-"""
-任务调度器
+"""任务调度器.
 
 提供任务调度和管理功能，包括：
 - 任务优先级调度
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class SchedulerStatus(Enum):
-    """调度器状态"""
+    """调度器状态."""
 
     IDLE = "idle"
     RUNNING = "running"
@@ -31,7 +30,7 @@ class SchedulerStatus(Enum):
 
 @dataclass
 class ScheduledTask:
-    """定时任务"""
+    """定时任务."""
 
     id: str
     task_type: str
@@ -44,7 +43,7 @@ class ScheduledTask:
     attempts: int = 0
 
     def to_queue_task(self) -> QueueTask:
-        """转换为队列任务"""
+        """转换为队列任务."""
         return QueueTask(
             id=self.id,
             task_type=self.task_type,
@@ -56,7 +55,7 @@ class ScheduledTask:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "task_type": self.task_type,
@@ -75,7 +74,7 @@ class ScheduledTask:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ScheduledTask":
-        """从字典创建"""
+        """从字典创建."""
         return cls(
             id=data["id"],
             task_type=data["task_type"],
@@ -94,18 +93,18 @@ class ScheduledTask:
 
 
 class TaskHandler:
-    """任务处理器接口"""
+    """任务处理器接口."""
 
     async def handle_task(self, task: QueueTask) -> dict[str, Any]:
-        """处理任务"""
+        """处理任务."""
         raise NotImplementedError
 
 
 class DefaultTaskHandler(TaskHandler):
-    """默认任务处理器"""
+    """默认任务处理器."""
 
     async def handle_task(self, task: QueueTask) -> dict[str, Any]:
-        """默认处理逻辑"""
+        """默认处理逻辑."""
         logger.info(f"处理任务: {task.id} (类型: {task.task_type})")
 
         # 模拟任务处理
@@ -124,7 +123,7 @@ class DefaultTaskHandler(TaskHandler):
 
 
 class TaskScheduler:
-    """任务调度器"""
+    """任务调度器."""
 
     def __init__(self, max_workers: int = 4):
         self.max_workers = max_workers
@@ -143,7 +142,7 @@ class TaskScheduler:
         }
 
     def register_handler(self, task_type: str, handler: TaskHandler):
-        """注册任务处理器"""
+        """注册任务处理器."""
         self.handlers[task_type] = handler
         logger.info(f"注册任务处理器: {task_type}")
 
@@ -157,7 +156,7 @@ class TaskScheduler:
         recurrence_interval: timedelta | None = None,
         **kwargs,
     ) -> str:
-        """调度任务"""
+        """调度任务."""
         if schedule_time is None:
             schedule_time = datetime.now()
 
@@ -185,7 +184,7 @@ class TaskScheduler:
         return scheduled_task.id
 
     async def start(self):
-        """启动调度器"""
+        """启动调度器."""
         if self.status == SchedulerStatus.RUNNING:
             logger.warning("调度器已在运行中")
             return
@@ -199,7 +198,7 @@ class TaskScheduler:
         asyncio.create_task(self._worker_loop())
 
     async def stop(self):
-        """停止调度器"""
+        """停止调度器."""
         if self.status == SchedulerStatus.STOPPED:
             logger.warning("调度器已停止")
             return
@@ -216,12 +215,12 @@ class TaskScheduler:
             await asyncio.gather(*self.worker_tasks.values(), return_exceptions=True)
 
     async def pause(self):
-        """暂停调度器"""
+        """暂停调度器."""
         self.status = SchedulerStatus.PAUSED
         logger.info("任务调度器暂停")
 
     async def resume(self):
-        """恢复调度器"""
+        """恢复调度器."""
         if self.status == SchedulerStatus.RUNNING:
             return
 
@@ -229,7 +228,7 @@ class TaskScheduler:
         logger.info("任务调度器恢复")
 
     async def _schedule_loop(self):
-        """调度循环"""
+        """调度循环."""
         while self.status != SchedulerStatus.STOPPED:
             try:
                 if self.status == SchedulerStatus.PAUSED:
@@ -262,7 +261,7 @@ class TaskScheduler:
                 await asyncio.sleep(5)  # 异常时等待更长时间
 
     async def _worker_loop(self):
-        """工作循环"""
+        """工作循环."""
         while self.status != SchedulerStatus.STOPPED:
             try:
                 if (
@@ -298,7 +297,7 @@ class TaskScheduler:
                 await asyncio.sleep(1)
 
     async def _process_task(self, task: QueueTask):
-        """处理任务"""
+        """处理任务."""
         start_time = datetime.now()
 
         try:
@@ -331,7 +330,7 @@ class TaskScheduler:
                 ) / len(self.statistics["processing_times"])
 
     async def _complete_task(self, task: QueueTask, result: dict[str, Any]):
-        """完成任务"""
+        """完成任务."""
         self.statistics["total_completed"] += 1
 
         # 如果是Redis队列，标记任务完成
@@ -355,7 +354,7 @@ class TaskScheduler:
         logger.info(f"任务 {task.id} 处理完成")
 
     async def _fail_task(self, task: QueueTask, error_message: str):
-        """任务失败处理"""
+        """任务失败处理."""
         self.statistics["total_failed"] += 1
 
         # 如果是Redis队列，标记任务失败
@@ -384,7 +383,7 @@ class TaskScheduler:
         logger.error(f"任务 {task.id} 处理失败: {error_message}")
 
     def _cleanup_task(self, task_name: str):
-        """清理完成的任务"""
+        """清理完成的任务."""
         task_id = task_name.split("_")[-1]  # 从任务名称提取ID
 
         # 查找并删除工作记录
@@ -393,7 +392,7 @@ class TaskScheduler:
             self.current_workers = max(0, self.current_workers - 1)
 
     async def _cleanup_completed_tasks(self):
-        """清理已完成的工作任务"""
+        """清理已完成的工作任务."""
         completed_tasks = []
 
         for task_id, worker_task in self.worker_tasks.items():
@@ -405,7 +404,7 @@ class TaskScheduler:
             self.current_workers = max(0, self.current_workers - 1)
 
     def get_statistics(self) -> dict[str, Any]:
-        """获取调度器统计信息"""
+        """获取调度器统计信息."""
         stats = self.statistics.copy()
         stats["status"] = self.status.value
         stats["current_workers"] = self.current_workers
@@ -415,7 +414,7 @@ class TaskScheduler:
         return stats
 
     def get_scheduled_tasks(self) -> list[dict[str, Any]]:
-        """获取定时任务列表"""
+        """获取定时任务列表."""
         return [task.to_dict() for task in self.scheduled_tasks]
 
 
@@ -425,7 +424,7 @@ global_scheduler = TaskScheduler()
 
 # 便捷函数
 def get_scheduler() -> TaskScheduler:
-    """获取全局调度器实例"""
+    """获取全局调度器实例."""
     return global_scheduler
 
 
@@ -436,7 +435,7 @@ def schedule_task(
     priority: TaskPriority = TaskPriority.NORMAL,
     **kwargs,
 ) -> str:
-    """便捷的任务调度函数"""
+    """便捷的任务调度函数."""
     return global_scheduler.schedule_task(
         task_type=task_type,
         data=data,
@@ -447,5 +446,5 @@ def schedule_task(
 
 
 def register_task_handler(task_type: str, handler: TaskHandler):
-    """便捷的处理器注册函数"""
+    """便捷的处理器注册函数."""
     global_scheduler.register_handler(task_type, handler)

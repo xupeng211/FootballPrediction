@@ -1,6 +1,5 @@
-"""
-数据验证工具类
-DataValidator
+"""数据验证工具类
+DataValidator.
 
 提供各种数据验证方法.
 """
@@ -10,14 +9,14 @@ from typing import Any
 
 
 class DataValidator:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """数据验证工具类"""
 
     @staticmethod
     def validate_email(email: str) -> bool:
-        """验证邮箱格式"""
+        """验证邮箱格式."""
         if not isinstance(email, str):
             return False
 
@@ -43,7 +42,7 @@ class DataValidator:
 
     @staticmethod
     def validate_phone(phone: str) -> bool:
-        """验证手机号格式"""
+        """验证手机号格式."""
         if not isinstance(phone, str):
             return False
 
@@ -60,7 +59,7 @@ class DataValidator:
 
     @staticmethod
     def validate_url(url: str) -> bool:
-        """验证URL格式"""
+        """验证URL格式."""
         if not isinstance(url, str):
             return False
 
@@ -69,7 +68,7 @@ class DataValidator:
 
     @staticmethod
     def validate_id_card(id_card: str) -> bool:
-        """验证身份证号"""
+        """验证身份证号."""
         if not isinstance(id_card, str):
             return False
 
@@ -93,7 +92,7 @@ class DataValidator:
 
     @staticmethod
     def _validate_id_card_checksum(id_card: str) -> bool:
-        """验证18位身份证校验码"""
+        """验证18位身份证校验码."""
         # 权重因子
         weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
         # 校验码对应表
@@ -111,7 +110,7 @@ class DataValidator:
 
     @staticmethod
     def sanitize_input(input_data: Any) -> str:
-        """清理输入数据"""
+        """清理输入数据."""
         if input_data is None:
             return ""
 
@@ -146,7 +145,7 @@ class DataValidator:
 
     @staticmethod
     def validate_username(username: str) -> bool:
-        """验证用户名格式"""
+        """验证用户名格式."""
         if not isinstance(username, str):
             return False
 
@@ -156,7 +155,7 @@ class DataValidator:
 
     @staticmethod
     def validate_password_strength(password: str) -> dict:
-        """验证密码强度"""
+        """验证密码强度."""
         if not isinstance(password, str):
             return {"valid": False, "strength": 0, "issues": ["密码不能为空"]}
 
@@ -192,7 +191,7 @@ class DataValidator:
 
     @staticmethod
     def validate_positive_number(value: Any) -> bool:
-        """验证正数"""
+        """验证正数."""
         try:
             num = float(value)
             return num > 0
@@ -201,7 +200,7 @@ class DataValidator:
 
     @staticmethod
     def validate_required_fields(data: dict, required_fields: list) -> dict:
-        """验证必填字段"""
+        """验证必填字段."""
         if not isinstance(data, dict):
             return {"valid": False, "missing": ["数据格式错误"]}
 
@@ -215,12 +214,12 @@ class DataValidator:
 
 # 便捷函数，用于直接导入使用
 def validate_email(email: str) -> bool:
-    """邮箱验证便捷函数"""
+    """邮箱验证便捷函数."""
     return DataValidator.validate_email(email)
 
 
 def validate_password_strength(password: str) -> dict:
-    """密码强度验证便捷函数"""
+    """密码强度验证便捷函数."""
     result = DataValidator.validate_password_strength(password)
     if not result["valid"]:
         raise ValueError("；".join(result["issues"]))

@@ -1,6 +1,5 @@
-"""
-Football Prediction FastAPI Application
-足球预测系统主应用文件
+"""Football Prediction FastAPI Application
+足球预测系统主应用文件.
 """
 
 import logging
@@ -53,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """应用生命周期管理"""
+    """应用生命周期管理."""
     logger.info("启动足球预测系统...")
 
     # 检查是否为测试环境
@@ -173,8 +172,7 @@ setup_docs_routes(app)
     },
 )
 async def root() -> RootResponse:
-    """
-    系统根端点
+    """系统根端点.
 
     返回API系统的基本信息，用于验证系统是否正常运行。
 
@@ -182,7 +180,6 @@ async def root() -> RootResponse:
     - **缓存**: 无需缓存
     - **认证**: 无需认证
     """
-
     return RootResponse(
         message="Football Prediction System API",
         version="2.0.0",
@@ -229,8 +226,7 @@ async def root() -> RootResponse:
     },
 )
 async def health_check() -> dict:
-    """
-    基础健康检查
+    """基础健康检查.
 
     提供系统的基础健康状态信息，用于负载均衡器和监控系统的健康检查。
 
@@ -316,8 +312,7 @@ async def health_check() -> dict:
     },
 )
 async def health_check_system() -> dict:
-    """
-    系统资源健康检查
+    """系统资源健康检查.
 
     提供系统级别的资源使用情况，用于监控系统性能和容量规划。
 
@@ -416,7 +411,7 @@ async def health_check_system() -> dict:
 
 @app.get("/health/database", tags=["健康检查"])
 async def health_check_database() -> dict:
-    """数据库健康检查"""
+    """数据库健康检查."""
     import time
 
     return {

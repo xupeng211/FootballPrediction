@@ -1,6 +1,4 @@
-"""
-特征存储
-"""
+"""特征存储."""
 
 # 导入
 import os
@@ -14,7 +12,7 @@ INT64 = "INT64"
 
 # 类定义
 class FootballFeatureStore:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """足球特征存储管理器"
@@ -29,7 +27,7 @@ class FootballFeatureStore:
 
 
 class MockFeatureStore:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """测试友好的Feast替代实现."""

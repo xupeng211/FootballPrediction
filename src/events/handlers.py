@@ -1,6 +1,5 @@
-"""
-事件处理器实现
-Event Handlers Implementation
+"""事件处理器实现
+Event Handlers Implementation.
 
 提供各种事件处理器的实现.
 Provides implementations for various event handlers.
@@ -26,10 +25,10 @@ logger = logging.getLogger(__name__)
 
 
 class MetricsEventHandler(EventHandler):
-    """指标收集事件处理器"""
+    """指标收集事件处理器."""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__("MetricsCollector")
         self.metrics: dict[str, Any] = {
@@ -39,7 +38,7 @@ class MetricsEventHandler(EventHandler):
         }
 
     async def handle(self, event: Event) -> None:
-        """处理事件,收集指标"""
+        """处理事件,收集指标."""
         event_type = event.get_event_type()
         self.metrics["events_processed"] += 1
         self.metrics["event_counts"][event_type] = (
@@ -60,22 +59,22 @@ class MetricsEventHandler(EventHandler):
         ]
 
     def get_metrics(self) -> dict[str, Any]:
-        """获取收集的指标"""
+        """获取收集的指标."""
         return self.metrics.copy()
 
 
 class LoggingEventHandler(EventHandler):
-    """日志记录事件处理器"""
+    """日志记录事件处理器."""
 
     def __init__(self, log_level: int = logging.INFO):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__("EventLogger")
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
         self.logger.setLevel(log_level)
 
     async def handle(self, event: Event) -> None:
-        """记录事件日志"""
+        """记录事件日志."""
         event_data = event.to_dict()
 
         # 格式化日志消息
@@ -109,16 +108,16 @@ class LoggingEventHandler(EventHandler):
 
 
 class CacheInvalidationHandler(EventHandler):
-    """缓存失效事件处理器"""
+    """缓存失效事件处理器."""
 
     def __init__(self, cache_manager=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__("CacheInvalidator")
         self.cache_manager = cache_manager
 
     async def handle(self, event: Event) -> None:
-        """处理缓存失效"""
+        """处理缓存失效."""
         event_type = event.get_event_type()
         patterns = []
 
@@ -164,17 +163,17 @@ class CacheInvalidationHandler(EventHandler):
 
 
 class NotificationEventHandler(EventHandler):
-    """通知事件处理器"""
+    """通知事件处理器."""
 
     def __init__(self, notification_service=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__("NotificationHandler")
         self.notification_service = notification_service
         self.notification_queue = asyncio.Queue()
 
     async def handle(self, event: Event) -> None:
-        """处理通知事件"""
+        """处理通知事件."""
         event_type = event.get_event_type()
 
         # 根据事件类型创建通知
@@ -186,7 +185,7 @@ class NotificationEventHandler(EventHandler):
             await self._handle_user_registered(event)
 
     async def _handle_match_created(self, event: MatchCreatedEvent) -> None:
-        """处理比赛创建通知"""
+        """处理比赛创建通知."""
         notification = {
             "type": "match_created",
             "title": "New Match Available",
@@ -196,7 +195,7 @@ class NotificationEventHandler(EventHandler):
         await self.notification_queue.put(notification)
 
     async def _handle_prediction_made(self, event: PredictionMadeEvent) -> None:
-        """处理预测创建通知"""
+        """处理预测创建通知."""
         notification = {
             "type": "prediction_made",
             "title": "Prediction Submitted",
@@ -206,7 +205,7 @@ class NotificationEventHandler(EventHandler):
         await self.notification_queue.put(notification)
 
     async def _handle_user_registered(self, event: UserRegisteredEvent) -> None:
-        """处理用户注册通知"""
+        """处理用户注册通知."""
         notification = {
             "type": "user_registered",
             "title": "Welcome!",
@@ -223,7 +222,7 @@ class NotificationEventHandler(EventHandler):
         ]
 
     async def get_notifications(self) -> list[dict[str, Any]]:
-        """获取待发送的通知"""
+        """获取待发送的通知."""
         notifications = []
         while not self.notification_queue.empty():
             try:
@@ -235,10 +234,10 @@ class NotificationEventHandler(EventHandler):
 
 
 class AnalyticsEventHandler(EventHandler):
-    """分析事件处理器"""
+    """分析事件处理器."""
 
     def __init__(self, analytics_service=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__("AnalyticsHandler")
         self.analytics_service = analytics_service
@@ -249,7 +248,7 @@ class AnalyticsEventHandler(EventHandler):
         }
 
     async def handle(self, event: Event) -> None:
-        """处理分析事件"""
+        """处理分析事件."""
         event_type = event.get_event_type()
         date = event.timestamp.date()
 
@@ -265,7 +264,7 @@ class AnalyticsEventHandler(EventHandler):
         event: PredictionMadeEvent,
         date: datetime.date,
     ) -> None:
-        """跟踪预测数据"""
+        """跟踪预测数据."""
         # 按日期统计预测数
         date_str = date.isoformat()
         self.analytics_data["daily_predictions"][date_str] = (
@@ -306,7 +305,7 @@ class AnalyticsEventHandler(EventHandler):
         event: UserRegisteredEvent,
         date: datetime.date,
     ) -> None:
-        """跟踪用户注册"""
+        """跟踪用户注册."""
         # 这里可以发送到分析服务
         logger.info(f"New user registration tracked: {event.data.username}")
 
@@ -315,7 +314,7 @@ class AnalyticsEventHandler(EventHandler):
         event: MatchCreatedEvent,
         date: datetime.date,
     ) -> None:
-        """跟踪比赛创建"""
+        """跟踪比赛创建."""
         # 这里可以发送到分析服务
         logger.info(f"New match created: {event.data.match_id}")
 
@@ -327,15 +326,15 @@ class AnalyticsEventHandler(EventHandler):
         ]
 
     def get_analytics_data(self) -> dict[str, Any]:
-        """获取分析数据"""
+        """获取分析数据."""
         return self.analytics_data.copy()
 
 
 class AlertEventHandler(EventHandler):
-    """告警事件处理器"""
+    """告警事件处理器."""
 
     def __init__(self, alert_service=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__("AlertHandler")
         self.alert_service = alert_service
@@ -349,7 +348,7 @@ class AlertEventHandler(EventHandler):
         }
 
     async def handle(self, event: Event) -> None:
-        """检查告警条件"""
+        """检查告警条件."""
         event_type = event.get_event_type()
 
         # 检查各种告警条件
@@ -358,7 +357,7 @@ class AlertEventHandler(EventHandler):
         # 可以添加更多告警检查
 
     async def _check_prediction_volume(self) -> None:
-        """检查预测量告警"""
+        """检查预测量告警."""
         # 这里应该实现实际的预测量检查逻辑
 
     def get_handled_events(self) -> list[str]:
@@ -369,7 +368,7 @@ class AlertEventHandler(EventHandler):
 
 # 便捷函数:注册所有默认处理器
 async def register_default_handlers() -> None:
-    """注册所有默认事件处理器"""
+    """注册所有默认事件处理器."""
     bus = get_event_bus()
 
     # 注册指标收集器

@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class MatchInfo(BaseModel):
-    """比赛信息模型"""
+    """比赛信息模型."""
 
     match_id: int = Field(..., description="比赛ID")
     home_team: str = Field(..., description="主队")
@@ -44,7 +44,7 @@ class MatchInfo(BaseModel):
 
 
 class AddMatchRequest(BaseModel):
-    """添加比赛请求模型"""
+    """添加比赛请求模型."""
 
     match_id: int = Field(..., description="比赛ID")
     home_team: str = Field(..., description="主队")
@@ -55,7 +55,7 @@ class AddMatchRequest(BaseModel):
 
 
 class UpdateScoreRequest(BaseModel):
-    """更新比分请求模型"""
+    """更新比分请求模型."""
 
     home_score: int = Field(..., ge=0, description="主队得分")
     away_score: int = Field(..., ge=0, description="客队得分")
@@ -63,14 +63,14 @@ class UpdateScoreRequest(BaseModel):
 
 
 class UpdateStatusRequest(BaseModel):
-    """更新状态请求模型"""
+    """更新状态请求模型."""
 
     status: str = Field(..., description="新状态")
     current_time: str | None = Field(None, description="当前时间")
 
 
 class MatchStatsResponse(BaseModel):
-    """比赛统计响应模型"""
+    """比赛统计响应模型."""
 
     service_name: str
     total_matches: int
@@ -93,8 +93,7 @@ class MatchStatsResponse(BaseModel):
 async def add_match_to_monitoring(
     request: AddMatchRequest, background_tasks: BackgroundTasks
 ):
-    """
-    添加比赛到实时监控
+    """添加比赛到实时监控.
 
     Args:
         request: 比赛信息
@@ -161,8 +160,7 @@ async def add_match_to_monitoring(
 async def update_match_score(
     match_id: int, request: UpdateScoreRequest, background_tasks: BackgroundTasks
 ):
-    """
-    更新比赛比分
+    """更新比赛比分.
 
     Args:
         match_id: 比赛ID
@@ -226,8 +224,7 @@ async def update_match_score(
 async def update_match_status(
     match_id: int, request: UpdateStatusRequest, background_tasks: BackgroundTasks
 ):
-    """
-    更新比赛状态
+    """更新比赛状态.
 
     Args:
         match_id: 比赛ID
@@ -296,8 +293,7 @@ async def update_match_status(
 
 @router.get("/{match_id}", summary="获取比赛信息")
 async def get_match_info(match_id: int):
-    """
-    获取指定比赛的信息
+    """获取指定比赛的信息.
 
     Args:
         match_id: 比赛ID
@@ -329,8 +325,7 @@ async def get_league_matches(
     status: str | None = Query(None, description="状态过滤"),
     limit: int = Query(50, ge=1, le=200, description="返回数量限制"),
 ):
-    """
-    获取指定联赛的所有比赛
+    """获取指定联赛的所有比赛.
 
     Args:
         league: 联赛名称
@@ -372,8 +367,7 @@ async def get_live_matches(
     league: str | None = Query(None, description="联赛过滤"),
     limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
 ):
-    """
-    获取所有直播中的比赛
+    """获取所有直播中的比赛.
 
     Args:
         league: 联赛过滤
@@ -408,8 +402,7 @@ async def get_live_matches(
 
 @router.get("/stats", response_model=MatchStatsResponse, summary="获取比赛服务统计")
 async def get_match_service_stats():
-    """
-    获取实时比赛服务统计信息
+    """获取实时比赛服务统计信息.
 
     Returns:
         服务统计信息
@@ -431,8 +424,7 @@ async def get_match_service_stats():
 async def subscribe_to_match_updates(
     match_id: int, user_id: str = Query(..., description="用户ID")
 ):
-    """
-    订阅比赛更新通知
+    """订阅比赛更新通知.
 
     Args:
         match_id: 比赛ID
@@ -469,8 +461,7 @@ async def subscribe_to_match_updates(
 async def unsubscribe_from_match_updates(
     match_id: int, user_id: str = Query(..., description="用户ID")
 ):
-    """
-    取消订阅比赛更新通知
+    """取消订阅比赛更新通知.
 
     Args:
         match_id: 比赛ID
@@ -513,8 +504,7 @@ async def broadcast_match_alert(
     severity: str = "low",
     component: str = "match_api",
 ):
-    """
-    广播比赛相关告警消息
+    """广播比赛相关告警消息.
 
     Args:
         message: 告警消息
@@ -563,7 +553,7 @@ async def broadcast_match_alert(
 async def _send_match_notification(
     match_id: int, action: str, data: dict[str, Any]
 ) -> None:
-    """发送比赛通知"""
+    """发送比赛通知."""
     try:
         websocket_manager = get_websocket_manager()
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Swagger UI 配置和增强功能
-Swagger UI Configuration and Enhanced Features
+"""Swagger UI 配置和增强功能
+Swagger UI Configuration and Enhanced Features.
 
 Author: Claude Code
 Version: 1.0.0
@@ -14,7 +13,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 
 
 class SwaggerUIConfig:
-    """Swagger UI 配置管理类"""
+    """Swagger UI 配置管理类."""
 
     @staticmethod
     def get_custom_swagger_ui_html(
@@ -25,8 +24,7 @@ class SwaggerUIConfig:
         init_oauth: dict[str, Any] | None = None,
         swagger_ui_parameters: dict[str, Any] | None = None,
     ) -> str:
-        """
-        获取自定义的Swagger UI HTML页面
+        """获取自定义的Swagger UI HTML页面.
 
         Args:
             openapi_url: OpenAPI JSON文档URL
@@ -38,7 +36,6 @@ class SwaggerUIConfig:
         Returns:
             str: 自定义的HTML页面
         """
-
         # 默认配置
         default_config = {
             "deepLinking": True,
@@ -489,10 +486,10 @@ class SwaggerUIConfig:
 
     @staticmethod
     def setup_custom_swagger_ui(app: FastAPI) -> None:
-        """设置自定义Swagger UI"""
+        """设置自定义Swagger UI."""
 
         def swagger_ui_html(req):
-            """自定义Swagger UI页面处理器"""
+            """自定义Swagger UI页面处理器."""
             return SwaggerUIConfig.get_custom_swagger_ui_html(
                 openapi_url=app.openapi_url,
                 title=f"{app.title} - Swagger UI",
@@ -535,8 +532,7 @@ class SwaggerUIConfig:
         title: str,
         redoc_js_url: str = "https://cdn.jsdelivr.net/npm/redoc@2.0.0/bundles/redoc.standalone.js",
     ) -> str:
-        """获取增强的ReDoc HTML页面"""
-
+        """获取增强的ReDoc HTML页面."""
         redoc_html = f"""
 <!DOCTYPE html>
 <html>
@@ -661,7 +657,7 @@ class SwaggerUIConfig:
 
     @staticmethod
     def setup_enhanced_redoc(app: FastAPI) -> None:
-        """设置增强的ReDoc"""
+        """设置增强的ReDoc."""
 
         @app.get("/redoc", include_in_schema=False)
         async def custom_redoc_html():
@@ -671,7 +667,7 @@ class SwaggerUIConfig:
 
 
 def setup_enhanced_docs(app: FastAPI) -> None:
-    """设置增强的API文档"""
+    """设置增强的API文档."""
     swagger_config = SwaggerUIConfig()
 
     # 设置自定义Swagger UI

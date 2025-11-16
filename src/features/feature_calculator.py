@@ -1,5 +1,4 @@
-"""
-feature_calculator 主模块
+"""feature_calculator 主模块.
 
 此文件由长文件拆分工具自动生成
 
@@ -12,7 +11,7 @@ try:
 except ImportError:
     # 如果拆分模块不存在，提供一个简单的占位符
     class FeatureCalculator:
-        """FeatureCalculator 占位符实现"""
+        """FeatureCalculator 占位符实现."""
 
         def __init__(self, *args, **kwargs):
             pass

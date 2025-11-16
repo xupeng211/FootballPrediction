@@ -1,6 +1,4 @@
-"""
-核心复杂类
-"""
+"""核心复杂类."""
 
 # 导入
 
@@ -20,7 +18,7 @@ SKIP_AND_CONTINUE = "skip_and_continue"
 
 # 类定义
 class RecoveryHandler:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """恢复处理器主类"
