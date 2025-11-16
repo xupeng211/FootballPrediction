@@ -167,7 +167,7 @@ class CacheVersion:
         vector_clock: VectorClock | None = None,
         checksum: str = "",
         metadata: dict[str, Any] | None = None,
-        **kwargs
+        **kwargs,
     ):
         self.key = key
         self.version = version
@@ -181,7 +181,7 @@ class CacheVersion:
     def _calculate_checksum(self) -> str:
         """计算校验和"""
         data = f"{self.key}{self.version}{self.timestamp}{self.node_id}"
-        if hasattr(self, 'data') and self.data:
+        if hasattr(self, "data") and self.data:
             data += str(self.data)
         if self.vector_clock:
             data += json.dumps(self.vector_clock.to_dict(), sort_keys=True)

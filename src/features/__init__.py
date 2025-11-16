@@ -11,9 +11,9 @@
 from .entities import MatchEntity, TeamEntity
 from .feature_store import FootballFeatureStore
 
-# 导入特征计算相关类
+# 导入特征定义类
 try:
-    from .feature_calculator import FeatureCalculator
+    from .feature_definitions import (
         AllMatchFeatures,
         AllTeamFeatures,
         HistoricalMatchupFeatures,
@@ -26,6 +26,11 @@ except ImportError:
     HistoricalMatchupFeatures = None
     OddsFeatures = None
     RecentPerformanceFeatures = None
+
+# 导入特征计算器
+try:
+    from .feature_calculator import FeatureCalculator
+except ImportError:
     FeatureCalculator = None
 
 __all__ = [

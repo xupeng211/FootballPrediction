@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 """
+import tensorflow as tf
+import random
+import pandas as pd
+import numpy as np
+
 LSTM时间序列预测模型
 LSTM Time Series Prediction Model
 

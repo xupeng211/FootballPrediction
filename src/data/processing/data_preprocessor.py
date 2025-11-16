@@ -6,6 +6,7 @@
 
 import logging
 from typing import Any
+import pandas as pd
 
 from .football_data_cleaner import FootballDataCleaner
 from .missing_data_handler import MissingDataHandler

@@ -1,4 +1,6 @@
 """
+import sklearn
+
 警告过滤器设置
 Warning Filters Setup
 """

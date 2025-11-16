@@ -7,11 +7,21 @@ Provides abstraction layer for data access.
 """
 
 from .base import BaseRepository, QuerySpec
-    MatchRepoDep,
-    PredictionRepoDep,
-    ReadOnlyMatchRepoDep,
-    ReadOnlyPredictionRepoDep,
-)
+
+# 导入依赖类型
+try:
+    from .dependencies import (
+        MatchRepoDep,
+        PredictionRepoDep,
+        ReadOnlyMatchRepoDep,
+        ReadOnlyPredictionRepoDep,
+    )
+except ImportError:
+    # 如果依赖模块不存在，提供占位符
+    MatchRepoDep = None
+    PredictionRepoDep = None
+    ReadOnlyMatchRepoDep = None
+    ReadOnlyPredictionRepoDep = None
 
 __all__ = [
     "BaseRepository",

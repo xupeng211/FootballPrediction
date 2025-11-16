@@ -29,7 +29,7 @@ class RetryConfig:
         retryable_exceptions: tuple = (Exception,),
         exceptions: tuple = (Exception,),
         backoff_factor: float = 2.0,
-        **kwargs
+        **kwargs,
     ):
         self.max_attempts = max_attempts
 
@@ -69,6 +69,7 @@ from enum import Enum
 
 class CircuitState(Enum):
     """熔断器状态"""
+
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
@@ -76,6 +77,7 @@ class CircuitState(Enum):
 
 class BackoffStrategy:
     """退避策略基类"""
+
     def __init__(self, initial_delay: float = 1.0):
         self.initial_delay = initial_delay
 
@@ -85,6 +87,7 @@ class BackoffStrategy:
 
 class FixedBackoffStrategy(BackoffStrategy):
     """固定退避策略"""
+
     def __init__(self, delay: float = 1.0):
         super().__init__(delay)
         self.delay = delay
@@ -95,6 +98,7 @@ class FixedBackoffStrategy(BackoffStrategy):
 
 class LinearBackoffStrategy(BackoffStrategy):
     """线性退避策略"""
+
     def __init__(self, initial_delay: float = 1.0, increment: float = 0.5):
         super().__init__(initial_delay)
         self.increment = increment
@@ -105,6 +109,7 @@ class LinearBackoffStrategy(BackoffStrategy):
 
 class ExponentialBackoffStrategy(BackoffStrategy):
     """指数退避策略"""
+
     def __init__(self, initial_delay: float = 1.0, multiplier: float = 2.0):
         super().__init__(initial_delay)
         self.multiplier = multiplier
@@ -115,17 +120,24 @@ class ExponentialBackoffStrategy(BackoffStrategy):
 
 class PolynomialBackoffStrategy(BackoffStrategy):
     """多项式退避策略"""
+
     def __init__(self, initial_delay: float = 1.0, exponent: float = 2.0):
         super().__init__(initial_delay)
         self.exponent = exponent
 
     def get_delay(self, attempt: int) -> float:
-        return self.initial_delay * (attempt ** self.exponent)
+        return self.initial_delay * (attempt**self.exponent)
 
 
 class CircuitBreaker:
     """熔断器"""
-    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0, expected_exception: type = Exception):
+
+    def __init__(
+        self,
+        failure_threshold: int = 5,
+        recovery_timeout: float = 60.0,
+        expected_exception: type = Exception,
+    ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.expected_exception = expected_exception
@@ -238,6 +250,7 @@ def retry(
             raise last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -249,8 +262,6 @@ def retry_async(config: RetryConfig | None = None):
 def retry_sync(config: RetryConfig | None = None):
     """同步重试装饰器别名"""
     return retry_with_exponential_backoff()
-
-
 
     def __init__(
         self,

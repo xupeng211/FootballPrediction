@@ -272,7 +272,11 @@ class AccessPatternAnalyzer:
         # 简单的线性预测：基于最近访问间隔
         now = datetime.utcnow()
         recent_accesses = sorted(
-            [access for access in pattern.access_history if access >= now - timedelta(days=7)]
+            [
+                access
+                for access in pattern.access_history
+                if access >= now - timedelta(days=7)
+            ]
         )
 
         if len(recent_accesses) < 2:
@@ -281,7 +285,9 @@ class AccessPatternAnalyzer:
         # 计算平均访问间隔
         intervals = []
         for i in range(1, len(recent_accesses)):
-            interval = (recent_accesses[i] - recent_accesses[i-1]).total_seconds() / 3600
+            interval = (
+                recent_accesses[i] - recent_accesses[i - 1]
+            ).total_seconds() / 3600
             intervals.append(interval)
 
         if intervals:

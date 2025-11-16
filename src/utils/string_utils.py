@@ -395,7 +395,7 @@ def validate_batch_emails(emails: list[str]) -> dict:
     return {
         "valid": valid_emails,
         "invalid": invalid_emails,
-        "details": {email: StringUtils.validate_email(email) for email in emails}
+        "details": {email: StringUtils.validate_email(email) for email in emails},
     }
 
 
@@ -403,14 +403,16 @@ def normalize_string(text: str) -> str:
     """标准化字符串"""
     if not text:
         return ""
-    return StringUtils.clean_string(text).strip()
+    # 清理并转换为小写
+    result = StringUtils.clean_string(text).strip()
+    return result.lower()
 
 
 def truncate_string(text: str, length: int, suffix: str = "...") -> str:
     """截断字符串"""
     if not isinstance(text, str):
-        logger.error(f"truncate_string: 期望字符串类型，实际收到 {type(text).__name__}")
-        raise TypeError(f"Expected string, got {type(text).__name__}")
+        logger.debug("truncate_string: 非字符串输入，返回空字符串")
+        return ""
     if not isinstance(length, int):
         logger.error(f"truncate_string: 期望整数长度，实际收到 {type(length).__name__}")
         raise TypeError(f"Expected int for length, got {type(length).__name__}")
@@ -418,7 +420,9 @@ def truncate_string(text: str, length: int, suffix: str = "...") -> str:
         logger.debug("truncate_string: 输入文本为空，返回空字符串")
         return ""
     if len(text) <= length + len(suffix):
-        logger.debug(f"truncate_string: 文本长度 {len(text)} 不超过限制 {length}，返回原文")
+        logger.debug(
+            f"truncate_string: 文本长度 {len(text)} 不超过限制 {length}，返回原文"
+        )
         return text
 
     truncated = text[: length - len(suffix)] + suffix

@@ -27,11 +27,7 @@ except ImportError:
     pass
 
 # 配置警告过滤器
-try:
     setup_warning_filters()
-except ImportError:
-    # 警告过滤器不可用时跳过
-    pass
 
 # 版本信息
 __version__ = "2.0.0"

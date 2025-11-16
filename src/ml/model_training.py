@@ -1,4 +1,8 @@
 """
+import random
+import pandas as pd
+import numpy as np
+
 模型训练模块 - 桩实现
 
 Model Training Module - Stub Implementation

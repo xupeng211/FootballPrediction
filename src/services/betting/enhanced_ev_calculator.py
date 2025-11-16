@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+import numpy as np
+
 增强版EV计算器 - Issue #121优化版本
 Enhanced EV Calculator for Issue #121 Optimization
 

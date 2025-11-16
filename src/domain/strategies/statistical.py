@@ -1,4 +1,7 @@
 """
+import random
+import numpy as np
+
 统计分析策略
 Statistical Strategy
 

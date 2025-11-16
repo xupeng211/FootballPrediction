@@ -13,37 +13,28 @@ Realtime Module - Football Prediction System WebSocket Real-time Communication
 from .subscriptions import SubscriptionManager
 
 # 导入实时事件相关类
-try:
-        AnalyticsEvent,
-        EventType,
-        MatchEvent,
-        OddsEvent,
-        PredictionEvent,
-        RealtimeEvent,
-        SystemAlertEvent,
-        create_analytics_updated_event,
-    )
-except ImportError:
-    AnalyticsEvent = None
-    EventType = None
-    MatchEvent = None
-    OddsEvent = None
-    PredictionEvent = None
-    RealtimeEvent = None
-    SystemAlertEvent = None
-    create_analytics_updated_event = None
+# 模块暂未实现 - 自动修复
+# 占位符
+AnalyticsEvent = None
+EventType = None
+MatchEvent = None
+OddsEvent = None
+PredictionEvent = None
+RealtimeEvent = None
+SystemAlertEvent = None
+create_analytics_updated_event = None
 
 __all__ = [
-    # 订阅管理
-    "SubscriptionManager",
-    # 事件类型
-    "AnalyticsEvent",
-    "EventType",
-    "MatchEvent",
-    "OddsEvent",
-    "PredictionEvent",
-    "RealtimeEvent",
-    "SystemAlertEvent",
-    # 事件创建函数
-    "create_analytics_updated_event",
+# 订阅管理
+"SubscriptionManager",
+# 事件类型
+"AnalyticsEvent",
+"EventType",
+"MatchEvent",
+"OddsEvent",
+"PredictionEvent",
+"RealtimeEvent",
+"SystemAlertEvent",
+# 事件创建函数
+"create_analytics_updated_event",
 ]

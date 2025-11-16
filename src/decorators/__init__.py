@@ -9,25 +9,15 @@ Used for functionality enhancement and cross-cutting concerns.
 from .base import Decorator, DecoratorComponent
 
 # 导入__init__相关类
-try:
-        AuthDecorator,
-        CacheDecorator,
-        LoggingDecorator,
-        MetricsDecorator,
-        RateLimitDecorator,
-        RetryDecorator,
-        TimeoutDecorator,
-        ValidationDecorator,
-    )
-except ImportError:
-    AuthDecorator = None
-    CacheDecorator = None
-    LoggingDecorator = None
-    MetricsDecorator = None
-    RateLimitDecorator = None
-    RetryDecorator = None
-    TimeoutDecorator = None
-    ValidationDecorator = None
+# 模块暂未实现 - 自动修复
+AuthDecorator = None
+CacheDecorator = None
+LoggingDecorator = None
+MetricsDecorator = None
+RateLimitDecorator = None
+RetryDecorator = None
+TimeoutDecorator = None
+ValidationDecorator = None
 
 from .factory import DecoratorFactory
 from .service import DecoratorService

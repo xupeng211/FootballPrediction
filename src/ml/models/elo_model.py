@@ -9,6 +9,9 @@ import pickle
 from datetime import datetime
 from typing import Any
 
+import pandas as pd
+import numpy as np
+
 from .base_model import BaseModel, PredictionResult, TrainingResult
 
 logger = logging.getLogger(__name__)
