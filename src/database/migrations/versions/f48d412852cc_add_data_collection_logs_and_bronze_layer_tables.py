@@ -23,15 +23,13 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """
-    创建数据采集日志表和Bronze层原始数据表
+    """创建数据采集日志表和Bronze层原始数据表.
 
     基于 DATA_DESIGN.md 第1.3节和第2.1节设计:
     - data_collection_logs: 采集任务日志记录
     - raw_match_data: Bronze层原始比赛数据
     - raw_odds_data: Bronze层原始赔率数据（分区表）
     """
-
     # 创建数据采集日志表
     op.create_table(
         "data_collection_logs",
@@ -229,10 +227,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """
-    回滚数据采集日志表和Bronze层表的创建
-    """
-
+    """回滚数据采集日志表和Bronze层表的创建."""
     # 删除Gold层特征表的扩展字段
     try:
         # 只删除在此迁移中添加的字段

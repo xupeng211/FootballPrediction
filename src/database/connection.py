@@ -1,5 +1,4 @@
-"""
-数据库连接管理模块 / Database Connection Management Module
+"""数据库连接管理模块 / Database Connection Management Module.
 
 提供同步和异步的PostgreSQL数据库连接,会话管理和生命周期控制。
 支持多用户权限分离的数据库连接管理。

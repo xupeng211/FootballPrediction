@@ -1,6 +1,5 @@
-"""
-分布式缓存管理器
-Distributed Cache Manager
+"""分布式缓存管理器
+Distributed Cache Manager.
 
 提供企业级分布式缓存解决方案，支持多级缓存、智能路由、负载均衡和故障转移。
 """
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class CacheLevel(Enum):
-    """缓存级别"""
+    """缓存级别."""
 
     L1_MEMORY = "l1_memory"  # L1: 内存缓存（最快）
     L2_REDIS = "l2_redis"  # L2: Redis缓存（快）
@@ -35,7 +34,7 @@ class CacheLevel(Enum):
 
 
 class CacheEvictionPolicy(Enum):
-    """缓存淘汰策略"""
+    """缓存淘汰策略."""
 
     LRU = "lru"  # 最近最少使用
     LFU = "lfu"  # 最少使用频率
@@ -45,7 +44,7 @@ class CacheEvictionPolicy(Enum):
 
 
 class DistributionStrategy(Enum):
-    """分发策略"""
+    """分发策略."""
 
     CONSISTENT_HASH = "consistent_hash"  # 一致性哈希
     ROUND_ROBIN = "round_robin"  # 轮询
@@ -55,7 +54,7 @@ class DistributionStrategy(Enum):
 
 @dataclass
 class CacheConfig:
-    """缓存配置"""
+    """缓存配置."""
 
     max_size: int = 10000
     ttl: int | None = 3600
@@ -67,7 +66,7 @@ class CacheConfig:
 
 @dataclass
 class CacheEntry:
-    """缓存条目"""
+    """缓存条目."""
 
     key: str
     value: Any
@@ -87,12 +86,12 @@ class CacheEntry:
             self.size = self._calculate_size()
 
     def _calculate_checksum(self) -> str:
-        """计算校验和"""
+        """计算校验和."""
         data = f"{self.key}{self.value}{self.level}{self.created_at}"
         return hashlib.md5(data.encode()).hexdigest()
 
     def _calculate_size(self) -> int:
-        """计算条目大小"""
+        """计算条目大小."""
         try:
             if self.enable_serialization:
                 return len(json.dumps(self.value, default=str))
@@ -102,24 +101,24 @@ class CacheEntry:
             return len(str(self.value))
 
     def is_expired(self) -> bool:
-        """检查是否过期"""
+        """检查是否过期."""
         if self.ttl:
             return (datetime.utcnow() - self.created_at).total_seconds() > self.ttl
         return False
 
     def is_valid(self) -> bool:
-        """检查条目有效性"""
+        """检查条目有效性."""
         return self.checksum == self._calculate_checksum() and not self.is_expired()
 
     def access(self) -> Any:
-        """访问缓存条目"""
+        """访问缓存条目."""
         self.accessed_at = datetime.utcnow()
         self.access_count += 1
         return self.value
 
 
 class MemoryCache:
-    """内存缓存实现"""
+    """内存缓存实现."""
 
     def __init__(self, config: CacheConfig):
         self.config = config
@@ -137,7 +136,7 @@ class MemoryCache:
         }
 
     def get(self, key: str) -> Any | None:
-        """获取缓存值"""
+        """获取缓存值."""
         with self.lock:
             if key in self.cache:
                 entry = self.cache[key]
@@ -153,7 +152,7 @@ class MemoryCache:
             return None
 
     def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
-        """设置缓存值"""
+        """设置缓存值."""
         with self.lock:
             try:
                 # 检查大小限制
@@ -181,7 +180,7 @@ class MemoryCache:
                 return False
 
     def delete(self, key: str) -> bool:
-        """删除缓存值"""
+        """删除缓存值."""
         with self.lock:
             if key in self.cache:
                 self._remove_entry(key)
@@ -189,7 +188,7 @@ class MemoryCache:
             return False
 
     def clear(self):
-        """清空缓存"""
+        """清空缓存."""
         with self.lock:
             self.cache.clear()
             self.access_order.clear()
@@ -198,7 +197,7 @@ class MemoryCache:
             self.metrics["memory_usage"] = 0
 
     def _update_access_info(self, key: str):
-        """更新访问信息"""
+        """更新访问信息."""
         # 更新LRU顺序
         if key in self.access_order:
             self.access_order.remove(key)
@@ -208,7 +207,7 @@ class MemoryCache:
         self.frequency[key] += 1
 
     def _remove_entry(self, key: str):
-        """移除缓存条目"""
+        """移除缓存条目."""
         if key in self.cache:
             del self.cache[key]
             if key in self.access_order:
@@ -222,7 +221,7 @@ class MemoryCache:
             )
 
     def _evict_entries(self, count: int = 1):
-        """淘汰缓存条目"""
+        """淘汰缓存条目."""
         evicted = 0
         while evicted < count and self.cache:
             if self.config.eviction_policy == CacheEvictionPolicy.LRU:
@@ -244,7 +243,7 @@ class MemoryCache:
             self.metrics["evictions"] += 1
 
     def get_metrics(self) -> dict[str, Any]:
-        """获取缓存指标"""
+        """获取缓存指标."""
         total_requests = self.metrics["hits"] + self.metrics["misses"]
         hit_rate = (
             (self.metrics["hits"] / total_requests * 100) if total_requests > 0 else 0
@@ -258,38 +257,38 @@ class MemoryCache:
 
 
 class CacheBackend(ABC):
-    """缓存后端抽象类"""
+    """缓存后端抽象类."""
 
     @abstractmethod
     async def get(self, key: str) -> Any | None:
-        """获取缓存值"""
+        """获取缓存值."""
         pass
 
     @abstractmethod
     async def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
-        """设置缓存值"""
+        """设置缓存值."""
         pass
 
     @abstractmethod
     async def delete(self, key: str) -> bool:
-        """删除缓存值"""
+        """删除缓存值."""
         pass
 
     @abstractmethod
     async def health_check(self) -> bool:
-        """健康检查"""
+        """健康检查."""
         pass
 
 
 class RedisCacheBackend(CacheBackend):
-    """Redis缓存后端"""
+    """Redis缓存后端."""
 
     def __init__(self, redis_manager: RedisClusterManager | None = None):
         self.redis_manager = redis_manager or get_redis_cluster_manager()
         self.metrics = {"hits": 0, "misses": 0, "sets": 0, "errors": 0}
 
     async def get(self, key: str) -> Any | None:
-        """获取缓存值"""
+        """获取缓存值."""
         try:
             if not self.redis_manager:
                 return None
@@ -308,7 +307,7 @@ class RedisCacheBackend(CacheBackend):
             return None
 
     async def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
-        """设置缓存值"""
+        """设置缓存值."""
         try:
             if not self.redis_manager:
                 return False
@@ -324,7 +323,7 @@ class RedisCacheBackend(CacheBackend):
             return False
 
     async def delete(self, key: str) -> bool:
-        """删除缓存值"""
+        """删除缓存值."""
         try:
             if not self.redis_manager:
                 return False
@@ -337,7 +336,7 @@ class RedisCacheBackend(CacheBackend):
             return False
 
     async def health_check(self) -> bool:
-        """健康检查"""
+        """健康检查."""
         try:
             if not self.redis_manager:
                 return False
@@ -351,7 +350,7 @@ class RedisCacheBackend(CacheBackend):
 
 
 class DistributedCacheManager:
-    """分布式缓存管理器"""
+    """分布式缓存管理器."""
 
     def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
@@ -380,7 +379,7 @@ class DistributedCacheManager:
         self.event_handlers: dict[str, list[Callable]] = defaultdict(list)
 
     def _initialize_cache_levels(self):
-        """初始化缓存级别"""
+        """初始化缓存级别."""
         # L1: 内存缓存
         l1_config = CacheConfig(
             max_size=self.config.get("l1_max_size", 1000),
@@ -402,7 +401,7 @@ class DistributedCacheManager:
         level: CacheLevel | None = None,
         session_id: str | None = None,
     ) -> Any | None:
-        """获取缓存值（多级缓存查找）"""
+        """获取缓存值（多级缓存查找）."""
         start_time = time.time()
 
         try:
@@ -442,7 +441,7 @@ class DistributedCacheManager:
         level: CacheLevel | None = None,
         session_id: str | None = None,
     ) -> bool:
-        """设置缓存值（多级缓存写入）"""
+        """设置缓存值（多级缓存写入）."""
         start_time = time.time()
 
         try:
@@ -496,7 +495,7 @@ class DistributedCacheManager:
             return False
 
     async def delete(self, key: str, propagate: bool = True) -> bool:
-        """删除缓存值（从所有级别删除）"""
+        """删除缓存值（从所有级别删除）."""
         try:
             success = True
 
@@ -521,7 +520,7 @@ class DistributedCacheManager:
     async def _get_from_level(
         self, key: str, level: CacheLevel, session_id: str | None = None
     ) -> Any | None:
-        """从特定缓存级别获取值"""
+        """从特定缓存级别获取值."""
         if level == CacheLevel.L1_MEMORY:
             return self.cache_levels[level].get(key)
         elif level in self.backends:
@@ -536,7 +535,7 @@ class DistributedCacheManager:
         level: CacheLevel,
         session_id: str | None = None,
     ) -> bool:
-        """向特定缓存级别设置值"""
+        """向特定缓存级别设置值."""
         if level == CacheLevel.L1_MEMORY:
             return self.cache_levels[level].set(key, value, ttl)
         elif level in self.backends:
@@ -544,7 +543,7 @@ class DistributedCacheManager:
         return False
 
     async def _delete_from_level(self, key: str, level: CacheLevel) -> bool:
-        """从特定缓存级别删除值"""
+        """从特定缓存级别删除值."""
         if level == CacheLevel.L1_MEMORY:
             return self.cache_levels[level].delete(key)
         elif level in self.backends:
@@ -554,7 +553,7 @@ class DistributedCacheManager:
     async def _populate_higher_levels(
         self, key: str, value: Any, source_level: CacheLevel
     ):
-        """回填到更高级别的缓存"""
+        """回填到更高级别的缓存."""
         # 如果是从L2获取的，回填到L1
         if source_level == CacheLevel.L2_REDIS:
             await self._set_to_level(key, value, None, CacheLevel.L1_MEMORY)
@@ -562,7 +561,7 @@ class DistributedCacheManager:
     async def _async_write_back(
         self, key: str, value: Any, ttl: int | None, session_id: str | None = None
     ):
-        """异步回写"""
+        """异步回写."""
         try:
             await asyncio.sleep(0.1)  # 短暂延迟
             await self._set_to_level(key, value, ttl, CacheLevel.L2_REDIS, session_id)
@@ -570,7 +569,7 @@ class DistributedCacheManager:
             logger.error(f"Async write-back failed for key {key}: {e}")
 
     async def _trigger_event(self, event_name: str, data: dict[str, Any]):
-        """触发缓存事件"""
+        """触发缓存事件."""
         if event_name in self.event_handlers:
             for handler in self.event_handlers[event_name]:
                 try:
@@ -582,11 +581,11 @@ class DistributedCacheManager:
                     logger.error(f"Error in event handler for {event_name}: {e}")
 
     def add_event_handler(self, event_name: str, handler: Callable):
-        """添加事件处理器"""
+        """添加事件处理器."""
         self.event_handlers[event_name].append(handler)
 
     async def invalidate_pattern(self, pattern: str) -> int:
-        """按模式失效缓存"""
+        """按模式失效缓存."""
         count = 0
         try:
             # L1缓存模式失效
@@ -615,7 +614,7 @@ class DistributedCacheManager:
             return 0
 
     async def warm_cache(self, keys: list[str], data_loader: Callable[[str], Any]):
-        """缓存预热"""
+        """缓存预热."""
         warmed_count = 0
 
         for key in keys:
@@ -637,7 +636,7 @@ class DistributedCacheManager:
         return warmed_count
 
     async def get_cache_status(self) -> dict[str, Any]:
-        """获取缓存状态"""
+        """获取缓存状态."""
         status = {
             "configuration": {
                 "distribution_strategy": self.distribution_strategy.value,
@@ -668,7 +667,7 @@ class DistributedCacheManager:
 
 
 class LoadBalancer:
-    """负载均衡器"""
+    """负载均衡器."""
 
     def __init__(self, strategy: DistributionStrategy):
         self.strategy = strategy
@@ -676,7 +675,7 @@ class LoadBalancer:
         self.node_weights: dict[str, int] = {}
 
     def select_node(self, nodes: list[str], key: str | None = None) -> str:
-        """选择节点"""
+        """选择节点."""
         if not nodes:
             raise ValueError("No nodes available")
 
@@ -709,7 +708,7 @@ class LoadBalancer:
 
 
 class CacheCoordinator:
-    """缓存协调器（用于多级缓存一致性）"""
+    """缓存协调器（用于多级缓存一致性）."""
 
     def __init__(self, cache_manager: DistributedCacheManager):
         self.cache_manager = cache_manager
@@ -717,7 +716,7 @@ class CacheCoordinator:
         self.version_map: dict[str, int] = {}
 
     async def notify_write(self, key: str, value: Any):
-        """通知写入操作"""
+        """通知写入操作."""
         # 更新版本
         self.version_map[key] = self.version_map.get(key, 0) + 1
 
@@ -726,7 +725,7 @@ class CacheCoordinator:
             del self.invalidations[key]
 
     async def notify_invalidation(self, key: str):
-        """通知失效操作"""
+        """通知失效操作."""
         self.invalidations[key] = datetime.utcnow()
 
         # 清理版本信息
@@ -734,11 +733,11 @@ class CacheCoordinator:
             del self.version_map[key]
 
     async def get_version(self, key: str) -> int:
-        """获取键的版本"""
+        """获取键的版本."""
         return self.version_map.get(key, 0)
 
     async def is_invalidated(self, key: str) -> bool:
-        """检查键是否已失效"""
+        """检查键是否已失效."""
         if key not in self.invalidations:
             return False
 
@@ -751,7 +750,7 @@ class CacheCoordinator:
 
 
 class CachePerformanceMonitor:
-    """缓存性能监控器"""
+    """缓存性能监控器."""
 
     def __init__(self):
         self.metrics = {
@@ -764,7 +763,7 @@ class CachePerformanceMonitor:
         }
 
     async def record_hit(self, level: CacheLevel, response_time: float):
-        """记录缓存命中"""
+        """记录缓存命中."""
         self.metrics["hits"][level.value] += 1
         self.metrics["response_times"][level.value].append(response_time)
 
@@ -775,20 +774,20 @@ class CachePerformanceMonitor:
             ][level.value][-1000:]
 
     async def record_miss(self, response_time: float):
-        """记录缓存未命中"""
+        """记录缓存未命中."""
         self.metrics["misses"] += 1
 
     async def record_write(self, level: CacheLevel, response_time: float):
-        """记录写入操作"""
+        """记录写入操作."""
         self.metrics["writes"][level.value] += 1
         self.metrics["response_times"][f"{level.value}_write"].append(response_time)
 
     async def record_error(self):
-        """记录错误"""
+        """记录错误."""
         self.metrics["errors"] += 1
 
     async def get_metrics(self) -> dict[str, Any]:
-        """获取性能指标"""
+        """获取性能指标."""
         total_hits = sum(self.metrics["hits"].values())
         total_requests = total_hits + self.metrics["misses"]
 
@@ -821,7 +820,7 @@ _distributed_cache_manager: DistributedCacheManager | None = None
 
 
 def get_distributed_cache_manager() -> DistributedCacheManager | None:
-    """获取全局分布式缓存管理器实例"""
+    """获取全局分布式缓存管理器实例."""
     global _distributed_cache_manager
     return _distributed_cache_manager
 
@@ -829,7 +828,7 @@ def get_distributed_cache_manager() -> DistributedCacheManager | None:
 async def initialize_distributed_cache(
     config: dict[str, Any],
 ) -> DistributedCacheManager:
-    """初始化分布式缓存管理器"""
+    """初始化分布式缓存管理器."""
     global _distributed_cache_manager
 
     _distributed_cache_manager = DistributedCacheManager(config)

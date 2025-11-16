@@ -1,6 +1,4 @@
-"""
-缓存装饰器
-"""
+"""缓存装饰器."""
 
 # 导入
 from collections.abc import Callable
@@ -13,7 +11,7 @@ T = TypeVar("T")
 
 # 类定义
 class CacheDecorator:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """缓存装饰器类,提供更灵活的配置"""
@@ -22,7 +20,7 @@ class CacheDecorator:
 
 
 class UserCacheDecorator:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户缓存装饰器类"""
@@ -31,7 +29,7 @@ class UserCacheDecorator:
 
 
 class InvalidateCacheDecorator:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """缓存失效装饰器类"""

@@ -1,5 +1,4 @@
-"""
-Match - 数据库模块
+"""Match - 数据库模块.
 
 提供 match 相关的数据库功能.
 
@@ -29,7 +28,7 @@ from src.database.base import BaseModel
 
 
 class MatchStatus(Enum):
-    """比赛状态枚举"""
+    """比赛状态枚举."""
 
     SCHEDULED = "scheduled"  # 已安排
     LIVE = "live"  # 进行中
@@ -38,7 +37,7 @@ class MatchStatus(Enum):
 
 
 class MatchResult(Enum):
-    """比赛结果枚举"""
+    """比赛结果枚举."""
 
     HOME_WIN = "home_win"  # 主队获胜
     AWAY_WIN = "away_win"  # 客队获胜

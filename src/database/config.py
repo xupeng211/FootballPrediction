@@ -1,4 +1,4 @@
-"""数据库配置模块"""
+"""数据库配置模块."""
 
 import os
 from dataclasses import dataclass
@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 @dataclass
 class DatabaseConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """封装数据库连接配置及常用连接URL."""
@@ -85,7 +85,6 @@ def _parse_int(key: str, default: int) -> int:
 
 def get_database_config(environment: str | None = None) -> DatabaseConfig:
     """根据环境返回数据库配置."""
-
     env = (
         environment or os.getenv("ENVIRONMENT", "development") or "development"
     ).lower()
@@ -137,18 +136,15 @@ def get_database_config(environment: str | None = None) -> DatabaseConfig:
 
 def get_test_database_config() -> DatabaseConfig:
     """返回测试环境数据库配置."""
-
     return get_database_config("test")
 
 
 def get_production_database_config() -> DatabaseConfig:
     """返回生产环境数据库配置."""
-
     return get_database_config("production")
 
 
 def get_database_url(environment: str | None = None) -> str:
     """根据环境返回数据库连接URL."""
-
     config = get_database_config(environment)
     return config.async_url

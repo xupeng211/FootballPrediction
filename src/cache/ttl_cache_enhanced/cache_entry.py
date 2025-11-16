@@ -1,6 +1,5 @@
-"""
-缓存条目定义
-Cache Entry Definition
+"""缓存条目定义
+Cache Entry Definition.
 
 定义缓存中的单个条目,包含值,过期时间和访问统计.
 """
@@ -10,7 +9,7 @@ from typing import Any
 
 
 class CacheEntry:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """缓存条目"
@@ -27,8 +26,7 @@ class CacheEntry:
         value: Any,
         ttl: float | None = None,
     ):
-        """
-        初始化缓存条目
+        """初始化缓存条目.
 
         Args:
             key: 缓存键
@@ -42,8 +40,7 @@ class CacheEntry:
         self.last_access = time.time()
 
     def is_expired(self) -> bool:
-        """
-        检查是否过期
+        """检查是否过期.
 
         Returns:
             bool: 是否已过期
@@ -51,8 +48,7 @@ class CacheEntry:
         return self.expires_at is not None and time.time() > self.expires_at
 
     def access(self) -> Any:
-        """
-        访问缓存项
+        """访问缓存项.
 
         更新访问统计并返回值.
 
@@ -64,8 +60,7 @@ class CacheEntry:
         return self.value
 
     def update_ttl(self, ttl: float | None = None) -> None:
-        """
-        更新过期时间
+        """更新过期时间.
 
         Args:
             ttl: 新的TTL（秒）,None表示永不过期
@@ -76,8 +71,7 @@ class CacheEntry:
             self.expires_at = None
 
     def get_remaining_ttl(self) -> int | None:
-        """
-        获取剩余TTL
+        """获取剩余TTL.
 
         Returns:
             Optional[int]: 剩余秒数,None表示永不过期
@@ -88,7 +82,7 @@ class CacheEntry:
         return remaining if remaining > 0 else 0
 
     def __lt__(self, other):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """
         用于堆排序,比较过期时间
@@ -104,7 +98,7 @@ class CacheEntry:
         return self.expires_at < other.expires_at
 
     def __repr__(self) -> str:
-        """字符串表示"""
+        """字符串表示."""
         ttl_str = f"TTL={self.get_remaining_ttl()}s" if self.expires_at else "TTL=∞"
         return (
             f"CacheEntry(key={self.key}, value={type(self.value).__name__}, {ttl_str})"

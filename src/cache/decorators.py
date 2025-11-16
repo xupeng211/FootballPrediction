@@ -1,6 +1,4 @@
-"""
-缓存装饰器模块
-"""
+"""缓存装饰器模块."""
 
 import asyncio
 import functools
@@ -11,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def cache_result(ttl: int = 300, key_func: Callable | None = None):
-    """缓存结果装饰器"""
+    """缓存结果装饰器."""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -30,7 +28,7 @@ def cache_result(ttl: int = 300, key_func: Callable | None = None):
 
 
 def invalidate_cache(pattern: str = "*"):
-    """缓存失效装饰器"""
+    """缓存失效装饰器."""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -50,7 +48,7 @@ def invalidate_cache(pattern: str = "*"):
 
 # 缓存装饰器类
 class CacheDecorator:
-    """缓存装饰器基类"""
+    """缓存装饰器基类."""
 
     def __init__(self, ttl: int = 300):
         self.ttl = ttl
@@ -60,7 +58,7 @@ class CacheDecorator:
 
 
 class InvalidateCacheDecorator:
-    """缓存失效装饰器"""
+    """缓存失效装饰器."""
 
     def __init__(self, pattern: str = "*"):
         self.pattern = pattern
@@ -70,7 +68,7 @@ class InvalidateCacheDecorator:
 
 
 class UserCacheDecorator(CacheDecorator):
-    """用户缓存装饰器"""
+    """用户缓存装饰器."""
 
     def __init__(self, ttl: int = 300):
         super().__init__(ttl)

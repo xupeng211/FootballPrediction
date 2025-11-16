@@ -1,6 +1,5 @@
-"""
-预测仓储
-Prediction Repository
+"""预测仓储
+Prediction Repository.
 
 提供预测数据的访问操作,实现Repository模式.
 Provides prediction data access operations, implementing the Repository pattern.
@@ -23,7 +22,7 @@ Prediction = Predictions
 
 # 预测状态常量
 class PredictionStatus:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     PENDING = "pending"
@@ -32,16 +31,15 @@ class PredictionStatus:
 
 
 class PredictionRepository(BaseRepository[Predictions]):
-    """
-    预测仓储类
-    Prediction Repository Class
+    """预测仓储类
+    Prediction Repository Class.
 
     提供预测数据的CRUD操作和复杂查询方法.
     Provides CRUD operations and complex query methods for prediction data.
     """
 
     def __init__(self, db_manager=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass
         # 添加pass语句
         super().__init__(Predictions, db_manager)
@@ -57,8 +55,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[Prediction]:
-        """
-        获取指定比赛的预测
+        """获取指定比赛的预测.
 
         Args:
             match_id: 比赛ID
@@ -78,8 +75,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_by_user(
         self, user_id: str, status: str | None = None
     ) -> list[Prediction]:
-        """
-        获取指定用户的预测
+        """获取指定用户的预测.
 
         Args:
             user_id: 用户ID
@@ -99,8 +95,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_by_status(
         self, status: PredictionStatus, limit: int | None = None
     ) -> list[Prediction]:
-        """
-        根据状态获取预测
+        """根据状态获取预测.
 
         Args:
             status: 预测状态
@@ -121,8 +116,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_pending_predictions(
         self, limit: int | None = None
     ) -> list[Prediction]:
-        """
-        获取待处理的预测
+        """获取待处理的预测.
 
         Args:
             limit: 限制返回数量
@@ -139,8 +133,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[Prediction]:
-        """
-        获取已完成的预测
+        """获取已完成的预测.
 
         Args:
             days: 过去多少天
@@ -179,8 +172,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         match_id: int | str,
         session: AsyncSession | None = None,
     ) -> Prediction | None:
-        """
-        获取用户对特定比赛的预测
+        """获取用户对特定比赛的预测.
 
         Args:
             user_id: 用户ID
@@ -204,8 +196,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         model_version: str | None = None,
         session: AsyncSession | None = None,
     ) -> Prediction:
-        """
-        创建新预测
+        """创建新预测.
 
         Args:
             user_id: 用户ID
@@ -244,8 +235,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         points_earned: float | None = None,
         session: AsyncSession | None = None,
     ) -> Prediction | None:
-        """
-        更新预测结果
+        """更新预测结果.
 
         Args:
             prediction_id: 预测ID
@@ -279,8 +269,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         reason: str | None = None,
         session: AsyncSession | None = None,
     ) -> Prediction | None:
-        """
-        取消预测
+        """取消预测.
 
         Args:
             prediction_id: 预测ID
@@ -312,8 +301,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         days: int | None = None,
         session: AsyncSession | None = None,
     ) -> dict[str, Any]:
-        """
-        获取用户预测统计
+        """获取用户预测统计.
 
         Args:
             user_id: 用户ID
@@ -394,8 +382,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_match_prediction_summary(
         self, match_id: int | str, session: AsyncSession | None = None
     ) -> dict[str, Any]:
-        """
-        获取比赛预测汇总
+        """获取比赛预测汇总.
 
         Args:
             match_id: 比赛ID
@@ -473,8 +460,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_top_predictors(
         self, days: int = 30, limit: int = 10, session: AsyncSession | None = None
     ) -> list[dict[str, Any]]:
-        """
-        获取顶级预测者排行榜
+        """获取顶级预测者排行榜.
 
         Args:
             days: 统计天数
@@ -545,8 +531,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         relation_name: str,
         session: AsyncSession | None = None,
     ) -> Any:
-        """
-        获取预测的关联数据
+        """获取预测的关联数据.
 
         Args:
             obj_id: 预测ID

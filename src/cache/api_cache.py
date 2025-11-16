@@ -1,6 +1,5 @@
-"""
-API缓存系统
-API Cache System
+"""API缓存系统
+API Cache System.
 
 提供高性能的API响应缓存，支持TTL管理、缓存失效策略和性能监控。
 """
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ApiCacheConfig:
-    """API缓存配置"""
+    """API缓存配置."""
 
     # 基础配置
     default_ttl: int = 300  # 5分钟
@@ -42,7 +41,7 @@ class ApiCacheConfig:
 
 @dataclass
 class CacheMetrics:
-    """缓存性能指标"""
+    """缓存性能指标."""
 
     hits: int = 0
     misses: int = 0
@@ -51,17 +50,17 @@ class CacheMetrics:
     errors: int = 0
 
     def get_hit_rate(self) -> float:
-        """获取缓存命中率"""
+        """获取缓存命中率."""
         total = self.hits + self.misses
         return self.hits / total if total > 0 else 0.0
 
     def reset(self) -> None:
-        """重置指标"""
+        """重置指标."""
         self.hits = self.misses = self.sets = self.deletes = self.errors = 0
 
 
 class ApiCache:
-    """高性能API缓存系统"""
+    """高性能API缓存系统."""
 
     def __init__(self, config: ApiCacheConfig | None = None):
         self.config = config or ApiCacheConfig()
@@ -79,8 +78,7 @@ class ApiCache:
         headers: dict | None = None,
         user_id: str | None = None,
     ) -> str:
-        """生成缓存键"""
-
+        """生成缓存键."""
         # 基础键结构
         key_parts = [self.config.key_prefix, method.lower(), endpoint.lower()]
 
@@ -112,7 +110,7 @@ class ApiCache:
         return ":".join(key_parts)
 
     def _serialize_value(self, value: Any) -> bytes:
-        """序列化缓存值"""
+        """序列化缓存值."""
         try:
             if isinstance(value, (dict, list, tuple)):
                 data = json.dumps(value, ensure_ascii=False, default=str)
@@ -132,7 +130,7 @@ class ApiCache:
             raise
 
     def _deserialize_value(self, data: bytes) -> Any:
-        """反序列化缓存值"""
+        """反序列化缓存值."""
         try:
             # 尝试解压缩
             if self._compression_enabled and data.startswith(b"\x1f\x8b"):
@@ -154,7 +152,7 @@ class ApiCache:
             return None
 
     def _calculate_ttl(self, base_ttl: int | None = None) -> int:
-        """计算TTL"""
+        """计算TTL."""
         if base_ttl is None:
             return self.config.default_ttl
 
@@ -170,8 +168,7 @@ class ApiCache:
         headers: dict | None = None,
         user_id: str | None = None,
     ) -> Any | None:
-        """获取缓存值"""
-
+        """获取缓存值."""
         try:
             cache_key = self._generate_cache_key(
                 endpoint, method, params, headers, user_id
@@ -208,8 +205,7 @@ class ApiCache:
         ttl: int | None = None,
         tags: list[str] | None = None,
     ) -> bool:
-        """设置缓存值"""
-
+        """设置缓存值."""
         try:
             cache_key = self._generate_cache_key(
                 endpoint, method, params, headers, user_id
@@ -253,8 +249,7 @@ class ApiCache:
         headers: dict | None = None,
         user_id: str | None = None,
     ) -> bool:
-        """删除缓存值"""
-
+        """删除缓存值."""
         try:
             cache_key = self._generate_cache_key(
                 endpoint, method, params, headers, user_id
@@ -276,8 +271,7 @@ class ApiCache:
             return False
 
     async def invalidate_by_tags(self, tags: list[str]) -> int:
-        """根据标签失效缓存"""
-
+        """根据标签失效缓存."""
         try:
             invalidated_count = 0
 
@@ -310,8 +304,7 @@ class ApiCache:
             return 0
 
     async def _set_cache_tags(self, cache_key: str, tags: list[str]) -> None:
-        """设置缓存标签"""
-
+        """设置缓存标签."""
         for tag in tags:
             tag_key = f"{self.config.key_prefix}:tag:{tag}"
 
@@ -329,8 +322,7 @@ class ApiCache:
                 )
 
     async def get_metrics(self) -> dict:
-        """获取缓存性能指标"""
-
+        """获取缓存性能指标."""
         if not self.config.enable_metrics:
             return {}
 
@@ -345,12 +337,11 @@ class ApiCache:
         }
 
     def reset_metrics(self) -> None:
-        """重置性能指标"""
+        """重置性能指标."""
         self.metrics.reset()
 
     async def clear_all(self) -> bool:
-        """清空所有API缓存"""
-
+        """清空所有API缓存."""
         try:
             # 使用Redis模式匹配删除所有API缓存键
 
@@ -370,7 +361,7 @@ _api_cache_instance: ApiCache | None = None
 
 
 def get_api_cache(config: ApiCacheConfig | None = None) -> ApiCache:
-    """获取全局API缓存实例"""
+    """获取全局API缓存实例."""
     global _api_cache_instance
 
     if _api_cache_instance is None:
@@ -386,7 +377,7 @@ def cache_api_response(
     key_params: list[str] | None = None,
     cache_user_specific: bool = False,
 ):
-    """API响应缓存装饰器"""
+    """API响应缓存装饰器."""
 
     def decorator(func):
         async def wrapper(*args, **kwargs):

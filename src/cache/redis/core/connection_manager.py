@@ -1,6 +1,4 @@
-"""
-Redis connection manager
-"""
+"""Redis connection manager."""
 
 import os
 
@@ -9,19 +7,19 @@ from redis.exceptions import RedisError
 
 
 class RedisConnectionManager:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """管理Redis连接的类"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self._pool: aioredis.ConnectionPool | None = None
         self._redis: aioredis.Redis | None = None
 
     async def connect(self) -> aioredis.Redis:
-        """建立Redis连接"""
+        """建立Redis连接."""
         if self._redis is None:
             # 使用环境变量或默认URL
             redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
@@ -32,13 +30,13 @@ class RedisConnectionManager:
         return self._redis
 
     async def disconnect(self):
-        """关闭Redis连接"""
+        """关闭Redis连接."""
         if self._redis:
             await self._redis.close()
             self._redis = None
 
     async def health_check(self) -> bool:
-        """检查Redis健康状态"""
+        """检查Redis健康状态."""
         try:
             redis = await self.connect()
             await redis.ping()

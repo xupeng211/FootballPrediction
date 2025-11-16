@@ -1,6 +1,5 @@
-"""
-用户仓储
-User Repository
+"""用户仓储
+User Repository.
 
 提供用户数据的访问操作,实现Repository模式.
 Provides user data access operations, implementing the Repository pattern.
@@ -19,16 +18,15 @@ from .base import BaseRepository
 
 
 class UserRepository(BaseRepository[User]):
-    """
-    用户仓储类
-    User Repository Class
+    """用户仓储类
+    User Repository Class.
 
     提供用户数据的CRUD操作和复杂查询方法.
     Provides CRUD operations and complex query methods for user data.
     """
 
     def __init__(self, db_manager=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(User, db_manager)
 
@@ -39,8 +37,7 @@ class UserRepository(BaseRepository[User]):
     async def get_by_username(
         self, username: str, session: AsyncSession | None = None
     ) -> User | None:
-        """
-        根据用户名获取用户
+        """根据用户名获取用户.
 
         Args:
             username: 用户名
@@ -54,8 +51,7 @@ class UserRepository(BaseRepository[User]):
     async def get_by_email(
         self, email: str, session: AsyncSession | None = None
     ) -> User | None:
-        """
-        根据邮箱获取用户
+        """根据邮箱获取用户.
 
         Args:
             email: 邮箱地址
@@ -72,8 +68,7 @@ class UserRepository(BaseRepository[User]):
         exclude_id: int | str | None = None,
         session: AsyncSession | None = None,
     ) -> bool:
-        """
-        检查用户名是否存在
+        """检查用户名是否存在.
 
         Args:
             username: 用户名
@@ -95,8 +90,7 @@ class UserRepository(BaseRepository[User]):
         exclude_id: int | str | None = None,
         session: AsyncSession | None = None,
     ) -> bool:
-        """
-        检查邮箱是否存在
+        """检查邮箱是否存在.
 
         Args:
             email: 邮箱地址
@@ -115,8 +109,7 @@ class UserRepository(BaseRepository[User]):
     async def get_active_users(
         self, limit: int | None = None, session: AsyncSession | None = None
     ) -> list[User]:
-        """
-        获取活跃用户
+        """获取活跃用户.
 
         Args:
             limit: 限制返回数量
@@ -152,8 +145,7 @@ class UserRepository(BaseRepository[User]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[User]:
-        """
-        获取非活跃用户
+        """获取非活跃用户.
 
         Args:
             days: 多少天未登录
@@ -190,8 +182,7 @@ class UserRepository(BaseRepository[User]):
         limit: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[User]:
-        """
-        搜索用户
+        """搜索用户.
 
         Args:
             query: 搜索关键词
@@ -226,8 +217,7 @@ class UserRepository(BaseRepository[User]):
     async def update_last_login(
         self, user_id: int | str, session: AsyncSession | None = None
     ) -> User | None:
-        """
-        更新用户最后登录时间
+        """更新用户最后登录时间.
 
         Args:
             user_id: 用户ID
@@ -248,8 +238,7 @@ class UserRepository(BaseRepository[User]):
         hashed_password: str,
         session: AsyncSession | None = None,
     ) -> User | None:
-        """
-        修改用户密码
+        """修改用户密码.
 
         Args:
             user_id: 用户ID
@@ -271,8 +260,7 @@ class UserRepository(BaseRepository[User]):
     async def activate_user(
         self, user_id: int | str, session: AsyncSession | None = None
     ) -> User | None:
-        """
-        激活用户
+        """激活用户.
 
         Args:
             user_id: 用户ID
@@ -293,8 +281,7 @@ class UserRepository(BaseRepository[User]):
         reason: str | None = None,
         session: AsyncSession | None = None,
     ) -> User | None:
-        """
-        停用用户
+        """停用用户.
 
         Args:
             user_id: 用户ID
@@ -318,8 +305,7 @@ class UserRepository(BaseRepository[User]):
     async def get_user_stats(
         self, days: int | None = None, session: AsyncSession | None = None
     ) -> dict[str, Any]:
-        """
-        获取用户统计信息
+        """获取用户统计信息.
 
         Args:
             days: 统计天数（可选）
@@ -382,8 +368,7 @@ class UserRepository(BaseRepository[User]):
     async def get_user_growth_stats(
         self, days: int = 30, session: AsyncSession | None = None
     ) -> list[dict[str, Any]]:
-        """
-        获取用户增长统计
+        """获取用户增长统计.
 
         Args:
             days: 统计天数
@@ -438,8 +423,7 @@ class UserRepository(BaseRepository[User]):
         relation_name: str,
         session: AsyncSession | None = None,
     ) -> Any:
-        """
-        获取用户的关联数据
+        """获取用户的关联数据.
 
         Args:
             obj_id: 用户ID

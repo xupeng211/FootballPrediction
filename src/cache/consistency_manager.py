@@ -1,6 +1,5 @@
-"""
-缓存一致性管理器
-Cache Consistency Manager
+"""缓存一致性管理器
+Cache Consistency Manager.
 
 提供企业级缓存一致性管理功能，支持多种一致性级别和失效策略。
 """
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class ConsistencyLevel(Enum):
-    """缓存一致性级别"""
+    """缓存一致性级别."""
 
     EVENTUAL = "eventual"  # 最终一致性
     STRONG = "strong"  # 强一致性
@@ -26,7 +25,7 @@ class ConsistencyLevel(Enum):
 
 
 class CacheEvent:
-    """缓存事件"""
+    """缓存事件."""
 
     def __init__(self, event_type: str, key: str, data: dict[str, Any] | None = None):
         self.event_type = event_type
@@ -38,7 +37,7 @@ class CacheEvent:
 
 @dataclass
 class CacheEntry:
-    """缓存条目"""
+    """缓存条目."""
 
     key: str
     value: Any
@@ -50,11 +49,10 @@ class CacheEntry:
 
 
 class CacheConsistencyManager:
-    """缓存一致性管理器"""
+    """缓存一致性管理器."""
 
     def __init__(self, consistency_level: ConsistencyLevel = ConsistencyLevel.EVENTUAL):
-        """
-        初始化缓存一致性管理器
+        """初始化缓存一致性管理器.
 
         Args:
             consistency_level: 一致性级别
@@ -73,7 +71,7 @@ class CacheConsistencyManager:
         )
 
     async def start(self) -> None:
-        """启动一致性管理器"""
+        """启动一致性管理器."""
         with self._lock:
             if self._running:
                 return
@@ -85,7 +83,7 @@ class CacheConsistencyManager:
             logger.info("缓存一致性管理器已启动")
 
     async def stop(self) -> None:
-        """停止一致性管理器"""
+        """停止一致性管理器."""
         with self._lock:
             if not self._running:
                 return
@@ -102,21 +100,20 @@ class CacheConsistencyManager:
             logger.info("缓存一致性管理器已停止")
 
     def register_cache_store(self, name: str, store: Any) -> None:
-        """注册缓存存储后端"""
+        """注册缓存存储后端."""
         with self._lock:
             self._cache_stores[name] = store
             logger.info(f"注册缓存存储: {name}")
 
     def unregister_cache_store(self, name: str) -> None:
-        """注销缓存存储后端"""
+        """注销缓存存储后端."""
         with self._lock:
             if name in self._cache_stores:
                 del self._cache_stores[name]
                 logger.info(f"注销缓存存储: {name}")
 
     async def invalidate_cache(self, keys: list[str], reason: str = "manual") -> None:
-        """
-        缓存失效处理
+        """缓存失效处理.
 
         Args:
             keys: 要失效的缓存键列表
@@ -146,8 +143,7 @@ class CacheConsistencyManager:
         await self._notify_event_listeners(event)
 
     async def invalidate_pattern(self, pattern: str, reason: str = "pattern") -> None:
-        """
-        按模式失效缓存
+        """按模式失效缓存.
 
         Args:
             pattern: 缓存键模式
@@ -180,8 +176,7 @@ class CacheConsistencyManager:
     async def get_cache_entry(
         self, key: str, store_name: str = "default"
     ) -> CacheEntry | None:
-        """
-        获取缓存条目
+        """获取缓存条目.
 
         Args:
             key: 缓存键
@@ -217,8 +212,7 @@ class CacheConsistencyManager:
     async def set_cache_entry(
         self, key: str, value: Any, ttl: int, store_name: str = "default"
     ) -> bool:
-        """
-        设置缓存条目
+        """设置缓存条目.
 
         Args:
             key: 缓存键
@@ -251,8 +245,7 @@ class CacheConsistencyManager:
         return False
 
     def subscribe(self, key: str, callback: Callable[[str], None]) -> None:
-        """
-        订阅缓存键变化
+        """订阅缓存键变化.
 
         Args:
             key: 缓存键
@@ -265,8 +258,7 @@ class CacheConsistencyManager:
             logger.info(f"订阅缓存键变化: {key}")
 
     def unsubscribe(self, key: str, callback: Callable[[str], None]) -> None:
-        """
-        取消订阅缓存键变化
+        """取消订阅缓存键变化.
 
         Args:
             key: 缓存键
@@ -280,8 +272,7 @@ class CacheConsistencyManager:
                 logger.info(f"取消订阅缓存键变化: {key}")
 
     def add_event_listener(self, listener: Callable[[CacheEvent], None]) -> None:
-        """
-        添加事件监听器
+        """添加事件监听器.
 
         Args:
             listener: 事件监听器函数
@@ -290,8 +281,7 @@ class CacheConsistencyManager:
         logger.info("添加缓存事件监听器")
 
     def remove_event_listener(self, listener: Callable[[CacheEvent], None]) -> None:
-        """
-        移除事件监听器
+        """移除事件监听器.
 
         Args:
             listener: 事件监听器函数
@@ -301,8 +291,7 @@ class CacheConsistencyManager:
             logger.info("移除缓存事件监听器")
 
     async def get_statistics(self) -> dict[str, Any]:
-        """
-        获取一致性管理器统计信息
+        """获取一致性管理器统计信息.
 
         Returns:
             统计信息字典
@@ -334,7 +323,7 @@ class CacheConsistencyManager:
         return stats
 
     async def _process_invalidation_queue(self) -> None:
-        """处理失效队列"""
+        """处理失效队列."""
         while self._running:
             try:
                 # 等待失效任务，设置超时避免阻塞
@@ -358,7 +347,7 @@ class CacheConsistencyManager:
     async def _perform_invalidation(
         self, keys_or_pattern: Any, event: CacheEvent
     ) -> None:
-        """执行失效操作"""
+        """执行失效操作."""
         if isinstance(keys_or_pattern, list):
             # 具体键失效
             for store_name, store in self._cache_stores.items():
@@ -379,7 +368,7 @@ class CacheConsistencyManager:
                         logger.error(f"从存储 {store_name} 模式删除失败: {e}")
 
     async def _notify_subscribers(self, keys: list[str], event: CacheEvent) -> None:
-        """通知订阅者"""
+        """通知订阅者."""
         for key in keys:
             with self._lock:
                 if key in self._subscriptions:
@@ -393,7 +382,7 @@ class CacheConsistencyManager:
                             logger.error(f"通知订阅者 {key} 时发生错误: {e}")
 
     async def _notify_event_listeners(self, event: CacheEvent) -> None:
-        """通知事件监听器"""
+        """通知事件监听器."""
         for listener in self._event_listeners:
             try:
                 if asyncio.iscoroutinefunction(listener):
@@ -404,7 +393,7 @@ class CacheConsistencyManager:
                 logger.error(f"事件监听器处理失败: {e}")
 
     async def _update_access_info(self, key: str, store_name: str) -> None:
-        """更新访问信息"""
+        """更新访问信息."""
         store = self._cache_stores.get(store_name)
         if store and hasattr(store, "update_access_info"):
             try:
@@ -413,7 +402,7 @@ class CacheConsistencyManager:
                 logger.error(f"更新访问信息失败: {e}")
 
     def _get_ttl(self, key: str, store_name: str) -> int:
-        """获取TTL"""
+        """获取TTL."""
         store = self._cache_stores.get(store_name)
         if store and hasattr(store, "get_ttl"):
             try:
@@ -428,7 +417,7 @@ _global_consistency_manager: CacheConsistencyManager | None = None
 
 
 def get_consistency_manager() -> CacheConsistencyManager:
-    """获取全局一致性管理器实例"""
+    """获取全局一致性管理器实例."""
     global _global_consistency_manager
     if _global_consistency_manager is None:
         _global_consistency_manager = CacheConsistencyManager()
@@ -436,22 +425,21 @@ def get_consistency_manager() -> CacheConsistencyManager:
 
 
 async def start_consistency_manager() -> CacheConsistencyManager:
-    """启动全局一致性管理器"""
+    """启动全局一致性管理器."""
     manager = get_consistency_manager()
     await manager.start()
     return manager
 
 
 async def stop_consistency_manager() -> None:
-    """停止全局一致性管理器"""
+    """停止全局一致性管理器."""
     manager = get_consistency_manager()
     await manager.stop()
 
 
 # 便捷函数 - 向后兼容
 async def invalidate_entity_cache(entity_type: str, entity_id: str = None) -> None:
-    """
-    实体缓存失效
+    """实体缓存失效.
 
     Args:
         entity_type: 实体类型
@@ -470,8 +458,7 @@ async def invalidate_entity_cache(entity_type: str, entity_id: str = None) -> No
 async def sync_entity_cache(
     entity_type: str, entity_id: str = None, data: Any = None, ttl: int = 3600
 ) -> None:
-    """
-    同步实体缓存
+    """同步实体缓存.
 
     Args:
         entity_type: 实体类型

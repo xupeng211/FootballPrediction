@@ -51,7 +51,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def is_sqlite():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """检测当前是否为SQLite数据库"""
     if context.is_offline_mode():
@@ -61,7 +61,7 @@ def is_sqlite():
 
 
 def is_postgresql():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """检测当前是否为PostgreSQL数据库"""
     if context.is_offline_mode():
@@ -71,8 +71,7 @@ def is_postgresql():
 
 
 def upgrade() -> None:
-    """
-    升级数据库结构以支持JSONB与SQLite兼容性
+    """升级数据库结构以支持JSONB与SQLite兼容性
     注意:由于我们已经在模型层面使用了兼容的类型定义,
     这个迁移主要是为了验证和确保现有结构的兼容性.
     """
@@ -94,7 +93,7 @@ def upgrade() -> None:
 
 
 def _configure_sqlite_compatibility():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """为SQLite配置兼容性设置"""
     tables_to_check = [
@@ -114,7 +113,7 @@ def _configure_sqlite_compatibility():
 
 
 def _verify_postgresql_jsonb_config():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """验证PostgreSQL的JSONB配置"""
     bind = op.get_bind()
@@ -156,8 +155,7 @@ def _verify_postgresql_jsonb_config():
 
 
 def downgrade() -> None:
-    """
-    降级操作
+    """降级操作
     由于此迁移主要是兼容性验证和配置,降级时不需要特殊操作。
     实际的数据库结构没有发生改变.
     """

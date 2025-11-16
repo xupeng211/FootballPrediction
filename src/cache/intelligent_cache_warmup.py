@@ -1,6 +1,5 @@
-"""
-智能缓存预热系统
-Intelligent Cache Warmup System
+"""智能缓存预热系统
+Intelligent Cache Warmup System.
 
 提供基于机器学习、访问模式分析和业务规则的智能缓存预热解决方案。
 """
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class WarmupStrategy(Enum):
-    """预热策略"""
+    """预热策略."""
 
     ACCESS_PATTERN = "access_pattern"  # 基于访问模式
     BUSINESS_RULES = "business_rules"  # 基于业务规则
@@ -31,7 +30,7 @@ class WarmupStrategy(Enum):
 
 
 class PriorityLevel(Enum):
-    """优先级级别"""
+    """优先级级别."""
 
     CRITICAL = "critical"  # 关键数据
     HIGH = "high"  # 高优先级
@@ -42,7 +41,7 @@ class PriorityLevel(Enum):
 
 @dataclass
 class AccessPattern:
-    """访问模式"""
+    """访问模式."""
 
     key: str
     access_frequency: float = 0.0  # 访问频率
@@ -56,7 +55,7 @@ class AccessPattern:
     correlation_score: float = 0.0  # 与其他键的关联度
 
     def add_access(self, timestamp: datetime, duration: float = 0.0):
-        """添加访问记录"""
+        """添加访问记录."""
         self.access_times.append(timestamp)
         self.last_access = timestamp
         self.access_duration = (
@@ -70,7 +69,7 @@ class AccessPattern:
         self.daily_distribution[day] += 1
 
     def calculate_frequency(self, time_window: timedelta = timedelta(days=7)) -> float:
-        """计算访问频率"""
+        """计算访问频率."""
         if not self.access_times:
             return 0.0
 
@@ -87,7 +86,7 @@ class AccessPattern:
         return len(recent_accesses) / (time_span / 3600)  # 每小时访问次数
 
     def predict_next_access(self) -> datetime | None:
-        """预测下次访问时间"""
+        """预测下次访问时间."""
         if len(self.access_times) < 3:
             return None
 
@@ -109,7 +108,7 @@ class AccessPattern:
 
 @dataclass
 class WarmupTask:
-    """预热任务"""
+    """预热任务."""
 
     task_id: str
     key: str
@@ -132,7 +131,7 @@ class WarmupTask:
 
 @dataclass
 class WarmupPlan:
-    """预热计划"""
+    """预热计划."""
 
     plan_id: str
     strategy: WarmupStrategy
@@ -146,7 +145,7 @@ class WarmupPlan:
 
 
 class AccessPatternAnalyzer:
-    """访问模式分析器"""
+    """访问模式分析器."""
 
     def __init__(self):
         self.patterns: dict[str, AccessPattern] = {}
@@ -159,7 +158,7 @@ class AccessPatternAnalyzer:
     def record_access(
         self, key: str, session_id: str | None = None, duration: float = 0.0
     ):
-        """记录访问"""
+        """记录访问."""
         with self.lock:
             if key not in self.patterns:
                 self.patterns[key] = AccessPattern(key=key)
@@ -174,7 +173,7 @@ class AccessPatternAnalyzer:
     def analyze_patterns(
         self, time_window: timedelta = timedelta(days=7)
     ) -> dict[str, Any]:
-        """分析访问模式"""
+        """分析访问模式."""
         analysis = {
             "total_keys": len(self.patterns),
             "high_frequency_keys": [],
@@ -217,7 +216,7 @@ class AccessPatternAnalyzer:
         return analysis
 
     def find_correlated_keys(self, key: str, threshold: float = 0.3) -> list[str]:
-        """查找关联键"""
+        """查找关联键."""
         if key not in self.correlation_matrix:
             return []
 
@@ -225,7 +224,7 @@ class AccessPatternAnalyzer:
         return [k for k, v in correlations.items() if v >= threshold]
 
     def update_correlation_matrix(self, access_sequence: list[str]):
-        """更新关联矩阵"""
+        """更新关联矩阵."""
         for i in range(len(access_sequence)):
             for j in range(i + 1, len(access_sequence)):
                 key1, key2 = access_sequence[i], access_sequence[j]
@@ -233,7 +232,7 @@ class AccessPatternAnalyzer:
                 self.correlation_matrix[key2][key1] += 1
 
     def get_warmup_candidates(self, limit: int = 100) -> list[tuple[str, float]]:
-        """获取预热候选键"""
+        """获取预热候选键."""
         candidates = []
 
         for key, pattern in self.patterns.items():
@@ -261,7 +260,7 @@ class AccessPatternAnalyzer:
         return candidates[:limit]
 
     def predict_next_access(self, key: str) -> float:
-        """预测下一个访问时间（返回小时数）"""
+        """预测下一个访问时间（返回小时数）."""
         if key not in self.patterns:
             return 24.0  # 默认24小时后
 
@@ -298,33 +297,33 @@ class AccessPatternAnalyzer:
 
 
 class PredictiveModel(ABC):
-    """预测模型抽象类"""
+    """预测模型抽象类."""
 
     @abstractmethod
     def train(self, training_data: list[dict[str, Any]]) -> bool:
-        """训练模型"""
+        """训练模型."""
         pass
 
     @abstractmethod
     def predict(self, input_data: dict[str, Any]) -> float:
-        """预测"""
+        """预测."""
         pass
 
     @abstractmethod
     def get_feature_importance(self) -> dict[str, float]:
-        """获取特征重要性"""
+        """获取特征重要性."""
         pass
 
 
 class SimpleFrequencyPredictor(PredictiveModel):
-    """简单频率预测器"""
+    """简单频率预测器."""
 
     def __init__(self):
         self.frequencies: dict[str, float] = {}
         self.time_weights: dict[int, float] = {}
 
     def train(self, training_data: list[dict[str, Any]]) -> bool:
-        """训练频率模型"""
+        """训练频率模型."""
         try:
             for record in training_data:
                 key = record["key"]
@@ -347,7 +346,7 @@ class SimpleFrequencyPredictor(PredictiveModel):
             return False
 
     def predict(self, input_data: dict[str, Any]) -> float:
-        """预测访问概率"""
+        """预测访问概率."""
         key = input_data.get("key", "")
         hour = input_data.get("hour", datetime.utcnow().hour)
 
@@ -357,12 +356,12 @@ class SimpleFrequencyPredictor(PredictiveModel):
         return base_frequency * time_weight
 
     def get_feature_importance(self) -> dict[str, float]:
-        """获取特征重要性"""
+        """获取特征重要性."""
         return {"frequency": 0.7, "time_weight": 0.3}
 
 
 class IntelligentCacheWarmupManager:
-    """智能缓存预热管理器"""
+    """智能缓存预热管理器."""
 
     def __init__(self, cache_manager, config: dict[str, Any] | None = None):
         self.cache_manager = cache_manager
@@ -408,13 +407,13 @@ class IntelligentCacheWarmupManager:
         self.event_handlers: dict[str, list[Callable]] = defaultdict(list)
 
     def register_data_loader(self, key_pattern: str, loader: Callable):
-        """注册数据加载器"""
+        """注册数据加载器."""
         self.data_loaders[key_pattern] = loader
 
     async def record_access(
         self, key: str, session_id: str | None = None, duration: float = 0.0
     ):
-        """记录访问（用于模式学习）"""
+        """记录访问（用于模式学习）."""
         self.pattern_analyzer.record_access(key, session_id, duration)
 
     async def create_warmup_plan(
@@ -424,7 +423,7 @@ class IntelligentCacheWarmupManager:
         priority_filter: list[PriorityLevel] | None = None,
         scheduled_at: datetime | None = None,
     ) -> str:
-        """创建预热计划"""
+        """创建预热计划."""
         plan_id = f"plan_{int(time.time() * 1000)}"
         plan = WarmupPlan(plan_id=plan_id, strategy=strategy, scheduled_at=scheduled_at)
 
@@ -441,7 +440,7 @@ class IntelligentCacheWarmupManager:
         return plan_id
 
     async def execute_warmup_plan(self, plan_id: str) -> bool:
-        """执行预热计划"""
+        """执行预热计划."""
         if plan_id not in self.warmup_plans:
             raise ValueError(f"Warmup plan {plan_id} not found")
 
@@ -480,7 +479,7 @@ class IntelligentCacheWarmupManager:
         keys: list[str] | None = None,
         priority_filter: list[PriorityLevel] | None = None,
     ) -> list[WarmupTask]:
-        """基于访问模式的预热策略"""
+        """基于访问模式的预热策略."""
         candidates = self.pattern_analyzer.get_warmup_candidates(limit=200)
 
         if keys:
@@ -511,7 +510,7 @@ class IntelligentCacheWarmupManager:
         keys: list[str] | None = None,
         priority_filter: list[PriorityLevel] | None = None,
     ) -> list[WarmupTask]:
-        """基于业务规则的预热策略"""
+        """基于业务规则的预热策略."""
         tasks = []
         business_rules = self.config.get("business_rules", {})
 
@@ -546,7 +545,7 @@ class IntelligentCacheWarmupManager:
         keys: list[str] | None = None,
         priority_filter: list[PriorityLevel] | None = None,
     ) -> list[WarmupTask]:
-        """预测性预热策略"""
+        """预测性预热策略."""
         # 准备训练数据
         training_data = []
         patterns = self.pattern_analyzer.patterns
@@ -604,7 +603,7 @@ class IntelligentCacheWarmupManager:
         keys: list[str] | None = None,
         priority_filter: list[PriorityLevel] | None = None,
     ) -> list[WarmupTask]:
-        """混合策略"""
+        """混合策略."""
         # 结合多种策略的结果
         pattern_tasks = await self._access_pattern_strategy(keys, priority_filter)
         business_tasks = await self._business_rules_strategy(keys, priority_filter)
@@ -626,7 +625,7 @@ class IntelligentCacheWarmupManager:
         keys: list[str] | None = None,
         priority_filter: list[PriorityLevel] | None = None,
     ) -> list[WarmupTask]:
-        """定时预热策略"""
+        """定时预热策略."""
         current_hour = datetime.utcnow().hour
         scheduled_warmups = self.config.get("scheduled_warmups", {})
 
@@ -662,7 +661,7 @@ class IntelligentCacheWarmupManager:
     def _should_include_key(
         self, key: str, priority_filter: list[PriorityLevel] | None
     ) -> bool:
-        """检查是否应该包含键"""
+        """检查是否应该包含键."""
         if not priority_filter:
             return True
 
@@ -672,7 +671,7 @@ class IntelligentCacheWarmupManager:
         return key_priority in priority_filter
 
     def _determine_priority(self, score: float) -> PriorityLevel:
-        """根据分数确定优先级"""
+        """根据分数确定优先级."""
         if score >= 80:
             return PriorityLevel.CRITICAL
         elif score >= 60:
@@ -685,7 +684,7 @@ class IntelligentCacheWarmupManager:
             return PriorityLevel.BACKGROUND
 
     def _get_priority_value(self, priority: PriorityLevel) -> int:
-        """获取优先级数值"""
+        """获取优先级数值."""
         priority_values = {
             PriorityLevel.CRITICAL: 1,
             PriorityLevel.HIGH: 2,
@@ -696,7 +695,7 @@ class IntelligentCacheWarmupManager:
         return priority_values.get(priority, 3)
 
     def _get_data_loader(self, key: str) -> Callable | None:
-        """获取数据加载器"""
+        """获取数据加载器."""
         # 查找匹配的加载器
         for pattern, loader in self.data_loaders.items():
             if pattern in key or key in pattern:
@@ -706,13 +705,13 @@ class IntelligentCacheWarmupManager:
         return self._default_data_loader
 
     async def _default_data_loader(self, key: str) -> Any:
-        """默认数据加载器"""
+        """默认数据加载器."""
         # 这里可以实现默认的数据加载逻辑
         logger.warning(f"Using default data loader for key: {key}")
         return None
 
     def _evaluate_business_rule(self, rule: dict[str, Any]) -> bool:
-        """评估业务规则"""
+        """评估业务规则."""
         conditions = rule.get("conditions", [])
 
         for condition in conditions:
@@ -731,7 +730,7 @@ class IntelligentCacheWarmupManager:
         return True
 
     async def start_task_executor(self):
-        """启动任务执行器"""
+        """启动任务执行器."""
         if self.executor_running:
             return
 
@@ -739,11 +738,11 @@ class IntelligentCacheWarmupManager:
         asyncio.create_task(self._task_executor_loop())
 
     async def stop_task_executor(self):
-        """停止任务执行器"""
+        """停止任务执行器."""
         self.executor_running = False
 
     async def _task_executor_loop(self):
-        """任务执行循环"""
+        """任务执行循环."""
         while self.executor_running:
             try:
                 # 控制并发数
@@ -771,7 +770,7 @@ class IntelligentCacheWarmupManager:
                 await asyncio.sleep(1)
 
     async def _execute_warmup_task(self, task: WarmupTask):
-        """执行预热任务"""
+        """执行预热任务."""
         task.status = "running"
         task.started_at = datetime.utcnow()
 
@@ -851,7 +850,7 @@ class IntelligentCacheWarmupManager:
             )
 
     async def cancel_task(self, task_id: str) -> bool:
-        """取消任务"""
+        """取消任务."""
         if task_id in self.warmup_tasks:
             task = self.warmup_tasks[task_id]
             if task.status in ["pending", "running"]:
@@ -860,7 +859,7 @@ class IntelligentCacheWarmupManager:
         return False
 
     async def cancel_plan(self, plan_id: str) -> bool:
-        """取消预热计划"""
+        """取消预热计划."""
         if plan_id in self.warmup_plans:
             plan = self.warmup_plans[plan_id]
             if plan.status in ["draft", "scheduled", "running"]:
@@ -874,7 +873,7 @@ class IntelligentCacheWarmupManager:
         return False
 
     async def get_warmup_statistics(self) -> dict[str, Any]:
-        """获取预热统计信息"""
+        """获取预热统计信息."""
         analysis = self.pattern_analyzer.analyze_patterns()
 
         return {
@@ -895,7 +894,7 @@ class IntelligentCacheWarmupManager:
         }
 
     async def _trigger_event(self, event_name: str, data: dict[str, Any]):
-        """触发事件"""
+        """触发事件."""
         if event_name in self.event_handlers:
             for handler in self.event_handlers[event_name]:
                 try:
@@ -907,7 +906,7 @@ class IntelligentCacheWarmupManager:
                     logger.error(f"Error in event handler for {event_name}: {e}")
 
     def add_event_handler(self, event_name: str, handler: Callable):
-        """添加事件处理器"""
+        """添加事件处理器."""
         self.event_handlers[event_name].append(handler)
 
     async def auto_warmup(
@@ -915,7 +914,7 @@ class IntelligentCacheWarmupManager:
         strategy: WarmupStrategy = WarmupStrategy.HYBRID,
         schedule_interval: int = 3600,
     ) -> str:
-        """自动预热（定时执行）"""
+        """自动预热（定时执行）."""
         plan_id = await self.create_warmup_plan(strategy)
 
         # 创建定时任务
@@ -941,7 +940,7 @@ _warmup_manager: IntelligentCacheWarmupManager | None = None
 
 
 def get_intelligent_warmup_manager() -> IntelligentCacheWarmupManager | None:
-    """获取全局智能缓存预热管理器实例"""
+    """获取全局智能缓存预热管理器实例."""
     global _warmup_manager
     return _warmup_manager
 
@@ -949,7 +948,7 @@ def get_intelligent_warmup_manager() -> IntelligentCacheWarmupManager | None:
 async def initialize_intelligent_warmup(
     cache_manager, config: dict[str, Any] | None = None
 ) -> IntelligentCacheWarmupManager:
-    """初始化智能缓存预热管理器"""
+    """初始化智能缓存预热管理器."""
     global _warmup_manager
 
     _warmup_manager = IntelligentCacheWarmupManager(cache_manager, config)

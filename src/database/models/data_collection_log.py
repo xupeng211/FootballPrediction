@@ -19,7 +19,7 @@ from src.database.base import BaseModel
 
 
 class CollectionStatus(Enum):
-    """采集状态枚举"""
+    """采集状态枚举."""
 
     SUCCESS = "success"
     FAILED = "failed"
@@ -28,7 +28,7 @@ class CollectionStatus(Enum):
 
 
 class CollectionType(Enum):
-    """采集类型枚举"""
+    """采集类型枚举."""
 
     FIXTURES = "fixtures"
     ODDS = "odds"
@@ -72,7 +72,7 @@ class DataCollectionLog(BaseModel):
 
     @validates("collection_type")
     def validate_collection_type(self, key: str, collection_type: str) -> str:
-        """验证采集类型"""
+        """验证采集类型."""
         valid_types = [ct.value for ct in CollectionType]
         if collection_type not in valid_types:
             raise ValueError(
@@ -82,7 +82,7 @@ class DataCollectionLog(BaseModel):
 
     @validates("status")
     def validate_status(self, key: str, status: str) -> str:
-        """验证采集状态"""
+        """验证采集状态."""
         valid_statuses = [cs.value for cs in CollectionStatus]
         if status not in valid_statuses:
             raise ValueError(
@@ -92,14 +92,14 @@ class DataCollectionLog(BaseModel):
 
     @property
     def duration_seconds(self) -> float | None:
-        """计算采集耗时（秒）"""
+        """计算采集耗时（秒）."""
         if self.start_time and self.end_time:
             return (self.end_time - self.start_time).total_seconds()
         return None
 
     @property
     def success_rate(self) -> float:
-        """计算成功率"""
+        """计算成功率."""
         total = self.success_count + self.error_count
         if total == 0:
             return 0.0
@@ -107,7 +107,7 @@ class DataCollectionLog(BaseModel):
 
     @property
     def is_completed(self) -> bool:
-        """是否已完成（成功或失败）"""
+        """是否已完成（成功或失败）."""
         return self.status in (
             CollectionStatus.SUCCESS.value,
             CollectionStatus.FAILED.value,
@@ -116,11 +116,11 @@ class DataCollectionLog(BaseModel):
 
     @property
     def is_successful(self) -> bool:
-        """是否成功完成"""
+        """是否成功完成."""
         return self.status == CollectionStatus.SUCCESS.value
 
     def mark_started(self) -> None:
-        """标记采集开始"""
+        """标记采集开始."""
         self.start_time = datetime.now()
         self.status = CollectionStatus.RUNNING.value
 
@@ -132,8 +132,7 @@ class DataCollectionLog(BaseModel):
         error_count: int = 0,
         error_message: str | None = None,
     ) -> None:
-        """
-        标记采集完成
+        """标记采集完成.
 
         Args:
             status: 最终状态
@@ -151,7 +150,7 @@ class DataCollectionLog(BaseModel):
             self.error_message = error_message
 
     def __repr__(self) -> str:
-        """字符串表示"""
+        """字符串表示."""
         return (
             f"<DataCollectionLog("
             f"id={self.id}, "
@@ -163,7 +162,7 @@ class DataCollectionLog(BaseModel):
         )
 
     def to_dict(self, exclude_fields: set | None = None) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "id": self.id,
             "data_source": self.data_source,

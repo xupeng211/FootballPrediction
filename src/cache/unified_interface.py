@@ -1,6 +1,5 @@
-"""
-统一缓存接口
-Unified Cache Interface
+"""统一缓存接口
+Unified Cache Interface.
 
 提供统一的缓存管理接口，整合TTL缓存、Redis缓存、缓存装饰器和一致性管理器。
 """
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class CacheBackend(Enum):
-    """缓存后端类型"""
+    """缓存后端类型."""
 
     MEMORY = "memory"
     REDIS = "redis"
@@ -30,7 +29,7 @@ class CacheBackend(Enum):
 
 @dataclass
 class UnifiedCacheConfig:
-    """统一缓存配置"""
+    """统一缓存配置."""
 
     backend: CacheBackend = CacheBackend.MEMORY
     memory_config: dict[str, Any] | None = None
@@ -41,35 +40,35 @@ class UnifiedCacheConfig:
 
 
 class CacheInterface(ABC):
-    """缓存接口抽象基类"""
+    """缓存接口抽象基类."""
 
     @abstractmethod
     def get(self, key: str, default: Any = None) -> Any:
-        """获取缓存值"""
+        """获取缓存值."""
 
     @abstractmethod
     def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
-        """设置缓存值"""
+        """设置缓存值."""
 
     @abstractmethod
     def delete(self, key: str) -> bool:
-        """删除缓存项"""
+        """删除缓存项."""
 
     @abstractmethod
     def exists(self, key: str) -> bool:
-        """检查键是否存在"""
+        """检查键是否存在."""
 
     @abstractmethod
     def clear(self) -> None:
-        """清空缓存"""
+        """清空缓存."""
 
     @abstractmethod
     def size(self) -> int:
-        """获取缓存大小"""
+        """获取缓存大小."""
 
 
 class MemoryCacheAdapter(CacheInterface):
-    """内存缓存适配器"""
+    """内存缓存适配器."""
 
     def __init__(self, config: dict[str, Any] = None):
         default_config = {
@@ -107,13 +106,13 @@ class MemoryCacheAdapter(CacheInterface):
 
 
 class RedisCacheAdapter(CacheInterface):
-    """Redis缓存适配器"""
+    """Redis缓存适配器."""
 
     def __init__(self, config: RedisConfig = None, use_mock: bool = None):
         self._manager = EnhancedRedisManager(config, use_mock)
 
     def _serialize_value(self, value: Any) -> str:
-        """序列化值"""
+        """序列化值."""
         if isinstance(value, str):
             return value
         elif isinstance(value, (int, float, bool)):
@@ -129,7 +128,7 @@ class RedisCacheAdapter(CacheInterface):
             return base64.b64encode(pickle.dumps(value)).decode()
 
     def _deserialize_value(self, value: str) -> Any:
-        """反序列化值"""
+        """反序列化值."""
         # 尝试解析为数字
         try:
             if "." in value:
@@ -192,7 +191,7 @@ class RedisCacheAdapter(CacheInterface):
 
 
 class MultiLevelCacheAdapter(CacheInterface):
-    """多级缓存适配器"""
+    """多级缓存适配器."""
 
     def __init__(
         self, memory_config: dict[str, Any] = None, redis_config: RedisConfig = None
@@ -244,7 +243,7 @@ class MultiLevelCacheAdapter(CacheInterface):
 
 
 class UnifiedCacheManager:
-    """统一缓存管理器"""
+    """统一缓存管理器."""
 
     def __init__(self, config: UnifiedCacheConfig = None):
         self.config = config or UnifiedCacheConfig()
@@ -257,7 +256,7 @@ class UnifiedCacheManager:
         logger.info(f"统一缓存管理器初始化完成，后端: {self.config.backend.value}")
 
     def _create_adapter(self) -> CacheInterface:
-        """创建缓存适配器"""
+        """创建缓存适配器."""
         if self.config.backend == CacheBackend.MEMORY:
             return MemoryCacheAdapter(self.config.memory_config)
         elif self.config.backend == CacheBackend.REDIS:
@@ -271,11 +270,11 @@ class UnifiedCacheManager:
 
     # 基础操作
     def get(self, key: str, default: Any = None) -> Any:
-        """获取缓存值"""
+        """获取缓存值."""
         return self._adapter.get(key, default)
 
     def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
-        """设置缓存值"""
+        """设置缓存值."""
         success = self._adapter.set(key, value, ttl)
 
         if success and self._consistency_manager:
@@ -302,7 +301,7 @@ class UnifiedCacheManager:
         return success
 
     def delete(self, key: str) -> bool:
-        """删除缓存项"""
+        """删除缓存项."""
         success = self._adapter.delete(key)
 
         if success and self._consistency_manager:
@@ -321,11 +320,11 @@ class UnifiedCacheManager:
         return success
 
     def exists(self, key: str) -> bool:
-        """检查键是否存在"""
+        """检查键是否存在."""
         return self._adapter.exists(key)
 
     def clear(self) -> None:
-        """清空缓存"""
+        """清空缓存."""
         self._adapter.clear()
 
         if self._consistency_manager:
@@ -337,12 +336,12 @@ class UnifiedCacheManager:
             )
 
     def size(self) -> int:
-        """获取缓存大小"""
+        """获取缓存大小."""
         return self._adapter.size()
 
     # 批量操作
     def get_many(self, keys: list[str]) -> dict[str, Any]:
-        """批量获取缓存值"""
+        """批量获取缓存值."""
         result = {}
         for key in keys:
             value = self.get(key)
@@ -351,7 +350,7 @@ class UnifiedCacheManager:
         return result
 
     def set_many(self, mapping: dict[str, Any], ttl: int | None = None) -> bool:
-        """批量设置缓存值"""
+        """批量设置缓存值."""
         success_count = 0
         for key, value in mapping.items():
             if self.set(key, value, ttl):
@@ -359,7 +358,7 @@ class UnifiedCacheManager:
         return success_count == len(mapping)
 
     def delete_many(self, keys: list[str]) -> int:
-        """批量删除缓存项"""
+        """批量删除缓存项."""
         success_count = 0
         for key in keys:
             if self.delete(key):
@@ -368,7 +367,7 @@ class UnifiedCacheManager:
 
     # 高级操作
     def incr(self, key: str, amount: int = 1) -> int:
-        """递增数值"""
+        """递增数值."""
         current = self.get(key, 0)
         if not isinstance(current, (int, float)):
             current = 0
@@ -377,11 +376,11 @@ class UnifiedCacheManager:
         return new_value
 
     def decr(self, key: str, amount: int = 1) -> int:
-        """递减数值"""
+        """递减数值."""
         return self.incr(key, -amount)
 
     def ttl(self, key: str) -> int:
-        """获取键的TTL"""
+        """获取键的TTL."""
         if hasattr(self._adapter, "_cache") and hasattr(self._adapter._cache, "ttl"):
             return self._adapter._cache.ttl(key)
         elif hasattr(self._adapter, "_manager"):
@@ -390,7 +389,7 @@ class UnifiedCacheManager:
             return -1
 
     def expire(self, key: str, seconds: int) -> bool:
-        """设置键的过期时间"""
+        """设置键的过期时间."""
         value = self.get(key)
         if value is not None:
             return self.set(key, value, seconds)
@@ -398,7 +397,7 @@ class UnifiedCacheManager:
 
     # 装饰器支持
     def cached(self, ttl: int = None, key_prefix: str = "cache", **kwargs):
-        """缓存装饰器"""
+        """缓存装饰器."""
         if ttl is None:
             ttl = self.config.default_ttl
 
@@ -418,7 +417,7 @@ class UnifiedCacheManager:
         return decorator
 
     def cache_invalidate(self, pattern: str = None, keys: list[str] = None):
-        """缓存失效装饰器"""
+        """缓存失效装饰器."""
 
         def decorator(func):
             if not self.config.enable_decorators:
@@ -434,7 +433,7 @@ class UnifiedCacheManager:
 
     # 统计和监控
     def get_stats(self) -> dict[str, Any]:
-        """获取缓存统计信息"""
+        """获取缓存统计信息."""
         stats = {
             "backend": self.config.backend.value,
             "size": self.size(),
@@ -475,7 +474,7 @@ class UnifiedCacheManager:
         return stats
 
     def health_check(self) -> dict[str, Any]:
-        """健康检查"""
+        """健康检查."""
         health = {
             "status": "healthy",
             "backend": self.config.backend.value,
@@ -516,7 +515,7 @@ _global_cache_manager: UnifiedCacheManager | None = None
 
 
 def get_cache_manager(config: UnifiedCacheConfig = None) -> UnifiedCacheManager:
-    """获取全局缓存管理器实例"""
+    """获取全局缓存管理器实例."""
     global _global_cache_manager
     if _global_cache_manager is None:
         _global_cache_manager = UnifiedCacheManager(config)
@@ -524,44 +523,44 @@ def get_cache_manager(config: UnifiedCacheConfig = None) -> UnifiedCacheManager:
 
 
 def reset_cache_manager():
-    """重置全局缓存管理器"""
+    """重置全局缓存管理器."""
     global _global_cache_manager
     _global_cache_manager = None
 
 
 # 便捷函数
 def cache_get(key: str, default: Any = None) -> Any:
-    """便捷获取缓存"""
+    """便捷获取缓存."""
     return get_cache_manager().get(key, default)
 
 
 def cache_set(key: str, value: Any, ttl: int | None = None) -> bool:
-    """便捷设置缓存"""
+    """便捷设置缓存."""
     return get_cache_manager().set(key, value, ttl)
 
 
 def cache_delete(key: str) -> bool:
-    """便捷删除缓存"""
+    """便捷删除缓存."""
     return get_cache_manager().delete(key)
 
 
 def cache_exists(key: str) -> bool:
-    """便捷检查缓存是否存在"""
+    """便捷检查缓存是否存在."""
     return get_cache_manager().exists(key)
 
 
 def cache_clear() -> None:
-    """便捷清空缓存"""
+    """便捷清空缓存."""
     get_cache_manager().clear()
 
 
 def cache_get_many(keys: list[str]) -> dict[str, Any]:
-    """便捷批量获取缓存"""
+    """便捷批量获取缓存."""
     return get_cache_manager().get_many(keys)
 
 
 def cache_set_many(mapping: dict[str, Any], ttl: int | None = None) -> bool:
-    """便捷批量设置缓存"""
+    """便捷批量设置缓存."""
     return get_cache_manager().set_many(mapping, ttl)
 
 
