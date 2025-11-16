@@ -29,6 +29,9 @@ except ImportError:
     redis = None
     aioredis = None
 
+# 始终导入MockRedisManager以供测试使用
+from .mock_redis import MockRedisManager
+
 logger = logging.getLogger(__name__)
 
 
@@ -129,6 +132,18 @@ class CacheEntry:
         ):
             return False
         return self.checksum == self._calculate_checksum()
+
+    def is_expired(self) -> bool:
+        """检查缓存是否过期"""
+        if self.ttl is None:
+            return False
+        return (datetime.utcnow() - self.created_at).total_seconds() > self.ttl
+
+    def access(self):
+        """访问缓存条目，更新访问统计"""
+        self.accessed_at = datetime.utcnow()
+        self.access_count += 1
+        return self.value
 
 
 class ConsistentHashRing:

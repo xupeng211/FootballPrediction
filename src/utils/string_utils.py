@@ -10,9 +10,12 @@
 - 数字提取和处理
 """
 
+import logging
 import re
 import unicodedata
 from functools import lru_cache
+
+logger = logging.getLogger(__name__)
 
 
 class StringUtils:
@@ -368,6 +371,8 @@ class StringUtils:
 @lru_cache(maxsize=256)
 def cached_slug(text: str) -> str:
     """缓存的slug生成函数"""
+    if not isinstance(text, str):
+        raise TypeError(f"Expected string, got {type(text).__name__}")
     return StringUtils.slugify(text)
 
 
@@ -378,23 +383,47 @@ def batch_clean_strings(strings: list[str]) -> list[str]:
 
 def validate_batch_emails(emails: list[str]) -> dict:
     """批量验证邮箱"""
-    return {email: StringUtils.validate_email(email) for email in emails}
+    valid_emails = []
+    invalid_emails = []
+
+    for email in emails:
+        if StringUtils.validate_email(email):
+            valid_emails.append(email)
+        else:
+            invalid_emails.append(email)
+
+    return {
+        "valid": valid_emails,
+        "invalid": invalid_emails,
+        "details": {email: StringUtils.validate_email(email) for email in emails}
+    }
 
 
 def normalize_string(text: str) -> str:
     """标准化字符串"""
     if not text:
         return ""
-    return StringUtils.clean_string(text).lower().strip()
+    return StringUtils.clean_string(text).strip()
 
 
 def truncate_string(text: str, length: int, suffix: str = "...") -> str:
     """截断字符串"""
+    if not isinstance(text, str):
+        logger.error(f"truncate_string: 期望字符串类型，实际收到 {type(text).__name__}")
+        raise TypeError(f"Expected string, got {type(text).__name__}")
+    if not isinstance(length, int):
+        logger.error(f"truncate_string: 期望整数长度，实际收到 {type(length).__name__}")
+        raise TypeError(f"Expected int for length, got {type(length).__name__}")
     if not text:
+        logger.debug("truncate_string: 输入文本为空，返回空字符串")
         return ""
     if len(text) <= length + len(suffix):
+        logger.debug(f"truncate_string: 文本长度 {len(text)} 不超过限制 {length}，返回原文")
         return text
-    return text[: length - len(suffix)] + suffix
+
+    truncated = text[: length - len(suffix)] + suffix
+    logger.debug(f"truncate_string: 文本从 {len(text)} 截断至 {len(truncated)}")
+    return truncated
 
 
 def is_empty(text: str) -> bool:
