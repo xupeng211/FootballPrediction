@@ -41,7 +41,7 @@ class TestDIContainer:
     def test_register_singleton(self):
         """测试注册单例服务"""
         container = DIContainer()
-        container.register_singleton(str, "test_string")
+        container.register_singleton(str, instance="test_string")
 
         resolved = container.resolve(str)
         assert resolved == "test_string"
@@ -49,7 +49,8 @@ class TestDIContainer:
     def test_register_scoped(self):
         """测试注册作用域服务"""
         container = DIContainer()
-        container.register_scoped(str, "scoped_string")
+        # 作用域服务不能直接使用instance，需要使用工厂
+        container.register_scoped(str, factory=lambda: "scoped_string")
 
         resolved = container.resolve(str)
         assert resolved == "scoped_string"
@@ -57,7 +58,8 @@ class TestDIContainer:
     def test_register_transient(self):
         """测试注册瞬态服务"""
         container = DIContainer()
-        container.register_transient(str, "transient_string")
+        # 瞬时服务不能直接使用instance，需要使用工厂
+        container.register_transient(str, factory=lambda: "transient_string")
 
         resolved = container.resolve(str)
         assert resolved == "transient_string"
@@ -74,5 +76,6 @@ class TestDIContainer:
         """测试解析未注册服务"""
         container = DIContainer()
 
-        with pytest.raises((ValueError, KeyError)):
+        from src.core.exceptions import DependencyInjectionError
+        with pytest.raises(DependencyInjectionError):
             container.resolve(int)

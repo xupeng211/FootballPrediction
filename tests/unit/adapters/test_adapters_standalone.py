@@ -72,9 +72,9 @@ class CompositeAdapter(Adapter):
         """获取源数据结构"""
         return {}
 
-    @abstractmethod
     def get_target_schema(self) -> dict[str, Any]:
         """获取目标数据结构"""
+        return {"type": "object", "properties": {}}
 
     def __init__(self, name: str = "CompositeAdapter"):
         """初始化组合适配器"""
@@ -368,7 +368,7 @@ class TestDataTransformer:
     @pytest.mark.asyncio
     async def test_mock_data_transformer_transform_dict(self):
         """测试模拟数据转换器转换字典数据"""
-        transformer = MockDataTransformer()
+        transformer = MockDataTransformer("TestTransformer")
         input_data = {"key1": "value1", "key2": "value2"}
         result = await transformer.transform(input_data)
 
@@ -381,7 +381,7 @@ class TestDataTransformer:
     @pytest.mark.asyncio
     async def test_mock_data_transformer_transform_string(self):
         """测试模拟数据转换器转换字符串数据"""
-        transformer = MockDataTransformer()
+        transformer = MockDataTransformer("TestTransformer")
         result = await transformer.transform("test_string")
         assert result == "TestTransformer_transformed_test_string"
         assert transformer.transform_count == 1

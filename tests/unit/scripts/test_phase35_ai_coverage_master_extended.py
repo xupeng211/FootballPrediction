@@ -1,9 +1,6 @@
 import sys
 from pathlib import Path
 
-import pytest
-from phase35_ai_coverage_master import Phase35AICoverageMaster
-
 #!/usr/bin/env python3
 """
 
@@ -12,11 +9,14 @@ Phase35AICoverageMaster扩展测试
 增加更多测试用例以提升覆盖率
 """
 
-
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "scripts"))
+sys.path.insert(0, str(project_root / "scripts" / "utility"))
+
+import pytest
+from phase35_ai_coverage_master import Phase35AICoverageMaster
 
 
 class TestPhase35AICoverageMasterExtended:

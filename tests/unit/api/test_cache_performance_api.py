@@ -16,6 +16,9 @@ try:
     from src.api.optimization.cache_performance_api import (
         CacheAnalysisRequest,
         CacheOptimizationRequest,
+        CacheInvalidateRequest,
+        CacheWarmupRequest,
+        ConsistencyOperationRequest,
         ConsistencyRequest,
         WarmupRequest,
     )
@@ -36,56 +39,171 @@ class TestCachePerformanceAPI:
     def mock_cache_consistency_manager(self):
         """模拟缓存一致性管理器"""
         manager = AsyncMock()
-        manager.get_status.return_value = {
-            "status": "healthy",
-            "consistency_score": 95.5,
-            "nodes": 3,
-            "pending_operations": 0,
-        }
-        manager.create_consistency_session.return_value = {"session_id": "test_session"}
-        manager.get_statistics.return_value = {
-            "total_sessions": 10,
-            "successful_operations": 95,
-            "failed_operations": 5,
-        }
+
+        async def mock_get_status():
+            return {
+                "status": "healthy",
+                "consistency_score": 95.5,
+                "nodes": 3,
+                "pending_operations": 0,
+            }
+
+        async def mock_create_consistency_session():
+            return {"session_id": "test_session"}
+
+        async def mock_get_statistics():
+            return {
+                "total_sessions": 10,
+                "successful_operations": 95,
+                "failed_operations": 5,
+            }
+
+        async def mock_verify(keys, **kwargs):
+            return {"success": True, "verified_keys": 5}
+
+        async def mock_read(keys, **kwargs):
+            return {"success": True, "read_keys": 5}
+
+        async def mock_write(keys, **kwargs):
+            return {"success": True, "written_keys": 5}
+
+        async def mock_invalidate(keys, **kwargs):
+            return {"success": True, "invalidated_keys": 5}
+
+        async def mock_cleanup_session(session_id):
+            return True
+
+        manager.get_status = mock_get_status
+        manager.create_consistency_session = mock_create_consistency_session
+        manager.get_statistics = mock_get_statistics
+        manager.verify = mock_verify
+        manager.read = mock_read
+        manager.write = mock_write
+        manager.invalidate = mock_invalidate
+        manager.cleanup_session = mock_cleanup_session
         return manager
 
     @pytest.fixture
     def mock_distributed_cache_manager(self):
         """模拟分布式缓存管理器"""
         manager = AsyncMock()
-        manager.get_cluster_status.return_value = {
-            "cluster_status": "healthy",
-            "node_count": 3,
-            "total_keys": 1000,
-            "memory_usage_mb": 50.2,
-        }
-        manager.invalidate_keys.return_value = {"invalidated": 5}
-        manager.warmup_cache.return_value = {"warmed_keys": 10}
+
+        async def mock_get_cluster_status():
+            return {
+                "cluster_status": "healthy",
+                "node_count": 3,
+                "total_keys": 1000,
+                "memory_usage_mb": 50.2,
+            }
+
+        async def mock_get_cache_status():
+            return {
+                "cluster_status": "healthy",
+                "node_count": 3,
+                "total_keys": 1000,
+            }
+
+        async def mock_invalidate_keys(keys):
+            return {"invalidated": 5}
+
+        async def mock_invalidate_pattern(pattern):
+            return 10
+
+        async def mock_warmup_cache(keys, ttl):
+            return {"warmed_keys": 10}
+
+        manager.get_cluster_status = mock_get_cluster_status
+        manager.get_cache_status = mock_get_cache_status
+        manager.invalidate_keys = mock_invalidate_keys
+        manager.invalidate_pattern = mock_invalidate_pattern
+        manager.warmup_cache = mock_warmup_cache
         return manager
 
     @pytest.fixture
     def mock_intelligent_warmup_manager(self):
         """模拟智能预热管理器"""
         manager = AsyncMock()
-        manager.create_warmup_plan.return_value = {
-            "plan_id": "plan_123",
-            "status": "created",
-            "estimated_keys": 20,
+
+        async def mock_create_warmup_plan():
+            return {
+                "plan_id": "plan_123",
+                "status": "created",
+                "estimated_keys": 20,
+            }
+
+        async def mock_get_plan_status():
+            return {
+                "plan_id": "plan_123",
+                "status": "in_progress",
+                "completed_keys": 10,
+                "total_keys": 20,
+            }
+
+        async def mock_execute_warmup():
+            return {"started": True}
+
+        async def mock_get_statistics():
+            return {
+                "total_plans": 5,
+                "successful_executions": 20,
+                "total_warmed_keys": 100,
+            }
+
+        async def mock_get_warmup_statistics():
+            return {
+                "total_plans": 5,
+                "successful_executions": 20,
+                "total_warmed_keys": 100,
+            }
+
+        async def mock_record_access():
+            return True
+
+        async def mock_cancel_plan(plan_id):
+            return True
+
+        manager.create_warmup_plan = mock_create_warmup_plan
+        manager.get_plan_status = mock_get_plan_status
+        manager.execute_warmup = mock_execute_warmup
+        manager.get_statistics = mock_get_statistics
+        manager.get_warmup_statistics = mock_get_warmup_statistics
+        manager.record_access = mock_record_access
+        manager.cancel_plan = mock_cancel_plan
+
+        # 添加warmup_plans属性来模拟预热计划存储
+        manager.warmup_plans = {
+            "plan_123": {
+                "plan_id": "plan_123",
+                "status": "in_progress",
+                "completed_keys": 10,
+                "total_keys": 20,
+            }
         }
-        manager.get_plan_status.return_value = {
-            "plan_id": "plan_123",
-            "status": "in_progress",
-            "completed_keys": 10,
-            "total_keys": 20,
-        }
-        manager.execute_warmup.return_value = {"started": True}
-        manager.get_statistics.return_value = {
-            "total_plans": 5,
-            "successful_executions": 20,
-            "total_warmed_keys": 100,
-        }
-        manager.record_access.return_value = True
+
+        return manager
+
+    @pytest.fixture
+    def mock_redis_cluster_manager(self):
+        """模拟Redis集群管理器"""
+        manager = AsyncMock()
+        # 使用AsyncMock的return_value需要是协程
+        async def mock_get_cluster_status():
+            return {
+                "cluster_status": "healthy",
+                "node_count": 3,
+                "total_keys": 1000,
+                "memory_usage_mb": 50.2,
+            }
+
+        async def mock_add_node(config):
+            return True
+
+        async def mock_remove_node(node_id):
+            return True
+
+        manager.get_cluster_status = mock_get_cluster_status
+        manager.add_node = mock_add_node
+        manager.remove_node = mock_remove_node
         return manager
 
     @pytest.fixture
@@ -94,6 +212,7 @@ class TestCachePerformanceAPI:
         mock_cache_consistency_manager,
         mock_distributed_cache_manager,
         mock_intelligent_warmup_manager,
+        mock_redis_cluster_manager,
     ):
         """测试客户端"""
         with (
@@ -108,6 +227,10 @@ class TestCachePerformanceAPI:
             patch(
                 "src.api.optimization.cache_performance_api.get_intelligent_warmup_manager",
                 return_value=mock_intelligent_warmup_manager,
+            ),
+            patch(
+                "src.api.optimization.cache_performance_api.get_redis_cluster_manager",
+                return_value=mock_redis_cluster_manager,
             ),
         ):
             from fastapi import FastAPI
