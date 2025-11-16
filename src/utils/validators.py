@@ -1,13 +1,11 @@
-"""
-Data validators
-"""
+"""Data validators."""
 
 import re
 from typing import Any
 
 
 def is_valid_email(email: str) -> bool:
-    """Validate email address"""
+    """Validate email address."""
     if not isinstance(email, str) or not email:
         return False
 
@@ -37,7 +35,7 @@ def is_valid_email(email: str) -> bool:
 
 
 def is_valid_phone(phone: str) -> bool:
-    """Validate phone number"""
+    """Validate phone number."""
     # 检查输入类型
     if not isinstance(phone, str) or not phone:
         return False
@@ -53,7 +51,7 @@ def is_valid_phone(phone: str) -> bool:
 
 
 def is_valid_url(url: str) -> bool:
-    """Validate URL"""
+    """Validate URL."""
     # 检查输入类型
     if not isinstance(url, str) or not url:
         return False
@@ -94,7 +92,7 @@ def is_valid_url(url: str) -> bool:
 def validate_required_fields(
     data: dict[str, Any], required_fields: list[str]
 ) -> list[str]:
-    """Check if all required fields are present"""
+    """Check if all required fields are present."""
     missing_fields = []
     for field in required_fields:
         if field not in data or data[field] is None or data[field] == "":
@@ -103,7 +101,7 @@ def validate_required_fields(
 
 
 def validate_data_types(data: dict, schema: dict) -> list[str]:
-    """验证数据类型"""
+    """验证数据类型."""
     errors = []
     for field, expected_type in schema.items():
         if field in data:

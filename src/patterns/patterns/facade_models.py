@@ -1,13 +1,11 @@
-"""
-数据模型类
-"""
+"""数据模型类."""
 
 # 导入
 
 
 # 类定义
 class PredictionRequest:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测请求"""
@@ -16,7 +14,7 @@ class PredictionRequest:
 
 
 class PredictionResult:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测结果"""
@@ -25,7 +23,7 @@ class PredictionResult:
 
 
 class DataCollectionConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """数据收集配置"""
@@ -34,7 +32,7 @@ class DataCollectionConfig:
 
 
 class PredictionFacade:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测门面"
@@ -45,7 +43,7 @@ class PredictionFacade:
 
 
 class DataCollectionFacade:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """数据收集门面"
@@ -56,7 +54,7 @@ class DataCollectionFacade:
 
 
 class AnalyticsFacade:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """分析门面"
@@ -67,7 +65,7 @@ class AnalyticsFacade:
 
 
 class FacadeFactory:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """门面工厂"""

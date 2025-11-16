@@ -1,6 +1,5 @@
-"""
-事件系统基础类
-Event System Base Classes
+"""事件系统基础类
+Event System Base Classes.
 
 定义事件和事件处理器的核心接口.
 Defines core interfaces for events and event handlers.
@@ -17,7 +16,7 @@ T = TypeVar("T", bound="Event")
 
 
 class EventData:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """事件数据基类"
@@ -34,7 +33,7 @@ class EventData:
         event_id: str | None = None,
         timestamp: datetime | None = None,
     ):
-        """初始化事件数据"""
+        """初始化事件数据."""
         self.event_id = event_id or str(uuid.uuid4())
         self.timestamp = timestamp or datetime.utcnow()
         self.source = source
@@ -43,14 +42,14 @@ class EventData:
 
 
 class Event(ABC):
-    """事件抽象基类"
+    """事件抽象基类".
 
     定义所有事件必须实现的接口.
     Defines the interface that all events must implement.
     """
 
     def __init__(self, data: EventData):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化事件"
 
@@ -61,38 +60,38 @@ class Event(ABC):
 
     @property
     def data(self) -> EventData:
-        """获取事件数据"""
+        """获取事件数据."""
         return self.data
 
     @property
     def event_id(self) -> str:
-        """获取事件ID"""
+        """获取事件ID."""
         return self.data.event_id
 
     @property
     def timestamp(self) -> datetime:
-        """获取事件时间戳"""
+        """获取事件时间戳."""
         return self.data.timestamp
 
     @property
     def source(self) -> str | None:
-        """获取事件源"""
+        """获取事件源."""
         return self.data.source
 
     @property
     def version(self) -> str:
-        """获取事件版本"""
+        """获取事件版本."""
         return self.data.version
 
     @property
     def metadata(self) -> dict[str, Any]:
-        """获取事件元数据"""
+        """获取事件元数据."""
         return self.data.metadata
 
     @classmethod
     @abstractmethod
     def get_event_type(cls) -> str:
-        """获取事件类型"
+        """获取事件类型".
 
         Returns:
             str: 事件类型标识符
@@ -100,7 +99,7 @@ class Event(ABC):
 
     @abstractmethod
     def to_dict(self) -> dict[str, Any]:
-        """将事件转换为字典"
+        """将事件转换为字典".
 
         Returns:
             Dict[str, Any]: 事件的字典表示
@@ -109,7 +108,7 @@ class Event(ABC):
     @classmethod
     @abstractmethod
     def from_dict(cls: type[T], data: dict[str, Any]) -> T:
-        """从字典创建事件"
+        """从字典创建事件".
 
         Args:
             data: 事件字典数据
@@ -126,14 +125,14 @@ class Event(ABC):
 
 
 class EventHandler(ABC):
-    """事件处理器抽象基类"
+    """事件处理器抽象基类".
 
     定义事件处理器必须实现的接口.
     Defines the interface that all event handlers must implement.
     """
 
     def __init__(self, name: str | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化事件处理器"
 
@@ -145,7 +144,7 @@ class EventHandler(ABC):
 
     @abstractmethod
     async def handle(self, event: Event) -> None:
-        """处理事件"
+        """处理事件".
 
         Args:
             event: 要处理的事件
@@ -153,7 +152,7 @@ class EventHandler(ABC):
 
     @abstractmethod
     def get_handled_events(self) -> list[str]:
-        """获取处理器能处理的事件类型"
+        """获取处理器能处理的事件类型".
 
         Returns:
             list[str]: 事件类型列表
@@ -161,18 +160,18 @@ class EventHandler(ABC):
 
     @abstractmethod
     async def start(self) -> None:
-        """启动处理器 - 子类必须实现"""
+        """启动处理器 - 子类必须实现."""
         pass
 
     async def stop(self) -> None:
-        """停止处理器"""
+        """停止处理器."""
         # 清理订阅的队列
         for queue in self._subscribed_events.values():
             queue.put_nowait(None)
         self._subscribed_events.clear()
 
     def add_subscription(self, event_type: str, queue: asyncio.Queue) -> None:
-        """添加事件订阅"
+        """添加事件订阅".
 
         Args:
             event_type: 事件类型
@@ -181,7 +180,7 @@ class EventHandler(ABC):
         self._subscribed_events[event_type] = queue
 
     def remove_subscription(self, event_type: str) -> None:
-        """移除事件订阅"
+        """移除事件订阅".
 
         Args:
             event_type: 事件类型
@@ -189,7 +188,7 @@ class EventHandler(ABC):
         self._subscribed_events.pop(event_type, None)
 
     def is_subscribed_to(self, event_type: str) -> bool:
-        """检查是否订阅了指定事件类型"
+        """检查是否订阅了指定事件类型".
 
         Args:
             event_type: 事件类型
@@ -200,7 +199,7 @@ class EventHandler(ABC):
         return event_type in self._subscribed_events
 
     async def wait_for_events(self, event_type: str) -> None:
-        """等待并处理特定类型的事件"
+        """等待并处理特定类型的事件".
 
         Args:
             event_type: 事件类型
@@ -223,14 +222,14 @@ class EventHandler(ABC):
 
 
 class EventFilter(ABC):
-    """事件过滤器抽象基类"
+    """事件过滤器抽象基类".
 
     用于过滤事件,决定是否应该处理某个事件.
     """
 
     @abstractmethod
     def should_process(self, event: Event) -> bool:
-        """判断是否应该处理事件"
+        """判断是否应该处理事件".
 
         Args:
             event: 事件
@@ -241,10 +240,10 @@ class EventFilter(ABC):
 
 
 class EventTypeFilter(EventFilter):
-    """基于事件类型的过滤器"""
+    """基于事件类型的过滤器."""
 
     def __init__(self, allowed_types: list[str]):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化过滤器"
 
@@ -258,10 +257,10 @@ class EventTypeFilter(EventFilter):
 
 
 class EventSourceFilter(EventFilter):
-    """基于事件源的过滤器"""
+    """基于事件源的过滤器."""
 
     def __init__(self, allowed_sources: list[str]):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化过滤器"
 
@@ -275,10 +274,10 @@ class EventSourceFilter(EventFilter):
 
 
 class CompositeEventFilter(EventFilter):
-    """组合过滤器,支持AND和OR逻辑"""
+    """组合过滤器,支持AND和OR逻辑."""
 
     def __init__(self, filters: list[EventFilter], operator: str = "AND"):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化组合过滤器"
 

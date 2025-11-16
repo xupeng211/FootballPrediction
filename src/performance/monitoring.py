@@ -1,6 +1,5 @@
-"""
-性能监控工具
-Performance Monitoring Tools
+"""性能监控工具
+Performance Monitoring Tools.
 
 提供系统性能监控和分析工具。
 Provides system performance monitoring and analysis tools.
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PerformanceMetrics:
-    """性能指标数据类"""
+    """性能指标数据类."""
 
     timestamp: float
     cpu_percent: float
@@ -33,14 +32,14 @@ class PerformanceMetrics:
 
 
 class SystemMonitor:
-    """系统资源监控器"""
+    """系统资源监控器."""
 
     def __init__(self):
         self.metrics_history: list[PerformanceMetrics] = []
         self.max_history = 1000  # 保留最近1000个数据点
 
     def get_current_metrics(self) -> PerformanceMetrics:
-        """获取当前系统指标"""
+        """获取当前系统指标."""
         try:
             # CPU使用率
             cpu_percent = psutil.cpu_percent(interval=0.1)
@@ -105,25 +104,25 @@ class SystemMonitor:
             )
 
     def _get_avg_response_time(self) -> float:
-        """获取平均响应时间"""
+        """获取平均响应时间."""
         # 这里应该从性能监控中间件获取数据
         # 暂时返回模拟数据
         return 0.5
 
     def _get_requests_per_second(self) -> float:
-        """获取每秒请求数"""
+        """获取每秒请求数."""
         # 这里应该从性能监控中间件获取数据
         # 暂时返回模拟数据
         return 10.0
 
     def _get_error_rate(self) -> float:
-        """获取错误率"""
+        """获取错误率."""
         # 这里应该从性能监控中间件获取数据
         # 暂时返回模拟数据
         return 0.01
 
     def record_metrics(self, metrics: PerformanceMetrics):
-        """记录性能指标"""
+        """记录性能指标."""
         self.metrics_history.append(metrics)
 
         # 限制历史记录数量
@@ -131,7 +130,7 @@ class SystemMonitor:
             self.metrics_history = self.metrics_history[-self.max_history :]
 
     def get_metrics_summary(self, minutes: int = 5) -> dict[str, Any]:
-        """获取指标摘要"""
+        """获取指标摘要."""
         if not self.metrics_history:
             return {}
 
@@ -186,7 +185,7 @@ class SystemMonitor:
         }
 
     def check_performance_alerts(self) -> list[dict[str, Any]]:
-        """检查性能警报"""
+        """检查性能警报."""
         alerts = []
         current_metrics = self.get_current_metrics()
 
@@ -264,14 +263,14 @@ class SystemMonitor:
 
 
 class PerformanceAnalyzer:
-    """性能分析器"""
+    """性能分析器."""
 
     def __init__(self):
         self.metrics_history = []
         self.analysis_results = {}
 
     def analyze_trends(self, hours: int = 1) -> dict[str, Any]:
-        """分析性能趋势"""
+        """分析性能趋势."""
         cutoff_time = time.time() - (hours * 3600)
         recent_metrics = [m for m in self.metrics_history if m.timestamp >= cutoff_time]
 
@@ -320,7 +319,7 @@ class PerformanceAnalyzer:
         }
 
     def _calculate_trend(self, values: list[float]) -> str:
-        """计算趋势"""
+        """计算趋势."""
         if len(values) < 2:
             return "insufficient_data"
 
@@ -346,7 +345,7 @@ class PerformanceAnalyzer:
     def get_performance_recommendations(
         self, metrics_summary: dict[str, Any]
     ) -> list[str]:
-        """获取性能优化建议"""
+        """获取性能优化建议."""
         recommendations = []
 
         # CPU使用率建议
@@ -386,7 +385,7 @@ _system_monitor: SystemMonitor | None = None
 
 
 def get_system_monitor() -> SystemMonitor:
-    """获取全局系统监控器实例"""
+    """获取全局系统监控器实例."""
     global _system_monitor
     if _system_monitor is None:
         _system_monitor = SystemMonitor()
@@ -394,5 +393,5 @@ def get_system_monitor() -> SystemMonitor:
 
 
 def get_performance_analyzer() -> PerformanceAnalyzer:
-    """获取性能分析器实例"""
+    """获取性能分析器实例."""
     return PerformanceAnalyzer()

@@ -1,6 +1,4 @@
-"""
-预测领域模型
-"""
+"""预测领域模型."""
 
 from datetime import datetime
 from enum import Enum
@@ -8,7 +6,7 @@ from typing import Any
 
 
 class PredictionType(Enum):
-    """预测类型枚举"""
+    """预测类型枚举."""
 
     MATCH_RESULT = "match_result"  # 比赛结果
     OVER_UNDER = "over_under"  # 大小球
@@ -18,7 +16,7 @@ class PredictionType(Enum):
 
 
 class PredictionConfidence(Enum):
-    """预测置信度"""
+    """预测置信度."""
 
     LOW = 0.3  # 低
     MEDIUM = 0.6  # 中
@@ -27,7 +25,7 @@ class PredictionConfidence(Enum):
 
 
 class Prediction:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测领域模型"""
@@ -82,7 +80,7 @@ class Prediction:
                 pass
 
     def settle(self, actual_value: str) -> None:
-        """结算预测"""
+        """结算预测."""
         if self.is_settled:
             return None
         self.actual_value = actual_value
@@ -103,7 +101,7 @@ class Prediction:
         self.updated_at = datetime.now()
 
     def _check_correctness(self, actual_value: str) -> bool:
-        """检查预测是否正确"""
+        """检查预测是否正确."""
         if self.prediction_type == PredictionType.MATCH_RESULT:
             # 直接比较比赛结果
             return self.predicted_value.upper() == actual_value.upper()
@@ -130,7 +128,7 @@ class Prediction:
         return False
 
     def get_confidence_level(self) -> PredictionConfidence:
-        """获取置信度等级"""
+        """获取置信度等级."""
         if self.confidence >= PredictionConfidence.VERY_HIGH.value:
             return PredictionConfidence.VERY_HIGH
         elif self.confidence >= PredictionConfidence.HIGH.value:
@@ -141,7 +139,7 @@ class Prediction:
             return PredictionConfidence.LOW
 
     def is_value_bet(self, threshold: float = 1.0) -> bool:
-        """判断是否为价值投注"""
+        """判断是否为价值投注."""
         if not self.odds or self.odds <= 1:
             return False
 
@@ -150,7 +148,7 @@ class Prediction:
         return expected_value > (1 + threshold)
 
     def get_expected_value(self) -> float:
-        """获取期望值"""
+        """获取期望值."""
         if not self.odds:
             return -self.stake
 
@@ -159,23 +157,23 @@ class Prediction:
         return win_ev + lose_ev
 
     def add_reasoning(self, reasoning: str) -> None:
-        """添加预测理由"""
+        """添加预测理由."""
         self.reasoning = reasoning
         self.updated_at = datetime.now()
 
     def add_analysis_data(self, key: str, value: Any) -> None:
-        """添加分析数据"""
+        """添加分析数据."""
         self.analysis_data[key] = value
         self.updated_at = datetime.now()
 
     def get_roi(self) -> float:
-        """获取投资回报率"""
+        """获取投资回报率."""
         if self.stake == 0:
             return 0.0
         return (self.profit_loss / self.stake) * 100
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "match_id": self.match_id,
@@ -203,7 +201,7 @@ class Prediction:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Prediction":
-        """从字典创建实例"""
+        """从字典创建实例."""
         _prediction = cls(
             id=data.get("id"),
             match_id=data.get("match_id", 0),

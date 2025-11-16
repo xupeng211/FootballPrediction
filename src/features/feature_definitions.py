@@ -1,6 +1,5 @@
 # mypy: ignore-errors
-"""
-特征定义
+"""特征定义.
 
 定义足球预测系统中的核心特征：
 - 近期战绩特征：recent_5_wins, goals_for/against
@@ -18,7 +17,7 @@ from .entities import MatchEntity, TeamEntity
 
 @dataclass
 class RecentPerformanceFeatures:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -48,18 +47,18 @@ class RecentPerformanceFeatures:
     # 计算属性
     @property
     def recent_5_win_rate(self) -> float:
-        """近5场胜率"""
+        """近5场胜率."""
         total_games = self.recent_5_wins + self.recent_5_draws + self.recent_5_losses
         return self.recent_5_wins / total_games if total_games > 0 else 0.0
 
     @property
     def recent_5_goals_per_game(self) -> float:
-        """近5场场均进球"""
+        """近5场场均进球."""
         total_games = self.recent_5_wins + self.recent_5_draws + self.recent_5_losses
         return self.recent_5_goals_for / total_games if total_games > 0 else 0.0
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "team_id": self.team_id,
             "calculation_date": self.calculation_date.isoformat(),
@@ -80,7 +79,7 @@ class RecentPerformanceFeatures:
 
 @dataclass
 class HistoricalMatchupFeatures:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -110,7 +109,7 @@ class HistoricalMatchupFeatures:
     # 计算属性
     @property
     def h2h_home_win_rate(self) -> float:
-        """主队历史胜率"""
+        """主队历史胜率."""
         return (
             self.h2h_home_wins / self.h2h_total_matches
             if self.h2h_total_matches > 0
@@ -119,7 +118,7 @@ class HistoricalMatchupFeatures:
 
     @property
     def h2h_goals_avg(self) -> float:
-        """历史对战场均总进球数"""
+        """历史对战场均总进球数."""
         total_goals = self.h2h_home_goals_total + self.h2h_away_goals_total
         return (
             total_goals / self.h2h_total_matches if self.h2h_total_matches > 0 else 0.0
@@ -127,7 +126,7 @@ class HistoricalMatchupFeatures:
 
     @property
     def h2h_home_goals_avg(self) -> float:
-        """主队历史场均进球"""
+        """主队历史场均进球."""
         return (
             self.h2h_home_goals_total / self.h2h_total_matches
             if self.h2h_total_matches > 0
@@ -135,7 +134,7 @@ class HistoricalMatchupFeatures:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "home_team_id": self.home_team_id,
             "away_team_id": self.away_team_id,
@@ -157,7 +156,7 @@ class HistoricalMatchupFeatures:
 
 @dataclass
 class OddsFeatures:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -194,7 +193,7 @@ class OddsFeatures:
     # 计算属性
     @property
     def bookmaker_consensus(self) -> float | None:
-        """博彩公司共识度 (1 - 平均方差)"""
+        """博彩公司共识度 (1 - 平均方差)."""
         if all(
             v is not None
             for v in [
@@ -218,7 +217,7 @@ class OddsFeatures:
 
     @property
     def market_efficiency(self) -> float | None:
-        """市场效率 (总隐含概率)"""
+        """市场效率 (总隐含概率)."""
         if all(
             p is not None
             for p in [
@@ -242,7 +241,7 @@ class OddsFeatures:
         return None
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "match_id": self.match_id,
             "calculation_date": self.calculation_date.isoformat(),
@@ -266,7 +265,7 @@ class OddsFeatures:
 
 @dataclass
 class AllMatchFeatures:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -282,7 +281,7 @@ class AllMatchFeatures:
     odds_features: OddsFeatures
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "match_entity": self.match_entity.to_dict(),
             "home_team_recent": self.home_team_recent.to_dict(),
@@ -294,7 +293,7 @@ class AllMatchFeatures:
 
 @dataclass
 class AllTeamFeatures:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -307,7 +306,7 @@ class AllTeamFeatures:
     recent_performance: RecentPerformanceFeatures
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "team_entity": self.team_entity.to_dict(),
             "recent_performance": self.recent_performance.to_dict(),

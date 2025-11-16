@@ -1,6 +1,5 @@
-"""
-性能监控模块
-Performance Monitoring Module
+"""性能监控模块
+Performance Monitoring Module.
 
 提供全面的性能监控功能:
 - 性能分析器

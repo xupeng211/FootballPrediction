@@ -1,6 +1,5 @@
-"""
-性能配置管理
-Performance Configuration Management
+"""性能配置管理
+Performance Configuration Management.
 
 定义性能监控和优化相关的配置参数。
 Defines performance monitoring and optimization related configuration parameters.
@@ -12,7 +11,7 @@ from typing import Any
 
 @dataclass
 class CacheConfig:
-    """缓存配置"""
+    """缓存配置."""
 
     # 预测相关缓存配置
     prediction_ttl: int = 1800  # 30分钟
@@ -39,7 +38,7 @@ class CacheConfig:
 
 @dataclass
 class MonitoringConfig:
-    """监控配置"""
+    """监控配置."""
 
     # 系统监控间隔
     metrics_collection_interval: int = 30  # 秒
@@ -68,7 +67,7 @@ class MonitoringConfig:
 
 @dataclass
 class OptimizationConfig:
-    """优化配置"""
+    """优化配置."""
 
     # 数据库优化
     enable_query_optimization: bool = True
@@ -93,7 +92,7 @@ class OptimizationConfig:
 
 
 class PerformanceConfig:
-    """性能配置管理器"""
+    """性能配置管理器."""
 
     def __init__(self):
         self.cache = CacheConfig()
@@ -101,7 +100,7 @@ class PerformanceConfig:
         self.optimization = OptimizationConfig()
 
     def get_cache_config(self) -> dict[str, Any]:
-        """获取缓存配置字典"""
+        """获取缓存配置字典."""
         return {
             "prediction": {
                 "ttl": self.cache.prediction_ttl,
@@ -128,7 +127,7 @@ class PerformanceConfig:
         }
 
     def get_monitoring_config(self) -> dict[str, Any]:
-        """获取监控配置字典"""
+        """获取监控配置字典."""
         return {
             "collection": {
                 "interval": self.monitoring.metrics_collection_interval,
@@ -163,7 +162,7 @@ class PerformanceConfig:
         }
 
     def get_optimization_config(self) -> dict[str, Any]:
-        """获取优化配置字典"""
+        """获取优化配置字典."""
         return {
             "database": {
                 "enable_query_optimization": self.optimization.enable_query_optimization,
@@ -189,19 +188,19 @@ class PerformanceConfig:
         }
 
     def update_cache_config(self, **kwargs):
-        """更新缓存配置"""
+        """更新缓存配置."""
         for key, value in kwargs.items():
             if hasattr(self.cache, key):
                 setattr(self.cache, key, value)
 
     def update_monitoring_config(self, **kwargs):
-        """更新监控配置"""
+        """更新监控配置."""
         for key, value in kwargs.items():
             if hasattr(self.monitoring, key):
                 setattr(self.monitoring, key, value)
 
     def update_optimization_config(self, **kwargs):
-        """更新优化配置"""
+        """更新优化配置."""
         for key, value in kwargs.items():
             if hasattr(self.optimization, key):
                 setattr(self.optimization, key, value)
@@ -212,7 +211,7 @@ _performance_config: PerformanceConfig = None
 
 
 def get_performance_config() -> PerformanceConfig:
-    """获取性能配置实例"""
+    """获取性能配置实例."""
     global _performance_config
     if _performance_config is None:
         _performance_config = PerformanceConfig()

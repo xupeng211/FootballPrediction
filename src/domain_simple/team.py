@@ -1,19 +1,17 @@
-"""
-球队领域模型
-"""
+"""球队领域模型."""
 
 from datetime import datetime
 from typing import Any
 
 
 class TeamStatistics:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队统计数据"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.matches_played = 0
         self.wins = 0
@@ -25,7 +23,7 @@ class TeamStatistics:
         self.points = 0
 
     def update(self, goals_for: int, goals_against: int) -> None:
-        """更新统计"""
+        """更新统计."""
         self.matches_played += 1
         self.goals_for += goals_for
         self.goals_against += goals_against
@@ -41,26 +39,26 @@ class TeamStatistics:
             self.points += 1
 
     def get_win_rate(self) -> float:
-        """获取胜率"""
+        """获取胜率."""
         if self.matches_played == 0:
             return 0.0
         return self.wins / self.matches_played
 
     def get_avg_goals(self) -> float:
-        """获取场均进球"""
+        """获取场均进球."""
         if self.matches_played == 0:
             return 0.0
         return self.goals_for / self.matches_played
 
     def get_avg_conceded(self) -> float:
-        """获取场均失球"""
+        """获取场均失球."""
         if self.matches_played == 0:
             return 0.0
         return self.goals_against / self.matches_played
 
 
 class Team:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队领域模型"""
@@ -100,7 +98,7 @@ class Team:
         self.updated_at = datetime.now()
 
     def update_stats(self, goals_for: int, goals_against: int, is_home: bool) -> None:
-        """更新统计数据"""
+        """更新统计数据."""
         self.overall_stats.update(goals_for, goals_against)
 
         if is_home:
@@ -129,7 +127,7 @@ class Team:
         self.updated_at = datetime.now()
 
     def _update_streak(self) -> None:
-        """更新连胜/连败记录"""
+        """更新连胜/连败记录."""
         if not self.recent_form:
             return None
         last_result = self.recent_form[-1]
@@ -152,7 +150,7 @@ class Team:
         self.current_streak = {"type": streak_type, "count": streak_count}
 
     def _update_strength_rating(self) -> None:
-        """更新实力评分"""
+        """更新实力评分."""
         # 基于近期表现调整实力评分
         recent_points = 0
         for result in self.recent_form[-5:]:
@@ -173,7 +171,7 @@ class Team:
         self.defense_rating = min(100, max(0, 100 - avg_conceded * 10))
 
     def get_form_points(self, last_n: int = 5) -> int:
-        """获取最近N场的积分"""
+        """获取最近N场的积分."""
         if not self.recent_form or last_n <= 0:
             return 0
 
@@ -189,11 +187,11 @@ class Team:
         return points
 
     def get_strength_score(self) -> float:
-        """获取综合实力评分"""
+        """获取综合实力评分."""
         return self.strength_score
 
     def is_in_form(self) -> bool:
-        """判断状态是否良好"""
+        """判断状态是否良好."""
         if len(self.recent_form) < 3:
             return False
 
@@ -205,7 +203,7 @@ class Team:
         return wins >= 2 or (wins >= 1 and draws >= 2)
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "name": self.name,
@@ -235,7 +233,7 @@ class Team:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Team":
-        """从字典创建实例"""
+        """从字典创建实例."""
         team = cls(
             id=data.get("id"),
             name=data.get("name", ""),

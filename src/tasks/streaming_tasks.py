@@ -1,5 +1,4 @@
-"""
-实时数据流任务
+"""实时数据流任务.
 
 处理实时数据流,包括:
 - WebSocket连接管理
@@ -10,7 +9,7 @@
 
 # Mock implementations for streaming classes
 class FootballKafkaConsumer:
-    """Mock FootballKafkaConsumer implementation"""
+    """Mock FootballKafkaConsumer implementation."""
 
     def __init__(self, consumer_group_id=None):
         self.consumer_group_id = consumer_group_id
@@ -23,14 +22,14 @@ class FootballKafkaConsumer:
 
 
 class FootballKafkaProducer:
-    """Mock FootballKafkaProducer implementation"""
+    """Mock FootballKafkaProducer implementation."""
 
     def __init__(self):
         pass
 
 
 class StreamProcessor:
-    """Mock StreamProcessor implementation"""
+    """Mock StreamProcessor implementation."""
 
     def __init__(self):
         pass
@@ -43,7 +42,7 @@ class StreamProcessor:
 
 
 class StreamConfig:
-    """Mock StreamConfig implementation"""
+    """Mock StreamConfig implementation."""
 
     def __init__(self):
         pass
@@ -51,15 +50,15 @@ class StreamConfig:
 
 # 实时数据流任务函数
 async def process_real_time_data():
-    """处理实时数据"""
+    """处理实时数据."""
     pass
 
 
 async def manage_websocket_connections():
-    """管理WebSocket连接"""
+    """管理WebSocket连接."""
     pass
 
 
 async def persist_stream_data():
-    """持久化流数据"""
+    """持久化流数据."""
     pass

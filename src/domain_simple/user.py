@@ -1,6 +1,4 @@
-"""
-用户领域模型
-"""
+"""用户领域模型."""
 
 from datetime import datetime
 from enum import Enum
@@ -8,7 +6,7 @@ from typing import Any
 
 
 class UserRole(Enum):
-    """用户角色"""
+    """用户角色."""
 
     USER = "user"
     PREMIUM = "premium"
@@ -17,13 +15,13 @@ class UserRole(Enum):
 
 
 class UserPreferences:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户偏好设置"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.favorite_teams: list[int] = []
         self.favorite_leagues: list[int] = []
@@ -34,34 +32,34 @@ class UserPreferences:
         self.odds_format = "decimal"  # decimal, fractional, american
 
     def add_favorite_team(self, team_id: int) -> None:
-        """添加喜欢的球队"""
+        """添加喜欢的球队."""
         if team_id not in self.favorite_teams:
             self.favorite_teams.append(team_id)
 
     def remove_favorite_team(self, team_id: int) -> None:
-        """移除喜欢的球队"""
+        """移除喜欢的球队."""
         if team_id in self.favorite_teams:
             self.favorite_teams.remove(team_id)
 
     def add_favorite_league(self, league_id: int) -> None:
-        """添加喜欢的联赛"""
+        """添加喜欢的联赛."""
         if league_id not in self.favorite_leagues:
             self.favorite_leagues.append(league_id)
 
     def remove_favorite_league(self, league_id: int) -> None:
-        """移除喜欢的联赛"""
+        """移除喜欢的联赛."""
         if league_id in self.favorite_leagues:
             self.favorite_leagues.remove(league_id)
 
 
 class UserStatistics:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户统计数据"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.total_predictions = 0
         self.correct_predictions = 0
@@ -78,7 +76,7 @@ class UserStatistics:
         odds: float | None = None,
         confidence: float | None = None,
     ) -> None:
-        """更新预测统计"""
+        """更新预测统计."""
         self.total_predictions += 1
 
         if is_correct:
@@ -102,20 +100,20 @@ class UserStatistics:
             ) / self.total_predictions
 
     def get_accuracy_rate(self) -> float:
-        """获取准确率"""
+        """获取准确率."""
         if self.total_predictions == 0:
             return 0.0
         return (self.correct_predictions / self.total_predictions) * 100
 
     def get_roi(self) -> float:
-        """获取投资回报率（假设每注1单位）"""
+        """获取投资回报率（假设每注1单位）."""
         if self.total_predictions == 0:
             return 0.0
         return (self.total_profit_loss / self.total_predictions) * 100
 
 
 class User:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户领域模型"""
@@ -157,43 +155,43 @@ class User:
         self.updated_at = datetime.now()
 
     def get_full_name(self) -> str:
-        """获取全名"""
+        """获取全名."""
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
         return self.username
 
     def is_premium(self) -> bool:
-        """是否为高级用户"""
+        """是否为高级用户."""
         return self.role in [UserRole.PREMIUM, UserRole.ADMIN, UserRole.ANALYST]
 
     def is_admin(self) -> bool:
-        """是否为管理员"""
+        """是否为管理员."""
         return self.role == UserRole.ADMIN
 
     def update_last_login(self) -> None:
-        """更新最后登录时间"""
+        """更新最后登录时间."""
         self.last_login = datetime.now()
         self.updated_at = datetime.now()
 
     def add_experience(self, points: int) -> None:
-        """添加经验值"""
+        """添加经验值."""
         self.experience_points += points
         self._update_level()
 
     def _update_level(self) -> None:
-        """更新等级（简单的等级计算）"""
+        """更新等级（简单的等级计算）."""
         # 每100经验值升一级
         new_level = self.experience_points // 100 + 1
         if new_level > self.level:
             self.level = new_level
 
     def add_achievement(self, achievement: str) -> None:
-        """添加成就"""
+        """添加成就."""
         if achievement not in self.achievements:
             self.achievements.append(achievement)
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "username": self.username,
@@ -238,7 +236,7 @@ class User:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "User":
-        """从字典创建实例"""
+        """从字典创建实例."""
         _user = cls(
             id=data.get("id"),
             username=data.get("username", ""),
@@ -294,13 +292,13 @@ class User:
 
 
 class UserProfile:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户档案（扩展的用户信息）"""
 
     def __init__(self, user: User):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self._user = user
         self.prediction_history: list[dict[str, Any]] = []
@@ -309,31 +307,31 @@ class UserProfile:
         self.reputation_score = 0.0
 
     def follow_user(self, user_id: int) -> None:
-        """关注用户"""
+        """关注用户."""
         if user_id not in self.following:
             self.following.append(user_id)
 
     def unfollow_user(self, user_id: int) -> None:
-        """取消关注"""
+        """取消关注."""
         if user_id in self.following:
             self.following.remove(user_id)
 
     def add_follower(self, user_id: int) -> None:
-        """添加粉丝"""
+        """添加粉丝."""
         if user_id not in self.followers:
             self.followers.append(user_id)
 
     def remove_follower(self, user_id: int) -> None:
-        """移除粉丝"""
+        """移除粉丝."""
         if user_id in self.followers:
             self.followers.remove(user_id)
 
     def update_reputation(self, score: float) -> None:
-        """更新声誉分数"""
+        """更新声誉分数."""
         self.reputation_score = max(0, min(100, score))
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "user": self._user.to_dict(),
             "following_count": len(self.following),

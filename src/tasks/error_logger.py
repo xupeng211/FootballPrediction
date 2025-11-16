@@ -1,5 +1,4 @@
-"""
-任务错误日志记录器
+"""任务错误日志记录器.
 
 负责记录任务执行过程中的错误信息,包括:
 - API 调用失败日志
@@ -30,13 +29,13 @@ logger = logging.getLogger(__name__)
 
 
 class TaskErrorLogger:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """任务错误日志记录器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.db_manager = DatabaseManager()
         self._db_type = None
@@ -50,8 +49,7 @@ class TaskErrorLogger:
         context: dict[str, Any] | None = None,
         retry_count: int = 0,
     ) -> None:
-        """
-        记录任务错误日志
+        """记录任务错误日志.
 
         Args:
             task_name: 任务名称
@@ -104,8 +102,7 @@ class TaskErrorLogger:
         retry_count: int = 0,
         response_data: dict[str, Any] | None = None,
     ) -> None:
-        """
-        记录 API 调用失败日志
+        """记录 API 调用失败日志.
 
         Args:
             task_name: 任务名称
@@ -152,8 +149,7 @@ class TaskErrorLogger:
         success_count: int = 0,
         error_count: int = 0,
     ) -> int | None:
-        """
-        记录数据采集错误到 data_collection_logs 表
+        """记录数据采集错误到 data_collection_logs 表.
 
         Args:
             data_source: 数据源
@@ -197,8 +193,7 @@ class TaskErrorLogger:
             return None
 
     async def _save_error_to_db(self, error_details: dict[str, Any]) -> None:
-        """
-        保存错误详情到数据库
+        """保存错误详情到数据库.
 
         由于没有专门的 error_logs 表,这里使用原始SQL创建表并插入数据
         """
@@ -240,7 +235,7 @@ class TaskErrorLogger:
             logger.error(f"保存错误到数据库失败: {str(db_error)}")
 
     async def _get_db_type(self) -> str:
-        """获取数据库类型"""
+        """获取数据库类型."""
         if self._db_type is None:
             try:
                 # 获取数据库引擎来检测类型
@@ -254,14 +249,14 @@ class TaskErrorLogger:
         return self._db_type
 
     async def _get_query_builder(self) -> CompatibleQueryBuilder:
-        """获取兼容性查询构建器"""
+        """获取兼容性查询构建器."""
         if self._query_builder is None:
             db_type = await self._get_db_type()
             self._query_builder = CompatibleQueryBuilder(db_type)
         return self._query_builder
 
     async def _ensure_error_logs_table_exists(self, session) -> None:
-        """确保 error_logs 表存在"""
+        """确保 error_logs 表存在."""
         try:
             db_type = await self._get_db_type()
             create_table_sql = text(
@@ -275,8 +270,7 @@ class TaskErrorLogger:
             logger.warning(f"创建 error_logs 表失败: {str(create_error)}")
 
     async def get_error_statistics(self, hours: int = 24) -> dict[str, Any]:
-        """
-        获取错误统计信息
+        """获取错误统计信息.
 
         Args:
             hours: 统计时间范围(小时)
@@ -329,8 +323,7 @@ class TaskErrorLogger:
             }
 
     async def cleanup_old_errors(self, days_to_keep: int = 7) -> int:
-        """
-        清理旧的错误日志
+        """清理旧的错误日志.
 
         Args:
             days_to_keep: 保留天数
@@ -358,8 +351,7 @@ class TaskErrorLogger:
             return 0
 
     async def cleanup_old_logs(self, days_to_keep: int = 7) -> int:
-        """
-        清理旧的错误日志(别名方法,兼容测试)
+        """清理旧的错误日志(别名方法,兼容测试).
 
         Args:
             days_to_keep: 保留天数

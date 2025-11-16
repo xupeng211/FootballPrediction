@@ -1,5 +1,4 @@
-"""
-任务工具函数
+"""任务工具函数.
 
 提供任务调度相关的工具函数,包括:
 - 比赛时间检查
@@ -15,8 +14,7 @@ from src.database.connection import DatabaseManager
 
 
 async def should_collect_live_scores() -> bool:
-    """
-    判断是否应该采集实时比分
+    """判断是否应该采集实时比分.
 
     检查当前是否有进行中的比赛或即将开始的比赛
 
@@ -54,8 +52,7 @@ async def should_collect_live_scores() -> bool:
 
 
 async def get_upcoming_matches(hours: int = 24) -> list[dict]:
-    """
-    获取未来N小时内的比赛
+    """获取未来N小时内的比赛.
 
     Args:
         hours: 时间范围（小时）
@@ -108,8 +105,7 @@ async def get_upcoming_matches(hours: int = 24) -> list[dict]:
 
 
 def is_match_day(date: datetime | None = None) -> bool:
-    """
-    检查指定日期是否有比赛
+    """检查指定日期是否有比赛.
 
     Args:
         date: 要检查的日期,默认为今天
@@ -126,8 +122,7 @@ def is_match_day(date: datetime | None = None) -> bool:
 
 
 async def get_active_leagues() -> list[str]:
-    """
-    获取当前活跃的联赛列表
+    """获取当前活跃的联赛列表.
 
     Returns:
         活跃联赛ID列表
@@ -160,8 +155,7 @@ async def get_active_leagues() -> list[str]:
 def calculate_next_collection_time(
     task_name: str, interval_minutes: int = None
 ) -> datetime:
-    """
-    计算下次采集时间
+    """计算下次采集时间.
 
     Args:
         task_name: 任务名称
@@ -200,8 +194,7 @@ def calculate_next_collection_time(
 
 
 async def cleanup_stale_tasks() -> int:
-    """
-    清理过期的任务记录
+    """清理过期的任务记录.
 
     Returns:
         清理的记录数
@@ -231,8 +224,7 @@ async def cleanup_stale_tasks() -> int:
 
 
 def get_task_priority(task_name: str) -> int:
-    """
-    获取任务优先级
+    """获取任务优先级.
 
     Args:
         task_name: 任务名称

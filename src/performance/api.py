@@ -1,7 +1,6 @@
 # mypy: ignore-errors
-"""
-性能监控API端点
-Performance Monitoring API Endpoints
+"""性能监控API端点
+Performance Monitoring API Endpoints.
 
 提供性能监控相关的API:
 - 获取实时性能指标
@@ -38,7 +37,7 @@ task_monitor = BackgroundTaskPerformanceMonitor()
 
 
 class PerformanceConfig(BaseModel):
-    """性能配置"""
+    """性能配置."""
 
     sample_rate: float = Field(default=1.0, ge=0.0, le=1.0, description="采样率")
     slow_request_threshold: float = Field(
@@ -50,7 +49,7 @@ class PerformanceConfig(BaseModel):
 
 
 class ThresholdUpdate(BaseModel):
-    """阈值更新"""
+    """阈值更新."""
 
     category: str = Field(..., description="类别")
     metric: str = Field(..., description="指标")
@@ -58,7 +57,7 @@ class ThresholdUpdate(BaseModel):
 
 
 class PerformanceRequest(BaseModel):
-    """性能分析请求"""
+    """性能分析请求."""
 
     duration_minutes: int = Field(default=5, ge=1, le=60, description="分析时长(分钟)")
     include_memory: bool = Field(default=True, description="是否包含内存分析")
@@ -67,7 +66,7 @@ class PerformanceRequest(BaseModel):
 
 @router.get("/metrics")
 async def get_performance_metrics():
-    """获取实时性能指标"""
+    """获取实时性能指标."""
     try:
         # 获取API性能统计
         api_stats: dict = {}
@@ -116,7 +115,7 @@ async def get_performance_metrics():
 
 @router.post("/profiling/start")
 async def start_profiling(config: PerformanceRequest):
-    """启动性能分析"""
+    """启动性能分析."""
     try:
         profiler = get_profiler()
 
@@ -153,7 +152,7 @@ async def start_profiling(config: PerformanceRequest):
 
 @router.post("/profiling/stop")
 async def stop_profiling():
-    """停止性能分析"""
+    """停止性能分析."""
     try:
         profiler = get_profiler()
 
@@ -183,7 +182,7 @@ async def stop_profiling():
 
 @router.get("/profiling/results")
 async def get_profiling_results():
-    """获取性能分析结果"""
+    """获取性能分析结果."""
     try:
         profiler = get_profiler()
 
@@ -232,7 +231,7 @@ async def get_performance_report(
     export_format: str = Query(default="json", regex="^(json|html)$"),
     include_recommendations: bool = Query(default=True),
 ):
-    """生成性能报告"""
+    """生成性能报告."""
     try:
         # 收集性能数据
         api_stats: dict = {}  # 从中间件获取

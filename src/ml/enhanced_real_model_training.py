@@ -7,7 +7,7 @@ class EnhancedRealModelTraining:
 
 
 class SRSCompliantModelTrainer:
-    """SRS兼容的模型训练器"""
+    """SRS兼容的模型训练器."""
 
     # SRS目标要求
     SRS_TARGETS = {
@@ -22,20 +22,20 @@ class SRSCompliantModelTrainer:
         self.is_trained = False
 
     async def train_model(self, features, labels):
-        """训练模型"""
+        """训练模型."""
         # 简化实现
         self.model = "trained_model"
         self.is_trained = True
         return {"accuracy": 0.75, "auc": 0.72}
 
     async def predict(self, features):
-        """预测"""
+        """预测."""
         if not self.is_trained:
             raise ValueError("模型尚未训练")
         return [0.5] * len(features)
 
     def get_feature_importance(self):
-        """获取特征重要性"""
+        """获取特征重要性."""
         return {"feature1": 0.3, "feature2": 0.2, "feature3": 0.5}
 
 

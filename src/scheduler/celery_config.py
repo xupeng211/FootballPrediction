@@ -135,14 +135,14 @@ app.conf.task_queues = {
 
 
 def get_redis_connection():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """获取Redis连接"""
     return redis.from_url(REDIS_URL)
 
 
 def is_match_day() -> bool:
-    """检查今天是否有比赛"""
+    """检查今天是否有比赛."""
     try:
         # 实现检查今日是否有比赛的逻辑
         # 查询数据库中今日的比赛安排
@@ -167,7 +167,7 @@ def is_match_day() -> bool:
 
 
 def get_upcoming_matches(hours: int = 24) -> list:
-    """获取未来N小时内的比赛"""
+    """获取未来N小时内的比赛."""
     try:
         # 实现获取即将开始比赛的逻辑
         # 查询数据库中未来N小时内的比赛
@@ -200,7 +200,7 @@ def get_upcoming_matches(hours: int = 24) -> list:
 
 
 def should_collect_live_scores() -> bool:
-    """判断是否应该采集实时比分"""
+    """判断是否应该采集实时比分."""
     try:
         # 检查当前是否有进行中的比赛
         # 获取当前时间前后2小时内的比赛
@@ -215,7 +215,7 @@ def should_collect_live_scores() -> bool:
 
 # 任务重试配置
 class TaskRetryConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """任务重试配置"""
@@ -245,7 +245,7 @@ class TaskRetryConfig:
 
 # 监控配置
 class MonitoringConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """监控配置"""

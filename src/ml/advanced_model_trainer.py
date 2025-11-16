@@ -4,7 +4,7 @@ from enum import Enum
 
 
 class ModelType(Enum):
-    """模型类型枚举"""
+    """模型类型枚举."""
 
     POISSON = "poisson"
     LINEAR_REGRESSION = "linear_regression"

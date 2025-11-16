@@ -1,6 +1,5 @@
-"""
-重试机制实现
-Retry Mechanism Implementation
+"""重试机制实现
+Retry Mechanism Implementation.
 """
 
 import asyncio
@@ -11,7 +10,7 @@ from functools import wraps
 
 
 class CircuitState(Enum):
-    """熔断器状态"""
+    """熔断器状态."""
 
     CLOSED = "closed"
     OPEN = "open"
@@ -19,7 +18,7 @@ class CircuitState(Enum):
 
 
 class RetryConfig:
-    """重试配置"""
+    """重试配置."""
 
     def __init__(
         self,
@@ -59,18 +58,18 @@ class RetryConfig:
 
 
 class BackoffStrategy:
-    """退避策略基类"""
+    """退避策略基类."""
 
     def __init__(self, initial_delay: float = 1.0):
         self.initial_delay = initial_delay
 
     def get_delay(self, attempt: int) -> float:
-        """获取第attempt次重试的延迟时间"""
+        """获取第attempt次重试的延迟时间."""
         return self.initial_delay
 
 
 class FixedBackoffStrategy(BackoffStrategy):
-    """固定退避策略"""
+    """固定退避策略."""
 
     def __init__(self, delay: float = 1.0):
         super().__init__(delay)
@@ -81,7 +80,7 @@ class FixedBackoffStrategy(BackoffStrategy):
 
 
 class LinearBackoffStrategy(BackoffStrategy):
-    """线性退避策略"""
+    """线性退避策略."""
 
     def __init__(self, initial_delay: float = 1.0, increment: float = 0.5):
         super().__init__(initial_delay)
@@ -92,7 +91,7 @@ class LinearBackoffStrategy(BackoffStrategy):
 
 
 class ExponentialBackoffStrategy(BackoffStrategy):
-    """指数退避策略"""
+    """指数退避策略."""
 
     def __init__(self, initial_delay: float = 1.0, multiplier: float = 2.0):
         super().__init__(initial_delay)
@@ -103,7 +102,7 @@ class ExponentialBackoffStrategy(BackoffStrategy):
 
 
 class PolynomialBackoffStrategy(BackoffStrategy):
-    """多项式退避策略"""
+    """多项式退避策略."""
 
     def __init__(self, initial_delay: float = 1.0, exponent: float = 2.0):
         super().__init__(initial_delay)
@@ -114,7 +113,7 @@ class PolynomialBackoffStrategy(BackoffStrategy):
 
 
 class CircuitBreaker:
-    """熔断器"""
+    """熔断器."""
 
     def __init__(
         self,
@@ -131,11 +130,11 @@ class CircuitBreaker:
         self.state = CircuitState.CLOSED
 
     def __call__(self, func: Callable) -> Callable:
-        """装饰器语法糖"""
+        """装饰器语法糖."""
         return self.wrap_function(func)
 
     def wrap_function(self, func: Callable) -> Callable:
-        """包装函数"""
+        """包装函数."""
         if asyncio.iscoroutinefunction(func):
 
             @wraps(func)
@@ -152,7 +151,7 @@ class CircuitBreaker:
             return sync_wrapper
 
     async def _call_async(self, func: Callable, *args, **kwargs):
-        """异步调用"""
+        """异步调用."""
         if self.state == CircuitState.OPEN:
             if self._should_attempt_reset():
                 self.state = CircuitState.HALF_OPEN
@@ -168,7 +167,7 @@ class CircuitBreaker:
             raise e
 
     def _call_sync(self, func: Callable, *args, **kwargs):
-        """同步调用"""
+        """同步调用."""
         if self.state == CircuitState.OPEN:
             if self._should_attempt_reset():
                 self.state = CircuitState.HALF_OPEN
@@ -184,18 +183,18 @@ class CircuitBreaker:
             raise e
 
     def _should_attempt_reset(self) -> bool:
-        """是否应该尝试重置"""
+        """是否应该尝试重置."""
         if self.last_failure_time is None:
             return False
         return time.time() - self.last_failure_time >= self.recovery_timeout
 
     def _on_success(self):
-        """成功时的处理"""
+        """成功时的处理."""
         self.failure_count = 0
         self.state = CircuitState.CLOSED
 
     def _on_failure(self):
-        """失败时的处理"""
+        """失败时的处理."""
         self.failure_count += 1
         self.last_failure_time = time.time()
 
@@ -211,7 +210,7 @@ def retry(
     exceptions: tuple = (Exception,),
     strategy: BackoffStrategy | None = None,
 ):
-    """重试装饰器
+    """重试装饰器.
 
     Args:
         max_attempts: 最大重试次数
@@ -258,7 +257,7 @@ def retry_sync(
     exceptions: tuple = (Exception,),
     strategy: BackoffStrategy | None = None,
 ):
-    """同步重试装饰器"""
+    """同步重试装饰器."""
     # 支持delay作为initial_delay的别名
     if delay is not None:
         initial_delay = delay
@@ -286,7 +285,7 @@ def retry_async(
     exceptions: tuple = (Exception,),
     strategy: BackoffStrategy | None = None,
 ):
-    """异步重试装饰器"""
+    """异步重试装饰器."""
     # 支持delay作为initial_delay的别名
     if delay is not None:
         initial_delay = delay
@@ -314,7 +313,7 @@ def _retry_sync(
     exceptions: tuple,
     strategy: BackoffStrategy | None,
 ) -> Callable:
-    """同步重试实现"""
+    """同步重试实现."""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -350,7 +349,7 @@ def _retry_async(
     exceptions: tuple,
     strategy: BackoffStrategy | None,
 ) -> Callable:
-    """异步重试实现"""
+    """异步重试实现."""
 
     @wraps(func)
     async def wrapper(*args, **kwargs):

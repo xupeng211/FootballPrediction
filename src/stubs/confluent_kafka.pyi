@@ -1,6 +1,4 @@
-"""
-Confluent Kafka stub
-"""
+"""Confluent Kafka stub."""
 
 from typing import Any
 

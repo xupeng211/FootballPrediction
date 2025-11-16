@@ -1,12 +1,10 @@
-"""
-i18n utilities
-"""
+"""i18n utilities."""
 
 from fastapi import Request
 
 
 def get_language_from_request(request: Request) -> str:
-    """Get language from request headers"""
+    """Get language from request headers."""
     # Try to get language from Accept-Language header
     accept_language = request.headers.get("accept-language", "")
     if accept_language:

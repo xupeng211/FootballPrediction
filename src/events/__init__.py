@@ -1,6 +1,5 @@
-"""
-事件驱动架构模块
-Event-Driven Architecture Module
+"""事件驱动架构模块
+Event-Driven Architecture Module.
 
 提供事件系统基础设施,实现松耦合的组件通信.
 Provides event system infrastructure for loosely coupled component communication.

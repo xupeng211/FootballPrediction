@@ -4,10 +4,10 @@ from typing import Any
 
 
 class InfluxdbClient:
-    """简化的influxdb_client类"""
+    """简化的influxdb_client类."""
 
     def __init__(self, **kwargs):
-        """初始化"""
+        """初始化."""
         self.id = kwargs.get("id")
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
@@ -18,7 +18,7 @@ class InfluxdbClient:
                 setattr(self, key, value)
 
     def process(self, data: Any = None) -> dict[str, Any]:
-        """处理数据"""
+        """处理数据."""
         return {
             "status": "processed",
             "timestamp": datetime.utcnow().isoformat(),
@@ -26,13 +26,13 @@ class InfluxdbClient:
         }
 
     def validate(self) -> bool:
-        """验证数据"""
+        """验证数据."""
         return self.id is not None
 
 
 # 模块级函数
 def helper_function(data: Any) -> str:
-    """辅助函数"""
+    """辅助函数."""
     return f"processed_{data}"
 
 

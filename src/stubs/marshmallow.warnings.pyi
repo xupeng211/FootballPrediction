@@ -1,6 +1,4 @@
-"""
-Marshmallow warnings stub
-"""
+"""Marshmallow warnings stub."""
 
 class ChangedInMarshmallow4Warning(UserWarning):
     pass

@@ -1,6 +1,5 @@
-"""
-事件总线实现
-Event Bus Implementation
+"""事件总线实现
+Event Bus Implementation.
 
 提供事件发布订阅机制
 """
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class Event:
-    """事件基类"""
+    """事件基类."""
 
     def __init__(self, event_type: str, data: dict | None = None):
         self.event_type = event_type
@@ -26,26 +25,26 @@ class Event:
 
 
 class EventHandler:
-    """事件处理器基类"""
+    """事件处理器基类."""
 
     def __init__(self, name: str):
         self.name = name
         self._subscribed_events: set[str] = set()
 
     async def handle(self, event: Event) -> None:
-        """处理事件"""
+        """处理事件."""
         raise NotImplementedError
 
     def is_subscribed_to(self, event_type: str) -> bool:
         return event_type in self._subscribed_events
 
     def add_subscription(self, event_type: str, queue: Any) -> None:
-        """添加订阅"""
+        """添加订阅."""
         self._subscribed_events.add(event_type)
 
 
 class EventBus:
-    """事件总线"""
+    """事件总线."""
 
     def __init__(self, max_workers: int = 10):
         self._subscribers: dict[str, list[EventHandler]] = {}
@@ -57,7 +56,7 @@ class EventBus:
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
     async def start(self) -> None:
-        """启动事件总线"""
+        """启动事件总线."""
         async with self._lock:
             if self._running:
                 return None
@@ -87,7 +86,7 @@ class EventBus:
                 self._tasks.append(task)
 
     async def stop(self) -> None:
-        """停止事件总线"""
+        """停止事件总线."""
         async with self._lock:
             if not self._running:
                 return None
@@ -108,7 +107,7 @@ class EventBus:
             logger.info("EventBus stopped")
 
     async def publish(self, event: Event) -> None:
-        """发布事件"""
+        """发布事件."""
         if not self._running:
             logger.warning("EventBus is not running")
             return
@@ -125,7 +124,7 @@ class EventBus:
     async def subscribe(
         self, event_type: str, handler: EventHandler, filters: dict | None = None
     ) -> None:
-        """订阅事件"""
+        """订阅事件."""
         async with self._lock:
             if event_type not in self._subscribers:
                 self._subscribers[event_type] = []
@@ -151,7 +150,7 @@ class EventBus:
                 logger.info(f"Handler {handler.name} subscribed to {event_type}")
 
     async def unsubscribe(self, event_type: str, handler: EventHandler) -> None:
-        """取消订阅事件"""
+        """取消订阅事件."""
         async with self._lock:
             if (
                 event_type in self._subscribers
@@ -168,7 +167,7 @@ class EventBus:
     async def _run_handler(
         self, handler: EventHandler, event_type: str, queue: Any
     ) -> None:
-        """运行事件处理器"""
+        """运行事件处理器."""
         while self._running:
             try:
                 # 等待事件，设置超时
@@ -195,7 +194,7 @@ class EventBus:
                 break
 
     async def _run_handler_monitor(self, handler: EventHandler) -> None:
-        """监控处理器状态"""
+        """监控处理器状态."""
         while self._running:
             try:
                 await asyncio.sleep(5.0)
@@ -204,7 +203,7 @@ class EventBus:
                 break
 
     async def _handle_event(self, handler: EventHandler, event: Event) -> None:
-        """处理事件"""
+        """处理事件."""
         try:
             # 检查是否需要在线程池中执行
             if hasattr(handler.handle, "_blocking"):
@@ -220,7 +219,7 @@ class EventBus:
             )
 
     def _should_handle(self, handler: EventHandler, event: Event) -> bool:
-        """检查处理器是否应该处理事件"""
+        """检查处理器是否应该处理事件."""
         # 检查过滤器
         if handler in self._filters:
             filters = self._filters[handler]
@@ -235,7 +234,7 @@ _event_bus: EventBus | None = None
 
 
 def get_event_bus() -> EventBus:
-    """获取事件总线实例"""
+    """获取事件总线实例."""
     global _event_bus
     if _event_bus is None:
         _event_bus = EventBus()
@@ -243,12 +242,12 @@ def get_event_bus() -> EventBus:
 
 
 async def start_event_bus() -> None:
-    """启动事件总线"""
+    """启动事件总线."""
     bus = get_event_bus()
     await bus.start()
 
 
 async def stop_event_bus() -> None:
-    """停止事件总线"""
+    """停止事件总线."""
     bus = get_event_bus()
     await bus.stop()

@@ -1,6 +1,5 @@
-"""
-门面模式模块
-Facade Pattern Module
+"""门面模式模块
+Facade Pattern Module.
 
 提供简化的接口来访问复杂的子系统.
 Provides simplified interfaces to access complex subsystems.
