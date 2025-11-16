@@ -1,6 +1,5 @@
-"""
-比赛领域模型
-Match Domain Model
+"""比赛领域模型
+Match Domain Model.
 
 封装比赛相关的业务逻辑和不变性约束.
 Encapsulates match-related business logic and invariants.
@@ -15,7 +14,7 @@ from src.core.exceptions import DomainError
 
 
 class MatchStatus(Enum):
-    """比赛状态"""
+    """比赛状态."""
 
     SCHEDULED = "scheduled"  # 已安排
     LIVE = "live"  # 进行中
@@ -25,7 +24,7 @@ class MatchStatus(Enum):
 
 
 class MatchResult(Enum):
-    """比赛结果"""
+    """比赛结果."""
 
     HOME_WIN = "home_win"  # 主队获胜
     AWAY_WIN = "away_win"  # 客队获胜
@@ -34,7 +33,7 @@ class MatchResult(Enum):
 
 @dataclass
 class MatchScore:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比赛比分值对象"""
@@ -43,23 +42,23 @@ class MatchScore:
     away_score: int = 0
 
     def __post_init__(self):
-        """验证比赛数据"""
+        """验证比赛数据."""
         if self.home_score < 0 or self.away_score < 0:
             raise DomainError("比分不能为负数")
 
     @property
     def total_goals(self) -> int:
-        """总进球数"""
+        """总进球数."""
         return self.home_score + self.away_score
 
     @property
     def goal_difference(self) -> int:
-        """净胜球"""
+        """净胜球."""
         return self.home_score - self.away_score
 
     @property
     def result(self) -> MatchResult:
-        """比赛结果"""
+        """比赛结果."""
         if self.home_score > self.away_score:
             return MatchResult.HOME_WIN
         elif self.away_score > self.home_score:
@@ -73,7 +72,7 @@ class MatchScore:
 
 @dataclass
 class Match:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -101,7 +100,7 @@ class Match:
     _domain_events: list[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化后的验证"""
         if self.home_team_id == self.away_team_id:
@@ -112,7 +111,7 @@ class Match:
 
     @staticmethod
     def _is_valid_season_format(season: str) -> bool:
-        """验证赛季格式"""
+        """验证赛季格式."""
         # 简单验证:2023-2024 或 2023
         parts = season.split("-")
         if len(parts) == 1:
@@ -132,7 +131,7 @@ class Match:
     # ========================================
 
     def start_match(self) -> None:
-        """开始比赛"""
+        """开始比赛."""
         if self.status != MatchStatus.SCHEDULED:
             raise DomainError(f"比赛状态为 {self.status.value},无法开始")
 
@@ -140,7 +139,7 @@ class Match:
         self.updated_at = datetime.utcnow()
 
     def update_score(self, home_score: int, away_score: int) -> None:
-        """更新比分"""
+        """更新比分."""
         if self.status not in [MatchStatus.LIVE, MatchStatus.SCHEDULED]:
             raise DomainError("只有进行中或已安排的比赛才能更新比分")
 
@@ -154,7 +153,7 @@ class Match:
         self.updated_at = datetime.utcnow()
 
     def finish_match(self) -> None:
-        """结束比赛"""
+        """结束比赛."""
         if self.status != MatchStatus.LIVE:
             raise DomainError("只有进行中的比赛才能结束")
 
@@ -178,7 +177,7 @@ class Match:
         )
 
     def cancel_match(self, reason: str | None = None) -> None:
-        """取消比赛"""
+        """取消比赛."""
         if self.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise DomainError("已结束或已取消的比赛无法再次取消")
 
@@ -186,7 +185,7 @@ class Match:
         self.updated_at = datetime.utcnow()
 
     def postpone_match(self, new_date: datetime | None = None) -> None:
-        """延期比赛"""
+        """延期比赛."""
         if self.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise DomainError("已结束或已取消的比赛无法延期")
 
@@ -196,19 +195,19 @@ class Match:
         self.updated_at = datetime.utcnow()
 
     def is_same_team(self, team_id: int) -> bool:
-        """检查是否是参赛球队"""
+        """检查是否是参赛球队."""
         return team_id in [self.home_team_id, self.away_team_id]
 
     def is_home_team(self, team_id: int) -> bool:
-        """检查是否是主队"""
+        """检查是否是主队."""
         return team_id == self.home_team_id
 
     def is_away_team(self, team_id: int) -> bool:
-        """检查是否是客队"""
+        """检查是否是客队."""
         return team_id == self.away_team_id
 
     def get_opponent_id(self, team_id: int) -> int | None:
-        """获取对手ID"""
+        """获取对手ID."""
         if team_id == self.home_team_id:
             return self.away_team_id
         elif team_id == self.away_team_id:
@@ -221,36 +220,36 @@ class Match:
 
     @property
     def is_upcoming(self) -> bool:
-        """是否是即将开始的比赛"""
+        """是否是即将开始的比赛."""
         return (
             self.status == MatchStatus.SCHEDULED and self.match_date > datetime.utcnow()
         )
 
     @property
     def is_live(self) -> bool:
-        """是否正在进行"""
+        """是否正在进行."""
         return self.status == MatchStatus.LIVE
 
     @property
     def is_finished(self) -> bool:
-        """是否已结束"""
+        """是否已结束."""
         return self.status == MatchStatus.FINISHED
 
     @property
     def can_be_predicted(self) -> bool:
-        """是否可以预测"""
+        """是否可以预测."""
         return self.status in [MatchStatus.SCHEDULED, MatchStatus.LIVE]
 
     @property
     def days_until_match(self) -> int:
-        """距离比赛还有多少天"""
+        """距离比赛还有多少天."""
         if self.match_date:
             delta = self.match_date - datetime.utcnow()
             return max(0, delta.days)
         return 0
 
     def get_duration(self) -> int | None:
-        """获取比赛时长（分钟）"""
+        """获取比赛时长（分钟）."""
         if self.status == MatchStatus.FINISHED and self.created_at:
             # 这里简化处理,实际应该记录开始时间
             return 90  # 标准足球比赛时长
@@ -261,15 +260,15 @@ class Match:
     # ========================================
 
     def _add_domain_event(self, event: Any) -> None:
-        """添加领域事件"""
+        """添加领域事件."""
         self._domain_events.append(event)
 
     def get_domain_events(self) -> list[Any]:
-        """获取领域事件"""
+        """获取领域事件."""
         return self._domain_events.copy()
 
     def clear_domain_events(self) -> None:
-        """清除领域事件"""
+        """清除领域事件."""
         self._domain_events.clear()
 
     # ========================================
@@ -277,7 +276,7 @@ class Match:
     # ========================================
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "home_team_id": self.home_team_id,
@@ -305,7 +304,7 @@ class Match:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Match":
-        """从字典创建实例"""
+        """从字典创建实例."""
         score_data = data.pop("score", None)
         score = None
         if score_data:

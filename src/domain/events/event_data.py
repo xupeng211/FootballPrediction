@@ -1,6 +1,5 @@
-"""
-事件数据类型
-Event Data Types
+"""事件数据类型
+Event Data Types.
 
 定义事件系统使用的数据结构.
 Defines data structures used by the event system.
@@ -15,7 +14,7 @@ from src.domain.events.base import EventData
 
 @dataclass
 class MatchCreatedEventData(EventData):
-    """比赛创建事件数据"""
+    """比赛创建事件数据."""
 
     match_id: int
     home_team_id: int
@@ -44,7 +43,7 @@ class MatchCreatedEventData(EventData):
 
 @dataclass
 class MatchUpdatedEventData(EventData):
-    """比赛更新事件数据"""
+    """比赛更新事件数据."""
 
     match_id: int
     updated_fields: dict[str, Any]
@@ -65,7 +64,7 @@ class MatchUpdatedEventData(EventData):
 
 @dataclass
 class PredictionMadeEventData(EventData):
-    """预测事件数据"""
+    """预测事件数据."""
 
     prediction_id: int
     user_id: int
@@ -106,7 +105,7 @@ def create_match_created_data(
     venue: str | None = None,
     competition_id: int | None = None,
 ) -> MatchCreatedEventData:
-    """创建比赛创建事件数据"""
+    """创建比赛创建事件数据."""
     return MatchCreatedEventData(
         match_id=match_id,
         home_team_id=home_team_id,
@@ -122,7 +121,7 @@ def create_match_updated_data(
     updated_fields: dict[str, Any],
     updated_at: datetime | None = None,
 ) -> MatchUpdatedEventData:
-    """创建比赛更新事件数据"""
+    """创建比赛更新事件数据."""
     if updated_at is None:
         updated_at = datetime.utcnow()
 
@@ -142,7 +141,7 @@ def create_prediction_made_data(
     confidence: float | None = None,
     prediction_time: datetime | None = None,
 ) -> PredictionMadeEventData:
-    """创建预测事件数据"""
+    """创建预测事件数据."""
     return PredictionMadeEventData(
         prediction_id=prediction_id,
         user_id=user_id,

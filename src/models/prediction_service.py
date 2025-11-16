@@ -1,5 +1,4 @@
-"""
-模型预测服务 / Model Prediction Service
+"""模型预测服务 / Model Prediction Service.
 
 提供实时比赛预测功能,支持：
 - 从MLflow加载最新生产模型

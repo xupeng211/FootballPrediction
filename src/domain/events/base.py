@@ -1,6 +1,5 @@
-"""
-基础领域事件
-Base Domain Event
+"""基础领域事件
+Base Domain Event.
 
 定义领域事件的基础结构.
 Defines the base structure for domain events.
@@ -15,7 +14,7 @@ from uuid import uuid4
 
 
 class EventData:
-    """事件数据容器"""
+    """事件数据容器."""
 
     def __init__(self, data: dict[str, Any] | None = None):
         self.data = data or {}
@@ -23,17 +22,16 @@ class EventData:
 
 
 class EventHandler(ABC):
-    """事件处理器基类"""
+    """事件处理器基类."""
 
     @abstractmethod
     async def handle(self, event: "DomainEvent") -> None:
-        """处理事件"""
+        """处理事件."""
         pass
 
 
 class DomainEvent(ABC):
-    """
-    领域事件基类
+    """领域事件基类.
 
     所有领域事件都应该继承此类.
     All domain events should inherit from this class.
@@ -41,12 +39,11 @@ class DomainEvent(ABC):
 
     @abstractmethod
     def get_event_type(self) -> str:
-        """获取事件类型 - 子类必须实现"""
+        """获取事件类型 - 子类必须实现."""
         pass
 
     def __init__(self, aggregate_id: int | None = None):
-        """
-        初始化领域事件
+        """初始化领域事件.
 
         Args:
             aggregate_id: 聚合根ID
@@ -57,7 +54,7 @@ class DomainEvent(ABC):
         self.data: dict[str, Any] = {}
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "id": self.id,
             "type": self.get_event_type(),

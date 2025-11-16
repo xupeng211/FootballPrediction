@@ -1,6 +1,5 @@
-"""
-增强机器学习模型策略
-Enhanced ML Model Strategy
+"""增强机器学习模型策略
+Enhanced ML Model Strategy.
 
 使用增强的机器学习模型进行预测的策略实现.
 Strategy implementation using enhanced machine learning models for prediction.
@@ -23,7 +22,7 @@ from src.domain.strategies.base import (
 
 
 class EnhancedMLModelStrategy(PredictionStrategy):
-    """增强机器学习模型预测策略
+    """增强机器学习模型预测策略.
 
     使用集成学习和高级特征工程进行比赛预测.
     Uses ensemble learning and advanced feature engineering for match prediction.
@@ -41,7 +40,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         self.logger = logging.getLogger(__name__)
 
     async def predict(self, input_data: PredictionInput) -> PredictionOutput:
-        """执行预测
+        """执行预测.
 
         Args:
             input_data: 预测输入数据
@@ -90,7 +89,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
     async def _advanced_feature_engineering(
         self, input_data: PredictionInput
     ) -> np.ndarray:
-        """高级特征工程"""
+        """高级特征工程."""
         # 简化的高级特征工程实现
         features = np.array(
             [
@@ -105,7 +104,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         return features
 
     async def _ensemble_predict(self, features: np.ndarray) -> list[list[int]]:
-        """集成预测"""
+        """集成预测."""
         predictions = []
         for i in range(self._model_params["ensemble_size"]):
             # 每个模型的预测略有不同
@@ -115,7 +114,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         return predictions
 
     async def _prediction_fusion(self, predictions: list[list[int]]) -> list[int]:
-        """预测融合"""
+        """预测融合."""
         # 简单的投票融合
         home_scores = [p[0] for p in predictions]
         away_scores = [p[1] for p in predictions]
@@ -129,7 +128,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
     async def _calculate_ensemble_confidence(
         self, predictions: list[list[int]]
     ) -> float:
-        """计算集成置信度"""
+        """计算集成置信度."""
         # 基于预测一致性计算置信度
         home_scores = [p[0] for p in predictions]
         away_scores = [p[1] for p in predictions]
@@ -145,7 +144,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
     async def _calculate_enhanced_probabilities(
         self, prediction: list[int], predictions: list[list[int]]
     ) -> dict[str, float]:
-        """计算增强概率分布"""
+        """计算增强概率分布."""
         total_goals = sum(prediction)
 
         # 基于集成预测的一致性调整概率
@@ -177,7 +176,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         return adjusted_probs
 
     async def _get_enhanced_feature_importance(self) -> dict[str, float]:
-        """获取增强特征重要性"""
+        """获取增强特征重要性."""
         return {
             "enhanced_home_advantage": 0.25,
             "advanced_form_analysis": 0.20,
@@ -188,7 +187,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         }
 
     async def get_metrics(self) -> StrategyMetrics:
-        """获取策略指标"""
+        """获取策略指标."""
         return StrategyMetrics(
             accuracy=0.75,
             precision=0.73,

@@ -1,6 +1,5 @@
-"""
-机器学习模型策略
-ML Model Strategy
+"""机器学习模型策略
+ML Model Strategy.
 
 使用机器学习模型进行预测的策略实现.
 Strategy implementation using machine learning models for prediction.
@@ -23,7 +22,7 @@ from src.domain.strategies.base import (
 
 
 class MLModelStrategy(PredictionStrategy):
-    """机器学习模型预测策略
+    """机器学习模型预测策略.
 
     使用训练好的机器学习模型进行比赛预测.
     Uses trained machine learning models for match prediction.
@@ -41,7 +40,7 @@ class MLModelStrategy(PredictionStrategy):
         self.logger = logging.getLogger(__name__)
 
     async def predict(self, input_data: PredictionInput) -> PredictionOutput:
-        """执行预测
+        """执行预测.
 
         Args:
             input_data: 预测输入数据
@@ -97,7 +96,7 @@ class MLModelStrategy(PredictionStrategy):
             raise
 
     async def _extract_features(self, input_data: PredictionInput) -> np.ndarray:
-        """提取特征"""
+        """提取特征."""
         # 简化的特征提取
         features = np.array(
             [
@@ -109,19 +108,19 @@ class MLModelStrategy(PredictionStrategy):
         return features
 
     async def _model_predict(self, features: np.ndarray) -> list[int]:
-        """模型预测"""
+        """模型预测."""
         # 简化的模型预测实现
         home_score = int(np.random.normal(1.5, 0.5))
         away_score = int(np.random.normal(1.2, 0.5))
         return [home_score, away_score]
 
     async def _model_predict_proba(self, features: np.ndarray) -> list[float]:
-        """模型概率预测"""
+        """模型概率预测."""
         # 简化的概率预测实现
         return [0.4, 0.3, 0.3]  # [home_win, draw, away_win]
 
     async def _preprocess_input(self, input_data: PredictionInput) -> dict[str, Any]:
-        """预处理输入数据"""
+        """预处理输入数据."""
         return {
             "home_team": input_data.home_team,
             "away_team": input_data.away_team,
@@ -132,7 +131,7 @@ class MLModelStrategy(PredictionStrategy):
     async def _postprocess_prediction(
         self, prediction: list[int], input_data: dict[str, Any]
     ) -> list[int]:
-        """后处理预测结果"""
+        """后处理预测结果."""
         # 确保预测结果在合理范围内
         home_score = max(0, min(10, prediction[0]))
         away_score = max(0, min(10, prediction[1]))
@@ -141,7 +140,7 @@ class MLModelStrategy(PredictionStrategy):
     async def _calculate_probability_distribution(
         self, prediction: list[int], prediction_proba: list[float]
     ) -> dict[str, float]:
-        """计算概率分布"""
+        """计算概率分布."""
         if len(prediction_proba) >= 3:
             return {
                 "home_win": prediction_proba[0],
@@ -162,7 +161,7 @@ class MLModelStrategy(PredictionStrategy):
             }
 
     async def _get_feature_importance(self) -> dict[str, float]:
-        """获取特征重要性"""
+        """获取特征重要性."""
         return {
             "home_advantage": 0.4,
             "team_form": 0.3,
@@ -171,7 +170,7 @@ class MLModelStrategy(PredictionStrategy):
         }
 
     async def get_metrics(self) -> StrategyMetrics:
-        """获取策略指标"""
+        """获取策略指标."""
         return StrategyMetrics(
             accuracy=0.70,
             precision=0.68,

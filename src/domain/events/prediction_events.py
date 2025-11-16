@@ -1,6 +1,5 @@
-"""
-预测领域事件
-Prediction Domain Events
+"""预测领域事件
+Prediction Domain Events.
 
 定义与预测相关的领域事件.
 Defines domain events related to predictions.
@@ -13,7 +12,7 @@ from src.domain.events.base import DomainEvent
 
 
 class PredictionEvent(DomainEvent):
-    """预测事件基类"""
+    """预测事件基类."""
 
     def __init__(
         self,
@@ -36,12 +35,12 @@ class PredictionEvent(DomainEvent):
         self.timestamp = timestamp
 
     def get_event_type(self) -> str:
-        """获取事件类型"""
+        """获取事件类型."""
         return self.event_type
 
 
 class PredictionCreatedEvent(DomainEvent):
-    """预测创建事件"""
+    """预测创建事件."""
 
     def __init__(
         self,
@@ -62,7 +61,7 @@ class PredictionCreatedEvent(DomainEvent):
         self.confidence = confidence
 
     def get_event_type(self) -> str:
-        """获取事件类型"""
+        """获取事件类型."""
         return "prediction_created"
 
     def _get_event_data(self) -> dict[str, Any]:
@@ -77,7 +76,7 @@ class PredictionCreatedEvent(DomainEvent):
 
 
 class PredictionUpdatedEvent(DomainEvent):
-    """预测更新事件"""
+    """预测更新事件."""
 
     def __init__(
         self,
@@ -96,7 +95,7 @@ class PredictionUpdatedEvent(DomainEvent):
         self.new_predicted_away = new_predicted_away
 
     def get_event_type(self) -> str:
-        """获取事件类型"""
+        """获取事件类型."""
         return "prediction_updated"
 
     def _get_event_data(self) -> dict[str, Any]:
@@ -114,7 +113,7 @@ class PredictionUpdatedEvent(DomainEvent):
 
 
 class PredictionEvaluatedEvent(DomainEvent):
-    """预测评估事件"""
+    """预测评估事件."""
 
     def __init__(
         self,
@@ -135,7 +134,7 @@ class PredictionEvaluatedEvent(DomainEvent):
         self.accuracy_score = accuracy_score
 
     def get_event_type(self) -> str:
-        """获取事件类型"""
+        """获取事件类型."""
         return "prediction_evaluated"
 
     def _get_event_data(self) -> dict[str, Any]:
@@ -149,7 +148,7 @@ class PredictionEvaluatedEvent(DomainEvent):
 
 
 class PredictionCancelledEvent(DomainEvent):
-    """预测取消事件"""
+    """预测取消事件."""
 
     def __init__(
         self,
@@ -164,7 +163,7 @@ class PredictionCancelledEvent(DomainEvent):
         self.cancelled_by = cancelled_by
 
     def get_event_type(self) -> str:
-        """获取事件类型"""
+        """获取事件类型."""
         return "prediction_cancelled"
 
     def _get_event_data(self) -> dict[str, Any]:
@@ -176,7 +175,7 @@ class PredictionCancelledEvent(DomainEvent):
 
 
 class PredictionExpiredEvent(DomainEvent):
-    """预测过期事件"""
+    """预测过期事件."""
 
     def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs):
         super().__init__(aggregate_id=prediction_id)
@@ -185,7 +184,7 @@ class PredictionExpiredEvent(DomainEvent):
         self.expired_at = expired_at
 
     def get_event_type(self) -> str:
-        """获取事件类型"""
+        """获取事件类型."""
         return "prediction_expired"
 
     def _get_event_data(self) -> dict[str, Any]:
@@ -197,7 +196,7 @@ class PredictionExpiredEvent(DomainEvent):
 
 
 class PredictionPointsAdjustedEvent(DomainEvent):
-    """预测积分调整事件"""
+    """预测积分调整事件."""
 
     def __init__(
         self,
@@ -216,7 +215,7 @@ class PredictionPointsAdjustedEvent(DomainEvent):
         self.adjustment_reason = adjustment_reason
 
     def get_event_type(self) -> str:
-        """获取事件类型"""
+        """获取事件类型."""
         return "prediction_points_adjusted"
 
     def _get_event_data(self) -> dict[str, Any]:

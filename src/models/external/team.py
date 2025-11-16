@@ -1,6 +1,5 @@
-"""
-外部球队数据模型
-External Team Data Model
+"""外部球队数据模型
+External Team Data Model.
 """
 
 from datetime import datetime
@@ -13,7 +12,7 @@ Base = declarative_base()
 
 
 class ExternalTeam(Base):
-    """外部球队数据模型"""
+    """外部球队数据模型."""
 
     __tablename__ = "external_teams"
 
@@ -64,23 +63,23 @@ class ExternalTeam(Base):
 
     @property
     def display_name(self) -> str:
-        """显示名称"""
+        """显示名称."""
         return self.short_name or self.name
 
     @property
     def has_complete_info(self) -> bool:
-        """是否有完整信息"""
+        """是否有完整信息."""
         required_fields = ["name", "external_id"]
         return all(getattr(self, field) for field in required_fields)
 
     @property
     def is_premium_data(self) -> bool:
-        """是否为高级数据"""
+        """是否为高级数据."""
         premium_fields = ["address", "website", "founded", "club_colors", "venue"]
         return sum(1 for field in premium_fields if getattr(self, field)) >= 3
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "external_id": self.external_id,
@@ -117,7 +116,7 @@ class ExternalTeam(Base):
     def from_api_data(
         cls, data: dict[str, Any], competition_info: dict[str, Any] | None = None
     ) -> "ExternalTeam":
-        """从API数据创建实例"""
+        """从API数据创建实例."""
         try:
             # 解析地区信息
             area = data.get("area", {})
@@ -176,7 +175,7 @@ class ExternalTeam(Base):
 
     @staticmethod
     def _calculate_data_quality_score(data: dict[str, Any]) -> int:
-        """计算数据质量评分"""
+        """计算数据质量评分."""
         score = 0
 
         # 基础信息 (40分)
@@ -200,7 +199,7 @@ class ExternalTeam(Base):
         return min(score, 100)  # 最高100分
 
     def update_from_api_data(self, data: dict[str, Any]) -> bool:
-        """从API数据更新实例"""
+        """从API数据更新实例."""
         try:
             # 检查外部ID是否匹配
             if str(data.get("id")) != self.external_id:
@@ -253,7 +252,7 @@ class ExternalTeam(Base):
             return False
 
     def merge_competition_info(self, competition_info: dict[str, Any]) -> None:
-        """合并联赛信息"""
+        """合并联赛信息."""
         if competition_info:
             self.competition_id = competition_info.get("id")
             self.competition_name = competition_info.get("name")
