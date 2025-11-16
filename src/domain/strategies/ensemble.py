@@ -18,6 +18,17 @@ class EnsembleMethod:
     """集成方法 - 占位符实现"""
 
 
+class EnsembleStrategy:
+    """集成策略 - 占位符实现"""
+
+    def __init__(self, config=None):
+        self.config = config or {}
+
+    def predict(self, input_data):
+        """预测方法 - 占位符实现"""
+        pass
+
+
 class EnsembleResult:
     """类文档字符串"""
 

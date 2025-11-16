@@ -57,7 +57,6 @@ from src.domain.strategies import (
     PredictionStrategy,
     PredictionStrategyFactory,
     StatisticalStrategy,
-    StrategyConfig,
     StrategyMetrics,
     StrategyType,
 )

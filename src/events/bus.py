@@ -47,14 +47,14 @@ class EventHandler:
 class EventBus:
     """事件总线"""
 
-    def __init__(self):
+    def __init__(self, max_workers: int = 10):
         self._subscribers: dict[str, list[EventHandler]] = {}
         self._queues: dict[str, Any] = {}
         self._tasks: list[asyncio.Task] = []
         self._running = False
         self._lock = asyncio.Lock()
         self._filters: dict[EventHandler, dict] = {}
-        self._executor = ThreadPoolExecutor(max_workers=10)
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
     async def start(self) -> None:
         """启动事件总线"""

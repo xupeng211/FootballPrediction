@@ -10,7 +10,9 @@
 - feature_service: 特征服务接口
 
 基于 DATA_DESIGN.md 第6.1节特征仓库设计.
+"""
 
+from .feature_definitions import (
     match_entity,
     match_features_view,
     odds_features_view,
@@ -19,6 +21,7 @@
 )
 from .feature_store import FeatureStore as FootballFeatureStore
 
+__all__ = [
     "FootballFeatureStore",
     "match_entity",
     "team_entity",

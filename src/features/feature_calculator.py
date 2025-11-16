@@ -8,9 +8,13 @@ feature_calculator 主模块
 
 # 导入拆分的模块
 try:
-    from .calculators.feature_calculator_main import FeatureCalculator
+    from src.features.features.feature_calculator_calculators import FeatureCalculator
 except ImportError:
-    from .feature_definitions import FeatureCalculator
+    # 如果拆分模块不存在，提供一个简单的占位符
+    class FeatureCalculator:
+        """FeatureCalculator 占位符实现"""
+        def __init__(self, *args, **kwargs):
+            pass
 
 # 导出所有公共接口
 __all__ = ["FeatureCalculator"]

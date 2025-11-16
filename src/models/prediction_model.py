@@ -1,4 +1,8 @@
 """
+import random
+import pandas as pd
+import numpy as np
+
 预测模型模块 - 桩实现
 
 Prediction Model Module - Stub Implementation

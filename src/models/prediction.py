@@ -65,11 +65,13 @@ class PredictionCache:
 class PredictionService(SimpleService):
     """预测服务"""
 
-    def __init__(self, mlflow_tracking_uri: str = None):
+    def __init__(self, mlflow_tracking_uri: str = None, repository=None, model=None):
         """函数文档字符串"""
         # 添加pass语句
         super().__init__("PredictionService")
         self.mlflow_tracking_uri = mlflow_tracking_uri or "http://localhost:5002"
+        self.repository = repository
+        self.model = model
         self.cache = PredictionCache()
 
     async def predict_match(self, match_id: int) -> PredictionResult:
@@ -100,6 +102,19 @@ class PredictionService(SimpleService):
     async def get_prediction_statistics(self) -> dict[str, Any]:
         """获取预测统计信息"""
         return {"total_predictions": 0, "accuracy": 0.0, "model_version": "v1.0.0"}
+
+    async def _on_shutdown(self) -> None:
+        """关闭服务时的清理工作"""
+        self.logger.info("PredictionService is shutting down")
+        # 清理缓存
+        if hasattr(self, 'cache'):
+            self.cache.clear()
+        # 可以在这里添加其他清理工作，如关闭数据库连接等
+
+    async def _on_stop(self) -> None:
+        """停止服务时的处理"""
+        self.logger.info("PredictionService is stopping")
+        # 可以在这里添加停止服务时的处理逻辑
 
 
 # Prometheus 监控指标（简单实现）

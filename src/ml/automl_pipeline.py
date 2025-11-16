@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+import random
+import pandas as pd
+import numpy as np
+
 AutoML Pipeline
 自动化机器学习管道
 

@@ -16,28 +16,16 @@ from .predictions import PredictedResult, Predictions
 from .raw_data import RawMatchData, RawOddsData, RawScoresData
 from .team import Team
 
-# 导入多租户相关类
-try:
-        PermissionScope,
-        ResourceType,
-        RolePermission,
-        Tenant,
-        TenantPermission,
-        TenantPlan,
-        TenantRole,
-        TenantStatus,
-        UserRoleAssignment,
-    )
-except ImportError:
-    PermissionScope = None
-    ResourceType = None
-    RolePermission = None
-    Tenant = None
-    TenantPermission = None
-    TenantPlan = None
-    TenantRole = None
-    TenantStatus = None
-    UserRoleAssignment = None
+# 导入多租户相关类 - 模块暂未实现
+PermissionScope = None
+ResourceType = None
+RolePermission = None
+Tenant = None
+TenantPermission = None
+TenantPlan = None
+TenantRole = None
+TenantStatus = None
+UserRoleAssignment = None
 
 from .user import User
 

@@ -1,4 +1,6 @@
 """
+import requests
+
 流式处理配置管理
 
 提供Kafka和流处理的配置管理功能,包括:

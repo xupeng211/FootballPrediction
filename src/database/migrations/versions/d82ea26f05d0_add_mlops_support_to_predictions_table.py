@@ -1,5 +1,6 @@
 # mypy: ignore-errors
 from alembic import op
+import sqlalchemy as sa
 
 """Add MLOps support to predictions table"
 

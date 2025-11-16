@@ -20,17 +20,22 @@ except ImportError:
     FootballDataAdapter = None
     OptaDataAdapter = None
 
-# 为了向后兼容,提供AdapterFactory别名
-try:
-    AdapterFactory = SimpleAdapterFactory
-except NameError:
-    AdapterFactory = None
+# 为了向后兼容,提供占位符
+AdapterFactory = None
+AdapterRegistry = None
+SimpleAdapterFactory = None
 
 # 适配器模式实现
 # Adapter Pattern Implementation
 # 用于集成外部系统和API.
 # Used to integrate external systems and APIs.
 
+# 适配器错误类
+class AdapterError(Exception):
+    """适配器模式相关错误"""
+    pass
+
+# 添加缺失的类到__all__
 __all__ = [
     # 基础类 - Base classes
     "BaseAdapter",

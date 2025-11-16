@@ -616,7 +616,6 @@ request = PredictionRequest(
     league="Premier League"
 )
 
-try:
     response = client.predictions.create(request)
     prediction = response.prediction
 

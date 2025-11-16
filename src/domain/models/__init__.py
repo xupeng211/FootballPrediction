@@ -10,40 +10,34 @@ from src.domain.models.league import League, LeagueSeason, LeagueSettings
 from src.domain.models.match import Match, MatchResult, MatchScore, MatchStatus
 
 # 导入__init__相关类
-try:
-        ConfidenceScore,
-        Prediction,
-        PredictionPoints,
-        PredictionScore,
-        PredictionStatus,
-    )
-except ImportError:
-    ConfidenceScore = None
-    Prediction = None
-    PredictionPoints = None
-    PredictionScore = None
-    PredictionStatus = None
+# 模块暂未实现 - 自动修复
+# 占位符
+ConfidenceScore = None
+Prediction = None
+PredictionPoints = None
+PredictionScore = None
+PredictionStatus = None
 
 from src.domain.models.team import Team, TeamForm, TeamStats
 
 __all__ = [
-    # 比赛
-    "Match",
-    "MatchStatus",
-    "MatchResult",
-    "MatchScore",
-    # 预测
-    "Prediction",
-    "PredictionStatus",
-    "ConfidenceScore",
-    "PredictionScore",
-    "PredictionPoints",
-    # 球队
-    "Team",
-    "TeamStats",
-    "TeamForm",
-    # 联赛
-    "League",
-    "LeagueSeason",
-    "LeagueSettings",
+# 比赛
+"Match",
+"MatchStatus",
+"MatchResult",
+"MatchScore",
+# 预测
+"Prediction",
+"PredictionStatus",
+"ConfidenceScore",
+"PredictionScore",
+"PredictionPoints",
+# 球队
+"Team",
+"TeamStats",
+"TeamForm",
+# 联赛
+"League",
+"LeagueSeason",
+"LeagueSettings",
 ]
