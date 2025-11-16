@@ -15,30 +15,122 @@ T = TypeVar("T")
 
 
 class RetryConfig:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """重试配置类"""
 
     def __init__(
         self,
         max_attempts: int = 3,
+        delay: float = None,
+        initial_delay: float = None,
         base_delay: float = 1.0,
         max_delay: float = 60.0,
         exponential_base: float = 2.0,
         jitter: bool = True,
         retryable_exceptions: tuple = (Exception,),
+        exceptions: tuple = (Exception,),
+        backoff_factor: float = 2.0,
+        **kwargs
     ):
         self.max_attempts = max_attempts
-        self.base_delay = base_delay
+
+        # 支持多种参数名
+        if initial_delay is not None:
+            self.initial_delay = initial_delay
+            self.delay = initial_delay
+            self.base_delay = initial_delay
+        elif delay is not None:
+            self.initial_delay = delay
+            self.delay = delay
+            self.base_delay = delay
+        else:
+            self.initial_delay = base_delay
+            self.delay = base_delay
+            self.base_delay = base_delay
+
         self.max_delay = max_delay
         self.exponential_base = exponential_base
+        self.backoff_factor = backoff_factor
         self.jitter = jitter
         self.retryable_exceptions = retryable_exceptions
+        self.exceptions = exceptions or retryable_exceptions
+
+        # 支持其他参数
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 
 class RetryError(Exception):
     """重试失败异常"""
+
+
+# 策略类和枚举
+from enum import Enum
+
+class CircuitState(Enum):
+    """熔断器状态"""
+    CLOSED = "closed"
+    OPEN = "open"
+    HALF_OPEN = "half_open"
+
+
+class BackoffStrategy:
+    """退避策略基类"""
+    def __init__(self, initial_delay: float = 1.0):
+        self.initial_delay = initial_delay
+
+    def get_delay(self, attempt: int) -> float:
+        return self.initial_delay
+
+
+class FixedBackoffStrategy(BackoffStrategy):
+    """固定退避策略"""
+    def __init__(self, delay: float = 1.0):
+        super().__init__(delay)
+        self.delay = delay
+
+    def get_delay(self, attempt: int) -> float:
+        return self.delay
+
+
+class LinearBackoffStrategy(BackoffStrategy):
+    """线性退避策略"""
+    def __init__(self, initial_delay: float = 1.0, increment: float = 0.5):
+        super().__init__(initial_delay)
+        self.increment = increment
+
+    def get_delay(self, attempt: int) -> float:
+        return self.initial_delay + (attempt - 1) * self.increment
+
+
+class ExponentialBackoffStrategy(BackoffStrategy):
+    """指数退避策略"""
+    def __init__(self, initial_delay: float = 1.0, multiplier: float = 2.0):
+        super().__init__(initial_delay)
+        self.multiplier = multiplier
+
+    def get_delay(self, attempt: int) -> float:
+        return self.initial_delay * (self.multiplier ** (attempt - 1))
+
+
+class PolynomialBackoffStrategy(BackoffStrategy):
+    """多项式退避策略"""
+    def __init__(self, initial_delay: float = 1.0, exponent: float = 2.0):
+        super().__init__(initial_delay)
+        self.exponent = exponent
+
+    def get_delay(self, attempt: int) -> float:
+        return self.initial_delay * (attempt ** self.exponent)
+
+
+class CircuitBreaker:
+    """熔断器"""
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0, expected_exception: type = Exception):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.expected_exception = expected_exception
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.state = CircuitState.CLOSED
 
 
 def retry_with_exponential_backoff(
@@ -107,53 +199,60 @@ async def async_retry_with_exponential_backoff(
     return decorator
 
 
-def retry(config: RetryConfig | None = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """通用的重试装饰器"""
-    if config is None:
-        config = RetryConfig()
+def retry(
+    max_attempts: int = 3,
+    delay: float = None,
+    initial_delay: float = None,
+    backoff_factor: float = 2.0,
+    exceptions: tuple = (Exception,),
+    strategy: BackoffStrategy | None = None,
+):
+    """重试装饰器"""
 
-    return retry_with_exponential_backoff(
-        max_attempts=config.max_attempts,
-        base_delay=config.base_delay,
-        max_delay=config.max_delay,
-    )
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs) -> T:
+            last_exception = None
+
+            # 使用提供的延迟或默认值
+            current_delay = delay or initial_delay or 1.0
+
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    last_exception = e
+
+                    if attempt == max_attempts:
+                        break
+
+                    # 计算延迟时间
+                    if strategy:
+                        sleep_time = strategy.get_delay(attempt)
+                    else:
+                        sleep_time = current_delay * (backoff_factor ** (attempt - 1))
+
+                    time.sleep(sleep_time)
+
+            raise last_exception
+
+        return wrapper
+    return decorator
 
 
-def async_retry(config: RetryConfig | None = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """通用的异步重试装饰器"""
-    if config is None:
-        config = RetryConfig()
-
-    return async_retry_with_exponential_backoff(
-        max_attempts=config.max_attempts,
-        base_delay=config.base_delay,
-        max_delay=config.max_delay,
-    )
+def retry_async(config: RetryConfig | None = None):
+    """异步重试装饰器别名"""
+    return async_retry_with_exponential_backoff()
 
 
-# 简单的别名
-BackoffStrategy = RetryConfig
-ExponentialBackoffStrategy = RetryConfig
-FixedBackoffStrategy = RetryConfig
-LinearBackoffStrategy = RetryConfig
-PolynomialBackoffStrategy = RetryConfig
-retry_sync = retry
-retry_async = async_retry
+def retry_sync(config: RetryConfig | None = None):
+    """同步重试装饰器别名"""
+    return retry_with_exponential_backoff()
 
 
-class CircuitState:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
-    """熔断器状态枚举"""
-
-    CLOSED = "closed"
-    OPEN = "open"
-    HALF_OPEN = "half_open"
+# 别名
+retry_sync = retry_with_exponential_backoff
+retry_async = async_retry_with_exponential_backoff
 
 
 class CircuitBreaker:

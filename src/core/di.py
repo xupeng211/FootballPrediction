@@ -8,6 +8,7 @@ Provides a lightweight dependency injection implementation.
 
 import inspect
 import logging
+import typing
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -156,7 +157,9 @@ class DIContainer:
     def resolve(self, interface: type[T]) -> T:
         """解析服务"""
         if interface not in self._services:
-            raise DependencyInjectionError(f"服务未注册: {self._get_type_name(interface)}")
+            raise DependencyInjectionError(
+                f"服务未注册: {self._get_type_name(interface)}"
+            )
 
         descriptor = self._services[interface]
 
@@ -225,7 +228,9 @@ class DIContainer:
             finally:
                 self._building.pop()
 
-        raise DependencyInjectionError(f"无法创建实例: {self._get_type_name(descriptor.interface)}")
+        raise DependencyInjectionError(
+            f"无法创建实例: {self._get_type_name(descriptor.interface)}"
+        )
 
     def _analyze_dependencies(self, cls: type) -> list[type]:
         """分析类的依赖"""
@@ -253,15 +258,40 @@ class DIContainer:
             if param_name == "self":
                 continue
 
+            # 跳过 *args 和 **kwargs 参数
+            if param.kind in (param.VAR_POSITIONAL, param.VAR_KEYWORD):
+                continue
+
             # 获取参数的类型
             param_type = param.annotation
 
             if param_type == inspect.Parameter.empty:
                 if param.default == inspect.Parameter.empty:
+                    logger.error(f"参数 {param_name} 在 {cls.__name__} 中没有类型注解且没有默认值")
                     raise DependencyInjectionError(
                         f"参数 {param_name} 没有类型注解且没有默认值"
                     )
+                logger.debug(f"参数 {param_name} 使用默认值: {param.default}")
                 continue
+
+            # 处理字符串类型注解（前向引用）
+            if isinstance(param_type, str):
+                try:
+                    # 使用 get_type_hints 来解析字符串类型注解
+                    type_hints = typing.get_type_hints(service_type)
+                    if param_name in type_hints:
+                        param_type = type_hints[param_name]
+                        logger.debug(f"成功解析字符串类型注解: {param_name} -> {param_type}")
+                except (NameError, AttributeError, TypeError) as e:
+                    # 如果无法解析，跳过这个参数（如果有默认值）
+                    if param.default != inspect.Parameter.empty:
+                        logger.warning(f"无法解析参数 {param_name} 的类型注解 {param.annotation}，使用默认值: {e}")
+                        continue
+                    else:
+                        logger.error(f"无法解析参数 {param_name} 的类型注解 {param.annotation}，且没有默认值")
+                        raise DependencyInjectionError(
+                            f"无法解析参数 {param_name} 的类型注解: {param.annotation}"
+                        )
 
             # 解析依赖
             if param_type in self._services:
@@ -277,9 +307,9 @@ class DIContainer:
 
     def _get_type_name(self, param_type) -> str:
         """安全地获取类型名称"""
-        if hasattr(param_type, '__name__'):
+        if hasattr(param_type, "__name__"):
             return param_type.__name__
-        elif hasattr(param_type, '_name'):  # typing.Generic
+        elif hasattr(param_type, "_name"):  # typing.Generic
             return param_type._name
         elif isinstance(param_type, str):
             return param_type
