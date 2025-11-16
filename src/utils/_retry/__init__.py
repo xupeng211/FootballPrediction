@@ -66,6 +66,7 @@ class RetryError(Exception):
 # 策略类和枚举
 from enum import Enum
 
+
 class CircuitState(Enum):
     """熔断器状态"""
     CLOSED = "closed"
@@ -250,16 +251,6 @@ def retry_sync(config: RetryConfig | None = None):
     return retry_with_exponential_backoff()
 
 
-# 别名
-retry_sync = retry_with_exponential_backoff
-retry_async = async_retry_with_exponential_backoff
-
-
-class CircuitBreaker:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
-    """熔断器实现"""
 
     def __init__(
         self,
