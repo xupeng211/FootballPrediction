@@ -291,7 +291,7 @@ class DIContainer:
                         logger.error(f"无法解析参数 {param_name} 的类型注解 {param.annotation}，且没有默认值")
                         raise DependencyInjectionError(
                             f"无法解析参数 {param_name} 的类型注解: {param.annotation}"
-                        )
+                        ) from None
 
             # 解析依赖
             if param_type in self._services:

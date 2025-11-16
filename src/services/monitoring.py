@@ -8,7 +8,7 @@ Provides system monitoring, statistics, and status check services.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class SystemService:
         """初始化系统服务"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取系统统计信息
         Get system statistics
@@ -65,7 +65,7 @@ class SystemService:
             self.logger.error(f"获取系统统计信息失败: {e}")
             raise
 
-    def get_api_version(self) -> Dict[str, Any]:
+    def get_api_version(self) -> dict[str, Any]:
         """
         获取API版本信息
         Get API version information
@@ -105,7 +105,7 @@ class SystemService:
             self.logger.error(f"获取API版本信息失败: {e}")
             raise
 
-    def get_queue_status(self) -> Dict[str, Any]:
+    def get_queue_status(self) -> dict[str, Any]:
         """
         获取队列状态信息
         Get queue status information
@@ -159,7 +159,7 @@ class SystemService:
             self.logger.error(f"获取队列状态信息失败: {e}")
             raise
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """
         系统健康检查
         System health check
@@ -212,7 +212,7 @@ def get_system_service() -> SystemService:
 
 
 # 便捷函数
-def get_system_stats() -> Dict[str, Any]:
+def get_system_stats() -> dict[str, Any]:
     """
     便捷的系统统计函数
     Convenience system statistics function
@@ -224,7 +224,7 @@ def get_system_stats() -> Dict[str, Any]:
     return service.get_stats()
 
 
-def get_api_version_info() -> Dict[str, Any]:
+def get_api_version_info() -> dict[str, Any]:
     """
     便捷的API版本信息函数
     Convenience API version info function
@@ -236,7 +236,7 @@ def get_api_version_info() -> Dict[str, Any]:
     return service.get_api_version()
 
 
-def get_queue_status_info() -> Dict[str, Any]:
+def get_queue_status_info() -> dict[str, Any]:
     """
     便捷的队列状态函数
     Convenience queue status function

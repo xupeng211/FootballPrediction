@@ -7,7 +7,7 @@ Provides core business logic for match data management.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class DataService:
         """初始化数据服务"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def get_matches_list(self, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+    def get_matches_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
         """
         获取比赛列表
         Get matches list
@@ -72,7 +72,7 @@ class DataService:
             "offset": offset,
         }
 
-    def get_match_by_id(self, match_id: int) -> Dict[str, Any] | None:
+    def get_match_by_id(self, match_id: int) -> dict[str, Any] | None:
         """
         根据ID获取比赛信息
         Get match information by ID
@@ -116,7 +116,7 @@ class DataService:
 
         return sample_matches.get(match_id)
 
-    def get_teams_list(self, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+    def get_teams_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
         """
         获取球队列表
         Get teams list
@@ -196,7 +196,7 @@ class DataService:
             "offset": offset,
         }
 
-    def get_team_by_id(self, team_id: int) -> Dict[str, Any] | None:
+    def get_team_by_id(self, team_id: int) -> dict[str, Any] | None:
         """
         根据ID获取球队信息
         Get team information by ID
@@ -246,7 +246,7 @@ class DataService:
 
         return sample_teams.get(team_id)
 
-    def get_leagues_list(self, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+    def get_leagues_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
         """
         获取联赛列表
         Get leagues list
@@ -308,7 +308,7 @@ class DataService:
             "offset": offset,
         }
 
-    def get_odds_data(self, match_id: int | None = None) -> Dict[str, Any]:
+    def get_odds_data(self, match_id: int | None = None) -> dict[str, Any]:
         """
         获取赔率数据
         Get odds data
@@ -359,7 +359,7 @@ class MatchService:
         """初始化比赛数据服务"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def get_matches(self, limit: int = 10, offset: int = 0) -> Dict[str, Any]:
+    def get_matches(self, limit: int = 10, offset: int = 0) -> dict[str, Any]:
         """
         获取比赛列表
         Get matches list
@@ -403,7 +403,7 @@ class MatchService:
             "offset": offset,
         }
 
-    def get_match_by_id(self, match_id: int) -> Dict[str, Any]:
+    def get_match_by_id(self, match_id: int) -> dict[str, Any]:
         """
         根据ID获取比赛
         Get match by ID
