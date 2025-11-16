@@ -1,28 +1,31 @@
 # 开发依赖
-# Development dependencies
+# Development dependencies (与 pyproject.toml 保持一致)
+# Development dependencies (consistent with pyproject.toml)
 
 -r base.txt
 
-# 代码质量
-ruff==0.14.1
-mypy==1.13.0
-black==24.10.0
-isort==5.13.2
-
-# 测试
-pytest==8.3.4
-pytest-asyncio==0.24.0
-pytest-cov==6.0.0
+# 测试工具 (Testing Tools)
+pytest==8.4.2
+pytest-asyncio==1.2.0
+pytest-cov==7.0.0
 pytest-mock==3.14.0
 pytest-xdist==3.6.1
 factory-boy==3.3.1
 
-# 开发工具
-pre-commit==4.0.1
-ipython==8.31.0
-jupyter==1.1.1
-pip-tools==7.4.1
+# 代码质量和格式化 (Code Quality & Formatting)
+ruff==0.14.3
+mypy==1.18.2
+bandit==1.8.6
 
-# 文档
+# 开发工具 (Development Tools)
+pre-commit==4.0.1
+pip-audit==2.6.0
+pip-tools==7.4.1
+ipython==8.31.0
+
+# 文档工具 (Documentation Tools)
 mkdocs==1.6.1
 mkdocs-material==9.5.49
+
+# Jupyter支持 (Jupyter Support)
+jupyter==1.1.1

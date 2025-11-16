@@ -165,20 +165,18 @@ create-env: ## Environment: Create environment file from example
 # ============================================================================
 # 🎨 Code Quality
 # ============================================================================
-lint: ## Quality: Run flake8 and mypy checks
+lint: ## Quality: Run ruff linter and mypy checks
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running flake8...$(RESET)" && \
-	flake8 src/ tests/ && \
+	echo "$(YELLOW)Running ruff linter...$(RESET)" && \
+	ruff check src/ tests/ && \
 	echo "$(YELLOW)Running mypy...$(RESET)" && \
 	mypy src tests && \
 	echo "$(GREEN)✅ Linting and type checks passed$(RESET)"
 
-fmt: ## Quality: Format code with black and isort
+fmt: ## Quality: Format code with ruff
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running black...$(RESET)" && \
-	black src/ tests/ && \
-	echo "$(YELLOW)Running isort...$(RESET)" && \
-	isort src/ tests/ && \
+	echo "$(YELLOW)Running ruff format...$(RESET)" && \
+	ruff format src/ tests/ && \
 	echo "$(GREEN)✅ Code formatted$(RESET)"
 
 quality: lint fmt test ## Quality: Complete quality check (lint + format + test)

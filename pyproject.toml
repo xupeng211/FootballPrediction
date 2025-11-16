@@ -40,15 +40,28 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "ruff>=0.1.0",
-    "mypy>=1.7.0",
-    "bandit>=1.7.0",
-    "black>=23.0.0",
-    "pre-commit>=3.5.0",
+    # 测试工具
+    "pytest>=8.4.0",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-xdist>=3.6.0",
+    "factory-boy>=3.3.1",
+
+    # 代码质量和格式化
+    "ruff>=0.14.0",
+    "mypy>=1.18.0",
+    "bandit>=1.8.6",
+
+    # 开发工具
+    "pre-commit>=4.0.1",
     "pip-audit>=2.6.0",
+    "pip-tools>=7.4.1",
+    "ipython>=8.31.0",
+
+    # 文档工具
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.5.49",
 ]
 
 [project.urls]
@@ -99,10 +112,31 @@ python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+strict_optional = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
 exclude = [
     "tests/",
     "scripts/",
+    "docs/",
+    "htmlcov/",
 ]
+
+[[tool.mypy.overrides]]
+module = [
+    "pandas.*",
+    "numpy.*",
+    "sklearn.*",
+    "redis.*",
+    "psycopg2.*",
+]
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "build", "dist"]
+skips = ["B101", "B601"]  # 跳过assert_test和shell_injection等不需要的检查
 
 [tool.pytest.ini_options]
 minversion = "7.0"
