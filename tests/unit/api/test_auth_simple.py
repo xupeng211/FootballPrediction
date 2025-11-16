@@ -34,18 +34,31 @@ try:
 except ImportError:
     # Mock implementations for testing
     class TokenData:
-        def __init__(self, user_id, username, role="user"):
+        def __init__(self, user_id, username, email, role, token_type, exp, iat, jti):
             self.user_id = user_id
-            self.username = username
-            self.role = role
-
-    class UserAuth:
-        def __init__(self, user_id, username, email, role="user", is_active=True):
-            self.id = user_id
             self.username = username
             self.email = email
             self.role = role
+            self.token_type = token_type
+            self.exp = exp
+            self.iat = iat
+            self.jti = jti
+
+    class UserAuth:
+        def __init__(self, id, username, email, hashed_password, is_active=True, role="user"):
+            self.id = id
+            self.username = username
+            self.email = email
+            self.hashed_password = hashed_password
             self.is_active = is_active
+            self.role = role
+
+    class UserRegister:
+        def __init__(self, username, email, password, full_name=None):
+            self.username = username
+            self.email = email
+            self.password = password
+            self.full_name = full_name
 
     class JWTAuthManager:
         def __init__(self, secret_key, access_token_expire_minutes=30):
@@ -55,11 +68,24 @@ except ImportError:
         def create_access_token(self, data, expires_delta=None):
             return "mock_token"
 
-        def verify_token(self, token):
-            return TokenData(1, "testuser", "user")
+        async def verify_token(self, token):
+            from datetime import datetime, timedelta
+            now = datetime.utcnow()
+            return TokenData(
+                user_id=1,
+                username="testuser",
+                email="test@example.com",
+                role="user",
+                token_type="bearer",
+                exp=now + timedelta(hours=1),
+                iat=now,
+                jti="test_jti_123"
+            )
 
-        def authenticate_user(self, username_or_email, password):
-            return UserAuth(1, username_or_email, f"{username_or_email}@test.com")
+        async def authenticate_user(self, username_or_email, password):
+            if username_or_email in ["testuser", "test@example.com"] and password == "password123":
+                return UserAuth(1, "testuser", "test@example.com", "hashed_password_123")
+            return None
 
     class AuthModule:
         MOCK_USERS = {}
@@ -92,6 +118,7 @@ class TestUserAuthModel:
             id=1,
             username="testuser",
             email="test@example.com",
+            hashed_password="hashed_password_123",
             role="user",
             is_active=True,
         )
@@ -101,14 +128,21 @@ class TestUserAuthModel:
         assert user.email == "test@example.com"
         assert user.role == "user"
         assert user.is_active is True
+        assert user.hashed_password == "hashed_password_123"
 
     def test_user_auth_data_model(self):
         """测试用户认证数据模型"""
-        user = UserAuth(id=1, username="testuser", email="test@example.com")
+        user = UserAuth(
+            id=1,
+            username="testuser",
+            email="test@example.com",
+            hashed_password="hashed_password_123"
+        )
 
         assert user.id == 1
         assert user.username == "testuser"
         assert user.email == "test@example.com"
+        assert user.hashed_password == "hashed_password_123"
 
 
 class TestTokenDataModel:
@@ -116,16 +150,45 @@ class TestTokenDataModel:
 
     def test_token_data_creation(self):
         """测试Token数据对象创建"""
-        token_data = TokenData(user_id=1, username="testuser", role="user")
+        from datetime import datetime, timedelta
+
+        now = datetime.utcnow()
+        token_data = TokenData(
+            user_id=1,
+            username="testuser",
+            email="test@example.com",
+            role="user",
+            token_type="bearer",
+            exp=now + timedelta(hours=1),
+            iat=now,
+            jti="test_jti_123"
+        )
 
         assert token_data.user_id == 1
         assert token_data.username == "testuser"
+        assert token_data.email == "test@example.com"
         assert token_data.role == "user"
+        assert token_data.token_type == "bearer"
+        assert token_data.exp == now + timedelta(hours=1)
+        assert token_data.iat == now
+        assert token_data.jti == "test_jti_123"
 
     def test_token_data_model(self):
         """测试Token数据模型"""
-        token_data = TokenData(1, "testuser", "user")
-        assert token_data.token_type == "access"
+        from datetime import datetime, timedelta
+
+        now = datetime.utcnow()
+        token_data = TokenData(
+            user_id=1,
+            username="testuser",
+            email="test@example.com",
+            role="user",
+            token_type="bearer",
+            exp=now + timedelta(hours=1),
+            iat=now,
+            jti="test_jti_456"
+        )
+        assert token_data.token_type == "bearer"
 
 
 class TestUserRegisterModel:

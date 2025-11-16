@@ -22,11 +22,9 @@ class PerformanceTestUser(HttpUser):
     def on_start(self):
         """用户启动时的初始化"""
         self.host = BASE_URL
-        print(f"🚀 Locust用户启动，目标服务: {self.host}")
 
     def on_stop(self):
         """用户停止时的清理"""
-        print("🔚 Locust用户停止")
 
 
 class CacheHitUser(PerformanceTestUser):
@@ -44,7 +42,6 @@ class CacheHitUser(PerformanceTestUser):
         self.user_ids = [1, 2, 3, 4, 5]  # 固定用户ID列表，确保缓存命中
         self.prediction_ids = [1, 2, 3, 4, 5]  # 固定预测ID列表
 
-        print("🔥 场景A: 开始缓存预热...")
         for user_id in self.user_ids:
             try:
                 self.client.get(f"/api/users/{user_id}", name="Cache-Hit Warmup")
@@ -57,7 +54,6 @@ class CacheHitUser(PerformanceTestUser):
             except:
                 pass  # 忽略预热错误
 
-        print("✅ 场景A: 缓存预热完成")
 
     @task(60)  # 60%概率进行用户信息查询
     def get_user_cache_hit(self):
@@ -73,9 +69,7 @@ class CacheHitUser(PerformanceTestUser):
                 response.success()
                 # 验证响应时间应该很快（缓存命中）
                 if response.elapsed.total_seconds() > 0.01:  # 10ms
-                    print(
-                        f"⚠️ 缓存命中响应时间较慢: {response.elapsed.total_seconds():.3f}s"
-                    )
+                    pass
             elif response.status_code == 404:
                 # 用户不存在也算成功响应（可能的测试数据清理）
                 response.success()
@@ -125,7 +119,6 @@ class CacheMissUser(PerformanceTestUser):
         super().on_start()
         self.user_counter = 1000  # 从大范围ID开始，确保缓存未命中
         self.prediction_counter = 1000
-        print("🧊 场景B: 开始缓存未命中测试...")
 
     @task(70)  # 70%概率进行用户查询
     def get_user_cache_miss(self):
@@ -141,10 +134,8 @@ class CacheMissUser(PerformanceTestUser):
         ) as response:
             if response.status_code == 200:
                 response.success()
-                print(f"📊 缓存未命中 - 用户{user_id}查询成功")
             elif response.status_code == 404:
                 response.success()  # 用户不存在也算成功响应
-                print(f"📊 缓存未命中 - 用户{user_id}不存在")
             else:
                 response.failure(f"用户查询失败: HTTP {response.status_code}")
 
@@ -161,10 +152,8 @@ class CacheMissUser(PerformanceTestUser):
         ) as response:
             if response.status_code == 200:
                 response.success()
-                print(f"📊 缓存未命中 - 预测{pred_id}查询成功")
             elif response.status_code == 404:
                 response.success()  # 预测不存在也算成功响应
-                print(f"📊 缓存未命中 - 预测{pred_id}不存在")
             else:
                 response.failure(f"预测查询失败: HTTP {response.status_code}")
 
@@ -184,7 +173,6 @@ class WriteInvalidateUser(PerformanceTestUser):
         self.user_id = random.randint(200, 300)
         self.prediction_id = random.randint(200, 300)
 
-        print(f"🔄 场景C: 开始混合负载测试 - 用户ID: {self.user_id}")
 
         # 确保用户和预测数据存在，并预热缓存
         self._ensure_test_data()
@@ -243,7 +231,6 @@ class WriteInvalidateUser(PerformanceTestUser):
         ) as response:
             if response.status_code == 200:
                 response.success()
-                print(f"🔄 用户{self.user_id}更新成功，触发缓存失效")
 
                 # 更新后立即查询，验证缓存失效和重新填充
                 self.client.get(
@@ -272,7 +259,6 @@ class WriteInvalidateUser(PerformanceTestUser):
         ) as response:
             if response.status_code in [200, 201]:
                 response.success()
-                print("🔄 新预测创建成功")
             else:
                 response.failure(f"预测创建失败: HTTP {response.status_code}")
 
@@ -294,7 +280,6 @@ class CacheOnlyUser(HttpUser):
         self.warmup_user_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # 扩展用户ID范围
         self.warmup_pred_ids = [1, 2, 3, 4, 5]  # 预测ID范围
 
-        print("🔥 P3.2.3任务A: 开始缓存预热...")
 
         # 预热用户数据缓存
         for user_id in self.warmup_user_ids:
@@ -303,9 +288,9 @@ class CacheOnlyUser(HttpUser):
                     f"/api/users/{user_id}", name="Cache-Only Warmup"
                 )
                 if response.status_code == 200:
-                    print(f"✅ 用户{user_id}缓存预热成功")
-            except Exception as e:
-                print(f"⚠️ 用户{user_id}缓存预热失败: {e}")
+                    pass
+            except Exception:
+                pass
 
         # 预热预测数据缓存
         for pred_id in self.warmup_pred_ids:
@@ -314,19 +299,18 @@ class CacheOnlyUser(HttpUser):
                     f"/api/predictions/{pred_id}", name="Cache-Only Warmup"
                 )
                 if response.status_code == 200:
-                    print(f"✅ 预测{pred_id}缓存预热成功")
-            except Exception as e:
-                print(f"⚠️ 预测{pred_id}缓存预热失败: {e}")
+                    pass
+            except Exception:
+                pass
 
         # 预热比赛列表缓存
         try:
             response = self.client.get("/api/matches", name="Cache-Only Warmup")
             if response.status_code == 200:
-                print("✅ 比赛列表缓存预热成功")
-        except Exception as e:
-            print(f"⚠️ 比赛列表缓存预热失败: {e}")
+                pass
+        except Exception:
+            pass
 
-        print("✅ P3.2.3任务A: 缓存预热完成，开始纯缓存性能测试")
 
     @task(70)  # 70%概率进行用户信息查询 (主要缓存命中测试)
     def get_user_cache_only(self):
@@ -342,9 +326,7 @@ class CacheOnlyUser(HttpUser):
                 response.success()
                 # 验证缓存命中效果 - 响应时间应该非常快
                 if response.elapsed.total_seconds() > 0.01:  # 10ms
-                    print(
-                        f"⚠️ 纯缓存响应时间较慢: {response.elapsed.total_seconds():.3f}s"
-                    )
+                    pass
             else:
                 response.failure(f"纯缓存用户查询失败: HTTP {response.status_code}")
 
@@ -393,7 +375,6 @@ class MixedLoadUser(HttpUser):
         self.miss_user_counter = 1000
         self.miss_pred_counter = 1000
 
-        print("🔄 P3.2.3任务B: 开始混合负载测试，预热缓存数据...")
 
         # 预热缓存数据
         for user_id in self.cache_user_ids:
@@ -401,7 +382,6 @@ class MixedLoadUser(HttpUser):
                 self.client.get(f"/api/users/{user_id}", name="Mixed-Load Warmup")
             except:
                 pass
-        print("✅ P3.2.3任务B: 混合负载测试准备完成")
 
     @task(49)  # 49% = 70% * 70% 读-命中
     def get_user_cache_hit(self):
@@ -518,26 +498,19 @@ class MixedLoadUser(HttpUser):
 def on_request(request_type, name, response_time, response_length, exception, **kwargs):
     """请求事件监听器"""
     if exception:
-        print(f"❌ 请求失败: {name} - {exception}")
+        pass
     else:
         if response_time > 1.0:  # 记录慢请求
-            print(f"⚠️ 慢请求警告: {name} - {response_time:.3f}s")
+            pass
 
 
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
     """测试开始事件"""
-    print("🚀 P3.2.2 基线性能测试开始")
-    print(f"📊 测试环境: {BASE_URL}")
-    print("🎯 测试目标: 数据库性能基线 (无缓存场景)")
-    print("📊 测试场景: Cache-Miss (读) + Write-Invalidate (写)")
 
 
 @events.test_stop.add_listener
 def on_test_stop(environment, **kwargs):
     """测试结束事件"""
-    print("🏁 Locust性能测试结束")
     if environment.stats.total.num_requests > 0:
-        print(f"📈 总请求数: {environment.stats.total.num_requests}")
-        print(f"📈 平均响应时间: {environment.stats.total.avg_response_time:.3f}s")
-        print(f"📈 错误率: {environment.stats.total.percent_fail:.2f}%")
+        pass

@@ -22,7 +22,7 @@ from datetime import datetime
 import pytest
 
 # 导入目标模块
-from core.di import (
+from src.core.di import (
     DependencyInjectionError,
     DIContainer,
     ServiceDescriptor,
@@ -47,7 +47,7 @@ class TestDIContainerSingleton:
                 errors.append(e)
 
         # 注册单例服务
-        container.register_singleton(str, "singleton_test")
+        container.register_singleton(str, instance="singleton_test")
 
         # 创建多个线程同时解析服务
         threads = []

@@ -22,9 +22,9 @@ import pytest
 import yaml
 
 # 导入目标模块
-from core.config_di import ConfigurationBinder, DIConfiguration, ServiceConfig
-from core.di import DIContainer
-from core.exceptions import DependencyInjectionError
+from src.core.config_di import ConfigurationBinder, DIConfiguration, ServiceConfig
+from src.core.di import DIContainer
+from src.core.exceptions import DependencyInjectionError
 
 
 class TestConfigurationBinderFileParsing:
@@ -71,12 +71,12 @@ profiles:
             # 验证配置解析
             assert binder.config is not None
             assert "test_service" in binder.config.services
-            assert binder.config.services["test_service"].name == "TestService"
+            assert binder.config.services["test_service"].name == "test_service"
             assert binder.config.services["test_service"].lifetime == "singleton"
             assert (
                 "DatabaseService" in binder.config.services["test_service"].dependencies
             )
-            assert binder.config.services["test_service"]["parameters"]["timeout"] == 30
+            assert binder.config.services["test_service"].parameters["timeout"] == 30
             assert len(binder.config.auto_scan) == 2
             assert len(binder.config.conventions) == 2
             assert len(binder.config.profiles) == 2

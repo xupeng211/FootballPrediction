@@ -34,8 +34,7 @@ try:
     from src.database.models.match import Match
     from src.database.models.predictions import Prediction
     from src.database.models.team import Team
-except ImportError as e:
-    print(f"Warning: Could not import database models: {e}")
+except ImportError:
     # 使用SQLAlchemy Base作为后备
     from sqlalchemy.orm import DeclarativeBase
 
@@ -54,8 +53,7 @@ try:
         PredictionScore,
         PredictionStatus,
     )
-except ImportError as e:
-    print(f"Warning: Could not import domain models: {e}")
+except ImportError:
     PredictionScore = None
     ConfidenceScore = None
     PredictionStatus = None
@@ -246,7 +244,7 @@ async def sample_match(test_db_session: AsyncSession, sample_teams):
     if not Match or not sample_teams:
         pytest.skip("Match model or teams not available")
 
-    home_team, away_team = sample_teams[0], sample_teams[1]
+    _home_team, _away_team = sample_teams[0], sample_teams[1]
 
     # Match也是dataclass，使用正确的构造参数
     match = Match(
