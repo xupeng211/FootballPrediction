@@ -25,11 +25,15 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
 
-    - name: Install dependencies
+    - name: Install Dependencies (via pip-sync)
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install ruff black mypy bandit safety
+        pip install pip-tools
+        pip-sync requirements/dev.txt
+        # Install make if not available
+        if ! command -v make &> /dev/null; then
+          apt-get update && apt-get install -y make
+        fi
 
     - name: Check code formatting with Black
       run: |
@@ -77,25 +81,23 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
 
-    - name: Install dependencies
+    - name: Install Dependencies (via pip-sync)
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-cov pytest-mock pytest-asyncio
+        pip install pip-tools
+        pip-sync requirements/dev.txt
+        # Install make if not available
+        if ! command -v make &> /dev/null; then
+          apt-get update && apt-get install -y make
+        fi
 
-    - name: Run unit tests
+    - name: Run Unit Tests (via Makefile)
       run: |
-        pytest tests/unit/ -v \
-          --cov=src \
-          --cov-report=xml \
-          --cov-report=html \
-          --cov-fail-under=25 \
-          --junitxml=test-results.xml
+        make test.unit
 
-    - name: Run integration tests
+    - name: Run Integration Tests (via Makefile)
       run: |
-        pytest tests/integration/ -v \
-          --junitxml=integration-test-results.xml || true
+        make test.integration
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
