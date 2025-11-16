@@ -18,7 +18,7 @@ def fix_test_interface_classes(file_path):
         # 替换空的TestInterface类，添加一个抽象方法
         pattern = r'class (TestInterface|ITestService|IRepository|IService)\(ABC\):\s*\n\s*pass'
         replacement = r'class \1(ABC):\n            """测试接口"""\n            @abstractmethod\n            def test_method(self) -> None:\n                """测试方法"""\n                pass'
-        
+
         content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
 
         if content != original_content:
@@ -52,7 +52,7 @@ def fix_base_adapter(file_path):
         # 修复BaseAdapter类
         pattern = r'class BaseAdapter\(ABC\):\s*\n\s*"""基础适配器抽象类"""'
         replacement = r'class BaseAdapter(ABC):\n        """基础适配器抽象类"""\n        \n        @abstractmethod\n        def connect(self) -> bool:\n            """连接方法"""\n            pass'
-        
+
         content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
 
         if content != original_content:

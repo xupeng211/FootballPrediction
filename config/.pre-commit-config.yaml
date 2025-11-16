@@ -25,36 +25,36 @@ repos:
         description: 防止提交过大的文件
         args: ['--maxkb=1000']
 
-  # Python代码格式化
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
-    hooks:
-      - id: black
-        name: Black代码格式化
-        description: 使用Black格式化Python代码
-        language_version: python3.11
-        line_length: 88
-
-  # 导入排序
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        name: 导入排序
-        description: 排序Python导入语句
-        args: ["--profile", "black", "--line-length", "88"]
-
-  # 代码检查
+  # 统一代码检查和格式化 (Ruff)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.0
+    rev: v0.14.3
     hooks:
       - id: ruff
-        name: Ruff代码检查
-        description: 使用Ruff检查Python代码
+        name: Ruff代码检查和修复
+        description: 使用Ruff检查并自动修复Python代码问题
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
-        name: Ruff格式化
-        description: 使用Ruff格式化代码
+        name: Ruff代码格式化
+        description: 使用Ruff格式化Python代码
+
+  # 安全检查
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        name: Bandit安全检查
+        description: 使用Bandit检查Python安全问题
+        args: [-c, pyproject.toml]
+        additional_dependencies: ["bandit[toml]"]
+        exclude: ^tests/
+
+  # 依赖安全审计
+  - repo: https://github.com/pycqa/pip-audit
+    rev: v2.6.1
+    hooks:
+      - id: pip-audit
+        name: Pip依赖安全审计
+        description: 检查依赖包的安全漏洞
 
   # 自定义修复钩子
   - repo: local
@@ -95,9 +95,10 @@ ci:
     🤖 自动修复pre-commit问题
 
     修复内容:
-    - 代码格式化 (Black, isort)
+    - 代码格式化和修复 (Ruff)
+    - 安全问题检查 (Bandit)
+    - 依赖安全审计 (Pip-audit)
     - 语法错误检查
-    - 导入问题修复
     - 基础质量问题修复
 
     🎯 请检查修复后的代码并提交

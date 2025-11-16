@@ -19,20 +19,20 @@ def fix_asyncio_imports(file_path):
         # 检查是否使用asyncio但没有导入
         if 'asyncio.' in content and 'import asyncio' not in content:
             lines = content.split('\n')
-            
+
             # 找到合适的导入位置
             import_pos = 0
             for i, line in enumerate(lines):
                 if line.strip().startswith(('import ', 'from ')):
                     import_pos = i + 1
-            
+
             # 插入asyncio导入
             lines.insert(import_pos, 'import asyncio')
             content = '\n'.join(lines)
-            
+
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-                
+
             print(f"✅ 修复了 {file_path} 的asyncio导入")
             return True
         return False
@@ -51,22 +51,22 @@ def fix_database_error_imports(file_path):
         # 检查是否使用了数据库异常但没有导入
         if ('IntegrityError' in content or 'OperationalError' in content) and \
            'from sqlalchemy.exc import' not in content:
-            
+
             lines = content.split('\n')
-            
+
             # 找到合适的导入位置
             import_pos = 0
             for i, line in enumerate(lines):
                 if line.strip().startswith(('import ', 'from ')):
                     import_pos = i + 1
-            
+
             # 插入数据库异常导入
             lines.insert(import_pos, 'from sqlalchemy.exc import IntegrityError, OperationalError')
             content = '\n'.join(lines)
-            
+
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-                
+
             print(f"✅ 修复了 {file_path} 的数据库异常导入")
             return True
         return False
@@ -85,20 +85,20 @@ def fix_json_import(file_path):
         # 检查是否使用json但没有导入
         if 'json.' in content and 'import json' not in content:
             lines = content.split('\n')
-            
+
             # 找到合适的导入位置
             import_pos = 0
             for i, line in enumerate(lines):
                 if line.strip().startswith(('import ', 'from ')):
                     import_pos = i + 1
-            
+
             # 插入json导入
             lines.insert(import_pos, 'import json')
             content = '\n'.join(lines)
-            
+
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-                
+
             print(f"✅ 修复了 {file_path} 的json导入")
             return True
         return False
@@ -125,21 +125,21 @@ def fix_exception_imports(file_path):
 
         if fixes_needed:
             lines = content.split('\n')
-            
+
             # 找到合适的导入位置
             import_pos = 0
             for i, line in enumerate(lines):
                 if line.strip().startswith(('import ', 'from ')):
                     import_pos = i + 1
-            
+
             # 插入异常导入
             import_line = f"from src.core.exceptions import ({', '.join(fixes_needed)})"
             lines.insert(import_pos, import_line)
             content = '\n'.join(lines)
-            
+
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-                
+
             print(f"✅ 修复了 {file_path} 的异常导入: {', '.join(fixes_needed)}")
             return True
         return False
@@ -158,7 +158,7 @@ def fix_mock_variable_definitions(file_path):
         # 查找未定义的mock_user_service
         if 'mock_user_service' in content and 'mock_user_service =' not in content:
             lines = content.split('\n')
-            
+
             # 找到第一个使用mock_user_service的位置
             for i, line in enumerate(lines):
                 if 'mock_user_service' in line and '=' not in line:
@@ -166,7 +166,7 @@ def fix_mock_variable_definitions(file_path):
                     lines.insert(i, '        mock_user_service = Mock()')
                     content = '\n'.join(lines)
                     break
-            
+
             # 确保导入了Mock
             if 'from unittest.mock import Mock' not in content:
                 import_pos = 0
@@ -175,11 +175,11 @@ def fix_mock_variable_definitions(file_path):
                         import_pos = i + 1
                 lines.insert(import_pos, 'from unittest.mock import Mock')
                 content = '\n'.join(lines)
-            
+
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                    
+
                 print(f"✅ 修复了 {file_path} 的mock变量定义")
                 return True
         return False
@@ -194,7 +194,7 @@ def main():
     # 获取所有包含F821错误的文件
     result = os.popen("ruff check src/ tests/ --select=F821 --output-format=json").read()
     files_to_fix = set()
-    
+
     for line in result.split('\n'):
         if '"filename":' in line:
             filename = line.split('"')[3]

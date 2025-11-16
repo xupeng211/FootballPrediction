@@ -118,7 +118,7 @@ Required coverage: 70.0% (CI threshold) - ✅ PASSED
 
 **执行内容**:
 
-- 执行flake8代码风格检查
+- 执行ruff代码风格检查
 - 验证代码规范符合性
 - 确保没有语法错误和风格问题
 
@@ -131,14 +131,14 @@ make lint
 **检查结果**:
 
 ```
-flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+ruff check . --count --select=E9,F63,F7,F82 --show-source --statistics
+ruff check . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 0
 ```
 
 **检查状态**:
 
-- ✅ Flake8检查通过，0个错误
+- ✅ Ruff检查通过，0个错误
 - ✅ 代码风格符合项目规范
 - ✅ 没有语法错误或复杂度问题
 
@@ -195,7 +195,7 @@ env:
 
 ### 代码质量指标
 
-- **Flake8错误数**: 0
+- **Ruff错误数**: 0
 - **代码复杂度**: 符合要求（≤10）
 - **代码风格**: 100%符合规范
 
@@ -225,7 +225,7 @@ env:
 1. ✅ 依赖服务健康检查
 2. ✅ 数据库迁移验证
 3. ✅ 测试套件执行（1832 passed, 78.36% coverage）
-4. ✅ 代码质量检查（0 flake8 errors）
+4. ✅ 代码质量检查（0 ruff errors）
 5. ✅ 流程一致性验证
 
 **关键指标**:

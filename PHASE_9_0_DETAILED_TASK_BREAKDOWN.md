@@ -464,16 +464,16 @@ class QualityDecomposer:
             print(f"MyPy检查失败: {e}")
             results['mypy'] = ""
 
-        # Flake8检查
+        # Ruff检查
         try:
-            flake8_result = subprocess.run(
-                ['flake8', 'src/', '--format=json'],
+            ruff_result = subprocess.run(
+                ['ruff', 'check', 'src/', '--output-format=json'],
                 capture_output=True, text=True
             )
-            results['flake8'] = flake8_result.stdout
+            results['ruff'] = ruff_result.stdout
         except Exception as e:
-            print(f"Flake8检查失败: {e}")
-            results['flake8'] = ""
+            print(f"Ruff检查失败: {e}")
+            results['ruff'] = "[]"
 
         return results
 

@@ -50,4 +50,3 @@
 1. 运行 `python scripts/test_quality_improvement_engine.py --execute-phase 1`
 2. 检查生成的测试文件并完善
 3. 运行 `make coverage` 验证改进效果
-

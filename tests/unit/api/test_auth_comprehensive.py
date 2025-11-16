@@ -502,7 +502,7 @@ class TestAuthDependencies:
         # 创建符合要求的用户token
         user_token = TokenData(
             user_id=1,
-            
+
             email="admin@example.com",
             role="admin",
             token_type="access",
@@ -527,7 +527,7 @@ class TestAuthDependencies:
         # 创建普通用户token
         user_token = TokenData(
             user_id=2,
-            
+
             email="user@example.com",
             role="user",
             token_type="access",
@@ -627,7 +627,7 @@ class TestAuthContext:
 
         token_data = TokenData(
             user_id=1,
-            
+
             email="test@example.com",
             role="user",
             token_type="access",
@@ -677,7 +677,7 @@ class TestSecurityFeatures:
         """测试用户认证数据模型"""
         user = UserAuth(
             id=1,
-            
+
             email="test@example.com",
             hashed_password="$2b$12$testhashedpassword",
             role="user",
@@ -697,7 +697,7 @@ class TestSecurityFeatures:
 
         token_data = TokenData(
             user_id=1,
-            
+
             email="test@example.com",
             role="user",
             token_type="access",

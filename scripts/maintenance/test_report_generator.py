@@ -690,7 +690,7 @@ class TestReportGenerator:
 
         # 基于警报的建议
         critical_alerts = [a for a in alerts if a.get("severity") == "critical" and not a.get("resolved",
-    
+
     True)]
         if critical_alerts:
             recommendations.append(f"🚨 存在{len(critical_alerts)}个未解决的严重警报，需要立即处理")

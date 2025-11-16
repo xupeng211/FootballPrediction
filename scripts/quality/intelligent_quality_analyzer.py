@@ -572,7 +572,7 @@ def __analyze_test_quality_check_condition():
     0) / max(code_metrics.get("total_python_files",
     1),
     1)),
-    
+
             security_score=85.0,  # 基于当前项目估算
             performance_score=90.0,  # 基于当前项目估算
             overall_score=self._calculate_comprehensive_score(analysis_data)

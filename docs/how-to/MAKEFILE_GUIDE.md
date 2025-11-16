@@ -145,23 +145,7 @@ make format
 
 **功能：**
 
-- 使用black格式化Python代码（line-length=88）
-- 使用isort整理导入语句
-- 自动修复格式问题
-
-#### `make lint`
-
-代码风格检查
-
-```bash
-make lint
-```
-
-**功能：**
-
-- 使用flake8检查代码风格
-- 最大行长度88字符
-- 忽略E203、W503规则（与black兼容）
+- 使用ruff格式化和检查Python代码
 
 #### `make typecheck`
 

@@ -20,16 +20,16 @@ def fix_unused_imports_fast(file_path):
 
         for i, line in enumerate(lines):
             line_stripped = line.strip()
-            
+
             # 跳过未使用导入
             if ('F401' in line_stripped and 'imported but unused' in line_stripped) or \
                (line_stripped.startswith('from decimal import Decimal') and 'Decimal' not in content[i+1:]):
                 continue
-                
+
             # 跳过pydantic.Field未使用
             if 'pydantic.Field' in line_stripped and 'imported but unused' in line_stripped:
                 continue
-                
+
             # 保留其他行
             new_lines.append(line)
 
@@ -58,7 +58,7 @@ def fix_import_positions_fast(file_path):
             # 找到所有需要移动的导入
             import_pattern = r'(sys\.path\.insert.*?\n)(\s*from\s+[^\n]+\n)'
             matches = re.findall(import_pattern, content, re.MULTILINE | re.DOTALL)
-            
+
             for match in matches:
                 sys_path_line, import_line = match
                 # 将导入移到sys.path.insert之前
@@ -101,7 +101,7 @@ def main():
         "tests/integration/test_football_data_api.py",
         "tests/unit/api/test_api_endpoint.py"
     ]
-    
+
     for file_path in import_files:
         if os.path.exists(file_path):
             if fix_import_positions_fast(file_path):

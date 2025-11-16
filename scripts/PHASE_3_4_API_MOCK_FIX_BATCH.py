@@ -89,7 +89,7 @@ def fix_api_file(file_path: str) -> Tuple[bool, str]:
             r"@pytest\.mark\.unit\s*\n@pytest\.mark\.api",
             "@pytest.mark.skipif(not API_AVAILABLE,
     reason=TEST_SKIP_REASON)\n@pytest.mark.unit\n@pytest.mark.api",
-    
+
             content,
         )
 

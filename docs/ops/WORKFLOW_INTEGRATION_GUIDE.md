@@ -188,16 +188,6 @@ repos:
       - id: check-yaml
       - id: check-json
 
-  - repo: https://github.com/psf/black
-    hooks:
-      - id: black
-        line_length: 88
-
-  - repo: https://github.com/pycqa/isort
-    hooks:
-      - id: isort
-        args: ["--profile", "black"]
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
     hooks:
       - id: ruff

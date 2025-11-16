@@ -133,4 +133,3 @@ def validate_data_types(data: dict, schema: dict) -> list[str]:
             elif expected_type == "list" and not isinstance(value, list):
                 errors.append(f"Field '{field}' should be list")
     return errors
-

@@ -161,7 +161,7 @@ class DevelopmentEnvironmentSetup:
         self.log_info("安装开发依赖...")
         dev_deps = [
             'pytest', 'pytest-cov', 'pytest-asyncio',
-            'ruff', 'mypy', 'black', 'isort',
+            'ruff', 'mypy',
             'pre-commit', 'bandit', 'pip-audit'
         ]
 
@@ -228,9 +228,6 @@ class DevelopmentEnvironmentSetup:
         extensions = {
             "recommendations": [
                 "ms-python.python",
-                "ms-python.flake8",
-                "ms-python.black-formatter",
-                "ms-python.isort",
                 "ms-python.debugpy",
                 "charliermarsh.ruff",
                 "ms-vscode.vscode-json",
@@ -513,7 +510,7 @@ help:		## 显示帮助信息
 
 install:		## 安装依赖
 	pip install -e .
-	pip install pytest pytest-cov ruff mypy black isort pre-commit
+	pip install pytest pytest-cov ruff mypy pre-commit
 
 test:		## 运行测试
 	pytest tests/ -v

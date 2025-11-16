@@ -49,8 +49,8 @@ python scripts/sync_issues.py sync   # 双向同步
 #### 2. **代码质量工具** ✨
 
 ```bash
-make lint        # 代码风格检查 (flake8 + mypy)
-make fmt         # 代码格式化 (black + isort)
+make lint        # 代码风格检查 (ruff + mypy)
+make fmt         # 代码格式化 (ruff)
 make check       # 完整质量检查
 ```
 

@@ -167,7 +167,7 @@ make ci-auto-fix                            # CI/CD自动修复流程
 ```bash
 make check-quality     # 完整质量检查
 make lint             # 运行代码检查
-make fmt              # 使用black和isort格式化
+make fmt              # 使用ruff格式化
 make syntax-check     # 语法错误检查
 make ci-check         # CI/CD质量检查
 ```
@@ -182,11 +182,6 @@ ruff check src/ tests/ --fix # 自动修复
 # 类型检查和安全
 mypy src/ --ignore-missing-imports  # MyPy类型检查
 bandit -r src/                     # 安全检查
-
-# 传统工具链（备用）
-black src/ tests/            # Black格式化
-isort src/ tests/            # 导入排序
-flake8 src/ tests/           # 代码检查
 ```
 
 ---

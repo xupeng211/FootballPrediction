@@ -18,21 +18,21 @@ def fix_syntax_errors_fast(file_path):
         # 修复常见的语法错误
         fixes = [
             # 修复 trailing comma not allowed
-            (r'from src\.domain\.models\.match import Match, # MatchStatus', 
+            (r'from src\.domain\.models\.match import Match, # MatchStatus',
              'from src.domain.models.match import Match'),
-            (r'from decimal import # Decimal', 
+            (r'from decimal import # Decimal',
              '# from decimal import Decimal'),
-            (r'from src\.core\.config import # Config', 
+            (r'from src\.core\.config import # Config',
              '# from src.core.config import Config'),
-            (r'from src\.services\.prediction import # PredictionService', 
+            (r'from src\.services\.prediction import # PredictionService',
              '# from src.services.prediction import PredictionService'),
-            
+
             # 修复缩进问题
-            (r'\n    async def test_data_collection_flow\(self\):', 
+            (r'\n    async def test_data_collection_flow\(self\):',
              '\n\nasync def test_data_collection_flow(self):'),
-            (r'\n    async def test_cache_workflow\(self\):', 
+            (r'\n    async def test_cache_workflow\(self\):',
              '\n\nasync def test_cache_workflow(self):'),
-            (r'\n        teams = \[\]', 
+            (r'\n        teams = \[\]',
              '\n    teams = []'),
         ]
 
@@ -60,7 +60,7 @@ def fix_unused_imports_comprehensive(file_path):
         # 移除未使用的导入
         unused_patterns = [
             'MatchEventData',
-            'PredictionEventData', 
+            'PredictionEventData',
             'pydantic.Field',
         ]
 
@@ -68,7 +68,7 @@ def fix_unused_imports_comprehensive(file_path):
             # 移除包含这些模式的导入行
             lines = content.split('\n')
             new_lines = []
-            
+
             for line in lines:
                 if pattern in line and 'import' in line:
                     # 注释掉而不是删除，更安全
@@ -78,7 +78,7 @@ def fix_unused_imports_comprehensive(file_path):
                         new_lines.append(line)
                 else:
                     new_lines.append(line)
-            
+
             content = '\n'.join(new_lines)
 
         if content != original_content:
@@ -123,11 +123,11 @@ def fix_import_positions_fast(file_path):
                 if line.strip().startswith(('import ', 'from ')):
                     insert_pos = i
                     break
-            
+
             # 插入移动的导入
             for import_line in reversed(moved_imports):
                 new_lines.insert(insert_pos, import_line)
-            
+
             # 移除原来的导入
             new_lines = [line for line in new_lines if line not in moved_imports]
             content = '\n'.join(new_lines)
@@ -150,18 +150,18 @@ def main():
     target_files = [
         # 语法错误文件
         "tests/integration/conftest.py",
-        "tests/integration/test_api_domain_integration.py", 
+        "tests/integration/test_api_domain_integration.py",
         "tests/performance/test_load.py",
         "tests/integration/test_data_flow.py",
         "tests/integration/test_database_integration.py",
         "tests/integration/test_full_workflow.py",
         "tests/unit/data/collectors/test_fixtures_collector.py",
-        
+
         # 未使用导入文件
         "src/domain/events/__init__.py",
         "src/events/__init__.py",
         "tests/unit/api/test_health_endpoints_comprehensive.py",
-        
+
         # 导入位置文件
         "tests/integration/test_api_data_source_simple.py",
         "tests/unit/api/test_api_endpoint.py",

@@ -155,7 +155,7 @@ class SyntaxErrorRule(QualityRule):
                     issue_id=self.generate_issue_id(str(file_path),
     self.name,
     e.lineno),
-    
+
                     severity=self.severity,
                     category=IssueCategory.SYNTAX,
                     title="Python语法错误",
@@ -254,7 +254,7 @@ class ImportAnalysisRule(QualityRule):
                     issue_id=self.generate_issue_id(str(file_path),
     "unused_import",
     imp['line']),
-    
+
                     severity=QualitySeverity.LOW,
                     category=IssueCategory.IMPORT,
                     title="未使用的导入",
@@ -287,7 +287,7 @@ class ImportAnalysisRule(QualityRule):
                             issue_id=self.generate_issue_id(str(file_path),
     "deep_relative_import",
     imp['line']),
-    
+
                             severity=QualitySeverity.MEDIUM,
                             category=IssueCategory.IMPORT,
                             title="深层相对导入",
@@ -333,7 +333,7 @@ class ImportAnalysisRule(QualityRule):
                     issue_id=self.generate_issue_id(str(file_path),
     "import_order",
     imp['line']),
-    
+
                     severity=QualitySeverity.LOW,
                     category=IssueCategory.STYLE,
                     title="导入顺序不规范",
@@ -375,7 +375,7 @@ class ImportAnalysisRule(QualityRule):
                     issue_id=self.generate_issue_id(str(file_path),
     "builtin_shadowing",
     imp['line']),
-    
+
                     severity=QualitySeverity.MEDIUM,
                     category=IssueCategory.IMPORT,
                     title="遮蔽内置函数",
@@ -435,7 +435,7 @@ class ComplexityAnalysisRule(QualityRule):
                 issue_id=self.generate_issue_id(str(file_path),
     "high_complexity",
     node.lineno),
-    
+
                 severity=QualitySeverity.MEDIUM,
                 category=IssueCategory.COMPLEXITY,
                 title="函数复杂度过高",
@@ -459,7 +459,7 @@ class ComplexityAnalysisRule(QualityRule):
                     issue_id=self.generate_issue_id(str(file_path),
     "long_function",
     node.lineno),
-    
+
                     severity=QualitySeverity.LOW,
                     category=IssueCategory.COMPLEXITY,
                     title="函数过长",
@@ -487,7 +487,7 @@ class ComplexityAnalysisRule(QualityRule):
                     issue_id=self.generate_issue_id(str(file_path),
     "large_class",
     node.lineno),
-    
+
                     severity=QualitySeverity.MEDIUM,
                     category=IssueCategory.COMPLEXITY,
                     title="类过大",
@@ -579,7 +579,7 @@ class SecurityAnalysisRule(QualityRule):
                             issue_id=self.generate_issue_id(str(file_path),
     "dangerous_function",
     node.lineno),
-    
+
                             severity=QualitySeverity.HIGH,
                             category=IssueCategory.SECURITY,
                             title="使用危险函数",
@@ -613,7 +613,7 @@ class SecurityAnalysisRule(QualityRule):
                         issue_id=self.generate_issue_id(str(file_path),
     "hardcoded_secret",
     line_num),
-    
+
                         severity=QualitySeverity.CRITICAL,
                         category=IssueCategory.SECURITY,
                         title="硬编码敏感信息",
@@ -651,7 +651,7 @@ class SecurityAnalysisRule(QualityRule):
                                     issue_id=self.generate_issue_id(str(file_path),
     "sql_injection",
     node.lineno),
-    
+
                                     severity=QualitySeverity.HIGH,
                                     category=IssueCategory.SECURITY,
                                     title="潜在SQL注入风险",

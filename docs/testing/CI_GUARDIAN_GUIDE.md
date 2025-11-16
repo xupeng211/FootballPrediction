@@ -198,7 +198,7 @@ python scripts/defense_validator.py -d logs/defenses_generated.json -dt
 
 ### 1. 代码风格问题 (Code Style)
 
-**检测工具**: Ruff, Black, Flake8
+**检测工具**: Ruff
 **常见问题**: 行长度超限、import排序、空格问题
 **防御策略**:
 

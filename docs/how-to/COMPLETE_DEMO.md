@@ -172,9 +172,7 @@ make prepush
    - 生成上下文快照
 
 3. **🔧 代码质量检查**
-   - Black代码格式化
-   - Flake8风格检查
-   - MyPy类型检查
+   - Ruff代码格式化和风格检查   - MyPy类型检查
    - Bandit安全检查
    - Radon复杂度分析
 
@@ -332,8 +330,8 @@ make sync
 ```bash
 source venv/bin/activate
 pip install -r requirements.txt
-black src/ tests/
-flake8 src/ tests/
+ruff format src/ tests/
+ruff check src/ tests/
 pytest tests/
 coverage run -m pytest
 git add .
