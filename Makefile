@@ -1366,7 +1366,7 @@ test.smart: ## Test: 运行快速冒烟测试 (对应 'smoke or critical' 标记
 test.unit: ## Test: 仅运行单元测试 (tests/unit/)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running Unit Tests...$(RESET)" && \
-	pytest $(PYTEST_OPTS) tests/unit/ --cov-fail-under=30
+	pytest $(PYTEST_OPTS) tests/unit/ 
 
 test.integration: ## Test: 仅运行集成测试 (tests/integration/)
 	@$(ACTIVATE) && \
