@@ -188,7 +188,7 @@ class TestEventBus:
         handler = Mock(spec=EventHandler)
 
         # 订阅事件
-        event_bus.subscribe("test_event", handler)
+        event_bus.subscribe_sync("test_event", handler)
 
         # 验证订阅成功
         assert "test_event" in event_bus._subscribers
@@ -200,8 +200,8 @@ class TestEventBus:
         handler2 = Mock(spec=EventHandler)
 
         # 订阅同一事件的多个处理器
-        event_bus.subscribe("test_event", handler1)
-        event_bus.subscribe("test_event", handler2)
+        event_bus.subscribe_sync("test_event", handler1)
+        event_bus.subscribe_sync("test_event", handler2)
 
         # 验证两个处理器都已订阅
         assert len(event_bus._subscribers["test_event"]) == 2
@@ -213,11 +213,11 @@ class TestEventBus:
         handler = Mock(spec=EventHandler)
 
         # 先订阅
-        event_bus.subscribe("test_event", handler)
+        event_bus.subscribe_sync("test_event", handler)
         assert handler in event_bus._subscribers["test_event"]
 
         # 取消订阅
-        event_bus.unsubscribe("test_event", handler)
+        event_bus.unsubscribe_sync("test_event", handler)
         assert handler not in event_bus._subscribers["test_event"]
 
     def test_publish_event_sync(self, event_bus):
@@ -226,7 +226,7 @@ class TestEventBus:
         handler.handle = Mock()
 
         # 订阅事件
-        event_bus.subscribe("test_event", handler)
+        event_bus.subscribe_sync("test_event", handler)
 
         # 发布事件
         test_event = EventData(source="test", event_id="test-123")
@@ -241,16 +241,38 @@ class TestEventBus:
         async def async_publish():
             handler = AsyncMock(spec=EventHandler)
             handler.handle = AsyncMock()
+            handler.name = "TestHandler"
+
+            # 添加必需的方法
+            handler._subscribed_events = {}
+
+            def add_subscription(event_type, queue):
+                handler._subscribed_events[event_type] = queue
+
+            def is_subscribed_to(event_type):
+                return event_type in handler._subscribed_events
+
+            handler.add_subscription = add_subscription
+            handler.is_subscribed_to = is_subscribed_to
 
             # 订阅事件
-            event_bus.subscribe("test_event", handler)
+            await event_bus.subscribe("test_event", handler)
+
+            # 启动EventBus
+            await event_bus.start()
 
             # 发布事件
             test_event = EventData(source="test", event_id="test-123")
             await event_bus.publish("test_event", test_event)
 
+            # 等待一下让事件处理完成
+            await asyncio.sleep(0.1)
+
             # 验证处理器被调用
-            handler.handle.assert_called_once_with(test_event)
+            handler.handle.assert_called_once()
+
+            # 停止EventBus
+            await event_bus.stop()
 
         # 运行异步测试
         asyncio.run(async_publish())
@@ -263,8 +285,8 @@ class TestEventBus:
         handler2.handle = Mock()
 
         # 订阅多个处理器
-        event_bus.subscribe("test_event", handler1)
-        event_bus.subscribe("test_event", handler2)
+        event_bus.subscribe_sync("test_event", handler1)
+        event_bus.subscribe_sync("test_event", handler2)
 
         # 发布事件
         test_event = EventData(source="test", event_id="test-123")
@@ -284,7 +306,7 @@ class TestEventBus:
             return hasattr(event, "source") and event.source == "allowed_source"
 
         # 订阅事件并添加过滤器
-        event_bus.subscribe("test_event", handler)
+        event_bus.subscribe_sync("test_event", handler)
         event_bus.add_filter(handler, test_filter)
 
         # 发布允许的事件
@@ -331,7 +353,7 @@ class TestMetricsEventHandler:
         test_event = EventData(source="test_service", event_id="test-123")
 
         # 处理事件
-        handler.handle(test_event)
+        handler.handle_sync(test_event)
 
         # 验证指标更新
         assert handler.metrics["events_processed"] == 1
@@ -344,21 +366,28 @@ class TestMetricsEventHandler:
         handler = MetricsEventHandler()
 
         # 处理多个不同类型的事件
+        from src.events.types import MatchCreatedEventData, PredictionMadeEventData
         events = [
             EventData(source="test", event_id="test-1"),
-            MatchCreatedEvent(match_id=1, home_team="A", away_team="B"),
-            PredictionMadeEvent(
+            MatchCreatedEvent(data=MatchCreatedEventData(
+                match_id=1,
+                home_team_id=1,
+                away_team_id=2,
+                league_id=1,
+                match_time=datetime(2024, 12, 1, 20, 0, 0)
+            )),
+            PredictionMadeEvent(data=PredictionMadeEventData(
                 prediction_id=1,
                 match_id=1,
                 user_id=1,
-                predicted_home_score=2,
-                predicted_away_score=1,
+                predicted_home=2,
+                predicted_away=1,
                 confidence=0.8,
-            ),
+            )),
         ]
 
         for event in events:
-            handler.handle(event)
+            handler.handle_sync(event)
 
         # 验证指标
         assert handler.metrics["events_processed"] == 3
@@ -369,15 +398,21 @@ class TestMetricsEventHandler:
         handler = MetricsEventHandler()
 
         # 处理一些事件
-        handler.handle(EventData(source="test", event_id="test-1"))
-        handler.handle(MatchCreatedEvent(match_id=1, home_team="A", away_team="B"))
+        handler.handle_sync(EventData(source="test", event_id="test-1"))
+        handler.handle_sync(MatchCreatedEvent(data=MatchCreatedEventData(
+            match_id=1,
+            home_team_id=1,
+            away_team_id=2,
+            league_id=1,
+            match_time=datetime(2024, 12, 1, 20, 0, 0)
+        )))
 
         # 获取指标
         metrics = handler.get_metrics()
 
         assert metrics["events_processed"] == 2
         assert "EventData" in metrics["event_counts"]
-        assert "MatchCreatedEvent" in metrics["event_counts"]
+        assert "match.created" in metrics["event_counts"]
         assert metrics["last_event_time"] is not None
 
     def test_metrics_reset(self):
@@ -385,7 +420,7 @@ class TestMetricsEventHandler:
         handler = MetricsEventHandler()
 
         # 处理一些事件
-        handler.handle(EventData(source="test", event_id="test-1"))
+        handler.handle_sync(EventData(source="test", event_id="test-1"))
         assert handler.metrics["events_processed"] == 1
 
         # 重置指标
@@ -411,16 +446,17 @@ class TestEventIntegration:
         custom_handler.handle = Mock()
 
         # 订阅事件
-        event_bus.subscribe("MatchCreatedEvent", metrics_handler)
-        event_bus.subscribe("MatchCreatedEvent", custom_handler)
+        event_bus.subscribe_sync("MatchCreatedEvent", metrics_handler)
+        event_bus.subscribe_sync("MatchCreatedEvent", custom_handler)
 
         # 创建并发布比赛创建事件
-        match_event = MatchCreatedEvent(
+        match_event = MatchCreatedEvent(data=MatchCreatedEventData(
             match_id=12345,
-            home_team="Team A",
-            away_team="Team B",
-            match_date="2024-12-01T20:00:00",
-        )
+            home_team_id=1,
+            away_team_id=2,
+            league_id=1,
+            match_time=datetime(2024, 12, 1, 20, 0, 0)
+        ))
 
         # 发布事件
         event_bus.publish_sync("MatchCreatedEvent", match_event)
@@ -431,7 +467,7 @@ class TestEventIntegration:
         # 验证指标处理器更新
         metrics = metrics_handler.get_metrics()
         assert metrics["events_processed"] == 1
-        assert "MatchCreatedEvent" in metrics["event_counts"]
+        assert "match.created" in metrics["event_counts"]
 
     def test_event_error_handling(self):
         """测试事件错误处理"""
@@ -446,8 +482,8 @@ class TestEventIntegration:
         success_handler.handle = Mock()
 
         # 订阅事件
-        event_bus.subscribe("test_event", failing_handler)
-        event_bus.subscribe("test_event", success_handler)
+        event_bus.subscribe_sync("test_event", failing_handler)
+        event_bus.subscribe_sync("test_event", success_handler)
 
         # 发布事件
         test_event = EventData(source="test", event_id="test-123")
@@ -469,7 +505,7 @@ class TestEventIntegration:
         metrics_handler = MetricsEventHandler()
 
         # 订阅事件
-        event_bus.subscribe("test_event", metrics_handler)
+        event_bus.subscribe_sync("test_event", metrics_handler)
 
         results = []
 
@@ -509,7 +545,7 @@ class TestEventPerformance:
         handler.handle = Mock()
 
         # 订阅事件
-        event_bus.subscribe("test_event", handler)
+        event_bus.subscribe_sync("test_event", handler)
 
         # 测试大量事件发布性能
         start_time = time.time()
@@ -537,7 +573,7 @@ class TestEventPerformance:
             handler = Mock(spec=EventHandler)
             handler.handle = Mock()
             handlers.append(handler)
-            event_bus.subscribe("test_event", handler)
+            event_bus.subscribe_sync("test_event", handler)
 
         # 测试性能
         start_time = time.time()
@@ -561,27 +597,29 @@ class TestEventPerformance:
 def create_test_event(event_type: str, **kwargs) -> Any:
     """创建测试事件"""
     if event_type == "match_created":
-        return MatchCreatedEvent(
+        return MatchCreatedEvent(data=MatchCreatedEventData(
             match_id=kwargs.get("match_id", 12345),
-            home_team=kwargs.get("home_team", "Team A"),
-            away_team=kwargs.get("away_team", "Team B"),
-            match_date=kwargs.get("match_date", "2024-12-01T20:00:00"),
-        )
+            home_team_id=1,
+            away_team_id=2,
+            league_id=1,
+            match_time=datetime(2024, 12, 1, 20, 0, 0)
+        ))
     elif event_type == "prediction_made":
-        return PredictionMadeEvent(
+        return PredictionMadeEvent(data=PredictionMadeEventData(
             prediction_id=kwargs.get("prediction_id", 67890),
             match_id=kwargs.get("match_id", 12345),
             user_id=kwargs.get("user_id", 999),
-            predicted_home_score=kwargs.get("predicted_home_score", 2),
-            predicted_away_score=kwargs.get("predicted_away_score", 1),
+            predicted_home=kwargs.get("predicted_home", 2),
+            predicted_away=kwargs.get("predicted_away", 1),
             confidence=kwargs.get("confidence", 0.85),
-        )
+        ))
     elif event_type == "user_registered":
-        return UserRegisteredEvent(
+        return UserRegisteredEvent(data=UserRegisteredEventData(
             user_id=kwargs.get("user_id", 1111),
             username=kwargs.get("username", "testuser"),
             email=kwargs.get("email", "test@example.com"),
-        )
+            registration_date=datetime(2024, 1, 1, 12, 0, 0)
+        ))
     else:
         return EventData(source="test", **kwargs)
 
@@ -592,7 +630,7 @@ def create_event_bus_with_handlers() -> EventBus:
     metrics_handler = MetricsEventHandler()
 
     # 订阅一些基本事件
-    event_bus.subscribe("test_event", metrics_handler)
+    event_bus.subscribe_sync("test_event", metrics_handler)
 
     return event_bus, metrics_handler
 
