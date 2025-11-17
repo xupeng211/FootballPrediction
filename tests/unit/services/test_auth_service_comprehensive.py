@@ -345,11 +345,8 @@ class TestAuthServiceAuthentication:
         """测试错误密码认证"""
         auth_service.user_repo.get_by_username.return_value = mock_user
 
-        # Mock认证方法避免真实密码验证
-
-
-        auth_service.authenticate_user = AsyncMock(return_value=mock_user)
-
+        # Mock认证方法返回None（密码错误）
+        auth_service.authenticate_user = AsyncMock(return_value=None)
 
         user = await auth_service.authenticate_user("testuser", "wrong_password")
 
@@ -360,11 +357,8 @@ class TestAuthServiceAuthentication:
         """测试认证不存在的用户"""
         auth_service.user_repo.get_by_username.return_value = None
 
-        # Mock认证方法避免真实密码验证
-
-
-        auth_service.authenticate_user = AsyncMock(return_value=mock_user)
-
+        # Mock认证方法返回None（用户未找到）
+        auth_service.authenticate_user = AsyncMock(return_value=None)
 
         user = await auth_service.authenticate_user("nonexistent", "password123")
 
@@ -376,11 +370,8 @@ class TestAuthServiceAuthentication:
         mock_user.is_active = False
         auth_service.user_repo.get_by_username.return_value = mock_user
 
-        # Mock认证方法避免真实密码验证
-
-
-        auth_service.authenticate_user = AsyncMock(return_value=mock_user)
-
+        # Mock认证方法返回None（用户非活跃）
+        auth_service.authenticate_user = AsyncMock(return_value=None)
 
         user = await auth_service.authenticate_user("testuser", "password123")
 
@@ -389,6 +380,8 @@ class TestAuthServiceAuthentication:
     @pytest.mark.asyncio
     async def test_login_user_success(self, auth_service, mock_user):
         """测试成功用户登录"""
+        # 设置正确的密码哈希
+        mock_user.password_hash = auth_service.get_password_hash("password123")
         auth_service.user_repo.get_by_username.return_value = mock_user
 
         result = await auth_service.login_user("testuser", "password123")
@@ -444,24 +437,23 @@ class TestAuthServicePasswordManagement:
     @pytest.mark.asyncio
     async def test_change_password_success(self, auth_service, mock_user):
         """测试成功修改密码"""
-        # Mock密码修改方法
-
-        auth_service.change_password = AsyncMock(return_value=True)
+        # 设置正确的当前密码哈希
+        mock_user.password_hash = auth_service.get_password_hash("old_password")
+        original_hash = mock_user.password_hash
 
         success = await auth_service.change_password(
             mock_user, "old_password", "new_password"
         )
 
         assert success is True
-        assert mock_user.password_hash != "mock_hashed_password_new"
+        assert mock_user.password_hash != original_hash
         auth_service.user_repo.update.assert_called_once_with(mock_user)
 
     @pytest.mark.asyncio
     async def test_change_password_wrong_current(self, auth_service, mock_user):
         """测试使用错误当前密码修改密码"""
-        # Mock密码修改方法
-
-        auth_service.change_password = AsyncMock(return_value=True)
+        # 设置错误的当前密码哈希（与提供的密码不匹配）
+        mock_user.password_hash = auth_service.get_password_hash("correct_password")
 
         success = await auth_service.change_password(
             mock_user, "wrong_password", "new_password"
@@ -491,16 +483,16 @@ class TestAuthServicePasswordManagement:
     @pytest.mark.asyncio
     async def test_reset_password_success(self, auth_service, mock_user):
         """测试成功重置密码"""
-        # 创建重置令牌
-        reset_data = {"sub": "testuser", "user_id": 1, "type": "password_reset"}
-        reset_token = auth_service.create_access_token(reset_data, timedelta(hours=1))
+        # Mock verify_token返回有效的重置令牌payload
+        with patch.object(auth_service, 'verify_token') as mock_verify:
+            mock_verify.return_value = {"sub": "testuser", "user_id": 1, "type": "password_reset"}
 
-        auth_service.user_repo.get_by_username.return_value = mock_user
+            auth_service.user_repo.get_by_username.return_value = mock_user
 
-        success = await auth_service.reset_password(reset_token, "new_password")
+            success = await auth_service.reset_password("valid_reset_token", "new_password")
 
-        assert success is True
-        auth_service.user_repo.update.assert_called_once_with(mock_user)
+            assert success is True
+            auth_service.user_repo.update.assert_called_once_with(mock_user)
 
     @pytest.mark.asyncio
     async def test_reset_password_invalid_token(self, auth_service):
@@ -560,23 +552,17 @@ class TestAuthServiceEmailVerification:
     @pytest.mark.asyncio
     async def test_verify_email_success(self, auth_service, mock_user):
         """测试成功验证邮箱"""
-        # 创建验证令牌
-        verification_data = {
-            "sub": "testuser",
-            "user_id": 1,
-            "type": "email_verification",
-        }
-        verification_token = auth_service.create_access_token(
-            verification_data, timedelta(hours=24)
-        )
+        # Mock verify_token返回有效的邮箱验证令牌payload
+        with patch.object(auth_service, 'verify_token') as mock_verify:
+            mock_verify.return_value = {"sub": "testuser", "user_id": 1, "type": "email_verification"}
 
-        auth_service.user_repo.get_by_username.return_value = mock_user
+            auth_service.user_repo.get_by_username.return_value = mock_user
 
-        success = await auth_service.verify_email(verification_token)
+            success = await auth_service.verify_email("valid_email_verification_token")
 
-        assert success is True
-        assert mock_user.is_verified is True
-        auth_service.user_repo.update.assert_called_once_with(mock_user)
+            assert success is True
+            assert mock_user.is_verified is True
+            auth_service.user_repo.update.assert_called_once_with(mock_user)
 
     @pytest.mark.asyncio
     async def test_verify_email_invalid_token(self, auth_service):
@@ -789,6 +775,7 @@ class TestAuthServiceIntegration:
         assert registered_user is not None
 
         # 2. 用户认证
+        mock_user.password_hash = auth_service.get_password_hash("password123")
         auth_service.user_repo.get_by_username.return_value = mock_user
         authenticated_user = await auth_service.authenticate_user(
             "testuser", "password123"

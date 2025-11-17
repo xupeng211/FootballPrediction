@@ -8,14 +8,11 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models.user import User, UserRole
 from src.repositories.auth_user import AuthUserRepository
-
-# 密码加密上下文
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT配置
 SECRET_KEY = secrets.token_urlsafe(32)
@@ -39,12 +36,23 @@ class AuthService:
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """验证密码."""
-        return pwd_context.verify(plain_password, hashed_password)
+        try:
+            # 确保密码不超过72字节（bcrypt限制）
+            if len(plain_password.encode('utf-8')) > 72:
+                plain_password = plain_password[:72]
+            return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+        except Exception:
+            return False
 
     @staticmethod
     def get_password_hash(password: str) -> str:
         """生成密码哈希."""
-        return pwd_context.hash(password)
+        # 确保密码不超过72字节（bcrypt限制）
+        if len(password.encode('utf-8')) > 72:
+            password = password[:72]
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+        return hashed.decode('utf-8')
 
     def create_access_token(
         self, data: dict[str, Any], expires_delta: timedelta | None = None
