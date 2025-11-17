@@ -9,6 +9,8 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
+from .base import EventData, EventHandler
+
 logger = logging.getLogger(__name__)
 
 
@@ -65,10 +67,14 @@ class EventBus:
 
             # 启动所有订阅的处理器
             for event_type, handlers in self._subscribers.items():
+                # 为每个事件类型创建一个队列（如果还没有的话）
+                if event_type not in self._queues:
+                    self._queues[event_type] = asyncio.Queue()
+
+                queue = self._queues[event_type]
+
                 for handler in handlers:
                     if not handler.is_subscribed_to(event_type):
-                        queue: Any = asyncio.Queue()
-                        self._queues[event_type] = queue
                         handler.add_subscription(event_type, queue)
 
                         task = asyncio.create_task(
@@ -106,20 +112,78 @@ class EventBus:
             self._executor.shutdown(wait=True)
             logger.info("EventBus stopped")
 
-    async def publish(self, event: Event) -> None:
+    async def publish(self, event_type: str, event: Event | EventData) -> None:
         """发布事件."""
         if not self._running:
             logger.warning("EventBus is not running")
             return
 
-        handlers = self._subscribers.get(event.get_event_type(), [])
+        handlers = self._subscribers.get(event_type, [])
         if not handlers:
             return
 
         # 将事件放入队列
-        queue = self._queues.get(event.get_event_type())
+        queue = self._queues.get(event_type)
         if queue:
             await queue.put(event)
+
+    def publish_sync(self, event_type: str, event: Event | EventData) -> None:
+        """同步发布事件."""
+        import asyncio
+
+        if not self._running:
+            # 如果总线未启动，直接同步调用处理器
+            handlers = self._subscribers.get(event_type, [])
+            for handler in handlers:
+                try:
+                    # 检查过滤器
+                    if not self._should_handle(handler, event):
+                        continue
+
+                    if hasattr(handler, 'handle') and asyncio.iscoroutinefunction(handler.handle):
+                        # 对于异步处理器，在新的事件循环中运行
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(handler.handle(event))
+                        loop.close()
+                    else:
+                        # 对于同步处理器，直接调用
+                        if hasattr(handler, 'handle_sync'):
+                            handler.handle_sync(event)
+                        else:
+                            handler.handle(event)
+                except Exception as e:
+                    handler_name = getattr(handler, 'name', type(handler).__name__)
+                    logger.error(f"Handler {handler_name} failed to process event {event_type}: {e}")
+            return
+
+        handlers = self._subscribers.get(event_type, [])
+        if not handlers:
+            return
+
+        # 将事件放入队列
+        queue = self._queues.get(event_type)
+        if queue:
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # 如果事件循环正在运行，创建任务
+                    asyncio.create_task(queue.put(event))
+                else:
+                    # 如果没有运行的事件循环，同步运行
+                    loop.run_until_complete(queue.put(event))
+            except RuntimeError:
+                # 没有事件循环，创建新的
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(queue.put(event))
+                loop.close()
+
+    def add_filter(self, handler: EventHandler, event_filter: callable) -> None:
+        """添加事件过滤器."""
+        if handler not in self._filters:
+            self._filters[handler] = []
+        self._filters[handler].append(event_filter)
 
     async def subscribe(
         self, event_type: str, handler: EventHandler, filters: dict | None = None
@@ -136,6 +200,10 @@ class EventBus:
                 if filters:
                     self._filters[handler] = filters
 
+                # 确保handler有name属性
+                if not hasattr(handler, 'name'):
+                    handler.name = getattr(handler, 'name', type(handler).__name__)
+
                 # 如果总线已经在运行, 立即启动处理器
                 if self._running and not handler.is_subscribed_to(event_type):
                     queue: Any = asyncio.Queue()
@@ -147,7 +215,28 @@ class EventBus:
                     )
                     self._tasks.append(task)
 
-                logger.info(f"Handler {handler.name} subscribed to {event_type}")
+                handler_name = getattr(handler, 'name', type(handler).__name__)
+                logger.info(f"Handler {handler_name} subscribed to {event_type}")
+
+    def subscribe_sync(self, event_type: str, handler: EventHandler) -> None:
+        """同步订阅事件."""
+        if event_type not in self._subscribers:
+            self._subscribers[event_type] = []
+
+        if handler not in self._subscribers[event_type]:
+            self._subscribers[event_type].append(handler)
+            handler_name = getattr(handler, 'name', type(handler).__name__)
+            logger.info(f"Handler {handler_name} subscribed to {event_type}")
+
+    def unsubscribe_sync(self, event_type: str, handler: EventHandler) -> None:
+        """同步取消订阅事件."""
+        if (
+            event_type in self._subscribers
+            and handler in self._subscribers[event_type]
+        ):
+            self._subscribers[event_type].remove(handler)
+            handler_name = getattr(handler, 'name', type(handler).__name__)
+            logger.info(f"Handler {handler_name} unsubscribed from {event_type}")
 
     async def unsubscribe(self, event_type: str, handler: EventHandler) -> None:
         """取消订阅事件."""
@@ -162,7 +251,8 @@ class EventBus:
                 if handler in self._filters:
                     del self._filters[handler]
 
-                logger.info(f"Handler {handler.name} unsubscribed from {event_type}")
+                handler_name = getattr(handler, 'name', type(handler).__name__)
+                logger.info(f"Handler {handler_name} unsubscribed from {event_type}")
 
     async def _run_handler(
         self, handler: EventHandler, event_type: str, queue: Any
@@ -202,7 +292,7 @@ class EventBus:
             except asyncio.CancelledError:
                 break
 
-    async def _handle_event(self, handler: EventHandler, event: Event) -> None:
+    async def _handle_event(self, handler: EventHandler, event: Event | EventData) -> None:
         """处理事件."""
         try:
             # 检查是否需要在线程池中执行
@@ -210,21 +300,31 @@ class EventBus:
                 loop = asyncio.get_event_loop()
                 await loop.run_in_executor(self._executor, handler.handle, event)
             else:
+                # 确保handler有name属性
+                if not hasattr(handler, 'name'):
+                    handler.name = getattr(handler, 'name', 'MockHandler')
                 await handler.handle(event)
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            # 获取事件类型
+            event_type = event.get_event_type() if hasattr(event, 'get_event_type') else type(event).__name__
+            handler_name = getattr(handler, 'name', type(handler).__name__)
             logger.error(
-                f"Handler {handler.name} failed to process event {event.get_event_type()}: {e}",
+                f"Handler {handler_name} failed to process event {event_type}: {e}",
                 exc_info=True,
             )
 
-    def _should_handle(self, handler: EventHandler, event: Event) -> bool:
+    def _should_handle(self, handler: EventHandler, event: Event | EventData) -> bool:
         """检查处理器是否应该处理事件."""
         # 检查过滤器
         if handler in self._filters:
             filters = self._filters[handler]
-            for key, value in filters.items():
-                if event.data.get(key) != value:
+            for filter_func in filters:
+                try:
+                    if not filter_func(event):
+                        return False
+                except Exception as e:
+                    logger.error(f"Filter error for handler {handler.name}: {e}")
                     return False
         return True
 

@@ -670,6 +670,11 @@ class MatchQueryHandlers:
 class GetUserByIdHandler(QueryHandler):
     """获取用户查询处理器."""
 
+    @property
+    def query_type(self):
+        """函数文档字符串."""
+        return GetUserByIdQuery
+
     async def handle(self, query: GetUserByIdQuery) -> UserDTO | None:
         """处理获取用户查询."""
         try:
@@ -696,7 +701,12 @@ class GetUserByIdHandler(QueryHandler):
 class CreateMatchHandler(CommandHandler):
     """创建比赛命令处理器."""
 
-    async def handle(self, command: CreateMatchCommand) -> MatchDTO | None:
+    @property
+    def command_type(self):
+        """函数文档字符串."""
+        return CreateMatchCommand
+
+    async def handle(self, command: CreateMatchCommand) -> CommandResult:
         """处理创建比赛命令."""
         try:
             async with get_session() as session:
@@ -712,29 +722,37 @@ class CreateMatchHandler(CommandHandler):
                 await session.commit()
                 await session.refresh(match)
 
-                return MatchDTO(
-                    id=match.id,
-                    home_team=match.home_team,
-                    away_team=match.away_team,
-                    home_score=match.home_score,
-                    away_score=match.away_score,
-                    match_date=match.match_date,
-                    status=match.status,
-                    competition=match.competition,
-                    venue=match.venue,
-                    created_at=match.created_at,
-                    updated_at=match.updated_at,
+                return CommandResult.success_result(
+                    data=MatchDTO(
+                        id=match.id,
+                        home_team=match.home_team,
+                        away_team=match.away_team,
+                        home_score=match.home_score,
+                        away_score=match.away_score,
+                        match_date=match.match_date,
+                        status=match.status,
+                        competition=match.competition,
+                        venue=match.venue,
+                        created_at=match.created_at,
+                        updated_at=match.updated_at,
+                    ),
+                    message="比赛创建成功",
                 )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"创建比赛失败: {e}")
-            return None
+            return CommandResult.failure_result([str(e)], "创建比赛失败")
 
 
 class UpdateMatchHandler(CommandHandler):
     """更新比赛命令处理器."""
 
-    async def handle(self, command: UpdateMatchCommand) -> MatchDTO | None:
+    @property
+    def command_type(self):
+        """函数文档字符串."""
+        return UpdateMatchCommand
+
+    async def handle(self, command: UpdateMatchCommand) -> CommandResult:
         """处理更新比赛命令."""
         try:
             async with get_session() as session:
@@ -753,27 +771,35 @@ class UpdateMatchHandler(CommandHandler):
                 await session.commit()
                 await session.refresh(match)
 
-                return MatchDTO(
-                    id=match.id,
-                    home_team=match.home_team,
-                    away_team=match.away_team,
-                    home_score=match.home_score,
-                    away_score=match.away_score,
-                    match_date=match.match_date,
-                    status=match.status,
-                    competition=match.competition,
-                    venue=match.venue,
-                    created_at=match.created_at,
-                    updated_at=match.updated_at,
+                return CommandResult.success_result(
+                    data=MatchDTO(
+                        id=match.id,
+                        home_team=match.home_team,
+                        away_team=match.away_team,
+                        home_score=match.home_score,
+                        away_score=match.away_score,
+                        match_date=match.match_date,
+                        status=match.status,
+                        competition=match.competition,
+                        venue=match.venue,
+                        created_at=match.created_at,
+                        updated_at=match.updated_at,
+                    ),
+                    message="比赛更新成功",
                 )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"更新比赛失败: {e}")
-            return None
+            return CommandResult.failure_result([str(e)], "更新比赛失败")
 
 
 class GetMatchByIdHandler(QueryHandler):
     """获取比赛查询处理器."""
+
+    @property
+    def query_type(self):
+        """函数文档字符串."""
+        return GetMatchByIdQuery
 
     async def handle(self, query: GetMatchByIdQuery) -> MatchDTO | None:
         """处理获取比赛查询."""
@@ -804,6 +830,11 @@ class GetMatchByIdHandler(QueryHandler):
 
 class GetMatchPredictionsHandler(QueryHandler):
     """获取比赛预测查询处理器."""
+
+    @property
+    def query_type(self):
+        """函数文档字符串."""
+        return GetMatchPredictionsQuery
 
     async def handle(self, query: GetMatchPredictionsQuery) -> list[PredictionDTO]:
         """处理获取比赛预测查询."""
