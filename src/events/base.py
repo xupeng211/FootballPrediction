@@ -38,7 +38,11 @@ class EventData:
         self.timestamp = timestamp or datetime.utcnow()
         self.source = source
         self.version = version
-        self.metadata = metadata or {}
+        self.metadata = metadata
+
+    def get_event_type(self) -> str:
+        """获取事件类型."""
+        return self.__class__.__name__
 
 
 class Event(ABC):
@@ -56,12 +60,17 @@ class Event(ABC):
         Args:
             data: 事件数据
         """
-        self.data = data
+        self._data = data
 
     @property
     def data(self) -> EventData:
         """获取事件数据."""
-        return self.data
+        return self._data
+
+    @data.setter
+    def data(self, value: EventData) -> None:
+        """设置事件数据."""
+        self._data = value
 
     @property
     def event_id(self) -> str:

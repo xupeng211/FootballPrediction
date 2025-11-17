@@ -4,7 +4,9 @@
 """
 
 import logging
+import sys
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,8 +32,8 @@ class FeatureService:
         self.logger = logger
 
     async def get_match_features(
-        self, match_id: int, calculation_date: datetime | None = None
-    ) -> AllMatchFeatures | None:
+        self, match_id: int, calculation_date: Optional[datetime] = None
+    ) -> Optional[AllMatchFeatures]:
         """获取比赛特征.
 
         Args:
@@ -62,8 +64,8 @@ class FeatureService:
             return None
 
     async def get_team_features(
-        self, team_id: int, calculation_date: datetime | None = None
-    ) -> AllTeamFeatures | None:
+        self, team_id: int, calculation_date: Optional[datetime] = None
+    ) -> Optional[AllTeamFeatures]:
         """获取球队特征.
 
         Args:

@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from .base import Event, EventHandler
+from .base import Event, EventData, EventHandler
 from .bus import get_event_bus
 from .types import (
     MatchCreatedEvent,
@@ -48,6 +48,18 @@ class MetricsEventHandler(EventHandler):
 
         logger.debug(f"Collected metrics for event: {event_type}")
 
+    def handle_sync(self, event: Event | EventData) -> None:
+        """同步处理事件,收集指标."""
+        event_type = event.get_event_type()
+        self.metrics["events_processed"] += 1
+        self.metrics["event_counts"][event_type] = (
+            self.metrics["event_counts"].get(event_type, 0) + 1
+        )
+        # 对于EventData，使用当前时间
+        self.metrics["last_event_time"] = event.timestamp if hasattr(event, 'timestamp') else datetime.utcnow()
+
+        logger.debug(f"Collected metrics for event: {event_type}")
+
     def get_handled_events(self) -> list[str]:
         return [
             MatchCreatedEvent.get_event_type(),
@@ -57,6 +69,10 @@ class MetricsEventHandler(EventHandler):
             UserRegisteredEvent.get_event_type(),
             TeamStatsUpdatedEvent.get_event_type(),
         ]
+
+    async def start(self) -> None:
+        """启动指标处理器."""
+        pass
 
     def get_metrics(self) -> dict[str, Any]:
         """获取收集的指标."""
@@ -105,6 +121,10 @@ class LoggingEventHandler(EventHandler):
             UserRegisteredEvent.get_event_type(),
             TeamStatsUpdatedEvent.get_event_type(),
         ]
+
+    async def start(self) -> None:
+        """启动日志处理器."""
+        pass
 
 
 class CacheInvalidationHandler(EventHandler):
@@ -160,6 +180,10 @@ class CacheInvalidationHandler(EventHandler):
             PredictionUpdatedEvent.get_event_type(),
             TeamStatsUpdatedEvent.get_event_type(),
         ]
+
+    async def start(self) -> None:
+        """启动缓存失效处理器."""
+        pass
 
 
 class NotificationEventHandler(EventHandler):
@@ -220,6 +244,10 @@ class NotificationEventHandler(EventHandler):
             PredictionMadeEvent.get_event_type(),
             UserRegisteredEvent.get_event_type(),
         ]
+
+    async def start(self) -> None:
+        """启动通知处理器."""
+        pass
 
     async def get_notifications(self) -> list[dict[str, Any]]:
         """获取待发送的通知."""

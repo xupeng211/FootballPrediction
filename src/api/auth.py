@@ -8,6 +8,33 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 router = APIRouter(prefix="/auth", tags=["authentication"])
 security = HTTPBearer()
 
+# Mock用户数据
+MOCK_USERS = {
+    1: {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@example.com",
+        "password": "admin123",
+        "is_active": True,
+        "role": "admin"
+    }
+}
+
+
+async def get_user_by_id(user_id: int):
+    """根据ID获取用户.
+
+    Args:
+        user_id: 用户ID
+
+    Returns:
+        用户对象或None
+    """
+    user_data = MOCK_USERS.get(user_id)
+    if user_data:
+        return type('User', (), user_data)()  # 创建简单的用户对象
+    return None
+
 
 @router.post("/login")
 async def login(username: str, password: str) -> dict[str, Any]:
