@@ -31,7 +31,7 @@ make fix-code
 make test.smart
 ```
 
-### ⚡ 15个核心开发命令
+### ⚡ 20个核心开发命令
 
 ```bash
 # 🔧 环境管理
@@ -52,6 +52,16 @@ make check-quality    # 质量检查
 make ci-check         # CI/CD验证
 make prepush          # 提交前验证
 
+# 🚀 渐进式改进系列
+make improve-start    # 开始改进会话
+make improve-status   # 查看改进状态
+make improve-all      # 执行完整改进
+
+# 🤖 MLOps 系列
+make feedback-update  # 更新预测反馈循环
+make model-monitor    # 监控模型健康状况
+make performance-report # 生成性能分析报告
+
 # 🐳 部署相关
 make up               # 启动服务
 make down             # 停止服务
@@ -62,7 +72,7 @@ make deploy           # 部署容器
 
 - **永远不要**对单个文件使用 `--cov-fail-under`
 - **优先使用** Makefile命令而非直接调用工具
-- **覆盖率阈值**: 40%目标阈值
+- **覆盖率阈值**: 当前29.0%，目标40%（渐进式提升）
 - **中文沟通**: 始终用简体中文回复用户
 
 ### 🔍 常用测试命令
@@ -210,10 +220,30 @@ make up          # 启动所有服务
 - loki (日志聚合)
 
 **服务访问地址**：
-- API文档: http://localhost:8000/docs
-- 健康检查: http://localhost:8000/health
-- Grafana: http://localhost:3001 (admin/admin)
-- Prometheus: http://localhost:9090
+- **API服务**: http://localhost:8000
+- **API文档**: http://localhost:8000/docs
+- **交互式API**: http://localhost:8000/redoc
+- **健康检查**: http://localhost:8000/health
+- **数据库**: localhost:5432 (PostgreSQL 15)
+- **Redis缓存**: localhost:6379 (Redis 7-alpine)
+- **Nginx代理**: http://localhost:80 (生产环境)
+
+**监控服务栈（生产环境）**：
+- **Grafana**: http://localhost:3001 (admin/admin)
+- **Prometheus**: http://localhost:9090
+- **日志聚合**: http://localhost:3100 (Loki)
+
+**Docker 开发环境管理**：
+```bash
+# 服务状态检查
+docker-compose ps                # 查看所有服务状态
+docker-compose logs app          # 查看应用日志
+docker-compose exec app bash     # 进入应用容器
+
+# 端口冲突解决
+docker-compose down              # 停止所有服务
+make up                          # 重新启动服务
+```
 
 ---
 
@@ -251,6 +281,32 @@ exclude_lines = [
     "raise NotImplementedError",
 ]
 ```
+
+### 🔄 CI/CD 集成说明
+
+**本地 CI 验证**：
+```bash
+./ci-verify.sh                    # 完整本地CI验证脚本
+# 自动执行：环境重建 → Docker启动 → 测试验证 → 覆盖率检查
+```
+
+**CI 环境一致性保证**：
+- **容器化测试**: `./scripts/run_tests_in_docker.sh` - 隔离本地依赖
+- **环境变量**: `.env.ci` - CI专用配置
+- **依赖锁定**: `requirements.lock` - 确保版本一致性
+- **Docker Compose**: 本地完整模拟CI环境
+
+**GitHub Actions 集成**：
+- **Kanban检查**: 自动同步项目状态
+- **质量门禁**: 代码覆盖率、安全扫描、测试通过率
+- **自动化部署**: 容器镜像构建和推送
+
+**质量验证流程**：
+1. `make env-check` - 环境健康检查
+2. `make test.smart` - 快速功能验证
+3. `make security-check` - 安全漏洞扫描
+4. `make coverage` - 覆盖率验证
+5. `make prepush` - 完整提交前验证
 
 ### 🔧 高级主题
 - **完整的代码示例**: [CLAUDE_DETAILED.md](./CLAUDE_DETAILED.md#代码示例)
@@ -297,12 +353,35 @@ docker-compose restart db
 make migrate-up
 ```
 
+### 🛡️ 企业级安全扫描工具链
+
+**多层安全审计体系**：
+```bash
+# 代码安全扫描
+make security-check    # 运行完整安全扫描
+bandit -r src/         # 代码漏洞扫描
+safety check           # 依赖漏洞检查
+pip-audit              # 依赖审计
+trufflehog git .       # 密钥扫描
+gitleaks detect        # 密钥泄露检测
+pip-licenses --from=mixed --format=table  # 许可证检查
+```
+
+**安全工具集成**：
+- **Bandit**: Python代码安全漏洞扫描
+- **Safety**: PyPI依赖包漏洞检查
+- **pip-audit**: 依赖审计和漏洞数据库
+- **TruffleHog**: Git历史密钥扫描
+- **Gitleaks**: 密钥泄露检测
+- **pip-licenses**: 开源许可证合规检查
+
 ### 📋 提交前检查
 
 - [ ] `make test.smart` 快速验证通过
 - [ ] `make test.unit` 完整单元测试通过
+- [ ] `make security-check` 安全扫描通过
 - [ ] `make ci-check` 无严重问题
-- [ ] `make coverage` 达到40%阈值
+- [ ] `make coverage` 达到当前29.0%覆盖率
 - [ ] `make prepush` 完整验证通过
 
 ---
@@ -326,6 +405,6 @@ make migrate-up
 
 ---
 
-*文档版本: v27.0 (配置精确化版) | 维护者: Claude Code | 更新时间: 2025-11-17*
+*文档版本: v28.0 (企业级增强版) | 维护者: Claude Code | 更新时间: 2025-11-17*
 
 📖 **需要更详细的信息？** 查看 [CLAUDE_DETAILED.md](./CLAUDE_DETAILED.md) 获取完整的代码示例、配置参数和故障排除指南。
