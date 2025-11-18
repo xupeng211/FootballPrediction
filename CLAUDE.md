@@ -31,19 +31,22 @@ make fix-code
 make test.smart
 ```
 
-### ⚡ 20个核心开发命令
+### ⚡ 25个核心开发命令
 
 ```bash
 # 🔧 环境管理
 make install          # 安装项目依赖
 make env-check        # 检查环境健康
 make create-env       # 创建环境文件
+make venv             # 创建虚拟环境
 
 # 🧪 测试相关
 make test             # 运行单元测试（默认）
 make test.smart       # 快速测试（<2分钟）
 make test.unit        # 完整单元测试
+make test.phase1      # Phase 1核心功能测试
 make coverage         # 覆盖率报告
+make cov.html         # HTML覆盖率报告
 make solve-test-crisis # 测试危机解决方案
 
 # 🔍 质量工具
@@ -51,6 +54,7 @@ make fix-code         # 一键修复代码质量
 make check-quality    # 质量检查
 make ci-check         # CI/CD验证
 make prepush          # 提交前验证
+make security-check   # 安全扫描
 
 # 🚀 渐进式改进系列
 make improve-start    # 开始改进会话
@@ -66,6 +70,7 @@ make performance-report # 生成性能分析报告
 make up               # 启动服务
 make down             # 停止服务
 make deploy           # 部署容器
+make ci               # 本地CI完整验证
 ```
 
 ### ⚠️ 关键规则
@@ -91,6 +96,15 @@ pytest --cov=src --cov-report=term-missing
 # 单个测试文件
 pytest tests/unit/utils/test_date_utils.py -v
 pytest tests/unit/cache/test_redis_manager.py::TestRedisManager::test_set_get -v
+
+# 按模块运行测试
+pytest tests/unit/api/ -v
+pytest tests/unit/domain/ -v
+pytest tests/unit/database/ -v
+
+# 运行特定标记的测试
+pytest -m "critical" -v
+pytest -m "not slow" --maxfail=5
 ```
 
 ### 🛠️ 开发环境设置
@@ -126,6 +140,15 @@ API_PORT=8000
 JWT_ALGORITHM=HS256
 JWT_EXPIRE_MINUTES=30
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# 外部服务配置
+EXTERNAL_API_TIMEOUT=30
+EXTERNAL_API_RETRIES=3
+
+# 监控配置
+ENABLE_METRICS=true
+METRICS_PORT=9090
 ```
 
 ---
@@ -183,7 +206,13 @@ src/
 **Smart Tests配置**：
 - 核心稳定模块：`tests/unit/utils`, `tests/unit/cache`, `tests/unit/core`
 - 执行时间：<2分钟，通过率>90%
-- 排除不稳定测试文件
+- 排除不稳定测试文件：
+  - `tests/unit/services/test_prediction_service.py`
+  - `tests/unit/core/test_di.py`
+  - `tests/unit/core/test_path_manager_enhanced.py`
+  - `tests/unit/core/test_config_new.py`
+  - `tests/unit/scripts/test_create_service_tests.py`
+  - `tests/unit/test_core_logger_enhanced.py`
 
 ### 🤖 机器学习架构
 
@@ -252,7 +281,7 @@ make up                          # 重新启动服务
 ### 📋 核心配置文件
 - `pyproject.toml`: 依赖管理和工具配置，包含完整的pytest和coverage设置
 - `pytest.ini`: 测试配置和57个标记定义，Smart Tests优化
-- `Makefile`: 76KB企业级开发工作流，15个核心命令
+- `Makefile`: 76KB企业级开发工作流，25个核心命令
 - `docker-compose.yml`: 容器编排配置，4个开发环境核心服务
 - `.env.example`: 环境变量模板，包含必需的生产环境配置
 
@@ -351,6 +380,34 @@ docker-compose ps db
 docker-compose restart db
 # 运行迁移
 make migrate-up
+```
+
+**本地开发环境故障排除**：
+```bash
+# 端口冲突解决
+make down && make up
+
+# 服务状态检查
+docker-compose ps
+docker-compose logs app
+
+# 进入容器调试
+docker-compose exec app bash
+
+# 环境变量问题
+make env-check
+make create-env
+```
+
+**覆盖率问题**：
+```bash
+# 查看详细覆盖率报告
+make cov.html
+open htmlcov/index.html  # macOS 或
+xdg-open htmlcov/index.html  # Linux
+
+# 单个模块覆盖率检查
+pytest --cov=src.domain --cov-report=term-missing tests/unit/domain/
 ```
 
 ### 🛡️ 企业级安全扫描工具链

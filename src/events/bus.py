@@ -140,7 +140,9 @@ class EventBus:
                     if not self._should_handle(handler, event):
                         continue
 
-                    if hasattr(handler, 'handle') and asyncio.iscoroutinefunction(handler.handle):
+                    if hasattr(handler, "handle") and asyncio.iscoroutinefunction(
+                        handler.handle
+                    ):
                         # 对于异步处理器，在新的事件循环中运行
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
@@ -148,13 +150,15 @@ class EventBus:
                         loop.close()
                     else:
                         # 对于同步处理器，直接调用
-                        if hasattr(handler, 'handle_sync'):
+                        if hasattr(handler, "handle_sync"):
                             handler.handle_sync(event)
                         else:
                             handler.handle(event)
                 except Exception as e:
-                    handler_name = getattr(handler, 'name', type(handler).__name__)
-                    logger.error(f"Handler {handler_name} failed to process event {event_type}: {e}")
+                    handler_name = getattr(handler, "name", type(handler).__name__)
+                    logger.error(
+                        f"Handler {handler_name} failed to process event {event_type}: {e}"
+                    )
             return
 
         handlers = self._subscribers.get(event_type, [])
@@ -201,8 +205,8 @@ class EventBus:
                     self._filters[handler] = filters
 
                 # 确保handler有name属性
-                if not hasattr(handler, 'name'):
-                    handler.name = getattr(handler, 'name', type(handler).__name__)
+                if not hasattr(handler, "name"):
+                    handler.name = getattr(handler, "name", type(handler).__name__)
 
                 # 如果总线已经在运行, 立即启动处理器
                 if self._running and not handler.is_subscribed_to(event_type):
@@ -215,7 +219,7 @@ class EventBus:
                     )
                     self._tasks.append(task)
 
-                handler_name = getattr(handler, 'name', type(handler).__name__)
+                handler_name = getattr(handler, "name", type(handler).__name__)
                 logger.info(f"Handler {handler_name} subscribed to {event_type}")
 
     def subscribe_sync(self, event_type: str, handler: EventHandler) -> None:
@@ -225,17 +229,14 @@ class EventBus:
 
         if handler not in self._subscribers[event_type]:
             self._subscribers[event_type].append(handler)
-            handler_name = getattr(handler, 'name', type(handler).__name__)
+            handler_name = getattr(handler, "name", type(handler).__name__)
             logger.info(f"Handler {handler_name} subscribed to {event_type}")
 
     def unsubscribe_sync(self, event_type: str, handler: EventHandler) -> None:
         """同步取消订阅事件."""
-        if (
-            event_type in self._subscribers
-            and handler in self._subscribers[event_type]
-        ):
+        if event_type in self._subscribers and handler in self._subscribers[event_type]:
             self._subscribers[event_type].remove(handler)
-            handler_name = getattr(handler, 'name', type(handler).__name__)
+            handler_name = getattr(handler, "name", type(handler).__name__)
             logger.info(f"Handler {handler_name} unsubscribed from {event_type}")
 
     async def unsubscribe(self, event_type: str, handler: EventHandler) -> None:
@@ -251,7 +252,7 @@ class EventBus:
                 if handler in self._filters:
                     del self._filters[handler]
 
-                handler_name = getattr(handler, 'name', type(handler).__name__)
+                handler_name = getattr(handler, "name", type(handler).__name__)
                 logger.info(f"Handler {handler_name} unsubscribed from {event_type}")
 
     async def _run_handler(
@@ -292,7 +293,9 @@ class EventBus:
             except asyncio.CancelledError:
                 break
 
-    async def _handle_event(self, handler: EventHandler, event: Event | EventData) -> None:
+    async def _handle_event(
+        self, handler: EventHandler, event: Event | EventData
+    ) -> None:
         """处理事件."""
         try:
             # 检查是否需要在线程池中执行
@@ -301,14 +304,18 @@ class EventBus:
                 await loop.run_in_executor(self._executor, handler.handle, event)
             else:
                 # 确保handler有name属性
-                if not hasattr(handler, 'name'):
-                    handler.name = getattr(handler, 'name', 'MockHandler')
+                if not hasattr(handler, "name"):
+                    handler.name = getattr(handler, "name", "MockHandler")
                 await handler.handle(event)
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 获取事件类型
-            event_type = event.get_event_type() if hasattr(event, 'get_event_type') else type(event).__name__
-            handler_name = getattr(handler, 'name', type(handler).__name__)
+            event_type = (
+                event.get_event_type()
+                if hasattr(event, "get_event_type")
+                else type(event).__name__
+            )
+            handler_name = getattr(handler, "name", type(handler).__name__)
             logger.error(
                 f"Handler {handler_name} failed to process event {event_type}: {e}",
                 exc_info=True,

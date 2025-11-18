@@ -8,7 +8,7 @@
 """
 
 # 导入配置管理
-from .config import Config, Settings, config, get_settings
+from .config import Config, Settings, get_config, get_settings
 
 # 导入依赖注入
 from .di import (
@@ -35,8 +35,8 @@ from .service_lifecycle import ServiceLifecycleManager, get_lifecycle_manager
 __all__ = [
     # 配置管理
     "Config",
-    "config",
     "Settings",
+    "get_config",
     "get_settings",
     # 日志系统
     "Logger",

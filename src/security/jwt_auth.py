@@ -315,7 +315,7 @@ class JWTAuthManager:
                 "email": "test@example.com",
                 "password": "password123",
                 "is_active": True,
-                "role": "user"
+                "role": "user",
             },
             "test@example.com": {
                 "id": 1,
@@ -323,8 +323,8 @@ class JWTAuthManager:
                 "email": "test@example.com",
                 "password": "password123",
                 "is_active": True,
-                "role": "user"
-            }
+                "role": "user",
+            },
         }
 
         # 检查用户是否存在且密码正确
@@ -332,6 +332,7 @@ class JWTAuthManager:
         if user_data and user_data["password"] == password:
             # 创建哈希密码（使用简化的SHA-256避免bcrypt问题）
             import hashlib
+
             hashed_password = hashlib.sha256(password.encode()).hexdigest()
             return UserAuth(
                 id=user_data["id"],
@@ -339,7 +340,7 @@ class JWTAuthManager:
                 email=user_data["email"],
                 hashed_password=hashed_password,
                 is_active=user_data["is_active"],
-                role=user_data["role"]
+                role=user_data["role"],
             )
 
         return None
@@ -361,7 +362,7 @@ class JWTAuthManager:
                 "email": "admin@example.com",
                 "password": "admin123",
                 "is_active": True,
-                "role": "admin"
+                "role": "admin",
             }
         }
 
@@ -369,6 +370,7 @@ class JWTAuthManager:
         if user_data:
             # 创建哈希密码（使用简化的SHA-256避免bcrypt问题）
             import hashlib
+
             hashed_password = hashlib.sha256(user_data["password"].encode()).hexdigest()
             return UserAuth(
                 id=user_data["id"],
@@ -376,7 +378,7 @@ class JWTAuthManager:
                 email=user_data["email"],
                 hashed_password=hashed_password,
                 is_active=user_data["is_active"],
-                role=user_data["role"]
+                role=user_data["role"],
             )
 
         return None
