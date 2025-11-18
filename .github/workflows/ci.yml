@@ -91,6 +91,18 @@ jobs:
           apt-get update && apt-get install -y make
         fi
 
+    - name: Run P0-P1 Safety Net Tests (Critical)
+      run: |
+        echo "🛡️ Running P0-P1 Safety Net Tests..."
+        pytest \
+          tests/unit/core/test_config_safety.py \
+          tests/unit/core/test_prediction_engine_safety.py \
+          tests/unit/cache/test_unified_interface_safety.py \
+          tests/unit/services/test_enhanced_ev_calculator_safety.py \
+          tests/unit/ml/test_lstm_predictor_safety.py \
+          tests/unit/cqrs/test_handlers_safety.py \
+          -v --cov=src --cov-report=term-missing
+
     - name: Run Unit Tests (via Makefile)
       run: |
         make test.unit
