@@ -7,8 +7,8 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Any
 
-from jose import JWTError, jwt
 import bcrypt
+from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models.user import User, UserRole
@@ -38,9 +38,11 @@ class AuthService:
         """验证密码."""
         try:
             # 确保密码不超过72字节（bcrypt限制）
-            if len(plain_password.encode('utf-8')) > 72:
+            if len(plain_password.encode("utf-8")) > 72:
                 plain_password = plain_password[:72]
-            return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+            return bcrypt.checkpw(
+                plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+            )
         except Exception:
             return False
 
@@ -48,11 +50,11 @@ class AuthService:
     def get_password_hash(password: str) -> str:
         """生成密码哈希."""
         # 确保密码不超过72字节（bcrypt限制）
-        if len(password.encode('utf-8')) > 72:
+        if len(password.encode("utf-8")) > 72:
             password = password[:72]
         salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed.decode('utf-8')
+        hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+        return hashed.decode("utf-8")
 
     def create_access_token(
         self, data: dict[str, Any], expires_delta: timedelta | None = None
