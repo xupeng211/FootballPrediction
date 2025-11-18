@@ -89,6 +89,10 @@ pytest -m "integration" -v       # 集成测试
 pytest -m "critical" --maxfail=5 # 关键功能测试
 pytest -m "not slow"             # 排除慢速测试
 
+# Smart Tests 快速验证
+make test.smart                  # 运行稳定的核心测试组合
+pytest -m "not slow" --maxfail=5 -x  # 快速失败模式
+
 # 覆盖率相关
 make cov.html                     # HTML覆盖率报告
 pytest --cov=src --cov-report=term-missing
@@ -227,6 +231,20 @@ src/
 - 比赛统计数据、历史对战记录
 - 球队状态、球员伤病情况
 
+**MLOps工具链**:
+```bash
+# ML相关命令
+make feedback-update    # 更新预测反馈循环
+make model-monitor      # 监控模型健康状况
+make retrain-check      # 检查模型是否需要重新训练
+make retrain-dry        # 干运行重新训练检查（仅评估）
+make mlops-pipeline     # 运行完整的MLOps反馈管道
+make mlops-status       # 显示MLOps管道状态
+
+# ML模型测试
+make feedback-test      # 运行反馈循环单元测试
+```
+
 ### 🐳 服务栈
 
 **开发环境（4个核心服务）**：
@@ -261,6 +279,23 @@ make up          # 启动所有服务
 - **Grafana**: http://localhost:3001 (admin/admin)
 - **Prometheus**: http://localhost:9090
 - **日志聚合**: http://localhost:3100 (Loki)
+
+**实时功能栈**：
+- **WebSocket**: 实时比赛数据推送和预测更新
+- **流处理**: Kafka消息队列处理实时数据流
+- **事件驱动**: 异步事件处理和通知系统
+
+**实时功能测试**：
+```bash
+# WebSocket连接测试
+curl http://localhost:8000/realtime/matches
+
+# 流数据测试
+curl http://localhost:8000/streaming/predictions
+
+# 事件处理测试
+curl http://localhost:8000/realtime/events
+```
 
 **Docker 开发环境管理**：
 ```bash
