@@ -54,7 +54,6 @@ class CacheHitUser(PerformanceTestUser):
             except:
                 pass  # 忽略预热错误
 
-
     @task(60)  # 60%概率进行用户信息查询
     def get_user_cache_hit(self):
         """用户信息查询 - 主要缓存命中测试"""
@@ -173,7 +172,6 @@ class WriteInvalidateUser(PerformanceTestUser):
         self.user_id = random.randint(200, 300)
         self.prediction_id = random.randint(200, 300)
 
-
         # 确保用户和预测数据存在，并预热缓存
         self._ensure_test_data()
 
@@ -280,7 +278,6 @@ class CacheOnlyUser(HttpUser):
         self.warmup_user_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # 扩展用户ID范围
         self.warmup_pred_ids = [1, 2, 3, 4, 5]  # 预测ID范围
 
-
         # 预热用户数据缓存
         for user_id in self.warmup_user_ids:
             try:
@@ -310,7 +307,6 @@ class CacheOnlyUser(HttpUser):
                 pass
         except Exception:
             pass
-
 
     @task(70)  # 70%概率进行用户信息查询 (主要缓存命中测试)
     def get_user_cache_only(self):
@@ -374,7 +370,6 @@ class MixedLoadUser(HttpUser):
         # 动态用户ID确保缓存未命中
         self.miss_user_counter = 1000
         self.miss_pred_counter = 1000
-
 
         # 预热缓存数据
         for user_id in self.cache_user_ids:
