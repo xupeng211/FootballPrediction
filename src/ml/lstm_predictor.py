@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-"""import tensorflow as tf
-import random
-import pandas as pd
-import numpy as np.
-
-LSTM时间序列预测模型
+"""LSTM时间序列预测模型
 LSTM Time Series Prediction Model
 
 基于长短期记忆网络的质量指标时间序列预测和异常检测
 """
 
+import random
+import pickle
+import pandas as pd
+import numpy as np
+
+try:
+    import tensorflow as tf
+except ImportError:
+    tf = None
+
 # ruff: noqa: N806, N803  # ML变量名和参数名约定 (X_train, X_test等) 是行业标准
 
-import pickle
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -30,16 +34,21 @@ except ImportError:
     tf = None
 
 from src.core.logging_system import get_logger
-from src.timeseries.influxdb_client import influxdb_manager
+try:
+    from src.timeseries.influxdb_client import influxdb_manager
+except ImportError:
+    # 创建一个Mock的influxdb_manager以避免导入错误
+    class MockInfluxDBManager:
+        async def get_quality_metrics_history(self, hours: int = 24):
+            """返回模拟的历史数据."""
+            return []
+    influxdb_manager = MockInfluxDBManager()
 
 logger = get_logger(__name__)
 
 
 @dataclass
 class PredictionResult:
-    """类文档字符串."""
-
-    pass  # 添加pass语句
     """预测结果数据模型"""
 
     timestamp: datetime
@@ -63,9 +72,6 @@ class PredictionResult:
 
 @dataclass
 class TrainingConfig:
-    """类文档字符串."""
-
-    pass  # 添加pass语句
     """LSTM训练配置"""
 
     sequence_length: int = 24  # 使用过去24个时间点
@@ -80,14 +86,10 @@ class TrainingConfig:
 
 
 class LSTMPredictor:
-    """类文档字符串."""
-
-    pass  # 添加pass语句
     """LSTM时间序列预测器"""
 
     def __init__(self, config: TrainingConfig | None = None):
-        """函数文档字符串."""
-        # 添加pass语句
+        """初始化LSTM预测器."""
         self.config = config or TrainingConfig()
         self.logger = get_logger(self.__class__.__name__)
 
@@ -112,6 +114,23 @@ class LSTMPredictor:
         self, data: list[dict[str, Any]], target_column: str = "overall_score"
     ) -> tuple[np.ndarray, np.ndarray]:
         """准备训练数据."""
+        # 防御性数据验证哨兵
+        if data is None:
+            raise ValueError("Input data cannot be None")
+
+        if not isinstance(data, list):
+            raise TypeError("Input data must be a list of dictionaries")
+
+        if len(data) == 0:
+            raise ValueError("Input data cannot be empty")
+
+        # 检查是否至少包含一个字典且有target_column
+        if not isinstance(data[0], dict):
+            raise TypeError("Input data must be a list of dictionaries")
+
+        if target_column not in data[0]:
+            raise KeyError(f"Target column '{target_column}' not found in input data")
+
         try:
             # 转换为DataFrame
             df = pd.DataFrame(data)
@@ -223,6 +242,24 @@ class LSTMPredictor:
         validation_data: tuple[np.ndarray, np.ndarray] | None = None,
     ) -> dict[str, Any]:
         """训练LSTM模型."""
+        # 形状验证哨兵
+        if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
+            raise TypeError("X and y must be numpy arrays")
+
+        if x.ndim != 3:
+            raise ValueError(f"X (features) must be 3-dimensional (samples, timesteps, features), but got {x.ndim}D")
+
+        if y.ndim < 2:
+            raise ValueError(f"y (target) must be at least 2-dimensional, but got {y.ndim}D")
+
+        # 验证样本数匹配
+        if x.shape[0] != y.shape[0]:
+            raise ValueError(f"X and y must have the same number of samples (batch size), but got {x.shape[0]} and {y.shape[0]}")
+
+        # 验证特征和时间步维度
+        if x.shape[1] <= 0 or x.shape[2] <= 0:
+            raise ValueError(f"X must have positive dimensions for timesteps and features, but got {x.shape[1:]}")
+
         if self.model is None:
             self.build_model(input_shape=(x.shape[1], x.shape[2]))
 
@@ -468,18 +505,22 @@ class LSTMPredictor:
             self.logger.error(f"保存模型失败: {e}")
             return False
 
-    def load_model(self) -> bool:
+    def load_model(self, model_path: str | Path) -> bool:
         """加载模型和标准化器."""
         try:
-            if not self.model_path.exists():
-                self.logger.warning(f"模型文件不存在: {self.model_path}")
+            # 转换为Path对象
+            model_path = Path(model_path)
+            scaler_path = model_path.parent / f"{model_path.stem}_scalers.pkl"
+
+            if not model_path.exists():
+                self.logger.warning(f"模型文件不存在: {model_path}")
                 return False
 
             # 加载Keras模型
-            self.model = tf.keras.models.load_model(self.model_path)
+            self.model = tf.keras.models.load_model(model_path)
 
             # 加载标准化器
-            with open(self.scaler_path, "rb") as f:
+            with open(scaler_path, "rb") as f:
                 scalers_data = pickle.load(f)
                 self.scaler_X = scalers_data["scaler_X"]
                 self.scaler_y = scalers_data["scaler_y"]
@@ -487,7 +528,7 @@ class LSTMPredictor:
                 self.config = scalers_data["config"]
 
             self.is_trained = True
-            self.logger.info(f"模型已加载: {self.model_path}")
+            self.logger.info(f"模型已加载: {model_path}")
             return True
 
         except Exception as e:
@@ -573,8 +614,7 @@ if __name__ == "__main__":
                     "memory_usage": 60 + 15 * np.cos(i * 0.08) + np.random.normal(0, 3),
                     "active_connections": 10
                     + 5 * np.sin(i * 0.03)
-                    + np.secrets.randbelow(6)
-                    + -2,
+                    + (random.randint(0, 6) - 2),
                 }
             )
 
