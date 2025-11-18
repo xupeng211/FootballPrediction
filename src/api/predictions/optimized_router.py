@@ -373,6 +373,13 @@ async def get_optimized_prediction(
     - 500: 预测服务异常
     """
     try:
+        # 验证match_id有效性
+        if match_id <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid match_id: {match_id}. Match ID must be a positive integer."
+            )
+
         # 记录性能指标
         start_time = datetime.utcnow()
 
@@ -425,6 +432,9 @@ async def get_optimized_prediction(
             }
         )
 
+    except HTTPException:
+        # HTTPException直接重新抛出，不转换为500错误
+        raise
     except Exception as e:
         logger.error(f"Error generating prediction for match {match_id}: {e}")
         raise HTTPException(status_code=500, detail=f"预测生成失败: {str(e)}") from e
@@ -570,13 +580,21 @@ async def get_popular_predictions(
     - 500: 服务内部错误
     """
     try:
+        # 验证time_range参数有效性
+        valid_time_ranges = {"1h", "24h", "7d"}
+        if time_range not in valid_time_ranges:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid time_range: '{time_range}'. Must be one of {list(valid_time_ranges)}"
+            )
+
         # 解析时间范围
         time_mapping = {
             "1h": timedelta(hours=1),
             "24h": timedelta(hours=24),
             "7d": timedelta(days=7),
         }
-        time_delta = time_mapping.get(time_range, timedelta(hours=24))
+        time_delta = time_mapping[time_range]
 
         # 生成缓存键
 
@@ -592,6 +610,9 @@ async def get_popular_predictions(
             }
         )
 
+    except HTTPException:
+        # HTTPException直接重新抛出，不转换为500错误
+        raise
     except Exception as e:
         logger.error(f"Error getting popular predictions: {e}")
         raise HTTPException(
@@ -1486,7 +1507,7 @@ async def _get_popular_predictions_data(
                 "confidence_score": round(random.uniform(0.7, 0.95), 3),
                 "popularity_score": round(random.uniform(0.5, 1.0), 3),
                 "created_at": (
-                    datetime.utcnow() - random.uniform(0, time_delta.total_seconds())
+                    datetime.utcnow() - timedelta(seconds=random.uniform(0, time_delta.total_seconds()))
                 ).isoformat(),
             }
         )
