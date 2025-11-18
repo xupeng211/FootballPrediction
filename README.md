@@ -1,5 +1,6 @@
 ![Docs Guard Status](https://img.shields.io/badge/Docs%20Guard-Passing-brightgreen?style=flat-square)
 [![Test Improvement Guide](https://img.shields.io/badge/📊%20Test%20Improvement%20Guide-blue?style=flat-square)](docs/TEST_IMPROVEMENT_GUIDE.md)
+[![Testing Guide](https://img.shields.io/badge/🛡️%20Testing%20Guide-green?style=flat-square)](docs/TESTING_GUIDE.md)
 [![Kanban Check](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml/badge.svg)](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml)
 
 # ⚽ FootballPrediction - 足球预测系统
@@ -131,6 +132,7 @@ make sync-issues  # GitHub Issues 同步 🔄
 
 - [Repository Guidelines](AGENTS.md) — 面向贡献者的结构、流程与安全基线快速上手手册。
 - [测试改进机制指南](docs/TEST_IMPROVEMENT_GUIDE.md) — 了解 Kanban、CI Hook 与周报机制，快速上手测试优化流程。
+- [🛡️ 测试实战指南](docs/TESTING_GUIDE.md) — SWAT行动成果，完整的测试方法论和最佳实践，涵盖Mock模式、CI/CD集成和安全网建设。
 
 
 ## 🤖 AI辅助开发
