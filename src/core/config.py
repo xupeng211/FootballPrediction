@@ -3,6 +3,7 @@
 提供统一的配置读写和持久化机制.
 """
 
+import functools
 import json
 import logging
 import os
@@ -12,22 +13,53 @@ from typing import Any
 # Pydantic compatibility logic
 try:
     # Pydantic v2
-    from pydantic import Field
+    from pydantic import Field, field_validator
     from pydantic_settings import BaseSettings
+    from pydantic.fields import FieldInfo
 
     HAS_PYDANTIC = True
+
+    class SmartListField(FieldInfo):
+        """智能列表字段，绕过Pydantic Settings的自动JSON解析"""
+        def __init__(self, default_factory, description):
+            super().__init__(
+                default=default_factory(),
+                description=description,
+                # 禁用Pydantic的自动JSON解析
+                json_schema_extra={"type": "array", "items": {"type": "string"}}
+            )
+
+        def __get_pydantic_json_schema__(self, field_type):
+            """重写JSON schema生成，禁用自动解析"""
+            return {
+                "type": "array",
+                "items": {"type": "string"}
+            }
+
 except ImportError:
     try:
         # Pydantic v1
-        from pydantic import BaseSettings, Field
+        from pydantic import BaseSettings, Field, validator
 
         HAS_PYDANTIC = True
+
+        class SmartListField:
+            """Pydantic v1的智能列表字段"""
+            def __init__(self, default_factory, description):
+                self.default_factory = default_factory
+                self.description = description
+                self.default = default_factory()
+
     except ImportError:
         HAS_PYDANTIC = False
         BaseSettings = object
 
         def field(*args: Any, **kwargs: Any) -> Any:
             return None
+
+        class SmartListField:
+            def __init__(self, default_factory, description):
+                pass
 
 
 class Config:
@@ -158,33 +190,13 @@ class Settings(SettingsClass):
         if HAS_PYDANTIC
         else True
     )
-    metrics_tables: list[str] = (
+    metrics_tables: str = (
         Field(
-            default_factory=lambda: [
-                "matches",
-                "teams",
-                "leagues",
-                "odds",
-                "features",
-                "raw_match_data",
-                "raw_odds_data",
-                "raw_scores_data",
-                "data_collection_logs",
-            ],
-            description="需要统计行数的数据库表",
+            default="matches,teams,leagues,odds,features,raw_match_data,raw_odds_data,raw_scores_data,data_collection_logs",
+            description="需要统计行数的数据库表(逗号分隔)"
         )
         if HAS_PYDANTIC
-        else [
-            "matches",
-            "teams",
-            "leagues",
-            "odds",
-            "features",
-            "raw_match_data",
-            "raw_odds_data",
-            "raw_scores_data",
-            "data_collection_logs",
-        ]
+        else "matches,teams,leagues,odds,features,raw_match_data,raw_odds_data,raw_scores_data,data_collection_logs"
     )
     metrics_collection_interval: int = (
         Field(default=30, description="指标收集间隔（秒）") if HAS_PYDANTIC else 30
@@ -199,21 +211,13 @@ class Settings(SettingsClass):
         if HAS_PYDANTIC
         else None
     )
-    enabled_services: list[str] = (
+    enabled_services: str = (
         Field(
-            default_factory=lambda: [
-                "ContentAnalysisService",
-                "UserProfileService",
-                "DataProcessingService",
-            ],
-            description="默认启用的服务列表",
+            default="ContentAnalysisService,UserProfileService,DataProcessingService",
+            description="默认启用的服务列表(逗号分隔)"
         )
         if HAS_PYDANTIC
-        else [
-            "ContentAnalysisService",
-            "UserProfileService",
-            "DataProcessingService",
-        ]
+        else "ContentAnalysisService,UserProfileService,DataProcessingService"
     )
 
     if HAS_PYDANTIC:
@@ -224,6 +228,10 @@ class Settings(SettingsClass):
                 "env_file_encoding": "utf-8",
                 "case_sensitive": False,
                 "extra": "allow",  # Allow extra fields from environment
+                # 禁用Pydantic自动JSON解析，让我们的验证器处理
+                "env_nested_delimiter": "__",  # 使用不同的嵌套分隔符，避免自动JSON解析
+                "env_strict": False,  # 禁用严格模式，避免自动类型转换
+                "env_parse_none_str": "null",  # 禁用自动解析
             }
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             # Fallback for older versions
@@ -237,6 +245,25 @@ class Settings(SettingsClass):
                 case_sensitive = False
                 extra = "allow"  # Allow extra fields from environment
 
+        @field_validator("api_port", mode="before")
+        @classmethod
+        def validate_api_port(cls, v):
+            """验证API端口，无效时回退到默认值8000"""
+            DEFAULT_PORT = 8000
+            if v is None:
+                return DEFAULT_PORT
+            try:
+                port = int(v)
+                if 1 <= port <= 65535:
+                    return port
+                else:
+                    logging.warning(f"API_PORT: '{v}' 超出范围，回退到 {DEFAULT_PORT}")
+                    return DEFAULT_PORT
+            except (ValueError, TypeError):
+                logging.warning(f"API_PORT: '{v}' 不是有效端口号，回退到 {DEFAULT_PORT}")
+                return DEFAULT_PORT
+
+        
     else:
 
         def __init__(self, **kwargs):
@@ -254,25 +281,11 @@ class Settings(SettingsClass):
             self.api_football_key = None
             self.api_football_url = "https://api-football-v1.p.rapidapi.com/v3"
             self.metrics_enabled = True
-            self.metrics_tables = [
-                "matches",
-                "teams",
-                "leagues",
-                "odds",
-                "features",
-                "raw_match_data",
-                "raw_odds_data",
-                "raw_scores_data",
-                "data_collection_logs",
-            ]
+            self.metrics_tables = "matches,teams,leagues,odds,features,raw_match_data,raw_odds_data,raw_scores_data,data_collection_logs"
             self.metrics_collection_interval = 30
             self.missing_data_defaults_path = None
             self.missing_data_defaults_json = None
-            self.enabled_services = [
-                "ContentAnalysisService",
-                "UserProfileService",
-                "DataProcessingService",
-            ]
+            self.enabled_services = "ContentAnalysisService,UserProfileService,DataProcessingService"
 
             # 从环境变量或kwargs更新配置
             for key, value in kwargs.items():
@@ -280,6 +293,16 @@ class Settings(SettingsClass):
 
             # 从环境变量读取配置
             self._load_from_env()
+
+    @property
+    def enabled_services_list(self) -> list[str]:
+        """获取启用服务的列表形式"""
+        return self._parse_list_env(self.enabled_services)
+
+    @property
+    def metrics_tables_list(self) -> list[str]:
+        """获取数据库表的列表形式"""
+        return self._parse_list_env(self.metrics_tables)
 
     def _load_from_env(self):
         """从环境变量加载配置."""
@@ -307,7 +330,18 @@ class Settings(SettingsClass):
             if env_value is None:
                 continue
 
-            if attr_name in {"api_port", "metrics_collection_interval"}:
+            if attr_name == "api_port":
+                try:
+                    port = int(env_value)
+                    if 1 <= port <= 65535:
+                        env_value = port
+                    else:
+                        logging.warning(f"API_PORT: '{env_value}' 超出范围，回退到默认值8000")
+                        env_value = 8000
+                except (ValueError, TypeError):
+                    logging.warning(f"API_PORT: '{env_value}' 不是有效端口号，回退到默认值8000")
+                    env_value = 8000
+            elif attr_name == "metrics_collection_interval":
                 try:
                     env_value = int(env_value)
                 except ValueError:
@@ -333,19 +367,26 @@ class Settings(SettingsClass):
 
         return [item.strip() for item in value.split(",") if item.strip()]
 
+    @property
+    def enabled_services_list(self) -> list[str]:
+        """获取启用服务的列表形式"""
+        return self._parse_list_env(self.enabled_services)
 
-# 全局配置实例
-config = Config()
+    @property
+    def metrics_tables_list(self) -> list[str]:
+        """获取数据库表的列表形式"""
+        return self._parse_list_env(self.metrics_tables)
 
 
+@functools.lru_cache(maxsize=None)
 def get_config() -> Config:
-    """获取配置实例."""
-    return config
+    """获取配置实例 - 延迟加载."""
+    return Config()
 
 
-# 创建全局设置实例
+@functools.lru_cache(maxsize=None)
 def get_settings() -> Settings:
-    """获取应用程序设置实例."""
+    """获取应用程序设置实例 - 延迟加载."""
     return Settings()
 
 
