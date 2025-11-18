@@ -141,7 +141,13 @@ class TestCQRSHandlersSafetyNet:
                 updated_at=datetime.now()
             )
         ]
-        self.mock_session.execute.return_value.fetchall.return_value = mock_predictions
+
+        # 创建Mock result对象
+        mock_result = Mock()
+        mock_result.fetchall.return_value = mock_predictions
+
+        # 正确Mock session.execute -> 返回result对象
+        self.mock_session.execute.return_value = mock_result
 
         # 测试处理器
         result = asyncio.run(handler.handle(mock_query))
@@ -171,17 +177,26 @@ class TestCQRSHandlersSafetyNet:
         mock_command.email = "test@example.com"
         mock_command.password_hash = "hashed_password"
 
-        # Mock数据库返回
-        self.mock_session.execute.return_value.fetchone.return_value = Mock(
-            id=1, created_at=datetime.now(), updated_at=datetime.now()
-        )
+        # Mock数据库操作
+        mock_user = Mock()
+        mock_user.id = 1
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.is_active = True
+        mock_user.created_at = datetime.now()
+        mock_user.last_login = datetime.now()
+
+        # Mock session.refresh的效果
+        self.mock_session.refresh = AsyncMock()
 
         # 测试处理器
         result = asyncio.run(handler.handle(mock_command))
 
         # 验证
         assert result is not None
-        assert self.mock_session.execute.called
+        # Create User处理器使用session.add和session.commit，不是execute
+        assert self.mock_session.add.called
+        assert self.mock_session.commit.called
 
     @pytest.mark.unit
     @pytest.mark.cqrs
