@@ -56,7 +56,9 @@ class MetricsEventHandler(EventHandler):
             self.metrics["event_counts"].get(event_type, 0) + 1
         )
         # 对于EventData，使用当前时间
-        self.metrics["last_event_time"] = event.timestamp if hasattr(event, 'timestamp') else datetime.utcnow()
+        self.metrics["last_event_time"] = (
+            event.timestamp if hasattr(event, "timestamp") else datetime.utcnow()
+        )
 
         logger.debug(f"Collected metrics for event: {event_type}")
 
