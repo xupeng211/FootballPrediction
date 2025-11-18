@@ -13,7 +13,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.core.exceptions import ResourceNotFoundError, ValidationError
+from src.core.exceptions import ValidationError, FootballPredictionError
 from src.database.models.tenant import (
     RolePermission,
     Tenant,
@@ -26,6 +26,10 @@ from src.database.models.tenant import (
 
 class TenantManagementError(Exception):
     """租户管理异常."""
+
+
+class ResourceNotFoundError(FootballPredictionError):
+    """资源未找到异常."""
 
 
 @dataclass
