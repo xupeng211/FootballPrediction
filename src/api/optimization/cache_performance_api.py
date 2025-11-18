@@ -4,7 +4,6 @@ Cache Performance Monitoring API Endpoints.
 提供完整的缓存性能监控、分析和优化功能的REST API接口。
 """
 
-import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Any
@@ -104,8 +103,24 @@ async def get_cache_status():
     warmup_manager = get_intelligent_warmup_manager()
 
     # 计算整体状态
-    all_disabled = all(manager is None for manager in [redis_manager, distributed_cache, consistency_manager, warmup_manager])
-    any_active = any(manager is not None for manager in [redis_manager, distributed_cache, consistency_manager, warmup_manager])
+    all_disabled = all(
+        manager is None
+        for manager in [
+            redis_manager,
+            distributed_cache,
+            consistency_manager,
+            warmup_manager,
+        ]
+    )
+    any_active = any(
+        manager is not None
+        for manager in [
+            redis_manager,
+            distributed_cache,
+            consistency_manager,
+            warmup_manager,
+        ]
+    )
 
     if all_disabled:
         overall_status = "unhealthy"
@@ -410,7 +425,11 @@ async def consistency_operation(request: ConsistencyOperationRequest):
                 method = getattr(consistency_manager, request.operation_type)
                 if callable(method):
                     result = await method(request.target_keys, **request.parameters)
-                    success = result.get("success", True) if isinstance(result, dict) else True
+                    success = (
+                        result.get("success", True)
+                        if isinstance(result, dict)
+                        else True
+                    )
 
         return {
             "operation_id": operation_id,
