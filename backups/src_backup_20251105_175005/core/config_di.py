@@ -1,6 +1,5 @@
-"""
-配置驱动的依赖注入
-Configuration-driven Dependency Injection
+"""配置驱动的依赖注入
+Configuration-driven Dependency Injection.
 
 通过配置文件管理依赖注入.
 Manages dependency injection through configuration files.
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ServiceConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """服务配置"""
@@ -41,7 +40,7 @@ class ServiceConfig:
 
 @dataclass
 class DIConfiguration:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """依赖注入配置"""
@@ -54,13 +53,13 @@ class DIConfiguration:
 
 
 class ConfigurationBinder:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """配置绑定器"""
 
     def __init__(self, container: DIContainer):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.container = container
         self.auto_binder = AutoBinder(container)
@@ -68,7 +67,7 @@ class ConfigurationBinder:
         self._active_profile: str | None = None
 
     def load_from_file(self, config_path: str | Path) -> None:
-        """从文件加载配置"""
+        """从文件加载配置."""
         config_path = Path(config_path)
 
         if not config_path.exists():
@@ -96,17 +95,17 @@ class ConfigurationBinder:
             raise DependencyInjectionError(f"加载配置文件失败: {e}") from e
 
     def load_from_dict(self, config_data: dict[str, Any]) -> None:
-        """从字典加载配置"""
+        """从字典加载配置."""
         self.config = self._parse_config(config_data)
         logger.info("从字典加载配置")
 
     def set_active_profile(self, profile: str) -> None:
-        """设置活动配置文件"""
+        """设置活动配置文件."""
         self._active_profile = profile
         logger.info(f"设置活动配置文件: {profile}")
 
     def apply_configuration(self) -> None:
-        """应用配置"""
+        """应用配置."""
         if not self.config:
             raise DependencyInjectionError("未加载配置")
 
@@ -141,7 +140,7 @@ class ConfigurationBinder:
         logger.info("配置应用完成")
 
     def _parse_config(self, data: dict[str, Any]) -> DIConfiguration:
-        """解析配置"""
+        """解析配置."""
         config = DIConfiguration()
 
         # 解析服务配置
@@ -179,7 +178,7 @@ class ConfigurationBinder:
         return config
 
     def _import_configuration(self, import_path: str) -> None:
-        """导入配置"""
+        """导入配置."""
         try:
             import_path = Path(import_path)
 
@@ -194,7 +193,7 @@ class ConfigurationBinder:
             logger.error(f"导入配置失败 {import_path}: {e}")
 
     def _register_service(self, service_name: str, config: ServiceConfig) -> None:
-        """注册服务"""
+        """注册服务."""
         try:
             # 获取服务类型
             service_type = self._get_type(service_name)
@@ -240,20 +239,20 @@ class ConfigurationBinder:
             logger.error(f"注册服务失败 {service_name}: {e}")
 
     def _get_type(self, type_name: str) -> type:
-        """获取类型"""
+        """获取类型."""
         # 尝试导入类型
         module_path, class_name = type_name.rsplit(".", 1)
         module = __import__(module_path, fromlist=[class_name])
         return getattr(module, class_name)
 
     def _get_factory(self, factory_path: str) -> callable:
-        """获取工厂函数"""
+        """获取工厂函数."""
         module_path, func_name = factory_path.rsplit(".", 1)
         module = __import__(module_path, fromlist=[func_name])
         return getattr(module, func_name)
 
     def _parse_lifetime(self, lifetime_str: str) -> ServiceLifetime:
-        """解析生命周期"""
+        """解析生命周期."""
         lifetime_map = {
             "singleton": ServiceLifetime.SINGLETON,
             "scoped": ServiceLifetime.SCOPED,
@@ -267,7 +266,7 @@ class ConfigurationBinder:
         return lifetime
 
     def _evaluate_condition(self, condition: str) -> bool:
-        """评估条件"""
+        """评估条件."""
         # 简单的条件评估
         # 例如: "profile == 'development'" or "env['DEBUG'] is True"
         try:
@@ -286,13 +285,13 @@ class ConfigurationBinder:
 
 
 class ConfigurationBuilder:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """配置构建器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.config = DIConfiguration()
 
@@ -303,7 +302,7 @@ class ConfigurationBuilder:
         lifetime: str = "transient",
         **kwargs,
     ) -> "ConfigurationBuilder":
-        """添加服务配置"""
+        """添加服务配置."""
         service_config = ServiceConfig(
             name=name, implementation=implementation, lifetime=lifetime, **kwargs
         )
@@ -311,34 +310,34 @@ class ConfigurationBuilder:
         return self
 
     def add_auto_scan(self, module_path: str) -> "ConfigurationBuilder":
-        """添加自动扫描"""
+        """添加自动扫描."""
         self.config.auto_scan.append(module_path)
         return self
 
     def add_convention(self, convention: str) -> "ConfigurationBuilder":
-        """添加约定"""
+        """添加约定."""
         self.config.conventions.append(convention)
         return self
 
     def add_import(self, import_path: str) -> "ConfigurationBuilder":
-        """添加导入"""
+        """添加导入."""
         self.config.imports.append(import_path)
         return self
 
     def build(self) -> DIConfiguration:
-        """构建配置"""
+        """构建配置."""
         return self.config
 
 
 def create_config_from_file(config_path: str | Path) -> DIConfiguration:
-    """从文件创建配置"""
+    """从文件创建配置."""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_file(config_path)
     return binder.config
 
 
 def create_config_from_dict(config_data: dict[str, Any]) -> DIConfiguration:
-    """从字典创建配置"""
+    """从字典创建配置."""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_dict(config_data)
     return binder.config
@@ -346,7 +345,7 @@ def create_config_from_dict(config_data: dict[str, Any]) -> DIConfiguration:
 
 # 示例配置生成器
 def generate_sample_config(format: str = "yaml") -> str:
-    """生成示例配置"""
+    """生成示例配置."""
     if format.lower() == "yaml":
         return """# 依赖注入配置"
 services:

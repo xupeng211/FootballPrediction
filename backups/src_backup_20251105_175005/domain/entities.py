@@ -1,6 +1,4 @@
-"""
-领域实体模块 - 简化版本
-"""
+"""领域实体模块 - 简化版本."""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -8,7 +6,7 @@ from enum import Enum
 
 
 class MatchStatus(Enum):
-    """比赛状态枚举"""
+    """比赛状态枚举."""
 
     SCHEDULED = "SCHEDULED"
     LIVE = "LIVE"
@@ -18,7 +16,7 @@ class MatchStatus(Enum):
 
 
 class TeamStatus(Enum):
-    """队伍状态枚举"""
+    """队伍状态枚举."""
 
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
@@ -27,7 +25,7 @@ class TeamStatus(Enum):
 
 @dataclass
 class Team:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """队伍实体"""
@@ -41,7 +39,7 @@ class Team:
 
 @dataclass
 class Match:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比赛实体"""
@@ -60,7 +58,7 @@ class Match:
 
 @dataclass
 class League:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """联赛实体"""
@@ -74,7 +72,7 @@ class League:
 
 @dataclass
 class Prediction:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测实体"""
@@ -90,12 +88,12 @@ class Prediction:
 
 # 导出常用函数
 def create_test_team(id: int, name: str) -> Team:
-    """创建测试用队伍"""
+    """创建测试用队伍."""
     return Team(id=id, name=name, status=TeamStatus.ACTIVE)
 
 
 def create_test_match(id: int, home_team: int, away_team: int) -> Match:
-    """创建测试用比赛"""
+    """创建测试用比赛."""
     return Match(
         id=id,
         home_team_id=home_team,
@@ -106,7 +104,7 @@ def create_test_match(id: int, home_team: int, away_team: int) -> Match:
 
 
 def validate_prediction_confidence(confidence: float) -> bool:
-    """验证预测置信度"""
+    """验证预测置信度."""
     return 0.0 <= confidence <= 1.0
 
 

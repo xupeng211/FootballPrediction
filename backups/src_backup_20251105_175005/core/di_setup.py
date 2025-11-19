@@ -1,6 +1,5 @@
-"""
-依赖注入设置
-Dependency Injection Setup
+"""依赖注入设置
+Dependency Injection Setup.
 
 提供依赖注入的初始化和配置功能.
 Provides initialization and configuration for dependency injection.
@@ -21,13 +20,13 @@ logger = logging.getLogger(__name__)
 
 
 class DISetup:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """依赖注入设置类"""
 
     def __init__(self, profile: str | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.profile = profile or os.getenv("APP_PROFILE", "development")
         self.container: DIContainer | None = None
@@ -38,7 +37,7 @@ class DISetup:
         config_file: str | None = None,
         auto_scan_modules: list | None = None,
     ) -> DIContainer:
-        """初始化依赖注入"""
+        """初始化依赖注入."""
         logger.info(f"初始化依赖注入,配置文件: {config_file}, 环境: {self.profile}")
 
         # 创建容器
@@ -70,7 +69,7 @@ class DISetup:
         return self.container
 
     def _register_core_services(self) -> None:
-        """注册核心服务"""
+        """注册核心服务."""
         # 注册生命周期管理器
         self.container.register_singleton(
             ServiceLifecycleManager, instance=self.lifecycle_manager
@@ -83,7 +82,7 @@ class DISetup:
         self._auto_register_services()
 
     def _auto_register_repositories(self) -> None:
-        """自动注册仓储"""
+        """自动注册仓储."""
         # 这里可以扫描并自动注册所有仓储类
         # 简化示例,手动注册主要仓储
         try:
@@ -102,7 +101,7 @@ class DISetup:
             logger.warning(f"无法导入仓储类: {e}")
 
     def _auto_register_services(self) -> None:
-        """自动注册服务"""
+        """自动注册服务."""
         # 这里可以扫描并自动注册所有服务类
         try:
             from ..services.cache import CacheService
@@ -118,14 +117,14 @@ class DISetup:
             logger.warning(f"无法导入服务类: {e}")
 
     async def start_services(self) -> None:
-        """启动所有服务"""
+        """启动所有服务."""
         if self.lifecycle_manager:
             await self.lifecycle_manager.start_all_services()
             # 启动健康监控
             self.lifecycle_manager.start_monitoring(interval=30.0)
 
     async def stop_services(self) -> None:
-        """停止所有服务"""
+        """停止所有服务."""
         if self.lifecycle_manager:
             await self.lifecycle_manager.shutdown()
 
@@ -135,7 +134,7 @@ _di_setup: DISetup | None = None
 
 
 def get_di_setup() -> DISetup:
-    """获取DI设置实例"""
+    """获取DI设置实例."""
     global _di_setup
     if _di_setup is None:
         _di_setup = DISetup()
@@ -147,7 +146,7 @@ def configure_di(
     profile: str | None = None,
     auto_scan_modules: list | None = None,
 ) -> DIContainer:
-    """配置依赖注入（便捷函数）"""
+    """配置依赖注入（便捷函数）."""
     setup = DISetup(profile)
     return setup.initialize(config_file, auto_scan_modules)
 
@@ -158,10 +157,10 @@ def register_service(
     interface: type | None = None,
     name: str | None = None,
 ):
-    """自动注册服务装饰器"""
+    """自动注册服务装饰器."""
 
     def decorator(cls):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         # 保存注册信息
         cls.__di_lifetime__ = lifetime
@@ -195,7 +194,7 @@ def register_service(
 def create_di_config(
     output_path: str = "configs/di-config.yaml", format: str = "yaml"
 ) -> None:
-    """创建依赖注入配置文件"""
+    """创建依赖注入配置文件."""
     from .config_di import generate_sample_config
 
     config_content = generate_sample_config(format)

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """validator
 赔率数据验证.
 

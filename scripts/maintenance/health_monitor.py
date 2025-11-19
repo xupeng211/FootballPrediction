@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-目录健康监控系统
-Directory Health Monitoring System
+"""目录健康监控系统
+Directory Health Monitoring System.
 
 用于监控项目目录结构的健康状况，提供实时警报和趋势分析
 
@@ -37,7 +36,7 @@ from scripts.maintenance.maintenance_logger import MaintenanceLogger
 
 @dataclass
 class HealthAlert:
-    """健康警报数据结构"""
+    """健康警报数据结构."""
     alert_type: str
     severity: str  # "info", "warning", "critical"
     title: str
@@ -48,7 +47,7 @@ class HealthAlert:
     resolved: bool = False
 
 class HealthMonitor:
-    """目录健康监控器"""
+    """目录健康监控器."""
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
@@ -76,7 +75,7 @@ class HealthMonitor:
         self._load_config()
 
     def _load_config(self):
-        """加载监控配置"""
+        """加载监控配置."""
         if self.config_file.exists():
             try:
                 with open(self.config_file, encoding='utf-8') as f:
@@ -86,7 +85,7 @@ class HealthMonitor:
                 pass
 
     def _save_config(self):
-        """保存监控配置"""
+        """保存监控配置."""
         try:
             config = {
                 "thresholds": self.thresholds,
@@ -98,7 +97,7 @@ class HealthMonitor:
             pass
 
     def _load_alerts(self) -> list[HealthAlert]:
-        """加载历史警报"""
+        """加载历史警报."""
         if not self.alerts_file.exists():
             return []
 
@@ -110,7 +109,7 @@ class HealthMonitor:
             return []
 
     def _save_alerts(self, alerts: list[HealthAlert]):
-        """保存警报记录"""
+        """保存警报记录."""
         try:
             alerts_data = [asdict(alert) for alert in alerts]
             with open(self.alerts_file, 'w', encoding='utf-8') as f:
@@ -121,7 +120,7 @@ class HealthMonitor:
     def _check_root_files_count(self,
     health_report: dict[str,
     Any]) -> HealthAlert | None:
-        """检查根目录文件数量"""
+        """检查根目录文件数量."""
         root_files = health_report["statistics"]["root_files"]
         threshold = self.thresholds["max_root_files"]
 
@@ -142,7 +141,7 @@ class HealthMonitor:
     def _check_health_score(self,
     health_report: dict[str,
     Any]) -> HealthAlert | None:
-        """检查健康评分"""
+        """检查健康评分."""
         health_score = health_report["health_score"]
         threshold = self.thresholds["min_health_score"]
 
@@ -163,7 +162,7 @@ class HealthMonitor:
     def _check_empty_directories(self,
     health_report: dict[str,
     Any]) -> HealthAlert | None:
-        """检查空目录数量"""
+        """检查空目录数量."""
         empty_dirs = health_report.get("empty_dirs", 0)
         threshold = self.thresholds["max_empty_dirs"]
 
@@ -184,7 +183,7 @@ class HealthMonitor:
     def _check_naming_violations(self,
     health_report: dict[str,
     Any]) -> HealthAlert | None:
-        """检查命名规范违规"""
+        """检查命名规范违规."""
         violations = health_report.get("naming_violations", 0)
         threshold = self.thresholds["max_naming_violations"]
 
@@ -205,7 +204,7 @@ class HealthMonitor:
     def _check_misplaced_files(self,
     health_report: dict[str,
     Any]) -> HealthAlert | None:
-        """检查错误放置的文件"""
+        """检查错误放置的文件."""
         misplaced = health_report.get("misplaced_files", 0)
         threshold = self.thresholds["max_misplaced_files"]
 
@@ -226,7 +225,7 @@ class HealthMonitor:
     def _check_project_size(self,
     health_report: dict[str,
     Any]) -> HealthAlert | None:
-        """检查项目大小"""
+        """检查项目大小."""
         size_mb = health_report["statistics"]["total_size_mb"]
         threshold_gb = self.thresholds["max_project_size_gb"]
         threshold_mb = threshold_gb * 1024
@@ -248,8 +247,7 @@ class HealthMonitor:
         return None
 
     def check_health(self) -> tuple[dict[str, Any], list[HealthAlert]]:
-        """执行健康检查并生成警报"""
-
+        """执行健康检查并生成警报."""
         # 生成健康报告
         health_report = self.maintenance.generate_health_report()
 
@@ -293,7 +291,7 @@ class HealthMonitor:
     health_report: dict[str,
     Any],
     alerts: list[HealthAlert]) -> Path:
-        """保存监控报告"""
+        """保存监控报告."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = self.monitoring_dir / f"health_monitoring_{timestamp}.json"
 
@@ -317,7 +315,7 @@ class HealthMonitor:
         return report_file
 
     def get_health_trends(self, days: int = 30) -> dict[str, Any]:
-        """获取健康趋势数据"""
+        """获取健康趋势数据."""
         trends = self.logger.get_health_trends(days)
 
         if not trends:
@@ -364,7 +362,7 @@ class HealthMonitor:
         return trend_analysis
 
     def generate_health_dashboard(self) -> dict[str, Any]:
-        """生成健康仪表板数据"""
+        """生成健康仪表板数据."""
         # 获取当前健康状态
         health_report, alerts = self.check_health()
 
@@ -399,7 +397,7 @@ class HealthMonitor:
     alerts: list[HealthAlert],
     health_report: dict[str,
     Any]) -> list[str]:
-        """生成改进建议"""
+        """生成改进建议."""
         recommendations = []
 
         # 基于警报生成建议
@@ -440,8 +438,7 @@ class HealthMonitor:
         return recommendations
 
     def run_monitoring(self, save_report: bool = True) -> dict[str, Any]:
-        """运行完整的健康监控"""
-
+        """运行完整的健康监控."""
         # 执行健康检查
         health_report, alerts = self.check_health()
 
@@ -479,7 +476,7 @@ class HealthMonitor:
         }
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(

@@ -1,6 +1,5 @@
-"""
-多级缓存系统
-生成时间:2025-10-26 20:57:22
+"""多级缓存系统
+生成时间:2025-10-26 20:57:22.
 """
 
 import time
@@ -15,20 +14,20 @@ class CacheLevel(Enum):
 
 
 class MultiLevelCache:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """多级缓存管理器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.l1_cache = {}  # 内存缓存
         self.l2_cache = {}  # Redis缓存（模拟）
         self.l3_cache = {}  # 数据库缓存（模拟）
 
     def get(self, key: str) -> Any | None:
-        """从缓存获取值（按级别依次检查）"""
+        """从缓存获取值（按级别依次检查）."""
         # L1缓存检查
         if key in self.l1_cache:
             item = self.l1_cache[key]
@@ -76,7 +75,7 @@ class MultiLevelCache:
         level: CacheLevel = CacheLevel.L1_MEMORY,
         ttl: int | None = None,
     ):
-        """设置缓存值到指定级别"""
+        """设置缓存值到指定级别."""
         if ttl is None:
             ttl = {
                 CacheLevel.L1_MEMORY: 60,  # 1分钟
@@ -94,7 +93,7 @@ class MultiLevelCache:
             self.l3_cache[key] = cache_item
 
     def invalidate(self, key: str):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """使缓存失效"""
         for cache in [self.l1_cache, self.l2_cache, self.l3_cache]:
@@ -102,7 +101,7 @@ class MultiLevelCache:
                 del cache[key]
 
     def clear_level(self, level: CacheLevel):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """清空指定级别的缓存"""
         if level == CacheLevel.L1_MEMORY:
@@ -113,7 +112,7 @@ class MultiLevelCache:
             self.l3_cache.clear()
 
     def get_cache_stats(self) -> dict[str, Any]:
-        """获取缓存统计信息"""
+        """获取缓存统计信息."""
         return {
             "l1_cache_size": len(self.l1_cache),
             "l2_cache_size": len(self.l2_cache),

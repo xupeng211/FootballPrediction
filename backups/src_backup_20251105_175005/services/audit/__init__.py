@@ -1,5 +1,4 @@
-"""
-audit 模块
+"""audit 模块.
 
 提供审计功能和日志记录服务.
 
@@ -14,7 +13,7 @@ from enum import Enum
 
 
 class AuditAction(Enum):
-    """审计动作枚举"""
+    """审计动作枚举."""
 
     CREATE = "create"
     UPDATE = "update"
@@ -25,7 +24,7 @@ class AuditAction(Enum):
 
 
 class AuditSeverity(Enum):
-    """审计严重性枚举"""
+    """审计严重性枚举."""
 
     LOW = "low"
     MEDIUM = "medium"
@@ -34,7 +33,7 @@ class AuditSeverity(Enum):
 
 
 class AuditContext:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计上下文"""
@@ -46,7 +45,7 @@ class AuditContext:
 
 
 class AuditLog:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计日志"""
@@ -64,25 +63,25 @@ class AuditLog:
 
 
 class AuditLogSummary:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计日志摘要"""
 
     def __init__(self, total_logs: int = 0):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.total_logs = total_logs
 
 
 class AuditService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计服务（简化版本）"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.name = "AuditService"
 
@@ -92,7 +91,7 @@ class AuditService:
         message: str,
         severity: AuditSeverity = AuditSeverity.LOW,
     ):
-        """记录审计日志"""
+        """记录审计日志."""
 
 
 __all__ = [

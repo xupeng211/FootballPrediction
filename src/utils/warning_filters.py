@@ -1,5 +1,3 @@
-from typing import Optional
-
 """import sklearn.
 
 警告过滤器设置

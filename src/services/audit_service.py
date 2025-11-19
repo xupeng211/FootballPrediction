@@ -8,7 +8,7 @@ Provides audit logging functionality for system operations.
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,5 @@
-"""
-API依赖注入
-API Dependencies
+"""API依赖注入
+API Dependencies.
 
 提供FastAPI依赖注入函数,包括:
 - 用户认证
@@ -31,7 +30,8 @@ except ImportError:
 
     def jwt(*args, **kwargs):
         """TODO: 添加函数文档
-        JWT函数占位符"""
+        JWT函数占位符.
+        """
         raise ImportError("Please install python-jose: pip install python-jose")
 
 
@@ -48,7 +48,7 @@ security = HTTPBearer()
 
 
 class TokenData:
-    """Token数据模型"""
+    """Token数据模型."""
 
     def __init__(self, username: str = None, user_id: int = None):
         self.username = username
@@ -58,7 +58,7 @@ class TokenData:
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
-    """获取当前用户"""
+    """获取当前用户."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -86,12 +86,12 @@ async def get_current_user(
 
 
 async def get_current_active_user(current_user: TokenData = Depends(get_current_user)):
-    """获取当前活跃用户"""
+    """获取当前活跃用户."""
     return current_user
 
 
 def create_access_token(data: dict, expires_delta: Optional = None):
-    """创建访问令牌"""
+    """创建访问令牌."""
     try:
         to_encode = data.copy()
 
@@ -113,7 +113,7 @@ def create_access_token(data: dict, expires_delta: Optional = None):
 
 
 def get_user_management_service():
-    """获取用户管理服务"""
+    """获取用户管理服务."""
     # 这里应该返回用户管理服务的实例
     # 为了测试目的，返回一个简单的模拟对象
     class MockUserManagementService:

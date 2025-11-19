@@ -1,5 +1,3 @@
-from typing import Optional
-
 """数据集成相关的Pydantic模型."""
 
 from datetime import datetime

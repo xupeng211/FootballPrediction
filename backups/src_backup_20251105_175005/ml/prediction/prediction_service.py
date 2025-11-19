@@ -1,6 +1,5 @@
-"""
-预测服务
-Prediction Service for Football Match Predictions
+"""预测服务
+Prediction Service for Football Match Predictions.
 """
 
 import logging
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class PredictionStrategy(Enum):
-    """预测策略"""
+    """预测策略."""
 
     SINGLE_MODEL = "single_model"
     WEIGHTED_ENSEMBLE = "weighted_ensemble"
@@ -27,7 +26,7 @@ class PredictionStrategy(Enum):
 
 @dataclass
 class EnsemblePrediction:
-    """集成预测结果"""
+    """集成预测结果."""
 
     match_id: str
     home_team: str
@@ -42,7 +41,7 @@ class EnsemblePrediction:
     created_at: datetime
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "match_id": self.match_id,
             "home_team": self.home_team,
@@ -60,7 +59,7 @@ class EnsemblePrediction:
 
 
 class PredictionService:
-    """预测服务"""
+    """预测服务."""
 
     def __init__(self):
         self.models = {}
@@ -72,7 +71,7 @@ class PredictionService:
         self._register_default_models()
 
     def _register_default_models(self):
-        """注册默认模型"""
+        """注册默认模型."""
         self.register_model("poisson", PoissonModel())
         self.register_model("elo", EloModel())
 
@@ -80,8 +79,7 @@ class PredictionService:
         self.model_weights = {"poisson": 0.4, "elo": 0.6}
 
     def register_model(self, name: str, model: BaseModel, weight: float = 1.0):
-        """
-        注册预测模型
+        """注册预测模型.
 
         Args:
             name: 模型名称
@@ -93,8 +91,7 @@ class PredictionService:
         logger.info(f"Registered model: {name} (weight: {weight})")
 
     def unregister_model(self, name: str):
-        """
-        注销模型
+        """注销模型.
 
         Args:
             name: 模型名称
@@ -105,8 +102,7 @@ class PredictionService:
             logger.info(f"Unregistered model: {name}")
 
     def get_available_models(self) -> list[str]:
-        """
-        获取可用模型列表
+        """获取可用模型列表.
 
         Returns:
             模型名称列表
@@ -114,8 +110,7 @@ class PredictionService:
         return list(self.models.keys())
 
     def get_trained_models(self) -> list[str]:
-        """
-        获取已训练的模型列表
+        """获取已训练的模型列表.
 
         Returns:
             已训练模型名称列表
@@ -123,8 +118,7 @@ class PredictionService:
         return [name for name, model in self.models.items() if model.is_trained]
 
     def set_strategy(self, strategy: PredictionStrategy):
-        """
-        设置预测策略
+        """设置预测策略.
 
         Args:
             strategy: 预测策略
@@ -140,8 +134,7 @@ class PredictionService:
 
         strategy: PredictionStrategy | None = None,
     ) -> Any:
-        """
-        预测比赛结果
+        """预测比赛结果.
 
         Args:
             match_data: 比赛数据
@@ -173,8 +166,7 @@ class PredictionService:
     Any],
     strategy: PredictionStrategy
     ) -> EnsemblePrediction:
-        """
-        集成预测
+        """集成预测.
 
         Args:
             match_data: 比赛数据
@@ -232,8 +224,7 @@ class PredictionService:
     def _weighted_ensemble(self,
     predictions: list[PredictionResult]) -> dict[str,
     Any]:
-        """
-        加权集成预测
+        """加权集成预测.
 
         Args:
             predictions: 各模型预测结果
@@ -282,8 +273,7 @@ class PredictionService:
         }
 
     def _majority_vote(self, predictions: list[PredictionResult]) -> dict[str, Any]:
-        """
-        多数投票预测
+        """多数投票预测.
 
         Args:
             predictions: 各模型预测结果
@@ -332,8 +322,7 @@ class PredictionService:
     def _best_performing(self,
     predictions: list[PredictionResult]) -> dict[str,
     Any]:
-        """
-        选择表现最好的模型的预测
+        """选择表现最好的模型的预测.
 
         Args:
             predictions: 各模型预测结果
@@ -375,7 +364,7 @@ class PredictionService:
     float,
     float]
     ) -> str:
-        """从概率分布获取预测结果"""
+        """从概率分布获取预测结果."""
         outcomes = ["home_win",
     "draw",
     "away_win"]
@@ -387,7 +376,7 @@ class PredictionService:
     probabilities: tuple[float,
     float,
     float]) -> float:
-        """计算预测置信度"""
+        """计算预测置信度."""
         max_prob = max(probabilities)
         min_prob = min(probabilities)
         confidence = max_prob + (max_prob - min_prob) * 0.1  # 考虑概率分布的离散程度
@@ -403,8 +392,7 @@ class PredictionService:
         model_name: str | None = None,
         strategy: PredictionStrategy | None = None,
     ) -> list[Any]:
-        """
-        批量预测
+        """批量预测.
 
         Args:
             matches_data: 比赛数据列表
@@ -429,8 +417,7 @@ class PredictionService:
         return results
 
     def update_model_weights(self, weights: dict[str, float]):
-        """
-        更新模型权重
+        """更新模型权重.
 
         Args:
             weights: 模型权重字典
@@ -443,8 +430,7 @@ class PredictionService:
     def set_model_performance(
         self, model_name: str, performance_metrics: dict[str, float]
     ):
-        """
-        设置模型性能指标
+        """设置模型性能指标.
 
         Args:
             model_name: 模型名称
@@ -454,8 +440,7 @@ class PredictionService:
         logger.info(f"Updated performance metrics for {model_name}")
 
     def get_model_info(self) -> dict[str, Any]:
-        """
-        获取模型信息
+        """获取模型信息.
 
         Returns:
             模型信息字典
@@ -483,8 +468,7 @@ class PredictionService:
     training_data,
     validation_data=None) -> dict[str,
     Any]:
-        """
-        训练所有模型
+        """训练所有模型.
 
         Args:
             training_data: 训练数据

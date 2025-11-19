@@ -1,5 +1,3 @@
-from typing import Optional
-
 """统计分析策略."""
 
 # 导入

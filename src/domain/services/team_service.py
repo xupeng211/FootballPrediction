@@ -6,7 +6,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Protocol, Optional
+from typing import Any, Protocol
 
 from src.domain.models.team import Team, TeamForm, TeamStats
 

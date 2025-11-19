@@ -1,5 +1,3 @@
-from typing import Optional
-
 """认证依赖模块
 Authentication Dependencies Module.
 

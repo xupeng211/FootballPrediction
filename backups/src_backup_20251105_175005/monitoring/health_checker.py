@@ -1,6 +1,5 @@
-"""
-健康检查器
-Health Checker
+"""健康检查器
+Health Checker.
 
 检查各个系统的健康状态.
 """
@@ -13,7 +12,7 @@ from src.database.connection import DatabaseManager
 
 
 class HealthStatus:
-    """健康状态"""
+    """健康状态."""
 
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
@@ -21,24 +20,24 @@ class HealthStatus:
 
 
 class HealthChecker:
-    """健康检查器"""
+    """健康检查器."""
 
     def __init__(self):
-        """初始化健康检查器"""
+        """初始化健康检查器."""
         self.db_manager: DatabaseManager | None = None
         self.redis_manager: RedisConnectionManager | None = None
         self.last_checks: dict[str, datetime] = {}
 
     def set_database_manager(self, db_manager: DatabaseManager) -> None:
-        """设置数据库管理器"""
+        """设置数据库管理器."""
         self.db_manager = db_manager
 
     def set_redis_manager(self, redis_manager: RedisConnectionManager) -> None:
-        """设置Redis管理器"""
+        """设置Redis管理器."""
         self.redis_manager = redis_manager
 
     async def check_database(self) -> dict[str, Any]:
-        """检查数据库健康状态"""
+        """检查数据库健康状态."""
         health = {
             "status": HealthStatus.HEALTHY,
             "timestamp": datetime.utcnow().isoformat(),
@@ -88,7 +87,7 @@ class HealthChecker:
         return health
 
     async def check_redis(self) -> dict[str, Any]:
-        """检查Redis健康状态"""
+        """检查Redis健康状态."""
         health = {
             "status": HealthStatus.HEALTHY,
             "timestamp": datetime.utcnow().isoformat(),
@@ -147,7 +146,7 @@ class HealthChecker:
         return health
 
     async def check_system_resources(self) -> dict[str, Any]:
-        """检查系统资源健康状态"""
+        """检查系统资源健康状态."""
         try:
             import psutil
         except ImportError:
@@ -234,7 +233,7 @@ class HealthChecker:
         return health
 
     async def check_application_health(self) -> dict[str, Any]:
-        """检查应用程序健康状态"""
+        """检查应用程序健康状态."""
         health = {
             "status": HealthStatus.HEALTHY,
             "timestamp": datetime.utcnow().isoformat(),
@@ -292,7 +291,7 @@ class HealthChecker:
         return health
 
     def _check_recent_errors(self, minutes: int = 5) -> int:
-        """检查最近的错误日志数量"""
+        """检查最近的错误日志数量."""
         try:
             # 这里应该实现实际的日志检查逻辑
             # 暂时返回0
@@ -301,7 +300,7 @@ class HealthChecker:
             return 0
 
     async def check_all(self) -> dict[str, Any]:
-        """检查所有组件的健康状态"""
+        """检查所有组件的健康状态."""
         overall_health = {
             "status": HealthStatus.HEALTHY,
             "timestamp": datetime.utcnow().isoformat(),
@@ -338,7 +337,7 @@ class HealthChecker:
         return overall_health
 
     async def start_monitoring(self, interval: int = 60) -> None:
-        """开始持续监控"""
+        """开始持续监控."""
         import asyncio
 
         while True:

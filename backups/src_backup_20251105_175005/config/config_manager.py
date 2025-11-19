@@ -1,6 +1,5 @@
-"""
-配置管理器模块
-Configuration Manager Module
+"""配置管理器模块
+Configuration Manager Module.
 """
 
 import os
@@ -8,14 +7,14 @@ from typing import Any
 
 
 class ConfigManager:
-    """配置管理器"""
+    """配置管理器."""
 
     def __init__(self):
         self.config: dict[str, Any] = {}
         self.load_default_config()
 
     def load_default_config(self):
-        """加载默认配置"""
+        """加载默认配置."""
         self.config = {
             "database_url": os.getenv(
                 "DATABASE_URL", "sqlite:///./football_prediction.db"
@@ -29,40 +28,40 @@ class ConfigManager:
         }
 
     def get(self, key: str, default: Any = None) -> Any:
-        """获取配置值"""
+        """获取配置值."""
         return self.config.get(key, default)
 
     def set(self, key: str, value: Any) -> None:
-        """设置配置值"""
+        """设置配置值."""
         self.config[key] = value
 
     def reload(self) -> None:
-        """重新加载配置"""
+        """重新加载配置."""
         self.load_default_config()
 
     @property
     def database_url(self) -> str:
-        """数据库URL"""
+        """数据库URL."""
         return self.get("database_url")
 
     @property
     def redis_url(self) -> str:
-        """Redis URL"""
+        """Redis URL."""
         return self.get("redis_url")
 
     @property
     def secret_key(self) -> str:
-        """密钥"""
+        """密钥."""
         return self.get("secret_key")
 
     @property
     def debug(self) -> bool:
-        """调试模式"""
+        """调试模式."""
         return self.get("debug", False)
 
     @property
     def log_level(self) -> str:
-        """日志级别"""
+        """日志级别."""
         return self.get("log_level", "INFO")
 
 
@@ -71,7 +70,7 @@ config_manager = ConfigManager()
 
 
 def example() -> str | None:
-    """示例函数"""
+    """示例函数."""
     return config_manager.get("example_value")
 
 

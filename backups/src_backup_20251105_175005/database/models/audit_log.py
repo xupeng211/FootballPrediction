@@ -17,7 +17,7 @@ from src.database.types import SQLiteCompatibleJSONB
 
 
 class AuditAction(str, Enum):
-    """审计操作类型枚举"""
+    """审计操作类型枚举."""
 
     # 数据操作
     CREATE = "CREATE"  # 创建记录
@@ -41,7 +41,7 @@ class AuditAction(str, Enum):
 
 
 class AuditSeverity(str, Enum):
-    """审计事件严重级别"""
+    """审计事件严重级别."""
 
     INFO = "INFO"  # 信息级:一般性成功事件
     LOW = "LOW"  # 低风险:普通读操作
@@ -77,7 +77,7 @@ class AuditLog(BaseModel):
     )
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -96,7 +96,7 @@ class AuditLog(BaseModel):
 
 
 class AuditLogSummary(BaseModel):
-    """审计日志汇总模型"""
+    """审计日志汇总模型."""
 
     __table_args__ = {"extend_existing": True}
     __tablename__ = "audit_log_summaries"
@@ -114,7 +114,7 @@ class AuditLogSummary(BaseModel):
     __table_args__ = (Index("idx_summary_date", "date"), {"extend_existing": True})
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "id": self.id,
             "date": self.date.isoformat() if self.date else None,

@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""
-P8.1 简化的失败测试聚类分析
-直接分析失败测试列表
+"""P8.1 简化的失败测试聚类分析
+直接分析失败测试列表.
 """
 
 import re
-from collections import defaultdict, Counter
-from pathlib import Path
+from collections import defaultdict
+
 
 def parse_failed_tests():
-    """解析失败测试列表"""
+    """解析失败测试列表."""
     failed_tests = []
 
-    with open('/tmp/failed_tests_list.txt', 'r') as f:
+    with open('/tmp/failed_tests_list.txt') as f:
         for line in f:
             # 解析格式: tests/module/file.py::Class::test_name FAILED [ x%]
             match = re.match(r'(tests/.+?)::(.+?)\s+FAILED', line.strip())
@@ -40,7 +39,7 @@ def parse_failed_tests():
     return failed_tests
 
 def extract_module(test_path):
-    """从测试路径提取模块"""
+    """从测试路径提取模块."""
     if '/api/' in test_path:
         return 'API'
     elif '/integration/' in test_path:
@@ -51,7 +50,7 @@ def extract_module(test_path):
         return 'OTHER'
 
 def extract_test_type(test_path):
-    """提取测试类型"""
+    """提取测试类型."""
     if 'auth' in test_path:
         return 'AUTH'
     elif 'cache' in test_path:
@@ -70,7 +69,7 @@ def extract_test_type(test_path):
         return 'GENERAL'
 
 def extract_functional_area(test_full_name):
-    """提取功能区域"""
+    """提取功能区域."""
     test_lower = test_full_name.lower()
     if 'health' in test_lower:
         return 'HEALTH_CHECK'
@@ -96,7 +95,7 @@ def extract_functional_area(test_full_name):
         return 'GENERAL'
 
 def identify_error_pattern(test_method):
-    """识别可能的错误模式"""
+    """识别可能的错误模式."""
     test_lower = test_method.lower()
     if 'system_info' in test_lower or 'health' in test_lower:
         return 'HTTP_500_ERROR'
@@ -114,7 +113,7 @@ def identify_error_pattern(test_method):
         return 'UNKNOWN_ERROR'
 
 def perform_clustering(failed_tests):
-    """执行聚类分析"""
+    """执行聚类分析."""
     # 按模块聚类
     module_clusters = defaultdict(list)
     for test in failed_tests:
@@ -143,7 +142,7 @@ def perform_clustering(failed_tests):
     }
 
 def calculate_impact(cluster, cluster_type):
-    """计算集群影响分数"""
+    """计算集群影响分数."""
     base_score = len(cluster)
 
     # 根据集群类型调整权重
@@ -195,7 +194,7 @@ def calculate_impact(cluster, cluster_type):
     return int(base_score * weight)
 
 def generate_triage_report(failed_tests, clusters):
-    """生成分诊报告"""
+    """生成分诊报告."""
     total_failures = len(failed_tests)
 
     # 计算各种统计
@@ -343,7 +342,7 @@ def generate_triage_report(failed_tests, clusters):
     return report
 
 def get_fix_suggestion(cluster):
-    """获取修复建议"""
+    """获取修复建议."""
     suggestions = {
         'HTTP_500_ERROR': '检查API端点实现，修复服务器内部错误',
         'CACHE_ATTR_ERROR': '解决异步装饰器问题，修复缓存管理器',
@@ -367,16 +366,12 @@ def get_fix_suggestion(cluster):
     return '需要详细分析具体错误原因'
 
 def main():
-    """主函数"""
-    print("🚀 启动P8.1简化聚类分析...")
-
+    """主函数."""
     # 解析失败测试
     failed_tests = parse_failed_tests()
-    print(f"✅ 解析完成: 找到 {len(failed_tests)} 个失败测试")
 
     # 执行聚类分析
     clusters = perform_clustering(failed_tests)
-    print("🔄 聚类分析完成")
 
     # 生成报告
     report = generate_triage_report(failed_tests, clusters)
@@ -385,15 +380,8 @@ def main():
     with open('P8.1_Triage_Report.md', 'w', encoding='utf-8') as f:
         f.write(report)
 
-    print("✅ 报告已保存到: P8.1_Triage_Report.md")
 
     # 显示摘要
-    print("\n📋 分析摘要:")
-    print(f"- 总失败测试: {len(failed_tests)}")
-    print(f"- 模块集群: {len(clusters['module_clusters'])}")
-    print(f"- 测试类型集群: {len(clusters['test_type_clusters'])}")
-    print(f"- 功能区域集群: {len(clusters['functional_clusters'])}")
-    print(f"- 错误模式集群: {len(clusters['error_clusters'])}")
 
 if __name__ == "__main__":
     main()

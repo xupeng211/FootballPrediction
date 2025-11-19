@@ -6,7 +6,7 @@ Defines all write operation commands.
 """
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.database.models import Match, Prediction, User
 

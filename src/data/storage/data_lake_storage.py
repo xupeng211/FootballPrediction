@@ -1,5 +1,3 @@
-from typing import Optional
-
 """数据湖存储模块
 Data Lake Storage Module.
 

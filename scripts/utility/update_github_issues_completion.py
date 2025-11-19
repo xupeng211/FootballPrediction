@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""
-更新GitHub Issues，标记所有优先级任务为已完成
-"""
+"""更新GitHub Issues，标记所有优先级任务为已完成."""
 
 import json
 from datetime import datetime
 
 
 def create_completion_report():
-    """创建任务完成报告"""
+    """创建任务完成报告."""
     report = {
         "timestamp": datetime.now().isoformat(),
         "completion_status": "ALL_PRIORITY_TASKS_COMPLETED",
@@ -52,8 +50,7 @@ def create_completion_report():
     return report
 
 def main():
-    """主函数"""
-
+    """主函数."""
     report = create_completion_report()
 
     # 保存完成报告

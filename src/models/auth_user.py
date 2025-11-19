@@ -1,5 +1,3 @@
-from typing import Optional
-
 """认证用户数据库模型
 Authentication User Database Model.
 

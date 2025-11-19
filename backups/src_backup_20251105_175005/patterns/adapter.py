@@ -1,6 +1,5 @@
-"""
-适配器模式实现
-Adapter Pattern Implementation
+"""适配器模式实现
+Adapter Pattern Implementation.
 
 提供统一的数据接口适配功能，用于整合不同外部API和数据源.
 """
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ExternalData:
-    """外部数据结构"""
+    """外部数据结构."""
 
     source: str
     data: dict[str, Any]
@@ -30,7 +29,7 @@ class ExternalData:
 
 
 class ExternalAPI(ABC):
-    """外部API抽象基类"""
+    """外部API抽象基类."""
 
     def __init__(self, name: str, base_url: str):
         self.name = name
@@ -40,25 +39,25 @@ class ExternalAPI(ABC):
 
     @abstractmethod
     async def connect(self) -> bool:
-        """连接到外部API"""
+        """连接到外部API."""
 
     @abstractmethod
     async def disconnect(self):
-        """断开连接"""
+        """断开连接."""
 
     @abstractmethod
     async def fetch_data(
         self, endpoint: str, params: dict | None = None
     ) -> ExternalData:
-        """获取数据"""
+        """获取数据."""
 
     @abstractmethod
     async def health_check(self) -> bool:
-        """健康检查"""
+        """健康检查."""
 
 
 class APIAdapter(ExternalAPI):
-    """API适配器基类"""
+    """API适配器基类."""
 
     def __init__(self, name: str, base_url: str, api_key: str | None = None):
         super().__init__(name, base_url)
@@ -67,7 +66,7 @@ class APIAdapter(ExternalAPI):
         self.timeout = 30  # 超时时间（秒）
 
     async def connect(self) -> bool:
-        """连接到API"""
+        """连接到API."""
         try:
             # 模拟连接逻辑
             await asyncio.sleep(0.1)
@@ -80,19 +79,19 @@ class APIAdapter(ExternalAPI):
             return False
 
     async def disconnect(self):
-        """断开连接"""
+        """断开连接."""
         self.is_connected = False
         logger.info(f"Disconnected from {self.name}")
 
     async def health_check(self) -> bool:
-        """健康检查"""
+        """健康检查."""
         if not self.is_connected:
             return await self.connect()
         return True
 
 
 class FootballApiAdapter(APIAdapter):
-    """足球API适配器"""
+    """足球API适配器."""
 
     def __init__(self, base_url: str, api_key: str | None = None):
         super().__init__("football_api", base_url, api_key)
@@ -100,7 +99,7 @@ class FootballApiAdapter(APIAdapter):
     async def fetch_data(
         self, endpoint: str, params: dict | None = None
     ) -> ExternalData:
-        """获取足球数据"""
+        """获取足球数据."""
         if not self.is_connected:
             await self.connect()
 
@@ -127,7 +126,7 @@ class FootballApiAdapter(APIAdapter):
 
 
 class WeatherApiAdapter(APIAdapter):
-    """天气API适配器"""
+    """天气API适配器."""
 
     def __init__(self, base_url: str, api_key: str | None = None):
         super().__init__("weather_api", base_url, api_key)
@@ -135,7 +134,7 @@ class WeatherApiAdapter(APIAdapter):
     async def fetch_data(
         self, endpoint: str, params: dict | None = None
     ) -> ExternalData:
-        """获取天气数据"""
+        """获取天气数据."""
         if not self.is_connected:
             await self.connect()
 
@@ -159,7 +158,7 @@ class WeatherApiAdapter(APIAdapter):
 
 
 class OddsApiAdapter(APIAdapter):
-    """赔率API适配器"""
+    """赔率API适配器."""
 
     def __init__(self, base_url: str, api_key: str | None = None):
         super().__init__("odds_api", base_url, api_key)
@@ -167,7 +166,7 @@ class OddsApiAdapter(APIAdapter):
     async def fetch_data(
         self, endpoint: str, params: dict | None = None
     ) -> ExternalData:
-        """获取赔率数据"""
+        """获取赔率数据."""
         if not self.is_connected:
             await self.connect()
 
@@ -191,25 +190,25 @@ class OddsApiAdapter(APIAdapter):
 
 
 class UnifiedDataCollector:
-    """统一数据收集器"""
+    """统一数据收集器."""
 
     def __init__(self):
         self.adapters: dict[str, APIAdapter] = {}
         self.is_initialized = False
 
     def register_adapter(self, adapter: APIAdapter):
-        """注册适配器"""
+        """注册适配器."""
         self.adapters[adapter.name] = adapter
         logger.info(f"Registered adapter: {adapter.name}")
 
     def unregister_adapter(self, name: str):
-        """注销适配器"""
+        """注销适配器."""
         if name in self.adapters:
             del self.adapters[name]
             logger.info(f"Unregistered adapter: {name}")
 
     async def initialize_all(self):
-        """初始化所有适配器"""
+        """初始化所有适配器."""
         tasks = []
         for adapter in self.adapters.values():
             tasks.append(adapter.connect())
@@ -222,7 +221,7 @@ class UnifiedDataCollector:
         self.is_initialized = True
 
     async def shutdown_all(self):
-        """关闭所有适配器"""
+        """关闭所有适配器."""
         tasks = []
         for adapter in self.adapters.values():
             tasks.append(adapter.disconnect())
@@ -234,7 +233,7 @@ class UnifiedDataCollector:
     async def collect_all_data(
         self, endpoint: str, params: dict | None = None
     ) -> list[ExternalData]:
-        """从所有适配器收集数据"""
+        """从所有适配器收集数据."""
         if not self.is_initialized:
             await self.initialize_all()
 
@@ -260,7 +259,7 @@ class UnifiedDataCollector:
         return collected_data
 
     async def get_health_status(self) -> dict[str, bool]:
-        """获取所有适配器的健康状态"""
+        """获取所有适配器的健康状态."""
         tasks = []
         for name, adapter in self.adapters.items():
             tasks.append((name, adapter.health_check()))
@@ -277,39 +276,39 @@ class UnifiedDataCollector:
 
 
 class AdapterFactory:
-    """适配器工厂类"""
+    """适配器工厂类."""
 
     @staticmethod
     def create_football_adapter(
         base_url: str, api_key: str | None = None
     ) -> FootballApiAdapter:
-        """创建足球API适配器"""
+        """创建足球API适配器."""
         return FootballApiAdapter(base_url, api_key)
 
     @staticmethod
     def create_weather_adapter(
         base_url: str, api_key: str | None = None
     ) -> WeatherApiAdapter:
-        """创建天气API适配器"""
+        """创建天气API适配器."""
         return WeatherApiAdapter(base_url, api_key)
 
     @staticmethod
     def create_odds_adapter(
         base_url: str, api_key: str | None = None
     ) -> OddsApiAdapter:
-        """创建赔率API适配器"""
+        """创建赔率API适配器."""
         return OddsApiAdapter(base_url, api_key)
 
     @staticmethod
     def create_unified_collector() -> UnifiedDataCollector:
-        """创建统一数据收集器"""
+        """创建统一数据收集器."""
         return UnifiedDataCollector()
 
     @staticmethod
     def create_adapter(
         adapter_type: str, base_url: str, api_key: str | None = None
     ) -> APIAdapter:
-        """根据类型创建适配器"""
+        """根据类型创建适配器."""
         adapter_map = {
             "football": AdapterFactory.create_football_adapter,
             "weather": AdapterFactory.create_weather_adapter,
@@ -323,7 +322,7 @@ class AdapterFactory:
 
     @classmethod
     def create_standard_setup(cls, config: dict[str, Any]) -> UnifiedDataCollector:
-        """创建标准设置"""
+        """创建标准设置."""
         collector = cls.create_unified_collector()
 
         # 注册足球适配器

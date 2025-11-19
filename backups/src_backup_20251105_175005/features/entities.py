@@ -1,5 +1,4 @@
-"""
-特征实体定义
+"""特征实体定义.
 
 定义足球预测系统中的核心实体:
 - MatchEntity: 比赛实体,用于比赛级别的特征
@@ -13,7 +12,7 @@ from typing import Any
 
 @dataclass
 class FeatureEntity:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """基础特征实体类"""
@@ -27,7 +26,7 @@ class FeatureEntity:
 
 @dataclass
 class MatchEntity:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -44,7 +43,7 @@ class MatchEntity:
     season: str
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "match_id": self.match_id,
             "home_team_id": self.home_team_id,
@@ -56,7 +55,7 @@ class MatchEntity:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "MatchEntity":
-        """从字典创建实体"""
+        """从字典创建实体."""
         return cls(
             match_id=data["match_id"],
             home_team_id=data["home_team_id"],
@@ -69,7 +68,7 @@ class MatchEntity:
 
 @dataclass
 class TeamEntity:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -84,7 +83,7 @@ class TeamEntity:
     home_venue: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "team_id": self.team_id,
             "team_name": self.team_name,
@@ -94,7 +93,7 @@ class TeamEntity:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "TeamEntity":
-        """从字典创建实体"""
+        """从字典创建实体."""
         return cls(
             team_id=data["team_id"],
             team_name=data["team_name"],
@@ -105,7 +104,7 @@ class TeamEntity:
 
 @dataclass
 class FeatureKey:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """

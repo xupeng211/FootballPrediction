@@ -1,6 +1,5 @@
-"""
-增强的指标收集器
-Enhanced Metrics Collector
+"""增强的指标收集器
+Enhanced Metrics Collector.
 
 提供全面的业务和系统指标收集:
 - 业务指标（预测数量、准确率等）
@@ -23,36 +22,36 @@ logger = logging.getLogger(__name__)
 
 
 class EnhancedMetricsCollector:
-    """简化的增强指标收集器"""
+    """简化的增强指标收集器."""
 
     @classmethod
     def initialize(cls):
-        """初始化指标收集器"""
+        """初始化指标收集器."""
         logger.info("✅ MetricsCollector initialized successfully")
 
     def __init__(self):
-        """初始化增强指标收集器"""
+        """初始化增强指标收集器."""
         self.metrics = {}
 
     def collect(self) -> dict[str, Any]:
-        """收集指标"""
+        """收集指标."""
         return {"timestamp": datetime.utcnow(), "metrics": self.metrics}
 
     def add_metric(self, name: str, value: Any):
-        """添加指标"""
+        """添加指标."""
         self.metrics[name] = value
         logger.debug(f"Added metric: {name} = {value}")
 
 
 class MetricsAggregator:
-    """指标聚合器 - 简化版本"""
+    """指标聚合器 - 简化版本."""
 
     def __init__(self):
-        """初始化指标聚合器"""
+        """初始化指标聚合器."""
         self.aggregated_metrics = {}
 
     def aggregate(self, metrics: dict[str, Any]):
-        """聚合指标"""
+        """聚合指标."""
         for key, value in metrics.items():
             if key in self.aggregated_metrics:
                 # 简单的聚合逻辑:取平均值
@@ -64,21 +63,21 @@ class MetricsAggregator:
         logger.debug(f"Aggregated {len(metrics)} metrics")
 
     def get_aggregated(self) -> dict[str, Any]:
-        """获取聚合后的指标"""
+        """获取聚合后的指标."""
         return self.aggregated_metrics
 
 
 class MetricPoint:
-    """指标点 - 简化版本"""
+    """指标点 - 简化版本."""
 
     def __init__(self, name: str, value: float, timestamp: datetime | None = None):
-        """初始化指标点"""
+        """初始化指标点."""
         self.name = name
         self.value = value
         self.timestamp = timestamp or datetime.utcnow()
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {"name": self.name, "value": self.value, "timestamp": self.timestamp}
 
 
@@ -87,7 +86,7 @@ _collector = None
 
 
 def get_metrics_collector() -> EnhancedMetricsCollector:
-    """获取全局指标收集器实例"""
+    """获取全局指标收集器实例."""
     global _collector
     if _collector is None:
         _collector = EnhancedMetricsCollector()
@@ -95,7 +94,7 @@ def get_metrics_collector() -> EnhancedMetricsCollector:
 
 
 def track_prediction_performance(prediction_id: str, accuracy: float):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """跟踪预测性能"""
     collector = get_metrics_collector()
@@ -104,7 +103,7 @@ def track_prediction_performance(prediction_id: str, accuracy: float):
 
 
 def track_cache_performance(cache_name: str, hit_rate: float):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """跟踪缓存性能"""
     collector = get_metrics_collector()

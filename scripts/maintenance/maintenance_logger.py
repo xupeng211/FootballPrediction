@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-维护日志系统
-Maintenance Logger System
+"""维护日志系统
+Maintenance Logger System.
 
 用于记录和跟踪目录维护的历史记录
 
@@ -20,7 +19,7 @@ from typing import Any
 
 @dataclass
 class MaintenanceRecord:
-    """维护记录数据结构"""
+    """维护记录数据结构."""
     timestamp: str
     action_type: str
     description: str
@@ -35,7 +34,7 @@ class MaintenanceRecord:
     error_message: str | None = None
 
 class MaintenanceLogger:
-    """维护日志记录器"""
+    """维护日志记录器."""
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
@@ -47,7 +46,7 @@ class MaintenanceLogger:
         self._init_database()
 
     def _init_database(self):
-        """初始化数据库"""
+        """初始化数据库."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -89,7 +88,7 @@ class MaintenanceLogger:
         conn.close()
 
     def log_maintenance(self, record: MaintenanceRecord) -> bool:
-        """记录维护活动"""
+        """记录维护活动."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -123,7 +122,7 @@ class MaintenanceLogger:
             return False
 
     def log_health_snapshot(self, health_report: dict[str, Any]):
-        """记录健康快照"""
+        """记录健康快照."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -154,7 +153,7 @@ class MaintenanceLogger:
             pass
 
     def get_maintenance_history(self, days: int = 30) -> list[dict[str, Any]]:
-        """获取维护历史记录"""
+        """获取维护历史记录."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -176,7 +175,7 @@ class MaintenanceLogger:
             return []
 
     def get_health_trends(self, days: int = 30) -> list[dict[str, Any]]:
-        """获取健康趋势数据"""
+        """获取健康趋势数据."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -198,7 +197,7 @@ class MaintenanceLogger:
             return []
 
     def generate_maintenance_report(self, days: int = 7) -> dict[str, Any]:
-        """生成维护报告"""
+        """生成维护报告."""
         maintenance_history = self.get_maintenance_history(days)
         health_trends = self.get_health_trends(days)
 
@@ -246,7 +245,7 @@ class MaintenanceLogger:
         return report
 
     def save_maintenance_report(self, report: dict[str, Any]) -> Path:
-        """保存维护报告"""
+        """保存维护报告."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = self.logs_dir / f"maintenance_report_{timestamp}.json"
 
@@ -256,7 +255,7 @@ class MaintenanceLogger:
         return report_file
 
     def cleanup_old_logs(self, days_to_keep: int = 90):
-        """清理旧的日志文件"""
+        """清理旧的日志文件."""
         cutoff_date = datetime.now() - timedelta(days=days_to_keep)
         cleaned_count = 0
 
@@ -287,7 +286,7 @@ class MaintenanceLogger:
 
 
 def main():
-    """主函数 - 用于测试"""
+    """主函数 - 用于测试."""
     project_root = Path(__file__).parent.parent.parent
     logger = MaintenanceLogger(project_root)
 

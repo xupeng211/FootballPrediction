@@ -6,7 +6,7 @@ Enterprise Multi-Tenant System Data Models.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import (
     JSON,

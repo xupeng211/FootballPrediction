@@ -1,5 +1,3 @@
-from typing import Optional
-
 """装饰器模式API端点
 Decorator Pattern API Endpoints.
 

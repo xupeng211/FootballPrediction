@@ -1,5 +1,3 @@
-from typing import Optional
-
 # 简化版 prediction_api 模块
 
 

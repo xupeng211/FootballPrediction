@@ -1,11 +1,10 @@
-"""
-Phase 35 AI Coverage Master - 覆盖率分析工具
+"""Phase 35 AI Coverage Master - 覆盖率分析工具.
 
 智能覆盖率分析和测试生成工具
 """
 
 class Phase35AICoverageMaster:
-    """Phase 35 AI Coverage Master - 智能覆盖率分析实现"""
+    """Phase 35 AI Coverage Master - 智能覆盖率分析实现."""
 
     def __init__(self):
         self.description = "Phase 35 AI Coverage Master - 智能覆盖率分析"
@@ -17,8 +16,7 @@ class Phase35AICoverageMaster:
         self.ai_insights: list = []
 
     def _collect_base_coverage_data(self) -> dict:
-        """
-        收集基础覆盖率数据
+        """收集基础覆盖率数据.
 
         Returns:
             dict: 包含基础覆盖率信息的字典
@@ -32,8 +30,7 @@ class Phase35AICoverageMaster:
         }
 
     def _identify_coverage_patterns(self, coverage_data: dict) -> dict:
-        """
-        识别覆盖率模式
+        """识别覆盖率模式.
 
         Args:
             coverage_data: 覆盖率数据
@@ -53,8 +50,7 @@ class Phase35AICoverageMaster:
         }
 
     def _predict_improvement_opportunities(self, patterns: dict) -> dict:
-        """
-        预测改进机会
+        """预测改进机会.
 
         Args:
             patterns: 覆盖率模式数据
@@ -74,8 +70,7 @@ class Phase35AICoverageMaster:
         }
 
     def _generate_intelligent_strategy(self, predictions: dict) -> dict:
-        """
-        生成智能策略
+        """生成智能策略.
 
         Args:
             predictions: 改进机会预测
@@ -95,12 +90,11 @@ class Phase35AICoverageMaster:
         }
 
     def run_coverage_analysis(self):
-        """运行覆盖率分析"""
+        """运行覆盖率分析."""
         return self.intelligent_coverage_analysis()
 
     def intelligent_coverage_analysis(self, *args, **kwargs) -> dict:
-        """
-        智能覆盖率分析主方法
+        """智能覆盖率分析主方法.
 
         执行完整的覆盖率分析流程：
         1. 收集基础数据

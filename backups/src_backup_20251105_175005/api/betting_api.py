@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-投注API模块
-Betting API Module
+"""投注API模块
+Betting API Module.
 
 提供EV计算和投注策略的RESTful API接口:
 - 单场比赛投注建议

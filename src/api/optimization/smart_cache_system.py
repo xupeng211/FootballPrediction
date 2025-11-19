@@ -11,7 +11,7 @@ import logging
 import time
 from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.cache.redis_enhanced import EnhancedRedisManager
 

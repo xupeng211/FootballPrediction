@@ -1,10 +1,10 @@
-"""CORS配置管理"""
+"""CORS配置管理."""
 
 import os
 
 
 def get_cors_origins() -> list[str]:
-    """获取CORS允许的源"""
+    """获取CORS允许的源."""
     env = os.getenv("ENVIRONMENT", "development")
 
     if env == "production":
@@ -23,7 +23,7 @@ def get_cors_origins() -> list[str]:
 
 
 def get_cors_config() -> dict:
-    """获取完整的CORS配置"""
+    """获取完整的CORS配置."""
     return {
         "allow_origins": get_cors_origins(),
         "allow_credentials": True,

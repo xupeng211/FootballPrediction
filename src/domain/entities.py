@@ -1,5 +1,3 @@
-from typing import Optional
-
 """领域实体模块 - 简化版本."""
 
 from dataclasses import dataclass

@@ -1,5 +1,4 @@
-"""
-historical 主模块
+"""historical 主模块.
 
 此文件由长文件拆分工具自动生成
 
@@ -12,7 +11,7 @@ historical 主模块
 
 # 占位符类定义
 class HistoricalMatch:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """历史比赛 - 占位符实现"""
@@ -20,7 +19,7 @@ class HistoricalMatch:
 
 
 class HistoricalStrategy:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """历史策略 - 占位符实现"""

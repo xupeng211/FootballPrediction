@@ -1,5 +1,3 @@
-from typing import Optional
-
 """Redis connection manager."""
 
 import os

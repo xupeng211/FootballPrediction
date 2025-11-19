@@ -1,6 +1,4 @@
-"""
-Redis warmup module
-"""
+"""Redis warmup module."""
 
 from .warmup_manager import WarmupManager
 

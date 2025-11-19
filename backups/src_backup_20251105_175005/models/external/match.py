@@ -1,6 +1,5 @@
-"""
-外部比赛数据模型
-External Match Data Model
+"""外部比赛数据模型
+External Match Data Model.
 """
 
 from datetime import datetime
@@ -12,7 +11,7 @@ Base = declarative_base()
 
 
 class ExternalMatch(Base):
-    """外部比赛数据模型"""
+    """外部比赛数据模型."""
 
     __tablename__ = "external_matches"
 
@@ -137,37 +136,37 @@ class ExternalMatch(Base):
 
     @property
     def match_title(self) -> str:
-        """比赛标题"""
+        """比赛标题."""
         return f"{self.home_team_name} vs {self.away_team_name}"
 
     @property
     def score_string(self) -> str:
-        """比分字符串"""
+        """比分字符串."""
         if self.home_score is not None and self.away_score is not None:
             return f"{self.home_score} - {self.away_score}"
         return "未开始"
 
     @property
     def is_finished(self) -> bool:
-        """是否已结束"""
+        """是否已结束."""
         return self.status in ["finished",
     "awarded"]
 
     @property
     def is_live(self) -> bool:
-        """是否正在进行"""
+        """是否正在进行."""
         return self.status in ["live",
     "in_play",
     "paused"]
 
     @property
     def is_scheduled(self) -> bool:
-        """是否已安排"""
+        """是否已安排."""
         return self.status in ["scheduled",
     "timed"]
 
     def to_dict(self) -> dict:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "external_id": self.external_id,
@@ -211,7 +210,7 @@ class ExternalMatch(Base):
 
     @classmethod
     def from_api_data(cls, data: dict) -> "ExternalMatch":
-        """从API数据创建实例"""
+        """从API数据创建实例."""
         try:
             # 获取基本信息
             home_team = data.get("homeTeam", {})
@@ -307,8 +306,7 @@ class ExternalMatch(Base):
 
     def update_from_api_data(self,
     data: dict) -> bool:
-        """
-        从API数据更新实例
+        """从API数据更新实例.
 
         Args:
             data: API数据

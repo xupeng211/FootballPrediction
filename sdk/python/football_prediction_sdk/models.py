@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-数据模型模块
-Football Prediction SDK - 数据模型定义
+"""数据模型模块
+Football Prediction SDK - 数据模型定义.
 
 Author: Claude Code
 Version: 1.0.0
@@ -14,7 +13,7 @@ from typing import Any
 
 
 class MatchStatus(Enum):
-    """比赛状态枚举"""
+    """比赛状态枚举."""
     SCHEDULED = "scheduled"
     LIVE = "live"
     COMPLETED = "completed"
@@ -23,14 +22,14 @@ class MatchStatus(Enum):
 
 
 class PredictionStatus(Enum):
-    """预测状态枚举"""
+    """预测状态枚举."""
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
 
 
 class SubscriptionPlan(Enum):
-    """订阅计划枚举"""
+    """订阅计划枚举."""
     FREE = "free"
     BASIC = "basic"
     PREMIUM = "premium"
@@ -39,7 +38,7 @@ class SubscriptionPlan(Enum):
 
 @dataclass
 class Team:
-    """球队模型"""
+    """球队模型."""
     team_id: str
     name: str
     short_name: str | None = None
@@ -54,7 +53,7 @@ class Team:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Team":
-        """从字典创建Team实例"""
+        """从字典创建Team实例."""
         return cls(
             team_id=data.get("team_id", ""),
             name=data.get("name", ""),
@@ -70,7 +69,7 @@ class Team:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "team_id": self.team_id,
             "name": self.name,
@@ -88,7 +87,7 @@ class Team:
 
 @dataclass
 class Match:
-    """比赛模型"""
+    """比赛模型."""
     match_id: str
     home_team: Team | dict[str, Any]
     away_team: Team | dict[str, Any]
@@ -101,7 +100,7 @@ class Match:
     odds: dict[str, float] | None = None
 
     def __post_init__(self):
-        """后处理：确保team字段是Team对象"""
+        """后处理：确保team字段是Team对象."""
         if isinstance(self.home_team, dict):
             self.home_team = Team.from_dict(self.home_team)
         if isinstance(self.away_team, dict):
@@ -117,7 +116,7 @@ class Match:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Match":
-        """从字典创建Match实例"""
+        """从字典创建Match实例."""
         return cls(
             match_id=data.get("match_id", ""),
             home_team=data.get("home_team", {}),
@@ -132,7 +131,7 @@ class Match:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "match_id": self.match_id,
             "home_team": self.home_team.to_dict() if isinstance(self.home_team, Team) else self.home_team,
@@ -149,7 +148,7 @@ class Match:
 
 @dataclass
 class Prediction:
-    """预测模型"""
+    """预测模型."""
     prediction_id: str
     match_id: str
     probabilities: dict[str, float]
@@ -164,7 +163,7 @@ class Prediction:
     explanation: str | None = None
 
     def __post_init__(self):
-        """后处理：确保字段类型正确"""
+        """后处理：确保字段类型正确."""
         # 确保status是PredictionStatus枚举
         if isinstance(self.status, str):
             self.status = PredictionStatus(self.status)
@@ -175,7 +174,7 @@ class Prediction:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Prediction":
-        """从字典创建Prediction实例"""
+        """从字典创建Prediction实例."""
         return cls(
             prediction_id=data.get("prediction_id", ""),
             match_id=data.get("match_id", ""),
@@ -192,7 +191,7 @@ class Prediction:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "prediction_id": self.prediction_id,
             "match_id": self.match_id,
@@ -211,7 +210,7 @@ class Prediction:
 
 @dataclass
 class PredictionRequest:
-    """预测请求模型"""
+    """预测请求模型."""
     match_id: str
     home_team: str
     away_team: str
@@ -222,12 +221,12 @@ class PredictionRequest:
     include_explanation: bool = False
 
     def __post_init__(self):
-        """后处理：确保match_date是datetime对象"""
+        """后处理：确保match_date是datetime对象."""
         if isinstance(self.match_date, str):
             self.match_date = datetime.fromisoformat(self.match_date.replace("Z", "+00:00"))
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为请求字典"""
+        """转换为请求字典."""
         data = {
             "match_id": self.match_id,
             "home_team": self.home_team,
@@ -250,7 +249,7 @@ class PredictionRequest:
 
 @dataclass
 class PredictionResponse:
-    """预测响应模型"""
+    """预测响应模型."""
     success: bool
     prediction: Prediction | None = None
     error: dict[str, Any] | None = None
@@ -258,7 +257,7 @@ class PredictionResponse:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PredictionResponse":
-        """从字典创建PredictionResponse实例"""
+        """从字典创建PredictionResponse实例."""
         prediction_data = data.get("data")
         prediction = None
 
@@ -289,7 +288,7 @@ class PredictionResponse:
 
 @dataclass
 class MatchListResponse:
-    """比赛列表响应模型"""
+    """比赛列表响应模型."""
     success: bool
     matches: list[Match] = field(default_factory=list)
     pagination: dict[str, Any] | None = None
@@ -297,7 +296,7 @@ class MatchListResponse:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "MatchListResponse":
-        """从字典创建MatchListResponse实例"""
+        """从字典创建MatchListResponse实例."""
         matches_data = data.get("data", [])
         matches = [Match.from_dict(match_data) for match_data in matches_data]
 
@@ -311,14 +310,14 @@ class MatchListResponse:
 
 @dataclass
 class SubscriptionInfo:
-    """订阅信息模型"""
+    """订阅信息模型."""
     plan: SubscriptionPlan
     expires_at: datetime | None = None
     features: list[str] = field(default_factory=list)
     auto_renew: bool = False
 
     def __post_init__(self):
-        """后处理：确保字段类型正确"""
+        """后处理：确保字段类型正确."""
         # 确保plan是SubscriptionPlan枚举
         if isinstance(self.plan, str):
             self.plan = SubscriptionPlan(self.plan)
@@ -329,7 +328,7 @@ class SubscriptionInfo:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "SubscriptionInfo":
-        """从字典创建SubscriptionInfo实例"""
+        """从字典创建SubscriptionInfo实例."""
         return cls(
             plan=data.get("plan", "free"),
             expires_at=data.get("expires_at"),
@@ -340,7 +339,7 @@ class SubscriptionInfo:
 
 @dataclass
 class UserPreferences:
-    """用户偏好设置模型"""
+    """用户偏好设置模型."""
     favorite_teams: list[str] = field(default_factory=list)
     notification_settings: dict[str, bool] = field(default_factory=dict)
     language: str = "zh-CN"
@@ -348,7 +347,7 @@ class UserPreferences:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "UserPreferences":
-        """从字典创建UserPreferences实例"""
+        """从字典创建UserPreferences实例."""
         return cls(
             favorite_teams=data.get("favorite_teams", []),
             notification_settings=data.get("notification_settings", {}),
@@ -359,7 +358,7 @@ class UserPreferences:
 
 @dataclass
 class User:
-    """用户模型"""
+    """用户模型."""
     user_id: str
     username: str
     email: str
@@ -369,7 +368,7 @@ class User:
     last_login: datetime | None = None
 
     def __post_init__(self):
-        """后处理：确保字段类型正确"""
+        """后处理：确保字段类型正确."""
         # 确保subscription是SubscriptionInfo对象
         if isinstance(self.subscription, dict):
             self.subscription = SubscriptionInfo.from_dict(self.subscription)
@@ -386,7 +385,7 @@ class User:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "User":
-        """从字典创建User实例"""
+        """从字典创建User实例."""
         return cls(
             user_id=data.get("user_id", ""),
             username=data.get("username", ""),
@@ -400,7 +399,7 @@ class User:
 
 @dataclass
 class UserProfileResponse:
-    """用户配置响应模型"""
+    """用户配置响应模型."""
     success: bool
     user: User | None = None
     error: dict[str, Any] | None = None
@@ -408,7 +407,7 @@ class UserProfileResponse:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "UserProfileResponse":
-        """从字典创建UserProfileResponse实例"""
+        """从字典创建UserProfileResponse实例."""
         user_data = data.get("data")
         user = None
 
@@ -425,7 +424,7 @@ class UserProfileResponse:
 
 @dataclass
 class UserStatistics:
-    """用户统计信息模型"""
+    """用户统计信息模型."""
     total_predictions: int
     successful_predictions: int
     success_rate: float
@@ -437,17 +436,17 @@ class UserStatistics:
 
     @property
     def total_failed_predictions(self) -> int:
-        """总失败预测数"""
+        """总失败预测数."""
         return self.total_predictions - self.successful_predictions
 
     @property
     def success_percentage(self) -> str:
-        """成功率百分比字符串"""
+        """成功率百分比字符串."""
         return f"{self.success_rate * 100:.1f}%"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "UserStatistics":
-        """从字典创建UserStatistics实例"""
+        """从字典创建UserStatistics实例."""
         return cls(
             total_predictions=data.get("total_predictions", 0),
             successful_predictions=data.get("successful_predictions", 0),

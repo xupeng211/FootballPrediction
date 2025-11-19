@@ -16,7 +16,7 @@
 
 import hashlib
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from src.collectors.base_collector import BaseCollector, CollectionResult
 

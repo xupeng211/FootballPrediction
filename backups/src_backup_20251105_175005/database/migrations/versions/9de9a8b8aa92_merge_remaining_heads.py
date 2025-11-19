@@ -1,4 +1,4 @@
-"""merge_remaining_heads"
+"""merge_remaining_heads".
 
 Revision ID: 9de9a8b8aa92
 Revises: 9ac2aff86228, 007_improve_phase3_implementations

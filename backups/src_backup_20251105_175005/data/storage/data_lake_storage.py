@@ -1,6 +1,5 @@
-"""
-数据湖存储模块
-Data Lake Storage Module
+"""数据湖存储模块
+Data Lake Storage Module.
 
 提供高性能的数据湖存储功能,支持本地和S3存储.
 """

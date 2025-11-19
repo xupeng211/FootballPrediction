@@ -1,5 +1,4 @@
-"""
-Celery 应用配置
+"""Celery 应用配置.
 
 基于 Redis 的任务队列系统,支持:
 - 多队列任务路由
@@ -22,48 +21,48 @@ logger = logging.getLogger(__name__)
 
 # 模拟的数据库管理器类（用于测试支持）
 class DatabaseManager:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """数据库管理器模拟类,用于支持测试"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.logger = logging.getLogger(f"{__name__}.DatabaseManager")
 
     def get_connection(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """获取数据库连接"""
         return None
 
     def close_connection(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """关闭数据库连接"""
 
 
 # 模拟的Redis管理器类（用于测试支持）
 class RedisManager:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """Redis管理器模拟类,用于支持测试"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.logger = logging.getLogger(f"{__name__}.RedisManager")
 
     def get_redis_client(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """获取Redis客户端"""
         return None
 
     def close_connection(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """关闭Redis连接"""
 
@@ -232,7 +231,7 @@ app.autodiscover_tasks(["src.tasks"])
 
 
 class TaskRetryConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """任务重试配置"""
@@ -265,7 +264,7 @@ class TaskRetryConfig:
 
     @classmethod
     def get_retry_config(cls, task_name: str) -> dict:
-        """获取任务的重试配置"""
+        """获取任务的重试配置."""
         return cls.TASK_RETRY_CONFIGS.get(
             task_name,
             {

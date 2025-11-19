@@ -1,7 +1,7 @@
 # mypy: ignore-errors
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import Column, DateTime, Integer, String, Text, func
 from sqlalchemy.orm import validates

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-🔒 安全密钥管理器
-用于生成、轮换和管理系统中的敏感密钥和密码
+"""🔒 安全密钥管理器
+用于生成、轮换和管理系统中的敏感密钥和密码.
 """
 
 import argparse
@@ -23,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class SecureKeyManager:
-    """安全密钥管理器"""
+    """安全密钥管理器."""
 
     def __init__(self, project_root: Path | None = None):
         if project_root is None:
@@ -35,21 +34,21 @@ class SecureKeyManager:
         self.backup_dir.mkdir(parents=True, exist_ok=True)
 
     def generate_secure_key(self, length: int = 64) -> str:
-        """生成安全密钥"""
+        """生成安全密钥."""
         return secrets.token_urlsafe(length)
 
     def generate_strong_password(self, length: int = 32) -> str:
-        """生成强密码"""
+        """生成强密码."""
         chars = string.ascii_letters + string.digits + '!@#$%^&*()_+-='
         return ''.join(secrets.choice(chars) for _ in range(length))
 
     def generate_api_key(self, prefix: str = "fp", length: int = 32) -> str:
-        """生成API密钥"""
+        """生成API密钥."""
         random_part = secrets.token_urlsafe(length)
         return f"{prefix}_{random_part}"
 
     def generate_all_keys(self) -> dict[str, str]:
-        """生成所有需要的密钥"""
+        """生成所有需要的密钥."""
         keys = {
             'JWT_SECRET_KEY': self.generate_secure_key(64),
             'SECRET_KEY': self.generate_secure_key(64),
@@ -69,7 +68,7 @@ class SecureKeyManager:
         return keys
 
     def backup_current_config(self, env_file: str) -> Path:
-        """备份当前配置文件"""
+        """备份当前配置文件."""
         env_path = self.project_root / env_file
         if env_path.exists():
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -87,7 +86,7 @@ class SecureKeyManager:
             return Path()
 
     def rotate_keys(self, env_file: str = ".env") -> bool:
-        """轮换密钥"""
+        """轮换密钥."""
         try:
             # 备份当前配置
             backup_path = self.backup_current_config(env_file)
@@ -115,7 +114,7 @@ class SecureKeyManager:
             return False
 
     def _update_env_file(self, env_path: Path, new_keys: dict[str, str]):
-        """更新环境变量文件"""
+        """更新环境变量文件."""
         with open(env_path, encoding='utf-8') as f:
             content = f.read()
 
@@ -140,7 +139,7 @@ class SecureKeyManager:
             f.write(content)
 
     def _save_rotation_record(self, env_file: str, new_keys: dict[str, str], backup_path: Path):
-        """保存密钥轮换记录"""
+        """保存密钥轮换记录."""
         record = {
             'env_file': env_file,
             'backup_file': str(backup_path),
@@ -160,7 +159,7 @@ class SecureKeyManager:
         logger.info(f"密钥轮换记录已保存: {record_path}")
 
     def check_key_age(self, env_file: str) -> dict[str, Any]:
-        """检查密钥年龄"""
+        """检查密钥年龄."""
         # 查找最近的轮换记录
         record_files = list(self.backup_dir.glob(f"key_rotation_{env_file}_*.json"))
 
@@ -191,7 +190,7 @@ class SecureKeyManager:
         }
 
     def validate_security(self) -> dict[str, Any]:
-        """验证安全配置"""
+        """验证安全配置."""
         issues = []
 
         # 检查 .gitignore
@@ -233,7 +232,7 @@ class SecureKeyManager:
         }
 
     def _check_key_strength(self, env_path: Path) -> list:
-        """检查密钥强度"""
+        """检查密钥强度."""
         weak_keys = []
 
         with open(env_path) as f:
@@ -261,7 +260,7 @@ class SecureKeyManager:
         return weak_keys
 
     def fix_file_permissions(self):
-        """修复文件权限"""
+        """修复文件权限."""
         env_files = ['.env', '.env.production']
 
         for env_file in env_files:
@@ -272,7 +271,7 @@ class SecureKeyManager:
                 logger.info(f"文件权限已修复: {env_file} (600)")
 
     def update_gitignore(self):
-        """更新 .gitignore 文件"""
+        """更新 .gitignore 文件."""
         gitignore_path = self.project_root / ".gitignore"
 
         required_entries = [
@@ -314,7 +313,7 @@ class SecureKeyManager:
         logger.info(" .gitignore 文件已更新")
 
 def main():
-    """主函数"""
+    """主函数."""
     parser = argparse.ArgumentParser(description='安全密钥管理器')
     parser.add_argument('--action', choices=['generate', 'rotate', 'check', 'validate', 'fix-permissions', 'update-gitignore'],
                        required=True, help='执行的操作')

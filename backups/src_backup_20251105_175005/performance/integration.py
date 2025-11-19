@@ -1,7 +1,6 @@
 # mypy: ignore-errors
-"""
-性能监控集成模块
-Performance Monitoring Integration Module
+"""性能监控集成模块
+Performance Monitoring Integration Module.
 
 提供与现有应用的集成功能:
 - 自动集成中间件
@@ -20,12 +19,12 @@ logger = get_logger(__name__)
 
 
 class PerformanceMonitoringIntegration:
-    """类文档字符串"""
+    """类文档字符串."""
     pass  # 添加pass语句
     """性能监控集成器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass
   # 添加pass语句
         """初始化性能监控集成"""
@@ -45,7 +44,7 @@ class PerformanceMonitoringIntegration:
         self._task_monitor = None
 
     def integrate_with_fastapi(self, app: FastAPI) -> None:
-        """集成性能监控到FastAPI应用"""
+        """集成性能监控到FastAPI应用."""
         if not self.enabled:
             logger.info("Performance monitoring is disabled")
             return None
@@ -71,7 +70,7 @@ class PerformanceMonitoringIntegration:
             logger.error(f"Failed to integrate performance monitoring: {str(e)}")
 
     def initialize_database_monitoring(self) -> None:
-        """初始化数据库监控"""
+        """初始化数据库监控."""
         if not self.enabled:
             return None
         try:
@@ -89,7 +88,7 @@ class PerformanceMonitoringIntegration:
             logger.error(f"Failed to initialize database monitoring: {str(e)}")
 
     def initialize_cache_monitoring(self) -> None:
-        """初始化缓存监控"""
+        """初始化缓存监控."""
         if not self.enabled:
             return None
         try:
@@ -101,7 +100,7 @@ class PerformanceMonitoringIntegration:
             logger.error(f"Failed to initialize cache monitoring: {str(e)}")
 
     def initialize_task_monitoring(self) -> None:
-        """初始化任务监控"""
+        """初始化任务监控."""
         if not self.enabled:
             return None
         try:
@@ -113,7 +112,7 @@ class PerformanceMonitoringIntegration:
             logger.error(f"Failed to initialize task monitoring: {str(e)}")
 
     def start_profiling(self) -> None:
-        """启动性能分析"""
+        """启动性能分析."""
         if not self.profiling_enabled:
             logger.warning("Performance profiling is disabled")
             return None
@@ -127,7 +126,7 @@ class PerformanceMonitoringIntegration:
             logger.error(f"Failed to start profiling: {str(e)}")
 
     def stop_profiling(self) -> None:
-        """停止性能分析"""
+        """停止性能分析."""
         try:
             from .profiler import stop_profiling
 
@@ -140,7 +139,7 @@ class PerformanceMonitoringIntegration:
             logger.error(f"Failed to stop profiling: {str(e)}")
 
     def get_performance_config(self) -> dict:
-        """获取性能监控配置"""
+        """获取性能监控配置."""
         return {
             "enabled": self.enabled,
             "sample_rate": self.sample_rate,
@@ -165,7 +164,7 @@ class PerformanceMonitoringIntegration:
         }
 
     def update_config(self, config: dict) -> None:
-        """更新性能监控配置"""
+        """更新性能监控配置."""
         try:
             # 更新采样率
             if "sample_rate" in config:
@@ -189,7 +188,7 @@ class PerformanceMonitoringIntegration:
             logger.error(f"Failed to update performance monitoring config: {str(e)}")
 
     def create_performance_report(self) -> str | None:
-        """创建性能报告"""
+        """创建性能报告."""
         if not self.enabled:
             return None
 
@@ -221,7 +220,7 @@ class PerformanceMonitoringIntegration:
             return None
 
     def setup_alerting(self) -> None:
-        """设置告警"""
+        """设置告警."""
         if not self.enabled:
             return None
         try:
@@ -237,7 +236,7 @@ class PerformanceMonitoringIntegration:
             logger.error(f"Failed to setup performance alerting: {str(e)}")
 
     def cleanup(self) -> None:
-        """清理资源"""
+        """清理资源."""
         try:
             # 停止所有监控
             if self.profiling_enabled:
@@ -260,7 +259,7 @@ _integration = None
 
 
 def get_performance_integration() -> PerformanceMonitoringIntegration:
-    """获取全局性能监控集成实例"""
+    """获取全局性能监控集成实例."""
     global _integration
     if _integration is None:
         _integration = PerformanceMonitoringIntegration()
@@ -270,7 +269,7 @@ def get_performance_integration() -> PerformanceMonitoringIntegration:
 def setup_performance_monitoring(
     app: FastAPI | None = None,
 ) -> PerformanceMonitoringIntegration:
-    """设置性能监控"""
+    """设置性能监控."""
     integration = get_performance_integration()
 
     # 集成到FastAPI应用
@@ -294,20 +293,20 @@ def setup_performance_monitoring(
 
 # 便捷函数
 def integrate_performance_monitoring(app: FastAPI) -> None:
-    """集成性能监控到FastAPI应用（便捷函数）"""
+    """集成性能监控到FastAPI应用（便捷函数）."""
     setup_performance_monitoring(app)
 
 
 def start_performance_profiling() -> None:
-    """启动性能分析（便捷函数）"""
+    """启动性能分析（便捷函数）."""
     get_performance_integration().start_profiling()
 
 
 def stop_performance_profiling() -> None:
-    """停止性能分析（便捷函数）"""
+    """停止性能分析（便捷函数）."""
     get_performance_integration().stop_profiling()
 
 
 def generate_performance_report() -> str | None:
-    """生成性能报告（便捷函数）"""
+    """生成性能报告（便捷函数）."""
     return get_performance_integration().create_performance_report()

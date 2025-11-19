@@ -1,5 +1,3 @@
-from typing import Optional
-
 """日志装饰器."""
 
 # 导入

@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from ..models.base_model import BaseModel, PredictionResult
 from ..models.elo_model import EloModel

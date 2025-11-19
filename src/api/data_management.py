@@ -14,7 +14,7 @@ Provides data management API endpoints:
 - Odds data management
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 

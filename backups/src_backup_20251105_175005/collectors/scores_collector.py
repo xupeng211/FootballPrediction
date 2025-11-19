@@ -1,6 +1,5 @@
-"""
-比分收集器
-实时收集比赛比分和事件
+"""比分收集器
+实时收集比赛比分和事件.
 """
 
 import os
@@ -20,13 +19,13 @@ logger = get_logger(__name__)
 
 
 class ScoresCollector:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比分收集器"""
 
     def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.db_session = db_session
         self.redis_client = redis_client
@@ -42,8 +41,7 @@ class ScoresCollector:
         self.headers = {"X-Auth-Token": api_token} if api_token else {}
 
     async def collect_live_scores(self, force_refresh: bool = False) -> dict[str, Any]:
-        """
-        收集所有正在进行的比赛比分
+        """收集所有正在进行的比赛比分.
 
         Args:
             force_refresh: 是否强制刷新
@@ -93,7 +91,7 @@ class ScoresCollector:
             return {"error": str(e)}
 
     async def _get_live_matches_from_db(self) -> list[Match]:
-        """从数据库获取正在进行的比赛"""
+        """从数据库获取正在进行的比赛."""
         result = await self.db_session.execute(
             select(Match).where(
                 or_(Match.match_status == "live", Match.match_status == "half_time")
@@ -102,13 +100,13 @@ class ScoresCollector:
         return result.scalars().all()
 
     async def _get_match_score(self, match: Match) -> dict[str, int]:
-        """获取比赛比分"""
+        """获取比赛比分."""
         if match.home_score is not None:
             return {"home": match.home_score, "away": match.away_score}
         return {"home": 0, "away": 0}
 
     async def _clear_match_cache(self, match_id: int) -> None:
-        """清除比赛相关的缓存"""
+        """清除比赛相关的缓存."""
         keys_to_clear = [
             "scores:live",
             f"events:match:{match_id}",
@@ -119,14 +117,14 @@ class ScoresCollector:
 
 
 class ScoresCollectorFactory:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比分收集器工厂类"""
 
     @staticmethod
     def create() -> ScoresCollector:
-        """创建比分收集器实例"""
+        """创建比分收集器实例."""
         db_session = DatabaseManager()
         redis_client = RedisManager()
         return ScoresCollector(db_session, redis_client)

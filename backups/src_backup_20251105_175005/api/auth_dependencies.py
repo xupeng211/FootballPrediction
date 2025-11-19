@@ -1,6 +1,5 @@
-"""
-认证依赖模块
-Authentication Dependencies Module
+"""认证依赖模块
+Authentication Dependencies Module.
 """
 
 from fastapi import Depends, HTTPException, Security, status
@@ -17,19 +16,19 @@ class TokenData:
 
 # 简单的速率限制器
 class RateLimiter:
-    """简单的速率限制器"""
+    """简单的速率限制器."""
 
     def __init__(self):
         self.requests = {}
 
     def is_allowed(self, key: str, limit: int = 100) -> bool:
-        """检查是否允许请求"""
+        """检查是否允许请求."""
         return True
 
 
 # 安全头部配置
 class SecurityHeaders:
-    """安全头部配置"""
+    """安全头部配置."""
 
     def __init__(self):
         self.headers = {
@@ -48,7 +47,7 @@ security = HTTPBearer()
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Security(security),
 ):
-    """获取当前用户"""
+    """获取当前用户."""
     try:
         # 这里应该解析JWT token，暂时返回模拟数据
         token_data = TokenData(user_id=1, username="test_user", role="user")
@@ -62,7 +61,7 @@ async def get_current_user(
 
 
 async def require_admin(current_user: TokenData = Depends(get_current_user)):
-    """需要管理员权限"""
+    """需要管理员权限."""
     if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"

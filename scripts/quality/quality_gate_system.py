@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""
-企业级质量保障系统 - 多层次质量门禁
+"""企业级质量保障系统 - 多层次质量门禁
 基于Issue #159的70.1%覆盖率成就，建立完整的自动化质量保障体系
-目标：实现企业级代码质量标准和自动化质量监控
+目标：实现企业级代码质量标准和自动化质量监控.
 """
 
 import threading
@@ -14,7 +13,7 @@ from typing import Any
 
 
 class QualityLevel(Enum):
-    """质量等级"""
+    """质量等级."""
     CRITICAL = "CRITICAL"    # 严重问题，必须解决
     HIGH = "HIGH"           # 高优先级问题
     MEDIUM = "MEDIUM"       # 中等优先级问题
@@ -22,7 +21,7 @@ class QualityLevel(Enum):
     INFO = "INFO"          # 信息性提示
 
 class QualityStatus(Enum):
-    """质量状态"""
+    """质量状态."""
     PASSED = "PASSED"      # 通过质量检查
     FAILED = "FAILED"      # 未通过质量检查
     WARNING = "WARNING"    # 有警告，但可通过
@@ -30,7 +29,7 @@ class QualityStatus(Enum):
 
 @dataclass
 class QualityIssue:
-    """质量问题"""
+    """质量问题."""
     issue_id: str
     level: QualityLevel
     category: str
@@ -44,7 +43,7 @@ class QualityIssue:
 
 @dataclass
 class QualityMetrics:
-    """质量指标"""
+    """质量指标."""
     coverage_percentage: float
     test_count: int
     test_success_rate: float
@@ -59,7 +58,7 @@ class QualityMetrics:
 
 @dataclass
 class QualityGateResult:
-    """质量门禁结果"""
+    """质量门禁结果."""
     gate_name: str
     status: QualityStatus
     metrics: QualityMetrics
@@ -70,7 +69,7 @@ class QualityGateResult:
     recommendations: list[str] = field(default_factory=list)
 
 class QualityRule:
-    """质量规则基类"""
+    """质量规则基类."""
 
     def __init__(self, name: str, description: str, level: QualityLevel):
         self.name = name
@@ -79,11 +78,11 @@ class QualityRule:
         self.enabled = True
 
     def check(self, context: dict[str, Any]) -> list[QualityIssue]:
-        """执行质量检查"""
+        """执行质量检查."""
         raise NotImplementedError
 
 class CoverageRule(QualityRule):
-    """覆盖率规则"""
+    """覆盖率规则."""
 
     def __init__(self):
         super().__init__(
@@ -113,7 +112,7 @@ class CoverageRule(QualityRule):
         return issues
 
 class TestQualityRule(QualityRule):
-    """测试质量规则"""
+    """测试质量规则."""
 
     def __init__(self):
         super().__init__(
@@ -153,7 +152,7 @@ class TestQualityRule(QualityRule):
         return issues
 
 class CodeComplexityRule(QualityRule):
-    """代码复杂度规则"""
+    """代码复杂度规则."""
 
     def __init__(self):
         super().__init__(
@@ -187,7 +186,7 @@ class CodeComplexityRule(QualityRule):
         return issues
 
 class SecurityRule(QualityRule):
-    """安全规则"""
+    """安全规则."""
 
     def __init__(self):
         super().__init__(
@@ -222,7 +221,7 @@ class SecurityRule(QualityRule):
         return issues
 
 class PerformanceRule(QualityRule):
-    """性能规则"""
+    """性能规则."""
 
     def __init__(self):
         super().__init__(
@@ -257,7 +256,7 @@ class PerformanceRule(QualityRule):
         return issues
 
 class QualityGateSystem:
-    """质量门禁系统"""
+    """质量门禁系统."""
 
     def __init__(self):
         self.rules = [
@@ -273,15 +272,15 @@ class QualityGateSystem:
         self.cache_ttl = 300  # 5分钟缓存
 
     def add_rule(self, rule: QualityRule):
-        """添加质量规则"""
+        """添加质量规则."""
         self.rules.append(rule)
 
     def remove_rule(self, rule_name: str):
-        """移除质量规则"""
+        """移除质量规则."""
         self.rules = [rule for rule in self.rules if rule.name != rule_name]
 
     def run_quality_gate(self, context: dict[str, Any]) -> QualityGateResult:
-        """运行质量门禁检查"""
+        """运行质量门禁检查."""
         start_time = time.time()
 
         all_issues = []
@@ -336,7 +335,7 @@ class QualityGateSystem:
     context: dict[str,
     Any],
     issues: list[QualityIssue]) -> QualityMetrics:
-        """计算质量指标"""
+        """计算质量指标."""
         coverage_data = context.get('coverage_data', {})
         test_analysis = context.get('test_analysis', {})
 
@@ -378,7 +377,7 @@ class QualityGateSystem:
     def _determine_status(self,
     issues: list[QualityIssue],
     metrics: QualityMetrics) -> QualityStatus:
-        """确定质量状态"""
+        """确定质量状态."""
         critical_issues = [i for i in issues if i.level == QualityLevel.CRITICAL]
         high_issues = [i for i in issues if i.level == QualityLevel.HIGH]
 
@@ -394,7 +393,7 @@ class QualityGateSystem:
     def _generate_recommendations(self,
     issues: list[QualityIssue],
     metrics: QualityMetrics) -> list[str]:
-        """生成改进建议"""
+        """生成改进建议."""
         recommendations = []
 
         # 基于覆盖率
@@ -420,8 +419,7 @@ class QualityGateSystem:
         return recommendations
 
 def main():
-    """主函数"""
-
+    """主函数."""
     # 创建质量门禁系统
     quality_gate = QualityGateSystem()
 

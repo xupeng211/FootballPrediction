@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Football Prediction Python SDK
-足球比赛结果预测系统 - 官方Python SDK
+"""Football Prediction Python SDK
+足球比赛结果预测系统 - 官方Python SDK.
 
 Version: 1.0.0
 Author: Claude Code
@@ -69,10 +68,10 @@ import warnings
 
 
 def check_python_version():
-    """检查Python版本兼容性"""
+    """检查Python版本兼容性."""
 
 def check_sdk_version():
-    """检查SDK版本更新"""
+    """检查SDK版本更新."""
     try:
         import requests
         response = requests.get(
@@ -95,8 +94,7 @@ check_sdk_version()
 
 # 模块级便捷函数
 def create_client(api_key: str, base_url: str = "https://api.football-prediction.com/v1", **kwargs) -> FootballPredictionClient:
-    """
-    便捷函数：创建客户端实例
+    """便捷函数：创建客户端实例.
 
     Args:
         api_key: API密钥

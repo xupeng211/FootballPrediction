@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-认证管理模块
-Football Prediction SDK - 认证和授权管理
+"""认证管理模块
+Football Prediction SDK - 认证和授权管理.
 
 Author: Claude Code
 Version: 1.0.0
@@ -17,7 +16,7 @@ from .exceptions import AuthenticationError, SystemError
 
 
 class AuthManager:
-    """认证管理器"""
+    """认证管理器."""
 
     def __init__(
         self,
@@ -26,8 +25,7 @@ class AuthManager:
         timeout: int = 30,
         auto_refresh: bool = True
     ):
-        """
-        初始化认证管理器
+        """初始化认证管理器.
 
         Args:
             api_key: API密钥
@@ -55,7 +53,7 @@ class AuthManager:
 
     @property
     def is_authenticated(self) -> bool:
-        """检查是否已认证"""
+        """检查是否已认证."""
         if not self._access_token or not self._token_expires_at:
             return False
 
@@ -66,14 +64,13 @@ class AuthManager:
 
     @property
     def access_token(self) -> str | None:
-        """获取访问token"""
+        """获取访问token."""
         if self.auto_refresh and not self.is_authenticated:
             self.refresh_token_if_needed()
         return self._access_token
 
     def get_auth_headers(self) -> dict[str, str]:
-        """
-        获取认证头
+        """获取认证头.
 
         Returns:
             Dict[str, str]: 包含认证信息的请求头
@@ -88,8 +85,7 @@ class AuthManager:
         return {"Authorization": f"Bearer {token}"}
 
     def authenticate_with_api_key(self, username: str | None = None, password: str | None = None) -> bool:
-        """
-        使用API密钥进行认证
+        """使用API密钥进行认证.
 
         Args:
             username: 用户名（可选）
@@ -113,7 +109,7 @@ class AuthManager:
             raise AuthenticationError(f"认证请求失败: {str(e)}")
 
     def _authenticate_with_api_key(self) -> bool:
-        """使用API密钥认证"""
+        """使用API密钥认证."""
         auth_url = f"{self.base_url}/auth/api-key"
 
         try:
@@ -135,7 +131,7 @@ class AuthManager:
             raise AuthenticationError(f"API密钥认证失败: {str(e)}")
 
     def _authenticate_with_password(self, username: str, password: str) -> bool:
-        """使用用户名密码认证"""
+        """使用用户名密码认证."""
         auth_url = f"{self.base_url}/auth/token"
 
         try:
@@ -157,7 +153,7 @@ class AuthManager:
             raise AuthenticationError(f"密码认证失败: {str(e)}")
 
     def _process_auth_response(self, auth_data: dict[str, Any]) -> None:
-        """处理认证响应"""
+        """处理认证响应."""
         if not auth_data.get("success"):
             raise AuthenticationError("认证响应失败")
 
@@ -181,7 +177,7 @@ class AuthManager:
             })
 
     def _handle_auth_error(self, response: requests.Response) -> None:
-        """处理认证错误响应"""
+        """处理认证错误响应."""
         try:
             error_data = response.json()
             error_info = error_data.get("error", {})
@@ -199,7 +195,7 @@ class AuthManager:
             raise AuthenticationError(f"认证失败: HTTP {response.status_code}")
 
     def refresh_token_if_needed(self) -> bool:
-        """如果需要，刷新访问token"""
+        """如果需要，刷新访问token."""
         if not self._refresh_token or not self._refresh_token_expires_at:
             return False
 
@@ -220,7 +216,7 @@ class AuthManager:
             raise AuthenticationError(f"Token刷新失败: {str(e)}")
 
     def _refresh_access_token(self) -> bool:
-        """刷新访问token"""
+        """刷新访问token."""
         refresh_url = f"{self.base_url}/auth/refresh"
 
         try:
@@ -244,7 +240,7 @@ class AuthManager:
             raise AuthenticationError(f"Token刷新请求失败: {str(e)}")
 
     def clear_tokens(self) -> None:
-        """清除所有token"""
+        """清除所有token."""
         self._access_token = None
         self._refresh_token = None
         self._token_expires_at = None
@@ -255,7 +251,7 @@ class AuthManager:
             del self._session.headers["Authorization"]
 
     def logout(self) -> bool:
-        """登出"""
+        """登出."""
         if not self.is_authenticated:
             return True
 
@@ -273,7 +269,7 @@ class AuthManager:
         return success
 
     def validate_token(self) -> bool:
-        """验证当前token是否有效"""
+        """验证当前token是否有效."""
         if not self._access_token:
             return False
 
@@ -287,7 +283,7 @@ class AuthManager:
             return False
 
     def get_user_info(self) -> dict[str, Any] | None:
-        """获取当前用户信息"""
+        """获取当前用户信息."""
         if not self.is_authenticated:
             raise AuthenticationError("未认证")
 
@@ -305,7 +301,7 @@ class AuthManager:
             raise SystemError(f"获取用户信息失败: {str(e)}")
 
     def change_password(self, current_password: str, new_password: str) -> bool:
-        """修改密码"""
+        """修改密码."""
         if not self.is_authenticated:
             raise AuthenticationError("未认证")
 
@@ -327,7 +323,7 @@ class AuthManager:
             raise SystemError(f"修改密码失败: {str(e)}")
 
     def generate_api_key(self, name: str, description: str = None) -> str | None:
-        """生成新的API密钥"""
+        """生成新的API密钥."""
         if not self.is_authenticated:
             raise AuthenticationError("未认证")
 
@@ -353,7 +349,7 @@ class AuthManager:
             raise SystemError(f"生成API密钥失败: {str(e)}")
 
     def revoke_api_key(self, api_key_id: str) -> bool:
-        """撤销API密钥"""
+        """撤销API密钥."""
         if not self.is_authenticated:
             raise AuthenticationError("未认证")
 
@@ -367,7 +363,7 @@ class AuthManager:
             raise SystemError(f"撤销API密钥失败: {str(e)}")
 
     def list_api_keys(self) -> list:
-        """列出所有API密钥"""
+        """列出所有API密钥."""
         if not self.is_authenticated:
             raise AuthenticationError("未认证")
 
@@ -385,15 +381,15 @@ class AuthManager:
             raise SystemError(f"获取API密钥列表失败: {str(e)}")
 
     def __enter__(self):
-        """上下文管理器入口"""
+        """上下文管理器入口."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """上下文管理器出口"""
+        """上下文管理器出口."""
         if self.auto_refresh:
             self.clear_tokens()
 
     def __repr__(self) -> str:
-        """字符串表示"""
+        """字符串表示."""
         status = "已认证" if self.is_authenticated else "未认证"
         return f"<AuthManager status={status} expires_at={self._token_expires_at}>"

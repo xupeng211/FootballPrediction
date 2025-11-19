@@ -1,6 +1,4 @@
-"""
-Collectors models package
-"""
+"""Collectors models package."""
 
 # 导出所有模型
 from .match import Match

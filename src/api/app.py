@@ -1,5 +1,3 @@
-from typing import Optional
-
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime

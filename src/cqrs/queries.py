@@ -6,7 +6,7 @@ Defines all read operation queries.
 """
 
 from datetime import date
-from typing import Any, Optional
+from typing import Any
 
 from .base import ValidatableQuery, ValidationResult
 

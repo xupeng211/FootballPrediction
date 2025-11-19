@@ -4,7 +4,7 @@ System Monitor.
 统一系统监控入口,向后兼容原有接口.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
 class SystemMonitor:

@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-增强版预测API - 符合SRS规范
-SRS Compliant Enhanced Prediction API
+"""增强版预测API - 符合SRS规范
+SRS Compliant Enhanced Prediction API.
 
 实现需求:
 - /predict API:输入赛事信息返回胜/平/负概率

@@ -1,5 +1,3 @@
-from typing import Optional
-
 # mypy: ignore-errors
 import logging
 from collections.abc import Sequence

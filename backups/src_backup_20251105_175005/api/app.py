@@ -67,7 +67,7 @@ prediction_engine: PredictionEngine | None = None
 
 
 async def init_prediction_engine():
-    """初始化预测引擎"""
+    """初始化预测引擎."""
     global prediction_engine
     try:
         prediction_engine = PredictionEngine()
@@ -77,7 +77,7 @@ async def init_prediction_engine():
 
 
 async def close_prediction_engine():
-    """关闭预测引擎"""
+    """关闭预测引擎."""
     global prediction_engine
     if prediction_engine:
         try:
@@ -89,7 +89,7 @@ async def close_prediction_engine():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
+    """应用生命周期管理."""
     logger.info("启动足球预测API服务...")
     await init_prediction_engine()
     logger.info("服务启动完成")
@@ -122,7 +122,7 @@ app.add_middleware(
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """请求日志中间件"""
+    """请求日志中间件."""
 
     async def dispatch(self, request: Request, call_next):
         start_time = None
@@ -167,7 +167,7 @@ app.include_router(
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    """HTTP异常处理"""
+    """HTTP异常处理."""
     logger.warning(
         f"HTTP exception: {exc.status_code} {exc.detail} "
         f"at {request.method} {request.url.path}"
@@ -186,7 +186,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """请求验证异常处理"""
+    """请求验证异常处理."""
     logger.warning(
         f"Validation error at {request.method} {request.url.path}: {exc.errors()}"
     )
@@ -205,7 +205,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    """通用异常处理"""
+    """通用异常处理."""
     logger.error(
         f"Unhandled exception at {request.method} {request.url.path}: {str(exc)}",
         exc_info=True,
@@ -224,7 +224,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 @app.get("/")
 async def root():
-    """根路径"""
+    """根路径."""
     return {
         "message": "Football Prediction API",
         "version": "1.0.0",
@@ -235,7 +235,7 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
-    """健康检查端点"""
+    """健康检查端点."""
     return {
         "status": "healthy",
         "timestamp": time.time(),
@@ -245,7 +245,7 @@ async def health_check():
 
 @app.get("/metrics")
 async def metrics_endpoint():
-    """Prometheus 格式的指标端点"""
+    """Prometheus 格式的指标端点."""
     metrics_data = """# HELP http_requests_total Total number of HTTP requests"
 http_requests_total{method="GET",endpoint="/api/health"} 1
 request_duration_seconds_bucket{le="0.1"} 1
@@ -258,7 +258,7 @@ api_health_status 1
 
 @app.get("/api/test")
 async def test_endpoint():
-    """测试端点"""
+    """测试端点."""
     return {
         "message": "API is working!",
         "timestamp": datetime.now().isoformat(),

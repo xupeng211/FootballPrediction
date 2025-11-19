@@ -9,7 +9,7 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Generic, TypeVar, Optional
+from typing import Any, Generic, TypeVar
 
 # 定义泛型类型
 CommandResultType = TypeVar("CommandResultType")

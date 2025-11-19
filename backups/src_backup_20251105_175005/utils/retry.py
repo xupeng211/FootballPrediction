@@ -1,6 +1,5 @@
-"""
-重试机制（向后兼容）
-Retry Mechanism (Backward Compatible)
+"""重试机制（向后兼容）
+Retry Mechanism (Backward Compatible).
 
 为了保持向后兼容性,此文件重新导出新的模块化重试系统.
 

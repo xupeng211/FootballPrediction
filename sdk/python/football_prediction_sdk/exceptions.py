@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-异常定义模块
-Football Prediction SDK - 异常类定义
+"""异常定义模块
+Football Prediction SDK - 异常类定义.
 
 Author: Claude Code
 Version: 1.0.0
@@ -11,7 +10,7 @@ from typing import Any
 
 
 class FootballPredictionError(Exception):
-    """基础异常类"""
+    """基础异常类."""
 
     def __init__(
         self,
@@ -32,7 +31,7 @@ class FootballPredictionError(Exception):
         return self.message
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "error_type": self.__class__.__name__,
             "message": self.message,
@@ -42,35 +41,35 @@ class FootballPredictionError(Exception):
 
 
 class AuthenticationError(FootballPredictionError):
-    """认证相关错误"""
+    """认证相关错误."""
 
     def __init__(self, message: str = "认证失败", **kwargs):
         super().__init__(message, **kwargs)
 
 
 class ValidationError(FootballPredictionError):
-    """数据验证错误"""
+    """数据验证错误."""
 
     def __init__(self, message: str = "数据验证失败", **kwargs):
         super().__init__(message, **kwargs)
 
 
 class BusinessError(FootballPredictionError):
-    """业务逻辑错误"""
+    """业务逻辑错误."""
 
     def __init__(self, message: str = "业务逻辑错误", **kwargs):
         super().__init__(message, **kwargs)
 
 
 class SystemError(FootballPredictionError):
-    """系统错误"""
+    """系统错误."""
 
     def __init__(self, message: str = "系统错误", **kwargs):
         super().__init__(message, **kwargs)
 
 
 class RateLimitError(FootballPredictionError):
-    """限流错误"""
+    """限流错误."""
 
     def __init__(
         self,
@@ -92,12 +91,12 @@ class RateLimitError(FootballPredictionError):
             })
 
     def get_retry_after_seconds(self) -> int | None:
-        """获取重试等待时间（秒）"""
+        """获取重试等待时间（秒）."""
         return self.retry_after
 
 
 class NotFoundError(BusinessError):
-    """资源不存在错误"""
+    """资源不存在错误."""
 
     def __init__(self, message: str = "资源不存在", resource_type: str = None, resource_id: str = None, **kwargs):
         super().__init__(message, **kwargs)
@@ -108,14 +107,14 @@ class NotFoundError(BusinessError):
 
 
 class ConflictError(BusinessError):
-    """冲突错误"""
+    """冲突错误."""
 
     def __init__(self, message: str = "资源冲突", **kwargs):
         super().__init__(message, **kwargs)
 
 
 class ExternalServiceError(SystemError):
-    """外部服务错误"""
+    """外部服务错误."""
 
     def __init__(self, message: str = "外部服务错误", service_name: str = None, **kwargs):
         super().__init__(message, **kwargs)
@@ -124,7 +123,7 @@ class ExternalServiceError(SystemError):
 
 
 class ConfigurationError(FootballPredictionError):
-    """配置错误"""
+    """配置错误."""
 
     def __init__(self, message: str = "配置错误", **kwargs):
         super().__init__(message, **kwargs)
@@ -167,8 +166,7 @@ ERROR_CODE_MAP = {
 
 
 def create_exception_from_response(response_data: dict[str, Any], response: Any = None) -> FootballPredictionError:
-    """
-    从API响应创建对应的异常实例
+    """从API响应创建对应的异常实例.
 
     Args:
         response_data: API错误响应数据

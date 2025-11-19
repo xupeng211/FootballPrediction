@@ -1,5 +1,3 @@
-from typing import Optional
-
 """transformer
 赔率数据转换.
 

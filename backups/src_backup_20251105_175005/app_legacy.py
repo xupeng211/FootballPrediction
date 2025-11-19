@@ -1,6 +1,5 @@
-"""
-根目录下的简化 FastAPI 应用
-Root Directory Simplified FastAPI Application
+"""根目录下的简化 FastAPI 应用
+Root Directory Simplified FastAPI Application.
 """
 
 from fastapi import FastAPI
@@ -15,7 +14,7 @@ app = FastAPI(
 
 @app.get("/")
 async def root():
-    """根端点"""
+    """根端点."""
     return {
         "message": "Football Prediction API",
         "version": "2.0.0",
@@ -25,7 +24,7 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """健康检查端点"""
+    """健康检查端点."""
     return {"status": "healthy", "version": "2.0.0"}
 
 

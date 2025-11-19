@@ -1,6 +1,5 @@
-"""
-警告过滤器设置
-Warning Filters Setup
+"""警告过滤器设置
+Warning Filters Setup.
 """
 
 import logging
@@ -11,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def setup_warning_filters():
-    """设置警告过滤器"""
+    """设置警告过滤器."""
     try:
         # 忽略一些常见的警告
         warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow.*")

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """异常检测相关功能."""
 
 # 导入

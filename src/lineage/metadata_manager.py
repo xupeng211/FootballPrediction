@@ -1,5 +1,3 @@
-from typing import Optional
-
 """metadata_manager.py
 Metadata_Manager.
 

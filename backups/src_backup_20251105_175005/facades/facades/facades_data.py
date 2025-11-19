@@ -1,13 +1,11 @@
-"""
-数据门面
-"""
+"""数据门面."""
 
 # 导入
 
 
 # 类定义
 class DatabaseSubsystem:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """数据库子系统"""
@@ -16,7 +14,7 @@ class DatabaseSubsystem:
 
 
 class DataCollectionFacade:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """数据收集门面 - 专注于数据收集功能"""

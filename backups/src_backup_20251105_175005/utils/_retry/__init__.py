@@ -1,5 +1,4 @@
-"""
-重试机制模块 / Retry Mechanism Module
+"""重试机制模块 / Retry Mechanism Module.
 
 包含所有重试相关的类和函数.
 """
@@ -15,7 +14,7 @@ T = TypeVar("T")
 
 
 class RetryConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """重试配置类"""
@@ -38,7 +37,7 @@ class RetryConfig:
 
 
 class RetryError(Exception):
-    """重试失败异常"""
+    """重试失败异常."""
 
 
 
@@ -48,7 +47,7 @@ def retry_with_exponential_backoff(
     max_delay: float = 60.0,
     exceptions: tuple = (Exception,),
 ):
-    """重试装饰器（同步版本）"""
+    """重试装饰器（同步版本）."""
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
@@ -81,7 +80,7 @@ async def async_retry_with_exponential_backoff(
     max_delay: float = 60.0,
     exceptions: tuple = (Exception,),
 ):
-    """重试装饰器（异步版本）"""
+    """重试装饰器（异步版本）."""
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
@@ -109,7 +108,7 @@ async def async_retry_with_exponential_backoff(
 
 
 def retry(config: RetryConfig | None = None):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """通用的重试装饰器"""
     if config is None:
@@ -123,7 +122,7 @@ def retry(config: RetryConfig | None = None):
 
 
 def async_retry(config: RetryConfig | None = None):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """通用的异步重试装饰器"""
     if config is None:
@@ -147,7 +146,7 @@ retry_async = async_retry
 
 
 class CircuitState:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """熔断器状态枚举"""
@@ -158,7 +157,7 @@ class CircuitState:
 
 
 class CircuitBreaker:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """熔断器实现"""

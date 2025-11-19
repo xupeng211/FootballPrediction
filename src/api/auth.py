@@ -1,6 +1,6 @@
 """认证API模块."""
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer

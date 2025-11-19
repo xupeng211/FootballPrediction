@@ -6,7 +6,7 @@ Provides adapter creation, registration, and management functionality.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 # 导入基础类
 from .base import BaseAdapter

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """外观模式核心类模块
 Facade Core Classes Module.
 

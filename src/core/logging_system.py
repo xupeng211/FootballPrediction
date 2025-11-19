@@ -1,5 +1,3 @@
-from typing import Optional
-
 """日志系统（向后兼容）
 Logging System (Backward Compatible).
 

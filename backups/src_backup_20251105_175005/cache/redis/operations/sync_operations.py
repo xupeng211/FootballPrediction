@@ -12,20 +12,20 @@ logger = logging.getLogger(__name__)
 
 
 class RedisSyncOperations:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """Synchronous Redis operations"""
 
     def __init__(self, redis_client=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """Initialize sync operations"""
         self.client = redis_client
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def get(self, key: str) -> Any | None:
-        """Get value from Redis"""
+        """Get value from Redis."""
         if not self.client:
             return None
         try:
@@ -38,7 +38,7 @@ class RedisSyncOperations:
             return None
 
     def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
-        """Set value in Redis"""
+        """Set value in Redis."""
         if not self.client:
             return False
         try:
@@ -52,7 +52,7 @@ class RedisSyncOperations:
             return False
 
     def delete(self, key: str) -> bool:
-        """Delete key from Redis"""
+        """Delete key from Redis."""
         if not self.client:
             return False
         try:
@@ -62,7 +62,7 @@ class RedisSyncOperations:
             return False
 
     def exists(self, key: str) -> bool:
-        """Check if key exists"""
+        """Check if key exists."""
         if not self.client:
             return False
         try:

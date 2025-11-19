@@ -1,5 +1,3 @@
-from typing import Optional
-
 """API缓存中间件
 API Cache Middleware.
 

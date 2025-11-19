@@ -1,6 +1,5 @@
-"""
-CQRS API端点
-CQRS API Endpoints
+"""CQRS API端点
+CQRS API Endpoints.
 
 提供CQRS模式的HTTP接口.
 Provides HTTP interface for CQRS pattern.
@@ -17,22 +16,22 @@ router = APIRouter(prefix="/cqrs", tags=["CQRS"])
 
 
 def get_prediction_cqrs_service():
-    """获取预测CQRS服务"""
+    """获取预测CQRS服务."""
     return CQRSServiceFactory.create_prediction_service()
 
 
 def get_match_cqrs_service():
-    """获取比赛CQRS服务"""
+    """获取比赛CQRS服务."""
     return CQRSServiceFactory.create_match_service()
 
 
 def get_user_cqrs_service():
-    """获取用户CQRS服务"""
+    """获取用户CQRS服务."""
     return CQRSServiceFactory.create_user_service()
 
 
 def get_analytics_cqrs_service():
-    """获取分析CQRS服务"""
+    """获取分析CQRS服务."""
     return CQRSServiceFactory.create_analytics_service()
 
 
@@ -40,7 +39,7 @@ def get_analytics_cqrs_service():
 
 
 class PredictionCreateCommand(BaseModel):
-    """创建预测命令"""
+    """创建预测命令."""
 
     match_id: int = Field(..., description="比赛ID")
     user_id: int = Field(..., description="用户ID")
@@ -52,7 +51,7 @@ class PredictionCreateCommand(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """预测响应"""
+    """预测响应."""
 
     id: int
     match_id: int
@@ -72,7 +71,7 @@ async def create_prediction(
     background_tasks: BackgroundTasks,
     service=Depends(get_prediction_cqrs_service),
 ):
-    """创建预测"""
+    """创建预测."""
     try:
         result = await service.create_prediction(command)
         return result
@@ -85,7 +84,7 @@ async def get_prediction(
     prediction_id: int,
     service=Depends(get_prediction_cqrs_service),
 ):
-    """获取预测"""
+    """获取预测."""
     try:
         result = await service.get_prediction(prediction_id)
         return result
@@ -100,7 +99,7 @@ async def list_predictions(
     offset: int = Query(0, ge=0, description="偏移量"),
     service=Depends(get_prediction_cqrs_service),
 ):
-    """列出预测"""
+    """列出预测."""
     try:
         result = await service.list_predictions(user_id, limit, offset)
         return result
@@ -112,7 +111,7 @@ async def list_predictions(
 
 
 class MatchResponse(BaseModel):
-    """比赛响应"""
+    """比赛响应."""
 
     id: int
     home_team: str
@@ -130,7 +129,7 @@ async def get_match(
     match_id: int,
     service=Depends(get_match_cqrs_service),
 ):
-    """获取比赛"""
+    """获取比赛."""
     try:
         result = await service.get_match(match_id)
         return result
@@ -146,7 +145,7 @@ async def list_matches(
     offset: int = Query(0, ge=0, description="偏移量"),
     service=Depends(get_match_cqrs_service),
 ):
-    """列出比赛"""
+    """列出比赛."""
     try:
         result = await service.list_matches(date_from, date_to, limit, offset)
         return result
@@ -158,7 +157,7 @@ async def list_matches(
 
 
 class UserResponse(BaseModel):
-    """用户响应"""
+    """用户响应."""
 
     id: int
     username: str
@@ -172,7 +171,7 @@ async def get_user(
     user_id: int,
     service=Depends(get_user_cqrs_service),
 ):
-    """获取用户"""
+    """获取用户."""
     try:
         result = await service.get_user(user_id)
         return result
@@ -186,7 +185,7 @@ async def list_users(
     offset: int = Query(0, ge=0, description="偏移量"),
     service=Depends(get_user_cqrs_service),
 ):
-    """列出用户"""
+    """列出用户."""
     try:
         result = await service.list_users(limit, offset)
         return result
@@ -198,7 +197,7 @@ async def list_users(
 
 
 class AnalyticsResponse(BaseModel):
-    """分析响应"""
+    """分析响应."""
 
     total_predictions: int
     accuracy_rate: float
@@ -213,7 +212,7 @@ async def get_analytics(
     days: int = Query(30, ge=1, le=365, description="分析天数"),
     service=Depends(get_analytics_cqrs_service),
 ):
-    """获取分析数据"""
+    """获取分析数据."""
     try:
         result = await service.get_analytics(user_id, days)
         return result

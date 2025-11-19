@@ -1,6 +1,4 @@
-"""
-国际化中间件
-"""
+"""国际化中间件."""
 
 import os
 
@@ -9,7 +7,7 @@ from starlette.requests import Request
 
 
 class I18nMiddleware(BaseHTTPMiddleware):
-    """国际化中间件 - 设置语言偏好"""
+    """国际化中间件 - 设置语言偏好."""
 
     async def dispatch(self, request: Request, call_next):
         # 从请求头获取语言偏好

@@ -1,5 +1,4 @@
-"""
-数据验证器 - 重写版本
+"""数据验证器 - 重写版本.
 
 验证处理后的数据质量和完整性
 Data Validator - Rewritten Version
@@ -13,13 +12,13 @@ import pandas as pd
 
 
 class DataValidator:
-    """数据验证器 - 简化版本
+    """数据验证器 - 简化版本.
 
     提供数据质量和完整性验证功能
     """
 
     def __init__(self):
-        """初始化验证器"""
+        """初始化验证器."""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
 
         # 验证规则配置
@@ -44,7 +43,7 @@ class DataValidator:
     async def validate_data(
         self, data: dict | list[dict], data_type: str = "match_data"
     ) -> dict[str, Any]:
-        """验证数据"""
+        """验证数据."""
         try:
             if isinstance(data, dict):
                 return await self._validate_single_record(data, data_type)
@@ -60,7 +59,7 @@ class DataValidator:
     async def _validate_single_record(
         self, record: dict[str, Any], data_type: str
     ) -> dict[str, Any]:
-        """验证单条记录"""
+        """验证单条记录."""
         errors = []
         warnings = []
         validation_stats = {}
@@ -122,7 +121,7 @@ class DataValidator:
     async def _validate_multiple_records(
         self, records: list[dict[str, Any]], data_type: str
     ) -> dict[str, Any]:
-        """验证多条记录"""
+        """验证多条记录."""
         total_errors = []
         total_warnings = []
         valid_records = 0
@@ -171,7 +170,7 @@ class DataValidator:
     async def _check_required_fields(
         self, record: dict[str, Any], required_fields: list[str]
     ) -> list[str]:
-        """检查必需字段"""
+        """检查必需字段."""
         missing_fields = []
         for field in required_fields:
             if field not in record or record[field] is None or record[field] == "":
@@ -181,7 +180,7 @@ class DataValidator:
     async def _validate_numeric_fields(
         self, record: dict[str, Any], numeric_fields: list[str]
     ) -> list[str]:
-        """验证数值字段"""
+        """验证数值字段."""
         errors = []
         for field in numeric_fields:
             if field in record and record[field] is not None:
@@ -194,7 +193,7 @@ class DataValidator:
     async def _validate_date_fields(
         self, record: dict[str, Any], date_fields: list[str]
     ) -> list[str]:
-        """验证日期字段"""
+        """验证日期字段."""
         errors = []
         for field in date_fields:
             if field in record and record[field] is not None:
@@ -214,7 +213,7 @@ class DataValidator:
     async def _validate_range_fields(
         self, record: dict[str, Any], range_fields: dict[str, dict]
     ) -> list[str]:
-        """验证字段值范围"""
+        """验证字段值范围."""
         errors = []
         for field, range_config in range_fields.items():
             if field in record and record[field] is not None:
@@ -234,7 +233,7 @@ class DataValidator:
     async def _validate_string_fields(
         self, record: dict[str, Any], string_fields: list[str]
     ) -> list[str]:
-        """验证字符串字段"""
+        """验证字符串字段."""
         warnings = []
         for field in string_fields:
             if field in record and record[field] is not None:
@@ -248,7 +247,7 @@ class DataValidator:
     def _create_result(
         self, is_valid: bool, message: str, data: dict[str, Any]
     ) -> dict[str, Any]:
-        """创建验证结果"""
+        """创建验证结果."""
         return {
             "is_valid": is_valid,
             "result_type": "success" if is_valid else "error",
@@ -260,7 +259,7 @@ class DataValidator:
     async def validate_dataframe(
         self, df: pd.DataFrame, data_type: str = "match_data"
     ) -> dict[str, Any]:
-        """验证DataFrame数据"""
+        """验证DataFrame数据."""
         try:
             # 转换为字典列表
             records = df.to_dict("records")
@@ -271,7 +270,7 @@ class DataValidator:
             return self._create_result(False, f"DataFrame验证失败: {str(e)}", {})
 
     async def validate_data_quality(self, data: dict | list[dict]) -> dict[str, Any]:
-        """评估数据质量"""
+        """评估数据质量."""
         try:
             if isinstance(data, dict):
                 data = [data]
@@ -302,7 +301,7 @@ class DataValidator:
             }
 
     async def _calculate_completeness(self, data: list[dict]) -> float:
-        """计算完整性得分"""
+        """计算完整性得分."""
         if not data:
             return 0.0
 
@@ -315,7 +314,7 @@ class DataValidator:
         return (non_null_fields / total_fields * 100) if total_fields > 0 else 0.0
 
     async def _calculate_consistency(self, data: list[dict]) -> float:
-        """计算一致性得分"""
+        """计算一致性得分."""
         if not data:
             return 0.0
 
@@ -330,7 +329,7 @@ class DataValidator:
         return (consistent_records / len(data) * 100) if data else 0.0
 
     async def _calculate_accuracy(self, data: list[dict]) -> float:
-        """计算准确性得分 (简化版本)"""
+        """计算准确性得分 (简化版本)."""
         # 这里可以实现更复杂的准确性检查逻辑
         # 现在返回基于数据格式的准确性评估
         if not data:
@@ -352,7 +351,7 @@ class DataValidator:
         )
 
     async def _calculate_timeliness(self, data: list[dict]) -> float:
-        """计算时效性得分"""
+        """计算时效性得分."""
         if not data:
             return 0.0
 
@@ -387,7 +386,7 @@ class DataValidator:
         )
 
     def _get_quality_grade(self, score: float) -> str:
-        """获取质量等级"""
+        """获取质量等级."""
         if score >= 90:
             return "A"
         elif score >= 80:

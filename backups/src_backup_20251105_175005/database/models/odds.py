@@ -1,6 +1,5 @@
-"""
-数据库赔率模型
-Database Odds Models
+"""数据库赔率模型
+Database Odds Models.
 
 定义赔率相关的数据库模型和操作
 """
@@ -16,7 +15,7 @@ Base = declarative_base()
 
 
 class MarketType(Enum):
-    """市场类型枚举"""
+    """市场类型枚举."""
 
     HOME_WIN = "home_win"
     DRAW = "draw"
@@ -28,7 +27,7 @@ class MarketType(Enum):
 
 
 class BetType(Enum):
-    """投注类型枚举"""
+    """投注类型枚举."""
 
     HOME_WIN = "home_win"
     DRAW = "draw"
@@ -40,7 +39,7 @@ class BetType(Enum):
 
 
 class Odds(Base):
-    """赔率模型"""
+    """赔率模型."""
 
     __tablename__ = "odds"
 
@@ -54,23 +53,23 @@ class Odds(Base):
     is_active = Column(Boolean, default=True)
 
     def __repr__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return f"<Odds(match_id={self.match_id}, bookmaker={self.bookmaker}, type={self.bet_type}, odds={self.odds_value})>"
 
     @property
     def decimal_odds(self) -> Decimal:
-        """获取十进制赔率"""
+        """获取十进制赔率."""
         return Decimal(str(self.odds_value))
 
     @property
     def implied_probability(self) -> float:
-        """获取隐含概率"""
+        """获取隐含概率."""
         return float(1 / self.odds_value)
 
 
 class OddsHistory(Base):
-    """赔率历史记录模型"""
+    """赔率历史记录模型."""
 
     __tablename__ = "odds_history"
 
@@ -82,13 +81,13 @@ class OddsHistory(Base):
     change_reason = Column(Text, nullable=True)
 
     def __repr__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return f"<OddsHistory(odds_id={self.odds_id}, change={self.old_odds_value}->{self.new_odds_value})>"
 
 
 class MarketAnalysis(Base):
-    """市场分析模型"""
+    """市场分析模型."""
 
     __tablename__ = "market_analysis"
 
@@ -103,18 +102,18 @@ class MarketAnalysis(Base):
     market_confidence = Column(Numeric(3, 2), default=0.5)  # 0-1之间的市场信心度
 
     def __repr__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         return f"<MarketAnalysis(match_id={self.match_id}, type={self.bet_type}, avg_odds={self.average_odds})>"
 
     @property
     def odds_range(self) -> Decimal:
-        """获取赔率范围"""
+        """获取赔率范围."""
         return self.max_odds - self.min_odds
 
     @property
     def market_volatility(self) -> float:
-        """获取市场波动性"""
+        """获取市场波动性."""
         if self.average_odds == 0:
             return 0.0
         return float((self.max_odds - self.min_odds) / self.average_odds)

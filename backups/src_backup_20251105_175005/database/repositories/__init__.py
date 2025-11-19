@@ -1,6 +1,5 @@
-"""
-Repository模式实现
-Repository Pattern Implementation
+"""Repository模式实现
+Repository Pattern Implementation.
 
 提供数据访问层的抽象,实现仓储模式以进一步解耦数据访问层.
 Provides data access layer abstraction, implementing repository pattern for further decoupling.

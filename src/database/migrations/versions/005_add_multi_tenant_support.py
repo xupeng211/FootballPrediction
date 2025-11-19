@@ -1,5 +1,3 @@
-from typing import Optional
-
 """添加多租户支持
 Add Multi-Tenant Support.
 

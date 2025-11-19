@@ -3,7 +3,7 @@
 import hashlib
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 def generate_uuid() -> str:

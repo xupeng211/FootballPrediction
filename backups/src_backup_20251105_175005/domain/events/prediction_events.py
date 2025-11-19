@@ -1,6 +1,5 @@
-"""
-预测领域事件
-Prediction Domain Events
+"""预测领域事件
+Prediction Domain Events.
 
 定义与预测相关的领域事件.
 Defines domain events related to predictions.
@@ -13,7 +12,7 @@ from src.domain.events.base import DomainEvent
 
 
 class PredictionEvent(DomainEvent):
-    """预测事件基类"""
+    """预测事件基类."""
 
     def __init__(
         self,
@@ -37,7 +36,7 @@ class PredictionEvent(DomainEvent):
 
 
 class PredictionCreatedEvent(DomainEvent):
-    """预测创建事件"""
+    """预测创建事件."""
 
     def __init__(
         self,
@@ -69,7 +68,7 @@ class PredictionCreatedEvent(DomainEvent):
 
 
 class PredictionUpdatedEvent(DomainEvent):
-    """预测更新事件"""
+    """预测更新事件."""
 
     def __init__(
         self,
@@ -102,7 +101,7 @@ class PredictionUpdatedEvent(DomainEvent):
 
 
 class PredictionEvaluatedEvent(DomainEvent):
-    """预测评估事件"""
+    """预测评估事件."""
 
     def __init__(
         self,
@@ -133,7 +132,7 @@ class PredictionEvaluatedEvent(DomainEvent):
 
 
 class PredictionCancelledEvent(DomainEvent):
-    """预测取消事件"""
+    """预测取消事件."""
 
     def __init__(
         self,
@@ -156,10 +155,10 @@ class PredictionCancelledEvent(DomainEvent):
 
 
 class PredictionExpiredEvent(DomainEvent):
-    """预测过期事件"""
+    """预测过期事件."""
 
     def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(aggregate_id=prediction_id)
         self.prediction_id = prediction_id
@@ -175,7 +174,7 @@ class PredictionExpiredEvent(DomainEvent):
 
 
 class PredictionPointsAdjustedEvent(DomainEvent):
-    """预测积分调整事件"""
+    """预测积分调整事件."""
 
     def __init__(
         self,

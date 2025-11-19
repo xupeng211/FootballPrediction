@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-"""
-Python 兼容性批量修复脚本
+"""Python 兼容性批量修复脚本
 Batch fix script for Python version compatibility issues.
 
 修复所有 `Type | None` 语法为 `Optional[Type]` 语法
 Fix all `Type | None` syntax to `Optional[Type]` syntax
 """
 
-import os
 import re
 import sys
 from pathlib import Path
 
 
 def add_optional_import(file_path: Path) -> bool:
-    """添加 Optional 导入到文件头部"""
+    """添加 Optional 导入到文件头部."""
     try:
         content = file_path.read_text(encoding='utf-8')
 
@@ -53,13 +51,12 @@ def add_optional_import(file_path: Path) -> bool:
         file_path.write_text('\n'.join(lines), encoding='utf-8')
         return True
 
-    except Exception as e:
-        print(f"Error processing {file_path}: {e}")
+    except Exception:
         return False
 
 
 def fix_type_annotations(file_path: Path) -> int:
-    """修复单个文件中的类型注解"""
+    """修复单个文件中的类型注解."""
     try:
         content = file_path.read_text(encoding='utf-8')
         original_content = content
@@ -127,13 +124,12 @@ def fix_type_annotations(file_path: Path) -> int:
 
         return fixes_count
 
-    except Exception as e:
-        print(f"Error processing {file_path}: {e}")
+    except Exception:
         return 0
 
 
 def fix_project_compatibility(project_root: str):
-    """修复整个项目的兼容性问题"""
+    """修复整个项目的兼容性问题."""
     project_path = Path(project_root)
 
     # 需要处理的目录
@@ -143,16 +139,12 @@ def fix_project_compatibility(project_root: str):
     total_fixes = 0
     errors = 0
 
-    print(f"🔧 开始修复项目兼容性问题...")
-    print(f"📁 项目根目录: {project_path}")
 
     for directory in directories:
         dir_path = project_path / directory
         if not dir_path.exists():
-            print(f"⚠️  目录不存在: {dir_path}")
             continue
 
-        print(f"\n🔍 处理目录: {directory}")
 
         # 递归查找所有 Python 文件
         python_files = list(dir_path.rglob('*.py'))
@@ -168,23 +160,16 @@ def fix_project_compatibility(project_root: str):
                 # 1. 添加 Optional 导入
                 import_added = add_optional_import(py_file)
                 if import_added:
-                    print(f"  📦 添加 Optional 导入: {py_file.relative_to(project_path)}")
+                    pass
 
                 # 2. 修复类型注解
                 fixes = fix_type_annotations(py_file)
                 if fixes > 0:
-                    print(f"  🔧 修复 {fixes} 个类型注解: {py_file.relative_to(project_path)}")
                     total_fixes += fixes
 
-            except Exception as e:
-                print(f"  ❌ 错误处理文件 {py_file}: {e}")
+            except Exception:
                 errors += 1
 
-    print(f"\n📊 修复完成统计:")
-    print(f"   📁 处理文件数: {total_files}")
-    print(f"   🔧 修复的注解数: {total_fixes}")
-    print(f"   ❌ 错误文件数: {errors}")
-    print(f"   ✅ 成功率: {((total_files-errors)/total_files*100):.1f}%")
 
 
 if __name__ == '__main__':
@@ -194,11 +179,6 @@ if __name__ == '__main__':
         # 默认使用当前目录
         project_root = '.'
 
-    print("🚀 Python 兼容性批量修复工具")
-    print("=" * 50)
 
     fix_project_compatibility(project_root)
 
-    print("\n✅ 批量修复完成！")
-    print("💡 建议运行测试验证修复效果:")
-    print("   python -m pytest tests/unit/services/test_feature_service.py -v")

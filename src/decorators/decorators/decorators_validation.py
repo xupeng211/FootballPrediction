@@ -1,5 +1,3 @@
-from typing import Optional
-
 """验证装饰器."""
 
 # 导入

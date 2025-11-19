@@ -1,5 +1,3 @@
-from typing import Optional
-
 """预测API端点 / Prediction API Endpoints.
 
 提供比赛预测相关的API接口:

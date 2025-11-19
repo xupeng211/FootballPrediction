@@ -1,5 +1,3 @@
-from typing import Optional
-
 """
 精简的核心测试配置文件
 专注于项目的核心功能测试

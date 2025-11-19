@@ -31,7 +31,7 @@ make fix-code
 make test.smart
 ```
 
-### ⚡ 30+个核心开发命令（156个Makefile目标精选）
+### ⚡ 35+个核心开发命令（动态项目状态监控）
 
 ```bash
 # 🔧 环境管理
@@ -39,6 +39,13 @@ make install          # 安装项目依赖
 make env-check        # 检查环境健康
 make create-env       # 创建环境文件
 make venv             # 创建虚拟环境
+
+# 📊 动态项目状态监控（新增）
+make coverage-status  # 实时覆盖率报告和状态
+make test-status      # 最近测试结果和通过率
+make quality-score    # 代码质量评分和问题统计
+make health-check     # 项目整体健康状态检查
+make project-dashboard # 完整项目状态仪表板
 
 # 🧪 测试相关
 make test             # 运行单元测试（默认）
@@ -71,6 +78,19 @@ make retrain-check    # 检查模型是否需要重新训练
 make retrain-dry      # 干运行重新训练检查（仅评估）
 make mlops-pipeline   # 运行完整的MLOps反馈管道
 make mlops-status     # 显示MLOps管道状态
+
+# 🌐 API文档和测试（新增）
+make api-docs         # 生成API文档和OpenAPI规范
+make api-test         # API集成测试和性能测试
+make api-monitor      # API性能监控和指标分析
+make api-validation   # API契约验证和兼容性检查
+
+# 🐳 微服务架构管理（新增）
+make services-status  # 微服务状态检查
+make service-restart  # 单个服务重启（支持参数）
+make logs-merge       # 多服务日志合并查看
+make service-health   # 服务间健康检查
+make micro-deploy     # 微服务独立部署
 
 # 🐳 部署相关
 make up               # 启动服务
@@ -265,88 +285,126 @@ make mlops-status       # 显示MLOps管道状态
 make feedback-test      # 运行反馈循环单元测试
 ```
 
-### 🐳 服务栈
+### 🐳 微服务架构栈（企业级增强版）
 
 **开发环境（4个核心服务）**：
 ```bash
-make up          # 启动所有服务
+make up                    # 启动所有开发服务
+make services-status       # 检查所有微服务状态
 ```
 
-- **app** (FastAPI应用) - 主要API服务
-- **db** (PostgreSQL 15) - 主数据库
-- **redis** (Redis 7-alpine) - 缓存和会话存储
-- **nginx** (反向代理) - 负载均衡和静态文件服务
+- **app** (FastAPI应用) - 主要API服务和业务逻辑
+- **db** (PostgreSQL 15) - 主数据库和持久化存储
+- **redis** (Redis 7-alpine) - 缓存、会话和消息队列
+- **nginx** (反向代理) - 负载均衡、SSL终止和静态文件
 
-**完整生产环境（7个服务）**：
-- app (FastAPI应用)
-- db (PostgreSQL)
-- redis (Redis缓存)
-- nginx (反向代理)
-- prometheus (监控)
-- grafana (可视化)
-- loki (日志聚合)
+**微服务架构（生产环境7+服务）**：
+```bash
+# 核心业务服务
+make micro-deploy app     # 独立部署API服务
+make service-restart db   # 数据库服务重启
+make service-health       # 所有服务间健康检查
+```
+
+- **app** (FastAPI应用) - 核心业务API
+- **analytics** (分析服务) - 数据分析和报表生成
+- **data_collection** (数据收集) - 外部数据抓取和处理
+- **prediction** (预测服务) - ML模型推理和预测
+- **user_management** (用户管理) - 认证、授权和用户配置
+
+**完整生产环境（11个服务）**：
+- **业务服务**: app, analytics, data_collection, prediction, user_management
+- **数据服务**: db (PostgreSQL), redis (Redis缓存)
+- **基础设施**: nginx (反向代理), kafka (消息队列)
+- **监控服务**: prometheus (监控), grafana (可视化), loki (日志聚合)
 
 **服务访问地址**：
-- **API服务**: http://localhost:8000
-- **API文档**: http://localhost:8000/docs
-- **交互式API**: http://localhost:8000/redoc
+- **主API服务**: http://localhost:8000
+- **API文档**: http://localhost:8000/docs (Swagger UI)
+- **交互式API**: http://localhost:8000/redoc (ReDoc)
 - **健康检查**: http://localhost:8000/health
-- **数据库**: localhost:5432 (PostgreSQL 15)
-- **Redis缓存**: localhost:6379 (Redis 7-alpine)
-- **Nginx代理**: http://localhost:80 (生产环境)
+- **分析服务**: http://localhost:8001 (analytics API)
+- **数据收集**: http://localhost:8002 (data collection API)
 
-**监控服务栈（生产环境）**：
-- **Grafana**: http://localhost:3001 (admin/admin)
-- **Prometheus**: http://localhost:9090
-- **日志聚合**: http://localhost:3100 (Loki)
+**微服务管理命令（新增）**：
+```bash
+# 🔧 微服务状态管理
+make services-status      # 所有微服务状态和资源使用
+make service-health       # 服务间连接和依赖健康检查
+make logs-merge           # 多服务日志合并和关联分析
+make service-restart app  # 单个服务热重启（保持其他服务运行）
 
-**🚀 实时功能栈（现代流处理架构）**：
-- **🔌 WebSocket**: 实时比赛数据推送和预测更新（双向通信）
-- **🌊 流处理**: Kafka消息队列处理实时数据流（高吞吐量）
-- **⚡ 事件驱动**: 异步事件处理和通知系统（松耦合）
-- **📊 实时监控**: 流数据处理指标和性能监控
-- **🔄 数据同步**: 多数据源实时同步和一致性保证
+# 📊 微服务监控
+make micro-monitor        # 微服务性能和资源监控
+make service-deps         # 服务依赖关系图和状态
+make micro-scale          # 服务扩缩容管理
+make service-backup       # 服务数据和配置备份
+```
+
+**🚀 实时流处理架构（现代微服务）**：
+- **🔌 WebSocket Gateway**: 实时数据网关和连接管理
+- **🌊 Kafka Cluster**: 高吞吐量分布式消息队列
+- **⚡ Event Bus**: 事件驱动架构和异步处理
+- **📊 Stream Processing**: 实时数据流处理和分析
+- **🔄 Service Mesh**: 微服务间通信和治理
 
 **实时功能测试和验证**：
 ```bash
-# 🔌 WebSocket连接测试
+# 🔌 WebSocket连接和压力测试
 curl http://localhost:8000/realtime/matches           # 实时比赛数据
-wscat -c ws://localhost:8000/ws/matches             # WebSocket交互
+wscat -c ws://localhost:8000/ws/matches             # WebSocket交互测试
+make websocket-load-test                           # WebSocket并发测试
 
-# 🌊 流数据测试
+# 🌊 流数据集成测试
 curl http://localhost:8000/streaming/predictions     # 实时预测流
 curl http://localhost:8000/streaming/matches         # 比赛数据流
+make stream-integration-test                       # 完整流处理集成测试
 
-# ⚡ 事件处理测试
+# ⚡ 事件驱动测试
 curl http://localhost:8000/realtime/events           # 事件驱动API
-curl -X POST http://localhost:8000/events/trigger    # 触发事件
+curl -X POST http://localhost:8000/events/trigger    # 触发业务事件
+make event-storm-test                             # 事件风暴和压力测试
 
-# 📈 流处理健康检查
-curl http://localhost:8000/streaming/health          # 流处理状态
-curl http://localhost:8000/kafka/status              # Kafka集群状态
+# 📈 微服务健康和监控
+make micro-health-check      # 微服务集群健康状态
+curl http://localhost:8000/kafka/status            # Kafka集群状态
+make service-metrics        # 服务性能指标收集
 ```
 
-**🎯 实时功能集成测试**：
+**🎯 微服务集成测试套件**：
 ```bash
-# 端到端实时数据流测试
-pytest -m "streaming and integration" -v           # 流处理集成测试
-pytest -m "websocket and e2e" -v                  # WebSocket端到端测试
-pytest -m "realtime and performance" --benchmark   # 实时性能测试
+# 端到端微服务测试
+pytest -m "microservice and integration" -v       # 微服务集成测试
+pytest -m "service_mesh and e2e" -v              # 服务网格端到端测试
+pytest -m "kafka and streaming" --benchmark       # Kafka流处理性能测试
 
-# 生产环境实时功能验证
-docker-compose exec app curl http://localhost:8000/realtime/health
+# 生产环境微服务验证
+docker-compose exec app make service-health        # 生产环境服务健康检查
+make chaos-engineering                            # 混沌工程和故障注入测试
 ```
 
-**Docker 开发环境管理**：
+**🐳 Docker微服务环境管理**：
 ```bash
-# 服务状态检查
-docker-compose ps                # 查看所有服务状态
-docker-compose logs app          # 查看应用日志
-docker-compose exec app bash     # 进入应用容器
+# 服务状态和资源监控
+docker-compose ps                # 查看所有微服务状态
+docker-compose top               # 服务资源使用情况
+docker-compose logs app --tail=100 # 应用服务详细日志
 
-# 端口冲突解决
-docker-compose down              # 停止所有服务
-make up                          # 重新启动服务
+# 服务操作和维护
+docker-compose exec app bash     # 进入主应用容器
+docker-compose exec analytics bash # 进入分析服务容器
+make service-restart app        # 热重启应用服务
+make service-backup db          # 数据库服务备份
+
+# 网络和故障排除
+docker-compose exec app netstat -tlnp  # 查看服务端口监听
+docker-compose exec app ping db       # 测试服务间网络连接
+docker-compose exec nslookup app redis # 服务发现测试
+
+# 环境重置和恢复
+make down && make up                    # 完全重启所有微服务
+make micro-deploy --force              # 强制重新部署所有服务
+make env-restore                       # 环境配置一键恢复
 ```
 
 ---
@@ -418,71 +476,103 @@ exclude_lines = [
 - **故障排除指南**: [CLAUDE_DETAILED.md](./CLAUDE_DETAILED.md#故障排除)
 - **质量修复工具**: [CLAUDE_DETAILED.md](./CLAUDE_DETAILED.md#质量修复)
 
-### 🚨 常见问题快速解决
+### 🚨 一键危机解决方案（增强版）
+
+**🚨 紧急故障排除（5分钟快速恢复）**：
+
+```bash
+# 1️⃣ 测试危机快速解决（最常用）
+make solve-test-crisis    # 测试大量失败时的完整解决方案
+make emergency-fix        # 紧急代码修复和语法错误处理
+make env-restore          # 环境状态恢复到正常工作状态
+
+# 2️⃣ 服务重启危机处理
+make down && make up      # 所有服务重启（端口冲突解决）
+make service-restart app  # 单个服务重启（指定服务名）
+make health-check         # 全面健康状态检查
+
+# 3️⃣ 质量危机处理
+make fix-code             # 一键修复代码质量问题
+make quality-guardian     # 质量守护检查，找出关键问题
+make daily-quality        # 每日质量改进，渐进式修复
+```
+
+**📊 具体问题解决方案**：
 
 **测试大量失败 >30%**：
 ```bash
-make solve-test-crisis
-make fix-code
-make test.unit
+make solve-test-crisis    # 完整的测试危机解决方案
+make fix-code             # 修复语法和导入错误
+make test.unit            # 重新运行单元测试验证
+make test-status          # 查看详细测试状态报告
 ```
 
 **代码质量问题**：
 ```bash
-make fix-code
-make check-quality
-ruff check src/ tests/ --fix
+make emergency-fix        # 紧急修复语法错误
+make fix-code             # 格式化和质量修复
+make quality-score        # 查看质量评分和问题统计
+make check-quality        # 详细质量检查报告
 ```
 
 **环境问题**：
 ```bash
-make env-check
-make create-env
-make check-deps
+make env-restore          # 环境一键恢复
+make env-check            # 环境健康检查
+make create-env           # 重新创建环境文件
+make check-deps           # 依赖完整性检查
 ```
 
-**Docker问题**：
+**微服务架构问题**：
 ```bash
-make down && make up
-docker-compose exec app make test.unit
+make services-status      # 所有微服务状态检查
+make service-health       # 服务间健康和连接检查
+make logs-merge           # 多服务日志合并分析
+make micro-deploy         # 微服务独立部署修复
 ```
 
-**数据库连接问题**：
+**数据库和缓存问题**：
 ```bash
-# 检查数据库服务状态
-docker-compose ps db
-# 重启数据库
-docker-compose restart db
-# 运行迁移
-make migrate-up
+# 数据库连接问题
+docker-compose ps db      # 检查数据库服务状态
+docker-compose restart db # 重启数据库服务
+make migrate-up           # 重新运行数据库迁移
+
+# Redis缓存问题
+docker-compose ps redis   # 检查Redis服务状态
+docker-compose restart redis # 重启Redis服务
 ```
 
-**本地开发环境故障排除**：
+**API和实时功能问题**：
 ```bash
-# 端口冲突解决
-make down && make up
+make api-validation       # API契约验证
+make api-monitor          # API性能监控
+make api-docs             # 检查API文档完整性
+curl http://localhost:8000/health  # API健康检查
+```
 
-# 服务状态检查
-docker-compose ps
-docker-compose logs app
-
-# 进入容器调试
-docker-compose exec app bash
-
-# 环境变量问题
-make env-check
-make create-env
+**Docker和容器问题**：
+```bash
+make down && make up              # 完全重启所有容器
+docker-compose ps                 # 查看所有容器状态
+docker-compose logs app --tail=50 # 查看应用最近日志
+docker-compose exec app bash      # 进入容器调试
 ```
 
 **覆盖率问题**：
 ```bash
-# 查看详细覆盖率报告
-make cov.html
-open htmlcov/index.html  # macOS 或
-xdg-open htmlcov/index.html  # Linux
+make coverage-status    # 实时覆盖率状态和趋势
+make cov.html           # 生成并打开HTML覆盖率报告
+make project-dashboard  # 完整项目状态仪表板
+pytest --cov=src --cov-report=term-missing tests/unit/domain/  # 模块级覆盖率检查
+```
 
-# 单个模块覆盖率检查
-pytest --cov=src.domain --cov-report=term-missing tests/unit/domain/
+**性能和监控问题**：
+```bash
+make performance-report # 生成性能分析报告
+make mlops-status       # MLOps管道状态检查
+make model-monitor      # ML模型健康状况监控
+make health-check       # 项目整体健康状态检查
 ```
 
 ### 🛡️ 企业级安全扫描工具链
@@ -526,8 +616,69 @@ make prepush                           # 包含安全扫描的完整验证
 make ci-check                         # 质量门禁+安全验证
 ```
 
-### 📋 提交前检查
+### 🌐 API文档和测试增强（新增）
 
+**API文档自动化**：
+```bash
+# 📚 API文档生成和管理
+make api-docs               # 生成完整API文档和OpenAPI规范
+make api-validation         # API契约验证和兼容性检查
+make api-spec               # 导出API规范文件（JSON/YAML）
+make api-client-code        # 生成客户端SDK代码
+make api-postman            # 生成Postman集合文件
+```
+
+**API测试和监控**：
+```bash
+# 🧪 API测试套件
+make api-test               # API集成测试和功能验证
+make api-load-test          # API负载和压力测试
+make api-contract-test      # API契约测试（PACT）
+make api-compatibility      # API向后兼容性测试
+
+# 📊 API性能监控
+make api-monitor            # API性能指标监控和分析
+make api-latency            # API延迟分析和优化建议
+make api-throughput         # API吞吐量测试和报告
+make api-error-analysis     # API错误率和异常分析
+```
+
+**API质量和治理**：
+```bash
+# 🔍 API质量检查
+make api-lint               # API设计规范检查
+make api-sec-scan           # API安全漏洞扫描
+make api-deprecation        # API废弃版本管理
+make api-versioning         # API版本控制和发布
+```
+
+**API文档和测试访问地址**：
+- **Swagger UI**: http://localhost:8000/docs (交互式API文档)
+- **ReDoc**: http://localhost:8000/redoc (优雅的API文档)
+- **OpenAPI JSON**: http://localhost:8000/openapi.json (原始规范)
+- **API监控面板**: http://localhost:8000/api-metrics (性能指标)
+- **API健康检查**: http://localhost:8000/health (服务状态)
+
+**API高级功能测试**：
+```bash
+# 🔐 认证和授权测试
+make api-auth-test          # JWT认证和权限测试
+make api-rate-limit-test    # API限流和熔断测试
+make api-cors-test          # 跨域请求测试
+
+# 🌐 API集成和端到端测试
+pytest -m "api and integration" -v           # API集成测试
+pytest -m "api and e2e" -v                  # API端到端测试
+pytest -m "api and performance" --benchmark  # API性能测试
+
+# 📝 API文档测试
+make api-doc-test          # API文档示例验证
+make api-schema-test       # API Schema一致性测试
+```
+
+### 📋 提交前检查（增强版）
+
+**🔍 基础验证**：
 - [ ] `make test.smart` 快速验证通过
 - [ ] `make test.unit` 完整单元测试通过
 - [ ] `make security-check` 安全扫描通过
@@ -535,27 +686,66 @@ make ci-check                         # 质量门禁+安全验证
 - [ ] `make coverage` 达到当前29.0%覆盖率
 - [ ] `make prepush` 完整验证通过
 
+**🌐 API相关验证**：
+- [ ] `make api-docs` API文档生成成功
+- [ ] `make api-validation` API契约验证通过
+- [ ] `make api-test` API集成测试通过
+- [ ] `make api-sec-scan` API安全扫描通过
+
+**🐳 微服务验证**：
+- [ ] `make services-status` 所有服务状态正常
+- [ ] `make service-health` 服务间健康检查通过
+- [ ] `make micro-deploy` 微服务部署成功
+
+**📊 项目质量验证**：
+- [ ] `make quality-score` 代码质量评分达标
+- [ ] `make health-check` 项目整体健康状态良好
+- [ ] `make project-dashboard` 项目仪表板无严重问题
+
 ---
 
 ## 🏆 项目状态
 
-- **🏗️ 架构**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动
-- **📏 规模**: 企业级代码库，完整测试体系
-- **🧪 测试**: 57个标准化测试标记，40%覆盖率目标
-- **🛡️ 质量**: 现代化工具链（Ruff + MyPy + 安全扫描）
-- **🤖 工具**: 自动化脚本 + 完整CI/CD工作流
-- **🎯 方法**: 渐进式改进策略，Docker容器化部署
+- **🏗️ 架构**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动 + 微服务
+- **📏 规模**: 企业级代码库，完整测试体系，11个生产服务
+- **🧪 测试**: 57个标准化测试标记，40%覆盖率目标，Smart Tests优化
+- **🛡️ 质量**: 现代化工具链（Ruff + MyPy + 安全扫描 + API治理）
+- **🤖 工具**: 35+个核心命令，动态状态监控，一键危机解决方案
+- **🎯 方法**: 渐进式改进策略，Docker容器化部署，实时流处理
 
 ### 🚀 核心优势
 
-- **智能修复**: 完整的代码质量修复工具链
-- **渐进改进**: 不破坏现有功能的持续优化
+- **智能修复**: 完整的代码质量修复工具链和危机解决方案
+- **渐进改进**: 不破坏现有功能的持续优化策略
 - **完整工具链**: 从开发到部署的全流程自动化
-- **企业级就绪**: 完整的CI/CD、监控、安全体系
-- **ML驱动**: 多模型集成的智能预测引擎
+- **企业级就绪**: 完整的CI/CD、监控、安全、API治理体系
+- **微服务架构**: 11个生产服务，实时流处理，事件驱动架构
+- **ML驱动**: 多模型集成的智能预测引擎，完整MLOps工具链
+
+### 🆕 v29.0 更新亮点
+
+**📊 动态项目状态监控**：
+- 5个新增状态监控命令，实时掌握项目健康状况
+- 项目仪表板和质量评分系统
+- 覆盖率状态跟踪和趋势分析
+
+**🚨 一键危机解决方案**：
+- 紧急故障排除（5分钟快速恢复）
+- 测试危机、环境问题、微服务故障解决方案
+- 性能监控和MLOps状态检查
+
+**🐳 微服务架构增强**：
+- 11个生产服务的完整管理命令
+- 服务健康检查、日志合并、独立部署
+- 实时流处理和WebSocket压力测试
+
+**🌐 API文档和测试增强**：
+- API文档自动化和契约验证
+- API性能监控、负载测试、安全扫描
+- Postman集合生成和客户端SDK代码
 
 ---
 
-*文档版本: v28.0 (企业级增强版) | 维护者: Claude Code | 更新时间: 2025-11-17*
+*文档版本: v29.0 (微服务架构增强版) | 维护者: Claude Code | 更新时间: 2025-11-19*
 
 📖 **需要更详细的信息？** 查看 [CLAUDE_DETAILED.md](./CLAUDE_DETAILED.md) 获取完整的代码示例、配置参数和故障排除指南。

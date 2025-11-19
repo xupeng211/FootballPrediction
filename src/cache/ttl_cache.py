@@ -1,5 +1,3 @@
-from typing import Optional
-
 """TTL cache module - 使用增强版TTL缓存实现.
 
 提供高性能的内存缓存功能,支持:

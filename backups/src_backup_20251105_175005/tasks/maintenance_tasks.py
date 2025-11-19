@@ -1,5 +1,4 @@
-"""
-维护任务模块
+"""维护任务模块.
 
 包含系统维护相关的任务:
 - 数据质量检查
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @app.task
 def quality_check_task() -> dict[str, Any]:
-    """数据质量检查任务"""
+    """数据质量检查任务."""
     try:
         db_manager = DatabaseManager()
 
@@ -55,7 +54,7 @@ def quality_check_task() -> dict[str, Any]:
 
 @app.task
 def cleanup_logs_task() -> dict[str, Any]:
-    """日志清理任务"""
+    """日志清理任务."""
     try:
         log_dir = "logs"
         cleaned_files = []
@@ -86,7 +85,7 @@ def cleanup_logs_task() -> dict[str, Any]:
 
 @app.task
 def system_health_task() -> dict[str, Any]:
-    """系统健康检查任务"""
+    """系统健康检查任务."""
     try:
         import psutil
 
@@ -116,7 +115,7 @@ def system_health_task() -> dict[str, Any]:
 
 @app.task
 def database_maintenance_task() -> dict[str, Any]:
-    """数据库维护任务"""
+    """数据库维护任务."""
     try:
         db_manager = DatabaseManager()
 

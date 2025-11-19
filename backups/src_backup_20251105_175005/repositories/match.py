@@ -1,5 +1,4 @@
-"""
-比赛仓储模块 - 重写版本
+"""比赛仓储模块 - 重写版本.
 
 实现比赛相关的数据访问逻辑
 Match Repository - Rewritten Version
@@ -17,7 +16,7 @@ from .base import BaseRepository, QuerySpec
 
 
 class MatchRepositoryInterface:
-    """比赛仓储接口"""
+    """比赛仓储接口."""
 
     async def get_match_by_id(self, match_id: int) -> Optional["Match"]:
         raise NotImplementedError
@@ -29,7 +28,7 @@ class MatchRepositoryInterface:
 
 
 class MatchStatus(str, Enum):
-    """比赛状态枚举"""
+    """比赛状态枚举."""
 
     SCHEDULED = "scheduled"
     LIVE = "live"
@@ -39,20 +38,20 @@ class MatchStatus(str, Enum):
 
 
 class MatchRepository(BaseRepository):
-    """比赛仓储实现 - 简化版本"""
+    """比赛仓储实现 - 简化版本."""
 
     def __init__(self, session: AsyncSession):
-        """初始化比赛仓储"""
+        """初始化比赛仓储."""
         super().__init__(session, Match)
 
     async def get_by_id(self, match_id: int) -> Optional["Match"]:
-        """根据ID获取比赛"""
+        """根据ID获取比赛."""
         query = select(self.model_class).where(self.model_class.id == match_id)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_all(self, query_spec: QuerySpec | None = None) -> list["Match"]:
-        """获取所有比赛"""
+        """获取所有比赛."""
         query = select(self.model_class)
 
         if query_spec:
@@ -62,7 +61,7 @@ class MatchRepository(BaseRepository):
         return result.scalars().all()
 
     async def create(self, match_data: dict[str, Any]) -> "Match":
-        """创建比赛"""
+        """创建比赛."""
         match = self.model_class(
             home_team_id=match_data["home_team_id"],
             away_team_id=match_data["away_team_id"],
@@ -83,7 +82,7 @@ class MatchRepository(BaseRepository):
     async def update(
         self, match_id: int, update_data: dict[str, Any]
     ) -> Optional["Match"]:
-        """更新比赛"""
+        """更新比赛."""
         update_data["updated_at"] = datetime.utcnow()
 
         query = (
@@ -98,7 +97,7 @@ class MatchRepository(BaseRepository):
         return await self.get_by_id(match_id)
 
     async def delete(self, match_id: int) -> bool:
-        """删除比赛"""
+        """删除比赛."""
         match = await self.get_by_id(match_id)
         if match:
             await self.session.delete(match)
@@ -109,21 +108,21 @@ class MatchRepository(BaseRepository):
     async def find_by_team(
         self, team_id: int, limit: int | None = None
     ) -> list["Match"]:
-        """根据球队ID查找比赛"""
+        """根据球队ID查找比赛."""
         filters = {"$or": [{"home_team_id": team_id}, {"away_team_id": team_id}]}
         return await self.find_by_filters(filters, limit)
 
     async def find_by_status(
         self, status: MatchStatus, limit: int | None = None
     ) -> list["Match"]:
-        """根据状态查找比赛"""
+        """根据状态查找比赛."""
         filters = {"status": status}
         return await self.find_by_filters(filters, limit)
 
     async def find_upcoming_matches(
         self, days: int = 7, limit: int = 50
     ) -> list["Match"]:
-        """查找即将到来的比赛"""
+        """查找即将到来的比赛."""
         start_time = datetime.utcnow()
         end_time = start_time + timedelta(days=days)
 
@@ -138,14 +137,14 @@ class MatchRepository(BaseRepository):
         return await self.get_all(query_spec)
 
     async def find_live_matches(self) -> list["Match"]:
-        """查找正在进行的比赛"""
+        """查找正在进行的比赛."""
         filters = {"status": MatchStatus.LIVE}
         return await self.find_by_filters(filters)
 
     async def find_recent_finished_matches(
         self, days: int = 7, limit: int = 50
     ) -> list["Match"]:
-        """查找最近结束的比赛"""
+        """查找最近结束的比赛."""
         start_time = datetime.utcnow() - timedelta(days=days)
 
         filters = {"match_time": {"$gte": start_time}, "status": MatchStatus.FINISHED}
@@ -158,7 +157,7 @@ class MatchRepository(BaseRepository):
     async def update_match_score(
         self, match_id: int, home_score: int, away_score: int
     ) -> bool:
-        """更新比赛比分"""
+        """更新比赛比分."""
         update_data = {
             "home_score": home_score,
             "away_score": away_score,
@@ -169,7 +168,7 @@ class MatchRepository(BaseRepository):
         return result is not None
 
     async def start_match(self, match_id: int) -> bool:
-        """开始比赛"""
+        """开始比赛."""
         update_data = {"status": MatchStatus.LIVE, "updated_at": datetime.utcnow()}
 
         result = await self.update(match_id, update_data)
@@ -178,7 +177,7 @@ class MatchRepository(BaseRepository):
     async def finish_match(
         self, match_id: int, home_score: int, away_score: int
     ) -> bool:
-        """结束比赛"""
+        """结束比赛."""
         update_data = {
             "status": MatchStatus.FINISHED,
             "home_score": home_score,
@@ -190,7 +189,7 @@ class MatchRepository(BaseRepository):
         return result is not None
 
     async def postpone_match(self, match_id: int, reason: str = "") -> bool:
-        """推迟比赛"""
+        """推迟比赛."""
         update_data = {
             "status": MatchStatus.POSTPONED,
             "postponed_reason": reason,
@@ -201,7 +200,7 @@ class MatchRepository(BaseRepository):
         return result is not None
 
     async def cancel_match(self, match_id: int, reason: str = "") -> bool:
-        """取消比赛"""
+        """取消比赛."""
         update_data = {
             "status": MatchStatus.CANCELLED,
             "cancelled_reason": reason,
@@ -217,7 +216,7 @@ class MatchRepository(BaseRepository):
         end_date: datetime,
         status: MatchStatus | None = None,
     ) -> list["Match"]:
-        """根据日期范围获取比赛"""
+        """根据日期范围获取比赛."""
         filters = {"match_time": {"$gte": start_date, "$lte": end_date}}
 
         if status:
@@ -228,7 +227,7 @@ class MatchRepository(BaseRepository):
     async def get_head_to_head_matches(
         self, team1_id: int, team2_id: int, limit: int = 10
     ) -> list["Match"]:
-        """获取两支球队的历史交锋记录"""
+        """获取两支球队的历史交锋记录."""
         filters = {
             "$or": [
                 {"home_team_id": team1_id, "away_team_id": team2_id},
@@ -242,7 +241,7 @@ class MatchRepository(BaseRepository):
         return await self.get_all(query_spec)
 
     async def count_matches_by_status(self) -> dict[str, int]:
-        """统计各种状态的比赛数量"""
+        """统计各种状态的比赛数量."""
         result = {}
         for status in MatchStatus:
             count = await self.count(QuerySpec(filters={"status": status}))
@@ -250,7 +249,7 @@ class MatchRepository(BaseRepository):
         return result
 
     async def bulk_create(self, matches_data: list[dict[str, Any]]) -> list["Match"]:
-        """批量创建比赛"""
+        """批量创建比赛."""
         matches = []
         for match_data in matches_data:
             match = self.model_class(
@@ -275,14 +274,14 @@ class MatchRepository(BaseRepository):
 
 
 class ReadOnlyMatchRepository(BaseRepository):
-    """只读比赛仓储"""
+    """只读比赛仓储."""
 
     def __init__(self, session: AsyncSession):
-        """初始化只读比赛仓储"""
+        """初始化只读比赛仓储."""
         super().__init__(session, Match)
 
     async def get_match_by_id(self, match_id: int) -> Optional["Match"]:
-        """根据ID获取比赛"""
+        """根据ID获取比赛."""
         return await self.get_by_id(match_id)
 
     async def get_matches_by_date_range(
@@ -291,7 +290,7 @@ class ReadOnlyMatchRepository(BaseRepository):
         end_date: datetime,
         status: MatchStatus | None = None,
     ) -> list["Match"]:
-        """获取日期范围内的比赛"""
+        """获取日期范围内的比赛."""
         conditions = {
             "match_date__gte": start_date,
             "match_date__lte": end_date,

@@ -1,12 +1,11 @@
-"""
-特征工程管道构建器
-Feature Engineering Pipeline Builder
+"""特征工程管道构建器
+Feature Engineering Pipeline Builder.
 
 基于 Scikit-learn Pipeline 理念构建的特征工程模块，用于足球预测模型。
 """
 
 import logging
-from typing import Any, Dict, List, Tuple, Union, Optional
+from typing import Any
 
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
@@ -17,10 +16,10 @@ try:
     from sklearn.impute import SimpleImputer
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import (
-        OneHotEncoder,
-        StandardScaler,
         MinMaxScaler,
+        OneHotEncoder,
         RobustScaler,
+        StandardScaler,
     )
 
     HAS_SCIPY = True
@@ -96,8 +95,7 @@ logger = logging.getLogger(__name__)
 
 
 class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
-    """
-    足球特征自定义转换器
+    """足球特征自定义转换器.
 
     专门用于处理足球预测相关的特征工程：
     - 球队历史对战记录
@@ -113,8 +111,7 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
         include_recent_form: bool = True,
         recent_form_window: int = 5,
     ):
-        """
-        初始化足球特征转换器
+        """初始化足球特征转换器.
 
         Args:
             include_head_to_head: 是否包含历史对战特征
@@ -130,7 +127,7 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
         self.head_to_head_cache = {}
 
     def fit(self, X: pd.DataFrame, y: pd.Series = None) -> "FootballFeatureTransformer":
-        """拟合转换器，计算球队统计信息"""
+        """拟合转换器，计算球队统计信息."""
         if not HAS_SCIPY:
             logger.warning("Scikit-learn not available, using mock implementation")
             return self
@@ -144,7 +141,7 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        """转换特征数据"""
+        """转换特征数据."""
         if not HAS_SCIPY:
             logger.warning("Scikit-learn not available, returning original data")
             return X
@@ -166,7 +163,7 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
         return X_transformed
 
     def _compute_team_statistics(self, X: pd.DataFrame) -> None:
-        """计算球队基础统计信息"""
+        """计算球队基础统计信息."""
         if not hasattr(X, "columns"):
             return
 
@@ -188,26 +185,26 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
                         }
 
     def _compute_head_to_head_stats(self, X: pd.DataFrame) -> None:
-        """计算历史对战统计信息"""
+        """计算历史对战统计信息."""
         # 简化实现，实际中应该从历史数据计算
         self.head_to_head_cache = {}
 
     def _add_home_advantage_features(self, X: pd.DataFrame) -> pd.DataFrame:
-        """添加主客场优势特征"""
+        """添加主客场优势特征."""
         # 简化实现，添加主客场标识
         if hasattr(X, "assign"):
             X = X.assign(is_home_match=1)  # 假设都是主场
         return X
 
     def _add_recent_form_features(self, X: pd.DataFrame) -> pd.DataFrame:
-        """添加近期状态特征"""
+        """添加近期状态特征."""
         # 简化实现，添加近期得分趋势
         if hasattr(X, "assign"):
             X = X.assign(recent_form_score=0.5)  # 默认中性状态
         return X
 
     def _add_head_to_head_features(self, X: pd.DataFrame) -> pd.DataFrame:
-        """添加历史对战特征"""
+        """添加历史对战特征."""
         # 简化实现，添加历史对战优势
         if hasattr(X, "assign"):
             X = X.assign(head_to_head_advantage=0.0)  # 默认无优势
@@ -215,25 +212,24 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
 
 
 class FeaturePipelineBuilder:
-    """
-    特征管道构建器
+    """特征管道构建器.
 
     使用 Scikit-learn Pipeline 和 ColumnTransformer 构建完整的特征工程管道。
     支持数值特征、类别特征和自定义足球特征的组合处理。
     """
 
     def __init__(self):
-        """初始化特征管道构建器"""
-        self.numeric_features: List[str] = []
-        self.categorical_features: List[str] = []
-        self.custom_features: List[str] = []
+        """初始化特征管道构建器."""
+        self.numeric_features: list[str] = []
+        self.categorical_features: list[str] = []
+        self.custom_features: list[str] = []
         self.pipeline: Pipeline = None
 
         # 默认特征分类
         self._default_feature_classification()
 
     def _default_feature_classification(self) -> None:
-        """默认特征分类"""
+        """默认特征分类."""
         # 常见的数值特征
         self.numeric_features = [
             "home_team_score",
@@ -285,25 +281,25 @@ class FeaturePipelineBuilder:
         ]
 
     def add_numeric_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
-        """添加数值特征"""
+        """添加数值特征."""
         if feature_name not in self.numeric_features:
             self.numeric_features.append(feature_name)
         return self
 
     def add_categorical_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
-        """添加类别特征"""
+        """添加类别特征."""
         if feature_name not in self.categorical_features:
             self.categorical_features.append(feature_name)
         return self
 
     def add_custom_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
-        """添加自定义特征"""
+        """添加自定义特征."""
         if feature_name not in self.custom_features:
             self.custom_features.append(feature_name)
         return self
 
     def remove_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
-        """移除特征"""
+        """移除特征."""
         self.numeric_features = [f for f in self.numeric_features if f != feature_name]
         self.categorical_features = [
             f for f in self.categorical_features if f != feature_name
@@ -318,8 +314,7 @@ class FeaturePipelineBuilder:
         include_football_features: bool = True,
         handle_missing: bool = True,
     ) -> Pipeline:
-        """
-        构建特征工程管道
+        """构建特征工程管道.
 
         Args:
             numeric_strategy: 数值特征处理策略 ('standard', 'minmax', 'robust')
@@ -360,7 +355,8 @@ class FeaturePipelineBuilder:
 
         # 3. 预处理管道
         preprocessor = ColumnTransformer(
-            transformers=transformers, remainder="drop"  # 忽略未指定的列
+            transformers=transformers,
+            remainder="drop",  # 忽略未指定的列
         )
 
         # 4. 完整管道
@@ -385,7 +381,7 @@ class FeaturePipelineBuilder:
     def _build_numeric_transformer(
         self, strategy: str, handle_missing: bool
     ) -> Pipeline:
-        """构建数值特征转换器"""
+        """构建数值特征转换器."""
         steps = []
 
         # 缺失值处理
@@ -405,7 +401,7 @@ class FeaturePipelineBuilder:
     def _build_categorical_transformer(
         self, strategy: str, handle_missing: bool
     ) -> Pipeline:
-        """构建类别特征转换器"""
+        """构建类别特征转换器."""
         steps = []
 
         # 缺失值处理
@@ -424,8 +420,8 @@ class FeaturePipelineBuilder:
 
         return Pipeline(steps)
 
-    def get_feature_names(self) -> List[str]:
-        """获取处理后的特征名称"""
+    def get_feature_names(self) -> list[str]:
+        """获取处理后的特征名称."""
         if self.pipeline is None:
             return (
                 self.numeric_features + self.categorical_features + self.custom_features
@@ -445,8 +441,8 @@ class FeaturePipelineBuilder:
 
         return self.numeric_features + self.categorical_features + self.custom_features
 
-    def validate_features(self, X: pd.DataFrame) -> Tuple[bool, List[str]]:
-        """验证数据中的特征"""
+    def validate_features(self, X: pd.DataFrame) -> tuple[bool, list[str]]:
+        """验证数据中的特征."""
         missing_features = []
 
         all_expected_features = (
@@ -465,8 +461,8 @@ class FeaturePipelineBuilder:
 
         return is_valid, missing_features
 
-    def get_pipeline_summary(self) -> Dict[str, Any]:
-        """获取管道摘要信息"""
+    def get_pipeline_summary(self) -> dict[str, Any]:
+        """获取管道摘要信息."""
         return {
             "numeric_features_count": len(self.numeric_features),
             "categorical_features_count": len(self.categorical_features),
@@ -483,7 +479,7 @@ class FeaturePipelineBuilder:
 
 # 便捷函数
 def create_default_football_pipeline() -> Pipeline:
-    """创建默认的足球特征工程管道"""
+    """创建默认的足球特征工程管道."""
     builder = FeaturePipelineBuilder()
     return builder.build_pipeline(
         numeric_strategy="standard",
@@ -493,8 +489,8 @@ def create_default_football_pipeline() -> Pipeline:
     )
 
 
-def create_simple_pipeline(features: List[str]) -> Pipeline:
-    """创建简单的特征管道"""
+def create_simple_pipeline(features: list[str]) -> Pipeline:
+    """创建简单的特征管道."""
     builder = FeaturePipelineBuilder()
 
     # 自动分类特征

@@ -1,6 +1,6 @@
 """适配器API路由."""
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter
 

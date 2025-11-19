@@ -1,5 +1,4 @@
-"""
-实时模块 - 足球预测系统WebSocket实时通信
+"""实时模块 - 足球预测系统WebSocket实时通信.
 
 Realtime Module - Football Prediction System WebSocket Real-time Communication
 

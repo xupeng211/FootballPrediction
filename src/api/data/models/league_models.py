@@ -1,5 +1,3 @@
-from typing import Optional
-
 """联赛相关模型
 League Related Models.
 """

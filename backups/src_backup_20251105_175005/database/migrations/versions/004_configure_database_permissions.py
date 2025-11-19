@@ -139,7 +139,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    """配置数据库权限"""
+    """配置数据库权限."""
     if context.is_offline_mode():
         logger.info("⚠️  离线模式:跳过数据库权限配置")
         op.execute("-- offline mode: skipped database user creation")
@@ -405,7 +405,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """回滚数据库权限配置"""
+    """回滚数据库权限配置."""
     if context.is_offline_mode():
         logger.info("⚠️  离线模式:跳过数据库权限回滚")
         op.execute("-- offline mode: skipped database permission rollback")

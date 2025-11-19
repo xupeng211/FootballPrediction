@@ -1,5 +1,4 @@
-"""
-比赛数据处理器 - 重写版本
+"""比赛数据处理器 - 重写版本.
 
 处理原始比赛数据的清洗、转换和标准化
 Match Data Processor - Rewritten Version
@@ -13,13 +12,13 @@ import pandas as pd
 
 
 class MatchProcessor:
-    """比赛数据处理器 - 简化版本
+    """比赛数据处理器 - 简化版本.
 
     负责原始比赛数据的清洗、转换和标准化处理
     """
 
     def __init__(self):
-        """初始化处理器"""
+        """初始化处理器."""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         self.required_fields = {
             "match_id",
@@ -34,7 +33,7 @@ class MatchProcessor:
     async def process_raw_match_data(
         self, raw_data: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """处理原始比赛数据"""
+        """处理原始比赛数据."""
         processed_matches = []
 
         for match_data in raw_data:
@@ -51,7 +50,7 @@ class MatchProcessor:
     async def _process_single_match(
         self, match_data: dict[str, Any]
     ) -> dict[str, Any] | None:
-        """处理单个比赛数据"""
+        """处理单个比赛数据."""
         # 验证必需字段
         if not await self._validate_required_fields(match_data):
             return None
@@ -65,11 +64,11 @@ class MatchProcessor:
         return standardized_data
 
     async def _validate_required_fields(self, match_data: dict[str, Any]) -> bool:
-        """验证必需字段"""
+        """验证必需字段."""
         return all(field in match_data for field in self.required_fields)
 
     async def _clean_match_data(self, match_data: dict[str, Any]) -> dict[str, Any]:
-        """清洗比赛数据"""
+        """清洗比赛数据."""
         cleaned_data = {}
 
         # 清洗字符串字段
@@ -99,7 +98,7 @@ class MatchProcessor:
         return cleaned_data
 
     async def _parse_date(self, date_value: str | datetime) -> datetime | None:
-        """解析日期字段"""
+        """解析日期字段."""
         if isinstance(date_value, datetime):
             return date_value
 
@@ -125,7 +124,7 @@ class MatchProcessor:
     async def _standardize_match_data(
         self, match_data: dict[str, Any]
     ) -> dict[str, Any]:
-        """标准化比赛数据格式"""
+        """标准化比赛数据格式."""
         standardized = {
             "match_id": str(match_data.get("match_id", "")),
             "home_team": str(match_data.get("home_team", "")).title(),
@@ -154,7 +153,7 @@ class MatchProcessor:
         return standardized
 
     async def _determine_winner(self, home_score: int, away_score: int) -> str:
-        """确定比赛获胜者"""
+        """确定比赛获胜者."""
         if home_score > away_score:
             return "home"
         elif away_score > home_score:
@@ -163,7 +162,7 @@ class MatchProcessor:
             return "draw"
 
     async def process_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
-        """处理DataFrame格式的比赛数据"""
+        """处理DataFrame格式的比赛数据."""
         try:
             # 转换为字典列表处理
             raw_data = df.to_dict("records")
@@ -180,7 +179,7 @@ class MatchProcessor:
             return pd.DataFrame()
 
     async def validate_match_integrity(self, match_data: dict[str, Any]) -> bool:
-        """验证比赛数据完整性"""
+        """验证比赛数据完整性."""
         try:
             # 检查比分合理性
             home_score = int(match_data.get("home_score", 0))
@@ -206,7 +205,7 @@ class MatchProcessor:
     async def get_processing_stats(
         self, original_count: int, processed_count: int
     ) -> dict[str, Any]:
-        """获取处理统计信息"""
+        """获取处理统计信息."""
         success_rate = (
             (processed_count / original_count * 100) if original_count > 0 else 0
         )
@@ -222,7 +221,7 @@ class MatchProcessor:
     async def batch_process(
         self, data_batches: list[list[dict[str, Any]]]
     ) -> list[dict[str, Any]]:
-        """批量处理多批次数据"""
+        """批量处理多批次数据."""
         all_processed = []
         total_stats = {"original": 0, "processed": 0}
 

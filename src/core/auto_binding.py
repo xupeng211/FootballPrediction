@@ -11,7 +11,7 @@ import inspect
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypeVar, Optional
+from typing import TypeVar
 
 from .di import DIContainer, ServiceLifetime
 from .exceptions import DependencyInjectionError

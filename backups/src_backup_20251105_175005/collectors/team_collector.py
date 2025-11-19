@@ -1,6 +1,5 @@
-"""
-球队数据采集器
-Team Data Collector for Football-Data.org API
+"""球队数据采集器
+Team Data Collector for Football-Data.org API.
 """
 
 import logging
@@ -13,14 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class TeamCollector(FootballDataCollector):
-    """球队数据采集器"""
+    """球队数据采集器."""
 
     def __init__(self):
         super().__init__()
 
     async def collect_data(self) -> dict[str, Any]:
-        """
-        收集所有支持的联赛中的球队数据
+        """收集所有支持的联赛中的球队数据.
 
         Returns:
             包含球队数据的字典
@@ -80,8 +78,7 @@ class TeamCollector(FootballDataCollector):
     async def collect_competition_teams(
         self, competition_code: str
     ) -> list[dict[str, Any]]:
-        """
-        收集特定联赛的球队数据
+        """收集特定联赛的球队数据.
 
         Args:
             competition_code: 联赛代码 (如 PL, CL等)
@@ -128,8 +125,7 @@ class TeamCollector(FootballDataCollector):
             raise
 
     def normalize_team_data(self, team: dict[str, Any]) -> dict[str, Any]:
-        """
-        标准化球队数据格式
+        """标准化球队数据格式.
 
         Args:
             team: 原始球队数据
@@ -182,7 +178,7 @@ class TeamCollector(FootballDataCollector):
     coach: dict[str,
     Any]) -> dict[str,
     Any] | None:
-        """标准化教练数据"""
+        """标准化教练数据."""
         if not coach:
             return None
 
@@ -204,7 +200,7 @@ class TeamCollector(FootballDataCollector):
     def _normalize_squad_data(
         self, squad: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """标准化阵容数据"""
+        """标准化阵容数据."""
         normalized_squad = []
 
         for player in squad:
@@ -229,7 +225,7 @@ class TeamCollector(FootballDataCollector):
     def _normalize_competitions_data(
         self, competitions: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """标准化参赛联赛数据"""
+        """标准化参赛联赛数据."""
         normalized_competitions = []
 
         for comp in competitions:
@@ -250,8 +246,7 @@ class TeamCollector(FootballDataCollector):
         return normalized_competitions
 
     async def collect_team_details(self, team_id: str) -> dict[str, Any] | None:
-        """
-        收集特定球队的详细信息
+        """收集特定球队的详细信息.
 
         Args:
             team_id: 球队ID
@@ -303,8 +298,7 @@ class TeamCollector(FootballDataCollector):
     limit: int = 20
     ) -> list[dict[str,
     Any]]:
-        """
-        收集特定球队的比赛数据
+        """收集特定球队的比赛数据.
 
         Args:
             team_id: 球队ID
@@ -339,7 +333,7 @@ class TeamCollector(FootballDataCollector):
     team_id: str
     ) -> dict[str,
     Any] | None:
-        """为球队视角标准化比赛数据"""
+        """为球队视角标准化比赛数据."""
         try:
             home_team = match.get("homeTeam", {})
             away_team = match.get("awayTeam", {})
@@ -405,8 +399,7 @@ class TeamCollector(FootballDataCollector):
     async def search_teams(self,
     search_term: str) -> list[dict[str,
     Any]]:
-        """
-        搜索球队
+        """搜索球队.
 
         Args:
             search_term: 搜索关键词

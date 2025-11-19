@@ -1,6 +1,5 @@
-"""
-缓存工厂类
-Cache Factory
+"""缓存工厂类
+Cache Factory.
 
 提供创建不同类型缓存的工厂方法.
 Provides factory methods for creating different types of caches.
@@ -11,7 +10,7 @@ from .ttl_cache import TTLCache
 
 
 class CacheFactory:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """缓存工厂类"
@@ -27,8 +26,7 @@ class CacheFactory:
         default_ttl: float | None = None,
         cleanup_interval: float = 60.0,
     ) -> TTLCache | AsyncTTLCache:
-        """
-        创建缓存实例
+        """创建缓存实例.
 
         Args:
             cache_type: 缓存类型 ('sync' 或 'async')
@@ -51,8 +49,7 @@ class CacheFactory:
 
     @staticmethod
     def create_lru_cache(max_size: int = 128) -> TTLCache:
-        """
-        创建LRU缓存
+        """创建LRU缓存.
 
         Args:
             max_size: 最大缓存项数
@@ -67,8 +64,7 @@ class CacheFactory:
         max_size: int = 1000,
         default_ttl: float = 3600,
     ) -> TTLCache:
-        """
-        创建TTL缓存
+        """创建TTL缓存.
 
         Args:
             max_size: 最大缓存项数
@@ -81,8 +77,7 @@ class CacheFactory:
 
     @staticmethod
     def create_async_lru_cache(max_size: int = 128) -> AsyncTTLCache:
-        """
-        创建异步LRU缓存
+        """创建异步LRU缓存.
 
         Args:
             max_size: 最大缓存项数
@@ -97,8 +92,7 @@ class CacheFactory:
         max_size: int = 1000,
         default_ttl: float = 3600,
     ) -> AsyncTTLCache:
-        """
-        创建异步TTL缓存
+        """创建异步TTL缓存.
 
         Args:
             max_size: 最大缓存项数
@@ -111,8 +105,7 @@ class CacheFactory:
 
     @staticmethod
     def create_prediction_cache() -> TTLCache:
-        """
-        创建预测缓存（预设配置）
+        """创建预测缓存（预设配置）.
 
         Returns:
             TTLCache: 预测缓存实例
@@ -121,8 +114,7 @@ class CacheFactory:
 
     @staticmethod
     def create_feature_cache() -> TTLCache:
-        """
-        创建特征缓存（预设配置）
+        """创建特征缓存（预设配置）.
 
         Returns:
             TTLCache: 特征缓存实例
@@ -131,8 +123,7 @@ class CacheFactory:
 
     @staticmethod
     def create_odds_cache() -> TTLCache:
-        """
-        创建赔率缓存（预设配置）
+        """创建赔率缓存（预设配置）.
 
         Returns:
             TTLCache: 赔率缓存实例
@@ -141,8 +132,7 @@ class CacheFactory:
 
     @staticmethod
     def create_session_cache() -> TTLCache:
-        """
-        创建会话缓存（预设配置）
+        """创建会话缓存（预设配置）.
 
         Returns:
             TTLCache: 会话缓存实例
@@ -151,8 +141,7 @@ class CacheFactory:
 
     @staticmethod
     def create_config_cache() -> TTLCache:
-        """
-        创建配置缓存（预设配置）
+        """创建配置缓存（预设配置）.
 
         Returns:
             TTLCache: 配置缓存实例
@@ -161,8 +150,7 @@ class CacheFactory:
 
     @staticmethod
     def get_available_types() -> list:
-        """
-        获取可用的缓存类型
+        """获取可用的缓存类型.
 
         Returns:
             list: 缓存类型列表
@@ -171,8 +159,7 @@ class CacheFactory:
 
     @staticmethod
     def get_preset_configs() -> dict:
-        """
-        获取预设配置
+        """获取预设配置.
 
         Returns:
             dict: 预设配置字典

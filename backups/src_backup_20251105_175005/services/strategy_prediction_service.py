@@ -1,7 +1,6 @@
 # mypy: ignore-errors
-"""
-基于策略模式的预测服务
-Strategy-based Prediction Service
+"""基于策略模式的预测服务
+Strategy-based Prediction Service.
 
 使用策略模式重构的预测服务,提供灵活的预测算法选择.
 Refactored prediction service using strategy pattern for flexible algorithm selection.
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class StrategyPredictionService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """基于策略模式的预测服务"
@@ -45,7 +44,7 @@ class StrategyPredictionService:
         prediction_repository: PredictionRepository,
         default_strategy: str = "ensemble_predictor",
     ):
-        """初始化预测服务"
+        """初始化预测服务".
 
         Args:
             strategy_factory: 策略工厂
@@ -62,7 +61,7 @@ class StrategyPredictionService:
         self._current_strategies: dict[str, PredictionStrategy] = {}
 
     async def initialize(self) -> None:
-        """初始化服务"""
+        """初始化服务."""
         # 初始化默认策略
         await self._strategy_factory.initialize_default_strategies()
 
@@ -83,7 +82,7 @@ class StrategyPredictionService:
         confidence: float | None = None,
         notes: str | None = None,
     ) -> Prediction:
-        """预测单场比赛"
+        """预测单场比赛".
 
         Args:
             match_id: 比赛ID
@@ -152,7 +151,7 @@ class StrategyPredictionService:
     user_id: int,
     strategy_name: str | None = None
     ) -> list[Prediction]:
-        """批量预测比赛"
+        """批量预测比赛".
 
         Args:
             match_ids: 比赛ID列表
@@ -219,12 +218,12 @@ class StrategyPredictionService:
     strategy_names: list[str] | None = None
     ) -> dict[str,
     PredictionOutput]:
-        """比较不同策略的预测结果"
+        """比较不同策略的预测结果".
 
         Args:
             match_id: 比赛ID
             strategy_names: 要比较的策略列表,
-    None表示比较所有可用策略
+        None表示比较所有可用策略
 
         Returns:
             Dict[str, PredictionOutput]: 各策略的预测结果
@@ -272,7 +271,7 @@ class StrategyPredictionService:
     days: int = 30
     ) -> dict[str,
     Any] | None:
-        """获取策略性能指标"
+        """获取策略性能指标".
 
         Args:
             strategy_name: 策略名称
@@ -280,7 +279,7 @@ class StrategyPredictionService:
 
         Returns:
             Optional[Dict[str,
-    Any]]: 性能指标
+        Any]]: 性能指标
         """
         strategy = self._strategy_factory.get_strategy(strategy_name)
         if not strategy:
@@ -319,7 +318,7 @@ class StrategyPredictionService:
     async def update_strategy_weights(self,
     strategy_weights: dict[str,
     float]) -> None:
-        """更新集成策略的权重"
+        """更新集成策略的权重".
 
         Args:
             strategy_weights: 策略权重字典
@@ -331,7 +330,7 @@ class StrategyPredictionService:
             logger.info("更新集成策略权重")
 
     async def switch_default_strategy(self, strategy_name: str) -> None:
-        """切换默认策略"
+        """切换默认策略".
 
         Args:
             strategy_name: 新的默认策略名称
@@ -345,7 +344,7 @@ class StrategyPredictionService:
         logger.info(f"默认策略从 {old_strategy} 切换到 {strategy_name}")
 
     async def get_available_strategies(self) -> dict[str, dict[str, Any]]:
-        """获取所有可用策略信息"""
+        """获取所有可用策略信息."""
         health_report = await self._strategy_factory.health_check()
 
         strategies_info = {}
@@ -367,7 +366,7 @@ class StrategyPredictionService:
 
     # 私有方法
     async def _get_or_create_strategy(self, strategy_name: str) -> PredictionStrategy:
-        """获取或创建策略实例"""
+        """获取或创建策略实例."""
         strategy = self._strategy_factory.get_strategy(strategy_name)
         if not strategy:
             strategy = await self._strategy_factory.create_strategy(strategy_name)
@@ -376,7 +375,7 @@ class StrategyPredictionService:
         return strategy
 
     async def _get_team_info(self, team_id: int) -> Team:
-        """获取球队信息（简化实现）"""
+        """获取球队信息（简化实现）."""
         # 实际应该从team repository获取
         # 这里返回模拟数据
         return Team(id=team_id, name=f"Team_{team_id}", league_id=1)
@@ -385,7 +384,7 @@ class StrategyPredictionService:
         self,
     context: PredictionContext
     ) -> PredictionInput:
-        """准备预测输入数据"""
+        """准备预测输入数据."""
         # 收集历史数据
         historical_data = await self._collect_historical_data(context)
 
@@ -407,7 +406,7 @@ class StrategyPredictionService:
     context: PredictionContext
     ) -> dict[str,
     Any]:
-        """收集历史数据"""
+        """收集历史数据."""
         # 这里应该从数据库或缓存获取历史数据
         # 简化实现,返回模拟数据
         return {
@@ -440,7 +439,7 @@ class StrategyPredictionService:
     strategy_name: str,
 
     ) -> None:
-        """记录预测详情"""
+        """记录预测详情."""
         details = {
             "prediction_id": prediction.id,
             "strategy_used": strategy_name,
@@ -457,7 +456,7 @@ class StrategyPredictionService:
     async def _calculate_actual_performance(
         self, predictions: list[Prediction]
     ) -> dict[str, Any]:
-        """计算实际性能"""
+        """计算实际性能."""
         if not predictions:
             return {}
 
@@ -499,8 +498,7 @@ class StrategyPredictionService:
 
 # 依赖注入配置
 def configure_strategy_prediction_services(container: DIContainer) -> None:
-    """配置策略预测服务的依赖注入"""
-
+    """配置策略预测服务的依赖注入."""
     # 注册策略工厂
     container.register_singleton(PredictionStrategyFactory)
 

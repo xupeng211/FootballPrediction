@@ -5,7 +5,7 @@
 
 from datetime import date, datetime, timedelta
 from functools import lru_cache
-from typing import Any, Optional
+from typing import Any
 
 
 class DateUtils:

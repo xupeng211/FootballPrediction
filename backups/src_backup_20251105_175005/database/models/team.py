@@ -12,7 +12,7 @@ from src.database.base import BaseModel
 
 
 class TeamForm(Enum):
-    """球队状态枚举"""
+    """球队状态枚举."""
 
     GOOD = "good"  # 状态良好
     AVERAGE = "average"  # 状态一般

@@ -1,6 +1,5 @@
-"""
-JWT认证管理模块
-JWT Authentication Manager Module
+"""JWT认证管理模块
+JWT Authentication Manager Module.
 
 提供完整的JWT token管理、用户认证和授权功能
 """
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TokenData:
-    """Token数据模型"""
+    """Token数据模型."""
 
     user_id: int
     username: str
@@ -35,7 +34,7 @@ class TokenData:
 
 @dataclass
 class UserAuth:
-    """用户认证数据"""
+    """用户认证数据."""
 
     id: int
     username: str
@@ -46,7 +45,7 @@ class UserAuth:
 
 
 class JWTAuthManager:
-    """JWT认证管理器"""
+    """JWT认证管理器."""
 
     def __init__(
         self,
@@ -56,8 +55,7 @@ class JWTAuthManager:
         refresh_token_expire_days: int = 7,
         redis_url: str | None = None,
     ):
-        """
-        初始化JWT认证管理器
+        """初始化JWT认证管理器.
 
         Args:
             secret_key: JWT密钥
@@ -85,14 +83,13 @@ class JWTAuthManager:
                 logger.warning(f"Redis连接失败，token黑名单功能不可用: {e}")
 
     def _generate_secret_key(self) -> str:
-        """生成安全的JWT密钥"""
+        """生成安全的JWT密钥."""
         return secrets.token_urlsafe(64)
 
     def create_access_token(
         self, data: dict[str, Any], expires_delta: timedelta | None = None
     ) -> str:
-        """
-        创建访问令牌
+        """创建访问令牌.
 
         Args:
             data: 要编码的数据
@@ -125,8 +122,7 @@ class JWTAuthManager:
     def create_refresh_token(
         self, data: dict[str, Any], expires_delta: timedelta | None = None
     ) -> str:
-        """
-        创建刷新令牌
+        """创建刷新令牌.
 
         Args:
             data: 要编码的数据
@@ -155,8 +151,7 @@ class JWTAuthManager:
         return encoded_jwt
 
     async def verify_token(self, token: str) -> TokenData:
-        """
-        验证JWT令牌
+        """验证JWT令牌.
 
         Args:
             token: JWT令牌字符串
@@ -206,8 +201,7 @@ class JWTAuthManager:
             raise ValueError("Invalid token")
 
     async def blacklist_token(self, jti: str, exp: datetime) -> None:
-        """
-        将token加入黑名单
+        """将token加入黑名单.
 
         Args:
             jti: JWT ID
@@ -227,8 +221,7 @@ class JWTAuthManager:
             logger.error(f"将token加入黑名单失败: {e}")
 
     async def _is_token_blacklisted(self, jti: str | None) -> bool:
-        """
-        检查token是否在黑名单中
+        """检查token是否在黑名单中.
 
         Args:
             jti: JWT ID
@@ -247,8 +240,7 @@ class JWTAuthManager:
             return False
 
     def hash_password(self, password: str) -> str:
-        """
-        哈希密码
+        """哈希密码.
 
         Args:
             password: 明文密码
@@ -262,8 +254,7 @@ class JWTAuthManager:
         return self.pwd_context.hash(password)
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        """
-        验证密码
+        """验证密码.
 
         Args:
             plain_password: 明文密码
@@ -278,8 +269,7 @@ class JWTAuthManager:
         return self.pwd_context.verify(plain_password, hashed_password)
 
     def generate_password_reset_token(self, email: str) -> str:
-        """
-        生成密码重置令牌
+        """生成密码重置令牌.
 
         Args:
             email: 用户邮箱
@@ -303,8 +293,7 @@ class JWTAuthManager:
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
 
     async def verify_password_reset_token(self, token: str) -> str:
-        """
-        验证密码重置令牌
+        """验证密码重置令牌.
 
         Args:
             token: 密码重置令牌
@@ -334,13 +323,12 @@ class JWTAuthManager:
             raise ValueError("Invalid password reset token")
 
     async def close(self) -> None:
-        """关闭Redis连接"""
+        """关闭Redis连接."""
         if self.redis_client:
             await self.redis_client.close()
 
     def validate_password_strength(self, password: str) -> tuple[bool, list[str]]:
-        """
-        验证密码强度
+        """验证密码强度.
 
         Args:
             password: 密码
@@ -378,7 +366,7 @@ _jwt_auth_manager: JWTAuthManager | None = None
 
 
 def get_jwt_auth_manager() -> JWTAuthManager:
-    """获取全局JWT认证管理器实例"""
+    """获取全局JWT认证管理器实例."""
     global _jwt_auth_manager
     if _jwt_auth_manager is None:
         _jwt_auth_manager = JWTAuthManager()
@@ -392,8 +380,7 @@ def init_jwt_auth_manager(
     refresh_token_expire_days: int = 7,
     redis_url: str | None = None,
 ) -> JWTAuthManager:
-    """
-    初始化JWT认证管理器
+    """初始化JWT认证管理器.
 
     Args:
         secret_key: JWT密钥

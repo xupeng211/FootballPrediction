@@ -1,5 +1,4 @@
-"""
-投注服务 - 重写版本
+"""投注服务 - 重写版本.
 
 提供EV计算和投注策略集成功能
 Betting Service - Rewritten Version
@@ -13,7 +12,7 @@ from typing import Any
 
 @dataclass
 class BettingOdds:
-    """投注赔率数据"""
+    """投注赔率数据."""
 
     home_win: float
     draw: float
@@ -24,7 +23,7 @@ class BettingOdds:
 
 @dataclass
 class PredictionProbabilities:
-    """预测概率数据"""
+    """预测概率数据."""
 
     home_win: float
     draw: float
@@ -35,7 +34,7 @@ class PredictionProbabilities:
 
 @dataclass
 class EVCalculation:
-    """期望值计算结果"""
+    """期望值计算结果."""
 
     ev_home_win: float
     ev_draw: float
@@ -50,7 +49,7 @@ class EVCalculation:
 
 @dataclass
 class BettingRecommendation:
-    """投注建议"""
+    """投注建议."""
 
     match_id: str
     bet_type: str
@@ -64,12 +63,11 @@ class BettingRecommendation:
 
 
 class EVCalculator:
-    """期望值计算器"""
+    """期望值计算器."""
 
     def __init__(self,
     margin: float = 0.05):
-        """
-        初始化EV计算器
+        """初始化EV计算器.
 
         Args:
             margin: 计算中使用的安全边际
@@ -79,7 +77,7 @@ class EVCalculator:
     def calculate_ev(self,
     odds: float,
     probability: float) -> float:
-        """计算单个投注的期望值"""
+        """计算单个投注的期望值."""
         if odds <= 1.0 or probability <= 0.0 or probability >= 1.0:
             return 0.0
 
@@ -91,7 +89,7 @@ class EVCalculator:
     def calculate_kelly_fraction(self,
     ev: float,
     odds: float) -> float | None:
-        """计算凯利投注比例"""
+        """计算凯利投注比例."""
         if ev <= 0:
             return 0.0
 
@@ -109,8 +107,7 @@ class EVCalculator:
     odds: BettingOdds,
     probabilities: PredictionProbabilities
     ) -> EVCalculation:
-        """计算整场比赛的期望值"""
-
+        """计算整场比赛的期望值."""
         # 计算1X2投注的EV
         ev_home = self.calculate_ev(odds.home_win,
     probabilities.home_win)
@@ -193,7 +190,7 @@ class EVCalculator:
 
 
 class BettingRecommendationEngine:
-    """投注建议引擎"""
+    """投注建议引擎."""
 
     def __init__(self, ev_calculator: EVCalculator):
         self.ev_calculator = ev_calculator
@@ -205,7 +202,7 @@ class BettingRecommendationEngine:
     odds: BettingOdds,
     probabilities: PredictionProbabilities
     ) -> list[BettingRecommendation]:
-        """生成投注建议"""
+        """生成投注建议."""
         ev_calc = self.ev_calculator.calculate_match_ev(odds,
     probabilities)
         recommendations = []
@@ -298,10 +295,10 @@ class BettingRecommendationEngine:
 
 
 class BettingService:
-    """投注服务主类 - 简化版本"""
+    """投注服务主类 - 简化版本."""
 
     def __init__(self, config: dict[str, Any] | None = None):
-        """初始化投注服务"""
+        """初始化投注服务."""
         self.logger = logging.getLogger(f"{__name__}.BettingService")
 
         # 配置参数
@@ -327,7 +324,7 @@ class BettingService:
     prediction_data: dict[str,
     Any]
     ) -> dict[str, Any]:
-        """分析单场比赛"""
+        """分析单场比赛."""
         try:
             # 转换数据格式
             odds = self._parse_odds_data(odds_data)
@@ -364,7 +361,7 @@ class BettingService:
     def _parse_odds_data(self,
     odds_data: dict[str,
     Any]) -> BettingOdds | None:
-        """解析赔率数据"""
+        """解析赔率数据."""
         try:
             return BettingOdds(
                 home_win=float(odds_data.get("home_win",
@@ -407,7 +404,7 @@ class BettingService:
     prediction_data: dict[str,
     Any]
     ) -> PredictionProbabilities | None:
-        """解析预测数据"""
+        """解析预测数据."""
         try:
             return PredictionProbabilities(
                 home_win=float(prediction_data.get("home_win_prob",
@@ -450,7 +447,7 @@ class BettingService:
     def _generate_analysis_summary(
         self, ev_calc: EVCalculation, recommendations: list[BettingRecommendation]
     ) -> dict[str, Any]:
-        """生成分析摘要"""
+        """生成分析摘要."""
         return {
             "overall_recommendation": ev_calc.recommendation,
             "confidence_score": ev_calc.confidence,
@@ -470,7 +467,7 @@ class BettingService:
     min_confidence: float = 0.1,
     limit: int = 10
     ) -> list[BettingRecommendation]:
-        """根据置信度获取推荐"""
+        """根据置信度获取推荐."""
         filtered = [
             r for r in self.recommendation_history if r.confidence >= min_confidence
         ]
@@ -487,7 +484,7 @@ class BettingService:
     end_date: datetime | None = None
     ) -> dict[str,
     Any]:
-        """计算投资组合表现"""
+        """计算投资组合表现."""
         if not self.recommendation_history:
             return {"error": "没有推荐历史"}
 
@@ -536,7 +533,7 @@ class BettingService:
 
     def get_service_stats(self) -> dict[str,
     Any]:
-        """获取服务统计信息"""
+        """获取服务统计信息."""
         return {
             "total_recommendations": len(self.recommendation_history),
             "config": self.config,

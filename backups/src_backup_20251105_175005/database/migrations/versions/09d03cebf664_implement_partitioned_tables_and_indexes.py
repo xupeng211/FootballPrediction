@@ -77,7 +77,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def is_sqlite():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """检测当前是否为SQLite数据库"""
     if context.is_offline_mode():
@@ -87,7 +87,7 @@ def is_sqlite():
 
 
 def is_postgresql():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """检测当前是否为PostgreSQL数据库"""
     if context.is_offline_mode():
@@ -97,8 +97,7 @@ def is_postgresql():
 
 
 def upgrade() -> None:
-    """
-    升级数据库:实现分区表和索引优化
+    """升级数据库:实现分区表和索引优化
     SQLite不支持分区表,但会创建相应的索引来优化查询性能。
     PostgreSQL将实现完整的分区表策略和高级索引.
     """
@@ -122,7 +121,7 @@ def upgrade() -> None:
 
 
 def _implement_postgresql_partitioning_and_indexes():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """PostgreSQL环境下实现分区表和高级索引"""
     op.execute(
@@ -222,7 +221,7 @@ def _implement_postgresql_partitioning_and_indexes():
 
 
 def _create_postgresql_advanced_indexes():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """创建PostgreSQL高级索引"""
     advanced_indexes = [
@@ -277,7 +276,7 @@ def _create_postgresql_advanced_indexes():
 
 
 def _implement_sqlite_optimized_indexes():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """SQLite环境下实现优化索引"""
     sqlite_indexes = [
@@ -325,7 +324,7 @@ def _implement_sqlite_optimized_indexes():
 
 
 def _implement_basic_indexes():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """实现基础索引（通用数据库）"""
     basic_indexes = [
@@ -348,7 +347,7 @@ def _implement_basic_indexes():
 
 
 def _create_index_if_not_exists(name, table, columns, method="btree", condition=None):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """创建PostgreSQL索引（如果不存在）"""
     exists = (
@@ -379,7 +378,7 @@ def _create_index_if_not_exists(name, table, columns, method="btree", condition=
 
 
 def _create_simple_index(name, table, columns):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """创建简单索引"""
     try:
@@ -393,9 +392,8 @@ def _create_simple_index(name, table, columns):
 
 
 def downgrade() -> None:
-    """
-    降级操作:移除分区表和索引
-    注意:分区表的降级需要谨慎操作,可能需要数据迁移
+    """降级操作:移除分区表和索引
+    注意:分区表的降级需要谨慎操作,可能需要数据迁移.
     """
     if context.is_offline_mode():
         logger.info("⚠️  离线模式:跳过分区表降级")
@@ -411,7 +409,7 @@ def downgrade() -> None:
 
 
 def _downgrade_postgresql_features():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """降级PostgreSQL特性"""
     op.execute(text("DROP FUNCTION IF EXISTS create_match_partition(INTEGER)"))
@@ -435,7 +433,7 @@ def _downgrade_postgresql_features():
 
 
 def _downgrade_sqlite_features():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """降级SQLite特性"""
     indexes_to_drop = [

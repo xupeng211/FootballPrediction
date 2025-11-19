@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-客户端模块
-Football Prediction SDK - 主客户端类
+"""客户端模块
+Football Prediction SDK - 主客户端类.
 
 Author: Claude Code
 Version: 1.0.0
@@ -28,15 +27,14 @@ from .utils import parse_api_error, rate_limit_handler, retry_with_backoff
 
 
 class PredictionAPI:
-    """预测API管理"""
+    """预测API管理."""
 
     def __init__(self, client: "FootballPredictionClient"):
         self.client = client
 
     @retry_with_backoff(max_retries=3)
     def create(self, request: PredictionRequest) -> PredictionResponse:
-        """
-        创建预测请求
+        """创建预测请求.
 
         Args:
             request: 预测请求数据
@@ -82,8 +80,7 @@ class PredictionAPI:
 
     @retry_with_backoff(max_retries=2)
     def get(self, prediction_id: str) -> Prediction | None:
-        """
-        获取预测结果
+        """获取预测结果.
 
         Args:
             prediction_id: 预测ID
@@ -123,8 +120,7 @@ class PredictionAPI:
         date_from: datetime | None = None,
         date_to: datetime | None = None
     ) -> list[Prediction]:
-        """
-        获取预测历史列表
+        """获取预测历史列表.
 
         Args:
             status: 状态筛选
@@ -173,8 +169,7 @@ class PredictionAPI:
 
     @retry_with_backoff(max_retries=3)
     def batch_create(self, requests: builtins.list[PredictionRequest]) -> dict[str, Any]:
-        """
-        批量创建预测
+        """批量创建预测.
 
         Args:
             requests: 预测请求列表
@@ -216,15 +211,14 @@ class PredictionAPI:
 
 
 class MatchAPI:
-    """比赛API管理"""
+    """比赛API管理."""
 
     def __init__(self, client: "FootballPredictionClient"):
         self.client = client
 
     @retry_with_backoff(max_retries=2)
     def get(self, match_id: str) -> Match | None:
-        """
-        获取比赛详情
+        """获取比赛详情.
 
         Args:
             match_id: 比赛ID
@@ -265,8 +259,7 @@ class MatchAPI:
         page: int = 1,
         page_size: int = 20
     ) -> MatchListResponse:
-        """
-        获取比赛列表
+        """获取比赛列表.
 
         Args:
             league: 联赛筛选
@@ -317,8 +310,7 @@ class MatchAPI:
 
     @retry_with_backoff(max_retries=2)
     def get_leagues(self) -> builtins.list[dict[str, Any]]:
-        """
-        获取联赛列表
+        """获取联赛列表.
 
         Returns:
             List[Dict[str, Any]]: 联赛列表
@@ -344,15 +336,14 @@ class MatchAPI:
 
 
 class UserAPI:
-    """用户API管理"""
+    """用户API管理."""
 
     def __init__(self, client: "FootballPredictionClient"):
         self.client = client
 
     @retry_with_backoff(max_retries=2)
     def get_profile(self) -> UserProfileResponse:
-        """
-        获取用户配置信息
+        """获取用户配置信息.
 
         Returns:
             UserProfileResponse: 用户配置响应
@@ -378,8 +369,7 @@ class UserAPI:
 
     @retry_with_backoff(max_retries=2)
     def update_profile(self, preferences: dict[str, Any]) -> bool:
-        """
-        更新用户配置信息
+        """更新用户配置信息.
 
         Args:
             preferences: 偏好设置
@@ -408,8 +398,7 @@ class UserAPI:
 
     @retry_with_backoff(max_retries=2)
     def get_statistics(self) -> UserStatistics:
-        """
-        获取用户统计信息
+        """获取用户统计信息.
 
         Returns:
             UserStatistics: 用户统计信息
@@ -436,7 +425,7 @@ class UserAPI:
 
 
 class FootballPredictionClient:
-    """足球预测API客户端"""
+    """足球预测API客户端."""
 
     def __init__(
         self,
@@ -447,8 +436,7 @@ class FootballPredictionClient:
         user_agent: str = None,
         offline_mode: bool = False
     ):
-        """
-        初始化客户端
+        """初始化客户端.
 
         Args:
             api_key: API密钥
@@ -505,8 +493,7 @@ class FootballPredictionClient:
                 self.offline_mode = True
 
     def authenticate(self, username: str = None, password: str = None) -> bool:
-        """
-        进行认证
+        """进行认证.
 
         Args:
             username: 用户名（可选）
@@ -534,12 +521,11 @@ class FootballPredictionClient:
 
     @property
     def is_authenticated(self) -> bool:
-        """检查是否已认证"""
+        """检查是否已认证."""
         return self.auth.is_authenticated
 
     def get(self, endpoint: str, params: dict[str, Any] = None) -> dict[str, Any]:
-        """
-        通用GET请求
+        """通用GET请求.
 
         Args:
             endpoint: API端点
@@ -551,8 +537,7 @@ class FootballPredictionClient:
         return self._make_request("GET", endpoint, params=params)
 
     def post(self, endpoint: str, data: dict[str, Any] = None) -> dict[str, Any]:
-        """
-        通用POST请求
+        """通用POST请求.
 
         Args:
             endpoint: API端点
@@ -564,8 +549,7 @@ class FootballPredictionClient:
         return self._make_request("POST", endpoint, json=data)
 
     def put(self, endpoint: str, data: dict[str, Any] = None) -> dict[str, Any]:
-        """
-        通用PUT请求
+        """通用PUT请求.
 
         Args:
             endpoint: API端点
@@ -577,8 +561,7 @@ class FootballPredictionClient:
         return self._make_request("PUT", endpoint, json=data)
 
     def delete(self, endpoint: str) -> dict[str, Any]:
-        """
-        通用DELETE请求
+        """通用DELETE请求.
 
         Args:
             endpoint: API端点
@@ -596,8 +579,7 @@ class FootballPredictionClient:
         json: dict[str, Any] = None,
         **kwargs
     ) -> dict[str, Any]:
-        """
-        发起HTTP请求
+        """发起HTTP请求.
 
         Args:
             method: HTTP方法
@@ -654,8 +636,7 @@ class FootballPredictionClient:
             raise
 
     def health_check(self) -> dict[str, Any]:
-        """
-        健康检查
+        """健康检查.
 
         Returns:
             Dict[str, Any]: 健康状态信息
@@ -677,8 +658,7 @@ class FootballPredictionClient:
             return {"status": "unhealthy", "error": "连接失败"}
 
     def get_api_info(self) -> dict[str, Any]:
-        """
-        获取API信息
+        """获取API信息.
 
         Returns:
             Dict[str, Any]: API信息
@@ -700,15 +680,15 @@ class FootballPredictionClient:
             return {}
 
     def __enter__(self):
-        """上下文管理器入口"""
+        """上下文管理器入口."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """上下文管理器出口"""
+        """上下文管理器出口."""
         self.auth.clear_tokens()
         self.session.close()
 
     def __repr__(self) -> str:
-        """字符串表示"""
+        """字符串表示."""
         status = "已认证" if self.is_authenticated else "未认证"
         return f"<FootballPredictionClient base_url={self.base_url} status={status}>"

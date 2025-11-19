@@ -5,7 +5,6 @@
 
 import logging
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,8 +30,8 @@ class FeatureService:
         self.logger = logger
 
     async def get_match_features(
-        self, match_id: int, calculation_date: Optional[datetime] = None
-    ) -> Optional[AllMatchFeatures]:
+        self, match_id: int, calculation_date: datetime | None = None
+    ) -> AllMatchFeatures | None:
         """获取比赛特征.
 
         Args:
@@ -63,8 +62,8 @@ class FeatureService:
             return None
 
     async def get_team_features(
-        self, team_id: int, calculation_date: Optional[datetime] = None
-    ) -> Optional[AllTeamFeatures]:
+        self, team_id: int, calculation_date: datetime | None = None
+    ) -> AllTeamFeatures | None:
         """获取球队特征.
 
         Args:
@@ -91,8 +90,8 @@ class FeatureService:
             return None
 
     async def batch_get_match_features(
-        self, match_ids: list[int], calculation_date: Optional[datetime] = None
-    ) -> dict[int, Optional[AllMatchFeatures]]:
+        self, match_ids: list[int], calculation_date: datetime | None = None
+    ) -> dict[int, AllMatchFeatures | None]:
         """批量获取比赛特征.
 
         Args:
@@ -122,8 +121,8 @@ class FeatureService:
             return dict.fromkeys(match_ids)
 
     async def get_recent_performance_features(
-        self, team_id: int, calculation_date: Optional[datetime] = None
-    ) -> Optional[RecentPerformanceFeatures]:
+        self, team_id: int, calculation_date: datetime | None = None
+    ) -> RecentPerformanceFeatures | None:
         """获取球队近期战绩特征.
 
         Args:
@@ -153,8 +152,8 @@ class FeatureService:
         self,
         home_team_id: int,
         away_team_id: int,
-        calculation_date: Optional[datetime] = None,
-    ) -> Optional[HistoricalMatchupFeatures]:
+        calculation_date: datetime | None = None,
+    ) -> HistoricalMatchupFeatures | None:
         """获取历史对战特征.
 
         Args:
@@ -182,8 +181,8 @@ class FeatureService:
             return None
 
     async def get_odds_features(
-        self, match_id: int, calculation_date: Optional[datetime] = None
-    ) -> Optional[OddsFeatures]:
+        self, match_id: int, calculation_date: datetime | None = None
+    ) -> OddsFeatures | None:
         """获取赔率特征.
 
         Args:
@@ -267,8 +266,8 @@ class FeatureService:
             return False
 
     async def get_feature_summary(
-        self, match_id: int, calculation_date: Optional[datetime] = None
-    ) -> Optional[dict]:
+        self, match_id: int, calculation_date: datetime | None = None
+    ) -> dict | None:
         """获取特征摘要信息.
 
         Args:

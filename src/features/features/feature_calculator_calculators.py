@@ -1,5 +1,3 @@
-from typing import Optional
-
 """特征计算器实现.
 
 足球预测系统的核心特征计算逻辑：

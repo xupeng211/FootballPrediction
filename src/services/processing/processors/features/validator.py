@@ -1,5 +1,3 @@
-from typing import Optional
-
 """validator
 特征验证器.
 

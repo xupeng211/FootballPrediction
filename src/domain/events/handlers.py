@@ -7,7 +7,7 @@ Defines handlers for various domain events.
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from .base import DomainEvent, EventHandler
 

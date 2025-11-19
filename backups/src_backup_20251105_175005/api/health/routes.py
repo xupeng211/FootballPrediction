@@ -7,7 +7,7 @@ router = APIRouter(prefix="/health", tags=["health"])
 
 @router.get("/")
 async def health_check():
-    """基础健康检查"""
+    """基础健康检查."""
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
@@ -18,7 +18,7 @@ async def health_check():
 
 @router.get("/detailed")
 async def detailed_health_check():
-    """详细健康检查"""
+    """详细健康检查."""
     health_status = {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),

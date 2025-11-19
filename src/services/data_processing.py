@@ -8,7 +8,7 @@ Provides data processing and transformation functionality.
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

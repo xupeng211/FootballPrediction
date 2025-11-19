@@ -3,7 +3,7 @@
 为所有API端点提供标准化的响应模型,确保API文档的一致性和完整性.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 

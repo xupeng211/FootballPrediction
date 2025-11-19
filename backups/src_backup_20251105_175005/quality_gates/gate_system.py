@@ -14,6 +14,7 @@ from enum import Enum
 from pathlib import Path
 
 from scripts.quality_guardian import QualityGuardian
+
 from src.core.logging_system import get_logger
 from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
 from src.metrics.quality_integration import QualityMetricsIntegrator
@@ -22,7 +23,7 @@ logger = get_logger(__name__)
 
 
 class GateStatus(Enum):
-    """门禁状态枚举"""
+    """门禁状态枚举."""
 
     PASSED = "passed"
     FAILED = "failed"
@@ -31,7 +32,7 @@ class GateStatus(Enum):
 
 
 class GateResult:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """门禁检查结果"""
@@ -56,7 +57,7 @@ class GateResult:
         self.timestamp = datetime.now().isoformat()
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "gate_name": self.gate_name,
             "status": self.status.value,
@@ -70,7 +71,7 @@ class GateResult:
 
 
 class QualityGate:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """单个质量门禁"""
@@ -91,7 +92,7 @@ class QualityGate:
         self.logger = get_logger(self.__class__.__name__)
 
     def check(self) -> GateResult:
-        """执行门禁检查"""
+        """执行门禁检查."""
         if not self.enabled:
             return GateResult(
                 gate_name=self.name,
@@ -140,15 +141,15 @@ class QualityGate:
             )
 
     def _calculate_score(self) -> float:
-        """计算门禁分数（子类实现）"""
+        """计算门禁分数（子类实现）."""
         raise NotImplementedError("子类必须实现 _calculate_score 方法")
 
 
 class CodeQualityGate(QualityGate):
-    """代码质量门禁"""
+    """代码质量门禁."""
 
     def __init__(self, threshold: float = 8.0):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(
             name="代码质量",
@@ -159,7 +160,7 @@ class CodeQualityGate(QualityGate):
         self.quality_guardian = QualityGuardian()
 
     def _calculate_score(self) -> float:
-        """计算代码质量分数"""
+        """计算代码质量分数."""
         report = self.quality_guardian.run_quality_check()
 
         # Ruff和MyPy满分各5分,总分10分
@@ -181,10 +182,10 @@ class CodeQualityGate(QualityGate):
 
 
 class TestCoverageGate(QualityGate):
-    """测试覆盖率门禁"""
+    """测试覆盖率门禁."""
 
     def __init__(self, threshold: float = 80.0):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(
             name="测试覆盖率",
@@ -195,16 +196,16 @@ class TestCoverageGate(QualityGate):
         self.quality_guardian = QualityGuardian()
 
     def _calculate_score(self) -> float:
-        """计算测试覆盖率分数"""
+        """计算测试覆盖率分数."""
         report = self.quality_guardian.run_quality_check()
         return report.get("coverage_percentage", 0.0)
 
 
 class SecurityGate(QualityGate):
-    """安全检查门禁"""
+    """安全检查门禁."""
 
     def __init__(self, threshold: float = 9.0):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(
             name="安全检查",
@@ -215,16 +216,16 @@ class SecurityGate(QualityGate):
         self.quality_guardian = QualityGuardian()
 
     def _calculate_score(self) -> float:
-        """计算安全分数"""
+        """计算安全分数."""
         report = self.quality_guardian.run_quality_check()
         return report.get("security_score", 0.0)
 
 
 class OverallQualityGate(QualityGate):
-    """综合质量门禁"""
+    """综合质量门禁."""
 
     def __init__(self, threshold: float = 8.5):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(
             name="综合质量",
@@ -235,7 +236,7 @@ class OverallQualityGate(QualityGate):
         self.integrator = QualityMetricsIntegrator()
 
     def _calculate_score(self) -> float:
-        """计算综合质量分数"""
+        """计算综合质量分数."""
         # 模拟现有质量报告
         quality_guardian = QualityGuardian()
         basic_report = quality_guardian.run_quality_check()
@@ -247,10 +248,10 @@ class OverallQualityGate(QualityGate):
 
 
 class TechnicalDebtGate(QualityGate):
-    """技术债务门禁"""
+    """技术债务门禁."""
 
     def __init__(self, threshold: float = 60.0):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(
             name="技术债务",
@@ -261,7 +262,7 @@ class TechnicalDebtGate(QualityGate):
         self.analyzer = AdvancedMetricsAnalyzer()
 
     def _calculate_score(self) -> float:
-        """计算技术债务分数"""
+        """计算技术债务分数."""
         project_root = Path(__file__).parent.parent.parent
         advanced_metrics = self.analyzer.run_full_analysis(project_root)
 
@@ -269,10 +270,10 @@ class TechnicalDebtGate(QualityGate):
 
 
 class ComplexityGate(QualityGate):
-    """复杂度门禁"""
+    """复杂度门禁."""
 
     def __init__(self, threshold: float = 70.0):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(
             name="代码复杂度",
@@ -283,7 +284,7 @@ class ComplexityGate(QualityGate):
         self.analyzer = AdvancedMetricsAnalyzer()
 
     def _calculate_score(self) -> float:
-        """计算复杂度分数（基于可维护性指数）"""
+        """计算复杂度分数（基于可维护性指数）."""
         project_root = Path(__file__).parent.parent.parent
         advanced_metrics = self.analyzer.run_full_analysis(project_root)
 
@@ -294,20 +295,20 @@ class ComplexityGate(QualityGate):
 
 
 class QualityGateSystem:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """质量门禁系统主类"""
 
     def __init__(self, config_path: str | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.config = self._load_config(config_path)
         self.gates = self._initialize_gates()
         self.logger = get_logger(self.__class__.__name__)
 
     def _load_config(self, config_path: str | None) -> dict[str, Any]:
-        """加载门禁配置"""
+        """加载门禁配置."""
         default_config = {
             "gates": {
                 "code_quality": {"enabled": True, "threshold": 8.0, "critical": True},
@@ -340,7 +341,7 @@ class QualityGateSystem:
         return default_config
 
     def _initialize_gates(self) -> list[QualityGate]:
-        """初始化门禁列表"""
+        """初始化门禁列表."""
         gates_config = self.config.get("gates", {})
         gates = []
 
@@ -371,7 +372,7 @@ class QualityGateSystem:
         return gates
 
     def run_all_checks(self) -> dict[str, Any]:
-        """运行所有门禁检查"""
+        """运行所有门禁检查."""
         self.logger.info("开始运行质量门禁检查...")
         start_time = datetime.now()
 
@@ -443,7 +444,7 @@ class QualityGateSystem:
         return gate_report
 
     def generate_report(self, results: dict[str, Any]) -> str:
-        """生成门禁检查报告"""
+        """生成门禁检查报告."""
         report_lines = [
             "# 质量门禁检查报告",
             f"生成时间: {results['timestamp']}",
@@ -491,12 +492,12 @@ class QualityGateSystem:
         return "\n".join(report_lines)
 
     def should_block_merge(self, results: dict[str, Any]) -> bool:
-        """判断是否应该阻止合并"""
+        """判断是否应该阻止合并."""
         return results.get("should_block", False)
 
 
 def main():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """主函数,用于测试"""
     gate_system = QualityGateSystem()

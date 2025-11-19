@@ -1,6 +1,5 @@
-"""
-用户管理API路由
-User Management API Routes
+"""用户管理API路由
+User Management API Routes.
 
 提供用户管理的REST API端点。
 """
@@ -27,14 +26,14 @@ security = HTTPBearer()
 
 
 class LoginRequest(BaseModel):
-    """登录请求模型"""
+    """登录请求模型."""
 
     email: str
     password: str
 
 
 class ChangePasswordRequest(BaseModel):
-    """修改密码请求模型"""
+    """修改密码请求模型."""
 
     old_password: str
     new_password: str
@@ -45,7 +44,7 @@ async def register_user(
     request: UserCreateRequest,
     user_service=Depends(get_user_management_service),
 ) -> UserResponse:
-    """注册新用户"""
+    """注册新用户."""
     try:
         user = await user_service.create_user(request)
         return user
@@ -60,7 +59,7 @@ async def login_user(
     request: LoginRequest,
     user_service=Depends(get_user_management_service),
 ) -> UserAuthResponse:
-    """用户登录"""
+    """用户登录."""
     try:
         auth_response = await user_service.authenticate_user(
             email=request.email, password=request.password
@@ -75,7 +74,7 @@ async def get_current_user_info(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
 ) -> UserResponse:
-    """获取当前用户信息"""
+    """获取当前用户信息."""
     try:
         user = await user_service.get_user_by_id(current_user["id"])
         return user
@@ -88,7 +87,7 @@ async def get_user(
     user_id: int,
     user_service=Depends(get_user_management_service),
 ) -> UserResponse:
-    """获取指定用户信息"""
+    """获取指定用户信息."""
     try:
         user = await user_service.get_user_by_id(user_id)
         return user
@@ -103,7 +102,7 @@ async def update_user(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
 ) -> UserResponse:
-    """更新用户信息"""
+    """更新用户信息."""
     try:
         # 检查权限：只能更新自己的信息
         if current_user["id"] != user_id:
@@ -124,7 +123,7 @@ async def delete_user(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
 ):
-    """删除用户"""
+    """删除用户."""
     try:
         # 检查权限：只能删除自己的账户
         if current_user["id"] != user_id:
@@ -144,7 +143,7 @@ async def get_users(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
 ) -> list[UserResponse]:
-    """获取用户列表"""
+    """获取用户列表."""
     # 检查权限：只有管理员可以查看所有用户
     if not current_user.get("is_admin", False):
         raise HTTPException(
@@ -168,7 +167,7 @@ async def search_users(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
 ) -> list[UserResponse]:
-    """搜索用户"""
+    """搜索用户."""
     # 检查权限
     if not current_user.get("is_admin", False):
         raise HTTPException(
@@ -189,7 +188,7 @@ async def change_password(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
 ):
-    """修改密码"""
+    """修改密码."""
     try:
         success = await user_service.change_password(
             user_id=current_user["id"],
@@ -209,7 +208,7 @@ async def deactivate_user(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
 ) -> UserResponse:
-    """停用用户"""
+    """停用用户."""
     try:
         # 检查权限：只有管理员可以停用用户
         if not current_user.get("is_admin", False):
@@ -228,7 +227,7 @@ async def activate_user(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
 ) -> UserResponse:
-    """激活用户"""
+    """激活用户."""
     try:
         # 检查权限：只有管理员可以激活用户
         if not current_user.get("is_admin", False):
@@ -246,7 +245,7 @@ async def get_user_stats(
     current_user: dict = Depends(get_current_user),
     user_service=Depends(get_user_management_service),
 ):
-    """获取用户统计信息"""
+    """获取用户统计信息."""
     # 检查权限：只有管理员可以查看统计
     if not current_user.get("is_admin", False):
         raise HTTPException(

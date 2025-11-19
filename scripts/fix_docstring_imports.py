@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-批量修复docstring中import语句的脚本
+"""批量修复docstring中import语句的脚本.
 
 解决F821错误的系统性问题：
 - import语句被包含在docstring中
@@ -9,14 +8,14 @@
 
 import os
 import re
-from pathlib import Path
+
 
 def find_files_with_f821():
-    """查找所有有F821错误的Python文件"""
+    """查找所有有F821错误的Python文件."""
     os.system("ruff check src/ --select=F821 --output-format=full > f821_errors.txt")
 
     files_with_errors = set()
-    with open('f821_errors.txt', 'r') as f:
+    with open('f821_errors.txt') as f:
         for line in f:
             if 'F821 Undefined name' in line and '-->' in line:
                 # 提取文件路径
@@ -27,9 +26,9 @@ def find_files_with_f821():
     return sorted(files_with_errors)
 
 def fix_docstring_imports(file_path):
-    """修复单个文件的docstring导入问题"""
+    """修复单个文件的docstring导入问题."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -78,34 +77,26 @@ def fix_docstring_imports(file_path):
 
         return False
 
-    except Exception as e:
-        print(f"修复文件 {file_path} 时出错: {e}")
+    except Exception:
         return False
 
 def main():
-    """主函数"""
-    print("🔧 开始批量修复F821错误...")
-
+    """主函数."""
     # 查找需要修复的文件
     files_to_fix = find_files_with_f821()
-    print(f"📋 发现 {len(files_to_fix)} 个需要修复的文件")
 
     # 逐个修复
     fixed_count = 0
     for file_path in files_to_fix:
-        print(f"🔨 修复: {file_path}")
         if fix_docstring_imports(file_path):
             fixed_count += 1
-            print(f"  ✅ 已修复")
         else:
-            print(f"  ⚪  无需修复")
+            pass
 
     # 清理临时文件
     if os.path.exists('f821_errors.txt'):
         os.remove('f821_errors.txt')
 
-    print(f"\n🎉 修复完成！")
-    print(f"📊 修复文件数: {fixed_count}/{len(files_to_fix)}")
 
     # 验证修复效果
     os.system("echo '🔍 验证修复效果...'")

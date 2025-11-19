@@ -1,5 +1,3 @@
-from typing import Optional
-
 """数据API端点（向后兼容）
 Data API Endpoints (Backward Compatible).
 

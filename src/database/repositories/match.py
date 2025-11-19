@@ -6,7 +6,7 @@ Provides match data access operations, implementing the Repository pattern.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession

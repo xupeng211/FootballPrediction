@@ -1,5 +1,4 @@
-"""
-足球预测系统配置管理模块
+"""足球预测系统配置管理模块.
 
 提供统一的配置读写和持久化机制.
 """
@@ -32,13 +31,13 @@ except ImportError:
 
 
 class Config:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """配置管理类 - 提供统一的配置读写和持久化机制"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         # 配置文件存储在用户主目录下,避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
@@ -53,7 +52,7 @@ class Config:
         self._load_config()
 
     def _load_config(self) -> None:
-        """加载配置文件 - 自动处理文件不存在或格式错误的情况"""
+        """加载配置文件 - 自动处理文件不存在或格式错误的情况."""
         if self.config_file.exists():
             try:
                 with open(self.config_file, encoding="utf-8") as f:
@@ -63,15 +62,15 @@ class Config:
                 logging.warning(f"配置文件加载失败: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
-        """获取配置项 - 支持默认值,确保程序健壮性"""
+        """获取配置项 - 支持默认值,确保程序健壮性."""
         return self.config.get(str(key), default)
 
     def set(self, key: str, value: Any) -> None:
-        """设置配置项 - 仅更新内存中的配置,需调用save()持久化"""
+        """设置配置项 - 仅更新内存中的配置,需调用save()持久化."""
         self.config[key] = value
 
     def save(self) -> None:
-        """保存配置到文件 - 自动创建目录,确保配置持久化"""
+        """保存配置到文件 - 自动创建目录,确保配置持久化."""
         # 确保配置目录存在,parents=True递归创建父目录
         self.config_dir.mkdir(parents=True, exist_ok=True)
         with open(self.config_file, "w", encoding="utf-8") as f:
@@ -83,7 +82,7 @@ SettingsClass = BaseSettings if HAS_PYDANTIC else object
 
 
 class Settings(SettingsClass):
-    """应用程序设置类 - 使用Pydantic进行配置管理和验证"""
+    """应用程序设置类 - 使用Pydantic进行配置管理和验证."""
 
     # 数据库配置
     database_url: str = (
@@ -225,7 +224,7 @@ class Settings(SettingsClass):
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             # Fallback for older versions
             class Config:
-                """类文档字符串"""
+                """类文档字符串."""
 
                 pass  # 添加pass语句
 
@@ -237,7 +236,7 @@ class Settings(SettingsClass):
     else:
 
         def __init__(self, **kwargs):
-            """初始化配置"""
+            """初始化配置."""
             # 设置默认值
             self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
             self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
@@ -279,7 +278,7 @@ class Settings(SettingsClass):
             self._load_from_env()
 
     def _load_from_env(self):
-        """从环境变量加载配置"""
+        """从环境变量加载配置."""
         env_mapping = {
             "DATABASE_URL": "database_url",
             "TEST_DATABASE_URL": "test_database_url",
@@ -336,19 +335,18 @@ config = Config()
 
 
 def get_config() -> Config:
-    """获取配置实例"""
+    """获取配置实例."""
     return config
 
 
 # 创建全局设置实例
 def get_settings() -> Settings:
-    """获取应用程序设置实例"""
+    """获取应用程序设置实例."""
     return Settings()
 
 
 def load_config(config_file: str | None = None) -> Settings:
-    """
-    加载配置文件
+    """加载配置文件.
 
     Args:
         config_file: 配置文件路径，如果为None则使用默认配置

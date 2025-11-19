@@ -1,6 +1,5 @@
-"""
-审计服务模型（兼容版本）
-Audit Service Models (Compatibility Version)
+"""审计服务模型（兼容版本）
+Audit Service Models (Compatibility Version).
 """
 
 from dataclasses import dataclass
@@ -10,7 +9,7 @@ from typing import Any
 
 
 class AuditAction(Enum):
-    """审计动作"""
+    """审计动作."""
 
     CREATE = "create"
     UPDATE = "update"
@@ -22,7 +21,7 @@ class AuditAction(Enum):
 
 
 class AuditSeverity(Enum):
-    """审计严重级别"""
+    """审计严重级别."""
 
     LOW = "low"
     MEDIUM = "medium"
@@ -32,7 +31,7 @@ class AuditSeverity(Enum):
 
 @dataclass
 class AuditEvent:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计事件"""
@@ -48,7 +47,7 @@ class AuditEvent:
     metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         if self.metadata is None:
             self.metadata = {}

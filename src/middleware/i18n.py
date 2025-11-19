@@ -1,5 +1,3 @@
-from typing import Optional
-
 """国际化中间件."""
 
 import os

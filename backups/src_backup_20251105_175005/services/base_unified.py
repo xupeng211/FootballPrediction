@@ -1,5 +1,4 @@
-"""
-统一的基础服务类
+"""统一的基础服务类.
 
 合并了原来两个基础服务类的功能,提供完整的服务基础设施.
 """
@@ -13,8 +12,7 @@ from src.database.connection import DatabaseManager
 
 
 class BaseService(ABC):
-    """
-    统一的基础服务类
+    """统一的基础服务类.
 
     提供以下功能:
     - 服务生命周期管理（初始化、启动,停止,关闭）
@@ -26,8 +24,7 @@ class BaseService(ABC):
     def __init__(
         self, name: str | None = None, db_manager: DatabaseManager | None = None
     ):
-        """
-        初始化基础服务
+        """初始化基础服务.
 
         Args:
             name: 服务名称,默认使用类名
@@ -45,8 +42,7 @@ class BaseService(ABC):
     # ========================================
 
     async def initialize(self) -> bool:
-        """
-        初始化服务
+        """初始化服务.
 
         子类可以重写此方法来实现自定义初始化逻辑
 
@@ -72,8 +68,7 @@ class BaseService(ABC):
             return False
 
     async def shutdown(self) -> None:
-        """
-        关闭服务
+        """关闭服务.
 
         子类可以重写此方法来实现自定义清理逻辑
         """
@@ -91,8 +86,7 @@ class BaseService(ABC):
             self.logger.error(f"服务 {self.name} 关闭异常: {e}")
 
     def start(self) -> bool:
-        """
-        启动服务
+        """启动服务.
 
         Returns:
             bool: 启动是否成功
@@ -120,7 +114,7 @@ class BaseService(ABC):
             return False
 
     async def stop(self) -> None:
-        """停止服务"""
+        """停止服务."""
         if not self._running:
             return None
         self.logger.info(f"正在停止服务: {self.name}")
@@ -137,11 +131,11 @@ class BaseService(ABC):
     # ========================================
 
     async def get_async_session(self):
-        """获取异步数据库会话"""
+        """获取异步数据库会话."""
         return self.db_manager.get_async_session()
 
     def get_sync_session(self):
-        """获取同步数据库会话"""
+        """获取同步数据库会话."""
         return self.db_manager.get_session()
 
     # ========================================
@@ -154,8 +148,7 @@ class BaseService(ABC):
         details: dict[str, Any] | None = None,
         level: str = "info",
     ) -> None:
-        """
-        记录操作日志
+        """记录操作日志.
 
         Args:
             operation: 操作名称
@@ -171,8 +164,7 @@ class BaseService(ABC):
     def log_error(
         self, operation: str, error: Exception, details: dict[str, Any] | None = None
     ) -> None:
-        """
-        记录错误日志
+        """记录错误日志.
 
         Args:
             operation: 操作名称
@@ -190,7 +182,7 @@ class BaseService(ABC):
     # ========================================
 
     def get_status(self) -> str:
-        """获取服务状态"""
+        """获取服务状态."""
         if not self._initialized:
             return "uninitialized"
         elif self._running:
@@ -199,8 +191,7 @@ class BaseService(ABC):
             return "stopped"
 
     def is_healthy(self) -> bool:
-        """
-        检查服务健康状态
+        """检查服务健康状态.
 
         子类可以重写此方法来实现自定义健康检查
 
@@ -210,8 +201,7 @@ class BaseService(ABC):
         return self._initialized and self._running
 
     async def health_check(self) -> dict[str, Any]:
-        """
-        获取详细的健康检查信息
+        """获取详细的健康检查信息.
 
         Returns:
             Dict: 包含健康状态的详细信息
@@ -227,7 +217,7 @@ class BaseService(ABC):
         }
 
     def _check_database_connection(self) -> bool:
-        """检查数据库连接"""
+        """检查数据库连接."""
         try:
             with self.db_manager.get_session() as session:
                 session.execute("SELECT 1")
@@ -240,8 +230,7 @@ class BaseService(ABC):
     # ========================================
 
     async def _on_initialize(self) -> bool:
-        """
-        初始化钩子方法
+        """初始化钩子方法.
 
         子类重写此方法来实现自定义初始化逻辑
 
@@ -251,15 +240,13 @@ class BaseService(ABC):
         return True
 
     async def _on_shutdown(self) -> None:
-        """
-        关闭钩子方法
+        """关闭钩子方法.
 
         子类重写此方法来实现自定义清理逻辑
         """
 
     def _on_start(self) -> bool:
-        """
-        启动钩子方法
+        """启动钩子方法.
 
         子类重写此方法来实现自定义启动逻辑
 
@@ -269,8 +256,7 @@ class BaseService(ABC):
         return True
 
     async def _on_stop(self) -> None:
-        """
-        停止钩子方法
+        """停止钩子方法.
 
         子类重写此方法来实现自定义停止逻辑
         """
@@ -281,8 +267,7 @@ class BaseService(ABC):
 
     @abstractmethod
     async def _get_service_info(self) -> dict[str, Any]:
-        """
-        获取服务信息
+        """获取服务信息.
 
         子类必须实现此方法,返回服务的基本信息
 
@@ -298,14 +283,13 @@ class BaseService(ABC):
 
 
 class SimpleService(BaseService):
-    """
-    简单服务实现
+    """简单服务实现.
 
     适用于不需要复杂初始化逻辑的服务
     """
 
     async def _get_service_info(self) -> dict[str, Any]:
-        """获取服务信息"""
+        """获取服务信息."""
         return {
             "name": self.name,
             "type": self.__class__.__name__,

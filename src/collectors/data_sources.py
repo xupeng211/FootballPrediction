@@ -1,5 +1,3 @@
-from typing import Optional
-
 """数据源配置和适配器
 提供多种足球数据API的统一接口.
 """

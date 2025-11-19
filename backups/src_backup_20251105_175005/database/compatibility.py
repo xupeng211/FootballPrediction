@@ -1,6 +1,5 @@
-"""
-数据库兼容性模块
-Database Compatibility Module
+"""数据库兼容性模块
+Database Compatibility Module.
 
 提供数据库兼容性相关的类和函数.
 """
@@ -11,7 +10,7 @@ from typing import Any
 
 
 class Compatibility(Enum):
-    """兼容性级别枚举"""
+    """兼容性级别枚举."""
 
     FULL = "full"  # 完全兼容
     PARTIAL = "partial"  # 部分兼容
@@ -19,13 +18,13 @@ class Compatibility(Enum):
 
 
 class CompatibleQueryBuilder:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """兼容性查询构建器"""
 
     def __init__(self, dialect: str = "postgresql"):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化查询构建器"
 
@@ -36,7 +35,7 @@ class CompatibleQueryBuilder:
         self.compatibility_rules = self._get_compatibility_rules()
 
     def _get_compatibility_rules(self) -> dict[str, Any]:
-        """获取兼容性规则"""
+        """获取兼容性规则."""
         rules = {
             "postgresql": {
                 "limit_syntax": "LIMIT {limit}",
@@ -60,7 +59,7 @@ class CompatibleQueryBuilder:
         return rules.get(self.dialect, rules["postgresql"])
 
     def build_limit_query(self, base_query: str, limit: int, offset: int = 0) -> str:
-        """构建带限制的查询"
+        """构建带限制的查询".
 
         Args:
             base_query: 基础查询
@@ -80,7 +79,7 @@ class CompatibleQueryBuilder:
         return query
 
     def build_json_query(self, column: str, path: str) -> str:
-        """构建JSON查询"
+        """构建JSON查询".
 
         Args:
             column: JSON列名
@@ -96,13 +95,13 @@ class CompatibleQueryBuilder:
 
 
 class SQLCompatibilityHelper:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """SQL兼容性助手"""
 
     def __init__(self, source_dialect: str, target_dialect: str):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化兼容性助手"
 
@@ -115,7 +114,7 @@ class SQLCompatibilityHelper:
         self.transformation_rules = self._load_transformation_rules()
 
     def _load_transformation_rules(self) -> dict[str, dict[str, str]]:
-        """加载转换规则"""
+        """加载转换规则."""
         return {
             "postgresql_to_mysql": {
                 "SERIAL": "INT AUTO_INCREMENT",
@@ -160,7 +159,7 @@ class SQLCompatibilityHelper:
         }
 
     def convert_datatype(self, datatype: str) -> str:
-        """转换数据类型"
+        """转换数据类型".
 
         Args:
             datatype: 源数据类型
@@ -183,7 +182,7 @@ class SQLCompatibilityHelper:
         return datatype
 
     def convert_sql(self, sql: str) -> str:
-        """转换SQL语句"
+        """转换SQL语句".
 
         Args:
             sql: 源SQL语句
@@ -207,7 +206,7 @@ class SQLCompatibilityHelper:
         return converted
 
     def check_compatibility(self, sql: str) -> Compatibility:
-        """检查SQL兼容性"
+        """检查SQL兼容性".
 
         Args:
             sql: SQL语句
@@ -233,7 +232,7 @@ class SQLCompatibilityHelper:
             return Compatibility.NONE
 
     def get_migration_script(self, source_ddl: str) -> str:
-        """获取迁移脚本"
+        """获取迁移脚本".
 
         Args:
             source_ddl: 源DDL语句

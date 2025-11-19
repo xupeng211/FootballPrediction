@@ -1,6 +1,5 @@
-"""
-Redis缓存管理器
-Redis Cache Manager
+"""Redis缓存管理器
+Redis Cache Manager.
 
 实现Redis连接池、基础操作方法，支持异步和同步两种模式，以及集群、哨兵等高级特性。
 """

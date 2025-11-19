@@ -6,7 +6,7 @@ Handles complex business logic related to matches.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from src.domain.events.match_events import (
     MatchCancelledEvent,

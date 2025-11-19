@@ -1,6 +1,5 @@
-"""
-Football-Data.org API数据采集器
-提供完整的足球数据采集功能
+"""Football-Data.org API数据采集器
+提供完整的足球数据采集功能.
 """
 
 import logging
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class FootballDataCollector(BaseCollector):
-    """Football-Data.org 数据采集器"""
+    """Football-Data.org 数据采集器."""
 
     def __init__(
         self,
@@ -50,7 +49,7 @@ class FootballDataCollector(BaseCollector):
         ]
 
     async def _get_headers(self) -> dict[str, str]:
-        """获取Football-Data.org API请求头"""
+        """获取Football-Data.org API请求头."""
         return {
             "X-Auth-Token": self.api_key,
             "Content-Type": "application/json",
@@ -60,7 +59,7 @@ class FootballDataCollector(BaseCollector):
     def _build_url(self,
     endpoint: str,
     **params) -> str:
-        """构建请求URL"""
+        """构建请求URL."""
         # 移除开头的斜杠并确保正确的路径
         endpoint = endpoint.lstrip("/")
         return urljoin(self.base_url + "/",
@@ -75,7 +74,7 @@ class FootballDataCollector(BaseCollector):
         status: str | None = None,
         limit: int = 100,
     ) -> CollectionResult:
-        """采集比赛数据"""
+        """采集比赛数据."""
         try:
             if league_id:
                 # 获取特定联赛的比赛
@@ -117,7 +116,7 @@ class FootballDataCollector(BaseCollector):
     async def collect_teams(
         self, league_id: int | None = None, limit: int = 100
     ) -> CollectionResult:
-        """采集球队数据"""
+        """采集球队数据."""
         try:
             if league_id:
                 # 获取特定联赛的球队
@@ -151,7 +150,7 @@ class FootballDataCollector(BaseCollector):
     async def collect_players(
         self, team_id: int | None = None, limit: int = 50
     ) -> CollectionResult:
-        """采集球员数据"""
+        """采集球员数据."""
         try:
             if not team_id:
                 return CollectionResult(
@@ -193,7 +192,7 @@ class FootballDataCollector(BaseCollector):
             )
 
     async def collect_leagues(self, areas: list[int] | None = None) -> CollectionResult:
-        """采集联赛数据"""
+        """采集联赛数据."""
         try:
             endpoint = "competitions"
             params = {}
@@ -241,7 +240,7 @@ class FootballDataCollector(BaseCollector):
             )
 
     async def collect_standings(self, league_id: int) -> CollectionResult:
-        """采集联赛积分榜"""
+        """采集联赛积分榜."""
         try:
             endpoint = f"competitions/{league_id}/standings"
             result = await self.get(endpoint)
@@ -275,8 +274,7 @@ class FootballDataCollector(BaseCollector):
     days_forward: int = 7,
 
     ) -> CollectionResult:
-        """
-        采集全面的足球数据
+        """采集全面的足球数据.
 
         Args:
             competition_codes: 联赛代码列表，如None则使用默认支持的联赛
@@ -475,7 +473,7 @@ class FootballDataCollector(BaseCollector):
             )
 
     async def health_check(self) -> bool:
-        """健康检查 - 尝试获取联赛列表"""
+        """健康检查 - 尝试获取联赛列表."""
         try:
             result = await self.collect_leagues()
             return result.success
@@ -484,11 +482,11 @@ class FootballDataCollector(BaseCollector):
             return False
 
     def get_supported_competitions(self) -> list[str]:
-        """获取支持的联赛代码列表"""
+        """获取支持的联赛代码列表."""
         return self.supported_competitions.copy()
 
     async def get_competition_id_by_code(self, code: str) -> int | None:
-        """根据联赛代码获取联赛ID"""
+        """根据联赛代码获取联赛ID."""
         try:
             result = await self.collect_leagues()
             if result.success and result.data:

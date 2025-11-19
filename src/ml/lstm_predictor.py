@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """LSTM时间序列预测模型
-LSTM Time Series Prediction Model
+LSTM Time Series Prediction Model.
 
 基于长短期记忆网络的质量指标时间序列预测和异常检测
 """
 
-import random
 import pickle
-import pandas as pd
+import random
+
 import numpy as np
+import pandas as pd
 
 try:
     import tensorflow as tf
@@ -20,7 +21,7 @@ except ImportError:
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import MinMaxScaler
@@ -51,7 +52,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class PredictionResult:
-    """预测结果数据模型"""
+    """预测结果数据模型."""
 
     timestamp: datetime
     predicted_values: list[float]
@@ -74,7 +75,7 @@ class PredictionResult:
 
 @dataclass
 class TrainingConfig:
-    """LSTM训练配置"""
+    """LSTM训练配置."""
 
     sequence_length: int = 24  # 使用过去24个时间点
     prediction_horizon: int = 12  # 预测未来12个时间点
@@ -88,7 +89,7 @@ class TrainingConfig:
 
 
 class LSTMPredictor:
-    """LSTM时间序列预测器"""
+    """LSTM时间序列预测器."""
 
     def __init__(self, config: TrainingConfig | None = None):
         """初始化LSTM预测器."""

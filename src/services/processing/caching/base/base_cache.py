@@ -4,7 +4,7 @@ Base Cache Classes.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 
 class BaseCache(ABC):

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.domain.events.base import DomainEvent
 from src.domain.models.match import MatchResult, MatchScore

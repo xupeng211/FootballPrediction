@@ -1,6 +1,5 @@
-"""
-联赛数据采集器
-League Data Collector for Football-Data.org API
+"""联赛数据采集器
+League Data Collector for Football-Data.org API.
 """
 
 import logging
@@ -13,14 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class LeagueCollector(FootballDataCollector):
-    """联赛数据采集器"""
+    """联赛数据采集器."""
 
     def __init__(self):
         super().__init__()
 
     async def collect_data(self) -> dict[str, Any]:
-        """
-        收集所有支持的联赛数据
+        """收集所有支持的联赛数据.
 
         Returns:
             包含联赛数据的字典
@@ -81,8 +79,7 @@ class LeagueCollector(FootballDataCollector):
         return results
 
     async def collect_league_details(self, competition_code: str) -> dict[str, Any]:
-        """
-        收集特定联赛的完整数据
+        """收集特定联赛的完整数据.
 
         Args:
             competition_code: 联赛代码 (如 PL, CL等)
@@ -138,8 +135,7 @@ class LeagueCollector(FootballDataCollector):
             raise
 
     def normalize_league_data(self, competition: dict[str, Any]) -> dict[str, Any]:
-        """
-        标准化联赛数据格式
+        """标准化联赛数据格式.
 
         Args:
             competition: 原始联赛数据
@@ -181,7 +177,7 @@ class LeagueCollector(FootballDataCollector):
     season: dict[str,
     Any]) -> dict[str,
     Any]:
-        """标准化赛季数据"""
+        """标准化赛季数据."""
         if not season:
             return {}
 
@@ -205,8 +201,7 @@ class LeagueCollector(FootballDataCollector):
     competition: dict[str,
     Any]
     ) -> list[dict[str, Any]]:
-        """
-        标准化积分榜数据格式
+        """标准化积分榜数据格式.
 
         Args:
             standings: 原始积分榜数据
@@ -275,8 +270,7 @@ class LeagueCollector(FootballDataCollector):
         return normalized_standings
 
     async def collect_league_statistics(self, competition_code: str) -> dict[str, Any]:
-        """
-        收集联赛统计数据
+        """收集联赛统计数据.
 
         Args:
             competition_code: 联赛代码
@@ -347,8 +341,7 @@ class LeagueCollector(FootballDataCollector):
     limit: int = 10
     ) -> list[dict[str,
     Any]]:
-        """
-        收集联赛排名靠前的球队
+        """收集联赛排名靠前的球队.
 
         Args:
             competition_code: 联赛代码
@@ -380,8 +373,7 @@ class LeagueCollector(FootballDataCollector):
     matchday: int | None = None
     ) -> dict[str,
     Any]:
-        """
-        收集特定轮次的比赛
+        """收集特定轮次的比赛.
 
         Args:
             competition_code: 联赛代码
@@ -443,8 +435,7 @@ class LeagueCollector(FootballDataCollector):
     async def search_competitions(self,
     search_term: str) -> list[dict[str,
     Any]]:
-        """
-        搜索联赛
+        """搜索联赛.
 
         Args:
             search_term: 搜索关键词
@@ -482,8 +473,7 @@ class LeagueCollector(FootballDataCollector):
             return []
 
     async def get_available_seasons(self, competition_code: str) -> list[int]:
-        """
-        获取联赛可用的赛季
+        """获取联赛可用的赛季.
 
         Args:
             competition_code: 联赛代码

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """监控装饰器."""
 
 # 导入

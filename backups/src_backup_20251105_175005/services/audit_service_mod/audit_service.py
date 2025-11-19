@@ -1,6 +1,5 @@
-"""
-审计服务（兼容版本）
-Audit Service (Compatibility Version)
+"""审计服务（兼容版本）
+Audit Service (Compatibility Version).
 """
 
 import logging
@@ -14,13 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 class AuditService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计服务"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.events: list[AuditEvent] = []
 
@@ -34,7 +33,7 @@ class AuditService:
         severity: AuditSeverity = AuditSeverity.LOW,
         metadata: dict[str, Any] | None = None,
     ) -> AuditEvent:
-        """记录审计事件"""
+        """记录审计事件."""
         event = AuditEvent(
             id=str(uuid.uuid4()),
             action=action,
@@ -57,7 +56,7 @@ class AuditService:
         severity: AuditSeverity | None = None,
         limit: int = 100,
     ) -> list[AuditEvent]:
-        """获取审计事件"""
+        """获取审计事件."""
         filtered = self.events
 
         if user_id:
@@ -71,14 +70,14 @@ class AuditService:
 
 
 class DataSanitizer:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """数据清理器"""
 
     @staticmethod
     def sanitize_email(email: str) -> str:
-        """清理邮箱地址"""
+        """清理邮箱地址."""
         if "@" in email:
             local, domain = email.split("@", 1)
             return f"{local[:3]}***@{domain}"
@@ -86,14 +85,14 @@ class DataSanitizer:
 
     @staticmethod
     def sanitize_phone(phone: str) -> str:
-        """清理电话号码"""
+        """清理电话号码."""
         if len(phone) > 4:
             return phone[:2] + "*" * (len(phone) - 4) + phone[-2:]
         return "***"
 
 
 class SeverityAnalyzer:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """严重程度分析器"""
@@ -102,7 +101,7 @@ class SeverityAnalyzer:
     def analyze_severity(
         action: AuditAction, resource_type: str, user_role: str = "user"
     ) -> AuditSeverity:
-        """分析事件严重程度"""
+        """分析事件严重程度."""
         if action == AuditAction.DELETE:
             if resource_type in ["user", "admin"]:
                 return AuditSeverity.CRITICAL

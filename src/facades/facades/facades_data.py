@@ -1,5 +1,3 @@
-from typing import Optional
-
 """数据门面."""
 
 # 导入

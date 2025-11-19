@@ -69,7 +69,7 @@ Implements handlers for all commands and queries.
 import logging
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from src.database.connection import get_session
 from src.database.models import Match, Prediction, User

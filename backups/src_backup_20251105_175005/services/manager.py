@@ -1,5 +1,4 @@
-"""
-Manager - 服务模块
+"""Manager - 服务模块.
 
 提供 manager 相关的服务功能.
 
@@ -30,7 +29,7 @@ from .user_profile import UserProfileService
 
 
 class ServiceManager:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """服务管理器 - 负责统一管理所有业务服务的生命周期和依赖关系"""
@@ -40,7 +39,7 @@ class ServiceManager:
         self.logger = logger
 
     def register_service(self, name: str, service: BaseService) -> None:
-        """注册服务 - 将服务加入管理器,支持后续统一初始化和管理"""
+        """注册服务 - 将服务加入管理器,支持后续统一初始化和管理."""
         if name in self._services:
             existing = self._services[name]
             if existing is service or existing.__class__ is service.__class__:
@@ -57,20 +56,20 @@ class ServiceManager:
         self.logger.info(f"已注册服务: {name}")
 
     def get_service(self, name: str) -> BaseService | None:
-        """获取服务实例 - 提供类型安全的服务访问接口"""
+        """获取服务实例 - 提供类型安全的服务访问接口."""
         return self._services.get(name)
 
     def list_services(self) -> dict[str, BaseService]:
-        """获取所有服务列表"""
+        """获取所有服务列表."""
         return self._services.copy()
 
     @property
     def services(self) -> dict[str, BaseService]:
-        """服务字典属性 - 兼容测试代码"""
+        """服务字典属性 - 兼容测试代码."""
         return self._services
 
     async def initialize_all(self) -> bool:
-        """初始化所有服务 - 按注册顺序依次初始化,任一失败则整体失败"""
+        """初始化所有服务 - 按注册顺序依次初始化,任一失败则整体失败."""
         self.logger.info("正在初始化所有服务...")
         success = True
         for service in self._services.values():
@@ -87,7 +86,7 @@ class ServiceManager:
         return success
 
     async def shutdown_all(self) -> None:
-        """关闭所有服务 - 确保资源清理,即使某个服务关闭失败也继续处理其他服务"""
+        """关闭所有服务 - 确保资源清理,即使某个服务关闭失败也继续处理其他服务."""
         self.logger.info("正在关闭所有服务...")
         for service in self._services.values():
             try:

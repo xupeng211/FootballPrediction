@@ -6,7 +6,7 @@ Provides management and monitoring interfaces for the observer system.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel

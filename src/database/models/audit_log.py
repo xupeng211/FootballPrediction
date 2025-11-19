@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, func
 

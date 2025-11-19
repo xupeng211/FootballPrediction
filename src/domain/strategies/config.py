@@ -1,5 +1,3 @@
-from typing import Optional
-
 """config 主模块.
 
 此文件由长文件拆分工具自动生成

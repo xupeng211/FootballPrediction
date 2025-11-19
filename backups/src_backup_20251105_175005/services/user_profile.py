@@ -1,5 +1,4 @@
-"""
-足球预测系统用户画像服务模块
+"""足球预测系统用户画像服务模块.
 
 提供用户画像生成和管理功能.
 """
@@ -12,7 +11,7 @@ from .base_unified import SimpleService
 
 # 简化的UserProfile类定义
 class UserProfile:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
 
@@ -30,7 +29,7 @@ class UserProfile:
         self.preferences = preferences
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "user_id": self.user_id,
             "display_name": self.display_name,
@@ -41,26 +40,26 @@ class UserProfile:
 
 # 简化的User类定义
 class User:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
 
     def __init__(self, user_id: str, username: str):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.id = user_id
         self.username = username
 
 
 class UserProfileService(SimpleService):
-    """用户画像服务"""
+    """用户画像服务."""
 
     def __init__(self) -> None:
         super().__init__("UserProfileService")
         self._user_profiles: dict[str, UserProfile] = {}
 
     async def _on_initialize(self) -> bool:
-        """初始化服务"""
+        """初始化服务."""
         self.logger.info(f"正在初始化 {self.name}")
         # 加载用户数据,模型等
         # 在实际生产环境中,这里会从数据库加载用户数据
@@ -72,12 +71,12 @@ class UserProfileService(SimpleService):
             return False
 
     async def _on_shutdown(self) -> None:
-        """关闭服务"""
+        """关闭服务."""
         self.logger.info(f"正在关闭 {self.name}")
         self._user_profiles.clear()
 
     async def _get_service_info(self) -> dict[str, Any]:
-        """获取服务信息"""
+        """获取服务信息."""
         return {
             "name": self.name,
             "type": self.__class__.__name__,
@@ -87,7 +86,7 @@ class UserProfileService(SimpleService):
         }
 
     async def generate_profile(self, user: User) -> UserProfile:
-        """生成用户画像"""
+        """生成用户画像."""
         self.logger.info(f"正在生成用户画像: {user.id}")
         # 实现用户画像生成逻辑
         # 基于用户行为和偏好生成画像
@@ -120,7 +119,7 @@ class UserProfileService(SimpleService):
 
     async def get_profile(self,
     user_id: str) -> UserProfile | None:
-        """获取用户画像"""
+        """获取用户画像."""
         return self._user_profiles.get(user_id)
 
     async def update_profile(
@@ -129,7 +128,7 @@ class UserProfileService(SimpleService):
     updates: dict[str,
     Any]
     ) -> UserProfile | None:
-        """更新用户画像"""
+        """更新用户画像."""
         profile = await self.get_profile(user_id)
         if not profile:
             return None
@@ -143,7 +142,7 @@ class UserProfileService(SimpleService):
         return profile
 
     def _analyze_user_interests(self, user: User) -> list[str]:
-        """分析用户兴趣"""
+        """分析用户兴趣."""
         # 在实际系统中,这里会基于用户行为分析兴趣
         # 现在提供默认的兴趣列表
         default_interests = ["足球", "体育", "预测"]
@@ -156,7 +155,7 @@ class UserProfileService(SimpleService):
         return list(set(default_interests))  # 去重
 
     def _analyze_behavior_patterns(self, user_data: dict[str, Any]) -> dict[str, Any]:
-        """创建用户画像 - 同步版本用于测试"""
+        """创建用户画像 - 同步版本用于测试."""
         if not user_data or not user_data.get("user_id"):
             return {"status": "error", "message": "Empty or invalid user data"}
 
@@ -187,7 +186,7 @@ class UserProfileService(SimpleService):
         return {"status": "created", "profile": profile.to_dict()}
 
     def delete_profile(self, user_id: str) -> dict[str, Any]:
-        """删除用户画像"""
+        """删除用户画像."""
         if user_id in self._user_profiles:
             del self._user_profiles[user_id]
             return {"status": "deleted"}
@@ -195,7 +194,7 @@ class UserProfileService(SimpleService):
 
     @property
     def _profiles(self) -> dict[str, Any]:
-        """兼容测试代码的属性"""
+        """兼容测试代码的属性."""
         # Convert UserProfile objects to dict for test compatibility
         return {
             user_id: profile.to_dict() if hasattr(profile, "to_dict") else profile

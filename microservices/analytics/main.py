@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Analytics Service
-分析服务微服务
+"""Analytics Service
+分析服务微服务.
 
 端口: 8004
 生成时间: 2025-10-26 20:57:41
@@ -41,7 +40,7 @@ app.add_middleware(
 # 健康检查端点
 @app.get("/health")
 async def health_check():
-    """健康检查"""
+    """健康检查."""
     return {
         "status": "healthy",
         "service": "Analytics Service",
@@ -53,7 +52,7 @@ async def health_check():
 # 服务信息端点
 @app.get("/info")
 async def service_info():
-    """服务信息"""
+    """服务信息."""
     return {
         "name": "Analytics Service",
         "description": "分析服务微服务",
@@ -66,7 +65,7 @@ async def service_info():
 # 指标端点
 @app.get("/metrics")
 async def get_metrics():
-    """获取服务指标"""
+    """获取服务指标."""
     # TODO: 实现具体的指标收集
     return {
         "service": "Analytics Service",
@@ -83,7 +82,7 @@ async def get_metrics():
 # 主要业务逻辑端点（示例）
 @app.post("/process")
 async def process_request(request_data: dict[str, Any]):
-    """处理请求"""
+    """处理请求."""
     try:
         logger.info(f"处理请求: {request_data}")
 
@@ -104,7 +103,7 @@ async def process_request(request_data: dict[str, Any]):
 # 批量处理端点
 @app.post("/batch-process")
 async def batch_process(request_list: list[dict[str, Any]]):
-    """批量处理请求"""
+    """批量处理请求."""
     try:
         logger.info(f"批量处理 {len(request_list)} 个请求")
 

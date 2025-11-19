@@ -1,5 +1,4 @@
-"""
-增强的服务核心模块
+"""增强的服务核心模块.
 
 定义统一的基础服务类和配置.
 """
@@ -14,7 +13,7 @@ from src.core.logging import get_logger
 
 
 class ServiceConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """服务配置类"""
@@ -36,13 +35,13 @@ class ServiceConfig:
 
 
 class ServiceMetrics:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """服务指标收集器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.metrics = {
             "calls": 0,
@@ -53,7 +52,7 @@ class ServiceMetrics:
         }
 
     def record_call(self, duration: float, success: bool = True):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """记录调用"""
         self.metrics["calls"] += 1
@@ -64,19 +63,19 @@ class ServiceMetrics:
             self.metrics["errors"] += 1
 
     def get_metrics(self) -> dict[str, Any]:
-        """获取指标"""
+        """获取指标."""
         return self.metrics.copy()
 
 
 class EnhancedBaseService(ABC):
-    """增强的基础服务类"
+    """增强的基础服务类".
 
     整合了原有BaseService和AbstractBaseService的功能,
     并添加了指标收集,配置管理,健康检查等功能.
     """
 
     def __init__(self, config: ServiceConfig | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化服务"
 
@@ -110,14 +109,14 @@ class EnhancedBaseService(ABC):
 
     @abstractmethod
     async def initialize(self) -> None:
-        """初始化服务 - 子类必须实现"""
+        """初始化服务 - 子类必须实现."""
 
     @abstractmethod
     async def shutdown(self) -> None:
-        """关闭服务 - 子类必须实现"""
+        """关闭服务 - 子类必须实现."""
 
     async def start(self) -> bool:
-        """启动服务"""
+        """启动服务."""
         if self._running:
             self.logger.warning(f"Service {self.name} is already running")
             return True
@@ -135,7 +134,7 @@ class EnhancedBaseService(ABC):
             return False
 
     async def stop(self) -> bool:
-        """停止服务"""
+        """停止服务."""
         if not self._running:
             self.logger.warning(f"Service {self.name} is not running")
             return True
@@ -152,17 +151,17 @@ class EnhancedBaseService(ABC):
             return False
 
     def get_status(self) -> str:
-        """获取服务状态"""
+        """获取服务状态."""
         if not self._initialized:
             return "not_initialized"
         return "running" if self._running else "stopped"
 
     def is_healthy(self) -> bool:
-        """检查服务是否健康"""
+        """检查服务是否健康."""
         return self._health_status["status"] == "healthy"
 
     def get_health_info(self) -> dict[str, Any]:
-        """获取健康信息"""
+        """获取健康信息."""
         health_info = self._health_status.copy()
         health_info.update(
             {
@@ -177,7 +176,7 @@ class EnhancedBaseService(ABC):
         return health_info
 
     async def health_check(self) -> dict[str, Any]:
-        """执行健康检查 - 子类可以重写"""
+        """执行健康检查 - 子类可以重写."""
         # 检查依赖
         unhealthy_deps = []
         for name, dep in self._dependencies.items():
@@ -196,7 +195,7 @@ class EnhancedBaseService(ABC):
     async def execute_with_metrics(
         self, operation_name: str, func: Callable, *args, **kwargs
     ) -> Any:
-        """执行函数并收集指标"""
+        """执行函数并收集指标."""
         start_time = time.time()
         success = True
 
@@ -216,24 +215,24 @@ class EnhancedBaseService(ABC):
             )
 
     def add_dependency(self, name: str, service: "EnhancedBaseService"):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """添加依赖服务"""
         self._dependencies[name] = service
         self.logger.debug(f"Added dependency: {name}")
 
     def get_dependency(self, name: str) -> Optional["EnhancedBaseService"]:
-        """获取依赖服务"""
+        """获取依赖服务."""
         return self._dependencies.get(name)
 
     def get_config(self, key: str, default: Any = None) -> Any:
-        """获取配置值"""
+        """获取配置值."""
         return self.config.config.get(key, default)
 
     def _update_health_status(
         self, status: str, message: str, details: dict[str, Any] | None = None
     ):
-        """更新健康状态"""
+        """更新健康状态."""
         self._health_status.update(
             {
                 "status": status,
@@ -244,7 +243,7 @@ class EnhancedBaseService(ABC):
         )
 
     def _get_uptime_seconds(self) -> float | None:
-        """获取运行时间（秒）"""
+        """获取运行时间（秒）."""
         if self._startup_time:
             return (datetime.now() - self._startup_time).total_seconds()
         return None
@@ -257,29 +256,29 @@ class EnhancedBaseService(ABC):
 
 # 为了向后兼容,保留原有的BaseService类
 class BaseService(EnhancedBaseService):
-    """向后兼容的基础服务类"""
+    """向后兼容的基础服务类."""
 
     def __init__(self, name: str = "BaseService"):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         config = ServiceConfig(name=name)
         super().__init__(config)
 
     async def initialize(self) -> None:
-        """默认初始化实现"""
+        """默认初始化实现."""
         self._initialized = True
 
     async def shutdown(self) -> None:
-        """默认关闭实现"""
+        """默认关闭实现."""
         self._running = False
         self._initialized = False
 
 
 class AbstractBaseService(EnhancedBaseService):
-    """抽象基础服务类 - 强制子类实现所有方法"""
+    """抽象基础服务类 - 强制子类实现所有方法."""
 
     def __init__(self, name: str):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         config = ServiceConfig(name=name)
         super().__init__(config)

@@ -1,6 +1,5 @@
-"""
-性能分析器模块
-Performance Profiler Module
+"""性能分析器模块
+Performance Profiler Module.
 
 提供API端点和系统性能分析功能.
 """
@@ -18,7 +17,7 @@ from typing import Any
 
 @dataclass
 class ProfileStats:
-    """性能统计信息"""
+    """性能统计信息."""
 
     call_count: int = 0
     total_time: float = 0.0
@@ -31,7 +30,7 @@ class ProfileStats:
 
 
 class APIEndpointProfiler:
-    """API端点性能分析器"""
+    """API端点性能分析器."""
 
     def __init__(self, max_history: int = 1000):
         self.max_history = max_history
@@ -46,7 +45,7 @@ class APIEndpointProfiler:
         success: bool = True,
         error: str | None = None,
     ):
-        """记录API调用"""
+        """记录API调用."""
         if not self.enabled:
             return
 
@@ -67,14 +66,14 @@ class APIEndpointProfiler:
     def get_stats(
         self, endpoint: str | None = None
     ) -> ProfileStats | dict[str, ProfileStats]:
-        """获取性能统计"""
+        """获取性能统计."""
         with self.lock:
             if endpoint:
                 return self.stats[endpoint]
             return dict(self.stats)
 
     def get_top_slowest(self, limit: int = 10) -> list[tuple]:
-        """获取最慢的端点"""
+        """获取最慢的端点."""
         with self.lock:
             return sorted(
                 [
@@ -87,7 +86,7 @@ class APIEndpointProfiler:
             )[:limit]
 
     def get_recent_performance(self, endpoint: str, minutes: int = 5) -> dict[str, Any]:
-        """获取最近的性能数据"""
+        """获取最近的性能数据."""
         _cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
         with self.lock:
@@ -109,7 +108,7 @@ class APIEndpointProfiler:
             }
 
     def clear_stats(self, endpoint: str | None = None):
-        """清空统计数据"""
+        """清空统计数据."""
         with self.lock:
             if endpoint:
                 if endpoint in self.stats:
@@ -118,15 +117,15 @@ class APIEndpointProfiler:
                 self.stats.clear()
 
     def enable(self):
-        """启用性能分析"""
+        """启用性能分析."""
         self.enabled = True
 
     def disable(self):
-        """禁用性能分析"""
+        """禁用性能分析."""
         self.enabled = False
 
     def profile_endpoint(self, endpoint_name: str):
-        """装饰器：分析API端点性能"""
+        """装饰器：分析API端点性能."""
 
         def decorator(func: Callable):
             if asyncio.iscoroutinefunction(func):
@@ -175,7 +174,7 @@ class APIEndpointProfiler:
         return decorator
 
     def get_summary_report(self) -> dict[str, Any]:
-        """获取摘要报告"""
+        """获取摘要报告."""
         with self.lock:
             total_calls = sum(stats.call_count for stats in self.stats.values())
             total_errors = sum(stats.error_count for stats in self.stats.values())
@@ -204,7 +203,7 @@ _profiler_lock = threading.Lock()
 
 
 def get_profiler() -> APIEndpointProfiler:
-    """获取全局性能分析器实例"""
+    """获取全局性能分析器实例."""
     global _profiler_instance
     if _profiler_instance is None:
         with _profiler_lock:
@@ -214,13 +213,13 @@ def get_profiler() -> APIEndpointProfiler:
 
 
 def profile_api_endpoint(endpoint_name: str):
-    """便捷的API端点性能分析装饰器"""
+    """便捷的API端点性能分析装饰器."""
     return get_profiler().profile_endpoint(endpoint_name)
 
 
 # 数据库查询性能分析器
 class DatabaseQueryProfiler:
-    """数据库查询性能分析器"""
+    """数据库查询性能分析器."""
 
     def __init__(self, max_history: int = 1000):
         self.max_history = max_history
@@ -229,7 +228,7 @@ class DatabaseQueryProfiler:
         self.enabled = True
 
     def record_query(self, query_type: str, duration: float):
-        """记录数据库查询"""
+        """记录数据库查询."""
         if not self.enabled:
             return
 
@@ -240,7 +239,7 @@ class DatabaseQueryProfiler:
                 self.queries[query_type] = self.queries[query_type][-self.max_history :]
 
     def get_query_stats(self, query_type: str) -> dict[str, float]:
-        """获取查询统计"""
+        """获取查询统计."""
         with self.lock:
             times = self.queries.get(query_type, [])
             if not times:
@@ -261,7 +260,7 @@ class DatabaseQueryProfiler:
             }
 
     def get_all_stats(self) -> dict[str, dict[str, float]]:
-        """获取所有查询统计"""
+        """获取所有查询统计."""
         with self.lock:
             return {
                 query_type: self.get_query_stats(query_type)
@@ -271,7 +270,7 @@ class DatabaseQueryProfiler:
 
 # 内存性能分析器
 class MemoryProfiler:
-    """内存性能分析器"""
+    """内存性能分析器."""
 
     def __init__(self):
         self.samples: list[dict[str, Any]] = []
@@ -279,7 +278,7 @@ class MemoryProfiler:
         self.enabled = True
 
     def sample_memory(self):
-        """采样内存使用情况"""
+        """采样内存使用情况."""
         if not self.enabled:
             return
 
@@ -311,7 +310,7 @@ class MemoryProfiler:
             pass
 
     def get_memory_trend(self, minutes: int = 5) -> dict[str, Any]:
-        """获取内存使用趋势"""
+        """获取内存使用趋势."""
         cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
         with self.lock:
@@ -335,7 +334,7 @@ class MemoryProfiler:
 
 # 通用性能分析器
 class PerformanceProfiler:
-    """通用性能分析器"""
+    """通用性能分析器."""
 
     def __init__(self):
         self.api_profiler = APIEndpointProfiler()
@@ -344,7 +343,7 @@ class PerformanceProfiler:
         self.system_profiler = SystemProfiler()
 
     def get_comprehensive_report(self) -> dict[str, Any]:
-        """获取综合性能报告"""
+        """获取综合性能报告."""
         return {
             "api_stats": self.api_profiler.get_summary_report(),
             "db_stats": self.db_profiler.get_all_stats(),
@@ -353,34 +352,34 @@ class PerformanceProfiler:
         }
 
     def enable_all(self):
-        """启用所有分析器"""
+        """启用所有分析器."""
         self.api_profiler.enable()
         self.db_profiler.enabled = True
         self.memory_profiler.enabled = True
 
     def disable_all(self):
-        """禁用所有分析器"""
+        """禁用所有分析器."""
         self.api_profiler.disable()
         self.db_profiler.enabled = False
         self.memory_profiler.enabled = False
 
 
 def get_performance_report() -> dict[str, Any]:
-    """获取性能报告的便捷函数"""
+    """获取性能报告的便捷函数."""
     profiler = PerformanceProfiler()
     return profiler.get_comprehensive_report()
 
 
 # 系统级性能监控
 class SystemProfiler:
-    """系统性能分析器"""
+    """系统性能分析器."""
 
     def __init__(self):
         self.metrics: dict[str, list[float]] = defaultdict(list)
         self.lock = threading.Lock()
 
     def record_metric(self, name: str, value: float):
-        """记录系统指标"""
+        """记录系统指标."""
         with self.lock:
             self.metrics[name].append(value)
             # 保留最近1000个数据点
@@ -388,7 +387,7 @@ class SystemProfiler:
                 self.metrics[name] = self.metrics[name][-1000:]
 
     def get_metric_summary(self, name: str, minutes: int = 5) -> dict[str, float]:
-        """获取指标摘要"""
+        """获取指标摘要."""
         _cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
         with self.lock:
@@ -409,7 +408,7 @@ _system_profiler: SystemProfiler | None = None
 
 
 def get_system_profiler() -> SystemProfiler:
-    """获取系统分析器实例"""
+    """获取系统分析器实例."""
     global _system_profiler
     if _system_profiler is None:
         with _profiler_lock:
@@ -420,7 +419,7 @@ def get_system_profiler() -> SystemProfiler:
 
 # 装饰器函数
 def profile_function(func: Callable) -> Callable:
-    """函数性能分析装饰器"""
+    """函数性能分析装饰器."""
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -431,7 +430,7 @@ def profile_function(func: Callable) -> Callable:
 
 
 def profile_method(method: Callable) -> Callable:
-    """方法性能分析装饰器"""
+    """方法性能分析装饰器."""
 
     @functools.wraps(method)
     def wrapper(*args, **kwargs):
@@ -447,7 +446,7 @@ _profiler_lock = threading.Lock()
 
 
 def start_profiling():
-    """启动性能分析"""
+    """启动性能分析."""
     global _profiling_enabled
     with _profiler_lock:
         _profiling_enabled = True
@@ -456,7 +455,7 @@ def start_profiling():
 
 
 def stop_profiling():
-    """停止性能分析"""
+    """停止性能分析."""
     global _profiling_enabled
     with _profiler_lock:
         _profiling_enabled = False
@@ -465,7 +464,7 @@ def stop_profiling():
 
 
 def is_profiling_enabled() -> bool:
-    """检查是否启用性能分析"""
+    """检查是否启用性能分析."""
     return _profiling_enabled
 
 

@@ -1,5 +1,3 @@
-from typing import Optional
-
 # 简化版 data_collection_core 模块
 
 

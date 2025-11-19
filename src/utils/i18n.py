@@ -1,5 +1,3 @@
-from typing import Optional
-
 """国际化支持
 Internationalization Support.
 """

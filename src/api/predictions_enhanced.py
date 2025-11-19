@@ -1,5 +1,3 @@
-from typing import Optional
-
 import asyncio
 import time
 from dataclasses import dataclass

@@ -6,7 +6,7 @@ Defines performance monitoring and optimization related configuration parameters
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass

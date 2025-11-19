@@ -9,7 +9,7 @@ import logging
 import time
 from collections import defaultdict, deque
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware

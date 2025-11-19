@@ -6,7 +6,7 @@
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.database.connection import DatabaseManager
 

@@ -1,6 +1,5 @@
-"""
-仓储模式实现
-Repository Pattern Implementation
+"""仓储模式实现
+Repository Pattern Implementation.
 
 提供数据访问的抽象层.
 Provides abstraction layer for data access.

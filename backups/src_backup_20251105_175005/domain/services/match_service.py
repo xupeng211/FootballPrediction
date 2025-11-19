@@ -1,6 +1,5 @@
-"""
-比赛领域服务
-Match Domain Service
+"""比赛领域服务
+Match Domain Service.
 
 处理比赛相关的复杂业务逻辑.
 Handles complex business logic related to matches.
@@ -20,13 +19,13 @@ from src.domain.models.team import Team
 
 
 class MatchDomainService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比赛领域服务"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self._events: list[Any] = []
 
@@ -38,7 +37,7 @@ class MatchDomainService:
         venue: str | None = None,
         round_number: int | None = None,
     ) -> Match:
-        """安排新比赛"""
+        """安排新比赛."""
         if home_team.id == away_team.id:
             raise ValueError("主队和客队不能是同一支球队")
 
@@ -58,7 +57,7 @@ class MatchDomainService:
         return match
 
     def start_match(self, match: Match) -> Match:
-        """开始比赛"""
+        """开始比赛."""
         if match.status != MatchStatus.SCHEDULED:
             raise ValueError("只能开始预定的比赛")
 
@@ -91,7 +90,7 @@ class MatchDomainService:
         away_score: int,
         minute: int | None = None,
     ) -> None:
-        """更新比赛比分"""
+        """更新比赛比分."""
         if match.status != MatchStatus.LIVE:
             raise ValueError("只有进行中的比赛才能更新比分")
 
@@ -111,7 +110,7 @@ class MatchDomainService:
         away_score: int,
         minute: int | None = None,
     ) -> Match:
-        """更新比赛比分（别名方法，返回Match对象）"""
+        """更新比赛比分（别名方法，返回Match对象）."""
         if match.status != MatchStatus.LIVE:
             raise ValueError("只能更新进行中比赛的比分")
 
@@ -126,7 +125,7 @@ class MatchDomainService:
     def finish_match(
         self, match: Match, home_score: int = None, away_score: int = None
     ) -> Match:
-        """结束比赛"""
+        """结束比赛."""
         if match.status != MatchStatus.LIVE:
             raise ValueError("只能结束进行中的比赛")
 
@@ -152,7 +151,7 @@ class MatchDomainService:
         return match
 
     def cancel_match(self, match: Match, reason: str) -> Match:
-        """取消比赛"""
+        """取消比赛."""
         if match.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise ValueError("不能取消已结束或已取消的比赛")
 
@@ -165,7 +164,7 @@ class MatchDomainService:
         return match
 
     def postpone_match(self, match: Match, new_date: datetime, reason: str) -> Match:
-        """延期比赛"""
+        """延期比赛."""
         if match.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise ValueError("只能延期预定或进行中的比赛")
 
@@ -185,7 +184,7 @@ class MatchDomainService:
         return match
 
     def is_match_valid_to_start(self, match: Match) -> bool:
-        """检查比赛是否可以开始"""
+        """检查比赛是否可以开始."""
         return (
             match.status == MatchStatus.SCHEDULED
             and match.match_date <= datetime.now()
@@ -196,7 +195,7 @@ class MatchDomainService:
         )
 
     def calculate_match_duration(self, match: Match) -> timedelta:
-        """计算比赛持续时间"""
+        """计算比赛持续时间."""
         if match.status != MatchStatus.FINISHED:
             return timedelta(0)
 
@@ -205,7 +204,7 @@ class MatchDomainService:
         return timedelta(minutes=90)
 
     def validate_match_schedule(self, match: Match) -> list[str]:
-        """验证比赛安排"""
+        """验证比赛安排."""
         errors = []
 
         # 检查比赛时间
@@ -237,7 +236,7 @@ class MatchDomainService:
         away_team_position: int | None = None,
         total_teams: int | None = None,
     ) -> float:
-        """计算比赛重要性"""
+        """计算比赛重要性."""
         importance = 0.5  # 基础重要性
 
         # Note: is_knockout 和 is_final 属性在当前模型中不存在
@@ -263,17 +262,17 @@ class MatchDomainService:
         return min(importance, 1.0)
 
     def get_domain_events(self) -> list[Any]:
-        """获取领域事件"""
+        """获取领域事件."""
         return self._events.copy()
 
     def get_events(self) -> list[Any]:
-        """获取领域事件（别名方法）"""
+        """获取领域事件（别名方法）."""
         return self.get_domain_events()
 
     def clear_domain_events(self) -> None:
-        """清除领域事件"""
+        """清除领域事件."""
         self._events.clear()
 
     def clear_events(self) -> None:
-        """清除事件（别名方法）"""
+        """清除事件（别名方法）."""
         return self.clear_domain_events()

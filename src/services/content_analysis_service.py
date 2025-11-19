@@ -3,7 +3,7 @@ Content Analysis Service.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass

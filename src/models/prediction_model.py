@@ -15,7 +15,7 @@ Temporary implementation to resolve import errors.
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import joblib
 

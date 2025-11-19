@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-简化版GitHub Issues最佳实践分析器
-Simplified GitHub Issues Best Practices Analyzer
+"""简化版GitHub Issues最佳实践分析器
+Simplified GitHub Issues Best Practices Analyzer.
 
 分析当前M2规划，提供GitHub Issues拆分和管理建议
 """
@@ -11,8 +10,7 @@ from datetime import datetime
 
 
 def analyze_m2_planning():
-    """分析M2规划"""
-
+    """分析M2规划."""
     # 当前M2规划分析
     analysis = {
         "phases": 4,
@@ -66,8 +64,7 @@ def analyze_m2_planning():
     return analysis
 
 def define_best_practices():
-    """定义最佳实践"""
-
+    """定义最佳实践."""
     principles = [
         {
             "name": "单一职责",
@@ -97,8 +94,7 @@ def define_best_practices():
     return principles
 
 def create_issue_recommendations():
-    """创建Issue推荐"""
-
+    """创建Issue推荐."""
     recommendations = [
         {
             "category": "任务拆分",
@@ -131,8 +127,7 @@ def create_issue_recommendations():
     return recommendations
 
 def create_management_strategy():
-    """创建管理策略"""
-
+    """创建管理策略."""
     strategy = {
         "milestone": {
             "name": "M2: 50% Coverage Target",
@@ -155,8 +150,7 @@ def create_management_strategy():
     return strategy
 
 def generate_report():
-    """生成分析报告"""
-
+    """生成分析报告."""
     analysis = analyze_m2_planning()
     define_best_practices()
     create_issue_recommendations()
@@ -317,8 +311,7 @@ M2-P1, core, testing, dependency-injection
     return report
 
 def main():
-    """主函数"""
-
+    """主函数."""
     # 执行分析
     report = generate_report()
 

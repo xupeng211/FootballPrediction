@@ -1,16 +1,14 @@
-"""
-Prefect 数据管道工作流
+"""Prefect 数据管道工作流
 Football Prediction 项目的主要数据处理和机器学习管道
-使用 Prefect 2.0+ 的 @flow 和 @task 装饰器实现
+使用 Prefect 2.0+ 的 @flow 和 @task 装饰器实现.
 """
 
-from prefect import flow, task
-import logging
-from typing import Dict, Any, Optional, List
 import asyncio
+import logging
 from datetime import datetime, timedelta
-import json
-import os
+from typing import Any
+
+from prefect import flow, task
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -24,9 +22,8 @@ logger = logging.getLogger(__name__)
     retry_delay_seconds=60,
     cache_expiration=timedelta(hours=1),
 )
-async def fetch_data() -> Dict[str, Any]:
-    """
-    从外部数据源获取足球比赛数据
+async def fetch_data() -> dict[str, Any]:
+    """从外部数据源获取足球比赛数据.
 
     Returns:
         Dict[str, Any]: 包含比赛数据的字典
@@ -97,9 +94,8 @@ async def fetch_data() -> Dict[str, Any]:
     retries=2,
     retry_delay_seconds=30,
 )
-async def engineer_features(data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    对获取的原始数据进行特征工程处理
+async def engineer_features(data: dict[str, Any]) -> dict[str, Any]:
+    """对获取的原始数据进行特征工程处理.
 
     Args:
         data (Dict[str, Any]): 原始比赛数据
@@ -194,9 +190,8 @@ async def engineer_features(data: Dict[str, Any]) -> Dict[str, Any]:
     retries=1,
     retry_delay_seconds=10,
 )
-async def train_model(features: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    使用特征数据训练机器学习模型
+async def train_model(features: dict[str, Any]) -> dict[str, Any]:
+    """使用特征数据训练机器学习模型.
 
     Args:
         features (Dict[str, Any]): 特征和标签数据
@@ -270,9 +265,8 @@ async def train_model(features: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @task(name="模型评估", description="评估训练好的模型性能")
-async def evaluate_model(model_results: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    评估训练好的模型性能
+async def evaluate_model(model_results: dict[str, Any]) -> dict[str, Any]:
+    """评估训练好的模型性能.
 
     Args:
         model_results (Dict[str, Any]): 模型训练结果
@@ -328,9 +322,8 @@ async def evaluate_model(model_results: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @task(name="保存模型", description="将训练好的模型保存到存储")
-async def save_model(model_results: Dict[str, Any], evaluation: Dict[str, Any]) -> bool:
-    """
-    保存模型和评估结果
+async def save_model(model_results: dict[str, Any], evaluation: dict[str, Any]) -> bool:
+    """保存模型和评估结果.
 
     Args:
         model_results (Dict[str, Any]): 模型训练结果
@@ -345,7 +338,7 @@ async def save_model(model_results: Dict[str, Any], evaluation: Dict[str, Any]) 
         # 模拟模型保存过程
         # 在实际实现中，这里会将模型保存到文件系统或云存储
 
-        model_metadata = {
+        {
             "model_results": model_results,
             "evaluation": evaluation,
             "save_timestamp": datetime.now().isoformat(),
@@ -369,9 +362,8 @@ async def save_model(model_results: Dict[str, Any], evaluation: Dict[str, Any]) 
     description="完整的足球预测数据处理和模型训练管道",
     log_prints=True,
 )
-async def main_data_flow() -> Dict[str, Any]:
-    """
-    主要的数据管道流程
+async def main_data_flow() -> dict[str, Any]:
+    """主要的数据管道流程.
 
     这个流程包含以下步骤：
     1. 从外部数据源获取比赛数据
@@ -464,9 +456,8 @@ async def main_data_flow() -> Dict[str, Any]:
 
 
 @flow(name="快速数据验证流程", description="用于测试和验证的轻量级数据流程")
-async def quick_validation_flow() -> Dict[str, Any]:
-    """
-    快速验证流程，用于测试环境
+async def quick_validation_flow() -> dict[str, Any]:
+    """快速验证流程，用于测试环境.
 
     Returns:
         Dict[str, Any]: 验证结果
@@ -521,7 +512,3 @@ if __name__ == "__main__":
         # 运行完整数据管道
         result = asyncio.run(main_data_flow())
 
-    print("\n" + "=" * 50)
-    print("📊 执行结果摘要")
-    print("=" * 50)
-    print(json.dumps(result, indent=2, ensure_ascii=False))

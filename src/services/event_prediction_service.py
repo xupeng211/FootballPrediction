@@ -8,7 +8,7 @@ Prediction service integrated with event system, publishing prediction-related e
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.core.di import DIContainer
 from src.domain.models import Match, Prediction

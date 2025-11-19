@@ -1,6 +1,5 @@
-"""
-数据收集器模块
-负责从各种数据源收集足球相关数据
+"""数据收集器模块
+负责从各种数据源收集足球相关数据.
 """
 
 from .base_collector import BaseCollector, CollectionResult, CollectorError

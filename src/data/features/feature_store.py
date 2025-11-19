@@ -1,5 +1,3 @@
-from typing import Optional
-
 # 简化版 feature_store 模块
 
 

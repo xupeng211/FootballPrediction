@@ -8,19 +8,19 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Pydantic compatibility logic
 try:
     # Pydantic v2
     from pydantic import Field, field_validator
-    from pydantic_settings import BaseSettings
     from pydantic.fields import FieldInfo
+    from pydantic_settings import BaseSettings
 
     HAS_PYDANTIC = True
 
     class SmartListField(FieldInfo):
-        """智能列表字段，绕过Pydantic Settings的自动JSON解析"""
+        """智能列表字段，绕过Pydantic Settings的自动JSON解析."""
 
         def __init__(self, default_factory, description):
             super().__init__(
@@ -31,7 +31,7 @@ try:
             )
 
         def __get_pydantic_json_schema__(self, field_type):
-            """重写JSON schema生成，禁用自动解析"""
+            """重写JSON schema生成，禁用自动解析."""
             return {"type": "array", "items": {"type": "string"}}
 
 except ImportError:
@@ -42,7 +42,7 @@ except ImportError:
         HAS_PYDANTIC = True
 
         class SmartListField:
-            """Pydantic v1的智能列表字段"""
+            """Pydantic v1的智能列表字段."""
 
             def __init__(self, default_factory, description):
                 self.default_factory = default_factory
@@ -247,7 +247,7 @@ class Settings(SettingsClass):
         @field_validator("api_port", mode="before")
         @classmethod
         def validate_api_port(cls, v):
-            """验证API端口，无效时回退到默认值8000"""
+            """验证API端口，无效时回退到默认值8000."""
             DEFAULT_PORT = 8000
             if v is None:
                 return DEFAULT_PORT
@@ -298,12 +298,12 @@ class Settings(SettingsClass):
 
     @property
     def enabled_services_list(self) -> list[str]:
-        """获取启用服务的列表形式"""
+        """获取启用服务的列表形式."""
         return self._parse_list_env(self.enabled_services)
 
     @property
     def metrics_tables_list(self) -> list[str]:
-        """获取数据库表的列表形式"""
+        """获取数据库表的列表形式."""
         return self._parse_list_env(self.metrics_tables)
 
     def _load_from_env(self):
@@ -375,22 +375,22 @@ class Settings(SettingsClass):
 
     @property
     def enabled_services_list(self) -> list[str]:
-        """获取启用服务的列表形式"""
+        """获取启用服务的列表形式."""
         return self._parse_list_env(self.enabled_services)
 
     @property
     def metrics_tables_list(self) -> list[str]:
-        """获取数据库表的列表形式"""
+        """获取数据库表的列表形式."""
         return self._parse_list_env(self.metrics_tables)
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def get_config() -> Config:
     """获取配置实例 - 延迟加载."""
     return Config()
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def get_settings() -> Settings:
     """获取应用程序设置实例 - 延迟加载."""
     return Settings()

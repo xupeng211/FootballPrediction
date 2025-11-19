@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""
-详细错误分析脚本
-收集更多失败测试的详细信息
+"""详细错误分析脚本
+收集更多失败测试的详细信息.
 """
 
-import subprocess
-import json
 import re
+import subprocess
 from collections import defaultdict
 
+
 def get_sample_error_details():
-    """获取样本测试的详细错误信息"""
+    """获取样本测试的详细错误信息."""
     sample_tests = [
         # API端点错误
         "tests/api/test_endpoints.py::TestHealthEndpoints::test_health_check_system_info",
@@ -35,7 +34,6 @@ def get_sample_error_details():
     error_details = []
 
     for test in sample_tests:
-        print(f"🔍 分析: {test}")
         try:
             # 运行测试并捕获错误
             result = subprocess.run([
@@ -57,7 +55,7 @@ def get_sample_error_details():
                     'full_output': error_output
                 })
             else:
-                print(f"  ✅ 测试通过: {test}")
+                pass
 
         except subprocess.TimeoutExpired:
             error_details.append({
@@ -77,7 +75,7 @@ def get_sample_error_details():
     return error_details
 
 def extract_error_type(output):
-    """从错误输出中提取错误类型"""
+    """从错误输出中提取错误类型."""
     patterns = [
         (r'AttributeError:\s*(.+)', 'AttributeError'),
         (r'ImportError:\s*(.+)', 'ImportError'),
@@ -113,7 +111,7 @@ def extract_error_type(output):
         return 'UnknownError'
 
 def extract_error_message(output):
-    """提取关键错误消息"""
+    """提取关键错误消息."""
     lines = output.split('\n')
     error_lines = []
 
@@ -140,7 +138,7 @@ def extract_error_message(output):
         return 'No specific error message extracted'
 
 def analyze_error_patterns(error_details):
-    """分析错误模式"""
+    """分析错误模式."""
     error_type_counts = defaultdict(int)
     pattern_counts = defaultdict(int)
 
@@ -165,26 +163,21 @@ def analyze_error_patterns(error_details):
     return dict(error_type_counts), dict(pattern_counts)
 
 def enhance_triage_report():
-    """增强分诊报告"""
-    print("🔍 开始详细错误分析...")
-
+    """增强分诊报告."""
     # 获取详细错误信息
     error_details = get_sample_error_details()
-    print(f"✅ 获取了 {len(error_details)} 个样本错误详情")
 
     # 分析错误模式
     error_type_counts, pattern_counts = analyze_error_patterns(error_details)
 
-    print("\n📊 错误类型分析:")
     for error_type, count in sorted(error_type_counts.items(), key=lambda x: x[1], reverse=True):
-        print(f"  {error_type}: {count}")
+        pass
 
-    print("\n🎯 错误模式分析:")
     for pattern, count in sorted(pattern_counts.items(), key=lambda x: x[1], reverse=True):
-        print(f"  {pattern}: {count}")
+        pass
 
     # 读取现有报告
-    with open('P8.1_Triage_Report.md', 'r', encoding='utf-8') as f:
+    with open('P8.1_Triage_Report.md', encoding='utf-8') as f:
         report_content = f.read()
 
     # 在报告末尾添加详细错误分析
@@ -267,19 +260,13 @@ def enhance_triage_report():
     with open('P8.1_Triage_Report.md', 'w', encoding='utf-8') as f:
         f.write(updated_report)
 
-    print("✅ 详细错误分析已添加到报告中")
 
     return error_details
 
 def main():
-    """主函数"""
-    print("🚀 启动详细错误分析...")
+    """主函数."""
+    enhance_triage_report()
 
-    error_details = enhance_triage_report()
-
-    print(f"\n📋 分析完成:")
-    print(f"- 分析样本数: {len(error_details)}")
-    print(f"- 报告已更新: P8.1_Triage_Report.md")
 
 if __name__ == "__main__":
     main()

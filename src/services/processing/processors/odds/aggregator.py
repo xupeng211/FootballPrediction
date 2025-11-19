@@ -1,5 +1,3 @@
-from typing import Optional
-
 """aggregator
 赔率数据聚合.
 

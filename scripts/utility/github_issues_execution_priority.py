@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""
-基于远程GitHub Issues设计执行优先级
-"""
+"""基于远程GitHub Issues设计执行优先级."""
 
 import json
 from datetime import datetime
 
 
 def analyze_current_status():
-    """分析当前项目状态"""
+    """分析当前项目状态."""
     return {
         "main_app_status": "✅ 正常工作",
         "auth_dependencies": "✅ 语法正确",
@@ -19,8 +17,7 @@ def analyze_current_status():
     }
 
 def design_execution_priority():
-    """设计执行优先级"""
-
+    """设计执行优先级."""
     current_status = analyze_current_status()
 
     priority_plan = {
@@ -199,8 +196,7 @@ def design_execution_priority():
     return priority_plan
 
 def main():
-    """主函数"""
-
+    """主函数."""
     plan = design_execution_priority()
 
     # 保存优先级计划

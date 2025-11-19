@@ -1,5 +1,4 @@
-"""
-数据库类型适配模块
+"""数据库类型适配模块.
 
 提供跨数据库兼容的数据类型定义,特别是JSONB与SQLite的兼容性支持.
 """
@@ -13,8 +12,7 @@ from sqlalchemy.engine.interfaces import Dialect
 
 
 class SQLiteCompatibleJSONB(TypeDecorator):
-    """
-    SQLite兼容的JSONB类型
+    """SQLite兼容的JSONB类型.
 
     在PostgreSQL中使用JSONB,在SQLite中自动转换为TEXT存储。
     提供统一的JSON操作接口.
@@ -24,7 +22,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":
@@ -34,7 +32,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             return dialect.type_descriptor(Text())
 
     def process_bind_param(self, value: Any, dialect) -> str | Any:
-        """处理绑定参数（Python值 -> 数据库值）"""
+        """处理绑定参数（Python值 -> 数据库值）."""
         if value is None:
             return None
 
@@ -57,7 +55,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
                 return json.dumps(value)
 
     def process_result_value(self, value: str) -> Any:
-        """处理结果值（数据库值 -> Python值）"""
+        """处理结果值（数据库值 -> Python值）."""
         if value is None:
             return None
 
@@ -75,8 +73,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
 
 
 class CompatibleJSON(TypeDecorator):
-    """
-    跨数据库兼容的JSON类型
+    """跨数据库兼容的JSON类型.
 
     自动根据数据库类型选择最佳的JSON存储方式.
     """
@@ -85,7 +82,7 @@ class CompatibleJSON(TypeDecorator):
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":
@@ -97,7 +94,7 @@ class CompatibleJSON(TypeDecorator):
         return json.dumps(value) if value is not None else None
 
     def process_result_value(self, value: Any, dialect: Dialect) -> Any:
-        """处理结果值"""
+        """处理结果值."""
         if value is None:
             return None
 
@@ -123,8 +120,7 @@ JsonTypeCompat = JSON
 
 
 def get_json_type(use_jsonb: bool = True) -> TypeDecorator:
-    """
-    获取兼容的JSON类型
+    """获取兼容的JSON类型.
 
     Args:
         use_jsonb: 是否优先使用JSONB（仅在PostgreSQL中有效）

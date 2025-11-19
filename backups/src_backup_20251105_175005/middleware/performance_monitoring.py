@@ -1,6 +1,5 @@
-"""
-性能监控中间件
-Performance Monitoring Middleware
+"""性能监控中间件
+Performance Monitoring Middleware.
 """
 
 import logging
@@ -14,16 +13,16 @@ logger = logging.getLogger(__name__)
 
 
 class PerformanceMiddleware(BaseHTTPMiddleware):
-    """性能监控中间件"""
+    """性能监控中间件."""
 
     def __init__(self, app, enabled: bool = True):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """处理请求并记录性能指标"""
+        """处理请求并记录性能指标."""
         if not self.enabled:
             return await call_next(request)
 
@@ -55,16 +54,16 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """请求日志中间件"""
+    """请求日志中间件."""
 
     def __init__(self, app, enabled: bool = True):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """记录请求日志"""
+        """记录请求日志."""
         if not self.enabled:
             return await call_next(request)
 

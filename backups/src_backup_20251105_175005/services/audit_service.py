@@ -1,6 +1,5 @@
-"""
-审计服务
-Audit Service
+"""审计服务
+Audit Service.
 
 提供系统操作的审计日志功能.
 Provides audit logging functionality for system operations.
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class AuditSeverity(Enum):
-    """审计严重程度"""
+    """审计严重程度."""
 
     LOW = "low"
     MEDIUM = "medium"
@@ -24,7 +23,7 @@ class AuditSeverity(Enum):
 
 
 class AuditAction:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计动作"""
@@ -39,7 +38,7 @@ class AuditAction:
 
 
 class AuditContext:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计上下文"""
@@ -57,7 +56,7 @@ class AuditContext:
 
 
 class AuditLog:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计日志"""
@@ -77,13 +76,13 @@ class AuditLog:
 
 
 class AuditLogSummary:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计日志摘要"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.total_logs = 0
         self.by_severity = {}
@@ -91,13 +90,13 @@ class AuditLogSummary:
 
 
 class DataSanitizer:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """数据清理器 - 简化版本"""
 
     def sanitize(self, data: dict[str, Any]) -> dict[str, Any]:
-        """清理敏感数据"""
+        """清理敏感数据."""
         # 简化的清理逻辑
         sanitized = data.copy()
         if "password" in sanitized:
@@ -108,13 +107,13 @@ class DataSanitizer:
 
 
 class SeverityAnalyzer:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """严重程度分析器"""
 
     def analyze(self, event: "AuditEvent") -> AuditSeverity:
-        """分析事件严重程度"""
+        """分析事件严重程度."""
         # 简化的分析逻辑
         if "delete" in event.action.lower():
             return AuditSeverity.HIGH
@@ -124,7 +123,7 @@ class SeverityAnalyzer:
 
 
 class AuditEvent:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计事件"""
@@ -140,20 +139,20 @@ class AuditEvent:
 
 
 class AuditService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计服务 - 简化版本"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.events: list[AuditEvent] = []
         self.sanitizer = DataSanitizer()
         self.analyzer = SeverityAnalyzer()
 
     def log_event(self, action: str, user: str, details: dict[str, Any]):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """记录审计事件"""
         # 清理数据
@@ -170,11 +169,11 @@ class AuditService:
         return event
 
     def get_events(self, limit: int = 100) -> list[AuditEvent]:
-        """获取审计事件"""
+        """获取审计事件."""
         return self.events[-limit:]
 
     def get_summary(self) -> AuditLogSummary:
-        """获取审计摘要"""
+        """获取审计摘要."""
         summary = AuditLogSummary()
         summary.total_logs = len(self.events)
 

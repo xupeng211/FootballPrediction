@@ -12,7 +12,7 @@ import logging
 import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
@@ -381,8 +381,7 @@ class BaselineModelTrainer:
         early_stopping_rounds: int = 50,
         verbose: bool = True,
     ) -> Dict[str, Any]:
-        """
-        训练 XGBoost 模型
+        """训练 XGBoost 模型.
 
         Args:
             X_train: 训练特征数据
@@ -472,7 +471,7 @@ class BaselineModelTrainer:
         early_stopping_rounds: int,
         verbose: bool,
     ) -> Dict[str, Any]:
-        """不使用 MLflow 训练 XGBoost 模型"""
+        """不使用 MLflow 训练 XGBoost 模型."""
         try:
             # 创建 XGBoost 分类器
             self.model = XGBClassifier(**params)
@@ -542,7 +541,7 @@ class BaselineModelTrainer:
         verbose: bool,
         run_id: str,
     ) -> Dict[str, Any]:
-        """使用 MLflow 训练 XGBoost 模型"""
+        """使用 MLflow 训练 XGBoost 模型."""
         try:
             # 记录参数到 MLflow
             mlflow.log_params(params)
@@ -582,7 +581,7 @@ class BaselineModelTrainer:
             raise
 
     def _get_feature_importance(self) -> np.ndarray:
-        """获取特征重要性"""
+        """获取特征重要性."""
         if not self.is_trained or not HAS_XGB:
             return None
 
@@ -617,8 +616,7 @@ class BaselineModelTrainer:
         scoring: str = "f1_weighted",
         n_trials: int = 50,
     ) -> Dict[str, Any]:
-        """
-        XGBoost 超参数优化（简化版随机搜索）
+        """XGBoost 超参数优化（简化版随机搜索）.
 
         Args:
             X_train: 训练特征数据

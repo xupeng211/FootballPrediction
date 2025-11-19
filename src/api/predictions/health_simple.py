@@ -4,7 +4,7 @@ Simplified Predictions Health Check Endpoint.
 
 from datetime import datetime
 from logging import getLogger
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 

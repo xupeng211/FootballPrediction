@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-LSTM时间序列预测模型
-LSTM Time Series Prediction Model
+"""LSTM时间序列预测模型
+LSTM Time Series Prediction Model.
 
 基于长短期记忆网络的质量指标时间序列预测和异常检测
 """
@@ -34,7 +33,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class PredictionResult:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测结果数据模型"""
@@ -50,7 +49,7 @@ class PredictionResult:
     r2: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         data = asdict(self)
         data["timestamp"] = self.timestamp.isoformat()
         if self.actual_values:
@@ -60,7 +59,7 @@ class PredictionResult:
 
 @dataclass
 class TrainingConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """LSTM训练配置"""
@@ -77,13 +76,13 @@ class TrainingConfig:
 
 
 class LSTMPredictor:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """LSTM时间序列预测器"""
 
     def __init__(self, config: TrainingConfig | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.config = config or TrainingConfig()
         self.logger = get_logger(self.__class__.__name__)
@@ -108,7 +107,7 @@ class LSTMPredictor:
     def prepare_data(
         self, data: list[dict[str, Any]], target_column: str = "overall_score"
     ) -> tuple[np.ndarray, np.ndarray]:
-        """准备训练数据"""
+        """准备训练数据."""
         try:
             # 转换为DataFrame
             df = pd.DataFrame(data)
@@ -149,7 +148,7 @@ class LSTMPredictor:
     def _create_sequences(
         self, features: np.ndarray, target: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """创建时间序列数据"""
+        """创建时间序列数据."""
         X, y = [], []
 
         for i in range(
@@ -173,7 +172,7 @@ class LSTMPredictor:
         return np.array(X), np.array(y)
 
     def build_model(self, input_shape: tuple[int, int]) -> None:
-        """构建LSTM模型"""
+        """构建LSTM模型."""
         if tf is None:
             raise ImportError("TensorFlow未安装,无法构建LSTM模型")
 
@@ -219,7 +218,7 @@ class LSTMPredictor:
         y: np.ndarray,
         validation_data: tuple[np.ndarray, np.ndarray] | None = None,
     ) -> dict[str, Any]:
-        """训练LSTM模型"""
+        """训练LSTM模型."""
         if self.model is None:
             self.build_model(input_shape=(X.shape[1], X.shape[2]))
 
@@ -286,7 +285,7 @@ class LSTMPredictor:
     def predict(
         self, input_sequence: np.ndarray, return_confidence: bool = True
     ) -> PredictionResult:
-        """进行预测"""
+        """进行预测."""
         if not self.is_trained:
             raise ValueError("模型尚未训练")
 
@@ -355,7 +354,7 @@ class LSTMPredictor:
             raise
 
     async def predict_future(self, hours_ahead: int = 6) -> PredictionResult:
-        """预测未来质量指标"""
+        """预测未来质量指标."""
         try:
             # 获取最近的历史数据
             recent_data = await influxdb_manager.get_quality_metrics_history(
@@ -414,7 +413,7 @@ class LSTMPredictor:
     def evaluate_model(
         self, test_X: np.ndarray, test_y: np.ndarray
     ) -> dict[str, float]:
-        """评估模型性能"""
+        """评估模型性能."""
         try:
             # 预测
             predictions_scaled = self.model.predict(test_X, verbose=0)
@@ -437,7 +436,7 @@ class LSTMPredictor:
             return {}
 
     def save_model(self) -> bool:
-        """保存模型和标准化器"""
+        """保存模型和标准化器."""
         try:
             if self.model is None:
                 self.logger.warning("没有可保存的模型")
@@ -466,7 +465,7 @@ class LSTMPredictor:
             return False
 
     def load_model(self) -> bool:
-        """加载模型和标准化器"""
+        """加载模型和标准化器."""
         try:
             if not self.model_path.exists():
                 self.logger.warning(f"模型文件不存在: {self.model_path}")
@@ -492,7 +491,7 @@ class LSTMPredictor:
             return False
 
     async def train_with_historical_data(self, days: int = 30) -> dict[str, Any]:
-        """使用历史数据训练模型"""
+        """使用历史数据训练模型."""
         try:
             self.logger.info(f"开始使用历史数据训练模型 (过去{days}天)")
 
@@ -534,12 +533,12 @@ lstm_predictor = LSTMPredictor()
 
 # 辅助函数
 async def train_lstm_model(days: int = 30) -> dict[str, Any]:
-    """训练LSTM模型"""
+    """训练LSTM模型."""
     return await lstm_predictor.train_with_historical_data(days)
 
 
 async def predict_quality_trend(hours_ahead: int = 6) -> PredictionResult:
-    """预测质量趋势"""
+    """预测质量趋势."""
     return await lstm_predictor.predict_future(hours_ahead)
 
 
@@ -547,8 +546,7 @@ if __name__ == "__main__":
     import asyncio
 
     async def test_lstm_predictor():
-        """测试LSTM预测器"""
-
+        """测试LSTM预测器."""
         # 生成模拟历史数据
         np.random.seed(42)
         n_points = 200

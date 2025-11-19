@@ -1,5 +1,4 @@
-"""
-监控指标导出器
+"""监控指标导出器.
 
 导出足球预测平台的各项监控指标,供 Prometheus 采集。
 包括数据采集成功/失败次数、数据清洗成功/失败次数,调度任务延迟时间,数据表行数统计等.
@@ -28,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class MetricsExporter:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -47,8 +46,7 @@ class MetricsExporter:
         registry: CollectorRegistry | None = None,
         tables_to_monitor: list[str] | None = None,
     ):
-        """
-        初始化指标导出器
+        """初始化指标导出器.
 
         Args:
             registry: Prometheus 注册表,默认使用全局注册表
@@ -185,7 +183,6 @@ class MetricsExporter:
 
     def set_tables_to_monitor(self, tables: list[str]) -> None:
         """设置需要统计行数的表列表."""
-
         self._tables_to_monitor = list(tables)
 
     def record_data_collection(
@@ -197,8 +194,7 @@ class MetricsExporter:
         error_type: str | None = None,
         records_count: int = 0,
     ) -> None:
-        """
-        记录数据采集指标
+        """记录数据采集指标.
 
         Args:
             data_source: 数据源名称
@@ -234,8 +230,7 @@ class MetricsExporter:
         error_type: str | None = None,
         records_processed: int = 1,
     ) -> None:
-        """
-        记录数据清洗指标
+        """记录数据清洗指标.
 
         Args:
             data_type: 数据类型（match/odds/scores）
@@ -259,8 +254,7 @@ class MetricsExporter:
     def record_data_collection_success(
         self, data_source: str, records_count: int = 1
     ) -> None:
-        """
-        记录数据采集成功 - 兼容测试接口
+        """记录数据采集成功 - 兼容测试接口.
 
         Args:
             data_source: 数据源名称
@@ -277,8 +271,7 @@ class MetricsExporter:
     def record_data_collection_failure(
         self, data_source: str, error_message: str
     ) -> None:
-        """
-        记录数据采集失败 - 兼容测试接口
+        """记录数据采集失败 - 兼容测试接口.
 
         Args:
             data_source: 数据源名称
@@ -293,8 +286,7 @@ class MetricsExporter:
         )
 
     def record_data_cleaning_success(self, records_processed: int = 1) -> None:
-        """
-        记录数据清洗成功 - 兼容测试接口
+        """记录数据清洗成功 - 兼容测试接口.
 
         Args:
             records_processed: 处理记录数
@@ -315,8 +307,7 @@ class MetricsExporter:
         success: bool,
         failure_reason: str | None = None,
     ) -> None:
-        """
-        记录调度任务指标
+        """记录调度任务指标.
 
         Args:
             task_name: 任务名称
@@ -342,8 +333,7 @@ class MetricsExporter:
     def record_scheduler_task_simple(
         self, task_name: str, status: str, duration: float
     ) -> None:
-        """
-        记录调度任务指标 - 简化接口,兼容测试
+        """记录调度任务指标 - 简化接口,兼容测试.
 
         Args:
             task_name: 任务名称
@@ -363,8 +353,7 @@ class MetricsExporter:
             ).inc()
 
     def update_table_row_counts(self, table_counts: dict | None = None) -> None:
-        """
-        更新数据表行数统计 - 兼容测试接口
+        """更新数据表行数统计 - 兼容测试接口.
 
         Args:
             table_counts: 表行数字典,格式为 {table_name: row_count}
@@ -383,9 +372,7 @@ class MetricsExporter:
                 self.table_row_count.labels(table_name=table_name).set(0.0)
 
     async def _update_table_row_counts_async(self) -> None:
-        """
-        异步更新数据表行数统计 - 内部方法
-        """
+        """异步更新数据表行数统计 - 内部方法."""
         try:
             async with get_async_session() as session:
                 if not self._tables_to_monitor:
@@ -423,15 +410,11 @@ class MetricsExporter:
             logger.error(f"更新表行数统计失败: {e}")
 
     async def update_table_row_counts_async(self) -> None:
-        """
-        异步更新数据表行数统计 - 向后兼容的公共接口
-        """
+        """异步更新数据表行数统计 - 向后兼容的公共接口."""
         await self._update_table_row_counts_async()
 
     async def update_database_metrics(self) -> None:
-        """
-        更新数据库性能指标
-        """
+        """更新数据库性能指标."""
         try:
             async with get_async_session() as session:
                 # 获取数据库连接数
@@ -456,9 +439,7 @@ class MetricsExporter:
             logger.error(f"更新数据库指标失败: {e}")
 
     async def collect_all_metrics(self) -> None:
-        """
-        收集所有监控指标
-        """
+        """收集所有监控指标."""
         start_time = time.time()
 
         try:
@@ -480,8 +461,7 @@ class MetricsExporter:
         logger.debug(f"指标收集耗时: {duration:.2f}秒")
 
     def get_metrics(self) -> tuple[str, str]:
-        """
-        获取 Prometheus 格式的指标数据
+        """获取 Prometheus 格式的指标数据.
 
         Returns:
             Tuple[str, str]: (content_type, metrics_data)
@@ -492,8 +472,7 @@ class MetricsExporter:
     def _get_or_create_counter(
         self, name: str, description: str, labels: list, registry: CollectorRegistry
     ):
-        """
-        获取或创建Counter指标,避免重复注册
+        """获取或创建Counter指标,避免重复注册.
 
         在测试环境中使用独立的 CollectorRegistry 可以避免指标重复注册问题。
         这个方法确保在出现冲突时能够优雅处理.
@@ -516,8 +495,7 @@ class MetricsExporter:
     def _get_or_create_gauge(
         self, name: str, description: str, labels: list, registry: CollectorRegistry
     ):
-        """
-        获取或创建Gauge指标,避免重复注册
+        """获取或创建Gauge指标,避免重复注册.
 
         在测试环境中使用独立的 CollectorRegistry 可以避免指标重复注册问题。
         这个方法确保在出现冲突时能够优雅处理.
@@ -545,8 +523,7 @@ _metrics_exporter_instance = None
 def get_metrics_exporter(
     registry: CollectorRegistry | None = None,
 ) -> MetricsExporter:
-    """
-    获取指标导出器实例 - 支持自定义注册表
+    """获取指标导出器实例 - 支持自定义注册表.
 
     在测试环境中，可以传入独立的 CollectorRegistry 来避免全局状态污染。
     在生产环境中,将使用全局单例实例.
@@ -571,7 +548,7 @@ def get_metrics_exporter(
 
 
 def reset_metrics_exporter():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """
     重置全局指标导出器实例 - 主要用于测试清理

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """FastAPI 依赖注入模块.
 
 提供数据库会话的依赖注入函数,用于替换全局会话模式。

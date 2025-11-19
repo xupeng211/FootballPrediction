@@ -1,5 +1,4 @@
-"""
-流式处理配置管理
+"""流式处理配置管理.
 
 提供Kafka和流处理的配置管理功能,包括:
 - Kafka连接配置
@@ -15,7 +14,7 @@ from typing import Any
 
 @dataclass
 class KafkaConfig:
-    """类文档字符串"""
+    """类文档字符串."""
     pass  # 添加pass语句
     """Kafka基础配置"""
 
@@ -46,7 +45,7 @@ class KafkaConfig:
 
 @dataclass
 class TopicConfig:
-    """类文档字符串"""
+    """类文档字符串."""
     pass  # 添加pass语句
     """Topic配置"""
 
@@ -59,7 +58,7 @@ class TopicConfig:
 
 
 class StreamConfig:
-    """类文档字符串"""
+    """类文档字符串."""
     pass  # 添加pass语句
     """
     流式处理配置管理器
@@ -69,14 +68,14 @@ class StreamConfig:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass
   # 添加pass语句
         self.kafka_config = self._load_kafka_config()
         self.topics = self._init_topics()
 
     def _load_kafka_config(self) -> KafkaConfig:
-        """从环境变量加载Kafka配置"""
+        """从环境变量加载Kafka配置."""
         return KafkaConfig(
             bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
             security_protocol=os.getenv("KAFKA_SECURITY_PROTOCOL", "PLAINTEXT"),
@@ -97,7 +96,7 @@ class StreamConfig:
         )
 
     def _init_topics(self) -> dict[str, TopicConfig]:
-        """初始化Topic配置"""
+        """初始化Topic配置."""
         return {
             # 比赛数据流
             "matches-stream": TopicConfig(
@@ -126,7 +125,7 @@ class StreamConfig:
         }
 
     def get_producer_config(self) -> dict[str, Any]:
-        """获取生产者配置"""
+        """获取生产者配置."""
         return {
             "bootstrap.servers": self.kafka_config.bootstrap_servers,
             "security.protocol": self.kafka_config.security_protocol,
@@ -143,7 +142,7 @@ class StreamConfig:
     def get_consumer_config(
         self, consumer_group_id: str | None = None
     ) -> dict[str, Any]:
-        """获取消费者配置"""
+        """获取消费者配置."""
         group_id = consumer_group_id or self.kafka_config.consumer_group_id
 
         return {
@@ -161,13 +160,13 @@ class StreamConfig:
         }
 
     def get_topic_config(self, topic_name: str) -> TopicConfig | None:
-        """获取指定Topic配置"""
+        """获取指定Topic配置."""
         return self.topics.get(topic_name)
 
     def get_all_topics(self) -> list[str]:
-        """获取所有Topic名称"""
+        """获取所有Topic名称."""
         return list(self.topics.keys())
 
     def is_valid_topic(self, topic_name: str) -> bool:
-        """检查Topic是否有效"""
+        """检查Topic是否有效."""
         return topic_name in self.topics

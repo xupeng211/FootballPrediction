@@ -1,6 +1,4 @@
-"""
-Team model for data collection
-"""
+"""Team model for data collection."""
 
 from dataclasses import dataclass
 from typing import Any
@@ -8,7 +6,7 @@ from typing import Any
 
 @dataclass
 class Team:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """Team data model"""
@@ -22,13 +20,13 @@ class Team:
     metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         if self.metadata is None:
             self.metadata = {}
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary"""
+        """Convert to dictionary."""
         return {
             "id": self.id,
             "name": self.name,
@@ -41,7 +39,7 @@ class Team:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Team":
-        """Create from dictionary"""
+        """Create from dictionary."""
         return cls(
             id=data["id"],
             name=data["name"],

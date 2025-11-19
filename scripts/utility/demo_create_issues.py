@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-演示远程Issues创建流程
-Demo Remote Issues Creation Process
+"""演示远程Issues创建流程
+Demo Remote Issues Creation Process.
 """
 
 import json
@@ -10,8 +9,7 @@ import sys
 
 
 def check_prerequisites():
-    """检查先决条件"""
-
+    """检查先决条件."""
     # 检查GitHub CLI
     try:
         subprocess.run(["gh", "--version"], capture_output=True, check=True)
@@ -37,8 +35,7 @@ def check_prerequisites():
 
 
 def show_preview():
-    """显示预览信息"""
-
+    """显示预览信息."""
     # 加载Issues数据
     try:
         with open("generated_issues.json") as f:
@@ -63,7 +60,7 @@ def show_preview():
 
 
 def show_sample_commands():
-    """显示示例命令"""
+    """显示示例命令."""
 
 
 
@@ -72,8 +69,7 @@ def show_sample_commands():
 
 
 def main():
-    """主函数"""
-
+    """主函数."""
     # 检查先决条件
     if not check_prerequisites():
         return False

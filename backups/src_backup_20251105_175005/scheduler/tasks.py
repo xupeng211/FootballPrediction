@@ -1,6 +1,5 @@
-"""
-Celery调度任务
-Celery Scheduler Tasks
+"""Celery调度任务
+Celery Scheduler Tasks.
 
 实现足球数据采集和处理的定时任务。
 

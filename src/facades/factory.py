@@ -4,7 +4,7 @@ Facade Factory Module.
 提供外观和子系统的工厂创建功能.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from .base import Facade, Subsystem, SystemFacade
 

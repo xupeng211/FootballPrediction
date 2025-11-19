@@ -1,6 +1,5 @@
-"""
-观察者模式模块
-Observer Pattern Module
+"""观察者模式模块
+Observer Pattern Module.
 
 提供观察者模式的实现，定义对象间的一对多依赖关系.
 """
@@ -14,14 +13,14 @@ from typing import Any
 
 
 class Observer(ABC):
-    """观察者抽象基类
+    """观察者抽象基类.
 
     定义观察者的更新接口.
     """
 
     @abstractmethod
     def update(self, subject: "Subject", data: Any | None = None) -> None:
-        """接收主题更新的通知
+        """接收主题更新的通知.
 
         Args:
             subject: 发出通知的主题
@@ -30,23 +29,23 @@ class Observer(ABC):
 
     @abstractmethod
     def get_observer_id(self) -> str:
-        """获取观察者ID"""
+        """获取观察者ID."""
 
 
 class Subject(ABC):
-    """主题抽象基类
+    """主题抽象基类.
 
     管理观察者并发出通知.
     """
 
     def __init__(self):
-        """初始化主题"""
+        """初始化主题."""
         self._observers: list[Observer] = []
         self._changed = False
         self._lock = threading.Lock()
 
     def attach(self, observer: Observer) -> None:
-        """添加观察者
+        """添加观察者.
 
         Args:
             observer: 要添加的观察者
@@ -56,7 +55,7 @@ class Subject(ABC):
                 self._observers.append(observer)
 
     def detach(self, observer: Observer) -> None:
-        """移除观察者
+        """移除观察者.
 
         Args:
             observer: 要移除的观察者
@@ -66,7 +65,7 @@ class Subject(ABC):
                 self._observers.remove(observer)
 
     def notify(self, data: Any | None = None) -> None:
-        """通知所有观察者
+        """通知所有观察者.
 
         Args:
             data: 要传递的数据
@@ -81,35 +80,35 @@ class Subject(ABC):
                 pass
 
     def clear_observers(self) -> None:
-        """清除所有观察者"""
+        """清除所有观察者."""
         with self._lock:
             self._observers.clear()
 
     def get_observer_count(self) -> int:
-        """获取观察者数量"""
+        """获取观察者数量."""
         return len(self._observers)
 
     def has_changed(self) -> bool:
-        """检查是否发生变化"""
+        """检查是否发生变化."""
         return self._changed
 
     def set_changed(self) -> None:
-        """标记为已变化"""
+        """标记为已变化."""
         self._changed = True
 
     def clear_changed(self) -> None:
-        """清除变化标记"""
+        """清除变化标记."""
         self._changed = False
 
 
 class ConcreteSubject(Subject):
-    """具体主题类
+    """具体主题类.
 
     实现具体的状态管理逻辑.
     """
 
     def __init__(self, name: str = "ConcreteSubject"):
-        """初始化具体主题
+        """初始化具体主题.
 
         Args:
             name: 主题名称
@@ -120,7 +119,7 @@ class ConcreteSubject(Subject):
         self._history: list[dict[str, Any]] = []
 
     def get_state(self, key: str) -> Any:
-        """获取状态值
+        """获取状态值.
 
         Args:
             key: 状态键
@@ -131,7 +130,7 @@ class ConcreteSubject(Subject):
         return self._state.get(key)
 
     def set_state(self, key: str, value: Any) -> None:
-        """设置状态值
+        """设置状态值.
 
         Args:
             key: 状态键
@@ -146,7 +145,7 @@ class ConcreteSubject(Subject):
             self.notify({"key": key, "old_value": old_value, "new_value": value})
 
     def get_all_states(self) -> dict[str, Any]:
-        """获取所有状态
+        """获取所有状态.
 
         Returns:
             Dict[str, Any]: 所有状态
@@ -154,7 +153,7 @@ class ConcreteSubject(Subject):
         return self._state.copy()
 
     def update_states(self, states: dict[str, Any]) -> None:
-        """批量更新状态
+        """批量更新状态.
 
         Args:
             states: 要更新的状态字典
@@ -163,7 +162,7 @@ class ConcreteSubject(Subject):
             self.set_state(key, value)
 
     def _record_change(self, key: str, old_value: Any, new_value: Any) -> None:
-        """记录状态变化
+        """记录状态变化.
 
         Args:
             key: 状态键
@@ -183,7 +182,7 @@ class ConcreteSubject(Subject):
             self._history = self._history[-500:]
 
     def get_change_history(self, limit: int = 50) -> list[dict[str, Any]]:
-        """获取变化历史
+        """获取变化历史.
 
         Args:
             limit: 返回记录数限制
@@ -195,13 +194,13 @@ class ConcreteSubject(Subject):
 
 
 class ConcreteObserver(Observer):
-    """具体观察者类
+    """具体观察者类.
 
     实现具体的观察逻辑.
     """
 
     def __init__(self, observer_id: str, callback: Callable | None = None):
-        """初始化具体观察者
+        """初始化具体观察者.
 
         Args:
             observer_id: 观察者ID
@@ -213,7 +212,7 @@ class ConcreteObserver(Observer):
         self.created_at = datetime.utcnow()
 
     def update(self, subject: Subject, data: Any | None = None) -> None:
-        """接收更新通知
+        """接收更新通知.
 
         Args:
             subject: 发出通知的主题
@@ -240,11 +239,11 @@ class ConcreteObserver(Observer):
 
 
     def get_observer_id(self) -> str:
-        """获取观察者ID"""
+        """获取观察者ID."""
         return self.observer_id
 
     def get_notifications(self, limit: int = 50) -> list[dict[str, Any]]:
-        """获取通知记录
+        """获取通知记录.
 
         Args:
             limit: 返回记录数限制
@@ -255,18 +254,18 @@ class ConcreteObserver(Observer):
         return self.notifications[-limit:]
 
     def clear_notifications(self) -> None:
-        """清除通知记录"""
+        """清除通知记录."""
         self.notifications.clear()
 
 
 class LoggingObserver(Observer):
-    """日志观察者
+    """日志观察者.
 
     将通知记录到日志.
     """
 
     def __init__(self, observer_id: str = "logging_observer"):
-        """初始化日志观察者
+        """初始化日志观察者.
 
         Args:
             observer_id: 观察者ID
@@ -275,7 +274,7 @@ class LoggingObserver(Observer):
         self.log_entries: list[dict[str, Any]] = []
 
     def update(self, subject: Subject, data: Any | None = None) -> None:
-        """记录日志
+        """记录日志.
 
         Args:
             subject: 发出通知的主题
@@ -292,11 +291,11 @@ class LoggingObserver(Observer):
         self.log_entries.append(log_entry)
 
     def get_observer_id(self) -> str:
-        """获取观察者ID"""
+        """获取观察者ID."""
         return self.observer_id
 
     def get_logs(self, limit: int = 100) -> list[dict[str, Any]]:
-        """获取日志记录
+        """获取日志记录.
 
         Args:
             limit: 返回记录数限制
@@ -308,13 +307,13 @@ class LoggingObserver(Observer):
 
 
 class MetricsObserver(Observer):
-    """指标观察者
+    """指标观察者.
 
     收集指标数据.
     """
 
     def __init__(self, observer_id: str = "metrics_observer"):
-        """初始化指标观察者
+        """初始化指标观察者.
 
         Args:
             observer_id: 观察者ID
@@ -327,7 +326,7 @@ class MetricsObserver(Observer):
         }
 
     def update(self, subject: Subject, data: Any | None = None) -> None:
-        """更新指标
+        """更新指标.
 
         Args:
             subject: 发出通知的主题
@@ -342,11 +341,11 @@ class MetricsObserver(Observer):
         }
 
     def get_observer_id(self) -> str:
-        """获取观察者ID"""
+        """获取观察者ID."""
         return self.observer_id
 
     def get_metrics(self) -> dict[str, Any]:
-        """获取指标数据
+        """获取指标数据.
 
         Returns:
             Dict[str, Any]: 指标数据
@@ -356,7 +355,7 @@ class MetricsObserver(Observer):
         return result
 
     def reset_metrics(self) -> None:
-        """重置指标"""
+        """重置指标."""
         self.metrics = {
             "notification_count": 0,
             "subjects_notified": set(),
@@ -365,7 +364,7 @@ class MetricsObserver(Observer):
 
 
 class AlertingObserver(Observer):
-    """告警观察者
+    """告警观察者.
 
     根据条件触发告警.
     """
@@ -375,7 +374,7 @@ class AlertingObserver(Observer):
         observer_id: str = "alerting_observer",
         alert_conditions: list[Callable] | None = None,
     ):
-        """初始化告警观察者
+        """初始化告警观察者.
 
         Args:
             observer_id: 观察者ID
@@ -386,7 +385,7 @@ class AlertingObserver(Observer):
         self.alerts: list[dict[str, Any]] = []
 
     def add_alert_condition(self, condition: Callable) -> None:
-        """添加告警条件
+        """添加告警条件.
 
         Args:
             condition: 告警条件函数，返回True时触发告警
@@ -394,7 +393,7 @@ class AlertingObserver(Observer):
         self.alert_conditions.append(condition)
 
     def update(self, subject: Subject, data: Any | None = None) -> None:
-        """检查告警条件
+        """检查告警条件.
 
         Args:
             subject: 发出通知的主题
@@ -416,11 +415,11 @@ class AlertingObserver(Observer):
                 pass
 
     def get_observer_id(self) -> str:
-        """获取观察者ID"""
+        """获取观察者ID."""
         return self.observer_id
 
     def get_alerts(self, limit: int = 50) -> list[dict[str, Any]]:
-        """获取告警记录
+        """获取告警记录.
 
         Args:
             limit: 返回记录数限制
@@ -432,13 +431,13 @@ class AlertingObserver(Observer):
 
 
 class EventQueue:
-    """事件队列
+    """事件队列.
 
     异步处理观察者通知.
     """
 
     def __init__(self, max_size: int = 1000):
-        """初始化事件队列
+        """初始化事件队列.
 
         Args:
             max_size: 队列最大大小
@@ -448,7 +447,7 @@ class EventQueue:
         self._worker_thread: threading.Thread | None = None
 
     def start(self) -> None:
-        """启动事件处理"""
+        """启动事件处理."""
         if not self._running:
             self._running = True
             self._worker_thread = threading.Thread(
@@ -457,13 +456,13 @@ class EventQueue:
             self._worker_thread.start()
 
     def stop(self) -> None:
-        """停止事件处理"""
+        """停止事件处理."""
         self._running = False
         if self._worker_thread:
             self._worker_thread.join(timeout=5.0)
 
     def put_event(self, observer: Observer, subject: Subject, data: Any) -> None:
-        """添加事件到队列
+        """添加事件到队列.
 
         Args:
             observer: 观察者
@@ -477,7 +476,7 @@ class EventQueue:
             pass
 
     def _process_events(self) -> None:
-        """处理事件队列"""
+        """处理事件队列."""
         while self._running:
             try:
                 event = self._queue.get(timeout=1.0)
@@ -499,13 +498,13 @@ class EventQueue:
 
 
 class AsyncSubject(Subject):
-    """异步主题
+    """异步主题.
 
     使用队列异步通知观察者.
     """
 
     def __init__(self, name: str = "AsyncSubject", queue_size: int = 1000):
-        """初始化异步主题
+        """初始化异步主题.
 
         Args:
             name: 主题名称
@@ -516,15 +515,15 @@ class AsyncSubject(Subject):
         self.event_queue = EventQueue(queue_size)
 
     def start_async_notifications(self) -> None:
-        """启动异步通知"""
+        """启动异步通知."""
         self.event_queue.start()
 
     def stop_async_notifications(self) -> None:
-        """停止异步通知"""
+        """停止异步通知."""
         self.event_queue.stop()
 
     def notify(self, data: Any | None = None) -> None:
-        """异步通知观察者
+        """异步通知观察者.
 
         Args:
             data: 要传递的数据
@@ -538,7 +537,7 @@ class AsyncSubject(Subject):
 
 # 便捷函数
 def create_observer_system() -> tuple[ConcreteSubject, list[Observer]]:
-    """创建观察者系统
+    """创建观察者系统.
 
     Returns:
         tuple[ConcreteSubject, List[Observer]]: 主题和观察者列表
@@ -568,8 +567,7 @@ def create_observer_system() -> tuple[ConcreteSubject, list[Observer]]:
 
 
 def demonstrate_observer_pattern():
-    """演示观察者模式的使用"""
-
+    """演示观察者模式的使用."""
     subject, observers = create_observer_system()
 
     # 模拟状态变化
@@ -592,13 +590,13 @@ def demonstrate_observer_pattern():
 
 # 可观察服务实现
 class ObservableService(Subject):
-    """可观察服务类
+    """可观察服务类.
 
     提供服务级别的观察者功能.
     """
 
     def __init__(self, service_name: str):
-        """初始化可观察服务
+        """初始化可观察服务.
 
         Args:
             service_name: 服务名称
@@ -609,17 +607,17 @@ class ObservableService(Subject):
         self._metrics = {}
 
     def start(self):
-        """启动服务"""
+        """启动服务."""
         self._status = "running"
         self.notify({"event": "service_started", "service": self.service_name})
 
     def stop(self):
-        """停止服务"""
+        """停止服务."""
         self._status = "stopped"
         self.notify({"event": "service_stopped", "service": self.service_name})
 
     def update_metrics(self, metrics: dict[str, Any]):
-        """更新服务指标
+        """更新服务指标.
 
         Args:
             metrics: 指标数据
@@ -634,16 +632,16 @@ class ObservableService(Subject):
         )
 
     def get_status(self) -> str:
-        """获取服务状态"""
+        """获取服务状态."""
         return self._status
 
     def get_metrics(self) -> dict[str, Any]:
-        """获取服务指标"""
+        """获取服务指标."""
         return self._metrics.copy()
 
 
 def create_observer_system(service_name: str) -> dict[str, Any]:
-    """创建观察者系统
+    """创建观察者系统.
 
     Args:
         service_name: 服务名称
@@ -675,7 +673,7 @@ def create_observer_system(service_name: str) -> dict[str, Any]:
 
 
 def setup_service_observers(service: ObservableService) -> dict[str, Any]:
-    """设置服务观察者
+    """设置服务观察者.
 
     Args:
         service: 要设置观察者的服务

@@ -1,6 +1,5 @@
-"""
-基础数据采集器
-提供通用的数据采集功能和接口规范
+"""基础数据采集器
+提供通用的数据采集功能和接口规范.
 """
 
 import asyncio
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CollectionResult:
-    """数据采集结果"""
+    """数据采集结果."""
 
     success: bool
     data: Any | None = None
@@ -29,7 +28,7 @@ class CollectionResult:
 
 
 class BaseCollector(ABC):
-    """基础数据采集器抽象类"""
+    """基础数据采集器抽象类."""
 
     def __init__(
         self,
@@ -49,35 +48,35 @@ class BaseCollector(ABC):
         self._request_count = 0
 
     async def __aenter__(self):
-        """异步上下文管理器入口"""
+        """异步上下文管理器入口."""
         await self._ensure_session()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """异步上下文管理器出口"""
+        """异步上下文管理器出口."""
         await self.close()
 
     async def _ensure_session(self):
-        """确保会话存在"""
+        """确保会话存在."""
         if self.session is None or self.session.closed:
             headers = await self._get_headers()
             self.session = aiohttp.ClientSession(headers=headers, timeout=self.timeout)
 
     async def close(self):
-        """关闭会话"""
+        """关闭会话."""
         if self.session and not self.session.closed:
             await self.session.close()
 
     @abstractmethod
     async def _get_headers(self) -> dict[str, str]:
-        """获取请求头"""
+        """获取请求头."""
 
     @abstractmethod
     def _build_url(self, endpoint: str, **params) -> str:
-        """构建请求URL"""
+        """构建请求URL."""
 
     async def _rate_limit_wait(self):
-        """速率限制等待"""
+        """速率限制等待."""
         current_time = asyncio.get_event_loop().time()
         time_since_last_request = current_time - self._last_request_time
 
@@ -99,7 +98,7 @@ class BaseCollector(ABC):
         max_value=10,
     )
     async def _make_request(self, method: str, url: str, **kwargs) -> CollectionResult:
-        """发起HTTP请求"""
+        """发起HTTP请求."""
         start_time = asyncio.get_event_loop().time()
 
         try:
@@ -167,14 +166,14 @@ class BaseCollector(ABC):
     async def get(
         self, endpoint: str, params: dict[str, Any] | None = None
     ) -> CollectionResult:
-        """GET请求"""
+        """GET请求."""
         url = self._build_url(endpoint, **(params or {}))
         return await self._make_request("GET", url)
 
     async def post(
         self, endpoint: str, data: dict[str, Any] | None = None
     ) -> CollectionResult:
-        """POST请求"""
+        """POST请求."""
         url = self._build_url(endpoint)
         return await self._make_request("POST", url, json=data)
 
@@ -185,22 +184,22 @@ class BaseCollector(ABC):
         date_from: datetime | None = None,
         date_to: datetime | None = None,
     ) -> CollectionResult:
-        """采集比赛数据"""
+        """采集比赛数据."""
 
     @abstractmethod
     async def collect_teams(self, league_id: int | None = None) -> CollectionResult:
-        """采集球队数据"""
+        """采集球队数据."""
 
     @abstractmethod
     async def collect_players(self, team_id: int | None = None) -> CollectionResult:
-        """采集球员数据"""
+        """采集球员数据."""
 
     @abstractmethod
     async def collect_leagues(self) -> CollectionResult:
-        """采集联赛数据"""
+        """采集联赛数据."""
 
     def get_request_stats(self) -> dict[str, Any]:
-        """获取请求统计信息"""
+        """获取请求统计信息."""
         return {
             "total_requests": self._request_count,
             "last_request_time": self._last_request_time,
@@ -208,7 +207,7 @@ class BaseCollector(ABC):
         }
 
     async def health_check(self) -> bool:
-        """健康检查"""
+        """健康检查."""
         try:
             # 使用一个轻量级的端点进行健康检查
             result = await self.get("/status")
@@ -219,16 +218,16 @@ class BaseCollector(ABC):
 
 
 class CollectorError(Exception):
-    """采集器异常"""
+    """采集器异常."""
 
 
 class RateLimitError(CollectorError):
-    """速率限制异常"""
+    """速率限制异常."""
 
 
 class AuthenticationError(CollectorError):
-    """认证异常"""
+    """认证异常."""
 
 
 class DataValidationError(CollectorError):
-    """数据验证异常"""
+    """数据验证异常."""

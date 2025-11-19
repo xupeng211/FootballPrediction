@@ -8,7 +8,7 @@ Provides implementations for various event handlers.
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from .base import Event, EventData, EventHandler
 from .bus import get_event_bus
