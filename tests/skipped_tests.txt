@@ -1174,7 +1174,6 @@ tests/unit/utils/test_date_utils_basic.py
 tests/unit/utils/test_date_utils_enhanced_final.py
 tests/unit/utils/test_formatters_complete.py
 tests/unit/utils/test_formatters_enhanced.py
-tests/unit/utils/test_formatters.py
 tests/unit/utils/test_i18n_enhanced.py
 tests/unit/utils/test_i18n.py
 tests/unit/utils/test_response_enhanced.py
