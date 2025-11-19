@@ -26,6 +26,13 @@ except ImportError:
 
 @pytest.mark.health
 @pytest.mark.smoke
+def test_health_endpoint():
+    """测试健康检查端点"""
+    if not APP_AVAILABLE:
+        pytest.skip("应用不可用，跳过健康检查测试")
+
+    response = client.get("/health")
+    assert response.status_code == 200
     data = response.json()
     assert "status" in data
     assert data["status"] == "healthy"
