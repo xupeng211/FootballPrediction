@@ -86,7 +86,7 @@ jobs:
     name: 🔍 Quality Checks
     runs-on: ubuntu-22.04
     needs: detect-changes
-    if: always() && (needs.detect-changes.outputs.src-changed == 'true' || needs.detect-changes.outputs.ci-changed == 'true' || github.event_name == 'workflow_dispatch')
+    if: always() && (needs.detect-changes.outputs.src-changed == 'true' || needs.detect-changes.outputs.ci-changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push')
 
     strategy:
       fail-fast: false
@@ -234,7 +234,7 @@ jobs:
     name: 🧪 Test Suite
     runs-on: ubuntu-22.04
     needs: detect-changes
-    if: always() && (needs.detect-changes.outputs.src-changed == 'true' || needs.detect-changes.outputs.test-changed == 'true' || github.event_name == 'workflow_dispatch')
+    if: always() && (needs.detect-changes.outputs.src-changed == 'true' || needs.detect-changes.outputs.test-changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push')
 
     strategy:
       fail-fast: false
@@ -430,7 +430,7 @@ jobs:
     name: ⚡ Performance Test
     runs-on: ubuntu-22.04
     needs: [detect-changes, test-suite]
-    if: always() && ((needs.detect-changes.outputs.src-changed == 'true' || github.event_name == 'workflow_dispatch') && needs.test-suite.result == 'success')
+    if: always() && ((needs.detect-changes.outputs.src-changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push') && needs.test-suite.result == 'success')
 
     steps:
     - name: Checkout code
