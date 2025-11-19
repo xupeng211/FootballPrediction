@@ -121,7 +121,7 @@ jobs:
         if [ -f "requirements/dev.txt" ]; then
           pip-sync requirements/dev.txt
         elif [ -f "pyproject.toml" ]; then
-          pip install -e ".[dev,test]"
+          pip install -e ".[dev]"
         else
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-asyncio ruff mypy bandit black isort
@@ -294,7 +294,7 @@ jobs:
         if [ -f "requirements/dev.txt" ]; then
           pip-sync requirements/dev.txt
         elif [ -f "pyproject.toml" ]; then
-          pip install -e ".[dev,test]"
+          pip install -e ".[dev]"
         else
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-asyncio pytest-mock pytest-benchmark
