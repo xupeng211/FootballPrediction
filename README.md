@@ -1,7 +1,10 @@
+[![CI Pipeline](https://github.com/xupeng211/FootballPrediction/actions/workflows/ci_pipeline_v2.yml/badge.svg)](https://github.com/xupeng211/FootballPrediction/actions/workflows/ci_pipeline_v2.yml)
 ![Docs Guard Status](https://img.shields.io/badge/Docs%20Guard-Passing-brightgreen?style=flat-square)
 [![Test Improvement Guide](https://img.shields.io/badge/📊%20Test%20Improvement%20Guide-blue?style=flat-square)](docs/TEST_IMPROVEMENT_GUIDE.md)
 [![Testing Guide](https://img.shields.io/badge/🛡️%20Testing%20Guide-green?style=flat-square)](docs/TESTING_GUIDE.md)
 [![Kanban Check](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml/badge.svg)](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml)
+
+> ✅ **Build Status: Stable (Green Baseline Established)** - CI/CD pipeline maintained with automated test recovery and flaky test isolation
 
 # ⚽ FootballPrediction - 足球预测系统
 
