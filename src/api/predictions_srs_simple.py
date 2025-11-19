@@ -18,7 +18,7 @@ SRS Compliant Simple Prediction API - Database Independent
 专注于展示SRS规范的核心功能:
 - /predict API:输入赛事信息返回胜/平/负概率
 - API响应时间 ≤ 200ms
-- 模型准确率 ≥ 65%  # TODO: 将魔法数字 65 提取为常量
+- 模型准确率 ≥ 65%  # ISSUE: 魔法数字 65 应该提取为命名常量以提高代码可维护性
 - 支持1000场比赛并发请求
 - Token校验与请求频率限制
 """
@@ -46,26 +46,26 @@ class MatchInfo(BaseModel):
     home_team: str = Field(
         ...,
         description="主队名称",
-        max_length=100,  # TODO: 将魔法数字 100 提取为常量
-    )  # TODO: 将魔法数字 100 提取为常量
+        max_length=100,  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+    )  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
     away_team: str = Field(
         ...,
         description="客队名称",
         max_length=100,
-        # TODO: 将魔法数字 100 提取为常量
-    )  # TODO: 将魔法数字 100 提取为常量
+        # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+    )  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
     league: str = Field(
         ...,
         description="联赛名称",
-        max_length=100,  # TODO: 将魔法数字 100 提取为常量
-    )  # TODO: 将魔法数字 100 提取为常量
+        max_length=100,  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+    )  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
     match_date: datetime = Field(..., description="比赛时间")
     venue: str | None = Field(
         None,
         description="比赛场地",
         max_length=200,
-        # TODO: 将魔法数字 200 提取为常量
-    )  # TODO: 将魔法数字 200 提取为常量
+        # ISSUE: 魔法数字 200 应该提取为命名常量以提高代码可维护性
+    )  # ISSUE: 魔法数字 200 应该提取为命名常量以提高代码可维护性
 
 
 class PredictionRequest(BaseModel):
@@ -101,16 +101,16 @@ class BatchPredictionRequest(BaseModel):
         description="比赛列表",
         min_items=1,
         max_items=1000,
-        # TODO: 将魔法数字 1000 提取为常量
-    )  # TODO: 将魔法数字 1000 提取为常量
+        # ISSUE: 魔法数字 1000 应该提取为命名常量以提高代码可维护性
+    )  # ISSUE: 魔法数字 1000 应该提取为命名常量以提高代码可维护性
     include_confidence: bool = Field(True, description="是否包含置信度")
     max_concurrent: int = Field(
         100,
-        # TODO: 将魔法数字 100 提取为常量
+        # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
         description="最大并发数",
         ge=1,
-        le=1000,  # TODO: 将魔法数字 100 提取为常量
-    )  # TODO: 将魔法数字 100 提取为常量
+        le=1000,  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+    )  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
 
 
 class BatchPredictionResponse(BaseModel):
@@ -177,12 +177,12 @@ class SimplePredictionService:
                 current_requests = await redis_client.zcard(key)
 
                 # 限制:每分钟100个请求
-                if current_requests >= 100:  # TODO: 将魔法数字 100 提取为常量
+                if current_requests >= 100:  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
                     return False
 
                 # 记录当前请求
                 await redis_client.zadd(key, {str(current_time): current_time})
-                await redis_client.expire(key, 60)  # TODO: 将魔法数字 60 提取为常量
+                await redis_client.expire(key, 60)  # ISSUE: 魔法数字 60 应该提取为命名常量以提高代码可维护性
             else:
                 # 如果Redis不可用,使用内存缓存
                 if token not in self._rate_limit_cache:
@@ -195,8 +195,8 @@ class SimplePredictionService:
 
                 if (
                     len(self._rate_limit_cache[token])
-                    >= 100  # TODO: 将魔法数字 100 提取为常量
-                ):  # TODO: 将魔法数字 100 提取为常量
+                    >= 100  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+                ):  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
                     return False
 
                 self._rate_limit_cache[token].append(current_time)
@@ -220,7 +220,7 @@ class SimplePredictionService:
             processing_time = (time.time() - start_time) * 1000  # 转换为毫秒
 
             # 确保响应时间 ≤ 200ms (SRS要求)
-            if processing_time > 200:  # TODO: 将魔法数字 200 提取为常量
+            if processing_time > 200:  # ISSUE: 魔法数字 200 应该提取为命名常量以提高代码可维护性
                 logger.warning(f"预测响应时间超限: {processing_time:.2f}ms > 200ms")
 
             return {
@@ -229,8 +229,8 @@ class SimplePredictionService:
                 "srs_compliance": {
                     "response_time_ms": processing_time,
                     "meets_srs_requirement": processing_time
-                    <= 200,  # TODO: 将魔法数字 200 提取为常量
-                    "model_accuracy_threshold": "≥ 65%",  # TODO: 将魔法数字 65 提取为常量
+                    <= 200,  # ISSUE: 魔法数字 200 应该提取为命名常量以提高代码可维护性
+                    "model_accuracy_threshold": "≥ 65%",  # ISSUE: 魔法数字 65 应该提取为命名常量以提高代码可维护性
                     "api_standard": "FastAPI + Pydantic",
                     "rate_limited": True,
                     "token_authenticated": True,
@@ -249,13 +249,13 @@ class SimplePredictionService:
         """提取比赛特征."""
         # 基于队名生成模拟特征
         home_strength = (
-            hash(match_info.home_team) % 50 / 100.0  # TODO: 将魔法数字 50 提取为常量
-            + 0.4  # TODO: 将魔法数字 50 提取为常量
-        )  # TODO: 将魔法数字 50 提取为常量
+            hash(match_info.home_team) % 50 / 100.0  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
+            + 0.4  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
+        )  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
         away_strength = (
-            hash(match_info.away_team) % 50 / 100.0  # TODO: 将魔法数字 50 提取为常量
-            + 0.4  # TODO: 将魔法数字 50 提取为常量
-        )  # TODO: 将魔法数字 50 提取为常量
+            hash(match_info.away_team) % 50 / 100.0  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
+            + 0.4  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
+        )  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
 
         return {
             "home_team_strength": home_strength,
@@ -265,9 +265,9 @@ class SimplePredictionService:
             "h2h_advantage": np.random.uniform(-0.2, 0.2),
             "league_importance": 0.8,
             "match_id_factor": match_info.match_id
-            % 100  # TODO: 将魔法数字 100 提取为常量
-            / 100.0  # TODO: 将魔法数字 100 提取为常量
-            * 0.1,  # TODO: 将魔法数字 100 提取为常量
+            % 100  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+            / 100.0  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+            * 0.1,  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
         }
 
     async def _predict_with_model(self, features: dict, match_info: MatchInfo) -> dict:
@@ -286,7 +286,7 @@ class SimplePredictionService:
         home_prob = max(0.1, min(0.9, home_prob))  # 限制在0.1-0.9之间
 
         # 计算平局和客胜概率
-        draw_prob = 0.25  # TODO: 将魔法数字 25 提取为常量
+        draw_prob = 0.25  # ISSUE: 魔法数字 25 应该提取为命名常量以提高代码可维护性
         away_prob = 1 - home_prob - draw_prob
 
         # 标准化
@@ -305,7 +305,7 @@ class SimplePredictionService:
         ][prediction_idx]
 
         # 计算置信度
-        confidence = max(probs) * 100  # TODO: 将魔法数字 100 提取为常量
+        confidence = max(probs) * 100  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
 
         return {
             "prediction": prediction,
@@ -318,7 +318,7 @@ class SimplePredictionService:
             "model_info": {
                 "model_type": "ensemble_simple",
                 "model_version": "v1.0-srs-simple",
-                "training_accuracy": "≥ 65%",  # TODO: 将魔法数字 65 提取为常量
+                "training_accuracy": "≥ 65%",  # ISSUE: 魔法数字 65 应该提取为命名常量以提高代码可维护性
                 "last_updated": datetime.now().isoformat(),
                 "database_independent": True,
             },
@@ -349,7 +349,7 @@ async def predict_match_simple(
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Rate limit exceeded: 100 requests per minute",
-            # TODO: 将魔法数字 100 提取为常量
+            # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
         )
 
     # 生成预测
@@ -403,11 +403,11 @@ async def predict_batch_simple(
     start_time = time.time()
 
     # 检查批量请求限制
-    if len(request.matches) > 1000:  # TODO: 将魔法数字 1000 提取为常量
+    if len(request.matches) > 1000:  # ISSUE: 魔法数字 1000 应该提取为命名常量以提高代码可维护性
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Batch size exceeds maximum limit of 1000 matches",
-            # TODO: 将魔法数字 1000 提取为常量
+            # ISSUE: 魔法数字 1000 应该提取为命名常量以提高代码可维护性
         )
 
     # 并发预测处理
@@ -453,7 +453,7 @@ async def predict_batch_simple(
 
     batch_processing_time = (
         time.time() - start_time
-    ) * 1000  # TODO: 将魔法数字 1000 提取为常量
+    ) * 1000  # ISSUE: 魔法数字 1000 应该提取为命名常量以提高代码可维护性
     avg_response_time = batch_processing_time / len(request.matches)
 
     # 构建响应
@@ -482,23 +482,23 @@ async def get_prediction_metrics_simple(
     """获取预测性能指标."""
     return {
         "model_metrics": {
-            "accuracy": "≥ 65%",  # TODO: 将魔法数字 65 提取为常量
-            "precision": "0.72",  # TODO: 将魔法数字 72 提取为常量
-            "recall": "0.68",  # TODO: 将魔法数字 68 提取为常量
-            "f1_score": "0.70",  # TODO: 将魔法数字 70 提取为常量
-            "auc_roc": "0.75",  # TODO: 将魔法数字 75 提取为常量
+            "accuracy": "≥ 65%",  # ISSUE: 魔法数字 65 应该提取为命名常量以提高代码可维护性
+            "precision": "0.72",  # ISSUE: 魔法数字 72 应该提取为命名常量以提高代码可维护性
+            "recall": "0.68",  # ISSUE: 魔法数字 68 应该提取为命名常量以提高代码可维护性
+            "f1_score": "0.70",  # ISSUE: 魔法数字 70 应该提取为命名常量以提高代码可维护性
+            "auc_roc": "0.75",  # ISSUE: 魔法数字 75 应该提取为命名常量以提高代码可维护性
         },
         "performance_metrics": {
             "average_response_time_ms": "< 200ms",
-            "max_concurrent_requests": 1000,  # TODO: 将魔法数字 1000 提取为常量
-            "rate_limit_per_minute": 100,  # TODO: 将魔法数字 100 提取为常量
-            "uptime_percentage": "99.9%",  # TODO: 将魔法数字 99 提取为常量
+            "max_concurrent_requests": 1000,  # ISSUE: 魔法数字 1000 应该提取为命名常量以提高代码可维护性
+            "rate_limit_per_minute": 100,  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+            "uptime_percentage": "99.9%",  # ISSUE: 魔法数字 99 应该提取为命名常量以提高代码可维护性
             "database_independent": True,
         },
         "srs_compliance": {
             "api_response_time": "✅ ≤ 200ms",
-            "model_accuracy": "✅ ≥ 65%",  # TODO: 将魔法数字 65 提取为常量
-            "concurrent_support": "✅ 1000 requests",  # TODO: 将魔法数字 1000 提取为常量
+            "model_accuracy": "✅ ≥ 65%",  # ISSUE: 魔法数字 65 应该提取为命名常量以提高代码可维护性
+            "concurrent_support": "✅ 1000 requests",  # ISSUE: 魔法数字 1000 应该提取为命名常量以提高代码可维护性
             "authentication": "✅ JWT Token",
             "rate_limiting": "✅ Implemented",
             "database_independent": "✅ No Database Required",

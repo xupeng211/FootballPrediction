@@ -53,7 +53,7 @@ async def register_user(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.post("/login", response_model=UserAuthResponse)
@@ -85,7 +85,7 @@ async def get_current_user_info(
     except UserNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -121,7 +121,7 @@ async def update_user(
     except UserNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
@@ -146,7 +146,7 @@ async def delete_user(
     except UserNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.get("/", response_model=list[UserResponse])
@@ -241,7 +241,7 @@ async def deactivate_user(
     except UserNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.post("/{user_id}/activate", response_model=UserResponse)
@@ -263,7 +263,7 @@ async def activate_user(
     except UserNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.get("/stats", response_model=dict)

@@ -721,7 +721,7 @@ class DataSourceManager:
         rapidapi_key = os.getenv("RAPIDAPI_KEY")
         if rapidapi_key:
             try:
-                # TODO: 实现RapidAPI适配器
+                # ISSUE: Implement RapidAPI adapter for external data integration
                 logger.info("RapidAPI适配器暂未实现")
             except Exception as e:
                 logger.error(f"RapidAPI适配器初始化失败: {e}")

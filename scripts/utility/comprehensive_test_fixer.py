@@ -6,7 +6,10 @@
 
 import ast
 import re
+import shutil
+import os
 from pathlib import Path
+from datetime import datetime
 
 
 def fix_indentation_issues(content):
@@ -86,8 +89,28 @@ def fix_test_file(file_path):
         try:
             ast.parse(content)
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(content)
+                # 步骤 A - 创建备份
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_path = f"{file_path}.{timestamp}.bak"
+                shutil.copy2(file_path, backup_path)
+                print(f"    📋 已创建备份: {backup_path}")
+
+                try:
+                    # 步骤 B - 执行修复与写入
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+
+                    # 步骤 C - 清理备份文件（修复成功）
+                    os.remove(backup_path)
+                    print(f"    ✅ 修复成功并清理备份")
+
+                except Exception as write_error:
+                    # 步骤 D - 回滚（写入失败）
+                    print(f"    ❌ 写入失败，正在回滚: {write_error}")
+                    shutil.copy2(backup_path, file_path)
+                    os.remove(backup_path)
+                    return False, f"写入失败，已回滚: {write_error}"
+
             return True, "修复成功"
         except SyntaxError as e:
             return False, f"语法错误: 行 {e.lineno} - {e.msg}"

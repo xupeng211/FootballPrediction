@@ -10,7 +10,7 @@ class DatabaseSubsystem:
     pass  # 添加pass语句
     """数据库子系统"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class DataCollectionFacade:
@@ -19,4 +19,4 @@ class DataCollectionFacade:
     pass  # 添加pass语句
     """数据收集门面 - 专注于数据收集功能"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

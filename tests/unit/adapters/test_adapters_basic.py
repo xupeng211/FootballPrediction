@@ -136,10 +136,6 @@ class MockDataTransformer(DataTransformer):
             return f"{self.name}_transformed_{data}"
 
 
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Base adapter imports not available")
-class TestAdapterStatus:
-    """适配器状态测试"""
-
     def test_adapter_status_enum_values(self):
         """测试适配器状态枚举值"""
         assert AdapterStatus.ACTIVE.value == "active"
@@ -156,10 +152,6 @@ class TestAdapterStatus:
         assert AdapterStatus.ERROR in statuses
         assert AdapterStatus.MAINTENANCE in statuses
 
-
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Base adapter imports not available")
-class TestAdaptee:
-    """被适配者测试"""
 
     def test_mock_adaptee_initialization(self):
         """测试模拟被适配者初始化"""
@@ -198,10 +190,6 @@ class TestAdaptee:
             Adaptee()
 
 
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Base adapter imports not available")
-class TestTarget:
-    """目标接口测试"""
-
     def test_mock_target_initialization(self):
         """测试模拟目标接口初始化"""
         target = MockTarget("TestTarget")
@@ -225,10 +213,6 @@ class TestTarget:
         with pytest.raises(TypeError):
             Target()
 
-
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Base adapter imports not available")
-class TestAdapter:
-    """适配器测试"""
 
     def test_mock_adapter_initialization(self):
         """测试模拟适配器初始化"""
@@ -261,19 +245,11 @@ class TestAdapter:
         assert result["request_id"] == 1
 
 
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Base adapter imports not available")
-class TestBaseAdapter:
-    """基础适配器测试"""
-
     def test_base_adapter_is_abstract(self):
         """测试基础适配器是抽象的"""
         with pytest.raises(TypeError):
             BaseAdapter()
 
-
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Base adapter imports not available")
-class TestDataTransformer:
-    """数据转换器测试"""
 
     def test_mock_data_transformer_initialization(self):
         """测试模拟数据转换器初始化"""
@@ -306,10 +282,6 @@ class TestDataTransformer:
         with pytest.raises(TypeError):
             DataTransformer()
 
-
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Base adapter imports not available")
-class TestCompositeAdapter:
-    """组合适配器测试"""
 
     def test_composite_adapter_initialization(self):
         """测试组合适配器初始化"""
@@ -444,10 +416,6 @@ class TestCompositeAdapter:
         assert metrics["success_rate"] == 0
 
 
-@pytest.mark.skipif(not REGISTRY_AVAILABLE, reason="Registry imports not available")
-class TestAdapterRegistry:
-    """适配器注册表测试"""
-
     def test_adapter_registry_initialization(self):
         """测试适配器注册表初始化"""
         registry = AdapterRegistry()
@@ -517,10 +485,6 @@ class TestAdapterRegistry:
         assert len(registry.groups) == 0
 
 
-@pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory imports not available")
-class TestAdapterConfig:
-    """适配器配置测试"""
-
     def test_adapter_config_initialization_minimal(self):
         """测试适配器配置最小初始化"""
         config = AdapterConfig("TestAdapter", "test_type")
@@ -562,10 +526,6 @@ class TestAdapterConfig:
         assert config.retry_config is retry_config
 
 
-@pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory imports not available")
-class TestAdapterGroupConfig:
-    """适配器组配置测试"""
-
     def test_adapter_group_config_initialization_minimal(self):
         """测试适配器组配置最小初始化"""
         config = AdapterGroupConfig("TestGroup", ["Adapter1", "Adapter2"])
@@ -590,19 +550,11 @@ class TestAdapterGroupConfig:
         assert config.fallback_strategy == "parallel"
 
 
-@pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory imports not available")
-class TestAdapterFactory:
-    """适配器工厂测试"""
-
     def test_adapter_factory_initialization(self):
         """测试适配器工厂初始化"""
         factory = AdapterFactory()
         assert factory is not None
 
-
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Base adapter imports not available")
-class TestAdapterIntegration:
-    """适配器集成测试"""
 
     @pytest.mark.asyncio
     async def test_full_adapter_workflow(self):

@@ -21,7 +21,31 @@ from src.services.tenant_service import TenantCreationRequest, TenantService
 
 router = APIRouter(prefix="/api/v1/tenants", tags=["多租户管理"])
 
-# ==================== 请求/响应模型 ==================== None
+# ==================== 常量定义 ====================
+
+# 字段长度限制
+MAX_NAME_LENGTH = 100
+MAX_DOMAIN_LENGTH = 50
+MAX_ADMIN_EMAIL_LENGTH = 100
+MAX_ADMIN_NAME_LENGTH = 500
+MAX_CONTACT_EMAIL_LENGTH = 10000
+MAX_PLAN_NAME_LENGTH = 30
+MAX_SUBDOMAIN_LENGTH = 365
+
+# 分页限制
+DEFAULT_PAGE_SIZE = 50
+MAX_PAGE_SIZE = 100
+
+# 健康评分常量
+DEFAULT_HEALTH_SCORE = 100.0
+DOMAIN_PENALTY = 50.0
+EMAIL_PENALTY = 30.0
+HIGH_USAGE_PENALTY = 20.0
+MEDIUM_USAGE_PENALTY = 15.0
+HIGH_USAGE_THRESHOLD = 90
+MEDIUM_USAGE_THRESHOLD = 80
+
+# ==================== 请求/响应模型 ====================
 
 
 class TenantCreationRequestModel(BaseModel):
@@ -30,51 +54,34 @@ class TenantCreationRequestModel(BaseModel):
     name: str = Field(
         ...,
         min_length=1,
-        max_length=100,
-        # TODO: 将魔法数字 100 提取为常量
-        description="租户名称",  # TODO: 将魔法数字 100 提取为常量
-    )  # TODO: 将魔法数字 100 提取为常量
+        max_length=MAX_NAME_LENGTH,
+        description="租户名称",
+    )
     slug: str = Field(
         ...,
         min_length=1,
-        max_length=50,
-        # TODO: 将魔法数字 50 提取为常量
+        max_length=MAX_DOMAIN_LENGTH,
         description="租户标识符",
-        # TODO: 将魔法数字 50 提取为常量
-    )  # TODO: 将魔法数字 50 提取为常量
     contact_email: str = Field(..., description="联系邮箱")
     company_name: str | None = Field(
         None,
         max_length=100,
-        # TODO: 将魔法数字 100 提取为常量
         description="公司名称",
-        # TODO: 将魔法数字 100 提取为常量
-    )  # TODO: 将魔法数字 100 提取为常量
     description: str | None = Field(
         None,
-        max_length=500,
-        # TODO: 将魔法数字 500 提取为常量
+        max_length=MAX_ADMIN_NAME_LENGTH,
         description="租户描述",
-        # TODO: 将魔法数字 500 提取为常量
-    )  # TODO: 将魔法数字 500 提取为常量
     plan: str = Field("basic", description="租户计划")
     max_users: int = Field(
         10,
         ge=1,
         le=10000,
-        # TODO: 将魔法数字 10000 提取为常量
         description="最大用户数",
-        # TODO: 将魔法数字 10000 提取为常量
-    )  # TODO: 将魔法数字 10000 提取为常量
     trial_days: int = Field(
         30,
-        # TODO: 将魔法数字 30 提取为常量
         ge=1,
         le=365,
-        # TODO: 将魔法数字 365 提取为常量
         description="试用天数",
-        # TODO: 将魔法数字 30 提取为常量
-    )  # TODO: 将魔法数字 30 提取为常量
     custom_settings: dict[str, Any] | None = Field(None, description="自定义设置")
 
     @field_validator("slug")
@@ -92,36 +99,23 @@ class TenantUpdateRequestModel(BaseModel):
     name: str | None = Field(
         None,
         min_length=1,
-        max_length=100,  # TODO: 将魔法数字 100 提取为常量
-        description="租户名称",  # TODO: 将魔法数字 100 提取为常量
-    )  # TODO: 将魔法数字 100 提取为常量
+        max_length=MAX_NAME_LENGTH,
     description: str | None = Field(
         None,
-        max_length=500,
-        # TODO: 将魔法数字 500 提取为常量
+        max_length=MAX_ADMIN_NAME_LENGTH,
         description="租户描述",
-        # TODO: 将魔法数字 500 提取为常量
-    )  # TODO: 将魔法数字 500 提取为常量
     contact_email: str | None = Field(None, description="联系邮箱")
     contact_phone: str | None = Field(
         None,
-        max_length=50,
-        # TODO: 将魔法数字 50 提取为常量
+        max_length=MAX_DOMAIN_LENGTH,
         description="联系电话",
-        # TODO: 将魔法数字 50 提取为常量
-    )  # TODO: 将魔法数字 50 提取为常量
     company_name: str | None = Field(
         None,
-        max_length=100,  # TODO: 将魔法数字 100 提取为常量
-        description="公司名称",  # TODO: 将魔法数字 100 提取为常量
-    )  # TODO: 将魔法数字 100 提取为常量
+        max_length=MAX_NAME_LENGTH,
     company_address: str | None = Field(
         None,
-        max_length=500,
-        # TODO: 将魔法数字 500 提取为常量
+        max_length=MAX_ADMIN_NAME_LENGTH,
         description="公司地址",
-        # TODO: 将魔法数字 500 提取为常量
-    )  # TODO: 将魔法数字 500 提取为常量
     settings: dict[str, Any] | None = Field(None, description="租户设置")
     features: dict[str, bool] | None = Field(None, description="功能配置")
     branding: dict[str, Any] | None = Field(None, description="品牌定制")
@@ -439,13 +433,9 @@ async def list_tenants(
     skip: int = Query(0, ge=0, description="跳过数量"),
     limit: int = Query(
         50,
-        # TODO: 将魔法数字 50 提取为常量
         ge=1,
         le=100,
-        # TODO: 将魔法数字 100 提取为常量
         description="返回数量",
-        # TODO: 将魔法数字 50 提取为常量
-    ),  # TODO: 将魔法数字 50 提取为常量
     status: str | None = Query(None, description="状态筛选"),
     plan: str | None = Query(None, description="计划筛选"),
     search: str | None = Query(None, description="搜索关键词"),
@@ -508,24 +498,17 @@ async def tenant_health_check(tenant_id: int):
 # 重复的类定义已清理
 def _calculate_health_score(tenant: Tenant) -> float:
     """计算租户健康分数."""
-    score = 100.0  # TODO: 将魔法数字 100 提取为常量
 
     # 状态检查
     if tenant.status != "active":
-        score -= 50.0  # TODO: 将魔法数字 50 提取为常量
 
     # 订阅检查
     if not tenant.is_subscription_active:
-        score -= 30.0  # TODO: 将魔法数字 30 提取为常量
 
     # 使用率检查
-    if tenant.usage_percentage > 90:  # TODO: 将魔法数字 90 提取为常量
-        score -= 20.0  # TODO: 将魔法数字 20 提取为常量
-    elif tenant.usage_percentage > 80:  # TODO: 将魔法数字 80 提取为常量
         score -= 10.0
 
     # 过期时间检查
     if tenant.days_until_expiry is not None and tenant.days_until_expiry < 7:
-        score -= 15.0  # TODO: 将魔法数字 15 提取为常量
 
     return max(0.0, score)

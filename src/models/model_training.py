@@ -114,16 +114,21 @@ __all__ = [
     "HAS_MLFLOW",
     "mlflow",
     "MlflowClient",
+    "XGBClassifier",
+    "XGBRegressor",
 ]
 
 # 尝试导入XGBoost
 try:
     import xgboost as xgb
+    from xgboost import XGBClassifier, XGBRegressor
 
     HAS_XGB = True
 except ImportError:
     HAS_XGB = False
     xgb = None
+    XGBClassifier = None
+    XGBRegressor = None
 
 # 配置日志
 logger = logging.getLogger(__name__)
@@ -364,6 +369,308 @@ class BaselineModelTrainer:
             return self.model.predict_proba(X)
         else:
             raise ValueError("Model does not support probability predictions")
+
+    def train_xgboost(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        X_val: pd.DataFrame = None,
+        y_val: pd.Series = None,
+        params: Dict[str, Any] = None,
+        eval_set: List[Tuple[pd.DataFrame, pd.Series]] = None,
+        early_stopping_rounds: int = 50,
+        verbose: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        训练 XGBoost 模型
+
+        Args:
+            X_train: 训练特征数据
+            y_train: 训练标签数据
+            X_val: 验证特征数据（可选）
+            y_val: 验证标签数据（可选）
+            params: XGBoost 模型参数
+            eval_set: 评估数据集列表
+            early_stopping_rounds: 早停轮数
+            verbose: 是否输出训练信息
+
+        Returns:
+            包含模型和评估指标的字典
+        """
+        if not HAS_XGB:
+            raise ImportError("XGBoost is not installed. Please install with: pip install xgboost")
+
+        # 设置默认参数
+        default_params = {
+            'objective': 'binary:logistic',  # 二分类任务
+            'eval_metric': 'logloss',       # 评估指标
+            'n_estimators': 1000,           # 最大树数量
+            'max_depth': 6,                 # 树的最大深度
+            'learning_rate': 0.1,           # 学习率
+            'subsample': 0.8,               # 子样本比例
+            'colsample_bytree': 0.8,        # 特征采样比例
+            'random_state': 42,             # 随机种子
+            'n_jobs': -1,                   # 并行作业数
+            'reg_alpha': 0,                 # L1正则化
+            'reg_lambda': 1,                # L2正则化
+            'min_child_weight': 1,          # 叶子节点最小权重
+            'gamma': 0,                     # 最小分裂增益
+        }
+
+        # 合并用户参数
+        if params:
+            default_params.update(params)
+        else:
+            params = default_params
+
+        logger.info(f"Training XGBoost model with parameters: {params}")
+
+        # 准备评估数据集
+        if eval_set is None and X_val is not None and y_val is not None:
+            eval_set = [(X_train, y_train)]
+            if X_val is not None and y_val is not None:
+                eval_set.append((X_val, y_val))
+
+        # 创建并训练 XGBoost 模型
+        if self.use_mlflow:
+            with mlflow.start_run(
+                run_name=f"xgboost_{self.model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            ) as run:
+                return self._train_xgboost_with_mlflow(
+                    X_train, y_train, X_val, y_val, params,
+                    eval_set, early_stopping_rounds, verbose, run.run_id
+                )
+        else:
+            return self._train_xgboost_without_mlflow(
+                X_train, y_train, X_val, y_val, params,
+                eval_set, early_stopping_rounds, verbose
+            )
+
+    def _train_xgboost_without_mlflow(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        X_val: pd.DataFrame,
+        y_val: pd.Series,
+        params: Dict[str, Any],
+        eval_set: List[Tuple[pd.DataFrame, pd.Series]],
+        early_stopping_rounds: int,
+        verbose: bool,
+    ) -> Dict[str, Any]:
+        """不使用 MLflow 训练 XGBoost 模型"""
+        try:
+            # 创建 XGBoost 分类器
+            self.model = XGBClassifier(**params)
+
+            # 训练模型
+            fit_params = {}
+            if eval_set:
+                fit_params['eval_set'] = eval_set
+                if early_stopping_rounds:
+                    fit_params['early_stopping_rounds'] = early_stopping_rounds
+
+            self.model.fit(X_train, y_train, **fit_params)
+
+            # 评估模型
+            metrics = {}
+            if X_val is not None and y_val is not None:
+                metrics = self._evaluate_model(X_val, y_val)
+
+            # 添加 XGBoost 特定的评估指标
+            if eval_set:
+                # 获取训练过程中的最佳分数
+                if hasattr(self.model, 'best_score'):
+                    metrics['best_eval_score'] = self.model.best_score
+                if hasattr(self.model, 'best_iteration'):
+                    metrics['best_iteration'] = self.model.best_iteration
+
+            # 标记为已训练
+            self.is_trained = True
+
+            # 保存模型
+            self.save_model()
+
+            # 记录训练历史
+            self.training_history = {
+                "model_type": "xgboost",
+                "model_params": params,
+                "metrics": metrics,
+                "timestamp": datetime.now().isoformat(),
+                "early_stopping_rounds": early_stopping_rounds,
+                "eval_sets_provided": len(eval_set) if eval_set else 0
+            }
+
+            logger.info(f"XGBoost model {self.model_name} trained successfully")
+            if verbose and metrics:
+                logger.info(f"Validation metrics: {metrics}")
+
+            return {
+                "model": self.model,
+                "metrics": metrics,
+                "training_history": self.training_history,
+                "feature_importance": self._get_feature_importance()
+            }
+
+        except Exception as e:
+            logger.error(f"XGBoost training failed: {e}")
+            raise
+
+    def _train_xgboost_with_mlflow(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        X_val: pd.DataFrame,
+        y_val: pd.Series,
+        params: Dict[str, Any],
+        eval_set: List[Tuple[pd.DataFrame, pd.Series]],
+        early_stopping_rounds: int,
+        verbose: bool,
+        run_id: str,
+    ) -> Dict[str, Any]:
+        """使用 MLflow 训练 XGBoost 模型"""
+        try:
+            # 记录参数到 MLflow
+            mlflow.log_params(params)
+
+            # 训练模型
+            result = self._train_xgboost_without_mlflow(
+                X_train, y_train, X_val, y_val, params,
+                eval_set, early_stopping_rounds, verbose
+            )
+
+            # 记录指标到 MLflow
+            if result["metrics"]:
+                mlflow.log_metrics(result["metrics"])
+
+            # 记录模型到 MLflow
+            mlflow.sklearn.log_model(self.model, "xgboost_model")
+
+            # 记录特征重要性
+            if "feature_importance" in result:
+                feature_importance = result["feature_importance"]
+                if feature_importance is not None:
+                    # 创建特征重要性图表或记录为指标
+                    for i, importance in enumerate(feature_importance):
+                        mlflow.log_metric(f"feature_importance_{i}", importance)
+
+            logger.info(f"XGBoost model logged to MLflow with run ID: {run_id}")
+            return result
+
+        except Exception as e:
+            logger.error(f"XGBoost training with MLflow failed: {e}")
+            raise
+
+    def _get_feature_importance(self) -> np.ndarray:
+        """获取特征重要性"""
+        if not self.is_trained or not HAS_XGB:
+            return None
+
+        try:
+            if hasattr(self.model, 'feature_importances_'):
+                return self.model.feature_importances_
+            elif hasattr(self.model, 'get_booster'):
+                # XGBoost 的 booster 对象
+                booster = self.model.get_booster()
+                importance_dict = booster.get_score(importance_type='weight')
+                # 将字典转换为数组（按特征顺序）
+                if importance_dict:
+                    max_feature_index = max(int(k[1:]) for k in importance_dict.keys())
+                    importance_array = np.zeros(max_feature_index + 1)
+                    for k, v in importance_dict.items():
+                        feature_idx = int(k[1:])
+                        importance_array[feature_idx] = v
+                    return importance_array
+            return None
+        except Exception as e:
+            logger.warning(f"Could not get feature importance: {e}")
+            return None
+
+    def optimize_xgboost_hyperparameters(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        X_val: pd.DataFrame,
+        y_val: pd.Series,
+        param_grid: Dict[str, List[Any]] = None,
+        cv_folds: int = 3,
+        scoring: str = 'f1_weighted',
+        n_trials: int = 50,
+    ) -> Dict[str, Any]:
+        """
+        XGBoost 超参数优化（简化版随机搜索）
+
+        Args:
+            X_train: 训练特征数据
+            y_train: 训练标签数据
+            X_val: 验证特征数据
+            y_val: 验证标签数据
+            param_grid: 参数搜索网格
+            cv_folds: 交叉验证折数
+            scoring: 评估指标
+            n_trials: 随机搜索次数
+
+        Returns:
+            最佳参数和对应的评分
+        """
+        if not HAS_SCIPY or not HAS_XGB:
+            raise ImportError("Required libraries not available for hyperparameter optimization")
+
+        # 默认参数搜索空间
+        default_param_grid = {
+            'max_depth': [3, 4, 5, 6, 7, 8],
+            'learning_rate': [0.01, 0.05, 0.1, 0.2, 0.3],
+            'n_estimators': [100, 200, 300, 500, 1000],
+            'subsample': [0.6, 0.7, 0.8, 0.9, 1.0],
+            'colsample_bytree': [0.6, 0.7, 0.8, 0.9, 1.0],
+            'reg_alpha': [0, 0.1, 0.5, 1.0, 2.0],
+            'reg_lambda': [0.5, 1.0, 2.0, 3.0, 5.0],
+            'min_child_weight': [1, 3, 5, 7, 10],
+        }
+
+        if param_grid:
+            default_param_grid.update(param_grid)
+
+        best_score = float('-inf')
+        best_params = None
+
+        logger.info(f"Starting XGBoost hyperparameter optimization with {n_trials} trials")
+
+        for trial in range(n_trials):
+            # 随机选择参数
+            current_params = {}
+            for param_name, param_values in default_param_grid.items():
+                current_params[param_name] = np.random.choice(param_values)
+
+            try:
+                # 训练模型
+                self.model = XGBClassifier(**current_params)
+                self.model.fit(X_train, y_train)
+
+                # 评估模型
+                y_pred = self.model.predict(X_val)
+                from sklearn.metrics import f1_score
+                current_score = f1_score(y_val, y_pred, average='weighted')
+
+                # 更新最佳参数
+                if current_score > best_score:
+                    best_score = current_score
+                    best_params = current_params.copy()
+
+                if trial % 10 == 0:
+                    logger.info(f"Trial {trial}: Score = {current_score:.4f}")
+
+            except Exception as e:
+                logger.warning(f"Trial {trial} failed: {e}")
+                continue
+
+        logger.info(f"Best score: {best_score:.4f}")
+        logger.info(f"Best parameters: {best_params}")
+
+        return {
+            "best_params": best_params,
+            "best_score": best_score,
+            "trials_completed": n_trials
+        }
 
 
 # 保持向后兼容

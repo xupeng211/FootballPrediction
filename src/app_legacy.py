@@ -6,6 +6,9 @@ from fastapi import FastAPI
 Root Directory Simplified FastAPI Application
 """
 
+# 常量定义
+DEFAULT_PORT = 8000
+
 # 创建简化的FastAPI应用
 app = FastAPI(
     title="Football Prediction API",
@@ -34,7 +37,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
-        port=8000,  # TODO: 将魔法数字 8000 提取为常量
+        port=DEFAULT_PORT,
         reload=True,
         log_level="info",
     )

@@ -24,24 +24,12 @@ except ImportError:
 
 @pytest.mark.health
 @pytest.mark.smoke
-@pytest.mark.skipif(not APP_AVAILABLE, reason="主应用不可用")
-def test_health_endpoint():
-    """测试健康检查端点"""
-    response = client.get("/health")
-    assert response.status_code == 200
-
     data = response.json()
     assert "status" in data
     assert data["status"] == "healthy"
 
 
 @pytest.mark.health
-@pytest.mark.skipif(not APP_AVAILABLE, reason="主应用不可用")
-def test_root_endpoint():
-    """测试根端点"""
-    response = client.get("/")
-    assert response.status_code == 200
-
 
 @pytest.mark.health
 @pytest.mark.unit

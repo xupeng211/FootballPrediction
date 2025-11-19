@@ -10,7 +10,7 @@ class PerformanceInsight:
     pass  # 添加pass语句
     """性能洞察数据结构"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class PerformanceTrend:
@@ -19,4 +19,4 @@ class PerformanceTrend:
     pass  # 添加pass语句
     """性能趋势数据"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

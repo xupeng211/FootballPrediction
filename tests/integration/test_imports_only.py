@@ -43,7 +43,7 @@ def test_critical_imports():
 
     if failed_modules:
         for _module, _error in failed_modules:
-            pass  # TODO: Add logger import if needed
+            pass
 
     return success_count == len(critical_modules)
 

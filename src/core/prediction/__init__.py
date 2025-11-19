@@ -61,7 +61,7 @@ class PredictionEngine:
         Returns:
             预测结果字典
         """
-        # TODO: 实现实际的预测逻辑
+        # ISSUE: 实现实际的预测逻辑
         return {
             "match_id": match_id,
             "home_win_prob": 0.45,

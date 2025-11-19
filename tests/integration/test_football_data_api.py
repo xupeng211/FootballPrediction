@@ -47,7 +47,7 @@ async def test_football_data_api():
         # 显示前3场比赛
         if matches:
             for _i, _match in enumerate(matches[:3], 1):
-                pass  # TODO: Add logger import if needed
+                pass
 
         # 测试获取球队数据
         teams = await adapter.get_teams()
@@ -56,7 +56,7 @@ async def test_football_data_api():
         if teams:
             for _i, team in enumerate(teams[:5], 1):
                 if team.venue:
-                    pass  # TODO: Add logger import if needed
+                    pass
 
         return True
 
@@ -73,9 +73,9 @@ async def main():
     success = await test_football_data_api()
 
     if success:
-        pass  # TODO: Add logger import if needed
+        pass
     else:
-        pass  # TODO: Add logger import if needed
+        pass
 
 
 if __name__ == "__main__":

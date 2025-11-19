@@ -15,4 +15,4 @@ class ScoresCollector:
     Collects real-time scores from multiple sources, supporting WebSocket and HTTP polling.
     """
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

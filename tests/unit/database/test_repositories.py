@@ -206,12 +206,6 @@ class MockDatabaseManager:
         return MockAsyncSessionContext(self.session)
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="数据库模块导入失败")
-@pytest.mark.unit
-@pytest.mark.database
-class TestBaseRepository:
-    """基础仓储测试"""
-
     @pytest_asyncio.fixture
     async def mock_db_manager(self):
         """模拟数据库管理器"""
@@ -511,12 +505,6 @@ class TestBaseRepository:
         assert result is False
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="数据库模块导入失败")
-@pytest.mark.unit
-@pytest.mark.database
-class TestDatabaseManager:
-    """数据库管理器测试"""
-
     @pytest.mark.asyncio
     async def test_database_manager_initialization(self):
         """测试数据库管理器初始化"""
@@ -553,12 +541,6 @@ class TestDatabaseManager:
         # 验证会话已被移除
         assert session not in db_manager.sessions
 
-
-@pytest.mark.skipif(not CAN_IMPORT, reason="数据库模块导入失败")
-@pytest.mark.unit
-@pytest.mark.database
-class TestTransactionManagement:
-    """事务管理测试"""
 
     @pytest_asyncio.fixture
     async def mock_db_manager(self):

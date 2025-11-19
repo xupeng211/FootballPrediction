@@ -1,0 +1,198 @@
+# 🚀 Football Prediction Project - Simplified Makefile
+# Author: MLOps Engineer
+# Description: Streamlined Makefile with Prefect workflow integration
+# Simplified from 156 targets to 9 core targets
+
+# ============================================================================
+# 🔧 Configuration Variables
+# ============================================================================
+PYTHON := python3
+VENV := .venv
+VENV_BIN := $(VENV)/bin
+ACTIVATE := . $(VENV_BIN)/activate
+COVERAGE_THRESHOLD := 40
+IMAGE_NAME := football-prediction
+GIT_SHA := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+# Colors
+GREEN := \033[32m
+YELLOW := \033[33m
+RED := \033[31m
+BLUE := \033[34m
+RESET := \033[0m
+
+# ============================================================================
+# 🎯 Default Target
+# ============================================================================
+.DEFAULT_GOAL := help
+
+help: ## 📋 Show available commands
+	@echo "$(BLUE)🚀 Football Prediction Project - Simplified Commands$(RESET)"
+	@echo "$(YELLOW)Environment:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Environment/ {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)Quality:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Quality/ {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)Testing:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Test/ {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)Deployment:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*(Deploy|Container|Prefect)/ {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)Other:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && !/Environment|Quality|Test|Deploy|Container|Prefect/ {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+# ============================================================================
+# 🌍 Environment Management
+# ============================================================================
+install: ## Environment: Install dependencies
+	@echo "$(YELLOW)Installing dependencies...$(RESET)"
+	@if [ ! -d "$(VENV)" ]; then \
+		echo "$(BLUE)Creating virtual environment...$(RESET)"; \
+		$(PYTHON) -m venv $(VENV); \
+		echo "$(GREEN)✅ Virtual environment created$(RESET)"; \
+	fi
+	@$(ACTIVATE) && \
+		pip install --upgrade pip && \
+		if [ -f "requirements.txt" ]; then pip install -r requirements.txt; fi && \
+		if [ -f "requirements-dev.txt" ]; then pip install -r requirements-dev.txt; fi && \
+		if [ -f "pyproject.toml" ]; then pip install -e ".[dev,test]" || pip install -e ".[dev]"; fi && \
+		echo "$(GREEN)✅ Dependencies installed$(RESET)"
+
+clean: ## Environment: Remove cache and build files
+	@echo "$(YELLOW)Cleaning up...$(RESET)"
+	@rm -rf $(VENV) __pycache__ .pytest_cache .mypy_cache .coverage htmlcov/ build/ dist/
+	@find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type f -name "*.pyc" -delete
+	@echo "$(GREEN)✅ Cleanup completed$(RESET)"
+
+# ============================================================================
+# 🎨 Code Quality
+# ============================================================================
+lint: ## Quality: Run code quality checks
+	@$(ACTIVATE) && \
+		echo "$(YELLOW)Running code quality checks...$(RESET)" && \
+		ruff check src/ tests/ && \
+		echo "$(BLUE)Running type checking...$(RESET)" && \
+		mypy src/ --ignore-missing-imports || echo "$(YELLOW)⚠️ Type check completed with warnings$(RESET)" && \
+		echo "$(GREEN)✅ Code quality checks passed$(RESET)"
+
+format: ## Quality: Format code
+	@$(ACTIVATE) && \
+		echo "$(YELLOW)Formatting code...$(RESET)" && \
+		ruff format src/ tests/ && \
+		echo "$(GREEN)✅ Code formatted$(RESET)"
+
+fix-code: ## Quality: Auto-fix code issues
+	@$(ACTIVATE) && \
+		echo "$(YELLOW)Fixing code quality issues...$(RESET)" && \
+		ruff check src/ tests/ --fix && \
+		ruff format src/ tests/ && \
+		echo "$(GREEN)✅ Code issues fixed$(RESET)"
+
+# ============================================================================
+# 🧪 Testing
+# ============================================================================
+test: test.unit ## Test: Run unit tests (default)
+	@$(ACTIVATE) && \
+		echo "$(YELLOW)Running unit tests...$(RESET)" && \
+		pytest tests/unit/ -v --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD)
+
+test.unit: ## Test: Run only unit tests
+	@$(ACTIVATE) && \
+		echo "$(YELLOW)Running unit tests...$(RESET)" && \
+		pytest tests/unit/ -v --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD)
+
+test.all: ## Test: Run all tests
+	@$(ACTIVATE) && \
+		echo "$(YELLOW)Running all tests...$(RESET)" && \
+		pytest tests/ -v --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD)
+
+test.smart: ## Test: Run quick tests
+	@$(ACTIVATE) && \
+		echo "$(YELLOW)Running quick tests...$(RESET)" && \
+		pytest -m "not slow" --maxfail=5 -v
+
+coverage: ## Test: Generate coverage report
+	@$(ACTIVATE) && \
+		echo "$(YELLOW)Generating coverage report...$(RESET)" && \
+		pytest --cov=src --cov-report=html --cov-report=term-missing && \
+		echo "$(GREEN)✅ Coverage report generated in htmlcov/$(RESET)"
+
+# ============================================================================
+# 🚀 Deployment
+# ============================================================================
+up: ## Container: Start development services
+	@echo "$(YELLOW)Starting development services...$(RESET)"
+	@docker-compose up -d && \
+		echo "$(GREEN)✅ Services started$(RESET)"
+
+down: ## Container: Stop services
+	@echo "$(YELLOW)Stopping services...$(RESET)"
+	@docker-compose down && \
+		echo "$(GREEN)✅ Services stopped$(RESET)"
+
+deploy: ## Container: Build and deploy
+	@echo "$(YELLOW)Building and deploying...$(RESET)"
+	@docker build -t $(IMAGE_NAME):$(GIT_SHA) . && \
+		echo "$(GREEN)✅ Deployment completed$(RESET)"
+
+# ============================================================================
+# 🤖 Prefect Workflow Orchestration
+# ============================================================================
+run.workflow: ## Prefect: Run Prefect data pipeline workflow
+	@$(ACTIVATE) && \
+		echo "$(BLUE)🚀 Starting Prefect data pipeline workflow...$(RESET)" && \
+		python src/workflows/data_pipeline.py
+
+run.worker: ## Prefect: Run Prefect worker
+	@echo "$(BLUE)🤖 Starting Prefect worker...$(RESET)"
+	@$(ACTIVATE) && \
+		prefect worker start
+
+run.api: ## Prefect Run API server
+	@echo "$(BLUE)🌐 Starting API server...$(RESET)"
+	@$(ACTIVATE) && \
+		python src/main.py
+
+# ============================================================================
+# 🤖 MLOps Tools
+# ============================================================================
+mlops.monitor: ## MLOps: Run MLOps monitoring
+	@$(ACTIVATE) && \
+		echo "$(BLUE)📊 Running MLOps monitoring...$(RESET)" && \
+		python scripts/mlops_monitor.py
+
+mlops.feedback: ## MLOps: Update prediction feedback
+	@$(ACTIVATE) && \
+		echo "$(YELLOW)🔄 Updating prediction feedback...$(RESET)" && \
+		python scripts/update_predictions_results.py --update
+
+# ============================================================================
+# 🔍 Professional Analysis
+# ============================================================================
+doctor: ## Development: Run health check
+	@echo "$(BLUE)🩺 Running development health check...$(RESET)"
+	@echo "$(GREEN)✅ System ready$(RESET)"
+
+status: ## Analytics: Show project status
+	@echo "$(BLUE)📊 Project Status:$(RESET)"
+	@$(ACTIVATE) && \
+		echo "✅ Python: $(shell python --version 2>&1)" && \
+		echo "✅ Location: $(shell pwd)" && \
+		echo "✅ Branch: $(shell git branch --show-current 2>/dev/null || echo 'unknown')"
+
+# ============================================================================
+# 📊 Monitoring and Analytics
+# ============================================================================
+metrics: ## Analytics: Generate performance metrics
+	@$(ACTIVATE) && \
+		echo "$(BLUE)📈 Generating performance metrics...$(RESET)" && \
+		python scripts/generate_metrics.py
+
+logs: ## Container: Show service logs
+	@echo "$(GREEN)Following service logs... (Ctrl+C to exit)$(RESET)"
+	@docker-compose logs -f
+
+# ============================================================================
+# 📋 Phony Targets
+# ============================================================================
+.PHONY: help install clean lint format fix-code test test.unit test.all test.smart coverage up down deploy \
+        run.workflow run.worker run.api mlops.monitor mlops.feedback doctor status metrics logs

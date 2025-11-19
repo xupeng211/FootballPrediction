@@ -23,7 +23,7 @@ class FootballFeatureStore:
     - 特征注册和版本管理
     - 在线/离线特征同步"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class MockFeatureStore:
@@ -32,4 +32,4 @@ class MockFeatureStore:
     pass  # 添加pass语句
     """测试友好的Feast替代实现."""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

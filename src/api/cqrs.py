@@ -91,7 +91,7 @@ async def get_prediction(
     except Exception as e:
         raise HTTPException(
             status_code=404, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.get("/predictions/", response_model=list[PredictionResponse])
@@ -138,7 +138,7 @@ async def get_match(
     except Exception as e:
         raise HTTPException(
             status_code=404, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.get("/matches/", response_model=list[MatchResponse])
@@ -182,7 +182,7 @@ async def get_user(
     except Exception as e:
         raise HTTPException(
             status_code=404, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.get("/users/", response_model=list[UserResponse])
@@ -225,4 +225,4 @@ async def get_analytics(
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=str(e)
-        ) from e  # TODO: B904 exception chaining
+        ) from e

@@ -25,7 +25,7 @@ async def test_basic_api():
     """测试基本的API连接"""
     api_key = os.getenv("FOOTBALL_DATA_API_KEY")
     if not api_key:
-        logger.debug("❌ 未找到API密钥")  # TODO: Add logger import if needed
+        logger.debug("❌ 未找到API密钥")
         return
 
     headers = {"X-Auth-Token": api_key}
@@ -34,7 +34,7 @@ async def test_basic_api():
     async with aiohttp.ClientSession(headers=headers) as session:
         try:
             # 测试1: 获取可用的比赛列表
-            logger.debug("🔧 测试获取比赛列表...")  # TODO: Add logger import if needed
+            logger.debug("🔧 测试获取比赛列表...")
             url = f"{base_url}/matches"
 
             params = {"limit": 10}
@@ -42,14 +42,14 @@ async def test_basic_api():
             async with session.get(url, params=params) as response:
                 logger.debug(
                     f"状态码: {response.status}"
-                )  # TODO: Add logger import if needed
+                )
 
                 if response.status == 200:
                     data = await response.json()
                     matches = data.get("matches", [])
                     logger.debug(
                         f"✅ 获取到 {len(matches)} 场比赛"
-                    )  # TODO: Add logger import if needed
+                    )
 
                     # 显示前3场比赛
                     for i, match in enumerate(matches[:3], 1):
@@ -62,41 +62,41 @@ async def test_basic_api():
 
                         logger.debug(
                             f"  {i}. {home_team} vs {away_team}"
-                        )  # TODO: Add logger import if needed
+                        )
                         logger.debug(
                             f"     联赛: {competition}"
-                        )  # TODO: Add logger import if needed
+                        )
                         logger.debug(
                             f"     时间: {utc_date}"
-                        )  # TODO: Add logger import if needed
-                        logger.debug()  # TODO: Add logger import if needed
+                        )
+                        logger.debug()
 
                 else:
                     error_text = await response.text()
                     logger.debug(
                         f"❌ API请求失败: {response.status}"
-                    )  # TODO: Add logger import if needed
+                    )
                     logger.error(
                         f"错误详情: {error_text}"
-                    )  # TODO: Add logger import if needed
+                    )
 
             # 测试2: 获取可用比赛
             logger.debug(
                 "\n🏆 测试获取可用比赛..."
-            )  # TODO: Add logger import if needed
+            )
             url = f"{base_url}/competitions"
 
             async with session.get(url) as response:
                 logger.debug(
                     f"状态码: {response.status}"
-                )  # TODO: Add logger import if needed
+                )
 
                 if response.status == 200:
                     data = await response.json()
                     competitions = data.get("competitions", [])
                     logger.debug(
                         f"✅ 获取到 {len(competitions)} 个比赛"
-                    )  # TODO: Add logger import if needed
+                    )
 
                     # 显示前5个比赛
                     for i, comp in enumerate(competitions[:5], 1):
@@ -106,19 +106,19 @@ async def test_basic_api():
 
                         logger.debug(
                             f"  {i}. {name} ({code}) - {area}"
-                        )  # TODO: Add logger import if needed
+                        )
 
                 else:
                     error_text = await response.text()
                     logger.debug(
                         f"❌ API请求失败: {response.status}"
-                    )  # TODO: Add logger import if needed
+                    )
                     logger.error(
                         f"错误详情: {error_text}"
-                    )  # TODO: Add logger import if needed
+                    )
 
         except Exception as e:
-            logger.debug(f"❌ 测试失败: {e}")  # TODO: Add logger import if needed
+            logger.debug(f"❌ 测试失败: {e}")
             import traceback
 
             traceback.print_exc()

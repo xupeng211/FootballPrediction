@@ -138,9 +138,9 @@ def run_coverage_tests():
             if test_func():
                 passed += 1
             else:
-                pass  # TODO: Add logger import if needed
+                pass
         except Exception:
-            pass  # TODO: Add logger import if needed
+            pass
 
     success_rate = (passed / total) * 100
 
@@ -175,13 +175,13 @@ if __name__ == "__main__":
     estimated_coverage = estimate_coverage()
 
     if success_rate >= 80:
-        pass  # TODO: Add logger import if needed
+        pass
     elif success_rate >= 60:
-        pass  # TODO: Add logger import if needed
+        pass
     else:
-        pass  # TODO: Add logger import if needed
+        pass
 
     if estimated_coverage >= 15:
-        pass  # TODO: Add logger import if needed
+        pass
     else:
-        pass  # TODO: Add logger import if needed
+        pass

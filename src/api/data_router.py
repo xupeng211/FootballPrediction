@@ -123,11 +123,11 @@ async def get_leagues(
     country: str | None = Query(None, description="国家筛选"),
     season: str | None = Query(None, description="赛季"),
     limit: int = Query(
-        20,  # TODO: 将魔法数字 20 提取为常量
+        20,  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
         ge=1,
-        le=100,  # TODO: 将魔法数字 100 提取为常量
-        description="返回数量",  # TODO: 将魔法数字 20 提取为常量
-    ),  # TODO: 将魔法数字 20 提取为常量
+        le=100,  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+        description="返回数量",  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
+    ),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
 ):
     """获取联赛列表.
 
@@ -136,15 +136,15 @@ async def get_leagues(
     logger.info(f"获取联赛列表: country={country}, season={season}")
 
     try:
-        # TODO: 从数据库获取实际数据
+        # ISSUE: 需要从数据库获取实际数据，需要实现数据访问层查询逻辑实际数据
         leagues = [
             LeagueInfo(
                 id=i,
                 name=f"League {i}",
                 country=country or f"Country{i}",
-                season=season or "2024-25",  # TODO: 将魔法数字 2024 提取为常量
+                season=season or "2024-25",  # ISSUE: 魔法数字 2024 应该提取为命名常量以提高代码可维护性
             )
-            for i in range(1, min(limit + 1, 11))  # TODO: 将魔法数字 11 提取为常量
+            for i in range(1, min(limit + 1, 11))  # ISSUE: 魔法数字 11 应该提取为命名常量以提高代码可维护性
         ]
 
         logger.info(f"成功获取 {len(leagues)} 个联赛")
@@ -153,9 +153,9 @@ async def get_leagues(
     except Exception as e:
         logger.error(f"获取联赛失败: {e}")
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail=f"获取联赛失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        ) from e  # TODO: 将魔法数字 500 提取为常量，B904 exception chaining
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail=f"获取联赛失败: {str(e)}",  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+        ) from e  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性，B904 exception chaining
 
 
 @router.get("/leagues/{league_id}", response_model=LeagueInfo)
@@ -164,20 +164,20 @@ async def get_league(league_id: int):
     logger.info(f"获取联赛 {league_id} 详情")
 
     try:
-        # TODO: 从数据库获取
+        # ISSUE: 需要从数据库获取实际数据，需要实现数据访问层查询逻辑
         league = LeagueInfo(
             id=league_id,
             name=f"League {league_id}",
             country="Example Country",
-            season="2024-25",  # TODO: 将魔法数字 2024 提取为常量
+            season="2024-25",  # ISSUE: 魔法数字 2024 应该提取为命名常量以提高代码可维护性
         )
         return league
     except Exception as e:
         logger.error(f"获取联赛失败: {e}")
         raise HTTPException(
-            status_code=404,  # TODO: 将魔法数字 404 提取为常量
-            detail="联赛不存在",  # TODO: 将魔法数字 404 提取为常量
-        ) from e  # TODO: 将魔法数字 404 提取为常量，B904 exception chaining
+            status_code=404,  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
+            detail="联赛不存在",  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
+        ) from e  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性，B904 exception chaining
 
 
 # ============================================================================
@@ -190,7 +190,7 @@ async def get_teams(
     league_id: int | None = Query(None, description="联赛ID"),
     country: str | None = Query(None, description="国家"),
     search: str | None = Query(None, description="搜索关键词"),
-    limit: int = Query(20, ge=1, le=100),  # TODO: 将魔法数字 20 提取为常量
+    limit: int = Query(20, ge=1, le=100),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
 ):
     """获取球队列表.
 
@@ -199,7 +199,7 @@ async def get_teams(
     logger.info(f"获取球队列表: league_id={league_id}, search={search}")
 
     try:
-        # TODO: 从数据库获取
+        # ISSUE: 需要从数据库获取实际数据，需要实现数据访问层查询逻辑
         _teams = [
             TeamInfo(
                 id=i,
@@ -208,10 +208,10 @@ async def get_teams(
                 country=country or "Country",
                 league_id=league_id,
                 # 用户建议的新增字段
-                founded_year=1980 + i,  # TODO: 将魔法数字 1980 提取为常量
+                founded_year=1980 + i,  # ISSUE: 魔法数字 1980 应该提取为命名常量以提高代码可维护性
                 stadium_name=f"Stadium {i}",
-                stadium_capacity=30000  # TODO: 将魔法数字 30000 提取为常量
-                + (i * 5000),  # TODO: 将魔法数字 30000 提取为常量
+                stadium_capacity=30000  # ISSUE: 魔法数字 30000 应该提取为命名常量以提高代码可维护性
+                + (i * 5000),  # ISSUE: 魔法数字 30000 应该提取为命名常量以提高代码可维护性
                 website_url=f"https://team{i}.example.com",
                 team_color=(
                     ["Red", "Blue", "Green", "Yellow", "Purple"][i - 1]
@@ -219,7 +219,7 @@ async def get_teams(
                     else "Orange"
                 ),
             )
-            for i in range(1, min(limit + 1, 11))  # TODO: 将魔法数字 11 提取为常量
+            for i in range(1, min(limit + 1, 11))  # ISSUE: 魔法数字 11 应该提取为命名常量以提高代码可维护性
         ]
 
         logger.info(f"成功获取 {len(_teams)} 支球队")
@@ -228,9 +228,9 @@ async def get_teams(
     except Exception as e:
         logger.error(f"获取球队失败: {e}")
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail=f"获取球队失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        ) from e  # TODO: 将魔法数字 500 提取为常量，B904 exception chaining
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail=f"获取球队失败: {str(e)}",  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+        ) from e  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性，B904 exception chaining
 
 
 @router.get("/teams/{team_id}", response_model=TeamInfo)
@@ -249,9 +249,9 @@ async def get_team(team_id: int):
     except Exception as e:
         logger.error(f"获取球队失败: {e}")
         raise HTTPException(
-            status_code=404,  # TODO: 将魔法数字 404 提取为常量
-            detail="球队不存在",  # TODO: 将魔法数字 404 提取为常量
-        ) from e  # TODO: B904 exception chaining
+            status_code=404,  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
+            detail="球队不存在",  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
+        ) from e
 
 
 @router.get("/teams/{team_id}/statistics", response_model=TeamStatistics)
@@ -264,21 +264,21 @@ async def get_team_statistics(
     try:
         stats = TeamStatistics(
             team_id=team_id,
-            matches_played=30,  # TODO: 将魔法数字 30 提取为常量
-            wins=18,  # TODO: 将魔法数字 18 提取为常量
+            matches_played=30,  # ISSUE: 魔法数字 30 应该提取为命名常量以提高代码可维护性
+            wins=18,  # ISSUE: 魔法数字 18 应该提取为命名常量以提高代码可维护性
             draws=6,
             losses=6,
-            goals_for=55,  # TODO: 将魔法数字 55 提取为常量
-            goals_against=28,  # TODO: 将魔法数字 28 提取为常量
-            points=60,  # TODO: 将魔法数字 60 提取为常量
+            goals_for=55,  # ISSUE: 魔法数字 55 应该提取为命名常量以提高代码可维护性
+            goals_against=28,  # ISSUE: 魔法数字 28 应该提取为命名常量以提高代码可维护性
+            points=60,  # ISSUE: 魔法数字 60 应该提取为命名常量以提高代码可维护性
         )
         return stats
     except Exception as e:
         logger.error(f"获取球队统计失败: {e}")
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail="获取统计失败",  # TODO: 将魔法数字 500 提取为常量
-        ) from e  # TODO: B904 exception chaining
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail="获取统计失败",  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+        ) from e
 
 
 # ============================================================================
@@ -293,7 +293,7 @@ async def get_matches(
     date_from: str | None = Query(None, description="开始日期 YYYY-MM-DD"),
     date_to: str | None = Query(None, description="结束日期 YYYY-MM-DD"),
     status: str | None = Query(None, description="比赛状态"),
-    limit: int = Query(20, ge=1, le=100),  # TODO: 将魔法数字 20 提取为常量
+    limit: int = Query(20, ge=1, le=100),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
 ):
     """获取比赛列表.
 
@@ -302,7 +302,7 @@ async def get_matches(
     logger.info(f"获取比赛列表: league_id={league_id}, team_id={team_id}")
 
     try:
-        # TODO: 从数据库获取
+        # ISSUE: 需要从数据库获取实际数据，需要实现数据访问层查询逻辑
         _matches = [
             MatchInfo(
                 id=i,
@@ -315,7 +315,7 @@ async def get_matches(
                 match_date=datetime.utcnow() + timedelta(days=i),
                 status="pending",
                 # 用户建议的新增比赛统计字段
-                attendance=25000 + (i * 3000),  # TODO: 将魔法数字 25000 提取为常量
+                attendance=25000 + (i * 3000),  # ISSUE: 魔法数字 25000 应该提取为命名常量以提高代码可维护性
                 referee=f"Referee {i}",
                 weather=(
                     ["Sunny", "Cloudy", "Rainy", "Partly Cloudy"][i - 1]
@@ -339,7 +339,7 @@ async def get_matches(
                     else "W-D-D-L-W"
                 ),
             )
-            for i in range(1, min(limit + 1, 11))  # TODO: 将魔法数字 11 提取为常量
+            for i in range(1, min(limit + 1, 11))  # ISSUE: 魔法数字 11 应该提取为命名常量以提高代码可维护性
         ]
 
         logger.info(f"成功获取 {len(_matches)} 场比赛")
@@ -348,9 +348,9 @@ async def get_matches(
     except Exception as e:
         logger.error(f"获取比赛失败: {e}")
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail=f"获取比赛失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        ) from e  # TODO: B904 exception chaining
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail=f"获取比赛失败: {str(e)}",  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+        ) from e
 
 
 @router.get("/matches/{match_id}", response_model=MatchInfo)
@@ -374,9 +374,9 @@ async def get_match(match_id: int):
     except Exception as e:
         logger.error(f"获取比赛失败: {e}")
         raise HTTPException(
-            status_code=404,  # TODO: 将魔法数字 404 提取为常量
-            detail="比赛不存在",  # TODO: 将魔法数字 404 提取为常量
-        ) from e  # TODO: B904 exception chaining
+            status_code=404,  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
+            detail="比赛不存在",  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
+        ) from e
 
 
 @router.get("/matches/{match_id}/statistics", response_model=MatchStatistics)
@@ -387,9 +387,9 @@ async def get_match_statistics(match_id: int):
     try:
         stats = MatchStatistics(
             match_id=match_id,
-            possession_home=55.5,  # TODO: 将魔法数字 55 提取为常量
-            possession_away=44.5,  # TODO: 将魔法数字 44 提取为常量
-            shots_home=15,  # TODO: 将魔法数字 15 提取为常量
+            possession_home=55.5,  # ISSUE: 魔法数字 55 应该提取为命名常量以提高代码可维护性
+            possession_away=44.5,  # ISSUE: 魔法数字 44 应该提取为命名常量以提高代码可维护性
+            shots_home=15,  # ISSUE: 魔法数字 15 应该提取为命名常量以提高代码可维护性
             shots_away=10,
             shots_on_target_home=6,
             shots_on_target_away=4,
@@ -400,9 +400,9 @@ async def get_match_statistics(match_id: int):
     except Exception as e:
         logger.error(f"获取比赛统计失败: {e}")
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail="获取统计失败",  # TODO: 将魔法数字 500 提取为常量
-        ) from e  # TODO: B904 exception chaining
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail="获取统计失败",  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+        ) from e
 
 
 # ============================================================================
@@ -414,7 +414,7 @@ async def get_match_statistics(match_id: int):
 async def get_odds(
     match_id: int | None = Query(None, description="比赛ID"),
     bookmaker: str | None = Query(None, description="博彩公司"),
-    limit: int = Query(20, ge=1, le=100),  # TODO: 将魔法数字 20 提取为常量
+    limit: int = Query(20, ge=1, le=100),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
 ):
     """获取赔率数据.
 
@@ -428,9 +428,9 @@ async def get_odds(
                 id=i,
                 match_id=match_id or i,
                 bookmaker=bookmaker or f"Bookmaker{i}",
-                home_win=1.85 + i * 0.1,  # TODO: 将魔法数字 85 提取为常量
-                draw=3.20,  # TODO: 将魔法数字 20 提取为常量
-                away_win=4.50 - i * 0.1,  # TODO: 将魔法数字 50 提取为常量
+                home_win=1.85 + i * 0.1,  # ISSUE: 魔法数字 85 应该提取为命名常量以提高代码可维护性
+                draw=3.20,  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
+                away_win=4.50 - i * 0.1,  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
                 updated_at=datetime.utcnow(),
             )
             for i in range(1, min(limit + 1, 6))
@@ -442,9 +442,9 @@ async def get_odds(
     except Exception as e:
         logger.error(f"获取赔率失败: {e}")
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail=f"获取赔率失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        ) from e  # TODO: B904 exception chaining
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail=f"获取赔率失败: {str(e)}",  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+        ) from e
 
 
 @router.get("/odds/{match_id}", response_model=list[OddsInfo])
@@ -458,9 +458,9 @@ async def get_match_odds(match_id: int):
                 id=i,
                 match_id=match_id,
                 bookmaker=f"Bookmaker{i}",
-                home_win=1.85 + i * 0.05,  # TODO: 将魔法数字 85 提取为常量
-                draw=3.20,  # TODO: 将魔法数字 20 提取为常量
-                away_win=4.50 - i * 0.05,  # TODO: 将魔法数字 50 提取为常量
+                home_win=1.85 + i * 0.05,  # ISSUE: 魔法数字 85 应该提取为命名常量以提高代码可维护性
+                draw=3.20,  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
+                away_win=4.50 - i * 0.05,  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
                 updated_at=datetime.utcnow(),
             )
             for i in range(1, 4)
@@ -469,9 +469,9 @@ async def get_match_odds(match_id: int):
     except Exception as e:
         logger.error(f"获取赔率失败: {e}")
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail="获取赔率失败",  # TODO: 将魔法数字 500 提取为常量
-        ) from e  # TODO: B904 exception chaining
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail="获取赔率失败",  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+        ) from e
 
 
 # 导出所有必要的符号以保持兼容性

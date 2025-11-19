@@ -10,4 +10,4 @@ class MetricsDecorator:
     pass  # 添加pass语句
     """指标收集装饰器,收集函数执行的性能指标"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

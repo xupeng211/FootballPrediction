@@ -32,10 +32,6 @@ except ImportError:
     CAN_IMPORT = False
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="Elo模型导入失败")
-class TestEloModel:
-    """Elo模型测试"""
-
     @pytest.fixture
     def elo_model(self):
         """创建Elo模型实例"""

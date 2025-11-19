@@ -138,9 +138,9 @@ def main():
         json.dump(verification_report, f, indent=2, ensure_ascii=False)
 
     if analysis_result and generation_result:
-        pass  # TODO: Add logger import if needed
+        pass
     else:
-        pass  # TODO: Add logger import if needed
+        pass
 
     return verification_report
 

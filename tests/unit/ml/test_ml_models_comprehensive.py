@@ -33,10 +33,6 @@ except ImportError:
     CAN_IMPORT = False
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="ML模型导入失败")
-class TestBaseModel:
-    """测试基础模型抽象类"""
-
     def test_prediction_result_dataclass(self):
         """测试预测结果数据类"""
         result = PredictionResult(
@@ -121,10 +117,6 @@ class TestBaseModel:
         with pytest.raises(TypeError):
             IncompleteModel("IncompleteModel", "1.0")
 
-
-@pytest.mark.skipif(not CAN_IMPORT, reason="ML模型导入失败")
-class TestPoissonModel:
-    """测试泊松分布模型"""
 
     @pytest.fixture
     def poisson_model(self):
@@ -398,10 +390,6 @@ class TestPoissonModel:
             poisson_model.prepare_features({})  # 缺少必需的team信息
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="ML模型导入失败")
-class TestEloModel:
-    """测试ELO评分模型"""
-
     @pytest.fixture
     def elo_model(self):
         """创建ELO模型实例"""
@@ -618,10 +606,6 @@ class TestEloModel:
         assert new_model.k_factor == elo_model.k_factor
         assert new_model.home_advantage == elo_model.home_advantage
 
-
-@pytest.mark.skipif(not CAN_IMPORT, reason="ML模型导入失败")
-class TestMLModelIntegration:
-    """机器学习模型集成测试"""
 
     @pytest.fixture
     def sample_data(self):

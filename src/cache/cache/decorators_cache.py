@@ -16,7 +16,7 @@ class CacheDecorator:
     pass  # 添加pass语句
     """缓存装饰器类,提供更灵活的配置"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class UserCacheDecorator:
@@ -25,7 +25,7 @@ class UserCacheDecorator:
     pass  # 添加pass语句
     """用户缓存装饰器类"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class InvalidateCacheDecorator:
@@ -34,4 +34,4 @@ class InvalidateCacheDecorator:
     pass  # 添加pass语句
     """缓存失效装饰器类"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

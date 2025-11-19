@@ -487,10 +487,6 @@ class TestAuthenticationDependencies:
 # ==================== FastAPI集成测试 ====================
 
 
-@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI not available")
-class TestFastAPIIntegration:
-    """FastAPI集成测试类"""
-
     def test_app_creation(self):
         """测试FastAPI应用创建"""
         assert app is not None

@@ -127,8 +127,8 @@ async def create_prediction(
 ):
     """创建预测."""
     try:
-        # TODO: 实现完整的业务逻辑
-        # 现在返回创建成功的响应以解决 405 错误
+        # ISSUE: 需要实现完整的预测创建业务逻辑
+        # 当前只返回模拟响应以解决 405 错误，需要集成实际的机器学习预测服务
         import uuid
         from datetime import datetime, timedelta
 

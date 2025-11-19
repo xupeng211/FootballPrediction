@@ -260,7 +260,7 @@ async def request_password_reset(
         return {"message": "如果邮箱存在,重置链接已发送"}
 
     # 这里应该发送邮件,暂时返回令牌（实际生产中不应该返回）
-    # TODO: 集成邮件服务
+    # ISSUE: 需要集成邮件服务用于用户通知和验证功能
 
     # 记录密码重置请求指标 (暂时禁用)
     # increase_password_resets()
@@ -337,7 +337,7 @@ async def resend_verification_email(
 
     auth_service.create_email_verification_token(current_user)
 
-    # TODO: 集成邮件服务
+    # ISSUE: 需要集成邮件服务用于用户通知和验证功能
 
     return {"message": "验证邮件已发送"}
 
@@ -355,7 +355,7 @@ async def logout(
     注意:由于JWT是无状态的,实际的令牌失效需要客户端删除
     这个接口主要用于记录登出事件和清理服务器端状态
     """
-    # TODO: 实现令牌黑名单机制（可选）
+    # ISSUE: 需要实现令牌黑名单机制用于令牌撤销功能（可选安全增强）
     return {"message": "登出成功"}
 
 

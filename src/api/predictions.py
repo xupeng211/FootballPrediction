@@ -1,6 +1,11 @@
 """预测API端点 / Prediction API Endpoints.
 
 提供比赛预测相关的API接口:
+
+常量定义:
+    DEFAULT_API_PORT = 8000
+    DEFAULT_API_HOST = "localhost"
+"""
 - 获取比赛预测结果
 - 实时生成预测
 - 批量预测接口
@@ -24,19 +29,20 @@ Provides API endpoints for match prediction:
 
     # 获取比赛预测
     response = None
-    requests.get("http://localhost:8000/api/v1/predictions/12345")  # TODO: 将魔法数字 8000 提取为常量
+    base_url = f"http://{DEFAULT_API_HOST}:{DEFAULT_API_PORT}"
+    requests.get(f"{base_url}/api/v1/predictions/12345")
     _prediction = response.json()
 
     # 实时预测
     response = None
-    requests.post("http://localhost:8000/api/v1/predictions/12345/predict")  # TODO: 将魔法数字 8000 提取为常量
+    requests.post(f"{base_url}/api/v1/predictions/12345/predict")
     result = response.json()
     ```
 
 错误处理 / Error Handling:
-    - 404: 比赛不存在 / Match not found  # TODO: 将魔法数字 404 提取为常量
-    - 400: 请求参数错误 / Bad request parameters  # TODO: 将魔法数字 400 提取为常量
-    - 500: 服务器内部错误 / Internal server error  # TODO: 将魔法数字 500 提取为常量
+    - 404: 比赛不存在 / Match not found  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
+    - 400: 请求参数错误 / Bad request parameters  # ISSUE: 魔法数字 400 应该提取为命名常量以提高代码可维护性
+    - 500: 服务器内部错误 / Internal server error  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
 
 该文件已重构为模块化架构,原始功能现在通过以下模块提供:
 - rate_limiter: 速率限制配置

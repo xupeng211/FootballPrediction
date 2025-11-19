@@ -22,7 +22,7 @@ class AnomalyType:
     pass  # 添加pass语句
     """异常类型枚举"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class AnomalySeverity:
@@ -31,7 +31,7 @@ class AnomalySeverity:
     pass  # 添加pass语句
     """异常严重程度"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class AnomalyResult:
@@ -40,7 +40,7 @@ class AnomalyResult:
     pass  # 添加pass语句
     """异常检测结果"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class AnomalyDetector:
@@ -56,4 +56,4 @@ class AnomalyDetector:
     - 时间序列异常检测
     - 频率分布异常检测"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

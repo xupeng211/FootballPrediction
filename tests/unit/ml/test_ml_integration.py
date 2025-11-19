@@ -149,13 +149,6 @@ def create_batch_prediction_data(num_predictions: int = 10) -> list[dict[str, An
     return predictions
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
-@pytest.mark.unit
-@pytest.mark.ml
-@pytest.mark.integration
-class TestMLWorkflowIntegration:
-    """ML工作流集成测试"""
-
     @pytest.mark.asyncio
     async def test_complete_prediction_pipeline(self):
         """测试完整的预测流水线"""
@@ -184,7 +177,7 @@ class TestMLWorkflowIntegration:
                 predictions.append(prediction)
             except Exception:
                 # 记录预测失败的情况
-                pass  # TODO: Add logger import if needed
+                pass
 
         # 6. 验证预测结果
         assert len(predictions) > 0
@@ -403,13 +396,6 @@ class TestMLWorkflowIntegration:
             )
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
-@pytest.mark.unit
-@pytest.mark.ml
-@pytest.mark.integration
-class TestMLModelDeployment:
-    """ML模型部署测试"""
-
     @pytest.mark.asyncio
     async def test_model_export_import_workflow(self):
         """测试模型导出导入工作流"""
@@ -557,13 +543,6 @@ class TestMLModelDeployment:
         assert isinstance(monitoring_report, dict)
         assert monitoring_report["total_predictions"] == 10
 
-
-@pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
-@pytest.mark.unit
-@pytest.mark.ml
-@pytest.mark.integration
-class TestMLDataPipeline:
-    """ML数据流水线测试"""
 
     def test_feature_engineering_pipeline(self):
         """测试特征工程流水线"""

@@ -6,7 +6,7 @@
 """
 
 # 导入拆分的模块
-# FIXME: 星号导入已注释 - from .patterns.facade_models import *  # TODO: Convert to explicit imports
+# 星号导入已移除 - 需要时可以显式导入 specific models
 
 # 导出所有公共接口
 # __all__ = [

@@ -36,7 +36,7 @@ async def test_data_sources():
         # 显示前3场比赛
         if matches:
             for _i, _match in enumerate(matches[:3], 1):
-                pass  # TODO: Add logger import if needed
+                pass
 
         # 测试获取球队数据
         teams = await mock_adapter.get_teams()
@@ -45,9 +45,9 @@ async def test_data_sources():
         if teams:
             for _i, team in enumerate(teams[:5], 1):
                 if team.venue:
-                    pass  # TODO: Add logger import if needed
+                    pass
     else:
-        pass  # TODO: Add logger import if needed
+        pass
 
 
 @pytest.mark.asyncio
@@ -113,7 +113,7 @@ async def test_specific_team():
             # 显示比赛详情
             if fixtures:
                 for _i, _fixture in enumerate(fixtures[:5], 1):
-                    pass  # TODO: Add logger import if needed
+                    pass
 
     except Exception:
         import traceback

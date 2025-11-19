@@ -18,7 +18,7 @@ def test_python_environment():
         try:
             importlib.import_module(lib)
         except ImportError:
-            pass  # TODO: Add logger import if needed
+            pass
 
 
 def test_core_dependencies():
@@ -41,12 +41,12 @@ def test_core_dependencies():
                     from packaging import version as pkg_version
 
                     if pkg_version.parse(version) < pkg_version.parse(min_version):
-                        pass  # TODO: Add logger import if needed
+                        pass
                 except ImportError:
-                    pass  # TODO: Add logger import if needed
+                    pass
 
         except ImportError:
-            pass  # TODO: Add logger import if needed
+            pass
 
 
 def test_project_structure():
@@ -57,15 +57,15 @@ def test_project_structure():
 
     for directory in key_directories:
         if Path(directory).exists():
-            pass  # TODO: Add logger import if needed
+            pass
         else:
-            pass  # TODO: Add logger import if needed
+            pass
 
     for file in key_files:
         if Path(file).exists():
-            pass  # TODO: Add logger import if needed
+            pass
         else:
-            pass  # TODO: Add logger import if needed
+            pass
 
 
 def test_basic_functionality():
@@ -98,7 +98,7 @@ def test_basic_functionality():
         assert content == "test content"
 
     except Exception:
-        pass  # TODO: Add logger import if needed
+        pass
 
 
 def test_import_issues():
@@ -106,9 +106,9 @@ def test_import_issues():
 
     # 测试pytest相关问题
     try:
-        pass  # TODO: Add logger import if needed
+        pass
     except Exception:
-        pass  # TODO: Add logger import if needed
+        pass
 
     # 测试其他工具
     tool_list = ["ruff", "mypy", "bandit"]
@@ -118,11 +118,11 @@ def test_import_issues():
                 [tool, "--version"], capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0:
-                pass  # TODO: Add logger import if needed
+                pass
             else:
-                pass  # TODO: Add logger import if needed
+                pass
         except (subprocess.TimeoutExpired, FileNotFoundError):
-            pass  # TODO: Add logger import if needed
+            pass
 
 
 def main():

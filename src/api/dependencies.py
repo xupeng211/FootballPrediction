@@ -29,7 +29,7 @@ except ImportError:
         pass
 
     def jwt(*args, **kwargs):
-        """TODO: 添加函数文档
+        """ISSUE: 需要添加完整的函数文档，包括参数说明、返回值和异常
         JWT函数占位符.
         """
         raise ImportError("Please install python-jose: pip install python-jose")

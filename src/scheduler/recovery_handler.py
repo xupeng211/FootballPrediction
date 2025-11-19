@@ -6,8 +6,9 @@
 """
 
 # 导入拆分的模块
-# FIXME: 星号导入已注释 - from .scheduler.recovery_handler_core import *  # TODO: Convert to explicit imports
-# FIXME: 星号导入已注释 - from .scheduler.recovery_handler_models import *  # TODO: Convert to explicit imports
+# ISSUE: Convert wildcard imports to explicit imports for better maintainability
+# from .scheduler.recovery_handler_core import *
+# from .scheduler.recovery_handler_models import *
 
 # 导出所有公共接口
 # __all__ = ["RecoveryHandler", "FailureType", "RecoveryStrategy", "TaskFailure"]  # 注释以避免F822错误

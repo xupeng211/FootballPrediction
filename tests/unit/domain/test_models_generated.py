@@ -20,10 +20,6 @@ except ImportError:
     League = None
 
 
-@pytest.mark.skipif(not MODELS_AVAILABLE, reason="Domain models not available")
-class TestDomainModels:
-    """领域模型测试"""
-
     def test_match_creation(self):
         """测试比赛创建"""
         if Match:

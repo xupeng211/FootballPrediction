@@ -32,7 +32,7 @@ class EnhancedDataPipeline:
     ) -> AsyncGenerator[dict[str, Any], None]:
         """处理数据流."""
         try:
-            # TODO: 实现具体的数据处理逻辑
+            # ISSUE: 实现具体的数据处理逻辑
             logger.info(f"开始处理数据源: {data_source}")
 
             # 模拟数据处理
@@ -58,7 +58,7 @@ class EnhancedDataPipeline:
     async def validate_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """验证数据质量."""
         try:
-            # TODO: 实现数据验证逻辑
+            # ISSUE: 实现数据验证逻辑
             validation_result = {
                 "valid": True,
                 "score": 0.98,

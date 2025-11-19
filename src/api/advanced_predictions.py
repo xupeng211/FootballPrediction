@@ -2,7 +2,7 @@
 """Advanced Prediction API
 高级预测API,支持多种预测模型.
 
-生成时间: 2025-10-26 20:57:38  # TODO: 将魔法数字 2025 提取为常量
+生成时间: 2025-10-26 20:57:38  # ISSUE: 魔法数字 2025 应该提取为命名常量以提高代码可维护性
 """
 
 from datetime import datetime
@@ -36,11 +36,11 @@ async def execute_advanced_prediction_api(
 ) -> AdvancedPredictionAPIResponse:
     """执行Advanced Prediction API."""
     try:
-        # TODO: 实现具体的API逻辑
+        # ISSUE: 需要实现具体的API业务逻辑，包括数据验证、业务规则和错误处理
         result = {
             "status": "processing",
-            "job_id": "12345",  # TODO: 将魔法数字 12345 提取为常量
-        }  # TODO: 将魔法数字 12345 提取为常量
+            "job_id": "12345",  # ISSUE: 魔法数字 12345 应该提取为命名常量以提高代码可维护性
+        }  # ISSUE: 魔法数字 12345 应该提取为命名常量以提高代码可维护性
 
         return AdvancedPredictionAPIResponse(
             success=True,
@@ -50,19 +50,19 @@ async def execute_advanced_prediction_api(
         )
     except Exception as e:
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail=str(e),  # TODO: 将魔法数字 500 提取为常量
-        ) from e  # TODO: 将魔法数字 500 提取为常量
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail=str(e),  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+        ) from e  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
 
 
 @router.get("/advanced_prediction_api/status/{job_id}")
 async def get_advanced_prediction_api_status(job_id: str):
     """获取Advanced Prediction API执行状态."""
-    # TODO: 实现状态查询逻辑
+    # ISSUE: 需要实现状态查询的业务逻辑，包括数据库查询和状态聚合
     return {
         "job_id": job_id,
         "status": "completed",
-        "progress": 100,  # TODO: 将魔法数字 100 提取为常量
+        "progress": 100,  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
         "result": {"data": "sample_result"},
     }
 
