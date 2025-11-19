@@ -88,7 +88,7 @@ class CacheEntry:
     def _calculate_checksum(self) -> str:
         """计算校验和."""
         data = f"{self.key}{self.value}{self.level}{self.created_at}"
-        return hashlib.md5(data.encode(, usedforsecurity=False)).hexdigest()
+        return hashlib.md5(data.encode(), usedforsecurity=False).hexdigest()
 
     def _calculate_size(self) -> int:
         """计算条目大小."""
@@ -700,7 +700,7 @@ class LoadBalancer:
 
         elif self.strategy == DistributionStrategy.CONSISTENT_HASH and key:
             # 简化的一致性哈希
-            hash_value = int(hashlib.md5(key.encode(, usedforsecurity=False)).hexdigest(), 16)
+            hash_value = int(hashlib.md5(key.encode(), usedforsecurity=False).hexdigest(), 16)
             return nodes[hash_value % len(nodes)]
 
         else:  # AFFINITY_BASED or default
