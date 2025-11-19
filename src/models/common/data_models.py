@@ -1,3 +1,5 @@
+from typing import Optional
+
 """data_models
 数据模型.
 

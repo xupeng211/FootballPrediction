@@ -1,3 +1,5 @@
+from typing import Optional
+
 from .base import Adaptee, BaseAdapter, Target
 
 # 重新启用的模块导入

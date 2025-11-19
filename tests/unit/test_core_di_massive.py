@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 大规模测试套件 - core.di
 目标: 创建40个可运行的测试用例

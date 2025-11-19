@@ -6,7 +6,7 @@ Feature Engineering Pipeline Builder
 """
 
 import logging
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
@@ -60,7 +60,7 @@ except ImportError:
             return X
 
         def predict(self, X):
-            return [0] * len(X) if hasattr(X, '__len__') else [0]
+            return [0] * len(X) if hasattr(X, "__len__") else [0]
 
     class MockColumnTransformer:
         """Mock ColumnTransformer for environments without sklearn."""
@@ -106,11 +106,13 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
     - 伤病情况影响
     """
 
-    def __init__(self,
-                 include_head_to_head: bool = True,
-                 include_home_advantage: bool = True,
-                 include_recent_form: bool = True,
-                 recent_form_window: int = 5):
+    def __init__(
+        self,
+        include_head_to_head: bool = True,
+        include_home_advantage: bool = True,
+        include_recent_form: bool = True,
+        recent_form_window: int = 5,
+    ):
         """
         初始化足球特征转换器
 
@@ -127,7 +129,7 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
         self.team_stats = {}
         self.head_to_head_cache = {}
 
-    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> 'FootballFeatureTransformer':
+    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> "FootballFeatureTransformer":
         """拟合转换器，计算球队统计信息"""
         if not HAS_SCIPY:
             logger.warning("Scikit-learn not available, using mock implementation")
@@ -165,11 +167,11 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
 
     def _compute_team_statistics(self, X: pd.DataFrame) -> None:
         """计算球队基础统计信息"""
-        if not hasattr(X, 'columns'):
+        if not hasattr(X, "columns"):
             return
 
         # 简化实现，实际中应该从历史数据计算
-        team_columns = [col for col in X.columns if 'team' in col.lower()]
+        team_columns = [col for col in X.columns if "team" in col.lower()]
 
         for col in team_columns:
             if col in X.columns:
@@ -177,12 +179,12 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
                 for team in unique_teams:
                     if team not in self.team_stats:
                         self.team_stats[team] = {
-                            'matches_played': 0,
-                            'wins': 0,
-                            'draws': 0,
-                            'losses': 0,
-                            'goals_scored': 0,
-                            'goals_conceded': 0
+                            "matches_played": 0,
+                            "wins": 0,
+                            "draws": 0,
+                            "losses": 0,
+                            "goals_scored": 0,
+                            "goals_conceded": 0,
                         }
 
     def _compute_head_to_head_stats(self, X: pd.DataFrame) -> None:
@@ -193,21 +195,21 @@ class FootballFeatureTransformer(BaseEstimator, TransformerMixin):
     def _add_home_advantage_features(self, X: pd.DataFrame) -> pd.DataFrame:
         """添加主客场优势特征"""
         # 简化实现，添加主客场标识
-        if hasattr(X, 'assign'):
+        if hasattr(X, "assign"):
             X = X.assign(is_home_match=1)  # 假设都是主场
         return X
 
     def _add_recent_form_features(self, X: pd.DataFrame) -> pd.DataFrame:
         """添加近期状态特征"""
         # 简化实现，添加近期得分趋势
-        if hasattr(X, 'assign'):
+        if hasattr(X, "assign"):
             X = X.assign(recent_form_score=0.5)  # 默认中性状态
         return X
 
     def _add_head_to_head_features(self, X: pd.DataFrame) -> pd.DataFrame:
         """添加历史对战特征"""
         # 简化实现，添加历史对战优势
-        if hasattr(X, 'assign'):
+        if hasattr(X, "assign"):
             X = X.assign(head_to_head_advantage=0.0)  # 默认无优势
         return X
 
@@ -234,64 +236,88 @@ class FeaturePipelineBuilder:
         """默认特征分类"""
         # 常见的数值特征
         self.numeric_features = [
-            'home_team_score', 'away_team_score',
-            'home_team_goals', 'away_team_goals',
-            'home_team_shots', 'away_team_shots',
-            'home_team_possession', 'away_team_possession',
-            'home_team_passes', 'away_team_passes',
-            'home_team_fouls', 'away_team_fouls',
-            'home_team_corners', 'away_team_corners',
-            'home_team_yellow_cards', 'away_team_yellow_cards',
-            'home_team_red_cards', 'away_team_red_cards',
-            'odds_home_win', 'odds_draw', 'odds_away_win',
-            'recent_form_score', 'head_to_head_advantage'
+            "home_team_score",
+            "away_team_score",
+            "home_team_goals",
+            "away_team_goals",
+            "home_team_shots",
+            "away_team_shots",
+            "home_team_possession",
+            "away_team_possession",
+            "home_team_passes",
+            "away_team_passes",
+            "home_team_fouls",
+            "away_team_fouls",
+            "home_team_corners",
+            "away_team_corners",
+            "home_team_yellow_cards",
+            "away_team_yellow_cards",
+            "home_team_red_cards",
+            "away_team_red_cards",
+            "odds_home_win",
+            "odds_draw",
+            "odds_away_win",
+            "recent_form_score",
+            "head_to_head_advantage",
         ]
 
         # 常见的类别特征
         self.categorical_features = [
-            'home_team', 'away_team',
-            'league', 'season', 'venue',
-            'weather_condition', 'referee',
-            'match_day', 'match_month',
-            'is_home_match', 'is_derby'
+            "home_team",
+            "away_team",
+            "league",
+            "season",
+            "venue",
+            "weather_condition",
+            "referee",
+            "match_day",
+            "match_month",
+            "is_home_match",
+            "is_derby",
         ]
 
         # 自定义特征（需要特殊处理）
         self.custom_features = [
-            'team_history', 'player_injuries',
-            'transfer_activity', 'manager_changes'
+            "team_history",
+            "player_injuries",
+            "transfer_activity",
+            "manager_changes",
         ]
 
-    def add_numeric_feature(self, feature_name: str) -> 'FeaturePipelineBuilder':
+    def add_numeric_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
         """添加数值特征"""
         if feature_name not in self.numeric_features:
             self.numeric_features.append(feature_name)
         return self
 
-    def add_categorical_feature(self, feature_name: str) -> 'FeaturePipelineBuilder':
+    def add_categorical_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
         """添加类别特征"""
         if feature_name not in self.categorical_features:
             self.categorical_features.append(feature_name)
         return self
 
-    def add_custom_feature(self, feature_name: str) -> 'FeaturePipelineBuilder':
+    def add_custom_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
         """添加自定义特征"""
         if feature_name not in self.custom_features:
             self.custom_features.append(feature_name)
         return self
 
-    def remove_feature(self, feature_name: str) -> 'FeaturePipelineBuilder':
+    def remove_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
         """移除特征"""
         self.numeric_features = [f for f in self.numeric_features if f != feature_name]
-        self.categorical_features = [f for f in self.categorical_features if f != feature_name]
+        self.categorical_features = [
+            f for f in self.categorical_features if f != feature_name
+        ]
         self.custom_features = [f for f in self.custom_features if f != feature_name]
         return self
 
-    def build_pipeline(self,
-                      numeric_strategy: str = 'standard',
-                      categorical_strategy: str = 'onehot',
-                      include_football_features: bool = True,
-                      handle_missing: bool = True) -> Pipeline:
+    def build_pipeline(
+        self,
+        numeric_strategy: str = "standard",
+        categorical_strategy: str = "onehot",
+        include_football_features: bool = True,
+        handle_missing: bool = True,
+    ) -> Pipeline:
         """
         构建特征工程管道
 
@@ -306,28 +332,35 @@ class FeaturePipelineBuilder:
         """
         if not HAS_SCIPY:
             logger.warning("Scikit-learn not available, creating mock pipeline")
-            return MockPipeline([
-                ('football_features', FootballFeatureTransformer()),
-                ('mock_processor', MockTransformer())
-            ])
+            return MockPipeline(
+                [
+                    ("football_features", FootballFeatureTransformer()),
+                    ("mock_processor", MockTransformer()),
+                ]
+            )
 
         # 构建转换器列表
         transformers = []
 
         # 1. 数值特征处理
         if self.numeric_features:
-            numeric_transformer = self._build_numeric_transformer(numeric_strategy, handle_missing)
-            transformers.append(('numeric', numeric_transformer, self.numeric_features))
+            numeric_transformer = self._build_numeric_transformer(
+                numeric_strategy, handle_missing
+            )
+            transformers.append(("numeric", numeric_transformer, self.numeric_features))
 
         # 2. 类别特征处理
         if self.categorical_features:
-            categorical_transformer = self._build_categorical_transformer(categorical_strategy, handle_missing)
-            transformers.append(('categorical', categorical_transformer, self.categorical_features))
+            categorical_transformer = self._build_categorical_transformer(
+                categorical_strategy, handle_missing
+            )
+            transformers.append(
+                ("categorical", categorical_transformer, self.categorical_features)
+            )
 
         # 3. 预处理管道
         preprocessor = ColumnTransformer(
-            transformers=transformers,
-            remainder='drop'  # 忽略未指定的列
+            transformers=transformers, remainder="drop"  # 忽略未指定的列
         )
 
         # 4. 完整管道
@@ -335,10 +368,10 @@ class FeaturePipelineBuilder:
 
         # 添加足球特征转换器
         if include_football_features:
-            pipeline_steps.append(('football_features', FootballFeatureTransformer()))
+            pipeline_steps.append(("football_features", FootballFeatureTransformer()))
 
         # 添加预处理器
-        pipeline_steps.append(('preprocessor', preprocessor))
+        pipeline_steps.append(("preprocessor", preprocessor))
 
         # 创建最终管道
         self.pipeline = Pipeline(pipeline_steps)
@@ -349,50 +382,63 @@ class FeaturePipelineBuilder:
 
         return self.pipeline
 
-    def _build_numeric_transformer(self, strategy: str, handle_missing: bool) -> Pipeline:
+    def _build_numeric_transformer(
+        self, strategy: str, handle_missing: bool
+    ) -> Pipeline:
         """构建数值特征转换器"""
         steps = []
 
         # 缺失值处理
         if handle_missing:
-            steps.append(('imputer', SimpleImputer(strategy='median')))
+            steps.append(("imputer", SimpleImputer(strategy="median")))
 
         # 标准化
-        if strategy == 'standard':
-            steps.append(('scaler', StandardScaler()))
-        elif strategy == 'minmax':
-            steps.append(('scaler', MinMaxScaler()))
-        elif strategy == 'robust':
-            steps.append(('scaler', RobustScaler()))
+        if strategy == "standard":
+            steps.append(("scaler", StandardScaler()))
+        elif strategy == "minmax":
+            steps.append(("scaler", MinMaxScaler()))
+        elif strategy == "robust":
+            steps.append(("scaler", RobustScaler()))
 
         return Pipeline(steps)
 
-    def _build_categorical_transformer(self, strategy: str, handle_missing: bool) -> Pipeline:
+    def _build_categorical_transformer(
+        self, strategy: str, handle_missing: bool
+    ) -> Pipeline:
         """构建类别特征转换器"""
         steps = []
 
         # 缺失值处理
         if handle_missing:
-            steps.append(('imputer', SimpleImputer(strategy='most_frequent')))
+            steps.append(("imputer", SimpleImputer(strategy="most_frequent")))
 
         # 编码
-        if strategy == 'onehot':
-            steps.append(('encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False)))
-        elif strategy == 'ordinal':
-            steps.append(('encoder', OneHotEncoder(handle_unknown='ignore')))  # 暂时用OneHot替代
+        if strategy == "onehot":
+            steps.append(
+                ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False))
+            )
+        elif strategy == "ordinal":
+            steps.append(
+                ("encoder", OneHotEncoder(handle_unknown="ignore"))
+            )  # 暂时用OneHot替代
 
         return Pipeline(steps)
 
     def get_feature_names(self) -> List[str]:
         """获取处理后的特征名称"""
         if self.pipeline is None:
-            return self.numeric_features + self.categorical_features + self.custom_features
+            return (
+                self.numeric_features + self.categorical_features + self.custom_features
+            )
 
         # 如果管道已拟合，可以获取转换后的特征名称
-        if hasattr(self.pipeline, 'named_steps') and 'preprocessor' in self.pipeline.named_steps:
+        if (
+            hasattr(self.pipeline, "named_steps")
+            and "preprocessor" in self.pipeline.named_steps
+        ):
             try:
-                preprocessor = self.pipeline.named_steps['preprocessor']
-                if hasattr(preprocessor, 'get_feature_names_out'):
+                preprocessor = self.pipeline.named_steps["preprocessor"]
+                if hasattr(preprocessor, "get_feature_names_out"):
                     return preprocessor.get_feature_names_out().tolist()
             except Exception as e:
                 logger.warning(f"Could not get feature names: {e}")
@@ -403,8 +449,10 @@ class FeaturePipelineBuilder:
         """验证数据中的特征"""
         missing_features = []
 
-        all_expected_features = self.numeric_features + self.categorical_features + self.custom_features
-        available_features = list(X.columns) if hasattr(X, 'columns') else []
+        all_expected_features = (
+            self.numeric_features + self.categorical_features + self.custom_features
+        )
+        available_features = list(X.columns) if hasattr(X, "columns") else []
 
         for feature in all_expected_features:
             if feature not in available_features:
@@ -420,14 +468,16 @@ class FeaturePipelineBuilder:
     def get_pipeline_summary(self) -> Dict[str, Any]:
         """获取管道摘要信息"""
         return {
-            'numeric_features_count': len(self.numeric_features),
-            'categorical_features_count': len(self.categorical_features),
-            'custom_features_count': len(self.custom_features),
-            'total_features': len(self.numeric_features) + len(self.categorical_features) + len(self.custom_features),
-            'pipeline_built': self.pipeline is not None,
-            'numeric_features': self.numeric_features,
-            'categorical_features': self.categorical_features,
-            'custom_features': self.custom_features
+            "numeric_features_count": len(self.numeric_features),
+            "categorical_features_count": len(self.categorical_features),
+            "custom_features_count": len(self.custom_features),
+            "total_features": len(self.numeric_features)
+            + len(self.categorical_features)
+            + len(self.custom_features),
+            "pipeline_built": self.pipeline is not None,
+            "numeric_features": self.numeric_features,
+            "categorical_features": self.categorical_features,
+            "custom_features": self.custom_features,
         }
 
 
@@ -436,10 +486,10 @@ def create_default_football_pipeline() -> Pipeline:
     """创建默认的足球特征工程管道"""
     builder = FeaturePipelineBuilder()
     return builder.build_pipeline(
-        numeric_strategy='standard',
-        categorical_strategy='onehot',
+        numeric_strategy="standard",
+        categorical_strategy="onehot",
         include_football_features=True,
-        handle_missing=True
+        handle_missing=True,
     )
 
 
@@ -449,7 +499,10 @@ def create_simple_pipeline(features: List[str]) -> Pipeline:
 
     # 自动分类特征
     for feature in features:
-        if any(keyword in feature.lower() for keyword in ['team', 'league', 'venue', 'weather']):
+        if any(
+            keyword in feature.lower()
+            for keyword in ["team", "league", "venue", "weather"]
+        ):
             builder.add_categorical_feature(feature)
         else:
             builder.add_numeric_feature(feature)

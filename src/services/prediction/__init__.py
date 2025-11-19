@@ -1,3 +1,5 @@
+from typing import Optional
+
 """src.services.prediction 模块."""
 
 # 导入预测服务

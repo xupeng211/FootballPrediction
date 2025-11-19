@@ -1,3 +1,5 @@
+from typing import Optional
+
 """足球预测系统时间处理工具模块.
 
 提供时间和日期处理相关的工具函数.

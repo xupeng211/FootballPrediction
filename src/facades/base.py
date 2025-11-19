@@ -7,7 +7,7 @@ Facade Base Module.
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 
 class SubsystemStatus(Enum):

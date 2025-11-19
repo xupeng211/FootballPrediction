@@ -1,3 +1,5 @@
+from typing import Optional
+
 """工具函数."""
 
 # 导入

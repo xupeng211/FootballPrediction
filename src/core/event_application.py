@@ -1,3 +1,5 @@
+from typing import Optional
+
 """事件驱动应用程序初始化
 Event-Driven Application Initialization.
 

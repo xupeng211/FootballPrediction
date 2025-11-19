@@ -1,3 +1,5 @@
+from typing import Optional
+
 """API性能优化模块
 API Performance Optimization Module.
 

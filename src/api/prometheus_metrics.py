@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Prometheus Metrics API
 Prometheus指标API端点.
 """

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """足球预测系统工具模块.
 
 提供系统中使用的工具函数和辅助类,包括:

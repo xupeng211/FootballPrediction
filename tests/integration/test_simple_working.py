@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 简单的测试文件，验证pytest环境是否正常工作

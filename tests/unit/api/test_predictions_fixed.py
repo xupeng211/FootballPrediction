@@ -1,3 +1,5 @@
+from typing import Optional
+
 """API预测端点测试 - 修复版本"""
 
 import pytest

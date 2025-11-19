@@ -1,3 +1,5 @@
+from typing import Optional
+
 """机器学习策略."""
 
 # 导入

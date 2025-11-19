@@ -9,7 +9,7 @@ import asyncio
 import time
 from collections.abc import Callable
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import AsyncMock, Mock
 
 import pytest

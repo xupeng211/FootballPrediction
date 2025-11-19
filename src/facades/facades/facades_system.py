@@ -1,3 +1,5 @@
+from typing import Optional
+
 """系统门面."""
 
 # 导入

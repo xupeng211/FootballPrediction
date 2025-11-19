@@ -7,7 +7,7 @@ Memory cache manager for development and testing environments.
 
 import fnmatch
 import time
-from typing import Any
+from typing import Any, Optional
 
 
 class MockRedis:

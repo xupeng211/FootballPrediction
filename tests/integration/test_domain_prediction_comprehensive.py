@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 Phase 3.3 - Domain模块高价值深度优化

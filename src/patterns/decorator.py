@@ -9,7 +9,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
+from typing import Any, Optional
 
 
 class Component(ABC):

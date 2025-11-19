@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据处理服务测试 - 简化版本"""
 
 from unittest.mock import Mock

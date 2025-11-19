@@ -5,7 +5,7 @@
 
 from collections.abc import AsyncGenerator, Generator
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import Column, DateTime, Integer, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

@@ -7,7 +7,7 @@ Event System Test Suite
 
 import asyncio
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import AsyncMock, Mock
 
 import pytest

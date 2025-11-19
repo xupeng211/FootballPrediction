@@ -1,3 +1,5 @@
+from typing import Optional
+
 """外部数据模型
 External Data Models for Football-Data.org API.
 """

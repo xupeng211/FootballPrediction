@@ -1,3 +1,5 @@
+from typing import Optional
+
 """i18n utilities."""
 
 from fastapi import Request

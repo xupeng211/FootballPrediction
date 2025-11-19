@@ -1,3 +1,5 @@
+from typing import Optional
+
 """事件驱动架构模块
 Event-Driven Architecture Module.
 

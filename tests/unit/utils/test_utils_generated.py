@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 工具类测试 - 自动生成扩展
 """

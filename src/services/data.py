@@ -6,7 +6,7 @@ Provides core business logic for match data management.
 """
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 

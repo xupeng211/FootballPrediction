@@ -1,3 +1,5 @@
+from typing import Optional
+
 """aggregator
 特征聚合器.
 

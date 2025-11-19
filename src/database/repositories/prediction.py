@@ -6,7 +6,7 @@ Provides prediction data access operations, implementing the Repository pattern.
 """
 
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession

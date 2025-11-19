@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Manager Base Module
 管理器基础模块.
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据采集器模块.
 
 实现足球数据的采集功能，包括:

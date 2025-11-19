@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Redis operations module."""
 
 from .async_operations import RedisAsyncOperations

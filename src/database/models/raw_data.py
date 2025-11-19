@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 
 from src.database.base import BaseModel

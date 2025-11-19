@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 CryptoUtils增强测试 - 冲刺7.5%覆盖率目标
 专门针对未覆盖的加密工具函数进行精准测试

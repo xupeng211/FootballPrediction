@@ -11,7 +11,7 @@ import logging
 import math
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 # 配置日志
 logging.basicConfig(

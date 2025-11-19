@@ -1,3 +1,5 @@
+from typing import Optional
+
 """预测引擎配置模块
 Prediction Engine Configuration Module.
 """

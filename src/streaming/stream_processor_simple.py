@@ -2,7 +2,7 @@
 
 from collections.abc import AsyncIterator, Callable
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 
 class StreamProcessor:

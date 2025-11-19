@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据处理器模块.
 
 提供各种数据处理功能.

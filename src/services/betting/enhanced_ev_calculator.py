@@ -21,7 +21,7 @@ import sys
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 try:
     import numpy as np
@@ -199,7 +199,9 @@ class EnhancedKellyCalculator:
         if bankroll is not None and bankroll <= 0:
             raise ValueError(f"Bankroll must be positive, got: {bankroll}")
         if max_fraction is not None and (max_fraction < 0 or max_fraction > 1):
-            raise ValueError(f"Max fraction must be between 0 and 1, got: {max_fraction}")
+            raise ValueError(
+                f"Max fraction must be between 0 and 1, got: {max_fraction}"
+            )
 
         # 参数处理：适配新的参数格式
         if edge is not None and odds is not None:
@@ -853,10 +855,12 @@ class EnhancedEVCalculator:
 
         # 参数验证
         if odds is None or probabilities is None or bet_type is None:
-            raise ValueError("Required parameters (odds, probabilities, bet_type) cannot be None")
+            raise ValueError(
+                "Required parameters (odds, probabilities, bet_type) cannot be None"
+            )
 
         # 参数处理：适配新的参数格式
-        if hasattr(odds, 'home_win') and probabilities:
+        if hasattr(odds, "home_win") and probabilities:
             # 如果传入BettingOdds对象和PredictionProbabilities对象
             if bet_type == BetType.HOME_WIN:
                 probability = probabilities.home_win
@@ -1013,7 +1017,11 @@ class EnhancedEVCalculator:
 
         for bet_data in bets_data:
             # 检查数据格式 - 支持简化格式
-            if "bet_type" not in bet_data or "probability" not in bet_data or "odds" not in bet_data:
+            if (
+                "bet_type" not in bet_data
+                or "probability" not in bet_data
+                or "odds" not in bet_data
+            ):
                 # 简化格式：只包含基本信息
                 wins += 1 if bet_data.get("result", False) else 0
                 losses += 0 if bet_data.get("result", False) else 1

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Database connection pools."""
 
 import logging

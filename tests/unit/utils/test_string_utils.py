@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 字符串工具测试
 """

@@ -12,7 +12,7 @@ import os
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

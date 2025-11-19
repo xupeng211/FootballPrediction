@@ -5,7 +5,7 @@ Observer Pattern Base Implementation.
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 
 class ObservableEventType(Enum):

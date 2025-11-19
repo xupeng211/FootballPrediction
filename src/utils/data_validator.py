@@ -5,7 +5,7 @@ DataValidator.
 """
 
 import re
-from typing import Any
+from typing import Any, Optional
 
 
 class DataValidator:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 缓存系统优化测试
 Cache System Optimization Tests

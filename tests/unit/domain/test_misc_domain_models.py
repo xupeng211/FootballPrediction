@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 领域模型测试
 专注于DDD核心模型的测试

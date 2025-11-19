@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 增强的核心配置测试 - 覆盖率优化

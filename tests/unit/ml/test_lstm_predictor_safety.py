@@ -25,7 +25,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from unittest.mock import Mock, patch, MagicMock
-from typing import Any
+from typing import Any, Optional
 
 # 直接导入目标文件中的类和方法
 try:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 P3.2 性能测试脚本 - Locust负载测试

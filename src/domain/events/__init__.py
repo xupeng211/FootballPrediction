@@ -1,3 +1,5 @@
+from typing import Optional
+
 """领域事件
 Domain Events.
 

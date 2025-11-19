@@ -7,7 +7,7 @@ Comprehensive Authentication Integration Tests
 
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import AsyncMock, Mock
 
 import pytest

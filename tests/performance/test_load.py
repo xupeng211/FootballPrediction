@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 Load and Performance Tests
 足球比赛结果预测系统 - 负载和性能测试

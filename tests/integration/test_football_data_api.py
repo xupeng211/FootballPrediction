@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 测试Football-Data.org API连接

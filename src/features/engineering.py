@@ -1,3 +1,5 @@
+from typing import Optional
+
 """特征工程主模块.
 
 足球预测系统的特征工程入口：

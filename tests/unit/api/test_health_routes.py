@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 健康检查路由API测试
 Health Check Routes API Tests

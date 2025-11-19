@@ -1,3 +1,5 @@
+from typing import Optional
+
 # middleware package init
 # 自动生成以解决导入问题
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """实时质量监控WebSocket服务器
 Real-time Quality Monitoring WebSocket Server.

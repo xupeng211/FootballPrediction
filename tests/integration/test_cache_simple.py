@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 简化的缓存集成测试
 Simplified Cache Integration Tests

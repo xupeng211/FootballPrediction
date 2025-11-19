@@ -1,3 +1,5 @@
+from typing import Optional
+
 """api_models
 API模型.
 

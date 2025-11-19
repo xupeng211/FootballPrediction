@@ -6,7 +6,7 @@ Provides creation and dependency injection configuration for repository instance
 """
 
 from functools import lru_cache
-from typing import Protocol, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar, runtime_checkable, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

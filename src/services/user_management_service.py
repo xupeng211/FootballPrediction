@@ -8,7 +8,7 @@ User Management Service.
 import hashlib
 import re
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, EmailStr
 

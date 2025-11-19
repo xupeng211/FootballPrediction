@@ -1,3 +1,5 @@
+from typing import Optional
+
 """预测策略模块
 Prediction Strategies Module.
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """任务工具函数.
 
 提供任务调度相关的工具函数,包括:

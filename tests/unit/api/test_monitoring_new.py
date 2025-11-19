@@ -1,3 +1,5 @@
+from typing import Optional
+
 """API监控端点测试"""
 
 from unittest.mock import patch

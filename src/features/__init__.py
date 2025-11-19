@@ -1,3 +1,5 @@
+from typing import Optional
+
 """特征管理模块.
 
 本模块提供足球预测系统的特征工程和特征存储功能,支持：

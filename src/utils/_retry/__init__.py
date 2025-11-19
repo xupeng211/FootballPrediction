@@ -8,7 +8,7 @@ import functools
 import secrets
 import time
 from collections.abc import Callable
-from typing import TypeVar
+from typing import TypeVar, Optional
 
 T = TypeVar("T")
 

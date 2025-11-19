@@ -10,7 +10,7 @@ import logging
 import time
 import uuid
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware

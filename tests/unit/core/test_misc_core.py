@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 核心功能测试
 专注于项目的关键业务逻辑

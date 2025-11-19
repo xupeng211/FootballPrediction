@@ -1,3 +1,5 @@
+from typing import Optional
+
 """adapters 主模块.
 
 外部API适配器接口

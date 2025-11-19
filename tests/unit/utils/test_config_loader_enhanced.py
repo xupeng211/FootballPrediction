@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 ConfigLoader模块增强测试 - 快速提升覆盖率
 测试配置文件加载功能

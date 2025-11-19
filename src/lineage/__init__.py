@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据血缘管理模块.
 
 提供数据血缘跟踪,元数据管理,数据治理等功能。

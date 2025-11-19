@@ -8,7 +8,7 @@ Encapsulates team-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from src.core.exceptions import DomainError
 

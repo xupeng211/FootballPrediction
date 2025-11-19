@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Redis缓存管理器
 Redis Cache Manager.
 

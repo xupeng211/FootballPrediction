@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 集成测试
 专注于系统组件间的集成测试

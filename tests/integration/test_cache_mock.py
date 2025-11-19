@@ -8,7 +8,7 @@ Complete Mock Cache Integration Tests
 import asyncio
 import json
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 

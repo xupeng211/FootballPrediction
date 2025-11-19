@@ -1,7 +1,7 @@
 """API schemas package."""
 
 # 简单导入,避免循环导入
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 

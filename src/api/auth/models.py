@@ -3,7 +3,7 @@
 定义认证相关的请求和响应模型
 """
 
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 

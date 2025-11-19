@@ -6,7 +6,7 @@ Database Compatibility Module.
 
 import re
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 
 class Compatibility(Enum):

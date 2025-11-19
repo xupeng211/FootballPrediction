@@ -1,3 +1,5 @@
+from typing import Optional
+
 """足球预测模型模块.
 
 提供模型训练,预测,评估等核心功能:

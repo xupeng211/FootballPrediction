@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据存储模块.
 
 包含数据湖存储、分层数据管理等功能。

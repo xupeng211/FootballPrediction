@@ -8,7 +8,7 @@ Prediction API Integration Tests
 import asyncio
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import AsyncMock
 
 import pytest

@@ -7,7 +7,7 @@ Defines the base structure for domain events.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 # 兼容性别名将在文件末尾定义

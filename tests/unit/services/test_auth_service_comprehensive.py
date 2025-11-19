@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 认证服务测试
 Auth Service Tests

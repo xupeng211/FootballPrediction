@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 优化版预测路由API测试
 Optimized Prediction Router API Tests

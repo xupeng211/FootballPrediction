@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 WarningFilters增强最终测试 - 深化75%到90%+覆盖率
 覆盖初始化代码和错误处理路径的全面测试

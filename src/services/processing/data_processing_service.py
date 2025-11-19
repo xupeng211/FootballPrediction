@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Data Processing Service - 服务模块.
 
 提供 data processing service 相关的服务功能.

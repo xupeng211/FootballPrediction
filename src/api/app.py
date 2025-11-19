@@ -1,3 +1,5 @@
+from typing import Optional
+
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -127,9 +129,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(
-    GZipMiddleware, minimum_size=GZIP_MINIMUM_SIZE
-)
+app.add_middleware(GZipMiddleware, minimum_size=GZIP_MINIMUM_SIZE)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):

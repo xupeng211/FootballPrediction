@@ -1,3 +1,5 @@
+from typing import Optional
+
 from datetime import datetime
 
 from fastapi import APIRouter

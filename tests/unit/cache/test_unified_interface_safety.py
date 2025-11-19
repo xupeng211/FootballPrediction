@@ -26,7 +26,7 @@ Unified Interface Safety Net Tests
 
 import pytest
 from unittest.mock import AsyncMock, Mock, patch, MagicMock
-from typing import Any
+from typing import Any, Optional
 
 # 直接导入目标文件中的类和方法
 try:

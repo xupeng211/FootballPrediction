@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 Response模块增强测试 - 快速提升覆盖率
 测试APIResponseModel和APIResponse类的所有方法

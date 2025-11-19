@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据收集任务模块
 Data Collection Tasks Module.
 

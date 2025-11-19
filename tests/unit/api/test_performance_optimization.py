@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 API性能优化测试
 API Performance Optimization Tests

@@ -5,7 +5,7 @@
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 from .base_collector import BaseCollector, CollectionResult
 

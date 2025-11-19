@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 Formatters模块增强测试 - 快速提升覆盖率
 测试format_datetime, format_json, format_currency, format_percentage函数

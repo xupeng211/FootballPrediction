@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 数据质量监控服务测试
 Data Quality Monitor Service Tests

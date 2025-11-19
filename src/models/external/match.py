@@ -1,3 +1,5 @@
+from typing import Optional
+
 """外部比赛数据模型
 External Match Data Model.
 """

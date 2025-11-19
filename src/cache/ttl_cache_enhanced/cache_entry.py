@@ -5,7 +5,7 @@ Cache Entry Definition.
 """
 
 import time
-from typing import Any
+from typing import Any, Optional
 
 
 class CacheEntry:

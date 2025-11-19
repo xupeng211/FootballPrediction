@@ -5,7 +5,7 @@ Simple BaseAdapter Factory Implementation.
 Provides lightweight adapter creation and management functionality.
 """
 
-from typing import Any
+from typing import Any, Optional
 
 # 导入基础类
 from .base import BaseAdapter

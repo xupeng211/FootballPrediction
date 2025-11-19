@@ -5,7 +5,7 @@ Data Sync Service for Football-Data.org API.
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine

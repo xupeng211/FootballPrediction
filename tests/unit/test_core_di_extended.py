@@ -466,7 +466,7 @@ class TestEdgeCasesAndAdvancedFeatures:
 
     def test_generic_type_resolution(self):
         """测试泛型类型解析"""
-        from typing import Generic, TypeVar
+        from typing import Generic, TypeVar, Optional
 
         T = TypeVar("T")
 

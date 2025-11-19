@@ -1,3 +1,5 @@
+from typing import Optional
+
 """预测统计模块
 Prediction Statistics Module.
 """

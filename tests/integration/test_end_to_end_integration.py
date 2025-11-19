@@ -8,7 +8,7 @@ Tests complete business workflows, validating collaboration between system compo
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 

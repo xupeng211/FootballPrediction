@@ -1,3 +1,5 @@
+from typing import Optional
+
 """足球预测系统核心功能模块.
 
 提供系统核心功能,包括:

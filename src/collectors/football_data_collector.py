@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Football-Data.org API数据采集器
 提供完整的足球数据采集功能.
 """

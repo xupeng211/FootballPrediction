@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 API集成测试
 API Integration Tests

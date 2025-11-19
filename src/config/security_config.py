@@ -11,7 +11,7 @@ Security Configuration Management.
 import logging
 import os
 import secrets
-from typing import Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 

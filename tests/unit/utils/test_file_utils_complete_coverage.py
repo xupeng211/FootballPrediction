@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 FileUtils完整覆盖测试 - 覆盖剩余函数以冲刺7.5%目标
 """

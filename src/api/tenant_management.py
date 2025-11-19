@@ -6,7 +6,7 @@ Multi-Tenant Management API.
 
 import re
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field, field_validator

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """缓存模块 - 提供统一的缓存管理功能.
 
 提供Redis缓存功能,支持:

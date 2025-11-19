@@ -1,3 +1,5 @@
+from typing import Optional
+
 """足球预测系统 - 数据库模块.
 
 此模块提供PostgreSQL数据库连接,会话管理和基础配置.

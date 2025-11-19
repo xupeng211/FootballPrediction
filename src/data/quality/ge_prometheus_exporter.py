@@ -1,3 +1,5 @@
+from typing import Optional
+
 import warnings
 
 # 从新模块导入所有内容

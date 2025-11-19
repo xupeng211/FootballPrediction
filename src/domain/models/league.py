@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from src.core.exceptions import DomainError
 

@@ -3,7 +3,7 @@
 import json
 from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any
+from typing import Any, Optional
 
 
 def format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:

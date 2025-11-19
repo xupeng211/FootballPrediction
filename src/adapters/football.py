@@ -1,3 +1,5 @@
+from typing import Optional
+
 """football 主模块
 Football Main Module.
 

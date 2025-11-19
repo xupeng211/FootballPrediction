@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -306,9 +306,7 @@ async def get_match_info(match_id: int):
         match_info = await service.get_match_info(match_id)
 
         if not match_info:
-            raise HTTPException(
-                status_code=404, detail="Match not found"
-            )
+            raise HTTPException(status_code=404, detail="Match not found")
 
         return match_info
 
@@ -475,9 +473,7 @@ async def unsubscribe_from_match_updates(
         success = await service.unsubscribe_from_match(match_id, user_id)
 
         if not success:
-            raise HTTPException(
-                status_code=404, detail="Match not found"
-            )
+            raise HTTPException(status_code=404, detail="Match not found")
 
         return {
             "success": True,

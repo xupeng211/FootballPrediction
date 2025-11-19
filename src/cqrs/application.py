@@ -7,7 +7,7 @@ Provides high-level CQRS operation interfaces.
 
 import logging
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Optional
 
 from .bus import get_command_bus, get_query_bus
 from .commands import (

@@ -12,7 +12,7 @@ import logging
 import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
@@ -398,23 +398,25 @@ class BaselineModelTrainer:
             包含模型和评估指标的字典
         """
         if not HAS_XGB:
-            raise ImportError("XGBoost is not installed. Please install with: pip install xgboost")
+            raise ImportError(
+                "XGBoost is not installed. Please install with: pip install xgboost"
+            )
 
         # 设置默认参数
         default_params = {
-            'objective': 'binary:logistic',  # 二分类任务
-            'eval_metric': 'logloss',       # 评估指标
-            'n_estimators': 1000,           # 最大树数量
-            'max_depth': 6,                 # 树的最大深度
-            'learning_rate': 0.1,           # 学习率
-            'subsample': 0.8,               # 子样本比例
-            'colsample_bytree': 0.8,        # 特征采样比例
-            'random_state': 42,             # 随机种子
-            'n_jobs': -1,                   # 并行作业数
-            'reg_alpha': 0,                 # L1正则化
-            'reg_lambda': 1,                # L2正则化
-            'min_child_weight': 1,          # 叶子节点最小权重
-            'gamma': 0,                     # 最小分裂增益
+            "objective": "binary:logistic",  # 二分类任务
+            "eval_metric": "logloss",  # 评估指标
+            "n_estimators": 1000,  # 最大树数量
+            "max_depth": 6,  # 树的最大深度
+            "learning_rate": 0.1,  # 学习率
+            "subsample": 0.8,  # 子样本比例
+            "colsample_bytree": 0.8,  # 特征采样比例
+            "random_state": 42,  # 随机种子
+            "n_jobs": -1,  # 并行作业数
+            "reg_alpha": 0,  # L1正则化
+            "reg_lambda": 1,  # L2正则化
+            "min_child_weight": 1,  # 叶子节点最小权重
+            "gamma": 0,  # 最小分裂增益
         }
 
         # 合并用户参数
@@ -437,13 +439,26 @@ class BaselineModelTrainer:
                 run_name=f"xgboost_{self.model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             ) as run:
                 return self._train_xgboost_with_mlflow(
-                    X_train, y_train, X_val, y_val, params,
-                    eval_set, early_stopping_rounds, verbose, run.run_id
+                    X_train,
+                    y_train,
+                    X_val,
+                    y_val,
+                    params,
+                    eval_set,
+                    early_stopping_rounds,
+                    verbose,
+                    run.run_id,
                 )
         else:
             return self._train_xgboost_without_mlflow(
-                X_train, y_train, X_val, y_val, params,
-                eval_set, early_stopping_rounds, verbose
+                X_train,
+                y_train,
+                X_val,
+                y_val,
+                params,
+                eval_set,
+                early_stopping_rounds,
+                verbose,
             )
 
     def _train_xgboost_without_mlflow(
@@ -465,9 +480,9 @@ class BaselineModelTrainer:
             # 训练模型
             fit_params = {}
             if eval_set:
-                fit_params['eval_set'] = eval_set
+                fit_params["eval_set"] = eval_set
                 if early_stopping_rounds:
-                    fit_params['early_stopping_rounds'] = early_stopping_rounds
+                    fit_params["early_stopping_rounds"] = early_stopping_rounds
 
             self.model.fit(X_train, y_train, **fit_params)
 
@@ -479,10 +494,10 @@ class BaselineModelTrainer:
             # 添加 XGBoost 特定的评估指标
             if eval_set:
                 # 获取训练过程中的最佳分数
-                if hasattr(self.model, 'best_score'):
-                    metrics['best_eval_score'] = self.model.best_score
-                if hasattr(self.model, 'best_iteration'):
-                    metrics['best_iteration'] = self.model.best_iteration
+                if hasattr(self.model, "best_score"):
+                    metrics["best_eval_score"] = self.model.best_score
+                if hasattr(self.model, "best_iteration"):
+                    metrics["best_iteration"] = self.model.best_iteration
 
             # 标记为已训练
             self.is_trained = True
@@ -497,7 +512,7 @@ class BaselineModelTrainer:
                 "metrics": metrics,
                 "timestamp": datetime.now().isoformat(),
                 "early_stopping_rounds": early_stopping_rounds,
-                "eval_sets_provided": len(eval_set) if eval_set else 0
+                "eval_sets_provided": len(eval_set) if eval_set else 0,
             }
 
             logger.info(f"XGBoost model {self.model_name} trained successfully")
@@ -508,7 +523,7 @@ class BaselineModelTrainer:
                 "model": self.model,
                 "metrics": metrics,
                 "training_history": self.training_history,
-                "feature_importance": self._get_feature_importance()
+                "feature_importance": self._get_feature_importance(),
             }
 
         except Exception as e:
@@ -534,8 +549,14 @@ class BaselineModelTrainer:
 
             # 训练模型
             result = self._train_xgboost_without_mlflow(
-                X_train, y_train, X_val, y_val, params,
-                eval_set, early_stopping_rounds, verbose
+                X_train,
+                y_train,
+                X_val,
+                y_val,
+                params,
+                eval_set,
+                early_stopping_rounds,
+                verbose,
             )
 
             # 记录指标到 MLflow
@@ -566,12 +587,12 @@ class BaselineModelTrainer:
             return None
 
         try:
-            if hasattr(self.model, 'feature_importances_'):
+            if hasattr(self.model, "feature_importances_"):
                 return self.model.feature_importances_
-            elif hasattr(self.model, 'get_booster'):
+            elif hasattr(self.model, "get_booster"):
                 # XGBoost 的 booster 对象
                 booster = self.model.get_booster()
-                importance_dict = booster.get_score(importance_type='weight')
+                importance_dict = booster.get_score(importance_type="weight")
                 # 将字典转换为数组（按特征顺序）
                 if importance_dict:
                     max_feature_index = max(int(k[1:]) for k in importance_dict.keys())
@@ -593,7 +614,7 @@ class BaselineModelTrainer:
         y_val: pd.Series,
         param_grid: Dict[str, List[Any]] = None,
         cv_folds: int = 3,
-        scoring: str = 'f1_weighted',
+        scoring: str = "f1_weighted",
         n_trials: int = 50,
     ) -> Dict[str, Any]:
         """
@@ -613,27 +634,31 @@ class BaselineModelTrainer:
             最佳参数和对应的评分
         """
         if not HAS_SCIPY or not HAS_XGB:
-            raise ImportError("Required libraries not available for hyperparameter optimization")
+            raise ImportError(
+                "Required libraries not available for hyperparameter optimization"
+            )
 
         # 默认参数搜索空间
         default_param_grid = {
-            'max_depth': [3, 4, 5, 6, 7, 8],
-            'learning_rate': [0.01, 0.05, 0.1, 0.2, 0.3],
-            'n_estimators': [100, 200, 300, 500, 1000],
-            'subsample': [0.6, 0.7, 0.8, 0.9, 1.0],
-            'colsample_bytree': [0.6, 0.7, 0.8, 0.9, 1.0],
-            'reg_alpha': [0, 0.1, 0.5, 1.0, 2.0],
-            'reg_lambda': [0.5, 1.0, 2.0, 3.0, 5.0],
-            'min_child_weight': [1, 3, 5, 7, 10],
+            "max_depth": [3, 4, 5, 6, 7, 8],
+            "learning_rate": [0.01, 0.05, 0.1, 0.2, 0.3],
+            "n_estimators": [100, 200, 300, 500, 1000],
+            "subsample": [0.6, 0.7, 0.8, 0.9, 1.0],
+            "colsample_bytree": [0.6, 0.7, 0.8, 0.9, 1.0],
+            "reg_alpha": [0, 0.1, 0.5, 1.0, 2.0],
+            "reg_lambda": [0.5, 1.0, 2.0, 3.0, 5.0],
+            "min_child_weight": [1, 3, 5, 7, 10],
         }
 
         if param_grid:
             default_param_grid.update(param_grid)
 
-        best_score = float('-inf')
+        best_score = float("-inf")
         best_params = None
 
-        logger.info(f"Starting XGBoost hyperparameter optimization with {n_trials} trials")
+        logger.info(
+            f"Starting XGBoost hyperparameter optimization with {n_trials} trials"
+        )
 
         for trial in range(n_trials):
             # 随机选择参数
@@ -649,7 +674,8 @@ class BaselineModelTrainer:
                 # 评估模型
                 y_pred = self.model.predict(X_val)
                 from sklearn.metrics import f1_score
-                current_score = f1_score(y_val, y_pred, average='weighted')
+
+                current_score = f1_score(y_val, y_pred, average="weighted")
 
                 # 更新最佳参数
                 if current_score > best_score:
@@ -669,7 +695,7 @@ class BaselineModelTrainer:
         return {
             "best_params": best_params,
             "best_score": best_score,
-            "trials_completed": n_trials
+            "trials_completed": n_trials,
         }
 
 

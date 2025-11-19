@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据API端点（向后兼容）
 Data API Endpoints (Backward Compatible).
 
@@ -142,9 +144,12 @@ async def get_leagues(
                 id=i,
                 name=f"League {i}",
                 country=country or f"Country{i}",
-                season=season or "2024-25",  # ISSUE: 魔法数字 2024 应该提取为命名常量以提高代码可维护性
+                season=season
+                or "2024-25",  # ISSUE: 魔法数字 2024 应该提取为命名常量以提高代码可维护性
             )
-            for i in range(1, min(limit + 1, 11))  # ISSUE: 魔法数字 11 应该提取为命名常量以提高代码可维护性
+            for i in range(
+                1, min(limit + 1, 11)
+            )  # ISSUE: 魔法数字 11 应该提取为命名常量以提高代码可维护性
         ]
 
         logger.info(f"成功获取 {len(leagues)} 个联赛")
@@ -190,7 +195,9 @@ async def get_teams(
     league_id: int | None = Query(None, description="联赛ID"),
     country: str | None = Query(None, description="国家"),
     search: str | None = Query(None, description="搜索关键词"),
-    limit: int = Query(20, ge=1, le=100),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
+    limit: int = Query(
+        20, ge=1, le=100
+    ),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
 ):
     """获取球队列表.
 
@@ -208,10 +215,13 @@ async def get_teams(
                 country=country or "Country",
                 league_id=league_id,
                 # 用户建议的新增字段
-                founded_year=1980 + i,  # ISSUE: 魔法数字 1980 应该提取为命名常量以提高代码可维护性
+                founded_year=1980
+                + i,  # ISSUE: 魔法数字 1980 应该提取为命名常量以提高代码可维护性
                 stadium_name=f"Stadium {i}",
                 stadium_capacity=30000  # ISSUE: 魔法数字 30000 应该提取为命名常量以提高代码可维护性
-                + (i * 5000),  # ISSUE: 魔法数字 30000 应该提取为命名常量以提高代码可维护性
+                + (
+                    i * 5000
+                ),  # ISSUE: 魔法数字 30000 应该提取为命名常量以提高代码可维护性
                 website_url=f"https://team{i}.example.com",
                 team_color=(
                     ["Red", "Blue", "Green", "Yellow", "Purple"][i - 1]
@@ -219,7 +229,9 @@ async def get_teams(
                     else "Orange"
                 ),
             )
-            for i in range(1, min(limit + 1, 11))  # ISSUE: 魔法数字 11 应该提取为命名常量以提高代码可维护性
+            for i in range(
+                1, min(limit + 1, 11)
+            )  # ISSUE: 魔法数字 11 应该提取为命名常量以提高代码可维护性
         ]
 
         logger.info(f"成功获取 {len(_teams)} 支球队")
@@ -293,7 +305,9 @@ async def get_matches(
     date_from: str | None = Query(None, description="开始日期 YYYY-MM-DD"),
     date_to: str | None = Query(None, description="结束日期 YYYY-MM-DD"),
     status: str | None = Query(None, description="比赛状态"),
-    limit: int = Query(20, ge=1, le=100),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
+    limit: int = Query(
+        20, ge=1, le=100
+    ),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
 ):
     """获取比赛列表.
 
@@ -315,7 +329,10 @@ async def get_matches(
                 match_date=datetime.utcnow() + timedelta(days=i),
                 status="pending",
                 # 用户建议的新增比赛统计字段
-                attendance=25000 + (i * 3000),  # ISSUE: 魔法数字 25000 应该提取为命名常量以提高代码可维护性
+                attendance=25000
+                + (
+                    i * 3000
+                ),  # ISSUE: 魔法数字 25000 应该提取为命名常量以提高代码可维护性
                 referee=f"Referee {i}",
                 weather=(
                     ["Sunny", "Cloudy", "Rainy", "Partly Cloudy"][i - 1]
@@ -339,7 +356,9 @@ async def get_matches(
                     else "W-D-D-L-W"
                 ),
             )
-            for i in range(1, min(limit + 1, 11))  # ISSUE: 魔法数字 11 应该提取为命名常量以提高代码可维护性
+            for i in range(
+                1, min(limit + 1, 11)
+            )  # ISSUE: 魔法数字 11 应该提取为命名常量以提高代码可维护性
         ]
 
         logger.info(f"成功获取 {len(_matches)} 场比赛")
@@ -414,7 +433,9 @@ async def get_match_statistics(match_id: int):
 async def get_odds(
     match_id: int | None = Query(None, description="比赛ID"),
     bookmaker: str | None = Query(None, description="博彩公司"),
-    limit: int = Query(20, ge=1, le=100),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
+    limit: int = Query(
+        20, ge=1, le=100
+    ),  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
 ):
     """获取赔率数据.
 
@@ -428,9 +449,11 @@ async def get_odds(
                 id=i,
                 match_id=match_id or i,
                 bookmaker=bookmaker or f"Bookmaker{i}",
-                home_win=1.85 + i * 0.1,  # ISSUE: 魔法数字 85 应该提取为命名常量以提高代码可维护性
+                home_win=1.85
+                + i * 0.1,  # ISSUE: 魔法数字 85 应该提取为命名常量以提高代码可维护性
                 draw=3.20,  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
-                away_win=4.50 - i * 0.1,  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
+                away_win=4.50
+                - i * 0.1,  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
                 updated_at=datetime.utcnow(),
             )
             for i in range(1, min(limit + 1, 6))
@@ -458,9 +481,11 @@ async def get_match_odds(match_id: int):
                 id=i,
                 match_id=match_id,
                 bookmaker=f"Bookmaker{i}",
-                home_win=1.85 + i * 0.05,  # ISSUE: 魔法数字 85 应该提取为命名常量以提高代码可维护性
+                home_win=1.85
+                + i * 0.05,  # ISSUE: 魔法数字 85 应该提取为命名常量以提高代码可维护性
                 draw=3.20,  # ISSUE: 魔法数字 20 应该提取为命名常量以提高代码可维护性
-                away_win=4.50 - i * 0.05,  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
+                away_win=4.50
+                - i * 0.05,  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
                 updated_at=datetime.utcnow(),
             )
             for i in range(1, 4)

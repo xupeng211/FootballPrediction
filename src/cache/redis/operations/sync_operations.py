@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from redis.exceptions import RedisError
 

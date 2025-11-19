@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 数据验证器增强测试 - 冲刺40%覆盖率
 """

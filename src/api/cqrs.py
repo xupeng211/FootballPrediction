@@ -1,3 +1,5 @@
+from typing import Optional
+
 """CQRS API端点
 CQRS API Endpoints.
 
@@ -89,9 +91,7 @@ async def get_prediction(
         result = await service.get_prediction(prediction_id)
         return result
     except Exception as e:
-        raise HTTPException(
-            status_code=404, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.get("/predictions/", response_model=list[PredictionResponse])
@@ -136,9 +136,7 @@ async def get_match(
         result = await service.get_match(match_id)
         return result
     except Exception as e:
-        raise HTTPException(
-            status_code=404, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.get("/matches/", response_model=list[MatchResponse])
@@ -180,9 +178,7 @@ async def get_user(
         result = await service.get_user(user_id)
         return result
     except Exception as e:
-        raise HTTPException(
-            status_code=404, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.get("/users/", response_model=list[UserResponse])
@@ -223,6 +219,4 @@ async def get_analytics(
         result = await service.get_analytics(user_id, days)
         return result
     except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=400, detail=str(e)) from e

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 简化集成测试
 Simple Integration Tests

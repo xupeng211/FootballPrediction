@@ -11,7 +11,7 @@ Strategy implementation using statistical methods and mathematical models for pr
 import logging
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from src.domain.strategies.base import (
     PredictionInput,

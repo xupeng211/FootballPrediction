@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 # Pydantic compatibility logic
 try:
@@ -21,20 +21,18 @@ try:
 
     class SmartListField(FieldInfo):
         """智能列表字段，绕过Pydantic Settings的自动JSON解析"""
+
         def __init__(self, default_factory, description):
             super().__init__(
                 default=default_factory(),
                 description=description,
                 # 禁用Pydantic的自动JSON解析
-                json_schema_extra={"type": "array", "items": {"type": "string"}}
+                json_schema_extra={"type": "array", "items": {"type": "string"}},
             )
 
         def __get_pydantic_json_schema__(self, field_type):
             """重写JSON schema生成，禁用自动解析"""
-            return {
-                "type": "array",
-                "items": {"type": "string"}
-            }
+            return {"type": "array", "items": {"type": "string"}}
 
 except ImportError:
     try:
@@ -45,6 +43,7 @@ except ImportError:
 
         class SmartListField:
             """Pydantic v1的智能列表字段"""
+
             def __init__(self, default_factory, description):
                 self.default_factory = default_factory
                 self.description = description
@@ -193,7 +192,7 @@ class Settings(SettingsClass):
     metrics_tables: str = (
         Field(
             default="matches,teams,leagues,odds,features,raw_match_data,raw_odds_data,raw_scores_data,data_collection_logs",
-            description="需要统计行数的数据库表(逗号分隔)"
+            description="需要统计行数的数据库表(逗号分隔)",
         )
         if HAS_PYDANTIC
         else "matches,teams,leagues,odds,features,raw_match_data,raw_odds_data,raw_scores_data,data_collection_logs"
@@ -214,7 +213,7 @@ class Settings(SettingsClass):
     enabled_services: str = (
         Field(
             default="ContentAnalysisService,UserProfileService,DataProcessingService",
-            description="默认启用的服务列表(逗号分隔)"
+            description="默认启用的服务列表(逗号分隔)",
         )
         if HAS_PYDANTIC
         else "ContentAnalysisService,UserProfileService,DataProcessingService"
@@ -260,10 +259,11 @@ class Settings(SettingsClass):
                     logging.warning(f"API_PORT: '{v}' 超出范围，回退到 {DEFAULT_PORT}")
                     return DEFAULT_PORT
             except (ValueError, TypeError):
-                logging.warning(f"API_PORT: '{v}' 不是有效端口号，回退到 {DEFAULT_PORT}")
+                logging.warning(
+                    f"API_PORT: '{v}' 不是有效端口号，回退到 {DEFAULT_PORT}"
+                )
                 return DEFAULT_PORT
 
-        
     else:
 
         def __init__(self, **kwargs):
@@ -285,7 +285,9 @@ class Settings(SettingsClass):
             self.metrics_collection_interval = 30
             self.missing_data_defaults_path = None
             self.missing_data_defaults_json = None
-            self.enabled_services = "ContentAnalysisService,UserProfileService,DataProcessingService"
+            self.enabled_services = (
+                "ContentAnalysisService,UserProfileService,DataProcessingService"
+            )
 
             # 从环境变量或kwargs更新配置
             for key, value in kwargs.items():
@@ -336,10 +338,14 @@ class Settings(SettingsClass):
                     if 1 <= port <= 65535:
                         env_value = port
                     else:
-                        logging.warning(f"API_PORT: '{env_value}' 超出范围，回退到默认值8000")
+                        logging.warning(
+                            f"API_PORT: '{env_value}' 超出范围，回退到默认值8000"
+                        )
                         env_value = 8000
                 except (ValueError, TypeError):
-                    logging.warning(f"API_PORT: '{env_value}' 不是有效端口号，回退到默认值8000")
+                    logging.warning(
+                        f"API_PORT: '{env_value}' 不是有效端口号，回退到默认值8000"
+                    )
                     env_value = 8000
             elif attr_name == "metrics_collection_interval":
                 try:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """性能监控模块
 Performance Monitoring Module.
 

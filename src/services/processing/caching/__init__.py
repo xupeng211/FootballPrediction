@@ -1,3 +1,5 @@
+from typing import Optional
+
 """缓存管理模块.
 
 提供数据处理缓存功能.

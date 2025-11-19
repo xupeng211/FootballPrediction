@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 # 导入被测试的模块
 from src.ml.models.poisson_model import PoissonModel

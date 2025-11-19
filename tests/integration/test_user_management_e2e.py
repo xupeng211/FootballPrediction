@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 
 # Mock user service for testing

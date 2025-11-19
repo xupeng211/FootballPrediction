@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """投注API模块
 Betting API Module.

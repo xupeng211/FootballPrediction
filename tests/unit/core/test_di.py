@@ -7,7 +7,7 @@ Tests the integrity and correctness of core dependency injection functionality.
 """
 
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable, Optional
 from unittest.mock import Mock, patch
 
 import pytest

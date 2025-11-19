@@ -15,7 +15,7 @@ import pytest
 from unittest.mock import Mock, patch, mock_open
 from importlib import reload
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 # 导入要测试的模块
 import src.core.config

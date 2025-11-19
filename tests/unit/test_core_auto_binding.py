@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 增强的测试文件 - 目标覆盖率 40%
 模块: core.auto_binding

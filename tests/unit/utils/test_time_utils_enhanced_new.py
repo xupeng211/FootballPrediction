@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 TimeUtils增强测试 - 提升39%到65%+覆盖率
 针对未覆盖的时间工具函数进行全面测试

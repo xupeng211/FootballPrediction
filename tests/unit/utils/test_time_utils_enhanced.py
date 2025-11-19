@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 时间工具增强测试 - 基于实际TimeUtils类
 """

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """集成策略."""
 
 # 导入

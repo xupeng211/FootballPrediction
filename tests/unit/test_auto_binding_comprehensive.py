@@ -7,7 +7,7 @@ AutoBinding 综合测试
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TypeVar
+from typing import TypeVar, Optional
 from unittest.mock import patch
 
 import pytest

@@ -13,7 +13,7 @@ import asyncio
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, Mock, patch, MagicMock
-from typing import Any, List
+from typing import Any, List, Optional
 
 import pytest
 

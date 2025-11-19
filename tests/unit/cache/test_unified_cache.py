@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 统一缓存管理器测试
 Unified Cache Manager Tests

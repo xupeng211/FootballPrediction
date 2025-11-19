@@ -1,3 +1,5 @@
+from typing import Optional
+
 """装饰器模式实现
 Decorator Pattern Implementation.
 

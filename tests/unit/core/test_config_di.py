@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 配置驱动的依赖注入测试
 Configuration-driven Dependency Injection Tests

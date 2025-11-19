@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 Phase 3.2 - Core模块异常系统全面测试

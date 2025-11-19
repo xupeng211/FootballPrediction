@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 文件工具全面测试 - 冲刺45%覆盖率
 """

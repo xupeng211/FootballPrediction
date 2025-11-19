@@ -1,3 +1,5 @@
+from typing import Optional
+
 """领域模型
 Domain Models.
 

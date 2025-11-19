@@ -1,3 +1,5 @@
+from typing import Optional
+
 # 简化版 kafka_producer 模块
 
 

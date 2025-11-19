@@ -12,7 +12,7 @@ import logging
 import os
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import HTTPException, Request, Response, status
 

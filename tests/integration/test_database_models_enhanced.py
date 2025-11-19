@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 增强的数据库模型测试 - 覆盖率优化

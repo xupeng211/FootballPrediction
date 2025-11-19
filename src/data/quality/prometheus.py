@@ -5,7 +5,7 @@ Prometheus Exporter Module.
 """
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 
 class PrometheusCollector:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 API端点测试
 专注于FastAPI应用的基本功能测试

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Initial database schema".
 
 Revision ID: d56c8d0d5aa0

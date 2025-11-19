@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 内容分析服务测试
 """

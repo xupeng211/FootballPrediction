@@ -1,3 +1,5 @@
+from typing import Optional
+
 """audit 模块.
 
 提供审计功能和日志记录服务.

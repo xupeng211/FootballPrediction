@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 Formatters完整测试 - 从0%提升到100%覆盖率
 覆盖所有格式化函数

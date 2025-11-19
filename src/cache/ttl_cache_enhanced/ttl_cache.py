@@ -8,7 +8,7 @@ Provides in-memory cache with time-to-live functionality.
 import logging
 import threading
 import time
-from typing import Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 

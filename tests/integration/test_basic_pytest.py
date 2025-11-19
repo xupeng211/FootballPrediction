@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 基础pytest测试 - Issue #88 阶段1完成验证

@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 简单的数据源API测试脚本（不依赖数据库）

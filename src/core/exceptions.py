@@ -1,3 +1,5 @@
+from typing import Optional
+
 """足球预测系统异常定义模块.
 
 定义系统中使用的所有自定义异常类.
