@@ -3,7 +3,14 @@
 提供时间和日期处理相关的工具函数.
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
+
+try:
+    from datetime import UTC
+except ImportError:
+    # For Python < 3.11
+    from datetime import timezone
+    UTC = timezone.utc
 
 try:
     from zoneinfo import ZoneInfo
