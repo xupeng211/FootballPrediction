@@ -544,6 +544,7 @@ FAILED tests/unit/utils/test_validators_comprehensive.py::TestValidatorsComprehe
 FAILED tests/unit/utils/test_validators_enhanced.py::TestValidatorsEnhanced::test_validate_data_types_complex_types
 FAILED tests/unit/utils/test_validators_enhanced.py::TestValidatorsEnhanced::test_validate_data_types_invalid_types
 tests/unit/adapters/test_factory_simple.py::TestIntegrationWithRealAdapters::test_end_to_end_workflow
+tests/unit/api/test_api_endpoint.py::test_data_sources_directly
 tests/unit/api/test_api_simple.py::TestIntegrationScenarios::test_chained_mock_calls
 tests/unit/api/test_api_simple.py::TestIntegrationScenarios::test_error_handling
 tests/unit/api/test_api_simple.py::TestIntegrationScenarios::test_full_test_flow
