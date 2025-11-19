@@ -30,6 +30,10 @@ try:
     CAN_IMPORT = True
 except ImportError:
     CAN_IMPORT = False
+    # 创建一个模拟的BaseRepository类
+    class BaseRepository:
+        def __init__(self, *args, **kwargs):
+            pass
 
 
 class MockModel:
