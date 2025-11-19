@@ -8,7 +8,9 @@
 PYTHON := python3
 VENV := .venv
 VENV_BIN := $(VENV)/bin
-ACTIVATE := . $(VENV_BIN)/activate
+# 在CI环境中不需要激活虚拟环境，使用actions/setup-python设置的环境
+# 设置为noop命令，保持与现有Makefile结构的兼容性
+ACTIVATE := :
 COVERAGE_THRESHOLD := 40
 IMAGE_NAME ?= football-prediction
 GIT_SHA := $(shell git rev-parse --short HEAD)
