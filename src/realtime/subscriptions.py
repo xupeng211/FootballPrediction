@@ -144,12 +144,12 @@ class SubscriptionManager:
         """函数文档字符串."""
         pass
         # 添加pass语句
-        self.subscriptions: dict[
-            str, list[Subscription]
-        ] = {}  # connection_id -> subscriptions
-        self.event_subscribers: dict[
-            EventType, set[str]
-        ] = {}  # event_type -> connection_ids
+        self.subscriptions: dict[str, list[Subscription]] = (
+            {}
+        )  # connection_id -> subscriptions
+        self.event_subscribers: dict[EventType, set[str]] = (
+            {}
+        )  # event_type -> connection_ids
         self.logger = logging.getLogger(f"{__name__}.SubscriptionManager")
         asyncio.create_task(self._cleanup_inactive_subscriptions())
         self.logger.info("SubscriptionManager initialized")

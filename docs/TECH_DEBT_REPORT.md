@@ -1,17 +1,17 @@
 # 📊 技术债务报告 (Tech Debt Report)
 
-> 📅 **生成时间**: 2025-11-20 00:56:37
+> 📅 **生成时间**: 2025-11-20 01:11:47
 > 📁 **数据源**: `/home/user/projects/FootballPrediction/tests/skipped_tests.txt`
-> 🔢 **总跳过测试数**: 1117
+> 🔢 **总跳过测试数**: 10
 
 ## 🎯 执行摘要
 
 本报告基于 `skipped_tests.txt` 文件分析，识别项目中的技术债务分布和重灾区。
 
 ### 📈 关键指标
-- **跳过测试总数**: 1117
+- **跳过测试总数**: 10
 - **影响模块数**: 2
-- **重灾区文件数**: 11
+- **重灾区文件数**: 0
 
 ---
 
@@ -19,8 +19,8 @@
 
 | 模块 | 跳过测试数 | 占比 | 重灾区子模块 |
 |------|------------|------|-------------|
-| `unit` | 623 | 55.8% | services (142), api (125), cache (90) |
-| `unknown` | 494 | 44.2% | unknown (494) |
+| `unknown` | 5 | 50.0% | unknown (5) |
+| `unit` | 5 | 50.0% | scripts (5) |
 
 
 ---
@@ -31,21 +31,8 @@
 
 | 排名 | 文件路径 | 跳过测试数 | 严重程度 |
 |------|----------|------------|----------|
-| 1 | `unknown/unknown/unknown` | 494 | 🔴 极高 |
-| 2 | `unit/services/services` | 142 | 🔴 极高 |
-| 3 | `unit/api/api` | 125 | 🔴 极高 |
-| 4 | `unit/cache/cache` | 90 | 🔴 极高 |
-| 5 | `unit/database/database` | 80 | 🔴 极高 |
-| 6 | `unit/data/data` | 39 | 🔴 极高 |
-| 7 | `unit/core/core` | 25 | 🔴 极高 |
-| 8 | `unit/cqrs/cqrs` | 14 | 🟠 高 |
-| 9 | `unit/collectors/collectors` | 14 | 🟠 高 |
-| 10 | `unit/domain/domain` | 14 | 🟠 高 |
-| 11 | `unit/queues/queues` | 11 | 🟠 高 |
-| 12 | `unit/ml/ml` | 8 | 🟡 中 |
-| 13 | `unit/scripts/scripts` | 8 | 🟡 中 |
-| 14 | `unit/performance/performance` | 4 | 🟢 低 |
-| 15 | `unit/utils/utils` | 4 | 🟢 低 |
+| 1 | `unknown/unknown/unknown` | 5 | 🟡 中 |
+| 2 | `unit/scripts/scripts` | 5 | 🟡 中 |
 
 
 ---
@@ -54,8 +41,7 @@
 
 | 错误类型 | 数量 | 占比 |
 |----------|------|------|
-| `ERROR` | 51 | 4.6% |
-| `SKIPPED` | 1066 | 95.4% |
+| `SKIPPED` | 10 | 100.0% |
 
 
 ---
@@ -63,16 +49,7 @@
 ## 🧪 测试类模式分析
 
 **常见问题测试类:**
-- `TestCacheKeyManager`: 68 个测试
-- `TestDataQualityMonitor`: 36 个测试
-- `TestAuditService`: 30 个测试
-- `TestAPIMonitoring`: 29 个测试
-- `TestCacheInterface`: 28 个测试
-- `TestFootballDataCache`: 26 个测试
-- `TestIntegrationScenarios`: 24 个测试
-- `TestFootballDataCollector`: 24 个测试
-- `TestDataProcessingService`: 22 个测试
-- `TestDataService`: 22 个测试
+- `TestCoverageImprovementIntegration`: 10 个测试
 
 
 ---
@@ -81,25 +58,14 @@
 
 ### 🔥 **紧急修复 (P0 - 本周内)**
 - 重灾区文件 (≥20个跳过测试):
-  - `unknown/unknown/unknown` (494 个测试)
-  - `unit/services/services` (142 个测试)
-  - `unit/api/api` (125 个测试)
-  - `unit/cache/cache` (90 个测试)
-  - `unit/database/database` (80 个测试)
-  - `unit/data/data` (39 个测试)
-  - `unit/core/core` (25 个测试)
 
 ### ⚡ **高优先级 (P1 - 2周内)**
 - 中等重灾区文件 (10-19个跳过测试):
-  - `unit/cqrs/cqrs` (14 个测试)
-  - `unit/collectors/collectors` (14 个测试)
-  - `unit/domain/domain` (14 个测试)
-  - `unit/queues/queues` (11 个测试)
 
 ### 📋 **中优先级 (P2 - 1个月内)**
 - 轻微重灾区文件 (5-9个跳过测试):
-  - `unit/ml/ml` (8 个测试)
-  - `unit/scripts/scripts` (8 个测试)
+  - `unknown/unknown/unknown` (5 个测试)
+  - `unit/scripts/scripts` (5 个测试)
 
 
 ---
@@ -152,4 +118,4 @@ git log --oneline --since="1 week ago" -- tests/skipped_tests.txt
 
 ---
 
-*📋 此报告自动生成，最后更新时间: 2025-11-20 00:56:37*
+*📋 此报告自动生成，最后更新时间: 2025-11-20 01:11:47*
