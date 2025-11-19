@@ -12,6 +12,7 @@ try:
 except ImportError:
     # For Python < 3.11
     from datetime import timezone
+
     UTC = timezone.utc
 from typing import Any
 from uuid import uuid4
