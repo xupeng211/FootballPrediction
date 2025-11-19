@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 API Endpoints Comprehensive Test Suite
 足球比赛结果预测系统 - API端点完整测试

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据模型类."""
 
 # 导入

@@ -14,7 +14,7 @@ AutoML Pipeline
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 import joblib
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier

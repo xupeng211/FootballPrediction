@@ -1,3 +1,5 @@
+from typing import Optional
+
 # 简化版 model_training_broken 模块
 
 

@@ -7,7 +7,7 @@ Advanced Quality Metrics Integration.
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from src.core.logging_system import get_logger
 from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer

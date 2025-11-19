@@ -1,3 +1,5 @@
+from typing import Optional
+
 """门面模式模块
 Facade Pattern Module.
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 重试机制测试（向后兼容）
 Retry Mechanism Test (Backward Compatible)

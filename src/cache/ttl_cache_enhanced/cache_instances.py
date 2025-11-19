@@ -1,3 +1,5 @@
+from typing import Optional
+
 """预定义的缓存实例
 Predefined Cache Instances.
 

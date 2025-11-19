@@ -8,7 +8,7 @@ Provides system performance monitoring and analysis tools.
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 import psutil
 

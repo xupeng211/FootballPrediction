@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 简化的端到端集成测试
 Simplified End-to-End Integration Tests

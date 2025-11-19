@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 WarningFilters完整测试 - 优化75%到90%+覆盖率
 针对警告过滤器设置模块进行全面测试

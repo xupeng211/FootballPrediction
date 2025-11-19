@@ -8,7 +8,7 @@ Strategy implementation using enhanced machine learning models for prediction.
 import logging
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 

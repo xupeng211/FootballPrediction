@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Manager - 服务模块.
 
 提供 manager 相关的服务功能.

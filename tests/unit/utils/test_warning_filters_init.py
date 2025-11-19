@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 WarningFilters初始化测试 - 专门覆盖第24-28行初始化代码
 """

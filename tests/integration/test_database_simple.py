@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 简化的数据库集成测试
 Simplified Database Integration Tests

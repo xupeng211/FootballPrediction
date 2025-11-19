@@ -1,3 +1,5 @@
+from typing import Optional
+
 """用户管理API路由
 User Management API Routes.
 
@@ -83,9 +85,7 @@ async def get_current_user_info(
         user = await user_service.get_user_by_id(current_user["id"])
         return user
     except UserNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -119,9 +119,7 @@ async def update_user(
         user = await user_service.update_user(user_id, request)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
@@ -144,9 +142,7 @@ async def delete_user(
             )
         await user_service.delete_user(user_id)
     except UserNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 @router.get("/", response_model=list[UserResponse])
@@ -239,9 +235,7 @@ async def deactivate_user(
         user = await user_service.deactivate_user(user_id)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 @router.post("/{user_id}/activate", response_model=UserResponse)
@@ -261,9 +255,7 @@ async def activate_user(
         user = await user_service.activate_user(user_id)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 @router.get("/stats", response_model=dict)

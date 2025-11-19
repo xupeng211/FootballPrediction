@@ -8,7 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 # mypy: ignore-errors
 # 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑

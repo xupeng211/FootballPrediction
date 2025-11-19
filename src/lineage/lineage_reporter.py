@@ -6,7 +6,7 @@
 
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 from openlineage.client import OpenLineageClient

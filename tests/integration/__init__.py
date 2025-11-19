@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 集成测试模块
 Integration Tests Module

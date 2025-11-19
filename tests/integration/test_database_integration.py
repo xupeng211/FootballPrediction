@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 数据库集成测试
 Database Integration Tests

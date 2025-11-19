@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据收集任务主入口
 Data Collection Tasks Main Entry.
 

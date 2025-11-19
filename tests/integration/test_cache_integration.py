@@ -9,7 +9,7 @@ import asyncio
 import json
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

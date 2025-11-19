@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 大规模测试套件 - core.exceptions
 目标: 创建50个可运行的测试用例

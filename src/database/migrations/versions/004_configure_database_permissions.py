@@ -1,3 +1,5 @@
+from typing import Optional
+
 # mypy: ignore-errors
 import logging
 import os

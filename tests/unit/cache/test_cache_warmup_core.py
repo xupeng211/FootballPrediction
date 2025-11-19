@@ -1,3 +1,5 @@
+from typing import Optional
+
 """智能缓存预热核心单元测试
 Core Unit Tests for Intelligent Cache Warmup.
 """

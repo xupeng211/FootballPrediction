@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """
 Phase 5.0 - 最后冲刺15%企业级覆盖率

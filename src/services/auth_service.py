@@ -5,7 +5,7 @@
 
 import secrets
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 import bcrypt
 from jose import JWTError, jwt

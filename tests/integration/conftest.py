@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 集成测试配置文件 - 全面增强版
 Enhanced Integration Test Configuration

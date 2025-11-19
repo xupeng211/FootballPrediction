@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Common module."""
 
 # 模块导入将在需要时添加

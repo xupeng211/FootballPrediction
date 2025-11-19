@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Redis core modules."""
 
 from .connection_manager import RedisConnectionManager

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Football Prediction FastAPI Application
 足球预测系统主应用文件.
 """

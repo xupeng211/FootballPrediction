@@ -8,7 +8,7 @@ Health Check API Endpoints Comprehensive Test Suite
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 

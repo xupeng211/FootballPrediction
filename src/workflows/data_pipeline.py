@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     description="从外部API获取最新比赛数据",
     retries=3,
     retry_delay_seconds=60,
-    cache_expiration=timedelta(hours=1)
+    cache_expiration=timedelta(hours=1),
 )
 async def fetch_data() -> Dict[str, Any]:
     """
@@ -54,8 +54,8 @@ async def fetch_data() -> Dict[str, Any]:
                     "stats": {
                         "possession": {"home": 55, "away": 45},
                         "shots": {"home": 12, "away": 8},
-                        "corners": {"home": 6, "away": 4}
-                    }
+                        "corners": {"home": 6, "away": 4},
+                    },
                 },
                 {
                     "id": 2,
@@ -68,15 +68,15 @@ async def fetch_data() -> Dict[str, Any]:
                     "stats": {
                         "possession": {"home": 50, "away": 50},
                         "shots": {"home": 5, "away": 7},
-                        "corners": {"home": 3, "away": 5}
-                    }
-                }
+                        "corners": {"home": 3, "away": 5},
+                    },
+                },
             ],
             "metadata": {
                 "source": "external_api",
                 "fetch_time": datetime.now().isoformat(),
-                "total_matches": 2
-            }
+                "total_matches": 2,
+            },
         }
 
         logger.info(f"✅ 成功获取 {len(mock_data['matches'])} 场比赛数据")
@@ -95,7 +95,7 @@ async def fetch_data() -> Dict[str, Any]:
     name="特征工程处理",
     description="对原始数据进行特征工程处理",
     retries=2,
-    retry_delay_seconds=30
+    retry_delay_seconds=30,
 )
 async def engineer_features(data: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -119,7 +119,6 @@ async def engineer_features(data: Dict[str, Any]) -> Dict[str, Any]:
                 "match_id": match["id"],
                 "home_team": match["home_team"],
                 "away_team": match["away_team"],
-
                 # 统计特征
                 "home_possession": match["stats"]["possession"]["home"],
                 "away_possession": match["stats"]["possession"]["away"],
@@ -127,18 +126,21 @@ async def engineer_features(data: Dict[str, Any]) -> Dict[str, Any]:
                 "away_shots": match["stats"]["shots"]["away"],
                 "home_corners": match["stats"]["corners"]["home"],
                 "away_corners": match["stats"]["corners"]["away"],
-
                 # 派生特征
-                "possession_diff": match["stats"]["possession"]["home"] - match["stats"]["possession"]["away"],
-                "shots_diff": match["stats"]["shots"]["home"] - match["stats"]["shots"]["away"],
-                "corners_diff": match["stats"]["corners"]["home"] - match["stats"]["corners"]["away"],
-                "total_shots": match["stats"]["shots"]["home"] + match["stats"]["shots"]["away"],
-                "total_corners": match["stats"]["corners"]["home"] + match["stats"]["corners"]["away"],
-
+                "possession_diff": match["stats"]["possession"]["home"]
+                - match["stats"]["possession"]["away"],
+                "shots_diff": match["stats"]["shots"]["home"]
+                - match["stats"]["shots"]["away"],
+                "corners_diff": match["stats"]["corners"]["home"]
+                - match["stats"]["corners"]["away"],
+                "total_shots": match["stats"]["shots"]["home"]
+                + match["stats"]["shots"]["away"],
+                "total_corners": match["stats"]["corners"]["home"]
+                + match["stats"]["corners"]["away"],
                 # 目标变量
                 "home_goals": match["home_score"],
                 "away_goals": match["away_score"],
-                "goal_difference": match["home_score"] - match["away_score"]
+                "goal_difference": match["home_score"] - match["away_score"],
             }
 
             features.append(feature_vector)
@@ -151,12 +153,15 @@ async def engineer_features(data: Dict[str, Any]) -> Dict[str, Any]:
             else:
                 result = "draw"
 
-            labels.append({
-                "match_id": match["id"],
-                "result": result,
-                "over_2_5_goals": (match["home_score"] + match["away_score"]) > 2.5,
-                "both_teams_score": match["home_score"] > 0 and match["away_score"] > 0
-            })
+            labels.append(
+                {
+                    "match_id": match["id"],
+                    "result": result,
+                    "over_2_5_goals": (match["home_score"] + match["away_score"]) > 2.5,
+                    "both_teams_score": match["home_score"] > 0
+                    and match["away_score"] > 0,
+                }
+            )
 
         processed_data = {
             "features": features,
@@ -165,8 +170,10 @@ async def engineer_features(data: Dict[str, Any]) -> Dict[str, Any]:
                 "total_samples": len(features),
                 "feature_count": len(features[0]) if features else 0,
                 "processing_time": datetime.now().isoformat(),
-                "original_data_source": data.get("metadata", {}).get("source", "unknown")
-            }
+                "original_data_source": data.get("metadata", {}).get(
+                    "source", "unknown"
+                ),
+            },
         }
 
         logger.info(f"✅ 特征工程完成，生成了 {len(features)} 个样本")
@@ -185,7 +192,7 @@ async def engineer_features(data: Dict[str, Any]) -> Dict[str, Any]:
     name="模型训练",
     description="使用处理后的特征数据训练预测模型",
     retries=1,
-    retry_delay_seconds=10
+    retry_delay_seconds=10,
 )
 async def train_model(features: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -223,7 +230,7 @@ async def train_model(features: Dict[str, Any]) -> Dict[str, Any]:
                 "precision": 0.73,
                 "recall": 0.78,
                 "f1_score": 0.75,
-                "roc_auc": 0.82
+                "roc_auc": 0.82,
             },
             "feature_importance": {
                 "possession_diff": 0.15,
@@ -233,7 +240,7 @@ async def train_model(features: Dict[str, Any]) -> Dict[str, Any]:
                 "total_corners": 0.12,
                 "home_possession": 0.08,
                 "away_possession": 0.06,
-                "other_features": 0.04
+                "other_features": 0.04,
             },
             "training_metadata": {
                 "algorithm": "XGBoost + LSTM Ensemble",
@@ -241,17 +248,19 @@ async def train_model(features: Dict[str, Any]) -> Dict[str, Any]:
                     "learning_rate": 0.01,
                     "max_depth": 6,
                     "n_estimators": 100,
-                    "random_state": 42
+                    "random_state": 42,
                 },
                 "cross_validation_folds": 5,
-                "training_timestamp": datetime.now().isoformat()
-            }
+                "training_timestamp": datetime.now().isoformat(),
+            },
         }
 
         # 模拟训练时间
         await asyncio.sleep(3)
 
-        logger.info(f"✅ 模型训练完成，准确率: {training_results['model_performance']['accuracy']:.2%}")
+        logger.info(
+            f"✅ 模型训练完成，准确率: {training_results['model_performance']['accuracy']:.2%}"
+        )
 
         return training_results
 
@@ -260,10 +269,7 @@ async def train_model(features: Dict[str, Any]) -> Dict[str, Any]:
         raise
 
 
-@task(
-    name="模型评估",
-    description="评估训练好的模型性能"
-)
+@task(name="模型评估", description="评估训练好的模型性能")
 async def evaluate_model(model_results: Dict[str, Any]) -> Dict[str, Any]:
     """
     评估训练好的模型性能
@@ -281,22 +287,22 @@ async def evaluate_model(model_results: Dict[str, Any]) -> Dict[str, Any]:
 
         # 生成评估报告
         evaluation_report = {
-            "overall_score": (performance.get("accuracy", 0) +
-                            performance.get("precision", 0) +
-                            performance.get("recall", 0) +
-                            performance.get("f1_score", 0)) / 4,
-
+            "overall_score": (
+                performance.get("accuracy", 0)
+                + performance.get("precision", 0)
+                + performance.get("recall", 0)
+                + performance.get("f1_score", 0)
+            )
+            / 4,
             "detailed_metrics": performance,
-
             "quality_assessment": {
                 "excellent": performance.get("accuracy", 0) > 0.85,
                 "good": 0.75 < performance.get("accuracy", 0) <= 0.85,
                 "acceptable": 0.65 < performance.get("accuracy", 0) <= 0.75,
-                "needs_improvement": performance.get("accuracy", 0) <= 0.65
+                "needs_improvement": performance.get("accuracy", 0) <= 0.65,
             },
-
             "recommendations": [],
-            "evaluation_timestamp": datetime.now().isoformat()
+            "evaluation_timestamp": datetime.now().isoformat(),
         }
 
         # 基于性能给出建议
@@ -310,7 +316,9 @@ async def evaluate_model(model_results: Dict[str, Any]) -> Dict[str, Any]:
         if performance.get("recall", 0) < 0.75:
             evaluation_report["recommendations"].append("考虑使用不同的算法")
 
-        logger.info(f"✅ 模型评估完成，综合评分: {evaluation_report['overall_score']:.2%}")
+        logger.info(
+            f"✅ 模型评估完成，综合评分: {evaluation_report['overall_score']:.2%}"
+        )
 
         return evaluation_report
 
@@ -319,10 +327,7 @@ async def evaluate_model(model_results: Dict[str, Any]) -> Dict[str, Any]:
         raise
 
 
-@task(
-    name="保存模型",
-    description="将训练好的模型保存到存储"
-)
+@task(name="保存模型", description="将训练好的模型保存到存储")
 async def save_model(model_results: Dict[str, Any], evaluation: Dict[str, Any]) -> bool:
     """
     保存模型和评估结果
@@ -344,7 +349,7 @@ async def save_model(model_results: Dict[str, Any], evaluation: Dict[str, Any]) 
             "model_results": model_results,
             "evaluation": evaluation,
             "save_timestamp": datetime.now().isoformat(),
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
         # 模拟保存操作
@@ -362,7 +367,7 @@ async def save_model(model_results: Dict[str, Any], evaluation: Dict[str, Any]) 
 @flow(
     name="足球预测数据管道",
     description="完整的足球预测数据处理和模型训练管道",
-    log_prints=True
+    log_prints=True,
 )
 async def main_data_flow() -> Dict[str, Any]:
     """
@@ -408,27 +413,33 @@ async def main_data_flow() -> Dict[str, Any]:
             "data_processed": {
                 "raw_matches": len(raw_data.get("matches", [])),
                 "feature_samples": len(processed_data.get("features", [])),
-                "model_accuracy": model_results.get("model_performance", {}).get("accuracy", 0)
+                "model_accuracy": model_results.get("model_performance", {}).get(
+                    "accuracy", 0
+                ),
             },
             "model_performance": {
-                "accuracy": model_results.get("model_performance", {}).get("accuracy", 0),
+                "accuracy": model_results.get("model_performance", {}).get(
+                    "accuracy", 0
+                ),
                 "evaluation_score": evaluation.get("overall_score", 0),
-                "quality_assessment": evaluation.get("quality_assessment", {})
+                "quality_assessment": evaluation.get("quality_assessment", {}),
             },
             "outputs": {
                 "model_saved": save_success,
                 "evaluation_completed": True,
-                "recommendations": evaluation.get("recommendations", [])
+                "recommendations": evaluation.get("recommendations", []),
             },
             "timestamps": {
                 "start_time": pipeline_start_time.isoformat(),
                 "end_time": pipeline_end_time.isoformat(),
-                "duration": f"{pipeline_duration:.2f} seconds"
-            }
+                "duration": f"{pipeline_duration:.2f} seconds",
+            },
         }
 
         logger.info(f"🎉 数据管道执行完成! 耗时: {pipeline_duration:.2f}秒")
-        logger.info(f"📊 模型准确率: {pipeline_summary['model_performance']['accuracy']:.2%}")
+        logger.info(
+            f"📊 模型准确率: {pipeline_summary['model_performance']['accuracy']:.2%}"
+        )
 
         return pipeline_summary
 
@@ -443,8 +454,8 @@ async def main_data_flow() -> Dict[str, Any]:
             "timestamps": {
                 "start_time": pipeline_start_time.isoformat(),
                 "failure_time": pipeline_end_time.isoformat(),
-                "duration": f"{pipeline_duration:.2f} seconds"
-            }
+                "duration": f"{pipeline_duration:.2f} seconds",
+            },
         }
 
         logger.error(f"❌ 数据管道执行失败: {str(e)}")
@@ -452,10 +463,7 @@ async def main_data_flow() -> Dict[str, Any]:
         return error_summary
 
 
-@flow(
-    name="快速数据验证流程",
-    description="用于测试和验证的轻量级数据流程"
-)
+@flow(name="快速数据验证流程", description="用于测试和验证的轻量级数据流程")
 async def quick_validation_flow() -> Dict[str, Any]:
     """
     快速验证流程，用于测试环境
@@ -475,10 +483,14 @@ async def quick_validation_flow() -> Dict[str, Any]:
             "data_validation": {
                 "matches_count": len(raw_data.get("matches", [])),
                 "features_count": len(processed_data.get("features", [])),
-                "feature_dimensions": len(processed_data.get("features", [{}])[0]) if processed_data.get("features") else 0
+                "feature_dimensions": (
+                    len(processed_data.get("features", [{}])[0])
+                    if processed_data.get("features")
+                    else 0
+                ),
             },
             "pipeline_ready": True,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         logger.info("✅ 快速验证流程完成")
@@ -490,7 +502,7 @@ async def quick_validation_flow() -> Dict[str, Any]:
             "status": "failed",
             "error": str(e),
             "pipeline_ready": False,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
@@ -509,7 +521,7 @@ if __name__ == "__main__":
         # 运行完整数据管道
         result = asyncio.run(main_data_flow())
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("📊 执行结果摘要")
-    print("="*50)
+    print("=" * 50)
     print(json.dumps(result, indent=2, ensure_ascii=False))

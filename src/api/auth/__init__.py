@@ -1,3 +1,5 @@
+from typing import Optional
+
 """用户认证API包.
 
 提供完整的用户认证功能,包括:

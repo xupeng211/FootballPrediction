@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 Elo评级模型测试
 Elo Rating Model Tests

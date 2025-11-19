@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 API认证系统综合测试
 目标覆盖率: 45%

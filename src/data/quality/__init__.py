@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据质量监控模块.
 
 提供基于Great Expectations的数据质量监控和异常检测功能。

@@ -4,7 +4,7 @@ sql_compatibility.
 SQL兼容性工具模块 - 为各种SQL操作提供兼容性支持
 """
 
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy.engine import Engine
 

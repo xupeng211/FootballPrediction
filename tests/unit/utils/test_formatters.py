@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 数据格式化工具测试
 Data Formatters Test

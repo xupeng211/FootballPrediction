@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 大规模测试套件 - core.auto_binding
 目标: 创建25个可运行的测试用例

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据库赔率模型
 Database Odds Models.
 

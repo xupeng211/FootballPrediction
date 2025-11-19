@@ -9,7 +9,7 @@ import json
 import logging
 import pickle
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 try:
     import redis.asyncio as aioredis

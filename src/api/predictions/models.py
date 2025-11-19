@@ -1,3 +1,5 @@
+from typing import Optional
+
 """预测API模型定义."""
 
 from pydantic import BaseModel, Field

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 健康检查基础测试
 Basic Health Check Tests

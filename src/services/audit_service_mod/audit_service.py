@@ -5,7 +5,7 @@ Audit Service (Compatibility Version).
 import logging
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from .models import AuditAction, AuditEvent, AuditSeverity
 

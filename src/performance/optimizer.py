@@ -6,7 +6,7 @@ Provides system performance optimization features.
 """
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession

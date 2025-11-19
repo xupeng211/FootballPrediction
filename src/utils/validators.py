@@ -1,7 +1,7 @@
 """Data validators."""
 
 import re
-from typing import Any
+from typing import Any, Optional
 
 
 def is_valid_email(email: str) -> bool:

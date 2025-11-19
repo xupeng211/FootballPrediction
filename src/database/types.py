@@ -4,7 +4,7 @@
 """
 
 import json
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import JSON, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB

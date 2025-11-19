@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 高影响力测试 - 模块: core.logger
 专注于100%可运行的测试用例

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """比赛相关模型
 Match Related Models.
 """

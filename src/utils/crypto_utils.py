@@ -1,3 +1,5 @@
+from typing import Optional
+
 import base64
 import hashlib
 import secrets

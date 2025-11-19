@@ -1,3 +1,5 @@
+from typing import Optional
+
 """观察者模式模块
 Observer Pattern Module.
 

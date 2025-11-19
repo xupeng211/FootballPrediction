@@ -8,7 +8,7 @@ Match Data Processor - Rewritten Version
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 
 class MatchProcessor:

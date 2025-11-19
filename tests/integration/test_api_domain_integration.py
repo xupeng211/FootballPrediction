@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 API与Domain模块集成测试
 API and Domain Module Integration Tests

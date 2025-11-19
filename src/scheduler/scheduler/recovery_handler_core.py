@@ -1,3 +1,5 @@
+from typing import Optional
+
 """核心复杂类."""
 
 # 导入

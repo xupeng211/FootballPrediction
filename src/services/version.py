@@ -7,7 +7,7 @@ Provides API version information and application version management.
 
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 

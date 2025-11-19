@@ -7,7 +7,7 @@ Defines core event types in the system.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from .base import Event, EventData
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """预测模块
 Prediction Module.
 

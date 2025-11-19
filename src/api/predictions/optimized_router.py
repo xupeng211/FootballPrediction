@@ -7,7 +7,7 @@ Provides high-performance prediction API endpoints with caching strategies and p
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -377,7 +377,7 @@ async def get_optimized_prediction(
         if match_id <= 0:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid match_id: {match_id}. Match ID must be a positive integer."
+                detail=f"Invalid match_id: {match_id}. Match ID must be a positive integer.",
             )
 
         # 记录性能指标
@@ -585,7 +585,7 @@ async def get_popular_predictions(
         if time_range not in valid_time_ranges:
             raise HTTPException(
                 status_code=422,
-                detail=f"Invalid time_range: '{time_range}'. Must be one of {list(valid_time_ranges)}"
+                detail=f"Invalid time_range: '{time_range}'. Must be one of {list(valid_time_ranges)}",
             )
 
         # 解析时间范围
@@ -1507,7 +1507,8 @@ async def _get_popular_predictions_data(
                 "confidence_score": round(random.uniform(0.7, 0.95), 3),
                 "popularity_score": round(random.uniform(0.5, 1.0), 3),
                 "created_at": (
-                    datetime.utcnow() - timedelta(seconds=random.uniform(0, time_delta.total_seconds()))
+                    datetime.utcnow()
+                    - timedelta(seconds=random.uniform(0, time_delta.total_seconds()))
                 ).isoformat(),
             }
         )

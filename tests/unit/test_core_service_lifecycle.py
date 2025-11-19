@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 增强的测试文件 - 目标覆盖率 45%
 模块: core.service_lifecycle

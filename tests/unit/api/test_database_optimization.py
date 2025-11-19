@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 数据库优化功能测试
 Database Optimization Tests

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 核心模块集成测试
 Core Module Integration Tests

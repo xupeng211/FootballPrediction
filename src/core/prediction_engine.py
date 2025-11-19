@@ -1,3 +1,5 @@
+from typing import Optional
+
 """足球预测引擎核心模块
 Football Prediction Engine Core Module.
 

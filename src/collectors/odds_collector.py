@@ -1,3 +1,5 @@
+from typing import Optional
+
 """odds_collector.py
 odds_collector.
 

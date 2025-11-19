@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from scripts.quality_guardian import QualityGuardian
 

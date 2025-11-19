@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 缓存性能API测试
 Cache Performance API Tests

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据管道模块.
 
 包含足球预测系统的数据采集、存储、清洗和处理组件。

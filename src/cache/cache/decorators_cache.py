@@ -2,7 +2,7 @@
 
 # 导入
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Optional
 
 # 常量
 F = TypeVar("F", bound=Callable[..., Any])

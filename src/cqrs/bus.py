@@ -6,7 +6,7 @@ Implements dispatching mechanism for commands and queries.
 """
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from .base import Command, CommandHandler, Query, QueryHandler
 

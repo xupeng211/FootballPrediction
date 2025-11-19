@@ -1,3 +1,5 @@
+from typing import Optional
+
 """增强版 FastAPI 应用
 Enhanced FastAPI Application.
 

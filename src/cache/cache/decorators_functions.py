@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Optional
 
 """
 函数式装饰器

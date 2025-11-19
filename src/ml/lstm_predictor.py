@@ -20,7 +20,7 @@ except ImportError:
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import MinMaxScaler
@@ -34,6 +34,7 @@ except ImportError:
     tf = None
 
 from src.core.logging_system import get_logger
+
 try:
     from src.timeseries.influxdb_client import influxdb_manager
 except ImportError:
@@ -42,6 +43,7 @@ except ImportError:
         async def get_quality_metrics_history(self, hours: int = 24):
             """返回模拟的历史数据."""
             return []
+
     influxdb_manager = MockInfluxDBManager()
 
 logger = get_logger(__name__)
@@ -247,18 +249,26 @@ class LSTMPredictor:
             raise TypeError("X and y must be numpy arrays")
 
         if x.ndim != 3:
-            raise ValueError(f"X (features) must be 3-dimensional (samples, timesteps, features), but got {x.ndim}D")
+            raise ValueError(
+                f"X (features) must be 3-dimensional (samples, timesteps, features), but got {x.ndim}D"
+            )
 
         if y.ndim < 2:
-            raise ValueError(f"y (target) must be at least 2-dimensional, but got {y.ndim}D")
+            raise ValueError(
+                f"y (target) must be at least 2-dimensional, but got {y.ndim}D"
+            )
 
         # 验证样本数匹配
         if x.shape[0] != y.shape[0]:
-            raise ValueError(f"X and y must have the same number of samples (batch size), but got {x.shape[0]} and {y.shape[0]}")
+            raise ValueError(
+                f"X and y must have the same number of samples (batch size), but got {x.shape[0]} and {y.shape[0]}"
+            )
 
         # 验证特征和时间步维度
         if x.shape[1] <= 0 or x.shape[2] <= 0:
-            raise ValueError(f"X must have positive dimensions for timesteps and features, but got {x.shape[1:]}")
+            raise ValueError(
+                f"X must have positive dimensions for timesteps and features, but got {x.shape[1:]}"
+            )
 
         if self.model is None:
             self.build_model(input_shape=(x.shape[1], x.shape[2]))

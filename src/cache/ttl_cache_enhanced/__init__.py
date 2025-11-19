@@ -1,3 +1,5 @@
+from typing import Optional
+
 """TTL缓存增强模块.
 
 提供高性能的TTL缓存实现，支持：

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """重试机制实现
 Retry Mechanism Implementation.
 """

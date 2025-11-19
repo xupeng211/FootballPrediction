@@ -1,3 +1,5 @@
+from typing import Optional
+
 """error_handler.py
 Error_Handler.
 

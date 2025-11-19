@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 核心配置测试
 """

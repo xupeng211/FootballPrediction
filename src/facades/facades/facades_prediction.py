@@ -1,3 +1,5 @@
+from typing import Optional
+
 """预测门面."""
 
 # 导入

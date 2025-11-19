@@ -8,7 +8,7 @@ import hashlib
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 from redis.exceptions import RedisError
 

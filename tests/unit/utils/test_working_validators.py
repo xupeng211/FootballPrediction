@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 验证器测试 - 只测试确认存在的函数
 """

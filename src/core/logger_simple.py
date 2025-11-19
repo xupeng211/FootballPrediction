@@ -1,3 +1,5 @@
+from typing import Optional
+
 """简化的日志管理工具
 Simplified Logging Management Tool.
 """

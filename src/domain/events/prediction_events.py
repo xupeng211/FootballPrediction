@@ -6,7 +6,7 @@ Defines domain events related to predictions.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from src.domain.events.base import DomainEvent
 

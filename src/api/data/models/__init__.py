@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Models package for API data models."""
 
 try:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """API data models package."""
 
 # 路由器在 data.py 文件中定义，这里不导入以避免循环依赖

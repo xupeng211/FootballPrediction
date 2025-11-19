@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 I18n模块增强测试 - 快速提升覆盖率
 测试国际化支持功能

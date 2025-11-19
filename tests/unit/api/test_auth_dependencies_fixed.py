@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 认证依赖模块测试
 Authentication Dependencies Test Module

@@ -7,7 +7,7 @@ Football Prediction Complete Pipeline
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Optional
 
 # 尝试导入所需库
 try:
@@ -22,7 +22,10 @@ except ImportError:
 
 # 导入项目模块
 try:
-    from src.features.feature_engineer import FeaturePipelineBuilder, create_default_football_pipeline
+    from src.features.feature_engineer import (
+        FeaturePipelineBuilder,
+        create_default_football_pipeline,
+    )
     from src.models.model_training import BaselineModelTrainer, HAS_XGB
 
     HAS_PROJECT_MODULES = True
@@ -56,7 +59,9 @@ class FootballPredictionPipeline:
             random_state: 随机种子
         """
         if not HAS_DEPENDENCIES:
-            raise ImportError("Required dependencies not available. Please install pandas, numpy, scikit-learn")
+            raise ImportError(
+                "Required dependencies not available. Please install pandas, numpy, scikit-learn"
+            )
 
         if not HAS_PROJECT_MODULES:
             raise ImportError("Required project modules not available")
@@ -81,10 +86,10 @@ class FootballPredictionPipeline:
         numeric_features: list = None,
         categorical_features: list = None,
         custom_features: list = None,
-        numeric_strategy: str = 'standard',
-        categorical_strategy: str = 'onehot',
+        numeric_strategy: str = "standard",
+        categorical_strategy: str = "onehot",
         include_football_features: bool = True,
-    ) -> 'FootballPredictionPipeline':
+    ) -> "FootballPredictionPipeline":
         """
         构建特征工程管道
 
@@ -120,7 +125,7 @@ class FootballPredictionPipeline:
             numeric_strategy=numeric_strategy,
             categorical_strategy=categorical_strategy,
             include_football_features=include_football_features,
-            handle_missing=True
+            handle_missing=True,
         )
 
         logger.info(f"Feature pipeline built successfully")
@@ -201,16 +206,21 @@ class FootballPredictionPipeline:
             model_name=self.model_name,
             model_type=model_type,
             output_dir=str(self.output_dir),
-            use_mlflow=self.use_mlflow
+            use_mlflow=self.use_mlflow,
         )
 
         # 训练模型
         if model_type == "xgboost" and HAS_XGB:
             if optimize_hyperparameters and X_val is not None and y_val is not None:
                 # 超参数优化
-                optimization_result = self.model_trainer.optimize_xgboost_hyperparameters(
-                    X_train_processed, y_train, X_val_processed, y_val,
-                    n_trials=n_trials
+                optimization_result = (
+                    self.model_trainer.optimize_xgboost_hyperparameters(
+                        X_train_processed,
+                        y_train,
+                        X_val_processed,
+                        y_val,
+                        n_trials=n_trials,
+                    )
                 )
 
                 # 使用最佳参数训练
@@ -218,14 +228,20 @@ class FootballPredictionPipeline:
                 logger.info(f"Using optimized parameters: {best_params}")
 
                 training_result = self.model_trainer.train_xgboost(
-                    X_train_processed, y_train, X_val_processed, y_val,
-                    params=best_params
+                    X_train_processed,
+                    y_train,
+                    X_val_processed,
+                    y_val,
+                    params=best_params,
                 )
             else:
                 # 使用默认或指定参数训练
                 training_result = self.model_trainer.train_xgboost(
-                    X_train_processed, y_train, X_val_processed, y_val,
-                    params=xgboost_params
+                    X_train_processed,
+                    y_train,
+                    X_val_processed,
+                    y_val,
+                    params=xgboost_params,
                 )
         else:
             # 使用其他模型类型
@@ -311,7 +327,7 @@ class FootballPredictionPipeline:
                 "classification_report": classification_rep,
                 "confusion_matrix": confusion_mat.tolist(),
                 "predictions": y_pred.tolist(),
-                "probabilities": y_pred_proba.tolist()
+                "probabilities": y_pred_proba.tolist(),
             }
         except Exception as e:
             logger.error(f"Evaluation failed: {e}")
@@ -340,17 +356,17 @@ class FootballPredictionPipeline:
             "metadata": {
                 "created_at": pd.Timestamp.now().isoformat(),
                 "model_type": "xgboost" if self.model_trainer else "unknown",
-                "has_xgboost": HAS_XGB
-            }
+                "has_xgboost": HAS_XGB,
+            },
         }
 
-        with open(filepath, 'wb') as f:
+        with open(filepath, "wb") as f:
             pickle.dump(pipeline_data, f)
 
         logger.info(f"Pipeline saved to {filepath}")
         return str(filepath)
 
-    def load_pipeline(self, filepath: str) -> 'FootballPredictionPipeline':
+    def load_pipeline(self, filepath: str) -> "FootballPredictionPipeline":
         """
         加载完整管道
 
@@ -362,7 +378,7 @@ class FootballPredictionPipeline:
         """
         import pickle
 
-        with open(filepath, 'rb') as f:
+        with open(filepath, "rb") as f:
             pipeline_data = pickle.load(f)
 
         self.feature_pipeline = pipeline_data["feature_pipeline"]
@@ -378,20 +394,18 @@ class FootballPredictionPipeline:
 def create_simple_prediction_pipeline() -> FootballPredictionPipeline:
     """创建简单的足球预测管道"""
     return FootballPredictionPipeline(
-        model_name="simple_football_predictor",
-        use_mlflow=False
+        model_name="simple_football_predictor", use_mlflow=False
     ).build_feature_pipeline()
 
 
 def create_advanced_prediction_pipeline() -> FootballPredictionPipeline:
     """创建高级的足球预测管道"""
     return FootballPredictionPipeline(
-        model_name="advanced_football_predictor",
-        use_mlflow=True
+        model_name="advanced_football_predictor", use_mlflow=True
     ).build_feature_pipeline(
-        numeric_strategy='robust',
-        categorical_strategy='onehot',
-        include_football_features=True
+        numeric_strategy="robust",
+        categorical_strategy="onehot",
+        include_football_features=True,
     )
 
 
@@ -407,19 +421,19 @@ def example_usage():
     n_samples = 1000
 
     data = {
-        'home_team': np.random.choice(['Team_A', 'Team_B', 'Team_C'], n_samples),
-        'away_team': np.random.choice(['Team_X', 'Team_Y', 'Team_Z'], n_samples),
-        'home_team_score': np.random.randint(0, 5, n_samples),
-        'away_team_score': np.random.randint(0, 5, n_samples),
-        'home_team_shots': np.random.randint(5, 25, n_samples),
-        'away_team_shots': np.random.randint(5, 25, n_samples),
-        'odds_home_win': np.random.uniform(1.5, 5.0, n_samples),
-        'odds_draw': np.random.uniform(3.0, 4.5, n_samples),
-        'odds_away_win': np.random.uniform(1.8, 6.0, n_samples),
+        "home_team": np.random.choice(["Team_A", "Team_B", "Team_C"], n_samples),
+        "away_team": np.random.choice(["Team_X", "Team_Y", "Team_Z"], n_samples),
+        "home_team_score": np.random.randint(0, 5, n_samples),
+        "away_team_score": np.random.randint(0, 5, n_samples),
+        "home_team_shots": np.random.randint(5, 25, n_samples),
+        "away_team_shots": np.random.randint(5, 25, n_samples),
+        "odds_home_win": np.random.uniform(1.5, 5.0, n_samples),
+        "odds_draw": np.random.uniform(3.0, 4.5, n_samples),
+        "odds_away_win": np.random.uniform(1.8, 6.0, n_samples),
     }
 
     # 创建目标变量（主队是否获胜）
-    y = (data['home_team_score'] > data['away_team_score']).astype(int)
+    y = (data["home_team_score"] > data["away_team_score"]).astype(int)
 
     X = pd.DataFrame(data)
 
@@ -432,9 +446,12 @@ def example_usage():
     # 训练模型
     if HAS_XGB:
         training_result = pipeline.train_model(
-            X_train, y_train, X_test, y_test,
+            X_train,
+            y_train,
+            X_test,
+            y_test,
             optimize_hyperparameters=True,
-            n_trials=20  # 示例中使用较少的试验次数
+            n_trials=20,  # 示例中使用较少的试验次数
         )
         print("Training completed successfully")
         print(f"Best score: {training_result.get('metrics', {})}")

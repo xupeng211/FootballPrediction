@@ -1,3 +1,5 @@
+from typing import Optional
+
 """密钥管理模块 - 桩实现.
 
 Key Management Module - Stub Implementation

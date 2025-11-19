@@ -1,3 +1,5 @@
+from typing import Optional
+
 """统一日志访问接口.
 
 提供 get_logger(name, level) 以兼容各处引用（例如监控与脚本）.

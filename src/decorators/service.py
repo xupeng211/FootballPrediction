@@ -7,7 +7,7 @@ Provides high-level management and services for decorators.
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from src.core.logger import get_logger
 

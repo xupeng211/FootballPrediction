@@ -1,3 +1,5 @@
+from typing import Optional
+
 """用户认证API的依赖项.
 
 提供获取当前用户,认证服务等依赖函数

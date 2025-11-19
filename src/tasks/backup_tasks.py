@@ -1,3 +1,5 @@
+from typing import Optional
+
 """数据库备份任务 / Database Backup Tasks.
 
 实现定时数据库备份任务，包括：

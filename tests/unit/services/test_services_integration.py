@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 服务集成测试
 Services Integration Tests

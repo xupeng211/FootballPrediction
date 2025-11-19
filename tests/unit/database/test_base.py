@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 数据库基础模块测试
 """

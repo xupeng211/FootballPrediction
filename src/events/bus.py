@@ -7,7 +7,7 @@ Event Bus Implementation.
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
+from typing import Any, Optional
 
 from .base import EventData, EventHandler
 

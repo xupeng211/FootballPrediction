@@ -1,3 +1,5 @@
+from typing import Optional
+
 import asyncio
 import time
 from datetime import datetime
@@ -177,12 +179,16 @@ class SimplePredictionService:
                 current_requests = await redis_client.zcard(key)
 
                 # 限制:每分钟100个请求
-                if current_requests >= 100:  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+                if (
+                    current_requests >= 100
+                ):  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
                     return False
 
                 # 记录当前请求
                 await redis_client.zadd(key, {str(current_time): current_time})
-                await redis_client.expire(key, 60)  # ISSUE: 魔法数字 60 应该提取为命名常量以提高代码可维护性
+                await redis_client.expire(
+                    key, 60
+                )  # ISSUE: 魔法数字 60 应该提取为命名常量以提高代码可维护性
             else:
                 # 如果Redis不可用,使用内存缓存
                 if token not in self._rate_limit_cache:
@@ -220,7 +226,9 @@ class SimplePredictionService:
             processing_time = (time.time() - start_time) * 1000  # 转换为毫秒
 
             # 确保响应时间 ≤ 200ms (SRS要求)
-            if processing_time > 200:  # ISSUE: 魔法数字 200 应该提取为命名常量以提高代码可维护性
+            if (
+                processing_time > 200
+            ):  # ISSUE: 魔法数字 200 应该提取为命名常量以提高代码可维护性
                 logger.warning(f"预测响应时间超限: {processing_time:.2f}ms > 200ms")
 
             return {
@@ -249,11 +257,15 @@ class SimplePredictionService:
         """提取比赛特征."""
         # 基于队名生成模拟特征
         home_strength = (
-            hash(match_info.home_team) % 50 / 100.0  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
+            hash(match_info.home_team)
+            % 50
+            / 100.0  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
             + 0.4  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
         )  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
         away_strength = (
-            hash(match_info.away_team) % 50 / 100.0  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
+            hash(match_info.away_team)
+            % 50
+            / 100.0  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
             + 0.4  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
         )  # ISSUE: 魔法数字 50 应该提取为命名常量以提高代码可维护性
 
@@ -305,7 +317,9 @@ class SimplePredictionService:
         ][prediction_idx]
 
         # 计算置信度
-        confidence = max(probs) * 100  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+        confidence = (
+            max(probs) * 100
+        )  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
 
         return {
             "prediction": prediction,
@@ -403,7 +417,9 @@ async def predict_batch_simple(
     start_time = time.time()
 
     # 检查批量请求限制
-    if len(request.matches) > 1000:  # ISSUE: 魔法数字 1000 应该提取为命名常量以提高代码可维护性
+    if (
+        len(request.matches) > 1000
+    ):  # ISSUE: 魔法数字 1000 应该提取为命名常量以提高代码可维护性
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Batch size exceeds maximum limit of 1000 matches",

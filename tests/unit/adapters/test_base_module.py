@@ -10,7 +10,7 @@ import pytest
 import os
 import sys
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 # 添加adapters目录到路径，避免通过__init__.py
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/adapters"))

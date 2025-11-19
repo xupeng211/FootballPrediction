@@ -1,3 +1,5 @@
+from typing import Optional
+
 """User Profile Service Module
 用户画像服务模块.
 

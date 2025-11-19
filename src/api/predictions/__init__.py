@@ -1,3 +1,5 @@
+from typing import Optional
+
 """预测API模块."""
 
 # 预测API模块相关类

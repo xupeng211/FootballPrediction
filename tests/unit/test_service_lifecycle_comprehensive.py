@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 ServiceLifecycleManager 综合测试
 目标覆盖率: 40%

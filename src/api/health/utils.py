@@ -19,7 +19,7 @@
 import asyncio
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 
 class HealthChecker:

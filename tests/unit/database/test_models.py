@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 数据库模型测试
 Database Models Test

@@ -107,7 +107,7 @@ class ModelTrainer:
         """
         self.config = config or TrainingConfig()
         import logging
-        from typing import Any
+        from typing import Any, Optional
 
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.model = None

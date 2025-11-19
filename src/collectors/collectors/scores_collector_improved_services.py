@@ -1,3 +1,5 @@
+from typing import Optional
+
 """服务类."""
 
 # 导入

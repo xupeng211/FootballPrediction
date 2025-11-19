@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 Services与Domain模块集成测试
 Services and Domain Module Integration Tests

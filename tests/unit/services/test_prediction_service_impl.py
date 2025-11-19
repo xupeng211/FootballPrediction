@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 预测服务测试
 Prediction Service Tests

@@ -14,7 +14,7 @@ Domain Service Lifecycle Tests
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import patch
 
 import pytest

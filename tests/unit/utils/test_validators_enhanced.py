@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 验证器增强测试 - 深化覆盖未测试的代码路径
 """

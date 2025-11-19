@@ -1,3 +1,5 @@
+from typing import Optional
+
 """仓储模式实现
 Repository Pattern Implementation.
 

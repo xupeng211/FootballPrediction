@@ -1,3 +1,5 @@
+from typing import Optional
+
 # mypy: ignore-errors
 """性能监控集成模块
 Performance Monitoring Integration Module.

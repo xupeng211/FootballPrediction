@@ -8,7 +8,7 @@
 """
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd

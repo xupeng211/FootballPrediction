@@ -1,3 +1,5 @@
+from typing import Optional
+
 """API Module."""
 
 # 导入各个模块的路由器

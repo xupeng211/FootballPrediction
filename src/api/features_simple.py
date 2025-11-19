@@ -4,7 +4,7 @@
 """
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -57,9 +57,7 @@ async def get_match_features(
 
     except SQLAlchemyError as e:
         logger.error(f"数据库查询错误: {e}")
-        raise HTTPException(
-            status_code=500, detail="数据库查询失败"
-        ) from e
+        raise HTTPException(status_code=500, detail="数据库查询失败") from e
     except HTTPException:
         # HTTPException会被FastAPI全局异常处理器捕获
         raise

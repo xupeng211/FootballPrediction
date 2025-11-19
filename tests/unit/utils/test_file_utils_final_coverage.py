@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 FileUtils补充测试 - 冲刺7.5%覆盖率目标
 专门针对未覆盖的函数进行精准测试

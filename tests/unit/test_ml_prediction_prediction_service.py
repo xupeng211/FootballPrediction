@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 基础测试文件
 模块: ml.prediction.prediction_service

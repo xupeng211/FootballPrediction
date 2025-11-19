@@ -13,7 +13,7 @@ import asyncio
 import logging
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 import httpx
 import pytest
@@ -47,15 +47,11 @@ class AuthPredictionIntegrationTester:
         self.test_results.append(result)
 
         status_symbol = "✅" if success else "❌"
-        logger.debug(
-            f"{status_symbol} {test_name}"
-        )
+        logger.debug(f"{status_symbol} {test_name}")
         if details:
             logger.debug(f"   📝 {details}")
         if duration > 0:
-            logger.debug(
-                f"   ⏱️  耗时: {duration:.2f}秒"
-            )
+            logger.debug(f"   ⏱️  耗时: {duration:.2f}秒")
 
     @pytest.mark.asyncio
     async def test_health_endpoints(self) -> bool:
@@ -382,9 +378,7 @@ class AuthPredictionIntegrationTester:
 
     async def run_all_tests(self) -> dict[str, Any]:
         """运行所有集成测试"""
-        logger.debug(
-            "🚀 开始API集成测试：认证与预测服务集成"
-        )
+        logger.debug("🚀 开始API集成测试：认证与预测服务集成")
         logger.debug("=" * 60)
 
         test_methods = [
@@ -427,12 +421,8 @@ class AuthPredictionIntegrationTester:
         logger.debug("📊 测试完成！")
         logger.debug(f"总测试数: {total_tests}")
         logger.debug(f"通过测试: {passed_tests}")
-        logger.debug(
-            f"失败测试: {total_tests - passed_tests}"
-        )
-        logger.debug(
-            f"成功率: {success_rate:.1f}%"
-        )
+        logger.debug(f"失败测试: {total_tests - passed_tests}")
+        logger.debug(f"成功率: {success_rate:.1f}%")
 
         return report
 
@@ -518,17 +508,13 @@ async def main():
     report = await tester.run_all_tests()
 
     logger.debug("\n🎯 集成测试结果:")
-    logger.debug(
-        f"成功率: {report['success_rate']:.1f}%"
-    )
+    logger.debug(f"成功率: {report['success_rate']:.1f}%")
 
     if report["success_rate"] >= 80:
         logger.debug("🎉 集成测试通过！")
         return 0
     else:
-        logger.debug(
-            "❌ 集成测试失败，成功率不足80%"
-        )
+        logger.debug("❌ 集成测试失败，成功率不足80%")
         return 1
 
 

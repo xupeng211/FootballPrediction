@@ -1,3 +1,5 @@
+from typing import Optional
+
 """赔率相关模型
 Odds Related Models.
 """

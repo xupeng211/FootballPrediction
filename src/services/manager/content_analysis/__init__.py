@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Content Analysis Service Module
 内容分析服务模块.
 

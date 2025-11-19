@@ -1,3 +1,5 @@
+from typing import Optional
+
 """base_models
 基础模型类.
 

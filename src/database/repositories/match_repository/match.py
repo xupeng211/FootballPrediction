@@ -1,3 +1,5 @@
+from typing import Optional
+
 """比赛仓储实现
 Match Repository Implementation.
 """

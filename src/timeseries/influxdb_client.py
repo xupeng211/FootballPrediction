@@ -1,6 +1,6 @@
 # 简化版模块: influxdb_client
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 
 class InfluxdbClient:

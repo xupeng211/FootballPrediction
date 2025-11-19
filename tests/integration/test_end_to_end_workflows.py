@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 端到端业务流程集成测试
 End-to-End Business Logic Integration Tests

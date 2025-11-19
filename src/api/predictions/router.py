@@ -9,7 +9,7 @@ Predictions API Router.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -405,9 +405,7 @@ async def batch_predict(request: BatchPredictionRequest):
 
     except Exception as e:
         logger.error(f"批量预测失败: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"批量预测失败: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"批量预测失败: {str(e)}") from e
 
 
 @router.get("/history/{match_id}", response_model=PredictionHistory)
@@ -503,6 +501,4 @@ async def verify_prediction(
 
     except Exception as e:
         logger.error(f"验证预测失败: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"验证预测失败: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"验证预测失败: {str(e)}") from e

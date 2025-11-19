@@ -1,3 +1,5 @@
+from typing import Optional
+
 """特征处理器."""
 
 # 导入

@@ -7,7 +7,7 @@ Responsible for collecting football match odds data from various data sources.
 import asyncio
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from src.core.logging import get_logger
 

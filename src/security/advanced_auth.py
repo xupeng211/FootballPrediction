@@ -1,3 +1,5 @@
+from typing import Optional
+
 #!/usr/bin/env python3
 """Advanced Authentication System
 高级认证系统.

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """简化版日期工具类."""
 
 from datetime import datetime, timedelta

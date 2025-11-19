@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 简单工具测试 - 基于实际存在的函数
 """

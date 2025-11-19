@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Data Processing Service Module
 数据处理服务模块.
 

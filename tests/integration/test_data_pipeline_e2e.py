@@ -6,7 +6,7 @@ Data Pipeline End-to-End Tests
 """
 
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import AsyncMock, patch
 
 import pytest

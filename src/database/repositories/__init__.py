@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Repository模式实现
 Repository Pattern Implementation.
 

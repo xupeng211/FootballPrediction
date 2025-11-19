@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 国际化支持测试
 Internationalization Support Test

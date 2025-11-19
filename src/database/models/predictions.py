@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Predictions - 数据库模块.
 
 提供 predictions 相关的数据库功能.

@@ -3,7 +3,7 @@
 提供用户注册,登录,令牌管理等认证相关的API端点
 """
 
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm

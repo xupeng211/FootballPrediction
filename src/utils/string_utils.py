@@ -1,3 +1,5 @@
+from typing import Optional
+
 """足球预测系统字符串处理工具模块 - Phase 4B增强版.
 
 提供字符串操作和文本处理相关的工具函数:

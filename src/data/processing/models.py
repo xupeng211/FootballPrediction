@@ -1,3 +1,5 @@
+from typing import Optional
+
 """占位符模块 - 解决导入错误
 src.data.processing.models.
 """

@@ -5,7 +5,7 @@ Core Unit Tests for Tenant Management Service.
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Any
+from typing import Any, Optional
 
 # 导入SQLAlchemy组件
 from sqlalchemy.ext.asyncio import AsyncSession

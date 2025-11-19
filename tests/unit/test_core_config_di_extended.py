@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 M2-P1-02: 完善core.config_di配置管理测试
 目标覆盖率45%+

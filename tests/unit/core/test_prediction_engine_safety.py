@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Phase 7: Prediction Engine 安全网测试
 Mock驱动的预测引擎代理模块单元测试 - 专门针对 src/core/prediction_engine.py
 

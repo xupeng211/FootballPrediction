@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 JWT认证核心功能测试
 目标覆盖率: 45%

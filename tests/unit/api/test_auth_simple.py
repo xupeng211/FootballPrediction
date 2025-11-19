@@ -1,3 +1,5 @@
+from typing import Optional
+
 """认证API测试
 Auth API Tests.
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 # mypy: ignore-errors
 """仓储模式API端点
 Repository Pattern API Endpoints.

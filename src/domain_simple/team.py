@@ -1,7 +1,7 @@
 """球队领域模型."""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 
 class TeamStatistics:

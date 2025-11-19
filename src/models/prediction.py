@@ -7,7 +7,7 @@ Provides prediction-related data models and services.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from src.services.base_unified import SimpleService
 

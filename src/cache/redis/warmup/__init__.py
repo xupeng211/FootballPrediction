@@ -1,3 +1,5 @@
+from typing import Optional
+
 """Redis warmup module."""
 
 from .warmup_manager import WarmupManager

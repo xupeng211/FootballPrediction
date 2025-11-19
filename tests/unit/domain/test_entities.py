@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 领域实体测试模块
 Domain Entities Test Module

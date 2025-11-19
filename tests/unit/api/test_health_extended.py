@@ -1,3 +1,5 @@
+from typing import Optional
+
 """API健康检查扩展测试"""
 import pytest
 from fastapi.testclient import TestClient

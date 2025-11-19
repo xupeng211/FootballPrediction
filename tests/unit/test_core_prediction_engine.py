@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 基础测试文件
 模块: core.prediction_engine

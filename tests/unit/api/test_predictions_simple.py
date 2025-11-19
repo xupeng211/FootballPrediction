@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 预测API简化测试
 目标覆盖率: 45%

@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 预测工作流端到端测试
 Prediction Workflow End-to-End Tests

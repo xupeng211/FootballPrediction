@@ -1,3 +1,5 @@
+from typing import Optional
+
 """领域层
 Domain Layer.
 

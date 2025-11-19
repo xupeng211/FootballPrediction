@@ -1,3 +1,5 @@
+from typing import Optional
+
 """
 字典工具增强测试 - 深化覆盖
 """

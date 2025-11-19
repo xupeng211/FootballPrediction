@@ -1,3 +1,5 @@
+from typing import Optional
+
 """缓存装饰器模块."""
 
 import asyncio
