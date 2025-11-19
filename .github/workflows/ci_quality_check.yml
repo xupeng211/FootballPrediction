@@ -75,11 +75,7 @@ jobs:
     - name: Determine Python version
       id: python-version
       run: |
-        if [ -n "${{ github.event.inputs.python_version }}" ]; then
-          echo "version=[${{ github.event.inputs.python_version }}]" >> $GITHUB_OUTPUT
-        else
-          echo "version=[3.10, 3.11, 3.12]" >> $GITHUB_OUTPUT
-        fi
+        echo "version=[3.10, 3.11, 3.12]" >> $GITHUB_OUTPUT
 
   # 并行质量检查作业
   quality-checks:
