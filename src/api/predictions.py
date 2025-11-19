@@ -7,15 +7,16 @@ from typing import Optional
 常量定义:
     DEFAULT_API_PORT = 8000
     DEFAULT_API_HOST = "localhost"
-"""
+
+主要功能:
 - 获取比赛预测结果
 - 实时生成预测
 - 批量预测接口
 
 Provides API endpoints for match prediction:
     - Get match prediction results
-- Generate real-time predictions
-- Batch prediction interface
+    - Generate real-time predictions
+    - Batch prediction interface
 
 主要端点 / Main Endpoints:
     GET /predictions/{match_id}: 获取指定比赛的预测结果 / Get prediction for specified match
@@ -42,9 +43,9 @@ Provides API endpoints for match prediction:
     ```
 
 错误处理 / Error Handling:
-    - 404: 比赛不存在 / Match not found  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
-    - 400: 请求参数错误 / Bad request parameters  # ISSUE: 魔法数字 400 应该提取为命名常量以提高代码可维护性
-    - 500: 服务器内部错误 / Internal server error  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+    - 404: 比赛不存在 / Match not found
+    - 400: 请求参数错误 / Bad request parameters
+    - 500: 服务器内部错误 / Internal server error
 
 该文件已重构为模块化架构,原始功能现在通过以下模块提供:
 - rate_limiter: 速率限制配置
