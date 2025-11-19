@@ -165,7 +165,7 @@ make migrate-up
 make up
 ```
 
-### 🔧 关键环境变量
+### 🔧 关键环境变量（基于.env.example）
 
 ```bash
 # 必需的生产环境变量
@@ -179,6 +179,8 @@ DEBUG=true
 LOG_LEVEL=INFO
 API_HOST=0.0.0.0
 API_PORT=8000
+HOT_RELOAD=true
+AUTO_RESTART=true
 
 # 安全配置
 JWT_ALGORITHM=HS256
@@ -200,10 +202,10 @@ METRICS_PORT=9090
 ## 🏗️ 架构概览
 
 ### 💻 技术栈
-- **后端**: FastAPI + SQLAlchemy 2.0 + Redis + PostgreSQL
-- **架构**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动
+- **后端**: FastAPI 0.104+ + SQLAlchemy 2.0 + Redis 7.0 + PostgreSQL 15
+- **架构**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动 + 微服务
 - **机器学习**: LSTM、Poisson分布、Elo评分、集成学习
-- **测试**: 完整测试体系，40个标准化测试标记
+- **测试**: 57个标准化测试标记，29%覆盖率，40%目标，Smart Tests优化
 - **工具**: Ruff + MyPy + pytest + Docker + CI/CD
 
 ### 📁 核心结构
@@ -247,7 +249,7 @@ src/
 - **技术特定标记**: ml, asyncio, external_api, docker, network
 - **问题特定标记**: issue94
 
-**Smart Tests配置**：
+**Smart Tests配置**（基于pytest.ini优化）：
 - 核心稳定模块：`tests/unit/utils`, `tests/unit/cache`, `tests/unit/core`
 - 执行时间：<2分钟，通过率>90%
 - 排除不稳定测试文件：
@@ -287,16 +289,16 @@ make feedback-test      # 运行反馈循环单元测试
 
 ### 🐳 微服务架构栈（企业级增强版）
 
-**开发环境（4个核心服务）**：
+**开发环境（4个核心服务）（基于docker-compose.yml）**：
 ```bash
 make up                    # 启动所有开发服务
 make services-status       # 检查所有微服务状态
 ```
 
-- **app** (FastAPI应用) - 主要API服务和业务逻辑
-- **db** (PostgreSQL 15) - 主数据库和持久化存储
-- **redis** (Redis 7-alpine) - 缓存、会话和消息队列
-- **nginx** (反向代理) - 负载均衡、SSL终止和静态文件
+- **app** (FastAPI应用) - 端口8000，主要API服务和业务逻辑
+- **db** (PostgreSQL 15) - 端口5432，主数据库和持久化存储
+- **redis** (Redis 7-alpine) - 端口6379，缓存、会话和消息队列
+- **nginx** (反向代理) - 端口80，负载均衡、SSL终止和静态文件
 
 **微服务架构（生产环境7+服务）**：
 ```bash
@@ -412,11 +414,11 @@ make env-restore                       # 环境配置一键恢复
 ## 📚 详细文档
 
 ### 📋 核心配置文件
-- `pyproject.toml`: 依赖管理和工具配置，包含完整的pytest和coverage设置
-- `pytest.ini`: 测试配置和57个标记定义，Smart Tests优化
-- `Makefile`: 76KB企业级开发工作流，25个核心命令
-- `docker-compose.yml`: 容器编排配置，4个开发环境核心服务
-- `.env.example`: 环境变量模板，包含必需的生产环境配置
+- `pyproject.toml`: 现代Python项目配置，FastAPI 0.104+、SQLAlchemy 2.0、Redis 5.0+
+- `pytest.ini`: 测试配置和57个标记定义，Smart Tests优化，覆盖率29.0%
+- `Makefile`: 企业级开发工作流，35+个核心命令，动态状态监控
+- `docker-compose.yml`: 容器编排配置，4个开发环境核心服务（端口：8000,5432,6379,80）
+- `.env.example`: 环境变量模板，包含必需的生产环境配置和开发工具配置
 
 ### 🔧 重要配置细节
 
@@ -707,8 +709,8 @@ make api-schema-test       # API Schema一致性测试
 ## 🏆 项目状态
 
 - **🏗️ 架构**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动 + 微服务
-- **📏 规模**: 企业级代码库，完整测试体系，11个生产服务
-- **🧪 测试**: 57个标准化测试标记，40%覆盖率目标，Smart Tests优化
+- **📏 规模**: 企业级代码库，622个源文件，269个测试文件，11个生产服务
+- **🧪 测试**: 57个标准化测试标记，29%覆盖率，40%目标，Smart Tests优化
 - **🛡️ 质量**: 现代化工具链（Ruff + MyPy + 安全扫描 + API治理）
 - **🤖 工具**: 35+个核心命令，动态状态监控，一键危机解决方案
 - **🎯 方法**: 渐进式改进策略，Docker容器化部署，实时流处理
@@ -727,7 +729,7 @@ make api-schema-test       # API Schema一致性测试
 **📊 动态项目状态监控**：
 - 5个新增状态监控命令，实时掌握项目健康状况
 - 项目仪表板和质量评分系统
-- 覆盖率状态跟踪和趋势分析
+- 覆盖率状态跟踪和趋势分析（当前29.0%，目标40%）
 
 **🚨 一键危机解决方案**：
 - 紧急故障排除（5分钟快速恢复）
@@ -738,11 +740,13 @@ make api-schema-test       # API Schema一致性测试
 - 11个生产服务的完整管理命令
 - 服务健康检查、日志合并、独立部署
 - 实时流处理和WebSocket压力测试
+- 基于docker-compose.yml的4个开发环境服务（端口：8000,5432,6379,80）
 
 **🌐 API文档和测试增强**：
 - API文档自动化和契约验证
 - API性能监控、负载测试、安全扫描
 - Postman集合生成和客户端SDK代码
+- 57个标准化测试标记的灵活运用
 
 ---
 
