@@ -32,7 +32,7 @@ def pytest_collection_modifyitems(config, items):
     if not os.path.exists(skip_file):
         return
 
-    with open(skip_file, 'r', encoding='utf-8') as f:
+    with open(skip_file, encoding='utf-8') as f:
         skipped_ids = {line.strip() for line in f if line.strip()}
 
     skipped_count = 0
@@ -42,8 +42,9 @@ def pytest_collection_modifyitems(config, items):
             skipped_count += 1
 
     if skipped_count > 0:
-        print(f"\n🎯 Auto-skipped {skipped_count} tests for CI stabilization")
-        print(f"📄 Total skipped tests: {len(skipped_ids)}")
+        # Skip print statements to avoid linting errors
+        # Auto-skipped tests will be reported in pytest summary
+        pass
 
 
 @pytest.fixture(scope="session")
