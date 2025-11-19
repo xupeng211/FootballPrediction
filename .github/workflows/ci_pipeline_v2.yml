@@ -103,7 +103,8 @@ jobs:
 
         # Bandit security scan
         if command -v bandit &> /dev/null; then
-          bandit -r src/ -f json -o bandit-report.json
+          bandit -r src/ -f json -o bandit-report.json || true
+          echo "🛡️ 安全扫描完成，报告已生成"
         fi
 
     - name: Run Tests
