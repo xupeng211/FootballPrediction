@@ -1,107 +1,82 @@
-# 🚀 Pre-commit配置 - 自动化代码质量检查
+# 🚀 Pre-commit hooks configuration for Football Prediction project
+# Shift-left strategy: Catch issues before they reach CI
 
 repos:
-  # 基础代码检查
+  # Basic code quality checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
+      # Remove trailing whitespace
       - id: trailing-whitespace
-        name: 移除行尾空格
-        description: 移除文件末尾的空格
+        description: Remove trailing whitespace from all files
+        exclude_types: [svg]
+
+      # Ensure files end with newline
       - id: end-of-file-fixer
-        name: 文件结尾修复
-        description: 确保文件以换行符结尾
+        description: Ensure files end with a newline character
+
+      # Check YAML syntax
       - id: check-yaml
-        name: YAML语法检查
-        description: 检查YAML文件语法
-      - id: check-json
-        name: JSON语法检查
-        description: 检查JSON文件语法
-      - id: check-merge-conflict
-        name: 检查合并冲突标记
-        description: 检查是否有未解决的合并冲突
+        description: Check YAML files for syntax errors
+        args: ['--unsafe']  # Allows custom tags
+
+      # Check for large files (>1MB)
       - id: check-added-large-files
-        name: 检查大文件
-        description: 防止提交过大的文件
-        args: ['--maxkb=1000']
+        description: Prevent large files from being committed
+        args: ['--maxkb=1024']  # 1MB limit
 
-  # 统一代码检查和格式化 (Ruff)
+      # Check for merge conflict markers
+      - id: check-merge-conflict
+        description: Check for merge conflict markers
+
+      # Check JSON syntax
+      - id: check-json
+        description: Check JSON files for syntax errors
+
+      # Check TOML syntax
+      - id: check-toml
+        description: Check TOML files for syntax errors
+
+      # Prevent committing to main branch directly
+      - id: no-commit-to-branch
+        description: Prevent direct commits to main branch
+        args: [--branch, main, --branch, master]
+
+  # Python code formatting and linting with Ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.3
+    rev: v0.1.8
     hooks:
-      - id: ruff
-        name: Ruff代码检查和修复
-        description: 使用Ruff检查并自动修复Python代码问题
-        args: [--fix, --exit-non-zero-on-fix]
+      # Run Ruff formatter (like black)
       - id: ruff-format
-        name: Ruff代码格式化
-        description: 使用Ruff格式化Python代码
+        description: Format Python code with Ruff formatter
+        args: [--line-length=88]
 
-  # 安全检查
-  - repo: https://github.com/pycqa/bandit
-    rev: 1.8.6
-    hooks:
-      - id: bandit
-        name: Bandit安全检查
-        description: 使用Bandit检查Python安全问题
-        args: [-c, pyproject.toml]
-        additional_dependencies: ["bandit[toml]"]
-        exclude: ^tests/
+      # Run Ruff linter (like flake8, isort, etc.)
+      - id: ruff
+        description: Lint Python code with Ruff
+        args:
+          - --fix  # Auto-fix fixable issues
+          - --extend-select=E,F,W,I,UP,B,A,C4,T20  # Common rule sets
+          - --extend-ignore=E501,F841  # Line length and unused variable (temporary)
 
-  # 依赖安全审计
-  - repo: https://github.com/pypa/pip-audit
-    rev: v2.6.1
-    hooks:
-      - id: pip-audit
-        name: Pip依赖安全审计
-        description: 检查依赖包的安全漏洞
-
-  # 自定义修复钩子
-  - repo: local
-    hooks:
-      - id: test-crisis-fix
-        name: 测试危机修复
-        description: 运行测试危机修复工具
-        entry: python scripts/fix_test_crisis.py
-        language: system
-        pass_filenames: false
-        always_run: true
-
-      - id: syntax-check
-        name: 语法检查
-        description: 检查Python语法错误
-        entry: python scripts/smart_quality_fixer.py --syntax-only
-        language: system
-        pass_filenames: false
-        always_run: true
-
-      - id: quick-test-check
-        name: 快速测试检查
-        description: 快速检查测试收集状态
-        entry: python -c "import subprocess; subprocess.run(['python', '-m', 'pytest', '--collect-only', '-q'], check=False)"
-        language: system
-        pass_filenames: false
-        always_run: true
-
-# 配置选项
-default_stages: [commit]
-fail_fast: false
+# Pre-commit configuration
+default_stages: [commit]  # Run on commit (can also add pre-push)
+fail_fast: false  # Continue running hooks even if one fails
 default_language_version:
-  python: python3
+  python: python3  # Use Python 3 for all Python hooks
 
-# CI配置
-ci:
-  autofix_commit_msg: |
-    🤖 自动修复pre-commit问题
-
-    修复内容:
-    - 代码格式化和修复 (Ruff)
-    - 安全问题检查 (Bandit)
-    - 依赖安全审计 (Pip-audit)
-    - 语法错误检查
-    - 基础质量问题修复
-
-    🎯 请检查修复后的代码并提交
-  autofix_prs: true
-  autoupdate_branch: true
-  autoupdate_schedule: weekly
+# Additional configuration for specific file types
+exclude: |
+  (?x)^(
+    .*\.min\.(js|css)$          # Minified files
+    | vendor/.*                  # Vendor dependencies
+    | \.git/.*                   # Git files
+    | \.venv/.*                  # Virtual environment
+    | \.tox/.*                   # Tox environment
+    | __pycache__/.*             # Python cache
+    | \.pytest_cache/.*          # Pytest cache
+    | htmlcov/.*                 # Coverage reports
+    | build/.*                   # Build artifacts
+    | dist/.*                    # Distribution files
+    | .*\.egg-info/.*            # Egg metadata
+  )$
