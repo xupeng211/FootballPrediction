@@ -3,6 +3,7 @@
 提供所有数据模型的基础类,包含通用字段和方法，以及数据库连接函数。
 """
 
+import os
 from collections.abc import AsyncGenerator, Generator
 from datetime import datetime
 from typing import Any
@@ -109,9 +110,9 @@ class BaseModel(Base, TimestampMixin):
         return f"<{self.__class__.__name__}(id={getattr(self, 'id', None)})>"
 
 
-# 数据库连接配置
-DATABASE_URL = "sqlite:///./football_prediction.db"
-ASYNC_DATABASE_URL = "sqlite+aiosqlite:///./football_prediction.db"
+# 数据库连接配置 - 支持环境变量覆盖，提供安全默认值
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./football_prediction.db")
+ASYNC_DATABASE_URL = os.getenv("ASYNC_DATABASE_URL", "sqlite+aiosqlite:///./football_prediction.db")
 
 # 同步数据库引擎和会话
 engine = create_engine(DATABASE_URL, echo=False)
