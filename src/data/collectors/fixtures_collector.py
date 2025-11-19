@@ -339,7 +339,7 @@ class FixturesCollector(BaseCollector):
         ]
 
         key_string = "|".join(key_components)
-        return hashlib.md5(key_string.encode(, usedforsecurity=False), usedforsecurity=False).hexdigest()
+        return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()
 
     async def _clean_fixture_data(
         self, raw_fixture: dict[str, Any]
