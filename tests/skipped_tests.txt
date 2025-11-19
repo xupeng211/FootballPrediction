@@ -1180,9 +1180,6 @@ tests/unit/utils/test_response_enhanced.py
 tests/unit/utils/test_response.py
 tests/unit/utils/test_retry.py
 tests/unit/utils/test_simple_utils.py
-tests/unit/utils/test_time_utils_enhanced_new.py
-tests/unit/utils/test_time_utils_enhanced.py
-tests/unit/utils/test_time_utils.py
 tests/unit/utils/test_utils_generated.py
 tests/unit/utils/test_validators_comprehensive.py
 tests/unit/utils/test_validators_comprehensive.py::TestValidatorsComprehensive::test_validate_data_types_function
