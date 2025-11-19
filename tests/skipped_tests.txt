@@ -8,21 +8,6 @@ ERROR tests/unit/cache/test_redis_manager.py::TestRedisManagerIntegration::test_
 ERROR tests/unit/cqrs/test_handlers.py::TestCreateMatchHandler::test_handle_success
 ERROR tests/unit/cqrs/test_handlers.py::TestGetMatchPredictionsHandler::test_handle_empty_result
 ERROR tests/unit/cqrs/test_handlers.py::TestGetMatchPredictionsHandler::test_handle_success
-ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_collect_fixtures_empty_response
-ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_collect_fixtures_success
-ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_deduplicate_matches
-ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_fixtures_collector_initialization
-ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_process_league_data
-ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_validate_match_data
-ERROR tests/unit/data/test_collectors.py::TestScoresCollector::test_collect_live_scores
-ERROR tests/unit/data/test_collectors.py::TestScoresCollector::test_process_match_events
-ERROR tests/unit/data/test_collectors.py::TestScoresCollector::test_scores_collector_initialization
-ERROR tests/unit/data/test_collectors.py::TestScoresCollector::test_validate_score_data
-ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_handle_streaming_errors
-ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_process_streaming_data
-ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_start_streaming
-ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_stop_streaming
-ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_streaming_collector_initialization
 ERROR tests/unit/database/test_connection_enhanced.py::TestConnectionPooling::test_connection_pool_configuration
 ERROR tests/unit/database/test_connection_enhanced.py::TestConnectionPooling::test_engine_dispose
 ERROR tests/unit/database/test_connection_enhanced.py::TestDatabaseManager::test_database_url_construction
@@ -49,6 +34,21 @@ ERROR tests/unit/database/test_connection_new.py::TestIntegrationScenarios::test
 ERROR tests/unit/database/test_connection_new.py::TestIntegrationScenarios::test_full_workflow_simulation
 ERROR tests/unit/database/test_connection_new.py::TestIntegrationScenarios::test_multiple_session_creation
 ERROR tests/unit/database/test_connection_new.py::TestMultiUserDatabaseManager::test_multi_user_initialization
+ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_collect_fixtures_empty_response
+ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_collect_fixtures_success
+ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_deduplicate_matches
+ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_fixtures_collector_initialization
+ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_process_league_data
+ERROR tests/unit/data/test_collectors.py::TestFixturesCollector::test_validate_match_data
+ERROR tests/unit/data/test_collectors.py::TestScoresCollector::test_collect_live_scores
+ERROR tests/unit/data/test_collectors.py::TestScoresCollector::test_process_match_events
+ERROR tests/unit/data/test_collectors.py::TestScoresCollector::test_scores_collector_initialization
+ERROR tests/unit/data/test_collectors.py::TestScoresCollector::test_validate_score_data
+ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_handle_streaming_errors
+ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_process_streaming_data
+ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_start_streaming
+ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_stop_streaming
+ERROR tests/unit/data/test_collectors.py::TestStreamingCollector::test_streaming_collector_initialization
 FAILED tests/unit/adapters/test_factory_simple.py::TestIntegrationWithRealAdapters::test_end_to_end_workflow
 FAILED tests/unit/api/test_api_simple.py::TestIntegrationScenarios::test_chained_mock_calls
 FAILED tests/unit/api/test_api_simple.py::TestIntegrationScenarios::test_error_handling
@@ -69,12 +69,14 @@ FAILED tests/unit/api/test_auth_comprehensive.py::TestRateLimiting::test_rate_li
 FAILED tests/unit/api/test_auth_comprehensive.py::TestSecurityFeatures::test_mock_users_data_structure
 FAILED tests/unit/api/test_auth_comprehensive.py::TestSecurityFeatures::test_token_data_model
 FAILED tests/unit/api/test_auth_comprehensive.py::TestSecurityFeatures::test_user_auth_data_model
-FAILED tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_different_credentials
-FAILED tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_exception_handling
-FAILED tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_success
+FAILED tests/unit/api/test_auth_dependencies_fixed.py::TestAuthenticationDependencies::test_get_admin_user_success
+FAILED tests/unit/api/test_auth_dependencies_fixed.py::TestAuthenticationDependencies::test_get_admin_user_unauthorized
 FAILED tests/unit/api/test_auth_dependencies.py::TestGetCurrentUserOptional::test_get_current_user_optional_exception_handling
 FAILED tests/unit/api/test_auth_dependencies.py::TestGetCurrentUserOptional::test_get_current_user_optional_malformed_token
 FAILED tests/unit/api/test_auth_dependencies.py::TestGetCurrentUserOptional::test_get_current_user_optional_success
+FAILED tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_different_credentials
+FAILED tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_exception_handling
+FAILED tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_success
 FAILED tests/unit/api/test_auth_dependencies.py::TestIntegrationScenarios::test_error_handling_consistency
 FAILED tests/unit/api/test_auth_dependencies.py::TestIntegrationScenarios::test_full_authentication_flow
 FAILED tests/unit/api/test_auth_dependencies.py::TestIntegrationScenarios::test_optional_authentication_scenarios
@@ -84,8 +86,6 @@ FAILED tests/unit/api/test_auth_dependencies.py::TestRequireAdmin::test_require_
 FAILED tests/unit/api/test_auth_dependencies.py::TestRequireAdmin::test_require_admin_regular_user_denied
 FAILED tests/unit/api/test_auth_dependencies.py::TestTokenData::test_token_data_creation_default
 FAILED tests/unit/api/test_auth_dependencies.py::TestTokenData::test_token_data_creation_partial
-FAILED tests/unit/api/test_auth_dependencies_fixed.py::TestAuthenticationDependencies::test_get_admin_user_success
-FAILED tests/unit/api/test_auth_dependencies_fixed.py::TestAuthenticationDependencies::test_get_admin_user_unauthorized
 FAILED tests/unit/api/test_auth_simple.py::TestAuthAPI::test_get_current_user_no_auth_header
 FAILED tests/unit/api/test_auth_simple.py::TestAuthAPI::test_get_current_user_success
 FAILED tests/unit/api/test_auth_simple.py::TestAuthAPI::test_get_user_by_id_success
@@ -128,15 +128,15 @@ FAILED tests/unit/api/test_jwt_auth_core.py::TestPasswordManagement::test_verify
 FAILED tests/unit/api/test_jwt_auth_core.py::TestTokenCreation::test_token_data_includes_required_fields
 FAILED tests/unit/api/test_jwt_auth_core.py::TestTokenVerification::test_verify_token_wrong_algorithm
 FAILED tests/unit/api/test_jwt_auth_core.py::TestTokenVerification::test_verify_valid_refresh_token
+FAILED tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_metrics
+FAILED tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_stats
+FAILED tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_status
 FAILED tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_acknowledge_alert
 FAILED tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_get_alerts
 FAILED tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_get_metrics
 FAILED tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_get_performance_stats
 FAILED tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_health_check_with_metrics
 FAILED tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_trigger_alert
-FAILED tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_metrics
-FAILED tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_stats
-FAILED tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_status
 FAILED tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_get_metrics
 FAILED tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_get_status
 FAILED tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_prediction_by_id
@@ -166,6 +166,19 @@ FAILED tests/unit/cache/test_football_data_cache.py::TestFootballDataCache::test
 FAILED tests/unit/cache/test_football_data_cache.py::TestFootballDataCache::test_league_data_caching_missing_id
 FAILED tests/unit/cache/test_football_data_cache.py::TestFootballDataCache::test_match_data_caching
 FAILED tests/unit/cache/test_football_data_cache.py::TestFootballDataCache::test_team_data_caching
+FAILED tests/unit/cache/test_redis_manager_new.py::TestBatchOperations::test_async_batch_operations
+FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_generate_key_with_version
+FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_key_manager_initialization
+FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_normalize_key
+FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_validate_key_invalid
+FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_validate_key_valid
+FAILED tests/unit/cache/test_redis_manager_new.py::TestConvenienceFunctions::test_ttl_function
+FAILED tests/unit/cache/test_redis_manager_new.py::TestIntegrationScenarios::test_cache_with_versioning_pattern
+FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisManager::test_manager_auto_detect_mock
+FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_delete
+FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_exists
+FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_set_and_get
+FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_set_with_ttl
 FAILED tests/unit/cache/test_redis_manager.py::TestCacheKeyManager::test_async_operations
 FAILED tests/unit/cache/test_redis_manager.py::TestCacheKeyManager::test_build_key_success
 FAILED tests/unit/cache/test_redis_manager.py::TestCacheKeyManager::test_build_key_with_different_params
@@ -198,19 +211,6 @@ FAILED tests/unit/cache/test_redis_manager.py::TestCacheKeyManager::test_validat
 FAILED tests/unit/cache/test_redis_manager.py::TestGlobalRedisManager::test_get_redis_manager
 FAILED tests/unit/cache/test_redis_manager.py::TestGlobalRedisManager::test_global_manager_configuration
 FAILED tests/unit/cache/test_redis_manager.py::TestGlobalRedisManager::test_singleton_behavior
-FAILED tests/unit/cache/test_redis_manager_new.py::TestBatchOperations::test_async_batch_operations
-FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_generate_key_with_version
-FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_key_manager_initialization
-FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_normalize_key
-FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_validate_key_invalid
-FAILED tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_validate_key_valid
-FAILED tests/unit/cache/test_redis_manager_new.py::TestConvenienceFunctions::test_ttl_function
-FAILED tests/unit/cache/test_redis_manager_new.py::TestIntegrationScenarios::test_cache_with_versioning_pattern
-FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisManager::test_manager_auto_detect_mock
-FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_delete
-FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_exists
-FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_set_and_get
-FAILED tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_set_with_ttl
 FAILED tests/unit/cache/test_unified_interface.py::TestCacheInterface::test_cache_backend_enum
 FAILED tests/unit/cache/test_unified_interface.py::TestCacheInterface::test_cache_interface_method_signatures
 FAILED tests/unit/cache/test_unified_interface.py::TestCacheInterface::test_memory_cache_adapter_complex_data_types
@@ -272,18 +272,6 @@ FAILED tests/unit/cqrs/test_handlers.py::TestUpdateMatchHandler::test_handle_mat
 FAILED tests/unit/cqrs/test_handlers_safety.py::TestCQRSHandlersSafetyNet::test_create_user_handler_validation
 FAILED tests/unit/cqrs/test_handlers_safety.py::TestCQRSHandlersSafetyNet::test_handler_concurrent_access_safety
 FAILED tests/unit/cqrs/test_handlers_safety.py::TestCQRSHandlersSafetyNet::test_handler_performance_large_dataset
-FAILED tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_error_recovery
-FAILED tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_performance
-FAILED tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_workflow
-FAILED tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_data_quality_validation
-FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_calculate_average_odds
-FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_calculate_implied_probability
-FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_collect_odds_success
-FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_detect_odds_anomalies
-FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_odds_collector_initialization
-FAILED tests/unit/database/test_connection.py::TestDatabaseConnection::test_async_session_creation
-FAILED tests/unit/database/test_connection.py::TestDatabaseConnectionErrorHandling::test_connection_error_handling
-FAILED tests/unit/database/test_connection.py::TestDatabaseConnectionErrorHandling::test_invalid_database_url
 FAILED tests/unit/database/test_connection_enhanced.py::TestAsyncSupport::test_async_session_context
 FAILED tests/unit/database/test_connection_enhanced.py::TestAsyncSupport::test_async_transaction_rollback
 FAILED tests/unit/database/test_connection_enhanced.py::TestDatabaseManager::test_context_manager_async
@@ -298,6 +286,9 @@ FAILED tests/unit/database/test_connection_new.py::TestRealDatabaseManager::test
 FAILED tests/unit/database/test_connection_new.py::TestRealDatabaseManager::test_get_async_session_without_initialization_real_manager
 FAILED tests/unit/database/test_connection_new.py::TestRealDatabaseManager::test_get_session_real_manager
 FAILED tests/unit/database/test_connection_new.py::TestRealDatabaseManager::test_get_session_without_initialization_real_manager
+FAILED tests/unit/database/test_connection.py::TestDatabaseConnectionErrorHandling::test_connection_error_handling
+FAILED tests/unit/database/test_connection.py::TestDatabaseConnectionErrorHandling::test_invalid_database_url
+FAILED tests/unit/database/test_connection.py::TestDatabaseConnection::test_async_session_creation
 FAILED tests/unit/database/test_models.py::TestDatabaseModels::test_all_models_have_required_fields
 FAILED tests/unit/database/test_models.py::TestMatchModel::test_match_creation
 FAILED tests/unit/database/test_models.py::TestMatchModel::test_match_with_scores
@@ -309,17 +300,26 @@ FAILED tests/unit/database/test_models.py::TestTeamModel::test_team_creation
 FAILED tests/unit/database/test_models.py::TestTeamModel::test_team_str_representation
 FAILED tests/unit/database/test_models.py::TestUserModel::test_user_creation
 FAILED tests/unit/database/test_models.py::TestUserModel::test_user_str_representation
+FAILED tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_error_recovery
+FAILED tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_performance
+FAILED tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_workflow
+FAILED tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_data_quality_validation
+FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_calculate_average_odds
+FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_calculate_implied_probability
+FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_collect_odds_success
+FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_detect_odds_anomalies
+FAILED tests/unit/data/test_collectors.py::TestOddsCollector::test_odds_collector_initialization
+FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_ml_strategy
+FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_statistical_strategy
+FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_unknown_strategy_type
+FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_factory_strategy_registry
+FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_factory_with_empty_config
 FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_initialization
 FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_initialize
 FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_metrics_getting
 FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_metrics_none_when_not_set
 FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_metrics_setting
 FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_name_and_type
-FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_ml_strategy
-FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_statistical_strategy
-FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_unknown_strategy_type
-FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_factory_strategy_registry
-FAILED tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_factory_with_empty_config
 FAILED tests/unit/domain/test_strategies.py::TestStrategyIntegration::test_multiple_strategy_creation
 FAILED tests/unit/domain/test_strategies.py::TestStrategyIntegration::test_strategy_end_to_end_prediction
 FAILED tests/unit/domain/test_strategies.py::TestStrategyPerformance::test_strategy_prediction_performance
@@ -354,18 +354,25 @@ FAILED tests/unit/scripts/test_coverage_improvement_integration.py::TestCoverage
 FAILED tests/unit/scripts/test_create_api_tests.py::TestCreateAPITests::test_health_test_content
 FAILED tests/unit/scripts/test_create_service_tests.py::TestCreateServiceTests::test_create_prediction_service_test
 FAILED tests/unit/scripts/test_create_service_tests.py::TestCreateServiceTests::test_generated_test_file_structure
+FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_anonymize_sensitive_data
+FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_archive_old_logs
+FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_check_compliance
+FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_export_audit_logs
+FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_api_access
+FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_data_access
+FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_security_event
 FAILED tests/unit/services/test_audit_service.py::TestAuditContext::test_audit_context_validation
 FAILED tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_id
 FAILED tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_initialization_full
 FAILED tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_initialization_minimal
 FAILED tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_serialization
 FAILED tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_timestamp
+FAILED tests/unit/services/test_audit_service.py::TestAuditLogSummary::test_audit_log_summary_initialization
+FAILED tests/unit/services/test_audit_service.py::TestAuditLogSummary::test_audit_log_summary_time_tracking
 FAILED tests/unit/services/test_audit_service.py::TestAuditLog::test_audit_log_id_generation
 FAILED tests/unit/services/test_audit_service.py::TestAuditLog::test_audit_log_initialization
 FAILED tests/unit/services/test_audit_service.py::TestAuditLog::test_audit_log_serialization
 FAILED tests/unit/services/test_audit_service.py::TestAuditLog::test_audit_log_timestamp_default
-FAILED tests/unit/services/test_audit_service.py::TestAuditLogSummary::test_audit_log_summary_initialization
-FAILED tests/unit/services/test_audit_service.py::TestAuditLogSummary::test_audit_log_summary_time_tracking
 FAILED tests/unit/services/test_audit_service.py::TestAuditService::test_audit_service_initialization
 FAILED tests/unit/services/test_audit_service.py::TestAuditService::test_get_events_with_data
 FAILED tests/unit/services/test_audit_service.py::TestAuditService::test_get_summary_empty
@@ -381,13 +388,6 @@ FAILED tests/unit/services/test_audit_service.py::TestDataSanitizer::test_saniti
 FAILED tests/unit/services/test_audit_service.py::TestDataSanitizer::test_sanitize_sensitive_data
 FAILED tests/unit/services/test_audit_service.py::TestSeverityAnalyzer::test_analyze_critical_severity_event
 FAILED tests/unit/services/test_audit_service.py::TestSeverityAnalyzer::test_analyze_unknown_action
-FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_anonymize_sensitive_data
-FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_archive_old_logs
-FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_check_compliance
-FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_export_audit_logs
-FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_api_access
-FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_data_access
-FAILED tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_security_event
 FAILED tests/unit/services/test_auth_service_comprehensive.py::TestAuthServiceIntegration::test_user_lifecycle
 FAILED tests/unit/services/test_auth_service_comprehensive.py::TestAuthServiceUserRegistration::test_register_user_default_preferences
 FAILED tests/unit/services/test_auth_service_comprehensive.py::TestAuthServiceUserRegistration::test_register_user_default_statistics
@@ -403,6 +403,12 @@ FAILED tests/unit/services/test_data_processing_service.py::TestDataProcessingSe
 FAILED tests/unit/services/test_data_processing_service.py::TestDataProcessingService::test_process_match_data
 FAILED tests/unit/services/test_data_processing_service.py::TestDataProcessingService::test_transform_data_format
 FAILED tests/unit/services/test_data_processing_service.py::TestDataProcessingService::test_validate_match_data
+FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataProcessing::test_process_data_with_exception
+FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataQualityMonitorIntegration::test_data_quality_score_tracking
+FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataQualityMonitorIntegration::test_error_recovery_workflow
+FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataValidation::test_validate_data_with_exception
+FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestMetricsCalculation::test_duration_calculation
+FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestMetricsCalculation::test_throughput_calculation
 FAILED tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_concurrent_processing
 FAILED tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_data_batch_processing
 FAILED tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_data_quality_monitor_initialization_default
@@ -421,12 +427,6 @@ FAILED tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor:
 FAILED tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_validate_data_format_errors
 FAILED tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_validate_data_missing_required_fields
 FAILED tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_validate_data_valid_data
-FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataProcessing::test_process_data_with_exception
-FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataQualityMonitorIntegration::test_data_quality_score_tracking
-FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataQualityMonitorIntegration::test_error_recovery_workflow
-FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataValidation::test_validate_data_with_exception
-FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestMetricsCalculation::test_duration_calculation
-FAILED tests/unit/services/test_data_quality_monitor_comprehensive.py::TestMetricsCalculation::test_throughput_calculation
 FAILED tests/unit/services/test_data_service.py::TestDataService::test_get_leagues_list_custom_parameters
 FAILED tests/unit/services/test_data_service.py::TestDataService::test_get_leagues_list_default_parameters
 FAILED tests/unit/services/test_data_service.py::TestDataService::test_get_matches_list_custom_parameters
@@ -496,12 +496,12 @@ FAILED tests/unit/services/test_tenant_service_core.py::TestResourceQuota::test_
 FAILED tests/unit/services/test_tenant_service_core.py::TestTenantLifecycle::test_update_tenant_not_found
 FAILED tests/unit/services/test_tenant_service_core.py::TestTenantStatistics::test_get_tenant_statistics_success
 FAILED tests/unit/services/test_tenant_service_core.py::TestTenantStatistics::test_get_tenant_statistics_tenant_not_found
+FAILED tests/unit/test_auto_binding_comprehensive.py::TestAutoBinderEdgeCases::test_find_implementations_module_error_handling
+FAILED tests/unit/test_auto_binding_comprehensive.py::TestAutoBinderEdgeCases::test_scan_module_import_error_handling
 FAILED tests/unit/test_auto_binding_comprehensive.py::TestAutoBinder::test_bind_from_assembly_directory
 FAILED tests/unit/test_auto_binding_comprehensive.py::TestAutoBinder::test_bind_from_assembly_module
 FAILED tests/unit/test_auto_binding_comprehensive.py::TestAutoBinder::test_bind_interface_to_implementations_single
 FAILED tests/unit/test_auto_binding_comprehensive.py::TestAutoBinder::test_is_implementation_success
-FAILED tests/unit/test_auto_binding_comprehensive.py::TestAutoBinderEdgeCases::test_find_implementations_module_error_handling
-FAILED tests/unit/test_auto_binding_comprehensive.py::TestAutoBinderEdgeCases::test_scan_module_import_error_handling
 FAILED tests/unit/test_core_auto_binding.py::TestDIContainer::test_register_scoped
 FAILED tests/unit/test_core_auto_binding.py::TestDIContainer::test_register_singleton
 FAILED tests/unit/test_core_auto_binding.py::TestDIContainer::test_register_transient
@@ -515,12 +515,12 @@ FAILED tests/unit/test_core_config_di_extended.py::TestConfigurationValidationBo
 FAILED tests/unit/test_core_di_extended.py::TestCircularDependencyDetection::test_complex_circular_dependency_chain
 FAILED tests/unit/test_core_di_extended.py::TestCircularDependencyDetection::test_no_circular_dependency_with_scoped
 FAILED tests/unit/test_core_di_extended.py::TestCircularDependencyDetection::test_simple_circular_dependency
-FAILED tests/unit/test_core_di_extended.py::TestDIContainerSingleton::test_singleton_dependency_injection
-FAILED tests/unit/test_core_di_extended.py::TestDIContainerSingleton::test_singleton_instance_caching
 FAILED tests/unit/test_core_di_extended.py::TestDependencyInjectionBoundaryConditions::test_error_handling_for_missing_dependencies
 FAILED tests/unit/test_core_di_extended.py::TestDependencyInjectionBoundaryConditions::test_register_with_invalid_lifetime
 FAILED tests/unit/test_core_di_extended.py::TestDependencyInjectionBoundaryConditions::test_register_with_none_interface
 FAILED tests/unit/test_core_di_extended.py::TestDependencyInjectionBoundaryConditions::test_resolve_with_complex_dependencies
+FAILED tests/unit/test_core_di_extended.py::TestDIContainerSingleton::test_singleton_dependency_injection
+FAILED tests/unit/test_core_di_extended.py::TestDIContainerSingleton::test_singleton_instance_caching
 FAILED tests/unit/test_core_di_extended.py::TestEdgeCasesAndAdvancedFeatures::test_concurrent_access_thread_safety
 FAILED tests/unit/test_core_di_extended.py::TestEdgeCasesAndAdvancedFeatures::test_generic_type_resolution
 FAILED tests/unit/test_core_di_extended.py::TestEdgeCasesAndAdvancedFeatures::test_performance_with_many_services
@@ -534,12 +534,12 @@ FAILED tests/unit/test_core_exceptions_massive.py::TestExceptionsBasic::test_exc
 FAILED tests/unit/test_core_logger_enhanced.py::TestLoggerFunctionality::test_setup_logger_with_mock
 FAILED tests/unit/test_core_service_lifecycle.py::TestModuleFunctionality::test_error_handling
 FAILED tests/unit/test_health_check.py::test_project_structure - AssertionErr...
-FAILED tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManager::test_start_service_invalid_state
 FAILED tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerAsync::test_health_check_updates_timestamp
 FAILED tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerAsync::test_start_service_async_timeout
 FAILED tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerAsync::test_stop_service_async_timeout
 FAILED tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerMonitoring::test_monitoring_loop_with_exception
 FAILED tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerMonitoring::test_monitoring_loop_with_unhealthy_services
+FAILED tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManager::test_start_service_invalid_state
 FAILED tests/unit/utils/test_validators_comprehensive.py::TestValidatorsComprehensive::test_validate_data_types_function
 FAILED tests/unit/utils/test_validators_enhanced.py::TestValidatorsEnhanced::test_validate_data_types_complex_types
 FAILED tests/unit/utils/test_validators_enhanced.py::TestValidatorsEnhanced::test_validate_data_types_invalid_types
@@ -563,12 +563,14 @@ tests/unit/api/test_auth_comprehensive.py::TestRateLimiting::test_rate_limit_log
 tests/unit/api/test_auth_comprehensive.py::TestSecurityFeatures::test_mock_users_data_structure
 tests/unit/api/test_auth_comprehensive.py::TestSecurityFeatures::test_token_data_model
 tests/unit/api/test_auth_comprehensive.py::TestSecurityFeatures::test_user_auth_data_model
-tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_different_credentials
-tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_exception_handling
-tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_success
+tests/unit/api/test_auth_dependencies_fixed.py::TestAuthenticationDependencies::test_get_admin_user_success
+tests/unit/api/test_auth_dependencies_fixed.py::TestAuthenticationDependencies::test_get_admin_user_unauthorized
 tests/unit/api/test_auth_dependencies.py::TestGetCurrentUserOptional::test_get_current_user_optional_exception_handling
 tests/unit/api/test_auth_dependencies.py::TestGetCurrentUserOptional::test_get_current_user_optional_malformed_token
 tests/unit/api/test_auth_dependencies.py::TestGetCurrentUserOptional::test_get_current_user_optional_success
+tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_different_credentials
+tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_exception_handling
+tests/unit/api/test_auth_dependencies.py::TestGetCurrentUser::test_get_current_user_success
 tests/unit/api/test_auth_dependencies.py::TestIntegrationScenarios::test_error_handling_consistency
 tests/unit/api/test_auth_dependencies.py::TestIntegrationScenarios::test_full_authentication_flow
 tests/unit/api/test_auth_dependencies.py::TestIntegrationScenarios::test_optional_authentication_scenarios
@@ -578,8 +580,6 @@ tests/unit/api/test_auth_dependencies.py::TestRequireAdmin::test_require_admin_n
 tests/unit/api/test_auth_dependencies.py::TestRequireAdmin::test_require_admin_regular_user_denied
 tests/unit/api/test_auth_dependencies.py::TestTokenData::test_token_data_creation_default
 tests/unit/api/test_auth_dependencies.py::TestTokenData::test_token_data_creation_partial
-tests/unit/api/test_auth_dependencies_fixed.py::TestAuthenticationDependencies::test_get_admin_user_success
-tests/unit/api/test_auth_dependencies_fixed.py::TestAuthenticationDependencies::test_get_admin_user_unauthorized
 tests/unit/api/test_auth_simple.py
 tests/unit/api/test_auth_simple.py::TestAuthAPI::test_get_current_user_no_auth_header
 tests/unit/api/test_auth_simple.py::TestAuthAPI::test_get_current_user_success
@@ -591,12 +591,28 @@ tests/unit/api/test_auth_simple.py::TestAuthAPI::test_logout_success
 tests/unit/api/test_auth_simple.py::TestAuthAPI::test_mock_users_structure
 tests/unit/api/test_auth_simple.py::TestAuthAPI::test_router_configuration
 tests/unit/api/test_auth_simple.py::TestAuthAPI::test_security_scheme
+tests/unit/api/test_database_optimization.py
+tests/unit/api/test_database_optimization.py::TestConnectionPoolOptimizer::test_pool_registration
+tests/unit/api/test_database_optimization.py::TestConnectionPoolOptimizer::test_pool_status_retrieval
+tests/unit/api/test_database_optimization.py::TestDatabasePerformanceMiddleware::test_current_performance_analysis
+tests/unit/api/test_database_optimization.py::TestDatabasePerformanceMiddleware::test_real_time_metrics
+tests/unit/api/test_database_optimization.py::TestDatabasePerformanceMiddleware::test_start_stop_monitoring
+tests/unit/api/test_database_optimization.py::TestIntegration::test_full_optimization_workflow
+tests/unit/api/test_database_optimization.py::TestQueryMetrics::test_execution_recording
+tests/unit/api/test_database_optimization.py::TestQueryOptimizationAdvisor::test_advisor_initialization
+tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_data_validation_error
 tests/unit/api/test_data_extended.pyTestAPIDataExtended::test_data_validation_error
+tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_export_data_csv
 tests/unit/api/test_data_extended.pyTestAPIDataExtended::test_export_data_csv
+tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_export_data_json
 tests/unit/api/test_data_extended.pyTestAPIDataExtended::test_export_data_json
+tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_get_match_by_id
 tests/unit/api/test_data_extended.pyTestAPIDataExtended::test_get_match_by_id
+tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_get_matches
 tests/unit/api/test_data_extended.pyTestAPIDataExtended::test_get_matches
+tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_get_matches_with_filters
 tests/unit/api/test_data_extended.pyTestAPIDataExtended::test_get_matches_with_filters
+tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_get_teams
 tests/unit/api/test_data_extended.pyTestAPIDataExtended::test_get_teams
 tests/unit/api/test_data_extended.pyTestAPIMonitoring::test_collector_health
 tests/unit/api/test_data_extended.pyTestAPIMonitoring::test_get_stats
@@ -614,15 +630,6 @@ tests/unit/api/test_data_extended.pyTestPredictionsAPI::test_get_recent_predicti
 tests/unit/api/test_data_extended.pyTestPredictionsAPI::test_predictions_health_check
 tests/unit/api/test_data_extended.pyTestPredictionsAPI::test_predictions_root_endpoint
 tests/unit/api/test_data_extended.pyTestPredictionsAPI::test_query_parameters_validation
-tests/unit/api/test_database_optimization.py
-tests/unit/api/test_database_optimization.py::TestConnectionPoolOptimizer::test_pool_registration
-tests/unit/api/test_database_optimization.py::TestConnectionPoolOptimizer::test_pool_status_retrieval
-tests/unit/api/test_database_optimization.py::TestDatabasePerformanceMiddleware::test_current_performance_analysis
-tests/unit/api/test_database_optimization.py::TestDatabasePerformanceMiddleware::test_real_time_metrics
-tests/unit/api/test_database_optimization.py::TestDatabasePerformanceMiddleware::test_start_stop_monitoring
-tests/unit/api/test_database_optimization.py::TestIntegration::test_full_optimization_workflow
-tests/unit/api/test_database_optimization.py::TestQueryMetrics::test_execution_recording
-tests/unit/api/test_database_optimization.py::TestQueryOptimizationAdvisor::test_advisor_initialization
 tests/unit/api/test_features_new.py::TestAPIFeatures::test_batch_feature_calculation
 tests/unit/api/test_features_new.py::TestAPIFeatures::test_calculate_features
 tests/unit/api/test_features_new.py::TestAPIFeatures::test_feature_validation
@@ -650,20 +657,38 @@ tests/unit/api/test_jwt_auth_core.py::TestPasswordManagement::test_verify_incorr
 tests/unit/api/test_jwt_auth_core.py::TestTokenCreation::test_token_data_includes_required_fields
 tests/unit/api/test_jwt_auth_core.py::TestTokenVerification::test_verify_token_wrong_algorithm
 tests/unit/api/test_jwt_auth_core.py::TestTokenVerification::test_verify_valid_refresh_token
+tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_collector_health
+tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_metrics
+tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_stats
+tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_status
+tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_monitoring_root
+tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_prometheus_metrics
 tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_acknowledge_alert
 tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_get_alerts
 tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_get_metrics
 tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_get_performance_stats
 tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_health_check_with_metrics
 tests/unit/api/test_monitoring_new.py::TestAPIMonitoring::test_trigger_alert
-tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_metrics
-tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_stats
-tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_get_status
+tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_collector_health
 tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_get_metrics
+tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_get_stats
 tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_get_status
+tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_monitoring_root
+tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_prometheus_metrics
 tests/unit/api/test_performance_optimization.py
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_batch_predict
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_batch_predict_invalid_match_ids
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_batch_predict_too_many_match_ids
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_create_prediction
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_create_prediction_default_values
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_error_handling_invalid_endpoint
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_prediction_by_id
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_prediction_invalid_match_id
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_recent_predictions
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_prediction_result_validation
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_predictions_health_check
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_predictions_root_endpoint
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_query_parameters_validation
 tests/unit/api/test_predictions_new.py::TestAPIPredictions::test_create_prediction
 tests/unit/api/test_predictions_new.py::TestAPIPredictions::test_get_prediction_by_id
 tests/unit/api/test_predictions_new.py::TestAPIPredictions::test_get_predictions_list
@@ -692,6 +717,19 @@ tests/unit/cache/test_football_data_cache.py::TestFootballDataCache::test_league
 tests/unit/cache/test_football_data_cache.py::TestFootballDataCache::test_league_data_caching_missing_id
 tests/unit/cache/test_football_data_cache.py::TestFootballDataCache::test_match_data_caching
 tests/unit/cache/test_football_data_cache.py::TestFootballDataCache::test_team_data_caching
+tests/unit/cache/test_redis_manager_new.py::TestBatchOperations::test_async_batch_operations
+tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_generate_key_with_version
+tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_key_manager_initialization
+tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_normalize_key
+tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_validate_key_invalid
+tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_validate_key_valid
+tests/unit/cache/test_redis_manager_new.py::TestConvenienceFunctions::test_ttl_function
+tests/unit/cache/test_redis_manager_new.py::TestIntegrationScenarios::test_cache_with_versioning_pattern
+tests/unit/cache/test_redis_manager_new.py::TestRedisManager::test_manager_auto_detect_mock
+tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_delete
+tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_exists
+tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_set_and_get
+tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_set_with_ttl
 tests/unit/cache/test_redis_manager.py::TestCacheKeyManager::test_async_operations
 tests/unit/cache/test_redis_manager.py::TestCacheKeyManager::test_build_key_success
 tests/unit/cache/test_redis_manager.py::TestCacheKeyManager::test_build_key_with_different_params
@@ -731,19 +769,6 @@ tests/unit/cache/test_redis_manager.py::TestRedisManagerIntegration::test_cache_
 tests/unit/cache/test_redis_manager.py::TestRedisManagerIntegration::test_end_to_end_workflow
 tests/unit/cache/test_redis_manager.py::TestRedisManagerIntegration::test_error_handling
 tests/unit/cache/test_redis_manager.py::TestRedisManagerIntegration::test_retry_mechanism
-tests/unit/cache/test_redis_manager_new.py::TestBatchOperations::test_async_batch_operations
-tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_generate_key_with_version
-tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_key_manager_initialization
-tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_normalize_key
-tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_validate_key_invalid
-tests/unit/cache/test_redis_manager_new.py::TestCacheKeyManager::test_validate_key_valid
-tests/unit/cache/test_redis_manager_new.py::TestConvenienceFunctions::test_ttl_function
-tests/unit/cache/test_redis_manager_new.py::TestIntegrationScenarios::test_cache_with_versioning_pattern
-tests/unit/cache/test_redis_manager_new.py::TestRedisManager::test_manager_auto_detect_mock
-tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_delete
-tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_exists
-tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_set_and_get
-tests/unit/cache/test_redis_manager_new.py::TestRedisOperations::test_async_set_with_ttl
 tests/unit/cache/test_unified_cache.py
 tests/unit/cache/test_unified_interface.py::TestCacheInterface::test_cache_backend_enum
 tests/unit/cache/test_unified_interface.py::TestCacheInterface::test_cache_interface_method_signatures
@@ -811,33 +836,6 @@ tests/unit/cqrs/test_handlers.py::TestUpdateMatchHandler::test_handle_match_not_
 tests/unit/cqrs/test_handlers_safety.py::TestCQRSHandlersSafetyNet::test_create_user_handler_validation
 tests/unit/cqrs/test_handlers_safety.py::TestCQRSHandlersSafetyNet::test_handler_concurrent_access_safety
 tests/unit/cqrs/test_handlers_safety.py::TestCQRSHandlersSafetyNet::test_handler_performance_large_dataset
-tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_error_recovery
-tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_performance
-tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_workflow
-tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_data_quality_validation
-tests/unit/data/test_collectors.py::TestFixturesCollector::test_collect_fixtures_empty_response
-tests/unit/data/test_collectors.py::TestFixturesCollector::test_collect_fixtures_success
-tests/unit/data/test_collectors.py::TestFixturesCollector::test_deduplicate_matches
-tests/unit/data/test_collectors.py::TestFixturesCollector::test_fixtures_collector_initialization
-tests/unit/data/test_collectors.py::TestFixturesCollector::test_process_league_data
-tests/unit/data/test_collectors.py::TestFixturesCollector::test_validate_match_data
-tests/unit/data/test_collectors.py::TestOddsCollector::test_calculate_average_odds
-tests/unit/data/test_collectors.py::TestOddsCollector::test_calculate_implied_probability
-tests/unit/data/test_collectors.py::TestOddsCollector::test_collect_odds_success
-tests/unit/data/test_collectors.py::TestOddsCollector::test_detect_odds_anomalies
-tests/unit/data/test_collectors.py::TestOddsCollector::test_odds_collector_initialization
-tests/unit/data/test_collectors.py::TestScoresCollector::test_collect_live_scores
-tests/unit/data/test_collectors.py::TestScoresCollector::test_process_match_events
-tests/unit/data/test_collectors.py::TestScoresCollector::test_scores_collector_initialization
-tests/unit/data/test_collectors.py::TestScoresCollector::test_validate_score_data
-tests/unit/data/test_collectors.py::TestStreamingCollector::test_handle_streaming_errors
-tests/unit/data/test_collectors.py::TestStreamingCollector::test_process_streaming_data
-tests/unit/data/test_collectors.py::TestStreamingCollector::test_start_streaming
-tests/unit/data/test_collectors.py::TestStreamingCollector::test_stop_streaming
-tests/unit/data/test_collectors.py::TestStreamingCollector::test_streaming_collector_initialization
-tests/unit/database/test_connection.py::TestDatabaseConnection::test_async_session_creation
-tests/unit/database/test_connection.py::TestDatabaseConnectionErrorHandling::test_connection_error_handling
-tests/unit/database/test_connection.py::TestDatabaseConnectionErrorHandling::test_invalid_database_url
 tests/unit/database/test_connection_enhanced.py::TestAsyncSupport::test_async_session_context
 tests/unit/database/test_connection_enhanced.py::TestAsyncSupport::test_async_transaction_rollback
 tests/unit/database/test_connection_enhanced.py::TestConnectionPooling::test_connection_pool_configuration
@@ -878,6 +876,9 @@ tests/unit/database/test_connection_new.py::TestRealDatabaseManager::test_get_as
 tests/unit/database/test_connection_new.py::TestRealDatabaseManager::test_get_async_session_without_initialization_real_manager
 tests/unit/database/test_connection_new.py::TestRealDatabaseManager::test_get_session_real_manager
 tests/unit/database/test_connection_new.py::TestRealDatabaseManager::test_get_session_without_initialization_real_manager
+tests/unit/database/test_connection.py::TestDatabaseConnectionErrorHandling::test_connection_error_handling
+tests/unit/database/test_connection.py::TestDatabaseConnectionErrorHandling::test_invalid_database_url
+tests/unit/database/test_connection.py::TestDatabaseConnection::test_async_session_creation
 tests/unit/database/test_models.py::TestDatabaseModels::test_all_models_have_required_fields
 tests/unit/database/test_models.py::TestMatchModel::test_match_creation
 tests/unit/database/test_models.py::TestMatchModel::test_match_with_scores
@@ -889,20 +890,44 @@ tests/unit/database/test_models.py::TestTeamModel::test_team_creation
 tests/unit/database/test_models.py::TestTeamModel::test_team_str_representation
 tests/unit/database/test_models.py::TestUserModel::test_user_creation
 tests/unit/database/test_models.py::TestUserModel::test_user_str_representation
+tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_error_recovery
+tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_performance
+tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_collectors_workflow
+tests/unit/data/test_collectors.py::TestDataCollectorsIntegration::test_data_quality_validation
+tests/unit/data/test_collectors.py::TestFixturesCollector::test_collect_fixtures_empty_response
+tests/unit/data/test_collectors.py::TestFixturesCollector::test_collect_fixtures_success
+tests/unit/data/test_collectors.py::TestFixturesCollector::test_deduplicate_matches
+tests/unit/data/test_collectors.py::TestFixturesCollector::test_fixtures_collector_initialization
+tests/unit/data/test_collectors.py::TestFixturesCollector::test_process_league_data
+tests/unit/data/test_collectors.py::TestFixturesCollector::test_validate_match_data
+tests/unit/data/test_collectors.py::TestOddsCollector::test_calculate_average_odds
+tests/unit/data/test_collectors.py::TestOddsCollector::test_calculate_implied_probability
+tests/unit/data/test_collectors.py::TestOddsCollector::test_collect_odds_success
+tests/unit/data/test_collectors.py::TestOddsCollector::test_detect_odds_anomalies
+tests/unit/data/test_collectors.py::TestOddsCollector::test_odds_collector_initialization
+tests/unit/data/test_collectors.py::TestScoresCollector::test_collect_live_scores
+tests/unit/data/test_collectors.py::TestScoresCollector::test_process_match_events
+tests/unit/data/test_collectors.py::TestScoresCollector::test_scores_collector_initialization
+tests/unit/data/test_collectors.py::TestScoresCollector::test_validate_score_data
+tests/unit/data/test_collectors.py::TestStreamingCollector::test_handle_streaming_errors
+tests/unit/data/test_collectors.py::TestStreamingCollector::test_process_streaming_data
+tests/unit/data/test_collectors.py::TestStreamingCollector::test_start_streaming
+tests/unit/data/test_collectors.py::TestStreamingCollector::test_stop_streaming
+tests/unit/data/test_collectors.py::TestStreamingCollector::test_streaming_collector_initialization
 tests/unit/domain/test_entities.py
 tests/unit/domain/test_events.py
 tests/unit/domain/test_strategies.py
+tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_ml_strategy
+tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_statistical_strategy
+tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_unknown_strategy_type
+tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_factory_strategy_registry
+tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_factory_with_empty_config
 tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_initialization
 tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_initialize
 tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_metrics_getting
 tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_metrics_none_when_not_set
 tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_metrics_setting
 tests/unit/domain/test_strategies.py::TestPredictionStrategy::test_strategy_name_and_type
-tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_ml_strategy
-tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_statistical_strategy
-tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_create_unknown_strategy_type
-tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_factory_strategy_registry
-tests/unit/domain/test_strategies.py::TestPredictionStrategyFactory::test_factory_with_empty_config
 tests/unit/domain/test_strategies.py::TestStrategyIntegration::test_multiple_strategy_creation
 tests/unit/domain/test_strategies.py::TestStrategyIntegration::test_strategy_end_to_end_prediction
 tests/unit/domain/test_strategies.py::TestStrategyPerformance::test_strategy_prediction_performance
@@ -944,18 +969,27 @@ tests/unit/scripts/test_coverage_improvement_integration.py::TestCoverageImprove
 tests/unit/scripts/test_create_api_tests.py::TestCreateAPITests::test_health_test_content
 tests/unit/scripts/test_create_service_tests.py::TestCreateServiceTests::test_create_prediction_service_test
 tests/unit/scripts/test_create_service_tests.py::TestCreateServiceTests::test_generated_test_file_structure
+tests/unit/services/test_audit_service_comprehensive.py
+tests/unit/services/test_audit_service_new.py
+tests/unit/services/test_audit_service_new.py::TestAuditService::test_anonymize_sensitive_data
+tests/unit/services/test_audit_service_new.py::TestAuditService::test_archive_old_logs
+tests/unit/services/test_audit_service_new.py::TestAuditService::test_check_compliance
+tests/unit/services/test_audit_service_new.py::TestAuditService::test_export_audit_logs
+tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_api_access
+tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_data_access
+tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_security_event
 tests/unit/services/test_audit_service.py::TestAuditContext::test_audit_context_validation
 tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_id
 tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_initialization_full
 tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_initialization_minimal
 tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_serialization
 tests/unit/services/test_audit_service.py::TestAuditEvent::test_audit_event_timestamp
+tests/unit/services/test_audit_service.py::TestAuditLogSummary::test_audit_log_summary_initialization
+tests/unit/services/test_audit_service.py::TestAuditLogSummary::test_audit_log_summary_time_tracking
 tests/unit/services/test_audit_service.py::TestAuditLog::test_audit_log_id_generation
 tests/unit/services/test_audit_service.py::TestAuditLog::test_audit_log_initialization
 tests/unit/services/test_audit_service.py::TestAuditLog::test_audit_log_serialization
 tests/unit/services/test_audit_service.py::TestAuditLog::test_audit_log_timestamp_default
-tests/unit/services/test_audit_service.py::TestAuditLogSummary::test_audit_log_summary_initialization
-tests/unit/services/test_audit_service.py::TestAuditLogSummary::test_audit_log_summary_time_tracking
 tests/unit/services/test_audit_service.py::TestAuditService::test_audit_service_initialization
 tests/unit/services/test_audit_service.py::TestAuditService::test_get_events_with_data
 tests/unit/services/test_audit_service.py::TestAuditService::test_get_summary_empty
@@ -971,15 +1005,6 @@ tests/unit/services/test_audit_service.py::TestDataSanitizer::test_sanitize_none
 tests/unit/services/test_audit_service.py::TestDataSanitizer::test_sanitize_sensitive_data
 tests/unit/services/test_audit_service.py::TestSeverityAnalyzer::test_analyze_critical_severity_event
 tests/unit/services/test_audit_service.py::TestSeverityAnalyzer::test_analyze_unknown_action
-tests/unit/services/test_audit_service_comprehensive.py
-tests/unit/services/test_audit_service_new.py
-tests/unit/services/test_audit_service_new.py::TestAuditService::test_anonymize_sensitive_data
-tests/unit/services/test_audit_service_new.py::TestAuditService::test_archive_old_logs
-tests/unit/services/test_audit_service_new.py::TestAuditService::test_check_compliance
-tests/unit/services/test_audit_service_new.py::TestAuditService::test_export_audit_logs
-tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_api_access
-tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_data_access
-tests/unit/services/test_audit_service_new.py::TestAuditService::test_log_security_event
 tests/unit/services/test_auth_service_comprehensive.py
 tests/unit/services/test_auth_service_comprehensive.py::TestAuthServiceIntegration::test_user_lifecycle
 tests/unit/services/test_auth_service_comprehensive.py::TestAuthServiceUserRegistration::test_register_user_default_preferences
@@ -999,6 +1024,13 @@ tests/unit/services/test_data_processing_service.py::TestDataProcessingService::
 tests/unit/services/test_data_processing_service.py::TestDataProcessingService::test_transform_data_format
 tests/unit/services/test_data_processing_service.py::TestDataProcessingService::test_validate_match_data
 tests/unit/services/test_data_processing_service_simple.py
+tests/unit/services/test_data_quality_monitor_comprehensive.py
+tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataProcessing::test_process_data_with_exception
+tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataQualityMonitorIntegration::test_data_quality_score_tracking
+tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataQualityMonitorIntegration::test_error_recovery_workflow
+tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataValidation::test_validate_data_with_exception
+tests/unit/services/test_data_quality_monitor_comprehensive.py::TestMetricsCalculation::test_duration_calculation
+tests/unit/services/test_data_quality_monitor_comprehensive.py::TestMetricsCalculation::test_throughput_calculation
 tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_concurrent_processing
 tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_data_batch_processing
 tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_data_quality_monitor_initialization_default
@@ -1017,13 +1049,6 @@ tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_v
 tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_validate_data_format_errors
 tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_validate_data_missing_required_fields
 tests/unit/services/test_data_quality_monitor.py::TestDataQualityMonitor::test_validate_data_valid_data
-tests/unit/services/test_data_quality_monitor_comprehensive.py
-tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataProcessing::test_process_data_with_exception
-tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataQualityMonitorIntegration::test_data_quality_score_tracking
-tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataQualityMonitorIntegration::test_error_recovery_workflow
-tests/unit/services/test_data_quality_monitor_comprehensive.py::TestDataValidation::test_validate_data_with_exception
-tests/unit/services/test_data_quality_monitor_comprehensive.py::TestMetricsCalculation::test_duration_calculation
-tests/unit/services/test_data_quality_monitor_comprehensive.py::TestMetricsCalculation::test_throughput_calculation
 tests/unit/services/test_data_service.py::TestDataService::test_get_leagues_list_custom_parameters
 tests/unit/services/test_data_service.py::TestDataService::test_get_leagues_list_default_parameters
 tests/unit/services/test_data_service.py::TestDataService::test_get_matches_list_custom_parameters
@@ -1098,12 +1123,12 @@ tests/unit/services/test_tenant_service_core.py::TestResourceQuota::test_update_
 tests/unit/services/test_tenant_service_core.py::TestTenantLifecycle::test_update_tenant_not_found
 tests/unit/services/test_tenant_service_core.py::TestTenantStatistics::test_get_tenant_statistics_success
 tests/unit/services/test_tenant_service_core.py::TestTenantStatistics::test_get_tenant_statistics_tenant_not_found
+tests/unit/test_auto_binding_comprehensive.py::TestAutoBinderEdgeCases::test_find_implementations_module_error_handling
+tests/unit/test_auto_binding_comprehensive.py::TestAutoBinderEdgeCases::test_scan_module_import_error_handling
 tests/unit/test_auto_binding_comprehensive.py::TestAutoBinder::test_bind_from_assembly_directory
 tests/unit/test_auto_binding_comprehensive.py::TestAutoBinder::test_bind_from_assembly_module
 tests/unit/test_auto_binding_comprehensive.py::TestAutoBinder::test_bind_interface_to_implementations_single
 tests/unit/test_auto_binding_comprehensive.py::TestAutoBinder::test_is_implementation_success
-tests/unit/test_auto_binding_comprehensive.py::TestAutoBinderEdgeCases::test_find_implementations_module_error_handling
-tests/unit/test_auto_binding_comprehensive.py::TestAutoBinderEdgeCases::test_scan_module_import_error_handling
 tests/unit/test_core_auto_binding.py::TestDIContainer::test_register_scoped
 tests/unit/test_core_auto_binding.py::TestDIContainer::test_register_singleton
 tests/unit/test_core_auto_binding.py::TestDIContainer::test_register_transient
@@ -1117,12 +1142,12 @@ tests/unit/test_core_config_di_extended.py::TestConfigurationValidationBoundaryC
 tests/unit/test_core_di_extended.py::TestCircularDependencyDetection::test_complex_circular_dependency_chain
 tests/unit/test_core_di_extended.py::TestCircularDependencyDetection::test_no_circular_dependency_with_scoped
 tests/unit/test_core_di_extended.py::TestCircularDependencyDetection::test_simple_circular_dependency
-tests/unit/test_core_di_extended.py::TestDIContainerSingleton::test_singleton_dependency_injection
-tests/unit/test_core_di_extended.py::TestDIContainerSingleton::test_singleton_instance_caching
 tests/unit/test_core_di_extended.py::TestDependencyInjectionBoundaryConditions::test_error_handling_for_missing_dependencies
 tests/unit/test_core_di_extended.py::TestDependencyInjectionBoundaryConditions::test_register_with_invalid_lifetime
 tests/unit/test_core_di_extended.py::TestDependencyInjectionBoundaryConditions::test_register_with_none_interface
 tests/unit/test_core_di_extended.py::TestDependencyInjectionBoundaryConditions::test_resolve_with_complex_dependencies
+tests/unit/test_core_di_extended.py::TestDIContainerSingleton::test_singleton_dependency_injection
+tests/unit/test_core_di_extended.py::TestDIContainerSingleton::test_singleton_instance_caching
 tests/unit/test_core_di_extended.py::TestEdgeCasesAndAdvancedFeatures::test_concurrent_access_thread_safety
 tests/unit/test_core_di_extended.py::TestEdgeCasesAndAdvancedFeatures::test_generic_type_resolution
 tests/unit/test_core_di_extended.py::TestEdgeCasesAndAdvancedFeatures::test_performance_with_many_services
@@ -1136,60 +1161,35 @@ tests/unit/test_core_exceptions_massive.py::TestExceptionsBasic::test_exception_
 tests/unit/test_core_logger_enhanced.py::TestLoggerFunctionality::test_setup_logger_with_mock
 tests/unit/test_core_service_lifecycle.py::TestModuleFunctionality::test_error_handling
 tests/unit/test_health_check.py::test_project_structure
-tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManager::test_start_service_invalid_state
 tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerAsync::test_health_check_updates_timestamp
 tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerAsync::test_start_service_async_timeout
 tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerAsync::test_stop_service_async_timeout
 tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerMonitoring::test_monitoring_loop_with_exception
 tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManagerMonitoring::test_monitoring_loop_with_unhealthy_services
+tests/unit/test_service_lifecycle_comprehensive.py::TestServiceLifecycleManager::test_start_service_invalid_state
 tests/unit/utils/test_config_loader_enhanced.py
+tests/unit/utils/test_crypto_utils_comprehensive.py::TestCryptoUtilsComprehensive::test_performance_considerations
 tests/unit/utils/test_date_utils_basic.py
 tests/unit/utils/test_date_utils_enhanced_final.py
-tests/unit/utils/test_formatters.py
 tests/unit/utils/test_formatters_complete.py
 tests/unit/utils/test_formatters_enhanced.py
-tests/unit/utils/test_i18n.py
+tests/unit/utils/test_formatters.py
 tests/unit/utils/test_i18n_enhanced.py
-tests/unit/utils/test_response.py
+tests/unit/utils/test_i18n.py
 tests/unit/utils/test_response_enhanced.py
+tests/unit/utils/test_response.py
 tests/unit/utils/test_retry.py
 tests/unit/utils/test_simple_utils.py
-tests/unit/utils/test_time_utils.py
-tests/unit/utils/test_time_utils_enhanced.py
 tests/unit/utils/test_time_utils_enhanced_new.py
+tests/unit/utils/test_time_utils_enhanced.py
+tests/unit/utils/test_time_utils.py
 tests/unit/utils/test_utils_generated.py
-tests/unit/utils/test_validators.py
 tests/unit/utils/test_validators_comprehensive.py
 tests/unit/utils/test_validators_comprehensive.py::TestValidatorsComprehensive::test_validate_data_types_function
 tests/unit/utils/test_validators_enhanced.py
 tests/unit/utils/test_validators_enhanced.py::TestValidatorsEnhanced::test_validate_data_types_complex_types
 tests/unit/utils/test_validators_enhanced.py::TestValidatorsEnhanced::test_validate_data_types_invalid_types
+tests/unit/utils/test_validators.py
 tests/unit/utils/test_warning_filters_complete.py
 tests/unit/utils/test_warning_filters_enhanced_final.py
 tests/unit/utils/test_working_validators.py
-tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_data_validation_error
-tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_export_data_csv
-tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_export_data_json
-tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_get_match_by_id
-tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_get_matches
-tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_get_matches_with_filters
-tests/unit/api/test_data_extended.py::TestAPIDataExtended::test_get_teams
-tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_collector_health
-tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_monitoring_root
-tests/unit/api/test_monitoring_new_fixed.py::TestAPIMonitoring::test_prometheus_metrics
-tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_collector_health
-tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_get_stats
-tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_monitoring_root
-tests/unit/api/test_monitoring_simple.py::TestAPIMonitoring::test_prometheus_metrics
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_batch_predict
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_batch_predict_invalid_match_ids
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_batch_predict_too_many_match_ids
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_create_prediction
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_create_prediction_default_values
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_error_handling_invalid_endpoint
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_prediction_invalid_match_id
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_recent_predictions
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_predictions_health_check
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_predictions_root_endpoint
-tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_query_parameters_validation
-tests/unit/utils/test_crypto_utils_comprehensive.py::TestCryptoUtilsComprehensive::test_performance_considerations
