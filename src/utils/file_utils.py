@@ -49,7 +49,7 @@ class FileUtils:
     @staticmethod
     def get_file_hash(file_path: str | Path) -> str:
         """获取文件MD5哈希值."""
-        hash_md5 = hashlib.md5(usedforsecurity=False)
+        hash_md5 = hashlib.md5(usedforsecurity=False, usedforsecurity=False)
         with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)

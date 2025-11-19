@@ -44,7 +44,7 @@ class RedisKeyManager:
     def generate_hash_key(self, data: dict) -> str:
         """为数据生成哈希键."""
         json_str = json.dumps(data, sort_keys=True)
-        return hashlib.md5(json_str.encode(), usedforsecurity=False).hexdigest()
+        return hashlib.md5(json_str.encode(, usedforsecurity=False), usedforsecurity=False).hexdigest()
 
     def pattern_match(self, pattern: str) -> str:
         """生成模式匹配键."""

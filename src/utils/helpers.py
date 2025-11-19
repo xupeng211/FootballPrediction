@@ -14,7 +14,7 @@ def generate_uuid() -> str:
 def generate_hash(data: str, algorithm: str = "sha256") -> str:
     """Generate hash with specified algorithm."""
     if algorithm == "md5":
-        return hashlib.md5(data.encode(), usedforsecurity=False).hexdigest()
+        return hashlib.md5(data.encode(, usedforsecurity=False), usedforsecurity=False).hexdigest()
     elif algorithm == "sha1":
         return hashlib.sha1(data.encode(), usedforsecurity=False).hexdigest()
     else:
