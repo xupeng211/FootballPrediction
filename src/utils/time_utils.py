@@ -10,6 +10,7 @@ try:
 except ImportError:
     # For Python < 3.11
     from datetime import timezone
+
     UTC = timezone.utc
 
 try:

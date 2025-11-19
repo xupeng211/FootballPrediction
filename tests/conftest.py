@@ -32,13 +32,15 @@ def pytest_collection_modifyitems(config, items):
     if not os.path.exists(skip_file):
         return
 
-    with open(skip_file, encoding='utf-8') as f:
+    with open(skip_file, encoding="utf-8") as f:
         skipped_ids = {line.strip() for line in f if line.strip()}
 
     skipped_count = 0
     for item in items:
         if item.nodeid in skipped_ids:
-            item.add_marker(pytest.mark.skip(reason="Skipped by CI stabilization process"))
+            item.add_marker(
+                pytest.mark.skip(reason="Skipped by CI stabilization process")
+            )
             skipped_count += 1
 
     if skipped_count > 0:
