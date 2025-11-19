@@ -199,25 +199,8 @@ jobs:
             echo "⚠️ 发现安全问题，请检查报告"
           }
 
-          # Fail on high severity issues
-          python3 -c "
-          import json
-          try:
-              with open('bandit-report.json') as f:
-                  data = json.load(f)
-              high_issues = [r for r in data.get('results', []) if r.get('issue_severity') == 'HIGH']
-              if high_issues:
-                  print('❌ 发现高危安全问题，必须修复:')
-                  for issue in high_issues:
-                      print(f'  - {issue.get(\"test_name\", \"unknown\")}: {issue.get(\"issue_text\", \"unknown\")}')
-                  exit(1)
-              else:
-                  print('✅ 无高危安全问题')
-          except FileNotFoundError:
-              print('✅ 安全扫描完成')
-          except Exception as e:
-              print(f'安全检查失败: {e}')
-          "
+          # Fail on high severity issues - 使用独立脚本
+          python3 scripts/check_security_report.py --report-path bandit-report.json
         fi
 
         # Dependency audit
