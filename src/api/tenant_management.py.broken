@@ -62,26 +62,31 @@ class TenantCreationRequestModel(BaseModel):
         min_length=1,
         max_length=MAX_DOMAIN_LENGTH,
         description="租户标识符",
+    )
     contact_email: str = Field(..., description="联系邮箱")
     company_name: str | None = Field(
         None,
         max_length=100,
         description="公司名称",
+    )
     description: str | None = Field(
         None,
         max_length=MAX_ADMIN_NAME_LENGTH,
         description="租户描述",
+    )
     plan: str = Field("basic", description="租户计划")
     max_users: int = Field(
         10,
         ge=1,
         le=10000,
         description="最大用户数",
+    )
     trial_days: int = Field(
         30,
         ge=1,
         le=365,
         description="试用天数",
+    )
     custom_settings: dict[str, Any] | None = Field(None, description="自定义设置")
 
     @field_validator("slug")
@@ -91,6 +96,40 @@ class TenantCreationRequestModel(BaseModel):
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("租户标识符只能包含小写字母、数字和连字符")
         return v
+
+
+class TenantUpdateRequestModel(BaseModel):
+    """租户更新请求模型."""
+
+    name: str | None = Field(
+        None,
+        min_length=1,
+        max_length=MAX_NAME_LENGTH,
+        description="租户名称",
+    )
+    description: str | None = Field(
+        None,
+        max_length=MAX_ADMIN_NAME_LENGTH,
+        description="租户描述",
+    )
+    contact_email: str | None = Field(None, description="联系邮箱")
+    contact_phone: str | None = Field(
+        None,
+        max_length=MAX_DOMAIN_LENGTH,
+        description="联系电话",
+    )
+    company_name: str | None = Field(
+        None,
+        max_length=MAX_NAME_LENGTH,
+        description="公司名称",
+    )
+    company_address: str | None = Field(
+        None,
+        max_length=MAX_ADMIN_NAME_LENGTH,
+        description="公司地址",
+    )
+    settings: dict[str, Any] | None = Field(None, description="租户设置")
+
 
 
 class TenantUpdateRequestModel(BaseModel):
