@@ -112,7 +112,9 @@ class BaseModel(Base, TimestampMixin):
 
 # 数据库连接配置 - 支持环境变量覆盖，提供安全默认值
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./football_prediction.db")
-ASYNC_DATABASE_URL = os.getenv("ASYNC_DATABASE_URL", "sqlite+aiosqlite:///./football_prediction.db")
+ASYNC_DATABASE_URL = os.getenv(
+    "ASYNC_DATABASE_URL", "sqlite+aiosqlite:///./football_prediction.db"
+)
 
 # 同步数据库引擎和会话
 engine = create_engine(DATABASE_URL, echo=False)
