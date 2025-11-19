@@ -59,7 +59,7 @@ async def get_match_features(
         logger.error(f"数据库查询错误: {e}")
         raise HTTPException(
             status_code=500, detail="数据库查询失败"
-        ) from e  # TODO: B904 exception chaining
+        ) from e
     except HTTPException:
         # HTTPException会被FastAPI全局异常处理器捕获
         raise

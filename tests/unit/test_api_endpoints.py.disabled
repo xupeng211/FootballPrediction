@@ -1,6 +1,9 @@
 """
 API端点基础测试
 Basic API Endpoint Tests
+
+ISSUE: Pydantic validation error in RootResponse model - missing required fields: service, docs_url, health_check
+This test fails due to business logic issues in the API response model, not simple syntax errors.
 """
 
 import sys

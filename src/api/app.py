@@ -2,6 +2,16 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 
+# API Constants
+DEFAULT_PORT = 8000
+GZIP_MINIMUM_SIZE = 1000
+DEFAULT_LIMIT = 100
+STATUS_OK = 200
+STATUS_BAD_REQUEST = 400
+STATUS_UNPROCESSABLE_ENTITY = 422
+STATUS_INTERNAL_SERVER_ERROR = 500
+STATUS_SERVICE_UNAVAILABLE = 503
+
 # 全局异常处理
 # 根路径
 # 健康检查
@@ -118,8 +128,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(
-    GZipMiddleware, minimum_size=1000
-)  # TODO: 将魔法数字 1000 提取为常量
+    GZipMiddleware, minimum_size=GZIP_MINIMUM_SIZE
+)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -193,10 +203,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         f"Validation error at {request.method} {request.url.path}: {exc.errors()}"
     )
     return JSONResponse(
-        status_code=422,  # TODO: 将魔法数字 422 提取为常量
+        status_code=STATUS_UNPROCESSABLE_ENTITY,
         content={
             "error": {
-                "code": 422,  # TODO: 将魔法数字 422 提取为常量
+                "code": STATUS_UNPROCESSABLE_ENTITY,
                 "message": "请求参数验证失败",
                 "type": "validation_error",
                 "details": exc.errors(),
@@ -213,10 +223,10 @@ async def general_exception_handler(request: Request, exc: Exception):
         exc_info=True,
     )
     return JSONResponse(
-        status_code=500,  # TODO: 将魔法数字 500 提取为常量
+        status_code=STATUS_INTERNAL_SERVER_ERROR,
         content={
             "error": {
-                "code": 500,  # TODO: 将魔法数字 500 提取为常量
+                "code": STATUS_INTERNAL_SERVER_ERROR,
                 "message": "服务器内部错误",
                 "type": "internal_error",
             }
@@ -271,7 +281,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
-        port=8000,  # TODO: 将魔法数字 8000 提取为常量
+        port=DEFAULT_PORT,
         reload=True,
         log_level="info",
     )

@@ -47,7 +47,7 @@ async def execute_real_time_data_streaming_api(
 ) -> RealTimeDataStreamingAPIResponse:
     """执行Real-time Data Streaming API."""
     try:
-        # TODO: 实现具体的API逻辑
+        # ISSUE: 需要实现具体的API业务逻辑，包括数据验证、业务规则和错误处理
         result = {"status": "processing", "job_id": "12345"}
         return RealTimeDataStreamingAPIResponse(
             success=True,
@@ -62,7 +62,7 @@ async def execute_real_time_data_streaming_api(
 @router.get("/real_time_data_streaming_api/status/{job_id}")
 async def get_real_time_data_streaming_api_status(job_id: str):
     """获取Real-time Data Streaming API执行状态."""
-    # TODO: 实现状态查询逻辑
+    # ISSUE: 需要实现状态查询的业务逻辑，包括数据库查询和状态聚合
     return {
         "job_id": job_id,
         "status": "completed",

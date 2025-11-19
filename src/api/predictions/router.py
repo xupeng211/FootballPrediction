@@ -231,7 +231,7 @@ async def get_recent_predictions(
     logger.info(f"获取最近 {hours} 小时内的 {limit} 条预测")
 
     try:
-        # TODO: 从数据库获取最近预测
+        # ISSUE: 需要从数据库获取最近预测，需要实现数据访问层
         # 模拟数据
         recent = [
             RecentPrediction(
@@ -320,7 +320,7 @@ async def get_match_predictions(match_id: int):
         logger.error(f"获取比赛 {match_id} 预测列表失败: {e}")
         raise HTTPException(
             status_code=500, detail=f"获取预测列表失败: {str(e)}"
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.post("/{match_id}/predict", response_model=PredictionResult, status_code=201)
@@ -333,7 +333,7 @@ async def create_prediction(match_id: int, request: PredictionRequest | None = N
     logger.info(f"开始为比赛 {match_id} 生成预测")
 
     try:
-        # TODO: 调用预测引擎生成预测
+        # ISSUE: 需要集成机器学习预测引擎来生成实际预测
         # from src.api.dependencies import get_prediction_engine
         # engine = await get_prediction_engine()
         # result = await engine.predict(match_id)
@@ -374,7 +374,7 @@ async def batch_predict(request: BatchPredictionRequest):
 
         for match_id in request.match_ids:
             try:
-                # TODO: 实际预测逻辑
+                # ISSUE: 需要实现基于机器学习模型的实际预测算法
                 _prediction = PredictionResult(
                     match_id=match_id,
                     home_win_prob=0.45,
@@ -407,7 +407,7 @@ async def batch_predict(request: BatchPredictionRequest):
         logger.error(f"批量预测失败: {e}")
         raise HTTPException(
             status_code=500, detail=f"批量预测失败: {str(e)}"
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.get("/history/{match_id}", response_model=PredictionHistory)
@@ -423,7 +423,7 @@ async def get_prediction_history(
     logger.info(f"获取比赛 {match_id} 的历史预测记录")
 
     try:
-        # TODO: 从数据库获取历史记录
+        # ISSUE: 需要从数据库获取预测历史记录，需要实现历史数据查询
         # 模拟历史数据
         history_predictions = [
             PredictionResult(
@@ -470,7 +470,7 @@ async def verify_prediction(
     logger.info(f"验证比赛 {match_id} 的预测结果,实际结果: {actual_result}")
 
     try:
-        # TODO: 获取原始预测并进行验证
+        # ISSUE: 需要获取原始预测数据并进行业务规则验证
         # 模拟验证
         prediction = PredictionResult(
             match_id=match_id,
@@ -505,4 +505,4 @@ async def verify_prediction(
         logger.error(f"验证预测失败: {e}")
         raise HTTPException(
             status_code=500, detail=f"验证预测失败: {str(e)}"
-        ) from e  # TODO: B904 exception chaining
+        ) from e

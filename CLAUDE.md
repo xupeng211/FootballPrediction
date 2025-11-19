@@ -31,7 +31,7 @@ make fix-code
 make test.smart
 ```
 
-### ⚡ 25个核心开发命令
+### ⚡ 30+个核心开发命令（156个Makefile目标精选）
 
 ```bash
 # 🔧 环境管理
@@ -45,9 +45,11 @@ make test             # 运行单元测试（默认）
 make test.smart       # 快速测试（<2分钟）
 make test.unit        # 完整单元测试
 make test.phase1      # Phase 1核心功能测试
+make test-crisis-solution  # 完整的测试危机解决方案
+make feedback-test    # 反馈循环单元测试
 make coverage         # 覆盖率报告
 make cov.html         # HTML覆盖率报告
-make solve-test-crisis # 测试危机解决方案
+make solve-test-crisis # 测试危机解决方案（快速版本）
 
 # 🔍 质量工具
 make fix-code         # 一键修复代码质量
@@ -61,10 +63,14 @@ make improve-start    # 开始改进会话
 make improve-status   # 查看改进状态
 make improve-all      # 执行完整改进
 
-# 🤖 MLOps 系列
+# 🤖 MLOps 系列（完整工具链）
 make feedback-update  # 更新预测反馈循环
 make model-monitor    # 监控模型健康状况
 make performance-report # 生成性能分析报告
+make retrain-check    # 检查模型是否需要重新训练
+make retrain-dry      # 干运行重新训练检查（仅评估）
+make mlops-pipeline   # 运行完整的MLOps反馈管道
+make mlops-status     # 显示MLOps管道状态
 
 # 🐳 部署相关
 make up               # 启动服务
@@ -84,20 +90,29 @@ make ci               # 本地CI完整验证
 
 ```bash
 # 按类型运行测试
-pytest -m "unit" -v              # 单元测试
-pytest -m "integration" -v       # 集成测试
-pytest -m "critical" --maxfail=5 # 关键功能测试
-pytest -m "not slow"             # 排除慢速测试
+pytest -m "unit" -v                        # 单元测试
+pytest -m "integration" -v                 # 集成测试
+pytest -m "e2e" -v                         # 端到端测试
+pytest -m "critical" --maxfail=5           # 关键功能测试
+pytest -m "not slow"                       # 排除慢速测试
+
+# 🧪 高级测试组合（57个标记灵活运用）
+pytest -m "critical and not slow" --maxfail=5     # 关键功能且快速
+pytest -m "unit and (api or domain)" -v           # 单元测试中的API和领域模块
+pytest -m "(unit or integration) and not ml"      # 非ML的核心测试
+pytest -m "smoke or critical" --tb=short          # 冒烟测试或关键测试
+pytest -m "not slow and not external_api"         # 排除慢速和外部API依赖
 
 # Smart Tests 快速验证
-make test.smart                  # 运行稳定的核心测试组合
-pytest -m "not slow" --maxfail=5 -x  # 快速失败模式
+make test.smart                               # 运行稳定的核心测试组合
+pytest -m "not slow" --maxfail=5 -x           # 快速失败模式
 
 # 覆盖率相关
-make cov.html                     # HTML覆盖率报告
+make cov.html                                  # HTML覆盖率报告
 pytest --cov=src --cov-report=term-missing
+pytest --cov=src.domain --cov-report=term-missing tests/unit/domain/  # 模块覆盖率
 
-# 单个测试文件
+# 单个测试文件/类/方法
 pytest tests/unit/utils/test_date_utils.py -v
 pytest tests/unit/cache/test_redis_manager.py::TestRedisManager::test_set_get -v
 
@@ -105,10 +120,15 @@ pytest tests/unit/cache/test_redis_manager.py::TestRedisManager::test_set_get -v
 pytest tests/unit/api/ -v
 pytest tests/unit/domain/ -v
 pytest tests/unit/database/ -v
+pytest tests/unit/services/ -v
 
-# 运行特定标记的测试
-pytest -m "critical" -v
-pytest -m "not slow" --maxfail=5
+# 🚀 问题特定测试
+pytest -m "issue94" -v                        # Issue #94 相关测试
+pytest -m "regression" --maxfail=3           # 回归测试
+pytest -m "edge_cases" -v                    # 边界条件测试
+
+# 并行执行（CI环境）
+pytest -n auto --dist=loadscope -m "unit"    # 并行单元测试
 ```
 
 ### 🛠️ 开发环境设置
@@ -280,21 +300,41 @@ make up          # 启动所有服务
 - **Prometheus**: http://localhost:9090
 - **日志聚合**: http://localhost:3100 (Loki)
 
-**实时功能栈**：
-- **WebSocket**: 实时比赛数据推送和预测更新
-- **流处理**: Kafka消息队列处理实时数据流
-- **事件驱动**: 异步事件处理和通知系统
+**🚀 实时功能栈（现代流处理架构）**：
+- **🔌 WebSocket**: 实时比赛数据推送和预测更新（双向通信）
+- **🌊 流处理**: Kafka消息队列处理实时数据流（高吞吐量）
+- **⚡ 事件驱动**: 异步事件处理和通知系统（松耦合）
+- **📊 实时监控**: 流数据处理指标和性能监控
+- **🔄 数据同步**: 多数据源实时同步和一致性保证
 
-**实时功能测试**：
+**实时功能测试和验证**：
 ```bash
-# WebSocket连接测试
-curl http://localhost:8000/realtime/matches
+# 🔌 WebSocket连接测试
+curl http://localhost:8000/realtime/matches           # 实时比赛数据
+wscat -c ws://localhost:8000/ws/matches             # WebSocket交互
 
-# 流数据测试
-curl http://localhost:8000/streaming/predictions
+# 🌊 流数据测试
+curl http://localhost:8000/streaming/predictions     # 实时预测流
+curl http://localhost:8000/streaming/matches         # 比赛数据流
 
-# 事件处理测试
-curl http://localhost:8000/realtime/events
+# ⚡ 事件处理测试
+curl http://localhost:8000/realtime/events           # 事件驱动API
+curl -X POST http://localhost:8000/events/trigger    # 触发事件
+
+# 📈 流处理健康检查
+curl http://localhost:8000/streaming/health          # 流处理状态
+curl http://localhost:8000/kafka/status              # Kafka集群状态
+```
+
+**🎯 实时功能集成测试**：
+```bash
+# 端到端实时数据流测试
+pytest -m "streaming and integration" -v           # 流处理集成测试
+pytest -m "websocket and e2e" -v                  # WebSocket端到端测试
+pytest -m "realtime and performance" --benchmark   # 实时性能测试
+
+# 生产环境实时功能验证
+docker-compose exec app curl http://localhost:8000/realtime/health
 ```
 
 **Docker 开发环境管理**：
@@ -447,25 +487,44 @@ pytest --cov=src.domain --cov-report=term-missing tests/unit/domain/
 
 ### 🛡️ 企业级安全扫描工具链
 
-**多层安全审计体系**：
+**多层安全审计体系（完整CI/CD集成）**：
 ```bash
-# 代码安全扫描
-make security-check    # 运行完整安全扫描
-bandit -r src/         # 代码漏洞扫描
-safety check           # 依赖漏洞检查
-pip-audit              # 依赖审计
-trufflehog git .       # 密钥扫描
-gitleaks detect        # 密钥泄露检测
-pip-licenses --from=mixed --format=table  # 许可证检查
+# 🚀 一键完整安全扫描
+make security-check    # 运行完整安全扫描（推荐）
+
+# 🔍 专项安全工具
+bandit -r src/         # Python代码漏洞扫描（ CWE/SANS Top 25 ）
+safety check           # PyPI依赖包漏洞检查（CVE数据库）
+pip-audit              # 依赖审计（实时漏洞数据库）
+trufflehog git .       # Git历史密钥扫描（深度扫描）
+gitleaks detect        # 密钥泄露检测（正则和熵检测）
+pip-licenses --from=mixed --format=table  # 开源许可证合规检查
+
+# 📊 安全报告生成
+bandit -r src/ -f json -o bandit_report.json    # JSON格式报告
+safety check --json --output safety_report.json  # 依赖漏洞报告
+pip-audit --format=json --output audit_report.json # 完整审计报告
 ```
 
-**安全工具集成**：
-- **Bandit**: Python代码安全漏洞扫描
-- **Safety**: PyPI依赖包漏洞检查
-- **pip-audit**: 依赖审计和漏洞数据库
-- **TruffleHog**: Git历史密钥扫描
-- **Gitleaks**: 密钥泄露检测
-- **pip-licenses**: 开源许可证合规检查
+**企业级安全工具集成**：
+- **🛡️ Bandit**: Python代码安全漏洞扫描（SQL注入、XSS、路径遍历等）
+- **🔒 Safety**: PyPI依赖包漏洞检查（实时CVE漏洞数据库）
+- **🔍 pip-audit**: 依赖审计和漏洞数据库（支持私有索引）
+- **🕵️ TruffleHog**: Git历史密钥扫描（熵值和模式匹配）
+- **🚨 Gitleaks**: 密钥泄露检测（200+种密钥模式）
+- **📄 pip-licenses**: 开源许可证合规检查（MIT/Apache/GPL兼容性）
+
+**🎯 安全最佳实践**：
+```bash
+# 开发阶段安全检查
+make fix-code && make security-check    # 代码修复+安全扫描
+
+# 提交前安全验证
+make prepush                           # 包含安全扫描的完整验证
+
+# CI/CD安全门禁
+make ci-check                         # 质量门禁+安全验证
+```
 
 ### 📋 提交前检查
 

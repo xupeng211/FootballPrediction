@@ -224,13 +224,6 @@ class ServiceContainer:
         return infos
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="领域服务导入失败")
-@pytest.mark.unit
-@pytest.mark.domain
-@pytest.mark.services
-class TestServiceLifecycle:
-    """服务生命周期测试"""
-
     @pytest.fixture
     def service_container(self):
         """创建服务容器"""

@@ -293,7 +293,7 @@ services:
       - "9121:9121"
     environment:
       - REDIS_ADDR=redis://redis:6379
-      - REDIS_PASSWORD=staging_redis_password_2024
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     depends_on:
       - redis
     networks:

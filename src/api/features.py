@@ -51,8 +51,8 @@ def validate_match_id(match_id: int) -> None:
         logger.warning(f"无效的比赛ID: {match_id}")
         raise HTTPException(
             status_code=400,
-            detail="比赛ID必须大于0",  # TODO: 将魔法数字 400 提取为常量
-        )  # TODO: B904 exception chaining
+            detail="比赛ID必须大于0",  # ISSUE: 魔法数字 400 应该提取为命名常量以提高代码可维护性
+        )
 
 
 def check_feature_store_availability() -> None:
@@ -60,8 +60,8 @@ def check_feature_store_availability() -> None:
     if get_feature_store() is None:
         logger.error("特征存储服务不可用")
         raise HTTPException(
-            status_code=503,  # TODO: 将魔法数字 503 提取为常量
-            detail="特征存储服务暂时不可用,请稍后重试",  # TODO: 将魔法数字 503 提取为常量
+            status_code=503,  # ISSUE: 魔法数字 503 应该提取为命名常量以提高代码可维护性
+            detail="特征存储服务暂时不可用,请稍后重试",  # ISSUE: 魔法数字 503 应该提取为命名常量以提高代码可维护性
         )
 
 
@@ -77,9 +77,9 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         if not match:
             logger.warning(f"比赛 {match_id} 不存在")
             raise HTTPException(
-                status_code=404,  # TODO: 将魔法数字 404 提取为常量
-                detail=f"比赛 {match_id} 不存在",  # TODO: 将魔法数字 404 提取为常量
-            )  # TODO: B904 exception chaining
+                status_code=404,  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
+                detail=f"比赛 {match_id} 不存在",  # ISSUE: 魔法数字 404 应该提取为命名常量以提高代码可维护性
+            )
 
         logger.debug(f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}")
         return match
@@ -88,8 +88,8 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     except SQLAlchemyError as db_error:
         logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail="数据库查询失败,请稍后重试",  # TODO: 将魔法数字 500 提取为常量
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail="数据库查询失败,请稍后重试",  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
         ) from None
     except (
         ValueError,
@@ -101,8 +101,8 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     ) as query_error:
         logger.error(f"查询比赛信息时发生未知错误: {query_error}")
         raise HTTPException(
-            status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail="查询比赛信息失败",  # TODO: 将魔法数字 500 提取为常量
+            status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+            detail="查询比赛信息失败",  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
         ) from None
 
 

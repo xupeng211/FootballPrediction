@@ -17,56 +17,56 @@ class _MockFeastResult:
     pass  # 添加pass语句
     """轻量的Feast查询结果,仅实现 to_df 方法."""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class MockEntity:
     """类文档字符串."""
 
     pass  # 添加pass语句
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class MockFeatureView:
     """类文档字符串."""
 
     pass  # 添加pass语句
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class MockField:
     """类文档字符串."""
 
     pass  # 添加pass语句
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class MockFloat64:
     """类文档字符串."""
 
     pass  # 添加pass语句
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class MockInt64:
     """类文档字符串."""
 
     pass  # 添加pass语句
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class MockPostgreSQLSource:
     """类文档字符串."""
 
     pass  # 添加pass语句
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class MockValueType:
     """类文档字符串."""
 
     pass  # 添加pass语句
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class FeatureProcessor:

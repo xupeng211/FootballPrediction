@@ -4,6 +4,11 @@ Data Processing Simple Tests
 
 测试数据处理和质量监控系统的核心功能，基于实际模块结构.
 Tests core functionality of data processing and quality monitoring system based on actual module structure.
+
+ISSUE: Business logic errors in data processing tests
+- test_remove_duplicates: expects 3 unique records but gets 4 (data deduplication logic issue)
+- test_handler_initialization: MissingDataHandler class missing 'config' attribute
+These are complex business logic issues, not simple syntax errors.
 """
 
 from datetime import datetime

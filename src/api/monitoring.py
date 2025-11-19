@@ -365,7 +365,7 @@ async def manual_collect() -> dict[str, Any]:
         logger.error(f"手动指标收集失败: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"指标收集失败: {str(e)}"
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.get("/collector/status")
@@ -388,7 +388,7 @@ async def start_collector() -> dict[str, str]:
         logger.error(f"启动指标收集器失败: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"启动失败: {str(e)}"
-        ) from e  # TODO: B904 exception chaining
+        ) from e
 
 
 @router.post("/collector/stop")
@@ -401,4 +401,4 @@ async def stop_collector() -> dict[str, str]:
         logger.error(f"停止指标收集器失败: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"停止失败: {str(e)}"
-        ) from e  # TODO: B904 exception chaining
+        ) from e

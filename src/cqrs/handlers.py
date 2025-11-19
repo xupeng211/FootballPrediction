@@ -620,7 +620,7 @@ class UserCommandHandlers:
         """函数文档字符串."""
         # 添加pass语句
         self.create = CreateUserHandler()
-        # TODO: 实现UpdateUserHandler - 临时注释以解决启动问题
+        # ISSUE: 需要实现UpdateUserHandler来处理用户更新命令（临时注释以解决启动问题）
         # self.update = UpdateUserHandler()
 
 

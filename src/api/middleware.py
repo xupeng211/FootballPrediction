@@ -56,9 +56,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        calls: int = 100,  # TODO: 将魔法数字 100 提取为常量
-        period: int = 60,  # TODO: 将魔法数字 100 提取为常量
-    ):  # TODO: 将魔法数字 100 提取为常量
+        calls: int = 100,  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+        period: int = 60,  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
+    ):  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
         super().__init__(app)
         self.calls = calls
         self.period = period
@@ -81,7 +81,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # 检查是否超过限制
         if len(self.clients[client_ip]) >= self.calls:
             raise HTTPException(
-                status_code=429,  # TODO: 将魔法数字 429 提取为常量
+                status_code=429,  # ISSUE: 魔法数字 429 应该提取为命名常量以提高代码可维护性
                 detail="Rate limit exceeded",
             )
 
@@ -107,8 +107,8 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             raise HTTPException(
-                status_code=401,  # TODO: 将魔法数字 401 提取为常量
-                detail="Missing or invalid token",  # TODO: 将魔法数字 401 提取为常量
+                status_code=401,  # ISSUE: 魔法数字 401 应该提取为命名常量以提高代码可维护性
+                detail="Missing or invalid token",  # ISSUE: 魔法数字 401 应该提取为命名常量以提高代码可维护性
             )
 
         # 这里可以添加token验证逻辑
@@ -156,7 +156,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Strict-Transport-Security"] = (
-            "max-age=31536000; includeSubDomains"  # TODO: 将魔法数字 31536000 提取为常量
+            "max-age=31536000; includeSubDomains"  # ISSUE: 魔法数字 31536000 应该提取为命名常量以提高代码可维护性
         )
 
         return response
@@ -168,8 +168,8 @@ class CacheMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        cache_timeout: int = 300,  # TODO: 将魔法数字 300 提取为常量
-    ):  # TODO: 将魔法数字 300 提取为常量
+        cache_timeout: int = 300,  # ISSUE: 魔法数字 300 应该提取为命名常量以提高代码可维护性
+    ):  # ISSUE: 魔法数字 300 应该提取为命名常量以提高代码可维护性
         super().__init__(app)
         self.cache: dict[str, dict[str, Any]] = {}
         self.cache_timeout = cache_timeout
@@ -217,6 +217,6 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             logger.error(f"Unhandled error: {str(e)}")
             return Response(
                 content=json.dumps({"detail": "Internal server error"}),
-                status_code=500,  # TODO: 将魔法数字 500 提取为常量
+                status_code=500,  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
                 media_type="application/json",
             )

@@ -49,9 +49,9 @@ def main():
     success = run_coverage_test()
 
     if success:
-        pass  # TODO: Add logger import if needed
+        pass
     else:
-        pass  # TODO: Add logger import if needed
+        pass
 
     return success
 

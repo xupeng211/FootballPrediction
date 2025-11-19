@@ -109,7 +109,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="内部服务器错误",
-            ) from e  # TODO: B904 exception chaining
+            ) from e
 
     async def _extract_tenant(self, request: Request) -> Tenant | None:
         """从请求中提取租户信息.

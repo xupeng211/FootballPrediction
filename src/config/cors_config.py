@@ -2,6 +2,12 @@ import os
 
 """CORS配置管理"""
 
+# 常量定义
+DEV_FRONTEND_PORT = 3000
+DEV_ADMIN_PORT = 8080
+DEV_API_PORT = 8000
+CORS_MAX_AGE = 600
+
 
 def get_cors_origins() -> list[str]:
     """获取CORS允许的源."""
@@ -11,13 +17,13 @@ def get_cors_origins() -> list[str]:
     elif env == "staging":
         return [
             "https://staging.yourdomain.com",
-            "http://localhost:3000",  # TODO: 将魔法数字 3000 提取为常量
+            f"http://localhost:{DEV_FRONTEND_PORT}",
         ]
     else:
         return [
-            "http://localhost:3000",  # TODO: 将魔法数字 3000 提取为常量
-            "http://localhost:8080",  # TODO: 将魔法数字 8080 提取为常量
-            "http://localhost:8000",  # TODO: 将魔法数字 8000 提取为常量
+            f"http://localhost:{DEV_FRONTEND_PORT}",
+            f"http://localhost:{DEV_ADMIN_PORT}",
+            f"http://localhost:{DEV_API_PORT}",
         ]
 
 
@@ -28,5 +34,5 @@ def get_cors_config() -> dict:
         "allow_credentials": True,
         "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["*"],
-        "max_age": 600,  # TODO: 将魔法数字 600 提取为常量
+        "max_age": CORS_MAX_AGE,
     }

@@ -206,13 +206,6 @@ except ImportError:
             return datetime.now() - match.start_time
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="领域服务导入失败")
-@pytest.mark.unit
-@pytest.mark.domain
-@pytest.mark.services
-class TestMatchDomainService:
-    """比赛领域服务测试"""
-
     @pytest.fixture
     def mock_home_team(self):
         """模拟主队"""

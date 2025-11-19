@@ -21,9 +21,6 @@ except ImportError:
         PredictionService = None
 
 
-@pytest.mark.skipif(
-    not PREDICTION_SERVICE_AVAILABLE, reason="PredictionService not available"
-)
 class TestPredictionServiceGenerated:
     """预测服务测试"""
 

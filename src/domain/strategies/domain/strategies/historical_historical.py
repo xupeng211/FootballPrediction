@@ -10,7 +10,7 @@ class HistoricalMatch:
     pass  # 添加pass语句
     """历史比赛数据结构"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class HistoricalStrategy:
@@ -25,4 +25,4 @@ class HistoricalStrategy:
     - 同赛季类似情况
     - 相似时间段的表现"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

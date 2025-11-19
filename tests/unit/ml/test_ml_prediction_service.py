@@ -38,10 +38,6 @@ except ImportError:
     CAN_IMPORT = False
 
 
-@pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
-class TestPredictionService:
-    """预测服务测试"""
-
     @pytest.fixture
     def prediction_service(self):
         """创建预测服务实例"""
@@ -603,10 +599,6 @@ class TestPredictionService:
                     == performance_data[model_name]
                 )
 
-
-@pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
-class TestEnsemblePrediction:
-    """集成预测结果测试"""
 
     def test_ensemble_prediction_creation(self):
         """测试集成预测结果创建"""

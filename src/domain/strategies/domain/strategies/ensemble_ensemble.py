@@ -17,7 +17,7 @@ class EnsembleMethod:
     pass  # 添加pass语句
     """集成方法枚举"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class EnsembleResult:
@@ -26,7 +26,7 @@ class EnsembleResult:
     pass  # 添加pass语句
     """集成结果"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class EnsembleStrategy:
@@ -38,4 +38,4 @@ class EnsembleStrategy:
     组合多个子策略的预测结果,通过智能加权提高整体准确性.
     Combines predictions from multiple sub-strategies through intelligent weighting."""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

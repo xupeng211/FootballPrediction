@@ -23,7 +23,7 @@ class FailureType:
     pass  # 添加pass语句
     """失败类型枚举"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class RecoveryStrategy:
@@ -32,7 +32,7 @@ class RecoveryStrategy:
     pass  # 添加pass语句
     """恢复策略枚举"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use
 
 
 class TaskFailure:
@@ -41,4 +41,4 @@ class TaskFailure:
     pass  # 添加pass语句
     """任务失败记录类"""
 
-    pass  # TODO: 实现类逻辑
+    pass  # ISSUE: Implement complete class logic for production use

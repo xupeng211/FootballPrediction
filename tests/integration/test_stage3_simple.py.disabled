@@ -264,10 +264,12 @@ def _test_api_data_integration_handle_error():
             start_time = datetime.utcnow()
 
 def _test_api_data_integration_iterate_items():
-                self.cache_manager.set_cache(f"team:{i}", data, ttl_seconds=3600)
+    for i in range(1000):
+        data = {"id": i, "name": f"Team {i}", "performance": i * 0.1}
+        self.cache_manager.set_cache(f"team:{i}", data, ttl_seconds=3600)
 
-            write_time = (datetime.utcnow() - start_time).total_seconds()
-            logger.info(f"  ✅ 批量写入1000条数据耗时: {write_time:.3f}秒")
+    write_time = (datetime.utcnow() - start_time).total_seconds()
+    logger.info(f"  ✅ 批量写入1000条数据耗时: {write_time:.3f}秒")
 
             # 测试批量读取性能
             start_time = datetime.utcnow()

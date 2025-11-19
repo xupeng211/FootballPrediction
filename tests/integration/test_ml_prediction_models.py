@@ -306,8 +306,8 @@ def test_prediction_service(training_data):
 
 def main():
     """主测试函数"""
-    logger.debug("🚀 开始机器学习预测模型测试")  # TODO: Add logger import if needed
-    logger.debug("=" * 60)  # TODO: Add logger import if needed
+    logger.debug("🚀 开始机器学习预测模型测试")
+    logger.debug("=" * 60)
 
     start_time = datetime.now()
 
@@ -329,57 +329,57 @@ def main():
     failed = 0
 
     for test_name, test_func in tests:
-        logger.debug(f"\n{'=' * 60}")  # TODO: Add logger import if needed
-        logger.debug(f"🧪 {test_name}")  # TODO: Add logger import if needed
-        logger.debug("=" * 60)  # TODO: Add logger import if needed
+        logger.debug(f"\n{'=' * 60}")
+        logger.debug(f"🧪 {test_name}")
+        logger.debug("=" * 60)
 
         try:
             if test_func():
                 logger.debug(
                     f"✅ {test_name} 测试通过"
-                )  # TODO: Add logger import if needed
+                )
                 passed += 1
             else:
                 logger.debug(
                     f"❌ {test_name} 测试失败"
-                )  # TODO: Add logger import if needed
+                )
                 failed += 1
         except Exception as e:
             logger.debug(
                 f"❌ {test_name} 测试异常: {e}"
-            )  # TODO: Add logger import if needed
+            )
             logger.exception(f"Exception in {test_name}")
             failed += 1
 
     end_time = datetime.now()
     duration = end_time - start_time
 
-    logger.debug("\n" + "=" * 60)  # TODO: Add logger import if needed
-    logger.debug("📊 测试总结")  # TODO: Add logger import if needed
-    logger.debug("=" * 60)  # TODO: Add logger import if needed
-    logger.debug(f"   通过: {passed}")  # TODO: Add logger import if needed
-    logger.error(f"   失败: {failed}")  # TODO: Add logger import if needed
-    logger.error(f"   总计: {passed + failed}")  # TODO: Add logger import if needed
+    logger.debug("\n" + "=" * 60)
+    logger.debug("📊 测试总结")
+    logger.debug("=" * 60)
+    logger.debug(f"   通过: {passed}")
+    logger.error(f"   失败: {failed}")
+    logger.error(f"   总计: {passed + failed}")
     logger.debug(
         f"   耗时: {duration.total_seconds():.2f} 秒"
-    )  # TODO: Add logger import if needed
+    )
 
     if failed == 0:
         logger.debug(
             "🎉 所有测试通过！机器学习预测模型基础功能正常"
-        )  # TODO: Add logger import if needed
-        logger.debug("\n✅ 已实现功能:")  # TODO: Add logger import if needed
-        logger.debug("   - 泊松分布预测模型")  # TODO: Add logger import if needed
-        logger.debug("   - ELO评分预测模型")  # TODO: Add logger import if needed
-        logger.debug("   - 集成预测服务")  # TODO: Add logger import if needed
-        logger.debug("   - 多种预测策略")  # TODO: Add logger import if needed
-        logger.debug("   - 模型训练和评估")  # TODO: Add logger import if needed
-        logger.debug("   - 批量预测支持")  # TODO: Add logger import if needed
+        )
+        logger.debug("\n✅ 已实现功能:")
+        logger.debug("   - 泊松分布预测模型")
+        logger.debug("   - ELO评分预测模型")
+        logger.debug("   - 集成预测服务")
+        logger.debug("   - 多种预测策略")
+        logger.debug("   - 模型训练和评估")
+        logger.debug("   - 批量预测支持")
         return True
     else:
         logger.debug(
             "⚠️  部分测试失败，请检查相关实现"
-        )  # TODO: Add logger import if needed
+        )
         return False
 
 
