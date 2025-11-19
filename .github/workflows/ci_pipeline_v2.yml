@@ -86,37 +86,34 @@ jobs:
         export $(cat .env.test | xargs)
         echo "测试环境已设置"
 
-    - name: Run Linting (Continue on Error)
-      continue-on-error: true
+    - name: Run Linting
       run: |
         echo "🔍 运行代码检查..."
         export $(cat .env.test | xargs)
 
         # Ruff linting
         if command -v ruff &> /dev/null; then
-          ruff check src/ tests/ --output-format=github || echo "⚠️ Linting issues found, but continuing..."
+          ruff check src/ tests/ --output-format=github
         fi
 
-    - name: Run Security Check (Continue on Error)
-      continue-on-error: true
+    - name: Run Security Check
       run: |
         echo "🛡️ 运行安全扫描..."
         export $(cat .env.test | xargs)
 
         # Bandit security scan
         if command -v bandit &> /dev/null; then
-          bandit -r src/ -f json -o bandit-report.json || echo "⚠️ Security issues found, but continuing..."
+          bandit -r src/ -f json -o bandit-report.json
         fi
 
-    - name: Run Tests (Continue on Error for Green Build)
-      continue-on-error: true
+    - name: Run Tests
       run: |
         echo "🧪 运行测试套件..."
         export $(cat .env.test | xargs)
 
-        # Run tests with coverage
+        # Run tests with coverage (allow some failures for gradual improvement)
         if [ -f "Makefile" ] && grep -q "test.unit" Makefile; then
-          make test.unit || echo "⚠️ Unit tests failed, but continuing..."
+          make test.unit
         else
           pytest tests/unit/ \
             -v \
@@ -124,12 +121,12 @@ jobs:
             --cov-report=xml \
             --cov-report=term-missing \
             --junit-xml=test-results.xml \
-            --maxfail=10 \
-            -x || echo "⚠️ Unit tests failed, but continuing..."
+            --maxfail=5 \
+            -x
         fi
 
         # Generate coverage summary
-        python -m coverage report --show-missing > coverage-summary.txt || echo "⚠️ Coverage report failed, but continuing..."
+        python -m coverage report --show-missing > coverage-summary.txt
 
     - name: Upload test results
       if: always()
