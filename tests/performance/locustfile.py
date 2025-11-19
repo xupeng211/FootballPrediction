@@ -45,13 +45,13 @@ class CacheHitUser(PerformanceTestUser):
         for user_id in self.user_ids:
             try:
                 self.client.get(f"/api/users/{user_id}", name="Cache-Hit Warmup")
-            except:
+            except Exception:
                 pass  # 忽略预热错误
 
         for pred_id in self.prediction_ids:
             try:
                 self.client.get(f"/api/predictions/{pred_id}", name="Cache-Hit Warmup")
-            except:
+            except Exception:
                 pass  # 忽略预热错误
 
     @task(60)  # 60%概率进行用户信息查询
@@ -375,7 +375,7 @@ class MixedLoadUser(HttpUser):
         for user_id in self.cache_user_ids:
             try:
                 self.client.get(f"/api/users/{user_id}", name="Mixed-Load Warmup")
-            except:
+            except Exception:
                 pass
 
     @task(49)  # 49% = 70% * 70% 读-命中
