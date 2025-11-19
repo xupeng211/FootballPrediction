@@ -90,7 +90,9 @@ class ApiCache:
         if self.config.include_query_params and params:
             # 对参数进行排序以确保键的一致性
             sorted_params = json.dumps(params, sort_keys=True, ensure_ascii=False)
-            param_hash = hashlib.md5(sorted_params.encode(), usedforsecurity=False).hexdigest()[:8]
+            param_hash = hashlib.md5(
+                sorted_params.encode(), usedforsecurity=False
+            ).hexdigest()[:8]
             key_parts.append(f"params:{param_hash}")
 
         # 添加头部信息
@@ -103,7 +105,8 @@ class ApiCache:
             }
             if cache_headers:
                 header_hash = hashlib.md5(
-                    json.dumps(cache_headers, sort_keys=True).encode(), usedforsecurity=False
+                    json.dumps(cache_headers, sort_keys=True).encode(),
+                    usedforsecurity=False,
                 ).hexdigest()[:8]
                 key_parts.append(f"headers:{header_hash}")
 

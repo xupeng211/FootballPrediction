@@ -376,11 +376,11 @@ class BaselineModelTrainer:
         y_train: pd.Series,
         X_val: pd.DataFrame = None,
         y_val: pd.Series = None,
-        params: Dict[str, Any] = None,
-        eval_set: List[Tuple[pd.DataFrame, pd.Series]] = None,
+        params: dict[str, Any] = None,
+        eval_set: list[tuple[pd.DataFrame, pd.Series]] = None,
         early_stopping_rounds: int = 50,
         verbose: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """训练 XGBoost 模型.
 
         Args:
@@ -466,11 +466,11 @@ class BaselineModelTrainer:
         y_train: pd.Series,
         X_val: pd.DataFrame,
         y_val: pd.Series,
-        params: Dict[str, Any],
-        eval_set: List[Tuple[pd.DataFrame, pd.Series]],
+        params: dict[str, Any],
+        eval_set: list[tuple[pd.DataFrame, pd.Series]],
         early_stopping_rounds: int,
         verbose: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """不使用 MLflow 训练 XGBoost 模型."""
         try:
             # 创建 XGBoost 分类器
@@ -535,12 +535,12 @@ class BaselineModelTrainer:
         y_train: pd.Series,
         X_val: pd.DataFrame,
         y_val: pd.Series,
-        params: Dict[str, Any],
-        eval_set: List[Tuple[pd.DataFrame, pd.Series]],
+        params: dict[str, Any],
+        eval_set: list[tuple[pd.DataFrame, pd.Series]],
         early_stopping_rounds: int,
         verbose: bool,
         run_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """使用 MLflow 训练 XGBoost 模型."""
         try:
             # 记录参数到 MLflow
@@ -611,11 +611,11 @@ class BaselineModelTrainer:
         y_train: pd.Series,
         X_val: pd.DataFrame,
         y_val: pd.Series,
-        param_grid: Dict[str, List[Any]] = None,
+        param_grid: dict[str, list[Any]] = None,
         cv_folds: int = 3,
         scoring: str = "f1_weighted",
         n_trials: int = 50,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """XGBoost 超参数优化（简化版随机搜索）.
 
         Args:
