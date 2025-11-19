@@ -613,12 +613,12 @@ class TestDataConsistency:
     async def test_all_consistency_checks(self, consistency_tester):
         """测试所有一致性检查"""
         report = await consistency_tester.run_all_consistency_tests()
-        assert report["success_rate"] >= 80, (
-            f"一致性测试成功率不足80%: {report['success_rate']:.1f}%"
-        )
-        assert len(report["consistency_errors"]) == 0, (
-            f"发现一致性错误: {report['consistency_errors']}"
-        )
+        assert (
+            report["success_rate"] >= 80
+        ), f"一致性测试成功率不足80%: {report['success_rate']:.1f}%"
+        assert (
+            len(report["consistency_errors"]) == 0
+        ), f"发现一致性错误: {report['consistency_errors']}"
 
 
 # 独立运行测试的主函数
