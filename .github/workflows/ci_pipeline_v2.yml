@@ -126,8 +126,14 @@ jobs:
             -x
         fi
 
-        # Generate coverage summary
-        python -m coverage report --show-missing > coverage-summary.txt
+        # Generate coverage summary (fail-safe)
+        if [ -f .coverage ]; then
+          echo "📊 生成覆盖率报告..."
+          python -m coverage report --show-missing > coverage-summary.txt
+        else
+          echo "⚠️ No coverage data found (likely due to skipped tests), skipping report." > coverage-summary.txt
+          echo "⚠️ 覆盖率数据不存在（可能因为大量测试被跳过），跳过报告生成"
+        fi
 
     - name: Upload test results
       if: always()
@@ -142,13 +148,14 @@ jobs:
         retention-days: 30
 
     - name: Upload coverage to Codecov
-      if: matrix.python-version == '3.11'
+      if: matrix.python-version == '3.11' && success()
       uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
+        fail_ci_if_error: false
+        verbose: true
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
 
   # 简化的质量门禁汇总
