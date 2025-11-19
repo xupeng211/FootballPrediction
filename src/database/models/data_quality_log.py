@@ -1,5 +1,3 @@
-from typing import Optional
-
 from src.database.base import BaseModel
 
 """

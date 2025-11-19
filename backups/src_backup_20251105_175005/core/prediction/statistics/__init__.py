@@ -1,19 +1,18 @@
-"""
-预测统计模块
-Prediction Statistics Module
+"""预测统计模块
+Prediction Statistics Module.
 """
 
 from datetime import datetime
 
 
 class PredictionStatistics:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测统计类"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.total_predictions = 0
         self.correct_predictions = 0
@@ -23,7 +22,7 @@ class PredictionStatistics:
         self.history: list[dict] = []
 
     def add_prediction(self, is_correct: bool, model_version: str = "default"):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """添加预测记录"""
         self.total_predictions += 1
@@ -54,7 +53,7 @@ class PredictionStatistics:
         )
 
     def get_summary(self) -> dict:
-        """获取统计摘要"""
+        """获取统计摘要."""
         return {
             "total_predictions": self.total_predictions,
             "correct_predictions": self.correct_predictions,

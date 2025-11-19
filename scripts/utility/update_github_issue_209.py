@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""
-更新GitHub Issue #209: 修复测试文件导入错误
-"""
+"""更新GitHub Issue #209: 修复测试文件导入错误."""
 
 import json
 from datetime import datetime
 
 
 def create_issue_209_update():
-    """创建Issue #209更新报告"""
-
+    """创建Issue #209更新报告."""
     update_report = {
         "issue_number": 209,
         "issue_title": "🔧 P1高优先级: 修复测试文件导入错误 - 33个测试文件无法执行",
@@ -100,8 +97,7 @@ def create_issue_209_update():
     return update_report
 
 def main():
-    """主函数"""
-
+    """主函数."""
     report = create_issue_209_update()
 
     # 保存更新报告

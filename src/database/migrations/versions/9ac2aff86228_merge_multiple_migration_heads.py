@@ -1,5 +1,3 @@
-from typing import Optional
-
 """Merge multiple migration heads".
 
 Revision ID: 9ac2aff86228

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """特征存储."""
 
 # 导入

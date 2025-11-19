@@ -1,6 +1,5 @@
-"""
-装饰器模式模块
-Decorator Pattern Module
+"""装饰器模式模块
+Decorator Pattern Module.
 
 提供装饰器模式的实现，允许动态地添加对象的功能.
 """
@@ -14,24 +13,24 @@ from typing import Any
 
 
 class Component(ABC):
-    """组件抽象基类
+    """组件抽象基类.
 
     定义装饰器和具体组件的共同接口.
     """
 
     @abstractmethod
     def operation(self) -> str:
-        """执行操作"""
+        """执行操作."""
 
 
 class ConcreteComponent(Component):
-    """具体组件类
+    """具体组件类.
 
     实现基础功能.
     """
 
     def __init__(self, name: str = "ConcreteComponent"):
-        """初始化具体组件
+        """初始化具体组件.
 
         Args:
             name: 组件名称
@@ -39,18 +38,18 @@ class ConcreteComponent(Component):
         self.name = name
 
     def operation(self) -> str:
-        """执行基础操作"""
+        """执行基础操作."""
         return f"{self.name}: 基础操作"
 
 
 class Decorator(Component):
-    """装饰器抽象基类
+    """装饰器抽象基类.
 
     实现装饰器的通用功能.
     """
 
     def __init__(self, component: Component):
-        """初始化装饰器
+        """初始化装饰器.
 
         Args:
             component: 要装饰的组件
@@ -59,22 +58,22 @@ class Decorator(Component):
 
     @property
     def component(self) -> Component:
-        """获取被装饰的组件"""
+        """获取被装饰的组件."""
         return self._component
 
     def operation(self) -> str:
-        """执行操作，委托给组件"""
+        """执行操作，委托给组件."""
         return self._component.operation()
 
 
 class ConcreteDecoratorA(Decorator):
-    """具体装饰器A
+    """具体装饰器A.
 
     添加状态并修改操作行为.
     """
 
     def __init__(self, component: Component, added_state: str = "装饰器A"):
-        """初始化具体装饰器A
+        """初始化具体装饰器A.
 
         Args:
             component: 要装饰的组件
@@ -84,19 +83,19 @@ class ConcreteDecoratorA(Decorator):
         self.added_state = added_state
 
     def operation(self) -> str:
-        """执行装饰后的操作"""
+        """执行装饰后的操作."""
         result = super().operation()
         return f"{result} + {self.added_state}"
 
 
 class ConcreteDecoratorB(Decorator):
-    """具体装饰器B
+    """具体装饰器B.
 
     添加新的行为.
     """
 
     def __init__(self, component: Component):
-        """初始化具体装饰器B
+        """初始化具体装饰器B.
 
         Args:
             component: 要装饰的组件
@@ -104,18 +103,18 @@ class ConcreteDecoratorB(Decorator):
         super().__init__(component)
 
     def operation(self) -> str:
-        """执行装饰后的操作"""
+        """执行装饰后的操作."""
         result = super().operation()
         return f"{result} + 装饰器B增强"
 
     def added_behavior(self) -> str:
-        """新增的行为"""
+        """新增的行为."""
         return "装饰器B的额外功能"
 
 
 # 函数装饰器实现
 def timing_decorator(func: Callable) -> Callable:
-    """计时装饰器
+    """计时装饰器.
 
     测量函数执行时间.
 
@@ -139,7 +138,7 @@ def timing_decorator(func: Callable) -> Callable:
 
 
 def logging_decorator(log_level: str = "INFO") -> Callable:
-    """日志装饰器
+    """日志装饰器.
 
     记录函数调用信息.
 
@@ -166,7 +165,7 @@ def logging_decorator(log_level: str = "INFO") -> Callable:
 
 
 def cache_decorator(max_size: int = 128) -> Callable:
-    """缓存装饰器
+    """缓存装饰器.
 
     缓存函数结果.
 
@@ -213,7 +212,7 @@ def cache_decorator(max_size: int = 128) -> Callable:
 
 def retry_decorator(max_attempts: int = 3,
     delay: float = 1.0) -> Callable:
-    """重试装饰器
+    """重试装饰器.
 
     在函数失败时自动重试.
 
@@ -250,17 +249,17 @@ def retry_decorator(max_attempts: int = 3,
 
 
 class DecoratorChain:
-    """装饰器链管理器
+    """装饰器链管理器.
 
     管理多个装饰器的应用顺序.
     """
 
     def __init__(self):
-        """初始化装饰器链"""
+        """初始化装饰器链."""
         self.decorators: list[Callable] = []
 
     def add_decorator(self, decorator: Callable) -> "DecoratorChain":
-        """添加装饰器到链中
+        """添加装饰器到链中.
 
         Args:
             decorator: 要添加的装饰器
@@ -272,7 +271,7 @@ class DecoratorChain:
         return self
 
     def apply_to(self, func: Callable) -> Callable:
-        """将装饰器链应用到函数
+        """将装饰器链应用到函数.
 
         Args:
             func: 要装饰的函数
@@ -286,7 +285,7 @@ class DecoratorChain:
         return result
 
     def clear(self) -> "DecoratorChain":
-        """清除装饰器链
+        """清除装饰器链.
 
         Returns:
             DecoratorChain: 返回自身以支持链式调用
@@ -295,7 +294,7 @@ class DecoratorChain:
         return self
 
     def count(self) -> int:
-        """获取装饰器数量
+        """获取装饰器数量.
 
         Returns:
             int: 装饰器数量
@@ -308,14 +307,14 @@ class DecoratorChain:
 @logging_decorator("DEBUG")
 @cache_decorator(max_size=64)
 def example_function(x: int, y: int) -> int:
-    """示例函数，用于演示装饰器"""
+    """示例函数，用于演示装饰器."""
     time.sleep(0.1)  # 模拟计算时间
     return x + y
 
 
 @retry_decorator(max_attempts=3, delay=0.5)
 def unstable_function(should_fail: bool = False) -> str:
-    """不稳定的函数，用于演示重试装饰器"""
+    """不稳定的函数，用于演示重试装饰器."""
     if should_fail:
         raise ValueError("函数执行失败")
     return "成功"
@@ -325,7 +324,7 @@ def unstable_function(should_fail: bool = False) -> str:
 def create_component_chain(
     base_component: Component, decorators: list[type]
 ) -> Component:
-    """创建组件装饰链
+    """创建组件装饰链.
 
     Args:
         base_component: 基础组件
@@ -341,8 +340,7 @@ def create_component_chain(
 
 
 def demonstrate_decorator_pattern():
-    """演示装饰器模式的使用"""
-
+    """演示装饰器模式的使用."""
     # 创建基础组件
     component = ConcreteComponent("数据处理组件")
 
@@ -375,13 +373,13 @@ def demonstrate_decorator_pattern():
 
 # 企业级装饰器实现
 class BaseDecorator(Decorator):
-    """基础装饰器类
+    """基础装饰器类.
 
     提供装饰器的基础实现.
     """
 
     def __init__(self, component: Component):
-        """初始化基础装饰器
+        """初始化基础装饰器.
 
         Args:
             component: 要装饰的组件
@@ -389,18 +387,18 @@ class BaseDecorator(Decorator):
         super().__init__(component)
 
     def operation(self) -> str:
-        """执行装饰后的操作"""
+        """执行装饰后的操作."""
         return self._component.operation()
 
 
 class LoggingDecorator(BaseDecorator):
-    """日志装饰器
+    """日志装饰器.
 
     为组件添加日志功能.
     """
 
     def __init__(self, component: Component, log_level: str = "INFO"):
-        """初始化日志装饰器
+        """初始化日志装饰器.
 
         Args:
             component: 要装饰的组件
@@ -410,19 +408,19 @@ class LoggingDecorator(BaseDecorator):
         self.log_level = log_level
 
     def operation(self) -> str:
-        """执行带日志的操作"""
+        """执行带日志的操作."""
         result = self._component.operation()
         return result
 
 
 class MetricsDecorator(BaseDecorator):
-    """指标装饰器
+    """指标装饰器.
 
     为组件添加性能监控功能.
     """
 
     def __init__(self, component: Component):
-        """初始化指标装饰器
+        """初始化指标装饰器.
 
         Args:
             component: 要装饰的组件
@@ -432,7 +430,7 @@ class MetricsDecorator(BaseDecorator):
         self.total_time = 0.0
 
     def operation(self) -> str:
-        """执行带指标收集的操作"""
+        """执行带指标收集的操作."""
         start_time = time.time()
         self.call_count += 1
 
@@ -444,7 +442,7 @@ class MetricsDecorator(BaseDecorator):
         return result
 
     def get_metrics(self) -> dict[str, Any]:
-        """获取性能指标"""
+        """获取性能指标."""
         return {
             "call_count": self.call_count,
             "total_time": self.total_time,
@@ -455,13 +453,13 @@ class MetricsDecorator(BaseDecorator):
 
 
 class RetryDecorator(BaseDecorator):
-    """重试装饰器
+    """重试装饰器.
 
     为组件添加重试功能.
     """
 
     def __init__(self, component: Component, max_retries: int = 3, delay: float = 1.0):
-        """初始化重试装饰器
+        """初始化重试装饰器.
 
         Args:
             component: 要装饰的组件
@@ -473,7 +471,7 @@ class RetryDecorator(BaseDecorator):
         self.delay = delay
 
     def operation(self) -> str:
-        """执行带重试的操作"""
+        """执行带重试的操作."""
         last_exception = None
 
         for attempt in range(self.max_retries + 1):
@@ -493,7 +491,7 @@ class RetryDecorator(BaseDecorator):
 
 
 class ValidationDecorator(BaseDecorator):
-    """验证装饰器
+    """验证装饰器.
 
     为组件添加输入验证功能.
     """
@@ -501,7 +499,7 @@ class ValidationDecorator(BaseDecorator):
     def __init__(self,
     component: Component,
     validator: Callable | None = None):
-        """初始化验证装饰器
+        """初始化验证装饰器.
 
         Args:
             component: 要装饰的组件
@@ -513,12 +511,11 @@ class ValidationDecorator(BaseDecorator):
     def _default_validator(self,
     *args,
     **kwargs):
-        """默认验证器"""
+        """默认验证器."""
         return True
 
     def operation(self) -> str:
-        """执行带验证的操作"""
-
+        """执行带验证的操作."""
         if self.validator():
             result = self._component.operation()
             return result
@@ -527,13 +524,13 @@ class ValidationDecorator(BaseDecorator):
 
 
 class CacheDecorator(BaseDecorator):
-    """缓存装饰器
+    """缓存装饰器.
 
     为组件添加缓存功能.
     """
 
     def __init__(self, component: Component, cache_size: int = 128):
-        """初始化缓存装饰器
+        """初始化缓存装饰器.
 
         Args:
             component: 要装饰的组件
@@ -544,7 +541,7 @@ class CacheDecorator(BaseDecorator):
         self._cache = {}
 
     def operation(self) -> str:
-        """执行带缓存的操作"""
+        """执行带缓存的操作."""
         cache_key = str(id(self._component))
 
         if cache_key in self._cache:
@@ -561,11 +558,11 @@ class CacheDecorator(BaseDecorator):
         return result
 
     def clear_cache(self):
-        """清空缓存"""
+        """清空缓存."""
         self._cache.clear()
 
     def get_cache_stats(self) -> dict[str, Any]:
-        """获取缓存统计"""
+        """获取缓存统计."""
         return {
             "cache_size": len(self._cache),
     "max_size": self.cache_size,
@@ -576,7 +573,7 @@ class CacheDecorator(BaseDecorator):
 
 # 异步装饰器
 def async_log(log_level: str = "INFO"):
-    """异步日志装饰器"""
+    """异步日志装饰器."""
 
     def decorator(func):
         @wraps(func)
@@ -594,7 +591,7 @@ def async_log(log_level: str = "INFO"):
 
 
 def async_metrics(func):
-    """异步指标装饰器"""
+    """异步指标装饰器."""
 
     @wraps(func)
     async def wrapper(*args, **kwargs):
@@ -611,7 +608,7 @@ def async_metrics(func):
 
 
 def async_retry(max_retries: int = 3, delay: float = 1.0):
-    """异步重试装饰器"""
+    """异步重试装饰器."""
 
     def decorator(func):
         @wraps(func)
@@ -639,7 +636,7 @@ def async_retry(max_retries: int = 3, delay: float = 1.0):
 
 
 def create_decorated_service(service_name: str) -> Component:
-    """创建装饰后的服务
+    """创建装饰后的服务.
 
     Args:
         service_name: 服务名称

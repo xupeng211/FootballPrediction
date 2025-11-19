@@ -1,6 +1,5 @@
-"""
-球队领域模型
-Team Domain Model
+"""球队领域模型
+Team Domain Model.
 
 封装球队相关的业务逻辑和不变性约束.
 Encapsulates team-related business logic and invariants.
@@ -15,7 +14,7 @@ from src.core.exceptions import DomainError
 
 
 class TeamType(Enum):
-    """球队类型"""
+    """球队类型."""
 
     CLUB = "club"  # 俱乐部
     NATIONAL = "national"  # 国家队
@@ -23,7 +22,7 @@ class TeamType(Enum):
 
 @dataclass
 class TeamStats:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队统计值对象"""
@@ -36,7 +35,7 @@ class TeamStats:
     goals_against: int = 0
 
     def __post_init__(self):
-        """验证统计数据"""
+        """验证统计数据."""
         if any(
             x < 0
             for x in [
@@ -57,29 +56,29 @@ class TeamStats:
 
     @property
     def points(self) -> int:
-        """积分（标准足球积分:胜3平1负0）"""
+        """积分（标准足球积分:胜3平1负0）."""
         return self.wins * 3 + self.draws
 
     @property
     def goal_difference(self) -> int:
-        """净胜球"""
+        """净胜球."""
         return self.goals_for - self.goals_against
 
     @property
     def win_rate(self) -> float:
-        """胜率"""
+        """胜率."""
         if self.matches_played == 0:
             return 0.0
         return self.wins / self.matches_played
 
     @property
     def form(self) -> list[str]:
-        """最近状态（简化表示）"""
+        """最近状态（简化表示）."""
         # 这里应该从历史记录计算,简化处理
         return []
 
     def update(self, result: str, goals_for: int, goals_against: int) -> None:
-        """更新统计数据"""
+        """更新统计数据."""
         self.matches_played += 1
         self.goals_for += goals_for
         self.goals_against += goals_against
@@ -97,7 +96,7 @@ class TeamStats:
 
 @dataclass
 class TeamForm:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队状态值对象"""
@@ -107,7 +106,7 @@ class TeamForm:
     streak_type: str = ""  # 连续类型:win/draw/loss/none
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """验证状态数据"""
         if len(self.last_matches) > 10:
@@ -118,7 +117,7 @@ class TeamForm:
                 raise DomainError("比赛结果只能是 W/D/L")
 
     def add_result(self, result: str) -> None:
-        """添加比赛结果"""
+        """添加比赛结果."""
         if result not in ["W", "D", "L"]:
             raise DomainError("比赛结果只能是 W/D/L")
 
@@ -130,7 +129,7 @@ class TeamForm:
         self._update_streak()
 
     def _update_streak(self) -> None:
-        """更新连续纪录"""
+        """更新连续纪录."""
         if not self.last_matches:
             self.current_streak = 0
             self.streak_type = "none"
@@ -158,12 +157,12 @@ class TeamForm:
 
     @property
     def recent_form_string(self) -> str:
-        """最近状态字符串"""
+        """最近状态字符串."""
         return "".join(self.last_matches[:5])
 
     @property
     def is_in_good_form(self) -> bool:
-        """是否状态良好"""
+        """是否状态良好."""
         # 简单判断:最近5场不败且至少赢3场
         if len(self.last_matches) < 5:
             return False
@@ -184,7 +183,7 @@ class TeamForm:
 
 @dataclass
 class Team:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -216,7 +215,7 @@ class Team:
     _domain_events: list[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
@@ -253,7 +252,7 @@ class Team:
         stadium: str | None = None,
         capacity: int | None = None,
     ) -> None:
-        """更新球队信息"""
+        """更新球队信息."""
         if name:
             self.name = name
         if short_name:
@@ -274,7 +273,7 @@ class Team:
         goals_against: int,
         is_home: bool | None = None,
     ) -> None:
-        """添加比赛结果"""
+        """添加比赛结果."""
         if result not in ["win", "draw", "loss"]:
             raise DomainError("比赛结果必须是 win/draw/loss")
 
@@ -292,27 +291,27 @@ class Team:
         self.updated_at = datetime.utcnow()
 
     def promote(self) -> None:
-        """升级（用于联赛系统）"""
+        """升级（用于联赛系统）."""
         # 这里可以添加升级相关的业务逻辑
         self.updated_at = datetime.utcnow()
 
     def relegate(self) -> None:
-        """降级（用于联赛系统）"""
+        """降级（用于联赛系统）."""
         # 这里可以添加降级相关的业务逻辑
         self.updated_at = datetime.utcnow()
 
     def activate(self) -> None:
-        """激活球队"""
+        """激活球队."""
         self.is_active = True
         self.updated_at = datetime.utcnow()
 
     def deactivate(self) -> None:
-        """停用球队"""
+        """停用球队."""
         self.is_active = False
         self.updated_at = datetime.utcnow()
 
     def calculate_strength(self) -> float:
-        """计算球队实力（0-100）"""
+        """计算球队实力（0-100）."""
         if not self.stats or self.stats.matches_played == 0:
             return 50.0  # 默认中等实力
 
@@ -336,24 +335,24 @@ class Team:
 
     @property
     def full_name(self) -> str:
-        """全名"""
+        """全名."""
         return self.name
 
     @property
     def display_name(self) -> str:
-        """显示名称"""
+        """显示名称."""
         return self.short_name or self.name
 
     @property
     def age(self) -> int | None:
-        """球队年龄"""
+        """球队年龄."""
         if self.founded_year:
             return datetime.utcnow().year - self.founded_year
         return None
 
     @property
     def rank(self) -> str:
-        """排名级别"""
+        """排名级别."""
         if not self.stats or self.stats.matches_played < 10:
             return "N/A"
 
@@ -370,12 +369,12 @@ class Team:
             return "保级"
 
     def get_rival_team_ids(self) -> list[int]:
-        """获取死敌球队ID（需要从外部配置）"""
+        """获取死敌球队ID（需要从外部配置）."""
         # 这里应该从配置或数据库获取
         return []
 
     def is_rival(self, team_id: int) -> bool:
-        """是否是死敌"""
+        """是否是死敌."""
         return team_id in self.get_rival_team_ids()
 
     # ========================================
@@ -383,15 +382,15 @@ class Team:
     # ========================================
 
     def _add_domain_event(self, event: Any) -> None:
-        """添加领域事件"""
+        """添加领域事件."""
         self._domain_events.append(event)
 
     def get_domain_events(self) -> list[Any]:
-        """获取领域事件"""
+        """获取领域事件."""
         return self._domain_events.copy()
 
     def clear_domain_events(self) -> None:
-        """清除领域事件"""
+        """清除领域事件."""
         self._domain_events.clear()
 
     # ========================================
@@ -399,7 +398,7 @@ class Team:
     # ========================================
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "name": self.name,
@@ -446,7 +445,7 @@ class Team:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Team":
-        """从字典创建实例"""
+        """从字典创建实例."""
         stats_data = data.pop("stats", None)
         stats = None
         if stats_data:

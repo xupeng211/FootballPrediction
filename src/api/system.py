@@ -14,7 +14,7 @@ Provides system management API endpoints:
 - Health checks
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 

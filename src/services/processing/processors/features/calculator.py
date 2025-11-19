@@ -1,5 +1,3 @@
-from typing import Optional
-
 """calculator
 特征计算器.
 

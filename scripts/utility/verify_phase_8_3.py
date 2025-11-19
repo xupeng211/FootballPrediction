@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Phase 8.3 系统整合验证脚本
-System Integration Verification Script for Phase 8.3
+"""Phase 8.3 系统整合验证脚本
+System Integration Verification Script for Phase 8.3.
 """
 
 import os
@@ -9,8 +8,7 @@ from pathlib import Path
 
 
 def verify_api_reference_docs():
-    """验证API参考文档"""
-
+    """验证API参考文档."""
     api_ref_path = 'docs/api_reference.md'
     if not os.path.exists(api_ref_path):
         return False
@@ -45,8 +43,7 @@ def verify_api_reference_docs():
     return True
 
 def verify_error_codes_docs():
-    """验证错误代码文档"""
-
+    """验证错误代码文档."""
     error_code_path = 'docs/error_codes.md'
     if not os.path.exists(error_code_path):
         return False
@@ -88,8 +85,7 @@ def verify_error_codes_docs():
     return True
 
 def verify_python_sdk():
-    """验证Python SDK"""
-
+    """验证Python SDK."""
     sdk_path = Path('sdk/python/football_prediction_sdk')
     if not sdk_path.exists():
         return False
@@ -154,8 +150,7 @@ def verify_python_sdk():
     return True
 
 def verify_swagger_ui_enhancements():
-    """验证Swagger UI增强功能"""
-
+    """验证Swagger UI增强功能."""
     # 检查配置文件
     swagger_config_path = 'src/config/swagger_ui_config.py'
     if not os.path.exists(swagger_config_path):
@@ -206,8 +201,7 @@ def verify_swagger_ui_enhancements():
     return True
 
 def verify_file_structure():
-    """验证整体文件结构"""
-
+    """验证整体文件结构."""
     # 主要目录和文件
     key_items = [
         ('docs/api_reference.md', 'API参考文档'),
@@ -231,8 +225,7 @@ def verify_file_structure():
     return completion_rate >= 90
 
 def verify_code_quality():
-    """验证代码质量"""
-
+    """验证代码质量."""
     # 检查Python文件语法
     python_files = [
         'src/config/swagger_ui_config.py',
@@ -273,8 +266,7 @@ def verify_code_quality():
     return True
 
 def main():
-    """主验证函数"""
-
+    """主验证函数."""
     results = []
 
     # 执行各项验证

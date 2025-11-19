@@ -1,6 +1,5 @@
-"""
-简单的适配器工厂实现
-Simple Adapter Factory Implementation
+"""简单的适配器工厂实现
+Simple Adapter Factory Implementation.
 """
 
 from typing import Any
@@ -16,21 +15,21 @@ except ImportError:
 
 
 class AdapterFactory:
-    """适配器工厂类"""
+    """适配器工厂类."""
 
     def __init__(self):
-        """初始化工厂"""
+        """初始化工厂."""
         self.adapters: dict[str, type[Adapter]] = {}
         self.singletons: dict[str, Adapter] = {}
 
     def register_adapter(self, name: str, adapter_class: type[Adapter]) -> None:
-        """注册适配器类"""
+        """注册适配器类."""
         self.adapters[name] = adapter_class
 
     def create_adapter(
         self, name: str, config: dict[str, Any] | None = None, singleton: bool = True
     ) -> Adapter:
-        """创建适配器实例"""
+        """创建适配器实例."""
         if name not in self.adapters:
             raise AdapterError(f"Adapter '{name}' not registered")
 
@@ -48,7 +47,7 @@ class AdapterFactory:
 
 # 预定义的适配器名称
 class AdapterNames:
-    """预定义的适配器名称常量"""
+    """预定义的适配器名称常量."""
 
     HTTP = "http"
     DATABASE = "database"
@@ -64,8 +63,7 @@ _global_factory = AdapterFactory()
 def get_adapter(
     name: str, config: dict[str, Any] | None = None, singleton: bool = True
 ) -> Adapter:
-    """
-    获取适配器实例（便捷函数）
+    """获取适配器实例（便捷函数）.
 
     Args:
         name: 适配器名称
@@ -79,5 +77,5 @@ def get_adapter(
 
 
 def get_global_factory() -> AdapterFactory:
-    """获取全局工厂实例"""
+    """获取全局工厂实例."""
     return _global_factory

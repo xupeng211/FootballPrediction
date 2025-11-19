@@ -1,6 +1,5 @@
-"""
-适配器工厂模块
-Adapter Factory Module
+"""适配器工厂模块
+Adapter Factory Module.
 """
 
 from dataclasses import dataclass, field
@@ -10,7 +9,7 @@ from .base import Adapter
 
 
 class AdapterError(Exception):
-    """适配器错误"""
+    """适配器错误."""
 
 
 try:
@@ -29,7 +28,7 @@ except ImportError:
 
 @dataclass
 class AdapterConfig:
-    """适配器配置"""
+    """适配器配置."""
 
     name: str
     adapter_type: str
@@ -48,7 +47,7 @@ class AdapterConfig:
 
 @dataclass
 class AdapterGroupConfig:
-    """适配器组配置"""
+    """适配器组配置."""
 
     name: str
     description: str = ""
@@ -61,10 +60,10 @@ class AdapterGroupConfig:
 
 
 class AdapterFactory:
-    """适配器工厂类"""
+    """适配器工厂类."""
 
     def __init__(self):
-        """初始化适配器工厂"""
+        """初始化适配器工厂."""
         self._adapters = {}
         self._configs = {}
         self._groups = {}
@@ -73,7 +72,7 @@ class AdapterFactory:
     def create_adapter(
         self, name: str, config: dict[str, Any] | None = None, **kwargs
     ) -> Adapter:
-        """创建适配器"""
+        """创建适配器."""
         if name not in self._adapters:
             raise ValueError(f"Unknown adapter: {name}")
 
@@ -81,23 +80,23 @@ class AdapterFactory:
         return adapter_class(config or {}, **kwargs)
 
     def register_adapter(self, name: str, adapter_class: type[Adapter]) -> None:
-        """注册适配器类"""
+        """注册适配器类."""
         self._adapters[name] = adapter_class
 
     def register_config(self, name: str, config: AdapterConfig) -> None:
-        """注册适配器配置"""
+        """注册适配器配置."""
         self._configs[name] = config
 
     def register_group(self, name: str, group_config: AdapterGroupConfig) -> None:
-        """注册适配器组"""
+        """注册适配器组."""
         self._groups[name] = group_config
 
     def get_adapter(self, name: str) -> Adapter:
-        """获取适配器"""
+        """获取适配器."""
         return self.create_adapter(name)
 
     def _register_default_adapters(self):
-        """注册默认适配器"""
+        """注册默认适配器."""
         # 注册足球数据适配器
         self.register_adapter("api_football", ApiFootballAdapter)
         self.register_adapter("composite_football", CompositeFootballAdapter)
@@ -112,17 +111,17 @@ adapter_factory = _global_factory
 
 
 def register_adapter(name: str, adapter_class: type[Adapter]) -> None:
-    """注册适配器的便捷函数"""
+    """注册适配器的便捷函数."""
     _global_factory.register_adapter(name, adapter_class)
 
 
 def create_adapter(
     name: str, config: dict[str, Any] | None = None, **kwargs
 ) -> Adapter:
-    """创建适配器的便捷函数"""
+    """创建适配器的便捷函数."""
     return _global_factory.create_adapter(name, config, **kwargs)
 
 
 def get_global_factory() -> AdapterFactory:
-    """获取全局工厂实例"""
+    """获取全局工厂实例."""
     return _global_factory

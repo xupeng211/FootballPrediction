@@ -1,5 +1,3 @@
-from typing import Optional
-
 """Tasks module."""
 
 # 模块导入将在需要时添加

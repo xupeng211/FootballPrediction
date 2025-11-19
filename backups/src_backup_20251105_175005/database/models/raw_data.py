@@ -17,7 +17,7 @@ class RawData(BaseModel):
 
 
 class RawMatchData(BaseModel):
-    """原始比赛数据模型"""
+    """原始比赛数据模型."""
 
     __table_args__ = {"extend_existing": True}
     __tablename__ = "raw_match_data"
@@ -31,7 +31,7 @@ class RawMatchData(BaseModel):
 
 
 class RawOddsData(BaseModel):
-    """原始赔率数据模型"""
+    """原始赔率数据模型."""
 
     __table_args__ = {"extend_existing": True}
     __tablename__ = "raw_odds_data"
@@ -45,7 +45,7 @@ class RawOddsData(BaseModel):
 
 
 class RawScoresData(BaseModel):
-    """原始比分数据模型"""
+    """原始比分数据模型."""
 
     __table_args__ = {"extend_existing": True}
     __tablename__ = "raw_scores_data"

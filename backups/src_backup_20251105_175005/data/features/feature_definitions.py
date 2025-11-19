@@ -1,5 +1,4 @@
-"""
-足球预测系统特征定义
+"""足球预测系统特征定义.
 
 定义用于机器学习模型的实体和特征视图。
 包括比赛特征,球队统计特征,赔率衍生特征等。
@@ -12,7 +11,7 @@ from typing import Optional
 
 
 class FeatureDefinitions:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """特征定义类,包含所有特征相关的定义"""
@@ -69,7 +68,7 @@ class FeatureDefinitions:
 
 # 为了兼容性,提供简化的模拟对象
 class MockEntity:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
 
@@ -80,7 +79,7 @@ class MockEntity:
 
 
 class MockFeatureView:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
 
@@ -100,7 +99,7 @@ class MockFeatureView:
 
 
 class MockFileSource:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
 
@@ -178,7 +177,7 @@ head_to_head_features_view = MockFeatureView(
 
 # 特征服务定义（简化版本）
 class FeatureServices:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """特征服务定义类"""

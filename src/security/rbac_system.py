@@ -1,5 +1,3 @@
-from typing import Optional
-
 #!/usr/bin/env python3
 """Role-Based Access Control
 访问控制系统.

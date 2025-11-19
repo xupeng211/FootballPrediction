@@ -1,6 +1,5 @@
-"""
-预测策略工厂
-Prediction Strategy Factory
+"""预测策略工厂
+Prediction Strategy Factory.
 
 负责创建和管理预测策略实例.
 Responsible for creating and managing prediction strategy instances.
@@ -25,17 +24,17 @@ logger = logging.getLogger(__name__)
 
 
 class StrategyCreationError(Exception):
-    """策略创建错误"""
+    """策略创建错误."""
 
 
 
 class StrategyConfigurationError(Exception):
-    """策略配置错误"""
+    """策略配置错误."""
 
 
 
 class PredictionStrategyFactory:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测策略工厂类"
@@ -44,7 +43,7 @@ class PredictionStrategyFactory:
     """
 
     def __init__(self, config_path: str | Path | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化策略工厂"
 
@@ -71,7 +70,7 @@ class PredictionStrategyFactory:
     def register_strategy(
         self, strategy_type: str, strategy_class: type[PredictionStrategy]
     ) -> None:
-        """注册新的策略类型"
+        """注册新的策略类型".
 
         Args:
             strategy_type: 策略类型名称
@@ -81,7 +80,7 @@ class PredictionStrategyFactory:
         logger.info(f"注册策略类型: {strategy_type} -> {strategy_class.__name__}")
 
     def unregister_strategy(self, strategy_type: str) -> None:
-        """注销策略类型"
+        """注销策略类型".
 
         Args:
             strategy_type: 策略类型名称
@@ -97,7 +96,7 @@ class PredictionStrategyFactory:
         config: dict[str, Any] | None = None,
         overwrite: bool = False,
     ) -> PredictionStrategy:
-        """创建策略实例"
+        """创建策略实例".
 
         Args:
             strategy_name: 策略实例名称
@@ -153,7 +152,7 @@ class PredictionStrategyFactory:
     async def _create_ensemble_strategy(
         self, strategy_name: str, config: dict[str, Any]
     ) -> EnsembleStrategy:
-        """创建集成策略（特殊处理）"""
+        """创建集成策略（特殊处理）."""
         ensemble = EnsembleStrategy(strategy_name)
 
         # 先创建子策略
@@ -190,7 +189,7 @@ class PredictionStrategyFactory:
         return ensemble
 
     def get_strategy(self, strategy_name: str) -> PredictionStrategy | None:
-        """获取策略实例"
+        """获取策略实例".
 
         Args:
             strategy_name: 策略名称
@@ -201,13 +200,13 @@ class PredictionStrategyFactory:
         return self._strategies.get(strategy_name)
 
     def get_all_strategies(self) -> dict[str, PredictionStrategy]:
-        """获取所有策略实例"""
+        """获取所有策略实例."""
         return self._strategies.copy()
 
     def get_strategies_by_type(
         self, strategy_type: StrategyType
     ) -> list[PredictionStrategy]:
-        """根据类型获取策略列表"
+        """根据类型获取策略列表".
 
         Args:
             strategy_type: 策略类型
@@ -224,7 +223,7 @@ class PredictionStrategyFactory:
     async def create_multiple_strategies(
         self, strategy_configs: list[dict[str, Any]]
     ) -> dict[str, PredictionStrategy]:
-        """批量创建策略"
+        """批量创建策略".
 
         Args:
             strategy_configs: 策略配置列表
@@ -251,7 +250,7 @@ class PredictionStrategyFactory:
         return created_strategies
 
     async def initialize_default_strategies(self) -> None:
-        """初始化默认策略"""
+        """初始化默认策略."""
         default_configs = self._default_config.get("default_strategies", [])
 
         for config in default_configs:
@@ -271,7 +270,7 @@ class PredictionStrategyFactory:
                     logger.error(f"初始化默认策略 '{strategy_name}' 失败: {e}")
 
     def remove_strategy(self, strategy_name: str) -> None:
-        """移除策略"
+        """移除策略".
 
         Args:
             strategy_name: 策略名称
@@ -281,12 +280,12 @@ class PredictionStrategyFactory:
             logger.info(f"移除策略: {strategy_name}")
 
     def reload_configuration(self) -> None:
-        """重新加载配置"""
+        """重新加载配置."""
         self._load_configuration()
         logger.info("策略配置已重新加载")
 
     def _load_configuration(self) -> None:
-        """加载策略配置文件"""
+        """加载策略配置文件."""
         config_path = Path(self._config_path)
 
         if not config_path.exists():
@@ -315,7 +314,7 @@ class PredictionStrategyFactory:
             self._create_default_config()
 
     def _create_default_config(self) -> None:
-        """创建默认配置"""
+        """创建默认配置."""
         self._default_config = {
             "default_strategies": [
                 {
@@ -389,7 +388,7 @@ class PredictionStrategyFactory:
         self._save_default_config()
 
     def _save_default_config(self) -> None:
-        """保存默认配置到文件"""
+        """保存默认配置到文件."""
         config_path = Path(self._config_path)
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -410,7 +409,7 @@ class PredictionStrategyFactory:
             logger.error(f"保存默认配置失败: {e}")
 
     def _apply_environment_overrides(self) -> None:
-        """应用环境变量覆盖"""
+        """应用环境变量覆盖."""
         # 读取环境变量
         env_prefix = "PREDICTION_STRATEGY_"
 
@@ -432,7 +431,7 @@ class PredictionStrategyFactory:
                 logger.debug(f"环境变量覆盖: {config_key} = {parsed_value}")
 
     def _get_strategy_config(self, strategy_name: str) -> dict[str, Any]:
-        """获取策略配置"
+        """获取策略配置".
 
         Args:
             strategy_name: 策略名称
@@ -472,15 +471,15 @@ class PredictionStrategyFactory:
         return config
 
     def list_available_strategies(self) -> list[str]:
-        """列出可用的策略类型"""
+        """列出可用的策略类型."""
         return list(self._strategy_registry.keys())
 
     def list_configured_strategies(self) -> list[str]:
-        """列出配置的策略"""
+        """列出配置的策略."""
         return list(self._strategy_configs.keys())
 
     def validate_strategy_config(self, config: dict[str, Any]) -> list[str]:
-        """验证策略配置"
+        """验证策略配置".
 
         Args:
             config: 策略配置
@@ -519,7 +518,7 @@ class PredictionStrategyFactory:
         return errors
 
     async def health_check(self) -> dict[str, dict[str, Any]]:
-        """检查所有策略的健康状态"""
+        """检查所有策略的健康状态."""
         health_report = {}
 
         for name, strategy in self.strategies.items():

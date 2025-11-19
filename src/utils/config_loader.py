@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Any, Optional
+from typing import Any
 
 try:
     import yaml

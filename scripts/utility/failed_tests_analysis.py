@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
-"""
-P8.1 FAILED测试聚类分析工具
-用于分析324个FAILED测试的聚类模式
+"""P8.1 FAILED测试聚类分析工具
+用于分析324个FAILED测试的聚类模式.
 """
 
 import re
-import json
-from collections import defaultdict, Counter
-from typing import Dict, List, Tuple
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
+
 @dataclass
 class TestFailure:
-    """测试失败信息数据类"""
+    """测试失败信息数据类."""
     test_path: str
     test_name: str
     module: str
@@ -22,17 +20,17 @@ class TestFailure:
     failure_pattern: str
 
 class FailedTestsAnalyzer:
-    """失败测试分析器"""
+    """失败测试分析器."""
 
     def __init__(self):
-        self.failures: List[TestFailure] = []
+        self.failures: list[TestFailure] = []
         self.error_type_clusters = defaultdict(list)
         self.module_clusters = defaultdict(list)
         self.pattern_clusters = defaultdict(list)
 
     def parse_failure_log(self, log_path: str = "/tmp/pytest_full_results.log") -> None:
-        """解析pytest失败日志"""
-        with open(log_path, 'r', encoding='utf-8') as f:
+        """解析pytest失败日志."""
+        with open(log_path, encoding='utf-8') as f:
             log_content = f.read()
 
         # 提取失败测试行
@@ -62,10 +60,9 @@ class FailedTestsAnalyzer:
 
                 self.failures.append(failure)
 
-        print(f"✅ 解析完成: 找到 {len(self.failures)} 个失败测试")
 
     def _extract_module(self, test_path: str) -> str:
-        """从测试路径提取模块"""
+        """从测试路径提取模块."""
         if 'api/' in test_path:
             return 'API'
         elif 'integration/' in test_path:
@@ -86,7 +83,7 @@ class FailedTestsAnalyzer:
             return 'OTHER'
 
     def _identify_pattern(self, test_name: str) -> str:
-        """识别失败模式"""
+        """识别失败模式."""
         if 'health' in test_name.lower():
             return 'HEALTH_CHECK'
         elif 'auth' in test_name.lower():
@@ -109,7 +106,7 @@ class FailedTestsAnalyzer:
             return 'GENERAL'
 
     def analyze_error_types(self) -> None:
-        """基于常见错误类型进行分析"""
+        """基于常见错误类型进行分析."""
         # 根据测试名称和模式推断可能的错误类型
         for failure in self.failures:
             if failure.test_name.startswith('test_'):
@@ -131,10 +128,8 @@ class FailedTestsAnalyzer:
             # 更新聚类
             self.error_type_clusters[failure.error_type].append(failure)
 
-    def perform_clustering(self) -> Dict:
-        """执行聚类分析"""
-        print("🔄 开始聚类分析...")
-
+    def perform_clustering(self) -> dict:
+        """执行聚类分析."""
         # 按错误类型聚类
         for failure in self.failures:
             self.error_type_clusters[failure.error_type].append(failure)
@@ -148,8 +143,8 @@ class FailedTestsAnalyzer:
             'pattern_clusters': {k: len(v) for k, v in self.pattern_clusters.items()}
         }
 
-    def get_high_value_clusters(self) -> List[Dict]:
-        """识别高价值集群（影响测试数量最多）"""
+    def get_high_value_clusters(self) -> list[dict]:
+        """识别高价值集群（影响测试数量最多）."""
         clusters = []
 
         # 错误类型集群
@@ -185,8 +180,8 @@ class FailedTestsAnalyzer:
         # 按影响大小排序
         return sorted(clusters, key=lambda x: x['impact'], reverse=True)
 
-    def _calculate_impact(self, failures: List[TestFailure]) -> int:
-        """计算集群影响分数"""
+    def _calculate_impact(self, failures: list[TestFailure]) -> int:
+        """计算集群影响分数."""
         # 简单的影响计算：基于集群大小和模块重要性
         module_weights = {
             'API': 10,
@@ -206,9 +201,7 @@ class FailedTestsAnalyzer:
         return int(base_impact * module_bonus)
 
     def generate_triage_report(self) -> str:
-        """生成分诊报告"""
-        print("📊 生成P8.1_Triage_Report...")
-
+        """生成分诊报告."""
         # 执行聚类分析
         clustering_results = self.perform_clustering()
         high_value_clusters = self.get_high_value_clusters()
@@ -232,7 +225,7 @@ class FailedTestsAnalyzer:
             percentage = (count / clustering_results['total_failures']) * 100
             report_content += f"- **{error_type}**: {count} 个测试 ({percentage:.1f}%)\n"
 
-        report_content += f"""
+        report_content += """
 ### 模块分布
 """
         for module, count in sorted(clustering_results['module_clusters'].items(),
@@ -240,7 +233,7 @@ class FailedTestsAnalyzer:
             percentage = (count / clustering_results['total_failures']) * 100
             report_content += f"- **{module}**: {count} 个测试 ({percentage:.1f}%)\n"
 
-        report_content += f"""
+        report_content += """
 ### 失败模式分布
 """
         for pattern, count in sorted(clustering_results['pattern_clusters'].items(),
@@ -248,7 +241,7 @@ class FailedTestsAnalyzer:
             percentage = (count / clustering_results['total_failures']) * 100
             report_content += f"- **{pattern}**: {count} 个测试 ({percentage:.1f}%)\n"
 
-        report_content += f"""
+        report_content += """
 ## 🔥 高价值集群分析
 
 ### 优先级1: 立即修复（影响 > 200）
@@ -266,7 +259,7 @@ class FailedTestsAnalyzer:
             for failure in cluster['failures'][:3]:
                 report_content += f"  - `{failure.test_path}::{failure.test_name}`\n"
 
-        report_content += f"""
+        report_content += """
 ### 优先级2: 高优先级（影响 100-200）
 """
 
@@ -314,8 +307,8 @@ class FailedTestsAnalyzer:
 
         return report_content
 
-    def _get_fix_suggestion(self, cluster: Dict) -> str:
-        """获取修复建议"""
+    def _get_fix_suggestion(self, cluster: dict) -> str:
+        """获取修复建议."""
         suggestions = {
             'HTTP_500_ERROR': '检查API端点实现，修复服务器内部错误',
             'AUTH_SERVICE_ERROR': '修复认证服务依赖，检查密码哈希库',
@@ -335,21 +328,18 @@ class FailedTestsAnalyzer:
         return suggestions.get(cluster['name'], '需要详细分析具体错误原因')
 
     def _get_current_time(self) -> str:
-        """获取当前时间"""
+        """获取当前时间."""
         from datetime import datetime
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def save_report(self, report_content: str, filename: str = "P8.1_Triage_Report.md") -> None:
-        """保存报告到文件"""
+        """保存报告到文件."""
         report_path = Path(filename)
         with open(report_path, 'w', encoding='utf-8') as f:
             f.write(report_content)
-        print(f"✅ 报告已保存到: {report_path.absolute()}")
 
 def main():
-    """主函数"""
-    print("🚀 启动P8.1 Failed Tests聚类分析...")
-
+    """主函数."""
     # 创建分析器
     analyzer = FailedTestsAnalyzer()
 
@@ -364,16 +354,10 @@ def main():
     analyzer.save_report(report)
 
     # 显示摘要
-    print("\n📋 分析摘要:")
-    print(f"- 总失败测试: {len(analyzer.failures)}")
-    print(f"- 错误类型集群: {len(analyzer.error_type_clusters)}")
-    print(f"- 模块集群: {len(analyzer.module_clusters)}")
-    print(f"- 模式集群: {len(analyzer.pattern_clusters)}")
 
-    print("\n🎯 前5个高价值集群:")
     high_value_clusters = analyzer.get_high_value_clusters()[:5]
-    for i, cluster in enumerate(high_value_clusters, 1):
-        print(f"{i}. {cluster['name']} ({cluster['type']}) - 影响: {cluster['impact']}")
+    for _i, _cluster in enumerate(high_value_clusters, 1):
+        pass
 
 if __name__ == "__main__":
     main()

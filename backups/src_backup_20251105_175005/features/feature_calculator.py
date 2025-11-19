@@ -1,5 +1,4 @@
-"""
-feature_calculator 主模块
+"""feature_calculator 主模块.
 
 此文件由长文件拆分工具自动生成
 

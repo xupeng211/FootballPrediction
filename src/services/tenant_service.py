@@ -7,13 +7,13 @@ Enterprise Multi-Tenant Management Service.
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.core.exceptions import ValidationError, FootballPredictionError
+from src.core.exceptions import FootballPredictionError, ValidationError
 from src.database.models.tenant import (
     RolePermission,
     Tenant,

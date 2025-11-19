@@ -1,6 +1,5 @@
-"""
-比赛相关模型
-Match Related Models
+"""比赛相关模型
+Match Related Models.
 """
 
 from datetime import datetime
@@ -9,7 +8,7 @@ from pydantic import BaseModel, Field
 
 
 class MatchQueryParams(BaseModel):
-    """比赛查询参数"""
+    """比赛查询参数."""
 
     league_id: int | None = Field(None, description="联赛ID")
     team_id: int | None = Field(None, description="球队ID")
@@ -21,7 +20,7 @@ class MatchQueryParams(BaseModel):
 
 
 class MatchCreateRequest(BaseModel):
-    """创建比赛请求"""
+    """创建比赛请求."""
 
     home_team_id: int = Field(..., description="主队ID")
     away_team_id: int = Field(..., description="客队ID")
@@ -31,7 +30,7 @@ class MatchCreateRequest(BaseModel):
 
 
 class MatchUpdateRequest(BaseModel):
-    """更新比赛请求"""
+    """更新比赛请求."""
 
     match_time: datetime | None = Field(None, description="比赛时间")
     venue: str | None = Field(None, description="比赛场地")

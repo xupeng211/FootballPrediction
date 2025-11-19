@@ -1,6 +1,4 @@
-"""
-Helper functions
-"""
+"""Helper functions."""
 
 import hashlib
 import uuid
@@ -9,12 +7,12 @@ from typing import Any
 
 
 def generate_uuid() -> str:
-    """Generate a UUID string"""
+    """Generate a UUID string."""
     return str(uuid.uuid4())
 
 
 def generate_hash(data: str, algorithm: str = "sha256") -> str:
-    """Generate hash with specified algorithm"""
+    """Generate hash with specified algorithm."""
     if algorithm == "md5":
         return hashlib.md5(data.encode(), usedforsecurity=False).hexdigest()
     elif algorithm == "sha1":
@@ -24,7 +22,7 @@ def generate_hash(data: str, algorithm: str = "sha256") -> str:
 
 
 def safe_get(data: dict[str, Any] | None, key: str, default: Any = None) -> Any:
-    """Safely get value from dict using dot notation"""
+    """Safely get value from dict using dot notation."""
     if data is None:
         return default
 
@@ -50,14 +48,14 @@ def safe_get(data: dict[str, Any] | None, key: str, default: Any = None) -> Any:
 
 
 def format_timestamp(dt: datetime | None = None) -> str:
-    """Format timestamp to ISO format"""
+    """Format timestamp to ISO format."""
     if dt is None:
         dt = datetime.utcnow()
     return dt.isoformat()
 
 
 def sanitize_string(s: str) -> str:
-    """Sanitize string input - basic XSS protection"""
+    """Sanitize string input - basic XSS protection."""
     if not s:
         return ""
 

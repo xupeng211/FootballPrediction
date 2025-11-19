@@ -1,8 +1,6 @@
-"""
-
-# mypy: ignore-errors
+"""# mypy: ignore-errors
 # 该文件包含复杂的机器学习逻辑,类型检查已忽略
-赛程数据采集器
+赛程数据采集器.
 
 实现足球比赛赛程数据的采集逻辑。
 包含防重复,防丢失策略,确保赛程数据的完整性和一致性。
@@ -24,8 +22,7 @@ from .base_collector import CollectionResult, DataCollector
 
 
 class FixturesCollector(DataCollector):
-    """
-    赛程数据采集器
+    """赛程数据采集器.
 
     负责从外部API采集足球比赛赛程数据,
     实现防重复,
@@ -41,8 +38,7 @@ class FixturesCollector(DataCollector):
         base_url: str = "https://api.football-data.org/v4",
         **kwargs,
     ):
-        """
-        初始化赛程采集器
+        """初始化赛程采集器.
 
         Args:
             data_source: 数据源名称
@@ -68,8 +64,7 @@ class FixturesCollector(DataCollector):
         date_to: datetime | None = None,
         **kwargs,
     ) -> CollectionResult:
-        """
-        采集赛程数据
+        """采集赛程数据.
 
         防重复策略:
         - 基于 external_match_id + league_id 生成唯一键
@@ -229,7 +224,7 @@ class FixturesCollector(DataCollector):
 
     async def collect_odds(self,
     **kwargs) -> CollectionResult:
-        """赛程采集器不处理赔率数据"""
+        """赛程采集器不处理赔率数据."""
         return CollectionResult(
             data_source=self.data_source,
     collection_type="odds",
@@ -242,7 +237,7 @@ class FixturesCollector(DataCollector):
 
     async def collect_live_scores(self,
     **kwargs) -> CollectionResult:
-        """赛程采集器不处理实时比分数据"""
+        """赛程采集器不处理实时比分数据."""
         return CollectionResult(
             data_source=self.data_source,
     collection_type="live_scores",
@@ -254,8 +249,7 @@ class FixturesCollector(DataCollector):
         )
 
     async def _get_active_leagues(self) -> list[str]:
-        """
-        获取活跃的联赛列表
+        """获取活跃的联赛列表.
 
         Returns:
             List[str]: 联赛代码列表
@@ -286,8 +280,7 @@ class FixturesCollector(DataCollector):
     date_from: datetime,
     date_to: datetime
     ) -> None:
-        """
-        加载已存在的比赛ID（防重复机制）
+        """加载已存在的比赛ID（防重复机制）.
 
         Args:
             date_from: 开始日期
@@ -320,8 +313,7 @@ class FixturesCollector(DataCollector):
     date_to: datetime
     ) -> list[dict[str,
     Any]]:
-        """
-        采集指定联赛的赛程数据
+        """采集指定联赛的赛程数据.
 
         Args:
             league_code: 联赛代码
@@ -361,8 +353,7 @@ class FixturesCollector(DataCollector):
     def _generate_match_key(self,
     fixture_data: dict[str,
     Any]) -> str:
-        """
-        生成比赛唯一键（防重复）
+        """生成比赛唯一键（防重复）.
 
         Args:
             fixture_data: 比赛原始数据
@@ -388,8 +379,7 @@ class FixturesCollector(DataCollector):
     Any]
     ) -> dict[str,
     Any] | None:
-        """
-        清洗和标准化赛程数据
+        """清洗和标准化赛程数据.
 
         Args:
             raw_fixture: 原始赛程数据
@@ -449,8 +439,7 @@ class FixturesCollector(DataCollector):
 
         date_to: datetime,
     ) -> None:
-        """
-        检测缺失的比赛（防丢失策略）
+        """检测缺失的比赛（防丢失策略）.
 
         Args:
             collected_data: 本次采集的数据

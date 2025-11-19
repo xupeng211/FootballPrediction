@@ -1,5 +1,4 @@
-"""
-API响应工具类
+"""API响应工具类.
 
 提供统一的API响应格式
 """
@@ -11,7 +10,7 @@ from pydantic import BaseModel
 
 
 class APIResponseModel(BaseModel):
-    """API响应Pydantic模型"""
+    """API响应Pydantic模型."""
 
     success: bool
     message: str
@@ -20,12 +19,11 @@ class APIResponseModel(BaseModel):
 
 
 class APIResponse:
-    """API响应格式化工具"""
+    """API响应格式化工具."""
 
     @staticmethod
     def success(data: Any = None, message: str = "操作成功") -> dict[str, Any]:
-        """
-        成功响应
+        """成功响应.
 
         Args:
             data: 响应数据
@@ -47,15 +45,14 @@ class APIResponse:
 
     @staticmethod
     def success_response(data: Any = None, message: str = "操作成功") -> dict[str, Any]:
-        """成功响应（别名方法）"""
+        """成功响应（别名方法）."""
         return APIResponse.success(data, message)
 
     @staticmethod
     def error(
         message: str = "操作失败", code: int | None = None, data: Any = None
     ) -> dict[str, Any]:
-        """
-        错误响应
+        """错误响应.
 
         Args:
             message: 错误消息
@@ -85,7 +82,7 @@ class APIResponse:
     def error_response(
         message: str = "操作失败", code: int | None = None, data: Any = None
     ) -> dict[str, Any]:
-        """错误响应（别名方法）"""
+        """错误响应（别名方法）."""
         return APIResponse.error(message, code, data)
 
 

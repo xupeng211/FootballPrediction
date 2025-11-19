@@ -1,5 +1,4 @@
-"""
-Predictions - 数据库模块
+"""Predictions - 数据库模块.
 
 提供 predictions 相关的数据库功能.
 
@@ -26,7 +25,7 @@ from src.database.base import BaseModel
 
 
 class PredictedResult(Enum):
-    """预测结果枚举"""
+    """预测结果枚举."""
 
     HOME_WIN = "home_win"  # 主队胜
     DRAW = "draw"  # 平局

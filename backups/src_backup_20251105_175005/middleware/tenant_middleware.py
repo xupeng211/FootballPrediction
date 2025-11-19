@@ -1,6 +1,5 @@
-"""
-多租户权限管理中间件
-Multi-Tenant Permission Management Middleware
+"""多租户权限管理中间件
+Multi-Tenant Permission Management Middleware.
 
 提供HTTP层面的多租户权限控制和访问管理.
 """
@@ -22,7 +21,7 @@ security = HTTPBearer(auto_error=False)
 
 
 class TenantContext:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """租户上下文"""
@@ -53,23 +52,20 @@ class TenantContext:
 
 
 class TenantMiddleware(BaseHTTPMiddleware):
-    """
-    多租户中间件
+    """多租户中间件.
 
     负责处理HTTP请求中的租户识别,用户认证和权限验证
     """
 
     def __init__(self, app, tenant_service: TenantService, auth_service: AuthService):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(app)
         self.tenant_service = tenant_service
         self.auth_service = auth_service
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """
-        处理请求,建立租户上下文
-        """
+        """处理请求,建立租户上下文."""
         try:
             # 从请求中提取租户信息
             tenant = await self._extract_tenant(request)
@@ -116,8 +112,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             ) from e
 
     async def _extract_tenant(self, request: Request) -> Tenant | None:
-        """
-        从请求中提取租户信息
+        """从请求中提取租户信息.
 
         支持多种租户识别方式:
         1. 子域名 (tenant.example.com)
@@ -162,7 +157,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         return None
 
     def _validate_tenant_status(self, tenant: Tenant) -> bool:
-        """验证租户状态"""
+        """验证租户状态."""
         if not tenant.is_active:
             return False
 
@@ -175,9 +170,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
     async def _extract_user_context(
         self, request: Request, tenant: Tenant
     ) -> dict[str, Any]:
-        """
-        从请求中提取用户上下文
-        """
+        """从请求中提取用户上下文."""
         context = {"user_id": None, "permissions": [], "restrictions": {}}
 
         # 尝试从Authorization header获取用户信息
@@ -224,7 +217,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
     def _add_tenant_headers(
         self, response: Response, tenant_context: TenantContext
     ) -> None:
-        """添加租户相关的响应头"""
+        """添加租户相关的响应头."""
         if tenant_context.tenant:
             response.headers["X-Tenant-ID"] = str(tenant_context.tenant_id)
             response.headers["X-Tenant-Slug"] = tenant_context.tenant_slug or ""
@@ -237,8 +230,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 def require_permission(
     permission_code: str, resource_context: dict[str, Any] | None = None
 ):
-    """
-    权限检查装饰器
+    """权限检查装饰器.
 
     Args:
         permission_code: 需要的权限代码
@@ -303,7 +295,7 @@ def require_permission(
 
 
 def require_tenant_role(role_code: str):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """
     租户角色检查装饰器
@@ -370,7 +362,7 @@ def require_tenant_role(role_code: str):
 
 
 def check_resource_quota(resource_type: str, amount: int = 1):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """
     资源配额检查装饰器
@@ -436,24 +428,24 @@ def check_resource_quota(resource_type: str, amount: int = 1):
 
 
 def get_tenant_context(request: Request) -> TenantContext | None:
-    """从请求中获取租户上下文"""
+    """从请求中获取租户上下文."""
     return getattr(request.state, "tenant_context", None)
 
 
 def get_current_tenant(request: Request) -> Tenant | None:
-    """获取当前租户"""
+    """获取当前租户."""
     tenant_context = get_tenant_context(request)
     return tenant_context.tenant if tenant_context else None
 
 
 def get_current_user_id(request: Request) -> int | None:
-    """获取当前用户ID"""
+    """获取当前用户ID."""
     tenant_context = get_tenant_context(request)
     return tenant_context.user_id if tenant_context else None
 
 
 def has_permission(permission_code: str) -> bool:
-    """检查当前用户是否有指定权限"""
+    """检查当前用户是否有指定权限."""
     # 这个函数需要在请求上下文中使用
     # 实际实现需要依赖当前请求
     # 这里只是示例接口

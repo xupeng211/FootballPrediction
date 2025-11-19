@@ -8,7 +8,7 @@ OddsPortal Scraper Integration Module.
 import asyncio
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 

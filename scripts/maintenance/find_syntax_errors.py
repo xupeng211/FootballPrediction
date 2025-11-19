@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-语法错误检查工具
-Find Syntax Errors Tool
+"""语法错误检查工具
+Find Syntax Errors Tool.
 
 检查所有Python文件的语法错误，特别针对测试文件进行优化
 """
@@ -12,7 +11,7 @@ from pathlib import Path
 
 
 def check_syntax(file_path: Path) -> list[str]:
-    """检查单个文件的语法错误"""
+    """检查单个文件的语法错误."""
     errors = []
 
     try:
@@ -33,7 +32,7 @@ def check_syntax(file_path: Path) -> list[str]:
 
 
 def find_python_files(directory: Path) -> list[Path]:
-    """查找所有Python文件"""
+    """查找所有Python文件."""
     python_files = []
 
     # 查找所有.py文件
@@ -55,7 +54,7 @@ def find_python_files(directory: Path) -> list[Path]:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     project_root = Path.cwd()
 
 

@@ -1,5 +1,3 @@
-from typing import Optional
-
 # mypy: ignore-errors
 """性能监控API端点
 Performance Monitoring API Endpoints.

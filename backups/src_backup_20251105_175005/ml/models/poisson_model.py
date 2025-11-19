@@ -1,6 +1,5 @@
-"""
-泊松分布预测模型
-Poisson Distribution Model for Football Match Prediction
+"""泊松分布预测模型
+Poisson Distribution Model for Football Match Prediction.
 """
 
 import logging
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class PoissonModel(BaseModel):
-    """泊松分布预测模型"""
+    """泊松分布预测模型."""
 
     def __init__(self, version: str = "1.0"):
         super().__init__("PoissonModel", version)
@@ -46,17 +45,16 @@ class PoissonModel(BaseModel):
     def prepare_features(self,
     match_data: dict[str,
     Any]) -> np.ndarray:
-        """
-        准备特征 - 泊松模型主要依赖历史统计数据
+        """准备特征 - 泊松模型主要依赖历史统计数据.
 
         Args:
             match_data: 比赛数据，需要包含历史统计
 
         Returns:
             特征向量 [home_attack,
-    home_defense,
-    away_attack,
-    away_defense]
+        home_defense,
+        away_attack,
+        away_defense]
         """
         home_team = match_data.get("home_team")
         away_team = match_data.get("away_team")
@@ -82,8 +80,7 @@ class PoissonModel(BaseModel):
         training_data: pd.DataFrame,
         validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
-        """
-        训练泊松分布模型
+        """训练泊松分布模型.
 
         Args:
             training_data: 训练数据，必须包含 'home_team', 'away_team', 'home_score', 'away_score'
@@ -150,8 +147,7 @@ class PoissonModel(BaseModel):
         return result
 
     def _calculate_team_strengths(self, training_data: pd.DataFrame):
-        """
-        计算球队攻防强度
+        """计算球队攻防强度.
 
         Args:
             training_data: 训练数据
@@ -263,8 +259,7 @@ class PoissonModel(BaseModel):
         logger.info(f"Calculated strengths for {len(self.team_attack_strength)} teams")
 
     def predict(self, match_data: dict[str, Any]) -> PredictionResult:
-        """
-        预测比赛结果
+        """预测比赛结果.
 
         Args:
             match_data: 比赛数据
@@ -334,8 +329,7 @@ class PoissonModel(BaseModel):
     opponent: str,
     is_home: bool
     ) -> float:
-        """
-        计算期望进球数
+        """计算期望进球数.
 
         Args:
             team: 球队
@@ -369,8 +363,7 @@ class PoissonModel(BaseModel):
     home_expected: float,
     away_expected: float
     ) -> tuple[float, float, float]:
-        """
-        计算比赛结果概率
+        """计算比赛结果概率.
 
         Args:
             home_expected: 主队期望进球
@@ -412,8 +405,7 @@ class PoissonModel(BaseModel):
         return home_win_prob, draw_prob, away_win_prob
 
     def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
-        """
-        预测概率分布
+        """预测概率分布.
 
         Args:
             match_data: 比赛数据
@@ -446,8 +438,7 @@ class PoissonModel(BaseModel):
     def evaluate(self,
     test_data: pd.DataFrame) -> dict[str,
     float]:
-        """
-        评估模型性能
+        """评估模型性能.
 
         Args:
             test_data: 测试数据
@@ -527,8 +518,7 @@ class PoissonModel(BaseModel):
     folds: int = 5
     ) -> dict[str,
     float]:
-        """
-        交叉验证
+        """交叉验证.
 
         Args:
             training_data: 训练数据
@@ -577,8 +567,7 @@ class PoissonModel(BaseModel):
         return avg_metrics
 
     def save_model(self, file_path: str) -> bool:
-        """
-        保存模型
+        """保存模型.
 
         Args:
             file_path: 模型文件路径
@@ -613,8 +602,7 @@ class PoissonModel(BaseModel):
             return False
 
     def load_model(self, file_path: str) -> bool:
-        """
-        加载模型
+        """加载模型.
 
         Args:
             file_path: 模型文件路径

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """缓存装饰器."""
 
 # 导入

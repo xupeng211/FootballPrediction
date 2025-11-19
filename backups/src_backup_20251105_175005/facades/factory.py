@@ -1,6 +1,5 @@
-"""
-外观模式工厂模块
-Facade Factory Module
+"""外观模式工厂模块
+Facade Factory Module.
 
 提供外观和子系统的工厂创建功能.
 """
@@ -11,7 +10,7 @@ from .base import Facade, Subsystem, SystemFacade
 
 
 class FacadeConfig:
-    """外观配置类"""
+    """外观配置类."""
 
     def __init__(
         self,
@@ -19,7 +18,7 @@ class FacadeConfig:
         subsystem_configs: dict[str, dict[str, Any]] | None = None,
         global_config: dict[str, Any] | None = None,
     ):
-        """初始化外观配置
+        """初始化外观配置.
 
         Args:
             name: 外观名称
@@ -33,15 +32,15 @@ class FacadeConfig:
         self.health_check_interval = 30
 
     def add_subsystem_config(self, name: str, config: dict[str, Any]) -> None:
-        """添加子系统配置"""
+        """添加子系统配置."""
         self.subsystem_configs[name] = config
 
     def get_subsystem_config(self, name: str) -> dict[str, Any] | None:
-        """获取子系统配置"""
+        """获取子系统配置."""
         return self.subsystem_configs.get(name)
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "name": self.name,
             "subsystem_configs": self.subsystem_configs,
@@ -52,16 +51,16 @@ class FacadeConfig:
 
 
 class FacadeFactory:
-    """外观工厂类"""
+    """外观工厂类."""
 
     def __init__(self):
-        """初始化工厂"""
+        """初始化工厂."""
         self._subsystem_registry: dict[str, type[Subsystem]] = {}
         self._facade_registry: dict[str, type[Facade]] = {}
         self._created_instances: dict[str, Facade] = {}
 
     def register_subsystem(self, name: str, subsystem_class: type[Subsystem]) -> None:
-        """注册子系统类型
+        """注册子系统类型.
 
         Args:
             name: 子系统名称
@@ -70,7 +69,7 @@ class FacadeFactory:
         self._subsystem_registry[name] = subsystem_class
 
     def register_facade(self, name: str, facade_class: type[Facade]) -> None:
-        """注册外观类型
+        """注册外观类型.
 
         Args:
             name: 外观名称
@@ -81,7 +80,7 @@ class FacadeFactory:
     def create_subsystem(
         self, name: str, config: dict[str, Any] | None = None
     ) -> Subsystem | None:
-        """创建子系统实例
+        """创建子系统实例.
 
         Args:
             name: 子系统名称
@@ -97,7 +96,7 @@ class FacadeFactory:
         return subsystem_class(name, config)
 
     def create_facade(self, config: FacadeConfig) -> Facade | None:
-        """创建外观实例
+        """创建外观实例.
 
         Args:
             config: 外观配置
@@ -125,7 +124,7 @@ class FacadeFactory:
         return facade
 
     def get_facade(self, name: str) -> Facade | None:
-        """获取已创建的外观实例
+        """获取已创建的外观实例.
 
         Args:
             name: 外观名称
@@ -138,7 +137,7 @@ class FacadeFactory:
     def create_system_facade(
         self, name: str = "System", config: dict[str, Any] | None = None
     ) -> SystemFacade:
-        """创建系统外观的便捷方法
+        """创建系统外观的便捷方法.
 
         Args:
             name: 系统名称
@@ -151,19 +150,19 @@ class FacadeFactory:
         return self.create_facade(facade_config)
 
     def list_registered_subsystems(self) -> list[str]:
-        """列出已注册的子系统类型"""
+        """列出已注册的子系统类型."""
         return list(self._subsystem_registry.keys())
 
     def list_registered_facades(self) -> list[str]:
-        """列出已注册的外观类型"""
+        """列出已注册的外观类型."""
         return list(self._facade_registry.keys())
 
     def list_created_instances(self) -> list[str]:
-        """列出已创建的实例"""
+        """列出已创建的实例."""
         return list(self._created_instances.keys())
 
     def clear_cache(self) -> None:
-        """清除实例缓存"""
+        """清除实例缓存."""
         self._created_instances.clear()
 
 
@@ -177,7 +176,7 @@ def create_facade(
     subsystem_configs: dict[str, dict[str, Any]] | None = None,
     global_config: dict[str, Any] | None = None,
 ) -> Facade | None:
-    """创建外观的便捷函数
+    """创建外观的便捷函数.
 
     Args:
         name: 外观名称
@@ -194,7 +193,7 @@ def create_facade(
 def create_system_facade(
     name: str = "System", config: dict[str, Any] | None = None
 ) -> SystemFacade:
-    """创建系统外观的便捷函数
+    """创建系统外观的便捷函数.
 
     Args:
         name: 系统名称

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-更新GitHub Issue #191: P3-战略优先级: 智能工具体系完善 - 600+脚本功能优化
-Update GitHub Issue #191: P3-Strategic Priority: Intelligent Tool System Enhancement
+"""更新GitHub Issue #191: P3-战略优先级: 智能工具体系完善 - 600+脚本功能优化
+Update GitHub Issue #191: P3-Strategic Priority: Intelligent Tool System Enhancement.
 """
 
 import json
@@ -9,8 +8,7 @@ from datetime import datetime
 
 
 def update_github_issue_191():
-    """更新GitHub Issue #191"""
-
+    """更新GitHub Issue #191."""
     # Issue #191的更新内容
     issue_update = {
         "body": """# 🔧 P3-战略优先级: 智能工具体系完善 - 600+脚本功能优化

@@ -1,5 +1,4 @@
-"""
-ensemble 主模块
+"""ensemble 主模块.
 
 此文件由长文件拆分工具自动生成
 
@@ -12,7 +11,7 @@ ensemble 主模块
 
 # 占位符类定义
 class EnsembleMethod:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """集成方法 - 占位符实现"""
@@ -20,7 +19,7 @@ class EnsembleMethod:
 
 
 class EnsembleResult:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """集成结果 - 占位符实现"""
@@ -28,7 +27,7 @@ class EnsembleResult:
 
 
 class EnsembleStrategy:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """集成策略 - 占位符实现"""
@@ -36,7 +35,7 @@ class EnsembleStrategy:
 
 
 class StrategyWeight:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """策略权重 - 占位符实现"""

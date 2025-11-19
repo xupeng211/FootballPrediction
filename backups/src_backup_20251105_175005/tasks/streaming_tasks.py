@@ -1,5 +1,4 @@
-"""
-实时数据流任务
+"""实时数据流任务.
 
 处理实时数据流,包括:
 - WebSocket连接管理
@@ -21,8 +20,7 @@ logger = get_logger(__name__)
 
 
 class StreamingTask(Task):
-    """
-    流处理任务基类
+    """流处理任务基类.
 
     提供流处理任务的通用功能:
     - 异步任务执行
@@ -31,13 +29,13 @@ class StreamingTask(Task):
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.error_logger = TaskErrorLogger()
         self.logger = logging.getLogger(f"streaming_task.{self.__class__.__name__}")
 
     def run_async(self, coro):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """运行异步协程"""
         try:
@@ -56,8 +54,7 @@ def consume_kafka_streams_task(
     batch_size: int = 100,
     timeout: float = 30.0,
 ):
-    """
-    消费Kafka流数据任务
+    """消费Kafka流数据任务.
 
     Args:
         topics: 要消费的Topic列表,None表示消费所有Topic
@@ -126,8 +123,7 @@ def consume_kafka_streams_task(
 def start_continuous_consumer_task(
     self, topics: list[str] | None = None, consumer_group_id: str | None = None
 ):
-    """
-    启动持续Kafka消费任务
+    """启动持续Kafka消费任务.
 
     Args:
         topics: 要消费的Topic列表,None表示消费所有Topic
@@ -194,8 +190,7 @@ def produce_to_kafka_stream_task(
     data_type: str,
     key_field: str | None = None,
 ):
-    """
-    生产数据到Kafka流任务
+    """生产数据到Kafka流任务.
 
     Args:
         data_list: 要发送的数据列表
@@ -257,7 +252,7 @@ def produce_to_kafka_stream_task(
 
 @app.task(base=StreamingTask, bind=True)
 def stream_health_check_task(self):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """
     流处理健康检查任务
@@ -309,8 +304,7 @@ def stream_data_processing_task(
     topics: list[str] | None = None,
     processing_duration: int = 300,  # 5分钟
 ):
-    """
-    流数据处理任务
+    """流数据处理任务.
 
     Args:
         topics: 要处理的Topic列表
@@ -382,7 +376,7 @@ def stream_data_processing_task(
 
 @app.task(base=StreamingTask, bind=True)
 def kafka_topic_management_task(self, action: str, topic_name: str | None = None):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """
     Kafka Topic管理任务

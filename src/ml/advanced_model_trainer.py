@@ -1,5 +1,3 @@
-from typing import Optional
-
 # 简化版 advanced_model_trainer 模块
 
 from enum import Enum

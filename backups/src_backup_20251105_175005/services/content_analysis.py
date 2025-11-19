@@ -1,5 +1,4 @@
-"""
-足球预测系统内容分析服务模块
+"""足球预测系统内容分析服务模块.
 
 提供内容分析和处理功能.
 """
@@ -12,7 +11,7 @@ from .base_unified import SimpleService
 
 
 class ContentType(Enum):
-    """内容类型枚举"""
+    """内容类型枚举."""
 
     TEXT = "text"
     IMAGE = "image"
@@ -22,7 +21,7 @@ class ContentType(Enum):
 
 
 class UserRole(Enum):
-    """用户角色枚举"""
+    """用户角色枚举."""
 
     ADMIN = "admin"
     USER = "user"
@@ -31,13 +30,13 @@ class UserRole(Enum):
 
 
 class Content:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """内容类"""
 
     def __init__(self, content_id: str, content_type: str, data: dict[str, Any]):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass  # 添加pass语句
         self.id = content_id
         self.content_type = content_type
@@ -45,20 +44,20 @@ class Content:
 
 
 class UserProfile:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户配置文件类"""
 
     def __init__(self, user_id: str, preferences: dict[str, Any] = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass  # 添加pass语句
         self.user_id = user_id
         self.preferences = preferences or {}
 
 
 class AnalysisResult:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """分析结果类"""
@@ -81,16 +80,16 @@ class AnalysisResult:
 
 
 class ContentAnalysisService(SimpleService):
-    """内容分析服务"""
+    """内容分析服务."""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass  # 添加pass语句
         super().__init__("ContentAnalysisService")
         self._models_loaded = False
 
     async def _on_initialize(self) -> bool:
-        """初始化服务"""
+        """初始化服务."""
         self.logger.info(f"正在初始化 {self.name}")
         # 加载AI模型,连接外部API等
         # 在实际生产环境中,这里会加载ML模型和建立外部连接
@@ -103,12 +102,12 @@ class ContentAnalysisService(SimpleService):
             return False
 
     async def _on_shutdown(self) -> None:
-        """关闭服务"""
+        """关闭服务."""
         self.logger.info(f"正在关闭 {self.name}")
         self._models_loaded = False
 
     async def _get_service_info(self) -> dict[str, Any]:
-        """获取服务信息"""
+        """获取服务信息."""
         return {
             "name": self.name,
             "type": self.__class__.__name__,
@@ -118,7 +117,7 @@ class ContentAnalysisService(SimpleService):
         }
 
     async def analyze_content(self, content: Content) -> AnalysisResult | None:
-        """分析内容"""
+        """分析内容."""
         if not self._initialized:
             raise RuntimeError("服务未初始化")
         self.logger.info(f"正在分析内容: {content.id}")
@@ -153,7 +152,7 @@ class ContentAnalysisService(SimpleService):
         )
 
     async def batch_analyze(self, contents: list[Content]) -> list[AnalysisResult]:
-        """批量分析内容"""
+        """批量分析内容."""
         results: list[AnalysisResult] = []
         for content in contents:
             result = await self.analyze_content(content)
@@ -162,7 +161,7 @@ class ContentAnalysisService(SimpleService):
         return results
 
     def _categorize_content(self, text: str) -> str:
-        """内容分类"""
+        """内容分类."""
         football_keywords = [
             "足球",
             "比赛",
@@ -182,7 +181,7 @@ class ContentAnalysisService(SimpleService):
         return "一般内容"
 
     def _calculate_quality_score(self, content: Content) -> float:
-        """计算内容质量分数"""
+        """计算内容质量分数."""
         if content.content_type == "text":
             text = content.data.get("text", "")
             # 基于长度,关键词数量等计算质量分数
@@ -196,7 +195,7 @@ class ContentAnalysisService(SimpleService):
         return 0.5
 
     def analyze_text(self, text: str) -> dict:
-        """分析文本内容 - 同步版本用于测试"""
+        """分析文本内容 - 同步版本用于测试."""
         if not text:
             return {"error": "Empty text"}
         # 简单的文本分析逻辑
@@ -212,7 +211,7 @@ class ContentAnalysisService(SimpleService):
         }
 
     def extract_entities(self, text: str) -> list:
-        """提取实体"""
+        """提取实体."""
         # 简单的实体提取逻辑
         entities = []
         # 提取球队名称
@@ -238,7 +237,7 @@ class ContentAnalysisService(SimpleService):
         return entities[:10]  # 限制返回数量
 
     def classify_content(self, content: str) -> dict:
-        """内容分类"""
+        """内容分类."""
         if not content:
             return {"category": "unknown", "confidence": 0.0}
         content_lower = content.lower()
@@ -271,7 +270,7 @@ class ContentAnalysisService(SimpleService):
         return {"category": "general", "confidence": 0.5}
 
     def analyze_sentiment(self, text: str) -> dict:
-        """情感分析"""
+        """情感分析."""
         if not text:
             return {"sentiment": "neutral", "score": 0.0}
         # 简单的情感词典
@@ -302,7 +301,7 @@ class ContentAnalysisService(SimpleService):
         }
 
     def generate_summary(self, text: str, max_length: int = 100) -> str:
-        """生成摘要"""
+        """生成摘要."""
         if not text or len(text) <= max_length:
             return text or ""
 

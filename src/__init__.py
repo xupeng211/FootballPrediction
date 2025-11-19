@@ -1,7 +1,6 @@
-from typing import Optional
-
 import sys
 from pathlib import Path
+from typing import Optional
 
 from .core.path_manager import PathManager
 from .utils.warning_filters import setup_warning_filters

@@ -1,5 +1,3 @@
-from typing import Optional
-
 import logging
 
 # from datetime import datetime, timezone  # Temporarily commented to fix F401

@@ -1,6 +1,4 @@
-"""
-预测API模块
-"""
+"""预测API模块."""
 
 from .models import (
     BatchPredictionRequest,

@@ -1,6 +1,4 @@
-"""
-数据集成相关的Pydantic模型
-"""
+"""数据集成相关的Pydantic模型."""
 
 from datetime import datetime
 
@@ -8,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class DataCollectionRequest(BaseModel):
-    """数据收集请求模型"""
+    """数据收集请求模型."""
 
     collection_type: str = Field(..., description="收集类型: all, team, league")
     days_ahead: int = Field(30, ge=1, le=365, description="向前收集的天数")
@@ -23,7 +21,7 @@ class DataCollectionRequest(BaseModel):
 
 
 class DataCollectionResponse(BaseModel):
-    """数据收集响应模型"""
+    """数据收集响应模型."""
 
     success: bool = Field(..., description="收集是否成功")
     message: str = Field(..., description="响应消息")
@@ -34,7 +32,7 @@ class DataCollectionResponse(BaseModel):
 
 
 class DataSourceStatusResponse(BaseModel):
-    """数据源状态响应模型"""
+    """数据源状态响应模型."""
 
     available_sources: list[str] = Field(..., description="可用的数据源列表")
     primary_source: str = Field(..., description="主要数据源")
@@ -45,7 +43,7 @@ class DataSourceStatusResponse(BaseModel):
 
 
 class MatchResponse(BaseModel):
-    """比赛响应模型"""
+    """比赛响应模型."""
 
     id: int = Field(..., description="比赛ID")
     home_team: str = Field(..., description="主队名称")
@@ -59,7 +57,7 @@ class MatchResponse(BaseModel):
 
 
 class TeamResponse(BaseModel):
-    """球队响应模型"""
+    """球队响应模型."""
 
     id: int = Field(..., description="球队ID")
     name: str = Field(..., description="球队名称")
@@ -69,7 +67,7 @@ class TeamResponse(BaseModel):
 
 
 class DataSourceTestResponse(BaseModel):
-    """数据源测试响应模型"""
+    """数据源测试响应模型."""
 
     success: bool = Field(..., description="测试是否成功")
     data_source: str = Field(..., description="数据源名称")
@@ -80,7 +78,7 @@ class DataSourceTestResponse(BaseModel):
 
 
 class DataStatsResponse(BaseModel):
-    """数据统计响应模型"""
+    """数据统计响应模型."""
 
     total_matches: int = Field(..., description="总比赛数")
     upcoming_matches: int = Field(..., description="即将开始的比赛数")

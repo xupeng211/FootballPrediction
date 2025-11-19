@@ -1,6 +1,5 @@
-"""
-装饰器工厂
-Decorator Factory
+"""装饰器工厂
+Decorator Factory.
 
 用于创建和配置装饰器实例.
 Used to create and configure decorator instances.
@@ -18,7 +17,7 @@ from .base import Component, Decorator, decorator_registry
 
 @dataclass
 class DecoratorConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """装饰器配置"""
@@ -33,7 +32,7 @@ class DecoratorConfig:
 
 @dataclass
 class DecoratorChainConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """装饰器链配置"""
@@ -45,13 +44,13 @@ class DecoratorChainConfig:
 
 
 class DecoratorFactory:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """装饰器工厂,用于创建装饰器实例"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self._config_cache: dict[str, DecoratorConfig] = {}
         self._chain_configs: dict[str, DecoratorChainConfig] = {}
@@ -59,7 +58,7 @@ class DecoratorFactory:
     def create_decorator(
         self, decorator_type: str, component: Component, **kwargs
     ) -> Decorator:
-        """创建装饰器实例"""
+        """创建装饰器实例."""
         # 获取装饰器类
         decorator_class = decorator_registry.get_decorator_class(decorator_type)
         if not decorator_class:
@@ -71,7 +70,7 @@ class DecoratorFactory:
     def create_from_config(
         self, config: DecoratorConfig, component: Component
     ) -> Decorator:
-        """从配置创建装饰器实例"""
+        """从配置创建装饰器实例."""
         if not config.enabled:
             raise ValueError(f"Decorator {config.name} is disabled")
 
@@ -82,7 +81,7 @@ class DecoratorFactory:
     def create_chain(
         self, configs: list[DecoratorConfig], component: Component
     ) -> list[Decorator]:
-        """创建装饰器链"""
+        """创建装饰器链."""
         # 按优先级排序
         sorted_configs = sorted(configs, key=lambda x: x.priority)
 
@@ -95,7 +94,7 @@ class DecoratorFactory:
         return decorators
 
     def load_config_from_file(self, file_path: str | Path) -> None:
-        """从文件加载装饰器配置"""
+        """从文件加载装饰器配置."""
         file_path = Path(file_path)
 
         if not file_path.exists():
@@ -124,23 +123,23 @@ class DecoratorFactory:
                 self._chain_configs[chain_config.name] = chain_config
 
     def get_config(self, name: str) -> DecoratorConfig | None:
-        """获取装饰器配置"""
+        """获取装饰器配置."""
         return self._config_cache.get(name)
 
     def get_chain_config(self, name: str) -> DecoratorChainConfig | None:
-        """获取装饰器链配置"""
+        """获取装饰器链配置."""
         return self._chain_configs.get(name)
 
     def list_configs(self) -> list[str]:
-        """列出所有配置的装饰器"""
+        """列出所有配置的装饰器."""
         return list(self._config_cache.keys())
 
     def list_chain_configs(self) -> list[str]:
-        """列出所有配置的装饰器链"""
+        """列出所有配置的装饰器链."""
         return list(self._chain_configs.keys())
 
     def save_config_to_file(self, file_path: str | Path) -> None:
-        """保存配置到文件"""
+        """保存配置到文件."""
         file_path = Path(file_path)
 
         data = {
@@ -187,7 +186,7 @@ class DecoratorFactory:
             raise ValueError(f"Unsupported config file format: {file_path.suffix}")
 
     def create_default_configs(self) -> None:
-        """创建默认配置"""
+        """创建默认配置."""
         # 日志装饰器配置
         logging_config = DecoratorConfig(
             name="default_logging",
@@ -276,13 +275,13 @@ class DecoratorFactory:
 
 
 class DecoratorBuilder:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """装饰器构建器,使用构建器模式创建装饰器"""
 
     def __init__(self, decorator_type: str, component: Component):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.decorator_type = decorator_type
         self.component = component
@@ -290,22 +289,22 @@ class DecoratorBuilder:
         self.name: str | None = None
 
     def with_name(self, name: str) -> "DecoratorBuilder":
-        """设置装饰器名称"""
+        """设置装饰器名称."""
         self.name = name
         return self
 
     def with_parameter(self, key: str, value: Any) -> "DecoratorBuilder":
-        """设置参数"""
+        """设置参数."""
         self.parameters[key] = value
         return self
 
     def with_parameters(self, **kwargs) -> "DecoratorBuilder":
-        """批量设置参数"""
+        """批量设置参数."""
         self.parameters.update(kwargs)
         return self
 
     def build(self) -> Decorator:
-        """构建装饰器实例"""
+        """构建装饰器实例."""
         factory = DecoratorFactory()
         return factory.create_decorator(
             self.decorator_type, self.component, name=self.name, **self.parameters

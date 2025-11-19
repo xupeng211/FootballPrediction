@@ -1,6 +1,5 @@
-"""
-装饰器服务
-Decorator Service
+"""装饰器服务
+Decorator Service.
 
 提供装饰器的高层管理和服务.
 Provides high-level management and services for decorators.
@@ -19,13 +18,13 @@ logger = get_logger(__name__)
 
 
 class DecoratorService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """装饰器服务,管理和应用装饰器"""
 
     def __init__(self, factory: DecoratorFactory | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.factory = factory or DecoratorFactory()
         self._decorated_functions: dict[str, DecoratorComponent] = {}
@@ -33,7 +32,7 @@ class DecoratorService:
         self._function_decorators: dict[str, list[DecoratorConfig]] = {}
 
     def load_configuration(self, config_path: str | Path) -> None:
-        """加载装饰器配置文件"""
+        """加载装饰器配置文件."""
         self.factory.load_config_from_file(config_path)
 
         # 加载全局装饰器
@@ -42,14 +41,14 @@ class DecoratorService:
                 self._global_decorators.append(config)
 
     def register_global_decorator(self, config: DecoratorConfig) -> None:
-        """注册全局装饰器"""
+        """注册全局装饰器."""
         self._global_decorators.append(config)
         self.factory._config_cache[config.name] = config
 
     def register_function_decorator(
         self, function_name: str, config: DecoratorConfig
     ) -> None:
-        """为特定函数注册装饰器"""
+        """为特定函数注册装饰器."""
         if function_name not in self._function_decorators:
             self._function_decorators[function_name] = []
         self._function_decorators[function_name].append(config)
@@ -58,7 +57,7 @@ class DecoratorService:
     def apply_decorators(
         self, func: Callable, decorator_names: list[str] | None = None, **kwargs
     ) -> Callable:
-        """应用装饰器到函数"""
+        """应用装饰器到函数."""
         func_name = func.__name__
 
         # 如果已经装饰过,直接返回
@@ -105,7 +104,7 @@ class DecoratorService:
         return self._create_wrapper(decorator_component)
 
     def _matches_function(self, func_name: str, patterns: list[str]) -> bool:
-        """检查函数名是否匹配模式"""
+        """检查函数名是否匹配模式."""
         for pattern in patterns:
             if pattern.endswith("*"):
                 # 前缀匹配
@@ -128,7 +127,7 @@ class DecoratorService:
         return False
 
     def _create_wrapper(self, decorator_component: DecoratorComponent) -> Callable:
-        """创建函数包装器"""
+        """创建函数包装器."""
 
         async def wrapper(*args, **kwargs):
             # 创建装饰器上下文
@@ -155,13 +154,13 @@ class DecoratorService:
         return wrapper
 
     def get_function_stats(self, func_name: str) -> dict[str, Any] | None:
-        """获取函数的装饰器统计信息"""
+        """获取函数的装饰器统计信息."""
         if func_name in self._decorated_functions:
             return self._decorated_functions[func_name].get_all_stats()
         return None
 
     def get_all_stats(self) -> dict[str, Any]:
-        """获取所有装饰器的统计信息"""
+        """获取所有装饰器的统计信息."""
         stats = {"total_functions": len(self._decorated_functions), "functions": {}}
 
         for func_name, component in self._decorated_functions.items():
@@ -170,7 +169,7 @@ class DecoratorService:
         return stats
 
     def clear_stats(self) -> None:
-        """清空所有统计信息"""
+        """清空所有统计信息."""
         for component in self._decorated_functions.values():
             for decorator in component.decorators:
                 decorator.execution_count = 0
@@ -179,7 +178,7 @@ class DecoratorService:
                 decorator.last_execution_time = None
 
     def reload_configuration(self) -> None:
-        """重新加载配置"""
+        """重新加载配置."""
         # 清空缓存
         self._global_decorators.clear()
         self._function_decorators.clear()
@@ -192,7 +191,7 @@ class DecoratorService:
 
 # 便捷装饰器函数
 def decorate(decorator_names: list[str] | None = None, **decorator_kwargs) -> Callable:
-    """装饰器工厂函数,用于装饰其他函数"""
+    """装饰器工厂函数,用于装饰其他函数."""
 
     def decorator(func: Callable) -> Callable:
         # 获取装饰器服务
@@ -209,7 +208,7 @@ def decorate(decorator_names: list[str] | None = None, **decorator_kwargs) -> Ca
 def with_logging(
     level: str = "INFO", log_args: bool = True, log_result: bool = True, **kwargs
 ) -> Callable:
-    """添加日志装饰器"""
+    """添加日志装饰器."""
     return decorate(
         decorator_names=["default_logging"],
         level=level,
@@ -222,7 +221,7 @@ def with_logging(
 def with_retry(
     max_attempts: int = 3, delay: float = 1.0, backoff_factor: float = 2.0, **kwargs
 ) -> Callable:
-    """添加重试装饰器"""
+    """添加重试装饰器."""
     return decorate(
         decorator_names=["default_retry"],
         max_attempts=max_attempts,
@@ -235,7 +234,7 @@ def with_retry(
 def with_metrics(
     metric_name: str | None = None, tags: dict[str, str] | None = None, **kwargs
 ) -> Callable:
-    """添加指标装饰器"""
+    """添加指标装饰器."""
     return decorate(
         decorator_names=["default_metrics"],
         metric_name=metric_name,
@@ -245,12 +244,12 @@ def with_metrics(
 
 
 def with_cache(ttl: int | None = None, **kwargs) -> Callable:
-    """添加缓存装饰器"""
+    """添加缓存装饰器."""
     return decorate(decorator_names=["default_cache"], ttl=ttl, **kwargs)
 
 
 def with_timeout(timeout_seconds: float = 30.0, **kwargs) -> Callable:
-    """添加超时装饰器"""
+    """添加超时装饰器."""
     return decorate(
         decorator_names=["default_timeout"], timeout_seconds=timeout_seconds, **kwargs
     )
@@ -263,7 +262,7 @@ def with_all(
     timeout_seconds: float = 30.0,
     **kwargs,
 ) -> Callable:
-    """添加所有常用装饰器"""
+    """添加所有常用装饰器."""
     return decorate(
         decorator_names=[
             "default_logging",

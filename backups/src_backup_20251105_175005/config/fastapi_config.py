@@ -1,6 +1,4 @@
-"""
-FastAPI 中文配置
-"""
+"""FastAPI 中文配置."""
 
 from fastapi import FastAPI
 
@@ -134,8 +132,7 @@ from src.utils.i18n import I18nUtils, init_i18n
 # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
 # TODO: 方法 def create_chinese_app 过长(36行)，建议拆分
 def create_chinese_app() -> FastAPI:
-    """创建中文界面的 FastAPI 应用"""
-
+    """创建中文界面的 FastAPI 应用."""
     # 初始化中文
     init_i18n()
 
@@ -172,7 +169,7 @@ def create_chinese_app() -> FastAPI:
     # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
     # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
     def custom_openapi():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
-        """TODO: 添加函数文档"""
+        """TODO: 添加函数文档."""
         if app.openapi_schema:
             return app.openapi_schema
 

@@ -1,6 +1,5 @@
-"""
-计分领域服务
-Scoring Domain Service
+"""计分领域服务
+Scoring Domain Service.
 
 处理预测计分相关的复杂业务逻辑.
 Handles complex business logic related to prediction scoring.
@@ -13,14 +12,14 @@ from src.domain.models.prediction import PredictionPoints
 
 
 class ScoringService:
-    """计分服务"""
+    """计分服务."""
 
     def __init__(self, scoring_config: dict[str, Any] | None = None):
-        """初始化计分服务"""
+        """初始化计分服务."""
         self.config = scoring_config or self._default_scoring_config()
 
     def _default_scoring_config(self) -> dict[str, Any]:
-        """默认计分配置"""
+        """默认计分配置."""
         return {
             "exact_score": {"points": 10, "multiplier": 1.0},
             "outcome_only": {"points": 3, "multiplier": 1.0},
@@ -40,7 +39,7 @@ class ScoringService:
         match_importance: float = 0.5,
         user_streak: int = 0,
     ) -> PredictionPoints:
-        """计算预测得分"""
+        """计算预测得分."""
         # 计算基础得分
         exact_score_points = self._calculate_exact_score_points(
             predicted_home, predicted_away, actual_home, actual_away
@@ -83,7 +82,7 @@ class ScoringService:
         actual_home: int,
         actual_away: int,
     ) -> int:
-        """计算精确比分得分"""
+        """计算精确比分得分."""
         if predicted_home == actual_home and predicted_away == actual_away:
             return int(
                 self.config["exact_score"]["points"]
@@ -98,7 +97,7 @@ class ScoringService:
         actual_home: int,
         actual_away: int,
     ) -> int:
-        """计算胜负平得分"""
+        """计算胜负平得分."""
         predicted_outcome = self._get_outcome(predicted_home, predicted_away)
         actual_outcome = self._get_outcome(actual_home, actual_away)
 
@@ -116,7 +115,7 @@ class ScoringService:
         actual_home: int,
         actual_away: int,
     ) -> int:
-        """计算净胜球得分"""
+        """计算净胜球得分."""
         predicted_diff = predicted_home - predicted_away
         actual_diff = actual_home - actual_away
 
@@ -128,7 +127,7 @@ class ScoringService:
         return 0
 
     def _calculate_confidence_bonus(self, confidence: float | None) -> int:
-        """计算信心度奖励"""
+        """计算信心度奖励."""
         if not confidence:
             return 0
 
@@ -140,7 +139,7 @@ class ScoringService:
         return 0
 
     def _calculate_streak_bonus(self, streak: int) -> int:
-        """计算连胜奖励"""
+        """计算连胜奖励."""
         if not self.config["streak_bonus"]["enabled"]:
             return 0
 
@@ -154,7 +153,7 @@ class ScoringService:
     def _calculate_difficulty_bonus(
         self, match_importance: float, predicted_home: int, predicted_away: int
     ) -> int:
-        """计算难度奖励"""
+        """计算难度奖励."""
         if not self.config["difficulty_multiplier"]["enabled"]:
             return 0
 
@@ -178,7 +177,7 @@ class ScoringService:
         return int(difficulty_multiplier * 2)  # 基础2分,根据难度调整
 
     def _get_outcome(self, home: int, away: int) -> str:
-        """获取比赛结果"""
+        """获取比赛结果."""
         if home > away:
             return "home_win"
         elif home < away:
@@ -189,7 +188,7 @@ class ScoringService:
     def calculate_leaderboard_position(
         self, user_points: int, all_users_points: list[int]
     ) -> int:
-        """计算排行榜位置"""
+        """计算排行榜位置."""
         # 排序（降序）
         sorted_points = sorted(all_users_points, reverse=True)
 
@@ -200,7 +199,7 @@ class ScoringService:
             return len(sorted_points) + 1
 
     def calculate_rank_percentile(self, position: int, total_users: int) -> float:
-        """计算排名百分位"""
+        """计算排名百分位."""
         if total_users == 0:
             return 0.0
 
@@ -209,7 +208,7 @@ class ScoringService:
         return round(percentile, 2)
 
     def update_scoring_config(self, new_config: dict[str, Any]) -> None:
-        """更新计分配置"""
+        """更新计分配置."""
         # 验证配置
         self._validate_config(new_config)
 
@@ -217,7 +216,7 @@ class ScoringService:
         self.config.update(new_config)
 
     def _validate_config(self, config: dict[str, Any]) -> None:
-        """验证计分配置"""
+        """验证计分配置."""
         required_keys = ["exact_score", "outcome_only", "goal_difference"]
 
         for key in required_keys:
@@ -234,7 +233,7 @@ class ScoringService:
                 raise ValueError(f"计分配置 {key}.points 不能为负数")
 
     def get_scoring_rules_summary(self) -> dict[str, Any]:
-        """获取计分规则摘要"""
+        """获取计分规则摘要."""
         return {
             "exact_score": f"{self.config['exact_score']['points']}分",
             "outcome_only": f"{self.config['outcome_only']['points']}分",

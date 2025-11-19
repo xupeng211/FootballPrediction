@@ -1,5 +1,3 @@
-from typing import Optional
-
 """OAuth2认证方案.
 
 定义JWT令牌的获取和验证方式

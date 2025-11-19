@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-多渠道通知管理器
-Multi-channel Notification Manager
+"""多渠道通知管理器
+Multi-channel Notification Manager.
 
 支持邮件、Slack,企业微信,钉钉等多种通知渠道
 """
@@ -28,7 +27,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class NotificationChannel:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """通知渠道配置"""
@@ -42,13 +41,13 @@ class NotificationChannel:
 
 
 class EmailClient:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """邮件通知客户端"""
 
     def __init__(self, config: dict[str, Any]):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.smtp_server = config.get("smtp_server", "smtp.gmail.com")
         self.smtp_port = config.get("smtp_port", 587)
@@ -59,7 +58,7 @@ class EmailClient:
         self.logger = get_logger(self.__class__.__name__)
 
     async def send_alert_email(self, alert: Alert, recipients: list[str]) -> bool:
-        """发送告警邮件"""
+        """发送告警邮件."""
         try:
             # 创建邮件内容
             subject = f"[{alert.severity.value.upper()}] {alert.title}"
@@ -92,7 +91,7 @@ class EmailClient:
             return False
 
     def _render_email_template(self, alert: Alert) -> str:
-        """渲染邮件HTML模板"""
+        """渲染邮件HTML模板."""
         template_str = """
 <!DOCTYPE html>
 <html>
@@ -239,7 +238,7 @@ class EmailClient:
         return template.render(alert=alert, now=datetime.now())
 
     def _render_text_template(self, alert: Alert) -> str:
-        """渲染纯文本模板"""
+        """渲染纯文本模板."""
         template_str = """
 质量监控告警通知
 
@@ -271,7 +270,7 @@ class EmailClient:
         return template.render(alert=alert, now=datetime.now())
 
     async def _send_email(self, msg: MIMEMultipart, recipients: list[str]):
-        """发送邮件"""
+        """发送邮件."""
         # 在实际实现中,这里应该使用异步SMTP库
         # 目前使用同步方式作为示例
         with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
@@ -282,13 +281,13 @@ class EmailClient:
 
 
 class SlackClient:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """Slack通知客户端"""
 
     def __init__(self, config: dict[str, Any]):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.webhook_url = config.get("webhook_url")
         self.channel = config.get("channel", "#quality-alerts")
@@ -297,7 +296,7 @@ class SlackClient:
         self.logger = get_logger(self.__class__.__name__)
 
     async def send_alert_slack(self, alert: Alert) -> bool:
-        """发送Slack告警通知"""
+        """发送Slack告警通知."""
         try:
             # 构建Slack消息
             payload = self._build_slack_message(alert)
@@ -321,7 +320,7 @@ class SlackClient:
             return False
 
     def _build_slack_message(self, alert: Alert) -> dict[str, Any]:
-        """构建Slack消息格式"""
+        """构建Slack消息格式."""
         # 根据严重程度选择颜色
         color_map = {
             AlertSeverity.CRITICAL: "#ff0000",
@@ -379,20 +378,20 @@ class SlackClient:
 
 
 class WeChatClient:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """企业微信通知客户端"""
 
     def __init__(self, config: dict[str, Any]):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.webhook_url = config.get("webhook_url")
         self.mentioned_list = config.get("mentioned_list", [])
         self.logger = get_logger(self.__class__.__name__)
 
     async def send_alert_wechat(self, alert: Alert) -> bool:
-        """发送企业微信告警通知"""
+        """发送企业微信告警通知."""
         try:
             # 构建企业微信消息
             payload = self._build_wechat_message(alert)
@@ -421,7 +420,7 @@ class WeChatClient:
             return False
 
     def _build_wechat_message(self, alert: Alert) -> dict[str, Any]:
-        """构建企业微信消息格式"""
+        """构建企业微信消息格式."""
         # 根据严重程度选择颜色
         color_map = {
             AlertSeverity.CRITICAL: "warning",
@@ -465,13 +464,13 @@ class WeChatClient:
 
 
 class DingTalkClient:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """钉钉通知客户端"""
 
     def __init__(self, config: dict[str, Any]):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.webhook_url = config.get("webhook_url")
         self.secret = config.get("secret")
@@ -480,7 +479,7 @@ class DingTalkClient:
         self.logger = get_logger(self.__class__.__name__)
 
     async def send_alert_dingtalk(self, alert: Alert) -> bool:
-        """发送钉钉告警通知"""
+        """发送钉钉告警通知."""
         try:
             # 构建钉钉消息
             payload = self._build_dingtalk_message(alert)
@@ -509,7 +508,7 @@ class DingTalkClient:
             return False
 
     def _build_dingtalk_message(self, alert: Alert) -> dict[str, Any]:
-        """构建钉钉消息格式"""
+        """构建钉钉消息格式."""
         # 根据严重程度选择表情符号
         emoji_map = {
             AlertSeverity.CRITICAL: "🚨",
@@ -553,13 +552,13 @@ class DingTalkClient:
 
 
 class NotificationManager:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """通知管理器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.channels: dict[str, NotificationChannel] = {}
         self.clients: dict[str, Any] = {}
@@ -570,7 +569,7 @@ class NotificationManager:
         self._load_notification_channels()
 
     def _load_notification_channels(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """加载通知渠道配置"""
         try:
@@ -605,7 +604,7 @@ class NotificationManager:
             self.logger.error(f"加载通知渠道配置失败: {e}")
 
     def _initialize_client(self, channel: NotificationChannel):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化通知客户端"""
         try:
@@ -624,7 +623,7 @@ class NotificationManager:
             self.logger.error(f"初始化通知客户端失败 {channel.id}: {e}")
 
     async def send_alert_notification(self, alert: Alert) -> dict[str, bool]:
-        """发送告警通知到所有启用的渠道"""
+        """发送告警通知到所有启用的渠道."""
         results = {}
 
         try:
@@ -649,7 +648,7 @@ class NotificationManager:
         return results
 
     def _should_send_alert(self, alert: Alert, channel: NotificationChannel) -> bool:
-        """检查告警是否应该发送到指定渠道"""
+        """检查告警是否应该发送到指定渠道."""
         try:
             # 如果没有过滤条件,默认发送
             if not channel.filters:
@@ -685,7 +684,7 @@ class NotificationManager:
     async def _send_to_channel(
         self, alert: Alert, channel: NotificationChannel
     ) -> bool:
-        """发送告警到指定渠道"""
+        """发送告警到指定渠道."""
         try:
             # 检查发送条件
             if not self._should_send_alert(alert, channel):
@@ -727,13 +726,13 @@ class NotificationManager:
             return False
 
         def add_channel(self, channel: NotificationChannel):
-                """添加新的通知渠道"""
+                """添加新的通知渠道."""
                 self.channels[channel.id] = channel
                 self._initialize_client(channel)
                 self.logger.info(f"已添加通知渠道: {channel.id}")
 
         def remove_channel(self, channel_id: str):
-                """移除通知渠道"""
+                """移除通知渠道."""
                 if channel_id in self.channels:
                     del self.channels[channel_id]
                     if channel_id in self.clients:
@@ -741,7 +740,7 @@ class NotificationManager:
                     self.logger.info(f"已移除通知渠道: {channel_id}")
 
         def get_channel_status(self) -> dict[str, dict[str, Any]]:
-                """获取所有渠道的状态"""
+                """获取所有渠道的状态."""
                 status = {}
                 for channel_id, channel in self.channels.items():
                     status[channel_id] = {

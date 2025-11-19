@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-实时质量监控WebSocket服务器
-Real-time Quality Monitoring WebSocket Server
+"""实时质量监控WebSocket服务器
+Real-time Quality Monitoring WebSocket Server.
 
 提供实时质量指标推送,告警广播和客户端连接管理
 """
@@ -22,13 +21,13 @@ logger = get_logger(__name__)
 
 
 class QualityMonitorServer:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """实时质量监控服务器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.app = FastAPI(
             title="实时质量监控服务",
@@ -67,7 +66,7 @@ class QualityMonitorServer:
         self.logger = get_logger(self.__class__.__name__)
 
     def _setup_routes(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """设置路由"""
 
@@ -81,7 +80,7 @@ class QualityMonitorServer:
 
         @self.app.get("/api/current-metrics")
         async def get_current_metrics():
-            """获取当前质量指标"""
+            """获取当前质量指标."""
             try:
                 metrics = await self.collect_quality_metrics()
                 return metrics
@@ -91,7 +90,7 @@ class QualityMonitorServer:
 
         @self.app.get("/api/alerts")
         async def get_active_alerts():
-            """获取活跃告警"""
+            """获取活跃告警."""
             try:
                 alerts = await self.get_active_alerts()
                 return {"alerts": alerts}
@@ -100,7 +99,7 @@ class QualityMonitorServer:
                 return {"alerts": []}
 
     async def handle_websocket_connection(self, websocket: WebSocket):
-        """处理WebSocket连接"""
+        """处理WebSocket连接."""
         await websocket.accept()
         self.active_connections.add(websocket)
 
@@ -138,7 +137,7 @@ class QualityMonitorServer:
                 self.active_connections.remove(websocket)
 
     async def handle_client_message(self, websocket: WebSocket, data: str):
-        """处理客户端消息"""
+        """处理客户端消息."""
         try:
             message = json.loads(data)
             message_type = message.get("type")
@@ -167,7 +166,7 @@ class QualityMonitorServer:
             self.logger.error(f"处理客户端消息失败: {e}")
 
     async def collect_quality_metrics(self) -> dict:
-        """收集质量指标"""
+        """收集质量指标."""
         try:
             # 获取基础质量指标
             current_time = datetime.now()
@@ -228,7 +227,7 @@ class QualityMonitorServer:
             }
 
     async def get_trend_data(self, hours: int = 24) -> dict:
-        """获取趋势数据"""
+        """获取趋势数据."""
         try:
             # 从Redis获取历史数据
             trend_data = []
@@ -265,7 +264,7 @@ class QualityMonitorServer:
             return {"data_points": 0, "trend": []}
 
     async def get_active_alerts(self) -> list[dict]:
-        """获取活跃告警"""
+        """获取活跃告警."""
         try:
             alerts = []
 
@@ -316,7 +315,7 @@ class QualityMonitorServer:
             return []
 
     async def broadcast_quality_update(self, data: dict):
-        """广播质量更新给所有连接的客户端"""
+        """广播质量更新给所有连接的客户端."""
         if not self.active_connections:
             return None
         message = json.dumps(
@@ -342,7 +341,7 @@ class QualityMonitorServer:
                 self.active_connections.remove(connection)
 
     async def start_background_monitoring(self):
-        """启动后台监控任务"""
+        """启动后台监控任务."""
         while True:
             try:
                 # 收集最新指标
@@ -362,7 +361,7 @@ class QualityMonitorServer:
                 await asyncio.sleep(60)  # 出错时等待1分钟后重试
 
     async def check_alert_conditions(self, metrics: dict):
-        """检查告警条件"""
+        """检查告警条件."""
         try:
             alerts = []
 
@@ -429,7 +428,7 @@ class QualityMonitorServer:
             self.logger.error(f"检查告警条件失败: {e}")
 
     async def start_server(self):
-        """启动服务器和后台任务"""
+        """启动服务器和后台任务."""
         self.logger.info("启动实时质量监控服务器...")
 
         # 启动后台监控任务
@@ -438,7 +437,7 @@ class QualityMonitorServer:
         self.logger.info("实时质量监控服务器启动完成")
 
     def stop_server(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """停止服务器"""
         if self.background_task:
@@ -464,13 +463,13 @@ app = monitor_server.app
 
 @app.on_event("startup")
 async def startup_event():
-    """应用启动事件"""
+    """应用启动事件."""
     await monitor_server.start_server()
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """应用关闭事件"""
+    """应用关闭事件."""
     monitor_server.stop_server()
 
 

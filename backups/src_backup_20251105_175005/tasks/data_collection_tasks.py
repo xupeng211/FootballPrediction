@@ -1,6 +1,5 @@
-"""
-数据收集任务
-Data Collection Tasks
+"""数据收集任务
+Data Collection Tasks.
 
 提供各种数据收集任务的定义和执行.
 """

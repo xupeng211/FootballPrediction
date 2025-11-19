@@ -1,5 +1,3 @@
-from typing import Optional
-
 """实时数据流任务.
 
 处理实时数据流,包括:

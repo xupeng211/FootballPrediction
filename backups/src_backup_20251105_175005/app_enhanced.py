@@ -1,6 +1,5 @@
-"""
-增强版 FastAPI 应用 - 集成数据访问层
-Enhanced FastAPI Application with Data Access Layer
+"""增强版 FastAPI 应用 - 集成数据访问层
+Enhanced FastAPI Application with Data Access Layer.
 """
 
 import os
@@ -47,7 +46,7 @@ db_pool = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
+    """应用生命周期管理."""
     global db_pool
 
 
@@ -71,7 +70,7 @@ async def lifespan(app: FastAPI):
 
 
 async def create_tables():
-    """创建基础表结构"""
+    """创建基础表结构."""
     if not db_pool:
         return
 
@@ -109,7 +108,7 @@ async def create_tables():
 
 
 async def get_db_connection():
-    """获取数据库连接"""
+    """获取数据库连接."""
     if not db_pool:
         raise HTTPException(
             status_code=503,
@@ -132,7 +131,7 @@ app = FastAPI(
 
 @app.get("/")
 async def root():
-    """根端点"""
+    """根端点."""
     return {
         "message": "Football Prediction API - Enhanced",
         "version": "2.1.0",
@@ -144,7 +143,7 @@ async def root():
 @app.get("/health",
     response_model=HealthResponse)
 async def health_check():
-    """增强健康检查端点"""
+    """增强健康检查端点."""
     db_status = "connected" if db_pool else "disconnected"
 
     # 简单的 Redis 检查
@@ -161,7 +160,7 @@ async def health_check():
 @app.get("/predictions",
     response_model=list[PredictionResponse])
 async def get_predictions():
-    """获取所有预测"""
+    """获取所有预测."""
     if not db_pool:
         raise HTTPException(
             status_code=503,
@@ -193,7 +192,7 @@ async def get_predictions():
 async def create_prediction(match_id: int,
     predicted_winner: str,
     confidence: float):
-    """创建新预测"""
+    """创建新预测."""
     if not db_pool:
         raise HTTPException(
             status_code=503,
@@ -238,7 +237,7 @@ async def create_prediction(match_id: int,
 
 @app.get("/predictions/{prediction_id}", response_model=PredictionResponse)
 async def get_prediction(prediction_id: int):
-    """获取特定预测"""
+    """获取特定预测."""
     if not db_pool:
         raise HTTPException(
             status_code=503,
@@ -272,7 +271,7 @@ async def get_prediction(prediction_id: int):
 
 @app.delete("/predictions/{prediction_id}")
 async def delete_prediction(prediction_id: int):
-    """删除预测"""
+    """删除预测."""
     if not db_pool:
         raise HTTPException(
             status_code=503,

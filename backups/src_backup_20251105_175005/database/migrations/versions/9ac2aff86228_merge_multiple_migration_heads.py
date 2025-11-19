@@ -1,4 +1,4 @@
-"""Merge multiple migration heads"
+"""Merge multiple migration heads".
 
 Revision ID: 9ac2aff86228
 Revises: 002_add_raw_scores_data_and_upgrade_jsonb, 005, 09d03cebf664, a20f91c49306

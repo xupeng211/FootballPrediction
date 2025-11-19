@@ -1,6 +1,5 @@
-"""
-增强机器学习模型策略
-Enhanced ML Model Strategy
+"""增强机器学习模型策略
+Enhanced ML Model Strategy.
 
 Phase G Week 4 P2任务:智能预测增强
 专注于性能优化和预测准确性提升.
@@ -29,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class EnhancedMLConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """增强ML模型配置"""
@@ -46,7 +45,7 @@ class EnhancedMLConfig:
 
 @dataclass
 class PredictionCache:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测结果缓存"""
@@ -58,7 +57,7 @@ class PredictionCache:
     misses: int = 0
 
     def get(self, key: str) -> Any | None:
-        """获取缓存值"""
+        """获取缓存值."""
         current_time = time.time()
 
         if key in self.cache:
@@ -74,7 +73,7 @@ class PredictionCache:
         return None
 
     def set(self, key: str, value: Any) -> None:
-        """设置缓存值"""
+        """设置缓存值."""
         if len(self.cache) >= self.max_size:
             # 删除最旧的缓存项
             oldest_key = min(self.timestamps, key=self.timestamps.get)
@@ -86,7 +85,7 @@ class PredictionCache:
         self.timestamps[key] = time.time()
 
     def get_stats(self) -> dict[str, Any]:
-        """获取缓存统计"""
+        """获取缓存统计."""
         total = self.hits + self.misses
         hit_rate = (self.hits / total * 100) if total > 0 else 0
         return {
@@ -100,7 +99,7 @@ class PredictionCache:
 
 @dataclass
 class FeatureEngine:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """特征工程器"""
@@ -108,11 +107,11 @@ class FeatureEngine:
     feature_cache: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
-        """初始化后设置"""
+        """初始化后设置."""
         self.setup_features()
 
     def setup_features(self) -> None:
-        """设置特征配置"""
+        """设置特征配置."""
         # 特征重要性权重
         self.feature_weights = {
             "team_form_last_5": 0.25,
@@ -127,7 +126,7 @@ class FeatureEngine:
 
     @lru_cache(maxsize=100)
     def extract_team_features(self, team_data: dict[str, Any]) -> dict[str, float]:
-        """提取球队特征"""
+        """提取球队特征."""
         if not team_data:
             return {}
 
@@ -156,7 +155,7 @@ class FeatureEngine:
 
     @lru_cache(maxsize=100)
     def extract_match_features(self, match_data: dict[str, Any]) -> dict[str, float]:
-        """提取比赛特征"""
+        """提取比赛特征."""
         if not match_data:
             return {}
 
@@ -185,7 +184,7 @@ class FeatureEngine:
         away_features: dict[str, float],
         match_features: dict[str, float],
     ) -> np.ndarray:
-        """组合所有特征"""
+        """组合所有特征."""
         all_features = {}
         all_features.update(home_features)
         all_features.update(away_features)
@@ -208,7 +207,7 @@ class FeatureEngine:
 
 @dataclass
 class PerformanceMetrics:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """性能指标收集器"""
@@ -221,32 +220,32 @@ class PerformanceMetrics:
     start_time: float = field(default_factory=time.time)
 
     def get_avg_prediction_time(self) -> float:
-        """获取平均预测时间"""
+        """获取平均预测时间."""
         return self.total_prediction_time / max(self.predictions_made, 1)
 
     def get_error_rate(self) -> float:
-        """获取错误率"""
+        """获取错误率."""
         return (self.errors / max(self.predictions_made, 1)) * 100
 
     def get_avg_confidence(self) -> float:
-        """获取平均置信度"""
+        """获取平均置信度."""
         return np.mean(self.confidence_scores) if self.confidence_scores else 0.0
 
     def get_throughput(self) -> float:
-        """获取吞吐量（预测/秒）"""
+        """获取吞吐量（预测/秒）."""
         elapsed = time.time() - self.start_time
         return self.predictions_made / elapsed if elapsed > 0 else 0
 
 
 class EnhancedMLModelStrategy(PredictionStrategy):
-    """增强机器学习模型预测策略"
+    """增强机器学习模型预测策略".
 
     Phase G Week 4 P2任务:智能预测增强
     专注于性能优化和预测准确性提升.
     """
 
     def __init__(self, model_name: str = "enhanced_ml_model"):
-        """初始化增强ML模型"""
+        """初始化增强ML模型."""
         super().__init__(model_name, StrategyType.ML_MODEL)
 
         # 配置和组件
@@ -267,7 +266,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         self.logger = logging.getLogger(__name__)
 
     async def initialize(self, config: dict[str, Any]) -> None:
-        """初始化增强ML模型策略"""
+        """初始化增强ML模型策略."""
         try:
             # 更新配置
             if "config" in config:
@@ -298,7 +297,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             raise
 
     async def _load_models(self, config: dict[str, Any]) -> None:
-        """加载ML模型"""
+        """加载ML模型."""
         try:
             # 这里可以加载多个预训练模型
             # 模拟模型加载过程
@@ -329,7 +328,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             self._create_simple_models()
 
     def _create_simple_models(self) -> None:
-        """创建简单的后备模型"""
+        """创建简单的后备模型."""
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.preprocessing import StandardScaler
 
@@ -359,21 +358,21 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             self.models["dummy"] = type("DummyModel", (), {})
 
     def _create_batch_predictor(self) -> Any:
-        """创建批处理器"""
+        """创建批处理器."""
         # 这里可以返回实际的批处理组件
         return None
 
     def _create_async_predictor(self) -> Any:
-        """创建异步预测器"""
+        """创建异步预测器."""
         # 这里可以返回异步处理组件
         return None
 
     def _get_cache_key(self, home_team_id: int, away_team_id: int) -> str:
-        """生成缓存键"""
+        """生成缓存键."""
         return f"{home_team_id}_vs_{away_team_id}"
 
     async def predict(self, prediction_input: PredictionInput) -> PredictionOutput:
-        """执行预测"""
+        """执行预测."""
         start_time = time.time()
 
         try:
@@ -475,7 +474,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         away_features: dict[str, float],
         match_features: dict[str, float],
     ) -> dict[str, Any]:
-        """使用模型进行预测"""
+        """使用模型进行预测."""
         try:
             # 使用集成方法进行预测
             if self.config.use_ensemble and len(self.models) > 1:
@@ -492,7 +491,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             return self._dummy_predict(feature_vector)
 
     async def _ensemble_predict(self, feature_vector: np.ndarray) -> dict[str, Any]:
-        """集成预测"""
+        """集成预测."""
         try:
             # 简单的集成方法
             predictions = []
@@ -532,7 +531,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         away_features: dict[str, float],
         match_features: dict[str, float],
     ) -> dict[str, Any]:
-        """简单预测"""
+        """简单预测."""
         try:
             # 使用简单的线性回归进行预测
             home_goals = max(0, int(home_features.get("goals_scored", 0)))
@@ -570,7 +569,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             return self._dummy_predict(feature_vector)
 
     def _dummy_predict(self, feature_vector: np.ndarray) -> dict[str, Any]:
-        """虚拟预测（后备方案）"""
+        """虚拟预测（后备方案）."""
         return {
             "home_score": 1,
             "away_score": 1,
@@ -581,7 +580,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         }
 
     def _calculate_confidence(self, prediction_result: dict[str, Any]) -> float:
-        """计算预测置信度"""
+        """计算预测置信度."""
         try:
             method = prediction_result.get("method", "unknown")
 
@@ -610,13 +609,13 @@ class EnhancedMLModelStrategy(PredictionStrategy):
     def _update_performance_metrics(
         self, output: PredictionOutput, confidence: float
     ) -> None:
-        """更新性能指标"""
+        """更新性能指标."""
         self.performance_metrics.predictions_made += 1
         self.performance_metrics.total_prediction_time += output.prediction_time
         self.performance_metrics.confidence_scores.append(confidence)
 
     def get_metrics(self) -> StrategyMetrics:
-        """获取策略指标"""
+        """获取策略指标."""
         return StrategyMetrics(
             strategy_name=self.model_name,
             strategy_type=StrategyType.ML_MODEL,
@@ -632,7 +631,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
     async def batch_predict(
         self, inputs: list[PredictionInput]
     ) -> list[PredictionOutput]:
-        """批量预测"""
+        """批量预测."""
         if not self.config.batch_prediction:
             # 逐个预测
             results = []
@@ -661,11 +660,11 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         return results
 
     def get_cache_stats(self) -> dict[str, Any]:
-        """获取缓存统计"""
+        """获取缓存统计."""
         return self.cache.get_stats()
 
     def get_performance_stats(self) -> dict[str, Any]:
-        """获取性能统计"""
+        """获取性能统计."""
         return {
             "predictions_made": self.performance_metrics.predictions_made,
             "avg_prediction_time": self.performance_metrics.get_avg_prediction_time(),
@@ -677,7 +676,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         }
 
     async def cleanup(self) -> None:
-        """清理资源"""
+        """清理资源."""
         self.models.clear()
         self.cache.cache.clear()
         self.feature_engine.feature_cache.clear()
@@ -685,7 +684,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
 
 
 def create_enhanced_ml_strategy() -> EnhancedMLModelStrategy:
-    """创建增强ML策略实例"""
+    """创建增强ML策略实例."""
     return EnhancedMLModelStrategy("enhanced_ml_model")
 
 

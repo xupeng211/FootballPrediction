@@ -1,6 +1,4 @@
-"""
-Configuration loader utilities
-"""
+"""Configuration loader utilities."""
 
 import json
 import os
@@ -13,7 +11,7 @@ except ImportError:
 
 
 def load_config_from_file(file_path: str) -> dict[str, Any]:
-    """Load configuration from file"""
+    """Load configuration from file."""
     if not os.path.exists(file_path):
         return {}
 

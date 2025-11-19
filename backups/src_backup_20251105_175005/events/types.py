@@ -1,8 +1,7 @@
 # mypy: ignore-errors
-"""
-from typing import Dict, Optional
+"""from typing import Dict, Optional
 核心事件类型定义
-Core Event Types
+Core Event Types.
 
 定义系统中的核心事件类型.
 Defines core event types in the system.
@@ -16,7 +15,7 @@ from .base import Event, EventData
 
 # 比赛相关事件数据
 class MatchEventData(EventData):
-    """比赛事件数据"""
+    """比赛事件数据."""
 
     def __init__(
         self,
@@ -42,7 +41,7 @@ class MatchEventData(EventData):
 
 
 class MatchCreatedEventData(MatchEventData):
-    """比赛创建事件数据"""
+    """比赛创建事件数据."""
 
     def __init__(
         self,
@@ -68,7 +67,7 @@ class MatchCreatedEventData(MatchEventData):
 
 
 class MatchUpdatedEventData(MatchEventData):
-    """比赛更新事件数据"""
+    """比赛更新事件数据."""
 
     def __init__(
         self,
@@ -95,7 +94,7 @@ class MatchUpdatedEventData(MatchEventData):
 
 # 预测相关事件数据
 class PredictionEventData(EventData):
-    """预测事件数据"""
+    """预测事件数据."""
 
     def __init__(
         self,
@@ -119,7 +118,7 @@ class PredictionEventData(EventData):
 
 
 class PredictionMadeEventData(PredictionEventData):
-    """预测创建事件数据"""
+    """预测创建事件数据."""
 
     def __init__(
         self,
@@ -149,7 +148,7 @@ class PredictionMadeEventData(PredictionEventData):
 
 
 class PredictionUpdatedEventData(PredictionEventData):
-    """预测更新事件数据"""
+    """预测更新事件数据."""
 
     def __init__(
         self,
@@ -180,7 +179,7 @@ class PredictionUpdatedEventData(PredictionEventData):
 
 # 用户相关事件数据
 class UserEventData(EventData):
-    """用户事件数据"""
+    """用户事件数据."""
 
     def __init__(
         self,
@@ -198,7 +197,7 @@ class UserEventData(EventData):
 
 
 class UserRegisteredEventData(UserEventData):
-    """用户注册事件数据"""
+    """用户注册事件数据."""
 
     def __init__(
         self,
@@ -225,7 +224,7 @@ class UserRegisteredEventData(UserEventData):
 
 # 球队统计事件数据
 class TeamStatsEventData(EventData):
-    """球队统计事件数据"""
+    """球队统计事件数据."""
 
     def __init__(
         self,
@@ -256,10 +255,10 @@ class TeamStatsEventData(EventData):
 
 # 事件类定义
 class MatchCreatedEvent(Event):
-    """比赛创建事件"""
+    """比赛创建事件."""
 
     def __init__(self, data: MatchCreatedEventData):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(data)
 
@@ -310,10 +309,10 @@ class MatchCreatedEvent(Event):
 
 
 class MatchUpdatedEvent(Event):
-    """比赛更新事件"""
+    """比赛更新事件."""
 
     def __init__(self, data: MatchUpdatedEventData):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(data)
 
@@ -364,10 +363,10 @@ class MatchUpdatedEvent(Event):
 
 
 class PredictionMadeEvent(Event):
-    """预测创建事件"""
+    """预测创建事件."""
 
     def __init__(self, data: PredictionMadeEventData):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(data)
 
@@ -416,10 +415,10 @@ class PredictionMadeEvent(Event):
 
 
 class PredictionUpdatedEvent(Event):
-    """预测更新事件"""
+    """预测更新事件."""
 
     def __init__(self, data: PredictionUpdatedEventData):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(data)
 
@@ -468,10 +467,10 @@ class PredictionUpdatedEvent(Event):
 
 
 class UserRegisteredEvent(Event):
-    """用户注册事件"""
+    """用户注册事件."""
 
     def __init__(self, data: UserRegisteredEventData):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(data)
 
@@ -516,10 +515,10 @@ class UserRegisteredEvent(Event):
 
 
 class TeamStatsUpdatedEvent(Event):
-    """球队统计更新事件"""
+    """球队统计更新事件."""
 
     def __init__(self, data: TeamStatsEventData):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(data)
 

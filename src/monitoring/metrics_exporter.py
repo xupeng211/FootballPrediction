@@ -1,5 +1,3 @@
-from typing import Optional
-
 """监控指标导出器.
 
 导出足球预测平台的各项监控指标,供 Prometheus 采集。

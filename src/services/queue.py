@@ -7,7 +7,7 @@ Provides queue management and status monitoring services.
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

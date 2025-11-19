@@ -3,7 +3,7 @@
 提供字典操作相关的工具函数.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
 class DictUtils:

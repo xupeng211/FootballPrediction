@@ -1,7 +1,7 @@
 # 数据收集器基础模块
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass

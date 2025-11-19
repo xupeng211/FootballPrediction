@@ -1,6 +1,5 @@
-"""
-Football Prediction FastAPI Application
-足球预测系统主应用文件
+"""Football Prediction FastAPI Application
+足球预测系统主应用文件.
 """
 
 import logging
@@ -44,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
+    """应用生命周期管理."""
     logger.info("🚀 Starting Football Prediction API...")
 
     # 初始化各个系统
@@ -112,7 +111,7 @@ if SLOWAPI_AVAILABLE:
 
 @app.get("/", response_model=RootResponse)
 async def root():
-    """根端点"""
+    """根端点."""
     return RootResponse(
         message="Football Prediction API", version="2.0.0", status="healthy"
     )
@@ -120,7 +119,7 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """健康检查端点"""
+    """健康检查端点."""
     return {"status": "healthy", "version": "2.0.0"}
 
 

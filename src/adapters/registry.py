@@ -1,5 +1,3 @@
-from typing import Optional
-
 """适配器注册表模块
 BaseAdapter Registry Module.
 

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """数据质量监控器 / Data Quality Monitor.
 
 负责监控数据新鲜度、缺失率、完整性等数据质量指标。

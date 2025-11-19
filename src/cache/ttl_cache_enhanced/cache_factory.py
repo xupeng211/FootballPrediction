@@ -1,5 +1,3 @@
-from typing import Optional
-
 """缓存工厂类
 Cache Factory.
 

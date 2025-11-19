@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-覆盖率分析工具 - 简化版本
-"""
+"""覆盖率分析工具 - 简化版本."""
 
 import subprocess
 import sys
@@ -9,7 +7,7 @@ from pathlib import Path
 
 
 def count_lines_of_code(file_path: str) -> int:
-    """计算文件的有效代码行数"""
+    """计算文件的有效代码行数."""
     try:
         with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
@@ -25,7 +23,7 @@ def count_lines_of_code(file_path: str) -> int:
         return 0
 
 def get_coverage_data():
-    """获取覆盖率数据"""
+    """获取覆盖率数据."""
     try:
         # 运行pytest获取覆盖率
         result = subprocess.run([
@@ -41,8 +39,7 @@ def get_coverage_data():
         return {}
 
 def main():
-    """主函数"""
-
+    """主函数."""
     # 计算代码行数
     src_dir = Path("src")
     if src_dir.exists():

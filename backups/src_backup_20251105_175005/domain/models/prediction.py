@@ -1,6 +1,5 @@
-"""
-预测领域模型
-Prediction Domain Model
+"""预测领域模型
+Prediction Domain Model.
 
 封装预测相关的业务逻辑和不变性约束.
 Encapsulates prediction-related business logic and invariants.
@@ -16,7 +15,7 @@ from src.core.exceptions import DomainError
 
 
 class PredictionStatus(Enum):
-    """预测状态"""
+    """预测状态."""
 
     PENDING = "pending"  # 待处理
     EVALUATED = "evaluated"  # 已评估
@@ -26,7 +25,7 @@ class PredictionStatus(Enum):
 
 @dataclass
 class ConfidenceScore:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """置信度值对象"""
@@ -34,7 +33,7 @@ class ConfidenceScore:
     value: Decimal
 
     def __post_init__(self):
-        """验证预测数据"""
+        """验证预测数据."""
         if self.value < 0 or self.value > 1:
             raise DomainError("置信度必须在 0 到 1 之间")
         # 转换为两位小数
@@ -42,7 +41,7 @@ class ConfidenceScore:
 
     @property
     def level(self) -> str:
-        """置信度等级"""
+        """置信度等级."""
         if self.value >= Decimal("0.8"):
             return "high"
         elif self.value >= Decimal("0.6"):
@@ -56,7 +55,7 @@ class ConfidenceScore:
 
 @dataclass
 class PredictionScore:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测比分值对象"""
@@ -67,7 +66,7 @@ class PredictionScore:
     actual_away: int | None = None
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """验证比分"""
         if self.predicted_home < 0 or self.predicted_away < 0:
@@ -80,12 +79,12 @@ class PredictionScore:
 
     @property
     def is_evaluated(self) -> bool:
-        """是否已评估"""
+        """是否已评估."""
         return self.actual_home is not None and self.actual_away is not None
 
     @property
     def is_correct_score(self) -> bool:
-        """是否预测正确比分"""
+        """是否预测正确比分."""
         if not self.is_evaluated:
             return False
         return (
@@ -95,7 +94,7 @@ class PredictionScore:
 
     @property
     def is_correct_result(self) -> bool:
-        """是否预测正确结果（胜平负）"""
+        """是否预测正确结果（胜平负）."""
         if not self.is_evaluated:
             return False
 
@@ -113,7 +112,7 @@ class PredictionScore:
 
     @property
     def goal_difference_error(self) -> int:
-        """净胜球误差"""
+        """净胜球误差."""
         if not self.is_evaluated:
             return 0
         predicted_diff = self.predicted_home - self.predicted_away
@@ -128,7 +127,7 @@ class PredictionScore:
 
 @dataclass
 class PredictionPoints:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测积分值对象"""
@@ -139,7 +138,7 @@ class PredictionPoints:
     confidence_bonus: Decimal = Decimal("0")  # 置信度奖励
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """四舍五入到两位小数"""
         self.total = self.total.quantize(Decimal("0.01"))
@@ -149,7 +148,7 @@ class PredictionPoints:
 
     @property
     def breakdown(self) -> dict[str, Decimal]:
-        """积分明细"""
+        """积分明细."""
         return {
             "score_bonus": self.score_bonus,
             "result_bonus": self.result_bonus,
@@ -163,7 +162,7 @@ class PredictionPoints:
 
 @dataclass
 class Prediction:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -190,7 +189,7 @@ class Prediction:
     init=False)
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化后的验证"""
         if self.user_id <= 0:
@@ -210,7 +209,7 @@ class Prediction:
         confidence: float | None = None,
         model_version: str | None = None,
     ) -> None:
-        """创建预测"""
+        """创建预测."""
         if self.status != PredictionStatus.PENDING:
             raise DomainError(f"预测状态为 {self.status.value},无法修改")
 
@@ -247,7 +246,7 @@ class Prediction:
 
         scoring_rules: dict[str, Decimal] | None = None,
     ) -> None:
-        """评估预测结果"""
+        """评估预测结果."""
         if self.status != PredictionStatus.PENDING:
             raise DomainError(f"预测状态为 {self.status.value},无法评估")
 
@@ -284,7 +283,7 @@ class Prediction:
 
     def cancel(self,
     reason: str | None = None) -> None:
-        """取消预测"""
+        """取消预测."""
         if self.status in [PredictionStatus.EVALUATED,
     PredictionStatus.CANCELLED]:
             raise DomainError(f"预测状态为 {self.status.value},无法取消")
@@ -294,7 +293,7 @@ class Prediction:
         self.cancellation_reason = reason
 
     def mark_expired(self) -> None:
-        """标记为过期"""
+        """标记为过期."""
         if self.status != PredictionStatus.PENDING:
             raise DomainError(f"预测状态为 {self.status.value},无法标记为过期")
 
@@ -302,7 +301,7 @@ class Prediction:
 
     @staticmethod
     def _default_scoring_rules() -> dict[str, Decimal]:
-        """默认积分规则"""
+        """默认积分规则."""
         return {
             "exact_score": Decimal("10"),
     # 精确比分
@@ -315,7 +314,7 @@ class Prediction:
     def _calculate_points(self,
     rules: dict[str,
     Decimal]) -> PredictionPoints:
-        """计算积分"""
+        """计算积分."""
         points = PredictionPoints()
 
         # 精确比分奖励
@@ -350,27 +349,27 @@ class Prediction:
 
     @property
     def is_pending(self) -> bool:
-        """是否待处理"""
+        """是否待处理."""
         return self.status == PredictionStatus.PENDING
 
     @property
     def is_evaluated(self) -> bool:
-        """是否已评估"""
+        """是否已评估."""
         return self.status == PredictionStatus.EVALUATED
 
     @property
     def is_cancelled(self) -> bool:
-        """是否已取消"""
+        """是否已取消."""
         return self.status == PredictionStatus.CANCELLED
 
     @property
     def is_expired(self) -> bool:
-        """是否已过期"""
+        """是否已过期."""
         return self.status == PredictionStatus.EXPIRED
 
     @property
     def accuracy_score(self) -> float:
-        """准确度分数 (0-1)"""
+        """准确度分数 (0-1)."""
         if not self.is_evaluated or not self.score:
             return 0.0
 
@@ -381,7 +380,7 @@ class Prediction:
         return score_accuracy * 0.7 + result_accuracy * 0.3
 
     def get_prediction_summary(self) -> dict[str, Any]:
-        """获取预测摘要"""
+        """获取预测摘要."""
         if not self.score:
             return {"status": "no_prediction"}
 
@@ -409,15 +408,15 @@ class Prediction:
     # ========================================
 
     def _add_domain_event(self, event: Any) -> None:
-        """添加领域事件"""
+        """添加领域事件."""
         self._domain_events.append(event)
 
     def get_domain_events(self) -> list[Any]:
-        """获取领域事件"""
+        """获取领域事件."""
         return self._domain_events.copy()
 
     def clear_domain_events(self) -> None:
-        """清除领域事件"""
+        """清除领域事件."""
         self._domain_events.clear()
 
     # ========================================
@@ -425,7 +424,7 @@ class Prediction:
     # ========================================
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -469,7 +468,7 @@ class Prediction:
     def from_dict(cls,
     data: dict[str,
     Any]) -> "Prediction":
-        """从字典创建实例"""
+        """从字典创建实例."""
         score_data = data.pop("score",
     None)
         score = PredictionScore(**score_data) if score_data else None

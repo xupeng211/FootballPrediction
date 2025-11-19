@@ -1,6 +1,5 @@
-"""
-监控指标收集器
-Metrics Collector
+"""监控指标收集器
+Metrics Collector.
 
 统一指标收集入口,向后兼容原有接口.
 """
@@ -28,7 +27,7 @@ except ImportError:
 
 # 便捷函数 - 直接实现以保持向后兼容
 def start_metrics_collection():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """启动指标收集"""
     collector = get_metrics_collector()
@@ -38,7 +37,7 @@ def start_metrics_collection():
 
 
 def stop_metrics_collection():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """停止指标收集"""
     collector = get_metrics_collector()

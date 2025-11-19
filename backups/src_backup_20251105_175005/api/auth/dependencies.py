@@ -1,5 +1,4 @@
-"""
-用户认证API的依赖项
+"""用户认证API的依赖项.
 
 提供获取当前用户,认证服务等依赖函数
 """
@@ -16,7 +15,7 @@ from src.services.auth_service import AuthService
 async def get_auth_service(
     db: AsyncSession = Depends(get_async_session),
 ) -> AuthService:
-    """获取认证服务实例"""
+    """获取认证服务实例."""
     return AuthService(db)
 
 
@@ -24,8 +23,7 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
-    """
-    获取当前登录用户
+    """获取当前登录用户.
 
     Args:
         token: JWT访问令牌
@@ -50,8 +48,7 @@ async def get_current_user(
 async def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """
-    获取当前活跃用户
+    """获取当前活跃用户.
 
     Args:
         current_user: 当前用户
@@ -72,8 +69,7 @@ async def get_current_active_user(
 async def get_current_verified_user(
     current_user: User = Depends(get_current_active_user),
 ) -> User:
-    """
-    获取当前已验证用户
+    """获取当前已验证用户.
 
     Args:
         current_user: 当前活跃用户
@@ -94,8 +90,7 @@ async def get_current_verified_user(
 async def get_current_admin_user(
     current_user: User = Depends(get_current_active_user),
 ) -> User:
-    """
-    获取当前管理员用户
+    """获取当前管理员用户.
 
     Args:
         current_user: 当前活跃用户
@@ -116,8 +111,7 @@ async def get_current_admin_user(
 async def get_current_premium_user(
     current_user: User = Depends(get_current_active_user),
 ) -> User:
-    """
-    获取当前高级用户
+    """获取当前高级用户.
 
     Args:
         current_user: 当前活跃用户
@@ -136,7 +130,7 @@ async def get_current_premium_user(
 
 
 def require_permissions(required_roles: list | None = None):
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """
     权限装饰器工厂函数
@@ -168,7 +162,7 @@ RequireAnalystOrAdmin = require_permissions(["analyst", "admin"])
 
 
 class OptionalAuth:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -178,7 +172,7 @@ class OptionalAuth:
     """
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
 
     async def __call__(
@@ -186,8 +180,7 @@ class OptionalAuth:
         token: str | None = Depends(oauth2_scheme),
         auth_service: AuthService = Depends(get_auth_service),
     ) -> User | None:
-        """
-        可选获取当前用户
+        """可选获取当前用户.
 
         Args:
             token: JWT访问令牌（可选）

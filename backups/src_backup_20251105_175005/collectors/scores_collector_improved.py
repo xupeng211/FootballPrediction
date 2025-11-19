@@ -1,5 +1,4 @@
-"""
-scores_collector_improved 主模块
+"""scores_collector_improved 主模块.
 
 此文件由长文件拆分工具自动生成
 

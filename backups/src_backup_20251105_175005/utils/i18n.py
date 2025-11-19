@@ -1,6 +1,5 @@
-"""
-国际化支持
-Internationalization Support
+"""国际化支持
+Internationalization Support.
 """
 
 import gettext
@@ -20,7 +19,7 @@ LOCALE_DIR = Path(__file__).parent / "locales"
 
 
 def init_i18n():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """初始化国际化"""
     # 确保翻译目录存在
@@ -46,7 +45,7 @@ _current_language = "zh"
 
 
 def get_text(key: str, default: str = None) -> str:
-    """获取翻译文本"
+    """获取翻译文本".
 
     Args:
         key: 翻译键
@@ -60,7 +59,7 @@ def get_text(key: str, default: str = None) -> str:
 
 
 def set_language(language: str) -> None:
-    """设置当前语言"
+    """设置当前语言".
 
     Args:
         language: 语言代码
@@ -71,7 +70,7 @@ def set_language(language: str) -> None:
 
 
 def get_current_language() -> str:
-    """获取当前语言"
+    """获取当前语言".
 
     Returns:
         当前语言代码
@@ -80,19 +79,19 @@ def get_current_language() -> str:
 
 
 class I18nUtils:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """国际化工具类"""
 
     @staticmethod
     def translate(key: str, language: str = "zh") -> str:
-        """翻译文本"""
+        """翻译文本."""
         return key  # 简化实现
 
     @staticmethod
     def get_supported_languages() -> dict:
-        """获取支持的语言"""
+        """获取支持的语言."""
         return supported_languages
 
 

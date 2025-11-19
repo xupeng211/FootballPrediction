@@ -1,6 +1,5 @@
-"""
-安全中间件
-Security Middleware
+"""安全中间件
+Security Middleware.
 
 提供各种安全功能的中间件,包括:
 - 安全头设置
@@ -33,17 +32,17 @@ logger = logging.getLogger(__name__)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """安全头中间件"""
+    """安全头中间件."""
 
     def __init__(self, app: ASGIApp, enabled: bool = True):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
         self.headers = self._get_security_headers()
 
     def _get_security_headers(self) -> dict[str, str]:
-        """获取安全头配置"""
+        """获取安全头配置."""
         return {
             "X-Frame-Options": os.getenv("X_FRAME_OPTIONS", "DENY"),
             "X-Content-Type-Options": os.getenv("X_CONTENT_TYPE_OPTIONS", "nosniff"),
@@ -61,7 +60,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return self.headers
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """处理请求并添加安全头"""
+        """处理请求并添加安全头."""
         if not self.enabled:
             return await call_next(request)
 
@@ -75,7 +74,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """速率限制中间件"""
+    """速率限制中间件."""
 
     def __init__(
         self, app: ASGIApp, requests_per_minute: int = 60, burst_size: int = 10
@@ -86,7 +85,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.clients = defaultdict(list)
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """处理请求并实施速率限制"""
+        """处理请求并实施速率限制."""
         client_ip = self._get_client_ip(request)
         current_time = time.time()
 
@@ -106,7 +105,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
     def _get_client_ip(self, request: Request) -> str:
-        """获取客户端IP地址"""
+        """获取客户端IP地址."""
         # 优先使用X-Forwarded-For头（在代理后）
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
@@ -121,7 +120,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return request.client.host if request.client else "unknown"
 
     def _cleanup_old_requests(self, client_ip: str, current_time: float):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """清理过期的请求记录"""
         cutoff_time = current_time - 60  # 1分钟前
@@ -130,7 +129,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ]
 
     def _is_rate_limited(self, client_ip: str, current_time: float) -> bool:
-        """检查是否超过速率限制"""
+        """检查是否超过速率限制."""
         requests = self.clients[client_ip]
 
         # 检查突发限制
@@ -147,17 +146,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 class AuditLoggingMiddleware(BaseHTTPMiddleware):
-    """审计日志中间件"""
+    """审计日志中间件."""
 
     def __init__(self, app: ASGIApp, enabled: bool = True):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
         self.setup_audit_logger()
 
     def setup_audit_logger(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """设置审计日志记录器"""
         if not self.enabled:
@@ -183,7 +182,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
             self.audit_logger = logger
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """处理请求并记录审计日志"""
+        """处理请求并记录审计日志."""
         if not self.enabled:
             return await call_next(request)
 
@@ -208,7 +207,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
             raise
 
     def _log_request_start(self, request: Request):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """记录请求开始"""
         self.audit_logger.info(
@@ -220,7 +219,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
     def _log_request_complete(
         self, request: Request, response: Response, duration: float
     ):
-        """记录请求完成"""
+        """记录请求完成."""
         self.audit_logger.info(
             f"Request completed: {request.method} {request.url} - "
             f"Status: {response.status_code} - "
@@ -229,7 +228,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
         )
 
     def _log_request_error(self, request: Request, error: Exception, duration: float):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """记录请求错误"""
         self.audit_logger.error(
@@ -240,7 +239,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
         )
 
     def _get_client_info(self, request: Request) -> str:
-        """获取客户端信息"""
+        """获取客户端信息."""
         client_ip = request.client.host if request.client else "unknown"
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
@@ -249,17 +248,17 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
 
 
 class CSPMiddleware(BaseHTTPMiddleware):
-    """内容安全策略中间件"""
+    """内容安全策略中间件."""
 
     def __init__(self, app: ASGIApp, enabled: bool = True):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
         self.csp_policy = self._build_csp_policy()
 
     def _build_csp_policy(self) -> str:
-        """构建CSP策略"""
+        """构建CSP策略."""
         if not self.enabled:
             return ""
 
@@ -282,7 +281,7 @@ class CSPMiddleware(BaseHTTPMiddleware):
         return "; ".join(directives)
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """处理请求并添加CSP头"""
+        """处理请求并添加CSP头."""
         if not self.enabled:
             return await call_next(request)
 
@@ -293,8 +292,7 @@ class CSPMiddleware(BaseHTTPMiddleware):
 
 
 def setup_security_middleware(app: ASGIApp) -> ASGIApp:
-    """设置所有安全中间件"""
-
+    """设置所有安全中间件."""
     # CORS中间件
     app.add_middleware(
         CORSMiddleware,
@@ -334,18 +332,18 @@ def setup_security_middleware(app: ASGIApp) -> ASGIApp:
 
 
 class SecurityConfig:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """安全配置类"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.load_config()
 
     def load_config(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """加载安全配置"""
         self.rate_limit_per_minute = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
@@ -392,7 +390,7 @@ class SecurityConfig:
         self.session_samesite_cookie = os.getenv("SESSION_SAMESITE_COOKIE", "Strict")
 
     def validate_password(self, password: str) -> bool:
-        """验证密码强度"""
+        """验证密码强度."""
         if len(password) < self.password_min_length:
             return False
 
@@ -413,7 +411,7 @@ class SecurityConfig:
         return True
 
     def get_session_config(self) -> dict[str, Any]:
-        """获取会话配置"""
+        """获取会话配置."""
         return {
             "max_age": self.session_timeout_minutes * 60,
             "secure": self.session_secure_cookie,

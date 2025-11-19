@@ -1,6 +1,5 @@
-"""
-审计服务模块（兼容版本）
-Audit Service Module (Compatibility Version)
+"""审计服务模块（兼容版本）
+Audit Service Module (Compatibility Version).
 """
 
 from dataclasses import dataclass
@@ -15,7 +14,7 @@ from .models import AuditAction, AuditEvent, AuditSeverity
 
 @dataclass
 class AuditContext:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计上下文"""
@@ -30,7 +29,7 @@ class AuditContext:
 
 @dataclass
 class AuditLog:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计日志"""
@@ -48,7 +47,7 @@ class AuditLog:
 
 @dataclass
 class AuditLogSummary:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """审计日志摘要"""

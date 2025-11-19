@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-监控数据API - 为监控面板提供数据接口
-"""
+"""监控数据API - 为监控面板提供数据接口."""
 
 import json
 import sys
@@ -13,7 +11,7 @@ sys.path.insert(0, ".")
 
 
 def load_validation_data():
-    """加载最新验证数据"""
+    """加载最新验证数据."""
     try:
         with open("validation_report.json", encoding="utf-8") as f:
             return json.load(f)
@@ -22,7 +20,7 @@ def load_validation_data():
 
 
 def load_maintenance_logs():
-    """加载维护日志"""
+    """加载维护日志."""
     log_file = Path("maintenance_logs/maintenance_log.json")
     if log_file.exists():
         try:
@@ -35,7 +33,7 @@ def load_maintenance_logs():
 
 
 def get_system_status():
-    """获取系统状态数据"""
+    """获取系统状态数据."""
     validation_data = load_validation_data()
     maintenance_logs = load_maintenance_logs()
 
@@ -73,7 +71,7 @@ def get_system_status():
 
 
 def main():
-    """主函数 - 输出JSON格式的状态数据"""
+    """主函数 - 输出JSON格式的状态数据."""
     if len(sys.argv) > 1 and sys.argv[1] == "--json":
         get_system_status()
     else:

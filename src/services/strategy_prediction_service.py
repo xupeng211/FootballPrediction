@@ -7,7 +7,7 @@ Refactored prediction service using strategy pattern for flexible algorithm sele
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from src.core.di import DIContainer
 from src.database.repositories import MatchRepository, PredictionRepository

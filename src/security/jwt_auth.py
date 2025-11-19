@@ -9,7 +9,7 @@ import os
 import secrets
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 import jwt
 import redis.asyncio as redis

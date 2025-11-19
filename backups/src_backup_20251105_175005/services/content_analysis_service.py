@@ -1,6 +1,5 @@
-"""
-内容分析服务
-Content Analysis Service
+"""内容分析服务
+Content Analysis Service.
 """
 
 from dataclasses import dataclass
@@ -9,7 +8,7 @@ from typing import Any
 
 @dataclass
 class ContentAnalysisResult:
-    """内容分析结果"""
+    """内容分析结果."""
 
     content_id: str
     analysis_type: str
@@ -19,17 +18,16 @@ class ContentAnalysisResult:
 
 
 class ContentAnalysisService:
-    """内容分析服务"""
+    """内容分析服务."""
 
     def __init__(self):
-        """初始化内容分析服务"""
+        """初始化内容分析服务."""
         self.analyzers = {}
 
     def analyze_text(
         self, text: str, analysis_type: str = "sentiment"
     ) -> ContentAnalysisResult:
-        """
-        分析文本内容
+        """分析文本内容.
 
         Args:
             text: 待分析文本
@@ -54,8 +52,7 @@ class ContentAnalysisService:
     def analyze_content(
         self, content: Any, content_type: str = "text"
     ) -> ContentAnalysisResult:
-        """
-        分析内容
+        """分析内容.
 
         Args:
             content: 待分析内容

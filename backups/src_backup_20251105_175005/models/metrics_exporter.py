@@ -1,5 +1,4 @@
-"""
-模型指标导出器
+"""模型指标导出器.
 
 提供Prometheus指标导出功能,监控模型性能和预测质量
 """
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ModelMetricsExporter:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -28,7 +27,7 @@ class ModelMetricsExporter:
     """
 
     def __init__(self, registry=None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化Prometheus指标"""
         # 使用自定义registry避免重复注册错误
@@ -104,8 +103,7 @@ class ModelMetricsExporter:
         )
 
     def export_prediction_metrics(self, result: Any) -> None:
-        """
-        导出预测指标
+        """导出预测指标.
 
         Args:
             result: PredictionResult对象
@@ -143,8 +141,7 @@ class ModelMetricsExporter:
         accuracy: float,
         time_window: str = "7d",
     ) -> None:
-        """
-        导出准确率指标
+        """导出准确率指标.
 
         Args:
             model_name: 模型名称
@@ -169,8 +166,7 @@ class ModelMetricsExporter:
     def export_duration_metrics(
         self, model_name: str, model_version: str, duration: float
     ) -> None:
-        """
-        导出响应时间指标
+        """导出响应时间指标.
 
         Args:
             model_name: 模型名称
@@ -188,8 +184,7 @@ class ModelMetricsExporter:
     def export_coverage_metrics(
         self, model_name: str, model_version: str, coverage_rate: float
     ) -> None:
-        """
-        导出模型覆盖率指标
+        """导出模型覆盖率指标.
 
         Args:
             model_name: 模型名称
@@ -207,8 +202,7 @@ class ModelMetricsExporter:
     def export_error_metrics(
         self, model_name: str, model_version: str, error_type: str
     ) -> None:
-        """
-        导出错误指标
+        """导出错误指标.
 
         Args:
             model_name: 模型名称
@@ -228,8 +222,7 @@ class ModelMetricsExporter:
     def export_model_load_duration(
         self, model_name: str, model_version: str, duration: float
     ) -> None:
-        """
-        导出模型加载时间指标
+        """导出模型加载时间指标.
 
         Args:
             model_name: 模型名称
@@ -245,8 +238,7 @@ class ModelMetricsExporter:
             logger.error(f"导出模型加载时间指标失败: {e}")
 
     def get_metrics_summary(self) -> dict[str, Any]:
-        """
-        获取指标摘要
+        """获取指标摘要.
 
         Returns:
             指标摘要字典

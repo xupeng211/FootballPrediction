@@ -1,6 +1,5 @@
-"""
-改进的TTL缓存模块
-Improved TTL Cache Module
+"""改进的TTL缓存模块
+Improved TTL Cache Module.
 
 提供高性能的内存缓存功能,支持:
 - 自动过期

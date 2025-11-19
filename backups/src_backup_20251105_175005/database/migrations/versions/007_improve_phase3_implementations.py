@@ -19,7 +19,7 @@ depends_on = None
 
 
 def upgrade():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """升级数据库架构"""
 
@@ -225,7 +225,7 @@ def upgrade():
 
 
 def downgrade():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """回滚数据库架构"""
 

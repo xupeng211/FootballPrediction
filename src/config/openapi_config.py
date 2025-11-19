@@ -2,7 +2,7 @@
 Enhanced OpenAPI Configuration and Documentation.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import FastAPI
 

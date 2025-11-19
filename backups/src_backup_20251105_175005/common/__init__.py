@@ -1,6 +1,4 @@
-"""
-Common utilities and shared components
-"""
+"""Common utilities and shared components."""
 
 from src.api import data as api_models
 

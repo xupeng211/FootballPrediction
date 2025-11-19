@@ -1,6 +1,5 @@
-"""
-基础仓储接口
-Base Repository Interface
+"""基础仓储接口
+Base Repository Interface.
 
 定义Repository模式的基础接口,提供CRUD操作的标准方法.
 Defines the base interface for the Repository pattern, providing standard CRUD operations.
@@ -21,17 +20,15 @@ T = TypeVar("T")
 
 
 class BaseRepository(ABC, Generic[T]):
-    """
-    基础仓储抽象类
-    Base Repository Abstract Class
+    """基础仓储抽象类
+    Base Repository Abstract Class.
 
     提供标准的CRUD操作,所有具体仓储都应继承此类.
     Provides standard CRUD operations, all concrete repositories should inherit from this class.
     """
 
     def __init__(self, model_class: type[T], db_manager: DatabaseManager | None = None):
-        """
-        初始化仓储
+        """初始化仓储.
 
         Args:
             model_class: SQLAlchemy模型类
@@ -48,8 +45,7 @@ class BaseRepository(ABC, Generic[T]):
     async def create(
         self, obj_data: dict[str, Any], session: AsyncSession | None = None
     ) -> T:
-        """
-        创建新记录
+        """创建新记录.
 
         Args:
             obj_data: 创建对象的数据字典
@@ -71,8 +67,7 @@ class BaseRepository(ABC, Generic[T]):
     async def get_by_id(
         self, obj_id: int | str, session: AsyncSession | None = None
     ) -> T | None:
-        """
-        根据ID获取记录
+        """根据ID获取记录.
 
         Args:
             obj_id: 记录ID
@@ -95,8 +90,7 @@ class BaseRepository(ABC, Generic[T]):
         offset: int | None = None,
         session: AsyncSession | None = None,
     ) -> list[T]:
-        """
-        获取所有记录
+        """获取所有记录.
 
         Args:
             limit: 限制返回数量
@@ -126,8 +120,7 @@ class BaseRepository(ABC, Generic[T]):
         obj_data: dict[str, Any],
         session: AsyncSession | None = None,
     ) -> T | None:
-        """
-        更新记录
+        """更新记录.
 
         Args:
             obj_id: 记录ID
@@ -156,8 +149,7 @@ class BaseRepository(ABC, Generic[T]):
     async def delete(
         self, obj_id: int | str, session: AsyncSession | None = None
     ) -> bool:
-        """
-        删除记录
+        """删除记录.
 
         Args:
             obj_id: 记录ID
@@ -188,8 +180,7 @@ class BaseRepository(ABC, Generic[T]):
         order_by: str | None = None,
         session: AsyncSession | None = None,
     ) -> list[T]:
-        """
-        根据条件查找记录
+        """根据条件查找记录.
 
         Args:
             filters: 过滤条件字典
@@ -228,8 +219,7 @@ class BaseRepository(ABC, Generic[T]):
     async def find_one_by(
         self, filters: dict[str, Any], session: AsyncSession | None = None
     ) -> T | None:
-        """
-        根据条件查找单个记录
+        """根据条件查找单个记录.
 
         Args:
             filters: 过滤条件字典
@@ -246,8 +236,7 @@ class BaseRepository(ABC, Generic[T]):
         filters: dict[str, Any] | None = None,
         session: AsyncSession | None = None,
     ) -> int:
-        """
-        统计记录数量
+        """统计记录数量.
 
         Args:
             filters: 过滤条件字典（可选）
@@ -274,8 +263,7 @@ class BaseRepository(ABC, Generic[T]):
     async def exists(
         self, filters: dict[str, Any], session: AsyncSession | None = None
     ) -> bool:
-        """
-        检查记录是否存在
+        """检查记录是否存在.
 
         Args:
             filters: 过滤条件字典
@@ -294,8 +282,7 @@ class BaseRepository(ABC, Generic[T]):
     async def bulk_create(
         self, objects_data: list[dict[str, Any]], session: AsyncSession | None = None
     ) -> list[T]:
-        """
-        批量创建记录
+        """批量创建记录.
 
         Args:
             objects_data: 创建对象的数据字典列表
@@ -321,8 +308,7 @@ class BaseRepository(ABC, Generic[T]):
     async def bulk_update(
         self, updates: list[dict[str, Any]], session: AsyncSession | None = None
     ) -> int:
-        """
-        批量更新记录
+        """批量更新记录.
 
         Args:
             updates: 更新列表,每个元素包含id和更新数据
@@ -354,8 +340,7 @@ class BaseRepository(ABC, Generic[T]):
     async def bulk_delete(
         self, ids: list[int | str], session: AsyncSession | None = None
     ) -> int:
-        """
-        批量删除记录
+        """批量删除记录.
 
         Args:
             ids: ID列表
@@ -383,8 +368,7 @@ class BaseRepository(ABC, Generic[T]):
         operations: list[Callable],
         session: AsyncSession | None = None,
     ) -> Any:
-        """
-        在事务中执行多个操作
+        """在事务中执行多个操作.
 
         Args:
             operations: 操作函数列表
@@ -425,8 +409,7 @@ class BaseRepository(ABC, Generic[T]):
         relation_name: str,
         session: AsyncSession | None = None,
     ) -> Any:
-        """
-        获取关联数据
+        """获取关联数据.
 
         Args:
             obj_id: 主记录ID
@@ -438,9 +421,9 @@ class BaseRepository(ABC, Generic[T]):
         """
 
     def get_model_class(self) -> type[T]:
-        """获取模型类"""
+        """获取模型类."""
         return self.model_class
 
     def get_model_name(self) -> str:
-        """获取模型名称"""
+        """获取模型名称."""
         return self._model_name

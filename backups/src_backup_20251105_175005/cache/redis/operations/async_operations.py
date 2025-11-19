@@ -1,6 +1,4 @@
-"""
-Redis asynchronous operations
-"""
+"""Redis asynchronous operations."""
 
 import json
 import logging
@@ -15,13 +13,13 @@ logger = get_logger(__name__)
 
 
 class RedisAsyncOperations:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """Asynchronous Redis operations"""
 
     def __init__(self, redis_url: str | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """Initialize async operations"""
         self.redis_url = redis_url or "redis://localhost:6379"
@@ -29,18 +27,18 @@ class RedisAsyncOperations:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     async def connect(self):
-        """Connect to Redis"""
+        """Connect to Redis."""
         if not self.client:
             self.client = aioredis.from_url(self.redis_url, decode_responses=True)
 
     async def disconnect(self):
-        """Disconnect from Redis"""
+        """Disconnect from Redis."""
         if self.client:
             await self.client.close()
             self.client = None
 
     async def get(self, key: str) -> Any | None:
-        """Get value from Redis"""
+        """Get value from Redis."""
         if not self.client:
             await self.connect()
         try:
@@ -53,7 +51,7 @@ class RedisAsyncOperations:
             return None
 
     async def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
-        """Set value in Redis"""
+        """Set value in Redis."""
         if not self.client:
             await self.connect()
         try:
@@ -67,7 +65,7 @@ class RedisAsyncOperations:
             return False
 
     async def delete(self, key: str) -> bool:
-        """Delete key from Redis"""
+        """Delete key from Redis."""
         if not self.client:
             await self.connect()
         try:
@@ -77,7 +75,7 @@ class RedisAsyncOperations:
             return False
 
     async def exists(self, key: str) -> bool:
-        """Check if key exists"""
+        """Check if key exists."""
         if not self.client:
             await self.connect()
         try:
@@ -87,7 +85,7 @@ class RedisAsyncOperations:
             return False
 
     async def expire(self, key: str, ttl: int) -> bool:
-        """Set TTL for key"""
+        """Set TTL for key."""
         if not self.client:
             await self.connect()
         try:

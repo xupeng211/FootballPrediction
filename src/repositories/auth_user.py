@@ -1,5 +1,3 @@
-from typing import Optional
-
 """认证用户仓储.
 
 专门用于认证服务的简化用户数据访问

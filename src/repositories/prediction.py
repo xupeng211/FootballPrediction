@@ -7,7 +7,7 @@ Implements data access logic for predictions.
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import delete, func, select, update
 

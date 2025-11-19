@@ -1,5 +1,3 @@
-from typing import Optional
-
 """历史数据策略."""
 
 # 导入

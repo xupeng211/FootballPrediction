@@ -1,5 +1,3 @@
-from typing import Optional
-
 """streaming_collector.py
 streaming_collector.
 

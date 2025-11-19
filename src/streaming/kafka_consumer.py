@@ -1,5 +1,3 @@
-from typing import Optional
-
 """Kafka消费者模块 - 兼容性包装器.
 
 为了保持向后兼容性,此文件重新导出新模块化结构中的类和函数。

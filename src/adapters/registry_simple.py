@@ -5,7 +5,7 @@ Simple Adapter Registry.
 Provides lightweight adapter registration and management functionality.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 # 尝试导入AdapterError，如果失败则创建
 try:
@@ -36,7 +36,7 @@ class AdapterRegistry:
             raise AdapterError(f"No adapter registered with name '{name}'")
         del self._registry[name]
 
-    def get_adapter_class(self, name: str) -> Optional[type]:
+    def get_adapter_class(self, name: str) -> type | None:
         """获取适配器类."""
         if name in self._registry:
             return self._registry[name]["class"]
@@ -56,7 +56,7 @@ class AdapterRegistry:
         self._instances[name] = instance
         return instance
 
-    def get_adapter(self, name: str) -> Optional[Any]:
+    def get_adapter(self, name: str) -> Any | None:
         """获取适配器实例."""
         return self._instances.get(name)
 

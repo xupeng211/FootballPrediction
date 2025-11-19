@@ -1,6 +1,6 @@
 # 简化版模块: confluent_kafka
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 class ConfluentKafka:

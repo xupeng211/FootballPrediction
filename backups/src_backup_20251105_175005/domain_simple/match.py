@@ -1,5 +1,4 @@
-"""
-比赛领域模型
+"""比赛领域模型.
 
 封装比赛的核心业务逻辑和规则.
 """
@@ -10,7 +9,7 @@ from typing import Any
 
 
 class MatchStatus(Enum):
-    """比赛状态枚举"""
+    """比赛状态枚举."""
 
     SCHEDULED = "scheduled"  # 已安排
     IN_PROGRESS = "in_progress"  # 进行中
@@ -20,7 +19,7 @@ class MatchStatus(Enum):
 
 
 class MatchResult(Enum):
-    """比赛结果枚举"""
+    """比赛结果枚举."""
 
     HOME_WIN = "home_win"  # 主队胜
     AWAY_WIN = "away_win"  # 客队胜
@@ -29,7 +28,7 @@ class MatchResult(Enum):
 
 
 class Match:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比赛领域模型"""
@@ -60,7 +59,7 @@ class Match:
         self.confidence_score = 0.0
 
     def start_match(self) -> bool:
-        """开始比赛"""
+        """开始比赛."""
         if self.status != MatchStatus.SCHEDULED:
             return False
 
@@ -68,7 +67,7 @@ class Match:
         return True
 
     def end_match(self, home_score: int, away_score: int) -> bool:
-        """结束比赛"""
+        """结束比赛."""
         if self.status != MatchStatus.IN_PROGRESS:
             return False
 
@@ -87,13 +86,13 @@ class Match:
         return True
 
     def update_score(self, home_score: int, away_score: int) -> None:
-        """更新比分"""
+        """更新比分."""
         if self.status == MatchStatus.IN_PROGRESS:
             self.home_score = home_score
             self.away_score = away_score
 
     def cancel_match(self, reason: str = "") -> bool:
-        """取消比赛"""
+        """取消比赛."""
         if self.status in [MatchStatus.COMPLETED, MatchStatus.CANCELLED]:
             return False
 
@@ -101,7 +100,7 @@ class Match:
         return True
 
     def postpone_match(self, new_time: datetime) -> bool:
-        """延期比赛"""
+        """延期比赛."""
         if self.status != MatchStatus.SCHEDULED:
             return False
 
@@ -110,24 +109,24 @@ class Match:
         return True
 
     def is_predictable(self) -> bool:
-        """检查是否可以预测"""
+        """检查是否可以预测."""
         return self.status == MatchStatus.SCHEDULED and not self.prediction_made
 
     def set_prediction(self, prediction: Any, confidence: float) -> None:
-        """设置预测结果"""
+        """设置预测结果."""
         if self.is_predictable():
             self.prediction_made = True
             self.prediction_result = prediction
             self.confidence_score = confidence
 
     def get_result(self) -> MatchResult | None:
-        """获取比赛结果"""
+        """获取比赛结果."""
         if self.status != MatchStatus.COMPLETED:
             return None
         return self.prediction_result
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "home_team_id": self.home_team_id,
@@ -148,7 +147,7 @@ class Match:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Match":
-        """从字典创建实例"""
+        """从字典创建实例."""
         match = cls(
             id=data.get("id"),
             home_team_id=data.get("home_team_id", 0),

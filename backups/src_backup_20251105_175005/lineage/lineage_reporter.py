@@ -1,5 +1,4 @@
-"""
-数据血缘报告器
+"""数据血缘报告器.
 
 集成 OpenLineage 标准,自动上报数据血缘信息到 Marquez。
 跟踪数据流转过程,包括采集,清洗,转换等各个环节.
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class LineageReporter:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -42,8 +41,7 @@ class LineageReporter:
         marquez_url: str = "http://localhost:5000",
         namespace: str = "football_prediction",
     ):
-        """
-        初始化数据血缘报告器
+        """初始化数据血缘报告器.
 
         Args:
             marquez_url: Marquez 服务地址
@@ -65,8 +63,7 @@ class LineageReporter:
         parent_run_id: str | None = None,
         transformation_sql: str | None = None,
     ) -> str:
-        """
-        开始一个作业运行
+        """开始一个作业运行.
 
         Args:
             job_name: 作业名称
@@ -168,8 +165,7 @@ class LineageReporter:
         metrics: dict[str, Any] | None = None,
         run_id: str | None = None,
     ) -> bool:
-        """
-        完成一个作业运行
+        """完成一个作业运行.
 
         Args:
             job_name: 作业名称
@@ -257,14 +253,13 @@ class LineageReporter:
     error_message: str,
     run_id: str | None = None
     ) -> bool:
-        """
-        标记作业运行失败
+        """标记作业运行失败.
 
         Args:
             job_name: 作业名称
             error_message: 错误信息
             run_id: 运行ID（如果不提供,
-    从活跃运行中获取）
+        从活跃运行中获取）
 
         Returns:
             bool: 是否成功
@@ -321,8 +316,7 @@ class LineageReporter:
         collection_time: datetime,
         source_config: dict[str, Any] | None = None,
     ) -> str:
-        """
-        报告数据采集过程
+        """报告数据采集过程.
 
         Args:
             source_name: 数据源名称
@@ -389,8 +383,7 @@ class LineageReporter:
         records_processed: int,
         transformation_type: str = "ETL",
     ) -> str:
-        """
-        报告数据转换过程
+        """报告数据转换过程.
 
         Args:
             source_tables: 源表列表
@@ -446,8 +439,7 @@ class LineageReporter:
         return run_id
 
     def get_active_runs(self) -> dict[str, str]:
-        """
-        获取当前活跃的运行
+        """获取当前活跃的运行.
 
         Returns:
             Dict[str, str]: 作业名称到运行ID的映射
@@ -455,7 +447,7 @@ class LineageReporter:
         return self._active_runs.copy()
 
     def clear_active_runs(self) -> None:
-        """清理所有活跃运行记录"""
+        """清理所有活跃运行记录."""
         self._active_runs.clear()
         logger.info("Cleared all active runs")
 

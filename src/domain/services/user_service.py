@@ -4,7 +4,7 @@ User Domain Service.
 处理用户相关的业务逻辑.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
 class UserService:

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """merge_remaining_heads".
 
 Revision ID: 9de9a8b8aa92

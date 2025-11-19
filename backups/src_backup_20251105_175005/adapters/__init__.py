@@ -1,6 +1,5 @@
-"""
-适配器模式实现
-Adapter Pattern Implementation
+"""适配器模式实现
+Adapter Pattern Implementation.
 
 用于集成外部系统和API.
 Used to integrate external systems and APIs.

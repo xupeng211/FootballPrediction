@@ -1,6 +1,5 @@
-"""
-系统指标收集器
-System Metrics Collector
+"""系统指标收集器
+System Metrics Collector.
 
 负责收集系统,数据库,缓存等各项指标.
 """
@@ -16,7 +15,7 @@ from src.database.connection import DatabaseManager
 
 
 class SystemMetricsCollector:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """系统指标收集器"""
@@ -69,15 +68,15 @@ class SystemMetricsCollector:
         )
 
     def set_database_manager(self, db_manager: DatabaseManager) -> None:
-        """设置数据库管理器"""
+        """设置数据库管理器."""
         self.db_manager = db_manager
 
     def set_redis_manager(self, redis_manager: RedisConnectionManager) -> None:
-        """设置Redis管理器"""
+        """设置Redis管理器."""
         self.redis_manager = redis_manager
 
     async def collect_system_metrics(self) -> dict[str, Any]:
-        """收集系统指标"""
+        """收集系统指标."""
         metrics = {}
 
         # CPU 使用率
@@ -137,7 +136,7 @@ class SystemMetricsCollector:
         return metrics
 
     async def collect_database_metrics(self) -> dict[str, Any]:
-        """收集数据库指标"""
+        """收集数据库指标."""
         if not self.db_manager:
             return {"error": "Database manager not set"}
 
@@ -171,7 +170,7 @@ class SystemMetricsCollector:
         return metrics
 
     async def collect_cache_metrics(self) -> dict[str, Any]:
-        """收集缓存指标"""
+        """收集缓存指标."""
         if not self.redis_manager:
             return {"error": "Redis manager not set"}
 
@@ -216,7 +215,7 @@ class SystemMetricsCollector:
         return metrics
 
     async def collect_application_metrics(self) -> dict[str, Any]:
-        """收集应用程序指标"""
+        """收集应用程序指标."""
         metrics = {}
 
         # 获取当前进程信息

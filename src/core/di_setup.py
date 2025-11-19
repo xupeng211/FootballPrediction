@@ -1,5 +1,3 @@
-from typing import Optional
-
 """依赖注入设置
 Dependency Injection Setup.
 

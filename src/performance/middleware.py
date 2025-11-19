@@ -1,5 +1,3 @@
-from typing import Optional
-
 """性能监控中间件
 Performance Monitoring Middleware.
 

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """Models - API模块.
 
 提供 models 相关的API功能.

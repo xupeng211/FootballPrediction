@@ -6,7 +6,7 @@ Author: Claude Code
 Version: 1.0.0
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html

@@ -7,7 +7,7 @@ Provides base abstract classes and interfaces for the adapter pattern.
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class AdapterStatus(Enum):

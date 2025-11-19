@@ -1,5 +1,3 @@
-from typing import Optional
-
 """CQRS API端点
 CQRS API Endpoints.
 

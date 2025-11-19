@@ -1,6 +1,5 @@
-"""
-预测领域服务
-Prediction Domain Service
+"""预测领域服务
+Prediction Domain Service.
 
 处理预测相关的复杂业务逻辑.
 Handles complex business logic related to predictions.
@@ -23,13 +22,13 @@ from src.domain.models.prediction import Prediction, PredictionPoints, Predictio
 
 
 class PredictionDomainService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测领域服务"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self._events: list[Any] = []
 
@@ -42,7 +41,7 @@ class PredictionDomainService:
         confidence: float | None = None,
         notes: str | None = None,
     ) -> Prediction:
-        """创建预测"""
+        """创建预测."""
         # 验证比赛状态
         if match.status != MatchStatus.SCHEDULED:
             raise ValueError("只能对未开始的比赛进行预测")
@@ -100,7 +99,7 @@ class PredictionDomainService:
         new_confidence: float | None = None,
         new_notes: str | None = None,
     ) -> None:
-        """更新预测"""
+        """更新预测."""
         # 验证预测状态
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能更新待处理的预测")
@@ -138,7 +137,7 @@ class PredictionDomainService:
         actual_away: int,
         scoring_rules: dict[str, Any] | None = None,
     ) -> None:
-        """评估预测"""
+        """评估预测."""
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能评估待处理的预测")
 
@@ -166,7 +165,7 @@ class PredictionDomainService:
         self._events.append(event)
 
     def cancel_prediction(self, prediction: Prediction) -> None:
-        """取消预测"""
+        """取消预测."""
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能取消待处理的预测")
 
@@ -180,7 +179,7 @@ class PredictionDomainService:
         self._events.append(event)
 
     def expire_prediction(self, prediction: Prediction) -> None:
-        """使预测过期"""
+        """使预测过期."""
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能使待处理的预测过期")
 
@@ -201,7 +200,7 @@ class PredictionDomainService:
     def adjust_prediction_points(
         self, prediction: Prediction, new_points: int, adjustment_reason: str
     ) -> None:
-        """调整预测积分"""
+        """调整预测积分."""
         if prediction.status != PredictionStatus.EVALUATED:
             raise ValueError("只能调整已评估的预测积分")
 
@@ -231,7 +230,7 @@ class PredictionDomainService:
         match重要性: float,
         team_form_diff: float | None = None,
     ) -> float:
-        """计算预测信心度"""
+        """计算预测信心度."""
         base_confidence = 0.5
 
         # 根据用户历史准确率调整
@@ -255,7 +254,7 @@ class PredictionDomainService:
         user_predictions_today: int,
         max_predictions_per_day: int = 10,
     ) -> list[str]:
-        """验证预测规则"""
+        """验证预测规则."""
         errors = []
 
         # 检查每日预测限制
@@ -282,9 +281,9 @@ class PredictionDomainService:
         return errors
 
     def get_domain_events(self) -> list[Any]:
-        """获取领域事件"""
+        """获取领域事件."""
         return self._events.copy()
 
     def clear_domain_events(self) -> None:
-        """清除领域事件"""
+        """清除领域事件."""
         self._events.clear()

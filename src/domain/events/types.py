@@ -7,7 +7,7 @@ Defines event-related data types.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from .base import EventData
 

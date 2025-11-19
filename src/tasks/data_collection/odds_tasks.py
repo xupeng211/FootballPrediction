@@ -1,5 +1,3 @@
-from typing import Optional
-
 """Odds Data Collection Tasks.
 
 # 此文件已从 data_collection_tasks_legacy.py 拆分

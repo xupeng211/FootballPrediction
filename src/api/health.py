@@ -1,5 +1,3 @@
-from typing import Optional
-
 """# 导出所有类.
 
 health.py

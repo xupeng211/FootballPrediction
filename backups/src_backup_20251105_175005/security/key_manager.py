@@ -1,5 +1,4 @@
-"""
-密钥管理模块 - 桩实现
+"""密钥管理模块 - 桩实现.
 
 Key Management Module - Stub Implementation
 
@@ -12,7 +11,7 @@ import os
 
 
 class KeyManager:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -22,7 +21,7 @@ class KeyManager:
     """
 
     def __init__(self, key_file: str | None = None):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """
         初始化密钥管理器
@@ -36,8 +35,7 @@ class KeyManager:
         self.logger.info("KeyManager initialized (stub implementation)")
 
     def get_key(self, key_name: str) -> str:
-        """
-        获取密钥
+        """获取密钥.
 
         Args:
             key_name: 密钥名称
@@ -50,8 +48,7 @@ class KeyManager:
         return f"dummy_key_{key_name}"
 
     def set_key(self, key_name: str, value: str) -> None:
-        """
-        设置密钥
+        """设置密钥.
 
         Args:
             key_name: 密钥名称
@@ -61,8 +58,7 @@ class KeyManager:
         self._keys[key_name] = value
 
     def delete_key(self, key_name: str) -> bool:
-        """
-        删除密钥
+        """删除密钥.
 
         Args:
             key_name: 密钥名称
@@ -77,8 +73,7 @@ class KeyManager:
         return False
 
     def list_keys(self) -> dict[str, str]:
-        """
-        列出所有密钥
+        """列出所有密钥.
 
         Returns:
             密钥字典
@@ -86,8 +81,7 @@ class KeyManager:
         return self._keys.copy()
 
     def rotate_key(self, key_name: str) -> str:
-        """
-        轮换密钥
+        """轮换密钥.
 
         Args:
             key_name: 密钥名称
@@ -101,8 +95,7 @@ class KeyManager:
         return new_key
 
     def encrypt(self, data: str, key_name: str) -> str:
-        """
-        加密数据
+        """加密数据.
 
         Args:
             data: 要加密的数据
@@ -118,8 +111,7 @@ class KeyManager:
         return base64.b64encode(data.encode()).decode()
 
     def decrypt(self, encrypted_data: str, key_name: str) -> str:
-        """
-        解密数据
+        """解密数据.
 
         Args:
             encrypted_data: 加密的数据
@@ -135,8 +127,7 @@ class KeyManager:
         return base64.b64decode(encrypted_data.encode()).decode()
 
     def validate_key(self, key_name: str) -> bool:
-        """
-        验证密钥是否有效
+        """验证密钥是否有效.
 
         Args:
             key_name: 密钥名称
@@ -147,8 +138,7 @@ class KeyManager:
         return key_name in self._keys or key_name.startswith("dummy_")
 
     def load_keys_from_file(self, file_path: str | None = None) -> None:
-        """
-        从文件加载密钥
+        """从文件加载密钥.
 
         Args:
             file_path: 文件路径
@@ -158,8 +148,7 @@ class KeyManager:
         # 桩实现:不实际加载
 
     def save_keys_to_file(self, file_path: str | None = None) -> None:
-        """
-        保存密钥到文件
+        """保存密钥到文件.
 
         Args:
             file_path: 文件路径
@@ -174,8 +163,7 @@ _global_key_manager: KeyManager | None = None
 
 
 def get_key_manager() -> KeyManager:
-    """
-    获取全局密钥管理器实例
+    """获取全局密钥管理器实例.
 
     Returns:
         KeyManager 实例
@@ -188,20 +176,20 @@ def get_key_manager() -> KeyManager:
 
 # 便捷函数
 def get_key(key_name: str) -> str:
-    """获取密钥的便捷函数"""
+    """获取密钥的便捷函数."""
     return get_key_manager().get_key(key_name)
 
 
 def set_key(key_name: str, value: str) -> None:
-    """设置密钥的便捷函数"""
+    """设置密钥的便捷函数."""
     get_key_manager().set_key(key_name, value)
 
 
 def encrypt_data(data: str, key_name: str) -> str:
-    """加密数据的便捷函数"""
+    """加密数据的便捷函数."""
     return get_key_manager().encrypt(data, key_name)
 
 
 def decrypt_data(encrypted_data: str, key_name: str) -> str:
-    """解密数据的便捷函数"""
+    """解密数据的便捷函数."""
     return get_key_manager().decrypt(encrypted_data, key_name)

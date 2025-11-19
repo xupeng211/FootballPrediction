@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-部署工具链
-"""
+"""部署工具链."""
 
 import sys
 from pathlib import Path
@@ -16,7 +14,7 @@ except ImportError:
     sys.exit(1)
 
 def main():
-    """主函数"""
+    """主函数."""
     logger = get_logger("部署工具链")
 
     logger.info("开始部署工具链...")

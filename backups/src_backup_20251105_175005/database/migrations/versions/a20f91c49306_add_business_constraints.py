@@ -28,8 +28,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """添加业务逻辑约束和触发器"""
-
+    """添加业务逻辑约束和触发器."""
     # 检查是否在SQLite环境中（测试环境）
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()
@@ -202,8 +201,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """移除业务逻辑约束和触发器"""
-
+    """移除业务逻辑约束和触发器."""
     # 检查是否在SQLite环境中（测试环境）
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()

@@ -1,5 +1,3 @@
-from typing import Optional
-
 # 简化版 match 模块
 
 

@@ -1,6 +1,5 @@
-"""
-增强版比赛赛程收集器
-集成新的数据源管理器,支持多种数据源
+"""增强版比赛赛程收集器
+集成新的数据源管理器,支持多种数据源.
 """
 
 from datetime import datetime, timedelta
@@ -19,13 +18,13 @@ logger = get_logger(__name__)
 
 
 class EnhancedFixturesCollector:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """增强版比赛赛程收集器"""
 
     def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.db_session = db_session
         self.redis_client = redis_client
@@ -38,8 +37,7 @@ class EnhancedFixturesCollector:
         force_refresh: bool = False,
         preferred_source: str = "mock",
     ) -> list[dict[str, Any]]:
-        """
-        收集所有未来比赛
+        """收集所有未来比赛.
 
         Args:
             days_ahead: 向前搜索的天数
@@ -108,8 +106,7 @@ class EnhancedFixturesCollector:
         force_refresh: bool = False,
         preferred_source: str = "mock",
     ) -> list[dict[str, Any]]:
-        """
-        收集指定球队的未来比赛
+        """收集指定球队的未来比赛.
 
         Args:
             team_name: 球队名称
@@ -178,8 +175,7 @@ class EnhancedFixturesCollector:
         force_refresh: bool = False,
         preferred_source: str = "mock",
     ) -> list[dict[str, Any]]:
-        """
-        收集联赛的比赛赛程
+        """收集联赛的比赛赛程.
 
         Args:
             league_name: 联赛名称
@@ -244,8 +240,7 @@ class EnhancedFixturesCollector:
         force_refresh: bool = False,
         preferred_source: str = "mock",
     ) -> list[dict[str, Any]]:
-        """
-        收集球队信息
+        """收集球队信息.
 
         Args:
             league_name: 联赛名称（可选）
@@ -299,7 +294,7 @@ class EnhancedFixturesCollector:
             return []
 
     def _convert_match_data_to_dict(self, match_data: MatchData) -> dict[str, Any]:
-        """将MatchData转换为字典格式"""
+        """将MatchData转换为字典格式."""
         return {
             "id": match_data.id,
             "home_team": match_data.home_team,
@@ -320,7 +315,7 @@ class EnhancedFixturesCollector:
         }
 
     def _convert_team_data_to_dict(self, team_data: TeamData) -> dict[str, Any]:
-        """将TeamData转换为字典格式"""
+        """将TeamData转换为字典格式."""
         return {
             "id": team_data.id,
             "name": team_data.name,
@@ -333,7 +328,7 @@ class EnhancedFixturesCollector:
         }
 
     async def _save_fixture_to_db(self, fixture_dict: dict[str, Any]) -> bool:
-        """保存比赛到数据库"""
+        """保存比赛到数据库."""
         try:
             # 检查比赛是否已存在
             existing_match = await self.db_session.get(Match, fixture_dict["id"])
@@ -359,7 +354,7 @@ class EnhancedFixturesCollector:
             return False
 
     async def _save_team_to_db(self, team_dict: dict[str, Any]) -> bool:
-        """保存球队到数据库"""
+        """保存球队到数据库."""
         try:
             # 检查球队是否已存在
             existing_team = await self.db_session.get(Team, team_dict["id"])
@@ -385,7 +380,7 @@ class EnhancedFixturesCollector:
             return False
 
     async def get_data_source_status(self) -> dict[str, Any]:
-        """获取数据源状态"""
+        """获取数据源状态."""
         available_sources = self.data_source_manager.get_available_sources()
 
         status = {

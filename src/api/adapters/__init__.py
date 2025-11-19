@@ -2,7 +2,6 @@ from typing import Optional
 
 # adapters package init
 # 自动生成以解决导入问题
-
 from src.adapters import AdapterFactory, AdapterRegistry
 
 from .router import router

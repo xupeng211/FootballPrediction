@@ -1,6 +1,5 @@
-"""
-安全模块
-Security Module
+"""安全模块
+Security Module.
 
 提供安全相关的功能,包括:
 - 安全中间件

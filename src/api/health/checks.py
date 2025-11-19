@@ -1,5 +1,3 @@
-from typing import Optional
-
 """Checks - API模块.
 
 提供 checks 相关的API功能.

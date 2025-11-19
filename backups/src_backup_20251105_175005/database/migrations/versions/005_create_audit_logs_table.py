@@ -91,7 +91,7 @@ depends_on = None
 
 
 def upgrade():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """升级数据库架构 - 创建audit_logs表"""
     conn = op.get_bind()
@@ -297,7 +297,7 @@ def upgrade():
 
 
 def downgrade():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """降级数据库架构 - 删除audit_logs表"""
     if not context.is_offline_mode():

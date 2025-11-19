@@ -1,5 +1,3 @@
-from typing import Optional
-
 # mypy: ignore-errors
 import sqlalchemy as sa
 from alembic import op

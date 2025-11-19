@@ -7,7 +7,7 @@ Handles complex business logic related to predictions.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from src.domain.events.prediction_events import (
     PredictionCancelledEvent,

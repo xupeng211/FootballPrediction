@@ -1,6 +1,5 @@
-"""
-外部联赛数据模型
-External Competition Data Model
+"""外部联赛数据模型
+External Competition Data Model.
 """
 
 from datetime import datetime
@@ -12,7 +11,7 @@ Base = declarative_base()
 
 
 class ExternalCompetition(Base):
-    """外部联赛数据模型"""
+    """外部联赛数据模型."""
 
     __tablename__ = "external_competitions"
 

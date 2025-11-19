@@ -1,6 +1,5 @@
-"""
-添加多租户支持
-Add Multi-Tenant Support
+"""添加多租户支持
+Add Multi-Tenant Support.
 
 Revision ID: 005_add_multi_tenant_support
 Revises: 004_configure_database_permissions
@@ -22,8 +21,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """升级数据库,添加多租户支持"""
-
+    """升级数据库,添加多租户支持."""
     # 创建租户表
     op.create_table(
         "tenants",
@@ -426,8 +424,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """降级数据库,移除多租户支持"""
-
+    """降级数据库,移除多租户支持."""
     # 删除索引
     op.drop_index("idx_users_tenant_id", table_name="users")
     op.drop_index("idx_predictions_tenant_id", table_name="predictions")

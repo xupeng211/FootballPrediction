@@ -13,7 +13,7 @@ from email.mime.html import MIMEText as MIMEHtml
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 import jinja2

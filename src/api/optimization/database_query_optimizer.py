@@ -7,7 +7,7 @@ Database Query Performance Optimizer.
 import logging
 from collections import deque
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.pool import QueuePool

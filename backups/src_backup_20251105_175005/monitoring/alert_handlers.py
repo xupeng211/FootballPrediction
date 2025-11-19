@@ -1,6 +1,5 @@
-"""
-告警处理器
-Alert Handlers
+"""告警处理器
+Alert Handlers.
 
 处理不同类型的告警输出.
 """
@@ -14,7 +13,7 @@ from .alert_manager_mod.models import Alert, AlertChannel
 
 
 class PrometheusMetrics:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """Prometheus 指标管理"""
@@ -45,13 +44,13 @@ class PrometheusMetrics:
         )
 
     def increment_counter(self, alert: Alert) -> None:
-        """增加告警计数"""
+        """增加告警计数."""
         self.alerts_total.labels(
             severity=alert.severity.value, type=alert.type.value, source=alert.source
         ).inc()
 
     def set_active_gauge(self, alerts: list[Alert]) -> None:
-        """设置活跃告警数量"""
+        """设置活跃告警数量."""
         # 重置所有活跃告警
         self.active_alerts.clear()
 
@@ -63,12 +62,12 @@ class PrometheusMetrics:
                 ).set(1)
 
     def observe_resolution_time(self, alert: Alert, duration: float) -> None:
-        """记录告警解决时间"""
+        """记录告警解决时间."""
         self.alert_duration.labels(severity=alert.severity.value).observe(duration)
 
 
 class AlertHandler:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """告警处理器基类"""
@@ -77,23 +76,23 @@ class AlertHandler:
         self.channel = channel
 
     async def handle(self, alert: Alert) -> bool:
-        """处理告警"""
+        """处理告警."""
         raise NotImplementedError
 
     def get_name(self) -> str:
-        """获取处理器名称"""
+        """获取处理器名称."""
         return self.__class__.__name__
 
 
 class LogHandler(AlertHandler):
-    """日志告警处理器"""
+    """日志告警处理器."""
 
     def __init__(self) -> None:
         super().__init__(AlertChannel.LOG)
         self.logger = logging.getLogger("alerts")
 
     async def handle(self, alert: Alert) -> bool:
-        """处理日志告警"""
+        """处理日志告警."""
         try:
             # 根据严重程度选择日志级别
             level_map = {
@@ -121,14 +120,14 @@ class LogHandler(AlertHandler):
 
 
 class PrometheusHandler(AlertHandler):
-    """Prometheus 告警处理器"""
+    """Prometheus 告警处理器."""
 
     def __init__(self, metrics: PrometheusMetrics) -> None:
         super().__init__(AlertChannel.PROMETHEUS)
         self.metrics = metrics
 
     async def handle(self, alert: Alert) -> bool:
-        """处理 Prometheus 告警"""
+        """处理 Prometheus 告警."""
         try:
             # 更新指标
             self.metrics.increment_counter(alert)
@@ -140,7 +139,7 @@ class PrometheusHandler(AlertHandler):
 
 
 class WebhookHandler(AlertHandler):
-    """Webhook 告警处理器"""
+    """Webhook 告警处理器."""
 
     def __init__(self, url: str, headers: dict[str, str] | None = None) -> None:
         super().__init__(AlertChannel.WEBHOOK)
@@ -148,7 +147,7 @@ class WebhookHandler(AlertHandler):
         self.headers = headers or {}
 
     async def handle(self, alert: Alert) -> bool:
-        """处理 Webhook 告警"""
+        """处理 Webhook 告警."""
         try:
             import aiohttp
 
@@ -172,14 +171,14 @@ class WebhookHandler(AlertHandler):
 
 
 class EmailHandler(AlertHandler):
-    """邮件告警处理器"""
+    """邮件告警处理器."""
 
     def __init__(self, smtp_config: dict[str, Any]) -> None:
         super().__init__(AlertChannel.EMAIL)
         self.smtp_config = smtp_config
 
     async def handle(self, alert: Alert) -> bool:
-        """处理邮件告警"""
+        """处理邮件告警."""
         try:
             import smtplib
             from email.mime.multipart import MIMEMultipart

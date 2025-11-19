@@ -1,6 +1,5 @@
-"""
-足球预测引擎核心模块
-Football Prediction Engine Core Module
+"""足球预测引擎核心模块
+Football Prediction Engine Core Module.
 
 集成了机器学习模型,特征工程,数据收集和缓存管理,
 提供高性能的比赛预测服务。
@@ -15,7 +14,7 @@ PredictionStatistics = None
 
 
 def _lazy_import():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """延迟导入以避免循环导入"""
     global PredictionEngine, PredictionConfig, PredictionStatistics
@@ -34,8 +33,7 @@ _prediction_engine_instance = None
 
 
 async def get_prediction_engine():
-    """
-    获取预测引擎单例实例
+    """获取预测引擎单例实例.
 
     Returns:
         PredictionEngine: 预测引擎实例

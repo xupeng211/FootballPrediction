@@ -33,7 +33,7 @@ security = HTTPBearer()
 
 class PredictionResult(str,
     Enum):
-    """预测结果枚举"""
+    """预测结果枚举."""
 
     HOME_WIN = "home_win"
     DRAW = "draw"
@@ -42,7 +42,7 @@ class PredictionResult(str,
 
 # Pydantic模型定义
 class MatchInfo(BaseModel):
-    """比赛信息模型"""
+    """比赛信息模型."""
 
     match_id: int = Field(...,
     description="比赛ID")
@@ -75,7 +75,7 @@ class MatchInfo(BaseModel):
 
 
 class PredictionRequest(BaseModel):
-    """预测请求模型"""
+    """预测请求模型."""
 
     match_info: MatchInfo = Field(...,
     description="比赛信息")
@@ -86,7 +86,7 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """预测响应模型"""
+    """预测响应模型."""
 
     success: bool = Field(...,
     description="预测是否成功")
@@ -117,7 +117,7 @@ class PredictionResponse(BaseModel):
 
 
 class BatchPredictionRequest(BaseModel):
-    """批量预测请求模型"""
+    """批量预测请求模型."""
 
     matches: list[MatchInfo] = Field(
         ...,
@@ -139,7 +139,7 @@ class BatchPredictionRequest(BaseModel):
 
 
 class BatchPredictionResponse(BaseModel):
-    """批量预测响应模型"""
+    """批量预测响应模型."""
 
     success: bool = Field(...,
     description="批量预测是否成功")
@@ -162,13 +162,13 @@ class BatchPredictionResponse(BaseModel):
 
 
 class SimplePredictionService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """简化版预测服务 - 不依赖数据库"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.request_count = 0
         self._rate_limit_cache = {}
@@ -176,7 +176,7 @@ class SimplePredictionService:
     async def verify_token(
         self, credentials: HTTPAuthorizationCredentials = Depends(security)
     ) -> str:
-        """验证JWT Token (简化版本)"""
+        """验证JWT Token (简化版本)."""
         try:
             token = credentials.credentials
             if not token or len(token) < 10:
@@ -195,7 +195,7 @@ class SimplePredictionService:
             ) from e
 
     async def check_rate_limit(self, token: str, redis_client) -> bool:
-        """检查请求频率限制"""
+        """检查请求频率限制."""
         try:
             key = f"rate_limit:simple:{token}"
             current_time = int(time.time())
@@ -240,7 +240,7 @@ class SimplePredictionService:
             return True  # 如果出错,不限制请求
 
     async def generate_prediction(self, match_info: MatchInfo) -> dict:
-        """生成单个预测"""
+        """生成单个预测."""
         start_time = time.time()
 
         try:
@@ -279,7 +279,7 @@ class SimplePredictionService:
             ) from e
 
     async def _extract_features(self, match_info: MatchInfo) -> dict:
-        """提取比赛特征"""
+        """提取比赛特征."""
         import numpy as np
 
         # 基于队名生成模拟特征
@@ -308,7 +308,7 @@ class SimplePredictionService:
     async def _predict_with_model(self,
     features: dict,
     match_info: MatchInfo) -> dict:
-        """使用模型进行预测"""
+        """使用模型进行预测."""
         import numpy as np
 
         home_strength = features["home_team_strength"] + features["home_advantage"]
@@ -379,8 +379,7 @@ async def predict_match_simple(
     redis_client=Depends(get_redis_manager),
 
 ):
-    """
-    SRS规范简化预测接口 - 不依赖数据库
+    """SRS规范简化预测接口 - 不依赖数据库.
 
     功能:
     - 输入赛事信息返回胜/平/负概率
@@ -440,8 +439,7 @@ async def predict_batch_simple(
 
     redis_client=Depends(get_redis_manager),
     ):
-    """
-    批量预测接口 - 支持1000场比赛并发
+    """批量预测接口 - 支持1000场比赛并发.
 
     功能:
     - 同时处理多场比赛预测
@@ -534,7 +532,7 @@ async def get_prediction_metrics_simple(
     token: str = Depends(simple_prediction_service.verify_token),
 
 ):
-    """获取预测性能指标"""
+    """获取预测性能指标."""
     return {
         "model_metrics": {
             "accuracy": "≥ 65%",  # TODO: 将魔法数字 65 提取为常量
@@ -569,7 +567,7 @@ async def get_prediction_metrics_simple(
 
 @router.get("/health")
 async def health_check():
-    """健康检查接口 - 不依赖数据库"""
+    """健康检查接口 - 不依赖数据库."""
     return {
         "status": "healthy",
         "service": "predictions-srs-simple",
@@ -582,14 +580,14 @@ async def health_check():
 async def log_prediction_simple(match_id: int,
     prediction: str,
     response_time: float):
-    """记录预测日志"""
+    """记录预测日志."""
     logger.info(
         f"Simple Prediction logged - Match: {match_id}, Result: {prediction}, Time: {response_time:.2f}ms"
     )
 
 
 async def log_batch_prediction_simple(total: int, successful: int, total_time: float):
-    """记录批量预测日志"""
+    """记录批量预测日志."""
     logger.info(
         f"Simple Batch prediction - Total: {total}, Successful: {successful}, Total time: {total_time:.2f}ms"
     )

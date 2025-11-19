@@ -10,7 +10,7 @@ import logging
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, TypeVar, Optional
+from typing import Any, TypeVar
 
 T = TypeVar("T", bound="Event")
 

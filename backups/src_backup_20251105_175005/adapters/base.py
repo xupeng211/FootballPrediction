@@ -1,6 +1,5 @@
-"""
-适配器模式基类
-Adapter Pattern Base Classes
+"""适配器模式基类
+Adapter Pattern Base Classes.
 
 定义适配器模式的核心接口和抽象类.
 Define core interfaces and abstract classes for the adapter pattern.
@@ -13,7 +12,7 @@ from typing import Any
 
 
 class AdapterStatus(Enum):
-    """适配器状态枚举"""
+    """适配器状态枚举."""
 
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -22,50 +21,50 @@ class AdapterStatus(Enum):
 
 
 class Adaptee(ABC):
-    """被适配者接口,需要被适配的现有接口"""
+    """被适配者接口,需要被适配的现有接口."""
 
     @abstractmethod
     async def get_data(self, *args, **kwargs) -> Any:
-        """获取原始数据"""
+        """获取原始数据."""
 
     @abstractmethod
     async def send_data(self, data: Any) -> Any:
-        """发送数据"""
+        """发送数据."""
 
 
 class Target(ABC):
-    """目标接口,客户端期望的接口"""
+    """目标接口,客户端期望的接口."""
 
     @abstractmethod
     async def request(self, *args, **kwargs) -> Any:
-        """标准请求方法"""
+        """标准请求方法."""
 
 
 class Adapter(Target):
-    """适配器基类,将Adaptee接口转换为Target接口"""
+    """适配器基类,将Adaptee接口转换为Target接口."""
 
 
 class BaseAdapter(ABC):
-    """基础适配器抽象类"""
+    """基础适配器抽象类."""
 
     @abstractmethod
     async def process(self, data: Any) -> Any:
-        """处理数据"""
+        """处理数据."""
 
 
 class DataTransformer(ABC):
-    """数据转换器基类"""
+    """数据转换器基类."""
 
     @abstractmethod
     async def transform(self, data: Any, **kwargs) -> Any:
-        """转换数据格式"""
+        """转换数据格式."""
 
 
 class CompositeAdapter(Adapter):
-    """组合适配器,可以管理多个子适配器"""
+    """组合适配器,可以管理多个子适配器."""
 
     def __init__(self, name: str = "CompositeAdapter"):
-        """初始化组合适配器"""
+        """初始化组合适配器."""
         self.name = name
         self.adapters: list[Adapter] = []
         self.adapter_registry: dict[str, Adapter] = {}
@@ -80,7 +79,7 @@ class CompositeAdapter(Adapter):
         self.last_error = None
 
     def get_metrics(self) -> dict[str, Any]:
-        """获取适配器指标"""
+        """获取适配器指标."""
         return {
             "name": self.name,
             "status": self.status.value,
@@ -96,12 +95,12 @@ class CompositeAdapter(Adapter):
         }
 
     def add_adapter(self, adapter: Adapter) -> None:
-        """添加子适配器"""
+        """添加子适配器."""
         self.adapters.append(adapter)
         self.adapter_registry[adapter.name] = adapter
 
     def remove_adapter(self, adapter_name: str) -> bool:
-        """移除子适配器"""
+        """移除子适配器."""
         if adapter_name in self.adapter_registry:
             adapter = self.adapter_registry[adapter_name]
             self.adapters.remove(adapter)
@@ -111,11 +110,11 @@ class CompositeAdapter(Adapter):
 
     # TODO: 方法 def get_adapter 过长(23行)，建议拆分
     def get_adapter(self, adapter_name: str) -> Adapter | None:
-        """获取子适配器"""
+        """获取子适配器."""
         return self.adapter_registry.get(adapter_name)
 
     async def request(self, *args, **kwargs) -> Any:
-        """并行请求所有适配器并合并结果"""
+        """并行请求所有适配器并合并结果."""
         results = []
 
         # 并行请求所有适配器

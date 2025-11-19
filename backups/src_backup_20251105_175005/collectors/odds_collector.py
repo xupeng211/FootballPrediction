@@ -1,6 +1,5 @@
-"""
-odds_collector.py
-odds_collector
+"""odds_collector.py
+odds_collector.
 
 此文件已被拆分为多个模块以提供更好的组织结构。
 This file has been split into multiple modules for better organization.
@@ -31,27 +30,27 @@ warnings.warn(
 
 # 创建兼容类
 class OddsCollector:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """兼容性占位符类"""
 
     def __init__(self, *args, **kwargs):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         if collector is None:
             raise NotImplementedError("OddsCollector implementation not available")
 
 
 class OddsCollectorFactory:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """兼容性占位符工厂类"""
 
     @staticmethod
     def create(*args, **kwargs):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         if collector is None:
             raise NotImplementedError("OddsCollector implementation not available")

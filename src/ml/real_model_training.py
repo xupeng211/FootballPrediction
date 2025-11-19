@@ -1,5 +1,3 @@
-from typing import Optional
-
 # 简化版 real_model_training 模块
 
 

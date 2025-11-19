@@ -1,6 +1,5 @@
-"""
-仓储依赖注入配置
-Repository Dependency Injection Configuration
+"""仓储依赖注入配置
+Repository Dependency Injection Configuration.
 
 为FastAPI提供仓储实例的依赖注入.
 Provides dependency injection for repository instances in FastAPI.
@@ -21,7 +20,7 @@ from .user import ReadOnlyUserRepository, UserRepository
 
 # 仓储提供者依赖
 async def get_repository_provider_dependency() -> RepositoryProvider:
-    """获取仓储提供者依赖"""
+    """获取仓储提供者依赖."""
     return get_repository_provider()
 
 
@@ -29,7 +28,7 @@ async def get_repository_provider_dependency() -> RepositoryProvider:
 async def get_prediction_repository(
     session: AsyncSession = Depends(get_async_session),
 ) -> PredictionRepository:
-    """获取预测仓储依赖"""
+    """获取预测仓储依赖."""
     provider = get_repository_provider()
     return provider.get_prediction_repository(session, read_only=False)
 
@@ -37,7 +36,7 @@ async def get_prediction_repository(
 async def get_read_only_prediction_repository(
     session: AsyncSession = Depends(get_async_session),
 ) -> ReadOnlyPredictionRepository:
-    """获取只读预测仓储依赖"""
+    """获取只读预测仓储依赖."""
     provider = get_repository_provider()
     return provider.get_prediction_repository(session, read_only=True)
 
@@ -46,7 +45,7 @@ async def get_read_only_prediction_repository(
 async def get_user_repository(
     session: AsyncSession = Depends(get_async_session),
 ) -> UserRepository:
-    """获取用户仓储依赖"""
+    """获取用户仓储依赖."""
     provider = get_repository_provider()
     return provider.get_user_repository(session, read_only=False)
 
@@ -54,7 +53,7 @@ async def get_user_repository(
 async def get_read_only_user_repository(
     session: AsyncSession = Depends(get_async_session),
 ) -> ReadOnlyUserRepository:
-    """获取只读用户仓储依赖"""
+    """获取只读用户仓储依赖."""
     provider = get_repository_provider()
     return provider.get_user_repository(session, read_only=True)
 
@@ -63,7 +62,7 @@ async def get_read_only_user_repository(
 async def get_match_repository(
     session: AsyncSession = Depends(get_async_session),
 ) -> MatchRepository:
-    """获取比赛仓储依赖"""
+    """获取比赛仓储依赖."""
     provider = get_repository_provider()
     return provider.get_match_repository(session, read_only=False)
 
@@ -71,7 +70,7 @@ async def get_match_repository(
 async def get_read_only_match_repository(
     session: AsyncSession = Depends(get_async_session),
 ) -> ReadOnlyMatchRepository:
-    """获取只读比赛仓储依赖"""
+    """获取只读比赛仓储依赖."""
     provider = get_repository_provider()
     return provider.get_match_repository(session, read_only=True)
 

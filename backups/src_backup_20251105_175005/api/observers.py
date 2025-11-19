@@ -1,6 +1,5 @@
-"""
-观察者系统API端点
-Observer System API Endpoints
+"""观察者系统API端点
+Observer System API Endpoints.
 
 提供观察者系统的管理和监控接口.
 Provides management and monitoring interfaces for the observer system.
@@ -23,7 +22,7 @@ router = APIRouter(prefix="/observers", tags=["观察者系统"])
 
 
 class AlertRequest(BaseModel):
-    """告警请求模型"""
+    """告警请求模型."""
 
     alert_type: str
     severity: str
@@ -33,7 +32,7 @@ class AlertRequest(BaseModel):
 
 
 class MetricUpdateRequest(BaseModel):
-    """指标更新请求模型"""
+    """指标更新请求模型."""
 
     metric_name: str
     metric_value: float
@@ -42,7 +41,7 @@ class MetricUpdateRequest(BaseModel):
 
 @router.get("/", summary="观察者系统根路径")
 async def get_observers_root():
-    """观察者系统根路径"""
+    """观察者系统根路径."""
     return {
         "service": "足球预测API",
         "module": "observers",
@@ -73,21 +72,21 @@ async def get_observers_root():
 
 @router.get("/status", summary="获取观察者系统状态")
 async def get_observer_status() -> dict[str, Any]:
-    """获取观察者系统的整体状态"""
+    """获取观察者系统的整体状态."""
     manager = get_observer_manager()
     return manager.get_system_status()
 
 
 @router.get("/metrics", summary="获取所有指标")
 async def get_all_metrics() -> dict[str, Any]:
-    """获取所有观察者收集的指标"""
+    """获取所有观察者收集的指标."""
     manager = get_observer_manager()
     return manager.get_all_metrics()
 
 
 @router.get("/observers", summary="获取所有观察者")
 async def get_observers() -> dict[str, Any]:
-    """获取所有观察者的信息"""
+    """获取所有观察者的信息."""
     manager = get_observer_manager()
     observers = {}
 
@@ -106,7 +105,7 @@ async def get_observers() -> dict[str, Any]:
 
 @router.get("/subjects", summary="获取所有被观察者")
 async def get_subjects() -> dict[str, Any]:
-    """获取所有被观察者的信息"""
+    """获取所有被观察者的信息."""
     manager = get_observer_manager()
     subjects = {}
 
@@ -126,7 +125,7 @@ async def get_alerts(
     hours: int = Query(24, ge=1, le=168, description="查询时间范围（小时）"),
     limit: int = Query(50, ge=1, le=200, description="返回数量限制"),
 ) -> dict[str, Any]:
-    """获取告警历史记录"""
+    """获取告警历史记录."""
     manager = get_observer_manager()
     alerting_observer = manager.get_alerting_observer()
 
@@ -153,7 +152,7 @@ async def get_alerts(
 async def trigger_alert(
     request: AlertRequest, background_tasks: BackgroundTasks
 ) -> dict[str, str]:
-    """手动触发一个告警"""
+    """手动触发一个告警."""
     manager = get_observer_manager()
 
     # 后台任务触发告警
@@ -171,7 +170,7 @@ async def trigger_alert(
 
 @router.get("/alerts/rules", summary="获取告警规则")
 async def get_alert_rules() -> dict[str, Any]:
-    """获取所有告警规则"""
+    """获取所有告警规则."""
     manager = get_observer_manager()
     alerting_observer = manager.get_alerting_observer()
 
@@ -188,7 +187,7 @@ async def get_alert_rules() -> dict[str, Any]:
 async def update_metric(
     request: MetricUpdateRequest, background_tasks: BackgroundTasks
 ) -> dict[str, str]:
-    """手动更新一个指标值"""
+    """手动更新一个指标值."""
     manager = get_observer_manager()
     system_subject = manager.get_system_metrics_subject()
 
@@ -207,7 +206,7 @@ async def update_metric(
 
 @router.get("/predictions", summary="获取预测统计")
 async def get_prediction_metrics() -> dict[str, Any]:
-    """获取预测相关的统计信息"""
+    """获取预测相关的统计信息."""
     manager = get_observer_manager()
     prediction_subject = manager.get_prediction_metrics_subject()
 
@@ -225,7 +224,7 @@ async def record_prediction(
     confidence: float | None = None,
     background_tasks: BackgroundTasks = None,
 ) -> dict[str, str]:
-    """记录一个预测事件"""
+    """记录一个预测事件."""
     manager = get_observer_manager()
 
     # 后台任务记录预测
@@ -254,7 +253,7 @@ async def record_prediction(
 
 @router.get("/cache", summary="获取缓存统计")
 async def get_cache_statistics() -> dict[str, Any]:
-    """获取缓存统计信息"""
+    """获取缓存统计信息."""
     manager = get_observer_manager()
     cache_subject = manager.get_cache_subject()
 
@@ -268,7 +267,7 @@ async def get_cache_statistics() -> dict[str, Any]:
 async def record_cache_hit(
     cache_name: str, key: str, background_tasks: BackgroundTasks = None
 ) -> dict[str, str]:
-    """记录缓存命中事件"""
+    """记录缓存命中事件."""
     manager = get_observer_manager()
 
     if background_tasks:
@@ -291,7 +290,7 @@ async def record_cache_hit(
 async def record_cache_miss(
     cache_name: str, key: str, background_tasks: BackgroundTasks = None
 ) -> dict[str, str]:
-    """记录缓存未命中事件"""
+    """记录缓存未命中事件."""
     manager = get_observer_manager()
 
     if background_tasks:
@@ -312,7 +311,7 @@ async def record_cache_miss(
 
 @router.get("/performance", summary="获取性能指标")
 async def get_performance_metrics() -> dict[str, Any]:
-    """获取性能指标"""
+    """获取性能指标."""
     manager = get_observer_manager()
     performance_observer = manager._observers.get("performance")
 
@@ -326,7 +325,7 @@ async def get_performance_metrics() -> dict[str, Any]:
 async def trigger_system_metrics_collection(
     background_tasks: BackgroundTasks,
 ) -> dict[str, str]:
-    """手动触发系统指标收集"""
+    """手动触发系统指标收集."""
     manager = get_observer_manager()
     system_subject = manager.get_system_metrics_subject()
 
@@ -343,7 +342,7 @@ async def trigger_system_metrics_collection(
 async def trigger_performance_check(
     background_tasks: BackgroundTasks,
 ) -> dict[str, str]:
-    """手动触发性能检查"""
+    """手动触发性能检查."""
     manager = get_observer_manager()
     prediction_subject = manager.get_prediction_metrics_subject()
 
@@ -358,13 +357,13 @@ async def trigger_performance_check(
 
 @router.get("/event-types", summary="获取所有事件类型")
 async def get_event_types() -> list[str]:
-    """获取所有可用的事件类型"""
+    """获取所有可用的事件类型."""
     return [et.value for et in ObservableEventType]
 
 
 @router.post("/observer/{observer_name}/enable", summary="启用观察者")
 async def enable_observer(observer_name: str) -> dict[str, str]:
-    """启用指定的观察者"""
+    """启用指定的观察者."""
     manager = get_observer_manager()
     observer = manager.get_observer(observer_name)
 
@@ -377,7 +376,7 @@ async def enable_observer(observer_name: str) -> dict[str, str]:
 
 @router.post("/observer/{observer_name}/disable", summary="禁用观察者")
 async def disable_observer(observer_name: str) -> dict[str, str]:
-    """禁用指定的观察者"""
+    """禁用指定的观察者."""
     manager = get_observer_manager()
     observer = manager.get_observer(observer_name)
 
@@ -390,7 +389,7 @@ async def disable_observer(observer_name: str) -> dict[str, str]:
 
 @router.post("/subject/{subject_name}/clear-history", summary="清空事件历史")
 async def clear_subject_history(subject_name: str) -> dict[str, str]:
-    """清空指定被观察者的事件历史"""
+    """清空指定被观察者的事件历史."""
     manager = get_observer_manager()
     subject = manager.get_subject(subject_name)
 

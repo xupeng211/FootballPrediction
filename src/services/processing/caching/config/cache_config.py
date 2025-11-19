@@ -1,5 +1,3 @@
-from typing import Optional
-
 """缓存配置
 Cache Configuration.
 """

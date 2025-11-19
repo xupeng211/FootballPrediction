@@ -1,6 +1,5 @@
-"""
-领域服务
-Domain Services
+"""领域服务
+Domain Services.
 
 包含跨多个聚合的业务逻辑.
 Contains business logic that spans multiple aggregates.

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-增强版EV计算器 - Issue #121优化版本
-Enhanced EV Calculator for Issue #121 Optimization
+"""增强版EV计算器 - Issue #121优化版本
+Enhanced EV Calculator for Issue #121 Optimization.
 
 主要优化:
 1. 改进Kelly Criterion参数计算
@@ -56,7 +55,7 @@ except ImportError:
 
     @dataclass
     class BettingOdds:
-        """投注赔率数据类"""
+        """投注赔率数据类."""
 
         match_id: int
         home_win: float
@@ -74,7 +73,7 @@ except ImportError:
 
     @dataclass
     class PredictionProbabilities:
-        """预测概率数据类"""
+        """预测概率数据类."""
 
         home_win: float
         draw: float
@@ -88,7 +87,7 @@ except ImportError:
 
     @dataclass
     class EVCalculation:
-        """期望值计算结果"""
+        """期望值计算结果."""
 
         bet_type: BetType
         probability: float
@@ -105,7 +104,7 @@ except ImportError:
 
     @dataclass
     class BettingStrategy:
-        """投注策略配置"""
+        """投注策略配置."""
 
         name: str
         description: str
@@ -122,7 +121,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class KellyOptimizationResult:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """Kelly准则优化结果"""
@@ -137,7 +136,7 @@ class KellyOptimizationResult:
 
 @dataclass
 class EnhancedValueRating:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """增强价值评级结果"""
@@ -153,13 +152,13 @@ class EnhancedValueRating:
 
 
 class EnhancedKellyCalculator:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """增强Kelly准则计算器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.logger = logger
         # 优化后的Kelly参数
@@ -177,8 +176,7 @@ class EnhancedKellyCalculator:
         bankroll: float = 1000.0,
         historical_performance: dict[str, float] | None = None,
     ) -> KellyOptimizationResult:
-        """
-        计算优化的分数Kelly准则
+        """计算优化的分数Kelly准则.
 
         Args:
             true_probability: 真实概率
@@ -187,7 +185,6 @@ class EnhancedKellyCalculator:
             bankroll: 资金池
             historical_performance: 历史表现数据
         """
-
         # 基础Kelly计算
         b = decimal_odds - 1  # 净赔率
         p = true_probability
@@ -245,8 +242,7 @@ class EnhancedKellyCalculator:
         confidence: float,
         historical_performance: dict[str, float] | None,
     ) -> float:
-        """应用Kelly准则优化"""
-
+        """应用Kelly准则优化."""
         # 1. 分数Kelly调整
         kelly_fractional = kelly_standard * self.fractional_kelly_multiplier
 
@@ -277,7 +273,7 @@ class EnhancedKellyCalculator:
     def _calculate_volatility_penalty(
         self, probability: float, net_odds: float
     ) -> float:
-        """计算波动率惩罚"""
+        """计算波动率惩罚."""
         # 基于概率和赔率的方差计算波动率
         variance = probability * (net_odds**2) * (1 - probability)
         volatility = math.sqrt(variance)
@@ -287,7 +283,7 @@ class EnhancedKellyCalculator:
         return penalty
 
     def _calculate_performance_factor(self, historical: dict[str, float]) -> float:
-        """基于历史表现计算调整因子"""
+        """基于历史表现计算调整因子."""
         if not historical:
             return 1.0
 
@@ -322,7 +318,7 @@ class EnhancedKellyCalculator:
     def _calculate_expected_growth(
         self, kelly_fraction: float, probability: float, net_odds: float
     ) -> float:
-        """计算期望增长率"""
+        """计算期望增长率."""
         if kelly_fraction <= 0:
             return 0.0
 
@@ -341,7 +337,7 @@ class EnhancedKellyCalculator:
     def _calculate_risk_of_ruin(
         self, kelly_fraction: float, probability: float, net_odds: float
     ) -> float:
-        """计算破产风险"""
+        """计算破产风险."""
         if kelly_fraction <= 0:
             return 0.0
 
@@ -370,7 +366,7 @@ class EnhancedKellyCalculator:
         net_odds: float,
         confidence: float,
     ) -> tuple[float, float]:
-        """计算Kelly分数的置信区间"""
+        """计算Kelly分数的置信区间."""
         if kelly_fraction <= 0:
             return (0.0, 0.0)
 
@@ -385,7 +381,7 @@ class EnhancedKellyCalculator:
     def _perform_sensitivity_analysis(
         self, kelly_fraction: float, probability: float, net_odds: float
     ) -> dict[str, float]:
-        """执行敏感性分析"""
+        """执行敏感性分析."""
         sensitivity = {}
 
         # 概率敏感性
@@ -426,7 +422,7 @@ class EnhancedKellyCalculator:
     def _generate_kelly_recommendation(
         self, kelly_fraction: float, risk_of_ruin: float, expected_growth: float
     ) -> str:
-        """生成Kelly建议"""
+        """生成Kelly建议."""
         if kelly_fraction <= 0:
             return "avoid"
         elif risk_of_ruin > 0.25:
@@ -440,13 +436,13 @@ class EnhancedKellyCalculator:
 
 
 class EnhancedValueRatingCalculator:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """增强价值评级计算器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.logger = logger
         # 评级权重配置
@@ -467,10 +463,7 @@ class EnhancedValueRatingCalculator:
         market_data: dict[str, Any] | None = None,
         historical_data: dict[str, Any] | None = None,
     ) -> EnhancedValueRating:
-        """
-        计算增强价值评级
-        """
-
+        """计算增强价值评级."""
         # 1. EV分数
         ev = (probability * odds) - 1
         ev_score = self._calculate_ev_score(ev)
@@ -528,7 +521,7 @@ class EnhancedValueRatingCalculator:
         )
 
     def _calculate_ev_score(self, ev: float) -> float:
-        """计算EV分数 (0-10)"""
+        """计算EV分数 (0-10)."""
         if ev <= 0:
             return 0.0
 
@@ -544,7 +537,7 @@ class EnhancedValueRatingCalculator:
     def _calculate_probability_score(
         self, probability: float, confidence: float
     ) -> float:
-        """计算概率分数 (0-10)"""
+        """计算概率分数 (0-10)."""
         # 基于概率置信度的分数
         base_score = probability * 8  # 0-8分
 
@@ -555,7 +548,7 @@ class EnhancedValueRatingCalculator:
         return min(total_score, 10.0)
 
     def _calculate_odds_fairness_score(self, probability: float, odds: float) -> float:
-        """计算赔率公平性分数 (0-10)"""
+        """计算赔率公平性分数 (0-10)."""
         fair_odds = 1 / probability if probability > 0 else float("inf")
         actual_odds = odds
 
@@ -580,7 +573,7 @@ class EnhancedValueRatingCalculator:
     def _calculate_market_efficiency_score(
         self, probability: float, odds: float, market_data: dict[str, Any] | None
     ) -> float:
-        """计算市场效率分数 (0-10)"""
+        """计算市场效率分数 (0-10)."""
         if not market_data:
             # 没有市场数据时给予基础分数
             return 6.0
@@ -620,7 +613,7 @@ class EnhancedValueRatingCalculator:
     def _calculate_risk_adjusted_score(
         self, ev: float, probability: float, odds: float, confidence: float
     ) -> float:
-        """计算风险调整分数 (0-10)"""
+        """计算风险调整分数 (0-10)."""
         if ev <= 0:
             return 0.0
 
@@ -665,7 +658,7 @@ class EnhancedValueRatingCalculator:
     def _calculate_historical_performance_score(
         self, historical_data: dict[str, Any] | None
     ) -> float:
-        """计算历史表现分数 (0-10)"""
+        """计算历史表现分数 (0-10)."""
         if not historical_data:
             return 5.0  # 默认中等分数
 
@@ -704,13 +697,13 @@ class EnhancedValueRatingCalculator:
 
 
 class EnhancedEVCalculator:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """增强EV计算器主类"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.kelly_calculator = EnhancedKellyCalculator()
         self.value_calculator = EnhancedValueRatingCalculator()
@@ -721,7 +714,7 @@ class EnhancedEVCalculator:
         self.optimized_strategies = self._create_optimized_strategies()
 
     def _create_optimized_strategies(self) -> dict[str, BettingStrategy]:
-        """创建优化后的策略"""
+        """创建优化后的策略."""
         return {
             "ultra_conservative": BettingStrategy(
                 name="超级保守策略",
@@ -785,10 +778,7 @@ class EnhancedEVCalculator:
         market_data: dict[str, Any] | None = None,
         historical_data: dict[str, Any] | None = None,
     ) -> EVCalculation:
-        """
-        计算增强EV
-        """
-
+        """计算增强EV."""
         strategy = self.optimized_strategies.get(
             strategy_name, self.optimized_strategies["srs_premium"]
         )
@@ -838,7 +828,7 @@ class EnhancedEVCalculator:
     def _assess_enhanced_risk(
         self, probability: float, odds: float, ev: float, risk_of_ruin: float
     ) -> RiskLevel:
-        """评估增强风险等级"""
+        """评估增强风险等级."""
         if ev < 0 or risk_of_ruin > 0.3:
             return RiskLevel.VERY_HIGH
         elif risk_of_ruin > 0.15:
@@ -856,8 +846,7 @@ class EnhancedEVCalculator:
         risk_level: RiskLevel,
         strategy: BettingStrategy,
     ) -> str:
-        """生成增强投注建议"""
-
+        """生成增强投注建议."""
         # 基础过滤条件
         if ev < strategy.min_ev_threshold:
             return "avoid"
@@ -888,10 +877,7 @@ class EnhancedEVCalculator:
         historical_bets: list[dict[str, Any]],
         initial_bankroll: float = 1000.0,
     ) -> dict[str, Any]:
-        """
-        回测策略效果
-        """
-
+        """回测策略效果."""
         strategy = self.optimized_strategies.get(strategy_name)
         if not strategy:
             raise ValueError(f"未知策略: {strategy_name}")

@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""
-全面的测试文件修复工具
-专注于修复语法错误，恢复测试运行能力
+"""全面的测试文件修复工具
+专注于修复语法错误，恢复测试运行能力.
 """
 
 import ast
+import os
 import re
 import shutil
-import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def fix_indentation_issues(content):
-    """修复缩进问题"""
+    """修复缩进问题."""
     lines = content.split('\n')
     fixed_lines = []
 
@@ -27,7 +26,7 @@ def fix_indentation_issues(content):
     return '\n'.join(fixed_lines)
 
 def fix_string_literals(content):
-    """修复字符串字面量问题"""
+    """修复字符串字面量问题."""
     # 修复未闭合的字符串
     lines = content.split('\n')
     fixed_lines = []
@@ -45,7 +44,7 @@ def fix_string_literals(content):
     return '\n'.join(fixed_lines)
 
 def fix_function_calls(content):
-    """修复函数调用问题"""
+    """修复函数调用问题."""
     # 修复分离的函数参数
     content = re.sub(
         r'(\w+)\(\s*\n\s+([^)]+)\s*\)',
@@ -59,7 +58,7 @@ def fix_function_calls(content):
     return content
 
 def fix_common_patterns(content):
-    """修复常见的语法错误模式"""
+    """修复常见的语法错误模式."""
     # 修复logger.debug()调用
     content = re.sub(r'logger\.debug\(\s*\)\s*f"([^"]*)"', r'logger.debug(f"\1")', content)
 
@@ -72,7 +71,7 @@ def fix_common_patterns(content):
     return content
 
 def fix_test_file(file_path):
-    """修复单个测试文件"""
+    """修复单个测试文件."""
     try:
         with open(file_path, encoding='utf-8') as f:
             content = f.read()
@@ -93,7 +92,6 @@ def fix_test_file(file_path):
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 backup_path = f"{file_path}.{timestamp}.bak"
                 shutil.copy2(file_path, backup_path)
-                print(f"    📋 已创建备份: {backup_path}")
 
                 try:
                     # 步骤 B - 执行修复与写入
@@ -102,11 +100,9 @@ def fix_test_file(file_path):
 
                     # 步骤 C - 清理备份文件（修复成功）
                     os.remove(backup_path)
-                    print(f"    ✅ 修复成功并清理备份")
 
                 except Exception as write_error:
                     # 步骤 D - 回滚（写入失败）
-                    print(f"    ❌ 写入失败，正在回滚: {write_error}")
                     shutil.copy2(backup_path, file_path)
                     os.remove(backup_path)
                     return False, f"写入失败，已回滚: {write_error}"
@@ -119,7 +115,7 @@ def fix_test_file(file_path):
         return False, f"处理失败: {e}"
 
 def main():
-    """主修复函数"""
+    """主修复函数."""
     # 获取所有测试文件
     test_dir = Path("tests")
     test_files = list(test_dir.rglob("test_*.py")) + list(test_dir.rglob("*_test.py"))

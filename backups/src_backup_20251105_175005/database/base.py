@@ -1,5 +1,4 @@
-"""
-SQLAlchemy基础模型
+"""SQLAlchemy基础模型.
 
 提供所有数据模型的基础类,包含通用字段和方法.
 """
@@ -12,11 +11,11 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
-    """SQLAlchemy基础模型类"""
+    """SQLAlchemy基础模型类."""
 
 
 class TimestampMixin:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """时间戳混入类,为模型添加创建时间和更新时间字段"""
@@ -35,8 +34,7 @@ class TimestampMixin:
 
 
 class BaseModel(Base, TimestampMixin):
-    """
-    基础模型类
+    """基础模型类.
 
     所有业务模型都应该继承此类,自动包含:
     - 主键ID字段
@@ -49,8 +47,7 @@ class BaseModel(Base, TimestampMixin):
     id = Column(Integer, primary_key=True, autoincrement=True, comment="主键ID")
 
     def to_dict(self, exclude_fields: set | None = None) -> dict[str, Any]:
-        """
-        将模型对象转换为字典
+        """将模型对象转换为字典.
 
         Args:
             exclude_fields: 需要排除的字段集合
@@ -75,7 +72,7 @@ class BaseModel(Base, TimestampMixin):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]):
-        """从字典创建模型实例
+        """从字典创建模型实例.
 
         Args:
             data: 包含模型数据的字典
@@ -91,8 +88,7 @@ class BaseModel(Base, TimestampMixin):
         return cls(**filtered_data)
 
     def update_from_dict(self, data: dict[str, Any], exclude_fields: set[str] | None = None) -> None:
-        """
-        从字典更新模型对象
+        """从字典更新模型对象.
 
         Args:
             data: 更新数据字典
@@ -105,7 +101,7 @@ class BaseModel(Base, TimestampMixin):
             setattr(self, key, value)
 
     def __repr__(self) -> str:
-        """对象的字符串表示"""
+        """对象的字符串表示."""
         return f"<{self.__class__.__name__}(id={getattr(self, 'id', None)})>"
 
 

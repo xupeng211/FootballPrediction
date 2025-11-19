@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-更新GitHub Issue #210: P1-高优先级: 扩展单元测试覆盖
-Update GitHub Issue #210: P1-High Priority: Expand unit test coverage
+"""更新GitHub Issue #210: P1-高优先级: 扩展单元测试覆盖
+Update GitHub Issue #210: P1-High Priority: Expand unit test coverage.
 """
 
 import json
@@ -9,7 +8,7 @@ from datetime import datetime
 
 
 def load_github_token():
-    """加载GitHub token"""
+    """加载GitHub token."""
     try:
         with open('.github_token') as f:
             return f.read().strip()
@@ -17,7 +16,7 @@ def load_github_token():
         return None
 
 def update_github_issue():
-    """更新GitHub Issue #210"""
+    """更新GitHub Issue #210."""
     token = load_github_token()
     if not token:
         return False

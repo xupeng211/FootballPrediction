@@ -1,5 +1,3 @@
-from typing import Optional
-
 """用户管理API路由
 User Management API Routes.
 

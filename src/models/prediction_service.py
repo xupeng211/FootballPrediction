@@ -1,5 +1,3 @@
-from typing import Optional
-
 """模型预测服务 / Model Prediction Service.
 
 提供实时比赛预测功能,支持：

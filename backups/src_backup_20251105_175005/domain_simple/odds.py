@@ -1,6 +1,4 @@
-"""
-赔率领域模型
-"""
+"""赔率领域模型."""
 
 from datetime import datetime
 from enum import Enum
@@ -8,7 +6,7 @@ from typing import Any
 
 
 class MarketType(Enum):
-    """市场类型"""
+    """市场类型."""
 
     MATCH_RESULT = "1X2"  # 独赢
     HANDICAP = "HANDICAP"  # 让球
@@ -20,7 +18,7 @@ class MarketType(Enum):
 
 
 class OddsFormat(Enum):
-    """赔率格式"""
+    """赔率格式."""
 
     DECIMAL = "decimal"  # 小数（欧洲）
     FRACTIONAL = "fractional"  # 分数（英国）
@@ -28,12 +26,12 @@ class OddsFormat(Enum):
 
 
 class OddsMovement:
-    """类文档字符串"""
+    """类文档字符串."""
     pass  # 添加pass语句
     """赔率变化"""
 
     def __init__(self, old_odds: float, new_odds: float, timestamp: datetime):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass
   # 添加pass语句
         self.old_odds = old_odds
@@ -43,17 +41,17 @@ class OddsMovement:
         self.change_percent = (self.change / old_odds) * 100 if old_odds != 0 else 0
 
     def is_significant(self, threshold: float = 5.0) -> bool:
-        """是否为显著变化"""
+        """是否为显著变化."""
         return abs(self.change_percent) >= threshold
 
 
 class ValueBet:
-    """类文档字符串"""
+    """类文档字符串."""
     pass  # 添加pass语句
     """价值投注"""
 
     def __init__(self, odds: float, probability: float, threshold: float = 1.0):
-        """函数文档字符串"""
+        """函数文档字符串."""
         pass
   # 添加pass语句
         self.odds = odds
@@ -62,18 +60,18 @@ class ValueBet:
         self.expected_value = (odds * probability) - 1
 
     def is_value(self) -> bool:
-        """是否为价值投注"""
+        """是否为价值投注."""
         return self.expected_value > self.threshold
 
     def get_confidence(self) -> float:
-        """获取价值置信度"""
+        """获取价值置信度."""
         if not self.is_value():
             return 0.0
         return min(1.0, self.expected_value / (self.threshold * 2))
 
 
 class Odds:
-    """类文档字符串"""
+    """类文档字符串."""
     pass  # 添加pass语句
     """赔率领域模型"""
 
@@ -122,7 +120,7 @@ class Odds:
         draw_odds: float | None = None,
         away_odds: float | None = None,
     ) -> None:
-        """更新赔率"""
+        """更新赔率."""
         # 记录变化
         if home_odds and self.home_odds and home_odds != self.home_odds:
             self.movements.append(
@@ -151,7 +149,7 @@ class Odds:
         self.last_movement = datetime.now()
 
     def get_implied_probability(self) -> dict[str, float]:
-        """获取隐含概率"""
+        """获取隐含概率."""
         probabilities = {}
 
         if self.home_odds and self.home_odds > 0:
@@ -166,7 +164,7 @@ class Odds:
         return probabilities
 
     def get_vig_percentage(self) -> float:
-        """获取抽水百分比"""
+        """获取抽水百分比."""
         probs = self.get_implied_probability()
         total_prob = sum(probs.values())
 
@@ -175,7 +173,7 @@ class Odds:
         return 0.0
 
     def get_true_probability(self) -> dict[str, float]:
-        """获取真实概率（去除抽水）"""
+        """获取真实概率（去除抽水）."""
         implied = self.get_implied_probability()
         vig = self.get_vig_percentage()
 
@@ -192,7 +190,7 @@ class Odds:
     def find_value_bets(
         self, predicted_probs: dict[str, float], threshold: float = 1.0
     ) -> list[ValueBet]:
-        """寻找价值投注"""
+        """寻找价值投注."""
         value_bets = []
 
         if self.home_odds and "home" in predicted_probs:
@@ -219,7 +217,7 @@ class Odds:
         return value_bets
 
     def convert_format(self, target_format: OddsFormat) -> dict[str, float]:
-        """转换赔率格式"""
+        """转换赔率格式."""
         result = {}
 
         if target_format == OddsFormat.DECIMAL:
@@ -249,7 +247,7 @@ class Odds:
         return result
 
     def _decimal_to_fractional(self, decimal: float) -> str:
-        """小数转分数"""
+        """小数转分数."""
         if decimal <= 1:
             return "1/1"
 
@@ -264,31 +262,31 @@ class Odds:
         return f"{fraction:.2f}/1"
 
     def _decimal_to_american(self, decimal: float) -> int:
-        """小数转美式"""
+        """小数转美式."""
         if decimal >= 2.0:
             return int((decimal - 1) * 100)
         else:
             return int(-100 / (decimal - 1))
 
     def suspend(self) -> None:
-        """暂停赔率"""
+        """暂停赔率."""
         self.is_suspended = True
         self.is_active = False
         self.updated_at = datetime.now()
 
     def resume(self) -> None:
-        """恢复赔率"""
+        """恢复赔率."""
         self.is_suspended = False
         self.is_active = True
         self.updated_at = datetime.now()
 
     def get_recent_movements(self, hours: int = 24) -> list[OddsMovement]:
-        """获取最近的赔率变化"""
+        """获取最近的赔率变化."""
         cutoff = datetime.now().timestamp() - (hours * 3600)
         return [m for m in self.movements if m.timestamp.timestamp() > cutoff]
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "match_id": self.match_id,
@@ -315,7 +313,7 @@ class Odds:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Odds":
-        """从字典创建实例"""
+        """从字典创建实例."""
         odds = cls(
             id=data.get("id"),
             match_id=data.get("match_id", 0),

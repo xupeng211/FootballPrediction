@@ -8,7 +8,7 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from .mock_redis import CacheKeyManager
 from .redis_manager import get_redis_manager

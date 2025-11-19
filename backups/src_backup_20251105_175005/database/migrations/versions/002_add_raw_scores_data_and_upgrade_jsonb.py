@@ -78,13 +78,12 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """
-    添加raw_scores_data表并升级现有Bronze层表为JSONB
+    """添加raw_scores_data表并升级现有Bronze层表为JSONB
     变更内容:
     1. 创建raw_scores_data表（Bronze层比分数据）
     2. 升级raw_match_data和raw_odds_data表的JSON字段为JSONB
     3. 添加分区策略（按月分区）
-    4. 创建相关索引优化查询性能
+    4. 创建相关索引优化查询性能.
     """
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()
@@ -238,9 +237,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """
-    回滚raw_scores_data表和JSONB升级的更改
-    """
+    """回滚raw_scores_data表和JSONB升级的更改."""
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()
     if db_dialect != "sqlite":

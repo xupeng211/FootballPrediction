@@ -1,5 +1,3 @@
-from typing import Optional
-
 """足球数据模型
 Football Data Models.
 """

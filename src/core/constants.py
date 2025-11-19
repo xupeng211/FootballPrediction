@@ -1,5 +1,3 @@
-from typing import Optional
-
 """常量定义模块
 集中管理项目中的魔法数字和常量.
 """

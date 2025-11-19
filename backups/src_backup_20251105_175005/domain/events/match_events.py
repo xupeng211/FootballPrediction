@@ -5,7 +5,7 @@ from typing import Any
 
 @dataclass
 class MatchEvent:
-    """比赛事件基类"""
+    """比赛事件基类."""
 
     match_id: str
     timestamp: datetime
@@ -19,7 +19,7 @@ class MatchEvent:
 
 @dataclass
 class MatchStartedEvent(MatchEvent):
-    """比赛开始事件"""
+    """比赛开始事件."""
 
     event_type: str = "match_started"
     home_team: str = ""
@@ -28,7 +28,7 @@ class MatchStartedEvent(MatchEvent):
 
 @dataclass
 class MatchEndedEvent(MatchEvent):
-    """比赛结束事件"""
+    """比赛结束事件."""
 
     event_type: str = "match_ended"
     final_score: str = ""
@@ -50,10 +50,10 @@ from src.domain.models.match import MatchResult, MatchScore
 
 
 class MatchStartedEvent(DomainEvent):
-    """比赛开始事件"""
+    """比赛开始事件."""
 
     def __init__(self, match_id: int, home_team_id: int, away_team_id: int, **kwargs):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
@@ -69,7 +69,7 @@ class MatchStartedEvent(DomainEvent):
 
 
 class MatchFinishedEvent(DomainEvent):
-    """比赛结束事件"""
+    """比赛结束事件."""
 
     def __init__(
         self,
@@ -101,10 +101,10 @@ class MatchFinishedEvent(DomainEvent):
 
 
 class MatchCancelledEvent(DomainEvent):
-    """比赛取消事件"""
+    """比赛取消事件."""
 
     def __init__(self, match_id: int, reason: str, **kwargs):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
@@ -115,10 +115,10 @@ class MatchCancelledEvent(DomainEvent):
 
 
 class MatchPostponedEvent(DomainEvent):
-    """比赛延期事件"""
+    """比赛延期事件."""
 
     def __init__(self, match_id: int, new_date: str, reason: str, **kwargs):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id

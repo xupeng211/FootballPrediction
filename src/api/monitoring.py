@@ -2,7 +2,7 @@ import os
 import time
 from collections.abc import Awaitable
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import psutil
 from fastapi import APIRouter, Depends, HTTPException, Response

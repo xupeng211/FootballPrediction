@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-简化的语法错误检查工具
-Simple Syntax Errors Check Tool
+"""简化的语法错误检查工具
+Simple Syntax Errors Check Tool.
 
 只检查src目录的关键Python文件，忽略其他目录
 """
@@ -12,7 +11,7 @@ from pathlib import Path
 
 
 def check_syntax(file_path: Path) -> list[str]:
-    """检查单个文件的语法错误"""
+    """检查单个文件的语法错误."""
     errors = []
 
     try:
@@ -32,7 +31,7 @@ def check_syntax(file_path: Path) -> list[str]:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     project_root = Path.cwd()
     src_dir = project_root / "src"
 

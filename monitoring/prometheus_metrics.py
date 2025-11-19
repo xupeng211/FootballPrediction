@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Prometheus Metrics
-Prometheus指标收集
+"""Prometheus Metrics
+Prometheus指标收集.
 
 生成时间: 2025-10-26 20:59:14
 """
@@ -13,14 +12,14 @@ logger = logging.getLogger(__name__)
 
 
 class PrometheusMetrics:
-    """Prometheus Metrics"""
+    """Prometheus Metrics."""
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.logger.info("初始化monitoring特性: Prometheus Metrics")
 
     def process(self, data: dict) -> dict:
-        """处理数据"""
+        """处理数据."""
         result = {
             "status": "success",
             "feature": "Prometheus Metrics",
@@ -30,7 +29,7 @@ class PrometheusMetrics:
         return result
 
     def get_status(self) -> dict:
-        """获取状态"""
+        """获取状态."""
         return {
             "feature": "Prometheus Metrics",
             "type": "monitoring",

@@ -10,7 +10,7 @@ import time
 from collections import defaultdict, deque
 from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from .base import ObservableEvent, ObservableEventType, Observer
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-工具函数模块
-Football Prediction SDK - 工具函数和装饰器
+"""工具函数模块
+Football Prediction SDK - 工具函数和装饰器.
 
 Author: Claude Code
 Version: 1.0.0
@@ -30,8 +29,7 @@ def retry_with_backoff(
     jitter: bool = True,
     retryable_status_codes: list[int] | None = None
 ):
-    """
-    带退避策略的重试装饰器
+    """带退避策略的重试装饰器.
 
     Args:
         max_retries: 最大重试次数
@@ -105,8 +103,7 @@ def retry_with_backoff(
 
 
 def extract_retry_after(response: requests.Response) -> int | None:
-    """
-    从响应中提取重试等待时间
+    """从响应中提取重试等待时间.
 
     Args:
         response: HTTP响应对象
@@ -154,8 +151,7 @@ def extract_retry_after(response: requests.Response) -> int | None:
 
 
 def validate_request_data(data: dict[str, Any], required_fields: list[str] = None) -> None:
-    """
-    验证请求数据
+    """验证请求数据.
 
     Args:
         data: 要验证的数据字典
@@ -175,8 +171,7 @@ def validate_request_data(data: dict[str, Any], required_fields: list[str] = Non
 
 
 def validate_date_string(date_string: str, format_name: str = "ISO 8601") -> datetime:
-    """
-    验证日期字符串格式
+    """验证日期字符串格式.
 
     Args:
         date_string: 日期字符串
@@ -202,8 +197,7 @@ def validate_date_string(date_string: str, format_name: str = "ISO 8601") -> dat
 
 
 def validate_probability(value: float, field_name: str = "probability") -> float:
-    """
-    验证概率值
+    """验证概率值.
 
     Args:
         value: 概率值
@@ -225,8 +219,7 @@ def validate_probability(value: float, field_name: str = "probability") -> float
 
 
 def validate_confidence_score(value: float) -> float:
-    """
-    验证置信度分数
+    """验证置信度分数.
 
     Args:
         value: 置信度分数
@@ -241,8 +234,7 @@ def validate_confidence_score(value: float) -> float:
 
 
 def sanitize_string(value: str, max_length: int = None, allow_empty: bool = True) -> str:
-    """
-    清理和验证字符串
+    """清理和验证字符串.
 
     Args:
         value: 输入字符串
@@ -271,8 +263,7 @@ def sanitize_string(value: str, max_length: int = None, allow_empty: bool = True
 
 
 def generate_request_id() -> str:
-    """
-    生成唯一的请求ID
+    """生成唯一的请求ID.
 
     Returns:
         str: 请求ID
@@ -283,8 +274,7 @@ def generate_request_id() -> str:
 
 
 def build_url(base_url: str, path: str) -> str:
-    """
-    构建完整的URL
+    """构建完整的URL.
 
     Args:
         base_url: 基础URL
@@ -297,8 +287,7 @@ def build_url(base_url: str, path: str) -> str:
 
 
 def parse_api_error(response: requests.Response) -> dict[str, Any]:
-    """
-    解析API错误响应
+    """解析API错误响应.
 
     Args:
         response: HTTP响应对象
@@ -328,8 +317,7 @@ def parse_api_error(response: requests.Response) -> dict[str, Any]:
 
 
 def format_file_size(size_bytes: int) -> str:
-    """
-    格式化文件大小
+    """格式化文件大小.
 
     Args:
         size_bytes: 字节数
@@ -350,8 +338,7 @@ def format_file_size(size_bytes: int) -> str:
 
 
 def mask_sensitive_data(data: str, mask_char: str = "*", visible_chars: int = 4) -> str:
-    """
-    遮蔽敏感数据
+    """遮蔽敏感数据.
 
     Args:
         data: 敏感数据字符串
@@ -370,8 +357,7 @@ def mask_sensitive_data(data: str, mask_char: str = "*", visible_chars: int = 4)
 
 
 def calculate_hash(data: Any, algorithm: str = "sha256") -> str:
-    """
-    计算数据哈希值
+    """计算数据哈希值.
 
     Args:
         data: 要计算哈希的数据
@@ -391,8 +377,7 @@ def calculate_hash(data: Any, algorithm: str = "sha256") -> str:
 
 
 def chunk_list(items: list[Any], chunk_size: int) -> list[list[Any]]:
-    """
-    将列表分割成块
+    """将列表分割成块.
 
     Args:
         items: 要分割的列表
@@ -405,8 +390,7 @@ def chunk_list(items: list[Any], chunk_size: int) -> list[list[Any]]:
 
 
 def merge_dicts(*dicts: dict[str, Any]) -> dict[str, Any]:
-    """
-    合并多个字典
+    """合并多个字典.
 
     Args:
         *dicts: 要合并的字典
@@ -422,8 +406,7 @@ def merge_dicts(*dicts: dict[str, Any]) -> dict[str, Any]:
 
 
 def safe_get_nested_value(data: dict[str, Any], key_path: str, default: Any = None) -> Any:
-    """
-    安全获取嵌套字典的值
+    """安全获取嵌套字典的值.
 
     Args:
         data: 数据字典
@@ -452,8 +435,7 @@ def safe_get_nested_value(data: dict[str, Any], key_path: str, default: Any = No
 
 
 def rate_limit_handler(response: requests.Response) -> RateLimitError | None:
-    """
-    处理限流响应
+    """处理限流响应.
 
     Args:
         response: HTTP响应对象
@@ -488,8 +470,7 @@ def rate_limit_handler(response: requests.Response) -> RateLimitError | None:
 
 
 def is_valid_url(url: str) -> bool:
-    """
-    验证URL格式
+    """验证URL格式.
 
     Args:
         url: URL字符串
@@ -505,8 +486,7 @@ def is_valid_url(url: str) -> bool:
 
 
 def convert_timestamp(timestamp: str | int | float | datetime) -> datetime:
-    """
-    转换时间戳为datetime对象
+    """转换时间戳为datetime对象.
 
     Args:
         timestamp: 时间戳（字符串、Unix时间戳或datetime对象）
@@ -529,7 +509,7 @@ def convert_timestamp(timestamp: str | int | float | datetime) -> datetime:
 
 
 class Timer:
-    """计时器上下文管理器"""
+    """计时器上下文管理器."""
 
     def __init__(self, name: str = "Timer"):
         self.name = name
@@ -552,12 +532,12 @@ class Timer:
 
     @property
     def elapsed_ms(self) -> float:
-        """获取经过的毫秒数"""
+        """获取经过的毫秒数."""
         return (self.elapsed or 0) * 1000
 
 
 class RateLimiter:
-    """简单的速率限制器"""
+    """简单的速率限制器."""
 
     def __init__(self, max_calls: int, time_window: float):
         self.max_calls = max_calls
@@ -565,7 +545,7 @@ class RateLimiter:
         self.calls = []
 
     def is_allowed(self) -> bool:
-        """检查是否允许进行调用"""
+        """检查是否允许进行调用."""
         now = time.time()
 
         # 清理过期的调用记录
@@ -579,7 +559,7 @@ class RateLimiter:
         return False
 
     def wait_time(self) -> float:
-        """获取需要等待的时间"""
+        """获取需要等待的时间."""
         if not self.calls:
             return 0
 
@@ -587,5 +567,5 @@ class RateLimiter:
         return max(0, self.time_window - (time.time() - oldest_call))
 
     def reset(self) -> None:
-        """重置速率限制器"""
+        """重置速率限制器."""
         self.calls.clear()

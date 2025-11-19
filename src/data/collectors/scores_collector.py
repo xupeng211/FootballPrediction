@@ -1,5 +1,3 @@
-from typing import Optional
-
 """比分数据采集器.
 
 实现足球比赛实时比分和赛后数据采集逻辑。

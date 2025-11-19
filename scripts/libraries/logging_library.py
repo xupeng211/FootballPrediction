@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""
-统一日志工具库
-"""
+"""统一日志工具库."""
 
 import logging
 import sys
 
 
 class SimpleLogger:
-    """简单日志器"""
+    """简单日志器."""
 
     def __init__(self, name="simple"):
         self.logger = logging.getLogger(name)
@@ -33,5 +31,5 @@ class SimpleLogger:
         self.logger.error(f"❌ {message}")
 
 def get_logger(name=None):
-    """获取日志器"""
+    """获取日志器."""
     return SimpleLogger(name or "default")

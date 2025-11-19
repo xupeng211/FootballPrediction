@@ -1,6 +1,5 @@
-"""
-质量指标收集器
-独立的质量指标收集模块,不依赖复杂的导入
+"""质量指标收集器
+独立的质量指标收集模块,不依赖复杂的导入.
 """
 
 import json
@@ -15,18 +14,18 @@ logger = logging.getLogger(__name__)
 
 
 class QualityMetricsCollector:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """质量指标收集器"""
 
     def __init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         self.project_root = Path(__file__).parent.parent.parent
 
     async def collect_all_metrics(self) -> dict[str, Any]:
-        """收集所有质量指标"""
+        """收集所有质量指标."""
         try:
             metrics = {
                 "overall_score": 0.0,
@@ -55,7 +54,7 @@ class QualityMetricsCollector:
             return self._get_default_metrics()
 
     async def _get_test_coverage(self) -> float:
-        """获取测试覆盖率"""
+        """获取测试覆盖率."""
         try:
             # 运行覆盖率测试
             result = subprocess.run(
@@ -102,7 +101,7 @@ class QualityMetricsCollector:
         return 84.4  # 基于实际运行结果
 
     async def _get_code_quality_score(self) -> float:
-        """获取代码质量分数"""
+        """获取代码质量分数."""
         try:
             # 运行ruff检查
             result = subprocess.run(
@@ -133,7 +132,7 @@ class QualityMetricsCollector:
         return 9.2  # 基于实际运行结果
 
     async def _get_security_score(self) -> float:
-        """获取安全分数"""
+        """获取安全分数."""
         try:
             # 运行bandit安全扫描
             result = subprocess.run(
@@ -174,7 +173,7 @@ class QualityMetricsCollector:
         return 10.0  # 基于实际运行结果
 
     async def _get_maintainability_index(self) -> float:
-        """获取可维护性指数"""
+        """获取可维护性指数."""
         try:
             # 基于代码复杂度和结构计算
             result = subprocess.run(
@@ -208,7 +207,7 @@ class QualityMetricsCollector:
         return 75.0  # 默认值
 
     async def _get_technical_debt_ratio(self) -> float:
-        """获取技术债务比例"""
+        """获取技术债务比例."""
         try:
             # 简化的技术债务计算,基于TODO/FIXME注释
             result = subprocess.run(
@@ -258,7 +257,7 @@ class QualityMetricsCollector:
         return 5.0  # 默认值
 
     async def _get_srs_compliance(self) -> float:
-        """获取SRS符合性"""
+        """获取SRS符合性."""
         try:
             # 检查关键SRS功能
             srs_checks = {
@@ -289,7 +288,7 @@ class QualityMetricsCollector:
         return 95.0  # 基于实际进度
 
     async def _get_ml_accuracy(self) -> float:
-        """获取ML模型准确率"""
+        """获取ML模型准确率."""
         try:
             # 检查是否存在ML训练结果
             ml_results_path = self.project_root / "ml_results.json"
@@ -318,7 +317,7 @@ class QualityMetricsCollector:
         return 68.0  # 基于SRS训练结果
 
     async def _get_api_availability(self) -> float:
-        """获取API可用性"""
+        """获取API可用性."""
         try:
             # 简单的API健康检查
             result = subprocess.run(
@@ -347,7 +346,7 @@ class QualityMetricsCollector:
         return 95.0  # 默认值
 
     async def _get_error_rate(self) -> float:
-        """获取错误率"""
+        """获取错误率."""
         try:
             # 检查最近的测试运行结果
             result = subprocess.run(
@@ -380,7 +379,7 @@ class QualityMetricsCollector:
         return 3.0  # 默认值
 
     async def _get_response_time(self) -> float:
-        """获取响应时间"""
+        """获取响应时间."""
         try:
             # 测试API响应时间
             result = subprocess.run(
@@ -408,7 +407,7 @@ class QualityMetricsCollector:
         return 250.0  # 默认值
 
     def _calculate_overall_score(self, metrics: dict[str, Any]) -> float:
-        """计算综合质量分数"""
+        """计算综合质量分数."""
         weights = {
             "test_coverage": 0.15,
             "code_quality_score": 0.20,
@@ -446,7 +445,7 @@ class QualityMetricsCollector:
         return round(min(total_score, 10.0), 2)
 
     def _get_default_metrics(self) -> dict[str, Any]:
-        """获取默认指标（出错时使用）"""
+        """获取默认指标（出错时使用）."""
         return {
             "overall_score": 7.0,
             "test_coverage": 75.0,

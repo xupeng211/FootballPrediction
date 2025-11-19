@@ -1,5 +1,3 @@
-from typing import Optional
-
 """简化版 bad_example 模块
 Simplified bad_example module.
 

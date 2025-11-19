@@ -1,6 +1,5 @@
-"""
-联赛领域模型
-League Domain Model
+"""联赛领域模型
+League Domain Model.
 
 封装联赛相关的业务逻辑和不变性约束.
 Encapsulates league-related business logic and invariants.
@@ -16,7 +15,7 @@ from src.core.exceptions import DomainError
 
 
 class LeagueType(Enum):
-    """联赛类型"""
+    """联赛类型."""
 
     DOMESTIC_LEAGUE = "domestic_league"  # 国内联赛
     CUP = "cup"  # 杯赛
@@ -25,7 +24,7 @@ class LeagueType(Enum):
 
 
 class LeagueStatus(Enum):
-    """联赛状态"""
+    """联赛状态."""
 
     UPCOMING = "upcoming"  # 即将开始
     ACTIVE = "active"  # 进行中
@@ -35,7 +34,7 @@ class LeagueStatus(Enum):
 
 @dataclass
 class LeagueSeason:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """联赛赛季值对象"""
@@ -48,7 +47,7 @@ class LeagueSeason:
     current_round: int = 0
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """验证赛季信息"""
         if not self.season:
@@ -65,18 +64,18 @@ class LeagueSeason:
 
     @property
     def progress(self) -> float:
-        """赛季进度"""
+        """赛季进度."""
         if self.total_rounds == 0:
             return 0.0
         return min(self.current_round / self.total_rounds, 1.0)
 
     @property
     def is_active(self) -> bool:
-        """是否进行中"""
+        """是否进行中."""
         return self.status == LeagueStatus.ACTIVE
 
     def start_season(self) -> None:
-        """开始赛季"""
+        """开始赛季."""
         if self.status != LeagueStatus.UPCOMING:
             raise DomainError(f"赛季状态为 {self.status.value},无法开始")
 
@@ -84,7 +83,7 @@ class LeagueSeason:
         self.current_round = 1
 
     def advance_round(self) -> None:
-        """推进轮次"""
+        """推进轮次."""
         if self.status != LeagueStatus.ACTIVE:
             raise DomainError("只有进行中的赛季才能推进轮次")
 
@@ -94,7 +93,7 @@ class LeagueSeason:
             self.current_round += 1
 
     def complete_season(self) -> None:
-        """结束赛季"""
+        """结束赛季."""
         self.status = LeagueStatus.COMPLETED
         if self.current_round < self.total_rounds:
             self.current_round = self.total_rounds
@@ -105,7 +104,7 @@ class LeagueSeason:
 
 @dataclass
 class LeagueSettings:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """联赛设置值对象"""
@@ -122,7 +121,7 @@ class LeagueSettings:
     penalty_shootout: bool = False  # 是否点球
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """验证设置"""
         if any(
@@ -150,7 +149,7 @@ class LeagueSettings:
             raise DomainError("中场休息时长不能为负数")
 
     def calculate_points(self, wins: int, draws: int, losses: int) -> int:
-        """计算积分"""
+        """计算积分."""
         return (
             wins * self.points_for_win
             + draws * self.points_for_draw
@@ -165,7 +164,7 @@ class LeagueSettings:
 
 @dataclass
 class League:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """
@@ -194,7 +193,7 @@ class League:
     _domain_events: list[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
-        """函数文档字符串"""
+        """函数文档字符串."""
         # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
@@ -229,7 +228,7 @@ class League:
         end_date: datetime,
         total_rounds: int | None = None,
     ) -> LeagueSeason:
-        """开始新赛季"""
+        """开始新赛季."""
         if self.current_season and self.current_season.is_active:
             raise DomainError("当前赛季仍在进行中")
 
@@ -253,7 +252,7 @@ class League:
         website: str | None = None,
         logo_url: str | None = None,
     ) -> None:
-        """更新联赛信息"""
+        """更新联赛信息."""
         if name:
             self.name = name
         if short_name:
@@ -272,7 +271,7 @@ class League:
         points_for_loss: int | None = None,
         max_foreign_players: int | None = None,
     ) -> None:
-        """更新联赛设置"""
+        """更新联赛设置."""
         if points_for_win is not None:
             self.settings.points_for_win = points_for_win
         if points_for_draw is not None:
@@ -285,17 +284,17 @@ class League:
         self.updated_at = datetime.utcnow()
 
     def activate(self) -> None:
-        """激活联赛"""
+        """激活联赛."""
         self.is_active = True
         self.updated_at = datetime.utcnow()
 
     def deactivate(self) -> None:
-        """停用联赛"""
+        """停用联赛."""
         self.is_active = False
         self.updated_at = datetime.utcnow()
 
     def promote_to_next_level(self) -> None:
-        """升级到下一级别"""
+        """升级到下一级别."""
         if self.level <= 1:
             raise DomainError("已经是最高级别联赛")
 
@@ -303,12 +302,12 @@ class League:
         self.updated_at = datetime.utcnow()
 
     def relegate_to_lower_level(self) -> None:
-        """降级到下一级别"""
+        """降级到下一级别."""
         self.level += 1
         self.updated_at = datetime.utcnow()
 
     def calculate_revenue_sharing(self, position: int, total_teams: int) -> Decimal:
-        """计算收入分成（基于排名）"""
+        """计算收入分成（基于排名）."""
         if position < 1 or position > total_teams:
             raise DomainError("排名无效")
 
@@ -323,19 +322,19 @@ class League:
 
     @property
     def display_name(self) -> str:
-        """显示名称"""
+        """显示名称."""
         return self.short_name or self.name
 
     @property
     def age(self) -> int | None:
-        """联赛年龄"""
+        """联赛年龄."""
         if self.founded_year:
             return datetime.utcnow().year - self.founded_year
         return None
 
     @property
     def prestige(self) -> str:
-        """声望等级"""
+        """声望等级."""
         if self.level == 1:
             return "顶级联赛"
         elif self.level <= 3:
@@ -347,29 +346,29 @@ class League:
 
     @property
     def current_progress(self) -> float:
-        """当前赛季进度"""
+        """当前赛季进度."""
         if self.current_season:
             return self.current_season.progress
         return 0.0
 
     @property
     def is_cup_competition(self) -> bool:
-        """是否是杯赛"""
+        """是否是杯赛."""
         return self.type == LeagueType.CUP
 
     @property
     def is_international(self) -> bool:
-        """是否是国际赛事"""
+        """是否是国际赛事."""
         return self.type == LeagueType.INTERNATIONAL
 
     def get_seasons_count(self) -> int:
-        """获取赛季数量（简化处理）"""
+        """获取赛季数量（简化处理）."""
         if self.founded_year:
             return datetime.utcnow().year - self.founded_year + 1
         return 0
 
     def can_team_register(self, team_level: int) -> bool:
-        """检查球队是否可以注册"""
+        """检查球队是否可以注册."""
         # 简化规则:球队级别不能超过联赛级别太多
         return abs(team_level - self.level) <= 2
 
@@ -378,15 +377,15 @@ class League:
     # ========================================
 
     def _add_domain_event(self, event: Any) -> None:
-        """添加领域事件"""
+        """添加领域事件."""
         self._domain_events.append(event)
 
     def get_domain_events(self) -> list[Any]:
-        """获取领域事件"""
+        """获取领域事件."""
         return self._domain_events.copy()
 
     def clear_domain_events(self) -> None:
-        """清除领域事件"""
+        """清除领域事件."""
         self._domain_events.clear()
 
     # ========================================
@@ -394,7 +393,7 @@ class League:
     # ========================================
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "name": self.name,
@@ -439,7 +438,7 @@ class League:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "League":
-        """从字典创建实例"""
+        """从字典创建实例."""
         season_data = data.pop("current_season", None)
         current_season = None
         if season_data:

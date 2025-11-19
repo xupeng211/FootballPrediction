@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-简化的健康检查和指标服务器
-用于在主应用修复期间提供基础的监控功能
+"""简化的健康检查和指标服务器
+用于在主应用修复期间提供基础的监控功能.
 """
 
 import logging
@@ -61,17 +60,17 @@ system_memory_usage = Gauge(
 
 @app.get("/")
 async def root():
-    """根端点"""
+    """根端点."""
     return {"status": "healthy", "service": "football-prediction-health", "version": "1.0.0"}
 
 @app.get("/health")
 async def health():
-    """健康检查"""
+    """健康检查."""
     return {"status": "healthy", "timestamp": time.time()}
 
 @app.get("/metrics")
 async def metrics():
-    """Prometheus指标端点"""
+    """Prometheus指标端点."""
     try:
         # 更新系统指标
         await update_system_metrics()
@@ -90,7 +89,7 @@ async def metrics():
         )
 
 async def update_system_metrics():
-    """更新系统指标"""
+    """更新系统指标."""
     try:
         import psutil
 
@@ -112,7 +111,7 @@ async def update_system_metrics():
 
 @app.middleware("http")
 async def metrics_middleware(request, call_next):
-    """指标收集中间件"""
+    """指标收集中间件."""
     start_time = time.time()
 
     response = await call_next(request)

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Football Prediction SDK 安装配置
-"""
+"""Football Prediction SDK 安装配置."""
 
 import os
 

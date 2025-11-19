@@ -7,7 +7,7 @@ Defines data structures used by the event system.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.domain.events.base import EventData
 

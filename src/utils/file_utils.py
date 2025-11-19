@@ -9,7 +9,7 @@ import os
 import shutil
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class FileUtils:

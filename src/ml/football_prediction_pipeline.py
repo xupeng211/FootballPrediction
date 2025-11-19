@@ -1,20 +1,19 @@
-"""
-足球预测完整管道
-Football Prediction Complete Pipeline
+"""足球预测完整管道
+Football Prediction Complete Pipeline.
 
 结合特征工程管道和 XGBoost 模型训练的完整示例。
 """
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Tuple, Optional
+from typing import Any
 
 # 尝试导入所需库
 try:
-    import pandas as pd
     import numpy as np
-    from sklearn.model_selection import train_test_split
+    import pandas as pd
     from sklearn.metrics import classification_report, confusion_matrix
+    from sklearn.model_selection import train_test_split
 
     HAS_DEPENDENCIES = True
 except ImportError:
@@ -26,7 +25,7 @@ try:
         FeaturePipelineBuilder,
         create_default_football_pipeline,
     )
-    from src.models.model_training import BaselineModelTrainer, HAS_XGB
+    from src.models.model_training import HAS_XGB, BaselineModelTrainer
 
     HAS_PROJECT_MODULES = True
 except ImportError:
@@ -36,8 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 class FootballPredictionPipeline:
-    """
-    足球预测完整管道
+    """足球预测完整管道.
 
     整合特征工程、模型训练和预测的端到端解决方案。
     """
@@ -49,8 +47,7 @@ class FootballPredictionPipeline:
         use_mlflow: bool = True,
         random_state: int = 42,
     ):
-        """
-        初始化预测管道
+        """初始化预测管道.
 
         Args:
             model_name: 模型名称
@@ -90,8 +87,7 @@ class FootballPredictionPipeline:
         categorical_strategy: str = "onehot",
         include_football_features: bool = True,
     ) -> "FootballPredictionPipeline":
-        """
-        构建特征工程管道
+        """构建特征工程管道.
 
         Args:
             numeric_features: 数值特征列表
@@ -128,7 +124,7 @@ class FootballPredictionPipeline:
             handle_missing=True,
         )
 
-        logger.info(f"Feature pipeline built successfully")
+        logger.info("Feature pipeline built successfully")
         return self
 
     def prepare_data(
@@ -137,9 +133,8 @@ class FootballPredictionPipeline:
         y: pd.Series,
         test_size: float = 0.2,
         validate_features: bool = True,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        """
-        准备训练和测试数据
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        """准备训练和测试数据.
 
         Args:
             X: 特征数据
@@ -170,12 +165,11 @@ class FootballPredictionPipeline:
         X_val: pd.DataFrame = None,
         y_val: pd.Series = None,
         model_type: str = "xgboost",
-        xgboost_params: Dict[str, Any] = None,
+        xgboost_params: dict[str, Any] = None,
         optimize_hyperparameters: bool = False,
         n_trials: int = 50,
-    ) -> Dict[str, Any]:
-        """
-        训练预测模型
+    ) -> dict[str, Any]:
+        """训练预测模型.
 
         Args:
             X_train: 训练特征数据
@@ -253,8 +247,7 @@ class FootballPredictionPipeline:
         return training_result
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
-        """
-        进行预测
+        """进行预测.
 
         Args:
             X: 特征数据
@@ -275,8 +268,7 @@ class FootballPredictionPipeline:
         return self.model_trainer.predict(X_processed)
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
-        """
-        获取预测概率
+        """获取预测概率.
 
         Args:
             X: 特征数据
@@ -296,9 +288,8 @@ class FootballPredictionPipeline:
         # 模型预测概率
         return self.model_trainer.predict_proba(X_processed)
 
-    def evaluate(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict[str, Any]:
-        """
-        评估模型性能
+    def evaluate(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict[str, Any]:
+        """评估模型性能.
 
         Args:
             X_test: 测试特征数据
@@ -334,8 +325,7 @@ class FootballPredictionPipeline:
             return {"error": str(e)}
 
     def save_pipeline(self, filepath: str = None) -> str:
-        """
-        保存完整管道
+        """保存完整管道.
 
         Args:
             filepath: 保存路径
@@ -367,8 +357,7 @@ class FootballPredictionPipeline:
         return str(filepath)
 
     def load_pipeline(self, filepath: str) -> "FootballPredictionPipeline":
-        """
-        加载完整管道
+        """加载完整管道.
 
         Args:
             filepath: 文件路径
@@ -392,14 +381,14 @@ class FootballPredictionPipeline:
 
 # 便捷函数
 def create_simple_prediction_pipeline() -> FootballPredictionPipeline:
-    """创建简单的足球预测管道"""
+    """创建简单的足球预测管道."""
     return FootballPredictionPipeline(
         model_name="simple_football_predictor", use_mlflow=False
     ).build_feature_pipeline()
 
 
 def create_advanced_prediction_pipeline() -> FootballPredictionPipeline:
-    """创建高级的足球预测管道"""
+    """创建高级的足球预测管道."""
     return FootballPredictionPipeline(
         model_name="advanced_football_predictor", use_mlflow=True
     ).build_feature_pipeline(
@@ -411,9 +400,8 @@ def create_advanced_prediction_pipeline() -> FootballPredictionPipeline:
 
 # 使用示例
 def example_usage():
-    """使用示例"""
+    """使用示例."""
     if not HAS_DEPENDENCIES:
-        print("Required dependencies not available")
         return
 
     # 创建模拟数据
@@ -445,7 +433,7 @@ def example_usage():
 
     # 训练模型
     if HAS_XGB:
-        training_result = pipeline.train_model(
+        pipeline.train_model(
             X_train,
             y_train,
             X_test,
@@ -453,15 +441,12 @@ def example_usage():
             optimize_hyperparameters=True,
             n_trials=20,  # 示例中使用较少的试验次数
         )
-        print("Training completed successfully")
-        print(f"Best score: {training_result.get('metrics', {})}")
     else:
-        print("XGBoost not available, skipping training example")
+        pass
 
     # 评估模型
     if pipeline.is_fitted:
-        evaluation_result = pipeline.evaluate(X_test, y_test)
-        print(f"Model accuracy: {evaluation_result.get('accuracy', 0):.4f}")
+        pipeline.evaluate(X_test, y_test)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ import asyncio
 import logging
 from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

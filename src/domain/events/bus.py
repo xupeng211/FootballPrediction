@@ -1,5 +1,3 @@
-from typing import Optional
-
 """事件总线模块
 Event Bus Module.
 

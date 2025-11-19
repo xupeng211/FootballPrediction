@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""
-统一测试工具库
-"""
+"""统一测试工具库."""
 
 import re
 import subprocess
 
 
 class QuickTestRunner:
-    """快速测试运行器"""
+    """快速测试运行器."""
 
     def run_tests(self, test_path=None, coverage=False):
-        """运行测试"""
+        """运行测试."""
         cmd = ["python3", "-m", "pytest"]
 
         if test_path:
@@ -43,11 +41,11 @@ class QuickTestRunner:
         return int(match.group(1)) if match else 0
 
 def quick_test(test_path=None):
-    """快速测试"""
+    """快速测试."""
     runner = QuickTestRunner()
     return runner.run_tests(test_path)
 
 def quick_coverage_test(test_path=None):
-    """快速覆盖率测试"""
+    """快速覆盖率测试."""
     runner = QuickTestRunner()
     return runner.run_tests(test_path, coverage=True)

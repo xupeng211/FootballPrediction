@@ -14,7 +14,7 @@ Model Performance Monitor
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import joblib
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier

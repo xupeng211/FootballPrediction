@@ -7,7 +7,7 @@ Database Performance Monitoring Middleware.
 import asyncio
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession

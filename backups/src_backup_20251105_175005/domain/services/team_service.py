@@ -1,4 +1,4 @@
-"""球队领域服务"
+"""球队领域服务".
 
 提供围绕球队聚合的高级业务操作,例如比赛结果更新,
 球队信息维护以及联赛积分榜计算.
@@ -25,7 +25,7 @@ class TeamRepositoryProtocol(Protocol):
 
 @dataclass(frozen=True)
 class TeamStatsEvent:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队统计更新事件快照."""
@@ -41,7 +41,7 @@ class TeamStatsEvent:
 
 @dataclass(frozen=True)
 class TeamProfileUpdatedEvent:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队资料更新事件."""
@@ -53,7 +53,7 @@ class TeamProfileUpdatedEvent:
 
 @dataclass(frozen=True)
 class TeamPerformanceResetEvent:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队表现重置事件."""
@@ -63,7 +63,7 @@ class TeamPerformanceResetEvent:
 
 
 class TeamDomainService:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """球队领域服务"""

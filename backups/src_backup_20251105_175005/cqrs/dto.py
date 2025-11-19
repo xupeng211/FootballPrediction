@@ -1,6 +1,5 @@
-"""
-数据传输对象
-Data Transfer Objects
+"""数据传输对象
+Data Transfer Objects.
 
 定义CQRS模式中使用的DTO.
 Defines DTOs used in CQRS pattern.
@@ -13,7 +12,7 @@ from typing import Any
 
 @dataclass
 class PredictionDTO:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测DTO"""
@@ -32,7 +31,7 @@ class PredictionDTO:
     updated_at: datetime | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "match_id": self.match_id,
@@ -53,7 +52,7 @@ class PredictionDTO:
 
 @dataclass
 class UserDTO:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """用户DTO"""
@@ -69,7 +68,7 @@ class UserDTO:
     last_login: datetime | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "username": self.username,
@@ -85,7 +84,7 @@ class UserDTO:
 
 @dataclass
 class MatchDTO:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比赛DTO"""
@@ -103,7 +102,7 @@ class MatchDTO:
     updated_at: datetime | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "id": self.id,
             "home_team": self.home_team,
@@ -121,7 +120,7 @@ class MatchDTO:
 
 @dataclass
 class PredictionStatsDTO:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """预测统计DTO"""
@@ -136,7 +135,7 @@ class PredictionStatsDTO:
     recent_performance: list[dict[str, Any]]
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "user_id": self.user_id,
             "total_predictions": self.total_predictions,
@@ -151,7 +150,7 @@ class PredictionStatsDTO:
 
 @dataclass
 class MatchStatsDTO:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """比赛统计DTO"""
@@ -165,7 +164,7 @@ class MatchStatsDTO:
     away_win_percentage: float
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "match_id": self.match_id,
             "total_predictions": self.total_predictions,
@@ -179,7 +178,7 @@ class MatchStatsDTO:
 
 @dataclass
 class CommandResult:
-    """类文档字符串"""
+    """类文档字符串."""
 
     pass  # 添加pass语句
     """命令执行结果"""
@@ -193,12 +192,12 @@ class CommandResult:
     def success_result(
         cls, data: Any = None, message: str = "操作成功"
     ) -> "CommandResult":
-        """创建成功结果"""
+        """创建成功结果."""
         return cls(success=True, message=message, data=data)
 
     @classmethod
     def failure_result(
         cls, errors: list[str], message: str = "操作失败"
     ) -> "CommandResult":
-        """创建失败结果"""
+        """创建失败结果."""
         return cls(success=False, message=message, errors=errors)

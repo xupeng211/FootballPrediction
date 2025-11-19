@@ -1,5 +1,3 @@
-from typing import Optional
-
 """数据库配置模块."""
 
 import os

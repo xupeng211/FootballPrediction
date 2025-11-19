@@ -1,5 +1,3 @@
-from typing import Optional
-
 import os
 from datetime import date, datetime, timedelta
 

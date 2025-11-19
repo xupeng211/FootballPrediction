@@ -113,7 +113,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def _create_predictions_indexes(conn) -> None:
-    """创建预测表索引"""
+    """创建预测表索引."""
     logger.info("1. 创建预测表性能索引...")
     try:
         conn.execute(
@@ -142,7 +142,7 @@ def _create_predictions_indexes(conn) -> None:
 
 
 def upgrade() -> None:
-    """添加性能关键索引"""
+    """添加性能关键索引."""
     if context.is_offline_mode():
         logger.info("⚠️  离线模式:跳过性能索引创建")
         op.execute("-- offline mode: skipped performance indexes creation")
@@ -154,7 +154,7 @@ def upgrade() -> None:
 
 
 def _create_matches_indexes(conn) -> None:
-    """创建比赛表索引"""
+    """创建比赛表索引."""
     logger.info("2. 创建比赛表复合索引...")
     try:
         conn.execute(
@@ -195,7 +195,7 @@ def _create_matches_indexes(conn) -> None:
 
 
 def _create_features_indexes(conn) -> None:
-    """创建特征表索引"""
+    """创建特征表索引."""
     logger.info("3. 创建特征表性能索引...")
     try:
         conn.execute(
@@ -224,7 +224,7 @@ def _create_features_indexes(conn) -> None:
 
 
 def _create_data_quality_indexes(conn) -> None:
-    """创建数据质量监控索引"""
+    """创建数据质量监控索引."""
     logger.info("4. 创建数据质量监控索引...")
     try:
         conn.execute(
@@ -253,7 +253,7 @@ def _create_data_quality_indexes(conn) -> None:
 
 
 def _create_audit_logs_indexes(conn) -> None:
-    """创建审计日志索引"""
+    """创建审计日志索引."""
     logger.info("5. 创建审计日志索引...")
     try:
         conn.execute(
@@ -360,7 +360,7 @@ def _create_audit_logs_indexes(conn) -> None:
 
 
 def downgrade() -> None:
-    """删除性能关键索引"""
+    """删除性能关键索引."""
     if context.is_offline_mode():
         logger.info("⚠️  离线模式:跳过索引删除")
         op.execute("-- offline mode: skipped performance indexes removal")

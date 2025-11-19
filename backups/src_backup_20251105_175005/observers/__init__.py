@@ -1,6 +1,5 @@
-"""
-观察者模式模块
-Observer Pattern Module
+"""观察者模式模块
+Observer Pattern Module.
 
 提供观察者模式的实现,用于监控和日志系统的通知.
 Provides observer pattern implementation for monitoring and logging notifications.
@@ -19,7 +18,7 @@ from .subjects import AlertSubject, PredictionMetricsSubject, SystemMetricsSubje
 
 # 系统级便捷函数
 def initialize_observer_system():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """初始化观察者系统"""
     manager = get_observer_manager()
@@ -29,7 +28,7 @@ def initialize_observer_system():
 
 
 def start_observer_system():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """启动观察者系统"""
     manager = get_observer_manager()
@@ -39,7 +38,7 @@ def start_observer_system():
 
 
 def stop_observer_system():
-    """函数文档字符串"""
+    """函数文档字符串."""
     pass  # 添加pass语句
     """停止观察者系统"""
     manager = get_observer_manager()
