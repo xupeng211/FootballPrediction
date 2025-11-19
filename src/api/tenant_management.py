@@ -6,7 +6,7 @@ Multi-Tenant Management API.
 
 import re
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field, field_validator
@@ -64,12 +64,12 @@ class TenantCreationRequestModel(BaseModel):
         description="租户标识符",
     )
     contact_email: str = Field(..., description="联系邮箱")
-    company_name: str | None = Field(
+    company_name: Optional[str] = Field(
         None,
         max_length=100,
         description="公司名称",
     )
-    description: str | None = Field(
+    description: Optional[str] = Field(
         None,
         max_length=MAX_ADMIN_NAME_LENGTH,
         description="租户描述",
@@ -87,7 +87,7 @@ class TenantCreationRequestModel(BaseModel):
         le=365,
         description="试用天数",
     )
-    custom_settings: dict[str, Any] | None = Field(None, description="自定义设置")
+    custom_settings: Optional[dict[str, Any]] = Field(None, description="自定义设置")
 
     @field_validator("slug")
     @classmethod
@@ -101,63 +101,36 @@ class TenantCreationRequestModel(BaseModel):
 class TenantUpdateRequestModel(BaseModel):
     """租户更新请求模型."""
 
-    name: str | None = Field(
+    name: Optional[str] = Field(
         None,
         min_length=1,
         max_length=MAX_NAME_LENGTH,
         description="租户名称",
     )
-    description: str | None = Field(
+    description: Optional[str] = Field(
         None,
         max_length=MAX_ADMIN_NAME_LENGTH,
         description="租户描述",
     )
-    contact_email: str | None = Field(None, description="联系邮箱")
-    contact_phone: str | None = Field(
+    contact_email: Optional[str] = Field(None, description="联系邮箱")
+    contact_phone: Optional[str] = Field(
         None,
         max_length=MAX_DOMAIN_LENGTH,
         description="联系电话",
     )
-    company_name: str | None = Field(
+    company_name: Optional[str] = Field(
         None,
         max_length=MAX_NAME_LENGTH,
         description="公司名称",
     )
-    company_address: str | None = Field(
+    company_address: Optional[str] = Field(
         None,
         max_length=MAX_ADMIN_NAME_LENGTH,
         description="公司地址",
     )
-    settings: dict[str, Any] | None = Field(None, description="租户设置")
-
-
-
-class TenantUpdateRequestModel(BaseModel):
-    """租户更新请求模型."""
-
-    name: str | None = Field(
-        None,
-        min_length=1,
-        max_length=MAX_NAME_LENGTH,
-    description: str | None = Field(
-        None,
-        max_length=MAX_ADMIN_NAME_LENGTH,
-        description="租户描述",
-    contact_email: str | None = Field(None, description="联系邮箱")
-    contact_phone: str | None = Field(
-        None,
-        max_length=MAX_DOMAIN_LENGTH,
-        description="联系电话",
-    company_name: str | None = Field(
-        None,
-        max_length=MAX_NAME_LENGTH,
-    company_address: str | None = Field(
-        None,
-        max_length=MAX_ADMIN_NAME_LENGTH,
-        description="公司地址",
-    settings: dict[str, Any] | None = Field(None, description="租户设置")
-    features: dict[str, bool] | None = Field(None, description="功能配置")
-    branding: dict[str, Any] | None = Field(None, description="品牌定制")
+    settings: Optional[dict[str, Any]] = Field(None, description="租户设置")
+    features: Optional[dict[str, bool]] = Field(None, description="功能配置")
+    branding: Optional[dict[str, Any]] = Field(None, description="品牌定制")
 
 
 class TenantResponseModel(BaseModel):
@@ -166,9 +139,9 @@ class TenantResponseModel(BaseModel):
     id: int
     name: str
     slug: str
-    domain: str | None
-    description: str | None
-    company_name: str | None
+    domain: Optional[str]
+    description: Optional[str]
+    company_name: Optional[str]
     contact_email: str
     status: str
     plan: str
@@ -178,7 +151,7 @@ class TenantResponseModel(BaseModel):
     storage_quota_mb: int
     is_trial: bool
     is_subscription_active: bool
-    days_until_expiry: int | None
+    days_until_expiry: Optional[int]
     usage_percentage: float
     created_at: str
     updated_at: str
@@ -466,7 +439,7 @@ async def update_usage_metrics(tenant_id: int, metrics: dict[str, Any]):
 # ==================== 租户列表和搜索 ==================== None
 
 
-@router.get("/", response_model=list[TenantResponseModel])
+@router.get("/", response_model=List[TenantResponseModel])
 @require_permission("tenant.list")
 async def list_tenants(
     skip: int = Query(0, ge=0, description="跳过数量"),
@@ -475,9 +448,10 @@ async def list_tenants(
         ge=1,
         le=100,
         description="返回数量",
-    status: str | None = Query(None, description="状态筛选"),
-    plan: str | None = Query(None, description="计划筛选"),
-    search: str | None = Query(None, description="搜索关键词"),
+    ),
+    status: Optional[str] = Query(None, description="状态筛选"),
+    plan: Optional[str] = Query(None, description="计划筛选"),
+    search: Optional[str] = Query(None, description="搜索关键词"),
 ):
     """获取租户列表.
 
@@ -538,16 +512,24 @@ async def tenant_health_check(tenant_id: int):
 def _calculate_health_score(tenant: Tenant) -> float:
     """计算租户健康分数."""
 
+    score = DEFAULT_HEALTH_SCORE
+
     # 状态检查
     if tenant.status != "active":
+        score -= 20.0
 
     # 订阅检查
     if not tenant.is_subscription_active:
+        score -= 15.0
 
     # 使用率检查
-        score -= 10.0
+    if tenant.usage_percentage > HIGH_USAGE_THRESHOLD:
+        score -= HIGH_USAGE_PENALTY
+    elif tenant.usage_percentage > MEDIUM_USAGE_THRESHOLD:
+        score -= MEDIUM_USAGE_PENALTY
 
     # 过期时间检查
     if tenant.days_until_expiry is not None and tenant.days_until_expiry < 7:
+        score -= 25.0
 
     return max(0.0, score)
