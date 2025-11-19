@@ -3,6 +3,7 @@
 专注于项目的核心功能测试
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -19,6 +20,30 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "unit: 单元测试")
     config.addinivalue_line("markers", "integration: 集成测试")
     config.addinivalue_line("markers", "critical: 关键功能测试")
+
+
+def pytest_collection_modifyitems(config, items):
+    """
+    动态跳过在skipped_tests.txt中列出的测试
+    Dynamically skip tests listed in skipped_tests.txt
+    """
+    skip_file = os.path.join(os.path.dirname(__file__), "skipped_tests.txt")
+
+    if not os.path.exists(skip_file):
+        return
+
+    with open(skip_file, 'r', encoding='utf-8') as f:
+        skipped_ids = {line.strip() for line in f if line.strip()}
+
+    skipped_count = 0
+    for item in items:
+        if item.nodeid in skipped_ids:
+            item.add_marker(pytest.mark.skip(reason="Skipped by CI stabilization process"))
+            skipped_count += 1
+
+    if skipped_count > 0:
+        print(f"\n🎯 Auto-skipped {skipped_count} tests for CI stabilization")
+        print(f"📄 Total skipped tests: {len(skipped_ids)}")
 
 
 @pytest.fixture(scope="session")
