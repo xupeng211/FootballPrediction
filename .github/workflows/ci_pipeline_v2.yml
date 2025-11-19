@@ -112,9 +112,9 @@ jobs:
         echo "🧪 运行测试套件..."
         export $(cat .env.test | xargs)
 
-        # Run tests with coverage (force pass for green baseline)
+        # Run tests with coverage (strict mode - re-enabled)
         if [ -f "Makefile" ] && grep -q "test.unit" Makefile; then
-          make test.unit || echo "⚠️ Tests failed, but forcing green build for baseline."
+          make test.unit
         else
           pytest tests/unit/ \
             -v \
@@ -123,7 +123,7 @@ jobs:
             --cov-report=term-missing \
             --junit-xml=test-results.xml \
             --maxfail=5 \
-            -x || echo "⚠️ Tests failed, but forcing green build for baseline."
+            -x
         fi
 
         # Generate coverage summary (fail-safe)
