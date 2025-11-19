@@ -193,7 +193,9 @@ class ProcessingCache:
 
             # 生成MD5哈希
             key_string = ":".join(key_parts)
-            hash_key = hashlib.md5(key_string.encode(usedforsecurity=False)).hexdigest()
+            hash_key = hashlib.md5(
+                key_string.encode(), usedforsecurity=False
+            ).hexdigest()
 
             return f"{prefix}:{hash_key}"
 

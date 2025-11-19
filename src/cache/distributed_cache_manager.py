@@ -700,7 +700,9 @@ class LoadBalancer:
 
         elif self.strategy == DistributionStrategy.CONSISTENT_HASH and key:
             # 简化的一致性哈希
-            hash_value = int(hashlib.md5(key.encode(), usedforsecurity=False).hexdigest(), 16)
+            hash_value = int(
+                hashlib.md5(key.encode(), usedforsecurity=False).hexdigest(), 16
+            )
             return nodes[hash_value % len(nodes)]
 
         else:  # AFFINITY_BASED or default
