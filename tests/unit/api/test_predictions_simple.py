@@ -18,21 +18,31 @@ from pydantic import ValidationError
 # 添加src到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-# 直接导入predictions路由器
-import importlib.util
+# 导入predictions路由器
+try:
+    from src.api.predictions.router import router
+    from src.api.predictions.models import (
+        PredictionRequest,
+        PredictionResult,
+        BatchPredictionRequest
+    )
+except ImportError:
+    # 备用导入方式
+    import importlib.util
+    import os
 
-spec = importlib.util.spec_from_file_location(
-    "predictions_module",
-    "/home/user/projects/FootballPrediction/src/api/predictions/router.py",
-)
-predictions_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(predictions_module)
+    router_path = os.path.join(
+        os.path.dirname(__file__),
+        "../../../src/api/predictions/router.py"
+    )
+    spec = importlib.util.spec_from_file_location("predictions_router", router_path)
+    predictions_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(predictions_module)
 
-# 从导入的模块中获取类和路由器
-router = predictions_module.router
-PredictionRequest = predictions_module.PredictionRequest
-PredictionResult = predictions_module.PredictionResult
-BatchPredictionRequest = predictions_module.BatchPredictionRequest
+    router = predictions_module.router
+    PredictionRequest = predictions_module.PredictionRequest
+    PredictionResult = predictions_module.PredictionResult
+    BatchPredictionRequest = predictions_module.BatchPredictionRequest
 BatchPredictionResponse = predictions_module.BatchPredictionResponse
 PredictionHistory = predictions_module.PredictionHistory
 RecentPrediction = predictions_module.RecentPrediction
