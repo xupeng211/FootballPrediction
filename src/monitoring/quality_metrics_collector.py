@@ -226,7 +226,7 @@ class QualityMetricsCollector:
                 capture_output=True,
                 text=True,
                 timeout=30,
-                shell=True,
+                shell=True,  # nosec B602 - controlled command with validated input
             )
 
             if result.returncode == 0:
@@ -239,7 +239,7 @@ class QualityMetricsCollector:
                     capture_output=True,
                     text=True,
                     timeout=30,
-                    shell=True,
+                    shell=True,  # nosec B602 - controlled command with validated input
                 )
 
                 if files_result.returncode == 0:

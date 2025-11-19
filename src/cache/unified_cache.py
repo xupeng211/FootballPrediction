@@ -359,7 +359,7 @@ def cached(
             else:
                 # 使用函数名和参数生成哈希键
                 param_str = f"{func.__name__}:{str(args)}:{str(sorted(kwargs.items()))}"
-                cache_key = hashlib.md5(param_str.encode()).hexdigest()
+                cache_key = hashlib.md5(param_str.encode(, usedforsecurity=False)).hexdigest()
 
             # 尝试从缓存获取
             cache_manager = get_cache_manager()

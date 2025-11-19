@@ -120,7 +120,7 @@ class CacheEntry:
     def _calculate_checksum(self) -> str:
         """计算校验和."""
         data = f"{self.key}{self.value}{self.version}{self.created_at}"
-        return hashlib.md5(data.encode()).hexdigest()
+        return hashlib.md5(data.encode(, usedforsecurity=False)).hexdigest()
 
     def is_valid(self) -> bool:
         """验证缓存条目有效性."""
@@ -226,7 +226,7 @@ class ConsistentHashRing:
 
     def _hash(self, key: str) -> int:
         """计算哈希值."""
-        return int(hashlib.md5(key.encode()).hexdigest(), 16)
+        return int(hashlib.md5(key.encode(, usedforsecurity=False)).hexdigest(), 16)
 
 
 class RedisClusterManager:

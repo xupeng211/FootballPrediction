@@ -184,7 +184,7 @@ class CacheVersion:
             data += str(self.data)
         if self.vector_clock:
             data += json.dumps(self.vector_clock.to_dict(), sort_keys=True)
-        return hashlib.md5(data.encode()).hexdigest()
+        return hashlib.md5(data.encode(, usedforsecurity=False)).hexdigest()
 
     def is_valid(self) -> bool:
         """检查版本有效性."""
