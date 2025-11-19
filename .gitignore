@@ -225,4 +225,7 @@ htmlcov*/
 .cache/
 # 归档旧文件
 archive/
+archived/
+backups/
+backup_*/
 .venv/
