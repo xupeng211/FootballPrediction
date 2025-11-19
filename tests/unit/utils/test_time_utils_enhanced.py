@@ -4,7 +4,13 @@ from typing import Optional
 时间工具增强测试 - 基于实际TimeUtils类
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+try:
+    from datetime import UTC
+except ImportError:
+    # For Python < 3.11
+    UTC = timezone.utc
 
 import pytest
 
