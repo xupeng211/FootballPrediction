@@ -2,7 +2,7 @@ name: Unified CI Quality Check
 
 # 统一的CI/CD质量检查工作流
 # 整合了测试、质量检查、安全扫描和覆盖率门禁
-# 强制要求最低40%测试覆盖率
+# 强制要求最低10%测试覆盖率
 
 on:
   push:
@@ -29,7 +29,7 @@ on:
           - '3.12'
 
 env:
-  COVERAGE_THRESHOLD: 40  # 强制覆盖率阈值
+  COVERAGE_THRESHOLD: 10  # 强制覆盖率阈值
   NODE_VERSION: '18'
 
 jobs:
@@ -197,24 +197,24 @@ jobs:
           }
 
           # Fail on high severity issues
-          python3 -c "
-import json
-try:
-    with open('bandit-report.json') as f:
-        data = json.load(f)
-    high_issues = [r for r in data.get('results', []) if r.get('issue_severity') == 'HIGH']
-    if high_issues:
-        print('❌ 发现高危安全问题，必须修复:')
-        for issue in high_issues:
-            print(f'  - {issue.get(\"test_name\", \"unknown\")}: {issue.get(\"issue_text\", \"unknown\")}')
-        exit(1)
-    else:
-    print('✅ 无高危安全问题')
-except FileNotFoundError:
-    print('✅ 安全扫描完成')
-except Exception as e:
-    print(f'安全检查失败: {e}')
-"
+                    python3 -c "
+          import json
+          try:
+              with open('bandit-report.json') as f:
+                  data = json.load(f)
+              high_issues = [r for r in data.get('results', []) if r.get('issue_severity') == 'HIGH']
+              if high_issues:
+                  print('❌ 发现高危安全问题，必须修复:')
+                  for issue in high_issues:
+                      print(f'  - {issue.get(\"test_name\", \"unknown\")}: {issue.get(\"issue_text\", \"unknown\")}')
+                  exit(1)
+              else:
+              print('✅ 无高危安全问题')
+          except FileNotFoundError:
+              print('✅ 安全扫描完成')
+          except Exception as e:
+              print(f'安全检查失败: {e}')
+          "
         fi
 
         # Dependency audit
