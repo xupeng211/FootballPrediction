@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install requests pandas numpy matplotlib
-        pip install -r requirements/requirements.lock
+        # Note: requirements.lock file doesn't exist, using direct install
 
     - name: Run CI monitoring analysis
       run: |

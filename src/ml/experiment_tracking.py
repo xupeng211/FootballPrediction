@@ -18,7 +18,7 @@ import sys
 import time
 import json
 import logging
-from typing import Dict, Any, Optional, Union
+from typing import Any, Optional, Union
 from datetime import datetime
 
 try:
@@ -352,15 +352,15 @@ def dummy_football_prediction_experiment(params: dict[str, Any]) -> dict[str, An
 
 def main():
     """主函数 - 演示MLflow集成"""
-    print("🚀 Starting MLflow Integration Test")
-    print("=" * 50)
+    logger.info("🚀 Starting MLflow Integration Test")
+    logger.info("=" * 50)
 
     # 创建实验跟踪器
     try:
         tracker = MLflowExperimentTracker("football-prediction-demo")
-        print("✅ MLflow experiment tracker initialized")
-        print(f"📊 Tracking URI: {tracker.tracking_uri}")
-        print(f"🏷️  Experiment: {tracker.experiment_name}")
+        logger.info("✅ MLflow experiment tracker initialized")
+        logger.info(f"📊 Tracking URI: {tracker.tracking_uri}")
+        logger.info(f"🏷️  Experiment: {tracker.experiment_name}")
 
         # 定义实验参数
         experiment_params = {
@@ -372,12 +372,12 @@ def main():
             "optimizer": "adam",
         }
 
-        print("\n🎯 Running experiment with parameters:")
+        logger.info("\n🎯 Running experiment with parameters:")
         for key, value in experiment_params.items():
-            print(f"  {key}: {value}")
+            logger.info(f"  {key}: {value}")
 
         # 运行实验
-        print("\n🧪 Running experiment...")
+        logger.info("\n🧪 Running experiment...")
         result = tracker.run_experiment(
             dummy_football_prediction_experiment, experiment_params
         )
@@ -411,15 +411,15 @@ def main():
         # 清理临时文件
         os.remove(results_file)
 
-        print("\n✅ Experiment completed successfully!")
-        print(f"📊 Final validation accuracy: {metrics['final_val_accuracy']:.4f}")
-        print(f"🏆 Best validation accuracy: {metrics['best_val_accuracy']:.4f}")
-        print("📁 Results logged to MLflow experiment")
+        logger.info("\n✅ Experiment completed successfully!")
+        logger.info(f"📊 Final validation accuracy: {metrics['final_val_accuracy']:.4f}")
+        logger.info(f"🏆 Best validation accuracy: {metrics['best_val_accuracy']:.4f}")
+        logger.info("📁 Results logged to MLflow experiment")
 
         return result
 
     except Exception as e:
-        print(f"❌ Failed to run experiment: {e}")
+        logger.error(f"❌ Failed to run experiment: {e}")
         return None
 
 
