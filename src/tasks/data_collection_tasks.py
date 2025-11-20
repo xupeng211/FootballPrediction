@@ -5,7 +5,7 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any
 
 from celery import shared_task
 from celery.schedules import crontab
@@ -49,7 +49,7 @@ __all__ = [
 ]
 
 @shared_task(bind=True, name="collect_daily_fixtures")
-def collect_daily_fixtures(self) -> Dict[str, Any]:
+def collect_daily_fixtures(self) -> dict[str, Any]:
     """
     每日赛程数据采集任务.
 
@@ -123,7 +123,7 @@ def collect_daily_fixtures(self) -> Dict[str, Any]:
 
 
 @shared_task(bind=True, name="collect_live_scores")
-def collect_live_scores(self, match_ids: List[int] = None) -> Dict[str, Any]:
+def collect_live_scores(self, match_ids: list[int] = None) -> dict[str, Any]:
     """
     实时比分数据采集任务.
 
@@ -133,14 +133,6 @@ def collect_live_scores(self, match_ids: List[int] = None) -> Dict[str, Any]:
     logger.info(f"Starting live scores collection task for matches: {match_ids}")
 
     try:
-        config = {
-            "api_key": "demo_api_key",
-            "timeout": 30.0,
-            "max_retries": 3
-        }
-
-        collector = get_scores_collector(config)
-
         if match_ids is None:
             match_ids = [1, 2, 3]  # 模拟比赛ID
 
@@ -170,7 +162,7 @@ def collect_live_scores(self, match_ids: List[int] = None) -> Dict[str, Any]:
 
 
 @shared_task(bind=True, name="collect_odds_data")
-def collect_odds_data(self, match_ids: List[int] = None, hours_ahead: int = 24) -> Dict[str, Any]:
+def collect_odds_data(self, match_ids: list[int] = None, hours_ahead: int = 24) -> dict[str, Any]:
     """
     赔率数据采集任务.
 
@@ -205,7 +197,7 @@ def collect_odds_data(self, match_ids: List[int] = None, hours_ahead: int = 24) 
 
 
 @shared_task(bind=True, name="cleanup_old_data")
-def cleanup_old_data(self, days_to_keep: int = 90) -> Dict[str, Any]:
+def cleanup_old_data(self, days_to_keep: int = 90) -> dict[str, Any]:
     """
     清理旧数据任务.
 
