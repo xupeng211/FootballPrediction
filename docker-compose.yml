@@ -20,8 +20,8 @@ services:
       - ./tests:/app/tests
       - ./requirements:/app/requirements
     restart: unless-stopped
-    # 使用开发环境启动，依赖已在Dockerfile中安装
-    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    # 安装所需依赖并启动应用
+    command: ["bash", "-c", "pip install uvicorn fastapi bcrypt psycopg2-binary && /venv/bin/uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"]
 
   db:
     image: postgres:15

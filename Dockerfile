@@ -6,15 +6,7 @@ FROM python:3.11-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# 安装系统依赖 (例如, build-essential, libpq-dev)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    curl \
-    && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# 跳过系统包安装，直接使用 Python 基础镜像
 
 WORKDIR /app
 
@@ -23,32 +15,32 @@ WORKDIR /app
 # 此阶段用于为 *生产* 环境安装依赖
 #
 FROM base AS builder-prod
-# 安装 pip-tools
-RUN pip install pip-tools
+# 配置pip使用清华镜像源并安装pip-tools
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pip-tools
 
 # 复制生产依赖 *锁定* 文件
 COPY requirements/prod.txt .
 
-# 创建虚拟环境并安装生产依赖
+# 创建虚拟环境并安装生产依赖（使用清华镜像源加速）
 RUN python -m venv /venv && \
     . /venv/bin/activate && \
-    pip-sync prod.txt
+    pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r prod.txt
 
 #
 # --- 3. Builder-Dev Stage ---
 # 此阶段用于为 *开发和测试* 环境安装依赖
 #
 FROM base AS builder-dev
-# 安装 pip-tools
-RUN pip install pip-tools
+# 配置pip使用清华镜像源并安装pip-tools
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pip-tools
 
 # 复制开发依赖 *锁定* 文件 (包含所有 prod, dev, test 依赖)
 COPY requirements/dev.txt .
 
-# 创建虚拟环境并安装开发依赖
+# 创建虚拟环境并安装开发依赖（使用清华镜像源加速）
 RUN python -m venv /venv && \
     . /venv/bin/activate && \
-    pip-sync dev.txt
+    pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r dev.txt
 
 #
 # --- 4. Final (Production) Stage ---
@@ -71,9 +63,9 @@ USER appuser
 # 激活 venv
 ENV PATH="/venv/bin:$PATH"
 
-# 健康检查
+# 健康检查（使用 wget 替代 curl）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD wget --quiet --tries=1 --spider http://localhost:8000/health || exit 1
 
 # 暴露端口和运行
 EXPOSE 8000
