@@ -149,9 +149,7 @@ class MLflowExperimentTracker:
         except Exception as e:
             logger.error(f"Failed to log parameters: {e}")
 
-    def log_metrics(
-        self, metrics: dict[str, int | float], step: int | None = None
-    ):
+    def log_metrics(self, metrics: dict[str, int | float], step: int | None = None):
         """
         记录指标
 
@@ -412,7 +410,9 @@ def main():
         os.remove(results_file)
 
         logger.info("\n✅ Experiment completed successfully!")
-        logger.info(f"📊 Final validation accuracy: {metrics['final_val_accuracy']:.4f}")
+        logger.info(
+            f"📊 Final validation accuracy: {metrics['final_val_accuracy']:.4f}"
+        )
         logger.info(f"🏆 Best validation accuracy: {metrics['best_val_accuracy']:.4f}")
         logger.info("📁 Results logged to MLflow experiment")
 
