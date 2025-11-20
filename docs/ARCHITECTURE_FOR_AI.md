@@ -130,16 +130,15 @@ src/database/
 ### 🔌 `src/adapters/` - External Integrations (外部适配器)
 ```
 src/adapters/
-├── data_sources/     # 📊 数据源适配器
-│   ├── football_api.py       # ⚽ 足球数据API
-│   ├── betting_api.py        # 💰 博彩数据API
-│   └── news_api.py          # 📰 新闻数据API
-├── cache/            # 💾 缓存适配器
-│   ├── redis_adapter.py      # 🔴 Redis适配器
-│   └── memory_cache.py       # 🧠 内存缓存适配器
-└── notifications/    # 📢 通知适配器
-    ├── email_adapter.py      # 📧 邮件通知
-    └── webhook_adapter.py    # 🎣 Webhook通知
+├── adapters/         # 📊 数据源适配器
+│   ├── football_models.py   # ⚽ 足球数据模型
+│   └── football.py          # ⚽ 足球数据适配器
+├── base.py           # 🔧 基础适配器类
+├── factory.py        # 🏭 适配器工厂
+└── football.py       # ⚽ 足球数据适配器
+
+# 缓存系统在 src/cache/ 目录
+# src/cache/redis_manager.py - Redis适配器
 ```
 
 **职责边界**:
@@ -173,19 +172,18 @@ src/core/
 ```
 src/ml/
 ├── models/           # 🤖 ML模型定义
-│   ├── lstm_model.py         # 📊 LSTM时序模型
-│   ├── poisson_model.py      # 📈 Poisson分布模型
-│   └── ensemble_model.py     # 🔄 集成模型
-├── features/         # 🔧 特征工程
-│   ├── match_features.py     # ⚽ 比赛特征
-│   ├── team_features.py      # 👥 球队特征
-│   └── historical_features.py # 📚 历史特征
-├── training/         # 🎯 模型训练
-│   ├── trainer.py           # 🏋️ 模型训练器
-│   └── evaluator.py         # 📊 模型评估
-└── inference/        # 🔮 模型推理
-    ├── predictor.py         # 🔮 预测器
-    └── model_loader.py      # 📂 模型加载器
+│   ├── base_model.py         # 🔧 基础模型类
+│   ├── elo_model.py          # 📊 Elo评分模型
+│   └── poisson_model.py      # 📈 Poisson分布模型
+├── prediction/       # 🔮 预测模块
+│   ├── lstm_predictor.py     # 📊 LSTM预测器
+│   └── model_performance_monitor.py # 📊 性能监控
+├── experiment_tracking.py    # 🧪 实验跟踪
+├── model_training.py         # 🎯 模型训练
+└── football_prediction_pipeline.py # 🏆 完整预测流水线
+
+# 特征工程在 src/features/ 目录
+# src/features/ - 特征工程模块
 ```
 
 ---
@@ -198,50 +196,49 @@ src/ml/
 ```
 📁 文件位置:
 - 模型实现: src/ml/models/new_model.py
-- 策略实现: src/domain/strategies/new_model_strategy.py
-- 服务集成: src/services/prediction/strategy_selector.py
-- API端点: src/api/routers/predictions.py
+- 策略实现: src/domain/strategies/enhanced_ml_model.py
+- 服务集成: src/services/prediction/
+- API端点: src/api/predictions/
 
 🔄 开发流程:
 1. 在 src/ml/models/ 实现ML模型
 2. 在 src/domain/strategies/ 创建策略
-3. 在 src/services/prediction/ 集成策略
-4. 在 src/api/routers/predictions/ 暴露API
+3. 在 src/services/ 集成预测逻辑
+4. 在 src/api/predictions/ 暴露API
 5. 在 tests/unit/ 对应目录添加测试
 ```
 
 #### 2. 添加新的API端点
 ```
 📁 文件位置:
-- 路由定义: src/api/routers/feature_name.py
-- 请求模型: src/api/models/requests/feature_name.py
-- 响应模型: src/api/models/responses/feature_name.py
-- 业务逻辑: src/services/feature_name/
-- 数据模型: src/domain/models/feature_name.py
+- 路由定义: src/api/feature_name.py
+- 请求模型: src/api/schemas.py
+- 响应模型: src/api/schemas.py
+- 业务逻辑: src/services/
+- 数据模型: src/domain/models/
 
 🔄 开发流程:
-1. 在 src/api/routers/ 定义路由
-2. 在 src/api/models/ 定义请求/响应模型
-3. 在 src/services/ 实现业务逻辑
-4. 在 src/domain/ 定义领域模型
-5. 在 src/database/ 实现数据访问 (如需要)
-6. 在 tests/unit/ 添加完整测试
+1. 在 src/api/ 定义路由和schemas
+2. 在 src/services/ 实现业务逻辑
+3. 在 src/domain/ 定义领域模型
+4. 在 src/database/ 实现数据访问 (如需要)
+5. 在 tests/unit/ 添加完整测试
 ```
 
 #### 3. 添加新的数据源
 ```
 📁 文件位置:
-- 适配器实现: src/adapters/data_sources/new_source.py
-- 数据转换: src/adapters/transformers/new_source_transformer.py
-- 配置管理: src/core/config/new_source.py
-- 测试: tests/unit/adapters/test_new_source.py
+- 适配器实现: src/adapters/new_source.py
+- 数据模型: src/adapters/adapters/new_source_models.py
+- 配置管理: src/core/config/
+- 测试: tests/unit/adapters/
 
 🔄 开发流程:
-1. 在 src/adapters/data_sources/ 实现适配器
-2. 在 src/adapters/transformers/ 实现数据转换
+1. 在 src/adapters/ 实现适配器
+2. 在 src/adapters/adapters/ 实现数据模型
 3. 在 src/core/config/ 添加配置
 4. 在 src/services/ 集成数据源
-5. 在 tests/ 添加集成测试
+5. 在 tests/unit/adapters/ 添加测试
 ```
 
 ### 🚨 Architecture Violations (必须避免)
@@ -375,39 +372,37 @@ Database ← Repository ← Service Orchestration ← Event Handlers
 ### 📋 常见开发任务的文件位置
 ```
 🔍 添加新API端点:
-   - 路由: src/api/routers/
-   - 模型: src/api/models/
+   - 路由和模型: src/api/
    - 服务: src/services/
 
 🤖 实现新ML模型:
    - 模型: src/ml/models/
-   - 特征: src/ml/features/
+   - 特征: src/features/
    - 策略: src/domain/strategies/
 
 🗄️ 添加新数据表:
-   - 模型: src/database/models/
-   - Repository: src/database/repositories/
+   - 模型: src/database/
+   - Repository: src/database/
    - 迁移: src/database/migrations/
 
 🔌 集成新外部API:
-   - 适配器: src/adapters/data_sources/
-   - 转换器: src/adapters/transformers/
+   - 适配器: src/adapters/
+   - 数据模型: src/adapters/adapters/
    - 配置: src/core/config/
 
 📢 添加新领域事件:
    - 事件定义: src/domain/events/
-   - 事件处理: src/services/handlers/
-   - 事件发布: src/core/event_bus.py
+   - 事件处理: src/services/
 ```
 
 ### 🧪 测试文件对应关系
 ```
-src/api/routers/predictions.py     → tests/unit/api/test_predictions.py
-src/services/prediction/           → tests/unit/services/test_prediction.py
-src/domain/models/prediction.py    → tests/unit/domain/test_prediction.py
-src/database/models/prediction.py  → tests/unit/database/test_prediction.py
-src/ml/models/lstm_model.py        → tests/unit/ml/test_lstm_model.py
-src/adapters/data_sources/         → tests/unit/adapters/test_data_sources.py
+src/api/predictions.py              → tests/unit/api/test_predictions.py
+src/services/prediction/            → tests/unit/services/test_prediction.py
+src/domain/models/                  → tests/unit/domain/test_prediction.py
+src/database/                       → tests/unit/database/test_prediction.py
+src/ml/models/lstm_predictor.py     → tests/unit/ml/test_lstm_predictor.py
+src/adapters/                       → tests/unit/adapters/test_adapters.py
 ```
 
 ---

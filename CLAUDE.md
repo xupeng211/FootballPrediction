@@ -49,7 +49,7 @@ make security-check
 ### 🧪 AI Testing Protocol
 ```bash
 # 新功能开发测试流程
-make test.phase1      # Phase 1核心功能测试
+make test.smart       # 快速冒烟测试 (smoke or critical 标记)
 make coverage         # 覆盖率检查 (当前29.0%, 目标40%)
 make cov.html         # 生成HTML覆盖率报告
 
@@ -209,6 +209,7 @@ chore(ci): fix GitHub Actions configuration
 - [ ] Security check: `make security-check`
 - [ ] Coverage maintained: `make coverage`
 - [ ] Type checking passes: `mypy src/`
+- [ ] Full validation: `make ci-check`
 
 ---
 
@@ -336,10 +337,10 @@ pytest -m "issue94" -v                        # 特定问题测试
 
 ### 📈 Quality Commands
 ```bash
-make project-dashboard  # 完整项目状态仪表板
-make quality-score      # 代码质量评分
-make health-check       # 项目整体健康状态
-make coverage-status    # 覆盖率状态和趋势
+make test-status-report  # 测试状态报告
+make quality             # 完整的质量检查 (lint + format + all tests)
+make ci-check           # 完整CI流程 (quality + test)
+make coverage           # 覆盖率检查
 ```
 
 ---
@@ -369,16 +370,16 @@ make coverage-status    # 覆盖率状态和趋势
 ## 📞 Emergency Contacts
 
 ### 🆘 Critical Situations
-- **Production Issues**: Check service health → `make service-health`
 - **Test Failures**: Run crisis solver → `make solve-test-crisis`
-- **Environment Issues**: Restore environment → `make env-restore`
 - **Code Quality**: Emergency fix → `make emergency-fix`
+- **Environment Issues**: Create environment → `make create-env`
+- **CI/CD Issues**: Full pipeline check → `make ci-check`
 
 ### 📚 Reference Documentation
 - **Detailed Architecture**: `docs/ARCHITECTURE_FOR_AI.md`
 - **Testing Guidelines**: `docs/TESTING_GUIDE.md`
 - **API Documentation**: `http://localhost:8000/docs`
-- **Project Status**: `make project-dashboard`
+- **Project Status**: `make test-status-report`
 
 ---
 
