@@ -1,0 +1,2 @@
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_prediction_by_id
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_prediction_result_validation

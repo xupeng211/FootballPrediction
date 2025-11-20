@@ -47,6 +47,7 @@ class FixturesCollector(BaseCollector):
         # 从环境变量获取API密钥，如果未提供则使用空字符串
         if not api_key:
             import os
+
             api_key = os.getenv("FOOTBALL_DATA_API_KEY", "")
 
         # 正确调用父类构造函数
@@ -55,7 +56,7 @@ class FixturesCollector(BaseCollector):
             base_url=base_url,
             timeout=kwargs.get("timeout", 30),
             max_retries=kwargs.get("max_retries", 3),
-            rate_limit=kwargs.get("rate_limit", 10)
+            rate_limit=kwargs.get("rate_limit", 10),
         )
 
         # 保存附加属性
@@ -317,9 +318,6 @@ class FixturesCollector(BaseCollector):
             List[Dict]: 赛程数据列表
         """
         try:
-            url = f"{self.base_url}/competitions/{league_code}/matches"
-            headers = {"x-Auth-Token": self.api_key} if self.api_key else {}
-
             params = {
                 "dateFrom": date_from.strftime("%Y-%m-%d"),
                 "dateTo": date_to.strftime("%Y-%m-%d"),
@@ -332,12 +330,14 @@ class FixturesCollector(BaseCollector):
 
             if result.success:
                 # 从响应数据中提取matches
-                if hasattr(result, 'data'):
+                if hasattr(result, "data"):
                     return result.data.get("matches", [])
                 else:
                     return result.get("matches", [])
             else:
-                self.logger.error(f"Failed to collect fixtures for league {league_code}: {result.error}")
+                self.logger.error(
+                    f"Failed to collect fixtures for league {league_code}: {result.error}"
+                )
                 return []
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -486,35 +486,34 @@ class FixturesCollector(BaseCollector):
             # 使用现有的collect_fixtures方法
             leagues = [str(league_id)] if league_id else None
             result = await self.collect_fixtures(
-                leagues=leagues,
-                date_from=date_from,
-                date_to=date_to
+                leagues=leagues, date_from=date_from, date_to=date_to
             )
 
             # 转换数据格式
             matches_data = []
             for fixture in result.collected_data:
-                matches_data.append({
-                    "id": fixture.get("external_match_id"),
-                    "homeTeam": {"id": fixture.get("external_home_team_id")},
-                    "awayTeam": {"id": fixture.get("external_away_team_id")},
-                    "utcDate": fixture.get("match_time"),
-                    "status": fixture.get("status"),
-                    "competition": {"id": fixture.get("external_league_id")},
-                    "season": fixture.get("season"),
-                    "matchday": fixture.get("matchday")
-                })
+                matches_data.append(
+                    {
+                        "id": fixture.get("external_match_id"),
+                        "homeTeam": {"id": fixture.get("external_home_team_id")},
+                        "awayTeam": {"id": fixture.get("external_away_team_id")},
+                        "utcDate": fixture.get("match_time"),
+                        "status": fixture.get("status"),
+                        "competition": {"id": fixture.get("external_league_id")},
+                        "season": fixture.get("season"),
+                        "matchday": fixture.get("matchday"),
+                    }
+                )
 
             return CollectionResult(
                 success=True,
                 data={"matches": matches_data},
-                metadata={"total_matches": len(matches_data)}
+                metadata={"total_matches": len(matches_data)},
             )
 
         except Exception as e:
             return CollectionResult(
-                success=False,
-                error=f"Failed to collect matches: {str(e)}"
+                success=False, error=f"Failed to collect matches: {str(e)}"
             )
 
     async def collect_teams(self, league_id: int | None = None) -> CollectionResult:
@@ -529,8 +528,7 @@ class FixturesCollector(BaseCollector):
         try:
             if not league_id:
                 return CollectionResult(
-                    success=False,
-                    error="League ID is required for teams collection"
+                    success=False, error="League ID is required for teams collection"
                 )
 
             # 构建API请求
@@ -540,6 +538,7 @@ class FixturesCollector(BaseCollector):
 
             # 使用HTTP客户端请求数据
             import httpx
+
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
@@ -550,14 +549,15 @@ class FixturesCollector(BaseCollector):
             return CollectionResult(
                 success=True,
                 data={"teams": teams},
-                metadata={"total_teams": len(teams), "league_id": league_id}
+                metadata={"total_teams": len(teams), "league_id": league_id},
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to collect teams for league {league_id}: {str(e)}")
+            self.logger.error(
+                f"Failed to collect teams for league {league_id}: {str(e)}"
+            )
             return CollectionResult(
-                success=False,
-                error=f"Failed to collect teams: {str(e)}"
+                success=False, error=f"Failed to collect teams: {str(e)}"
             )
 
     async def collect_players(self, team_id: int | None = None) -> CollectionResult:
@@ -572,8 +572,7 @@ class FixturesCollector(BaseCollector):
         try:
             if not team_id:
                 return CollectionResult(
-                    success=False,
-                    error="Team ID is required for players collection"
+                    success=False, error="Team ID is required for players collection"
                 )
 
             # 构建API请求
@@ -583,6 +582,7 @@ class FixturesCollector(BaseCollector):
 
             # 使用HTTP客户端请求数据
             import httpx
+
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
@@ -594,14 +594,13 @@ class FixturesCollector(BaseCollector):
             return CollectionResult(
                 success=True,
                 data={"players": squad, "team": data},
-                metadata={"total_players": len(squad), "team_id": team_id}
+                metadata={"total_players": len(squad), "team_id": team_id},
             )
 
         except Exception as e:
             self.logger.error(f"Failed to collect players for team {team_id}: {str(e)}")
             return CollectionResult(
-                success=False,
-                error=f"Failed to collect players: {str(e)}"
+                success=False, error=f"Failed to collect players: {str(e)}"
             )
 
     async def collect_leagues(self) -> CollectionResult:
@@ -618,6 +617,7 @@ class FixturesCollector(BaseCollector):
 
             # 使用HTTP客户端请求数据
             import httpx
+
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
@@ -628,8 +628,7 @@ class FixturesCollector(BaseCollector):
             # 过滤主要联赛
             major_league_codes = ["PL", "PD", "SA", "BL1", "FL1", "CL", "EL"]
             major_competitions = [
-                comp for comp in competitions
-                if comp.get("code") in major_league_codes
+                comp for comp in competitions if comp.get("code") in major_league_codes
             ]
 
             return CollectionResult(
@@ -637,13 +636,12 @@ class FixturesCollector(BaseCollector):
                 data={"competitions": major_competitions},
                 metadata={
                     "total_competitions": len(major_competitions),
-                    "all_competitions": len(competitions)
-                }
+                    "all_competitions": len(competitions),
+                },
             )
 
         except Exception as e:
             self.logger.error(f"Failed to collect leagues: {str(e)}")
             return CollectionResult(
-                success=False,
-                error=f"Failed to collect leagues: {str(e)}"
+                success=False, error=f"Failed to collect leagues: {str(e)}"
             )

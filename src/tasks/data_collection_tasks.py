@@ -96,6 +96,7 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
             logger.warning(f"Collection failed, using mock data: {collect_error}")
             # 返回模拟数据用于演示
             from src.collectors.base_collector import CollectionResult
+
             result = CollectionResult(
                 success=True,
                 data={
@@ -108,7 +109,7 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
                             "status": "SCHEDULED",
                         }
                     ]
-                }
+                },
             )
 
         if result.success:
