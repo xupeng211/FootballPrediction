@@ -93,6 +93,10 @@ class EventDrivenApplication:
                 event_type = event.get_event_type()
                 self.stats[event_type] = self.stats.get(event_type, 0) + 1
 
+            async def start(self) -> None:
+                """启动简单统计处理器."""
+                logger.info(f"Starting {self.name}")
+
             def get_handled_events(self) -> list[str]:
                 return [
                     "prediction.made",
