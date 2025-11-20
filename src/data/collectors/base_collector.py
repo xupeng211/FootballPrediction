@@ -41,7 +41,7 @@ class BaseCollector:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
-        reraise=True
+        reraise=True,
     )
     async def _make_request(
         self,
@@ -80,11 +80,7 @@ class BaseCollector:
                 self.logger.debug(f"Making {method} request to {url}")
 
                 response = await client.request(
-                    method=method,
-                    url=url,
-                    headers=headers,
-                    params=params,
-                    json=data
+                    method=method, url=url, headers=headers, params=params, json=data
                 )
 
                 # 检查HTTP状态码
@@ -101,11 +97,13 @@ class BaseCollector:
                     raise ValueError(f"Invalid JSON response from {url}: {e}")
 
             except httpx.HTTPStatusError as e:
-                self.logger.error(f"HTTP {e.response.status_code} error for {url}: {e.response.text}")
+                self.logger.error(
+                    f"HTTP {e.response.status_code} error for {url}: {e.response.text}"
+                )
                 raise httpx.HTTPStatusError(
                     f"HTTP {e.response.status_code} error for {url}",
                     request=e.request,
-                    response=e.response
+                    response=e.response,
                 )
 
             except httpx.TimeoutException as e:

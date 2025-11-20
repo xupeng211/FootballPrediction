@@ -26,21 +26,22 @@ class RealModelTrainingPipeline:
             "model_type": self.model_type,
             "samples": len(data),
             "status": "completed",
-            "accuracy": 0.85
+            "accuracy": 0.85,
         }
 
     def preprocess_data(self, raw_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """数据预处理."""
         return raw_data
 
-    def evaluate_model(self, model: Any, test_data: list[dict[str, Any]]) -> dict[str, float]:
+    def evaluate_model(
+        self, model: Any, test_data: list[dict[str, Any]]
+    ) -> dict[str, float]:
         """模型评估."""
         return {"accuracy": 0.85, "precision": 0.82, "recall": 0.88}
 
 
 async def train_football_prediction_model(
-    data: list[dict[str, Any]],
-    model_type: str = "random_forest"
+    data: list[dict[str, Any]], model_type: str = "random_forest"
 ) -> dict[str, Any]:
     """训练足球预测模型的简化函数."""
     pipeline = RealModelTrainingPipeline(model_type)
