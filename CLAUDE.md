@@ -31,19 +31,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 💻 Development Workflow
 ```bash
-# 环境检查 (开始工作前必做)
-make env-check
+# 环境设置 (开始工作前必做)
+make venv               # 创建虚拟环境
+make install            # 安装所有依赖 (pyproject.toml + pip-tools)
+make env-check          # 检查开发环境健康状态
+make context            # 加载项目上下文到AI工作内存
 
 # 代码质量修复 (发现问题时立即执行)
-make fix-code
+make fix-code           # 一键修复代码质量 (Black + Ruff + MyPy)
+make fix-syntax         # 修复语法错误
+make fix-imports        # 修复导入语句
 
 # 测试 (修改代码前后必须执行)
-make test.smart       # 快速测试 (<2分钟)
-make test.unit        # 完整单元测试
-make test-status      # 查看测试状态报告
+make test.smart         # 快速冒烟测试 (<2分钟, smoke/critical标记)
+make test.unit          # 完整单元测试
+make test.integration   # 集成测试
+make test.all           # 所有测试 (Unit + Integration)
+make test-status        # 查看测试状态报告
+make coverage           # 覆盖率检查 (当前29.0%, 目标40%)
+make cov.html           # 生成HTML覆盖率报告
 
 # 安全检查 (提交前必须执行)
-make security-check
+make security-check     # Bandit安全扫描 + 依赖审计
+make secret-scan        # 敏感信息扫描
+```
+
+### 🐳 Docker Development Environment
+```bash
+# 开发环境管理 (热重载、调试支持)
+make docker.up.dev      # 启动开发环境 (app + db + redis)
+make docker.up.admin    # 启动开发环境 + 管理工具 (pgAdmin, Redis-Commander)
+make docker.logs.dev    # 查看应用日志
+make docker.down.dev    # 停止开发环境
+make docker.build.dev   # 重新构建开发镜像
+
+# 生产环境部署
+make docker.build.prod  # 构建生产镜像
+make docker.push.prod   # 推送生产镜像
+docker-compose -f docker-compose.prod.yml up    # 生产环境启动
 ```
 
 ### 🧪 AI Testing Protocol
@@ -162,12 +187,24 @@ async def get_user_by_id(
 
 ## 📁 Architecture Boundaries (架构职责边界)
 
-### 🎯 Layer Responsibilities
+### 🎯 Layer Responsibilities (DDD + CQRS Pattern)
 - **`src/api/`**: FastAPI routers, request/response models, HTTP concerns only
+  - `health/`, `predictions/`, `auth/`, `data_management/`, `system/`
 - **`src/domain/`**: Business logic, entities, domain services (pure Python)
+  - `models/`, `services/`, `strategies/`, `events/`
 - **`src/services/`**: Application services, orchestration between layers
+  - `prediction/`, `cache/`, `processing/`, `audit/`
 - **`src/database/`**: Database models, repositories, SQLAlchemy operations
+  - `models/`, `repositories/`, `connection/`, `migrations/`
 - **`src/adapters/`**: External service integrations, third-party APIs
+  - Data collectors, odds APIs, external systems
+
+### 🏗️ Application Architecture
+- **Pattern**: Domain-Driven Design (DDD) + Command Query Responsibility Segregation (CQRS)
+- **Database**: Async SQLAlchemy 2.0+ with PostgreSQL 15
+- **Caching**: Redis 7.0+ with async operations
+- **API**: FastAPI with automatic OpenAPI documentation
+- **Containerization**: Multi-stage Docker builds (dev/prod targets)
 
 ### 🚫 Forbidden Cross-layer Calls
 
@@ -177,6 +214,12 @@ async def get_user_by_id(
 ❌ Services → FastAPI dependencies (inject from API layer)
 ✅ API → Services → Domain/Database/Adapters
 ```
+
+### ⚡ Async/Concurrency Patterns
+- **Database**: All operations must use `await` with `AsyncSession`
+- **External APIs**: Use `asynchttp` or `httpx` async clients
+- **Caching**: Redis async client (`redis-py` async)
+- **File I/O**: Use `aiofiles` for async file operations
 
 ---
 
@@ -268,22 +311,31 @@ class TestPredictionService:
         logger.info(f"Prediction test passed: {result}")
 ```
 
-### 🏷️ Test Markers (57个标准化标记)
+### 🏷️ Test Markers & Configuration
 ```bash
 # 核心测试组合 (AI日常使用)
 pytest -m "unit and not slow" -v              # 单元测试 (快速)
 pytest -m "critical and not slow" --maxfail=5 # 关键功能测试
 pytest -m "smoke or critical" -v              # 冒烟测试
 
-# 问题特定测试
-pytest -m "regression" --maxfail=3            # 回归测试
-pytest -m "issue94" -v                        # 特定问题测试
+# 统一测试接口 (推荐使用Makefile)
+make test.smart         # 快速冒烟测试 (推荐)
+make test.unit          # 单元测试 (默认)
+make test.integration   # 集成测试
+make test.all           # 完整测试套件
 
-# CI/CD集成测试
-make test-ci-integration                       # CI集成测试
-make test-enhanced-coverage                    # 增强覆盖率分析
-make test-report-generate                     # 生成综合测试报告
+# 高级测试功能
+make test-crisis-fix    # 紧急修复测试问题
+make test-enhanced-coverage # 增强覆盖率分析
+make test-report-generate   # 生成综合测试报告
 ```
+
+#### Test Configuration (pytest.ini + conftest.py)
+- **Test Files**: 269 test files organized by type
+- **Markers**: 57 standardized markers (unit, integration, critical, smoke, etc.)
+- **Fixtures**: Global fixtures for client, access_token, training_data
+- **Auto-Skip**: Tests listed in `tests/skipped_tests.txt` auto-skipped for CI stability
+- **Coverage Target**: 40% (current: 29.0%)
 
 ---
 
@@ -337,31 +389,48 @@ make test-report-generate                     # 生成综合测试报告
 
 ---
 
-## 📊 Quality Metrics
+## 📊 Quality Metrics & Tooling
 
 ### 🎯 Current Benchmarks
 - **Test Coverage**: 29.0% (Target: 40%)
-- **Test Files**: 269 files
-- **Source Files**: 622 files
-- **Test Markers**: 57 standardized markers
-- **CI Pipeline**: Green baseline established
+- **Test Files**: 269 files with 57 standardized markers
+- **Source Files**: 622 files across multiple layers
+- **CI Pipeline**: Green baseline established with automated recovery
 - **Flaky Test Management**: Automated isolation system in place
-- **Quality Gates**: Ruff, MyPy, Bandit integration
+- **Quality Gates**: Ruff, MyPy (temporarily disabled for green CI), Bandit
 
-### 📈 Quality Commands
+### 🔧 Development Toolchain
 ```bash
-make test-status-report  # 测试状态报告
-make quality             # 完整的质量检查 (lint + format + all tests)
-make ci-check           # 完整CI流程 (quality + test)
-make coverage           # 覆盖率检查
+# Code Quality (Ruff + Black + MyPy)
+make lint               # 运行 Ruff linter
+make fmt                # Ruff 代码格式化
+make type-check         # MyPy 类型检查
+make fix-code           # 一键修复所有问题
+
+# Testing & Coverage
+make test.smart         # 快速冒烟测试 (<2分钟)
+make coverage           # 生成覆盖率报告
+make cov.html           # 生成HTML覆盖率报告
+
+# Dependency Management
+make install            # 安装依赖 (pyproject.toml + pip-tools)
+make lock               # 锁定依赖版本
+make lock-dev           # 锁定开发依赖
 ```
+
+### 📦 Dependency Management (pyproject.toml)
+- **Format**: Modern Python pyproject.toml with optional dependencies
+- **Tools**: pip-tools for lock file generation (requirements/prod.txt, requirements/dev.txt)
+- **Resolution**: Backtracking resolver for complex dependency trees
+- **Dev Dependencies**: pytest, ruff, mypy, bandit, pre-commit
+- **Production Dependencies**: FastAPI, SQLAlchemy, Redis, PostgreSQL drivers
 
 ---
 
 ## 🐳 Docker & Development Environment
 
 ### 🏗️ Container Architecture
-The project uses multi-stage Docker builds with development and production targets:
+Multi-stage Docker builds with separate development and production targets:
 
 ```bash
 # 开发环境 (热重载、调试支持)
@@ -373,12 +442,12 @@ docker-compose -f docker-compose.prod.yml up
 ```
 
 ### 🔧 Service Stack
-- **app**: FastAPI application (development target with hot reload)
-- **db**: PostgreSQL 15 with persistent data
+- **app**: FastAPI application (development target with hot reload, production optimized)
+- **db**: PostgreSQL 15 with persistent data, health checks, initialization scripts
 - **redis**: Redis 7.0 for caching and session management
-- **nginx**: Reverse proxy (production only)
+- **nginx**: Reverse proxy with SSL termination (production only)
 
-### 📁 Development Volumes
+### 📁 Development Volumes & Hot Reload
 ```yaml
 volumes:
   - ./src:/app/src      # 源代码热重载
@@ -386,9 +455,14 @@ volumes:
 ```
 
 ### 🌐 Environment Configuration
-- Development environment variables in `.env`
-- Production overrides in docker-compose.prod.yml
-- Database connection pooling configured for both environments
+- **Development**: `.env` file with local overrides
+- **Production**: Environment-specific configuration in docker-compose.prod.yml
+- **CI**: `.env.ci` for automated testing environments
+- **Database**: Connection pooling configured for both environments
+
+### 🐳 Development vs Production Targets
+- **Development**: `target: development` - includes dev dependencies, debugging tools
+- **Production**: `target: production` - optimized image, minimal layers, security hardening
 
 ---
 
@@ -447,3 +521,26 @@ volumes:
 - Test coverage improvement (target: 40% from current 29.0%)
 - CI/CD pipeline stability enhancements
 - Code quality baseline establishment
+
+### 🚀 Quick Start for New AI Instances
+```bash
+# 1. Environment Setup (5 minutes)
+make venv && make install && make env-check
+
+# 2. Load Project Context (2 minutes)
+make context
+
+# 3. Validate Setup (3 minutes)
+make test.smart && make lint
+
+# 4. Start Development (optional)
+make docker.up.dev     # Full stack with hot reload
+# OR
+uvicorn src.main:app --reload  # Direct Python execution
+```
+
+### 📚 Essential Documentation
+- **Project README**: Quick overview and installation guide
+- **Testing Guide**: `docs/TESTING_GUIDE.md` - Comprehensive testing methodology
+- **Architecture**: Understanding DDD+CQRS implementation
+- **API Docs**: Interactive OpenAPI at `http://localhost:8000/docs`

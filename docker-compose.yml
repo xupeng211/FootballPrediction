@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     environment:
       - ENV=development
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/football_prediction}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-development-only}
     depends_on:
@@ -18,9 +18,10 @@ services:
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
+      - ./requirements:/app/requirements
     restart: unless-stopped
-    # 临时使用bash启动来手动安装依赖
-    command: ["bash", "-c", "pip install -r requirements/prod.txt uvicorn fastapi && exec uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"]
+    # 使用开发环境启动，依赖已在Dockerfile中安装
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   db:
     image: postgres:15

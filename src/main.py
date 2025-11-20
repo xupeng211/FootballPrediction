@@ -64,8 +64,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         # 初始化数据库 (测试环境中跳过)
         if initialize_database and not is_test_env:
-            await initialize_database()
-            logger.info("✅ 数据库初始化完成")
+            try:
+                initialize_database()
+                logger.info("✅ 数据库初始化完成")
+            except Exception as e:
+                logger.error(f"❌ 数据库初始化失败: {e}")
+                raise
         else:
             logger.warning("⚠️ 数据库初始化函数未定义，跳过")
 
