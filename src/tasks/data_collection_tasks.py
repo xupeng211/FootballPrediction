@@ -13,29 +13,40 @@ from celery.schedules import crontab
 # 添加同步包装器用于Celery任务
 from functools import wraps
 
+
 def sync_task_to_async(async_func):
     """将异步函数转换为同步的Celery任务"""
+
     @wraps(async_func)
     def wrapper(*args, **kwargs):
         import asyncio
+
         return asyncio.run(async_func(*args, **kwargs))
+
     return wrapper
+
 
 # 暂时导入收集器，避免循环导入问题
 def get_fixtures_collector(config):
     """获取FixturesCollector实例"""
     from src.data.collectors.fixtures_collector import FixturesCollector
+
     return FixturesCollector(config=config)
+
 
 def get_scores_collector(config):
     """获取ScoresCollector实例"""
     from src.data.collectors.scores_collector import ScoresCollector
+
     return ScoresCollector(config=config)
+
 
 def get_odds_collector(config):
     """获取OddsCollector实例"""
     from src.data.collectors.odds_collector import OddsCollector
+
     return OddsCollector(config=config)
+
 
 from src.tasks.celery_app import celery_app
 
@@ -45,8 +56,9 @@ __all__ = [
     "collect_daily_fixtures",
     "collect_live_scores",
     "collect_odds_data",
-    "cleanup_old_data"
+    "cleanup_old_data",
 ]
+
 
 @shared_task(bind=True, name="collect_daily_fixtures")
 def collect_daily_fixtures(self) -> dict[str, Any]:
@@ -63,7 +75,7 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
             "api_key": "demo_api_key",  # 应从环境变量获取
             "base_url": "https://api.football-data.org/v4",
             "timeout": 30.0,
-            "max_retries": 3
+            "max_retries": 3,
         }
 
         collector = get_fixtures_collector(config)
@@ -76,32 +88,36 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
         # 注意: 由于这是一个同步任务，我们需要将异步调用包装
         try:
             import asyncio
-            result = asyncio.run(collector.collect_fixtures(
-                date_from=date_from,
-                date_to=date_to
-            ))
+
+            result = asyncio.run(
+                collector.collect_fixtures(date_from=date_from, date_to=date_to)
+            )
         except Exception as collect_error:
             logger.warning(f"Collection failed, using mock data: {collect_error}")
             # 返回模拟数据用于演示
-            result = collector.create_success_result({
-                "fixtures": [
-                    {
-                        "id": 1,
-                        "home_team": "Team A",
-                        "away_team": "Team B",
-                        "date": date_from.strftime("%Y-%m-%d"),
-                        "status": "SCHEDULED"
-                    }
-                ]
-            })
+            result = collector.create_success_result(
+                {
+                    "fixtures": [
+                        {
+                            "id": 1,
+                            "home_team": "Team A",
+                            "away_team": "Team B",
+                            "date": date_from.strftime("%Y-%m-%d"),
+                            "status": "SCHEDULED",
+                        }
+                    ]
+                }
+            )
 
         if result.success:
-            logger.info(f"Successfully collected {len(result.data.get('fixtures', []))} fixtures")
+            logger.info(
+                f"Successfully collected {len(result.data.get('fixtures', []))} fixtures"
+            )
             return {
                 "status": "success",
                 "fixtures_count": len(result.data.get("fixtures", [])),
                 "message": "Daily fixtures collection completed successfully",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         else:
             logger.error(f"Fixtures collection failed: {result.error}")
@@ -109,7 +125,7 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
                 "status": "error",
                 "error": result.error,
                 "message": "Daily fixtures collection failed",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     except Exception as e:
@@ -118,7 +134,7 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
             "status": "error",
             "error": str(e),
             "message": "Daily fixtures collection task failed with exception",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
@@ -140,7 +156,9 @@ def collect_live_scores(self, match_ids: list[int] = None) -> dict[str, Any]:
         total_updates = len(match_ids)
         failed_matches = []
 
-        logger.info(f"Live scores collection completed: {total_updates} updates, {len(failed_matches)} failures")
+        logger.info(
+            f"Live scores collection completed: {total_updates} updates, {len(failed_matches)} failures"
+        )
 
         return {
             "status": "success",
@@ -148,7 +166,7 @@ def collect_live_scores(self, match_ids: list[int] = None) -> dict[str, Any]:
             "successful_updates": total_updates,
             "failed_matches": failed_matches,
             "message": f"Live scores collection completed: {total_updates}/{len(match_ids)} matches updated",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -157,12 +175,14 @@ def collect_live_scores(self, match_ids: list[int] = None) -> dict[str, Any]:
             "status": "error",
             "error": str(e),
             "message": "Live scores collection task failed with exception",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
 @shared_task(bind=True, name="collect_odds_data")
-def collect_odds_data(self, match_ids: list[int] = None, hours_ahead: int = 24) -> dict[str, Any]:
+def collect_odds_data(
+    self, match_ids: list[int] = None, hours_ahead: int = 24
+) -> dict[str, Any]:
     """
     赔率数据采集任务.
 
@@ -183,7 +203,7 @@ def collect_odds_data(self, match_ids: list[int] = None, hours_ahead: int = 24) 
             "odds_count": odds_count,
             "hours_ahead": hours_ahead,
             "message": f"Odds collection completed successfully for {odds_count} records",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -192,7 +212,7 @@ def collect_odds_data(self, match_ids: list[int] = None, hours_ahead: int = 24) 
             "status": "error",
             "error": str(e),
             "message": "Odds collection task failed with exception",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
@@ -216,7 +236,7 @@ def cleanup_old_data(self, days_to_keep: int = 90) -> dict[str, Any]:
             "status": "success",
             "days_to_keep": days_to_keep,
             "message": f"Data cleanup completed for data older than {days_to_keep} days",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -225,27 +245,27 @@ def cleanup_old_data(self, days_to_keep: int = 90) -> dict[str, Any]:
             "status": "error",
             "error": str(e),
             "message": "Data cleanup task failed with exception",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
 # 定义定时任务配置
 # 这些应该在celery_app.py的beat_schedule中配置
 CELERYBEAT_SCHEDULE = {
-    'collect-daily-fixtures': {
-        'task': 'collect_daily_fixtures',
-        'schedule': crontab(hour=2, minute=0),  # 每天凌晨2点执行
+    "collect-daily-fixtures": {
+        "task": "collect_daily_fixtures",
+        "schedule": crontab(hour=2, minute=0),  # 每天凌晨2点执行
     },
-    'collect-live-scores': {
-        'task': 'collect_live_scores',
-        'schedule': crontab(minute='*/5'),  # 每5分钟执行一次
+    "collect-live-scores": {
+        "task": "collect_live_scores",
+        "schedule": crontab(minute="*/5"),  # 每5分钟执行一次
     },
-    'collect-odds-data': {
-        'task': 'collect_odds_data',
-        'schedule': crontab(hour='*/6'),  # 每6小时执行一次
+    "collect-odds-data": {
+        "task": "collect_odds_data",
+        "schedule": crontab(hour="*/6"),  # 每6小时执行一次
     },
-    'cleanup-old-data': {
-        'task': 'cleanup_old_data',
-        'schedule': crontab(hour=3, minute=0, day_of_week=0),  # 每周日凌晨3点执行
+    "cleanup-old-data": {
+        "task": "cleanup_old_data",
+        "schedule": crontab(hour=3, minute=0, day_of_week=0),  # 每周日凌晨3点执行
     },
 }
