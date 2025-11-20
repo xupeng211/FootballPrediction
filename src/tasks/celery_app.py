@@ -229,6 +229,9 @@ app.conf.beat_schedule = {
 # 自动发现任务模块
 app.autodiscover_tasks(["src.tasks"])
 
+# 为了向后兼容，提供 celery_app 别名
+celery_app = app
+
 
 class TaskRetryConfig:
     """类文档字符串."""
