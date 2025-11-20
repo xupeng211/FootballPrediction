@@ -1,4 +1,5 @@
 
+# CI-only failure (Environment Diff) - Missing prometheus_client dependency
 ERROR tests/integration/test_ml_pipeline.py::ImportError
 FAILED tests/unit/scripts/test_coverage_improvement_integration.py::TestCoverageImprovementIntegration::test_coverage_executor_integration
 FAILED tests/unit/scripts/test_coverage_improvement_integration.py::TestCoverageImprovementIntegration::test_coverage_improvement_workflow
@@ -111,8 +112,10 @@ tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_batch_predict
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_create_prediction
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_create_prediction_default_values
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_error_handling_invalid_endpoint
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_prediction_by_id
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_prediction_invalid_match_id
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_get_recent_predictions
+tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_prediction_result_validation
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_predictions_health_check
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_predictions_root_endpoint
 tests/unit/api/test_predictions_fixed.py::TestPredictionsAPI::test_query_parameters_validation
