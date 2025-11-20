@@ -21,18 +21,8 @@ from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-try:
-    from jose import JWTError, jwt
-except ImportError:
-    # 如果没有安装python-jose,提供一个简单的占位符
-    class JWTError(Exception):
-        pass
-
-    def jwt(*args, **kwargs):
-        """ISSUE: 需要添加完整的函数文档，包括参数说明、返回值和异常
-        JWT函数占位符.
-        """
-        raise ImportError("Please install python-jose: pip install python-jose")
+import jwt
+from jwt.exceptions import InvalidTokenError as JWTError
 
 
 # 加载环境变量
