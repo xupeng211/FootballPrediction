@@ -47,10 +47,10 @@ class BaseCollector:
         self,
         url: str,
         method: str = "GET",
-        headers: Optional[dict[str, str]] = None,
-        params: Optional[dict[str, Any]] = None,
-        data: Optional[dict[str, Any]] = None,
-        timeout: Optional[float] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+        timeout: float | None = None,
     ) -> dict[str, Any]:
         """
         发送HTTP请求的核心方法.
