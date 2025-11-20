@@ -96,8 +96,8 @@ Dockerfile.dev
 .venv/
 .venv*/
 
-# 排除本地开发依赖文件，只允许 prod.txt 被复制
-requirements/dev.txt
+# 允许开发依赖文件用于开发环境构建
+!requirements/dev.txt
 !requirements/prod.txt
 
 # 排除CI/CD配置和脚本

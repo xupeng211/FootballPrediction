@@ -62,12 +62,17 @@ pytest -m "critical" -v                    # 关键功能测试
 ```bash
 # 当测试大量失败时 (>30%)
 make solve-test-crisis
+make test-crisis-solution    # 完整测试危机解决方案
 
 # 当代码质量下降时
 make emergency-fix
 
 # 当环境出现问题时
 make env-restore
+
+# 语法错误批量修复 (Issue #84)
+make syntax-fix              # 自动修复语法错误
+make syntax-validate         # 验证测试文件可执行性
 ```
 
 ---
@@ -165,7 +170,8 @@ async def get_user_by_id(
 - **`src/adapters/`**: External service integrations, third-party APIs
 
 ### 🚫 Forbidden Cross-layer Calls
-```
+
+```text
 ❌ API Layer → Database Layer (must go through Services)
 ❌ Domain Layer → External APIs (must go through Adapters)
 ❌ Services → FastAPI dependencies (inject from API layer)
@@ -272,6 +278,11 @@ pytest -m "smoke or critical" -v              # 冒烟测试
 # 问题特定测试
 pytest -m "regression" --maxfail=3            # 回归测试
 pytest -m "issue94" -v                        # 特定问题测试
+
+# CI/CD集成测试
+make test-ci-integration                       # CI集成测试
+make test-enhanced-coverage                    # 增强覆盖率分析
+make test-report-generate                     # 生成综合测试报告
 ```
 
 ---
@@ -334,6 +345,8 @@ pytest -m "issue94" -v                        # 特定问题测试
 - **Source Files**: 622 files
 - **Test Markers**: 57 standardized markers
 - **CI Pipeline**: Green baseline established
+- **Flaky Test Management**: Automated isolation system in place
+- **Quality Gates**: Ruff, MyPy, Bandit integration
 
 ### 📈 Quality Commands
 ```bash
@@ -342,6 +355,40 @@ make quality             # 完整的质量检查 (lint + format + all tests)
 make ci-check           # 完整CI流程 (quality + test)
 make coverage           # 覆盖率检查
 ```
+
+---
+
+## 🐳 Docker & Development Environment
+
+### 🏗️ Container Architecture
+The project uses multi-stage Docker builds with development and production targets:
+
+```bash
+# 开发环境 (热重载、调试支持)
+docker-compose up --build                    # 启动完整开发栈
+docker-compose up app db redis               # 选择性启动服务
+
+# 生产环境部署
+docker-compose -f docker-compose.prod.yml up
+```
+
+### 🔧 Service Stack
+- **app**: FastAPI application (development target with hot reload)
+- **db**: PostgreSQL 15 with persistent data
+- **redis**: Redis 7.0 for caching and session management
+- **nginx**: Reverse proxy (production only)
+
+### 📁 Development Volumes
+```yaml
+volumes:
+  - ./src:/app/src      # 源代码热重载
+  - ./tests:/app/tests  # 测试文件同步
+```
+
+### 🌐 Environment Configuration
+- Development environment variables in `.env`
+- Production overrides in docker-compose.prod.yml
+- Database connection pooling configured for both environments
 
 ---
 
@@ -386,3 +433,17 @@ make coverage           # 覆盖率检查
 **Remember**: As an AI maintainer, your priority is maintaining architectural integrity and code quality. When in doubt, choose the conservative approach that preserves existing patterns.
 
 *Last Updated: 2025-11-20 | AI Maintainer: Claude Code*
+
+---
+
+## 🔄 Current Session Context
+
+### 📝 Recent Changes (Git Status)
+- Modified `.dockerignore`: Allow development dependencies for dev builds
+- Modified `docker-compose.yml`: Use development build target for local development
+
+### 🎯 Active Development Areas
+- Docker development environment optimization
+- Test coverage improvement (target: 40% from current 29.0%)
+- CI/CD pipeline stability enhancements
+- Code quality baseline establishment
