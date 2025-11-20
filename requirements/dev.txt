@@ -4,8 +4,18 @@
 #
 #    pip-compile --extra=dev,test --output-file=requirements/dev.txt --strip-extras pyproject.toml
 #
-alembic==1.17.2
+aiohappyeyeballs==2.6.1
+    # via aiohttp
+aiohttp==3.13.2
     # via football-prediction (pyproject.toml)
+aiosignal==1.4.0
+    # via aiohttp
+aiosqlite==0.21.0
+    # via football-prediction (pyproject.toml)
+alembic==1.17.2
+    # via
+    #   football-prediction (pyproject.toml)
+    #   mlflow
 annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0
@@ -17,14 +27,20 @@ anyio==4.11.0
     #   watchfiles
 asttokens==3.0.1
     # via stack-data
+attrs==25.4.0
+    # via aiohttp
 babel==2.17.0
     # via mkdocs-material
+backoff==2.2.1
+    # via football-prediction (pyproject.toml)
 backrefs==6.1
     # via mkdocs-material
 bandit==1.8.6
     # via football-prediction (pyproject.toml)
 bcrypt==5.0.0
     # via passlib
+blinker==1.9.0
+    # via flask
 boolean-py==5.0
     # via license-expression
 build==1.3.0
@@ -33,6 +49,10 @@ cachecontrol==0.14.4
     # via
     #   cachecontrol
     #   pip-audit
+cachetools==5.5.2
+    # via
+    #   google-auth
+    #   mlflow-skinny
 certifi==2025.11.12
     # via
     #   httpcore
@@ -46,25 +66,41 @@ charset-normalizer==3.4.4
     # via requests
 click==8.3.1
     # via
+    #   flask
     #   mkdocs
+    #   mlflow-skinny
     #   pip-tools
     #   uvicorn
+cloudpickle==3.1.2
+    # via mlflow-skinny
 colorama==0.4.6
     # via mkdocs-material
+contourpy==1.3.3
+    # via matplotlib
 coverage==7.11.3
     # via pytest-cov
 cryptography==46.0.3
     # via python-jose
+cycler==0.12.1
+    # via matplotlib
 cyclonedx-python-lib==9.1.0
     # via pip-audit
+databricks-sdk==0.73.0
+    # via mlflow-skinny
 decorator==5.2.1
     # via ipython
 defusedxml==0.7.1
     # via py-serializable
 distlib==0.4.0
     # via virtualenv
+dnspython==2.8.0
+    # via email-validator
+docker==7.1.0
+    # via mlflow
 ecdsa==0.19.1
     # via python-jose
+email-validator==2.3.0
+    # via football-prediction (pyproject.toml)
 execnet==2.1.2
     # via pytest-xdist
 executing==2.2.1
@@ -74,15 +110,41 @@ factory-boy==3.3.3
 faker==38.0.0
     # via factory-boy
 fastapi==0.121.2
-    # via football-prediction (pyproject.toml)
+    # via
+    #   football-prediction (pyproject.toml)
+    #   mlflow-skinny
 filelock==3.20.0
     # via
     #   cachecontrol
     #   virtualenv
+flask==3.1.2
+    # via mlflow
+fonttools==4.60.1
+    # via matplotlib
+frozenlist==1.8.0
+    # via
+    #   aiohttp
+    #   aiosignal
 ghp-import==2.1.0
     # via mkdocs
+gitdb==4.0.12
+    # via gitpython
+gitpython==3.1.45
+    # via mlflow-skinny
+google-auth==2.43.0
+    # via databricks-sdk
+graphene==3.4.3
+    # via mlflow
+graphql-core==3.2.7
+    # via
+    #   graphene
+    #   graphql-relay
+graphql-relay==3.2.0
+    # via graphene
 greenlet==3.2.4
     # via sqlalchemy
+gunicorn==23.0.0
+    # via mlflow
 h11==0.16.0
     # via
     #   httpcore
@@ -98,22 +160,34 @@ identify==2.6.15
 idna==3.11
     # via
     #   anyio
+    #   email-validator
     #   httpx
     #   requests
+    #   yarl
+importlib-metadata==8.7.0
+    # via
+    #   mlflow-skinny
+    #   opentelemetry-api
 iniconfig==2.3.0
     # via pytest
 ipython==9.7.0
     # via football-prediction (pyproject.toml)
 ipython-pygments-lexers==1.1.1
     # via ipython
+itsdangerous==2.2.0
+    # via flask
 jedi==0.19.2
     # via ipython
 jinja2==3.1.6
     # via
+    #   flask
     #   mkdocs
     #   mkdocs-material
+    #   mlflow
 joblib==1.5.2
     # via scikit-learn
+kiwisolver==1.4.9
+    # via matplotlib
 license-expression==30.4.4
     # via cyclonedx-python-lib
 mako==1.3.10
@@ -122,14 +196,19 @@ markdown==3.10
     # via
     #   mkdocs
     #   mkdocs-material
+    #   mlflow
     #   pymdown-extensions
 markdown-it-py==4.0.0
     # via rich
 markupsafe==3.0.3
     # via
+    #   flask
     #   jinja2
     #   mako
     #   mkdocs
+    #   werkzeug
+matplotlib==3.10.7
+    # via mlflow
 matplotlib-inline==0.2.1
     # via ipython
 mdurl==0.1.2
@@ -148,8 +227,16 @@ mkdocs-material==9.7.0
     # via football-prediction (pyproject.toml)
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
+mlflow==2.22.2
+    # via football-prediction (pyproject.toml)
+mlflow-skinny==2.22.2
+    # via mlflow
 msgpack==1.1.2
     # via cachecontrol
+multidict==6.7.0
+    # via
+    #   aiohttp
+    #   yarl
 mypy==1.18.2
     # via football-prediction (pyproject.toml)
 mypy-extensions==1.1.0
@@ -158,23 +245,43 @@ nodeenv==1.9.1
     # via pre-commit
 numpy==2.3.4
     # via
+    #   contourpy
     #   football-prediction (pyproject.toml)
+    #   matplotlib
+    #   mlflow
     #   pandas
     #   scikit-learn
     #   scipy
+    #   xgboost
+nvidia-nccl-cu12==2.28.9
+    # via xgboost
+opentelemetry-api==1.38.0
+    # via
+    #   mlflow-skinny
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-sdk==1.38.0
+    # via mlflow-skinny
+opentelemetry-semantic-conventions==0.59b0
+    # via opentelemetry-sdk
 packageurl-python==0.17.5
     # via cyclonedx-python-lib
-packaging==25.0
+packaging==24.2
     # via
     #   build
+    #   gunicorn
+    #   matplotlib
     #   mkdocs
+    #   mlflow-skinny
     #   pip-audit
     #   pip-requirements-parser
     #   pytest
 paginate==0.5.7
     # via mkdocs-material
 pandas==2.3.3
-    # via football-prediction (pyproject.toml)
+    # via
+    #   football-prediction (pyproject.toml)
+    #   mlflow
 parso==0.8.5
     # via jedi
 passlib==1.7.4
@@ -185,6 +292,8 @@ pathspec==0.12.1
     #   mypy
 pexpect==4.9.0
     # via ipython
+pillow==12.0.0
+    # via matplotlib
 pip-api==0.0.34
     # via pip-audit
 pip-audit==2.9.0
@@ -206,6 +315,16 @@ pre-commit==4.4.0
     # via football-prediction (pyproject.toml)
 prompt-toolkit==3.0.52
     # via ipython
+propcache==0.4.1
+    # via
+    #   aiohttp
+    #   yarl
+protobuf==6.33.1
+    # via
+    #   databricks-sdk
+    #   mlflow-skinny
+psutil==7.1.3
+    # via football-prediction (pyproject.toml)
 psycopg2-binary==2.9.11
     # via football-prediction (pyproject.toml)
 ptyprocess==0.7.0
@@ -214,16 +333,22 @@ pure-eval==0.2.3
     # via stack-data
 py-serializable==2.1.0
     # via cyclonedx-python-lib
+pyarrow==19.0.1
+    # via mlflow
 pyasn1==0.6.1
     # via
+    #   pyasn1-modules
     #   python-jose
     #   rsa
+pyasn1-modules==0.4.2
+    # via google-auth
 pycparser==2.23
     # via cffi
 pydantic==2.12.4
     # via
     #   fastapi
     #   football-prediction (pyproject.toml)
+    #   mlflow-skinny
 pydantic-core==2.41.5
     # via pydantic
 pygments==2.19.2
@@ -233,10 +358,14 @@ pygments==2.19.2
     #   mkdocs-material
     #   pytest
     #   rich
+pyjwt==2.10.1
+    # via football-prediction (pyproject.toml)
 pymdown-extensions==10.17.1
     # via mkdocs-material
 pyparsing==3.2.5
-    # via pip-requirements-parser
+    # via
+    #   matplotlib
+    #   pip-requirements-parser
 pyproject-hooks==1.2.0
     # via
     #   build
@@ -259,6 +388,8 @@ pytest-xdist==3.8.0
 python-dateutil==2.9.0.post0
     # via
     #   ghp-import
+    #   graphene
+    #   matplotlib
     #   pandas
 python-dotenv==1.2.1
     # via
@@ -275,6 +406,7 @@ pyyaml==6.0.3
     #   bandit
     #   mkdocs
     #   mkdocs-get-deps
+    #   mlflow-skinny
     #   pre-commit
     #   pymdown-extensions
     #   pyyaml-env-tag
@@ -286,24 +418,37 @@ redis==7.0.1
 requests==2.32.5
     # via
     #   cachecontrol
+    #   databricks-sdk
+    #   docker
+    #   football-prediction (pyproject.toml)
     #   mkdocs-material
+    #   mlflow-skinny
     #   pip-audit
 rich==14.2.0
     # via
     #   bandit
     #   pip-audit
 rsa==4.9.1
-    # via python-jose
+    # via
+    #   google-auth
+    #   python-jose
 ruff==0.14.5
     # via football-prediction (pyproject.toml)
 scikit-learn==1.7.2
-    # via football-prediction (pyproject.toml)
+    # via
+    #   football-prediction (pyproject.toml)
+    #   mlflow
 scipy==1.16.3
-    # via scikit-learn
+    # via
+    #   mlflow
+    #   scikit-learn
+    #   xgboost
 six==1.17.0
     # via
     #   ecdsa
     #   python-dateutil
+smmap==5.0.2
+    # via gitdb
 sniffio==1.3.1
     # via anyio
 sortedcontainers==2.4.0
@@ -312,12 +457,17 @@ sqlalchemy==2.0.44
     # via
     #   alembic
     #   football-prediction (pyproject.toml)
+    #   mlflow
+sqlparse==0.5.3
+    # via mlflow-skinny
 stack-data==0.6.3
     # via ipython
 starlette==0.49.3
     # via fastapi
 stevedore==5.5.0
     # via bandit
+tenacity==9.1.2
+    # via football-prediction (pyproject.toml)
 threadpoolctl==3.6.0
     # via scikit-learn
 toml==0.10.2
@@ -328,11 +478,18 @@ traitlets==5.14.3
     #   matplotlib-inline
 typing-extensions==4.15.0
     # via
+    #   aiosignal
+    #   aiosqlite
     #   alembic
     #   anyio
     #   fastapi
+    #   graphene
     #   ipython
+    #   mlflow-skinny
     #   mypy
+    #   opentelemetry-api
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
     #   pydantic
     #   pydantic-core
     #   pytest-asyncio
@@ -346,9 +503,13 @@ tzdata==2025.2
     #   faker
     #   pandas
 urllib3==2.5.0
-    # via requests
+    # via
+    #   docker
+    #   requests
 uvicorn==0.38.0
-    # via football-prediction (pyproject.toml)
+    # via
+    #   football-prediction (pyproject.toml)
+    #   mlflow-skinny
 uvloop==0.22.1
     # via uvicorn
 virtualenv==20.35.4
@@ -361,8 +522,16 @@ wcwidth==0.2.14
     # via prompt-toolkit
 websockets==15.0.1
     # via uvicorn
+werkzeug==3.1.3
+    # via flask
 wheel==0.45.1
     # via pip-tools
+xgboost==3.1.2
+    # via football-prediction (pyproject.toml)
+yarl==1.22.0
+    # via aiohttp
+zipp==3.23.0
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
