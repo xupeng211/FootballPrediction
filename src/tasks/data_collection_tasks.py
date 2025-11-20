@@ -95,8 +95,10 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
         except Exception as collect_error:
             logger.warning(f"Collection failed, using mock data: {collect_error}")
             # 返回模拟数据用于演示
-            result = collector.create_success_result(
-                {
+            from src.collectors.base_collector import CollectionResult
+            result = CollectionResult(
+                success=True,
+                data={
                     "fixtures": [
                         {
                             "id": 1,
