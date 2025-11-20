@@ -23,6 +23,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../store';
 import { fetchMatches } from '../store/slices/matchesSlice';
+import { getTeamName } from '../services/api';
 
 // 懒加载ECharts组件
 const ReactECharts = lazy(() => import('echarts-for-react').then(module => ({ default: module.default })));
@@ -295,6 +296,7 @@ const Analytics: React.FC = () => {
     };
   };
 
+  
   // 球队积分榜表格列
   const teamRankingColumns = [
     {
@@ -311,6 +313,7 @@ const Analytics: React.FC = () => {
       title: '球队',
       dataIndex: 'team',
       key: 'team',
+      render: (team: any) => getTeamName(team),
     },
     {
       title: '场次',

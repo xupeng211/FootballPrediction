@@ -1,182 +1,147 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
-import { PredictionResponse } from '../services/api';
+
+// 兼容现有的PredictionResponse接口
+export interface PredictionResponse {
+  home_win_prob: number;
+  draw_prob: number;
+  away_win_prob: number;
+  confidence: number;
+  prediction: 'home_win' | 'draw' | 'away_win';
+  match_id?: number;
+  ev?: number; // 期望收益
+  suggestion?: string; // 投注建议
+}
 
 interface PredictionChartProps {
-  prediction: PredictionResponse;
-  width?: string | number;
+  // 支持新的简单接口
+  home_prob?: number;
+  draw_prob?: number;
+  away_prob?: number;
+  // 支持现有的PredictionResponse接口
+  prediction?: PredictionResponse;
+  title?: string;
   height?: string | number;
 }
 
 const PredictionChart: React.FC<PredictionChartProps> = ({
+  home_prob,
+  draw_prob,
+  away_prob,
   prediction,
-  width = '100%',
-  height = 300,
+  title = '比赛预测结果',
+  height = 350
 }) => {
-  // 获取预测结果的颜色
-  const getPredictionColor = (prediction: string) => {
-    switch (prediction) {
-      case 'home_win':
-        return '#52c41a'; // 绿色
-      case 'draw':
-        return '#faad14'; // 黄色
-      case 'away_win':
-        return '#ff4d4f'; // 红色
-      default:
-        return '#1890ff'; // 蓝色
-    }
-  };
+  // 兼容两种接口方式
+  let homeWinProb: number;
+  let drawProb: number;
+  let awayWinProb: number;
 
-  // 获取置信度等级
-  const getConfidenceLevel = (confidence: number) => {
-    if (confidence >= 0.8) return { text: '高', color: '#52c41a' };
-    if (confidence >= 0.6) return { text: '中', color: '#faad14' };
-    return { text: '低', color: '#ff4d4f' };
-  };
+  if (prediction) {
+    // 使用PredictionResponse接口
+    homeWinProb = prediction.home_win_prob;
+    drawProb = prediction.draw_prob;
+    awayWinProb = prediction.away_win_prob;
+  } else {
+    // 使用简单接口，提供默认值
+    homeWinProb = home_prob || 0.6;
+    drawProb = draw_prob || 0.25;
+    awayWinProb = away_prob || 0.15;
+  }
 
-  // 图表配置
-  const getOption = () => {
-    const confidenceLevel = getConfidenceLevel(prediction.confidence);
-    const predictionColor = getPredictionColor(prediction.prediction);
+  // 转换为百分比显示
+  const homePercent = Math.round(homeWinProb * 100);
+  const drawPercent = Math.round(drawProb * 100);
+  const awayPercent = Math.round(awayWinProb * 100);
 
-    return {
-      title: {
-        text: '比赛预测结果',
-        left: 'center',
-        textStyle: {
-          fontSize: 18,
-          fontWeight: 'bold',
-        },
+  const option = {
+    title: {
+      text: title,
+      left: 'center',
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 'bold'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
       },
-      tooltip: {
-        trigger: 'item',
-        formatter: '{a} <br/>{b}: {c}% ({d}%)',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: '#ccc',
-        borderWidth: 1,
-        textStyle: {
-          color: '#333',
-        },
-      },
-      legend: {
-        orient: 'vertical',
-        left: 'left',
-        top: 'middle',
-        data: ['主胜', '平局', '客胜'],
-      },
-      series: [
-        {
-          name: '预测概率',
-          type: 'pie',
-          radius: ['40%', '70%'],
-          center: ['60%', '50%'],
-          avoidLabelOverlap: false,
-          label: {
-            show: true,
-            position: 'outside',
-            formatter: '{b}\n{c}%',
-            fontSize: 14,
-            fontWeight: 'bold',
-          },
-          emphasis: {
-            label: {
-              show: true,
-              fontSize: 16,
-              fontWeight: 'bold',
-            },
+      formatter: (params: any) => {
+        const data = params[0];
+        const resultNames = ['主胜', '平局', '客胜'];
+        return `${resultNames[data.dataIndex]}: ${data.value}%`;
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: ['主胜', '平局', '客胜'],
+      axisTick: {
+        alignWithLabel: true
+      }
+    },
+    yAxis: {
+      type: 'value',
+      max: 100,
+      axisLabel: {
+        formatter: '{value}%'
+      }
+    },
+    series: [
+      {
+        name: '预测概率',
+        type: 'bar',
+        barWidth: '60%',
+        data: [
+          {
+            value: homePercent,
             itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)',
-            },
+              color: '#52c41a' // 绿色 - 主胜
+            }
           },
-          labelLine: {
-            show: true,
-            length: 10,
-            length2: 20,
+          {
+            value: drawPercent,
+            itemStyle: {
+              color: '#8c8c8c' // 灰色 - 平局
+            }
           },
-          data: [
-            {
-              value: Math.round(prediction.home_win_prob * 100),
-              name: '主胜',
-              itemStyle: {
-                color: prediction.prediction === 'home_win' ? predictionColor : '#91cc75',
-                borderColor: '#fff',
-                borderWidth: 2,
-              },
-            },
-            {
-              value: Math.round(prediction.draw_prob * 100),
-              name: '平局',
-              itemStyle: {
-                color: prediction.prediction === 'draw' ? predictionColor : '#fac858',
-                borderColor: '#fff',
-                borderWidth: 2,
-              },
-            },
-            {
-              value: Math.round(prediction.away_win_prob * 100),
-              name: '客胜',
-              itemStyle: {
-                color: prediction.prediction === 'away_win' ? predictionColor : '#ee6666',
-                borderColor: '#fff',
-                borderWidth: 2,
-              },
-            },
-          ],
-        },
-      ],
-      graphic: [
-        // 添加推荐箭头指向预测结果
-        {
-          type: 'group',
-          left: '60%',
-          top: '50%',
-          children: [
-            {
-              type: 'text',
-              left: 0,
-              top: -30,
-              style: {
-                text: '推荐',
-                fontSize: 14,
-                fontWeight: 'bold',
-                fill: predictionColor,
-              },
-            },
-            {
-              type: 'text',
-              left: -15,
-              top: -10,
-              style: {
-                text: '▼',
-                fontSize: 20,
-                fill: predictionColor,
-              },
-            },
-          ],
-        },
-        // 添加置信度信息
-        {
-          type: 'text',
-          left: '60%',
-          top: '85%',
-          style: {
-            text: `置信度: ${Math.round(prediction.confidence * 100)}% (${confidenceLevel.text})`,
-            fontSize: 14,
-            fill: confidenceLevel.color,
-            fontWeight: 'bold',
-          },
-        },
-      ],
-    };
+          {
+            value: awayPercent,
+            itemStyle: {
+              color: '#ff4d4f' // 红色 - 客胜
+            }
+          }
+        ],
+        label: {
+          show: true,
+          position: 'top',
+          formatter: '{c}%',
+          fontSize: 14,
+          fontWeight: 'bold'
+        }
+      }
+    ]
   };
 
   return (
-    <div className="prediction-chart">
+    <div style={{
+      width: '100%',
+      height: typeof height === 'number' ? `${height}px` : height,
+      padding: '10px',
+      border: '1px solid #f0f0f0',
+      borderRadius: '8px',
+      backgroundColor: '#fafafa'
+    }}>
       <ReactECharts
-        option={getOption()}
-        style={{ width, height }}
+        option={option}
+        style={{ height: '100%', width: '100%' }}
         notMerge={true}
         lazyUpdate={true}
       />

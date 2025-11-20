@@ -69,16 +69,28 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 
   // 构建WebSocket URL
   const buildWebSocketUrl = useCallback(() => {
-    const baseUrl = typeof window !== 'undefined'
-      ? window.location.origin
-      : 'http://localhost:8000';
+    // 优先使用指定的WebSocket URL
+    const wsBaseUrl = process.env.REACT_APP_WS_URL ||
+      process.env.REACT_APP_API_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 
-    const wsUrl = baseUrl.replace(/^http/, 'ws');
+    const wsUrl = wsBaseUrl.replace(/^http/, 'ws');
     const endpointPath = typeof endpoint === 'string'
       ? endpoint
       : WEBSOCKET_ENDPOINTS[endpoint];
 
-    return `${wsUrl}${endpointPath}`;
+    const fullUrl = `${wsUrl}${endpointPath}`;
+
+    // 验证URL格式
+    try {
+      new URL(fullUrl);
+      console.log('Connecting to WebSocket:', fullUrl);
+      return fullUrl;
+    } catch (error) {
+      console.warn('Invalid WebSocket URL constructed:', fullUrl, error);
+      // 返回一个安全的默认URL
+      return 'ws://localhost:8000/api/v1/realtime/ws';
+    }
   }, [endpoint]);
 
   // 创建WebSocket服务
@@ -139,7 +151,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         await serviceRef.current.connect();
       } catch (err) {
         if (mountedRef.current) {
+          console.warn('WebSocket connection failed, falling back to HTTP polling:', err);
           setError(err as Error);
+          // 不阻止应用运行，只是记录错误
         }
       }
     }
@@ -181,8 +195,18 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   useEffect(() => {
     mountedRef.current = true;
 
-    if (autoConnect) {
+    // 检查是否应该禁用WebSocket（用于不支持WebSocket的后端）
+    const disableWebSocket = process.env.REACT_APP_DISABLE_WS === 'true';
+
+    if (autoConnect && !disableWebSocket) {
       connect();
+    } else if (disableWebSocket) {
+      console.info('WebSocket is disabled via REACT_APP_DISABLE_WS=true');
+      setConnectionStatus({
+        status: 'disconnected',
+        message: 'WebSocket disabled',
+        timestamp: new Date().toISOString()
+      });
     }
 
     return () => {

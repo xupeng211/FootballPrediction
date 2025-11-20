@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { MatchData } from '../../services/api';
+import { MatchData, getTeamName, getLeagueName } from '../../services/api';
 import { apiService } from '../../services/api';
 
 // 异步thunk用于获取比赛列表
@@ -120,7 +120,10 @@ export const selectMatchesPagination = (state: { matches: MatchesState }) => sta
 export const selectFilteredMatches = (state: { matches: MatchesState }) => {
   const { matches, filters } = state.matches;
 
-  return matches.filter(match => {
+  // 防御性检查：确保 matches 是数组
+  const safeMatches = Array.isArray(matches) ? matches : [];
+
+  return safeMatches.filter(match => {
     // 联赛过滤
     if (filters.league && match.league !== filters.league) {
       return false;
@@ -135,9 +138,9 @@ export const selectFilteredMatches = (state: { matches: MatchesState }) => {
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
       return (
-        match.home_team.toLowerCase().includes(searchTerm) ||
-        match.away_team.toLowerCase().includes(searchTerm) ||
-        match.league.toLowerCase().includes(searchTerm)
+        getTeamName(match.home_team).toLowerCase().includes(searchTerm) ||
+        getTeamName(match.away_team).toLowerCase().includes(searchTerm) ||
+        getLeagueName(match.league).toLowerCase().includes(searchTerm)
       );
     }
 
