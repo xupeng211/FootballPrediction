@@ -1,0 +1,116 @@
+{
+  "audit_start_time": "2025-11-20T20:55:48.878435",
+  "api_key_configured": true,
+  "database_url_configured": true,
+  "data_collection": {
+    "status": "import_error",
+    "message": "采集任务模块未找到: cannot import name 'collect_league_matches' from 'src.tasks.data_collection_tasks' (/home/user/projects/FootballPrediction/src/tasks/data_collection_tasks.py)"
+  },
+  "schema_audit": {
+    "status": "success",
+    "table_count": 2,
+    "tables": [
+      "matches",
+      "teams"
+    ],
+    "table_stats": [
+      {
+        "table": "matches",
+        "record_count": 3
+      },
+      {
+        "table": "teams",
+        "record_count": 5
+      }
+    ]
+  },
+  "matches_audit": {
+    "status": "success",
+    "count": 3,
+    "quality_issues": [],
+    "data": [
+      {
+        "id": 1,
+        "home_team_name": "Manchester United",
+        "away_team_name": "Liverpool",
+        "match_date": "2025-11-20 20:00:00",
+        "status": "FINISHED",
+        "home_score": 2,
+        "away_score": 1,
+        "competition_name": "Premier League",
+        "created_at": "2025-11-20 12:55:44.865264",
+        "updated_at": "2025-11-20 12:55:44.865264"
+      },
+      {
+        "id": 2,
+        "home_team_name": "Arsenal",
+        "away_team_name": "Chelsea",
+        "match_date": "2025-11-19 19:30:00",
+        "status": "FINISHED",
+        "home_score": 1,
+        "away_score": 1,
+        "competition_name": "Premier League",
+        "created_at": "2025-11-20 12:55:44.865264",
+        "updated_at": "2025-11-20 12:55:44.865264"
+      },
+      {
+        "id": 3,
+        "home_team_name": "Manchester City",
+        "away_team_name": "Manchester United",
+        "match_date": "2025-11-18 20:15:00",
+        "status": "FINISHED",
+        "home_score": 3,
+        "away_score": 0,
+        "competition_name": "Premier League",
+        "created_at": "2025-11-20 12:55:44.865264",
+        "updated_at": "2025-11-20 12:55:44.865264"
+      }
+    ]
+  },
+  "teams_audit": {
+    "status": "success",
+    "count": 3,
+    "quality_issues": [],
+    "data": [
+      {
+        "id": 1,
+        "name": "Manchester United",
+        "short_name": "MAN UTD",
+        "crest_url": "https://example.com/manutd.png",
+        "founded_year": 1878,
+        "venue_name": "Old Trafford",
+        "created_at": "2025-11-20 12:55:44.865264",
+        "updated_at": "2025-11-20 12:55:44.865264"
+      },
+      {
+        "id": 2,
+        "name": "Liverpool",
+        "short_name": "LFC",
+        "crest_url": "https://example.com/lfc.png",
+        "founded_year": 1892,
+        "venue_name": "Anfield",
+        "created_at": "2025-11-20 12:55:44.865264",
+        "updated_at": "2025-11-20 12:55:44.865264"
+      },
+      {
+        "id": 3,
+        "name": "Arsenal",
+        "short_name": "ARS",
+        "crest_url": "https://example.com/arsenal.png",
+        "founded_year": 1886,
+        "venue_name": "Emirates Stadium",
+        "created_at": "2025-11-20 12:55:44.865264",
+        "updated_at": "2025-11-20 12:55:44.865264"
+      }
+    ]
+  },
+  "summary": {
+    "total_tables": 2,
+    "matches_records": 3,
+    "teams_records": 3,
+    "total_quality_issues": 0,
+    "overall_quality": "GOOD"
+  },
+  "audit_duration": 0.325233,
+  "audit_end_time": "2025-11-20T20:55:49.203668"
+}
