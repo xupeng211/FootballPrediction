@@ -187,23 +187,23 @@ const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
   };
 
   return (
-    <div className={className} style={{ height }}>
-      <Row gutter={[16, 16]} style={{ height: '100%' }}>
+    <div className={className} style={{ height, padding: '8px' }}>
+      <Row gutter={[24, 24]} style={{ height: '100%' }}>
         {/* 连接状态卡片 */}
-        <Col xs={24} sm={24} md={8}>
+        <Col xs={24} sm={24} lg={8}>
           <Card
             title={
-              <Space>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <WifiOutlined />
                 <span>连接状态</span>
                 <Badge
                   status={getConnectionStatusColor() as any}
                   text={getConnectionStatusText()}
                 />
-              </Space>
+              </div>
             }
             extra={
-              <Space>
+              <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                 <Tooltip title={ws.isConnected ? "断开连接" : "重新连接"}>
                   <Button
                     type={ws.isConnected ? "default" : "primary"}
@@ -221,39 +221,51 @@ const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
                     disabled={!ws.isConnected}
                   />
                 </Tooltip>
-              </Space>
+              </div>
             }
             size="small"
+            styles={{
+              body: { paddingTop: '16px' },
+              header: { padding: '12px 16px' }
+            }}
+            style={{ height: '100%', boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)' }}
           >
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
               {/* 连接信息 */}
-              <div>
-                <Text type="secondary">连接ID:</Text>
-                <Text code copyable>
-                  {connectionStatus.status?.connectionId || 'N/A'}
-                </Text>
-              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ minWidth: '0', flex: 1 }}>
+                  <div style={{ marginBottom: '8px' }}>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: '2px' }}>连接ID:</Text>
+                    <Text code copyable style={{ fontSize: '12px' }}>
+                      {connectionStatus.status?.connectionId || 'N/A'}
+                    </Text>
+                  </div>
 
-              <div>
-                <Text type="secondary">用户ID:</Text>
-                <Text code>{userId || 'N/A'}</Text>
-              </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: '2px' }}>用户ID:</Text>
+                    <Text code style={{ fontSize: '12px' }}>{userId || 'N/A'}</Text>
+                  </div>
 
-              {connectionStatus.status?.timestamp && (
-                <div>
-                  <Text type="secondary">连接时间:</Text>
-                  <Text>{new Date(connectionStatus.status.timestamp).toLocaleString()}</Text>
+                  {connectionStatus.status?.timestamp && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <Text type="secondary" style={{ display: 'block', marginBottom: '2px' }}>连接时间:</Text>
+                      <Text style={{ fontSize: '12px' }}>
+                        {new Date(connectionStatus.status.timestamp).toLocaleString()}
+                      </Text>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               {/* 连接状态进度条 */}
               <div>
-                <Text type="secondary">连接质量:</Text>
+                <Text type="secondary" style={{ display: 'block', marginBottom: '4px' }}>连接质量:</Text>
                 <Progress
                   percent={ws.isConnected ? 100 : 0}
                   status={ws.isConnected ? "success" : "exception"}
                   size="small"
                   showInfo={false}
+                  strokeWidth={6}
                 />
               </div>
             </Space>
@@ -261,46 +273,51 @@ const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
         </Col>
 
         {/* 统计信息卡片 */}
-        <Col xs={24} sm={24} md={8}>
+        <Col xs={24} sm={24} lg={8}>
           <Card
             title={
-              <Space>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <DatabaseOutlined />
                 <span>实时统计</span>
-              </Space>
+              </div>
             }
             size="small"
+            styles={{
+              body: { paddingTop: '16px' },
+              header: { padding: '12px 16px' }
+            }}
+            style={{ height: '100%', boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)' }}
           >
             {ws.stats ? (
-              <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <Statistic
                   title="总连接数"
                   value={ws.stats.total_connections}
                   prefix={<UserOutlined />}
-                  valueStyle={{ fontSize: '16px' }}
+                  valueStyle={{ fontSize: '14px' }}
                 />
 
                 <Statistic
                   title="活跃用户"
                   value={ws.stats.total_users}
                   prefix={<UserOutlined />}
-                  valueStyle={{ fontSize: '16px' }}
+                  valueStyle={{ fontSize: '14px' }}
                 />
 
                 <Statistic
                   title="房间数量"
                   value={ws.stats.total_rooms}
                   prefix={<EyeOutlined />}
-                  valueStyle={{ fontSize: '16px' }}
+                  valueStyle={{ fontSize: '14px' }}
                 />
 
                 <Statistic
                   title="订阅数量"
                   value={ws.stats.total_subscriptions}
                   prefix={<BellOutlined />}
-                  valueStyle={{ fontSize: '16px' }}
+                  valueStyle={{ fontSize: '14px' }}
                 />
-              </Space>
+              </div>
             ) : (
               <Empty
                 description={ws.isConnected ? "加载统计信息中..." : "请先连接"}
@@ -311,17 +328,17 @@ const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
         </Col>
 
         {/* 事件历史卡片 */}
-        <Col xs={24} sm={24} md={8}>
+        <Col xs={24} sm={24} lg={8}>
           <Card
             title={
-              <Space>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
                 <BellOutlined />
                 <span>事件历史</span>
                 <Badge count={eventHistory.length} showZero />
-              </Space>
+              </div>
             }
             extra={
-              <Space>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', flexShrink: 0 }}>
                 <Tooltip title="自动滚动">
                   <Switch
                     size="small"
@@ -345,10 +362,14 @@ const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
                     disabled={eventHistory.length === 0}
                   />
                 </Tooltip>
-              </Space>
+              </div>
             }
             size="small"
-            bodyStyle={{ maxHeight: 300, overflow: 'auto' }}
+            styles={{
+              body: { paddingTop: '16px', maxHeight: 300, overflow: 'auto' },
+              header: { padding: '12px 16px' }
+            }}
+            style={{ height: '100%', boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)' }}
           >
             {eventHistory.length > 0 ? (
               <List

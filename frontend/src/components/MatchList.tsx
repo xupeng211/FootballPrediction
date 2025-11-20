@@ -36,7 +36,7 @@ import {
   selectMatchesFilters,
   selectMatchesPagination,
 } from '../store/slices/matchesSlice';
-import { MatchData } from '../services/api';
+import { MatchData, getTeamName, getLeagueName } from '../services/api';
 import {
   generatePrediction,
   selectPrediction,
@@ -165,6 +165,7 @@ const MatchList: React.FC<MatchListProps> = ({ onPredictionSelect }) => {
     return 'VS';
   };
 
+  
   // 表格列定义
   const columns = [
     {
@@ -174,10 +175,10 @@ const MatchList: React.FC<MatchListProps> = ({ onPredictionSelect }) => {
       render: (record: MatchData) => (
         <div>
           <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
-            {record.home_team} VS {record.away_team}
+            {getTeamName(record.home_team)} VS {getTeamName(record.away_team)}
           </div>
           <div style={{ color: '#666', fontSize: '12px' }}>
-            {record.league} • {new Date(record.match_date).toLocaleString()}
+            {getLeagueName(record.league)} • {new Date(record.match_date).toLocaleString()}
           </div>
         </div>
       ),

@@ -12,12 +12,42 @@ export interface PredictionResponse {
   suggestion?: string; // 投注建议
 }
 
+// 球队信息接口
+export interface TeamInfo {
+  id: number;
+  name: string;
+  short_name?: string;
+}
+
+// 联赛信息接口
+export interface LeagueInfo {
+  id: number;
+  name: string;
+  country: string;
+}
+
+// 辅助函数：获取联赛名称，兼容新旧数据格式
+export const getLeagueName = (league: LeagueInfo | string): string => {
+  if (typeof league === 'object' && league !== null && league.name) {
+    return league.name;
+  }
+  return String(league);
+};
+
+// 辅助函数：获取球队名称，兼容新旧数据格式
+export const getTeamName = (team: TeamInfo | string): string => {
+  if (typeof team === 'object' && team !== null && team.name) {
+    return team.name;
+  }
+  return String(team);
+};
+
 export interface MatchData {
   id: number;
-  home_team: string;
-  away_team: string;
+  home_team: TeamInfo | string;  // 兼容新旧格式
+  away_team: TeamInfo | string;  // 兼容新旧格式
   match_date: string;
-  league: string;
+  league: LeagueInfo | string;  // 兼容新旧格式
   status: 'upcoming' | 'live' | 'finished';
   home_score?: number;
   away_score?: number;
@@ -78,7 +108,21 @@ class ApiService {
   }): Promise<MatchData[]> {
     try {
       const response = await this.client.get('/matches', { params });
-      return response.data;
+
+      // 后端返回 { "matches": [...] } 结构，需要提取 matches 数组
+      const responseData = response.data;
+      if (responseData && Array.isArray(responseData.matches)) {
+        return responseData.matches;
+      }
+
+      // 防御性检查：如果直接返回数组
+      if (Array.isArray(responseData)) {
+        return responseData;
+      }
+
+      // 如果都不是，返回空数组
+      console.warn('API returned unexpected data structure:', responseData);
+      return [];
     } catch (error) {
       console.error('获取比赛列表失败:', error);
       throw error;

@@ -27,7 +27,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '../store';
 import { fetchMatches, selectFilteredMatches } from '../store/slices/matchesSlice';
-import { apiService } from '../services/api';
+import { apiService, getTeamName, getLeagueName } from '../services/api';
 import { PredictionResponse } from '../services/api';
 import PerformanceOptimizer from './PerformanceOptimizer';
 import RealtimeDashboard from './RealtimeDashboard';
@@ -76,11 +76,13 @@ const Dashboard: React.FC = () => {
       // 加载数据
       const statsData = await apiService.getStats();
 
+      // 防御性检查：确保 matches 是数组
+      const safeMatches = Array.isArray(matches) ? matches : [];
       setStats({
         ...statsData,
-        upcoming_matches: matches.filter(m => m.status === 'upcoming').length,
-        live_matches: matches.filter(m => m.status === 'live').length,
-        finished_matches: matches.filter(m => m.status === 'finished').length,
+        upcoming_matches: safeMatches.filter(m => m.status === 'upcoming').length,
+        live_matches: safeMatches.filter(m => m.status === 'live').length,
+        finished_matches: safeMatches.filter(m => m.status === 'finished').length,
       });
     } catch (err) {
       console.error('加载仪表板数据失败:', err);
@@ -148,9 +150,11 @@ const Dashboard: React.FC = () => {
 
   // 计算比赛统计
   const getMatchStats = () => {
-    const upcoming = matches.filter(m => m.status === 'upcoming').length;
-    const live = matches.filter(m => m.status === 'live').length;
-    const finished = matches.filter(m => m.status === 'finished').length;
+    // 防御性检查：确保 matches 是数组
+    const safeMatches = Array.isArray(matches) ? matches : [];
+    const upcoming = safeMatches.filter(m => m.status === 'upcoming').length;
+    const live = safeMatches.filter(m => m.status === 'live').length;
+    const finished = safeMatches.filter(m => m.status === 'finished').length;
     return { upcoming, live, finished };
   };
 
@@ -189,6 +193,7 @@ const Dashboard: React.FC = () => {
     return <Tag color="default">{suggestion}</Tag>;
   };
 
+  
   // 预测分布图表配置
   const predictionDistributionOption = useMemo(() => {
     const predictionCounts = recentPredictions.reduce((acc, pred) => {
@@ -534,7 +539,7 @@ const Dashboard: React.FC = () => {
                 render: (record: RecentPrediction) => (
                   <div>
                     <div style={{ fontWeight: 'bold' }}>
-                      {record.match_info.home_team} VS {record.match_info.away_team}
+                      {getTeamName(record.match_info.home_team)} VS {getTeamName(record.match_info.away_team)}
                     </div>
                     <div style={{ fontSize: '12px', color: '#666' }}>
                       {record.match_info.league}

@@ -124,9 +124,23 @@ export class WebSocketService {
         // 构建WebSocket URL
         const wsUrl = this.buildWebSocketUrl();
 
+        // 检查WebSocket支持
+        if (typeof WebSocket === 'undefined') {
+          throw new Error('WebSocket is not supported in this environment');
+        }
+
         this.ws = new WebSocket(wsUrl, this.config.protocols);
 
+        // 设置连接超时
+        const connectionTimeout = setTimeout(() => {
+          if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+            this.ws.close();
+            reject(new Error('WebSocket connection timeout'));
+          }
+        }, 10000); // 10秒超时
+
         this.ws.onopen = () => {
+          clearTimeout(connectionTimeout);
           this.onOpen();
           resolve();
         };
@@ -136,17 +150,21 @@ export class WebSocketService {
         };
 
         this.ws.onclose = (event) => {
+          clearTimeout(connectionTimeout);
           this.onClose(event);
         };
 
         this.ws.onerror = (event) => {
-          this.onError(new Error('WebSocket connection error'));
-          reject(new Error('WebSocket connection error'));
+          clearTimeout(connectionTimeout);
+          const error = new Error('WebSocket connection failed');
+          this.onError(error);
+          reject(error);
         };
 
       } catch (error) {
-        this.onError(error as Error);
-        reject(error);
+        const enhancedError = new Error(`Failed to connect to WebSocket: ${(error as Error).message}`);
+        this.onError(enhancedError);
+        reject(enhancedError);
       }
     });
   }
@@ -310,20 +328,31 @@ export class WebSocketService {
   }
 
   private buildWebSocketUrl(): string {
-    const url = new URL(this.config.url);
+    try {
+      // 确保URL有效
+      if (!this.config.url) {
+        throw new Error('WebSocket URL is not provided');
+      }
 
-    // 添加查询参数
-    if (this.config.userId) {
-      url.searchParams.set('user_id', this.config.userId);
-    }
-    if (this.config.sessionId) {
-      url.searchParams.set('session_id', this.config.sessionId);
-    }
-    if (this.config.token) {
-      url.searchParams.set('token', this.config.token);
-    }
+      const url = new URL(this.config.url);
 
-    return url.toString();
+      // 添加查询参数
+      if (this.config.userId) {
+        url.searchParams.set('user_id', this.config.userId);
+      }
+      if (this.config.sessionId) {
+        url.searchParams.set('session_id', this.config.sessionId);
+      }
+      if (this.config.token) {
+        url.searchParams.set('token', this.config.token);
+      }
+
+      return url.toString();
+    } catch (error) {
+      console.error('Failed to build WebSocket URL:', error);
+      // 抛出更清晰的错误信息
+      throw new Error(`Invalid WebSocket URL: ${this.config.url}`);
+    }
   }
 
   private onOpen(): void {

@@ -54,6 +54,7 @@ import {
 } from '@ant-design/icons';
 import { useWebSocket, useRealtimeEvent } from '../hooks/useWebSocket';
 import { EVENT_TYPES } from '../services/websocket';
+import { getTeamName } from '../services/api';
 
 // 懒加载ECharts组件
 const ReactECharts = React.lazy(() => import('echarts-for-react').then(module => ({ default: module.default })));
@@ -539,6 +540,7 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
     return <Tag color={colors[risk as keyof typeof colors]}>{texts[risk as keyof typeof texts]}</Tag>;
   };
 
+  
   // 推荐表格列定义
   const recommendationColumns = [
     {
@@ -548,7 +550,7 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
       render: (record: SmartRecommendation) => (
         <div>
           <div style={{ fontWeight: 'bold' }}>
-            {record.home_team} VS {record.away_team}
+            {getTeamName(record.home_team)} VS {getTeamName(record.away_team)}
           </div>
           <div style={{ fontSize: '12px', color: '#666' }}>
             ID: {record.match_id}
