@@ -44,7 +44,22 @@ class FixturesCollector(BaseCollector):
             api_key: API密钥
             base_url: API基础URL
         """
-        super().__init__(data_source, **kwargs)
+        # 从环境变量获取API密钥，如果未提供则使用空字符串
+        if not api_key:
+            import os
+            api_key = os.getenv("FOOTBALL_DATA_API_KEY", "")
+
+        # 正确调用父类构造函数
+        super().__init__(
+            api_key=api_key,
+            base_url=base_url,
+            timeout=kwargs.get("timeout", 30),
+            max_retries=kwargs.get("max_retries", 3),
+            rate_limit=kwargs.get("rate_limit", 10)
+        )
+
+        # 保存附加属性
+        self.data_source = data_source
         self.api_key = api_key
         self.base_url = base_url
 
@@ -311,9 +326,19 @@ class FixturesCollector(BaseCollector):
                 "status": "SCHEDULED",
             }
 
-            response = await self._make_request(url=url, headers=headers, params=params)
+            # 使用父类的get方法
+            endpoint = f"competitions/{league_code}/matches"
+            result = await self.get(endpoint, params=params)
 
-            return response.get("matches", [])
+            if result.success:
+                # 从响应数据中提取matches
+                if hasattr(result, 'data'):
+                    return result.data.get("matches", [])
+                else:
+                    return result.get("matches", [])
+            else:
+                self.logger.error(f"Failed to collect fixtures for league {league_code}: {result.error}")
+                return []
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(
@@ -413,3 +438,212 @@ class FixturesCollector(BaseCollector):
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to detect missing matches: {str(e)}")
+
+    async def _get_headers(self) -> dict[str, str]:
+        """获取请求头.
+
+        Returns:
+            Dict[str, str]: 请求头字典
+        """
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-Auth-Token"] = self.api_key
+        return headers
+
+    def _build_url(self, endpoint: str, **params) -> str:
+        """构建请求URL.
+
+        Args:
+            endpoint: API端点
+            **params: 查询参数
+
+        Returns:
+            str: 完整的URL
+        """
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        if params:
+            query_string = "&".join(f"{k}={v}" for k, v in params.items())
+            url += f"?{query_string}"
+        return url
+
+    async def collect_matches(
+        self,
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> CollectionResult:
+        """采集比赛数据.
+
+        Args:
+            league_id: 联赛ID
+            date_from: 开始日期
+            date_to: 结束日期
+
+        Returns:
+            CollectionResult: 采集结果
+        """
+        try:
+            # 使用现有的collect_fixtures方法
+            leagues = [str(league_id)] if league_id else None
+            result = await self.collect_fixtures(
+                leagues=leagues,
+                date_from=date_from,
+                date_to=date_to
+            )
+
+            # 转换数据格式
+            matches_data = []
+            for fixture in result.collected_data:
+                matches_data.append({
+                    "id": fixture.get("external_match_id"),
+                    "homeTeam": {"id": fixture.get("external_home_team_id")},
+                    "awayTeam": {"id": fixture.get("external_away_team_id")},
+                    "utcDate": fixture.get("match_time"),
+                    "status": fixture.get("status"),
+                    "competition": {"id": fixture.get("external_league_id")},
+                    "season": fixture.get("season"),
+                    "matchday": fixture.get("matchday")
+                })
+
+            return CollectionResult(
+                success=True,
+                data={"matches": matches_data},
+                metadata={"total_matches": len(matches_data)}
+            )
+
+        except Exception as e:
+            return CollectionResult(
+                success=False,
+                error=f"Failed to collect matches: {str(e)}"
+            )
+
+    async def collect_teams(self, league_id: int | None = None) -> CollectionResult:
+        """采集球队数据.
+
+        Args:
+            league_id: 联赛ID
+
+        Returns:
+            CollectionResult: 采集结果
+        """
+        try:
+            if not league_id:
+                return CollectionResult(
+                    success=False,
+                    error="League ID is required for teams collection"
+                )
+
+            # 构建API请求
+            endpoint = f"competitions/{league_id}/teams"
+            url = self._build_url(endpoint)
+            headers = await self._get_headers()
+
+            # 使用HTTP客户端请求数据
+            import httpx
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.get(url, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+
+            teams = data.get("teams", [])
+
+            return CollectionResult(
+                success=True,
+                data={"teams": teams},
+                metadata={"total_teams": len(teams), "league_id": league_id}
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to collect teams for league {league_id}: {str(e)}")
+            return CollectionResult(
+                success=False,
+                error=f"Failed to collect teams: {str(e)}"
+            )
+
+    async def collect_players(self, team_id: int | None = None) -> CollectionResult:
+        """采集球员数据.
+
+        Args:
+            team_id: 球队ID
+
+        Returns:
+            CollectionResult: 采集结果
+        """
+        try:
+            if not team_id:
+                return CollectionResult(
+                    success=False,
+                    error="Team ID is required for players collection"
+                )
+
+            # 构建API请求
+            endpoint = f"teams/{team_id}"
+            url = self._build_url(endpoint)
+            headers = await self._get_headers()
+
+            # 使用HTTP客户端请求数据
+            import httpx
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.get(url, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+
+            # 获取球员信息
+            squad = data.get("squad", [])
+
+            return CollectionResult(
+                success=True,
+                data={"players": squad, "team": data},
+                metadata={"total_players": len(squad), "team_id": team_id}
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to collect players for team {team_id}: {str(e)}")
+            return CollectionResult(
+                success=False,
+                error=f"Failed to collect players: {str(e)}"
+            )
+
+    async def collect_leagues(self) -> CollectionResult:
+        """采集联赛数据.
+
+        Returns:
+            CollectionResult: 采集结果
+        """
+        try:
+            # 获取支持的联赛列表
+            endpoint = "competitions"
+            url = self._build_url(endpoint)
+            headers = await self._get_headers()
+
+            # 使用HTTP客户端请求数据
+            import httpx
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.get(url, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+
+            competitions = data.get("competitions", [])
+
+            # 过滤主要联赛
+            major_league_codes = ["PL", "PD", "SA", "BL1", "FL1", "CL", "EL"]
+            major_competitions = [
+                comp for comp in competitions
+                if comp.get("code") in major_league_codes
+            ]
+
+            return CollectionResult(
+                success=True,
+                data={"competitions": major_competitions},
+                metadata={
+                    "total_competitions": len(major_competitions),
+                    "all_competitions": len(competitions)
+                }
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to collect leagues: {str(e)}")
+            return CollectionResult(
+                success=False,
+                error=f"Failed to collect leagues: {str(e)}"
+            )
