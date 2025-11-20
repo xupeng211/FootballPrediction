@@ -15,6 +15,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+# 修复pandas/NumPy覆盖率模式下的_NoValueType问题
+import os
+
+os.environ["NUMPY_EXPERIMENTAL_ARRAY_FUNCTION"] = "0"
+
 logger = logging.getLogger(__name__)
 
 
@@ -145,7 +150,9 @@ class FootballDataCleaner:
         missing_info = {}
 
         for column in data.columns:
-            missing_count = data[column].isnull().sum()
+            # 修复_NoValueType错误：使用更安全的方式计算缺失值
+            null_mask = data[column].isnull()
+            missing_count = len(data) - len(data[column][~null_mask])
             if missing_count > 0:
                 missing_ratio = missing_count / len(data)
                 missing_info[column] = {
@@ -186,9 +193,17 @@ class FootballDataCleaner:
         elif strategy == "drop_rows":
             return series.dropna()
         elif strategy == "mean" and series.dtype in ["int64", "float64"]:
-            return series.fillna(series.mean())
+            fill_value = series.mean()
+            # 修复类型兼容性：对整数列保持整数类型
+            if pd.api.types.is_integer_dtype(series):
+                fill_value = int(round(fill_value))
+            return series.fillna(fill_value)
         elif strategy == "median" and series.dtype in ["int64", "float64"]:
-            return series.fillna(series.median())
+            fill_value = series.median()
+            # 修复类型兼容性：对整数列保持整数类型
+            if pd.api.types.is_integer_dtype(series):
+                fill_value = int(round(fill_value))
+            return series.fillna(fill_value)
         elif strategy == "mode":
             mode_value = series.mode()[0] if not series.mode().empty else "Unknown"
             return series.fillna(mode_value)
@@ -197,9 +212,17 @@ class FootballDataCleaner:
         elif strategy == "backward_fill":
             return series.bfill()
         elif strategy == "interpolate" and series.dtype in ["int64", "float64"]:
-            return series.interpolate()
+            interpolated = series.interpolate()
+            # 修复类型兼容性：对整数列保持整数类型
+            if pd.api.types.is_integer_dtype(series):
+                interpolated = interpolated.round().astype(series.dtype)
+            return interpolated
         else:
-            return series.fillna(0)  # 默认填充0
+            # 修复类型兼容性：对整数列保持整数类型
+            if pd.api.types.is_integer_dtype(series):
+                return series.fillna(0).astype(series.dtype)
+            else:
+                return series.fillna(0)
 
     def _detect_and_handle_outliers(
         self, data: pd.DataFrame, data_type: str
@@ -215,8 +238,9 @@ class FootballDataCleaner:
                 outliers = pd.Series(False, index=data.index)
 
             if outliers.any():
+                # 修复_NoValueType错误：使用更安全的方式计算异常值数量
                 outliers_info[column] = {
-                    "count": outliers.sum(),
+                    "count": len(outliers[outliers]),
                     "indices": data.index[outliers].tolist(),
                 }
 
@@ -256,6 +280,11 @@ class FootballDataCleaner:
             lower_bound = q1 - 1.5 * iqr
             upper_bound = q3 + 1.5 * iqr
 
+            # 修复类型兼容性问题：将边界值转换为与列相同的类型
+            if pd.api.types.is_integer_dtype(data[column]):
+                lower_bound = int(round(lower_bound))
+                upper_bound = int(round(upper_bound))
+
             # 将异常值限制在边界范围内
             data.loc[data[column] < lower_bound, column] = lower_bound
             data.loc[data[column] > upper_bound, column] = upper_bound
@@ -277,9 +306,12 @@ class FootballDataCleaner:
         for col in numeric_columns:
             # 检查是否可以转换为更小的数值类型
             if data[col].dtype == "int64":
-                if data[col].min() >= 0 and data[col].max() <= 255:
+                # 修复_NoValueType错误：使用更安全的方式获取min/max
+                col_min = min(data[col].values)
+                col_max = max(data[col].values)
+                if col_min >= 0 and col_max <= 255:
                     data[col] = data[col].astype("uint8")
-                elif data[col].min() >= 0 and data[col].max() <= 65535:
+                elif col_min >= 0 and col_max <= 65535:
                     data[col] = data[col].astype("uint16")
             elif data[col].dtype == "float64":
                 data[col] = pd.to_numeric(data[col], downcast="float")

@@ -348,6 +348,11 @@ class AnalyticsEventHandler(EventHandler):
         # 这里可以发送到分析服务
         logger.info(f"New match created: {event.data.match_id}")
 
+    async def start(self) -> None:
+        """启动分析事件处理器."""
+        logger.info(f"Starting {self.name}")
+        # 这里可以添加启动逻辑，比如连接到分析服务
+
     def get_handled_events(self) -> list[str]:
         return [
             PredictionMadeEvent.get_event_type(),
@@ -389,6 +394,11 @@ class AlertEventHandler(EventHandler):
     async def _check_prediction_volume(self) -> None:
         """检查预测量告警."""
         # 这里应该实现实际的预测量检查逻辑
+
+    async def start(self) -> None:
+        """启动告警事件处理器."""
+        logger.info(f"Starting {self.name}")
+        # 这里可以添加启动逻辑，比如初始化告警规则
 
     def get_handled_events(self) -> list[str]:
         return [

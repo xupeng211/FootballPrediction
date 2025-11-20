@@ -8,7 +8,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 # 可选的速率限制功能
@@ -151,6 +151,88 @@ app.include_router(prometheus_router, prefix="/metrics", tags=["监控"])
 setup_openapi(app)
 setup_enhanced_docs(app)
 setup_docs_routes(app)
+
+
+# WebSocket 路由
+@app.websocket("/api/v1/realtime/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket端点用于实时通信"""
+    await websocket.accept()
+
+    try:
+        while True:
+            # 接收客户端消息
+            data = await websocket.receive_text()
+
+            try:
+                import json
+
+                message = json.loads(data)
+                message_type = message.get("type")
+
+                # 处理不同类型的消息
+                if message_type == "ping":
+                    await websocket.send_text(
+                        json.dumps(
+                            {"type": "pong", "timestamp": "2025-01-20T00:00:00Z"}
+                        )
+                    )
+                elif message_type == "subscribe":
+                    await websocket.send_text(
+                        json.dumps(
+                            {
+                                "type": "subscription_confirmed",
+                                "event_types": message.get("event_types", []),
+                                "timestamp": "2025-01-20T00:00:00Z",
+                            }
+                        )
+                    )
+                elif message_type == "get_stats":
+                    await websocket.send_text(
+                        json.dumps(
+                            {
+                                "type": "stats_response",
+                                "data": {
+                                    "total_connections": 1,
+                                    "total_users": 1,
+                                    "total_rooms": 1,
+                                    "total_subscriptions": 1,
+                                },
+                                "timestamp": "2025-01-20T00:00:00Z",
+                            }
+                        )
+                    )
+                else:
+                    await websocket.send_text(
+                        json.dumps(
+                            {
+                                "type": "error",
+                                "message": f"Unknown message type: {message_type}",
+                                "timestamp": "2025-01-20T00:00:00Z",
+                            }
+                        )
+                    )
+
+            except json.JSONDecodeError:
+                await websocket.send_text(
+                    json.dumps(
+                        {
+                            "type": "error",
+                            "message": "Invalid JSON format",
+                            "timestamp": "2025-01-20T00:00:00Z",
+                        }
+                    )
+                )
+
+    except WebSocketDisconnect:
+        # 客户端正常断开连接
+        pass
+    except Exception:
+        # 发生错误时尝试清理连接
+        try:
+            await websocket.close()
+        except Exception:
+            pass
 
 
 @app.get(
