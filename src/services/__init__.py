@@ -1,6 +1,12 @@
-from typing import Optional
+"""服务模块初始化文件
+Services Module Initialization File.
 
-"""Services module."""
+提供各种业务服务：
+- 推理服务
+- 数据服务
+- 缓存服务
+"""
 
-# 模块导入将在需要时添加
-__all__ = []
+from .inference_service import InferenceService
+
+__all__ = ["InferenceService"]

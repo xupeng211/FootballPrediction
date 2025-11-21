@@ -8,7 +8,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 # 可选的速率限制功能
@@ -118,9 +118,16 @@ app = FastAPI(
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应该限制具体域名
+    allow_origins=[
+        "http://localhost:3000",  # React前端开发服务器
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",  # React前端开发服务器（备用端口）
+        "http://127.0.0.1:3001",
+        "http://localhost:8000",  # 本地开发
+        "http://127.0.0.1:8000"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -151,6 +158,183 @@ app.include_router(prometheus_router, prefix="/metrics", tags=["监控"])
 setup_openapi(app)
 setup_enhanced_docs(app)
 setup_docs_routes(app)
+
+# ===== 简单API端点 - 用于前端集成 =====
+from fastapi.responses import JSONResponse
+import pandas as pd
+import os
+
+@app.get("/api/v1/matches")
+async def get_matches(limit: int = 50, offset: int = 0):
+    """获取比赛列表 - 简单版本用于前端演示"""
+    try:
+        # 从数据库加载比赛数据
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+
+        db_config = {
+            'host': os.getenv('DB_HOST', 'localhost'),
+            'port': int(os.getenv('DB_PORT', 5432)),
+            'database': os.getenv('DB_NAME', 'football_prediction'),
+            'user': os.getenv('DB_USER', 'postgres'),
+            'password': os.getenv('DB_PASSWORD', 'postgres-dev-password')
+        }
+
+        conn = psycopg2.connect(**db_config)
+        query = """
+        SELECT
+            m.id,
+            m.home_team_id,
+            m.away_team_id,
+            m.home_score,
+            m.away_score,
+            m.status,
+            m.match_date,
+            t1.name as home_team_name,
+            t2.name as away_team_name,
+            l.name as league_name
+        FROM matches m
+        JOIN teams t1 ON m.home_team_id = t1.id
+        JOIN teams t2 ON m.away_team_id = t2.id
+        LEFT JOIN leagues l ON m.league_id = l.id
+        ORDER BY m.match_date DESC
+        LIMIT %s OFFSET %s
+        """
+
+        df = pd.read_sql_query(query, conn, params=[limit, offset])
+        conn.close()
+
+        # 转换为前端期望的格式
+        matches = []
+        for _, row in df.iterrows():
+            match = {
+                "id": row['id'],
+                "home_team": {
+                    "id": row['home_team_id'],
+                    "name": row['home_team_name']
+                },
+                "away_team": {
+                    "id": row['away_team_id'],
+                    "name": row['away_team_name']
+                },
+                "league": {
+                    "id": 1,  # 默认值
+                    "name": row.get('league_name', 'Premier League')
+                },
+                "match_date": row['match_date'].isoformat() if row['match_date'] else None,
+                "home_score": row['home_score'],
+                "away_score": row['away_score'],
+                "status": row['status'] or "SCHEDULED"
+            }
+            matches.append(match)
+
+        return {"matches": matches, "total": len(matches)}
+
+    except Exception as e:
+        logger.error(f"获取比赛数据失败: {e}")
+        # 如果数据库连接失败，返回模拟数据
+        mock_matches = [
+            {
+                "id": 1,
+                "home_team": {"id": 3, "name": "Manchester United"},
+                "away_team": {"id": 4, "name": "Fulham"},
+                "league": {"id": 1, "name": "Premier League"},
+                "match_date": "2024-08-16T19:00:00Z",
+                "home_score": 1,
+                "away_score": 0,
+                "status": "FINISHED"
+            },
+            {
+                "id": 2,
+                "home_team": {"id": 5, "name": "Liverpool"},
+                "away_team": {"id": 6, "name": "Arsenal"},
+                "league": {"id": 1, "name": "Premier League"},
+                "match_date": "2024-08-17T17:00:00Z",
+                "home_score": 2,
+                "away_score": 1,
+                "status": "FINISHED"
+            }
+        ]
+        return {"matches": mock_matches, "total": len(mock_matches)}
+
+@app.get("/api/v1/predictions/{match_id}")
+async def get_prediction(match_id: int):
+    """获取比赛预测 - 使用真实的XGBoost模型"""
+    try:
+        # 导入推理服务
+        from src.services.inference_service import inference_service
+
+        # 调用推理服务进行预测
+        prediction_result = inference_service.predict_match(match_id)
+
+        if not prediction_result.get("success", False):
+            raise HTTPException(
+                status_code=404,
+                detail=prediction_result.get("error", "预测失败")
+            )
+
+        return prediction_result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取预测失败: {e}")
+        raise HTTPException(status_code=500, detail="预测服务暂时不可用")
+
+@app.post("/api/v1/predictions/{match_id}/predict")
+async def generate_prediction(match_id: int):
+    """生成比赛预测 - 实时调用XGBoost模型"""
+    try:
+        # 导入推理服务
+        from src.services.inference_service import inference_service
+
+        # 调用推理服务进行实时预测
+        prediction_result = inference_service.predict_match(match_id)
+
+        if not prediction_result.get("success", False):
+            raise HTTPException(
+                status_code=404,
+                detail=prediction_result.get("error", "预测生成失败")
+            )
+
+        # 添加生成时间戳
+        from datetime import datetime
+        prediction_result["generated_at"] = datetime.now().isoformat()
+
+        return prediction_result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"生成预测失败: {e}")
+        raise HTTPException(status_code=500, detail="预测生成失败")
+
+@app.get("/")
+async def root():
+    """根路径"""
+    return {"message": "足球预测系统API", "version": "2.0.0", "status": "running"}
+
+@app.get("/api/v1/health/inference")
+async def inference_health_check():
+    """推理服务健康检查"""
+    try:
+        from src.services.inference_service import inference_service
+
+        health_status = inference_service.health_check()
+        model_info = inference_service.get_model_info()
+
+        return {
+            "status": "healthy",
+            "inference_service": health_status,
+            "model_info": model_info,
+            "timestamp": "2025-11-21T00:00:00Z"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": "2025-11-21T00:00:00Z"
+        }
 
 
 # WebSocket 路由

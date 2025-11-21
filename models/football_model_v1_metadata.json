@@ -1,0 +1,29 @@
+{
+  "model_version": "v1",
+  "training_date": "2025-11-21T12:40:05.091507",
+  "feature_names": [
+    "home_team_id",
+    "away_team_id",
+    "home_last_5_points",
+    "away_last_5_points",
+    "home_last_5_avg_goals",
+    "away_last_5_avg_goals",
+    "h2h_last_3_home_wins",
+    "home_last_5_goal_diff",
+    "away_last_5_goal_diff",
+    "home_win_streak",
+    "away_win_streak",
+    "home_last_5_win_rate",
+    "away_last_5_win_rate",
+    "home_rest_days",
+    "away_rest_days"
+  ],
+  "target_classes": [
+    "平局",
+    "主队胜",
+    "客队胜"
+  ],
+  "training_samples": 304,
+  "test_samples": 76,
+  "num_features": 15
+}

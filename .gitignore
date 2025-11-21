@@ -230,3 +230,21 @@ backups/
 backup_*/
 .venv/
 mlruns/
+
+# 数据文件 (CSV, JSON, XML等)
+data/*.csv
+data/*.json
+data/*.xml
+data/*.xlsx
+data/*.parquet
+
+# 前端相关
+frontend/node_modules/
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
