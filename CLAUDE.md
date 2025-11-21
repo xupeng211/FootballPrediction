@@ -64,6 +64,11 @@ make cov.html           # 生成HTML覆盖率报告
 # 安全检查 (提交前必须执行)
 make security-check     # Bandit安全扫描 + 依赖审计
 make secret-scan        # 敏感信息扫描
+
+# 服务启动和调试
+make docker.up.dev      # 启动完整开发环境 (app + db + redis)
+make docker.logs.dev    # 查看应用日志
+uvicorn src.main:app --reload  # 直接启动FastAPI应用 (8000端口)
 ```
 
 ### 🐳 Docker Development Environment
@@ -553,6 +558,21 @@ When starting work, always read these files first:
 - **`docker-compose.yml`**: Local development environment setup
 - **`src/main.py`**: FastAPI application entry point and router configuration
 
+### 🔍 Quick Architecture Understanding
+The project follows a **clean architecture pattern** with these key layers:
+- **API Layer** (`src/api/`): FastAPI routers, HTTP concerns only
+- **Domain Layer** (`src/domain/`): Business logic, pure Python
+- **Services Layer** (`src/services/`): Application orchestration
+- **Database Layer** (`src/database/`): SQLAlchemy models and repositories
+- **Adapters** (`src/adapters/`): External API integrations
+
+**Key Integration Points**:
+- Main FastAPI app in `src/main.py` with 40+ API endpoints
+- XGBoost ML models for match predictions
+- Redis caching for performance optimization
+- PostgreSQL for data persistence
+- WebSocket support for real-time features
+
 ### 🚀 Quick Start Commands
 ```bash
 # 1. Environment Setup (5 minutes)
@@ -610,4 +630,4 @@ uvicorn src.main:app --reload  # Direct Python execution
 
 **Remember**: As an AI maintainer, your priority is maintaining architectural integrity and code quality. When in doubt, choose the conservative approach that preserves existing patterns.
 
-*Last Updated: 2025-11-21 | AI Maintainer: Claude Code | Version: 3.0 (Enhanced with Latest Technology Stack & Security Patches)*
+*Last Updated: 2025-11-21 | AI Maintainer: Claude Code | Version: 3.1 (Enhanced Service Startup Guide & Architecture Quick Reference)*
