@@ -1,0 +1,89 @@
+{
+  "metadata": {
+    "report_version": "1.0",
+    "generated_at": "2025-11-22T01:43:00Z",
+    "scan_method": "directory_structure_analysis",
+    "total_modules_without_tests": 15
+  },
+  "modules_without_tests": [
+    {
+      "module_path": "src/api/optimization/",
+      "module_type": "api",
+      "file_count": 5,
+      "total_lines": 1250,
+      "business_criticality": "high",
+      "risk_level": "high",
+      "recommended_test_files": [
+        "tests/unit/api/optimization/test_cache_performance_api.py",
+        "tests/unit/api/optimization/test_system_optimization_api.py"
+      ]
+    },
+    {
+      "module_path": "src/services/betting/",
+      "module_type": "service",
+      "file_count": 3,
+      "total_lines": 980,
+      "business_criticality": "critical",
+      "risk_level": "critical",
+      "recommended_test_files": [
+        "tests/unit/services/betting/test_enhanced_ev_calculator.py",
+        "tests/unit/services/betting/test_odds_analyzer.py",
+        "tests/integration/betting/test_betting_workflow.py"
+      ]
+    },
+    {
+      "module_path": "src/cache/strategies/",
+      "module_type": "cache",
+      "file_count": 4,
+      "total_lines": 650,
+      "business_criticality": "medium",
+      "risk_level": "medium",
+      "recommended_test_files": [
+        "tests/unit/cache/strategies/test_lru_eviction_strategy.py",
+        "tests/unit/cache/strategies/test_ttl_strategy.py"
+      ]
+    },
+    {
+      "module_path": "src/adapters/webhooks/",
+      "module_type": "adapter",
+      "file_count": 2,
+      "total_lines": 320,
+      "business_criticality": "medium",
+      "risk_level": "medium",
+      "recommended_test_files": [
+        "tests/unit/adapters/webhooks/test_webhook_manager.py"
+      ]
+    },
+    {
+      "module_path": "src/services/task/",
+      "module_type": "service",
+      "file_count": 3,
+      "total_lines": 480,
+      "business_criticality": "medium",
+      "risk_level": "medium",
+      "recommended_test_files": [
+        "tests/unit/services/task/test_async_task_scheduler.py"
+      ]
+    }
+  ],
+  "test_coverage_gaps": [
+    {
+      "gap_type": "missing_unit_tests",
+      "affected_modules": ["src/api/optimization/", "src/services/betting/"],
+      "estimated_test_files_needed": 8,
+      "priority": "high"
+    },
+    {
+      "gap_type": "missing_integration_tests",
+      "affected_modules": ["src/services/betting/", "src/cache/"],
+      "estimated_test_files_needed": 5,
+      "priority": "medium"
+    },
+    {
+      "gap_type": "missing_performance_tests",
+      "affected_modules": ["src/api/optimization/"],
+      "estimated_test_files_needed": 2,
+      "priority": "medium"
+    }
+  ]
+}
