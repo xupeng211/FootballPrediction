@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  db:
+    image: postgres:15
+    container_name: football_prediction_db
+    environment:
+      POSTGRES_DB: football_prediction
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: football_prediction_2024
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    restart: unless-stopped
+    networks:
+      - football_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d football_prediction"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: football_prediction_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - football_network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端 API 服务
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.simple
+    container_name: football_prediction_backend
+    environment:
+      # 数据库配置
+      DATABASE_URL: postgresql://postgres:football_prediction_2024@db:5432/football_prediction
+      ASYNC_DATABASE_URL: postgresql+asyncpg://postgres:football_prediction_2024@db:5432/football_prediction
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: football_prediction
+      DB_USER: postgres
+      DB_PASSWORD: football_prediction_2024
+
+      # Redis 配置
+      REDIS_URL: redis://redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # 应用配置
+      SECRET_KEY: football_prediction_secret_key_2024
+      ENVIRONMENT: production
+      API_HOSTNAME: localhost
+      LOG_LEVEL: INFO
+
+      # CORS 配置 (允许前端访问)
+      CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
+
+      # 测试环境标识
+      TESTING: "false"
+
+      # 外部API配置
+      FOOTBALL_DATA_API_KEY: ed809154dc1f422da46a18d8961a98a0
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - football_network
+    volumes:
+      # 挂载源代码用于开发调试
+      - ./src:/app/src
+      # 挂载模型文件 (如果有的话)
+      - ./models:/app/models
+      # 挂载日志目录
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: football_prediction_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - football_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# 网络配置
+networks:
+  football_network:
+    driver: bridge
+    name: football_prediction_network
+
+# 数据卷
+volumes:
+  postgres_data:
+    name: football_prediction_postgres_data
+    driver: local
+  redis_data:
+    name: football_prediction_redis_data
+    driver: local
