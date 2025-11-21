@@ -13,7 +13,15 @@ import os
 import pandas as pd
 from pathlib import Path
 from typing import Optional
-import xgboost as xgb
+
+# 尝试导入XGBoost，如果失败则运行在Mock模式
+try:
+    import xgboost as xgb
+    HAVE_XGBOOST = True
+except ImportError:
+    HAVE_XGBOOST = False
+    logger = logging.getLogger(__name__)
+    logger.warning("⚠️ XGBoost not found. Inference service running in MOCK mode.")
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +52,19 @@ class InferenceService:
 
     def _load_model(self):
         """加载训练好的XGBoost模型."""
+        if not HAVE_XGBOOST:
+            logger.warning("⚠️ XGBoost不可用，跳过模型加载，使用Mock模式")
+            self._model = None
+            self._model_metadata = {"model_version": "mock_v1", "target_classes": ["平局", "主队胜", "客队胜"]}
+            self._feature_columns = [
+                "home_team_id", "away_team_id", "home_last_5_points", "away_last_5_points",
+                "home_last_5_avg_goals", "away_last_5_avg_goals", "h2h_last_3_home_wins",
+                "home_last_5_goal_diff", "away_last_5_goal_diff", "home_win_streak",
+                "away_win_streak", "home_last_5_win_rate", "away_last_5_win_rate",
+                "home_rest_days", "away_rest_days"
+            ]
+            return
+
         try:
             model_path = Path("models/football_model_v1.json")
             metadata_path = Path("models/football_model_v1_metadata.json")
@@ -68,7 +89,17 @@ class InferenceService:
 
         except Exception as e:
             logger.error(f"❌ 模型加载失败: {e}")
-            raise
+            # 降级到Mock模式
+            logger.warning("🔄 降级到Mock模式")
+            self._model = None
+            self._model_metadata = {"model_version": "mock_v1", "target_classes": ["平局", "主队胜", "客队胜"]}
+            self._feature_columns = [
+                "home_team_id", "away_team_id", "home_last_5_points", "away_last_5_points",
+                "home_last_5_avg_goals", "away_last_5_avg_goals", "h2h_last_3_home_wins",
+                "home_last_5_goal_diff", "away_last_5_goal_diff", "home_win_streak",
+                "away_win_streak", "home_last_5_win_rate", "away_last_5_win_rate",
+                "home_rest_days", "away_rest_days"
+            ]
 
     def _load_feature_data(self):
         """加载特征数据用于推理."""
@@ -191,6 +222,23 @@ class InferenceService:
         Returns:
             包含预测结果的字典
         """
+        # 如果XGBoost不可用，返回Mock数据
+        if not HAVE_XGBOOST:
+            logger.info(f"🔮 Mock模式预测比赛 {match_id}")
+            return {
+                "match_id": match_id,
+                "prediction": "home_win",
+                "confidence": 0.60,
+                "home_win_prob": 0.6,
+                "draw_prob": 0.2,
+                "away_win_prob": 0.2,
+                "status": "mock_data",
+                "note": "XGBoost not installed (Docker lightweight mode)",
+                "success": True,
+                "model_version": "mock_v1",
+                "suggestion": "Mock模式预测，主队胜，置信度中等(60%)",
+            }
+
         try:
             logger.info(f"🔮 开始预测比赛 {match_id}")
 
@@ -293,6 +341,17 @@ class InferenceService:
     def health_check(self) -> dict:
         """健康检查."""
         try:
+            if not HAVE_XGBOOST:
+                return {
+                    "status": "degraded",
+                    "model_loaded": False,
+                    "feature_data_loaded": not self._feature_data.empty,
+                    "feature_count": len(self._feature_columns) if self._feature_columns else 0,
+                    "initialized": self._initialized,
+                    "note": "XGBoost not available - running in mock mode",
+                    "xgboost_available": False,
+                }
+
             model_loaded = self._model is not None
             feature_data_loaded = self._feature_data is not None
             feature_count = len(self._feature_columns) if self._feature_columns else 0
@@ -305,6 +364,7 @@ class InferenceService:
                 else False,
                 "feature_count": feature_count,
                 "initialized": self._initialized,
+                "xgboost_available": True,
             }
         except Exception as e:
             return {"status": "unhealthy", "error": str(e)}

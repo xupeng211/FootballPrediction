@@ -40,11 +40,26 @@ async def init_database():
     logger.info("开始数据库初始化...")
 
     try:
-        # 获取配置
-        settings = get_settings()
-        database_url = settings.database_url
+        # 直接使用环境变量，确保使用异步驱动
+        async_url = os.getenv("ASYNC_DATABASE_URL")
+        sync_url = os.getenv("DATABASE_URL")
+        logger.info(f"ASYNC_DATABASE_URL: {async_url}")
+        logger.info(f"DATABASE_URL: {sync_url}")
 
-        logger.info(f"使用数据库URL: {database_url}")
+        url = async_url or sync_url
+        logger.info(f"选择的URL: {url}")
+
+        if not url:
+            logger.error("未找到数据库URL环境变量")
+            return False
+
+        # 如果是同步URL，转换为异步URL
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://")
+            logger.info(f"同步URL已转换为异步URL: {url}")
+
+        database_url = url
+        logger.info(f"最终使用的数据库URL: {database_url}")
 
         # 创建异步引擎
         engine = create_async_engine(
