@@ -46,6 +46,7 @@ dependencies = [
     "requests>=2.31.0",
     "psutil>=5.9.0",
     "pyjwt>=2.8.0",
+    "prometheus-client>=0.14.0",
     "mlflow>=2.22.2,<3.0.0",
 ]
 
@@ -140,19 +141,78 @@ skips = ["B101", "B601"]  # 跳过assert_test和shell_injection等不需要的�
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --strict-markers --strict-config"
+addopts = "--strict-markers --strict-config --tb=short --disable-warnings --durations=10"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+pythonpath = ["src"]
+norecursedirs = ["tests/backup", "tests/archived", "__pycache__", ".pytest_cache", "htmlcov"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::RuntimeWarning",
+    "ignore::ResourceWarning",
+    "ignore::ImportWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+    "ignore::pytest.PytestExperimentalApiWarning",
+]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "e2e: End-to-end tests",
-    "slow: Slow running tests",
-    "api: API related tests",
-    "database: Database related tests",
-    "auth: Authentication tests",
+    # 核心测试类型标记
+    "unit: 单元测试 - 测试单个函数或类 (85% of tests)",
+    "integration: 集成测试 - 测试多个组件的交互 (12% of tests)",
+    "e2e: 端到端测试 - 完整的用户流程测试 (2% of tests)",
+    "performance: 性能测试 - 基准测试和性能分析 (1% of tests)",
+
+    # 功能域标记
+    "api: API测试 - 测试HTTP端点和接口",
+    "domain: 领域层测试 - 业务逻辑和算法测试",
+    "business: 业务规则测试 - 业务逻辑和规则引擎",
+    "services: 服务层测试 - 业务服务和数据处理",
+    "database: 数据库测试 - 需要数据库连接",
+    "cache: 缓存相关测试 - Redis和缓存逻辑",
+    "auth: 认证相关测试 - JWT和权限验证",
+    "monitoring: 监控相关测试 - 指标和健康检查",
+    "streaming: 流处理测试 - Kafka和实时数据",
+    "collectors: 收集器测试 - 数据收集和抓取模块",
+    "middleware: 中间件测试 - 请求处理和管道组件",
+    "utils: 工具类测试 - 通用工具和辅助函数",
+    "core: 核心模块测试 - 配置、依赖注入、基础设施",
+    "decorators: 装饰器测试 - 各种装饰器功能和性能测试",
+
+    # 执行特征标记
+    "slow: 慢速测试 - 运行时间较长的测试 (>30s)",
+    "smoke: 冒烟测试 - 基本功能验证",
+    "critical: 关键测试 - 必须通过的核心功能测试",
+    "regression: 回归测试 - 验证修复的问题不会重现",
+    "metrics: 指标和度量测试 - 性能指标和进展验证",
+
+    # Issue特定标记
+    "issue94: Issue #94 API模块系统性修复 - 特定问题修复验证",
+
+    # 额外标记支持
+    "health: 健康检查相关测试",
+    "validation: 验证和确认测试",
+
+    # 依赖标记
+    "external_api: 需要外部API调用",
+    "docker: 需要Docker容器环境",
+    "network: 需要网络连接",
+
+    # 异步测试标记
+    "asyncio: 异步测试 - 测试异步函数和协程",
+
+    # Phase E 特殊标记
+    "edge_cases: 边界条件测试 - 极值和异常情况处理",
+
+    # ML模块特定标记
+    "ml: 机器学习测试 - ML模型训练、预测和评估测试",
 ]
 
 [tool.coverage.run]

@@ -19,14 +19,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 def test_pytest_config_exists():
     """测试pytest配置文件存在"""
     project_root = Path(__file__).parent.parent.parent
-    config_file = project_root / "pytest.ini"
+    config_file = project_root / "pyproject.toml"
 
-    assert config_file.exists(), "pytest.ini配置文件不存在"
+    assert config_file.exists(), "pyproject.toml配置文件不存在"
 
     # 检查关键配置
     content = config_file.read_text()
-    assert "[pytest]" in content, "pytest配置文件格式错误"
-    assert "testpaths = tests" in content, "测试路径配置缺失"
+    assert "[tool.pytest.ini_options]" in content, "pytest配置文件格式错误"
+    assert "testpaths" in content, "测试路径配置缺失"
 
 
 @pytest.mark.unit

@@ -1051,12 +1051,12 @@ security-check: ## Security: Run security vulnerability scan
 	@echo "$(YELLOW)Running security vulnerability scan...$(RESET)"
 	@$(ACTIVATE) && \
 	if command -v safety >/dev/null 2>&1; then \
-		echo "$(BLUE)🔍 Running safety check...$(RESET)"; \
-		safety check --json || safety check; \
+		echo "$(BLUE)🔍 Running safety scan...$(RESET)"; \
+		safety check --json --key= || safety check --key=; \
 	else \
 		echo "$(BLUE)💡 Installing safety...$(RESET)"; \
 		pip install safety; \
-		safety check; \
+		safety check --key=; \
 	fi
 	@$(ACTIVATE) && \
 	if command -v bandit >/dev/null 2>&1; then \
