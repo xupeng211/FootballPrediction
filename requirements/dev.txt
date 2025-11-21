@@ -307,6 +307,8 @@ pluggy==1.6.0
     #   pytest-cov
 pre-commit==4.4.0
     # via football-prediction (pyproject.toml)
+prometheus-client==0.23.1
+    # via football-prediction (pyproject.toml)
 prompt-toolkit==3.0.52
     # via ipython
 propcache==0.4.1
