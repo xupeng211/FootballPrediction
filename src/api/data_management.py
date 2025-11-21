@@ -28,9 +28,7 @@ router = APIRouter(tags=["数据管理"])
 
 @router.get("/matches")
 async def get_matches_list(
-    limit: int = 50,
-    offset: int = 0,
-    session: AsyncSession = Depends(get_async_session)
+    limit: int = 50, offset: int = 0, session: AsyncSession = Depends(get_async_session)
 ) -> dict[str, Any]:
     """获取比赛列表 - 使用Repository模式和异步SQLAlchemy
     Get matches list using Repository pattern and async SQLAlchemy.
@@ -45,6 +43,7 @@ async def get_matches_list(
     """
     try:
         import logging
+
         logger = logging.getLogger(__name__)
 
         # 使用Repository模式获取数据
@@ -58,20 +57,22 @@ async def get_matches_list(
                 "id": match.id,
                 "home_team": {
                     "id": match.home_team_id,
-                    "name": match.home_team.name if match.home_team else "Unknown Team"
+                    "name": match.home_team.name if match.home_team else "Unknown Team",
                 },
                 "away_team": {
                     "id": match.away_team_id,
-                    "name": match.away_team.name if match.away_team else "Unknown Team"
+                    "name": match.away_team.name if match.away_team else "Unknown Team",
                 },
                 "league": {
                     "id": match.league_id or 1,  # 默认值
-                    "name": match.league.name if match.league else "Premier League"
+                    "name": match.league.name if match.league else "Premier League",
                 },
-                "match_date": match.match_date.isoformat() if match.match_date else None,
+                "match_date": match.match_date.isoformat()
+                if match.match_date
+                else None,
                 "home_score": match.home_score,
                 "away_score": match.away_score,
-                "status": match.status or "SCHEDULED"
+                "status": match.status or "SCHEDULED",
             }
             matches_data.append(match_data)
 
@@ -80,6 +81,7 @@ async def get_matches_list(
 
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"获取比赛数据失败: {e}")
 
@@ -93,7 +95,7 @@ async def get_matches_list(
                 "match_date": "2024-08-16T19:00:00Z",
                 "home_score": 1,
                 "away_score": 0,
-                "status": "FINISHED"
+                "status": "FINISHED",
             },
             {
                 "id": 2,
@@ -103,8 +105,8 @@ async def get_matches_list(
                 "match_date": "2024-08-17T17:00:00Z",
                 "home_score": 2,
                 "away_score": 1,
-                "status": "FINISHED"
-            }
+                "status": "FINISHED",
+            },
         ]
         return {"matches": mock_matches, "total": len(mock_matches)}
 

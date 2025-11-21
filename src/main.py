@@ -124,7 +124,7 @@ app.add_middleware(
         "http://localhost:3001",  # React前端开发服务器（备用端口）
         "http://127.0.0.1:3001",
         "http://localhost:8000",  # 本地开发
-        "http://127.0.0.1:8000"
+        "http://127.0.0.1:8000",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -162,6 +162,7 @@ setup_docs_routes(app)
 # API路由已移至 src/api/data_management.py
 # 遵循架构分层原则，避免在main.py中直接定义业务逻辑
 
+
 @app.get("/api/v1/predictions/{match_id}")
 async def get_prediction(match_id: int):
     """获取比赛预测 - 使用真实的XGBoost模型"""
@@ -174,8 +175,7 @@ async def get_prediction(match_id: int):
 
         if not prediction_result.get("success", False):
             raise HTTPException(
-                status_code=404,
-                detail=prediction_result.get("error", "预测失败")
+                status_code=404, detail=prediction_result.get("error", "预测失败")
             )
 
         return prediction_result
@@ -185,6 +185,7 @@ async def get_prediction(match_id: int):
     except Exception as e:
         logger.error(f"获取预测失败: {e}")
         raise HTTPException(status_code=500, detail="预测服务暂时不可用")
+
 
 @app.post("/api/v1/predictions/{match_id}/predict")
 async def generate_prediction(match_id: int):
@@ -198,12 +199,12 @@ async def generate_prediction(match_id: int):
 
         if not prediction_result.get("success", False):
             raise HTTPException(
-                status_code=404,
-                detail=prediction_result.get("error", "预测生成失败")
+                status_code=404, detail=prediction_result.get("error", "预测生成失败")
             )
 
         # 添加生成时间戳
         from datetime import datetime
+
         prediction_result["generated_at"] = datetime.now().isoformat()
 
         return prediction_result
@@ -214,10 +215,12 @@ async def generate_prediction(match_id: int):
         logger.error(f"生成预测失败: {e}")
         raise HTTPException(status_code=500, detail="预测生成失败")
 
+
 @app.get("/")
 async def root():
     """根路径"""
     return {"message": "足球预测系统API", "version": "2.0.0", "status": "running"}
+
 
 @app.get("/api/v1/health/inference")
 async def inference_health_check():
@@ -232,13 +235,13 @@ async def inference_health_check():
             "status": "healthy",
             "inference_service": health_status,
             "model_info": model_info,
-            "timestamp": "2025-11-21T00:00:00Z"
+            "timestamp": "2025-11-21T00:00:00Z",
         }
     except Exception as e:
         return {
             "status": "unhealthy",
             "error": str(e),
-            "timestamp": "2025-11-21T00:00:00Z"
+            "timestamp": "2025-11-21T00:00:00Z",
         }
 
 

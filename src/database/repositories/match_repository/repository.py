@@ -29,9 +29,7 @@ class MatchRepository:
         self._session = session
 
     async def get_matches_with_teams(
-        self,
-        limit: int = 50,
-        offset: int = 0
+        self, limit: int = 50, offset: int = 0
     ) -> list[Match]:
         """获取比赛列表并预加载关联数据.
 
@@ -49,7 +47,7 @@ class MatchRepository:
             .options(
                 joinedload(Match.home_team),
                 joinedload(Match.away_team),
-                joinedload(Match.league)
+                joinedload(Match.league),
             )
             .order_by(Match.match_date.desc())
             .limit(limit)
@@ -69,7 +67,7 @@ class MatchRepository:
         result = await self._session.execute(stmt)
         return result.scalar() or 0
 
-    async def get_by_id(self, match_id: int) -> Optional[Match]:
+    async def get_by_id(self, match_id: int) -> Match | None:
         """根据ID获取比赛详情.
 
         Args:
@@ -83,7 +81,7 @@ class MatchRepository:
             .options(
                 joinedload(Match.home_team),
                 joinedload(Match.away_team),
-                joinedload(Match.league)
+                joinedload(Match.league),
             )
             .where(Match.id == match_id)
         )
@@ -92,10 +90,7 @@ class MatchRepository:
         return result.scalar_one_or_none()
 
     async def get_matches_by_status(
-        self,
-        status: str,
-        limit: int = 50,
-        offset: int = 0
+        self, status: str, limit: int = 50, offset: int = 0
     ) -> list[Match]:
         """根据状态获取比赛列表.
 
@@ -112,7 +107,7 @@ class MatchRepository:
             .options(
                 joinedload(Match.home_team),
                 joinedload(Match.away_team),
-                joinedload(Match.league)
+                joinedload(Match.league),
             )
             .where(Match.status == status)
             .order_by(Match.match_date.desc())

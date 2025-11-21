@@ -6,11 +6,14 @@ Football Main Module.
 """
 
 import asyncio
+import logging
 import os
 from datetime import datetime
 from typing import Any
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 # 导入基础模型
 from .adapters.football_models import (
@@ -33,11 +36,13 @@ from .base import BaseAdapter, AdapterStatus
 
 class FootballAdapterError(Exception):
     """Football适配器异常基类."""
+
     pass
 
 
 class FootballAdapterConnectionError(FootballAdapterError):
     """Football适配器连接错误."""
+
     pass
 
 
@@ -67,8 +72,7 @@ class ApiFootballAdapter(FootballDataAdapter):
             # 验证API Key有效性
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.get(
-                    f"{self.base_url}/competitions",
-                    headers=self.headers
+                    f"{self.base_url}/competitions", headers=self.headers
                 )
                 if response.status_code == 200:
                     return True
@@ -100,9 +104,7 @@ class ApiFootballAdapter(FootballDataAdapter):
         return await self.get_fixtures(**data)
 
     async def get_fixtures(
-        self,
-        league_code: str = "PL",
-        season: int = 2024
+        self, league_code: str = "PL", season: int = 2024
     ) -> list[dict[str, Any]]:
         """
         获取比赛赛程数据。
@@ -123,7 +125,7 @@ class ApiFootballAdapter(FootballDataAdapter):
                 url = f"{self.base_url}/competitions/{league_code}/matches"
                 params = {
                     "season": season,
-                    "limit": 100  # 限制返回数量
+                    "limit": 100,  # 限制返回数量
                 }
 
                 response = await client.get(url, headers=self.headers, params=params)
@@ -140,7 +142,7 @@ class ApiFootballAdapter(FootballDataAdapter):
                 matches = data.get("matches", [])
 
                 if not matches:
-                    print(f"警告: 联赛 {league_code} 赛季 {season} 没有找到比赛数据")
+                    logger.warning(f"联赛 {league_code} 赛季 {season} 没有找到比赛数据")
 
                 return matches
 
@@ -200,8 +202,7 @@ class ApiFootballAdapter(FootballDataAdapter):
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(
-                    f"{self.base_url}/competitions",
-                    headers=self.headers
+                    f"{self.base_url}/competitions", headers=self.headers
                 )
 
                 if response.status_code != 200:

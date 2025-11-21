@@ -11,7 +11,7 @@
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -394,7 +394,7 @@ class FootballDataCleaner:
         """获取清洗报告."""
         return self.data_quality_report.copy()
 
-    def parse_match_json(self, raw_json: Dict[str, Any]) -> Dict[str, Any]:
+    def parse_match_json(self, raw_json: dict[str, Any]) -> dict[str, Any]:
         """解析比赛JSON数据为标准化格式.
 
         从API返回的JSON中提取关键信息并转换为符合Match模型的格式。
@@ -418,51 +418,63 @@ class FootballDataCleaner:
                 "status": data.get("status", "SCHEDULED"),
                 "match_date": self._parse_datetime(data.get("utcDate")),
                 "matchday": data.get("matchday"),
-                "season": data.get("season", {}).get("id") if isinstance(data.get("season"), dict) else data.get("season"),
+                "season": data.get("season", {}).get("id")
+                if isinstance(data.get("season"), dict)
+                else data.get("season"),
             }
 
             # 提取比分信息
             score = data.get("score", {})
             if isinstance(score, dict):
                 full_time = score.get("fullTime", {})
-                match_data.update({
-                    "home_score": full_time.get("home", 0),
-                    "away_score": full_time.get("away", 0),
-                    "winner": score.get("winner"),
-                })
+                match_data.update(
+                    {
+                        "home_score": full_time.get("home", 0),
+                        "away_score": full_time.get("away", 0),
+                        "winner": score.get("winner"),
+                    }
+                )
             else:
-                match_data.update({
-                    "home_score": 0,
-                    "away_score": 0,
-                    "winner": None,
-                })
+                match_data.update(
+                    {
+                        "home_score": 0,
+                        "away_score": 0,
+                        "winner": None,
+                    }
+                )
 
             # 提取主队信息
             home_team = data.get("homeTeam", {})
             if isinstance(home_team, dict):
-                match_data.update({
-                    "home_team_external_id": home_team.get("id"),
-                    "home_team_name": home_team.get("name"),
-                    "home_team_short_name": home_team.get("shortName"),
-                })
+                match_data.update(
+                    {
+                        "home_team_external_id": home_team.get("id"),
+                        "home_team_name": home_team.get("name"),
+                        "home_team_short_name": home_team.get("shortName"),
+                    }
+                )
 
             # 提取客队信息
             away_team = data.get("awayTeam", {})
             if isinstance(away_team, dict):
-                match_data.update({
-                    "away_team_external_id": away_team.get("id"),
-                    "away_team_name": away_team.get("name"),
-                    "away_team_short_name": away_team.get("shortName"),
-                })
+                match_data.update(
+                    {
+                        "away_team_external_id": away_team.get("id"),
+                        "away_team_name": away_team.get("name"),
+                        "away_team_short_name": away_team.get("shortName"),
+                    }
+                )
 
             # 提取联赛信息
             competition = data.get("competition", {})
             if isinstance(competition, dict):
-                match_data.update({
-                    "league_external_id": competition.get("id"),
-                    "league_name": competition.get("name"),
-                    "league_code": competition.get("code"),
-                })
+                match_data.update(
+                    {
+                        "league_external_id": competition.get("id"),
+                        "league_name": competition.get("name"),
+                        "league_code": competition.get("code"),
+                    }
+                )
 
             # 提取场地信息
             match_data["venue"] = data.get("venue")
@@ -471,7 +483,9 @@ class FootballDataCleaner:
             if not match_data.get("external_id"):
                 raise ValueError("缺少external_id字段")
 
-            if not match_data.get("home_team_external_id") or not match_data.get("away_team_external_id"):
+            if not match_data.get("home_team_external_id") or not match_data.get(
+                "away_team_external_id"
+            ):
                 raise ValueError("缺少球队ID信息")
 
             logger.debug(f"成功解析比赛数据: external_id={match_data['external_id']}")
@@ -495,11 +509,11 @@ class FootballDataCleaner:
 
         try:
             # 处理带Z后缀的UTC时间
-            if datetime_str.endswith('Z'):
-                datetime_str = datetime_str[:-1] + '+00:00'
+            if datetime_str.endswith("Z"):
+                datetime_str = datetime_str[:-1] + "+00:00"
 
             # 使用pandas的to_datetime解析，支持更多格式
-            dt = pd.to_datetime(datetime_str, errors='coerce')
+            dt = pd.to_datetime(datetime_str, errors="coerce")
             if pd.isna(dt):
                 raise ValueError(f"无效的时间格式: {datetime_str}")
 
@@ -509,7 +523,9 @@ class FootballDataCleaner:
             logger.warning(f"时间解析失败: {e}, 使用当前时间")
             return datetime.utcnow()
 
-    def extract_team_from_match(self, match_data: Dict[str, Any], team_type: str) -> Dict[str, Any]:
+    def extract_team_from_match(
+        self, match_data: dict[str, Any], team_type: str
+    ) -> dict[str, Any]:
         """从比赛数据中提取球队信息.
 
         Args:
@@ -519,14 +535,14 @@ class FootballDataCleaner:
         Returns:
             Dict: 球队信息
         """
-        if team_type == 'home':
+        if team_type == "home":
             return {
                 "external_id": match_data.get("home_team_external_id"),
                 "name": match_data.get("home_team_name"),
                 "short_name": match_data.get("home_team_short_name"),
                 "country": "England",  # 基于当前英超数据的默认值
             }
-        elif team_type == 'away':
+        elif team_type == "away":
             return {
                 "external_id": match_data.get("away_team_external_id"),
                 "name": match_data.get("away_team_name"),
@@ -536,7 +552,7 @@ class FootballDataCleaner:
         else:
             raise ValueError("team_type必须是'home'或'away'")
 
-    def extract_league_from_match(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+    def extract_league_from_match(self, match_data: dict[str, Any]) -> dict[str, Any]:
         """从比赛数据中提取联赛信息.
 
         Args:
