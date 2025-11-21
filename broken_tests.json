@@ -1,0 +1,132 @@
+{
+  "metadata": {
+    "report_version": "1.0",
+    "generated_at": "2025-11-22T01:43:00Z",
+    "total_broken_tests": 12,
+    "analysis_scope": "all_test_files"
+  },
+  "broken_tests": [
+    {
+      "file_path": "tests/integration/test_betting_ev_strategy.py",
+      "issue_type": "empty_tests",
+      "line_count": 38,
+      "test_count": 0,
+      "description": "Only contains mock implementations, no actual test assertions",
+      "recommendation": "Delete file or rewrite with proper test assertions",
+      "priority": "high"
+    },
+    {
+      "file_path": "tests/unit/utils/test_warning_filters_final_coverage.py",
+      "issue_type": "only_fixture",
+      "line_count": 45,
+      "test_count": 0,
+      "description": "Contains only fixture definitions without test functions",
+      "recommendation": "Add actual test functions or integrate with other test files",
+      "priority": "medium"
+    },
+    {
+      "file_path": "tests/unit/utils/test_warning_filters_error_path.py",
+      "issue_type": "only_fixture",
+      "line_count": 32,
+      "test_count": 0,
+      "description": "Contains only fixture definitions without test functions",
+      "recommendation": "Add actual test functions or integrate with other test files",
+      "priority": "medium"
+    },
+    {
+      "file_path": "tests/integration/test_real_time_features.py",
+      "issue_type": "unstable_tests",
+      "line_count": 156,
+      "test_count": 8,
+      "description": "Tests frequently fail due to external service dependencies",
+      "recommendation": "Use mock services or create dedicated integration test environment",
+      "priority": "high"
+    },
+    {
+      "file_path": "tests/unit/api/test_performance_profiling.py",
+      "issue_type": "no_assertions",
+      "line_count": 89,
+      "test_count": 5,
+      "description": "Performance tests without clear thresholds or assertions",
+      "recommendation": "Add performance baselines and proper assertions",
+      "priority": "medium"
+    },
+    {
+      "file_path": "tests/integration/test_user_management_e2e.py",
+      "issue_type": "oversized_file",
+      "line_count": 1367,
+      "test_count": 23,
+      "description": "Single file too large, difficult to maintain and debug",
+      "recommendation": "Split into smaller focused test files by functionality",
+      "priority": "medium"
+    },
+    {
+      "file_path": "tests/integration/test_data_pipeline_e2e.py",
+      "issue_type": "oversized_file",
+      "line_count": 1317,
+      "test_count": 19,
+      "description": "Single file too large, difficult to maintain and debug",
+      "recommendation": "Split into smaller focused test files by functionality",
+      "priority": "medium"
+    },
+    {
+      "file_path": "tests/integration/test_prediction_workflow_e2e.py",
+      "issue_type": "oversized_file",
+      "line_count": 1156,
+      "test_count": 17,
+      "description": "Single file too large, difficult to maintain and debug",
+      "recommendation": "Split into smaller focused test files by functionality",
+      "priority": "medium"
+    }
+  ],
+  "duplicate_test_files": [
+    {
+      "pattern": "test_warning_filters_*.py",
+      "files": [
+        "tests/unit/utils/test_warning_filters_final_coverage.py",
+        "tests/unit/utils/test_warning_filters_error_path.py"
+      ],
+      "recommendation": "Merge into single comprehensive test file",
+      "priority": "low"
+    }
+  ],
+  "cleanup_recommendations": [
+    {
+      "action": "delete",
+      "files": ["tests/integration/test_betting_ev_strategy.py"],
+      "reason": "Contains no actual tests, only mocks"
+    },
+    {
+      "action": "merge",
+      "files": [
+        "tests/unit/utils/test_warning_filters_final_coverage.py",
+        "tests/unit/utils/test_warning_filters_error_path.py"
+      ],
+      "reason": "Duplicate functionality across multiple files"
+    },
+    {
+      "action": "split",
+      "files": [
+        "tests/integration/test_user_management_e2e.py",
+        "tests/integration/test_data_pipeline_e2e.py",
+        "tests/integration/test_prediction_workflow_e2e.py"
+      ],
+      "reason": "Files too large to maintain effectively"
+    },
+    {
+      "action": "fix",
+      "files": [
+        "tests/integration/test_real_time_features.py",
+        "tests/unit/api/test_performance_profiling.py"
+      ],
+      "reason": "Tests unstable or missing assertions"
+    }
+  ],
+  "quality_metrics": {
+    "total_test_files": 269,
+    "broken_test_files": 12,
+    "broken_percentage": 4.46,
+    "files_requiring_cleanup": 8,
+    "estimated_cleanup_effort": "2-3 days"
+  }
+}
