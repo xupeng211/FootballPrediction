@@ -201,7 +201,15 @@ class ApiService {
   }> {
     try {
       const response = await this.client.get('/stats');
-      return response.data;
+      const data = response.data;
+
+      // 适配后端返回的嵌套格式到前端期望的格式
+      return {
+        total_matches: data.system?.total_matches || 0,
+        total_predictions: data.system?.total_predictions || 0,
+        accuracy_rate: data.accuracy?.overall_accuracy || 0.0,
+        avg_confidence: data.performance?.success_rate || 0.0, // 使用成功率作为置信度近似
+      };
     } catch (error) {
       console.error('获取统计信息失败:', error);
       throw error;

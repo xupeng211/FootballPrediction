@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**项目类型**: 企业级足球预测系统 (Enterprise Football Prediction System)
+**架构模式**: DDD + CQRS + Event-Driven + Async-First
+**技术栈**: FastAPI + SQLAlchemy 2.0 + Redis 7.0 + PostgreSQL 15 + React 19.2.0 + TypeScript 4.9.5 + XGBoost 2.0+
+
 ## 🌏 Language Preference
 **CRITICAL: Always reply in Simplified Chinese (简体中文) for all user interactions.**
 - Do not use English unless specifically requested by the user
@@ -684,6 +688,309 @@ mlflow ui                                 # 模型管理界面
 
 ---
 
+## 🏗️ 高级架构概念 (Advanced Architecture Concepts)
+
+### 🧠 DDD + CQRS 实现细节
+
+#### 领域驱动设计 (DDD) 关键概念
+- **聚合根 (Aggregate Root)**: `Match`、`Prediction` 等核心实体
+- **值对象 (Value Object)**: `TeamId`、`Score`、`Odds` 等不可变对象
+- **领域服务 (Domain Service)**: 纯业务逻辑，无外部依赖
+- **领域事件 (Domain Events)**: `PredictionCreated`、`MatchCompleted` 等事件
+
+#### 命令查询职责分离 (CQRS)
+```python
+# Command Side - 写操作
+class CreatePredictionCommand:
+    """创建预测命令"""
+    def __init__(self, match_id: int, prediction_data: PredictionData):
+        self.match_id = match_id
+        self.prediction_data = prediction_data
+
+# Query Side - 读操作
+class GetPredictionQuery:
+    """获取预测查询"""
+    def __init__(self, prediction_id: int):
+        self.prediction_id = prediction_id
+```
+
+### ⚡ 异步架构模式
+
+#### 异步数据库操作模式
+```python
+# ✅ 正确的异步数据库操作
+async def get_predictions(db: AsyncSession, limit: int = 100) -> List[Prediction]:
+    """异步获取预测列表"""
+    stmt = select(Prediction).limit(limit).order_by(Prediction.created_at.desc())
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+# ❌ 错误的同步操作
+def get_predictions_sync(db: Session, limit: int = 100) -> List[Prediction]:
+    """禁止使用同步数据库操作"""
+    return db.query(Prediction).limit(limit).all()
+```
+
+#### 异步外部API调用
+```python
+async def fetch_external_data(url: str) -> Dict[str, Any]:
+    """异步获取外部数据"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, timeout=30.0)
+        response.raise_for_status()
+        return response.json()
+```
+
+### 🔄 事件驱动架构
+
+#### 领域事件发布
+```python
+class PredictionCreated:
+    """预测创建事件"""
+    def __init__(self, prediction_id: int, match_id: int):
+        self.prediction_id = prediction_id
+        self.match_id = match_id
+        self.timestamp = datetime.utcnow()
+
+# 事件发布
+async def create_prediction(db: AsyncSession, data: PredictionData) -> Prediction:
+    prediction = Prediction(**data.dict())
+    db.add(prediction)
+    await db.commit()
+
+    # 发布领域事件
+    await event_bus.publish(PredictionCreated(prediction.id, prediction.match_id))
+    return prediction
+```
+
+### 🎯 机器学习架构
+
+#### XGBoost模型集成
+- **模型存储**: MLflow模型注册表管理版本
+- **特征工程**: 实时特征计算和缓存
+- **模型推理**: 异步推理服务，支持批量预测
+- **模型监控**: 性能指标追踪和自动重训练
+
+#### 预测服务架构
+```python
+class PredictionService:
+    """预测服务 - 协调领域模型和ML推理"""
+
+    async def predict_match(self, match_data: MatchData) -> PredictionResult:
+        # 1. 数据验证 (领域层)
+        validated_match = await self.validation_service.validate(match_data)
+
+        # 2. 特征计算 (领域层)
+        features = await self.feature_calculator.calculate(validated_match)
+
+        # 3. 模型推理 (ML层)
+        prediction = await self.ml_model.predict(features)
+
+        # 4. 结果处理 (领域层)
+        return await self.result_processor.process(prediction, validated_match)
+```
+
+---
+
+## 🎯 关键开发模式 (Key Development Patterns)
+
+### 📝 常见代码模式
+
+#### 1. 服务层模式 (Service Layer Pattern)
+```python
+# ✅ 推荐的服务层实现
+class PredictionService:
+    def __init__(self, db: AsyncSession, event_bus: EventBus):
+        self.db = db
+        self.event_bus = event_bus
+
+    async def create_prediction(self, data: CreatePredictionRequest) -> PredictionResponse:
+        # 1. 验证输入 (领域逻辑)
+        validated_data = await self._validate_prediction_data(data)
+
+        # 2. 业务处理 (领域服务)
+        prediction = await self._process_prediction(validated_data)
+
+        # 3. 持久化 (基础设施)
+        saved_prediction = await self._save_prediction(prediction)
+
+        # 4. 发布事件 (领域事件)
+        await self.event_bus.publish(PredictionCreated(saved_prediction.id))
+
+        return PredictionResponse.from_model(saved_prediction)
+```
+
+#### 2. 仓储模式 (Repository Pattern)
+```python
+# ✅ 异步仓储实现
+class PredictionRepository:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def find_by_id(self, prediction_id: int) -> Optional[Prediction]:
+        """根据ID查找预测"""
+        stmt = select(Prediction).where(Prediction.id == prediction_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def find_by_match(self, match_id: int) -> List[Prediction]:
+        """根据比赛查找所有预测"""
+        stmt = select(Prediction).where(Prediction.match_id == match_id)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+```
+
+#### 3. 工厂模式 (Factory Pattern)
+```python
+# ✅ 预测对象工厂
+class PredictionFactory:
+    @staticmethod
+    def create_from_data(match_data: MatchData, user_id: int) -> Prediction:
+        """从比赛数据创建预测对象"""
+        return Prediction(
+            match_id=match_data.id,
+            user_id=user_id,
+            home_win_prob=match_data.home_win_probability,
+            away_win_prob=match_data.away_win_probability,
+            draw_prob=match_data.draw_probability,
+            created_at=datetime.utcnow()
+        )
+```
+
+### 🧪 测试模式
+
+#### 1. 异步单元测试模式
+```python
+@pytest.mark.asyncio
+@pytest.mark.unit
+class TestPredictionService:
+    async def test_create_prediction_success(self):
+        # Arrange
+        mock_db = AsyncMock()
+        mock_event_bus = AsyncMock()
+        service = PredictionService(mock_db, mock_event_bus)
+
+        request_data = CreatePredictionRequest(
+            match_id=123,
+            predicted_result="home_win"
+        )
+
+        # Act
+        result = await service.create_prediction(request_data)
+
+        # Assert
+        assert result is not None
+        assert result.match_id == 123
+        mock_event_bus.publish.assert_called_once()
+```
+
+#### 2. 数据库集成测试模式
+```python
+@pytest.mark.integration
+@pytest.mark.database
+class TestPredictionRepositoryIntegration:
+    async def test_save_and_retrieve_prediction(self, db_session: AsyncSession):
+        # Arrange
+        repo = PredictionRepository(db_session)
+        prediction = PredictionFactory.create_from_data(mock_match_data, 1)
+
+        # Act
+        await repo.save(prediction)
+        retrieved = await repo.find_by_id(prediction.id)
+
+        # Assert
+        assert retrieved is not None
+        assert retrieved.match_id == prediction.match_id
+```
+
+### 🔧 配置管理模式
+
+#### 1. 环境配置
+```python
+# ✅ 环境配置管理
+from pydantic_settings import BaseSettings
+
+class DatabaseSettings(BaseSettings):
+    url: str
+    pool_size: int = 10
+    max_overflow: int = 20
+
+    class Config:
+        env_prefix = "DATABASE_"
+
+class AppSettings(BaseSettings):
+    database: DatabaseSettings = DatabaseSettings()
+    redis_url: str
+    secret_key: str
+    debug: bool = False
+
+    class Config:
+        env_file = ".env"
+```
+
+#### 2. 依赖注入模式
+```python
+# ✅ FastAPI依赖注入
+async def get_prediction_service(db: AsyncSession = Depends(get_db)) -> PredictionService:
+    event_bus = get_event_bus()
+    return PredictionService(db, event_bus)
+
+@app.post("/predictions")
+async def create_prediction(
+    request: CreatePredictionRequest,
+    service: PredictionService = Depends(get_prediction_service)
+) -> PredictionResponse:
+    return await service.create_prediction(request)
+```
+
+### 🚨 反模式检测 (Anti-Patterns to Avoid)
+
+#### ❌ 常见错误模式
+```python
+# 1. 在API层直接操作数据库
+@app.post("/predictions")
+async def create_prediction(request: CreatePredictionRequest, db: AsyncSession):
+    # ❌ 错误：违反分层架构
+    prediction = Prediction(**request.dict())
+    db.add(prediction)
+    await db.commit()
+
+# 2. 同步数据库操作
+def get_predictions_sync(db: Session):
+    # ❌ 错误：应该使用异步操作
+    return db.query(Prediction).all()
+
+# 3. 硬编码配置
+async def fetch_external_data():
+    # ❌ 错误：应该使用环境变量
+    api_key = "hardcoded_api_key_123"
+    # ...
+```
+
+#### ✅ 正确的重构方式
+```python
+# ✅ 正确：分层架构 + 异步操作 + 配置管理
+@app.post("/predictions")
+async def create_prediction(
+    request: CreatePredictionRequest,
+    service: PredictionService = Depends(get_prediction_service)
+):
+    return await service.create_prediction(request)
+
+async def get_predictions(db: AsyncSession):
+    # ✅ 正确：异步操作
+    stmt = select(Prediction)
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+async def fetch_external_data(config: AppConfig = Depends(get_config)):
+    # ✅ 正确：依赖注入配置
+    api_key = config.external_api_key
+    # ...
+```
+
+---
+
 ## 🎯 AI Decision Framework
 
 ### 🤔 When to Add New Features
@@ -724,13 +1031,28 @@ mlflow ui                                 # 模型管理界面
 
 **Remember**: As an AI maintainer, your priority is maintaining architectural integrity and code quality. When in doubt, choose the conservative approach that preserves existing patterns.
 
-*Last Updated: 2025-11-21 | AI Maintainer: Claude Code | Version: 2.1 (Frontend + ML Enhancement)*
+*Last Updated: 2025-11-21 | AI Maintainer: Claude Code | Version: 2.2 (Architecture Enhancement + Development Patterns)*
 
 ---
 
 ## 📝 CLAUDE.md 改进历史
 
-### v2.1 - 当前版本 (2025-11-21)
+### v2.2 - 当前版本 (2025-11-21)
+**新增功能**:
+- ✅ **高级架构概念** - DDD + CQRS实现细节和代码示例
+- ✅ **关键开发模式** - 服务层、仓储、工厂等设计模式的最佳实践
+- ✅ **异步架构模式** - 完整的异步操作模式和反模式检测
+- ✅ **事件驱动架构** - 领域事件发布和事件驱动实现指南
+- ✅ **测试模式增强** - 异步单元测试和集成测试的标准模式
+
+**改进内容**:
+- 添加项目类型和技术栈的快速识别标识
+- 增强DDD + CQRS架构模式的详细实现指导
+- 补充完整的代码模式和反模式检测指南
+- 完善异步架构和事件驱动的设计模式
+- 增加配置管理和依赖注入的最佳实践
+
+### v2.1 - 前一版本 (2025-11-21)
 **新增功能**:
 - ✅ **前端开发指南** - 完整的React + TypeScript + Ant Design开发工作流
 - ✅ **机器学习管理** - XGBoost模型生命周期管理和性能监控
@@ -834,7 +1156,6 @@ uvicorn src.main:app --reload  # Direct Python execution
 
 # 5. Frontend Development (optional)
 cd frontend && npm install && npm start  # React开发服务器 (http://localhost:3000)
-```
 ```
 
 ### 📁 Essential Project Files for AI Context

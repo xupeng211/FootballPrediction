@@ -8,9 +8,10 @@
 - 高级数据质量评估
 """
 
+import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
@@ -392,6 +393,164 @@ class FootballDataCleaner:
     def get_cleaning_report(self) -> dict[str, Any]:
         """获取清洗报告."""
         return self.data_quality_report.copy()
+
+    def parse_match_json(self, raw_json: Dict[str, Any]) -> Dict[str, Any]:
+        """解析比赛JSON数据为标准化格式.
+
+        从API返回的JSON中提取关键信息并转换为符合Match模型的格式。
+
+        Args:
+            raw_json: 原始API返回的JSON数据
+
+        Returns:
+            Dict: 解析后的标准化数据
+        """
+        try:
+            # 处理不同的JSON结构（可能是直接API数据或已包装的数据）
+            if "raw_data" in raw_json:
+                data = raw_json["raw_data"]
+            else:
+                data = raw_json
+
+            # 提取基本信息
+            match_data = {
+                "external_id": data.get("id"),
+                "status": data.get("status", "SCHEDULED"),
+                "match_date": self._parse_datetime(data.get("utcDate")),
+                "matchday": data.get("matchday"),
+                "season": data.get("season", {}).get("id") if isinstance(data.get("season"), dict) else data.get("season"),
+            }
+
+            # 提取比分信息
+            score = data.get("score", {})
+            if isinstance(score, dict):
+                full_time = score.get("fullTime", {})
+                match_data.update({
+                    "home_score": full_time.get("home", 0),
+                    "away_score": full_time.get("away", 0),
+                    "winner": score.get("winner"),
+                })
+            else:
+                match_data.update({
+                    "home_score": 0,
+                    "away_score": 0,
+                    "winner": None,
+                })
+
+            # 提取主队信息
+            home_team = data.get("homeTeam", {})
+            if isinstance(home_team, dict):
+                match_data.update({
+                    "home_team_external_id": home_team.get("id"),
+                    "home_team_name": home_team.get("name"),
+                    "home_team_short_name": home_team.get("shortName"),
+                })
+
+            # 提取客队信息
+            away_team = data.get("awayTeam", {})
+            if isinstance(away_team, dict):
+                match_data.update({
+                    "away_team_external_id": away_team.get("id"),
+                    "away_team_name": away_team.get("name"),
+                    "away_team_short_name": away_team.get("shortName"),
+                })
+
+            # 提取联赛信息
+            competition = data.get("competition", {})
+            if isinstance(competition, dict):
+                match_data.update({
+                    "league_external_id": competition.get("id"),
+                    "league_name": competition.get("name"),
+                    "league_code": competition.get("code"),
+                })
+
+            # 提取场地信息
+            match_data["venue"] = data.get("venue")
+
+            # 验证必需字段
+            if not match_data.get("external_id"):
+                raise ValueError("缺少external_id字段")
+
+            if not match_data.get("home_team_external_id") or not match_data.get("away_team_external_id"):
+                raise ValueError("缺少球队ID信息")
+
+            logger.debug(f"成功解析比赛数据: external_id={match_data['external_id']}")
+            return match_data
+
+        except Exception as e:
+            logger.error(f"JSON解析失败: {e}, 原始数据: {raw_json}")
+            raise
+
+    def _parse_datetime(self, datetime_str: str) -> datetime:
+        """解析ISO8601时间字符串为datetime对象.
+
+        Args:
+            datetime_str: ISO8601格式的时间字符串
+
+        Returns:
+            datetime: 解析后的时间对象
+        """
+        if not datetime_str:
+            return datetime.utcnow()
+
+        try:
+            # 处理带Z后缀的UTC时间
+            if datetime_str.endswith('Z'):
+                datetime_str = datetime_str[:-1] + '+00:00'
+
+            # 使用pandas的to_datetime解析，支持更多格式
+            dt = pd.to_datetime(datetime_str, errors='coerce')
+            if pd.isna(dt):
+                raise ValueError(f"无效的时间格式: {datetime_str}")
+
+            return dt.to_pydatetime()
+
+        except Exception as e:
+            logger.warning(f"时间解析失败: {e}, 使用当前时间")
+            return datetime.utcnow()
+
+    def extract_team_from_match(self, match_data: Dict[str, Any], team_type: str) -> Dict[str, Any]:
+        """从比赛数据中提取球队信息.
+
+        Args:
+            match_data: 解析后的比赛数据
+            team_type: 'home' 或 'away'
+
+        Returns:
+            Dict: 球队信息
+        """
+        if team_type == 'home':
+            return {
+                "external_id": match_data.get("home_team_external_id"),
+                "name": match_data.get("home_team_name"),
+                "short_name": match_data.get("home_team_short_name"),
+                "country": "England",  # 基于当前英超数据的默认值
+            }
+        elif team_type == 'away':
+            return {
+                "external_id": match_data.get("away_team_external_id"),
+                "name": match_data.get("away_team_name"),
+                "short_name": match_data.get("away_team_short_name"),
+                "country": "England",  # 基于当前英超数据的默认值
+            }
+        else:
+            raise ValueError("team_type必须是'home'或'away'")
+
+    def extract_league_from_match(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+        """从比赛数据中提取联赛信息.
+
+        Args:
+            match_data: 解析后的比赛数据
+
+        Returns:
+            Dict: 联赛信息
+        """
+        return {
+            "external_id": match_data.get("league_external_id"),
+            "name": match_data.get("league_name", "Premier League"),
+            "country": "England",  # 基于当前英超数据的默认值
+            "is_active": True,
+        }
 
     def clean_match_data(self, raw_data: pd.DataFrame) -> pd.DataFrame:
         """清洗比赛数据的便捷方法."""

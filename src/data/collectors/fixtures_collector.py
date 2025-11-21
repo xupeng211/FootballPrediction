@@ -14,69 +14,75 @@
 基于 DATA_DESIGN.md 第1.1节设计.
 """
 
+import asyncio
 import hashlib
+import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-from src.collectors.base_collector import BaseCollector, CollectionResult
+from src.adapters.football import ApiFootballAdapter, FootballAdapterError
+from src.collectors.base_collector import CollectionResult
+from src.database.connection import get_async_session
+from src.database.models.raw_data import RawMatchData
+
+logger = logging.getLogger(__name__)
 
 
-class FixturesCollector(BaseCollector):
+class FixturesCollector:
     """赛程数据采集器.
 
     负责从外部API采集足球比赛赛程数据,
     实现防重复,
     防丢失机制,
     确保数据质量.
+    支持欧洲五大联赛采集和API速率限制保护.
     """
+
+    # 目标联赛配置 - 欧洲五大联赛
+    TARGET_LEAGUES = [
+        {"code": "PL", "name": "Premier League", "country": "England"},
+        {"code": "PD", "name": "La Liga", "country": "Spain"},
+        {"code": "BL1", "name": "Bundesliga", "country": "Germany"},
+        {"code": "SA", "name": "Serie A", "country": "Italy"},
+        {"code": "FL1", "name": "Ligue 1", "country": "France"},
+    ]
+
+    # API速率限制配置
+    RATE_LIMIT_DELAY = 3  # 请求间隔（秒）
+    MAX_RETRIES = 2      # 最大重试次数
 
     def __init__(
         self,
         data_source: str = "football_api",
-        api_key: str | None = None,
-        base_url: str = "https://api.football-data.org/v4",
         **kwargs,
     ):
         """初始化赛程采集器.
 
         Args:
             data_source: 数据源名称
-            api_key: API密钥
-            base_url: API基础URL
         """
-        # 从环境变量获取API密钥，如果未提供则使用空字符串
-        if not api_key:
-            import os
-
-            api_key = os.getenv("FOOTBALL_DATA_API_KEY", "")
-
-        # 正确调用父类构造函数
-        super().__init__(
-            api_key=api_key,
-            base_url=base_url,
-            timeout=kwargs.get("timeout", 30),
-            max_retries=kwargs.get("max_retries", 3),
-            rate_limit=kwargs.get("rate_limit", 10),
-        )
-
-        # 保存附加属性
         self.data_source = data_source
-        self.api_key = api_key
-        self.base_url = base_url
+
+        # 初始化ApiFootballAdapter
+        self.api_adapter = ApiFootballAdapter(name=data_source)
 
         # 防重复:记录已处理的比赛ID
         self._processed_matches: set[str] = set()
         # 防丢失:记录应该存在但缺失的比赛
         self._missing_matches: list[dict[str, Any]] = []
 
+        # 采集统计
+        self.league_stats = {}
+
     async def collect_fixtures(
         self,
         leagues: list[str] | None = None,
-        date_from: datetime | None = None,
-        date_to: datetime | None = None,
+        season: int = 2024,
         **kwargs,
     ) -> CollectionResult:
         """采集赛程数据.
+
+        支持欧洲五大联赛批量采集，包含API速率限制保护。
 
         防重复策略:
         - 基于 external_match_id + league_id 生成唯一键
@@ -84,14 +90,18 @@ class FixturesCollector(BaseCollector):
         - 跳过重复记录
 
         防丢失策略:
-        - 全量获取指定时间范围内的赛程
+        - 全量获取指定赛季的赛程
         - 与数据库现有数据比对
         - 标记缺失的比赛并补全
 
+        速率限制策略:
+        - 在每个联赛请求间强制休眠
+        - 支持重试机制
+        - 避免触发HTTP 429错误
+
         Args:
             leagues: 需要采集的联赛列表
-            date_from: 开始日期
-            date_to: 结束日期
+            season: 赛季年份
 
         Returns:
             CollectionResult: 采集结果
@@ -102,150 +112,219 @@ class FixturesCollector(BaseCollector):
         error_messages = []
 
         try:
-            # 设置默认时间范围（未来30天）
-            if not date_from:
-                date_from = datetime.now()
-            if not date_to:
-                date_to = date_from + timedelta(days=30)
+            # 初始化适配器
+            logger.info("正在初始化API适配器...")
+            await self.api_adapter.initialize()
 
-            # 获取需要采集的联赛列表
+            # 获取需要采集的联赛列表（默认为欧洲五大联赛）
             if not leagues:
-                leagues = await self._get_active_leagues()
+                leagues = [league["code"] for league in self.TARGET_LEAGUES]
 
-            self.logger.info(
-                f"Starting fixtures collection for {len(leagues)} leagues, "
-                f"date range: {date_from.date()} to {date_to.date()}"
-            )
+            logger.info(f"开始采集多联赛赛程数据: {len(leagues)} 个联赛, 赛季: {season}")
+            logger.info(f"目标联赛: {leagues}")
 
-            # 加载已存在的比赛ID（防重复）
-            await self._load_existing_matches(date_from, date_to)
+            # 按联赛采集赛程数据（支持速率限制）
+            for i, league_code in enumerate(leagues):
+                league_info = next((l for l in self.TARGET_LEAGUES if l["code"] == league_code), None)
+                league_name = league_info["name"] if league_info else league_code
 
-            # 按联赛采集赛程数据
-            for league_code in leagues:
-                try:
-                    league_fixtures = await self._collect_league_fixtures(
-                        league_code,
-                        date_from,
-                        date_to,
-                    )
+                logger.info(f"[{i+1}/{len(leagues)}] 正在采集联赛 {league_name} ({league_code}) 的赛程数据...")
 
-                    # 处理每场比赛
-                    for fixture_data in league_fixtures:
-                        try:
-                            # 防重复检查
-                            match_key = self._generate_match_key(fixture_data)
-                            if match_key in self._processed_matches:
-                                self.logger.debug(
-                                    f"Skipping duplicate match: {match_key}"
-                                )
-                                continue
+                # 重置联赛统计
+                self.league_stats[league_code] = {
+                    'requested': 0,
+                    'success': 0,
+                    'errors': 0,
+                    'name': league_name
+                }
 
-                            # 数据清洗和标准化
-                            cleaned_fixture = await self._clean_fixture_data(
-                                fixture_data
-                            )
-                            if cleaned_fixture:
-                                collected_data.append(cleaned_fixture)
-                                self._processed_matches.add(match_key)
-                                success_count += 1
-                            else:
-                                error_count += 1
-                                error_messages.append(
-                                    f"Invalid fixture data: {fixture_data}"
-                                )
+                league_data = await self._collect_league_with_rate_limit(
+                    league_code, season, league_name
+                )
 
-                        except (
-                            ValueError,
-                            TypeError,
-                            AttributeError,
-                            KeyError,
-                            RuntimeError,
-                        ) as e:
-                            error_count += 1
-                            error_messages.append(f"Error processing fixture: {str(e)}")
-                            self.logger.error(f"Error processing fixture: {str(e)}")
+                if league_data:
+                    # 将数据添加到总收集列表
+                    collected_data.extend(league_data)
+                    success_count += len(league_data)
 
-                except (
-                    ValueError,
-                    TypeError,
-                    AttributeError,
-                    KeyError,
-                    RuntimeError,
-                ) as e:
+                    # 速率限制：在下一个联赛请求前休眠
+                    if i < len(leagues) - 1:
+                        logger.info(f"⏳  速率限制保护：等待 {self.RATE_LIMIT_DELAY} 秒后采集下一个联赛...")
+                        await asyncio.sleep(self.RATE_LIMIT_DELAY)
+                else:
                     error_count += 1
-                    error_messages.append(
-                        f"Error collecting league {league_code}: {str(e)}"
-                    )
-                    self.logger.error(
-                        f"Error collecting league {league_code}: {str(e)}"
-                    )
+                    error_messages.append(f"采集联赛 {league_name} 失败")
+
+            # 输出采集统计摘要
+            logger.info("=" * 50)
+            logger.info("📊 多联赛采集统计摘要")
+            logger.info("=" * 50)
+            for league_code, stats in self.league_stats.items():
+                status = "✅" if stats['success'] > 0 else "❌"
+                logger.info(f"{status} {stats['name']} ({league_code}): "
+                           f"请求={stats['requested']}, 成功={stats['success']}, 错误={stats['errors']}")
 
             # 检测并处理缺失的比赛（防丢失）
-            await self._detect_missing_matches(collected_data, date_from, date_to)
+            await self._detect_missing_matches(collected_data)
 
             # 保存到Bronze层原始数据表
             if collected_data:
-                await self._save_to_bronze_layer("raw_match_data", collected_data)
+                await self._save_to_bronze_layer(collected_data)
+
+            # 清理适配器
+            await self.api_adapter.cleanup()
 
             # 确定最终状态
             total_collected = len(collected_data)
             if error_count == 0:
-                status = "success"
+                success = True
             elif success_count > 0:
-                status = "partial"
+                success = True  # 部分成功也算成功
             else:
-                status = "failed"
+                success = False
+
+            # 构建结果数据
+            result_data = {
+                "collection_type": "fixtures",
+                "data_source": self.data_source,
+                "records_collected": total_collected,
+                "success_count": success_count,
+                "error_count": error_count,
+                "collected_data": collected_data,
+                "status": "success" if success else "failed",
+                "errors": error_messages[:5] if error_messages else [],
+                "league_stats": self.league_stats
+            }
 
             result = CollectionResult(
-                data_source=self.data_source,
-                collection_type="fixtures",
-                records_collected=total_collected,
-                success_count=success_count,
-                error_count=error_count,
-                status=status,
-                error_message="; ".join(error_messages[:5]) if error_messages else None,
-                collected_data=collected_data,
+                success=success,
+                data=result_data,
+                error="; ".join(error_messages[:5]) if error_messages else None
             )
 
-            self.logger.info(
-                f"Fixtures collection completed: "
-                f"collected={total_collected}, success={success_count}, errors={error_count}"
+            logger.info(
+                f"多联赛赛程数据采集完成: "
+                f"总计={total_collected}, 成功={success_count}, 错误={error_count}"
             )
 
             return result
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"Fixtures collection failed: {str(e)}")
+        except FootballAdapterError as e:
+            logger.error(f"赛程数据采集失败: {str(e)}")
             return CollectionResult(
-                data_source=self.data_source,
-                collection_type="fixtures",
-                records_collected=0,
-                success_count=0,
-                error_count=1,
-                status="failed",
-                error_message=str(e),
+                success=False,
+                error=str(e)
             )
+        except Exception as e:
+            logger.error(f"赛程数据采集出现未预期错误: {str(e)}")
+            return CollectionResult(
+                success=False,
+                error=f"未预期错误: {str(e)}"
+            )
+
+    async def _collect_league_with_rate_limit(
+        self, league_code: str, season: int, league_name: str
+    ) -> list[dict[str, Any]]:
+        """使用速率限制保护采集单个联赛的数据.
+
+        Args:
+            league_code: 联赛代码
+            season: 赛季
+            league_name: 联赛名称
+
+        Returns:
+            List[Dict]: 采集到的比赛数据列表
+        """
+        max_retries = self.MAX_RETRIES
+        retry_count = 0
+        collected_data = []
+
+        while retry_count <= max_retries:
+            try:
+                self.league_stats[league_code]['requested'] += 1
+
+                logger.debug(f"尝试采集联赛 {league_name} 第 {retry_count + 1} 次")
+
+                # 使用真实的API适配器获取数据
+                league_fixtures = await self.api_adapter.get_fixtures(
+                    league_code=league_code,
+                    season=season
+                )
+
+                logger.info(f"联赛 {league_name} ({league_code}) 获取到 {len(league_fixtures)} 场比赛")
+
+                # 处理每场比赛
+                for fixture_data in league_fixtures:
+                    try:
+                        # 防重复检查
+                        match_key = self._generate_match_key(fixture_data)
+                        if match_key in self._processed_matches:
+                            logger.debug(f"跳过重复比赛: {match_key}")
+                            continue
+
+                        # 数据清洗和标准化
+                        cleaned_fixture = await self._clean_fixture_data(fixture_data)
+                        if cleaned_fixture:
+                            # 添加到收集的数据列表
+                            collected_data.append(cleaned_fixture)
+                            self._processed_matches.add(match_key)  # 标记为已处理
+                            self.league_stats[league_code]['success'] += 1
+                            logger.debug(f"成功处理比赛: {cleaned_fixture.get('external_match_id')}")
+                        else:
+                            self.league_stats[league_code]['errors'] += 1
+                            logger.warning(f"无效的比赛数据: {fixture_data.get('id', 'unknown')}")
+
+                    except (
+                        ValueError,
+                        TypeError,
+                        AttributeError,
+                        KeyError,
+                        RuntimeError,
+                    ) as e:
+                        self.league_stats[league_code]['errors'] += 1
+                        logger.error(f"处理比赛数据时出错: {str(e)}")
+
+                # 成功则返回收集的数据
+                logger.info(f"联赛 {league_name} 采集成功，收集到 {len(collected_data)} 场有效比赛")
+                return collected_data
+
+            except FootballAdapterError as e:
+                retry_count += 1
+                logger.warning(f"采集联赛 {league_name} 失败 (尝试 {retry_count}/{max_retries + 1}): {str(e)}")
+
+                if "429" in str(e).lower() and retry_count < max_retries:
+                    logger.info(f"检测到速率限制，增加等待时间...")
+                    wait_time = self.RATE_LIMIT_DELAY * (retry_count + 1)  # 递增等待时间
+                    logger.info(f"等待 {wait_time} 秒后重试...")
+                    await asyncio.sleep(wait_time)
+
+                if retry_count <= max_retries:
+                    continue
+                else:
+                    logger.error(f"联赛 {league_name} 采集最终失败")
+                    return []
+
+            except Exception as e:
+                logger.error(f"采集联赛 {league_name} 发生异常: {str(e)}")
+                self.league_stats[league_code]['errors'] += 1
+                return []
+
+        # 所有重试都失败了
+        logger.error(f"联赛 {league_name} 采集失败，已达到最大重试次数 {max_retries}")
+        return []
 
     async def collect_odds(self, **kwargs) -> CollectionResult:
         """赛程采集器不处理赔率数据."""
         return CollectionResult(
-            data_source=self.data_source,
-            collection_type="odds",
-            records_collected=0,
-            success_count=0,
-            error_count=0,
-            status="skipped",
+            success=True,
+            data={"message": "Odds collection not supported by FixturesCollector", "collection_type": "odds", "status": "skipped"}
         )
 
     async def collect_live_scores(self, **kwargs) -> CollectionResult:
         """赛程采集器不处理实时比分数据."""
         return CollectionResult(
-            data_source=self.data_source,
-            collection_type="live_scores",
-            records_collected=0,
-            success_count=0,
-            error_count=0,
-            status="skipped",
+            success=True,
+            data={"message": "Live scores collection not supported by FixturesCollector", "collection_type": "live_scores", "status": "skipped"}
         )
 
     async def _get_active_leagues(self) -> list[str]:
@@ -255,9 +334,7 @@ class FixturesCollector(BaseCollector):
             List[str]: 联赛代码列表
         """
         try:
-            # 从数据库获取活跃联赛列表
-            # 在实际生产环境中，这里会查询数据库获取配置的活跃联赛
-            # 目前返回主要联赛作为默认配置
+            # 返回主要联赛作为默认配置
             active_leagues = [
                 "PL",  # 英超
                 "PD",  # 西甲
@@ -268,83 +345,11 @@ class FixturesCollector(BaseCollector):
                 "EL",  # 欧联
             ]
 
-            # 可以通过配置文件或数据库动态调整
-            self.logger.info(f"使用活跃联赛列表: {active_leagues}")
+            logger.info(f"使用活跃联赛列表: {active_leagues}")
             return active_leagues
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"Failed to get active leagues: {str(e)}")
+        except Exception as e:
+            logger.error(f"获取活跃联赛列表失败: {str(e)}")
             return ["PL", "PD"]  # 默认返回英超和西甲
-
-    async def _load_existing_matches(
-        self, date_from: datetime, date_to: datetime
-    ) -> None:
-        """加载已存在的比赛ID（防重复机制）.
-
-        Args:
-            date_from: 开始日期
-            date_to: 结束日期
-        """
-        try:
-            # 查询数据库中已存在的比赛
-            # 在实际生产环境中，这里会查询数据库获取指定日期范围内的比赛
-            # 目前使用空集合作为占位符，允许重复插入（生产环境需要实现）
-            self.logger.info(f"加载 {date_from} 到 {date_to} 的已存在比赛ID")
-            self._processed_matches = set()
-
-            # 生产环境实现示例:
-            # async with self.db_manager.get_async_session() as session:
-            #     query = text("""
-            #         SELECT match_id FROM matches
-            #         WHERE match_date BETWEEN :date_from AND :date_to
-            #     """)"
-            #     result = await session.execute(query, {"date_from": date_from, "date_to": date_to})
-            #     self._processed_matches = {row.match_id for row in result}
-
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"Failed to load existing matches: {str(e)}")
-            self._processed_matches = set()
-
-    async def _collect_league_fixtures(
-        self, league_code: str, date_from: datetime, date_to: datetime
-    ) -> list[dict[str, Any]]:
-        """采集指定联赛的赛程数据.
-
-        Args:
-            league_code: 联赛代码
-            date_from: 开始日期
-            date_to: 结束日期
-
-        Returns:
-            List[Dict]: 赛程数据列表
-        """
-        try:
-            params = {
-                "dateFrom": date_from.strftime("%Y-%m-%d"),
-                "dateTo": date_to.strftime("%Y-%m-%d"),
-                "status": "SCHEDULED",
-            }
-
-            # 使用父类的get方法
-            endpoint = f"competitions/{league_code}/matches"
-            result = await self.get(endpoint, params=params)
-
-            if result.success:
-                # 从响应数据中提取matches
-                if hasattr(result, "data"):
-                    return result.data.get("matches", [])
-                else:
-                    return result.get("matches", [])
-            else:
-                self.logger.error(
-                    f"Failed to collect fixtures for league {league_code}: {result.error}"
-                )
-                return []
-
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(
-                f"Failed to collect fixtures for league {league_code}: {str(e)}"
-            )
-            return []
 
     def _generate_match_key(self, fixture_data: dict[str, Any]) -> str:
         """生成比赛唯一键（防重复）.
@@ -414,234 +419,78 @@ class FixturesCollector(BaseCollector):
     async def _detect_missing_matches(
         self,
         collected_data: list[dict[str, Any]],
-        date_from: datetime,
-        date_to: datetime,
     ) -> None:
         """检测缺失的比赛（防丢失策略）.
 
         Args:
             collected_data: 本次采集的数据
-            date_from: 开始日期
-            date_to: 结束日期
         """
         try:
-            # 1. 从数据库查询应该存在的比赛
-            # 2. 与本次采集结果比对
-
-            # 3. 标记缺失的比赛
-            # 4. 记录到_missing_matches列表
-
-            self.logger.info(
-                f"Missing matches detection completed. "
-                f"Found {len(self._missing_matches)} missing matches"
-            )
-
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"Failed to detect missing matches: {str(e)}")
-
-    async def _get_headers(self) -> dict[str, str]:
-        """获取请求头.
-
-        Returns:
-            Dict[str, str]: 请求头字典
-        """
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["X-Auth-Token"] = self.api_key
-        return headers
-
-    def _build_url(self, endpoint: str, **params) -> str:
-        """构建请求URL.
-
-        Args:
-            endpoint: API端点
-            **params: 查询参数
-
-        Returns:
-            str: 完整的URL
-        """
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        if params:
-            query_string = "&".join(f"{k}={v}" for k, v in params.items())
-            url += f"?{query_string}"
-        return url
-
-    async def collect_matches(
-        self,
-        league_id: int | None = None,
-        date_from: datetime | None = None,
-        date_to: datetime | None = None,
-    ) -> CollectionResult:
-        """采集比赛数据.
-
-        Args:
-            league_id: 联赛ID
-            date_from: 开始日期
-            date_to: 结束日期
-
-        Returns:
-            CollectionResult: 采集结果
-        """
-        try:
-            # 使用现有的collect_fixtures方法
-            leagues = [str(league_id)] if league_id else None
-            result = await self.collect_fixtures(
-                leagues=leagues, date_from=date_from, date_to=date_to
-            )
-
-            # 转换数据格式
-            matches_data = []
-            for fixture in result.collected_data:
-                matches_data.append(
-                    {
-                        "id": fixture.get("external_match_id"),
-                        "homeTeam": {"id": fixture.get("external_home_team_id")},
-                        "awayTeam": {"id": fixture.get("external_away_team_id")},
-                        "utcDate": fixture.get("match_time"),
-                        "status": fixture.get("status"),
-                        "competition": {"id": fixture.get("external_league_id")},
-                        "season": fixture.get("season"),
-                        "matchday": fixture.get("matchday"),
-                    }
-                )
-
-            return CollectionResult(
-                success=True,
-                data={"matches": matches_data},
-                metadata={"total_matches": len(matches_data)},
-            )
+            # 目前简化实现，在生产环境中需要与数据库比对
+            logger.info(f"缺失比赛检测完成，发现 {len(self._missing_matches)} 场缺失比赛")
 
         except Exception as e:
-            return CollectionResult(
-                success=False, error=f"Failed to collect matches: {str(e)}"
-            )
+            logger.error(f"检测缺失比赛失败: {str(e)}")
 
-    async def collect_teams(self, league_id: int | None = None) -> CollectionResult:
-        """采集球队数据.
+    async def _save_to_bronze_layer(self, collected_data: list[dict[str, Any]]) -> None:
+        """保存数据到Bronze层原始数据表.
 
         Args:
-            league_id: 联赛ID
-
-        Returns:
-            CollectionResult: 采集结果
+            collected_data: 采集到的数据列表
         """
         try:
-            if not league_id:
-                return CollectionResult(
-                    success=False, error="League ID is required for teams collection"
-                )
+            logger.info(f"正在保存 {len(collected_data)} 条记录到Bronze层...")
 
-            # 构建API请求
-            endpoint = f"competitions/{league_id}/teams"
-            url = self._build_url(endpoint)
-            headers = await self._get_headers()
+            async with get_async_session() as session:
+                saved_count = 0
 
-            # 使用HTTP客户端请求数据
-            import httpx
+                for data in collected_data:
+                    try:
+                        # 检查是否已存在相同的记录（幂等性）
+                        external_id = data.get('external_match_id')
+                        if not external_id:
+                            logger.warning("跳过没有external_match_id的记录")
+                            continue
 
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.get(url, headers=headers)
-                response.raise_for_status()
-                data = response.json()
+                        # 检查记录是否已存在
+                        from sqlalchemy import select
+                        existing_query = select(RawMatchData).where(
+                            RawMatchData.external_id == external_id,
+                            RawMatchData.source == self.data_source
+                        )
+                        existing_result = await session.execute(existing_query)
+                        existing_record = existing_result.scalar_one_or_none()
 
-            teams = data.get("teams", [])
+                        if existing_record:
+                            # 更新现有记录
+                            existing_record.match_data = data
+                            existing_record.collected_at = datetime.now()
+                            logger.debug(f"更新已存在的记录: {external_id}")
+                        else:
+                            # 创建新记录
+                            raw_match = RawMatchData(
+                                external_id=external_id,
+                                source=self.data_source,
+                                match_data=data,  # 存储完整的原始JSON数据
+                                collected_at=datetime.now(),
+                                processed=False
+                            )
+                            session.add(raw_match)
+                            logger.debug(f"创建新记录: {external_id}")
 
-            return CollectionResult(
-                success=True,
-                data={"teams": teams},
-                metadata={"total_teams": len(teams), "league_id": league_id},
-            )
+                        saved_count += 1
 
-        except Exception as e:
-            self.logger.error(
-                f"Failed to collect teams for league {league_id}: {str(e)}"
-            )
-            return CollectionResult(
-                success=False, error=f"Failed to collect teams: {str(e)}"
-            )
+                    except Exception as e:
+                        logger.error(f"保存单个记录失败 {data.get('external_match_id', 'unknown')}: {str(e)}")
+                        continue
 
-    async def collect_players(self, team_id: int | None = None) -> CollectionResult:
-        """采集球员数据.
-
-        Args:
-            team_id: 球队ID
-
-        Returns:
-            CollectionResult: 采集结果
-        """
-        try:
-            if not team_id:
-                return CollectionResult(
-                    success=False, error="Team ID is required for players collection"
-                )
-
-            # 构建API请求
-            endpoint = f"teams/{team_id}"
-            url = self._build_url(endpoint)
-            headers = await self._get_headers()
-
-            # 使用HTTP客户端请求数据
-            import httpx
-
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.get(url, headers=headers)
-                response.raise_for_status()
-                data = response.json()
-
-            # 获取球员信息
-            squad = data.get("squad", [])
-
-            return CollectionResult(
-                success=True,
-                data={"players": squad, "team": data},
-                metadata={"total_players": len(squad), "team_id": team_id},
-            )
+                # 提交事务
+                await session.commit()
+                logger.info(f"Bronze层数据保存成功，共处理 {saved_count} 条记录")
 
         except Exception as e:
-            self.logger.error(f"Failed to collect players for team {team_id}: {str(e)}")
-            return CollectionResult(
-                success=False, error=f"Failed to collect players: {str(e)}"
-            )
+            logger.error(f"保存Bronze层数据失败: {str(e)}")
+            raise
 
-    async def collect_leagues(self) -> CollectionResult:
-        """采集联赛数据.
-
-        Returns:
-            CollectionResult: 采集结果
-        """
-        try:
-            # 获取支持的联赛列表
-            endpoint = "competitions"
-            url = self._build_url(endpoint)
-            headers = await self._get_headers()
-
-            # 使用HTTP客户端请求数据
-            import httpx
-
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.get(url, headers=headers)
-                response.raise_for_status()
-                data = response.json()
-
-            competitions = data.get("competitions", [])
-
-            # 过滤主要联赛
-            major_league_codes = ["PL", "PD", "SA", "BL1", "FL1", "CL", "EL"]
-            major_competitions = [
-                comp for comp in competitions if comp.get("code") in major_league_codes
-            ]
-
-            return CollectionResult(
-                success=True,
-                data={"competitions": major_competitions},
-                metadata={
-                    "total_competitions": len(major_competitions),
-                    "all_competitions": len(competitions),
-                },
-            )
-
-        except Exception as e:
-            self.logger.error(f"Failed to collect leagues: {str(e)}")
-            return CollectionResult(
-                success=False, error=f"Failed to collect leagues: {str(e)}"
-            )
+    # 移除了不需要的方法，只保留核心的collect_fixtures功能
+# 其他方法如collect_teams, collect_players等可以通过ApiFootballAdapter直接调用
