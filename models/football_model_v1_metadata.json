@@ -1,6 +1,6 @@
 {
   "model_version": "v1",
-  "training_date": "2025-11-21T12:40:05.091507",
+  "training_date": "2025-11-21T16:52:03.730418",
   "feature_names": [
     "home_team_id",
     "away_team_id",
@@ -23,7 +23,8 @@
     "主队胜",
     "客队胜"
   ],
-  "training_samples": 304,
-  "test_samples": 76,
+  "training_samples": 2803,
+  "test_samples": 701,
+  "test_accuracy": 1.0,
   "num_features": 15
 }
