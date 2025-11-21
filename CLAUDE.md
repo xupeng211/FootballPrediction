@@ -80,6 +80,9 @@ make docker.logs.dev    # 查看应用日志
 make docker.down.dev    # 停止开发环境
 make docker.build.dev   # 重新构建开发镜像
 
+# 轻量级开发环境 (新增)
+docker-compose -f docker-compose.lightweight.yml up    # 轻量级全栈环境 (前端+后端+数据库+Redis)
+
 # 生产环境部署
 make docker.build.prod  # 构建生产镜像
 docker-compose -f docker-compose.prod.yml up    # 生产环境启动
@@ -354,6 +357,14 @@ docker-compose -f docker-compose.prod.yml up
 - **db**: PostgreSQL 15 with persistent data, health checks, initialization scripts
 - **redis**: Redis 7.0 for caching and session management
 - **nginx**: Reverse proxy with SSL termination (production only)
+- **frontend**: React 19.2.0 + TypeScript 4.9.5 application (lightweight configuration)
+
+### 📁 Multiple Docker Compose Configurations
+- **`docker-compose.yml`**: Standard development environment
+- **`docker-compose.lightweight.yml`**: Full-stack lightweight deployment (frontend + backend + db + redis)
+- **`docker-compose.prod.yml`**: Production-optimized configuration
+- **`docker-compose.dev.yml`**: Development with hot reload and debugging
+- **`config/docker-compose*.yml`**: Environment-specific configurations (staging, test, microservices)
 
 ### 📁 Development Volumes & Hot Reload
 ```yaml
@@ -370,6 +381,18 @@ volumes:
 ### 🐳 Development vs Production Targets
 - **Development**: `target: development` - includes dev dependencies, debugging tools
 - **Production**: `target: production` - optimized image, minimal layers, security hardening
+- **Lightweight**: `Dockerfile.lightweight` - minimal dependencies for rapid deployment and testing
+
+### 🎨 Frontend Development (React + TypeScript)
+```bash
+# 前端开发 (React 19.2.0 + TypeScript 4.9.5)
+cd frontend && npm start           # 启动开发服务器 (3000端口)
+cd frontend && npm test            # Jest + React Testing Library
+cd frontend && npm run build       # 生产构建验证
+
+# 轻量级全栈开发
+docker-compose -f docker-compose.lightweight.yml up  # 前端+后端+数据库+Redis
+```
 
 ---
 
@@ -522,6 +545,7 @@ Overall Health: 85/100 ✅
 - **Test Enhancement**: Coverage improvement towards 40% target
 - **CI Pipeline**: Stability enhancements and automated recovery
 - **Code Quality**: Baseline establishment and gradual improvement
+- **Lightweight Deployment**: New Dockerfile.lightweight and docker-compose.lightweight.yml for rapid full-stack deployment
 
 ---
 
@@ -630,4 +654,4 @@ uvicorn src.main:app --reload  # Direct Python execution
 
 **Remember**: As an AI maintainer, your priority is maintaining architectural integrity and code quality. When in doubt, choose the conservative approach that preserves existing patterns.
 
-*Last Updated: 2025-11-21 | AI Maintainer: Claude Code | Version: 3.1 (Enhanced Service Startup Guide & Architecture Quick Reference)*
+*Last Updated: 2025-11-22 | AI Maintainer: Claude Code | Version: 3.2 (Enhanced Docker Configuration & Full-Stack Development Guide)*

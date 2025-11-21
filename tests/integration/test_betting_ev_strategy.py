@@ -1,5 +1,3 @@
-from typing import Optional
-
 #!/usr/bin/env python3
 """
 EV计算和投注策略测试脚本
@@ -17,21 +15,28 @@ EV Calculation and Betting Strategy Test Script
 Issue: #116 EV计算和投注策略
 """
 
-import sys
-from pathlib import Path
+import pytest
+from typing import Optional
 
-# 添加项目根目录到路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+# 这个文件之前只有mock实现，没有实际测试断言
+# 需要重新实现完整的测试
+# 暂时跳过，待完整实现后再启用
 
+@pytest.mark.skip(reason="EV Strategy test needs complete implementation - only mock implementations exist")
+class TestEVStrategy:
+    """EV计算和投注策略测试类"""
 
-def create_betting_service():
-    """Mock implementation for testing"""
-    from unittest.mock import Mock
+    @pytest.mark.skip(reason="Pending complete test implementation")
+    def test_ev_calculation_accuracy(self):
+        """测试EV计算准确性"""
+        pass
 
-    service = Mock()
-    service.calculate_ev.return_value = 0.05
-    return service
+    @pytest.mark.skip(reason="Pending complete test implementation")
+    def test_kelly_criterion_implementation(self):
+        """测试Kelly Criterion实现"""
+        pass
 
-
-# 继续原有的测试内容
+    @pytest.mark.skip(reason="Pending complete test implementation")
+    def test_betting_strategy_effectiveness(self):
+        """测试投注策略有效性"""
+        pass
