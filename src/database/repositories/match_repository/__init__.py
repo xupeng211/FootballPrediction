@@ -1,8 +1,9 @@
-from typing import Optional
+"""Match Repository module.
 
-"""src.database.repositories.match_repository 模块 - 桩实现".
-
-临时创建的桩模块,用于解决导入错误.
+提供比赛数据的异步访问接口，使用SQLAlchemy 2.0语法.
+遵循Repository模式，封装数据访问逻辑.
 """
 
-# 桩实现
+from .repository import MatchRepository
+
+__all__ = ["MatchRepository"]
