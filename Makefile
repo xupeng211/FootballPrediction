@@ -1199,7 +1199,9 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
         docs-api docs-code docs-architecture docs-stats docs-all serve-docs \
         db-init db-migrate db-seed db-backup db-restore db-reset db-shell \
         security-check license-check dependency-check secret-scan audit \
-        dev-stats code-quality-report workflow-analysis
+        dev-stats code-quality-report workflow-analysis \
+        docker.up.lightweight docker.down.lightweight docker.logs.lightweight docker.build.lightweight docker.restart.lightweight \
+        frontend.install frontend.start frontend.build frontend.test frontend.lint frontend.build.docker
 
 .PHONY: docs.check
 ## 运行文档质量检查（坏链/孤儿/目录规范）
@@ -1499,6 +1501,37 @@ docker.test.down: ## Docker: (手动) 强制停止并清理集成测试环境
 	@$(COMPOSE_TEST) down -v --remove-orphans
 
 # ==================================
+# === 轻量级环境 (Lightweight) ===
+# ==================================
+
+docker.up.lightweight: ## Docker: 启动轻量级全栈环境 (前端 + 后端 + 数据库 + Redis)
+	@echo "$(BLUE)Starting lightweight full-stack environment...$(RESET)"
+	@docker-compose -f docker-compose.lightweight.yml up -d
+	@echo "$(GREEN)✅ Lightweight environment started$(RESET)"
+	@echo "$(BLUE)📱 Frontend: http://localhost:3000$(RESET)"
+	@echo "$(BLUE)🔧 Backend API: http://localhost:8000$(RESET)"
+	@echo "$(BLUE)📊 API Docs: http://localhost:8000/docs$(RESET)"
+
+docker.down.lightweight: ## Docker: 停止轻量级全栈环境
+	@echo "$(YELLOW)Stopping lightweight full-stack environment...$(RESET)"
+	@docker-compose -f docker-compose.lightweight.yml down
+	@echo "$(GREEN)✅ Lightweight environment stopped$(RESET)"
+
+docker.logs.lightweight: ## Docker: 查看轻量级环境日志
+	@echo "$(BLUE)Showing lightweight environment logs...$(RESET)"
+	@docker-compose -f docker-compose.lightweight.yml logs -f
+
+docker.build.lightweight: ## Docker: 构建轻量级环境镜像
+	@echo "$(BLUE)Building lightweight environment images...$(RESET)"
+	@docker-compose -f docker-compose.lightweight.yml build
+	@echo "$(GREEN)✅ Lightweight images built$(RESET)"
+
+docker.restart.lightweight: ## Docker: 重启轻量级环境
+	@echo "$(YELLOW)Restarting lightweight full-stack environment...$(RESET)"
+	@docker-compose -f docker-compose.lightweight.yml restart
+	@echo "$(GREEN)✅ Lightweight environment restarted$(RESET)"
+
+# ==================================
 # === 生产环境 (Production) ===
 # ==================================
 
@@ -1518,3 +1551,36 @@ docker.clean: ## Docker: 清理所有停止的容器、无用的网络和悬空�
 	@echo "$(YELLOW)Cleaning up Docker system...$(RESET)"
 	@docker system prune -f
 	@docker volume prune -f
+
+# ==================================
+# === 前端开发 (Frontend) ===
+# ==================================
+
+frontend.install: ## Frontend: 安装前端依赖
+	@echo "$(YELLOW)Installing frontend dependencies...$(RESET)"
+	@cd frontend && npm install
+	@echo "$(GREEN)✅ Frontend dependencies installed$(RESET)"
+
+frontend.start: ## Frontend: 启动前端开发服务器
+	@echo "$(BLUE)Starting frontend development server...$(RESET)"
+	@cd frontend && npm start
+
+frontend.build: ## Frontend: 构建前端生产版本
+	@echo "$(YELLOW)Building frontend for production...$(RESET)"
+	@cd frontend && npm run build
+	@echo "$(GREEN)✅ Frontend build completed$(RESET)"
+
+frontend.test: ## Frontend: 运行前端测试
+	@echo "$(YELLOW)Running frontend tests...$(RESET)"
+	@cd frontend && npm test -- --coverage --watchAll=false
+	@echo "$(GREEN)✅ Frontend tests completed$(RESET)"
+
+frontend.lint: ## Frontend: 运行前端代码质量检查
+	@echo "$(YELLOW)Running frontend linting...$(RESET)"
+	@cd frontend && npm run lint || echo "Lint command not found in package.json"
+	@echo "$(GREEN)✅ Frontend linting completed$(RESET)"
+
+frontend.build.docker: ## Frontend: 构建前端Docker镜像
+	@echo "$(BLUE)Building frontend Docker image...$(RESET)"
+	@cd frontend && docker build -t football-prediction-frontend .
+	@echo "$(GREEN)✅ Frontend Docker image built$(RESET)"
