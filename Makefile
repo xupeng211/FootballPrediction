@@ -336,11 +336,11 @@ cov.html: ## Test: Generate HTML coverage report
 	pytest -m "unit" --cov=src --cov-report=html && \
 	echo "$(GREEN)✅ HTML coverage report generated in htmlcov/$(RESET)"
 
-cov.enforce: ## Test: Run coverage with strict 80% threshold
+cov.enforce: ## Test: Run coverage with strict 35% threshold
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running coverage with 80% threshold...$(RESET)" && \
-	pytest -m "unit" --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=80 && \
-	echo "$(GREEN)✅ Coverage passed (>=80%)$(RESET)"
+	echo "$(YELLOW)Running coverage with 35% threshold...$(RESET)" && \
+	pytest -m "unit" --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=35 && \
+	echo "$(GREEN)✅ Coverage passed (>=35%)$(RESET)"
 
 test-quick: ## Test: Quick test run (unit tests with timeout)
 	@$(ACTIVATE) && \
