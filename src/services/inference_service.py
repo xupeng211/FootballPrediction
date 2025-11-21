@@ -12,7 +12,7 @@ import logging
 import os
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 import xgboost as xgb
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ class InferenceService:
 
     def __init__(self):
         """初始化推理服务."""
-        if not hasattr(self, '_initialized'):
+        if not hasattr(self, "_initialized"):
             self._initialized = False
             self._load_model()
             self._load_feature_data()
@@ -60,10 +60,10 @@ class InferenceService:
             logger.info("✅ XGBoost模型加载成功")
 
             # 加载模型元数据
-            with open(metadata_path, 'r', encoding='utf-8') as f:
+            with open(metadata_path, encoding="utf-8") as f:
                 self._model_metadata = json.load(f)
 
-            self._feature_columns = self._model_metadata.get('feature_names', [])
+            self._feature_columns = self._model_metadata.get("feature_names", [])
             logger.info(f"✅ 模型元数据加载成功，特征列: {len(self._feature_columns)}")
 
         except Exception as e:
@@ -84,8 +84,10 @@ class InferenceService:
             self._feature_data = pd.read_csv(dataset_path)
 
             # 确保日期列是datetime类型
-            if 'match_date' in self._feature_data.columns:
-                self._feature_data['match_date'] = pd.to_datetime(self._feature_data['match_date'])
+            if "match_date" in self._feature_data.columns:
+                self._feature_data["match_date"] = pd.to_datetime(
+                    self._feature_data["match_date"]
+                )
 
             logger.info(f"✅ 特征数据加载成功: {len(self._feature_data)} 条记录")
 
@@ -93,7 +95,7 @@ class InferenceService:
             logger.error(f"❌ 特征数据加载失败: {e}")
             self._feature_data = pd.DataFrame()
 
-    def _get_features_for_match(self, match_id: int) -> Optional[Dict]:
+    def _get_features_for_match(self, match_id: int) -> dict | None:
         """根据比赛ID获取特征数据.
 
         Args:
@@ -122,31 +124,32 @@ class InferenceService:
                     if col in base_features:
                         # 添加一些随机性来模拟不同比赛的差异
                         import random
-                        if col in ['home_team_id', 'away_team_id']:
+
+                        if col in ["home_team_id", "away_team_id"]:
                             features[col] = random.randint(1, 20)  # 随机球队ID
-                        elif 'points' in col or 'goals' in col:
+                        elif "points" in col or "goals" in col:
                             features[col] = random.randint(0, 15)  # 积分和进球
-                        elif 'rate' in col:
+                        elif "rate" in col:
                             features[col] = random.uniform(0.0, 1.0)  # 胜率
-                        elif 'streak' in col:
+                        elif "streak" in col:
                             features[col] = random.randint(-3, 3)  # 连胜/连败
-                        elif 'rest_days' in col:
+                        elif "rest_days" in col:
                             features[col] = random.randint(2, 14)  # 休息天数
                         else:
                             features[col] = base_features[col]
                     else:
                         # 为缺失的特征设置默认值
-                        if 'team_id' in col:
+                        if "team_id" in col:
                             features[col] = random.randint(1, 20)
-                        elif 'points' in col:
+                        elif "points" in col:
                             features[col] = 6  # 平均积分
-                        elif 'goals' in col:
+                        elif "goals" in col:
                             features[col] = 1.4  # 平均进球
-                        elif 'rate' in col:
+                        elif "rate" in col:
                             features[col] = 0.37  # 平均胜率
-                        elif 'streak' in col:
+                        elif "streak" in col:
                             features[col] = 0  # 无连胜
-                        elif 'rest_days' in col:
+                        elif "rest_days" in col:
                             features[col] = 7  # 标准休息
                         else:
                             features[col] = 0  # 其他特征默认值
@@ -159,27 +162,27 @@ class InferenceService:
             logger.error(f"❌ 获取特征失败 (match_id={match_id}): {e}")
             return self._get_default_features()
 
-    def _get_default_features(self) -> Dict:
+    def _get_default_features(self) -> dict:
         """获取默认特征数据."""
         return {
-            'home_team_id': 1,
-            'away_team_id': 2,
-            'home_last_5_points': 6,
-            'away_last_5_points': 7,
-            'home_last_5_avg_goals': 1.4,
-            'away_last_5_avg_goals': 1.5,
-            'h2h_last_3_home_wins': 1,
-            'home_last_5_goal_diff': 0,
-            'away_last_5_goal_diff': 0,
-            'home_win_streak': 0,
-            'away_win_streak': 0,
-            'home_last_5_win_rate': 0.37,
-            'away_last_5_win_rate': 0.38,
-            'home_rest_days': 7,
-            'away_rest_days': 7
+            "home_team_id": 1,
+            "away_team_id": 2,
+            "home_last_5_points": 6,
+            "away_last_5_points": 7,
+            "home_last_5_avg_goals": 1.4,
+            "away_last_5_avg_goals": 1.5,
+            "h2h_last_3_home_wins": 1,
+            "home_last_5_goal_diff": 0,
+            "away_last_5_goal_diff": 0,
+            "home_win_streak": 0,
+            "away_win_streak": 0,
+            "home_last_5_win_rate": 0.37,
+            "away_last_5_win_rate": 0.38,
+            "home_rest_days": 7,
+            "away_rest_days": 7,
         }
 
-    def predict_match(self, match_id: int) -> Dict:
+    def predict_match(self, match_id: int) -> dict:
         """对指定比赛进行预测.
 
         Args:
@@ -197,7 +200,7 @@ class InferenceService:
                 return {
                     "match_id": match_id,
                     "error": "无法获取比赛特征数据",
-                    "success": False
+                    "success": False,
                 }
 
             # 确保特征顺序与训练时一致
@@ -224,7 +227,9 @@ class InferenceService:
 
             # 生成投注建议
             if confidence > 0.6:
-                suggestion = f"模型预测{result_names[prediction]}，置信度较高({confidence:.1%})"
+                suggestion = (
+                    f"模型预测{result_names[prediction]}，置信度较高({confidence:.1%})"
+                )
             elif confidence > 0.4:
                 suggestion = f"模型倾向{result_names[prediction]}，但不确定性较大({confidence:.1%})"
             else:
@@ -234,16 +239,18 @@ class InferenceService:
                 "match_id": match_id,
                 "prediction": result_names[prediction],
                 "home_win_prob": float(probabilities[1]),  # 主队胜概率
-                "draw_prob": float(probabilities[0]),      # 平局概率
+                "draw_prob": float(probabilities[0]),  # 平局概率
                 "away_win_prob": float(probabilities[2]),  # 客队胜概率
                 "confidence": float(confidence),
                 "suggestion": suggestion,
                 "success": True,
                 "features_used": self._feature_columns,
-                "model_version": self._model_metadata.get('model_version', 'v1')
+                "model_version": self._model_metadata.get("model_version", "v1"),
             }
 
-            logger.info(f"✅ 预测完成: {result_names[prediction]} (置信度: {confidence:.1%})")
+            logger.info(
+                f"✅ 预测完成: {result_names[prediction]} (置信度: {confidence:.1%})"
+            )
             return result
 
         except Exception as e:
@@ -251,10 +258,10 @@ class InferenceService:
             return {
                 "match_id": match_id,
                 "error": f"预测服务错误: {str(e)}",
-                "success": False
+                "success": False,
             }
 
-    def predict_batch(self, match_ids: List[int]) -> List[Dict]:
+    def predict_batch(self, match_ids: list[int]) -> list[dict]:
         """批量预测比赛结果.
 
         Args:
@@ -269,21 +276,21 @@ class InferenceService:
             results.append(result)
         return results
 
-    def get_model_info(self) -> Dict:
+    def get_model_info(self) -> dict:
         """获取模型信息."""
         if not self._model_metadata:
             return {"error": "模型未加载"}
 
         return {
-            "model_version": self._model_metadata.get('model_version'),
-            "training_date": self._model_metadata.get('training_date'),
+            "model_version": self._model_metadata.get("model_version"),
+            "training_date": self._model_metadata.get("training_date"),
             "feature_count": len(self._feature_columns),
-            "target_classes": self._model_metadata.get('target_classes'),
-            "test_accuracy": self._model_metadata.get('test_accuracy'),
-            "feature_names": self._feature_columns
+            "target_classes": self._model_metadata.get("target_classes"),
+            "test_accuracy": self._model_metadata.get("test_accuracy"),
+            "feature_names": self._feature_columns,
         }
 
-    def health_check(self) -> Dict:
+    def health_check(self) -> dict:
         """健康检查."""
         try:
             model_loaded = self._model is not None
@@ -293,15 +300,14 @@ class InferenceService:
             return {
                 "status": "healthy" if model_loaded else "unhealthy",
                 "model_loaded": model_loaded,
-                "feature_data_loaded": not self._feature_data.empty if feature_data_loaded else False,
+                "feature_data_loaded": not self._feature_data.empty
+                if feature_data_loaded
+                else False,
                 "feature_count": feature_count,
-                "initialized": self._initialized
+                "initialized": self._initialized,
             }
         except Exception as e:
-            return {
-                "status": "unhealthy",
-                "error": str(e)
-            }
+            return {"status": "unhealthy", "error": str(e)}
 
 
 # 全局推理服务实例

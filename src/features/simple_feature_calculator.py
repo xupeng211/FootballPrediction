@@ -7,7 +7,7 @@
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -24,9 +24,11 @@ class SimpleFeatureCalculator:
             matches_df: 包含所有比赛数据的DataFrame
         """
         self.matches_df = matches_df.copy()
-        self.matches_df['match_date'] = pd.to_datetime(self.matches_df['match_date'])
+        self.matches_df["match_date"] = pd.to_datetime(self.matches_df["match_date"])
         # 确保按日期排序
-        self.matches_df = self.matches_df.sort_values('match_date').reset_index(drop=True)
+        self.matches_df = self.matches_df.sort_values("match_date").reset_index(
+            drop=True
+        )
         logger.info(f"已加载 {len(self.matches_df)} 条比赛数据")
 
     def calculate_match_result(self, row: pd.Series) -> int:
@@ -38,8 +40,8 @@ class SimpleFeatureCalculator:
         Returns:
             int: 0=Draw, 1=HomeWin, 2=AwayWin
         """
-        home_score = row.get('home_score', 0)
-        away_score = row.get('away_score', 0)
+        home_score = row.get("home_score", 0)
+        away_score = row.get("away_score", 0)
 
         if home_score > away_score:
             return 1  # HomeWin
@@ -48,7 +50,9 @@ class SimpleFeatureCalculator:
         else:
             return 0  # Draw
 
-    def get_team_previous_matches(self, team_id: int, match_date: datetime, limit: int = 5) -> pd.DataFrame:
+    def get_team_previous_matches(
+        self, team_id: int, match_date: datetime, limit: int = 5
+    ) -> pd.DataFrame:
         """获取指定球队在特定日期之前的最近比赛.
 
         Args:
@@ -60,15 +64,23 @@ class SimpleFeatureCalculator:
             pd.DataFrame: 该队之前的比赛记录
         """
         # 获取该队作为主队或客队的所有比赛，且日期早于当前比赛
-        previous_matches = self.matches_df[
-            ((self.matches_df['home_team_id'] == team_id) |
-             (self.matches_df['away_team_id'] == team_id)) &
-            (self.matches_df['match_date'] < match_date)
-        ].sort_values('match_date', ascending=False).head(limit)
+        previous_matches = (
+            self.matches_df[
+                (
+                    (self.matches_df["home_team_id"] == team_id)
+                    | (self.matches_df["away_team_id"] == team_id)
+                )
+                & (self.matches_df["match_date"] < match_date)
+            ]
+            .sort_values("match_date", ascending=False)
+            .head(limit)
+        )
 
         return previous_matches
 
-    def calculate_team_recent_stats(self, team_id: int, match_date: datetime) -> Tuple[int, float]:
+    def calculate_team_recent_stats(
+        self, team_id: int, match_date: datetime
+    ) -> tuple[int, float]:
         """计算球队近期战绩.
 
         Args:
@@ -88,12 +100,16 @@ class SimpleFeatureCalculator:
 
         for _, match in previous_matches.iterrows():
             # 判断该队是主队还是客队
-            if match['home_team_id'] == team_id:
-                team_score = match['home_score']
+            if match["home_team_id"] == team_id:
+                team_score = match["home_score"]
             else:
-                team_score = match['away_score']
+                team_score = match["away_score"]
 
-            opponent_score = match['away_score'] if match['home_team_id'] == team_id else match['home_score']
+            opponent_score = (
+                match["away_score"]
+                if match["home_team_id"] == team_id
+                else match["home_score"]
+            )
 
             # 计算积分
             if team_score > opponent_score:
@@ -125,13 +141,15 @@ class SimpleFeatureCalculator:
             # 赛季首场，默认充分休息
             return 14
 
-        last_match_date = previous_match.iloc[0]['match_date']
+        last_match_date = previous_match.iloc[0]["match_date"]
         rest_days = (match_date - last_match_date).days
 
         # 最大值为14天
         return min(rest_days, 14)
 
-    def calculate_team_advanced_stats(self, team_id: int, match_date: datetime) -> Tuple[int, float, int, float]:
+    def calculate_team_advanced_stats(
+        self, team_id: int, match_date: datetime
+    ) -> tuple[int, float, int, float]:
         """计算球队高级统计特征.
 
         Args:
@@ -153,12 +171,12 @@ class SimpleFeatureCalculator:
 
         for _, match in previous_matches.iterrows():
             # 判断该队是主队还是客队
-            if match['home_team_id'] == team_id:
-                team_score = match['home_score']
-                opponent_score = match['away_score']
+            if match["home_team_id"] == team_id:
+                team_score = match["home_score"]
+                opponent_score = match["away_score"]
             else:
-                team_score = match['away_score']
-                opponent_score = match['home_score']
+                team_score = match["away_score"]
+                opponent_score = match["home_score"]
 
             # 净胜球
             goal_diff = (team_score or 0) - (opponent_score or 0)
@@ -188,7 +206,9 @@ class SimpleFeatureCalculator:
         Returns:
             int: 连胜场次（正数为连胜，负数为连败，0为无连胜）
         """
-        previous_matches = self.get_team_previous_matches(team_id, match_date, 20)  # 查看更多历史记录
+        previous_matches = self.get_team_previous_matches(
+            team_id, match_date, 20
+        )  # 查看更多历史记录
 
         if len(previous_matches) == 0:
             return 0
@@ -196,12 +216,12 @@ class SimpleFeatureCalculator:
         streak = 0
         for _, match in previous_matches.iterrows():
             # 判断该队是主队还是客队
-            if match['home_team_id'] == team_id:
-                team_score = match['home_score']
-                opponent_score = match['away_score']
+            if match["home_team_id"] == team_id:
+                team_score = match["home_score"]
+                opponent_score = match["away_score"]
             else:
-                team_score = match['away_score']
-                opponent_score = match['home_score']
+                team_score = match["away_score"]
+                opponent_score = match["home_score"]
 
             # 判断比赛结果
             if team_score > opponent_score:
@@ -219,7 +239,9 @@ class SimpleFeatureCalculator:
 
         return streak
 
-    def get_h2h_matches(self, home_team_id: int, away_team_id: int, match_date: datetime, limit: int = 3) -> pd.DataFrame:
+    def get_h2h_matches(
+        self, home_team_id: int, away_team_id: int, match_date: datetime, limit: int = 3
+    ) -> pd.DataFrame:
         """获取两支球队历史交锋记录.
 
         Args:
@@ -232,17 +254,29 @@ class SimpleFeatureCalculator:
             pd.DataFrame: 历史交锋记录
         """
         # 获取两支球队的历史交锋记录（不考虑主客场）
-        h2h_matches = self.matches_df[
-            (((self.matches_df['home_team_id'] == home_team_id) &
-              (self.matches_df['away_team_id'] == away_team_id)) |
-             ((self.matches_df['home_team_id'] == away_team_id) &
-              (self.matches_df['away_team_id'] == home_team_id))) &
-            (self.matches_df['match_date'] < match_date)
-        ].sort_values('match_date', ascending=False).head(limit)
+        h2h_matches = (
+            self.matches_df[
+                (
+                    (
+                        (self.matches_df["home_team_id"] == home_team_id)
+                        & (self.matches_df["away_team_id"] == away_team_id)
+                    )
+                    | (
+                        (self.matches_df["home_team_id"] == away_team_id)
+                        & (self.matches_df["away_team_id"] == home_team_id)
+                    )
+                )
+                & (self.matches_df["match_date"] < match_date)
+            ]
+            .sort_values("match_date", ascending=False)
+            .head(limit)
+        )
 
         return h2h_matches
 
-    def calculate_h2h_stats(self, home_team_id: int, away_team_id: int, match_date: datetime) -> int:
+    def calculate_h2h_stats(
+        self, home_team_id: int, away_team_id: int, match_date: datetime
+    ) -> int:
         """计算历史交锋统计.
 
         Args:
@@ -259,18 +293,18 @@ class SimpleFeatureCalculator:
 
         for _, match in h2h_matches.iterrows():
             # 判断主队在哪一方
-            if match['home_team_id'] == home_team_id:
+            if match["home_team_id"] == home_team_id:
                 # 主队就是home_team_id
-                if match['home_score'] > match['away_score']:
+                if match["home_score"] > match["away_score"]:
                     home_wins += 1
             else:
                 # 主队是away_team_id（也就是客队在当前比赛中）
-                if match['away_score'] > match['home_score']:
+                if match["away_score"] > match["home_score"]:
                     home_wins += 1
 
         return home_wins
 
-    def calculate_features_for_match(self, row: pd.Series) -> Dict:
+    def calculate_features_for_match(self, row: pd.Series) -> dict:
         """为单场比赛计算所有特征.
 
         Args:
@@ -282,53 +316,57 @@ class SimpleFeatureCalculator:
         features = {}
 
         # 基础信息特征
-        features['home_team_id'] = row['home_team_id']
-        features['away_team_id'] = row['away_team_id']
-        features['match_date'] = row['match_date']
-        features['match_result'] = self.calculate_match_result(row)
+        features["home_team_id"] = row["home_team_id"]
+        features["away_team_id"] = row["away_team_id"]
+        features["match_date"] = row["match_date"]
+        features["match_result"] = self.calculate_match_result(row)
 
         # 近期战绩特征
         home_points, home_avg_goals = self.calculate_team_recent_stats(
-            row['home_team_id'], row['match_date']
+            row["home_team_id"], row["match_date"]
         )
         away_points, away_avg_goals = self.calculate_team_recent_stats(
-            row['away_team_id'], row['match_date']
+            row["away_team_id"], row["match_date"]
         )
 
-        features['home_last_5_points'] = home_points
-        features['away_last_5_points'] = away_points
-        features['home_last_5_avg_goals'] = home_avg_goals
-        features['away_last_5_avg_goals'] = away_avg_goals
+        features["home_last_5_points"] = home_points
+        features["away_last_5_points"] = away_points
+        features["home_last_5_avg_goals"] = home_avg_goals
+        features["away_last_5_avg_goals"] = away_avg_goals
 
         # 高级特征：体能、实力、士气
-        home_advanced = self.calculate_team_advanced_stats(row['home_team_id'], row['match_date'])
-        away_advanced = self.calculate_team_advanced_stats(row['away_team_id'], row['match_date'])
+        home_advanced = self.calculate_team_advanced_stats(
+            row["home_team_id"], row["match_date"]
+        )
+        away_advanced = self.calculate_team_advanced_stats(
+            row["away_team_id"], row["match_date"]
+        )
 
         # 解包高级特征
         (home_goal_diff, home_win_rate, home_win_streak, home_rest_days) = home_advanced
         (away_goal_diff, away_win_rate, away_win_streak, away_rest_days) = away_advanced
 
         # 实力特征：净胜球
-        features['home_last_5_goal_diff'] = home_goal_diff
-        features['away_last_5_goal_diff'] = away_goal_diff
+        features["home_last_5_goal_diff"] = home_goal_diff
+        features["away_last_5_goal_diff"] = away_goal_diff
 
         # 士气特征：连胜场次
-        features['home_win_streak'] = home_win_streak
-        features['away_win_streak'] = away_win_streak
+        features["home_win_streak"] = home_win_streak
+        features["away_win_streak"] = away_win_streak
 
         # 胜率特征
-        features['home_last_5_win_rate'] = home_win_rate
-        features['away_last_5_win_rate'] = away_win_rate
+        features["home_last_5_win_rate"] = home_win_rate
+        features["away_last_5_win_rate"] = away_win_rate
 
         # 体能特征：休息天数
-        features['home_rest_days'] = home_rest_days
-        features['away_rest_days'] = away_rest_days
+        features["home_rest_days"] = home_rest_days
+        features["away_rest_days"] = away_rest_days
 
         # 历史交锋特征
         h2h_home_wins = self.calculate_h2h_stats(
-            row['home_team_id'], row['away_team_id'], row['match_date']
+            row["home_team_id"], row["away_team_id"], row["match_date"]
         )
-        features['h2h_last_3_home_wins'] = h2h_home_wins
+        features["h2h_last_3_home_wins"] = h2h_home_wins
 
         return features
 
@@ -368,18 +406,29 @@ class SimpleFeatureCalculator:
         """
         # 检查必需的列是否存在（包含新的高级特征）
         required_columns = [
-            'home_team_id', 'away_team_id', 'match_date', 'match_result',
-            'home_last_5_points', 'away_last_5_points',
-            'home_last_5_avg_goals', 'away_last_5_avg_goals',
-            'h2h_last_3_home_wins',
+            "home_team_id",
+            "away_team_id",
+            "match_date",
+            "match_result",
+            "home_last_5_points",
+            "away_last_5_points",
+            "home_last_5_avg_goals",
+            "away_last_5_avg_goals",
+            "h2h_last_3_home_wins",
             # 新增的高级特征
-            'home_last_5_goal_diff', 'away_last_5_goal_diff',
-            'home_win_streak', 'away_win_streak',
-            'home_last_5_win_rate', 'away_last_5_win_rate',
-            'home_rest_days', 'away_rest_days'
+            "home_last_5_goal_diff",
+            "away_last_5_goal_diff",
+            "home_win_streak",
+            "away_win_streak",
+            "home_last_5_win_rate",
+            "away_last_5_win_rate",
+            "home_rest_days",
+            "away_rest_days",
         ]
 
-        missing_columns = [col for col in required_columns if col not in features_df.columns]
+        missing_columns = [
+            col for col in required_columns if col not in features_df.columns
+        ]
         if missing_columns:
             logger.error(f"缺少必需的特征列: {missing_columns}")
             return False
@@ -391,18 +440,24 @@ class SimpleFeatureCalculator:
 
         # 检查第一场比赛的特征（应该是0或默认值）
         first_match = features_df.iloc[0]
-        if (first_match['home_last_5_points'] != 0 or
-            first_match['away_last_5_points'] != 0):
+        if (
+            first_match["home_last_5_points"] != 0
+            or first_match["away_last_5_points"] != 0
+        ):
             logger.warning("第一场比赛的近期积分不为0，可能存在数据泄露")
 
         # 验证新特征的合理性
         logger.info("=== 高级特征统计 ===")
         logger.info(f"休息天数分布: 主队 {features_df['home_rest_days'].describe()}")
-        logger.info(f"净胜球分布: 主队 {features_df['home_last_5_goal_diff'].describe()}")
+        logger.info(
+            f"净胜球分布: 主队 {features_df['home_last_5_goal_diff'].describe()}"
+        )
         logger.info(f"胜率分布: 主队 {features_df['home_last_5_win_rate'].describe()}")
         logger.info(f"连胜分布: 主队 {features_df['home_win_streak'].describe()}")
 
-        logger.info(f"特征验证通过，共生成 {len(features_df)} 条特征记录，包含 {len(required_columns)-4} 个预测特征")
+        logger.info(
+            f"特征验证通过，共生成 {len(features_df)} 条特征记录，包含 {len(required_columns) - 4} 个预测特征"
+        )
         return True
 
 
@@ -414,11 +469,11 @@ def load_data_from_database() -> pd.DataFrame:
 
         # 数据库连接配置
         db_config = {
-            'host': 'localhost',
-            'port': 5432,
-            'database': 'football_prediction',
-            'user': 'postgres',
-            'password': 'postgres-dev-password'
+            "host": "localhost",
+            "port": 5432,
+            "database": "football_prediction",
+            "user": "postgres",
+            "password": "postgres-dev-password",
         }
 
         conn = psycopg2.connect(**db_config)
@@ -452,7 +507,9 @@ def load_data_from_database() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def save_features_to_csv(features_df: pd.DataFrame, filepath: str = 'data/dataset_v1.csv'):
+def save_features_to_csv(
+    features_df: pd.DataFrame, filepath: str = "data/dataset_v1.csv"
+):
     """将特征数据保存为CSV文件.
 
     Args:
@@ -462,16 +519,17 @@ def save_features_to_csv(features_df: pd.DataFrame, filepath: str = 'data/datase
     try:
         # 确保目录存在
         import os
+
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         features_df.to_csv(filepath, index=False)
         logger.info(f"特征数据已保存到 {filepath}")
 
         # 显示前几行数据
-        print("特征数据预览:")
-        print(features_df.head())
-        print(f"\n数据形状: {features_df.shape}")
-        print(f"特征列: {list(features_df.columns)}")
+        logger.info("特征数据预览:")
+        logger.debug(f"特征数据前几行:\n{features_df.head()}")
+        logger.info(f"数据形状: {features_df.shape}")
+        logger.info(f"特征列: {list(features_df.columns)}")
 
     except Exception as e:
         logger.error(f"保存特征数据失败: {e}")
