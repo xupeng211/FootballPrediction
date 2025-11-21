@@ -115,40 +115,22 @@ jobs:
         echo "🧪 运行测试套件..."
         export $(cat .env.test | xargs)
 
-        # Run tests with coverage and 80% threshold requirement
+        # Run tests with coverage (先运行测试，再检查覆盖率)
         if [ -f "Makefile" ] && grep -q "test.unit" Makefile; then
-          # 使用Makefile运行测试，并添加80%覆盖率检查
+          # 使用Makefile运行测试（不使用覆盖率阈值检查）
           make test.unit
-
-          # 额外的覆盖率阈值检查 (80%)
-          echo "📊 检查测试覆盖率是否达到80%..."
-          python -m pytest tests/unit/ \
-            --cov=src \
-            --cov-report=xml \
-            --cov-report=term-missing \
-            --cov-fail-under=80 \
-            --junit-xml=test-results.xml \
-            --maxfail=5 \
-            -x || {
-              echo "❌ 测试覆盖率未达到80%要求，请增加测试用例"
-              exit 1
-          }
         else
           pytest tests/unit/ \
             -v \
             --cov=src \
             --cov-report=xml \
             --cov-report=term-missing \
-            --cov-fail-under=80 \
             --junit-xml=test-results.xml \
             --maxfail=5 \
-            -x || {
-              echo "❌ 测试覆盖率未达到80%要求，请增加测试用例"
-              exit 1
-          }
+            -x
         fi
 
-        # Generate coverage summary
+        # Generate coverage summary and check 80% threshold
         if [ -f .coverage ]; then
           echo "📊 生成覆盖率报告..."
           python -m coverage report --show-missing > coverage-summary.txt
@@ -167,6 +149,9 @@ jobs:
                 echo "❌ 覆盖率不足80%，当前为 ${COVERAGE_PERCENT}%"
                 echo "💡 请为未覆盖的代码添加测试用例"
                 echo "📋 查看coverage-summary.txt了解具体缺失的代码行"
+                echo ""
+                echo "📋 覆盖率详情:"
+                cat coverage-summary.txt
                 exit 1
               else
                 echo "✅ 覆盖率达标: ${COVERAGE_PERCENT}% ≥ 80%"
