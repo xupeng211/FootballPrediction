@@ -86,6 +86,44 @@ class DailyPipeline:
         self.current_step = 0
         self.errors = []
 
+    def _get_target_seasons(self) -> List[int]:
+        """
+        获取目标赛季列表.
+
+        根据当前日期智能判断当前赛季和上一赛季：
+        - 足球赛季通常跨年，从8月开始到次年5月结束
+        - 如果当前月份 >= 7，当前赛季 = 当前年份
+        - 如果当前月份 < 7，当前赛季 = 去年年份
+        - 返回 [当前赛季, 上一赛季] 以保证数据完整性
+
+        Returns:
+            List[int]: 目标赛季列表 [current_season, previous_season]
+        """
+        current_date = datetime.now()
+        current_month = current_date.month
+        current_year = current_date.year
+
+        # 判断当前赛季
+        if current_month >= 7:
+            # 7月及以后，当前赛季 = 当前年份
+            current_season = current_year
+        else:
+            # 6月及以前，当前赛季 = 去年年份
+            current_season = current_year - 1
+
+        # 计算上一赛季
+        previous_season = current_season - 1
+
+        target_seasons = [current_season, previous_season]
+
+        logger.info(f"🗓️  智能赛季判断:")
+        logger.info(f"    当前日期: {current_date.strftime('%Y-%m-%d')}")
+        logger.info(f"    当前赛季: {current_season}")
+        logger.info(f"    上一赛季: {previous_season}")
+        logger.info(f"    目标赛季列表: {target_seasons}")
+
+        return target_seasons
+
     def log_step(self, step_name: str, status: str = "START"):
         """记录管道步骤.
 
@@ -102,7 +140,7 @@ class DailyPipeline:
             logger.error(f"[{self.current_step}/{self.pipeline_steps}] {step_name} - ❌ 失败")
 
     async def step_1_data_sync(self) -> bool:
-        """步骤1：数据同步 - 获取最新比赛数据."""
+        """步骤1：数据同步 - 获取最新比赛数据（支持多赛季智能采集）."""
         step_name = "数据同步 (Data Sync)"
         self.log_step(step_name, "START")
 
@@ -111,23 +149,74 @@ class DailyPipeline:
             initialize_database()
             logger.info("数据库连接初始化成功")
 
+            # 获取目标赛季列表
+            target_seasons = self._get_target_seasons()
+
             # 创建数据采集器
             collector = FixturesCollector(data_source="football_api")
 
-            # 采集欧洲五大联赛2024赛季数据
-            result = await collector.collect_fixtures(
-                leagues=["PL", "PD", "BL1", "SA", "FL1"],  # 欧洲五大联赛：英超、西甲、德甲、意甲、法甲
-                season=2024
-            )
+            # 定义目标联赛
+            target_leagues = ["PL", "PD", "BL1", "SA", "FL1"]  # 欧洲五大联赛：英超、西甲、德甲、意甲、法甲
 
-            if result.success:
+            total_records_collected = 0
+            total_success = 0
+            total_errors = 0
+
+            logger.info(f"🏆 开始多赛季数据采集，目标联赛: {target_leagues}")
+            logger.info(f"📅 目标赛季: {target_seasons}")
+
+            # 遍历每个赛季进行采集
+            for season in target_seasons:
+                logger.info(f"🔄 正在采集 {season} 赛季数据...")
+
+                try:
+                    # 采集当前赛季的所有联赛数据
+                    season_result = await collector.collect_fixtures(
+                        leagues=target_leagues,
+                        season=season
+                    )
+
+                    if season_result.success:
+                        season_records = season_result.data.get('records_collected', 0)
+                        total_records_collected += season_records
+                        total_success += 1
+
+                        logger.info(f"✅ {season} 赛季数据采集成功，收集到 {season_records} 条记录")
+
+                        # 如果有详细的联赛统计信息，也记录下来
+                        if 'league_stats' in season_result.data:
+                            league_stats = season_result.data['league_stats']
+                            logger.info(f"📊 {season} 赛季联赛统计:")
+                            for league, stats in league_stats.items():
+                                logger.info(f"    - {league}: {stats}")
+                    else:
+                        total_errors += 1
+                        error_msg = season_result.error or "未知错误"
+                        logger.error(f"❌ {season} 赛季数据采集失败: {error_msg}")
+                        self.errors.append(f"{season}赛季数据采集失败: {error_msg}")
+
+                except Exception as e:
+                    total_errors += 1
+                    logger.error(f"❌ {season} 赛季数据采集异常: {e}")
+                    self.errors.append(f"{season}赛季数据采集异常: {str(e)}")
+
+            # 评估整体采集结果
+            logger.info("=" * 60)
+            logger.info("📊 多赛季采集统计摘要")
+            logger.info("=" * 60)
+            logger.info(f"🎯 目标赛季数: {len(target_seasons)}")
+            logger.info(f"✅ 成功采集赛季数: {total_success}")
+            logger.info(f"❌ 失败采集赛季数: {total_errors}")
+            logger.info(f"📄 总记录收集数: {total_records_collected}")
+
+            # 判断整体是否成功
+            if total_success > 0:
                 self.log_step(step_name, "COMPLETED")
-                logger.info(f"数据同步成功，采集到 {result.data.get('records_collected', 0)} 条记录")
+                logger.info(f"数据同步成功，共采集到 {total_records_collected} 条记录")
                 return True
             else:
                 self.log_step(step_name, "FAILED")
-                error_msg = result.error or "未知错误"
-                self.errors.append(f"数据同步失败: {error_msg}")
+                self.errors.append("所有赛季数据采集均失败")
                 return False
 
         except Exception as e:
