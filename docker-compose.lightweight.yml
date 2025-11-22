@@ -29,11 +29,13 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://postgres:football_prediction_2024@db:5432/football_prediction
+      ASYNC_DATABASE_URL: postgresql+asyncpg://postgres:football_prediction_2024@db:5432/football_prediction
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: football_prediction_secret_key_2024
       ENVIRONMENT: production
       LOG_LEVEL: INFO
       API_HOSTNAME: localhost
+      FOOTBALL_DATA_API_KEY: ed809154dc1f422da46a18d8961a98a0
     depends_on:
       db:
         condition: service_healthy

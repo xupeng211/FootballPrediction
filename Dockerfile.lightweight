@@ -9,9 +9,10 @@ ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 更新包源并安装最小依赖
+# 更新包源并安装最小依赖和cron
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    cron \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件
@@ -27,6 +28,7 @@ RUN pip install --no-cache-dir --prefer-binary \
     python-dotenv==1.2.1 \
     redis==7.0.1 \
     psycopg2-binary==2.9.11 \
+    asyncpg==0.29.0 \
     pandas==2.3.3 \
     numpy==2.3.4 \
     scikit-learn==1.7.2 \
@@ -46,6 +48,12 @@ RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app
 USER app
 
+# 复制启动脚本和cron配置
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY scripts/crontab /etc/cron.d/football-cron
+RUN chmod +x /usr/local/bin/entrypoint.sh && \
+    chmod 0644 /etc/cron.d/football-cron
+
 # 暴露端口
 EXPOSE 8000
 
@@ -53,5 +61,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
-# 启动命令
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 设置entrypoint为默认命令
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
