@@ -81,6 +81,9 @@ make docker.down.dev    # 停止开发环境
 make docker.build.dev   # 重新构建开发镜像
 
 # 轻量级开发环境 (新增)
+make docker.up.lightweight    # 启动轻量级全栈环境
+make docker.down.lightweight  # 停止轻量级环境
+make docker.logs.lightweight  # 查看轻量级环境日志
 docker-compose -f docker-compose.lightweight.yml up    # 轻量级全栈环境 (前端+后端+数据库+Redis)
 
 # 生产环境部署
@@ -128,23 +131,24 @@ make syntax-validate         # 验证测试文件可执行性
 ### 📋 Technology Requirements
 
 #### 后端技术栈 (From pyproject.toml)
-- **Python**: 3.10+ (支持现代类型注解)
-- **Web Framework**: FastAPI 0.104+ (async-first)
-- **ORM**: SQLAlchemy 2.0+ (async operations only)
+- **Python**: 3.10+ (支持 3.10, 3.11, 3.12)
+- **Web Framework**: FastAPI 0.121.2 (async-first)
+- **ORM**: SQLAlchemy 2.0.44 (async operations only)
 - **Data Validation**: Pydantic v2+ (strict mode)
-- **Testing**: pytest 8.4+ (with asyncio support)
+- **Testing**: pytest 9.0.1+ (with asyncio support)
 - **Database**: PostgreSQL 15 (async driver with psycopg2-binary)
-- **Cache**: Redis 7.0+ (async operations)
+- **Cache**: Redis 7.0.1 (async operations)
 - **Machine Learning**: XGBoost 2.0+, scikit-learn 1.3+, pandas 2.1+, numpy 1.25+
-- **Security**: PyJWT 2.8+ (replaced python-jose for ECDSA vulnerability fix)
+- **Security**: PyJWT 2.10.1 (replaced python-jose for ECDSA vulnerability fix)
 - **ML Model Management**: MLflow 2.22.2+ (with security patches)
 
-#### 前端技术栈
+#### 前端技术栈 (From package.json)
 - **Framework**: React 19.2.0 + TypeScript 4.9.5
 - **UI Library**: Ant Design 5.27.6
-- **Charts**: ECharts 5.4.3 + Ant Design Charts
-- **State Management**: Redux Toolkit
-- **Testing**: Jest + React Testing Library
+- **Charts**: ECharts 5.4.3 + Ant Design Charts 2.6.6
+- **State Management**: Redux Toolkit 2.9.2 + React Redux 9.2.0
+- **HTTP Client**: Axios 1.13.0
+- **Testing**: Jest + React Testing Library 16.3.0
 
 ### 🏛️ Architecture Pattern: DDD + CQRS + Event-Driven
 
@@ -203,10 +207,14 @@ make syntax-validate         # 验证测试文件可执行性
 ```
 
 ### 🌐 Application Endpoints
+- **主应用**: `http://localhost:8000` (FastAPI 应用入口)
+- **前端开发**: `http://localhost:3000` (React 开发服务器)
+- **质量仪表板**: `http://localhost:3001` (独立的质量监控应用)
 - **API Documentation**: `http://localhost:8000/docs` (Interactive OpenAPI)
 - **Health Check**: `http://localhost:8000/health` (基础 + 详细健康检查)
 - **System Status**: `http://localhost:8000/system/status`
-- **Application Root**: `http://localhost:8000/`
+- **Prometheus Metrics**: `http://localhost:8000/metrics`
+- **WebSocket**: `ws://localhost:8000/api/v1/realtime/ws` (实时通信)
 
 ---
 
@@ -261,7 +269,8 @@ pytest tests/unit/test_specific_file.py -k "test_keyword" -v
 ```
 
 ### 📊 Current Test Metrics
-- **Test Coverage**: 29.0% (Target: 40%, Gap: 11%)
+- **Test Coverage**: Use `make test.unit --cov=src --cov-report=term-missing` for actual coverage
+- **Test Framework**: pytest 9.0.1 + asyncio 1.3.0
 - **Test Files**: 269 test files organized by type
 - **Test Cases**: 385 active test cases across unit/integration/e2e
 - **Markers**: 57 standardized markers for test categorization
@@ -521,19 +530,20 @@ chore(security): upgrade MLflow to 2.22.2 for security patches
 
 ### 🎯 Current Quality Indicators
 - **CI Status**: ✅ Green baseline established with automated recovery
-- **Test Coverage**: 29.0% (Target: 40%, Gap: 11%)
+- **Test Coverage**: Use `make test.unit --cov=src --cov-report=term-missing` for actual coverage
 - **Test Suite**: 385 test cases, 269 test files
+- **Test Framework**: pytest 9.0.1 + asyncio 1.3.0
 - **Code Quality**: Ruff + Bandit validation passing
 - **Type Safety**: MyPy temporarily disabled for CI stability
 - **Security**: ✅ No critical vulnerabilities, ECDSA vulnerability patched
-- **Docker**: ✅ Multi-stage builds ready (dev/prod targets)
+- **Docker**: ✅ Multi-stage builds ready (dev/prod/lightweight targets)
 - **Dependencies**: ✅ All critical dependencies up-to-date, MLflow security patched
 
 ### 📋 Project Health Score
 ```
 Overall Health: 85/100 ✅
 ├── Code Quality: 90/100 ✅ (Ruff + Black + Bandit passing)
-├── Testing: 70/100 ⚠️ (29.0% coverage, need +11%)
+├── Testing: 70/100 ⚠️ (Run coverage check, Target: 40%)
 ├── Documentation: 95/100 ✅ (Comprehensive guides exist)
 ├── Security: 95/100 ✅ (No critical vulnerabilities)
 ├── CI/CD: 90/100 ✅ (Green pipeline with auto-recovery)
@@ -654,4 +664,4 @@ uvicorn src.main:app --reload  # Direct Python execution
 
 **Remember**: As an AI maintainer, your priority is maintaining architectural integrity and code quality. When in doubt, choose the conservative approach that preserves existing patterns.
 
-*Last Updated: 2025-11-22 | AI Maintainer: Claude Code | Version: 3.2 (Enhanced Docker Configuration & Full-Stack Development Guide)*
+*Last Updated: 2025-11-22 | AI Maintainer: Claude Code | Version: 3.3 (Updated Technology Stack Versions & Lightweight Deployment Features)*
