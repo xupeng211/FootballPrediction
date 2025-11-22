@@ -104,13 +104,14 @@ class ApiFootballAdapter(FootballDataAdapter):
         return await self.get_fixtures(**data)
 
     async def get_fixtures(
-        self, league_code: str = "PL", season: int = 2024
+        self, league_code: str = "PL", league_id: int = None, season: int = 2024
     ) -> list[dict[str, Any]]:
         """
         获取比赛赛程数据。
 
         Args:
             league_code: 联赛代码，默认为"PL"（英超）
+            league_id: 联赛数字ID，如果提供则优先使用此ID
             season: 赛季年份，默认为2024
 
         Returns:
@@ -121,11 +122,12 @@ class ApiFootballAdapter(FootballDataAdapter):
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                # 获取比赛数据
-                url = f"{self.base_url}/competitions/{league_code}/matches"
+                # 优先使用数字ID，回退到联赛代码
+                competition_id = league_id if league_id is not None else league_code
+                url = f"{self.base_url}/competitions/{competition_id}/matches"
                 params = {
                     "season": season,
-                    "limit": 100,  # 限制返回数量
+                    "limit": 500,  # 增加限制以获取更多比赛
                 }
 
                 response = await client.get(url, headers=self.headers, params=params)
