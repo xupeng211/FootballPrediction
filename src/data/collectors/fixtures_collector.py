@@ -38,18 +38,18 @@ class FixturesCollector:
     支持欧洲五大联赛采集和API速率限制保护.
     """
 
-    # 目标联赛配置 - 欧洲五大联赛
+    # 目标联赛配置 - 欧洲五大联赛 (使用验证过能跑通的Football-Data.org数字ID)
     TARGET_LEAGUES = [
-        {"code": "PL", "name": "Premier League", "country": "England"},
-        {"code": "PD", "name": "La Liga", "country": "Spain"},
-        {"code": "BL1", "name": "Bundesliga", "country": "Germany"},
-        {"code": "SA", "name": "Serie A", "country": "Italy"},
-        {"code": "FL1", "name": "Ligue 1", "country": "France"},
+        {"code": "PL", "name": "Premier League", "country": "England", "id": 2021},
+        {"code": "PD", "name": "La Liga", "country": "Spain", "id": 2014},
+        {"code": "BL1", "name": "Bundesliga", "country": "Germany", "id": 2002},
+        {"code": "SA", "name": "Serie A", "country": "Italy", "id": 2019},
+        {"code": "FL1", "name": "Ligue 1", "country": "France", "id": 2015},
     ]
 
-    # API速率限制配置
-    RATE_LIMIT_DELAY = 3  # 请求间隔（秒）
-    MAX_RETRIES = 2  # 最大重试次数
+    # API速率限制配置 (基于验证过的成功配置)
+    RATE_LIMIT_DELAY = 7  # 请求间隔（秒）- 使用保守的7秒间隔
+    MAX_RETRIES = 3  # 最大重试次数
 
     def __init__(
         self,
@@ -144,8 +144,13 @@ class FixturesCollector:
                     "name": league_name,
                 }
 
+                league_info = next(
+                    (league for league in self.TARGET_LEAGUES if league["code"] == league_code), None
+                )
+                league_id = league_info["id"] if league_info else None
+
                 league_data = await self._collect_league_with_rate_limit(
-                    league_code, season, league_name
+                    league_code, league_id, season, league_name
                 )
 
                 if league_data:
@@ -227,12 +232,13 @@ class FixturesCollector:
             return CollectionResult(success=False, error=f"未预期错误: {str(e)}")
 
     async def _collect_league_with_rate_limit(
-        self, league_code: str, season: int, league_name: str
+        self, league_code: str, league_id: int, season: int, league_name: str
     ) -> list[dict[str, Any]]:
         """使用速率限制保护采集单个联赛的数据.
 
         Args:
             league_code: 联赛代码
+            league_id: 联赛数字ID (Football-Data.org验证过的ID)
             season: 赛季
             league_name: 联赛名称
 
@@ -249,9 +255,10 @@ class FixturesCollector:
 
                 logger.debug(f"尝试采集联赛 {league_name} 第 {retry_count + 1} 次")
 
-                # 使用真实的API适配器获取数据
+                # 使用真实的API适配器获取数据 (使用验证过的数字ID)
+                logger.info(f"调用API获取联赛 {league_name} (ID: {league_id}) 的数据...")
                 league_fixtures = await self.api_adapter.get_fixtures(
-                    league_code=league_code, season=season
+                    league_id=league_id, season=season
                 )
 
                 logger.info(
@@ -306,10 +313,13 @@ class FixturesCollector:
                 )
 
                 if "429" in str(e).lower() and retry_count < max_retries:
-                    logger.info("检测到速率限制，增加等待时间...")
-                    wait_time = self.RATE_LIMIT_DELAY * (
-                        retry_count + 1
-                    )  # 递增等待时间
+                    logger.warning("检测到速率限制 (HTTP 429)，应用指数退避策略...")
+                    wait_time = self.RATE_LIMIT_DELAY * (2 ** retry_count)  # 指数退避: 7s, 14s, 28s
+                    logger.info(f"等待 {wait_time} 秒后重试 (第{retry_count + 1}次重试)...")
+                    await asyncio.sleep(wait_time)
+                elif "invalid" in str(e).lower() and retry_count < max_retries:
+                    logger.warning(f"API调用失败 (可能是ID问题)，重试第{retry_count + 1}次...")
+                    wait_time = self.RATE_LIMIT_DELAY * (retry_count + 1)
                     logger.info(f"等待 {wait_time} 秒后重试...")
                     await asyncio.sleep(wait_time)
 
