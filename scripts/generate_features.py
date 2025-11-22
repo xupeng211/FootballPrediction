@@ -79,19 +79,26 @@ class FeatureGenerator:
         logger.info("=" * 60)
 
         try:
-            # 数据库连接配置
-            db_config = {
-                'host': os.getenv('DB_HOST', 'localhost'),
-                'port': int(os.getenv('DB_PORT', 5432)),
-                'database': os.getenv('DB_NAME', 'football_prediction'),
-                'user': os.getenv('DB_USER', 'postgres'),
-                'password': os.getenv('DB_PASSWORD', 'postgres-dev-password')
-            }
+            # 优先读取环境变量 DATABASE_URL
+            db_url = os.getenv("DATABASE_URL")
+            if not db_url:
+                # 回退逻辑：使用单独的环境变量
+                db_user = os.getenv("POSTGRES_USER", "postgres")
+                db_password = os.getenv("POSTGRES_PASSWORD", "football_prediction_2024")
+                db_host = os.getenv("DB_HOST", "db")  # Docker里是 db，不是localhost
+                db_port = os.getenv("DB_PORT", "5432")
+                db_name = os.getenv("POSTGRES_DB", "football_prediction")
+                db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
-            logger.info(f"连接数据库: {db_config['host']}:{db_config['port']}/{db_config['database']}")
+            logger.info(f"使用数据库连接: {db_url.split('@')[1] if '@' in db_url else db_url}")
+
+            # Pandas 需要同步驱动，移除 asyncpg
+            if "+asyncpg" in db_url:
+                db_url = db_url.replace("+asyncpg", "")
+                logger.info("已将asyncpg驱动替换为psycopg2以适配Pandas")
 
             # 连接数据库并查询数据
-            conn = psycopg2.connect(**db_config)
+            conn = psycopg2.connect(db_url)
 
             query = """
             SELECT

@@ -25,7 +25,7 @@ sys.path.insert(0, str(project_root))
 try:
     import pandas as pd
     import numpy as np
-    from sklearn.model_selection import train_test_split
+    from sklearn.model_selection import train_test_split, RandomizedSearchCV, TimeSeriesSplit
     from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
     from sklearn.preprocessing import LabelEncoder
     import xgboost as xgb
@@ -178,13 +178,13 @@ class FootballModelTrainer:
             return None, None, None, None
 
     def train_model(self):
-        """训练XGBoost模型.
+        """训练XGBoost模型（包含超参数优化）.
 
         Returns:
             bool: 训练是否成功
         """
         try:
-            logger.info("🚀 开始训练XGBoost模型")
+            logger.info("🚀 开始训练XGBoost模型（含超参数优化）")
 
             # 准备数据
             X, y = self.prepare_features()
@@ -196,36 +196,131 @@ class FootballModelTrainer:
             if self.X_train is None:
                 return False
 
-            # 定义XGBoost参数
-            params = {
-                'objective': 'multi:softmax',  # 多分类
-                'num_class': 3,                # 3个类别：0=平局，1=主胜，2=客胜
-                'max_depth': 6,                # 树的最大深度
-                'learning_rate': 0.1,          # 学习率
-                'n_estimators': 100,           # 树的数量
-                'random_state': 42,            # 随机种子
-                'eval_metric': 'mlogloss',     # 评估指标
-                'use_label_encoder': False,    # 不使用标签编码器
+            # 第一步：训练基准模型（使用默认参数）
+            logger.info("📊 训练基准模型...")
+            baseline_params = {
+                'objective': 'multi:softmax',
+                'num_class': 3,
+                'max_depth': 6,
+                'learning_rate': 0.1,
+                'n_estimators': 100,
+                'random_state': 42,
+                'eval_metric': 'mlogloss',
+                'use_label_encoder': False,
             }
 
-            # 创建并训练模型
-            self.model = xgb.XGBClassifier(**params)
+            baseline_model = xgb.XGBClassifier(**baseline_params)
+            baseline_model.fit(self.X_train, self.y_train, eval_set=[(self.X_test, self.y_test)], verbose=False)
 
-            logger.info("🔄 开始模型训练...")
+            baseline_accuracy = accuracy_score(self.y_test, baseline_model.predict(self.X_test))
+            logger.info(f"📈 基准模型准确率: {baseline_accuracy:.4f} ({baseline_accuracy*100:.2f}%)")
+
+            # 第二步：超参数搜索
+            logger.info("🔍 开始超参数搜索...")
+
+            # 定义参数网格
+            param_distributions = {
+                'n_estimators': [100, 200, 300],
+                'max_depth': [3, 5, 7, 9],
+                'learning_rate': [0.01, 0.05, 0.1, 0.15],
+                'subsample': [0.6, 0.8, 1.0],
+                'colsample_bytree': [0.6, 0.8, 1.0],
+                'gamma': [0, 0.1, 0.2],
+                'reg_alpha': [0, 0.01, 0.1],
+                'reg_lambda': [1, 1.5, 2],
+                'min_child_weight': [1, 3, 5]
+            }
+
+            # 固定参数
+            fixed_params = {
+                'objective': 'multi:softmax',
+                'num_class': 3,
+                'random_state': 42,
+                'eval_metric': 'mlogloss',
+                'use_label_encoder': False,
+            }
+
+            # 创建基础模型
+            xgb_base = xgb.XGBClassifier(**fixed_params)
+
+            # 使用时间序列交叉验证
+            cv = TimeSeriesSplit(n_splits=3)
+
+            # 随机搜索
+            random_search = RandomizedSearchCV(
+                estimator=xgb_base,
+                param_distributions=param_distributions,
+                n_iter=20,  # 随机采样20组参数
+                scoring='accuracy',
+                cv=cv,
+                verbose=1,
+                random_state=42,
+                n_jobs=-1,  # 使用所有CPU核心
+                return_train_score=True
+            )
+
+            logger.info("🔄 执行随机搜索交叉验证...")
+            random_search.fit(self.X_train, self.y_train)
+
+            # 获取最佳参数
+            best_params = random_search.best_params_
+            best_cv_score = random_search.best_score_
+
+            logger.info("=" * 60)
+            logger.info("🎯 超参数搜索完成")
+            logger.info("=" * 60)
+            logger.info(f"🏆 最佳交叉验证准确率: {best_cv_score:.4f} ({best_cv_score*100:.2f}%)")
+            logger.info("🔧 最佳参数组合:")
+            for param, value in best_params.items():
+                logger.info(f"   {param}: {value}")
+            logger.info("=" * 60)
+
+            # 第三步：使用最佳参数训练最终模型
+            logger.info("🎓 使用最佳参数训练最终模型...")
+            final_params = {**fixed_params, **best_params}
+
+            self.model = xgb.XGBClassifier(**final_params)
+
+            # 训练最终模型
             self.model.fit(
                 self.X_train, self.y_train,
                 eval_set=[(self.X_test, self.y_test)],
                 verbose=False
             )
 
-            logger.info("✅ 模型训练完成")
+            # 评估最终模型
+            final_accuracy = accuracy_score(self.y_test, self.model.predict(self.X_test))
+
+            logger.info("=" * 60)
+            logger.info("📊 模型性能对比")
+            logger.info("=" * 60)
+            logger.info(f"🔵 基准模型准确率: {baseline_accuracy:.4f} ({baseline_accuracy*100:.2f}%)")
+            logger.info(f"🟢 优化模型准确率: {final_accuracy:.4f} ({final_accuracy*100:.2f}%)")
+
+            improvement = final_accuracy - baseline_accuracy
+            improvement_pct = (improvement / baseline_accuracy) * 100
+            logger.info(f"📈 性能提升: {improvement:.4f} ({improvement_pct:+.2f}%)")
+            logger.info("=" * 60)
 
             # 显示特征重要性
             feature_importance = self.model.feature_importances_
-            logger.info("📊 特征重要性:")
-            for name, importance in zip(self.feature_names, feature_importance):
+            logger.info("📊 最终模型特征重要性:")
+            # 按重要性排序
+            importance_pairs = sorted(zip(self.feature_names, feature_importance), key=lambda x: x[1], reverse=True)
+            for name, importance in importance_pairs:
                 logger.info(f"   {name}: {importance:.4f}")
 
+            # 保存超参数搜索结果
+            self.hyperparameter_results = {
+                'baseline_accuracy': baseline_accuracy,
+                'best_cv_score': best_cv_score,
+                'final_accuracy': final_accuracy,
+                'best_params': best_params,
+                'improvement': improvement,
+                'improvement_percentage': improvement_pct
+            }
+
+            logger.info("✅ 模型训练完成（含超参数优化）")
             return True
 
         except Exception as e:
@@ -293,7 +388,7 @@ class FootballModelTrainer:
 
             # 保存元数据
             metadata = {
-                'model_version': 'v1',
+                'model_version': 'v1_tuned',
                 'training_date': datetime.now().isoformat(),
                 'feature_names': self.feature_names,
                 'target_classes': ['平局', '主队胜', '客队胜'],
@@ -302,12 +397,32 @@ class FootballModelTrainer:
                 'num_features': len(self.feature_names)
             }
 
+            # 如果有超参数优化结果，添加到元数据中
+            if hasattr(self, 'hyperparameter_results'):
+                metadata.update({
+                    'hyperparameter_tuning': True,
+                    'tuning_results': self.hyperparameter_results,
+                    'best_parameters': self.hyperparameter_results.get('best_params', {}),
+                    'performance_improvement': {
+                        'baseline_accuracy': self.hyperparameter_results.get('baseline_accuracy'),
+                        'final_accuracy': self.hyperparameter_results.get('final_accuracy'),
+                        'improvement': self.hyperparameter_results.get('improvement'),
+                        'improvement_percentage': self.hyperparameter_results.get('improvement_percentage')
+                    }
+                })
+            else:
+                metadata['hyperparameter_tuning'] = False
+
             metadata_path = filepath.replace('.json', '_metadata.json')
             with open(metadata_path, 'w', encoding='utf-8') as f:
                 json.dump(metadata, f, ensure_ascii=False, indent=2)
 
-            logger.info(f"💾 模型已保存到: {filepath}")
+            logger.info(f"💾 优化模型已保存到: {filepath}")
             logger.info(f"📋 元数据已保存到: {metadata_path}")
+
+            if hasattr(self, 'hyperparameter_results'):
+                logger.info(f"🎯 包含超参数优化结果")
+                logger.info(f"📈 性能提升: {self.hyperparameter_results.get('improvement_percentage', 0):+.2f}%")
 
             return True
 
