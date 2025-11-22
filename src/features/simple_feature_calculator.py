@@ -464,19 +464,26 @@ class SimpleFeatureCalculator:
 def load_data_from_database() -> pd.DataFrame:
     """从数据库加载比赛数据."""
     try:
+        import os
         import psycopg2
         from psycopg2.extras import RealDictCursor
 
-        # 数据库连接配置
-        db_config = {
-            "host": "localhost",
-            "port": 5432,
-            "database": "football_prediction",
-            "user": "postgres",
-            "password": "postgres-dev-password",
-        }
+        # 优先读取环境变量 DATABASE_URL
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            # 回退逻辑：使用单独的环境变量
+            db_user = os.getenv("POSTGRES_USER", "postgres")
+            db_password = os.getenv("POSTGRES_PASSWORD", "football_prediction_2024")
+            db_host = os.getenv("DB_HOST", "db")  # Docker里是 db，不是localhost
+            db_port = os.getenv("DB_PORT", "5432")
+            db_name = os.getenv("POSTGRES_DB", "football_prediction")
+            db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
-        conn = psycopg2.connect(**db_config)
+        # Pandas 需要同步驱动，移除 asyncpg
+        if "+asyncpg" in db_url:
+            db_url = db_url.replace("+asyncpg", "")
+
+        conn = psycopg2.connect(db_url)
         query = """
         SELECT
             m.id as match_id,
