@@ -73,18 +73,18 @@ uvicorn src.main:app --reload  # 直接启动FastAPI应用 (8000端口)
 
 ### 🐳 Docker Development Environment
 ```bash
-# 开发环境管理 (热重载、调试支持)
+# 🚀 轻量级全栈开发 (推荐 - 一键启动前后端)
+make docker.up.lightweight    # 启动轻量级全栈环境 (前端+后端+数据库+Redis)
+make docker.down.lightweight  # 停止轻量级环境
+make docker.logs.lightweight  # 查看轻量级环境日志
+# 访问: Frontend http://localhost:3000 | Backend http://localhost:8000 | API Docs http://localhost:8000/docs
+
+# 标准开发环境管理 (热重载、调试支持)
 make docker.up.dev      # 启动开发环境 (app + db + redis)
 make docker.up.admin    # 启动开发环境 + 管理工具 (pgAdmin, Redis-Commander)
 make docker.logs.dev    # 查看应用日志
 make docker.down.dev    # 停止开发环境
 make docker.build.dev   # 重新构建开发镜像
-
-# 轻量级开发环境 (新增)
-make docker.up.lightweight    # 启动轻量级全栈环境
-make docker.down.lightweight  # 停止轻量级环境
-make docker.logs.lightweight  # 查看轻量级环境日志
-docker-compose -f docker-compose.lightweight.yml up    # 轻量级全栈环境 (前端+后端+数据库+Redis)
 
 # 生产环境部署
 make docker.build.prod  # 构建生产镜像
@@ -102,9 +102,27 @@ make cov.html         # 生成HTML覆盖率报告
 pytest -m "unit and not slow" --maxfail=5  # 快速失败模式
 pytest -m "critical" -v                    # 关键功能测试
 
-# 前端测试 (React + TypeScript)
+# 前端开发与测试 (React 19.2.0 + TypeScript 4.9.5)
+cd frontend && npm start                   # 启动开发服务器 (3000端口)
 cd frontend && npm test                    # Jest + React Testing Library
 cd frontend && npm run build               # 生产构建验证
+cd frontend && npm run lint                # ESLint代码质量检查
+```
+
+### 🤖 AI专属维护工具 (项目特色)
+```bash
+# 🔥 AI维护核心工具链 (其他项目少有)
+make solve-test-crisis       # 测试危机一键解决方案 (修复100+测试失败)
+make emergency-fix           # 紧急代码质量修复 (批量修复语法/导入/格式问题)
+make smart-fix              # 智能自动化修复 (AI驱动的代码质量工具)
+make quality-guardian       # 质量守护检查 (持续监控代码健康)
+make daily-quality          # 每日质量改进 (渐进式代码优化)
+
+# 🚨 危机处理工具
+make test-crisis-solution   # 完整测试危机解决方案
+make syntax-fix            # 自动修复语法错误
+make syntax-validate       # 验证测试文件可执行性
+make env-restore           # 环境恢复工具
 ```
 
 ### 🚨 Crisis Recovery (紧急情况处理)
@@ -251,22 +269,30 @@ tests/
 ```
 
 ### 🎯 Testing Commands (AI日常使用)
+
+#### 🚀 推荐测试策略 (基于57个标准化标记)
 ```bash
-# 核心测试组合 (推荐使用Makefile)
-make test.smart         # 快速冒烟测试 (推荐)
-make test.unit          # 单元测试 (默认)
-make test.integration   # 集成测试
-make test.all           # 完整测试套件
+# 日常开发测试流程 (推荐)
+make test.smart         # 🎯 快速冒烟测试 (<2分钟, smoke/critical标记) - 日常验证
+make test.unit          # 📦 完整单元测试 (85% of tests)
+make test.integration   # 🔗 集成测试 (12% of tests)
+make test.all           # 🎪 完整测试套件 (Unit + Integration)
 
-# 问题排查测试
-pytest -m "unit and not slow" -v              # 单元测试 (快速)
-pytest -m "critical and not slow" --maxfail=5 # 关键功能测试
-pytest -m "smoke or critical" -v              # 冒烟测试
+# 问题排查和调试
+pytest -m "unit and not slow" -v              # 单元测试 (快速模式)
+pytest -m "critical and not slow" --maxfail=5 # 关键功能测试 (核心业务)
+pytest -m "smoke or critical" -v              # 冒烟测试 (基本功能验证)
 
-# 运行单个测试文件（当需要调试时）
+# 单个测试调试
 pytest tests/unit/test_specific_file.py::test_function_name -v
 pytest tests/unit/test_specific_file.py -k "test_keyword" -v
 ```
+
+#### 📊 测试标记系统 (57个标准化标记)
+- **执行速度**: `@pytest.mark.slow` (>30s) vs 快速测试
+- **功能域**: `@pytest.mark.api`, `@pytest.mark.domain`, `@pytest.mark.ml`, `@pytest.mark.database`
+- **重要性**: `@pytest.mark.critical` (必须通过), `@pytest.mark.smoke` (基本功能)
+- **测试类型**: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.e2e`
 
 ### 📊 Current Test Metrics
 - **Test Coverage**: Use `make test.unit --cov=src --cov-report=term-missing` for actual coverage
@@ -664,4 +690,4 @@ uvicorn src.main:app --reload  # Direct Python execution
 
 **Remember**: As an AI maintainer, your priority is maintaining architectural integrity and code quality. When in doubt, choose the conservative approach that preserves existing patterns.
 
-*Last Updated: 2025-11-22 | AI Maintainer: Claude Code | Version: 3.3 (Updated Technology Stack Versions & Lightweight Deployment Features)*
+*Last Updated: 2025-11-23 | AI Maintainer: Claude Code | Version: 3.4 (Enhanced AI Maintenance Tools & Lightweight Development Features)*

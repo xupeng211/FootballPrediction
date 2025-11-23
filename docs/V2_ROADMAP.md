@@ -167,9 +167,239 @@ class EnsembleVoting:
         return final_prediction
 ```
 
-### C. 决策与风控 (Decision Engine)
+### C. 战意与情境引擎 (Context Engine)
 
-#### C1. 赔率异动监控 (Odds Movement Monitoring)
+#### C1. 积分榜回溯引擎 (Table Reconstructor)
+```yaml
+职责: 基于历史比分，逐日复原联赛积分榜和排名变化
+核心技术:
+  - 时间序列积分计算: 按比赛日期实时更新积分
+  - 多联赛并行处理: 支持英超、西甲、德甲等主流联赛
+  - 净胜球和胜负关系排序: 完整模拟官方排名规则
+
+算法实现:
+  - 输入: 历史比赛结果数据库
+  - 处理: 按日期排序比赛，逐轮计算积分和排名
+  - 输出: 每场比赛前的实时积分榜状态
+
+关键特征输出:
+  - points_to_top_4: 距离欧冠资格区的积分差距
+  - points_to_safety: 距离保级安全线的积分差距
+  - is relegation_battle: 是否处于降级区或边缘
+  - is_title_race: 是否参与冠军争夺
+  - is_dead_rubber: 是否为无意义的垃圾时间比赛
+  - european_competition_pressure: 欧战资格压力指数
+
+数据源集成:
+  - football-data.co.uk: 历史比赛结果和积分榜
+  - API-Football: 实时积分榜验证
+  - 自建数据库: 积分变化历史记录
+
+实现优先级: P1 (Phase 1.5 核心任务)
+```
+
+#### C2. 德比知识库 (Rivalry Matrix)
+```yaml
+职责: 建立全球足球德比关系图谱，量化战意加成
+知识库构建:
+  - 经典德比识别: 国家德比、城市德比、地区德比
+  - 历史对抗数据: 交锋历史、胜负统计、进球记录
+  - 情感强度评估: 基于媒体报道和球迷热度的量化指标
+
+德比分类体系:
+  国家级德比:
+    - 英格兰: 曼联vs利物浦、阿森纳vs热刺
+    - 西班牙: 皇马vs巴萨、马德里德比
+    - 德国: 拜仁vs多特、鲁尔德比
+    - 意大利: 国米vs尤文、米兰德比
+  城市级德比:
+    - 伦敦德比系列、曼彻斯特德比
+    - 利物浦德比、格拉斯哥德比
+  历史恩怨:
+    - 基于历史事件的特殊对抗关系
+    - 争议比赛导致的长期敌对关系
+
+特征输出:
+  - is_derby: 是否为德比战 (0/1)
+  - derby_intensity: 德比强度等级 (1-5)
+  - historical_advantage: 历史交锋优势方
+  - recent_form_bias: 近期交锋倾向
+  - crowd_pressure_factor: 主客场球迷压力指数
+
+更新机制:
+  - 季度更新: 新增德比关系识别
+  - 实时调整: 基于近期比赛的强度调整
+  - 机器学习: 自动发现潜在德比关系
+
+实现优先级: P1 (Phase 2 优化任务)
+```
+
+#### C3. 战意综合评分 (Motivation Score)
+```python
+# 伪代码：战意评分计算系统
+class MotivationEngine:
+    def __init__(self):
+        self.table_reconstructor = TableReconstructor()
+        self.rivalry_matrix = RivalryMatrix()
+        self.weight_config = {
+            'table_position': 0.4,      # 积分榜位置
+            'euro_qualification': 0.25, # 欧战资格
+            'relegation_battle': 0.2,   # 保级压力
+            'derby_factor': 0.15        # 德比加成
+        }
+
+    def calculate_motivation_score(self, match_data, match_date):
+        """
+        计算比赛双方的战意评分 (0-100)
+        """
+        # 获取积分榜情境
+        home_table_context = self.table_reconstructor.get_team_context(
+            match_data['home_team'], match_date
+        )
+        away_table_context = self.table_reconstructor.get_team_context(
+            match_data['away_team'], match_date
+        )
+
+        # 获取德比信息
+        derby_info = self.rivalry_matrix.get_rivalry_info(
+            match_data['home_team'], match_data['away_team']
+        )
+
+        # 计算主场战意
+        home_motivation = self._calculate_team_motivation(
+            home_table_context, derby_info, is_home=True
+        )
+
+        # 计算客场战意
+        away_motivation = self._calculate_team_motivation(
+            away_table_context, derby_info, is_home=False
+        )
+
+        return {
+            'home_motivation': home_motivation,
+            'away_motivation': away_motivation,
+            'motivation_gap': abs(home_motivation - away_motivation),
+            'context_factors': {
+                'home_pressure': home_table_context['pressure_level'],
+                'away_pressure': away_table_context['pressure_level'],
+                'derby_intensity': derby_info['intensity']
+            }
+        }
+
+    def _calculate_team_motivation(self, table_context, derby_info, is_home):
+        """计算单支球队战意"""
+        base_score = 50  # 基础战意
+
+        # 积分榜位置加成/减分
+        if table_context['is_title_race']:
+            base_score += 25
+        elif table_context['is_relegation_battle']:
+            base_score += 20
+        elif table_context['is_dead_rubber']:
+            base_score -= 15
+
+        # 欧战资格压力
+        euro_pressure = table_context.get('euro_pressure', 0)
+        base_score += euro_pressure * 10
+
+        # 德比加成
+        derby_bonus = derby_info['intensity'] * 5
+        base_score += derby_bonus
+
+        # 主客场调整
+        if is_home:
+            base_score += 5  # 主场通常战意更强
+
+        return min(100, max(0, base_score))  # 限制在0-100范围
+```
+
+### D. 基础设施服务 (Infrastructure Services)
+
+#### D1. 球队映射服务 (Team Mapping Service)
+```yaml
+职责: 解决多数据源之间队名不一致问题，建立统一球队标识体系
+核心挑战:
+  - 数据源队名差异: "Man United" vs "Manchester United" vs "曼联"
+  - 多语言队名: 英文、中文、本地化名称
+  - API返回格式不一致: 不同API的队名格式差异
+  - 历史队名变更: 球队更名、缩写变化
+
+技术实现:
+  映射表构建:
+    - 主映射表: team_mapping.json (标准化队名)
+    - 别名映射表: 每个标准化队名的所有别名
+    - API特定映射: 每个数据源的特殊映射规则
+    - 模糊匹配引擎: 基于Levenshtein距离的智能匹配
+
+匹配算法:
+  1. 精确匹配: 直接查找映射表
+  2. 模糊匹配: 字符串相似度计算
+  3. 上下文匹配: 基于联赛、年份的上下文信息
+  4. 人工校正: 不确定匹配项的人工审核
+
+数据结构:
+  team_mapping.json:
+    standard_name: "Manchester United"
+    aliases: ["Man United", "Man Utd", "曼联", "红魔"]
+    api_mappings:
+      football_data: "Manchester United"
+      api_football: 33
+      weather_api: "Manchester"
+    metadata:
+      league: "Premier League"
+      founded: 1878
+      stadium: "Old Trafford"
+
+服务接口:
+  - normalize_team_name(team_name, source_api): 标准化队名
+  - get_team_id(standard_name): 获取统一球队ID
+  - batch_normalize(team_list): 批量标准化
+  - add_mapping(standard_name, alias): 动态添加映射
+
+维护机制:
+  - 自动发现: 新队名的自动检测和匹配建议
+  - 定期审核: 季度性映射表质量审核
+  - 社区贡献: 开放的映射表贡献机制
+
+实现优先级: P0 (Phase 1 基础设施核心任务)
+```
+
+#### D2. 数据质量监控 (Data Quality Monitor)
+```yaml
+职责: 监控多源数据的质量和一致性，确保模型输入数据的可靠性
+监控维度:
+  完整性监控:
+    - 数据缺失率检测
+    - 关键字段覆盖度统计
+    - 历史数据连续性检查
+
+  准确性监控:
+    - 跨数据源一致性验证
+    - 异常值检测和告警
+    - 逻辑关系验证 (如积分榜计算正确性)
+
+  时效性监控:
+    - 数据更新延迟监控
+    - API响应时间统计
+    - 数据新鲜度评估
+
+质量指标:
+  - 数据完整性得分: 0-100分
+  - 数据一致性得分: 0-100分
+  - 数据时效性得分: 0-100分
+  - 综合质量得分: 加权平均
+
+告警机制:
+  - 实时告警: 关键数据质量问题立即通知
+  - 趋势告警: 质量下降趋势预警
+  - 每日报告: 数据质量日报
+
+实现优先级: P1 (Phase 1.5 质量保障任务)
+```
+
+### E. 决策与风控 (Decision Engine)
+
+#### E1. 赔率异动监控 (Odds Movement Monitoring)
 ```yaml
 监控机制:
   - 赛前24小时赔率变化追踪
@@ -185,7 +415,7 @@ class EnsembleVoting:
   - LOW: 正常预测，记录异常模式
 ```
 
-#### C2. 价值注判定 (Value Bet Identification)
+#### E2. 价值注判定 (Value Bet Identification)
 ```python
 # 价值投注计算逻辑
 def calculate_value_bet(model_probability, bookmaker_odds):
@@ -210,7 +440,7 @@ def calculate_value_bet(model_probability, bookmaker_odds):
     return {'is_value': False}
 ```
 
-#### C3. 凯利公式资金管理 (Kelly Criterion Bankroll Management)
+#### E3. 凯利公式资金管理 (Kelly Criterion Bankroll Management)
 ```yaml
 核心公式: f* = (bp - q) / b
 其中:
@@ -237,7 +467,7 @@ def calculate_value_bet(model_probability, bookmaker_odds):
 ### Phase 1: 数据补全与基础设施 (Weeks 1-4)
 **目标: 建立完整的数据基础，支持高级模型训练**
 
-#### Week 1-2: 历史数据集成
+#### Week 1-2: 历史数据集成与基础设施
 - [ ] **P11**: 集成 `football-data.co.uk` 历史赔率CSV
   - 数据清洗和标准化流程
   - 历史赔率-结果关联数据库构建
@@ -248,16 +478,31 @@ def calculate_value_bet(model_probability, bookmaker_odds):
   - 赛程数据自动同步机制
   - API配额监控和限流保护
 
-#### Week 3-4: 数据管道优化
+- [ ] **P12.5**: 构建 Team Mapping Service (新增)
+  - 建立 team_mapping.json 统一队名映射表
+  - 实现模糊匹配算法 (Levenshtein距离)
+  - API特定映射规则和多语言支持
+
+#### Week 3-4: 数据管道优化与战意引擎
 - [ ] **P13**: 构建 "隐形特征" 计算引擎
   - 休息天数和赛程密度算法
   - 主客场奔波距离计算
   - 球队轮换深度评估模型
 
+- [ ] **P13.5**: 开发积分榜回溯引擎 (新增)
+  - 基于历史比分的逐日积分榜复原
+  - 多联赛并行处理和排名规则模拟
+  - 关键特征提取 (points_to_top_4, relegation_battle等)
+
 - [ ] **P14**: 天气数据集成系统
   - OpenWeatherMap API对接
   - 天气对比赛影响的历史分析
   - 极端天气预警机制
+
+- [ ] **P14.5**: 建立数据质量监控系统 (新增)
+  - 多源数据一致性和完整性监控
+  - 实时质量指标计算和告警机制
+  - 自动化数据质量报告生成
 
 **交付物:**
 - 完整的历史数据仓库
@@ -278,19 +523,30 @@ def calculate_value_bet(model_probability, bookmaker_odds):
   - 联合概率分布算法
   - 波胆推荐系统
 
-#### Week 7-8: 模型融合与优化
+- [ ] **P16.5**: 构建德比知识库 (新增)
+  - 全球足球德比关系图谱构建
+  - 历史对抗数据收集和分析
+  - 德比强度评估算法开发
+
+#### Week 7-8: 模型融合与战意优化
 - [ ] **P17**: 集成投票机制框架
   - 多模型预测融合算法
   - 动态权重调整机制
   - 置信度评估体系
 
+- [ ] **P17.5**: 开发战意综合评分系统 (新增)
+  - 积分榜情境与德比信息融合
+  - 战意评分算法实现 (0-100分制)
+  - 战意差距和压力因子量化
+
 - [ ] **P18**: XGBoost 模型增强训练
-  - 新特征工程和选择
+  - 新特征工程和选择 (包含战意特征)
   - 超参数自动优化
   - 时间序列交叉验证
 
 **交付物:**
 - 多模型预测引擎
+- 战意分析系统 (积分榜回溯 + 德比知识库)
 - 模型性能评估报告
 - 自动化模型训练流程
 
