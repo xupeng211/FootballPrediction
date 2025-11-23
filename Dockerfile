@@ -1,119 +1,80 @@
-#
-# --- 1. Base Stage ---
-# 基础镜像，包含所有构建时和运行时共享的系统依赖
-#
-FROM python:3.11-slim AS base
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# 后端 Dockerfile - 足球预测系统 (轻量级快速版)
+FROM python:3.11-slim
 
-# 跳过系统包安装，直接使用 Python 基础镜像
-
+# 设置工作目录
 WORKDIR /app
 
-#
-# --- 2. Builder-Prod Stage ---
-# 此阶段用于为 *生产* 环境安装依赖
-#
-FROM base AS builder-prod
-# 配置pip使用清华镜像源并安装pip-tools
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pip-tools
+# 设置环境变量
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
 
-# 复制生产依赖 *锁定* 文件
-COPY requirements/prod.txt .
+# 更新包源并安装最小依赖和编译工具
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    cron \
+    gcc \
+    g++ \
+    make \
+    libffi-dev \
+    libssl-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# 创建虚拟环境并安装生产依赖（使用清华镜像源加速）
-RUN python -m venv /venv && \
-    . /venv/bin/activate && \
-    pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r prod.txt
+# 复制依赖文件
+COPY requirements.txt .
 
-#
-# --- 3. Builder-Dev Stage ---
-# 此阶段用于为 *开发和测试* 环境安装依赖
-#
-FROM base AS builder-dev
-# 配置pip使用清华镜像源并安装pip-tools
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pip-tools
+# 安装完整的 Python 依赖 (基于 pyproject.toml dependencies)
+RUN pip install --no-cache-dir --prefer-binary \
+    fastapi==0.121.2 \
+    uvicorn[standard]==0.38.0 \
+    sqlalchemy==2.0.44 \
+    pydantic==2.12.4 \
+    email-validator==2.0.0 \
+    aiosqlite==0.17.0 \
+    redis==7.0.1 \
+    psycopg2-binary==2.9.11 \
+    python-multipart==0.0.20 \
+    passlib[bcrypt]==1.7.4 \
+    python-dotenv==1.2.1 \
+    httpx==0.25.0 \
+    aiohttp==3.10.5 \
+    backoff==2.2.0 \
+    tenacity==8.2.0 \
+    pandas==2.3.3 \
+    numpy==2.3.4 \
+    scikit-learn==1.7.2 \
+    xgboost==2.0.3 \
+    requests==2.31.0 \
+    psutil==5.9.8 \
+    PyJWT==2.10.1 \
+    prometheus-client==0.14.0 \
+    mlflow==2.22.2 \
+    alembic==1.12.0 \
+    asyncpg==0.29.0
 
-# 复制开发依赖 *锁定* 文件 (包含所有 prod, dev, test 依赖)
-COPY requirements/dev.txt .
+# 复制启动脚本和cron配置 (需要在切换用户之前)
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY scripts/crontab /etc/cron.d/football-cron
+RUN chmod +x /usr/local/bin/entrypoint.sh && \
+    chmod 0644 /etc/cron.d/football-cron
 
-# 创建虚拟环境并安装开发依赖（使用清华镜像源加速）
-RUN python -m venv /venv && \
-    . /venv/bin/activate && \
-    pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r dev.txt
+# 复制应用代码
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+COPY pyproject.toml ./
 
-#
-# --- 4. Final (Production) Stage ---
-# 最终的生产镜像，非常精简
-#
-FROM base AS final
-# 复制已安装 *生产* 依赖的虚拟环境
-COPY --from=builder-prod /venv /venv
-
-# 复制项目源代码
-# (.dockerignore 将确保 .git, .venv, requirements/dev.txt 等被排除)
-COPY . .
-
-# 设置非 root 用户
-RUN useradd --create-home --shell /bin/bash appuser && \
-    chown -R appuser:appuser /app && \
-    chown -R appuser:appuser /venv
-USER appuser
-
-# 激活 venv
-ENV PATH="/venv/bin:$PATH"
-
-# 健康检查（使用 wget 替代 curl）
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:8000/health || exit 1
-
-# 暴露端口和运行
-EXPOSE 8000
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.main:app", "-w", "4", "-b", "0.0.0.0:8000"]
-
-#
-# --- 5. Development Stage ---
-# 用于本地开发的镜像，带实时重载
-#
-FROM base AS development
-# 复制已安装 *开发* 依赖的虚拟环境
-COPY --from=builder-dev /venv /venv
-
-# 设置非 root 用户
-RUN useradd --create-home --shell /bin/bash appuser && \
-    chown -R appuser:appuser /app && \
-    chown -R appuser:appuser /venv
-USER appuser
-
-# 激活 venv
-ENV PATH="/venv/bin:$PATH"
+# 创建非 root 用户
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app
+USER app
 
 # 暴露端口
 EXPOSE 8000
 
-# 默认命令 (带实时重载)
-# 注意：代码将通过 docker-compose volume 挂载到 /app
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# 健康检查 (使用wget替代curl)
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
-#
-# --- 6. Test Stage ---
-# 用于运行集成测试的镜像
-#
-FROM base AS test
-# 复制已安装 *开发* 依赖的虚拟环境
-COPY --from=builder-dev /venv /venv
-
-# 复制源代码
-COPY . .
-
-# 设置非 root 用户
-RUN useradd --create-home --shell /bin/bash appuser && \
-    chown -R appuser:appuser /app && \
-    chown -R appuser:appuser /venv
-USER appuser
-
-# 激活 venv
-ENV PATH="/venv/bin:$PATH"
-
-# 默认命令 (运行我们统一的 make test.all 命令)
-CMD ["make", "test.all"]
+# 设置entrypoint为默认命令
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
