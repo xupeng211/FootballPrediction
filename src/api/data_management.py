@@ -142,22 +142,25 @@ async def get_match_by_id(match_id: int) -> dict[str, Any]:
 
 
 @router.get("/teams")
-async def get_teams_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
-    """获取球队列表
-    Get teams list.
+async def get_teams_list(
+    limit: int = 20, offset: int = 0, session: AsyncSession = Depends(get_async_session)
+) -> dict[str, Any]:
+    """获取球队列表 - 使用真实数据库查询
+    Get teams list - using real database queries.
 
     Args:
         limit: 返回数量限制
         offset: 偏移量
+        session: 异步数据库会话
 
     Returns:
         球队列表信息
     """
     try:
-        from src.services.data import get_data_service
+        from src.services.real_data import get_real_data_service
 
-        data_service = get_data_service()
-        teams_data = data_service.get_teams_list(limit=limit, offset=offset)
+        data_service = get_real_data_service(session)
+        teams_data = await data_service.get_teams_list(limit=limit, offset=offset)
 
         return teams_data
 
@@ -168,21 +171,24 @@ async def get_teams_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
 
 
 @router.get("/teams/{team_id}")
-async def get_team_by_id(team_id: int) -> dict[str, Any]:
-    """根据ID获取球队信息
-    Get team information by ID.
+async def get_team_by_id(
+    team_id: int, session: AsyncSession = Depends(get_async_session)
+) -> dict[str, Any]:
+    """根据ID获取球队信息 - 使用真实数据库查询
+    Get team information by ID - using real database queries.
 
     Args:
         team_id: 球队ID
+        session: 异步数据库会话
 
     Returns:
         球队信息
     """
     try:
-        from src.services.data import get_data_service
+        from src.services.real_data import get_real_data_service
 
-        data_service = get_data_service()
-        team_data = data_service.get_team_by_id(team_id)
+        data_service = get_real_data_service(session)
+        team_data = await data_service.get_team_by_id(team_id)
 
         if team_data is None:
             raise HTTPException(status_code=404, detail=f"球队ID {team_id} 不存在")
