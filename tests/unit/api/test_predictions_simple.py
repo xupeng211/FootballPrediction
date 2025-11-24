@@ -339,7 +339,7 @@ class TestPredictionAPIEndpoints:
         assert response.status_code == 201
         data = response.json()
         assert data["match_id"] == match_id
-        assert data["model_version"] == "default"  # 默认值
+        assert data["model_version"] == "v1"  # 实际模型版本
 
     def test_batch_predict_success(self, client):
         """测试批量预测成功"""
