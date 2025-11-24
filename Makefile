@@ -1,10 +1,28 @@
 # 🐳 Football Prediction Docker Makefile
 # 用于标准化 Docker 开发环境的管理工具
+# 支持 CI 环境自动适配
 
 .PHONY: help dev prod clean shell logs db-shell test lint build
 
 # 默认目标
 .DEFAULT_GOAL := help
+
+# 检测是否在 CI 环境中
+ifdef CI
+    # CI 环境：直接运行命令
+    EXEC_CMD :=
+    EXEC_PREFIX :=
+    PYTEST_PREFIX :=
+    RUFF_PREFIX :=
+    BANDIT_PREFIX :=
+else
+    # 本地环境：在容器内运行
+    EXEC_CMD := docker-compose exec app
+    EXEC_PREFIX := docker-compose exec app bash -c
+    PYTEST_PREFIX := 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest'
+    RUFF_PREFIX := 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff'
+    BANDIT_PREFIX := 'export PATH=$$PATH:/home/app/.local/bin && cd /app && bandit'
+endif
 
 # 颜色定义
 GREEN := \033[32m
@@ -96,45 +114,85 @@ status: ## 管理/查看所有服务状态
 	@echo "$(BLUE)🔍 健康检查:$(RESET)"
 	@docker-compose exec app python -c "import urllib.request; print('✅ API健康')" 2>/dev/null || echo "❌ API不可访问"
 
-test: ## 管理/在容器中运行测试
-	@echo "$(YELLOW)🧪 在容器中运行测试...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ -v --tb=short'
+test: ## 管理/运行测试 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🧪 运行测试...$(RESET)"
+ifdef CI
+	pytest tests/ -v --tb=short
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ -v --tb=short'
+endif
 
-lint: ## 管理/在容器中运行代码检查
-	@echo "$(YELLOW)🔍 在容器中运行代码检查...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff check .'
+lint: ## 管理/运行代码检查 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🔍 运行代码检查...$(RESET)"
+ifdef CI
+	ruff check .
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff check .'
+endif
 
-format: ## 管理/在容器中运行代码格式化
-	@echo "$(YELLOW)🎨 在容器中运行代码格式化...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff format .'
+format: ## 管理/运行代码格式化 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🎨 运行代码格式化...$(RESET)"
+ifdef CI
+	ruff format .
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff format .'
+endif
 
-fix-code: ## 管理/在容器中运行代码自动修复
-	@echo "$(YELLOW)🔧 在容器中运行代码自动修复...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff check --fix .'
+fix-code: ## 管理/运行代码自动修复 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🔧 运行代码自动修复...$(RESET)"
+ifdef CI
+	ruff check --fix .
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff check --fix .'
+endif
 
-type-check: ## 管理/在容器中运行类型检查
-	@echo "$(YELLOW)🔍 在容器中运行类型检查...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && mypy src/ --ignore-missing-imports'
+type-check: ## 管理/运行类型检查 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🔍 运行类型检查...$(RESET)"
+ifdef CI
+	mypy src/ --ignore-missing-imports
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && mypy src/ --ignore-missing-imports'
+endif
 
-security-check: ## 管理/在容器中运行安全检查
-	@echo "$(YELLOW)🔒 在容器中运行安全检查...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && bandit -r src/'
+security-check: ## 管理/运行安全检查 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🔒 运行安全检查...$(RESET)"
+ifdef CI
+	bandit -r src/
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && bandit -r src/'
+endif
 
-coverage: ## 管理/在容器中生成覆盖率报告
-	@echo "$(YELLOW)📊 在容器中生成覆盖率报告...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ --cov=src --cov-report=html --cov-report=term-missing'
+coverage: ## 管理/生成覆盖率报告 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)📊 生成覆盖率报告...$(RESET)"
+ifdef CI
+	pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ --cov=src --cov-report=html --cov-report=term-missing'
+endif
 
-test.unit: ## 管理/在容器中运行单元测试
-	@echo "$(YELLOW)🧪 在容器中运行单元测试...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -v'
+test.unit: ## 管理/运行单元测试 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🧪 运行单元测试...$(RESET)"
+ifdef CI
+	pytest tests/unit/ -v --cov=src --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml --maxfail=5 -x
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -v'
+endif
 
-test.integration: ## 管理/在容器中运行集成测试
-	@echo "$(YELLOW)🧪 在容器中运行集成测试...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/integration/ -v'
+test.integration: ## 管理/运行集成测试 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🧪 运行集成测试...$(RESET)"
+ifdef CI
+	pytest tests/integration/ -v
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/integration/ -v'
+endif
 
-test.all: ## 管理/在容器中运行所有测试
-	@echo "$(YELLOW)🧪 在容器中运行所有测试...$(RESET)"
-	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ -v'
+test.all: ## 管理/运行所有测试 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🧪 运行所有测试...$(RESET)"
+ifdef CI
+	pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml --maxfail=5 -x
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ -v'
+endif
 
 # 清理命令
 clean: ## 管理/清理容器和缓存
