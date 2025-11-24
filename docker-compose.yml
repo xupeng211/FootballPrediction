@@ -60,6 +60,29 @@ services:
       timeout: 3s
       retries: 3
 
+  # Frontend React 应用
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"  # 内部80端口，外部映射到3000（可选，用于直接访问）
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_BASE_URL=http://localhost/api
+    volumes:
+      - ./frontend:/app  # 开发模式热重载
+      - /app/node_modules  # 避免node_modules被覆盖
+    restart: unless-stopped
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   nginx:
     image: nginx:alpine
     ports:
@@ -68,11 +91,84 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app
+      - frontend
     restart: unless-stopped
+
+  # Celery Worker - 执行异步任务
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - ENV=development
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-development-only}
+      - FOOTBALL_DATA_API_KEY=${FOOTBALL_DATA_API_KEY}
+      - PYTHONPATH=/app
+      - C_FORCE_ROOT=true  # 允许在容器中以root身份运行celery
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+      - ./models:/app/models
+    restart: unless-stopped
+    command: [
+      "celery",
+      "-A", "src.tasks.celery_app",
+      "worker",
+      "--loglevel=info",
+      "--concurrency=2",
+      "--prefetch-multiplier=1"
+    ]
+
+  # Celery Beat - 定时任务调度器
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - ENV=development
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-development-only}
+      - FOOTBALL_DATA_API_KEY=${FOOTBALL_DATA_API_KEY}
+      - PYTHONPATH=/app
+      - C_FORCE_ROOT=true
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+      - ./models:/app/models
+      - celerybeat_data:/app/celerybeat-schedule
+    restart: unless-stopped
+    command: [
+      "celery",
+      "-A", "src.tasks.celery_app",
+      "beat",
+      "--loglevel=info",
+      "--pidfile=/tmp/celerybeat.pid",
+      "--schedule=/tmp/celerybeat-schedule"
+    ]
 
 volumes:
   postgres_data:
   redis_data:
+  celerybeat_data:
 
 networks:
   default:

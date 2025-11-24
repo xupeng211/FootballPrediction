@@ -136,6 +136,10 @@ app.conf.update(
             "exchange": "backup",
             "routing_key": "backup",
         },
+        "features": {
+            "exchange": "features",
+            "routing_key": "features",
+        },
     },
 )
 
@@ -173,6 +177,18 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=4, minute=0),
         "options": {"queue": "maintenance"},
         "kwargs": {"days_to_keep": 7},
+    },
+    # 完整数据管道 - 每日凌晨3:30执行（在采集后，清理前）
+    "daily-complete-pipeline": {
+        "task": "tasks.pipeline_tasks.complete_data_pipeline",
+        "schedule": crontab(hour=3, minute=30),
+        "options": {"queue": "features"},
+    },
+    # 特征计算任务 - 每小时检查一次是否有新数据需要特征计算
+    "hourly-feature-calculation": {
+        "task": "tasks.pipeline_tasks.trigger_feature_calculation_for_new_matches",
+        "schedule": crontab(minute=30),  # 每小时30分执行
+        "options": {"queue": "features"},
     },
     # Kafka流处理任务
     # 批量消费Kafka流 - 每分钟
@@ -227,7 +243,14 @@ app.conf.beat_schedule = {
 }
 
 # 自动发现任务模块
-app.autodiscover_tasks(["src.tasks"])
+app.autodiscover_tasks([
+    "src.tasks.data_collection",
+    "src.tasks.data_collection_tasks",
+    "src.tasks.pipeline_tasks",
+    "src.tasks.maintenance_tasks",
+    "src.tasks.backup_tasks",
+    "src.tasks.streaming_tasks"
+])
 
 # 为了向后兼容，提供 celery_app 别名
 celery_app = app
