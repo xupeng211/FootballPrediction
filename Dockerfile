@@ -51,7 +51,8 @@ RUN pip install --no-cache-dir --prefer-binary \
     prometheus-client==0.14.0 \
     mlflow==2.22.2 \
     alembic==1.12.0 \
-    asyncpg==0.29.0
+    asyncpg==0.29.0 \
+    celery==5.4.0
 
 # 复制启动脚本和cron配置 (需要在切换用户之前)
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
