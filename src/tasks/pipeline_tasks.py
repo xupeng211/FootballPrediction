@@ -42,6 +42,9 @@ def data_cleaning_task(self, collection_result: Dict[str, Any]) -> Dict[str, Any
     try:
         logger.info(f"开始执行数据清洗任务，处理采集结果: {collection_result}")
 
+        # 确保数据库已初始化
+        ensure_database_initialized()
+
         # 这里实现数据清洗逻辑
         # 暂时返回成功状态，后续可以集成FootballDataCleaner
         cleaning_result = {
@@ -77,12 +80,8 @@ def feature_engineering_task(self, cleaning_result: Dict[str, Any]) -> Dict[str,
     try:
         logger.info(f"开始执行特征工程任务，处理清洗结果: {cleaning_result}")
 
-        # 调用特征服务进行特征计算
-        from src.services.feature_service import FeatureService
-        from src.database.connection import DatabaseManager
-
-        # 初始化数据库连接
-        db_manager = DatabaseManager()
+        # 确保数据库已初始化
+        db_manager = ensure_database_initialized()
 
         # 模拟特征计算（实际应该根据清洗后的数据计算特征）
         features_calculated = cleaning_result.get("cleaned_records", 0)
@@ -126,6 +125,9 @@ def data_storage_task(self, feature_result: Dict[str, Any]) -> Dict[str, Any]:
     try:
         logger.info(f"开始执行数据存储任务，处理特征结果: {feature_result}")
 
+        # 确保数据库已初始化
+        db_manager = ensure_database_initialized()
+
         # 这里实现特征数据到数据库的存储
         stored_features = feature_result.get("features_calculated", 0)
 
@@ -148,6 +150,37 @@ def data_storage_task(self, feature_result: Dict[str, Any]) -> Dict[str, Any]:
         }
 
 
+def ensure_database_initialized():
+    """确保数据库管理器已初始化."""
+    try:
+        from src.database.connection import DatabaseManager
+        import os
+
+        db_manager = DatabaseManager()
+
+        # 检查是否已初始化
+        if not hasattr(db_manager, "_initialized") or not db_manager._initialized:
+            # 使用环境变量获取数据库URL
+            database_url = os.getenv("DATABASE_URL")
+            if not database_url:
+                # 回退逻辑：使用单独的环境变量
+                db_user = os.getenv("POSTGRES_USER", "postgres")
+                db_password = os.getenv("POSTGRES_PASSWORD", "football_prediction_2024")
+                db_host = os.getenv("DB_HOST", "db")
+                db_port = os.getenv("DB_PORT", "5432")
+                db_name = os.getenv("POSTGRES_DB", "football_prediction")
+                database_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+            db_manager.initialize(database_url=database_url)
+            db_manager._initialized = True
+            logger.info("数据库管理器初始化成功")
+
+        return db_manager
+    except Exception as e:
+        logger.error(f"数据库初始化失败: {e}")
+        raise
+
+
 @shared_task(bind=True, name="complete_data_pipeline")
 def complete_data_pipeline(self) -> Dict[str, Any]:
     """完整的数据管道任务.
@@ -160,7 +193,13 @@ def complete_data_pipeline(self) -> Dict[str, Any]:
     try:
         logger.info("开始执行完整数据管道")
 
+        # 确保数据库已初始化
+        ensure_database_initialized()
+
         # 定义任务链：采集 -> 清洗 -> 特征 -> 存储
+        # 使用正确的 Celery chain 语法，导入实际任务函数
+        from .data_collection_tasks import collect_daily_fixtures
+
         pipeline = chain(
             collect_daily_fixtures.s(),
             data_cleaning_task.s(),
@@ -169,13 +208,14 @@ def complete_data_pipeline(self) -> Dict[str, Any]:
         )
 
         # 执行管道
-        result = pipeline()
+        result = pipeline.apply_async()
 
         pipeline_result = {
             "status": "success",
             "pipeline_completed": True,
             "completion_timestamp": datetime.utcnow().isoformat(),
-            "final_result": result
+            "task_id": result.id,
+            "message": "数据管道任务链已启动"
         }
 
         logger.info(f"完整数据管道执行完成: {pipeline_result}")
