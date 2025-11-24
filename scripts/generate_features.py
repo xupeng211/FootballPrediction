@@ -200,6 +200,104 @@ class FeatureGenerator:
             logger.error(f"❌ 特征验证失败: {e}")
             return False
 
+    def save_to_database(self):
+        """保存特征数据到数据库."""
+        logger.info("=" * 60)
+        logger.info("💾 开始保存特征到数据库")
+        logger.info("=" * 60)
+
+        try:
+            import json
+            from sqlalchemy import create_engine
+
+            # 获取数据库连接
+            db_url = os.getenv("DATABASE_URL")
+            if not db_url:
+                # 回退逻辑：使用单独的环境变量
+                db_user = os.getenv("POSTGRES_USER", "postgres")
+                db_password = os.getenv("POSTGRES_PASSWORD", "football_prediction_2024")
+                db_host = os.getenv("DB_HOST", "db")
+                db_port = os.getenv("DB_PORT", "5432")
+                db_name = os.getenv("POSTGRES_DB", "football_prediction")
+                db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+            # Pandas需要同步驱动，移除asyncpg
+            if "+asyncpg" in db_url:
+                db_url = db_url.replace("+asyncpg", "")
+
+            # 创建SQLAlchemy引擎
+            engine = create_engine(db_url)
+
+            # 准备批量插入数据 - 适配实际表结构
+            batch_data = []
+
+            logger.info(f"开始准备 {len(self.features_df)} 条特征记录...")
+
+            for index, row in self.features_df.iterrows():
+                try:
+                    # 准备特征数据 - 只包含实际表结构中的字段
+                    feature_record = {
+                        'match_id': int(row['match_id']),
+                        'feature_data': json.dumps({
+                            'home_team_id': int(row['home_team_id']),
+                            'away_team_id': int(row['away_team_id']),
+                            'match_date': str(row['match_date']),
+                            'match_result': int(row['match_result']),
+                            'home_last_5_points': float(row['home_last_5_points']),
+                            'away_last_5_points': float(row['away_last_5_points']),
+                            'home_last_5_avg_goals': float(row['home_last_5_avg_goals']),
+                            'away_last_5_avg_goals': float(row['away_last_5_avg_goals']),
+                            'home_last_5_goal_diff': float(row['home_last_5_goal_diff']),
+                            'away_last_5_goal_diff': float(row['away_last_5_goal_diff']),
+                            'home_win_streak': int(row['home_win_streak']),
+                            'away_win_streak': int(row['away_win_streak']),
+                            'home_last_5_win_rate': float(row['home_last_5_win_rate']),
+                            'away_last_5_win_rate': float(row['away_last_5_win_rate']),
+                            'home_rest_days': int(row['home_rest_days']),
+                            'away_rest_days': int(row['away_rest_days']),
+                            'h2h_last_3_home_wins': int(row['h2h_last_3_home_wins'])
+                        })
+                    }
+                    batch_data.append(feature_record)
+
+                    # 每50条记录显示一次进度
+                    if (index + 1) % 50 == 0:
+                        logger.info(f"已准备 {index + 1}/{len(self.features_df)} 条记录...")
+
+                except Exception as e:
+                    logger.error(f"准备第 {index} 条记录失败: {e}")
+                    continue
+
+            logger.info(f"开始批量插入 {len(batch_data)} 条特征记录到数据库...")
+
+            # 批量插入到数据库 - 使用pandas to_sql直接插入
+            features_df = pd.DataFrame(batch_data)
+
+            # 添加时间戳
+            from datetime import datetime
+            features_df['created_at'] = datetime.now()
+            features_df['updated_at'] = datetime.now()
+
+            # 使用pandas的to_sql批量插入，只包含实际表结构中的字段
+            features_df.to_sql(
+                'features',
+                engine,
+                if_exists='append',
+                index=False
+            )
+
+            logger.info(f"✅ 成功保存 {len(batch_data)} 条特征记录到数据库")
+
+            logger.info(f"✅ 成功保存 {len(batch_data)} 条特征记录到数据库")
+            return True
+
+        except Exception as e:
+            logger.error(f"❌ 保存到数据库失败: {e}")
+            # 打印详细错误信息用于调试
+            import traceback
+            logger.error(f"详细错误信息: {traceback.format_exc()}")
+            return False
+
     def save_dataset(self, filepath: str = 'data/dataset_v1.csv'):
         """保存数据集."""
         logger.info("=" * 60)
@@ -288,11 +386,15 @@ class FeatureGenerator:
             if not self.validate_features():
                 return False
 
-            # 4. 保存数据集
+            # 4. 保存到数据库 (新增)
+            if not self.save_to_database():
+                logger.warning("⚠️ 保存到数据库失败，但继续保存CSV文件")
+
+            # 5. 保存数据集
             if not self.save_dataset(output_path):
                 return False
 
-            # 5. 生成摘要报告
+            # 6. 生成摘要报告
             self.generate_summary_report()
 
             end_time = datetime.now()
@@ -302,6 +404,7 @@ class FeatureGenerator:
             logger.info("🎉 特征生成流程完成！")
             logger.info(f"⏱️  总耗时: {duration}")
             logger.info(f"💾 输出文件: {output_path}")
+            logger.info("🗄️  数据库: features 表已更新")
             logger.info("=" * 60)
 
             return True
