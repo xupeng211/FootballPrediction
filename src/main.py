@@ -63,15 +63,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # 初始化各个系统
     try:
         # 初始化数据库 (测试环境中跳过)
-        if initialize_database and not is_test_env:
+        if not is_test_env:
             try:
+                logger.info("🔄 正在初始化数据库连接...")
                 initialize_database()
                 logger.info("✅ 数据库初始化完成")
+
+                # 验证数据库连接
+                from src.database.definitions import get_database_manager
+                db_manager = get_database_manager()
+                if db_manager.initialized:
+                    logger.info("✅ 数据库管理器验证通过")
+                else:
+                    raise RuntimeError("数据库管理器初始化失败")
+
             except Exception as e:
                 logger.error(f"❌ 数据库初始化失败: {e}")
+                logger.error(f"❌ 错误详情: {type(e).__name__}: {str(e)}")
                 raise
         else:
-            logger.warning("⚠️ 数据库初始化函数未定义，跳过")
+            logger.warning("⚠️ 测试环境，跳过数据库初始化")
 
         # 初始化事件系统
         await initialize_event_system()
@@ -171,7 +182,7 @@ async def get_prediction(match_id: int):
         from src.services.inference_service import inference_service
 
         # 调用推理服务进行预测
-        prediction_result = inference_service.predict_match(match_id)
+        prediction_result = await inference_service.predict_match(match_id)
 
         if not prediction_result.get("success", False):
             raise HTTPException(
@@ -195,7 +206,7 @@ async def generate_prediction(match_id: int):
         from src.services.inference_service import inference_service
 
         # 调用推理服务进行实时预测
-        prediction_result = inference_service.predict_match(match_id)
+        prediction_result = await inference_service.predict_match(match_id)
 
         if not prediction_result.get("success", False):
             raise HTTPException(

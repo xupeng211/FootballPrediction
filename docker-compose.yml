@@ -7,11 +7,14 @@ services:
       dockerfile: Dockerfile  # 使用新的标准 Dockerfile
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - ENV=development
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-development-only}
+      - FOOTBALL_DATA_API_KEY=${FOOTBALL_DATA_API_KEY}
       - PYTHONPATH=/app
     depends_on:
       db:
@@ -22,6 +25,7 @@ services:
       - ./src:/app/src
       - ./tests:/app/tests
       - ./scripts:/app/scripts
+      - ./models:/app/models
     restart: unless-stopped
     command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
