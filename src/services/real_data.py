@@ -6,7 +6,7 @@ Provides real database query service based on SQLAlchemy, replacing Mock data.
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -44,7 +44,9 @@ class RealDataService:
             球队列表数据，包含分页信息
         """
         try:
-            self.logger.info(f"Querying teams from database: limit={limit}, offset={offset}")
+            self.logger.info(
+                f"Querying teams from database: limit={limit}, offset={offset}"
+            )
 
             # 查询球队总数
             count_query = select(Team)
@@ -67,12 +69,18 @@ class RealDataService:
                     "founded": team.founded_year,
                     "stadium": team.venue,
                     "website": team.website,
-                    "created_at": team.created_at.isoformat() if team.created_at else None,
-                    "updated_at": team.updated_at.isoformat() if team.updated_at else None,
+                    "created_at": team.created_at.isoformat()
+                    if team.created_at
+                    else None,
+                    "updated_at": team.updated_at.isoformat()
+                    if team.updated_at
+                    else None,
                 }
                 teams_data.append(team_dict)
 
-            self.logger.info(f"Successfully retrieved {len(teams_data)} teams from database")
+            self.logger.info(
+                f"Successfully retrieved {len(teams_data)} teams from database"
+            )
 
             return {
                 "teams": teams_data,
@@ -85,7 +93,7 @@ class RealDataService:
             self.logger.error(f"Error querying teams from database: {e}")
             raise e
 
-    async def get_team_by_id(self, team_id: int) -> Optional[dict[str, Any]]:
+    async def get_team_by_id(self, team_id: int) -> dict[str, Any] | None:
         """
         根据ID获取球队信息 - 从真实数据库查询
         Get team information by ID - query from real database.
@@ -126,7 +134,9 @@ class RealDataService:
             self.logger.error(f"Error querying team {team_id} from database: {e}")
             raise e
 
-    async def get_matches_list(self, limit: int = 50, offset: int = 0) -> dict[str, Any]:
+    async def get_matches_list(
+        self, limit: int = 50, offset: int = 0
+    ) -> dict[str, Any]:
         """
         获取比赛列表 - 从真实数据库查询
         Get matches list - query from real database.
@@ -139,7 +149,9 @@ class RealDataService:
             比赛列表数据，包含分页信息
         """
         try:
-            self.logger.info(f"Querying matches from database: limit={limit}, offset={offset}")
+            self.logger.info(
+                f"Querying matches from database: limit={limit}, offset={offset}"
+            )
 
             # 查询比赛总数
             count_query = select(Match)
@@ -169,16 +181,24 @@ class RealDataService:
                     "home_score": match.home_score,
                     "away_score": match.away_score,
                     "status": match.status,
-                    "match_date": match.match_date.isoformat() if match.match_date else None,
+                    "match_date": match.match_date.isoformat()
+                    if match.match_date
+                    else None,
                     "venue": match.venue,
                     "league_id": match.league_id,
                     "season": match.season,
-                    "created_at": match.created_at.isoformat() if match.created_at else None,
-                    "updated_at": match.updated_at.isoformat() if match.updated_at else None,
+                    "created_at": match.created_at.isoformat()
+                    if match.created_at
+                    else None,
+                    "updated_at": match.updated_at.isoformat()
+                    if match.updated_at
+                    else None,
                 }
                 matches_data.append(match_dict)
 
-            self.logger.info(f"Successfully retrieved {len(matches_data)} matches from database")
+            self.logger.info(
+                f"Successfully retrieved {len(matches_data)} matches from database"
+            )
 
             return {
                 "matches": matches_data,
@@ -191,7 +211,7 @@ class RealDataService:
             self.logger.error(f"Error querying matches from database: {e}")
             raise e
 
-    async def get_match_by_id(self, match_id: int) -> Optional[dict[str, Any]]:
+    async def get_match_by_id(self, match_id: int) -> dict[str, Any] | None:
         """
         根据ID获取比赛信息 - 从真实数据库查询
         Get match information by ID - query from real database.
@@ -227,12 +247,18 @@ class RealDataService:
                 "home_score": match.home_score,
                 "away_score": match.away_score,
                 "status": match.status,
-                "match_date": match.match_date.isoformat() if match.match_date else None,
+                "match_date": match.match_date.isoformat()
+                if match.match_date
+                else None,
                 "venue": match.venue,
                 "league_id": match.league_id,
                 "season": match.season,
-                "created_at": match.created_at.isoformat() if match.created_at else None,
-                "updated_at": match.updated_at.isoformat() if match.updated_at else None,
+                "created_at": match.created_at.isoformat()
+                if match.created_at
+                else None,
+                "updated_at": match.updated_at.isoformat()
+                if match.updated_at
+                else None,
             }
 
             self.logger.info(f"Successfully retrieved match {match_id} from database")

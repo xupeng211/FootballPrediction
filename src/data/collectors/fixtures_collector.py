@@ -128,7 +128,12 @@ class FixturesCollector:
             # 按联赛采集赛程数据（支持速率限制）
             for i, league_code in enumerate(leagues):
                 league_info = next(
-                    (league for league in self.TARGET_LEAGUES if league["code"] == league_code), None
+                    (
+                        league
+                        for league in self.TARGET_LEAGUES
+                        if league["code"] == league_code
+                    ),
+                    None,
                 )
                 league_name = league_info["name"] if league_info else league_code
 
@@ -145,7 +150,12 @@ class FixturesCollector:
                 }
 
                 league_info = next(
-                    (league for league in self.TARGET_LEAGUES if league["code"] == league_code), None
+                    (
+                        league
+                        for league in self.TARGET_LEAGUES
+                        if league["code"] == league_code
+                    ),
+                    None,
                 )
                 league_id = league_info["id"] if league_info else None
 
@@ -256,7 +266,9 @@ class FixturesCollector:
                 logger.debug(f"尝试采集联赛 {league_name} 第 {retry_count + 1} 次")
 
                 # 使用真实的API适配器获取数据 (使用验证过的数字ID)
-                logger.info(f"调用API获取联赛 {league_name} (ID: {league_id}) 的数据...")
+                logger.info(
+                    f"调用API获取联赛 {league_name} (ID: {league_id}) 的数据..."
+                )
                 league_fixtures = await self.api_adapter.get_fixtures(
                     league_id=league_id, season=season
                 )
@@ -314,11 +326,17 @@ class FixturesCollector:
 
                 if "429" in str(e).lower() and retry_count < max_retries:
                     logger.warning("检测到速率限制 (HTTP 429)，应用指数退避策略...")
-                    wait_time = self.RATE_LIMIT_DELAY * (2 ** retry_count)  # 指数退避: 7s, 14s, 28s
-                    logger.info(f"等待 {wait_time} 秒后重试 (第{retry_count + 1}次重试)...")
+                    wait_time = self.RATE_LIMIT_DELAY * (
+                        2**retry_count
+                    )  # 指数退避: 7s, 14s, 28s
+                    logger.info(
+                        f"等待 {wait_time} 秒后重试 (第{retry_count + 1}次重试)..."
+                    )
                     await asyncio.sleep(wait_time)
                 elif "invalid" in str(e).lower() and retry_count < max_retries:
-                    logger.warning(f"API调用失败 (可能是ID问题)，重试第{retry_count + 1}次...")
+                    logger.warning(
+                        f"API调用失败 (可能是ID问题)，重试第{retry_count + 1}次..."
+                    )
                     wait_time = self.RATE_LIMIT_DELAY * (retry_count + 1)
                     logger.info(f"等待 {wait_time} 秒后重试...")
                     await asyncio.sleep(wait_time)

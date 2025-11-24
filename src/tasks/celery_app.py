@@ -247,10 +247,7 @@ import src.tasks.data_collection_tasks
 import src.tasks.pipeline_tasks
 
 # 自动发现任务模块 (只导入存在的模块)
-app.autodiscover_tasks([
-    "src.tasks.data_collection_tasks",
-    "src.tasks.pipeline_tasks"
-])
+app.autodiscover_tasks(["src.tasks.data_collection_tasks", "src.tasks.pipeline_tasks"])
 
 # 为了向后兼容，提供 celery_app 别名
 celery_app = app

@@ -71,6 +71,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
                 # 验证数据库连接
                 from src.database.definitions import get_database_manager
+
                 db_manager = get_database_manager()
                 if db_manager.initialized:
                     logger.info("✅ 数据库管理器验证通过")

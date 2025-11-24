@@ -6,7 +6,7 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any
 
 from celery import chain, group, shared_task
 from celery.schedules import crontab
@@ -14,7 +14,11 @@ from celery.schedules import crontab
 logger = logging.getLogger(__name__)
 
 # 导入基础数据采集任务
-from .data_collection_tasks import collect_daily_fixtures, collect_live_scores, collect_odds_data
+from .data_collection_tasks import (
+    collect_daily_fixtures,
+    collect_live_scores,
+    collect_odds_data,
+)
 
 
 def sync_task_to_async(async_func):
@@ -24,13 +28,14 @@ def sync_task_to_async(async_func):
     @wraps(async_func)
     def wrapper(*args, **kwargs):
         import asyncio
+
         return asyncio.run(async_func(*args, **kwargs))
 
     return wrapper
 
 
 @shared_task(bind=True, name="data_cleaning_task")
-def data_cleaning_task(self, collection_result: Dict[str, Any]) -> Dict[str, Any]:
+def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any]:
     """数据清洗任务.
 
     Args:
@@ -63,12 +68,12 @@ def data_cleaning_task(self, collection_result: Dict[str, Any]) -> Dict[str, Any
         return {
             "status": "error",
             "error": str(e),
-            "cleaning_timestamp": datetime.utcnow().isoformat()
+            "cleaning_timestamp": datetime.utcnow().isoformat(),
         }
 
 
 @shared_task(bind=True, name="feature_engineering_task")
-def feature_engineering_task(self, cleaning_result: Dict[str, Any]) -> Dict[str, Any]:
+def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str, Any]:
     """特征工程任务.
 
     Args:
@@ -81,7 +86,7 @@ def feature_engineering_task(self, cleaning_result: Dict[str, Any]) -> Dict[str,
         logger.info(f"开始执行特征工程任务，处理清洗结果: {cleaning_result}")
 
         # 确保数据库已初始化
-        db_manager = ensure_database_initialized()
+        ensure_database_initialized()
 
         # 模拟特征计算（实际应该根据清洗后的数据计算特征）
         features_calculated = cleaning_result.get("cleaned_records", 0)
@@ -92,12 +97,22 @@ def feature_engineering_task(self, cleaning_result: Dict[str, Any]) -> Dict[str,
             "features_calculated": features_calculated,
             "feature_timestamp": datetime.utcnow().isoformat(),
             "feature_columns": [
-                "home_team_id", "away_team_id", "home_last_5_points", "away_last_5_points",
-                "home_last_5_avg_goals", "away_last_5_avg_goals", "h2h_last_3_home_wins",
-                "home_last_5_goal_diff", "away_last_5_goal_diff", "home_win_streak",
-                "away_win_streak", "home_last_5_win_rate", "away_last_5_win_rate",
-                "home_rest_days", "away_rest_days"
-            ]
+                "home_team_id",
+                "away_team_id",
+                "home_last_5_points",
+                "away_last_5_points",
+                "home_last_5_avg_goals",
+                "away_last_5_avg_goals",
+                "h2h_last_3_home_wins",
+                "home_last_5_goal_diff",
+                "away_last_5_goal_diff",
+                "home_win_streak",
+                "away_win_streak",
+                "home_last_5_win_rate",
+                "away_last_5_win_rate",
+                "home_rest_days",
+                "away_rest_days",
+            ],
         }
 
         logger.info(f"特征工程完成: {feature_result}")
@@ -108,12 +123,12 @@ def feature_engineering_task(self, cleaning_result: Dict[str, Any]) -> Dict[str,
         return {
             "status": "error",
             "error": str(e),
-            "feature_timestamp": datetime.utcnow().isoformat()
+            "feature_timestamp": datetime.utcnow().isoformat(),
         }
 
 
 @shared_task(bind=True, name="data_storage_task")
-def data_storage_task(self, feature_result: Dict[str, Any]) -> Dict[str, Any]:
+def data_storage_task(self, feature_result: dict[str, Any]) -> dict[str, Any]:
     """数据存储任务.
 
     Args:
@@ -126,7 +141,7 @@ def data_storage_task(self, feature_result: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"开始执行数据存储任务，处理特征结果: {feature_result}")
 
         # 确保数据库已初始化
-        db_manager = ensure_database_initialized()
+        ensure_database_initialized()
 
         # 这里实现特征数据到数据库的存储
         stored_features = feature_result.get("features_calculated", 0)
@@ -135,7 +150,7 @@ def data_storage_task(self, feature_result: Dict[str, Any]) -> Dict[str, Any]:
             "status": "success",
             "stored_features": stored_features,
             "storage_timestamp": datetime.utcnow().isoformat(),
-            "database_table": "features"
+            "database_table": "features",
         }
 
         logger.info(f"数据存储完成: {storage_result}")
@@ -146,7 +161,7 @@ def data_storage_task(self, feature_result: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "status": "error",
             "error": str(e),
-            "storage_timestamp": datetime.utcnow().isoformat()
+            "storage_timestamp": datetime.utcnow().isoformat(),
         }
 
 
@@ -182,7 +197,7 @@ def ensure_database_initialized():
 
 
 @shared_task(bind=True, name="complete_data_pipeline")
-def complete_data_pipeline(self) -> Dict[str, Any]:
+def complete_data_pipeline(self) -> dict[str, Any]:
     """完整的数据管道任务.
 
     按顺序执行：数据采集 -> 数据清洗 -> 特征工程 -> 数据存储
@@ -204,7 +219,7 @@ def complete_data_pipeline(self) -> Dict[str, Any]:
             collect_daily_fixtures.s(),
             data_cleaning_task.s(),
             feature_engineering_task.s(),
-            data_storage_task.s()
+            data_storage_task.s(),
         )
 
         # 执行管道
@@ -215,7 +230,7 @@ def complete_data_pipeline(self) -> Dict[str, Any]:
             "pipeline_completed": True,
             "completion_timestamp": datetime.utcnow().isoformat(),
             "task_id": result.id,
-            "message": "数据管道任务链已启动"
+            "message": "数据管道任务链已启动",
         }
 
         logger.info(f"完整数据管道执行完成: {pipeline_result}")
@@ -227,12 +242,14 @@ def complete_data_pipeline(self) -> Dict[str, Any]:
             "status": "error",
             "error": str(e),
             "pipeline_completed": False,
-            "completion_timestamp": datetime.utcnow().isoformat()
+            "completion_timestamp": datetime.utcnow().isoformat(),
         }
 
 
 @shared_task(bind=True, name="trigger_feature_calculation_for_new_matches")
-def trigger_feature_calculation_for_new_matches(self, match_ids: List[int]) -> Dict[str, Any]:
+def trigger_feature_calculation_for_new_matches(
+    self, match_ids: list[int]
+) -> dict[str, Any]:
     """为新采集的比赛触发特征计算.
 
     Args:
@@ -292,7 +309,7 @@ def trigger_feature_calculation_for_new_matches(self, match_ids: List[int]) -> D
             "total_matches": len(match_ids),
             "calculated_features": calculated_count,
             "failed_calculations": failed_count,
-            "calculation_timestamp": datetime.utcnow().isoformat()
+            "calculation_timestamp": datetime.utcnow().isoformat(),
         }
 
         logger.info(f"特征计算触发完成: {result}")
@@ -303,7 +320,7 @@ def trigger_feature_calculation_for_new_matches(self, match_ids: List[int]) -> D
         return {
             "status": "error",
             "error": str(e),
-            "calculation_timestamp": datetime.utcnow().isoformat()
+            "calculation_timestamp": datetime.utcnow().isoformat(),
         }
 
 
