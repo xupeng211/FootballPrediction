@@ -316,6 +316,7 @@ class SimpleFeatureCalculator:
         features = {}
 
         # 基础信息特征
+        features["match_id"] = row["match_id"]  # 添加match_id字段
         features["home_team_id"] = row["home_team_id"]
         features["away_team_id"] = row["away_team_id"]
         features["match_date"] = row["match_date"]
