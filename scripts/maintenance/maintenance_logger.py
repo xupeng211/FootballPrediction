@@ -20,6 +20,7 @@ from typing import Any
 @dataclass
 class MaintenanceRecord:
     """维护记录数据结构."""
+
     timestamp: str
     action_type: str
     description: str
@@ -32,6 +33,7 @@ class MaintenanceRecord:
     execution_time_seconds: float
     success: bool
     error_message: str | None = None
+
 
 class MaintenanceLogger:
     """维护日志记录器."""
@@ -51,7 +53,7 @@ class MaintenanceLogger:
         cursor = conn.cursor()
 
         # 创建维护记录表
-        cursor.execute('''
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS maintenance_records (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT NOT NULL,
@@ -68,10 +70,10 @@ class MaintenanceLogger:
                 error_message TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ''')
+        """)
 
         # 创建健康趋势表
-        cursor.execute('''
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS health_trends (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT NOT NULL,
@@ -82,7 +84,7 @@ class MaintenanceLogger:
                 total_size_mb REAL DEFAULT 0.0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ''')
+        """)
 
         conn.commit()
         conn.close()
@@ -93,26 +95,29 @@ class MaintenanceLogger:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute('''
+            cursor.execute(
+                """
                 INSERT INTO maintenance_records
                 (timestamp, action_type, description, files_affected, size_freed_mb,
                  issues_found, issues_fixed, health_score_before, health_score_after,
                  execution_time_seconds, success, error_message)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                record.timestamp,
-                record.action_type,
-                record.description,
-                record.files_affected,
-                record.size_freed_mb,
-                record.issues_found,
-                record.issues_fixed,
-                record.health_score_before,
-                record.health_score_after,
-                record.execution_time_seconds,
-                record.success,
-                record.error_message
-            ))
+            """,
+                (
+                    record.timestamp,
+                    record.action_type,
+                    record.description,
+                    record.files_affected,
+                    record.size_freed_mb,
+                    record.issues_found,
+                    record.issues_fixed,
+                    record.health_score_before,
+                    record.health_score_after,
+                    record.execution_time_seconds,
+                    record.success,
+                    record.error_message,
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -128,7 +133,8 @@ class MaintenanceLogger:
             cursor = conn.cursor()
 
             stats = health_report.get("statistics", {})
-            cursor.execute('''
+            cursor.execute(
+                """
                 INSERT INTO health_trends
                 (timestamp,
     health_score,
@@ -137,14 +143,16 @@ class MaintenanceLogger:
     markdown_files,
     total_size_mb)
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                health_report.get("timestamp"),
-                health_report.get("health_score"),
-                stats.get("root_files"),
-                stats.get("python_files"),
-                stats.get("markdown_files"),
-                stats.get("total_size_mb")
-            ))
+            """,
+                (
+                    health_report.get("timestamp"),
+                    health_report.get("health_score"),
+                    stats.get("root_files"),
+                    stats.get("python_files"),
+                    stats.get("markdown_files"),
+                    stats.get("total_size_mb"),
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -159,14 +167,19 @@ class MaintenanceLogger:
             cursor = conn.cursor()
 
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            cursor.execute('''
+            cursor.execute(
+                """
                 SELECT * FROM maintenance_records
                 WHERE timestamp >= ?
                 ORDER BY timestamp DESC
-            ''', (cutoff_date,))
+            """,
+                (cutoff_date,),
+            )
 
             columns = [desc[0] for desc in cursor.description]
-            records = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
+            records = [
+                dict(zip(columns, row, strict=False)) for row in cursor.fetchall()
+            ]
 
             conn.close()
             return records
@@ -181,14 +194,19 @@ class MaintenanceLogger:
             cursor = conn.cursor()
 
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-            cursor.execute('''
+            cursor.execute(
+                """
                 SELECT * FROM health_trends
                 WHERE timestamp >= ?
                 ORDER BY timestamp ASC
-            ''', (cutoff_date,))
+            """,
+                (cutoff_date,),
+            )
 
             columns = [desc[0] for desc in cursor.description]
-            trends = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
+            trends = [
+                dict(zip(columns, row, strict=False)) for row in cursor.fetchall()
+            ]
 
             conn.close()
             return trends
@@ -226,20 +244,28 @@ class MaintenanceLogger:
             "maintenance_summary": {
                 "total_maintenance_activities": total_maintenance,
                 "successful_activities": successful_maintenance,
-                "success_rate": round(successful_maintenance / total_maintenance * 100,
-    2) if total_maintenance > 0 else 0,
-
+                "success_rate": round(
+                    successful_maintenance / total_maintenance * 100, 2
+                )
+                if total_maintenance > 0
+                else 0,
                 "total_files_affected": total_files_affected,
                 "total_size_freed_mb": round(total_size_freed, 2),
-                "total_issues_fixed": total_issues_fixed
+                "total_issues_fixed": total_issues_fixed,
             },
             "health_analysis": {
                 "current_health_score": latest_health,
                 "health_score_change": health_change,
-                "health_trend": "improving" if health_change > 0 else "declining" if health_change < 0 else "stable"
+                "health_trend": "improving"
+                if health_change > 0
+                else "declining"
+                if health_change < 0
+                else "stable",
             },
             "recent_activities": recent_activities,
-            "health_trends": health_trends[-10:] if health_trends else []  # 最近10个数据点
+            "health_trends": health_trends[-10:]
+            if health_trends
+            else [],  # 最近10个数据点
         }
 
         return report
@@ -249,7 +275,7 @@ class MaintenanceLogger:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = self.logs_dir / f"maintenance_report_{timestamp}.json"
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         return report_file
@@ -271,12 +297,12 @@ class MaintenanceLogger:
             cursor = conn.cursor()
 
             cutoff_str = cutoff_date.isoformat()
-            cursor.execute('DELETE FROM maintenance_records WHERE timestamp < ?',
-    (cutoff_str,
-    ))
-            cursor.execute('DELETE FROM health_trends WHERE timestamp < ?',
-    (cutoff_str,
-    ))
+            cursor.execute(
+                "DELETE FROM maintenance_records WHERE timestamp < ?", (cutoff_str,)
+            )
+            cursor.execute(
+                "DELETE FROM health_trends WHERE timestamp < ?", (cutoff_str,)
+            )
 
             conn.commit()
             conn.close()
@@ -302,7 +328,7 @@ def main():
         health_score_before=75,
         health_score_after=85,
         execution_time_seconds=12.5,
-        success=True
+        success=True,
     )
 
     # 记录测试数据

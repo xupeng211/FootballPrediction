@@ -208,9 +208,7 @@ class TestExternalDataSyncE2E:
             ],
         }
 
-        with patch(
-            "src.services.data.DataSyncService", return_value=mock_data_service
-        ):
+        with patch("src.services.data.DataSyncService", return_value=mock_data_service):
             response = await async_client.get("/api/data/quality-report")
 
             if response.status_code == 200:

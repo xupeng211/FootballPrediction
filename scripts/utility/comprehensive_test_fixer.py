@@ -13,22 +13,23 @@ from pathlib import Path
 
 def fix_indentation_issues(content):
     """修复缩进问题."""
-    lines = content.split('\n')
+    lines = content.split("\n")
     fixed_lines = []
 
     for line in lines:
         # 标准化制表符为空格
-        line = line.replace('\t', '    ')
+        line = line.replace("\t", "    ")
         # 修复行尾多余空格
         line = line.rstrip()
         fixed_lines.append(line)
 
-    return '\n'.join(fixed_lines)
+    return "\n".join(fixed_lines)
+
 
 def fix_string_literals(content):
     """修复字符串字面量问题."""
     # 修复未闭合的字符串
-    lines = content.split('\n')
+    lines = content.split("\n")
     fixed_lines = []
 
     for line in lines:
@@ -38,42 +39,45 @@ def fix_string_literals(content):
             line = re.sub(r'f"([^"]*)$', r'f"\1"', line)
 
         # 修复分离的字符串连接
-        line = re.sub(r'("[^"]*")\s*\n\s*"([^"]*")', r'\1\2', line)
+        line = re.sub(r'("[^"]*")\s*\n\s*"([^"]*")', r"\1\2", line)
         fixed_lines.append(line)
 
-    return '\n'.join(fixed_lines)
+    return "\n".join(fixed_lines)
+
 
 def fix_function_calls(content):
     """修复函数调用问题."""
     # 修复分离的函数参数
-    content = re.sub(
-        r'(\w+)\(\s*\n\s+([^)]+)\s*\)',
-        r'\1(\2)',
-        content
-    )
+    content = re.sub(r"(\w+)\(\s*\n\s+([^)]+)\s*\)", r"\1(\2)", content)
 
     # 修复未闭合的括号
-    content = re.sub(r'\(\s*\n\s*\)', r'()', content)
+    content = re.sub(r"\(\s*\n\s*\)", r"()", content)
 
     return content
+
 
 def fix_common_patterns(content):
     """修复常见的语法错误模式."""
     # 修复logger.debug()调用
-    content = re.sub(r'logger\.debug\(\s*\)\s*f"([^"]*)"', r'logger.debug(f"\1")', content)
+    content = re.sub(
+        r'logger\.debug\(\s*\)\s*f"([^"]*)"', r'logger.debug(f"\1")', content
+    )
 
     # 修复分离的断言语句
-    content = re.sub(r'assert\s+([^,\n]+)\s*,\s*\n\s*"([^"]*)"', r'assert \1, "\2"', content)
+    content = re.sub(
+        r'assert\s+([^,\n]+)\s*,\s*\n\s*"([^"]*)"', r'assert \1, "\2"', content
+    )
 
     # 修复未闭合的print语句
-    content = re.sub(r'print\(\s*([^)]*)\s*\n\s*\)', r'print(\1)', content)
+    content = re.sub(r"print\(\s*([^)]*)\s*\n\s*\)", r"print(\1)", content)
 
     return content
+
 
 def fix_test_file(file_path):
     """修复单个测试文件."""
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -95,7 +99,7 @@ def fix_test_file(file_path):
 
                 try:
                     # 步骤 B - 执行修复与写入
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(content)
 
                     # 步骤 C - 清理备份文件（修复成功）
@@ -114,12 +118,12 @@ def fix_test_file(file_path):
     except Exception as e:
         return False, f"处理失败: {e}"
 
+
 def main():
     """主修复函数."""
     # 获取所有测试文件
     test_dir = Path("tests")
     test_files = list(test_dir.rglob("test_*.py")) + list(test_dir.rglob("*_test.py"))
-
 
     fixed_count = 0
     failed_count = 0
@@ -128,7 +132,7 @@ def main():
     for test_file in test_files:
         try:
             # 先检查语法是否正确
-            with open(test_file, encoding='utf-8') as f:
+            with open(test_file, encoding="utf-8") as f:
                 content = f.read()
             ast.parse(content)
             skipped_count += 1
@@ -142,8 +146,8 @@ def main():
         else:
             failed_count += 1
 
-
     return fixed_count, failed_count, skipped_count
+
 
 if __name__ == "__main__":
     main()

@@ -31,7 +31,7 @@ class QuickTestRunner:
                 "success": result.returncode == 0,
                 "passed": passed,
                 "failed": failed,
-                "output": result.stdout + result.stderr
+                "output": result.stdout + result.stderr,
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -40,10 +40,12 @@ class QuickTestRunner:
         match = re.search(pattern, text)
         return int(match.group(1)) if match else 0
 
+
 def quick_test(test_path=None):
     """快速测试."""
     runner = QuickTestRunner()
     return runner.run_tests(test_path)
+
 
 def quick_coverage_test(test_path=None):
     """快速覆盖率测试."""

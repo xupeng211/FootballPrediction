@@ -485,9 +485,7 @@ class TestAuthenticationDependencies:
         # 测试迭代
         assert list(mock_obj) == []
 
-
-# ==================== FastAPI集成测试 ====================
-
+    # ==================== FastAPI集成测试 ====================
 
     def test_app_creation(self):
         """测试FastAPI应用创建"""

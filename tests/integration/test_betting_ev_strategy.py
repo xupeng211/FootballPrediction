@@ -22,7 +22,10 @@ from typing import Optional
 # 需要重新实现完整的测试
 # 暂时跳过，待完整实现后再启用
 
-@pytest.mark.skip(reason="EV Strategy test needs complete implementation - only mock implementations exist")
+
+@pytest.mark.skip(
+    reason="EV Strategy test needs complete implementation - only mock implementations exist"
+)
 class TestEVStrategy:
     """EV计算和投注策略测试类"""
 

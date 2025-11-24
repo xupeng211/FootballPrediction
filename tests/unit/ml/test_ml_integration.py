@@ -148,7 +148,6 @@ def create_batch_prediction_data(num_predictions: int = 10) -> list[dict[str, An
 
     return predictions
 
-
     @pytest.mark.asyncio
     async def test_complete_prediction_pipeline(self):
         """测试完整的预测流水线"""
@@ -240,7 +239,9 @@ def create_batch_prediction_data(num_predictions: int = 10) -> list[dict[str, An
                 predicted_outcome=(
                     "home_win"
                     if avg_home_prob > max(avg_draw_prob, avg_away_prob)
-                    else "draw" if avg_draw_prob > avg_away_prob else "away_win"
+                    else "draw"
+                    if avg_draw_prob > avg_away_prob
+                    else "away_win"
                 ),
                 confidence=max(avg_home_prob, avg_draw_prob, avg_away_prob),
                 model_name="EnsembleModel",
@@ -395,7 +396,6 @@ def create_batch_prediction_data(num_predictions: int = 10) -> list[dict[str, An
                 < 0.01
             )
 
-
     @pytest.mark.asyncio
     async def test_model_export_import_workflow(self):
         """测试模型导出导入工作流"""
@@ -542,7 +542,6 @@ def create_batch_prediction_data(num_predictions: int = 10) -> list[dict[str, An
 
         assert isinstance(monitoring_report, dict)
         assert monitoring_report["total_predictions"] == 10
-
 
     def test_feature_engineering_pipeline(self):
         """测试特征工程流水线"""

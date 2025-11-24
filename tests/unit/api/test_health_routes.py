@@ -26,8 +26,8 @@ class TestHealthRoutes:
         self.app.include_router(router, prefix="/api")
         self.client = TestClient(self.app)
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
     def test_health_check_basic(self, mock_get_db_manager, mock_datetime):
         """测试基础健康检查"""
         # Mock数据库管理器为已初始化状态
@@ -54,8 +54,8 @@ class TestHealthRoutes:
         # 验证时间戳格式
         datetime.fromisoformat(data["timestamp"])
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
     def test_health_check_response_structure(self, mock_get_db_manager, mock_datetime):
         """测试健康检查响应结构"""
         # Mock数据库管理器为已初始化状态
@@ -74,8 +74,8 @@ class TestHealthRoutes:
 
         assert expected_keys.issubset(actual_keys)
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
     def test_health_check_service_info(self, mock_get_db_manager, mock_datetime):
         """测试服务信息"""
         # Mock数据库管理器为已初始化状态
@@ -90,10 +90,12 @@ class TestHealthRoutes:
         assert isinstance(data["version"], str)
         assert len(data["version"]) > 0
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
-    @patch('redis.from_url')
-    def test_detailed_health_check_basic(self, mock_redis_from_url, mock_get_db_manager, mock_datetime):
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
+    @patch("redis.from_url")
+    def test_detailed_health_check_basic(
+        self, mock_redis_from_url, mock_get_db_manager, mock_datetime
+    ):
         """测试详细健康检查基础功能"""
         # Mock数据库管理器为已初始化状态
         mock_db_manager = MagicMock()
@@ -116,10 +118,12 @@ class TestHealthRoutes:
         assert "version" in data
         assert "checks" in data
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
-    @patch('redis.from_url')
-    def test_detailed_health_check_response_structure(self, mock_redis_from_url, mock_get_db_manager, mock_datetime):
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
+    @patch("redis.from_url")
+    def test_detailed_health_check_response_structure(
+        self, mock_redis_from_url, mock_get_db_manager, mock_datetime
+    ):
         """测试详细健康检查响应结构"""
         # Mock数据库管理器为已初始化状态
         mock_db_manager = MagicMock()
@@ -138,10 +142,12 @@ class TestHealthRoutes:
 
         assert expected_keys == actual_keys
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
-    @patch('redis.from_url')
-    def test_detailed_health_check_components(self, mock_redis_from_url, mock_get_db_manager, mock_datetime):
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
+    @patch("redis.from_url")
+    def test_detailed_health_check_components(
+        self, mock_redis_from_url, mock_get_db_manager, mock_datetime
+    ):
         """测试详细健康检查组件信息"""
         # Mock数据库管理器为已初始化状态
         mock_db_manager = MagicMock()
@@ -163,7 +169,7 @@ class TestHealthRoutes:
         assert "database" in components
         assert "redis" in components
 
-    @patch('src.database.definitions.get_database_manager')
+    @patch("src.database.definitions.get_database_manager")
     def test_health_check_timestamp_validity(self, mock_get_db_manager):
         """测试健康检查时间戳有效性"""
         # Mock数据库管理器为已初始化状态
@@ -176,7 +182,9 @@ class TestHealthRoutes:
 
         # 时间戳应该是有效的ISO格式字符串
         timestamp_str = data["timestamp"]
-        assert isinstance(timestamp_str, str), f"Timestamp should be string, got {type(timestamp_str)}"
+        assert isinstance(timestamp_str, str), (
+            f"Timestamp should be string, got {type(timestamp_str)}"
+        )
 
         timestamp = datetime.fromisoformat(timestamp_str)
 
@@ -217,7 +225,9 @@ class TestHealthRoutes:
         if data["status"] == "unhealthy":
             # 如果状态不健康，至少有一个组件应该有问题
             checks = data["checks"]
-            assert any("unhealthy" in str(check.get("status", "")) for check in checks.values())
+            assert any(
+                "unhealthy" in str(check.get("status", "")) for check in checks.values()
+            )
 
     def test_health_check_performance(self):
         """测试健康检查性能"""
@@ -231,8 +241,8 @@ class TestHealthRoutes:
         assert response.status_code == 200
         assert (end_time - start_time) < 1.0  # 应该在1秒内响应
 
-    @patch('redis.from_url')
-    @patch('src.database.definitions.get_database_manager')
+    @patch("redis.from_url")
+    @patch("src.database.definitions.get_database_manager")
     def test_detailed_health_check_performance(self, mock_get_db_manager, mock_redis):
         """测试详细健康检查性能"""
         # Mock Redis to avoid connection timeout

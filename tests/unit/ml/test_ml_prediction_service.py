@@ -39,7 +39,6 @@ try:
 except ImportError:
     CAN_IMPORT = False
 
-
     @pytest.fixture
     def prediction_service(self):
         """创建预测服务实例"""
@@ -600,7 +599,6 @@ except ImportError:
                     model_info["models"][model_name]["performance"]
                     == performance_data[model_name]
                 )
-
 
     def test_ensemble_prediction_creation(self):
         """测试集成预测结果创建"""

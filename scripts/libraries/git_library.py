@@ -15,12 +15,13 @@ class QuickGitManager:
         """运行Git命令."""
         cmd = ["git"] + command
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True,
-                                 cwd=self.repo_path, timeout=60)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, cwd=self.repo_path, timeout=60
+            )
             return {
                 "success": result.returncode == 0,
                 "stdout": result.stdout.strip(),
-                "stderr": result.stderr.strip()
+                "stderr": result.stderr.strip(),
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -37,6 +38,7 @@ class QuickGitManager:
     def quick_push(self, branch="main"):
         """快速推送."""
         return self.run_git(["push", "origin", branch])
+
 
 def quick_git_commit(message, files=None):
     """快速Git提交."""

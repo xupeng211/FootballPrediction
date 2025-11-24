@@ -13,6 +13,7 @@ try:
 except ImportError:
     sys.exit(1)
 
+
 def main():
     """主函数."""
     logger = get_logger("测试工具链")
@@ -36,6 +37,7 @@ def main():
 
     logger.success("测试工具链完成!")
     return True
+
 
 if __name__ == "__main__":
     success = main()

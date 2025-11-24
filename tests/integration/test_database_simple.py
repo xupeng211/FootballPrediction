@@ -49,7 +49,6 @@ class TestSimpleDatabaseOperations:
             yield session
 
     @pytest.mark.asyncio
-
     async def test_team_crud_operations(self, test_db_session: AsyncSession):
         """测试球队CRUD操作"""
         # Create
@@ -93,7 +92,6 @@ class TestSimpleDatabaseOperations:
         assert result.scalar_one_or_none() is None
 
     @pytest.mark.asyncio
-
     async def test_match_crud_operations(self, test_db_session: AsyncSession):
         """测试比赛CRUD操作"""
         # Create teams first
@@ -133,7 +131,6 @@ class TestSimpleDatabaseOperations:
         assert match.status == "finished"
 
     @pytest.mark.asyncio
-
     async def test_prediction_crud_operations(self, test_db_session: AsyncSession):
         """测试预测CRUD操作"""
         # Create match first
@@ -184,7 +181,6 @@ class TestSimpleDatabaseOperations:
         assert predictions[0].predicted_outcome == "home"
 
     @pytest.mark.asyncio
-
     async def test_transaction_commit(self, test_db_session: AsyncSession):
         """测试事务提交"""
         # 直接提交数据（session已经有事务）
@@ -202,7 +198,6 @@ class TestSimpleDatabaseOperations:
         assert len(teams) == 2
 
     @pytest.mark.asyncio
-
     async def test_transaction_rollback(self, test_db_session: AsyncSession):
         """测试事务回滚"""
         try:
@@ -224,7 +219,6 @@ class TestSimpleDatabaseOperations:
         assert result.scalar_one_or_none() is None
 
     @pytest.mark.asyncio
-
     async def test_bulk_operations_performance(self, test_db_session: AsyncSession):
         """测试批量操作性能"""
         import time

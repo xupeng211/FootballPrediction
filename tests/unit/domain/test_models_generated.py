@@ -21,7 +21,6 @@ except ImportError:
     Team = None
     League = None
 
-
     def test_match_creation(self):
         """测试比赛创建"""
         if Match:

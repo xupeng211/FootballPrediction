@@ -42,15 +42,15 @@ def test_utils_response_basic():
 
         # 测试响应创建
         response = ResponseUtils.create_success_response({"data": "test"})
-        assert (
-            response.get("data") == "test"
-        ), f"Expected 'test', got {response.get('data')}"
+        assert response.get("data") == "test", (
+            f"Expected 'test', got {response.get('data')}"
+        )
 
         # 测试错误响应
         error_response = ResponseUtils.create_error_response("test error", 400)
-        assert (
-            error_response.get("error") == "test error"
-        ), f"Expected 'test error', got {error_response.get('error')}"
+        assert error_response.get("error") == "test error", (
+            f"Expected 'test error', got {error_response.get('error')}"
+        )
 
         return True
 

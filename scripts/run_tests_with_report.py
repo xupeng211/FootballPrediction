@@ -23,10 +23,10 @@ import logging
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class TestRunner:
     """统一测试运行器"""
@@ -37,21 +37,24 @@ class TestRunner:
         self.report_dir = project_root / "test_reports"
         self.report_dir.mkdir(exist_ok=True)
 
-    def run_tests(self, test_markers: Optional[str] = None,
-                  test_paths: Optional[List[str]] = None) -> Dict[str, Any]:
+    def run_tests(
+        self, test_markers: str | None = None, test_paths: list[str] | None = None
+    ) -> dict[str, Any]:
         """运行测试并收集结果"""
         logger.info("Starting test execution...")
 
         # 构建pytest命令
         cmd = [
-            "python", "-m", "pytest",
+            "python",
+            "-m",
+            "pytest",
             "--cov=src",
             "--cov-report=json",
             "--cov-report=html",
             "--cov-report=term-missing",
             "--tb=short",
             "--maxfail=20",
-            "-v"
+            "-v",
         ]
 
         if test_markers:
@@ -68,14 +71,14 @@ class TestRunner:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=600  # 10分钟超时
+                timeout=600,  # 10分钟超时
             )
 
             return {
                 "success": result.returncode == 0,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
 
         except subprocess.TimeoutExpired:
@@ -84,51 +87,62 @@ class TestRunner:
                 "success": False,
                 "stdout": "",
                 "stderr": "Test execution timed out after 10 minutes",
-                "returncode": -1
+                "returncode": -1,
             }
 
-    def load_coverage_data(self) -> Optional[Dict[str, Any]]:
+    def load_coverage_data(self) -> dict[str, Any] | None:
         """加载覆盖率数据"""
         if not self.coverage_file.exists():
             logger.warning(f"Coverage file not found: {self.coverage_file}")
             return None
 
         try:
-            with open(self.coverage_file, 'r') as f:
+            with open(self.coverage_file) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load coverage data: {e}")
             return None
 
-    def analyze_coverage_gaps(self, coverage_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def analyze_coverage_gaps(
+        self, coverage_data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """分析覆盖率缺口"""
         gaps = []
-        files = coverage_data.get('files', {})
+        files = coverage_data.get("files", {})
 
         for file_path, file_info in files.items():
-            if not file_path.startswith('src/'):
+            if not file_path.startswith("src/"):
                 continue
 
-            summary = file_info.get('summary', {})
-            total_lines = summary.get('num_statements', 0)
-            covered_lines = summary.get('covered_lines', 0)
+            summary = file_info.get("summary", {})
+            total_lines = summary.get("num_statements", 0)
+            covered_lines = summary.get("covered_lines", 0)
             uncovered_lines = total_lines - covered_lines
 
             if uncovered_lines > 50:  # 关注未覆盖超过50行的文件
-                gaps.append({
-                    "file_path": file_path,
-                    "uncovered_lines": uncovered_lines,
-                    "total_lines": total_lines,
-                    "coverage_percent": round((covered_lines / total_lines * 100), 2) if total_lines > 0 else 0,
-                    "missing_lines": file_info.get('missing_lines', [])[:10]  # 只显示前10个缺失行
-                })
+                gaps.append(
+                    {
+                        "file_path": file_path,
+                        "uncovered_lines": uncovered_lines,
+                        "total_lines": total_lines,
+                        "coverage_percent": round(
+                            (covered_lines / total_lines * 100), 2
+                        )
+                        if total_lines > 0
+                        else 0,
+                        "missing_lines": file_info.get("missing_lines", [])[
+                            :10
+                        ],  # 只显示前10个缺失行
+                    }
+                )
 
         # 按未覆盖行数排序
-        gaps.sort(key=lambda x: x['uncovered_lines'], reverse=True)
+        gaps.sort(key=lambda x: x["uncovered_lines"], reverse=True)
         return gaps
 
-    def generate_test_report(self, test_results: Dict[str, Any],
-                           coverage_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def generate_test_report(
+        self, test_results: dict[str, Any], coverage_data: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """生成统一测试报告"""
         timestamp = datetime.now().isoformat()
 
@@ -136,31 +150,33 @@ class TestRunner:
             "metadata": {
                 "timestamp": timestamp,
                 "test_runner_version": "1.0",
-                "project_root": str(self.project_root)
+                "project_root": str(self.project_root),
             },
             "test_results": test_results,
-            "coverage_analysis": {}
+            "coverage_analysis": {},
         }
 
         if coverage_data:
-            totals = coverage_data.get('totals', {})
+            totals = coverage_data.get("totals", {})
             report["coverage_analysis"] = {
-                "overall_coverage": round(totals.get('percent_covered', 0), 2),
-                "total_statements": totals.get('num_statements', 0),
-                "covered_lines": totals.get('covered_lines', 0),
-                "missing_lines": totals.get('missing_lines', 0),
-                "coverage_gaps": self.analyze_coverage_gaps(coverage_data)[:20]  # Top 20 gaps
+                "overall_coverage": round(totals.get("percent_covered", 0), 2),
+                "total_statements": totals.get("num_statements", 0),
+                "covered_lines": totals.get("covered_lines", 0),
+                "missing_lines": totals.get("missing_lines", 0),
+                "coverage_gaps": self.analyze_coverage_gaps(coverage_data)[
+                    :20
+                ],  # Top 20 gaps
             }
 
         return report
 
-    def save_report(self, report: Dict[str, Any], format_type: str = "json"):
+    def save_report(self, report: dict[str, Any], format_type: str = "json"):
         """保存报告到文件"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         if format_type == "json":
             report_file = self.report_dir / f"test_report_{timestamp}.json"
-            with open(report_file, 'w') as f:
+            with open(report_file, "w") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
             logger.info(f"JSON report saved to: {report_file}")
 
@@ -169,13 +185,13 @@ class TestRunner:
             self._save_markdown_report(report, report_file)
             logger.info(f"Markdown report saved to: {report_file}")
 
-    def _save_markdown_report(self, report: Dict[str, Any], report_file: Path):
+    def _save_markdown_report(self, report: dict[str, Any], report_file: Path):
         """保存Markdown格式报告"""
         md_content = self._generate_markdown_content(report)
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             f.write(md_content)
 
-    def _generate_markdown_content(self, report: Dict[str, Any]) -> str:
+    def _generate_markdown_content(self, report: dict[str, Any]) -> str:
         """生成Markdown内容"""
         test_results = report["test_results"]
         coverage = report.get("coverage_analysis", {})
@@ -211,13 +227,13 @@ class TestRunner:
 ## 测试输出
 
 ```
-{test_results['stdout']}
+{test_results["stdout"]}
 ```
 
 ## 错误信息（如有）
 
 ```
-{test_results['stderr']}
+{test_results["stderr"]}
 ```
 
 ---
@@ -225,13 +241,18 @@ class TestRunner:
 """
         return content
 
+
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="统一测试运行和报告生成")
     parser.add_argument("--markers", "-m", help="pytest标记")
     parser.add_argument("--paths", "-p", nargs="*", help="测试路径")
-    parser.add_argument("--format", choices=["json", "markdown", "both"],
-                       default="both", help="报告格式")
+    parser.add_argument(
+        "--format",
+        choices=["json", "markdown", "both"],
+        default="both",
+        help="报告格式",
+    )
 
     args = parser.parse_args()
 
@@ -255,6 +276,7 @@ def main():
 
     # 设置退出码
     sys.exit(0 if test_results["success"] else 1)
+
 
 if __name__ == "__main__":
     main()

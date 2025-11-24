@@ -1,4 +1,3 @@
-
 """期望值(Expected Value)计算器
 EV Calculator.
 """
@@ -10,6 +9,7 @@ from typing import Any
 @dataclass
 class EVCalculationResult:
     """EV计算结果."""
+
     bet_type: str
     odds: float
     probability: float
@@ -25,10 +25,9 @@ class EVCalculator:
         """初始化EV计算器."""
         self.commission_rate = 0.02  # 2%佣金率
 
-    def calculate_ev(self,
-    odds: float,
-    probability: float,
-    stake: float = 100.0) -> EVCalculationResult:
+    def calculate_ev(
+        self, odds: float, probability: float, stake: float = 100.0
+    ) -> EVCalculationResult:
         """计算期望值.
 
         Args:
@@ -61,11 +60,12 @@ class EVCalculator:
             probability=probability,
             ev_value=ev_value_after_commission,
             recommendation=recommendation,
-            confidence=confidence
+            confidence=confidence,
         )
 
-    def analyze_betting_opportunity(self, odds: float, model_probability: float,
-                                   market_probability: float = None) -> dict[str, Any]:
+    def analyze_betting_opportunity(
+        self, odds: float, model_probability: float, market_probability: float = None
+    ) -> dict[str, Any]:
         """分析投注机会.
 
         Args:
@@ -89,7 +89,7 @@ class EVCalculator:
             "market_probability": market_probability,
             "value_edge": value_edge,
             "ev_calculation": self.calculate_ev(odds, model_probability),
-            "recommendation": "value_bet" if value_edge > 0.05 else "no_value"
+            "recommendation": "value_bet" if value_edge > 0.05 else "no_value",
         }
 
         return result

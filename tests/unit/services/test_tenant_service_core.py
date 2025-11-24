@@ -22,9 +22,11 @@ from src.services.tenant_service import (
 from src.database.models.tenant import Tenant, TenantPlan, TenantStatus
 from src.core.exceptions import ValidationError, FootballPredictionError
 
+
 # 创建兼容的异常类
 class ResourceNotFoundError(FootballPredictionError):
     """资源未找到异常."""
+
     pass
 
 
@@ -134,7 +136,7 @@ def tenant_creation_request():
         plan=TenantPlan.PROFESSIONAL,
         max_users=50,
         trial_days=14,
-        custom_settings={"timezone": "UTC", "language": "en"}
+        custom_settings={"timezone": "UTC", "language": "en"},
     )
 
 
@@ -158,18 +160,28 @@ class TestTenantLifecycle:
 
     @pytest.mark.skip("Complex SQLAlchemy instantiation issue - pending fix")
     @pytest.mark.asyncio
-    async def test_create_tenant_success(self, tenant_service, tenant_creation_request, mock_db_session):
+    async def test_create_tenant_success(
+        self, tenant_service, tenant_creation_request, mock_db_session
+    ):
         """测试成功创建租户."""
         # Mock整个Tenant构造过程，避免SQLAlchemy实例化
-        with patch.object(tenant_service, 'get_tenant_by_slug', return_value=None):
-            with patch.object(tenant_service, '_create_default_roles', return_value=None):
-                with patch.object(tenant_service, '_apply_plan_quotas', return_value=None):
+        with patch.object(tenant_service, "get_tenant_by_slug", return_value=None):
+            with patch.object(
+                tenant_service, "_create_default_roles", return_value=None
+            ):
+                with patch.object(
+                    tenant_service, "_apply_plan_quotas", return_value=None
+                ):
                     # Mock Tenant类本身
-                    with patch('src.services.tenant_service.Tenant') as mock_tenant_class:
+                    with patch(
+                        "src.services.tenant_service.Tenant"
+                    ) as mock_tenant_class:
                         mock_tenant_class.return_value = MagicMock()
 
                         # 创建租户
-                        result = await tenant_service.create_tenant(tenant_creation_request, creator_id=1)
+                        result = await tenant_service.create_tenant(
+                            tenant_creation_request, creator_id=1
+                        )
 
         # 验证数据库操作被正确调用
         mock_db_session.add.assert_called_once()
@@ -180,10 +192,14 @@ class TestTenantLifecycle:
         assert result is not None
 
     @pytest.mark.asyncio
-    async def test_create_tenant_slug_conflict(self, tenant_service, tenant_creation_request, mock_tenant):
+    async def test_create_tenant_slug_conflict(
+        self, tenant_service, tenant_creation_request, mock_tenant
+    ):
         """测试创建租户时slug冲突."""
         # Mock get_tenant_by_slug 返回已存在的租户
-        with patch.object(tenant_service, 'get_tenant_by_slug', return_value=mock_tenant):
+        with patch.object(
+            tenant_service, "get_tenant_by_slug", return_value=mock_tenant
+        ):
             with pytest.raises(ValidationError) as exc_info:
                 await tenant_service.create_tenant(tenant_creation_request)
 
@@ -193,7 +209,9 @@ class TestTenantLifecycle:
     async def test_get_tenant_by_id(self, tenant_service, mock_db_session, mock_tenant):
         """测试根据ID获取租户."""
         # 设置mock返回值
-        mock_db_session.execute.return_value.scalar_one_or_none.return_value = mock_tenant
+        mock_db_session.execute.return_value.scalar_one_or_none.return_value = (
+            mock_tenant
+        )
 
         # 调用方法
         result = await tenant_service.get_tenant_by_id(1)
@@ -205,10 +223,14 @@ class TestTenantLifecycle:
         mock_db_session.execute.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_tenant_by_slug(self, tenant_service, mock_db_session, mock_tenant):
+    async def test_get_tenant_by_slug(
+        self, tenant_service, mock_db_session, mock_tenant
+    ):
         """测试根据标识符获取租户."""
         # 设置mock返回值
-        mock_db_session.execute.return_value.scalar_one_or_none.return_value = mock_tenant
+        mock_db_session.execute.return_value.scalar_one_or_none.return_value = (
+            mock_tenant
+        )
 
         # 调用方法
         result = await tenant_service.get_tenant_by_slug("test-tenant")
@@ -220,14 +242,16 @@ class TestTenantLifecycle:
         mock_db_session.execute.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_update_tenant_success(self, tenant_service, mock_db_session, mock_tenant):
+    async def test_update_tenant_success(
+        self, tenant_service, mock_db_session, mock_tenant
+    ):
         """测试成功更新租户."""
         # Mock get_tenant_by_id 返回租户
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
             updates = {
                 "name": "Updated Name",
                 "description": "Updated Description",
-                "settings": {"timezone": "UTC+8"}
+                "settings": {"timezone": "UTC+8"},
             }
 
             result = await tenant_service.update_tenant(1, updates)
@@ -237,19 +261,19 @@ class TestTenantLifecycle:
             mock_db_session.commit.assert_called_once()
 
             # 验证只更新了允许的字段
-            assert hasattr(mock_tenant, 'name')  # name被更新
+            assert hasattr(mock_tenant, "name")  # name被更新
 
     @pytest.mark.asyncio
     async def test_update_tenant_not_found(self, tenant_service):
         """测试更新不存在的租户."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=None):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=None):
             with pytest.raises(ResourceNotFoundError):
                 await tenant_service.update_tenant(999, {"name": "Test"})
 
     @pytest.mark.asyncio
     async def test_suspend_tenant(self, tenant_service, mock_db_session, mock_tenant):
         """测试暂停租户."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
             result = await tenant_service.suspend_tenant(1, "Test suspension")
 
             # 验证数据库操作被调用
@@ -260,9 +284,11 @@ class TestTenantLifecycle:
     @pytest.mark.asyncio
     async def test_activate_tenant(self, tenant_service, mock_db_session, mock_tenant):
         """测试激活租户."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
-            with patch.object(tenant_service, '_apply_plan_quotas', return_value=None):
-                result = await tenant_service.activate_tenant(1, TenantPlan.PROFESSIONAL)
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
+            with patch.object(tenant_service, "_apply_plan_quotas", return_value=None):
+                result = await tenant_service.activate_tenant(
+                    1, TenantPlan.PROFESSIONAL
+                )
 
                 # 验证数据库操作被调用
                 mock_db_session.commit.assert_called_once()
@@ -276,7 +302,7 @@ class TestPermissionManagement:
     @pytest.mark.asyncio
     async def test_check_user_permission_no_roles(self, tenant_service):
         """测试用户无角色时的权限检查."""
-        with patch.object(tenant_service, '_get_user_roles', return_value=[]):
+        with patch.object(tenant_service, "_get_user_roles", return_value=[]):
             result = await tenant_service.check_user_permission(1, 1, "test.permission")
 
             assert not result.granted
@@ -295,20 +321,30 @@ class TestPermissionManagement:
         mock_assignment.is_expired = False
         mock_assignment.role = mock_role
 
-        with patch.object(tenant_service, '_get_user_roles', return_value=[mock_assignment]):
-            with patch.object(tenant_service, '_get_role_permissions', return_value=[]):
-                result = await tenant_service.check_user_permission(1, 1, "test.permission")
+        with patch.object(
+            tenant_service, "_get_user_roles", return_value=[mock_assignment]
+        ):
+            with patch.object(tenant_service, "_get_role_permissions", return_value=[]):
+                result = await tenant_service.check_user_permission(
+                    1, 1, "test.permission"
+                )
 
                 assert result.granted
                 assert "test.permission" in result.permissions
 
     @pytest.mark.asyncio
-    async def test_assign_user_role_success(self, tenant_service, mock_tenant, mock_role):
+    async def test_assign_user_role_success(
+        self, tenant_service, mock_tenant, mock_role
+    ):
         """测试成功分配用户角色."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
-            with patch.object(tenant_service, '_get_tenant_role', return_value=mock_role):
-                with patch.object(tenant_service, '_get_user_role_assignment', return_value=None):
-                    result = await tenant_service.assign_user_role(1, 1, "user", 1)
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
+            with patch.object(
+                tenant_service, "_get_tenant_role", return_value=mock_role
+            ):
+                with patch.object(
+                    tenant_service, "_get_user_role_assignment", return_value=None
+                ):
+                    await tenant_service.assign_user_role(1, 1, "user", 1)
 
                     # 验证数据库操作
                     tenant_service.db.add.assert_called()
@@ -317,7 +353,7 @@ class TestPermissionManagement:
     @pytest.mark.asyncio
     async def test_assign_user_role_tenant_not_found(self, tenant_service):
         """测试分配角色时租户不存在."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=None):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=None):
             with pytest.raises(ResourceNotFoundError):
                 await tenant_service.assign_user_role(1, 999, "user", 1)
 
@@ -326,8 +362,12 @@ class TestPermissionManagement:
         """测试成功撤销用户角色."""
         mock_role = MagicMock()
 
-        with patch.object(tenant_service, '_get_tenant_role', return_value=mock_role):
-            with patch.object(tenant_service, '_get_user_role_assignment', return_value=mock_role_assignment):
+        with patch.object(tenant_service, "_get_tenant_role", return_value=mock_role):
+            with patch.object(
+                tenant_service,
+                "_get_user_role_assignment",
+                return_value=mock_role_assignment,
+            ):
                 result = await tenant_service.revoke_user_role(1, 1, "user")
 
                 # 验证角色被撤销
@@ -340,8 +380,10 @@ class TestPermissionManagement:
         """测试撤销不存在的角色."""
         mock_role = MagicMock()
 
-        with patch.object(tenant_service, '_get_tenant_role', return_value=mock_role):
-            with patch.object(tenant_service, '_get_user_role_assignment', return_value=None):
+        with patch.object(tenant_service, "_get_tenant_role", return_value=mock_role):
+            with patch.object(
+                tenant_service, "_get_user_role_assignment", return_value=None
+            ):
                 result = await tenant_service.revoke_user_role(1, 1, "nonexistent")
 
                 assert result is False
@@ -352,8 +394,8 @@ class TestResourceQuota:
 
     async def test_check_resource_quota_within_limit(self, tenant_service, mock_tenant):
         """测试资源配额检查在限制内."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
-            with patch.object(tenant_service, '_get_resource_usage', return_value=5):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
+            with patch.object(tenant_service, "_get_resource_usage", return_value=5):
                 result = await tenant_service.check_resource_quota(1, "users", 3)
 
                 assert result.can_access
@@ -363,8 +405,8 @@ class TestResourceQuota:
 
     async def test_check_resource_quota_exceeded(self, tenant_service, mock_tenant):
         """测试资源配额超限."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
-            with patch.object(tenant_service, '_get_resource_usage', return_value=8):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
+            with patch.object(tenant_service, "_get_resource_usage", return_value=8):
                 result = await tenant_service.check_resource_quota(1, "users", 3)
 
                 assert not result.can_access
@@ -374,24 +416,28 @@ class TestResourceQuota:
 
     async def test_check_resource_quota_no_limit(self, tenant_service, mock_tenant):
         """测试无限制资源配额."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
-            with patch.object(tenant_service, '_get_resource_usage', return_value=100):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
+            with patch.object(tenant_service, "_get_resource_usage", return_value=100):
                 # Mock返回None表示无限制
-                with patch.object(tenant_service, '_get_resource_limit', return_value=None):
-                    result = await tenant_service.check_resource_quota(1, "unlimited_resource", 1)
+                with patch.object(
+                    tenant_service, "_get_resource_limit", return_value=None
+                ):
+                    result = await tenant_service.check_resource_quota(
+                        1, "unlimited_resource", 1
+                    )
 
                     assert result.can_access
                     assert result.max_limit == -1
 
     async def test_check_resource_quota_tenant_not_found(self, tenant_service):
         """测试检查不存在租户的资源配额."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=None):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=None):
             with pytest.raises(Exception):
                 await tenant_service.check_resource_quota(999, "users")
 
     async def test_update_usage_metrics(self, tenant_service, mock_tenant):
         """测试更新使用指标."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
             metrics = {"daily_predictions": 50, "api_calls": 100}
             await tenant_service.update_usage_metrics(1, metrics)
 
@@ -405,11 +451,27 @@ class TestTenantStatistics:
 
     async def test_get_tenant_statistics_success(self, tenant_service, mock_tenant):
         """测试获取租户统计信息."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
-            with patch.object(tenant_service, '_get_tenant_user_stats', return_value={"total_users": 5}):
-                with patch.object(tenant_service, '_get_tenant_prediction_stats', return_value={"total": 100}):
-                    with patch.object(tenant_service, '_get_tenant_api_stats', return_value={"calls": 1000}):
-                        with patch.object(tenant_service, 'check_resource_quota', return_value=ResourceQuotaCheck(True, 5, 10, 50)):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
+            with patch.object(
+                tenant_service,
+                "_get_tenant_user_stats",
+                return_value={"total_users": 5},
+            ):
+                with patch.object(
+                    tenant_service,
+                    "_get_tenant_prediction_stats",
+                    return_value={"total": 100},
+                ):
+                    with patch.object(
+                        tenant_service,
+                        "_get_tenant_api_stats",
+                        return_value={"calls": 1000},
+                    ):
+                        with patch.object(
+                            tenant_service,
+                            "check_resource_quota",
+                            return_value=ResourceQuotaCheck(True, 5, 10, 50),
+                        ):
                             result = await tenant_service.get_tenant_statistics(1)
 
                             # 验证返回的数据结构
@@ -425,7 +487,7 @@ class TestTenantStatistics:
 
     async def test_get_tenant_statistics_tenant_not_found(self, tenant_service):
         """测试获取不存在租户的统计信息."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=None):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=None):
             with pytest.raises(Exception):
                 await tenant_service.get_tenant_statistics(999)
 
@@ -444,7 +506,9 @@ class TestPlanFeatures:
 
     def test_get_default_features_for_professional_plan(self, tenant_service):
         """测试专业计划的默认功能."""
-        features = tenant_service._get_default_features_for_plan(TenantPlan.PROFESSIONAL)
+        features = tenant_service._get_default_features_for_plan(
+            TenantPlan.PROFESSIONAL
+        )
 
         assert features["basic_predictions"] is True
         assert features["data_export"] is True
@@ -466,7 +530,7 @@ class TestPlanFeatures:
         features = tenant_service._get_default_features_for_plan(TenantPlan.CUSTOM)
 
         # 自定义计划应该启用所有功能
-        for feature, enabled in features.items():
+        for _feature, enabled in features.items():
             assert enabled is True
 
     @pytest.mark.asyncio
@@ -500,7 +564,9 @@ class TestIsolationVerification:
         # 验证查询包含ID过滤条件
         assert "id" in query_str and "123" in query_str
 
-    async def test_tenant_query_isolation_by_slug(self, tenant_service, mock_db_session):
+    async def test_tenant_query_isolation_by_slug(
+        self, tenant_service, mock_db_session
+    ):
         """测试按slug查询的租户隔离."""
         # 设置mock
         mock_result = AsyncMock()
@@ -572,7 +638,9 @@ class TestIsolationVerification:
         """测试计划功能的隔离性."""
         # 测试不同计划的不同功能
         basic_features = tenant_service._get_default_features_for_plan(TenantPlan.BASIC)
-        enterprise_features = tenant_service._get_default_features_for_plan(TenantPlan.ENTERPRISE)
+        enterprise_features = tenant_service._get_default_features_for_plan(
+            TenantPlan.ENTERPRISE
+        )
 
         # 验证功能差异化（隔离性）
         assert basic_features["data_export"] is False
@@ -594,12 +662,12 @@ class TestErrorHandling:
 
     async def test_invalid_update_fields(self, tenant_service, mock_tenant):
         """测试无效更新字段."""
-        with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
+        with patch.object(tenant_service, "get_tenant_by_id", return_value=mock_tenant):
             # 尝试更新不允许的字段
             updates = {
                 "id": 999,  # 不允许更新
                 "created_at": datetime.utcnow(),  # 不允许更新
-                "valid_field": "value"  # 允许更新
+                "valid_field": "value",  # 允许更新
             }
 
             await tenant_service.update_tenant(1, updates)
@@ -617,10 +685,13 @@ class TestErrorHandling:
         assert limit == 0
 
         # 测试负数使用量
-        with patch.object(tenant_service, '_get_resource_usage', return_value=-5):
-            with patch.object(tenant_service, 'get_tenant_by_id', return_value=mock_tenant):
+        with patch.object(tenant_service, "_get_resource_usage", return_value=-5):
+            with patch.object(
+                tenant_service, "get_tenant_by_id", return_value=mock_tenant
+            ):
                 # 这个测试需要异步包装
                 import asyncio
+
                 result = asyncio.run(tenant_service.check_resource_quota(1, "users", 1))
                 # 验证负数使用量被正确处理
                 assert isinstance(result, ResourceQuotaCheck)

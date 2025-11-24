@@ -288,9 +288,9 @@ class TestCoreExceptionsComprehensive:
 
         for exc_class in exceptions:
             assert exc_class is not None, f"异常类 {exc_class.__name__} 导入失败"
-            assert issubclass(
-                exc_class, Exception
-            ), f"{exc_class.__name__} 不是Exception的子类"
+            assert issubclass(exc_class, Exception), (
+                f"{exc_class.__name__} 不是Exception的子类"
+            )
 
     def test_exception_messages_with_unicode(self):
         """测试异常消息支持Unicode"""

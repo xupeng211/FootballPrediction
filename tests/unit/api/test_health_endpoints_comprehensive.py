@@ -281,9 +281,9 @@ class MockHealthChecker:
         if component_type in self.components:
             self.components[component_type]["status"] = HealthStatus.UNHEALTHY
             self.components[component_type]["last_error"] = datetime.now()
-            self.components[component_type][
-                "error_message"
-            ] = "Simulated failure for testing"
+            self.components[component_type]["error_message"] = (
+                "Simulated failure for testing"
+            )
 
     async def simulate_component_recovery(self, component_type: ComponentType):
         """模拟组件恢复"""
@@ -924,9 +924,9 @@ class TestHealthCheckPerformance:
         # 验证响应时间
         response_times = [result["response_time"] for result in results]
         avg_response_time = sum(response_times) / len(response_times)
-        assert (
-            avg_response_time < 1.0
-        ), f"Average response time too slow: {avg_response_time}s"
+        assert avg_response_time < 1.0, (
+            f"Average response time too slow: {avg_response_time}s"
+        )
 
         # 验证总体执行时间
         total_time = end_time - start_time

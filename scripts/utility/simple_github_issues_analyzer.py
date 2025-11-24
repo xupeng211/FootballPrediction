@@ -17,17 +17,17 @@ def analyze_m2_planning():
         "current_tasks_per_phase": 3,
         "total_current_tasks": 12,
         "granularity": "COARSE - 需要细化",
-        "issues": []
+        "issues": [],
     }
 
     # 分析每个阶段
     for phase_num in range(1, 5):
         phase_issues = {
             "phase": f"M2-Phase {phase_num}",
-            "target_coverage": [15, 25, 35, 50][phase_num-1],
+            "target_coverage": [15, 25, 35, 50][phase_num - 1],
             "current_tasks": 3,
-            "recommended_breakdown": 5-8,
-            "issues": []
+            "recommended_breakdown": 5 - 8,
+            "issues": [],
         }
 
         # 阶段1的具体Issue
@@ -37,7 +37,7 @@ def analyze_m2_planning():
                 "[M2-P1-02] 完善core.config_di配置管理测试",
                 "[M2-P1-03] 优化core.service_lifecycle生命周期测试",
                 "[M2-P1-04] 扩展core.auto_binding自动绑定测试",
-                "[M2-P1-05] 完善测试工具链和报告自动化"
+                "[M2-P1-05] 完善测试工具链和报告自动化",
             ]
         # 阶段2的具体Issue
         elif phase_num == 2:
@@ -46,7 +46,7 @@ def analyze_m2_planning():
                 "[M2-P2-02] 建立api.predictions预测服务测试",
                 "[M2-P2-03] 实现API集成测试套件",
                 "[M2-P2-04] 建立Mock数据和服务系统",
-                "[M2-P2-05] 完善API文档和测试报告"
+                "[M2-P2-05] 完善API文档和测试报告",
             ]
         # 阶段3和4的基础Issue（简化版）
         else:
@@ -55,13 +55,18 @@ def analyze_m2_planning():
                 f"[M2-P{phase_num}-02] 数据模型验证测试",
                 f"[M2-P{phase_num}-03] 业务规则测试",
                 f"[M2-P{phase_num}-04] ML模型测试",
-                f"[M2-P{phase_num}-05] 集成测试完善"
+                f"[M2-P{phase_num}-05] 集成测试完善",
             ]
 
-        phase_issues["issues"] = phase1_issues if phase_num == 1 else (phase2_issues if phase_num == 2 else phase3_issues)
+        phase_issues["issues"] = (
+            phase1_issues
+            if phase_num == 1
+            else (phase2_issues if phase_num == 2 else phase3_issues)
+        )
         analysis["issues"].append(phase_issues)
 
     return analysis
+
 
 def define_best_practices():
     """定义最佳实践."""
@@ -70,28 +75,29 @@ def define_best_practices():
             "name": "单一职责",
             "description": "每个Issue只解决一个具体问题",
             "good": "为core.di模块添加依赖注入测试",
-            "bad": "完善所有core模块的测试"
+            "bad": "完善所有core模块的测试",
         },
         {
             "name": "具体可执行",
             "description": "Issue描述必须包含具体信息",
             "good": "为core.di.py第45-80行添加5个测试用例",
-            "bad": "改进DI容器测试"
+            "bad": "改进DI容器测试",
         },
         {
             "name": "明确验收标准",
             "description": "每个Issue都有明确的完成标准",
             "good": "覆盖率提升至少5%，所有测试通过",
-            "bad": "完成相关测试"
+            "bad": "完成相关测试",
         },
         {
             "name": "可估算工作量",
             "description": "工作量应该在1-3天内完成",
             "good": "预计1-2天，包含编写、运行、调试",
-            "bad": "改进测试质量（工作量未知）"
-        }
+            "bad": "改进测试质量（工作量未知）",
+        },
     ]
     return principles
+
 
 def create_issue_recommendations():
     """创建Issue推荐."""
@@ -102,8 +108,8 @@ def create_issue_recommendations():
             "details": [
                 "按模块细分（每个模块1-2个Issue）",
                 "按功能细分（单元测试、集成测试、Mock测试）",
-                "按复杂度细分（简单、复杂、边界条件）"
-            ]
+                "按复杂度细分（简单、复杂、边界条件）",
+            ],
         },
         {
             "category": "模板标准化",
@@ -111,8 +117,8 @@ def create_issue_recommendations():
             "details": [
                 "统一标题格式：[M2-P1-XX] 具体功能描述",
                 "统一描述格式：背景、任务、验收标准、验证方式",
-                "统一标签系统：阶段、优先级、模块、类型"
-            ]
+                "统一标签系统：阶段、优先级、模块、类型",
+            ],
         },
         {
             "category": "依赖管理",
@@ -120,11 +126,12 @@ def create_issue_recommendations():
             "details": [
                 "使用GitHub Milestone组织相关Issue",
                 "使用项目板可视化进度",
-                "设置Issue依赖关系"
-            ]
-        }
+                "设置Issue依赖关系",
+            ],
+        },
     ]
     return recommendations
+
 
 def create_management_strategy():
     """创建管理策略."""
@@ -132,22 +139,23 @@ def create_management_strategy():
         "milestone": {
             "name": "M2: 50% Coverage Target",
             "due_date": "2025-12-01",
-            "issues_count": 25
+            "issues_count": 25,
         },
         "labels": {
             "phases": ["M2-P1", "M2-P2", "M2-P3", "M2-P4"],
             "priorities": ["critical", "high", "medium"],
             "modules": ["core", "api", "database", "domain", "ml"],
-            "types": ["testing", "integration", "mock", "tools"]
+            "types": ["testing", "integration", "mock", "tools"],
         },
         "workflow": {
             "creation": "使用模板创建Issue",
             "assignment": "分配给负责人",
             "review": "代码审查",
-            "tracking": "项目板跟踪"
-        }
+            "tracking": "项目板跟踪",
+        },
     }
     return strategy
+
 
 def generate_report():
     """生成分析报告."""
@@ -158,15 +166,15 @@ def generate_report():
 
     report = f"""# GitHub Issues最佳实践分析报告
 
-**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## 📊 当前M2规划分析
 
 ### 粒度评估
-- **当前规划**: {analysis['phases']}个阶段，{analysis['total_current_tasks']}个任务
-- **粒度评估**: {analysis['granularity']}
+- **当前规划**: {analysis["phases"]}个阶段，{analysis["total_current_tasks"]}个任务
+- **粒度评估**: {analysis["granularity"]}
 - **建议拆分**: 每个阶段5-8个Issue
-- **总计Issue**: {sum(len(phase['issues']) for phase in analysis['issues'])}个具体Issue
+- **总计Issue**: {sum(len(phase["issues"]) for phase in analysis["issues"])}个具体Issue
 
 ### 主要问题
 1. **任务过于宽泛**: 缺乏具体执行步骤
@@ -197,43 +205,43 @@ def generate_report():
 ### 阶段1: 基础覆盖率扩展 (目标15%)
 """
 
-    for i, issue in enumerate(analysis['issues'][0]['issues'], 1):
+    for i, issue in enumerate(analysis["issues"][0]["issues"], 1):
         report += f"{i}. {issue}\n"
 
     report += """
 ### 阶段2: API层覆盖率提升 (目标25%)
 """
 
-    for i, issue in enumerate(analysis['issues'][1]['issues'], 6):
+    for i, issue in enumerate(analysis["issues"][1]["issues"], 6):
         report += f"{i}. {issue}\n"
 
     report += """
 ### 阶段3: 数据层覆盖率攻坚 (目标35%)
 """
 
-    for i, issue in enumerate(analysis['issues'][2]['issues'], 11):
+    for i, issue in enumerate(analysis["issues"][2]["issues"], 11):
         report += f"{i}. {issue}\n"
 
     report += """
 ### 阶段4: 业务逻辑层覆盖 (目标50%)
 """
 
-    for i, issue in enumerate(analysis['issues'][3]['issues'], 16):
+    for i, issue in enumerate(analysis["issues"][3]["issues"], 16):
         report += f"{i}. {issue}\n"
 
     report += f"""
 ## 🗂️ Issues管理策略
 
 ### Milestone设置
-- **名称**: {strategy['milestone']['name']}
-- **截止日期**: {strategy['milestone']['due_date']}
-- **包含Issue**: {strategy['milestone']['issues_count']}个
+- **名称**: {strategy["milestone"]["name"]}
+- **截止日期**: {strategy["milestone"]["due_date"]}
+- **包含Issue**: {strategy["milestone"]["issues_count"]}个
 
 ### 标签系统
-- **阶段标签**: {', '.join(strategy['labels']['phases'])}
-- **优先级标签**: {', '.join(strategy['labels']['priorities'])}
-- **模块标签**: {', '.join(strategy['labels']['modules'])}
-- **类型标签**: {', '.join(strategy['labels']['types'])}
+- **阶段标签**: {", ".join(strategy["labels"]["phases"])}
+- **优先级标签**: {", ".join(strategy["labels"]["priorities"])}
+- **模块标签**: {", ".join(strategy["labels"]["modules"])}
+- **类型标签**: {", ".join(strategy["labels"]["types"])}
 
 ## 💡 实施建议
 
@@ -305,10 +313,11 @@ M2-P1, core, testing, dependency-injection
 ---
 
 **报告版本**: v1.0
-**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
 
     return report
+
 
 def main():
     """主函数."""
@@ -328,7 +337,7 @@ def main():
         "generated_at": datetime.now().isoformat(),
         "analysis": analysis,
         "recommendations": recommendations,
-        "strategy": strategy
+        "strategy": strategy,
     }
 
     with open("github_issues_analysis_data.json", "w", encoding="utf-8") as f:

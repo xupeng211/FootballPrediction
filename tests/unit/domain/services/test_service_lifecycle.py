@@ -223,7 +223,6 @@ class ServiceContainer:
             infos[name] = service.get_service_info()
         return infos
 
-
     @pytest.fixture
     def service_container(self):
         """创建服务容器"""

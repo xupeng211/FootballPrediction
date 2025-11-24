@@ -8,7 +8,10 @@ Auth API Tests.
 
 import pytest
 
-pytest.skip("Skipping entire file for CI baseline - email_validator dependency issues", allow_module_level=True)
+pytest.skip(
+    "Skipping entire file for CI baseline - email_validator dependency issues",
+    allow_module_level=True,
+)
 from fastapi.testclient import TestClient
 from fastapi.security import HTTPAuthorizationCredentials
 
@@ -73,7 +76,7 @@ MOCK_USERS = {
         "email": "admin@example.com",
         "password_hash": "hashed_password_admin",
         "is_active": True,
-        "roles": ["admin"]
+        "roles": ["admin"],
     },
     2: {
         "id": 2,
@@ -81,8 +84,8 @@ MOCK_USERS = {
         "email": "user@example.com",
         "password_hash": "hashed_password_user",
         "is_active": True,
-        "roles": ["user"]
-    }
+        "roles": ["user"],
+    },
 }
 
 # JWT相关类（如果导入失败则使用简化版本）
@@ -97,12 +100,14 @@ except ImportError:
         def hash_password(self, password: str) -> str:
             """简化的密码哈希，避免bcrypt问题"""
             import hashlib
+
             # 使用SHA-256作为fallback，避免bcrypt长度限制
             return hashlib.sha256(password.encode()).hexdigest()
 
         def verify_password(self, password: str, hashed: str) -> bool:
             """简化的密码验证"""
             import hashlib
+
             # 验证密码
             return hashlib.sha256(password.encode()).hexdigest() == hashed
 

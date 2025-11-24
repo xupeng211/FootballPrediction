@@ -30,8 +30,7 @@ from src.database.models import *  # 导入所有模型以注册到Base.metadata
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -91,11 +90,19 @@ async def init_database():
 
             # 检查关键表是否存在
             required_tables = [
-                'raw_match_data', 'raw_odds_data', 'raw_scores_data',
-                'matches', 'teams', 'leagues', 'features', 'predictions'
+                "raw_match_data",
+                "raw_odds_data",
+                "raw_scores_data",
+                "matches",
+                "teams",
+                "leagues",
+                "features",
+                "predictions",
             ]
 
-            missing_tables = [table for table in required_tables if table not in existing_tables]
+            missing_tables = [
+                table for table in required_tables if table not in existing_tables
+            ]
             if missing_tables:
                 logger.warning(f"缺少表: {missing_tables} (暂时跳过，继续启动)")
                 logger.info("✅ 数据库基本表创建成功，FastAPI可以启动")

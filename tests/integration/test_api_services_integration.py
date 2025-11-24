@@ -305,7 +305,9 @@ class TestUserAPIServiceIntegration:
             "created_at": user_data["created_at"].isoformat(),
         }
 
-        with patch("src.domain.services.user_service.UserService", return_value=mock_service):
+        with patch(
+            "src.domain.services.user_service.UserService", return_value=mock_service
+        ):
             response = await async_client.post(
                 "/api/users/register", json=registration_data
             )
@@ -345,7 +347,9 @@ class TestUserAPIServiceIntegration:
             },
         }
 
-        with patch("src.domain.services.auth_service.AuthService", return_value=mock_service):
+        with patch(
+            "src.domain.services.auth_service.AuthService", return_value=mock_service
+        ):
             response = await async_client.post("/api/auth/login", json=login_data)
 
             if response.status_code == 200:
@@ -386,7 +390,9 @@ class TestUserAPIServiceIntegration:
             if pred.user_id == user_id
         ]
 
-        with patch("src.domain.services.user_service.UserService", return_value=mock_service):
+        with patch(
+            "src.domain.services.user_service.UserService", return_value=mock_service
+        ):
             response = await async_client.get(
                 f"/api/users/{user_id}/predictions", headers=auth_headers
             )
@@ -432,7 +438,8 @@ class TestAnalyticsAPIServiceIntegration:
         }
 
         with patch(
-            "src.domain.services.analytics_service.AnalyticsService", return_value=mock_service
+            "src.domain.services.analytics_service.AnalyticsService",
+            return_value=mock_service,
         ):
             response = await async_client.get(
                 "/api/analytics/predictions", headers=auth_headers
@@ -476,7 +483,8 @@ class TestAnalyticsAPIServiceIntegration:
         }
 
         with patch(
-            "src.domain.services.analytics_service.AnalyticsService", return_value=mock_service
+            "src.domain.services.analytics_service.AnalyticsService",
+            return_value=mock_service,
         ):
             response = await async_client.get(
                 f"/api/analytics/users/{user_data['id']}", headers=auth_headers

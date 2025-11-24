@@ -90,7 +90,8 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.domain.services.match_service.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService",
+            return_value=mock_match_service,
         ):
             response = await async_client.post("/api/matches/", json=match_data)
 
@@ -124,7 +125,8 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.domain.services.match_service.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService",
+            return_value=mock_match_service,
         ):
             response = await async_client.get(f"/api/matches/{match_id}/details")
 
@@ -283,7 +285,8 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.domain.services.match_service.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService",
+            return_value=mock_match_service,
         ):
             response = await async_client.post(f"/api/matches/{match_id}/start")
 
@@ -300,7 +303,8 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.domain.services.match_service.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService",
+            return_value=mock_match_service,
         ):
             response = await async_client.get(f"/api/matches/{match_id}/live")
 
@@ -328,7 +332,8 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.domain.services.match_service.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService",
+            return_value=mock_match_service,
         ):
             response = await async_client.post(
                 f"/api/matches/{match_id}/finish", json=final_score
@@ -394,7 +399,8 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.domain.services.scoring_service.ScoringService", return_value=mock_scoring_service
+            "src.domain.services.scoring_service.ScoringService",
+            return_value=mock_scoring_service,
         ):
             response = await async_client.post(
                 f"/api/users/{user_id}/update-points", headers=auth_headers
@@ -521,7 +527,8 @@ class TestPredictionWorkflowE2E:
             }
 
             with patch(
-                "src.domain.services.match_service.MatchService", return_value=mock_match_service
+                "src.domain.services.match_service.MatchService",
+                return_value=mock_match_service,
             ):
                 response = await async_client.post("/api/matches/", json=match_data)
                 if response.status_code == 200:
@@ -639,7 +646,8 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.domain.services.match_service.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService",
+            return_value=mock_match_service,
         ):
             response = await async_client.post("/api/matches/", json=match_data)
             match_id = 1 if response.status_code != 200 else response.json()["id"]
@@ -785,7 +793,8 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.domain.services.match_service.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService",
+            return_value=mock_match_service,
         ):
             response = await async_client.post("/api/matches/", json=match_data)
             match_id = 1 if response.status_code != 200 else response.json()["id"]
@@ -827,7 +836,8 @@ class TestPredictionWorkflowE2E:
         }
 
         with patch(
-            "src.domain.services.match_service.MatchService", return_value=mock_match_service
+            "src.domain.services.match_service.MatchService",
+            return_value=mock_match_service,
         ):
             response = await async_client.post(f"/api/matches/{match_id}/start")
 

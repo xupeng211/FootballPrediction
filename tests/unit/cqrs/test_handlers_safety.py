@@ -41,9 +41,9 @@ try:
         UserQueryHandlers,
     )
     from src.cqrs.base import CommandHandler, QueryHandler
+
     IMPORTS_AVAILABLE = True
-except ImportError as e:
-    print(f"导入警告: {e}")
+except ImportError:
     IMPORTS_AVAILABLE = False
 
 
@@ -71,7 +71,7 @@ class TestCQRSHandlersSafetyNet:
     @pytest.fixture
     def mock_db_session(self):
         """创建Mock数据库会话"""
-        with patch('src.cqrs.handlers.get_session') as mock_get_session:
+        with patch("src.cqrs.handlers.get_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = self.mock_session
             mock_get_session.return_value.__aexit__.return_value = None
             yield mock_get_session
@@ -135,10 +135,18 @@ class TestCQRSHandlersSafetyNet:
         # Mock数据库返回数据
         mock_predictions = [
             Mock(
-                id=1, match_id=100, user_id=1, predicted_home=2, predicted_away=1,
-                confidence=0.75, strategy_used="lstm", points_earned=0,
-                accuracy_score=0.0, notes="test", created_at=datetime.now(),
-                updated_at=datetime.now()
+                id=1,
+                match_id=100,
+                user_id=1,
+                predicted_home=2,
+                predicted_away=1,
+                confidence=0.75,
+                strategy_used="lstm",
+                points_earned=0,
+                accuracy_score=0.0,
+                notes="test",
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
             )
         ]
 
@@ -234,9 +242,9 @@ class TestCQRSHandlersSafetyNet:
         handlers = PredictionCommandHandlers()
 
         # 验证关键处理器存在
-        assert hasattr(handlers, 'create')
-        assert hasattr(handlers, 'update')
-        assert hasattr(handlers, 'delete')
+        assert hasattr(handlers, "create")
+        assert hasattr(handlers, "update")
+        assert hasattr(handlers, "delete")
 
         # 验证处理器类型
         assert isinstance(handlers.create, CreatePredictionHandler)
@@ -256,9 +264,9 @@ class TestCQRSHandlersSafetyNet:
         handlers = MatchQueryHandlers()
 
         # 验证关键处理器存在
-        assert hasattr(handlers, 'get_by_id')
-        assert hasattr(handlers, 'get_predictions')
-        assert hasattr(handlers, 'get_upcoming')
+        assert hasattr(handlers, "get_by_id")
+        assert hasattr(handlers, "get_predictions")
+        assert hasattr(handlers, "get_upcoming")
 
         # 验证处理器类型
         assert isinstance(handlers.get_by_id, GetMatchByIdHandler)
@@ -309,10 +317,10 @@ class TestCQRSHandlersSafetyNet:
         # 测试模块导入
         try:
             import src.cqrs.handlers
+
             assert src.cqrs.handlers is not None
-        except ImportError as e:
+        except ImportError:
             # 如果导入失败，记录但不让测试失败
-            print(f"导入失败，但测试继续: {e}")
             assert True
 
     @pytest.mark.unit
@@ -331,10 +339,10 @@ class TestCQRSHandlersSafetyNet:
 
             # 检查模块属性
             required_handlers = [
-                'CreatePredictionHandler',
-                'GetMatchPredictionsHandler',
-                'PredictionCommandHandlers',
-                'MatchQueryHandlers'
+                "CreatePredictionHandler",
+                "GetMatchPredictionsHandler",
+                "PredictionCommandHandlers",
+                "MatchQueryHandlers",
             ]
 
             for handler_name in required_handlers:
@@ -369,12 +377,18 @@ class TestCQRSHandlersSafetyNet:
         for i in range(1000):
             mock_predictions.append(
                 Mock(
-                    id=i, match_id=100, user_id=i%100 + 1,
-                    predicted_home=2, predicted_away=1,
-                    confidence=0.75, strategy_used="lstm",
-                    points_earned=0, accuracy_score=0.0,
-                    notes=f"test_{i}", created_at=datetime.now(),
-                    updated_at=datetime.now()
+                    id=i,
+                    match_id=100,
+                    user_id=i % 100 + 1,
+                    predicted_home=2,
+                    predicted_away=1,
+                    confidence=0.75,
+                    strategy_used="lstm",
+                    points_earned=0,
+                    accuracy_score=0.0,
+                    notes=f"test_{i}",
+                    created_at=datetime.now(),
+                    updated_at=datetime.now(),
                 )
             )
 
@@ -382,6 +396,7 @@ class TestCQRSHandlersSafetyNet:
 
         # 测试性能
         import time
+
         start_time = time.time()
         result = asyncio.run(handler.handle(mock_query))
         end_time = time.time()
@@ -485,9 +500,9 @@ class TestCQRSHandlersSafetyNet:
         handler = CreatePredictionHandler()
 
         # 检查handle方法存在
-        assert hasattr(handler, 'handle')
-        assert callable(getattr(handler, 'handle'))
+        assert hasattr(handler, "handle")
+        assert callable(handler.handle)
 
         # 检查query_type属性存在（查询处理器）
         query_handler = GetMatchPredictionsHandler()
-        assert hasattr(query_handler, 'query_type')
+        assert hasattr(query_handler, "query_type")

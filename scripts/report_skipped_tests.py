@@ -20,33 +20,36 @@ import re
 def parse_skipped_tests(skipped_tests_file):
     """解析 skipped_tests.txt 文件"""
     if not os.path.exists(skipped_tests_file):
-        print(f"❌ 跳过测试文件不存在: {skipped_tests_file}")
         return []
 
     skipped_tests = []
-    with open(skipped_tests_file, 'r', encoding='utf-8') as f:
+    with open(skipped_tests_file, encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             if not line:
                 continue
 
             # 解析格式: "ERROR tests/unit/api/test_auth.py::TestAuth::test_method"
-            if line.startswith('ERROR '):
+            if line.startswith("ERROR "):
                 test_path = line[6:].strip()  # 移除 "ERROR " 前缀
-                skipped_tests.append({
-                    'line_num': line_num,
-                    'raw_line': line,
-                    'test_path': test_path,
-                    'error_type': 'ERROR'
-                })
-            elif '::' in line and '.py::' in line:
+                skipped_tests.append(
+                    {
+                        "line_num": line_num,
+                        "raw_line": line,
+                        "test_path": test_path,
+                        "error_type": "ERROR",
+                    }
+                )
+            elif "::" in line and ".py::" in line:
                 # 其他格式的测试路径
-                skipped_tests.append({
-                    'line_num': line_num,
-                    'raw_line': line,
-                    'test_path': line,
-                    'error_type': 'SKIPPED'
-                })
+                skipped_tests.append(
+                    {
+                        "line_num": line_num,
+                        "raw_line": line,
+                        "test_path": line,
+                        "error_type": "SKIPPED",
+                    }
+                )
 
     return skipped_tests
 
@@ -55,29 +58,29 @@ def extract_module_info(test_path):
     """从测试路径中提取模块信息"""
     # 示例路径: "tests/unit/api/test_auth.py::TestAuth::test_method"
 
-    if not test_path.startswith('tests/'):
-        return {'module': 'unknown', 'submodule': 'unknown', 'file': 'unknown'}
+    if not test_path.startswith("tests/"):
+        return {"module": "unknown", "submodule": "unknown", "file": "unknown"}
 
     # 移除 tests/ 前缀
     path_without_tests = test_path[6:]
 
     # 分割路径
-    parts = path_without_tests.split('/')
+    parts = path_without_tests.split("/")
 
     if len(parts) >= 2:
         module = parts[0]  # unit, integration, e2e
-        submodule = parts[1] if len(parts) > 1 else 'unknown'
-        file_name = parts[1] if len(parts) > 1 else 'unknown'
+        submodule = parts[1] if len(parts) > 1 else "unknown"
+        file_name = parts[1] if len(parts) > 1 else "unknown"
     else:
-        module = 'unknown'
-        submodule = 'unknown'
-        file_name = parts[0] if parts else 'unknown'
+        module = "unknown"
+        submodule = "unknown"
+        file_name = parts[0] if parts else "unknown"
 
     return {
-        'module': module,
-        'submodule': submodule,
-        'file': file_name,
-        'full_path': path_without_tests
+        "module": module,
+        "submodule": submodule,
+        "file": file_name,
+        "full_path": path_without_tests,
     }
 
 
@@ -85,7 +88,7 @@ def analyze_tech_debt(skipped_tests):
     """分析技术债务分布"""
 
     # 按模块分组统计
-    module_stats = defaultdict(lambda: {'count': 0, 'submodules': defaultdict(int)})
+    module_stats = defaultdict(lambda: {"count": 0, "submodules": defaultdict(int)})
 
     # 按文件分组统计 (识别重灾区文件)
     file_stats = defaultdict(int)
@@ -97,47 +100,47 @@ def analyze_tech_debt(skipped_tests):
     test_pattern_stats = defaultdict(int)
 
     for test in skipped_tests:
-        module_info = extract_module_info(test['test_path'])
+        module_info = extract_module_info(test["test_path"])
 
         # 模块统计
-        module = module_info['module']
-        submodule = module_info['submodule']
-        file_name = module_info['file']
+        module = module_info["module"]
+        submodule = module_info["submodule"]
+        file_name = module_info["file"]
 
-        module_stats[module]['count'] += 1
-        module_stats[module]['submodules'][submodule] += 1
+        module_stats[module]["count"] += 1
+        module_stats[module]["submodules"][submodule] += 1
 
         # 文件统计
         full_file_path = f"{module}/{submodule}/{file_name}"
         file_stats[full_file_path] += 1
 
         # 错误类型统计
-        error_stats[test['error_type']] += 1
+        error_stats[test["error_type"]] += 1
 
         # 测试模式统计
-        if '::Test' in test['test_path']:
-            class_match = re.search(r'::Test(\w+)', test['test_path'])
+        if "::Test" in test["test_path"]:
+            class_match = re.search(r"::Test(\w+)", test["test_path"])
             if class_match:
                 test_class = class_match.group(1)
                 test_pattern_stats[f"Test{test_class}"] += 1
 
     return {
-        'module_stats': dict(module_stats),
-        'file_stats': dict(file_stats),
-        'error_stats': dict(error_stats),
-        'test_pattern_stats': dict(test_pattern_stats),
-        'total_tests': len(skipped_tests)
+        "module_stats": dict(module_stats),
+        "file_stats": dict(file_stats),
+        "error_stats": dict(error_stats),
+        "test_pattern_stats": dict(test_pattern_stats),
+        "total_tests": len(skipped_tests),
     }
 
 
 def generate_markdown_report(analysis, skipped_tests_file, output_file):
     """生成 Markdown 格式的技术债务报告"""
 
-    total_tests = analysis['total_tests']
-    module_stats = analysis['module_stats']
-    file_stats = analysis['file_stats']
-    error_stats = analysis['error_stats']
-    test_pattern_stats = analysis['test_pattern_stats']
+    total_tests = analysis["total_tests"]
+    module_stats = analysis["module_stats"]
+    file_stats = analysis["file_stats"]
+    error_stats = analysis["error_stats"]
+    test_pattern_stats = analysis["test_pattern_stats"]
 
     # 获取当前时间
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -166,19 +169,25 @@ def generate_markdown_report(analysis, skipped_tests_file, output_file):
 """
 
     # 按模块排序
-    sorted_modules = sorted(module_stats.items(), key=lambda x: x[1]['count'], reverse=True)
+    sorted_modules = sorted(
+        module_stats.items(), key=lambda x: x[1]["count"], reverse=True
+    )
 
     for module, stats in sorted_modules:
-        count = stats['count']
+        count = stats["count"]
         percentage = (count / total_tests * 100) if total_tests > 0 else 0
 
         # 找出该模块下的重灾区子模块
-        top_submodules = sorted(stats['submodules'].items(), key=lambda x: x[1], reverse=True)[:3]
+        top_submodules = sorted(
+            stats["submodules"].items(), key=lambda x: x[1], reverse=True
+        )[:3]
         submodules_str = ", ".join([f"{sub} ({cnt})" for sub, cnt in top_submodules])
 
-        report_content += f"| `{module}` | {count} | {percentage:.1f}% | {submodules_str} |\n"
+        report_content += (
+            f"| `{module}` | {count} | {percentage:.1f}% | {submodules_str} |\n"
+        )
 
-    report_content += f"""
+    report_content += """
 
 ---
 
@@ -206,7 +215,7 @@ def generate_markdown_report(analysis, skipped_tests_file, output_file):
 
         report_content += f"| {rank} | `{file_path}` | {count} | {severity} |\n"
 
-    report_content += f"""
+    report_content += """
 
 ---
 
@@ -222,7 +231,7 @@ def generate_markdown_report(analysis, skipped_tests_file, output_file):
 
     # 测试模式分析
     if test_pattern_stats:
-        report_content += f"""
+        report_content += """
 
 ---
 
@@ -231,11 +240,13 @@ def generate_markdown_report(analysis, skipped_tests_file, output_file):
 **常见问题测试类:**
 """
 
-        sorted_patterns = sorted(test_pattern_stats.items(), key=lambda x: x[1], reverse=True)[:10]
+        sorted_patterns = sorted(
+            test_pattern_stats.items(), key=lambda x: x[1], reverse=True
+        )[:10]
         for pattern, count in sorted_patterns:
             report_content += f"- `{pattern}`: {count} 个测试\n"
 
-    report_content += f"""
+    report_content += """
 
 ---
 
@@ -249,7 +260,7 @@ def generate_markdown_report(analysis, skipped_tests_file, output_file):
         if count >= 20:
             report_content += f"  - `{file_path}` ({count} 个测试)\n"
 
-    report_content += f"""
+    report_content += """
 ### ⚡ **高优先级 (P1 - 2周内)**
 - 中等重灾区文件 (10-19个跳过测试):
 """
@@ -258,7 +269,7 @@ def generate_markdown_report(analysis, skipped_tests_file, output_file):
         if 10 <= count < 20:
             report_content += f"  - `{file_path}` ({count} 个测试)\n"
 
-    report_content += f"""
+    report_content += """
 ### 📋 **中优先级 (P2 - 1个月内)**
 - 轻微重灾区文件 (5-9个跳过测试):
 """
@@ -323,13 +334,8 @@ git log --oneline --since="1 week ago" -- tests/skipped_tests.txt
 """
 
     # 写入报告文件
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(report_content)
-
-    print(f"✅ 技术债务报告已生成: {output_file}")
-    print(f"📊 总跳过测试数: {total_tests}")
-    print(f"🏗️ 影响模块数: {len(module_stats)}")
-    print(f"🚨 重灾区文件数: {len([f for f in file_stats.values() if f > 10])}")
 
 
 def main():
@@ -342,13 +348,10 @@ def main():
     # 确保输出目录存在
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    print("🔍 开始分析技术债务...")
-
     # 解析跳过测试文件
     skipped_tests = parse_skipped_tests(skipped_tests_file)
 
     if not skipped_tests:
-        print("ℹ️  没有发现跳过的测试，技术债务为空！")
         # 生成空报告
         empty_report = f"""# 📊 技术债务报告 (Tech Debt Report)
 
@@ -367,9 +370,8 @@ def main():
 
 继续保持！🚀
 """
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(empty_report)
-        print(f"✅ 空技术债务报告已生成: {output_file}")
         return
 
     # 分析技术债务

@@ -38,8 +38,6 @@ sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 
 @pytest.mark.asyncio
-
-
 async def test_data_sources_directly():
     """直接测试数据源管理器"""
 

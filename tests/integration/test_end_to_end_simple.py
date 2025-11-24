@@ -107,9 +107,9 @@ class TestSimplifiedEndToEndWorkflows:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        mock_services["prediction_engine"].generate_prediction.return_value = (
-            prediction_data
-        )
+        mock_services[
+            "prediction_engine"
+        ].generate_prediction.return_value = prediction_data
 
         # 执行预测
         prediction = await mock_services["prediction_engine"].generate_prediction(1)

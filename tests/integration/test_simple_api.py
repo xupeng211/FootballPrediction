@@ -21,8 +21,6 @@ load_dotenv()
 
 
 @pytest.mark.asyncio
-
-
 async def test_basic_api():
     """测试基本的API连接"""
     api_key = os.getenv("FOOTBALL_DATA_API_KEY")
@@ -42,16 +40,12 @@ async def test_basic_api():
             params = {"limit": 10}
 
             async with session.get(url, params=params) as response:
-                logger.debug(
-                    f"状态码: {response.status}"
-                )
+                logger.debug(f"状态码: {response.status}")
 
                 if response.status == 200:
                     data = await response.json()
                     matches = data.get("matches", [])
-                    logger.debug(
-                        f"✅ 获取到 {len(matches)} 场比赛"
-                    )
+                    logger.debug(f"✅ 获取到 {len(matches)} 场比赛")
 
                     # 显示前3场比赛
                     for i, match in enumerate(matches[:3], 1):
@@ -62,43 +56,27 @@ async def test_basic_api():
                         )
                         utc_date = match.get("utcDate", "Unknown")
 
-                        logger.debug(
-                            f"  {i}. {home_team} vs {away_team}"
-                        )
-                        logger.debug(
-                            f"     联赛: {competition}"
-                        )
-                        logger.debug(
-                            f"     时间: {utc_date}"
-                        )
+                        logger.debug(f"  {i}. {home_team} vs {away_team}")
+                        logger.debug(f"     联赛: {competition}")
+                        logger.debug(f"     时间: {utc_date}")
                         logger.debug()
 
                 else:
                     error_text = await response.text()
-                    logger.debug(
-                        f"❌ API请求失败: {response.status}"
-                    )
-                    logger.error(
-                        f"错误详情: {error_text}"
-                    )
+                    logger.debug(f"❌ API请求失败: {response.status}")
+                    logger.error(f"错误详情: {error_text}")
 
             # 测试2: 获取可用比赛
-            logger.debug(
-                "\n🏆 测试获取可用比赛..."
-            )
+            logger.debug("\n🏆 测试获取可用比赛...")
             url = f"{base_url}/competitions"
 
             async with session.get(url) as response:
-                logger.debug(
-                    f"状态码: {response.status}"
-                )
+                logger.debug(f"状态码: {response.status}")
 
                 if response.status == 200:
                     data = await response.json()
                     competitions = data.get("competitions", [])
-                    logger.debug(
-                        f"✅ 获取到 {len(competitions)} 个比赛"
-                    )
+                    logger.debug(f"✅ 获取到 {len(competitions)} 个比赛")
 
                     # 显示前5个比赛
                     for i, comp in enumerate(competitions[:5], 1):
@@ -106,18 +84,12 @@ async def test_basic_api():
                         code = comp.get("code", "Unknown")
                         area = comp.get("area", {}).get("name", "Unknown")
 
-                        logger.debug(
-                            f"  {i}. {name} ({code}) - {area}"
-                        )
+                        logger.debug(f"  {i}. {name} ({code}) - {area}")
 
                 else:
                     error_text = await response.text()
-                    logger.debug(
-                        f"❌ API请求失败: {response.status}"
-                    )
-                    logger.error(
-                        f"错误详情: {error_text}"
-                    )
+                    logger.debug(f"❌ API请求失败: {response.status}")
+                    logger.error(f"错误详情: {error_text}")
 
         except Exception as e:
             logger.debug(f"❌ 测试失败: {e}")

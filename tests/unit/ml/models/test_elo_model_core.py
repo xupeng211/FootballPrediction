@@ -34,17 +34,37 @@ def minimal_training_data():
             datetime(2024, 1, 8),
         ],
         "home_team": [
-            "Team_A", "Team_B", "Team_A", "Team_C",
-            "Team_B", "Team_C", "Team_A", "Team_B"
+            "Team_A",
+            "Team_B",
+            "Team_A",
+            "Team_C",
+            "Team_B",
+            "Team_C",
+            "Team_A",
+            "Team_B",
         ],
         "away_team": [
-            "Team_B", "Team_C", "Team_C", "Team_A",
-            "Team_A", "Team_B", "Team_B", "Team_C"
+            "Team_B",
+            "Team_C",
+            "Team_C",
+            "Team_A",
+            "Team_A",
+            "Team_B",
+            "Team_B",
+            "Team_C",
         ],
         "home_score": [2, 1, 3, 0, 1, 2, 1, 1],
         "away_score": [1, 1, 2, 1, 2, 0, 1, 3],
-        "result": ["home_win", "draw", "home_win", "away_win",
-                  "away_win", "home_win", "draw", "away_win"]
+        "result": [
+            "home_win",
+            "draw",
+            "home_win",
+            "away_win",
+            "away_win",
+            "home_win",
+            "draw",
+            "away_win",
+        ],
     }
     return pd.DataFrame(data)
 
@@ -58,7 +78,7 @@ def validation_data():
         "away_team": ["Team_B", "Team_A"],
         "home_score": [1, 2],
         "away_score": [0, 1],
-        "result": ["home_win", "home_win"]
+        "result": ["home_win", "home_win"],
     }
     return pd.DataFrame(data)
 
@@ -96,15 +116,15 @@ class TestExpectedScoreCalculation:
     @pytest.mark.parametrize(
         "team_elo,opponent_elo,is_home,expected_approx",
         [
-            (1500, 1500, False, 0.5),      # 同分，无主场优势
-            (1500, 1500, True, 0.64),      # 同分，有主场优势
-            (2000, 1000, False, 0.91),     # 强队vs弱队
-            (2000, 1000, True, 0.91),      # 强队主场优势
-            (1000, 2000, False, 0.09),     # 弱队vs强队
-            (1000, 2000, True, 0.09),      # 弱队主场优势
-            (2500, 500, False, 0.91),      # 极端差异（会被限制）
-            (1400, 1600, False, 0.24),     # 接近比分
-        ]
+            (1500, 1500, False, 0.5),  # 同分，无主场优势
+            (1500, 1500, True, 0.64),  # 同分，有主场优势
+            (2000, 1000, False, 0.91),  # 强队vs弱队
+            (2000, 1000, True, 0.91),  # 强队主场优势
+            (1000, 2000, False, 0.09),  # 弱队vs强队
+            (1000, 2000, True, 0.09),  # 弱队主场优势
+            (2500, 500, False, 0.91),  # 极端差异（会被限制）
+            (1400, 1600, False, 0.24),  # 接近比分
+        ],
     )
     def test_calculate_expected_score(
         self, elo_model, team_elo, opponent_elo, is_home, expected_approx
@@ -134,18 +154,20 @@ class TestEloRatingUpdate:
     @pytest.mark.parametrize(
         "old_rating,opponent_rating,actual_result,expected_direction",
         [
-            (1500, 1400, 1.0, "up"),      # 强队获胜，评分应该上升
-            (1500, 1600, 1.0, "up"),      # 弱队获胜（冷门），评分应该大幅上升
-            (1500, 1400, 0.0, "down"),    # 强队败北，评分应该下降
-            (1500, 1600, 0.0, "down"),    # 弱队败北，评分应该小幅下降
-            (1500, 1500, 0.5, "same"),    # 同分平局，评分应该基本不变
-        ]
+            (1500, 1400, 1.0, "up"),  # 强队获胜，评分应该上升
+            (1500, 1600, 1.0, "up"),  # 弱队获胜（冷门），评分应该大幅上升
+            (1500, 1400, 0.0, "down"),  # 强队败北，评分应该下降
+            (1500, 1600, 0.0, "down"),  # 弱队败北，评分应该小幅下降
+            (1500, 1500, 0.5, "same"),  # 同分平局，评分应该基本不变
+        ],
     )
     def test_rating_update_direction(
         self, elo_model, old_rating, opponent_rating, actual_result, expected_direction
     ):
         """测试评分更新方向."""
-        new_rating = elo_model._update_rating(old_rating, opponent_rating, actual_result)
+        new_rating = elo_model._update_rating(
+            old_rating, opponent_rating, actual_result
+        )
 
         if expected_direction == "up":
             assert new_rating > old_rating
@@ -181,18 +203,20 @@ class TestProbabilityConversion:
     @pytest.mark.parametrize(
         "home_expected,away_expected,elo_diff",
         [
-            (0.7, 0.3, 200),    # 强队主场
-            (0.3, 0.7, -200),   # 弱队主场
-            (0.5, 0.5, 0),      # 同分
-            (0.9, 0.1, 400),    # 极端差异
-        ]
+            (0.7, 0.3, 200),  # 强队主场
+            (0.3, 0.7, -200),  # 弱队主场
+            (0.5, 0.5, 0),  # 同分
+            (0.9, 0.1, 400),  # 极端差异
+        ],
     )
     def test_convert_expected_scores_to_probabilities(
         self, elo_model, home_expected, away_expected, elo_diff
     ):
         """测试期望得分转换为概率."""
-        home_win, draw_prob, away_win = elo_model._convert_expected_scores_to_probabilities(
-            home_expected, away_expected, elo_diff
+        home_win, draw_prob, away_win = (
+            elo_model._convert_expected_scores_to_probabilities(
+                home_expected, away_expected, elo_diff
+            )
         )
 
         # 概率应该在合理范围内
@@ -266,7 +290,7 @@ class TestEloModelTraining:
         assert set(elo_model.team_elos.keys()) == expected_teams
 
         # 初始评分应该是设置的初始值
-        initial_elo = elo_model.hyperparameters["initial_elo"]
+        elo_model.hyperparameters["initial_elo"]
         # 由于训练过程中的更新，某些球队的评分可能不再是初始值
         for team in expected_teams:
             assert elo_model.team_elos[team] > 0
@@ -299,10 +323,15 @@ class TestEloModelTraining:
         assert not elo_model.validate_training_data(invalid_df)
 
         # 负分数据
-        negative_scores = pd.DataFrame({
-            "home_team": ["A"], "away_team": ["B"],
-            "home_score": [-1], "away_score": [0], "result": ["home_win"]
-        })
+        negative_scores = pd.DataFrame(
+            {
+                "home_team": ["A"],
+                "away_team": ["B"],
+                "home_score": [-1],
+                "away_score": [0],
+                "result": ["home_win"],
+            }
+        )
         assert not elo_model.validate_training_data(negative_scores)
 
     def test_hyperparameter_updates(self, elo_model):
@@ -356,7 +385,7 @@ class TestEloModelPrediction:
         match_data = {
             "home_team": "Team_A",
             "away_team": "Team_B",
-            "match_id": "test_match"
+            "match_id": "test_match",
         }
 
         result = elo_model.predict(match_data)
@@ -383,10 +412,7 @@ class TestEloModelPrediction:
         """测试概率预测."""
         elo_model.train(minimal_training_data)
 
-        match_data = {
-            "home_team": "Team_A",
-            "away_team": "Team_B"
-        }
+        match_data = {"home_team": "Team_A", "away_team": "Team_B"}
 
         probabilities = elo_model.predict_proba(match_data)
         assert len(probabilities) == 3
@@ -402,7 +428,7 @@ class TestEloModelPrediction:
         # 测试包含新球队的预测
         match_data = {
             "home_team": "Team_A",  # 已训练球队
-            "away_team": "New_Team"  # 新球队
+            "away_team": "New_Team",  # 新球队
         }
 
         result = elo_model.predict(match_data)
@@ -489,16 +515,15 @@ class TestEloModelUtilities:
         """测试特征准备."""
         elo_model.train(minimal_training_data)
 
-        match_data = {
-            "home_team": "Team_A",
-            "away_team": "Team_B"
-        }
+        match_data = {"home_team": "Team_A", "away_team": "Team_B"}
 
         features = elo_model.prepare_features(match_data)
 
         # 验证特征向量
         assert isinstance(features, np.ndarray)
-        assert len(features) == 4  # [home_elo, away_elo, elo_difference, home_advantage_adjusted]
+        assert (
+            len(features) == 4
+        )  # [home_elo, away_elo, elo_difference, home_advantage_adjusted]
 
         # 验证所有特征为正数
         assert all(feature >= 0 for feature in features)
@@ -545,17 +570,19 @@ class TestEdgeCases:
     def test_minimum_training_data(self, elo_model):
         """测试最小训练数据."""
         # 创建最小的有效数据集
-        minimal_data = pd.DataFrame({
-            "date": [datetime(2024, 1, 1), datetime(2024, 1, 2)],
-            "home_team": ["Team_A", "Team_B"],
-            "away_team": ["Team_B", "Team_A"],
-            "home_score": [2, 1],
-            "away_score": [1, 2],
-            "result": ["home_win", "away_win"]
-        })
+        minimal_data = pd.DataFrame(
+            {
+                "date": [datetime(2024, 1, 1), datetime(2024, 1, 2)],
+                "home_team": ["Team_A", "Team_B"],
+                "away_team": ["Team_B", "Team_A"],
+                "home_score": [2, 1],
+                "away_score": [1, 2],
+                "result": ["home_win", "away_win"],
+            }
+        )
 
         # 应该能够成功训练
-        result = elo_model.train(minimal_data)
+        elo_model.train(minimal_data)
         assert elo_model.is_trained
         assert len(elo_model.team_elos) == 2
 
@@ -567,7 +594,7 @@ class TestEdgeCases:
         extreme_data.loc[1, "away_score"] = 0
 
         # 应该能够处理极端比分
-        result = elo_model.train(extreme_data)
+        elo_model.train(extreme_data)
         assert elo_model.is_trained
 
     def test_prediction_input_validation(self, elo_model, minimal_training_data):

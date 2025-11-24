@@ -244,7 +244,6 @@ class TestBasicFunctionality:
         assert isinstance(adapter.adaptee, MockAdaptee)
 
     @pytest.mark.asyncio
-
     async def test_basic_adapter_request(self):
         """测试基础适配器请求"""
         adapter = MockAdapter()
@@ -258,7 +257,6 @@ class TestBasicFunctionality:
         assert transformer.transform_count == 0
 
     @pytest.mark.asyncio
-
     async def test_data_transformation(self):
         """测试数据转换"""
         transformer = MockDataTransformer()

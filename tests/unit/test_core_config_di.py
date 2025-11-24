@@ -77,5 +77,6 @@ class TestDIContainer:
         container = DIContainer()
 
         from src.core.exceptions import DependencyInjectionError
+
         with pytest.raises(DependencyInjectionError):
             container.resolve(int)

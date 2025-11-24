@@ -77,13 +77,15 @@ class TestLSTMPredictorSafetyNet:
         np.random.seed(42)
         data = []
         for i in range(50):  # 创建50个时间点的数据
-            data.append({
-                'time': f'2024-01-{(i%30)+1:02d}T{(i%24):02d}:00:00',
-                'overall_score': np.random.uniform(6.0, 10.0),
-                'cpu_usage': np.random.uniform(20.0, 80.0),
-                'memory_usage': np.random.uniform(40.0, 90.0),
-                'active_connections': np.random.randint(5, 25)
-            })
+            data.append(
+                {
+                    "time": f"2024-01-{(i % 30) + 1:02d}T{(i % 24):02d}:00:00",
+                    "overall_score": np.random.uniform(6.0, 10.0),
+                    "cpu_usage": np.random.uniform(20.0, 80.0),
+                    "memory_usage": np.random.uniform(40.0, 90.0),
+                    "active_connections": np.random.randint(5, 25),
+                }
+            )
         return data
 
     # ==================== P0 优先级 Happy Path 测试 ====================
@@ -101,17 +103,17 @@ class TestLSTMPredictorSafetyNet:
         """
         # 验证对象创建成功
         assert lstm_predictor is not None
-        assert hasattr(lstm_predictor, 'model')
-        assert hasattr(lstm_predictor, 'scaler_X')  # 实际的属性名
-        assert hasattr(lstm_predictor, 'scaler_y')  # 实际的属性名
-        assert hasattr(lstm_predictor, 'config')
-        assert hasattr(lstm_predictor, 'is_trained')
-        assert hasattr(lstm_predictor, 'feature_columns')
+        assert hasattr(lstm_predictor, "model")
+        assert hasattr(lstm_predictor, "scaler_X")  # 实际的属性名
+        assert hasattr(lstm_predictor, "scaler_y")  # 实际的属性名
+        assert hasattr(lstm_predictor, "config")
+        assert hasattr(lstm_predictor, "is_trained")
+        assert hasattr(lstm_predictor, "feature_columns")
 
         # 验证配置存在
         assert lstm_predictor.config is not None
-        assert hasattr(lstm_predictor.config, 'sequence_length')
-        assert hasattr(lstm_predictor.config, 'prediction_horizon')
+        assert hasattr(lstm_predictor.config, "sequence_length")
+        assert hasattr(lstm_predictor.config, "prediction_horizon")
 
         # 验证基本配置存在
         assert isinstance(lstm_predictor.config.sequence_length, int)
@@ -150,12 +152,16 @@ class TestLSTMPredictorSafetyNet:
             assert y.ndim == 3  # 目标也是3维 (samples, timesteps, features)
 
         except Exception as e:
-            pytest.fail(f"prepare_data() should not crash with valid dict list input: {e}")
+            pytest.fail(
+                f"prepare_data() should not crash with valid dict list input: {e}"
+            )
 
     @pytest.mark.unit
     @pytest.mark.ml
     @pytest.mark.critical
-    def test_predict_with_sequence_happy_path(self, lstm_predictor, sample_sequence_data):
+    def test_predict_with_sequence_happy_path(
+        self, lstm_predictor, sample_sequence_data
+    ):
         """
         P0测试: 序列预测 Happy Path
 
@@ -170,10 +176,10 @@ class TestLSTMPredictorSafetyNet:
             # 基本验证
             assert result is not None
             # 预测结果应该是PredictionResult对象
-            if hasattr(result, 'predicted_values'):
+            if hasattr(result, "predicted_values"):
                 # PredictionResult对象
-                assert hasattr(result, 'timestamp')
-                assert hasattr(result, 'confidence_intervals')
+                assert hasattr(result, "timestamp")
+                assert hasattr(result, "confidence_intervals")
                 assert isinstance(result.predicted_values, list)
             elif isinstance(result, np.ndarray):
                 # 直接numpy数组结果
@@ -191,9 +197,11 @@ class TestLSTMPredictorSafetyNet:
                 pytest.fail(f"predict() should handle sequence data gracefully: {e}")
         except Exception as e:
             # 允许TensorFlow相关异常
-            if ("tensorflow" in str(e).lower() or
-                "cuda" in str(e).lower() or
-                "gpu" in str(e).lower()):
+            if (
+                "tensorflow" in str(e).lower()
+                or "cuda" in str(e).lower()
+                or "gpu" in str(e).lower()
+            ):
                 pass
             else:
                 pytest.fail(f"predict() should handle sequence data gracefully: {e}")
@@ -201,7 +209,9 @@ class TestLSTMPredictorSafetyNet:
     @pytest.mark.unit
     @pytest.mark.ml
     @pytest.mark.critical
-    def test_train_happy_path(self, lstm_predictor, sample_sequence_data, sample_target_data):
+    def test_train_happy_path(
+        self, lstm_predictor, sample_sequence_data, sample_target_data
+    ):
         """
         P0测试: 模型训练 Happy Path
 
@@ -223,7 +233,9 @@ class TestLSTMPredictorSafetyNet:
 
             if sample_target_data.ndim == 2:
                 # 为每个样本创建目标序列 (prediction_horizon, 1)
-                target_seq = np.random.randn(lstm_predictor.config.prediction_horizon, 1)
+                target_seq = np.random.randn(
+                    lstm_predictor.config.prediction_horizon, 1
+                )
                 train_y = np.array([target_seq] * len(train_X))  # 匹配样本数
             else:
                 train_y = sample_target_data
@@ -241,7 +253,13 @@ class TestLSTMPredictorSafetyNet:
             assert isinstance(result, dict)
 
             # 验证训练统计信息
-            possible_keys = ["train_loss", "train_mae", "val_loss", "val_mae", "epochs_trained"]
+            possible_keys = [
+                "train_loss",
+                "train_mae",
+                "val_loss",
+                "val_mae",
+                "epochs_trained",
+            ]
             has_valid_key = any(key in result for key in possible_keys)
             assert has_valid_key or len(result) > 0
 
@@ -250,10 +268,16 @@ class TestLSTMPredictorSafetyNet:
 
         except Exception as e:
             # TensorFlow相关的异常是可以接受的
-            if "tensorflow" in str(e).lower() or "cuda" in str(e).lower() or "gpu" in str(e).lower():
+            if (
+                "tensorflow" in str(e).lower()
+                or "cuda" in str(e).lower()
+                or "gpu" in str(e).lower()
+            ):
                 pass
             else:
-                pytest.fail(f"train() should handle valid sequence data gracefully: {e}")
+                pytest.fail(
+                    f"train() should handle valid sequence data gracefully: {e}"
+                )
 
     @pytest.mark.unit
     @pytest.mark.ml
@@ -275,7 +299,7 @@ class TestLSTMPredictorSafetyNet:
             # 3. 降级到默认模型状态
             assert result in [False, None] or isinstance(result, bool)
 
-        except (FileNotFoundError, IOError):
+        except (OSError, FileNotFoundError):
             # 预期的文件系统异常
             pass
         except Exception as e:
@@ -331,7 +355,9 @@ class TestLSTMPredictorSafetyNet:
         try:
             result = lstm_predictor.predict(wrong_shape_data)
             # 如果没有抛出异常，结果应该指示错误
-            assert result is None or (hasattr(result, 'error') if hasattr(result, 'error') else False)
+            assert result is None or (
+                hasattr(result, "error") if hasattr(result, "error") else False
+            )
 
         except (ValueError, TypeError, AttributeError):
             # 抛出异常是预期的行为
@@ -426,7 +452,7 @@ class TestLSTMPredictorSafetyNet:
                 result = lstm_predictor.load_model(path)
                 # 可能返回False或None
                 assert result in [False, None]
-            except (ValueError, FileNotFoundError, IOError):
+            except (OSError, ValueError, FileNotFoundError):
                 # 预期的异常
                 pass
 
@@ -445,18 +471,18 @@ class TestLSTMPredictorSafetyNet:
                 timestamp="2024-01-01T00:00:00",
                 predicted_values=[1.5, 2.0, 1.8],
                 confidence_intervals=[(1.2, 1.8), (1.7, 2.3), (1.5, 2.1)],
-                model_version="test"
+                model_version="test",
             )
 
             # 验证属性存在
-            assert hasattr(result, 'timestamp')
-            assert hasattr(result, 'predicted_values')
-            assert hasattr(result, 'confidence_intervals')
-            assert hasattr(result, 'model_version')
-            assert hasattr(result, 'prediction_horizon')  # 默认值字段
-            assert hasattr(result, 'mae')  # 可选字段
-            assert hasattr(result, 'rmse')  # 可选字段
-            assert hasattr(result, 'r2')  # 可选字段
+            assert hasattr(result, "timestamp")
+            assert hasattr(result, "predicted_values")
+            assert hasattr(result, "confidence_intervals")
+            assert hasattr(result, "model_version")
+            assert hasattr(result, "prediction_horizon")  # 默认值字段
+            assert hasattr(result, "mae")  # 可选字段
+            assert hasattr(result, "rmse")  # 可选字段
+            assert hasattr(result, "r2")  # 可选字段
 
             # 验证数据类型
             assert isinstance(result.timestamp, str)
@@ -487,19 +513,19 @@ class TestLSTMPredictorSafetyNet:
                 batch_size=16,
                 epochs=10,
                 learning_rate=0.001,
-                validation_split=0.2
+                validation_split=0.2,
             )
 
             # 验证属性存在
-            assert hasattr(config, 'sequence_length')
-            assert hasattr(config, 'prediction_horizon')
-            assert hasattr(config, 'lstm_units')
-            assert hasattr(config, 'dropout_rate')
-            assert hasattr(config, 'batch_size')
-            assert hasattr(config, 'epochs')
-            assert hasattr(config, 'learning_rate')
-            assert hasattr(config, 'validation_split')
-            assert hasattr(config, 'early_stopping_patience')
+            assert hasattr(config, "sequence_length")
+            assert hasattr(config, "prediction_horizon")
+            assert hasattr(config, "lstm_units")
+            assert hasattr(config, "dropout_rate")
+            assert hasattr(config, "batch_size")
+            assert hasattr(config, "epochs")
+            assert hasattr(config, "learning_rate")
+            assert hasattr(config, "validation_split")
+            assert hasattr(config, "early_stopping_patience")
 
             # 验证数据类型
             assert isinstance(config.sequence_length, int)
@@ -526,10 +552,13 @@ class TestLSTMPredictorSafetyNet:
         预期结果: 应该有合理的边界处理
         """
         # 创建包含极端值的测试数据
-        extreme_data = np.array([
-            [1e10, -1e10, 1e-10, -1e-10, 0],  # 极大和极小值
-            [np.inf, -np.inf, np.nan, 1.0, 0.0],  # 无穷大和NaN
-        ], dtype=np.float32)
+        extreme_data = np.array(
+            [
+                [1e10, -1e10, 1e-10, -1e-10, 0],  # 极大和极小值
+                [np.inf, -np.inf, np.nan, 1.0, 0.0],  # 无穷大和NaN
+            ],
+            dtype=np.float32,
+        )
 
         try:
             result = lstm_predictor.predict(extreme_data)
@@ -560,7 +589,9 @@ class TestLSTMPredictorSafetyNet:
         """
         try:
             # 创建较大的数据集（但不要太大以免影响测试性能）
-            large_data = np.random.randn(1000, 50).astype(np.float32)  # 1000个样本，50个特征
+            large_data = np.random.randn(1000, 50).astype(
+                np.float32
+            )  # 1000个样本，50个特征
 
             result = lstm_predictor.predict(large_data)
 

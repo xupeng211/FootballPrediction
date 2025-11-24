@@ -63,15 +63,12 @@ try:
     from src.database.models.raw_data import RawMatchData
     from src.database.models.match import Match
     from sqlalchemy import select
-except ImportError as e:
-    print(f"❌ 导入模块失败: {e}")
-    print("💡 请确保已安装所有依赖: pip install xgboost pandas sqlalchemy asyncpg")
+except ImportError:
     sys.exit(1)
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - [PIPELINE] - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - [PIPELINE] - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -86,7 +83,7 @@ class DailyPipeline:
         self.current_step = 0
         self.errors = []
 
-    def _get_target_seasons(self) -> List[int]:
+    def _get_target_seasons(self) -> list[int]:
         """
         获取目标赛季列表.
 
@@ -116,7 +113,7 @@ class DailyPipeline:
 
         target_seasons = [current_season, previous_season]
 
-        logger.info(f"🗓️  智能赛季判断:")
+        logger.info("🗓️  智能赛季判断:")
         logger.info(f"    当前日期: {current_date.strftime('%Y-%m-%d')}")
         logger.info(f"    当前赛季: {current_season}")
         logger.info(f"    上一赛季: {previous_season}")
@@ -133,11 +130,17 @@ class DailyPipeline:
         """
         if status == "START":
             self.current_step += 1
-            logger.info(f"[{self.current_step}/{self.pipeline_steps}] {step_name} - 开始")
+            logger.info(
+                f"[{self.current_step}/{self.pipeline_steps}] {step_name} - 开始"
+            )
         elif status == "COMPLETED":
-            logger.info(f"[{self.current_step}/{self.pipeline_steps}] {step_name} - ✅ 完成")
+            logger.info(
+                f"[{self.current_step}/{self.pipeline_steps}] {step_name} - ✅ 完成"
+            )
         elif status == "FAILED":
-            logger.error(f"[{self.current_step}/{self.pipeline_steps}] {step_name} - ❌ 失败")
+            logger.error(
+                f"[{self.current_step}/{self.pipeline_steps}] {step_name} - ❌ 失败"
+            )
 
     async def step_1_data_sync(self) -> bool:
         """步骤1：数据同步 - 获取最新比赛数据（支持多赛季智能采集）."""
@@ -156,7 +159,13 @@ class DailyPipeline:
             collector = FixturesCollector(data_source="football_api")
 
             # 定义目标联赛
-            target_leagues = ["PL", "PD", "BL1", "SA", "FL1"]  # 欧洲五大联赛：英超、西甲、德甲、意甲、法甲
+            target_leagues = [
+                "PL",
+                "PD",
+                "BL1",
+                "SA",
+                "FL1",
+            ]  # 欧洲五大联赛：英超、西甲、德甲、意甲、法甲
 
             total_records_collected = 0
             total_success = 0
@@ -172,20 +181,21 @@ class DailyPipeline:
                 try:
                     # 采集当前赛季的所有联赛数据
                     season_result = await collector.collect_fixtures(
-                        leagues=target_leagues,
-                        season=season
+                        leagues=target_leagues, season=season
                     )
 
                     if season_result.success:
-                        season_records = season_result.data.get('records_collected', 0)
+                        season_records = season_result.data.get("records_collected", 0)
                         total_records_collected += season_records
                         total_success += 1
 
-                        logger.info(f"✅ {season} 赛季数据采集成功，收集到 {season_records} 条记录")
+                        logger.info(
+                            f"✅ {season} 赛季数据采集成功，收集到 {season_records} 条记录"
+                        )
 
                         # 如果有详细的联赛统计信息，也记录下来
-                        if 'league_stats' in season_result.data:
-                            league_stats = season_result.data['league_stats']
+                        if "league_stats" in season_result.data:
+                            league_stats = season_result.data["league_stats"]
                             logger.info(f"📊 {season} 赛季联赛统计:")
                             for league, stats in league_stats.items():
                                 logger.info(f"    - {league}: {stats}")
@@ -309,7 +319,7 @@ class DailyPipeline:
             features_df = calculator.generate_features_dataset()
 
             # 保存特征数据
-            features_df.to_csv('data/dataset_v1.csv', index=False)
+            features_df.to_csv("data/dataset_v1.csv", index=False)
 
             self.log_step(step_name, "COMPLETED")
             logger.info(f"特征生成完成，生成 {len(features_df)} 条特征记录")
@@ -329,27 +339,34 @@ class DailyPipeline:
 
         try:
             # 加载特征数据
-            df = pd.read_csv('data/dataset_v1.csv')
-            df['match_date'] = pd.to_datetime(df['match_date'])
-            df = df.sort_values('match_date').reset_index(drop=True)
+            df = pd.read_csv("data/dataset_v1.csv")
+            df["match_date"] = pd.to_datetime(df["match_date"])
+            df = df.sort_values("match_date").reset_index(drop=True)
 
             # 定义特征列（包含新的高级特征）
             feature_columns = [
                 # 基础特征
-                'home_team_id', 'away_team_id',
-                'home_last_5_points', 'away_last_5_points',
-                'home_last_5_avg_goals', 'away_last_5_avg_goals',
-                'h2h_last_3_home_wins',
+                "home_team_id",
+                "away_team_id",
+                "home_last_5_points",
+                "away_last_5_points",
+                "home_last_5_avg_goals",
+                "away_last_5_avg_goals",
+                "h2h_last_3_home_wins",
                 # 高级特征 - 体能、实力、士气
-                'home_last_5_goal_diff', 'away_last_5_goal_diff',
-                'home_win_streak', 'away_win_streak',
-                'home_last_5_win_rate', 'away_last_5_win_rate',
-                'home_rest_days', 'away_rest_days'
+                "home_last_5_goal_diff",
+                "away_last_5_goal_diff",
+                "home_win_streak",
+                "away_win_streak",
+                "home_last_5_win_rate",
+                "away_last_5_win_rate",
+                "home_rest_days",
+                "away_rest_days",
             ]
 
             # 准备数据
             X = df[feature_columns].copy()
-            y = df['match_result'].copy()
+            y = df["match_result"].copy()
 
             # 时间序列切分
             split_point = int(len(X) * 0.8)
@@ -360,14 +377,14 @@ class DailyPipeline:
 
             # 训练XGBoost模型
             params = {
-                'objective': 'multi:softmax',
-                'num_class': 3,
-                'max_depth': 6,
-                'learning_rate': 0.1,
-                'n_estimators': 100,
-                'random_state': 42,
-                'eval_metric': 'mlogloss',
-                'use_label_encoder': False,
+                "objective": "multi:softmax",
+                "num_class": 3,
+                "max_depth": 6,
+                "learning_rate": 0.1,
+                "n_estimators": 100,
+                "random_state": 42,
+                "eval_metric": "mlogloss",
+                "use_label_encoder": False,
             }
 
             model = xgb.XGBClassifier(**params)
@@ -378,27 +395,32 @@ class DailyPipeline:
             accuracy = (y_pred == y_test).mean()
 
             # 保存模型
-            os.makedirs('models', exist_ok=True)
-            model.save_model('models/football_model_v1.json')
+            os.makedirs("models", exist_ok=True)
+            model.save_model("models/football_model_v1.json")
 
             # 保存元数据
             import json
+
             metadata = {
-                'model_version': 'v1',
-                'training_date': datetime.now().isoformat(),
-                'feature_names': feature_columns,
-                'target_classes': ['平局', '主队胜', '客队胜'],
-                'training_samples': len(X_train),
-                'test_samples': len(X_test),
-                'test_accuracy': float(accuracy),
-                'num_features': len(feature_columns)
+                "model_version": "v1",
+                "training_date": datetime.now().isoformat(),
+                "feature_names": feature_columns,
+                "target_classes": ["平局", "主队胜", "客队胜"],
+                "training_samples": len(X_train),
+                "test_samples": len(X_test),
+                "test_accuracy": float(accuracy),
+                "num_features": len(feature_columns),
             }
 
-            with open('models/football_model_v1_metadata.json', 'w', encoding='utf-8') as f:
+            with open(
+                "models/football_model_v1_metadata.json", "w", encoding="utf-8"
+            ) as f:
                 json.dump(metadata, f, ensure_ascii=False, indent=2)
 
             self.log_step(step_name, "COMPLETED")
-            logger.info(f"模型训练完成，测试准确率: {accuracy:.4f} ({accuracy*100:.2f}%)")
+            logger.info(
+                f"模型训练完成，测试准确率: {accuracy:.4f} ({accuracy * 100:.2f}%)"
+            )
             return True
 
         except Exception as e:
@@ -416,13 +438,13 @@ class DailyPipeline:
         try:
             # 加载模型
             model = xgb.XGBClassifier()
-            model.load_model('models/football_model_v1.json')
+            model.load_model("models/football_model_v1.json")
 
             # 加载元数据
-            with open('models/football_model_v1_metadata.json', 'r', encoding='utf-8') as f:
+            with open("models/football_model_v1_metadata.json", encoding="utf-8") as f:
                 metadata = json.load(f)
 
-            feature_names = metadata['feature_names']
+            feature_names = metadata["feature_names"]
             result_names = {0: "平局", 1: "主队胜", 2: "客队胜"}
 
             # 从数据库获取未来比赛
@@ -430,11 +452,11 @@ class DailyPipeline:
             from psycopg2.extras import RealDictCursor
 
             db_config = {
-                'host': os.getenv('DB_HOST', 'localhost'),
-                'port': int(os.getenv('DB_PORT', 5432)),
-                'database': os.getenv('DB_NAME', 'football_prediction'),
-                'user': os.getenv('DB_USER', 'postgres'),
-                'password': os.getenv('DB_PASSWORD', 'postgres-dev-password')
+                "host": os.getenv("DB_HOST", "localhost"),
+                "port": int(os.getenv("DB_PORT", 5432)),
+                "database": os.getenv("DB_NAME", "football_prediction"),
+                "user": os.getenv("DB_USER", "postgres"),
+                "password": os.getenv("DB_PASSWORD", "postgres-dev-password"),
             }
 
             conn = psycopg2.connect(**db_config)
@@ -477,15 +499,18 @@ class DailyPipeline:
 
             # 为未来比赛生成特征
             # 需要从历史数据计算特征
-            all_matches_df = pd.read_csv('data/dataset_v1.csv')
-            all_matches_df['match_date'] = pd.to_datetime(all_matches_df['match_date'])
+            all_matches_df = pd.read_csv("data/dataset_v1.csv")
+            all_matches_df["match_date"] = pd.to_datetime(all_matches_df["match_date"])
 
             # 合并历史数据和未来比赛数据
-            combined_df = pd.concat([
-                all_matches_df[['home_team_id', 'away_team_id', 'match_date']],
-                future_matches_df[['home_team_id', 'away_team_id', 'match_date']]
-            ], ignore_index=True)
-            combined_df = combined_df.sort_values('match_date').reset_index(drop=True)
+            combined_df = pd.concat(
+                [
+                    all_matches_df[["home_team_id", "away_team_id", "match_date"]],
+                    future_matches_df[["home_team_id", "away_team_id", "match_date"]],
+                ],
+                ignore_index=True,
+            )
+            combined_df = combined_df.sort_values("match_date").reset_index(drop=True)
 
             # 计算特征
             calculator = SimpleFeatureCalculator(all_matches_df)
@@ -495,34 +520,40 @@ class DailyPipeline:
             for _, match in future_matches_df.iterrows():
                 try:
                     # 使用calculated方法计算特征
-                    match_dict = match.to_dict()
+                    match.to_dict()
 
                     # 计算主队近期战绩
-                    home_points, home_avg_goals = calculator.calculate_team_recent_stats(
-                        match['home_team_id'], match['match_date']
+                    home_points, home_avg_goals = (
+                        calculator.calculate_team_recent_stats(
+                            match["home_team_id"], match["match_date"]
+                        )
                     )
 
                     # 计算客队近期战绩
-                    away_points, away_avg_goals = calculator.calculate_team_recent_stats(
-                        match['away_team_id'], match['match_date']
+                    away_points, away_avg_goals = (
+                        calculator.calculate_team_recent_stats(
+                            match["away_team_id"], match["match_date"]
+                        )
                     )
 
                     # 计算历史交锋
                     h2h_wins = calculator.calculate_h2h_stats(
-                        match['home_team_id'], match['away_team_id'], match['match_date']
+                        match["home_team_id"],
+                        match["away_team_id"],
+                        match["match_date"],
                     )
 
                     features = {
-                        'home_team_id': match['home_team_id'],
-                        'away_team_id': match['away_team_id'],
-                        'home_last_5_points': home_points,
-                        'away_last_5_points': away_points,
-                        'home_last_5_avg_goals': home_avg_goals,
-                        'away_last_5_avg_goals': away_avg_goals,
-                        'h2h_last_3_home_wins': h2h_wins,
-                        'match_date': match['match_date'],
-                        'home_team_name': match['home_team_name'],
-                        'away_team_name': match['away_team_name']
+                        "home_team_id": match["home_team_id"],
+                        "away_team_id": match["away_team_id"],
+                        "home_last_5_points": home_points,
+                        "away_last_5_points": away_points,
+                        "home_last_5_avg_goals": home_avg_goals,
+                        "away_last_5_avg_goals": away_avg_goals,
+                        "h2h_last_3_home_wins": h2h_wins,
+                        "match_date": match["match_date"],
+                        "home_team_name": match["home_team_name"],
+                        "away_team_name": match["away_team_name"],
                     }
                     future_features.append(features)
 
@@ -550,13 +581,15 @@ class DailyPipeline:
                 pred = predictions[i]
                 probs = probabilities[i]
 
-                match_date = match['match_date'].strftime('%Y-%m-%d')
-                home_team = match['home_team_name']
-                away_team = match['away_team_name']
+                match_date = match["match_date"].strftime("%Y-%m-%d")
+                home_team = match["home_team_name"]
+                away_team = match["away_team_name"]
 
                 logger.info(f"[{match_date}] {home_team} (主) vs {away_team} (客)")
                 logger.info(f"预测: {result_names[pred]}")
-                logger.info(f"概率: 平局 {probs[0]:.1%} | 主胜 {probs[1]:.1%} | 客胜 {probs[2]:.1%}")
+                logger.info(
+                    f"概率: 平局 {probs[0]:.1%} | 主胜 {probs[1]:.1%} | 客胜 {probs[2]:.1%}"
+                )
                 logger.info("-" * 50)
 
             logger.info(f"📊 共预测 {len(future_features)} 场未来比赛")

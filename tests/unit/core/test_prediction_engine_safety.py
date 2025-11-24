@@ -77,7 +77,9 @@ class TestPredictionEngineSafetyNet:
             src.core.prediction_engine.PredictionStatistics = mock_statistics
 
         # 替换_lazy_import函数的行为
-        with patch.object(src.core.prediction_engine, '_lazy_import', side_effect=mock_import):
+        with patch.object(
+            src.core.prediction_engine, "_lazy_import", side_effect=mock_import
+        ):
             # 调用延迟导入
             src.core.prediction_engine._lazy_import()
 
@@ -117,9 +119,12 @@ class TestPredictionEngineSafetyNet:
         mock_config_module = Mock()
         mock_config_module.PredictionConfig = mock_config_class
 
-        with patch.object(src.core.prediction_engine, '_lazy_import', side_effect=mock_lazy_import), \
-             patch.dict(sys.modules, {'src.core.prediction.config': mock_config_module}):
-
+        with (
+            patch.object(
+                src.core.prediction_engine, "_lazy_import", side_effect=mock_lazy_import
+            ),
+            patch.dict(sys.modules, {"src.core.prediction.config": mock_config_module}),
+        ):
             # 第一次调用
             engine1 = await src.core.prediction_engine.get_prediction_engine()
 
@@ -153,11 +158,13 @@ class TestPredictionEngineSafetyNet:
         ]
 
         # 验证__all__存在且包含预期项目
-        assert hasattr(src.core.prediction_engine, '__all__')
+        assert hasattr(src.core.prediction_engine, "__all__")
         actual_exports = sorted(src.core.prediction_engine.__all__)
         expected_exports_sorted = sorted(expected_exports)
 
-        assert actual_exports == expected_exports_sorted, f"期望 {expected_exports_sorted}, 实际 {actual_exports}"
+        assert actual_exports == expected_exports_sorted, (
+            f"期望 {expected_exports_sorted}, 实际 {actual_exports}"
+        )
 
     @pytest.mark.unit
     @pytest.mark.core
@@ -193,8 +200,8 @@ class TestPredictionEngineSafetyNet:
         assert "集成了机器学习模型" in src.core.prediction_engine.__doc__
 
         # 验证关键函数有文档
-        assert hasattr(src.core.prediction_engine, '_lazy_import')
-        assert hasattr(src.core.prediction_engine, 'get_prediction_engine')
+        assert hasattr(src.core.prediction_engine, "_lazy_import")
+        assert hasattr(src.core.prediction_engine, "get_prediction_engine")
         assert src.core.prediction_engine._lazy_import.__doc__ is not None
         assert src.core.prediction_engine.get_prediction_engine.__doc__ is not None
 
@@ -230,9 +237,12 @@ class TestPredictionEngineSafetyNet:
         mock_config_module = Mock()
         mock_config_module.PredictionConfig = mock_config_class
 
-        with patch.object(src.core.prediction_engine, '_lazy_import', side_effect=mock_lazy_import), \
-             patch.dict(sys.modules, {'src.core.prediction.config': mock_config_module}):
-
+        with (
+            patch.object(
+                src.core.prediction_engine, "_lazy_import", side_effect=mock_lazy_import
+            ),
+            patch.dict(sys.modules, {"src.core.prediction.config": mock_config_module}),
+        ):
             # 创建多个并发任务
             async def get_engine():
                 return await src.core.prediction_engine.get_prediction_engine()
@@ -277,9 +287,12 @@ class TestPredictionEngineSafetyNet:
         mock_config_module = Mock()
         mock_config_module.PredictionConfig = mock_config_class
 
-        with patch.object(src.core.prediction_engine, '_lazy_import', side_effect=mock_lazy_import), \
-             patch.dict(sys.modules, {'src.core.prediction.config': mock_config_module}):
-
+        with (
+            patch.object(
+                src.core.prediction_engine, "_lazy_import", side_effect=mock_lazy_import
+            ),
+            patch.dict(sys.modules, {"src.core.prediction.config": mock_config_module}),
+        ):
             # 获取预测引擎
             engine = await src.core.prediction_engine.get_prediction_engine()
 
@@ -324,7 +337,9 @@ class TestPredictionEngineSafetyNet:
                 src.core.prediction_engine.PredictionStatistics = ps
 
         # 替换_lazy_import
-        with patch.object(src.core.prediction_engine, '_lazy_import', side_effect=mock_lazy_import):
+        with patch.object(
+            src.core.prediction_engine, "_lazy_import", side_effect=mock_lazy_import
+        ):
             # 多次调用延迟导入
             src.core.prediction_engine._lazy_import()
             src.core.prediction_engine._lazy_import()
@@ -368,9 +383,12 @@ class TestPredictionEngineSafetyNet:
         mock_config_module = Mock()
         mock_config_module.PredictionConfig = mock_config_class
 
-        with patch.object(src.core.prediction_engine, '_lazy_import', side_effect=mock_lazy_import), \
-             patch.dict(sys.modules, {'src.core.prediction.config': mock_config_module}):
-
+        with (
+            patch.object(
+                src.core.prediction_engine, "_lazy_import", side_effect=mock_lazy_import
+            ),
+            patch.dict(sys.modules, {"src.core.prediction.config": mock_config_module}),
+        ):
             # 第一次获取引擎实例
             engine1 = await src.core.prediction_engine.get_prediction_engine()
 
@@ -407,13 +425,13 @@ class TestPredictionEngineSafetyNet:
         assert module is src.core.prediction_engine
 
         # 验证关键属性存在
-        assert hasattr(module, 'PredictionEngine')
-        assert hasattr(module, 'PredictionConfig')
-        assert hasattr(module, 'PredictionStatistics')
-        assert hasattr(module, 'get_prediction_engine')
-        assert hasattr(module, '_lazy_import')
-        assert hasattr(module, '_prediction_engine_instance')
-        assert hasattr(module, '__all__')
+        assert hasattr(module, "PredictionEngine")
+        assert hasattr(module, "PredictionConfig")
+        assert hasattr(module, "PredictionStatistics")
+        assert hasattr(module, "get_prediction_engine")
+        assert hasattr(module, "_lazy_import")
+        assert hasattr(module, "_prediction_engine_instance")
+        assert hasattr(module, "__all__")
 
     @pytest.mark.unit
     @pytest.mark.core
@@ -441,8 +459,8 @@ class TestPredictionEngineSafetyNet:
             pytest.fail(f"模块重新导入失败: {e}")
 
         # 验证重新导入后状态正常
-        assert hasattr(src.core.prediction_engine, 'get_prediction_engine')
-        assert hasattr(src.core.prediction_engine, '_lazy_import')
+        assert hasattr(src.core.prediction_engine, "get_prediction_engine")
+        assert hasattr(src.core.prediction_engine, "_lazy_import")
 
     @pytest.mark.unit
     @pytest.mark.core
@@ -473,9 +491,12 @@ class TestPredictionEngineSafetyNet:
         mock_config_module = Mock()
         mock_config_module.PredictionConfig = mock_config_class
 
-        with patch.object(src.core.prediction_engine, '_lazy_import', side_effect=mock_lazy_import), \
-             patch.dict(sys.modules, {'src.core.prediction.config': mock_config_module}):
-
+        with (
+            patch.object(
+                src.core.prediction_engine, "_lazy_import", side_effect=mock_lazy_import
+            ),
+            patch.dict(sys.modules, {"src.core.prediction.config": mock_config_module}),
+        ):
             # 创建多个并发任务来测试单例安全性
             async def get_engine():
                 return await src.core.prediction_engine.get_prediction_engine()

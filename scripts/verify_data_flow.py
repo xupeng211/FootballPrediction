@@ -27,16 +27,18 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class DataFlowValidator:
     """数据流验证器"""
 
     def __init__(self):
-        self.database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./football_prediction.db")
+        self.database_url = os.getenv(
+            "DATABASE_URL", "sqlite+aiosqlite:///./football_prediction.db"
+        )
         self.api_key = os.getenv("FOOTBALL_DATA_API_KEY", "")
         self.engine = None
 
@@ -50,7 +52,9 @@ class DataFlowValidator:
             logger.error(f"❌ 数据库连接失败: {e}")
             return False
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
     async def test_external_api(self) -> dict:
         """测试外部API连接"""
         if not self.api_key or self.api_key == "demo_key_19534501498":
@@ -61,8 +65,7 @@ class DataFlowValidator:
             headers = {"X-Auth-Token": self.api_key}
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.get(
-                    "https://api.football-data.org/v4/matches",
-                    headers=headers
+                    "https://api.football-data.org/v4/matches", headers=headers
                 )
                 if response.status_code == 200:
                     data = response.json()
@@ -86,7 +89,9 @@ class DataFlowValidator:
 
             if isinstance(result, dict) and result.get("status") == "success":
                 fixtures_count = result.get("fixtures_count", 0)
-                logger.info(f"✅ 数据采集任务成功执行，采集到 {fixtures_count} 个fixture")
+                logger.info(
+                    f"✅ 数据采集任务成功执行，采集到 {fixtures_count} 个fixture"
+                )
                 return True
             else:
                 logger.warning(f"⚠️  数据采集任务返回异常结果: {result}")
@@ -110,10 +115,12 @@ class DataFlowValidator:
             date_to = date_from + timedelta(days=7)
 
             logger.info("🔄 直接测试数据采集器...")
-            result = await collector.collect_fixtures(date_from=date_from, date_to=date_to)
+            result = await collector.collect_fixtures(
+                date_from=date_from, date_to=date_to
+            )
 
             if result.success:
-                fixtures = result.data.get('fixtures', [])
+                fixtures = result.data.get("fixtures", [])
                 logger.info(f"✅ 直接采集器测试成功，采集到 {len(fixtures)} 个fixture")
                 return True
             else:
@@ -129,24 +136,30 @@ class DataFlowValidator:
         try:
             async with AsyncSession(self.engine) as session:
                 # 查询matches表
-                result = await session.execute(text("SELECT COUNT(*) as count FROM matches"))
+                result = await session.execute(
+                    text("SELECT COUNT(*) as count FROM matches")
+                )
                 row = result.fetchone()
                 matches_count = row[0] if row else 0
 
                 # 查询fixtures表（如果存在）
                 try:
-                    result = await session.execute(text("SELECT COUNT(*) as count FROM fixtures"))
+                    result = await session.execute(
+                        text("SELECT COUNT(*) as count FROM fixtures")
+                    )
                     row = result.fetchone()
                     fixtures_count = row[0] if row else 0
                 except:
                     fixtures_count = 0
 
-                logger.info(f"✅ 数据库验证完成: matches={matches_count}, fixtures={fixtures_count}")
+                logger.info(
+                    f"✅ 数据库验证完成: matches={matches_count}, fixtures={fixtures_count}"
+                )
 
                 return {
                     "matches_count": matches_count,
                     "fixtures_count": fixtures_count,
-                    "total_records": matches_count + fixtures_count
+                    "total_records": matches_count + fixtures_count,
                 }
 
         except Exception as e:
@@ -159,7 +172,8 @@ class DataFlowValidator:
             async with AsyncSession(self.engine) as session:
                 # 检查表是否存在，如果不存在则创建
                 try:
-                    await session.execute(text("""
+                    await session.execute(
+                        text("""
                         CREATE TABLE IF NOT EXISTS matches (
                             id INTEGER PRIMARY KEY,
                             home_team VARCHAR(255),
@@ -168,7 +182,8 @@ class DataFlowValidator:
                             status VARCHAR(50),
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )
-                    """))
+                    """)
+                    )
                     await session.commit()
                     logger.info("✅ 确保matches表存在")
                 except Exception as e:
@@ -176,10 +191,12 @@ class DataFlowValidator:
 
                 # 插入测试数据
                 try:
-                    await session.execute(text("""
+                    await session.execute(
+                        text("""
                         INSERT OR IGNORE INTO matches (id, home_team, away_team, match_date, status)
                         VALUES (999999, 'Test Home', 'Test Away', CURRENT_DATE, 'TEST')
-                    """))
+                    """)
+                    )
                     await session.commit()
                     logger.info("✅ 测试记录插入成功")
                     return True
@@ -211,7 +228,7 @@ class DataFlowValidator:
             "collection_task": False,
             "database_storage": {"total_records": 0},
             "test_records": False,
-            "overall_status": "unknown"
+            "overall_status": "unknown",
         }
 
         # 1. 设置数据库
@@ -236,7 +253,7 @@ class DataFlowValidator:
             results["database_setup"],
             results["api_test"]["status"] in ["success", "demo"],
             results["collection_task"] or results["test_records"],
-            results["database_storage"]["total_records"] >= 0
+            results["database_storage"]["total_records"] >= 0,
         ]
 
         results["overall_status"] = "success" if all(success_criteria) else "partial"
@@ -246,34 +263,21 @@ class DataFlowValidator:
 
         return results
 
+
 async def main():
     """主函数"""
-    print("🔧 业务验证工程师 - 数据流验证开始")
-    print("=" * 60)
 
     validator = DataFlowValidator()
     results = await validator.run_validation()
 
-    print("\n" + "=" * 60)
-    print("📊 验证结果报告:")
-    print(f"🗄️  数据库设置: {'✅ 成功' if results['database_setup'] else '❌ 失败'}")
-    print(f"🌐 API测试: {'✅ 成功' if results['api_test']['status'] == 'success' else '⚠️ 演示模式' if results['api_test']['status'] == 'demo' else '❌ 失败'}")
-    print(f"📥 采集任务: {'✅ 成功' if results['collection_task'] else '❌ 失败'}")
-    print(f"💾 数据库记录: {results['database_storage']['total_records']} 条")
-    print(f"🧪 测试记录: {'✅ 成功' if results['test_records'] else '❌ 失败'}")
-
-    overall_status = results['overall_status']
+    overall_status = results["overall_status"]
     if overall_status == "success":
-        print("\n🎉 **核心业务价值验证通过！**")
-        print("✅ 数据采集任务能够正常运行")
-        print("✅ 系统能够优雅降级（演示模式）")
-        print("✅ 数据库连接和存储正常")
+        pass
     else:
-        print("\n⚠️ **验证部分通过**")
-        print("系统基本功能可用，但建议检查失败的组件")
+        pass
 
-    print("=" * 60)
     return overall_status == "success"
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

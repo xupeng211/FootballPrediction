@@ -20,6 +20,7 @@ from typing import Any
 try:
     from email.mime.multipart import MimeMultipart
     from email.mime.text import MimeText
+
     EMAIL_SUPPORT = True
 except ImportError:
     MimeText = None
@@ -37,6 +38,7 @@ from scripts.maintenance.maintenance_logger import MaintenanceLogger
 @dataclass
 class HealthAlert:
     """健康警报数据结构."""
+
     alert_type: str
     severity: str  # "info", "warning", "critical"
     title: str
@@ -45,6 +47,7 @@ class HealthAlert:
     threshold_value: Any
     timestamp: str
     resolved: bool = False
+
 
 class HealthMonitor:
     """目录健康监控器."""
@@ -62,7 +65,7 @@ class HealthMonitor:
             "max_naming_violations": 10,
             "max_misplaced_files": 20,
             "max_project_size_gb": 5.0,
-            "max_old_reports_days": 30
+            "max_old_reports_days": 30,
         }
 
         # 监控状态文件
@@ -78,7 +81,7 @@ class HealthMonitor:
         """加载监控配置."""
         if self.config_file.exists():
             try:
-                with open(self.config_file, encoding='utf-8') as f:
+                with open(self.config_file, encoding="utf-8") as f:
                     config = json.load(f)
                     self.thresholds.update(config.get("thresholds", {}))
             except Exception:
@@ -89,9 +92,9 @@ class HealthMonitor:
         try:
             config = {
                 "thresholds": self.thresholds,
-                "last_updated": datetime.now().isoformat()
+                "last_updated": datetime.now().isoformat(),
             }
-            with open(self.config_file, 'w', encoding='utf-8') as f:
+            with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
         except Exception:
             pass
@@ -102,7 +105,7 @@ class HealthMonitor:
             return []
 
         try:
-            with open(self.alerts_file, encoding='utf-8') as f:
+            with open(self.alerts_file, encoding="utf-8") as f:
                 alerts_data = json.load(f)
                 return [HealthAlert(**alert) for alert in alerts_data]
         except Exception:
@@ -112,14 +115,14 @@ class HealthMonitor:
         """保存警报记录."""
         try:
             alerts_data = [asdict(alert) for alert in alerts]
-            with open(self.alerts_file, 'w', encoding='utf-8') as f:
+            with open(self.alerts_file, "w", encoding="utf-8") as f:
                 json.dump(alerts_data, f, indent=2, ensure_ascii=False)
         except Exception:
             pass
 
-    def _check_root_files_count(self,
-    health_report: dict[str,
-    Any]) -> HealthAlert | None:
+    def _check_root_files_count(
+        self, health_report: dict[str, Any]
+    ) -> HealthAlert | None:
         """检查根目录文件数量."""
         root_files = health_report["statistics"]["root_files"]
         threshold = self.thresholds["max_root_files"]
@@ -133,14 +136,12 @@ class HealthMonitor:
                 message=f"根目录有 {root_files} 个文件，超过阈值 {threshold}",
                 current_value=root_files,
                 threshold_value=threshold,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
         return None
 
-    def _check_health_score(self,
-    health_report: dict[str,
-    Any]) -> HealthAlert | None:
+    def _check_health_score(self, health_report: dict[str, Any]) -> HealthAlert | None:
         """检查健康评分."""
         health_score = health_report["health_score"]
         threshold = self.thresholds["min_health_score"]
@@ -154,14 +155,14 @@ class HealthMonitor:
                 message=f"当前健康评分 {health_score}，低于阈值 {threshold}",
                 current_value=health_score,
                 threshold_value=threshold,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
         return None
 
-    def _check_empty_directories(self,
-    health_report: dict[str,
-    Any]) -> HealthAlert | None:
+    def _check_empty_directories(
+        self, health_report: dict[str, Any]
+    ) -> HealthAlert | None:
         """检查空目录数量."""
         empty_dirs = health_report.get("empty_dirs", 0)
         threshold = self.thresholds["max_empty_dirs"]
@@ -175,14 +176,14 @@ class HealthMonitor:
                 message=f"发现 {empty_dirs} 个空目录，超过阈值 {threshold}",
                 current_value=empty_dirs,
                 threshold_value=threshold,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
         return None
 
-    def _check_naming_violations(self,
-    health_report: dict[str,
-    Any]) -> HealthAlert | None:
+    def _check_naming_violations(
+        self, health_report: dict[str, Any]
+    ) -> HealthAlert | None:
         """检查命名规范违规."""
         violations = health_report.get("naming_violations", 0)
         threshold = self.thresholds["max_naming_violations"]
@@ -196,14 +197,14 @@ class HealthMonitor:
                 message=f"发现 {violations} 个命名规范问题，超过阈值 {threshold}",
                 current_value=violations,
                 threshold_value=threshold,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
         return None
 
-    def _check_misplaced_files(self,
-    health_report: dict[str,
-    Any]) -> HealthAlert | None:
+    def _check_misplaced_files(
+        self, health_report: dict[str, Any]
+    ) -> HealthAlert | None:
         """检查错误放置的文件."""
         misplaced = health_report.get("misplaced_files", 0)
         threshold = self.thresholds["max_misplaced_files"]
@@ -217,14 +218,12 @@ class HealthMonitor:
                 message=f"发现 {misplaced} 个错误放置的文件，超过阈值 {threshold}",
                 current_value=misplaced,
                 threshold_value=threshold,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
         return None
 
-    def _check_project_size(self,
-    health_report: dict[str,
-    Any]) -> HealthAlert | None:
+    def _check_project_size(self, health_report: dict[str, Any]) -> HealthAlert | None:
         """检查项目大小."""
         size_mb = health_report["statistics"]["total_size_mb"]
         threshold_gb = self.thresholds["max_project_size_gb"]
@@ -237,11 +236,9 @@ class HealthMonitor:
                 severity=severity,
                 title="项目大小过大",
                 message=f"项目大小 {size_mb:.1f} MB，超过阈值 {threshold_mb:.1f} MB ({threshold_gb} GB)",
-
-
                 current_value=size_mb,
                 threshold_value=threshold_mb,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
         return None
@@ -260,7 +257,7 @@ class HealthMonitor:
             self._check_empty_directories,
             self._check_naming_violations,
             self._check_misplaced_files,
-            self._check_project_size
+            self._check_project_size,
         ]
 
         for check_func in check_functions:
@@ -278,19 +275,17 @@ class HealthMonitor:
                 severity="info",
                 title="目录健康状态良好",
                 message=f"健康评分 {health_report['health_score']}，所有指标正常",
-                current_value=health_report['health_score'],
+                current_value=health_report["health_score"],
                 threshold_value=100,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
             alerts.append(info_alert)
 
-
         return health_report, alerts
 
-    def save_monitoring_report(self,
-    health_report: dict[str,
-    Any],
-    alerts: list[HealthAlert]) -> Path:
+    def save_monitoring_report(
+        self, health_report: dict[str, Any], alerts: list[HealthAlert]
+    ) -> Path:
         """保存监控报告."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = self.monitoring_dir / f"health_monitoring_{timestamp}.json"
@@ -305,11 +300,11 @@ class HealthMonitor:
                 "total_alerts": len(alerts),
                 "critical_alerts": len([a for a in alerts if a.severity == "critical"]),
                 "warning_alerts": len([a for a in alerts if a.severity == "warning"]),
-                "info_alerts": len([a for a in alerts if a.severity == "info"])
-            }
+                "info_alerts": len([a for a in alerts if a.severity == "info"]),
+            },
         }
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(monitoring_data, f, indent=2, ensure_ascii=False)
 
         return report_file
@@ -331,32 +326,38 @@ class HealthMonitor:
             "data_points": len(trends),
             "health_score": {
                 "current": health_scores[-1] if health_scores else 0,
-                "average": round(sum(health_scores) / len(health_scores),
-    1) if health_scores else 0,
-
+                "average": round(sum(health_scores) / len(health_scores), 1)
+                if health_scores
+                else 0,
                 "min": min(health_scores) if health_scores else 0,
                 "max": max(health_scores) if health_scores else 0,
-                "trend": "improving" if len(health_scores) > 1 and health_scores[-1] > health_scores[0] else "stable"
+                "trend": "improving"
+                if len(health_scores) > 1 and health_scores[-1] > health_scores[0]
+                else "stable",
             },
             "root_files": {
                 "current": root_files[-1] if root_files else 0,
-                "average": round(sum(root_files) / len(root_files),
-    1) if root_files else 0,
-
+                "average": round(sum(root_files) / len(root_files), 1)
+                if root_files
+                else 0,
                 "min": min(root_files) if root_files else 0,
                 "max": max(root_files) if root_files else 0,
-                "trend": "increasing" if len(root_files) > 1 and root_files[-1] > root_files[0] else "stable"
+                "trend": "increasing"
+                if len(root_files) > 1 and root_files[-1] > root_files[0]
+                else "stable",
             },
             "project_size": {
                 "current_mb": project_sizes[-1] if project_sizes else 0,
-                "average_mb": round(sum(project_sizes) / len(project_sizes),
-    1) if project_sizes else 0,
-
+                "average_mb": round(sum(project_sizes) / len(project_sizes), 1)
+                if project_sizes
+                else 0,
                 "min_mb": min(project_sizes) if project_sizes else 0,
                 "max_mb": max(project_sizes) if project_sizes else 0,
-                "trend": "growing" if len(project_sizes) > 1 and project_sizes[-1] > project_sizes[0] else "stable"
+                "trend": "growing"
+                if len(project_sizes) > 1 and project_sizes[-1] > project_sizes[0]
+                else "stable",
             },
-            "raw_data": trends[-10:] if trends else []  # 最近10个数据点
+            "raw_data": trends[-10:] if trends else [],  # 最近10个数据点
         }
 
         return trend_analysis
@@ -377,7 +378,7 @@ class HealthMonitor:
             "total": len(alerts),
             "critical": len([a for a in alerts if a.severity == "critical"]),
             "warning": len([a for a in alerts if a.severity == "warning"]),
-            "info": len([a for a in alerts if a.severity == "info"])
+            "info": len([a for a in alerts if a.severity == "info"]),
         }
 
         dashboard = {
@@ -388,26 +389,29 @@ class HealthMonitor:
             "trends": trends,
             "recent_maintenance": maintenance_history[:5],
             "thresholds": self.thresholds,
-            "recommendations": self._generate_recommendations(alerts, health_report)
+            "recommendations": self._generate_recommendations(alerts, health_report),
         }
 
         return dashboard
 
-    def _generate_recommendations(self,
-    alerts: list[HealthAlert],
-    health_report: dict[str,
-    Any]) -> list[str]:
+    def _generate_recommendations(
+        self, alerts: list[HealthAlert], health_report: dict[str, Any]
+    ) -> list[str]:
         """生成改进建议."""
         recommendations = []
 
         # 基于警报生成建议
         for alert in alerts:
             if alert.alert_type == "root_files_count":
-                recommendations.append("🗂️  运行 `python3 scripts/maintenance/directory_maintenance.py --auto-fix` 清理根目录")
+                recommendations.append(
+                    "🗂️  运行 `python3 scripts/maintenance/directory_maintenance.py --auto-fix` 清理根目录"
+                )
                 recommendations.append("📦 将散落的文件移动到适当的目录中")
 
             elif alert.alert_type == "health_score":
-                recommendations.append("🔧 运行完整的维护流程 `python3 scripts/maintenance/directory_maintenance.py`")
+                recommendations.append(
+                    "🔧 运行完整的维护流程 `python3 scripts/maintenance/directory_maintenance.py`"
+                )
                 recommendations.append("📋 检查并修复命名规范问题")
 
             elif alert.alert_type == "empty_directories":
@@ -415,7 +419,9 @@ class HealthMonitor:
                 recommendations.append("📁 检查是否有未完成的功能模块")
 
             elif alert.alert_type == "naming_violations":
-                recommendations.append("📝 运行命名规范检查 `python3 scripts/utils/naming_convention_checker.py`")
+                recommendations.append(
+                    "📝 运行命名规范检查 `python3 scripts/utils/naming_convention_checker.py`"
+                )
                 recommendations.append("🔤 统一目录和文件的命名规范")
 
             elif alert.alert_type == "misplaced_files":
@@ -429,7 +435,9 @@ class HealthMonitor:
         # 基于健康评分生成通用建议
         if health_report["health_score"] < 80:
             recommendations.append("📊 定期运行健康检查和维护任务")
-            recommendations.append("🤖 考虑设置定期维护任务 `python3 scripts/maintenance/scheduled_maintenance.py --daemon`")
+            recommendations.append(
+                "🤖 考虑设置定期维护任务 `python3 scripts/maintenance/scheduled_maintenance.py --daemon`"
+            )
 
         if not recommendations:
             recommendations.append("✅ 目录结构健康状况良好，继续保持！")
@@ -454,7 +462,8 @@ class HealthMonitor:
         # 保留最近30天的警报
         cutoff_date = datetime.now() - timedelta(days=30)
         filtered_alerts = [
-            alert for alert in all_alerts
+            alert
+            for alert in all_alerts
             if datetime.fromisoformat(alert.timestamp) > cutoff_date
         ]
 
@@ -464,7 +473,6 @@ class HealthMonitor:
         critical_count = len([a for a in alerts if a.severity == "critical"])
         len([a for a in alerts if a.severity == "warning"])
 
-
         if critical_count > 0:
             pass
 
@@ -472,8 +480,9 @@ class HealthMonitor:
             "health_report": health_report,
             "alerts": [asdict(alert) for alert in alerts],
             "report_file": str(report_file) if report_file else None,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
+
 
 def main():
     """主函数."""
@@ -487,32 +496,18 @@ def main():
   python3 health_monitor.py                        # 运行健康监控
   python3 health_monitor.py --trends              # 查看健康趋势
   python3 health_monitor.py --dashboard            # 生成健康仪表板
-        """
+        """,
     )
 
     parser.add_argument(
-        "--project-root",
-        type=Path,
-        help="项目根目录路径 (默认: 自动检测)"
+        "--project-root", type=Path, help="项目根目录路径 (默认: 自动检测)"
     )
 
-    parser.add_argument(
-        "--trends",
-        action="store_true",
-        help="显示健康趋势分析"
-    )
+    parser.add_argument("--trends", action="store_true", help="显示健康趋势分析")
 
-    parser.add_argument(
-        "--dashboard",
-        action="store_true",
-        help="生成健康仪表板"
-    )
+    parser.add_argument("--dashboard", action="store_true", help="生成健康仪表板")
 
-    parser.add_argument(
-        "--no-save",
-        action="store_true",
-        help="不保存监控报告"
-    )
+    parser.add_argument("--no-save", action="store_true", help="不保存监控报告")
 
     args = parser.parse_args()
 
@@ -550,7 +545,9 @@ def main():
         pass
     except Exception:
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

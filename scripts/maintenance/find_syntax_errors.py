@@ -15,7 +15,7 @@ def check_syntax(file_path: Path) -> list[str]:
     errors = []
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # 尝试解析AST
@@ -41,8 +41,16 @@ def find_python_files(directory: Path) -> list[Path]:
 
     # 排除一些特殊目录
     exclude_dirs = {
-        ".git", "__pycache__", ".pytest_cache", "htmlcov",
-        ".venv", "venv", "env", ".tox", "build", "dist"
+        ".git",
+        "__pycache__",
+        ".pytest_cache",
+        "htmlcov",
+        ".venv",
+        "venv",
+        "env",
+        ".tox",
+        "build",
+        "dist",
     }
 
     filtered_files = []
@@ -56,7 +64,6 @@ def find_python_files(directory: Path) -> list[Path]:
 def main():
     """主函数."""
     project_root = Path.cwd()
-
 
     # 查找所有Python文件
     python_files = find_python_files(project_root)
@@ -74,7 +81,6 @@ def main():
             total_errors += len(errors)
             for _error in errors:
                 pass
-
 
     if total_errors > 0:
         sys.exit(1)

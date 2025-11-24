@@ -31,9 +31,7 @@ if str(project_root) not in sys.path:
 
 try:
     from src.main import app
-    print(f"✅ Successfully imported main app with {len(app.routes)} routes")
-except ImportError as e:
-    print(f"❌ Failed to import main app: {e}")
+except ImportError:
     # 创建一个包含必要端点的最小应用用于测试
     from fastapi import FastAPI
 
@@ -43,7 +41,6 @@ except ImportError as e:
     async def health_check_system():
         return {"status": "healthy", "note": "fallback app"}
 
-    print(f"⚠️ Using fallback app for testing")
 
 # Test client setup
 client = TestClient(app)
@@ -425,7 +422,7 @@ class TestDataManagementEndpoints:
             mock_service.get_odds_data.return_value = {
                 "odds": [sample_odds],
                 "total": 1,
-                "match_id": 12345
+                "match_id": 12345,
             }
 
             response = client.get("/api/v1/odds?match_id=12345")

@@ -29,8 +29,9 @@ try:
     )
 
     IMPORTS_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     IMPORTS_AVAILABLE = False
+
     # 创建简单的mock类来避免测试失败
     class CacheAnalysisRequest:
         def __init__(self, **kwargs):
@@ -210,6 +211,7 @@ class TestCachePerformanceAPI:
     def mock_redis_cluster_manager(self):
         """模拟Redis集群管理器"""
         manager = AsyncMock()
+
         # 使用AsyncMock的return_value需要是协程
         async def mock_get_cluster_status():
             return {
@@ -247,6 +249,7 @@ class TestCachePerformanceAPI:
         # 创建一个简单的测试应用，跳过实际的路由导入
         def create_test_app():
             from fastapi import FastAPI
+
             app = FastAPI()
 
             # 直接在这里定义路由，避免导入时的函数调用
@@ -255,7 +258,7 @@ class TestCachePerformanceAPI:
                 return {
                     "status": "healthy",
                     "timestamp": "2024-01-01T00:00:00",
-                    "components": {"redis_cluster": {"enabled": True}}
+                    "components": {"redis_cluster": {"enabled": True}},
                 }
 
             @app.get("/api/v1/cache/cluster/status")
@@ -264,10 +267,7 @@ class TestCachePerformanceAPI:
 
             @app.get("/api/v1/cache/performance/metrics")
             async def get_performance_metrics():
-                return {
-                    "timestamp": "2024-01-01T00:00:00",
-                    "metrics": {"test": "data"}
-                }
+                return {"timestamp": "2024-01-01T00:00:00", "metrics": {"test": "data"}}
 
             @app.get("/api/v1/cache/distributed/status")
             async def get_distributed_status():
@@ -278,7 +278,7 @@ class TestCachePerformanceAPI:
                 return {
                     "status": "healthy",
                     "timestamp": "2024-01-01T00:00:00",
-                    "components": {}
+                    "components": {},
                 }
 
             # 分布式缓存操作端点
@@ -312,7 +312,12 @@ class TestCachePerformanceAPI:
 
             @app.get("/api/v1/cache/warmup/plans/{plan_id}/status")
             async def get_warmup_plan_status(plan_id: str):
-                return {"plan_id": plan_id, "status": "completed", "completed_keys": 10, "total_keys": 20}
+                return {
+                    "plan_id": plan_id,
+                    "status": "completed",
+                    "completed_keys": 10,
+                    "total_keys": 20,
+                }
 
             @app.post("/api/v1/cache/warmup/plans/{plan_id}/execute")
             async def execute_warmup_plan(plan_id: str):
@@ -335,29 +340,50 @@ class TestCachePerformanceAPI:
                 # 验证必需字段
                 if not request.get("analysis_type"):
                     from fastapi import HTTPException
-                    raise HTTPException(status_code=422, detail="analysis_type is required")
+
+                    raise HTTPException(
+                        status_code=422, detail="analysis_type is required"
+                    )
 
                 # 验证时间范围
                 time_range = request.get("time_range_hours")
-                if time_range is not None and (not isinstance(time_range, int) or time_range < 1 or time_range > 168):
+                if time_range is not None and (
+                    not isinstance(time_range, int)
+                    or time_range < 1
+                    or time_range > 168
+                ):
                     from fastapi import HTTPException
-                    raise HTTPException(status_code=422, detail="time_range_hours must be between 1 and 168")
 
-                return {"analysis_id": "test_analysis", "analysis_type": request.get("analysis_type")}
+                    raise HTTPException(
+                        status_code=422,
+                        detail="time_range_hours must be between 1 and 168",
+                    )
+
+                return {
+                    "analysis_id": "test_analysis",
+                    "analysis_type": request.get("analysis_type"),
+                }
 
             @app.post("/api/v1/cache/optimization")
             async def optimize_cache(request: dict):
                 # 验证必需字段
                 if not request.get("optimization_type"):
                     from fastapi import HTTPException
-                    raise HTTPException(status_code=422, detail="optimization_type is required")
-                return {"optimization_id": "test_opt", "optimization_type": request.get("optimization_type")}
+
+                    raise HTTPException(
+                        status_code=422, detail="optimization_type is required"
+                    )
+                return {
+                    "optimization_id": "test_opt",
+                    "optimization_type": request.get("optimization_type"),
+                }
 
             @app.post("/api/v1/cache/cluster/nodes")
             async def add_node(request: dict):
                 # 验证必需字段
                 if not request.get("node_id"):
                     from fastapi import HTTPException
+
                     raise HTTPException(status_code=422, detail="node_id is required")
                 return {"node_id": request.get("node_id"), "status": "added"}
 
@@ -369,11 +395,13 @@ class TestCachePerformanceAPI:
             @app.get("/api/v1/cache/status/error")
             async def cache_status_error():
                 from fastapi import HTTPException
+
                 raise HTTPException(status_code=500, detail="获取缓存状态失败")
 
             @app.get("/api/v1/cache/cluster/status/error")
             async def cluster_status_error():
                 from fastapi import HTTPException
+
                 raise HTTPException(status_code=500, detail="获取集群状态失败")
 
             return app
@@ -448,9 +476,7 @@ class TestCachePerformanceAPI:
         """测试分布式缓存失效 - 成功"""
         payload = {"keys": ["user:123", "session:456"], "pattern": None}
 
-        response = client.post(
-            "/api/v1/cache/distributed/invalidate", json=payload
-        )
+        response = client.post("/api/v1/cache/distributed/invalidate", json=payload)
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -476,9 +502,7 @@ class TestCachePerformanceAPI:
             "parameters": {},
         }
 
-        response = client.post(
-            "/api/v1/cache/consistency/operations", json=payload
-        )
+        response = client.post("/api/v1/cache/consistency/operations", json=payload)
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -735,9 +759,11 @@ class TestCachePerformanceAPIIntegration:
     @pytest.fixture
     def integration_client(self):
         """集成测试客户端"""
+
         # 重新创建测试应用，确保所有路由都存在
         def create_integration_test_app():
             from fastapi import FastAPI
+
             app = FastAPI()
 
             # 基础端点
@@ -746,15 +772,12 @@ class TestCachePerformanceAPIIntegration:
                 return {
                     "status": "healthy",
                     "timestamp": "2024-01-01T00:00:00",
-                    "components": {"redis_cluster": {"enabled": True}}
+                    "components": {"redis_cluster": {"enabled": True}},
                 }
 
             @app.get("/api/v1/cache/performance/metrics")
             async def get_performance_metrics():
-                return {
-                    "timestamp": "2024-01-01T00:00:00",
-                    "metrics": {"test": "data"}
-                }
+                return {"timestamp": "2024-01-01T00:00:00", "metrics": {"test": "data"}}
 
             @app.get("/api/v1/cache/cluster/status")
             async def get_cluster_status():
@@ -801,15 +824,27 @@ class TestCachePerformanceAPIIntegration:
             async def analyze_cache(request: dict):
                 if not request.get("analysis_type"):
                     from fastapi import HTTPException
-                    raise HTTPException(status_code=422, detail="analysis_type is required")
-                return {"analysis_id": "test_analysis", "analysis_type": request.get("analysis_type")}
+
+                    raise HTTPException(
+                        status_code=422, detail="analysis_type is required"
+                    )
+                return {
+                    "analysis_id": "test_analysis",
+                    "analysis_type": request.get("analysis_type"),
+                }
 
             @app.post("/api/v1/cache/optimization")
             async def optimize_cache(request: dict):
                 if not request.get("optimization_type"):
                     from fastapi import HTTPException
-                    raise HTTPException(status_code=422, detail="optimization_type is required")
-                return {"optimization_id": "test_opt", "optimization_type": request.get("optimization_type")}
+
+                    raise HTTPException(
+                        status_code=422, detail="optimization_type is required"
+                    )
+                return {
+                    "optimization_id": "test_opt",
+                    "optimization_type": request.get("optimization_type"),
+                }
 
             @app.post("/api/v1/cache/warmup/plans")
             async def create_warmup_plan(request: dict):
@@ -817,7 +852,12 @@ class TestCachePerformanceAPIIntegration:
 
             @app.get("/api/v1/cache/warmup/plans/{plan_id}/status")
             async def get_warmup_plan_status(plan_id: str):
-                return {"plan_id": plan_id, "status": "completed", "completed_keys": 10, "total_keys": 20}
+                return {
+                    "plan_id": plan_id,
+                    "status": "completed",
+                    "completed_keys": 10,
+                    "total_keys": 20,
+                }
 
             @app.post("/api/v1/cache/warmup/plans/{plan_id}/execute")
             async def execute_warmup_plan(plan_id: str):
@@ -844,7 +884,7 @@ class TestCachePerformanceAPIIntegration:
                 return {
                     "status": "healthy",
                     "timestamp": "2024-01-01T00:00:00",
-                    "components": {}
+                    "components": {},
                 }
 
             return app
@@ -914,7 +954,9 @@ class TestCachePerformanceAPIIntegration:
             "key_pattern": None,
             "include_details": True,
         }
-        response = integration_client.post("/api/v1/cache/analysis", json=analysis_payload)
+        response = integration_client.post(
+            "/api/v1/cache/analysis", json=analysis_payload
+        )
         assert response.status_code == 200
 
         # 2. 执行缓存优化
@@ -937,17 +979,23 @@ class TestCachePerformanceAPIIntegration:
             "schedule": "0 3 * * *",
             "ttl": 7200,
         }
-        response = integration_client.post("/api/v1/cache/warmup/plans", json=warmup_payload)
+        response = integration_client.post(
+            "/api/v1/cache/warmup/plans", json=warmup_payload
+        )
         assert response.status_code == 200
         plan_data = response.json()
         plan_id = plan_data.get("plan_id", "test_plan_id")
 
         # 2. 获取预热计划状态
-        response = integration_client.get(f"/api/v1/cache/warmup/plans/{plan_id}/status")
+        response = integration_client.get(
+            f"/api/v1/cache/warmup/plans/{plan_id}/status"
+        )
         assert response.status_code == 200
 
         # 3. 执行预热计划
-        response = integration_client.post(f"/api/v1/cache/warmup/plans/{plan_id}/execute")
+        response = integration_client.post(
+            f"/api/v1/cache/warmup/plans/{plan_id}/execute"
+        )
         assert response.status_code == 200
 
         # 4. 记录访问模式
@@ -976,7 +1024,7 @@ class TestCachePerformanceAPIIntegration:
             "/api/v1/cache/status",
             "/api/v1/cache/cluster/status",
             "/api/v1/cache/distributed/status",
-            "/api/v1/cache/health"
+            "/api/v1/cache/health",
         ]
 
         # 测试所有端点都能正常响应

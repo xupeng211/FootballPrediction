@@ -24,8 +24,6 @@ load_dotenv()
 
 
 @pytest.mark.asyncio
-
-
 async def test_football_data_api():
     """测试Football-Data.org API连接"""
 

@@ -464,9 +464,9 @@ class TestAPIWorkflows:
     async def test_all_workflows(self, workflow_tester):
         """测试所有工作流"""
         report = await workflow_tester.run_all_workflow_tests()
-        assert (
-            report["success_rate"] >= 75
-        ), f"整体成功率不足75%: {report['success_rate']:.1f}%"
+        assert report["success_rate"] >= 75, (
+            f"整体成功率不足75%: {report['success_rate']:.1f}%"
+        )
         assert report["users_created"] >= 1, "至少需要创建1个用户"
         assert report["predictions_created"] >= 1, "至少需要创建1个预测"
 

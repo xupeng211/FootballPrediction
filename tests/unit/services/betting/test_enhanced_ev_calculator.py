@@ -22,6 +22,7 @@ from typing import Dict, Any
 # 添加项目根目录到路径
 import sys
 from pathlib import Path
+
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -40,13 +41,15 @@ try:
         EVCalculation,
         BettingStrategy,
     )
+
     IMPORTS_AVAILABLE = True
-except ImportError as e:
-    print(f"Warning: Could not import enhanced_ev_calculator: {e}")
+except ImportError:
     IMPORTS_AVAILABLE = False
 
 
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Enhanced EV Calculator not available")
+@pytest.mark.skipif(
+    not IMPORTS_AVAILABLE, reason="Enhanced EV Calculator not available"
+)
 class TestEnhancedEVCalculator:
     """增强EV计算器测试类"""
 
@@ -54,7 +57,7 @@ class TestEnhancedEVCalculator:
     def calculator(self):
         """创建计算器实例"""
         # Mock Redis manager
-        with patch('src.services.betting.enhanced_ev_calculator.get_redis_manager'):
+        with patch("src.services.betting.enhanced_ev_calculator.get_redis_manager"):
             return EnhancedEVCalculator()
 
     @pytest.fixture
@@ -67,7 +70,7 @@ class TestEnhancedEVCalculator:
             away_win=2.8,
             over_2_5=1.9,
             under_2_5=2.1,
-            source="test"
+            source="test",
         )
 
     @pytest.fixture
@@ -79,27 +82,27 @@ class TestEnhancedEVCalculator:
             away_win=0.30,
             over_2_5=0.55,
             under_2_5=0.45,
-            confidence=0.85
+            confidence=0.85,
         )
 
     def test_calculator_initialization(self, calculator):
         """测试计算器初始化"""
         assert calculator is not None
-        assert hasattr(calculator, 'kelly_calculator')
-        assert hasattr(calculator, 'value_calculator')
-        assert hasattr(calculator, 'optimized_strategies')
+        assert hasattr(calculator, "kelly_calculator")
+        assert hasattr(calculator, "value_calculator")
+        assert hasattr(calculator, "optimized_strategies")
         assert isinstance(calculator.optimized_strategies, dict)
         assert len(calculator.optimized_strategies) > 0
 
     def test_strategies_configuration(self, calculator):
         """测试策略配置"""
         strategies = calculator.optimized_strategies
-        assert 'srs_premium' in strategies
-        assert 'ultra_conservative' in strategies
-        assert 'balanced_enhanced' in strategies
+        assert "srs_premium" in strategies
+        assert "ultra_conservative" in strategies
+        assert "balanced_enhanced" in strategies
 
         # 检查SRS策略的关键参数
-        srs_strategy = strategies['srs_premium']
+        srs_strategy = strategies["srs_premium"]
         assert srs_strategy.max_kelly_fraction == 0.20
         assert srs_strategy.min_ev_threshold == 0.05
         assert srs_strategy.risk_tolerance == 0.4
@@ -110,7 +113,7 @@ class TestEnhancedEVCalculator:
         result = calculator.calculate_enhanced_ev(
             odds=sample_odds,
             probabilities=sample_probabilities,
-            bet_type=BetType.HOME_WIN
+            bet_type=BetType.HOME_WIN,
         )
 
         assert isinstance(result, EVCalculation)
@@ -128,22 +131,13 @@ class TestEnhancedEVCalculator:
         odds = 2.5  # 赔率2.5
 
         # 创建完整的BettingOdds和PredictionProbabilities对象
-        test_odds = BettingOdds(
-            match_id=1,
-            home_win=odds,
-            draw=3.0,
-            away_win=2.8
-        )
+        test_odds = BettingOdds(match_id=1, home_win=odds, draw=3.0, away_win=2.8)
         test_probabilities = PredictionProbabilities(
-            home_win=probability,
-            draw=0.25,
-            away_win=0.15
+            home_win=probability, draw=0.25, away_win=0.15
         )
 
         result = calculator.calculate_enhanced_ev(
-            odds=test_odds,
-            probabilities=test_probabilities,
-            bet_type=BetType.HOME_WIN
+            odds=test_odds, probabilities=test_probabilities, bet_type=BetType.HOME_WIN
         )
 
         expected_ev = (probability * odds) - 1
@@ -160,22 +154,13 @@ class TestEnhancedEVCalculator:
         odds = 2.0  # 赔率2.0
 
         # 创建完整的BettingOdds和PredictionProbabilities对象
-        test_odds = BettingOdds(
-            match_id=1,
-            home_win=odds,
-            draw=3.0,
-            away_win=2.8
-        )
+        test_odds = BettingOdds(match_id=1, home_win=odds, draw=3.0, away_win=2.8)
         test_probabilities = PredictionProbabilities(
-            home_win=probability,
-            draw=0.4,
-            away_win=0.4
+            home_win=probability, draw=0.4, away_win=0.4
         )
 
         result = calculator.calculate_enhanced_ev(
-            odds=test_odds,
-            probabilities=test_probabilities,
-            bet_type=BetType.HOME_WIN
+            odds=test_odds, probabilities=test_probabilities, bet_type=BetType.HOME_WIN
         )
 
         expected_ev = (probability * odds) - 1  # -0.6
@@ -183,7 +168,9 @@ class TestEnhancedEVCalculator:
         assert result.recommendation in ["avoid", "wait"]
 
     @pytest.mark.unit
-    def test_calculate_ev_all_bet_types(self, calculator, sample_odds, sample_probabilities):
+    def test_calculate_ev_all_bet_types(
+        self, calculator, sample_odds, sample_probabilities
+    ):
         """测试所有投注类型的EV计算"""
         bet_types = [
             BetType.HOME_WIN,
@@ -196,9 +183,7 @@ class TestEnhancedEVCalculator:
         results = []
         for bet_type in bet_types:
             result = calculator.calculate_enhanced_ev(
-                odds=sample_odds,
-                probabilities=sample_probabilities,
-                bet_type=bet_type
+                odds=sample_odds, probabilities=sample_probabilities, bet_type=bet_type
             )
             # 某些投注类型可能返回None（如果源代码中没有对应的处理）
             if result is not None:
@@ -206,7 +191,7 @@ class TestEnhancedEVCalculator:
                 results.append(result)
             else:
                 # 记录哪个bet_type返回了None
-                print(f"BetType {bet_type} returned None")
+                pass
 
         # 确保至少有一些有效结果
         assert len(results) > 0
@@ -220,16 +205,14 @@ class TestEnhancedEVCalculator:
         # 测试None值验证
         with pytest.raises(ValueError, match="Required parameters"):
             calculator.calculate_enhanced_ev(
-                odds=None,
-                probabilities=None,
-                bet_type=None
+                odds=None, probabilities=None, bet_type=None
             )
 
         # 测试无效bet_type - 函数应该返回None
         result = calculator.calculate_enhanced_ev(
             odds=BettingOdds(match_id=1, home_win=2.0, draw=3.0, away_win=2.5),
             probabilities=PredictionProbabilities(home_win=0.4, draw=0.3, away_win=0.3),
-            bet_type="invalid_type"
+            bet_type="invalid_type",
         )
         # 应该返回None表示无效投注类型
         assert result is None
@@ -239,26 +222,20 @@ class TestEnhancedEVCalculator:
         """测试风险评估逻辑"""
         # 测试高风险情况
         high_risk_result = calculator._assess_enhanced_risk(
-            probability=0.1,
-            odds=5.0,
-            ev=-0.5,
-            risk_of_ruin=0.4
+            probability=0.1, odds=5.0, ev=-0.5, risk_of_ruin=0.4
         )
         assert high_risk_result == RiskLevel.VERY_HIGH
 
         # 测试低风险情况
         low_risk_result = calculator._assess_enhanced_risk(
-            probability=0.7,
-            odds=1.8,
-            ev=0.26,
-            risk_of_ruin=0.03
+            probability=0.7, odds=1.8, ev=0.26, risk_of_ruin=0.03
         )
         assert low_risk_result == RiskLevel.LOW
 
     @pytest.mark.unit
     def test_recommendation_generation(self, calculator):
         """测试建议生成"""
-        strategy = calculator.optimized_strategies['srs_premium']
+        strategy = calculator.optimized_strategies["srs_premium"]
 
         # 创建模拟的Kelly结果
         mock_kelly = Mock(spec=KellyOptimizationResult)
@@ -272,7 +249,7 @@ class TestEnhancedEVCalculator:
             value_rating=8.5,
             kelly_result=mock_kelly,
             risk_level=RiskLevel.LOW,
-            strategy=strategy
+            strategy=strategy,
         )
         assert recommendation in ["strong_bet", "bet"]
 
@@ -282,7 +259,7 @@ class TestEnhancedEVCalculator:
             value_rating=4.0,
             kelly_result=mock_kelly,
             risk_level=RiskLevel.HIGH,
-            strategy=strategy
+            strategy=strategy,
         )
         assert avoid_recommendation == "avoid"
 
@@ -294,11 +271,14 @@ class TestEnhancedEVCalculator:
 
         # 由于backtest_strategy是异步函数，需要使用同步方式测试
         import asyncio
-        result = asyncio.run(calculator.backtest_strategy(
-            strategy_name="balanced_enhanced",
-            historical_bets=historical_bets,
-            initial_bankroll=1000.0
-        ))
+
+        result = asyncio.run(
+            calculator.backtest_strategy(
+                strategy_name="balanced_enhanced",
+                historical_bets=historical_bets,
+                initial_bankroll=1000.0,
+            )
+        )
 
         assert isinstance(result, dict)
         assert "strategy" in result
@@ -315,11 +295,14 @@ class TestEnhancedEVCalculator:
     def test_backtest_strategy_empty_data(self, calculator):
         """测试空历史数据的回测"""
         import asyncio
-        result = asyncio.run(calculator.backtest_strategy(
-            strategy_name="balanced_enhanced",
-            historical_bets=[],
-            initial_bankroll=1000.0
-        ))
+
+        result = asyncio.run(
+            calculator.backtest_strategy(
+                strategy_name="balanced_enhanced",
+                historical_bets=[],
+                initial_bankroll=1000.0,
+            )
+        )
 
         assert result["total_bets"] == 0
         assert result["winning_bets"] == 0
@@ -332,7 +315,7 @@ class TestEnhancedEVCalculator:
             odds=sample_odds,
             probabilities=sample_probabilities,
             bet_type=BetType.HOME_WIN,
-            confidence=0.9
+            confidence=0.9,
         )
 
         # 验证Kelly分数计算
@@ -340,12 +323,14 @@ class TestEnhancedEVCalculator:
         assert 0 <= result.kelly_fraction <= 1  # 应该在合理范围内
 
     @pytest.mark.unit
-    def test_value_rating_integration(self, calculator, sample_odds, sample_probabilities):
+    def test_value_rating_integration(
+        self, calculator, sample_odds, sample_probabilities
+    ):
         """测试价值评级集成"""
         result = calculator.calculate_enhanced_ev(
             odds=sample_odds,
             probabilities=sample_probabilities,
-            bet_type=BetType.HOME_WIN
+            bet_type=BetType.HOME_WIN,
         )
 
         # 验证价值评级
@@ -353,13 +338,15 @@ class TestEnhancedEVCalculator:
         assert 0 <= result.value_rating <= 10  # 应该在0-10范围内
 
     @pytest.mark.unit
-    def test_suggested_stake_calculation(self, calculator, sample_odds, sample_probabilities):
+    def test_suggested_stake_calculation(
+        self, calculator, sample_odds, sample_probabilities
+    ):
         """测试建议投注金额计算"""
         result = calculator.calculate_enhanced_ev(
             odds=sample_odds,
             probabilities=sample_probabilities,
             bet_type=BetType.HOME_WIN,
-            strategy_name="srs_premium"
+            strategy_name="srs_premium",
         )
 
         # 验证建议投注金额
@@ -372,40 +359,26 @@ class TestEnhancedEVCalculator:
     def test_edge_cases(self, calculator):
         """测试边界情况"""
         # 极小概率
-        test_odds_1 = BettingOdds(
-            match_id=1,
-            home_win=10.0,
-            draw=8.0,
-            away_win=5.0
-        )
+        test_odds_1 = BettingOdds(match_id=1, home_win=10.0, draw=8.0, away_win=5.0)
         test_probabilities_1 = PredictionProbabilities(
-            home_win=0.01,
-            draw=0.49,
-            away_win=0.5
+            home_win=0.01, draw=0.49, away_win=0.5
         )
         result = calculator.calculate_enhanced_ev(
             odds=test_odds_1,
             probabilities=test_probabilities_1,
-            bet_type=BetType.HOME_WIN
+            bet_type=BetType.HOME_WIN,
         )
         assert result.ev < 0  # 应该是负EV
 
         # 极高概率
-        test_odds_2 = BettingOdds(
-            match_id=2,
-            home_win=1.1,
-            draw=8.0,
-            away_win=15.0
-        )
+        test_odds_2 = BettingOdds(match_id=2, home_win=1.1, draw=8.0, away_win=15.0)
         test_probabilities_2 = PredictionProbabilities(
-            home_win=0.95,
-            draw=0.04,
-            away_win=0.01
+            home_win=0.95, draw=0.04, away_win=0.01
         )
         result = calculator.calculate_enhanced_ev(
             odds=test_odds_2,
             probabilities=test_probabilities_2,
-            bet_type=BetType.HOME_WIN
+            bet_type=BetType.HOME_WIN,
         )
         assert result.ev > 0  # 应该是正EV
 
@@ -417,7 +390,7 @@ class TestEnhancedEVCalculator:
             odds=sample_odds,
             probabilities=sample_probabilities,
             bet_type=BetType.HOME_WIN,
-            confidence=0.5
+            confidence=0.5,
         )
 
         # 高置信度
@@ -425,7 +398,7 @@ class TestEnhancedEVCalculator:
             odds=sample_odds,
             probabilities=sample_probabilities,
             bet_type=BetType.HOME_WIN,
-            confidence=0.9
+            confidence=0.9,
         )
 
         # 高置信度应该获得更好的建议或更高的价值评级
@@ -434,7 +407,9 @@ class TestEnhancedEVCalculator:
         assert isinstance(high_conf_result.recommendation, str)
 
 
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Enhanced EV Calculator not available")
+@pytest.mark.skipif(
+    not IMPORTS_AVAILABLE, reason="Enhanced EV Calculator not available"
+)
 class TestEnhancedKellyCalculator:
     """增强Kelly计算器测试类"""
 
@@ -448,17 +423,17 @@ class TestEnhancedKellyCalculator:
         assert kelly_calculator.fractional_kelly_multiplier == 0.25
         assert kelly_calculator.min_edge_threshold == 0.02
         assert kelly_calculator.max_drawdown_tolerance == 0.20
-        assert kelly_calculator.volatility_adjustment == True
-        assert kelly_calculator.confidence_weighting == True
+        assert kelly_calculator.volatility_adjustment
+        assert kelly_calculator.confidence_weighting
 
     def test_calculate_fractional_kelly_basic(self, kelly_calculator):
         """测试基础分数Kelly计算"""
         # 使用简单参数
         result = kelly_calculator.calculate_fractional_kelly(
             edge=0.1,  # 10% edge
-            odds=2.2,   # 赔率2.2
+            odds=2.2,  # 赔率2.2
             confidence=0.8,
-            bankroll=1000.0
+            bankroll=1000.0,
         )
 
         assert isinstance(result, KellyOptimizationResult)
@@ -469,27 +444,19 @@ class TestEnhancedKellyCalculator:
         # 无效赔率
         with pytest.raises(ValueError, match="Odds must be greater than 1.0"):
             kelly_calculator.calculate_fractional_kelly(
-                edge=0.1,
-                odds=0.5,
-                confidence=0.8
+                edge=0.1, odds=0.5, confidence=0.8
             )
 
         # 无效资金池
         with pytest.raises(ValueError, match="Bankroll must be positive"):
             kelly_calculator.calculate_fractional_kelly(
-                edge=0.1,
-                odds=2.0,
-                confidence=0.8,
-                bankroll=-100
+                edge=0.1, odds=2.0, confidence=0.8, bankroll=-100
             )
 
         # 无效最大分数
         with pytest.raises(ValueError, match="Max fraction must be between 0 and 1"):
             kelly_calculator.calculate_fractional_kelly(
-                edge=0.1,
-                odds=2.0,
-                confidence=0.8,
-                max_fraction=1.5
+                edge=0.1, odds=2.0, confidence=0.8, max_fraction=1.5
             )
 
     def test_kelly_formula_edge_cases(self, kelly_calculator):
@@ -498,7 +465,7 @@ class TestEnhancedKellyCalculator:
         result_negative = kelly_calculator.calculate_fractional_kelly(
             edge=-0.5,  # -50% edge
             odds=2.0,
-            confidence=0.8
+            confidence=0.8,
         )
         assert result_negative.optimal_fraction == 0.0
         assert result_negative.recommended_adjustment == "avoid"
@@ -507,7 +474,7 @@ class TestEnhancedKellyCalculator:
         result_zero = kelly_calculator.calculate_fractional_kelly(
             edge=0.0,  # 0% edge
             odds=2.0,
-            confidence=0.8
+            confidence=0.8,
         )
         assert result_zero.optimal_fraction == 0.0
 
@@ -519,7 +486,7 @@ class TestEnhancedKellyCalculator:
         result = kelly_calculator.calculate_fractional_kelly(
             edge=0.2,  # 对应probability=0.6
             odds=2.0,
-            confidence=0.8
+            confidence=0.8,
         )
 
         # 优化后的Kelly应该小于标准Kelly
@@ -532,14 +499,14 @@ class TestEnhancedKellyCalculator:
         result_high_vol = kelly_calculator.calculate_fractional_kelly(
             edge=0.1,
             odds=5.0,  # 高赔率，高波动率
-            confidence=0.8
+            confidence=0.8,
         )
 
         # 低波动率情况（低赔率）
         result_low_vol = kelly_calculator.calculate_fractional_kelly(
             edge=0.1,
             odds=1.5,  # 低赔率，低波动率
-            confidence=0.8
+            confidence=0.8,
         )
 
         # 高波动率应该得到更保守的建议
@@ -548,7 +515,9 @@ class TestEnhancedKellyCalculator:
         assert isinstance(result_low_vol.optimal_fraction, (int, float))
 
 
-@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Enhanced EV Calculator not available")
+@pytest.mark.skipif(
+    not IMPORTS_AVAILABLE, reason="Enhanced EV Calculator not available"
+)
 class TestEnhancedValueRatingCalculator:
     """增强价值评级计算器测试类"""
 
@@ -572,7 +541,7 @@ class TestEnhancedValueRatingCalculator:
             ev=0.15,  # 15% EV
             probability=0.6,
             odds=2.5,
-            confidence=0.8
+            confidence=0.8,
         )
 
         assert isinstance(result, EnhancedValueRating)
@@ -605,24 +574,19 @@ class TestEnhancedValueRatingCalculator:
 
         # 不匹配的赔率
         result_imperfect = value_calculator._calculate_odds_fairness_score(
-            probability=0.5, odds=3.0  # 应该是2.0
+            probability=0.5,
+            odds=3.0,  # 应该是2.0
         )
         assert result_imperfect < 10.0
 
     def test_negative_ev_penalty(self, value_calculator):
         """测试负EV的惩罚"""
         result_positive = value_calculator.calculate_enhanced_value_rating(
-            ev=0.10,
-            probability=0.6,
-            odds=2.5,
-            confidence=0.8
+            ev=0.10, probability=0.6, odds=2.5, confidence=0.8
         )
 
         result_negative = value_calculator.calculate_enhanced_value_rating(
-            ev=-0.10,
-            probability=0.6,
-            odds=2.5,
-            confidence=0.8
+            ev=-0.10, probability=0.6, odds=2.5, confidence=0.8
         )
 
         # 负EV应该得到更低的评级
@@ -632,8 +596,8 @@ class TestEnhancedValueRatingCalculator:
         """测试历史表现集成"""
         historical_data = {
             "accuracy": 0.65,  # 65%准确率
-            "roi": 0.15,       # 15% ROI
-            "volatility": 0.05   # 5%波动率
+            "roi": 0.15,  # 15% ROI
+            "volatility": 0.05,  # 5%波动率
         }
 
         result = value_calculator.calculate_enhanced_value_rating(
@@ -641,7 +605,7 @@ class TestEnhancedValueRatingCalculator:
             probability=0.55,
             odds=2.2,
             confidence=0.7,
-            historical_data=historical_data
+            historical_data=historical_data,
         )
 
         # 有历史数据应该影响评级
@@ -650,6 +614,4 @@ class TestEnhancedValueRatingCalculator:
 
 if __name__ == "__main__":
     # 简单的测试运行验证
-    print("Running enhanced EV calculator tests...")
-    print("This test suite validates core betting calculation logic.")
-    print("To run with pytest: pytest tests/unit/services/betting/test_enhanced_ev_calculator.py -v")
+    pass
