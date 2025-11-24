@@ -8,7 +8,7 @@ Health Check API Tests
 """
 
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 from fastapi import FastAPI
@@ -28,8 +28,19 @@ class TestHealthAPI:
         app.include_router(health_router)
         return TestClient(app)
 
-    def test_basic_health_check(self, health_client):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    def test_basic_health_check(self, mock_get_db_manager, mock_datetime, health_client):
         """测试基础健康检查"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
+        # Mock时间戳
+        mock_now = datetime(2024, 1, 1, 12, 0, 0)
+        mock_datetime.utcnow.return_value = mock_now
+
         response = health_client.get("/health/")
         assert response.status_code == 200
 
@@ -39,20 +50,53 @@ class TestHealthAPI:
         assert "service" in data
         assert "version" in data
         assert data["service"] == "football-prediction-api"
+        assert data["timestamp"] == mock_now.isoformat()
+        assert data["checks"]["database"]["status"] == "healthy"
 
-    def test_detailed_health_check(self, health_client):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    @patch('redis.from_url')
+    def test_detailed_health_check(self, mock_redis_from_url, mock_get_db_manager, mock_datetime, health_client):
         """测试详细健康检查"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
+        # Mock Redis客户端
+        mock_redis_client = MagicMock()
+        mock_redis_client.ping.return_value = True
+        mock_redis_from_url.return_value = mock_redis_client
+
+        # Mock时间戳
+        mock_now = datetime(2024, 1, 1, 12, 0, 0)
+        mock_datetime.utcnow.return_value = mock_now
+
         response = health_client.get("/health/detailed")
         assert response.status_code == 200
 
         data = response.json()
-        assert data["status"] in ["healthy", "unhealthy"]
+        assert data["status"] == "healthy"
         assert "timestamp" in data
         assert "service" in data
-        assert "components" in data
+        assert "checks" in data
+        assert data["checks"]["database"]["status"] == "healthy"
+        assert data["checks"]["redis"]["status"] == "healthy"
+        assert data["timestamp"] == mock_now.isoformat()
 
-    def test_health_response_format(self, health_client):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    def test_health_response_format(self, mock_get_db_manager, mock_datetime, health_client):
         """测试健康检查响应格式"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
+        # Mock时间戳
+        mock_now = datetime(2024, 1, 1, 12, 0, 0)
+        mock_datetime.utcnow.return_value = mock_now
+
         response = health_client.get("/health/")
         data = response.json()
 
@@ -107,9 +151,20 @@ class TestHealthAPI:
         assert len(results) == 10
         assert all(status == 200 for status in results)
 
-    def test_health_check_response_time(self, health_client):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    def test_health_check_response_time(self, mock_get_db_manager, mock_datetime, health_client):
         """测试健康检查响应时间"""
         import time
+
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
+        # Mock时间戳
+        mock_now = datetime(2024, 1, 1, 12, 0, 0)
+        mock_datetime.utcnow.return_value = mock_now
 
         start_time = time.time()
         response = health_client.get("/health/")
