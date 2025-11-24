@@ -17,6 +17,7 @@ from typing import Optional
 # 尝试导入XGBoost，如果失败则运行在Mock模式
 try:
     import xgboost as xgb
+
     HAVE_XGBOOST = True
 except ImportError:
     HAVE_XGBOOST = False
@@ -55,13 +56,26 @@ class InferenceService:
         if not HAVE_XGBOOST:
             logger.warning("⚠️ XGBoost不可用，跳过模型加载，使用Mock模式")
             self._model = None
-            self._model_metadata = {"model_version": "mock_v1", "target_classes": ["平局", "主队胜", "客队胜"]}
+            self._model_metadata = {
+                "model_version": "mock_v1",
+                "target_classes": ["平局", "主队胜", "客队胜"],
+            }
             self._feature_columns = [
-                "home_team_id", "away_team_id", "home_last_5_points", "away_last_5_points",
-                "home_last_5_avg_goals", "away_last_5_avg_goals", "h2h_last_3_home_wins",
-                "home_last_5_goal_diff", "away_last_5_goal_diff", "home_win_streak",
-                "away_win_streak", "home_last_5_win_rate", "away_last_5_win_rate",
-                "home_rest_days", "away_rest_days"
+                "home_team_id",
+                "away_team_id",
+                "home_last_5_points",
+                "away_last_5_points",
+                "home_last_5_avg_goals",
+                "away_last_5_avg_goals",
+                "h2h_last_3_home_wins",
+                "home_last_5_goal_diff",
+                "away_last_5_goal_diff",
+                "home_win_streak",
+                "away_win_streak",
+                "home_last_5_win_rate",
+                "away_last_5_win_rate",
+                "home_rest_days",
+                "away_rest_days",
             ]
             return
 
@@ -75,6 +89,7 @@ class InferenceService:
             if pkl_model_path.exists():
                 logger.info(f"🔄 加载PKL格式模型: {pkl_model_path}")
                 import joblib
+
                 self._model = joblib.load(pkl_model_path)
                 logger.info("✅ XGBoost PKL模型加载成功")
 
@@ -88,7 +103,7 @@ class InferenceService:
                     self._model_metadata = {
                         "model_version": "v2_best",
                         "target_classes": ["平局", "主队胜", "客队胜"],
-                        "model_type": "xgboost_v2"
+                        "model_type": "xgboost_v2",
                     }
                     logger.warning("⚠️ 使用默认模型元数据")
 
@@ -108,28 +123,55 @@ class InferenceService:
                 raise FileNotFoundError("未找到可用的模型文件")
 
             # 强制使用正确的特征名称（基于实际模型的feature_names）
-            actual_feature_names = self._model.get_booster().feature_names if hasattr(self._model.get_booster(), 'feature_names') else None
+            actual_feature_names = (
+                self._model.get_booster().feature_names
+                if hasattr(self._model.get_booster(), "feature_names")
+                else None
+            )
             if actual_feature_names:
                 self._feature_columns = actual_feature_names
                 logger.info(f"✅ 使用模型实际的特征名称: {self._feature_columns}")
             else:
-                self._feature_columns = ['feature_0', 'feature_1', 'feature_2', 'feature_3', 'feature_4']
-                logger.warning(f"⚠️ 无法获取模型特征名称，使用默认值: {self._feature_columns}")
+                self._feature_columns = [
+                    "feature_0",
+                    "feature_1",
+                    "feature_2",
+                    "feature_3",
+                    "feature_4",
+                ]
+                logger.warning(
+                    f"⚠️ 无法获取模型特征名称，使用默认值: {self._feature_columns}"
+                )
 
-            logger.info(f"✅ 模型设置完成，特征列: {len(self._feature_columns)}, 模型版本: {self._model_metadata.get('model_version', 'unknown')}")
+            logger.info(
+                f"✅ 模型设置完成，特征列: {len(self._feature_columns)}, 模型版本: {self._model_metadata.get('model_version', 'unknown')}"
+            )
 
         except Exception as e:
             logger.error(f"❌ 模型加载失败: {e}")
             # 降级到Mock模式
             logger.warning("🔄 降级到Mock模式")
             self._model = None
-            self._model_metadata = {"model_version": "mock_v1", "target_classes": ["平局", "主队胜", "客队胜"]}
+            self._model_metadata = {
+                "model_version": "mock_v1",
+                "target_classes": ["平局", "主队胜", "客队胜"],
+            }
             self._feature_columns = [
-                "home_team_id", "away_team_id", "home_last_5_points", "away_last_5_points",
-                "home_last_5_avg_goals", "away_last_5_avg_goals", "h2h_last_3_home_wins",
-                "home_last_5_goal_diff", "away_last_5_goal_diff", "home_win_streak",
-                "away_win_streak", "home_last_5_win_rate", "away_last_5_win_rate",
-                "home_rest_days", "away_rest_days"
+                "home_team_id",
+                "away_team_id",
+                "home_last_5_points",
+                "away_last_5_points",
+                "home_last_5_avg_goals",
+                "away_last_5_avg_goals",
+                "h2h_last_3_home_wins",
+                "home_last_5_goal_diff",
+                "away_last_5_goal_diff",
+                "home_win_streak",
+                "away_win_streak",
+                "home_last_5_win_rate",
+                "away_last_5_win_rate",
+                "home_rest_days",
+                "away_rest_days",
             ]
 
     def _load_feature_data(self):
@@ -176,14 +218,15 @@ class InferenceService:
             db_manager = DatabaseManager()
 
             # 确保数据库管理器已初始化
-            if not hasattr(db_manager, '_initialized') or not db_manager._initialized:
+            if not hasattr(db_manager, "_initialized") or not db_manager._initialized:
                 from src.config.settings import get_settings
+
                 settings = get_settings()
                 db_manager.initialize(
                     database_url=settings.database_url,
                     pool_size=settings.db_pool_size,
                     max_overflow=settings.db_max_overflow,
-                    pool_timeout=settings.db_pool_timeout
+                    pool_timeout=settings.db_pool_timeout,
                 )
 
             # 使用异步会话查询数据库
@@ -192,15 +235,19 @@ class InferenceService:
 
                 # 执行SQL查询
                 result = await session.execute(
-                    text("SELECT feature_data FROM features WHERE match_id = :match_id"),
-                    {"match_id": match_id}
+                    text(
+                        "SELECT feature_data FROM features WHERE match_id = :match_id"
+                    ),
+                    {"match_id": match_id},
                 )
                 row = result.first()
 
                 if row and row[0]:  # feature_data 存在
                     # row[0] 是JSONB对象，直接使用
                     features_dict = row[0]
-                    logger.info(f"✅ Successfully fetched features for match {match_id}: {len(features_dict)} features")
+                    logger.info(
+                        f"✅ Successfully fetched features for match {match_id}: {len(features_dict)} features"
+                    )
                     return features_dict
                 else:
                     logger.warning(f"⚠️ No features found for match {match_id}")
@@ -272,16 +319,30 @@ class InferenceService:
             # 模型期望 feature_0 到 feature_4 的5个特征
             try:
                 # 如果模型使用通用特征名，创建特征向量
-                if all(col.startswith('feature_') for col in self._feature_columns):
+                if all(col.startswith("feature_") for col in self._feature_columns):
                     # 使用通用特征映射，将业务特征转换为5个维度
-                    feature_0 = features.get('home_team_id', 1)  # 主队ID
-                    feature_1 = features.get('away_team_id', 2)  # 客队ID
-                    feature_2 = features.get('home_last_5_points', 6)  # 主队最近积分
-                    feature_3 = features.get('away_last_5_points', 6)  # 客队最近积分
-                    feature_4 = features.get('h2h_last_3_home_wins', 1)  # 历史交锋主队胜场
+                    feature_0 = features.get("home_team_id", 1)  # 主队ID
+                    feature_1 = features.get("away_team_id", 2)  # 客队ID
+                    feature_2 = features.get("home_last_5_points", 6)  # 主队最近积分
+                    feature_3 = features.get("away_last_5_points", 6)  # 客队最近积分
+                    feature_4 = features.get(
+                        "h2h_last_3_home_wins", 1
+                    )  # 历史交锋主队胜场
 
-                    feature_vector = [feature_0, feature_1, feature_2, feature_3, feature_4]
-                    self._feature_columns = ['feature_0', 'feature_1', 'feature_2', 'feature_3', 'feature_4']
+                    feature_vector = [
+                        feature_0,
+                        feature_1,
+                        feature_2,
+                        feature_3,
+                        feature_4,
+                    ]
+                    self._feature_columns = [
+                        "feature_0",
+                        "feature_1",
+                        "feature_2",
+                        "feature_3",
+                        "feature_4",
+                    ]
                     logger.info(f"✅ 使用通用特征映射: {feature_vector}")
                 else:
                     # 使用原始特征列映射
@@ -340,9 +401,17 @@ class InferenceService:
             else:
                 # 三分类模型
                 prob_home_win = round(float(probabilities[1]), 3)
-                prob_draw = round(float(probabilities[0]), 3) if len(probabilities) > 2 else 0.0
-                prob_away_win = round(float(probabilities[2]), 3) if len(probabilities) > 2 else 0.0
-                predicted_outcome = "home" if prediction == 1 else ("draw" if prediction == 0 else "away")
+                prob_draw = (
+                    round(float(probabilities[0]), 3) if len(probabilities) > 2 else 0.0
+                )
+                prob_away_win = (
+                    round(float(probabilities[2]), 3) if len(probabilities) > 2 else 0.0
+                )
+                predicted_outcome = (
+                    "home"
+                    if prediction == 1
+                    else ("draw" if prediction == 0 else "away")
+                )
 
             result = {
                 "match_id": match_id,
@@ -408,7 +477,9 @@ class InferenceService:
                     "status": "degraded",
                     "model_loaded": False,
                     "feature_data_loaded": not self._feature_data.empty,
-                    "feature_count": len(self._feature_columns) if self._feature_columns else 0,
+                    "feature_count": len(self._feature_columns)
+                    if self._feature_columns
+                    else 0,
                     "initialized": self._initialized,
                     "note": "XGBoost not available - running in mock mode",
                     "xgboost_available": False,

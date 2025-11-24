@@ -7,13 +7,17 @@ from fastapi import APIRouter, HTTPException, Query
 # 尝试导入requests，如果失败则使用mock异常
 try:
     from requests.exceptions import HTTPError
+
     HAVE_REQUESTS = True
 except ImportError:
     HAVE_REQUESTS = False
+
     # 创建一个简单的mock异常类
     class HTTPError(Exception):
         """Mock HTTPError for when requests module is not available."""
+
         pass
+
 
 from src.core.event_application import get_event_application
 from src.events import get_event_bus

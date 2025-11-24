@@ -478,7 +478,9 @@ def load_data_from_database() -> pd.DataFrame:
             db_host = os.getenv("DB_HOST", "db")  # Docker里是 db，不是localhost
             db_port = os.getenv("DB_PORT", "5432")
             db_name = os.getenv("POSTGRES_DB", "football_prediction")
-            db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+            db_url = (
+                f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+            )
 
         # Pandas 需要同步驱动，移除 asyncpg
         if "+asyncpg" in db_url:

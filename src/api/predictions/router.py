@@ -345,7 +345,11 @@ async def create_prediction(match_id: int, request: PredictionRequest | None = N
             )
 
         # 转换为API响应格式
-        model_version = request.model_version if request else prediction_result.get("model_version", "default")
+        model_version = (
+            request.model_version
+            if request
+            else prediction_result.get("model_version", "default")
+        )
         result = PredictionResult(
             match_id=match_id,
             home_win_prob=prediction_result.get("home_win_prob", 0.33),
