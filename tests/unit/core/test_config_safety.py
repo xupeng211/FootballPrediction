@@ -67,7 +67,7 @@ class TestConfigSafetyNet:
             "METRICS_COLLECTION_INTERVAL": "60",
             "MISSING_DATA_DEFAULTS_PATH": "/path/to/defaults.json",
             "MISSING_DATA_DEFAULTS_JSON": '{"key": "value"}',
-            "ENABLED_SERVICES": "ServiceA,ServiceB,ServiceC"
+            "ENABLED_SERVICES": "ServiceA,ServiceB,ServiceC",
         }
         with patch.dict(os.environ, full_env, clear=True):
             yield
@@ -94,14 +94,16 @@ class TestConfigSafetyNet:
 
         # 验证基本属性
         assert config is not None
-        assert hasattr(config, 'debug')
-        assert hasattr(config, 'secret_key')
-        assert hasattr(config, 'database_url')
+        assert hasattr(config, "debug")
+        assert hasattr(config, "secret_key")
+        assert hasattr(config, "database_url")
 
         # 验证默认值
         assert config.debug is False
         assert config.secret_key == "dev-secret-key-for-testing"
-        assert config.database_url == "sqlite+aiosqlite:///./data/football_prediction.db"
+        assert (
+            config.database_url == "sqlite+aiosqlite:///./data/football_prediction.db"
+        )
 
     @pytest.mark.unit
     @pytest.mark.core
@@ -170,11 +172,12 @@ class TestConfigSafetyNet:
         def mock_json_dump(data, file, **kwargs):
             mock_file_data.update(data)
 
-        with patch('builtins.open', mock_open()) as mock_file, \
-             patch('json.dump', side_effect=mock_json_dump), \
-             patch('pathlib.Path.exists', return_value=False), \
-             patch('pathlib.Path.mkdir'):
-
+        with (
+            patch("builtins.open", mock_open()) as mock_file,
+            patch("json.dump", side_effect=mock_json_dump),
+            patch("pathlib.Path.exists", return_value=False),
+            patch("pathlib.Path.mkdir"),
+        ):
             config.set("test_key", "test_value")
             config.save()
 
@@ -201,10 +204,11 @@ class TestConfigSafetyNet:
         config = src.core.config.Config()
 
         # 模拟损坏的配置文件
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch('builtins.open', mock_open(read_data="{invalid json")), \
-             patch('logging.warning') as mock_warning:
-
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch("builtins.open", mock_open(read_data="{invalid json")),
+            patch("logging.warning") as mock_warning,
+        ):
             config._load_config()
 
             # 验证警告被记录
@@ -232,15 +236,17 @@ class TestConfigSafetyNet:
         settings = src.core.config.get_settings()
 
         # 验证基本属性存在
-        assert hasattr(settings, 'database_url')
-        assert hasattr(settings, 'redis_url')
-        assert hasattr(settings, 'api_host')
-        assert hasattr(settings, 'api_port')
-        assert hasattr(settings, 'environment')
-        assert hasattr(settings, 'log_level')
+        assert hasattr(settings, "database_url")
+        assert hasattr(settings, "redis_url")
+        assert hasattr(settings, "api_host")
+        assert hasattr(settings, "api_port")
+        assert hasattr(settings, "environment")
+        assert hasattr(settings, "log_level")
 
         # 验证默认值（取决于是否有Pydantic）
-        assert settings.database_url == "sqlite+aiosqlite:///./data/football_prediction.db"
+        assert (
+            settings.database_url == "sqlite+aiosqlite:///./data/football_prediction.db"
+        )
         assert settings.redis_url == "redis://redis:6379/0"
         assert settings.api_host == "localhost"
         assert settings.api_port == 8000
@@ -267,7 +273,10 @@ class TestConfigSafetyNet:
 
         # 验证环境变量被正确加载
         assert settings.database_url == "postgresql://test:test@localhost:5432/test_db"
-        assert settings.test_database_url == "postgresql://test:test@localhost:5432/test_db_test"
+        assert (
+            settings.test_database_url
+            == "postgresql://test:test@localhost:5432/test_db_test"
+        )
         assert settings.redis_url == "redis://localhost:6380/1"
         assert settings.api_host == "test-host"
         assert settings.api_port == 9000  # 应该从字符串转换为整数
@@ -315,7 +324,7 @@ class TestConfigSafetyNet:
         settings = src.core.config.get_settings()
 
         # 验证JSON列表解析 - 使用新的属性方法
-        if hasattr(settings, 'metrics_tables_list'):
+        if hasattr(settings, "metrics_tables_list"):
             assert isinstance(settings.metrics_tables_list, list)
             assert "table1" in settings.metrics_tables_list
             assert "table2" in settings.metrics_tables_list
@@ -343,7 +352,7 @@ class TestConfigSafetyNet:
             settings = src.core.config.get_settings()
 
             # 验证逗号分隔列表解析 - 使用新的属性方法
-            if hasattr(settings, 'enabled_services_list'):
+            if hasattr(settings, "enabled_services_list"):
                 assert isinstance(settings.enabled_services_list, list)
                 assert "ServiceA" in settings.enabled_services_list
                 assert "ServiceB" in settings.enabled_services_list
@@ -369,9 +378,9 @@ class TestConfigSafetyNet:
 
         # 验证返回类型
         assert isinstance(config, src.core.config.Config)
-        assert hasattr(config, 'get')
-        assert hasattr(config, 'set')
-        assert hasattr(config, 'save')
+        assert hasattr(config, "get")
+        assert hasattr(config, "set")
+        assert hasattr(config, "save")
 
     @pytest.mark.unit
     @pytest.mark.core
@@ -391,8 +400,8 @@ class TestConfigSafetyNet:
 
         # 验证返回类型
         assert isinstance(settings, src.core.config.Settings)
-        assert hasattr(settings, 'database_url')
-        assert hasattr(settings, 'redis_url')
+        assert hasattr(settings, "database_url")
+        assert hasattr(settings, "redis_url")
 
     @pytest.mark.unit
     @pytest.mark.core
@@ -412,7 +421,7 @@ class TestConfigSafetyNet:
 
         # 验证返回类型（函数当前忽略config_file参数）
         assert isinstance(settings, src.core.config.Settings)
-        assert hasattr(settings, 'database_url')
+        assert hasattr(settings, "database_url")
 
     # ==================== P1 优先级 错误处理测试 ====================
 
@@ -438,7 +447,7 @@ class TestConfigSafetyNet:
 
             # 验证处理无效端口的方式
             # 根据实现，可能会使用默认值或忽略
-            assert hasattr(settings, 'api_port')
+            assert hasattr(settings, "api_port")
 
     @pytest.mark.unit
     @pytest.mark.core
@@ -455,11 +464,12 @@ class TestConfigSafetyNet:
         config = src.core.config.Config()
 
         # 模拟目录创建
-        with patch('pathlib.Path.exists', return_value=False), \
-             patch('pathlib.Path.mkdir') as mock_mkdir, \
-             patch('builtins.open', mock_open()), \
-             patch('json.dump'):
-
+        with (
+            patch("pathlib.Path.exists", return_value=False),
+            patch("pathlib.Path.mkdir") as mock_mkdir,
+            patch("builtins.open", mock_open()),
+            patch("json.dump"),
+        ):
             config.save()
 
             # 验证目录创建被调用
@@ -480,8 +490,8 @@ class TestConfigSafetyNet:
         config = src.core.config.Config()
 
         # 验证配置路径结构
-        assert hasattr(config, 'config_dir')
-        assert hasattr(config, 'config_file')
+        assert hasattr(config, "config_dir")
+        assert hasattr(config, "config_file")
 
         # 验证路径类型
         assert isinstance(config.config_dir, Path)
@@ -501,7 +511,7 @@ class TestConfigSafetyNet:
         # 设置部分环境变量
         partial_env = {
             "DATABASE_URL": "custom://db",
-            "API_HOST": "custom-host"
+            "API_HOST": "custom-host",
             # 其他使用默认值
         }
         with patch.dict(os.environ, partial_env, clear=True):
@@ -564,7 +574,7 @@ class TestConfigSafetyNet:
             "int_key": 42,
             "bool_key": True,
             "list_key": ["item1", "item2"],
-            "dict_key": {"nested": "value"}
+            "dict_key": {"nested": "value"},
         }
 
         mock_file_data = {}
@@ -573,11 +583,12 @@ class TestConfigSafetyNet:
             mock_file_data.clear()
             mock_file_data.update(data)
 
-        with patch('builtins.open', mock_open()) as mock_file, \
-             patch('json.dump', side_effect=mock_json_dump), \
-             patch('pathlib.Path.exists', return_value=False), \
-             patch('pathlib.Path.mkdir'):
-
+        with (
+            patch("builtins.open", mock_open()),
+            patch("json.dump", side_effect=mock_json_dump),
+            patch("pathlib.Path.exists", return_value=False),
+            patch("pathlib.Path.mkdir"),
+        ):
             # 保存配置
             for key, value in test_data.items():
                 config.set(key, value)
@@ -599,9 +610,7 @@ class TestConfigSafetyNet:
         业务重要性: 密钥配置回退机制
         """
         # 设置FLASK_SECRET_KEY但不设置SECRET_KEY
-        env_with_flask_key = {
-            "FLASK_SECRET_KEY": "flask-secret-fallback"
-        }
+        env_with_flask_key = {"FLASK_SECRET_KEY": "flask-secret-fallback"}
         with patch.dict(os.environ, env_with_flask_key, clear=True):
             # 重新加载config模块
             reload(src.core.config)
@@ -623,7 +632,7 @@ class TestConfigSafetyNet:
         业务重要性: 模块重新加载稳定性
         """
         # 多次重新加载模块
-        for i in range(3):
+        for _i in range(3):
             reload(src.core.config)
 
             # 验证全局实例仍然可用
@@ -632,5 +641,5 @@ class TestConfigSafetyNet:
 
             assert config is not None
             assert settings is not None
-            assert hasattr(config, 'get')
-            assert hasattr(settings, 'database_url')
+            assert hasattr(config, "get")
+            assert hasattr(settings, "database_url")

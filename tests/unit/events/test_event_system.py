@@ -367,23 +367,28 @@ class TestMetricsEventHandler:
 
         # 处理多个不同类型的事件
         from src.events.types import MatchCreatedEventData, PredictionMadeEventData
+
         events = [
             EventData(source="test", event_id="test-1"),
-            MatchCreatedEvent(data=MatchCreatedEventData(
-                match_id=1,
-                home_team_id=1,
-                away_team_id=2,
-                league_id=1,
-                match_time=datetime(2024, 12, 1, 20, 0, 0)
-            )),
-            PredictionMadeEvent(data=PredictionMadeEventData(
-                prediction_id=1,
-                match_id=1,
-                user_id=1,
-                predicted_home=2,
-                predicted_away=1,
-                confidence=0.8,
-            )),
+            MatchCreatedEvent(
+                data=MatchCreatedEventData(
+                    match_id=1,
+                    home_team_id=1,
+                    away_team_id=2,
+                    league_id=1,
+                    match_time=datetime(2024, 12, 1, 20, 0, 0),
+                )
+            ),
+            PredictionMadeEvent(
+                data=PredictionMadeEventData(
+                    prediction_id=1,
+                    match_id=1,
+                    user_id=1,
+                    predicted_home=2,
+                    predicted_away=1,
+                    confidence=0.8,
+                )
+            ),
         ]
 
         for event in events:
@@ -399,13 +404,17 @@ class TestMetricsEventHandler:
 
         # 处理一些事件
         handler.handle_sync(EventData(source="test", event_id="test-1"))
-        handler.handle_sync(MatchCreatedEvent(data=MatchCreatedEventData(
-            match_id=1,
-            home_team_id=1,
-            away_team_id=2,
-            league_id=1,
-            match_time=datetime(2024, 12, 1, 20, 0, 0)
-        )))
+        handler.handle_sync(
+            MatchCreatedEvent(
+                data=MatchCreatedEventData(
+                    match_id=1,
+                    home_team_id=1,
+                    away_team_id=2,
+                    league_id=1,
+                    match_time=datetime(2024, 12, 1, 20, 0, 0),
+                )
+            )
+        )
 
         # 获取指标
         metrics = handler.get_metrics()
@@ -450,13 +459,15 @@ class TestEventIntegration:
         event_bus.subscribe_sync("MatchCreatedEvent", custom_handler)
 
         # 创建并发布比赛创建事件
-        match_event = MatchCreatedEvent(data=MatchCreatedEventData(
-            match_id=12345,
-            home_team_id=1,
-            away_team_id=2,
-            league_id=1,
-            match_time=datetime(2024, 12, 1, 20, 0, 0)
-        ))
+        match_event = MatchCreatedEvent(
+            data=MatchCreatedEventData(
+                match_id=12345,
+                home_team_id=1,
+                away_team_id=2,
+                league_id=1,
+                match_time=datetime(2024, 12, 1, 20, 0, 0),
+            )
+        )
 
         # 发布事件
         event_bus.publish_sync("MatchCreatedEvent", match_event)
@@ -597,29 +608,35 @@ class TestEventPerformance:
 def create_test_event(event_type: str, **kwargs) -> Any:
     """创建测试事件"""
     if event_type == "match_created":
-        return MatchCreatedEvent(data=MatchCreatedEventData(
-            match_id=kwargs.get("match_id", 12345),
-            home_team_id=1,
-            away_team_id=2,
-            league_id=1,
-            match_time=datetime(2024, 12, 1, 20, 0, 0)
-        ))
+        return MatchCreatedEvent(
+            data=MatchCreatedEventData(
+                match_id=kwargs.get("match_id", 12345),
+                home_team_id=1,
+                away_team_id=2,
+                league_id=1,
+                match_time=datetime(2024, 12, 1, 20, 0, 0),
+            )
+        )
     elif event_type == "prediction_made":
-        return PredictionMadeEvent(data=PredictionMadeEventData(
-            prediction_id=kwargs.get("prediction_id", 67890),
-            match_id=kwargs.get("match_id", 12345),
-            user_id=kwargs.get("user_id", 999),
-            predicted_home=kwargs.get("predicted_home", 2),
-            predicted_away=kwargs.get("predicted_away", 1),
-            confidence=kwargs.get("confidence", 0.85),
-        ))
+        return PredictionMadeEvent(
+            data=PredictionMadeEventData(
+                prediction_id=kwargs.get("prediction_id", 67890),
+                match_id=kwargs.get("match_id", 12345),
+                user_id=kwargs.get("user_id", 999),
+                predicted_home=kwargs.get("predicted_home", 2),
+                predicted_away=kwargs.get("predicted_away", 1),
+                confidence=kwargs.get("confidence", 0.85),
+            )
+        )
     elif event_type == "user_registered":
-        return UserRegisteredEvent(data=UserRegisteredEventData(
-            user_id=kwargs.get("user_id", 1111),
-            username=kwargs.get("username", "testuser"),
-            email=kwargs.get("email", "test@example.com"),
-            registration_date=datetime(2024, 1, 1, 12, 0, 0)
-        ))
+        return UserRegisteredEvent(
+            data=UserRegisteredEventData(
+                user_id=kwargs.get("user_id", 1111),
+                username=kwargs.get("username", "testuser"),
+                email=kwargs.get("email", "test@example.com"),
+                registration_date=datetime(2024, 1, 1, 12, 0, 0),
+            )
+        )
     else:
         return EventData(source="test", **kwargs)
 

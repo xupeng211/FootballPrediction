@@ -34,7 +34,6 @@ try:
 except ImportError:
     CAN_IMPORT = False
 
-
     def test_prediction_result_dataclass(self):
         """测试预测结果数据类"""
         result = PredictionResult(
@@ -118,7 +117,6 @@ except ImportError:
 
         with pytest.raises(TypeError):
             IncompleteModel("IncompleteModel", "1.0")
-
 
     @pytest.fixture
     def poisson_model(self):
@@ -391,7 +389,6 @@ except ImportError:
         with pytest.raises(ValueError):
             poisson_model.prepare_features({})  # 缺少必需的team信息
 
-
     @pytest.fixture
     def elo_model(self):
         """创建ELO模型实例"""
@@ -607,7 +604,6 @@ except ImportError:
         assert new_model.team_elos == original_elos
         assert new_model.k_factor == elo_model.k_factor
         assert new_model.home_advantage == elo_model.home_advantage
-
 
     @pytest.fixture
     def sample_data(self):

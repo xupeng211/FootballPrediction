@@ -13,6 +13,7 @@ try:
 except ImportError:
     sys.exit(1)
 
+
 def main():
     """主函数."""
     logger = get_logger("部署工具链")
@@ -20,19 +21,14 @@ def main():
     logger.info("开始部署工具链...")
 
     # 模拟部署步骤
-    steps = [
-        "检查Git状态",
-        "运行测试",
-        "构建项目",
-        "部署到服务器",
-        "验证部署"
-    ]
+    steps = ["检查Git状态", "运行测试", "构建项目", "部署到服务器", "验证部署"]
 
     for step in steps:
         logger.info(f"执行: {step}")
 
     logger.success("部署工具链完成!")
     return True
+
 
 if __name__ == "__main__":
     success = main()

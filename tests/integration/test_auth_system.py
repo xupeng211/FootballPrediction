@@ -45,8 +45,6 @@ def print_info(message: str):
 
 
 @pytest.mark.asyncio
-
-
 async def test_api_health():
     """测试API健康状态"""
     print_test_header("API健康检查")
@@ -70,8 +68,6 @@ async def test_api_health():
 
 
 @pytest.mark.asyncio
-
-
 async def test_user_registration():
     """测试用户注册"""
     print_test_header("用户注册测试")
@@ -100,8 +96,6 @@ async def test_user_registration():
 
 
 @pytest.mark.asyncio
-
-
 async def test_user_login():
     """测试用户登录"""
     print_test_header("用户登录测试")
@@ -133,8 +127,6 @@ async def test_user_login():
 
 
 @pytest.mark.asyncio
-
-
 async def test_get_current_user(access_token: str):
     """测试获取当前用户信息"""
     print_test_header("获取当前用户信息")
@@ -165,8 +157,6 @@ async def test_get_current_user(access_token: str):
 
 
 @pytest.mark.asyncio
-
-
 async def test_existing_users():
     """测试现有用户登录"""
     print_test_header("现有用户登录测试")

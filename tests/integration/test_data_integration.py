@@ -21,8 +21,6 @@ from src.database.connection import get_async_session
 
 
 @pytest.mark.asyncio
-
-
 async def test_data_sources():
     """测试数据源管理器"""
 
@@ -53,8 +51,6 @@ async def test_data_sources():
 
 
 @pytest.mark.asyncio
-
-
 async def test_collector():
     """测试增强版收集器"""
 
@@ -88,8 +84,6 @@ async def test_collector():
 
 
 @pytest.mark.asyncio
-
-
 async def test_specific_team():
     """测试指定球队的数据收集"""
 
@@ -124,8 +118,6 @@ async def test_specific_team():
 
 
 @pytest.mark.asyncio
-
-
 async def test_league_data():
     """测试联赛数据收集"""
 

@@ -118,8 +118,8 @@ class TestAuditService:
         """测试获取用户活动"""
         # 准备测试数据
         user_id = 123
-        start_date = datetime(2024, 1, 1)
-        end_date = datetime(2024, 1, 31)
+        datetime(2024, 1, 1)
+        datetime(2024, 1, 31)
 
         # 设置模拟返回
         mock_activities = [
@@ -148,13 +148,13 @@ class TestAuditService:
         # 验证
         assert len(activities) >= 2
         # 检查返回的是AuditEvent对象
-        assert all(hasattr(event, 'action') for event in activities)
+        assert all(hasattr(event, "action") for event in activities)
 
     def test_generate_audit_report(self, service, mock_repository):
         """测试生成审计报告"""
         # 准备测试数据
-        start_date = datetime(2024, 1, 1)
-        end_date = datetime(2024, 1, 31)
+        datetime(2024, 1, 1)
+        datetime(2024, 1, 31)
 
         # 设置模拟返回
         mock_repository.get_audit_summary.return_value = {

@@ -11,135 +11,143 @@ def parse_failed_tests():
     """解析失败测试列表."""
     failed_tests = []
 
-    with open('/tmp/failed_tests_list.txt') as f:
+    with open("/tmp/failed_tests_list.txt") as f:
         for line in f:
             # 解析格式: tests/module/file.py::Class::test_name FAILED [ x%]
-            match = re.match(r'(tests/.+?)::(.+?)\s+FAILED', line.strip())
+            match = re.match(r"(tests/.+?)::(.+?)\s+FAILED", line.strip())
             if match:
                 test_path, test_full_name = match.groups()
 
                 # 分离类名和测试方法名
-                if '::' in test_full_name:
-                    class_name, test_method = test_full_name.split('::', 1)
+                if "::" in test_full_name:
+                    class_name, test_method = test_full_name.split("::", 1)
                 else:
                     class_name = test_full_name
                     test_method = test_full_name
 
-                failed_tests.append({
-                    'full_path': line.strip(),
-                    'test_path': test_path,
-                    'class_name': class_name,
-                    'test_method': test_method,
-                    'module': extract_module(test_path),
-                    'test_type': extract_test_type(test_path),
-                    'functional_area': extract_functional_area(test_full_name),
-                    'error_pattern': identify_error_pattern(test_method)
-                })
+                failed_tests.append(
+                    {
+                        "full_path": line.strip(),
+                        "test_path": test_path,
+                        "class_name": class_name,
+                        "test_method": test_method,
+                        "module": extract_module(test_path),
+                        "test_type": extract_test_type(test_path),
+                        "functional_area": extract_functional_area(test_full_name),
+                        "error_pattern": identify_error_pattern(test_method),
+                    }
+                )
 
     return failed_tests
 
+
 def extract_module(test_path):
     """从测试路径提取模块."""
-    if '/api/' in test_path:
-        return 'API'
-    elif '/integration/' in test_path:
-        return 'INTEGRATION'
-    elif '/unit/' in test_path:
-        return 'UNIT'
+    if "/api/" in test_path:
+        return "API"
+    elif "/integration/" in test_path:
+        return "INTEGRATION"
+    elif "/unit/" in test_path:
+        return "UNIT"
     else:
-        return 'OTHER'
+        return "OTHER"
+
 
 def extract_test_type(test_path):
     """提取测试类型."""
-    if 'auth' in test_path:
-        return 'AUTH'
-    elif 'cache' in test_path:
-        return 'CACHE'
-    elif 'api' in test_path:
-        return 'API'
-    elif 'database' in test_path or 'db' in test_path:
-        return 'DATABASE'
-    elif 'ml' in test_path:
-        return 'ML'
-    elif 'services' in test_path:
-        return 'SERVICES'
-    elif 'core' in test_path:
-        return 'CORE'
+    if "auth" in test_path:
+        return "AUTH"
+    elif "cache" in test_path:
+        return "CACHE"
+    elif "api" in test_path:
+        return "API"
+    elif "database" in test_path or "db" in test_path:
+        return "DATABASE"
+    elif "ml" in test_path:
+        return "ML"
+    elif "services" in test_path:
+        return "SERVICES"
+    elif "core" in test_path:
+        return "CORE"
     else:
-        return 'GENERAL'
+        return "GENERAL"
+
 
 def extract_functional_area(test_full_name):
     """提取功能区域."""
     test_lower = test_full_name.lower()
-    if 'health' in test_lower:
-        return 'HEALTH_CHECK'
-    elif 'auth' in test_lower:
-        return 'AUTHENTICATION'
-    elif 'cache' in test_lower:
-        return 'CACHE_OPERATION'
-    elif 'prediction' in test_lower:
-        return 'PREDICTION_LOGIC'
-    elif 'match' in test_lower:
-        return 'MATCH_MANAGEMENT'
-    elif 'team' in test_lower:
-        return 'TEAM_MANAGEMENT'
-    elif 'user' in test_lower:
-        return 'USER_MANAGEMENT'
-    elif 'adapter' in test_lower:
-        return 'ADAPTER_INTEGRATION'
-    elif 'performance' in test_lower:
-        return 'PERFORMANCE'
-    elif 'error' in test_lower:
-        return 'ERROR_HANDLING'
+    if "health" in test_lower:
+        return "HEALTH_CHECK"
+    elif "auth" in test_lower:
+        return "AUTHENTICATION"
+    elif "cache" in test_lower:
+        return "CACHE_OPERATION"
+    elif "prediction" in test_lower:
+        return "PREDICTION_LOGIC"
+    elif "match" in test_lower:
+        return "MATCH_MANAGEMENT"
+    elif "team" in test_lower:
+        return "TEAM_MANAGEMENT"
+    elif "user" in test_lower:
+        return "USER_MANAGEMENT"
+    elif "adapter" in test_lower:
+        return "ADAPTER_INTEGRATION"
+    elif "performance" in test_lower:
+        return "PERFORMANCE"
+    elif "error" in test_lower:
+        return "ERROR_HANDLING"
     else:
-        return 'GENERAL'
+        return "GENERAL"
+
 
 def identify_error_pattern(test_method):
     """识别可能的错误模式."""
     test_lower = test_method.lower()
-    if 'system_info' in test_lower or 'health' in test_lower:
-        return 'HTTP_500_ERROR'
-    elif 'basic_operations' in test_lower or 'set' in test_lower:
-        return 'CACHE_ATTR_ERROR'
-    elif 'password' in test_lower or 'hash' in test_lower:
-        return 'AUTH_SERVICE_ERROR'
-    elif 'list' in test_lower or 'get' in test_lower:
-        return 'API_RESPONSE_ERROR'
-    elif 'create' in test_lower or 'update' in test_lower:
-        return 'DATA_VALIDATION_ERROR'
-    elif 'integration' in test_lower:
-        return 'INTEGRATION_ERROR'
+    if "system_info" in test_lower or "health" in test_lower:
+        return "HTTP_500_ERROR"
+    elif "basic_operations" in test_lower or "set" in test_lower:
+        return "CACHE_ATTR_ERROR"
+    elif "password" in test_lower or "hash" in test_lower:
+        return "AUTH_SERVICE_ERROR"
+    elif "list" in test_lower or "get" in test_lower:
+        return "API_RESPONSE_ERROR"
+    elif "create" in test_lower or "update" in test_lower:
+        return "DATA_VALIDATION_ERROR"
+    elif "integration" in test_lower:
+        return "INTEGRATION_ERROR"
     else:
-        return 'UNKNOWN_ERROR'
+        return "UNKNOWN_ERROR"
+
 
 def perform_clustering(failed_tests):
     """执行聚类分析."""
     # 按模块聚类
     module_clusters = defaultdict(list)
     for test in failed_tests:
-        module_clusters[test['module']].append(test)
+        module_clusters[test["module"]].append(test)
 
     # 按测试类型聚类
     test_type_clusters = defaultdict(list)
     for test in failed_tests:
-        test_type_clusters[test['test_type']].append(test)
+        test_type_clusters[test["test_type"]].append(test)
 
     # 按功能区域聚类
     functional_clusters = defaultdict(list)
     for test in failed_tests:
-        functional_clusters[test['functional_area']].append(test)
+        functional_clusters[test["functional_area"]].append(test)
 
     # 按错误模式聚类
     error_clusters = defaultdict(list)
     for test in failed_tests:
-        error_clusters[test['error_pattern']].append(test)
+        error_clusters[test["error_pattern"]].append(test)
 
     return {
-        'module_clusters': dict(module_clusters),
-        'test_type_clusters': dict(test_type_clusters),
-        'functional_clusters': dict(functional_clusters),
-        'error_clusters': dict(error_clusters)
+        "module_clusters": dict(module_clusters),
+        "test_type_clusters": dict(test_type_clusters),
+        "functional_clusters": dict(functional_clusters),
+        "error_clusters": dict(error_clusters),
     }
+
 
 def calculate_impact(cluster, cluster_type):
     """计算集群影响分数."""
@@ -147,100 +155,102 @@ def calculate_impact(cluster, cluster_type):
 
     # 根据集群类型调整权重
     weights = {
-        'module': {
-            'API': 10,
-            'INTEGRATION': 8,
-            'UNIT': 5,
-            'OTHER': 3
+        "module": {"API": 10, "INTEGRATION": 8, "UNIT": 5, "OTHER": 3},
+        "test_type": {
+            "AUTH": 9,
+            "CACHE": 8,
+            "API": 8,
+            "DATABASE": 7,
+            "SERVICES": 7,
+            "ML": 6,
+            "CORE": 6,
+            "GENERAL": 4,
         },
-        'test_type': {
-            'AUTH': 9,
-            'CACHE': 8,
-            'API': 8,
-            'DATABASE': 7,
-            'SERVICES': 7,
-            'ML': 6,
-            'CORE': 6,
-            'GENERAL': 4
+        "functional": {
+            "HEALTH_CHECK": 7,
+            "AUTHENTICATION": 9,
+            "CACHE_OPERATION": 8,
+            "PREDICTION_LOGIC": 8,
+            "API_RESPONSE_ERROR": 7,
+            "INTEGRATION": 8,
+            "PERFORMANCE": 5,
         },
-        'functional': {
-            'HEALTH_CHECK': 7,
-            'AUTHENTICATION': 9,
-            'CACHE_OPERATION': 8,
-            'PREDICTION_LOGIC': 8,
-            'API_RESPONSE_ERROR': 7,
-            'INTEGRATION': 8,
-            'PERFORMANCE': 5
+        "error": {
+            "HTTP_500_ERROR": 10,
+            "CACHE_ATTR_ERROR": 9,
+            "AUTH_SERVICE_ERROR": 9,
+            "INTEGRATION_ERROR": 8,
+            "API_RESPONSE_ERROR": 7,
+            "DATA_VALIDATION_ERROR": 6,
+            "UNKNOWN_ERROR": 4,
         },
-        'error': {
-            'HTTP_500_ERROR': 10,
-            'CACHE_ATTR_ERROR': 9,
-            'AUTH_SERVICE_ERROR': 9,
-            'INTEGRATION_ERROR': 8,
-            'API_RESPONSE_ERROR': 7,
-            'DATA_VALIDATION_ERROR': 6,
-            'UNKNOWN_ERROR': 4
-        }
     }
 
     # 根据集群名称获取权重
     weight = 5  # 默认权重
     if cluster_type in weights:
         for cluster_name, w in weights[cluster_type].items():
-            if cluster_name in str(cluster[0] if cluster else ''):
+            if cluster_name in str(cluster[0] if cluster else ""):
                 weight = w
                 break
 
     return int(base_score * weight)
+
 
 def generate_triage_report(failed_tests, clusters):
     """生成分诊报告."""
     total_failures = len(failed_tests)
 
     # 计算各种统计
-    module_stats = {k: len(v) for k, v in clusters['module_clusters'].items()}
-    test_type_stats = {k: len(v) for k, v in clusters['test_type_clusters'].items()}
-    functional_stats = {k: len(v) for k, v in clusters['functional_clusters'].items()}
-    error_stats = {k: len(v) for k, v in clusters['error_clusters'].items()}
+    module_stats = {k: len(v) for k, v in clusters["module_clusters"].items()}
+    test_type_stats = {k: len(v) for k, v in clusters["test_type_clusters"].items()}
+    functional_stats = {k: len(v) for k, v in clusters["functional_clusters"].items()}
+    error_stats = {k: len(v) for k, v in clusters["error_clusters"].items()}
 
     # 识别高价值集群
     high_value_clusters = []
 
     # 模块集群
-    for module, tests in clusters['module_clusters'].items():
-        impact = calculate_impact(tests, 'module')
-        high_value_clusters.append({
-            'type': 'MODULE',
-            'name': module,
-            'size': len(tests),
-            'impact': impact,
-            'examples': [t['full_path'] for t in tests[:3]]
-        })
+    for module, tests in clusters["module_clusters"].items():
+        impact = calculate_impact(tests, "module")
+        high_value_clusters.append(
+            {
+                "type": "MODULE",
+                "name": module,
+                "size": len(tests),
+                "impact": impact,
+                "examples": [t["full_path"] for t in tests[:3]],
+            }
+        )
 
     # 错误模式集群
-    for error_pattern, tests in clusters['error_clusters'].items():
-        impact = calculate_impact(tests, 'error')
-        high_value_clusters.append({
-            'type': 'ERROR_PATTERN',
-            'name': error_pattern,
-            'size': len(tests),
-            'impact': impact,
-            'examples': [t['full_path'] for t in tests[:3]]
-        })
+    for error_pattern, tests in clusters["error_clusters"].items():
+        impact = calculate_impact(tests, "error")
+        high_value_clusters.append(
+            {
+                "type": "ERROR_PATTERN",
+                "name": error_pattern,
+                "size": len(tests),
+                "impact": impact,
+                "examples": [t["full_path"] for t in tests[:3]],
+            }
+        )
 
     # 功能区域集群
-    for functional_area, tests in clusters['functional_clusters'].items():
-        impact = calculate_impact(tests, 'functional')
-        high_value_clusters.append({
-            'type': 'FUNCTIONAL_AREA',
-            'name': functional_area,
-            'size': len(tests),
-            'impact': impact,
-            'examples': [t['full_path'] for t in tests[:3]]
-        })
+    for functional_area, tests in clusters["functional_clusters"].items():
+        impact = calculate_impact(tests, "functional")
+        high_value_clusters.append(
+            {
+                "type": "FUNCTIONAL_AREA",
+                "name": functional_area,
+                "size": len(tests),
+                "impact": impact,
+                "examples": [t["full_path"] for t in tests[:3]],
+            }
+        )
 
     # 按影响分数排序
-    high_value_clusters.sort(key=lambda x: x['impact'], reverse=True)
+    high_value_clusters.sort(key=lambda x: x["impact"], reverse=True)
 
     # 生成报告内容
     report = f"""# P8.1 Failed Tests Triage Report
@@ -262,47 +272,53 @@ def generate_triage_report(failed_tests, clusters):
 
     report += "\n### 按测试类型分布\n"
 
-    for test_type, count in sorted(test_type_stats.items(), key=lambda x: x[1], reverse=True):
+    for test_type, count in sorted(
+        test_type_stats.items(), key=lambda x: x[1], reverse=True
+    ):
         percentage = (count / total_failures) * 100
         report += f"- **{test_type}**: {count} 个测试 ({percentage:.1f}%)\n"
 
     report += "\n### 按功能区域分布\n"
 
-    for functional_area, count in sorted(functional_stats.items(), key=lambda x: x[1], reverse=True):
+    for functional_area, count in sorted(
+        functional_stats.items(), key=lambda x: x[1], reverse=True
+    ):
         percentage = (count / total_failures) * 100
         report += f"- **{functional_area}**: {count} 个测试 ({percentage:.1f}%)\n"
 
     report += "\n### 按错误模式分布\n"
 
-    for error_pattern, count in sorted(error_stats.items(), key=lambda x: x[1], reverse=True):
+    for error_pattern, count in sorted(
+        error_stats.items(), key=lambda x: x[1], reverse=True
+    ):
         percentage = (count / total_failures) * 100
         report += f"- **{error_pattern}**: {count} 个测试 ({percentage:.1f}%)\n"
 
     report += "\n## 🔥 高价值集群分析\n\n"
 
     # 优先级1: 影响分数 > 1000
-    priority_1 = [c for c in high_value_clusters if c['impact'] > 1000]
+    priority_1 = [c for c in high_value_clusters if c["impact"] > 1000]
     if priority_1:
         report += "### 优先级1: 立即修复 (影响 > 1000)\n\n"
         for i, cluster in enumerate(priority_1[:5], 1):
-            report += f"""#### {i}. {cluster['name']} ({cluster['type']})
-- **影响分数**: {cluster['impact']}
-- **涉及测试**: {cluster['size']} 个
+            report += f"""#### {i}. {cluster["name"]} ({cluster["type"]})
+- **影响分数**: {cluster["impact"]}
+- **涉及测试**: {cluster["size"]} 个
 - **修复建议**: {get_fix_suggestion(cluster)}
 - **示例测试**:
 """
-            for example in cluster['examples']:
+            for example in cluster["examples"]:
                 report += f"  - `{example}`\n"
             report += "\n"
 
     # 优先级2: 影响分数 500-1000
-    priority_2 = [c for c in high_value_clusters if 500 <= c['impact'] <= 1000]
+    priority_2 = [c for c in high_value_clusters if 500 <= c["impact"] <= 1000]
     if priority_2:
         report += "### 优先级2: 高优先级 (影响 500-1000)\n\n"
         for i, cluster in enumerate(priority_2[:5], 1):
-            report += f"""#### {i}. {cluster['name']} ({cluster['type']})
-- **影响分数**: {cluster['impact']}
-- **涉及测试**: {cluster['size']} 个
+            report += f"""#### {i}. {cluster["name"]} ({cluster["type"]})
+- **影响分数**: {cluster["impact"]}
+- **涉及测试**: {cluster["size"]} 个
 - **修复建议**: {get_fix_suggestion(cluster)}
 """
 
@@ -341,29 +357,31 @@ def generate_triage_report(failed_tests, clusters):
 
     return report
 
+
 def get_fix_suggestion(cluster):
     """获取修复建议."""
     suggestions = {
-        'HTTP_500_ERROR': '检查API端点实现，修复服务器内部错误',
-        'CACHE_ATTR_ERROR': '解决异步装饰器问题，修复缓存管理器',
-        'AUTH_SERVICE_ERROR': '修复认证服务依赖，检查密码哈希库',
-        'API_RESPONSE_ERROR': '验证API响应格式，修复序列化问题',
-        'INTEGRATION_ERROR': '解决模块间依赖，修复服务注入',
-        'HEALTH_CHECK': '修复健康检查端点和系统监控',
-        'AUTHENTICATION': '检查JWT令牌和用户认证逻辑',
-        'CACHE_OPERATION': '解决缓存操作和Redis集成',
-        'PREDICTION_LOGIC': '修复预测服务和数据模型',
-        'API': '重点修复FastAPI路由和依赖注入',
-        'INTEGRATION': '解决跨模块集成问题',
-        'AUTH': '解决密码哈希和认证流程',
-        'UNIT': '修复单元测试的模拟和依赖'
+        "HTTP_500_ERROR": "检查API端点实现，修复服务器内部错误",
+        "CACHE_ATTR_ERROR": "解决异步装饰器问题，修复缓存管理器",
+        "AUTH_SERVICE_ERROR": "修复认证服务依赖，检查密码哈希库",
+        "API_RESPONSE_ERROR": "验证API响应格式，修复序列化问题",
+        "INTEGRATION_ERROR": "解决模块间依赖，修复服务注入",
+        "HEALTH_CHECK": "修复健康检查端点和系统监控",
+        "AUTHENTICATION": "检查JWT令牌和用户认证逻辑",
+        "CACHE_OPERATION": "解决缓存操作和Redis集成",
+        "PREDICTION_LOGIC": "修复预测服务和数据模型",
+        "API": "重点修复FastAPI路由和依赖注入",
+        "INTEGRATION": "解决跨模块集成问题",
+        "AUTH": "解决密码哈希和认证流程",
+        "UNIT": "修复单元测试的模拟和依赖",
     }
 
     for key, suggestion in suggestions.items():
-        if key.lower() in cluster['name'].lower():
+        if key.lower() in cluster["name"].lower():
             return suggestion
 
-    return '需要详细分析具体错误原因'
+    return "需要详细分析具体错误原因"
+
 
 def main():
     """主函数."""
@@ -377,11 +395,11 @@ def main():
     report = generate_triage_report(failed_tests, clusters)
 
     # 保存报告
-    with open('P8.1_Triage_Report.md', 'w', encoding='utf-8') as f:
+    with open("P8.1_Triage_Report.md", "w", encoding="utf-8") as f:
         f.write(report)
 
-
     # 显示摘要
+
 
 if __name__ == "__main__":
     main()

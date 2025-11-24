@@ -31,35 +31,135 @@ def mini_league_training_data():
     """
     data = {
         "home_team": [
-            "Team_A", "Team_A", "Team_A", "Team_A", "Team_A", "Team_A",  # Team A主场6场
-            "Team_B", "Team_B", "Team_B", "Team_B", "Team_B", "Team_B",  # Team B主场6场
-            "Team_C", "Team_C", "Team_C", "Team_C", "Team_C", "Team_C",  # Team C主场6场
-            "Team_D", "Team_D", "Team_D", "Team_D", "Team_D", "Team_D",  # Team D主场6场
+            "Team_A",
+            "Team_A",
+            "Team_A",
+            "Team_A",
+            "Team_A",
+            "Team_A",  # Team A主场6场
+            "Team_B",
+            "Team_B",
+            "Team_B",
+            "Team_B",
+            "Team_B",
+            "Team_B",  # Team B主场6场
+            "Team_C",
+            "Team_C",
+            "Team_C",
+            "Team_C",
+            "Team_C",
+            "Team_C",  # Team C主场6场
+            "Team_D",
+            "Team_D",
+            "Team_D",
+            "Team_D",
+            "Team_D",
+            "Team_D",  # Team D主场6场
         ],
         "away_team": [
-            "Team_B", "Team_C", "Team_D", "Team_B", "Team_C", "Team_D",  # Team A主场对手
-            "Team_A", "Team_C", "Team_D", "Team_A", "Team_C", "Team_D",  # Team B主场对手
-            "Team_A", "Team_B", "Team_D", "Team_A", "Team_B", "Team_D",  # Team C主场对手
-            "Team_A", "Team_B", "Team_C", "Team_A", "Team_B", "Team_C",  # Team D主场对手
+            "Team_B",
+            "Team_C",
+            "Team_D",
+            "Team_B",
+            "Team_C",
+            "Team_D",  # Team A主场对手
+            "Team_A",
+            "Team_C",
+            "Team_D",
+            "Team_A",
+            "Team_C",
+            "Team_D",  # Team B主场对手
+            "Team_A",
+            "Team_B",
+            "Team_D",
+            "Team_A",
+            "Team_B",
+            "Team_D",  # Team C主场对手
+            "Team_A",
+            "Team_B",
+            "Team_C",
+            "Team_A",
+            "Team_B",
+            "Team_C",  # Team D主场对手
         ],
         "home_score": [
-            3, 4, 5, 2, 3, 4,  # Team A主场: 进球多
-            2, 1, 3, 1, 2, 3,  # Team B主场: 中等
-            1, 2, 1, 0, 1, 2,  # Team C主场: 较少
-            0, 1, 0, 1, 0, 1,  # Team D主场: 很少
+            3,
+            4,
+            5,
+            2,
+            3,
+            4,  # Team A主场: 进球多
+            2,
+            1,
+            3,
+            1,
+            2,
+            3,  # Team B主场: 中等
+            1,
+            2,
+            1,
+            0,
+            1,
+            2,  # Team C主场: 较少
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,  # Team D主场: 很少
         ],
         "away_score": [
-            1, 0, 1, 2, 0, 1,  # Team A主场: 失球少
-            2, 1, 2, 3, 2, 1,  # Team B主场: 中等失球
-            3, 2, 3, 4, 3, 2,  # Team C主场: 失球较多
-            4, 3, 2, 5, 4, 3,  # Team D主场: 失球很多
+            1,
+            0,
+            1,
+            2,
+            0,
+            1,  # Team A主场: 失球少
+            2,
+            1,
+            2,
+            3,
+            2,
+            1,  # Team B主场: 中等失球
+            3,
+            2,
+            3,
+            4,
+            3,
+            2,  # Team C主场: 失球较多
+            4,
+            3,
+            2,
+            5,
+            4,
+            3,  # Team D主场: 失球很多
         ],
         "result": [
-            "home_win", "home_win", "home_win", "draw", "home_win", "home_win",
-            "draw", "home_win", "home_win", "away_win", "draw", "home_win",
-            "away_win", "draw", "away_win", "away_win", "away_win", "away_win",
-            "away_win", "away_win", "away_win", "away_win", "away_win", "away_win",
-        ]
+            "home_win",
+            "home_win",
+            "home_win",
+            "draw",
+            "home_win",
+            "home_win",
+            "draw",
+            "home_win",
+            "home_win",
+            "away_win",
+            "draw",
+            "home_win",
+            "away_win",
+            "draw",
+            "away_win",
+            "away_win",
+            "away_win",
+            "away_win",
+            "away_win",
+            "away_win",
+            "away_win",
+            "away_win",
+            "away_win",
+            "away_win",
+        ],
     }
     return pd.DataFrame(data)
 
@@ -72,7 +172,7 @@ def validation_data():
         "away_team": ["Team_D", "Team_C", "Team_A"],
         "home_score": [2, 1, 1],
         "away_score": [0, 1, 3],
-        "result": ["home_win", "draw", "away_win"]
+        "result": ["home_win", "draw", "away_win"],
     }
     return pd.DataFrame(data)
 
@@ -85,9 +185,20 @@ def minimal_training_data():
         "away_team": ["Team_Y", "Team_X"] * 6,
         "home_score": [2, 1, 3, 0, 1, 2, 1, 1, 2, 0, 3, 1],
         "away_score": [1, 2, 1, 3, 2, 0, 1, 1, 0, 2, 1, 2],
-        "result": ["home_win", "away_win", "home_win", "away_win",
-                  "home_win", "home_win", "draw", "draw",
-                  "home_win", "away_win", "home_win", "away_win"]
+        "result": [
+            "home_win",
+            "away_win",
+            "home_win",
+            "away_win",
+            "home_win",
+            "home_win",
+            "draw",
+            "draw",
+            "home_win",
+            "away_win",
+            "home_win",
+            "away_win",
+        ],
     }
     return pd.DataFrame(data)
 
@@ -123,7 +234,9 @@ class TestPoissonModelInitialization:
 class TestTeamStrengthCalculation:
     """球队攻防强度计算测试."""
 
-    def test_overall_averages_calculation(self, poisson_model, mini_league_training_data):
+    def test_overall_averages_calculation(
+        self, poisson_model, mini_league_training_data
+    ):
         """测试总体平均进球数计算."""
         poisson_model._calculate_team_strengths(mini_league_training_data)
 
@@ -147,7 +260,9 @@ class TestTeamStrengthCalculation:
         assert set(poisson_model.team_attack_strength.keys()) == expected_teams
         assert set(poisson_model.team_defense_strength.keys()) == expected_teams
 
-    def test_strength_differences_validation(self, poisson_model, mini_league_training_data):
+    def test_strength_differences_validation(
+        self, poisson_model, mini_league_training_data
+    ):
         """验证攻防强度的相对关系."""
         poisson_model._calculate_team_strengths(mini_league_training_data)
 
@@ -181,12 +296,14 @@ class TestTeamStrengthCalculation:
     def test_insufficient_data_teams(self, poisson_model):
         """测试数据不足球队的默认值处理."""
         # 创建一个数据不足的数据集
-        insufficient_data = pd.DataFrame({
-            "home_team": ["Team_X"],
-            "away_team": ["Team_Y"],
-            "home_score": [2],
-            "away_score": [1]
-        })
+        insufficient_data = pd.DataFrame(
+            {
+                "home_team": ["Team_X"],
+                "away_team": ["Team_Y"],
+                "home_score": [2],
+                "away_score": [1],
+            }
+        )
 
         poisson_model._calculate_team_strengths(insufficient_data)
 
@@ -194,13 +311,19 @@ class TestTeamStrengthCalculation:
         assert poisson_model.team_attack_strength.get("Team_X") == 1.0
         assert poisson_model.team_defense_strength.get("Team_Y") == 1.0
 
-    def test_home_away_separate_calculation(self, poisson_model, mini_league_training_data):
+    def test_home_away_separate_calculation(
+        self, poisson_model, mini_league_training_data
+    ):
         """测试主客场分别计算."""
         poisson_model._calculate_team_strengths(mini_league_training_data)
 
         # 验证计算了主客场数据
-        team_a_home_matches = mini_league_training_data[mini_league_training_data["home_team"] == "Team_A"]
-        team_a_away_matches = mini_league_training_data[mini_league_training_data["away_team"] == "Team_A"]
+        team_a_home_matches = mini_league_training_data[
+            mini_league_training_data["home_team"] == "Team_A"
+        ]
+        team_a_away_matches = mini_league_training_data[
+            mini_league_training_data["away_team"] == "Team_A"
+        ]
 
         assert len(team_a_home_matches) > 0
         assert len(team_a_away_matches) > 0
@@ -209,13 +332,19 @@ class TestTeamStrengthCalculation:
 class TestExpectedGoalsCalculation:
     """期望进球数计算测试."""
 
-    def test_basic_expected_goals_calculation(self, poisson_model, mini_league_training_data):
+    def test_basic_expected_goals_calculation(
+        self, poisson_model, mini_league_training_data
+    ):
         """测试基础期望进球计算."""
         poisson_model._calculate_team_strengths(mini_league_training_data)
 
         # Team A (强队) vs Team D (弱队)
-        home_expected = poisson_model._calculate_expected_goals("Team_A", "Team_D", is_home=True)
-        away_expected = poisson_model._calculate_expected_goals("Team_D", "Team_A", is_home=False)
+        home_expected = poisson_model._calculate_expected_goals(
+            "Team_A", "Team_D", is_home=True
+        )
+        away_expected = poisson_model._calculate_expected_goals(
+            "Team_D", "Team_A", is_home=False
+        )
 
         # 主队期望进球应该大于客队
         assert home_expected > away_expected
@@ -229,26 +358,38 @@ class TestExpectedGoalsCalculation:
         poisson_model._calculate_team_strengths(mini_league_training_data)
 
         # 相同两支球队，主客场期望进球应该不同
-        home_expected = poisson_model._calculate_expected_goals("Team_A", "Team_B", is_home=True)
-        away_expected = poisson_model._calculate_expected_goals("Team_A", "Team_B", is_home=False)
+        home_expected = poisson_model._calculate_expected_goals(
+            "Team_A", "Team_B", is_home=True
+        )
+        away_expected = poisson_model._calculate_expected_goals(
+            "Team_A", "Team_B", is_home=False
+        )
 
         # 主场期望进球应该更高（包含主场优势）
         assert home_expected > away_expected
 
-    def test_strength_impact_on_expected_goals(self, poisson_model, mini_league_training_data):
+    def test_strength_impact_on_expected_goals(
+        self, poisson_model, mini_league_training_data
+    ):
         """测试攻防强度对期望进球的影响."""
         poisson_model._calculate_team_strengths(mini_league_training_data)
 
         # 计算期望进球
-        strong_vs_weak = poisson_model._calculate_expected_goals("Team_A", "Team_D", is_home=True)
-        weak_vs_strong = poisson_model._calculate_expected_goals("Team_D", "Team_A", is_home=True)
+        strong_vs_weak = poisson_model._calculate_expected_goals(
+            "Team_A", "Team_D", is_home=True
+        )
+        weak_vs_strong = poisson_model._calculate_expected_goals(
+            "Team_D", "Team_A", is_home=True
+        )
 
         # 验证期望进球为合理正数
         assert strong_vs_weak > 0.1
         assert weak_vs_strong > 0.1
 
         # 验证主场优势存在（主队期望进球应该包含主场优势加成）
-        neutral_expected = poisson_model._calculate_expected_goals("Team_A", "Team_D", is_home=False)
+        neutral_expected = poisson_model._calculate_expected_goals(
+            "Team_A", "Team_D", is_home=False
+        )
         assert strong_vs_weak > neutral_expected
 
     def test_minimum_expected_goals_protection(self, poisson_model):
@@ -258,7 +399,9 @@ class TestExpectedGoalsCalculation:
         poisson_model.team_defense_strength["Strong"] = 10.0
         poisson_model.average_goals_home = 0.1  # 极低的平均进球
 
-        expected = poisson_model._calculate_expected_goals("Weak", "Strong", is_home=True)
+        expected = poisson_model._calculate_expected_goals(
+            "Weak", "Strong", is_home=True
+        )
 
         # 期望进球不应该低于0.1
         assert expected >= 0.1
@@ -266,8 +409,12 @@ class TestExpectedGoalsCalculation:
     def test_new_team_default_values(self, poisson_model):
         """测试新球队的默认值."""
         # 使用未训练的模型（新球队使用默认值1.0）
-        home_expected = poisson_model._calculate_expected_goals("NewTeam", "AnotherNew", is_home=True)
-        away_expected = poisson_model._calculate_expected_goals("AnotherNew", "NewTeam", is_home=False)
+        home_expected = poisson_model._calculate_expected_goals(
+            "NewTeam", "AnotherNew", is_home=True
+        )
+        away_expected = poisson_model._calculate_expected_goals(
+            "AnotherNew", "NewTeam", is_home=False
+        )
 
         # 应该基于默认强度计算
         assert home_expected > 0
@@ -277,13 +424,16 @@ class TestExpectedGoalsCalculation:
 class TestPoissonProbabilityCalculation:
     """泊松概率计算测试."""
 
-    @pytest.mark.parametrize("home_expected,away_expected", [
-        (1.0, 1.0),    # 平均情况
-        (2.5, 0.8),    # 强主队vs弱客队
-        (0.8, 2.0),    # 弱主队vs强客队
-        (3.0, 3.0),    # 高进球期望
-        (0.5, 0.5),    # 低进球期望
-    ])
+    @pytest.mark.parametrize(
+        "home_expected,away_expected",
+        [
+            (1.0, 1.0),  # 平均情况
+            (2.5, 0.8),  # 强主队vs弱客队
+            (0.8, 2.0),  # 弱主队vs强客队
+            (3.0, 3.0),  # 高进球期望
+            (0.5, 0.5),  # 低进球期望
+        ],
+    )
     def test_probability_distribution_properties(
         self, poisson_model, home_expected, away_expected
     ):
@@ -317,6 +467,7 @@ class TestPoissonProbabilityCalculation:
         for home_goals in range(max_goals + 1):
             for away_goals in range(max_goals + 1):
                 from scipy import stats
+
                 home_prob = stats.poisson.pmf(home_goals, home_expected)
                 away_prob = stats.poisson.pmf(away_goals, away_expected)
                 combined_prob = home_prob * away_prob
@@ -337,7 +488,9 @@ class TestPoissonProbabilityCalculation:
         assert total_matrix_prob == pytest.approx(1.0, abs=0.01)
 
         # 验证分类概率与矩阵概率一致
-        assert home_win_prob + draw_prob + away_win_prob == pytest.approx(total_matrix_prob, abs=0.01)
+        assert home_win_prob + draw_prob + away_win_prob == pytest.approx(
+            total_matrix_prob, abs=0.01
+        )
 
     def test_high_scoring_expectations(self, poisson_model):
         """测试高进球期望的情况."""
@@ -371,7 +524,9 @@ class TestPoissonProbabilityCalculation:
         for max_goals in [5, 10, 15]:
             poisson_model.hyperparameters["max_goals"] = max_goals
 
-            home_win, draw, away_win = poisson_model._calculate_match_probabilities(1.5, 1.2)
+            home_win, draw, away_win = poisson_model._calculate_match_probabilities(
+                1.5, 1.2
+            )
             total_prob = home_win + draw + away_win
 
             # 概率总和应该始终接近1
@@ -411,7 +566,9 @@ class TestPoissonModelTraining:
         invalid_df = pd.DataFrame({"team": ["A", "B"]})
         assert not poisson_model.validate_training_data(invalid_df)
 
-    def test_mini_league_training_results(self, poisson_model, mini_league_training_data):
+    def test_mini_league_training_results(
+        self, poisson_model, mini_league_training_data
+    ):
         """测试迷你联赛训练结果."""
         poisson_model.train(mini_league_training_data)
 
@@ -469,7 +626,7 @@ class TestPoissonModelPrediction:
         match_data = {
             "home_team": "Team_A",
             "away_team": "Team_D",
-            "match_id": "test_match"
+            "match_id": "test_match",
         }
 
         result = poisson_model.predict(match_data)
@@ -496,10 +653,7 @@ class TestPoissonModelPrediction:
         """测试概率预测."""
         poisson_model.train(mini_league_training_data)
 
-        match_data = {
-            "home_team": "Team_A",
-            "away_team": "Team_B"
-        }
+        match_data = {"home_team": "Team_A", "away_team": "Team_B"}
 
         probabilities = poisson_model.predict_proba(match_data)
         assert len(probabilities) == 3
@@ -515,7 +669,7 @@ class TestPoissonModelPrediction:
         # 测试包含新球队的预测
         match_data = {
             "home_team": "Team_A",  # 已训练球队
-            "away_team": "New_Team"  # 新球队
+            "away_team": "New_Team",  # 新球队
         }
 
         result = poisson_model.predict(match_data)
@@ -526,21 +680,21 @@ class TestPoissonModelPrediction:
         probabilities = poisson_model.predict_proba(match_data)
         assert len(probabilities) == 3
 
-    def test_strength_based_prediction_differences(self, poisson_model, mini_league_training_data):
+    def test_strength_based_prediction_differences(
+        self, poisson_model, mini_league_training_data
+    ):
         """测试基于强度的预测差异."""
         poisson_model.train(mini_league_training_data)
 
         # 强队vs弱队
-        strong_vs_weak = poisson_model.predict_proba({
-            "home_team": "Team_A",
-            "away_team": "Team_D"
-        })
+        strong_vs_weak = poisson_model.predict_proba(
+            {"home_team": "Team_A", "away_team": "Team_D"}
+        )
 
         # 弱队vs强队
-        weak_vs_strong = poisson_model.predict_proba({
-            "home_team": "Team_D",
-            "away_team": "Team_A"
-        })
+        weak_vs_strong = poisson_model.predict_proba(
+            {"home_team": "Team_D", "away_team": "Team_A"}
+        )
 
         # 验证概率都是有效的
         assert all(0.0 <= p <= 1.0 for p in strong_vs_weak)
@@ -554,7 +708,9 @@ class TestPoissonModelPrediction:
 class TestModelEvaluation:
     """模型评估测试."""
 
-    def test_model_evaluation(self, poisson_model, mini_league_training_data, validation_data):
+    def test_model_evaluation(
+        self, poisson_model, mini_league_training_data, validation_data
+    ):
         """测试模型评估."""
         # 训练模型
         poisson_model.train(mini_league_training_data)
@@ -578,30 +734,28 @@ class TestModelEvaluation:
 class TestFeaturePreparation:
     """特征准备测试."""
 
-    def test_feature_preparation_with_trained_model(self, poisson_model, mini_league_training_data):
+    def test_feature_preparation_with_trained_model(
+        self, poisson_model, mini_league_training_data
+    ):
         """测试训练后模型的特征准备."""
         poisson_model.train(mini_league_training_data)
 
-        match_data = {
-            "home_team": "Team_A",
-            "away_team": "Team_B"
-        }
+        match_data = {"home_team": "Team_A", "away_team": "Team_B"}
 
         features = poisson_model.prepare_features(match_data)
 
         # 验证特征向量
         assert isinstance(features, np.ndarray)
-        assert len(features) == 4  # [home_attack, home_defense, away_attack, away_defense]
+        assert (
+            len(features) == 4
+        )  # [home_attack, home_defense, away_attack, away_defense]
 
         # 验证所有特征为正数
         assert all(feature >= 0 for feature in features)
 
     def test_feature_preparation_with_new_teams(self, poisson_model):
         """测试新球队的特征准备."""
-        match_data = {
-            "home_team": "New_Team_A",
-            "away_team": "New_Team_B"
-        }
+        match_data = {"home_team": "New_Team_A", "away_team": "New_Team_B"}
 
         features = poisson_model.prepare_features(match_data)
 
@@ -613,7 +767,9 @@ class TestFeaturePreparation:
 class TestModelPersistence:
     """模型持久化测试."""
 
-    def test_model_save_and_load(self, poisson_model, mini_league_training_data, tmp_path):
+    def test_model_save_and_load(
+        self, poisson_model, mini_league_training_data, tmp_path
+    ):
         """测试模型保存和加载."""
         # 训练模型
         poisson_model.train(mini_league_training_data)
@@ -653,33 +809,37 @@ class TestEdgeCases:
     def test_minimum_training_data(self, poisson_model, minimal_training_data):
         """测试最小训练数据."""
         # 应该能够成功训练
-        result = poisson_model.train(minimal_training_data)
+        poisson_model.train(minimal_training_data)
         assert poisson_model.is_trained
 
     def test_extreme_score_data(self, poisson_model):
         """测试极端比分数据."""
         # 创建极端比分数据
-        extreme_data = pd.DataFrame({
-            "home_team": ["HighScore", "LowScore"] * 6,
-            "away_team": ["LowScore", "HighScore"] * 6,
-            "home_score": [8, 0, 7, 1, 6, 0, 9, 0, 5, 1, 8, 0],
-            "away_score": [0, 7, 1, 8, 0, 6, 0, 9, 1, 5, 0, 8],
-            "result": ["home_win", "away_win"] * 6
-        })
+        extreme_data = pd.DataFrame(
+            {
+                "home_team": ["HighScore", "LowScore"] * 6,
+                "away_team": ["LowScore", "HighScore"] * 6,
+                "home_score": [8, 0, 7, 1, 6, 0, 9, 0, 5, 1, 8, 0],
+                "away_score": [0, 7, 1, 8, 0, 6, 0, 9, 1, 5, 0, 8],
+                "result": ["home_win", "away_win"] * 6,
+            }
+        )
 
         # 应该能够处理极端比分
-        result = poisson_model.train(extreme_data)
+        poisson_model.train(extreme_data)
         assert poisson_model.is_trained
 
     def test_zero_goals_data(self, poisson_model):
         """测试全0比分数据."""
-        zero_goals_data = pd.DataFrame({
-            "home_team": ["Team_A", "Team_B"] * 8,
-            "away_team": ["Team_B", "Team_A"] * 8,
-            "home_score": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            "away_score": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            "result": ["draw"] * 16
-        })
+        zero_goals_data = pd.DataFrame(
+            {
+                "home_team": ["Team_A", "Team_B"] * 8,
+                "away_team": ["Team_B", "Team_A"] * 8,
+                "home_score": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                "away_score": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                "result": ["draw"] * 16,
+            }
+        )
 
         # 应该能够处理全0比分
         result = poisson_model.train(zero_goals_data)
@@ -689,7 +849,9 @@ class TestEdgeCases:
         # 这里主要验证训练过程不会抛出异常
         assert result is not None
 
-    def test_prediction_input_validation(self, poisson_model, mini_league_training_data):
+    def test_prediction_input_validation(
+        self, poisson_model, mini_league_training_data
+    ):
         """测试预测输入验证."""
         poisson_model.train(mini_league_training_data)
 

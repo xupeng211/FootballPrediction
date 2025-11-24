@@ -24,7 +24,7 @@ try:
     from src.api.predictions.models import (
         PredictionRequest,
         PredictionResult,
-        BatchPredictionRequest
+        BatchPredictionRequest,
     )
 except ImportError:
     # 备用导入方式
@@ -32,8 +32,7 @@ except ImportError:
     import os
 
     router_path = os.path.join(
-        os.path.dirname(__file__),
-        "../../../src/api/predictions/router.py"
+        os.path.dirname(__file__), "../../../src/api/predictions/router.py"
     )
     spec = importlib.util.spec_from_file_location("predictions_router", router_path)
     predictions_module = importlib.util.module_from_spec(spec)
@@ -471,9 +470,9 @@ class TestPredictionBusinessLogic:
             )
 
             total_prob = home + draw + away
-            assert (
-                abs(total_prob - 1.0) < 0.01
-            ), f"概率总和应该为1.0，实际为{total_prob}"
+            assert abs(total_prob - 1.0) < 0.01, (
+                f"概率总和应该为1.0，实际为{total_prob}"
+            )
 
     def test_prediction_outcome_consistency(self):
         """测试预测结果一致性"""

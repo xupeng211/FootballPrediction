@@ -102,7 +102,6 @@ class TestPredictionAPIIntegration:
         return cache
 
     @pytest.mark.asyncio
-
     async def test_create_match_prediction(self, mock_prediction_service, mock_cache):
         """测试创建比赛预测"""
         # 1. 准备预测请求数据
@@ -150,7 +149,6 @@ class TestPredictionAPIIntegration:
         mock_cache.set.assert_called_once()
 
     @pytest.mark.asyncio
-
     async def test_get_prediction_by_id(self, mock_prediction_service, mock_cache):
         """测试根据ID获取预测"""
         # 1. 准备预测ID
@@ -179,7 +177,6 @@ class TestPredictionAPIIntegration:
         assert prediction["status"] == "completed"
 
     @pytest.mark.asyncio
-
     async def test_get_user_predictions(self, mock_prediction_service, mock_cache):
         """测试获取用户预测历史"""
         # 1. 准备用户ID和分页参数
@@ -212,7 +209,6 @@ class TestPredictionAPIIntegration:
                 assert "status" in prediction
 
     @pytest.mark.asyncio
-
     async def test_batch_prediction_creation(self, mock_prediction_service):
         """测试批量创建预测"""
         # 1. 准备批量预测数据
@@ -248,7 +244,6 @@ class TestPredictionAPIIntegration:
             assert "home_win_probability" in result
 
     @pytest.mark.asyncio
-
     async def test_prediction_model_versions(self, mock_prediction_service):
         """测试预测模型版本管理"""
         # 1. 获取可用的模型版本
@@ -274,7 +269,6 @@ class TestPredictionAPIIntegration:
         assert prediction_fallback["model_version"] == fallback_version
 
     @pytest.mark.asyncio
-
     async def test_prediction_confidence_scoring(self, mock_prediction_service):
         """测试预测置信度评分"""
         # 1. 创建不同置信度的预测
@@ -320,7 +314,6 @@ class TestPredictionAPIIntegration:
             assert max_prob >= 0.3  # 至少30%的最高概率
 
     @pytest.mark.asyncio
-
     async def test_prediction_caching_strategy(self, mock_cache):
         """测试预测缓存策略"""
 
@@ -357,7 +350,6 @@ class TestPredictionAPIIntegration:
         assert is_cache_expired(current_time - 3700, cache_duration)  # 已过期
 
     @pytest.mark.asyncio
-
     async def test_prediction_error_handling(self, mock_prediction_service):
         """测试预测错误处理"""
         # 1. 测试无效输入
@@ -393,7 +385,6 @@ class TestPredictionAPIIntegration:
         assert "Service unavailable" in str(exc_info.value)
 
     @pytest.mark.asyncio
-
     async def test_prediction_performance_monitoring(self):
         """测试预测性能监控"""
         # 1. 模拟性能指标收集
@@ -426,7 +417,6 @@ class TestPredictionAPIIntegration:
             assert avg_time < 1.0  # 平均预测时间应小于1秒
 
     @pytest.mark.asyncio
-
     async def test_prediction_data_validation(self):
         """测试预测数据验证"""
 
@@ -496,7 +486,6 @@ class TestPredictionAPIIntegration:
         assert len(errors) >= 2
 
     @pytest.mark.asyncio
-
     async def test_prediction_rate_limiting(self):
         """测试预测API速率限制"""
         # 1. 设置速率限制参数
@@ -549,7 +538,6 @@ class TestPredictionAPIAdvancedFeatures:
     """预测API高级功能测试"""
 
     @pytest.mark.asyncio
-
     async def test_prediction_model_ensemble(self):
         """测试预测模型集成"""
         # 1. 模拟多个模型的预测结果
@@ -577,7 +565,6 @@ class TestPredictionAPIAdvancedFeatures:
         assert all(0 <= prob <= 1 for prob in ensemble_prediction.values())
 
     @pytest.mark.asyncio
-
     async def test_prediction_explanation_feature(self):
         """测试预测解释功能"""
         # 1. 模拟预测解释数据
@@ -628,7 +615,6 @@ class TestPredictionAPIAdvancedFeatures:
             assert 0 <= factor["weight"] <= 1
 
     @pytest.mark.asyncio
-
     async def test_prediction_market_odds_comparison(self):
         """测试预测与市场赔率比较"""
         # 1. 模拟市场赔率
@@ -679,7 +665,6 @@ class TestPredictionAPIAdvancedFeatures:
                 assert bet["value_percentage"] > 0
 
     @pytest.mark.asyncio
-
     async def test_prediction_confidence_intervals(self):
         """测试预测置信区间"""
         # 1. 模拟预测结果和置信区间
@@ -716,7 +701,6 @@ class TestPredictionAPIAdvancedFeatures:
         assert prediction_with_intervals["confidence_level"] == 0.95
 
     @pytest.mark.asyncio
-
     async def test_prediction_sensitivity_analysis(self):
         """测试预测敏感性分析"""
         # 1. 基础预测

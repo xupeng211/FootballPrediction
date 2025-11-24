@@ -62,9 +62,9 @@ class TestDIContainerSingleton:
 
         # 验证所有线程获得的是同一个实例
         assert len(errors) == 0, f"Errors occurred: {errors}"
-        assert (
-            len(set(results)) == 1
-        ), f"Multiple instances created: {len(set(results))} unique IDs"
+        assert len(set(results)) == 1, (
+            f"Multiple instances created: {len(set(results))} unique IDs"
+        )
 
     def test_singleton_instance_caching(self):
         """测试单例实例缓存"""

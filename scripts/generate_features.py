@@ -35,10 +35,9 @@ env_files = [
 for env_file in env_files:
     if env_file.exists():
         load_dotenv(env_file)
-        print(f"✅ 已加载环境文件: {env_file}")
         break
 else:
-    print("⚠️  未找到.env文件，将使用系统环境变量")
+    pass
 
 # 导入模块
 try:
@@ -48,17 +47,14 @@ try:
     from src.features.simple_feature_calculator import (
         SimpleFeatureCalculator,
         load_data_from_database,
-        save_features_to_csv
+        save_features_to_csv,
     )
-except ImportError as e:
-    print(f"❌ 导入模块失败: {e}")
-    print("💡 提示: 请确保已安装所有依赖: pip install pandas psycopg2-binary")
+except ImportError:
     sys.exit(1)
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -90,7 +86,9 @@ class FeatureGenerator:
                 db_name = os.getenv("POSTGRES_DB", "football_prediction")
                 db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
-            logger.info(f"使用数据库连接: {db_url.split('@')[1] if '@' in db_url else db_url}")
+            logger.info(
+                f"使用数据库连接: {db_url.split('@')[1] if '@' in db_url else db_url}"
+            )
 
             # Pandas 需要同步驱动，移除 asyncpg
             if "+asyncpg" in db_url:
@@ -125,12 +123,15 @@ class FeatureGenerator:
             logger.info(f"✅ 成功加载 {len(self.matches_df)} 条比赛记录")
 
             # 显示数据基本信息
-            logger.info(f"📅 数据时间范围: {self.matches_df['match_date'].min()} 到 {self.matches_df['match_date'].max()}")
-            logger.info(f"🏆 涉及球队数: {len(set(self.matches_df['home_team_id'].unique()) | set(self.matches_df['away_team_id'].unique()))}")
+            logger.info(
+                f"📅 数据时间范围: {self.matches_df['match_date'].min()} 到 {self.matches_df['match_date'].max()}"
+            )
+            logger.info(
+                f"🏆 涉及球队数: {len(set(self.matches_df['home_team_id'].unique()) | set(self.matches_df['away_team_id'].unique()))}"
+            )
 
             # 显示前几行数据
             logger.info("📊 数据预览:")
-            print(self.matches_df.head(3))
 
             return True
 
@@ -156,7 +157,6 @@ class FeatureGenerator:
 
             # 显示特征统计信息
             logger.info("📈 特征统计信息:")
-            print(self.features_df.describe())
 
             return True
 
@@ -178,18 +178,26 @@ class FeatureGenerator:
 
                 # 检查第一场比赛的特征（应该没有历史数据）
                 first_match = self.features_df.iloc[0]
-                logger.info(f"📊 第一场比赛特征验证:")
+                logger.info("📊 第一场比赛特征验证:")
                 logger.info(f"   主队最近5场积分: {first_match['home_last_5_points']}")
                 logger.info(f"   客队最近5场积分: {first_match['away_last_5_points']}")
-                logger.info(f"   历史交锋主队获胜次数: {first_match['h2h_last_3_home_wins']}")
+                logger.info(
+                    f"   历史交锋主队获胜次数: {first_match['h2h_last_3_home_wins']}"
+                )
 
                 # 检查后续比赛的特征
                 if len(self.features_df) >= 10:
                     tenth_match = self.features_df.iloc[9]  # 第10场比赛
-                    logger.info(f"📊 第十场比赛特征验证:")
-                    logger.info(f"   主队最近5场积分: {tenth_match['home_last_5_points']}")
-                    logger.info(f"   客队最近5场积分: {tenth_match['away_last_5_points']}")
-                    logger.info(f"   历史交锋主队获胜次数: {tenth_match['h2h_last_3_home_wins']}")
+                    logger.info("📊 第十场比赛特征验证:")
+                    logger.info(
+                        f"   主队最近5场积分: {tenth_match['home_last_5_points']}"
+                    )
+                    logger.info(
+                        f"   客队最近5场积分: {tenth_match['away_last_5_points']}"
+                    )
+                    logger.info(
+                        f"   历史交锋主队获胜次数: {tenth_match['h2h_last_3_home_wins']}"
+                    )
 
                 return True
             else:
@@ -237,32 +245,50 @@ class FeatureGenerator:
                 try:
                     # 准备特征数据 - 只包含实际表结构中的字段
                     feature_record = {
-                        'match_id': int(row['match_id']),
-                        'feature_data': json.dumps({
-                            'home_team_id': int(row['home_team_id']),
-                            'away_team_id': int(row['away_team_id']),
-                            'match_date': str(row['match_date']),
-                            'match_result': int(row['match_result']),
-                            'home_last_5_points': float(row['home_last_5_points']),
-                            'away_last_5_points': float(row['away_last_5_points']),
-                            'home_last_5_avg_goals': float(row['home_last_5_avg_goals']),
-                            'away_last_5_avg_goals': float(row['away_last_5_avg_goals']),
-                            'home_last_5_goal_diff': float(row['home_last_5_goal_diff']),
-                            'away_last_5_goal_diff': float(row['away_last_5_goal_diff']),
-                            'home_win_streak': int(row['home_win_streak']),
-                            'away_win_streak': int(row['away_win_streak']),
-                            'home_last_5_win_rate': float(row['home_last_5_win_rate']),
-                            'away_last_5_win_rate': float(row['away_last_5_win_rate']),
-                            'home_rest_days': int(row['home_rest_days']),
-                            'away_rest_days': int(row['away_rest_days']),
-                            'h2h_last_3_home_wins': int(row['h2h_last_3_home_wins'])
-                        })
+                        "match_id": int(row["match_id"]),
+                        "feature_data": json.dumps(
+                            {
+                                "home_team_id": int(row["home_team_id"]),
+                                "away_team_id": int(row["away_team_id"]),
+                                "match_date": str(row["match_date"]),
+                                "match_result": int(row["match_result"]),
+                                "home_last_5_points": float(row["home_last_5_points"]),
+                                "away_last_5_points": float(row["away_last_5_points"]),
+                                "home_last_5_avg_goals": float(
+                                    row["home_last_5_avg_goals"]
+                                ),
+                                "away_last_5_avg_goals": float(
+                                    row["away_last_5_avg_goals"]
+                                ),
+                                "home_last_5_goal_diff": float(
+                                    row["home_last_5_goal_diff"]
+                                ),
+                                "away_last_5_goal_diff": float(
+                                    row["away_last_5_goal_diff"]
+                                ),
+                                "home_win_streak": int(row["home_win_streak"]),
+                                "away_win_streak": int(row["away_win_streak"]),
+                                "home_last_5_win_rate": float(
+                                    row["home_last_5_win_rate"]
+                                ),
+                                "away_last_5_win_rate": float(
+                                    row["away_last_5_win_rate"]
+                                ),
+                                "home_rest_days": int(row["home_rest_days"]),
+                                "away_rest_days": int(row["away_rest_days"]),
+                                "h2h_last_3_home_wins": int(
+                                    row["h2h_last_3_home_wins"]
+                                ),
+                            }
+                        ),
                     }
                     batch_data.append(feature_record)
 
                     # 每50条记录显示一次进度
                     if (index + 1) % 50 == 0:
-                        logger.info(f"已准备 {index + 1}/{len(self.features_df)} 条记录...")
+                        logger.info(
+                            f"已准备 {index + 1}/{len(self.features_df)} 条记录..."
+                        )
 
                 except Exception as e:
                     logger.error(f"准备第 {index} 条记录失败: {e}")
@@ -275,16 +301,12 @@ class FeatureGenerator:
 
             # 添加时间戳
             from datetime import datetime
-            features_df['created_at'] = datetime.now()
-            features_df['updated_at'] = datetime.now()
+
+            features_df["created_at"] = datetime.now()
+            features_df["updated_at"] = datetime.now()
 
             # 使用pandas的to_sql批量插入，只包含实际表结构中的字段
-            features_df.to_sql(
-                'features',
-                engine,
-                if_exists='append',
-                index=False
-            )
+            features_df.to_sql("features", engine, if_exists="append", index=False)
 
             logger.info(f"✅ 成功保存 {len(batch_data)} 条特征记录到数据库")
 
@@ -295,10 +317,11 @@ class FeatureGenerator:
             logger.error(f"❌ 保存到数据库失败: {e}")
             # 打印详细错误信息用于调试
             import traceback
+
             logger.error(f"详细错误信息: {traceback.format_exc()}")
             return False
 
-    def save_dataset(self, filepath: str = 'data/dataset_v1.csv'):
+    def save_dataset(self, filepath: str = "data/dataset_v1.csv"):
         """保存数据集."""
         logger.info("=" * 60)
         logger.info("💾 开始保存数据集")
@@ -316,7 +339,9 @@ class FeatureGenerator:
 
                 # 读取并验证保存的文件
                 saved_df = pd.read_csv(filepath)
-                logger.info(f"📊 验证保存的文件: {saved_df.shape[0]} 行, {saved_df.shape[1]} 列")
+                logger.info(
+                    f"📊 验证保存的文件: {saved_df.shape[0]} 行, {saved_df.shape[1]} 列"
+                )
 
                 return True
             else:
@@ -340,35 +365,51 @@ class FeatureGenerator:
 
             # 基本统计
             total_matches = len(self.features_df)
-            home_wins = len(self.features_df[self.features_df['match_result'] == 1])
-            away_wins = len(self.features_df[self.features_df['match_result'] == 2])
-            draws = len(self.features_df[self.features_df['match_result'] == 0])
+            home_wins = len(self.features_df[self.features_df["match_result"] == 1])
+            away_wins = len(self.features_df[self.features_df["match_result"] == 2])
+            draws = len(self.features_df[self.features_df["match_result"] == 0])
 
-            logger.info(f"📊 数据集统计:")
+            logger.info("📊 数据集统计:")
             logger.info(f"   总比赛数: {total_matches}")
-            logger.info(f"   主队获胜: {home_wins} ({home_wins/total_matches*100:.1f}%)")
-            logger.info(f"   客队获胜: {away_wins} ({away_wins/total_matches*100:.1f}%)")
-            logger.info(f"   平局: {draws} ({draws/total_matches*100:.1f}%)")
+            logger.info(
+                f"   主队获胜: {home_wins} ({home_wins / total_matches * 100:.1f}%)"
+            )
+            logger.info(
+                f"   客队获胜: {away_wins} ({away_wins / total_matches * 100:.1f}%)"
+            )
+            logger.info(f"   平局: {draws} ({draws / total_matches * 100:.1f}%)")
 
             # 特征统计
-            logger.info(f"📈 特征统计:")
-            logger.info(f"   主队近期积分均值: {self.features_df['home_last_5_points'].mean():.2f}")
-            logger.info(f"   客队近期积分均值: {self.features_df['away_last_5_points'].mean():.2f}")
-            logger.info(f"   主队近期进球均值: {self.features_df['home_last_5_avg_goals'].mean():.2f}")
-            logger.info(f"   客队近期进球均值: {self.features_df['away_last_5_avg_goals'].mean():.2f}")
+            logger.info("📈 特征统计:")
+            logger.info(
+                f"   主队近期积分均值: {self.features_df['home_last_5_points'].mean():.2f}"
+            )
+            logger.info(
+                f"   客队近期积分均值: {self.features_df['away_last_5_points'].mean():.2f}"
+            )
+            logger.info(
+                f"   主队近期进球均值: {self.features_df['home_last_5_avg_goals'].mean():.2f}"
+            )
+            logger.info(
+                f"   客队近期进球均值: {self.features_df['away_last_5_avg_goals'].mean():.2f}"
+            )
 
             # 数据质量检查
-            zero_history_matches = len(self.features_df[
-                (self.features_df['home_last_5_points'] == 0) &
-                (self.features_df['away_last_5_points'] == 0)
-            ])
-            logger.info(f"🔍 数据质量:")
-            logger.info(f"   无历史记录的比赛: {zero_history_matches} ({zero_history_matches/total_matches*100:.1f}%)")
+            zero_history_matches = len(
+                self.features_df[
+                    (self.features_df["home_last_5_points"] == 0)
+                    & (self.features_df["away_last_5_points"] == 0)
+                ]
+            )
+            logger.info("🔍 数据质量:")
+            logger.info(
+                f"   无历史记录的比赛: {zero_history_matches} ({zero_history_matches / total_matches * 100:.1f}%)"
+            )
 
         except Exception as e:
             logger.error(f"❌ 生成报告失败: {e}")
 
-    async def run(self, output_path: str = 'data/dataset_v1.csv'):
+    async def run(self, output_path: str = "data/dataset_v1.csv"):
         """运行完整的特征生成流程."""
         logger.info("🚀 开始特征生成流程")
         start_time = datetime.now()

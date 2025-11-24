@@ -103,7 +103,10 @@ def test_adapters_with_mock_factory():
     with patch("src.api.adapters.router.get_registry") as mock_registry:
         # 创建mock注册表实例
         mock_registry_instance = MagicMock()
-        mock_registry_instance.register_adapter.return_value = {"id": "test_adapter", "status": "registered"}
+        mock_registry_instance.register_adapter.return_value = {
+            "id": "test_adapter",
+            "status": "registered",
+        }
         mock_registry.return_value = mock_registry_instance
 
         response = client.post("/api/v1/adapters/register", json={"name": "test"})

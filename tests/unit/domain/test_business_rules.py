@@ -689,9 +689,9 @@ class TestBusinessRuleEngine:
 
         assert len(results) == 3
         for result in results:
-            assert (
-                result.passed
-            ), f"所有规则应该通过: {result.rule_name} - {result.message}"
+            assert result.passed, (
+                f"所有规则应该通过: {result.rule_name} - {result.message}"
+            )
 
     def test_some_rules_fail(self):
         """测试部分规则失败"""

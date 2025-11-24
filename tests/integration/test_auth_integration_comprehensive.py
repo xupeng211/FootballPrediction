@@ -1,6 +1,9 @@
 import pytest
 
-pytest.skip("Skipping entire file for CI baseline - comprehensive authentication dependency issues", allow_module_level=True)
+pytest.skip(
+    "Skipping entire file for CI baseline - comprehensive authentication dependency issues",
+    allow_module_level=True,
+)
 
 """
 认证系统综合集成测试
@@ -76,7 +79,6 @@ class TestAuthIntegrationComprehensive:
         return db
 
     @pytest.mark.asyncio
-
     async def test_login_flow_complete(self, mock_token_service, mock_user_service):
         """测试完整的登录流程"""
         # 1. 用户提交登录凭据
@@ -101,7 +103,6 @@ class TestAuthIntegrationComprehensive:
         assert token_data["username"] == "testuser"
 
     @pytest.mark.asyncio
-
     async def test_user_registration_flow(self, mock_user_service, mock_token_service):
         """测试用户注册流程"""
         # 1. 提交注册数据
@@ -127,7 +128,6 @@ class TestAuthIntegrationComprehensive:
         assert access_token is not None
 
     @pytest.mark.asyncio
-
     async def test_token_refresh_flow(self, mock_token_service):
         """测试令牌刷新流程"""
         # 1. 使用过期的访问令牌
@@ -144,7 +144,6 @@ class TestAuthIntegrationComprehensive:
         assert "user_id" in token_data
 
     @pytest.mark.asyncio
-
     async def test_user_profile_access(self, mock_user_service, mock_token_service):
         """测试用户资料访问"""
         # 1. 获取有效令牌
@@ -161,7 +160,6 @@ class TestAuthIntegrationComprehensive:
         assert user_profile["email"] == "test@example.com"
 
     @pytest.mark.asyncio
-
     async def test_role_based_access_control(self, mock_token_service):
         """测试基于角色的访问控制"""
         # 测试普通用户访问
@@ -179,7 +177,6 @@ class TestAuthIntegrationComprehensive:
         assert admin_data["role"] == "admin"
 
     @pytest.mark.asyncio
-
     async def test_logout_flow(self, mock_token_service, mock_database):
         """测试登出流程"""
         # 1. 用户主动登出
@@ -193,7 +190,6 @@ class TestAuthIntegrationComprehensive:
         assert access_token in token_blacklist
 
     @pytest.mark.asyncio
-
     async def test_password_reset_flow(self, mock_user_service):
         """测试密码重置流程"""
         # 1. 请求密码重置
@@ -208,7 +204,6 @@ class TestAuthIntegrationComprehensive:
         assert reset_success is True
 
     @pytest.mark.asyncio
-
     async def test_concurrent_sessions(self, mock_token_service, mock_user_service):
         """测试并发会话管理"""
         # 1. 用户在多个设备登录
@@ -230,7 +225,6 @@ class TestAuthIntegrationComprehensive:
         assert len(tokens) == 3
 
     @pytest.mark.asyncio
-
     async def test_session_expiry(self, mock_token_service):
         """测试会话过期"""
         # 1. 创建短期令牌
@@ -244,7 +238,6 @@ class TestAuthIntegrationComprehensive:
         assert token_data is None  # 令牌已过期
 
     @pytest.mark.asyncio
-
     async def test_account_lockout_mechanism(self, mock_user_service):
         """测试账户锁定机制"""
         # 1. 模拟多次失败登录
@@ -265,7 +258,6 @@ class TestAuthIntegrationComprehensive:
         assert failed_attempts == 5
 
     @pytest.mark.asyncio
-
     async def test_two_factor_authentication(
         self, mock_user_service, mock_token_service
     ):
@@ -297,7 +289,6 @@ class TestAuthIntegrationComprehensive:
             assert access_token is not None
 
     @pytest.mark.asyncio
-
     async def test_privacy_settings_management(self, mock_user_service, mock_database):
         """测试隐私设置管理"""
         # 1. 获取用户隐私设置
@@ -320,7 +311,6 @@ class TestAuthIntegrationComprehensive:
         assert privacy_settings["email_notifications"] is False
 
     @pytest.mark.asyncio
-
     async def test_audit_log_functionality(self, mock_database):
         """测试审计日志功能"""
         # 1. 记录用户操作
@@ -348,7 +338,6 @@ class TestAuthIntegrationComprehensive:
         assert audit_logs[2]["action"] == "logout"
 
     @pytest.mark.asyncio
-
     async def test_rate_limiting_on_auth(self):
         """测试认证端点的速率限制"""
         # 1. 模拟请求计数器
@@ -388,7 +377,6 @@ class TestAuthIntegrationComprehensive:
         assert len(request_counts[ip_address]) >= rate_limit
 
     @pytest.mark.asyncio
-
     async def test_api_key_authentication(self):
         """测试API密钥认证"""
         # 1. 生成API密钥
@@ -419,7 +407,6 @@ class TestAuthSecurityIntegration:
     """认证安全集成测试"""
 
     @pytest.mark.asyncio
-
     async def test_sql_injection_protection(self):
         """测试SQL注入防护"""
         # 1. 模拟恶意输入
@@ -446,7 +433,6 @@ class TestAuthSecurityIntegration:
             assert "--" not in cleaned
 
     @pytest.mark.asyncio
-
     async def test_xss_protection(self):
         """测试XSS防护"""
         # 1. 模拟XSS攻击向量
@@ -471,7 +457,6 @@ class TestAuthSecurityIntegration:
             assert "onerror=" not in escaped.lower()
 
     @pytest.mark.asyncio
-
     async def test_csrf_protection(self):
         """测试CSRF防护"""
 
@@ -495,7 +480,6 @@ class TestAuthSecurityIntegration:
         assert validate_csrf_token("invalid_token") is False
 
     @pytest.mark.asyncio
-
     async def test_secure_headers(self):
         """测试安全HTTP头部"""
         # 1. 定义安全头部
@@ -519,7 +503,6 @@ class TestAuthSecurityIntegration:
             assert security_headers[header] is not None
 
     @pytest.mark.asyncio
-
     async def test_password_hashing_security(self):
         """测试密码哈希安全性"""
         import hashlib

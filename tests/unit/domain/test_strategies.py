@@ -224,7 +224,6 @@ class TestPredictionStrategy:
         assert strategy.config == {}
 
     @pytest.mark.asyncio
-
     async def test_strategy_initialize(self):
         """测试策略初始化方法"""
         strategy = MockPredictionStrategy("test_strategy", StrategyType.ML_MODEL)
@@ -355,7 +354,6 @@ class TestStrategyIntegration:
     """策略集成测试"""
 
     @pytest.mark.asyncio
-
     async def test_strategy_end_to_end_prediction(self):
         """测试策略端到端预测"""
         factory = PredictionStrategyFactory()
@@ -416,7 +414,6 @@ class TestStrategyIntegration:
         assert all(isinstance(s, PredictionStrategy) for s in strategies)
 
     @pytest.mark.asyncio
-
     async def test_strategy_error_handling(self):
         """测试策略错误处理"""
         PredictionStrategyFactory()
@@ -452,7 +449,6 @@ class TestStrategyPerformance:
     """策略性能测试"""
 
     @pytest.mark.asyncio
-
     async def test_strategy_prediction_performance(self):
         """测试策略预测性能"""
         import time

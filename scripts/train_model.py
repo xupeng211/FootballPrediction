@@ -25,28 +25,28 @@ sys.path.insert(0, str(project_root))
 try:
     import pandas as pd
     import numpy as np
-    from sklearn.model_selection import train_test_split, RandomizedSearchCV, TimeSeriesSplit
+    from sklearn.model_selection import (
+        train_test_split,
+        RandomizedSearchCV,
+        TimeSeriesSplit,
+    )
     from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
     from sklearn.preprocessing import LabelEncoder
     import xgboost as xgb
     import matplotlib.pyplot as plt
     import seaborn as sns
-except ImportError as e:
-    print(f"❌ 缺少依赖库: {e}")
-    print("💡 请安装必需的依赖:")
-    print("   pip install xgboost scikit-learn pandas numpy matplotlib seaborn")
+except ImportError:
     sys.exit(1)
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # 设置中文字体（用于matplotlib）
-plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'SimHei']
-plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams["font.sans-serif"] = ["DejaVu Sans", "Arial", "SimHei"]
+plt.rcParams["axes.unicode_minus"] = False
 
 
 class FootballModelTrainer:
@@ -62,7 +62,7 @@ class FootballModelTrainer:
         self.model = None
         self.feature_names = None
 
-    def load_data(self, filepath: str = 'data/dataset_v1.csv'):
+    def load_data(self, filepath: str = "data/dataset_v1.csv"):
         """加载数据集.
 
         Args:
@@ -76,16 +76,20 @@ class FootballModelTrainer:
             self.data = pd.read_csv(filepath)
 
             # 确保数据按时间排序
-            self.data['match_date'] = pd.to_datetime(self.data['match_date'])
-            self.data = self.data.sort_values('match_date').reset_index(drop=True)
+            self.data["match_date"] = pd.to_datetime(self.data["match_date"])
+            self.data = self.data.sort_values("match_date").reset_index(drop=True)
 
             logger.info(f"✅ 数据加载成功: {self.data.shape}")
-            logger.info(f"📅 数据时间范围: {self.data['match_date'].min()} 到 {self.data['match_date'].max()}")
-            logger.info(f"🎯 目标变量分布:")
-            target_counts = self.data['match_result'].value_counts().sort_index()
+            logger.info(
+                f"📅 数据时间范围: {self.data['match_date'].min()} 到 {self.data['match_date'].max()}"
+            )
+            logger.info("🎯 目标变量分布:")
+            target_counts = self.data["match_result"].value_counts().sort_index()
             for result, count in target_counts.items():
                 result_name = {0: "平局", 1: "主队胜", 2: "客队胜"}[result]
-                logger.info(f"   {result_name}: {count} ({count/len(self.data)*100:.1f}%)")
+                logger.info(
+                    f"   {result_name}: {count} ({count / len(self.data) * 100:.1f}%)"
+                )
 
             return True
 
@@ -103,22 +107,29 @@ class FootballModelTrainer:
             # 定义特征列（包含新的高级特征）
             feature_columns = [
                 # 基础特征
-                'home_team_id', 'away_team_id',
-                'home_last_5_points', 'away_last_5_points',
-                'home_last_5_avg_goals', 'away_last_5_avg_goals',
-                'h2h_last_3_home_wins',
+                "home_team_id",
+                "away_team_id",
+                "home_last_5_points",
+                "away_last_5_points",
+                "home_last_5_avg_goals",
+                "away_last_5_avg_goals",
+                "h2h_last_3_home_wins",
                 # 高级特征 - 体能、实力、士气
-                'home_last_5_goal_diff', 'away_last_5_goal_diff',
-                'home_win_streak', 'away_win_streak',
-                'home_last_5_win_rate', 'away_last_5_win_rate',
-                'home_rest_days', 'away_rest_days'
+                "home_last_5_goal_diff",
+                "away_last_5_goal_diff",
+                "home_win_streak",
+                "away_win_streak",
+                "home_last_5_win_rate",
+                "away_last_5_win_rate",
+                "home_rest_days",
+                "away_rest_days",
             ]
 
             self.feature_names = feature_columns
 
             # 准备特征矩阵X和目标向量y
             X = self.data[feature_columns].copy()
-            y = self.data['match_result'].copy()
+            y = self.data["match_result"].copy()
 
             logger.info(f"📊 特征矩阵形状: {X.shape}")
             logger.info(f"🎯 目标向量形状: {y.shape}")
@@ -127,10 +138,12 @@ class FootballModelTrainer:
             # 显示特征统计
             logger.info("📈 特征统计信息:")
             for col in feature_columns:
-                if col in ['home_team_id', 'away_team_id']:
+                if col in ["home_team_id", "away_team_id"]:
                     logger.info(f"   {col}: {X[col].nunique()} 个唯一值")
                 else:
-                    logger.info(f"   {col}: 均值={X[col].mean():.2f}, 标准差={X[col].std():.2f}")
+                    logger.info(
+                        f"   {col}: 均值={X[col].mean():.2f}, 标准差={X[col].std():.2f}"
+                    )
 
             return X, y
 
@@ -159,9 +172,13 @@ class FootballModelTrainer:
             y_train = y[:split_point]
             y_test = y[split_point:]
 
-            logger.info(f"🔄 数据切分完成:")
-            logger.info(f"   训练集: {len(X_train)} 条 ({len(X_train)/len(X)*100:.1f}%)")
-            logger.info(f"   测试集: {len(X_test)} 条 ({len(X_test)/len(X)*100:.1f}%)")
+            logger.info("🔄 数据切分完成:")
+            logger.info(
+                f"   训练集: {len(X_train)} 条 ({len(X_train) / len(X) * 100:.1f}%)"
+            )
+            logger.info(
+                f"   测试集: {len(X_test)} 条 ({len(X_test) / len(X) * 100:.1f}%)"
+            )
             logger.info(f"   切分时间点: {self.data.iloc[split_point]['match_date']}")
 
             # 检查测试集的目标分布
@@ -169,7 +186,9 @@ class FootballModelTrainer:
             test_counts = y_test.value_counts().sort_index()
             for result, count in test_counts.items():
                 result_name = {0: "平局", 1: "主队胜", 2: "客队胜"}[result]
-                logger.info(f"   {result_name}: {count} ({count/len(y_test)*100:.1f}%)")
+                logger.info(
+                    f"   {result_name}: {count} ({count / len(y_test) * 100:.1f}%)"
+                )
 
             return X_train, X_test, y_train, y_test
 
@@ -192,52 +211,63 @@ class FootballModelTrainer:
                 return False
 
             # 时间序列切分
-            self.X_train, self.X_test, self.y_train, self.y_test = self.time_series_split(X, y)
+            self.X_train, self.X_test, self.y_train, self.y_test = (
+                self.time_series_split(X, y)
+            )
             if self.X_train is None:
                 return False
 
             # 第一步：训练基准模型（使用默认参数）
             logger.info("📊 训练基准模型...")
             baseline_params = {
-                'objective': 'multi:softmax',
-                'num_class': 3,
-                'max_depth': 6,
-                'learning_rate': 0.1,
-                'n_estimators': 100,
-                'random_state': 42,
-                'eval_metric': 'mlogloss',
-                'use_label_encoder': False,
+                "objective": "multi:softmax",
+                "num_class": 3,
+                "max_depth": 6,
+                "learning_rate": 0.1,
+                "n_estimators": 100,
+                "random_state": 42,
+                "eval_metric": "mlogloss",
+                "use_label_encoder": False,
             }
 
             baseline_model = xgb.XGBClassifier(**baseline_params)
-            baseline_model.fit(self.X_train, self.y_train, eval_set=[(self.X_test, self.y_test)], verbose=False)
+            baseline_model.fit(
+                self.X_train,
+                self.y_train,
+                eval_set=[(self.X_test, self.y_test)],
+                verbose=False,
+            )
 
-            baseline_accuracy = accuracy_score(self.y_test, baseline_model.predict(self.X_test))
-            logger.info(f"📈 基准模型准确率: {baseline_accuracy:.4f} ({baseline_accuracy*100:.2f}%)")
+            baseline_accuracy = accuracy_score(
+                self.y_test, baseline_model.predict(self.X_test)
+            )
+            logger.info(
+                f"📈 基准模型准确率: {baseline_accuracy:.4f} ({baseline_accuracy * 100:.2f}%)"
+            )
 
             # 第二步：超参数搜索
             logger.info("🔍 开始超参数搜索...")
 
             # 定义参数网格
             param_distributions = {
-                'n_estimators': [100, 200, 300],
-                'max_depth': [3, 5, 7, 9],
-                'learning_rate': [0.01, 0.05, 0.1, 0.15],
-                'subsample': [0.6, 0.8, 1.0],
-                'colsample_bytree': [0.6, 0.8, 1.0],
-                'gamma': [0, 0.1, 0.2],
-                'reg_alpha': [0, 0.01, 0.1],
-                'reg_lambda': [1, 1.5, 2],
-                'min_child_weight': [1, 3, 5]
+                "n_estimators": [100, 200, 300],
+                "max_depth": [3, 5, 7, 9],
+                "learning_rate": [0.01, 0.05, 0.1, 0.15],
+                "subsample": [0.6, 0.8, 1.0],
+                "colsample_bytree": [0.6, 0.8, 1.0],
+                "gamma": [0, 0.1, 0.2],
+                "reg_alpha": [0, 0.01, 0.1],
+                "reg_lambda": [1, 1.5, 2],
+                "min_child_weight": [1, 3, 5],
             }
 
             # 固定参数
             fixed_params = {
-                'objective': 'multi:softmax',
-                'num_class': 3,
-                'random_state': 42,
-                'eval_metric': 'mlogloss',
-                'use_label_encoder': False,
+                "objective": "multi:softmax",
+                "num_class": 3,
+                "random_state": 42,
+                "eval_metric": "mlogloss",
+                "use_label_encoder": False,
             }
 
             # 创建基础模型
@@ -251,12 +281,12 @@ class FootballModelTrainer:
                 estimator=xgb_base,
                 param_distributions=param_distributions,
                 n_iter=20,  # 随机采样20组参数
-                scoring='accuracy',
+                scoring="accuracy",
                 cv=cv,
                 verbose=1,
                 random_state=42,
                 n_jobs=-1,  # 使用所有CPU核心
-                return_train_score=True
+                return_train_score=True,
             )
 
             logger.info("🔄 执行随机搜索交叉验证...")
@@ -269,7 +299,9 @@ class FootballModelTrainer:
             logger.info("=" * 60)
             logger.info("🎯 超参数搜索完成")
             logger.info("=" * 60)
-            logger.info(f"🏆 最佳交叉验证准确率: {best_cv_score:.4f} ({best_cv_score*100:.2f}%)")
+            logger.info(
+                f"🏆 最佳交叉验证准确率: {best_cv_score:.4f} ({best_cv_score * 100:.2f}%)"
+            )
             logger.info("🔧 最佳参数组合:")
             for param, value in best_params.items():
                 logger.info(f"   {param}: {value}")
@@ -283,19 +315,26 @@ class FootballModelTrainer:
 
             # 训练最终模型
             self.model.fit(
-                self.X_train, self.y_train,
+                self.X_train,
+                self.y_train,
                 eval_set=[(self.X_test, self.y_test)],
-                verbose=False
+                verbose=False,
             )
 
             # 评估最终模型
-            final_accuracy = accuracy_score(self.y_test, self.model.predict(self.X_test))
+            final_accuracy = accuracy_score(
+                self.y_test, self.model.predict(self.X_test)
+            )
 
             logger.info("=" * 60)
             logger.info("📊 模型性能对比")
             logger.info("=" * 60)
-            logger.info(f"🔵 基准模型准确率: {baseline_accuracy:.4f} ({baseline_accuracy*100:.2f}%)")
-            logger.info(f"🟢 优化模型准确率: {final_accuracy:.4f} ({final_accuracy*100:.2f}%)")
+            logger.info(
+                f"🔵 基准模型准确率: {baseline_accuracy:.4f} ({baseline_accuracy * 100:.2f}%)"
+            )
+            logger.info(
+                f"🟢 优化模型准确率: {final_accuracy:.4f} ({final_accuracy * 100:.2f}%)"
+            )
 
             improvement = final_accuracy - baseline_accuracy
             improvement_pct = (improvement / baseline_accuracy) * 100
@@ -306,18 +345,22 @@ class FootballModelTrainer:
             feature_importance = self.model.feature_importances_
             logger.info("📊 最终模型特征重要性:")
             # 按重要性排序
-            importance_pairs = sorted(zip(self.feature_names, feature_importance), key=lambda x: x[1], reverse=True)
+            importance_pairs = sorted(
+                zip(self.feature_names, feature_importance, strict=False),
+                key=lambda x: x[1],
+                reverse=True,
+            )
             for name, importance in importance_pairs:
                 logger.info(f"   {name}: {importance:.4f}")
 
             # 保存超参数搜索结果
             self.hyperparameter_results = {
-                'baseline_accuracy': baseline_accuracy,
-                'best_cv_score': best_cv_score,
-                'final_accuracy': final_accuracy,
-                'best_params': best_params,
-                'improvement': improvement,
-                'improvement_percentage': improvement_pct
+                "baseline_accuracy": baseline_accuracy,
+                "best_cv_score": best_cv_score,
+                "final_accuracy": final_accuracy,
+                "best_params": best_params,
+                "improvement": improvement,
+                "improvement_percentage": improvement_pct,
             }
 
             logger.info("✅ 模型训练完成（含超参数优化）")
@@ -343,34 +386,38 @@ class FootballModelTrainer:
             # 计算准确率
             accuracy = accuracy_score(self.y_test, y_pred)
 
-            logger.info(f"🎯 测试集准确率: {accuracy:.4f} ({accuracy*100:.2f}%)")
+            logger.info(f"🎯 测试集准确率: {accuracy:.4f} ({accuracy * 100:.2f}%)")
 
             # 分类报告
-            target_names = ['平局', '主队胜', '客队胜']
-            report = classification_report(self.y_test, y_pred, target_names=target_names)
+            target_names = ["平局", "主队胜", "客队胜"]
+            report = classification_report(
+                self.y_test, y_pred, target_names=target_names
+            )
             logger.info("📊 分类报告:")
             logger.info("\n" + report)
 
             # 混淆矩阵
             cm = confusion_matrix(self.y_test, y_pred)
             logger.info("🔢 混淆矩阵:")
-            logger.info(f"   实际\\预测  平局  主胜  客胜")
+            logger.info("   实际\\预测  平局  主胜  客胜")
             for i, actual_class in enumerate(target_names):
-                logger.info(f"   {actual_class:6s}  {cm[i][0]:4d}  {cm[i][1]:4d}  {cm[i][2]:4d}")
+                logger.info(
+                    f"   {actual_class:6s}  {cm[i][0]:4d}  {cm[i][1]:4d}  {cm[i][2]:4d}"
+                )
 
             return {
-                'accuracy': accuracy,
-                'classification_report': report,
-                'confusion_matrix': cm.tolist(),
-                'y_pred': y_pred,
-                'y_pred_proba': y_pred_proba
+                "accuracy": accuracy,
+                "classification_report": report,
+                "confusion_matrix": cm.tolist(),
+                "y_pred": y_pred,
+                "y_pred_proba": y_pred_proba,
             }
 
         except Exception as e:
             logger.error(f"❌ 模型评估失败: {e}")
             return None
 
-    def save_model(self, filepath: str = 'models/football_model_v1.json'):
+    def save_model(self, filepath: str = "models/football_model_v1.json"):
         """保存训练好的模型.
 
         Args:
@@ -388,41 +435,55 @@ class FootballModelTrainer:
 
             # 保存元数据
             metadata = {
-                'model_version': 'v1_tuned',
-                'training_date': datetime.now().isoformat(),
-                'feature_names': self.feature_names,
-                'target_classes': ['平局', '主队胜', '客队胜'],
-                'training_samples': len(self.X_train),
-                'test_samples': len(self.X_test),
-                'num_features': len(self.feature_names)
+                "model_version": "v1_tuned",
+                "training_date": datetime.now().isoformat(),
+                "feature_names": self.feature_names,
+                "target_classes": ["平局", "主队胜", "客队胜"],
+                "training_samples": len(self.X_train),
+                "test_samples": len(self.X_test),
+                "num_features": len(self.feature_names),
             }
 
             # 如果有超参数优化结果，添加到元数据中
-            if hasattr(self, 'hyperparameter_results'):
-                metadata.update({
-                    'hyperparameter_tuning': True,
-                    'tuning_results': self.hyperparameter_results,
-                    'best_parameters': self.hyperparameter_results.get('best_params', {}),
-                    'performance_improvement': {
-                        'baseline_accuracy': self.hyperparameter_results.get('baseline_accuracy'),
-                        'final_accuracy': self.hyperparameter_results.get('final_accuracy'),
-                        'improvement': self.hyperparameter_results.get('improvement'),
-                        'improvement_percentage': self.hyperparameter_results.get('improvement_percentage')
+            if hasattr(self, "hyperparameter_results"):
+                metadata.update(
+                    {
+                        "hyperparameter_tuning": True,
+                        "tuning_results": self.hyperparameter_results,
+                        "best_parameters": self.hyperparameter_results.get(
+                            "best_params", {}
+                        ),
+                        "performance_improvement": {
+                            "baseline_accuracy": self.hyperparameter_results.get(
+                                "baseline_accuracy"
+                            ),
+                            "final_accuracy": self.hyperparameter_results.get(
+                                "final_accuracy"
+                            ),
+                            "improvement": self.hyperparameter_results.get(
+                                "improvement"
+                            ),
+                            "improvement_percentage": self.hyperparameter_results.get(
+                                "improvement_percentage"
+                            ),
+                        },
                     }
-                })
+                )
             else:
-                metadata['hyperparameter_tuning'] = False
+                metadata["hyperparameter_tuning"] = False
 
-            metadata_path = filepath.replace('.json', '_metadata.json')
-            with open(metadata_path, 'w', encoding='utf-8') as f:
+            metadata_path = filepath.replace(".json", "_metadata.json")
+            with open(metadata_path, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, ensure_ascii=False, indent=2)
 
             logger.info(f"💾 优化模型已保存到: {filepath}")
             logger.info(f"📋 元数据已保存到: {metadata_path}")
 
-            if hasattr(self, 'hyperparameter_results'):
-                logger.info(f"🎯 包含超参数优化结果")
-                logger.info(f"📈 性能提升: {self.hyperparameter_results.get('improvement_percentage', 0):+.2f}%")
+            if hasattr(self, "hyperparameter_results"):
+                logger.info("🎯 包含超参数优化结果")
+                logger.info(
+                    f"📈 性能提升: {self.hyperparameter_results.get('improvement_percentage', 0):+.2f}%"
+                )
 
             return True
 
@@ -439,17 +500,19 @@ class FootballModelTrainer:
             last_match_idx = len(self.X_test) - 1
             last_match_features = self.X_test.iloc[[last_match_idx]]
             last_match_actual = self.y_test.iloc[last_match_idx]
-            last_match_date = self.data.iloc[len(self.X_train) + last_match_idx]['match_date']
+            last_match_date = self.data.iloc[len(self.X_train) + last_match_idx][
+                "match_date"
+            ]
 
             # 获取球队信息
-            home_team_id = last_match_features['home_team_id'].iloc[0]
-            away_team_id = last_match_features['away_team_id'].iloc[0]
+            home_team_id = last_match_features["home_team_id"].iloc[0]
+            away_team_id = last_match_features["away_team_id"].iloc[0]
 
             # 从原始数据中查找球队名称
             original_data = self.data.copy()
-            team_mapping = original_data[['home_team_id', 'away_team_id']].drop_duplicates()
+            original_data[["home_team_id", "away_team_id"]].drop_duplicates()
             # 这里简化处理，实际应该从team表查询
-            logger.info(f"⚽ 预测比赛信息:")
+            logger.info("⚽ 预测比赛信息:")
             logger.info(f"   比赛日期: {last_match_date}")
             logger.info(f"   主队ID: {home_team_id}")
             logger.info(f"   客队ID: {away_team_id}")
@@ -466,19 +529,25 @@ class FootballModelTrainer:
             # 显示预测结果
             logger.info(f"🎯 实际结果: {actual_result}")
             logger.info(f"🔮 预测结果: {predicted_result}")
-            logger.info(f"📊 预测概率:")
-            for i, (result_name, prob) in enumerate(zip(result_names.values(), probabilities)):
+            logger.info("📊 预测概率:")
+            for i, (result_name, prob) in enumerate(
+                zip(result_names.values(), probabilities, strict=False)
+            ):
                 status = "✅" if i == prediction else "  "
-                logger.info(f"   {status} {result_name}: {prob:.3f} ({prob*100:.1f}%)")
+                logger.info(
+                    f"   {status} {result_name}: {prob:.3f} ({prob * 100:.1f}%)"
+                )
 
             # 预测是否正确
             is_correct = prediction == last_match_actual
-            logger.info(f"{'✅' if is_correct else '❌'} 预测{'正确' if is_correct else '错误'}！")
+            logger.info(
+                f"{'✅' if is_correct else '❌'} 预测{'正确' if is_correct else '错误'}！"
+            )
 
         except Exception as e:
             logger.error(f"❌ 预测演示失败: {e}")
 
-    def run(self, model_path: str = 'models/football_model_v1.json'):
+    def run(self, model_path: str = "models/football_model_v1.json"):
         """运行完整的训练流程.
 
         Args:

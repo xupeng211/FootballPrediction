@@ -19,6 +19,9 @@ APP_NAME := $(PROJECT_NAME)_app
 DB_NAME := $(PROJECT_NAME)_db
 REDIS_NAME := $(PROJECT_NAME)_redis
 
+# .PHONY声明所有命令
+.PHONY: help dev prod clean shell logs db-shell test lint build format fix-code type-check security-check coverage test.unit test.all
+
 help: ## 📋 显示可用命令
 	@echo "$(BLUE)🐳 Football Prediction Docker Commands$(RESET)"
 	@echo "$(YELLOW)开发环境:$(RESET)"
@@ -95,11 +98,43 @@ status: ## 管理/查看所有服务状态
 
 test: ## 管理/在容器中运行测试
 	@echo "$(YELLOW)🧪 在容器中运行测试...$(RESET)"
-	docker-compose exec app make test.smart
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ -v --tb=short'
 
 lint: ## 管理/在容器中运行代码检查
 	@echo "$(YELLOW)🔍 在容器中运行代码检查...$(RESET)"
-	docker-compose exec app make lint
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff check .'
+
+format: ## 管理/在容器中运行代码格式化
+	@echo "$(YELLOW)🎨 在容器中运行代码格式化...$(RESET)"
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff format .'
+
+fix-code: ## 管理/在容器中运行代码自动修复
+	@echo "$(YELLOW)🔧 在容器中运行代码自动修复...$(RESET)"
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff check --fix .'
+
+type-check: ## 管理/在容器中运行类型检查
+	@echo "$(YELLOW)🔍 在容器中运行类型检查...$(RESET)"
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && mypy src/ --ignore-missing-imports'
+
+security-check: ## 管理/在容器中运行安全检查
+	@echo "$(YELLOW)🔒 在容器中运行安全检查...$(RESET)"
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && bandit -r src/'
+
+coverage: ## 管理/在容器中生成覆盖率报告
+	@echo "$(YELLOW)📊 在容器中生成覆盖率报告...$(RESET)"
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ --cov=src --cov-report=html --cov-report=term-missing'
+
+test.unit: ## 管理/在容器中运行单元测试
+	@echo "$(YELLOW)🧪 在容器中运行单元测试...$(RESET)"
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -v'
+
+test.integration: ## 管理/在容器中运行集成测试
+	@echo "$(YELLOW)🧪 在容器中运行集成测试...$(RESET)"
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/integration/ -v'
+
+test.all: ## 管理/在容器中运行所有测试
+	@echo "$(YELLOW)🧪 在容器中运行所有测试...$(RESET)"
+	docker-compose exec app bash -c 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ -v'
 
 # 清理命令
 clean: ## 管理/清理容器和缓存

@@ -42,8 +42,6 @@ except ImportError:
 
 
 @pytest.mark.asyncio
-
-
 async def test_integration_initialization():
     """测试集成初始化"""
     logger.info("Testing OddsPortal Integration Initialization...")
@@ -66,8 +64,6 @@ async def test_integration_initialization():
 
 
 @pytest.mark.asyncio
-
-
 async def test_configuration_loading():
     """测试配置加载"""
     logger.info("Testing configuration loading...")
@@ -93,8 +89,6 @@ async def test_configuration_loading():
 
 
 @pytest.mark.asyncio
-
-
 async def test_source_info():
     """测试数据源信息获取"""
     logger.info("Testing source info retrieval...")
@@ -127,8 +121,6 @@ async def test_source_info():
 
 
 @pytest.mark.asyncio
-
-
 async def test_health_check():
     """测试健康检查"""
     logger.info("Testing health check...")
@@ -155,8 +147,6 @@ async def test_health_check():
 
 
 @pytest.mark.asyncio
-
-
 async def test_adapter_interface():
     """测试适配器接口"""
     logger.info("Testing adapter interface...")
@@ -185,8 +175,6 @@ async def test_adapter_interface():
 
 
 @pytest.mark.asyncio
-
-
 async def test_data_conversion():
     """测试数据转换"""
     logger.info("Testing data conversion...")
@@ -229,8 +217,6 @@ async def test_data_conversion():
 
 
 @pytest.mark.asyncio
-
-
 async def test_error_handling():
     """测试错误处理"""
     logger.info("Testing error handling...")

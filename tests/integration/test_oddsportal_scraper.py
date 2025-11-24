@@ -44,8 +44,6 @@ logger = get_logger(__name__)
 
 
 @pytest.mark.asyncio
-
-
 async def test_scraper_initialization():
     """测试爬虫初始化"""
     try:
@@ -60,8 +58,6 @@ async def test_scraper_initialization():
 
 
 @pytest.mark.asyncio
-
-
 async def test_scraper_robots_parsing():
     """测试robots.txt解析"""
     try:
@@ -75,8 +71,6 @@ async def test_scraper_robots_parsing():
 
 
 @pytest.mark.asyncio
-
-
 async def test_scraper_rate_limits():
     """测试速率限制设置"""
     try:
@@ -96,8 +90,6 @@ async def test_scraper_rate_limits():
 
 
 @pytest.mark.asyncio
-
-
 async def test_scraper_error_handling():
     """测试错误处理机制"""
     try:
@@ -111,8 +103,6 @@ async def test_scraper_error_handling():
 
 
 @pytest.mark.asyncio
-
-
 async def test_oddsportal_match_model():
     """测试OddsPortalMatch模型"""
     try:
@@ -133,8 +123,6 @@ async def test_oddsportal_match_model():
 
 
 @pytest.mark.asyncio
-
-
 async def test_scraper_methods():
     """测试爬虫方法"""
     try:

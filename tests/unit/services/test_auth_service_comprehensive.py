@@ -334,9 +334,7 @@ class TestAuthServiceAuthentication:
 
         # Mock认证方法避免真实密码验证
 
-
         auth_service.authenticate_user = AsyncMock(return_value=mock_user)
-
 
         user = await auth_service.authenticate_user("testuser", "password123")
 
@@ -486,12 +484,18 @@ class TestAuthServicePasswordManagement:
     async def test_reset_password_success(self, auth_service, mock_user):
         """测试成功重置密码"""
         # Mock verify_token返回有效的重置令牌payload
-        with patch.object(auth_service, 'verify_token') as mock_verify:
-            mock_verify.return_value = {"sub": "testuser", "user_id": 1, "type": "password_reset"}
+        with patch.object(auth_service, "verify_token") as mock_verify:
+            mock_verify.return_value = {
+                "sub": "testuser",
+                "user_id": 1,
+                "type": "password_reset",
+            }
 
             auth_service.user_repo.get_by_username.return_value = mock_user
 
-            success = await auth_service.reset_password("valid_reset_token", "new_password")
+            success = await auth_service.reset_password(
+                "valid_reset_token", "new_password"
+            )
 
             assert success is True
             auth_service.user_repo.update.assert_called_once_with(mock_user)
@@ -555,8 +559,12 @@ class TestAuthServiceEmailVerification:
     async def test_verify_email_success(self, auth_service, mock_user):
         """测试成功验证邮箱"""
         # Mock verify_token返回有效的邮箱验证令牌payload
-        with patch.object(auth_service, 'verify_token') as mock_verify:
-            mock_verify.return_value = {"sub": "testuser", "user_id": 1, "type": "email_verification"}
+        with patch.object(auth_service, "verify_token") as mock_verify:
+            mock_verify.return_value = {
+                "sub": "testuser",
+                "user_id": 1,
+                "type": "email_verification",
+            }
 
             auth_service.user_repo.get_by_username.return_value = mock_user
 

@@ -258,6 +258,7 @@ class TestPredictionsOptimizedRouter:
 
             # 通过FastAPI应用测试依赖注入
             from src.api.predictions.optimized_router import get_prediction_service
+
             service = get_prediction_service()
             assert service is not None
 
@@ -271,6 +272,7 @@ class TestPredictionsOptimizedRouter:
 
             # 通过直接导入测试缓存管理器
             from src.api.predictions.optimized_router import get_cache_manager
+
             cache = get_cache_manager()
             assert cache is not None
 
@@ -284,6 +286,7 @@ class TestPredictionsOptimizedRouter:
 
             # 通过直接导入测试系统监控
             from src.api.predictions.optimized_router import get_system_monitor
+
             monitor = get_system_monitor()
             assert monitor is not None
 

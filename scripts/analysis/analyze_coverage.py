@@ -22,14 +22,26 @@ def count_lines_of_code(file_path: str) -> int:
     except Exception:
         return 0
 
+
 def get_coverage_data():
     """获取覆盖率数据."""
     try:
         # 运行pytest获取覆盖率
-        result = subprocess.run([
-            "python", "-m", "pytest", "tests/", "--cov=src",
-            "--cov-report=term-missing", "--tb=no", "-q"
-        ], capture_output=True, text=True, timeout=60)
+        result = subprocess.run(
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/",
+                "--cov=src",
+                "--cov-report=term-missing",
+                "--tb=no",
+                "-q",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
 
         if result.returncode == 0:
             return {}
@@ -37,6 +49,7 @@ def get_coverage_data():
             return {}
     except Exception:
         return {}
+
 
 def main():
     """主函数."""
@@ -51,5 +64,6 @@ def main():
 
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

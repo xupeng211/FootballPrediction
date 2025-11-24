@@ -133,19 +133,37 @@ class TestUnifiedInterfaceSafetyNet:
         return mock_manager
 
     @pytest.fixture
-    def unified_cache_memory(self, mock_memory_cache, mock_consistency_manager, mock_ttl_cache):
+    def unified_cache_memory(
+        self, mock_memory_cache, mock_consistency_manager, mock_ttl_cache
+    ):
         """创建内存后端的UnifiedCacheManager实例"""
-        with patch('src.cache.unified_interface.get_consistency_manager', return_value=mock_consistency_manager), \
-             patch('src.cache.unified_interface.TTLCache', return_value=mock_ttl_cache):
-            with patch('src.cache.unified_interface.MemoryCacheAdapter', return_value=mock_memory_cache):
+        with (
+            patch(
+                "src.cache.unified_interface.get_consistency_manager",
+                return_value=mock_consistency_manager,
+            ),
+            patch("src.cache.unified_interface.TTLCache", return_value=mock_ttl_cache),
+        ):
+            with patch(
+                "src.cache.unified_interface.MemoryCacheAdapter",
+                return_value=mock_memory_cache,
+            ):
                 config = UnifiedCacheConfig(backend=CacheBackend.MEMORY)
                 return UnifiedCacheManager(config)
 
     @pytest.fixture
     def unified_cache_redis(self, mock_redis_manager, mock_consistency_manager):
         """创建Redis后端的UnifiedCacheManager实例"""
-        with patch('src.cache.unified_interface.get_consistency_manager', return_value=mock_consistency_manager), \
-             patch('src.cache.unified_interface.EnhancedRedisManager', return_value=mock_redis_manager):
+        with (
+            patch(
+                "src.cache.unified_interface.get_consistency_manager",
+                return_value=mock_consistency_manager,
+            ),
+            patch(
+                "src.cache.unified_interface.EnhancedRedisManager",
+                return_value=mock_redis_manager,
+            ),
+        ):
             config = UnifiedCacheConfig(backend=CacheBackend.REDIS)
             return UnifiedCacheManager(config)
 
@@ -157,7 +175,7 @@ class TestUnifiedInterfaceSafetyNet:
             "number": 123,
             "boolean": True,
             "list": [1, 2, 3],
-            "dict": {"nested": "data"}
+            "dict": {"nested": "data"},
         }
 
     # ==================== P0 优先级 Happy Path 测试 ====================
@@ -175,9 +193,9 @@ class TestUnifiedInterfaceSafetyNet:
         """
         # 验证对象创建成功
         assert unified_cache_memory is not None
-        assert hasattr(unified_cache_memory, 'config')
-        assert hasattr(unified_cache_memory, '_adapter')
-        assert hasattr(unified_cache_memory, '_consistency_manager')
+        assert hasattr(unified_cache_memory, "config")
+        assert hasattr(unified_cache_memory, "_adapter")
+        assert hasattr(unified_cache_memory, "_consistency_manager")
 
         # 验证配置
         assert unified_cache_memory.config.backend == CacheBackend.MEMORY
@@ -195,8 +213,8 @@ class TestUnifiedInterfaceSafetyNet:
         """
         # 验证对象创建成功
         assert unified_cache_redis is not None
-        assert hasattr(unified_cache_redis, 'config')
-        assert hasattr(unified_cache_redis, '_adapter')
+        assert hasattr(unified_cache_redis, "config")
+        assert hasattr(unified_cache_redis, "_adapter")
 
         # 验证配置
         assert unified_cache_redis.config.backend == CacheBackend.REDIS
@@ -204,7 +222,9 @@ class TestUnifiedInterfaceSafetyNet:
     @pytest.mark.unit
     @pytest.mark.cache
     @pytest.mark.critical
-    def test_set_get_happy_path_memory(self, unified_cache_memory, sample_data, mock_memory_cache):
+    def test_set_get_happy_path_memory(
+        self, unified_cache_memory, sample_data, mock_memory_cache
+    ):
         """
         P0测试: 缓存设置和获取 - 内存后端 Happy Path
 
@@ -230,7 +250,9 @@ class TestUnifiedInterfaceSafetyNet:
     @pytest.mark.unit
     @pytest.mark.cache
     @pytest.mark.critical
-    def test_get_cache_hit_happy_path_memory(self, unified_cache_memory, sample_data, mock_memory_cache):
+    def test_get_cache_hit_happy_path_memory(
+        self, unified_cache_memory, sample_data, mock_memory_cache
+    ):
         """
         P0测试: 缓存获取 - 命中 Happy Path
 
@@ -253,7 +275,9 @@ class TestUnifiedInterfaceSafetyNet:
     @pytest.mark.unit
     @pytest.mark.cache
     @pytest.mark.critical
-    def test_get_cache_miss_happy_path_memory(self, unified_cache_memory, mock_memory_cache, mock_ttl_cache):
+    def test_get_cache_miss_happy_path_memory(
+        self, unified_cache_memory, mock_memory_cache, mock_ttl_cache
+    ):
         """
         P0测试: 缓存获取 - 未命中 Happy Path
 
@@ -276,7 +300,9 @@ class TestUnifiedInterfaceSafetyNet:
     @pytest.mark.unit
     @pytest.mark.cache
     @pytest.mark.critical
-    def test_delete_happy_path_memory(self, unified_cache_memory, mock_memory_cache, mock_ttl_cache):
+    def test_delete_happy_path_memory(
+        self, unified_cache_memory, mock_memory_cache, mock_ttl_cache
+    ):
         """
         P0测试: 缓存删除 Happy Path
 
@@ -295,7 +321,9 @@ class TestUnifiedInterfaceSafetyNet:
     @pytest.mark.unit
     @pytest.mark.cache
     @pytest.mark.critical
-    def test_exists_happy_path_memory(self, unified_cache_memory, mock_memory_cache, mock_ttl_cache):
+    def test_exists_happy_path_memory(
+        self, unified_cache_memory, mock_memory_cache, mock_ttl_cache
+    ):
         """
         P0测试: 键存在检查 Happy Path
 
@@ -322,7 +350,9 @@ class TestUnifiedInterfaceSafetyNet:
     @pytest.mark.unit
     @pytest.mark.cache
     @pytest.mark.critical
-    def test_clear_happy_path_memory(self, unified_cache_memory, mock_memory_cache, mock_ttl_cache):
+    def test_clear_happy_path_memory(
+        self, unified_cache_memory, mock_memory_cache, mock_ttl_cache
+    ):
         """
         P0测试: 缓存清空 Happy Path
 
@@ -341,7 +371,9 @@ class TestUnifiedInterfaceSafetyNet:
     @pytest.mark.unit
     @pytest.mark.cache
     @pytest.mark.critical
-    def test_set_get_happy_path_redis(self, unified_cache_redis, sample_data, mock_redis_manager):
+    def test_set_get_happy_path_redis(
+        self, unified_cache_redis, sample_data, mock_redis_manager
+    ):
         """
         P0测试: 缓存设置和获取 - Redis后端 Happy Path
 
@@ -374,7 +406,9 @@ class TestUnifiedInterfaceSafetyNet:
 
     @pytest.mark.unit
     @pytest.mark.cache
-    def test_set_invalid_key_memory(self, unified_cache_memory, mock_memory_cache, mock_ttl_cache):
+    def test_set_invalid_key_memory(
+        self, unified_cache_memory, mock_memory_cache, mock_ttl_cache
+    ):
         """
         P1测试: 缓存设置 - 无效键 Unhappy Path
 
@@ -403,7 +437,9 @@ class TestUnifiedInterfaceSafetyNet:
 
     @pytest.mark.unit
     @pytest.mark.cache
-    def test_get_none_key_memory(self, unified_cache_memory, mock_memory_cache, mock_ttl_cache):
+    def test_get_none_key_memory(
+        self, unified_cache_memory, mock_memory_cache, mock_ttl_cache
+    ):
         """
         P1测试: 缓存获取 - 无效键 Unhappy Path
 
@@ -423,7 +459,9 @@ class TestUnifiedInterfaceSafetyNet:
 
     @pytest.mark.unit
     @pytest.mark.cache
-    def test_delete_none_key_memory(self, unified_cache_memory, mock_memory_cache, mock_ttl_cache):
+    def test_delete_none_key_memory(
+        self, unified_cache_memory, mock_memory_cache, mock_ttl_cache
+    ):
         """
         P1测试: 缓存删除 - 无效键 Unhappy Path
 
@@ -442,7 +480,9 @@ class TestUnifiedInterfaceSafetyNet:
 
     @pytest.mark.unit
     @pytest.mark.cache
-    def test_delete_non_existent_key_memory(self, unified_cache_memory, mock_memory_cache, mock_ttl_cache):
+    def test_delete_non_existent_key_memory(
+        self, unified_cache_memory, mock_memory_cache, mock_ttl_cache
+    ):
         """
         P1测试: 缓存删除 - 不存在的键 Unhappy Path
 
@@ -458,7 +498,9 @@ class TestUnifiedInterfaceSafetyNet:
 
     @pytest.mark.unit
     @pytest.mark.cache
-    def test_set_redis_failure(self, unified_cache_redis, sample_data, mock_redis_manager):
+    def test_set_redis_failure(
+        self, unified_cache_redis, sample_data, mock_redis_manager
+    ):
         """
         P1测试: Redis设置失败 Unhappy Path
 
@@ -507,7 +549,10 @@ class TestUnifiedInterfaceSafetyNet:
         invalid_values = ["invalid_json", "invalid_pickle", ""]
         for invalid_value in invalid_values:
             # 使用patch来mock EnhancedRedisManager
-            with patch('src.cache.unified_interface.EnhancedRedisManager', return_value=mock_redis_manager):
+            with patch(
+                "src.cache.unified_interface.EnhancedRedisManager",
+                return_value=mock_redis_manager,
+            ):
                 mock_redis_manager.get.return_value = invalid_value
                 adapter = RedisCacheAdapter(use_mock=True)
 
@@ -555,12 +600,12 @@ class TestUnifiedInterfaceSafetyNet:
             config = UnifiedCacheConfig()
 
             # 验证属性存在
-            assert hasattr(config, 'backend')
-            assert hasattr(config, 'memory_config')
-            assert hasattr(config, 'redis_config')
-            assert hasattr(config, 'use_consistency_manager')
-            assert hasattr(config, 'enable_decorators')
-            assert hasattr(config, 'default_ttl')
+            assert hasattr(config, "backend")
+            assert hasattr(config, "memory_config")
+            assert hasattr(config, "redis_config")
+            assert hasattr(config, "use_consistency_manager")
+            assert hasattr(config, "enable_decorators")
+            assert hasattr(config, "default_ttl")
 
             # 验证默认值
             assert config.backend == CacheBackend.MEMORY
@@ -581,10 +626,12 @@ class TestUnifiedInterfaceSafetyNet:
         预期结果: 应该正确初始化适配器
         """
         try:
-            with patch('src.cache.unified_interface.TTLCache', return_value=mock_ttl_cache):
+            with patch(
+                "src.cache.unified_interface.TTLCache", return_value=mock_ttl_cache
+            ):
                 adapter = MemoryCacheAdapter()
                 assert adapter is not None
-                assert hasattr(adapter, '_cache')
+                assert hasattr(adapter, "_cache")
                 assert adapter._cache == mock_ttl_cache
 
         except Exception as e:
@@ -600,10 +647,13 @@ class TestUnifiedInterfaceSafetyNet:
         预期结果: 应该正确初始化适配器
         """
         try:
-            with patch('src.cache.unified_interface.EnhancedRedisManager', return_value=mock_redis_manager):
+            with patch(
+                "src.cache.unified_interface.EnhancedRedisManager",
+                return_value=mock_redis_manager,
+            ):
                 adapter = RedisCacheAdapter(use_mock=True)
                 assert adapter is not None
-                assert hasattr(adapter, '_manager')
+                assert hasattr(adapter, "_manager")
                 assert adapter._manager == mock_redis_manager
 
         except Exception as e:
@@ -611,7 +661,9 @@ class TestUnifiedInterfaceSafetyNet:
 
     @pytest.mark.unit
     @pytest.mark.cache
-    def test_multi_level_cache_adapter_creation(self, mock_memory_cache, mock_redis_manager, mock_ttl_cache):
+    def test_multi_level_cache_adapter_creation(
+        self, mock_memory_cache, mock_redis_manager, mock_ttl_cache
+    ):
         """
         P1测试: 多级缓存适配器创建
 
@@ -619,13 +671,23 @@ class TestUnifiedInterfaceSafetyNet:
         预期结果: 应该正确初始化L1和L2缓存
         """
         try:
-            with patch('src.cache.unified_interface.TTLCache', return_value=mock_ttl_cache), \
-                 patch('src.cache.unified_interface.MemoryCacheAdapter', return_value=mock_memory_cache), \
-                 patch('src.cache.unified_interface.EnhancedRedisManager', return_value=mock_redis_manager):
+            with (
+                patch(
+                    "src.cache.unified_interface.TTLCache", return_value=mock_ttl_cache
+                ),
+                patch(
+                    "src.cache.unified_interface.MemoryCacheAdapter",
+                    return_value=mock_memory_cache,
+                ),
+                patch(
+                    "src.cache.unified_interface.EnhancedRedisManager",
+                    return_value=mock_redis_manager,
+                ),
+            ):
                 adapter = MultiLevelCacheAdapter()
                 assert adapter is not None
-                assert hasattr(adapter, '_l1_cache')
-                assert hasattr(adapter, '_l2_cache')
+                assert hasattr(adapter, "_l1_cache")
+                assert hasattr(adapter, "_l2_cache")
 
         except Exception as e:
             pytest.fail(f"MultiLevelCacheAdapter should be properly created: {e}")
@@ -642,7 +704,7 @@ class TestUnifiedInterfaceSafetyNet:
         try:
             # 验证抽象方法存在
             abstract_methods = CacheInterface.__abstractmethods__
-            expected_methods = {'get', 'set', 'delete', 'exists', 'clear', 'size'}
+            expected_methods = {"get", "set", "delete", "exists", "clear", "size"}
 
             for method in expected_methods:
                 assert method in abstract_methods

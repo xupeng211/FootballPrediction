@@ -151,18 +151,14 @@ class TestAuthModels:
         """测试用户注册模型邮箱验证失败"""
         with pytest.raises(ValueError):
             UserRegister(
-                username="testuser",
-                email="invalid-email",
-                password="TestPassword123!"
+                username="testuser", email="invalid-email", password="TestPassword123!"
             )
 
     def test_user_register_model_short_password(self):
         """测试用户注册模型密码过短"""
         with pytest.raises(ValueError):
             UserRegister(
-                username="testuser",
-                email="test@example.com",
-                password="short"
+                username="testuser", email="test@example.com", password="short"
             )
 
     def test_user_login_model_valid(self):
@@ -204,7 +200,7 @@ class TestAuthModels:
             experience_points="0",
             achievements=None,
             created_at="2025-01-01T00:00:00Z",
-            updated_at="2025-01-01T00:00:00Z"
+            updated_at="2025-01-01T00:00:00Z",
         )
 
         token_data = {
@@ -321,7 +317,7 @@ class TestUserCreation:
     @pytest.mark.asyncio
     async def test_create_user_success(self, auth_manager):
         """测试创建用户成功"""
-        user_data = UserRegister(
+        UserRegister(
             username="newuser",
             email="newuser@example.com",
             password="NewPassword123!",
@@ -330,7 +326,9 @@ class TestUserCreation:
         )
 
         with patch.dict("src.api.auth.MOCK_USERS", {}, clear=False):
-            user = create_user("newuser@example.com", "NewPassword123!", full_name="New User")
+            user = create_user(
+                "newuser@example.com", "NewPassword123!", full_name="New User"
+            )
 
             assert user is not None
             assert user["email"] == "newuser@example.com"
@@ -502,7 +500,6 @@ class TestAuthDependencies:
         # 创建符合要求的用户token
         user_token = TokenData(
             user_id=1,
-
             email="admin@example.com",
             role="admin",
             token_type="access",
@@ -527,7 +524,6 @@ class TestAuthDependencies:
         # 创建普通用户token
         user_token = TokenData(
             user_id=2,
-
             email="user@example.com",
             role="user",
             token_type="access",
@@ -627,7 +623,6 @@ class TestAuthContext:
 
         token_data = TokenData(
             user_id=1,
-
             email="test@example.com",
             role="user",
             token_type="access",
@@ -677,7 +672,6 @@ class TestSecurityFeatures:
         """测试用户认证数据模型"""
         user = UserAuth(
             id=1,
-
             email="test@example.com",
             hashed_password="$2b$12$testhashedpassword",
             role="user",
@@ -697,7 +691,6 @@ class TestSecurityFeatures:
 
         token_data = TokenData(
             user_id=1,
-
             email="test@example.com",
             role="user",
             token_type="access",

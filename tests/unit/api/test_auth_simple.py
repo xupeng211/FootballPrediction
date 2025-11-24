@@ -21,7 +21,6 @@ class TestAuthAPI:
         """创建测试客户端."""
         return TestClient(router)
 
-
     def test_get_user_by_id_success(self):
         """测试成功获取用户数据."""
         # 测试存在的用户ID (使用test用户，ID=1)
@@ -48,7 +47,9 @@ class TestAuthAPI:
     def test_login_success(self, client):
         """测试成功登录."""
         # 测试正确凭据
-        response = client.post("/auth/login", data={"username": "admin", "password": "admin123"})
+        response = client.post(
+            "/auth/login", data={"username": "admin", "password": "admin123"}
+        )
 
         # 验证响应状态码
         assert response.status_code == 200
@@ -73,7 +74,7 @@ class TestAuthAPI:
         response = client.post(
             "/auth/login",
             data="username=admin&password=admin123",
-            headers={"Content-Type": "application/x-www-form-urlencoded"}
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
 
         # 验证成功响应
@@ -180,11 +181,11 @@ class TestAuthAPI:
         assert router.tags == ["认证"]
 
         # 验证端点数量
-        endpoints = [route for route in router.routes if hasattr(route, 'path')]
+        endpoints = [route for route in router.routes if hasattr(route, "path")]
         assert len(endpoints) >= 3  # 至少有login, me, logout
 
     def test_security_scheme(self):
         """测试安全方案配置."""
         # 验证路由器导出是否正确
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
         assert len(router.routes) > 0

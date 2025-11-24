@@ -85,7 +85,9 @@ class TestAPIPerformance:
         response_times = [r["response_time"] for r in results]
 
         assert success_count == 50  # All requests should succeed
-        assert statistics.mean(response_times) < 200  # Average under 200ms (further adjusted for test environment)
+        assert (
+            statistics.mean(response_times) < 200
+        )  # Average under 200ms (further adjusted for test environment)
         assert max(response_times) < 2000  # Max under 2s (more realistic threshold)
 
     @pytest.mark.performance
@@ -312,12 +314,16 @@ class TestMemoryPerformance:
 
         # Memory assertions
         memory_increase = peak_memory - initial_memory
-        memory_recovery = peak_memory - final_memory if final_memory < peak_memory else 0
+        memory_recovery = (
+            peak_memory - final_memory if final_memory < peak_memory else 0
+        )
 
         assert memory_increase < 100  # Should not increase by more than 100MB
         # Only check recovery if there was actual memory increase and recovery
         if memory_increase > 10 and memory_recovery > 0:
-            assert memory_recovery > (memory_increase * 0.5)  # Should recover at least 50% of memory
+            assert memory_recovery > (
+                memory_increase * 0.5
+            )  # Should recover at least 50% of memory
 
     @pytest.mark.performance
     @pytest.mark.asyncio
@@ -509,7 +515,9 @@ class TestScalabilityPerformance:
         # Check that tasks completed (may have some failures due to resource constraints)
         expected_tasks = sum(concurrent_levels) * 10
         completion_rate = len(results) / expected_tasks
-        assert completion_rate >= 0.5  # At least 50% of tasks should complete (more realistic for test environment)
+        assert (
+            completion_rate >= 0.5
+        )  # At least 50% of tasks should complete (more realistic for test environment)
         assert len(results) > 0  # At least some tasks should complete
 
 

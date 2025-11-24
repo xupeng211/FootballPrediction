@@ -24,14 +24,14 @@ class TestFootballDataCache:
             "id": 39,
             "name": "Premier League",
             "country": "England",
-            "season": 2023
+            "season": 2023,
         }
 
         self.test_team_data = {
             "id": 57,
             "name": "Arsenal",
             "short_name": "ARS",
-            "country": "England"
+            "country": "England",
         }
 
         self.test_match_data = {
@@ -41,7 +41,7 @@ class TestFootballDataCache:
             "home_score": 2,
             "away_score": 1,
             "date": "2023-12-01",
-            "status": "FT"
+            "status": "FT",
         }
 
     def test_cache_config_initialization(self):
@@ -57,18 +57,18 @@ class TestFootballDataCache:
 
         # 测试自定义配置
         custom_config = CacheConfig(
-            league_cache_hours=48,
-            team_cache_hours=72,
-            match_cache_minutes=30
+            league_cache_hours=48, team_cache_hours=72, match_cache_minutes=30
         )
         assert custom_config.league_cache_hours == 48
         assert custom_config.team_cache_hours == 72
         assert custom_config.match_cache_minutes == 30
         assert custom_config.standings_cache_minutes == 30  # 默认值
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
-    def test_football_data_cache_manager_initialization(self, mock_key_manager, mock_redis_manager):
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
+    def test_football_data_cache_manager_initialization(
+        self, mock_key_manager, mock_redis_manager
+    ):
         """测试足球数据缓存管理器初始化."""
         # 模拟依赖
         mock_redis_instance = Mock()
@@ -91,7 +91,7 @@ class TestFootballDataCache:
             "standings": "football:standings",
             "api_response": "football:api",
             "statistics": "football:stats",
-            "sync_status": "football:sync"
+            "sync_status": "football:sync",
         }
         assert manager.prefixes == expected_prefixes
 
@@ -100,8 +100,8 @@ class TestFootballDataCache:
         custom_manager = FootballDataCacheManager(custom_config)
         assert custom_manager.config.league_cache_hours == 48
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.asyncio
     async def test_league_data_caching(self, mock_key_manager, mock_redis_manager):
         """测试联赛数据缓存."""
@@ -124,7 +124,7 @@ class TestFootballDataCache:
         # 验证调用参数
         call_args = mock_redis_instance.aset.call_args
         key, value = call_args[0]  # 位置参数
-        ex_ttl = call_args[1]['ex']  # 关键字参数
+        ex_ttl = call_args[1]["ex"]  # 关键字参数
         assert key == "football:league:39"  # 预期的键格式
         assert json.loads(value) == self.test_league_data
         assert ex_ttl == 24 * 3600  # 24小时的秒数
@@ -132,10 +132,12 @@ class TestFootballDataCache:
         # 验证列表操作
         mock_redis_instance.asadd.assert_called_once()
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.asyncio
-    async def test_league_data_caching_missing_id(self, mock_key_manager, mock_redis_manager):
+    async def test_league_data_caching_missing_id(
+        self, mock_key_manager, mock_redis_manager
+    ):
         """测试缺少ID的联赛数据缓存."""
         mock_redis_instance = Mock()
         mock_redis_manager.return_value = mock_redis_instance
@@ -155,8 +157,8 @@ class TestFootballDataCache:
         result = await manager.cache_league(empty_data)
         assert result is False
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.skip(reason="Async test needs more work - CI priority fix")
     def test_get_cached_league(self, mock_key_manager, mock_redis_manager):
         """测试获取缓存的联赛数据."""
@@ -173,8 +175,8 @@ class TestFootballDataCache:
         assert result == self.test_league_data
         mock_redis_instance.aget.assert_called_once_with("football:league:39")
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.skip(reason="Async test needs more work - CI priority fix")
     def test_get_cached_league_not_found(self, mock_key_manager, mock_redis_manager):
         """测试获取不存在的缓存联赛数据."""
@@ -191,8 +193,8 @@ class TestFootballDataCache:
         assert result is None
         mock_redis_instance.aget.assert_called_once_with("football:league:999")
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.skip(reason="Async test needs more work - CI priority fix")
     def test_team_data_caching(self, mock_key_manager, mock_redis_manager):
         """测试球队数据缓存."""
@@ -214,8 +216,8 @@ class TestFootballDataCache:
         _, _, ttl = call_args[0]
         assert ttl == 48 * 3600  # 48小时的秒数
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.skip(reason="Async test needs more work - CI priority fix")
     def test_match_data_caching(self, mock_key_manager, mock_redis_manager):
         """测试比赛数据缓存."""
@@ -237,8 +239,8 @@ class TestFootballDataCache:
         _, _, ttl = call_args[0]
         assert ttl == 15 * 60  # 15分钟的秒数
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.skip(reason="Async test needs more work - CI priority fix")
     def test_api_response_caching(self, mock_key_manager, mock_redis_manager):
         """测试API响应缓存."""
@@ -252,7 +254,7 @@ class TestFootballDataCache:
         api_response = {
             "status": "success",
             "data": {"count": 100},
-            "timestamp": "2023-12-01T10:00:00Z"
+            "timestamp": "2023-12-01T10:00:00Z",
         }
 
         # 测试成功缓存API响应
@@ -266,15 +268,12 @@ class TestFootballDataCache:
         _, _, ttl = call_args[0]
         assert ttl == 10 * 60  # 10分钟的秒数
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.skip(reason="Async test needs more work - CI priority fix")
     def test_get_cached_api_response(self, mock_key_manager, mock_redis_manager):
         """测试获取缓存的API响应."""
-        api_response = {
-            "status": "success",
-            "data": {"count": 100}
-        }
+        api_response = {"status": "success", "data": {"count": 100}}
 
         mock_redis_instance = Mock()
         mock_redis_instance.aget.return_value = json.dumps(api_response)
@@ -289,7 +288,9 @@ class TestFootballDataCache:
         assert result == api_response
         mock_redis_instance.aget.assert_called_once()
 
-    @pytest.mark.skip(reason="Cache key generation test needs more work - CI priority fix")
+    @pytest.mark.skip(
+        reason="Cache key generation test needs more work - CI priority fix"
+    )
     def test_cache_key_generation(self):
         """测试缓存键生成."""
         # 直接测试键生成方法
@@ -314,8 +315,8 @@ class TestFootballDataCache:
         assert "country=England" in key4
         assert "season=2023" in key4
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.skip(reason="Async test needs more work - CI priority fix")
     def test_error_handling_redis_failure(self, mock_key_manager, mock_redis_manager):
         """测试Redis连接失败的错误处理."""
@@ -331,11 +332,13 @@ class TestFootballDataCache:
 
         assert result is False  # 应该优雅地处理错误
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
-    @patch('src.cache.football_data_cache.logger')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
+    @patch("src.cache.football_data_cache.logger")
     @pytest.mark.skip(reason="Error handling test needs more work - CI priority fix")
-    def test_error_handling_logging(self, mock_logger, mock_key_manager, mock_redis_manager):
+    def test_error_handling_logging(
+        self, mock_logger, mock_key_manager, mock_redis_manager
+    ):
         """测试错误处理和日志记录."""
         mock_redis_instance = Mock()
         mock_redis_instance.aset.side_effect = Exception("Test error")
@@ -350,8 +353,8 @@ class TestFootballDataCache:
         # 验证错误被记录
         mock_logger.error.assert_called()
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.skip(reason="Async test needs more work - CI priority fix")
     def test_complex_data_serialization(self, mock_key_manager, mock_redis_manager):
         """测试复杂数据序列化."""
@@ -360,15 +363,12 @@ class TestFootballDataCache:
             "name": "Premier League",
             "country": "England",
             "season": 2023,
-            "teams": [
-                {"id": 57, "name": "Arsenal"},
-                {"id": 58, "name": "Chelsea"}
-            ],
+            "teams": [{"id": 57, "name": "Arsenal"}, {"id": 58, "name": "Chelsea"}],
             "metadata": {
                 "created_at": "2023-01-01",
                 "updated_at": "2023-12-01",
-                "version": 1.0
-            }
+                "version": 1.0,
+            },
         }
 
         mock_redis_instance = Mock()
@@ -395,12 +395,12 @@ class TestFootballDataCache:
 
         # 验证TTL转换
         assert config.league_cache_hours * 3600 == 86400  # 24小时
-        assert config.team_cache_hours * 3600 == 172800   # 48小时
-        assert config.match_cache_minutes * 60 == 900      # 15分钟
+        assert config.team_cache_hours * 3600 == 172800  # 48小时
+        assert config.match_cache_minutes * 60 == 900  # 15分钟
         assert config.api_response_cache_minutes * 60 == 600  # 10分钟
 
-    @patch('src.cache.football_data_cache.get_redis_manager')
-    @patch('src.cache.football_data_cache.CacheKeyManager')
+    @patch("src.cache.football_data_cache.get_redis_manager")
+    @patch("src.cache.football_data_cache.CacheKeyManager")
     @pytest.mark.skip(reason="Async test needs more work - CI priority fix")
     def test_cache_invalidation(self, mock_key_manager, mock_redis_manager):
         """测试缓存失效."""
@@ -418,6 +418,6 @@ class TestFootballDataCache:
         mock_redis_instance.delete.assert_called_with("football:league:39")
 
         # 测试清空所有缓存（如果方法存在）
-        if hasattr(manager, 'clear_all_cache'):
+        if hasattr(manager, "clear_all_cache"):
             manager.clear_all_cache()
             mock_redis_instance.flushdb.assert_called()

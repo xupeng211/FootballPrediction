@@ -20,8 +20,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 try:
     from src.api.health import router
     from src.main_simple import app
+
     # 从health模块的具体函数导入
     from src.api.health import health_check, health_check_system, get_database_status
+
     database_health = get_database_status  # 别名映射
     system_health = health_check_system  # 别名映射
 except ImportError:
@@ -84,10 +86,11 @@ class TestHealthAPI:
         mock_memory.percent = 60.2
         mock_memory.available = 8 * (1024**3)  # 8GB
 
-        with patch("psutil.virtual_memory", return_value=mock_memory), \
-             patch("psutil.cpu_percent", return_value=45.5), \
-             patch("psutil.disk_usage") as mock_disk:
-
+        with (
+            patch("psutil.virtual_memory", return_value=mock_memory),
+            patch("psutil.cpu_percent", return_value=45.5),
+            patch("psutil.disk_usage") as mock_disk,
+        ):
             mock_disk.return_value.percent = 75.8
 
             if system_health:
@@ -201,6 +204,7 @@ class TestHealthAPI:
         """测试健康检查性能"""
         if health_check:
             import time
+
             start_time = time.time()
             result = await health_check()
             end_time = time.time()
@@ -279,7 +283,7 @@ class TestHealthRouter:
         """测试路由器端点"""
         if router is not None:
             # 基本验证：路由器应该有一些路由
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
         else:
             pytest.skip("Router not available")
 

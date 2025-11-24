@@ -51,7 +51,6 @@ def show_preview():
         sum(1 for i in all_issues if "high" in i.get("labels", []))
         sum(1 for i in all_issues if "medium" in i.get("labels", []))
 
-
         for _i, _issue in enumerate(all_issues[:5], 1):
             pass
 
@@ -61,11 +60,6 @@ def show_preview():
 
 def show_sample_commands():
     """显示示例命令."""
-
-
-
-
-
 
 
 def main():
@@ -79,7 +73,6 @@ def main():
 
     # 显示示例命令
     show_sample_commands()
-
 
     return True
 

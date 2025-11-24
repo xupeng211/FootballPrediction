@@ -39,7 +39,6 @@ def test_health_endpoint():
 
 
 @pytest.mark.health
-
 @pytest.mark.health
 @pytest.mark.unit
 def test_basic_imports():

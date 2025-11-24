@@ -14,7 +14,7 @@ class SimpleLogger:
 
         if not self.logger.handlers:
             handler = logging.StreamHandler(sys.stdout)
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+            formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
 
@@ -29,6 +29,7 @@ class SimpleLogger:
 
     def error(self, message):
         self.logger.error(f"❌ {message}")
+
 
 def get_logger(name=None):
     """获取日志器."""

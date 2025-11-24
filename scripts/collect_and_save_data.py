@@ -16,8 +16,7 @@ sys.path.insert(0, str(project_root))
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class DataCollectionService:
 
                 for team_data in teams_data:
                     # 检查球队是否已存在
-                    query = select(Team).where(Team.name == team_data.get('name'))
+                    query = select(Team).where(Team.name == team_data.get("name"))
                     result = await session.execute(query)
                     existing_team = result.scalar_one_or_none()
 
@@ -56,12 +55,14 @@ class DataCollectionService:
 
                     # 创建新球队记录
                     team = Team(
-                        name=team_data.get('name'),
-                        short_name=team_data.get('short_name') or team_data.get('shortName')[:50],
-                        country=team_data.get('country') or 'Unknown',
-                        founded_year=team_data.get('founded') or team_data.get('foundedYear'),
-                        venue=team_data.get('venue') or team_data.get('stadium'),
-                        website=team_data.get('website') or team_data.get('website'),
+                        name=team_data.get("name"),
+                        short_name=team_data.get("short_name")
+                        or team_data.get("shortName")[:50],
+                        country=team_data.get("country") or "Unknown",
+                        founded_year=team_data.get("founded")
+                        or team_data.get("foundedYear"),
+                        venue=team_data.get("venue") or team_data.get("stadium"),
+                        website=team_data.get("website") or team_data.get("website"),
                     )
 
                     session.add(team)
@@ -93,7 +94,8 @@ class DataCollectionService:
 
             # 使用采集器获取球队详情
             from src.collectors.football_data_collector import FootballDataCollector
-            collector = FootballDataCollector()
+
+            FootballDataCollector()
 
             # 采集特定球队信息（这里我们使用一个通用的方法，因为API可能不支持单个球队查询）
             # 作为替代方案，我们创建一个占位符球队记录
@@ -109,7 +111,9 @@ class DataCollectionService:
 
             session.add(placeholder_team)
             await session.flush()  # 立即保存但不提交
-            self.logger.info(f"✅ 创建占位符球队: {placeholder_team.name} (ID: {team_id})")
+            self.logger.info(
+                f"✅ 创建占位符球队: {placeholder_team.name} (ID: {team_id})"
+            )
 
             return True
 
@@ -133,28 +137,34 @@ class DataCollectionService:
                 saved_count = 0
 
                 for match_data in matches_data:
-                    home_team_id = match_data.get('homeTeam', {}).get('id')
-                    away_team_id = match_data.get('awayTeam', {}).get('id')
+                    home_team_id = match_data.get("homeTeam", {}).get("id")
+                    away_team_id = match_data.get("awayTeam", {}).get("id")
 
                     # 确保两支球队都存在
                     if not await self.ensure_team_exists(home_team_id, session):
-                        self.logger.warning(f"跳过比赛：无法确保主队存在 (ID: {home_team_id})")
+                        self.logger.warning(
+                            f"跳过比赛：无法确保主队存在 (ID: {home_team_id})"
+                        )
                         continue
 
                     if not await self.ensure_team_exists(away_team_id, session):
-                        self.logger.warning(f"跳过比赛：无法确保客队存在 (ID: {away_team_id})")
+                        self.logger.warning(
+                            f"跳过比赛：无法确保客队存在 (ID: {away_team_id})"
+                        )
                         continue
 
                     # 检查比赛是否已存在
                     query = select(Match).where(
-                        (Match.home_team_id == home_team_id) &
-                        (Match.away_team_id == away_team_id)
+                        (Match.home_team_id == home_team_id)
+                        & (Match.away_team_id == away_team_id)
                     )
                     result = await session.execute(query)
                     existing_match = result.scalar_one_or_none()
 
                     if existing_match:
-                        self.logger.debug(f"比赛 {match_data.get('homeTeam', {}).get('name')} vs {match_data.get('awayTeam', {}).get('name')} 已存在，跳过")
+                        self.logger.debug(
+                            f"比赛 {match_data.get('homeTeam', {}).get('name')} vs {match_data.get('awayTeam', {}).get('name')} 已存在，跳过"
+                        )
                         continue
 
                     # 创建新比赛记录
@@ -162,7 +172,7 @@ class DataCollectionService:
                     from dateutil import parser as date_parser
 
                     # 处理日期字符串
-                    match_date_str = match_data.get('utcDate')
+                    match_date_str = match_data.get("utcDate")
                     match_date = None
                     if match_date_str:
                         try:
@@ -177,10 +187,10 @@ class DataCollectionService:
                             match_date = None
 
                     # 处理season字段
-                    season_data = match_data.get('season')
-                    season = '2024-2025'
+                    season_data = match_data.get("season")
+                    season = "2024-2025"
                     if isinstance(season_data, dict):
-                        season = str(season_data.get('id', '2024-2025'))
+                        season = str(season_data.get("id", "2024-2025"))
                     elif isinstance(season_data, str):
                         season = season_data
                     elif season_data is not None:
@@ -189,11 +199,15 @@ class DataCollectionService:
                     match = Match(
                         home_team_id=home_team_id,
                         away_team_id=away_team_id,
-                        home_score=match_data.get('score', {}).get('fullTime', {}).get('home'),
-                        away_score=match_data.get('score', {}).get('fullTime', {}).get('away'),
-                        status=match_data.get('status', 'unknown'),
+                        home_score=match_data.get("score", {})
+                        .get("fullTime", {})
+                        .get("home"),
+                        away_score=match_data.get("score", {})
+                        .get("fullTime", {})
+                        .get("away"),
+                        status=match_data.get("status", "unknown"),
                         match_date=match_date,
-                        venue=match_data.get('venue'),
+                        venue=match_data.get("venue"),
                         season=season,
                     )
 
@@ -217,7 +231,7 @@ async def collect_and_save_data():
         logger.info("🚀 开始数据采集和保存流程...")
 
         # 检查API密钥
-        api_key = os.getenv('FOOTBALL_DATA_API_KEY')
+        api_key = os.getenv("FOOTBALL_DATA_API_KEY")
         if not api_key:
             logger.error("❌ FOOTBALL_DATA_API_KEY 环境变量未设置")
             return False
@@ -258,15 +272,16 @@ async def collect_and_save_data():
         # 采集比赛数据（选择Premier League，ID=2021）
         premier_league_id = None
         for league in leagues:
-            if league.get('name') == 'Premier League':
-                premier_league_id = league['id']
+            if league.get("name") == "Premier League":
+                premier_league_id = league["id"]
                 break
 
         if premier_league_id:
-            logger.info(f"🔄 正在采集Premier League比赛数据 (ID: {premier_league_id})...")
+            logger.info(
+                f"🔄 正在采集Premier League比赛数据 (ID: {premier_league_id})..."
+            )
             matches_result = await collector.collect_matches(
-                league_id=premier_league_id,
-                limit=20
+                league_id=premier_league_id, limit=20
             )
 
             if matches_result.success:
@@ -276,12 +291,14 @@ async def collect_and_save_data():
                 logger.info("💾 正在保存比赛数据到数据库...")
                 saved_matches = await service.save_matches_to_database(matches)
 
-                logger.info(f"🎉 数据采集和保存完成!")
+                logger.info("🎉 数据采集和保存完成!")
                 logger.info(f"   - 保存球队: {saved_teams} 支")
                 logger.info(f"   - 保存比赛: {saved_matches} 场")
                 return True
             else:
-                logger.warning(f"⚠️ 采集Premier League比赛数据失败: {matches_result.error}")
+                logger.warning(
+                    f"⚠️ 采集Premier League比赛数据失败: {matches_result.error}"
+                )
                 return saved_teams > 0  # 只要球队保存成功就算部分成功
 
         return saved_teams > 0

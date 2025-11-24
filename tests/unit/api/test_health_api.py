@@ -28,9 +28,11 @@ class TestHealthAPI:
         app.include_router(health_router)
         return TestClient(app)
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
-    def test_basic_health_check(self, mock_get_db_manager, mock_datetime, health_client):
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
+    def test_basic_health_check(
+        self, mock_get_db_manager, mock_datetime, health_client
+    ):
         """测试基础健康检查"""
         # Mock数据库管理器为已初始化状态
         mock_db_manager = MagicMock()
@@ -53,10 +55,12 @@ class TestHealthAPI:
         assert data["timestamp"] == mock_now.isoformat()
         assert data["checks"]["database"]["status"] == "healthy"
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
-    @patch('redis.from_url')
-    def test_detailed_health_check(self, mock_redis_from_url, mock_get_db_manager, mock_datetime, health_client):
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
+    @patch("redis.from_url")
+    def test_detailed_health_check(
+        self, mock_redis_from_url, mock_get_db_manager, mock_datetime, health_client
+    ):
         """测试详细健康检查"""
         # Mock数据库管理器为已初始化状态
         mock_db_manager = MagicMock()
@@ -84,9 +88,11 @@ class TestHealthAPI:
         assert data["checks"]["redis"]["status"] == "healthy"
         assert data["timestamp"] == mock_now.isoformat()
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
-    def test_health_response_format(self, mock_get_db_manager, mock_datetime, health_client):
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
+    def test_health_response_format(
+        self, mock_get_db_manager, mock_datetime, health_client
+    ):
         """测试健康检查响应格式"""
         # Mock数据库管理器为已初始化状态
         mock_db_manager = MagicMock()
@@ -151,9 +157,11 @@ class TestHealthAPI:
         assert len(results) == 10
         assert all(status == 200 for status in results)
 
-    @patch('src.api.health.routes.datetime')
-    @patch('src.database.definitions.get_database_manager')
-    def test_health_check_response_time(self, mock_get_db_manager, mock_datetime, health_client):
+    @patch("src.api.health.routes.datetime")
+    @patch("src.database.definitions.get_database_manager")
+    def test_health_check_response_time(
+        self, mock_get_db_manager, mock_datetime, health_client
+    ):
         """测试健康检查响应时间"""
         import time
 

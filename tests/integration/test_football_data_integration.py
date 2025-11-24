@@ -32,8 +32,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.asyncio
-
-
 async def test_api_connection():
     """测试API连接"""
     try:
@@ -66,8 +64,6 @@ async def test_api_connection():
 
 
 @pytest.mark.asyncio
-
-
 async def test_data_normalization():
     """测试数据标准化"""
     try:
@@ -95,8 +91,6 @@ async def test_data_normalization():
 
 
 @pytest.mark.asyncio
-
-
 async def test_database_model():
     """测试数据库模型"""
     try:
@@ -149,9 +143,7 @@ async def test_database_model():
 
 async def main():
     """主测试函数"""
-    logger.debug(
-        "🚀 开始 Football-Data.org API 集成测试"
-    )
+    logger.debug("🚀 开始 Football-Data.org API 集成测试")
     logger.debug("=" * 60)
 
     start_time = datetime.now()
@@ -169,19 +161,13 @@ async def main():
         logger.debug(f"\n🔍 执行 {test_name}...")
         try:
             if await test_func():
-                logger.debug(
-                    f"✅ {test_name} 通过"
-                )
+                logger.debug(f"✅ {test_name} 通过")
                 passed += 1
             else:
-                logger.debug(
-                    f"❌ {test_name} 失败"
-                )
+                logger.debug(f"❌ {test_name} 失败")
                 failed += 1
         except Exception as e:
-            logger.debug(
-                f"❌ {test_name} 异常: {e}"
-            )
+            logger.debug(f"❌ {test_name} 异常: {e}")
             failed += 1
 
     end_time = datetime.now()
@@ -192,19 +178,13 @@ async def main():
     logger.debug(f"   通过: {passed}")
     logger.error(f"   失败: {failed}")
     logger.error(f"   总计: {passed + failed}")
-    logger.debug(
-        f"   耗时: {duration.total_seconds():.2f} 秒"
-    )
+    logger.debug(f"   耗时: {duration.total_seconds():.2f} 秒")
 
     if failed == 0:
-        logger.debug(
-            "🎉 所有测试通过！Football-Data.org API 集成基础功能正常"
-        )
+        logger.debug("🎉 所有测试通过！Football-Data.org API 集成基础功能正常")
         return True
     else:
-        logger.debug(
-            "⚠️  部分测试失败，请检查相关实现"
-        )
+        logger.debug("⚠️  部分测试失败，请检查相关实现")
         return False
 
 

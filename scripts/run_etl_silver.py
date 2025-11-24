@@ -45,10 +45,9 @@ env_files = [
 for env_file in env_files:
     if env_file.exists():
         load_dotenv(env_file)
-        print(f"✅ 已加载环境文件: {env_file}")
         break
 else:
-    print("⚠️  未找到.env文件，将使用系统环境变量")
+    pass
 
 # 导入模块
 try:
@@ -60,15 +59,12 @@ try:
     from src.database.models.match import Match, MatchStatus
     from sqlalchemy import select, and_, or_
     from sqlalchemy.orm import selectinload
-except ImportError as e:
-    print(f"❌ 导入模块失败: {e}")
-    print("💡 提示: 请确保已安装所有依赖: pip install asyncpg sqlalchemy")
+except ImportError:
     sys.exit(1)
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -129,7 +125,7 @@ class SilverETLProcessor:
     async def _fetch_unprocessed_data(self, session) -> list:
         """获取未处理的原始数据."""
         try:
-            stmt = select(RawMatchData).where(RawMatchData.processed == False)
+            stmt = select(RawMatchData).where(not RawMatchData.processed)
             result = await session.execute(stmt)
             return result.scalars().all()
         except Exception as e:
@@ -147,11 +143,13 @@ class SilverETLProcessor:
             league_id = await self._upsert_league(session, match_data)
 
             # 2. Upsert主队和客队
-            home_team_id = await self._upsert_team(session, match_data, 'home')
-            away_team_id = await self._upsert_team(session, match_data, 'away')
+            home_team_id = await self._upsert_team(session, match_data, "home")
+            away_team_id = await self._upsert_team(session, match_data, "away")
 
             # 3. Upsert比赛
-            await self._upsert_match(session, match_data, home_team_id, away_team_id, league_id)
+            await self._upsert_match(
+                session, match_data, home_team_id, away_team_id, league_id
+            )
 
             # 4. 标记原始数据为已处理
             raw_record.processed = True
@@ -159,7 +157,9 @@ class SilverETLProcessor:
 
             self.processing_stats["processed_matches"] += 1
             if self.processing_stats["processed_matches"] % 50 == 0:
-                logger.info(f"📈 已处理 {self.processing_stats['processed_matches']} 条记录")
+                logger.info(
+                    f"📈 已处理 {self.processing_stats['processed_matches']} 条记录"
+                )
 
         except Exception as e:
             logger.error(f"处理记录失败 (external_id={raw_record.external_id}): {e}")
@@ -167,7 +167,7 @@ class SilverETLProcessor:
             # 不标记为已处理，下次重试
             raise
 
-    async def _upsert_league(self, session, match_data: Dict[str, Any]) -> int:
+    async def _upsert_league(self, session, match_data: dict[str, Any]) -> int:
         """Upsert联赛数据."""
         try:
             league_info = self.cleaner.extract_league_from_match(match_data)
@@ -189,7 +189,7 @@ class SilverETLProcessor:
                 new_league = League(
                     name=league_info["name"],
                     country=league_info["country"],
-                    is_active=league_info.get("is_active", True)
+                    is_active=league_info.get("is_active", True),
                 )
                 session.add(new_league)
                 await session.flush()  # 获取ID
@@ -201,7 +201,9 @@ class SilverETLProcessor:
             logger.error(f"Upsert联赛失败: {e}")
             raise
 
-    async def _upsert_team(self, session, match_data: Dict[str, Any], team_type: str) -> int:
+    async def _upsert_team(
+        self, session, match_data: dict[str, Any], team_type: str
+    ) -> int:
         """Upsert球队数据."""
         try:
             team_info = self.cleaner.extract_team_from_match(match_data, team_type)
@@ -235,8 +237,14 @@ class SilverETLProcessor:
             logger.error(f"Upsert {team_type} 球队失败: {e}")
             raise
 
-    async def _upsert_match(self, session, match_data: Dict[str, Any],
-                           home_team_id: int, away_team_id: int, league_id: int):
+    async def _upsert_match(
+        self,
+        session,
+        match_data: dict[str, Any],
+        home_team_id: int,
+        away_team_id: int,
+        league_id: int,
+    ):
         """Upsert比赛数据."""
         try:
             # 移除时区信息以匹配数据库字段类型
@@ -249,7 +257,7 @@ class SilverETLProcessor:
                 and_(
                     Match.home_team_id == home_team_id,
                     Match.away_team_id == away_team_id,
-                    Match.match_date == match_date
+                    Match.match_date == match_date,
                 )
             )
             result = await session.execute(stmt)

@@ -8,6 +8,7 @@
 import pytest
 from typing import Optional
 
+
 # 基础测试类，确保文件结构完整
 @pytest.mark.unit
 class TestWarningFiltersFinalCoverage:
@@ -22,4 +23,3 @@ class TestWarningFiltersFinalCoverage:
     def test_warning_filter_functionality(self):
         """测试警告过滤器功能 - 待实现"""
         pass
-

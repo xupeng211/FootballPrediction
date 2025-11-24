@@ -15,7 +15,7 @@ def check_syntax(file_path: Path) -> list[str]:
     errors = []
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # 尝试解析AST
@@ -38,7 +38,6 @@ def main():
     if not src_dir.exists():
         sys.exit(0)
 
-
     # 只查找src目录下的Python文件
     python_files = list(src_dir.glob("**/*.py"))
 
@@ -55,7 +54,6 @@ def main():
             total_errors += len(errors)
             for _error in errors:
                 pass
-
 
     if total_errors > 0:
         sys.exit(1)

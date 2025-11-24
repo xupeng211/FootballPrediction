@@ -26,10 +26,10 @@ import logging
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class FixPlanGenerator:
     """修复计划生成器"""
@@ -40,122 +40,137 @@ class FixPlanGenerator:
         self.uncovered_file = project_root / "uncovered_files.json"
         self.modules_file = project_root / "modules_without_tests.json"
 
-    def load_coverage_data(self) -> Optional[Dict[str, Any]]:
+    def load_coverage_data(self) -> dict[str, Any] | None:
         """加载覆盖率数据"""
         if not self.coverage_file.exists():
             logger.error(f"Coverage file not found: {self.coverage_file}")
             return None
 
         try:
-            with open(self.coverage_file, 'r') as f:
+            with open(self.coverage_file) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load coverage data: {e}")
             return None
 
-    def load_uncovered_files(self) -> Optional[List[Dict[str, Any]]]:
+    def load_uncovered_files(self) -> list[dict[str, Any]] | None:
         """加载未覆盖文件数据"""
         if not self.uncovered_file.exists():
             logger.error(f"Uncovered files data not found: {self.uncovered_file}")
             return None
 
         try:
-            with open(self.uncovered_file, 'r') as f:
+            with open(self.uncovered_file) as f:
                 data = json.load(f)
-                return data.get('uncovered_files', [])
+                return data.get("uncovered_files", [])
         except Exception as e:
             logger.error(f"Failed to load uncovered files data: {e}")
             return None
 
-    def load_modules_without_tests(self) -> Optional[Dict[str, Any]]:
+    def load_modules_without_tests(self) -> dict[str, Any] | None:
         """加载无测试模块数据"""
         if not self.modules_file.exists():
             logger.warning(f"Modules without tests file not found: {self.modules_file}")
             return None
 
         try:
-            with open(self.modules_file, 'r') as f:
+            with open(self.modules_file) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load modules without tests data: {e}")
             return None
 
-    def categorize_by_priority(self, files: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def categorize_by_priority(
+        self, files: list[dict[str, Any]]
+    ) -> dict[str, list[dict[str, Any]]]:
         """按优先级分类文件"""
         categories = {
-            'P0_Critical': [],      # 核心业务模块，高未覆盖
-            'P1_High': [],          # 重要模块，中等未覆盖
-            'P2_Medium': [],        # 一般模块，需要关注
-            'P3_Low': []            # 低优先级
+            "P0_Critical": [],  # 核心业务模块，高未覆盖
+            "P1_High": [],  # 重要模块，中等未覆盖
+            "P2_Medium": [],  # 一般模块，需要关注
+            "P3_Low": [],  # 低优先级
         }
 
         for file_info in files:
-            file_path = file_info['file_path']
-            uncovered_lines = file_info['uncovered_lines']
-            business_criticality = file_info.get('business_criticality', 'medium')
+            file_info["file_path"]
+            uncovered_lines = file_info["uncovered_lines"]
+            business_criticality = file_info.get("business_criticality", "medium")
 
             # P0: 核心业务模块 + 高未覆盖行数
-            if (business_criticality == 'critical' and uncovered_lines > 100) or \
-               (business_criticality == 'high' and uncovered_lines > 200) or \
-               uncovered_lines > 250:
-                categories['P0_Critical'].append(file_info)
+            if (
+                (business_criticality == "critical" and uncovered_lines > 100)
+                or (business_criticality == "high" and uncovered_lines > 200)
+                or uncovered_lines > 250
+            ):
+                categories["P0_Critical"].append(file_info)
 
             # P1: 重要模块
-            elif (business_criticality in ['critical', 'high'] and uncovered_lines > 50) or \
-                 uncovered_lines > 150:
-                categories['P1_High'].append(file_info)
+            elif (
+                business_criticality in ["critical", "high"] and uncovered_lines > 50
+            ) or uncovered_lines > 150:
+                categories["P1_High"].append(file_info)
 
             # P2: 一般模块
             elif uncovered_lines > 50:
-                categories['P2_Medium'].append(file_info)
+                categories["P2_Medium"].append(file_info)
 
             # P3: 低优先级
             else:
-                categories['P3_Low'].append(file_info)
+                categories["P3_Low"].append(file_info)
 
         return categories
 
-    def generate_test_suggestions(self, file_info: Dict[str, Any]) -> List[str]:
+    def generate_test_suggestions(self, file_info: dict[str, Any]) -> list[str]:
         """为文件生成测试建议"""
         suggestions = []
-        file_path = file_info['file_path']
-        uncovered_lines = file_info['uncovered_lines']
+        file_path = file_info["file_path"]
+        uncovered_lines = file_info["uncovered_lines"]
 
-        if 'api/' in file_path:
-            suggestions.extend([
-                f"创建 `tests/unit/api/{file_path.split('/')[-1].replace('.py', '_test.py')}`",
-                "测试HTTP端点的请求/响应",
-                "验证参数验证和错误处理",
-                "测试API返回状态码和响应格式"
-            ])
-        elif 'services/' in file_path:
-            suggestions.extend([
-                f"创建 `tests/unit/services/{file_path.split('/')[-1].replace('.py', '_test.py')}`",
-                "使用unittest.mock模拟外部依赖",
-                "测试核心业务逻辑",
-                "验证边界条件和异常处理",
-                "添加性能基准测试"
-            ])
-        elif 'database/' in file_path:
-            suggestions.extend([
-                f"创建 `tests/unit/database/{file_path.split('/')[-1].replace('.py', '_test.py')}`",
-                "使用内存数据库进行测试",
-                "测试数据库连接和事务",
-                "验证SQL查询逻辑"
-            ])
-        elif 'cache/' in file_path:
-            suggestions.extend([
-                f"创建 `tests/unit/cache/{file_path.split('/')[-1].replace('.py', '_test.py')}`",
-                "模拟Redis连接进行测试",
-                "测试缓存策略和失效逻辑",
-                "验证性能和并发访问"
-            ])
+        if "api/" in file_path:
+            suggestions.extend(
+                [
+                    f"创建 `tests/unit/api/{file_path.split('/')[-1].replace('.py', '_test.py')}`",
+                    "测试HTTP端点的请求/响应",
+                    "验证参数验证和错误处理",
+                    "测试API返回状态码和响应格式",
+                ]
+            )
+        elif "services/" in file_path:
+            suggestions.extend(
+                [
+                    f"创建 `tests/unit/services/{file_path.split('/')[-1].replace('.py', '_test.py')}`",
+                    "使用unittest.mock模拟外部依赖",
+                    "测试核心业务逻辑",
+                    "验证边界条件和异常处理",
+                    "添加性能基准测试",
+                ]
+            )
+        elif "database/" in file_path:
+            suggestions.extend(
+                [
+                    f"创建 `tests/unit/database/{file_path.split('/')[-1].replace('.py', '_test.py')}`",
+                    "使用内存数据库进行测试",
+                    "测试数据库连接和事务",
+                    "验证SQL查询逻辑",
+                ]
+            )
+        elif "cache/" in file_path:
+            suggestions.extend(
+                [
+                    f"创建 `tests/unit/cache/{file_path.split('/')[-1].replace('.py', '_test.py')}`",
+                    "模拟Redis连接进行测试",
+                    "测试缓存策略和失效逻辑",
+                    "验证性能和并发访问",
+                ]
+            )
         else:
-            suggestions.extend([
-                f"创建 `tests/unit/{file_path.replace('src/', '').replace('.py', '_test.py')}`",
-                "添加基础单元测试",
-                "覆盖主要函数和方法"
-            ])
+            suggestions.extend(
+                [
+                    f"创建 `tests/unit/{file_path.replace('src/', '').replace('.py', '_test.py')}`",
+                    "添加基础单元测试",
+                    "覆盖主要函数和方法",
+                ]
+            )
 
         # 根据未覆盖行数添加建议
         if uncovered_lines > 200:
@@ -165,14 +180,16 @@ class FixPlanGenerator:
 
         return suggestions
 
-    def generate_markdown_report(self,
-                              categories: Dict[str, List[Dict[str, Any]]],
-                              modules_data: Optional[Dict[str, Any]] = None) -> str:
+    def generate_markdown_report(
+        self,
+        categories: dict[str, list[dict[str, Any]]],
+        modules_data: dict[str, Any] | None = None,
+    ) -> str:
         """生成Markdown格式的修复计划"""
 
         report = f"""# 测试覆盖率修复计划
 
-**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 **基于数据**: coverage.json + uncovered_files.json
 
 ## 📊 修复计划概览
@@ -184,13 +201,13 @@ class FixPlanGenerator:
         # 添加概览统计
         for priority, files in categories.items():
             if files:
-                total_uncovered = sum(f['uncovered_lines'] for f in files)
-                avg_coverage = sum(f['coverage_percent'] for f in files) / len(files)
+                total_uncovered = sum(f["uncovered_lines"] for f in files)
+                avg_coverage = sum(f["coverage_percent"] for f in files) / len(files)
                 report += f"| {priority} | {len(files)} | {total_uncovered} | {avg_coverage:.1f}% |\n"
 
         # P0 优先级详细计划
-        if categories['P0_Critical']:
-            report += f"""
+        if categories["P0_Critical"]:
+            report += """
 
 ## 🔴 P0 优先级 - 关键业务模块 (立即处理)
 
@@ -198,14 +215,14 @@ class FixPlanGenerator:
 **目标**: 本周内完成基础测试覆盖
 
 """
-            for i, file_info in enumerate(categories['P0_Critical'], 1):
+            for i, file_info in enumerate(categories["P0_Critical"], 1):
                 report += f"""
-### {i}. {file_info['file_path']}
+### {i}. {file_info["file_path"]}
 
-- **未覆盖行数**: {file_info['uncovered_lines']}
-- **总行数**: {file_info['total_lines']}
-- **当前覆盖率**: {file_info['coverage_percent']}%
-- **业务关键性**: {file_info.get('business_criticality', 'unknown')}
+- **未覆盖行数**: {file_info["uncovered_lines"]}
+- **总行数**: {file_info["total_lines"]}
+- **当前覆盖率**: {file_info["coverage_percent"]}%
+- **业务关键性**: {file_info.get("business_criticality", "unknown")}
 
 **测试建议**:
 """
@@ -214,60 +231,62 @@ class FixPlanGenerator:
                     report += f"- {suggestion}\n"
 
                 report += f"""
-**推荐测试文件名**: `tests/unit/{file_info['file_path'].replace('src/', '').replace('.py', '_test.py')}`
+**推荐测试文件名**: `tests/unit/{file_info["file_path"].replace("src/", "").replace(".py", "_test.py")}`
 
-**预期覆盖率提升**: {min(file_info['uncovered_lines'] / 2, file_info['total_lines'] * 0.7):.0f} 行
+**预期覆盖率提升**: {min(file_info["uncovered_lines"] / 2, file_info["total_lines"] * 0.7):.0f} 行
 
 ---
 
 """
 
         # P1 优先级
-        if categories['P1_High']:
-            report += f"""
+        if categories["P1_High"]:
+            report += """
 
 ## 🟡 P1 优先级 - 重要模块 (本周目标)
 
 **说明**: 重要功能模块，需要完善测试覆盖
 
 """
-            for i, file_info in enumerate(categories['P1_High'], 1):
+            for i, file_info in enumerate(categories["P1_High"], 1):
                 report += f"""
-### {i}. {file_info['file_path']}
+### {i}. {file_info["file_path"]}
 
-- **未覆盖行数**: {file_info['uncovered_lines']}
-- **当前覆盖率**: {file_info['coverage_percent']}%
+- **未覆盖行数**: {file_info["uncovered_lines"]}
+- **当前覆盖率**: {file_info["coverage_percent"]}%
 
 """
 
         # P2 优先级
-        if categories['P2_Medium']:
-            report += f"""
+        if categories["P2_Medium"]:
+            report += """
 
 ## 🟢 P2 优先级 - 一般模块 (计划处理)
 
 """
-            for i, file_info in enumerate(categories['P2_Medium'][:10], 1):  # 只显示前10个
+            for i, file_info in enumerate(
+                categories["P2_Medium"][:10], 1
+            ):  # 只显示前10个
                 report += f"- {file_info['file_path']} ({file_info['uncovered_lines']}行未覆盖)\n"
 
         # 模块级分析
         if modules_data:
-            report += f"""
+            report += """
 
 ## 📁 模块级测试覆盖分析
 
 """
-            modules = modules_data.get('modules_without_tests', [])
+            modules = modules_data.get("modules_without_tests", [])
             for module in modules:
                 report += f"""
-### {module['module_path']} (无测试覆盖)
+### {module["module_path"]} (无测试覆盖)
 
-- **文件数量**: {module['file_count']}
-- **总代码行数**: {module['total_lines']}
-- **风险等级**: {module['risk_level']}
+- **文件数量**: {module["file_count"]}
+- **总代码行数**: {module["total_lines"]}
+- **风险等级**: {module["risk_level"]}
 - **推荐测试文件**:
 """
-                for test_file in module.get('recommended_test_files', []):
+                for test_file in module.get("recommended_test_files", []):
                     report += f"  - `{test_file}`\n"
 
         # 执行计划
@@ -276,17 +295,17 @@ class FixPlanGenerator:
 ## 🚀 执行计划
 
 ### 第一周 (P0 优先级)
-- [ ] 完成 {len(categories.get('P0_Critical', []))} 个关键文件的单元测试
-- [ ] 预期覆盖率提升: {sum(f['uncovered_lines'] for f in categories.get('P0_Critical', []))} 行
+- [ ] 完成 {len(categories.get("P0_Critical", []))} 个关键文件的单元测试
+- [ ] 预期覆盖率提升: {sum(f["uncovered_lines"] for f in categories.get("P0_Critical", []))} 行
 - [ ] 重点关注: EV计算器、缓存性能API等核心业务
 
 ### 第二周 (P1 优先级)
-- [ ] 完成 {len(categories.get('P1_High', []))} 个重要文件的测试
+- [ ] 完成 {len(categories.get("P1_High", []))} 个重要文件的测试
 - [ ] 开始集成测试覆盖
 - [ ] 建立持续监控机制
 
 ### 第三周 (P2 优先级 + 完善)
-- [ ] 完成 {len(categories.get('P2_Medium', []))} 个一般文件测试
+- [ ] 完成 {len(categories.get("P2_Medium", []))} 个一般文件测试
 - [ ] 完善测试文档和覆盖率报告
 - [ ] 建立自动化质量门禁
 
@@ -322,7 +341,7 @@ class FixPlanGenerator:
 
         return report
 
-    def save_report(self, report: str, filename: Optional[str] = None):
+    def save_report(self, report: str, filename: str | None = None):
         """保存修复计划报告"""
         if not filename:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -332,7 +351,7 @@ class FixPlanGenerator:
         report_file.parent.mkdir(exist_ok=True)
 
         try:
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 f.write(report)
             logger.info(f"Fix plan report saved to: {report_file}")
             return report_file
@@ -364,15 +383,16 @@ class FixPlanGenerator:
         self.save_report(report)
 
         # 输出到控制台
-        print(report)
 
         return report
+
 
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="生成测试覆盖率修复计划")
-    parser.add_argument("--format", choices=["markdown"],
-                       default="markdown", help="输出格式")
+    parser.add_argument(
+        "--format", choices=["markdown"], default="markdown", help="输出格式"
+    )
     parser.add_argument("--output", help="输出文件名")
 
     args = parser.parse_args()
@@ -387,11 +407,10 @@ def main():
         if args.output:
             generator.save_report(report, args.output)
 
-        print(f"\n✅ 修复计划生成完成!")
-
     except Exception as e:
         logger.error(f"Failed to generate fix plan: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

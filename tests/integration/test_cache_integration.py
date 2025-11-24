@@ -451,12 +451,9 @@ class TestCacheL1L2Integration:
     @pytest.fixture
     def cache_manager(self, mock_redis):
         """创建缓存管理器"""
-        return UnifiedCacheManager(
-            redis_client=mock_redis, local_cache_size=10
-        )
+        return UnifiedCacheManager(redis_client=mock_redis, local_cache_size=10)
 
     @pytest.mark.asyncio
-
     async def test_l1_l2_cache_hierarchy(self, cache_manager, mock_redis):
         """测试L1和L2缓存层次结构"""
         key = "test:hierarchy:key"
@@ -484,7 +481,6 @@ class TestCacheL1L2Integration:
         assert recovered_value is not None
 
     @pytest.mark.asyncio
-
     async def test_cache_fallback_mechanism(self, cache_manager, mock_redis):
         """测试缓存降级机制"""
         key = "test:fallback:key"
@@ -502,7 +498,6 @@ class TestCacheL1L2Integration:
         assert l1_value["data"] == "fallback_test"
 
     @pytest.mark.asyncio
-
     async def test_cache_invalidation_propagation(self, cache_manager, mock_redis):
         """测试缓存失效传播"""
         key = "test:invalidation:key"
@@ -564,7 +559,6 @@ class TestCacheDecoratorIntegration:
         assert isinstance(result2, (int, float))
 
     @pytest.mark.asyncio
-
     async def test_async_cache_decorator(self, cache_manager):
         """测试异步缓存装饰器"""
         call_count = 0
@@ -637,12 +631,9 @@ class TestCacheRealWorldScenarios:
     @pytest.fixture
     def cache_manager(self, mock_redis):
         """创建缓存管理器"""
-        return UnifiedCacheManager(
-            redis_client=mock_redis, local_cache_size=20
-        )
+        return UnifiedCacheManager(redis_client=mock_redis, local_cache_size=20)
 
     @pytest.mark.asyncio
-
     async def test_database_query_caching(self, cache_manager):
         """测试数据库查询缓存场景"""
         # 模拟数据库查询
@@ -678,7 +669,6 @@ class TestCacheRealWorldScenarios:
         assert query_call_count == 2
 
     @pytest.mark.asyncio
-
     async def test_api_response_caching(self, cache_manager):
         """测试API响应缓存场景"""
         api_call_count = 0
@@ -712,7 +702,6 @@ class TestCacheRealWorldScenarios:
         assert result1["data"] == result2["data"]
 
     @pytest.mark.asyncio
-
     async def test_cache_warming_strategy(self, cache_manager):
         """测试缓存预热策略"""
         # 模拟预热数据
@@ -733,7 +722,6 @@ class TestCacheRealWorldScenarios:
             assert len(cached_data) > 0
 
     @pytest.mark.asyncio
-
     async def test_cache_invalidation_on_update(self, cache_manager):
         """测试更新时缓存失效"""
         # 设置初始缓存

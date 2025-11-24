@@ -17,7 +17,7 @@ from src.cache.intelligent_cache_warmup import (
     AccessPattern,
     AccessPatternAnalyzer,
     PredictiveModel,
-    WarmupPlan
+    WarmupPlan,
 )
 
 
@@ -34,7 +34,7 @@ def warmup_manager(mock_cache_manager):
         "max_concurrent_tasks": 5,
         "default_ttl": 300,
         "enable_adaptive_ttl": True,
-        "warmup_sensitivity": 0.7
+        "warmup_sensitivity": 0.7,
     }
     return IntelligentCacheWarmupManager(mock_cache_manager, config)
 
@@ -49,7 +49,7 @@ class TestWarmupStrategy:
             WarmupStrategy.BUSINESS_RULES,
             WarmupStrategy.PREDICTIVE,
             WarmupStrategy.HYBRID,
-            WarmupStrategy.SCHEDULED
+            WarmupStrategy.SCHEDULED,
         ]
         assert len(strategies) == 5
 
@@ -71,7 +71,7 @@ class TestPriorityLevel:
             PriorityLevel.HIGH,
             PriorityLevel.MEDIUM,
             PriorityLevel.LOW,
-            PriorityLevel.BACKGROUND
+            PriorityLevel.BACKGROUND,
         ]
         assert len(priorities) == 5
 
@@ -92,7 +92,7 @@ class TestAccessPattern:
             key="test:key",
             access_frequency=0.8,
             access_times=[datetime.now()],
-            hourly_distribution={0: 1, 1: 2}
+            hourly_distribution={0: 1, 1: 2},
         )
 
         assert pattern.key == "test:key"
@@ -130,14 +130,16 @@ class TestWarmupTask:
 
     def test_task_creation_with_required_params(self):
         """测试使用必需参数创建任务."""
+
         # 创建数据加载器
-        data_loader = lambda k: f"data_for_{k}"
+        def data_loader(k):
+            return f"data_for_{k}"
 
         task = WarmupTask(
             task_id="test_task_1",
             key="test:key",
             priority=PriorityLevel.HIGH,
-            data_loader=data_loader
+            data_loader=data_loader,
         )
 
         assert task.task_id == "test_task_1"
@@ -150,7 +152,9 @@ class TestWarmupTask:
 
     def test_task_creation_with_optional_params(self):
         """测试使用可选参数创建任务."""
-        data_loader = lambda k: f"data_for_{k}"
+
+        def data_loader(k):
+            return f"data_for_{k}"
 
         task = WarmupTask(
             task_id="test_task_2",
@@ -159,7 +163,7 @@ class TestWarmupTask:
             data_loader=data_loader,
             estimated_size=1024,
             ttl=300,
-            max_retries=5
+            max_retries=5,
         )
 
         assert task.task_id == "test_task_2"
@@ -171,12 +175,15 @@ class TestWarmupTask:
 
     def test_task_repr(self):
         """测试任务字符串表示."""
-        data_loader = lambda k: f"data_for_{k}"
+
+        def data_loader(k):
+            return f"data_for_{k}"
+
         task = WarmupTask(
             task_id="test_task",
             key="test:key",
             priority=PriorityLevel.HIGH,
-            data_loader=data_loader
+            data_loader=data_loader,
         )
         repr_str = repr(task)
         assert "test_task" in repr_str
@@ -188,10 +195,7 @@ class TestWarmupPlan:
 
     def test_plan_creation_with_required_params(self):
         """测试使用必需参数创建计划."""
-        plan = WarmupPlan(
-            plan_id="test_plan_1",
-            strategy=WarmupStrategy.ACCESS_PATTERN
-        )
+        plan = WarmupPlan(plan_id="test_plan_1", strategy=WarmupStrategy.ACCESS_PATTERN)
 
         assert plan.plan_id == "test_plan_1"
         assert plan.strategy == WarmupStrategy.ACCESS_PATTERN
@@ -203,19 +207,22 @@ class TestWarmupPlan:
 
     def test_plan_creation_with_tasks(self):
         """测试创建包含任务的计划."""
-        data_loader = lambda k: f"data_for_{k}"
+
+        def data_loader(k):
+            return f"data_for_{k}"
+
         task = WarmupTask(
             task_id="test_task",
             key="test:key",
             priority=PriorityLevel.HIGH,
-            data_loader=data_loader
+            data_loader=data_loader,
         )
 
         plan = WarmupPlan(
             plan_id="test_plan_2",
             strategy=WarmupStrategy.PREDICTIVE,
             tasks=[task],
-            total_tasks=1
+            total_tasks=1,
         )
 
         assert plan.plan_id == "test_plan_2"
@@ -232,15 +239,15 @@ class TestAccessPatternAnalyzer:
         """测试分析器初始化."""
         analyzer = AccessPatternAnalyzer()
 
-        assert hasattr(analyzer, 'patterns')
+        assert hasattr(analyzer, "patterns")
         assert isinstance(analyzer.patterns, dict)
         assert len(analyzer.patterns) == 0
 
-        assert hasattr(analyzer, 'correlation_matrix')
-        assert hasattr(analyzer, 'session_history')
+        assert hasattr(analyzer, "correlation_matrix")
+        assert hasattr(analyzer, "session_history")
         assert isinstance(analyzer.session_history, list)
 
-        assert hasattr(analyzer, 'lock')
+        assert hasattr(analyzer, "lock")
 
     def test_record_access(self):
         """测试记录访问."""
@@ -333,7 +340,9 @@ class TestIntelligentCacheWarmupManager:
 
     def test_register_data_loader(self, warmup_manager):
         """测试注册数据加载器."""
-        data_loader = lambda k: f"data_for_{k}"
+
+        def data_loader(k):
+            return f"data_for_{k}"
 
         warmup_manager.register_data_loader("test:", data_loader)
 
@@ -342,7 +351,10 @@ class TestIntelligentCacheWarmupManager:
 
     def test_get_data_loader(self, warmup_manager):
         """测试获取数据加载器."""
-        data_loader = lambda k: f"data_for_{k}"
+
+        def data_loader(k):
+            return f"data_for_{k}"
+
         warmup_manager.register_data_loader("test:", data_loader)
 
         # 测试匹配的加载器
@@ -423,14 +435,16 @@ class TestCacheWarmupCore:
 
     def test_task_creation_workflow(self):
         """测试任务创建工作流."""
-        data_loader = lambda k: f"test_data_{k}"
+
+        def data_loader(k):
+            return f"test_data_{k}"
 
         task = WarmupTask(
             task_id="integration_test_task",
             key="integration:test:key",
             priority=PriorityLevel.MEDIUM,
             data_loader=data_loader,
-            estimated_size=512
+            estimated_size=512,
         )
 
         # 验证任务属性
@@ -444,8 +458,7 @@ class TestCacheWarmupCore:
     def test_plan_creation_workflow(self):
         """测试计划创建工作流."""
         plan = WarmupPlan(
-            plan_id="integration_test_plan",
-            strategy=WarmupStrategy.ACCESS_PATTERN
+            plan_id="integration_test_plan", strategy=WarmupStrategy.ACCESS_PATTERN
         )
 
         # 验证计划属性
@@ -478,9 +491,9 @@ class TestPredictiveModel:
         from src.cache.intelligent_cache_warmup import SimpleFrequencyPredictor
 
         predictor = SimpleFrequencyPredictor()
-        assert hasattr(predictor, 'train')
-        assert hasattr(predictor, 'predict')
-        assert hasattr(predictor, 'get_feature_importance')
+        assert hasattr(predictor, "train")
+        assert hasattr(predictor, "predict")
+        assert hasattr(predictor, "get_feature_importance")
 
     def test_predictive_model_interface(self):
         """测试预测模型接口."""
@@ -497,7 +510,7 @@ class TestPredictiveModel:
         training_data = [
             {"key": "test1", "frequency": 0.8, "hour": 14},
             {"key": "test2", "frequency": 0.5, "hour": 9},
-            {"key": "test3", "frequency": 0.3, "hour": 20}
+            {"key": "test3", "frequency": 0.3, "hour": 20},
         ]
 
         result = predictor.train(training_data)
@@ -517,7 +530,7 @@ class TestPredictiveModel:
         # 先训练
         training_data = [
             {"key": "test1", "frequency": 0.8, "hour": 14},
-            {"key": "test2", "frequency": 0.5, "hour": 9}
+            {"key": "test2", "frequency": 0.5, "hour": 9},
         ]
         predictor.train(training_data)
 

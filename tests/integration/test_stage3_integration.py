@@ -68,7 +68,6 @@ class Stage3IntegrationTester:
             self.test_results["errors"].append(f"初始化失败: {e}")
 
     @pytest.mark.asyncio
-
     async def test_cache_functionality(self) -> bool:
         """测试缓存功能"""
         try:
@@ -171,7 +170,6 @@ class Stage3IntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_data_models(self) -> bool:
         """测试数据模型"""
         try:
@@ -298,7 +296,6 @@ class Stage3IntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_collector_integration(self) -> bool:
         """测试数据采集器集成"""
         try:
@@ -362,7 +359,6 @@ class Stage3IntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_cache_invalidations(self) -> bool:
         """测试缓存失效机制"""
         try:
@@ -416,7 +412,6 @@ class Stage3IntegrationTester:
             return False
 
     @pytest.mark.asyncio
-
     async def test_sync_status_tracking(self) -> bool:
         """测试同步状态跟踪"""
         try:
@@ -452,7 +447,7 @@ class Stage3IntegrationTester:
             logger.error(f"  ❌ 同步状态跟踪测试失败: {e}")
             return False
 
-    async def run_all_tests(self) -> Dict[str, Any]:
+    async def run_all_tests(self) -> dict[str, Any]:
         """运行所有测试"""
         logger.debug("🚀 开始第三阶段集成测试")
         logger.debug("=" * 60)
@@ -468,26 +463,18 @@ class Stage3IntegrationTester:
         ]
 
         for test_name, test_func in tests:
-            logger.debug(
-                f"\n🔍 执行 {test_name}测试..."
-            )
+            logger.debug(f"\n🔍 执行 {test_name}测试...")
             self.test_results["total_tests"] += 1
 
             try:
                 if await test_func():
-                    logger.debug(
-                        f"✅ {test_name}测试通过"
-                    )
+                    logger.debug(f"✅ {test_name}测试通过")
                     self.test_results["passed_tests"] += 1
                 else:
-                    logger.debug(
-                        f"❌ {test_name}测试失败"
-                    )
+                    logger.debug(f"❌ {test_name}测试失败")
                     self.test_results["failed_tests"] += 1
             except Exception as e:
-                logger.debug(
-                    f"❌ {test_name}测试异常: {e}"
-                )
+                logger.debug(f"❌ {test_name}测试异常: {e}")
                 self.test_results["failed_tests"] += 1
                 self.test_results["errors"].append(f"{test_name}: {e}")
 
@@ -503,18 +490,10 @@ class Stage3IntegrationTester:
 
         logger.debug("\n" + "=" * 60)
         logger.debug("📊 第三阶段集成测试完成!")
-        logger.debug(
-            f"   总计: {self.test_results['total_tests']}"
-        )
-        logger.debug(
-            f"   通过: {self.test_results['passed_tests']}"
-        )
-        logger.error(
-            f"   失败: {self.test_results['failed_tests']}"
-        )
-        logger.debug(
-            f"   耗时: {duration.total_seconds():.2f} 秒"
-        )
+        logger.debug(f"   总计: {self.test_results['total_tests']}")
+        logger.debug(f"   通过: {self.test_results['passed_tests']}")
+        logger.error(f"   失败: {self.test_results['failed_tests']}")
+        logger.debug(f"   耗时: {duration.total_seconds():.2f} 秒")
 
         if self.test_results["errors"]:
             logger.debug("\n❌ 错误详情:")
@@ -527,27 +506,19 @@ class Stage3IntegrationTester:
                 self.test_results["passed_tests"] / self.test_results["total_tests"]
             ) * 100
 
-        logger.debug(
-            f"\n🎯 成功率: {success_rate:.1f}%"
-        )
+        logger.debug(f"\n🎯 成功率: {success_rate:.1f}%")
 
         if self.test_results["failed_tests"] == 0:
             logger.debug("🎉 所有测试通过！")
             logger.debug("✅ 缓存功能正常工作")
-            logger.debug(
-                "✅ 数据模型创建和转换正确"
-            )
+            logger.debug("✅ 数据模型创建和转换正确")
             logger.debug("✅ 数据采集器集成成功")
             logger.debug("✅ 缓存失效机制有效")
             logger.debug("✅ 同步状态跟踪正常")
-            logger.debug(
-                "🚀 第三阶段集成验证完成！"
-            )
+            logger.debug("🚀 第三阶段集成验证完成！")
             return True
         else:
-            logger.debug(
-                "⚠️  部分测试失败，请检查实现"
-            )
+            logger.debug("⚠️  部分测试失败，请检查实现")
             return False
 
 
@@ -562,9 +533,7 @@ async def main():
         # 运行所有测试
         success = await tester.run_all_tests()
 
-        logger.debug(
-            f"\n退出码: {0 if success else 1}"
-        )
+        logger.debug(f"\n退出码: {0 if success else 1}")
         return success
 
     except Exception as e:

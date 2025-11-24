@@ -583,7 +583,9 @@ class BettingCoreTester:
             (
                 "✅"
                 if result["status"] == "passed"
-                else "⚠️" if result["status"] == "partially_passed" else "❌"
+                else "⚠️"
+                if result["status"] == "partially_passed"
+                else "❌"
             )
 
         # 保存报告

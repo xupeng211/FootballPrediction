@@ -86,15 +86,11 @@ async def check_and_trigger_initial_data_fill() -> None:
                     task = celery_app.send_task(
                         "complete_data_pipeline",
                         queue="default",
-                        priority=5  # 中等优先级
+                        priority=5,  # 中等优先级
                     )
 
-                    logger.info(
-                        f"✅ 成功触发初始化数据采集任务 (任务ID: {task.id})"
-                    )
-                    logger.info(
-                        "📅 数据采集将在后台异步执行，请稍后查看数据状态"
-                    )
+                    logger.info(f"✅ 成功触发初始化数据采集任务 (任务ID: {task.id})")
+                    logger.info("📅 数据采集将在后台异步执行，请稍后查看数据状态")
                     logger.info(
                         "💡 您可以通过 /api/v1/system/status 或 /health 端点检查采集进度"
                     )
@@ -119,8 +115,7 @@ async def check_and_trigger_initial_data_fill() -> None:
         logger.error(f"❌ 冷启动检查失败: {e}")
         logger.error(f"❌ 错误详情: {type(e).__name__}: {str(e)}")
         logger.warning(
-            "⚠️ 系统将继续启动，但无法自动检查数据状态。"
-            "请确保数据管道已手动触发。"
+            "⚠️ 系统将继续启动，但无法自动检查数据状态。请确保数据管道已手动触发。"
         )
 
 

@@ -337,19 +337,13 @@ def main():
 
         try:
             if test_func():
-                logger.debug(
-                    f"✅ {test_name} 测试通过"
-                )
+                logger.debug(f"✅ {test_name} 测试通过")
                 passed += 1
             else:
-                logger.debug(
-                    f"❌ {test_name} 测试失败"
-                )
+                logger.debug(f"❌ {test_name} 测试失败")
                 failed += 1
         except Exception as e:
-            logger.debug(
-                f"❌ {test_name} 测试异常: {e}"
-            )
+            logger.debug(f"❌ {test_name} 测试异常: {e}")
             logger.exception(f"Exception in {test_name}")
             failed += 1
 
@@ -362,14 +356,10 @@ def main():
     logger.debug(f"   通过: {passed}")
     logger.error(f"   失败: {failed}")
     logger.error(f"   总计: {passed + failed}")
-    logger.debug(
-        f"   耗时: {duration.total_seconds():.2f} 秒"
-    )
+    logger.debug(f"   耗时: {duration.total_seconds():.2f} 秒")
 
     if failed == 0:
-        logger.debug(
-            "🎉 所有测试通过！机器学习预测模型基础功能正常"
-        )
+        logger.debug("🎉 所有测试通过！机器学习预测模型基础功能正常")
         logger.debug("\n✅ 已实现功能:")
         logger.debug("   - 泊松分布预测模型")
         logger.debug("   - ELO评分预测模型")
@@ -379,9 +369,7 @@ def main():
         logger.debug("   - 批量预测支持")
         return True
     else:
-        logger.debug(
-            "⚠️  部分测试失败，请检查相关实现"
-        )
+        logger.debug("⚠️  部分测试失败，请检查相关实现")
         return False
 
 

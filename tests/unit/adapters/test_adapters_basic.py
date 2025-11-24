@@ -135,7 +135,6 @@ class MockDataTransformer(DataTransformer):
         else:
             return f"{self.name}_transformed_{data}"
 
-
     def test_adapter_status_enum_values(self):
         """测试适配器状态枚举值"""
         assert AdapterStatus.ACTIVE.value == "active"
@@ -151,7 +150,6 @@ class MockDataTransformer(DataTransformer):
         assert AdapterStatus.INACTIVE in statuses
         assert AdapterStatus.ERROR in statuses
         assert AdapterStatus.MAINTENANCE in statuses
-
 
     def test_mock_adaptee_initialization(self):
         """测试模拟被适配者初始化"""
@@ -189,7 +187,6 @@ class MockDataTransformer(DataTransformer):
         with pytest.raises(TypeError):
             Adaptee()
 
-
     def test_mock_target_initialization(self):
         """测试模拟目标接口初始化"""
         target = MockTarget("TestTarget")
@@ -212,7 +209,6 @@ class MockDataTransformer(DataTransformer):
         """测试目标接口是抽象的"""
         with pytest.raises(TypeError):
             Target()
-
 
     def test_mock_adapter_initialization(self):
         """测试模拟适配器初始化"""
@@ -244,12 +240,10 @@ class MockDataTransformer(DataTransformer):
         assert result["adapter"] == "TestAdapter"
         assert result["request_id"] == 1
 
-
     def test_base_adapter_is_abstract(self):
         """测试基础适配器是抽象的"""
         with pytest.raises(TypeError):
             BaseAdapter()
-
 
     def test_mock_data_transformer_initialization(self):
         """测试模拟数据转换器初始化"""
@@ -281,7 +275,6 @@ class MockDataTransformer(DataTransformer):
         """测试数据转换器接口是抽象的"""
         with pytest.raises(TypeError):
             DataTransformer()
-
 
     def test_composite_adapter_initialization(self):
         """测试组合适配器初始化"""
@@ -415,7 +408,6 @@ class MockDataTransformer(DataTransformer):
         assert metrics["failed_requests"] == 0
         assert metrics["success_rate"] == 0
 
-
     def test_adapter_registry_initialization(self):
         """测试适配器注册表初始化"""
         registry = AdapterRegistry()
@@ -484,7 +476,6 @@ class MockDataTransformer(DataTransformer):
         assert len(registry.adapters) == 0
         assert len(registry.groups) == 0
 
-
     def test_adapter_config_initialization_minimal(self):
         """测试适配器配置最小初始化"""
         config = AdapterConfig("TestAdapter", "test_type")
@@ -525,7 +516,6 @@ class MockDataTransformer(DataTransformer):
         assert config.cache_config is cache_config
         assert config.retry_config is retry_config
 
-
     def test_adapter_group_config_initialization_minimal(self):
         """测试适配器组配置最小初始化"""
         config = AdapterGroupConfig("TestGroup", ["Adapter1", "Adapter2"])
@@ -549,12 +539,10 @@ class MockDataTransformer(DataTransformer):
         assert config.primary_adapter == "Adapter1"
         assert config.fallback_strategy == "parallel"
 
-
     def test_adapter_factory_initialization(self):
         """测试适配器工厂初始化"""
         factory = AdapterFactory()
         assert factory is not None
-
 
     @pytest.mark.asyncio
     async def test_full_adapter_workflow(self):

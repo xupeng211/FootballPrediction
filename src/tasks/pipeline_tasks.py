@@ -57,7 +57,7 @@ async def manual_data_cleaning() -> int:
 
         async with get_async_session() as session:
             # 获取所有未处理的原始数据
-            query = select(RawMatchData).where(RawMatchData.processed == False)
+            query = select(RawMatchData).where(not RawMatchData.processed)
             result = await session.execute(query)
             raw_matches = result.scalars().all()
 
@@ -75,25 +75,31 @@ async def manual_data_cleaning() -> int:
                         country = comp.get("area", {}).get("name", "Unknown Country")
 
                         # 检查是否已存在
-                        existing_query = text("SELECT id FROM leagues WHERE name = :name AND country = :country")
-                        result = await session.execute(existing_query, {"name": league_name, "country": country})
+                        existing_query = text(
+                            "SELECT id FROM leagues WHERE name = :name AND country = :country"
+                        )
+                        result = await session.execute(
+                            existing_query, {"name": league_name, "country": country}
+                        )
                         existing_league = result.scalar_one_or_none()
 
                         if not existing_league:
                             # 创建新league
                             new_league = League(
-                                name=league_name,
-                                country=country,
-                                is_active=True
+                                name=league_name, country=country, is_active=True
                             )
                             session.add(new_league)
                             await session.flush()  # 获取生成的ID
                             league_id_map[str(comp.get("id"))] = new_league.id
                             league_count += 1
-                            logger.debug(f"✅ 创建联赛: {league_name} (ID: {new_league.id})")
+                            logger.debug(
+                                f"✅ 创建联赛: {league_name} (ID: {new_league.id})"
+                            )
                         else:
                             league_id_map[str(comp.get("id"))] = existing_league
-                            logger.debug(f"ℹ️  联赛已存在: {league_name} (ID: {existing_league})")
+                            logger.debug(
+                                f"ℹ️  联赛已存在: {league_name} (ID: {existing_league})"
+                            )
 
                 except Exception as e:
                     logger.error(f"❌ 处理league失败: {e}")
@@ -112,13 +118,19 @@ async def manual_data_cleaning() -> int:
                     if "homeTeam" in raw_data:
                         home_team = raw_data["homeTeam"]
                         team_name = home_team.get("name", "Unknown Team")
-                        country = raw_data.get("area", {}).get("name", "Unknown Country")
+                        country = raw_data.get("area", {}).get(
+                            "name", "Unknown Country"
+                        )
                         team_id = str(home_team.get("id"))
 
                         if team_id not in team_id_map:
                             # 检查是否已存在
-                            existing_query = text("SELECT id FROM teams WHERE name = :name")
-                            result = await session.execute(existing_query, {"name": team_name})
+                            existing_query = text(
+                                "SELECT id FROM teams WHERE name = :name"
+                            )
+                            result = await session.execute(
+                                existing_query, {"name": team_name}
+                            )
                             existing_team = result.scalar_one_or_none()
 
                             if not existing_team:
@@ -132,22 +144,32 @@ async def manual_data_cleaning() -> int:
                                 await session.flush()
                                 team_id_map[team_id] = new_team.id
                                 team_count += 1
-                                logger.debug(f"✅ 创建球队: {team_name} (ID: {new_team.id})")
+                                logger.debug(
+                                    f"✅ 创建球队: {team_name} (ID: {new_team.id})"
+                                )
                             else:
                                 team_id_map[team_id] = existing_team
-                                logger.debug(f"ℹ️  球队已存在: {team_name} (ID: {existing_team})")
+                                logger.debug(
+                                    f"ℹ️  球队已存在: {team_name} (ID: {existing_team})"
+                                )
 
                     # 处理客队
                     if "awayTeam" in raw_data:
                         away_team = raw_data["awayTeam"]
                         team_name = away_team.get("name", "Unknown Team")
-                        country = raw_data.get("area", {}).get("name", "Unknown Country")
+                        country = raw_data.get("area", {}).get(
+                            "name", "Unknown Country"
+                        )
                         team_id = str(away_team.get("id"))
 
                         if team_id not in team_id_map:
                             # 检查是否已存在
-                            existing_query = text("SELECT id FROM teams WHERE name = :name")
-                            result = await session.execute(existing_query, {"name": team_name})
+                            existing_query = text(
+                                "SELECT id FROM teams WHERE name = :name"
+                            )
+                            result = await session.execute(
+                                existing_query, {"name": team_name}
+                            )
                             existing_team = result.scalar_one_or_none()
 
                             if not existing_team:
@@ -161,10 +183,14 @@ async def manual_data_cleaning() -> int:
                                 await session.flush()
                                 team_id_map[team_id] = new_team.id
                                 team_count += 1
-                                logger.debug(f"✅ 创建球队: {team_name} (ID: {new_team.id})")
+                                logger.debug(
+                                    f"✅ 创建球队: {team_name} (ID: {new_team.id})"
+                                )
                             else:
                                 team_id_map[team_id] = existing_team
-                                logger.debug(f"ℹ️  球队已存在: {team_name} (ID: {existing_team})")
+                                logger.debug(
+                                    f"ℹ️  球队已存在: {team_name} (ID: {existing_team})"
+                                )
 
                 except Exception as e:
                     logger.error(f"❌ 处理team失败: {e}")
@@ -181,8 +207,12 @@ async def manual_data_cleaning() -> int:
 
                     # 获取对应的内部ID
                     external_league_id = str(match_data.get("external_league_id", 0))
-                    external_home_team_id = str(match_data.get("external_home_team_id", 0))
-                    external_away_team_id = str(match_data.get("external_away_team_id", 0))
+                    external_home_team_id = str(
+                        match_data.get("external_home_team_id", 0)
+                    )
+                    external_away_team_id = str(
+                        match_data.get("external_away_team_id", 0)
+                    )
 
                     # 映射到内部ID
                     league_internal_id = league_id_map.get(external_league_id)
@@ -190,8 +220,16 @@ async def manual_data_cleaning() -> int:
                     away_team_internal_id = team_id_map.get(external_away_team_id)
 
                     # 验证所有必需的ID都存在
-                    if not all([league_internal_id, home_team_internal_id, away_team_internal_id]):
-                        logger.warning(f"⚠️  跳过比赛 {match_data.get('external_match_id')}，缺少关联的ID")
+                    if not all(
+                        [
+                            league_internal_id,
+                            home_team_internal_id,
+                            away_team_internal_id,
+                        ]
+                    ):
+                        logger.warning(
+                            f"⚠️  跳过比赛 {match_data.get('external_match_id')}，缺少关联的ID"
+                        )
                         continue
 
                     # 确保match_date是datetime对象
@@ -201,8 +239,11 @@ async def manual_data_cleaning() -> int:
                         if isinstance(match_time_str, str):
                             try:
                                 from datetime import datetime
+
                                 # 解析ISO格式时间字符串并转换为naive datetime
-                                aware_dt = datetime.fromisoformat(match_time_str.replace("Z", "+00:00"))
+                                aware_dt = datetime.fromisoformat(
+                                    match_time_str.replace("Z", "+00:00")
+                                )
                                 match_date = aware_dt.replace(tzinfo=None)
                             except (ValueError, TypeError):
                                 logger.warning(f"无法解析match_time: {match_time_str}")
@@ -221,8 +262,12 @@ async def manual_data_cleaning() -> int:
                         season=str(match_data.get("season", "")),
                         venue=raw_match_data.get("area", {}).get("name"),
                         # 比分信息
-                        home_score=raw_match_data.get("score", {}).get("fullTime", {}).get("home", 0),
-                        away_score=raw_match_data.get("score", {}).get("fullTime", {}).get("away", 0),
+                        home_score=raw_match_data.get("score", {})
+                        .get("fullTime", {})
+                        .get("home", 0),
+                        away_score=raw_match_data.get("score", {})
+                        .get("fullTime", {})
+                        .get("away", 0),
                     )
 
                     session.add(match)
@@ -239,13 +284,15 @@ async def manual_data_cleaning() -> int:
                         logger.info(f"✅ 已处理 {cleaned_count} 条match记录")
 
                 except Exception as match_error:
-                    logger.error(f"❌ 处理比赛 {raw_match.external_id} 失败: {match_error}")
+                    logger.error(
+                        f"❌ 处理比赛 {raw_match.external_id} 失败: {match_error}"
+                    )
                     continue
 
             # 提交剩余的事务
             await session.commit()
 
-        logger.info(f"🎉 级联数据清洗完成！")
+        logger.info("🎉 级联数据清洗完成！")
         logger.info(f"   - 新增leagues: {league_count}")
         logger.info(f"   - 新增teams: {team_count}")
         logger.info(f"   - 新增matches: {cleaned_count}")
@@ -255,6 +302,7 @@ async def manual_data_cleaning() -> int:
     except Exception as e:
         logger.error(f"❌ 级联数据清洗失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 0
 
@@ -277,9 +325,9 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
 
         # 修复字段映射：采集任务返回的是 total_collected 或 records_collected
         collected_records = (
-            collection_result.get("records_collected") or
-            collection_result.get("total_collected") or
-            collection_result.get("collected_records", 0)
+            collection_result.get("records_collected")
+            or collection_result.get("total_collected")
+            or collection_result.get("collected_records", 0)
         )
 
         logger.info(f"采集到的原始数据记录数: {collected_records}")
@@ -297,6 +345,7 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
                     return result
 
                 import asyncio
+
                 clean_result = asyncio.run(clean_data())
                 cleaned_count = clean_result.get("cleaned_records", 0)
                 logger.info(f"✅ 真实数据清洗完成，清洗记录数: {cleaned_count}")
@@ -305,6 +354,7 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
                 logger.warning(f"⚠️ 数据清洗器执行失败，尝试手动清洗: {clean_error}")
                 # 手动清洗逻辑：将raw_match_data中的数据导入到matches表
                 import asyncio
+
                 cleaned_count = asyncio.run(manual_data_cleaning())
 
         cleaning_result = {
@@ -321,6 +371,7 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
     except Exception as e:
         logger.error(f"数据清洗任务失败: {e}")
         import traceback
+
         logger.error(f"🔍 完整错误堆栈: {traceback.format_exc()}")
         return {
             "status": "error",

@@ -10,10 +10,11 @@ from datetime import datetime
 def load_github_token():
     """加载GitHub token."""
     try:
-        with open('.github_token') as f:
+        with open(".github_token") as f:
             return f.read().strip()
     except FileNotFoundError:
         return None
+
 
 def update_github_issue():
     """更新GitHub Issue #210."""
@@ -162,7 +163,6 @@ def update_github_issue():
     # 这里可以添加实际的GitHub API调用
     # 为了演示，我们保存更新内容到文件
 
-
     # 保存更新内容
     update_data = {
         "issue_number": 210,
@@ -175,16 +175,16 @@ def update_github_issue():
             "completion_rate": 174,
             "test_files_created": 15,
             "tools_created": 7,
-            "pass_rate": 91.6
+            "pass_rate": 91.6,
         },
-        "update_content": issue_update["body"]
+        "update_content": issue_update["body"],
     }
 
-    with open('github_issue_210_update.json', 'w', encoding='utf-8') as f:
+    with open("github_issue_210_update.json", "w", encoding="utf-8") as f:
         json.dump(update_data, f, indent=2, ensure_ascii=False)
 
-
     return True
+
 
 if __name__ == "__main__":
     success = update_github_issue()

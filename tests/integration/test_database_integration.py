@@ -24,7 +24,6 @@ class TestDatabaseModels:
     """数据库模型集成测试"""
 
     @pytest.mark.asyncio
-
     async def test_team_crud_operations(self, test_db_session: AsyncSession):
         """测试球队CRUD操作"""
         # Create
@@ -65,7 +64,6 @@ class TestDatabaseModels:
         assert result.scalar_one_or_none() is None
 
     @pytest.mark.asyncio
-
     async def test_match_crud_operations(
         self, test_db_session: AsyncSession, sample_teams, sample_match
     ):
@@ -98,12 +96,10 @@ class TestDatabaseModels:
         assert match_with_team[1].id == teams[0].id
 
     @pytest.mark.asyncio
-
     async def test_prediction_crud_operations(
         self, test_db_session: AsyncSession, sample_match
     ):
         """测试预测CRUD操作"""
-        match = sample_match
 
         # Create prediction - SQLAlchemy模型只有基础字段
         prediction = Prediction()
@@ -131,7 +127,6 @@ class TestDatabaseTransactions:
     """数据库事务集成测试"""
 
     @pytest.mark.asyncio
-
     async def test_transaction_commit(self, test_db_session: AsyncSession):
         """测试事务提交"""
         # 开始事务
@@ -150,7 +145,6 @@ class TestDatabaseTransactions:
         assert len(teams) == 2
 
     @pytest.mark.asyncio
-
     async def test_transaction_rollback(self, test_db_session: AsyncSession):
         """测试事务回滚"""
         try:
@@ -170,7 +164,6 @@ class TestDatabaseTransactions:
         assert result.scalar_one_or_none() is None
 
     @pytest.mark.asyncio
-
     async def test_nested_transactions(self, test_db_session: AsyncSession):
         """测试嵌套事务"""
         async with test_db_session.begin():
@@ -207,7 +200,6 @@ class TestDatabaseRelationships:
     """数据库关系集成测试"""
 
     @pytest.mark.asyncio
-
     async def test_match_team_relationship(
         self, test_db_session: AsyncSession, sample_teams, sample_match
     ):
@@ -230,12 +222,10 @@ class TestDatabaseRelationships:
         assert fetched_match.away_team_id == teams[1].id
 
     @pytest.mark.asyncio
-
     async def test_prediction_match_relationship(
         self, test_db_session: AsyncSession, sample_match, sample_predictions
     ):
         """测试预测与比赛关系"""
-        match = sample_match
 
         # 创建多个预测 - SQLAlchemy模型只有基础字段
         predictions = [
@@ -263,7 +253,6 @@ class TestDatabaseConstraints:
     """数据库约束集成测试"""
 
     @pytest.mark.asyncio
-
     async def test_unique_constraints(self, test_db_session: AsyncSession):
         """测试唯一约束"""
         # 创建第一个球队
@@ -281,7 +270,6 @@ class TestDatabaseConstraints:
             await test_db_session.commit()
 
     @pytest.mark.asyncio
-
     async def test_foreign_key_constraints(self, test_db_session: AsyncSession):
         """测试外键约束"""
         # SQLAlchemy的Prediction模型没有外键约束，只有基础字段
@@ -293,7 +281,6 @@ class TestDatabaseConstraints:
         await test_db_session.commit()
 
     @pytest.mark.asyncio
-
     async def test_not_null_constraints(self, test_db_session: AsyncSession):
         """测试非空约束"""
         # 尝试创建没有必需字段的球队
@@ -313,7 +300,6 @@ class TestDatabasePerformance:
     """数据库性能集成测试"""
 
     @pytest.mark.asyncio
-
     async def test_bulk_insert_performance(self, test_db_session: AsyncSession):
         """测试批量插入性能"""
         import time
@@ -348,7 +334,6 @@ class TestDatabasePerformance:
         assert len(inserted_teams) == 100
 
     @pytest.mark.asyncio
-
     async def test_query_performance(self, test_db_session: AsyncSession):
         """测试查询性能"""
         import time

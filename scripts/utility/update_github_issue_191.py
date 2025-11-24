@@ -231,16 +231,16 @@ python3 scripts/tool_chains/deployment_tool_chain.py
             "libraries_created": 3,
             "tool_chains_created": 2,
             "average_quality_score": 56.3,
-            "integration_opportunities": 2
+            "integration_opportunities": 2,
         },
-        "update_content": issue_update["body"]
+        "update_content": issue_update["body"],
     }
 
-    with open('github_issue_191_update.json', 'w', encoding='utf-8') as f:
+    with open("github_issue_191_update.json", "w", encoding="utf-8") as f:
         json.dump(update_data, f, indent=2, ensure_ascii=False)
 
-
     return True
+
 
 if __name__ == "__main__":
     success = update_github_issue_191()

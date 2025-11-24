@@ -205,7 +205,6 @@ except ImportError:
 
             return datetime.now() - match.start_time
 
-
     @pytest.fixture
     def mock_home_team(self):
         """模拟主队"""

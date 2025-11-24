@@ -30,6 +30,7 @@ try:
     CAN_IMPORT = True
 except ImportError:
     CAN_IMPORT = False
+
     # 创建一个模拟的BaseRepository类
     class BaseRepository:
         def __init__(self, *args, **kwargs):
@@ -208,7 +209,6 @@ class MockDatabaseManager:
     def get_async_session(self):
         """获取异步会话上下文管理器"""
         return MockAsyncSessionContext(self.session)
-
 
     @pytest_asyncio.fixture
     async def mock_db_manager(self):
@@ -508,7 +508,6 @@ class MockDatabaseManager:
 
         assert result is False
 
-
     @pytest.mark.asyncio
     async def test_database_manager_initialization(self):
         """测试数据库管理器初始化"""
@@ -544,7 +543,6 @@ class MockDatabaseManager:
 
         # 验证会话已被移除
         assert session not in db_manager.sessions
-
 
     @pytest_asyncio.fixture
     async def mock_db_manager(self):
