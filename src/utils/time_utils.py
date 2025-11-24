@@ -3,15 +3,13 @@
 提供时间和日期处理相关的工具函数.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 try:
     from datetime import UTC
 except ImportError:
     # For Python < 3.11
-    from datetime import timezone
-
-    UTC = UTC
+    UTC = timezone.utc
 
 try:
     from zoneinfo import ZoneInfo
