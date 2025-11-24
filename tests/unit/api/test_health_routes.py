@@ -6,7 +6,9 @@ Health Check Routes API Tests
 """
 
 from datetime import datetime
+from unittest.mock import patch, MagicMock
 
+import pytest
 from fastapi.testclient import TestClient
 
 from src.api.health.routes import router
@@ -24,8 +26,19 @@ class TestHealthRoutes:
         self.app.include_router(router, prefix="/api")
         self.client = TestClient(self.app)
 
-    def test_health_check_basic(self):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    def test_health_check_basic(self, mock_get_db_manager, mock_datetime):
         """测试基础健康检查"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
+        # Mock时间戳
+        mock_now = datetime(2024, 1, 1, 12, 0, 0)
+        mock_datetime.utcnow.return_value = mock_now
+
         response = self.client.get("/api/health/")
 
         assert response.status_code == 200
@@ -35,21 +48,41 @@ class TestHealthRoutes:
         assert "timestamp" in data
         assert data["service"] == "football-prediction-api"
         assert "version" in data
+        assert data["timestamp"] == mock_now.isoformat()
+        assert data["checks"]["database"]["status"] == "healthy"
 
         # 验证时间戳格式
         datetime.fromisoformat(data["timestamp"])
 
-    def test_health_check_response_structure(self):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    def test_health_check_response_structure(self, mock_get_db_manager, mock_datetime):
         """测试健康检查响应结构"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
+        # Mock时间戳
+        mock_now = datetime(2024, 1, 1, 12, 0, 0)
+        mock_datetime.utcnow.return_value = mock_now
+
         response = self.client.get("/api/health/")
 
-        expected_keys = {"status", "timestamp", "service", "version"}
+        expected_keys = {"status", "timestamp", "service", "version", "checks"}
         actual_keys = set(response.json().keys())
 
         assert expected_keys.issubset(actual_keys)
 
-    def test_health_check_service_info(self):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    def test_health_check_service_info(self, mock_get_db_manager, mock_datetime):
         """测试服务信息"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
         response = self.client.get("/api/health/")
         data = response.json()
 
@@ -57,42 +90,88 @@ class TestHealthRoutes:
         assert isinstance(data["version"], str)
         assert len(data["version"]) > 0
 
-    def test_detailed_health_check_basic(self):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    @patch('redis.from_url')
+    def test_detailed_health_check_basic(self, mock_redis_from_url, mock_get_db_manager, mock_datetime):
         """测试详细健康检查基础功能"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
+        # Mock Redis客户端
+        mock_redis_client = MagicMock()
+        mock_redis_client.ping.return_value = True
+        mock_redis_from_url.return_value = mock_redis_client
+
         response = self.client.get("/api/health/detailed")
 
         assert response.status_code == 200
         data = response.json()
 
-        assert data["status"] in ["healthy", "unhealthy"]
+        assert data["status"] == "healthy"
         assert "timestamp" in data
         assert "service" in data
         assert "version" in data
-        assert "components" in data
+        assert "checks" in data
 
-    def test_detailed_health_check_response_structure(self):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    @patch('redis.from_url')
+    def test_detailed_health_check_response_structure(self, mock_redis_from_url, mock_get_db_manager, mock_datetime):
         """测试详细健康检查响应结构"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
+        # Mock Redis客户端
+        mock_redis_client = MagicMock()
+        mock_redis_client.ping.return_value = True
+        mock_redis_from_url.return_value = mock_redis_client
+
         response = self.client.get("/api/health/detailed")
 
-        expected_keys = {"status", "timestamp", "service", "version", "components"}
+        expected_keys = {"status", "timestamp", "service", "version", "checks"}
         actual_keys = set(response.json().keys())
 
         assert expected_keys == actual_keys
 
-    def test_detailed_health_check_components(self):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    @patch('redis.from_url')
+    def test_detailed_health_check_components(self, mock_redis_from_url, mock_get_db_manager, mock_datetime):
         """测试详细健康检查组件信息"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
+        # Mock Redis客户端
+        mock_redis_client = MagicMock()
+        mock_redis_client.ping.return_value = True
+        mock_redis_from_url.return_value = mock_redis_client
+
         response = self.client.get("/api/health/detailed")
         data = response.json()
 
-        components = data["components"]
+        components = data["checks"]
         assert isinstance(components, dict)
 
         # 应该包含数据库和Redis组件
         assert "database" in components
         assert "redis" in components
 
-    def test_health_check_timestamp_validity(self):
+    @patch('src.api.health.routes.datetime')
+    @patch('src.database.definitions.get_database_manager')
+    def test_health_check_timestamp_validity(self, mock_get_db_manager, mock_datetime):
         """测试健康检查时间戳有效性"""
+        # Mock数据库管理器为已初始化状态
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
         response = self.client.get("/api/health/")
         data = response.json()
 
