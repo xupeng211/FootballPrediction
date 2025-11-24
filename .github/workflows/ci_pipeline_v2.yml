@@ -168,7 +168,6 @@ jobs:
           echo "⚠️ 覆盖率数据不存在"
           echo "🔓 继续构建 (覆盖率不再阻塞CI)"
         fi
-        fi
 
     - name: Upload test results
       if: always()
