@@ -333,20 +333,26 @@ async def create_prediction(match_id: int, request: PredictionRequest | None = N
     logger.info(f"开始为比赛 {match_id} 生成预测")
 
     try:
-        # ISSUE: 需要集成机器学习预测引擎来生成实际预测
-        # from src.api.dependencies import get_prediction_engine
-        # engine = await get_prediction_engine()
-        # result = await engine.predict(match_id)
+        # 调用真实的推理服务
+        from src.services.inference_service import inference_service
 
-        # 模拟预测结果
-        model_version = request.model_version if request else "default"
+        # 使用推理服务进行预测
+        prediction_result = await inference_service.predict_match(match_id)
+
+        if not prediction_result.get("success", False):
+            raise HTTPException(
+                status_code=404, detail=prediction_result.get("error", "预测生成失败")
+            )
+
+        # 转换为API响应格式
+        model_version = request.model_version if request else prediction_result.get("model_version", "default")
         result = PredictionResult(
             match_id=match_id,
-            home_win_prob=0.50,
-            draw_prob=0.28,
-            away_win_prob=0.22,
-            predicted_outcome="home",
-            confidence=0.78,
+            home_win_prob=prediction_result.get("home_win_prob", 0.33),
+            draw_prob=prediction_result.get("draw_prob", 0.33),
+            away_win_prob=prediction_result.get("away_win_prob", 0.34),
+            predicted_outcome=prediction_result.get("predicted_outcome", "home"),
+            confidence=prediction_result.get("confidence", 0.5),
             model_version=model_version,
             predicted_at=datetime.utcnow(),
         )

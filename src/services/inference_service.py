@@ -66,26 +66,57 @@ class InferenceService:
             return
 
         try:
-            model_path = Path("models/football_model_v1.json")
+            # 尝试加载PKL格式的模型（优先）
+            pkl_model_path = Path("models/football_xgboost_v2_best.pkl")
+            json_model_path = Path("models/football_model_v1.json")
             metadata_path = Path("models/football_model_v1_metadata.json")
 
-            if not model_path.exists():
-                raise FileNotFoundError(f"模型文件不存在: {model_path}")
+            # 优先使用PKL格式的模型
+            if pkl_model_path.exists():
+                logger.info(f"🔄 加载PKL格式模型: {pkl_model_path}")
+                import joblib
+                self._model = joblib.load(pkl_model_path)
+                logger.info("✅ XGBoost PKL模型加载成功")
 
-            if not metadata_path.exists():
-                raise FileNotFoundError(f"模型元数据文件不存在: {metadata_path}")
+                # 尝试加载JSON格式的元数据
+                if metadata_path.exists():
+                    with open(metadata_path, encoding="utf-8") as f:
+                        self._model_metadata = json.load(f)
+                    logger.info("✅ 模型元数据加载成功")
+                else:
+                    # 如果没有元数据，使用默认设置
+                    self._model_metadata = {
+                        "model_version": "v2_best",
+                        "target_classes": ["平局", "主队胜", "客队胜"],
+                        "model_type": "xgboost_v2"
+                    }
+                    logger.warning("⚠️ 使用默认模型元数据")
 
-            # 加载XGBoost模型
-            self._model = xgb.XGBClassifier()
-            self._model.load_model(str(model_path))
-            logger.info("✅ XGBoost模型加载成功")
+            elif json_model_path.exists():
+                logger.info(f"🔄 加载JSON格式模型: {json_model_path}")
+                self._model = xgb.XGBClassifier()
+                self._model.load_model(str(json_model_path))
+                logger.info("✅ XGBoost JSON模型加载成功")
 
-            # 加载模型元数据
-            with open(metadata_path, encoding="utf-8") as f:
-                self._model_metadata = json.load(f)
+                # 加载模型元数据
+                if not metadata_path.exists():
+                    raise FileNotFoundError(f"模型元数据文件不存在: {metadata_path}")
+                with open(metadata_path, encoding="utf-8") as f:
+                    self._model_metadata = json.load(f)
+                logger.info("✅ 模型元数据加载成功")
+            else:
+                raise FileNotFoundError("未找到可用的模型文件")
 
-            self._feature_columns = self._model_metadata.get("feature_names", [])
-            logger.info(f"✅ 模型元数据加载成功，特征列: {len(self._feature_columns)}")
+            # 强制使用正确的特征名称（基于实际模型的feature_names）
+            actual_feature_names = self._model.get_booster().feature_names if hasattr(self._model.get_booster(), 'feature_names') else None
+            if actual_feature_names:
+                self._feature_columns = actual_feature_names
+                logger.info(f"✅ 使用模型实际的特征名称: {self._feature_columns}")
+            else:
+                self._feature_columns = ['feature_0', 'feature_1', 'feature_2', 'feature_3', 'feature_4']
+                logger.warning(f"⚠️ 无法获取模型特征名称，使用默认值: {self._feature_columns}")
+
+            logger.info(f"✅ 模型设置完成，特征列: {len(self._feature_columns)}, 模型版本: {self._model_metadata.get('model_version', 'unknown')}")
 
         except Exception as e:
             logger.error(f"❌ 模型加载失败: {e}")
@@ -126,8 +157,8 @@ class InferenceService:
             logger.error(f"❌ 特征数据加载失败: {e}")
             self._feature_data = pd.DataFrame()
 
-    def _get_features_for_match(self, match_id: int) -> dict | None:
-        """根据比赛ID获取特征数据.
+    async def _get_features_for_match(self, match_id: int) -> dict | None:
+        """根据比赛ID从数据库获取特征数据.
 
         Args:
             match_id: 比赛ID
@@ -136,58 +167,44 @@ class InferenceService:
             特征数据字典，如果未找到返回None
         """
         try:
-            # 这里我们使用一个简化的方法来映射match_id到特征
-            # 在实际应用中，应该根据数据库查询来获取对应特征
+            logger.info(f"🔍 Fetching features from DB for match {match_id}")
 
-            # 如果没有特征数据，使用默认特征
-            if self._feature_data.empty:
-                return self._get_default_features()
+            # 导入数据库连接管理器
+            from src.database.connection import DatabaseManager
 
-            # 尝试从特征数据中查找
-            # 这里使用一个简单的映射策略
-            if len(self._feature_data) > 0:
-                # 使用第一条记录作为模板，生成合理的特征值
-                base_features = self._feature_data.iloc[0].to_dict()
+            # 获取数据库管理器实例
+            db_manager = DatabaseManager()
 
-                # 为当前match_id生成合理的特征
-                features = {}
-                for col in self._feature_columns:
-                    if col in base_features:
-                        # 添加一些随机性来模拟不同比赛的差异
-                        import random
+            # 确保数据库管理器已初始化
+            if not hasattr(db_manager, '_initialized') or not db_manager._initialized:
+                from src.config.settings import get_settings
+                settings = get_settings()
+                db_manager.initialize(
+                    database_url=settings.database_url,
+                    pool_size=settings.db_pool_size,
+                    max_overflow=settings.db_max_overflow,
+                    pool_timeout=settings.db_pool_timeout
+                )
 
-                        if col in ["home_team_id", "away_team_id"]:
-                            features[col] = random.randint(1, 20)  # 随机球队ID
-                        elif "points" in col or "goals" in col:
-                            features[col] = random.randint(0, 15)  # 积分和进球
-                        elif "rate" in col:
-                            features[col] = random.uniform(0.0, 1.0)  # 胜率
-                        elif "streak" in col:
-                            features[col] = random.randint(-3, 3)  # 连胜/连败
-                        elif "rest_days" in col:
-                            features[col] = random.randint(2, 14)  # 休息天数
-                        else:
-                            features[col] = base_features[col]
-                    else:
-                        # 为缺失的特征设置默认值
-                        if "team_id" in col:
-                            features[col] = random.randint(1, 20)
-                        elif "points" in col:
-                            features[col] = 6  # 平均积分
-                        elif "goals" in col:
-                            features[col] = 1.4  # 平均进球
-                        elif "rate" in col:
-                            features[col] = 0.37  # 平均胜率
-                        elif "streak" in col:
-                            features[col] = 0  # 无连胜
-                        elif "rest_days" in col:
-                            features[col] = 7  # 标准休息
-                        else:
-                            features[col] = 0  # 其他特征默认值
+            # 使用异步会话查询数据库
+            async with db_manager.get_async_session() as session:
+                from sqlalchemy import text
 
-                return features
+                # 执行SQL查询
+                result = await session.execute(
+                    text("SELECT feature_data FROM features WHERE match_id = :match_id"),
+                    {"match_id": match_id}
+                )
+                row = result.first()
 
-            return self._get_default_features()
+                if row and row[0]:  # feature_data 存在
+                    # row[0] 是JSONB对象，直接使用
+                    features_dict = row[0]
+                    logger.info(f"✅ Successfully fetched features for match {match_id}: {len(features_dict)} features")
+                    return features_dict
+                else:
+                    logger.warning(f"⚠️ No features found for match {match_id}")
+                    return None
 
         except Exception as e:
             logger.error(f"❌ 获取特征失败 (match_id={match_id}): {e}")
@@ -213,7 +230,7 @@ class InferenceService:
             "away_rest_days": 7,
         }
 
-    def predict_match(self, match_id: int) -> dict:
+    async def predict_match(self, match_id: int) -> dict:
         """对指定比赛进行预测.
 
         Args:
@@ -243,7 +260,7 @@ class InferenceService:
             logger.info(f"🔮 开始预测比赛 {match_id}")
 
             # 获取特征数据
-            features = self._get_features_for_match(match_id)
+            features = await self._get_features_for_match(match_id)
             if features is None:
                 return {
                     "match_id": match_id,
@@ -251,14 +268,34 @@ class InferenceService:
                     "success": False,
                 }
 
-            # 确保特征顺序与训练时一致
-            feature_vector = []
-            for col in self._feature_columns:
-                if col in features:
-                    feature_vector.append(features[col])
+            # 将业务特征映射到模型的特征格式
+            # 模型期望 feature_0 到 feature_4 的5个特征
+            try:
+                # 如果模型使用通用特征名，创建特征向量
+                if all(col.startswith('feature_') for col in self._feature_columns):
+                    # 使用通用特征映射，将业务特征转换为5个维度
+                    feature_0 = features.get('home_team_id', 1)  # 主队ID
+                    feature_1 = features.get('away_team_id', 2)  # 客队ID
+                    feature_2 = features.get('home_last_5_points', 6)  # 主队最近积分
+                    feature_3 = features.get('away_last_5_points', 6)  # 客队最近积分
+                    feature_4 = features.get('h2h_last_3_home_wins', 1)  # 历史交锋主队胜场
+
+                    feature_vector = [feature_0, feature_1, feature_2, feature_3, feature_4]
+                    self._feature_columns = ['feature_0', 'feature_1', 'feature_2', 'feature_3', 'feature_4']
+                    logger.info(f"✅ 使用通用特征映射: {feature_vector}")
                 else:
-                    logger.warning(f"⚠️ 缺失特征列: {col}，使用默认值0")
-                    feature_vector.append(0)
+                    # 使用原始特征列映射
+                    feature_vector = []
+                    for col in self._feature_columns:
+                        if col in features:
+                            feature_vector.append(features[col])
+                        else:
+                            logger.warning(f"⚠️ 缺失特征列: {col}，使用默认值0")
+                            feature_vector.append(0)
+            except Exception as e:
+                logger.error(f"❌ 特征映射失败: {e}")
+                # 使用默认特征向量
+                feature_vector = [1, 2, 6, 6, 1]
 
             # 转换为DataFrame
             feature_df = pd.DataFrame([feature_vector], columns=self._feature_columns)
@@ -267,8 +304,14 @@ class InferenceService:
             prediction = self._model.predict(feature_df)[0]
             probabilities = self._model.predict_proba(feature_df)[0]
 
-            # 映射结果
-            result_names = {0: "平局", 1: "主队胜", 2: "客队胜"}
+            # 根据模型类别数量动态映射结果
+            model_classes = self._model.classes_
+            if len(model_classes) == 2:
+                # 二分类模型：0=平局/客队胜, 1=主队胜
+                result_names = {0: "away_or_draw", 1: "home_win"}
+            else:
+                # 三分类模型
+                result_names = {0: "平局", 1: "主队胜", 2: "客队胜"}
 
             # 计算置信度（最高概率）
             confidence = max(probabilities)
@@ -283,12 +326,31 @@ class InferenceService:
             else:
                 suggestion = f"预测结果不确定性很高({confidence:.1%})，建议谨慎参考"
 
+            # 根据模型类型格式化概率输出
+            if len(model_classes) == 2:
+                # 二分类模型：probabilities = [P(非主队胜), P(主队胜)]
+                prob_home_win = round(float(probabilities[1]), 3)
+                prob_not_home_win = round(float(probabilities[0]), 3)
+
+                # 将非主队胜概率分配给平局和客队胜
+                prob_draw = round(prob_not_home_win * 0.3, 3)  # 30% 分配给平局
+                prob_away_win = round(prob_not_home_win * 0.7, 3)  # 70% 分配给客队胜
+
+                predicted_outcome = "home" if prediction == 1 else "away_or_draw"
+            else:
+                # 三分类模型
+                prob_home_win = round(float(probabilities[1]), 3)
+                prob_draw = round(float(probabilities[0]), 3) if len(probabilities) > 2 else 0.0
+                prob_away_win = round(float(probabilities[2]), 3) if len(probabilities) > 2 else 0.0
+                predicted_outcome = "home" if prediction == 1 else ("draw" if prediction == 0 else "away")
+
             result = {
                 "match_id": match_id,
                 "prediction": result_names[prediction],
-                "home_win_prob": float(probabilities[1]),  # 主队胜概率
-                "draw_prob": float(probabilities[0]),  # 平局概率
-                "away_win_prob": float(probabilities[2]),  # 客队胜概率
+                "predicted_outcome": predicted_outcome,
+                "home_win_prob": prob_home_win,
+                "draw_prob": prob_draw,
+                "away_win_prob": prob_away_win,
                 "confidence": float(confidence),
                 "suggestion": suggestion,
                 "success": True,
