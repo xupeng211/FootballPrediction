@@ -50,6 +50,80 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+async def check_and_trigger_initial_data_fill() -> None:
+    """
+    冷启动自动填充机制.
+
+    检查数据库中是否已有数据，如果是空数据库则自动触发数据采集。
+    这确保了全新部署的用户无需等待次日凌晨的定时任务。
+    """
+    try:
+        logger.info("🔍 检查数据库状态以确定是否需要冷启动填充...")
+
+        # 获取数据库连接
+        from src.database.definitions import get_database_manager
+        from sqlalchemy import text
+
+        db_manager = get_database_manager()
+
+        # 使用同步连接检查matches表
+        with db_manager.get_sync_connection() as conn:
+            # 查询matches表的记录数
+            result = conn.execute(text("SELECT COUNT(*) FROM matches"))
+            match_count = result.scalar()
+
+            logger.info(f"📊 当前数据库中有 {match_count} 条比赛记录")
+
+            # 判定是否需要触发数据采集
+            if match_count == 0:
+                logger.info("🆕 检测到空数据库，正在触发初始化数据采集...")
+
+                # 使用Celery触发数据管道任务
+                from src.tasks.celery_app import celery_app
+
+                try:
+                    # 发送任务到Celery队列
+                    task = celery_app.send_task(
+                        "complete_data_pipeline",
+                        queue="default",
+                        priority=5  # 中等优先级
+                    )
+
+                    logger.info(
+                        f"✅ 成功触发初始化数据采集任务 (任务ID: {task.id})"
+                    )
+                    logger.info(
+                        "📅 数据采集将在后台异步执行，请稍后查看数据状态"
+                    )
+                    logger.info(
+                        "💡 您可以通过 /api/v1/system/status 或 /health 端点检查采集进度"
+                    )
+
+                except Exception as celery_error:
+                    logger.error(f"❌ 触发Celery任务失败: {celery_error}")
+                    logger.error("⚠️ 系统将继续启动，但需要手动触发数据采集")
+
+            elif match_count < 100:
+                logger.info(
+                    f"⚠️ 数据库中只有 {match_count} 条记录，"
+                    "可能需要补充更多数据。跳过自动触发，建议手动执行数据采集。"
+                )
+
+            else:
+                logger.info(
+                    f"✅ 数据库已有充足数据 ({match_count} 条记录)，"
+                    "跳过初始化数据采集。"
+                )
+
+    except Exception as e:
+        logger.error(f"❌ 冷启动检查失败: {e}")
+        logger.error(f"❌ 错误详情: {type(e).__name__}: {str(e)}")
+        logger.warning(
+            "⚠️ 系统将继续启动，但无法自动检查数据状态。"
+            "请确保数据管道已手动触发。"
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """应用生命周期管理."""
@@ -100,6 +174,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # 设置性能监控
         setup_performance_monitoring(app)
         logger.info("✅ 性能监控设置完成")
+
+        # 冷启动自动填充机制
+        if not is_test_env:
+            await check_and_trigger_initial_data_fill()
+        else:
+            logger.warning("⚠️ 测试环境，跳过冷启动数据填充")
 
         logger.info("🚀 足球预测系统启动完成!")
 
