@@ -5,15 +5,13 @@
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     from datetime import UTC
 except ImportError:
     # For Python < 3.11
-    from datetime import timezone
-
-    UTC = UTC
+    UTC = timezone.utc
 from typing import Any
 from uuid import uuid4
 
