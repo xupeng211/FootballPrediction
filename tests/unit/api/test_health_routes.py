@@ -163,9 +163,8 @@ class TestHealthRoutes:
         assert "database" in components
         assert "redis" in components
 
-    @patch('src.api.health.routes.datetime')
     @patch('src.database.definitions.get_database_manager')
-    def test_health_check_timestamp_validity(self, mock_get_db_manager, mock_datetime):
+    def test_health_check_timestamp_validity(self, mock_get_db_manager):
         """测试健康检查时间戳有效性"""
         # Mock数据库管理器为已初始化状态
         mock_db_manager = MagicMock()
@@ -175,8 +174,10 @@ class TestHealthRoutes:
         response = self.client.get("/api/health/")
         data = response.json()
 
-        # 时间戳应该是有效的ISO格式
+        # 时间戳应该是有效的ISO格式字符串
         timestamp_str = data["timestamp"]
+        assert isinstance(timestamp_str, str), f"Timestamp should be string, got {type(timestamp_str)}"
+
         timestamp = datetime.fromisoformat(timestamp_str)
 
         # 时间戳应该接近当前时间（允许5分钟误差）
@@ -215,8 +216,8 @@ class TestHealthRoutes:
         # 状态应该根据组件健康状况设置
         if data["status"] == "unhealthy":
             # 如果状态不健康，至少有一个组件应该有问题
-            components = data["components"]
-            assert any("unhealthy" in str(value) for value in components.values())
+            checks = data["checks"]
+            assert any("unhealthy" in str(check.get("status", "")) for check in checks.values())
 
     def test_health_check_performance(self):
         """测试健康检查性能"""
@@ -230,8 +231,20 @@ class TestHealthRoutes:
         assert response.status_code == 200
         assert (end_time - start_time) < 1.0  # 应该在1秒内响应
 
-    def test_detailed_health_check_performance(self):
+    @patch('redis.from_url')
+    @patch('src.database.definitions.get_database_manager')
+    def test_detailed_health_check_performance(self, mock_get_db_manager, mock_redis):
         """测试详细健康检查性能"""
+        # Mock Redis to avoid connection timeout
+        mock_redis_client = MagicMock()
+        mock_redis_client.ping.return_value = True
+        mock_redis.return_value = mock_redis_client
+
+        # Mock database manager
+        mock_db_manager = MagicMock()
+        mock_db_manager.initialized = True
+        mock_get_db_manager.return_value = mock_db_manager
+
         import time
 
         start_time = time.time()
