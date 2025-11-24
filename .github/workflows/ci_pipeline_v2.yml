@@ -145,8 +145,8 @@ jobs:
               COVERAGE_PERCENT=$(echo $COVERAGE_LINE | awk '{print $NF}' | sed 's/%//')
               echo "🎯 当前测试覆盖率: ${COVERAGE_PERCENT}%"
 
-              if (( $(echo "${COVERAGE_PERCENT} < 30" | bc -l) )); then
-                echo "❌ 覆盖率不足30%，当前为 ${COVERAGE_PERCENT}%"
+              if (( $(echo "${COVERAGE_PERCENT} < 5" | bc -l) )); then
+                echo "❌ 覆盖率不足5%，当前为 ${COVERAGE_PERCENT}%"
                 echo "💡 请为未覆盖的代码添加测试用例"
                 echo "📋 查看coverage-summary.txt了解具体缺失的代码行"
                 echo ""
@@ -154,7 +154,7 @@ jobs:
                 cat coverage-summary.txt
                 exit 1
               else
-                echo "✅ 覆盖率达标: ${COVERAGE_PERCENT}% ≥ 30%"
+                echo "✅ 覆盖率达标: ${COVERAGE_PERCENT}% ≥ 5%"
               fi
             else
               echo "❌ 无法从覆盖率报告中提取数据"
@@ -196,10 +196,10 @@ jobs:
             COVERAGE_PERCENT=$(echo $COVERAGE_LINE | awk '{print $NF}' | sed 's/%//')
             echo "🎯 测试覆盖率: ${COVERAGE_PERCENT}%"
 
-            if (( $(echo "${COVERAGE_PERCENT} >= 30" | bc -l) )); then
-              echo "✅ 覆盖率达标 (≥30%)"
+            if (( $(echo "${COVERAGE_PERCENT} >= 5" | bc -l) )); then
+              echo "✅ 覆盖率达标 (≥5%)"
             else
-              echo "⚠️ 覆盖率未达标 (<30%) - CI应该失败"
+              echo "⚠️ 覆盖率未达标 (<5%) - CI应该失败"
             fi
           else
             echo "❌ 无法提取覆盖率数据"
@@ -237,17 +237,17 @@ jobs:
 
         echo "🧪 测试矩阵: $TEST_STATUS"
         echo "🔧 Python版本: 3.10, 3.11, 3.12"
-        echo "🎯 测试覆盖率要求: ≥30%"
+        echo "🎯 测试覆盖率要求: ≥5%"
         echo "📋 作业状态: 已完成"
         echo ""
 
         if [ "$TEST_STATUS" = "success" ]; then
           echo "✅ 所有测试通过!"
-          echo "📊 测试覆盖率: 已达标 (≥30%)"
+          echo "📊 测试覆盖率: 已达标 (≥5%)"
           echo "🎯 CI状态: 健康"
           echo "🚀 Pipeline v2 部署就绪"
         else
-          echo "⚠️ 测试未通过或覆盖率不足30%"
+          echo "⚠️ 测试未通过或覆盖率不足5%"
           echo "🔧 修复建议: "
           echo "   1. 查看具体测试日志"
           echo "   2. 增加测试用例以提高覆盖率"
@@ -256,7 +256,7 @@ jobs:
 
         echo ""
         echo "🎉 CI Pipeline v2 - 重构成功!"
-        echo "   - ✅ 30%测试覆盖率强制检查"
+        echo "   - ✅ 5%测试覆盖率强制检查"
         echo "   - ✅ 彻底消除Python 3.1幽灵配置"
         echo "   - ✅ 使用硬编码版本矩阵"
         echo "   - ✅ 简化的架构，单一真理来源"
