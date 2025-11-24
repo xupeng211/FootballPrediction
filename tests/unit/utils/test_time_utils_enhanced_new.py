@@ -11,7 +11,7 @@ try:
     from datetime import UTC
 except ImportError:
     # For Python < 3.11
-    UTC = UTC
+    UTC = timezone.utc
 from unittest.mock import MagicMock, patch
 
 import pytest
