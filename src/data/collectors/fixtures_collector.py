@@ -78,12 +78,12 @@ class FixturesCollector:
         try:
             with open(self.config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
-            logger.info(f"✅ 成功加载数据源配置: {self.config_file}")
+            logger.info(f"✅ 成功加载数据战略配置: {self.config_file}")
             logger.info(f"📋 配置版本: {config.get('version', 'unknown')}")
+            logger.info(f"🎯 采集策略: {config.get('strategic_settings', {}).get('collection_strategy', 'unknown')}")
             return config
         except FileNotFoundError:
             logger.error(f"❌ 配置文件未找到: {self.config_file}")
-            # 返回默认配置作为回退
             logger.warning("⚠️ 使用默认配置作为回退")
             return self._get_default_config()
         except json.JSONDecodeError as e:
@@ -98,101 +98,139 @@ class FixturesCollector:
     def _get_default_config(self) -> Dict[str, Any]:
         """获取默认配置（回退方案）."""
         return {
-            "version": "1.0.0-fallback",
-            "global_settings": {
-                "backfill_years": [2022, 2023, 2024],
+            "version": "2.0.0-fallback",
+            "strategic_settings": {
+                "backfill_seasons": 3,
                 "current_season": 2024,
-                "api_rate_limit": {
-                    "requests_per_minute": 10,
-                    "requests_per_hour": 100,
-                    "retry_attempts": 3,
-                    "retry_delay": 2
-                }
+                "max_api_calls_per_minute": 10,
+                "collection_strategy": "high_value_focus"
             },
-            "leagues": [
+            "target_leagues": [
                 # 基本的五大联赛作为回退
-                {"code": "PL", "name": "Premier League", "country": "England",
-                 "api_mappings": {"football_data": {"api_id": 2021, "db_id": 11}}},
-                {"code": "PD", "name": "La Liga", "country": "Spain",
-                 "api_mappings": {"football_data": {"api_id": 2014, "db_id": 12}}},
-                {"code": "BL1", "name": "Bundesliga", "country": "Germany",
-                 "api_mappings": {"football_data": {"api_id": 2002, "db_id": 13}}},
-                {"code": "SA", "name": "Serie A", "country": "Italy",
-                 "api_mappings": {"football_data": {"api_id": 2019, "db_id": 14}}},
-                {"code": "FL1", "name": "Ligue 1", "country": "France",
-                 "api_mappings": {"football_data": {"api_id": 2015, "db_id": 15}}},
-            ]
+                {"name": "Premier League", "api_id": 2021, "db_id": 11, "type": "Tier1", "priority": "critical"},
+                {"name": "La Liga", "api_id": 2014, "db_id": 12, "type": "Tier1", "priority": "critical"},
+                {"name": "Bundesliga", "api_id": 2002, "db_id": 13, "type": "Tier1", "priority": "critical"},
+                {"name": "Serie A", "api_id": 2019, "db_id": 14, "type": "Tier1", "priority": "critical"},
+                {"name": "Ligue 1", "api_id": 2015, "db_id": 15, "type": "Tier1", "priority": "critical"},
+            ],
+            "api_limits": {
+                "football_data_org": {
+                    "max_requests_per_minute": 10,
+                    "max_requests_per_hour": 100,
+                    "retry_attempts": 3,
+                    "retry_delay_seconds": 2
+                }
+            }
         }
 
     def _load_target_leagues(self) -> List[Dict[str, Any]]:
         """从配置中加载目标联赛列表."""
         leagues = []
         try:
-            for league_config in self.config.get("leagues", []):
-                # 转换配置格式以兼容现有代码
+            for league_config in self.config.get("target_leagues", []):
+                # 转换新配置格式以兼容现有代码
                 league_info = {
-                    "code": league_config["code"],
                     "name": league_config["name"],
-                    "country": league_config["country"],
-                    "tier": league_config.get("tier", 1),
+                    "country": league_config.get("country", "Unknown"),
+                    "type": league_config["type"],
                     "priority": league_config.get("priority", "medium"),
-                    "api_id": league_config["api_mappings"]["football_data"]["api_id"],
-                    "db_id": league_config["api_mappings"]["football_data"]["db_id"],
-                    "season_config": league_config.get("season_config", {}),
-                    "collection_strategy": league_config.get("collection_strategy", {}),
+                    "api_id": league_config["api_id"],
+                    "db_id": league_config["db_id"],
+                    "teams_count": league_config.get("teams_count", 20),
                 }
                 leagues.append(league_info)
 
-            logger.info(f"✅ 成功加载 {len(leagues)} 个目标联赛")
+            logger.info(f"✅ 成功加载 {len(leagues)} 个核心联赛")
             return leagues
 
         except Exception as e:
             logger.error(f"❌ 加载联赛配置失败: {e}")
             return []
 
-    def get_global_settings(self) -> Dict[str, Any]:
-        """获取全局设置."""
-        return self.config.get("global_settings", {})
+    def get_strategic_settings(self) -> Dict[str, Any]:
+        """获取战略设置."""
+        return self.config.get("strategic_settings", {})
 
-    def get_league_by_code(self, code: str) -> Optional[Dict[str, Any]]:
-        """根据联赛代码获取联赛配置."""
+    def get_league_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """根据联赛名称获取联赛配置."""
         for league in self.target_leagues:
-            if league["code"] == code:
+            if league["name"] == name:
                 return league
         return None
 
-    def get_backfill_years(self) -> List[int]:
-        """获取历史回溯年限."""
-        global_settings = self.get_global_settings()
-        return global_settings.get("backfill_years", [2022, 2023, 2024])
+    def get_backfill_seasons(self) -> int:
+        """获取历史回溯赛季数."""
+        strategic_settings = self.get_strategic_settings()
+        return strategic_settings.get("backfill_seasons", 3)
 
     def get_current_season(self) -> int:
         """获取当前赛季."""
-        global_settings = self.get_global_settings()
-        return global_settings.get("current_season", 2024)
+        strategic_settings = self.get_strategic_settings()
+        return strategic_settings.get("current_season", 2024)
 
-    def get_api_rate_limit(self) -> Dict[str, Any]:
-        """获取API速率限制配置."""
-        global_settings = self.get_global_settings()
-        return global_settings.get("api_rate_limit", {
-            "requests_per_minute": 10,
-            "requests_per_hour": 100,
-            "retry_attempts": 3,
-            "retry_delay": 2
-        })
+    def get_backfill_years(self) -> List[int]:
+        """获取历史回溯年限列表."""
+        current_season = self.get_current_season()
+        backfill_count = self.get_backfill_seasons()
+        return [current_season - i for i in range(1, backfill_count + 1)]
 
-    def get_leagues_by_priority(self, priority: str = "high") -> List[Dict[str, Any]]:
+    def get_max_api_calls_per_minute(self) -> int:
+        """获取每分钟最大API调用次数."""
+        strategic_settings = self.get_strategic_settings()
+        return strategic_settings.get("max_api_calls_per_minute", 10)
+
+    def get_collection_strategy(self) -> str:
+        """获取采集策略."""
+        strategic_settings = self.get_strategic_settings()
+        return strategic_settings.get("collection_strategy", "high_value_focus")
+
+    def get_leagues_by_type(self, league_type: str = "Tier1") -> List[Dict[str, Any]]:
+        """根据联赛类型获取联赛列表."""
+        return [league for league in self.target_leagues
+                if league.get("type", "Tier1") == league_type]
+
+    def get_leagues_by_priority(self, priority: str = "critical") -> List[Dict[str, Any]]:
         """根据优先级获取联赛列表."""
         return [league for league in self.target_leagues
                 if league.get("priority", "medium") == priority]
 
     def get_rate_limit_delay(self) -> float:
         """根据配置计算请求间隔."""
-        rate_limit = self.get_api_rate_limit()
-        requests_per_minute = rate_limit.get("requests_per_minute", 10)
+        max_calls_per_minute = self.get_max_api_calls_per_minute()
         # 保守的间隔计算：60秒 / (每分钟请求数 * 0.8)
-        delay = 60 / (requests_per_minute * 0.8)
+        delay = 60 / (max_calls_per_minute * 0.8)
         return max(delay, 1.0)  # 至少1秒间隔
+
+    def get_api_limits(self, api_name: str = "football_data_org") -> Dict[str, Any]:
+        """获取指定API的速率限制配置."""
+        api_limits = self.config.get("api_limits", {})
+        return api_limits.get(api_name, {
+            "max_requests_per_minute": 10,
+            "max_requests_per_hour": 100,
+            "retry_attempts": 3,
+            "retry_delay_seconds": 2
+        })
+
+    def get_league_summary(self) -> Dict[str, Any]:
+        """获取联赛配置摘要统计."""
+        type_count = {}
+        priority_count = {}
+
+        for league in self.target_leagues:
+            league_type = league.get("type", "Unknown")
+            priority = league.get("priority", "medium")
+
+            type_count[league_type] = type_count.get(league_type, 0) + 1
+            priority_count[priority] = priority_count.get(priority, 0) + 1
+
+        return {
+            "total_leagues": len(self.target_leagues),
+            "types": type_count,
+            "priorities": priority_count,
+            "backfill_seasons": self.get_backfill_seasons(),
+            "current_season": self.get_current_season(),
+            "collection_strategy": self.get_collection_strategy()
+        }
 
     # 动态速率限制配置（从配置文件加载）
     # RATE_LIMIT_DELAY 和 MAX_RETRIES 现在通过 get_rate_limit_delay() 和 get_api_rate_limit() 获取
