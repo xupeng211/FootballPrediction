@@ -58,7 +58,7 @@ async def manual_data_cleaning() -> int:
         async with get_async_session() as session:
             # 获取所有未处理的原始数据，使用options来预加载关联数据
             from sqlalchemy.orm import selectinload
-            query = select(RawMatchData).where(RawMatchData.processed == False)
+            query = select(RawMatchData).where(RawMatchData.processed.is_(False))
             result = await session.execute(query)
             raw_matches = result.scalars().all()
 
