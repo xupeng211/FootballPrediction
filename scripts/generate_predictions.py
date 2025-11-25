@@ -21,8 +21,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, text
 
-# 导入推理服务
+# 导入推理服务和数据库
 from src.services.inference_service import InferenceService
+from src.database.definitions import initialize_database
+from src.config.settings import get_settings
 
 # 配置日志
 logging.basicConfig(
@@ -123,6 +125,13 @@ class BatchPredictionGenerator:
     async def generate_real_prediction(self, match_id: int) -> dict[str, Any]:
         """为比赛生成真实的模型预测数据"""
         try:
+            # 确保数据库已初始化
+            try:
+                settings = get_settings()
+                await initialize_database(database_url=settings.database_url)
+            except Exception as e:
+                logger.warning(f"数据库初始化失败，继续使用推理服务: {e}")
+
             # 初始化推理服务
             inference_service = InferenceService()
 
@@ -312,6 +321,15 @@ async def main():
     generate_all = "--all" in sys.argv or len(sys.argv) > 1 and sys.argv[1] == "all"
 
     logger.info("🏃‍♂️ 启动批量预测生成器")
+
+    # 初始化数据库
+    try:
+        settings = get_settings()
+        await initialize_database(database_url=settings.database_url)
+        logger.info("✅ 数据库初始化成功")
+    except Exception as e:
+        logger.error(f"❌ 数据库初始化失败: {e}")
+        raise
 
     generator = BatchPredictionGenerator()
 
