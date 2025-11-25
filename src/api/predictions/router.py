@@ -162,12 +162,12 @@ async def get_predictions_list(
 
     try:
         # 导入预测服务
-        from src.services.prediction_service import get_prediction_service
+        from src.services.prediction_service import PredictionService
 
-        prediction_service = get_prediction_service()
+        prediction_service = PredictionService()
 
         # 获取预测列表
-        result = prediction_service.get_predictions(limit=limit, offset=offset)
+        result = await prediction_service.get_predictions(limit=limit, offset=offset)
 
         logger.info(f"成功获取 {len(result['predictions'])} 条预测")
         return result
@@ -306,12 +306,12 @@ async def get_match_predictions(match_id: int):
 
     try:
         # 导入预测服务
-        from src.services.prediction_service import get_prediction_service
+        from src.services.prediction_service import PredictionService
 
-        prediction_service = get_prediction_service()
+        prediction_service = PredictionService()
 
         # 获取比赛的预测列表
-        predictions = prediction_service.get_match_predictions(match_id)
+        predictions = await prediction_service.get_match_predictions(match_id)
 
         logger.info(f"成功获取比赛 {match_id} 的 {len(predictions)} 条预测")
         return predictions

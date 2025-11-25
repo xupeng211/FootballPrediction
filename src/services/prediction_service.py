@@ -11,6 +11,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, text
+from src.database.connection import DatabaseManager
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +40,7 @@ class PredictionService:
         """初始化预测服务."""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def get_predictions(self, limit: int = 10, offset: int = 0) -> dict[str, Any]:
+    async def get_predictions(self, limit: int = 10, offset: int = 0) -> dict[str, Any]:
         """获取预测列表
         Get predictions list.
 
@@ -47,41 +51,78 @@ class PredictionService:
         Returns:
             包含预测列表和分页信息的字典
         """
-        # 模拟返回一些预测数据
-        sample_predictions = [
-            {
-                "id": "pred_12345",
-                "match_id": 12345,
-                "home_team": "Team A",
-                "away_team": "Team B",
-                "predicted_outcome": "home_win",
-                "confidence": 0.75,
-                "created_at": "2025-11-06T08:00:00.000Z",
-            },
-            {
-                "id": "pred_12346",
-                "match_id": 12346,
-                "home_team": "Team C",
-                "away_team": "Team D",
-                "predicted_outcome": "draw",
-                "confidence": 0.60,
-                "created_at": "2025-11-06T09:00:00.000Z",
-            },
-        ]
+        db_manager = DatabaseManager()
 
-        # 应用分页
-        start = offset
-        end = start + limit
-        paginated_predictions = sample_predictions[start:end]
+        try:
+            async with db_manager.get_async_session() as session:
+                # 获取总数
+                total_result = await session.execute(text("SELECT COUNT(*) FROM predictions"))
+                total = total_result.scalar()
 
-        return {
-            "predictions": paginated_predictions,
-            "total": len(sample_predictions),
-            "limit": limit,
-            "offset": offset,
-        }
+                # 获取分页数据
+                query = text("""
+                    SELECT p.id, p.match_id, p.score, p.confidence, p.status,
+                           p.created_at, p.updated_at,
+                           ht.name as home_team_name, at.name as away_team_name
+                    FROM predictions p
+                    JOIN matches m ON p.match_id = m.id
+                    JOIN teams ht ON m.home_team_id = ht.id
+                    JOIN teams at ON m.away_team_id = at.id
+                    ORDER BY p.created_at DESC
+                    LIMIT :limit OFFSET :offset
+                """)
 
-    def get_match_predictions(self, match_id: int) -> list[dict[str, Any]]:
+                result = await session.execute(query, {"limit": limit, "offset": offset})
+                rows = result.fetchall()
+
+                # 格式化预测数据
+                predictions = []
+                for row in rows:
+                    # 从score字段解析预测结果
+                    score = row[2] or "1-1"
+                    if "-" in score:
+                        home_score, away_score = map(int, score.split("-"))
+                        if home_score > away_score:
+                            predicted_outcome = "home_win"
+                        elif home_score < away_score:
+                            predicted_outcome = "away_win"
+                        else:
+                            predicted_outcome = "draw"
+                    else:
+                        predicted_outcome = "draw"
+
+                    predictions.append({
+                        "id": f"pred_{row[0]}",
+                        "match_id": row[1],
+                        "home_team": row[7],
+                        "away_team": row[8],
+                        "predicted_outcome": predicted_outcome,
+                        "confidence": float(row[3] or "0.5"),
+                        "score": score,
+                        "status": row[4],
+                        "created_at": row[5].isoformat() if row[5] else None,
+                        "updated_at": row[6].isoformat() if row[6] else None,
+                    })
+
+                logger.info(f"成功从数据库获取 {len(predictions)} 条预测记录")
+                return {
+                    "predictions": predictions,
+                    "total": total,
+                    "limit": limit,
+                    "offset": offset,
+                }
+
+        except Exception as e:
+            logger.error(f"查询预测数据失败: {e}")
+            # 返回空结果而不是抛出异常
+            return {
+                "predictions": [],
+                "total": 0,
+                "limit": limit,
+                "offset": offset,
+            }
+
+    async def get_match_predictions(self, match_id: int) -> list[dict[str, Any]]:
         """获取指定比赛的预测
         Get predictions for a specific match.
 
@@ -91,20 +132,60 @@ class PredictionService:
         Returns:
             该比赛的预测列表
         """
-        # 模拟返回指定比赛的预测数据
-        sample_predictions = [
-            {
-                "id": "pred_12345",
-                "match_id": match_id,
-                "home_team": "Team A",
-                "away_team": "Team B",
-                "predicted_outcome": "home_win",
-                "confidence": 0.75,
-                "created_at": "2025-11-06T08:00:00.000Z",
-            },
-        ]
+        db_manager = DatabaseManager()
 
-        return sample_predictions
+        try:
+            async with db_manager.get_async_session() as session:
+                query = text("""
+                    SELECT p.id, p.match_id, p.score, p.confidence, p.status,
+                           p.created_at, p.updated_at,
+                           ht.name as home_team_name, at.name as away_team_name
+                    FROM predictions p
+                    JOIN matches m ON p.match_id = m.id
+                    JOIN teams ht ON m.home_team_id = ht.id
+                    JOIN teams at ON m.away_team_id = at.id
+                    WHERE p.match_id = :match_id
+                    ORDER BY p.created_at DESC
+                """)
+
+                result = await session.execute(query, {"match_id": match_id})
+                rows = result.fetchall()
+
+                # 格式化预测数据
+                predictions = []
+                for row in rows:
+                    # 从score字段解析预测结果
+                    score = row[2] or "1-1"
+                    if "-" in score:
+                        home_score, away_score = map(int, score.split("-"))
+                        if home_score > away_score:
+                            predicted_outcome = "home_win"
+                        elif home_score < away_score:
+                            predicted_outcome = "away_win"
+                        else:
+                            predicted_outcome = "draw"
+                    else:
+                        predicted_outcome = "draw"
+
+                    predictions.append({
+                        "id": f"pred_{row[0]}",
+                        "match_id": row[1],
+                        "home_team": row[7],
+                        "away_team": row[8],
+                        "predicted_outcome": predicted_outcome,
+                        "confidence": float(row[3] or "0.5"),
+                        "score": score,
+                        "status": row[4],
+                        "created_at": row[5].isoformat() if row[5] else None,
+                        "updated_at": row[6].isoformat() if row[6] else None,
+                    })
+
+                logger.info(f"获取比赛 {match_id} 的 {len(predictions)} 条预测记录")
+                return predictions
+
+        except Exception as e:
+            logger.error(f"获取比赛 {match_id} 预测数据失败: {e}")
+            return []
 
     def predict_match(
         self, match_data: dict[str, Any], model_name: str = "default"
