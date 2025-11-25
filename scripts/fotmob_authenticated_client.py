@@ -15,8 +15,6 @@ from urllib.parse import quote
 try:
     from curl_cffi.requests import AsyncSession
 except ImportError:
-    print("❌ 错误: curl_cffi 库未安装")
-    print("请运行: docker-compose exec app pip install curl_cffi")
     exit(1)
 
 
@@ -42,12 +40,10 @@ class FotMobAuthenticatedClient:
 
     async def initialize_session(self):
         """初始化会话"""
-        print("🔧 初始化会话...")
         self.session = AsyncSession(impersonate="chrome120")
 
         # 访问主页建立会话
-        home_response = await self.session.get("https://www.fotmob.com/")
-        print(f"主页状态码: {home_response.status_code}")
+        await self.session.get("https://www.fotmob.com/")
 
     def generate_x_mas_header(self, api_url):
         """
@@ -120,8 +116,6 @@ class FotMobAuthenticatedClient:
             x_mas = self.generate_x_mas_header(api_url)
             headers = {**self.base_headers, "x-mas": x_mas}
 
-        print(f"📡 请求 URL: https://www.fotmob.com{api_url}")
-        print(f"🔐 使用 x-mas: {x_mas if not use_known_signature else '已知有效签名'}")
 
         try:
             response = await self.session.get(
@@ -130,57 +124,42 @@ class FotMobAuthenticatedClient:
                 timeout=15
             )
 
-            print(f"📊 状态码: {response.status_code}")
-            print(f"📋 响应头: {dict(response.headers)}")
 
             if response.status_code == 200:
                 try:
                     data = response.json()
-                    print(f"✅ 成功! 数据类型: {type(data).__name__}")
 
                     if isinstance(data, dict):
-                        print("🏗️ 数据结构:")
-                        for key, value in list(data.items())[:5]:
+                        for _key, value in list(data.items())[:5]:
                             if isinstance(value, list):
-                                print(f"  {key}: list[{len(value)}]")
+                                pass
                             elif isinstance(value, dict):
-                                print(f"  {key}: dict[{len(value)}]")
+                                pass
                             else:
-                                print(f"  {key}: {type(value).__name__}")
+                                pass
 
                     # 显示数据预览
-                    json_str = json.dumps(data, ensure_ascii=False)
-                    print(f"📄 数据长度: {len(json_str)} 字符")
-                    print(f"📝 数据前100字符: {json_str[:100]}...")
+                    json.dumps(data, ensure_ascii=False)
 
                     return data
 
                 except json.JSONDecodeError:
-                    print("❌ JSON 解析失败")
-                    print(f"📄 原始响应: {response.text[:200]}...")
                     return None
 
             elif response.status_code == 401:
-                print("🚫 认证失败")
-                print(f"📄 响应: {response.text[:100]}...")
                 return None
 
             elif response.status_code == 404:
-                print("❌ 端点不存在")
                 return None
 
             else:
-                print(f"⚠️ 其他状态码: {response.status_code}")
-                print(f"📄 响应: {response.text[:100]}...")
                 return None
 
-        except Exception as e:
-            print(f"❌ 请求异常: {e}")
+        except Exception:
             return None
 
     async def get_audio_matches(self):
         """获取音频比赛数据，提取 matchId 列表"""
-        print("\n🎵 获取音频比赛数据...")
 
         result = await self.make_authenticated_request("/api/data/audio-matches", use_known_signature=True)
 
@@ -191,29 +170,22 @@ class FotMobAuthenticatedClient:
                 if isinstance(item, dict) and 'id' in item:
                     match_ids.append(item['id'])
 
-            print(f"✅ 成功获取 {len(match_ids)} 个比赛 ID")
-            print(f"📋 前 10 个 ID: {match_ids[:10]}")
             return match_ids
 
-        print("❌ 无法获取音频比赛数据")
         return []
 
     async def fetch_match_details(self, match_id, use_signature=True):
         """获取单场比赛详情"""
         api_url = f"/api/matchDetails?matchId={match_id}"
 
-        print(f"\n🏈 获取比赛详情 (ID: {match_id})")
-        print(f"🔗 URL: https://www.fotmob.com{api_url}")
 
         # 先尝试带签名
         if use_signature:
-            print("🔐 尝试带 x-mas 签名请求...")
             result = await self.make_authenticated_request(api_url, use_known_signature=False)
             if result:
                 return result
 
         # 如果签名失败，尝试不带签名（仅 TLS 伪装）
-        print("🔓 尝试不带签名请求（仅 TLS 伪装）...")
 
         if not self.session:
             await self.initialize_session()
@@ -227,52 +199,42 @@ class FotMobAuthenticatedClient:
                 timeout=15
             )
 
-            print(f"📊 无签名请求状态码: {response.status_code}")
 
             if response.status_code == 200:
                 try:
                     data = response.json()
-                    print(f"✅ 无签名请求成功!")
 
                     # 显示数据结构
                     if isinstance(data, dict):
-                        print("🏗️ 详情数据结构:")
-                        for key, value in data.items():
+                        for _key, value in data.items():
                             if isinstance(value, list):
-                                print(f"  {key}: list[{len(value)}]")
+                                pass
                             elif isinstance(value, dict):
-                                print(f"  {key}: dict[{len(value)}]")
                                 # 显示子级的键
-                                for subkey in list(value.keys())[:3]:
-                                    print(f"    └─ {subkey}")
+                                for _subkey in list(value.keys())[:3]:
+                                    pass
                             else:
-                                print(f"  {key}: {type(value).__name__}")
+                                pass
 
                     return data
 
                 except json.JSONDecodeError:
-                    print("❌ JSON 解析失败")
-                    print(f"📄 响应预览: {response.text[:100]}...")
                     return None
             else:
-                print(f"⚠️ 无签名请求失败: {response.status_code}")
                 if response.text:
-                    print(f"📄 响应预览: {response.text[:100]}...")
+                    pass
                 return None
 
-        except Exception as e:
-            print(f"❌ 无签名请求异常: {e}")
+        except Exception:
             return None
 
     async def test_id_traversal_strategy(self):
         """测试 ID 遍历策略"""
-        print("\n🎯 执行 ID 遍历策略测试...")
 
         # Step 1: 获取 matchId 列表
         match_ids = await self.get_audio_matches()
 
         if not match_ids:
-            print("❌ 无法获取 matchId，策略终止")
             return
 
         # Step 2: 测试前 3 个比赛的详情
@@ -281,42 +243,31 @@ class FotMobAuthenticatedClient:
 
         for i in range(test_count):
             match_id = match_ids[i]
-            print(f"\n{'='*50}")
-            print(f"📍 测试 {i+1}/{test_count}: 比赛 {match_id}")
-            print(f"{'='*50}")
 
             # 尝试获取详情
             details = await self.fetch_match_details(match_id, use_signature=True)
 
             if details:
                 successful_details += 1
-                print(f"🎉 比赛 {match_id} 详情获取成功!")
 
                 # 如果成功，尝试解析一些关键信息
                 if isinstance(details, dict):
                     # 常见的比赛信息字段
                     for key in ['header', 'content', 'general', 'teams', 'match']:
                         if key in details:
-                            print(f"  📊 找到关键字段: {key}")
                             if isinstance(details[key], dict):
-                                for subkey, subvalue in details[key].items():
+                                for _subkey, subvalue in details[key].items():
                                     if isinstance(subvalue, (str, int, float)):
-                                        print(f"    └─ {subkey}: {subvalue}")
                                         if isinstance(subvalue, str) and len(subvalue) > 50:
-                                            print(f"       (长度: {len(subvalue)})")
+                                            pass
             else:
-                print(f"❌ 比赛 {match_id} 详情获取失败")
+                pass
 
-        print(f"\n📈 策略执行总结:")
-        print(f"  📋 总共测试: {test_count} 个比赛")
-        print(f"  ✅ 成功获取: {successful_details} 个详情")
-        print(f"  📊 成功率: {(successful_details/test_count*100):.1f}%")
 
         return successful_details > 0
 
     async def brute_force_endpoint_discovery(self, match_id):
         """广撒网式路径探测 - 寻找防护薄弱的遗留接口"""
-        print(f"\n🎯 执行广撒网式路径探测 (Match ID: {match_id})")
 
         # 候选路径模板列表
         endpoint_templates = [
@@ -368,7 +319,6 @@ class FotMobAuthenticatedClient:
             "/match{id}",
         ]
 
-        print(f"📋 总计 {len(endpoint_templates)} 个候选端点")
 
         # 构造完整的 URL 列表
         urls = []
@@ -376,7 +326,6 @@ class FotMobAuthenticatedClient:
             url = template.format(id=match_id)
             urls.append((template, url))
 
-        print(f"🚀 开始并发探测...")
 
         # 分批并发探测以避免过载
         batch_size = 8
@@ -384,7 +333,6 @@ class FotMobAuthenticatedClient:
 
         for i in range(0, len(urls), batch_size):
             batch = urls[i:i + batch_size]
-            print(f"\n📦 测试批次 {i//batch_size + 1}/{(len(urls) + batch_size - 1)//batch_size}")
 
             # 并发执行 A/B 测试
             batch_results = await asyncio.gather(
@@ -392,7 +340,7 @@ class FotMobAuthenticatedClient:
                 return_exceptions=True
             )
 
-            for (template, url), result in zip(batch, batch_results):
+            for (template, url), result in zip(batch, batch_results, strict=False):
                 if isinstance(result, dict) and result.get('success'):
                     successful_endpoints.append({
                         'template': template,
@@ -400,7 +348,6 @@ class FotMobAuthenticatedClient:
                         'method': result['method'],
                         'data': result['data']
                     })
-                    print(f"🎉 发现可用端点: {template} (方法: {result['method']})")
 
         return successful_endpoints
 
@@ -430,7 +377,6 @@ class FotMobAuthenticatedClient:
             result['status_codes'].append(f"A:{response_a.status_code}")
 
             if response_a.status_code == 200:
-                print(f"✅ [{template}] A测试成功 (带签名)")
                 result.update({
                     'success': True,
                     'method': 'with_signature',
@@ -447,7 +393,6 @@ class FotMobAuthenticatedClient:
             result['status_codes'].append(f"B:{response_b.status_code}")
 
             if response_b.status_code == 200:
-                print(f"✅ [{template}] B测试成功 (无签名)")
                 result.update({
                     'success': True,
                     'method': 'no_signature',
@@ -460,7 +405,7 @@ class FotMobAuthenticatedClient:
 
         # 记录失败但有用的信息
         if any("200" in code for code in result['status_codes']):
-            print(f"⚠️ [{template}] 部分成功: {result['status_codes']}")
+            pass
 
         return result
 
@@ -534,63 +479,44 @@ class FotMobAuthenticatedClient:
 
     async def run_comprehensive_discovery(self):
         """执行全面的端点发现"""
-        print("\n🔍 启动全面端点发现...")
 
         # 获取测试用的 matchId
         match_ids = await self.get_audio_matches()
 
         if not match_ids:
-            print("❌ 无法获取 matchId")
             return []
 
         # 使用第一个 matchId 进行探测
         test_match_id = match_ids[0]
-        print(f"🎯 使用比赛 {test_match_id} 进行探测")
 
         # 执行广撒网探测
         successful_endpoints = await self.brute_force_endpoint_discovery(test_match_id)
 
         # 输出结果报告
-        print(f"\n" + "="*80)
-        print(f"📊 广撒网探测结果报告")
-        print(f"="*80)
 
         if successful_endpoints:
-            print(f"🎉 发现 {len(successful_endpoints)} 个可用端点:")
 
-            for i, endpoint in enumerate(successful_endpoints, 1):
-                print(f"\n{i}️⃣ 端点: {endpoint['template']}")
-                print(f"   方法: {endpoint['method']}")
-                print(f"   URL: https://www.fotmob.com{endpoint['url']}")
+            for _i, endpoint in enumerate(successful_endpoints, 1):
 
                 data = endpoint['data']
                 if data['type'] == 'json':
-                    print(f"   类型: JSON 数据")
                     if data['keys']:
-                        print(f"   主要字段: {data['keys'][:5]}")
-                    print(f"   结构: {data['structure']}")
-                    print(f"   预览: {data['preview']}...")
+                        pass
 
                 elif data['type'] == 'html':
-                    print(f"   类型: HTML 页面 ({data['length']} 字符)")
                     if data['has_embedded_json']:
-                        print(f"   🔍 发现嵌入的 JSON 数据")
-                    print(f"   预览: {data['preview']}...")
+                        pass
 
                 else:
-                    print(f"   类型: {data['type']}")
-                    print(f"   预览: {data['preview']}...")
+                    pass
 
             return successful_endpoints
 
         else:
-            print(f"❌ 未发现可用的端点")
-            print(f"💡 建议：可能需要更高级的认证机制或不同的数据源")
             return []
 
     async def test_other_endpoints(self):
         """测试其他可能的 API 端点"""
-        print("\n🔍 测试其他端点...")
 
         endpoints = [
             "/api/leagues",
@@ -602,15 +528,12 @@ class FotMobAuthenticatedClient:
             "/api/data/teams",
         ]
 
-        for i, endpoint in enumerate(endpoints, 1):
-            print(f"\n{i}️⃣ 测试端点: {endpoint}")
+        for _i, endpoint in enumerate(endpoints, 1):
             await self.make_authenticated_request(endpoint)
 
 
 async def main():
     """主函数"""
-    print("🚀 FotMob 认证客户端 - 广撒网式端点发现")
-    print("=" * 60)
 
     client = FotMobAuthenticatedClient()
 
@@ -619,17 +542,12 @@ async def main():
         successful_endpoints = await client.run_comprehensive_discovery()
 
         if successful_endpoints:
-            print(f"\n🎉 广撒网策略成功! 发现 {len(successful_endpoints)} 个可用端点")
-            print("💡 建议基于这些端点开发数据采集逻辑")
+            pass
         else:
-            print("\n❌ 广撒网策略失败")
-            print("💡 建议：可能需要完全不同的数据源或更深入的逆向工程")
+            pass
 
-        print("\n" + "=" * 60)
-        print("🎯 广撒网探测完成!")
 
-    except Exception as e:
-        print(f"\n💥 程序异常: {e}")
+    except Exception:
         import traceback
         traceback.print_exc()
 
@@ -638,6 +556,6 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n⚠️ 用户中断")
-    except Exception as e:
-        print(f"\n💥 程序异常: {e}")
+        pass
+    except Exception:
+        pass

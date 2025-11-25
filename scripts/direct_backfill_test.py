@@ -20,7 +20,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def generate_sample_dates(count: int = 10) -> List[str]:
+def generate_sample_dates(count: int = 10) -> list[str]:
     """生成少量示例日期用于测试"""
     dates = []
     base_date = datetime(2024, 1, 1)
@@ -33,7 +33,7 @@ def generate_sample_dates(count: int = 10) -> List[str]:
     return dates
 
 
-def trigger_direct_collection(dates: List[str], api_throttle_delay: float = 5.0) -> Dict[str, Any]:
+def trigger_direct_collection(dates: list[str], api_throttle_delay: float = 5.0) -> dict[str, Any]:
     """直接调用数据采集函数（不通过Celery）"""
     logger.info(f"🚀 开始直接数据采集，共 {len(dates)} 个日期")
     logger.info(f"⚠️ 启用速率节流: 每个任务间隔 {api_throttle_delay} 秒，避免 API 429 错误")
@@ -108,7 +108,7 @@ def main():
             api_throttle_delay=5.0  # 每个 API 调用间隔 5 秒，避免 429 错误
         )
 
-        logger.info(f"🎉 数据采集完成！")
+        logger.info("🎉 数据采集完成！")
         logger.info(f"📊 采集统计: {result_summary}")
     else:
         logger.warning("⚠️ 没有指定测试日期")

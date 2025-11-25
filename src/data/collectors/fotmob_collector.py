@@ -10,7 +10,7 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
     from curl_cffi.requests import AsyncSession
@@ -31,7 +31,7 @@ class FotmobCollector(BaseCollector):
     - /api/match?id={id}: 获取比赛详情 (需要签名)
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         super().__init__(config)
 
         # FotMob 特定配置
@@ -39,7 +39,7 @@ class FotmobCollector(BaseCollector):
         self.client_version = "production:208a8f87c2cc13343f1dd8671471cf5a039dced3"
 
         # Session 配置
-        self._session: Optional[AsyncSession] = None
+        self._session: AsyncSession | None = None
 
         # 基础 Headers
         self.base_headers = {
@@ -109,14 +109,14 @@ class FotmobCollector(BaseCollector):
 
         return x_mas_encoded
 
-    def _generate_signature(self, body_data: Dict[str, Any], api_url: str) -> str:
+    def _generate_signature(self, body_data: dict[str, Any], api_url: str) -> str:
         """生成签名 (基于成功探测的算法)"""
         # 方法1: URL + code + client_version 的 MD5 前16位
         base_str = f"{api_url}{body_data['code']}{self.client_version}"
         signature = hashlib.md5(base_str.encode()).hexdigest().upper()[:16]
         return signature
 
-    def _get_headers(self, api_url: str, use_known_signature: bool = False) -> Dict[str, str]:
+    def _get_headers(self, api_url: str, use_known_signature: bool = False) -> dict[str, str]:
         """
         获取请求头
 
@@ -144,7 +144,7 @@ class FotmobCollector(BaseCollector):
         api_url: str,
         use_known_signature: bool = False,
         timeout: float = 30.0
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         发送认证请求
 
@@ -298,7 +298,7 @@ class FotmobCollector(BaseCollector):
 
             semaphore = asyncio.Semaphore(5)  # 限制并发数
 
-            async def collect_single_match(match_id: str) -> Optional[Dict[str, Any]]:
+            async def collect_single_match(match_id: str) -> dict[str, Any] | None:
                 async with semaphore:
                     result = await self.collect_match_details(match_id)
                     if result.success:
