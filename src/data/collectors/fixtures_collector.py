@@ -77,10 +77,20 @@ class FixturesCollector:
         {"code": "PPL", "name": "Primeira Liga", "country": "Portugal",
          "api_id": 2017, "db_id": 2017},
 
-        # 注意：Championship、巴甲和世界杯可能需要在Football-Data.org中确认正确的API ID
+        # 欧洲次级联赛和亚洲联赛 (新增)
+        {"code": "ELC", "name": "Championship", "country": "England",
+         "api_id": 2016, "db_id": 2016},
+        {"code": "SB", "name": "Serie B", "country": "Italy",
+         "api_id": 2121, "db_id": 2121},
+        {"code": "SD", "name": "Segunda División", "country": "Spain",
+         "api_id": 2077, "db_id": 2077},
+        {"code": "JJL", "name": "J. League", "country": "Japan",
+         "api_id": 2119, "db_id": 2140},
+        {"code": "CSL", "name": "Chinese Super League", "country": "China",
+         "api_id": 2044, "db_id": 2044},
+
+        # 注意：巴甲和世界杯可能需要在Football-Data.org中确认正确的API ID
         # 暂时注释掉以避免API错误
-        # {"code": "ELC", "name": "Championship", "country": "England",
-        #  "api_id": 2016, "db_id": 2016},
         # {"code": "BSA", "name": "Série A", "country": "Brazil",
         #  "api_id": 2013, "db_id": 2013},
         # {"code": "WC", "name": "FIFA World Cup", "country": "International",
