@@ -89,9 +89,9 @@ app.conf.update(
     enable_utc=True,
     # 任务路由配置
     task_routes={
-        "tasks.data_collection_tasks.collect_fixtures_task": {"queue": "fixtures"},
-        "tasks.data_collection_tasks.collect_odds_task": {"queue": "odds"},
-        "tasks.data_collection_tasks.collect_scores_task": {"queue": "scores"},
+        "collect_daily_fixtures": {"queue": "fixtures"},
+        "collect_odds_data": {"queue": "odds"},
+        "collect_live_scores": {"queue": "scores"},
         "tasks.maintenance_tasks.*": {"queue": "maintenance"},
         "tasks.streaming_tasks.*": {"queue": "streaming"},
         "tasks.backup_tasks.*": {"queue": "backup"},
@@ -147,23 +147,22 @@ app.conf.update(
 app.conf.beat_schedule = {
     # 每日赛程采集 - 凌晨2:00
     "collect-daily-fixtures": {
-        "task": "tasks.data_collection_tasks.collect_fixtures_task",
+        "task": "collect_daily_fixtures",
         "schedule": crontab(hour=2, minute=0),
         "options": {"queue": "fixtures"},
-        "kwargs": {"days_ahead": 30},
     },
     # 赔率采集 - 每5分钟
     "collect-odds-regular": {
-        "task": "tasks.data_collection_tasks.collect_odds_task",
+        "task": "collect_odds_data",
         "schedule": 300.0,  # 5分钟
         "options": {"queue": "odds"},
     },
     # 实时比分采集 - 每2分钟
     "collect-live-scores": {
-        "task": "tasks.data_collection_tasks.collect_scores_task",
+        "task": "collect_live_scores",
         "schedule": 120.0,  # 2分钟
         "options": {"queue": "scores"},
-        "kwargs": {"live_only": True},
+        "kwargs": {"match_ids": None},  # 采集所有进行中的比赛
     },
     # 数据质量检查 - 每小时
     "hourly-quality-check": {

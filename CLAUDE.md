@@ -12,6 +12,12 @@ This is an enterprise-level football prediction system built with Python FastAPI
 
 **Current Status**: Production-ready with CI/CD pipeline established, 29.0% test coverage, and comprehensive quality assurance measures.
 
+**Project Scale**:
+- **385 test cases** covering unit, integration, and end-to-end scenarios
+- **613-line Makefile** with comprehensive development workflow automation
+- **40+ API endpoints** across multiple domains (predictions, data management, system monitoring)
+- **Multiple task queues** for data collection, ETL processing, and system maintenance
+
 ## Key Development Commands
 
 ### Environment Management
@@ -257,6 +263,9 @@ pytest tests/unit/ -m "unit and not slow" -v
 # Fast failure for debugging
 pytest tests/unit/ --maxfail=3 -x
 
+# Run single test with detailed output
+pytest tests/unit/test_specific.py::test_function -v -s --tb=short
+
 # Coverage analysis
 pytest --cov=src --cov-report=html --cov-report=term-missing
 
@@ -265,6 +274,9 @@ pytest --cov=src --cov-report=html --cov-report=term-missing
 
 # CI-style test execution with reporting
 pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml --maxfail=5 -x
+
+# Run tests with specific Python version
+docker-compose exec app python -m pytest tests/unit/ -v
 ```
 
 ### Test Configuration (pyproject.toml)
@@ -431,6 +443,20 @@ make test-phase1        # Core functionality tests
 ./scripts/run_tests_in_docker.sh  # Isolated test execution
 ```
 
+## Important Reminders for Developers
+
+### Critical Development Notes
+- **⚠️ Test Running**: Always use Makefile commands for testing, never run pytest directly on individual files. See [TEST_RUN_GUIDE.md](TEST_RUN_GUIDE.md) for proper testing methodology.
+- **📋 Context Loading**: Always run `make context` before starting development work to load project context.
+- **🐳 Docker Environment**: Use Docker Compose for local development to ensure consistency with CI environment.
+- **🔄 CI Validation**: Run `./ci-verify.sh` before commits to simulate the complete CI pipeline locally.
+
+### Project Documentation Structure
+- **[TEST_IMPROVEMENT_GUIDE.md](docs/TEST_IMPROVEMENT_GUIDE.md)** - Kanban, CI Hook, and weekly reporting mechanisms for test optimization
+- **[TESTING_GUIDE.md](docs/TESTING_GUIDE.md)** - Comprehensive testing methodology and best practices from SWAT operations
+- **[TOOLS.md](./TOOLS.md)** - Complete tool usage guide including GitHub Issues sync and development workflows
+- **[AGENTS.md](AGENTS.md)** - Repository guidelines for contributors covering structure, processes, and security baselines
+
 ## Quality Assurance
 
 ### Code Quality Tools
@@ -438,13 +464,21 @@ make test-phase1        # Core functionality tests
 - **MyPy**: Static type checking
 - **Bandit**: Security scanning
 - **pytest**: Testing framework with asyncio support
+- **pip-audit**: Dependency vulnerability scanning
 
 ### Pre-commit Checklist
 - [ ] Tests pass: `make test`
 - [ ] Code quality: `make fix-code`
+- [ ] Type checking: `make type-check`
 - [ ] Security check: `make security-check`
 - [ ] Coverage maintained: `make coverage`
 - [ ] Full validation: `make lint && make test`
+
+### Code Quality Standards
+- **Type Coverage**: All functions must have complete type annotations
+- **Async Pattern**: All I/O operations must use async/await
+- **Error Handling**: Comprehensive exception handling with structured logging
+- **Documentation**: Public APIs must have docstrings with examples
 
 ## Troubleshooting
 
@@ -493,6 +527,15 @@ docker-compose exec app celery -A src.tasks.celery_app inspect scheduled  # 查�
 # ETL pipeline debugging
 docker-compose exec app python scripts/run_etl_silver.py                          # 手动运行 ETL
 docker-compose exec app python scripts/audit_data_quality.py                     # 数据质量审计
+
+# Performance monitoring
+docker-compose exec app python -c "import psutil; print(f'CPU: {psutil.cpu_percent()}%'); print(f'Memory: {psutil.virtual_memory().percent}%%')"  # 系统资源监控
+docker-compose stats                                                              # 容器资源使用情况
+docker-compose exec app python scripts/monitor_system_health.py                  # 系统健康检查（如果存在）
+
+# Application debugging
+docker-compose exec app python -c "from src.core.cache import cache_manager; print('Cache connection:', cache_manager.redis.ping())"  # 测试缓存连接
+docker-compose exec app python -c "from src.database.session import get_async_session; print('Database connection test')"  # 测试数据库连接
 ```
 
 ## Commit Standards
