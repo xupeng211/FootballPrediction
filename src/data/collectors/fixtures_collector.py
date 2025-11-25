@@ -35,16 +35,56 @@ class FixturesCollector:
     实现防重复,
     防丢失机制,
     确保数据质量.
-    支持欧洲五大联赛采集和API速率限制保护.
+    支持欧洲五大联赛+竞彩关键联赛+关键杯赛采集和API速率限制保护.
     """
 
-    # 目标联赛配置 - 欧洲五大联赛 (使用验证过能跑通的Football-Data.org数字ID)
+    # 目标联赛配置 - 欧洲五大联赛 + 竞彩关键联赛 + 关键杯赛
+    # 包含数据库ID和API ID的映射关系
     TARGET_LEAGUES = [
-        {"code": "PL", "name": "Premier League", "country": "England", "id": 2021},
-        {"code": "PD", "name": "La Liga", "country": "Spain", "id": 2014},
-        {"code": "BL1", "name": "Bundesliga", "country": "Germany", "id": 2002},
-        {"code": "SA", "name": "Serie A", "country": "Italy", "id": 2019},
-        {"code": "FL1", "name": "Ligue 1", "country": "France", "id": 2015},
+        # 原五大联赛 (使用Football-Data.org API ID + 数据库业务ID)
+        {"code": "PL", "name": "Premier League", "country": "England",
+         "api_id": 2021, "db_id": 11},
+        {"code": "PD", "name": "La Liga", "country": "Spain",
+         "api_id": 2014, "db_id": 12},
+        {"code": "BL1", "name": "Bundesliga", "country": "Germany",
+         "api_id": 2002, "db_id": 13},
+        {"code": "SA", "name": "Serie A", "country": "Italy",
+         "api_id": 2019, "db_id": 14},
+        {"code": "FL1", "name": "Ligue 1", "country": "France",
+         "api_id": 2015, "db_id": 15},
+
+        # 欧洲重要赛事
+        {"code": "CL", "name": "UEFA Champions League", "country": "Europe",
+         "api_id": 2001, "db_id": 2001},
+        {"code": "EL", "name": "UEFA Europa League", "country": "Europe",
+         "api_id": 2146, "db_id": 2146},
+
+        # 关键杯赛 - 用于真实休息天数计算
+        {"code": "FAC", "name": "FA Cup", "country": "England",
+         "api_id": 2057, "db_id": 2057},
+        {"code": "COP", "name": "Copa del Rey", "country": "Spain",
+         "api_id": 2145, "db_id": 2145},
+        {"code": "DFB", "name": "DFB-Pokal", "country": "Germany",
+         "api_id": 2002, "db_id": 2002},
+        {"code": "COPP", "name": "Coppa Italia", "country": "Italy",
+         "api_id": 2163, "db_id": 2163},
+        {"code": "CDF", "name": "Coupe de France", "country": "France",
+         "api_id": 2119, "db_id": 2119},
+
+        # 新增竞彩关键联赛
+        {"code": "EL1", "name": "Eredivisie", "country": "Netherlands",
+         "api_id": 2003, "db_id": 2003},
+        {"code": "PPL", "name": "Primeira Liga", "country": "Portugal",
+         "api_id": 2017, "db_id": 2017},
+
+        # 注意：Championship、巴甲和世界杯可能需要在Football-Data.org中确认正确的API ID
+        # 暂时注释掉以避免API错误
+        # {"code": "ELC", "name": "Championship", "country": "England",
+        #  "api_id": 2016, "db_id": 2016},
+        # {"code": "BSA", "name": "Série A", "country": "Brazil",
+        #  "api_id": 2013, "db_id": 2013},
+        # {"code": "WC", "name": "FIFA World Cup", "country": "International",
+        #  "api_id": 2018, "db_id": 2018},
     ]
 
     # API速率限制配置 (基于验证过的成功配置)
@@ -82,7 +122,7 @@ class FixturesCollector:
     ) -> CollectionResult:
         """采集赛程数据.
 
-        支持欧洲五大联赛批量采集，包含API速率限制保护。
+        支持欧洲五大联赛+竞彩关键联赛+关键杯赛批量采集，包含API速率限制保护。
 
         防重复策略:
         - 基于 external_match_id + league_id 生成唯一键
@@ -157,7 +197,7 @@ class FixturesCollector:
                     ),
                     None,
                 )
-                league_id = league_info["id"] if league_info else None
+                league_id = league_info["api_id"] if league_info else None
 
                 league_data = await self._collect_league_with_rate_limit(
                     league_code, league_id, season, league_name

@@ -80,14 +80,51 @@ class InferenceService:
             return
 
         try:
-            # 尝试加载PKL格式的模型（优先）
+            # 尝试加载新训练的v2模型
+            v2_model_path = Path("models/football_prediction_v2.pkl")
+            v2_metadata_path = Path("models/model_metadata.json")
+
+            # 备用：旧模型路径
             pkl_model_path = Path("models/football_xgboost_v2_best.pkl")
             json_model_path = Path("models/football_model_v1.json")
             metadata_path = Path("models/football_model_v1_metadata.json")
 
-            # 优先使用PKL格式的模型
-            if pkl_model_path.exists():
-                logger.info(f"🔄 加载PKL格式模型: {pkl_model_path}")
+            # 优先使用新训练的v2模型
+            if v2_model_path.exists():
+                logger.info(f"🔄 加载新训练的v2模型: {v2_model_path}")
+                import pickle
+
+                with open(v2_model_path, 'rb') as f:
+                    model_data = pickle.load(f)
+
+                self._model = model_data['model']
+                self._label_encoder = model_data.get('label_encoder')
+
+                # 加载元数据
+                if v2_metadata_path.exists():
+                    with open(v2_metadata_path, 'r', encoding='utf-8') as f:
+                        self._model_metadata = json.load(f)
+                    logger.info("✅ v2模型元数据加载成功")
+                    self._feature_columns = self._model_metadata['feature_metadata']['feature_columns']
+                else:
+                    logger.warning("⚠️ v2元数据文件不存在，使用默认设置")
+                    self._model_metadata = {
+                        "model_version": "v2",
+                        "target_classes": ["Home", "Draw", "Away"],
+                        "model_type": "XGBClassifier",
+                    }
+                    # 如果没有元数据，尝试从模型推断特征
+                    if hasattr(self._model, 'feature_names'):
+                        self._feature_columns = list(self._model.feature_names)
+                    else:
+                        logger.warning("⚠️ 无法获取v2模型特征名称")
+                        self._feature_columns = []
+
+                logger.info("✅ v2模型加载成功")
+
+            # 备用：使用旧模型
+            elif pkl_model_path.exists():
+                logger.info(f"🔄 加载备用PKL模型: {pkl_model_path}")
                 import joblib
 
                 self._model = joblib.load(pkl_model_path)
@@ -219,15 +256,10 @@ class InferenceService:
 
             # 确保数据库管理器已初始化
             if not hasattr(db_manager, "_initialized") or not db_manager._initialized:
-                from src.config.settings import get_settings
+                from src.core.config import get_settings
 
                 settings = get_settings()
-                db_manager.initialize(
-                    database_url=settings.database_url,
-                    pool_size=settings.db_pool_size,
-                    max_overflow=settings.db_max_overflow,
-                    pool_timeout=settings.db_pool_timeout,
-                )
+                db_manager.initialize(database_url=settings.database_url)
 
             # 使用异步会话查询数据库
             async with db_manager.get_async_session() as session:
@@ -243,8 +275,18 @@ class InferenceService:
                 row = result.first()
 
                 if row and row[0]:  # feature_data 存在
-                    # row[0] 是JSONB对象，直接使用
-                    features_dict = row[0]
+                    # 处理JSONB对象，确保正确转换为Python字典
+                    features_data = row[0]
+                    if isinstance(features_data, str):
+                        # 如果是字符串，需要解析JSON
+                        features_dict = json.loads(features_data)
+                    elif hasattr(features_data, '__dict__'):
+                        # 如果是对象，尝试转换为字典
+                        features_dict = dict(features_data)
+                    else:
+                        # 如果已经是字典，直接使用
+                        features_dict = features_data
+
                     logger.info(
                         f"✅ Successfully fetched features for match {match_id}: {len(features_dict)} features"
                     )
@@ -315,48 +357,26 @@ class InferenceService:
                     "success": False,
                 }
 
-            # 将业务特征映射到模型的特征格式
-            # 模型期望 feature_0 到 feature_4 的5个特征
+            # 使用v2模型的真实特征列进行预测
             try:
-                # 如果模型使用通用特征名，创建特征向量
-                if all(col.startswith("feature_") for col in self._feature_columns):
-                    # 使用通用特征映射，将业务特征转换为5个维度
-                    feature_0 = features.get("home_team_id", 1)  # 主队ID
-                    feature_1 = features.get("away_team_id", 2)  # 客队ID
-                    feature_2 = features.get("home_last_5_points", 6)  # 主队最近积分
-                    feature_3 = features.get("away_last_5_points", 6)  # 客队最近积分
-                    feature_4 = features.get(
-                        "h2h_last_3_home_wins", 1
-                    )  # 历史交锋主队胜场
+                logger.info(f"🎯 使用v2模型的13个真实特征进行预测")
+                logger.info(f"📋 模型特征列: {self._feature_columns}")
 
-                    feature_vector = [
-                        feature_0,
-                        feature_1,
-                        feature_2,
-                        feature_3,
-                        feature_4,
-                    ]
-                    self._feature_columns = [
-                        "feature_0",
-                        "feature_1",
-                        "feature_2",
-                        "feature_3",
-                        "feature_4",
-                    ]
-                    logger.info(f"✅ 使用通用特征映射: {feature_vector}")
-                else:
-                    # 使用原始特征列映射
-                    feature_vector = []
-                    for col in self._feature_columns:
-                        if col in features:
-                            feature_vector.append(features[col])
-                        else:
-                            logger.warning(f"⚠️ 缺失特征列: {col}，使用默认值0")
-                            feature_vector.append(0)
+                # 直接使用模型的特征列映射，确保特征顺序一致
+                feature_vector = []
+                for col in self._feature_columns:
+                    if col in features:
+                        feature_vector.append(features[col])
+                    else:
+                        logger.warning(f"⚠️ 缺失特征列: {col}，使用默认值0")
+                        feature_vector.append(0)
+
+                logger.info(f"✅ 构建的特征向量: {feature_vector}")
+
             except Exception as e:
                 logger.error(f"❌ 特征映射失败: {e}")
-                # 使用默认特征向量
-                feature_vector = [1, 2, 6, 6, 1]
+                # 使用默认特征向量（基于新特征的默认值）
+                feature_vector = [6, 7, 1.4, 1.5, 0, 0, 0, 0, 0.37, 0.38, 7, 7, 1]
 
             # 转换为DataFrame
             feature_df = pd.DataFrame([feature_vector], columns=self._feature_columns)
@@ -371,8 +391,23 @@ class InferenceService:
                 # 二分类模型：0=平局/客队胜, 1=主队胜
                 result_names = {0: "away_or_draw", 1: "home_win"}
             else:
-                # 三分类模型
-                result_names = {0: "平局", 1: "主队胜", 2: "客队胜"}
+                # 三分类模型 - 支持新模型的英文标签和旧模型的中文标签
+                if hasattr(self._model, 'classes_') and len(self._model.classes_) == 3:
+                    # 检查是否是新模型的英文标签
+                    class_list = list(self._model.classes_)
+                    if 'Away' in class_list and 'Draw' in class_list and 'Home' in class_list:
+                        # 新模型英文标签映射
+                        away_idx = class_list.index('Away')
+                        draw_idx = class_list.index('Draw')
+                        home_idx = class_list.index('Home')
+                        result_names = {away_idx: "客队胜", draw_idx: "平局", home_idx: "主队胜"}
+                        logger.info(f"🏷️ 使用新模型英文标签映射: {result_names}")
+                    else:
+                        # 旧模型中文标签映射
+                        result_names = {0: "平局", 1: "主队胜", 2: "客队胜"}
+                else:
+                    # 默认中文标签映射
+                    result_names = {0: "平局", 1: "主队胜", 2: "客队胜"}
 
             # 计算置信度（最高概率）
             confidence = max(probabilities)
@@ -399,19 +434,40 @@ class InferenceService:
 
                 predicted_outcome = "home" if prediction == 1 else "away_or_draw"
             else:
-                # 三分类模型
-                prob_home_win = round(float(probabilities[1]), 3)
-                prob_draw = (
-                    round(float(probabilities[0]), 3) if len(probabilities) > 2 else 0.0
-                )
-                prob_away_win = (
-                    round(float(probabilities[2]), 3) if len(probabilities) > 2 else 0.0
-                )
-                predicted_outcome = (
-                    "home"
-                    if prediction == 1
-                    else ("draw" if prediction == 0 else "away")
-                )
+                # 三分类模型 - 智能处理新模型和旧模型的标签顺序
+                class_list = list(model_classes)
+
+                # 检查是否是新模型的英文标签
+                if 'Away' in class_list and 'Draw' in class_list and 'Home' in class_list:
+                    # 新模型：按实际索引获取概率
+                    away_prob = float(probabilities[class_list.index('Away')])
+                    draw_prob = float(probabilities[class_list.index('Draw')])
+                    home_prob = float(probabilities[class_list.index('Home')])
+
+                    prob_home_win = round(home_prob, 3)
+                    prob_draw = round(draw_prob, 3)
+                    prob_away_win = round(away_prob, 3)
+
+                    # 根据预测结果确定outcome
+                    if prediction == class_list.index('Home'):
+                        predicted_outcome = "home"
+                    elif prediction == class_list.index('Draw'):
+                        predicted_outcome = "draw"
+                    else:
+                        predicted_outcome = "away"
+
+                    logger.info(f"🎯 新模型概率分布: Home={prob_home_win}, Draw={prob_draw}, Away={prob_away_win}")
+                else:
+                    # 旧模型：假设顺序是 [平局, 主队胜, 客队胜]
+                    prob_home_win = round(float(probabilities[1]), 3)
+                    prob_draw = round(float(probabilities[0]), 3) if len(probabilities) > 2 else 0.0
+                    prob_away_win = round(float(probabilities[2]), 3) if len(probabilities) > 2 else 0.0
+
+                    predicted_outcome = (
+                        "home"
+                        if prediction == 1
+                        else ("draw" if prediction == 0 else "away")
+                    )
 
             result = {
                 "match_id": match_id,
