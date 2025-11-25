@@ -36,315 +36,352 @@ def sync_task_to_async(async_func):
 
 
 async def batch_data_cleaning() -> int:
-    """批量数据清洗：使用高效的批量操作处理leagues、teams和matches"""
+    """高性能分块批量数据清洗：支持大数据量处理，避免长事务超时"""
     try:
-        logger.info("🚀 开始批量数据清洗...")
+        logger.info("🚀 开始分块高性能批量数据清洗...")
 
         # 确保数据库已初始化
-        ensure_database_initialized()
+        from src.database.connection import initialize_database
+        initialize_database()
 
         from src.database.connection import get_async_session
         from src.database.models.raw_data import RawMatchData
         from src.database.models.league import League
         from src.database.models.team import Team
         from src.database.models.match import Match
-        from sqlalchemy import select, text, insert, update
-        from sqlalchemy.dialects.postgresql import insert as pg_insert
-        import pandas as pd
+        from sqlalchemy import select, text, update
 
-        cleaned_count = 0
+        total_cleaned_count = 0
+        BATCH_SIZE = 5  # 减小批次大小以便更好地调试
+        offset = 0
 
-        async with get_async_session() as session:
-            # 获取所有未处理的原始数据
-            query = select(RawMatchData).where(RawMatchData.processed.is_(False))
-            result = await session.execute(query)
-            raw_matches = result.scalars().all()
+        logger.info("🔄 开始分块处理循环...")
 
-            if not raw_matches:
-                logger.info("📊 没有未处理的原始数据")
-                return 0
+        # 🔄 分块处理循环
+        while True:
+            logger.info(f"📊 处理批次 offset={offset}, batch_size={BATCH_SIZE}")
 
-            # 转换为DataFrame进行批量处理
-            raw_data_list = []
-            for raw_match in raw_matches:
-                raw_data_list.append({
-                    'id': raw_match.id,
-                    'external_id': raw_match.external_id,
-                    'match_data': dict(raw_match.match_data),
-                    'source': raw_match.source
-                })
+            # 每个批次使用独立的事务
+            async with get_async_session() as session:
+                # 步骤1：分批获取未处理的原始数据
+                query = (
+                    select(RawMatchData)
+                    .where(RawMatchData.processed.is_(False))
+                    .limit(BATCH_SIZE)
+                    .offset(offset)
+                )
+                result = await session.execute(query)
+                batch_raw_matches = result.scalars().all()
 
-            logger.info(f"📊 找到 {len(raw_data_list)} 条未处理的原始比赛数据")
+                if not batch_raw_matches:
+                    logger.info("📊 没有更多未处理的原始数据")
+                    break
 
-            # 步骤1：批量提取和创建leagues
-            logger.info("📝 步骤1：批量创建leagues记录...")
-            leagues_data = []
-            league_external_id_map = {}  # external_id -> league_name + country
+                logger.info(f"📊 本批次找到 {len(batch_raw_matches)} 条原始数据")
 
-            for raw_match_data in raw_data_list:
-                try:
-                    raw_data = raw_match_data['match_data'].get("raw_data", {})
-                    if "competition" in raw_data:
-                        comp = raw_data["competition"]
-                        external_id = str(comp.get("id"))
-                        league_name = comp.get("name", "Unknown League")
-                        country = comp.get("area", {}).get("name", "Unknown Country")
+                # 步骤2：在当前事务中处理这批数据
+                batch_cleaned_count = await _process_data_batch(session, batch_raw_matches)
 
-                        if external_id not in league_external_id_map:
-                            league_external_id_map[external_id] = {
-                                'name': league_name,
-                                'country': country
-                            }
-                            leagues_data.append({
-                                'external_id': external_id,
-                                'name': league_name,
-                                'country': country,
-                                'is_active': True
-                            })
-                except Exception as e:
-                    logger.debug(f"提取league信息失败: {e}")
-                    continue
+                # 步骤3：提交当前批次的事务
+                await session.commit()
 
-            # 批量插入leagues (使用ON CONFLICT避免重复)
-            league_count = 0
-            if leagues_data:
-                try:
-                    # 查询已存在的leagues
-                    existing_leagues_query = text("""
-                        SELECT external_id, id FROM leagues
-                        WHERE external_id = ANY(:external_ids)
-                    """)
-                    result = await session.execute(
-                        existing_leagues_query,
-                        {"external_ids": [league['external_id'] for league in leagues_data]}
-                    )
-                    existing_leagues = {row[0]: row[1] for row in result.fetchall()}
+                total_cleaned_count += batch_cleaned_count
+                logger.info(f"✅ 批次处理完成: {batch_cleaned_count} 条记录，总计: {total_cleaned_count}")
 
-                    # 只插入不存在的leagues
-                    new_leagues = [
-                        league for league in leagues_data
-                        if league['external_id'] not in existing_leagues
-                    ]
+                # 如果返回的记录数少于批次大小，说明没有更多数据了
+                if len(batch_raw_matches) < BATCH_SIZE:
+                    break
 
-                    if new_leagues:
-                        # 使用批量插入
-                        leagues_df = pd.DataFrame(new_leagues)
-                        leagues_df['created_at'] = datetime.utcnow()
-                        leagues_df['updated_at'] = datetime.utcnow()
+                offset += BATCH_SIZE
 
-                        # 移除external_id字段（表中可能没有）
-                        if 'external_id' in leagues_df.columns:
-                            leagues_df = leagues_df.drop(columns=['external_id'])
-
-                        # 批量插入
-                        await session.execute(
-                            pg_insert(League).returning(League.id),
-                            leagues_df.to_dict('records')
-                        )
-                        await session.flush()
-                        league_count = len(new_leagues)
-
-                    logger.info(f"✅ 批量创建leagues完成，新增 {league_count} 个联赛")
-
-                except Exception as e:
-                    logger.error(f"批量创建leagues失败: {e}")
-
-            # 步骤2：批量提取和创建teams
-            logger.info("👥 步骤2：批量创建teams记录...")
-            teams_data = []
-            team_external_id_map = {}  # external_id -> team info
-
-            for raw_match_data in raw_data_list:
-                try:
-                    raw_data = raw_match_data['match_data'].get("raw_data", {})
-
-                    # 处理主队和客队
-                    for team_type in ["homeTeam", "awayTeam"]:
-                        if team_type in raw_data:
-                            team_info = raw_data[team_type]
-                            external_id = str(team_info.get("id"))
-                            team_name = team_info.get("name", "Unknown Team")
-                            short_name = team_info.get("shortName")
-                            country = raw_data.get("area", {}).get("name", "Unknown Country")
-
-                            if external_id not in team_external_id_map:
-                                team_external_id_map[external_id] = {
-                                    'name': team_name,
-                                    'short_name': short_name,
-                                    'country': country
-                                }
-                                teams_data.append({
-                                    'external_id': external_id,
-                                    'name': team_name,
-                                    'short_name': short_name,
-                                    'country': country,
-                                    'founded_year': 1870  # 默认值
-                                })
-                except Exception as e:
-                    logger.debug(f"提取team信息失败: {e}")
-                    continue
-
-            # 批量插入teams
-            team_count = 0
-            if teams_data:
-                try:
-                    # 查询已存在的teams
-                    existing_teams_query = text("""
-                        SELECT external_id, id FROM teams
-                        WHERE external_id = ANY(:external_ids)
-                    """)
-                    result = await session.execute(
-                        existing_teams_query,
-                        {"external_ids": [team['external_id'] for team in teams_data]}
-                    )
-                    existing_teams = {row[0]: row[1] for row in result.fetchall()}
-
-                    # 只插入不存在的teams
-                    new_teams = [
-                        team for team in teams_data
-                        if team['external_id'] not in existing_teams
-                    ]
-
-                    if new_teams:
-                        # 使用批量插入
-                        teams_df = pd.DataFrame(new_teams)
-                        teams_df['created_at'] = datetime.utcnow()
-                        teams_df['updated_at'] = datetime.utcnow()
-
-                        # 移除external_id字段（如果表中没有）
-                        if 'external_id' in teams_df.columns:
-                            teams_df = teams_df.drop(columns=['external_id'])
-
-                        await session.execute(
-                            pg_insert(Team).returning(Team.id),
-                            teams_df.to_dict('records')
-                        )
-                        await session.flush()
-                        team_count = len(new_teams)
-
-                    logger.info(f"✅ 批量创建teams完成，新增 {team_count} 个球队")
-
-                except Exception as e:
-                    logger.error(f"批量创建teams失败: {e}")
-
-            # 步骤3：批量创建matches记录
-            logger.info("⚽ 步骤3：批量创建matches记录...")
-
-            # 重新获取所有leagues和teams的ID映射
-            leagues_query = text("SELECT id, name, country FROM leagues")
-            teams_query = text("SELECT id, name FROM teams")
-
-            leagues_result = await session.execute(leagues_query)
-            teams_result = await session.execute(teams_query)
-
-            leagues_map = {(row[1], row[2]): row[0] for row in leagues_result.fetchall()}  # (name, country) -> id
-            teams_map = {row[1]: row[0] for row in teams_result.fetchall()}  # name -> id
-
-            matches_data = []
-            raw_match_ids = []
-
-            for raw_match_data in raw_data_list:
-                try:
-                    match_data = raw_match_data['match_data']
-                    raw_match_data_content = raw_match_data['match_data'].get("raw_data", {})
-
-                    # 获取关联的ID
-                    league_name = match_data.get("league_name", "Unknown League")
-                    league_country = match_data.get("league_country", "Unknown Country")
-                    home_team_name = match_data.get("home_team_name", "Unknown Team")
-                    away_team_name = match_data.get("away_team_name", "Unknown Team")
-
-                    league_id = leagues_map.get((league_name, league_country))
-                    home_team_id = teams_map.get(home_team_name)
-                    away_team_id = teams_map.get(away_team_name)
-
-                    if not all([league_id, home_team_id, away_team_id]):
-                        logger.warning(f"跳过比赛，缺少关联ID: league={league_name}, home={home_team_name}, away={away_team_name}")
-                        continue
-
-                    # 处理时间
-                    match_time_str = match_data.get("match_time")
-                    match_date = None
-                    if match_time_str and isinstance(match_time_str, str):
-                        try:
-                            aware_dt = datetime.fromisoformat(match_time_str.replace("Z", "+00:00"))
-                            match_date = aware_dt.replace(tzinfo=None)
-                        except (ValueError, TypeError):
-                            match_date = None
-
-                    # 准备match数据
-                    match_record = {
-                        'home_team_id': home_team_id,
-                        'away_team_id': away_team_id,
-                        'league_id': league_id,
-                        'status': match_data.get("status", "scheduled"),
-                        'match_date': match_date,
-                        'season': str(match_data.get("season", "")),
-                        'venue': raw_match_data_content.get("area", {}).get("name"),
-                        'home_score': raw_match_data_content.get("score", {}).get("fullTime", {}).get("home", 0),
-                        'away_score': raw_match_data_content.get("score", {}).get("fullTime", {}).get("away", 0),
-                        'created_at': datetime.utcnow(),
-                        'updated_at': datetime.utcnow()
-                    }
-
-                    matches_data.append(match_record)
-                    raw_match_ids.append(raw_match_data['id'])
-
-                except Exception as e:
-                    logger.error(f"处理比赛数据失败: {e}")
-                    continue
-
-            # 批量插入matches
-            if matches_data:
-                try:
-                    matches_df = pd.DataFrame(matches_data)
-
-                    # 使用DataFrame的to_sql进行批量插入
-                    from sqlalchemy import create_engine
-                    import os
-
-                    # 获取数据库URL
-                    db_url = os.getenv("DATABASE_URL")
-                    if db_url and "+asyncpg" in db_url:
-                        db_url = db_url.replace("+asyncpg", "")
-
-                    engine = create_engine(db_url)
-
-                    # 批量插入matches
-                    matches_df.to_sql("matches", engine, if_exists="append", index=False, method="multi")
-
-                    cleaned_count = len(matches_data)
-                    logger.info(f"✅ 批量创建matches完成，新增 {cleaned_count} 场比赛")
-
-                except Exception as e:
-                    logger.error(f"批量创建matches失败: {e}")
-
-            # 步骤4：批量标记原始数据为已处理
-            if raw_match_ids:
-                try:
-                    update_stmt = (
-                        update(RawMatchData)
-                        .where(RawMatchData.id.in_(raw_match_ids))
-                        .values(processed=True, updated_at=datetime.utcnow())
-                    )
-                    await session.execute(update_stmt)
-                    await session.commit()
-
-                except Exception as e:
-                    logger.error(f"标记原始数据失败: {e}")
-
-        logger.info("🎉 批量数据清洗完成！")
-        logger.info(f"   - 新增leagues: {league_count}")
-        logger.info(f"   - 新增teams: {team_count}")
-        logger.info(f"   - 新增matches: {cleaned_count}")
-
-        return cleaned_count
+        logger.info(f"🎉 分块批量数据清洗完成！总计处理 {total_cleaned_count} 条记录")
+        return total_cleaned_count
 
     except Exception as e:
-        logger.error(f"❌ 批量数据清洗失败: {e}")
+        logger.error(f"❌ 分块批量数据清洗失败: {e}")
         import traceback
         traceback.print_exc()
         return 0
+
+
+async def _process_data_batch(session, raw_matches) -> int:
+    """处理单批次数据的内部函数"""
+    leagues_created = 0
+    teams_created = 0
+    cleaned_count = 0
+
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+    from sqlalchemy import text, update
+    from src.database.models.league import League
+    from src.database.models.team import Team
+    from src.database.models.match import Match
+    from src.database.models.raw_data import RawMatchData
+
+    # 步骤1：提取本批唯一的Leagues
+    logger.info("📝 提取本批次Leagues...")
+    unique_leagues = {}
+    for raw_match in raw_matches:
+        try:
+            match_data = raw_match.match_data
+            raw_content = match_data.get("raw_data", {})
+
+            if "competition" in raw_content:
+                comp = raw_content["competition"]
+                league_name = comp.get("name", "Unknown League")
+                league_country = comp.get("area", {}).get("name", "Unknown Country")
+
+                league_key = (league_name, league_country)
+                if league_key not in unique_leagues:
+                    unique_leagues[league_key] = {
+                        'name': league_name,
+                        'country': league_country
+                    }
+        except Exception as e:
+            logger.debug(f"提取league信息失败: {e}")
+            continue
+
+    # 步骤2：批量创建Leagues
+    if unique_leagues:
+        logger.info(f"🏆 批量创建 {len(unique_leagues)} 个Leagues...")
+        existing_leagues = {}
+        for (name, country), league_data in unique_leagues.items():
+            query = text("SELECT id FROM leagues WHERE name = :name AND country = :country")
+            result = await session.execute(query, {"name": name, "country": country})
+            existing = result.scalar_one_or_none()
+            if existing:
+                existing_leagues[(name, country)] = existing
+
+        new_leagues = []
+        for (name, country), league_data in unique_leagues.items():
+            if (name, country) not in existing_leagues:
+                new_league = League(
+                    name=name,
+                    country=country,
+                    is_active=True,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                new_leagues.append(new_league)
+
+        if new_leagues:
+            session.add_all(new_leagues)
+            await session.flush()
+            leagues_created = len(new_leagues)
+
+    # 步骤3：重新获取Leagues映射
+    leagues_query = text("SELECT id, name, country FROM leagues")
+    leagues_result = await session.execute(leagues_query)
+    leagues_map = {(row[1], row[2]): row[0] for row in leagues_result.fetchall()}
+
+    # 🆕 添加League映射调试信息
+    logger.info(f"🗺️ League映射表 (共{len(leagues_map)}个):")
+    for (name, country), league_id in list(leagues_map.items())[:5]:  # 显示前5个
+        logger.info(f"   - ({name}, {country}) -> {league_id}")
+    if len(leagues_map) > 5:
+        logger.info(f"   ... 还有{len(leagues_map) - 5}个league")
+
+    # 步骤4：提取本批唯一的Teams
+    logger.info("👥 提取本批次Teams...")
+    unique_teams = {}
+    for raw_match in raw_matches:
+        try:
+            match_data = raw_match.match_data
+
+            # 🔄 适配不同数据源：优先使用match_data中的球队名称，回退到raw_data
+            home_team_name = match_data.get("home_team_name")
+            away_team_name = match_data.get("away_team_name")
+
+            # 如果match_data中没有球队信息，尝试从raw_data获取
+            if not home_team_name or not away_team_name:
+                raw_content = match_data.get("raw_data", {})
+
+                if not home_team_name and "homeTeam" in raw_content:
+                    home_team_info = raw_content["homeTeam"]
+                    home_team_name = home_team_info.get("name", "Unknown Team")
+
+                if not away_team_name and "awayTeam" in raw_content:
+                    away_team_info = raw_content["awayTeam"]
+                    away_team_name = away_team_info.get("name", "Unknown Team")
+
+            # 处理主队
+            if home_team_name:
+                team_short_name = home_team_name[:10] if len(home_team_name) > 10 else home_team_name
+                team_country = match_data.get("league_country", "Unknown Country")
+
+                if home_team_name not in unique_teams:
+                    unique_teams[home_team_name] = {
+                        'name': home_team_name,
+                        'short_name': team_short_name,
+                        'country': team_country
+                    }
+
+            # 处理客队
+            if away_team_name:
+                team_short_name = away_team_name[:10] if len(away_team_name) > 10 else away_team_name
+                team_country = match_data.get("league_country", "Unknown Country")
+
+                if away_team_name not in unique_teams:
+                    unique_teams[away_team_name] = {
+                        'name': away_team_name,
+                        'short_name': team_short_name,
+                        'country': team_country
+                    }
+
+        except Exception as e:
+            logger.debug(f"提取team信息失败: {e}")
+            continue
+
+    # 步骤5：批量创建Teams
+    if unique_teams:
+        logger.info(f"⚽ 批量创建 {len(unique_teams)} 个Teams...")
+        existing_teams = {}
+        for team_name, team_data in unique_teams.items():
+            query = text("SELECT id FROM teams WHERE name = :name")
+            result = await session.execute(query, {"name": team_name})
+            existing = result.scalar_one_or_none()
+            if existing:
+                existing_teams[team_name] = existing
+
+        new_teams = []
+        for team_name, team_data in unique_teams.items():
+            if team_name not in existing_teams:
+                new_team = Team(
+                    name=team_name,
+                    short_name=team_data['short_name'],
+                    country=team_data['country'],
+                    founded_year=2000,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                new_teams.append(new_team)
+
+        if new_teams:
+            session.add_all(new_teams)
+            await session.flush()
+            teams_created = len(new_teams)
+
+    # 步骤6：重新获取Teams映射
+    teams_query = text("SELECT id, name FROM teams")
+    teams_result = await session.execute(teams_query)
+    teams_map = {row[1]: row[0] for row in teams_result.fetchall()}
+
+    # 步骤7：批量创建Matches
+    logger.info("⚽ 批量创建Matches...")
+    matches_to_create = []
+    raw_match_ids_to_update = []
+
+    for raw_match in raw_matches:
+        try:
+            match_data = raw_match.match_data
+            raw_content = match_data.get("raw_data", {})
+
+            # 处理状态字段
+            status_field = match_data.get("status", {})
+            if isinstance(status_field, dict):
+                if status_field.get('finished', False):
+                    status = 'FINISHED'
+                elif status_field.get('started', False):
+                    status = 'LIVE'
+                else:
+                    status = 'SCHEDULED'
+            else:
+                status = str(status_field) if status_field else 'SCHEDULED'
+
+            # 获取关联的ID - 🔄 修复League映射不匹配问题
+            # 优先使用match_data中的结构化信息，回退到raw_data确保一致性
+            league_name = match_data.get("league_name", "Unknown League")
+
+            # 🆕 统一League查找逻辑，与League创建时保持一致
+            raw_content = match_data.get("raw_data", {})
+            if "competition" in raw_content:
+                comp = raw_content["competition"]
+                league_country_lookup = comp.get("area", {}).get("name", "Unknown Country")
+            else:
+                league_country_lookup = match_data.get("league_country", "Unknown Country")
+
+            # 保持原始信息用于日志
+            league_country_display = match_data.get("league_country", league_country_lookup)
+
+            home_team_name = match_data.get("home_team_name", "Unknown Team")
+            away_team_name = match_data.get("away_team_name", "Unknown Team")
+
+            # 🆕 使用统一查找逻辑
+            league_id = leagues_map.get((league_name, league_country_lookup))
+            home_team_id = teams_map.get(home_team_name)
+            away_team_id = teams_map.get(away_team_name)
+
+            # 🆕 添加详细调试信息
+            logger.info(f"🔍 比赛数据检查:")
+            logger.info(f"   - 比赛: {home_team_name} vs {away_team_name}")
+            logger.info(f"   - 联赛: {league_name} ({league_country_display})")
+            logger.info(f"   - 查找键: ({league_name}, {league_country_lookup})")
+            logger.info(f"   - 关联ID: league_id={league_id}, home_team_id={home_team_id}, away_team_id={away_team_id}")
+
+            if not all([league_id, home_team_id, away_team_id]):
+                logger.warning(f"⚠️ 跳过比赛，缺少关联ID: league={league_name}, home={home_team_name}, away={away_team_name}")
+                logger.warning(f"   ID详情: league_id={league_id}, home_team_id={home_team_id}, away_team_id={away_team_id}")
+                continue
+
+            # 处理时间
+            match_time_str = match_data.get("match_time")
+            match_date = None
+            if match_time_str and isinstance(match_time_str, str):
+                try:
+                    aware_dt = datetime.fromisoformat(match_time_str.replace("Z", "+00:00"))
+                    match_date = aware_dt.replace(tzinfo=None)
+                except (ValueError, TypeError):
+                    match_date = None
+
+            # 获取比分
+            home_score = raw_content.get("homeScore", 0)
+            away_score = raw_content.get("awayScore", 0)
+
+            # 创建Match对象
+            new_match = Match(
+                home_team_id=home_team_id,
+                away_team_id=away_team_id,
+                league_id=league_id,
+                status=status,
+                match_date=match_date,
+                season=str(match_data.get("season", "2024")),
+                venue=raw_content.get("venue", "Unknown Venue"),
+                home_score=home_score,
+                away_score=away_score,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+
+            matches_to_create.append(new_match)
+            raw_match_ids_to_update.append(raw_match.id)
+
+        except Exception as e:
+            logger.error(f"❌ 处理比赛数据失败: {e}")
+            continue
+
+    # 步骤8：批量插入Matches
+    if matches_to_create:
+        logger.info(f"💾 批量插入 {len(matches_to_create)} 场比赛...")
+        session.add_all(matches_to_create)
+        await session.flush()
+
+        # 步骤9：批量标记原始数据为已处理
+        if raw_match_ids_to_update:
+            logger.info(f"🔄 标记 {len(raw_match_ids_to_update)} 条原始数据为已处理...")
+            update_stmt = (
+                update(RawMatchData)
+                .where(RawMatchData.id.in_(raw_match_ids_to_update))
+                .values(
+                    processed=True,
+                    updated_at=datetime.utcnow()
+                )
+            )
+            await session.execute(update_stmt)
+
+        cleaned_count = len(matches_to_create)
+        logger.info(f"✅ 本批次完成: 创建 {cleaned_count} 场比赛")
+
+    logger.info(f"📊 本批次统计: leagues={leagues_created}, teams={teams_created}, matches={cleaned_count}")
+    return cleaned_count
 
 
 @shared_task(bind=True, name="data_cleaning_task")
