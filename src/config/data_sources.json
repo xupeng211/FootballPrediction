@@ -1,0 +1,582 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-11-25T00:00:00Z",
+  "description": "Football Prediction 系统数据源战略配置 - 支持热配置的联赛和赛季管理",
+
+  "global_settings": {
+    "backfill_years": [2022, 2023, 2024],
+    "current_season": 2024,
+    "default_timezone": "UTC",
+    "api_rate_limit": {
+      "requests_per_minute": 10,
+      "requests_per_hour": 100,
+      "retry_attempts": 3,
+      "retry_delay": 2
+    },
+    "data_retention": {
+      "years_to_keep": 10,
+      "cleanup_interval_days": 30
+    }
+  },
+
+  "leagues": [
+    {
+      "code": "PL",
+      "name": "Premier League",
+      "short_name": "EPL",
+      "country": "England",
+      "tier": 1,
+      "priority": "high",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2021,
+          "db_id": 11,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2022, 2023, 2024],
+        "current_season": 2024,
+        "teams_count": 20,
+        "matches_per_team": 38
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+    {
+      "code": "PD",
+      "name": "La Liga",
+      "short_name": "LaLiga",
+      "country": "Spain",
+      "tier": 1,
+      "priority": "high",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2014,
+          "db_id": 12,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2022, 2023, 2024],
+        "current_season": 2024,
+        "teams_count": 20,
+        "matches_per_team": 38
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+    {
+      "code": "BL1",
+      "name": "Bundesliga",
+      "short_name": "Bundesliga",
+      "country": "Germany",
+      "tier": 1,
+      "priority": "high",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2002,
+          "db_id": 13,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2022, 2023, 2024],
+        "current_season": 2024,
+        "teams_count": 18,
+        "matches_per_team": 34
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+    {
+      "code": "SA",
+      "name": "Serie A",
+      "short_name": "SerieA",
+      "country": "Italy",
+      "tier": 1,
+      "priority": "high",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2019,
+          "db_id": 14,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2022, 2023, 2024],
+        "current_season": 2024,
+        "teams_count": 20,
+        "matches_per_team": 38
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+    {
+      "code": "FL1",
+      "name": "Ligue 1",
+      "short_name": "Ligue1",
+      "country": "France",
+      "tier": 1,
+      "priority": "high",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2015,
+          "db_id": 15,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2022, 2023, 2024],
+        "current_season": 2024,
+        "teams_count": 18,
+        "matches_per_team": 34
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+
+    {
+      "code": "CL",
+      "name": "UEFA Champions League",
+      "short_name": "UCL",
+      "country": "Europe",
+      "tier": 0,
+      "priority": "critical",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2001,
+          "db_id": 2001,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2022, 2023, 2024],
+        "current_season": 2024,
+        "teams_count": 32,
+        "matches_per_team": "variable"
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+    {
+      "code": "EL",
+      "name": "UEFA Europa League",
+      "short_name": "UEL",
+      "country": "Europe",
+      "tier": 0,
+      "priority": "critical",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2146,
+          "db_id": 2146,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2022, 2023, 2024],
+        "current_season": 2024,
+        "teams_count": "variable",
+        "matches_per_team": "variable"
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+
+    {
+      "code": "FAC",
+      "name": "FA Cup",
+      "short_name": "FACup",
+      "country": "England",
+      "tier": 2,
+      "priority": "medium",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2057,
+          "db_id": 2057,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": "variable",
+        "matches_per_team": "variable"
+      },
+      "collection_strategy": {
+        "frequency": "weekly",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+    {
+      "code": "COP",
+      "name": "Copa del Rey",
+      "short_name": "CopaDelRey",
+      "country": "Spain",
+      "tier": 2,
+      "priority": "medium",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2145,
+          "db_id": 2145,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": "variable",
+        "matches_per_team": "variable"
+      },
+      "collection_strategy": {
+        "frequency": "weekly",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+    {
+      "code": "DFB",
+      "name": "DFB-Pokal",
+      "short_name": "DFBPokal",
+      "country": "Germany",
+      "tier": 2,
+      "priority": "medium",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2002,
+          "db_id": 2002,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": "variable",
+        "matches_per_team": "variable"
+      },
+      "collection_strategy": {
+        "frequency": "weekly",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+    {
+      "code": "COPP",
+      "name": "Coppa Italia",
+      "short_name": "CoppaItalia",
+      "country": "Italy",
+      "tier": 2,
+      "priority": "medium",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2163,
+          "db_id": 2163,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": "variable",
+        "matches_per_team": "variable"
+      },
+      "collection_strategy": {
+        "frequency": "weekly",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+    {
+      "code": "CDF",
+      "name": "Coupe de France",
+      "short_name": "CoupeDeFrance",
+      "country": "France",
+      "tier": 2,
+      "priority": "medium",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2119,
+          "db_id": 2119,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": "variable",
+        "matches_per_team": "variable"
+      },
+      "collection_strategy": {
+        "frequency": "weekly",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": true
+      }
+    },
+
+    {
+      "code": "EL1",
+      "name": "Eredivisie",
+      "short_name": "Eredivisie",
+      "country": "Netherlands",
+      "tier": 1,
+      "priority": "medium",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2003,
+          "db_id": 2003,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2022, 2023, 2024],
+        "current_season": 2024,
+        "teams_count": 18,
+        "matches_per_team": 34
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": false
+      }
+    },
+    {
+      "code": "PPL",
+      "name": "Primeira Liga",
+      "short_name": "PrimeiraLiga",
+      "country": "Portugal",
+      "tier": 1,
+      "priority": "medium",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2017,
+          "db_id": 2017,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2022, 2023, 2024],
+        "current_season": 2024,
+        "teams_count": 18,
+        "matches_per_team": 34
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": false
+      }
+    },
+
+    {
+      "code": "ELC",
+      "name": "Championship",
+      "short_name": "Championship",
+      "country": "England",
+      "tier": 2,
+      "priority": "low",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2016,
+          "db_id": 2016,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": 24,
+        "matches_per_team": 46
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": false
+      }
+    },
+    {
+      "code": "SB",
+      "name": "Serie B",
+      "short_name": "SerieB",
+      "country": "Italy",
+      "tier": 2,
+      "priority": "low",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2121,
+          "db_id": 2121,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": 20,
+        "matches_per_team": 38
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": false
+      }
+    },
+    {
+      "code": "SD",
+      "name": "Segunda División",
+      "short_name": "Segunda",
+      "country": "Spain",
+      "tier": 2,
+      "priority": "low",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2077,
+          "db_id": 2077,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": 22,
+        "matches_per_team": 42
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": false
+      }
+    },
+    {
+      "code": "JJL",
+      "name": "J. League",
+      "short_name": "JLeague",
+      "country": "Japan",
+      "tier": 1,
+      "priority": "low",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2119,
+          "db_id": 2140,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": 18,
+        "matches_per_team": 34
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": false
+      }
+    },
+    {
+      "code": "CSL",
+      "name": "Chinese Super League",
+      "short_name": "CSL",
+      "country": "China",
+      "tier": 1,
+      "priority": "low",
+      "api_mappings": {
+        "football_data": {
+          "api_id": 2044,
+          "db_id": 2044,
+          "endpoint": "competitions/{id}/matches"
+        }
+      },
+      "season_config": {
+        "backfill_years": [2023, 2024],
+        "current_season": 2024,
+        "teams_count": 16,
+        "matches_per_team": 30
+      },
+      "collection_strategy": {
+        "frequency": "daily",
+        "update_mode": "incremental",
+        "historical_backfill": true,
+        "live_updates": false
+      }
+    }
+  ],
+
+  "collection_strategies": {
+    "daily": {
+      "description": "每日增量更新，适用于主流联赛",
+      "schedule": "0 2 * * *",
+      "batch_size": 50,
+      "timeout": 300
+    },
+    "weekly": {
+      "description": "每周更新，适用于杯赛和次级联赛",
+      "schedule": "0 3 * * 1",
+      "batch_size": 100,
+      "timeout": 600
+    },
+    "on_demand": {
+      "description": "按需采集，适用于历史数据补全",
+      "batch_size": 200,
+      "timeout": 900
+    }
+  },
+
+  "data_sources": {
+    "primary": {
+      "name": "Football-Data.org",
+      "base_url": "https://api.football-data.org/v4",
+      "auth_required": true,
+      "rate_limit": {
+        "requests_per_minute": 10,
+        "requests_per_hour": 100
+      }
+    },
+    "secondary": {
+      "name": "FotMob",
+      "base_url": "https://www.fotmob.com",
+      "auth_required": false,
+      "rate_limit": {
+        "requests_per_minute": 30,
+        "requests_per_hour": 500
+      }
+    }
+  }
+}

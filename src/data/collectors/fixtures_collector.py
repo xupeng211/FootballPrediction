@@ -16,9 +16,11 @@
 
 import asyncio
 import hashlib
+import json
 import logging
+import os
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from src.adapters.football import ApiFootballAdapter, FootballAdapterError
 from src.collectors.base_collector import CollectionResult
@@ -35,83 +37,30 @@ class FixturesCollector:
     实现防重复,
     防丢失机制,
     确保数据质量.
-    支持欧洲五大联赛+竞彩关键联赛+关键杯赛采集和API速率限制保护.
+    支持基于配置文件的动态联赛管理和API速率限制保护.
     """
-
-    # 目标联赛配置 - 欧洲五大联赛 + 竞彩关键联赛 + 关键杯赛
-    # 包含数据库ID和API ID的映射关系
-    TARGET_LEAGUES = [
-        # 原五大联赛 (使用Football-Data.org API ID + 数据库业务ID)
-        {"code": "PL", "name": "Premier League", "country": "England",
-         "api_id": 2021, "db_id": 11},
-        {"code": "PD", "name": "La Liga", "country": "Spain",
-         "api_id": 2014, "db_id": 12},
-        {"code": "BL1", "name": "Bundesliga", "country": "Germany",
-         "api_id": 2002, "db_id": 13},
-        {"code": "SA", "name": "Serie A", "country": "Italy",
-         "api_id": 2019, "db_id": 14},
-        {"code": "FL1", "name": "Ligue 1", "country": "France",
-         "api_id": 2015, "db_id": 15},
-
-        # 欧洲重要赛事
-        {"code": "CL", "name": "UEFA Champions League", "country": "Europe",
-         "api_id": 2001, "db_id": 2001},
-        {"code": "EL", "name": "UEFA Europa League", "country": "Europe",
-         "api_id": 2146, "db_id": 2146},
-
-        # 关键杯赛 - 用于真实休息天数计算
-        {"code": "FAC", "name": "FA Cup", "country": "England",
-         "api_id": 2057, "db_id": 2057},
-        {"code": "COP", "name": "Copa del Rey", "country": "Spain",
-         "api_id": 2145, "db_id": 2145},
-        {"code": "DFB", "name": "DFB-Pokal", "country": "Germany",
-         "api_id": 2002, "db_id": 2002},
-        {"code": "COPP", "name": "Coppa Italia", "country": "Italy",
-         "api_id": 2163, "db_id": 2163},
-        {"code": "CDF", "name": "Coupe de France", "country": "France",
-         "api_id": 2119, "db_id": 2119},
-
-        # 新增竞彩关键联赛
-        {"code": "EL1", "name": "Eredivisie", "country": "Netherlands",
-         "api_id": 2003, "db_id": 2003},
-        {"code": "PPL", "name": "Primeira Liga", "country": "Portugal",
-         "api_id": 2017, "db_id": 2017},
-
-        # 欧洲次级联赛和亚洲联赛 (新增)
-        {"code": "ELC", "name": "Championship", "country": "England",
-         "api_id": 2016, "db_id": 2016},
-        {"code": "SB", "name": "Serie B", "country": "Italy",
-         "api_id": 2121, "db_id": 2121},
-        {"code": "SD", "name": "Segunda División", "country": "Spain",
-         "api_id": 2077, "db_id": 2077},
-        {"code": "JJL", "name": "J. League", "country": "Japan",
-         "api_id": 2119, "db_id": 2140},
-        {"code": "CSL", "name": "Chinese Super League", "country": "China",
-         "api_id": 2044, "db_id": 2044},
-
-        # 注意：巴甲和世界杯可能需要在Football-Data.org中确认正确的API ID
-        # 暂时注释掉以避免API错误
-        # {"code": "BSA", "name": "Série A", "country": "Brazil",
-        #  "api_id": 2013, "db_id": 2013},
-        # {"code": "WC", "name": "FIFA World Cup", "country": "International",
-        #  "api_id": 2018, "db_id": 2018},
-    ]
-
-    # API速率限制配置 (基于验证过的成功配置)
-    RATE_LIMIT_DELAY = 7  # 请求间隔（秒）- 使用保守的7秒间隔
-    MAX_RETRIES = 3  # 最大重试次数
 
     def __init__(
         self,
         data_source: str = "football_api",
+        config_file: Optional[str] = None,
         **kwargs,
     ):
         """初始化赛程采集器.
 
         Args:
             data_source: 数据源名称
+            config_file: 配置文件路径，默认使用 data_sources.json
         """
         self.data_source = data_source
+        self.config_file = config_file or os.path.join(
+            os.path.dirname(__file__),
+            "../../config/data_sources.json"
+        )
+
+        # 加载配置
+        self.config = self._load_config()
+        self.target_leagues = self._load_target_leagues()
 
         # 初始化ApiFootballAdapter
         self.api_adapter = ApiFootballAdapter(name=data_source)
@@ -123,6 +72,130 @@ class FixturesCollector:
 
         # 采集统计
         self.league_stats = {}
+
+    def _load_config(self) -> Dict[str, Any]:
+        """从配置文件加载数据源战略配置."""
+        try:
+            with open(self.config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            logger.info(f"✅ 成功加载数据源配置: {self.config_file}")
+            logger.info(f"📋 配置版本: {config.get('version', 'unknown')}")
+            return config
+        except FileNotFoundError:
+            logger.error(f"❌ 配置文件未找到: {self.config_file}")
+            # 返回默认配置作为回退
+            logger.warning("⚠️ 使用默认配置作为回退")
+            return self._get_default_config()
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ 配置文件JSON解析错误: {e}")
+            logger.warning("⚠️ 使用默认配置作为回退")
+            return self._get_default_config()
+        except Exception as e:
+            logger.error(f"❌ 加载配置文件时发生错误: {e}")
+            logger.warning("⚠️ 使用默认配置作为回退")
+            return self._get_default_config()
+
+    def _get_default_config(self) -> Dict[str, Any]:
+        """获取默认配置（回退方案）."""
+        return {
+            "version": "1.0.0-fallback",
+            "global_settings": {
+                "backfill_years": [2022, 2023, 2024],
+                "current_season": 2024,
+                "api_rate_limit": {
+                    "requests_per_minute": 10,
+                    "requests_per_hour": 100,
+                    "retry_attempts": 3,
+                    "retry_delay": 2
+                }
+            },
+            "leagues": [
+                # 基本的五大联赛作为回退
+                {"code": "PL", "name": "Premier League", "country": "England",
+                 "api_mappings": {"football_data": {"api_id": 2021, "db_id": 11}}},
+                {"code": "PD", "name": "La Liga", "country": "Spain",
+                 "api_mappings": {"football_data": {"api_id": 2014, "db_id": 12}}},
+                {"code": "BL1", "name": "Bundesliga", "country": "Germany",
+                 "api_mappings": {"football_data": {"api_id": 2002, "db_id": 13}}},
+                {"code": "SA", "name": "Serie A", "country": "Italy",
+                 "api_mappings": {"football_data": {"api_id": 2019, "db_id": 14}}},
+                {"code": "FL1", "name": "Ligue 1", "country": "France",
+                 "api_mappings": {"football_data": {"api_id": 2015, "db_id": 15}}},
+            ]
+        }
+
+    def _load_target_leagues(self) -> List[Dict[str, Any]]:
+        """从配置中加载目标联赛列表."""
+        leagues = []
+        try:
+            for league_config in self.config.get("leagues", []):
+                # 转换配置格式以兼容现有代码
+                league_info = {
+                    "code": league_config["code"],
+                    "name": league_config["name"],
+                    "country": league_config["country"],
+                    "tier": league_config.get("tier", 1),
+                    "priority": league_config.get("priority", "medium"),
+                    "api_id": league_config["api_mappings"]["football_data"]["api_id"],
+                    "db_id": league_config["api_mappings"]["football_data"]["db_id"],
+                    "season_config": league_config.get("season_config", {}),
+                    "collection_strategy": league_config.get("collection_strategy", {}),
+                }
+                leagues.append(league_info)
+
+            logger.info(f"✅ 成功加载 {len(leagues)} 个目标联赛")
+            return leagues
+
+        except Exception as e:
+            logger.error(f"❌ 加载联赛配置失败: {e}")
+            return []
+
+    def get_global_settings(self) -> Dict[str, Any]:
+        """获取全局设置."""
+        return self.config.get("global_settings", {})
+
+    def get_league_by_code(self, code: str) -> Optional[Dict[str, Any]]:
+        """根据联赛代码获取联赛配置."""
+        for league in self.target_leagues:
+            if league["code"] == code:
+                return league
+        return None
+
+    def get_backfill_years(self) -> List[int]:
+        """获取历史回溯年限."""
+        global_settings = self.get_global_settings()
+        return global_settings.get("backfill_years", [2022, 2023, 2024])
+
+    def get_current_season(self) -> int:
+        """获取当前赛季."""
+        global_settings = self.get_global_settings()
+        return global_settings.get("current_season", 2024)
+
+    def get_api_rate_limit(self) -> Dict[str, Any]:
+        """获取API速率限制配置."""
+        global_settings = self.get_global_settings()
+        return global_settings.get("api_rate_limit", {
+            "requests_per_minute": 10,
+            "requests_per_hour": 100,
+            "retry_attempts": 3,
+            "retry_delay": 2
+        })
+
+    def get_leagues_by_priority(self, priority: str = "high") -> List[Dict[str, Any]]:
+        """根据优先级获取联赛列表."""
+        return [league for league in self.target_leagues
+                if league.get("priority", "medium") == priority]
+
+    def get_rate_limit_delay(self) -> float:
+        """根据配置计算请求间隔."""
+        rate_limit = self.get_api_rate_limit()
+        requests_per_minute = rate_limit.get("requests_per_minute", 10)
+        # 保守的间隔计算：60秒 / (每分钟请求数 * 0.8)
+        delay = 60 / (requests_per_minute * 0.8)
+        return max(delay, 1.0)  # 至少1秒间隔
+
+    # 动态速率限制配置（从配置文件加载）
+    # RATE_LIMIT_DELAY 和 MAX_RETRIES 现在通过 get_rate_limit_delay() 和 get_api_rate_limit() 获取
 
     async def collect_fixtures(
         self,
@@ -166,9 +239,9 @@ class FixturesCollector:
             logger.info("正在初始化API适配器...")
             await self.api_adapter.initialize()
 
-            # 获取需要采集的联赛列表（默认为欧洲五大联赛）
+            # 获取需要采集的联赛列表（默认从配置文件获取）
             if not leagues:
-                leagues = [league["code"] for league in self.TARGET_LEAGUES]
+                leagues = [league["code"] for league in self.target_leagues]
 
             logger.info(
                 f"开始采集多联赛赛程数据: {len(leagues)} 个联赛, 赛季: {season}"
@@ -180,7 +253,7 @@ class FixturesCollector:
                 league_info = next(
                     (
                         league
-                        for league in self.TARGET_LEAGUES
+                        for league in self.target_leagues
                         if league["code"] == league_code
                     ),
                     None,
@@ -202,7 +275,7 @@ class FixturesCollector:
                 league_info = next(
                     (
                         league
-                        for league in self.TARGET_LEAGUES
+                        for league in self.target_leagues
                         if league["code"] == league_code
                     ),
                     None,
