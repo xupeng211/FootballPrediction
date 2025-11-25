@@ -1,0 +1,88 @@
+{
+  "model_version": "v2",
+  "model_path": "models/football_prediction_v2.pkl",
+  "feature_metadata": {
+    "feature_columns": [
+      "home_last_5_points",
+      "away_last_5_points",
+      "home_last_5_avg_goals",
+      "away_last_5_avg_goals",
+      "home_last_5_goal_diff",
+      "away_last_5_goal_diff",
+      "home_win_streak",
+      "away_win_streak",
+      "home_last_5_win_rate",
+      "away_last_5_win_rate",
+      "home_rest_days",
+      "away_rest_days",
+      "h2h_last_3_home_wins"
+    ],
+    "n_features": 13,
+    "training_date": "2025-11-25T02:38:30.940282",
+    "training_samples": 5350,
+    "excluded_columns": [
+      "home_team_id",
+      "away_team_id",
+      "match_date",
+      "match_result",
+      "result_label"
+    ],
+    "non_numeric_features": [],
+    "accuracy": 0.4289719626168224
+  },
+  "feature_importance": [
+    {
+      "feature": "away_last_5_goal_diff",
+      "importance": 0.10278377681970596
+    },
+    {
+      "feature": "home_last_5_avg_goals",
+      "importance": 0.0879250168800354
+    },
+    {
+      "feature": "home_last_5_goal_diff",
+      "importance": 0.08218225091695786
+    },
+    {
+      "feature": "home_last_5_points",
+      "importance": 0.0797116756439209
+    },
+    {
+      "feature": "home_last_5_win_rate",
+      "importance": 0.07724500447511673
+    },
+    {
+      "feature": "away_last_5_avg_goals",
+      "importance": 0.07633373886346817
+    },
+    {
+      "feature": "h2h_last_3_home_wins",
+      "importance": 0.07548807561397552
+    },
+    {
+      "feature": "away_rest_days",
+      "importance": 0.07192004472017288
+    },
+    {
+      "feature": "away_last_5_win_rate",
+      "importance": 0.07161053270101547
+    },
+    {
+      "feature": "home_rest_days",
+      "importance": 0.07055631279945374
+    }
+  ],
+  "label_encoder_classes": [
+    "Away",
+    "Draw",
+    "Home"
+  ],
+  "training_accuracy": 0.4289719626168224,
+  "created_at": "2025-11-25T02:38:31.100341",
+  "model_type": "XGBClassifier",
+  "target_classes": [
+    "Home",
+    "Draw",
+    "Away"
+  ]
+}
