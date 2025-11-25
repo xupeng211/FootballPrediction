@@ -244,9 +244,20 @@ app.conf.beat_schedule = {
 # 显式导入存在的任务模块，确保任务被正确注册
 import src.tasks.data_collection_tasks
 import src.tasks.pipeline_tasks
+import src.tasks.maintenance_tasks
+import src.tasks.streaming_tasks
+# import src.tasks.backup_tasks  # 暂时禁用，该模块存在导入错误
 
 # 自动发现任务模块 (只导入存在的模块)
-app.autodiscover_tasks(["src.tasks.data_collection_tasks", "src.tasks.pipeline_tasks"])
+app.autodiscover_tasks(
+    [
+        "src.tasks.data_collection_tasks",
+        "src.tasks.pipeline_tasks",
+        "src.tasks.maintenance_tasks",
+        "src.tasks.streaming_tasks",
+        # "src.tasks.backup_tasks",  # 暂时禁用
+    ]
+)
 
 # 为了向后兼容，提供 celery_app 别名
 celery_app = app
