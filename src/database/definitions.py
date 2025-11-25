@@ -85,6 +85,14 @@ class DatabaseManager:
             )
         return self._async_session_factory()
 
+    def get_sync_connection(self):
+        """获取同步数据库连接."""
+        if not self.initialized or not self._engine:
+            raise RuntimeError(
+                "DatabaseManager is not initialized. Call initialize() first."
+            )
+        return self._engine.connect()
+
 
 class MultiUserDatabaseManager(DatabaseManager):
     """多用户数据库管理器 - 简化版本."""
