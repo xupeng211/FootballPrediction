@@ -3,6 +3,7 @@
 定义Celery数据采集任务，包括定时赛程、比分、赔率数据采集。
 """
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Any
@@ -48,6 +49,13 @@ def get_odds_collector(config):
     return OddsCollector(config=config)
 
 
+def get_fotmob_collector(config):
+    """获取FotmobCollector实例"""
+    from src.data.collectors.fotmob_collector import FotmobCollector
+
+    return FotmobCollector(config=config)
+
+
 # 避免循环导入，celery_app 将通过 celery shared_task 装饰器自动注册
 
 logger = logging.getLogger(__name__)
@@ -56,6 +64,7 @@ __all__ = [
     "collect_daily_fixtures",
     "collect_live_scores",
     "collect_odds_data",
+    "collect_fotmob_data",
     "cleanup_old_data",
 ]
 
@@ -280,6 +289,106 @@ def cleanup_old_data(self, days_to_keep: int = 90) -> dict[str, Any]:
         }
 
 
+@shared_task(bind=True, name="collect_fotmob_data")
+def collect_fotmob_data(self, date: str = None) -> dict[str, Any]:
+    """
+    FotMob 数据采集任务
+
+    Args:
+        date: 可选的日期字符串 (YYYYMMDD)，默认为昨天
+
+    采集指定日期的足球比赛数据，包括：
+    - 比赛基本信息
+    - 队伍信息
+    - 比赛时间
+    - 比分数据
+    """
+    logger.info("Starting FotMob data collection task")
+
+    try:
+        # 确保数据库已初始化
+        ensure_database_initialized()
+
+        # 初始化 FotMob 收集器
+        config = {
+            "max_matches_per_date": 50,  # 限制每天最多采集50场比赛
+            "timeout": 30.0
+        }
+
+        collector = get_fotmob_collector(config)
+
+        # 确定采集日期
+        if date is None:
+            # 默认采集昨天的数据
+            target_date = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
+        else:
+            target_date = date
+
+        logger.info(f"Collecting FotMob data for date: {target_date}")
+
+        async def collect_data():
+            async with collector:
+                # 执行数据采集
+                result = await collector.collect(date=target_date)
+
+                if result.success:
+                    # 记录采集到的比赛信息
+                    match_data = result.data
+                    metadata = result.metadata or {}
+
+                    logger.info(f"✅ FotMob 采集成功:")
+                    logger.info(f"   - 总比赛数: {len(match_data) if match_data else 0}")
+                    logger.info(f"   - 成功率: {metadata.get('successful_details', 0)}/{metadata.get('total_match_ids', 0)}")
+
+                    # 记录具体的比赛信息
+                    if match_data and len(match_data) > 0:
+                        sample_matches = match_data[:3]  # 显示前3场比赛
+                        for i, match in enumerate(sample_matches, 1):
+                            home_team = match.get('home', {}).get('name', 'Unknown')
+                            away_team = match.get('away', {}).get('name', 'Unknown')
+                            match_date = match.get('matchDate', 'Unknown')
+                            home_score = match.get('homeScore', 0)
+                            away_score = match.get('awayScore', 0)
+
+                            logger.info(f"   比赛 {i}: {home_team} {home_score} - {away_score} {away_team} ({match_date})")
+
+                    return {
+                        "status": "success",
+                        "date": target_date,
+                        "matches_collected": len(match_data) if match_data else 0,
+                        "metadata": metadata,
+                        "message": f"FotMob data collection completed for {target_date}",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                else:
+                    logger.error(f"❌ FotMob 采集失败: {result.error}")
+                    return {
+                        "status": "error",
+                        "date": target_date,
+                        "error": result.error,
+                        "message": f"FotMob data collection failed for {target_date}",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+
+        # 执行异步采集
+        result = asyncio.run(collect_data())
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error in collect_fotmob_data task: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+
+        return {
+            "status": "error",
+            "date": date or "yesterday",
+            "error": str(e),
+            "message": "FotMob data collection task failed with exception",
+            "timestamp": datetime.now().isoformat(),
+        }
+
+
 # 定义定时任务配置
 # 这些应该在celery_app.py的beat_schedule中配置
 CELERYBEAT_SCHEDULE = {
@@ -294,6 +403,10 @@ CELERYBEAT_SCHEDULE = {
     "collect-odds-data": {
         "task": "collect_odds_data",
         "schedule": crontab(hour="*/6"),  # 每6小时执行一次
+    },
+    "collect-fotmob-data": {
+        "task": "collect_fotmob_data",
+        "schedule": crontab(hour=1, minute=30),  # 每天凌晨1:30执行
     },
     "cleanup-old-data": {
         "task": "cleanup_old_data",
