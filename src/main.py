@@ -52,21 +52,24 @@ logger = logging.getLogger(__name__)
 
 async def check_and_trigger_initial_data_fill() -> None:
     """
-    冷启动自动填充机制.
+    智能冷启动自动填充机制.
 
-    检查数据库中是否已有数据，如果是空数据库则自动触发数据采集。
-    这确保了全新部署的用户无需等待次日凌晨的定时任务。
+    检查数据库中的数据状态和数据新鲜度，智能触发数据采集：
+    1. 空数据库：触发完整数据采集
+    2. 数据过期（超过24小时）：触发增量数据更新
+    3. 数据充足且新鲜：跳过采集
     """
     try:
-        logger.info("🔍 检查数据库状态以确定是否需要冷启动填充...")
+        logger.info("🔍 检查数据库状态和数据新鲜度...")
 
         # 获取数据库连接
         from src.database.definitions import get_database_manager
         from sqlalchemy import text
+        from datetime import datetime, timedelta
 
         db_manager = get_database_manager()
 
-        # 使用同步连接检查matches表
+        # 使用同步连接检查数据库状态
         with db_manager.get_sync_connection() as conn:
             # 查询matches表的记录数
             result = conn.execute(text("SELECT COUNT(*) FROM matches"))
@@ -74,9 +77,77 @@ async def check_and_trigger_initial_data_fill() -> None:
 
             logger.info(f"📊 当前数据库中有 {match_count} 条比赛记录")
 
-            # 判定是否需要触发数据采集
+            # 新增：数据新鲜度检查
+            data_freshness_hours = None
+            should_trigger_collection = False
+            trigger_reason = ""
+
+            # 查询最近的数据采集时间
+            collection_result = conn.execute(
+                text("""
+                    SELECT MAX(collected_at) as latest_collection,
+                           COUNT(*) as recent_collections
+                    FROM raw_match_data
+                    WHERE collected_at IS NOT NULL
+                """)
+            )
+            collection_data = collection_result.fetchone()
+            latest_collection = collection_data[0] if collection_data[0] else None
+            recent_collections = collection_data[1] if collection_data[1] else 0
+
+            if latest_collection:
+                # 计算数据新鲜度
+                now = datetime.utcnow()
+                data_age = now - latest_collection
+                data_freshness_hours = data_age.total_seconds() / 3600
+
+                logger.info(f"🕐 最近数据采集时间: {latest_collection.strftime('%Y-%m-%d %H:%M:%S')} UTC")
+                logger.info(f"⏰ 数据新鲜度: {data_freshness_hours:.1f} 小时前")
+                logger.info(f"📦 总采集记录数: {recent_collections} 条")
+
+                # 检查数据是否过期（超过24小时）
+                if data_freshness_hours > 24:
+                    should_trigger_collection = True
+                    trigger_reason = f"数据已过期 ({data_freshness_hours:.1f}小时前)"
+                    logger.warning(f"⚠️ {trigger_reason}，触发增量更新...")
+                else:
+                    logger.info(f"✅ 数据新鲜 ({data_freshness_hours:.1f}小时内)，无需更新")
+            else:
+                logger.warning("⚠️ 未找到数据采集记录，可能需要初始化数据采集")
+                should_trigger_collection = match_count == 0
+                trigger_reason = "无采集记录" if match_count == 0 else "数据采集时间未知"
+
+            # 智能判断逻辑
             if match_count == 0:
+                # 空数据库：触发完整数据采集
                 logger.info("🆕 检测到空数据库，正在触发初始化数据采集...")
+                should_trigger_collection = True
+                trigger_reason = "空数据库初始化"
+                pipeline_task = "complete_data_pipeline"
+                priority = 5  # 中等优先级
+
+            elif should_trigger_collection:
+                # 数据过期或采集时间未知：触发增量更新
+                if match_count < 100:
+                    logger.info(f"📊 数据量较少 ({match_count}条)，执行完整数据采集...")
+                    pipeline_task = "complete_data_pipeline"
+                    priority = 6  # 稍高优先级
+                else:
+                    logger.info(f"🔄 数据量充足 ({match_count}条)，执行增量更新...")
+                    # 可以根据实际需求选择不同的增量更新策略
+                    pipeline_task = "complete_data_pipeline"  # 目前使用完整管道
+                    priority = 4  # 较低优先级
+            else:
+                # 数据充足且新鲜：跳过采集
+                logger.info(
+                    f"✅ 数据库状态良好 ({match_count} 条记录，{data_freshness_hours:.1f}小时内采集)，"
+                    "跳过数据采集。"
+                )
+                return
+
+            # 触发数据采集任务
+            if should_trigger_collection:
+                logger.info(f"🚀 触发原因: {trigger_reason}")
 
                 # 使用Celery触发数据管道任务
                 from src.tasks.celery_app import celery_app
@@ -84,35 +155,27 @@ async def check_and_trigger_initial_data_fill() -> None:
                 try:
                     # 发送任务到Celery队列
                     task = celery_app.send_task(
-                        "complete_data_pipeline",
+                        pipeline_task,
                         queue="default",
-                        priority=5,  # 中等优先级
+                        priority=priority,
                     )
 
-                    logger.info(f"✅ 成功触发初始化数据采集任务 (任务ID: {task.id})")
-                    logger.info("📅 数据采集将在后台异步执行，请稍后查看数据状态")
-                    logger.info(
-                        "💡 您可以通过 /api/v1/system/status 或 /health 端点检查采集进度"
-                    )
+                    logger.info(f"✅ 成功触发数据采集任务 (任务ID: {task.id})")
+                    logger.info(f"📋 采集策略: {'完整数据采集' if 'complete' in pipeline_task else '增量更新'}")
+                    logger.info("⏳ 数据采集将在后台异步执行")
+                    logger.info("💡 您可以通过以下方式检查进度:")
+                    logger.info("   - /api/v1/system/status")
+                    logger.info("   - /health")
+                    logger.info("   - 查看Celery worker日志: docker-compose logs -f worker")
 
                 except Exception as celery_error:
                     logger.error(f"❌ 触发Celery任务失败: {celery_error}")
                     logger.error("⚠️ 系统将继续启动，但需要手动触发数据采集")
-
-            elif match_count < 100:
-                logger.info(
-                    f"⚠️ 数据库中只有 {match_count} 条记录，"
-                    "可能需要补充更多数据。跳过自动触发，建议手动执行数据采集。"
-                )
-
-            else:
-                logger.info(
-                    f"✅ 数据库已有充足数据 ({match_count} 条记录)，"
-                    "跳过初始化数据采集。"
-                )
+                    logger.info("💡 手动触发命令:")
+                    logger.info("   docker-compose exec worker python -c 'from src.tasks.pipeline_tasks import complete_data_pipeline; import asyncio; asyncio.run(complete_data_pipeline())'")
 
     except Exception as e:
-        logger.error(f"❌ 冷启动检查失败: {e}")
+        logger.error(f"❌ 智能冷启动检查失败: {e}")
         logger.error(f"❌ 错误详情: {type(e).__name__}: {str(e)}")
         logger.warning(
             "⚠️ 系统将继续启动，但无法自动检查数据状态。请确保数据管道已手动触发。"
