@@ -82,7 +82,7 @@ def load_data_via_pandas():
         logger.info(f"📅 数据时间范围: {features_df['match_date'].min()} 到 {features_df['match_date'].max()}")
 
         # 显示标签分布
-        logger.info(f"📈 标签分布:")
+        logger.info("📈 标签分布:")
         label_dist = features_df['result_label'].value_counts()
         for label, count in label_dist.items():
             percentage = count / len(features_df) * 100
@@ -126,7 +126,7 @@ def preprocess_features(df):
     y = df['result_label'].copy()
 
     # 检查数据质量
-    logger.info(f"🔍 数据质量检查:")
+    logger.info("🔍 数据质量检查:")
     logger.info(f"   特征矩阵形状: {X.shape}")
     logger.info(f"   标签向量形状: {y.shape}")
 
@@ -134,7 +134,7 @@ def preprocess_features(df):
     missing_values = X.isnull().sum()
     if missing_values.sum() > 0:
         missing_cols = missing_values[missing_values > 0]
-        logger.warning(f"⚠️ 发现缺失值:")
+        logger.warning("⚠️ 发现缺失值:")
         for col, count in missing_cols.items():
             percentage = count / len(X) * 100
             logger.warning(f"   {col}: {count} ({percentage:.1f}%)")
@@ -187,7 +187,7 @@ def train_model(X, y):
     y_train = y_encoded[:split_index]
     y_test = y_encoded[split_index:]
 
-    logger.info(f"📊 时间序列拆分:")
+    logger.info("📊 时间序列拆分:")
     logger.info(f"   训练集: {X_train.shape[0]} 样本 ({len(X_train)/len(X)*100:.1f}%)")
     logger.info(f"   测试集: {X_test.shape[0]} 样本 ({len(X_test)/len(X)*100:.1f}%)")
 
@@ -196,8 +196,8 @@ def train_model(X, y):
     test_dist = pd.Series(y_test).value_counts().sort_index()
 
     class_names = label_encoder.classes_
-    logger.info(f"   训练集标签分布: {dict(zip(class_names, train_dist.values))}")
-    logger.info(f"   测试集标签分布: {dict(zip(class_names, test_dist.values))}")
+    logger.info(f"   训练集标签分布: {dict(zip(class_names, train_dist.values, strict=False))}")
+    logger.info(f"   测试集标签分布: {dict(zip(class_names, test_dist.values, strict=False))}")
 
     # 创建XGBoost分类器 - 使用合理的参数避免过拟合
     model = xgb.XGBClassifier(

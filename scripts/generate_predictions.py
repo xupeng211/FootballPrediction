@@ -43,7 +43,7 @@ class BatchPredictionGenerator:
             self.engine, class_=AsyncSession, expire_on_commit=False
         )
 
-    async def get_match_ids(self, limit: int = None, only_unpredicted: bool = True) -> List[int]:
+    async def get_match_ids(self, limit: int = None, only_unpredicted: bool = True) -> list[int]:
         """获取比赛ID列表
 
         Args:
@@ -120,7 +120,7 @@ class BatchPredictionGenerator:
                 logger.error(f"❌ 保存比赛 {match_id} 预测失败: {e}")
                 return False
 
-    async def generate_real_prediction(self, match_id: int) -> Dict[str, Any]:
+    async def generate_real_prediction(self, match_id: int) -> dict[str, Any]:
         """为比赛生成真实的模型预测数据"""
         try:
             # 初始化推理服务
@@ -193,7 +193,7 @@ class BatchPredictionGenerator:
 
     async def batch_generate_predictions(self, batch_size: int = 50):
         """批量生成预测"""
-        logger.info(f"🚀 开始批量生成预测数据...")
+        logger.info("🚀 开始批量生成预测数据...")
 
         # 获取比赛ID列表
         match_ids = await self.get_match_ids(batch_size)
@@ -253,7 +253,7 @@ class BatchPredictionGenerator:
 
     async def generate_all_predictions(self):
         """为所有未预测的比赛生成预测"""
-        logger.info(f"🎯 开始为所有未预测的比赛生成预测...")
+        logger.info("🎯 开始为所有未预测的比赛生成预测...")
 
         # 获取所有未预测的比赛
         match_ids = await self.get_match_ids(limit=None, only_unpredicted=True)

@@ -102,7 +102,7 @@ class InferenceService:
 
                 # 加载元数据
                 if v2_metadata_path.exists():
-                    with open(v2_metadata_path, 'r', encoding='utf-8') as f:
+                    with open(v2_metadata_path) as f:
                         self._model_metadata = json.load(f)
                     logger.info("✅ v2模型元数据加载成功")
                     self._feature_columns = self._model_metadata['feature_metadata']['feature_columns']
@@ -359,7 +359,7 @@ class InferenceService:
 
             # 使用v2模型的真实特征列进行预测
             try:
-                logger.info(f"🎯 使用v2模型的13个真实特征进行预测")
+                logger.info("🎯 使用v2模型的13个真实特征进行预测")
                 logger.info(f"📋 模型特征列: {self._feature_columns}")
 
                 # 直接使用模型的特征列映射，确保特征顺序一致
