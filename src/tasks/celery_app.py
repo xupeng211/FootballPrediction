@@ -166,13 +166,13 @@ app.conf.beat_schedule = {
     },
     # 数据质量检查 - 每小时
     "hourly-quality-check": {
-        "task": "tasks.maintenance_tasks.quality_check_task",
+        "task": "src.tasks.maintenance_tasks.quality_check_task",
         "schedule": crontab(minute=0),  # 每小时
         "options": {"queue": "maintenance"},
     },
     # 错误日志清理 - 每日凌晨4:00
     "daily-error-cleanup": {
-        "task": "tasks.maintenance_tasks.cleanup_error_logs_task",
+        "task": "src.tasks.maintenance_tasks.cleanup_logs_task",
         "schedule": crontab(hour=4, minute=0),
         "options": {"queue": "maintenance"},
         "kwargs": {"days_to_keep": 7},
@@ -189,56 +189,8 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=30),  # 每小时30分执行
         "options": {"queue": "features"},
     },
-    # Kafka流处理任务
-    # 批量消费Kafka流 - 每分钟
-    "consume-kafka-streams": {
-        "task": "tasks.streaming_tasks.consume_kafka_streams_task",
-        "schedule": 60.0,  # 1分钟
-        "options": {"queue": "streaming"},
-        "kwargs": {"batch_size": 100, "timeout": 50.0},
-    },
-    # 流处理健康检查 - 每10分钟
-    "stream-health-check": {
-        "task": "tasks.streaming_tasks.stream_health_check_task",
-        "schedule": 600.0,  # 10分钟
-        "options": {"queue": "streaming"},
-    },
-    # 流数据处理 - 每5分钟运行5分钟
-    "stream-data-processing": {
-        "task": "tasks.streaming_tasks.stream_data_processing_task",
-        "schedule": 300.0,  # 5分钟
-        "options": {"queue": "streaming"},
-        "kwargs": {"processing_duration": 280},  # 运行4分40秒,留20秒间隔
-    },
-    # 数据库备份任务
-    # 每日全量备份 - 凌晨3:00
-    "daily-full-backup": {
-        "task": "tasks.backup_tasks.daily_full_backup_task",
-        "schedule": crontab(hour=3, minute=0),
-        "options": {"queue": "backup"},
-        "kwargs": {"database_name": "football_prediction"},
-    },
-    # 每4小时增量备份
-    "incremental-backup": {
-        "task": "tasks.backup_tasks.hourly_incremental_backup_task",
-        "schedule": crontab(minute=0, hour="*/4"),  # 每4小时
-        "options": {"queue": "backup"},
-        "kwargs": {"database_name": "football_prediction"},
-    },
-    # 每周WAL归档 - 周日凌晨1:00
-    "weekly-wal-archive": {
-        "task": "tasks.backup_tasks.weekly_wal_archive_task",
-        "schedule": crontab(hour=1, minute=0, day_of_week=0),  # 周日
-        "options": {"queue": "backup"},
-        "kwargs": {"database_name": "football_prediction"},
-    },
-    # 每日备份清理 - 凌晨5:00
-    "daily-backup-cleanup": {
-        "task": "tasks.backup_tasks.cleanup_old_backups_task",
-        "schedule": crontab(hour=5, minute=0),
-        "options": {"queue": "backup"},
-        "kwargs": {"database_name": "football_prediction"},
-    },
+    # 注意：streaming_tasks 和 backup_tasks 模块暂时禁用
+    # 相关任务将在模块修复后重新启用
 }
 
 # 显式导入存在的任务模块，确保任务被正确注册
