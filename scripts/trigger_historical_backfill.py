@@ -9,6 +9,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 import random
+import time
 
 import requests
 from src.tasks.data_collection_tasks import collect_fotmob_data
@@ -60,17 +61,18 @@ def generate_historical_dates(backfill_seasons: int, dates_per_season: int = 50)
     return dates
 
 
-def trigger_fotmob_collection_tasks(dates: List[str], batch_delay: float = 0.5) -> Dict[str, Any]:
+def trigger_fotmob_collection_tasks(dates: List[str], api_throttle_delay: float = 5.0) -> Dict[str, Any]:
     """触发 FotMob 数据采集任务
 
     Args:
         dates: 需要采集的日期列表
-        batch_delay: 批次之间的延迟时间（秒）
+        api_throttle_delay: 每个任务间的API节流延迟时间（秒）
 
     Returns:
         采集结果统计
     """
     logger.info(f"🚀 开始 FotMob 历史数据回溯采集，共 {len(dates)} 个日期")
+    logger.info(f"⚠️ 启用速率节流: 每个任务间隔 {api_throttle_delay} 秒，避免 API 429 错误")
 
     success_count = 0
     error_count = 0
@@ -105,11 +107,10 @@ def trigger_fotmob_collection_tasks(dates: List[str], batch_delay: float = 0.5) 
                 error_count += 1
                 logger.error(f"❌ 获取任务结果失败: {task_error}")
 
-            # 避免过于频繁的任务提交
-            if i % 5 == 0:
-                logger.info(f"⏸️ 暂停 {batch_delay} 秒，避免任务队列过载...")
-                import time
-                time.sleep(batch_delay)
+            # 🚨 关键修复：每个任务后都强制等待，避免 API 速率限制
+            if i < len(dates):  # 最后一个任务不需要等待
+                logger.info(f"⏳ 正在等待 {api_throttle_delay} 秒，避免 API 速率限制...")
+                time.sleep(api_throttle_delay)
 
         except Exception as e:
             logger.error(f"❌ 触发日期 {date} 的采集任务失败: {e}")
@@ -161,7 +162,7 @@ def main():
     if historical_dates:
         result_summary = trigger_fotmob_collection_tasks(
             historical_dates,
-            batch_delay=0.3  # 减少延迟，加快采集速度
+            api_throttle_delay=5.0  # 每个 API 调用间隔 5 秒，避免 429 错误
         )
 
         logger.info(f"🎉 历史数据回溯采集任务触发完成！")
