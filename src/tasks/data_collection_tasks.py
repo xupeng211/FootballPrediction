@@ -336,7 +336,7 @@ def collect_fotmob_data(self, date: str = None) -> dict[str, Any]:
                     match_data = result.data
                     metadata = result.metadata or {}
 
-                    logger.info(f"✅ FotMob 采集成功:")
+                    logger.info("✅ FotMob 采集成功:")
                     logger.info(f"   - 总比赛数: {len(match_data) if match_data else 0}")
                     logger.info(f"   - 成功率: {metadata.get('successful_details', 0)}/{metadata.get('total_match_ids', 0)}")
 

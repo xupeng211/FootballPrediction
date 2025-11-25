@@ -22,14 +22,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def load_data_config() -> Dict[str, Any]:
+def load_data_config() -> dict[str, Any]:
     """加载数据源配置"""
     import json
-    with open('/app/src/config/data_sources.json', 'r') as f:
+    with open('/app/src/config/data_sources.json') as f:
         return json.load(f)
 
 
-def generate_historical_dates(backfill_seasons: int, dates_per_season: int = 50) -> List[str]:
+def generate_historical_dates(backfill_seasons: int, dates_per_season: int = 50) -> list[str]:
     """生成需要回溯的历史日期列表
 
     Args:
@@ -61,7 +61,7 @@ def generate_historical_dates(backfill_seasons: int, dates_per_season: int = 50)
     return dates
 
 
-def trigger_fotmob_collection_tasks(dates: List[str], api_throttle_delay: float = 5.0) -> Dict[str, Any]:
+def trigger_fotmob_collection_tasks(dates: list[str], api_throttle_delay: float = 5.0) -> dict[str, Any]:
     """触发 FotMob 数据采集任务
 
     Args:
@@ -140,7 +140,7 @@ def main():
     backfill_seasons = config['strategic_settings']['backfill_seasons']
     current_season = config['strategic_settings']['current_season']
 
-    logger.info(f"📋 配置信息:")
+    logger.info("📋 配置信息:")
     logger.info(f"  - 回溯赛季数: {backfill_seasons}")
     logger.info(f"  - 当前赛季: {current_season}")
     logger.info(f"  - 目标联赛数量: {len(config['target_leagues'])}")
@@ -152,7 +152,7 @@ def main():
     # 打乱日期顺序，确保数据的时间分布更自然
     random.shuffle(historical_dates)
 
-    logger.info(f"📅 生成的历史日期范围:")
+    logger.info("📅 生成的历史日期范围:")
     logger.info(f"  - 最早: {min(historical_dates)}")
     logger.info(f"  - 最晚: {max(historical_dates)}")
     logger.info(f"  - 总日期数: {len(historical_dates)}")
@@ -165,7 +165,7 @@ def main():
             api_throttle_delay=5.0  # 每个 API 调用间隔 5 秒，避免 429 错误
         )
 
-        logger.info(f"🎉 历史数据回溯采集任务触发完成！")
+        logger.info("🎉 历史数据回溯采集任务触发完成！")
         logger.info(f"📊 采集统计: {result_summary}")
     else:
         logger.warning("⚠️ 没有生成历史日期，请检查配置")

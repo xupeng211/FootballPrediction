@@ -12,8 +12,6 @@ from datetime import datetime, timedelta
 try:
     from curl_cffi.requests import AsyncSession
 except ImportError:
-    print("❌ 错误: curl_cffi 库未安装")
-    print("请运行: docker-compose exec app pip install curl_cffi")
     sys.exit(1)
 
 
@@ -43,79 +41,56 @@ class FotMobAdvancedProbe:
         past_date = (datetime.now() - timedelta(days=7)).strftime("%Y%m%d")
         self.target_url = f"https://www.fotmob.com/api/matches?date={past_date}"
 
-        print(f"🎯 目标 URL: {self.target_url}")
-        print(f"📅 使用日期: {past_date} (7天前)")
 
     async def probe_with_impersonation(self):
         """使用浏览器伪装进行探测"""
-        print("\n🕵️‍♂️ 开始高级探测...")
 
         try:
             # 创建具有 TLS 指纹模拟能力的会话
             async with AsyncSession(impersonate="chrome110") as session:
-                print("✅ 已创建 Chrome 110 伪装会话")
 
                 # 发送请求
-                print("📡 正在发送请求...")
                 response = await session.get(
                     self.target_url,
                     headers=self.headers,
                     timeout=30
                 )
 
-                print(f"📊 响应状态码: {response.status_code}")
-                print(f"📋 响应头: {dict(response.headers)}")
 
                 if response.status_code == 200:
-                    print("🎉 成功获取数据!")
 
                     try:
                         data = response.json()
-                        json_str = json.dumps(data, ensure_ascii=False, indent=2)
+                        json.dumps(data, ensure_ascii=False, indent=2)
 
-                        print(f"📄 JSON 数据长度: {len(json_str)} 字符")
-                        print("📝 数据前100个字符:")
-                        print(json_str[:100] + "..." if len(json_str) > 100 else json_str)
 
                         # 检查数据结构
                         if isinstance(data, dict):
-                            print("🏗️ 数据结构:")
-                            for key, value in data.items():
+                            for _key, value in data.items():
                                 if isinstance(value, (list, dict)):
-                                    print(f"  {key}: {type(value).__name__} (长度: {len(value)})")
+                                    pass
                                 else:
-                                    print(f"  {key}: {type(value).__name__}")
+                                    pass
 
                         return True
 
-                    except json.JSONDecodeError as e:
-                        print(f"❌ JSON 解析失败: {e}")
-                        print("📄 原始响应前200字符:")
-                        print(response.text[:200])
+                    except json.JSONDecodeError:
                         return False
 
                 elif response.status_code in [401, 403]:
-                    print(f"🚫 访问被拒绝 ({response.status_code})")
-                    print("📄 响应内容:")
-                    print(response.text[:500] if response.text else "无响应体")
 
                     # 分析可能的拦截方式
                     self.analyze_blocking_mechanism(response)
                     return False
 
                 else:
-                    print(f"⚠️ 其他状态码: {response.status_code}")
-                    print("📄 响应内容:")
-                    print(response.text[:200] if response.text else "无响应体")
                     return False
 
-        except Exception as e:
-            print(f"❌ 请求失败: {type(e).__name__}: {e}")
+        except Exception:
             return False
 
     def analyze_blocking_mechanism(self, response):
         """分析拦截机制"""
-        print("\n🔍 分析拦截机制:")
 
         headers = dict(response.headers)
 
@@ -129,34 +104,30 @@ class FotMobAdvancedProbe:
             "x-frame-options"
         ]
 
-        print("📋 检测到的防护头:")
         for header in anti_bot_headers:
             if header in headers:
-                print(f"  {header}: {headers[header]}")
+                pass
 
         # 检查响应体特征
         if response.text:
             if "cloudflare" in response.text.lower():
-                print("🛡️ 检测到 Cloudflare 保护")
+                pass
             if "captcha" in response.text.lower():
-                print("🤖 检测到验证码要求")
+                pass
             if "rate limit" in response.text.lower():
-                print("⏱️ 检测到频率限制")
+                pass
 
 
 async def main():
     """主函数"""
-    print("🚀 FotMob API 高级探测工具")
-    print("=" * 50)
 
     probe = FotMobAdvancedProbe()
     success = await probe.probe_with_impersonation()
 
-    print("\n" + "=" * 50)
     if success:
-        print("🎉 探测成功! 可以继续开发爬虫逻辑")
+        pass
     else:
-        print("❌ 探测失败，需要进一步分析或使用其他技术")
+        pass
 
     return success
 
@@ -166,8 +137,6 @@ if __name__ == "__main__":
         result = asyncio.run(main())
         sys.exit(0 if result else 1)
     except KeyboardInterrupt:
-        print("\n⚠️ 用户中断")
         sys.exit(1)
-    except Exception as e:
-        print(f"\n💥 程序异常: {e}")
+    except Exception:
         sys.exit(1)

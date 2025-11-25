@@ -70,7 +70,7 @@ async def batch_data_cleaning() -> int:
                 try:
                     query = (
                         select(RawMatchData)
-                        .where(RawMatchData.processed == False)
+                        .where(not RawMatchData.processed)
                         .limit(BATCH_SIZE)
                         .offset(offset)
                     )
@@ -199,7 +199,7 @@ async def _process_data_batch(session, raw_matches) -> int:
     if unique_leagues:
         logger.info(f"🏆 批量创建 {len(unique_leagues)} 个Leagues...")
         existing_leagues = {}
-        for (name, country), league_data in unique_leagues.items():
+        for (name, country), _league_data in unique_leagues.items():
             query = text("SELECT id FROM leagues WHERE name = :name AND country = :country")
             result = await session.execute(query, {"name": name, "country": country})
             existing = result.scalar_one_or_none()
@@ -207,7 +207,7 @@ async def _process_data_batch(session, raw_matches) -> int:
                 existing_leagues[(name, country)] = existing
 
         new_leagues = []
-        for (name, country), league_data in unique_leagues.items():
+        for (name, country), _league_data in unique_leagues.items():
             if (name, country) not in existing_leagues:
                 new_league = League(
                     name=name,
@@ -290,7 +290,7 @@ async def _process_data_batch(session, raw_matches) -> int:
     if unique_teams:
         logger.info(f"⚽ 批量创建 {len(unique_teams)} 个Teams...")
         existing_teams = {}
-        for team_name, team_data in unique_teams.items():
+        for team_name, _team_data in unique_teams.items():
             query = text("SELECT id FROM teams WHERE name = :name")
             result = await session.execute(query, {"name": team_name})
             existing = result.scalar_one_or_none()
@@ -298,7 +298,7 @@ async def _process_data_batch(session, raw_matches) -> int:
                 existing_teams[team_name] = existing
 
         new_teams = []
-        for team_name, team_data in unique_teams.items():
+        for team_name, _team_data in unique_teams.items():
             if team_name not in existing_teams:
                 new_team = Team(
                     name=team_name,
@@ -366,7 +366,7 @@ async def _process_data_batch(session, raw_matches) -> int:
             away_team_id = teams_map.get(away_team_name)
 
             # 🆕 添加详细调试信息
-            logger.info(f"🔍 比赛数据检查:")
+            logger.info("🔍 比赛数据检查:")
             logger.info(f"   - 比赛: {home_team_name} vs {away_team_name}")
             logger.info(f"   - 联赛: {league_name} ({league_country_display})")
             logger.info(f"   - 查找键: ({league_name}, {league_country_lookup})")
@@ -477,7 +477,7 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
                 from src.data.processors.football_data_cleaner import FootballDataCleaner
 
                 async def clean_data():
-                    cleaner = FootballDataCleaner()
+                    FootballDataCleaner()
                     # 这里可以扩展为支持批量清洗的方法
                     result = {"cleaned_records": 0}  # 临时占位
                     return result

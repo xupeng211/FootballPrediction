@@ -20,7 +20,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from src.adapters.football import ApiFootballAdapter, FootballAdapterError
 from src.collectors.base_collector import CollectionResult
@@ -43,7 +43,7 @@ class FixturesCollector:
     def __init__(
         self,
         data_source: str = "football_api",
-        config_file: Optional[str] = None,
+        config_file: str | None = None,
         **kwargs,
     ):
         """初始化赛程采集器.
@@ -73,10 +73,10 @@ class FixturesCollector:
         # 采集统计
         self.league_stats = {}
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """从配置文件加载数据源战略配置."""
         try:
-            with open(self.config_file, 'r', encoding='utf-8') as f:
+            with open(self.config_file, encoding='utf-8') as f:
                 config = json.load(f)
             logger.info(f"✅ 成功加载数据战略配置: {self.config_file}")
             logger.info(f"📋 配置版本: {config.get('version', 'unknown')}")
@@ -95,7 +95,7 @@ class FixturesCollector:
             logger.warning("⚠️ 使用默认配置作为回退")
             return self._get_default_config()
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """获取默认配置（回退方案）."""
         return {
             "version": "2.0.0-fallback",
@@ -123,7 +123,7 @@ class FixturesCollector:
             }
         }
 
-    def _load_target_leagues(self) -> List[Dict[str, Any]]:
+    def _load_target_leagues(self) -> list[dict[str, Any]]:
         """从配置中加载目标联赛列表."""
         leagues = []
         try:
@@ -147,11 +147,11 @@ class FixturesCollector:
             logger.error(f"❌ 加载联赛配置失败: {e}")
             return []
 
-    def get_strategic_settings(self) -> Dict[str, Any]:
+    def get_strategic_settings(self) -> dict[str, Any]:
         """获取战略设置."""
         return self.config.get("strategic_settings", {})
 
-    def get_league_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_league_by_name(self, name: str) -> dict[str, Any] | None:
         """根据联赛名称获取联赛配置."""
         for league in self.target_leagues:
             if league["name"] == name:
@@ -168,7 +168,7 @@ class FixturesCollector:
         strategic_settings = self.get_strategic_settings()
         return strategic_settings.get("current_season", 2024)
 
-    def get_backfill_years(self) -> List[int]:
+    def get_backfill_years(self) -> list[int]:
         """获取历史回溯年限列表."""
         current_season = self.get_current_season()
         backfill_count = self.get_backfill_seasons()
@@ -184,12 +184,12 @@ class FixturesCollector:
         strategic_settings = self.get_strategic_settings()
         return strategic_settings.get("collection_strategy", "high_value_focus")
 
-    def get_leagues_by_type(self, league_type: str = "Tier1") -> List[Dict[str, Any]]:
+    def get_leagues_by_type(self, league_type: str = "Tier1") -> list[dict[str, Any]]:
         """根据联赛类型获取联赛列表."""
         return [league for league in self.target_leagues
                 if league.get("type", "Tier1") == league_type]
 
-    def get_leagues_by_priority(self, priority: str = "critical") -> List[Dict[str, Any]]:
+    def get_leagues_by_priority(self, priority: str = "critical") -> list[dict[str, Any]]:
         """根据优先级获取联赛列表."""
         return [league for league in self.target_leagues
                 if league.get("priority", "medium") == priority]
@@ -201,7 +201,7 @@ class FixturesCollector:
         delay = 60 / (max_calls_per_minute * 0.8)
         return max(delay, 1.0)  # 至少1秒间隔
 
-    def get_api_limits(self, api_name: str = "football_data_org") -> Dict[str, Any]:
+    def get_api_limits(self, api_name: str = "football_data_org") -> dict[str, Any]:
         """获取指定API的速率限制配置."""
         api_limits = self.config.get("api_limits", {})
         return api_limits.get(api_name, {
@@ -211,7 +211,7 @@ class FixturesCollector:
             "retry_delay_seconds": 2
         })
 
-    def get_league_summary(self) -> Dict[str, Any]:
+    def get_league_summary(self) -> dict[str, Any]:
         """获取联赛配置摘要统计."""
         type_count = {}
         priority_count = {}
@@ -414,7 +414,7 @@ class FixturesCollector:
             league_name: 联赛名称
 
         Returns:
-            List[Dict]: 采集到的比赛数据列表
+            list[Dict]: 采集到的比赛数据列表
         """
         max_retries = self.MAX_RETRIES
         retry_count = 0
@@ -543,7 +543,7 @@ class FixturesCollector:
         """获取活跃的联赛列表.
 
         Returns:
-            List[str]: 联赛代码列表
+            list[str]: 联赛代码列表
         """
         try:
             # 返回主要联赛作为默认配置

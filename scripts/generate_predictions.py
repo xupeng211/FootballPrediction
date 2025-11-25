@@ -338,11 +338,11 @@ async def main():
         if generate_all:
             # 执行全量预测
             logger.info("🎯 开始全量预测生成模式")
-            result = await generator.generate_all_predictions()
+            await generator.generate_all_predictions()
         else:
             # 小批量测试
             logger.info("🧪 测试模式 - 生成少量预测")
-            result = await generator.batch_generate_predictions(batch_size=20)
+            await generator.batch_generate_predictions(batch_size=20)
 
         # 获取最终统计
         await generator.get_statistics()

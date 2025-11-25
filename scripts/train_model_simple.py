@@ -220,7 +220,7 @@ def train_model(X, y):
 
     # 预测
     y_pred = model.predict(X_test)
-    y_pred_proba = model.predict_proba(X_test)
+    model.predict_proba(X_test)
 
     # 评估
     accuracy = accuracy_score(y_test, y_pred)
