@@ -56,19 +56,30 @@ async def manual_data_cleaning() -> int:
         team_id_map = {}
 
         async with get_async_session() as session:
-            # 获取所有未处理的原始数据
-            query = select(RawMatchData).where(not RawMatchData.processed)
+            # 获取所有未处理的原始数据，使用options来预加载关联数据
+            from sqlalchemy.orm import selectinload
+            query = select(RawMatchData).where(RawMatchData.processed == False)
             result = await session.execute(query)
             raw_matches = result.scalars().all()
 
-            logger.info(f"📊 找到 {len(raw_matches)} 条未处理的原始比赛数据")
+            # 立即加载所有match_data以避免后续的lazy loading问题
+            raw_data_list = []
+            for raw_match in raw_matches:
+                raw_data_list.append({
+                    'id': raw_match.id,
+                    'external_id': raw_match.external_id,
+                    'match_data': dict(raw_match.match_data),  # 转换为dict以避免lazy loading
+                    'source': raw_match.source
+                })
+
+            logger.info(f"📊 找到 {len(raw_data_list)} 条未处理的原始比赛数据")
 
             # 步骤1：从raw_data中提取并创建所有唯一的leagues
             logger.info("📝 步骤1：创建leagues记录...")
             league_count = 0
-            for raw_match in raw_matches:
+            for raw_match_data in raw_data_list:
                 try:
-                    raw_data = raw_match.match_data.get("raw_data", {})
+                    raw_data = raw_match_data['match_data'].get("raw_data", {})
                     if "competition" in raw_data:
                         comp = raw_data["competition"]
                         league_name = comp.get("name", "Unknown League")
@@ -110,9 +121,9 @@ async def manual_data_cleaning() -> int:
             # 步骤2：从raw_data中提取并创建所有唯一的teams
             logger.info("👥 步骤2：创建teams记录...")
             team_count = 0
-            for raw_match in raw_matches:
+            for raw_match_data in raw_data_list:
                 try:
-                    raw_data = raw_match.match_data.get("raw_data", {})
+                    raw_data = raw_match_data['match_data'].get("raw_data", {})
 
                     # 处理主队
                     if "homeTeam" in raw_data:
@@ -200,10 +211,10 @@ async def manual_data_cleaning() -> int:
 
             # 步骤3：创建matches记录，使用内部ID
             logger.info("⚽ 步骤3：创建matches记录...")
-            for raw_match in raw_matches:
+            for raw_match_data in raw_data_list:
                 try:
-                    match_data = raw_match.match_data
-                    raw_match_data = raw_match.match_data.get("raw_data", {})
+                    match_data = raw_match_data['match_data']
+                    raw_match_data_content = raw_match_data['match_data'].get("raw_data", {})
 
                     # 获取对应的内部ID
                     external_league_id = str(match_data.get("external_league_id", 0))
@@ -260,21 +271,26 @@ async def manual_data_cleaning() -> int:
                         status=match_data.get("status", "scheduled"),
                         match_date=match_date,
                         season=str(match_data.get("season", "")),
-                        venue=raw_match_data.get("area", {}).get("name"),
+                        venue=raw_match_data_content.get("area", {}).get("name"),
                         # 比分信息
-                        home_score=raw_match_data.get("score", {})
+                        home_score=raw_match_data_content.get("score", {})
                         .get("fullTime", {})
                         .get("home", 0),
-                        away_score=raw_match_data.get("score", {})
+                        away_score=raw_match_data_content.get("score", {})
                         .get("fullTime", {})
                         .get("away", 0),
                     )
 
                     session.add(match)
 
-                    # 标记原始数据为已处理
-                    raw_match.processed = True
-                    raw_match.processed_at = datetime.utcnow()
+                    # 标记原始数据为已处理 - 需要从数据库重新获取记录
+                    from sqlalchemy import update
+                    update_stmt = (
+                        update(RawMatchData)
+                        .where(RawMatchData.id == raw_match_data['id'])
+                        .values(processed=True, updated_at=datetime.utcnow())
+                    )
+                    await session.execute(update_stmt)
 
                     cleaned_count += 1
 
@@ -285,7 +301,7 @@ async def manual_data_cleaning() -> int:
 
                 except Exception as match_error:
                     logger.error(
-                        f"❌ 处理比赛 {raw_match.external_id} 失败: {match_error}"
+                        f"❌ 处理比赛 {raw_match_data['external_id']} 失败: {match_error}"
                     )
                     continue
 
