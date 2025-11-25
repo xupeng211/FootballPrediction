@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Language Preference
+
+**请使用简体中文回复用户** - Please respond in Simplified Chinese when interacting with the user. The project team primarily communicates in Chinese, so all responses should be in Simplified Chinese unless specifically requested otherwise.
+
 ## Project Overview
 
 This is an enterprise-level football prediction system built with Python FastAPI, following Domain-Driven Design (DDD), CQRS, and Event-Driven architecture patterns. The system uses modern async/await patterns throughout and includes machine learning capabilities for match predictions.
@@ -33,7 +37,11 @@ make status
 make test
 make test.unit          # Unit tests only
 make test.integration   # Integration tests only
+make test.phase1        # Phase 1 core functionality tests
 make test.all           # All tests
+
+# Test execution in isolation
+./scripts/run_tests_in_docker.sh  # Run tests in Docker container
 
 # Code quality checks
 make lint               # Ruff + MyPy checks
@@ -44,6 +52,12 @@ make security-check     # Security scanning
 
 # Coverage analysis
 make coverage           # Generate coverage report
+open htmlcov/index.html # View coverage report (macOS)
+xdg-open htmlcov/index.html # View coverage report (Linux)
+
+# CI validation
+./ci-verify.sh          # Local CI verification
+make ci                 # Complete quality check pipeline
 ```
 
 ### Container Management
@@ -74,10 +88,11 @@ make logs-redis         # Redis logs
 
 ### Technology Stack
 - **Backend**: FastAPI 0.104+, SQLAlchemy 2.0+, Pydantic v2+, Redis 5.0+, PostgreSQL 15
-- **Machine Learning**: XGBoost 2.0+, scikit-learn 1.3+, pandas 2.1+, MLflow 2.22.2+
+- **Machine Learning**: XGBoost 2.0+, scikit-learn 1.3+, pandas 2.1+, numpy 1.25+, MLflow 2.22.2+
 - **Frontend**: React 19.2.0, TypeScript 4.9.5, Ant Design 5.27.6
-- **Testing**: pytest 8.4+ with asyncio support
+- **Testing**: pytest 8.4+ with asyncio support, pytest-cov 7.0+, pytest-mock 3.14+
 - **Code Quality**: Ruff 0.14+, MyPy 1.18+, Bandit 1.8.6+
+- **Development Tools**: pre-commit 4.0.1, pip-audit 2.6.0, ipython 8.31+
 
 ### Database & Caching
 - **Primary Database**: PostgreSQL 15 with async SQLAlchemy 2.0
@@ -130,14 +145,32 @@ async def get_prediction_use_case(
 
 ### Test Markers
 ```python
-@pytest.mark.unit           # Unit tests
-@pytest.mark.integration    # Integration tests
-@pytest.mark.e2e           # End-to-end tests
+# Core test type markers
+@pytest.mark.unit           # Unit tests - 85% of test suite
+@pytest.mark.integration    # Integration tests - 12% of test suite
+@pytest.mark.e2e           # End-to-end tests - 2% of test suite
+@pytest.mark.performance   # Performance tests - 1% of test suite
+
+# Functional domain markers
+@pytest.mark.api           # HTTP endpoint testing
+@pytest.mark.domain        # Domain layer business logic
+@pytest.mark.business      # Business rules and validation
+@pytest.mark.services      # Service layer testing
+@pytest.mark.database      # Database connection tests
+@pytest.mark.cache         # Redis and caching logic
+@pytest.mark.auth          # Authentication and authorization
+@pytest.mark.monitoring    # Metrics and health checks
+@pytest.mark.ml            # Machine learning tests
+@pytest.mark.utils         # Utility functions and helpers
+
+# Execution characteristics
 @pytest.mark.critical       # Must-pass core functionality
 @pytest.mark.slow          # Long-running tests (>30s)
-@pytest.mark.api           # HTTP endpoint testing
-@pytest.mark.database      # Database connection tests
-@pytest.mark.ml            # Machine learning tests
+@pytest.mark.smoke         # Basic functionality verification
+@pytest.mark.regression    # Verify fixes don't regress
+@pytest.mark.external_api  # Tests requiring external API calls
+@pytest.mark.docker        # Tests requiring Docker environment
+@pytest.mark.network       # Tests requiring network connection
 ```
 
 ### Running Tests
@@ -251,11 +284,31 @@ batch_results = await inference_service.batch_predict_match(match_ids)
 # Copy environment template
 cp .env.example .env
 
+# Initial development setup
+make install            # Install dependencies
+make context            # Load project context
+make env-check          # Verify environment configuration
+
 # Edit with actual values
 FOOTBALL_DATA_API_KEY=your_actual_api_key_here
 SECRET_KEY=your-secret-key-here
 DATABASE_URL=postgresql://user:pass@localhost:5432/football_prediction
 REDIS_URL=redis://localhost:6379/0
+
+# Local CI validation before commits
+./ci-verify.sh          # Complete local CI verification
+```
+
+### Development Workflow
+```bash
+# Standard development cycle
+1. make dev             # Start development environment
+2. make context         # Load project context
+3. Write code           # Follow DDD + CQRS patterns
+4. make test            # Run tests
+5. make lint && make fix-code  # Code quality checks
+6. ./ci-verify.sh       # Pre-commit validation
+7. make ci              # Full quality pipeline
 ```
 
 ## Quality Assurance
