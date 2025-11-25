@@ -63,15 +63,70 @@ async def batch_data_cleaning() -> int:
 
             # 每个批次使用独立的事务
             async with get_async_session() as session:
-                # 步骤1：分批获取未处理的原始数据
-                query = (
-                    select(RawMatchData)
-                    .where(RawMatchData.processed.is_(False))
-                    .limit(BATCH_SIZE)
-                    .offset(offset)
-                )
-                result = await session.execute(query)
-                batch_raw_matches = result.scalars().all()
+                # 步骤1：分批获取未处理的原始数据 - 使用多层级查询策略
+                batch_raw_matches = []
+
+                # 方法1：尝试简单的布尔比较
+                try:
+                    query = (
+                        select(RawMatchData)
+                        .where(RawMatchData.processed == False)
+                        .limit(BATCH_SIZE)
+                        .offset(offset)
+                    )
+                    result = await session.execute(query)
+                    batch_raw_matches = result.scalars().all()
+                    logger.info(f"✅ 方法1成功: 找到 {len(batch_raw_matches)} 条记录")
+                except Exception as e:
+                    logger.warning(f"⚠️ 方法1失败: {e}")
+
+                # 方法2：如果方法1失败，使用原生SQL查询
+                if not batch_raw_matches:
+                    try:
+                        sql_query = text("""
+                            SELECT * FROM raw_match_data
+                            WHERE processed = false
+                            ORDER BY created_at ASC
+                            LIMIT :limit OFFSET :offset
+                        """)
+                        result = await session.execute(sql_query, {
+                            "limit": BATCH_SIZE,
+                            "offset": offset
+                        })
+
+                        # 将结果转换为RawMatchData对象
+                        rows = result.fetchall()
+                        for row in rows:
+                            raw_match = RawMatchData(
+                                id=row[0],
+                                external_id=row[1],
+                                source=row[2],
+                                match_data=row[3],
+                                collected_at=row[4],
+                                processed=row[5],
+                                created_at=row[6] if len(row) > 6 else None,
+                                updated_at=row[7] if len(row) > 7 else None
+                            )
+                            batch_raw_matches.append(raw_match)
+
+                        logger.info(f"✅ 方法2成功: 找到 {len(batch_raw_matches)} 条记录")
+                    except Exception as e:
+                        logger.error(f"❌ 方法2也失败: {e}")
+                        # 方法3：最后回退到检查所有数据
+                        try:
+                            all_query = select(RawMatchData).limit(BATCH_SIZE).offset(offset)
+                            result = await session.execute(all_query)
+                            all_matches = result.scalars().all()
+
+                            # 在Python中过滤未处理的
+                            batch_raw_matches = [
+                                match for match in all_matches
+                                if not match.processed
+                            ]
+                            logger.info(f"✅ 方法3成功: 从{len(all_matches)}条中筛选出{len(batch_raw_matches)}条未处理记录")
+                        except Exception as e3:
+                            logger.error(f"❌ 所有方法都失败: {e3}")
+                            break
 
                 if not batch_raw_matches:
                     logger.info("📊 没有更多未处理的原始数据")
@@ -331,6 +386,11 @@ async def _process_data_batch(session, raw_matches) -> int:
                     match_date = aware_dt.replace(tzinfo=None)
                 except (ValueError, TypeError):
                     match_date = None
+
+            # 如果没有有效时间，使用默认时间
+            if match_date is None:
+                match_date = datetime.utcnow()
+                logger.debug(f"使用默认比赛时间: {match_date}")
 
             # 获取比分
             home_score = raw_content.get("homeScore", 0)
