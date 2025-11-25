@@ -299,13 +299,18 @@ class FeatureGenerator:
             # 批量插入到数据库 - 使用pandas to_sql直接插入
             features_df = pd.DataFrame(batch_data)
 
-            # 添加时间戳
+            # 添加时间戳和必需字段
             from datetime import datetime
 
             features_df["created_at"] = datetime.now()
             features_df["updated_at"] = datetime.now()
+            features_df["feature_type"] = "match_features"  # 添加必需的feature_type字段
+            features_df["team_id"] = None  # 添加可选的team_id字段
 
-            # 使用pandas的to_sql批量插入，只包含实际表结构中的字段
+            # 只包含表中实际存在的字段
+            features_df = features_df[["match_id", "team_id", "feature_type", "feature_data", "created_at", "updated_at"]]
+
+            # 使用pandas的to_sql批量插入
             features_df.to_sql("features", engine, if_exists="append", index=False)
 
             logger.info(f"✅ 成功保存 {len(batch_data)} 条特征记录到数据库")
