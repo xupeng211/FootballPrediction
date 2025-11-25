@@ -14,12 +14,11 @@
       "home_last_5_win_rate",
       "away_last_5_win_rate",
       "home_rest_days",
-      "away_rest_days",
-      "h2h_last_3_home_wins"
+      "away_rest_days"
     ],
-    "n_features": 13,
-    "training_date": "2025-11-25T02:38:30.940282",
-    "training_samples": 5350,
+    "n_features": 12,
+    "training_date": "2025-11-25T12:50:22.336193",
+    "training_samples": 131,
     "excluded_columns": [
       "home_team_id",
       "away_team_id",
@@ -28,48 +27,48 @@
       "result_label"
     ],
     "non_numeric_features": [],
-    "accuracy": 0.4289719626168224
+    "accuracy": 0.37037037037037035
   },
   "feature_importance": [
     {
-      "feature": "away_last_5_goal_diff",
-      "importance": 0.10278377681970596
-    },
-    {
-      "feature": "home_last_5_avg_goals",
-      "importance": 0.0879250168800354
+      "feature": "home_rest_days",
+      "importance": 0.10122313350439072
     },
     {
       "feature": "home_last_5_goal_diff",
-      "importance": 0.08218225091695786
-    },
-    {
-      "feature": "home_last_5_points",
-      "importance": 0.0797116756439209
+      "importance": 0.0986364334821701
     },
     {
       "feature": "home_last_5_win_rate",
-      "importance": 0.07724500447511673
+      "importance": 0.0924907997250557
     },
     {
       "feature": "away_last_5_avg_goals",
-      "importance": 0.07633373886346817
+      "importance": 0.09178192913532257
     },
     {
-      "feature": "h2h_last_3_home_wins",
-      "importance": 0.07548807561397552
-    },
-    {
-      "feature": "away_rest_days",
-      "importance": 0.07192004472017288
+      "feature": "home_win_streak",
+      "importance": 0.0850200429558754
     },
     {
       "feature": "away_last_5_win_rate",
-      "importance": 0.07161053270101547
+      "importance": 0.08095788210630417
     },
     {
-      "feature": "home_rest_days",
-      "importance": 0.07055631279945374
+      "feature": "home_last_5_avg_goals",
+      "importance": 0.08016160875558853
+    },
+    {
+      "feature": "away_last_5_goal_diff",
+      "importance": 0.07866598665714264
+    },
+    {
+      "feature": "away_win_streak",
+      "importance": 0.07762391865253448
+    },
+    {
+      "feature": "away_last_5_points",
+      "importance": 0.0724099799990654
     }
   ],
   "label_encoder_classes": [
@@ -77,8 +76,8 @@
     "Draw",
     "Home"
   ],
-  "training_accuracy": 0.4289719626168224,
-  "created_at": "2025-11-25T02:38:31.100341",
+  "training_accuracy": 0.37037037037037035,
+  "created_at": "2025-11-25T12:50:22.392279",
   "model_type": "XGBClassifier",
   "target_classes": [
     "Home",
