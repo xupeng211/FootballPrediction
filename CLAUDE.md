@@ -106,7 +106,7 @@ make ci-check          # 完整CI验证
 - **Backend**: FastAPI 0.104+, SQLAlchemy 2.0+, Pydantic v2+, Redis 5.0+, PostgreSQL 15
 - **Frontend**: React 19.2.0, TypeScript 4.9.5, Ant Design 5.27.6, Redux Toolkit 2.9.2
 - **Machine Learning**: XGBoost 2.0+, scikit-learn 1.3+, pandas 2.1+, MLflow 2.22.2+
-- **Testing**: pytest 8.4+ with asyncio support (385 test cases)
+- **Testing**: pytest 8.4+ with asyncio support (4597 test functions across 274 test files)
 - **Code Quality**: Ruff 0.14+, MyPy 1.18+, Bandit 1.8.6+
 
 ### Clean Architecture Pattern
@@ -139,7 +139,7 @@ src/
 
 ## 🧪 Testing Architecture
 
-### Test Structure (385 test cases)
+### Test Structure (4597 test functions across 274 test files)
 - **Unit Tests** (85%): Fast, isolated component testing
 - **Integration Tests** (12%): Real dependency testing
 - **E2E Tests** (2%): Complete user workflow testing
@@ -176,7 +176,7 @@ src/
 ### Recommended Testing Workflow
 ```bash
 # 日常开发 - 快速验证
-make test.smart         # Quick validation (<2 minutes, excludes slow tests)
+make test              # Run all tests with fast feedback
 
 # 功能开发完成 - 完整测试
 make test.unit          # Full unit test suite with coverage
@@ -185,9 +185,6 @@ make coverage           # Generate HTML coverage report
 # 发布前验证 - 全面检查
 make test.all           # Complete test suite (unit + integration + e2e)
 make lint && make test  # Code quality + full testing
-
-# CI/CD pipeline validation
-make ci-check          # Full pipeline validation (quality + security + tests)
 ```
 
 ## 🔧 Development Standards
@@ -309,7 +306,7 @@ mlflow ui --port 5000  # Access experiment tracking
 ### Test Crisis Recovery
 ```bash
 # When tests are failing (>30%)
-make test.smart          # Run quick tests to identify issues
+make test               # Run tests to identify issues
 make fix-code           # Auto-fix code quality issues
 make lint              # Run full code quality check
 make coverage          # Check coverage impact
@@ -323,8 +320,7 @@ pytest --cov=src --cov-report=term-missing  # Identify uncovered code
 ### Environment Recovery
 ```bash
 # Environment issues
-make clean && make install    # Fresh environment setup
-make doctor                   # Run health check
+make clean                    # Clean Docker resources
 make status                   # Check project status
 
 # Docker environment recovery
@@ -388,7 +384,7 @@ scripts/start_monitoring.sh # 启动监控系统
 ```
 
 ### CI/CD 流水线特性
-- **自动化测试**: 385个测试用例自动执行
+- **自动化测试**: 4597个测试函数自动执行
 - **代码质量检查**: Ruff + MyPy + Bandit 三重检查
 - **安全扫描**: 依赖漏洞检测和代码安全审计
 - **覆盖率门槛**: 31%覆盖率刚性要求
@@ -418,17 +414,17 @@ chore(security): upgrade MLflow to 2.22.2 for security patches
 ```
 
 ### Pre-Commit Checklist
-- [ ] Tests pass: `make test.smart`
+- [ ] Tests pass: `make test`
 - [ ] Code quality: `make fix-code`
 - [ ] Security check: `make security-check`
 - [ ] Coverage maintained: `make coverage`
-- [ ] Full validation: `make ci-check`
+- [ ] Full validation: `make lint && make test`
 
 ## 📊 Current Project Status
 
 ### Quality Metrics
 - **Test Coverage**: Use `make test.unit --cov=src --cov-report=term-missing`
-- **Test Cases**: 385 active test cases across unit/integration/e2e
+- **Test Cases**: 4597 test functions across 274 test files (unit/integration/e2e)
 - **Code Quality**: Ruff + Black + Bandit validation passing
 - **Security**: No critical vulnerabilities, ECDSA vulnerability patched
 - **CI/CD**: Green pipeline with automated recovery
@@ -459,11 +455,9 @@ Overall Health: 85/100 ✅
 # Frontend development (在 frontend/ 目录中)
 cd frontend
 npm install              # 安装依赖
-npm run dev             # 启动开发服务器 (port 3000)
+npm start               # 启动开发服务器 (port 3000)
 npm run build           # 生产构建
-npm run preview         # 预览生产构建
-npm run test            # 运行前端测试
-npm run lint            # ESLint + TypeScript 检查
+npm test                # 运行前端测试
 ```
 
 ### Frontend Project Structure
@@ -509,11 +503,11 @@ export const store = configureStore({
 This project is AI-first maintained with these configurations:
 
 #### Development Workflow
-1. **Environment Check**: `make env-check` - Verify development environment
-2. **Context Loading**: `make context` - Load project architecture into AI memory
-3. **Development**: Write code following DDD + CQRS patterns
-4. **Quality Validation**: `make ci-check` - Full pipeline validation
-5. **Pre-commit**: `make prepush` - Complete validation before push
+1. **Environment Setup**: `make dev` - Start development environment
+2. **Development**: Write code following DDD + CQRS patterns
+3. **Quality Validation**: `make lint && make test` - Code quality and testing
+4. **Security Check**: `make security-check` - Security scanning
+5. **Pre-commit**: `make fix-code && make format` - Code cleanup and validation
 
 #### AI Tool Guidelines
 - **Architecture Priority**: Maintain DDD layer separation and CQRS patterns
@@ -842,10 +836,10 @@ ab -n 100 -c 10 http://localhost:8000/health  # Apache bench
 ### Emergency Commands
 ```bash
 # Complete environment reset
-make clean && make install && make test.smart
+make clean && make test
 
 # Health check all services
-make up && make logs && make status
+make status
 
 # Code quality emergency
 make fix-code && make format && make lint
@@ -854,7 +848,7 @@ make fix-code && make format && make lint
 docker-compose down -v && docker-compose up -d
 
 # Dependency issues
-pip install --upgrade pip && make install
+pip install --upgrade pip
 
 # Test failures - quick diagnosis
 pytest tests/unit/ --tb=short --maxfail=3
@@ -908,6 +902,6 @@ curl http://localhost:8000/metrics  # Check application metrics
 - **Config**: `pyproject.toml` - Dependencies and tool configuration
 - **Docker**: `docker-compose.yml` - Development environment
 - **Makefile**: Development commands and workflows
-- **Tests**: `tests/` - 385 test cases across unit/integration/e2e
+- **Tests**: `tests/` - 4597 test functions across 274 test files (unit/integration/e2e)
 
-*Last Updated: 2025-11-24 | AI Maintainer: Claude Code | Version: 1.3*
+*Last Updated: 2025-11-25 | AI Maintainer: Claude Code | Version: 1.3*
