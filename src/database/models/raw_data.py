@@ -28,6 +28,8 @@ class RawMatchData(BaseModel):
     match_data = Column(JsonbType, nullable=False)
     collected_at = Column(DateTime, nullable=False, default=func.now())
     processed = Column(Boolean, default=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now())
 
 
 class RawOddsData(BaseModel):

@@ -340,24 +340,105 @@ def collect_fotmob_data(self, date: str = None) -> dict[str, Any]:
                     logger.info(f"   - 总比赛数: {len(match_data) if match_data else 0}")
                     logger.info(f"   - 成功率: {metadata.get('successful_details', 0)}/{metadata.get('total_match_ids', 0)}")
 
-                    # 记录具体的比赛信息
+                    # 🆕 数据持久化：将采集到的数据保存到数据库
+                    saved_count = 0
                     if match_data and len(match_data) > 0:
-                        sample_matches = match_data[:3]  # 显示前3场比赛
-                        for i, match in enumerate(sample_matches, 1):
-                            home_team = match.get('home', {}).get('name', 'Unknown')
-                            away_team = match.get('away', {}).get('name', 'Unknown')
-                            match_date = match.get('matchDate', 'Unknown')
-                            home_score = match.get('homeScore', 0)
-                            away_score = match.get('awayScore', 0)
+                        logger.info(f"💾 开始将 {len(match_data)} 条比赛数据保存到数据库...")
 
-                            logger.info(f"   比赛 {i}: {home_team} {home_score} - {away_score} {away_team} ({match_date})")
+                        try:
+                            # 使用 ORM 方式直接插入数据
+                            from src.database.connection import get_async_session
+                            from src.database.models.raw_data import RawMatchData
+                            import json
+
+                            async with get_async_session() as session:
+                                # 准备批量插入数据
+                                raw_records = []
+                                for match in match_data:
+                                    external_id = str(match.get('id', ''))
+                                    home_team = match.get('home', {})
+                                    away_team = match.get('away', {})
+                                    competition = match.get('competition', {})
+
+                                    # 构建结构化的 match_data
+                                    structured_match_data = {
+                                        'external_match_id': external_id,
+                                        'external_league_id': str(competition.get('id', '')),
+                                        'external_home_team_id': str(home_team.get('id', '')),
+                                        'external_away_team_id': str(away_team.get('id', '')),
+                                        'match_time': match.get('matchDate', ''),
+                                        'league_name': competition.get('name', ''),
+                                        'league_country': competition.get('area', {}).get('name', ''),
+                                        'home_team_name': home_team.get('name', ''),
+                                        'away_team_name': away_team.get('name', ''),
+                                        'home_team_short_name': home_team.get('shortName', ''),
+                                        'away_team_short_name': away_team.get('shortName', ''),
+                                        'status': match.get('status', 'UNKNOWN'),
+                                        'raw_data': match  # 保存原始 JSON 数据
+                                    }
+
+                                    raw_record = RawMatchData(
+                                        external_id=external_id,
+                                        source='fotmob',
+                                        match_data=structured_match_data,
+                                        processed=False
+                                    )
+                                    raw_records.append(raw_record)
+
+                                # 批量插入到数据库
+                                if raw_records:
+                                    try:
+                                        session.add_all(raw_records)
+                                        await session.commit()
+                                        saved_count = len(raw_records)
+
+                                        logger.info(f"✅ 成功保存 {saved_count} 条原始比赛数据到 raw_match_data 表")
+
+                                        # 记录具体的比赛信息
+                                        sample_matches = match_data[:3]  # 显示前3场比赛
+                                        for i, match in enumerate(sample_matches, 1):
+                                            home_team = match.get('home', {}).get('name', 'Unknown')
+                                            away_team = match.get('away', {}).get('name', 'Unknown')
+                                            match_date = match.get('matchDate', 'Unknown')
+                                            home_score = match.get('homeScore', 0)
+                                            away_score = match.get('awayScore', 0)
+
+                                            logger.info(f"   比赛 {i}: {home_team} {home_score} - {away_score} {away_team} ({match_date})")
+
+                                    except Exception as insert_error:
+                                        logger.error(f"❌ 批量插入失败: {insert_error}")
+                                        import traceback
+                                        logger.error(f"插入错误详情: {traceback.format_exc()}")
+                                        await session.rollback()
+
+                                        # 尝试逐条插入
+                                        logger.info("尝试逐条插入...")
+                                        saved_count = 0
+                                        for raw_record in raw_records:
+                                            try:
+                                                session.add(raw_record)
+                                                await session.commit()
+                                                saved_count += 1
+                                            except Exception as single_error:
+                                                await session.rollback()
+                                                logger.error(f"单条插入失败 {raw_record.external_id}: {single_error}")
+                                                continue
+
+                                        logger.info(f"✅ 逐条插入完成，成功保存 {saved_count} 条记录")
+
+                        except Exception as db_error:
+                            logger.error(f"❌ 数据库保存失败: {db_error}")
+                            import traceback
+                            logger.error(f"数据库错误详情: {traceback.format_exc()}")
+                            saved_count = 0
 
                     return {
                         "status": "success",
                         "date": target_date,
                         "matches_collected": len(match_data) if match_data else 0,
+                        "records_saved": saved_count,
                         "metadata": metadata,
-                        "message": f"FotMob data collection completed for {target_date}",
+                        "message": f"FotMob data collection completed for {target_date} ({saved_count} records saved)",
                         "timestamp": datetime.now().isoformat(),
                     }
                 else:
@@ -371,9 +452,20 @@ def collect_fotmob_data(self, date: str = None) -> dict[str, Any]:
                     }
 
         # 执行异步采集
-        result = asyncio.run(collect_data())
-
-        return result
+        try:
+            result = asyncio.run(collect_data())
+            return result
+        except Exception as e:
+            logger.error(f"Async execution failed: {e}")
+            import traceback
+            logger.error(f"Async error details: {traceback.format_exc()}")
+            return {
+                "status": "error",
+                "date": target_date,
+                "error": f"Async execution error: {str(e)}",
+                "message": "FotMob data collection failed due to async execution error",
+                "timestamp": datetime.now().isoformat(),
+            }
 
     except Exception as e:
         logger.error(f"Error in collect_fotmob_data task: {e}")
