@@ -24,7 +24,7 @@ from sqlalchemy import select, text
 # 导入推理服务和数据库
 from src.services.inference_service import InferenceService
 from src.database.definitions import initialize_database
-from src.config.settings import get_settings
+from src.config.config_manager import CONFIG_MANAGER
 
 # 配置日志
 logging.basicConfig(
@@ -127,8 +127,7 @@ class BatchPredictionGenerator:
         try:
             # 确保数据库已初始化
             try:
-                settings = get_settings()
-                await initialize_database(database_url=settings.database_url)
+                initialize_database(database_url=CONFIG_MANAGER.database_url)
             except Exception as e:
                 logger.warning(f"数据库初始化失败，继续使用推理服务: {e}")
 
@@ -324,8 +323,7 @@ async def main():
 
     # 初始化数据库
     try:
-        settings = get_settings()
-        await initialize_database(database_url=settings.database_url)
+        initialize_database(database_url=CONFIG_MANAGER.database_url)
         logger.info("✅ 数据库初始化成功")
     except Exception as e:
         logger.error(f"❌ 数据库初始化失败: {e}")
