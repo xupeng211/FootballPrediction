@@ -179,7 +179,7 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
 
 
 @shared_task(bind=True, name="collect_live_scores")
-def collect_live_scores(self, match_ids: list[int] = None) -> dict[str, Any]:
+def collect_live_scores(self, match_ids: list[int] = None, **kwargs) -> dict[str, Any]:
     """
     实时比分数据采集任务.
 
@@ -187,6 +187,8 @@ def collect_live_scores(self, match_ids: list[int] = None) -> dict[str, Any]:
         match_ids: 要采集比分的比赛ID列表，如果为空则采集所有进行中的比赛
     """
     logger.info(f"Starting live scores collection task for matches: {match_ids}")
+    if kwargs:
+        logger.warning(f"Received unexpected arguments: {kwargs}")
 
     try:
         if match_ids is None:
@@ -358,22 +360,25 @@ def collect_fotmob_data(self, date: str = None) -> dict[str, Any]:
                                     external_id = str(match.get('id', ''))
                                     home_team = match.get('home', {})
                                     away_team = match.get('away', {})
-                                    competition = match.get('competition', {})
+
+                                    # 🆕 支持新的历史数据API结构
+                                    league_info = match.get('league_info', {})
+                                    competition = match.get('competition', league_info)  # 兼容新旧API
 
                                     # 构建结构化的 match_data
                                     structured_match_data = {
                                         'external_match_id': external_id,
-                                        'external_league_id': str(competition.get('id', '')),
+                                        'external_league_id': str(competition.get('id', match.get('leagueId', ''))),
                                         'external_home_team_id': str(home_team.get('id', '')),
                                         'external_away_team_id': str(away_team.get('id', '')),
-                                        'match_time': match.get('matchDate', ''),
+                                        'match_time': match.get('time', match.get('matchDate', '')),  # 支持新旧时间字段
                                         'league_name': competition.get('name', ''),
-                                        'league_country': competition.get('area', {}).get('name', ''),
+                                        'league_country': competition.get('country', competition.get('area', {}).get('name', '')),
                                         'home_team_name': home_team.get('name', ''),
                                         'away_team_name': away_team.get('name', ''),
                                         'home_team_short_name': home_team.get('shortName', ''),
                                         'away_team_short_name': away_team.get('shortName', ''),
-                                        'status': match.get('status', 'UNKNOWN'),
+                                        'status': match.get('status', match.get('statusId', 'UNKNOWN')),
                                         'raw_data': match  # 保存原始 JSON 数据
                                     }
 
