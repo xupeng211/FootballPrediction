@@ -1,475 +1,480 @@
 #!/usr/bin/env python3
 """
-Feature Engineering V2: 滚动窗口统计特征生成器
-首席数据科学家专用 - 利用时序数据挖掘深层特征
+高级特征生成器 - V3版本架构
+Chief Data Scientist: 利用EWMA特征生成全量训练数据集
 
-🎯 核心功能:
-- 滚动窗口统计 (Rolling Window Statistics)
-- 历史交锋记录 (Head-to-Head Analysis)
-- 主场优势计算 (Home Advantage Analysis)
-- 时序趋势特征 (Temporal Trends)
-
-📊 特征维度:
-- 近N场进球/失球统计
-- 近N场得分趋势
-- 历史交锋强度
-- 主场优势指数
+核心功能:
+- 加载所有28,000+比赛数据
+- 计算所有球队EWMA指标
+- 生成主客场对比特征
+- 创建机器学习就绪特征数据集
 """
 
+import sys
+import os
+import asyncio
 import pandas as pd
 import numpy as np
-import os
-import sys
-import logging
 from datetime import datetime, timedelta
-from collections import defaultdict
-from typing import Dict, List, Tuple, Optional
+import logging
+from typing import Dict, List, Any, Tuple, Optional
 
-# 添加项目路径
+# 添加src到路径
 sys.path.append('/app/src')
 
-try:
-    from database.connection import DatabaseManager
-    import asyncio
-except ImportError as e:
-    print(f"⚠️ 数据库模块导入失败: {e}")
-    print("将使用模拟数据模式")
+from features.ewma_calculator import EWMACalculator
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy import text
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
 
 class AdvancedFeatureGenerator:
-    """高级特征生成器 - 专注于滚动窗口统计"""
+    """高级特征生成器 - 集成EWMA和传统特征工程"""
 
-    def __init__(self, window_sizes: List[int] = [5, 10, 15]):
-        self.window_sizes = window_sizes  # 滚动窗口大小：近5场、10场、15场
-        self.team_stats = defaultdict(dict)  # 球队历史统计缓存
-        self.h2h_stats = defaultdict(dict)  # 历史交锋统计缓存
-        self.home_advantage = defaultdict(dict)  # 主场优势统计缓存
+    def __init__(self):
+        # 数据库连接
+        database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction")
+        self.engine = create_async_engine(
+            database_url.replace("postgresql://", "postgresql+asyncpg://"),
+            echo=False
+        )
+        self.AsyncSessionLocal = async_sessionmaker(
+            self.engine, class_=AsyncSession, expire_on_commit=False
+        )
 
-        logger.info(f"🚀 高级特征生成器初始化，窗口大小: {window_sizes}")
+        # EWMA计算器配置
+        self.ewma_calculator = EWMACalculator(
+            spans=[5, 10, 20],  # 短期、中期、长期
+            min_matches=3,      # 最低比赛数
+            adjust=True         # 调整初始值
+        )
 
-    async def load_historical_data(self) -> pd.DataFrame:
-        """加载历史比赛数据"""
-        logger.info("📊 加载历史比赛数据...")
+        # 特征配置
+        self.feature_config = {
+            'include_ewma': True,
+            'include_basic': True,
+            'include_historical': True,
+            'include_temporal': True
+        }
 
-        try:
-            # 使用数据库连接
-            db_manager = DatabaseManager()
-            await db_manager.initialize()
+        logger.info("🧠 高级特征生成器初始化完成")
+        logger.info(f"   EWMA配置: spans={self.ewma_calculator.spans}, min_matches={self.ewma_calculator.min_matches}")
+        logger.info(f"   特征配置: {self.feature_config}")
 
-            async with db_manager.get_async_session() as session:
-                # 查询所有比赛（包括未完成的，用于特征计算）
-                query = """
-                    SELECT
-                        m.id as match_id,
-                        m.home_team_id,
-                        m.away_team_id,
-                        m.match_date,
-                        m.home_score,
-                        m.away_score,
-                        m.status,
-                        CAST(m.home_team_id AS TEXT) as home_team_name,
-                        CAST(m.away_team_id AS TEXT) as away_team_name
-                    FROM matches m
-                    ORDER BY m.match_date ASC
-                """
+    async def close(self):
+        """关闭数据库连接"""
+        await self.engine.dispose()
 
-                result = await session.execute(query)
-                matches = result.fetchall()
+    async def load_all_matches(self) -> pd.DataFrame:
+        """加载所有比赛数据"""
+        logger.info("📊 加载所有比赛数据...")
 
-                # 转换为DataFrame
-                df = pd.DataFrame([
-                    {
-                        'match_id': row.match_id,
-                        'home_team_id': row.home_team_id,
-                        'away_team_id': row.away_team_id,
-                        'match_date': row.match_date,
-                        'home_score': row.home_score,
-                        'away_score': row.away_score,
-                        'home_team_name': row.home_team_name,
-                        'away_team_name': row.away_team_name
-                    }
-                    for row in matches
-                ])
+        async with self.AsyncSessionLocal() as session:
+            query = text("""
+                SELECT
+                    id,
+                    home_team_id,
+                    home_team_name,
+                    away_team_id,
+                    away_team_name,
+                    home_score,
+                    away_score,
+                    match_date,
+                    league_id,
+                    league_name,
+                    season,
+                    status
+                FROM matches
+                WHERE home_score IS NOT NULL
+                AND away_score IS NOT NULL
+                AND match_date IS NOT NULL
+                AND home_team_id IS NOT NULL
+                AND away_team_id IS NOT NULL
+                ORDER BY match_date ASC
+            """)
 
-                logger.info(f"✅ 加载 {len(df)} 场历史比赛数据")
-                return df
+            result = await session.execute(query)
+            rows = result.fetchall()
 
-        except Exception as e:
-            logger.warning(f"⚠️ 数据库加载失败，使用模拟数据: {e}")
-            return self._generate_mock_data()
+            data = []
+            for row in rows:
+                data.append({
+                    'match_id': row.id,
+                    'home_team_id': row.home_team_id,
+                    'home_team_name': row.home_team_name,
+                    'away_team_id': row.away_team_id,
+                    'away_team_name': row.away_team_name,
+                    'home_score': row.home_score,
+                    'away_score': row.away_score,
+                    'match_date': row.match_date,
+                    'league_id': row.league_id,
+                    'league_name': row.league_name,
+                    'season': row.season,
+                    'status': row.status
+                })
 
-    def _generate_mock_data(self) -> pd.DataFrame:
-        """生成模拟比赛数据用于演示"""
-        logger.info("🔮 生成模拟比赛数据...")
+            df = pd.DataFrame(data)
+            logger.info(f"✅ 比赛数据加载完成: {len(df)} 场比赛")
+            logger.info(f"   时间范围: {df['match_date'].min()} 至 {df['match_date'].max()}")
+            logger.info(f"   涉及球队数: {len(df['home_team_id'].unique()) + len(df['away_team_id'].unique())}")
 
-        np.random.seed(42)
-        n_matches = 1000
+            return df
 
-        # 模拟球队列表
-        teams = [f"Team_{i}" for i in range(1, 51)]  # 50个球队
+    async def calculate_team_ewma_features(self, matches_df: pd.DataFrame) -> Dict[int, Dict[str, Any]]:
+        """为所有球队计算EWMA特征"""
+        logger.info("🚀 开始计算所有球队EWMA特征...")
 
-        matches = []
-        for i in range(n_matches):
-            home_team = np.random.choice(teams)
-            away_team = np.random.choice([t for t in teams if t != home_team])
+        # 计算所有球队的EWMA指标
+        all_ewma_results = await self.ewma_calculator.calculate_all_teams_ewma(matches_df)
 
-            # 模拟比分（泊松分布）
-            home_goals = np.random.poisson(1.5)
-            away_goals = np.random.poisson(1.2)
+        # 转换为team_id索引的字典
+        team_ewma_features = {}
+        for result in all_ewma_results:
+            team_id = result['team_id']
+            if team_id is not None:
+                team_ewma_features[team_id] = result
 
-            match_date = datetime.now() - timedelta(days=n_matches-i)
+        logger.info(f"✅ EWMA特征计算完成: {len(team_ewma_features)} 个球队")
+        return team_ewma_features
 
-            matches.append({
-                'match_id': i+1,
-                'home_team_id': teams.index(home_team)+1,
-                'away_team_id': teams.index(away_team)+1,
-                'home_team_name': home_team,
-                'away_team_name': away_team,
-                'match_date': match_date,
-                'home_score': home_goals,
-                'away_score': away_goals
+    def create_basic_features(self, row: pd.Series, home_ewma: Dict, away_ewma: Dict) -> Dict[str, Any]:
+        """创建基础特征"""
+        features = {}
+
+        # 基础球队信息
+        features['home_team_id'] = row['home_team_id']
+        features['away_team_id'] = row['away_team_id']
+        features['league_id'] = row['league_id']
+        features['season'] = row['season']
+
+        # 时间特征
+        match_date = pd.to_datetime(row['match_date'])
+        features['day_of_week'] = match_date.dayofweek
+        features['month'] = match_date.month
+        features['is_weekend'] = 1 if match_date.dayofweek >= 5 else 0
+
+        return features
+
+    def create_ewma_features(self, row: pd.Series, home_ewma: Dict, away_ewma: Dict) -> Dict[str, Any]:
+        """创建EWMA特征"""
+        features = {}
+
+        if not home_ewma or not away_ewma:
+            # 如果任一球队缺少EWMA数据，返回空特征
+            return {f'ewma_{k}': 0.0 for k in [
+                'home_attack_rating', 'away_attack_rating', 'home_defense_rating', 'away_defense_rating',
+                'home_overall_rating', 'away_overall_rating', 'attack_advantage', 'defense_advantage',
+                'overall_advantage'
+            ]}
+
+        # 直接EWMA评级
+        features['home_attack_rating'] = home_ewma['attack_rating']
+        features['away_attack_rating'] = away_ewma['attack_rating']
+        features['home_defense_rating'] = home_ewma['defense_rating']
+        features['away_defense_rating'] = away_ewma['defense_rating']
+        features['home_overall_rating'] = home_ewma['overall_rating']
+        features['away_overall_rating'] = away_ewma['overall_rating']
+
+        # 对比优势特征
+        features['attack_advantage'] = home_ewma['attack_rating'] - away_ewma['attack_rating']
+        features['defense_advantage'] = home_ewma['defense_rating'] - away_ewma['defense_rating']
+        features['overall_advantage'] = home_ewma['overall_rating'] - away_ewma['overall_rating']
+
+        # 跨度-specific EWMA特征
+        for span in self.ewma_calculator.spans:
+            home_goals_key = f'ewma_goals_scored_{span}'
+            away_goals_key = f'ewma_goals_scored_{span}'
+            home_conceded_key = f'ewma_goals_conceded_{span}'
+            away_conceded_key = f'ewma_goals_conceded_{span}'
+            home_points_key = f'ewma_points_{span}'
+            away_points_key = f'ewma_points_{span}'
+
+            if (home_goals_key in home_ewma['ewma_features'] and
+                away_goals_key in away_ewma['ewma_features']):
+
+                features[f'home_ewma_goals_scored_{span}'] = home_ewma['ewma_features'][home_goals_key]
+                features[f'away_ewma_goals_scored_{span}'] = away_ewma['ewma_features'][away_goals_key]
+                features[f'home_ewma_goals_conceded_{span}'] = home_ewma['ewma_features'][home_conceded_key]
+                features[f'away_ewma_goals_conceded_{span}'] = away_ewma['ewma_features'][away_conceded_key]
+                features[f'home_ewma_points_{span}'] = home_ewma['ewma_features'][home_points_key]
+                features[f'away_ewma_points_{span}'] = away_ewma['ewma_features'][away_points_key]
+
+                # EWMA对比特征
+                features[f'ewma_goals_advantage_{span}'] = (
+                    home_ewma['ewma_features'][home_goals_key] - away_ewma['ewma_features'][away_goals_key]
+                )
+                features[f'ewma_conceded_advantage_{span}'] = (
+                    away_ewma['ewma_features'][away_conceded_key] - home_ewma['ewma_features'][home_conceded_key]
+                )
+                features[f'ewma_points_advantage_{span}'] = (
+                    home_ewma['ewma_features'][home_points_key] - away_ewma['ewma_features'][away_points_key]
+                )
+
+        return features
+
+    def create_historical_features(self, row: pd.Series, home_ewma: Dict, away_ewma: Dict) -> Dict[str, Any]:
+        """创建历史特征"""
+        features = {}
+
+        if home_ewma and away_ewma:
+            # 比赛数量特征
+            features['home_team_matches'] = home_ewma['total_matches']
+            features['away_team_matches'] = away_ewma['total_matches']
+            features['matches_difference'] = home_ewma['total_matches'] - away_ewma['total_matches']
+
+            # 状态趋势特征
+            features['home_form_trend'] = home_ewma['form_trend']
+            features['away_form_trend'] = away_ewma['form_trend']
+            features['form_trend_advantage'] = home_ewma['form_trend'] - away_ewma['form_trend']
+        else:
+            # 缺失数据时的默认值
+            features.update({
+                'home_team_matches': 0, 'away_team_matches': 0, 'matches_difference': 0,
+                'home_form_trend': 0.0, 'away_form_trend': 0.0, 'form_trend_advantage': 0.0
             })
 
-        df = pd.DataFrame(matches)
-        logger.info(f"✅ 生成 {len(df)} 场模拟比赛数据")
-        return df
+        return features
 
-    def calculate_team_form_points(self, home_score: int, away_score: int) -> Tuple[int, int]:
-        """计算比赛得分（胜=3，平=1，负=0）"""
+    def create_target_variable(self, row: pd.Series) -> Dict[str, Any]:
+        """创建目标变量"""
+        targets = {}
+
+        # 比赛结果
+        home_score = int(row['home_score'])
+        away_score = int(row['away_score'])
+
         if home_score > away_score:
-            return 3, 0  # 主胜
+            targets['result'] = 'home_win'  # 主队胜利
         elif home_score < away_score:
-            return 0, 3  # 客胜
+            targets['result'] = 'away_win'  # 客队胜利
         else:
-            return 1, 1  # 平局
+            targets['result'] = 'draw'      # 平局
 
-    def calculate_rolling_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """计算滚动窗口特征"""
-        logger.info("🔄 计算滚动窗口特征...")
+        # 数值目标
+        targets['home_score'] = home_score
+        targets['away_score'] = away_score
+        targets['goal_difference'] = home_score - away_score
+        targets['total_goals'] = home_score + away_score
+        targets['over_2_5_goals'] = 1 if targets['total_goals'] > 2 else 0
+        targets['both_teams_score'] = 1 if home_score > 0 and away_score > 0 else 0
 
-        # 预计算所有球队的历史记录
-        self._precompute_team_histories(df)
-        self._precompute_h2h_histories(df)
-        self._precompute_home_advantage(df)
+        return targets
 
-        # 为每场比赛计算特征
-        features = []
+    async def generate_match_features(self, matches_df: pd.DataFrame, team_ewma_features: Dict) -> pd.DataFrame:
+        """为每场比赛生成特征"""
+        logger.info("⚙️ 开始生成比赛特征...")
 
-        for idx, row in df.iterrows():
-            if idx % 1000 == 0:
-                logger.info(f"📊 处理进度: {idx}/{len(df)}")
+        feature_data = []
+        total_matches = len(matches_df)
 
-            match_id = row['match_id']
+        # 过滤有足够历史数据的比赛
+        valid_matches = []
+        for idx, row in matches_df.iterrows():
             home_team_id = row['home_team_id']
             away_team_id = row['away_team_id']
-            match_date = row['match_date']
 
-            feature_dict = {
-                'match_id': match_id,
-                'home_team_id': home_team_id,
-                'away_team_id': away_team_id,
-                'match_date': match_date,
+            home_ewma = team_ewma_features.get(home_team_id)
+            away_ewma = team_ewma_features.get(away_team_id)
+
+            # 只处理两队都有EWMA数据的比赛
+            if home_ewma and away_ewma and home_ewma['total_matches'] >= 3 and away_ewma['total_matches'] >= 3:
+                valid_matches.append((row, home_ewma, away_ewma))
+
+        logger.info(f"   有效比赛数: {len(valid_matches)}/{total_matches} ({len(valid_matches)/total_matches*100:.1f}%)")
+
+        for idx, (row, home_ewma, away_ewma) in enumerate(valid_matches):
+            if idx % 1000 == 0:
+                logger.info(f"   处理进度: {idx}/{len(valid_matches)} ({idx/len(valid_matches)*100:.1f}%)")
+
+            # 创建特征字典
+            match_features = {
+                'match_id': row['match_id'],
+                'match_date': row['match_date']
             }
 
-            # 🔥 核心滚动窗口特征
-            for window_size in self.window_sizes:
-                home_features = self._get_team_rolling_features(
-                    home_team_id, match_date, window_size, is_home=True
-                )
-                away_features = self._get_team_rolling_features(
-                    away_team_id, match_date, window_size, is_home=False
-                )
+            # 添加各类特征
+            if self.feature_config['include_basic']:
+                match_features.update(self.create_basic_features(row, home_ewma, away_ewma))
 
-                # 添加到特征字典
-                for key, value in home_features.items():
-                    feature_dict[f'home_{key}_w{window_size}'] = value
+            if self.feature_config['include_ewma']:
+                match_features.update(self.create_ewma_features(row, home_ewma, away_ewma))
 
-                for key, value in away_features.items():
-                    feature_dict[f'away_{key}_w{window_size}'] = value
+            if self.feature_config['include_historical']:
+                match_features.update(self.create_historical_features(row, home_ewma, away_ewma))
 
-            # 🏠 主场优势特征
-            home_advantage = self._get_home_advantage(home_team_id, match_date)
-            feature_dict['home_advantage'] = home_advantage
+            # 添加目标变量
+            match_features.update(self.create_target_variable(row))
 
-            # ⚔️ 历史交锋特征
-            h2h_features = self._get_h2h_features(
-                home_team_id, away_team_id, match_date
-            )
-            feature_dict.update(h2h_features)
+            feature_data.append(match_features)
 
-            # 📈 比分特征（原始数据）
-            feature_dict['home_score'] = row['home_score']
-            feature_dict['away_score'] = row['away_score']
-            feature_dict['goal_difference'] = row['home_score'] - row['away_score']
-            feature_dict['total_goals'] = row['home_score'] + row['away_score']
+        # 转换为DataFrame
+        features_df = pd.DataFrame(feature_data)
+        logger.info(f"✅ 特征生成完成: {features_df.shape}")
 
-            features.append(feature_dict)
-
-        features_df = pd.DataFrame(features)
-        logger.info(f"✅ 滚动窗口特征计算完成，特征维度: {len(features_df.columns)}")
         return features_df
 
-    def _precompute_team_histories(self, df: pd.DataFrame):
-        """预计算所有球队的历史记录"""
-        logger.info("📊 预计算球队历史记录...")
+    def analyze_feature_quality(self, features_df: pd.DataFrame):
+        """分析特征质量"""
+        logger.info("📈 分析特征质量...")
 
-        for team_id in set(df['home_team_id'].unique()) | set(df['away_team_id'].unique()):
-            team_matches = df[
-                ((df['home_team_id'] == team_id) | (df['away_team_id'] == team_id))
-            ].sort_values('match_date')
+        print(f"\n{'='*80}")
+        print(f"🔍 高级特征数据集质量分析")
+        print(f"{'='*80}")
 
-            history = []
-            for _, row in team_matches.iterrows():
-                if row['home_team_id'] == team_id:
-                    # 主队记录
-                    is_home = True
-                    goals_scored = row['home_score']
-                    goals_conceded = row['away_score']
-                else:
-                    # 客队记录
-                    is_home = False
-                    goals_scored = row['away_score']
-                    goals_conceded = row['home_score']
+        # 基本统计
+        print(f"\n📊 数据集概览:")
+        print(f"   总比赛数: {len(features_df):,}")
+        print(f"   特征维度: {features_df.shape[1]}")
+        print(f"   时间范围: {features_df['match_date'].min()} 至 {features_df['match_date'].max()}")
 
-                # 计算得分
-                if row['home_score'] > row['away_score']:
-                    result = 3 if is_home else 0
-                elif row['home_score'] < row['away_score']:
-                    result = 0 if is_home else 3
-                else:
-                    result = 1  # 平局
+        # 目标变量分布
+        print(f"\n🎯 目标变量分布:")
+        result_dist = features_df['result'].value_counts()
+        for result, count in result_dist.items():
+            print(f"   {result}: {count} ({count/len(features_df)*100:.1f}%)")
 
-                history.append({
-                    'match_date': row['match_date'],
-                    'is_home': is_home,
-                    'goals_scored': goals_scored,
-                    'goals_conceded': goals_conceded,
-                    'result': result,
-                    'clean_sheet': goals_conceded == 0
-                })
+        # EWMA特征统计
+        ewma_cols = [col for col in features_df.columns if 'ewma_' in col or 'rating' in col]
+        if ewma_cols:
+            print(f"\n🧠 EWMA特征统计 ({len(ewma_cols)}个):")
+            for col in ewma_cols[:10]:  # 显示前10个
+                if features_df[col].dtype in ['float64', 'int64']:
+                    print(f"   {col:30s}: {features_df[col].mean():6.2f} ± {features_df[col].std():.2f}")
+            if len(ewma_cols) > 10:
+                print(f"   ... 还有 {len(ewma_cols) - 10} 个EWMA特征")
 
-            self.team_stats[team_id] = history
+        # 缺失值检查
+        missing_data = features_df.isnull().sum()
+        missing_cols = missing_data[missing_data > 0]
+        if len(missing_cols) > 0:
+            print(f"\n⚠️ 缺失值统计:")
+            for col, count in missing_cols.items():
+                print(f"   {col}: {count} ({count/len(features_df)*100:.1f}%)")
+        else:
+            print(f"\n✅ 无缺失值")
 
-        logger.info(f"✅ 预计算完成 {len(self.team_stats)} 个球队的历史记录")
+        print(f"\n{'='*80}")
 
-    def _precompute_h2h_histories(self, df: pd.DataFrame):
-        """预计算历史交锋记录"""
-        logger.info("⚔️ 预计算历史交锋记录...")
+    async def execute_feature_generation(self):
+        """执行完整特征生成流程"""
+        logger.info("🚀 启动高级特征生成系统...")
+        logger.info(f"🎯 目标: 基于EWMA特征生成ML训练数据集")
 
-        # 获取所有独特的球队组合
-        team_combinations = set()
-        for _, row in df.iterrows():
-            combo = tuple(sorted([row['home_team_id'], row['away_team_id']]))
-            team_combinations.add(combo)
+        try:
+            # 1. 加载比赛数据
+            matches_df = await self.load_all_matches()
 
-        for combo in team_combinations:
-            team1, team2 = combo
-            h2h_matches = df[
-                ((df['home_team_id'] == team1) & (df['away_team_id'] == team2)) |
-                ((df['home_team_id'] == team2) & (df['away_team_id'] == team1))
-            ].sort_values('match_date')
+            if len(matches_df) == 0:
+                logger.error("❌ 没有可用的比赛数据")
+                return False
 
-            h2h_history = []
-            for _, row in h2h_matches.iterrows():
-                if row['home_team_id'] == team1:
-                    # team1 作为主队
-                    goals_diff = row['home_score'] - row['away_score']
-                    result = 3 if goals_diff > 0 else (1 if goals_diff == 0 else 0)
-                else:
-                    # team1 作为客队
-                    goals_diff = row['away_score'] - row['home_score']
-                    result = 3 if goals_diff > 0 else (1 if goals_diff == 0 else 0)
+            # 2. 计算EWMA特征
+            team_ewma_features = await self.calculate_team_ewma_features(matches_df)
 
-                h2h_history.append({
-                    'match_date': row['match_date'],
-                    'goals_diff': goals_diff,
-                    'result': result
-                })
+            if len(team_ewma_features) == 0:
+                logger.error("❌ 没有计算出任何EWMA特征")
+                return False
 
-            self.h2h_stats[combo] = h2h_history
+            # 3. 生成比赛特征
+            features_df = await self.generate_match_features(matches_df, team_ewma_features)
 
-        logger.info(f"✅ 预计算完成 {len(self.h2h_stats)} 个球队组合的交锋记录")
+            if len(features_df) == 0:
+                logger.error("❌ 没有生成任何特征数据")
+                return False
 
-    def _precompute_home_advantage(self, df: pd.DataFrame):
-        """预计算主场优势统计"""
-        logger.info("🏠 预计算主场优势统计...")
+            # 4. 分析特征质量
+            self.analyze_feature_quality(features_df)
 
-        for team_id in set(df['home_team_id'].unique()):
-            home_matches = df[df['home_team_id'] == team_id]
-            away_matches = df[df['away_team_id'] == team_id]
+            # 5. 保存特征数据
+            output_path = "/app/data/advanced_features.csv"
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            features_df.to_csv(output_path, index=False, encoding='utf-8-sig')
+            logger.info(f"💾 特征数据已保存至: {output_path}")
 
-            home_wins = 0
-            home_total = len(home_matches)
+            # 6. 生成特征报告
+            await self.generate_feature_report(features_df, output_path)
 
-            for _, row in home_matches.iterrows():
-                if row['home_score'] > row['away_score']:
-                    home_wins += 1
+            return True
 
-            away_wins = 0
-            away_total = len(away_matches)
+        except Exception as e:
+            logger.error(f"💥 特征生成异常: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+        finally:
+            await self.close()
 
-            for _, row in away_matches.iterrows():
-                if row['away_score'] > row['home_score']:
-                    away_wins += 1
+    async def generate_feature_report(self, features_df: pd.DataFrame, output_path: str):
+        """生成特征报告"""
+        logger.info("📋 生成特征报告...")
 
-            # 计算主场优势指数
-            home_win_rate = home_wins / home_total if home_total > 0 else 0.5
-            away_win_rate = away_wins / away_total if away_total > 0 else 0.5
-            home_advantage = (home_win_rate - away_win_rate)
-
-            self.home_advantage[team_id] = {
-                'home_win_rate': home_win_rate,
-                'away_win_rate': away_win_rate,
-                'home_advantage': home_advantage,
-                'home_total': home_total,
-                'away_total': away_total
-            }
-
-        logger.info(f"✅ 预计算完成 {len(self.home_advantage)} 个球队的主场优势统计")
-
-    def _get_team_rolling_features(self, team_id: int, current_date: datetime,
-                                window_size: int, is_home: bool) -> Dict[str, float]:
-        """获取球队的滚动窗口特征"""
-        history = self.team_stats.get(team_id, [])
-
-        # 筛选当前日期之前的比赛
-        past_matches = [
-            match for match in history
-            if match['match_date'] < current_date
-        ][:window_size]
-
-        if not past_matches:
-            # 返回默认值
-            return {
-                'goals_scored_avg': 1.0,
-                'goals_conceded_avg': 1.0,
-                'form_points_avg': 1.0,
-                'win_rate': 0.33,
-                'clean_sheet_rate': 0.1,
-                'btts_rate': 0.6
-            }
-
-        # 计算统计特征
-        goals_scored = [m['goals_scored'] for m in past_matches]
-        goals_conceded = [m['goals_conceded'] for m in past_matches]
-        form_points = [m['result'] for m in past_matches]
-        clean_sheets = [m['clean_sheet'] for m in past_matches]
-
-        # 基础统计
-        goals_scored_avg = np.mean(goals_scored) if goals_scored else 1.0
-        goals_conceded_avg = np.mean(goals_conceded) if goals_conceded else 1.0
-        form_points_avg = np.mean(form_points) if form_points else 1.0
-        win_rate = sum(1 for p in form_points if p == 3) / len(form_points) if form_points else 0.33
-        clean_sheet_rate = sum(clean_sheets) / len(clean_sheets) if clean_sheets else 0.1
-        btts_rate = sum(1 for g_s, g_c in zip(goals_scored, goals_conceded) if g_s > 0 and g_c > 0) / len(past_matches) if past_matches else 0.6
-
-        return {
-            'goals_scored_avg': goals_scored_avg,
-            'goals_conceded_avg': goals_conceded_avg,
-            'form_points_avg': form_points_avg,
-            'win_rate': win_rate,
-            'clean_sheet_rate': clean_sheet_rate,
-            'btts_rate': btts_rate,
-            'goals_xg': goals_scored_avg * form_points_avg / 3  # 进球期望值
+        report = {
+            "timestamp": datetime.now().isoformat(),
+            "dataset_info": {
+                "total_matches": len(features_df),
+                "feature_count": features_df.shape[1],
+                "date_range": {
+                    "start": str(features_df['match_date'].min()),
+                    "end": str(features_df['match_date'].max())
+                }
+            },
+            "feature_categories": {
+                "basic_features": len([col for col in features_df.columns if any(x in col for x in ['team_id', 'league', 'season', 'day_', 'month', 'weekend'])]),
+                "ewma_features": len([col for col in features_df.columns if 'ewma_' in col or 'rating' in col]),
+                "historical_features": len([col for col in features_df.columns if any(x in col for x in ['matches', 'form_trend'])]),
+                "target_variables": len(['result', 'home_score', 'away_score', 'goal_difference', 'total_goals', 'over_2_5_goals', 'both_teams_score'])
+            },
+            "target_distribution": features_df['result'].value_counts().to_dict(),
+            "data_quality": {
+                "missing_values": int(features_df.isnull().sum().sum()),
+                "complete_rows": int(len(features_df) - features_df.dropna().shape[0])
+            },
+            "output_path": output_path
         }
 
-    def _get_home_advantage(self, team_id: int, current_date: datetime) -> float:
-        """获取主场优势指数"""
-        advantage = self.home_advantage.get(team_id, {})
-        return advantage.get('home_advantage', 0.0)
+        # 保存报告
+        report_path = "/app/data/advanced_features_report.json"
+        import json
+        with open(report_path, 'w', encoding='utf-8') as f:
+            json.dump(report, f, indent=2, ensure_ascii=False, default=str)
 
-    def _get_h2h_features(self, home_team_id: int, away_team_id: int,
-                        current_date: datetime) -> Dict[str, float]:
-        """获取历史交锋特征"""
-        combo = tuple(sorted([home_team_id, away_team_id]))
-        h2h_history = self.h2h_stats.get(combo, [])
+        logger.info(f"📋 特征报告已保存至: {report_path}")
 
-        # 筛选当前日期之前的交锋记录
-        past_h2h = [
-            match for match in h2h_history
-            if match['match_date'] < current_date
-        ][:5]  # 最近5次交锋
-
-        if not past_h2h:
-            return {
-                'h2h_goals_diff_avg': 0.0,
-                'h2h_points_avg': 1.0,
-                'h2h_win_rate': 0.5,
-                'h2h_over_2_5_rate': 0.4
-            }
-
-        goals_diffs = [m['goals_diff'] for m in past_h2h]
-        h2h_points = [m['result'] for m in past_h2h]
-        total_goals = [abs(m['goals_diff']) * 2 for m in past_h2h]  # 近似总进球数
-
-        return {
-            'h2h_goals_diff_avg': np.mean(goals_diffs) if goals_diffs else 0.0,
-            'h2h_points_avg': np.mean(h2h_points) if h2h_points else 1.0,
-            'h2h_win_rate': sum(1 for p in h2h_points if p == 3) / len(h2h_points) if h2h_points else 0.5,
-            'h2h_over_2_5_rate': sum(1 for g in total_goals if g > 2.5) / len(total_goals) if total_goals else 0.4
-        }
-
-    def save_features(self, df: pd.DataFrame, filename: str = None):
-        """保存特征数据"""
-        if filename is None:
-            filename = f"/app/data/advanced_features_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-
-        os.makedirs('/app/data', exist_ok=True)
-        df.to_csv(filename, index=False)
-
-        logger.info(f"💾 高级特征已保存到: {filename}")
-
-        # 打印特征统计
-        print(f"\n📊 高级特征统计报告:")
-        print(f"   总记录数: {len(df):,}")
-        print(f"   特征维度: {len(df.columns)}")
-
-        # 滚动窗口特征统计
-        rolling_features = [col for col in df.columns if 'w5' in col or 'w10' in col or 'w15' in col]
-        print(f"   滚动窗口特征: {len(rolling_features)} 个")
-
-        # 核心特征示例
-        core_features = [
-            'home_form_points_avg_w5', 'away_form_points_avg_w5',
-            'home_goals_scored_avg_w5', 'away_goals_scored_avg_w5',
-            'home_advantage', 'h2h_points_avg'
-        ]
-        for feature in core_features:
-            if feature in df.columns:
-                print(f"   {feature}: 均值={df[feature].mean():.3f}")
-
-        return filename
-
+        # 打印关键摘要
+        print(f"\n🎉 特征生成完成!")
+        print(f"📁 特征数据: {output_path}")
+        print(f"📊 特征报告: {report_path}")
+        print(f"🏗️ 数据集: {report['dataset_info']['total_matches']:,} 行 × {report['dataset_info']['feature_count']} 列")
+        print(f"🧠 EWMA特征: {report['feature_categories']['ewma_features']} 个")
 
 async def main():
     """主函数"""
-    print("🎯 高级特征生成器 V2 启动")
-    print("="*60)
+    print("🧠 高级特征生成器 - V3版本")
+    print("🎯 目标: 基于EWMA特征生成机器学习训练数据集")
+    print("🏗️ 架构: EWMA + 基础特征 + 历史特征 + 时间特征")
+    print("="*80)
 
-    # 初始化特征生成器
-    generator = AdvancedFeatureGenerator(window_sizes=[5, 10, 15])
+    generator = AdvancedFeatureGenerator()
 
-    # 加载数据
-    df = await generator.load_historical_data()
+    try:
+        success = await generator.execute_feature_generation()
 
-    print(f"📊 输入数据统计:")
-    print(f"   比赛场数: {len(df):,}")
-    print(f"   球队数量: {len(set(df['home_team_id'].unique()) | set(df['away_team_id'].unique()))}")
-    print(f"   日期范围: {df['match_date'].min()} 到 {df['match_date'].max()}")
+        if success:
+            print("\n🎉 高级特征生成成功完成!")
+            print("📁 输出文件:")
+            print("   /app/data/advanced_features.csv - 特征数据集")
+            print("   /app/data/advanced_features_report.json - 特征报告")
+            print("🔥 后续步骤: 运行 train_model_advanced.py 训练XGBoost模型")
+        else:
+            print("\n❌ 高级特征生成失败")
 
-    # 生成高级特征
-    features_df = generator.calculate_rolling_features(df)
-
-    # 保存特征
-    output_file = generator.save_features(features_df)
-
-    print(f"\n🎉 高级特征生成完成！")
-    print(f"📁 输出文件: {output_file}")
-
+    except Exception as e:
+        logger.error(f"💥 系统异常: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     asyncio.run(main())
