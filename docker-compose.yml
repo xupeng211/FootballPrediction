@@ -128,7 +128,8 @@ services:
       "worker",
       "--loglevel=info",
       "--concurrency=2",
-      "--prefetch-multiplier=1"
+      "--prefetch-multiplier=1",
+      "-Q", "default,fixtures,odds,scores,maintenance,backup,streaming,features,fotmob"
     ]
 
   # Celery Beat - 定时任务调度器
