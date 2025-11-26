@@ -8,6 +8,7 @@ import base64
 import hashlib
 import json
 import logging
+import random
 import time
 from datetime import datetime, timedelta
 from typing import Any, Optional
@@ -41,17 +42,51 @@ class FotmobCollector(BaseCollector):
         # Session 配置
         self._session: AsyncSession | None = None
 
-        # 基础 Headers
+        # 🛡️ 反爬增强配置
+        self.request_count = 0  # 请求计数器
+        self.last_request_time = 0  # 上次请求时间
+        self.consecutive_errors = 0  # 连续错误计数
+        self.blocked_until = None  # 解除封锁时间
+
+        # 🎭 User-Agent 池 (10-20个常见浏览器UA)
+        self.user_agent_pool = [
+            # Chrome on Windows
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+
+            # Chrome on macOS
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+
+            # Firefox on Windows
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/120.0",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0",
+
+            # Firefox on macOS
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/120.0",
+
+            # Safari on macOS
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+
+            # Edge on Windows
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0"
+        ]
+
+        # 基础 Headers (不包含 User-Agent，将动态设置)
         self.base_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "application/json, text/plain, */*",
             "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
             "Accept-Encoding": "gzip, deflate, br",
             "Referer": "https://www.fotmob.com/",
             "Origin": "https://www.fotmob.com",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-ch-ua": '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
-            "sec-ch-ua-mobile": "?0",
             "Cache-Control": "no-cache",
             "Pragma": "no-cache"
         }
@@ -73,6 +108,87 @@ class FotmobCollector(BaseCollector):
                 raise
 
         return self._session
+
+    def _get_random_user_agent(self) -> str:
+        """随机选择一个 User-Agent"""
+        return random.choice(self.user_agent_pool)
+
+    async def _smart_delay(self) -> None:
+        """智能延迟：模拟真人浏览节奏"""
+        current_time = time.time()
+
+        # 计算与上次请求的时间间隔
+        time_since_last = current_time - self.last_request_time
+
+        # 基础延迟时间 (正态分布，均值5秒，标准差1秒)
+        base_delay = max(0, random.gauss(5, 1))
+
+        # 如果距离上次请求太短，增加额外延迟
+        if time_since_last < 2:
+            base_delay += random.uniform(2, 4)
+
+        # 随着连续错误增加，增加延迟时间
+        if self.consecutive_errors > 0:
+            error_penalty = min(self.consecutive_errors * 2, 10)  # 最多额外10秒
+            base_delay += error_penalty
+
+        # 确保最小延迟
+        delay_time = max(base_delay, 1.0)
+
+        self.logger.debug(f"智能延迟: {delay_time:.2f}秒 (连续错误: {self.consecutive_errors})")
+        await asyncio.sleep(delay_time)
+
+        self.last_request_time = time.time()
+
+    async def _handle_rate_limit(self, status_code: int) -> bool:
+        """处理速率限制错误
+
+        Args:
+            status_code: HTTP状态码
+
+        Returns:
+            bool: True 表示需要重试，False 表示应该放弃
+        """
+        if status_code in (403, 429):
+            self.consecutive_errors += 1
+
+            # 根据连续错误次数计算熔断时间
+            if self.consecutive_errors == 1:
+                sleep_time = 60  # 1分钟
+            elif self.consecutive_errors == 2:
+                sleep_time = 300  # 5分钟
+            elif self.consecutive_errors <= 5:
+                sleep_time = 900  # 15分钟
+            else:
+                sleep_time = 1800  # 30分钟
+
+            self.blocked_until = time.time() + sleep_time
+
+            self.logger.warning(
+                f"🚫 检测到反爬措施 (HTTP {status_code})，"
+                f"连续错误 {self.consecutive_errors} 次，"
+                f"休眠 {sleep_time/60:.1f} 分钟至 {datetime.fromtimestamp(self.blocked_until)}"
+            )
+
+            await asyncio.sleep(sleep_time)
+            return True
+
+        return False
+
+    def _reset_error_count(self) -> None:
+        """重置错误计数"""
+        if self.consecutive_errors > 0:
+            self.logger.info(f"✅ 错误已清除，重置连续错误计数 (之前: {self.consecutive_errors})")
+        self.consecutive_errors = 0
+        self.blocked_until = None
+
+    def _is_blocked(self) -> bool:
+        """检查当前是否处于封锁状态"""
+        if self.blocked_until and time.time() < self.blocked_until:
+            remaining = self.blocked_until - time.time()
+            self.logger.warning(f"⏳ 仍处于封锁状态，剩余 {remaining/60:.1f} 分钟")
+            return True
+        return False
 
     def _generate_x_mas_header(self, api_url: str) -> str:
         """
@@ -118,7 +234,7 @@ class FotmobCollector(BaseCollector):
 
     def _get_headers(self, api_url: str, use_known_signature: bool = False) -> dict[str, str]:
         """
-        获取请求头
+        获取请求头 (增强版：随机UA + 动态sec-ch-ua)
 
         Args:
             api_url: API 端点路径
@@ -128,6 +244,50 @@ class FotmobCollector(BaseCollector):
             包含认证头的请求头字典
         """
         headers = self.base_headers.copy()
+
+        # 🎭 随机选择 User-Agent
+        user_agent = self._get_random_user_agent()
+        headers["User-Agent"] = user_agent
+
+        # 🔄 根据 User-Agent 动态设置 sec-ch-ua
+        if "Chrome" in user_agent:
+            # 提取 Chrome 版本号
+            import re
+            chrome_match = re.search(r'Chrome/(\d+)\.0\.0\.0', user_agent)
+            if chrome_match:
+                chrome_version = chrome_match.group(1)
+                headers["sec-ch-ua"] = f'"Chromium";v="{chrome_version}", "Google Chrome";v="{chrome_version}", "Not_A Brand";v="99"'
+            else:
+                headers["sec-ch-ua"] = '"Chromium";v="120", "Google Chrome";v="120", "Not_A Brand";v="99"'
+
+            if "Windows" in user_agent:
+                headers["sec-ch-ua-platform"] = '"Windows"'
+            elif "Macintosh" in user_agent:
+                headers["sec-ch-ua-platform"] = '"macOS"'
+
+            headers["sec-ch-ua-mobile"] = "?0"
+
+        elif "Firefox" in user_agent:
+            # Firefox 不使用 sec-ch-ua 头
+            headers.pop("sec-ch-ua", None)
+            headers.pop("sec-ch-ua-mobile", None)
+            headers.pop("sec-ch-ua-platform", None)
+
+        elif "Safari" in user_agent and "Chrome" not in user_agent:
+            # Safari 不使用 sec-ch-ua 头
+            headers.pop("sec-ch-ua", None)
+            headers.pop("sec-ch-ua-mobile", None)
+            headers.pop("sec-ch-ua-platform", None)
+
+        elif "Edg" in user_agent:
+            # Edge 浏览器
+            import re
+            edge_match = re.search(r'Edg/(\d+)\.0\.0\.0', user_agent)
+            if edge_match:
+                edge_version = edge_match.group(1)
+                headers["sec-ch-ua"] = f'"Chromium";v="120", "Microsoft Edge";v="{edge_version}", "Not_A Brand";v="99"'
+            else:
+                headers["sec-ch-ua"] = '"Chromium";v="120", "Microsoft Edge";v="120", "Not_A Brand";v="99"'
 
         if use_known_signature and (
             api_url == "/api/data/audio-matches" or
@@ -147,51 +307,93 @@ class FotmobCollector(BaseCollector):
         self,
         api_url: str,
         use_known_signature: bool = False,
-        timeout: float = 30.0
+        timeout: float = 30.0,
+        max_retries: int = 3
     ) -> dict[str, Any] | None:
         """
-        发送认证请求
+        发送认证请求 (增强版：智能延迟 + 错误熔断 + 重试机制)
 
         Args:
             api_url: API 端点路径
             use_known_signature: 是否使用已知的有效签名
             timeout: 请求超时时间
+            max_retries: 最大重试次数
 
         Returns:
             响应 JSON 数据或 None
         """
+        # 🔍 检查封锁状态
+        if self._is_blocked():
+            return None
+
+        # 🕐 智能延迟
+        await self._smart_delay()
+
         session = await self._get_session()
         headers = self._get_headers(api_url, use_known_signature)
         full_url = f"{self.base_url}{api_url}"
+        self.request_count += 1
 
-        try:
-            self.logger.debug(f"Making authenticated request to {api_url}")
+        # 📝 记录当前使用的 User-Agent (用于调试)
+        current_ua = headers.get("User-Agent", "Unknown")[:50]
+        self.logger.debug(f"🎭 请求 #{self.request_count} - UA: {current_ua} -> {api_url}")
 
-            response = await session.get(
-                full_url,
-                headers=headers,
-                timeout=timeout
-            )
+        for attempt in range(max_retries + 1):
+            try:
+                response = await session.get(
+                    full_url,
+                    headers=headers,
+                    timeout=timeout
+                )
 
-            self.logger.debug(f"Response status: {response.status_code}")
+                self.logger.debug(f"响应状态: {response.status_code} (尝试 {attempt + 1}/{max_retries + 1})")
 
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    self.logger.debug(f"Successfully received data from {api_url}")
-                    return data
-                except ValueError as e:
-                    self.logger.error(f"Failed to parse JSON from {api_url}: {e}")
+                if response.status_code == 200:
+                    # ✅ 请求成功，重置错误计数
+                    self._reset_error_count()
+                    try:
+                        data = response.json()
+                        self.logger.info(f"✅ 成功获取数据: {api_url} (大小: {len(str(data))} 字符)")
+                        return data
+                    except ValueError as e:
+                        self.logger.error(f"❌ JSON解析失败 {api_url}: {e}")
+                        return None
+
+                elif response.status_code in (403, 429):
+                    # 🚫 触发速率限制处理
+                    self.logger.warning(f"🚫 检测到反爬: HTTP {response.status_code}")
+                    should_retry = await self._handle_rate_limit(response.status_code)
+
+                    if should_retry and attempt < max_retries:
+                        # 重新生成 headers (包含新的随机 UA)
+                        headers = self._get_headers(api_url, use_known_signature)
+                        self.logger.info(f"🔄 熔断后重试 ({attempt + 1}/{max_retries})")
+                        continue
+                    else:
+                        return None
+
+                else:
+                    # 其他 HTTP 错误
+                    self.logger.warning(f"⚠️ HTTP {response.status_code} for {api_url}")
+                    if response.text:
+                        self.logger.debug(f"响应内容: {response.text[:200]}")
                     return None
-            else:
-                self.logger.warning(f"HTTP {response.status_code} for {api_url}")
-                if response.text:
-                    self.logger.debug(f"Response text: {response.text[:200]}")
+
+            except asyncio.TimeoutError:
+                self.logger.warning(f"⏱️ 请求超时 {api_url} (尝试 {attempt + 1})")
+                if attempt < max_retries:
+                    await asyncio.sleep(2 ** attempt)  # 指数退避
+                    continue
                 return None
 
-        except Exception as e:
-            self.logger.error(f"Request failed for {api_url}: {e}")
-            return None
+            except Exception as e:
+                self.logger.error(f"❌ 请求异常 {api_url} (尝试 {attempt + 1}): {e}")
+                if attempt < max_retries:
+                    await asyncio.sleep(1 + attempt)  # 简单退避
+                    continue
+                return None
+
+        return None
 
     async def collect_matches_by_date_api(self, date_str: str) -> CollectionResult:
         """
