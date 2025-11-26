@@ -49,6 +49,7 @@ dependencies = [
     "curl_cffi>=0.6.0",
     "prometheus-client>=0.14.0",
     "mlflow>=2.22.2,<3.0.0",
+    "optuna>=4.6.0",
 ]
 
 [project.optional-dependencies]
