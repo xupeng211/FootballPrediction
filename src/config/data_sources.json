@@ -7,7 +7,11 @@
     "backfill_seasons": 3,
     "current_season": 2024,
     "max_api_calls_per_minute": 10,
-    "collection_strategy": "high_value_focus"
+    "collection_strategy": "comprehensive_coverage",
+    "start_date": "20220101",
+    "end_date": "today",
+    "skip_rest_days": false,
+    "include_international": true
   },
 
   "target_leagues": [
@@ -118,6 +122,57 @@
       "country": "China",
       "teams_count": 16,
       "priority": "high"
+    },
+    {
+      "name": "FIFA World Cup",
+      "api_id": 2000,
+      "db_id": 2000,
+      "type": "International",
+      "country": "World",
+      "teams_count": 32,
+      "priority": "critical",
+      "tournament_period": "4_years"
+    },
+    {
+      "name": "UEFA Euro",
+      "api_id": 2018,
+      "db_id": 2018,
+      "type": "International",
+      "country": "Europe",
+      "teams_count": 24,
+      "priority": "critical",
+      "tournament_period": "4_years"
+    },
+    {
+      "name": "Copa America",
+      "api_id": 2033,
+      "db_id": 2033,
+      "type": "International",
+      "country": "South America",
+      "teams_count": 10,
+      "priority": "critical",
+      "tournament_period": "4_years"
+    },
+    {
+      "name": "UEFA Nations League",
+      "api_id": 2105,
+      "db_id": 2105,
+      "type": "International",
+      "country": "Europe",
+      "teams_count": 55,
+      "priority": "high",
+      "tournament_period": "2_years"
+    },
+    {
+      "name": "International Friendlies",
+      "api_id": 4444,
+      "db_id": 4444,
+      "type": "International",
+      "country": "World",
+      "teams_count": "variable",
+      "priority": "high",
+      "continuous": true,
+      "description": "国际友谊赛 - 高价值数据源"
     }
   ],
 

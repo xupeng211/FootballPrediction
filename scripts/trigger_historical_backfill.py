@@ -1,29 +1,38 @@
 #!/usr/bin/env python3
 """
-历史数据回溯采集脚本 / Historical Data Backfill Collection Script
+地毯式覆盖数据采集脚本 / Comprehensive Coverage Data Collection Script
 
-该脚本读取数据源配置，生成过去3年的历史日期列表，
-并通过Celery触发大规模的FotMob历史数据采集任务。
+🎯 战略变更：执行"地毯式覆盖"策略
+- 时间范围：2022年1月1日 到 今天
+- 采集方式：连续日期，一天都不跳过
+- 包含赛事：所有联赛 + 国际杯赛 + 友谊赛
+- 不再随机采样，不再跳过休赛期
 
-This script reads data source configuration, generates historical date lists for the past 3 years,
-and triggers large-scale FotMob historical data collection tasks via Celery.
+🚀 Strategic Change: "Comprehensive Coverage" Strategy
+- Time Range: 2022-01-01 to Today
+- Collection Method: Continuous dates, no skipping
+- Include: All leagues + International cups + Friendlies
+- No random sampling, no rest day skipping
 
 使用方法 / Usage:
     python scripts/trigger_historical_backfill.py [--dry-run]
 
 参数 / Arguments:
-    --dry-run: 只生成日期列表，不实际触发任务
+    --dry-run: 只显示计划，不实际触发任务
 
 注意事项 / Notes:
-- 该脚本会生成大量的Celery任务，请确保Worker有足够的处理能力
-- 建议分批执行，避免对API造成过大压力
-- 历史数据采集对于机器学习模型训练至关重要
+- 这是一个大规模数据采集任务，预计需要数小时完成
+- 5-10秒随机延迟，模拟真人行为，更加安全
+- 将采集包括休赛期在内的每一天的数据
+- 国际友谊赛是高价值数据源，不容忽视
 """
 
 import asyncio
 import logging
 import os
 import sys
+import random
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Any
@@ -89,95 +98,85 @@ def load_data_source_config() -> Dict[str, Any]:
         }
 
 
-def generate_historical_dates(config: Dict[str, Any]) -> List[str]:
-    """生成历史日期列表"""
+def generate_comprehensive_dates(config: Dict[str, Any]) -> List[str]:
+    """生成地毯式覆盖的连续日期列表"""
     strategic_settings = config.get('strategic_settings', {})
-    years = strategic_settings.get('backfill_seasons', 3)
-    days_per_season = 20  # 每赛季采样20天，平衡覆盖面和效率
+
+    # 🎯 地毯式覆盖策略参数
+    start_date_str = strategic_settings.get('start_date', '20220101')
+    end_date_str = strategic_settings.get('end_date', 'today')
+    skip_rest_days = strategic_settings.get('skip_rest_days', False)
+
     target_leagues = config.get('target_leagues', [])
 
-    current_year = datetime.now().year
+    # 解析日期范围
+    if end_date_str == 'today':
+        end_date = datetime.now()
+    else:
+        end_date = datetime.strptime(end_date_str, '%Y%m%d')
 
-    logger.info(f"🎯 开始生成 {years} 年历史数据回溯配置")
-    logger.info(f"   - 当前年份: {current_year}")
-    logger.info(f"   - 回溯年份数: {years}")
-    logger.info(f"   - 每赛季采样天数: {days_per_season}")
+    start_date = datetime.strptime(start_date_str, '%Y%m%d')
+
+    logger.info(f"🎯 地毯式覆盖数据采集策略")
+    logger.info(f"   - 时间范围: {start_date.strftime('%Y-%m-%d')} 到 {end_date.strftime('%Y-%m-%d')}")
+    logger.info(f"   - 跳过休赛期: {'是' if skip_rest_days else '否（地毯式覆盖）'}")
     logger.info(f"   - 目标联赛数量: {len(target_leagues)}")
 
-    # 生成年份列表
-    target_years = [current_year - i for i in range(years)]
-    logger.info(f"   - 目标年份: {target_years}")
+    # 识别国际赛事
+    international_leagues = [league for league in target_leagues if league.get('type') == 'International']
+    domestic_leagues = [league for league in target_leagues if league.get('type') != 'International']
 
-    # 为每年生成采样日期
+    logger.info(f"   - 国内联赛: {len(domestic_leagues)} 个")
+    logger.info(f"   - 国际赛事: {len(international_leagues)} 个")
+
+    if international_leagues:
+        logger.info(f"   - 国际赛事包括: {', '.join([league['name'] for league in international_leagues])}")
+
+    # 生成连续日期列表（地毯式覆盖）
     all_dates = []
+    current_date = start_date
 
-    for year in target_years:
-        season_dates = generate_season_dates(year, days_per_season)
-        all_dates.extend(season_dates)
-        logger.info(f"✅ {year}年生成 {len(season_dates)} 个日期")
-
-    # 去重并排序
-    unique_dates = list(set(all_dates))
-    unique_dates.sort()
-
-    logger.info(f"📅 生成的历史日期范围:")
-    logger.info(f"   - 最早: {unique_dates[0] if unique_dates else 'None'}")
-    logger.info(f"   - 最晚: {unique_dates[-1] if unique_dates else 'None'}")
-    logger.info(f"   - 总日期数: {len(unique_dates)}")
-    logger.info(f"   - 每赛季平均日期数: {len(unique_dates) // years}")
-
-    return unique_dates
-
-
-def generate_season_dates(year: int, days_per_season: int) -> List[str]:
-    """为指定赛季生成采样日期"""
-    dates = []
-
-    # 定义赛季大致时间范围
-    season_start_month = 8  # 8月开始
-    season_end_month = 5   # 次年5月结束
-
-    # 生成赛季起始日期
-    season_start = datetime(year, season_start_month, 1)
-    season_end = datetime(year + 1, season_end_month, 31)
-
-    # 计算总天数
-    total_days = (season_end - season_start).days
-    logger.info(f"   - {year}赛季: {season_start.strftime('%Y-%m-%d')} 到 {season_end.strftime('%Y-%m-%d')}")
-    logger.info(f"   - 赛季总天数: {total_days}")
-
-    # 计算采样间隔
-    if total_days <= days_per_season:
-        # 如果赛季天数少于目标天数，采样所有天
-        interval_days = 1
-    else:
-        # 计算采样间隔
-        interval_days = total_days // days_per_season
-
-    logger.info(f"   - 采样间隔: {interval_days}天")
-
-    # 生成采样日期
-    current_date = season_start
-    while current_date <= season_end:
+    while current_date <= end_date:
         date_str = current_date.strftime('%Y%m%d')
-        dates.append(date_str)
-        current_date += timedelta(days=interval_days)
+        all_dates.append(date_str)
+        current_date += timedelta(days=1)
 
-    return dates
+    logger.info(f"📅 地毯式覆盖日期统计:")
+    logger.info(f"   - 最早日期: {all_dates[0] if all_dates else 'None'}")
+    logger.info(f"   - 最晚日期: {all_dates[-1] if all_dates else 'None'}")
+    logger.info(f"   - 总天数: {len(all_dates)} 天")
+
+    # 计算预计执行时间
+    min_delay = 5
+    max_delay = 10
+    avg_delay = (min_delay + max_delay) / 2
+    estimated_minutes = len(all_dates) * avg_delay / 60
+    estimated_hours = estimated_minutes / 60
+
+    logger.info(f"⏱️ 预计执行时间:")
+    logger.info(f"   - 延迟范围: {min_delay}-{max_delay} 秒/任务")
+    logger.info(f"   - 预计总时长: {estimated_minutes:.1f} 分钟 ({estimated_hours:.1f} 小时)")
+
+    return all_dates
 
 
-async def trigger_collection_tasks(dates: List[str], dry_run: bool = False) -> int:
-    """触发采集任务"""
-    # 从配置中获取速率限制
-    rate_limit = 6  # 每个任务间隔6秒，避免API 429错误
+async def trigger_comprehensive_collection(dates: List[str], dry_run: bool = False) -> int:
+    """触发地毯式覆盖采集任务"""
+    # 🎯 地毯式覆盖策略：5-10秒随机延迟，模拟真人行为
+    min_delay = 5
+    max_delay = 10
 
-    logger.info(f"🚀 开始历史数据回溯采集，共 {len(dates)} 个日期")
-    logger.info(f"⚠️ 启用速率节流: 每个任务间隔 {rate_limit} 秒，避免 API 429 错误")
+    logger.info(f"🚀 启动地毯式覆盖数据采集")
+    logger.info(f"📅 采集日期范围: {len(dates)} 天连续覆盖")
+    logger.info(f"⏱️ 延迟策略: {min_delay}-{max_delay} 秒随机延迟（模拟真人行为）")
+    logger.info(f"🎯 不跳过休赛期: 确保数据完整性")
 
     if dry_run:
-        logger.info("🔍 DRY RUN 模式: 只显示将要触发的任务")
-        for i, date_str in enumerate(dates):
-            logger.info(f"   [{i+1:3}/{len(dates)}] 将触发日期 {date_str} 的数据采集")
+        logger.info("🔍 DRY RUN 模式: 显示地毯式覆盖计划")
+        for i, date_str in enumerate(dates[:10]):  # 只显示前10个
+            logger.info(f"   [{i+1:3}/{len(dates)}] 采集日期: {date_str}")
+        if len(dates) > 10:
+            logger.info(f"   ... 还有 {len(dates) - 10} 个日期")
         return len(dates)
 
     tasks_triggered = 0
@@ -185,78 +184,106 @@ async def trigger_collection_tasks(dates: List[str], dry_run: bool = False) -> i
 
     for i, date_str in enumerate(dates):
         try:
-            logger.info(f"📅 [{i+1:3}/{len(dates)}] 触发日期 {date_str} 的数据采集")
+            # 格式化进度显示
+            progress = (i + 1) / len(dates) * 100
+            logger.info(f"📅 [{i+1:4}/{len(dates)}] ({progress:5.1f}%) 采集 {date_str}")
 
-            # 调用Celery任务
+            # 调用Celery任务触发FotMob数据采集
             task = celery_app.send_task(
                 'collect_fotmob_data',
                 kwargs={'date': date_str},
-                queue='fotmob'
+                queue='fotmob',
+                priority=5  # 中等优先级
             )
 
             tasks_triggered += 1
-            logger.info(f"✅ 任务已提交: {task.id}")
+            logger.info(f"✅ 任务提交成功: {task.id}")
 
-            # 速率限制：等待一段时间再触发下一个任务
+            # 🎯 地毯式覆盖延迟策略：随机延迟5-10秒
             if i < len(dates) - 1:  # 最后一个任务不需要等待
-                logger.info(f"⏱️ 速率限制: 等待 {rate_limit} 秒...")
-                await asyncio.sleep(rate_limit)
+                delay = random.uniform(min_delay, max_delay)
+                logger.info(f"⏱️ 随机延迟 {delay:.1f} 秒...")
+                await asyncio.sleep(delay)
 
         except Exception as e:
-            logger.error(f"❌ 触发日期 {date_str} 的采集任务失败: {e}")
+            logger.error(f"❌ 日期 {date_str} 采集失败: {e}")
             failed_tasks += 1
+            # 失败时也添加短暂延迟，避免连续失败冲击API
+            await asyncio.sleep(random.uniform(2, 4))
             continue
 
-    logger.info(f"🎉 历史数据回溯采集任务触发完成！")
-    logger.info(f"📊 采集任务统计: {'total_dates': len(dates), 'successful_tasks': tasks_triggered, 'failed_tasks': failed_tasks, 'success_rate': tasks_triggered / len(dates) * 100 if dates else 0}")
-    logger.info(f"📋 下一步操作:")
-    logger.info(f"   1. 监控采集进度: docker-compose logs -f worker | grep -i fotmob")
-    logger.info(f"   2. 运行 ETL 处理: docker-compose exec app python scripts/run_etl_silver.py")
-    logger.info(f"   3. 触发完整管道: docker-compose exec worker celery -A src.tasks.celery_app call complete_data_pipeline")
+    # 最终统计报告
+    success_rate = (tasks_triggered / len(dates)) * 100 if dates else 0
+    logger.info(f"🎉 地毯式覆盖采集任务触发完成！")
+    logger.info(f"📊 执行统计:")
+    logger.info(f"   - 总日期数: {len(dates)}")
+    logger.info(f"   - 成功任务: {tasks_triggered}")
+    logger.info(f"   - 失败任务: {failed_tasks}")
+    logger.info(f"   - 成功率: {success_rate:.1f}%")
 
     return tasks_triggered
 
 
-def print_collection_summary(config: Dict[str, Any], dates: List[str]):
-    """打印采集摘要信息"""
+def print_comprehensive_summary(config: Dict[str, Any], dates: List[str]):
+    """打印地毯式覆盖采集摘要"""
     strategic_settings = config.get('strategic_settings', {})
     target_leagues = config.get('target_leagues', [])
 
     print("=" * 80)
-    print("🎯 历史数据回溯采集计划")
+    print("🎯 地毯式覆盖数据采集战略")
     print("=" * 80)
 
-    print(f"📊 采集策略: {strategic_settings.get('collection_strategy', 'unknown')}")
-    print(f"📅 时间范围: {strategic_settings.get('backfill_seasons', 3)} 年")
-    print(f"📈 目标联赛数量: {len(target_leagues)}")
-    print(f"📋 总采样日期: {len(dates)} 个")
+    print(f"📊 采集策略: {strategic_settings.get('collection_strategy', 'comprehensive_coverage')}")
+    print(f"📅 时间范围: {strategic_settings.get('start_date', '20220101')} 到 {strategic_settings.get('end_date', 'today')}")
+    print(f"🎯 覆盖方式: 连续日期，不跳过休赛期")
+    print(f"📋 总天数: {len(dates)} 天")
 
-    # 显示核心联赛
+    # 联赛分类统计
     tier1_leagues = [league['name'] for league in target_leagues if league.get('type') == 'Tier1']
     tier2_leagues = [league['name'] for league in target_leagues if league.get('type') == 'Tier2']
     cup_leagues = [league['name'] for league in target_leagues if league.get('type') == 'Cup']
+    international_leagues = [league['name'] for league in target_leagues if league.get('type') == 'International']
+    asian_leagues = [league['name'] for league in target_leagues if league.get('type') == 'Asia']
+    american_leagues = [league['name'] for league in target_leagues if league.get('type') == 'America']
 
+    print(f"\n🏆 目标赛事分类:")
     if tier1_leagues:
-        print(f"🏆 核心联赛: {', '.join(tier1_leagues[:3])}{'...' if len(tier1_leagues) > 3 else ''}")
+        print(f"   🥇 顶级联赛: {', '.join(tier1_leagues)}")
     if tier2_leagues:
-        print(f"📈 次级联赛: {', '.join(tier2_leagues[:2])}{'...' if len(tier2_leagues) > 2 else ''}")
+        print(f"   🥈 次级联赛: {', '.join(tier2_leagues)}")
     if cup_leagues:
-        print(f"🏅 杯赛: {', '.join(cup_leagues)}")
+        print(f"   🏅 杯赛: {', '.join(cup_leagues)}")
+    if international_leagues:
+        print(f"   🌍 国际赛事: {', '.join(international_leagues)}")
+    if asian_leagues:
+        print(f"   🏮 亚洲联赛: {', '.join(asian_leagues)}")
+    if american_leagues:
+        print(f"   ⚽ 美洲联赛: {', '.join(american_leagues)}")
 
     # 按年份统计
     year_stats = {}
+    month_stats = {}
     for date_str in dates:
         year = date_str[:4]
+        month = date_str[4:6]
         year_stats[year] = year_stats.get(year, 0) + 1
+        month_stats[f"{year}-{month}"] = month_stats.get(f"{year}-{month}", 0) + 1
 
-    print(f"📅 按年份分布:")
-    for year in sorted(year_stats.keys(), reverse=True):
-        print(f"   {year}年: {year_stats[year]} 个日期")
+    print(f"\n📅 按年份分布:")
+    for year in sorted(year_stats.keys()):
+        print(f"   {year}年: {year_stats[year]} 天")
 
-    rate_limit = 6
-    print(f"⚙️  速率限制: {rate_limit} 秒/任务")
-    print(f"⏱️  预计总时长: {len(dates) * rate_limit / 60:.1f} 分钟")
-    print(f"📈 预期数据量: 约 {len(dates) * 20} - {len(dates) * 50} 场比赛")
+    print(f"\n⏱️ 执行参数:")
+    print(f"   - 延迟策略: 5-10秒随机延迟")
+    print(f"   - 预计时长: {len(dates) * 7.5 / 60:.1f} 分钟")
+    print(f"   - 并发任务: 1个（顺序执行保安全）")
+
+    print(f"\n📈 预期收益:")
+    print(f"   - 数据完整性: 100%无间断覆盖")
+    print(f"   - 预期比赛数: 约 {len(dates) * 15} - {len(dates) * 40} 场")
+    print(f"   - 包含友谊赛: 高价值训练数据")
+    print(f"   - 国际杯赛: 重大赛事数据全覆盖")
+
     print("=" * 80)
 
 
@@ -298,19 +325,21 @@ async def main():
         logger.error("❌ 配置加载失败，退出执行")
         return 1
 
-    # 生成历史日期
-    dates = generate_historical_dates(config)
+    # 生成地毯式覆盖日期
+    dates = generate_comprehensive_dates(config)
     if not dates:
-        logger.error("❌ 没有生成历史日期，退出执行")
+        logger.error("❌ 没有生成地毯式覆盖日期，退出执行")
         return 1
 
-    # 打印采集摘要
-    print_collection_summary(config, dates)
+    # 打印地毯式覆盖摘要
+    print_comprehensive_summary(config, dates)
 
     # 确认执行
     if not args.dry_run:
         try:
-            response = input("\n❓ 确认要执行大规模历史数据采集吗？这将触发大量Celery任务 [y/N]: ")
+            print(f"\n⚠️  地毯式覆盖采集确认")
+            print(f"📅 将采集 {len(dates)} 天的数据，预计需要 {len(dates) * 7.5 / 60:.1f} 分钟")
+            response = input("❓ 确认要执行地毯式覆盖数据采集吗？这将触发大量Celery任务 [y/N]: ")
             if response.lower() not in ['y', 'yes', '是']:
                 logger.info("❌ 用户取消执行")
                 return 0
@@ -318,26 +347,27 @@ async def main():
             logger.info("❌ 用户中断执行")
             return 0
 
-    # 执行采集
+    # 执行地毯式覆盖采集
     try:
-        tasks_triggered = await trigger_collection_tasks(dates, args.dry_run)
+        tasks_triggered = await trigger_comprehensive_collection(dates, args.dry_run)
 
         if args.dry_run:
-            logger.info(f"🔍 DRY RUN 完成: 将触发 {tasks_triggered} 个任务")
+            logger.info(f"🔍 DRY RUN 完成: 将触发 {tasks_triggered} 个地毯式覆盖任务")
         else:
-            logger.info(f"🚀 执行完成: 成功触发 {tasks_triggered} 个任务")
+            logger.info(f"🚀 地毯式覆盖执行完成: 成功触发 {tasks_triggered} 个任务")
 
             # 提供后续操作指导
-            print("\n📋 后续操作建议:")
-            print("1. 监控任务执行: docker-compose logs -f worker")
-            print("2. 检查采集进度: docker-compose exec db psql -U postgres -d football_prediction -c \"SELECT COUNT(*) FROM raw_match_data WHERE created_at > NOW() - INTERVAL '1 hour';\"")
-            print("3. 查看任务队列: docker-compose exec worker celery -A src.tasks.celery_app inspect active")
-            print("4. 运行ETL处理: docker-compose exec app python scripts/run_etl_silver.py")
+            print("\n📋 地毯式覆盖后续操作建议:")
+            print("1. 📊 实时监控: docker-compose logs -f worker | grep -i fotmob")
+            print("2. 🔍 检查进度: docker-compose exec db psql -U postgres -d football_prediction -c \"SELECT COUNT(*) FROM raw_match_data WHERE created_at > NOW() - INTERVAL '1 hour';\"")
+            print("3. 📋 查看队列: docker-compose exec worker celery -A src.tasks.celery_app inspect active")
+            print("4. ⚡ ETL处理: docker-compose exec app python scripts/run_etl_silver.py")
+            print("5. 📈 质量审计: docker-compose exec app python scripts/audit_data_quality.py")
 
         return 0
 
     except Exception as e:
-        logger.error(f"❌ 执行失败: {e}")
+        logger.error(f"❌ 地毯式覆盖执行失败: {e}")
         import traceback
         traceback.print_exc()
         return 1
