@@ -351,17 +351,32 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
             match_data = raw_match.match_data
             raw_content = match_data.get("raw_data", {})
 
-            # 处理状态字段
+            # 处理状态字段 - 修复状态提取逻辑，支持FotMob JSON结构
+            status = 'SCHEDULED'  # 默认状态
+
+            # 方法1: 从 match_data.status 提取
             status_field = match_data.get("status", {})
             if isinstance(status_field, dict):
+                # FotMob 使用 'reason.short' == 'FT' 表示完赛
                 if status_field.get('finished', False):
+                    status = 'FINISHED'
+                elif status_field.get('reason', {}).get('short') == 'FT':
                     status = 'FINISHED'
                 elif status_field.get('started', False):
                     status = 'LIVE'
                 else:
                     status = 'SCHEDULED'
-            else:
-                status = str(status_field) if status_field else 'SCHEDULED'
+
+            # 方法2: 从 raw_data.status 提取（备用）
+            if status == 'SCHEDULED' and "status" in raw_content:
+                raw_status = raw_content.get("status", {})
+                if isinstance(raw_status, dict):
+                    if raw_status.get('finished', False):
+                        status = 'FINISHED'
+                    elif raw_status.get('reason', {}).get('short') == 'FT':
+                        status = 'FINISHED'
+                    elif raw_status.get('started', False):
+                        status = 'LIVE'
 
             # 获取关联的ID - 🔄 修复League映射不匹配问题
             # 优先使用match_data中的结构化信息，回退到raw_data确保一致性
@@ -413,9 +428,40 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
                 match_date = datetime.utcnow()
                 logger.debug(f"使用默认比赛时间: {match_date}")
 
-            # 获取比分
-            home_score = raw_content.get("homeScore", 0)
-            away_score = raw_content.get("awayScore", 0)
+            # 获取比分 - 修复比分提取逻辑，支持深层JSON查找
+            home_score = None
+            away_score = None
+
+            # 方法1: 从 raw_data.home.score 和 raw_data.away.score 提取
+            if "home" in raw_content and "away" in raw_content:
+                home_info = raw_content.get("home", {})
+                away_info = raw_content.get("away", {})
+
+                if "score" in home_info and "score" in away_info:
+                    home_score = home_info.get("score")
+                    away_score = away_info.get("score")
+
+            # 方法2: 从 status.scoreStr 解析比分
+            if home_score is None or away_score is None:
+                status_info = match_data.get("status", {})
+                score_str = status_info.get("scoreStr", "")
+
+                if score_str and " - " in score_str:
+                    try:
+                        parts = score_str.split(" - ")
+                        if len(parts) == 2:
+                            if home_score is None:
+                                home_score = int(parts[0].strip())
+                            if away_score is None:
+                                away_score = int(parts[1].strip())
+                    except (ValueError, IndexError):
+                        logger.warning(f"解析比分字符串失败: {score_str}")
+
+            # 方法3: 回退到原始逻辑（兼容性）
+            if home_score is None:
+                home_score = raw_content.get("homeScore", 0)
+            if away_score is None:
+                away_score = raw_content.get("awayScore", 0)
 
             # 创建Match对象
             new_match = Match(
