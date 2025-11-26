@@ -2,7 +2,7 @@
 # Development dependencies (与 pyproject.toml 保持一致)
 # Development dependencies (consistent with pyproject.toml)
 
--r base.txt
+-r requirements.txt
 
 # 测试工具 (Testing Tools)
 pytest==8.4.2
