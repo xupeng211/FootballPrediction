@@ -249,3 +249,6 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 FootballPrediction/
+# 临时脚本存档目录
+# 用于数据修复的一次性脚本，已完成使命
+temp_scripts/
