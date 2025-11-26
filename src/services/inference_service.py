@@ -80,7 +80,11 @@ class InferenceService:
             return
 
         try:
-            # 尝试加载新训练的v2模型
+            # 优先加载最新的V4 Optuna优化模型
+            v4_model_path = Path("models/football_prediction_v4_optuna.pkl")
+            v4_results_path = Path("models/football_prediction_v4_optuna_results.json")
+
+            # 备用：v2模型路径
             v2_model_path = Path("models/football_prediction_v2.pkl")
             v2_metadata_path = Path("models/model_metadata.json")
 
@@ -89,38 +93,50 @@ class InferenceService:
             json_model_path = Path("models/football_model_v1.json")
             metadata_path = Path("models/football_model_v1_metadata.json")
 
-            # 优先使用新训练的v2模型
-            if v2_model_path.exists():
-                logger.info(f"🔄 加载新训练的v2模型: {v2_model_path}")
+            # 优先使用最新的V4 Optuna优化模型
+            if v4_model_path.exists():
+                logger.info(f"🚀 加载V4 Optuna优化模型: {v4_model_path}")
                 import pickle
 
-                with open(v2_model_path, 'rb') as f:
-                    model_data = pickle.load(f)
+                with open(v4_model_path, 'rb') as f:
+                    self._model = pickle.load(f)
 
-                self._model = model_data['model']
-                self._label_encoder = model_data.get('label_encoder')
+                # 加载V4模型的优化结果作为元数据
+                if v4_results_path.exists():
+                    with open(v4_results_path) as f:
+                        v4_results = json.load(f)
 
-                # 加载元数据
-                if v2_metadata_path.exists():
-                    with open(v2_metadata_path) as f:
-                        self._model_metadata = json.load(f)
-                    logger.info("✅ v2模型元数据加载成功")
-                    self._feature_columns = self._model_metadata['feature_metadata']['feature_columns']
-                else:
-                    logger.warning("⚠️ v2元数据文件不存在，使用默认设置")
                     self._model_metadata = {
-                        "model_version": "v2",
-                        "target_classes": ["Home", "Draw", "Away"],
+                        "model_version": "v4_optuna",
+                        "model_type": "XGBClassifier",
+                        "target_classes": ["客队胜", "平局", "主队胜"],  # away_win, draw, home_win
+                        "best_score": v4_results.get("best_score"),
+                        "n_trials": v4_results.get("n_trials"),
+                        "optimization_time": v4_results.get("optimization_time"),
+                        "test_accuracy": v4_results.get("best_score"),
+                        "feature_count": len(v4_results.get("feature_names", [])),
+                        "label_encoder_classes": v4_results.get("label_encoder_classes"),
+                    }
+
+                    self._feature_columns = v4_results.get("feature_names", [])
+                    logger.info("✅ V4模型元数据加载成功")
+                    logger.info(f"📊 V4模型准确率: {v4_results.get('best_score', 'N/A'):.4f}")
+                    logger.info(f"🔧 V4模型特征数量: {len(self._feature_columns)}")
+                else:
+                    logger.warning("⚠️ V4元数据文件不存在，使用默认设置")
+                    self._model_metadata = {
+                        "model_version": "v4_optuna",
+                        "target_classes": ["客队胜", "平局", "主队胜"],
                         "model_type": "XGBClassifier",
                     }
                     # 如果没有元数据，尝试从模型推断特征
                     if hasattr(self._model, 'feature_names'):
                         self._feature_columns = list(self._model.feature_names)
                     else:
-                        logger.warning("⚠️ 无法获取v2模型特征名称")
+                        logger.warning("⚠️ 无法获取V4模型特征名称")
                         self._feature_columns = []
 
-                logger.info("✅ v2模型加载成功")
+                logger.info("✅ V4 Optuna优化模型加载成功")
 
             # 备用：使用旧模型
             elif pkl_model_path.exists():
@@ -391,11 +407,18 @@ class InferenceService:
                 # 二分类模型：0=平局/客队胜, 1=主队胜
                 result_names = {0: "away_or_draw", 1: "home_win"}
             else:
-                # 三分类模型 - 支持新模型的英文标签和旧模型的中文标签
+                # 三分类模型 - 支持V4模型的英文标签和旧模型的中文标签
                 if hasattr(self._model, 'classes_') and len(self._model.classes_) == 3:
-                    # 检查是否是新模型的英文标签
+                    # 检查模型标签类型
                     class_list = list(self._model.classes_)
-                    if 'Away' in class_list and 'Draw' in class_list and 'Home' in class_list:
+                    if 'away_win' in class_list and 'draw' in class_list and 'home_win' in class_list:
+                        # V4模型英文标签映射 (away_win, draw, home_win)
+                        away_idx = class_list.index('away_win')
+                        draw_idx = class_list.index('draw')
+                        home_idx = class_list.index('home_win')
+                        result_names = {away_idx: "客队胜", draw_idx: "平局", home_idx: "主队胜"}
+                        logger.info(f"🏷️ 使用V4模型英文标签映射: {result_names}")
+                    elif 'Away' in class_list and 'Draw' in class_list and 'Home' in class_list:
                         # 新模型英文标签映射
                         away_idx = class_list.index('Away')
                         draw_idx = class_list.index('Draw')
@@ -434,11 +457,30 @@ class InferenceService:
 
                 predicted_outcome = "home" if prediction == 1 else "away_or_draw"
             else:
-                # 三分类模型 - 智能处理新模型和旧模型的标签顺序
+                # 三分类模型 - 智能处理V4模型、新模型和旧模型的标签顺序
                 class_list = list(model_classes)
 
-                # 检查是否是新模型的英文标签
-                if 'Away' in class_list and 'Draw' in class_list and 'Home' in class_list:
+                # 检查是否是V4模型的英文标签 (away_win, draw, home_win)
+                if 'away_win' in class_list and 'draw' in class_list and 'home_win' in class_list:
+                    # V4模型：按实际索引获取概率
+                    away_prob = float(probabilities[class_list.index('away_win')])
+                    draw_prob = float(probabilities[class_list.index('draw')])
+                    home_prob = float(probabilities[class_list.index('home_win')])
+
+                    prob_home_win = round(home_prob, 3)
+                    prob_draw = round(draw_prob, 3)
+                    prob_away_win = round(away_prob, 3)
+
+                    # 根据预测结果确定outcome
+                    if prediction == class_list.index('home_win'):
+                        predicted_outcome = "home"
+                    elif prediction == class_list.index('draw'):
+                        predicted_outcome = "draw"
+                    else:
+                        predicted_outcome = "away"
+
+                    logger.info(f"🎯 V4模型概率分布: Home={prob_home_win}, Draw={prob_draw}, Away={prob_away_win}")
+                elif 'Away' in class_list and 'Draw' in class_list and 'Home' in class_list:
                     # 新模型：按实际索引获取概率
                     away_prob = float(probabilities[class_list.index('Away')])
                     draw_prob = float(probabilities[class_list.index('Draw')])
