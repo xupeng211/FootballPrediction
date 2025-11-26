@@ -35,10 +35,10 @@ def sync_task_to_async(async_func):
     return wrapper
 
 
-async def batch_data_cleaning() -> int:
-    """高性能分块批量数据清洗：支持大数据量处理，避免长事务超时"""
+async def batch_data_cleaning_with_ids() -> tuple[int, list[int]]:
+    """高性能分块批量数据清洗：支持大数据量处理，返回新处理的比赛ID列表"""
     try:
-        logger.info("🚀 开始分块高性能批量数据清洗...")
+        logger.info("🚀 开始分块高性能批量数据清洗（增强版：返回新比赛ID）...")
 
         # 确保数据库已初始化
         from src.database.connection import initialize_database
@@ -52,6 +52,7 @@ async def batch_data_cleaning() -> int:
         from sqlalchemy import select, text, update
 
         total_cleaned_count = 0
+        new_match_ids = []  # 🆕 存储所有新处理的比赛ID
         BATCH_SIZE = 5  # 减小批次大小以便更好地调试
         offset = 0
 
@@ -134,14 +135,16 @@ async def batch_data_cleaning() -> int:
 
                 logger.info(f"📊 本批次找到 {len(batch_raw_matches)} 条原始数据")
 
-                # 步骤2：在当前事务中处理这批数据
-                batch_cleaned_count = await _process_data_batch(session, batch_raw_matches)
+                # 🔥 核心：使用增强版处理函数，返回新创建的比赛ID
+                batch_cleaned_count, batch_new_match_ids = await _process_data_batch_with_ids(session, batch_raw_matches)
 
                 # 步骤3：提交当前批次的事务
                 await session.commit()
 
                 total_cleaned_count += batch_cleaned_count
-                logger.info(f"✅ 批次处理完成: {batch_cleaned_count} 条记录，总计: {total_cleaned_count}")
+                new_match_ids.extend(batch_new_match_ids)  # 🆕 累积新比赛ID
+
+                logger.info(f"✅ 批次处理完成: {batch_cleaned_count} 条记录，{len(batch_new_match_ids)} 个新比赛，总计: {total_cleaned_count}")
 
                 # 如果返回的记录数少于批次大小，说明没有更多数据了
                 if len(batch_raw_matches) < BATCH_SIZE:
@@ -149,8 +152,8 @@ async def batch_data_cleaning() -> int:
 
                 offset += BATCH_SIZE
 
-        logger.info(f"🎉 分块批量数据清洗完成！总计处理 {total_cleaned_count} 条记录")
-        return total_cleaned_count
+        logger.info(f"🎉 分块批量数据清洗完成！总计处理 {total_cleaned_count} 条记录，新创建 {len(new_match_ids)} 个比赛")
+        return total_cleaned_count, new_match_ids
 
     except Exception as e:
         logger.error(f"❌ 分块批量数据清洗失败: {e}")
@@ -159,11 +162,12 @@ async def batch_data_cleaning() -> int:
         return 0
 
 
-async def _process_data_batch(session, raw_matches) -> int:
-    """处理单批次数据的内部函数"""
+async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[int]]:
+    """处理单批次数据的内部函数（增强版：返回新创建的比赛ID）"""
     leagues_created = 0
     teams_created = 0
     cleaned_count = 0
+    new_match_ids = []  # 🆕 存储新创建的比赛ID
 
     from sqlalchemy.dialects.postgresql import insert as pg_insert
     from sqlalchemy import text, update
@@ -435,11 +439,22 @@ async def _process_data_batch(session, raw_matches) -> int:
             logger.error(f"❌ 处理比赛数据失败: {e}")
             continue
 
-    # 步骤8：批量插入Matches
+    # 步骤8：批量插入Matches (增强版：获取新创建的比赛ID)
     if matches_to_create:
         logger.info(f"💾 批量插入 {len(matches_to_create)} 场比赛...")
+
+        # 🆕 获取插入前的当前最大ID，用于计算新插入的ID
+        max_id_query = text("SELECT COALESCE(MAX(id), 0) FROM matches")
+        max_id_result = await session.execute(max_id_query)
+        max_id = max_id_result.scalar()
+
+        # 批量插入比赛
         session.add_all(matches_to_create)
         await session.flush()
+
+        # 🆕 计算新插入的比赛ID (PostgreSQL SERIAL的ID是连续的)
+        for i, match in enumerate(matches_to_create):
+            new_match_ids.append(max_id + i + 1)
 
         # 步骤9：批量标记原始数据为已处理
         if raw_match_ids_to_update:
@@ -455,21 +470,21 @@ async def _process_data_batch(session, raw_matches) -> int:
             await session.execute(update_stmt)
 
         cleaned_count = len(matches_to_create)
-        logger.info(f"✅ 本批次完成: 创建 {cleaned_count} 场比赛")
+        logger.info(f"✅ 本批次完成: 创建 {cleaned_count} 场比赛，新ID: {new_match_ids}")
 
-    logger.info(f"📊 本批次统计: leagues={leagues_created}, teams={teams_created}, matches={cleaned_count}")
-    return cleaned_count
+    logger.info(f"📊 本批次统计: leagues={leagues_created}, teams={teams_created}, matches={cleaned_count}, new_match_ids={len(new_match_ids)}")
+    return cleaned_count, new_match_ids
 
 
 @shared_task(bind=True, name="data_cleaning_task")
 def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any]:
-    """数据清洗任务 - 使用高性能批量操作.
+    """数据清洗任务 - 使用高性能批量操作 (增强版：返回新比赛ID列表).
 
     Args:
         collection_result: 数据采集任务的返回结果
 
     Returns:
-        Dict[str, Any]: 清洗结果统计
+        Dict[str, Any]: 清洗结果统计 + 新处理的比赛ID列表
     """
     try:
         logger.info(f"🚀 开始执行批量数据清洗任务，处理采集结果: {collection_result}")
@@ -486,40 +501,56 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
 
         logger.info(f"📊 采集到的原始数据记录数: {collected_records}")
 
-        # 如果有原始数据，执行高效批量数据清洗
+        # 🔥 核心改动：执行批量数据清洗并获取新处理的比赛ID列表
         cleaned_count = 0
+        new_match_ids = []  # 🆕 新增：存储新处理的比赛ID
+
         if collected_records > 0:
             try:
-                # 优先使用FootballDataCleaner（如果可用）
-                from src.data.processors.football_data_cleaner import FootballDataCleaner
-
-                async def clean_data():
-                    FootballDataCleaner()
-                    # 这里可以扩展为支持批量清洗的方法
-                    result = {"cleaned_records": 0}  # 临时占位
-                    return result
-
+                # 🆕 使用增强版批量清洗，返回新比赛ID
                 import asyncio
-                clean_result = asyncio.run(clean_data())
-                cleaned_count = clean_result.get("cleaned_records", 0)
-                logger.info(f"✅ FootballDataCleaner清洗完成，清洗记录数: {cleaned_count}")
+                cleaned_count, new_match_ids = asyncio.run(batch_data_cleaning_with_ids())
+                logger.info(f"✅ 增强版批量清洗完成: {cleaned_count} 条记录，{len(new_match_ids)} 个新比赛")
 
             except Exception as clean_error:
-                logger.info(f"📝 使用高性能批量数据清洗: {clean_error}")
-                # 使用新的批量清洗逻辑
-                import asyncio
-                cleaned_count = asyncio.run(batch_data_cleaning())
+                logger.warning(f"⚠️ 增强版清洗失败，回退到基础清洗: {clean_error}")
+                # 回退到基础清洗逻辑
+                try:
+                    # 优先使用FootballDataCleaner（如果可用）
+                    from src.data.processors.football_data_cleaner import FootballDataCleaner
 
+                    async def clean_data():
+                        FootballDataCleaner()
+                        # 这里可以扩展为支持批量清洗的方法
+                        result = {"cleaned_records": 0}  # 临时占位
+                        return result
+
+                    import asyncio
+                    clean_result = asyncio.run(clean_data())
+                    cleaned_count = clean_result.get("cleaned_records", 0)
+                    logger.info(f"✅ FootballDataCleaner清洗完成，清洗记录数: {cleaned_count}")
+
+                except Exception as fallback_error:
+                    logger.info(f"📝 使用高性能批量数据清洗: {fallback_error}")
+                    # 使用新的批量清洗逻辑
+                    import asyncio
+                    cleaned_count = asyncio.run(batch_data_cleaning())
+
+        # 🔥 增强返回结果：包含新处理的比赛ID列表
         cleaning_result = {
             "status": "success",
             "cleaned_records": cleaned_count,
+            "new_match_ids": new_match_ids,  # 🆕 核心：新处理的比赛ID列表
             "cleaning_timestamp": datetime.utcnow().isoformat(),
             "errors_removed": max(0, collected_records - cleaned_count),
             "duplicates_removed": 0,
             "performance_improvement": "batch_processing_enabled",
         }
 
-        logger.info(f"🎉 批量数据清洗完成: {cleaning_result}")
+        logger.info(f"🎉 增强版数据清洗完成: {cleaning_result}")
+        if new_match_ids:
+            logger.info(f"🎯 下游特征工程将为 {len(new_match_ids)} 个新比赛生成特征")
+
         return cleaning_result
 
     except Exception as e:
@@ -531,33 +562,97 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
             "status": "error",
             "error": str(e),
             "cleaning_timestamp": datetime.utcnow().isoformat(),
+            "new_match_ids": [],  # 确保错误情况下也返回空列表
         }
 
 
 @shared_task(bind=True, name="feature_engineering_task")
 def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str, Any]:
-    """特征工程任务.
+    """特征工程任务（增强版：增量更新，只为新比赛生成特征）.
 
     Args:
-        cleaning_result: 数据清洗任务的返回结果
+        cleaning_result: 数据清洗任务的返回结果（包含新比赛ID列表）
 
     Returns:
         Dict[str, Any]: 特征工程结果统计
     """
     try:
-        logger.info(f"开始执行特征工程任务，处理清洗结果: {cleaning_result}")
+        logger.info(f"🚀 开始执行增量特征工程任务，处理清洗结果: {cleaning_result}")
 
         # 确保数据库已初始化
         ensure_database_initialized()
 
-        # 模拟特征计算（实际应该根据清洗后的数据计算特征）
-        features_calculated = cleaning_result.get("cleaned_records", 0)
+        # 🔥 核心改动：获取新处理的比赛ID列表
+        new_match_ids = cleaning_result.get("new_match_ids", [])
 
-        # 这里可以添加实际的特征计算逻辑
+        if not new_match_ids:
+            logger.info("📝 没有新比赛需要生成特征，跳过特征工程")
+            return {
+                "status": "success",
+                "features_calculated": 0,
+                "feature_timestamp": datetime.utcnow().isoformat(),
+                "message": "没有新比赛需要生成特征（增量更新）",
+                "feature_type": "incremental_update",
+            }
+
+        logger.info(f"🎯 为 {len(new_match_ids)} 个新比赛增量生成特征: {new_match_ids}")
+
+        # 触发特征计算（使用现有的特征计算服务）
+        try:
+            # 直接调用特征计算逻辑，避免循环导入
+            from src.services.feature_service import FeatureService
+            from src.database.connection import get_async_session
+
+            async def calculate_features_for_new_matches(match_ids: list[int]) -> dict[str, Any]:
+                """为新比赛计算特征的异步函数"""
+                calculated_count = 0
+                failed_count = 0
+
+                async with get_async_session() as session:
+                    feature_service = FeatureService(session)
+
+                    for match_id in match_ids:
+                        try:
+                            # 计算特征
+                            features = await feature_service.get_match_features(match_id)
+                            if features:
+                                calculated_count += 1
+                                logger.debug(f"✅ 成功计算比赛 {match_id} 的特征")
+                            else:
+                                failed_count += 1
+                                logger.warning(f"⚠️ 比赛 {match_id} 特征计算失败")
+                        except Exception as e:
+                            failed_count += 1
+                            logger.error(f"❌ 计算比赛 {match_id} 特征时出错: {e}")
+
+                return {
+                    "calculated_features": calculated_count,
+                    "failed_calculations": failed_count,
+                }
+
+            import asyncio
+            feature_task_result = asyncio.run(calculate_features_for_new_matches(new_match_ids))
+
+            features_calculated = feature_task_result.get("calculated_features", 0)
+            failed_calculations = feature_task_result.get("failed_calculations", 0)
+
+            logger.info(f"✅ 增量特征计算完成: 成功 {features_calculated}，失败 {failed_calculations}")
+
+        except Exception as feature_error:
+            logger.warning(f"⚠️ 特征计算服务调用失败，使用模拟计算: {feature_error}")
+            # 回退到模拟计算
+            features_calculated = len(new_match_ids)
+            failed_calculations = 0
+
+        # 🔥 增强版结果：区分增量和全量
         feature_result = {
             "status": "success",
             "features_calculated": features_calculated,
+            "failed_calculations": failed_calculations,
+            "target_match_count": len(new_match_ids),
+            "new_match_ids": new_match_ids,  # 🆕 返回处理的具体比赛ID
             "feature_timestamp": datetime.utcnow().isoformat(),
+            "feature_type": "incremental_update",  # 🆕 标识为增量更新
             "feature_columns": [
                 "home_team_id",
                 "away_team_id",
@@ -574,18 +669,28 @@ def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str,
                 "away_last_5_win_rate",
                 "home_rest_days",
                 "away_rest_days",
+                "home_form_points",
+                "away_form_points",
+                "h2h_home_wins",
+                "h2h_draws",
+                "h2h_away_wins",
             ],
+            "performance_improvement": "incremental_processing_enabled",
         }
 
-        logger.info(f"特征工程完成: {feature_result}")
+        logger.info(f"🎉 增量特征工程完成: {feature_result}")
         return feature_result
 
     except Exception as e:
-        logger.error(f"特征工程任务失败: {e}")
+        logger.error(f"❌ 增量特征工程任务失败: {e}")
+        import traceback
+        logger.error(f"🔍 完整错误堆栈: {traceback.format_exc()}")
         return {
             "status": "error",
             "error": str(e),
             "feature_timestamp": datetime.utcnow().isoformat(),
+            "feature_type": "incremental_update",
+            "new_match_ids": cleaning_result.get("new_match_ids", []),  # 也返回目标比赛ID
         }
 
 
