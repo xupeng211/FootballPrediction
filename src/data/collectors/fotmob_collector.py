@@ -129,8 +129,12 @@ class FotmobCollector(BaseCollector):
         """
         headers = self.base_headers.copy()
 
-        if use_known_signature and api_url == "/api/data/audio-matches":
-            # 对音频匹配接口使用已知的有效签名
+        if use_known_signature and (
+            api_url == "/api/data/audio-matches" or
+            api_url.startswith("/api/matches?date=") or
+            api_url.startswith("/api/data/matches?date=")
+        ):
+            # 对音频匹配接口和历史数据接口使用已知的有效签名
             headers["x-mas"] = self.known_signature
         else:
             # 动态生成签名
@@ -189,45 +193,62 @@ class FotmobCollector(BaseCollector):
             self.logger.error(f"Request failed for {api_url}: {e}")
             return None
 
-    async def collect_audio_matches(self) -> CollectionResult:
+    async def collect_matches_by_date_api(self, date_str: str) -> CollectionResult:
         """
-        收集音频比赛数据，获取 matchId 列表
+        使用新的历史数据接口收集指定日期的比赛数据
+
+        Args:
+            date_str: 日期字符串，格式为 YYYYMMDD
 
         Returns:
-            CollectionResult: 包含 matchId 列表的结果
+            CollectionResult: 包含比赛数据的结果
         """
         try:
-            self.logger.info("Collecting audio matches from FotMob")
+            self.logger.info(f"Collecting matches for date {date_str} using historical API")
+
+            # 使用支持历史日期的新接口
+            api_url = f"/api/matches?date={date_str}"
 
             data = await self._make_authenticated_request(
-                "/api/data/audio-matches",
+                api_url,
                 use_known_signature=True
             )
 
             if data is None:
-                return self.create_error_result("Failed to fetch audio matches")
+                return self.create_error_result(f"Failed to fetch matches for date {date_str}")
 
-            if isinstance(data, list):
-                # 提取 matchId 列表
-                match_ids = []
-                for item in data:
-                    if isinstance(item, dict) and 'id' in item:
-                        match_ids.append(str(item['id']))
+            if isinstance(data, dict) and 'leagues' in data:
+                # 从联赛数据中提取比赛信息
+                matches = []
+                leagues = data.get('leagues', [])
+
+                for league in leagues:
+                    league_matches = league.get('matches', [])
+                    for match in league_matches:
+                        # 添加联赛信息到比赛数据中
+                        match['league_info'] = {
+                            'id': league.get('id'),
+                            'name': league.get('name'),
+                            'country': league.get('country'),
+                        }
+                        matches.append(match)
 
                 metadata = {
-                    "total_matches": len(match_ids),
-                    "source": "fotmob_audio_matches",
-                    "match_ids": match_ids[:10]  # 只记录前10个用于日志
+                    "date": date_str,
+                    "total_leagues": len(leagues),
+                    "total_matches": len(matches),
+                    "source": "fotmob_date_api",
+                    "api_url": api_url
                 }
 
-                self.logger.info(f"Successfully collected {len(match_ids)} match IDs")
-                return self.create_success_result(match_ids, metadata)
+                self.logger.info(f"Successfully collected {len(matches)} matches from {len(leagues)} leagues for date {date_str}")
+                return self.create_success_result(matches, metadata)
             else:
-                return self.create_error_result("Unexpected data format for audio matches")
+                return self.create_error_result(f"Unexpected data format for date {date_str}")
 
         except Exception as e:
-            self.logger.error(f"Error collecting audio matches: {e}")
-            return self.create_error_result(f"Audio matches collection failed: {e}")
+            self.logger.error(f"Error collecting matches for date {date_str}: {e}")
+            return self.create_error_result(f"Date API collection failed for {date_str}: {e}")
 
     async def collect_match_details(self, match_id: str) -> CollectionResult:
         """
@@ -278,15 +299,36 @@ class FotmobCollector(BaseCollector):
             CollectionResult: 包含当天所有比赛详情的结果
         """
         try:
-            self.logger.info(f"Collecting matches for date {date_str}")
+            self.logger.info(f"Collecting matches for date {date_str} using historical API")
 
-            # 首先获取 matchId 列表
-            audio_result = await self.collect_audio_matches()
+            # 直接使用新的历史数据接口，一步获取比赛数据
+            result = await self.collect_matches_by_date_api(date_str)
 
-            if not audio_result.success:
-                return self.create_error_result(f"Failed to get match IDs for date {date_str}")
+            if not result.success:
+                return self.create_error_result(f"Failed to get matches for date {date_str}: {result.error}")
 
-            match_ids = audio_result.data
+            matches = result.data
+            metadata = result.metadata or {}
+
+            # 限制处理数量以避免过载
+            max_matches = self.config.get("max_matches_per_date", 50)
+            if len(matches) > max_matches:
+                matches = matches[:max_matches]
+                self.logger.info(f"Limited matches to {max_matches} for date {date_str}")
+
+            # 更新元数据
+            metadata.update({
+                "date": date_str,
+                "matches_processed": len(matches),
+                "source": "fotmob_date_collection_v2"
+            })
+
+            self.logger.info(
+                f"Successfully collected {len(matches)} matches for {date_str} "
+                f"(from {metadata.get('total_leagues', 'unknown')} leagues)"
+            )
+
+            return self.create_success_result(matches, metadata)
 
             # 限制处理数量以避免过载
             max_matches = self.config.get("max_matches_per_date", 50)
