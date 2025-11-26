@@ -379,7 +379,7 @@ class FotmobCollector(BaseCollector):
                         self.logger.debug(f"响应内容: {response.text[:200]}")
                     return None
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self.logger.warning(f"⏱️ 请求超时 {api_url} (尝试 {attempt + 1})")
                 if attempt < max_retries:
                     await asyncio.sleep(2 ** attempt)  # 指数退避

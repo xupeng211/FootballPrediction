@@ -499,7 +499,7 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
         await session.flush()
 
         # 🆕 计算新插入的比赛ID (PostgreSQL SERIAL的ID是连续的)
-        for i, match in enumerate(matches_to_create):
+        for i, _ in enumerate(matches_to_create):
             new_match_ids.append(max_id + i + 1)
 
         # 步骤9：批量标记原始数据为已处理
