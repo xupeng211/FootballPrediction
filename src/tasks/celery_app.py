@@ -89,6 +89,7 @@ app.conf.update(
     enable_utc=True,
     # 任务路由配置
     task_routes={
+        "collect_fotmob_data": {"queue": "default"},
         "collect_daily_fixtures": {"queue": "fixtures"},
         "collect_odds_data": {"queue": "odds"},
         "collect_live_scores": {"queue": "scores"},
