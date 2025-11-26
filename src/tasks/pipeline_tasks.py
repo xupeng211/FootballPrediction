@@ -180,19 +180,36 @@ async def _process_data_batch(session, raw_matches) -> int:
             match_data = raw_match.match_data
             raw_content = match_data.get("raw_data", {})
 
+            # 优先从competition字段提取联赛信息
             if "competition" in raw_content:
                 comp = raw_content["competition"]
                 league_name = comp.get("name", "Unknown League")
                 league_country = comp.get("area", {}).get("name", "Unknown Country")
+            else:
+                # 回退到从顶层字段提取
+                league_name = match_data.get("league_name", "International Friendlies")
+                league_country = match_data.get("league_country", "International")
 
-                league_key = (league_name, league_country)
-                if league_key not in unique_leagues:
-                    unique_leagues[league_key] = {
-                        'name': league_name,
-                        'country': league_country
-                    }
+                # 如果联赛名称为空，使用默认值
+                if not league_name or league_name.strip() == "":
+                    league_name = "International Friendlies"
+                    league_country = "International"
+
+            league_key = (league_name, league_country)
+            if league_key not in unique_leagues:
+                unique_leagues[league_key] = {
+                    'name': league_name,
+                    'country': league_country
+                }
         except Exception as e:
             logger.debug(f"提取league信息失败: {e}")
+            # 使用默认联赛
+            default_key = ("International Friendlies", "International")
+            if default_key not in unique_leagues:
+                unique_leagues[default_key] = {
+                    'name': "International Friendlies",
+                    'country': "International"
+                }
             continue
 
     # 步骤2：批量创建Leagues
@@ -302,8 +319,8 @@ async def _process_data_batch(session, raw_matches) -> int:
             if team_name not in existing_teams:
                 new_team = Team(
                     name=team_name,
-                    short_name=team_data['short_name'],
-                    country=team_data['country'],
+                    short_name=_team_data['short_name'],
+                    country=_team_data['country'],
                     founded_year=2000,
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow()
