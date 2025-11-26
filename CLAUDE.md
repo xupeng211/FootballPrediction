@@ -134,6 +134,27 @@ make db-migrate         # Run database migrations
 
 ## Architecture
 
+### Core System Patterns
+
+#### 事件驱动架构 (Event-Driven Architecture)
+- **Event Bus**: `src/core/event_application.py` - 事件发布/订阅系统
+- **异步事件处理**: 支持事件处理器注册和生命周期管理
+- **解耦通信**: 组件间通过事件进行松耦合通信
+- **健康监控**: 内置事件系统健康检查和统计信息
+
+#### CQRS模式 (Command Query Responsibility Segregation)
+- **分离读写操作**: `src/cqrs/` - 完整的CQRS实现
+- **命令总线**: 处理写操作（Create, Update, Delete）
+- **查询总线**: 处理读操作（Get, List, Analytics）
+- **中间件支持**: 日志记录、验证和错误处理
+- **性能优化**: 读写操作可独立扩展和优化
+
+#### 异步优先架构 (Async-First Architecture)
+- **全局异步**: 所有I/O操作使用async/await模式
+- **非阻塞并发**: 支持高并发请求处理
+- **连接池管理**: 异步数据库和Redis连接池
+- **资源优化**: 异步任务队列和批处理操作
+
 ### Core Structure
 - **FastAPI Application**: `src/main.py` - Main application with 40+ API endpoints
 - **Domain Layer**: `src/domain/` - Business logic and entities (pure Python)
@@ -165,6 +186,19 @@ make db-migrate         # Run database migrations
 - **Metrics Collection**: `src/metrics/` - Business and technical metrics gathering
 - **Data Lineage**: `src/lineage/` - Data lineage tracking and governance
 - **Task Scheduling**: `src/scheduler/` - Advanced task scheduling and orchestration
+
+### Configuration Management Architecture 🛠️
+**模块化配置系统**: `config/` 目录 - 分层配置管理
+
+- **数据库连接池配置**: `database_pool_config.py` - 异步连接池优化
+- **Celery分布式配置**: `celery_config.py` - 任务队列分布式架构
+- **读写分离配置**: `read_write_separation_config.py` - 数据库读写分离策略
+- **批处理配置**: `batch_processing_config.py` - 大数据集批处理优化
+- **分布式缓存配置**: `distributed_cache_config.py` - Redis集群配置
+- **缓存策略配置**: `cache_strategy_config.py` - 多层缓存策略
+- **流处理配置**: `stream_processing_config.py` - 实时数据流处理
+- **API优化配置**: `api_optimization_config.py` - API性能调优参数
+- **安全配置**: `security.py` - 认证授权和安全策略
 
 ### Technology Stack 🛠️
 - **Backend Core**: FastAPI 0.104+, SQLAlchemy 2.0+, Pydantic v2+, Redis 7.0+, PostgreSQL 15
@@ -404,12 +438,19 @@ features = await engineer.extract_features(match_data)
 
 ## API Usage
 
+### API版本化策略
+- **v1 API**: 传统REST API端点，保持向后兼容
+- **v2 API**: 优化版预测API，提供更高性能和增强功能
+- **渐进式升级**: 支持v1到v2的平滑迁移
+- **版本共存**: 多版本API同时可用，满足不同客户端需求
+
 ### Key Endpoints
 - **Health Checks**: `/health`, `/health/system`, `/health/database`
 - **Predictions**: `/api/v1/predictions/`, `/api/v2/predictions/`
 - **Data Management**: `/api/v1/data_management/`
 - **System**: `/api/v1/system/`
 - **Adapters**: `/api/v1/adapters/`
+- **Real-time**: `/api/v1/realtime/ws` (WebSocket)
 - **Monitoring**: `/metrics`
 
 ### Response Format
@@ -433,6 +474,27 @@ features = await engineer.extract_features(match_data)
     "timestamp": "2025-01-01T00:00:00Z"
 }
 ```
+
+## Real-time Communication Architecture
+
+### WebSocket实时通信
+- **端点**: `/api/v1/realtime/ws` - WebSocket双向通信端点
+- **支持的消息类型**:
+  - `ping/pong` - 连接健康检查和心跳
+  - `subscribe` - 事件订阅确认机制
+  - `get_stats` - 实时统计数据查询
+- **事件驱动集成**: 与事件总线系统深度集成
+- **实时推送能力**:
+  - 比赛状态更新实时推送
+  - 预测结果完成通知
+  - 系统状态变化推送
+- **连接管理**: 自动连接监控、状态维护和重连机制
+
+### 事件系统与WebSocket集成
+- **事件发布**: WebSocket客户端可订阅事件总线消息
+- **选择性订阅**: 客户端可指定感兴趣的事件类型
+- **异步推送**: 事件触发时自动推送给订阅客户端
+- **状态同步**: 实时保持客户端与服务器状态一致
 
 ## URLs & Access
 
@@ -670,14 +732,15 @@ chore(security): upgrade MLflow to 2.22.2 for security patches
 ## Special Features
 
 ### Intelligent Cold Start System 🚀
-**File**: `src/main.py:260+` - `check_and_trigger_initial_data_fill()`
+**File**: `src/main.py:53+` - `check_and_trigger_initial_data_fill()`
 
-The system automatically detects database state and data freshness, triggering intelligent data collection:
-- **Empty database**: Triggers complete data collection across all sources
-- **Stale data**: Triggers incremental data updates based on last update timestamps (>24 hours)
-- **Fresh data**: Skips collection to optimize performance
-- **Smart detection**: Automatic analysis of `matches` table record count and data freshness
-- **Logging**: Detailed Chinese logging for monitoring collection decisions and reasons
+智能冷启动系统自动检测数据库状态和数据新鲜度，触发智能数据采集：
+- **空数据库检测**: 自动触发完整数据采集，涵盖所有数据源
+- **数据过期检测**: 基于最后更新时间戳（>24小时）触发增量更新
+- **数据新鲜度优化**: 数据新鲜时跳过采集以优化性能
+- **智能决策算法**: 自动分析`matches`表记录数量和数据新鲜度
+- **详细中文日志**: 监控采集决策和原因的详细中文记录
+- **启动时集成**: 应用启动时自动执行，确保系统就绪状态
 
 ### Enhanced Task Scheduling System ⚡
 **File**: `src/tasks/celery_app.py` - 7专用队列架构
