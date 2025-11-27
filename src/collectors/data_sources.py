@@ -673,6 +673,13 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"解析球队数据失败 (ID: {team.get('id', 'unknown')}): {e}")
             return None
 
+    async def get_odds(self, match_id: int) -> list[OddsData]:
+        """获取赔率数据."""
+        # Football-Data.org 的赔率API需要付费订阅
+        # 这里返回空列表,实际项目中需要订阅服务
+        logger.warning(f"Football-Data.org赔率API需要付费订阅,match_id: {match_id}")
+        return []
+
     async def validate_api_key(self) -> bool:
         """验证API密钥是否有效."""
         try:
