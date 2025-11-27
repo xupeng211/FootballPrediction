@@ -686,23 +686,26 @@ class TestDataSourcesSecurityEnhanced:
     @pytest.mark.unit
     async def test_500_internal_server_error_with_details(self, enhanced_adapter):
         """测试500内部服务器错误详细信息"""
-        # EnhancedFootballDataOrgAdapter没有实现get_matches方法，所以测试抽象方法行为
-        with pytest.raises(TypeError):
-            await enhanced_adapter.get_matches()
+        # enhanced_adapter 有真实的 get_matches 实现，但会捕获异常并返回空列表
+        result = await enhanced_adapter.get_matches()
+        # 应该返回空列表而不是抛出异常，因为方法内部捕获了所有异常
+        assert result == []
 
     @pytest.mark.unit
     async def test_timeout_with_retry_mechanism(self, enhanced_adapter):
         """测试超时异常和重试机制"""
-        # EnhancedFootballDataOrgAdapter没有实现get_matches方法，所以测试抽象方法行为
-        with pytest.raises(TypeError):
-            await enhanced_adapter.get_matches()
+        # enhanced_adapter 有真实的 get_matches 实现，但会捕获异常并返回空列表
+        result = await enhanced_adapter.get_matches()
+        # 应该返回空列表而不是抛出异常，因为方法内部捕获了所有异常
+        assert result == []
 
     @pytest.mark.unit
     async def test_connection_error_with_exponential_backoff(self, enhanced_adapter):
         """测试连接错误和指数退避"""
-        # EnhancedFootballDataOrgAdapter没有实现get_matches方法，所以测试抽象方法行为
-        with pytest.raises(TypeError):
-            await enhanced_adapter.get_matches()
+        # enhanced_adapter 有真实的 get_matches 实现，但会捕获异常并返回空列表
+        result = await enhanced_adapter.get_matches()
+        # 应该返回空列表而不是抛出异常，因为方法内部捕获了所有异常
+        assert result == []
 
     # ========================================================================
     # Data Security Testing - 数据安全验证
@@ -869,9 +872,10 @@ class TestDataSourcesSecurityEnhanced:
     @pytest.mark.unit
     async def test_concurrent_request_thread_safety(self, enhanced_adapter):
         """测试并发请求线程安全性"""
-        # EnhancedFootballDataOrgAdapter没有实现get_matches方法，所以测试抽象方法行为
-        with pytest.raises(TypeError):
-            await enhanced_adapter.get_matches()
+        # enhanced_adapter 有真实的 get_matches 实现，但会捕获异常并返回空列表
+        result = await enhanced_adapter.get_matches()
+        # 应该返回空列表而不是抛出异常，因为方法内部捕获了所有异常
+        assert result == []
 
     @pytest.mark.performance
     @pytest.mark.unit
@@ -900,9 +904,10 @@ class TestDataSourcesSecurityEnhanced:
     @pytest.mark.unit
     async def test_circuit_breaker_pattern_enhanced(self, enhanced_adapter):
         """测试增强熔断器模式"""
-        # EnhancedFootballDataOrgAdapter没有实现get_matches方法，所以测试抽象方法行为
-        with pytest.raises(TypeError):
-            await enhanced_adapter.get_matches()
+        # enhanced_adapter 有真实的 get_matches 实现，但会捕获异常并返回空列表
+        result = await enhanced_adapter.get_matches()
+        # 应该返回空列表而不是抛出异常，因为方法内部捕获了所有异常
+        assert result == []
 
     @pytest.mark.unit
     async def test_resource_cleanup_on_error(self, football_adapter):
