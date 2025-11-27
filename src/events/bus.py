@@ -141,12 +141,12 @@ class EventBus:
                         continue
 
                     # 优先检查handle_sync方法，然后检查handle方法的类型
-                    has_handle_sync = 'handle_sync' in dir(handler) and hasattr(handler, 'handle_sync') and callable(getattr(handler, 'handle_sync'))
+                    has_handle_sync = 'handle_sync' in dir(handler) and hasattr(handler, 'handle_sync') and callable(handler.handle_sync)
                     has_handle = hasattr(handler, "handle")
 
                     # 获取handle方法的实际类型
                     if has_handle:
-                        handle_method = getattr(handler, "handle")
+                        handle_method = handler.handle
                         # 检查是否是协程函数，但也要考虑既有同步又有异步handle的特殊情况
                         is_async_only = asyncio.iscoroutinefunction(handle_method)
 
@@ -175,10 +175,11 @@ class EventBus:
                             # 如果有运行中的循环，使用run_coroutine_threadsafe
                             if current_loop.is_running():
                                 import concurrent.futures
+                                from functools import partial
                                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                                    future = executor.submit(
-                                        lambda: asyncio.run(handler.handle(event))
-                                    )
+                                    # 使用partial绑定循环变量
+                                    execute_handler = partial(asyncio.run, handler.handle(event))
+                                    future = executor.submit(execute_handler)
                                     future.result(timeout=5.0)
                             else:
                                 # 循环存在但未运行，直接使用
@@ -201,7 +202,7 @@ class EventBus:
                     else:
                         # 对于同步处理器，直接调用
                         # 检查是否有明确的handle_sync方法（不是MagicMock自动创建的）
-                        has_handle_sync = 'handle_sync' in dir(handler) and hasattr(handler, 'handle_sync') and callable(getattr(handler, 'handle_sync'))
+                        has_handle_sync = 'handle_sync' in dir(handler) and hasattr(handler, 'handle_sync') and callable(handler.handle_sync)
 
                         if has_handle_sync:
                             handler.handle_sync(event)
@@ -227,12 +228,12 @@ class EventBus:
                     continue
 
                 # 优先检查handle_sync方法，然后检查handle方法的类型
-                has_handle_sync = 'handle_sync' in dir(handler) and hasattr(handler, 'handle_sync') and callable(getattr(handler, 'handle_sync'))
+                has_handle_sync = 'handle_sync' in dir(handler) and hasattr(handler, 'handle_sync') and callable(handler.handle_sync)
                 has_handle = hasattr(handler, "handle")
 
                 # 获取handle方法的实际类型
                 if has_handle:
-                    handle_method = getattr(handler, "handle")
+                    handle_method = handler.handle
                     # 检查是否是协程函数，但也要考虑既有同步又有异步handle的特殊情况
                     is_async_only = asyncio.iscoroutinefunction(handle_method)
 
@@ -261,10 +262,11 @@ class EventBus:
                         # 如果有运行中的循环，使用ThreadPoolExecutor
                         if current_loop.is_running():
                             import concurrent.futures
+                            from functools import partial
                             with concurrent.futures.ThreadPoolExecutor() as executor:
-                                future = executor.submit(
-                                    lambda: asyncio.run(handler.handle(event))
-                                )
+                                # 使用partial绑定循环变量
+                                execute_handler = partial(asyncio.run, handler.handle(event))
+                                future = executor.submit(execute_handler)
                                 future.result(timeout=5.0)
                         else:
                             # 循环存在但未运行，直接使用
