@@ -246,9 +246,7 @@ class TestFootballDataOrgAdapter:
         date_from = datetime(2024, 12, 1)
         date_to = datetime(2024, 12, 7)
 
-        await football_adapter.get_matches(
-            date_from=date_from, date_to=date_to
-        )
+        await football_adapter.get_matches(date_from=date_from, date_to=date_to)
 
         # 验证调用参数
         mock_get.assert_called_once()
@@ -352,7 +350,9 @@ class TestEnhancedFootballDataOrgAdapter:
     async def test_validate_api_key_success(self, enhanced_adapter):
         """测试API密钥验证成功."""
         with patch.object(
-            enhanced_adapter, "_make_request", return_value={"competitions": [{"id": 39}]}
+            enhanced_adapter,
+            "_make_request",
+            return_value={"competitions": [{"id": 39}]},
         ):
             result = await enhanced_adapter.validate_api_key()
             assert result is True
@@ -468,7 +468,9 @@ class TestDataSourceManager:
         primary_adapter = manager.get_primary_adapter()
 
         # 应该是增强适配器（如果初始化成功）或基础适配器
-        assert isinstance(primary_adapter, (EnhancedFootballDataOrgAdapter, FootballDataOrgAdapter))
+        assert isinstance(
+            primary_adapter, (EnhancedFootballDataOrgAdapter, FootballDataOrgAdapter)
+        )
 
     @pytest.mark.unit
     @patch.dict("os.environ", {}, clear=True)
@@ -602,6 +604,7 @@ def test_adapter_abstract_methods():
 # Enhanced Security Testing Suite - 企业级安全测试
 # ============================================================================
 
+
 @pytest.fixture
 def malicious_response_data():
     """恶意响应数据 - 用于安全测试"""
@@ -610,7 +613,7 @@ def malicious_response_data():
         "name": "'; DROP TABLE teams; --",
         "venue": "<img src=x onerror=alert('XSS')>",
         "website": "javascript:alert('XSS')",
-        "description": "<script>document.location='http://evil.com'</script>"
+        "description": "<script>document.location='http://evil.com'</script>",
     }
 
 
@@ -638,14 +641,13 @@ def security_test_data():
             "; ls -la",
             "| cat /etc/passwd",
             "$(whoami)",
-        ]
+        ],
     }
 
 
 @pytest.mark.asyncio
 @pytest.mark.collectors
 @pytest.mark.external_api
-
 class TestDataSourcesSecurityEnhanced:
     """增强版数据采集层安全测试套件"""
 
@@ -661,7 +663,7 @@ class TestDataSourcesSecurityEnhanced:
         mock_response.status = 404
         mock_response.text = AsyncMock(return_value="Not Found")
 
-        mock_get = mocker.patch('aiohttp.ClientSession.get')
+        mock_get = mocker.patch("aiohttp.ClientSession.get")
         mock_get.return_value.__aenter__.return_value = mock_response
 
         # Act
@@ -713,27 +715,39 @@ class TestDataSourcesSecurityEnhanced:
     # ========================================================================
 
     @pytest.mark.unit
-    async def test_input_validation_xss_prevention(self, football_adapter, security_test_data):
+    async def test_input_validation_xss_prevention(
+        self, football_adapter, security_test_data
+    ):
         """测试输入验证XSS防护"""
         for xss_payload in security_test_data["xss_payloads"]:
             # 测试各种XSS载荷
-            with patch.object(football_adapter, '_fetch_matches_from_url', return_value=[]):
+            with patch.object(
+                football_adapter, "_fetch_matches_from_url", return_value=[]
+            ):
                 result = await football_adapter.get_matches(league_id=xss_payload)
                 assert isinstance(result, list)
 
     @pytest.mark.unit
-    async def test_input_validation_sql_injection(self, football_adapter, security_test_data):
+    async def test_input_validation_sql_injection(
+        self, football_adapter, security_test_data
+    ):
         """测试输入验证SQL注入防护"""
         for sql_payload in security_test_data["sql_injection"]:
-            with patch.object(football_adapter, '_fetch_matches_from_url', return_value=[]):
+            with patch.object(
+                football_adapter, "_fetch_matches_from_url", return_value=[]
+            ):
                 result = await football_adapter.get_matches(league_id=sql_payload)
                 assert isinstance(result, list)
 
     @pytest.mark.unit
-    async def test_output_sanitization_malicious_data(self, football_adapter, malicious_response_data):
+    async def test_output_sanitization_malicious_data(
+        self, football_adapter, malicious_response_data
+    ):
         """测试输出清理恶意数据"""
         # 测试实际的 _parse_match_data 方法处理恶意数据的能力
-        malicious_matches = malicious_response_data.get("matches", [malicious_response_data])
+        malicious_matches = malicious_response_data.get(
+            "matches", [malicious_response_data]
+        )
 
         result = []
         for match in malicious_matches:
@@ -759,7 +773,11 @@ class TestDataSourcesSecurityEnhanced:
         incomplete_data_samples = [
             {"id": 123456},  # 缺少homeTeam, awayTeam, utcDate
             {"homeTeam": {"name": "Team1"}},  # 缺少id, awayTeam, utcDate
-            {"id": 123456, "homeTeam": {"name": "Team1"}, "awayTeam": {"name": "Team2"}},  # 缺少utcDate
+            {
+                "id": 123456,
+                "homeTeam": {"name": "Team1"},
+                "awayTeam": {"name": "Team2"},
+            },  # 缺少utcDate
         ]
 
         for incomplete_data in incomplete_data_samples:
@@ -794,7 +812,9 @@ class TestDataSourcesSecurityEnhanced:
     @pytest.mark.unit
     async def test_api_key_validation_invalid_key(self, enhanced_adapter):
         """测试无效API密钥验证"""
-        with patch.object(enhanced_adapter, "_make_request", side_effect=Exception("401 Unauthorized")):
+        with patch.object(
+            enhanced_adapter, "_make_request", side_effect=Exception("401 Unauthorized")
+        ):
             result = await enhanced_adapter.validate_api_key()
             assert result is False
 
@@ -804,7 +824,7 @@ class TestDataSourcesSecurityEnhanced:
         malicious_api_key = "Bearer <script>alert('xss')</script>"
         adapter = FootballDataOrgAdapter(api_key=malicious_api_key)
 
-        with patch('aiohttp.ClientSession') as mock_session_class:
+        with patch("aiohttp.ClientSession") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
             mock_get = AsyncMock()
@@ -819,7 +839,7 @@ class TestDataSourcesSecurityEnhanced:
             # 验证API密钥被正确传递（可能需要额外的安全处理）
             mock_session_class.assert_called_once()
             call_kwargs = mock_session_class.call_args[1]
-            assert 'headers' in call_kwargs
+            assert "headers" in call_kwargs
 
     @pytest.mark.unit
     async def test_missing_api_key_graceful_degradation(self, football_adapter):
@@ -837,7 +857,7 @@ class TestDataSourcesSecurityEnhanced:
     @pytest.mark.unit
     async def test_malformed_json_handling_enhanced(self, football_adapter):
         """测试增强畸形JSON处理"""
-        with patch.object(football_adapter, '_fetch_matches_from_url') as mock_fetch:
+        with patch.object(football_adapter, "_fetch_matches_from_url") as mock_fetch:
             # 模拟JSON解析错误
             mock_fetch.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
 
@@ -848,13 +868,26 @@ class TestDataSourcesSecurityEnhanced:
     async def test_massive_data_payload_dos_protection(self, football_adapter):
         """测试大数据负载DoS防护"""
         # 创建大量数据
-        large_matches = [{"id": i, "homeTeam": {"name": f"Team {i}"}, "awayTeam": {"name": f"Team {i+1}"}, "utcDate": "2024-12-01T15:00:00Z"} for i in range(1000)]
+        large_matches = [
+            {
+                "id": i,
+                "homeTeam": {"name": f"Team {i}"},
+                "awayTeam": {"name": f"Team {i + 1}"},
+                "utcDate": "2024-12-01T15:00:00Z",
+            }
+            for i in range(1000)
+        ]
 
-        with patch.object(football_adapter, '_fetch_matches_from_url') as mock_fetch:
-            with patch.object(football_adapter, '_parse_match_data') as mock_parse:
+        with patch.object(football_adapter, "_fetch_matches_from_url") as mock_fetch:
+            with patch.object(football_adapter, "_parse_match_data") as mock_parse:
                 # _fetch_matches_from_url 应该返回解析后的 MatchData 列表
-                mock_fetch.return_value = [MatchData(id=i, home_team=f"Team {i}", away_team=f"Team {i+1}") for i in range(1000)]
-                mock_parse.return_value = MatchData(id=1, home_team="Team", away_team="Team")
+                mock_fetch.return_value = [
+                    MatchData(id=i, home_team=f"Team {i}", away_team=f"Team {i + 1}")
+                    for i in range(1000)
+                ]
+                mock_parse.return_value = MatchData(
+                    id=1, home_team="Team", away_team="Team"
+                )
 
                 # 模拟大数据响应
                 result = await football_adapter.get_matches()
@@ -867,8 +900,18 @@ class TestDataSourcesSecurityEnhanced:
     async def test_unicode_encoding_security(self, football_adapter):
         """测试Unicode编码安全性"""
         unicode_samples = [
-            {"id": 123456, "homeTeam": {"name": "Тeam Françês"}, "awayTeam": {"name": "中国球队"}, "utcDate": "2024-12-01T15:00:00Z"},
-            {"id": 123457, "homeTeam": {"name": "🏈⚽ Team"}, "awayTeam": {"name": "Стадион São Paulo"}, "utcDate": "2024-12-01T15:00:00Z"},
+            {
+                "id": 123456,
+                "homeTeam": {"name": "Тeam Françês"},
+                "awayTeam": {"name": "中国球队"},
+                "utcDate": "2024-12-01T15:00:00Z",
+            },
+            {
+                "id": 123457,
+                "homeTeam": {"name": "🏈⚽ Team"},
+                "awayTeam": {"name": "Стадион São Paulo"},
+                "utcDate": "2024-12-01T15:00:00Z",
+            },
         ]
 
         for unicode_data in unicode_samples:
@@ -900,7 +943,7 @@ class TestDataSourcesSecurityEnhanced:
         gc.collect()
         initial_objects = len(gc.get_objects())
 
-        with patch.object(football_adapter, '_fetch_matches_from_url', return_value=[]):
+        with patch.object(football_adapter, "_fetch_matches_from_url", return_value=[]):
             # 执行大量请求
             for _ in range(100):
                 await football_adapter.get_matches()
@@ -924,7 +967,7 @@ class TestDataSourcesSecurityEnhanced:
     @pytest.mark.unit
     async def test_resource_cleanup_on_error(self, football_adapter):
         """测试错误时的资源清理"""
-        with patch.object(football_adapter, '_fetch_matches_from_url') as mock_fetch:
+        with patch.object(football_adapter, "_fetch_matches_from_url") as mock_fetch:
             mock_fetch.side_effect = Exception("Resource error")
 
             # 即使发生错误，也应该正常返回
@@ -935,7 +978,6 @@ class TestDataSourcesSecurityEnhanced:
 @pytest.mark.asyncio
 @pytest.mark.collectors
 @pytest.mark.integration
-
 class TestDataSourcesIntegrationSecurity:
     """数据采集层集成安全测试"""
 
@@ -1006,14 +1048,17 @@ class TestDataSourcesIntegrationSecurity:
 
 if __name__ == "__main__":
     # 运行完整的安全测试套件
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "--durations=10",
-        "-m", "security and collectors",
-        "--cov=src/collectors/data_sources",
-        "--cov-report=term-missing",
-        "--cov-report=html",
-        "--cov-fail-under=85"
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "--durations=10",
+            "-m",
+            "security and collectors",
+            "--cov=src/collectors/data_sources",
+            "--cov-report=term-missing",
+            "--cov-report=html",
+            "--cov-fail-under=85",
+        ]
+    )
