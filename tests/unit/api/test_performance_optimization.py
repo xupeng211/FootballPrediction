@@ -155,15 +155,24 @@ class TestSmartCacheManager:
     @pytest.mark.asyncio
     async def test_cache_expiration(self):
         """测试缓存过期"""
+        import time
+
         cache_manager = SmartCacheManager()
 
         # 设置短期缓存
         await cache_manager.set("expire_key", "test_value", ttl=1)
 
-        # 等待过期
-        await asyncio.sleep(2)
+        # 确认缓存存在
+        cached_value = await cache_manager.get("expire_key")
+        assert cached_value == "test_value"
 
-        # 应该返回None（已过期）
+        # 手动修改缓存条目的过期时间为过去时间，强制过期
+        if "expire_key" in cache_manager.local_cache:
+            cache_entry = cache_manager.local_cache["expire_key"]
+            # 将过期时间设置为2秒前
+            cache_entry.expires_at = time.time() - 2
+
+        # 现在应该返回None（已过期）
         cached_value = await cache_manager.get("expire_key")
         assert cached_value is None
 
