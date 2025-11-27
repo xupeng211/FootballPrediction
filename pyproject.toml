@@ -226,6 +226,11 @@ markers = [
 
     # ML模块特定标记
     "ml: 机器学习测试 - ML模型训练、预测和评估测试",
+
+    # 数据采集层安全测试标记
+    "collectors: 数据收集器测试 - 外部API集成和数据采集模块",
+    "external_api: 外部API调用测试 - 需要网络连接的API测试",
+    "security: 安全测试 - 数据验证、XSS防护、注入攻击防护等安全测试",
 ]
 
 [tool.coverage.run]
