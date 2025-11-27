@@ -731,23 +731,26 @@ class TestDataSourcesSecurityEnhanced:
     @pytest.mark.unit
     async def test_output_sanitization_malicious_data(self, football_adapter, malicious_response_data):
         """测试输出清理恶意数据"""
-        with patch.object(football_adapter, '_fetch_matches_from_url') as mock_fetch:
-            # 返回一些虚假数据来触发解析
-            mock_fetch.return_value = [{"id": 123456, "homeTeam": "Team A", "awayTeam": "Team B"}]
+        # 测试实际的 _parse_match_data 方法处理恶意数据的能力
+        malicious_matches = malicious_response_data.get("matches", [malicious_response_data])
 
-            with patch.object(football_adapter, '_parse_match_data') as mock_parse:
-                # Mock解析返回安全数据
-                mock_parse.return_value = MatchData(
-                    id=123456,
-                    home_team="Sanitized Team",
-                    away_team="Sanitized Team"
-                )
+        result = []
+        for match in malicious_matches:
+            # 调用真实的 _parse_match_data 方法来测试数据清理
+            match_data = football_adapter._parse_match_data(match)
+            if match_data:
+                result.append(match_data)
 
-                result = await football_adapter.get_matches()
-
-                # 解析方法应该被调用，数据应该被清理
-                mock_parse.assert_called()
-                assert isinstance(result, list)
+        # 验证结果是列表，并且恶意数据被正确处理
+        assert isinstance(result, list)
+        # 如果有解析成功的数据，验证它们已经被清理
+        for match_data in result:
+            assert isinstance(match_data, MatchData)
+            # 验证team名称不包含恶意脚本
+            assert "<script>" not in (match_data.home_team or "")
+            assert "<script>" not in (match_data.away_team or "")
+            assert "javascript:" not in (match_data.home_team or "")
+            assert "javascript:" not in (match_data.away_team or "")
 
     @pytest.mark.unit
     async def test_data_integrity_validation_missing_fields(self, football_adapter):
