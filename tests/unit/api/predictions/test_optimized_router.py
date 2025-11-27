@@ -233,16 +233,14 @@ class TestHealthCheck(TestOptimizedPredictionRouter):
 class TestGetOptimizedPrediction(TestOptimizedPredictionRouter):
     """测试获取优化预测端点."""
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
-    def test_get_optimized_prediction_success(self, mock_get_service, client, sample_prediction_data):
+    @patch('src.api.predictions.optimized_router._generate_prediction_data')
+    def test_get_optimized_prediction_success(self, mock_generate_data, client, sample_prediction_data):
         """测试成功获取优化预测."""
         # 设置mock
-        mock_service = AsyncMock()
-        mock_service.get_prediction_by_id.return_value = sample_prediction_data
-        mock_get_service.return_value = mock_service
+        mock_generate_data.return_value = sample_prediction_data
 
-        # 发送请求
-        response = client.get("/predictions/optimized/pred_12345678")
+        # 发送请求 - 使用正确的API路径
+        response = client.get("/predictions/matches/12345678/prediction")
 
         # 验证结果
         assert response.status_code == 200
