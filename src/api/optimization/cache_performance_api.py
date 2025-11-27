@@ -154,20 +154,20 @@ async def get_cache_status():
 
     # 获取各组件详细状态
     if redis_manager:
-        status["redis_cluster"]["details"] = await redis_manager.get_cluster_status()
+        status["components"]["redis_cluster"]["details"] = await redis_manager.get_cluster_status()
 
     if distributed_cache:
-        status["distributed_cache"][
+        status["components"]["distributed_cache"][
             "details"
         ] = await distributed_cache.get_cache_status()
 
     if consistency_manager:
-        status["consistency_manager"][
+        status["components"]["consistency_manager"][
             "details"
         ] = await consistency_manager.get_statistics()
 
     if warmup_manager:
-        status["warmup_manager"][
+        status["components"]["warmup_manager"][
             "details"
         ] = await warmup_manager.get_warmup_statistics()
 

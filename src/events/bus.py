@@ -140,17 +140,70 @@ class EventBus:
                     if not self._should_handle(handler, event):
                         continue
 
-                    if hasattr(handler, "handle") and asyncio.iscoroutinefunction(
-                        handler.handle
-                    ):
-                        # 对于异步处理器，在新的事件循环中运行
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        loop.run_until_complete(handler.handle(event))
-                        loop.close()
+                    # 优先检查handle_sync方法，然后检查handle方法的类型
+                    has_handle_sync = 'handle_sync' in dir(handler) and hasattr(handler, 'handle_sync') and callable(getattr(handler, 'handle_sync'))
+                    has_handle = hasattr(handler, "handle")
+
+                    # 获取handle方法的实际类型
+                    if has_handle:
+                        handle_method = getattr(handler, "handle")
+                        # 检查是否是协程函数，但也要考虑既有同步又有异步handle的特殊情况
+                        is_async_only = asyncio.iscoroutinefunction(handle_method)
+
+                        # 特殊检查：如果类中有多个handle方法定义，优先使用同步的
+                        handle_methods = [method for name, method in handler.__class__.__dict__.items()
+                                        if name == 'handle' and callable(method)]
+                        has_sync_handle_defined = any(not asyncio.iscoroutinefunction(m) for m in handle_methods)
+
+                        # 如果类定义了同步handle，即使实例方法是异步的也使用同步处理
+                        use_sync_handle = has_sync_handle_defined or not is_async_only
+                    else:
+                        use_sync_handle = False
+                        is_async_only = False
+
+                    if has_handle_sync:
+                        # 有明确的handle_sync方法，使用它
+                        handler.handle_sync(event)
+                    elif has_handle and use_sync_handle:
+                        # 使用同步handle处理
+                        handler.handle(event)
+                    elif has_handle and is_async_only:
+                        # 对于纯异步处理器，智能处理事件循环
+                        try:
+                            # 尝试获取当前运行的事件循环
+                            current_loop = asyncio.get_running_loop()
+                            # 如果有运行中的循环，使用run_coroutine_threadsafe
+                            if current_loop.is_running():
+                                import concurrent.futures
+                                with concurrent.futures.ThreadPoolExecutor() as executor:
+                                    future = executor.submit(
+                                        lambda: asyncio.run(handler.handle(event))
+                                    )
+                                    future.result(timeout=5.0)
+                            else:
+                                # 循环存在但未运行，直接使用
+                                current_loop.run_until_complete(handler.handle(event))
+                        except RuntimeError:
+                            # 没有运行中的事件循环，创建新的
+                            loop = asyncio.new_event_loop()
+                            try:
+                                asyncio.set_event_loop(loop)
+                                loop.run_until_complete(handler.handle(event))
+                            finally:
+                                loop.close()
+                                # 恢复原始循环（如果存在）
+                                try:
+                                    current_loop = asyncio.get_event_loop()
+                                    if current_loop.is_running():
+                                        asyncio.set_event_loop(current_loop)
+                                except RuntimeError:
+                                    pass
                     else:
                         # 对于同步处理器，直接调用
-                        if hasattr(handler, "handle_sync"):
+                        # 检查是否有明确的handle_sync方法（不是MagicMock自动创建的）
+                        has_handle_sync = 'handle_sync' in dir(handler) and hasattr(handler, 'handle_sync') and callable(getattr(handler, 'handle_sync'))
+
+                        if has_handle_sync:
                             handler.handle_sync(event)
                         else:
                             handler.handle(event)
@@ -165,23 +218,80 @@ class EventBus:
         if not handlers:
             return
 
-        # 将事件放入队列
-        queue = self._queues.get(event_type)
-        if queue:
+        # 对于同步发布，直接调用处理器而不是放入队列
+        # 这确保同步发布的行为一致性
+        for handler in handlers:
             try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    # 如果事件循环正在运行，创建任务
-                    asyncio.create_task(queue.put(event))
+                # 检查过滤器
+                if not self._should_handle(handler, event):
+                    continue
+
+                # 优先检查handle_sync方法，然后检查handle方法的类型
+                has_handle_sync = 'handle_sync' in dir(handler) and hasattr(handler, 'handle_sync') and callable(getattr(handler, 'handle_sync'))
+                has_handle = hasattr(handler, "handle")
+
+                # 获取handle方法的实际类型
+                if has_handle:
+                    handle_method = getattr(handler, "handle")
+                    # 检查是否是协程函数，但也要考虑既有同步又有异步handle的特殊情况
+                    is_async_only = asyncio.iscoroutinefunction(handle_method)
+
+                    # 特殊检查：如果类中有多个handle方法定义，优先使用同步的
+                    handle_methods = [method for name, method in handler.__class__.__dict__.items()
+                                    if name == 'handle' and callable(method)]
+                    has_sync_handle_defined = any(not asyncio.iscoroutinefunction(m) for m in handle_methods)
+
+                    # 如果类定义了同步handle，即使实例方法是异步的也使用同步处理
+                    use_sync_handle = has_sync_handle_defined or not is_async_only
                 else:
-                    # 如果没有运行的事件循环，同步运行
-                    loop.run_until_complete(queue.put(event))
-            except RuntimeError:
-                # 没有事件循环，创建新的
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(queue.put(event))
-                loop.close()
+                    use_sync_handle = False
+                    is_async_only = False
+
+                if has_handle_sync:
+                    # 有明确的handle_sync方法，使用它
+                    handler.handle_sync(event)
+                elif has_handle and use_sync_handle:
+                    # 使用同步handle处理
+                    handler.handle(event)
+                elif has_handle and is_async_only:
+                    # 对于纯异步处理器，智能处理事件循环
+                    try:
+                        # 尝试获取当前运行的事件循环
+                        current_loop = asyncio.get_running_loop()
+                        # 如果有运行中的循环，使用ThreadPoolExecutor
+                        if current_loop.is_running():
+                            import concurrent.futures
+                            with concurrent.futures.ThreadPoolExecutor() as executor:
+                                future = executor.submit(
+                                    lambda: asyncio.run(handler.handle(event))
+                                )
+                                future.result(timeout=5.0)
+                        else:
+                            # 循环存在但未运行，直接使用
+                            current_loop.run_until_complete(handler.handle(event))
+                    except RuntimeError:
+                        # 没有运行中的事件循环，创建新的
+                        loop = asyncio.new_event_loop()
+                        try:
+                            asyncio.set_event_loop(loop)
+                            loop.run_until_complete(handler.handle(event))
+                        finally:
+                            loop.close()
+                            # 恢复原始循环（如果存在）
+                            try:
+                                current_loop = asyncio.get_event_loop()
+                                if current_loop.is_running():
+                                    asyncio.set_event_loop(current_loop)
+                            except RuntimeError:
+                                pass
+                else:
+                    # 对于同步处理器，直接调用
+                    handler.handle(event)
+            except Exception as e:
+                handler_name = getattr(handler, "name", type(handler).__name__)
+                logger.error(
+                    f"Handler {handler_name} failed to process event {event_type}: {e}"
+                )
 
     def add_filter(self, handler: EventHandler, event_filter: callable) -> None:
         """添加事件过滤器."""
