@@ -653,13 +653,14 @@ class TestDataSourcesSecurityEnhanced:
     # ========================================================================
 
     @pytest.mark.unit
-    async def test_404_not_found_detailed_handling(self, mock_get, football_adapter):
+    async def test_404_not_found_detailed_handling(self, mocker, football_adapter):
         """测试404 Not Found详细错误处理"""
         # Arrange
         mock_response = AsyncMock()
         mock_response.status = 404
         mock_response.text = AsyncMock(return_value="Not Found")
 
+        mock_get = mocker.patch('aiohttp.ClientSession.get')
         mock_get.return_value.__aenter__.return_value = mock_response
 
         # Act
