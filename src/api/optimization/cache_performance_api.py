@@ -281,6 +281,9 @@ async def add_redis_node(node_config: dict[str, Any]):
                 status_code=status.HTTP_400_BAD_REQUEST, detail="添加Redis节点失败"
             )
 
+    except HTTPException:
+        # 重新抛出HTTPException，不转换
+        raise
     except Exception as e:
         logger.error(f"Error adding Redis node: {e}")
         raise HTTPException(
@@ -309,6 +312,9 @@ async def remove_redis_node(node_id: str):
                 detail=f"Redis节点 {node_id} 不存在",
             )
 
+    except HTTPException:
+        # 重新抛出HTTPException，不转换
+        raise
     except Exception as e:
         logger.error(f"Error removing Redis node: {e}")
         raise HTTPException(
