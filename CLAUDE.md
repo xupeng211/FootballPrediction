@@ -13,8 +13,8 @@ This is an enterprise-level football prediction system built with Python FastAPI
 **Current Status**: 🏆 **生产就绪的企业级系统** - 完整的CI/CD流水线，29.0%测试覆盖率，全面的质量保证体系，已达到企业级部署标准。
 
 **Project Scale**:
-- **632个Python源文件** 和 **275个测试文件** - 大型企业级应用规模
-- **4,100+ 测试函数**，覆盖完整的应用生命周期 (Unit: 85%, Integration: 12%, E2E: 2%, Performance: 1%)
+- **大规模Python项目** - 企业级应用架构，完整的DDD+CQRS+事件驱动实现
+- **完整的测试体系** - 四层测试架构 (Unit: 85%, Integration: 12%, E2E: 2%, Performance: 1%)
 - **613行Makefile** - 完整的开发工作流自动化和CI/CD集成
 - **40+ API端点** - 支持v1和v2版本，涵盖预测、数据管理、系统监控等多个域
 - **7专用队列架构** - Celery分布式任务调度，支持数据采集、ETL处理、系统维护等
@@ -52,8 +52,7 @@ make prod-rebuild       # Rebuild and start production
 make test               # Run all tests
 make test.unit          # Unit tests only
 make test.integration   # Integration tests only
-# Note: test.phase1 command not found in Makefile, use test.unit instead
-make test.all           # All tests
+make test.all           # All tests with full reporting
 
 # Test execution in isolation
 ./scripts/run_tests_in_docker.sh  # Run tests in Docker container
@@ -157,24 +156,28 @@ make db-migrate         # Run database migrations
 - **资源优化**: 异步任务队列和批处理操作
 
 ### Core Structure
-- **FastAPI Application**: `src/main.py` - Main application with 40+ API endpoints
-- **Domain Layer**: `src/domain/` - Business logic and entities (pure Python)
-- **API Layer**: `src/api/` - HTTP routers and API concerns
-- **Services**: `src/services/` - Application services and orchestration
-- **Database**: `src/database/` - SQLAlchemy models and repositories
-- **ML Engine**: `src/ml/` - Machine learning models and pipelines
-- **Cache Layer**: `src/cache/` - Redis-based caching
-- **Adapters**: `src/adapters/` - External API integrations
-- **Data Collectors**: `src/data/collectors/` - Data collection components (FotMob, Fixtures, Scores, Odds)
-- **Tasks Layer**: `src/tasks/` - Celery async tasks for data collection and processing
-  - `data_collection_tasks.py` - Main data collection tasks
-  - `pipeline_tasks.py` - ETL and feature calculation tasks
-  - `maintenance_tasks.py` - System maintenance and cleanup tasks
-  - `backup_tasks.py` - Database backup and archival tasks
-  - `streaming_tasks.py` - Real-time data streaming tasks
-- **CQRS Layer**: `src/cqrs/` - Command Query Responsibility Segregation implementation
-- **Config Layer**: `src/config/` - Configuration management and OpenAPI setup
-- **Core Infrastructure**: `src/core/` - Event system and shared utilities
+- **FastAPI Application**: `src/main.py` - Main application with 40+ API endpoints，支持智能冷启动系统
+- **Domain Layer**: `src/domain/` - 业务逻辑和实体，遵循DDD纯Python实现
+- **API Layer**: `src/api/` - HTTP路由器和API关注点，v1/v2版本化支持
+- **Services**: `src/services/` - 应用服务和编排层，业务流程协调
+- **Database**: `src/database/` - SQLAlchemy模型和仓储，异步连接池管理
+- **ML Engine**: `src/ml/` - 机器学习模型和管道，XGBoost + LSTM深度学习
+- **Cache Layer**: `src/cache/` - Redis缓存层，多层缓存策略
+- **Adapters**: `src/adapters/` - 外部API集成适配器
+- **Data Collectors**: `src/collectors/` - 数据采集组件 (FotMob, Football-Data等)
+- **Tasks Layer**: `src/tasks/` - Celery异步任务，7队列分布式架构
+  - `data_collection_tasks.py` - 数据采集核心任务
+  - `pipeline_tasks.py` - ETL和特征计算任务
+  - `maintenance_tasks.py` - 系统维护和清理任务
+  - `backup_tasks.py` - 数据库备份和归档任务
+  - `streaming_tasks.py` - 实时数据流处理任务
+- **CQRS Layer**: `src/cqrs/` - 命令查询责任分离实现
+- **Config Layer**: `src/config/` - 配置管理和OpenAPI设置
+- **Core Infrastructure**: `src/core/` - 事件系统和共享工具
+- **Monitoring**: `src/monitoring/` - 系统监控和质量仪表板
+- **Performance**: `src/performance/` - 性能监控和优化
+- **Real-time**: `src/realtime/` - WebSocket实时通信
+- **Quality Dashboard**: `src/quality_dashboard/` - 质量监控前端 (React + TypeScript)
 
 ### Extended System Components
 - **Monitoring & Observability**: `src/monitoring/` - System performance monitoring and health checks
@@ -302,12 +305,12 @@ async def get_prediction_use_case(
 ## Testing 🧪
 
 ### Test Structure & Distribution
-**Total**: 4,100+测试函数，覆盖完整的应用生命周期
+**测试架构**: 完整的四层测试体系，覆盖企业级应用生命周期
 
-- **Unit Tests**: 85% (~3,500个) - 快速隔离组件测试，专注单一业务逻辑
-- **Integration Tests**: 12% (~490个) - 真实依赖测试，数据库、缓存、外部API集成
-- **E2E Tests**: 2% (~80个) - 完整用户流程测试，从API到数据库的端到端验证
-- **Performance Tests**: 1% (~40个) - 负载和压力测试，确保系统性能基准
+- **Unit Tests**: 85% - 快速隔离组件测试，专注单一业务逻辑和核心算法
+- **Integration Tests**: 12% - 真实依赖测试，数据库、缓存、外部API集成验证
+- **E2E Tests**: 2% - 完整用户流程测试，从API到数据库的端到端验证
+- **Performance Tests**: 1% - 负载和压力测试，确保系统性能基准线
 
 ### Test Execution Strategy
 - **快速反馈**: Unit测试 < 30秒，提供即时开发反馈
@@ -584,13 +587,17 @@ mkdocs build            # 构建静态文档站点
 6. make coverage         # 检查测试覆盖率变化
 7. make lint && make test && make security-check && make type-check  # 完整质量流水线
 
+# CI/CD 流水线集成
+# 本地预验证（确保CI绿灯）
+make lint && make test && make security-check && make type-check
+
 # 数据采集与处理开发流程
 1. docker-compose exec app python scripts/fotmob_authenticated_client.py  # 测试 API 连接
 2. celery -A src.tasks.celery_app call tasks.data_collection_tasks.collect_fotmob_data  # 手动采集数据
 3. docker-compose exec app python scripts/run_etl_silver.py                # 处理采集的数据
 4. docker-compose exec app python scripts/audit_data_quality.py           # 验证数据质量
 
-# Celery 调试流程
+# Celery 任务调试流程
 1. docker-compose exec app celery -A src.tasks.celery_app inspect active   # 检查活跃任务
 2. docker-compose logs -f worker                                         # 查看 worker 日志
 3. docker-compose exec app celery -A src.tasks.celery_app purge           # 清空卡住的任务队列
@@ -602,17 +609,19 @@ docker-compose exec app python scripts/probe_fotmob_advanced.py           # 高�
 docker-compose exec app python scripts/probe_fotmob_advanced_v2.py         # API 探测 v2
 docker-compose exec app python scripts/trigger_historical_backfill.py      # 历史数据回填
 
-# Quick test validation
+# 容器化测试执行（确保环境一致性）
 ./scripts/run_tests_in_docker.sh  # Isolated test execution
 ```
 
 ## Important Reminders for Developers
 
 ### Critical Development Notes
-- **⚠️ Test Running**: Always use Makefile commands for testing, never run pytest directly on individual files. See [TEST_RUN_GUIDE.md](TEST_RUN_GUIDE.md) for proper testing methodology.
+- **⚠️ Test Running**: Always use Makefile commands for testing, never run pytest directly on individual files. Use `make test.unit`, `make test.integration`, or `make test.all`.
 - **🐳 Docker Environment一致性**: 强制要求使用Docker Compose进行本地开发，确保与CI环境100%一致，杜绝"在我机器上能运行"问题。
 - **🔄 CI Validation**: 提交前必须运行完整质量检查流水线 `make lint && make test && make security-check && make type-check`。
 - **📋 Environment Check**: 开发前始终运行 `make status` 验证所有服务健康状态。
+- **🏗️ Architecture Integrity**: 严格遵循DDD + CQRS + 事件驱动架构模式，保持层次分离。
+- **🚀 Async-First**: 所有I/O操作必须使用async/await模式，确保系统性能和并发能力。
 
 ### 🏗️ 企业级开发原则
 - **AI-first维护**: 项目由AI维护，具备完整的自动化工具链和智能开发助手
@@ -928,7 +937,7 @@ celery -A src.tasks.celery_app flower                    # 任务监控Web界面
 
 **工程化水平**：
 - ✅ **613行Makefile** - 企业级开发工作流自动化，CI/CD集成
-- ✅ **4,100+测试函数** - 四层测试体系(Unit: 85%, Integration: 12%, E2E: 2%, Performance: 1%)
+- ✅ **完整测试体系** - 四层测试架构(Unit: 85%, Integration: 12%, E2E: 2%, Performance: 1%)
 - ✅ **完整CI/CD流水线** - GitHub Actions + 本地预验证 + 绿色基线
 - ✅ **多环境容器化** - 开发/测试/生产环境100%一致性，杜绝环境差异问题
 

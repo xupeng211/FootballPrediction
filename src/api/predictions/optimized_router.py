@@ -76,7 +76,7 @@ async def get_predictions_list(
     try:
         # 使用PredictionService以支持测试Mock
         service = get_prediction_service()
-        result = service.get_predictions(limit, offset)
+        result = await service.get_predictions(limit, offset)
 
         # 检查返回值类型以支持测试Mock和真实service
         if isinstance(result, dict):
