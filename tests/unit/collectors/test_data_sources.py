@@ -25,6 +25,7 @@ import aiohttp
 from aiohttp import ClientError, ClientResponse, ServerTimeoutError
 
 from src.collectors.data_sources import (
+    DataSourceAdapter,
     DataSourceManager,
     EnhancedFootballDataOrgAdapter,
     FootballDataOrgAdapter,
@@ -851,6 +852,8 @@ class TestDataSourcesSecurityEnhanced:
 
         with patch.object(football_adapter, '_fetch_matches_from_url') as mock_fetch:
             with patch.object(football_adapter, '_parse_match_data') as mock_parse:
+                # _fetch_matches_from_url 应该返回解析后的 MatchData 列表
+                mock_fetch.return_value = [MatchData(id=i, home_team=f"Team {i}", away_team=f"Team {i+1}") for i in range(1000)]
                 mock_parse.return_value = MatchData(id=1, home_team="Team", away_team="Team")
 
                 # 模拟大数据响应
@@ -858,6 +861,7 @@ class TestDataSourcesSecurityEnhanced:
 
                 # 应该处理大量数据而不崩溃
                 assert isinstance(result, list)
+                assert len(result) == 1000  # 验证处理了所有数据
 
     @pytest.mark.unit
     async def test_unicode_encoding_security(self, football_adapter):
@@ -960,7 +964,8 @@ class TestDataSourcesIntegrationSecurity:
     @pytest.mark.unit
     async def test_global_manager_instance_security(self):
         """测试全局管理器实例安全性"""
-        matches = await data_source_manager.collect_all_matches(days_ahead=7)
+        manager = DataSourceManager()
+        matches = await manager.collect_all_matches(days_ahead=7)
 
         assert isinstance(matches, list)
 
