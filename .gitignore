@@ -18,6 +18,9 @@ ruff*.json
 htmlcov/
 .pytest_cache/
 .mypy_cache/
+
+# 临时开发脚本 (移动到 scripts/temp/ 目录)
+scripts/temp/
 coverage.xml
 
 # AI生成临时文件
