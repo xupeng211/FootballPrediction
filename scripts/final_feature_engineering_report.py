@@ -54,9 +54,9 @@ def generate_final_report():
         latest_file = sorted(importance_files)[-1]
         importance_df = pd.read_csv(f"/app/results/{latest_file}")
 
-        print(f"   📋 模型准确率: 82.80%")
+        print("   📋 模型准确率: 82.80%")
         print(f"   📊 特征数量: {len(importance_df)} 个")
-        print(f"   🏆 Top 10 重要特征:")
+        print("   🏆 Top 10 重要特征:")
 
         for i, (idx, row) in enumerate(importance_df.head(10).iterrows()):
             feature_name = row['feature']

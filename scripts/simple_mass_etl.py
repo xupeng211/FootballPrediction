@@ -138,7 +138,7 @@ def simple_etl():
 
             logger.info(f"✅ 批次完成: 处理 {len(rows)} 条，新增 {len(batch_matches)} 场比赛")
 
-        logger.info(f"🎉 ETL完成!")
+        logger.info("🎉 ETL完成!")
         logger.info(f"📊 总计处理: {processed} 条原始数据")
         logger.info(f"🏆 新增比赛: {matches_added} 场")
 

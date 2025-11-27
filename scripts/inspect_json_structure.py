@@ -168,7 +168,7 @@ class DataArchaeologist:
                 print(f"   {i:3d}. {key:<20} | 样例路径: {sample_path}")
 
             # 显示特殊发现
-            print(f"\\n🎯 特殊数据发现:")
+            print("\\n🎯 特殊数据发现:")
 
             categories = {
                 '进阶数据': ['xG_data', 'possession', 'shots', 'corners', 'advanced_stats'],
@@ -185,7 +185,7 @@ class DataArchaeologist:
                         found_any = True
                         print(f"      ✅ {key}: {self.special_findings[key]}")
                 if not found_any:
-                    print(f"      ❌ 未发现相关数据")
+                    print("      ❌ 未发现相关数据")
 
             return {
                 'total_keys': len(self.all_keys),
@@ -209,7 +209,7 @@ class DataArchaeologist:
             if analysis:
                 all_keys_across_matches.update(analysis['all_keys'])
 
-        print(f"\\n📊 统计摘要:")
+        print("\\n📊 统计摘要:")
         print(f"   分析比赛数: {len(analyses)}")
         print(f"   发现键总数: {len(all_keys_across_matches)}")
 
@@ -225,7 +225,7 @@ class DataArchaeologist:
             '📈 高级分析': ['xg', 'expected_goal', 'performance', 'analysis']
         }
 
-        print(f"\\n🗂️  数据分类盘点:")
+        print("\\n🗂️  数据分类盘点:")
         for category, keywords in categories.items():
             found_keys = [key for key in all_keys_across_matches
                          if any(keyword.lower() in key.lower() for keyword in keywords)]
@@ -238,7 +238,7 @@ class DataArchaeologist:
                 print(f"\\n   {category}: ❌ 未发现")
 
         # 特殊发现汇总
-        print(f"\\n🎯 关键数据可用性总结:")
+        print("\\n🎯 关键数据可用性总结:")
 
         data_types = {
             '期望进球 (xG)': 'xG_data',
@@ -287,8 +287,8 @@ def main():
     # 生成最终报告
     archaeologist.generate_data_inventory_report(analyses)
 
-    print(f"\\n🎉 数据考古完成!")
-    print(f"💡 基于以上分析，我们可以确定数据资产的完整性和可用性")
+    print("\\n🎉 数据考古完成!")
+    print("💡 基于以上分析，我们可以确定数据资产的完整性和可用性")
 
 if __name__ == "__main__":
     main()

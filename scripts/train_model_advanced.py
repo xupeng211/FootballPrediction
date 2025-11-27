@@ -65,7 +65,7 @@ class AdvancedXGBoostTrainer:
 
         return df
 
-    def prepare_features_and_targets(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, pd.Series]]:
+    def prepare_features_and_targets(self, df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, pd.Series]]:
         """准备特征和目标变量"""
         logger.info("⚙️ 准备特征和目标变量...")
 
@@ -206,12 +206,12 @@ class AdvancedXGBoostTrainer:
 
         return model
 
-    def extract_feature_importance(self, model, target_name: str, feature_names: List[str]):
+    def extract_feature_importance(self, model, target_name: str, feature_names: list[str]):
         """提取特征重要性"""
         if hasattr(model, 'feature_importances_'):
             importance = model.feature_importances_
             # 转换numpy类型为Python原生类型
-            feature_importance = {feature: float(score) for feature, score in zip(feature_names, importance)}
+            feature_importance = {feature: float(score) for feature, score in zip(feature_names, importance, strict=False)}
 
             # 按重要性排序
             sorted_importance = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
@@ -275,7 +275,7 @@ class AdvancedXGBoostTrainer:
 
                     # 取前20个重要特征
                     top_features = importance_data[:20]
-                    features, scores = zip(*top_features)
+                    features, scores = zip(*top_features, strict=False)
 
                     # 创建图表
                     plt.figure(figsize=(12, 8))
@@ -300,10 +300,10 @@ class AdvancedXGBoostTrainer:
     def print_summary_report(self):
         """打印模型训练总结报告"""
         print(f"\n{'='*80}")
-        print(f"🎯 XGBoost模型训练总结报告")
+        print("🎯 XGBoost模型训练总结报告")
         print(f"{'='*80}")
 
-        print(f"\n📊 模型性能总览:")
+        print("\n📊 模型性能总览:")
         for target_name, results in self.evaluation_results.items():
             print(f"\n   🔸 {target_name}:")
             if results['model_type'] == 'classification':
@@ -316,32 +316,32 @@ class AdvancedXGBoostTrainer:
                 print(f"      交叉验证R²: {results['cv_mean']:.4f} ± {results['cv_std']:.4f}")
 
         # EWMA特征重要性分析
-        print(f"\n🧠 EWMA特征重要性分析:")
+        print("\n🧠 EWMA特征重要性分析:")
         ewma_features = [f for f in self.feature_importance.get('match_result', []) if 'ewma' in f[0] or 'rating' in f[0]]
 
         if ewma_features:
-            print(f"   Top EWMA特征 (match_result):")
+            print("   Top EWMA特征 (match_result):")
             for i, (feature, score) in enumerate(ewma_features[:10]):
                 print(f"      {i+1:2d}. {feature:30s}: {score:.4f}")
         else:
-            print(f"   未找到EWMA特征在Top特征中")
+            print("   未找到EWMA特征在Top特征中")
 
         # 基础特征对比
-        print(f"\n📈 基础特征vs高级特征对比:")
+        print("\n📈 基础特征vs高级特征对比:")
         basic_features = [f for f in self.feature_importance.get('match_result', []) if f[0] in ['home_team_id', 'away_team_id', 'league_id']]
 
         if basic_features:
-            print(f"   基础特征排名:")
+            print("   基础特征排名:")
             for feature, score in basic_features:
                 rank = next(i for i, (f, s) in enumerate(self.feature_importance['match_result'], 1) if f == feature)
                 print(f"      {feature:15s}: 排名第{rank}位 (重要性: {score:.4f})")
         else:
-            print(f"   基础特征未进入Top重要特征")
+            print("   基础特征未进入Top重要特征")
 
-        print(f"\n🏆 模型保存位置:")
-        print(f"   模型文件: /app/models/xgboost_*.pkl")
-        print(f"   评估结果: /app/results/model_evaluation_*.json")
-        print(f"   特征重要性: /app/results/feature_importance_*.json")
+        print("\n🏆 模型保存位置:")
+        print("   模型文件: /app/models/xgboost_*.pkl")
+        print("   评估结果: /app/results/model_evaluation_*.json")
+        print("   特征重要性: /app/results/feature_importance_*.json")
 
         print(f"\n{'='*80}")
 

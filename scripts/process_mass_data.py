@@ -176,7 +176,7 @@ def process_raw_data_batch():
         logger.error(f"❌ 批量处理失败: {e}")
         raise
 
-    logger.info(f"🎉 批量处理完成！")
+    logger.info("🎉 批量处理完成！")
     logger.info(f"📊 总计处理: {processed_count} 条原始数据")
     logger.info(f"🏆 新增比赛: {matches_added} 场")
 
