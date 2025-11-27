@@ -732,7 +732,8 @@ class TestDataSourcesSecurityEnhanced:
     async def test_output_sanitization_malicious_data(self, football_adapter, malicious_response_data):
         """测试输出清理恶意数据"""
         with patch.object(football_adapter, '_fetch_matches_from_url') as mock_fetch:
-            mock_fetch.return_value = []
+            # 返回一些虚假数据来触发解析
+            mock_fetch.return_value = [{"id": 123456, "homeTeam": "Team A", "awayTeam": "Team B"}]
 
             with patch.object(football_adapter, '_parse_match_data') as mock_parse:
                 # Mock解析返回安全数据
