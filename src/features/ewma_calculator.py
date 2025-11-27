@@ -11,7 +11,7 @@ Chief Data Scientist: 基于时间衰减的高性能球队实力评估
 
 import pandas as pd
 import numpy as np
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Optional
 from datetime import datetime, date
 import logging
 
@@ -28,7 +28,7 @@ class EWMACalculator:
     """
 
     def __init__(self,
-                 spans: List[int] = [5, 10, 20],
+                 spans: list[int] | None = None,
                  min_matches: int = 3,
                  adjust: bool = True):
         """
@@ -39,6 +39,10 @@ class EWMACalculator:
             min_matches: 计算EWMA所需的最少比赛数
             adjust: 是否调整初始值
         """
+        # 使用默认值避免可变默认参数
+        if spans is None:
+            spans = [5, 10, 20]
+
         self.spans = spans
         self.min_matches = min_matches
         self.adjust = adjust
@@ -120,7 +124,7 @@ class EWMACalculator:
 
         return team_matches
 
-    def calculate_team_ewma(self, team_matches: pd.DataFrame, team_name: str) -> Dict[str, Any]:
+    def calculate_team_ewma(self, team_matches: pd.DataFrame, team_name: str) -> dict[str, Any]:
         """
         计算球队的EWMA指标
 
@@ -204,7 +208,7 @@ class EWMACalculator:
 
         return ewma_results
 
-    def _get_empty_ewma_dict(self, team_name: str) -> Dict[str, Any]:
+    def _get_empty_ewma_dict(self, team_name: str) -> dict[str, Any]:
         """获取空的EWMA结果字典"""
         empty_result = {
             'team_name': team_name,
@@ -274,7 +278,7 @@ class EWMACalculator:
         else:
             return max(0, 20 - (ewma_goals_conceded - 2.5) * 10)  # 防守漏洞
 
-    async def calculate_all_teams_ewma(self, matches_df: pd.DataFrame) -> List[Dict[str, Any]]:
+    async def calculate_all_teams_ewma(self, matches_df: pd.DataFrame) -> list[dict[str, Any]]:
         """
         计算所有球队的EWMA指标
 
@@ -319,7 +323,7 @@ class EWMACalculator:
 
         return all_ewma_results
 
-    def generate_features_dataframe(self, ewma_results: List[Dict[str, Any]]) -> pd.DataFrame:
+    def generate_features_dataframe(self, ewma_results: list[dict[str, Any]]) -> pd.DataFrame:
         """
         生成特征DataFrame
 
@@ -369,38 +373,17 @@ class EWMACalculator:
         """
         logger.info("📋 EWMA特征统计摘要:")
 
-        print(f"\n{'='*80}")
-        print(f"🧠 EWMA特征工程统计摘要")
-        print(f"{'='*80}")
 
-        print(f"\n📊 数据概览:")
-        print(f"   球队数量: {len(features_df):,}")
-        print(f"   特征维度: {features_df.shape[1]}")
 
-        print(f"\n🎯 综合实力分布:")
-        print(f"   平均评分: {features_df['overall_rating'].mean():.1f}")
-        print(f"   评分标准差: {features_df['overall_rating'].std():.1f}")
-        print(f"   最高评分: {features_df['overall_rating'].max():.1f}")
-        print(f"   最低评分: {features_df['overall_rating'].min():.1f}")
 
-        print(f"\n⚔️ Top 10 强队:")
         top_teams = features_df.nlargest(10, 'overall_rating')[['team_name', 'overall_rating', 'attack_rating', 'defense_rating']]
-        for _, team in top_teams.iterrows():
-            print(f"   {team['team_name'][:20]:20s} | 综合:{team['overall_rating']:5.1f} | 攻击:{team['attack_rating']:5.1f} | 防守:{team['defense_rating']:5.1f}")
+        for _, _team in top_teams.iterrows():
+            pass
 
-        print(f"\n📈 攻击力分布:")
-        print(f"   平均攻击力: {features_df['attack_rating'].mean():.1f}")
-        print(f"   攻击力标准差: {features_df['attack_rating'].std():.1f}")
 
-        print(f"\n🛡️ 防守力分布:")
-        print(f"   平均防守力: {features_df['defense_rating'].mean():.1f}")
-        print(f"   防守力标准差: {features_df['defense_rating'].std():.1f}")
 
         # EWMA特征统计
         ewma_cols = [col for col in features_df.columns if 'ewma_' in col]
         if ewma_cols:
-            print(f"\n📊 EWMA特征统计:")
-            ewma_stats = features_df[ewma_cols].describe().round(3)
-            print(ewma_stats)
+            features_df[ewma_cols].describe().round(3)
 
-        print(f"\n{'='*80}")
