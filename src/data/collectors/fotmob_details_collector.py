@@ -20,6 +20,7 @@ from curl_cffi.requests import AsyncSession
 @dataclass
 class MatchStats:
     """比赛统计数据"""
+
     home_team: str
     away_team: str
     home_score: int
@@ -37,6 +38,7 @@ class MatchStats:
 @dataclass
 class Player:
     """球员信息"""
+
     id: int | None = None
     name: str = ""
     position: str = ""
@@ -47,6 +49,7 @@ class Player:
 @dataclass
 class TeamLineup:
     """球队阵容"""
+
     team_id: int | None = None
     team_name: str = ""
     formation: str | None = None
@@ -60,6 +63,7 @@ class TeamLineup:
 @dataclass
 class MatchDetails:
     """比赛详情"""
+
     match_id: int
     home_team: str
     away_team: str
@@ -157,15 +161,28 @@ class FotmobDetailsCollector:
 
         try:
             response = await self.session.get(
-                url,
-                headers=self.base_headers,
-                timeout=15
+                url, headers=self.base_headers, timeout=15
             )
 
             if response.status_code == 200:
-                data = await response.json()
-                self.logger.debug(f"成功获取比赛 {match_id} 数据")
-                return data
+                # 修复curl_cffi的响应处理
+                try:
+                    if hasattr(response, 'json'):
+                        if asyncio.iscoroutinefunction(response.json):
+                            data = await response.json()
+                        else:
+                            data = response.json()
+                    else:
+                        # 如果没有json方法，尝试解析文本
+                        data = json.loads(response.text)
+
+                    self.logger.debug(f"成功获取比赛 {match_id} 数据")
+                    return data
+                except Exception as json_error:
+                    self.logger.error(f"解析JSON响应时出错: {json_error}")
+                    # 尝试直接返回文本内容
+                    return {"raw_response": response.text} if hasattr(response, 'text') else None
+
             elif response.status_code == 401:
                 self.logger.warning(f"比赛 {match_id} 需要认证")
                 return None
@@ -173,18 +190,22 @@ class FotmobDetailsCollector:
                 self.logger.warning(f"比赛 {match_id} 不存在")
                 return None
             else:
-                self.logger.warning(f"比赛 {match_id} 请求失败，状态码: {response.status_code}")
+                self.logger.warning(
+                    f"比赛 {match_id} 请求失败，状态码: {response.status_code}"
+                )
                 return None
 
         except Exception as e:
             self.logger.error(f"请求比赛 {match_id} 数据时发生异常: {e}")
             return None
 
-    def _parse_basic_info(self, raw_data: dict[str, Any], match_id: str) -> MatchDetails | None:
+    def _parse_basic_info(
+        self, raw_data: dict[str, Any], match_id: str
+    ) -> MatchDetails | None:
         """解析基础比赛信息"""
         try:
-            home_info = raw_data.get('home', {})
-            away_info = raw_data.get('away', {})
+            home_info = raw_data.get("home", {})
+            away_info = raw_data.get("away", {})
 
             if not home_info or not away_info:
                 self.logger.warning(f"比赛 {match_id} 缺少主客队信息")
@@ -192,12 +213,12 @@ class FotmobDetailsCollector:
 
             match_details = MatchDetails(
                 match_id=int(match_id),
-                home_team=home_info.get('name', ''),
-                away_team=away_info.get('name', ''),
-                match_date=raw_data.get('matchDate', ''),
-                status=raw_data.get('status', {}),
-                home_score=int(home_info.get('score', 0)),
-                away_score=int(away_info.get('score', 0))
+                home_team=home_info.get("name", ""),
+                away_team=away_info.get("name", ""),
+                match_date=raw_data.get("matchDate", ""),
+                status=raw_data.get("status", {}),
+                home_score=int(home_info.get("score", 0)),
+                away_score=int(away_info.get("score", 0)),
             )
 
             return match_details
@@ -210,21 +231,21 @@ class FotmobDetailsCollector:
         """解析统计数据"""
         try:
             # FotMob的统计数据可能在stats字段中
-            stats_data = raw_data.get('stats')
+            stats_data = raw_data.get("stats")
 
             if not stats_data:
                 # 如果stats为空，尝试从其他地方寻找xG数据
                 return self._extract_xg_from_alternative_sources(raw_data)
 
             if isinstance(stats_data, dict):
-                home_info = raw_data.get('home', {})
-                away_info = raw_data.get('away', {})
+                home_info = raw_data.get("home", {})
+                away_info = raw_data.get("away", {})
 
                 stats = MatchStats(
-                    home_team=home_info.get('name', ''),
-                    away_team=away_info.get('name', ''),
-                    home_score=int(home_info.get('score', 0)),
-                    away_score=int(away_info.get('score', 0))
+                    home_team=home_info.get("name", ""),
+                    away_team=away_info.get("name", ""),
+                    home_score=int(home_info.get("score", 0)),
+                    away_score=int(away_info.get("score", 0)),
                 )
 
                 # 尝试提取xG数据
@@ -237,20 +258,22 @@ class FotmobDetailsCollector:
 
         return None
 
-    def _extract_xg_from_alternative_sources(self, raw_data: dict[str, Any]) -> MatchStats | None:
+    def _extract_xg_from_alternative_sources(
+        self, raw_data: dict[str, Any]
+    ) -> MatchStats | None:
         """从其他数据源提取xG信息"""
         # 尝试从不同的数据结构中提取xG
         # 这是一个占位符，实际实现需要根据真实的数据结构
         try:
-            home_info = raw_data.get('home', {})
-            away_info = raw_data.get('away', {})
+            home_info = raw_data.get("home", {})
+            away_info = raw_data.get("away", {})
 
             # 基础统计，xG暂时为空
             stats = MatchStats(
-                home_team=home_info.get('name', ''),
-                away_team=away_info.get('name', ''),
-                home_score=int(home_info.get('score', 0)),
-                away_score=int(away_info.get('score', 0))
+                home_team=home_info.get("name", ""),
+                away_team=away_info.get("name", ""),
+                home_score=int(home_info.get("score", 0)),
+                away_score=int(away_info.get("score", 0)),
             )
 
             return stats
@@ -259,7 +282,9 @@ class FotmobDetailsCollector:
             self.logger.error(f"从替代源提取xG时发生错误: {e}")
             return None
 
-    def _parse_lineups(self, raw_data: dict[str, Any]) -> tuple[TeamLineup | None, TeamLineup | None]:
+    def _parse_lineups(
+        self, raw_data: dict[str, Any]
+    ) -> tuple[TeamLineup | None, TeamLineup | None]:
         """解析阵容数据"""
         try:
             home_lineup = None
@@ -268,24 +293,24 @@ class FotmobDetailsCollector:
             # FotMob的阵容数据可能在lineup字段或其他位置
             # 这里提供一个基础框架，实际实现需要根据真实数据结构调整
 
-            home_info = raw_data.get('home', {})
-            away_info = raw_data.get('away', {})
+            home_info = raw_data.get("home", {})
+            away_info = raw_data.get("away", {})
 
             # 创建基础阵容结构
             if home_info:
                 home_lineup = TeamLineup(
-                    team_id=home_info.get('id'),
-                    team_name=home_info.get('name', ''),
+                    team_id=home_info.get("id"),
+                    team_name=home_info.get("name", ""),
                     formation=None,  # 需要从数据中提取
-                    players=[]  # 需要从数据中提取
+                    players=[],  # 需要从数据中提取
                 )
 
             if away_info:
                 away_lineup = TeamLineup(
-                    team_id=away_info.get('id'),
-                    team_name=away_info.get('name', ''),
+                    team_id=away_info.get("id"),
+                    team_name=away_info.get("name", ""),
                     formation=None,
-                    players=[]
+                    players=[],
                 )
 
             return home_lineup, away_lineup
