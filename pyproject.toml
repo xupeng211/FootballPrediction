@@ -59,6 +59,7 @@ dev = [
     "pytest-asyncio>=1.2.0",
     "pytest-cov>=7.0.0",
     "pytest-mock>=3.14.0",
+    "pytest-timeout>=2.1.0",
     "pytest-xdist>=3.6.0",
     "factory-boy>=3.3.1",
 
@@ -174,21 +175,28 @@ markers = [
 
     # 功能域标记
     "api: API测试 - 测试HTTP端点和接口",
+    "api_integration: API集成测试 - HTTP端点集成测试",
     "domain: 领域层测试 - 业务逻辑和算法测试",
     "business: 业务规则测试 - 业务逻辑和规则引擎",
     "services: 服务层测试 - 业务服务和数据处理",
     "database: 数据库测试 - 需要数据库连接",
+    "db_integration: 数据库集成测试 - 数据库组件交互测试",
     "cache: 缓存相关测试 - Redis和缓存逻辑",
+    "cache_integration: 缓存集成测试 - 缓存组件集成测试",
     "auth: 认证相关测试 - JWT和权限验证",
     "monitoring: 监控相关测试 - 指标和健康检查",
     "streaming: 流处理测试 - Kafka和实时数据",
     "collectors: 收集器测试 - 数据收集和抓取模块",
+    "fotmob: FotMob数据收集器测试 - 外部API集成测试",
     "middleware: 中间件测试 - 请求处理和管道组件",
     "utils: 工具类测试 - 通用工具和辅助函数",
     "core: 核心模块测试 - 配置、依赖注入、基础设施",
+    "cqrs: CQRS模式测试 - 命令查询责任分离",
+    "events_integration: 事件系统集成测试 - 事件驱动架构集成",
     "decorators: 装饰器测试 - 各种装饰器功能和性能测试",
 
     # 执行特征标记
+    "load: 负载测试 - 系统负载和压力测试",
     "slow: 慢速测试 - 运行时间较长的测试 (>30s)",
     "smoke: 冒烟测试 - 基本功能验证",
     "critical: 关键测试 - 必须通过的核心功能测试",
@@ -209,6 +217,7 @@ markers = [
 
     # 异步测试标记
     "asyncio: 异步测试 - 测试异步函数和协程",
+    "timeout: 超时测试 - 设置测试执行时间限制",
 
     # Phase E 特殊标记
     "edge_cases: 边界条件测试 - 极值和异常情况处理",

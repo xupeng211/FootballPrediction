@@ -538,7 +538,7 @@ class InferenceService:
                 "success": False,
             }
 
-    def predict_batch(self, match_ids: list[int]) -> list[dict]:
+    async def predict_batch(self, match_ids: list[int]) -> list[dict]:
         """批量预测比赛结果.
 
         Args:
@@ -547,11 +547,26 @@ class InferenceService:
         Returns:
             预测结果列表
         """
-        results = []
-        for match_id in match_ids:
-            result = self.predict_match(match_id)
-            results.append(result)
-        return results
+        import asyncio
+
+        # 使用 asyncio.gather 并发执行预测，提高性能
+        tasks = [self.predict_match(match_id) for match_id in match_ids]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # 处理异常，确保返回的是字典格式
+        processed_results = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                # 如果是异常，创建错误结果
+                processed_results.append({
+                    "match_id": match_ids[i],
+                    "error": f"预测服务错误: {str(result)}",
+                    "success": False,
+                })
+            else:
+                processed_results.append(result)
+
+        return processed_results
 
     def get_model_info(self) -> dict:
         """获取模型信息."""
