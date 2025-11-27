@@ -187,6 +187,7 @@ markers = [
     "cache_integration: 缓存集成测试 - 缓存组件集成测试",
     "auth: 认证相关测试 - JWT和权限验证",
     "monitoring: 监控相关测试 - 指标和健康检查",
+    "security: 安全相关测试 - 数据验证、XSS防护、安全边界测试",
     "streaming: 流处理测试 - Kafka和实时数据",
     "collectors: 收集器测试 - 数据收集和抓取模块",
     "fotmob: FotMob数据收集器测试 - 外部API集成测试",
