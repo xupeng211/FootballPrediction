@@ -163,7 +163,7 @@ class FotmobDetailsCollector:
             )
 
             if response.status_code == 200:
-                data = response.json()
+                data = await response.json()
                 self.logger.debug(f"成功获取比赛 {match_id} 数据")
                 return data
             elif response.status_code == 401:
