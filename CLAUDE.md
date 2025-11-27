@@ -39,15 +39,25 @@ make clean-all
 # Check service status
 make status
 
+# AI-assisted development and context loading
+make context           # ⭐ 最重要：加载项目上下文和AI辅助开发环境
+
 # Build and deployment
 make build              # Build application image
 make build-no-cache     # Build without cache
 make dev-rebuild        # Rebuild and start development
 make prod-rebuild       # Rebuild and start production
+
+# Complete CI validation and pre-commit checks
+make ci                 # 完整的CI质量检查流水线
+make prepush           # 提交前完整验证
 ```
 
 ### Code Quality & Testing
 ```bash
+# ⚠️ 重要：始终使用Makefile命令运行测试，避免直接使用pytest
+# 确保测试环境一致性和完整的质量检查流程
+
 # Run tests
 make test               # Run all tests
 make test.unit          # Unit tests only
@@ -548,12 +558,13 @@ cp .env.example .env
 
 # ⭐ 5分钟快速启动流程 (5-Minute Quick Start)
 # 确保本地环境与CI完全一致的最佳实践
-make dev && make status && make test.unit && make coverage
+make context && make dev && make status && make test.unit && make coverage
 
 # 分步详细设置 (Step-by-step detailed setup)
-make dev                # 启动完整Docker开发环境 ⭐ 最重要
-make status             # 验证所有服务状态
-make test.unit          # 运行核心单元测试 (确保基础功能正常)
+make context           # ⭐ 最重要：加载项目上下文和AI辅助开发环境
+make dev               # 启动完整Docker开发环境
+make status            # 验证所有服务状态
+make test.unit         # 运行核心单元测试 (确保基础功能正常)
 
 # 验证测试环境和覆盖率
 make coverage           # 生成并查看覆盖率报告
@@ -569,7 +580,8 @@ REDIS_URL=redis://localhost:6379/0
 
 # Local CI validation before commits (提交前本地验证)
 # 完整质量检查流水线 - 确保代码提交前的质量
-make lint && make test && make security-check && make type-check
+make ci                 # 完整的CI质量检查流水线
+make prepush           # 提交前完整验证
 
 # 文档生成和本地查看
 mkdocs serve            # 启动本地文档服务器
@@ -579,17 +591,18 @@ mkdocs build            # 构建静态文档站点
 ### Development Workflow
 ```bash
 # 标准开发工作流 (Standard development cycle)
-1. make dev              # 启动Docker开发环境，确保与CI一致
-2. make status           # 验证所有服务状态（app, db, redis等）
-3. Write code            # 遵循DDD + CQRS + 事件驱动架构模式
-4. make test.unit        # 运行单元测试，确保代码质量
-5. make lint && make fix-code  # 代码质量检查和自动修复
-6. make coverage         # 检查测试覆盖率变化
-7. make lint && make test && make security-check && make type-check  # 完整质量流水线
+1. make context          # ⭐ 加载项目上下文和AI辅助开发环境
+2. make dev              # 启动Docker开发环境，确保与CI一致
+3. make status           # 验证所有服务状态（app, db, redis等）
+4. Write code            # 遵循DDD + CQRS + 事件驱动架构模式
+5. make test.unit        # 运行单元测试，确保代码质量
+6. make lint && make fix-code  # 代码质量检查和自动修复
+7. make coverage         # 检查测试覆盖率变化
+8. make ci && make prepush  # 完整质量流水线和提交前验证
 
 # CI/CD 流水线集成
 # 本地预验证（确保CI绿灯）
-make lint && make test && make security-check && make type-check
+make ci && make prepush
 
 # 数据采集与处理开发流程
 1. docker-compose exec app python scripts/fotmob_authenticated_client.py  # 测试 API 连接
