@@ -84,9 +84,9 @@ class InferenceService:
             v4_model_path = Path("models/football_prediction_v4_optuna.pkl")
             v4_results_path = Path("models/football_prediction_v4_optuna_results.json")
 
-            # 备用：v2模型路径
-            v2_model_path = Path("models/football_prediction_v2.pkl")
-            v2_metadata_path = Path("models/model_metadata.json")
+            # 备用：v2模型路径 (注意：当前已移动到scripts/temp/)
+            # v2_model_path = Path("models/football_prediction_v2.pkl")
+            # v2_metadata_path = Path("models/model_metadata.json")
 
             # 备用：旧模型路径
             pkl_model_path = Path("models/football_xgboost_v2_best.pkl")

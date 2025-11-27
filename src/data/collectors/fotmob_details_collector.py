@@ -10,7 +10,7 @@ FotMob 比赛详情采集器
 import asyncio
 import json
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -24,33 +24,33 @@ class MatchStats:
     away_team: str
     home_score: int
     away_score: int
-    home_xg: Optional[float] = None
-    away_xg: Optional[float] = None
-    possession_home: Optional[float] = None
-    possession_away: Optional[float] = None
-    shots_home: Optional[int] = None
-    shots_away: Optional[int] = None
-    shots_on_target_home: Optional[int] = None
-    shots_on_target_away: Optional[int] = None
+    home_xg: float | None = None
+    away_xg: float | None = None
+    possession_home: float | None = None
+    possession_away: float | None = None
+    shots_home: int | None = None
+    shots_away: int | None = None
+    shots_on_target_home: int | None = None
+    shots_on_target_away: int | None = None
 
 
 @dataclass
 class Player:
     """球员信息"""
-    id: Optional[int] = None
+    id: int | None = None
     name: str = ""
     position: str = ""
-    shirt_number: Optional[int] = None
+    shirt_number: int | None = None
     is_starter: bool = False
 
 
 @dataclass
 class TeamLineup:
     """球队阵容"""
-    team_id: Optional[int] = None
+    team_id: int | None = None
     team_name: str = ""
-    formation: Optional[str] = None
-    players: List[Player] = None
+    formation: str | None = None
+    players: list[Player] = None
 
     def __post_init__(self):
         if self.players is None:
@@ -64,13 +64,13 @@ class MatchDetails:
     home_team: str
     away_team: str
     match_date: str
-    status: Dict[str, Any]
+    status: dict[str, Any]
     home_score: int = 0
     away_score: int = 0
-    stats: Optional[MatchStats] = None
-    home_lineup: Optional[TeamLineup] = None
-    away_lineup: Optional[TeamLineup] = None
-    raw_data: Optional[Dict[str, Any]] = None
+    stats: MatchStats | None = None
+    home_lineup: TeamLineup | None = None
+    away_lineup: TeamLineup | None = None
+    raw_data: dict[str, Any] | None = None
 
 
 class FotmobDetailsCollector:
@@ -100,7 +100,7 @@ class FotmobDetailsCollector:
                 self.logger.error(f"FotMob HTTP会话初始化失败: {e}")
                 raise
 
-    async def collect_match_details(self, match_id: str) -> Optional[MatchDetails]:
+    async def collect_match_details(self, match_id: str) -> MatchDetails | None:
         """
         采集比赛详情
 
@@ -151,7 +151,7 @@ class FotmobDetailsCollector:
             self.logger.error(f"采集比赛 {match_id} 详情时发生错误: {e}")
             return None
 
-    async def _fetch_match_data(self, match_id: str) -> Optional[Dict[str, Any]]:
+    async def _fetch_match_data(self, match_id: str) -> dict[str, Any] | None:
         """获取比赛原始数据"""
         url = f"https://www.fotmob.com/api/match?id={match_id}"
 
@@ -180,7 +180,7 @@ class FotmobDetailsCollector:
             self.logger.error(f"请求比赛 {match_id} 数据时发生异常: {e}")
             return None
 
-    def _parse_basic_info(self, raw_data: Dict[str, Any], match_id: str) -> Optional[MatchDetails]:
+    def _parse_basic_info(self, raw_data: dict[str, Any], match_id: str) -> MatchDetails | None:
         """解析基础比赛信息"""
         try:
             home_info = raw_data.get('home', {})
@@ -206,7 +206,7 @@ class FotmobDetailsCollector:
             self.logger.error(f"解析基础信息时发生错误: {e}")
             return None
 
-    def _parse_stats(self, raw_data: Dict[str, Any]) -> Optional[MatchStats]:
+    def _parse_stats(self, raw_data: dict[str, Any]) -> MatchStats | None:
         """解析统计数据"""
         try:
             # FotMob的统计数据可能在stats字段中
@@ -237,7 +237,7 @@ class FotmobDetailsCollector:
 
         return None
 
-    def _extract_xg_from_alternative_sources(self, raw_data: Dict[str, Any]) -> Optional[MatchStats]:
+    def _extract_xg_from_alternative_sources(self, raw_data: dict[str, Any]) -> MatchStats | None:
         """从其他数据源提取xG信息"""
         # 尝试从不同的数据结构中提取xG
         # 这是一个占位符，实际实现需要根据真实的数据结构
@@ -259,7 +259,7 @@ class FotmobDetailsCollector:
             self.logger.error(f"从替代源提取xG时发生错误: {e}")
             return None
 
-    def _parse_lineups(self, raw_data: Dict[str, Any]) -> tuple[Optional[TeamLineup], Optional[TeamLineup]]:
+    def _parse_lineups(self, raw_data: dict[str, Any]) -> tuple[TeamLineup | None, TeamLineup | None]:
         """解析阵容数据"""
         try:
             home_lineup = None
@@ -294,14 +294,14 @@ class FotmobDetailsCollector:
             self.logger.error(f"解析阵容数据时发生错误: {e}")
             return None, None
 
-    async def batch_collect(self, match_ids: List[str]) -> List[MatchDetails]:
+    async def batch_collect(self, match_ids: list[str]) -> list[MatchDetails]:
         """批量采集比赛详情"""
         self.logger.info(f"开始批量采集 {len(match_ids)} 场比赛详情")
 
         results = []
         semaphore = asyncio.Semaphore(3)  # 限制并发数
 
-        async def collect_with_semaphore(match_id: str) -> Optional[MatchDetails]:
+        async def collect_with_semaphore(match_id: str) -> MatchDetails | None:
             async with semaphore:
                 return await self.collect_match_details(match_id)
 
@@ -326,7 +326,7 @@ class FotmobDetailsCollector:
 
 
 # 便捷函数
-async def collect_match_details(match_id: str) -> Optional[MatchDetails]:
+async def collect_match_details(match_id: str) -> MatchDetails | None:
     """便捷的单一比赛详情采集函数"""
     collector = FotmobDetailsCollector()
     try:
@@ -335,7 +335,7 @@ async def collect_match_details(match_id: str) -> Optional[MatchDetails]:
         await collector.close()
 
 
-async def collect_multiple_matches(match_ids: List[str]) -> List[MatchDetails]:
+async def collect_multiple_matches(match_ids: list[str]) -> list[MatchDetails]:
     """便捷的批量比赛详情采集函数"""
     collector = FotmobDetailsCollector()
     try:
