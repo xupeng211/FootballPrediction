@@ -770,17 +770,21 @@ class TestDataSourcesSecurityEnhanced:
         """测试增强频率限制执行"""
         # 设置较低的速率限制用于测试
         enhanced_adapter.rate_limit = 2
-        enhanced_adapter.request_count = 0
-        enhanced_adapter.last_reset = datetime.now()
+        enhanced_adapter.request_count = 2  # 直接设置为限制边缘
 
-        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
-            # 快速连续请求
-            await enhanced_adapter._check_rate_limit()  # 第1次
-            await enhanced_adapter._check_rate_limit()  # 第2次
-            await enhanced_adapter._check_rate_limit()  # 第3次，应该触发限制
+        # Mock时间让限制被触发
+        with patch("src.collectors.data_sources.datetime") as mock_datetime:
+            # 设置当前时间
+            now = datetime.now()
+            mock_datetime.now.return_value = now
+            enhanced_adapter.last_reset = now - timedelta(seconds=30)  # 30秒前重置
 
-            # 应该触发等待
-            mock_sleep.assert_called()
+            with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+                # 第3次请求应该触发限制
+                enhanced_adapter._check_rate_limit()
+
+                # 应该触发等待
+                mock_sleep.assert_called()
 
     # ========================================================================
     # Authentication & Authorization Security Testing
