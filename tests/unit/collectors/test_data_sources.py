@@ -644,7 +644,7 @@ def security_test_data():
 @pytest.mark.asyncio
 @pytest.mark.collectors
 @pytest.mark.external_api
-@pytest.mark.security
+
 class TestDataSourcesSecurityEnhanced:
     """增强版数据采集层安全测试套件"""
 
@@ -949,7 +949,7 @@ class TestDataSourcesSecurityEnhanced:
 @pytest.mark.asyncio
 @pytest.mark.collectors
 @pytest.mark.integration
-@pytest.mark.security
+
 class TestDataSourcesIntegrationSecurity:
     """数据采集层集成安全测试"""
 
