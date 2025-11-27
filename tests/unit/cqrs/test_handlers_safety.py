@@ -79,7 +79,7 @@ class TestCQRSHandlersSafetyNet:
     # ==================== P1 优先级 核心处理器测试 ====================
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.critical
     @pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="导入失败")
     def test_create_prediction_handler_basic_functionality(self, mock_db_session):
@@ -114,7 +114,7 @@ class TestCQRSHandlersSafetyNet:
         assert result is not None
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.critical
     @pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="导入失败")
     def test_get_match_predictions_handler_success(self, mock_db_session):
@@ -166,7 +166,7 @@ class TestCQRSHandlersSafetyNet:
         assert result[0].match_id == 100
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.critical
     @pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="导入失败")
     def test_create_user_handler_validation(self, mock_db_session):
@@ -207,7 +207,7 @@ class TestCQRSHandlersSafetyNet:
         assert self.mock_session.commit.called
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.critical
     def test_handler_inheritance_structure(self):
         """
@@ -229,7 +229,7 @@ class TestCQRSHandlersSafetyNet:
     # ==================== P2 优先级 聚合处理器测试 ====================
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="导入失败")
     def test_prediction_command_handlers_aggregation(self):
         """
@@ -251,7 +251,7 @@ class TestCQRSHandlersSafetyNet:
         assert isinstance(handlers.update, UpdatePredictionHandler)
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="导入失败")
     def test_match_query_handlers_aggregation(self):
         """
@@ -275,7 +275,7 @@ class TestCQRSHandlersSafetyNet:
     # ==================== P3 优先级 错误处理测试 ====================
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="导入失败")
     def test_handler_database_error_handling(self, mock_db_session):
         """
@@ -305,7 +305,7 @@ class TestCQRSHandlersSafetyNet:
             pass
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     def test_handlers_module_import_safety(self):
         """
         P3测试: 处理器模块导入安全性
@@ -324,7 +324,7 @@ class TestCQRSHandlersSafetyNet:
             assert True
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     def test_handlers_module_structure_completeness(self):
         """
         P3测试: 处理器模块结构完整性
@@ -355,7 +355,7 @@ class TestCQRSHandlersSafetyNet:
     # ==================== P4 优先级 性能和边界测试 ====================
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="导入失败")
     def test_handler_performance_large_dataset(self, mock_db_session):
         """
@@ -407,7 +407,7 @@ class TestCQRSHandlersSafetyNet:
         assert (end_time - start_time) < 5.0  # 5秒内完成
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="导入失败")
     def test_handler_concurrent_access_safety(self, mock_db_session):
         """
@@ -444,7 +444,7 @@ class TestCQRSHandlersSafetyNet:
         assert success_count >= 5  # 至少一半成功
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     def test_handlers_file_accessibility(self):
         """
         P4测试: 处理器文件可访问性
@@ -461,7 +461,7 @@ class TestCQRSHandlersSafetyNet:
         assert handlers_path.stat().st_size > 0
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     def test_handlers_module_docstring_completeness(self):
         """
         P4测试: 处理器模块文档完整性
@@ -486,7 +486,7 @@ class TestCQRSHandlersSafetyNet:
             pytest.skip("无法导入处理器模块")
 
     @pytest.mark.unit
-    @pytest.mark.cqrs
+    @pytest.mark.unit
     @pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="导入失败")
     def test_handler_type_annotations_completeness(self):
         """
