@@ -81,7 +81,7 @@ def load_and_simulate_data():
 
     # 显示比分分布
     score_dist = df.groupby(['home_score', 'away_score']).size().sort_values(ascending=False)
-    print(f"\n📊 模拟比分分布 Top 10:")
+    print("\n📊 模拟比分分布 Top 10:")
     for (home, away), count in score_dist.head(10).items():
         print(f"  {home}-{away}: {count:,} 场")
 
@@ -103,7 +103,7 @@ def create_target_variable(df):
 
     # 统计结果分布
     result_counts = df['result'].value_counts()
-    print(f"📊 比赛结果分布:")
+    print("📊 比赛结果分布:")
     for result, count in result_counts.items():
         print(f"   {result}: {count:,} ({count/len(df)*100:.1f}%)")
 
@@ -121,7 +121,7 @@ def prepare_features_and_target(df):
     feature_cols = [col for col in df.columns if col not in exclude_cols]
 
     print(f"📋 特征数量: {len(feature_cols)}")
-    print(f"🔍 主要特征类别:")
+    print("🔍 主要特征类别:")
 
     # 按类型分类特征
     rolling_features = [col for col in feature_cols if any(f'w{w}' in col for w in [5, 10, 15])]
@@ -188,7 +188,7 @@ def train_xgboost_model(X, y, feature_cols):
 
     # 分类报告
     class_names = ['away_win', 'draw', 'home_win']
-    print(f"\n📊 详细分类报告:")
+    print("\n📊 详细分类报告:")
     print(classification_report(y_test, y_pred, target_names=class_names))
 
     return model, accuracy, (X_test, y_test, y_pred)
@@ -204,7 +204,7 @@ def analyze_feature_importance(model, feature_cols):
         'importance': importance
     }).sort_values('importance', ascending=False)
 
-    print(f"\n📊 特征重要性 Top 20:")
+    print("\n📊 特征重要性 Top 20:")
     for i, (idx, row) in enumerate(feature_importance_df.head(20).iterrows()):
         print(f"   {i+1:2d}. {row['feature']}: {row['importance']:.4f}")
 
@@ -212,7 +212,7 @@ def analyze_feature_importance(model, feature_cols):
     rolling_form_features = [f for f in feature_cols if 'form_points_avg' in f]
     team_id_features = ['home_team_id', 'away_team_id']
 
-    print(f"\n🏆 关键对比:")
+    print("\n🏆 关键对比:")
 
     # 滚动特征 vs team_id
     rolling_form_info = []
@@ -229,11 +229,11 @@ def analyze_feature_importance(model, feature_cols):
             ranking = feature_importance_df[feature_importance_df['feature'] == feature].index.values[0] + 1
             team_id_info.append((feature, imp[0], ranking))
 
-    print(f"\\n   📈 Rolling Form 特征:")
+    print("\\n   📈 Rolling Form 特征:")
     for feature, importance, ranking in rolling_form_info:
         print(f"      {feature}: {importance:.4f} (排名 #{ranking})")
 
-    print(f"\\n   🏷️  Team ID 特征:")
+    print("\\n   🏷️  Team ID 特征:")
     for feature, importance, ranking in team_id_info:
         print(f"      {feature}: {importance:.4f} (排名 #{ranking})")
 
@@ -243,13 +243,13 @@ def analyze_feature_importance(model, feature_cols):
         max_team_id_ranking = min([info[2] for info in team_id_info])
 
         if max_rolling_ranking < max_team_id_ranking:
-            print(f"\\n   🎉 SUCCESS! Rolling Form 特征排名更高!")
+            print("\\n   🎉 SUCCESS! Rolling Form 特征排名更高!")
             print(f"      最佳 Rolling Form: 排名 #{max_rolling_ranking}")
             print(f"      最佳 Team ID: 排名 #{max_team_id_ranking}")
         else:
-            print(f"\\n   ⚠️  Team ID 特征仍然排名更高")
+            print("\\n   ⚠️  Team ID 特征仍然排名更高")
     else:
-        print(f"\\n   ℹ️  无法进行完整对比（某些特征缺失）")
+        print("\\n   ℹ️  无法进行完整对比（某些特征缺失）")
 
     return feature_importance_df
 
@@ -273,19 +273,19 @@ def save_results(model, feature_importance_df, accuracy):
     # 保存训练报告
     report_file = f"/app/results/rolling_training_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
     with open(report_file, 'w', encoding='utf-8') as f:
-        f.write(f"基于滚动窗口特征的XGBoost模型训练报告\\n")
+        f.write("基于滚动窗口特征的XGBoost模型训练报告\\n")
         f.write(f"{'='*60}\\n")
         f.write(f"训练时间: {datetime.now()}\\n")
         f.write(f"模型准确率: {accuracy:.4f} ({accuracy*100:.2f}%)\\n")
         f.write(f"特征数量: {len(feature_importance_df)}\\n\\n")
 
-        f.write(f"特征重要性 Top 20:\\n")
+        f.write("特征重要性 Top 20:\\n")
         for i, (idx, row) in enumerate(feature_importance_df.head(20).iterrows()):
             f.write(f"{i+1:2d}. {row['feature']}: {row['importance']:.4f}\\n")
 
-        f.write(f"\\n关键发现:\\n")
-        f.write(f"- 滚动窗口特征显著提升了预测能力\\n")
-        f.write(f"- 时序特征比静态team_id更具预测价值\\n")
+        f.write("\\n关键发现:\\n")
+        f.write("- 滚动窗口特征显著提升了预测能力\\n")
+        f.write("- 时序特征比静态team_id更具预测价值\\n")
 
     print(f"✅ 训练报告已保存: {report_file}")
 
@@ -312,14 +312,14 @@ def main():
         # 6. 保存结果
         model_file, importance_file, report_file = save_results(model, feature_importance_df, accuracy)
 
-        print(f"\\n🎉 滚动窗口特征模型训练完成!")
+        print("\\n🎉 滚动窗口特征模型训练完成!")
         print(f"📁 模型文件: {model_file}")
         print(f"📊 特征重要性: {importance_file}")
         print(f"📄 训练报告: {report_file}")
         print(f"🎯 最终准确率: {accuracy:.4f} ({accuracy*100:.2f}%)")
 
-        print(f"\\n🏆 核心成果: 验证了滚动窗口特征时序特征的有效性!")
-        print(f"📈 rolling_form 特征展现了比传统 team_id 更强的预测能力!")
+        print("\\n🏆 核心成果: 验证了滚动窗口特征时序特征的有效性!")
+        print("📈 rolling_form 特征展现了比传统 team_id 更强的预测能力!")
 
         return model, feature_importance_df, accuracy
 

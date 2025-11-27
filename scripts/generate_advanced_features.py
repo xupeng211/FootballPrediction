@@ -123,7 +123,7 @@ class AdvancedFeatureGenerator:
 
             return df
 
-    async def calculate_team_ewma_features(self, matches_df: pd.DataFrame) -> Dict[int, Dict[str, Any]]:
+    async def calculate_team_ewma_features(self, matches_df: pd.DataFrame) -> dict[int, dict[str, Any]]:
         """为所有球队计算EWMA特征"""
         logger.info("🚀 开始计算所有球队EWMA特征...")
 
@@ -140,7 +140,7 @@ class AdvancedFeatureGenerator:
         logger.info(f"✅ EWMA特征计算完成: {len(team_ewma_features)} 个球队")
         return team_ewma_features
 
-    def create_basic_features(self, row: pd.Series, home_ewma: Dict, away_ewma: Dict) -> Dict[str, Any]:
+    def create_basic_features(self, row: pd.Series, home_ewma: dict, away_ewma: dict) -> dict[str, Any]:
         """创建基础特征"""
         features = {}
 
@@ -158,7 +158,7 @@ class AdvancedFeatureGenerator:
 
         return features
 
-    def create_ewma_features(self, row: pd.Series, home_ewma: Dict, away_ewma: Dict) -> Dict[str, Any]:
+    def create_ewma_features(self, row: pd.Series, home_ewma: dict, away_ewma: dict) -> dict[str, Any]:
         """创建EWMA特征"""
         features = {}
 
@@ -215,7 +215,7 @@ class AdvancedFeatureGenerator:
 
         return features
 
-    def create_historical_features(self, row: pd.Series, home_ewma: Dict, away_ewma: Dict) -> Dict[str, Any]:
+    def create_historical_features(self, row: pd.Series, home_ewma: dict, away_ewma: dict) -> dict[str, Any]:
         """创建历史特征"""
         features = {}
 
@@ -238,7 +238,7 @@ class AdvancedFeatureGenerator:
 
         return features
 
-    def create_target_variable(self, row: pd.Series) -> Dict[str, Any]:
+    def create_target_variable(self, row: pd.Series) -> dict[str, Any]:
         """创建目标变量"""
         targets = {}
 
@@ -263,7 +263,7 @@ class AdvancedFeatureGenerator:
 
         return targets
 
-    async def generate_match_features(self, matches_df: pd.DataFrame, team_ewma_features: Dict) -> pd.DataFrame:
+    async def generate_match_features(self, matches_df: pd.DataFrame, team_ewma_features: dict) -> pd.DataFrame:
         """为每场比赛生成特征"""
         logger.info("⚙️ 开始生成比赛特征...")
 
@@ -321,17 +321,17 @@ class AdvancedFeatureGenerator:
         logger.info("📈 分析特征质量...")
 
         print(f"\n{'='*80}")
-        print(f"🔍 高级特征数据集质量分析")
+        print("🔍 高级特征数据集质量分析")
         print(f"{'='*80}")
 
         # 基本统计
-        print(f"\n📊 数据集概览:")
+        print("\n📊 数据集概览:")
         print(f"   总比赛数: {len(features_df):,}")
         print(f"   特征维度: {features_df.shape[1]}")
         print(f"   时间范围: {features_df['match_date'].min()} 至 {features_df['match_date'].max()}")
 
         # 目标变量分布
-        print(f"\n🎯 目标变量分布:")
+        print("\n🎯 目标变量分布:")
         result_dist = features_df['result'].value_counts()
         for result, count in result_dist.items():
             print(f"   {result}: {count} ({count/len(features_df)*100:.1f}%)")
@@ -350,18 +350,18 @@ class AdvancedFeatureGenerator:
         missing_data = features_df.isnull().sum()
         missing_cols = missing_data[missing_data > 0]
         if len(missing_cols) > 0:
-            print(f"\n⚠️ 缺失值统计:")
+            print("\n⚠️ 缺失值统计:")
             for col, count in missing_cols.items():
                 print(f"   {col}: {count} ({count/len(features_df)*100:.1f}%)")
         else:
-            print(f"\n✅ 无缺失值")
+            print("\n✅ 无缺失值")
 
         print(f"\n{'='*80}")
 
     async def execute_feature_generation(self):
         """执行完整特征生成流程"""
         logger.info("🚀 启动高级特征生成系统...")
-        logger.info(f"🎯 目标: 基于EWMA特征生成ML训练数据集")
+        logger.info("🎯 目标: 基于EWMA特征生成ML训练数据集")
 
         try:
             # 1. 加载比赛数据
@@ -444,7 +444,7 @@ class AdvancedFeatureGenerator:
         logger.info(f"📋 特征报告已保存至: {report_path}")
 
         # 打印关键摘要
-        print(f"\n🎉 特征生成完成!")
+        print("\n🎉 特征生成完成!")
         print(f"📁 特征数据: {output_path}")
         print(f"📊 特征报告: {report_path}")
         print(f"🏗️ 数据集: {report['dataset_info']['total_matches']:,} 行 × {report['dataset_info']['feature_count']} 列")

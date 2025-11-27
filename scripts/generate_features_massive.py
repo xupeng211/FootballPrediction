@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class MassiveFeatureGenerator:
     """大规模特征生成器 - 优化版本"""
 
-    def __init__(self, window_sizes: List[int] = [5, 10, 15]):
+    def __init__(self, window_sizes: list[int] = [5, 10, 15]):
         self.window_sizes = window_sizes
         self.database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@db:5432/football_prediction')
         self.engine = create_engine(self.database_url)
@@ -132,7 +132,7 @@ class MassiveFeatureGenerator:
         logger.info(f"✅ 滚动窗口特征计算完成，特征维度: {len(features_df.columns)}")
         return features_df
 
-    def _precompute_team_histories(self, df: pd.DataFrame) -> Dict[int, List[Dict]]:
+    def _precompute_team_histories(self, df: pd.DataFrame) -> dict[int, list[dict]]:
         """预计算所有球队的历史记录"""
         team_histories = defaultdict(list)
 
@@ -180,7 +180,7 @@ class MassiveFeatureGenerator:
         logger.info(f"✅ 预计算完成 {len(team_histories)} 个球队的历史记录")
         return team_histories
 
-    def _precompute_h2h_histories(self, df: pd.DataFrame) -> Dict[Tuple[int, int], List[Dict]]:
+    def _precompute_h2h_histories(self, df: pd.DataFrame) -> dict[tuple[int, int], list[dict]]:
         """预计算历史交锋记录"""
         h2h_histories = defaultdict(list)
 
@@ -219,7 +219,7 @@ class MassiveFeatureGenerator:
         logger.info(f"✅ 预计算完成 {len(h2h_histories)} 个球队组合的交锋记录")
         return h2h_histories
 
-    def _precompute_home_advantage(self, df: pd.DataFrame) -> Dict[int, float]:
+    def _precompute_home_advantage(self, df: pd.DataFrame) -> dict[int, float]:
         """预计算主场优势统计"""
         home_advantages = {}
 
@@ -243,9 +243,9 @@ class MassiveFeatureGenerator:
         logger.info(f"✅ 预计算完成 {len(home_advantages)} 个球队的主场优势统计")
         return home_advantages
 
-    def _get_team_rolling_features(self, team_histories: Dict[int, List[Dict]],
+    def _get_team_rolling_features(self, team_histories: dict[int, list[dict]],
                                  team_id: int, current_date: datetime,
-                                 window_size: int, is_home: bool) -> Dict[str, float]:
+                                 window_size: int, is_home: bool) -> dict[str, float]:
         """获取球队的滚动窗口特征"""
         history = team_histories.get(team_id, [])
 
@@ -278,7 +278,7 @@ class MassiveFeatureGenerator:
         form_points_avg = np.mean(form_points) if form_points else 1.0
         win_rate = sum(1 for p in form_points if p == 3) / len(form_points) if form_points else 0.33
         clean_sheet_rate = sum(clean_sheets) / len(clean_sheets) if clean_sheets else 0.1
-        btts_rate = sum(1 for g_s, g_c in zip(goals_scored, goals_conceded) if g_s > 0 and g_c > 0) / len(past_matches) if past_matches else 0.6
+        btts_rate = sum(1 for g_s, g_c in zip(goals_scored, goals_conceded, strict=False) if g_s > 0 and g_c > 0) / len(past_matches) if past_matches else 0.6
 
         return {
             'goals_scored_avg': goals_scored_avg,
@@ -290,9 +290,9 @@ class MassiveFeatureGenerator:
             'goals_xg': goals_scored_avg * form_points_avg / 3  # 进球期望值
         }
 
-    def _get_h2h_features(self, h2h_histories: Dict[Tuple[int, int], List[Dict]],
+    def _get_h2h_features(self, h2h_histories: dict[tuple[int, int], list[dict]],
                          home_team_id: int, away_team_id: int,
-                         current_date: datetime) -> Dict[str, float]:
+                         current_date: datetime) -> dict[str, float]:
         """获取历史交锋特征"""
         combo = tuple(sorted([home_team_id, away_team_id]))
         h2h_history = h2h_histories.get(combo, [])
@@ -333,7 +333,7 @@ class MassiveFeatureGenerator:
         logger.info(f"💾 大规模特征已保存到: {filename}")
 
         # 打印特征统计
-        print(f"\n📊 大规模特征统计报告:")
+        print("\n📊 大规模特征统计报告:")
         print(f"   总记录数: {len(df):,}")
         print(f"   特征维度: {len(df.columns)}")
 
@@ -365,7 +365,7 @@ def main():
     # 加载数据
     df = generator.load_all_matches()
 
-    print(f"\n📊 输入数据统计:")
+    print("\n📊 输入数据统计:")
     print(f"   比赛场数: {len(df):,}")
     print(f"   球队数量: {len(set(df['home_team_id'].unique()) | set(df['away_team_id'].unique()))}")
     print(f"   日期范围: {df['match_date'].min()} 到 {df['match_date'].max()}")
@@ -376,7 +376,7 @@ def main():
     # 保存特征
     output_file = generator.save_features(features_df)
 
-    print(f"\n🎉 大规模特征生成完成！")
+    print("\n🎉 大规模特征生成完成！")
     print(f"📁 输出文件: {output_file}")
 
     return output_file

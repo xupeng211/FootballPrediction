@@ -105,7 +105,7 @@ class OptunaHyperparameterTuner:
         Path("logs").mkdir(exist_ok=True, parents=True)
         Path("models").mkdir(exist_ok=True, parents=True)
 
-        logger.info(f"🚀 初始化 Optuna 超参数优化器")
+        logger.info("🚀 初始化 Optuna 超参数优化器")
         logger.info(f"📊 试验次数: {n_trials}, 交叉验证: {cv_folds}折")
 
     def load_and_prepare_data(self, data_path: str = "data/advanced_features.csv") -> bool:
@@ -202,7 +202,7 @@ class OptunaHyperparameterTuner:
 
             self.feature_names = list(X_scaled.columns)
 
-            logger.info(f"📊 最终数据形状:")
+            logger.info("📊 最终数据形状:")
             logger.info(f"   训练集: {self.X_train.shape}")
             logger.info(f"   测试集: {self.X_test.shape}")
             logger.info(f"   特征数量: {len(self.feature_names)}")
@@ -210,7 +210,7 @@ class OptunaHyperparameterTuner:
             # 目标变量分布
             unique, counts = np.unique(self.y_train, return_counts=True)
             logger.info("🎯 训练集目标变量分布:")
-            for cls, count in zip(unique, counts):
+            for cls, count in zip(unique, counts, strict=False):
                 percentage = count / len(self.y_train) * 100
                 if self.label_encoder:
                     cls_name = self.label_encoder.inverse_transform([cls])[0]
@@ -300,7 +300,7 @@ class OptunaHyperparameterTuner:
 
         return mean_accuracy
 
-    def optimize(self) -> Dict[str, Any]:
+    def optimize(self) -> dict[str, Any]:
         """执行超参数优化.
 
         Returns:
@@ -370,7 +370,7 @@ class OptunaHyperparameterTuner:
         train_score = accuracy_score(self.y_train, self.best_model.predict(self.X_train))
         test_score = accuracy_score(self.y_test, self.best_model.predict(self.X_test))
 
-        logger.info(f"📊 最终模型性能:")
+        logger.info("📊 最终模型性能:")
         logger.info(f"   训练集准确率: {train_score:.4f}")
         logger.info(f"   测试集准确率: {test_score:.4f}")
 

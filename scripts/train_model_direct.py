@@ -172,7 +172,7 @@ def train_model(X, y):
     # 评估
     accuracy = accuracy_score(y_test, y_pred)
 
-    logger.info(f"📊 模型训练完成!")
+    logger.info("📊 模型训练完成!")
     logger.info(f"✅ 测试集准确率: {accuracy:.4f}")
 
     # 打印分类报告
@@ -184,7 +184,7 @@ def train_model(X, y):
     importances = model.feature_importances_
 
     logger.info("\n🎯 特征重要性:")
-    for name, importance in zip(feature_names, importances):
+    for name, importance in zip(feature_names, importances, strict=False):
         logger.info(f"  {name}: {importance:.4f}")
 
     return model, accuracy

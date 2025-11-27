@@ -68,11 +68,11 @@ import json
 from src.tasks.celery_app import celery_app
 
 
-def load_data_source_config() -> Dict[str, Any]:
+def load_data_source_config() -> dict[str, Any]:
     """加载数据源配置"""
     try:
         config_path = project_root / "src" / "config" / "data_sources.json"
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, encoding='utf-8') as f:
             config = json.load(f)
         logger.info(f"✅ 成功加载数据战略配置: {config_path}")
         logger.info(f"📋 配置版本: {config.get('version', 'unknown')}")
@@ -98,7 +98,7 @@ def load_data_source_config() -> Dict[str, Any]:
         }
 
 
-def generate_comprehensive_dates(config: Dict[str, Any]) -> List[str]:
+def generate_comprehensive_dates(config: dict[str, Any]) -> list[str]:
     """生成地毯式覆盖的连续日期列表"""
     strategic_settings = config.get('strategic_settings', {})
 
@@ -117,7 +117,7 @@ def generate_comprehensive_dates(config: Dict[str, Any]) -> List[str]:
 
     start_date = datetime.strptime(start_date_str, '%Y%m%d')
 
-    logger.info(f"🎯 地毯式覆盖数据采集策略")
+    logger.info("🎯 地毯式覆盖数据采集策略")
     logger.info(f"   - 时间范围: {start_date.strftime('%Y-%m-%d')} 到 {end_date.strftime('%Y-%m-%d')}")
     logger.info(f"   - 跳过休赛期: {'是' if skip_rest_days else '否（地毯式覆盖）'}")
     logger.info(f"   - 目标联赛数量: {len(target_leagues)}")
@@ -141,7 +141,7 @@ def generate_comprehensive_dates(config: Dict[str, Any]) -> List[str]:
         all_dates.append(date_str)
         current_date += timedelta(days=1)
 
-    logger.info(f"📅 地毯式覆盖日期统计:")
+    logger.info("📅 地毯式覆盖日期统计:")
     logger.info(f"   - 最早日期: {all_dates[0] if all_dates else 'None'}")
     logger.info(f"   - 最晚日期: {all_dates[-1] if all_dates else 'None'}")
     logger.info(f"   - 总天数: {len(all_dates)} 天")
@@ -153,23 +153,23 @@ def generate_comprehensive_dates(config: Dict[str, Any]) -> List[str]:
     estimated_minutes = len(all_dates) * avg_delay / 60
     estimated_hours = estimated_minutes / 60
 
-    logger.info(f"⏱️ 预计执行时间:")
+    logger.info("⏱️ 预计执行时间:")
     logger.info(f"   - 延迟范围: {min_delay}-{max_delay} 秒/任务")
     logger.info(f"   - 预计总时长: {estimated_minutes:.1f} 分钟 ({estimated_hours:.1f} 小时)")
 
     return all_dates
 
 
-async def trigger_comprehensive_collection(dates: List[str], dry_run: bool = False) -> int:
+async def trigger_comprehensive_collection(dates: list[str], dry_run: bool = False) -> int:
     """触发地毯式覆盖采集任务"""
     # 🎯 地毯式覆盖策略：5-10秒随机延迟，模拟真人行为
     min_delay = 5
     max_delay = 10
 
-    logger.info(f"🚀 启动地毯式覆盖数据采集")
+    logger.info("🚀 启动地毯式覆盖数据采集")
     logger.info(f"📅 采集日期范围: {len(dates)} 天连续覆盖")
     logger.info(f"⏱️ 延迟策略: {min_delay}-{max_delay} 秒随机延迟（模拟真人行为）")
-    logger.info(f"🎯 不跳过休赛期: 确保数据完整性")
+    logger.info("🎯 不跳过休赛期: 确保数据完整性")
 
     if dry_run:
         logger.info("🔍 DRY RUN 模式: 显示地毯式覆盖计划")
@@ -214,8 +214,8 @@ async def trigger_comprehensive_collection(dates: List[str], dry_run: bool = Fal
 
     # 最终统计报告
     success_rate = (tasks_triggered / len(dates)) * 100 if dates else 0
-    logger.info(f"🎉 地毯式覆盖采集任务触发完成！")
-    logger.info(f"📊 执行统计:")
+    logger.info("🎉 地毯式覆盖采集任务触发完成！")
+    logger.info("📊 执行统计:")
     logger.info(f"   - 总日期数: {len(dates)}")
     logger.info(f"   - 成功任务: {tasks_triggered}")
     logger.info(f"   - 失败任务: {failed_tasks}")
@@ -224,7 +224,7 @@ async def trigger_comprehensive_collection(dates: List[str], dry_run: bool = Fal
     return tasks_triggered
 
 
-def print_comprehensive_summary(config: Dict[str, Any], dates: List[str]):
+def print_comprehensive_summary(config: dict[str, Any], dates: list[str]):
     """打印地毯式覆盖采集摘要"""
     strategic_settings = config.get('strategic_settings', {})
     target_leagues = config.get('target_leagues', [])
@@ -235,7 +235,7 @@ def print_comprehensive_summary(config: Dict[str, Any], dates: List[str]):
 
     print(f"📊 采集策略: {strategic_settings.get('collection_strategy', 'comprehensive_coverage')}")
     print(f"📅 时间范围: {strategic_settings.get('start_date', '20220101')} 到 {strategic_settings.get('end_date', 'today')}")
-    print(f"🎯 覆盖方式: 连续日期，不跳过休赛期")
+    print("🎯 覆盖方式: 连续日期，不跳过休赛期")
     print(f"📋 总天数: {len(dates)} 天")
 
     # 联赛分类统计
@@ -246,7 +246,7 @@ def print_comprehensive_summary(config: Dict[str, Any], dates: List[str]):
     asian_leagues = [league['name'] for league in target_leagues if league.get('type') == 'Asia']
     american_leagues = [league['name'] for league in target_leagues if league.get('type') == 'America']
 
-    print(f"\n🏆 目标赛事分类:")
+    print("\n🏆 目标赛事分类:")
     if tier1_leagues:
         print(f"   🥇 顶级联赛: {', '.join(tier1_leagues)}")
     if tier2_leagues:
@@ -269,20 +269,20 @@ def print_comprehensive_summary(config: Dict[str, Any], dates: List[str]):
         year_stats[year] = year_stats.get(year, 0) + 1
         month_stats[f"{year}-{month}"] = month_stats.get(f"{year}-{month}", 0) + 1
 
-    print(f"\n📅 按年份分布:")
+    print("\n📅 按年份分布:")
     for year in sorted(year_stats.keys()):
         print(f"   {year}年: {year_stats[year]} 天")
 
-    print(f"\n⏱️ 执行参数:")
-    print(f"   - 延迟策略: 5-10秒随机延迟")
+    print("\n⏱️ 执行参数:")
+    print("   - 延迟策略: 5-10秒随机延迟")
     print(f"   - 预计时长: {len(dates) * 7.5 / 60:.1f} 分钟")
-    print(f"   - 并发任务: 1个（顺序执行保安全）")
+    print("   - 并发任务: 1个（顺序执行保安全）")
 
-    print(f"\n📈 预期收益:")
-    print(f"   - 数据完整性: 100%无间断覆盖")
+    print("\n📈 预期收益:")
+    print("   - 数据完整性: 100%无间断覆盖")
     print(f"   - 预期比赛数: 约 {len(dates) * 15} - {len(dates) * 40} 场")
-    print(f"   - 包含友谊赛: 高价值训练数据")
-    print(f"   - 国际杯赛: 重大赛事数据全覆盖")
+    print("   - 包含友谊赛: 高价值训练数据")
+    print("   - 国际杯赛: 重大赛事数据全覆盖")
 
     print("=" * 80)
 
@@ -337,7 +337,7 @@ async def main():
     # 确认执行
     if not args.dry_run:
         try:
-            print(f"\n⚠️  地毯式覆盖采集确认")
+            print("\n⚠️  地毯式覆盖采集确认")
             print(f"📅 将采集 {len(dates)} 天的数据，预计需要 {len(dates) * 7.5 / 60:.1f} 分钟")
             response = input("❓ 确认要执行地毯式覆盖数据采集吗？这将触发大量Celery任务 [y/N]: ")
             if response.lower() not in ['y', 'yes', '是']:
