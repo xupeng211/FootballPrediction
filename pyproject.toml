@@ -218,6 +218,8 @@ markers = [
     # 异步测试标记
     "asyncio: 异步测试 - 测试异步函数和协程",
     "timeout: 超时测试 - 设置测试执行时间限制",
+    "cqrs: CQRS模式测试 - 命令查询责任分离",
+    "fotmob: FotMob数据收集器测试 - 外部API集成测试",
 
     # Phase E 特殊标记
     "edge_cases: 边界条件测试 - 极值和异常情况处理",
