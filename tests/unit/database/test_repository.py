@@ -7,33 +7,35 @@ from collections.abc import Callable
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from sqlalchemy import select, update
+from sqlalchemy import Column, Integer, String, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 from src.database.repositories.base import BaseRepository
 
+# 创建临时的 declarative base
+TestBase = declarative_base()
 
-class MockModel:
-    """模拟SQLAlchemy模型类."""
+
+class MockModel(TestBase):
+    """模拟SQLAlchemy模型类 - 兼容 SQLAlchemy 2.0."""
+
+    __tablename__ = "mock_model"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=True)
+    email = Column(String(255), nullable=True)
+    created_at = Column(String(50), nullable=True)  # 简化为字符串类型避免时间复杂度
 
     def __init__(self, **kwargs):
-        self.id = kwargs.get("id")
+        super().__init__()
         for key, value in kwargs.items():
-            setattr(self, key, value)
+            if hasattr(self, key):
+                setattr(self, key, value)
 
     def __repr__(self):
         return f"MockModel(id={self.id})"
-
-    # 模拟SQLAlchemy的属性和列
-    id = None
-    name = None
-    email = None
-    created_at = None
-
-    # 添加模拟的SQLAlchemy属性
-    __table__ = type("MockTable", (), {"name": "mock_model"})()
-    __tablename__ = "mock_model"
 
 
 class MockDatabaseManager:
