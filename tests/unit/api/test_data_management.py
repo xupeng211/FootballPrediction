@@ -70,7 +70,9 @@ class TestDataManagementAPI:
     # Mock 对象定义
     # ========================================
 
-    def create_mock_match(self, match_id=1, home_team_id=3, away_team_id=4, league_id=1):
+    def create_mock_match(
+        self, match_id=1, home_team_id=3, away_team_id=4, league_id=1
+    ):
         """创建模拟比赛对象."""
         mock_match = MagicMock()
         mock_match.id = match_id
@@ -104,8 +106,8 @@ class TestDataManagementAPI:
     # GET /matches 端点测试
     # ========================================
 
-    @patch('src.api.data_management.MatchRepository')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.MatchRepository")
+    @patch("src.api.data_management.get_async_session")
     def test_get_matches_list_success(self, mock_get_session, mock_match_repo):
         """测试成功获取比赛列表."""
         # 设置Mock
@@ -123,6 +125,7 @@ class TestDataManagementAPI:
         from src.api.data_management import get_matches_list
 
         import asyncio
+
         result = asyncio.run(get_matches_list(limit=10, offset=0, session=mock_session))
 
         # 验证结果
@@ -133,8 +136,8 @@ class TestDataManagementAPI:
         assert result["matches"][0]["home_team"]["name"] == "Manchester United"
         assert result["matches"][0]["away_team"]["name"] == "Fulham"
 
-    @patch('src.api.data_management.MatchRepository')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.MatchRepository")
+    @patch("src.api.data_management.get_async_session")
     def test_get_matches_list_with_pagination(self, mock_get_session, mock_match_repo):
         """测试带分页的比赛列表获取."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -146,15 +149,20 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_matches_list
         import asyncio
-        result = asyncio.run(get_matches_list(limit=20, offset=10, session=mock_session))
+
+        result = asyncio.run(
+            get_matches_list(limit=20, offset=10, session=mock_session)
+        )
 
         # 验证调用参数
-        mock_repo_instance.get_matches_with_teams.assert_called_once_with(limit=20, offset=10)
+        mock_repo_instance.get_matches_with_teams.assert_called_once_with(
+            limit=20, offset=10
+        )
         assert result["matches"] == []
         assert result["total"] == 0
 
-    @patch('src.api.data_management.MatchRepository')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.MatchRepository")
+    @patch("src.api.data_management.get_async_session")
     def test_get_matches_list_database_error(self, mock_get_session, mock_match_repo):
         """测试数据库错误时的降级处理."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -162,10 +170,13 @@ class TestDataManagementAPI:
 
         mock_repo_instance = AsyncMock()
         mock_match_repo.return_value = mock_repo_instance
-        mock_repo_instance.get_matches_with_teams.side_effect = Exception("Database connection failed")
+        mock_repo_instance.get_matches_with_teams.side_effect = Exception(
+            "Database connection failed"
+        )
 
         from src.api.data_management import get_matches_list
         import asyncio
+
         result = asyncio.run(get_matches_list(limit=10, offset=0, session=mock_session))
 
         # 验证降级到模拟数据
@@ -177,8 +188,8 @@ class TestDataManagementAPI:
         assert result["matches"][0]["home_team"]["name"] == "Manchester United"
         assert result["matches"][1]["home_team"]["name"] == "Liverpool"
 
-    @patch('src.api.data_management.MatchRepository')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.MatchRepository")
+    @patch("src.api.data_management.get_async_session")
     def test_get_matches_list_empty_result(self, mock_get_session, mock_match_repo):
         """测试空比赛列表."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -190,6 +201,7 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_matches_list
         import asyncio
+
         result = asyncio.run(get_matches_list(limit=10, offset=0, session=mock_session))
 
         assert result["matches"] == []
@@ -199,7 +211,7 @@ class TestDataManagementAPI:
     # GET /matches/{match_id} 端点测试
     # ========================================
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_match_by_id_success(self, mock_get_service):
         """测试成功根据ID获取比赛."""
         mock_service = MagicMock()
@@ -208,12 +220,13 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_match_by_id
         import asyncio
+
         result = asyncio.run(get_match_by_id(1))
 
         assert result == self.mock_match_data
         mock_service.get_match_by_id.assert_called_once_with(1)
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_match_by_id_not_found(self, mock_get_service):
         """测试获取不存在的比赛ID."""
         mock_service = MagicMock()
@@ -228,7 +241,7 @@ class TestDataManagementAPI:
 
         assert "比赛ID 999 不存在" in str(exc_info.value)
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_match_by_id_service_error(self, mock_get_service):
         """测试服务层错误处理."""
         mock_service = MagicMock()
@@ -247,8 +260,8 @@ class TestDataManagementAPI:
     # GET /teams 端点测试
     # ========================================
 
-    @patch('src.api.data_management.get_real_data_service')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.get_real_data_service")
+    @patch("src.api.data_management.get_async_session")
     def test_get_teams_list_success(self, mock_get_session, mock_get_service):
         """测试成功获取球队列表."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -260,13 +273,14 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_teams_list
         import asyncio
+
         result = asyncio.run(get_teams_list(limit=20, offset=0, session=mock_session))
 
         assert result == self.mock_team_data
         mock_service.get_teams_list.assert_called_once_with(limit=20, offset=0)
 
-    @patch('src.api.data_management.get_real_data_service')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.get_real_data_service")
+    @patch("src.api.data_management.get_async_session")
     def test_get_teams_list_with_pagination(self, mock_get_session, mock_get_service):
         """测试带分页的球队列表获取."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -278,14 +292,15 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_teams_list
         import asyncio
+
         result = asyncio.run(get_teams_list(limit=5, offset=10, session=mock_session))
 
         mock_service.get_teams_list.assert_called_once_with(limit=5, offset=10)
         assert result["teams"] == []
         assert result["total"] == 0
 
-    @patch('src.api.data_management.get_real_data_service')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.get_real_data_service")
+    @patch("src.api.data_management.get_async_session")
     def test_get_teams_list_service_error(self, mock_get_session, mock_get_service):
         """测试服务错误处理."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -307,8 +322,8 @@ class TestDataManagementAPI:
     # GET /teams/{team_id} 端点测试
     # ========================================
 
-    @patch('src.api.data_management.get_real_data_service')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.get_real_data_service")
+    @patch("src.api.data_management.get_async_session")
     def test_get_team_by_id_success(self, mock_get_session, mock_get_service):
         """测试成功根据ID获取球队."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -321,13 +336,14 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_team_by_id
         import asyncio
+
         result = asyncio.run(get_team_by_id(1, session=mock_session))
 
         assert result == mock_team
         mock_service.get_team_by_id.assert_called_once_with(1)
 
-    @patch('src.api.data_management.get_real_data_service')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.get_real_data_service")
+    @patch("src.api.data_management.get_async_session")
     def test_get_team_by_id_not_found(self, mock_get_session, mock_get_service):
         """测试获取不存在的球队ID."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -345,8 +361,8 @@ class TestDataManagementAPI:
 
         assert "球队ID 999 不存在" in str(exc_info.value)
 
-    @patch('src.api.data_management.get_real_data_service')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.get_real_data_service")
+    @patch("src.api.data_management.get_async_session")
     def test_get_team_by_id_service_error(self, mock_get_session, mock_get_service):
         """测试服务错误处理."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -368,7 +384,7 @@ class TestDataManagementAPI:
     # GET /leagues 端点测试
     # ========================================
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_leagues_list_success(self, mock_get_service):
         """测试成功获取联赛列表."""
         mock_service = MagicMock()
@@ -377,12 +393,13 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_leagues_list
         import asyncio
+
         result = asyncio.run(get_leagues_list(limit=20, offset=0))
 
         assert result == self.mock_league_data
         mock_service.get_leagues_list.assert_called_once_with(limit=20, offset=0)
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_leagues_list_with_pagination(self, mock_get_service):
         """测试带分页的联赛列表获取."""
         mock_service = MagicMock()
@@ -391,13 +408,14 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_leagues_list
         import asyncio
+
         result = asyncio.run(get_leagues_list(limit=5, offset=10))
 
         mock_service.get_leagues_list.assert_called_once_with(limit=5, offset=10)
         assert result["leagues"] == []
         assert result["total"] == 0
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_leagues_list_service_error(self, mock_get_service):
         """测试服务错误处理."""
         mock_service = MagicMock()
@@ -416,7 +434,7 @@ class TestDataManagementAPI:
     # GET /odds 端点测试
     # ========================================
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_odds_data_success(self, mock_get_service):
         """测试成功获取赔率数据."""
         mock_service = MagicMock()
@@ -425,12 +443,13 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_odds_data
         import asyncio
+
         result = asyncio.run(get_odds_data(match_id=1))
 
         assert result == self.mock_odds_data
         mock_service.get_odds_data.assert_called_once_with(match_id=1)
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_odds_data_without_filter(self, mock_get_service):
         """测试不带过滤条件的赔率数据获取."""
         mock_service = MagicMock()
@@ -439,13 +458,14 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_odds_data
         import asyncio
+
         result = asyncio.run(get_odds_data(match_id=None))
 
         assert result["odds"] == []
         assert result["total"] == 0
         mock_service.get_odds_data.assert_called_once_with(match_id=None)
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_odds_data_service_error(self, mock_get_service):
         """测试服务错误处理."""
         mock_service = MagicMock()
@@ -464,7 +484,7 @@ class TestDataManagementAPI:
     # 安全性和边界测试
     # ========================================
 
-    @patch('src.services.data.get_data_service')
+    @patch("src.services.data.get_data_service")
     def test_get_match_by_id_invalid_id_types(self, mock_get_service):
         """测试无效ID类型的处理."""
         mock_service = MagicMock()
@@ -482,9 +502,11 @@ class TestDataManagementAPI:
         with pytest.raises(Exception):
             asyncio.run(get_match_by_id(0))
 
-    @patch('src.api.data_management.MatchRepository')
-    @patch('src.api.data_management.get_async_session')
-    def test_get_matches_list_invalid_pagination(self, mock_get_session, mock_match_repo):
+    @patch("src.api.data_management.MatchRepository")
+    @patch("src.api.data_management.get_async_session")
+    def test_get_matches_list_invalid_pagination(
+        self, mock_get_session, mock_match_repo
+    ):
         """测试无效分页参数."""
         mock_session = AsyncMock(spec=AsyncSession)
         mock_get_session.return_value.__aenter__.return_value = mock_session
@@ -501,7 +523,9 @@ class TestDataManagementAPI:
         assert result["matches"] == []
 
         # 测试负数offset
-        result = asyncio.run(get_matches_list(limit=10, offset=-10, session=mock_session))
+        result = asyncio.run(
+            get_matches_list(limit=10, offset=-10, session=mock_session)
+        )
         assert result["matches"] == []
 
         # 验证调用参数被传递（即使无效）
@@ -514,7 +538,7 @@ class TestDataManagementAPI:
         incomplete_match.id = 1
         incomplete_match.home_team_id = 999  # 不存在的球队
         incomplete_match.away_team_id = 888  # 不存在的球队
-        incomplete_match.league_id = 777     # 不存在的联赛
+        incomplete_match.league_id = 777  # 不存在的联赛
         incomplete_match.home_score = None
         incomplete_match.away_score = None
         incomplete_match.status = None
@@ -523,8 +547,8 @@ class TestDataManagementAPI:
         incomplete_match.away_team = None
         incomplete_match.league = None
 
-        @patch('src.api.data_management.MatchRepository')
-        @patch('src.api.data_management.get_async_session')
+        @patch("src.api.data_management.MatchRepository")
+        @patch("src.api.data_management.get_async_session")
         def test_incomplete_data(mock_get_session, mock_match_repo):
             mock_session = AsyncMock(spec=AsyncSession)
             mock_get_session.return_value.__aenter__.return_value = mock_session
@@ -535,7 +559,10 @@ class TestDataManagementAPI:
 
             from src.api.data_management import get_matches_list
             import asyncio
-            result = asyncio.run(get_matches_list(limit=10, offset=0, session=mock_session))
+
+            result = asyncio.run(
+                get_matches_list(limit=10, offset=0, session=mock_session)
+            )
 
             # 验证默认值处理
             match_data = result["matches"][0]
@@ -553,8 +580,8 @@ class TestDataManagementAPI:
     # 性能和负载测试边界
     # ========================================
 
-    @patch('src.api.data_management.MatchRepository')
-    @patch('src.api.data_management.get_async_session')
+    @patch("src.api.data_management.MatchRepository")
+    @patch("src.api.data_management.get_async_session")
     def test_get_matches_list_large_dataset(self, mock_get_session, mock_match_repo):
         """测试大数据集处理."""
         mock_session = AsyncMock(spec=AsyncSession)
@@ -569,7 +596,10 @@ class TestDataManagementAPI:
 
         from src.api.data_management import get_matches_list
         import asyncio
-        result = asyncio.run(get_matches_list(limit=1000, offset=0, session=mock_session))
+
+        result = asyncio.run(
+            get_matches_list(limit=1000, offset=0, session=mock_session)
+        )
 
         assert len(result["matches"]) == 1000
         assert result["total"] == 1000
@@ -583,23 +613,28 @@ class TestDataManagementAPI:
         assert router is not None
         assert router.tags == ["数据管理"]
 
-    @patch('src.api.data_management.MatchRepository')
-    @patch('src.api.data_management.get_async_session')
-    @patch('logging.getLogger')
-    def test_logging_functionality(self, mock_logger, mock_get_session, mock_match_repo):
+    @patch("src.api.data_management.MatchRepository")
+    @patch("src.api.data_management.get_async_session")
+    @patch("logging.getLogger")
+    def test_logging_functionality(
+        self, mock_logger, mock_get_session, mock_match_repo
+    ):
         """测试日志功能."""
         mock_session = AsyncMock(spec=AsyncSession)
         mock_get_session.return_value.__aenter__.return_value = mock_session
 
         mock_repo_instance = AsyncMock()
         mock_match_repo.return_value = mock_repo_instance
-        mock_repo_instance.get_matches_with_teams.return_value = [self.create_mock_match()]
+        mock_repo_instance.get_matches_with_teams.return_value = [
+            self.create_mock_match()
+        ]
 
         mock_log_instance = MagicMock()
         mock_logger.return_value = mock_log_instance
 
         from src.api.data_management import get_matches_list
         import asyncio
+
         asyncio.run(get_matches_list(limit=10, offset=0, session=mock_session))
 
         # 验证日志调用

@@ -167,7 +167,7 @@ class FotmobDetailsCollector:
             if response.status_code == 200:
                 # 修复curl_cffi的响应处理
                 try:
-                    if hasattr(response, 'json'):
+                    if hasattr(response, "json"):
                         if asyncio.iscoroutinefunction(response.json):
                             data = await response.json()
                         else:
@@ -181,7 +181,11 @@ class FotmobDetailsCollector:
                 except Exception as json_error:
                     self.logger.error(f"解析JSON响应时出错: {json_error}")
                     # 尝试直接返回文本内容
-                    return {"raw_response": response.text} if hasattr(response, 'text') else None
+                    return (
+                        {"raw_response": response.text}
+                        if hasattr(response, "text")
+                        else None
+                    )
 
             elif response.status_code == 401:
                 self.logger.warning(f"比赛 {match_id} 需要认证")
