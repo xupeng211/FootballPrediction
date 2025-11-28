@@ -108,7 +108,13 @@ _SERVICE_FACTORIES = {
 
 def _ensure_default_services() -> None:
     settings = get_settings()
-    enabled_services = getattr(settings, "enabled_services", []) or []
+    enabled_services_str = getattr(settings, "enabled_services", "")
+
+    # 处理字符串格式：将逗号分隔的字符串转换为列表
+    if isinstance(enabled_services_str, str) and enabled_services_str:
+        enabled_services = [s.strip() for s in enabled_services_str.split(",") if s.strip()]
+    else:
+        enabled_services = []
 
     for service_name in enabled_services:
         factory = _SERVICE_FACTORIES.get(service_name)
