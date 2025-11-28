@@ -115,23 +115,12 @@ jobs:
         echo "🧪 运行测试套件..."
         export $(cat .env.test | xargs)
 
-        # Run tests with coverage (先运行测试，再检查覆盖率)
-        if [ -f "Makefile" ] && grep -q "test.unit.ci" Makefile; then
-          # 使用稳定的轻量级Makefile测试目标
-          make test.unit.ci
-        elif [ -f "Makefile" ] && grep -q "test.unit" Makefile; then
-          # 备用方案：使用基础测试目标
-          make test.unit
-        else
-          pytest tests/unit/ \
-            -v \
-            --cov=src \
-            --cov-report=xml \
-            --cov-report=term-missing \
-            --junit-xml=test-results.xml \
-            --maxfail=5 \
-            -x
-        fi
+        # Run tests with coverage - FINAL SURGICAL FIX
+        echo "🚀 执行外科手术式CI修复 - 强制运行稳定轻量级测试"
+
+        # 强制使用稳定的轻量级测试目标 - 绕过所有不稳定逻辑
+        make test.unit.ci
+        echo "✅ 轻量级测试完成 - CI稳定性保证"
 
         # Generate coverage summary and check 31% threshold
         if [ -f .coverage ]; then
