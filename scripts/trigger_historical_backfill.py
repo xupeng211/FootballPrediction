@@ -44,8 +44,7 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -72,7 +71,7 @@ def load_data_source_config() -> dict[str, Any]:
     """加载数据源配置"""
     try:
         config_path = project_root / "src" / "config" / "data_sources.json"
-        with open(config_path, encoding='utf-8') as f:
+        with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
         logger.info(f"✅ 成功加载数据战略配置: {config_path}")
         logger.info(f"📋 配置版本: {config.get('version', 'unknown')}")
@@ -87,57 +86,62 @@ def load_data_source_config() -> dict[str, Any]:
             "backfill": {
                 "years": 3,
                 "days_per_season": 30,
-                "target_leagues": ["PL", "PD", "BL1", "SA", "FL1"]
+                "target_leagues": ["PL", "PD", "BL1", "SA", "FL1"],
             },
             "fotmob": {
-                "rate_limit": {
-                    "requests_per_minute": 10,
-                    "delay_between_requests": 6
-                }
-            }
+                "rate_limit": {"requests_per_minute": 10, "delay_between_requests": 6}
+            },
         }
 
 
 def generate_comprehensive_dates(config: dict[str, Any]) -> list[str]:
     """生成地毯式覆盖的连续日期列表"""
-    strategic_settings = config.get('strategic_settings', {})
+    strategic_settings = config.get("strategic_settings", {})
 
     # 🎯 地毯式覆盖策略参数
-    start_date_str = strategic_settings.get('start_date', '20220101')
-    end_date_str = strategic_settings.get('end_date', 'today')
-    skip_rest_days = strategic_settings.get('skip_rest_days', False)
+    start_date_str = strategic_settings.get("start_date", "20220101")
+    end_date_str = strategic_settings.get("end_date", "today")
+    skip_rest_days = strategic_settings.get("skip_rest_days", False)
 
-    target_leagues = config.get('target_leagues', [])
+    target_leagues = config.get("target_leagues", [])
 
     # 解析日期范围
-    if end_date_str == 'today':
+    if end_date_str == "today":
         end_date = datetime.now()
     else:
-        end_date = datetime.strptime(end_date_str, '%Y%m%d')
+        end_date = datetime.strptime(end_date_str, "%Y%m%d")
 
-    start_date = datetime.strptime(start_date_str, '%Y%m%d')
+    start_date = datetime.strptime(start_date_str, "%Y%m%d")
 
     logger.info("🎯 地毯式覆盖数据采集策略")
-    logger.info(f"   - 时间范围: {start_date.strftime('%Y-%m-%d')} 到 {end_date.strftime('%Y-%m-%d')}")
+    logger.info(
+        f"   - 时间范围: {start_date.strftime('%Y-%m-%d')} 到 {end_date.strftime('%Y-%m-%d')}"
+    )
     logger.info(f"   - 跳过休赛期: {'是' if skip_rest_days else '否（地毯式覆盖）'}")
     logger.info(f"   - 目标联赛数量: {len(target_leagues)}")
 
     # 识别国际赛事
-    international_leagues = [league for league in target_leagues if league.get('type') == 'International']
-    domestic_leagues = [league for league in target_leagues if league.get('type') != 'International']
+    international_leagues = [
+        league for league in target_leagues if league.get("type") == "International"
+    ]
+    domestic_leagues = [
+        league for league in target_leagues if league.get("type") != "International"
+    ]
 
     logger.info(f"   - 国内联赛: {len(domestic_leagues)} 个")
     logger.info(f"   - 国际赛事: {len(international_leagues)} 个")
 
     if international_leagues:
-        logger.info(f"   - 国际赛事包括: {', '.join([league['name'] for league in international_leagues])}")
+        logger.info(
+            f"   - 国际赛事包括: {', '.join([league['name'] for league in international_leagues])}"
+        )
 
     # 生成连续日期列表（地毯式覆盖）
     all_dates = []
     current_date = start_date
 
     while current_date <= end_date:
-        date_str = current_date.strftime('%Y%m%d')
+        date_str = current_date.strftime("%Y%m%d")
         all_dates.append(date_str)
         current_date += timedelta(days=1)
 
@@ -155,12 +159,16 @@ def generate_comprehensive_dates(config: dict[str, Any]) -> list[str]:
 
     logger.info("⏱️ 预计执行时间:")
     logger.info(f"   - 延迟范围: {min_delay}-{max_delay} 秒/任务")
-    logger.info(f"   - 预计总时长: {estimated_minutes:.1f} 分钟 ({estimated_hours:.1f} 小时)")
+    logger.info(
+        f"   - 预计总时长: {estimated_minutes:.1f} 分钟 ({estimated_hours:.1f} 小时)"
+    )
 
     return all_dates
 
 
-async def trigger_comprehensive_collection(dates: list[str], dry_run: bool = False) -> int:
+async def trigger_comprehensive_collection(
+    dates: list[str], dry_run: bool = False
+) -> int:
     """触发地毯式覆盖采集任务"""
     # 🎯 地毯式覆盖策略：5-10秒随机延迟，模拟真人行为
     min_delay = 5
@@ -174,7 +182,7 @@ async def trigger_comprehensive_collection(dates: list[str], dry_run: bool = Fal
     if dry_run:
         logger.info("🔍 DRY RUN 模式: 显示地毯式覆盖计划")
         for i, date_str in enumerate(dates[:10]):  # 只显示前10个
-            logger.info(f"   [{i+1:3}/{len(dates)}] 采集日期: {date_str}")
+            logger.info(f"   [{i + 1:3}/{len(dates)}] 采集日期: {date_str}")
         if len(dates) > 10:
             logger.info(f"   ... 还有 {len(dates) - 10} 个日期")
         return len(dates)
@@ -186,14 +194,16 @@ async def trigger_comprehensive_collection(dates: list[str], dry_run: bool = Fal
         try:
             # 格式化进度显示
             progress = (i + 1) / len(dates) * 100
-            logger.info(f"📅 [{i+1:4}/{len(dates)}] ({progress:5.1f}%) 采集 {date_str}")
+            logger.info(
+                f"📅 [{i + 1:4}/{len(dates)}] ({progress:5.1f}%) 采集 {date_str}"
+            )
 
             # 调用Celery任务触发FotMob数据采集
             task = celery_app.send_task(
-                'collect_fotmob_data',
-                kwargs={'date': date_str},
-                queue='fotmob',
-                priority=5  # 中等优先级
+                "collect_fotmob_data",
+                kwargs={"date": date_str},
+                queue="fotmob",
+                priority=5,  # 中等优先级
             )
 
             tasks_triggered += 1
@@ -226,25 +236,43 @@ async def trigger_comprehensive_collection(dates: list[str], dry_run: bool = Fal
 
 def print_comprehensive_summary(config: dict[str, Any], dates: list[str]):
     """打印地毯式覆盖采集摘要"""
-    strategic_settings = config.get('strategic_settings', {})
-    target_leagues = config.get('target_leagues', [])
+    strategic_settings = config.get("strategic_settings", {})
+    target_leagues = config.get("target_leagues", [])
 
     print("=" * 80)
     print("🎯 地毯式覆盖数据采集战略")
     print("=" * 80)
 
-    print(f"📊 采集策略: {strategic_settings.get('collection_strategy', 'comprehensive_coverage')}")
-    print(f"📅 时间范围: {strategic_settings.get('start_date', '20220101')} 到 {strategic_settings.get('end_date', 'today')}")
+    print(
+        f"📊 采集策略: {strategic_settings.get('collection_strategy', 'comprehensive_coverage')}"
+    )
+    print(
+        f"📅 时间范围: {strategic_settings.get('start_date', '20220101')} 到 {strategic_settings.get('end_date', 'today')}"
+    )
     print("🎯 覆盖方式: 连续日期，不跳过休赛期")
     print(f"📋 总天数: {len(dates)} 天")
 
     # 联赛分类统计
-    tier1_leagues = [league['name'] for league in target_leagues if league.get('type') == 'Tier1']
-    tier2_leagues = [league['name'] for league in target_leagues if league.get('type') == 'Tier2']
-    cup_leagues = [league['name'] for league in target_leagues if league.get('type') == 'Cup']
-    international_leagues = [league['name'] for league in target_leagues if league.get('type') == 'International']
-    asian_leagues = [league['name'] for league in target_leagues if league.get('type') == 'Asia']
-    american_leagues = [league['name'] for league in target_leagues if league.get('type') == 'America']
+    tier1_leagues = [
+        league["name"] for league in target_leagues if league.get("type") == "Tier1"
+    ]
+    tier2_leagues = [
+        league["name"] for league in target_leagues if league.get("type") == "Tier2"
+    ]
+    cup_leagues = [
+        league["name"] for league in target_leagues if league.get("type") == "Cup"
+    ]
+    international_leagues = [
+        league["name"]
+        for league in target_leagues
+        if league.get("type") == "International"
+    ]
+    asian_leagues = [
+        league["name"] for league in target_leagues if league.get("type") == "Asia"
+    ]
+    american_leagues = [
+        league["name"] for league in target_leagues if league.get("type") == "America"
+    ]
 
     print("\n🏆 目标赛事分类:")
     if tier1_leagues:
@@ -292,13 +320,16 @@ def validate_environment():
     try:
         # 简单的环境验证
         import os
+
         database_url = os.getenv("DATABASE_URL")
         redis_url = os.getenv("REDIS_URL")
 
         logger.info("✅ 环境配置验证通过")
         logger.info(f"   - Database URL: {'已配置' if database_url else '未配置'}")
         logger.info(f"   - Redis URL: {'已配置' if redis_url else '未配置'}")
-        logger.info(f"   - Celery连接: {'可用' if database_url and redis_url else '不可用'}")
+        logger.info(
+            f"   - Celery连接: {'可用' if database_url and redis_url else '不可用'}"
+        )
         return True
     except Exception as e:
         logger.error(f"❌ 环境验证失败: {e}")
@@ -307,8 +338,10 @@ def validate_environment():
 
 async def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description='历史数据回溯采集脚本')
-    parser.add_argument('--dry-run', action='store_true', help='只生成日期列表，不实际触发任务')
+    parser = argparse.ArgumentParser(description="历史数据回溯采集脚本")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="只生成日期列表，不实际触发任务"
+    )
     args = parser.parse_args()
 
     logger.info("🎯 历史数据回溯采集启动")
@@ -338,9 +371,13 @@ async def main():
     if not args.dry_run:
         try:
             print("\n⚠️  地毯式覆盖采集确认")
-            print(f"📅 将采集 {len(dates)} 天的数据，预计需要 {len(dates) * 7.5 / 60:.1f} 分钟")
-            response = input("❓ 确认要执行地毯式覆盖数据采集吗？这将触发大量Celery任务 [y/N]: ")
-            if response.lower() not in ['y', 'yes', '是']:
+            print(
+                f"📅 将采集 {len(dates)} 天的数据，预计需要 {len(dates) * 7.5 / 60:.1f} 分钟"
+            )
+            response = input(
+                "❓ 确认要执行地毯式覆盖数据采集吗？这将触发大量Celery任务 [y/N]: "
+            )
+            if response.lower() not in ["y", "yes", "是"]:
                 logger.info("❌ 用户取消执行")
                 return 0
         except KeyboardInterrupt:
@@ -359,16 +396,25 @@ async def main():
             # 提供后续操作指导
             print("\n📋 地毯式覆盖后续操作建议:")
             print("1. 📊 实时监控: docker-compose logs -f worker | grep -i fotmob")
-            print("2. 🔍 检查进度: docker-compose exec db psql -U postgres -d football_prediction -c \"SELECT COUNT(*) FROM raw_match_data WHERE created_at > NOW() - INTERVAL '1 hour';\"")
-            print("3. 📋 查看队列: docker-compose exec worker celery -A src.tasks.celery_app inspect active")
-            print("4. ⚡ ETL处理: docker-compose exec app python scripts/run_etl_silver.py")
-            print("5. 📈 质量审计: docker-compose exec app python scripts/audit_data_quality.py")
+            print(
+                "2. 🔍 检查进度: docker-compose exec db psql -U postgres -d football_prediction -c \"SELECT COUNT(*) FROM raw_match_data WHERE created_at > NOW() - INTERVAL '1 hour';\""
+            )
+            print(
+                "3. 📋 查看队列: docker-compose exec worker celery -A src.tasks.celery_app inspect active"
+            )
+            print(
+                "4. ⚡ ETL处理: docker-compose exec app python scripts/run_etl_silver.py"
+            )
+            print(
+                "5. 📈 质量审计: docker-compose exec app python scripts/audit_data_quality.py"
+            )
 
         return 0
 
     except Exception as e:
         logger.error(f"❌ 地毯式覆盖执行失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

@@ -31,7 +31,7 @@ class FotMobAdvancedProbeV2:
             "Referer": "https://www.fotmob.com/",
             "Origin": "https://www.fotmob.com",
             "Cache-Control": "no-cache",
-            "Pragma": "no-cache"
+            "Pragma": "no-cache",
         }
 
     async def initialize_session(self):
@@ -44,7 +44,7 @@ class FotMobAdvancedProbeV2:
         # 测试翻译 API 确认基础连接
         await self.session.get(
             "https://www.fotmob.com/api/translationmapping?locale=en",
-            headers=self.base_headers
+            headers=self.base_headers,
         )
 
     async def test_different_date_formats(self):
@@ -56,11 +56,9 @@ class FotMobAdvancedProbeV2:
             (datetime.now() - timedelta(days=1)).strftime("%Y%m%d"),
             (datetime.now() - timedelta(days=7)).strftime("%Y%m%d"),
             (datetime.now() - timedelta(days=30)).strftime("%Y%m%d"),
-
             # 带分隔符的格式
             (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
             (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d"),
-
             # 特殊日期
             "20241124",  # 固定日期
             "20241201",  # 另一个固定日期
@@ -77,29 +75,31 @@ class FotMobAdvancedProbeV2:
         headers_variants = [
             # 基础版本
             self.base_headers.copy(),
-
             # 添加更多浏览器特征头
-            {**self.base_headers, **{
-                "sec-fetch-dest": "empty",
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-origin",
-                "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": '"Windows"'
-            }},
-
+            {
+                **self.base_headers,
+                **{
+                    "sec-fetch-dest": "empty",
+                    "sec-fetch-mode": "cors",
+                    "sec-fetch-site": "same-origin",
+                    "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": '"Windows"',
+                },
+            },
             # 添加可能的认证头
-            {**self.base_headers, **{
-                "x-client-version": "production:208a8f87c2cc13343f1dd8671471cf5a039dced3",
-                "x-platform": "web"
-            }},
+            {
+                **self.base_headers,
+                **{
+                    "x-client-version": "production:208a8f87c2cc13343f1dd8671471cf5a039dced3",
+                    "x-platform": "web",
+                },
+            },
         ]
 
         for _i, headers in enumerate(headers_variants, 1):
-
             try:
                 response = await self.session.get(api_url, headers=headers, timeout=15)
-
 
                 if response.status_code == 200:
                     try:
@@ -125,7 +125,7 @@ class FotMobAdvancedProbeV2:
                 elif response.status_code == 401:
                     # 分析 401 响应头
                     headers_info = dict(response.headers)
-                    for key in ['x-client-version', 'x-cache', 'x-amz-cf-id']:
+                    for key in ["x-client-version", "x-cache", "x-amz-cf-id"]:
                         if key in headers_info:
                             pass
 
@@ -157,7 +157,9 @@ class FotMobAdvancedProbeV2:
             url = f"https://www.fotmob.com{endpoint}"
 
             try:
-                response = await self.session.get(url, headers=self.base_headers, timeout=10)
+                response = await self.session.get(
+                    url, headers=self.base_headers, timeout=10
+                )
 
                 if response.status_code == 200:
                     try:
@@ -199,6 +201,7 @@ async def main():
 
     except Exception:
         import traceback
+
         traceback.print_exc()
 
     finally:

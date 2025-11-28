@@ -121,9 +121,7 @@ class StringUtils:
             return ""
 
         # 简单的中文映射
-        chinese_map = {
-            '测': 'ce', '试': 'shi', '文': 'wen', '本': 'ben'
-        }
+        chinese_map = {"测": "ce", "试": "shi", "文": "wen", "本": "ben"}
 
         # 先尝试中文字符映射
         result = ""
@@ -441,9 +439,9 @@ def normalize_string(text: str) -> str:
     # 基本清理并转换为小写，但保留空格
     result = result.strip()
     # 将换行符和制表符转换为空格
-    result = re.sub(r'[\n\t\r]+', ' ', result)
+    result = re.sub(r"[\n\t\r]+", " ", result)
     # 移除多余空格
-    result = re.sub(r' +', ' ', result)
+    result = re.sub(r" +", " ", result)
     return result.lower()
 
 
@@ -477,9 +475,11 @@ def strip_html(text: str) -> str:
     import re
 
     # 移除script和style标签及其内容
-    text = re.sub(r'<(script|style).*?>.*?</\1>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(
+        r"<(script|style).*?>.*?</\1>", "", text, flags=re.IGNORECASE | re.DOTALL
+    )
     # 移除所有HTML标签
-    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(r"<[^>]+>", "", text)
 
     return text
 

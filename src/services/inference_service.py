@@ -98,7 +98,7 @@ class InferenceService:
                 logger.info(f"🚀 加载V4 Optuna优化模型: {v4_model_path}")
                 import pickle
 
-                with open(v4_model_path, 'rb') as f:
+                with open(v4_model_path, "rb") as f:
                     self._model = pickle.load(f)
 
                 # 加载V4模型的优化结果作为元数据
@@ -109,18 +109,26 @@ class InferenceService:
                     self._model_metadata = {
                         "model_version": "v4_optuna",
                         "model_type": "XGBClassifier",
-                        "target_classes": ["客队胜", "平局", "主队胜"],  # away_win, draw, home_win
+                        "target_classes": [
+                            "客队胜",
+                            "平局",
+                            "主队胜",
+                        ],  # away_win, draw, home_win
                         "best_score": v4_results.get("best_score"),
                         "n_trials": v4_results.get("n_trials"),
                         "optimization_time": v4_results.get("optimization_time"),
                         "test_accuracy": v4_results.get("best_score"),
                         "feature_count": len(v4_results.get("feature_names", [])),
-                        "label_encoder_classes": v4_results.get("label_encoder_classes"),
+                        "label_encoder_classes": v4_results.get(
+                            "label_encoder_classes"
+                        ),
                     }
 
                     self._feature_columns = v4_results.get("feature_names", [])
                     logger.info("✅ V4模型元数据加载成功")
-                    logger.info(f"📊 V4模型准确率: {v4_results.get('best_score', 'N/A'):.4f}")
+                    logger.info(
+                        f"📊 V4模型准确率: {v4_results.get('best_score', 'N/A'):.4f}"
+                    )
                     logger.info(f"🔧 V4模型特征数量: {len(self._feature_columns)}")
                 else:
                     logger.warning("⚠️ V4元数据文件不存在，使用默认设置")
@@ -130,7 +138,7 @@ class InferenceService:
                         "model_type": "XGBClassifier",
                     }
                     # 如果没有元数据，尝试从模型推断特征
-                    if hasattr(self._model, 'feature_names'):
+                    if hasattr(self._model, "feature_names"):
                         self._feature_columns = list(self._model.feature_names)
                     else:
                         logger.warning("⚠️ 无法获取V4模型特征名称")
@@ -296,7 +304,7 @@ class InferenceService:
                     if isinstance(features_data, str):
                         # 如果是字符串，需要解析JSON
                         features_dict = json.loads(features_data)
-                    elif hasattr(features_data, '__dict__'):
+                    elif hasattr(features_data, "__dict__"):
                         # 如果是对象，尝试转换为字典
                         features_dict = dict(features_data)
                     else:
@@ -408,22 +416,38 @@ class InferenceService:
                 result_names = {0: "away_or_draw", 1: "home_win"}
             else:
                 # 三分类模型 - 支持V4模型的英文标签和旧模型的中文标签
-                if hasattr(self._model, 'classes_') and len(self._model.classes_) == 3:
+                if hasattr(self._model, "classes_") and len(self._model.classes_) == 3:
                     # 检查模型标签类型
                     class_list = list(self._model.classes_)
-                    if 'away_win' in class_list and 'draw' in class_list and 'home_win' in class_list:
+                    if (
+                        "away_win" in class_list
+                        and "draw" in class_list
+                        and "home_win" in class_list
+                    ):
                         # V4模型英文标签映射 (away_win, draw, home_win)
-                        away_idx = class_list.index('away_win')
-                        draw_idx = class_list.index('draw')
-                        home_idx = class_list.index('home_win')
-                        result_names = {away_idx: "客队胜", draw_idx: "平局", home_idx: "主队胜"}
+                        away_idx = class_list.index("away_win")
+                        draw_idx = class_list.index("draw")
+                        home_idx = class_list.index("home_win")
+                        result_names = {
+                            away_idx: "客队胜",
+                            draw_idx: "平局",
+                            home_idx: "主队胜",
+                        }
                         logger.info(f"🏷️ 使用V4模型英文标签映射: {result_names}")
-                    elif 'Away' in class_list and 'Draw' in class_list and 'Home' in class_list:
+                    elif (
+                        "Away" in class_list
+                        and "Draw" in class_list
+                        and "Home" in class_list
+                    ):
                         # 新模型英文标签映射
-                        away_idx = class_list.index('Away')
-                        draw_idx = class_list.index('Draw')
-                        home_idx = class_list.index('Home')
-                        result_names = {away_idx: "客队胜", draw_idx: "平局", home_idx: "主队胜"}
+                        away_idx = class_list.index("Away")
+                        draw_idx = class_list.index("Draw")
+                        home_idx = class_list.index("Home")
+                        result_names = {
+                            away_idx: "客队胜",
+                            draw_idx: "平局",
+                            home_idx: "主队胜",
+                        }
                         logger.info(f"🏷️ 使用新模型英文标签映射: {result_names}")
                     else:
                         # 旧模型中文标签映射
@@ -461,49 +485,69 @@ class InferenceService:
                 class_list = list(model_classes)
 
                 # 检查是否是V4模型的英文标签 (away_win, draw, home_win)
-                if 'away_win' in class_list and 'draw' in class_list and 'home_win' in class_list:
+                if (
+                    "away_win" in class_list
+                    and "draw" in class_list
+                    and "home_win" in class_list
+                ):
                     # V4模型：按实际索引获取概率
-                    away_prob = float(probabilities[class_list.index('away_win')])
-                    draw_prob = float(probabilities[class_list.index('draw')])
-                    home_prob = float(probabilities[class_list.index('home_win')])
+                    away_prob = float(probabilities[class_list.index("away_win")])
+                    draw_prob = float(probabilities[class_list.index("draw")])
+                    home_prob = float(probabilities[class_list.index("home_win")])
 
                     prob_home_win = round(home_prob, 3)
                     prob_draw = round(draw_prob, 3)
                     prob_away_win = round(away_prob, 3)
 
                     # 根据预测结果确定outcome
-                    if prediction == class_list.index('home_win'):
+                    if prediction == class_list.index("home_win"):
                         predicted_outcome = "home"
-                    elif prediction == class_list.index('draw'):
+                    elif prediction == class_list.index("draw"):
                         predicted_outcome = "draw"
                     else:
                         predicted_outcome = "away"
 
-                    logger.info(f"🎯 V4模型概率分布: Home={prob_home_win}, Draw={prob_draw}, Away={prob_away_win}")
-                elif 'Away' in class_list and 'Draw' in class_list and 'Home' in class_list:
+                    logger.info(
+                        f"🎯 V4模型概率分布: Home={prob_home_win}, Draw={prob_draw}, Away={prob_away_win}"
+                    )
+                elif (
+                    "Away" in class_list
+                    and "Draw" in class_list
+                    and "Home" in class_list
+                ):
                     # 新模型：按实际索引获取概率
-                    away_prob = float(probabilities[class_list.index('Away')])
-                    draw_prob = float(probabilities[class_list.index('Draw')])
-                    home_prob = float(probabilities[class_list.index('Home')])
+                    away_prob = float(probabilities[class_list.index("Away")])
+                    draw_prob = float(probabilities[class_list.index("Draw")])
+                    home_prob = float(probabilities[class_list.index("Home")])
 
                     prob_home_win = round(home_prob, 3)
                     prob_draw = round(draw_prob, 3)
                     prob_away_win = round(away_prob, 3)
 
                     # 根据预测结果确定outcome
-                    if prediction == class_list.index('Home'):
+                    if prediction == class_list.index("Home"):
                         predicted_outcome = "home"
-                    elif prediction == class_list.index('Draw'):
+                    elif prediction == class_list.index("Draw"):
                         predicted_outcome = "draw"
                     else:
                         predicted_outcome = "away"
 
-                    logger.info(f"🎯 新模型概率分布: Home={prob_home_win}, Draw={prob_draw}, Away={prob_away_win}")
+                    logger.info(
+                        f"🎯 新模型概率分布: Home={prob_home_win}, Draw={prob_draw}, Away={prob_away_win}"
+                    )
                 else:
                     # 旧模型：假设顺序是 [平局, 主队胜, 客队胜]
                     prob_home_win = round(float(probabilities[1]), 3)
-                    prob_draw = round(float(probabilities[0]), 3) if len(probabilities) > 2 else 0.0
-                    prob_away_win = round(float(probabilities[2]), 3) if len(probabilities) > 2 else 0.0
+                    prob_draw = (
+                        round(float(probabilities[0]), 3)
+                        if len(probabilities) > 2
+                        else 0.0
+                    )
+                    prob_away_win = (
+                        round(float(probabilities[2]), 3)
+                        if len(probabilities) > 2
+                        else 0.0
+                    )
 
                     predicted_outcome = (
                         "home"
@@ -558,11 +602,13 @@ class InferenceService:
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 # 如果是异常，创建错误结果
-                processed_results.append({
-                    "match_id": match_ids[i],
-                    "error": f"预测服务错误: {str(result)}",
-                    "success": False,
-                })
+                processed_results.append(
+                    {
+                        "match_id": match_ids[i],
+                        "error": f"预测服务错误: {str(result)}",
+                        "success": False,
+                    }
+                )
             else:
                 processed_results.append(result)
 

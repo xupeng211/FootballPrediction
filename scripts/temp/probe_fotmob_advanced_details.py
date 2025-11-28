@@ -45,7 +45,9 @@ class AdvancedFotMobDetailsProbe:
         # 方法1: 不带任何特殊头的直接请求
         try:
             url = f"https://www.fotmob.com/api/matchDetails?matchId={match_id}"
-            response = await self.session.get(url, headers=self.base_headers, timeout=10)
+            response = await self.session.get(
+                url, headers=self.base_headers, timeout=10
+            )
 
             print(f"   状态码: {response.status_code}")
 
@@ -84,21 +86,25 @@ class AdvancedFotMobDetailsProbe:
             print(f"🔍 测试端点: {endpoint}")
             try:
                 url = f"https://www.fotmob.com{endpoint}"
-                response = await self.session.get(url, headers=self.base_headers, timeout=8)
+                response = await self.session.get(
+                    url, headers=self.base_headers, timeout=8
+                )
 
                 if response.status_code == 200:
                     try:
                         data = response.json()
-                        print(f"   ✅ 成功! 数据键: {list(data.keys()) if isinstance(data, dict) else 'Not dict'}")
+                        print(
+                            f"   ✅ 成功! 数据键: {list(data.keys()) if isinstance(data, dict) else 'Not dict'}"
+                        )
 
                         # 检查是否包含我们想要的数据
                         if isinstance(data, dict):
-                            if 'content' in data:
-                                content = data['content']
+                            if "content" in data:
+                                content = data["content"]
                                 if isinstance(content, dict):
-                                    if 'stats' in content:
+                                    if "stats" in content:
                                         print("   🎯 发现统计数据!")
-                                    if 'lineup' in content:
+                                    if "lineup" in content:
                                         print("   👥 发现阵容数据!")
 
                         return data
@@ -131,7 +137,7 @@ class AdvancedFotMobDetailsProbe:
         print("🏆 测试已知比赛ID...")
 
         for i, match_id in enumerate(known_matches):
-            print(f"\n--- 测试比赛 {i+1}/{len(known_matches)} (ID: {match_id}) ---")
+            print(f"\n--- 测试比赛 {i + 1}/{len(known_matches)} (ID: {match_id}) ---")
 
             # 先测试直接端点
             data = await self.test_match_details_direct(match_id)
@@ -148,16 +154,20 @@ class AdvancedFotMobDetailsProbe:
                     print(f"📊 数据键: {list(data.keys())}")
 
                     # 寻找关键数据
-                    content = data.get('content', {})
+                    content = data.get("content", {})
                     if isinstance(content, dict):
-                        if 'stats' in content:
+                        if "stats" in content:
                             print("🎯 包含统计数据!")
-                        if 'lineup' in content:
+                        if "lineup" in content:
                             print("👥 包含阵容数据!")
 
                 # 保存第一个成功的数据样本
                 if i == 0:
-                    with open(f"successful_match_details_{match_id}.json", 'w', encoding='utf-8') as f:
+                    with open(
+                        f"successful_match_details_{match_id}.json",
+                        "w",
+                        encoding="utf-8",
+                    ) as f:
                         json.dump(data, f, ensure_ascii=False, indent=2)
                     print(f"💾 数据已保存到 successful_match_details_{match_id}.json")
 
@@ -186,11 +196,19 @@ class AdvancedFotMobDetailsProbe:
                     current_path = f"{key_path}.{key}" if key_path else key
 
                     # 检查关键键
-                    if key.lower() in ['xg', 'expectedgoals', 'expected_goals', 'stats', 'lineup']:
+                    if key.lower() in [
+                        "xg",
+                        "expectedgoals",
+                        "expected_goals",
+                        "stats",
+                        "lineup",
+                    ]:
                         found.append((current_path, type(value).__name__))
 
                     # 递归搜索
-                    if isinstance(value, (dict, list)) and len(str(value)) < 10000:  # 限制递归深度
+                    if (
+                        isinstance(value, (dict, list)) and len(str(value)) < 10000
+                    ):  # 限制递归深度
                         found.extend(find_key_recursive(value, current_path))
 
             elif isinstance(obj, list) and len(obj) > 0:
@@ -208,24 +226,24 @@ class AdvancedFotMobDetailsProbe:
                 print(f"   {path} ({type_name})")
 
         # 特别检查content结构
-        content = data.get('content', {})
+        content = data.get("content", {})
         if isinstance(content, dict):
             print("\n📊 Content分析:")
             print(f"   键: {list(content.keys())}")
 
             # 统计数据
-            stats = content.get('stats', {})
+            stats = content.get("stats", {})
             if stats:
                 print(f"   📈 Stats类型: {type(stats).__name__}")
                 if isinstance(stats, dict):
                     print(f"   📈 Stats键: {list(stats.keys())}")
                     # 寻找xG相关
                     for key in stats.keys():
-                        if 'xg' in key.lower() or 'expected' in key.lower():
+                        if "xg" in key.lower() or "expected" in key.lower():
                             print(f"      🔥 xG相关: {key}")
 
             # 阵容数据
-            lineup = content.get('lineup', {})
+            lineup = content.get("lineup", {})
             if lineup:
                 print(f"   👥 Lineup类型: {type(lineup).__name__}")
                 if isinstance(lineup, dict):

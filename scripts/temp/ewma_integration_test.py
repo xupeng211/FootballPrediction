@@ -13,7 +13,7 @@ from datetime import datetime
 import logging
 
 # 添加src到路径
-sys.path.append('/app/src')
+sys.path.append("/app/src")
 
 from features.ewma_calculator import EWMACalculator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -21,18 +21,23 @@ from sqlalchemy import text
 import os
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class EWMATestRunner:
     """EWMA集成测试运行器"""
 
     def __init__(self):
         # 数据库连接
-        database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction")
+        database_url = os.getenv(
+            "DATABASE_URL",
+            "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction",
+        )
         self.engine = create_async_engine(
-            database_url.replace("postgresql://", "postgresql+asyncpg://"),
-            echo=False
+            database_url.replace("postgresql://", "postgresql+asyncpg://"), echo=False
         )
         self.AsyncSessionLocal = async_sessionmaker(
             self.engine, class_=AsyncSession, expire_on_commit=False
@@ -72,20 +77,24 @@ class EWMATestRunner:
 
             data = []
             for row in rows:
-                data.append({
-                    'home_team_id': row.home_team_id,
-                    'home_team_name': row.home_team_name,
-                    'away_team_id': row.away_team_id,
-                    'away_team_name': row.away_team_name,
-                    'home_score': row.home_score,
-                    'away_score': row.away_score,
-                    'match_date': row.match_date,
-                    'league_name': row.league_name
-                })
+                data.append(
+                    {
+                        "home_team_id": row.home_team_id,
+                        "home_team_name": row.home_team_name,
+                        "away_team_id": row.away_team_id,
+                        "away_team_name": row.away_team_name,
+                        "home_score": row.home_score,
+                        "away_score": row.away_score,
+                        "match_date": row.match_date,
+                        "league_name": row.league_name,
+                    }
+                )
 
             df = pd.DataFrame(data)
             logger.info(f"✅ 数据加载完成: {len(df)} 场比赛")
-            logger.info(f"   时间范围: {df['match_date'].min()} 至 {df['match_date'].max()}")
+            logger.info(
+                f"   时间范围: {df['match_date'].min()} 至 {df['match_date'].max()}"
+            )
 
             return df
 
@@ -101,13 +110,11 @@ class EWMATestRunner:
             return False
 
         # 2. 初始化EWMA计算器
-        calculator = EWMACalculator(
-            spans=[5, 10, 20],
-            min_matches=5,
-            adjust=True
-        )
+        calculator = EWMACalculator(spans=[5, 10, 20], min_matches=5, adjust=True)
 
-        logger.info(f"🧠 EWMA配置: spans={calculator.spans}, min_matches={calculator.min_matches}")
+        logger.info(
+            f"🧠 EWMA配置: spans={calculator.spans}, min_matches={calculator.min_matches}"
+        )
 
         # 3. 计算所有球队EWMA指标
         logger.info("📊 开始计算EWMA特征...")
@@ -121,7 +128,7 @@ class EWMATestRunner:
 
         # 6. 保存结果
         output_path = "/app/ewma_integration_results.csv"
-        features_df.to_csv(output_path, index=False, encoding='utf-8-sig')
+        features_df.to_csv(output_path, index=False, encoding="utf-8-sig")
         logger.info(f"💾 结果已保存至: {output_path}")
 
         # 7. 详细分析
@@ -129,17 +136,19 @@ class EWMATestRunner:
 
         return True
 
-    async def analyze_results(self, features_df: pd.DataFrame, original_data: pd.DataFrame):
+    async def analyze_results(
+        self, features_df: pd.DataFrame, original_data: pd.DataFrame
+    ):
         """分析EWMA结果"""
         logger.info("📈 进行详细结果分析...")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("🔬 EWMA特征工程详细分析")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # 数据质量分析
         print("\n📊 数据质量分析:")
-        valid_teams = features_df[features_df['total_matches'] >= 5]
+        valid_teams = features_df[features_df["total_matches"] >= 5]
         print(f"   有效球队数: {len(valid_teams)} (≥5场比赛)")
         print(f"   数据不足球队: {len(features_df) - len(valid_teams)} 场")
 
@@ -150,18 +159,28 @@ class EWMATestRunner:
         # 攻防平衡分析
         print("\n⚔️ 攻防平衡分析:")
         balanced_teams = valid_teams[
-            (abs(valid_teams['attack_rating'] - valid_teams['defense_rating']) <= 10)
+            (abs(valid_teams["attack_rating"] - valid_teams["defense_rating"]) <= 10)
         ]
-        attack_heavy = valid_teams[valid_teams['attack_rating'] > valid_teams['defense_rating'] + 10]
-        defense_heavy = valid_teams[valid_teams['defense_rating'] > valid_teams['attack_rating'] + 10]
+        attack_heavy = valid_teams[
+            valid_teams["attack_rating"] > valid_teams["defense_rating"] + 10
+        ]
+        defense_heavy = valid_teams[
+            valid_teams["defense_rating"] > valid_teams["attack_rating"] + 10
+        ]
 
-        print(f"   攻防平衡球队: {len(balanced_teams)} ({len(balanced_teams)/len(valid_teams)*100:.1f}%)")
-        print(f"   攻击型球队: {len(attack_heavy)} ({len(attack_heavy)/len(valid_teams)*100:.1f}%)")
-        print(f"   防守型球队: {len(defense_heavy)} ({len(defense_heavy)/len(valid_teams)*100:.1f}%)")
+        print(
+            f"   攻防平衡球队: {len(balanced_teams)} ({len(balanced_teams) / len(valid_teams) * 100:.1f}%)"
+        )
+        print(
+            f"   攻击型球队: {len(attack_heavy)} ({len(attack_heavy) / len(valid_teams) * 100:.1f}%)"
+        )
+        print(
+            f"   防守型球队: {len(defense_heavy)} ({len(defense_heavy) / len(valid_teams) * 100:.1f}%)"
+        )
 
         # 联赛分布分析
         print("\n🏆 联赛分布分析:")
-        league_distribution = original_data['league_name'].value_counts().head(10)
+        league_distribution = original_data["league_name"].value_counts().head(10)
         print("   主要联赛 (比赛数量):")
         for league, count in league_distribution.items():
             print(f"      {league[:30]:30s}: {count:4d} 场")
@@ -169,11 +188,11 @@ class EWMATestRunner:
         # EWMA跨度对比分析
         print("\n📈 EWMA跨度对比分析:")
         for span in [5, 10, 20]:
-            if f'ewma_goals_scored_{span}' in features_df.columns:
-                mean_goals = valid_teams[f'ewma_goals_scored_{span}'].mean()
-                std_goals = valid_teams[f'ewma_goals_scored_{span}'].std()
-                mean_conceded = valid_teams[f'ewma_goals_conceded_{span}'].mean()
-                std_conceded = valid_teams[f'ewma_goals_conceded_{span}'].std()
+            if f"ewma_goals_scored_{span}" in features_df.columns:
+                mean_goals = valid_teams[f"ewma_goals_scored_{span}"].mean()
+                std_goals = valid_teams[f"ewma_goals_scored_{span}"].std()
+                mean_conceded = valid_teams[f"ewma_goals_conceded_{span}"].mean()
+                std_conceded = valid_teams[f"ewma_goals_conceded_{span}"].std()
 
                 print(f"   Span {span}:")
                 print(f"      进球: {mean_goals:.3f} ± {std_goals:.3f}")
@@ -183,28 +202,41 @@ class EWMATestRunner:
         if len(valid_teams) > 0:
             print("\n📊 状态趋势分析:")
             print(f"   平均状态趋势: {valid_teams['form_trend'].mean():.3f}")
-            print(f"   状态最好球队 (趋势>0): {len(valid_teams[valid_teams['form_trend'] > 0])}")
-            print(f"   状态下滑球队 (趋势<0): {len(valid_teams[valid_teams['form_trend'] < 0])}")
+            print(
+                f"   状态最好球队 (趋势>0): {len(valid_teams[valid_teams['form_trend'] > 0])}"
+            )
+            print(
+                f"   状态下滑球队 (趋势<0): {len(valid_teams[valid_teams['form_trend'] < 0])}"
+            )
 
             # 展示状态最好和最差的球队
-            best_form = valid_teams.nlargest(3, 'form_trend')[['team_name', 'form_trend', 'overall_rating']]
-            worst_form = valid_teams.nsmallest(3, 'form_trend')[['team_name', 'form_trend', 'overall_rating']]
+            best_form = valid_teams.nlargest(3, "form_trend")[
+                ["team_name", "form_trend", "overall_rating"]
+            ]
+            worst_form = valid_teams.nsmallest(3, "form_trend")[
+                ["team_name", "form_trend", "overall_rating"]
+            ]
 
             print("\n   📈 状态最佳球队:")
             for _, team in best_form.iterrows():
-                print(f"      {team['team_name'][:20]:20s} | 趋势: {team['form_trend']:+.2f} | 综合: {team['overall_rating']:5.1f}")
+                print(
+                    f"      {team['team_name'][:20]:20s} | 趋势: {team['form_trend']:+.2f} | 综合: {team['overall_rating']:5.1f}"
+                )
 
             print("\n   📉 状态最差球队:")
             for _, team in worst_form.iterrows():
-                print(f"      {team['team_name'][:20]:20s} | 趋势: {team['form_trend']:+.2f} | 综合: {team['overall_rating']:5.1f}")
+                print(
+                    f"      {team['team_name'][:20]:20s} | 趋势: {team['form_trend']:+.2f} | 综合: {team['overall_rating']:5.1f}"
+                )
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
+
 
 async def main():
     """主函数"""
     print("🧪 EWMA集成测试 - 真实数据处理")
     print("🎯 目标: 使用1000条真实比赛数据验证EWMA特征工程")
-    print("="*80)
+    print("=" * 80)
 
     runner = EWMATestRunner()
 
@@ -221,9 +253,11 @@ async def main():
     except Exception as e:
         logger.error(f"💥 集成测试异常: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         await runner.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

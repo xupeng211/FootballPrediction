@@ -54,11 +54,7 @@ class FotMobAuthenticatedClient:
         timestamp = int(time.time() * 1000)
 
         # 构建请求体数据
-        body_data = {
-            "url": api_url,
-            "code": timestamp,
-            "foo": self.client_version
-        }
+        body_data = {"url": api_url, "code": timestamp, "foo": self.client_version}
 
         # 生成签名的几种尝试
         signature_candidates = self._generate_signatures(body_data, api_url)
@@ -67,13 +63,10 @@ class FotMobAuthenticatedClient:
         signature = signature_candidates[0]
 
         # 构建完整的 x-mas 头
-        x_mas_data = {
-            "body": body_data,
-            "signature": signature
-        }
+        x_mas_data = {"body": body_data, "signature": signature}
 
         # 编码为 Base64
-        x_mas_str = json.dumps(x_mas_data, separators=(',', ':'))
+        x_mas_str = json.dumps(x_mas_data, separators=(",", ":"))
         x_mas_encoded = base64.b64encode(x_mas_str.encode()).decode()
 
         return x_mas_encoded
@@ -89,12 +82,14 @@ class FotMobAuthenticatedClient:
         signatures.append(signature)
 
         # 方法2: JSON 字符串哈希
-        json_str = json.dumps(body_data, separators=(',', ':'), sort_keys=True)
+        json_str = json.dumps(body_data, separators=(",", ":"), sort_keys=True)
         signature2 = hashlib.sha1(json_str.encode()).hexdigest().upper()[:16]
         signatures.append(signature2)
 
         # 方法3: 时间戳哈希
-        signature3 = hashlib.md5(str(body_data['code']).encode()).hexdigest().upper()[:16]
+        signature3 = (
+            hashlib.md5(str(body_data["code"]).encode()).hexdigest().upper()[:16]
+        )
         signatures.append(signature3)
 
         return signatures
@@ -116,14 +111,10 @@ class FotMobAuthenticatedClient:
             x_mas = self.generate_x_mas_header(api_url)
             headers = {**self.base_headers, "x-mas": x_mas}
 
-
         try:
             response = await self.session.get(
-                f"https://www.fotmob.com{api_url}",
-                headers=headers,
-                timeout=15
+                f"https://www.fotmob.com{api_url}", headers=headers, timeout=15
             )
-
 
             if response.status_code == 200:
                 try:
@@ -161,14 +152,16 @@ class FotMobAuthenticatedClient:
     async def get_audio_matches(self):
         """获取音频比赛数据，提取 matchId 列表"""
 
-        result = await self.make_authenticated_request("/api/data/audio-matches", use_known_signature=True)
+        result = await self.make_authenticated_request(
+            "/api/data/audio-matches", use_known_signature=True
+        )
 
         if result and isinstance(result, list):
             # 提取 matchId 列表
             match_ids = []
             for item in result:
-                if isinstance(item, dict) and 'id' in item:
-                    match_ids.append(item['id'])
+                if isinstance(item, dict) and "id" in item:
+                    match_ids.append(item["id"])
 
             return match_ids
 
@@ -178,10 +171,11 @@ class FotMobAuthenticatedClient:
         """获取单场比赛详情"""
         api_url = f"/api/matchDetails?matchId={match_id}"
 
-
         # 先尝试带签名
         if use_signature:
-            result = await self.make_authenticated_request(api_url, use_known_signature=False)
+            result = await self.make_authenticated_request(
+                api_url, use_known_signature=False
+            )
             if result:
                 return result
 
@@ -194,11 +188,8 @@ class FotMobAuthenticatedClient:
 
         try:
             response = await self.session.get(
-                f"https://www.fotmob.com{api_url}",
-                headers=headers,
-                timeout=15
+                f"https://www.fotmob.com{api_url}", headers=headers, timeout=15
             )
-
 
             if response.status_code == 200:
                 try:
@@ -253,16 +244,18 @@ class FotMobAuthenticatedClient:
                 # 如果成功，尝试解析一些关键信息
                 if isinstance(details, dict):
                     # 常见的比赛信息字段
-                    for key in ['header', 'content', 'general', 'teams', 'match']:
+                    for key in ["header", "content", "general", "teams", "match"]:
                         if key in details:
                             if isinstance(details[key], dict):
                                 for _subkey, subvalue in details[key].items():
                                     if isinstance(subvalue, (str, int, float)):
-                                        if isinstance(subvalue, str) and len(subvalue) > 50:
+                                        if (
+                                            isinstance(subvalue, str)
+                                            and len(subvalue) > 50
+                                        ):
                                             pass
             else:
                 pass
-
 
         return successful_details > 0
 
@@ -278,40 +271,33 @@ class FotMobAuthenticatedClient:
             "/api/matches/overview?matchId={id}",
             "/api/match/info?matchId={id}",
             "/api/match/data?matchId={id}",
-
             # 移动端/兼容性接口
             "/api/mobile/matchDetails?matchId={id}",
             "/api/mob/match?matchId={id}",
             "/api/app/matchDetails?matchId={id}",
             "/api/legacy/match?matchId={id}",
-
             # Web/特定平台接口
             "/api/web/match?matchId={id}",
             "/api/www/matchDetails?matchId={id}",
             "/api/tld/match?matchId={id}",
             "/api/desktop/match?matchId={id}",
-
             # 数据相关接口
             "/api/data/match?matchId={id}",
             "/api/data/matchDetails?matchId={id}",
             "/api/data/game?matchId={id}",
-
             # 比赛特定接口
             "/api/game?id={id}",
             "/api/gameDetails?matchId={id}",
             "/api/event?matchId={id}",
             "/api/fixture?id={id}",
-
             # 联赛/队伍相关 (可能包含比赛信息)
             "/api/leagues?id={id}",
             "/api/teams/match?matchId={id}",
             "/api/league/match?id={id}",
-
             # 直接路径 (无前缀)
             "/match/{id}",
             "/game/{id}",
             "/event/{id}",
-
             # 特殊格式
             "/matchDetails?matchId={id}",
             "/matchData?id={id}",
@@ -319,47 +305,47 @@ class FotMobAuthenticatedClient:
             "/match{id}",
         ]
 
-
         # 构造完整的 URL 列表
         urls = []
         for template in endpoint_templates:
             url = template.format(id=match_id)
             urls.append((template, url))
 
-
         # 分批并发探测以避免过载
         batch_size = 8
         successful_endpoints = []
 
         for i in range(0, len(urls), batch_size):
-            batch = urls[i:i + batch_size]
+            batch = urls[i : i + batch_size]
 
             # 并发执行 A/B 测试
             batch_results = await asyncio.gather(
                 *[self._test_endpoint_ab(template, url) for template, url in batch],
-                return_exceptions=True
+                return_exceptions=True,
             )
 
             for (template, url), result in zip(batch, batch_results, strict=False):
-                if isinstance(result, dict) and result.get('success'):
-                    successful_endpoints.append({
-                        'template': template,
-                        'url': url,
-                        'method': result['method'],
-                        'data': result['data']
-                    })
+                if isinstance(result, dict) and result.get("success"):
+                    successful_endpoints.append(
+                        {
+                            "template": template,
+                            "url": url,
+                            "method": result["method"],
+                            "data": result["data"],
+                        }
+                    )
 
         return successful_endpoints
 
     async def _test_endpoint_ab(self, template, url):
         """对单个端点进行 A/B 测试"""
         result = {
-            'template': template,
-            'url': url,
-            'success': False,
-            'method': None,
-            'data': None,
-            'status_codes': []
+            "template": template,
+            "url": url,
+            "success": False,
+            "method": None,
+            "data": None,
+            "status_codes": [],
         }
 
         # 确保 session 存在
@@ -373,38 +359,46 @@ class FotMobAuthenticatedClient:
             x_mas = self.generate_x_mas_header(url)
             headers_with_sig = {**self.base_headers, "x-mas": x_mas}
 
-            response_a = await self.session.get(full_url, headers=headers_with_sig, timeout=10)
-            result['status_codes'].append(f"A:{response_a.status_code}")
+            response_a = await self.session.get(
+                full_url, headers=headers_with_sig, timeout=10
+            )
+            result["status_codes"].append(f"A:{response_a.status_code}")
 
             if response_a.status_code == 200:
-                result.update({
-                    'success': True,
-                    'method': 'with_signature',
-                    'data': await self._analyze_response(response_a, template)
-                })
+                result.update(
+                    {
+                        "success": True,
+                        "method": "with_signature",
+                        "data": await self._analyze_response(response_a, template),
+                    }
+                )
                 return result
 
         except Exception as e:
-            result['status_codes'].append(f"A:Error({str(e)[:20]})")
+            result["status_codes"].append(f"A:Error({str(e)[:20]})")
 
         # Scenario B: 无签名头 (仅 TLS 伪装)
         try:
-            response_b = await self.session.get(full_url, headers=self.base_headers, timeout=10)
-            result['status_codes'].append(f"B:{response_b.status_code}")
+            response_b = await self.session.get(
+                full_url, headers=self.base_headers, timeout=10
+            )
+            result["status_codes"].append(f"B:{response_b.status_code}")
 
             if response_b.status_code == 200:
-                result.update({
-                    'success': True,
-                    'method': 'no_signature',
-                    'data': await self._analyze_response(response_b, template)
-                })
+                result.update(
+                    {
+                        "success": True,
+                        "method": "no_signature",
+                        "data": await self._analyze_response(response_b, template),
+                    }
+                )
                 return result
 
         except Exception as e:
-            result['status_codes'].append(f"B:Error({str(e)[:20]})")
+            result["status_codes"].append(f"B:Error({str(e)[:20]})")
 
         # 记录失败但有用的信息
-        if any("200" in code for code in result['status_codes']):
+        if any("200" in code for code in result["status_codes"]):
             pass
 
         return result
@@ -412,42 +406,45 @@ class FotMobAuthenticatedClient:
     async def _analyze_response(self, response, template):
         """分析成功的响应"""
         try:
-            content_type = response.headers.get('content-type', '').lower()
+            content_type = response.headers.get("content-type", "").lower()
 
-            if 'application/json' in content_type:
+            if "application/json" in content_type:
                 data = response.json()
                 return {
-                    'type': 'json',
-                    'preview': str(data)[:200],
-                    'keys': list(data.keys()) if isinstance(data, dict) else None,
-                    'structure': self._analyze_json_structure(data)
+                    "type": "json",
+                    "preview": str(data)[:200],
+                    "keys": list(data.keys()) if isinstance(data, dict) else None,
+                    "structure": self._analyze_json_structure(data),
                 }
 
-            elif 'text/html' in content_type:
+            elif "text/html" in content_type:
                 text = response.text
                 # 检查是否包含嵌入的 JSON 数据
-                json_indicators = ['__NEXT_DATA__', 'window.__INITIAL_STATE__', 'var data']
+                json_indicators = [
+                    "__NEXT_DATA__",
+                    "window.__INITIAL_STATE__",
+                    "var data",
+                ]
                 found_json = any(indicator in text for indicator in json_indicators)
 
                 return {
-                    'type': 'html',
-                    'length': len(text),
-                    'has_embedded_json': found_json,
-                    'preview': text[:200]
+                    "type": "html",
+                    "length": len(text),
+                    "has_embedded_json": found_json,
+                    "preview": text[:200],
                 }
 
             else:
                 return {
-                    'type': content_type or 'unknown',
-                    'length': len(response.content),
-                    'preview': response.text[:100] if hasattr(response, 'text') else str(response.content)[:100]
+                    "type": content_type or "unknown",
+                    "length": len(response.content),
+                    "preview": response.text[:100]
+                    if hasattr(response, "text")
+                    else str(response.content)[:100],
                 }
 
         except Exception as e:
-            return {
-                'type': 'error',
-                'error': str(e)
-            }
+            return {"type": "error", "error": str(e)}
 
     def _analyze_json_structure(self, data, depth=0, max_depth=2):
         """递归分析 JSON 结构"""
@@ -495,16 +492,14 @@ class FotMobAuthenticatedClient:
         # 输出结果报告
 
         if successful_endpoints:
-
             for _i, endpoint in enumerate(successful_endpoints, 1):
-
-                data = endpoint['data']
-                if data['type'] == 'json':
-                    if data['keys']:
+                data = endpoint["data"]
+                if data["type"] == "json":
+                    if data["keys"]:
                         pass
 
-                elif data['type'] == 'html':
-                    if data['has_embedded_json']:
+                elif data["type"] == "html":
+                    if data["has_embedded_json"]:
                         pass
 
                 else:
@@ -546,9 +541,9 @@ async def main():
         else:
             pass
 
-
     except Exception:
         import traceback
+
         traceback.print_exc()
 
 

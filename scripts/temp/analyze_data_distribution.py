@@ -18,19 +18,24 @@ from sqlalchemy import text, select, func, case, cast, Integer
 import os
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class DataAnalyzer:
     """数据分析师 - 专注于足球数据深度探索"""
 
     def __init__(self):
         # 从环境变量获取数据库URL
-        database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction")
+        database_url = os.getenv(
+            "DATABASE_URL",
+            "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction",
+        )
         # 确保使用asyncpg驱动
         self.engine = create_async_engine(
-            database_url.replace("postgresql://", "postgresql+asyncpg://"),
-            echo=False
+            database_url.replace("postgresql://", "postgresql+asyncpg://"), echo=False
         )
         self.AsyncSessionLocal = async_sessionmaker(
             self.engine, class_=AsyncSession, expire_on_commit=False
@@ -51,38 +56,46 @@ class DataAnalyzer:
 
         async with self.AsyncSessionLocal() as session:
             # 基础数据量统计
-            total_matches = await session.scalar(select(func.count()).select_from(text("matches")))
+            total_matches = await session.scalar(
+                select(func.count()).select_from(text("matches"))
+            )
 
             # 时间范围
-            date_range = await session.execute(text("""
+            date_range = await session.execute(
+                text("""
                 SELECT
                     MIN(match_date) as earliest_match,
                     MAX(match_date) as latest_match,
                     COUNT(DISTINCT DATE(match_date)) as unique_dates
                 FROM matches
                 WHERE match_date IS NOT NULL
-            """))
+            """)
+            )
             date_info = date_range.fetchone()
 
             # 球队数量
-            team_stats = await session.execute(text("""
+            team_stats = await session.execute(
+                text("""
                 SELECT
                     COUNT(DISTINCT home_team_id) as unique_home_teams,
                     COUNT(DISTINCT away_team_id) as unique_away_teams,
                     COUNT(DISTINCT home_team_name) as unique_home_names,
                     COUNT(DISTINCT away_team_name) as unique_away_names
                 FROM matches
-            """))
+            """)
+            )
             team_info = team_stats.fetchone()
 
             # 联赛数量
-            league_stats = await session.execute(text("""
+            league_stats = await session.execute(
+                text("""
                 SELECT
                     COUNT(DISTINCT league_id) as unique_leagues,
                     COUNT(DISTINCT league_name) as unique_league_names
                 FROM matches
                 WHERE league_id IS NOT NULL
-            """))
+            """)
+            )
             league_info = league_stats.fetchone()
 
             return {
@@ -95,7 +108,7 @@ class DataAnalyzer:
                 "unique_home_names": team_info.unique_home_names,
                 "unique_away_names": team_info.unique_away_names,
                 "unique_leagues": league_info.unique_leagues,
-                "unique_league_names": league_info.unique_league_names
+                "unique_league_names": league_info.unique_league_names,
             }
 
     async def analyze_match_outcomes(self) -> dict[str, Any]:
@@ -144,7 +157,8 @@ class DataAnalyzer:
             goals_stats = goals_result.fetchone()
 
             # 比分分布
-            score_distribution = await session.execute(text("""
+            score_distribution = await session.execute(
+                text("""
                 SELECT
                     home_score || '-' || away_score as score,
                     COUNT(*) as count,
@@ -154,7 +168,8 @@ class DataAnalyzer:
                 GROUP BY home_score, away_score
                 ORDER BY count DESC
                 LIMIT 20
-            """))
+            """)
+            )
 
             top_scores = score_distribution.fetchall()
 
@@ -163,24 +178,34 @@ class DataAnalyzer:
                     {
                         "result": row.result,
                         "count": row.count,
-                        "percentage": row.percentage
-                    } for row in outcomes
+                        "percentage": row.percentage,
+                    }
+                    for row in outcomes
                 ],
                 "goals_stats": {
-                    "avg_total_goals": float(goals_stats.avg_total_goals) if goals_stats.avg_total_goals else 0,
+                    "avg_total_goals": float(goals_stats.avg_total_goals)
+                    if goals_stats.avg_total_goals
+                    else 0,
                     "min_total_goals": goals_stats.min_total_goals,
                     "max_total_goals": goals_stats.max_total_goals,
-                    "stddev_total_goals": float(goals_stats.stddev_total_goals) if goals_stats.stddev_total_goals else 0,
-                    "avg_home_goals": float(goals_stats.avg_home_goals) if goals_stats.avg_home_goals else 0,
-                    "avg_away_goals": float(goals_stats.avg_away_goals) if goals_stats.avg_away_goals else 0
+                    "stddev_total_goals": float(goals_stats.stddev_total_goals)
+                    if goals_stats.stddev_total_goals
+                    else 0,
+                    "avg_home_goals": float(goals_stats.avg_home_goals)
+                    if goals_stats.avg_home_goals
+                    else 0,
+                    "avg_away_goals": float(goals_stats.avg_away_goals)
+                    if goals_stats.avg_away_goals
+                    else 0,
                 },
                 "top_scores": [
                     {
                         "score": row.score,
                         "count": row.count,
-                        "percentage": row.percentage
-                    } for row in top_scores
-                ]
+                        "percentage": row.percentage,
+                    }
+                    for row in top_scores
+                ],
             }
 
     async def analyze_league_activity(self) -> list[dict[str, Any]]:
@@ -216,8 +241,11 @@ class DataAnalyzer:
                     "unique_team_pairs": row.unique_team_pairs,
                     "earliest_match": row.earliest_match,
                     "latest_match": row.latest_match,
-                    "avg_goals_per_match": float(row.avg_goals_per_match) if row.avg_goals_per_match else 0
-                } for row in leagues
+                    "avg_goals_per_match": float(row.avg_goals_per_match)
+                    if row.avg_goals_per_match
+                    else 0,
+                }
+                for row in leagues
             ]
 
     async def analyze_temporal_patterns(self) -> dict[str, Any]:
@@ -226,7 +254,8 @@ class DataAnalyzer:
 
         async with self.AsyncSessionLocal() as session:
             # 按年月分析比赛数量
-            monthly_pattern = await session.execute(text("""
+            monthly_pattern = await session.execute(
+                text("""
                 SELECT
                     DATE_TRUNC('month', match_date)::date as month,
                     COUNT(*) as matches_count,
@@ -236,12 +265,14 @@ class DataAnalyzer:
                 GROUP BY DATE_TRUNC('month', match_date)::date
                 ORDER BY month DESC
                 LIMIT 24
-            """))
+            """)
+            )
 
             monthly_data = monthly_pattern.fetchall()
 
             # 按星期几分析
-            weekday_pattern = await session.execute(text("""
+            weekday_pattern = await session.execute(
+                text("""
                 SELECT
                     EXTRACT(ISODOW FROM match_date)::integer as weekday,
                     TO_CHAR(match_date, 'Day') as weekday_name,
@@ -254,7 +285,8 @@ class DataAnalyzer:
                 WHERE match_date IS NOT NULL
                 GROUP BY EXTRACT(ISODOW FROM match_date), TO_CHAR(match_date, 'Day')
                 ORDER BY weekday
-            """))
+            """)
+            )
 
             weekday_data = weekday_pattern.fetchall()
 
@@ -263,8 +295,9 @@ class DataAnalyzer:
                     {
                         "month": row.month,
                         "matches_count": row.matches_count,
-                        "avg_goals": float(row.avg_goals) if row.avg_goals else 0
-                    } for row in monthly_data
+                        "avg_goals": float(row.avg_goals) if row.avg_goals else 0,
+                    }
+                    for row in monthly_data
                 ],
                 "weekday_patterns": [
                     {
@@ -272,9 +305,12 @@ class DataAnalyzer:
                         "weekday_name": row.weekday_name.strip(),
                         "matches_count": row.matches_count,
                         "avg_goals": float(row.avg_goals) if row.avg_goals else 0,
-                        "home_win_percentage": float(row.home_win_percentage) if row.home_win_percentage else 0
-                    } for row in weekday_data
-                ]
+                        "home_win_percentage": float(row.home_win_percentage)
+                        if row.home_win_percentage
+                        else 0,
+                    }
+                    for row in weekday_data
+                ],
             }
 
     async def analyze_home_advantage(self) -> dict[str, Any]:
@@ -282,7 +318,8 @@ class DataAnalyzer:
         logger.info("🏠 分析主场优势...")
 
         async with self.AsyncSessionLocal() as session:
-            home_advantage = await session.execute(text("""
+            home_advantage = await session.execute(
+                text("""
                 SELECT
                     COUNT(*) as total_matches,
                     SUM(CASE WHEN home_score > away_score THEN 1 ELSE 0 END) as home_wins,
@@ -296,7 +333,8 @@ class DataAnalyzer:
                     ) as home_win_percentage
                 FROM matches
                 WHERE home_score IS NOT NULL AND away_score IS NOT NULL
-            """))
+            """)
+            )
 
             result = home_advantage.fetchone()
 
@@ -305,10 +343,18 @@ class DataAnalyzer:
                 "home_wins": result.home_wins,
                 "draws": result.draws,
                 "away_wins": result.away_wins,
-                "home_win_percentage": float(result.home_win_percentage) if result.home_win_percentage else 0,
-                "avg_goal_difference": float(result.avg_goal_difference) if result.avg_goal_difference else 0,
-                "avg_home_goals": float(result.avg_home_goals) if result.avg_home_goals else 0,
-                "avg_away_goals": float(result.avg_away_goals) if result.avg_away_goals else 0
+                "home_win_percentage": float(result.home_win_percentage)
+                if result.home_win_percentage
+                else 0,
+                "avg_goal_difference": float(result.avg_goal_difference)
+                if result.avg_goal_difference
+                else 0,
+                "avg_home_goals": float(result.avg_home_goals)
+                if result.avg_home_goals
+                else 0,
+                "avg_away_goals": float(result.avg_away_goals)
+                if result.avg_away_goals
+                else 0,
             }
 
     async def generate_comprehensive_report(self) -> dict[str, Any]:
@@ -327,27 +373,29 @@ class DataAnalyzer:
             "analysis_timestamp": datetime.now().isoformat(),
             "data_overview": {
                 **basic_stats,
-                "data_quality_note": "基于28,704条真实比赛数据"
+                "data_quality_note": "基于28,704条真实比赛数据",
             },
             "match_outcomes": match_outcomes,
             "league_activity": league_activity,
             "temporal_patterns": temporal_patterns,
-            "home_advantage": home_advantage
+            "home_advantage": home_advantage,
         }
 
         return comprehensive_report
 
     def print_report_summary(self, report: dict[str, Any]):
         """打印报告摘要"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🏆 足球预测数据深度探索性分析报告")
-        print("="*80)
+        print("=" * 80)
 
         # 数据概览
         overview = report["data_overview"]
         print("\n📊 数据概览:")
         print(f"   总比赛数: {overview['total_matches']:,}")
-        print(f"   时间跨度: {overview['earliest_match']} 至 {overview['latest_match']}")
+        print(
+            f"   时间跨度: {overview['earliest_match']} 至 {overview['latest_match']}"
+        )
         print(f"   独特日期: {overview['unique_dates']} 天")
         print(f"   独特联赛: {overview['unique_leagues']} 个")
 
@@ -355,7 +403,9 @@ class DataAnalyzer:
         outcomes = report["match_outcomes"]["outcomes"]
         print("\n⚽ 比赛结果分布:")
         for outcome in outcomes:
-            print(f"   {outcome['result']:10s}: {outcome['count']:6,} 场 ({outcome['percentage']:5.1f}%)")
+            print(
+                f"   {outcome['result']:10s}: {outcome['count']:6,} 场 ({outcome['percentage']:5.1f}%)"
+            )
 
         # 进球统计
         goals = report["match_outcomes"]["goals_stats"]
@@ -377,15 +427,20 @@ class DataAnalyzer:
         leagues = report["league_activity"][:10]
         print("\n🏆 Top 10 最活跃联赛:")
         for i, league in enumerate(leagues, 1):
-            print(f"   {i:2d}. {league['league_name'][:20]:20s}: {league['total_matches']:5,} 场")
+            print(
+                f"   {i:2d}. {league['league_name'][:20]:20s}: {league['total_matches']:5,} 场"
+            )
 
         # 热门比分
         top_scores = report["match_outcomes"]["top_scores"][:10]
         print("\n📈 热门比分 Top 10:")
         for score in top_scores:
-            print(f"   {score['score']:5s}: {score['count']:4,} 场 ({score['percentage']:4.1f}%)")
+            print(
+                f"   {score['score']:5s}: {score['count']:4,} 场 ({score['percentage']:4.1f}%)"
+            )
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
+
 
 async def main():
     """主函数"""
@@ -407,6 +462,7 @@ async def main():
         raise
     finally:
         await analyzer.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

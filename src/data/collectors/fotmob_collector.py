@@ -56,28 +56,23 @@ class FotmobCollector(BaseCollector):
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-
             # Chrome on macOS
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-
             # Firefox on Windows
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/120.0",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0",
-
             # Firefox on macOS
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/120.0",
-
             # Safari on macOS
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
-
             # Edge on Windows
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0",
         ]
 
         # 基础 Headers (不包含 User-Agent，将动态设置)
@@ -88,7 +83,7 @@ class FotmobCollector(BaseCollector):
             "Referer": "https://www.fotmob.com/",
             "Origin": "https://www.fotmob.com",
             "Cache-Control": "no-cache",
-            "Pragma": "no-cache"
+            "Pragma": "no-cache",
         }
 
         # 已知的有效签名 (从探测脚本获取)
@@ -135,7 +130,9 @@ class FotmobCollector(BaseCollector):
         # 确保最小延迟
         delay_time = max(base_delay, 1.0)
 
-        self.logger.debug(f"智能延迟: {delay_time:.2f}秒 (连续错误: {self.consecutive_errors})")
+        self.logger.debug(
+            f"智能延迟: {delay_time:.2f}秒 (连续错误: {self.consecutive_errors})"
+        )
         await asyncio.sleep(delay_time)
 
         self.last_request_time = time.time()
@@ -167,7 +164,7 @@ class FotmobCollector(BaseCollector):
             self.logger.warning(
                 f"🚫 检测到反爬措施 (HTTP {status_code})，"
                 f"连续错误 {self.consecutive_errors} 次，"
-                f"休眠 {sleep_time/60:.1f} 分钟至 {datetime.fromtimestamp(self.blocked_until)}"
+                f"休眠 {sleep_time / 60:.1f} 分钟至 {datetime.fromtimestamp(self.blocked_until)}"
             )
 
             await asyncio.sleep(sleep_time)
@@ -178,7 +175,9 @@ class FotmobCollector(BaseCollector):
     def _reset_error_count(self) -> None:
         """重置错误计数"""
         if self.consecutive_errors > 0:
-            self.logger.info(f"✅ 错误已清除，重置连续错误计数 (之前: {self.consecutive_errors})")
+            self.logger.info(
+                f"✅ 错误已清除，重置连续错误计数 (之前: {self.consecutive_errors})"
+            )
         self.consecutive_errors = 0
         self.blocked_until = None
 
@@ -186,7 +185,7 @@ class FotmobCollector(BaseCollector):
         """检查当前是否处于封锁状态"""
         if self.blocked_until and time.time() < self.blocked_until:
             remaining = self.blocked_until - time.time()
-            self.logger.warning(f"⏳ 仍处于封锁状态，剩余 {remaining/60:.1f} 分钟")
+            self.logger.warning(f"⏳ 仍处于封锁状态，剩余 {remaining / 60:.1f} 分钟")
             return True
         return False
 
@@ -204,23 +203,16 @@ class FotmobCollector(BaseCollector):
         timestamp = int(time.time() * 1000)
 
         # 构建请求体数据
-        body_data = {
-            "url": api_url,
-            "code": timestamp,
-            "foo": self.client_version
-        }
+        body_data = {"url": api_url, "code": timestamp, "foo": self.client_version}
 
         # 生成签名 (基于成功探测的模式)
         signature = self._generate_signature(body_data, api_url)
 
         # 构建完整的 x-mas 头
-        x_mas_data = {
-            "body": body_data,
-            "signature": signature
-        }
+        x_mas_data = {"body": body_data, "signature": signature}
 
         # 编码为 Base64
-        x_mas_str = json.dumps(x_mas_data, separators=(',', ':'))
+        x_mas_str = json.dumps(x_mas_data, separators=(",", ":"))
         x_mas_encoded = base64.b64encode(x_mas_str.encode()).decode()
 
         return x_mas_encoded
@@ -232,7 +224,9 @@ class FotmobCollector(BaseCollector):
         signature = hashlib.md5(base_str.encode()).hexdigest().upper()[:16]
         return signature
 
-    def _get_headers(self, api_url: str, use_known_signature: bool = False) -> dict[str, str]:
+    def _get_headers(
+        self, api_url: str, use_known_signature: bool = False
+    ) -> dict[str, str]:
         """
         获取请求头 (增强版：随机UA + 动态sec-ch-ua)
 
@@ -253,12 +247,17 @@ class FotmobCollector(BaseCollector):
         if "Chrome" in user_agent:
             # 提取 Chrome 版本号
             import re
-            chrome_match = re.search(r'Chrome/(\d+)\.0\.0\.0', user_agent)
+
+            chrome_match = re.search(r"Chrome/(\d+)\.0\.0\.0", user_agent)
             if chrome_match:
                 chrome_version = chrome_match.group(1)
-                headers["sec-ch-ua"] = f'"Chromium";v="{chrome_version}", "Google Chrome";v="{chrome_version}", "Not_A Brand";v="99"'
+                headers["sec-ch-ua"] = (
+                    f'"Chromium";v="{chrome_version}", "Google Chrome";v="{chrome_version}", "Not_A Brand";v="99"'
+                )
             else:
-                headers["sec-ch-ua"] = '"Chromium";v="120", "Google Chrome";v="120", "Not_A Brand";v="99"'
+                headers["sec-ch-ua"] = (
+                    '"Chromium";v="120", "Google Chrome";v="120", "Not_A Brand";v="99"'
+                )
 
             if "Windows" in user_agent:
                 headers["sec-ch-ua-platform"] = '"Windows"'
@@ -282,17 +281,22 @@ class FotmobCollector(BaseCollector):
         elif "Edg" in user_agent:
             # Edge 浏览器
             import re
-            edge_match = re.search(r'Edg/(\d+)\.0\.0\.0', user_agent)
+
+            edge_match = re.search(r"Edg/(\d+)\.0\.0\.0", user_agent)
             if edge_match:
                 edge_version = edge_match.group(1)
-                headers["sec-ch-ua"] = f'"Chromium";v="120", "Microsoft Edge";v="{edge_version}", "Not_A Brand";v="99"'
+                headers["sec-ch-ua"] = (
+                    f'"Chromium";v="120", "Microsoft Edge";v="{edge_version}", "Not_A Brand";v="99"'
+                )
             else:
-                headers["sec-ch-ua"] = '"Chromium";v="120", "Microsoft Edge";v="120", "Not_A Brand";v="99"'
+                headers["sec-ch-ua"] = (
+                    '"Chromium";v="120", "Microsoft Edge";v="120", "Not_A Brand";v="99"'
+                )
 
         if use_known_signature and (
-            api_url == "/api/data/audio-matches" or
-            api_url.startswith("/api/matches?date=") or
-            api_url.startswith("/api/data/matches?date=")
+            api_url == "/api/data/audio-matches"
+            or api_url.startswith("/api/matches?date=")
+            or api_url.startswith("/api/data/matches?date=")
         ):
             # 对音频匹配接口和历史数据接口使用已知的有效签名
             headers["x-mas"] = self.known_signature
@@ -308,7 +312,7 @@ class FotmobCollector(BaseCollector):
         api_url: str,
         use_known_signature: bool = False,
         timeout: float = 30.0,
-        max_retries: int = 3
+        max_retries: int = 3,
     ) -> dict[str, Any] | None:
         """
         发送认证请求 (增强版：智能延迟 + 错误熔断 + 重试机制)
@@ -336,24 +340,26 @@ class FotmobCollector(BaseCollector):
 
         # 📝 记录当前使用的 User-Agent (用于调试)
         current_ua = headers.get("User-Agent", "Unknown")[:50]
-        self.logger.debug(f"🎭 请求 #{self.request_count} - UA: {current_ua} -> {api_url}")
+        self.logger.debug(
+            f"🎭 请求 #{self.request_count} - UA: {current_ua} -> {api_url}"
+        )
 
         for attempt in range(max_retries + 1):
             try:
-                response = await session.get(
-                    full_url,
-                    headers=headers,
-                    timeout=timeout
-                )
+                response = await session.get(full_url, headers=headers, timeout=timeout)
 
-                self.logger.debug(f"响应状态: {response.status_code} (尝试 {attempt + 1}/{max_retries + 1})")
+                self.logger.debug(
+                    f"响应状态: {response.status_code} (尝试 {attempt + 1}/{max_retries + 1})"
+                )
 
                 if response.status_code == 200:
                     # ✅ 请求成功，重置错误计数
                     self._reset_error_count()
                     try:
                         data = response.json()
-                        self.logger.info(f"✅ 成功获取数据: {api_url} (大小: {len(str(data))} 字符)")
+                        self.logger.info(
+                            f"✅ 成功获取数据: {api_url} (大小: {len(str(data))} 字符)"
+                        )
                         return data
                     except ValueError as e:
                         self.logger.error(f"❌ JSON解析失败 {api_url}: {e}")
@@ -382,7 +388,7 @@ class FotmobCollector(BaseCollector):
             except TimeoutError:
                 self.logger.warning(f"⏱️ 请求超时 {api_url} (尝试 {attempt + 1})")
                 if attempt < max_retries:
-                    await asyncio.sleep(2 ** attempt)  # 指数退避
+                    await asyncio.sleep(2**attempt)  # 指数退避
                     continue
                 return None
 
@@ -406,32 +412,35 @@ class FotmobCollector(BaseCollector):
             CollectionResult: 包含比赛数据的结果
         """
         try:
-            self.logger.info(f"Collecting matches for date {date_str} using historical API")
+            self.logger.info(
+                f"Collecting matches for date {date_str} using historical API"
+            )
 
             # 使用支持历史日期的新接口
             api_url = f"/api/matches?date={date_str}"
 
             data = await self._make_authenticated_request(
-                api_url,
-                use_known_signature=True
+                api_url, use_known_signature=True
             )
 
             if data is None:
-                return self.create_error_result(f"Failed to fetch matches for date {date_str}")
+                return self.create_error_result(
+                    f"Failed to fetch matches for date {date_str}"
+                )
 
-            if isinstance(data, dict) and 'leagues' in data:
+            if isinstance(data, dict) and "leagues" in data:
                 # 从联赛数据中提取比赛信息
                 matches = []
-                leagues = data.get('leagues', [])
+                leagues = data.get("leagues", [])
 
                 for league in leagues:
-                    league_matches = league.get('matches', [])
+                    league_matches = league.get("matches", [])
                     for match in league_matches:
                         # 添加联赛信息到比赛数据中
-                        match['league_info'] = {
-                            'id': league.get('id'),
-                            'name': league.get('name'),
-                            'country': league.get('country'),
+                        match["league_info"] = {
+                            "id": league.get("id"),
+                            "name": league.get("name"),
+                            "country": league.get("country"),
                         }
                         matches.append(match)
 
@@ -440,17 +449,23 @@ class FotmobCollector(BaseCollector):
                     "total_leagues": len(leagues),
                     "total_matches": len(matches),
                     "source": "fotmob_date_api",
-                    "api_url": api_url
+                    "api_url": api_url,
                 }
 
-                self.logger.info(f"Successfully collected {len(matches)} matches from {len(leagues)} leagues for date {date_str}")
+                self.logger.info(
+                    f"Successfully collected {len(matches)} matches from {len(leagues)} leagues for date {date_str}"
+                )
                 return self.create_success_result(matches, metadata)
             else:
-                return self.create_error_result(f"Unexpected data format for date {date_str}")
+                return self.create_error_result(
+                    f"Unexpected data format for date {date_str}"
+                )
 
         except Exception as e:
             self.logger.error(f"Error collecting matches for date {date_str}: {e}")
-            return self.create_error_result(f"Date API collection failed for {date_str}: {e}")
+            return self.create_error_result(
+                f"Date API collection failed for {date_str}: {e}"
+            )
 
     async def collect_match_details(self, match_id: str) -> CollectionResult:
         """
@@ -468,19 +483,23 @@ class FotmobCollector(BaseCollector):
             data = await self._make_authenticated_request(f"/api/match?id={match_id}")
 
             if data is None:
-                return self.create_error_result(f"Failed to fetch match details for {match_id}")
+                return self.create_error_result(
+                    f"Failed to fetch match details for {match_id}"
+                )
 
             # 验证数据格式
-            required_fields = ['id', 'home', 'away']
+            required_fields = ["id", "home", "away"]
             if not all(field in data for field in required_fields):
-                return self.create_error_result(f"Invalid match details format for {match_id}")
+                return self.create_error_result(
+                    f"Invalid match details format for {match_id}"
+                )
 
             # 添加元数据
             metadata = {
                 "match_id": match_id,
                 "source": "fotmob_match_details",
                 "collected_at": datetime.now().isoformat(),
-                "data_fields": list(data.keys())
+                "data_fields": list(data.keys()),
             }
 
             self.logger.info(f"Successfully collected match details for {match_id}")
@@ -488,7 +507,9 @@ class FotmobCollector(BaseCollector):
 
         except Exception as e:
             self.logger.error(f"Error collecting match details for {match_id}: {e}")
-            return self.create_error_result(f"Match details collection failed for {match_id}: {e}")
+            return self.create_error_result(
+                f"Match details collection failed for {match_id}: {e}"
+            )
 
     async def collect_matches_by_date(self, date_str: str) -> CollectionResult:
         """
@@ -501,13 +522,17 @@ class FotmobCollector(BaseCollector):
             CollectionResult: 包含当天所有比赛详情的结果
         """
         try:
-            self.logger.info(f"Collecting matches for date {date_str} using historical API")
+            self.logger.info(
+                f"Collecting matches for date {date_str} using historical API"
+            )
 
             # 直接使用新的历史数据接口，一步获取比赛数据
             result = await self.collect_matches_by_date_api(date_str)
 
             if not result.success:
-                return self.create_error_result(f"Failed to get matches for date {date_str}: {result.error}")
+                return self.create_error_result(
+                    f"Failed to get matches for date {date_str}: {result.error}"
+                )
 
             matches = result.data
             metadata = result.metadata or {}
@@ -516,14 +541,18 @@ class FotmobCollector(BaseCollector):
             max_matches = self.config.get("max_matches_per_date", 50)
             if len(matches) > max_matches:
                 matches = matches[:max_matches]
-                self.logger.info(f"Limited matches to {max_matches} for date {date_str}")
+                self.logger.info(
+                    f"Limited matches to {max_matches} for date {date_str}"
+                )
 
             # 更新元数据
-            metadata.update({
-                "date": date_str,
-                "matches_processed": len(matches),
-                "source": "fotmob_date_collection_v2"
-            })
+            metadata.update(
+                {
+                    "date": date_str,
+                    "matches_processed": len(matches),
+                    "source": "fotmob_date_collection_v2",
+                }
+            )
 
             self.logger.info(
                 f"Successfully collected {len(matches)} matches for {date_str} "
@@ -568,7 +597,7 @@ class FotmobCollector(BaseCollector):
                 "successful_details": len(match_details),
                 "errors": len(errors),
                 "error_details": errors[:5],  # 只记录前5个错误
-                "source": "fotmob_date_collection"
+                "source": "fotmob_date_collection",
             }
 
             self.logger.info(
@@ -580,7 +609,9 @@ class FotmobCollector(BaseCollector):
 
         except Exception as e:
             self.logger.error(f"Error collecting matches for date {date_str}: {e}")
-            return self.create_error_result(f"Date collection failed for {date_str}: {e}")
+            return self.create_error_result(
+                f"Date collection failed for {date_str}: {e}"
+            )
 
     async def collect(self, *args, **kwargs) -> CollectionResult:
         """

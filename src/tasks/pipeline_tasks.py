@@ -42,6 +42,7 @@ async def batch_data_cleaning_with_ids() -> tuple[int, list[int]]:
 
         # 确保数据库已初始化
         from src.database.connection import initialize_database
+
         initialize_database()
 
         from src.database.connection import get_async_session
@@ -90,10 +91,9 @@ async def batch_data_cleaning_with_ids() -> tuple[int, list[int]]:
                             ORDER BY created_at ASC
                             LIMIT :limit OFFSET :offset
                         """)
-                        result = await session.execute(sql_query, {
-                            "limit": BATCH_SIZE,
-                            "offset": offset
-                        })
+                        result = await session.execute(
+                            sql_query, {"limit": BATCH_SIZE, "offset": offset}
+                        )
 
                         # 将结果转换为RawMatchData对象
                         rows = result.fetchall()
@@ -106,25 +106,30 @@ async def batch_data_cleaning_with_ids() -> tuple[int, list[int]]:
                                 collected_at=row[4],
                                 processed=row[5],
                                 created_at=row[6] if len(row) > 6 else None,
-                                updated_at=row[7] if len(row) > 7 else None
+                                updated_at=row[7] if len(row) > 7 else None,
                             )
                             batch_raw_matches.append(raw_match)
 
-                        logger.info(f"✅ 方法2成功: 找到 {len(batch_raw_matches)} 条记录")
+                        logger.info(
+                            f"✅ 方法2成功: 找到 {len(batch_raw_matches)} 条记录"
+                        )
                     except Exception as e:
                         logger.error(f"❌ 方法2也失败: {e}")
                         # 方法3：最后回退到检查所有数据
                         try:
-                            all_query = select(RawMatchData).limit(BATCH_SIZE).offset(offset)
+                            all_query = (
+                                select(RawMatchData).limit(BATCH_SIZE).offset(offset)
+                            )
                             result = await session.execute(all_query)
                             all_matches = result.scalars().all()
 
                             # 在Python中过滤未处理的
                             batch_raw_matches = [
-                                match for match in all_matches
-                                if not match.processed
+                                match for match in all_matches if not match.processed
                             ]
-                            logger.info(f"✅ 方法3成功: 从{len(all_matches)}条中筛选出{len(batch_raw_matches)}条未处理记录")
+                            logger.info(
+                                f"✅ 方法3成功: 从{len(all_matches)}条中筛选出{len(batch_raw_matches)}条未处理记录"
+                            )
                         except Exception as e3:
                             logger.error(f"❌ 所有方法都失败: {e3}")
                             break
@@ -136,7 +141,10 @@ async def batch_data_cleaning_with_ids() -> tuple[int, list[int]]:
                 logger.info(f"📊 本批次找到 {len(batch_raw_matches)} 条原始数据")
 
                 # 🔥 核心：使用增强版处理函数，返回新创建的比赛ID
-                batch_cleaned_count, batch_new_match_ids = await _process_data_batch_with_ids(session, batch_raw_matches)
+                (
+                    batch_cleaned_count,
+                    batch_new_match_ids,
+                ) = await _process_data_batch_with_ids(session, batch_raw_matches)
 
                 # 步骤3：提交当前批次的事务
                 await session.commit()
@@ -144,7 +152,9 @@ async def batch_data_cleaning_with_ids() -> tuple[int, list[int]]:
                 total_cleaned_count += batch_cleaned_count
                 new_match_ids.extend(batch_new_match_ids)  # 🆕 累积新比赛ID
 
-                logger.info(f"✅ 批次处理完成: {batch_cleaned_count} 条记录，{len(batch_new_match_ids)} 个新比赛，总计: {total_cleaned_count}")
+                logger.info(
+                    f"✅ 批次处理完成: {batch_cleaned_count} 条记录，{len(batch_new_match_ids)} 个新比赛，总计: {total_cleaned_count}"
+                )
 
                 # 如果返回的记录数少于批次大小，说明没有更多数据了
                 if len(batch_raw_matches) < BATCH_SIZE:
@@ -152,12 +162,15 @@ async def batch_data_cleaning_with_ids() -> tuple[int, list[int]]:
 
                 offset += BATCH_SIZE
 
-        logger.info(f"🎉 分块批量数据清洗完成！总计处理 {total_cleaned_count} 条记录，新创建 {len(new_match_ids)} 个比赛")
+        logger.info(
+            f"🎉 分块批量数据清洗完成！总计处理 {total_cleaned_count} 条记录，新创建 {len(new_match_ids)} 个比赛"
+        )
         return total_cleaned_count, new_match_ids
 
     except Exception as e:
         logger.error(f"❌ 分块批量数据清洗失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 0
 
@@ -202,8 +215,8 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
             league_key = (league_name, league_country)
             if league_key not in unique_leagues:
                 unique_leagues[league_key] = {
-                    'name': league_name,
-                    'country': league_country
+                    "name": league_name,
+                    "country": league_country,
                 }
         except Exception as e:
             logger.debug(f"提取league信息失败: {e}")
@@ -211,8 +224,8 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
             default_key = ("International Friendlies", "International")
             if default_key not in unique_leagues:
                 unique_leagues[default_key] = {
-                    'name': "International Friendlies",
-                    'country': "International"
+                    "name": "International Friendlies",
+                    "country": "International",
                 }
             continue
 
@@ -221,7 +234,9 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
         logger.info(f"🏆 批量创建 {len(unique_leagues)} 个Leagues...")
         existing_leagues = {}
         for (name, country), _league_data in unique_leagues.items():
-            query = text("SELECT id FROM leagues WHERE name = :name AND country = :country")
+            query = text(
+                "SELECT id FROM leagues WHERE name = :name AND country = :country"
+            )
             result = await session.execute(query, {"name": name, "country": country})
             existing = result.scalar_one_or_none()
             if existing:
@@ -235,7 +250,7 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
                     country=country,
                     is_active=True,
                     created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
                 new_leagues.append(new_league)
 
@@ -281,26 +296,30 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
 
             # 处理主队
             if home_team_name:
-                team_short_name = home_team_name[:10] if len(home_team_name) > 10 else home_team_name
+                team_short_name = (
+                    home_team_name[:10] if len(home_team_name) > 10 else home_team_name
+                )
                 team_country = match_data.get("league_country", "Unknown Country")
 
                 if home_team_name not in unique_teams:
                     unique_teams[home_team_name] = {
-                        'name': home_team_name,
-                        'short_name': team_short_name,
-                        'country': team_country
+                        "name": home_team_name,
+                        "short_name": team_short_name,
+                        "country": team_country,
                     }
 
             # 处理客队
             if away_team_name:
-                team_short_name = away_team_name[:10] if len(away_team_name) > 10 else away_team_name
+                team_short_name = (
+                    away_team_name[:10] if len(away_team_name) > 10 else away_team_name
+                )
                 team_country = match_data.get("league_country", "Unknown Country")
 
                 if away_team_name not in unique_teams:
                     unique_teams[away_team_name] = {
-                        'name': away_team_name,
-                        'short_name': team_short_name,
-                        'country': team_country
+                        "name": away_team_name,
+                        "short_name": team_short_name,
+                        "country": team_country,
                     }
 
         except Exception as e:
@@ -323,11 +342,11 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
             if team_name not in existing_teams:
                 new_team = Team(
                     name=team_name,
-                    short_name=_team_data['short_name'],
-                    country=_team_data['country'],
+                    short_name=_team_data["short_name"],
+                    country=_team_data["country"],
                     founded_year=2000,
                     created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
                 new_teams.append(new_team)
 
@@ -352,31 +371,31 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
             raw_content = match_data.get("raw_data", {})
 
             # 处理状态字段 - 修复状态提取逻辑，支持FotMob JSON结构
-            status = 'SCHEDULED'  # 默认状态
+            status = "SCHEDULED"  # 默认状态
 
             # 方法1: 从 match_data.status 提取
             status_field = match_data.get("status", {})
             if isinstance(status_field, dict):
                 # FotMob 使用 'reason.short' == 'FT' 表示完赛
-                if status_field.get('finished', False):
-                    status = 'FINISHED'
-                elif status_field.get('reason', {}).get('short') == 'FT':
-                    status = 'FINISHED'
-                elif status_field.get('started', False):
-                    status = 'LIVE'
+                if status_field.get("finished", False):
+                    status = "FINISHED"
+                elif status_field.get("reason", {}).get("short") == "FT":
+                    status = "FINISHED"
+                elif status_field.get("started", False):
+                    status = "LIVE"
                 else:
-                    status = 'SCHEDULED'
+                    status = "SCHEDULED"
 
             # 方法2: 从 raw_data.status 提取（备用）
-            if status == 'SCHEDULED' and "status" in raw_content:
+            if status == "SCHEDULED" and "status" in raw_content:
                 raw_status = raw_content.get("status", {})
                 if isinstance(raw_status, dict):
-                    if raw_status.get('finished', False):
-                        status = 'FINISHED'
-                    elif raw_status.get('reason', {}).get('short') == 'FT':
-                        status = 'FINISHED'
-                    elif raw_status.get('started', False):
-                        status = 'LIVE'
+                    if raw_status.get("finished", False):
+                        status = "FINISHED"
+                    elif raw_status.get("reason", {}).get("short") == "FT":
+                        status = "FINISHED"
+                    elif raw_status.get("started", False):
+                        status = "LIVE"
 
             # 获取关联的ID - 🔄 修复League映射不匹配问题
             # 优先使用match_data中的结构化信息，回退到raw_data确保一致性
@@ -386,12 +405,18 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
             raw_content = match_data.get("raw_data", {})
             if "competition" in raw_content:
                 comp = raw_content["competition"]
-                league_country_lookup = comp.get("area", {}).get("name", "Unknown Country")
+                league_country_lookup = comp.get("area", {}).get(
+                    "name", "Unknown Country"
+                )
             else:
-                league_country_lookup = match_data.get("league_country", "Unknown Country")
+                league_country_lookup = match_data.get(
+                    "league_country", "Unknown Country"
+                )
 
             # 保持原始信息用于日志
-            league_country_display = match_data.get("league_country", league_country_lookup)
+            league_country_display = match_data.get(
+                "league_country", league_country_lookup
+            )
 
             home_team_name = match_data.get("home_team_name", "Unknown Team")
             away_team_name = match_data.get("away_team_name", "Unknown Team")
@@ -406,11 +431,17 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
             logger.info(f"   - 比赛: {home_team_name} vs {away_team_name}")
             logger.info(f"   - 联赛: {league_name} ({league_country_display})")
             logger.info(f"   - 查找键: ({league_name}, {league_country_lookup})")
-            logger.info(f"   - 关联ID: league_id={league_id}, home_team_id={home_team_id}, away_team_id={away_team_id}")
+            logger.info(
+                f"   - 关联ID: league_id={league_id}, home_team_id={home_team_id}, away_team_id={away_team_id}"
+            )
 
             if not all([league_id, home_team_id, away_team_id]):
-                logger.warning(f"⚠️ 跳过比赛，缺少关联ID: league={league_name}, home={home_team_name}, away={away_team_name}")
-                logger.warning(f"   ID详情: league_id={league_id}, home_team_id={home_team_id}, away_team_id={away_team_id}")
+                logger.warning(
+                    f"⚠️ 跳过比赛，缺少关联ID: league={league_name}, home={home_team_name}, away={away_team_name}"
+                )
+                logger.warning(
+                    f"   ID详情: league_id={league_id}, home_team_id={home_team_id}, away_team_id={away_team_id}"
+                )
                 continue
 
             # 处理时间
@@ -418,7 +449,9 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
             match_date = None
             if match_time_str and isinstance(match_time_str, str):
                 try:
-                    aware_dt = datetime.fromisoformat(match_time_str.replace("Z", "+00:00"))
+                    aware_dt = datetime.fromisoformat(
+                        match_time_str.replace("Z", "+00:00")
+                    )
                     match_date = aware_dt.replace(tzinfo=None)
                 except (ValueError, TypeError):
                     match_date = None
@@ -475,7 +508,7 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
                 home_score=home_score,
                 away_score=away_score,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
 
             matches_to_create.append(new_match)
@@ -508,17 +541,18 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
             update_stmt = (
                 update(RawMatchData)
                 .where(RawMatchData.id.in_(raw_match_ids_to_update))
-                .values(
-                    processed=True,
-                    updated_at=datetime.utcnow()
-                )
+                .values(processed=True, updated_at=datetime.utcnow())
             )
             await session.execute(update_stmt)
 
         cleaned_count = len(matches_to_create)
-        logger.info(f"✅ 本批次完成: 创建 {cleaned_count} 场比赛，新ID: {new_match_ids}")
+        logger.info(
+            f"✅ 本批次完成: 创建 {cleaned_count} 场比赛，新ID: {new_match_ids}"
+        )
 
-    logger.info(f"📊 本批次统计: leagues={leagues_created}, teams={teams_created}, matches={cleaned_count}, new_match_ids={len(new_match_ids)}")
+    logger.info(
+        f"📊 本批次统计: leagues={leagues_created}, teams={teams_created}, matches={cleaned_count}, new_match_ids={len(new_match_ids)}"
+    )
     return cleaned_count, new_match_ids
 
 
@@ -555,15 +589,22 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
             try:
                 # 🆕 使用增强版批量清洗，返回新比赛ID
                 import asyncio
-                cleaned_count, new_match_ids = asyncio.run(batch_data_cleaning_with_ids())
-                logger.info(f"✅ 增强版批量清洗完成: {cleaned_count} 条记录，{len(new_match_ids)} 个新比赛")
+
+                cleaned_count, new_match_ids = asyncio.run(
+                    batch_data_cleaning_with_ids()
+                )
+                logger.info(
+                    f"✅ 增强版批量清洗完成: {cleaned_count} 条记录，{len(new_match_ids)} 个新比赛"
+                )
 
             except Exception as clean_error:
                 logger.warning(f"⚠️ 增强版清洗失败，回退到基础清洗: {clean_error}")
                 # 回退到基础清洗逻辑
                 try:
                     # 优先使用FootballDataCleaner（如果可用）
-                    from src.data.processors.football_data_cleaner import FootballDataCleaner
+                    from src.data.processors.football_data_cleaner import (
+                        FootballDataCleaner,
+                    )
 
                     async def clean_data():
                         FootballDataCleaner()
@@ -572,14 +613,18 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
                         return result
 
                     import asyncio
+
                     clean_result = asyncio.run(clean_data())
                     cleaned_count = clean_result.get("cleaned_records", 0)
-                    logger.info(f"✅ FootballDataCleaner清洗完成，清洗记录数: {cleaned_count}")
+                    logger.info(
+                        f"✅ FootballDataCleaner清洗完成，清洗记录数: {cleaned_count}"
+                    )
 
                 except Exception as fallback_error:
                     logger.info(f"📝 使用高性能批量数据清洗: {fallback_error}")
                     # 使用新的批量清洗逻辑
                     import asyncio
+
                     cleaned_count = asyncio.run(batch_data_cleaning())
 
         # 🔥 增强返回结果：包含新处理的比赛ID列表
@@ -649,7 +694,9 @@ def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str,
             from src.services.feature_service import FeatureService
             from src.database.connection import get_async_session
 
-            async def calculate_features_for_new_matches(match_ids: list[int]) -> dict[str, Any]:
+            async def calculate_features_for_new_matches(
+                match_ids: list[int],
+            ) -> dict[str, Any]:
                 """为新比赛计算特征的异步函数"""
                 calculated_count = 0
                 failed_count = 0
@@ -660,7 +707,9 @@ def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str,
                     for match_id in match_ids:
                         try:
                             # 计算特征
-                            features = await feature_service.get_match_features(match_id)
+                            features = await feature_service.get_match_features(
+                                match_id
+                            )
                             if features:
                                 calculated_count += 1
                                 logger.debug(f"✅ 成功计算比赛 {match_id} 的特征")
@@ -677,12 +726,17 @@ def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str,
                 }
 
             import asyncio
-            feature_task_result = asyncio.run(calculate_features_for_new_matches(new_match_ids))
+
+            feature_task_result = asyncio.run(
+                calculate_features_for_new_matches(new_match_ids)
+            )
 
             features_calculated = feature_task_result.get("calculated_features", 0)
             failed_calculations = feature_task_result.get("failed_calculations", 0)
 
-            logger.info(f"✅ 增量特征计算完成: 成功 {features_calculated}，失败 {failed_calculations}")
+            logger.info(
+                f"✅ 增量特征计算完成: 成功 {features_calculated}，失败 {failed_calculations}"
+            )
 
         except Exception as feature_error:
             logger.warning(f"⚠️ 特征计算服务调用失败，使用模拟计算: {feature_error}")
@@ -730,13 +784,16 @@ def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str,
     except Exception as e:
         logger.error(f"❌ 增量特征工程任务失败: {e}")
         import traceback
+
         logger.error(f"🔍 完整错误堆栈: {traceback.format_exc()}")
         return {
             "status": "error",
             "error": str(e),
             "feature_timestamp": datetime.utcnow().isoformat(),
             "feature_type": "incremental_update",
-            "new_match_ids": cleaning_result.get("new_match_ids", []),  # 也返回目标比赛ID
+            "new_match_ids": cleaning_result.get(
+                "new_match_ids", []
+            ),  # 也返回目标比赛ID
         }
 
 
@@ -828,8 +885,8 @@ def complete_data_pipeline(self) -> dict[str, Any]:
         from .data_collection_tasks import collect_fotmob_data
 
         pipeline = chain(
-            collect_fotmob_data.s(),        # 🆕 使用FotMob数据源
-            data_cleaning_task.s(),         # 🆕 批量数据清洗
+            collect_fotmob_data.s(),  # 🆕 使用FotMob数据源
+            data_cleaning_task.s(),  # 🆕 批量数据清洗
             feature_engineering_task.s(),
             data_storage_task.s(),
         )

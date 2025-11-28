@@ -10,7 +10,12 @@ from src.database.models.match import Match, MatchResult, MatchStatus
 from src.database.models.predictions import Prediction, Predictions, PredictedResult
 from src.database.models.team import Team, TeamForm
 from src.database.models.user import User, UserRole
-from src.database.models.features import Features, FeatureEntity, FeatureEntityType, TeamType
+from src.database.models.features import (
+    Features,
+    FeatureEntity,
+    FeatureEntityType,
+    TeamType,
+)
 from src.database.base import BaseModel, TimestampMixin
 
 
@@ -23,9 +28,9 @@ class TestBaseModel:
         model = BaseModel()
 
         # 验证继承的时间戳字段
-        assert hasattr(model, 'id')
-        assert hasattr(model, 'created_at')
-        assert hasattr(model, 'updated_at')
+        assert hasattr(model, "id")
+        assert hasattr(model, "created_at")
+        assert hasattr(model, "updated_at")
 
     @pytest.mark.unit
     def test_to_dict_with_exclude_fields(self):
@@ -43,18 +48,18 @@ class TestBaseModel:
         # 模拟表结构
         model.__table__ = MagicMock()
         model.__table__.columns = [
-            MockColumn('id'),
-            MockColumn('created_at'),
-            MockColumn('updated_at'),
+            MockColumn("id"),
+            MockColumn("created_at"),
+            MockColumn("updated_at"),
         ]
 
-        result = model.to_dict(exclude_fields={'id'})
+        result = model.to_dict(exclude_fields={"id"})
 
-        assert 'id' not in result
-        assert 'created_at' in result
-        assert 'updated_at' in result
+        assert "id" not in result
+        assert "created_at" in result
+        assert "updated_at" in result
         # 验证datetime转换为ISO格式
-        assert isinstance(result['created_at'], str)
+        assert isinstance(result["created_at"], str)
 
     @pytest.mark.unit
     def test_to_dict_without_exclude_fields(self):
@@ -71,14 +76,14 @@ class TestBaseModel:
         # 模拟表结构
         model.__table__ = MagicMock()
         model.__table__.columns = [
-            MockColumn('id'),
-            MockColumn('created_at'),
+            MockColumn("id"),
+            MockColumn("created_at"),
         ]
 
         result = model.to_dict()
 
-        assert 'id' in result
-        assert 'created_at' in result
+        assert "id" in result
+        assert "created_at" in result
 
     @pytest.mark.unit
     def test_update_from_dict(self):
@@ -93,14 +98,11 @@ class TestBaseModel:
 
         model.__table__ = MagicMock()
         model.__table__.columns = [
-            MockColumn('id'),
-            MockColumn('created_at'),
+            MockColumn("id"),
+            MockColumn("created_at"),
         ]
 
-        data = {
-            'id': 2,
-            'created_at': datetime(2024, 1, 1)
-        }
+        data = {"id": 2, "created_at": datetime(2024, 1, 1)}
 
         model.update_from_dict(data)
 
@@ -121,14 +123,11 @@ class TestBaseModel:
 
         model.__table__ = MagicMock()
         model.__table__.columns = [
-            MockColumn('id'),
-            MockColumn('created_at'),
+            MockColumn("id"),
+            MockColumn("created_at"),
         ]
 
-        data = {
-            'id': 2,
-            'created_at': datetime(2024, 1, 1)
-        }
+        data = {"id": 2, "created_at": datetime(2024, 1, 1)}
 
         # 由于BaseModel的update_from_dict方法实现中没有正确处理排除逻辑，
         # 我们只测试基本更新功能
@@ -155,8 +154,8 @@ class TestTimestampMixin:
     def test_timestamp_mixin_structure(self):
         """测试TimestampMixin结构."""
         # 验证TimestampMixin包含时间戳字段
-        assert hasattr(TimestampMixin, 'created_at')
-        assert hasattr(TimestampMixin, 'updated_at')
+        assert hasattr(TimestampMixin, "created_at")
+        assert hasattr(TimestampMixin, "updated_at")
 
 
 class TestMatchModel:
@@ -166,12 +165,21 @@ class TestMatchModel:
     def test_match_model_attributes(self):
         """测试Match模型属性定义."""
         # 验证模型定义的属性
-        assert hasattr(Match, '__tablename__')
-        assert Match.__tablename__ == 'matches'
+        assert hasattr(Match, "__tablename__")
+        assert Match.__tablename__ == "matches"
 
         # 验证核心字段存在
-        required_fields = ['id', 'home_team_id', 'away_team_id', 'home_score',
-                         'away_score', 'status', 'match_date', 'venue', 'league_id']
+        required_fields = [
+            "id",
+            "home_team_id",
+            "away_team_id",
+            "home_score",
+            "away_score",
+            "status",
+            "match_date",
+            "venue",
+            "league_id",
+        ]
         for field in required_fields:
             assert hasattr(Match, field)
 
@@ -179,7 +187,7 @@ class TestMatchModel:
     def test_match_relationships(self):
         """测试Match模型关系定义."""
         # 验证关系字段存在
-        relationships = ['home_team', 'away_team', 'league', 'features']
+        relationships = ["home_team", "away_team", "league", "features"]
         for relationship in relationships:
             assert hasattr(Match, relationship)
 
@@ -213,7 +221,7 @@ class TestMatchModel:
             status="finished",
             match_date=match_date,
             venue="Old Trafford",
-            league_id=39
+            league_id=39,
         )
 
         assert match.home_team_id == 1
@@ -248,11 +256,11 @@ class TestPredictionModel:
         """测试Prediction模型属性定义."""
         # 验证别名存在
         assert Prediction == Predictions
-        assert hasattr(Predictions, '__tablename__')
-        assert Predictions.__tablename__ == 'predictions'
+        assert hasattr(Predictions, "__tablename__")
+        assert Predictions.__tablename__ == "predictions"
 
         # 验证核心字段存在
-        required_fields = ['id', 'user_id', 'match_id', 'score', 'confidence', 'status']
+        required_fields = ["id", "user_id", "match_id", "score", "confidence", "status"]
         for field in required_fields:
             assert hasattr(Predictions, field)
 
@@ -273,18 +281,18 @@ class TestPredictionModel:
         prediction = Prediction(
             user_id=100,
             match_id=200,
-            score='2-1',
-            confidence='85%',
-            status='completed',
+            score="2-1",
+            confidence="85%",
+            status="completed",
             created_at=created_at,
-            updated_at=updated_at
+            updated_at=updated_at,
         )
 
         assert prediction.user_id == 100
         assert prediction.match_id == 200
-        assert prediction.score == '2-1'
-        assert prediction.confidence == '85%'
-        assert prediction.status == 'completed'
+        assert prediction.score == "2-1"
+        assert prediction.confidence == "85%"
+        assert prediction.status == "completed"
         assert prediction.created_at == created_at
         assert prediction.updated_at == updated_at
 
@@ -294,10 +302,10 @@ class TestPredictionModel:
         prediction = Prediction()
 
         # 手动设置状态来测试（避免SQLAlchemy默认值问题）
-        prediction.status = 'pending'
+        prediction.status = "pending"
 
         # 验证默认值
-        assert prediction.status == 'pending'
+        assert prediction.status == "pending"
 
 
 class TestTeamModel:
@@ -306,11 +314,19 @@ class TestTeamModel:
     @pytest.mark.unit
     def test_team_model_attributes(self):
         """测试Team模型属性定义."""
-        assert hasattr(Team, '__tablename__')
-        assert Team.__tablename__ == 'teams'
+        assert hasattr(Team, "__tablename__")
+        assert Team.__tablename__ == "teams"
 
         # 验证核心字段存在
-        required_fields = ['id', 'name', 'short_name', 'country', 'founded_year', 'venue', 'website']
+        required_fields = [
+            "id",
+            "name",
+            "short_name",
+            "country",
+            "founded_year",
+            "venue",
+            "website",
+        ]
         for field in required_fields:
             assert hasattr(Team, field)
 
@@ -326,7 +342,7 @@ class TestTeamModel:
     def test_team_relationships(self):
         """测试Team模型关系定义."""
         # 验证关系字段存在
-        assert hasattr(Team, 'features')
+        assert hasattr(Team, "features")
 
     @pytest.mark.unit
     def test_team_model_instantiation(self):
@@ -337,7 +353,7 @@ class TestTeamModel:
             country="England",
             founded_year=1878,
             venue="Old Trafford",
-            website="https://www.manutd.com"
+            website="https://www.manutd.com",
         )
 
         assert team.name == "Manchester United"
@@ -350,10 +366,7 @@ class TestTeamModel:
     @pytest.mark.unit
     def test_team_nullable_fields(self):
         """测试Team模型可空字段."""
-        team = Team(
-            name="Test Team",
-            country="Test Country"
-        )
+        team = Team(name="Test Team", country="Test Country")
 
         # 可空字段应该默认为None
         assert team.short_name is None
@@ -368,13 +381,25 @@ class TestUserModel:
     @pytest.mark.unit
     def test_user_model_attributes(self):
         """测试User模型属性定义."""
-        assert hasattr(User, '__tablename__')
-        assert User.__tablename__ == 'users'
+        assert hasattr(User, "__tablename__")
+        assert User.__tablename__ == "users"
 
         # 验证核心字段存在
-        required_fields = ['username', 'email', 'password_hash', 'first_name',
-                         'last_name', 'is_active', 'is_verified', 'role', 'preferences',
-                         'statistics', 'level', 'experience_points', 'achievements']
+        required_fields = [
+            "username",
+            "email",
+            "password_hash",
+            "first_name",
+            "last_name",
+            "is_active",
+            "is_verified",
+            "role",
+            "preferences",
+            "statistics",
+            "level",
+            "experience_points",
+            "achievements",
+        ]
         for field in required_fields:
             assert hasattr(User, field)
 
@@ -508,22 +533,22 @@ class TestUserModel:
         # 模拟表结构
         user.__table__ = MagicMock()
         user.__table__.columns = [
-            MockColumn('id'),
-            MockColumn('username'),
-            MockColumn('password_hash'),
-            MockColumn('first_name'),
-            MockColumn('last_name'),
-            MockColumn('role'),
+            MockColumn("id"),
+            MockColumn("username"),
+            MockColumn("password_hash"),
+            MockColumn("first_name"),
+            MockColumn("last_name"),
+            MockColumn("role"),
         ]
 
         result = user.to_dict()
 
         # 验证敏感字段被排除
-        assert 'password_hash' not in result
-        assert result['username'] == "testuser"
-        assert result['full_name'] == "John Doe"
-        assert result['is_premium'] is False
-        assert result['is_admin'] is False
+        assert "password_hash" not in result
+        assert result["username"] == "testuser"
+        assert result["full_name"] == "John Doe"
+        assert result["is_premium"] is False
+        assert result["is_admin"] is False
 
     @pytest.mark.unit
     def test_to_dict_method_custom_exclude(self):
@@ -541,16 +566,16 @@ class TestUserModel:
         # 模拟表结构
         user.__table__ = MagicMock()
         user.__table__.columns = [
-            MockColumn('id'),
-            MockColumn('username'),
-            MockColumn('email'),
+            MockColumn("id"),
+            MockColumn("username"),
+            MockColumn("email"),
         ]
 
-        result = user.to_dict(exclude_fields={'email'})
+        result = user.to_dict(exclude_fields={"email"})
 
         # 验证自定义排除字段
-        assert 'email' not in result
-        assert result['username'] == "testuser"
+        assert "email" not in result
+        assert result["username"] == "testuser"
 
 
 class TestFeaturesModel:
@@ -559,11 +584,11 @@ class TestFeaturesModel:
     @pytest.mark.unit
     def test_features_model_attributes(self):
         """测试Features模型属性定义."""
-        assert hasattr(Features, '__tablename__')
-        assert Features.__tablename__ == 'features'
+        assert hasattr(Features, "__tablename__")
+        assert Features.__tablename__ == "features"
 
         # 验证核心字段存在
-        required_fields = ['id', 'match_id', 'team_id', 'feature_type', 'feature_data']
+        required_fields = ["id", "match_id", "team_id", "feature_type", "feature_data"]
         for field in required_fields:
             assert hasattr(Features, field)
 
@@ -571,7 +596,7 @@ class TestFeaturesModel:
     def test_features_relationships(self):
         """测试Features模型关系定义."""
         # 验证关系字段存在
-        relationships = ['match', 'team']
+        relationships = ["match", "team"]
         for relationship in relationships:
             assert hasattr(Features, relationship)
 
@@ -584,7 +609,7 @@ class TestFeaturesModel:
             match_id=100,
             team_id=50,
             feature_type="performance_metrics",
-            feature_data={"goals": 2, "assists": 1}
+            feature_data={"goals": 2, "assists": 1},
         )
 
         # 手动设置时间戳（避免SQLAlchemy默认值问题）
@@ -599,10 +624,7 @@ class TestFeaturesModel:
     @pytest.mark.unit
     def test_features_nullable_team_id(self):
         """测试Features模型team_id可空."""
-        features = Features(
-            match_id=100,
-            feature_type="match_overview"
-        )
+        features = Features(match_id=100, feature_type="match_overview")
 
         # team_id应该可以为None
         assert features.team_id is None
@@ -612,12 +634,18 @@ class TestFeaturesModel:
     @pytest.mark.unit
     def test_feature_entity_model_attributes(self):
         """测试FeatureEntity模型属性定义."""
-        assert hasattr(FeatureEntity, '__tablename__')
-        assert FeatureEntity.__tablename__ == 'feature_entities'
+        assert hasattr(FeatureEntity, "__tablename__")
+        assert FeatureEntity.__tablename__ == "feature_entities"
 
         # 验证核心字段存在
-        required_fields = ['id', 'entity_type', 'entity_id', 'feature_name',
-                         'feature_value', 'feature_numeric']
+        required_fields = [
+            "id",
+            "entity_type",
+            "entity_id",
+            "feature_name",
+            "feature_value",
+            "feature_numeric",
+        ]
         for field in required_fields:
             assert hasattr(FeatureEntity, field)
 
@@ -631,7 +659,7 @@ class TestFeaturesModel:
             entity_id=50,
             feature_name="win_rate",
             feature_value="75%",
-            feature_numeric="75.50"
+            feature_numeric="75.50",
         )
 
         # 手动设置时间戳（避免SQLAlchemy默认值问题）
@@ -680,7 +708,7 @@ class TestModelIntegration:
             Team: "teams",
             User: "users",
             Features: "features",
-            FeatureEntity: "feature_entities"
+            FeatureEntity: "feature_entities",
         }
 
         for model_class, expected_name in expected_tables.items():
@@ -691,13 +719,13 @@ class TestModelIntegration:
         """测试模型枚举类型定义."""
         # 验证枚举类存在
         enums = [
-            (MatchStatus, ['SCHEDULED', 'LIVE', 'FINISHED', 'CANCELLED']),
-            (MatchResult, ['HOME_WIN', 'AWAY_WIN', 'DRAW']),
-            (PredictedResult, ['HOME_WIN', 'DRAW', 'AWAY_WIN']),
-            (TeamForm, ['GOOD', 'AVERAGE', 'POOR']),
-            (UserRole, ['USER', 'PREMIUM', 'ADMIN', 'ANALYST']),
-            (FeatureEntityType, ['MATCH', 'TEAM', 'PLAYER', 'LEAGUE']),
-            (TeamType, ['HOME', 'AWAY'])
+            (MatchStatus, ["SCHEDULED", "LIVE", "FINISHED", "CANCELLED"]),
+            (MatchResult, ["HOME_WIN", "AWAY_WIN", "DRAW"]),
+            (PredictedResult, ["HOME_WIN", "DRAW", "AWAY_WIN"]),
+            (TeamForm, ["GOOD", "AVERAGE", "POOR"]),
+            (UserRole, ["USER", "PREMIUM", "ADMIN", "ANALYST"]),
+            (FeatureEntityType, ["MATCH", "TEAM", "PLAYER", "LEAGUE"]),
+            (TeamType, ["HOME", "AWAY"]),
         ]
 
         for enum_class, expected_values in enums:
@@ -708,8 +736,8 @@ class TestModelIntegration:
     def test_timestamp_inheritance(self):
         """测试时间戳继承."""
         # 验证BaseModel包含TimestampMixin的字段
-        assert hasattr(BaseModel, 'created_at')
-        assert hasattr(BaseModel, 'updated_at')
+        assert hasattr(BaseModel, "created_at")
+        assert hasattr(BaseModel, "updated_at")
 
 
 class TestDataIntegrity:
@@ -721,7 +749,12 @@ class TestDataIntegrity:
         user = User()
 
         # 测试有效角色
-        valid_roles = [UserRole.USER, UserRole.PREMIUM, UserRole.ADMIN, UserRole.ANALYST]
+        valid_roles = [
+            UserRole.USER,
+            UserRole.PREMIUM,
+            UserRole.ADMIN,
+            UserRole.ANALYST,
+        ]
         for role in valid_roles:
             user.role = role
             assert user.role == role

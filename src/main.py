@@ -101,7 +101,9 @@ async def check_and_trigger_initial_data_fill() -> None:
                 data_age = now - latest_collection
                 data_freshness_hours = data_age.total_seconds() / 3600
 
-                logger.info(f"🕐 最近数据采集时间: {latest_collection.strftime('%Y-%m-%d %H:%M:%S')} UTC")
+                logger.info(
+                    f"🕐 最近数据采集时间: {latest_collection.strftime('%Y-%m-%d %H:%M:%S')} UTC"
+                )
                 logger.info(f"⏰ 数据新鲜度: {data_freshness_hours:.1f} 小时前")
                 logger.info(f"📦 总采集记录数: {recent_collections} 条")
 
@@ -111,11 +113,15 @@ async def check_and_trigger_initial_data_fill() -> None:
                     trigger_reason = f"数据已过期 ({data_freshness_hours:.1f}小时前)"
                     logger.warning(f"⚠️ {trigger_reason}，触发增量更新...")
                 else:
-                    logger.info(f"✅ 数据新鲜 ({data_freshness_hours:.1f}小时内)，无需更新")
+                    logger.info(
+                        f"✅ 数据新鲜 ({data_freshness_hours:.1f}小时内)，无需更新"
+                    )
             else:
                 logger.warning("⚠️ 未找到数据采集记录，可能需要初始化数据采集")
                 should_trigger_collection = match_count == 0
-                trigger_reason = "无采集记录" if match_count == 0 else "数据采集时间未知"
+                trigger_reason = (
+                    "无采集记录" if match_count == 0 else "数据采集时间未知"
+                )
 
             # 智能判断逻辑
             if match_count == 0:
@@ -161,18 +167,24 @@ async def check_and_trigger_initial_data_fill() -> None:
                     )
 
                     logger.info(f"✅ 成功触发数据采集任务 (任务ID: {task.id})")
-                    logger.info(f"📋 采集策略: {'完整数据采集' if 'complete' in pipeline_task else '增量更新'}")
+                    logger.info(
+                        f"📋 采集策略: {'完整数据采集' if 'complete' in pipeline_task else '增量更新'}"
+                    )
                     logger.info("⏳ 数据采集将在后台异步执行")
                     logger.info("💡 您可以通过以下方式检查进度:")
                     logger.info("   - /api/v1/system/status")
                     logger.info("   - /health")
-                    logger.info("   - 查看Celery worker日志: docker-compose logs -f worker")
+                    logger.info(
+                        "   - 查看Celery worker日志: docker-compose logs -f worker"
+                    )
 
                 except Exception as celery_error:
                     logger.error(f"❌ 触发Celery任务失败: {celery_error}")
                     logger.error("⚠️ 系统将继续启动，但需要手动触发数据采集")
                     logger.info("💡 手动触发命令:")
-                    logger.info("   docker-compose exec worker python -c 'from src.tasks.pipeline_tasks import complete_data_pipeline; import asyncio; asyncio.run(complete_data_pipeline())'")
+                    logger.info(
+                        "   docker-compose exec worker python -c 'from src.tasks.pipeline_tasks import complete_data_pipeline; import asyncio; asyncio.run(complete_data_pipeline())'"
+                    )
 
     except Exception as e:
         logger.error(f"❌ 智能冷启动检查失败: {e}")

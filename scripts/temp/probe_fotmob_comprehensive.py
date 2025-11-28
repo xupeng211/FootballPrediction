@@ -44,33 +44,27 @@ class FotMobComprehensiveProbe:
             f"/api/match/{match_id}/details",
             f"/api/match/{match_id}/stats",
             f"/api/match/{match_id}/lineup",
-
             # 带参数的变体
             f"/api/match?matchId={match_id}&tab=stats",
             f"/api/match?matchId={match_id}&tab=lineup",
             f"/api/match?matchId={match_id}&include=stats,lineup",
             f"/api/match?matchId={match_id}&details=true",
-
             # 统计相关
             f"/api/matchStats?matchId={match_id}",
             f"/api/stats/match?matchId={match_id}",
             f"/api/statistics/match?matchId={match_id}",
-
             # 阵容相关
             f"/api/matchLineup?matchId={match_id}",
             f"/api/lineup/match?matchId={match_id}",
             f"/api/lineups?matchId={match_id}",
-
             # 数据接口
             f"/api/data/matchDetails?matchId={match_id}",
             f"/api/data/match?matchId={match_id}",
             f"/api/data/matchStats?matchId={match_id}",
-
             # 移动端或版本化接口
             f"/api/v2/matchDetails?matchId={match_id}",
             f"/api/v1/match?matchId={match_id}",
             f"/api/mobile/matchDetails?matchId={match_id}",
-
             # 复合接口
             f"/api/match?matchId={match_id}&expand=stats,lineup",
             f"/api/match/{match_id}?expand=statistics,lineups",
@@ -85,7 +79,9 @@ class FotMobComprehensiveProbe:
 
             try:
                 url = f"https://www.fotmob.com{endpoint}"
-                response = await self.session.get(url, headers=self.base_headers, timeout=8)
+                response = await self.session.get(
+                    url, headers=self.base_headers, timeout=8
+                )
 
                 if response.status_code == 200:
                     try:
@@ -97,9 +93,12 @@ class FotMobComprehensiveProbe:
                             print(f"   📋 键: {keys[:10]}...")  # 只显示前10个键
 
                             # 检查是否包含我们想要的数据
-                            has_stats = any('stat' in key.lower() for key in keys)
-                            has_lineup = any('lineup' in key.lower() for key in keys)
-                            has_xg = any('xg' in key.lower() or 'expected' in key.lower() for key in keys)
+                            has_stats = any("stat" in key.lower() for key in keys)
+                            has_lineup = any("lineup" in key.lower() for key in keys)
+                            has_xg = any(
+                                "xg" in key.lower() or "expected" in key.lower()
+                                for key in keys
+                            )
 
                             if has_stats:
                                 print("   📊 发现统计数据!")
@@ -109,26 +108,28 @@ class FotMobComprehensiveProbe:
                                 print("   🔥 发现xG数据!")
 
                             # 深入检查content字段
-                            if 'content' in data and isinstance(data['content'], dict):
-                                content_keys = list(data['content'].keys())
-                                if 'stats' in content_keys:
+                            if "content" in data and isinstance(data["content"], dict):
+                                content_keys = list(data["content"].keys())
+                                if "stats" in content_keys:
                                     print("   📈 Content中有stats!")
-                                if 'lineup' in content_keys:
+                                if "lineup" in content_keys:
                                     print("   🏟️ Content中有lineup!")
 
                             if has_stats or has_lineup or has_xg:
-                                successful_endpoints.append({
-                                    'endpoint': endpoint,
-                                    'data': data,
-                                    'has_stats': has_stats,
-                                    'has_lineup': has_lineup,
-                                    'has_xg': has_xg
-                                })
+                                successful_endpoints.append(
+                                    {
+                                        "endpoint": endpoint,
+                                        "data": data,
+                                        "has_stats": has_stats,
+                                        "has_lineup": has_lineup,
+                                        "has_xg": has_xg,
+                                    }
+                                )
                                 print("   🎯 这个端点包含我们想要的数据!")
 
                                 # 保存这个端点的数据
                                 filename = f"endpoint_data_{endpoint.replace('/', '_').replace('?', '_')}.json"
-                                with open(filename, 'w', encoding='utf-8') as f:
+                                with open(filename, "w", encoding="utf-8") as f:
                                     json.dump(data, f, ensure_ascii=False, indent=2)
                                 print(f"   💾 数据已保存到: {filename}")
 
@@ -154,14 +155,24 @@ class FotMobComprehensiveProbe:
         """测试一些英超比赛ID"""
         # 英超比赛通常使用的ID格式（这些是已知的英超比赛ID）
         premier_league_matches = [
-            "4017263", "4017264", "4017265", "4017266", "4017267",
-            "4017268", "4017269", "4017270", "4017271", "4017272"
+            "4017263",
+            "4017264",
+            "4017265",
+            "4017266",
+            "4017267",
+            "4017268",
+            "4017269",
+            "4017270",
+            "4017271",
+            "4017272",
         ]
 
         print("🏆 测试英超比赛ID...")
 
         for i, match_id in enumerate(premier_league_matches):
-            print(f"\n--- 测试英超比赛 {i+1}/{len(premier_league_matches)} (ID: {match_id}) ---")
+            print(
+                f"\n--- 测试英超比赛 {i + 1}/{len(premier_league_matches)} (ID: {match_id}) ---"
+            )
 
             successful = await self.test_detailed_endpoints(match_id)
 
@@ -180,16 +191,18 @@ class FotMobComprehensiveProbe:
 
         try:
             await self.init_session()
-            response = await self.session.get(basic_url, headers=self.base_headers, timeout=10)
+            response = await self.session.get(
+                basic_url, headers=self.base_headers, timeout=10
+            )
 
             if response.status_code == 200:
                 basic_data = response.json()
                 print("✅ 获取基本信息成功")
 
                 # 获取比赛基本信息
-                home_team = basic_data.get('home', {}).get('name', 'Unknown')
-                away_team = basic_data.get('away', {}).get('name', 'Unknown')
-                status = basic_data.get('status', {})
+                home_team = basic_data.get("home", {}).get("name", "Unknown")
+                away_team = basic_data.get("away", {}).get("name", "Unknown")
+                status = basic_data.get("status", {})
 
                 print(f"🏆 比赛: {home_team} vs {away_team}")
                 print(f"📅 状态: {status}")
@@ -223,7 +236,9 @@ async def main():
 
     # 如果英超失败，测试之前的比赛
     print("\n⚽ 第二阶段：测试之前的比赛ID")
-    basic_data, detailed_results = await probe.test_specific_match_with_content("4721983")
+    basic_data, detailed_results = await probe.test_specific_match_with_content(
+        "4721983"
+    )
 
     if detailed_results:
         print("\n🎉 找到详细数据!")

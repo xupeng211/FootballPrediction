@@ -17,6 +17,7 @@ class TestSyncTaskConverter:
     @pytest.mark.unit
     def test_sync_task_to_async_converter(self):
         """测试同步异步转换函数."""
+
         # 模拟异步函数
         async def sample_async_func(x, y):
             return x + y
@@ -35,7 +36,9 @@ class TestDataCleaningTask:
 
     @pytest.mark.unit
     @patch("src.tasks.pipeline_tasks.ensure_database_initialized")
-    @patch("src.tasks.pipeline_tasks.batch_data_cleaning_with_ids", new_callable=MagicMock)
+    @patch(
+        "src.tasks.pipeline_tasks.batch_data_cleaning_with_ids", new_callable=MagicMock
+    )
     @patch("asyncio.run")
     def test_data_cleaning_task_success_with_new_matches(
         self, mock_asyncio_run, mock_batch_cleaning, mock_db_init
@@ -65,7 +68,9 @@ class TestDataCleaningTask:
 
         # 验证调用
         mock_db_init.assert_called_once()
-        mock_asyncio_run.assert_called_once_with(pipeline_module.batch_data_cleaning_with_ids)
+        mock_asyncio_run.assert_called_once_with(
+            pipeline_module.batch_data_cleaning_with_ids
+        )
 
     @pytest.mark.unit
     def test_data_cleaning_task_no_records_to_process(self):
@@ -118,11 +123,13 @@ class TestDataCleaningTask:
             "records_collected": 15,
             "total_collected": 15,
             "other_field": "should_be_ignored",
-            "nested": {"data": "should_be_ignored"}
+            "nested": {"data": "should_be_ignored"},
         }
 
         # Mock数据库初始化失败以跳过实际处理
-        with patch("src.tasks.pipeline_tasks.ensure_database_initialized") as mock_db_init:
+        with patch(
+            "src.tasks.pipeline_tasks.ensure_database_initialized"
+        ) as mock_db_init:
             mock_db_init.side_effect = Exception("Skip processing")
 
             result = pipeline_module.data_cleaning_task.__wrapped__(collection_result)
@@ -153,7 +160,9 @@ class TestFeatureEngineeringTask:
         # 模拟特征服务
         mock_feature_service_instance = MagicMock()
         mock_feature_service.return_value = mock_feature_service_instance
-        mock_feature_service_instance.get_match_features.return_value = {"features": True}
+        mock_feature_service_instance.get_match_features.return_value = {
+            "features": True
+        }
 
         # 模拟异步函数返回值
         mock_asyncio_run.return_value = {
@@ -177,7 +186,16 @@ class TestFeatureEngineeringTask:
         assert result["features_calculated"] == 7
         assert result["failed_calculations"] == 1
         assert result["target_match_count"] == 8
-        assert result["new_match_ids"] == [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008]
+        assert result["new_match_ids"] == [
+            1001,
+            1002,
+            1003,
+            1004,
+            1005,
+            1006,
+            1007,
+            1008,
+        ]
         assert result["feature_type"] == "incremental_update"
         assert "feature_columns" in result
 
@@ -207,14 +225,18 @@ class TestFeatureEngineeringTask:
         cleaning_result = {
             "status": "success",
             "cleaned_records": 5,
-            "new_match_ids": [1001, 1002, 1003, 1004, 1005]
+            "new_match_ids": [1001, 1002, 1003, 1004, 1005],
         }
 
         # Mock数据库初始化失败以跳过实际处理
-        with patch("src.tasks.pipeline_tasks.ensure_database_initialized") as mock_db_init:
+        with patch(
+            "src.tasks.pipeline_tasks.ensure_database_initialized"
+        ) as mock_db_init:
             mock_db_init.side_effect = Exception("Skip to test parsing")
 
-            result = pipeline_module.feature_engineering_task.__wrapped__(cleaning_result)
+            result = pipeline_module.feature_engineering_task.__wrapped__(
+                cleaning_result
+            )
 
             # 验证参数传递
             assert result["status"] == "error"
@@ -317,10 +339,7 @@ class TestCallbackFunctions:
         mock_trigger.delay.return_value = None
 
         # 模拟任务结果
-        task_result = {
-            "status": "success",
-            "new_match_ids": [1001, 1002, 1003]
-        }
+        task_result = {"status": "success", "new_match_ids": [1001, 1002, 1003]}
 
         # 执行回调
         pipeline_module.on_collection_success(task_result, "task-123", (), {})
@@ -332,10 +351,7 @@ class TestCallbackFunctions:
     def test_on_collection_success_no_match_ids(self):
         """测试采集成功回调没有新比赛ID."""
         # 模拟任务结果
-        task_result = {
-            "status": "success",
-            "new_match_ids": []
-        }
+        task_result = {"status": "success", "new_match_ids": []}
 
         # 执行回调 - 应该不抛出异常
         pipeline_module.on_collection_success(task_result, "task-123", (), {})
@@ -383,11 +399,13 @@ class TestTaskIntegration:
         collection_result = {
             "status": "success",
             "records_collected": 15,
-            "other_field": "should_be_ignored"
+            "other_field": "should_be_ignored",
         }
 
         # 模拟数据库初始化失败以跳过实际处理
-        with patch("src.tasks.pipeline_tasks.ensure_database_initialized") as mock_db_init:
+        with patch(
+            "src.tasks.pipeline_tasks.ensure_database_initialized"
+        ) as mock_db_init:
             mock_db_init.side_effect = Exception("Skip processing")
 
             result = pipeline_module.data_cleaning_task.__wrapped__(collection_result)
@@ -401,11 +419,7 @@ class TestTaskIntegration:
     def test_error_propagation_in_pipeline(self):
         """测试管道中的错误传播."""
         # 测试空输入的处理
-        empty_result = {
-            "status": "success",
-            "cleaned_records": 0,
-            "new_match_ids": []
-        }
+        empty_result = {"status": "success", "cleaned_records": 0, "new_match_ids": []}
 
         # 验证空输入不会导致异常
         result = pipeline_module.feature_engineering_task.__wrapped__(empty_result)
@@ -429,7 +443,9 @@ class TestFlowValidation:
         }
 
         # 验证清洗任务能正确解析采集结果
-        with patch("src.tasks.pipeline_tasks.ensure_database_initialized") as mock_db_init:
+        with patch(
+            "src.tasks.pipeline_tasks.ensure_database_initialized"
+        ) as mock_db_init:
             mock_db_init.side_effect = Exception("Skip to test parsing")
 
             result = pipeline_module.data_cleaning_task.__wrapped__(collection_result)
@@ -445,14 +461,18 @@ class TestFlowValidation:
         cleaning_result = {
             "status": "success",
             "cleaned_records": 5,
-            "new_match_ids": [1001, 1002, 1003, 1004, 1005]
+            "new_match_ids": [1001, 1002, 1003, 1004, 1005],
         }
 
         # 验证特征工程任务能正确处理新比赛ID
-        with patch("src.tasks.pipeline_tasks.ensure_database_initialized") as mock_db_init:
+        with patch(
+            "src.tasks.pipeline_tasks.ensure_database_initialized"
+        ) as mock_db_init:
             mock_db_init.side_effect = Exception("Skip to test parsing")
 
-            result = pipeline_module.feature_engineering_task.__wrapped__(cleaning_result)
+            result = pipeline_module.feature_engineering_task.__wrapped__(
+                cleaning_result
+            )
 
             # 验证参数传递
             assert result["status"] == "error"
@@ -462,11 +482,7 @@ class TestFlowValidation:
     def test_error_propagation_in_pipeline(self):
         """测试管道中的错误传播."""
         # 测试空输入的处理
-        empty_result = {
-            "status": "success",
-            "cleaned_records": 0,
-            "new_match_ids": []
-        }
+        empty_result = {"status": "success", "cleaned_records": 0, "new_match_ids": []}
 
         # 验证空输入不会导致异常
         result = pipeline_module.feature_engineering_task.__wrapped__(empty_result)
@@ -482,7 +498,9 @@ class TestTriggerFeatureCalculation:
     @pytest.mark.unit
     @patch("src.tasks.pipeline_tasks.FeatureService")
     @patch("src.database.connection.DatabaseManager")
-    def test_trigger_feature_calculation_success(self, mock_db_manager, mock_feature_service):
+    def test_trigger_feature_calculation_success(
+        self, mock_db_manager, mock_feature_service
+    ):
         """测试特征计算触发成功."""
         # 设置Mock
         mock_db_instance = MagicMock()
@@ -492,15 +510,21 @@ class TestTriggerFeatureCalculation:
         mock_feature_service.return_value = mock_service_instance
 
         # 模拟成功计算特征
-        mock_service_instance.calculate_match_features.return_value = {"status": "success"}
+        mock_service_instance.calculate_match_features.return_value = {
+            "status": "success"
+        }
 
         match_ids = [1001, 1002, 1003]
 
-        with patch('asyncio.run') as mock_asyncio_run:
+        with patch("asyncio.run") as mock_asyncio_run:
             # 模拟异步执行成功
             mock_asyncio_run.return_value = {"calculated_count": 3, "failed_count": 0}
 
-            result = pipeline_module.trigger_feature_calculation_for_new_matches.__wrapped__(match_ids)
+            result = (
+                pipeline_module.trigger_feature_calculation_for_new_matches.__wrapped__(
+                    match_ids
+                )
+            )
 
             # 验证结果
             assert result["status"] == "success"
@@ -511,7 +535,9 @@ class TestTriggerFeatureCalculation:
     @pytest.mark.unit
     def test_trigger_feature_calculation_empty_match_ids(self):
         """测试特征计算触发器处理空match_ids."""
-        result = pipeline_module.trigger_feature_calculation_for_new_matches.__wrapped__([])
+        result = (
+            pipeline_module.trigger_feature_calculation_for_new_matches.__wrapped__([])
+        )
 
         # 验证空列表处理
         assert result["status"] == "success"
@@ -524,7 +550,11 @@ class TestTriggerFeatureCalculation:
         """测试特征计算触发器数据库错误."""
         mock_db_manager.side_effect = Exception("Database connection failed")
 
-        result = pipeline_module.trigger_feature_calculation_for_new_matches.__wrapped__([1001, 1002])
+        result = (
+            pipeline_module.trigger_feature_calculation_for_new_matches.__wrapped__(
+                [1001, 1002]
+            )
+        )
 
         # 验证错误处理
         assert result["status"] == "error"
@@ -537,7 +567,9 @@ class TestPerformanceAndOptimization:
     @pytest.mark.unit
     def test_batch_processing_performance(self):
         """测试批处理性能优化."""
-        with patch("src.tasks.pipeline_tasks.ensure_database_initialized") as mock_db_init:
+        with patch(
+            "src.tasks.pipeline_tasks.ensure_database_initialized"
+        ) as mock_db_init:
             mock_db_init.return_value = True
 
             with patch("asyncio.run") as mock_asyncio:
@@ -545,7 +577,9 @@ class TestPerformanceAndOptimization:
                 mock_asyncio.return_value = (100, [i for i in range(1, 101)])
 
                 collection_result = {"status": "success", "records_collected": 100}
-                result = pipeline_module.data_cleaning_task.__wrapped__(collection_result)
+                result = pipeline_module.data_cleaning_task.__wrapped__(
+                    collection_result
+                )
 
                 # 验证批处理优化标记
                 assert result["performance_improvement"] == "batch_processing_enabled"
@@ -559,9 +593,14 @@ class TestPerformanceAndOptimization:
         with patch("src.database.connection.DatabaseManager"):
             with patch("asyncio.run") as mock_asyncio_run:
                 # 模拟分批处理
-                mock_asyncio.return_value = {"calculated_count": 10000, "failed_count": 0}
+                mock_asyncio.return_value = {
+                    "calculated_count": 10000,
+                    "failed_count": 0,
+                }
 
-                result = pipeline_module.trigger_feature_calculation_for_new_matches.__wrapped__(large_match_ids)
+                result = pipeline_module.trigger_feature_calculation_for_new_matches.__wrapped__(
+                    large_match_ids
+                )
 
                 # 验证能处理大量数据
                 assert result["calculated_count"] == 10000

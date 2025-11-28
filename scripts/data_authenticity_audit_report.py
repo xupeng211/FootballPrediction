@@ -8,11 +8,12 @@ from datetime import datetime
 import os
 
 print("🔍 训练数据真实性审计报告")
-print("="*80)
+print("=" * 80)
 print("审计员: 首席数据审计师")
 print(f"审计时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print("审计范围: FotMob数据源、特征矩阵、模型训练数据")
-print("="*80)
+print("=" * 80)
+
 
 def generate_audit_report():
     """生成数据真实性审计报告"""
@@ -62,7 +63,9 @@ def generate_audit_report():
 
     print("\n   📋 JSON 数据结构:")
     print("      顶级Keys: ['status', 'raw_data', 'match_time', 'league_name', ...]")
-    print("      raw_data Keys: ['id', 'away', 'home', 'time', 'status', 'league_info']")
+    print(
+        "      raw_data Keys: ['id', 'away', 'home', 'time', 'status', 'league_info']"
+    )
     print("      队伍信息: 仅包含 id, name, score, longName 四个基础字段")
 
     # 3. 特征矩阵真实性验证
@@ -176,6 +179,7 @@ def generate_audit_report():
     print("🔍 数据真实性审计完成")
     print("警告: 本报告指出的问题需要立即解决")
     print("=" * 80)
+
 
 if __name__ == "__main__":
     generate_audit_report()

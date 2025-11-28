@@ -11,17 +11,19 @@ sys.path.insert(0, str(project_root))
 from scripts.generate_features import FeatureGenerator
 import asyncio
 
+
 async def test():
     generator = FeatureGenerator()
-    print('🔍 测试数据库连接...')
+    print("🔍 测试数据库连接...")
     success = generator.load_data()
     if success:
-        print('✅ 数据库连接成功，特征生成脚本已修复')
+        print("✅ 数据库连接成功，特征生成脚本已修复")
         return True
     else:
-        print('❌ 数据库连接仍然失败')
+        print("❌ 数据库连接仍然失败")
         return False
+
 
 if __name__ == "__main__":
     result = asyncio.run(test())
-    print(f'测试结果: {result}')
+    print(f"测试结果: {result}")

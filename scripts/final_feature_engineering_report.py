@@ -10,7 +10,8 @@ from datetime import datetime
 import os
 
 print("🏆 Feature Engineering V2 - 最终成果报告")
-print("="*60)
+print("=" * 60)
+
 
 def generate_final_report():
     """生成最终成果报告"""
@@ -48,7 +49,9 @@ def generate_final_report():
 
     # 加载特征重要性文件
     data_dir = "/app/results"
-    importance_files = [f for f in os.listdir(data_dir) if 'rolling_feature_importance' in f]
+    importance_files = [
+        f for f in os.listdir(data_dir) if "rolling_feature_importance" in f
+    ]
 
     if importance_files:
         latest_file = sorted(importance_files)[-1]
@@ -59,9 +62,9 @@ def generate_final_report():
         print("   🏆 Top 10 重要特征:")
 
         for i, (idx, row) in enumerate(importance_df.head(10).iterrows()):
-            feature_name = row['feature']
-            importance = row['importance']
-            print(f"      {i+1:2d}. {feature_name:<25}: {importance:.4f}")
+            feature_name = row["feature"]
+            importance = row["importance"]
+            print(f"      {i + 1:2d}. {feature_name:<25}: {importance:.4f}")
 
     # 🏆 核心发现
     print("\\n🏆 核心发现与成果:")
@@ -123,10 +126,11 @@ def generate_final_report():
     print("   📄 训练报告:")
     print("      • /app/results/rolling_training_report_20251126_114758.txt")
 
-    print("\\n" + "="*60)
+    print("\\n" + "=" * 60)
     print("🎉 Feature Engineering V2 项目圆满完成!")
     print("📈 滚动窗口特征工程显著提升了预测模型的特征质量")
     print("🚀 为足球预测系统奠定了更强大的特征基础")
+
 
 if __name__ == "__main__":
     generate_final_report()

@@ -19,8 +19,10 @@ from sklearn.model_selection import train_test_split, cross_val_score, GridSearc
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
 try:
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
@@ -28,6 +30,7 @@ except ImportError:
 
 try:
     import seaborn as sns
+
     SEABORN_AVAILABLE = True
 except ImportError:
     SEABORN_AVAILABLE = False
@@ -37,8 +40,11 @@ import logging
 from typing import Dict, List, Tuple, Any
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class AdvancedXGBoostTrainer:
     """高级XGBoost模型训练器"""
@@ -50,12 +56,14 @@ class AdvancedXGBoostTrainer:
         self.evaluation_results = {}
 
         # 创建输出目录
-        os.makedirs('/app/models', exist_ok=True)
-        os.makedirs('/app/results', exist_ok=True)
+        os.makedirs("/app/models", exist_ok=True)
+        os.makedirs("/app/results", exist_ok=True)
 
         logger.info("🧠 高级XGBoost训练器初始化完成")
 
-    def load_features_data(self, file_path: str = "/app/data/advanced_features.csv") -> pd.DataFrame:
+    def load_features_data(
+        self, file_path: str = "/app/data/advanced_features.csv"
+    ) -> pd.DataFrame:
         """加载特征数据"""
         logger.info(f"📊 加载特征数据: {file_path}")
 
@@ -65,33 +73,44 @@ class AdvancedXGBoostTrainer:
 
         return df
 
-    def prepare_features_and_targets(self, df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, pd.Series]]:
+    def prepare_features_and_targets(
+        self, df: pd.DataFrame
+    ) -> tuple[pd.DataFrame, dict[str, pd.Series]]:
         """准备特征和目标变量"""
         logger.info("⚙️ 准备特征和目标变量...")
 
         # 识别特征列和目标列
-        exclude_cols = ['match_id', 'match_date', 'result', 'home_score', 'away_score',
-                        'goal_difference', 'total_goals', 'over_2_5_goals', 'both_teams_score']
+        exclude_cols = [
+            "match_id",
+            "match_date",
+            "result",
+            "home_score",
+            "away_score",
+            "goal_difference",
+            "total_goals",
+            "over_2_5_goals",
+            "both_teams_score",
+        ]
 
         feature_cols = [col for col in df.columns if col not in exclude_cols]
 
         # 处理缺失值 - 填充season列
         df_clean = df.copy()
-        if 'season' in df_clean.columns:
-            df_clean['season'] = df_clean['season'].fillna('2024')
+        if "season" in df_clean.columns:
+            df_clean["season"] = df_clean["season"].fillna("2024")
 
         # 确保所有特征列都是数值型
         X = df_clean[feature_cols].select_dtypes(include=[np.number])
 
         # 定义目标变量
         targets = {
-            'match_result': df_clean['result'],  # 比赛结果分类
-            'home_score': df_clean['home_score'],  # 主队进球数
-            'away_score': df_clean['away_score'],  # 客队进球数
-            'goal_difference': df_clean['goal_difference'],  # 进球差
-            'total_goals': df_clean['total_goals'],  # 总进球数
-            'over_2_5_goals': df_clean['over_2_5_goals'],  # 大小球
-            'both_teams_score': df_clean['both_teams_score']  # 双方进球
+            "match_result": df_clean["result"],  # 比赛结果分类
+            "home_score": df_clean["home_score"],  # 主队进球数
+            "away_score": df_clean["away_score"],  # 客队进球数
+            "goal_difference": df_clean["goal_difference"],  # 进球差
+            "total_goals": df_clean["total_goals"],  # 总进球数
+            "over_2_5_goals": df_clean["over_2_5_goals"],  # 大小球
+            "both_teams_score": df_clean["both_teams_score"],  # 双方进球
         }
 
         logger.info(f"✅ 特征准备完成: {X.shape}")
@@ -100,12 +119,14 @@ class AdvancedXGBoostTrainer:
 
         return X, targets
 
-    def train_classification_model(self, X: pd.DataFrame, y: pd.Series, target_name: str) -> xgb.XGBClassifier:
+    def train_classification_model(
+        self, X: pd.DataFrame, y: pd.Series, target_name: str
+    ) -> xgb.XGBClassifier:
         """训练分类模型"""
         logger.info(f"🎯 训练分类模型: {target_name}")
 
         # 编码目标变量
-        if y.dtype == 'object':
+        if y.dtype == "object":
             le = LabelEncoder()
             y_encoded = le.fit_transform(y)
             self.label_encoders[target_name] = le
@@ -119,15 +140,19 @@ class AdvancedXGBoostTrainer:
 
         # XGBoost参数
         params = {
-            'objective': 'multi:softprob' if len(np.unique(y_encoded)) > 2 else 'binary:logistic',
-            'num_class': len(np.unique(y_encoded)) if len(np.unique(y_encoded)) > 2 else None,
-            'max_depth': 6,
-            'learning_rate': 0.1,
-            'n_estimators': 100,
-            'subsample': 0.8,
-            'colsample_bytree': 0.8,
-            'random_state': 42,
-            'eval_metric': 'mlogloss' if len(np.unique(y_encoded)) > 2 else 'logloss'
+            "objective": "multi:softprob"
+            if len(np.unique(y_encoded)) > 2
+            else "binary:logistic",
+            "num_class": len(np.unique(y_encoded))
+            if len(np.unique(y_encoded)) > 2
+            else None,
+            "max_depth": 6,
+            "learning_rate": 0.1,
+            "n_estimators": 100,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "random_state": 42,
+            "eval_metric": "mlogloss" if len(np.unique(y_encoded)) > 2 else "logloss",
         }
 
         # 训练模型
@@ -139,23 +164,27 @@ class AdvancedXGBoostTrainer:
         accuracy = accuracy_score(y_test, y_pred)
 
         # 交叉验证
-        cv_scores = cross_val_score(model, X, y_encoded, cv=5, scoring='accuracy')
+        cv_scores = cross_val_score(model, X, y_encoded, cv=5, scoring="accuracy")
 
         logger.info(f"   测试集准确率: {accuracy:.4f}")
-        logger.info(f"   交叉验证准确率: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
+        logger.info(
+            f"   交叉验证准确率: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}"
+        )
 
         # 保存评估结果
         self.evaluation_results[target_name] = {
-            'test_accuracy': float(accuracy),
-            'cv_mean': float(cv_scores.mean()),
-            'cv_std': float(cv_scores.std()),
-            'model_type': 'classification',
-            'feature_names': list(X.columns)
+            "test_accuracy": float(accuracy),
+            "cv_mean": float(cv_scores.mean()),
+            "cv_std": float(cv_scores.std()),
+            "model_type": "classification",
+            "feature_names": list(X.columns),
         }
 
         return model
 
-    def train_regression_model(self, X: pd.DataFrame, y: pd.Series, target_name: str) -> xgb.XGBRegressor:
+    def train_regression_model(
+        self, X: pd.DataFrame, y: pd.Series, target_name: str
+    ) -> xgb.XGBRegressor:
         """训练回归模型"""
         logger.info(f"🎯 训练回归模型: {target_name}")
 
@@ -166,13 +195,13 @@ class AdvancedXGBoostTrainer:
 
         # XGBoost参数
         params = {
-            'objective': 'reg:squarederror',
-            'max_depth': 6,
-            'learning_rate': 0.1,
-            'n_estimators': 100,
-            'subsample': 0.8,
-            'colsample_bytree': 0.8,
-            'random_state': 42
+            "objective": "reg:squarederror",
+            "max_depth": 6,
+            "learning_rate": 0.1,
+            "n_estimators": 100,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "random_state": 42,
         }
 
         # 训练模型
@@ -186,7 +215,7 @@ class AdvancedXGBoostTrainer:
         r2 = r2_score(y_test, y_pred)
 
         # 交叉验证
-        cv_scores = cross_val_score(model, X, y, cv=5, scoring='r2')
+        cv_scores = cross_val_score(model, X, y, cv=5, scoring="r2")
 
         logger.info(f"   MSE: {mse:.4f}")
         logger.info(f"   MAE: {mae:.4f}")
@@ -195,37 +224,45 @@ class AdvancedXGBoostTrainer:
 
         # 保存评估结果
         self.evaluation_results[target_name] = {
-            'mse': float(mse),
-            'mae': float(mae),
-            'r2': float(r2),
-            'cv_mean': float(cv_scores.mean()),
-            'cv_std': float(cv_scores.std()),
-            'model_type': 'regression',
-            'feature_names': list(X.columns)
+            "mse": float(mse),
+            "mae": float(mae),
+            "r2": float(r2),
+            "cv_mean": float(cv_scores.mean()),
+            "cv_std": float(cv_scores.std()),
+            "model_type": "regression",
+            "feature_names": list(X.columns),
         }
 
         return model
 
-    def extract_feature_importance(self, model, target_name: str, feature_names: list[str]):
+    def extract_feature_importance(
+        self, model, target_name: str, feature_names: list[str]
+    ):
         """提取特征重要性"""
-        if hasattr(model, 'feature_importances_'):
+        if hasattr(model, "feature_importances_"):
             importance = model.feature_importances_
             # 转换numpy类型为Python原生类型
-            feature_importance = {feature: float(score) for feature, score in zip(feature_names, importance, strict=False)}
+            feature_importance = {
+                feature: float(score)
+                for feature, score in zip(feature_names, importance, strict=False)
+            }
 
             # 按重要性排序
-            sorted_importance = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
+            sorted_importance = sorted(
+                feature_importance.items(), key=lambda x: x[1], reverse=True
+            )
             self.feature_importance[target_name] = sorted_importance
 
             logger.info(f"📊 {target_name} Top 10 重要特征:")
             for i, (feature, score) in enumerate(sorted_importance[:10]):
-                logger.info(f"   {i+1:2d}. {feature:30s}: {score:.4f}")
+                logger.info(f"   {i + 1:2d}. {feature:30s}: {score:.4f}")
 
     def save_models(self):
         """保存训练好的模型"""
         logger.info("💾 保存训练模型...")
 
         import joblib
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         for target_name, model in self.models.items():
@@ -247,13 +284,13 @@ class AdvancedXGBoostTrainer:
 
         # 保存评估结果
         results_path = f"/app/results/model_evaluation_{timestamp}.json"
-        with open(results_path, 'w', encoding='utf-8') as f:
+        with open(results_path, "w", encoding="utf-8") as f:
             json.dump(self.evaluation_results, f, indent=2, ensure_ascii=False)
         logger.info(f"   评估结果已保存: {results_path}")
 
         # 保存特征重要性
         importance_path = f"/app/results/feature_importance_{timestamp}.json"
-        with open(importance_path, 'w', encoding='utf-8') as f:
+        with open(importance_path, "w", encoding="utf-8") as f:
             json.dump(self.feature_importance, f, indent=2, ensure_ascii=False)
         logger.info(f"   特征重要性已保存: {importance_path}")
 
@@ -267,7 +304,7 @@ class AdvancedXGBoostTrainer:
 
         try:
             # 为主要目标变量生成图表
-            main_targets = ['match_result', 'total_goals', 'over_2_5_goals']
+            main_targets = ["match_result", "total_goals", "over_2_5_goals"]
 
             for target_name in main_targets:
                 if target_name in self.feature_importance:
@@ -281,15 +318,17 @@ class AdvancedXGBoostTrainer:
                     plt.figure(figsize=(12, 8))
                     plt.barh(range(len(features)), scores)
                     plt.yticks(range(len(features)), features)
-                    plt.xlabel('特征重要性')
-                    plt.title(f'{target_name} - Top 20 特征重要性')
+                    plt.xlabel("特征重要性")
+                    plt.title(f"{target_name} - Top 20 特征重要性")
                     plt.gca().invert_yaxis()
 
                     # 保存图表
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    chart_path = f"/app/results/feature_importance_{target_name}_{timestamp}.png"
+                    chart_path = (
+                        f"/app/results/feature_importance_{target_name}_{timestamp}.png"
+                    )
                     plt.tight_layout()
-                    plt.savefig(chart_path, dpi=300, bbox_inches='tight')
+                    plt.savefig(chart_path, dpi=300, bbox_inches="tight")
                     plt.close()
 
                     logger.info(f"   {target_name} 特征重要性图表已保存: {chart_path}")
@@ -299,41 +338,59 @@ class AdvancedXGBoostTrainer:
 
     def print_summary_report(self):
         """打印模型训练总结报告"""
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("🎯 XGBoost模型训练总结报告")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         print("\n📊 模型性能总览:")
         for target_name, results in self.evaluation_results.items():
             print(f"\n   🔸 {target_name}:")
-            if results['model_type'] == 'classification':
+            if results["model_type"] == "classification":
                 print(f"      测试集准确率: {results['test_accuracy']:.4f}")
-                print(f"      交叉验证准确率: {results['cv_mean']:.4f} ± {results['cv_std']:.4f}")
+                print(
+                    f"      交叉验证准确率: {results['cv_mean']:.4f} ± {results['cv_std']:.4f}"
+                )
             else:
                 print(f"      R²: {results['r2']:.4f}")
                 print(f"      MSE: {results['mse']:.4f}")
                 print(f"      MAE: {results['mae']:.4f}")
-                print(f"      交叉验证R²: {results['cv_mean']:.4f} ± {results['cv_std']:.4f}")
+                print(
+                    f"      交叉验证R²: {results['cv_mean']:.4f} ± {results['cv_std']:.4f}"
+                )
 
         # EWMA特征重要性分析
         print("\n🧠 EWMA特征重要性分析:")
-        ewma_features = [f for f in self.feature_importance.get('match_result', []) if 'ewma' in f[0] or 'rating' in f[0]]
+        ewma_features = [
+            f
+            for f in self.feature_importance.get("match_result", [])
+            if "ewma" in f[0] or "rating" in f[0]
+        ]
 
         if ewma_features:
             print("   Top EWMA特征 (match_result):")
             for i, (feature, score) in enumerate(ewma_features[:10]):
-                print(f"      {i+1:2d}. {feature:30s}: {score:.4f}")
+                print(f"      {i + 1:2d}. {feature:30s}: {score:.4f}")
         else:
             print("   未找到EWMA特征在Top特征中")
 
         # 基础特征对比
         print("\n📈 基础特征vs高级特征对比:")
-        basic_features = [f for f in self.feature_importance.get('match_result', []) if f[0] in ['home_team_id', 'away_team_id', 'league_id']]
+        basic_features = [
+            f
+            for f in self.feature_importance.get("match_result", [])
+            if f[0] in ["home_team_id", "away_team_id", "league_id"]
+        ]
 
         if basic_features:
             print("   基础特征排名:")
             for feature, score in basic_features:
-                rank = next(i for i, (f, s) in enumerate(self.feature_importance['match_result'], 1) if f == feature)
+                rank = next(
+                    i
+                    for i, (f, s) in enumerate(
+                        self.feature_importance["match_result"], 1
+                    )
+                    if f == feature
+                )
                 print(f"      {feature:15s}: 排名第{rank}位 (重要性: {score:.4f})")
         else:
             print("   基础特征未进入Top重要特征")
@@ -343,7 +400,7 @@ class AdvancedXGBoostTrainer:
         print("   评估结果: /app/results/model_evaluation_*.json")
         print("   特征重要性: /app/results/feature_importance_*.json")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
 
     def execute_training_pipeline(self):
         """执行完整训练流程"""
@@ -362,12 +419,12 @@ class AdvancedXGBoostTrainer:
 
             # 3. 训练各个模型
             target_configs = {
-                'match_result': 'classification',
-                'total_goals': 'regression',
-                'over_2_5_goals': 'classification',
-                'both_teams_score': 'classification',
-                'home_score': 'regression',
-                'away_score': 'regression'
+                "match_result": "classification",
+                "total_goals": "regression",
+                "over_2_5_goals": "classification",
+                "both_teams_score": "classification",
+                "home_score": "regression",
+                "away_score": "regression",
             }
 
             for target_name, model_type in target_configs.items():
@@ -376,7 +433,7 @@ class AdvancedXGBoostTrainer:
 
                     y = targets[target_name]
 
-                    if model_type == 'classification':
+                    if model_type == "classification":
                         model = self.train_classification_model(X, y, target_name)
                     else:
                         model = self.train_regression_model(X, y, target_name)
@@ -399,15 +456,17 @@ class AdvancedXGBoostTrainer:
         except Exception as e:
             logger.error(f"💥 训练流程异常: {e}")
             import traceback
+
             traceback.print_exc()
             return False
+
 
 def main():
     """主函数"""
     print("🚀 XGBoost高级模型训练器 - V3版本")
     print("🎯 目标: 基于EWMA特征训练高性能预测模型")
     print("🧠 架构: 多目标预测 + 特征重要性分析")
-    print("="*80)
+    print("=" * 80)
 
     trainer = AdvancedXGBoostTrainer()
 
@@ -426,7 +485,9 @@ def main():
     except Exception as e:
         logger.error(f"💥 系统异常: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

@@ -34,13 +34,12 @@ class FotMobAdvancedProbe:
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"macOS"',
             "Cache-Control": "no-cache",
-            "Pragma": "no-cache"
+            "Pragma": "no-cache",
         }
 
         # API URL (使用过去日期避免缓存问题)
         past_date = (datetime.now() - timedelta(days=7)).strftime("%Y%m%d")
         self.target_url = f"https://www.fotmob.com/api/matches?date={past_date}"
-
 
     async def probe_with_impersonation(self):
         """使用浏览器伪装进行探测"""
@@ -48,21 +47,15 @@ class FotMobAdvancedProbe:
         try:
             # 创建具有 TLS 指纹模拟能力的会话
             async with AsyncSession(impersonate="chrome110") as session:
-
                 # 发送请求
                 response = await session.get(
-                    self.target_url,
-                    headers=self.headers,
-                    timeout=30
+                    self.target_url, headers=self.headers, timeout=30
                 )
 
-
                 if response.status_code == 200:
-
                     try:
                         data = response.json()
                         json.dumps(data, ensure_ascii=False, indent=2)
-
 
                         # 检查数据结构
                         if isinstance(data, dict):
@@ -78,7 +71,6 @@ class FotMobAdvancedProbe:
                         return False
 
                 elif response.status_code in [401, 403]:
-
                     # 分析可能的拦截方式
                     self.analyze_blocking_mechanism(response)
                     return False
@@ -101,7 +93,7 @@ class FotMobAdvancedProbe:
             "x-ratelimit-reset",
             "cf-ray",  # Cloudflare
             "server",
-            "x-frame-options"
+            "x-frame-options",
         ]
 
         for header in anti_bot_headers:
