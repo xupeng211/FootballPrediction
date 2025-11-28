@@ -260,7 +260,7 @@ class TestDataManagementAPI:
     # GET /teams 端点测试
     # ========================================
 
-    @patch("src.services.real_data.get_real_data_service")
+    @patch("src.api.data_management.get_real_data_service")
     @patch("src.api.data_management.get_async_session")
     def test_get_teams_list_success(self, mock_get_session, mock_get_service):
         """测试成功获取球队列表."""
@@ -279,7 +279,7 @@ class TestDataManagementAPI:
         assert result == self.mock_team_data
         mock_service.get_teams_list.assert_called_once_with(limit=20, offset=0)
 
-    @patch("src.services.real_data.get_real_data_service")
+    @patch("src.api.data_management.get_real_data_service")
     @patch("src.api.data_management.get_async_session")
     def test_get_teams_list_with_pagination(self, mock_get_session, mock_get_service):
         """测试带分页的球队列表获取."""
@@ -299,7 +299,7 @@ class TestDataManagementAPI:
         assert result["teams"] == []
         assert result["total"] == 0
 
-    @patch("src.services.real_data.get_real_data_service")
+    @patch("src.api.data_management.get_real_data_service")
     @patch("src.api.data_management.get_async_session")
     def test_get_teams_list_service_error(self, mock_get_session, mock_get_service):
         """测试服务错误处理."""
@@ -322,7 +322,7 @@ class TestDataManagementAPI:
     # GET /teams/{team_id} 端点测试
     # ========================================
 
-    @patch("src.services.real_data.get_real_data_service")
+    @patch("src.api.data_management.get_real_data_service")
     @patch("src.api.data_management.get_async_session")
     def test_get_team_by_id_success(self, mock_get_session, mock_get_service):
         """测试成功根据ID获取球队."""
@@ -342,7 +342,7 @@ class TestDataManagementAPI:
         assert result == mock_team
         mock_service.get_team_by_id.assert_called_once_with(1)
 
-    @patch("src.services.real_data.get_real_data_service")
+    @patch("src.api.data_management.get_real_data_service")
     @patch("src.api.data_management.get_async_session")
     def test_get_team_by_id_not_found(self, mock_get_session, mock_get_service):
         """测试获取不存在的球队ID."""
@@ -361,7 +361,7 @@ class TestDataManagementAPI:
 
         assert "球队ID 999 不存在" in str(exc_info.value)
 
-    @patch("src.services.real_data.get_real_data_service")
+    @patch("src.api.data_management.get_real_data_service")
     @patch("src.api.data_management.get_async_session")
     def test_get_team_by_id_service_error(self, mock_get_session, mock_get_service):
         """测试服务错误处理."""

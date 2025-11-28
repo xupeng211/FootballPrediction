@@ -113,7 +113,7 @@ class Tenant(BaseModel):
 
     # 关系
     users: Mapped[list["User"]] = relationship(
-        "User", back_populates="tenant", cascade="all, delete-orphan", foreign_keys="[User.tenant_id]"
+        "User", back_populates="tenant", cascade="all", foreign_keys="[User.tenant_id]"
     )
     tenant_roles: Mapped[list["TenantRole"]] = relationship(
         "TenantRole", back_populates="tenant", cascade="all, delete-orphan"
