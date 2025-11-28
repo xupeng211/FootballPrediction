@@ -122,17 +122,39 @@ jobs:
           echo "   - 可靠性优先: 架构决策确保CI永不挂起"
 
           # 运行核心稳定模块测试，确保CI始终为绿色（串行执行防死锁）
-          pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ tests/unit/collectors/ \
-            --timeout=60 \
-            -n 0 \
-            --maxfail=10 \
-            --tb=short \
-            --cov=src \
-            --cov-report=xml \
-            --cov-report=term-missing \
-            --cov-report=html \
-            --junit-xml=test-results.xml \
-            -v
+          timeout 300s bash -c '
+            echo "🚀 开始执行核心稳定模块测试（串行+超时保护）"
+            echo "⚠️ 多层超时保护已启用："
+            echo "   - 系统级超时: 300秒 (timeout命令)"
+            echo "   - 作业级超时: 600秒 (GitHub Actions)"
+            echo "   - pytest超时: 30秒/测试 (pytest-timeout插件)"
+
+            # 检查pytest-timeout是否可用，如果不可用则使用基本参数
+            if python -c "import pytest_timeout" 2>/dev/null; then
+              echo "✅ pytest-timeout 插件可用，启用单测试超时"
+              pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ tests/unit/collectors/ \
+                --timeout=30 \
+                -n 0 \
+                --maxfail=5 \
+                --tb=short \
+                --cov=src \
+                --cov-report=xml \
+                --cov-report=term-missing \
+                --junit-xml=test-results.xml \
+                -v || exit 1
+            else
+              echo "⚠️ pytest-timeout 插件不可用，使用基本参数运行"
+              pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ tests/unit/collectors/ \
+                -n 0 \
+                --maxfail=5 \
+                --tb=short \
+                --cov=src \
+                --cov-report=xml \
+                --cov-report=term-missing \
+                --junit-xml=test-results.xml \
+                -v || exit 1
+            fi
+          '
 
           echo "📊 生成覆盖率报告..."
 
