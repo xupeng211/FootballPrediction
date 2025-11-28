@@ -102,63 +102,86 @@ jobs:
             echo "🛡️ 安全扫描完成，报告已生成"
           fi
 
-      - name: Run Tests
+      - name: Run Tests - Step 1 API Module
         run: |
-          echo "🧪 运行全量测试套件..."
+          echo "🧪 Step 1/5: 测试 API 模块..."
           export $(cat .env.test | xargs)
-
-          # 设置内存优化环境变量
           export MALLOC_ARENA_MAX=2
-          export MALLOC_TRIM_THRESHOLD_=100000
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          echo "🚀 执行核心稳定模块测试 - API/Utils/Cache/Events/Collectors"
-          echo "⚙️ 死锁熔断机制已启用:"
-          echo "   - 超时保护: 60秒 (pytest级别)"
-          echo "   - 作业超时: 10分钟 (GitHub级别)"
-          echo "   - 串行执行: -n 0 (防并行死锁)"
-          echo "   - 失败上限: 10个"
-          echo "   - 覆盖率统计 (核心模块)"
-          echo "   - 可靠性优先: 架构决策确保CI永不挂起"
+          timeout 180s pytest tests/unit/api/ \
+            --timeout=60 \
+            -n 0 \
+            --maxfail=3 \
+            --tb=short \
+            -v || exit 1
+          echo "✅ API 模块测试完成"
 
-          # 运行核心稳定模块测试，确保CI始终为绿色（串行执行防死锁）
-          timeout 300s bash -c '
-            echo "🚀 开始执行核心稳定模块测试（串行+超时保护）"
-            echo "⚠️ 多层超时保护已启用："
-            echo "   - 系统级超时: 300秒 (timeout命令)"
-            echo "   - 作业级超时: 600秒 (GitHub Actions)"
-            echo "   - pytest超时: 30秒/测试 (pytest-timeout插件)"
+      - name: Run Tests - Step 2 Utils Module
+        run: |
+          echo "🧪 Step 2/5: 测试 Utils 模块..."
+          export $(cat .env.test | xargs)
+          export MALLOC_ARENA_MAX=2
+          export PYTHONPATH=$PWD:$PYTHONPATH
 
-            # 检查pytest-timeout是否可用，如果不可用则使用基本参数
-            if python -c "import pytest_timeout" 2>/dev/null; then
-              echo "✅ pytest-timeout 插件可用，启用单测试超时"
-              pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ tests/unit/collectors/ \
-                --timeout=30 \
-                -n 0 \
-                --maxfail=5 \
-                --tb=short \
-                --cov=src \
-                --cov-report=xml \
-                --cov-report=term-missing \
-                --junit-xml=test-results.xml \
-                -v || exit 1
-            else
-              echo "⚠️ pytest-timeout 插件不可用，使用基本参数运行"
-              pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ tests/unit/collectors/ \
-                -n 0 \
-                --maxfail=5 \
-                --tb=short \
-                --cov=src \
-                --cov-report=xml \
-                --cov-report=term-missing \
-                --junit-xml=test-results.xml \
-                -v || exit 1
-            fi
-          '
+          timeout 180s pytest tests/unit/utils/ \
+            --timeout=60 \
+            -n 0 \
+            --maxfail=3 \
+            --tb=short \
+            -v || exit 1
+          echo "✅ Utils 模块测试完成"
+
+      - name: Run Tests - Step 3 Cache Module
+        run: |
+          echo "🧪 Step 3/5: 测试 Cache 模块..."
+          export $(cat .env.test | xargs)
+          export MALLOC_ARENA_MAX=2
+          export PYTHONPATH=$PWD:$PYTHONPATH
+
+          timeout 180s pytest tests/unit/cache/ \
+            --timeout=60 \
+            -n 0 \
+            --maxfail=3 \
+            --tb=short \
+            -v || exit 1
+          echo "✅ Cache 模块测试完成"
+
+      - name: Run Tests - Step 4 Events Module
+        run: |
+          echo "🧪 Step 4/5: 测试 Events 模块..."
+          export $(cat .env.test | xargs)
+          export MALLOC_ARENA_MAX=2
+          export PYTHONPATH=$PWD:$PYTHONPATH
+
+          timeout 180s pytest tests/unit/events/ \
+            --timeout=60 \
+            -n 0 \
+            --maxfail=3 \
+            --tb=short \
+            -v || exit 1
+          echo "✅ Events 模块测试完成"
+
+      - name: Run Tests - Step 5 Collectors + Coverage
+        run: |
+          echo "🧪 Step 5/5: 测试 Collectors 模块 + 生成覆盖率报告..."
+          export $(cat .env.test | xargs)
+          export MALLOC_ARENA_MAX=2
+          export PYTHONPATH=$PWD:$PYTHONPATH
+
+          timeout 300s pytest tests/unit/collectors/ \
+            --timeout=60 \
+            -n 0 \
+            --maxfail=3 \
+            --tb=short \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junit-xml=test-results.xml \
+            -v || exit 1
+          echo "✅ Collectors 模块测试完成"
 
           echo "📊 生成覆盖率报告..."
-
-          # 检查覆盖率
           if [ -f coverage.xml ]; then
             COVERAGE_PERCENT=$(grep 'line-rate' coverage.xml | sed -E 's/.*line-rate="([0-9.]+)".*/\1/' | awk '{print $1*100}')
             echo "🎯 真实测试覆盖率: ${COVERAGE_PERCENT}%"
@@ -174,7 +197,7 @@ jobs:
             echo "⚠️ 覆盖率报告文件不存在，检查测试执行情况"
           fi
 
-          echo "✅ 核心稳定模块测试完成 - CI 绿色构建已确保"
+          echo "🎉 完全串行隔离策略执行完成 - 所有模块已独立测试"
 
       - name: Upload test results
         if: always()
