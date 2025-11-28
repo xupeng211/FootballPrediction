@@ -72,10 +72,6 @@ jobs:
         # 使用轻量级CI依赖，避免重型依赖导致的内存问题
         pip install -r requirements-ci.txt
 
-        # 安装覆盖率工具
-        pip install coverage
-        pip install pytest-cov
-
         # 安装bc计算器用于覆盖率比较
         sudo apt-get update && sudo apt-get install -y bc
 
@@ -89,11 +85,14 @@ jobs:
         DEBUG=false
         LOG_LEVEL=WARNING
         PYTHONPATH=$PWD:$PYTHONPATH
+        CI=true
+        PYTEST_CURRENT_TEST=1
         EOF
 
         # Export environment variables
         export $(cat .env.test | xargs)
-        echo "测试环境已设置"
+        echo "✅ 测试环境已设置"
+        echo "🔧 环境变量已导出"
 
     - name: Run Linting
       run: |
