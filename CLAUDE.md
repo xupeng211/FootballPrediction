@@ -418,6 +418,34 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/football_prediction
 REDIS_URL=redis://localhost:6379/0
 ```
 
+## CI/CD Pipeline & Validation
+
+### GitHub Actions Integration
+- **Smart CI System**: Automated CI pipeline with Python 3.10/3.11/3.12 matrix testing
+- **Local CI Simulation**: `./ci-verify.sh` - Complete local CI validation before commits
+- **Multi-environment Support**: Development, staging, and production deployment configurations
+- **Automated Recovery**: Smart CI with automatic test failure detection and recovery suggestions
+
+### Pre-commit Workflow
+```bash
+# Standard development sequence
+make env-check      # Verify environment health
+make context        # Load project context and dependencies
+make dev           # Start development environment
+make test          # Run test suite (385 tests)
+make ci            # Run complete quality validation
+make prepush       # Final validation before commit
+```
+
+### Docker Compose Environments
+The project includes **10 specialized Docker Compose configurations**:
+- `docker-compose.yml` - Development environment
+- `docker-compose.prod.yml` - Production deployment
+- `docker-compose.staging.yml` - Staging environment
+- `docker-compose.microservices.yml` - Microservices architecture
+- `docker-compose.full-test.yml` - Comprehensive testing environment
+- `docker-compose.optimized.yml` - Performance-optimized configuration
+
 ## Important Reminders
 
 ### Critical Development Notes
@@ -507,6 +535,19 @@ chore(security): upgrade dependencies for security patches
 3. Quality validation: `make lint && make test`
 4. Security check: `make security-check`
 5. Pre-commit: `make fix-code && make format`
+
+### Monitoring & Observability Stack
+- **Prometheus**: Metrics collection and monitoring
+- **Grafana**: Visualization dashboards and alerts
+- **InfluxDB**: Time-series database for production metrics
+- **Loki**: Log aggregation and analysis
+- **Alert Manager**: Intelligent alerting with multi-channel notifications
+
+### Data Collection Architecture
+- **Multi-Source Collectors**: `src/collectors/` - Specialized data采集器
+- **Async HTTP Processing**: `curl_cffi` for high-performance async requests
+- **Data Adapters**: `src/adapters/` - Unified data interface layer
+- **Quality Assurance**: `src/data/quality/` - Advanced anomaly detection and data validation
 
 ---
 
