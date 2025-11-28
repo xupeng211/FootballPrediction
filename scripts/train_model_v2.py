@@ -42,8 +42,8 @@ def load_training_data_from_database():
 
         async def async_load_data():
             async with db_manager.get_async_session() as session:
-            # 查询SQL：关联features和matches表，提取特征和标签
-            query = text("""
+                # 查询SQL：关联features和matches表，提取特征和标签
+                query = text("""
                 SELECT
                     f.feature_data,
                     m.home_score,
@@ -60,44 +60,46 @@ def load_training_data_from_database():
                   AND m.away_score IS NOT NULL
                   AND f.feature_data IS NOT NULL
                 ORDER BY m.match_date
-            """)
+                """)
 
-            result = conn.execute(query)
-            data = result.fetchall()
+                result = await session.execute(query)
+                data = result.fetchall()
 
-            logger.info(f"📊 成功加载 {len(data)} 条训练样本")
+                logger.info(f"📊 成功加载 {len(data)} 条训练样本")
 
-            if len(data) == 0:
-                raise ValueError("没有找到有效的训练数据")
+                if len(data) == 0:
+                    raise ValueError("没有找到有效的训练数据")
 
-            # 转换为DataFrame
-            df = pd.DataFrame(data)
+                # 转换为DataFrame
+                df = pd.DataFrame(data)
 
-            # 解析JSON特征数据
-            features_list = []
-            for feature_json in df['feature_data']:
-                if isinstance(feature_json, str):
-                    features = json.loads(feature_json)
-                else:
-                    features = feature_json
-                features_list.append(features)
+                # 解析JSON特征数据
+                features_list = []
+                for feature_json in df["feature_data"]:
+                    if isinstance(feature_json, str):
+                        features = json.loads(feature_json)
+                    else:
+                        features = feature_json
+                    features_list.append(features)
 
-            # 创建特征DataFrame
-            features_df = pd.DataFrame(features_list)
-            features_df['result_label'] = df['result_label'].values
-            features_df['match_date'] = pd.to_datetime(df['match_date'].values)
+                # 创建特征DataFrame
+                features_df = pd.DataFrame(features_list)
+                features_df["result_label"] = df["result_label"].values
+                features_df["match_date"] = pd.to_datetime(df["match_date"].values)
 
-            logger.info(f"🎯 原始特征维度: {features_df.shape[1]} (包含标签)")
-            logger.info(f"📅 数据时间范围: {features_df['match_date'].min()} 到 {features_df['match_date'].max()}")
+                logger.info(f"🎯 原始特征维度: {features_df.shape[1]} (包含标签)")
+                logger.info(
+                    f"📅 数据时间范围: {features_df['match_date'].min()} 到 {features_df['match_date'].max()}"
+                )
 
-            # 显示标签分布
-            logger.info(f"📈 标签分布:")
-            label_dist = features_df['result_label'].value_counts()
-            for label, count in label_dist.items():
-                percentage = count / len(features_df) * 100
-                logger.info(f"   {label}: {count} ({percentage:.1f}%)")
+                # 显示标签分布
+                logger.info("📈 标签分布:")
+                label_dist = features_df["result_label"].value_counts()
+                for label, count in label_dist.items():
+                    percentage = count / len(features_df) * 100
+                    logger.info(f"   {label}: {count} ({percentage:.1f}%)")
 
-            return features_df
+                return features_df
 
     except Exception as e:
         logger.error(f"❌ 加载数据失败: {e}")
@@ -110,11 +112,11 @@ def preprocess_features(df):
 
     # 移除明确的非预测性特征和标识符
     exclude_cols = [
-        'home_team_id',      # 球队ID，不包含预测信息
-        'away_team_id',      # 球队ID，不包含预测信息
-        'match_date',        # 比赛日期，不应该用于预测
-        'match_result',      # 比赛结果（如果有），会泄露答案
-        'result_label'       # 标签列
+        "home_team_id",  # 球队ID，不包含预测信息
+        "away_team_id",  # 球队ID，不包含预测信息
+        "match_date",  # 比赛日期，不应该用于预测
+        "match_result",  # 比赛结果（如果有），会泄露答案
+        "result_label",  # 标签列
     ]
 
     # 只保留真正的特征列
@@ -123,7 +125,7 @@ def preprocess_features(df):
     # 进一步过滤：只保留数值型特征
     numeric_features = []
     for col in feature_cols:
-        if df[col].dtype in ['int64', 'float64', 'int32', 'float32']:
+        if df[col].dtype in ["int64", "float64", "int32", "float32"]:
             numeric_features.append(col)
         else:
             logger.warning(f"⚠️ 跳过非数值特征: {col} (类型: {df[col].dtype})")
@@ -132,10 +134,10 @@ def preprocess_features(df):
 
     # 提取特征矩阵和标签
     X = df[numeric_features].copy()
-    y = df['result_label'].copy()
+    y = df["result_label"].copy()
 
     # 检查数据质量
-    logger.info(f"🔍 数据质量检查:")
+    logger.info("🔍 数据质量检查:")
     logger.info(f"   特征矩阵形状: {X.shape}")
     logger.info(f"   标签向量形状: {y.shape}")
 
@@ -143,7 +145,7 @@ def preprocess_features(df):
     missing_values = X.isnull().sum()
     if missing_values.sum() > 0:
         missing_cols = missing_values[missing_values > 0]
-        logger.warning(f"⚠️ 发现缺失值:")
+        logger.warning("⚠️ 发现缺失值:")
         for col, count in missing_cols.items():
             percentage = count / len(X) * 100
             logger.warning(f"   {col}: {count} ({percentage:.1f}%)")
@@ -169,12 +171,14 @@ def preprocess_features(df):
 
     # 保存特征列名供后续推理使用
     feature_metadata = {
-        'feature_columns': list(X.columns),
-        'n_features': len(X.columns),
-        'training_date': datetime.now().isoformat(),
-        'training_samples': len(X),
-        'excluded_columns': exclude_cols,
-        'non_numeric_features': [col for col in feature_cols if col not in numeric_features]
+        "feature_columns": list(X.columns),
+        "n_features": len(X.columns),
+        "training_date": datetime.now().isoformat(),
+        "training_samples": len(X),
+        "excluded_columns": exclude_cols,
+        "non_numeric_features": [
+            col for col in feature_cols if col not in numeric_features
+        ],
     }
 
     return X, y, feature_metadata
@@ -196,31 +200,39 @@ def train_model_with_proper_split(X, y):
     y_train = y_encoded[:split_index]
     y_test = y_encoded[split_index:]
 
-    logger.info(f"📊 时间序列拆分:")
-    logger.info(f"   训练集: {X_train.shape[0]} 样本 ({len(X_train)/len(X)*100:.1f}%)")
-    logger.info(f"   测试集: {X_test.shape[0]} 样本 ({len(X_test)/len(X)*100:.1f}%)")
+    logger.info("📊 时间序列拆分:")
+    logger.info(
+        f"   训练集: {X_train.shape[0]} 样本 ({len(X_train) / len(X) * 100:.1f}%)"
+    )
+    logger.info(
+        f"   测试集: {X_test.shape[0]} 样本 ({len(X_test) / len(X) * 100:.1f}%)"
+    )
 
     # 检查训练集和测试集的标签分布
     train_dist = pd.Series(y_train).value_counts().sort_index()
     test_dist = pd.Series(y_test).value_counts().sort_index()
 
     class_names = label_encoder.classes_
-    logger.info(f"   训练集标签分布: {dict(zip(class_names, train_dist.values))}")
-    logger.info(f"   测试集标签分布: {dict(zip(class_names, test_dist.values))}")
+    logger.info(
+        f"   训练集标签分布: {dict(zip(class_names, train_dist.values, strict=False))}"
+    )
+    logger.info(
+        f"   测试集标签分布: {dict(zip(class_names, test_dist.values, strict=False))}"
+    )
 
     # 创建XGBoost分类器 - 使用合理的参数避免过拟合
     model = xgb.XGBClassifier(
         n_estimators=100,
-        max_depth=4,              # 降低深度避免过拟合
+        max_depth=4,  # 降低深度避免过拟合
         learning_rate=0.1,
         random_state=42,
-        objective='multi:softmax',
+        objective="multi:softmax",
         num_class=3,
-        eval_metric='mlogloss',
-        subsample=0.8,            # 随机采样
-        colsample_bytree=0.8,     # 特征采样
-        reg_alpha=0.1,            # L1正则化
-        reg_lambda=1.0            # L2正则化
+        eval_metric="mlogloss",
+        subsample=0.8,  # 随机采样
+        colsample_bytree=0.8,  # 特征采样
+        reg_alpha=0.1,  # L1正则化
+        reg_lambda=1.0,  # L2正则化
     )
 
     # 训练模型
@@ -233,7 +245,7 @@ def train_model_with_proper_split(X, y):
 
     # 评估
     accuracy = accuracy_score(y_test, y_pred)
-    logger.info(f"📈 测试集准确率: {accuracy:.4f} ({accuracy*100:.1f}%)")
+    logger.info(f"📈 测试集准确率: {accuracy:.4f} ({accuracy * 100:.1f}%)")
 
     # 检查准确率是否合理（足球预测三分类）
     if accuracy > 0.65:
@@ -245,7 +257,9 @@ def train_model_with_proper_split(X, y):
 
     # 详细分类报告
     logger.info("📋 分类报告:")
-    report = classification_report(y_test, y_pred, target_names=class_names, output_dict=True)
+    report = classification_report(
+        y_test, y_pred, target_names=class_names, output_dict=True
+    )
 
     for class_name in class_names:
         metrics = report[class_name]
@@ -258,7 +272,7 @@ def train_model_with_proper_split(X, y):
     logger.info("🔢 混淆矩阵:")
     cm = confusion_matrix(y_test, y_pred)
     logger.info("   实际\\预测  Home  Draw  Away")
-    class_names = ['Home', 'Draw', 'Away']
+    class_names = ["Home", "Draw", "Away"]
     for i, actual_class in enumerate(class_names):
         row_str = f"   {actual_class:6s}"
         for j in range(3):
@@ -267,18 +281,21 @@ def train_model_with_proper_split(X, y):
 
     # 特征重要性
     logger.info("🏆 特征重要性排名 (Top 15):")
-    feature_importance = pd.DataFrame({
-        'feature': X.columns,
-        'importance': model.feature_importances_
-    }).sort_values('importance', ascending=False).head(15)
+    feature_importance = (
+        pd.DataFrame({"feature": X.columns, "importance": model.feature_importances_})
+        .sort_values("importance", ascending=False)
+        .head(15)
+    )
 
     for idx, row in feature_importance.iterrows():
-        logger.info(f"   {idx+1:2d}. {row['feature']}: {row['importance']:.4f}")
+        logger.info(f"   {idx + 1:2d}. {row['feature']}: {row['importance']:.4f}")
 
     return model, label_encoder, accuracy, feature_importance
 
 
-def save_model_and_metadata(model, label_encoder, feature_metadata, feature_importance, accuracy):
+def save_model_and_metadata(
+    model, label_encoder, feature_metadata, feature_importance, accuracy
+):
     """保存模型和相关元数据"""
     logger.info("💾 开始保存模型...")
 
@@ -290,12 +307,12 @@ def save_model_and_metadata(model, label_encoder, feature_metadata, feature_impo
     model_path = models_dir / "football_prediction_v2.pkl"
 
     model_data = {
-        'model': model,
-        'label_encoder': label_encoder,
-        'feature_metadata': feature_metadata
+        "model": model,
+        "label_encoder": label_encoder,
+        "feature_metadata": feature_metadata,
     }
 
-    with open(model_path, 'wb') as f:
+    with open(model_path, "wb") as f:
         pickle.dump(model_data, f)
 
     logger.info(f"✅ 模型已保存: {model_path}")
@@ -303,18 +320,18 @@ def save_model_and_metadata(model, label_encoder, feature_metadata, feature_impo
     # 保存元数据
     metadata_path = models_dir / "model_metadata.json"
     metadata = {
-        'model_version': 'v2',
-        'model_path': str(model_path),
-        'feature_metadata': feature_metadata,
-        'feature_importance': feature_importance.to_dict('records'),
-        'label_encoder_classes': label_encoder.classes_.tolist(),
-        'training_accuracy': accuracy,
-        'created_at': datetime.now().isoformat(),
-        'model_type': 'XGBClassifier',
-        'target_classes': ['Home', 'Draw', 'Away']
+        "model_version": "v2",
+        "model_path": str(model_path),
+        "feature_metadata": feature_metadata,
+        "feature_importance": feature_importance.to_dict("records"),
+        "label_encoder_classes": label_encoder.classes_.tolist(),
+        "training_accuracy": accuracy,
+        "created_at": datetime.now().isoformat(),
+        "model_type": "XGBClassifier",
+        "target_classes": ["Home", "Draw", "Away"],
     }
 
-    with open(metadata_path, 'w') as f:
+    with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=2)
 
     logger.info(f"✅ 元数据已保存: {metadata_path}")
@@ -336,10 +353,12 @@ def main():
         X, y, feature_metadata = preprocess_features(df)
 
         # 3. 训练模型
-        model, label_encoder, accuracy, feature_importance = train_model_with_proper_split(X, y)
+        model, label_encoder, accuracy, feature_importance = (
+            train_model_with_proper_split(X, y)
+        )
 
         # 更新元数据
-        feature_metadata['accuracy'] = accuracy
+        feature_metadata["accuracy"] = accuracy
 
         # 4. 保存模型
         model_path, metadata_path = save_model_and_metadata(
@@ -350,7 +369,7 @@ def main():
         logger.info("🎉 模型训练完成!")
         logger.info(f"📁 模型文件: {model_path}")
         logger.info(f"📄 元数据文件: {metadata_path}")
-        logger.info(f"🎯 最终准确率: {accuracy:.4f} ({accuracy*100:.1f}%)")
+        logger.info(f"🎯 最终准确率: {accuracy:.4f} ({accuracy * 100:.1f}%)")
         logger.info(f"🔢 特征数量: {len(feature_metadata['feature_columns'])}")
         logger.info("=" * 60)
 
@@ -360,13 +379,16 @@ def main():
         elif accuracy > 0.65:
             logger.warning("⚠️ 模型质量评估: WARNING - 准确率可能过高，检查特征泄露")
         else:
-            logger.warning("⚠️ 模型质量评估: WARNING - 准确率较低，可能需要更多特征或调参")
+            logger.warning(
+                "⚠️ 模型质量评估: WARNING - 准确率较低，可能需要更多特征或调参"
+            )
 
         return model_path, metadata_path
 
     except Exception as e:
         logger.error(f"❌ 训练失败: {e}")
         import traceback
+
         logger.error(f"🔍 详细错误: {traceback.format_exc()}")
         raise
 
