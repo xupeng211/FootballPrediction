@@ -36,6 +36,9 @@ PyJWT>=2.10.1
 python-dotenv>=1.2.1
 python-multipart>=0.0.20
 
+# 测试覆盖率工具
+coverage>=7.0.0
+
 # 可选的轻量级工具
 tenacity>=8.2.0
 aiofiles>=23.2.1
