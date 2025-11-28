@@ -25,11 +25,15 @@ class MockModel:
     def __repr__(self):
         return f"MockModel(id={self.id})"
 
-    # 模拟SQLAlchemy的属性
+    # 模拟SQLAlchemy的属性和列
     id = None
     name = None
     email = None
     created_at = None
+
+    # 添加模拟的SQLAlchemy属性
+    __table__ = type('MockTable', (), {'name': 'mock_model'})()
+    __tablename__ = 'mock_model'
 
 
 class MockDatabaseManager:
@@ -38,7 +42,7 @@ class MockDatabaseManager:
     def __init__(self):
         self.get_async_session_call_count = 0
 
-    async def get_async_session(self):
+    def get_async_session(self):
         """返回模拟的异步会话."""
         self.get_async_session_call_count += 1
         return MockAsyncSession()
