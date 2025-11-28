@@ -10,9 +10,10 @@ import traceback
 from datetime import datetime
 
 # 设置最小路径
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
 print("🚀 启动CI最小化验证...")
+
 
 def test_basic_imports():
     """测试基础模块导入"""
@@ -24,6 +25,7 @@ def test_basic_imports():
         import asyncio
         from datetime import datetime, timezone
         from typing import Optional, List, Dict
+
         print("✅ 标准库导入成功")
     except Exception as e:
         print(f"❌ 标准库导入失败: {e}")
@@ -32,6 +34,7 @@ def test_basic_imports():
     try:
         # 测试项目核心模块（最轻量级的）
         from utils.date_utils import DateUtils
+
         print("✅ DateUtils导入成功")
     except Exception as e:
         print(f"⚠️ DateUtils导入失败: {e}")
@@ -40,12 +43,14 @@ def test_basic_imports():
     try:
         # 测试最基础的数据库模型
         from database.models import Base
+
         print("✅ 数据库Base模型导入成功")
     except Exception as e:
         print(f"⚠️ 数据库模型导入失败: {e}")
         # 数据库模块失败不影响CI通过
 
     return True
+
 
 def test_basic_functionality():
     """测试基础功能（不依赖外部库）"""
@@ -57,8 +62,8 @@ def test_basic_functionality():
     # 测试1: 日期格式化
     try:
         test_date = datetime(2024, 1, 1, 12, 0, 0)
-        formatted = test_date.strftime('%Y-%m-%d %H:%M:%S')
-        assert formatted == '2024-01-01 12:00:00'
+        formatted = test_date.strftime("%Y-%m-%d %H:%M:%S")
+        assert formatted == "2024-01-01 12:00:00"
         print("✅ 日期格式化测试通过")
         success_count += 1
     except Exception as e:
@@ -67,6 +72,7 @@ def test_basic_functionality():
     # 测试2: JSON序列化
     try:
         import json
+
         test_data = {"name": "test", "value": 42}
         json_str = json.dumps(test_data)
         parsed = json.loads(json_str)
@@ -80,6 +86,7 @@ def test_basic_functionality():
     # 测试3: 异步基础
     try:
         import asyncio
+
         async def test_async():
             return "async_result"
 
@@ -93,7 +100,8 @@ def test_basic_functionality():
     # 测试4: 类型检查
     try:
         from typing import Dict, Any
-        def typed_function(name: str, age: int) -> Dict[str, Any]:
+
+        def typed_function(name: str, age: int) -> dict[str, Any]:
             return {"name": name, "age": age}
 
         result = typed_function("test", 25)
@@ -106,6 +114,7 @@ def test_basic_functionality():
 
     # 测试5: 错误处理
     try:
+
         def divide(a: float, b: float) -> float:
             if b == 0:
                 raise ValueError("除数不能为零")
@@ -128,6 +137,7 @@ def test_basic_functionality():
     print(f"🎯 基础功能测试: {success_count}/{total_tests} 通过")
     return success_count >= 3  # 60%通过率即可
 
+
 def test_date_utils_if_available():
     """如果DateUtils可用，测试其核心功能"""
     print("📅 测试DateUtils（如果可用）...")
@@ -142,7 +152,7 @@ def test_date_utils_if_available():
         try:
             test_date = datetime(2024, 1, 1, 12, 0, 0)
             result = DateUtils.format_datetime(test_date)
-            assert result == '2024-01-01 12:00:00'
+            assert result == "2024-01-01 12:00:00"
             print("✅ format_datetime测试通过")
             success_count += 1
         except Exception as e:
@@ -150,7 +160,7 @@ def test_date_utils_if_available():
 
         # 测试2: parse_date
         try:
-            result = DateUtils.parse_date('2024-01-01')
+            result = DateUtils.parse_date("2024-01-01")
             assert result.year == 2024
             assert result.month == 1
             assert result.day == 1
@@ -177,13 +187,14 @@ def test_date_utils_if_available():
         print("⚠️ DateUtils不可用，跳过测试")
         return True  # 跳过不算失败
 
+
 def main():
     """主测试函数"""
     print("🔧 设置CI环境变量...")
 
     # 设置内存优化环境变量
-    os.environ['PYTEST_CURRENT_TEST'] = '1'
-    os.environ['PYTHONPATH'] = f"{os.getcwd()}:{os.environ.get('PYTHONPATH', '')}"
+    os.environ["PYTEST_CURRENT_TEST"] = "1"
+    os.environ["PYTHONPATH"] = f"{os.getcwd()}:{os.environ.get('PYTHONPATH', '')}"
 
     print("🧪 开始CI最小化验证...")
     print("=" * 50)
@@ -224,6 +235,7 @@ def main():
         print("❌ CI最小化验证失败")
         print("🔧 核心功能存在问题，需要修复")
         return 1
+
 
 if __name__ == "__main__":
     try:

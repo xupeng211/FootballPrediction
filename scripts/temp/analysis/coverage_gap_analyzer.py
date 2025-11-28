@@ -11,13 +11,13 @@ from pathlib import Path
 from typing import List, Dict, Tuple
 
 
-def count_lines_in_file(file_path: Path) -> Tuple[int, int]:
+def count_lines_in_file(file_path: Path) -> tuple[int, int]:
     """统计文件中的代码行数和逻辑行数"""
     if not file_path.exists():
         return 0, 0
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # 统计非空、非注释的代码行数
@@ -42,7 +42,7 @@ def count_lines_in_file(file_path: Path) -> Tuple[int, int]:
         return 0, 0
 
 
-def find_python_files(src_dir: Path) -> List[Path]:
+def find_python_files(src_dir: Path) -> list[Path]:
     """找到所有Python文件"""
     python_files = []
     for root, dirs, files in os.walk(src_dir):
@@ -56,12 +56,12 @@ def find_python_files(src_dir: Path) -> List[Path]:
     return python_files
 
 
-def load_existing_coverage() -> Dict[str, float]:
+def load_existing_coverage() -> dict[str, float]:
     """加载现有的覆盖率数据（如果有的话）"""
     coverage_file = Path("coverage_final_gap.json")
     if coverage_file.exists():
         try:
-            with open(coverage_file, "r") as f:
+            with open(coverage_file) as f:
                 data = json.load(f)
                 return {
                     k: v.get("summary", {}).get("percent_covered", 0)
@@ -161,7 +161,7 @@ def main():
         return
 
     # 显示Top 10
-    print(f"🎯 Top 10 High-Value Coverage Targets:")
+    print("🎯 Top 10 High-Value Coverage Targets:")
     print(f"{'File':<40} {'Type':<10} {'Lines':<8} {'Coverage':<10} {'Missing':<8}")
     print("-" * 80)
 
@@ -173,7 +173,7 @@ def main():
             f"{candidate['missing_lines']:<8}"
         )
 
-    print(f"\n📈 分析完成:")
+    print("\n📈 分析完成:")
     print(f"   总候选文件数: {len(candidates)}")
     print(
         f"   Top 5 潜在覆盖提升: {sum(c['missing_lines'] for c in candidates[:5]):.0f} 行代码"

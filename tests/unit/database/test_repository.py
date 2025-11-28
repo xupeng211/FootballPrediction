@@ -32,8 +32,8 @@ class MockModel:
     created_at = None
 
     # 添加模拟的SQLAlchemy属性
-    __table__ = type('MockTable', (), {'name': 'mock_model'})()
-    __tablename__ = 'mock_model'
+    __table__ = type("MockTable", (), {"name": "mock_model"})()
+    __tablename__ = "mock_model"
 
 
 class MockDatabaseManager:
@@ -122,6 +122,7 @@ class MockScalars:
 
 class MockException(Exception):
     """模拟异常."""
+
     pass
 
 
@@ -151,7 +152,7 @@ class TestBaseRepository:
 
     def test_initialization_without_db_manager(self):
         """测试不带数据库管理器的初始化."""
-        with patch('src.database.repositories.base.DatabaseManager') as mock_dm:
+        with patch("src.database.repositories.base.DatabaseManager") as mock_dm:
             mock_dm.return_value = MockDatabaseManager()
             repo = ConcreteRepository(self.model_class)
             assert repo.db_manager is not None
@@ -194,7 +195,7 @@ class TestBaseRepository:
         mock_model = MockModel(id=1, name="Test")
         mock_result.scalar_one_or_none_result = mock_model
 
-        with patch.object(self.repository, 'find_one_by') as mock_find:
+        with patch.object(self.repository, "find_one_by") as mock_find:
             mock_find.return_value = mock_model
 
             result = await self.repository.get_by_id(1)
@@ -205,7 +206,7 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_get_by_id_not_found(self):
         """测试根据ID未找到记录."""
-        with patch.object(self.repository, 'find_one_by') as mock_find:
+        with patch.object(self.repository, "find_one_by") as mock_find:
             mock_find.return_value = None
 
             result = await self.repository.get_by_id(999)
@@ -217,7 +218,7 @@ class TestBaseRepository:
         """测试使用外部会话根据ID获取记录."""
         mock_session = MockAsyncSession()
 
-        with patch.object(self.repository, 'find_one_by') as mock_find:
+        with patch.object(self.repository, "find_one_by") as mock_find:
             mock_find.return_value = MockModel(id=1)
 
             result = await self.repository.get_by_id(1, session=mock_session)
@@ -230,39 +231,45 @@ class TestBaseRepository:
         """测试成功获取所有记录."""
         mock_models = [MockModel(id=1), MockModel(id=2)]
 
-        with patch.object(self.repository, 'find_by') as mock_find:
+        with patch.object(self.repository, "find_by") as mock_find:
             mock_find.return_value = mock_models
 
             result = await self.repository.get_all()
 
             assert len(result) == 2
-            mock_find.assert_called_once_with({}, limit=None, offset=None, order_by=None, session=None)
+            mock_find.assert_called_once_with(
+                {}, limit=None, offset=None, order_by=None, session=None
+            )
 
     @pytest.mark.asyncio
     async def test_get_all_with_limit_offset(self):
         """测试带限制和偏移量的获取所有记录."""
         mock_models = [MockModel(id=1)]
 
-        with patch.object(self.repository, 'find_by') as mock_find:
+        with patch.object(self.repository, "find_by") as mock_find:
             mock_find.return_value = mock_models
 
             result = await self.repository.get_all(limit=10, offset=5)
 
             assert len(result) == 1
-            mock_find.assert_called_once_with({}, limit=10, offset=5, order_by=None, session=None)
+            mock_find.assert_called_once_with(
+                {}, limit=10, offset=5, order_by=None, session=None
+            )
 
     @pytest.mark.asyncio
     async def test_get_all_with_session(self):
         """测试使用外部会话获取所有记录."""
         mock_session = MockAsyncSession()
 
-        with patch.object(self.repository, 'find_by') as mock_find:
+        with patch.object(self.repository, "find_by") as mock_find:
             mock_find.return_value = []
 
             result = await self.repository.get_all(session=mock_session)
 
             assert isinstance(result, list)
-            mock_find.assert_called_once_with({}, limit=None, offset=None, order_by=None, session=mock_session)
+            mock_find.assert_called_once_with(
+                {}, limit=None, offset=None, order_by=None, session=mock_session
+            )
 
     @pytest.mark.asyncio
     async def test_update_success(self):
@@ -271,10 +278,11 @@ class TestBaseRepository:
         update_data = {"name": "Updated Name"}
 
         # 模拟数据库执行
-        with patch('sqlalchemy.select') as mock_select, \
-             patch('sqlalchemy.update') as mock_update, \
-             patch.object(self.db_manager, 'get_async_session') as mock_get_session:
-
+        with (
+            patch("sqlalchemy.select") as mock_select,
+            patch("sqlalchemy.update") as mock_update,
+            patch.object(self.db_manager, "get_async_session") as mock_get_session,
+        ):
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -292,7 +300,7 @@ class TestBaseRepository:
         """测试更新不存在的记录."""
         update_data = {"name": "Updated Name"}
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -323,7 +331,7 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_delete_success(self):
         """测试成功删除记录."""
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -339,7 +347,7 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_delete_not_found(self):
         """测试删除不存在的记录."""
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -372,7 +380,7 @@ class TestBaseRepository:
         filters = {"name": "Test"}
         mock_models = [MockModel(id=1, name="Test")]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -392,7 +400,7 @@ class TestBaseRepository:
         filters = {"name": "Test"}
         mock_models = [MockModel(id=1, name="Test")]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -411,7 +419,7 @@ class TestBaseRepository:
         """测试使用无效过滤条件查找."""
         filters = {"invalid_field": "value"}
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -429,7 +437,7 @@ class TestBaseRepository:
         filters = {"name": "Test"}
         mock_model = MockModel(id=1, name="Test")
 
-        with patch.object(self.repository, 'find_by') as mock_find:
+        with patch.object(self.repository, "find_by") as mock_find:
             mock_find.return_value = [mock_model]
 
             result = await self.repository.find_one_by(filters)
@@ -442,7 +450,7 @@ class TestBaseRepository:
         """测试根据条件未找到单个记录."""
         filters = {"name": "NonExistent"}
 
-        with patch.object(self.repository, 'find_by') as mock_find:
+        with patch.object(self.repository, "find_by") as mock_find:
             mock_find.return_value = []
 
             result = await self.repository.find_one_by(filters)
@@ -455,7 +463,7 @@ class TestBaseRepository:
         mock_session = MockAsyncSession()
         filters = {"name": "Test"}
 
-        with patch.object(self.repository, 'find_by') as mock_find:
+        with patch.object(self.repository, "find_by") as mock_find:
             mock_find.return_value = [MockModel(id=1)]
 
             result = await self.repository.find_one_by(filters, session=mock_session)
@@ -468,7 +476,7 @@ class TestBaseRepository:
         """测试统计记录数量."""
         mock_models = [MockModel(id=1), MockModel(id=2), MockModel(id=3)]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -486,7 +494,7 @@ class TestBaseRepository:
         filters = {"name": "Test"}
         mock_models = [MockModel(id=1)]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -503,7 +511,7 @@ class TestBaseRepository:
         """测试使用外部会话统计记录数量."""
         mock_session = MockAsyncSession()
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             # 因为传入了session，不应该调用get_async_session
             result = await self.repository.count(session=mock_session)
 
@@ -513,7 +521,7 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_exists_true(self):
         """测试记录存在（返回True）."""
-        with patch.object(self.repository, 'count') as mock_count:
+        with patch.object(self.repository, "count") as mock_count:
             mock_count.return_value = 5
 
             result = await self.repository.exists({"name": "Test"})
@@ -524,7 +532,7 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_exists_false(self):
         """测试记录不存在（返回False）."""
-        with patch.object(self.repository, 'count') as mock_count:
+        with patch.object(self.repository, "count") as mock_count:
             mock_count.return_value = 0
 
             result = await self.repository.exists({"name": "NonExistent"})
@@ -536,10 +544,12 @@ class TestBaseRepository:
         """测试使用外部会话检查记录存在."""
         mock_session = MockAsyncSession()
 
-        with patch.object(self.repository, 'count') as mock_count:
+        with patch.object(self.repository, "count") as mock_count:
             mock_count.return_value = 1
 
-            result = await self.repository.exists({"name": "Test"}, session=mock_session)
+            result = await self.repository.exists(
+                {"name": "Test"}, session=mock_session
+            )
 
             assert result is True
             mock_count.assert_called_once_with({"name": "Test"}, session=mock_session)
@@ -585,7 +595,7 @@ class TestBaseRepository:
             {"id": 2, "name": "Updated2"},
         ]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -610,7 +620,7 @@ class TestBaseRepository:
         """测试批量更新不包含ID的记录."""
         updates = [{"name": "Updated"}]  # 没有id字段
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -637,7 +647,7 @@ class TestBaseRepository:
         """测试批量删除记录成功."""
         ids = [1, 2, 3]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -673,6 +683,7 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_execute_in_transaction_success(self):
         """测试在事务中执行多个操作成功."""
+
         async def operation1(session):
             return "result1"
 
@@ -681,7 +692,7 @@ class TestBaseRepository:
 
         operations = [operation1, operation2]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -699,7 +710,9 @@ class TestBaseRepository:
         async def operation(session):
             return "result"
 
-        result = await self.repository.execute_in_transaction([operation], session=mock_session)
+        result = await self.repository.execute_in_transaction(
+            [operation], session=mock_session
+        )
 
         assert result == ["result"]
         assert mock_session.committed is True
@@ -707,12 +720,13 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_execute_in_transaction_with_sqlalchemy_error(self):
         """测试事务中发生SQLAlchemy错误."""
+
         async def failing_operation(session):
             raise SQLAlchemyError("Database error")
 
         operations = [failing_operation]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -725,12 +739,13 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_execute_in_transaction_with_database_error(self):
         """测试事务中发生数据库错误."""
+
         async def failing_operation(session):
             raise DatabaseError("Database connection error", None, None)
 
         operations = [failing_operation]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -742,12 +757,13 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_execute_in_transaction_with_connection_error(self):
         """测试事务中发生连接错误."""
+
         async def failing_operation(session):
             raise ConnectionError("Connection lost")
 
         operations = [failing_operation]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -759,12 +775,13 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_execute_in_transaction_with_timeout_error(self):
         """测试事务中发生超时错误."""
+
         async def failing_operation(session):
             raise TimeoutError("Operation timeout")
 
         operations = [failing_operation]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -776,12 +793,13 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_execute_in_transaction_with_other_exception(self):
         """测试事务中发生其他异常（不应该回滚）."""
+
         async def failing_operation(session):
             raise ValueError("Invalid value")
 
         operations = [failing_operation]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -804,7 +822,9 @@ class TestBaseRepository:
         """测试带会话的关联数据获取."""
         mock_session = MockAsyncSession()
 
-        result = await self.repository.get_related_data(1, "test_relation", session=mock_session)
+        result = await self.repository.get_related_data(
+            1, "test_relation", session=mock_session
+        )
 
         assert result == {"obj_id": 1, "relation_name": "test_relation"}
 
@@ -819,7 +839,7 @@ class TestBaseRepository:
         assert created.name == "Integration Test"
 
         # 根据ID获取记录
-        with patch.object(self.repository, 'find_one_by') as mock_find:
+        with patch.object(self.repository, "find_one_by") as mock_find:
             mock_find.return_value = created
 
             retrieved = await self.repository.get_by_id(created.id)
@@ -830,19 +850,16 @@ class TestBaseRepository:
         """集成测试：批量操作."""
         # 批量创建
         objects_data = [
-            {"name": f"Test{i}", "email": f"test{i}@example.com"}
-            for i in range(5)
+            {"name": f"Test{i}", "email": f"test{i}@example.com"} for i in range(5)
         ]
 
         created = await self.repository.bulk_create(objects_data)
         assert len(created) == 5
 
         # 批量更新
-        updates = [
-            {"id": i + 1, "name": f"Updated{i}"} for i in range(5)
-        ]
+        updates = [{"id": i + 1, "name": f"Updated{i}"} for i in range(5)]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -856,7 +873,7 @@ class TestBaseRepository:
         # 批量删除
         ids = [1, 2, 3, 4, 5]
 
-        with patch.object(self.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
             mock_session = MockAsyncSession()
             mock_get_session.return_value.__aenter__.return_value = mock_session
 

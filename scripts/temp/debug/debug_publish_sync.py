@@ -21,9 +21,9 @@ def debug_publish_sync():
     print(f"Subscribers: {bus._subscribers}")
 
     event = Event("TestEvent", {"test": True})
-    print(f"About to call publish_sync")
+    print("About to call publish_sync")
     bus.publish_sync("TestEvent", event)
-    print(f"publish_sync completed")
+    print("publish_sync completed")
     print(f"Handler handle called: {handler.handle.called}")
     if handler.handle.called:
         print(f"Call args: {handler.handle.call_args}")

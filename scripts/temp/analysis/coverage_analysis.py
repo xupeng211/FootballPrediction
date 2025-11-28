@@ -10,16 +10,16 @@ from pathlib import Path
 from typing import Dict, List, Any
 
 
-def parse_coverage_json(file_path: str) -> Dict[str, Any]:
+def parse_coverage_json(file_path: str) -> dict[str, Any]:
     """解析coverage.json文件"""
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         data = json.load(f)
     return data
 
 
 def extract_uncovered_files(
-    coverage_data: Dict[str, Any], top_n: int = 50
-) -> List[Dict[str, Any]]:
+    coverage_data: dict[str, Any], top_n: int = 50
+) -> list[dict[str, Any]]:
     """提取未覆盖的文件，按未覆盖行数排序"""
     files = coverage_data.get("files", {})
     uncovered_files = []
@@ -56,7 +56,7 @@ def extract_uncovered_files(
     return uncovered_files[:top_n]
 
 
-def get_overall_stats(coverage_data: Dict[str, Any]) -> Dict[str, Any]:
+def get_overall_stats(coverage_data: dict[str, Any]) -> dict[str, Any]:
     """获取整体覆盖率统计"""
     totals = coverage_data.get("totals", {})
     return {
@@ -97,7 +97,7 @@ def main():
         json.dump(analysis_report, f, indent=2, ensure_ascii=False)
 
     # 打印基本信息
-    print(f"Coverage Analysis Results:")
+    print("Coverage Analysis Results:")
     print(f"Overall Coverage: {overall_stats['coverage_percent']}%")
     print(f"Total Statements: {overall_stats['num_statements']}")
     print(f"Covered Lines: {overall_stats['covered_lines']}")

@@ -49,13 +49,34 @@ class TestDateUtils:
         dt = datetime(2024, 1, 15, 14, 30, 45)
 
         # 测试各种预定义格式
-        assert DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["default"]) == "2024-01-15 14:30:45"
-        assert DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["date"]) == "2024-01-15"
-        assert DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["time"]) == "14:30:45"
-        assert DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["iso"]) == "2024-01-15T14:30:45"
-        assert DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["readable"]) == "2024年01月15日 14:30:45"
-        assert DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["short"]) == "01/15 14:30"
-        assert DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["us"]) == "01/15/2024 02:30 PM"
+        assert (
+            DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["default"])
+            == "2024-01-15 14:30:45"
+        )
+        assert (
+            DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["date"])
+            == "2024-01-15"
+        )
+        assert (
+            DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["time"])
+            == "14:30:45"
+        )
+        assert (
+            DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["iso"])
+            == "2024-01-15T14:30:45"
+        )
+        assert (
+            DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["readable"])
+            == "2024年01月15日 14:30:45"
+        )
+        assert (
+            DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["short"])
+            == "01/15 14:30"
+        )
+        assert (
+            DateUtils.format_datetime(dt, DateUtils.DATETIME_FORMATS["us"])
+            == "01/15/2024 02:30 PM"
+        )
 
     def test_format_datetime_invalid_type(self):
         """测试无效类型输入."""
@@ -69,7 +90,7 @@ class TestDateUtils:
         dt = datetime(2024, 1, 15, 14, 30, 45)
         # 使用一个会导致ValueError的格式（实际测试中大多数格式不会出错）
         # 我们直接模拟出错的情况
-        with patch.object(dt, 'strftime', side_effect=ValueError("Invalid format")):
+        with patch.object(dt, "strftime", side_effect=ValueError("Invalid format")):
             result = DateUtils.format_datetime(dt, "%Y-%m-%d")
             assert result == ""
 
@@ -127,7 +148,7 @@ class TestDateUtils:
         assert isinstance(result, str)
         assert len(result) > 0
 
-    @patch('src.utils.date_utils.datetime')
+    @patch("src.utils.date_utils.datetime")
     def test_time_ago_minutes_ago(self, mock_dt):
         """测试'分钟前'时间."""
         now = datetime(2024, 1, 15, 14, 30, 45)
@@ -138,7 +159,7 @@ class TestDateUtils:
         result = DateUtils.time_ago(test_time)
         assert result == "30分钟前"
 
-    @patch('src.utils.date_utils.datetime')
+    @patch("src.utils.date_utils.datetime")
     def test_time_ago_hours_ago(self, mock_dt):
         """测试'小时前'时间."""
         now = datetime(2024, 1, 15, 14, 30, 45)
@@ -149,7 +170,7 @@ class TestDateUtils:
         result = DateUtils.time_ago(test_time)
         assert result == "5小时前"
 
-    @patch('src.utils.date_utils.datetime')
+    @patch("src.utils.date_utils.datetime")
     def test_time_ago_days_ago(self, mock_dt):
         """测试'天前'时间."""
         now = datetime(2024, 1, 15, 14, 30, 45)
@@ -160,7 +181,7 @@ class TestDateUtils:
         result = DateUtils.time_ago(test_time)
         assert result == "3天前"
 
-    @patch('src.utils.date_utils.datetime')
+    @patch("src.utils.date_utils.datetime")
     def test_time_ago_weeks_ago(self, mock_dt):
         """测试'周前'时间."""
         now = datetime(2024, 1, 15, 14, 30, 45)
@@ -171,7 +192,7 @@ class TestDateUtils:
         result = DateUtils.time_ago(test_time)
         assert result == "2周前"
 
-    @patch('src.utils.date_utils.datetime')
+    @patch("src.utils.date_utils.datetime")
     def test_time_ago_month_ago(self, mock_dt):
         """测试一个月前时间（返回日期格式）."""
         now = datetime(2024, 1, 15, 14, 30, 45)
@@ -617,7 +638,7 @@ class TestDateUtils:
     def test_format_duration_exception(self):
         """测试异常情况."""
         # 模拟会引发异常的情况
-        with patch('builtins.int', side_effect=Exception("Test exception")):
+        with patch("builtins.int", side_effect=Exception("Test exception")):
             assert DateUtils.format_duration(30) == "0秒"
 
     def test_format_duration_between_valid(self):
@@ -650,15 +671,23 @@ class TestDateUtils:
 
     def test_format_duration_between_invalid_type(self):
         """测试无效类型输入."""
-        assert DateUtils.format_duration_between("not a datetime", datetime(2024, 1, 15)) == "0秒"
-        assert DateUtils.format_duration_between(datetime(2024, 1, 15), "not a datetime") == "0秒"
+        assert (
+            DateUtils.format_duration_between("not a datetime", datetime(2024, 1, 15))
+            == "0秒"
+        )
+        assert (
+            DateUtils.format_duration_between(datetime(2024, 1, 15), "not a datetime")
+            == "0秒"
+        )
         assert DateUtils.format_duration_between(None, datetime(2024, 1, 15)) == "0秒"
 
     def test_format_duration_between_exception(self):
         """测试异常情况."""
         start = datetime(2024, 1, 15, 14, 30, 0)
-        with patch('builtins.int', side_effect=Exception("Test exception")):
-            result = DateUtils.format_duration_between(start, start + timedelta(seconds=30))
+        with patch("builtins.int", side_effect=Exception("Test exception")):
+            result = DateUtils.format_duration_between(
+                start, start + timedelta(seconds=30)
+            )
             assert result == "0秒"
 
 
@@ -679,7 +708,7 @@ class TestCachedFunctions:
 
     def test_cached_time_ago(self):
         """测试缓存版本的时间差格式化."""
-        with patch('src.utils.date_utils.datetime') as mock_dt:
+        with patch("src.utils.date_utils.datetime") as mock_dt:
             now = datetime(2024, 1, 15, 14, 30, 45)
             mock_dt.utcnow.return_value = now
 

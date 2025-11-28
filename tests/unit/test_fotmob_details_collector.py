@@ -304,7 +304,9 @@ class TestConvenienceFunctions:
 @pytest.mark.integration
 @pytest.mark.unit
 @pytest.mark.slow
-@pytest.mark.skip(reason="Remote CI Flakiness/Environment Specific Issue - Requires actual network connection to FotMob API")
+@pytest.mark.skip(
+    reason="Remote CI Flakiness/Environment Specific Issue - Requires actual network connection to FotMob API"
+)
 class TestRealApiIntegration:
     """真实API集成测试"""
 
