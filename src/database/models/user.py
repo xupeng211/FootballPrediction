@@ -1,7 +1,8 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, String, Text
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
 
 from src.database.base import BaseModel
 
@@ -53,6 +54,10 @@ class User(BaseModel):
         String(20), default="0", nullable=False, comment="经验值"
     )
     achievements = Column(JSON, nullable=True, default=list, comment="成就列表")
+
+    # 租户关系
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, comment="租户ID")
+    tenant = relationship("Tenant", back_populates="users", foreign_keys=[tenant_id])
 
     # 时间戳字段继承自BaseModel (created_at, updated_at)
 

@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 from src.database.models.match import Match, MatchResult, MatchStatus
 from src.database.models.predictions import Prediction, Predictions, PredictedResult
 from src.database.models.team import Team, TeamForm
+from src.database.models.tenant import Tenant
 from src.database.models.user import User, UserRole
 from src.database.models.features import (
     Features,
