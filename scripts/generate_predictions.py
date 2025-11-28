@@ -28,13 +28,15 @@ from src.config.config_manager import CONFIG_MANAGER
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # 数据库配置
-DATABASE_URL = "postgresql+asyncpg://postgres:postgres-dev-password@db:5432/football_prediction"
+DATABASE_URL = (
+    "postgresql+asyncpg://postgres:postgres-dev-password@db:5432/football_prediction"
+)
+
 
 class BatchPredictionGenerator:
     """批量预测生成器"""
@@ -45,7 +47,9 @@ class BatchPredictionGenerator:
             self.engine, class_=AsyncSession, expire_on_commit=False
         )
 
-    async def get_match_ids(self, limit: int = None, only_unpredicted: bool = True) -> list[int]:
+    async def get_match_ids(
+        self, limit: int = None, only_unpredicted: bool = True
+    ) -> list[int]:
         """获取比赛ID列表
 
         Args:
@@ -62,7 +66,9 @@ class BatchPredictionGenerator:
                     LIMIT :limit
                 """)
             else:
-                query = text("SELECT id FROM matches ORDER BY match_date DESC LIMIT :limit")
+                query = text(
+                    "SELECT id FROM matches ORDER BY match_date DESC LIMIT :limit"
+                )
 
             result = await session.execute(query, {"limit": limit if limit else 10000})
             return [row[0] for row in result.fetchall()]
@@ -71,8 +77,10 @@ class BatchPredictionGenerator:
         """检查预测是否已存在"""
         async with self.async_session() as session:
             result = await session.execute(
-                text("SELECT COUNT(*) FROM predictions WHERE match_id = :match_id AND user_id = :user_id"),
-                {"match_id": match_id, "user_id": user_id}
+                text(
+                    "SELECT COUNT(*) FROM predictions WHERE match_id = :match_id AND user_id = :user_id"
+                ),
+                {"match_id": match_id, "user_id": user_id},
             )
             count = result.scalar()
             return count > 0
@@ -85,7 +93,7 @@ class BatchPredictionGenerator:
         draw_prob: float = 0.33,
         away_win_prob: float = 0.34,
         predicted_outcome: str = "home",
-        confidence: float = 0.75
+        confidence: float = 0.75,
     ):
         """保存预测到数据库"""
         async with self.async_session() as session:
@@ -111,8 +119,8 @@ class BatchPredictionGenerator:
                         "score": score,
                         "confidence": f"{confidence:.6f}",
                         "created_at": datetime.utcnow(),
-                        "updated_at": datetime.utcnow()
-                    }
+                        "updated_at": datetime.utcnow(),
+                    },
                 )
                 await session.commit()
                 logger.info(f"✅ 已保存比赛 {match_id} 的预测")
@@ -139,7 +147,9 @@ class BatchPredictionGenerator:
             prediction_result = await inference_service.predict_match(match_id)
 
             if not prediction_result.get("success", False):
-                logger.error(f"❌ 推理服务预测失败: {prediction_result.get('error', 'Unknown error')}")
+                logger.error(
+                    f"❌ 推理服务预测失败: {prediction_result.get('error', 'Unknown error')}"
+                )
                 # 如果推理失败，返回基础预测
                 return {
                     "match_id": match_id,
@@ -148,7 +158,7 @@ class BatchPredictionGenerator:
                     "away_win_prob": 0.33,
                     "predicted_outcome": "home",
                     "confidence": 0.5,
-                    "status": "fallback"
+                    "status": "fallback",
                 }
 
             # 提取推理结果中的关键信息
@@ -167,14 +177,18 @@ class BatchPredictionGenerator:
                 predicted_outcome_clean = "away"
             elif predicted_outcome == "away_or_draw":
                 # 对于away_or_draw，选择概率更高的
-                if prediction_result.get("away_win_prob", 0) > prediction_result.get("draw_prob", 0):
+                if prediction_result.get("away_win_prob", 0) > prediction_result.get(
+                    "draw_prob", 0
+                ):
                     predicted_outcome_clean = "away"
                 else:
                     predicted_outcome_clean = "draw"
             else:
                 predicted_outcome_clean = "home"  # 默认值
 
-            logger.info(f"✅ AI模型预测成功: {predicted_outcome_clean}, 置信度: {prediction_result.get('confidence', 0):.3f}")
+            logger.info(
+                f"✅ AI模型预测成功: {predicted_outcome_clean}, 置信度: {prediction_result.get('confidence', 0):.3f}"
+            )
 
             return {
                 "match_id": match_id,
@@ -183,7 +197,7 @@ class BatchPredictionGenerator:
                 "away_win_prob": float(prediction_result.get("away_win_prob", 0.34)),
                 "predicted_outcome": predicted_outcome_clean,
                 "confidence": float(prediction_result.get("confidence", 0.5)),
-                "status": "ai_generated"
+                "status": "ai_generated",
             }
 
         except Exception as e:
@@ -196,7 +210,7 @@ class BatchPredictionGenerator:
                 "away_win_prob": 0.33,
                 "predicted_outcome": "home",
                 "confidence": 0.5,
-                "status": "fallback_error"
+                "status": "fallback_error",
             }
 
     async def batch_generate_predictions(self, batch_size: int = 50):
@@ -227,7 +241,7 @@ class BatchPredictionGenerator:
                     draw_prob=prediction["draw_prob"],
                     away_win_prob=prediction["away_win_prob"],
                     predicted_outcome=prediction["predicted_outcome"],
-                    confidence=prediction["confidence"]
+                    confidence=prediction["confidence"],
                 )
 
                 if success:
@@ -246,17 +260,23 @@ class BatchPredictionGenerator:
         """获取数据库统计信息"""
         async with self.async_session() as session:
             matches_result = await session.execute(text("SELECT COUNT(*) FROM matches"))
-            predictions_result = await session.execute(text("SELECT COUNT(*) FROM predictions"))
+            predictions_result = await session.execute(
+                text("SELECT COUNT(*) FROM predictions")
+            )
 
             matches_count = matches_result.scalar()
             predictions_count = predictions_result.scalar()
 
-            logger.info(f"📊 数据库统计: 比赛 {matches_count} 场, 预测 {predictions_count} 条")
+            logger.info(
+                f"📊 数据库统计: 比赛 {matches_count} 场, 预测 {predictions_count} 条"
+            )
 
             return {
                 "matches_count": matches_count,
                 "predictions_count": predictions_count,
-                "coverage_rate": predictions_count / matches_count if matches_count > 0 else 0
+                "coverage_rate": predictions_count / matches_count
+                if matches_count > 0
+                else 0,
             }
 
     async def generate_all_predictions(self):
@@ -273,8 +293,10 @@ class BatchPredictionGenerator:
 
         # 分批处理
         for i in range(0, len(match_ids), batch_size):
-            batch_match_ids = match_ids[i:i + batch_size]
-            logger.info(f"正在处理第 {i // batch_size + 1} 批，共 {len(batch_match_ids)} 场比赛...")
+            batch_match_ids = match_ids[i : i + batch_size]
+            logger.info(
+                f"正在处理第 {i // batch_size + 1} 批，共 {len(batch_match_ids)} 场比赛..."
+            )
 
             for match_id in batch_match_ids:
                 try:
@@ -288,7 +310,7 @@ class BatchPredictionGenerator:
                         draw_prob=prediction["draw_prob"],
                         away_win_prob=prediction["away_win_prob"],
                         predicted_outcome=prediction["predicted_outcome"],
-                        confidence=prediction["confidence"]
+                        confidence=prediction["confidence"],
                     )
 
                     if success:
@@ -302,7 +324,9 @@ class BatchPredictionGenerator:
 
             # 每批处理完后显示进度
             progress = (i + len(batch_match_ids)) / len(match_ids) * 100
-            logger.info(f"📈 进度: {progress:.1f}% ({i + len(batch_match_ids)}/{len(match_ids)})")
+            logger.info(
+                f"📈 进度: {progress:.1f}% ({i + len(batch_match_ids)}/{len(match_ids)})"
+            )
 
         logger.info(f"🎉 全量预测生成完成！成功: {success_count}, 失败: {failed_count}")
         return {"success_count": success_count, "failed_count": failed_count}

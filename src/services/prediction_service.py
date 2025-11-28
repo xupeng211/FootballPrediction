@@ -56,7 +56,9 @@ class PredictionService:
         try:
             async with db_manager.get_async_session() as session:
                 # 获取总数
-                total_result = await session.execute(text("SELECT COUNT(*) FROM predictions"))
+                total_result = await session.execute(
+                    text("SELECT COUNT(*) FROM predictions")
+                )
                 total = total_result.scalar()
 
                 # 获取分页数据
@@ -72,7 +74,9 @@ class PredictionService:
                     LIMIT :limit OFFSET :offset
                 """)
 
-                result = await session.execute(query, {"limit": limit, "offset": offset})
+                result = await session.execute(
+                    query, {"limit": limit, "offset": offset}
+                )
                 rows = result.fetchall()
 
                 # 格式化预测数据
@@ -91,18 +95,20 @@ class PredictionService:
                     else:
                         predicted_outcome = "draw"
 
-                    predictions.append({
-                        "id": f"pred_{row[0]}",
-                        "match_id": row[1],
-                        "home_team": row[7],
-                        "away_team": row[8],
-                        "predicted_outcome": predicted_outcome,
-                        "confidence": float(row[3] or "0.5"),
-                        "score": score,
-                        "status": row[4],
-                        "created_at": row[5].isoformat() if row[5] else None,
-                        "updated_at": row[6].isoformat() if row[6] else None,
-                    })
+                    predictions.append(
+                        {
+                            "id": f"pred_{row[0]}",
+                            "match_id": row[1],
+                            "home_team": row[7],
+                            "away_team": row[8],
+                            "predicted_outcome": predicted_outcome,
+                            "confidence": float(row[3] or "0.5"),
+                            "score": score,
+                            "status": row[4],
+                            "created_at": row[5].isoformat() if row[5] else None,
+                            "updated_at": row[6].isoformat() if row[6] else None,
+                        }
+                    )
 
                 logger.info(f"成功从数据库获取 {len(predictions)} 条预测记录")
                 return {
@@ -167,18 +173,20 @@ class PredictionService:
                     else:
                         predicted_outcome = "draw"
 
-                    predictions.append({
-                        "id": f"pred_{row[0]}",
-                        "match_id": row[1],
-                        "home_team": row[7],
-                        "away_team": row[8],
-                        "predicted_outcome": predicted_outcome,
-                        "confidence": float(row[3] or "0.5"),
-                        "score": score,
-                        "status": row[4],
-                        "created_at": row[5].isoformat() if row[5] else None,
-                        "updated_at": row[6].isoformat() if row[6] else None,
-                    })
+                    predictions.append(
+                        {
+                            "id": f"pred_{row[0]}",
+                            "match_id": row[1],
+                            "home_team": row[7],
+                            "away_team": row[8],
+                            "predicted_outcome": predicted_outcome,
+                            "confidence": float(row[3] or "0.5"),
+                            "score": score,
+                            "status": row[4],
+                            "created_at": row[5].isoformat() if row[5] else None,
+                            "updated_at": row[6].isoformat() if row[6] else None,
+                        }
+                    )
 
                 logger.info(f"获取比赛 {match_id} 的 {len(predictions)} 条预测记录")
                 return predictions

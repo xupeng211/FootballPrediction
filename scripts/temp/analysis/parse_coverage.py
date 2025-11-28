@@ -17,13 +17,15 @@ uncovered_files = []
 for file_path, file_data in data["files"].items():
     missing_lines = file_data["summary"]["missing_lines"]
     if missing_lines > 0:
-        uncovered_files.append({
-            "file": file_path,
-            "missing_lines": missing_lines,
-            "total_lines": file_data["summary"]["num_statements"],
-            "covered_lines": file_data["summary"]["covered_lines"],
-            "coverage": file_data["summary"]["percent_covered"]
-        })
+        uncovered_files.append(
+            {
+                "file": file_path,
+                "missing_lines": missing_lines,
+                "total_lines": file_data["summary"]["num_statements"],
+                "covered_lines": file_data["summary"]["covered_lines"],
+                "coverage": file_data["summary"]["percent_covered"],
+            }
+        )
 
 uncovered_files.sort(key=lambda x: x["missing_lines"], reverse=True)
 print("| Rank | File | Uncovered Lines | Total Lines | Coverage |")

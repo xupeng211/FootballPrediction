@@ -308,7 +308,16 @@ class FeatureGenerator:
             features_df["team_id"] = None  # 添加可选的team_id字段
 
             # 只包含表中实际存在的字段
-            features_df = features_df[["match_id", "team_id", "feature_type", "feature_data", "created_at", "updated_at"]]
+            features_df = features_df[
+                [
+                    "match_id",
+                    "team_id",
+                    "feature_type",
+                    "feature_data",
+                    "created_at",
+                    "updated_at",
+                ]
+            ]
 
             # 使用pandas的to_sql批量插入
             features_df.to_sql("features", engine, if_exists="append", index=False)

@@ -43,7 +43,7 @@ async def probe_match_details():
 
         for i in range(test_count):
             match_id = match_ids[i]
-            print(f"\n--- 测试比赛 {i+1}/{test_count} (ID: {match_id}) ---")
+            print(f"\n--- 测试比赛 {i + 1}/{test_count} (ID: {match_id}) ---")
 
             # 获取比赛详情
             details = await client.fetch_match_details(match_id, use_signature=True)
@@ -56,12 +56,12 @@ async def probe_match_details():
                     print(f"📊 顶级键: {list(details.keys())}")
 
                     # 检查是否包含我们想要的数据
-                    content = details.get('content', {})
+                    content = details.get("content", {})
                     if isinstance(content, dict):
                         print(f"📋 content键: {list(content.keys())}")
 
                         # 检查统计数据
-                        stats = content.get('stats', {})
+                        stats = content.get("stats", {})
                         if stats:
                             print("🎯 找到统计数据 (stats)!")
                             if isinstance(stats, dict):
@@ -69,47 +69,67 @@ async def probe_match_details():
 
                                 # 寻找xG数据
                                 for key, value in stats.items():
-                                    if 'xg' in str(key).lower() or 'expected' in str(key).lower():
+                                    if (
+                                        "xg" in str(key).lower()
+                                        or "expected" in str(key).lower()
+                                    ):
                                         print(f"   🔥 发现xG相关数据: {key} = {value}")
 
                         # 检查阵容数据
-                        lineup = content.get('lineup', {})
+                        lineup = content.get("lineup", {})
                         if lineup:
                             print("👥 找到阵容数据 (lineup)!")
                             if isinstance(lineup, dict):
                                 print(f"   lineup键: {list(lineup.keys())}")
 
                                 # 寻找主客队阵容
-                                for team_key in ['home', 'away', 'homeTeam', 'awayTeam']:
+                                for team_key in [
+                                    "home",
+                                    "away",
+                                    "homeTeam",
+                                    "awayTeam",
+                                ]:
                                     if team_key in lineup:
                                         team_lineup = lineup[team_key]
-                                        if isinstance(team_lineup, dict) and 'players' in team_lineup:
-                                            players = team_lineup['players']
-                                            if isinstance(players, list) and len(players) > 0:
+                                        if (
+                                            isinstance(team_lineup, dict)
+                                            and "players" in team_lineup
+                                        ):
+                                            players = team_lineup["players"]
+                                            if (
+                                                isinstance(players, list)
+                                                and len(players) > 0
+                                            ):
                                                 # 找前锋
                                                 for player in players[:3]:  # 只看前3个
                                                     if isinstance(player, dict):
-                                                        name = player.get('name', {}).get('fullName', 'Unknown')
-                                                        position = player.get('position', {}).get('name', 'Unknown')
-                                                        print(f"   ⚽ 找到球员: {name} (位置: {position})")
+                                                        name = player.get(
+                                                            "name", {}
+                                                        ).get("fullName", "Unknown")
+                                                        position = player.get(
+                                                            "position", {}
+                                                        ).get("name", "Unknown")
+                                                        print(
+                                                            f"   ⚽ 找到球员: {name} (位置: {position})"
+                                                        )
 
                         # 检查其他可能包含xG和阵容的位置
                         for key in content.keys():
-                            if 'stat' in key.lower() or 'lineup' in key.lower():
+                            if "stat" in key.lower() or "lineup" in key.lower():
                                 print(f"   📈 发现相关字段: {key}")
 
                     # 检查header中的比赛基本信息
-                    header = details.get('header', {})
+                    header = details.get("header", {})
                     if isinstance(header, dict):
-                        teams = header.get('teams', [])
+                        teams = header.get("teams", [])
                         if isinstance(teams, list) and len(teams) >= 2:
-                            home_team = teams[0].get('name', 'Unknown Home')
-                            away_team = teams[1].get('name', 'Unknown Away')
+                            home_team = teams[0].get("name", "Unknown Home")
+                            away_team = teams[1].get("name", "Unknown Away")
                             print(f"🏆 比赛: {home_team} vs {away_team}")
 
                 # 保存完整的JSON到文件供分析
                 output_file = f"match_details_{match_id}_probe.json"
-                with open(output_file, 'w', encoding='utf-8') as f:
+                with open(output_file, "w", encoding="utf-8") as f:
                     json.dump(details, f, ensure_ascii=False, indent=2)
                 print(f"💾 完整数据已保存到: {output_file}")
 
@@ -121,6 +141,7 @@ async def probe_match_details():
     except Exception as e:
         print(f"❌ 探测过程中出现错误: {e}")
         import traceback
+
         traceback.print_exc()
 
 
@@ -138,15 +159,19 @@ async def test_specific_match(match_id):
             print("✅ 成功获取比赛详情!")
 
             # 快速查找关键数据
-            content = details.get('content', {})
+            content = details.get("content", {})
 
             # xG数据
-            stats = content.get('stats', {})
-            print(f"\n📊 统计数据键: {list(stats.keys()) if isinstance(stats, dict) else 'None'}")
+            stats = content.get("stats", {})
+            print(
+                f"\n📊 统计数据键: {list(stats.keys()) if isinstance(stats, dict) else 'None'}"
+            )
 
             # 阵容数据
-            lineup = content.get('lineup', {})
-            print(f"👥 阵容数据键: {list(lineup.keys()) if isinstance(lineup, dict) else 'None'}")
+            lineup = content.get("lineup", {})
+            print(
+                f"👥 阵容数据键: {list(lineup.keys()) if isinstance(lineup, dict) else 'None'}"
+            )
 
             return True
         else:

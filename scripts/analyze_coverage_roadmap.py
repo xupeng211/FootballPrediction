@@ -9,6 +9,7 @@ import sys
 from typing import Dict, List, Tuple
 from pathlib import Path
 
+
 def load_coverage_data(file_path: str = "coverage_new.json") -> dict:
     """加载覆盖率数据"""
     try:
@@ -21,6 +22,7 @@ def load_coverage_data(file_path: str = "coverage_new.json") -> dict:
         print(f"❌ 错误: 无法解析覆盖率报告文件 '{file_path}'")
         sys.exit(1)
 
+
 def analyze_file_coverage(coverage_data: dict) -> list[tuple[str, int, int, float]]:
     """
     分析每个文件的覆盖率情况
@@ -29,62 +31,66 @@ def analyze_file_coverage(coverage_data: dict) -> list[tuple[str, int, int, floa
     """
     files_analysis = []
 
-    for file_path, file_data in coverage_data.get('files', {}).items():
-        if not file_path.startswith('src/'):
+    for file_path, file_data in coverage_data.get("files", {}).items():
+        if not file_path.startswith("src/"):
             continue
 
-        summary = file_data.get('summary', {})
-        total_lines = summary.get('num_statements', 0)
-        missing_lines = summary.get('missing_lines', 0)
+        summary = file_data.get("summary", {})
+        total_lines = summary.get("num_statements", 0)
+        missing_lines = summary.get("missing_lines", 0)
         covered_lines = total_lines - missing_lines
         coverage_percent = (covered_lines / total_lines * 100) if total_lines > 0 else 0
 
-        files_analysis.append((
-            file_path,
-            total_lines,
-            missing_lines,
-            coverage_percent
-        ))
+        files_analysis.append((file_path, total_lines, missing_lines, coverage_percent))
 
     return files_analysis
 
+
 def categorize_module(file_path: str) -> str:
     """根据路径将文件分类到不同模块"""
-    if 'api/' in file_path:
-        return 'API层'
-    elif 'database/' in file_path or 'db' in file_path:
-        return '数据层'
-    elif 'domain/' in file_path:
-        return '领域层'
-    elif 'services/' in file_path:
-        return '服务层'
-    elif 'ml/' in file_path:
-        return '机器学习'
-    elif 'cache/' in file_path:
-        return '缓存层'
-    elif 'collectors/' in file_path or 'data/' in file_path:
-        return '数据收集'
-    elif 'tasks/' in file_path:
-        return '任务调度'
-    elif 'core/' in file_path:
-        return '核心基础设施'
-    elif 'utils/' in file_path or 'helpers' in file_path:
-        return '工具层'
-    elif 'monitoring/' in file_path:
-        return '监控系统'
-    elif 'config/' in file_path:
-        return '配置层'
+    if "api/" in file_path:
+        return "API层"
+    elif "database/" in file_path or "db" in file_path:
+        return "数据层"
+    elif "domain/" in file_path:
+        return "领域层"
+    elif "services/" in file_path:
+        return "服务层"
+    elif "ml/" in file_path:
+        return "机器学习"
+    elif "cache/" in file_path:
+        return "缓存层"
+    elif "collectors/" in file_path or "data/" in file_path:
+        return "数据收集"
+    elif "tasks/" in file_path:
+        return "任务调度"
+    elif "core/" in file_path:
+        return "核心基础设施"
+    elif "utils/" in file_path or "helpers" in file_path:
+        return "工具层"
+    elif "monitoring/" in file_path:
+        return "监控系统"
+    elif "config/" in file_path:
+        return "配置层"
     else:
-        return '其他模块'
+        return "其他模块"
 
-def identify_quick_wins(files_analysis: list[tuple[str, int, int, float]]) -> list[dict]:
+
+def identify_quick_wins(
+    files_analysis: list[tuple[str, int, int, float]],
+) -> list[dict]:
     """
     识别Quick Wins目标 - 高未覆盖行数且易于测试的文件
     优先选择: API路由、数据模型、服务类等
     """
     quick_win_patterns = [
-        'api/routes/', 'services/', 'database/models/', 'domain/entities/',
-        'cache/', 'config/', 'utils/'
+        "api/routes/",
+        "services/",
+        "database/models/",
+        "domain/entities/",
+        "cache/",
+        "config/",
+        "utils/",
     ]
 
     quick_wins = []
@@ -94,25 +100,29 @@ def identify_quick_wins(files_analysis: list[tuple[str, int, int, float]]) -> li
 
         is_quick_win = any(pattern in file_path for pattern in quick_win_patterns)
         if is_quick_win:
-            quick_wins.append({
-                'file': file_path,
-                'module': categorize_module(file_path),
-                'total_lines': total_lines,
-                'missing_lines': missing_lines,
-                'coverage_percent': coverage_percent,
-                'roi_score': missing_lines * (2.0 if 'api/routes/' in file_path else 1.5)  # API路径权重更高
-            })
+            quick_wins.append(
+                {
+                    "file": file_path,
+                    "module": categorize_module(file_path),
+                    "total_lines": total_lines,
+                    "missing_lines": missing_lines,
+                    "coverage_percent": coverage_percent,
+                    "roi_score": missing_lines
+                    * (2.0 if "api/routes/" in file_path else 1.5),  # API路径权重更高
+                }
+            )
 
-    return sorted(quick_wins, key=lambda x: x['roi_score'], reverse=True)
+    return sorted(quick_wins, key=lambda x: x["roi_score"], reverse=True)
 
-def identify_hard_battles(files_analysis: list[tuple[str, int, int, float]]) -> list[dict]:
+
+def identify_hard_battles(
+    files_analysis: list[tuple[str, int, int, float]],
+) -> list[dict]:
     """
     识别Hard Battles目标 - 代码行数多但测试难度大的文件
     主要包括: 复杂的第三方API集成、异步任务等
     """
-    hard_battle_patterns = [
-        'collectors/', 'data/', 'tasks/', 'ml/', 'monitoring/'
-    ]
+    hard_battle_patterns = ["collectors/", "data/", "tasks/", "ml/", "monitoring/"]
 
     hard_battles = []
     for file_path, total_lines, missing_lines, coverage_percent in files_analysis:
@@ -122,36 +132,41 @@ def identify_hard_battles(files_analysis: list[tuple[str, int, int, float]]) -> 
         is_hard_battle = any(pattern in file_path for pattern in hard_battle_patterns)
         if is_hard_battle:
             difficulty_score = missing_lines
-            if 'collectors/' in file_path:
+            if "collectors/" in file_path:
                 difficulty_score *= 2.0  # 数据收集器难度权重最高
-            elif 'ml/' in file_path:
+            elif "ml/" in file_path:
                 difficulty_score *= 1.8  # ML模块次之
-            elif 'tasks/' in file_path:
+            elif "tasks/" in file_path:
                 difficulty_score *= 1.5
 
-            hard_battles.append({
-                'file': file_path,
-                'module': categorize_module(file_path),
-                'total_lines': total_lines,
-                'missing_lines': missing_lines,
-                'coverage_percent': coverage_percent,
-                'difficulty_score': difficulty_score
-            })
+            hard_battles.append(
+                {
+                    "file": file_path,
+                    "module": categorize_module(file_path),
+                    "total_lines": total_lines,
+                    "missing_lines": missing_lines,
+                    "coverage_percent": coverage_percent,
+                    "difficulty_score": difficulty_score,
+                }
+            )
 
-    return sorted(hard_battles, key=lambda x: x['difficulty_score'], reverse=True)
+    return sorted(hard_battles, key=lambda x: x["difficulty_score"], reverse=True)
 
-def generate_roadmap_report(coverage_data: dict, files_analysis: list[tuple[str, int, int, float]]) -> str:
+
+def generate_roadmap_report(
+    coverage_data: dict, files_analysis: list[tuple[str, int, int, float]]
+) -> str:
     """生成80%覆盖率冲刺路线图报告"""
 
     # 计算整体覆盖率
-    totals = coverage_data.get('totals', {})
-    current_coverage = totals.get('percent_covered', 0)
+    totals = coverage_data.get("totals", {})
+    current_coverage = totals.get("percent_covered", 0)
 
     # 获取Top 20未覆盖文件
     top_20_files = sorted(
         [f for f in files_analysis if f[2] > 5],  # 只显示未覆盖行数>5的文件
         key=lambda x: x[2],  # 按未覆盖行数排序
-        reverse=True
+        reverse=True,
     )[:20]
 
     # 识别Quick Wins和Hard Battles
@@ -160,7 +175,7 @@ def generate_roadmap_report(coverage_data: dict, files_analysis: list[tuple[str,
 
     # 计算潜在覆盖率提升
     total_missing_lines = sum(f[2] for f in files_analysis)
-    quick_wins_potential = sum(w['missing_lines'] for w in quick_wins)
+    quick_wins_potential = sum(w["missing_lines"] for w in quick_wins)
 
     # 生成报告
     report = f"""# 🎯 80%覆盖率冲刺路线图
@@ -168,10 +183,10 @@ def generate_roadmap_report(coverage_data: dict, files_analysis: list[tuple[str,
 ## 📊 当前基线状态
 
 - **当前覆盖率**: **{current_coverage:.1f}%**
-- **总代码行数**: {totals.get('num_statements', 0):,} 行
-- **已覆盖行数**: {totals.get('covered_lines', 0):,} 行
-- **未覆盖行数**: {totals.get('missing_lines', 0):,} 行
-- **目标差距**: {max(0, 80 - current_coverage):.1f}% (需要覆盖约 {int((max(0, 80 - current_coverage) / 100) * totals.get('num_statements', 1)):,} 行)
+- **总代码行数**: {totals.get("num_statements", 0):,} 行
+- **已覆盖行数**: {totals.get("covered_lines", 0):,} 行
+- **未覆盖行数**: {totals.get("missing_lines", 0):,} 行
+- **目标差距**: {max(0, 80 - current_coverage):.1f}% (需要覆盖约 {int((max(0, 80 - current_coverage) / 100) * totals.get("num_statements", 1)):,} 行)
 
 ---
 
@@ -181,7 +196,9 @@ def generate_roadmap_report(coverage_data: dict, files_analysis: list[tuple[str,
 |------|----------|----------|--------|------------|------------|
 """
 
-    for i, (file_path, total_lines, missing_lines, coverage_percent) in enumerate(top_20_files, 1):
+    for i, (file_path, total_lines, missing_lines, coverage_percent) in enumerate(
+        top_20_files, 1
+    ):
         module_type = categorize_module(file_path)
         report += f"| {i:2d} | `{file_path}` | {module_type} | {total_lines:4d} | **{missing_lines:4d}** | {coverage_percent:5.1f}% |\n"
 
@@ -198,7 +215,13 @@ def generate_roadmap_report(coverage_data: dict, files_analysis: list[tuple[str,
 """
 
     for i, win in enumerate(quick_wins, 1):
-        difficulty = "🟢 简单" if win['missing_lines'] < 30 else "🟡 中等" if win['missing_lines'] < 50 else "🔠 较难"
+        difficulty = (
+            "🟢 简单"
+            if win["missing_lines"] < 30
+            else "🟡 中等"
+            if win["missing_lines"] < 50
+            else "🔠 较难"
+        )
         report += f"| {i} | `{win['file']}` | {win['module']} | {win['missing_lines']} | {difficulty} |\n"
 
     report += f"""
@@ -209,7 +232,7 @@ def generate_roadmap_report(coverage_data: dict, files_analysis: list[tuple[str,
 3. **数据模型测试** - 验证模型验证和序列化逻辑
 4. **配置和工具类** - 纯函数，最容易测试
 
-预计完成后覆盖率可提升至: **{current_coverage + (quick_wins_potential / totals.get('num_statements', 1) * 100):.1f}%**
+预计完成后覆盖率可提升至: **{current_coverage + (quick_wins_potential / totals.get("num_statements", 1) * 100):.1f}%**
 
 ---
 
@@ -222,7 +245,13 @@ def generate_roadmap_report(coverage_data: dict, files_analysis: list[tuple[str,
 """
 
     for i, battle in enumerate(hard_battles, 1):
-        difficulty_desc = "🔴 极难" if battle['difficulty_score'] > 100 else "🟠 困难" if battle['difficulty_score'] > 50 else "🟡 中等"
+        difficulty_desc = (
+            "🔴 极难"
+            if battle["difficulty_score"] > 100
+            else "🟠 困难"
+            if battle["difficulty_score"] > 50
+            else "🟡 中等"
+        )
         report += f"| {i} | `{battle['file']}` | {battle['module']} | {battle['missing_lines']} | {difficulty_desc} |\n"
 
     report += """
@@ -288,6 +317,7 @@ def generate_roadmap_report(coverage_data: dict, files_analysis: list[tuple[str,
 
     return report
 
+
 def main():
     """主函数"""
     print("🔍 正在分析覆盖率数据...")
@@ -304,15 +334,15 @@ def main():
     report = generate_roadmap_report(coverage_data, files_analysis)
 
     # 保存报告
-    with open('COVERAGE_ROADMAP_TO_80.md', 'w', encoding='utf-8') as f:
+    with open("COVERAGE_ROADMAP_TO_80.md", "w", encoding="utf-8") as f:
         f.write(report)
 
     print("✅ 路线图报告已生成: COVERAGE_ROADMAP_TO_80.md")
 
     # 输出关键统计
-    totals = coverage_data.get('totals', {})
-    current_coverage = totals.get('percent_covered', 0)
-    total_missing = totals.get('missing_lines', 0)
+    totals = coverage_data.get("totals", {})
+    current_coverage = totals.get("percent_covered", 0)
+    total_missing = totals.get("missing_lines", 0)
 
     print("\n📈 关键指标:")
     print(f"   当前覆盖率: {current_coverage:.1f}%")
@@ -320,10 +350,13 @@ def main():
     print(f"   目标差距: {max(0, 80 - current_coverage):.1f}%")
 
     # 显示Top 5文件
-    top_5 = sorted([f for f in files_analysis if f[2] > 5], key=lambda x: x[2], reverse=True)[:5]
+    top_5 = sorted(
+        [f for f in files_analysis if f[2] > 5], key=lambda x: x[2], reverse=True
+    )[:5]
     print("\n🎯 Top 5 优先目标:")
     for i, (file_path, _, missing_lines, _) in enumerate(top_5, 1):
         print(f"   {i}. {file_path} ({missing_lines} 行未覆盖)")
+
 
 if __name__ == "__main__":
     main()

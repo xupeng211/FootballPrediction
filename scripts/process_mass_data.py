@@ -25,14 +25,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def process_raw_data_batch():
     """批量处理原始数据"""
     logger.info("🚀 开始批量处理28,704条原始数据")
 
-    database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/football_prediction")
+    database_url = os.getenv(
+        "DATABASE_URL", "postgresql://postgres:postgres@db:5432/football_prediction"
+    )
     engine = create_engine(database_url)
     Session = sessionmaker(engine)
 
@@ -55,13 +60,17 @@ def process_raw_data_batch():
                     LIMIT :batch_size OFFSET :offset
                 """)
 
-                result = await session.execute(query, {"batch_size": batch_size, "offset": offset})
+                result = await session.execute(
+                    query, {"batch_size": batch_size, "offset": offset}
+                )
                 rows = result.fetchall()
 
                 if not rows:
                     break
 
-                logger.info(f"📦 处理批次 {offset//batch_size + 1}: {len(rows)} 条记录")
+                logger.info(
+                    f"📦 处理批次 {offset // batch_size + 1}: {len(rows)} 条记录"
+                )
 
                 for row in rows:
                     try:
@@ -74,28 +83,38 @@ def process_raw_data_batch():
                             data = match_data
 
                         # 提取比赛信息
-                        raw_data = data.get('raw_data', {})
-                        status = data.get('status', {})
+                        raw_data = data.get("raw_data", {})
+                        status = data.get("status", {})
 
                         # 获取基本信息
-                        home_team = raw_data.get('home', {})
-                        away_team = raw_data.get('away', {})
-                        league_info = raw_data.get('league_info', {})
+                        home_team = raw_data.get("home", {})
+                        away_team = raw_data.get("away", {})
+                        league_info = raw_data.get("league_info", {})
 
-                        if not all([home_team.get('id'), away_team.get('id'), league_info.get('id')]):
+                        if not all(
+                            [
+                                home_team.get("id"),
+                                away_team.get("id"),
+                                league_info.get("id"),
+                            ]
+                        ):
                             continue
 
                         # 检查match是否已存在
                         existing_match = await session.execute(
-                            text("SELECT id FROM matches WHERE external_id = :external_id"),
-                            {"external_id": str(raw_data.get('id', external_id))}
+                            text(
+                                "SELECT id FROM matches WHERE external_id = :external_id"
+                            ),
+                            {"external_id": str(raw_data.get("id", external_id))},
                         )
 
                         if existing_match.fetchone():
                             # 标记为已处理
                             await session.execute(
-                                text("UPDATE raw_match_data SET processed = TRUE WHERE id = :raw_id"),
-                                {"raw_id": raw_id}
+                                text(
+                                    "UPDATE raw_match_data SET processed = TRUE WHERE id = :raw_id"
+                                ),
+                                {"raw_id": raw_id},
                             )
                             continue
 
@@ -132,28 +151,43 @@ def process_raw_data_batch():
                             )
                         """)
 
-                        await session.execute(match_insert, {
-                            'external_id': str(raw_data.get('id', external_id)),
-                            'home_team_name': home_team.get('longName', home_team.get('name', '')),
-                            'away_team_name': away_team.get('longName', away_team.get('name', '')),
-                            'home_team_external_id': str(home_team.get('id', '')),
-                            'away_team_external_id': str(away_team.get('id', '')),
-                            'league_name': league_info.get('name', ''),
-                            'league_external_id': str(league_info.get('id', '')),
-                            'match_date': datetime.strptime(raw_data.get('time', ''), '%d.%m.%Y %H:%M') if raw_data.get('time') else None,
-                            'status': status.get('reason', {}).get('short', 'unknown'),
-                            'home_score': home_team.get('score', 0),
-                            'away_score': away_team.get('score', 0),
-                            'created_at': datetime.now(),
-                            'updated_at': datetime.now()
-                        })
+                        await session.execute(
+                            match_insert,
+                            {
+                                "external_id": str(raw_data.get("id", external_id)),
+                                "home_team_name": home_team.get(
+                                    "longName", home_team.get("name", "")
+                                ),
+                                "away_team_name": away_team.get(
+                                    "longName", away_team.get("name", "")
+                                ),
+                                "home_team_external_id": str(home_team.get("id", "")),
+                                "away_team_external_id": str(away_team.get("id", "")),
+                                "league_name": league_info.get("name", ""),
+                                "league_external_id": str(league_info.get("id", "")),
+                                "match_date": datetime.strptime(
+                                    raw_data.get("time", ""), "%d.%m.%Y %H:%M"
+                                )
+                                if raw_data.get("time")
+                                else None,
+                                "status": status.get("reason", {}).get(
+                                    "short", "unknown"
+                                ),
+                                "home_score": home_team.get("score", 0),
+                                "away_score": away_team.get("score", 0),
+                                "created_at": datetime.now(),
+                                "updated_at": datetime.now(),
+                            },
+                        )
 
                         matches_added += 1
 
                         # 标记原始数据为已处理
                         await session.execute(
-                            text("UPDATE raw_match_data SET processed = TRUE WHERE id = :raw_id"),
-                            {"raw_id": raw_id}
+                            text(
+                                "UPDATE raw_match_data SET processed = TRUE WHERE id = :raw_id"
+                            ),
+                            {"raw_id": raw_id},
                         )
 
                         processed_count += 1
@@ -164,7 +198,9 @@ def process_raw_data_batch():
 
                 # 提交当前批次
                 await session.commit()
-                logger.info(f"✅ 批次完成，已处理 {processed_count} 条记录，添加 {matches_added} 场比赛")
+                logger.info(
+                    f"✅ 批次完成，已处理 {processed_count} 条记录，添加 {matches_added} 场比赛"
+                )
 
                 offset += batch_size
 
@@ -179,6 +215,7 @@ def process_raw_data_batch():
     logger.info("🎉 批量处理完成！")
     logger.info(f"📊 总计处理: {processed_count} 条原始数据")
     logger.info(f"🏆 新增比赛: {matches_added} 场")
+
 
 if __name__ == "__main__":
     asyncio.run(process_raw_data_batch())

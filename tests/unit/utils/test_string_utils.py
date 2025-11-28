@@ -20,7 +20,6 @@ from unittest.mock import patch, MagicMock
 from src.utils.string_utils import (
     # StringUtils类
     StringUtils,
-
     # 缓存函数
     cached_slug,
 )
@@ -29,371 +28,428 @@ from src.utils.string_utils import (
 class TestStringUtilsClass:
     """StringUtils类测试 - 覆盖所有17个静态方法."""
 
-    @pytest.mark.parametrize("input_text,remove_special,expected", [
-        ("  hello world  ", False, "hello world"),
-        ("  hello world  ", True, "hello world"),
-        ("Hello\x00\x01\x02World", False, "HelloWorld"),
-        # 修复Unicode处理预期值
-        ("café", False, "cafe"),
-        ("café", True, "cafe"),
-        # 修复特殊字符处理预期值
-        ("Hello!@#$%^&*()", True, "Hello!@#$%^&*()"),
-        ("", False, ""),
-        (None, False, ""),
-        (123, False, ""),
-        ("a" * 1000, False, "a" * 1000),
-        # 修复制表符处理预期值
-        ("a\tb\nc", False, "abc"),
-        ("a  b   c", False, "a b c"),
-    ])
+    @pytest.mark.parametrize(
+        "input_text,remove_special,expected",
+        [
+            ("  hello world  ", False, "hello world"),
+            ("  hello world  ", True, "hello world"),
+            ("Hello\x00\x01\x02World", False, "HelloWorld"),
+            # 修复Unicode处理预期值
+            ("café", False, "cafe"),
+            ("café", True, "cafe"),
+            # 修复特殊字符处理预期值
+            ("Hello!@#$%^&*()", True, "Hello!@#$%^&*()"),
+            ("", False, ""),
+            (None, False, ""),
+            (123, False, ""),
+            ("a" * 1000, False, "a" * 1000),
+            # 修复制表符处理预期值
+            ("a\tb\nc", False, "abc"),
+            ("a  b   c", False, "a b c"),
+        ],
+    )
     def test_clean_string(self, input_text, remove_special, expected):
         """测试字符串清理方法."""
         result = StringUtils.clean_string(input_text, remove_special)
         assert result == expected
 
-    @pytest.mark.parametrize("text,length,suffix,expected", [
-        ("hello world", 5, "...", "he..."),
-        ("hello", 10, "...", "hello"),
-        ("hello", 5, "...", "hello"),
-        # 修复长度计算逻辑
-        ("hello world", 5, ">>", "hel>>"),  # 5-2=3个字符 + ">>"
-        ("hello", 0, "...", "..."),
-        ("hello", -5, "...", "..."),
-        ("hello", 2, "...", "..."),  # 长度<=后缀长度
-        (None, 10, "...", ""),
-        ("", 10, "...", ""),
-        ("a" * 100, 50, "...", "a" * 47 + "..."),
-        # 修复中文处理 - 中文不截断
-        ("中文测试", 5, "...", "中文测试"),
-        ("hello", 3, "!", "he!"),  # 3-1=2个字符 + "!"
-    ])
+    @pytest.mark.parametrize(
+        "text,length,suffix,expected",
+        [
+            ("hello world", 5, "...", "he..."),
+            ("hello", 10, "...", "hello"),
+            ("hello", 5, "...", "hello"),
+            # 修复长度计算逻辑
+            ("hello world", 5, ">>", "hel>>"),  # 5-2=3个字符 + ">>"
+            ("hello", 0, "...", "..."),
+            ("hello", -5, "...", "..."),
+            ("hello", 2, "...", "..."),  # 长度<=后缀长度
+            (None, 10, "...", ""),
+            ("", 10, "...", ""),
+            ("a" * 100, 50, "...", "a" * 47 + "..."),
+            # 修复中文处理 - 中文不截断
+            ("中文测试", 5, "...", "中文测试"),
+            ("hello", 3, "!", "he!"),  # 3-1=2个字符 + "!"
+        ],
+    )
     def test_truncate(self, text, length, suffix, expected):
         """测试字符串截断方法."""
         result = StringUtils.truncate(text, length, suffix)
         assert result == expected
 
-    @pytest.mark.parametrize("email,expected", [
-        ("test@example.com", True),
-        ("user.name+tag@domain.co.uk", True),
-        ("test@sub.domain.com", True),
-        ("invalid", False),
-        ("@domain.com", False),
-        ("user@", False),
-        ("user@.com", False),
-        ("user@com.", False),
-        ("user..name@domain.com", False),
-        ("user@domain..com", False),
-        ("a" * 250 + "@example.com", False),
-        ("test@example", False),
-        ("test@example.c", False),  # 修复：单字符TLD无效
-        ("", False),
-        (None, False),
-        (123, False),
-        ("user.name@domain.com ", True),
-        (" user.name@domain.com", True),
-        ("USER@DOMAIN.COM", True),  # 转小写
-        ("test@domain.com.", False),
-        (".user@domain.com", False),
-        ("user.@domain.com", False),
-        ("user@domain", False),
-        ("test@domain.com extra", False),
-        ("test@exa mple.com", False),
-    ])
+    @pytest.mark.parametrize(
+        "email,expected",
+        [
+            ("test@example.com", True),
+            ("user.name+tag@domain.co.uk", True),
+            ("test@sub.domain.com", True),
+            ("invalid", False),
+            ("@domain.com", False),
+            ("user@", False),
+            ("user@.com", False),
+            ("user@com.", False),
+            ("user..name@domain.com", False),
+            ("user@domain..com", False),
+            ("a" * 250 + "@example.com", False),
+            ("test@example", False),
+            ("test@example.c", False),  # 修复：单字符TLD无效
+            ("", False),
+            (None, False),
+            (123, False),
+            ("user.name@domain.com ", True),
+            (" user.name@domain.com", True),
+            ("USER@DOMAIN.COM", True),  # 转小写
+            ("test@domain.com.", False),
+            (".user@domain.com", False),
+            ("user.@domain.com", False),
+            ("user@domain", False),
+            ("test@domain.com extra", False),
+            ("test@exa mple.com", False),
+        ],
+    )
     def test_validate_email(self, email, expected):
         """测试邮箱验证方法."""
         result = StringUtils.validate_email(email)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("Hello World!", "hello-world"),
-        ("This is a Test", "this-is-a-test"),
-        ("Hello, World!", "hello-world"),
-        ("  Hello  World  ", "hello-world"),
-        ("", ""),
-        ("___", "___"),  # 修复：下划线被保留
-        # ("-_-_", "_-"),  # 跳过：实现差异
-        ("test@email.com", "testemailcom"),
-        ("café", "cafe"),
-        ("naïve", "naive"),
-        ("résumé", "resume"),
-        ("π/pi", "πpi"),  # 修复：Unicode字符被保留
-        ("What's up?", "whats-up"),
-        ("100% pure", "100-pure"),
-        ("C++ Programming", "c-programming"),
-        ("Python 3.x", "python-3x"),
-        ("a" * 200, "a" * 200),  # 长文本
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("Hello World!", "hello-world"),
+            ("This is a Test", "this-is-a-test"),
+            ("Hello, World!", "hello-world"),
+            ("  Hello  World  ", "hello-world"),
+            ("", ""),
+            ("___", "___"),  # 修复：下划线被保留
+            # ("-_-_", "_-"),  # 跳过：实现差异
+            ("test@email.com", "testemailcom"),
+            ("café", "cafe"),
+            ("naïve", "naive"),
+            ("résumé", "resume"),
+            ("π/pi", "πpi"),  # 修复：Unicode字符被保留
+            ("What's up?", "whats-up"),
+            ("100% pure", "100-pure"),
+            ("C++ Programming", "c-programming"),
+            ("Python 3.x", "python-3x"),
+            ("a" * 200, "a" * 200),  # 长文本
+        ],
+    )
     def test_slugify(self, text, expected):
         """测试slugify方法."""
         result = StringUtils.slugify(text)
         assert result == expected
 
-    @pytest.mark.parametrize("name,expected", [
-        ("camelCase", "camel_case"),
-        ("CamelCase", "camel_case"),
-        ("camelCaseString", "camel_case_string"),
-        ("CamelCaseString", "camel_case_string"),
-        ("XMLHttpRequest", "xml_http_request"),
-        ("HTTPRequest", "http_request"),
-        ("UserID", "user_id"),
-        ("parseXMLString", "parse_xml_string"),
-        ("", ""),
-        ("already_snake_case", "already_snake_case"),
-        ("A", "a"),
-        ("a", "a"),
-        ("test", "test"),
-        ("Test123", "test123"),
-        ("123Test", "123_test"),
-    ])
+    @pytest.mark.parametrize(
+        "name,expected",
+        [
+            ("camelCase", "camel_case"),
+            ("CamelCase", "camel_case"),
+            ("camelCaseString", "camel_case_string"),
+            ("CamelCaseString", "camel_case_string"),
+            ("XMLHttpRequest", "xml_http_request"),
+            ("HTTPRequest", "http_request"),
+            ("UserID", "user_id"),
+            ("parseXMLString", "parse_xml_string"),
+            ("", ""),
+            ("already_snake_case", "already_snake_case"),
+            ("A", "a"),
+            ("a", "a"),
+            ("test", "test"),
+            ("Test123", "test123"),
+            ("123Test", "123_test"),
+        ],
+    )
     def test_camel_to_snake(self, name, expected):
         """测试驼峰转下划线方法."""
         result = StringUtils.camel_to_snake(name)
         assert result == expected
 
-    @pytest.mark.parametrize("name,expected", [
-        ("snake_case", "snakeCase"),
-        ("snake_case_string", "snakeCaseString"),
-        ("alreadyCamelCase", "alreadycamelcase"),  # 修复：已经是驼峰命名
-        ("", ""),
-        ("single", "single"),
-        ("a", "a"),
-        ("test", "test"),
-        ("test_case", "testCase"),
-        ("long_snake_case_string", "longSnakeCaseString"),
-        ("xml_http_request", "xmlHttpRequest"),
-        ("user_id", "userId"),
-    ])
+    @pytest.mark.parametrize(
+        "name,expected",
+        [
+            ("snake_case", "snakeCase"),
+            ("snake_case_string", "snakeCaseString"),
+            ("alreadyCamelCase", "alreadycamelcase"),  # 修复：已经是驼峰命名
+            ("", ""),
+            ("single", "single"),
+            ("a", "a"),
+            ("test", "test"),
+            ("test_case", "testCase"),
+            ("long_snake_case_string", "longSnakeCaseString"),
+            ("xml_http_request", "xmlHttpRequest"),
+            ("user_id", "userId"),
+        ],
+    )
     def test_snake_to_camel(self, name, expected):
         """测试下划线转驼峰方法."""
         result = StringUtils.snake_to_camel(name)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("  hello world  ", "hello world"),
-        ("\t\ntest\n\t", "test"),
-        ("  ", ""),
-        ("", ""),
-        ("a   b   c", "a b c"),
-        ("hello", "hello"),
-        (None, ""),
-        (123, ""),
-        ("hello\x00world", "hello\x00world"),
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("  hello world  ", "hello world"),
+            ("\t\ntest\n\t", "test"),
+            ("  ", ""),
+            ("", ""),
+            ("a   b   c", "a b c"),
+            ("hello", "hello"),
+            (None, ""),
+            (123, ""),
+            ("hello\x00world", "hello\x00world"),
+        ],
+    )
     def test_clean_text(self, text, expected):
         """测试文本清理方法."""
         result = StringUtils.clean_text(text)
         assert result == expected
 
-    @pytest.mark.parametrize("phone,expected", [
-        ("13812345678", True),
-        ("15912345678", True),
-        ("12812345678", False),
-        ("1381234567", False),
-        ("138123456789", False),
-        ("12345678901", False),
-        ("", False),
-        (None, False),
-        ("abc1234567", False),
-        # 修复：实际实现支持格式化号码验证
-        ("138 1234 5678", True),
-        # ("+8613812345678", True),  # 跳过：实现差异
-        ("138-1234-5678", True),
-    ])
+    @pytest.mark.parametrize(
+        "phone,expected",
+        [
+            ("13812345678", True),
+            ("15912345678", True),
+            ("12812345678", False),
+            ("1381234567", False),
+            ("138123456789", False),
+            ("12345678901", False),
+            ("", False),
+            (None, False),
+            ("abc1234567", False),
+            # 修复：实际实现支持格式化号码验证
+            ("138 1234 5678", True),
+            # ("+8613812345678", True),  # 跳过：实现差异
+            ("138-1234-5678", True),
+        ],
+    )
     def test_validate_phone_number(self, phone, expected):
         """测试手机号验证方法."""
         result = StringUtils.validate_phone_number(phone)
         assert result == expected
 
-    @pytest.mark.parametrize("phone,expected", [
-        # 修复：实际实现会格式化中国手机号
-        ("13812345678", "138-1234-5678"),
-        ("  13812345678  ", "138-1234-5678"),
-        ("+86 13812345678", "8613812345678"),  # 非标准格式
-        ("+86-13812345678", "8613812345678"),
-        ("(86) 13812345678", "8613812345678"),
-        ("138-1234-5678", "138-1234-5678"),
-        ("138 1234 5678", "138-1234-5678"),
-        ("+86 138 1234 5678", "8613812345678"),
-        ("invalid", ""),
-        ("", ""),
-        (None, ""),
-        ("123", "123"),  # 非手机号返回数字
-    ])
+    @pytest.mark.parametrize(
+        "phone,expected",
+        [
+            # 修复：实际实现会格式化中国手机号
+            ("13812345678", "138-1234-5678"),
+            ("  13812345678  ", "138-1234-5678"),
+            ("+86 13812345678", "8613812345678"),  # 非标准格式
+            ("+86-13812345678", "8613812345678"),
+            ("(86) 13812345678", "8613812345678"),
+            ("138-1234-5678", "138-1234-5678"),
+            ("138 1234 5678", "138-1234-5678"),
+            ("+86 138 1234 5678", "8613812345678"),
+            ("invalid", ""),
+            ("", ""),
+            (None, ""),
+            ("123", "123"),  # 非手机号返回数字
+        ],
+    )
     def test_sanitize_phone_number(self, phone, expected):
         """测试手机号清理方法."""
         result = StringUtils.sanitize_phone_number(phone)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("The price is $123.45 and 67", [123.45, 67.0]),
-        ("123.45", [123.45]),
-        ("-123.45", [-123.45]),
-        ("No numbers here", []),
-        ("", []),
-        (None, []),
-        ("The score is 3-2", [3.0, -2.0]),  # 修复：连字符表示负数
-        ("0", [0.0]),
-        ("Decimal: 0.001", [0.001]),
-        ("Large: 1000000", [1000000.0]),
-        ("Multiple: 1, 2, 3.5, -4", [1.0, 2.0, 3.5, -4.0]),
-        ("Version 2.0.1", [2.0, 1.0]),
-        ("Progress: 50.5%", [50.5]),
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("The price is $123.45 and 67", [123.45, 67.0]),
+            ("123.45", [123.45]),
+            ("-123.45", [-123.45]),
+            ("No numbers here", []),
+            ("", []),
+            (None, []),
+            ("The score is 3-2", [3.0, -2.0]),  # 修复：连字符表示负数
+            ("0", [0.0]),
+            ("Decimal: 0.001", [0.001]),
+            ("Large: 1000000", [1000000.0]),
+            ("Multiple: 1, 2, 3.5, -4", [1.0, 2.0, 3.5, -4.0]),
+            ("Version 2.0.1", [2.0, 1.0]),
+            ("Progress: 50.5%", [50.5]),
+        ],
+    )
     def test_extract_numbers(self, text, expected):
         """测试数字提取方法."""
         result = StringUtils.extract_numbers(text)
         assert result == expected
 
-    @pytest.mark.parametrize("text,visible_chars,mask_char,expected", [
-        # 修正预期值以符合实际实现
-        ("Hello World", 4, "*", "Hell*******"),  # 长文本（>12字符）显示前4个+12个*
-        ("password123", 4, "*", "pass*******"),  # 长文本（>12字符）显示前4个+7个*
-        ("", 4, "*", ""),
-        ("test", 4, "*", "test"),  # 长度<=可见字符数，不遮蔽
-        ("Hello", 4, "x", "Hellx"),  # 长度<=可见字符数，不遮蔽
-        ("信用卡号", 4, "*", "信用卡号"),  # 长度<=可见字符数，不遮蔽
-        (None, 4, "*", ""),
-        ("short", 4, "*", "shor*"),  # 短文本（<=12字符）显示前4个+剩余长度的*
-    ])
-
+    @pytest.mark.parametrize(
+        "text,visible_chars,mask_char,expected",
+        [
+            # 修正预期值以符合实际实现
+            ("Hello World", 4, "*", "Hell*******"),  # 长文本（>12字符）显示前4个+12个*
+            ("password123", 4, "*", "pass*******"),  # 长文本（>12字符）显示前4个+7个*
+            ("", 4, "*", ""),
+            ("test", 4, "*", "test"),  # 长度<=可见字符数，不遮蔽
+            ("Hello", 4, "x", "Hellx"),  # 长度<=可见字符数，不遮蔽
+            ("信用卡号", 4, "*", "信用卡号"),  # 长度<=可见字符数，不遮蔽
+            (None, 4, "*", ""),
+            ("short", 4, "*", "shor*"),  # 短文本（<=12字符）显示前4个+剩余长度的*
+        ],
+    )
     def test_mask_sensitive_data(self, text, visible_chars, mask_char, expected):
         """测试敏感数据掩码方法."""
         result = StringUtils.mask_sensitive_data(text, visible_chars, mask_char)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("Hello World", "hello-world"),
-        ("Test Case", "test-case"),
-        ("", ""),
-        ("123 Test", "123-test"),
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("Hello World", "hello-world"),
+            ("Test Case", "test-case"),
+            ("", ""),
+            ("123 Test", "123-test"),
+        ],
+    )
     def test_generate_slug(self, text, expected):
         """测试slug生成方法."""
         result = StringUtils.generate_slug(text)
         assert result == expected
 
-    @pytest.mark.parametrize("bytes_count,precision,expected", [
-        # 修复：实际实现的格式化返回"0.00 B"等
-        (0, 2, "0.00 B"),
-        (1024, 2, "1.00 KB"),
-        (1536, 2, "1.50 KB"),
-        (1048576, 2, "1.00 MB"),
-        (1073741824, 2, "1.00 GB"),
-        (1099511627776, 2, "1.00 TB"),
-        (500, 1, "500.0 B"),
-        # (1500, 3, "1.464 KB"),  # 跳过：精度差异
-        (1024 * 1024 * 1.5, 2, "1.50 MB"),
-        (-1024, 2, "-1.00 KB"),  # 修复：负数正确处理
-        # (None, 2, "0.00 B"),  # 这个会抛异常，跳过
-    ])
+    @pytest.mark.parametrize(
+        "bytes_count,precision,expected",
+        [
+            # 修复：实际实现的格式化返回"0.00 B"等
+            (0, 2, "0.00 B"),
+            (1024, 2, "1.00 KB"),
+            (1536, 2, "1.50 KB"),
+            (1048576, 2, "1.00 MB"),
+            (1073741824, 2, "1.00 GB"),
+            (1099511627776, 2, "1.00 TB"),
+            (500, 1, "500.0 B"),
+            # (1500, 3, "1.464 KB"),  # 跳过：精度差异
+            (1024 * 1024 * 1.5, 2, "1.50 MB"),
+            (-1024, 2, "-1.00 KB"),  # 修复：负数正确处理
+            # (None, 2, "0.00 B"),  # 这个会抛异常，跳过
+        ],
+    )
     def test_format_bytes(self, bytes_count, precision, expected):
         """测试字节格式化方法."""
         result = StringUtils.format_bytes(bytes_count, precision)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("Hello world", 2),
-        ("", 0),
-        ("  ", 0),
-        ("hello", 1),
-        ("hello   world", 2),
-        ("one two three", 3),
-        (None, 0),
-        # ("   multiple   spaces   ", 1),  # 跳过：正则表达式差异
-        ("a b c d e f", 6),
-        ("中文 测试", 2),
-        ("word1\nword2\tword3", 3),
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("Hello world", 2),
+            ("", 0),
+            ("  ", 0),
+            ("hello", 1),
+            ("hello   world", 2),
+            ("one two three", 3),
+            (None, 0),
+            # ("   multiple   spaces   ", 1),  # 跳过：正则表达式差异
+            ("a b c d e f", 6),
+            ("中文 测试", 2),
+            ("word1\nword2\tword3", 3),
+        ],
+    )
     def test_count_words(self, text, expected):
         """测试单词计数方法."""
         result = StringUtils.count_words(text)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("<html>", "&lt;html&gt;"),
-        ("&lt;", "&amp;lt;"),
-        ("", ""),
-        ("Hello & world", "Hello &amp; world"),
-        # ("<script>alert('xss')</script>", "&lt;script&gt;alert('xss')&lt;/script&gt;"),  # 跳过：HTML转义差异
-        (None, ""),
-        ("5 > 3", "5 &gt; 3"),
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("<html>", "&lt;html&gt;"),
+            ("&lt;", "&amp;lt;"),
+            ("", ""),
+            ("Hello & world", "Hello &amp; world"),
+            # ("<script>alert('xss')</script>", "&lt;script&gt;alert('xss')&lt;/script&gt;"),  # 跳过：HTML转义差异
+            (None, ""),
+            ("5 > 3", "5 &gt; 3"),
+        ],
+    )
     def test_escape_html(self, text, expected):
         """测试HTML转义方法."""
         result = StringUtils.escape_html(text)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("&lt;html&gt;", "<html>"),
-        ("&amp;lt;", "&lt;"),
-        ("", ""),
-        ("Hello &amp; world", "Hello & world"),
-        (None, ""),
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("&lt;html&gt;", "<html>"),
+            ("&amp;lt;", "&lt;"),
+            ("", ""),
+            ("Hello &amp; world", "Hello & world"),
+            (None, ""),
+        ],
+    )
     def test_unescape_html(self, text, expected):
         """测试HTML反转义方法."""
         result = StringUtils.unescape_html(text)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("http://example.com", True),
-        ("https://example.com", True),
-        ("ftp://example.com", False),  # 修复：只支持HTTP/HTTPS
-        ("www.example.com", False),  # 修复：需要协议
-        ("example.com", False),  # 修复：需要协议
-        ("test@example.com", False),  # 修复：邮箱不是URL
-        ("not a url", False),
-        ("", False),
-        (None, False),
-        ("http://", False),
-        ("www.", False),
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("http://example.com", True),
+            ("https://example.com", True),
+            ("ftp://example.com", False),  # 修复：只支持HTTP/HTTPS
+            ("www.example.com", False),  # 修复：需要协议
+            ("example.com", False),  # 修复：需要协议
+            ("test@example.com", False),  # 修复：邮箱不是URL
+            ("not a url", False),
+            ("", False),
+            (None, False),
+            ("http://", False),
+            ("www.", False),
+        ],
+    )
     def test_is_url(self, text, expected):
         """测试URL验证方法."""
         result = StringUtils.is_url(text)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("hello", "olleh"),
-        ("", ""),
-        ("a", "a"),
-        ("racecar", "racecar"),
-        ("Hello World", "dlroW olleH"),
-        ("123", "321"),
-        (None, ""),
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("hello", "olleh"),
+            ("", ""),
+            ("a", "a"),
+            ("racecar", "racecar"),
+            ("Hello World", "dlroW olleH"),
+            ("123", "321"),
+            (None, ""),
+        ],
+    )
     def test_reverse_string(self, text, expected):
         """测试字符串反转方法."""
         result = StringUtils.reverse_string(text)
         assert result == expected
 
-    @pytest.mark.parametrize("text,expected", [
-        ("racecar", True),
-        ("hello", False),
-        ("", True),  # 修正：空字符串被认为是回文
-        ("a", True),
-        ("A", True),  # 转小写
-        ("RaceCar", True),  # 转小写
-        ("Madam", True),
-        ("12321", True),
-        ("123", False),
-        (None, False),
-        ("A man, a plan, a canal: Panama", True),  # 修复：标点被移除后是回文
-    ])
-    
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("racecar", True),
+            ("hello", False),
+            ("", True),  # 修正：空字符串被认为是回文
+            ("a", True),
+            ("A", True),  # 转小写
+            ("RaceCar", True),  # 转小写
+            ("Madam", True),
+            ("12321", True),
+            ("123", False),
+            (None, False),
+            ("A man, a plan, a canal: Panama", True),  # 修复：标点被移除后是回文
+        ],
+    )
     def test_is_palindrome(self, text, expected):
         """测试回文检测方法."""
         result = StringUtils.is_palindrome(text)
         assert result == expected
 
-    @pytest.mark.parametrize("length,chars,expected_length", [
-        (10, "abc", 10),
-        (0, "abc", 0),
-        (-5, "abc", 0),
-        (5, "a", 5),
-        (100, "abc", 100),
-    ])
-    
+    @pytest.mark.parametrize(
+        "length,chars,expected_length",
+        [
+            (10, "abc", 10),
+            (0, "abc", 0),
+            (-5, "abc", 0),
+            (5, "a", 5),
+            (100, "abc", 100),
+        ],
+    )
     def test_generate_random_string(self, length, chars, expected_length):
         """测试随机字符串生成方法."""
         result = StringUtils.random_string(length, chars)
@@ -418,7 +474,7 @@ class TestStringUtilsClass:
     def test_char_frequency(self):
         """测试字符频率方法."""
         result = StringUtils.char_frequency("hello")
-        expected = {'h': 1, 'e': 1, 'l': 2, 'o': 1}
+        expected = {"h": 1, "e": 1, "l": 2, "o": 1}
         assert result == expected
 
         assert StringUtils.char_frequency("") == {}
@@ -449,15 +505,27 @@ class TestModuleFunctions:
         assert result1 == "hello-world-test"
 
         # 验证缓存生效
-        with patch('src.utils.string_utils.StringUtils.slugify') as mock_slugify:
+        with patch("src.utils.string_utils.StringUtils.slugify") as mock_slugify:
             cached_slug("new text")
             cached_slug("new text")  # 应该从缓存获取
             mock_slugify.assert_called_once()  # 只调用一次
 
-    @pytest.mark.parametrize("input_text", [
-        "", None, "hello", "café", "π", "🚀", "测试", "text with spaces",
-        "text-with-dashes", "text_with_underscores", "Text With Capitals"
-    ])
+    @pytest.mark.parametrize(
+        "input_text",
+        [
+            "",
+            None,
+            "hello",
+            "café",
+            "π",
+            "🚀",
+            "测试",
+            "text with spaces",
+            "text-with-dashes",
+            "text_with_underscores",
+            "Text With Capitals",
+        ],
+    )
     def test_cached_slug_coverage(self, input_text):
         """测试缓存slug的覆盖率."""
         try:
@@ -474,32 +542,47 @@ class TestModuleFunctions:
 
         # 验证类存在
         assert StringUtils is not None
-        assert hasattr(StringUtils, 'clean_string')
-        assert hasattr(StringUtils, 'truncate')
-        assert hasattr(StringUtils, 'validate_email')
+        assert hasattr(StringUtils, "clean_string")
+        assert hasattr(StringUtils, "truncate")
+        assert hasattr(StringUtils, "validate_email")
 
 
 class TestBoundaryConditions:
     """边界条件和异常测试."""
 
-    @pytest.mark.parametrize("input_value", [
-        None, "", " ", "   ", "\t", "\n", "\r", "\r\n\t",
-        0, -1, 999999, [], {}, (), object(),
-        "a" * 1000000,  # 极长字符串
-        "\x00\x01\x02\x03",  # 控制字符
-        "正常中文", "🚀🌟💫",  # emoji
-        "Hello\x00World\x01",  # 混合控制字符
-    ])
+    @pytest.mark.parametrize(
+        "input_value",
+        [
+            None,
+            "",
+            " ",
+            "   ",
+            "\t",
+            "\n",
+            "\r",
+            "\r\n\t",
+            0,
+            -1,
+            999999,
+            [],
+            {},
+            (),
+            object(),
+            "a" * 1000000,  # 极长字符串
+            "\x00\x01\x02\x03",  # 控制字符
+            "正常中文",
+            "🚀🌟💫",  # emoji
+            "Hello\x00World\x01",  # 混合控制字符
+        ],
+    )
     def test_boundary_clean_string(self, input_value):
         """测试clean_string的边界条件."""
         result = StringUtils.clean_string(input_value)
         assert isinstance(result, str)
         # 结果不应该包含控制字符
-        assert not any(ord(c) < 32 and c not in '\t\n\r' for c in result)
+        assert not any(ord(c) < 32 and c not in "\t\n\r" for c in result)
 
-    @pytest.mark.parametrize("length", [
-        -100, -1, 0, 1, 5, 10, 50, 100, 1000, 1000000
-    ])
+    @pytest.mark.parametrize("length", [-100, -1, 0, 1, 5, 10, 50, 100, 1000, 1000000])
     def test_boundary_truncate(self, length):
         """测试truncate的边界条件."""
         text = "Hello World Test String"
@@ -575,7 +658,6 @@ class TestBoundaryConditions:
             assert StringUtils.clean_text(empty_input) == ""
             assert StringUtils.count_words(empty_input) == 0
 
-    
     def test_type_safety(self):
         """测试类型安全."""
         non_string_inputs = [None, 123, [], {}, (), object()]
@@ -593,11 +675,11 @@ class TestBoundaryConditions:
     def test_performance_considerations(self):
         """测试性能相关的情况."""
         # 大量数据处理
-        large_list = ["text{}".format(i) for i in range(1000)]
+        large_list = [f"text{i}" for i in range(1000)]
 
         for text in large_list:
             result = StringUtils.clean_string(text)
-            assert "text{}".format(large_list.index(text)) == result
+            assert f"text{large_list.index(text)}" == result
 
     def test_memory_usage(self):
         """测试内存使用情况."""
@@ -718,7 +800,7 @@ class TestPerformanceAndMemory:
     def test_memory_efficiency(self):
         """测试内存效率."""
         # 创建大量字符串对象
-        strings = ["test string {}".format(i) for i in range(10000)]
+        strings = [f"test string {i}" for i in range(10000)]
 
         # 处理所有字符串
         results = []
@@ -733,34 +815,47 @@ class TestPerformanceAndMemory:
 
 
 # 参数化测试组合
-@pytest.mark.parametrize("input_func,test_cases", [
-    (StringUtils.clean_string, [
-        ("hello", "hello"),
-        ("  hello  ", "hello"),
-        (None, ""),
-        ("", ""),
-        ("hello\x00world", "helloworld"),  # 控制字符被移除
-    ]),
-    (StringUtils.truncate, [
-        ("hello world", 5, "...", "he..."),
-        ("short", 20, "...", "short"),
-        ("", 10, "...", ""),
-        (None, 10, "...", ""),
-    ]),
-    (StringUtils.validate_email, [
-        ("test@example.com", True),
-        ("invalid", False),
-        ("", False),
-        (None, False),
-    ]),
-])
-
+@pytest.mark.parametrize(
+    "input_func,test_cases",
+    [
+        (
+            StringUtils.clean_string,
+            [
+                ("hello", "hello"),
+                ("  hello  ", "hello"),
+                (None, ""),
+                ("", ""),
+                ("hello\x00world", "helloworld"),  # 控制字符被移除
+            ],
+        ),
+        (
+            StringUtils.truncate,
+            [
+                ("hello world", 5, "...", "he..."),
+                ("short", 20, "...", "short"),
+                ("", 10, "...", ""),
+                (None, 10, "...", ""),
+            ],
+        ),
+        (
+            StringUtils.validate_email,
+            [
+                ("test@example.com", True),
+                ("invalid", False),
+                ("", False),
+                (None, False),
+            ],
+        ),
+    ],
+)
 def test_parametrized_string_operations(input_func, test_cases):
     """参数化测试所有字符串操作函数."""
     if len(test_cases[0]) == 2:  # 只有两个参数的情况
         for input_val, expected in test_cases:
             result = input_func(input_val)
-            assert result == expected, f"Failed for input_func({input_val}) = {result}, expected {expected}"
+            assert result == expected, (
+                f"Failed for input_func({input_val}) = {result}, expected {expected}"
+            )
     else:  # 多个参数的情况
         for case in test_cases:
             if len(case) == 3:  # 三个参数
@@ -809,7 +904,6 @@ class TestStringUtilsIntegration:
         assert "test@example.com" in processed
         assert "user.name+tag@domain.com" in processed
 
-    
     def test_text_analytics_integration(self):
         """测试文本分析集成."""
         sample_text = "Hello world! This is a test. Hello again world!"
@@ -859,29 +953,49 @@ class TestErrorHandling:
                 # 如果抛出异常，也应该是可预期的类型错误
                 pass
 
-    @pytest.mark.parametrize("edge_case", [
-        "", " ", "\t", "\n", "\r", "\x00", "\x01", "\x02",
-        "normal text", "text with 特殊字符", "emoji 🚀 test",
-        "multiple\nlines\nhere", "tabs\tand\tspaces",
-        "123", "123.45", "-123", "+456",
-        "True", "False", "None",
-    ])
+    @pytest.mark.parametrize(
+        "edge_case",
+        [
+            "",
+            " ",
+            "\t",
+            "\n",
+            "\r",
+            "\x00",
+            "\x01",
+            "\x02",
+            "normal text",
+            "text with 特殊字符",
+            "emoji 🚀 test",
+            "multiple\nlines\nhere",
+            "tabs\tand\tspaces",
+            "123",
+            "123.45",
+            "-123",
+            "+456",
+            "True",
+            "False",
+            "None",
+        ],
+    )
     def test_all_methods_edge_cases(self, edge_case):
         """测试所有方法的边界情况."""
         methods_to_test = [
-            ('clean_string', lambda x: StringUtils.clean_string(x)),
-            ('clean_text', lambda x: StringUtils.clean_text(x)),
-            ('truncate', lambda x: StringUtils.truncate(x, 10)),
-            ('slugify', lambda x: StringUtils.slugify(x)),
-            ('reverse_string', lambda x: StringUtils.reverse_string(x)),
-            ('count_words', lambda x: StringUtils.count_words(x)),
-            ('is_palindrome', lambda x: StringUtils.is_palindrome(x)),
+            ("clean_string", lambda x: StringUtils.clean_string(x)),
+            ("clean_text", lambda x: StringUtils.clean_text(x)),
+            ("truncate", lambda x: StringUtils.truncate(x, 10)),
+            ("slugify", lambda x: StringUtils.slugify(x)),
+            ("reverse_string", lambda x: StringUtils.reverse_string(x)),
+            ("count_words", lambda x: StringUtils.count_words(x)),
+            ("is_palindrome", lambda x: StringUtils.is_palindrome(x)),
         ]
 
         for method_name, method_func in methods_to_test:
             try:
                 result = method_func(edge_case)
-                assert isinstance(result, (str, int, bool, float)), f"{method_name} should return expected type"
+                assert isinstance(result, (str, int, bool, float)), (
+                    f"{method_name} should return expected type"
+                )
             except Exception as e:
                 # 记录但不失败，因为有些边界情况可能抛出异常是合理的
                 print(f"Note: {method_name} with {repr(edge_case)} raised: {e}")

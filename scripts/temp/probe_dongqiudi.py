@@ -20,8 +20,7 @@ from curl_cffi import requests
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -31,44 +30,46 @@ class DongqiudiWebProbe:
 
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'zh-CN,zh-Hans;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Referer': 'https://m.dongqiudi.com/'
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "zh-CN,zh-Hans;q=0.9",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Referer": "https://m.dongqiudi.com/",
+            }
+        )
 
         # 懂球帝可能的 API 端点
         self.base_urls = [
-            'https://m.dongqiudi.com/api',
-            'https://dongqiudi.com/api',
-            'https://www.dongqiudi.com/api',
-            'https://api.dongqiudi.com'
+            "https://m.dongqiudi.com/api",
+            "https://dongqiudi.com/api",
+            "https://www.dongqiudi.com/api",
+            "https://api.dongqiudi.com",
         ]
 
         # 可能的比赛列表端点
         self.match_list_endpoints = [
-            '/match/list',
-            '/match/today',
-            '/match/fixed',
-            '/v1/match/list',
-            '/v2/match/list',
-            '/v3/match/list',
-            '/mobile/match/list',
-            '/h5/match/list'
+            "/match/list",
+            "/match/today",
+            "/match/fixed",
+            "/v1/match/list",
+            "/v2/match/list",
+            "/v3/match/list",
+            "/mobile/match/list",
+            "/h5/match/list",
         ]
 
         # 可能的比赛详情端点
         self.match_detail_endpoints = [
-            '/match/detail',
-            '/match/info',
-            '/match/data',
-            '/v1/match/detail',
-            '/v2/match/detail',
-            '/mobile/match/detail',
-            '/h5/match/detail'
+            "/match/detail",
+            "/match/info",
+            "/match/data",
+            "/v1/match/detail",
+            "/v2/match/detail",
+            "/mobile/match/detail",
+            "/h5/match/detail",
         ]
 
     async def probe_match_list(self) -> list[dict] | None:
@@ -100,7 +101,7 @@ class DongqiudiWebProbe:
 
                     elif response.status_code in [301, 302, 307, 308]:
                         # 处理重定向
-                        redirect_url = response.headers.get('Location')
+                        redirect_url = response.headers.get("Location")
                         if redirect_url:
                             logger.info(f"重定向到: {redirect_url}")
 
@@ -122,15 +123,17 @@ class DongqiudiWebProbe:
         # 尝试不同的数据结构
         if isinstance(data, dict):
             # 情况1: data.data 或 data.result
-            for key in ['data', 'result', 'list', 'matches']:
+            for key in ["data", "result", "list", "matches"]:
                 if key in data and isinstance(data[key], list):
                     matches.extend(data[key])
 
             # 情况2: 分页数据
-            if 'data' in data and isinstance(data['data'], dict):
-                for sub_key in ['list', 'matches', 'items']:
-                    if sub_key in data['data'] and isinstance(data['data'][sub_key], list):
-                        matches.extend(data['data'][sub_key])
+            if "data" in data and isinstance(data["data"], dict):
+                for sub_key in ["list", "matches", "items"]:
+                    if sub_key in data["data"] and isinstance(
+                        data["data"][sub_key], list
+                    ):
+                        matches.extend(data["data"][sub_key])
 
         elif isinstance(data, list):
             matches = data
@@ -148,14 +151,26 @@ class DongqiudiWebProbe:
         try:
             # 五大联赛标识
             major_leagues = [
-                '英超', '西甲', '德甲', '意甲', '法甲',
-                'Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1',
-                'England', 'Spain', 'Germany', 'Italy', 'France'
+                "英超",
+                "西甲",
+                "德甲",
+                "意甲",
+                "法甲",
+                "Premier League",
+                "La Liga",
+                "Bundesliga",
+                "Serie A",
+                "Ligue 1",
+                "England",
+                "Spain",
+                "Germany",
+                "Italy",
+                "France",
             ]
 
             # 检查联赛名称
-            league_name = ''
-            for key in ['league', 'league_name', 'competition', 'comp']:
+            league_name = ""
+            for key in ["league", "league_name", "competition", "comp"]:
                 if key in match and match[key]:
                     league_name = str(match[key]).lower()
                     break
@@ -163,13 +178,15 @@ class DongqiudiWebProbe:
             is_major = any(league.lower() in league_name for league in major_leagues)
 
             # 检查比赛状态
-            status = ''
-            for key in ['status', 'match_status', 'state', 'finished']:
+            status = ""
+            for key in ["status", "match_status", "state", "finished"]:
                 if key in match:
                     status = str(match[key]).lower()
                     break
 
-            is_finished = any(word in status for word in ['finished', 'ended', '完场', '已结束'])
+            is_finished = any(
+                word in status for word in ["finished", "ended", "完场", "已结束"]
+            )
 
             return is_major and is_finished
 
@@ -180,9 +197,9 @@ class DongqiudiWebProbe:
     async def _scrape_match_list_from_web(self) -> list[dict] | None:
         """从网页抓取比赛列表（简化版本，不使用BeautifulSoup）"""
         urls_to_try = [
-            'https://m.dongqiudi.com/',
-            'https://dongqiudi.com/',
-            'https://www.dongqiudi.com/'
+            "https://m.dongqiudi.com/",
+            "https://dongqiudi.com/",
+            "https://www.dongqiudi.com/",
         ]
 
         for url in urls_to_try:
@@ -195,15 +212,17 @@ class DongqiudiWebProbe:
                     html_content = response.text
 
                     # 查找包含比赛数据的 script 标签
-                    script_pattern = r'<script[^>]*>(.*?)</script>'
+                    script_pattern = r"<script[^>]*>(.*?)</script>"
                     scripts = re.findall(script_pattern, html_content, re.DOTALL)
 
                     for script in scripts:
-                        if 'match' in script.lower() or '比赛' in script:
+                        if "match" in script.lower() or "比赛" in script:
                             # 尝试提取 JSON 数据
                             try:
                                 # 查找 JSON 对象模式
-                                json_pattern = r'window\.__INITIAL_STATE__\s*=\s*({.*?});'
+                                json_pattern = (
+                                    r"window\.__INITIAL_STATE__\s*=\s*({.*?});"
+                                )
                                 matches = re.findall(json_pattern, script, re.DOTALL)
 
                                 for match_json in matches:
@@ -237,7 +256,7 @@ class DongqiudiWebProbe:
                     f"?match_id={match_id}",
                     f"?matchId={match_id}",
                     f"/{match_id}",
-                    f"/{match_id}.json"
+                    f"/{match_id}.json",
                 ]
 
                 for param in param_formats:
@@ -254,11 +273,11 @@ class DongqiudiWebProbe:
 
                                 # 验证数据质量
                                 validation_result = self._validate_match_detail(data)
-                                if validation_result['has_data']:
+                                if validation_result["has_data"]:
                                     return {
-                                        'url': url,
-                                        'data': data,
-                                        'validation': validation_result
+                                        "url": url,
+                                        "data": data,
+                                        "validation": validation_result,
                                     }
 
                             except json.JSONDecodeError:
@@ -279,35 +298,56 @@ class DongqiudiWebProbe:
     def _validate_match_detail(self, data: dict) -> dict:
         """验证比赛详情数据质量"""
         validation = {
-            'has_data': False,
-            'has_xg': False,
-            'has_lineup': False,
-            'has_stats': False,
-            'key_fields': []
+            "has_data": False,
+            "has_xg": False,
+            "has_lineup": False,
+            "has_stats": False,
+            "key_fields": [],
         }
 
         try:
             # 检查基本数据结构
             if isinstance(data, dict) and data:
-                validation['has_data'] = True
+                validation["has_data"] = True
 
                 # 递归查找 xG 相关字段
-                xg_keywords = ['xg', 'expected_goals', 'xg_total', 'xg_home', 'xg_away', 'expected_goals']
+                xg_keywords = [
+                    "xg",
+                    "expected_goals",
+                    "xg_total",
+                    "xg_home",
+                    "xg_away",
+                    "expected_goals",
+                ]
                 if self._find_keywords_in_data(data, xg_keywords):
-                    validation['has_xg'] = True
-                    validation['key_fields'].append('xG数据')
+                    validation["has_xg"] = True
+                    validation["key_fields"].append("xG数据")
 
                 # 递归查找阵容相关字段
-                lineup_keywords = ['lineup', 'lineups', 'formation', 'starting_lineup', 'players', 'squad']
+                lineup_keywords = [
+                    "lineup",
+                    "lineups",
+                    "formation",
+                    "starting_lineup",
+                    "players",
+                    "squad",
+                ]
                 if self._find_keywords_in_data(data, lineup_keywords):
-                    validation['has_lineup'] = True
-                    validation['key_fields'].append('阵容数据')
+                    validation["has_lineup"] = True
+                    validation["key_fields"].append("阵容数据")
 
                 # 递归查找技术统计相关字段
-                stats_keywords = ['statistics', 'stats', 'technical', 'possession', 'shots', 'passes']
+                stats_keywords = [
+                    "statistics",
+                    "stats",
+                    "technical",
+                    "possession",
+                    "shots",
+                    "passes",
+                ]
                 if self._find_keywords_in_data(data, stats_keywords):
-                    validation['has_stats'] = True
-                    validation['key_fields'].append('技术统计')
+                    validation["has_stats"] = True
+                    validation["key_fields"].append("技术统计")
 
         except Exception as e:
             logger.error(f"数据验证失败: {e}")
@@ -366,17 +406,21 @@ class DongqiudiWebProbe:
             logger.info("✅ 探测成功!")
             logger.info(f"📡 成功接口: {detail_result['url']}")
 
-            validation = detail_result['validation']
+            validation = detail_result["validation"]
             logger.info("📊 数据验证结果:")
             logger.info(f"  - xG 数据: {'✅ 有' if validation['has_xg'] else '❌ 无'}")
-            logger.info(f"  - 阵容数据: {'✅ 有' if validation['has_lineup'] else '❌ 无'}")
-            logger.info(f"  - 技术统计: {'✅ 有' if validation['has_stats'] else '❌ 无'}")
+            logger.info(
+                f"  - 阵容数据: {'✅ 有' if validation['has_lineup'] else '❌ 无'}"
+            )
+            logger.info(
+                f"  - 技术统计: {'✅ 有' if validation['has_stats'] else '❌ 无'}"
+            )
 
-            if validation['key_fields']:
+            if validation["key_fields"]:
                 logger.info(f"🎯 发现关键字段: {', '.join(validation['key_fields'])}")
 
             # 打印部分数据结构
-            self._print_data_structure(detail_result['data'])
+            self._print_data_structure(detail_result["data"])
 
         else:
             logger.error("❌ 无法获取比赛详情")
@@ -387,7 +431,7 @@ class DongqiudiWebProbe:
             return None
 
         # 常见的 ID 字段名
-        id_fields = ['id', 'match_id', 'matchId', 'game_id', 'gameId', 'pk']
+        id_fields = ["id", "match_id", "matchId", "game_id", "gameId", "pk"]
 
         for field in id_fields:
             if field in match:

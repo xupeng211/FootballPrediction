@@ -5,6 +5,7 @@ import asyncio
 from src.events.bus import EventBus, Event
 from unittest.mock import MagicMock
 
+
 def debug_publish_sync():
     bus = EventBus()
     handler = MagicMock()
@@ -26,6 +27,7 @@ def debug_publish_sync():
     print(f"Handler handle called: {handler.handle.called}")
     if handler.handle.called:
         print(f"Call args: {handler.handle.call_args}")
+
 
 if __name__ == "__main__":
     debug_publish_sync()

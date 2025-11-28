@@ -14,8 +14,7 @@ from src.tasks.data_collection_tasks import collect_fotmob_data
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -27,16 +26,20 @@ def generate_sample_dates(count: int = 10) -> list[str]:
 
     for i in range(count):
         # 每隔一天生成一个日期
-        target_date = base_date + timedelta(days=i*7)  # 每周一个日期
+        target_date = base_date + timedelta(days=i * 7)  # 每周一个日期
         dates.append(target_date.strftime("%Y%m%d"))
 
     return dates
 
 
-def trigger_direct_collection(dates: list[str], api_throttle_delay: float = 5.0) -> dict[str, Any]:
+def trigger_direct_collection(
+    dates: list[str], api_throttle_delay: float = 5.0
+) -> dict[str, Any]:
     """直接调用数据采集函数（不通过Celery）"""
     logger.info(f"🚀 开始直接数据采集，共 {len(dates)} 个日期")
-    logger.info(f"⚠️ 启用速率节流: 每个任务间隔 {api_throttle_delay} 秒，避免 API 429 错误")
+    logger.info(
+        f"⚠️ 启用速率节流: 每个任务间隔 {api_throttle_delay} 秒，避免 API 429 错误"
+    )
 
     success_count = 0
     error_count = 0
@@ -50,21 +53,25 @@ def trigger_direct_collection(dates: list[str], api_throttle_delay: float = 5.0)
             # 直接调用数据采集函数
             result = collect_fotmob_data(date=date)
 
-            if result.get('status') == 'success':
+            if result.get("status") == "success":
                 success_count += 1
-                matches_collected = result.get('matches_collected', 0)
-                records_saved = result.get('records_saved', 0)
+                matches_collected = result.get("matches_collected", 0)
+                records_saved = result.get("records_saved", 0)
                 total_matches += matches_collected
                 total_saved += records_saved
 
-                logger.info(f"✅ 采集成功: {matches_collected} 场比赛, {records_saved} 条记录保存")
+                logger.info(
+                    f"✅ 采集成功: {matches_collected} 场比赛, {records_saved} 条记录保存"
+                )
             else:
                 error_count += 1
                 logger.error(f"❌ 采集失败: {result.get('error', 'Unknown error')}")
 
             # 🚨 关键修复：每个任务后都强制等待，避免 API 速率限制
             if i < len(dates):  # 最后一个任务不需要等待
-                logger.info(f"⏳ 正在等待 {api_throttle_delay} 秒，避免 API 速率限制...")
+                logger.info(
+                    f"⏳ 正在等待 {api_throttle_delay} 秒，避免 API 速率限制..."
+                )
                 time.sleep(api_throttle_delay)
 
         except Exception as e:
@@ -79,7 +86,9 @@ def trigger_direct_collection(dates: list[str], api_throttle_delay: float = 5.0)
         "success_rate": (success_count / len(dates)) * 100 if dates else 0,
         "total_matches_collected": total_matches,
         "total_records_saved": total_saved,
-        "average_matches_per_date": total_matches / success_count if success_count > 0 else 0
+        "average_matches_per_date": total_matches / success_count
+        if success_count > 0
+        else 0,
     }
 
     logger.info(f"📊 采集统计: {result_summary}")
@@ -105,7 +114,7 @@ def main():
     if test_dates:
         result_summary = trigger_direct_collection(
             test_dates,
-            api_throttle_delay=5.0  # 每个 API 调用间隔 5 秒，避免 429 错误
+            api_throttle_delay=5.0,  # 每个 API 调用间隔 5 秒，避免 429 错误
         )
 
         logger.info("🎉 数据采集完成！")

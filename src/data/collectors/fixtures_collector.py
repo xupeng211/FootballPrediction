@@ -54,8 +54,7 @@ class FixturesCollector:
         """
         self.data_source = data_source
         self.config_file = config_file or os.path.join(
-            os.path.dirname(__file__),
-            "../../config/data_sources.json"
+            os.path.dirname(__file__), "../../config/data_sources.json"
         )
 
         # 加载配置
@@ -76,11 +75,13 @@ class FixturesCollector:
     def _load_config(self) -> dict[str, Any]:
         """从配置文件加载数据源战略配置."""
         try:
-            with open(self.config_file, encoding='utf-8') as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 config = json.load(f)
             logger.info(f"✅ 成功加载数据战略配置: {self.config_file}")
             logger.info(f"📋 配置版本: {config.get('version', 'unknown')}")
-            logger.info(f"🎯 采集策略: {config.get('strategic_settings', {}).get('collection_strategy', 'unknown')}")
+            logger.info(
+                f"🎯 采集策略: {config.get('strategic_settings', {}).get('collection_strategy', 'unknown')}"
+            )
             return config
         except FileNotFoundError:
             logger.error(f"❌ 配置文件未找到: {self.config_file}")
@@ -103,24 +104,54 @@ class FixturesCollector:
                 "backfill_seasons": 3,
                 "current_season": 2024,
                 "max_api_calls_per_minute": 10,
-                "collection_strategy": "high_value_focus"
+                "collection_strategy": "high_value_focus",
             },
             "target_leagues": [
                 # 基本的五大联赛作为回退
-                {"name": "Premier League", "api_id": 2021, "db_id": 11, "type": "Tier1", "priority": "critical"},
-                {"name": "La Liga", "api_id": 2014, "db_id": 12, "type": "Tier1", "priority": "critical"},
-                {"name": "Bundesliga", "api_id": 2002, "db_id": 13, "type": "Tier1", "priority": "critical"},
-                {"name": "Serie A", "api_id": 2019, "db_id": 14, "type": "Tier1", "priority": "critical"},
-                {"name": "Ligue 1", "api_id": 2015, "db_id": 15, "type": "Tier1", "priority": "critical"},
+                {
+                    "name": "Premier League",
+                    "api_id": 2021,
+                    "db_id": 11,
+                    "type": "Tier1",
+                    "priority": "critical",
+                },
+                {
+                    "name": "La Liga",
+                    "api_id": 2014,
+                    "db_id": 12,
+                    "type": "Tier1",
+                    "priority": "critical",
+                },
+                {
+                    "name": "Bundesliga",
+                    "api_id": 2002,
+                    "db_id": 13,
+                    "type": "Tier1",
+                    "priority": "critical",
+                },
+                {
+                    "name": "Serie A",
+                    "api_id": 2019,
+                    "db_id": 14,
+                    "type": "Tier1",
+                    "priority": "critical",
+                },
+                {
+                    "name": "Ligue 1",
+                    "api_id": 2015,
+                    "db_id": 15,
+                    "type": "Tier1",
+                    "priority": "critical",
+                },
             ],
             "api_limits": {
                 "football_data_org": {
                     "max_requests_per_minute": 10,
                     "max_requests_per_hour": 100,
                     "retry_attempts": 3,
-                    "retry_delay_seconds": 2
+                    "retry_delay_seconds": 2,
                 }
-            }
+            },
         }
 
     def _load_target_leagues(self) -> list[dict[str, Any]]:
@@ -186,13 +217,21 @@ class FixturesCollector:
 
     def get_leagues_by_type(self, league_type: str = "Tier1") -> list[dict[str, Any]]:
         """根据联赛类型获取联赛列表."""
-        return [league for league in self.target_leagues
-                if league.get("type", "Tier1") == league_type]
+        return [
+            league
+            for league in self.target_leagues
+            if league.get("type", "Tier1") == league_type
+        ]
 
-    def get_leagues_by_priority(self, priority: str = "critical") -> list[dict[str, Any]]:
+    def get_leagues_by_priority(
+        self, priority: str = "critical"
+    ) -> list[dict[str, Any]]:
         """根据优先级获取联赛列表."""
-        return [league for league in self.target_leagues
-                if league.get("priority", "medium") == priority]
+        return [
+            league
+            for league in self.target_leagues
+            if league.get("priority", "medium") == priority
+        ]
 
     def get_rate_limit_delay(self) -> float:
         """根据配置计算请求间隔."""
@@ -204,12 +243,15 @@ class FixturesCollector:
     def get_api_limits(self, api_name: str = "football_data_org") -> dict[str, Any]:
         """获取指定API的速率限制配置."""
         api_limits = self.config.get("api_limits", {})
-        return api_limits.get(api_name, {
-            "max_requests_per_minute": 10,
-            "max_requests_per_hour": 100,
-            "retry_attempts": 3,
-            "retry_delay_seconds": 2
-        })
+        return api_limits.get(
+            api_name,
+            {
+                "max_requests_per_minute": 10,
+                "max_requests_per_hour": 100,
+                "retry_attempts": 3,
+                "retry_delay_seconds": 2,
+            },
+        )
 
     def get_league_summary(self) -> dict[str, Any]:
         """获取联赛配置摘要统计."""
@@ -229,7 +271,7 @@ class FixturesCollector:
             "priorities": priority_count,
             "backfill_seasons": self.get_backfill_seasons(),
             "current_season": self.get_current_season(),
-            "collection_strategy": self.get_collection_strategy()
+            "collection_strategy": self.get_collection_strategy(),
         }
 
     # 动态速率限制配置（从配置文件加载）

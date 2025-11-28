@@ -24,25 +24,32 @@ import joblib
 import logging
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class DirectFeatureGenerator:
     """直接从原始数据生成特征的类"""
 
     def __init__(self):
-        self.engine = create_engine('postgresql://postgres:postgres-dev-password@db:5432/football_prediction')
-        self.team_stats = defaultdict(lambda: {
-            'matches_played': 0,
-            'wins': 0,
-            'draws': 0,
-            'losses': 0,
-            'goals_for': 0,
-            'goals_against': 0,
-            'points': 0,
-            'recent_form': [],
-            'last_5': []
-        })
+        self.engine = create_engine(
+            "postgresql://postgres:postgres-dev-password@db:5432/football_prediction"
+        )
+        self.team_stats = defaultdict(
+            lambda: {
+                "matches_played": 0,
+                "wins": 0,
+                "draws": 0,
+                "losses": 0,
+                "goals_for": 0,
+                "goals_against": 0,
+                "points": 0,
+                "recent_form": [],
+                "last_5": [],
+            }
+        )
         self.matches = []
         self.features = []
 
@@ -65,16 +72,18 @@ class DirectFeatureGenerator:
             # 处理数据（已经是字典格式，不需要JSON解析）
             for _, row in df.iterrows():
                 try:
-                    match_data = row['match_data']
+                    match_data = row["match_data"]
                     # 如果是字符串，尝试解析为JSON
                     if isinstance(match_data, str):
                         match_data = json.loads(match_data)
 
                     if self._is_valid_match(match_data):
-                        self.matches.append({
-                            'raw_data': match_data,
-                            'collected_at': row['collected_at']
-                        })
+                        self.matches.append(
+                            {
+                                "raw_data": match_data,
+                                "collected_at": row["collected_at"],
+                            }
+                        )
                 except Exception as e:
                     logger.warning(f"处理比赛数据时出错: {str(e)}")
                     continue
@@ -89,20 +98,24 @@ class DirectFeatureGenerator:
     def _is_valid_match(self, match_data):
         """检查比赛数据是否有效"""
         try:
-            status = match_data.get('status', {})
+            status = match_data.get("status", {})
 
             # 检查是否已完成
-            if not status.get('finished', False):
+            if not status.get("finished", False):
                 return False
 
             # 检查比分字符串
-            score_str = status.get('scoreStr', '')
-            if not score_str or '-' not in score_str:
+            score_str = status.get("scoreStr", "")
+            if not score_str or "-" not in score_str:
                 return False
 
             # 检查队伍名称 - 优先使用新字段
-            home_team_name = match_data.get('home_team_name') or match_data.get('raw_data', {}).get('home', {}).get('name')
-            away_team_name = match_data.get('away_team_name') or match_data.get('raw_data', {}).get('away', {}).get('name')
+            home_team_name = match_data.get("home_team_name") or match_data.get(
+                "raw_data", {}
+            ).get("home", {}).get("name")
+            away_team_name = match_data.get("away_team_name") or match_data.get(
+                "raw_data", {}
+            ).get("away", {}).get("name")
 
             if not all([home_team_name, away_team_name]):
                 return False
@@ -115,14 +128,14 @@ class DirectFeatureGenerator:
     def extract_result(self, match_data):
         """提取比赛结果"""
         try:
-            status = match_data.get('status', {})
-            score_str = status.get('scoreStr', '')
+            status = match_data.get("status", {})
+            score_str = status.get("scoreStr", "")
 
             if not score_str:
                 return None
 
             # 解析比分
-            parts = score_str.split(' - ')
+            parts = score_str.split(" - ")
             if len(parts) != 2:
                 return None
 
@@ -141,9 +154,9 @@ class DirectFeatureGenerator:
 
     def extract_team_names(self, match_data):
         """提取队伍名称"""
-        home_team = match_data.get('home_team', {})
-        away_team = match_data.get('away_team', {})
-        return home_team.get('name', 'Unknown'), away_team.get('name', 'Unknown')
+        home_team = match_data.get("home_team", {})
+        away_team = match_data.get("away_team", {})
+        return home_team.get("name", "Unknown"), away_team.get("name", "Unknown")
 
     def calculate_team_statistics(self):
         """计算所有球队的统计数据"""
@@ -151,7 +164,7 @@ class DirectFeatureGenerator:
 
         # 按时间顺序处理比赛
         for match in self.matches:
-            match_data = match['raw_data']
+            match_data = match["raw_data"]
 
             # 提取队伍名称
             home_team, away_team = self.extract_team_names(match_data)
@@ -170,38 +183,38 @@ class DirectFeatureGenerator:
     def _update_team_stats(self, team_name, result, is_home):
         """更新单支球队统计"""
         stats = self.team_stats[team_name]
-        stats['matches_played'] += 1
+        stats["matches_played"] += 1
 
         # 记录结果
-        stats['recent_form'].append(result)
-        stats['last_5'].append(result)
+        stats["recent_form"].append(result)
+        stats["last_5"].append(result)
 
         # 更新胜负平统计
         if result == 1:  # 胜
-            stats['wins'] += 1
-            stats['points'] += 3
+            stats["wins"] += 1
+            stats["points"] += 3
         elif result == 0:  # 平
-            stats['draws'] += 1
-            stats['points'] += 1
+            stats["draws"] += 1
+            stats["points"] += 1
         else:  # 负
-            stats['losses'] += 1
+            stats["losses"] += 1
 
         # 只保留最近5场记录
-        if len(stats['last_5']) > 5:
-            stats['last_5'].pop(0)
-        if len(stats['recent_form']) > 10:  # 保留最近10场
-            stats['recent_form'].pop(0)
+        if len(stats["last_5"]) > 5:
+            stats["last_5"].pop(0)
+        if len(stats["recent_form"]) > 10:  # 保留最近10场
+            stats["recent_form"].pop(0)
 
     def extract_goals_stats(self, match_data):
         """提取进球统计"""
         try:
-            status = match_data.get('status', {})
-            score_str = status.get('scoreStr', '')
+            status = match_data.get("status", {})
+            score_str = status.get("scoreStr", "")
 
             if not score_str:
                 return 0, 0
 
-            parts = score_str.split(' - ')
+            parts = score_str.split(" - ")
             if len(parts) != 2:
                 return 0, 0
 
@@ -211,7 +224,9 @@ class DirectFeatureGenerator:
         except:
             return 0, 0
 
-    def generate_features_for_match(self, match_data, home_team, away_team, collected_at):
+    def generate_features_for_match(
+        self, match_data, home_team, away_team, collected_at
+    ):
         """为单场比赛生成特征"""
         try:
             # 获取球队统计
@@ -223,40 +238,43 @@ class DirectFeatureGenerator:
 
             # 基础特征
             features = {
-                'home_team_name': home_team,
-                'away_team_name': away_team,
-                'league_name': match_data.get('league_name', ''),
-                'match_time': match_data.get('match_time', ''),
-                'collection_date': collected_at,
-
+                "home_team_name": home_team,
+                "away_team_name": away_team,
+                "league_name": match_data.get("league_name", ""),
+                "match_time": match_data.get("match_time", ""),
+                "collection_date": collected_at,
                 # 主队特征
-                'home_matches_played': home_stats['matches_played'],
-                'home_wins': home_stats['wins'],
-                'home_draws': home_stats['draws'],
-                'home_losses': home_stats['losses'],
-                'home_points': home_stats['points'],
-                'home_win_rate': home_stats['wins'] / max(1, home_stats['matches_played']),
-                'home_recent_form_points': sum(max(0, r) for r in home_stats['last_5']),
-                'home_last_5_avg_goals': self._calc_avg_goals(home_stats['last_5'], match_data, True),
-                'home_goal_diff': self._calc_goal_diff(home_stats['last_5']),
-
+                "home_matches_played": home_stats["matches_played"],
+                "home_wins": home_stats["wins"],
+                "home_draws": home_stats["draws"],
+                "home_losses": home_stats["losses"],
+                "home_points": home_stats["points"],
+                "home_win_rate": home_stats["wins"]
+                / max(1, home_stats["matches_played"]),
+                "home_recent_form_points": sum(max(0, r) for r in home_stats["last_5"]),
+                "home_last_5_avg_goals": self._calc_avg_goals(
+                    home_stats["last_5"], match_data, True
+                ),
+                "home_goal_diff": self._calc_goal_diff(home_stats["last_5"]),
                 # 客队特征
-                'away_matches_played': away_stats['matches_played'],
-                'away_wins': away_stats['wins'],
-                'away_draws': away_stats['draws'],
-                'away_losses': away_stats['losses'],
-                'away_points': away_stats['points'],
-                'away_win_rate': away_stats['wins'] / max(1, away_stats['matches_played']),
-                'away_recent_form_points': sum(max(0, r) for r in away_stats['last_5']),
-                'away_last_5_avg_goals': self._calc_avg_goals(away_stats['last_5'], match_data, False),
-                'away_goal_diff': self._calc_goal_diff(away_stats['last_5']),
-
+                "away_matches_played": away_stats["matches_played"],
+                "away_wins": away_stats["wins"],
+                "away_draws": away_stats["draws"],
+                "away_losses": away_stats["losses"],
+                "away_points": away_stats["points"],
+                "away_win_rate": away_stats["wins"]
+                / max(1, away_stats["matches_played"]),
+                "away_recent_form_points": sum(max(0, r) for r in away_stats["last_5"]),
+                "away_last_5_avg_goals": self._calc_avg_goals(
+                    away_stats["last_5"], match_data, False
+                ),
+                "away_goal_diff": self._calc_goal_diff(away_stats["last_5"]),
                 # 比赛特征
-                'match_result': self.extract_result(match_data),
-                'home_score': home_goals,
-                'away_score': away_goals,
-                'total_goals': home_goals + away_goals,
-                'goal_difference': home_goals - away_goals
+                "match_result": self.extract_result(match_data),
+                "home_score": home_goals,
+                "away_score": away_goals,
+                "total_goals": home_goals + away_goals,
+                "goal_difference": home_goals - away_goals,
             }
 
             return features
@@ -275,11 +293,11 @@ class DirectFeatureGenerator:
         valid_matches = 0
 
         # 如果队伍有足够历史，从历史数据计算
-        if is_home and 'home_score' in str(match_data):
-            total_goals += match_data.get('status', {}).get('homeScore', 0)
+        if is_home and "home_score" in str(match_data):
+            total_goals += match_data.get("status", {}).get("homeScore", 0)
             valid_matches = max(1, len(recent_5))
-        elif not is_home and 'away_score' in str(match_data):
-            total_goals += match_data.get('status', {}).get('awayScore', 0)
+        elif not is_home and "away_score" in str(match_data):
+            total_goals += match_data.get("status", {}).get("awayScore", 0)
             valid_matches = max(1, len(recent_5))
 
         return total_goals / valid_matches if valid_matches > 0 else 0.0
@@ -297,11 +315,13 @@ class DirectFeatureGenerator:
 
         # 为每场比赛生成特征
         for match in self.matches:
-            match_data = match['raw_data']
+            match_data = match["raw_data"]
             home_team, away_team = self.extract_team_names(match_data)
-            collected_at = match['collected_at']
+            collected_at = match["collected_at"]
 
-            features = self.generate_features_for_match(match_data, home_team, away_team, collected_at)
+            features = self.generate_features_for_match(
+                match_data, home_team, away_team, collected_at
+            )
             if features:
                 self.features.append(features)
 
@@ -321,7 +341,7 @@ class DirectFeatureGenerator:
         logger.info(f"✅ 清理后保留 {len(df)} 条有效特征记录")
 
         # 保存到文件
-        features_file = '/app/data/features_direct.csv'
+        features_file = "/app/data/features_direct.csv"
         df.to_csv(features_file, index=False)
         logger.info(f"💾 特征数据已保存到: {features_file}")
 
@@ -334,12 +354,13 @@ class DirectFeatureGenerator:
 
         return df
 
+
 def main():
     """主函数"""
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("🎯 直接特征生成器启动")
     logger.info("📊 目标：为 2942 条原始数据生成 ML 特征")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # 创建特征生成器
     generator = DirectFeatureGenerator()
@@ -360,6 +381,7 @@ def main():
         logger.info(f"📈 生成了 {len(features_data)} 条特征记录，可用于模型训练")
     else:
         logger.error("❌ 特征生成失败")
+
 
 if __name__ == "__main__":
     main()

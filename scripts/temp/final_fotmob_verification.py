@@ -44,12 +44,14 @@ async def final_verification():
         print(f"   🏆 比赛: {details.home_team} vs {details.away_team}")
         print(f"   📊 比分: {details.home_score} - {details.away_score}")
         print(f"   📅 日期: {details.match_date}")
-        print(f"   🔄 状态: 已开始={details.status.get('started')}, 已结束={details.status.get('finished')}")
+        print(
+            f"   🔄 状态: 已开始={details.status.get('started')}, 已结束={details.status.get('finished')}"
+        )
         print(f"   🆔 比赛ID: {details.match_id}")
         print()
 
         # === 验证已完场 ===
-        is_finished = details.status.get('finished', False)
+        is_finished = details.status.get("finished", False)
         print("📋 2. 比赛状态验证:")
         if is_finished:
             print("   ✅ 确认已完场: 比赛已完成，应该有统计数据")
@@ -63,7 +65,9 @@ async def final_verification():
             print("   ✅ 统计对象已创建")
             print(f"   🏟️ 主队: {details.stats.home_team}")
             print(f"   🏟️ 客队: {details.stats.away_team}")
-            print(f"   📊 比分记录: {details.stats.home_score} - {details.stats.away_score}")
+            print(
+                f"   📊 比分记录: {details.stats.home_score} - {details.stats.away_score}"
+            )
 
             # 显示xG字段状态
             if details.stats.home_xg is not None:
@@ -77,9 +81,13 @@ async def final_verification():
             # 显示其他统计字段
             stats_summary = []
             if details.stats.possession_home is not None:
-                stats_summary.append(f"控球率: {details.stats.possession_home}% vs {details.stats.possession_away}%")
+                stats_summary.append(
+                    f"控球率: {details.stats.possession_home}% vs {details.stats.possession_away}%"
+                )
             if details.stats.shots_home is not None:
-                stats_summary.append(f"射门: {details.stats.shots_home} vs {details.stats.shots_away}")
+                stats_summary.append(
+                    f"射门: {details.stats.shots_home} vs {details.stats.shots_away}"
+                )
 
             if stats_summary:
                 for stat in stats_summary:
@@ -100,10 +108,16 @@ async def final_verification():
             print(f"   ✅ 主队阵容对象: {details.home_lineup.team_name}")
             print(f"   📋 球员数量: {home_players}")
             if home_players > 0:
-                forwards = [p for p in details.home_lineup.players if p.position and 'forward' in p.position.lower()]
+                forwards = [
+                    p
+                    for p in details.home_lineup.players
+                    if p.position and "forward" in p.position.lower()
+                ]
                 if forwards:
                     forward = forwards[0]
-                    print(f"   ⚽ 主队前锋示例: {forward.name} (位置: {forward.position})")
+                    print(
+                        f"   ⚽ 主队前锋示例: {forward.name} (位置: {forward.position})"
+                    )
                     print("   🎉 阵容数据获取成功!")
                 else:
                     print("   🔍 球员存在但位置信息需要丰富")
@@ -135,8 +149,8 @@ async def final_verification():
             print(f"   🔍 包含字段: {list(details.raw_data.keys())}")
 
             # 检查是否有隐藏的统计数据
-            if 'stats' in details.raw_data:
-                raw_stats = details.raw_data['stats']
+            if "stats" in details.raw_data:
+                raw_stats = details.raw_data["stats"]
                 if raw_stats is None:
                     print("   📊 统计字段: 存在但为空 (数据源限制)")
                 elif isinstance(raw_stats, dict):
@@ -171,6 +185,7 @@ async def final_verification():
     except Exception as e:
         print(f"❌ 验证过程中发生错误: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

@@ -40,6 +40,7 @@ try:
     from sklearn.model_selection import train_test_split, StratifiedKFold
     from sklearn.metrics import accuracy_score, f1_score, classification_report
     from sklearn.preprocessing import LabelEncoder, StandardScaler
+
     HAS_DEPENDENCIES = True
 except ImportError as e:
     HAS_DEPENDENCIES = False
@@ -49,8 +50,11 @@ except ImportError as e:
 
 # 导入项目模块
 try:
-    from src.ml.xgboost_hyperparameter_optimization import XGBoostHyperparameterOptimizer
+    from src.ml.xgboost_hyperparameter_optimization import (
+        XGBoostHyperparameterOptimizer,
+    )
     from src.ml.enhanced_feature_engineering import EnhancedFeatureEngineering
+
     HAS_PROJECT_MODULES = True
 except ImportError:
     HAS_PROJECT_MODULES = False
@@ -59,9 +63,7 @@ except ImportError:
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler()
-    ]
+    handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -74,7 +76,7 @@ class OptunaHyperparameterTuner:
         n_trials: int = 50,
         cv_folds: int = 5,
         random_state: int = 42,
-        model_save_path: str = "models/football_prediction_v4_optuna.pkl"
+        model_save_path: str = "models/football_prediction_v4_optuna.pkl",
     ):
         """初始化优化器.
 
@@ -108,7 +110,9 @@ class OptunaHyperparameterTuner:
         logger.info("🚀 初始化 Optuna 超参数优化器")
         logger.info(f"📊 试验次数: {n_trials}, 交叉验证: {cv_folds}折")
 
-    def load_and_prepare_data(self, data_path: str = "data/advanced_features.csv") -> bool:
+    def load_and_prepare_data(
+        self, data_path: str = "data/advanced_features.csv"
+    ) -> bool:
         """加载并准备训练数据.
 
         Args:
@@ -127,7 +131,7 @@ class OptunaHyperparameterTuner:
                 alternative_paths = [
                     "data/processed_dataset.csv",
                     "data/football_matches.csv",
-                    "data/matches_features.csv"
+                    "data/matches_features.csv",
                 ]
                 for alt_path in alternative_paths:
                     if os.path.exists(alt_path):
@@ -146,8 +150,10 @@ class OptunaHyperparameterTuner:
             logger.info("🔧 开始数据预处理...")
 
             # 检查必要的列
-            required_columns = ['result']  # 目标变量
-            missing_columns = [col for col in required_columns if col not in data.columns]
+            required_columns = ["result"]  # 目标变量
+            missing_columns = [
+                col for col in required_columns if col not in data.columns
+            ]
             if missing_columns:
                 logger.error(f"❌ 缺少必要列: {missing_columns}")
                 logger.info(f"📋 可用列: {list(data.columns)}")
@@ -155,22 +161,31 @@ class OptunaHyperparameterTuner:
 
             # 移除不必要的列
             columns_to_drop = [
-                'match_id', 'match_date', 'home_team_id', 'away_team_id',
-                'league_id', 'season', 'home_score', 'away_score', 'goal_difference',
-                'total_goals', 'over_2_5_goals', 'both_teams_score'
+                "match_id",
+                "match_date",
+                "home_team_id",
+                "away_team_id",
+                "league_id",
+                "season",
+                "home_score",
+                "away_score",
+                "goal_difference",
+                "total_goals",
+                "over_2_5_goals",
+                "both_teams_score",
             ]
             columns_to_drop = [col for col in columns_to_drop if col in data.columns]
             data = data.drop(columns=columns_to_drop)
 
             # 分离特征和目标
-            X = data.drop('result', axis=1)
-            y = data['result']
+            X = data.drop("result", axis=1)
+            y = data["result"]
 
             # 处理缺失值
             X = X.fillna(X.median())
 
             # 编码目标变量
-            if y.dtype == 'object':
+            if y.dtype == "object":
                 self.label_encoder = LabelEncoder()
                 y_encoded = self.label_encoder.fit_transform(y)
                 logger.info(f"🏷️ 目标变量编码: {self.label_encoder.classes_}")
@@ -187,17 +202,16 @@ class OptunaHyperparameterTuner:
             # 特征缩放
             scaler = StandardScaler()
             X_scaled = pd.DataFrame(
-                scaler.fit_transform(X),
-                columns=X.columns,
-                index=X.index
+                scaler.fit_transform(X), columns=X.columns, index=X.index
             )
 
             # 分割训练集和测试集
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-                X_scaled, y_encoded,
+                X_scaled,
+                y_encoded,
                 test_size=0.2,
                 random_state=self.random_state,
-                stratify=y_encoded
+                stratify=y_encoded,
             )
 
             self.feature_names = list(X_scaled.columns)
@@ -223,6 +237,7 @@ class OptunaHyperparameterTuner:
         except Exception as e:
             logger.error(f"❌ 数据准备失败: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -237,34 +252,35 @@ class OptunaHyperparameterTuner:
         """
         # 定义超参数搜索空间
         param = {
-            'objective': 'binary:logistic' if len(np.unique(self.y_train)) == 2 else 'multi:softprob',
-            'eval_metric': 'mlogloss',
-            'random_state': self.random_state,
-            'use_label_encoder': False,
-
+            "objective": "binary:logistic"
+            if len(np.unique(self.y_train)) == 2
+            else "multi:softprob",
+            "eval_metric": "mlogloss",
+            "random_state": self.random_state,
+            "use_label_encoder": False,
             # 主要超参数
-            'max_depth': trial.suggest_int('max_depth', 3, 10),
-            'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
-            'n_estimators': trial.suggest_int('n_estimators', 100, 1000),
-            'subsample': trial.suggest_float('subsample', 0.6, 1.0),
-            'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
-
+            "max_depth": trial.suggest_int("max_depth", 3, 10),
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+            "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
+            "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+            "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
             # 正则化参数
-            'reg_alpha': trial.suggest_float('reg_alpha', 0.0, 1.0),
-            'reg_lambda': trial.suggest_float('reg_lambda', 0.0, 2.0),
-            'min_child_weight': trial.suggest_float('min_child_weight', 1, 10),
-
+            "reg_alpha": trial.suggest_float("reg_alpha", 0.0, 1.0),
+            "reg_lambda": trial.suggest_float("reg_lambda", 0.0, 2.0),
+            "min_child_weight": trial.suggest_float("min_child_weight", 1, 10),
             # 其他参数
-            'gamma': trial.suggest_float('gamma', 0.0, 1.0),
-            'max_leaves': trial.suggest_int('max_leaves', 0, 100),
+            "gamma": trial.suggest_float("gamma", 0.0, 1.0),
+            "max_leaves": trial.suggest_int("max_leaves", 0, 100),
         }
 
         # 设置多分类参数
         if len(np.unique(self.y_train)) > 2:
-            param['num_class'] = len(np.unique(self.y_train))
+            param["num_class"] = len(np.unique(self.y_train))
 
         # 交叉验证
-        cv = StratifiedKFold(n_splits=self.cv_folds, shuffle=True, random_state=self.random_state)
+        cv = StratifiedKFold(
+            n_splits=self.cv_folds, shuffle=True, random_state=self.random_state
+        )
         cv_scores = []
 
         for train_idx, val_idx in cv.split(self.X_train, self.y_train):
@@ -277,10 +293,7 @@ class OptunaHyperparameterTuner:
             # 早停
             eval_set = [(X_val, y_val)]
             model.fit(
-                X_tr, y_tr,
-                eval_set=eval_set,
-                early_stopping_rounds=50,
-                verbose=False
+                X_tr, y_tr, eval_set=eval_set, early_stopping_rounds=50, verbose=False
             )
 
             # 预测和评估
@@ -313,9 +326,9 @@ class OptunaHyperparameterTuner:
 
         # 创建研究
         self.study = optuna.create_study(
-            direction='maximize',
+            direction="maximize",
             sampler=TPESampler(seed=self.random_state),
-            pruner=optuna.pruners.MedianPruner(n_startup_trials=5, n_warmup_steps=3)
+            pruner=optuna.pruners.MedianPruner(n_startup_trials=5, n_warmup_steps=3),
         )
 
         # 定义回调函数
@@ -329,9 +342,7 @@ class OptunaHyperparameterTuner:
 
         # 执行优化
         self.study.optimize(
-            self.objective,
-            n_trials=self.n_trials,
-            callbacks=[callback]
+            self.objective, n_trials=self.n_trials, callbacks=[callback]
         )
 
         # 获取最佳结果
@@ -345,29 +356,36 @@ class OptunaHyperparameterTuner:
         # 使用最佳参数训练最终模型
         logger.info("🔧 使用最佳参数训练最终模型...")
         best_params_full = self.best_params.copy()
-        best_params_full.update({
-            'objective': 'binary:logistic' if len(np.unique(self.y_train)) == 2 else 'multi:softprob',
-            'eval_metric': 'mlogloss',
-            'random_state': self.random_state,
-            'use_label_encoder': False,
-        })
+        best_params_full.update(
+            {
+                "objective": "binary:logistic"
+                if len(np.unique(self.y_train)) == 2
+                else "multi:softprob",
+                "eval_metric": "mlogloss",
+                "random_state": self.random_state,
+                "use_label_encoder": False,
+            }
+        )
 
         if len(np.unique(self.y_train)) > 2:
-            best_params_full['num_class'] = len(np.unique(self.y_train))
+            best_params_full["num_class"] = len(np.unique(self.y_train))
 
         self.best_model = xgb.XGBClassifier(**best_params_full)
 
         # 训练最终模型
         eval_set = [(self.X_test, self.y_test)]
         self.best_model.fit(
-            self.X_train, self.y_train,
+            self.X_train,
+            self.y_train,
             eval_set=eval_set,
             early_stopping_rounds=100,
-            verbose=False
+            verbose=False,
         )
 
         # 评估模型
-        train_score = accuracy_score(self.y_train, self.best_model.predict(self.X_train))
+        train_score = accuracy_score(
+            self.y_train, self.best_model.predict(self.X_train)
+        )
         test_score = accuracy_score(self.y_test, self.best_model.predict(self.X_test))
 
         logger.info("📊 最终模型性能:")
@@ -378,41 +396,43 @@ class OptunaHyperparameterTuner:
         self.save_results()
 
         return {
-            'best_params': self.best_params,
-            'best_score': self.best_score,
-            'train_accuracy': train_score,
-            'test_accuracy': test_score,
-            'n_trials': len(self.study.trials),
-            'study_name': self.study.study_name
+            "best_params": self.best_params,
+            "best_score": self.best_score,
+            "train_accuracy": train_score,
+            "test_accuracy": test_score,
+            "n_trials": len(self.study.trials),
+            "study_name": self.study.study_name,
         }
 
     def save_results(self) -> None:
         """保存优化结果和模型."""
         try:
             # 保存模型
-            with open(self.model_save_path, 'wb') as f:
+            with open(self.model_save_path, "wb") as f:
                 pickle.dump(self.best_model, f)
             logger.info(f"💾 模型已保存: {self.model_save_path}")
 
             # 保存优化结果
             results = {
-                'best_params': self.best_params,
-                'best_score': float(self.best_score),
-                'n_trials': len(self.study.trials),
-                'study_name': self.study.study_name,
-                'feature_names': self.feature_names,
-                'optimization_time': datetime.now().isoformat(),
-                'label_encoder_classes': self.label_encoder.classes_.tolist() if self.label_encoder else None
+                "best_params": self.best_params,
+                "best_score": float(self.best_score),
+                "n_trials": len(self.study.trials),
+                "study_name": self.study.study_name,
+                "feature_names": self.feature_names,
+                "optimization_time": datetime.now().isoformat(),
+                "label_encoder_classes": self.label_encoder.classes_.tolist()
+                if self.label_encoder
+                else None,
             }
 
-            results_path = self.model_save_path.replace('.pkl', '_results.json')
-            with open(results_path, 'w') as f:
+            results_path = self.model_save_path.replace(".pkl", "_results.json")
+            with open(results_path, "w") as f:
                 json.dump(results, f, indent=2)
             logger.info(f"📄 优化结果已保存: {results_path}")
 
             # 保存研究
-            study_path = self.model_save_path.replace('.pkl', '_study.pkl')
-            with open(study_path, 'wb') as f:
+            study_path = self.model_save_path.replace(".pkl", "_study.pkl")
+            with open(study_path, "wb") as f:
                 pickle.dump(self.study, f)
             logger.info(f"🔬 Optuna 研究已保存: {study_path}")
 
@@ -432,14 +452,22 @@ class OptunaHyperparameterTuner:
             logger.info("📈 优化统计:")
             logger.info(f"   总试验次数: {len(self.study.trials)}")
             logger.info(f"   最佳准确率: {self.study.best_value:.4f}")
-            completed_trials = len([t for t in self.study.trials if t.state == optuna.trial.TrialState.COMPLETE])
+            completed_trials = len(
+                [
+                    t
+                    for t in self.study.trials
+                    if t.state == optuna.trial.TrialState.COMPLETE
+                ]
+            )
             logger.info(f"   改进次数: {completed_trials}")
 
             # 参数重要性
             try:
                 importance = optuna.importance.get_param_importances(self.study)
                 logger.info("🔍 参数重要性:")
-                for param, imp in sorted(importance.items(), key=lambda x: x[1], reverse=True):
+                for param, imp in sorted(
+                    importance.items(), key=lambda x: x[1], reverse=True
+                ):
                     logger.info(f"   {param}: {imp:.4f}")
             except Exception as e:
                 logger.warning(f"⚠️ 无法计算参数重要性: {e}")
@@ -470,14 +498,16 @@ def main():
 
     # 检查依赖
     if not HAS_DEPENDENCIES:
-        logger.error("❌ 缺少必要依赖，请安装: pip install optuna xgboost scikit-learn pandas numpy")
+        logger.error(
+            "❌ 缺少必要依赖，请安装: pip install optuna xgboost scikit-learn pandas numpy"
+        )
         return
 
     # 创建优化器
     tuner = OptunaHyperparameterTuner(
         n_trials=30,  # 可以根据需要调整
         cv_folds=5,
-        random_state=42
+        random_state=42,
     )
 
     # 加载数据
@@ -501,12 +531,15 @@ def main():
 
         # 与基准模型比较
         baseline_accuracy = 0.5255  # 基准准确率 52.55%
-        improvement = (results['best_score'] - baseline_accuracy) * 100
-        logger.info(f"🚀 准确率提升: {improvement:+.2f}% (从 {baseline_accuracy:.2%} 到 {results['best_score']:.2%})")
+        improvement = (results["best_score"] - baseline_accuracy) * 100
+        logger.info(
+            f"🚀 准确率提升: {improvement:+.2f}% (从 {baseline_accuracy:.2%} 到 {results['best_score']:.2%})"
+        )
 
     except Exception as e:
         logger.error(f"❌ 优化过程中发生错误: {e}")
         import traceback
+
         traceback.print_exc()
 
 

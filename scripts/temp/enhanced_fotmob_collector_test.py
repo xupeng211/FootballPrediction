@@ -43,22 +43,18 @@ class EnhancedFotmobCollector:
         detail_endpoints = [
             # 基础接口
             f"https://www.fotmob.com/api/match?id={match_id}",
-
             # 统计相关接口
             f"https://www.fotmob.com/api/matchStats?matchId={match_id}",
             f"https://www.fotmob.com/api/stats/match?matchId={match_id}",
             f"https://www.fotmob.com/api/matchStatistics?matchId={match_id}",
-
             # 阵容相关接口
             f"https://www.fotmob.com/api/matchLineup?matchId={match_id}",
             f"https://www.fotmob.com/api/lineup?matchId={match_id}",
             f"https://www.fotmob.com/api/lineups?matchId={match_id}",
-
             # 复合接口
             f"https://www.fotmob.com/api/matchDetails?matchId={match_id}",
             f"https://www.fotmob.com/api/matchData?matchId={match_id}",
             f"https://www.fotmob.com/api/matchInfo?matchId={match_id}",
-
             # 带参数的接口
             f"https://www.fotmob.com/api/match?id={match_id}&tab=stats",
             f"https://www.fotmob.com/api/match?id={match_id}&tab=lineup",
@@ -71,10 +67,12 @@ class EnhancedFotmobCollector:
         print(f"🔍 测试 {len(detail_endpoints)} 个可能的详情接口...")
 
         for i, endpoint in enumerate(detail_endpoints):
-            print(f"\n[{i+1}/{len(detail_endpoints)}] 测试: {endpoint}")
+            print(f"\n[{i + 1}/{len(detail_endpoints)}] 测试: {endpoint}")
 
             try:
-                response = await self.session.get(endpoint, headers=self.base_headers, timeout=8)
+                response = await self.session.get(
+                    endpoint, headers=self.base_headers, timeout=8
+                )
 
                 if response.status_code == 200:
                     try:
@@ -120,19 +118,33 @@ class EnhancedFotmobCollector:
     def _check_xg_in_data(self, data):
         """检查数据中是否包含xG信息"""
         data_str = str(data).lower()
-        xg_keywords = ['xg', 'expected goals', 'expectedgoals', 'x_goals', 'x_goals']
+        xg_keywords = ["xg", "expected goals", "expectedgoals", "x_goals", "x_goals"]
         return any(keyword in data_str for keyword in xg_keywords)
 
     def _check_lineup_in_data(self, data):
         """检查数据中是否包含阵容信息"""
         data_str = str(data).lower()
-        lineup_keywords = ['lineup', 'player', 'squad', 'formation', 'starting', 'substitute']
+        lineup_keywords = [
+            "lineup",
+            "player",
+            "squad",
+            "formation",
+            "starting",
+            "substitute",
+        ]
         return any(keyword in data_str for keyword in lineup_keywords)
 
     def _check_stats_in_data(self, data):
         """检查数据中是否包含统计信息"""
         data_str = str(data).lower()
-        stats_keywords = ['statistic', 'stats', 'possession', 'shots', 'goals', 'corners']
+        stats_keywords = [
+            "statistic",
+            "stats",
+            "possession",
+            "shots",
+            "goals",
+            "corners",
+        ]
         return any(keyword in data_str for keyword in stats_keywords)
 
     async def analyze_complete_data(self, all_data, match_id):
@@ -188,12 +200,17 @@ class EnhancedFotmobCollector:
         if isinstance(data, dict):
             # 直接查找xG字段
             for key, value in data.items():
-                if 'xg' in key.lower() and isinstance(value, (int, float)):
+                if "xg" in key.lower() and isinstance(value, (int, float)):
                     return value
-                elif isinstance(value, (int, float)) and 0 <= value <= 10:  # xG通常在0-10之间
+                elif (
+                    isinstance(value, (int, float)) and 0 <= value <= 10
+                ):  # xG通常在0-10之间
                     # 检查上下文是否可能是xG
                     parent_key = key.lower()
-                    if any(keyword in parent_key for keyword in ['expected', 'goal', 'shot']):
+                    if any(
+                        keyword in parent_key
+                        for keyword in ["expected", "goal", "shot"]
+                    ):
                         return value
         return None
 
@@ -201,7 +218,7 @@ class EnhancedFotmobCollector:
         """提取阵容信息"""
         if isinstance(data, dict):
             for key, value in data.items():
-                if 'lineup' in key.lower() or 'player' in key.lower():
+                if "lineup" in key.lower() or "player" in key.lower():
                     if isinstance(value, list):
                         return f"{len(value)} 名球员"
                     elif isinstance(value, dict):
@@ -213,7 +230,10 @@ class EnhancedFotmobCollector:
         if isinstance(data, dict):
             stats_fields = []
             for key, value in data.items():
-                if any(keyword in key.lower() for keyword in ['possession', 'shots', 'corners', 'fouls']):
+                if any(
+                    keyword in key.lower()
+                    for keyword in ["possession", "shots", "corners", "fouls"]
+                ):
                     stats_fields.append(key)
 
             if stats_fields:
@@ -235,24 +255,37 @@ async def main():
     collector = EnhancedFotmobCollector()
 
     for i, (match_id, description) in enumerate(test_matches, 1):
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"测试比赛 {i}/{len(test_matches)}: {description} (ID: {match_id})")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         try:
-            successful_endpoints, all_data = await collector.get_enhanced_match_details(match_id)
+            successful_endpoints, all_data = await collector.get_enhanced_match_details(
+                match_id
+            )
 
             if all_data:
-                found_xg, found_lineup, found_stats = await collector.analyze_complete_data(all_data, match_id)
+                (
+                    found_xg,
+                    found_lineup,
+                    found_stats,
+                ) = await collector.analyze_complete_data(all_data, match_id)
 
                 # 保存完整数据
-                with open(f"enhanced_match_data_{match_id}.json", 'w', encoding='utf-8') as f:
-                    json.dump({
-                        'match_id': match_id,
-                        'description': description,
-                        'successful_endpoints': successful_endpoints,
-                        'all_data': all_data
-                    }, f, ensure_ascii=False, indent=2)
+                with open(
+                    f"enhanced_match_data_{match_id}.json", "w", encoding="utf-8"
+                ) as f:
+                    json.dump(
+                        {
+                            "match_id": match_id,
+                            "description": description,
+                            "successful_endpoints": successful_endpoints,
+                            "all_data": all_data,
+                        },
+                        f,
+                        ensure_ascii=False,
+                        indent=2,
+                    )
 
                 print(f"\n💾 完整数据已保存到: enhanced_match_data_{match_id}.json")
 
@@ -264,9 +297,9 @@ async def main():
         except Exception as e:
             print(f"❌ 测试过程中发生错误: {e}")
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("测试完成")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
 
 if __name__ == "__main__":

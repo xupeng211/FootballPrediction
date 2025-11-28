@@ -26,7 +26,7 @@ MOCK_ADMIN_USER = {
     "email": "admin@test.com",
     "is_active": True,
     "is_admin": True,
-    "role": "admin"
+    "role": "admin",
 }
 
 MOCK_NORMAL_USER = {
@@ -34,7 +34,7 @@ MOCK_NORMAL_USER = {
     "email": "user@test.com",
     "is_active": True,
     "is_admin": False,
-    "role": "user"
+    "role": "user",
 }
 
 
@@ -83,7 +83,7 @@ class TestOptimizedPredictionRouter:
             "confidence": 0.85,
             "status": "completed",
             "created_at": "2025-11-27T10:00:00Z",
-            "updated_at": "2025-11-27T10:05:00Z"
+            "updated_at": "2025-11-27T10:05:00Z",
         }
 
     @pytest.fixture
@@ -93,15 +93,17 @@ class TestOptimizedPredictionRouter:
             "predictions": [sample_prediction_data] * 3,
             "total": 3,
             "limit": 20,
-            "offset": 0
+            "offset": 0,
         }
 
 
 class TestGetPredictionsList(TestOptimizedPredictionRouter):
     """测试获取预测列表端点."""
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
-    def test_get_predictions_list_success(self, mock_get_service, client, sample_predictions_list):
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
+    def test_get_predictions_list_success(
+        self, mock_get_service, client, sample_predictions_list
+    ):
         """测试成功获取预测列表."""
         # 设置mock
         mock_service = AsyncMock()
@@ -124,7 +126,7 @@ class TestGetPredictionsList(TestOptimizedPredictionRouter):
         # 验证服务调用
         mock_service.get_predictions.assert_called_once_with(20, 0)
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_get_predictions_list_with_pagination(self, mock_get_service, client):
         """测试带分页的预测列表获取."""
         # 设置mock
@@ -133,7 +135,7 @@ class TestGetPredictionsList(TestOptimizedPredictionRouter):
             "predictions": [],
             "total": 0,
             "limit": 10,
-            "offset": 20
+            "offset": 20,
         }
         mock_get_service.return_value = mock_service
 
@@ -149,7 +151,7 @@ class TestGetPredictionsList(TestOptimizedPredictionRouter):
         # 验证服务调用
         mock_service.get_predictions.assert_called_once_with(10, 20)
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_get_predictions_list_service_exception(self, mock_get_service, client):
         """测试服务异常处理."""
         # 设置mock抛出异常
@@ -168,8 +170,10 @@ class TestGetPredictionsList(TestOptimizedPredictionRouter):
         assert data["detail"]["error"] == "内部服务器错误"
         assert data["detail"]["message"] == "Service error"
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
-    def test_get_predictions_list_service_returns_list(self, mock_get_service, client, sample_prediction_data):
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
+    def test_get_predictions_list_service_returns_list(
+        self, mock_get_service, client, sample_prediction_data
+    ):
         """测试服务返回列表格式的情况."""
         # 设置mock返回列表
         mock_service = AsyncMock()
@@ -196,7 +200,7 @@ class TestCreatePrediction(TestOptimizedPredictionRouter):
         request_data = {
             "match_id": 12345,
             "features": {"home_strength": 0.8, "away_strength": 0.6},
-            "priority": "high"
+            "priority": "high",
         }
 
         # 发送请求
@@ -225,10 +229,7 @@ class TestCreatePrediction(TestOptimizedPredictionRouter):
 
     def test_create_prediction_default_priority(self, client):
         """测试使用默认优先级."""
-        request_data = {
-            "match_id": 12345,
-            "features": {"test": "data"}
-        }
+        request_data = {"match_id": 12345, "features": {"test": "data"}}
 
         response = client.post("/predictions/", json=request_data)
 
@@ -249,7 +250,7 @@ class TestHealthCheck(TestOptimizedPredictionRouter):
         assert "cache_stats" in data
         assert "system_metrics" in data
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_health_check_service_error(self, mock_get_service, client):
         """测试健康检查中服务错误."""
         # 这个端点可能不依赖于服务，但如果有依赖则测试
@@ -261,8 +262,10 @@ class TestHealthCheck(TestOptimizedPredictionRouter):
 class TestGetOptimizedPrediction(TestOptimizedPredictionRouter):
     """测试获取优化预测端点."""
 
-    @patch('src.api.predictions.optimized_router._generate_prediction_data')
-    def test_get_optimized_prediction_success(self, mock_generate_data, client, sample_prediction_data):
+    @patch("src.api.predictions.optimized_router._generate_prediction_data")
+    def test_get_optimized_prediction_success(
+        self, mock_generate_data, client, sample_prediction_data
+    ):
         """测试成功获取优化预测."""
         # 设置mock
         mock_generate_data.return_value = sample_prediction_data
@@ -279,7 +282,7 @@ class TestGetOptimizedPrediction(TestOptimizedPredictionRouter):
                 prediction_data = data["data"]
                 assert "match_id" in prediction_data or "id" in prediction_data
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_get_optimized_prediction_not_found(self, mock_get_service, client):
         """测试预测不存在的情况."""
         # 设置mock返回None
@@ -293,7 +296,7 @@ class TestGetOptimizedPrediction(TestOptimizedPredictionRouter):
         # 验证404响应
         assert response.status_code == 404
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_get_optimized_prediction_service_exception(self, mock_get_service, client):
         """测试服务异常."""
         # 设置mock抛出异常
@@ -311,7 +314,7 @@ class TestGetOptimizedPrediction(TestOptimizedPredictionRouter):
 class TestGetPopularPredictions(TestOptimizedPredictionRouter):
     """测试获取热门预测端点."""
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_get_popular_predictions_success(self, mock_get_service, client):
         """测试成功获取热门预测."""
         # 设置mock
@@ -319,9 +322,9 @@ class TestGetPopularPredictions(TestOptimizedPredictionRouter):
         mock_service.get_popular_predictions.return_value = {
             "predictions": [
                 {"id": "pred_1", "match_id": 1001, "popularity": 95},
-                {"id": "pred_2", "match_id": 1002, "popularity": 87}
+                {"id": "pred_2", "match_id": 1002, "popularity": 87},
             ],
-            "total": 2
+            "total": 2,
         }
         mock_get_service.return_value = mock_service
 
@@ -333,11 +336,14 @@ class TestGetPopularPredictions(TestOptimizedPredictionRouter):
         data = response.json()
         # 只要返回200且是JSON格式即可，具体结构可能因实际实现而异
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_get_popular_predictions_with_limit(self, mock_get_service, client):
         """测试带限制的热门预测获取."""
         mock_service = AsyncMock()
-        mock_service.get_popular_predictions.return_value = {"predictions": [], "total": 0}
+        mock_service.get_popular_predictions.return_value = {
+            "predictions": [],
+            "total": 0,
+        }
         mock_get_service.return_value = mock_service
 
         # 发送请求
@@ -349,7 +355,7 @@ class TestGetPopularPredictions(TestOptimizedPredictionRouter):
 class TestCacheManagement(TestOptimizedPredictionRouter):
     """测试缓存管理端点."""
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_warmup_cache_success(self, mock_get_service, client):
         """测试缓存预热成功."""
         # 设置mock
@@ -365,7 +371,7 @@ class TestCacheManagement(TestOptimizedPredictionRouter):
         data = response.json()
         # 只要返回有效JSON即可
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_clear_cache_success(self, mock_get_service, client):
         """测试清除缓存成功."""
         mock_service = AsyncMock()
@@ -382,7 +388,7 @@ class TestCacheManagement(TestOptimizedPredictionRouter):
 class TestMatchPredictions(TestOptimizedPredictionRouter):
     """测试特定比赛预测端点."""
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_get_match_predictions_success(self, mock_get_service, client):
         """测试成功获取特定比赛预测."""
         mock_service = AsyncMock()
@@ -390,8 +396,8 @@ class TestMatchPredictions(TestOptimizedPredictionRouter):
             "match_id": 12345,
             "predictions": [
                 {"id": "pred_1", "home_win": 0.6},
-                {"id": "pred_2", "home_win": 0.65}
-            ]
+                {"id": "pred_2", "home_win": 0.65},
+            ],
         }
         mock_get_service.return_value = mock_service
 
@@ -406,13 +412,13 @@ class TestMatchPredictions(TestOptimizedPredictionRouter):
 class TestErrorHandling(TestOptimizedPredictionRouter):
     """测试错误处理."""
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_timeout_error_handling(self, mock_get_service, client):
         """测试超时错误处理."""
         import asyncio
 
         mock_service = AsyncMock()
-        mock_service.get_predictions.side_effect = asyncio.TimeoutError("Request timeout")
+        mock_service.get_predictions.side_effect = TimeoutError("Request timeout")
         mock_get_service.return_value = mock_service
 
         response = client.get("/predictions/")
@@ -428,7 +434,7 @@ class TestErrorHandling(TestOptimizedPredictionRouter):
         response = client.post(
             "/predictions/",
             data="invalid json",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 422
@@ -463,6 +469,7 @@ class TestServiceDependencyInjection(TestOptimizedPredictionRouter):
         """测试预测服务单例模式."""
         # 清理全局状态
         import src.api.predictions.optimized_router as router_module
+
         router_module._prediction_service = None
 
         service1 = get_prediction_service()
@@ -471,7 +478,7 @@ class TestServiceDependencyInjection(TestOptimizedPredictionRouter):
         # 应该返回同一个实例
         assert service1 is service2
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_mock_service_injection(self, mock_get_service, client):
         """测试模拟服务注入."""
         mock_service = AsyncMock()
@@ -488,9 +495,11 @@ class TestServiceDependencyInjection(TestOptimizedPredictionRouter):
 class TestPerformanceMonitoring(TestOptimizedPredictionRouter):
     """测试性能监控功能."""
 
-    @patch('src.api.predictions.optimized_router.performance_monitor')
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
-    def test_performance_monitoring_enabled(self, mock_get_service, mock_perf_monitor, client):
+    @patch("src.api.predictions.optimized_router.performance_monitor")
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
+    def test_performance_monitoring_enabled(
+        self, mock_get_service, mock_perf_monitor, client
+    ):
         """测试性能监控功能."""
         mock_service = AsyncMock()
         mock_service.get_predictions.return_value = {"predictions": [], "total": 0}
@@ -505,14 +514,14 @@ class TestPerformanceMonitoring(TestOptimizedPredictionRouter):
 class TestAdditionalEndpoints(TestOptimizedPredictionRouter):
     """测试其他重要端点."""
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_get_user_prediction_history(self, mock_get_service, client):
         """测试获取用户预测历史."""
         mock_service = AsyncMock()
         mock_service.get_user_predictions.return_value = {
             "user_id": "user_123",
             "predictions": [{"id": "pred_1", "status": "completed"}],
-            "total": 1
+            "total": 1,
         }
         mock_get_service.return_value = mock_service
 
@@ -521,14 +530,14 @@ class TestAdditionalEndpoints(TestOptimizedPredictionRouter):
         # 允许多种可接受的响应状态
         assert response.status_code in [200, 404, 422]
 
-    @patch('src.api.predictions.optimized_router.get_prediction_service')
+    @patch("src.api.predictions.optimized_router.get_prediction_service")
     def test_get_prediction_statistics(self, mock_get_service, client):
         """测试获取预测统计信息."""
         mock_service = AsyncMock()
         mock_service.get_statistics.return_value = {
             "total_predictions": 1000,
             "success_rate": 0.75,
-            "avg_confidence": 0.82
+            "avg_confidence": 0.82,
         }
         mock_get_service.return_value = mock_service
 

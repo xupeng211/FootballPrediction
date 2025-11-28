@@ -23,25 +23,29 @@ import os
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
+    format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler('/app/gap_fill.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler("/app/gap_fill.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 logger = logging.getLogger(__name__)
+
 
 class SmartGapFiller:
     """智能数据补漏系统 - 专注于安全高效的数据空缺修复"""
 
     def __init__(self):
         # 数据库连接配置
-        database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction")
+        database_url = os.getenv(
+            "DATABASE_URL",
+            "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction",
+        )
         self.engine = create_async_engine(
             database_url.replace("postgresql://", "postgresql+asyncpg://"),
             echo=False,
             pool_size=5,
-            max_overflow=10
+            max_overflow=10,
         )
         self.AsyncSessionLocal = async_sessionmaker(
             self.engine, class_=AsyncSession, expire_on_commit=False
@@ -138,7 +142,7 @@ class SmartGapFiller:
                 "unique_leagues": row.unique_leagues or 0,
                 "has_data": row.match_count > 0,
                 "earliest_time": row.earliest_time,
-                "latest_time": row.latest_time
+                "latest_time": row.latest_time,
             }
 
     async def trigger_fotmob_collection_for_date(self, target_date: date) -> bool:
@@ -180,25 +184,35 @@ class SmartGapFiller:
         quality_info = await self.check_date_data_quality(target_date)
 
         if quality_info["has_data"]:
-            logger.info(f"✅ {target_date} 数据填补成功: {quality_info['match_count']}场比赛")
+            logger.info(
+                f"✅ {target_date} 数据填补成功: {quality_info['match_count']}场比赛"
+            )
             return True
         else:
             logger.warning(f"⚠️ {target_date} 数据填补后仍无数据")
             return False
 
-    async def safe_fill_single_date(self, target_date: date, retry_count: int = 0) -> bool:
+    async def safe_fill_single_date(
+        self, target_date: date, retry_count: int = 0
+    ) -> bool:
         """安全地填补单个日期的数据"""
-        logger.info(f"🔧 开始填补 {target_date} 数据 (尝试 {retry_count + 1}/{self.max_retries})")
+        logger.info(
+            f"🔧 开始填补 {target_date} 数据 (尝试 {retry_count + 1}/{self.max_retries})"
+        )
 
         try:
             # 1. 检查当前数据状态
             current_quality = await self.check_date_data_quality(target_date)
             if current_quality["has_data"]:
-                logger.info(f"ℹ️ {target_date} 已有数据 ({current_quality['match_count']}场)，跳过")
+                logger.info(
+                    f"ℹ️ {target_date} 已有数据 ({current_quality['match_count']}场)，跳过"
+                )
                 return True
 
             # 2. 触发数据采集
-            collection_success = await self.trigger_fotmob_collection_for_date(target_date)
+            collection_success = await self.trigger_fotmob_collection_for_date(
+                target_date
+            )
 
             if collection_success:
                 # 3. 等待一段时间让数据写入数据库
@@ -242,7 +256,9 @@ class SmartGapFiller:
 
     async def process_batch_dates(self, date_batch: list[date]) -> dict[str, int]:
         """处理一批日期的数据填补"""
-        logger.info(f"📦 处理日期批次: {date_batch[0]} 至 {date_batch[-1]} ({len(date_batch)}天)")
+        logger.info(
+            f"📦 处理日期批次: {date_batch[0]} 至 {date_batch[-1]} ({len(date_batch)}天)"
+        )
 
         batch_results = {"success": 0, "failed": 0, "skipped": 0}
 
@@ -251,7 +267,7 @@ class SmartGapFiller:
                 logger.info("🛑 收到停止信号，结束批次处理")
                 break
 
-            logger.info(f"🎯 处理进度: {i+1}/{len(date_batch)} - {target_date}")
+            logger.info(f"🎯 处理进度: {i + 1}/{len(date_batch)} - {target_date}")
 
             # 检查是否已有数据
             current_quality = await self.check_date_data_quality(target_date)
@@ -282,7 +298,9 @@ class SmartGapFiller:
         """执行完整的数据填补流程"""
         logger.info("🚀 启动智能数据补漏系统...")
         logger.info(f"📅 目标日期范围: {self.start_date} 至 {self.end_date}")
-        logger.info(f"⚙️ 安全配置: 等待时间 {self.min_sleep}-{self.max_sleep}秒, 最大重试 {self.max_retries}次")
+        logger.info(
+            f"⚙️ 安全配置: 等待时间 {self.min_sleep}-{self.max_sleep}秒, 最大重试 {self.max_retries}次"
+        )
 
         try:
             # 1. 获取现有数据日期
@@ -344,8 +362,12 @@ class SmartGapFiller:
             "failed_attempts": self.failed_attempts,
             "remaining_gaps": len(gap_dates),
             "total_dates_with_data": len(current_dates),
-            "data_coverage_percentage": (len(current_dates) / ((self.end_date - self.start_date).days + 1)) * 100,
-            "success_rate": (self.successful_fills / max(self.processed_dates, 1)) * 100
+            "data_coverage_percentage": (
+                len(current_dates) / ((self.end_date - self.start_date).days + 1)
+            )
+            * 100,
+            "success_rate": (self.successful_fills / max(self.processed_dates, 1))
+            * 100,
         }
 
         logger.info("=" * 80)
@@ -360,11 +382,13 @@ class SmartGapFiller:
         logger.info("=" * 80)
 
         # 保存报告到文件
-        with open('/app/gap_fill_report.json', 'w', encoding='utf-8') as f:
+        with open("/app/gap_fill_report.json", "w", encoding="utf-8") as f:
             import json
+
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         logger.info("📋 报告已保存至: /app/gap_fill_report.json")
+
 
 async def main():
     """主函数"""
@@ -384,6 +408,7 @@ async def main():
         raise
     finally:
         logger.info("👋 智能数据补漏系统退出")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

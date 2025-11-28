@@ -154,7 +154,9 @@ async def get_cache_status():
 
     # 获取各组件详细状态
     if redis_manager:
-        status["components"]["redis_cluster"]["details"] = await redis_manager.get_cluster_status()
+        status["components"]["redis_cluster"][
+            "details"
+        ] = await redis_manager.get_cluster_status()
 
     if distributed_cache:
         status["components"]["distributed_cache"][
