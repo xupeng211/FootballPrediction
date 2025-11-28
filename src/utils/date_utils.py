@@ -5,7 +5,7 @@
 
 from datetime import date, datetime, timedelta
 from functools import lru_cache
-from typing import Any
+from typing import Any, Optional, Union
 
 
 class DateUtils:
@@ -34,7 +34,7 @@ class DateUtils:
             return ""
 
     @staticmethod
-    def parse_date(date_str: str, format_str: str = "%Y-%m-%d") -> datetime | None:
+    def parse_date(date_str: str, format_str: str = "%Y-%m-%d") -> Optional[datetime]:
         """解析日期字符串."""
         if not isinstance(date_str, str):
             return None
@@ -47,7 +47,7 @@ class DateUtils:
     @staticmethod
     def parse_datetime(
         datetime_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
-    ) -> datetime | None:
+    ) -> Optional[datetime]:
         """解析日期时间字符串."""
         if not isinstance(datetime_str, str):
             return None
@@ -101,8 +101,8 @@ class DateUtils:
 
     @staticmethod
     def get_age(
-        birth_date: datetime | date, current_date: datetime | date | None = None
-    ) -> int | None:
+        birth_date: Union[datetime, date], current_date: Optional[Union[datetime, date]] = None
+    ) -> Optional[int]:
         """计算年龄."""
         # 验证输入参数
         if birth_date is None or not isinstance(birth_date, (datetime, date)):
@@ -170,7 +170,7 @@ class DateUtils:
         return end_date.day
 
     @staticmethod
-    def add_days(dt: datetime, days: int) -> datetime | None:
+    def add_days(dt: datetime, days: int) -> Optional[datetime]:
         """增加天数."""
         if not isinstance(dt, datetime):
             raise ValueError("Invalid datetime object")
@@ -217,7 +217,7 @@ class DateUtils:
         }
 
     @staticmethod
-    def get_month_start(dt: datetime) -> datetime | None:
+    def get_month_start(dt: datetime) -> Optional[datetime]:
         """获取月份开始日期."""
         if not isinstance(dt, (datetime, date)):
             return None
@@ -226,7 +226,7 @@ class DateUtils:
         return datetime(dt.year, dt.month, 1)
 
     @staticmethod
-    def get_month_end(dt: datetime) -> datetime | None:
+    def get_month_end(dt: datetime) -> Optional[datetime]:
         """获取月份结束日期."""
         if not isinstance(dt, (datetime, date)):
             return None
@@ -238,7 +238,7 @@ class DateUtils:
             return datetime(dt.year, dt.month + 1, 1) - timedelta(days=1)
 
     @staticmethod
-    def days_between(dt1: datetime, dt2: datetime) -> int | None:
+    def days_between(dt1: datetime, dt2: datetime) -> Optional[int]:
         """计算两个日期之间的天数."""
         if not isinstance(dt1, (datetime, date)) or not isinstance(
             dt2, (datetime, date)
@@ -298,6 +298,6 @@ def cached_format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") 
 
 
 @lru_cache(maxsize=256)
-def cached_time_ago(dt: datetime, reference: datetime | None = None) -> str:
+def cached_time_ago(dt: datetime, reference: Optional[datetime] = None) -> str:
     """缓存版本的时间差格式化."""
     return DateUtils.time_ago(dt)
