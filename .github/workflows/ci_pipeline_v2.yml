@@ -68,7 +68,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pip-tools
-        pip install -e ".[dev]"
+
+        # 使用轻量级CI依赖，避免重型依赖导致的内存问题
+        pip install -r requirements-ci.txt
+
+        # 安装覆盖率工具
+        pip install coverage
+        pip install pytest-cov
 
         # 安装bc计算器用于覆盖率比较
         sudo apt-get update && sudo apt-get install -y bc
