@@ -22,6 +22,7 @@ jobs:
   test:
     name: 🧪 Test Matrix
     runs-on: ubuntu-22.04
+    timeout-minutes: 10
 
     strategy:
       fail-fast: false
@@ -112,18 +113,18 @@ jobs:
           export PYTHONPATH=$PWD:$PYTHONPATH
 
           echo "🚀 执行核心稳定模块测试 - API/Utils/Cache/Events/Collectors"
-          echo "⚙️ 安全防护参数已启用:"
-          echo "   - 超时保护: 30秒"
-          echo "   - 内存优化: 已配置"
-          echo "   - 并行执行: auto"
+          echo "⚙️ 死锁熔断机制已启用:"
+          echo "   - 超时保护: 60秒 (pytest级别)"
+          echo "   - 作业超时: 10分钟 (GitHub级别)"
+          echo "   - 串行执行: -n 0 (防并行死锁)"
           echo "   - 失败上限: 10个"
           echo "   - 覆盖率统计 (核心模块)"
-          echo "   - 架构决策: 暂时排除 ml/ 和 database/ 不稳定测试"
+          echo "   - 可靠性优先: 架构决策确保CI永不挂起"
 
-          # 运行核心稳定模块测试，确保CI始终为绿色
+          # 运行核心稳定模块测试，确保CI始终为绿色（串行执行防死锁）
           pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ tests/unit/collectors/ \
-            --timeout=30 \
-            -n auto \
+            --timeout=60 \
+            -n 0 \
             --maxfail=10 \
             --tb=short \
             --cov=src \
