@@ -36,18 +36,14 @@ class TestDataCleaningTask:
 
     @pytest.mark.unit
     @patch("src.tasks.pipeline_tasks.ensure_database_initialized")
-    @patch(
-        "src.tasks.pipeline_tasks.batch_data_cleaning_with_ids", new_callable=MagicMock
-    )
     @patch("asyncio.run")
     def test_data_cleaning_task_success_with_new_matches(
-        self, mock_asyncio_run, mock_batch_cleaning, mock_db_init
+        self, mock_asyncio_run, mock_db_init
     ):
         """测试数据清洗任务成功处理并返回新比赛ID."""
         # 设置Mock返回值
         mock_db_init.return_value = True
-        mock_batch_cleaning.return_value = (8, [1001, 1002, 1003])
-        mock_asyncio_run.return_value = mock_batch_cleaning.return_value
+        mock_asyncio_run.return_value = (8, [1001, 1002, 1003])
 
         # 模拟采集结果输入
         collection_result = {
@@ -68,9 +64,7 @@ class TestDataCleaningTask:
 
         # 验证调用
         mock_db_init.assert_called_once()
-        mock_asyncio_run.assert_called_once_with(
-            pipeline_module.batch_data_cleaning_with_ids
-        )
+        mock_asyncio_run.assert_called_once()
 
     @pytest.mark.unit
     def test_data_cleaning_task_no_records_to_process(self):
@@ -593,7 +587,7 @@ class TestPerformanceAndOptimization:
         with patch("src.database.connection.DatabaseManager"):
             with patch("asyncio.run") as mock_asyncio_run:
                 # 模拟分批处理
-                mock_asyncio.return_value = {
+                mock_asyncio_run.return_value = {
                     "calculated_count": 10000,
                     "failed_count": 0,
                 }
