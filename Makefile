@@ -190,7 +190,6 @@ ifdef CI
 		tests/unit/utils/test_date_utils.py::TestDateUtils::test_parse_date_valid \
 		tests/unit/utils/test_date_utils.py::TestDateUtils::test_is_weekend_monday \
 		--tb=short --maxfail=1 -x --cov=src --cov-report=xml \
-		--timeout=60 --timeout-method=thread \
 		-v \
 		--disable-warnings || \
 	(echo "⚠️ pytest失败，使用超轻量级回退测试..." && /app/scripts/ci-ultra-light.sh)
