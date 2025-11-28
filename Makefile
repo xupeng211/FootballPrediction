@@ -173,9 +173,26 @@ endif
 test.unit: ## 管理/运行单元测试 (CI环境直接运行，本地环境使用容器)
 	@echo "$(YELLOW)🧪 运行单元测试...$(RESET)"
 ifdef CI
-	pytest tests/unit/ -v --cov=src --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml --maxfail=5 -x
+	pytest tests/unit/ -v --cov=src --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml --maxfail=3 -x --tb=short
 else
 	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -v'
+endif
+
+test.unit.ci: ## 管理/运行CI轻量级单元测试 (只运行关键稳定测试)
+	@echo "$(YELLOW)🚀 运行CI轻量级单元测试...$(RESET)"
+ifdef CI
+	pytest tests/unit/utils/test_date_utils.py::TestDateUtils::test_format_datetime_valid \
+		tests/unit/utils/test_date_utils.py::TestDateUtils::test_parse_date_valid \
+		tests/unit/utils/test_date_utils.py::TestDateUtils::test_is_weekend_monday \
+		tests/unit/utils/test_date_utils.py::TestDateUtils::test_get_age_with_datetime \
+		tests/unit/utils/test_date_utils.py::TestDateUtils::test_is_leap_year_valid \
+		tests/unit/utils/test_date_utils.py::TestDateUtils::test_format_duration_seconds_only \
+		tests/unit/utils/test_date_utils.py::TestCachedFunctions::test_cached_format_datetime \
+		tests/unit/database/test_repository.py::TestBaseRepository::test_create_success \
+		tests/unit/database/test_repository.py::TestBaseRepository::test_bulk_create_success \
+		--tb=short --maxfail=2 -x --cov=src --cov-report=xml
+else
+	$(EXEC_PREFIX) '/app/scripts/ci_critical_tests.sh'
 endif
 
 test.integration: ## 管理/运行集成测试 (CI环境直接运行，本地环境使用容器)
