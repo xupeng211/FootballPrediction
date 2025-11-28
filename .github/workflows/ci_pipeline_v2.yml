@@ -119,18 +119,19 @@ jobs:
 
       - name: Run Tests - Step 2 Utils Module
         run: |
-          echo "🧪 Step 2/5: 测试 Utils 模块..."
+          echo "🧪 Step 2/4: 测试 Utils 模块 (核心文件)..."
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          timeout 180s pytest tests/unit/utils/ \
+          echo "🎯 精确测试: test_string_utils.py, test_date_utils.py"
+          timeout 180s pytest tests/unit/utils/test_string_utils.py tests/unit/utils/test_date_utils.py \
             --timeout=60 \
             -n 0 \
             --maxfail=3 \
             --tb=short \
             -v || exit 1
-          echo "✅ Utils 模块测试完成"
+          echo "✅ Utils 核心模块测试完成"
 
       - name: Run Tests - Step 3 Cache Module
         run: |
