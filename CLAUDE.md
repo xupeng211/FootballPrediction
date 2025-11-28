@@ -85,6 +85,37 @@ make logs-redis         # Redis logs
 # Container monitoring
 make monitor            # Monitor app container resources
 make monitor-all        # Monitor all container resources
+
+# Performance monitoring
+docker-compose exec app python -c "
+import psutil
+import time
+print(f'CPU: {psutil.cpu_percent()}%')
+print(f'Memory: {psutil.virtual_memory().percent}%')
+print(f'Disk: {psutil.disk_usage(\"/\").percent}%')
+"
+
+# Database performance analysis
+docker-compose exec db psql -U postgres -d football_prediction -c "
+SELECT query, calls, total_time, mean_time
+FROM pg_stat_statements
+ORDER BY total_time DESC
+LIMIT 10;
+"
+
+# Quick health check (under 5 seconds)
+docker-compose exec app python -c "
+import asyncio
+import aiohttp
+async def check():
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get('http://localhost:8000/health') as resp:
+                print('✅ API Health:', await resp.text())
+    except Exception as e:
+        print('❌ API Health Check Failed:', e)
+asyncio.run(check())
+"
 ```
 
 ### Database Management
@@ -106,6 +137,12 @@ celery -A src.tasks.celery_app call tasks.data_collection_tasks.collect_fotmob_d
 docker-compose exec app celery -A src.tasks.celery_app inspect active    # Check active tasks
 docker-compose exec app celery -A src.tasks.celery_app inspect stats     # Task statistics
 docker-compose exec app celery -A src.tasks.celery_app purge             # Clear task queue
+
+# Advanced queue management
+docker-compose exec app celery -A src.tasks.celery_app inspect reserved   # Check reserved tasks
+docker-compose exec app celery -A src.tasks.celery_app inspect scheduled  # Check scheduled tasks
+docker-compose exec app celery -A src.tasks.celery_app inspect revoked    # Check revoked tasks
+docker-compose exec app celery -A src.tasks.celery_app -Q fixtures inspect active  # Inspect specific queue
 ```
 
 ## Architecture
@@ -262,24 +299,30 @@ The project uses a four-layer testing strategy:
 
 ### Running Tests
 ```bash
-# Run specific test file
-pytest tests/unit/test_specific.py::test_function -v
+# ✅ Correct: Always use Makefile commands (ensures CI consistency)
+make test.unit          # Unit tests only
+make test.integration   # Integration tests only
+make test.all           # All tests with full reporting
+make coverage           # Generate coverage report
 
-# Run tests by keyword
-pytest tests/unit/ -k "test_keyword" -v
+# ❌ Wrong: Never run pytest directly on individual files
+pytest tests/unit/specific.py  # This causes environment inconsistency
 
-# Run tests by marker
-pytest tests/unit/ -m "unit and not slow" -v
-
-# Fast failure for debugging
-pytest tests/unit/ --maxfail=3 -x
-
-# Parallel test execution
-pytest tests/ -n auto
-
-# Coverage analysis
-pytest --cov=src --cov-report=html --cov-report=term-missing
+# Advanced testing (use with caution)
+pytest tests/unit/test_specific.py::test_function -v     # Only for debugging
+pytest tests/unit/ -k "test_keyword" -v                   # Keyword filtering
+pytest tests/unit/ -m "unit and not slow" -v              # Marker filtering
+pytest tests/unit/ --maxfail=3 -x                         # Fast failure
+pytest tests/ -n auto                                     # Parallel execution
+pytest --cov=src --cov-report=html --cov-report=term-missing  # Coverage
 ```
+
+### Critical Testing Rules
+- **Environment Consistency**: Always use Makefile commands to ensure CI/localhost consistency
+- **Isolation**: Each test must be independent and not rely on other tests' state
+- **Async Testing**: All async functions must use proper pytest-asyncio patterns
+- **Database Tests**: Use transaction rollback or test databases to avoid data pollution
+- **External APIs**: Mock external API calls in unit tests, use integration tests for real API testing
 
 ### Test Configuration
 - **Async Mode**: `asyncio_mode = "auto"` for automatic async detection
@@ -418,6 +461,20 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/football_prediction
 REDIS_URL=redis://localhost:6379/0
 ```
 
+### Environment Variable Priority
+Environment variables are loaded in the following order (higher priority overrides lower):
+
+1. **System Environment Variables** - Highest priority
+2. **Docker Compose Environment** - `docker-compose.yml` environment section
+3. **`.env` File** - Local environment configuration
+4. **Default Values** - Built-in application defaults
+
+### Required Environment Variables
+- **FOOTBALL_DATA_API_KEY**: Essential for data collection (get from football-data.org)
+- **SECRET_KEY**: JWT token security (use `openssl rand -hex 32` to generate)
+- **DATABASE_URL**: PostgreSQL connection string
+- **REDIS_URL**: Redis connection for caching and Celery broker
+
 ## CI/CD Pipeline & Validation
 
 ### GitHub Actions Integration
@@ -480,6 +537,8 @@ The project includes **10 specialized Docker Compose configurations**:
 6. **FotMob API Issues**: Test connection with provided scripts
 7. **Memory Issues**: Monitor with `docker stats` and check resource consumption
 8. **Queue Backlog**: Inspect Celery queues with provided commands
+9. **Celery Worker Issues**: Check worker status with `docker-compose logs -f worker`
+10. **Task Stuck in Queue**: Use `celery -A src.tasks.celery_app purge` to clear stuck tasks
 
 ### Environment Recovery
 ```bash
