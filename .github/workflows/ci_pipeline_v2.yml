@@ -103,38 +103,54 @@ jobs:
 
       - name: Run Tests
         run: |
-          echo "🧪 运行测试套件..."
+          echo "🧪 运行全量测试套件..."
           export $(cat .env.test | xargs)
-          echo "🚀 执行终极最小化CI验证"
-          echo "🧪 步骤1: 运行最小化功能验证..."
-          make test.unit.ci
-          echo "📊 步骤2: 生成最小覆盖率报告..."
 
-          # 创建简单的覆盖率文件
-          echo '<?xml version="1.0"?><coverage version="7.0" lines-valid="1000" lines-covered="310" line-rate="0.31"/>' > coverage.xml
+          # 设置内存优化环境变量
+          export MALLOC_ARENA_MAX=2
+          export MALLOC_TRIM_THRESHOLD_=100000
+          export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # 创建文本覆盖率报告
-          echo "TOTAL                      1000    690    31%" > coverage-summary.txt
+          echo "🚀 执行全量单元测试 - 1800+ 测试用例"
+          echo "⚙️ 安全防护参数已启用:"
+          echo "   - 超时保护: 30秒"
+          echo "   - 内存优化: 已配置"
+          echo "   - 并行执行: auto"
+          echo "   - 失败上限: 10个"
+          echo "   - 全量覆盖率统计"
 
-          echo "✅ 最小化验证完成 - CI稳定性保证"
+          # 运行全量单元测试，带所有安全防护参数
+          pytest tests/unit/ \
+            --timeout=30 \
+            -n auto \
+            --maxfail=10 \
+            --tb=short \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-report=html \
+            --junit-xml=test-results.xml \
+            -v
+
+          echo "📊 生成覆盖率报告..."
 
           # 检查覆盖率
-          if [ -f coverage-summary.txt ]; then
-            COVERAGE_LINE=$(grep -E "TOTAL" coverage-summary.txt | tail -1)
-            if [ ! -z "$COVERAGE_LINE" ]; then
-              COVERAGE_PERCENT=$(echo $COVERAGE_LINE | awk '{print $NF}' | sed 's/%//')
-              echo "🎯 当前测试覆盖率: ${COVERAGE_PERCENT}%"
-              if (( $(echo "${COVERAGE_PERCENT} >= 1" | bc -l) )); then
-                echo "✅ 覆盖率验证通过: ${COVERAGE_PERCENT}% ≥ 1%"
-              else
-                echo "⚠️ 覆盖率极低，但功能验证已通过"
-              fi
+          if [ -f coverage.xml ]; then
+            COVERAGE_PERCENT=$(grep 'line-rate' coverage.xml | sed -E 's/.*line-rate="([0-9.]+)".*/\1/' | awk '{print $1*100}')
+            echo "🎯 真实测试覆盖率: ${COVERAGE_PERCENT}%"
+
+            if (( $(echo "${COVERAGE_PERCENT} >= 20" | bc -l) )); then
+              echo "✅ 覆盖率验证通过: ${COVERAGE_PERCENT}% ≥ 20%"
+            elif (( $(echo "${COVERAGE_PERCENT} >= 15" | bc -l) )); then
+              echo "⚠️ 覆盖率需要提升: ${COVERAGE_PERCENT}% ≥ 15% (最低标准)"
             else
-              echo "⚠️ 无法从覆盖率报告中提取数据，但功能验证已通过"
+              echo "❌ 覆盖率过低: ${COVERAGE_PERCENT}% < 15% (需要改进)"
             fi
           else
-            echo "⚠️ 覆盖率报告文件不存在，但功能验证已通过"
+            echo "⚠️ 覆盖率报告文件不存在，检查测试执行情况"
           fi
+
+          echo "✅ 全量测试执行完成 - 1800+ 测试用例已运行"
 
       - name: Upload test results
         if: always()
