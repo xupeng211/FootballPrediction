@@ -164,11 +164,12 @@ jobs:
 
       - name: Run Tests - Step 5 Collectors Module
         run: |
-          echo "🧪 Step 5/6: 测试 Collectors 模块 (轻量化执行)..."
+          echo "🧪 Step 5/5: 测试 Collectors 模块 (纯净执行)..."
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
+          echo "⚡ CI专注测试验证，覆盖率计算移至本地执行"
           timeout 180s pytest tests/unit/collectors/ \
             --timeout=60 \
             -n 0 \
@@ -176,36 +177,10 @@ jobs:
             --tb=short \
             --junit-xml=test-results.xml \
             -v || exit 1
-          echo "✅ Collectors 模块测试完成 - 核心功能验证通过"
+          echo "✅ Collectors 模块测试完成 - 所有核心功能验证通过"
 
-      - name: Generate Coverage Report (Optional)
-        continue-on-error: true
-        run: |
-          echo "📊 Step 6/6: 生成覆盖率报告 (可选步骤)..."
-          export $(cat .env.test | xargs)
-          export MALLOC_ARENA_MAX=2
-          export PYTHONPATH=$PWD:$PYTHONPATH
-
-          echo "⚠️ 覆盖率生成为可选步骤，超时不会影响CI成功状态"
-          timeout 240s pytest tests/unit/collectors/ \
-            --timeout=60 \
-            -n 0 \
-            --maxfail=3 \
-            --tb=short \
-            --cov=src \
-            --cov-report=xml \
-            --cov-report=term-missing \
-            -v || echo "⚠️ 覆盖率生成超时或失败，但CI仍然成功"
-
-          if [ -f coverage.xml ]; then
-            COVERAGE_PERCENT=$(grep 'line-rate' coverage.xml | sed -E 's/.*line-rate="([0-9.]+)".*/\1/' | awk '{print $1*100}')
-            echo "🎯 测试覆盖率: ${COVERAGE_PERCENT}%"
-            echo "📈 覆盖率报告生成成功"
-          else
-            echo "⚠️ 覆盖率报告未生成，但所有核心测试已通过"
-          fi
-
-          echo "🎉 轻量化收尾策略完成 - 所有核心模块测试通过"
+          echo "🎉 完全串行隔离策略执行成功 - 5个核心模块全部通过!"
+          echo "📈 CI已稳定运行，覆盖率请在本地使用 'make coverage' 生成"
 
       - name: Upload test results
         if: always()
@@ -214,21 +189,8 @@ jobs:
           name: test-results-py${{ matrix.python-version }}
           path: |
             test-results.xml
-            coverage-summary.txt
-            coverage.xml
             bandit-report.json
           retention-days: 30
-
-      - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.11' && success()
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
-          verbose: true
-          flags: unittests
-          name: codecov-umbrella
-          token: ${{ secrets.CODECOV_TOKEN }}
 
   quality-summary:
     name: 📊 Quality Summary
