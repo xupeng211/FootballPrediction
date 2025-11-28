@@ -16,6 +16,30 @@ This is an enterprise-level football prediction system built with Python FastAPI
 - **613-line Makefile** - Complete development workflow automation
 - **40+ API endpoints** - Supporting both v1 and v2 versions
 - **7 dedicated queues** - Celery distributed task scheduling
+- **Current test coverage**: 29.0% baseline (as measured in latest CI runs)
+
+## Quick Reference (快速参考)
+
+### 5分钟快速上手
+```bash
+# 完整环境启动
+make dev && make status && make test.unit && make coverage
+
+# 开发流程 essentials
+make dev              # 启动环境
+make test.unit        # 运行单元测试
+make lint             # 代码检查
+make ci               # 完整CI验证
+```
+
+### 常用命令速查
+| 任务 | 命令 | 说明 |
+|------|------|------|
+| 环境管理 | `make dev` / `make down` | 启动/停止服务 |
+| 测试 | `make test.unit` / `make coverage` | 单元测试/覆盖率 |
+| 代码质量 | `make lint && make fix-code` | 检查并自动修复 |
+| 容器操作 | `make shell` / `make logs` | 进入容器/查看日志 |
+| 数据库 | `make db-shell` / `make db-reset` | 数据库操作 |
 
 ## Key Development Commands
 
@@ -239,7 +263,7 @@ docker-compose exec app celery -A src.tasks.celery_app -Q fixtures inspect activ
 
 #### Testing Standards
 - **Test-Driven**: Write tests before implementation code
-- **Coverage Target**: 29.0% baseline (Unit: 85%, Integration: 12%, E2E: 2%, Performance: 1%)
+- **Coverage Target**: Maintain 29.0% baseline with continuous improvement
 - **Async Testing**: Use pytest-asyncio for async function testing
 - **Test Isolation**: Each test should be independent and isolated
 
@@ -521,9 +545,9 @@ The project includes **10 specialized Docker Compose configurations**:
 - **Error Handling**: Comprehensive exception handling with structured logging
 
 ### Quality Assurance
-- **Code Coverage**: Maintain 29.0% baseline coverage with continuous improvement
-- **Security**: Regular security audits and dependency scanning
-- **Performance**: Monitor and optimize API response times
+- **Code Coverage**: Current baseline 29.0% with focus on continuous improvement
+- **Security**: Regular security audits and dependency scanning via bandit
+- **Performance**: Monitor and optimize API response times with dedicated middleware
 - **Documentation**: Maintain comprehensive API documentation and system guides
 
 ## Troubleshooting
