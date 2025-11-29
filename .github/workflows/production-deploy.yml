@@ -60,11 +60,13 @@ jobs:
         echo "🔍 执行生产前安全检查..."
 
         # 1. 零错误检查 - 必须通过
-        ERROR_COUNT=$(ruff check --config pyproject.toml src/ tests/ --output-format=concise | wc -l)
+        RUFF_OUTPUT=$(ruff check --config pyproject.toml src/ tests/ --output-format=concise)
+        ERROR_COUNT=$(echo "$RUFF_OUTPUT" | grep -c "E\|F\|W\|B\|N\|UP\|A\|C4\|T" || echo "0")
         if [ "$ERROR_COUNT" -gt 0 ]; then
           echo "❌ 发现 $ERROR_COUNT 个代码质量错误，禁止生产部署"
           echo "can_deploy=false" >> $GITHUB_OUTPUT
           echo "error_message=代码质量检查失败，发现 $ERROR_COUNT 个错误" >> $GITHUB_OUTPUT
+          echo "$RUFF_OUTPUT"
           ruff check --config pyproject.toml src/ tests/ --output-format=full
           exit 1
         fi
