@@ -42,6 +42,27 @@ from contextlib import asynccontextmanager
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# 延迟导入模型以初始化 ORM 映射关系 (解决循环依赖问题)
+def _init_orm_models():
+    """延迟初始化所有ORM模型，避免循环依赖"""
+    try:
+        # 导入核心模型，确保ORM映射正确初始化
+        import src.database.models.tenant
+        import src.database.models.user
+        import src.database.models.team
+        import src.database.models.league
+        import src.database.models.match
+        import src.database.models.predictions
+        import src.database.models.odds
+        import src.database.models.features
+        import src.database.models.data_collection_log
+        import src.database.models.data_quality_log
+        import src.database.models.audit_log
+        print("✅ ORM模型初始化成功")
+    except Exception as e:
+        print(f"⚠️ ORM模型初始化警告: {e}")
+        # 继续执行，核心Match模型应该仍然可用
+
 # 配置高级日志
 logging.basicConfig(
     level=logging.INFO,
@@ -142,8 +163,8 @@ class GlobalBackfillService:
         self.state_file.parent.mkdir(exist_ok=True)
 
         # API限流配置
-        self.min_delay = 1.5
-        self.max_delay = 3.5
+        self.min_delay = 8.0   # 增加最小延迟避免429
+        self.max_delay = 15.0  # 增加最大延迟避免429
 
         # 初始化数据采集器
         self.football_collector = None
@@ -167,6 +188,9 @@ class GlobalBackfillService:
     async def _init_database(self):
         """初始化数据库连接"""
         try:
+            # 首先初始化ORM模型映射关系
+            _init_orm_models()
+
             from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
             from sqlalchemy.orm import sessionmaker
 
@@ -315,8 +339,18 @@ class GlobalBackfillService:
                     fotmob_result = await self.fotmob_collector.collect_matches_by_date(date_str)
 
                     if fotmob_result.success:
-                        result.fotmob_matches = fotmob_result.data.get("matches", [])
-                        logger.info(f"✅ FotMob: 获取 {len(result.fotmob_matches)} 场比赛")
+                        # 🛠️ 适配新的FotMob采集器格式
+                        # 新格式返回直接的比赛列表，不是包含"matches"键的字典
+                        if isinstance(fotmob_result.data, list):
+                            result.fotmob_matches = fotmob_result.data
+                            logger.info(f"✅ FotMob: 获取 {len(result.fotmob_matches)} 场比赛 (新格式)")
+                        elif isinstance(fotmob_result.data, dict):
+                            # 兼容旧格式
+                            result.fotmob_matches = fotmob_result.data.get("matches", [])
+                            logger.info(f"✅ FotMob: 获取 {len(result.fotmob_matches)} 场比赛 (旧格式)")
+                        else:
+                            result.fotmob_matches = []
+                            logger.warning(f"⚠️ FotMob: 未知数据格式 {type(fotmob_result.data)}")
                     else:
                         error_msg = f"FotMob采集失败: {fotmob_result.error}"
                         result.errors.append(error_msg)
@@ -352,26 +386,107 @@ class GlobalBackfillService:
         try:
             async with self.async_session() as session:
                 from src.database.models.match import Match
+                from src.database.models.team import Team
                 from sqlalchemy import select
                 from datetime import datetime
+                from sqlalchemy.dialects.postgresql import insert
 
                 saved_count = 0
+                all_teams_to_save = set()  # 用于收集所有需要保存的球队
 
-                # 保存Football-Data.org的比赛数据
+                # 🏆 步骤1: 收集所有球队数据（Football-Data.org + FotMob）
+                if result.football_data_matches:
+                    for match_data in result.football_data_matches:
+                        home_team = match_data.get('homeTeam', {})
+                        away_team = match_data.get('awayTeam', {})
+
+                        if home_team.get('id'):
+                            all_teams_to_save.add((
+                                home_team.get('id', 0),
+                                home_team.get('name', ''),
+                                home_team.get('shortName', ''),
+                                home_team.get('crest', ''),
+                                'football-data'
+                            ))
+
+                        if away_team.get('id'):
+                            all_teams_to_save.add((
+                                away_team.get('id', 0),
+                                away_team.get('name', ''),
+                                away_team.get('shortName', ''),
+                                away_team.get('crest', ''),
+                                'football-data'
+                            ))
+
+                if result.fotmob_matches:
+                    for match_data in result.fotmob_matches:
+                        home_team = match_data.get('home', {})
+                        away_team = match_data.get('away', {})
+
+                        if home_team.get('id'):
+                            all_teams_to_save.add((
+                                home_team.get('id', 0),
+                                home_team.get('name', ''),
+                                home_team.get('shortName', ''),
+                                None,  # FotMob没有crest
+                                'fotmob'
+                            ))
+
+                        if away_team.get('id'):
+                            all_teams_to_save.add((
+                                away_team.get('id', 0),
+                                away_team.get('name', ''),
+                                away_team.get('shortName', ''),
+                                None,  # FotMob没有crest
+                                'fotmob'
+                            ))
+
+                # 🛡️ 步骤2: 批量保存球队数据（使用ON CONFLICT DO NOTHING避免重复）
+                if all_teams_to_save:
+                    logger.info(f"🏆 预保存 {len(all_teams_to_save)} 个球队...")
+
+                    for team_id, name, short_name, crest, source in all_teams_to_save:
+                        if team_id > 0:  # 只保存有效的球队ID
+                            try:
+                                # 使用PostgreSQL的UPSERT语法
+                                stmt = insert(Team).values(
+                                    id=team_id,
+                                    name=name or f"Team_{team_id}",
+                                    short_name=short_name or name or f"Team_{team_id}",
+                                    crest=crest,
+                                    created_at=datetime.now(),
+                                    updated_at=datetime.now()
+                                ).on_conflict_do_nothing(
+                                    index_elements=['id']
+                                )
+
+                                await session.execute(stmt)
+                            except Exception as team_error:
+                                logger.debug(f"球队 {team_id} 保存失败: {team_error}")
+                                continue
+
+                    await session.flush()  # 确保球队数据先写入
+                    logger.info(f"✅ 球队数据预保存完成")
+
+                # 🎯 步骤3: 保存比赛数据（Football-Data.org）
                 if result.football_data_matches:
                     for match_data in result.football_data_matches:
                         try:
-                            # 提取比赛数据
                             home_team = match_data.get('homeTeam', {})
                             away_team = match_data.get('awayTeam', {})
                             score = match_data.get('score', {})
 
-                            # 使用home_team_id + away_team_id + match_date作为唯一性检查
-                            match_date = datetime.fromisoformat(match_data.get('utcDate', f"{result.date}T15:00:00Z"))
                             home_team_id = home_team.get('id', 0)
                             away_team_id = away_team.get('id', 0)
 
-                            # 检查是否已存在（基于主客队和比赛时间）
+                            if home_team_id == 0 or away_team_id == 0:
+                                continue  # 跳过无效球队ID的比赛
+
+                            # 解析比赛时间
+                            raw_date = datetime.fromisoformat(match_data.get('utcDate', f"{result.date}T15:00:00Z"))
+                            match_date = raw_date.replace(tzinfo=None) if raw_date.tzinfo else raw_date
+
+                            # 检查是否已存在
                             existing_stmt = select(Match).where(
                                 Match.home_team_id == home_team_id,
                                 Match.away_team_id == away_team_id,
@@ -383,7 +498,7 @@ class GlobalBackfillService:
                             if existing_match:
                                 continue
 
-                            # 创建Match记录
+                            # 创建比赛记录
                             new_match = Match(
                                 home_team_id=home_team_id,
                                 away_team_id=away_team_id,
@@ -392,24 +507,110 @@ class GlobalBackfillService:
                                 match_date=match_date,
                                 status=match_data.get('status', 'SCHEDULED'),
                                 league_id=match_data.get('competition', {}).get('id', 0),
-                                season=match_data.get('season', {}).get('startDate', '')[:4] if match_data.get('season') else result.date[:4]
+                                season=match_data.get('season', {}).get('startDate', '')[:4] if match_data.get('season') else result.date[:4],
+                                created_at=datetime.now(),
+                                updated_at=datetime.now()
                             )
 
                             session.add(new_match)
+                            logger.info(f"🎯 ATTEMPTING TO SAVE Football-Data MATCH: {new_match.home_team_id} vs {new_match.away_team_id} at {new_match.match_date}")
                             saved_count += 1
 
                         except Exception as match_error:
-                            logger.warning(f"单场比赛保存失败: {match_error}")
+                            logger.error(f"❌ Football-Data比赛保存失败: {match_error}")
+                            import traceback
+                            logger.error(f"🐛 Football-Data错误详情: {traceback.format_exc()}")
                             continue
 
-                # 提交事务
+                # ⚽ 步骤4: 保存比赛数据（FotMob）
+                if result.fotmob_matches:
+                    for match_data in result.fotmob_matches:
+                        try:
+                            home_team = match_data.get('home', {})
+                            away_team = match_data.get('away', {})
+
+                            home_team_id = home_team.get('id', 0)
+                            away_team_id = away_team.get('id', 0)
+
+                            if home_team_id == 0 or away_team_id == 0:
+                                continue  # 跳过无效球队ID的比赛
+
+                            # 解析FotMob的比赛时间 (增强版: 支持多种格式)
+                            match_date_str = match_data.get('matchDate')
+                            if match_date_str:
+                                try:
+                                    # 🎯 方法1: 尝试解析 ISO 格式 (现有逻辑)
+                                    # 格式: "2025-11-29T00:30:00.000Z"
+                                    raw_date = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
+                                    match_date = raw_date.replace(tzinfo=None) if raw_date.tzinfo else raw_date
+                                    logger.debug(f"✅ ISO日期解析成功: {match_date_str} -> {match_date}")
+                                except ValueError:
+                                    try:
+                                        # 🎯 方法2: 尝试解析 FotMob 德式格式 (DD.MM.YYYY HH:MM)
+                                        # 格式: "21.12.2025 20:00"
+                                        raw_date = datetime.strptime(match_date_str, '%d.%m.%Y %H:%M')
+                                        match_date = raw_date
+                                        logger.debug(f"✅ 德式日期解析成功: {match_date_str} -> {match_date}")
+                                    except ValueError:
+                                        try:
+                                            # 🎯 方法3: 尝试解析其他常见格式
+                                            # 格式: "21.12.2025" (无时间)
+                                            raw_date = datetime.strptime(match_date_str, '%d.%m.%Y')
+                                            match_date = raw_date.replace(hour=15, minute=0)  # 默认15:00
+                                            logger.debug(f"✅ 日期格式解析成功: {match_date_str} -> {match_date}")
+                                        except ValueError:
+                                            # 🎯 方法4: 所有格式都失败，使用默认时间
+                                            logger.warning(f"⚠️ 无法解析日期格式: {match_date_str}，使用默认时间")
+                                            match_date = datetime.strptime(f"{result.date} 15:00:00", "%Y-%m-%d %H:%M:%S")
+                            else:
+                                # 使用默认时间
+                                match_date = datetime.strptime(f"{result.date} 15:00:00", "%Y-%m-%d %H:%M:%S")
+                                logger.debug(f"使用默认时间: {match_date}")
+
+                            # 检查是否已存在
+                            existing_stmt = select(Match).where(
+                                Match.home_team_id == home_team_id,
+                                Match.away_team_id == away_team_id,
+                                Match.match_date == match_date
+                            )
+                            existing_result = await session.execute(existing_stmt)
+                            existing_match = existing_result.scalar_one_or_none()
+
+                            if existing_match:
+                                continue
+
+                            # 创建比赛记录
+                            new_match = Match(
+                                home_team_id=home_team_id,
+                                away_team_id=away_team_id,
+                                home_score=home_team.get('score', 0),
+                                away_score=away_team.get('score', 0),
+                                match_date=match_date,
+                                status=match_data.get('status', {}).get('reason', {}).get('long', 'SCHEDULED')[:20],
+                                league_id=0,  # FotMob数据暂时设为0
+                                season=result.date[:4],
+                                created_at=datetime.now(),
+                                updated_at=datetime.now()
+                            )
+
+                            session.add(new_match)
+                            logger.info(f"🎯 ATTEMPTING TO SAVE FotMob MATCH: {new_match.home_team_id} vs {new_match.away_team_id} at {new_match.match_date}")
+                            saved_count += 1
+
+                        except Exception as match_error:
+                            logger.error(f"❌ FotMob比赛保存失败: {match_error}")
+                            import traceback
+                            logger.error(f"🐛 FotMob错误详情: {traceback.format_exc()}")
+                            continue
+
+                # 提交所有事务
                 await session.commit()
                 logger.info(f"✅ 数据保存成功: {result.date} - {saved_count} 场新比赛")
 
         except Exception as e:
             logger.error(f"❌ 数据保存失败 {result.date}: {e}")
             import traceback
-            traceback.print_exc()
+            logger.error(f"🐛 数据保存失败详情: {traceback.format_exc()}")
             raise
 
     async def run_backfill(

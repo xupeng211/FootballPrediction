@@ -35,11 +35,13 @@ make ci               # 完整CI验证
 ### 常用命令速查
 | 任务 | 命令 | 说明 |
 |------|------|------|
-| 环境管理 | `make dev` / `make down` | 启动/停止服务 |
+| 环境管理 | `make dev` / `make dev-stop` | 启动/停止开发环境 |
 | 测试 | `make test.unit` / `make coverage` | 单元测试/覆盖率 |
 | 代码质量 | `make lint && make fix-code` | 检查并自动修复 |
 | 容器操作 | `make shell` / `make logs` | 进入容器/查看日志 |
 | 数据库 | `make db-shell` / `make db-reset` | 数据库操作 |
+| 状态检查 | `make status` | 检查所有服务状态 |
+| 快速启动 | `make quick-start` | 快速启动开发环境 |
 
 ## Key Development Commands
 
@@ -52,10 +54,11 @@ make dev
 make prod
 
 # Stop services
-make down
+make dev-stop
 
 # Clean resources
 make clean
+make clean-all  # 彻底清理所有资源
 
 # Check service status
 make status
@@ -67,6 +70,10 @@ make prod-rebuild
 
 # Complete CI validation
 make ci
+
+# Quick commands
+make quick-start  # 快速启动 (别名)
+make quick-stop   # 快速停止 (别名)
 ```
 
 ### Code Quality & Testing
@@ -231,19 +238,21 @@ docker-compose exec app celery -A src.tasks.celery_app -Q fixtures inspect activ
 ### Container Architecture
 
 #### Development Services
-- **app**: FastAPI application (port: 8000)
-- **db**: PostgreSQL 15 (port: 5432)
-- **redis**: Redis 7.0 (port: 6379)
-- **frontend**: React application (ports: 3000, 3001)
-- **nginx**: Reverse proxy (port: 80)
-- **worker**: Celery worker for async tasks
-- **beat**: Celery beat for scheduled tasks
+- **app**: FastAPI application (port: 8000) - 主应用服务，支持热重载
+- **db**: PostgreSQL 15 (port: 5432) - 主数据库，带健康检查
+- **redis**: Redis 7.0 (port: 6379) - 缓存和Celery消息队列
+- **frontend**: React application (内部80端口，外部映射到3000) - 前端应用
+- **nginx**: Reverse proxy (port: 80) - 反向代理，统一入口
+- **worker**: Celery worker for async tasks - 异步任务处理器，8个专用队列
+- **beat**: Celery beat for scheduled tasks - 定时任务调度器
 
 #### Container Features
-- **Health Checks**: All services have comprehensive health monitoring
-- **Hot Reload**: Volume mounting for development
-- **Environment Isolation**: Separate configurations for dev/prod
-- **Multi-stage Builds**: Optimized Docker images
+- **Health Checks**: 所有服务都有完善的健康监控机制
+- **Hot Reload**: 开发环境支持代码热重载 (`./src:/app/src`)
+- **Environment Isolation**: 开发和生产环境配置分离
+- **Multi-stage Builds**: Docker镜像优化，支持开发和生产阶段
+- **Volume Management**: 数据持久化 (postgres_data, redis_data, celerybeat_data)
+- **Dependency Management**: 服务间依赖关系和启动顺序管理
 
 ## Code Requirements
 
@@ -628,10 +637,26 @@ chore(security): upgrade dependencies for security patches
 
 ### Development Workflow
 1. Environment setup: `make dev`
-2. Write code following DDD + CQRS patterns
-3. Quality validation: `make lint && make test`
-4. Security check: `make security-check`
-5. Pre-commit: `make fix-code && make format`
+2. Check service health: `make status`
+3. Write code following DDD + CQRS patterns
+4. Quality validation: `make lint && make test`
+5. Security check: `make security-check`
+6. Pre-commit: `make fix-code && make format`
+
+### Complete Development Checklist
+```bash
+# 每日开发流程
+make dev              # 启动开发环境
+make status           # 确认所有服务健康
+make test.unit        # 运行单元测试
+make coverage         # 检查覆盖率
+make lint && make fix-code  # 代码质量检查和修复
+
+# 提交前验证
+make ci               # 完整CI验证
+make security-check   # 安全检查
+make type-check       # 类型检查
+```
 
 ### Project Quality Status
 - **Build Status**: Stable (Green Baseline Established)

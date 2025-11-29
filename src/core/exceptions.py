@@ -163,3 +163,24 @@ DataValidationError = ValidationError
 ConfigurationError = ConfigError
 ServiceUnavailableError = ServiceError
 CustomCustomTimeout = FootballTimeoutError
+
+# Analytics specific exceptions
+class TeamNotFoundError(FootballPredictionError):
+    """球队未找到异常."""
+
+    def __init__(self, team_id: int):
+        super().__init__(f"Team with ID {team_id} not found", team_id=team_id)
+
+
+class LeagueNotFoundError(FootballPredictionError):
+    """联赛未找到异常."""
+
+    def __init__(self, league_id: int):
+        super().__init__(f"League with ID {league_id} not found", league_id=league_id)
+
+
+class MatchNotFoundError(FootballPredictionError):
+    """比赛未找到异常."""
+
+    def __init__(self, match_id: int):
+        super().__init__(f"Match with ID {match_id} not found", match_id=match_id)

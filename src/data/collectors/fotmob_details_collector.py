@@ -84,22 +84,36 @@ class FotmobDetailsCollector:
         self.logger = logging.getLogger(__name__)
         self.session = None
         self.base_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Accept": "application/json, text/plain, */*",
             "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
-            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
             "Referer": "https://www.fotmob.com/",
             "Origin": "https://www.fotmob.com",
+            "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not_A Brand";v="99"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
         }
 
     async def _init_session(self):
         """初始化HTTP会话"""
         if self.session is None:
-            self.session = AsyncSession(impersonate="chrome120")
+            # 🛡️ 使用更现代的Chrome版本进行TLS指纹伪装
+            self.session = AsyncSession(
+                impersonate="chrome124",
+                headers={
+                    "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not_A Brand";v="99"',
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": '"Windows"',
+                }
+            )
             # 访问主页建立会话
             try:
-                await self.session.get("https://www.fotmob.com/", timeout=5)
-                self.logger.info("FotMob HTTP会话初始化成功")
+                await self.session.get("https://www.fotmob.com/", timeout=10)
+                self.logger.info("FotMob HTTP会话初始化成功 (Chrome124 伪装)")
             except Exception as e:
                 self.logger.error(f"FotMob HTTP会话初始化失败: {e}")
                 raise
