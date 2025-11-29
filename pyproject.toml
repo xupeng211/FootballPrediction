@@ -104,6 +104,8 @@ ignore = ["E501", "B008", "D100", "D101", "D102", "D103", "D104", "D105", "D107"
          "I001",
          # Python 3.10 compatibility - UP017 requires datetime.UTC which doesn't exist in 3.10
          "UP017",
+         # Type hint compatibility - Allow Union and Optional for broader Python version support
+         "UP007", "UP045",
          # Pragmatic linting: Allow print statements for legacy scripts
          "T201"]
 
