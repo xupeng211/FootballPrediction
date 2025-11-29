@@ -85,6 +85,28 @@ jobs:
           export $(cat .env.test | xargs)
           echo "✅ 测试环境已设置"
 
+      - name: Create dummy data files
+        run: |
+          echo "📁 创建测试所需的数据文件..."
+          mkdir -p data logs
+
+          # 创建 dataset_v1.csv 示例数据
+          cat > data/dataset_v1.csv << 'EOF'
+date,home_team,away_team,home_score,away_score,result
+2024-01-01,Manchester United,Liverpool,2,1,H
+2024-01-02,Arsenal,Chelsea,1,1,D
+2024-01-03,Manchester City,Tottenham,3,0,H
+2024-01-04,Newcastle,Everton,1,2,A
+2024-01-05,Leicester,West Ham,2,2,D
+EOF
+
+          # 创建必要的日志文件避免测试失败
+          touch logs/enhanced_ev_test.log
+
+          echo "✅ 数据文件创建完成"
+          echo "📊 dataset_v1.csv: $(wc -l < data/dataset_v1.csv) 行"
+          ls -la data/ logs/
+
       - name: Run Linting
         run: |
           echo "🔍 运行代码检查..."
