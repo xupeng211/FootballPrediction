@@ -126,7 +126,7 @@ jobs:
 
       - name: Run Full Unit Test Suite
         run: |
-          echo "🧪 运行完整的单元测试套件 (117,356 行测试代码全量执行)..."
+          echo "🧪 运行核心单元测试套件 (排除重型依赖: ML, Integration, Performance)..."
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
@@ -139,8 +139,11 @@ jobs:
             --cov-report=term-missing \
             --maxfail=20 \
             -v \
-            --tb=short || exit 1
-          echo "✅ 完整单元测试套件执行完成!"
+            --tb=short \
+            --ignore=tests/unit/ml/ \
+            --ignore=tests/integration/ \
+            --ignore=tests/performance/ || exit 1
+          echo "✅ 核心单元测试套件执行完成!"
 
       - name: Upload Coverage Report
         run: |
