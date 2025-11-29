@@ -191,7 +191,7 @@ class DateUtils:
         return dt_datetime(year, month, day, dt.hour, dt.minute, dt.second)
 
     @staticmethod
-    def get_timezone_aware(dt: dt_datetime, timezone_offset: int = 0) -> datetime:
+    def get_timezone_aware(dt: dt_datetime, timezone_offset: int = 0) -> dt_datetime:
         """获取时区感知的日期时间（简化版本）."""
         if not isinstance(dt, dt_datetime):
             raise ValueError("无效的日期时间对象")
