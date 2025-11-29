@@ -298,6 +298,6 @@ def cached_format_dt_datetime(dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M
 
 
 @lru_cache(maxsize=256)
-def cached_time_ago(dt: dt_datetime, reference: Optional[datetime] = None) -> str:
+def cached_time_ago(dt: dt_datetime, reference: Optional[dt_datetime] = None) -> str:
     """缓存版本的时间差格式化."""
     return DateUtils.time_ago(dt)
