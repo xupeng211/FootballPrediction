@@ -23,6 +23,7 @@ except ImportError:
 
 # 导入项目模块
 from src.api.adapters import router as adapters_router
+from src.api.analytics import router as analytics_router
 from src.api.data_management import router as data_management_router
 from src.api.docs import setup_docs_routes
 from src.api.health import router as health_router
@@ -308,6 +309,7 @@ if SLOWAPI_AVAILABLE:
 # 注册路由
 app.include_router(health_router, prefix="/health", tags=["健康检查"])
 app.include_router(adapters_router, prefix="/api/v1", tags=["适配器管理"])
+app.include_router(analytics_router, prefix="/api/v1", tags=["分析统计"])
 app.include_router(data_management_router, prefix="/api/v1", tags=["数据管理"])
 app.include_router(system_router, prefix="/api/v1", tags=["系统管理"])
 app.include_router(predictions_router, prefix="/api/v1", tags=["预测"])
