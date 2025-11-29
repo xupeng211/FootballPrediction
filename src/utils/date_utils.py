@@ -179,7 +179,7 @@ class DateUtils:
         return dt + timedelta(days=days)
 
     @staticmethod
-    def add_months(dt: dt_datetime, months: int) -> datetime:
+    def add_months(dt: dt_datetime, months: int) -> dt_datetime:
         """增加月份."""
         if not isinstance(dt, dt_datetime):
             raise ValueError("无效的日期时间对象")
