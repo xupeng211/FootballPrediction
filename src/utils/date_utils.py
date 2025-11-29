@@ -34,6 +34,11 @@ class DateUtils:
             return ""
 
     @staticmethod
+    def format_datetime(dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+        """格式化日期时间 (别名方法，为向后兼容性)."""
+        return DateUtils.format_dt_datetime(dt, format_str)
+
+    @staticmethod
     def parse_date(date_str: str, format_str: str = "%Y-%m-%d") -> Optional[dt_datetime]:
         """解析日期字符串."""
         if not isinstance(date_str, str):
