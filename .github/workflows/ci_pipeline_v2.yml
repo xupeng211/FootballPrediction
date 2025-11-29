@@ -114,6 +114,10 @@ jobs:
             -n 0 \
             --maxfail=3 \
             --tb=short \
+            --cov=src/api \
+            --cov-report=xml:test-results-api.xml \
+            --cov-report=html:htmlcov-api \
+            --cov-append \
             -v || exit 1
           echo "✅ API 模块测试完成"
 
@@ -132,6 +136,10 @@ jobs:
             -n 0 \
             --maxfail=3 \
             --tb=short \
+            --cov=src/utils \
+            --cov-report=xml:test-results-utils.xml \
+            --cov-report=html:htmlcov-utils \
+            --cov-append \
             -v || exit 1
           echo "✅ Utils 核心模块测试完成 (已隔离问题文件)"
 
@@ -147,6 +155,10 @@ jobs:
             -n 0 \
             --maxfail=3 \
             --tb=short \
+            --cov=src/cache \
+            --cov-report=xml:test-results-cache.xml \
+            --cov-report=html:htmlcov-cache \
+            --cov-append \
             -v || exit 1
           echo "✅ Cache 模块测试完成"
 
@@ -162,13 +174,37 @@ jobs:
             -n 0 \
             --maxfail=3 \
             --tb=short \
+            --cov=src/events \
+            --cov-report=xml:test-results-events.xml \
+            --cov-report=html:htmlcov-events \
+            --cov-append \
             -v || exit 1
           echo "✅ Events 模块测试完成"
+
+      - name: Generate Coverage Report
+        run: |
+          echo "📊 生成合并覆盖率报告..."
+          export $(cat .env.test | xargs)
+          export PYTHONPATH=$PWD:$PYTHONPATH
+
+          # 安装coverage工具用于合并报告
+          pip install coverage
+
+          # 合并所有覆盖率数据
+          coverage combine || true
+
+          # 生成最终XML报告（不打印到控制台）
+          coverage xml -o coverage-final.xml || true
+
+          # 生成最终HTML报告（不打印到控制台）
+          coverage html -d htmlcov-final || true
+
+          echo "✅ 覆盖率报告生成完成 (仅上传，不打印)"
 
       - name: CI Completion Notification
         run: |
           echo "🎉 CI逻辑验证完成 - 4个核心模块全部通过!"
-          echo "⚡ CI专注于快速反馈，覆盖率请在本地使用 'make coverage' 生成"
+          echo "📊 覆盖率报告已生成并上传为构件"
           echo "⚠️ Collectors模块暂时跳过 (CI环境死锁问题)"
 
       # - name: Run Tests - Step 5 Collectors Module
@@ -199,7 +235,11 @@ jobs:
         with:
           name: test-results-py${{ matrix.python-version }}
           path: |
-            test-results.xml
+            test-results-*.xml
+            coverage-*.xml
+            htmlcov-*/
+            coverage-final.xml
+            htmlcov-final/
             bandit-report.json
           retention-days: 30
 

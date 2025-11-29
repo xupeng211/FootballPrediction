@@ -13,7 +13,7 @@ This is an enterprise-level football prediction system built with Python FastAPI
 **Project Scale**:
 - **Large-scale Python project** - Enterprise-grade application architecture
 - **Comprehensive testing** - Four-layer testing architecture (Unit: 85%, Integration: 12%, E2E: 2%, Performance: 1%)
-- **613-line Makefile** - Complete development workflow automation
+- **Complete workflow automation** - 259-line Makefile with comprehensive development commands
 - **40+ API endpoints** - Supporting both v1 and v2 versions
 - **7 dedicated queues** - Celery distributed task scheduling
 - **Current test coverage**: 29.0% baseline (as measured in latest CI runs)
@@ -519,13 +519,14 @@ make prepush       # Final validation before commit
 ```
 
 ### Docker Compose Environments
-The project includes **10 specialized Docker Compose configurations**:
+The project includes **multiple specialized Docker Compose configurations** (52+ configuration files):
 - `docker-compose.yml` - Development environment
 - `docker-compose.prod.yml` - Production deployment
 - `docker-compose.staging.yml` - Staging environment
 - `docker-compose.microservices.yml` - Microservices architecture
 - `docker-compose.full-test.yml` - Comprehensive testing environment
 - `docker-compose.optimized.yml` - Performance-optimized configuration
+- And 46+ specialized configurations for different use cases
 
 ## Important Reminders
 
