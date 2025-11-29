@@ -190,21 +190,22 @@ class TestBaseRepository:
         assert isinstance(result, MockModel)
         assert result.name == "Test Object"
 
-    @pytest.mark.skip(reason="CI Flaky: Mock setup issues in repository tests")
     @pytest.mark.asyncio
     async def test_get_by_id_success(self):
         """测试根据ID成功获取记录."""
-        mock_result = MockExecuteResult()
-        mock_model = MockModel(id=1, name="Test")
-        mock_result.scalar_one_or_none_result = mock_model
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
+            mock_session = MockAsyncSession()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
 
-        with patch.object(self.repository, "find_one_by") as mock_find:
-            mock_find.return_value = mock_model
+            # 模拟执行结果
+            mock_result = MockExecuteResult()
+            mock_model = MockModel(id=1, name="Test")
+            mock_result.scalar_one_or_none_result = mock_model
+            mock_session.execute = AsyncMock(return_value=mock_result)
 
             result = await self.repository.get_by_id(1)
 
             assert result == mock_model
-            mock_find.assert_called_once_with({"id": 1}, session=None)
 
     @pytest.mark.asyncio
     async def test_get_by_id_not_found(self):
@@ -216,67 +217,74 @@ class TestBaseRepository:
 
             assert result is None
 
-    @pytest.mark.skip(reason="CI Flaky: Mock setup issues in repository tests")
     @pytest.mark.asyncio
     async def test_get_by_id_with_session(self):
         """测试使用外部会话根据ID获取记录."""
         mock_session = MockAsyncSession()
 
-        with patch.object(self.repository, "find_one_by") as mock_find:
-            mock_find.return_value = MockModel(id=1)
+        # 模拟执行结果
+        mock_result = MockExecuteResult()
+        mock_model = MockModel(id=1)
+        mock_result.scalar_one_or_none_result = mock_model
+        mock_session.execute = AsyncMock(return_value=mock_result)
 
-            result = await self.repository.get_by_id(1, session=mock_session)
+        result = await self.repository.get_by_id(1, session=mock_session)
 
-            assert result is not None
-            mock_find.assert_called_once_with({"id": 1}, session=mock_session)
+        assert result == mock_model
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="CI Flaky: Mock setup issues in repository tests")
     async def test_get_all_success(self):
         """测试成功获取所有记录."""
         mock_models = [MockModel(id=1), MockModel(id=2)]
 
-        with patch.object(self.repository, "find_by") as mock_find:
-            mock_find.return_value = mock_models
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
+            mock_session = MockAsyncSession()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
+
+            # 模拟执行结果
+            mock_result = MockExecuteResult()
+            mock_result.scalars_all_result = mock_models
+            mock_session.execute = AsyncMock(return_value=mock_result)
 
             result = await self.repository.get_all()
 
             assert len(result) == 2
-            mock_find.assert_called_once_with(
-                {}, limit=None, offset=None, order_by=None, session=None
-            )
+            assert all(isinstance(model, MockModel) for model in result)
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="CI Flaky: Mock setup issues in repository tests")
     async def test_get_all_with_limit_offset(self):
         """测试带限制和偏移量的获取所有记录."""
         mock_models = [MockModel(id=1)]
 
-        with patch.object(self.repository, "find_by") as mock_find:
-            mock_find.return_value = mock_models
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
+            mock_session = MockAsyncSession()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
+
+            # 模拟执行结果
+            mock_result = MockExecuteResult()
+            mock_result.scalars_all_result = mock_models
+            mock_session.execute = AsyncMock(return_value=mock_result)
 
             result = await self.repository.get_all(limit=10, offset=5)
 
             assert len(result) == 1
-            mock_find.assert_called_once_with(
-                {}, limit=10, offset=5, order_by=None, session=None
-            )
+            assert all(isinstance(model, MockModel) for model in result)
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="CI Flaky: Mock setup issues in repository tests")
     async def test_get_all_with_session(self):
         """测试使用外部会话获取所有记录."""
         mock_session = MockAsyncSession()
+        mock_models = []
 
-        with patch.object(self.repository, "find_by") as mock_find:
-            mock_find.return_value = []
+        # 模拟执行结果
+        mock_result = MockExecuteResult()
+        mock_result.scalars_all_result = mock_models
+        mock_session.execute = AsyncMock(return_value=mock_result)
 
-            result = await self.repository.get_all(session=mock_session)
+        result = await self.repository.get_all(session=mock_session)
 
-            assert isinstance(result, list)
-            mock_find.assert_called_once_with(
-                {}, limit=None, offset=None, order_by=None, session=mock_session
-            )
+        assert isinstance(result, list)
+        assert len(result) == 0
 
     @pytest.mark.asyncio
     async def test_update_success(self):
@@ -667,12 +675,20 @@ class TestBaseRepository:
             assert result == 3
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="CI Flaky: Mock setup issues in repository tests")
     async def test_bulk_delete_empty_list(self):
         """测试批量删除空列表."""
-        result = await self.repository.bulk_delete([])
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
+            mock_session = MockAsyncSession()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
 
-        assert result == 0
+            # 模拟删除结果 - 空列表删除影响0行
+            mock_result = MockExecuteResult()
+            mock_result.rowcount = 0
+            mock_session.execute = AsyncMock(return_value=mock_result)
+
+            result = await self.repository.bulk_delete([])
+
+            assert result == 0
 
     @pytest.mark.asyncio
     async def test_bulk_delete_with_session(self):
@@ -837,7 +853,6 @@ class TestBaseRepository:
         assert result == {"obj_id": 1, "relation_name": "test_relation"}
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="CI Flaky: Mock setup issues in repository tests")
     async def test_integration_create_and_get(self):
         """集成测试：创建记录并获取."""
         obj_data = {"name": "Integration Test", "email": "integration@test.com"}
@@ -848,8 +863,14 @@ class TestBaseRepository:
         assert created.name == "Integration Test"
 
         # 根据ID获取记录
-        with patch.object(self.repository, "find_one_by") as mock_find:
-            mock_find.return_value = created
+        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
+            mock_session = MockAsyncSession()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
+
+            # 模拟执行结果 - 返回刚创建的记录
+            mock_result = MockExecuteResult()
+            mock_result.scalar_one_or_none_result = created
+            mock_session.execute = AsyncMock(return_value=mock_result)
 
             retrieved = await self.repository.get_by_id(created.id)
             assert retrieved == created
