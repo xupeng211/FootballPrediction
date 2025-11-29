@@ -40,12 +40,12 @@ class DateUtils:
             return None
 
         try:
-            return datetime.strptime(date_str, format_str)
+            return dt_datetime.strptime(date_str, format_str)
         except ValueError:
             return None
 
     @staticmethod
-    def parse_dt_datetime(
+    def parse_datetime(
         datetime_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
     ) -> Optional[dt_datetime]:
         """解析日期时间字符串."""
@@ -53,7 +53,7 @@ class DateUtils:
             return None
 
         try:
-            return datetime.strptime(datetime_str, format_str)
+            return dt_datetime.strptime(datetime_str, format_str)
         except ValueError:
             return None
 
@@ -108,7 +108,7 @@ class DateUtils:
         if birth_date is None or not isinstance(birth_date, (dt_datetime, date)):
             return None
 
-        if isinstance(birth_date, datetime):
+        if isinstance(birth_date, dt_datetime):
             birth_date = birth_date.date()
 
         if current_date is None:
@@ -116,7 +116,7 @@ class DateUtils:
         else:
             if not isinstance(current_date, (dt_datetime, date)):
                 return None
-            if isinstance(current_date, datetime):
+            if isinstance(current_date, dt_datetime):
                 today = current_date.date()
             else:
                 today = current_date
@@ -280,7 +280,7 @@ class DateUtils:
     @staticmethod
     def format_duration_between(start: dt_datetime, end: dt_datetime) -> str:
         """格式化两个时间点之间的时长."""
-        if not isinstance(start, datetime) or not isinstance(end, datetime):
+        if not isinstance(start, dt_datetime) or not isinstance(end, dt_datetime):
             return "0秒"
 
         try:
@@ -292,7 +292,7 @@ class DateUtils:
 
 # 缓存版本的函数
 @lru_cache(maxsize=128)
-def cached_format_dt_datetime(dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+def cached_format_datetime(dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
     """缓存版本的日期格式化."""
     return DateUtils.format_dt_datetime(dt, format_str)
 
