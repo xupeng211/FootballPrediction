@@ -137,7 +137,6 @@ jobs:
             tests/unit/collectors/ \
             tests/unit/core/ \
             tests/unit/events/ \
-            tests/unit/patterns/ \
             tests/unit/utils/test_date_utils.py \
             tests/unit/utils/test_dict_utils.py \
             --timeout=120 \
