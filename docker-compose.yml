@@ -93,6 +93,35 @@ services:
       - frontend
     restart: unless-stopped
 
+  # Data Collector - 专用的数据回填微服务
+  data-collector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development  # 使用开发阶段构建
+    env_file:
+      - .env
+    environment:
+      - ENV=development
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-development-only}
+      - FOOTBALL_DATA_API_KEY=${FOOTBALL_DATA_API_KEY}
+      - PYTHONPATH=/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+      - ./models:/app/models
+      - ./logs:/app/logs
+    restart: unless-stopped
+    command: ["python", "scripts/backfill_final.py", "--start-date=2022-01-01", "--source", "all"]
+
   # Celery Worker - 执行异步任务
   worker:
     build:
