@@ -54,9 +54,13 @@ psutil>=5.8.0
 backoff>=2.2.0
 celery>=5.3.0
 
+# 重要：添加必要的ML依赖以支持推理服务
+joblib>=1.4.0
+xgboost>=2.0.0
+
 # 重要：明确排除重型ML依赖
 # curl_cffi (已移除内存问题版本限制)
 curl_cffi>=0.5.10
-# - scikit-learn/joblib (重型ML依赖，内存消耗大)
+# - scikit-learn (重型ML依赖，内存消耗大)
 # - prometheus-client (可选监控)
 # 注：pandas/scipy已包含用于核心数据处理功能
