@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11']  # 轻量级CI: 仅测试一个Python版本以节省资源
+        python-version: ['3.10', '3.11', '3.12']  # V4.0: 恢复全量Python版本矩阵
 
     services:
       postgres:
@@ -81,6 +81,12 @@ jobs:
           CI=true
           PYTEST_CURRENT_TEST=1
           TESTING=true
+          # V4.0: ML Mock环境变量 - 强制使用Mock模式避免ML依赖内存问题
+          FOOTBALL_PREDICTION_ML_MODE=mock
+          INFERENCE_SERVICE_MOCK=true
+          SKIP_ML_MODEL_LOADING=true
+          XGBOOST_MOCK=true
+          JOBLIB_MOCK=true
           EOF
           export $(cat .env.test | xargs)
           echo "✅ 测试环境已设置"
@@ -126,15 +132,22 @@ jobs:
 
       - name: Run Full Unit Test Suite
         run: |
-          echo "🧪 运行核心单元测试套件 (排除死锁文件和重型依赖)..."
+          echo "🧪 V4.0 运行全量测试套件 - Service Containers + ML Mock..."
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # CI SECURITY: 与本地一致的测试命令 - 使用 Makefile 中的快速测试策略
-          # 极简CI: 仅测试最小工具类，避免任何ML依赖
-          timeout 60s python -m pytest tests/unit/utils/test_formatters.py -v --tb=short || exit 1
-          echo "✅ 核心单元测试套件执行完成!"
+          # V4.0: 恢复全量测试，利用conftest.py的技术债务管理机制
+          timeout 900s python -m pytest tests/ \
+            --timeout=120 \
+            --cov=src \
+            --cov-report=xml:test-results-full.xml \
+            --cov-report=html:htmlcov-full \
+            --cov-report=term-missing \
+            --maxfail=20 \
+            -v \
+            --tb=short || exit 1
+          echo "✅ 全量测试套件执行完成!"
 
       - name: Upload Coverage Report
         run: |
