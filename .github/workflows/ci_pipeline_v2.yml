@@ -132,7 +132,7 @@ jobs:
           export PYTHONPATH=$PWD:$PYTHONPATH
 
           # CI SECURITY: Allowlist mode - only run verified-safe test paths
-        timeout 600s pytest tests/unit/api/ \
+          timeout 600s pytest tests/unit/api/ \
             tests/unit/cache/ \
             tests/unit/collectors/ \
             tests/unit/core/ \
