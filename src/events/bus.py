@@ -6,6 +6,7 @@ Event Bus Implementation.
 
 import asyncio
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
@@ -20,7 +21,14 @@ class Event:
     def __init__(self, event_type: str, data: dict | None = None):
         self.event_type = event_type
         self.data = data or {}
-        self.timestamp = asyncio.get_event_loop().time()
+        # 使用time.time()替代asyncio.get_event_loop().time()以避免事件循环问题
+        try:
+            # 尝试使用事件循环时间（更精确）
+            loop = asyncio.get_running_loop()
+            self.timestamp = loop.time()
+        except RuntimeError:
+            # 如果没有运行的事件循环，使用系统时间
+            self.timestamp = time.time()
 
     def get_event_type(self) -> str:
         return self.event_type
