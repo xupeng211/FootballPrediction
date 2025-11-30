@@ -244,8 +244,8 @@ class StringUtils:
         if StringUtils._PHONE_REGEX.match(digits_only):
             return True
 
-        # 验证国际号码格式 (+开头，10-15位数字)
-        if digits_only.startswith('+') and len(digits_only) >= 12 and len(digits_only) <= 16:
+        # 验证国际号码格式 (+开头，8-15位数字，包含+号)
+        if digits_only.startswith('+') and len(digits_only) >= 8 and len(digits_only) <= 16:
             return True
 
         return False
