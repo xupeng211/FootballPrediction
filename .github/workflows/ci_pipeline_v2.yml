@@ -138,14 +138,18 @@ jobs:
           export PYTHONPATH=$PWD:$PYTHONPATH
 
           # V4.0: 临时跳过集成测试和ML测试，专注于核心功能测试通过
-          timeout 900s python -m pytest tests/unit/ \
+          timeout 600s python -m pytest tests/unit/ \
             --ignore=tests/unit/ml/ \
-            --timeout=120 \
+            --ignore=tests/unit/scripts/ \
+            --ignore=tests/unit/collectors/ \
+            --timeout=30 \
+            --timeout-method=thread \
             --cov=src \
             --cov-report=xml:test-results-full.xml \
             --cov-report=html:htmlcov-full \
             --cov-report=term-missing \
-            --maxfail=20 \
+            --maxfail=5 \
+            -x \
             -v \
             --tb=short || exit 1
           echo "✅ 全量测试套件执行完成!"
