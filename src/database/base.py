@@ -56,7 +56,7 @@ class BaseModel(Base, TimestampMixin):
             exclude_fields: 需要排除的字段集合
 
         Returns:
-            Dict[str, Any]: 模型字典表示
+            dict[str, Any]: 模型字典表示
         """
         if exclude_fields is None:
             exclude_fields = set()

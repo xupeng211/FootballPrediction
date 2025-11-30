@@ -154,7 +154,7 @@ class StrategyPredictionService:
             strategy_name: 使用的策略名称
 
         Returns:
-            List[Prediction]: 创建的预测列表
+            list[Prediction]: 创建的预测列表
         """
         # 选择策略
         strategy_name = strategy_name or self._default_strategy
@@ -214,7 +214,7 @@ class StrategyPredictionService:
         None表示比较所有可用策略
 
         Returns:
-                Dict[str, PredictionOutput]: 各策略的预测结果
+                dict[str, PredictionOutput]: 各策略的预测结果
         """
         # 获取比赛信息
         match = await self._match_repository.get_by_id(match_id)
@@ -263,7 +263,7 @@ class StrategyPredictionService:
                 days: 统计天数
 
         Returns:
-                Optional[Dict[str,
+                Optional[dict[str,
         Any]]: 性能指标
         """
         strategy = self._strategy_factory.get_strategy(strategy_name)

@@ -559,7 +559,7 @@ def get_prediction_by_id(prediction_id: str) -> dict[str, Any] | None:
     return None
 
 
-def get_match_predictions(match_id: int) -> list[dict[str, Any]]:
+def get_match_predictions_mock(match_id: int) -> list[dict[str, Any]]:
     """获取比赛的预测 - 为测试提供Mock接口
     Get match predictions - Mock interface for testing.
     """
@@ -577,6 +577,4 @@ def get_match_predictions(match_id: int) -> list[dict[str, Any]]:
     return []
 
 
-# 将方法添加到类中
-PredictionService.get_prediction_by_id = staticmethod(get_prediction_by_id)
-PredictionService.get_match_predictions = staticmethod(get_match_predictions)
+# 注意：类方法已经正确定义，不需要额外的静态方法赋值

@@ -44,8 +44,20 @@ class Odds(Base):
     id = Column(Integer, primary_key=True, index=True)
     match_id = Column(Integer, nullable=False, index=True)
     bookmaker = Column(String(100), nullable=False, index=True)
-    bet_type = Column(String(50), nullable=False)
-    odds_value = Column(Numeric(10, 4), nullable=False)
+
+    # 基础赔率字段
+    home_win = Column(Numeric(10, 4), nullable=True)
+    draw = Column(Numeric(10, 4), nullable=True)
+    away_win = Column(Numeric(10, 4), nullable=True)
+
+    # 扩展赔率字段
+    over_under = Column(Numeric(10, 4), nullable=True)
+    asian_handicap = Column(Numeric(10, 4), nullable=True)
+
+    # 原始字段保留
+    bet_type = Column(String(50), nullable=True)
+    odds_value = Column(Numeric(10, 4), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True)

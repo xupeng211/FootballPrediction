@@ -124,7 +124,7 @@ def main():
         label_names = ["平局", "主队胜", "客队胜"]
         predictions = []
 
-        for i, (idx, row) in enumerate(features_df.iterrows()):
+        for i, (_idx, row) in enumerate(features_df.iterrows()):
             pred_label = y_pred[i]
             proba = y_proba[i]
 
@@ -275,7 +275,7 @@ def main():
 
         logger.info("=" * 60)
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 预测生成失败: {str(e)}")
         import traceback
 

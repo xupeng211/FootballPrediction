@@ -30,7 +30,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -94,7 +94,7 @@ class DailyPipeline:
         - 返回 [当前赛季, 上一赛季] 以保证数据完整性
 
         Returns:
-            List[int]: 目标赛季列表 [current_season, previous_season]
+            list[int]: 目标赛季列表 [current_season, previous_season]
         """
         current_date = datetime.now()
         current_month = current_date.month
@@ -205,7 +205,7 @@ class DailyPipeline:
                         logger.error(f"❌ {season} 赛季数据采集失败: {error_msg}")
                         self.errors.append(f"{season}赛季数据采集失败: {error_msg}")
 
-                except Exception as e:
+                except Exception:
                     total_errors += 1
                     logger.error(f"❌ {season} 赛季数据采集异常: {e}")
                     self.errors.append(f"{season}赛季数据采集异常: {str(e)}")
@@ -229,7 +229,7 @@ class DailyPipeline:
                 self.errors.append("所有赛季数据采集均失败")
                 return False
 
-        except Exception as e:
+        except Exception:
             self.log_step(step_name, "FAILED")
             error_msg = str(e)
             self.errors.append(f"数据同步异常: {error_msg}")
@@ -257,7 +257,7 @@ class DailyPipeline:
                 self.errors.append("数据清洗失败")
                 return False
 
-        except Exception as e:
+        except Exception:
             self.log_step(step_name, "FAILED")
             error_msg = str(e)
             self.errors.append(f"数据清洗异常: {error_msg}")
@@ -325,7 +325,7 @@ class DailyPipeline:
             logger.info(f"特征生成完成，生成 {len(features_df)} 条特征记录")
             return True
 
-        except Exception as e:
+        except Exception:
             self.log_step(step_name, "FAILED")
             error_msg = str(e)
             self.errors.append(f"特征生成异常: {error_msg}")
@@ -423,7 +423,7 @@ class DailyPipeline:
             )
             return True
 
-        except Exception as e:
+        except Exception:
             self.log_step(step_name, "FAILED")
             error_msg = str(e)
             self.errors.append(f"模型训练异常: {error_msg}")
@@ -557,7 +557,7 @@ class DailyPipeline:
                     }
                     future_features.append(features)
 
-                except Exception as e:
+                except Exception:
                     logger.warning(f"计算比赛 {match['id']} 特征失败: {e}")
                     continue
 
@@ -597,7 +597,7 @@ class DailyPipeline:
             self.log_step(step_name, "COMPLETED")
             return True
 
-        except Exception as e:
+        except Exception:
             self.log_step(step_name, "FAILED")
             error_msg = str(e)
             self.errors.append(f"未来预测异常: {error_msg}")
@@ -659,7 +659,7 @@ class DailyPipeline:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"💥 管道执行异常: {e}")
             self.errors.append(f"管道异常: {str(e)}")
             return False
@@ -683,7 +683,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("⏹️  用户中断，管道停止")
         sys.exit(1)
-    except Exception as e:
+    except Exception:
         logger.error(f"💥 管道异常: {e}")
         sys.exit(1)
 

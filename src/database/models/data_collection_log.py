@@ -49,6 +49,7 @@ class DataCollectionLog(BaseModel):
 
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
+    source = Column(String(100), nullable=False, comment="数据源标识")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
     collection_type = Column(String(50), nullable=False, comment="采集类型")
 
@@ -58,6 +59,7 @@ class DataCollectionLog(BaseModel):
 
     # 统计字段
     records_collected = Column(Integer, nullable=False, default=0, comment="采集记录数")
+    records_count = Column(Integer, nullable=False, default=0, comment="采集记录数")
     success_count = Column(Integer, nullable=False, default=0, comment="成功数量")
     error_count = Column(Integer, nullable=False, default=0, comment="错误数量")
 

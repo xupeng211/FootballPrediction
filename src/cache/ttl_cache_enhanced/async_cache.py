@@ -110,7 +110,7 @@ class AsyncTTLCache:
             keys: 键列表
 
         Returns:
-            Dict[str, Any]: 键值对字典
+            dict[str, Any]: 键值对字典
         """
         return self._cache.get_many(keys)
 

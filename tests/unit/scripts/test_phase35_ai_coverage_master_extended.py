@@ -163,7 +163,7 @@ class TestPhase35AICoverageMasterExtended:
             result = self.master._collect_base_coverage_data()
             # 应该总是返回字典，不抛出异常
             assert isinstance(result, dict)
-        except Exception as e:
+        except Exception:
             pytest.fail(f"覆盖率收集抛出异常: {e}")
 
     def test_coverage_data_persistence(self):
@@ -249,7 +249,7 @@ class TestPhase35AICoverageMasterExtended:
 
             # 如果所有方法都能成功调用，链式调用就是成功的
             assert True
-        except Exception as e:
+        except Exception:
             pytest.fail(f"方法链式调用失败: {e}")
 
     def test_data_validation(self):

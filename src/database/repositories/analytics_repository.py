@@ -6,7 +6,7 @@ following the Repository pattern in DDD architecture.
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,7 +42,7 @@ class AnalyticsRepository:
 
     async def get_team_matches_in_period(
         self, team_id: int, days: int = 30
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get matches for a team within specified period using raw SQL.
 
@@ -56,7 +56,9 @@ class AnalyticsRepository:
         logger.debug(f"Querying matches for team {team_id} in last {days} days")
 
         try:
-            start_date = (datetime.utcnow() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+            start_date = (datetime.utcnow() - timedelta(days=days)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
 
             # Use raw SQL to bypass ORM mapping issues
             matches_query = text("""
@@ -70,25 +72,26 @@ class AnalyticsRepository:
             """)
 
             result = await self._db.execute(
-                matches_query,
-                {"team_id": team_id, "start_date": start_date}
+                matches_query, {"team_id": team_id, "start_date": start_date}
             )
             rows = result.fetchall()
 
             matches = []
             for row in rows:
-                matches.append({
-                    "id": row.id,
-                    "home_team_id": row.home_team_id,
-                    "away_team_id": row.away_team_id,
-                    "home_score": row.home_score,
-                    "away_score": row.away_score,
-                    "status": row.status,
-                    "match_date": row.match_date,
-                    "venue": row.venue,
-                    "league_id": row.league_id,
-                    "season": row.season
-                })
+                matches.append(
+                    {
+                        "id": row.id,
+                        "home_team_id": row.home_team_id,
+                        "away_team_id": row.away_team_id,
+                        "home_score": row.home_score,
+                        "away_score": row.away_score,
+                        "status": row.status,
+                        "match_date": row.match_date,
+                        "venue": row.venue,
+                        "league_id": row.league_id,
+                        "season": row.season,
+                    }
+                )
 
             logger.info(f"Found {len(matches)} matches for team {team_id}")
             return matches
@@ -97,7 +100,7 @@ class AnalyticsRepository:
             logger.error(f"Error getting team matches: {e}")
             return []  # Return empty list to avoid breaking the API
 
-    async def get_team_by_id(self, team_id: int) -> Optional[Dict[str, Any]]:
+    async def get_team_by_id(self, team_id: int) -> Optional[dict[str, Any]]:
         """
         Get team information by ID using raw SQL.
 
@@ -126,7 +129,7 @@ class AnalyticsRepository:
                     "founded_year": row.founded_year,
                     "short_name": row.short_name,
                     "venue": row.venue,
-                    "website": row.website
+                    "website": row.website,
                 }
                 logger.debug(f"Found team: {row.name}")
                 return team_dict
@@ -167,7 +170,7 @@ class AnalyticsRepository:
 
     async def get_league_standings(
         self, league_id: int, season: str = "2024"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get current league standings for specified season.
 
@@ -192,8 +195,8 @@ class AnalyticsRepository:
             raise
 
     async def calculate_team_performance_metrics(
-        self, team_id: int, matches: List[Match]
-    ) -> Dict[str, Any]:
+        self, team_id: int, matches: list[Match]
+    ) -> dict[str, Any]:
         """
         Calculate performance metrics from match data.
 
@@ -247,11 +250,18 @@ class AnalyticsRepository:
                 "goals_for": goals_for,
                 "goals_against": goals_against,
                 "goal_difference": goals_for - goals_against,
-                "avg_goals_for": goals_for / matches_played if matches_played > 0 else 0,
-                "avg_goals_against": goals_against / matches_played if matches_played > 0 else 0,
-                "clean_sheets": sum(1 for m in matches
-                                  if (m.home_team_id == team_id and m.away_score == 0) or
-                                     (m.away_team_id == team_id and m.home_score == 0))
+                "avg_goals_for": goals_for / matches_played
+                if matches_played > 0
+                else 0,
+                "avg_goals_against": goals_against / matches_played
+                if matches_played > 0
+                else 0,
+                "clean_sheets": sum(
+                    1
+                    for m in matches
+                    if (m.home_team_id == team_id and m.away_score == 0)
+                    or (m.away_team_id == team_id and m.home_score == 0)
+                ),
             }
 
         except Exception as e:
@@ -260,7 +270,7 @@ class AnalyticsRepository:
 
     async def get_real_team_performance_metrics(
         self, team_id: int, days: int = 30
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate real team performance metrics from database using raw SQL.
 
@@ -271,11 +281,15 @@ class AnalyticsRepository:
         Returns:
             Performance metrics dictionary from real database data
         """
-        logger.debug(f"Calculating real performance metrics for team {team_id}, period: {days} days")
+        logger.debug(
+            f"Calculating real performance metrics for team {team_id}, period: {days} days"
+        )
 
         try:
             # Calculate start date for the period
-            start_date = (datetime.utcnow() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+            start_date = (datetime.utcnow() - timedelta(days=days)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
 
             # Use raw SQL to bypass ORM mapping issues
             performance_query = text("""
@@ -331,13 +345,14 @@ class AnalyticsRepository:
             """)
 
             result = await self._db.execute(
-                performance_query,
-                {"team_id": team_id, "start_date": start_date}
+                performance_query, {"team_id": team_id, "start_date": start_date}
             )
             row = result.first()
 
             if not row or row.matches_played == 0:
-                logger.info(f"No matches found for team {team_id} in the last {days} days")
+                logger.info(
+                    f"No matches found for team {team_id} in the last {days} days"
+                )
                 return {
                     "matches_played": 0,
                     "wins": 0,
@@ -351,7 +366,7 @@ class AnalyticsRepository:
                     "goal_difference": 0,
                     "avg_goals_for": 0.0,
                     "avg_goals_against": 0.0,
-                    "clean_sheets": 0
+                    "clean_sheets": 0,
                 }
 
             # Calculate derived metrics with null safety
@@ -374,13 +389,19 @@ class AnalyticsRepository:
                 "goals_for": goals_for,
                 "goals_against": goals_against,
                 "goal_difference": goals_for - goals_against,
-                "avg_goals_for": goals_for / total_matches if total_matches > 0 else 0.0,
-                "avg_goals_against": goals_against / total_matches if total_matches > 0 else 0.0,
-                "clean_sheets": clean_sheets
+                "avg_goals_for": goals_for / total_matches
+                if total_matches > 0
+                else 0.0,
+                "avg_goals_against": goals_against / total_matches
+                if total_matches > 0
+                else 0.0,
+                "clean_sheets": clean_sheets,
             }
 
         except Exception as e:
-            logger.error(f"Error calculating real performance metrics for team {team_id}: {e}")
+            logger.error(
+                f"Error calculating real performance metrics for team {team_id}: {e}"
+            )
             # Return empty metrics on error to avoid breaking the API
             return {
                 "matches_played": 0,
@@ -395,12 +416,12 @@ class AnalyticsRepository:
                 "goal_difference": 0,
                 "avg_goals_for": 0.0,
                 "avg_goals_against": 0.0,
-                "clean_sheets": 0
+                "clean_sheets": 0,
             }
 
     async def get_real_league_standings(
         self, league_id: int, season: str = "2024"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get real league standings from database.
 
@@ -411,7 +432,9 @@ class AnalyticsRepository:
         Returns:
             List of standings data from real database
         """
-        logger.debug(f"Getting real league standings for league {league_id}, season {season}")
+        logger.debug(
+            f"Getting real league standings for league {league_id}, season {season}"
+        )
 
         try:
             # Complex SQL query for league standings
@@ -519,25 +542,29 @@ class AnalyticsRepository:
                 ORDER BY points DESC, (goals_for - goals_against) DESC, goals_for DESC
             """)
 
-            result = await self._db.execute(standings_query, {"league_id": league_id, "season": season})
+            result = await self._db.execute(
+                standings_query, {"league_id": league_id, "season": season}
+            )
             rows = result.fetchall()
 
             standings = []
             for row in rows:
-                standings.append({
-                    "position": row.position,
-                    "team_id": row.team_id,
-                    "team_name": row.team_name,
-                    "matches_played": row.matches_played,
-                    "wins": row.wins,
-                    "draws": row.draws,
-                    "losses": row.losses,
-                    "goals_for": row.goals_for,
-                    "goals_against": row.goals_against,
-                    "goal_difference": row.goal_difference,
-                    "points": row.points,
-                    "form": row.recent_form if row.recent_form else []
-                })
+                standings.append(
+                    {
+                        "position": row.position,
+                        "team_id": row.team_id,
+                        "team_name": row.team_name,
+                        "matches_played": row.matches_played,
+                        "wins": row.wins,
+                        "draws": row.draws,
+                        "losses": row.losses,
+                        "goals_for": row.goals_for,
+                        "goals_against": row.goals_against,
+                        "goal_difference": row.goal_difference,
+                        "points": row.points,
+                        "form": row.recent_form if row.recent_form else [],
+                    }
+                )
 
             logger.info(f"Returning {len(standings)} real standings entries")
             return standings

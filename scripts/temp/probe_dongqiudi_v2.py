@@ -84,7 +84,7 @@ class DongqiudiDeepProbe:
                             for mid in set(match_ids[:10])
                         ]
 
-            except Exception as e:
+            except Exception:
                 logger.error(f"访问 {url} 失败: {e}")
                 continue
 
@@ -203,7 +203,7 @@ class DongqiudiDeepProbe:
                 elif response.status_code == 404:
                     logger.debug(f"不存在: {url}")
 
-            except Exception as e:
+            except Exception:
                 logger.debug(f"请求失败 {url}: {e}")
                 continue
 
@@ -345,7 +345,7 @@ class DongqiudiDeepProbe:
                             except json.JSONDecodeError:
                                 continue
 
-            except Exception as e:
+            except Exception:
                 logger.debug(f"访问网页失败 {url}: {e}")
                 continue
 

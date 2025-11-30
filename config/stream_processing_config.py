@@ -3,7 +3,7 @@
 生成时间：2025-10-26 20:57:22
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 # Kafka配置
 KAFKA_CONFIG = {
     "bootstrap_servers": ["localhost:9092"],
@@ -68,5 +68,5 @@ class StreamProcessor:
         print(f"生产事件到主题: {topic}")
 
         # 这里应该是实际的Kafka生产者实现
-        for event in events:
+        for _event in events:
             pass

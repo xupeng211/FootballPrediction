@@ -138,7 +138,7 @@ async def probe_match_details():
 
         print("\n🎯 探测完成!")
 
-    except Exception as e:
+    except Exception:
         print(f"❌ 探测过程中出现错误: {e}")
         import traceback
 
@@ -178,7 +178,7 @@ async def test_specific_match(match_id):
             print("❌ 无法获取比赛详情")
             return False
 
-    except Exception as e:
+    except Exception:
         print(f"❌ 错误: {e}")
         return False
 

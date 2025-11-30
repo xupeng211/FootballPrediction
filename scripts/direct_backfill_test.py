@@ -7,7 +7,7 @@
 import time
 import logging
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import Any
 import random
 
 from src.tasks.data_collection_tasks import collect_fotmob_data
@@ -74,7 +74,7 @@ def trigger_direct_collection(
                 )
                 time.sleep(api_throttle_delay)
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 采集日期 {date} 失败: {e}")
             error_count += 1
 

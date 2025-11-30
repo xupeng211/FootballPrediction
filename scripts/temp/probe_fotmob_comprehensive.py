@@ -146,7 +146,7 @@ class FotMobComprehensiveProbe:
                 else:
                     print(f"   ❌ 状态码: {response.status_code}")
 
-            except Exception as e:
+            except Exception:
                 print(f"   ❌ 异常: {e}")
 
         return successful_endpoints
@@ -214,7 +214,7 @@ class FotMobComprehensiveProbe:
                     print("✅ 找到详细数据!")
                     return basic_data, detailed
 
-        except Exception as e:
+        except Exception:
             print(f"❌ 错误: {e}")
 
         return None, []

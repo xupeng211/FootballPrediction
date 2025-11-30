@@ -422,7 +422,7 @@ class LineageReporter:
         """获取当前活跃的运行.
 
         Returns:
-            Dict[str, str]: 作业名称到运行ID的映射
+            dict[str, str]: 作业名称到运行ID的映射
         """
         return self._active_runs.copy()
 

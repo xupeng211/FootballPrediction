@@ -10,8 +10,11 @@ from datetime import datetime
 from typing import Optional
 
 # 设置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 async def main():
     print("🔍 开始入库诊断...")
@@ -28,7 +31,6 @@ async def main():
         print("✅ 1. 模块导入成功")
 
         # 获取数据库连接
-        settings = get_settings()
         db_generator = get_async_db()
         db = await db_generator.__anext__()
 
@@ -50,7 +52,7 @@ async def main():
             status="FINISHED",
             competition_id=39,
             season="2022",
-            round_number=None
+            round_number=None,
         )
 
         print(f"✅ 4. 测试数据构造成功: {test_match.external_id}")
@@ -64,18 +66,22 @@ async def main():
             # 立即查询验证
             print("\n🔍 验证保存结果...")
             from sqlalchemy import select
+
             stmt = select(Match).where(Match.external_id == "debug-test-123")
             result = await db.execute(stmt)
             found_match = result.scalar_one_or_none()
 
             if found_match:
-                print(f"✅ 6. 验证成功! 数据库中的记录: ID={found_match.id}, external_id={found_match.external_id}")
+                print(
+                    f"✅ 6. 验证成功! 数据库中的记录: ID={found_match.id}, external_id={found_match.external_id}"
+                )
             else:
                 print("❌ 6. 验证失败! 保存后查询不到记录")
 
         except Exception as save_error:
             print(f"❌ 5. 保存失败! 错误: {type(save_error).__name__}: {save_error}")
             import traceback
+
             print("详细错误信息:")
             traceback.print_exc()
 
@@ -86,8 +92,10 @@ async def main():
     except Exception as import_error:
         print(f"❌ 导入/初始化失败: {type(import_error).__name__}: {import_error}")
         import traceback
+
         print("详细错误信息:")
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

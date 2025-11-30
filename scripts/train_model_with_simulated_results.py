@@ -221,7 +221,7 @@ def analyze_feature_importance(model, feature_cols):
     ).sort_values("importance", ascending=False)
 
     print("\n📊 特征重要性 Top 20:")
-    for i, (idx, row) in enumerate(feature_importance_df.head(20).iterrows()):
+    for i, (_idx, row) in enumerate(feature_importance_df.head(20).iterrows()):
         print(f"   {i + 1:2d}. {row['feature']}: {row['importance']:.4f}")
 
     # 🎯 特别关注 rolling_form vs team_id
@@ -311,7 +311,7 @@ def save_results(model, feature_importance_df, accuracy):
         f.write(f"特征数量: {len(feature_importance_df)}\\n\\n")
 
         f.write("特征重要性 Top 20:\\n")
-        for i, (idx, row) in enumerate(feature_importance_df.head(20).iterrows()):
+        for i, (_idx, row) in enumerate(feature_importance_df.head(20).iterrows()):
             f.write(f"{i + 1:2d}. {row['feature']}: {row['importance']:.4f}\\n")
 
         f.write("\\n关键发现:\\n")
@@ -357,7 +357,7 @@ def main():
 
         return model, feature_importance_df, accuracy
 
-    except Exception as e:
+    except Exception:
         print(f"❌ 训练过程中出现错误: {e}")
         raise
 

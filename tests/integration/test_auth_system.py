@@ -62,7 +62,7 @@ async def test_api_health():
             else:
                 print_error(f"API健康检查失败: {response.status_code}")
                 return False
-    except Exception as e:
+    except Exception:
         print_error(f"API连接失败: {e}")
         return False
 
@@ -90,7 +90,7 @@ async def test_user_registration():
                 error_data = response.json()
                 print_error(f"用户注册失败: {error_data.get('detail')}")
                 return False
-    except Exception as e:
+    except Exception:
         print_error(f"注册请求失败: {e}")
         return False
 
@@ -121,7 +121,7 @@ async def test_user_login():
                 error_data = response.json()
                 print_error(f"用户登录失败: {error_data.get('detail')}")
                 return None
-    except Exception as e:
+    except Exception:
         print_error(f"登录请求失败: {e}")
         return None
 
@@ -151,7 +151,7 @@ async def test_get_current_user(access_token: str):
                 error_data = response.json()
                 print_error(f"获取用户信息失败: {error_data.get('detail')}")
                 return False
-    except Exception as e:
+    except Exception:
         print_error(f"获取用户信息请求失败: {e}")
         return False
 
@@ -180,7 +180,7 @@ async def test_existing_users():
                     print_error(
                         f"用户 {user['username']} 登录失败: {error_data.get('detail')}"
                     )
-        except Exception as e:
+        except Exception:
             print_error(f"用户 {user['username']} 登录请求失败: {e}")
 
 

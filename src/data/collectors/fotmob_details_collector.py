@@ -108,7 +108,7 @@ class FotmobDetailsCollector:
                     "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not_A Brand";v="99"',
                     "sec-ch-ua-mobile": "?0",
                     "sec-ch-ua-platform": '"Windows"',
-                }
+                },
             )
             # 访问主页建立会话
             try:

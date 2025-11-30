@@ -14,21 +14,22 @@ from .league import League
 from .match import Match, MatchResult, MatchStatus
 from .odds import MarketType, Odds
 from .predictions import PredictedResult, Predictions
-from .raw_data import RawMatchData, RawOddsData, RawScoresData
+from .raw_data import RawData, RawMatchData, RawOddsData, RawScoresData
 from .team import Team
-
-# 导入多租户相关类 - 模块暂未实现
-PermissionScope = None
-ResourceType = None
-RolePermission = None
-Tenant = None
-TenantPermission = None
-TenantPlan = None
-TenantRole = None
-TenantStatus = None
-UserRoleAssignment = None
-
 from .user import User
+
+# 导入多租户相关类
+from .tenant import (
+    PermissionScope,
+    ResourceType,
+    RolePermission,
+    Tenant,
+    TenantPermission,
+    TenantPlan,
+    TenantRole,
+    TenantStatus,
+    UserRoleAssignment,
+)
 
 # 为API兼容性创建别名
 Prediction = Predictions
@@ -48,6 +49,7 @@ __all__ = [
     "Prediction",  # 别名
     # 数据管道模型
     "DataCollectionLog",
+    "RawData",
     "RawMatchData",
     "RawOddsData",
     "RawScoresData",

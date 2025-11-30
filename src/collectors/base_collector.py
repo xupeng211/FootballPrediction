@@ -47,6 +47,15 @@ class BaseCollector(ABC):
         self._last_request_time = 0.0
         self._request_count = 0
 
+    def _get_current_time(self) -> float:
+        """安全获取当前时间，兼容ThreadPoolExecutor环境"""
+        try:
+            import asyncio
+
+            return asyncio.get_running_loop().time()
+        except RuntimeError:
+            return time.time()
+
     async def __aenter__(self):
         """异步上下文管理器入口."""
         await self._ensure_session()
@@ -77,7 +86,15 @@ class BaseCollector(ABC):
 
     async def _rate_limit_wait(self):
         """速率限制等待."""
-        current_time = asyncio.get_event_loop().time()
+        try:
+            loop = asyncio.get_running_loop()
+            current_time = loop.time()
+        except RuntimeError:
+            # 如果没有运行中的事件循环，创建一个临时的
+            loop = asyncio.new_event_loop()
+            current_time = loop.time()
+            loop.close()
+
         time_since_last_request = current_time - self._last_request_time
 
         # 计算最小间隔时间 (60秒 / 每分钟请求数)
@@ -88,7 +105,13 @@ class BaseCollector(ABC):
             logger.debug(f"Rate limiting: waiting {wait_time:.2f} seconds")
             await asyncio.sleep(wait_time)
 
-        self._last_request_time = asyncio.get_event_loop().time()
+        # 更新最后请求时间
+        try:
+            self._last_request_time = asyncio.get_running_loop().time()
+        except RuntimeError:
+            import time
+
+            self._last_request_time = time.time()
 
     @backoff.on_exception(
         backoff.expo,
@@ -99,7 +122,13 @@ class BaseCollector(ABC):
     )
     async def _make_request(self, method: str, url: str, **kwargs) -> CollectionResult:
         """发起HTTP请求."""
-        start_time = asyncio.get_event_loop().time()
+        try:
+            loop = asyncio.get_running_loop()
+            start_time = loop.time()
+        except RuntimeError:
+            import time
+
+            start_time = time.time()
 
         try:
             await self._rate_limit_wait()
@@ -108,7 +137,7 @@ class BaseCollector(ABC):
             logger.debug(f"Making {method} request to: {url}")
 
             async with self.session.request(method, url, **kwargs) as response:
-                response_time = asyncio.get_event_loop().time() - start_time
+                response_time = self._get_current_time() - start_time
                 self._request_count += 1
 
                 # 记录请求统计
@@ -139,14 +168,14 @@ class BaseCollector(ABC):
                     )
 
         except TimeoutError:
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = self._get_current_time() - start_time
             logger.error(f"Request timeout after {response_time:.2f}s")
             return CollectionResult(
                 success=False, error="Request timeout", response_time=response_time
             )
 
         except aiohttp.ClientError as e:
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = self._get_current_time() - start_time
             logger.error(f"Client error: {e}")
             return CollectionResult(
                 success=False,
@@ -155,7 +184,7 @@ class BaseCollector(ABC):
             )
 
         except Exception as e:
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = self._get_current_time() - start_time
             logger.error(f"Unexpected error: {e}")
             return CollectionResult(
                 success=False,

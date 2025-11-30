@@ -15,7 +15,7 @@ import sys
 import subprocess
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
 
@@ -203,7 +203,7 @@ class QualityGate:
                     message="测试执行超时(>10分钟)",
                 )
             )
-        except Exception as e:
+        except Exception:
             metrics.append(
                 QualityMetric(
                     name="test_check_error",
@@ -263,7 +263,7 @@ class QualityGate:
             )
             metrics.append(mypy_metric)
 
-        except Exception as e:
+        except Exception:
             metrics.append(
                 QualityMetric(
                     name="code_quality_check_error",
@@ -328,7 +328,7 @@ class QualityGate:
                     message="安全检查工具bandit未安装，请运行: pip install bandit",
                 )
             )
-        except Exception as e:
+        except Exception:
             metrics.append(
                 QualityMetric(
                     name="security_check_error",

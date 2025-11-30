@@ -9,7 +9,7 @@ import sys
 import random
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import Any
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent
@@ -192,7 +192,7 @@ class ProductionBackfillService:
                 await asyncio.sleep(delay)
 
         print("\n" + "=" * 60)
-        print(f"🎉 Production Backfill 完成!")
+        print("🎉 Production Backfill 完成!")
         print(f"📊 总共保存: {total_saved} 场比赛")
         print("=" * 60)
 

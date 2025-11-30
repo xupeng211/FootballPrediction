@@ -110,7 +110,7 @@ class DataQualityMonitor:
         """异常检测.
 
         Returns:
-            List[Dict]: 检测到的异常列表
+            list[Dict]: 检测到的异常列表
         """
         anomalies: list[Any] = []
 

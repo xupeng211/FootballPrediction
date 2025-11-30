@@ -33,7 +33,7 @@ class BusinessRuleEngine:
             try:
                 result = rule.evaluate(context)
                 results.append(result)
-            except Exception as e:
+            except Exception:
                 results.append(RuleResult(rule.name, False, str(e)))
         return results
 

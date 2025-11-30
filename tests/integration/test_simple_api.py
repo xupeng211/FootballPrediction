@@ -91,7 +91,7 @@ async def test_basic_api():
                     logger.debug(f"❌ API请求失败: {response.status}")
                     logger.error(f"错误详情: {error_text}")
 
-        except Exception as e:
+        except Exception:
             logger.debug(f"❌ 测试失败: {e}")
             import traceback
 

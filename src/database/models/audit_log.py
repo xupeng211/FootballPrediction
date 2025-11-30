@@ -60,6 +60,8 @@ class AuditLog(BaseModel):
     action = Column(String(50), nullable=False, index=True)
     resource_type = Column(String(100), nullable=True, index=True)
     resource_id = Column(String(100), nullable=True, index=True)
+    old_values = Column(SQLiteCompatibleJSONB, nullable=True)
+    new_values = Column(SQLiteCompatibleJSONB, nullable=True)
     severity = Column(String(20), nullable=False, default="INFO", index=True)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(Text, nullable=True)
@@ -76,6 +78,14 @@ class AuditLog(BaseModel):
         {"extend_existing": True},
     )
 
+    def __repr__(self) -> str:
+        """返回日志的字符串表示."""
+        return (
+            f"AuditLog(id={self.id}, user_id={self.user_id}, "
+            f"action='{self.action}', resource_type='{self.resource_type}', "
+            f"resource_id='{self.resource_id}')"
+        )
+
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式."""
         return {
@@ -85,6 +95,8 @@ class AuditLog(BaseModel):
             "action": self.action,
             "resource_type": self.resource_type,
             "resource_id": self.resource_id,
+            "old_values": self.old_values,
+            "new_values": self.new_values,
             "severity": self.severity,
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,

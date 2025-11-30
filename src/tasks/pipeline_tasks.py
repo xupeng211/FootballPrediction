@@ -564,7 +564,7 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
         collection_result: 数据采集任务的返回结果
 
     Returns:
-        Dict[str, Any]: 清洗结果统计 + 新处理的比赛ID列表
+        dict[str, Any]: 清洗结果统计 + 新处理的比赛ID列表
     """
     try:
         logger.info(f"🚀 开始执行批量数据清洗任务，处理采集结果: {collection_result}")
@@ -665,7 +665,7 @@ def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str,
         cleaning_result: 数据清洗任务的返回结果（包含新比赛ID列表）
 
     Returns:
-        Dict[str, Any]: 特征工程结果统计
+        dict[str, Any]: 特征工程结果统计
     """
     try:
         logger.info(f"🚀 开始执行增量特征工程任务，处理清洗结果: {cleaning_result}")
@@ -805,7 +805,7 @@ def data_storage_task(self, feature_result: dict[str, Any]) -> dict[str, Any]:
         feature_result: 特征工程任务的返回结果
 
     Returns:
-        Dict[str, Any]: 存储结果统计
+        dict[str, Any]: 存储结果统计
     """
     try:
         logger.info(f"开始执行数据存储任务，处理特征结果: {feature_result}")
@@ -873,7 +873,7 @@ def complete_data_pipeline(self) -> dict[str, Any]:
     按顺序执行：FotMob数据采集 -> 批量数据清洗 -> 特征工程 -> 数据存储
 
     Returns:
-        Dict[str, Any]: 管道执行结果
+        dict[str, Any]: 管道执行结果
     """
     try:
         logger.info("🚀 开始执行完整数据管道 (FotMob数据源)")
@@ -927,7 +927,7 @@ def trigger_feature_calculation_for_new_matches(
         match_ids: 需要计算特征的比赛ID列表
 
     Returns:
-        Dict[str, Any]: 特征计算触发结果
+        dict[str, Any]: 特征计算触发结果
     """
     try:
         logger.info(f"为 {len(match_ids)} 场新比赛触发特征计算")

@@ -141,7 +141,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
             strategy_name: 使用的策略名称
 
         Returns:
-            List[Prediction]: 创建的预测列表
+            list[Prediction]: 创建的预测列表
         """
         # 执行批量预测
         predictions = await super().batch_predict(match_ids, user_id, strategy_name)

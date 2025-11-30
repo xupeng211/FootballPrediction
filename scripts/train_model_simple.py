@@ -96,7 +96,7 @@ def load_data_via_pandas():
 
         return features_df
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 加载数据失败: {e}")
         raise
 
@@ -378,7 +378,7 @@ def main():
 
         return model_path, metadata_path
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 训练失败: {e}")
         import traceback
 

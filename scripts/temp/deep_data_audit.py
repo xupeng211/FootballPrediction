@@ -9,7 +9,7 @@ import json
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+from typing import Any
 import sys
 from pathlib import Path
 
@@ -106,14 +106,14 @@ class DataAuditor:
                                 "collected_at": row.collected_at,
                             }
                         )
-                    except Exception as e:
+                    except Exception:
                         print(f"⚠️ 解析记录 {row.external_id} 时出错: {e}")
                         continue
 
                 self.data = pd.DataFrame(data_list)
                 print(f"✅ 成功解析 {len(self.data)} 条有效记录")
 
-        except Exception as e:
+        except Exception:
             print(f"❌ 数据加载失败: {e}")
             raise
 
@@ -136,13 +136,15 @@ class DataAuditor:
             for fmt in formats:
                 try:
                     return pd.to_datetime(date_str, format=fmt)
-                except:
+                except ValueError:
+                    # 日期格式不匹配，继续尝试下一个格式
                     continue
 
             # 如果都不行，使用pandas的自动解析
             return pd.to_datetime(date_str, errors="coerce")
 
-        except:
+        except Exception:
+            # 日期解析完全失败
             return None
 
     def analyze_timeline(self):
@@ -645,7 +647,7 @@ class DataAuditor:
 
             return self.report
 
-        except Exception as e:
+        except Exception:
             print(f"❌ 审计过程中发生错误: {e}")
             import traceback
 
@@ -675,7 +677,7 @@ async def main():
             with open(report_filename, "w", encoding="utf-8") as f:
                 f.write(md_report)
             print(f"\n📄 报告已保存到: {report_filename}")
-        except Exception as e:
+        except Exception:
             print(f"⚠️ 保存报告文件时出错: {e}")
 
         # 输出到控制台

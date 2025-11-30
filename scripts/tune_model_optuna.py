@@ -23,7 +23,7 @@ import json
 import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -234,7 +234,7 @@ class OptunaHyperparameterTuner:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 数据准备失败: {e}")
             import traceback
 
@@ -436,7 +436,7 @@ class OptunaHyperparameterTuner:
                 pickle.dump(self.study, f)
             logger.info(f"🔬 Optuna 研究已保存: {study_path}")
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 保存结果失败: {e}")
 
     def generate_report(self) -> None:
@@ -469,7 +469,7 @@ class OptunaHyperparameterTuner:
                     importance.items(), key=lambda x: x[1], reverse=True
                 ):
                     logger.info(f"   {param}: {imp:.4f}")
-            except Exception as e:
+            except Exception:
                 logger.warning(f"⚠️ 无法计算参数重要性: {e}")
 
             # 最佳试验详情
@@ -479,7 +479,7 @@ class OptunaHyperparameterTuner:
                 logger.info(f"   {param}: {value}")
 
             logger.info("📋 优化过程:")
-            for i, trial in enumerate(self.study.trials[:10]):  # 显示前10个试验
+            for _i, trial in enumerate(self.study.trials[:10]):  # 显示前10个试验
                 if trial.state == optuna.trial.TrialState.COMPLETE:
                     logger.info(f"   Trial {trial.number}: {trial.value:.4f}")
                 elif trial.state == optuna.trial.TrialState.PRUNED:
@@ -488,7 +488,7 @@ class OptunaHyperparameterTuner:
             if len(self.study.trials) > 10:
                 logger.info(f"   ... 还有 {len(self.study.trials) - 10} 个试验")
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 生成报告失败: {e}")
 
 
@@ -536,7 +536,7 @@ def main():
             f"🚀 准确率提升: {improvement:+.2f}% (从 {baseline_accuracy:.2%} 到 {results['best_score']:.2%})"
         )
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 优化过程中发生错误: {e}")
         import traceback
 

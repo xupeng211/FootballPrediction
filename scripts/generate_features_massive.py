@@ -10,7 +10,7 @@ import os
 import sys
 from datetime import datetime
 from collections import defaultdict
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Optional
 
 # 添加项目路径
 sys.path.append("/app/src")

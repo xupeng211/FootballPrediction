@@ -59,7 +59,7 @@ def load_training_data():
         logger.info(f"✅ 成功加载 {len(df)} 条已完成比赛记录")
         return df
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 数据加载失败: {str(e)}")
         return None
 
@@ -121,7 +121,7 @@ def process_raw_data(df):
             features.append(feature)
             labels.append(label)
 
-        except Exception as e:
+        except Exception:
             logger.warning(f"处理比赛数据时出错: {str(e)}")
             continue
 

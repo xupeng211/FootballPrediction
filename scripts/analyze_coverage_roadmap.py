@@ -6,7 +6,7 @@
 
 import json
 import sys
-from typing import Dict, List, Tuple
+from typing import Any
 from pathlib import Path
 
 
@@ -27,7 +27,7 @@ def analyze_file_coverage(coverage_data: dict) -> list[tuple[str, int, int, floa
     """
     分析每个文件的覆盖率情况
 
-    返回: List[Tuple[文件路径, 总行数, 未覆盖行数, 覆盖率百分比]]
+    返回 : list[tuple[文件路径, 总行数, 未覆盖行数, 覆盖率百分比]]
     """
     files_analysis = []
 
@@ -174,7 +174,7 @@ def generate_roadmap_report(
     hard_battles = identify_hard_battles(files_analysis)[:10]
 
     # 计算潜在覆盖率提升
-    total_missing_lines = sum(f[2] for f in files_analysis)
+    # 移除未使用的变量: total_missing_lines = sum(f[2] for f in files_analysis)
     quick_wins_potential = sum(w["missing_lines"] for w in quick_wins)
 
     # 生成报告

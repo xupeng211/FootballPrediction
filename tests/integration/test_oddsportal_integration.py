@@ -58,7 +58,7 @@ async def test_integration_initialization():
 
         logger.info("✅ Integration initialization test passed")
         return True
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ Integration initialization test failed: {e}")
         return False
 
@@ -83,7 +83,7 @@ async def test_configuration_loading():
 
         logger.info("✅ Configuration loading test passed")
         return True
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ Configuration loading test failed: {e}")
         return False
 
@@ -115,7 +115,7 @@ async def test_source_info():
 
         logger.info("✅ Source info test passed")
         return True
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ Source info test failed: {e}")
         return False
 
@@ -141,7 +141,7 @@ async def test_health_check():
 
         logger.info("✅ Health check test passed")
         return True
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ Health check test failed: {e}")
         return False
 
@@ -169,7 +169,7 @@ async def test_adapter_interface():
 
         logger.info("✅ Adapter interface test passed")
         return True
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ Adapter interface test failed: {e}")
         return False
 
@@ -211,7 +211,7 @@ async def test_data_conversion():
 
         logger.info("✅ Data conversion test passed")
         return True
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ Data conversion test failed: {e}")
         return False
 
@@ -231,7 +231,7 @@ async def test_error_handling():
 
         logger.info("✅ Error handling test passed")
         return True
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ Error handling test failed: {e}")
         return False
 
@@ -267,7 +267,7 @@ async def run_all_tests():
                 logger.info(f"✅ {test_name}: PASSED")
             else:
                 logger.error(f"❌ {test_name}: FAILED")
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ {test_name}: ERROR - {e}")
             results[test_name] = False
 
@@ -301,7 +301,7 @@ async def main():
     try:
         results = await run_all_tests()
         return results
-    except Exception as e:
+    except Exception:
         logger.error(f"Test execution failed: {e}")
         return None
 

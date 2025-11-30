@@ -173,7 +173,7 @@ def analyze_feature_importance(model, feature_cols):
     ).sort_values("importance", ascending=False)
 
     print("\n📊 特征重要性 Top 15:")
-    for i, row in feature_importance_df.head(15).iterrows():
+    for _i, row in feature_importance_df.head(15).iterrows():
         print(f"   {row['feature']}: {row['importance']:.4f}")
 
     # 🎯 特别关注 rolling_form vs team_id
@@ -278,7 +278,7 @@ def main():
 
         return model, feature_importance_df, accuracy
 
-    except Exception as e:
+    except Exception:
         print(f"❌ 训练过程中出现错误: {e}")
         raise
 

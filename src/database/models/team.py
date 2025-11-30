@@ -1,9 +1,14 @@
+from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.base import BaseModel
+
+if TYPE_CHECKING:
+    from .features import Features
 
 """
 球队模型
@@ -31,9 +36,23 @@ class Team(BaseModel):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     short_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
     country: Mapped[str] = mapped_column(String(50), nullable=False)
+    league_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     founded_year: Mapped[int] = mapped_column(Integer, nullable=True)
+    stadium: Mapped[str | None] = mapped_column(String(255), nullable=True)
     venue: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     website: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # 关系
-    features = relationship("Features", back_populates="team")
+    features = relationship("Features", back_populates="team", cascade="all, delete-orphan")
+
+    def __repr__(self) -> str:
+        """安全的__repr__方法，只访问自己的列字段."""
+        return (
+            f"Team(id={self.id}, "
+            f"name={self.name!r}, "
+            f"country={self.country!r})"
+        )

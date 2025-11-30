@@ -344,7 +344,7 @@ class TestSimplifiedEndToEndWorkflows:
         try:
             # 模拟数据库操作失败
             raise Exception("Database connection failed")
-        except Exception as e:
+        except Exception:
             # 3. 记录错误到缓存
             error_log = {
                 "error_type": "database_connection",

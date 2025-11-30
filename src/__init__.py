@@ -31,7 +31,7 @@ except ImportError:
     setup_warning_filters()
 
 # 版本信息
-__version__ = "2.0.0"
+__version__ = "1.0.0-rc1"
 __author__ = "Football Prediction Team"
 __description__ = "基于机器学习的足球比赛结果预测系统"
 

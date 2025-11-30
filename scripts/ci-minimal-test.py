@@ -24,10 +24,10 @@ def test_basic_imports():
         import json
         import asyncio
         from datetime import datetime, timezone
-        from typing import Optional, List, Dict
+        from typing import Optional
 
         print("✅ 标准库导入成功")
-    except Exception as e:
+    except Exception:
         print(f"❌ 标准库导入失败: {e}")
         return False
 
@@ -36,7 +36,7 @@ def test_basic_imports():
         from utils.date_utils import DateUtils
 
         print("✅ DateUtils导入成功")
-    except Exception as e:
+    except Exception:
         print(f"⚠️ DateUtils导入失败: {e}")
         # DateUtils失败不影响CI通过
 
@@ -45,7 +45,7 @@ def test_basic_imports():
         from database.models import Base
 
         print("✅ 数据库Base模型导入成功")
-    except Exception as e:
+    except Exception:
         print(f"⚠️ 数据库模型导入失败: {e}")
         # 数据库模块失败不影响CI通过
 
@@ -66,7 +66,7 @@ def test_basic_functionality():
         assert formatted == "2024-01-01 12:00:00"
         print("✅ 日期格式化测试通过")
         success_count += 1
-    except Exception as e:
+    except Exception:
         print(f"❌ 日期格式化测试失败: {e}")
 
     # 测试2: JSON序列化
@@ -80,7 +80,7 @@ def test_basic_functionality():
         assert parsed["value"] == 42
         print("✅ JSON序列化测试通过")
         success_count += 1
-    except Exception as e:
+    except Exception:
         print(f"❌ JSON序列化测试失败: {e}")
 
     # 测试3: 异步基础
@@ -94,13 +94,11 @@ def test_basic_functionality():
         assert result == "async_result"
         print("✅ 异步基础测试通过")
         success_count += 1
-    except Exception as e:
+    except Exception:
         print(f"❌ 异步基础测试失败: {e}")
 
     # 测试4: 类型检查
     try:
-        from typing import Dict, Any
-
         def typed_function(name: str, age: int) -> dict[str, Any]:
             return {"name": name, "age": age}
 
@@ -109,7 +107,7 @@ def test_basic_functionality():
         assert result["age"] == 25
         print("✅ 类型注解测试通过")
         success_count += 1
-    except Exception as e:
+    except Exception:
         print(f"❌ 类型注解测试失败: {e}")
 
     # 测试5: 错误处理
@@ -131,7 +129,7 @@ def test_basic_functionality():
 
         print("✅ 错误处理测试通过")
         success_count += 1
-    except Exception as e:
+    except Exception:
         print(f"❌ 错误处理测试失败: {e}")
 
     print(f"🎯 基础功能测试: {success_count}/{total_tests} 通过")
@@ -155,7 +153,7 @@ def test_date_utils_if_available():
             assert result == "2024-01-01 12:00:00"
             print("✅ format_datetime测试通过")
             success_count += 1
-        except Exception as e:
+        except Exception:
             print(f"❌ format_datetime测试失败: {e}")
 
         # 测试2: parse_date
@@ -166,7 +164,7 @@ def test_date_utils_if_available():
             assert result.day == 1
             print("✅ parse_date测试通过")
             success_count += 1
-        except Exception as e:
+        except Exception:
             print(f"❌ parse_date测试失败: {e}")
 
         # 测试3: is_weekend
@@ -177,7 +175,7 @@ def test_date_utils_if_available():
             assert DateUtils.is_weekend(sunday) == True
             print("✅ is_weekend测试通过")
             success_count += 1
-        except Exception as e:
+        except Exception:
             print(f"❌ is_weekend测试失败: {e}")
 
         print(f"🎯 DateUtils测试: {success_count}/{total_tests} 通过")
@@ -245,7 +243,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("⚠️ CI验证被中断")
         sys.exit(130)
-    except Exception as e:
+    except Exception:
         print(f"💥 CI验证发生未预期错误: {e}")
         print("📋 错误详情:")
         traceback.print_exc()

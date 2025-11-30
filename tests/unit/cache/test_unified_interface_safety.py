@@ -613,7 +613,7 @@ class TestUnifiedInterfaceSafetyNet:
             assert config.enable_decorators is True
             assert config.default_ttl == 3600
 
-        except Exception as e:
+        except Exception:
             pytest.fail(f"UnifiedCacheConfig should be properly defined: {e}")
 
     @pytest.mark.unit
@@ -634,7 +634,7 @@ class TestUnifiedInterfaceSafetyNet:
                 assert hasattr(adapter, "_cache")
                 assert adapter._cache == mock_ttl_cache
 
-        except Exception as e:
+        except Exception:
             pytest.fail(f"MemoryCacheAdapter should be properly created: {e}")
 
     @pytest.mark.unit
@@ -656,7 +656,7 @@ class TestUnifiedInterfaceSafetyNet:
                 assert hasattr(adapter, "_manager")
                 assert adapter._manager == mock_redis_manager
 
-        except Exception as e:
+        except Exception:
             pytest.fail(f"RedisCacheAdapter should be properly created: {e}")
 
     @pytest.mark.unit
@@ -689,7 +689,7 @@ class TestUnifiedInterfaceSafetyNet:
                 assert hasattr(adapter, "_l1_cache")
                 assert hasattr(adapter, "_l2_cache")
 
-        except Exception as e:
+        except Exception:
             pytest.fail(f"MultiLevelCacheAdapter should be properly created: {e}")
 
     @pytest.mark.unit
@@ -709,5 +709,5 @@ class TestUnifiedInterfaceSafetyNet:
             for method in expected_methods:
                 assert method in abstract_methods
 
-        except Exception as e:
+        except Exception:
             pytest.fail(f"CacheInterface should have expected abstract methods: {e}")

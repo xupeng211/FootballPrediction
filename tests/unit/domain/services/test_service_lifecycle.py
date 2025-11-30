@@ -626,7 +626,7 @@ class TestServiceLifecycleIntegration:
             try:
                 service = container.get_service("match")
                 results.append(service._is_initialized)
-            except Exception as e:
+            except Exception:
                 errors.append(str(e))
 
         # 创建多个线程同时初始化服务

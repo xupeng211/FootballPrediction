@@ -23,7 +23,7 @@ class QuickGitManager:
                 "stdout": result.stdout.strip(),
                 "stderr": result.stderr.strip(),
             }
-        except Exception as e:
+        except Exception:
             return {"success": False, "error": str(e)}
 
     def quick_commit(self, message, files=None):

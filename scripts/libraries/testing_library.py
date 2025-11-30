@@ -33,7 +33,7 @@ class QuickTestRunner:
                 "failed": failed,
                 "output": result.stdout + result.stderr,
             }
-        except Exception as e:
+        except Exception:
             return {"success": False, "error": str(e)}
 
     def _extract_count(self, text, pattern):

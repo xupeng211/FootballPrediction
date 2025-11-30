@@ -72,7 +72,7 @@ class DataCollectionService:
                 self.logger.info(f"✅ 成功保存 {saved_count} 支球队到数据库")
                 return saved_count
 
-        except Exception as e:
+        except Exception:
             self.logger.error(f"❌ 保存球队数据失败: {e}")
             raise
 
@@ -117,7 +117,7 @@ class DataCollectionService:
 
             return True
 
-        except Exception as e:
+        except Exception:
             self.logger.error(f"❌ 确保球队存在失败 (ID: {team_id}): {e}")
             return False
 
@@ -218,7 +218,7 @@ class DataCollectionService:
                 self.logger.info(f"✅ 成功保存 {saved_count} 场比赛到数据库")
                 return saved_count
 
-        except Exception as e:
+        except Exception:
             self.logger.error(f"❌ 保存比赛数据失败: {e}")
             raise
 
@@ -303,7 +303,7 @@ async def collect_and_save_data():
 
         return saved_teams > 0
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 数据采集和保存失败: {e}")
         return False
 

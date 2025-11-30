@@ -32,7 +32,7 @@ def get_coverage():
 
         return coverage_line
 
-    except Exception as e:
+    except Exception:
         print(f"Error running tests: {e}")
         return ""
 

@@ -13,7 +13,7 @@ import sys
 import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 import json
 
 # 添加项目根目录到Python路径
@@ -45,7 +45,7 @@ class DataQualityAuditor:
             conn = psycopg2.connect(self.db_url)
             logger.info("✅ 数据库连接成功")
             return conn
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 数据库连接失败: {e}")
             raise
 
@@ -59,7 +59,7 @@ class DataQualityAuditor:
                     cursor.execute(query, params)
                     results = cursor.fetchall()
                     return [dict(row) for row in results]
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 查询执行失败: {e}")
             return []
 
@@ -114,7 +114,7 @@ class DataQualityAuditor:
                         quality_issues.append(
                             f"比赛ID {match['id']}: match_date不是datetime类型"
                         )
-                except:
+                except Exception:
                     quality_issues.append(f"比赛ID {match['id']}: match_date格式错误")
 
             # 检查队名格式
@@ -209,7 +209,7 @@ class DataQualityAuditor:
                 result = self.execute_query(count_query)
                 count = result[0]["count"] if result else 0
                 table_stats.append({"table": table, "record_count": count})
-            except Exception as e:
+            except Exception:
                 logger.warning(f"⚠️ 无法查询表 {table}: {e}")
                 table_stats.append({"table": table, "record_count": "ERROR"})
 
@@ -247,7 +247,7 @@ class DataQualityAuditor:
         except ImportError as e:
             logger.warning(f"⚠️ 无法导入采集任务: {e}")
             return {"status": "import_error", "message": f"采集任务模块未找到: {e}"}
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 数据采集失败: {e}")
             return {"status": "error", "message": str(e)}
 
@@ -334,7 +334,7 @@ class DataQualityAuditor:
                 "overall_quality": "GOOD" if total_issues == 0 else "NEEDS_ATTENTION",
             }
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 审计过程中发生错误: {e}")
             results["error"] = str(e)
             results["status"] = "failed"
@@ -391,7 +391,7 @@ def main():
         # 根据质量评级返回退出码
         return 0 if summary.get("overall_quality") == "GOOD" else 1
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 审计系统错误: {e}")
         return 1
 

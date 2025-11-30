@@ -374,7 +374,7 @@ class FotMobAuthenticatedClient:
                 )
                 return result
 
-        except Exception as e:
+        except Exception:
             result["status_codes"].append(f"A:Error({str(e)[:20]})")
 
         # Scenario B: 无签名头 (仅 TLS 伪装)
@@ -394,7 +394,7 @@ class FotMobAuthenticatedClient:
                 )
                 return result
 
-        except Exception as e:
+        except Exception:
             result["status_codes"].append(f"B:Error({str(e)[:20]})")
 
         # 记录失败但有用的信息
@@ -443,7 +443,7 @@ class FotMobAuthenticatedClient:
                     else str(response.content)[:100],
                 }
 
-        except Exception as e:
+        except Exception:
             return {"type": "error", "error": str(e)}
 
     def _analyze_json_structure(self, data, depth=0, max_depth=2):

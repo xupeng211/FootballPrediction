@@ -3,7 +3,7 @@
 生成时间：2025-10-26 20:57:22
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 # Redis集群配置
 REDIS_CLUSTER_CONFIG = {
     "nodes": [

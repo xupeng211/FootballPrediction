@@ -108,7 +108,7 @@ class DongqiudiWebProbe:
                     else:
                         logger.warning(f"状态码 {response.status_code}: {url}")
 
-                except Exception as e:
+                except Exception:
                     logger.error(f"请求失败 {url}: {e}")
                     continue
 
@@ -190,7 +190,7 @@ class DongqiudiWebProbe:
 
             return is_major and is_finished
 
-        except Exception as e:
+        except Exception:
             logger.debug(f"解析比赛状态失败: {e}")
             return False
 
@@ -234,11 +234,11 @@ class DongqiudiWebProbe:
                                     except json.JSONDecodeError:
                                         continue
 
-                            except Exception as e:
+                            except Exception:
                                 logger.debug(f"解析 script 失败: {e}")
                                 continue
 
-            except Exception as e:
+            except Exception:
                 logger.error(f"抓取网页失败 {url}: {e}")
                 continue
 
@@ -289,7 +289,7 @@ class DongqiudiWebProbe:
                         else:
                             logger.debug(f"状态码 {response.status_code}: {url}")
 
-                    except Exception as e:
+                    except Exception:
                         logger.debug(f"请求失败 {url}: {e}")
                         continue
 
@@ -349,7 +349,7 @@ class DongqiudiWebProbe:
                     validation["has_stats"] = True
                     validation["key_fields"].append("技术统计")
 
-        except Exception as e:
+        except Exception:
             logger.error(f"数据验证失败: {e}")
 
         return validation

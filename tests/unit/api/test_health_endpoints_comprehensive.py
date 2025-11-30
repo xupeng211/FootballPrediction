@@ -475,7 +475,7 @@ def create_health_test_app() -> FastAPI:
             health_checker_instance.add_health_snapshot(overall_status, components)
 
             logging.info(f"Health check completed: {overall_status}")
-        except Exception as e:
+        except Exception:
             logging.error(f"Health check failed: {e}")
 
     return app

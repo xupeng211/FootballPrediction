@@ -115,7 +115,7 @@ def fix_test_file(file_path):
         except SyntaxError as e:
             return False, f"语法错误: 行 {e.lineno} - {e.msg}"
 
-    except Exception as e:
+    except Exception:
         return False, f"处理失败: {e}"
 
 

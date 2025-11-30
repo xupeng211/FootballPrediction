@@ -135,7 +135,7 @@ class FeatureGenerator:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 加载数据失败: {e}")
             return False
 
@@ -160,7 +160,7 @@ class FeatureGenerator:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 特征计算失败: {e}")
             return False
 
@@ -204,7 +204,7 @@ class FeatureGenerator:
                 logger.error("❌ 特征数据验证失败")
                 return False
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 特征验证失败: {e}")
             return False
 
@@ -290,7 +290,7 @@ class FeatureGenerator:
                             f"已准备 {index + 1}/{len(self.features_df)} 条记录..."
                         )
 
-                except Exception as e:
+                except Exception:
                     logger.error(f"准备第 {index} 条记录失败: {e}")
                     continue
 
@@ -327,7 +327,7 @@ class FeatureGenerator:
             logger.info(f"✅ 成功保存 {len(batch_data)} 条特征记录到数据库")
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 保存到数据库失败: {e}")
             # 打印详细错误信息用于调试
             import traceback
@@ -362,7 +362,7 @@ class FeatureGenerator:
                 logger.error(f"❌ 文件未创建: {filepath}")
                 return False
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 保存数据集失败: {e}")
             return False
 
@@ -420,7 +420,7 @@ class FeatureGenerator:
                 f"   无历史记录的比赛: {zero_history_matches} ({zero_history_matches / total_matches * 100:.1f}%)"
             )
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 生成报告失败: {e}")
 
     async def run(self, output_path: str = "data/dataset_v1.csv"):
@@ -464,7 +464,7 @@ class FeatureGenerator:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"💥 特征生成流程失败: {e}")
             return False
 
@@ -487,7 +487,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("⏹️  用户中断，特征生成停止")
         sys.exit(1)
-    except Exception as e:
+    except Exception:
         logger.error(f"💥 特征生成异常: {e}")
         sys.exit(1)
 

@@ -1,10 +1,23 @@
 from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from src.database.base import BaseModel
+
+if TYPE_CHECKING:
+    from .tenant import Tenant
 
 
 class UserRole(str, Enum):
@@ -56,10 +69,22 @@ class User(BaseModel):
     achievements = Column(JSON, nullable=True, default=list, comment="成就列表")
 
     # 租户关系
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, comment="租户ID")
+    tenant_id = Column(
+        Integer, ForeignKey("tenants.id"), nullable=True, comment="租户ID"
+    )
     tenant = relationship("Tenant", back_populates="users", foreign_keys=[tenant_id])
 
     # 时间戳字段继承自BaseModel (created_at, updated_at)
+
+    def __repr__(self) -> str:
+        """安全的__repr__方法，只访问自己的列字段."""
+        is_active_val = self.is_active if self.is_active is not None else True
+        return (
+            f"User(id={self.id}, "
+            f"username={self.username!r}, "
+            f"email={self.email!r}, "
+            f"is_active={is_active_val})"
+        )
 
     @property
     def full_name(self) -> str:

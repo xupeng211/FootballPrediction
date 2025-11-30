@@ -19,7 +19,7 @@ async def health_check() -> dict[str, Any]:
     """检查预测服务的健康状态.
 
     Returns:
-        Dict[str, Any]: 健康检查结果
+        dict[str, Any]: 健康检查结果
     """
     try:
         start_time = datetime.utcnow()

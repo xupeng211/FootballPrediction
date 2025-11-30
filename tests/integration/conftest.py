@@ -137,7 +137,7 @@ def sync_test_db_session(sync_test_db_engine):
 def app():
     """创建FastAPI应用实例"""
     try:
-        from src.api.main import app as main_app
+        from src.api.app import app as main_app
 
         return main_app
     except ImportError:

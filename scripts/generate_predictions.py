@@ -10,7 +10,7 @@ import asyncio
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent))
@@ -125,7 +125,7 @@ class BatchPredictionGenerator:
                 await session.commit()
                 logger.info(f"✅ 已保存比赛 {match_id} 的预测")
                 return True
-            except Exception as e:
+            except Exception:
                 await session.rollback()
                 logger.error(f"❌ 保存比赛 {match_id} 预测失败: {e}")
                 return False
@@ -136,7 +136,7 @@ class BatchPredictionGenerator:
             # 确保数据库已初始化
             try:
                 initialize_database(database_url=CONFIG_MANAGER.database_url)
-            except Exception as e:
+            except Exception:
                 logger.warning(f"数据库初始化失败，继续使用推理服务: {e}")
 
             # 初始化推理服务
@@ -200,7 +200,7 @@ class BatchPredictionGenerator:
                 "status": "ai_generated",
             }
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 生成真实预测失败: {e}")
             # 返回基础预测作为后备
             return {
@@ -249,7 +249,7 @@ class BatchPredictionGenerator:
                 else:
                     failed_count += 1
 
-            except Exception as e:
+            except Exception:
                 logger.error(f"❌ 处理比赛 {match_id} 失败: {e}")
                 failed_count += 1
 
@@ -318,7 +318,7 @@ class BatchPredictionGenerator:
                     else:
                         failed_count += 1
 
-                except Exception as e:
+                except Exception:
                     logger.error(f"❌ 处理比赛 {match_id} 失败: {e}")
                     failed_count += 1
 
@@ -349,7 +349,7 @@ async def main():
     try:
         initialize_database(database_url=CONFIG_MANAGER.database_url)
         logger.info("✅ 数据库初始化成功")
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 数据库初始化失败: {e}")
         raise
 
@@ -373,7 +373,7 @@ async def main():
 
         logger.info("✅ 预测生成任务完成")
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 预测生成失败: {e}")
         raise
     finally:

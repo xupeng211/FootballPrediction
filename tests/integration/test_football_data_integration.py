@@ -58,7 +58,7 @@ async def test_api_connection():
 
             return True
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ API连接测试失败: {e}")
         return False
 
@@ -85,7 +85,7 @@ async def test_data_normalization():
 
             return True
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 数据标准化测试失败: {e}")
         return False
 
@@ -136,7 +136,7 @@ async def test_database_model():
 
         return True
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 数据库模型测试失败: {e}")
         return False
 
@@ -166,7 +166,7 @@ async def main():
             else:
                 logger.debug(f"❌ {test_name} 失败")
                 failed += 1
-        except Exception as e:
+        except Exception:
             logger.debug(f"❌ {test_name} 异常: {e}")
             failed += 1
 

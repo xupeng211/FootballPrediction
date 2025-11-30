@@ -6,7 +6,7 @@ Enterprise Multi-Tenant System Data Models.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
     JSON,
@@ -24,7 +24,9 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, relationship
 
 from src.database.base import BaseModel
-from src.database.models.user import User
+
+if TYPE_CHECKING:
+    from .user import User
 
 
 class TenantStatus(str, Enum):
@@ -210,6 +212,14 @@ class Tenant(BaseModel):
         result["days_until_expiry"] = self.days_until_expiry
         result["usage_percentage"] = self.usage_percentage
         return result
+
+    def __repr__(self) -> str:
+        """安全的__repr__方法，只访问自己的列字段."""
+        return (
+            f"Tenant(id={self.id}, "
+            f"name={self.name!r}, "
+            f"slug={self.slug!r})"
+        )
 
 
 class PermissionScope(str, Enum):

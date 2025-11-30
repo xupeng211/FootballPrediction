@@ -878,9 +878,9 @@ class TestDataSourcesSecurityEnhanced:
             for i in range(1000)
         ]
 
-        with patch.object(football_adapter, "_fetch_matches_from_url") as mock_fetch:
+        with patch.object(football_adapter, "_fetch_matches_from_url", new_callable=AsyncMock) as mock_fetch:
             with patch.object(football_adapter, "_parse_match_data") as mock_parse:
-                # _fetch_matches_from_url 应该返回解析后的 MatchData 列表
+                # _fetch_matches_from_url 是异步方法，需要返回异步结果
                 mock_fetch.return_value = [
                     MatchData(id=i, home_team=f"Team {i}", away_team=f"Team {i + 1}")
                     for i in range(1000)
@@ -1037,7 +1037,7 @@ class TestDataSourcesIntegrationSecurity:
             try:
                 matches = await adapter.get_matches()
                 assert isinstance(matches, list)
-            except Exception as e:
+            except Exception:
                 # 单个适配器失败不应影响其他适配器
                 pytest.fail(f"Adapter {adapter_name} failed unexpectedly: {e}")
 

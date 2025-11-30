@@ -3,6 +3,7 @@
 Smoke Test for Data Backfill System
 验证数据流是否真正打通的实战测试
 """
+
 import asyncio
 import sys
 import time
@@ -10,9 +11,13 @@ import psycopg2
 from datetime import datetime
 import os
 
+
 def get_db_connection():
     """获取数据库连接"""
-    db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction")
+    db_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction",
+    )
     # 转换URL格式用于psycopg2
     if db_url.startswith("postgresql+asyncpg://"):
         db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
@@ -22,6 +27,7 @@ def get_db_connection():
         db_url = "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
 
     return psycopg2.connect(db_url)
+
 
 def get_matches_count():
     """获取当前比赛数量"""
@@ -33,9 +39,10 @@ def get_matches_count():
         cursor.close()
         conn.close()
         return count
-    except Exception as e:
+    except Exception:
         print(f"❌ 数据库连接失败: {e}")
         return None
+
 
 async def main():
     """主测试函数"""
@@ -87,6 +94,7 @@ async def main():
         print("🚨 系统异常，需要立即干预!")
         return False
 
+
 if __name__ == "__main__":
     try:
         result = asyncio.run(main())
@@ -94,6 +102,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n⚠️ 测试被用户中断")
         sys.exit(1)
-    except Exception as e:
+    except Exception:
         print(f"❌ 测试异常: {e}")
         sys.exit(1)

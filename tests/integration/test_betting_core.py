@@ -268,7 +268,7 @@ class BettingCoreTester:
 
             return self.test_results
 
-        except Exception as e:
+        except Exception:
             self.test_results["test_status"] = "error"
             self.test_results["error"] = str(e)
             return self.test_results

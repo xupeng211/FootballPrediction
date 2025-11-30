@@ -92,20 +92,22 @@ class FotmobCollector(BaseCollector):
     async def _get_session(self) -> AsyncSession:
         """获取或创建异步会话"""
         if self._session is None:
-            # 🛡️ 使用最新Chrome版本和完整浏览器指纹
+            # 🛡️ 使用Chrome120进行全新身份伪装 (避免被限制的124版本)
             self._session = AsyncSession(
-                impersonate="chrome124",
+                impersonate="chrome120",
                 headers={
-                    "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not_A Brand";v="99"',
+                    "sec-ch-ua": '"Chromium";v="120", "Google Chrome";v="120", "Not_A Brand";v="99"',
                     "sec-ch-ua-mobile": "?0",
                     "sec-ch-ua-platform": '"Windows"',
-                }
+                },
             )
 
             # 首先访问主页建立会话
             try:
                 await self._session.get(f"{self.base_url}/", timeout=10)
-                logger.info("FotMob session initialized successfully (Chrome124 伪装)")
+                logger.info(
+                    "FotMob session initialized successfully (Chrome120 全新身份伪装)"
+                )
             except Exception as e:
                 logger.error(f"Failed to initialize FotMob session: {e}")
                 raise
@@ -229,10 +231,10 @@ class FotmobCollector(BaseCollector):
         """生成签名 (增强版: 多重算法组合)"""
         # 算法1: URL + code + client_version 的 SHA256 前16位
         base_str1 = f"{api_url}{body_data['code']}{self.client_version}"
-        sig1 = hashlib.sha256(base_str1.encode()).hexdigest().upper()[:16]
+        hashlib.sha256(base_str1.encode()).hexdigest().upper()[:16]
 
         # 算法2: 时间戳 + URL 的 MD5 前8位 + client_version 后8位
-        timestamp_str = str(body_data['code'])
+        timestamp_str = str(body_data["code"])
         base_str2 = f"{timestamp_str}{api_url}"
         sig2_part1 = hashlib.md5(base_str2.encode()).hexdigest().upper()[:8]
         sig2_part2 = hashlib.md5(self.client_version.encode()).hexdigest().upper()[-8:]
@@ -242,8 +244,8 @@ class FotmobCollector(BaseCollector):
         # 从已知签名中提取基础模式
         known_pattern = "C22B41D96965BADE5632770D8275EE48"
         # 根据当前时间戳进行轻微变换
-        time_factor = body_data['code'] % 1000000
-        sig3 = known_pattern[:12] + f"{time_factor:04d}" + known_pattern[16:]
+        time_factor = body_data["code"] % 1000000
+        known_pattern[:12] + f"{time_factor:04d}" + known_pattern[16:]
 
         # 返回最可能的签名 (优先级: sig2 > sig1 > sig3)
         return sig2
@@ -470,17 +472,21 @@ class FotmobCollector(BaseCollector):
                     "home": {
                         "id": home_team,
                         "name": f"Team_{home_team}",
-                        "shortName": f"T{home_team}"
+                        "shortName": f"T{home_team}",
                     },
                     "away": {
                         "id": away_team,
                         "name": f"Team_{away_team}",
-                        "shortName": f"T{away_team}"
+                        "shortName": f"T{away_team}",
                     },
-                    "status": {"reason": {"long": "FINISHED"} if random.random() > 0.3 else "SCHEDULED"},
+                    "status": {
+                        "reason": {"long": "FINISHED"}
+                        if random.random() > 0.3
+                        else "SCHEDULED"
+                    },
                     "matchDate": match_date.isoformat(),
                     "homeScore": random.randint(0, 4) if random.random() > 0.3 else 0,
-                    "awayScore": random.randint(0, 4) if random.random() > 0.3 else 0
+                    "awayScore": random.randint(0, 4) if random.random() > 0.3 else 0,
                 }
                 matches.append(match_data)
 
@@ -500,9 +506,7 @@ class FotmobCollector(BaseCollector):
 
         except Exception as e:
             self.logger.error(f"Error collecting matches via audio-matches: {e}")
-            return self.create_error_result(
-                f"Audio-matches collection failed: {e}"
-            )
+            return self.create_error_result(f"Audio-matches collection failed: {e}")
 
     async def collect_match_details(self, match_id: str) -> CollectionResult:
         """

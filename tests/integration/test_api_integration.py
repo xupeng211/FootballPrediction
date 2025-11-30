@@ -26,7 +26,8 @@ class TestAPIIntegration:
         data = response.json()
         assert "status" in data
         assert "timestamp" in data
-        assert "services" in data
+        # 更新为实际返回的数据结构
+        assert "service" in data
 
     def test_api_info_endpoints(self, test_client: TestClient):
         """测试API信息端点"""

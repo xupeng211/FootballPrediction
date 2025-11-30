@@ -17,7 +17,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import logging
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Any, Optional
 
 # 添加src到路径
 sys.path.append("/app/src")
@@ -337,7 +337,7 @@ class AdvancedFeatureGenerator:
 
         # 过滤有足够历史数据的比赛
         valid_matches = []
-        for idx, row in matches_df.iterrows():
+        for _, row in matches_df.iterrows():
             home_team_id = row["home_team_id"]
             away_team_id = row["away_team_id"]
 
@@ -487,7 +487,7 @@ class AdvancedFeatureGenerator:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"💥 特征生成异常: {e}")
             import traceback
 
@@ -604,7 +604,7 @@ async def main():
         else:
             print("\n❌ 高级特征生成失败")
 
-    except Exception as e:
+    except Exception:
         logger.error(f"💥 系统异常: {e}")
         import traceback
 

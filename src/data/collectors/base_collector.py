@@ -64,7 +64,7 @@ class BaseCollector:
             timeout: 超时时间
 
         Returns:
-            Dict[str, Any]: 响应JSON数据
+            dict[str, Any]: 响应JSON数据
 
         Raises:
             httpx.RequestError: 请求错误

@@ -8,7 +8,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from collections import Counter, defaultdict
-from typing import Dict, List, Tuple, Any
+from typing import Any, Any
 import pandas as pd
 import numpy as np
 
@@ -457,7 +457,7 @@ async def main():
 
         logger.info("✅ 数据分析完成！")
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 分析过程中出现错误: {str(e)}")
         raise
     finally:

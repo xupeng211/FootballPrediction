@@ -6,7 +6,7 @@ Security Configuration
 """
 
 import os
-from typing import Dict, List, Optional
+# Optional imports remain
 
 
 class SecuritySettings:

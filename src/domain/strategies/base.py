@@ -113,7 +113,7 @@ class PredictionStrategy(ABC):
             inputs: 预测输入数据列表
 
         Returns:
-            List[PredictionOutput]: 预测结果列表
+            list[PredictionOutput]: 预测结果列表
         """
 
     @abstractmethod

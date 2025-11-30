@@ -6,7 +6,7 @@ including team performance statistics and league standings.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -23,9 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
-def get_analytics_service(
-    db_session = Depends(get_async_db)
-) -> AnalyticsService:
+def get_analytics_service(db_session=Depends(get_async_db)) -> AnalyticsService:
     """
     Dependency injection for AnalyticsService.
 
@@ -39,12 +37,14 @@ def get_analytics_service(
     return AnalyticsService(analytics_repository)
 
 
-@router.get("/teams/{team_id}/performance", response_model=Dict[str, Any])
+@router.get("/teams/{team_id}/performance", response_model=dict[str, Any])
 async def get_team_performance(
     team_id: int,
-    days: int = Query(default=30, ge=1, le=365, description="Number of days to look back"),
-    analytics_service: AnalyticsService = Depends(get_analytics_service)
-) -> Dict[str, Any]:
+    days: int = Query(
+        default=30, ge=1, le=365, description="Number of days to look back"
+    ),
+    analytics_service: AnalyticsService = Depends(get_analytics_service),
+) -> dict[str, Any]:
     """
     Get comprehensive team performance statistics.
 
@@ -70,13 +70,15 @@ async def get_team_performance(
 
     try:
         # Get performance statistics from service
-        performance_data = await analytics_service.get_team_performance_stats(team_id, days)
+        performance_data = await analytics_service.get_team_performance_stats(
+            team_id, days
+        )
 
         if performance_data is None:
             logger.warning(f"Team {team_id} performance data not found")
             raise HTTPException(
                 status_code=404,
-                detail=f"Team with ID {team_id} not found or no performance data available"
+                detail=f"Team with ID {team_id} not found or no performance data available",
             )
 
         logger.info(f"Successfully retrieved performance data for team {team_id}")
@@ -84,32 +86,26 @@ async def get_team_performance(
 
     except TeamNotFoundError:
         logger.warning(f"Team {team_id} not found")
-        raise HTTPException(
-            status_code=404,
-            detail=f"Team with ID {team_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Team with ID {team_id} not found")
 
     except ValueError as e:
         logger.error(f"Validation error for team {team_id}: {e}")
-        raise HTTPException(
-            status_code=422,
-            detail=f"Validation error: {str(e)}"
-        )
+        raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
 
     except Exception as e:
         logger.error(f"Unexpected error getting team performance for {team_id}: {e}")
         raise HTTPException(
             status_code=500,
-            detail="Internal server error while retrieving team performance data"
+            detail="Internal server error while retrieving team performance data",
         )
 
 
-@router.get("/leagues/{league_id}/standings", response_model=Dict[str, Any])
+@router.get("/leagues/{league_id}/standings", response_model=dict[str, Any])
 async def get_league_standings(
     league_id: int,
     season: str = Query(default="2024", description="Season identifier"),
-    analytics_service: AnalyticsService = Depends(get_analytics_service)
-) -> Dict[str, Any]:
+    analytics_service: AnalyticsService = Depends(get_analytics_service),
+) -> dict[str, Any]:
     """
     Get league standings and statistics.
 
@@ -138,10 +134,12 @@ async def get_league_standings(
         standings_data = await analytics_service.get_league_standings(league_id, season)
 
         if standings_data is None:
-            logger.warning(f"League {league_id} standings for season {season} not found")
+            logger.warning(
+                f"League {league_id} standings for season {season} not found"
+            )
             raise HTTPException(
                 status_code=404,
-                detail=f"League with ID {league_id} or season {season} not found"
+                detail=f"League with ID {league_id} or season {season} not found",
             )
 
         logger.info(f"Successfully retrieved standings for league {league_id}")
@@ -150,29 +148,25 @@ async def get_league_standings(
     except LeagueNotFoundError:
         logger.warning(f"League {league_id} not found")
         raise HTTPException(
-            status_code=404,
-            detail=f"League with ID {league_id} not found"
+            status_code=404, detail=f"League with ID {league_id} not found"
         )
 
     except ValueError as e:
         logger.error(f"Validation error for league {league_id}: {e}")
-        raise HTTPException(
-            status_code=422,
-            detail=f"Validation error: {str(e)}"
-        )
+        raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
 
     except Exception as e:
         logger.error(f"Unexpected error getting league standings for {league_id}: {e}")
         raise HTTPException(
             status_code=500,
-            detail="Internal server error while retrieving league standings"
+            detail="Internal server error while retrieving league standings",
         )
 
 
-@router.get("/health", response_model=Dict[str, str])
+@router.get("/health", response_model=dict[str, str])
 async def analytics_health_check(
-    analytics_service: AnalyticsService = Depends(get_analytics_service)
-) -> Dict[str, str]:
+    analytics_service: AnalyticsService = Depends(get_analytics_service),
+) -> dict[str, str]:
     """
     Health check endpoint for analytics service.
 
@@ -184,14 +178,11 @@ async def analytics_health_check(
         return {
             "status": "healthy",
             "service": "analytics",
-            "timestamp": "2025-01-01T12:00:00Z"
+            "timestamp": "2025-01-01T12:00:00Z",
         }
     except Exception as e:
         logger.error(f"Analytics health check failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="Analytics service unavailable"
-        )
+        raise HTTPException(status_code=503, detail="Analytics service unavailable")
 
 
 # Note: Exception handlers are defined in main.py for the FastAPI app

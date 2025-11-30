@@ -111,7 +111,7 @@ class Event(ABC):
         """将事件转换为字典".
 
         Returns:
-            Dict[str, Any]: 事件的字典表示
+            dict[str, Any]: 事件的字典表示
         """
 
     @classmethod

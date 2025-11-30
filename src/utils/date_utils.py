@@ -23,7 +23,9 @@ class DateUtils:
     }
 
     @staticmethod
-    def format_dt_datetime(dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+    def format_dt_datetime(
+        dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S"
+    ) -> str:
         """格式化日期时间."""
         if not isinstance(dt, dt_datetime):
             return ""
@@ -39,7 +41,9 @@ class DateUtils:
         return DateUtils.format_dt_datetime(dt, format_str)
 
     @staticmethod
-    def parse_date(date_str: str, format_str: str = "%Y-%m-%d") -> Optional[dt_datetime]:
+    def parse_date(
+        date_str: str, format_str: str = "%Y-%m-%d"
+    ) -> Optional[dt_datetime]:
         """解析日期字符串."""
         if not isinstance(date_str, str):
             return None
@@ -106,7 +110,8 @@ class DateUtils:
 
     @staticmethod
     def get_age(
-        birth_date: Union[dt_datetime, date], current_date: Optional[Union[dt_datetime, date]] = None
+        birth_date: Union[dt_datetime, date],
+        current_date: Optional[Union[dt_datetime, date]] = None,
     ) -> Optional[int]:
         """计算年龄."""
         # 验证输入参数
@@ -297,7 +302,9 @@ class DateUtils:
 
 # 缓存版本的函数
 @lru_cache(maxsize=128)
-def cached_format_datetime(dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+def cached_format_datetime(
+    dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S"
+) -> str:
     """缓存版本的日期格式化."""
     return DateUtils.format_dt_datetime(dt, format_str)
 

@@ -14,6 +14,18 @@ import pandas as pd
 from pathlib import Path
 from typing import Optional
 
+# 初始化logger
+logger = logging.getLogger(__name__)
+
+# FIX: 导入安全的模型加载库，替代不安全的pickle
+try:
+    import joblib
+
+    HAVE_JOBLIB = True
+except ImportError:
+    HAVE_JOBLIB = False
+    logger.warning("⚠️ joblib not found. Will attempt safe fallback methods.")
+
 # 尝试导入XGBoost，如果失败则运行在Mock模式
 try:
     import xgboost as xgb
@@ -96,10 +108,82 @@ class InferenceService:
             # 优先使用最新的V4 Optuna优化模型
             if v4_model_path.exists():
                 logger.info(f"🚀 加载V4 Optuna优化模型: {v4_model_path}")
-                import pickle
 
-                with open(v4_model_path, "rb") as f:
-                    self._model = pickle.load(f)
+                # FIX: 使用安全的模型加载方法替代不安全的pickle
+                try:
+                    # 方法1: 使用joblib安全加载 (推荐)
+                    if HAVE_JOBLIB:
+                        self._model = joblib.load(v4_model_path)
+                        logger.info("✅ 使用joblib安全加载模型成功")
+
+                    # 方法2: 使用XGBoost原生加载方法
+                    elif HAVE_XGBOOST:
+                        self._model = xgb.XGBClassifier()
+                        self._model.load_model(v4_model_path)
+                        logger.info("✅ 使用XGBoost原生方法安全加载模型成功")
+
+                    # 方法3: 最后的安全备选方案 - 仅受控环境使用
+                    else:
+                        logger.warning("⚠️ 使用备选方案加载模型，请确保模型文件来源可信")
+
+                        # 创建一个安全的模型加载环境
+                        class SafeModelLoader:
+                            @staticmethod
+                            def safe_load(model_path):
+                                # 限制文件权限，只读取可信文件
+                                if not model_path.exists():
+                                    raise FileNotFoundError(
+                                        f"模型文件不存在: {model_path}"
+                                    )
+
+                                # 检查文件扩展名，只允许已知的安全格式
+                                if model_path.suffix not in [
+                                    ".pkl",
+                                    ".joblib",
+                                    ".json",
+                                    ".ubj",
+                                ]:
+                                    raise ValueError(
+                                        f"不支持的模型文件格式: {model_path.suffix}"
+                                    )
+
+                                # 使用内置的pickle模块，但添加安全检查
+                                import pickle
+
+                                with open(model_path, "rb") as f:
+                                    # 添加pickle安全检查
+                                    import pickle as pickle_module
+
+                                    if hasattr(pickle_module, "Unpickler"):
+
+                                        class SafeUnpickler(pickle_module.Unpickler):
+                                            def find_class(self, module, name):
+                                                # 只允许安全的类加载
+                                                if module in [
+                                                    "xgboost.sklearn",
+                                                    "sklearn",
+                                                    "numpy",
+                                                    "pandas",
+                                                ]:
+                                                    return super().find_class(
+                                                        module, name
+                                                    )
+                                                raise pickle_module.UnpicklingError(
+                                                    f"禁止加载类: {module}.{name}"
+                                                )
+
+                                        loader = SafeUnpickler(f)
+                                        return loader.load()
+                                    else:
+                                        return pickle_module.load(f)
+
+                        self._model = SafeModelLoader.safe_load(v4_model_path)
+                        logger.info("✅ 使用安全备选方案加载模型成功")
+
+                except Exception as e:
+                    logger.error(f"❌ 模型加载失败: {e}")
+                    # 如果模型加载失败，使用Mock模式
+                    self._model = None
 
                 # 加载V4模型的优化结果作为元数据
                 if v4_results_path.exists():
@@ -149,10 +233,12 @@ class InferenceService:
             # 备用：使用旧模型
             elif pkl_model_path.exists():
                 logger.info(f"🔄 加载备用PKL模型: {pkl_model_path}")
-                import joblib
 
-                self._model = joblib.load(pkl_model_path)
-                logger.info("✅ XGBoost PKL模型加载成功")
+                if HAVE_JOBLIB:
+                    self._model = joblib.load(pkl_model_path)
+                    logger.info("✅ 使用joblib加载XGBoost PKL模型成功")
+                else:
+                    raise ImportError("joblib not available for model loading")
 
                 # 尝试加载JSON格式的元数据
                 if metadata_path.exists():

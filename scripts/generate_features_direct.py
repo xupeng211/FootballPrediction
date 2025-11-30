@@ -84,14 +84,14 @@ class DirectFeatureGenerator:
                                 "collected_at": row["collected_at"],
                             }
                         )
-                except Exception as e:
+                except Exception:
                     logger.warning(f"处理比赛数据时出错: {str(e)}")
                     continue
 
             logger.info(f"✅ 成功解析 {len(self.matches)} 条有效比赛")
             return self.matches
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 数据加载失败: {str(e)}")
             return []
 
@@ -121,7 +121,7 @@ class DirectFeatureGenerator:
                 return False
 
             return True
-        except Exception as e:
+        except Exception:
             logger.warning(f"验证比赛数据时出错: {str(e)}")
             return False
 
@@ -149,7 +149,8 @@ class DirectFeatureGenerator:
             else:
                 return 0
 
-        except:
+        except Exception:
+            # 特征生成失败时返回None
             return None
 
     def extract_team_names(self, match_data):
@@ -221,7 +222,8 @@ class DirectFeatureGenerator:
             home_goals, away_goals = map(int, parts)
             return home_goals, away_goals
 
-        except:
+        except (ValueError, IndexError):
+            # 比分解析失败时返回默认值
             return 0, 0
 
     def generate_features_for_match(
@@ -279,7 +281,7 @@ class DirectFeatureGenerator:
 
             return features
 
-        except Exception as e:
+        except Exception:
             logger.warning(f"生成特征时出错: {str(e)}")
             return None
 

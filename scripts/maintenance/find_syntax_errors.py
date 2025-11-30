@@ -25,7 +25,7 @@ def check_syntax(file_path: Path) -> list[str]:
         errors.append(f"语法错误 {file_path}:{e.lineno}:{e.offset}: {e.msg}")
     except UnicodeDecodeError as e:
         errors.append(f"编码错误 {file_path}: {e}")
-    except Exception as e:
+    except Exception:
         errors.append(f"其他错误 {file_path}: {e}")
 
     return errors

@@ -374,7 +374,7 @@ class TestPerformanceIntegration:
                         "response_time": end_time - start_time,
                     }
                 )
-            except Exception as e:
+            except Exception:
                 errors.append(str(e))
 
         # 创建多个并发请求

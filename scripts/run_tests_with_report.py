@@ -18,7 +18,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 import argparse
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 import logging
 
 # 设置日志
@@ -99,7 +99,7 @@ class TestRunner:
         try:
             with open(self.coverage_file) as f:
                 return json.load(f)
-        except Exception as e:
+        except Exception:
             logger.error(f"Failed to load coverage data: {e}")
             return None
 

@@ -26,7 +26,7 @@ async def fetch_data() -> dict[str, Any]:
     """从外部数据源获取足球比赛数据.
 
     Returns:
-        Dict[str, Any]: 包含比赛数据的字典
+        dict[str, Any]: 包含比赛数据的字典
 
     Raises:
         Exception: 数据获取失败时抛出异常
@@ -98,10 +98,10 @@ async def engineer_features(data: dict[str, Any]) -> dict[str, Any]:
     """对获取的原始数据进行特征工程处理.
 
     Args:
-        data (Dict[str, Any]): 原始比赛数据
+        data (dict[str, Any]): 原始比赛数据
 
     Returns:
-        Dict[str, Any]: 处理后的特征数据
+        dict[str, Any]: 处理后的特征数据
     """
     logger.info("🔧 开始特征工程处理...")
 
@@ -194,10 +194,10 @@ async def train_model(features: dict[str, Any]) -> dict[str, Any]:
     """使用特征数据训练机器学习模型.
 
     Args:
-        features (Dict[str, Any]): 特征和标签数据
+        features (dict[str, Any]): 特征和标签数据
 
     Returns:
-        Dict[str, Any]: 训练结果和模型评估
+        dict[str, Any]: 训练结果和模型评估
     """
     logger.info("🤖 开始模型训练...")
 
@@ -269,10 +269,10 @@ async def evaluate_model(model_results: dict[str, Any]) -> dict[str, Any]:
     """评估训练好的模型性能.
 
     Args:
-        model_results (Dict[str, Any]): 模型训练结果
+        model_results (dict[str, Any]): 模型训练结果
 
     Returns:
-        Dict[str, Any]: 详细的评估报告
+        dict[str, Any]: 详细的评估报告
     """
     logger.info("📈 开始模型评估...")
 
@@ -326,8 +326,8 @@ async def save_model(model_results: dict[str, Any], evaluation: dict[str, Any]) 
     """保存模型和评估结果.
 
     Args:
-        model_results (Dict[str, Any]): 模型训练结果
-        evaluation (Dict[str, Any]): 模型评估结果
+        model_results (dict[str, Any]): 模型训练结果
+        evaluation (dict[str, Any]): 模型评估结果
 
     Returns:
         bool: 保存是否成功
@@ -373,7 +373,7 @@ async def main_data_flow() -> dict[str, Any]:
     5. 保存模型和结果
 
     Returns:
-        Dict[str, Any]: 管道执行结果摘要
+        dict[str, Any]: 管道执行结果摘要
     """
     logger.info("🚀 启动足球预测数据管道...")
 
@@ -460,7 +460,7 @@ async def quick_validation_flow() -> dict[str, Any]:
     """快速验证流程，用于测试环境.
 
     Returns:
-        Dict[str, Any]: 验证结果
+        dict[str, Any]: 验证结果
     """
     logger.info("⚡ 启动快速数据验证流程...")
 

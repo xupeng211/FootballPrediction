@@ -109,7 +109,7 @@ class SecureKeyManager:
             logger.info(f"密钥轮换完成: {env_file}")
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"密钥轮换失败: {e}")
             return False
 

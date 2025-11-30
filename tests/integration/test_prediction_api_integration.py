@@ -368,7 +368,7 @@ class TestPredictionAPIIntegration:
             try:
                 await mock_prediction_service.create_prediction(**invalid_request)
                 raise AssertionError("Should have raised an exception")
-            except Exception as e:
+            except Exception:
                 assert str(e)  # 应该有错误信息
 
         # 2. 测试服务不可用

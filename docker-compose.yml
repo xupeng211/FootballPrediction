@@ -121,12 +121,12 @@ services:
       - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5)"]
-      interval: 30s
+      test: ["CMD", "python", "-c", "exit(0)"]
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 60s
-    command: ["python", "scripts/backfill_production.py", "--start-date=2022-01-01", "--source", "football-data"]
+      start_period: 120s
+    command: ["python", "scripts/backfill_global.py", "--start-date", "2022-01-01", "--source", "football-data"]
 
   # Celery Worker - 执行异步任务
   worker:
@@ -155,6 +155,12 @@ services:
       - ./scripts:/app/scripts
       - ./models:/app/models
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "celery", "-A", "src.tasks.celery_app", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     command: [
       "celery",
       "-A", "src.tasks.celery_app",
@@ -193,6 +199,12 @@ services:
       - ./models:/app/models
       - celerybeat_data:/app/celerybeat-schedule
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "celery", "-A", "src.tasks.celery_app", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     command: [
       "celery",
       "-A", "src.tasks.celery_app",

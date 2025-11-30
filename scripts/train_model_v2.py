@@ -101,7 +101,7 @@ def load_training_data_from_database():
 
                 return features_df
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 加载数据失败: {e}")
         raise
 
@@ -241,7 +241,7 @@ def train_model_with_proper_split(X, y):
 
     # 预测
     y_pred = model.predict(X_test)
-    y_pred_proba = model.predict_proba(X_test)
+    model.predict_proba(X_test)
 
     # 评估
     accuracy = accuracy_score(y_test, y_pred)
@@ -385,7 +385,7 @@ def main():
 
         return model_path, metadata_path
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 训练失败: {e}")
         import traceback
 

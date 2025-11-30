@@ -157,7 +157,7 @@ class ConcreteSubject(Subject):
         """获取所有状态.
 
         Returns:
-            Dict[str, Any]: 所有状态
+            dict[str, Any]: 所有状态
         """
         return self._state.copy()
 
@@ -197,7 +197,7 @@ class ConcreteSubject(Subject):
             limit: 返回记录数限制
 
         Returns:
-            List[Dict[str, Any]]: 变化历史记录
+            list[dict[str, Any]]: 变化历史记录
         """
         return self._history[-limit:]
 
@@ -257,7 +257,7 @@ class ConcreteObserver(Observer):
             limit: 返回记录数限制
 
         Returns:
-            List[Dict[str, Any]]: 通知记录
+            list[dict[str, Any]]: 通知记录
         """
         return self.notifications[-limit:]
 
@@ -309,7 +309,7 @@ class LoggingObserver(Observer):
             limit: 返回记录数限制
 
         Returns:
-            List[Dict[str, Any]]: 日志记录
+            list[dict[str, Any]]: 日志记录
         """
         return self.log_entries[-limit:]
 
@@ -356,7 +356,7 @@ class MetricsObserver(Observer):
         """获取指标数据.
 
         Returns:
-            Dict[str, Any]: 指标数据
+            dict[str, Any]: 指标数据
         """
         result = self.metrics.copy()
         result["subjects_notified"] = list(result["subjects_notified"])
@@ -433,7 +433,7 @@ class AlertingObserver(Observer):
             limit: 返回记录数限制
 
         Returns:
-            List[Dict[str, Any]]: 告警记录
+            list[dict[str, Any]]: 告警记录
         """
         return self.alerts[-limit:]
 
@@ -552,7 +552,7 @@ def create_observer_system() -> tuple[ConcreteSubject, list[Observer]]:
     """创建观察者系统.
 
     Returns:
-        tuple[ConcreteSubject, List[Observer]]: 主题和观察者列表
+        tuple[ConcreteSubject, list[Observer]]: 主题和观察者列表
     """
     subject = ConcreteSubject("演示主题")
 
@@ -663,7 +663,7 @@ def create_service_observer_system(service_name: str) -> dict[str, Any]:
         service_name: 服务名称
 
     Returns:
-        Dict[str, Any]: 观察者系统组件
+        dict[str, Any]: 观察者系统组件
     """
     # 创建可观察服务
     service = ObservableService(service_name)
@@ -695,7 +695,7 @@ def setup_service_observers(service: ObservableService) -> dict[str, Any]:
         service: 要设置观察者的服务
 
     Returns:
-        Dict[str, Any]: 配置的观察者
+        dict[str, Any]: 配置的观察者
     """
     observers = {}
 

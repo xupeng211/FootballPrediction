@@ -146,7 +146,7 @@ def test_poisson_model(training_data):
 
         return True
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 泊松模型测试失败: {e}")
         return False
 
@@ -218,7 +218,7 @@ def test_elo_model(training_data):
 
         return True
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ ELO模型测试失败: {e}")
         return False
 
@@ -289,7 +289,7 @@ def test_prediction_service(training_data):
                     f"   - 置信度: {result.confidence if hasattr(result, 'confidence') else result.ensemble_confidence:.3f}"
                 )
 
-            except Exception as e:
+            except Exception:
                 logger.error(f"❌ {strategy.value} 策略测试失败: {e}")
 
         # 获取模型信息
@@ -301,7 +301,7 @@ def test_prediction_service(training_data):
 
         return True
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 预测服务测试失败: {e}")
         return False
 
@@ -342,7 +342,7 @@ def main():
             else:
                 logger.debug(f"❌ {test_name} 测试失败")
                 failed += 1
-        except Exception as e:
+        except Exception:
             logger.debug(f"❌ {test_name} 测试异常: {e}")
             logger.exception(f"Exception in {test_name}")
             failed += 1

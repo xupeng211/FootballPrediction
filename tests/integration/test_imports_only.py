@@ -40,7 +40,7 @@ def test_critical_imports():
                 failed_modules.append((module_name, f"缺少 {expected_class}"))
         except ImportError as e:
             failed_modules.append((module_name, str(e)))
-        except Exception as e:
+        except Exception:
             failed_modules.append((module_name, str(e)))
 
     if failed_modules:

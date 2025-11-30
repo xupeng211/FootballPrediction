@@ -110,7 +110,7 @@ class EnhancedFotmobCollector:
                 else:
                     print(f"   ❌ 其他错误: {response.status_code}")
 
-            except Exception as e:
+            except Exception:
                 print(f"   ❌ 请求异常: {e}")
 
         return successful_endpoints, all_data
@@ -294,7 +294,7 @@ async def main():
                     print(f"\n🎉 在比赛 {description} 中找到了目标数据!")
                     break
 
-        except Exception as e:
+        except Exception:
             print(f"❌ 测试过程中发生错误: {e}")
 
     print(f"\n{'=' * 80}")

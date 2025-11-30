@@ -462,7 +462,7 @@ class MetricsExporter:
         """获取 Prometheus 格式的指标数据.
 
         Returns:
-            Tuple[str, str]: (content_type, metrics_data)
+            tuple[str, str]: (content_type, metrics_data)
         """
         metrics_data = generate_latest(self.registry)
         return CONTENT_TYPE_LATEST, metrics_data.decode("utf-8")

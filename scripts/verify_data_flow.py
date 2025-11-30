@@ -48,7 +48,7 @@ class DataFlowValidator:
             self.engine = create_async_engine(self.database_url)
             logger.info(f"✅ 数据库连接已建立: {self.database_url}")
             return True
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 数据库连接失败: {e}")
             return False
 
@@ -74,7 +74,7 @@ class DataFlowValidator:
                 else:
                     logger.warning(f"⚠️  API返回状态码: {response.status_code}")
                     return {"status": "error", "code": response.status_code}
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 外部API调用失败: {e}")
             return {"status": "error", "message": str(e)}
 
@@ -97,7 +97,7 @@ class DataFlowValidator:
                 logger.warning(f"⚠️  数据采集任务返回异常结果: {result}")
                 return False
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 数据采集任务执行失败: {e}")
             # 尝试直接调用collector进行测试
             return await self.test_direct_collector()
@@ -127,7 +127,7 @@ class DataFlowValidator:
                 logger.warning(f"⚠️  直接采集器测试失败: {result.message}")
                 return False
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 直接采集器测试失败: {e}")
             return False
 
@@ -162,7 +162,7 @@ class DataFlowValidator:
                     "total_records": matches_count + fixtures_count,
                 }
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 数据库验证失败: {e}")
             return {"error": str(e)}
 
@@ -186,7 +186,7 @@ class DataFlowValidator:
                     )
                     await session.commit()
                     logger.info("✅ 确保matches表存在")
-                except Exception as e:
+                except Exception:
                     logger.warning(f"⚠️  表创建检查: {e}")
 
                 # 插入测试数据
@@ -200,11 +200,11 @@ class DataFlowValidator:
                     await session.commit()
                     logger.info("✅ 测试记录插入成功")
                     return True
-                except Exception as e:
+                except Exception:
                     logger.error(f"❌ 测试记录插入失败: {e}")
                     return False
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 创建测试记录失败: {e}")
             return False
 
@@ -215,7 +215,7 @@ class DataFlowValidator:
                 await session.execute(text("DELETE FROM matches WHERE id = 999999"))
                 await session.commit()
                 logger.info("🧹 测试记录清理完成")
-        except Exception as e:
+        except Exception:
             logger.warning(f"⚠️  清理测试记录失败: {e}")
 
     async def run_validation(self) -> dict:

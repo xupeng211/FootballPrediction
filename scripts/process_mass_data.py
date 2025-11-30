@@ -60,7 +60,7 @@ def process_raw_data_batch():
                     LIMIT :batch_size OFFSET :offset
                 """)
 
-                result = await session.execute(
+                result = session.execute(
                     query, {"batch_size": batch_size, "offset": offset}
                 )
                 rows = result.fetchall()
@@ -101,7 +101,7 @@ def process_raw_data_batch():
                             continue
 
                         # 检查match是否已存在
-                        existing_match = await session.execute(
+                        existing_match = session.execute(
                             text(
                                 "SELECT id FROM matches WHERE external_id = :external_id"
                             ),
@@ -110,7 +110,7 @@ def process_raw_data_batch():
 
                         if existing_match.fetchone():
                             # 标记为已处理
-                            await session.execute(
+                            session.execute(
                                 text(
                                     "UPDATE raw_match_data SET processed = TRUE WHERE id = :raw_id"
                                 ),
@@ -151,7 +151,7 @@ def process_raw_data_batch():
                             )
                         """)
 
-                        await session.execute(
+                        session.execute(
                             match_insert,
                             {
                                 "external_id": str(raw_data.get("id", external_id)),
@@ -183,7 +183,7 @@ def process_raw_data_batch():
                         matches_added += 1
 
                         # 标记原始数据为已处理
-                        await session.execute(
+                        session.execute(
                             text(
                                 "UPDATE raw_match_data SET processed = TRUE WHERE id = :raw_id"
                             ),
@@ -192,12 +192,12 @@ def process_raw_data_batch():
 
                         processed_count += 1
 
-                    except Exception as e:
+                    except Exception:
                         logger.error(f"❌ 处理记录 {row[0]} 失败: {e}")
                         continue
 
                 # 提交当前批次
-                await session.commit()
+                session.commit()
                 logger.info(
                     f"✅ 批次完成，已处理 {processed_count} 条记录，添加 {matches_added} 场比赛"
                 )
@@ -208,7 +208,7 @@ def process_raw_data_batch():
                 if len(rows) < batch_size:
                     break
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 批量处理失败: {e}")
         raise
 

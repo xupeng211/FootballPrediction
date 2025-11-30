@@ -112,7 +112,9 @@ def _ensure_default_services() -> None:
 
     # 处理字符串格式：将逗号分隔的字符串转换为列表
     if isinstance(enabled_services_str, str) and enabled_services_str:
-        enabled_services = [s.strip() for s in enabled_services_str.split(",") if s.strip()]
+        enabled_services = [
+            s.strip() for s in enabled_services_str.split(",") if s.strip()
+        ]
     else:
         enabled_services = []
 

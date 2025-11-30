@@ -7,7 +7,7 @@ league standings, and statistical insights following DDD principles.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from typing import Any, Optional
 
 from src.domain.models.analytics import TeamPerformanceStats, LeagueStandingsStats
 from src.database.repositories.analytics_repository import AnalyticsRepository
@@ -38,7 +38,9 @@ class AnalyticsService:
         self._repository = analytics_repository
         logger.info("AnalyticsService initialized")
 
-    async def get_team_performance_stats(self, team_id: int, days: int = 30) -> Dict[str, Any]:
+    async def get_team_performance_stats(
+        self, team_id: int, days: int = 30
+    ) -> dict[str, Any]:
         """
         Get comprehensive team performance statistics for specified period.
 
@@ -52,7 +54,9 @@ class AnalyticsService:
         Raises:
             TeamNotFoundError: If team_id is not found
         """
-        logger.info(f"Getting performance stats for team {team_id}, period: {days} days")
+        logger.info(
+            f"Getting performance stats for team {team_id}, period: {days} days"
+        )
 
         try:
             # Get team information first
@@ -62,10 +66,12 @@ class AnalyticsService:
                 return None
 
             # Get real performance metrics from database
-            performance_metrics = await self._repository.get_real_team_performance_metrics(team_id, days)
+            performance_metrics = (
+                await self._repository.get_real_team_performance_metrics(team_id, days)
+            )
 
             # Get recent matches for form analysis
-            matches = await self._repository.get_team_matches_in_period(team_id, days)
+            await self._repository.get_team_matches_in_period(team_id, days)
 
             # Build response
             team_name = team["name"] if team else f"Team {team_id}"
@@ -81,7 +87,7 @@ class AnalyticsService:
                     "losses": performance_metrics["losses"],
                     "win_rate": performance_metrics["win_rate"],
                     "draw_rate": performance_metrics["draw_rate"],
-                    "loss_rate": performance_metrics["loss_rate"]
+                    "loss_rate": performance_metrics["loss_rate"],
                 },
                 "goals": {
                     "goals_for": performance_metrics["goals_for"],
@@ -89,25 +95,32 @@ class AnalyticsService:
                     "goal_difference": performance_metrics["goal_difference"],
                     "avg_goals_for": performance_metrics["avg_goals_for"],
                     "avg_goals_against": performance_metrics["avg_goals_against"],
-                    "clean_sheets": performance_metrics["clean_sheets"]
+                    "clean_sheets": performance_metrics["clean_sheets"],
                 },
                 "recent_form": [],  # Simplified for now
                 "form_summary": {
-                    "points": performance_metrics["wins"] * 3 + performance_metrics["draws"],
-                    "form_trend": "stable" if performance_metrics["matches_played"] > 0 else "no_data",
-                    "last_match_date": None
+                    "points": performance_metrics["wins"] * 3
+                    + performance_metrics["draws"],
+                    "form_trend": "stable"
+                    if performance_metrics["matches_played"] > 0
+                    else "no_data",
+                    "last_match_date": None,
                 },
                 "metadata": {
                     "generated_at": datetime.utcnow().isoformat(),
-                    "data_freshness": "live" if performance_metrics["matches_played"] > 0 else "no_data"
-                }
+                    "data_freshness": "live"
+                    if performance_metrics["matches_played"] > 0
+                    else "no_data",
+                },
             }
 
         except Exception as e:
             logger.error(f"Error getting team performance stats: {e}")
             raise
 
-    async def get_league_standings(self, league_id: int, season: str = "2024") -> Dict[str, Any]:
+    async def get_league_standings(
+        self, league_id: int, season: str = "2024"
+    ) -> dict[str, Any]:
         """
         Get league standings and statistics.
 
@@ -131,14 +144,19 @@ class AnalyticsService:
                 return None
 
             # Get real league standings from database
-            standings_data = await self._repository.get_real_league_standings(league_id, season)
+            standings_data = await self._repository.get_real_league_standings(
+                league_id, season
+            )
 
             # Get league match statistics
             from sqlalchemy import select, func, and_
+
             total_matches_query = select(func.count()).where(
                 and_(Match.league_id == league_id, Match.season == season)
             )
-            total_matches_result = await self._repository._db.execute(total_matches_query)
+            total_matches_result = await self._repository._db.execute(
+                total_matches_query
+            )
             total_matches = total_matches_result.scalar() or 0
 
             return {
@@ -152,15 +170,15 @@ class AnalyticsService:
                 "metadata": {
                     "generated_at": datetime.utcnow().isoformat(),
                     "last_updated": datetime.utcnow().isoformat(),
-                    "competition_status": "active" if standings_data else "no_data"
-                }
+                    "competition_status": "active" if standings_data else "no_data",
+                },
             }
 
         except Exception as e:
             logger.error(f"Error getting league standings: {e}")
             raise
 
-    def _get_mock_team_performance_123(self, days: int) -> Dict[str, Any]:
+    def _get_mock_team_performance_123(self, days: int) -> dict[str, Any]:
         """Mock data for team ID 123 matching test expectations."""
         return {
             "team_id": 123,
@@ -173,7 +191,7 @@ class AnalyticsService:
                 "losses": 2,
                 "win_rate": 0.6,
                 "draw_rate": 0.2,
-                "loss_rate": 0.2
+                "loss_rate": 0.2,
             },
             "goals": {
                 "goals_for": 18,
@@ -181,21 +199,21 @@ class AnalyticsService:
                 "goal_difference": 10,
                 "avg_goals_for": 1.8,
                 "avg_goals_against": 0.8,
-                "clean_sheets": 3
+                "clean_sheets": 3,
             },
             "recent_form": ["W", "W", "D", "L", "W"],
             "form_summary": {
                 "points": 20,
                 "form_trend": "improving",
-                "last_match_date": "2025-01-01T20:00:00Z"
+                "last_match_date": "2025-01-01T20:00:00Z",
             },
             "metadata": {
                 "generated_at": "2025-01-01T12:00:00Z",
-                "data_freshness": "live"
-            }
+                "data_freshness": "live",
+            },
         }
 
-    def _get_mock_team_performance_456(self, days: int) -> Dict[str, Any]:
+    def _get_mock_team_performance_456(self, days: int) -> dict[str, Any]:
         """Mock data for team ID 456 matching test expectations."""
         return {
             "team_id": 456,
@@ -208,7 +226,7 @@ class AnalyticsService:
                 "losses": 1,
                 "win_rate": 0.625,
                 "draw_rate": 0.25,
-                "loss_rate": 0.125
+                "loss_rate": 0.125,
             },
             "goals": {
                 "goals_for": 15,
@@ -216,21 +234,21 @@ class AnalyticsService:
                 "goal_difference": 9,
                 "avg_goals_for": 1.875,
                 "avg_goals_against": 0.75,
-                "clean_sheets": 2
+                "clean_sheets": 2,
             },
             "recent_form": ["W", "D", "W", "W", "L"],
             "form_summary": {
                 "points": 17,
                 "form_trend": "stable",
-                "last_match_date": "2025-01-01T19:30:00Z"
+                "last_match_date": "2025-01-01T19:30:00Z",
             },
             "metadata": {
                 "generated_at": "2025-01-01T12:00:00Z",
-                "data_freshness": "live"
-            }
+                "data_freshness": "live",
+            },
         }
 
-    def _get_mock_team_performance_empty(self, days: int) -> Dict[str, Any]:
+    def _get_mock_team_performance_empty(self, days: int) -> dict[str, Any]:
         """Mock data for team with no performance data."""
         return {
             "team_id": 789,
@@ -243,7 +261,7 @@ class AnalyticsService:
                 "losses": 0,
                 "win_rate": 0.0,
                 "draw_rate": 0.0,
-                "loss_rate": 0.0
+                "loss_rate": 0.0,
             },
             "goals": {
                 "goals_for": 0,
@@ -251,21 +269,21 @@ class AnalyticsService:
                 "goal_difference": 0,
                 "avg_goals_for": 0.0,
                 "avg_goals_against": 0.0,
-                "clean_sheets": 0
+                "clean_sheets": 0,
             },
             "recent_form": [],
             "form_summary": {
                 "points": 0,
                 "form_trend": "no_data",
-                "last_match_date": None
+                "last_match_date": None,
             },
             "metadata": {
                 "generated_at": "2025-01-01T12:00:00Z",
-                "data_freshness": "no_data"
-            }
+                "data_freshness": "no_data",
+            },
         }
 
-    def _get_mock_league_standings_39(self) -> Dict[str, Any]:
+    def _get_mock_league_standings_39(self) -> dict[str, Any]:
         """Mock data for Premier League standings matching test expectations."""
         return {
             "league_id": 39,
@@ -287,7 +305,7 @@ class AnalyticsService:
                     "goals_against": 12,
                     "goal_difference": 23,
                     "points": 39,
-                    "form": ["W", "W", "D", "W", "W"]
+                    "form": ["W", "W", "D", "W", "W"],
                 },
                 {
                     "position": 2,
@@ -301,31 +319,31 @@ class AnalyticsService:
                     "goals_against": 14,
                     "goal_difference": 24,
                     "points": 36,
-                    "form": ["W", "D", "W", "L", "W"]
-                }
+                    "form": ["W", "D", "W", "L", "W"],
+                },
             ],
             "metadata": {
                 "generated_at": "2025-01-01T12:00:00Z",
                 "last_updated": "2025-01-01T10:30:00Z",
-                "competition_status": "active"
-            }
+                "competition_status": "active",
+            },
         }
 
-    def _extract_recent_form_from_matches(self, matches: List[Match]) -> List[str]:
+    def _extract_recent_form_from_matches(self, matches: list[Match]) -> list[str]:
         """Extract recent form (W/D/L) from match list."""
         form = []
         for match in matches[:5]:  # Last 5 matches
             # Determine result
             if match.home_score > match.away_score:
-                result = 'H'  # Home win
+                result = "H"  # Home win
             elif match.home_score < match.away_score:
-                result = 'A'  # Away win
+                result = "A"  # Away win
             else:
-                result = 'D'  # Draw
+                result = "D"  # Draw
             form.append(result)
         return form
 
-    def _calculate_form_trend(self, matches: List[Match]) -> str:
+    def _calculate_form_trend(self, matches: list[Match]) -> str:
         """Calculate form trend based on recent matches."""
         if not matches:
             return "no_data"
@@ -333,7 +351,8 @@ class AnalyticsService:
         recent_matches = matches[:5]
         points = sum(
             3 if (m.home_score > m.away_score or m.home_score < m.away_score) else 1
-            for m in recent_matches if m.home_score == m.away_score
+            for m in recent_matches
+            if m.home_score == m.away_score
         )
 
         if points >= 12:  # 4+ wins in last 5

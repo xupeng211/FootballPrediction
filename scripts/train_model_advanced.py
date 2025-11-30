@@ -37,7 +37,7 @@ except ImportError:
 from datetime import datetime
 import json
 import logging
-from typing import Dict, List, Tuple, Any
+from typing import Any, Any
 
 # 配置日志
 logging.basicConfig(
@@ -333,7 +333,7 @@ class AdvancedXGBoostTrainer:
 
                     logger.info(f"   {target_name} 特征重要性图表已保存: {chart_path}")
 
-        except Exception as e:
+        except Exception:
             logger.warning(f"⚠️ 生成特征重要性图表时出错: {e}")
 
     def print_summary_report(self):
@@ -453,7 +453,7 @@ class AdvancedXGBoostTrainer:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"💥 训练流程异常: {e}")
             import traceback
 
@@ -482,7 +482,7 @@ def main():
         else:
             print("\n❌ XGBoost模型训练失败")
 
-    except Exception as e:
+    except Exception:
         logger.error(f"💥 系统异常: {e}")
         import traceback
 

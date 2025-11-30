@@ -476,7 +476,7 @@ class FeatureCalculator:
             calculation_date: 计算日期
 
         Returns:
-            Dict[int, AllMatchFeatures]: 比赛ID到特征的映射
+            dict[int, AllMatchFeatures]: 比赛ID到特征的映射
         """
         if calculation_date is None:
             calculation_date = datetime.now()

@@ -8,7 +8,7 @@ import json
 import sys
 import os
 from collections import defaultdict
-from typing import Dict, Set, Any
+from typing import Any
 
 # 添加项目路径
 sys.path.append("/app/src")
@@ -239,7 +239,7 @@ class DataArchaeologist:
                 "all_keys": sorted(self.all_keys),
             }
 
-        except Exception as e:
+        except Exception:
             print(f"❌ 分析失败: {e}")
             return None
 

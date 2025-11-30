@@ -88,7 +88,7 @@ class SimpleFeatureCalculator:
             match_date: 当前比赛日期
 
         Returns:
-            Tuple[int, float]: (最近5场积分, 最近5场平均进球数)
+            tuple[int, float]: (最近5场积分, 最近5场平均进球数)
         """
         previous_matches = self.get_team_previous_matches(team_id, match_date, 5)
 
@@ -157,7 +157,7 @@ class SimpleFeatureCalculator:
             match_date: 当前比赛日期
 
         Returns:
-            Tuple[int, float, int, float]: (最近5场净胜球, 最近5场胜率, 当前连胜场次, 休息天数)
+            tuple[int, float, int, float]: (最近5场净胜球, 最近5场胜率, 当前连胜场次, 休息天数)
         """
         previous_matches = self.get_team_previous_matches(team_id, match_date, 5)
 

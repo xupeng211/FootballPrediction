@@ -20,7 +20,7 @@ import json
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 import argparse
 import logging
 
@@ -49,7 +49,7 @@ class FixPlanGenerator:
         try:
             with open(self.coverage_file) as f:
                 return json.load(f)
-        except Exception as e:
+        except Exception:
             logger.error(f"Failed to load coverage data: {e}")
             return None
 
@@ -63,7 +63,7 @@ class FixPlanGenerator:
             with open(self.uncovered_file) as f:
                 data = json.load(f)
                 return data.get("uncovered_files", [])
-        except Exception as e:
+        except Exception:
             logger.error(f"Failed to load uncovered files data: {e}")
             return None
 
@@ -76,7 +76,7 @@ class FixPlanGenerator:
         try:
             with open(self.modules_file) as f:
                 return json.load(f)
-        except Exception as e:
+        except Exception:
             logger.error(f"Failed to load modules without tests data: {e}")
             return None
 
@@ -264,7 +264,7 @@ class FixPlanGenerator:
 ## 🟢 P2 优先级 - 一般模块 (计划处理)
 
 """
-            for i, file_info in enumerate(
+            for _, file_info in enumerate(
                 categories["P2_Medium"][:10], 1
             ):  # 只显示前10个
                 report += f"- {file_info['file_path']} ({file_info['uncovered_lines']}行未覆盖)\n"
@@ -355,7 +355,7 @@ class FixPlanGenerator:
                 f.write(report)
             logger.info(f"Fix plan report saved to: {report_file}")
             return report_file
-        except Exception as e:
+        except Exception:
             logger.error(f"Failed to save report: {e}")
             return None
 
@@ -407,7 +407,7 @@ def main():
         if args.output:
             generator.save_report(report, args.output)
 
-    except Exception as e:
+    except Exception:
         logger.error(f"Failed to generate fix plan: {e}")
         sys.exit(1)
 

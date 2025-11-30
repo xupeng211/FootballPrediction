@@ -93,7 +93,7 @@ class FootballModelTrainer:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 数据加载失败: {e}")
             return False
 
@@ -147,7 +147,7 @@ class FootballModelTrainer:
 
             return X, y
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 特征准备失败: {e}")
             return None, None
 
@@ -192,7 +192,7 @@ class FootballModelTrainer:
 
             return X_train, X_test, y_train, y_test
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 数据切分失败: {e}")
             return None, None, None, None
 
@@ -366,7 +366,7 @@ class FootballModelTrainer:
             logger.info("✅ 模型训练完成（含超参数优化）")
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 模型训练失败: {e}")
             return False
 
@@ -413,7 +413,7 @@ class FootballModelTrainer:
                 "y_pred_proba": y_pred_proba,
             }
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 模型评估失败: {e}")
             return None
 
@@ -487,7 +487,7 @@ class FootballModelTrainer:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 模型保存失败: {e}")
             return False
 
@@ -544,7 +544,7 @@ class FootballModelTrainer:
                 f"{'✅' if is_correct else '❌'} 预测{'正确' if is_correct else '错误'}！"
             )
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 预测演示失败: {e}")
 
     def run(self, model_path: str = "models/football_model_v1.json"):
@@ -595,7 +595,7 @@ class FootballModelTrainer:
 
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"💥 训练流程失败: {e}")
             return False
 
@@ -618,7 +618,7 @@ def main():
     except KeyboardInterrupt:
         logger.info("⏹️  用户中断，训练停止")
         sys.exit(1)
-    except Exception as e:
+    except Exception:
         logger.error(f"💥 训练异常: {e}")
         sys.exit(1)
 

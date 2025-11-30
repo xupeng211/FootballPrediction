@@ -556,7 +556,7 @@ except ImportError:
         try:
             result = prediction_service.predict_match(match_data)
             assert isinstance(result, (PredictionResult, EnsemblePrediction))
-        except Exception as e:
+        except Exception:
             pytest.fail(f"预测失败: {e}")
 
     def test_performance_monitoring_integration(

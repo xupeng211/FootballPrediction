@@ -182,7 +182,7 @@ async def final_verification():
 
         return True
 
-    except Exception as e:
+    except Exception:
         print(f"❌ 验证过程中发生错误: {e}")
         import traceback
 
@@ -227,7 +227,7 @@ async def demonstrate_collector_api():
         if result:
             print("   ✅ 便捷函数工作正常")
             print(f"   📊 返回: {type(result).__name__} 对象")
-    except Exception as e:
+    except Exception:
         print(f"   ⚠️ 便捷函数测试: {e}")
 
     await collector.close()

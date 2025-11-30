@@ -538,6 +538,6 @@ profiles:
             except DependencyInjectionError:
                 # 预期的异常
                 pass
-            except Exception as e:
+            except Exception:
                 # 其他异常也应该被包装为DependencyInjectionError
                 assert isinstance(e, DependencyInjectionError)

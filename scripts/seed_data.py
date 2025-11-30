@@ -10,7 +10,7 @@ import json
 import sys
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Optional
 
 try:
     import requests

@@ -151,7 +151,7 @@ class TestWarningFiltersComplete:
                 setup_warning_filters()
                 # 如果函数正常执行，验证没有副作用
                 assert True
-            except Exception as e:
+            except Exception:
                 # 如果有异常，确保它是可处理的
                 assert isinstance(e, Exception)
 

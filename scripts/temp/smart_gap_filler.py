@@ -166,14 +166,14 @@ class SmartGapFiller:
                 result = task.get(timeout=600)  # 10分钟超时
                 logger.info(f"✅ {target_date} 数据采集完成: {result}")
                 return True
-            except Exception as e:
+            except Exception:
                 logger.error(f"❌ {target_date} 数据采集超时或失败: {e}")
                 return False
 
         except ImportError as e:
             logger.error(f"❌ 无法导入数据采集模块: {e}")
             return False
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ {target_date} 采集触发失败: {e}")
             return False
 
@@ -403,7 +403,7 @@ async def main():
         logger.info("🎉 数据补漏系统完成!")
     except KeyboardInterrupt:
         logger.info("🛑 用户中断，系统优雅关闭")
-    except Exception as e:
+    except Exception:
         logger.error(f"💥 系统异常退出: {e}")
         raise
     finally:

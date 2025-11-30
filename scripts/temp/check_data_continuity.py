@@ -8,7 +8,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta, date
 from collections import defaultdict, Counter
-from typing import Dict, List, Tuple, Any
+from typing import Any, Any
 import pandas as pd
 import numpy as np
 
@@ -346,7 +346,7 @@ class DataContinuityAnalyzer:
 
             return save_path
 
-        except Exception as e:
+        except Exception:
             logger.error(f"🎨 日历生成失败: {e}")
             return None
 
@@ -459,7 +459,7 @@ class DataContinuityAnalyzer:
         # 6. 生成可视化
         try:
             calendar_path = self.create_density_calendar(daily_counts)
-        except Exception as e:
+        except Exception:
             logger.warning(f"可视化生成失败: {e}")
             calendar_path = None
 
@@ -610,7 +610,7 @@ async def main():
         print(f"   数据覆盖率: {coverage_pct:.1f}%")
         print(f"   Elo计算推荐: {'✅' if elo_recommended else '❌'}")
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 分析过程中出现错误: {str(e)}")
         raise
     finally:

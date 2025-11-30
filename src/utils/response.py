@@ -30,7 +30,7 @@ class APIResponse:
             message: 响应消息
 
         Returns:
-            Dict[str, Any]: 格式化的成功响应
+            dict[str, Any]: 格式化的成功响应
         """
         response = {
             "success": True,
@@ -60,7 +60,7 @@ class APIResponse:
             data: 附加数据
 
         Returns:
-            Dict[str, Any]: 格式化的错误响应
+            dict[str, Any]: 格式化的错误响应
         """
         response = {
             "success": False,

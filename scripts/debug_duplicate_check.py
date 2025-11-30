@@ -33,7 +33,9 @@ def check_database_duplicates():
         LIMIT 10;"
         """
 
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True, timeout=15
+        )
 
         if result.returncode == 0:
             print("📊 发现的重复组合:")
@@ -44,7 +46,7 @@ def check_database_duplicates():
         else:
             print(f"❌ 查询失败: {result.stderr}")
 
-    except Exception as e:
+    except Exception:
         print(f"❌ 检查重复时异常: {e}")
 
 
@@ -63,7 +65,9 @@ def check_team_existence():
         FROM matches;"
         """
 
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True, timeout=15
+        )
 
         if result.returncode == 0:
             print("📊 球队ID统计分析:")
@@ -71,7 +75,7 @@ def check_team_existence():
         else:
             print(f"❌ 查询失败: {result.stderr}")
 
-    except Exception as e:
+    except Exception:
         print(f"❌ 检查球队ID时异常: {e}")
 
 
@@ -90,7 +94,9 @@ def check_match_date_distribution():
         LIMIT 10;"
         """
 
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True, timeout=15
+        )
 
         if result.returncode == 0:
             print("📊 比赛日期分布:")
@@ -98,7 +104,7 @@ def check_match_date_distribution():
         else:
             print(f"❌ 查询失败: {result.stderr}")
 
-    except Exception as e:
+    except Exception:
         print(f"❌ 检查日期分布时异常: {e}")
 
 

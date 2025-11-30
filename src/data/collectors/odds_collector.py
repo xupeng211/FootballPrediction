@@ -7,9 +7,9 @@ Responsible for collecting football match odds data from various data sources.
 import asyncio
 import time
 from datetime import datetime
-from typing import Any, List, Dict, Optional
+from typing import Any, Optional
 
-import curl_cffi.requests
+# import curl_cffi.requests  # 暂时注释掉以避免 ImportError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from decimal import Decimal
@@ -17,6 +17,33 @@ from decimal import Decimal
 from src.core.logging import get_logger
 from src.database.models import Odds
 from src.database.base import AsyncSessionLocal
+
+
+# 确保ORM模型正确初始化，避免循环依赖
+def _ensure_orm_models_loaded():
+    """确保所有ORM模型都被加载，解决循环依赖问题"""
+    try:
+        # 按依赖顺序导入模型
+        import src.database.models.tenant
+        import src.database.models.user
+        import src.database.models.team
+        import src.database.models.league
+        import src.database.models.match
+        import src.database.models.predictions
+        import src.database.models.odds
+        import src.database.models.features
+        import src.database.models.data_collection_log
+        import src.database.models.data_quality_log
+        import src.database.models.audit_log
+    except Exception as e:
+        # 记录但不抛出异常，让程序继续运行
+        import sys
+
+        print(f"⚠️ ORM模型加载警告: {e}", file=sys.stderr)
+
+
+# 在模块加载时确保ORM模型已初始化
+_ensure_orm_models_loaded()
 
 
 class CollectionResult:
@@ -172,7 +199,7 @@ class OddsCollector:
         """获取缓存统计信息.
 
         Returns:
-            Dict[str, Any]: 缓存统计数据
+            dict[str, Any]: 缓存统计数据
         """
         return {"cache_size": len(self.cache), "cache_keys": list(self.cache.keys())}
 
@@ -181,7 +208,9 @@ class OddsCollector:
         self.cache.clear()
         self.logger.info("Cache cleared")
 
-    async def save_odds_to_database(self, match_id: int, odds_data: List[Dict[str, Any]]) -> int:
+    async def save_odds_to_database(
+        self, match_id: int, odds_data: list[dict[str, Any]]
+    ) -> int:
         """将赔率数据保存到数据库.
 
         Args:
@@ -209,7 +238,7 @@ class OddsCollector:
                             bet_type="home_win",
                             odds_value=Decimal(str(odds_item["home_win"])),
                             created_at=datetime.now(),
-                            updated_at=datetime.now()
+                            updated_at=datetime.now(),
                         )
                         session.add(home_win_odds)
                         saved_count += 1
@@ -222,7 +251,7 @@ class OddsCollector:
                             bet_type="draw",
                             odds_value=Decimal(str(odds_item["draw"])),
                             created_at=datetime.now(),
-                            updated_at=datetime.now()
+                            updated_at=datetime.now(),
                         )
                         session.add(draw_odds)
                         saved_count += 1
@@ -235,13 +264,15 @@ class OddsCollector:
                             bet_type="away_win",
                             odds_value=Decimal(str(odds_item["away_win"])),
                             created_at=datetime.now(),
-                            updated_at=datetime.now()
+                            updated_at=datetime.now(),
                         )
                         session.add(away_win_odds)
                         saved_count += 1
 
                 await session.commit()
-                self.logger.info(f"✅ 成功保存 {saved_count} 条赔率记录到数据库 (match_id: {match_id})")
+                self.logger.info(
+                    f"✅ 成功保存 {saved_count} 条赔率记录到数据库 (match_id: {match_id})"
+                )
 
             except Exception as e:
                 await session.rollback()
@@ -283,7 +314,9 @@ class OddsCollector:
 
         except Exception as e:
             response_time = time.time() - start_time
-            self.logger.error(f"Failed to collect and save odds for match {match_id}: {e}")
+            self.logger.error(
+                f"Failed to collect and save odds for match {match_id}: {e}"
+            )
             return CollectionResult(
                 success=False, error=str(e), response_time=response_time
             )
@@ -292,7 +325,7 @@ class OddsCollector:
         """获取收集统计信息.
 
         Returns:
-            Dict[str, Any]: 统计数据
+            dict[str, Any]: 统计数据
         """
         # 这里可以实现真实的统计逻辑
         return {

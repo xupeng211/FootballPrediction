@@ -75,7 +75,7 @@ def get_sample_error_details():
                     "full_output": "",
                 }
             )
-        except Exception as e:
+        except Exception:
             error_details.append(
                 {
                     "test": test,
@@ -206,12 +206,12 @@ def enhance_triage_report():
     # 分析错误模式
     error_type_counts, pattern_counts = analyze_error_patterns(error_details)
 
-    for error_type, count in sorted(
+    for _error_type, _count in sorted(
         error_type_counts.items(), key=lambda x: x[1], reverse=True
     ):
         pass
 
-    for pattern, count in sorted(
+    for _pattern, _count in sorted(
         pattern_counts.items(), key=lambda x: x[1], reverse=True
     ):
         pass

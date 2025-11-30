@@ -12,41 +12,49 @@ async def _save_daily_data(self, result: DailyDataResult):
             # 🏆 步骤1: 收集所有球队数据（不创建ORM对象）
             if result.football_data_matches:
                 for match_data in result.football_data_matches:
-                    home_team = match_data.get('homeTeam', {})
-                    away_team = match_data.get('awayTeam', {})
+                    home_team = match_data.get("homeTeam", {})
+                    away_team = match_data.get("awayTeam", {})
 
-                    if home_team.get('id'):
-                        all_teams_to_save.add((
-                            home_team.get('id', 0),
-                            home_team.get('name', ''),
-                            home_team.get('shortName', ''),
-                        ))
+                    if home_team.get("id"):
+                        all_teams_to_save.add(
+                            (
+                                home_team.get("id", 0),
+                                home_team.get("name", ""),
+                                home_team.get("shortName", ""),
+                            )
+                        )
 
-                    if away_team.get('id'):
-                        all_teams_to_save.add((
-                            away_team.get('id', 0),
-                            away_team.get('name', ''),
-                            away_team.get('shortName', ''),
-                        ))
+                    if away_team.get("id"):
+                        all_teams_to_save.add(
+                            (
+                                away_team.get("id", 0),
+                                away_team.get("name", ""),
+                                away_team.get("shortName", ""),
+                            )
+                        )
 
             if result.fotmob_matches:
                 for match_data in result.fotmob_matches:
-                    home_team = match_data.get('home', {})
-                    away_team = match_data.get('away', {})
+                    home_team = match_data.get("home", {})
+                    away_team = match_data.get("away", {})
 
-                    if home_team.get('id'):
-                        all_teams_to_save.add((
-                            home_team.get('id', 0),
-                            home_team.get('name', ''),
-                            home_team.get('shortName', ''),
-                        ))
+                    if home_team.get("id"):
+                        all_teams_to_save.add(
+                            (
+                                home_team.get("id", 0),
+                                home_team.get("name", ""),
+                                home_team.get("shortName", ""),
+                            )
+                        )
 
-                    if away_team.get('id'):
-                        all_teams_to_save.add((
-                            away_team.get('id', 0),
-                            away_team.get('name', ''),
-                            away_team.get('shortName', ''),
-                        ))
+                    if away_team.get("id"):
+                        all_teams_to_save.add(
+                            (
+                                away_team.get("id", 0),
+                                away_team.get("name", ""),
+                                away_team.get("shortName", ""),
+                            )
+                        )
 
             # 🎯 步骤2: 批量插入球队（如果不存在）
             if all_teams_to_save:
@@ -62,11 +70,14 @@ async def _save_daily_data(self, result: DailyDataResult):
 
                 for team_data in all_teams_to_save:
                     if team_data[0] > 0:  # 确保球队ID有效
-                        await session.execute(sql_team, {
-                            'id': team_data[0],
-                            'name': team_data[1] or f"Team_{team_data[0]}",
-                            'short_name': team_data[2] or f"T{team_data[0]}",
-                        })
+                        await session.execute(
+                            sql_team,
+                            {
+                                "id": team_data[0],
+                                "name": team_data[1] or f"Team_{team_data[0]}",
+                                "short_name": team_data[2] or f"T{team_data[0]}",
+                            },
+                        )
 
             # 🎯 步骤3: 使用纯SQL保存比赛数据
             sql_match = text("""
@@ -81,35 +92,50 @@ async def _save_daily_data(self, result: DailyDataResult):
             if result.football_data_matches:
                 for match_data in result.football_data_matches:
                     try:
-                        home_team = match_data.get('homeTeam', {})
-                        away_team = match_data.get('awayTeam', {})
-                        score = match_data.get('score', {})
+                        home_team = match_data.get("homeTeam", {})
+                        away_team = match_data.get("awayTeam", {})
+                        score = match_data.get("score", {})
 
-                        home_team_id = home_team.get('id', 0)
-                        away_team_id = away_team.get('id', 0)
+                        home_team_id = home_team.get("id", 0)
+                        away_team_id = away_team.get("id", 0)
 
                         if home_team_id == 0 or away_team_id == 0:
                             continue
 
                         # 解析比赛时间
-                        raw_date = datetime.fromisoformat(match_data.get('utcDate', f"{result.date}T15:00:00Z"))
-                        match_date = raw_date.replace(tzinfo=None) if raw_date.tzinfo else raw_date
+                        raw_date = datetime.fromisoformat(
+                            match_data.get("utcDate", f"{result.date}T15:00:00Z")
+                        )
+                        match_date = (
+                            raw_date.replace(tzinfo=None)
+                            if raw_date.tzinfo
+                            else raw_date
+                        )
 
                         # 纯SQL插入比赛
-                        await session.execute(sql_match, {
-                            'home_team_id': home_team_id,
-                            'away_team_id': away_team_id,
-                            'home_score': score.get('fullTime', {}).get('home', 0),
-                            'away_score': score.get('fullTime', {}).get('away', 0),
-                            'match_date': match_date,
-                            'status': match_data.get('status', 'SCHEDULED'),
-                            'league_id': match_data.get('competition', {}).get('id', 0),
-                            'season': match_data.get('season', {}).get('startDate', '')[:4] if match_data.get('season') else result.date[:4]
-                        })
+                        await session.execute(
+                            sql_match,
+                            {
+                                "home_team_id": home_team_id,
+                                "away_team_id": away_team_id,
+                                "home_score": score.get("fullTime", {}).get("home", 0),
+                                "away_score": score.get("fullTime", {}).get("away", 0),
+                                "match_date": match_date,
+                                "status": match_data.get("status", "SCHEDULED"),
+                                "league_id": match_data.get("competition", {}).get(
+                                    "id", 0
+                                ),
+                                "season": match_data.get("season", {}).get(
+                                    "startDate", ""
+                                )[:4]
+                                if match_data.get("season")
+                                else result.date[:4],
+                            },
+                        )
 
                         saved_count += 1
 
-                    except Exception as e:
+                    except Exception:
                         logger.error(f"❌ SQL Football-Data比赛失败: {e}")
                         continue
 
@@ -117,65 +143,86 @@ async def _save_daily_data(self, result: DailyDataResult):
             if result.fotmob_matches:
                 for match_data in result.fotmob_matches:
                     try:
-                        match_info = match_data.get('matchInfo', {})
+                        match_info = match_data.get("matchInfo", {})
                         if not match_info:
                             continue
 
-                        home_team = match_data.get('home', {})
-                        away_team = match_data.get('away', {})
+                        home_team = match_data.get("home", {})
+                        away_team = match_data.get("away", {})
 
-                        home_team_id = home_team.get('id', 0)
-                        away_team_id = away_team.get('id', 0)
+                        home_team_id = home_team.get("id", 0)
+                        away_team_id = away_team.get("id", 0)
 
                         if home_team_id == 0 or away_team_id == 0:
                             continue
 
                         # 解析日期
-                        match_date_str = match_info.get('startDate', {}).get('ts', None)
+                        match_date_str = match_info.get("startDate", {}).get("ts", None)
                         if not match_date_str:
-                            match_date_str = match_info.get('time', {}).get('longTs', None)
+                            match_date_str = match_info.get("time", {}).get(
+                                "longTs", None
+                            )
 
                         if not match_date_str:
                             continue
 
                         try:
-                            raw_date = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
-                            match_date = raw_date.replace(tzinfo=None) if raw_date.tzinfo else raw_date
+                            raw_date = datetime.fromisoformat(
+                                match_date_str.replace("Z", "+00:00")
+                            )
+                            match_date = (
+                                raw_date.replace(tzinfo=None)
+                                if raw_date.tzinfo
+                                else raw_date
+                            )
                         except ValueError:
                             try:
-                                raw_date = datetime.strptime(match_date_str, '%d.%m.%Y %H:%M')
+                                raw_date = datetime.strptime(
+                                    match_date_str, "%d.%m.%Y %H:%M"
+                                )
                                 match_date = raw_date
                             except ValueError:
                                 timestamp = int(match_date_str) / 1000
                                 match_date = datetime.fromtimestamp(timestamp)
 
                         # 解析比分和状态
-                        status_str = match_info.get('status', {}).get('scoreStr', '0-0')
-                        if isinstance(status_str, str) and ':' in status_str:
-                            scores = status_str.split(':')
+                        status_str = match_info.get("status", {}).get("scoreStr", "0-0")
+                        if isinstance(status_str, str) and ":" in status_str:
+                            scores = status_str.split(":")
                             home_score_val = int(scores[0])
                             away_score_val = int(scores[1])
                         else:
                             home_score_val = 0
                             away_score_val = 0
 
-                        status = 'CANCELLED' if match_info.get('status', {}).get('cancelled', False) else ('FINISHED' if ':' in status_str and status_str != '0-0' else 'SCHEDULED')
+                        status = (
+                            "CANCELLED"
+                            if match_info.get("status", {}).get("cancelled", False)
+                            else (
+                                "FINISHED"
+                                if ":" in status_str and status_str != "0-0"
+                                else "SCHEDULED"
+                            )
+                        )
 
                         # 纯SQL插入FotMob比赛
-                        await session.execute(sql_match, {
-                            'home_team_id': home_team_id,
-                            'away_team_id': away_team_id,
-                            'home_score': home_score_val,
-                            'away_score': away_score_val,
-                            'match_date': match_date,
-                            'status': status,
-                            'league_id': 0,
-                            'season': result.date[:4]
-                        })
+                        await session.execute(
+                            sql_match,
+                            {
+                                "home_team_id": home_team_id,
+                                "away_team_id": away_team_id,
+                                "home_score": home_score_val,
+                                "away_score": away_score_val,
+                                "match_date": match_date,
+                                "status": status,
+                                "league_id": 0,
+                                "season": result.date[:4],
+                            },
+                        )
 
                         saved_count += 1
 
-                    except Exception as e:
+                    except Exception:
                         logger.error(f"❌ SQL FotMob比赛失败: {e}")
                         continue
 
@@ -183,9 +230,10 @@ async def _save_daily_data(self, result: DailyDataResult):
             await session.commit()
             logger.info(f"✅ 纯SQL数据保存成功: {result.date} - {saved_count} 场比赛")
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 数据保存失败 {result.date}: {str(e)}")
         logger.error(f"🐛 数据保存失败详情: {type(e).__name__}: {str(e)}")
         import traceback
+
         logger.error(f"🔍 完整错误堆栈:\n{traceback.format_exc()}")
         raise

@@ -203,7 +203,7 @@ def test_kelly_optimization():
 
         return {"status": "success", "results": results}
 
-    except Exception as e:
+    except Exception:
         logger.error(f"Kelly准则优化测试失败: {e}")
         return {"status": "error", "message": str(e)}
 
@@ -263,7 +263,7 @@ def test_value_rating_enhancement():
 
         return {"status": "success", "results": results}
 
-    except Exception as e:
+    except Exception:
         logger.error(f"价值评级增强测试失败: {e}")
         return {"status": "error", "message": str(e)}
 
@@ -341,7 +341,7 @@ async def test_enhanced_ev_calculation():
 
         return {"status": "success", "results": results}
 
-    except Exception as e:
+    except Exception:
         logger.error(f"增强EV计算测试失败: {e}")
         return {"status": "error", "message": str(e)}
 
@@ -386,7 +386,7 @@ async def test_strategy_backtesting():
 
         return {"status": "success", "results": backtest_results}
 
-    except Exception as e:
+    except Exception:
         logger.error(f"策略回测测试失败: {e}")
         return {"status": "error", "message": str(e)}
 
@@ -454,7 +454,7 @@ def compare_with_original():
 
         return {"status": "success", "results": comparison_results}
 
-    except Exception as e:
+    except Exception:
         logger.error(f"对比测试失败: {e}")
         return {"status": "error", "message": str(e)}
 
@@ -504,7 +504,7 @@ async def main():
         with open("enhanced_ev_test_results.json", "w", encoding="utf-8") as f:
             json.dump(test_results, f, indent=2, ensure_ascii=False, default=str)
         logger.info("📄 测试结果已保存到 enhanced_ev_test_results.json")
-    except Exception as e:
+    except Exception:
         logger.error(f"保存测试结果失败: {e}")
 
     # 生成优化建议

@@ -37,7 +37,7 @@ def count_lines_in_file(file_path: Path) -> tuple[int, int]:
         total_lines = len(lines)
         return total_lines, code_lines
 
-    except Exception as e:
+    except Exception:
         print(f"Error reading {file_path}: {e}")
         return 0, 0
 
@@ -67,7 +67,7 @@ def load_existing_coverage() -> dict[str, float]:
                     k: v.get("summary", {}).get("percent_covered", 0)
                     for k, v in data.get("files", {}).items()
                 }
-        except Exception as e:
+        except Exception:
             print(f"Error loading coverage data: {e}")
 
     return {}

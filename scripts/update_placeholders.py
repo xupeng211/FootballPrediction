@@ -119,7 +119,7 @@ async def update_teams_from_premier_league():
                         )
                         updated_count += 1
 
-                    except Exception as e:
+                    except Exception:
                         logger.error(f"❌ 更新球队 {external_id} 失败: {e}")
                         await session.rollback()
                         failed_count += 1
@@ -140,7 +140,7 @@ async def update_teams_from_premier_league():
                 f"   📊 成功率: {(updated_count / len(team_mapping) * 100):.1f}%"
             )
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 更新过程中发生错误: {e}")
         sys.exit(1)
 

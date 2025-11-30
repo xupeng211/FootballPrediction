@@ -213,7 +213,7 @@ class TestDataPipelineIntegration:
                     "missing_values_before": sample_data.isnull().sum().sum(),
                     "missing_values_after": cleaned_data.isnull().sum().sum(),
                 }
-            except Exception as e:
+            except Exception:
                 workflow_results["cleaning"] = {"success": False, "error": str(e)}
 
             # 步骤2: 数据转换和队列处理
@@ -257,7 +257,7 @@ class TestDataPipelineIntegration:
                     "queue_size_after": await queue.get_size(),
                 }
 
-            except Exception as e:
+            except Exception:
                 workflow_results["queueing"] = {"success": False, "error": str(e)}
 
             # 步骤3: 任务处理
@@ -281,7 +281,7 @@ class TestDataPipelineIntegration:
                     ),
                 }
 
-            except Exception as e:
+            except Exception:
                 workflow_results["processing"] = {"success": False, "error": str(e)}
 
             # 验证整体工作流
@@ -317,7 +317,7 @@ class TestDataPipelineIntegration:
                 result = cleaner.clean_dataset(invalid_data, "matches")
                 assert isinstance(result, pd.DataFrame)
                 # 即使是无效数据，也应该返回某种形式的结果
-            except Exception as e:
+            except Exception:
                 # 如果抛出异常，应该是有意义的异常
                 assert isinstance(e, (ValueError, TypeError))
         else:

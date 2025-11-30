@@ -9,19 +9,20 @@ import os
 import sys
 import traceback
 from pathlib import Path
-from typing import List, Tuple, Set
+from typing import Optional
 
 # 需要验证的根目录
-ROOT_DIRS = ['src', 'tests']
+ROOT_DIRS = ["src", "tests"]
+
 
 class ImportValidator(ast.NodeVisitor):
     """AST访问器，用于检查导入和语法问题"""
 
     def __init__(self, filepath: str):
         self.filepath = filepath
-        self.imports: Set[str] = set()
-        self.undefined_names: Set[str] = set()
-        self.errors: List[str] = []
+        self.imports: set[str] = set()
+        self.undefined_names: set[str] = set()
+        self.errors: list[str] = []
 
     def visit_Import(self, node):
         for alias in node.names:
@@ -35,13 +36,14 @@ class ImportValidator(ast.NodeVisitor):
             self.imports.add(alias.name)
         self.generic_visit(node)
 
-def validate_file(filepath: Path) -> Tuple[bool, List[str]]:
+
+def validate_file(filepath: Path) -> tuple[bool, list[str]]:
     """验证单个Python文件的导入和语法"""
     errors = []
 
     try:
         # 1. 语法检查
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
 
         # 语法验证
@@ -52,23 +54,28 @@ def validate_file(filepath: Path) -> Tuple[bool, List[str]]:
             return False, errors
 
         # 2. 简单检查常见的导入问题
-        if 'datetime:' in content and 'from datetime import datetime as dt_datetime' not in content and 'import datetime' in content:
-            if 'datetime' in content.split('from datetime import')[0].split('#')[0]:
+        if (
+            "datetime:" in content
+            and "from datetime import datetime as dt_datetime" not in content
+            and "import datetime" in content
+        ):
+            if "datetime" in content.split("from datetime import")[0].split("#")[0]:
                 errors.append("可能存在 datetime 命名冲突")
 
-        if 'NameError: name \'datetime\' is not defined' in content:
+        if "NameError: name 'datetime' is not defined" in content:
             errors.append("存在未定义的 datetime 引用")
 
         # 3. 简单的 import 测试（不执行模块）
         try:
-            compile(content, str(filepath), 'exec')
-        except Exception as e:
+            compile(content, str(filepath), "exec")
+        except Exception:
             errors.append(f"编译错误: {e}")
 
-    except Exception as e:
+    except Exception:
         errors.append(f"文件读取错误: {e}")
 
     return len(errors) == 0, errors
+
 
 def main():
     """主函数"""
@@ -122,6 +129,7 @@ def main():
         print("🎉 所有模块验证通过!")
         print("✅ All modules valid")
         return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -250,7 +250,7 @@ async def main():
         else:
             print("\n❌ EWMA集成测试失败")
 
-    except Exception as e:
+    except Exception:
         logger.error(f"💥 集成测试异常: {e}")
         import traceback
 

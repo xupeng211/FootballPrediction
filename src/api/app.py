@@ -1,3 +1,4 @@
+import os
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -113,7 +114,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Football Prediction API",
     description="足球预测系统API - 提供比赛预测,数据查询和统计分析功能",
-    version="1.0.0",
+    version="1.0.0-rc1",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -237,7 +238,7 @@ async def root():
     """根路径."""
     return {
         "message": "Football Prediction API",
-        "version": "1.0.0",
+        "version": "1.0.0-rc1",
         "docs": "/docs",
         "health": "/api/health",
     }
@@ -276,10 +277,18 @@ async def test_endpoint():
 
 
 if __name__ == "__main__":
+    # FIX: 安全的主机绑定配置 - 优先使用环境变量，默认回环地址
+    host = os.getenv("HOST", "127.0.0.1")  # 默认绑定到安全的回环地址而非 0.0.0.0
+    port = int(os.getenv("PORT", str(DEFAULT_PORT)))
+
+    # 生产环境安全检查
+    if host == "0.0.0.0":
+        print("⚠️  安全警告: 检测到绑定所有接口 (0.0.0.0)，在生产环境中请使用具体IP地址")
+
     uvicorn.run(
         "app:app",
-        host="0.0.0.0",
-        port=DEFAULT_PORT,
+        host=host,
+        port=port,
         reload=True,
         log_level="info",
     )

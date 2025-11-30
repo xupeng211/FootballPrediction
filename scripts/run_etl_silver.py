@@ -26,7 +26,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -117,7 +117,7 @@ class SilverETLProcessor:
             await self._print_processing_summary()
             return True
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ ETL流程失败: {e}")
             self.processing_stats["errors"] += 1
             return False
@@ -128,7 +128,7 @@ class SilverETLProcessor:
             stmt = select(RawMatchData).where(not RawMatchData.processed)
             result = await session.execute(stmt)
             return result.scalars().all()
-        except Exception as e:
+        except Exception:
             logger.error(f"获取未处理数据失败: {e}")
             raise
 
@@ -161,7 +161,7 @@ class SilverETLProcessor:
                     f"📈 已处理 {self.processing_stats['processed_matches']} 条记录"
                 )
 
-        except Exception as e:
+        except Exception:
             logger.error(f"处理记录失败 (external_id={raw_record.external_id}): {e}")
             self.processing_stats["errors"] += 1
             # 不标记为已处理，下次重试
@@ -197,7 +197,7 @@ class SilverETLProcessor:
                 logger.debug(f"创建新联赛: {league_info['name']}")
                 return new_league.id
 
-        except Exception as e:
+        except Exception:
             logger.error(f"Upsert联赛失败: {e}")
             raise
 
@@ -233,7 +233,7 @@ class SilverETLProcessor:
                 logger.debug(f"创建新球队: {team_info['name']}")
                 return new_team.id
 
-        except Exception as e:
+        except Exception:
             logger.error(f"Upsert {team_type} 球队失败: {e}")
             raise
 
@@ -288,7 +288,7 @@ class SilverETLProcessor:
                 session.add(new_match)
                 logger.debug(f"创建新比赛: home={home_team_id}, away={away_team_id}")
 
-        except Exception as e:
+        except Exception:
             logger.error(f"Upsert比赛失败: {e}")
             raise
 
@@ -333,7 +333,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("⏹️  用户中断，ETL流程停止")
         sys.exit(1)
-    except Exception as e:
+    except Exception:
         logger.error(f"💥 ETL流程异常: {e}")
         sys.exit(1)
 

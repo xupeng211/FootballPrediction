@@ -210,7 +210,7 @@ class PredictionStrategyFactory:
             strategy_type: 策略类型
 
         Returns:
-            List[PredictionStrategy]: 指定类型的策略列表
+            list[PredictionStrategy]: 指定类型的策略列表
         """
         return [
             strategy
@@ -227,7 +227,7 @@ class PredictionStrategyFactory:
             strategy_configs: 策略配置列表
 
         Returns:
-            Dict[str, PredictionStrategy]: 创建的策略字典
+            dict[str, PredictionStrategy]: 创建的策略字典
         """
         created_strategies = {}
 
@@ -435,7 +435,7 @@ class PredictionStrategyFactory:
             strategy_name: 策略名称
 
         Returns:
-            Dict[str, Any]: 策略配置
+            dict[str, Any]: 策略配置
         """
         # 从策略配置中获取
         if strategy_name in self._strategy_configs:
@@ -483,7 +483,7 @@ class PredictionStrategyFactory:
             config: 策略配置
 
         Returns:
-            List[str]: 验证错误列表,空列表表示验证通过
+            list[str]: 验证错误列表,空列表表示验证通过
         """
         errors = []
 

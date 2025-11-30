@@ -164,6 +164,7 @@ ConfigurationError = ConfigError
 ServiceUnavailableError = ServiceError
 CustomCustomTimeout = FootballTimeoutError
 
+
 # Analytics specific exceptions
 class TeamNotFoundError(FootballPredictionError):
     """球队未找到异常."""

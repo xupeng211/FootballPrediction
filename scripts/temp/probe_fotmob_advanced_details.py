@@ -64,7 +64,7 @@ class AdvancedFotMobDetailsProbe:
                 if response.text:
                     print(f"   错误信息: {response.text[:200]}")
 
-        except Exception as e:
+        except Exception:
             print(f"   ❌ 请求异常: {e}")
 
         return None
@@ -113,7 +113,7 @@ class AdvancedFotMobDetailsProbe:
                 else:
                     print(f"   ❌ 状态码: {response.status_code}")
 
-            except Exception as e:
+            except Exception:
                 print(f"   ❌ 异常: {e}")
 
         return None

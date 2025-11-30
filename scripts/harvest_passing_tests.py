@@ -124,7 +124,7 @@ class TestHarvester:
 
         except subprocess.TimeoutExpired:
             return False, "❌ 超时"
-        except Exception as e:
+        except Exception:
             return False, f"❌ 异常: {str(e)[:50]}"
 
     def _count_tests_in_output(self, output: str) -> int:
@@ -163,7 +163,7 @@ class TestHarvester:
             module = self._get_module_name(test_file)
             modules[module].append(test_file)
 
-        for module, _files in sorted(modules.items()):
+        for _module, _files in sorted(modules.items()):
             pass
 
         # 逐个检查测试文件

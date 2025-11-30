@@ -135,7 +135,7 @@ class PremierLeagueMatchFinder:
 
                             return finished_matches[:3]
 
-                    except Exception as e:
+                    except Exception:
                         print(f"❌ JSON解析错误: {e}")
 
                 elif response.status_code == 401:
@@ -145,7 +145,7 @@ class PremierLeagueMatchFinder:
                 else:
                     print(f"❌ 请求失败，状态码: {response.status_code}")
 
-            except Exception as e:
+            except Exception:
                 print(f"❌ 请求异常: {e}")
 
         return []
@@ -268,7 +268,7 @@ class PremierLeagueMatchFinder:
                 else:
                     print(f"❌ 其他错误: {match_id} - {response.status_code}")
 
-            except Exception as e:
+            except Exception:
                 print(f"❌ 请求异常: {match_id} - {e}")
 
         return valid_matches
@@ -330,7 +330,7 @@ async def main():
         print("\n❌ 未能找到合适的英超比赛")
         return None
 
-    except Exception as e:
+    except Exception:
         print(f"\n❌ 搜索过程中发生错误: {e}")
         import traceback
 

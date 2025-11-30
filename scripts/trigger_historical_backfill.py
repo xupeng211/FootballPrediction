@@ -35,7 +35,7 @@ import random
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 import argparse
 
 # 添加项目根目录到Python路径
@@ -77,7 +77,7 @@ def load_data_source_config() -> dict[str, Any]:
         logger.info(f"📋 配置版本: {config.get('version', 'unknown')}")
         logger.info(f"🎯 采集策略: {config.get('collection_strategy', 'unknown')}")
         return config
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 加载数据源配置失败: {e}")
         # 返回默认配置
         return {
@@ -215,7 +215,7 @@ async def trigger_comprehensive_collection(
                 logger.info(f"⏱️ 随机延迟 {delay:.1f} 秒...")
                 await asyncio.sleep(delay)
 
-        except Exception as e:
+        except Exception:
             logger.error(f"❌ 日期 {date_str} 采集失败: {e}")
             failed_tasks += 1
             # 失败时也添加短暂延迟，避免连续失败冲击API
@@ -331,7 +331,7 @@ def validate_environment():
             f"   - Celery连接: {'可用' if database_url and redis_url else '不可用'}"
         )
         return True
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 环境验证失败: {e}")
         return False
 
@@ -411,7 +411,7 @@ async def main():
 
         return 0
 
-    except Exception as e:
+    except Exception:
         logger.error(f"❌ 地毯式覆盖执行失败: {e}")
         import traceback
 

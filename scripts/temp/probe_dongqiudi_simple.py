@@ -107,7 +107,7 @@ class DongqiudiSimpleProbe:
                 else:
                     logger.info(f"  ⚠️ 状态码: {response.status_code}")
 
-            except Exception as e:
+            except Exception:
                 logger.info(f"  ❌ 请求失败: {e}")
 
         return {"match_id": match_id, "results": results, "has_data": len(results) > 0}

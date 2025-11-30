@@ -76,7 +76,7 @@ class AuthPredictionIntegrationTester:
                 self.log_test("健康检查端点测试", success, details, duration)
                 return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("健康检查端点测试", False, f"异常: {str(e)}", duration)
             return False
@@ -110,7 +110,7 @@ class AuthPredictionIntegrationTester:
             self.log_test("用户注册测试", success, details, duration)
             return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("用户注册测试", False, f"异常: {str(e)}", duration)
             return False
@@ -146,7 +146,7 @@ class AuthPredictionIntegrationTester:
             self.log_test("用户登录测试", success, details, duration)
             return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("用户登录测试", False, f"异常: {str(e)}", duration)
             return False
@@ -167,7 +167,7 @@ class AuthPredictionIntegrationTester:
             self.log_test("未授权预测访问测试", success, details, duration)
             return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("未授权预测访问测试", False, f"异常: {str(e)}", duration)
             return False
@@ -199,7 +199,7 @@ class AuthPredictionIntegrationTester:
             self.log_test("授权预测访问测试", success, details, duration)
             return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("授权预测访问测试", False, f"异常: {str(e)}", duration)
             return False
@@ -233,7 +233,7 @@ class AuthPredictionIntegrationTester:
             self.log_test("创建预测测试", success, details, duration)
             return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("创建预测测试", False, f"异常: {str(e)}", duration)
             return False
@@ -271,7 +271,7 @@ class AuthPredictionIntegrationTester:
             self.log_test("批量预测测试", success, details, duration)
             return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("批量预测测试", False, f"异常: {str(e)}", duration)
             return False
@@ -306,7 +306,7 @@ class AuthPredictionIntegrationTester:
             self.log_test("预测验证测试", success, details, duration)
             return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("预测验证测试", False, f"异常: {str(e)}", duration)
             return False
@@ -340,7 +340,7 @@ class AuthPredictionIntegrationTester:
             self.log_test("Token刷新测试", success, details, duration)
             return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("Token刷新测试", False, f"异常: {str(e)}", duration)
             return False
@@ -371,7 +371,7 @@ class AuthPredictionIntegrationTester:
 
             return success
 
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             self.log_test("用户登出测试", False, f"异常: {str(e)}", duration)
             return False
@@ -402,7 +402,7 @@ class AuthPredictionIntegrationTester:
                 if await test_method():
                     passed_tests += 1
                 logger.debug()  # 空行分)
-            except Exception as e:
+            except Exception:
                 logger.error(f"测试方法 {test_method.__name__} 执行异常: {e}")
                 logger.debug()
 

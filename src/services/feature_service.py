@@ -100,7 +100,7 @@ class FeatureService:
             calculation_date: 计算日期
 
         Returns:
-            Dict[int, AllMatchFeatures]: 比赛ID到特征的映射
+            dict[int, AllMatchFeatures]: 比赛ID到特征的映射
         """
         try:
             features_dict = await self.calculator.batch_calculate_match_features(

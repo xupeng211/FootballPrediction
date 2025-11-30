@@ -125,7 +125,7 @@ def simple_etl():
                     batch_matches.append(match_data_insert)
                     batch_processed_ids.append(raw_id)
 
-                except Exception as e:
+                except Exception:
                     logger.warning(f"⚠️ 跳过记录 {raw_id}: {e}")
                     continue
 

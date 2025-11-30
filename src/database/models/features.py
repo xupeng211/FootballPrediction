@@ -52,6 +52,7 @@ class FeatureEntity(BaseModel):
     __tablename__ = "feature_entities"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    match_id: Mapped[int] = mapped_column(Integer, nullable=False)
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
     entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     feature_name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -59,6 +60,9 @@ class FeatureEntity(BaseModel):
     feature_numeric: Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 4), nullable=True
     )
+    feature_data: Mapped[dict[str, Any] | None] = mapped_column(
+        Text, nullable=True
+    )  # JSON as text
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
@@ -68,6 +72,7 @@ class FeatureEntity(BaseModel):
     __table_args__ = (
         Index("idx_feature_entity", "entity_type", "entity_id"),
         Index("idx_feature_name", "feature_name"),
+        Index("idx_feature_match", "match_id"),
         {"extend_existing": True},
     )
 

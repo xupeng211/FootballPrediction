@@ -386,7 +386,7 @@ class TestMetricsResponseComprehensive:
         try:
             response = MetricsResponse()
             assert response is not None
-        except Exception as e:
+        except Exception:
             # 如果类不存在或定义不完整，我们跳过测试
             pytest.skip(f"MetricsResponse not fully implemented: {e}")
 
