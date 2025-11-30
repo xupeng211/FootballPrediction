@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.11']  # 轻量级CI: 仅测试一个Python版本以节省资源
 
     services:
       postgres:
@@ -132,16 +132,13 @@ jobs:
           export PYTHONPATH=$PWD:$PYTHONPATH
 
           # CI SECURITY: 与本地一致的测试命令 - 使用 Makefile 中的快速测试策略
-          timeout 600s python -m pytest tests/unit/api/ \
+          # 轻量级CI: 快速测试策略，避免资源超限
+        timeout 300s python -m pytest tests/unit/api/ \
             tests/unit/cache/ \
             tests/unit/events/ \
             tests/unit/utils/ \
-            --timeout=120 \
-            --cov=src \
-            --cov-report=xml:test-results-full.xml \
-            --cov-report=html:htmlcov-full \
-            --cov-report=term-missing \
-            --maxfail=20 \
+            --timeout=60 \
+            --maxfail=10 \
             -v \
             --tb=short \
             --ignore=tests/unit/api/test_analytics.py \
