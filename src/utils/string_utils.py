@@ -36,12 +36,37 @@ class StringUtils:
         return not text.strip()
 
     @staticmethod
+    def capitalize(text: str) -> str:
+        """首字母大写."""
+        if not isinstance(text, str):
+            return ""
+        return text.capitalize()
+
+    @staticmethod
     def clean_whitespace(text: str) -> str:
         """清理多余的空白字符."""
         if not isinstance(text, str):
             return ""
         # 将多个空白字符替换为单个空格
         return " ".join(text.split())
+
+    @staticmethod
+    def remove_special_chars(text: str) -> str:
+        """移除特殊字符."""
+        if not isinstance(text, str):
+            return ""
+        # 移除非字母数字字符
+        return re.sub(r'[^a-zA-Z0-9]', '', text)
+
+    @staticmethod
+    def is_email(email: str) -> bool:
+        """检查是否为有效邮箱."""
+        return StringUtils.validate_email(email)
+
+    @staticmethod
+    def is_phone(phone: str) -> bool:
+        """检查是否为有效手机号."""
+        return StringUtils.validate_phone_number(phone)
 
     @staticmethod
     def clean_string(text: str, remove_special: bool = False) -> str:

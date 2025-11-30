@@ -30,6 +30,16 @@ class DateUtils:
         return dt > dt_datetime.now()
 
     @staticmethod
+    def format_date(dt: dt_datetime, format_str: str = "%Y-%m-%d") -> str:
+        """格式化日期."""
+        if not isinstance(dt, dt_datetime):
+            return ""
+        try:
+            return dt.strftime(format_str)
+        except ValueError:
+            return ""
+
+    @staticmethod
     def format_iso(dt: dt_datetime) -> str:
         """格式化为ISO格式."""
         if not isinstance(dt, dt_datetime):
@@ -69,6 +79,14 @@ class DateUtils:
             return dt_datetime.strptime(date_str, format_str)
         except ValueError:
             return None
+
+    @staticmethod
+    def days_between(start_date: dt_datetime, end_date: dt_datetime) -> int:
+        """计算两个日期之间的天数差."""
+        if not isinstance(start_date, dt_datetime) or not isinstance(end_date, dt_datetime):
+            return 0
+        delta = end_date - start_date
+        return abs(delta.days)
 
     @staticmethod
     def parse_datetime(
