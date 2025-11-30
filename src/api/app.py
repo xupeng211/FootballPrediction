@@ -244,6 +244,23 @@ async def root():
     }
 
 
+@app.get("/api")
+async def api_info():
+    """API信息端点."""
+    return {
+        "service": "Football Prediction API",
+        "version": "1.0.0-rc1",
+        "status": "active",
+        "endpoints": {
+            "health": "/api/health",
+            "docs": "/docs",
+            "predictions": "/api/v1/predictions",
+            "monitoring": "/api/monitoring",
+            "data": "/api/v1/data"
+        }
+    }
+
+
 @app.get("/api/health")
 async def health_check():
     """健康检查端点."""

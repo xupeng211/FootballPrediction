@@ -217,6 +217,27 @@ class EnhancedRedisManager:
         """设置缓存值."""
         return self.sync_client.set(key, value, ex=ex, px=px)
 
+    def set_cache_value(self, key: str, value: Any, ex: int | None = None) -> bool:
+        """设置缓存值（支持任意类型，自动序列化）.
+
+        Args:
+            key: 缓存键
+            value: 缓存值（任意类型）
+            ex: 过期时间（秒）
+
+        Returns:
+            是否设置成功
+        """
+        if isinstance(value, (dict, list)):
+            # JSON序列化复杂类型
+            return self.set_json(key, value, ex=ex)
+        elif isinstance(value, str):
+            # 字符串直接设置
+            return self.set(key, value, ex=ex)
+        else:
+            # 其他类型使用pickle序列化
+            return self.set_pickle(key, value, ex=ex)
+
     def setex(self, key: str, seconds: int, value: str) -> bool:
         """设置带TTL的缓存值."""
         return self.sync_client.setex(key, seconds, value)
