@@ -1,0 +1,204 @@
+# 🏗️ 本地CI模拟器 - 完全复现GitHub Actions环境
+# 版本: V5.0 - 构建本地CI模拟器：拒绝等待
+
+services:
+  # PostgreSQL数据库服务 - 与CI环境完全一致
+  db:
+    image: postgres:15
+    container_name: football-prediction-ci-db
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: test_football_prediction
+      POSTGRES_USER: postgres
+    ports:
+      - "5433:5432"  # 使用不同端口避免冲突
+    volumes:
+      - ci_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ci-network
+
+  # Redis缓存服务 - 与CI环境完全一致
+  redis:
+    image: redis:7
+    container_name: football-prediction-ci-redis
+    ports:
+      - "6380:6379"  # 使用不同端口避免冲突
+    command: redis-server --appendonly yes
+    volumes:
+      - ci_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ci-network
+
+  # CI运行器 - 完全隔离的测试环境
+  ci-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+    container_name: football-prediction-ci-runner
+    environment:
+      # 数据库配置 - 与CI完全一致
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/test_football_prediction
+      REDIS_URL: redis://redis:6379/0
+
+      # 环境标识
+      ENV: testing
+      CI: true
+      TESTING: true
+      DEBUG: false
+      LOG_LEVEL: WARNING
+
+      # Python路径
+      PYTHONPATH: /app
+
+      # 性能优化
+      PYTEST_CURRENT_TEST: 1
+      MALLOC_ARENA_MAX: 2
+
+      # ML Mock配置 - 关键！避免重型依赖
+      FOOTBALL_PREDICTION_ML_MODE: mock
+      INFERENCE_SERVICE_MOCK: true
+      SKIP_ML_MODEL_LOADING: true
+      XGBOOST_MOCK: true
+      JOBLIB_MOCK: true
+
+    volumes:
+      # 挂载源代码 - 排除本地构建产物
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./requirements.txt:/app/requirements.txt
+      - ./requirements-ci.txt:/app/requirements-ci.txt
+
+      # 排除本地虚拟环境和缓存
+      - ./.venv:/app/.venv:ro  # 只读挂载，确保不会使用
+      - ./htmlcov:/app/htmlcov  # 覆盖率报告输出
+
+    working_dir: /app
+
+    # CI命令序列 - 完全复现GitHub Actions步骤
+    command: >
+      bash -c "
+        echo '🚀 启动本地CI模拟器 V5.0...';
+
+        # 等待服务启动
+        echo '⏳ 等待数据库启动...';
+        # 使用TCP连接测试PostgreSQL
+        while ! timeout 2 bash -c "</dev/tcp/db/5432"; do
+          echo '等待PostgreSQL...';
+          sleep 2;
+        done;
+
+        echo '⏳ 等待Redis启动...';
+        while ! timeout 2 bash -c "</dev/tcp/redis/6379"; do
+          echo '等待Redis...';
+          sleep 2;
+        done;
+
+        echo '✅ 所有服务已就绪';
+
+        # 创建测试数据文件
+        echo '📁 创建测试所需的数据文件...';
+        mkdir -p data logs;
+
+        # 创建 dataset_v1.csv 示例数据
+        cat > data/dataset_v1.csv << 'EOF'
+        date,home_team,away_team,home_score,away_score,result
+        2024-01-01,Manchester United,Liverpool,2,1,H
+        2024-01-02,Arsenal,Chelsea,1,1,D
+        2024-01-03,Manchester City,Tottenham,3,0,H
+        2024-01-04,Newcastle,Everton,1,2,A
+        2024-01-05,Leicester,West Ham,2,2,D
+        EOF;
+
+        # 创建必要的日志文件
+        touch logs/enhanced_ev_test.log;
+
+        echo '✅ 数据文件创建完成';
+
+        # 安装依赖
+        echo '📦 安装CI依赖...';
+        python -m pip install --upgrade pip;
+        pip install pip-tools;
+        pip install -r requirements-ci.txt;
+
+        # 运行代码检查
+        echo '🔍 运行代码检查...';
+        ruff check src/ tests/ || echo '⚠️ 代码检查发现问题，继续执行测试';
+
+        # 运行安全扫描
+        echo '🛡️ 运行安全扫描...';
+        bandit -r src/ -f json -o bandit-report.json || echo '⚠️ 安全扫描完成';
+
+        # 运行测试套件 - 与CI完全一致的命令
+        echo '🧪 运行测试套件...';
+        timeout 600s python -m pytest tests/unit/ \\
+          --ignore=tests/unit/ml/ \\
+          --ignore=tests/unit/scripts/ \\
+          --ignore=tests/unit/collectors/ \\
+          --timeout=30 \\
+          --timeout-method=thread \\
+          --cov=src \\
+          --cov-report=xml:test-results-full.xml \\
+          --cov-report=html:htmlcov-full \\
+          --cov-report=term-missing \\
+          --maxfail=5 \\
+          -x \\
+          -v \\
+          --tb=short;
+
+        TEST_EXIT_CODE=$?;
+
+        if [ $TEST_EXIT_CODE -eq 0 ]; then
+          echo '🎉 CI测试通过！';
+          echo '📊 覆盖率报告已生成: htmlcov/index.html';
+        else
+          echo '❌ CI测试失败';
+        fi;
+
+        # 生成最终报告
+        echo '📋 生成CI报告...';
+        echo '=== 本地CI模拟器报告 ===' > ci-report.txt;
+        echo '测试时间: '$(date) >> ci-report.txt;
+        echo '测试状态: '$([ $TEST_EXIT_CODE -eq 0 ] && echo '✅ 通过' || echo '❌ 失败') >> ci-report.txt;
+        echo '覆盖率报告: htmlcov/index.html' >> ci-report.txt;
+        echo '安全扫描报告: bandit-report.json' >> ci-report.txt;
+        cat ci-report.txt;
+
+        exit $TEST_EXIT_CODE
+      "
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    networks:
+      - ci-network
+
+# 网络配置
+networks:
+  ci-network:
+    driver: bridge
+    name: football-prediction-ci-network
+
+# 数据卷
+volumes:
+  ci_postgres_data:
+    name: football-prediction-ci-postgres-data
+  ci_redis_data:
+    name: football-prediction-ci-redis-data

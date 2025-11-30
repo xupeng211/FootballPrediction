@@ -577,4 +577,19 @@ def get_match_predictions_mock(match_id: int) -> list[dict[str, Any]]:
     return []
 
 
+# 导出模块级别的便捷函数
+async def get_match_predictions(match_id: int) -> list[dict[str, Any]]:
+    """获取比赛预测 - 模块级别便捷函数
+    Get match predictions - module level convenience function.
+
+    Args:
+        match_id: 比赛ID
+
+    Returns:
+        比赛预测列表
+    """
+    service = get_prediction_service()
+    return await service.get_match_predictions(match_id)
+
+
 # 注意：类方法已经正确定义，不需要额外的静态方法赋值

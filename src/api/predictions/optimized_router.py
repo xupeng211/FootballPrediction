@@ -1311,7 +1311,7 @@ async def get_match_predictions(match_id: int):
     try:
         from src.services.prediction_service import get_match_predictions
 
-        predictions = get_match_predictions(match_id)
+        predictions = await get_match_predictions(match_id)
         return {
             "match_id": match_id,
             "predictions": predictions,

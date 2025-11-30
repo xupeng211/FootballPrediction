@@ -31,6 +31,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 make dev && make status && make test.unit && make coverage
 ```
 
+### 项目启动验证
+```bash
+# 1. 启动环境
+make dev
+
+# 2. 检查服务状态
+make status
+
+# 3. 验证API可访问性
+curl http://localhost:8000/health
+
+# 4. 运行核心测试
+make test.fast
+
+# 5. 查看项目状态
+make logs
+```
+
 ### 常用命令速查
 | 任务 | 命令 | 说明 |
 |------|------|------|
@@ -38,10 +56,11 @@ make dev && make status && make test.unit && make coverage
 | 测试 | `make test.unit` / `make test.fast` / `make coverage` | 单元测试/快速核心测试/覆盖率 |
 | CI验证 | `make test.unit.ci` / `make ci` | CI最小化验证/完整CI验证 |
 | 代码质量 | `make lint && make fix-code` | 检查并自动修复 |
-| 容器操作 | `make shell` / `make logs` / `make monitor` | 进入容器/查看日志/资源监控 |
+| 容器操作 | `make shell` / `make logs` / `make status` | 进入容器/查看日志/服务状态 |
 | 数据库 | `make db-shell` / `make db-reset` / `make db-migrate` | 数据库操作/重置/迁移 |
-| 状态检查 | `make status` | 检查所有服务状态 |
-| 维护命令 | `make rebuild` / `make clean` / `make clean-all` | 重新构建/清理资源/彻底清理 |
+| Redis | `make redis-shell` | 连接Redis缓存 |
+| 监控 | `make logs-db` / `make logs-redis` | 查看数据库/Redis日志 |
+| 维护命令 | `make rebuild` / `make clean` | 重新构建/清理资源 |
 
 ## 项目概述
 
@@ -67,12 +86,16 @@ make dev && make status && make test.unit && make coverage
 src/
 ├── api/              # API 层 (CQRS 实现)
 ├── domain/           # 领域层 (DDD 核心逻辑)
+├── adapters/         # 外部数据源适配器
 ├── cqrs/            # CQRS 模式实现
 ├── core/            # 核心基础设施
 ├── database/        # 数据层
 ├── cache/           # 缓存层
 ├── ml/              # 机器学习模块
 ├── tasks/           # Celery 任务调度
+├── events/          # 事件系统
+├── services/        # 业务服务层
+├── utils/           # 工具函数
 └── monitoring/      # 监控系统
 ```
 
@@ -107,6 +130,11 @@ src/
 - **定时任务** - Celery Beat 调度器
 - **数据收集** - 多源数据自动采集和处理
 - **智能重试** - 指数退避和错误阈值管理
+
+#### 6. 适配器系统 (`src/adapters/`)
+- **外部数据源适配** - 统一的第三方API接口适配层
+- **适配器工厂模式** - 动态创建和管理数据源适配器
+- **注册机制** - 可插拔的适配器注册和发现系统
 
 ## 开发命令
 
@@ -187,6 +215,19 @@ docker-compose exec app celery -A src.tasks.celery_app purge             # 清�
 3. **异步测试原则** - 正确的异步测试模式
 4. **外部API原则** - 单元测试Mock，集成测试使用真实API
 
+### ⚠️ 重要：如何运行单个测试文件
+**永远不要直接运行 `pytest tests/unit/specific_file.py`**，这会导致环境和依赖问题。
+
+正确的方法：
+```bash
+# 使用容器环境运行单个测试文件
+docker-compose exec app pytest tests/unit/api/test_predictions.py -v
+
+# 或者使用Makefile命令进入容器后运行
+make shell
+pytest tests/unit/api/test_predictions.py -v
+```
+
 ### 测试标记
 ```python
 @pytest.mark.unit           # 单元测试
@@ -264,6 +305,7 @@ docker-compose exec app celery -A src.tasks.celery_app purge             # 清�
 - **CI验证**: 提交前运行 `make lint && make test && make security-check`
 - **服务健康**: 开发前先运行 `make status` 检查所有服务
 - **数据安全**: `make db-reset` 会删除所有数据，谨慎使用
+- **语言偏好**: **请使用简体中文回复用户** - 项目团队主要使用中文交流
 
 ### 🛠️ 开发工作流
 
@@ -275,11 +317,18 @@ make test.unit        # 运行单元测试
 make coverage         # 检查覆盖率
 make lint && make fix-code  # 代码质量检查和修复
 
-# 提交前验证
-make ci               # 完整CI验证
+# 提交前验证（必须执行）
+make test.unit.ci     # 最小化CI验证（最快）
+make ci               # 完整CI验证（如时间允许）
 make security-check   # 安全检查
 make type-check       # 类型检查
 ```
+
+### 📋 GitHub 工作流集成
+- **CI 管道**: `.github/workflows/ci_pipeline_v2.yml` - 主要的持续集成管道
+- **智能修复**: `.github/workflows/smart-fixer-ci.yml` - 自动修复常见问题
+- **问题同步**: 自动化的 GitHub Issues 与项目看板同步
+- **覆盖率监控**: 实时测试覆盖率跟踪和报告
 
 ### 🔧 故障排除
 
