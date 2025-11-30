@@ -142,8 +142,7 @@ jobs:
             --tb=short \
             --ignore=tests/unit/ml/ \
             --ignore=tests/integration/ \
-            --ignore=tests/performance/ \
-            --ignore=tests/unit/utils/test_string_utils.py || exit 1
+            --ignore=tests/performance/ || exit 1
           echo "✅ 核心单元测试套件执行完成!"
 
       - name: Upload Coverage Report
