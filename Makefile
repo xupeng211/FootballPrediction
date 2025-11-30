@@ -178,6 +178,14 @@ else
 	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -v'
 endif
 
+test.fast: ## 管理/运行快速核心测试 (仅API/Utils/Cache/Events模块，避免加载ML模型)
+	@echo "$(GREEN)⚡ 运行快速核心测试...$(RESET)"
+ifdef CI
+	pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ -v --tb=short --maxfail=3 --ignore=tests/unit/api/test_analytics.py --ignore=tests/unit/api/test_analytics_v2.py
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ -v --tb=short --maxfail=3 --ignore=tests/unit/api/test_analytics.py --ignore=tests/unit/api/test_analytics_v2.py'
+endif
+
 test.unit.ci: ## 管理/运行CI最小化验证 (终极稳定方案)
 	@echo "$(YELLOW)🚀 运行CI最小化验证...$(RESET)"
 ifdef CI
