@@ -5,7 +5,8 @@ DataValidator.
 """
 
 import re
-from typing import Any
+from datetime import datetime
+from typing import Any, Union
 
 
 class DataValidator:
@@ -13,6 +14,46 @@ class DataValidator:
 
     pass  # 添加pass语句
     """数据验证工具类"""
+
+    @staticmethod
+    def validate_string(value: str, required: bool = False) -> bool:
+        """验证字符串."""
+        if required and (value is None or value == ""):
+            return False
+        if not required and (value is None or value == ""):
+            return True
+        return isinstance(value, str)
+
+    @staticmethod
+    def validate_number(value: Union[int, float], min_value: float = None, max_value: float = None) -> bool:
+        """验证数字."""
+        try:
+            num = float(value)
+        except (ValueError, TypeError):
+            return False
+
+        if min_value is not None and num < min_value:
+            return False
+        if max_value is not None and num > max_value:
+            return False
+        return True
+
+    @staticmethod
+    def validate_datetime(value) -> bool:
+        """验证日期时间."""
+        if isinstance(value, datetime):
+            return True
+        if isinstance(value, str):
+            try:
+                datetime.fromisoformat(value.replace('Z', '+00:00'))
+                return True
+            except ValueError:
+                try:
+                    datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+                    return True
+                except ValueError:
+                    return False
+        return False
 
     @staticmethod
     def validate_email(email: str) -> bool:

@@ -23,6 +23,23 @@ class DateUtils:
     }
 
     @staticmethod
+    def is_future(dt: dt_datetime) -> bool:
+        """检查日期时间是否在未来."""
+        if not isinstance(dt, dt_datetime):
+            return False
+        return dt > dt_datetime.now()
+
+    @staticmethod
+    def format_iso(dt: dt_datetime) -> str:
+        """格式化为ISO格式."""
+        if not isinstance(dt, dt_datetime):
+            return ""
+        try:
+            return dt.isoformat()
+        except ValueError:
+            return ""
+
+    @staticmethod
     def format_dt_datetime(
         dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S"
     ) -> str:

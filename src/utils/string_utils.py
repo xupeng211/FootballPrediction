@@ -29,6 +29,21 @@ class StringUtils:
     _PHONE_REGEX = re.compile(r"^1[3-9]\d{9}$")
 
     @staticmethod
+    def is_empty(text: str) -> bool:
+        """检查字符串是否为空或只包含空白字符."""
+        if not isinstance(text, str):
+            return True
+        return not text.strip()
+
+    @staticmethod
+    def clean_whitespace(text: str) -> str:
+        """清理多余的空白字符."""
+        if not isinstance(text, str):
+            return ""
+        # 将多个空白字符替换为单个空格
+        return " ".join(text.split())
+
+    @staticmethod
     def clean_string(text: str, remove_special: bool = False) -> str:
         """清理字符串."""
         if not isinstance(text, str):

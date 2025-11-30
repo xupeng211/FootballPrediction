@@ -96,7 +96,9 @@ class TestCoreModuleIntegration:
         assert hasattr(logger, "error")
 
         # 2. 测试日志输出
-        with patch("src.core.logging.logger") as mock_logger:
+        with patch("src.core.logging.get_logger") as mock_get_logger:
+            mock_logger = AsyncMock()
+            mock_get_logger.return_value = mock_logger
             test_logger = get_logger("test_module")
 
             # 测试不同级别的日志
@@ -105,8 +107,9 @@ class TestCoreModuleIntegration:
             test_logger.error("测试错误日志")
 
             # 验证日志调用
-            assert mock_logger.info.called
-            assert mock_logger.warning.called
+            mock_logger.info.assert_called_with("测试信息日志")
+            mock_logger.warning.assert_called_with("测试警告日志")
+            mock_logger.error.assert_called_with("测试错误日志")
             assert mock_logger.error.called
 
     def test_validation_system_integration(self):
