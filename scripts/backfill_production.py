@@ -387,7 +387,7 @@ class GlobalBackfillService:
             async with self.async_session() as session:
                 from src.database.models.match import Match
                 from src.database.models.team import Team
-                from sqlalchemy import select
+                from sqlalchemy import select, text
                 from datetime import datetime
                 from sqlalchemy.dialects.postgresql import insert
 
@@ -485,14 +485,15 @@ class GlobalBackfillService:
                     logger.info(f"✅ 球队数据预保存完成，当前球队总数: {saved_count}")
 
                     # 验证即将使用的球队ID是否都存在
-                    missing_teams_check = await session.execute(text("""
+                    team_ids = list(set(ht[0] for ht in all_teams_to_save if ht[0] > 0))
+                    missing_teams_check = await session.execute(text(f"""
                         SELECT COUNT(DISTINCT home_team_id) as missing_home
                         FROM (
                             SELECT DISTINCT home_team_id
-                            FROM unnest(:home_ids::int[]) as home_team_id
+                            FROM unnest(ARRAY{team_ids}::int[]) as home_team_id
                         ) h
                         WHERE h.home_team_id NOT IN (SELECT id FROM teams)
-                    """), {"home_ids": list(set(ht['id'] for ht in all_teams_to_save if ht[0] > 0))})
+                    """))
 
                     missing_count = missing_teams_check.scalar() or 0
                     if missing_count > 0:

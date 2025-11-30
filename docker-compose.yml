@@ -120,7 +120,7 @@ services:
       - ./models:/app/models
       - ./logs:/app/logs
     restart: unless-stopped
-    command: ["python", "scripts/backfill_final.py", "--start-date=2022-01-01", "--source", "all"]
+    command: ["python", "scripts/backfill_production.py", "--start-date=2022-01-01", "--source", "football-data"]
 
   # Celery Worker - 执行异步任务
   worker:
