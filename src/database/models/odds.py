@@ -9,9 +9,7 @@ from decimal import Decimal
 from enum import Enum
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, Text
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from src.database.base import Base
 
 
 class MarketType(Enum):
