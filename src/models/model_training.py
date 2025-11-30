@@ -72,8 +72,20 @@ except ImportError:
             """Context manager entry."""
             return self
 
-        def __exit__(self, *args):
+        def __exit__(self, exc_type, exc_val, exc_tb):
             """Context manager exit."""
+
+        @staticmethod
+        def sklearn():
+            """Mock sklearn module."""
+            return MockMLflow.SklearnWrapper()
+
+        class SklearnWrapper:
+            """Mock sklearn module."""
+
+            @staticmethod
+            def log_model(*args, **kwargs):
+                """Log a mock sklearn model."""
 
         def log_metric(self, *args, **kwargs):
             """Log a mock metric."""
@@ -83,13 +95,6 @@ except ImportError:
 
         def log_artifacts(self, *args, **kwargs):
             """Log mock artifacts."""
-
-        class SklearnWrapper:
-            """Mock sklearn module."""
-
-            @staticmethod
-            def log_model(*args, **kwargs):
-                """Log a mock sklearn model."""
 
     mlflow = MockMLflow()
     mlflow.sklearn = MockMLflow.sklearn()
