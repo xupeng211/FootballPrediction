@@ -233,15 +233,22 @@ class StringUtils:
     @staticmethod
     @lru_cache(maxsize=1000)
     def validate_phone_number(phone: str) -> bool:
-        """验证中国手机号格式."""
+        """验证手机号格式（支持国际号码）."""
         if not isinstance(phone, str):
             return False
 
-        # 移除非数字字符
-        digits_only = re.sub(r"[^0-9]", "", phone)
+        # 移除非数字字符（保留+号）
+        digits_only = re.sub(r"[^0-9+]", "", phone)
 
-        # 验证11位手机号
-        return bool(StringUtils._PHONE_REGEX.match(digits_only))
+        # 验证中国手机号
+        if StringUtils._PHONE_REGEX.match(digits_only):
+            return True
+
+        # 验证国际号码格式 (+开头，10-15位数字)
+        if digits_only.startswith('+') and len(digits_only) >= 12 and len(digits_only) <= 16:
+            return True
+
+        return False
 
     @staticmethod
     def sanitize_phone_number(phone: str) -> str:
