@@ -130,28 +130,41 @@ jobs:
             echo "🛡️ 安全扫描完成，报告已生成"
           fi
 
-      - name: Run Full Unit Test Suite
+      - name: Test API (Step 1) 🎯
         run: |
-          echo "🧪 V4.0 运行全量测试套件 - Service Containers + ML Mock..."
+          echo "🧪 Step 1: 测试 API 模块..."
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
+          timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
+          echo "✅ Step 1: API 测试完成!"
 
-          # V7.2: 收网行动 - 强化超时机制，移除Linux timeout命令
-          python -m pytest \
-            tests/unit/api/ \
-            tests/unit/utils/ \
-            tests/unit/cache/ \
-            tests/unit/events/ \
-            --timeout=60 \
-            --timeout-method=thread \
-            --maxfail=3 \
-            -x \
-            -vv \
-            --tb=short \
-            --durations=10 \
-            --junit-xml=test-results.xml || exit 1
-          echo "✅ 全量测试套件执行完成!"
+      - name: Test Utils (Step 2) 🔧
+        run: |
+          echo "🧪 Step 2: 测试 Utils 模块..."
+          export $(cat .env.test | xargs)
+          export MALLOC_ARENA_MAX=2
+          export PYTHONPATH=$PWD:$PYTHONPATH
+          timeout 120s python -m pytest tests/unit/utils/ -vv --timeout=30 --tb=short || exit 1
+          echo "✅ Step 2: Utils 测试完成!"
+
+      - name: Test Cache (Step 3) 💾
+        run: |
+          echo "🧪 Step 3: 测试 Cache 模块..."
+          export $(cat .env.test | xargs)
+          export MALLOC_ARENA_MAX=2
+          export PYTHONPATH=$PWD:$PYTHONPATH
+          timeout 120s python -m pytest tests/unit/cache/ -vv --timeout=30 --tb=short || exit 1
+          echo "✅ Step 3: Cache 测试完成!"
+
+      - name: Test Events (Step 4) 🚀
+        run: |
+          echo "🧪 Step 4: 测试 Events 模块..."
+          export $(cat .env.test | xargs)
+          export MALLOC_ARENA_MAX=2
+          export PYTHONPATH=$PWD:$PYTHONPATH
+          timeout 120s python -m pytest tests/unit/events/ -vv --timeout=30 --tb=short || exit 1
+          echo "✅ Step 4: Events 测试完成!"
 
       - name: Upload Test Results
         if: always()
