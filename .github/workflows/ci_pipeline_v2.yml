@@ -139,23 +139,19 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V16.0 顺序分离]
+      - name: Test Utils (Step 2) 🔧 [V17.0 精准定位]
         run: |
-          echo "🧪 Step 2: V16.0 顺序分离 - 既然确认是交互作用，现在分离执行顺序避免死锁"
+          echo "🧪 Step 2: V17.0 精准定位 - 发现V14.0成功是假象，直接测试slug/clean函数"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # V16.0 顺序分离：先测试安全的html/regex，再测试其他函数，避免交互作用
-          echo "🔹 阶段1：测试html/regex函数 (已知安全)"
-          timeout 180s python -m pytest tests/unit/utils/test_string_utils.py -k "html or regex" -vv --timeout=60 --tb=short || exit 1
-          echo "✅ 阶段1完成：html/regex函数安全"
-
-          echo "🔹 阶段2：测试其他函数 (slug/clean/strip等)"
-          timeout 180s python -m pytest tests/unit/utils/test_string_utils.py -k "not (html or regex)" -vv --timeout=60 --tb=short || exit 1
-          echo "✅ 阶段2完成：其他函数测试完成"
-
-          echo "✅ V16.0 顺序分离成功！证明了交互作用是问题根源"
+          # V17.0 精准定位：基于函数名直接测试可疑的slug/clean函数
+          echo "🔹 专门测试：slug/clean相关函数 (真正的毒瘤嫌疑人)"
+          timeout 180s python -m pytest tests/unit/utils/test_string_utils.py \
+            -k "slug or clean or generate_slug or test_clean_string or test_clean_text or test_slugify" \
+            -vv --timeout=60 --tb=short || exit 1
+          echo "✅ V17.0 完成！如果卡死则确认slug/clean是毒瘤"
 
       - name: Test Cache (Step 3) 💾
         run: |
