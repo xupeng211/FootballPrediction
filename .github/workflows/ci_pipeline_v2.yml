@@ -139,13 +139,13 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V13.0 逐个击破]
+      - name: Test Utils (Step 2) 🔧 [V14.0 反向测试]
         run: |
-          echo "🧪 Step 2: V13.0 逐个击破 - 释放slug/clean/strip，保留html/regex排除"
+          echo "🧪 Step 2: V14.0 反向测试 - 专门测试html/regex，排除已安全的slug/clean/strip"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
-          # V13.0 逐个击破：Group A - 释放slug/clean/strip，继续排除最危险的html/regex
+          # V14.0 反向测试：Group B - 专门测试html/regex，排除已证明安全的slug/clean/strip
           timeout 300s python -m pytest \
             tests/unit/utils/test_formatters.py \
             tests/unit/utils/test_dict_utils.py \
@@ -156,9 +156,9 @@ jobs:
             tests/unit/utils/test_working_validators.py \
             tests/unit/utils/test_warning_filters_init.py \
             tests/unit/utils/test_warning_filters_error_path.py \
-            tests/unit/utils/test_string_utils.py -k "not (html or regex)" \
+            tests/unit/utils/test_string_utils.py -k "html or regex" \
             -vv --timeout=90 --tb=short || exit 1
-          echo "✅ Step 2: V13.0 Group A测试完成! (已释放slug/clean/strip，仍排除html/regex)"
+          echo "✅ Step 2: V14.0 Group B测试完成! (专门测试html/regex，已排除安全函数)"
 
       - name: Test Cache (Step 3) 💾
         run: |
