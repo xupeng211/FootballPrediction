@@ -1,4 +1,4 @@
----
+--- 
 name: CI Pipeline v2 - Clean Architecture
 
 on:
@@ -130,45 +130,20 @@ jobs:
             echo "🛡️ 安全扫描完成，报告已生成"
           fi
 
-      - name: Test API (Step 1) 🎯
+      - name: 🕵️ Deadlock Hunt (Global Timeout 10s)
         run: |
-          echo "🧪 Step 1: 测试 API 模块..."
+          echo "🕵️ 启动死锁排查模式..."
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
-          timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
-          echo "✅ Step 1: API 测试完成!"
-
-      - name: Test Utils (Step 2) 🔧 [V24.0 异步策略重置]
-        run: |
-          echo "🧪 Step 2: V24.0 异步策略重置 - 强制重置EventLoop"
-          export $(cat .env.test | xargs)
-          export MALLOC_ARENA_MAX=2
-          export PYTHONPATH=$PWD:$PYTHONPATH
-
-          # V24.0 策略：禁用anyio，恢复全量Utils测试
-          echo "🔹 执行全量Utils测试（禁用anyio插件）"
-          timeout 120s python -m pytest -p no:anyio tests/unit/utils/ -vv --timeout=60 --tb=short || exit 1
-
-          echo "✅ Step 2: V24.0 异步策略重置完成！"
-
-      - name: Test Cache (Step 3) 💾
-        run: |
-          echo "🧪 Step 3: 测试 Cache 模块..."
-          export $(cat .env.test | xargs)
-          export MALLOC_ARENA_MAX=2
-          export PYTHONPATH=$PWD:$PYTHONPATH
-          timeout 120s python -m pytest tests/unit/cache/ -vv --timeout=30 --tb=short || exit 1
-          echo "✅ Step 3: Cache 测试完成!"
-
-      - name: Test Events (Step 4) 🚀
-        run: |
-          echo "🧪 Step 4: 测试 Events 模块..."
-          export $(cat .env.test | xargs)
-          export MALLOC_ARENA_MAX=2
-          export PYTHONPATH=$PWD:$PYTHONPATH
-          timeout 120s python -m pytest tests/unit/events/ -vv --timeout=30 --tb=short || exit 1
-          echo "✅ Step 4: Events 测试完成!"
+          
+          # V25.0 Enforce 10s timeout to isolate deadlock
+          echo "🔥 执行全量测试 (Timeout: 10s/test)..."
+          timeout 20m python -m pytest tests/ \
+            -vv \
+            --timeout=10 \
+            --timeout-method=thread \
+            --tb=short
 
       - name: Upload Test Results
         if: always()
@@ -190,7 +165,7 @@ jobs:
       - name: Quality Summary
         run: |
           echo "📊 CI Pipeline v2 质量汇总报告"
-          echo "================================"
+          echo "==============================="
           TEST_STATUS="${{ needs.test.result }}"
           echo "🧪 测试矩阵: $TEST_STATUS"
 
