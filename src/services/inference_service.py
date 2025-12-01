@@ -17,24 +17,41 @@ from typing import Optional
 # 初始化logger
 logger = logging.getLogger(__name__)
 
-# FIX: 导入安全的模型加载库，替代不安全的pickle
-try:
-    import joblib
+# V6.0: 优先检查Mock环境变量，防止资源耗尽
+ML_MODE = os.getenv("FOOTBALL_PREDICTION_ML_MODE", "real").lower()
+INFERENCE_SERVICE_MOCK = os.getenv("INFERENCE_SERVICE_MOCK", "false").lower() == "true"
+SKIP_ML_MODEL_LOADING = os.getenv("SKIP_ML_MODEL_LOADING", "false").lower() == "true"
 
-    HAVE_JOBLIB = True
-except ImportError:
+# 如果设置为Mock模式，完全跳过ML相关导入和加载
+FORCE_MOCK_MODE = (
+    ML_MODE == "mock" or
+    INFERENCE_SERVICE_MOCK or
+    SKIP_ML_MODEL_LOADING or
+    os.getenv("XGBOOST_MOCK", "false").lower() == "true" or
+    os.getenv("JOBLIB_MOCK", "false").lower() == "true"
+)
+
+if FORCE_MOCK_MODE:
+    logger.info("🔧 V6.0: 强制Mock模式已启用 - 跳过所有ML库导入以节省资源")
     HAVE_JOBLIB = False
-    logger.warning("⚠️ joblib not found. Will attempt safe fallback methods.")
-
-# 尝试导入XGBoost，如果失败则运行在Mock模式
-try:
-    import xgboost as xgb
-
-    HAVE_XGBOOST = True
-except ImportError:
     HAVE_XGBOOST = False
-    logger = logging.getLogger(__name__)
-    logger.warning("⚠️ XGBoost not found. Inference service running in MOCK mode.")
+else:
+    # FIX: 导入安全的模型加载库，替代不安全的pickle
+    try:
+        import joblib
+        HAVE_JOBLIB = True
+    except ImportError:
+        HAVE_JOBLIB = False
+        logger.warning("⚠️ joblib not found. Will attempt safe fallback methods.")
+
+    # 尝试导入XGBoost，如果失败则运行在Mock模式
+    try:
+        import xgboost as xgb
+        HAVE_XGBOOST = True
+    except ImportError:
+        HAVE_XGBOOST = False
+        logger = logging.getLogger(__name__)
+        logger.warning("⚠️ XGBoost not found. Inference service running in MOCK mode.")
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +82,35 @@ class InferenceService:
 
     def _load_model(self):
         """加载训练好的XGBoost模型."""
+        # V6.0: 强制Mock模式检查 - 立即返回，防止任何ML库加载
+        if FORCE_MOCK_MODE:
+            logger.info("🔧 V6.0: 强制Mock模式 - 跳过所有模型加载以节省资源")
+            self._model = None
+            self._model_metadata = {
+                "model_version": "mock_v6",
+                "target_classes": ["平局", "主队胜", "客队胜"],
+                "mock_mode": True,
+                "force_reason": "ENV_VARS_SET"
+            }
+            self._feature_columns = [
+                "home_team_id",
+                "away_team_id",
+                "home_last_5_points",
+                "away_last_5_points",
+                "home_last_5_avg_goals",
+                "away_last_5_avg_goals",
+                "h2h_last_3_home_wins",
+                "home_last_5_goal_diff",
+                "away_last_5_goal_diff",
+                "home_win_streak",
+                "away_win_streak",
+                "home_last_5_win_rate",
+                "away_last_5_win_rate",
+                "home_rest_days",
+                "away_rest_days",
+            ]
+            return
+
         if not HAVE_XGBOOST:
             logger.warning("⚠️ XGBoost不可用，跳过模型加载，使用Mock模式")
             self._model = None

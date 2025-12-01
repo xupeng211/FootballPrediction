@@ -137,7 +137,7 @@ jobs:
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # V4.0: 临时跳过集成测试和ML测试，专注于核心功能测试通过
+          # V6.0: 串行执行防止资源耗尽 - 完全禁用并行和重用
           timeout 600s python -m pytest tests/unit/ \
             --ignore=tests/unit/ml/ \
             --ignore=tests/unit/scripts/ \
@@ -151,7 +151,9 @@ jobs:
             --maxfail=5 \
             -x \
             -v \
-            --tb=short || exit 1
+            --tb=short \
+            -n 0 \
+            --reuse-db || exit 1
           echo "✅ 全量测试套件执行完成!"
 
       - name: Upload Coverage Report
