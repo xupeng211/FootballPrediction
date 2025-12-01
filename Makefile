@@ -38,7 +38,7 @@ DB_NAME := $(PROJECT_NAME)_db
 REDIS_NAME := $(PROJECT_NAME)_redis
 
 # .PHONY声明所有命令
-.PHONY: help dev prod clean shell logs db-shell test lint build format fix-code type-check security-check coverage test.unit test.all
+.PHONY: help dev prod clean shell logs db-shell test lint build format fix-code type-check security-check coverage test.unit test.all test-fast test-integration test-coverage-local
 
 help: ## 📋 显示可用命令
 	@echo "$(BLUE)🐳 Football Prediction Docker Commands$(RESET)"
@@ -266,3 +266,33 @@ monitor-all: ## 管理/监控所有容器资源使用
 quick-start: dev ## 快捷/快速启动开发环境 (别名)
 quick-stop: dev-stop ## 快捷/快速停止开发环境 (别名)
 quick-clean: clean ## 快捷/快速清理 (别名)
+
+# ============================================================================
+# 🧪 V31.0 测试分层与标准化命令 (新增)
+# ============================================================================
+
+test-fast: ## 测试/运行快速单元测试 (开发日常使用)
+	@echo "$(YELLOW)⚡ 运行快速单元测试...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -v --tb=short --durations=10'
+
+test-unit: test-fast ## 测试/运行单元测试 (别名)
+
+test-integration: ## 测试/运行集成测试
+	@echo "$(YELLOW)🔗 运行集成测试...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/integration/ -v --tb=short --maxfail=5'
+
+test-coverage-local: ## 测试/生成本地覆盖率报告
+	@echo "$(YELLOW)📊 生成本地覆盖率报告...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ --cov=src --cov-report=html --cov-report=term-missing'
+
+test-check-unit: ## 测试/检查单元测试状态 (无输出)
+	@$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -q --tb=no > /dev/null 2>&1 && echo "$(GREEN)✅ 单元测试通过$(RESET)" || echo "$(RED)❌ 单元测试失败$(RESET)"'
+
+# 使用独立的测试Makefile进行高级操作
+test-full:
+	@echo "$(YELLOW)🧪 使用完整测试配置...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && make -f Makefile.test test'
+
+test-quality:
+	@echo "$(YELLOW)🛡️ 运行测试质量检查...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && make -f Makefile.test check'

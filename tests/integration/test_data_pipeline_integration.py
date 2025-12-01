@@ -460,11 +460,10 @@ class TestStringProcessingIntegration:
             assert all(isinstance(slug, str) for slug in slugs)
             assert all(" " not in slug for slug in slugs)  # 所有slug都不应该有空格
 
-            # 验证一致性
+            # 验证一致性 - slug应该是原始字符串的规范化版本
             for i, original in enumerate(test_strings):
-                assert (
-                    slugs[i].lower() in original.lower()
-                    or original.lower() in slugs[i].lower()
-                )
+                # 验证slug是通过将空格替换为连字符并转换为小数生成的
+                expected_slug = original.lower().replace(" ", "-")
+                assert slugs[i] == expected_slug
         else:
             pytest.skip("String processing functions not available")

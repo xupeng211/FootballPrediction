@@ -73,7 +73,6 @@ def event_loop():
 
 
 @pytest_asyncio.fixture(scope="function")
-@pytest.mark.asyncio
 async def test_db_engine():
     """创建异步测试数据库引擎"""
     engine = create_async_engine(
@@ -111,7 +110,6 @@ def sync_test_db_engine():
 
 
 @pytest_asyncio.fixture
-@pytest.mark.asyncio
 async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
     """创建测试数据库会话"""
     async_session = async_sessionmaker(
@@ -246,7 +244,7 @@ async def sample_match(test_db_session: AsyncSession, sample_teams):
 
     _home_team, _away_team = sample_teams[0], sample_teams[1]
 
-    # Match也是dataclass，使用正确的构造参数
+    # 创建Match对象
     match = Match(
         home_team_id=1,  # 简化测试ID
         away_team_id=2,
@@ -255,6 +253,11 @@ async def sample_match(test_db_session: AsyncSession, sample_teams):
         match_date=datetime.utcnow() + timedelta(days=1),
         venue="Old Trafford",
     )
+
+    # 保存到数据库
+    test_db_session.add(match)
+    await test_db_session.commit()
+    await test_db_session.refresh(match)
 
     return match
 

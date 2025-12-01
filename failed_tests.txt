@@ -1,0 +1,24 @@
+[31mFAILED[0m tests/integration/test_database_integration.py
+[31mFAILED[0m tests/integration/test_database_phase2_core.py
+[31mFAILED[0m tests/integration/test_decorators_real_endpoints.py
+[31mFAILED[0m tests/integration/test_end_to_end_integration.py
+[31mFAILED[0m tests/integration/test_end_to_end_simple.py
+[31mFAILED[0m tests/integration/test_end_to_end_workflows.py
+[31mFAILED[0m tests/integration/test_enhanced_ev_calculator.py
+[31mFAILED[0m tests/integration/test_ml_pipeline.py
+[31mFAILED[0m tests/integration/test_ml_prediction_models.py
+[31mFAILED[0m tests/integration/test_observers_real_endpoints.py
+[31mFAILED[0m tests/integration/test_odds_collection.py
+[31mFAILED[0m tests/integration/test_prediction_api_integration.py
+tests/integration/test_database_integration.py
+tests/integration/test_database_phase2_core.py
+tests/integration/test_decorators_real_endpoints.py
+tests/integration/test_end_to_end_integration.py
+tests/integration/test_end_to_end_simple.py
+tests/integration/test_end_to_end_workflows.py
+tests/integration/test_enhanced_ev_calculator.py
+tests/integration/test_ml_pipeline.py
+tests/integration/test_ml_prediction_models.py
+tests/integration/test_observers_real_endpoints.py
+tests/integration/test_odds_collection.py
+tests/integration/test_prediction_api_integration.py
