@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout代码
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # 获取完整历史用于git信息
 
@@ -133,7 +133,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout代码
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -215,7 +215,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout代码
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@v6
 
       - name: 🐍 设置Python环境
         uses: actions/setup-python@v4.7.1
@@ -256,7 +256,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout代码
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@v6
 
       - name: 📦 下载构建产物
         uses: actions/download-artifact@v4.0.2
