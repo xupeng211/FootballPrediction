@@ -50,6 +50,16 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture(scope="session")
+def event_loop():
+    """
+    Create an instance of the default event loop for each test session.
+    """
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
 def client():
     """FastAPI测试客户端fixture"""
     try:
