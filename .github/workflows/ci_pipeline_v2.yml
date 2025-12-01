@@ -139,15 +139,25 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V7.5 焦土政策]
+      - name: Test Utils (Step 2) 🔧 [V8.0 白名单恢复]
         run: |
-          echo "🧪 Step 2: V7.5 焦土政策 - 由于Utils模块多处死锁，仅运行安全测试"
+          echo "🧪 Step 2: V8.0 白名单恢复 - 恢复安全的Utils测试，排除已知毒瘤"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
-          # V7.5 焦土政策：只运行安全的formatters测试，避免Utils死锁
-          timeout 120s python -m pytest tests/unit/utils/test_formatters.py -vv --timeout=30 --tb=short || exit 1
-          echo "✅ Step 2: Utils 安全测试完成!"
+          # V8.0 白名单策略：恢复安全文件，排除test_string_utils.py（已知毒瘤）
+          timeout 120s python -m pytest \
+            tests/unit/utils/test_formatters.py \
+            tests/unit/utils/test_dict_utils.py \
+            tests/unit/utils/test_helpers.py \
+            tests/unit/utils/test_simple_utils.py \
+            tests/unit/utils/test_time_utils.py \
+            tests/unit/utils/test_validators.py \
+            tests/unit/utils/test_working_validators.py \
+            tests/unit/utils/test_warning_filters_init.py \
+            tests/unit/utils/test_warning_filters_error_path.py \
+            -vv --timeout=30 --tb=short || exit 1
+          echo "✅ Step 2: Utils 白名单测试完成!"
 
       - name: Test Cache (Step 3) 💾
         run: |
