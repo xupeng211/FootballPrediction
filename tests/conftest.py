@@ -6,13 +6,30 @@
 import os
 import sys
 from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
+import asyncio
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+
+@pytest.fixture(autouse=True)
+def mock_ml_environment(monkeypatch):
+    """
+    强制在测试期间将ML组件置于Mock模式，防止加载真实模型导致挂起。
+    Force ML components to run in mock mode during tests unless explicitly disabled.
+    """
+    # 允许通过环境变量覆盖，以便在需要时运行真实ML测试
+    if os.getenv("TEST_REAL_ML") == "true":
+        return
+
+    monkeypatch.setenv("FOOTBALL_PREDICTION_ML_MODE", "mock")
+    monkeypatch.setenv("INFERENCE_SERVICE_MOCK", "true")
+    monkeypatch.setenv("SKIP_ML_MODEL_LOADING", "true")
+    monkeypatch.setenv("XGBOOST_MOCK", "true")
+    monkeypatch.setenv("JOBLIB_MOCK", "true")
 
 
 def pytest_configure(config):
