@@ -139,18 +139,18 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V18.0 全量恢复]
+      - name: Test Utils (Step 2) 🔧 [V19.0 调试模式]
         run: |
-          echo "🧪 Step 2: V18.0 全量恢复 - 外科手术完成，恢复全量Utils测试"
+          echo "🧪 Step 2: V19.0 调试模式 - 添加日志和5秒超时，找出卡死的测试"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # V18.0 全量恢复：毒瘤函数已重写为O(n)复杂度，现在恢复全量测试
-          echo "🔹 全量测试：所有Utils函数 (包括已修复的slug/clean函数)"
-          timeout 300s python -m pytest tests/unit/utils/ \
-            -vv --timeout=90 --tb=short || exit 1
-          echo "✅ V18.0 全量测试完成！毒瘤已根除！"
+          # V19.0 调试：使用-s显示stdout，--timeout=5快速超时，逼迫卡死测试报错
+          echo "🔹 调试测试：所有Utils函数 (使用5秒超时快速定位问题)"
+          timeout 300s python -m pytest tests/unit/utils/test_string_utils.py \
+            -s -vv --timeout=5 --tb=short || exit 1
+          echo "✅ V19.0 调试完成！应该能看到 TimeoutError 和具体测试名"
 
       - name: Test Cache (Step 3) 💾
         run: |
