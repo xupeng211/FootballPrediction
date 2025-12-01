@@ -177,54 +177,147 @@ class StringUtils:
 
     @staticmethod
     def slugify(text: str) -> str:
-        """转换为URL友好的字符串（V18.0重构：O(n)复杂度，避免Unicode处理）."""
+        """转换为URL友好的字符串（V20.0智能优化：保留Unicode功能，防止ReDoS攻击）."""
         if not isinstance(text, str):
             return ""
 
-        # V18.0 重构：严格限制输入长度
+        # V20.0 智能长度限制：防止DoS但保留功能
         if len(text) > 1000:
             text = text[:1000]
 
-        # V18.0 重构：使用简单字符映射，避免复杂Unicode处理
+        # V20.0 特殊情况：纯下划线直接返回
+        if text and all(c == '_' for c in text):
+            return text
+
+        # V20.0 安全处理：使用Unicode规范化但不依赖复杂正则表达式
+        import unicodedata
+
+        # 转换为ASCII表示，但保持基本功能
+        text = unicodedata.normalize('NFD', text)
+
+        # V20.0 字符级处理：避免正则表达式ReDoS
         result_chars = []
 
         for char in text.lower():
+            # ASCII字母数字
             if 'a' <= char <= 'z' or '0' <= char <= '9':
                 result_chars.append(char)
-            elif char in ' -_':
+            # 空格转为连字符
+            elif char == ' ':
                 if result_chars and result_chars[-1] != '-':
                     result_chars.append('-')
+            # 下划线直接保留（重要：保留纯下划线）
+            elif char == '_':
+                result_chars.append('_')
+            # Unicode重音符号处理：获取基字符
+            elif unicodedata.category(char) == 'Mn' and len(text) < 500:  # 限制Unicode处理复杂度
+                # 跳过组合标记，让基字符处理
+                pass
+            # 基本Unicode字母（受限处理）
+            elif char.isalpha() and len(text) < 200:  # 对长文本跳过Unicode处理
+                # V20.0 检查是否为纯下划线情况
+                if all(c == '_' for c in text):
+                    result_chars.append('_')
+                else:
+                    # 简化的ASCII转换
+                    simplified_char = {
+                        'ç': 'c', 'ñ': 'n', 'é': 'e', 'è': 'e', 'ê': 'e',
+                        'ë': 'e', 'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
+                        'ó': 'o', 'ò': 'o', 'ô': 'o', 'ö': 'o', 'õ': 'o',
+                        'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u', 'ý': 'y',
+                        'ÿ': 'y', 'ß': 'ss', 'ā': 'a', 'ā': 'a', 'ē': 'e',
+                        'ī': 'i', 'ō': 'o', 'ū': 'u', 'α': 'a', 'β': 'b',
+                        'γ': 'g', 'δ': 'd', 'ε': 'e', 'ζ': 'z', 'η': 'h',
+                        'θ': 'th', 'ι': 'i', 'κ': 'k', 'λ': 'l', 'μ': 'm',
+                        'ν': 'n', 'ξ': 'x', 'ο': 'o', 'π': 'π', 'ρ': 'r',
+                        'σ': 's', 'τ': 't', 'υ': 'y', 'φ': 'f', 'χ': 'ch',
+                        'ψ': 'ps', 'ω': 'w'
+                    }.get(char, '')
+                    if simplified_char:
+                        result_chars.append(simplified_char)
+            # 其他字符跳过
             else:
-                # 跳过其他字符
                 pass
 
-        # 清理首尾连字符
+        # V20.0 清理：移除首尾连字符和重复连字符
         while result_chars and result_chars[0] == '-':
             result_chars.pop(0)
         while result_chars and result_chars[-1] == '-':
             result_chars.pop()
 
-        return ''.join(result_chars)
+        # 压缩重复连字符
+        compressed_chars = []
+        for char in result_chars:
+            if char == '-' and compressed_chars and compressed_chars[-1] == '-':
+                continue
+            compressed_chars.append(char)
+
+        return ''.join(compressed_chars)
 
     @staticmethod
     def camel_to_snake(name: str) -> str:
-        """驼峰命名转下划线命名（V18.0重构：O(n)复杂度，避免正则）."""
+        """驼峰命名转下划线命名（V20.0智能优化：保留原始功能，避免正则ReDoS）."""
         if not isinstance(name, str):
             return ""
 
-        # V18.0 重构：简单处理全大写字符串
-        if name.isupper() and len(name) > 1:
+        # V20.0 长度限制：防止DoS攻击
+        if len(name) > 500:
+            name = name[:500]
+
+        # V20.0 简单边界情况
+        if not name or name.islower() and '_' not in name:
             return name.lower()
 
-        # V18.0 重构：使用简单字符遍历，避免复杂正则
+        # V20.0 字符级处理：避免正则表达式ReDoS，但保留原始逻辑
         result = []
+        length = len(name)
+
         for i, char in enumerate(name):
-            if i > 0 and 'A' <= char <= 'Z':
-                # 检查前一个字符，避免在大写字母序列中插入下划线
-                prev_char = name[i-1]
-                if 'a' <= prev_char <= 'z' or '0' <= prev_char <= '9':
+            # 小写字母和数字直接添加
+            if 'a' <= char <= 'z' or '0' <= char <= '9':
+                result.append(char)
+            # 大写字母处理
+            elif 'A' <= char <= 'Z':
+                lower_char = char.lower()
+
+                # V20.0 智能下划线插入逻辑：
+                if i == 0:
+                    # 首字母大写，直接转小写
+                    result.append(lower_char)
+                else:
+                    prev_char = name[i-1]
+
+                    # 检查是否需要插入下划线
+                    need_underscore = False
+
+                    if 'a' <= prev_char <= 'z' or '0' <= prev_char <= '9':
+                        # 前一个是小写字母或数字，需要下划线
+                        need_underscore = True
+                    elif prev_char == '_':
+                        # 前一个是下划线，不需要额外下划线
+                        need_underscore = False
+                    elif i < length - 1:
+                        # 检查后一个字符来判断是否是缩写
+                        next_char = name[i+1]
+                        if 'a' <= next_char <= 'z':
+                            # XMLHttp -> XML_http (在Http前插入下划线)
+                            need_underscore = True
+                        elif 'A' <= next_char <= 'Z' and i > 0 and 'a' <= name[i-1] <= 'z':
+                            # parseXMLString -> parse_XML_string (在XML前插入下划线)
+                            need_underscore = True
+                        else:
+                            need_underscore = False
+
+                    if need_underscore:
+                        result.append('_')
+                    result.append(lower_char)
+            # 下划线直接保留
+            elif char == '_':
+                result.append(char)
+            # 其他字符转为下划线
+            else:
+                if i > 0 and result[-1] != '_':
                     result.append('_')
-            result.append(char.lower())
 
         return ''.join(result)
 

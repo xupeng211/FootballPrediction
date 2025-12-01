@@ -139,18 +139,17 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V19.0 调试模式]
+      - name: Test Utils (Step 2) 🔧 [V20.0 智能优化]
         run: |
-          echo "🧪 Step 2: V19.0 调试模式 - 添加日志和5秒超时，找出卡死的测试"
+          echo "🧪 Step 2: V20.0 智能优化 - 恢复原始功能，修复ReDoS漏洞"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # V19.0 调试：使用-s显示stdout，--timeout=5快速超时，逼迫卡死测试报错
-          echo "🔹 调试测试：所有Utils函数 (使用5秒超时快速定位问题)"
-          timeout 300s python -m pytest tests/unit/utils/test_string_utils.py \
-            -s -vv --timeout=5 --tb=short || exit 1
-          echo "✅ V19.0 调试完成！应该能看到 TimeoutError 和具体测试名"
+          # V20.0 恢复正常测试：使用30秒超时，验证修复效果
+          echo "🔹 测试Utils模块：slugify/camel_to_snake已智能优化，保留功能防止ReDoS"
+          timeout 120s python -m pytest tests/unit/utils/ -vv --timeout=30 --tb=short || exit 1
+          echo "✅ Step 2: Utils 测试完成！ReDoS漏洞已修复，原始功能已恢复"
 
       - name: Test Cache (Step 3) 💾
         run: |
