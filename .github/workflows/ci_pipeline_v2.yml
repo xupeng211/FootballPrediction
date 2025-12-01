@@ -137,7 +137,7 @@ jobs:
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # V6.0: 串行执行防止资源耗尽 - 完全禁用并行和重用
+          # V6.0: 串行执行防止资源耗尽 - 完全禁用并行
           timeout 600s python -m pytest tests/unit/ \
             --ignore=tests/unit/ml/ \
             --ignore=tests/unit/scripts/ \
@@ -152,8 +152,7 @@ jobs:
             -x \
             -v \
             --tb=short \
-            -n 0 \
-            --reuse-db || exit 1
+            -n 0 || exit 1
           echo "✅ 全量测试套件执行完成!"
 
       - name: Upload Coverage Report
