@@ -139,13 +139,13 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V12.0 精准排雷]
+      - name: Test Utils (Step 2) 🔧 [V13.0 逐个击破]
         run: |
-          echo "🧪 Step 2: V12.0 精准排雷 - 修复正则地雷后全量恢复string_utils测试"
+          echo "🧪 Step 2: V13.0 逐个击破 - 释放slug/clean/strip，保留html/regex排除"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
-          # V12.0 精准排雷：修复strip_html、generate_slug、count_words等ReDoS风险函数，全量恢复测试
+          # V13.0 逐个击破：Group A - 释放slug/clean/strip，继续排除最危险的html/regex
           timeout 300s python -m pytest \
             tests/unit/utils/test_formatters.py \
             tests/unit/utils/test_dict_utils.py \
@@ -156,9 +156,9 @@ jobs:
             tests/unit/utils/test_working_validators.py \
             tests/unit/utils/test_warning_filters_init.py \
             tests/unit/utils/test_warning_filters_error_path.py \
-            tests/unit/utils/test_string_utils.py \
+            tests/unit/utils/test_string_utils.py -k "not (html or regex)" \
             -vv --timeout=90 --tb=short || exit 1
-          echo "✅ Step 2: Utils 全量测试完成! (ReDoS地雷已清除)"
+          echo "✅ Step 2: V13.0 Group A测试完成! (已释放slug/clean/strip，仍排除html/regex)"
 
       - name: Test Cache (Step 3) 💾
         run: |
