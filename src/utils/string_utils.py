@@ -374,16 +374,40 @@ class StringUtils:
 
     @staticmethod
     def count_words(text: str) -> int:
-        """计算文本中的单词数."""
+        """计算文本中的单词数（V12.0终极修复：避免复杂正则）."""
         if not isinstance(text, str):
             return 0
 
-        # 改进的单词计数：处理标点符号
-        # 使用正则表达式分割单词，支持多种分隔符
-        words = re.split(r"[,\s.!?;:()\[\]{}\"']+|[-_]+", text.strip())
-        # 过滤空字符串
-        words = [word for word in words if word.strip()]
-        return len(words)
+        # V12.0 修复：限制输入长度
+        if len(text) > 50000:
+            text = text[:50000]
+
+        try:
+            # V12.0 终极修复：使用简单字符处理替代复杂正则
+            text = text.strip()
+            if not text:
+                return 0
+
+            words = []
+            current_word = []
+            separators = set(' ,.!?;:()[]{}"\'-_\n\t\r')
+
+            for char in text:
+                if char in separators:
+                    if current_word:
+                        words.append(''.join(current_word))
+                        current_word = []
+                else:
+                    current_word.append(char)
+
+            # 添加最后一个单词
+            if current_word:
+                words.append(''.join(current_word))
+
+            return len(words)
+        except Exception:
+            # 如果出现错误，使用简单的split作为后备
+            return len(text.split())
 
     @staticmethod
     def escape_html(text: str) -> str:
@@ -600,29 +624,73 @@ def is_empty(text: str | None) -> bool:
 
 
 def strip_html(text: str) -> str:
-    """移除HTML标签（修复script和style标签处理，防止ReDoS攻击）."""
+    """移除HTML标签（V12.0终极修复：完全避免复杂正则）."""
     if not isinstance(text, str) or not text:
         return ""
 
-    import re
+    # V12.0 修复：严格限制输入长度
+    if len(text) > 50000:  # 进一步降低限制
+        text = text[:50000]
 
-    # V9.0 修复：限制输入长度，防止ReDoS攻击
-    if len(text) > 100000:  # 限制最大输入长度
-        text = text[:100000]
-
-    # 移除script和style标签及其内容 - 使用非贪婪匹配并添加长度限制
+    # V12.0 终极修复：使用简单字符串方法替代复杂正则
     try:
-        # 使用非贪婪匹配，添加lookahead限制，防止ReDoS
-        text = re.sub(
-            r"<(script|style)[^>]*>.*?(?=</\1>)</\1>", "", text, flags=re.IGNORECASE | re.DOTALL
-        )
-        # 移除所有HTML标签 - 添加长度限制防止恶意输入
-        text = re.sub(r"<[^>]{1,1000}>", "", text)
-    except re.error:
-        # 如果正则表达式出错，返回原文本的简单清理版本
-        pass
+        # 分步移除script和style标签内容
+        text_lower = text.lower()
 
-    return text
+        # 移除script标签内容
+        while True:
+            start_script = text_lower.find('<script')
+            if start_script == -1:
+                break
+            end_script = text_lower.find('</script>', start_script)
+            if end_script == -1:
+                break
+            text = text[:start_script] + text[end_script + 9:]
+            text_lower = text.lower()
+            # 防止无限循环
+            if len(text) < 100:
+                break
+
+        # 移除style标签内容
+        while True:
+            start_style = text_lower.find('<style')
+            if start_style == -1:
+                break
+            end_style = text_lower.find('</style>', start_style)
+            if end_style == -1:
+                break
+            text = text[:start_style] + text[end_style + 8:]
+            text_lower = text.lower()
+            # 防止无限循环
+            if len(text) < 100:
+                break
+
+        # 使用简单循环移除HTML标签，避免复杂正则
+        result = []
+        in_tag = False
+        tag_content_length = 0
+        max_tag_length = 100  # 限制标签长度
+
+        for char in text:
+            if char == '<':
+                in_tag = True
+                tag_content_length = 0
+            elif char == '>':
+                in_tag = False
+                tag_content_length = 0
+            elif not in_tag:
+                result.append(char)
+            else:
+                tag_content_length += 1
+                if tag_content_length > max_tag_length:
+                    # 标签过长，强制关闭
+                    in_tag = False
+                    tag_content_length = 0
+
+        return ''.join(result)
+    except Exception:
+        # 如果出现任何错误，返回原文本的基本清理
+        return ''.join(char for char in text if char != '<' and char != '>')
 
 
 def format_currency(amount: float, currency: str = "$") -> str:
@@ -741,31 +809,49 @@ def format_phone_number(phone: str) -> str:
 
 
 def generate_slug(text: str) -> str:
-    """生成URL友好的slug（模块级别包装函数，符合测试期望）."""
+    """生成URL友好的slug（V12.0终极修复：避免复杂正则）."""
     if not isinstance(text, str):
         return ""
 
-    import re
+    # V12.0 修复：限制输入长度
+    if len(text) > 10000:
+        text = text[:10000]
 
     # 转换为小写
     slug = text.lower()
 
-    # 将连续的特殊字符替换为连字符
-    slug = re.sub(r"[^a-z0-9\s\-\_]+", "-", slug)
+    # V12.0 终极修复：使用简单字符串操作替代复杂正则
+    try:
+        result = []
+        prev_was_special = False
 
-    # 将下划线转换为连字符
-    slug = re.sub(r"_", "-", slug)
+        for char in slug:
+            if char.isalnum():
+                result.append(char)
+                prev_was_special = False
+            elif char in ' -_':
+                if not prev_was_special:  # 避免重复连字符
+                    result.append('-')
+                    prev_was_special = True
+            else:
+                # 其他特殊字符转换为连字符
+                if not prev_was_special:
+                    result.append('-')
+                    prev_was_special = True
 
-    # 将多个空格替换为单个连字符
-    slug = re.sub(r"\s+", "-", slug)
+        # 转换为字符串并清理首尾连字符
+        slug_str = ''.join(result)
 
-    # 移除多余的连字符
-    slug = re.sub(r"-+", "-", slug)
+        # 移除首尾连字符
+        if slug_str.startswith('-'):
+            slug_str = slug_str[1:]
+        if slug_str.endswith('-'):
+            slug_str = slug_str[:-1]
 
-    # 移除首尾连字符
-    slug = slug.strip("-")
-
-    return slug
+        return slug_str
+    except Exception:
+        # 如果出现错误，返回基本版本
+        return ''.join(char if char.isalnum() else '-' for char in text.lower())
 
 
 def truncate_text(text: str, length: int = 50, add_ellipsis: bool = True) -> str:

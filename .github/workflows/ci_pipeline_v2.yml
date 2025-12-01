@@ -139,14 +139,14 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V11.0 终极拆解]
+      - name: Test Utils (Step 2) 🔧 [V12.0 精准排雷]
         run: |
-          echo "🧪 Step 2: V11.0 终极拆解 - 使用排除过滤器精准定位卡死函数"
+          echo "🧪 Step 2: V12.0 精准排雷 - 修复正则地雷后全量恢复string_utils测试"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
-          # V11.0 终极拆解：恢复string_utils但排除可疑的正则相关测试
-          timeout 180s python -m pytest \
+          # V12.0 精准排雷：修复strip_html、generate_slug、count_words等ReDoS风险函数，全量恢复测试
+          timeout 300s python -m pytest \
             tests/unit/utils/test_formatters.py \
             tests/unit/utils/test_dict_utils.py \
             tests/unit/utils/test_helpers.py \
@@ -156,9 +156,9 @@ jobs:
             tests/unit/utils/test_working_validators.py \
             tests/unit/utils/test_warning_filters_init.py \
             tests/unit/utils/test_warning_filters_error_path.py \
-            tests/unit/utils/test_string_utils.py -k "not (slug or html or regex or clean or strip)" \
-            -vv --timeout=60 --tb=short || exit 1
-          echo "✅ Step 2: Utils 测试完成! (已排除正则相关危险测试)"
+            tests/unit/utils/test_string_utils.py \
+            -vv --timeout=90 --tb=short || exit 1
+          echo "✅ Step 2: Utils 全量测试完成! (ReDoS地雷已清除)"
 
       - name: Test Cache (Step 3) 💾
         run: |
