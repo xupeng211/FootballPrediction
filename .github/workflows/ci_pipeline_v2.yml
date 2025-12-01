@@ -139,24 +139,25 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V22.0 极简白名单]
+      - name: Test Utils (Step 2) 🔧 [V23.0 基础设施重构]
         run: |
-          echo "🧪 Step 2: V22.0 极简白名单 - 只测试最安全的几个文件"
+          echo "🧪 Step 2: V23.0 基础设施重构 - 修复conftest.py死锁问题"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # V22.0 极简白名单：只测试几个安全的小文件
-          echo "🔹 测试安全的小Utils文件"
-          timeout 60s python -m pytest tests/unit/utils/test_formatters.py tests/unit/utils/test_simple_utils.py \
-            -vv --timeout=30 --tb=short || exit 1
-
-          # V22.0 白名单策略：只测试已修复的核心函数
+          # V23.0 调试模式：添加faulthandler获取堆栈跟踪
           echo "🔹 测试已修复的核心函数：slugify, camel_to_snake, clean_string"
-          timeout 120s python -m pytest tests/unit/utils/test_string_utils.py \
-            -k "slugify or camel_to_snake or clean_string" -vv --timeout=30 --tb=short || exit 1
+          timeout 120s python -X faulthandler -m pytest tests/unit/utils/test_string_utils.py \
+            -k "slugify or camel_to_snake or clean_string" -vv --timeout=60 --tb=long || exit 1
 
-          echo "✅ Step 2: Utils 极简白名单测试完成！避开所有问题文件"
+          # V23.0 恢复更多Utils测试：验证基础设施修复效果
+          echo "🔹 验证基础设施修复：测试更多安全文件"
+          timeout 60s python -X faulthandler -m pytest tests/unit/utils/test_formatters.py \
+            tests/unit/utils/test_simple_utils.py tests/unit/utils/test_helpers.py \
+            -vv --timeout=30 --tb=long || exit 1
+
+          echo "✅ Step 2: V23.0 基础设施重构完成！autouse死锁已修复"
 
       - name: Test Cache (Step 3) 💾
         run: |

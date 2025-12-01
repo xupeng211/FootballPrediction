@@ -681,20 +681,31 @@ def error_test_data():
     }
 
 
-# 自动清理fixture
-@pytest_asyncio.fixture(autouse=True)
+# V23.0 修复：移除全局自动清理，避免死锁
+# 将清理操作改为手动标记，避免单元测试触发数据库初始化
+@pytest_asyncio.fixture
 async def cleanup_test_data(test_db_session: AsyncSession):
-    """自动清理测试数据"""
+    """手动测试数据清理fixture - 不再自动使用"""
     yield
 
     try:
-        # 清理所有表
-        for table in reversed(Base.metadata.sorted_tables):
-            await test_db_session.execute(text(f"DELETE FROM {table.name}"))
-        await test_db_session.commit()
-    except Exception:
-        # 如果清理失败，忽略错误（测试结束后数据库会被丢弃）
-        pass
+        # 确保数据库连接仍然有效
+        if test_db_session and not test_db_session.closed:
+            # 清理所有表
+            for table in reversed(Base.metadata.sorted_tables):
+                await test_db_session.execute(text(f"DELETE FROM {table.name}"))
+            await test_db_session.commit()
+    except Exception as e:
+        # 记录错误但不阻塞测试
+        import warnings
+        warnings.warn(f"Cleanup failed: {e}", UserWarning)
+    finally:
+        # 确保会话关闭
+        try:
+            if test_db_session and not test_db_session.closed:
+                await test_db_session.close()
+        except Exception:
+            pass
 
 
 # 标记定义
