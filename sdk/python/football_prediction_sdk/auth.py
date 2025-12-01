@@ -12,7 +12,7 @@ from typing import Any
 
 import requests
 
-from .exceptions import AuthenticationError, SystemError
+from .exceptions import AuthenticationError, SystemServiceError
 
 
 class AuthManager:
@@ -298,7 +298,7 @@ class AuthManager:
                 return None
 
         except requests.exceptions.RequestException as e:
-            raise SystemError(f"获取用户信息失败: {str(e)}")
+            raise SystemServiceError(f"获取用户信息失败: {str(e)}")
 
     def change_password(self, current_password: str, new_password: str) -> bool:
         """修改密码."""
@@ -320,7 +320,7 @@ class AuthManager:
             return response.status_code == 200
 
         except requests.exceptions.RequestException as e:
-            raise SystemError(f"修改密码失败: {str(e)}")
+            raise SystemServiceError(f"修改密码失败: {str(e)}")
 
     def generate_api_key(self, name: str, description: str = None) -> str | None:
         """生成新的API密钥."""
@@ -346,7 +346,7 @@ class AuthManager:
                 return None
 
         except requests.exceptions.RequestException as e:
-            raise SystemError(f"生成API密钥失败: {str(e)}")
+            raise SystemServiceError(f"生成API密钥失败: {str(e)}")
 
     def revoke_api_key(self, api_key_id: str) -> bool:
         """撤销API密钥."""
@@ -360,7 +360,7 @@ class AuthManager:
             return response.status_code == 200
 
         except requests.exceptions.RequestException as e:
-            raise SystemError(f"撤销API密钥失败: {str(e)}")
+            raise SystemServiceError(f"撤销API密钥失败: {str(e)}")
 
     def list_api_keys(self) -> list:
         """列出所有API密钥."""
@@ -378,7 +378,7 @@ class AuthManager:
                 return []
 
         except requests.exceptions.RequestException as e:
-            raise SystemError(f"获取API密钥列表失败: {str(e)}")
+            raise SystemServiceError(f"获取API密钥列表失败: {str(e)}")
 
     def __enter__(self):
         """上下文管理器入口."""

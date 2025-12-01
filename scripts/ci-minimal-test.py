@@ -123,7 +123,7 @@ def test_basic_functionality():
 
         try:
             divide(10, 0)
-            assert False, "应该抛出异常"
+            raise AssertionError("应该抛出异常")
         except ValueError:
             pass  # 预期的异常
 
@@ -171,8 +171,8 @@ def test_date_utils_if_available():
         try:
             monday = datetime(2024, 1, 8)  # Monday
             sunday = datetime(2024, 1, 7)  # Sunday
-            assert DateUtils.is_weekend(monday) == False
-            assert DateUtils.is_weekend(sunday) == True
+            assert not DateUtils.is_weekend(monday)
+            assert DateUtils.is_weekend(sunday)
             print("✅ is_weekend测试通过")
             success_count += 1
         except Exception:

@@ -97,7 +97,7 @@ def simple_etl():
                     if match_time:
                         try:
                             match_date = datetime.strptime(match_time, "%d.%m.%Y %H:%M")
-                        except:
+                        except Exception:
                             pass
 
                     match_data_insert = {

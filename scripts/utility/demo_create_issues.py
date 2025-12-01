@@ -13,13 +13,13 @@ def check_prerequisites():
     # 检查GitHub CLI
     try:
         subprocess.run(["gh", "--version"], capture_output=True, check=True)
-    except:
+    except Exception:
         return False
 
     # 检查认证
     try:
         subprocess.run(["gh", "auth", "status"], capture_output=True, check=True)
-    except:
+    except Exception:
         return False
 
     # 检查Issues数据文件

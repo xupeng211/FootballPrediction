@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
 class MassiveFeatureGenerator:
     """大规模特征生成器 - 优化版本"""
 
-    def __init__(self, window_sizes: list[int] = [5, 10, 15]):
+    def __init__(self, window_sizes: list[int] = None):
+        if window_sizes is None:
+            window_sizes = [5, 10, 15]
         self.window_sizes = window_sizes
         self.database_url = os.getenv(
             "DATABASE_URL", "postgresql://postgres:postgres@db:5432/football_prediction"

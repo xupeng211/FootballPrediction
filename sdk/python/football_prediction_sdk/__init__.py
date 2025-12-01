@@ -14,7 +14,7 @@ from .exceptions import (
     BusinessError,
     FootballPredictionError,
     RateLimitError,
-    SystemError,
+    SystemServiceError,
     ValidationError,
 )
 from .models import (
@@ -43,7 +43,7 @@ __all__ = [
     "AuthenticationError",
     "ValidationError",
     "BusinessError",
-    "SystemError",
+    "SystemServiceError",
     "RateLimitError",
 
     # 数据模型
@@ -85,7 +85,7 @@ def check_sdk_version():
                     f"New SDK version available: {latest_version} (current: {__version__})",
                     UserWarning, stacklevel=2
                 )
-    except:
+    except Exception:
         pass  # 忽略网络错误
 
 # 初始化检查

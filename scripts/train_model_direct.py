@@ -98,7 +98,7 @@ def process_raw_data(df):
             # 解析比分
             try:
                 home_score, away_score = map(int, score_str.split(" - "))
-            except:
+            except Exception:
                 continue
 
             # 创建特征

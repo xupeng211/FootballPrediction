@@ -540,7 +540,7 @@ class GlobalBackfillService:
                     logger.info(f"✅ 球队数据预保存完成，当前球队总数: {saved_count}")
 
                     # 验证即将使用的球队ID是否都存在
-                    team_ids = list(set(ht[0] for ht in all_teams_to_save if ht[0] > 0))
+                    team_ids = list({ht[0] for ht in all_teams_to_save if ht[0] > 0})
                     missing_teams_check = await session.execute(
                         text(f"""
                         SELECT COUNT(DISTINCT home_team_id) as missing_home

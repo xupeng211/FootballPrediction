@@ -698,7 +698,7 @@ async def cleanup_test_data(test_db_session: AsyncSession):
     except Exception as e:
         # 记录错误但不阻塞测试
         import warnings
-        warnings.warn(f"Cleanup failed: {e}", UserWarning)
+        warnings.warn(f"Cleanup failed: {e}", UserWarning, stacklevel=2)
     finally:
         # 确保会话关闭
         try:

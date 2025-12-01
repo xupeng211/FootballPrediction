@@ -12,7 +12,7 @@ import logging
 import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Union, Dict
+from typing import Any, Union
 
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
@@ -214,7 +214,7 @@ class BaselineModelTrainer:
         X_val: Union[pd.DataFrame, None] = None,
         y_val: Union[pd.Series, None] = None,
         **model_params,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """训练模型."""
         try:
             if self.use_mlflow:
@@ -240,7 +240,7 @@ class BaselineModelTrainer:
         X_val: Union[pd.DataFrame, None],
         y_val: Union[pd.Series, None],
         **model_params,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """不使用MLflow训练模型."""
         # 根据模型类型创建模型
         self.model = self._create_model(**model_params)
@@ -385,7 +385,7 @@ class BaselineModelTrainer:
         eval_set: list[tuple[pd.DataFrame, pd.Series]] = None,
         early_stopping_rounds: int = 50,
         verbose: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """训练 XGBoost 模型.
 
         Args:
@@ -475,7 +475,7 @@ class BaselineModelTrainer:
         eval_set: list[tuple[pd.DataFrame, pd.Series]],
         early_stopping_rounds: int,
         verbose: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """不使用 MLflow 训练 XGBoost 模型."""
         try:
             # 创建 XGBoost 分类器
@@ -545,7 +545,7 @@ class BaselineModelTrainer:
         early_stopping_rounds: int,
         verbose: bool,
         run_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """使用 MLflow 训练 XGBoost 模型."""
         try:
             # 记录参数到 MLflow
@@ -620,7 +620,7 @@ class BaselineModelTrainer:
         cv_folds: int = 3,
         scoring: str = "f1_weighted",
         n_trials: int = 50,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """XGBoost 超参数优化（简化版随机搜索）.
 
         Args:

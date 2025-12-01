@@ -12,7 +12,7 @@ Complete Test Suite for String Utils Module - 100% Coverage Massacre
 """
 
 import pytest
-pytestmark = pytest.mark.skip(reason="CRITICAL: Entire file causes CI deadlock at 97%. Skipped for v1.0.0 release.")
+# pytestmark = pytest.mark.skip(reason="CRITICAL: Entire file causes CI deadlock at 97%. Skipped for v1.0.0 release.")
 import re
 import time
 import unicodedata

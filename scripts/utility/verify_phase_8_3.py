@@ -143,7 +143,7 @@ def verify_python_sdk():
                 content = f.read()
             class_count = content.count("class ")
             total_classes += class_count
-        except:
+        except Exception:
             pass
 
     return True

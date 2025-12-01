@@ -166,7 +166,7 @@ class FotMobAdvancedProbeV2:
                         data = response.json()
                         if isinstance(data, (list, dict)):
                             pass
-                    except:
+                    except Exception:
                         pass
 
             except Exception:

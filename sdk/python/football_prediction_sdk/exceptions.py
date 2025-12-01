@@ -61,7 +61,7 @@ class BusinessError(FootballPredictionError):
         super().__init__(message, **kwargs)
 
 
-class SystemError(FootballPredictionError):
+class SystemServiceError(FootballPredictionError):
     """系统错误."""
 
     def __init__(self, message: str = "系统错误", **kwargs):

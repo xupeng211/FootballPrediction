@@ -551,7 +551,7 @@ class GlobalBackfillService:
                     """),
                         {
                             "home_ids": list(
-                                set(ht["id"] for ht in all_teams_to_save if ht[0] > 0)
+                                {ht["id"] for ht in all_teams_to_save if ht[0] > 0}
                             )
                         },
                     )

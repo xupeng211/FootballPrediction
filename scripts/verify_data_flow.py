@@ -149,7 +149,7 @@ class DataFlowValidator:
                     )
                     row = result.fetchone()
                     fixtures_count = row[0] if row else 0
-                except:
+                except Exception:
                     fixtures_count = 0
 
                 logger.info(
