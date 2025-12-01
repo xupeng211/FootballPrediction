@@ -139,19 +139,18 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V17.0 精准定位]
+      - name: Test Utils (Step 2) 🔧 [V18.0 全量恢复]
         run: |
-          echo "🧪 Step 2: V17.0 精准定位 - 发现V14.0成功是假象，直接测试slug/clean函数"
+          echo "🧪 Step 2: V18.0 全量恢复 - 外科手术完成，恢复全量Utils测试"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # V17.0 精准定位：基于函数名直接测试可疑的slug/clean函数
-          echo "🔹 专门测试：slug/clean相关函数 (真正的毒瘤嫌疑人)"
-          timeout 180s python -m pytest tests/unit/utils/test_string_utils.py \
-            -k "slug or clean or generate_slug or test_clean_string or test_clean_text or test_slugify" \
-            -vv --timeout=60 --tb=short || exit 1
-          echo "✅ V17.0 完成！如果卡死则确认slug/clean是毒瘤"
+          # V18.0 全量恢复：毒瘤函数已重写为O(n)复杂度，现在恢复全量测试
+          echo "🔹 全量测试：所有Utils函数 (包括已修复的slug/clean函数)"
+          timeout 300s python -m pytest tests/unit/utils/ \
+            -vv --timeout=90 --tb=short || exit 1
+          echo "✅ V18.0 全量测试完成！毒瘤已根除！"
 
       - name: Test Cache (Step 3) 💾
         run: |

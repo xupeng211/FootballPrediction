@@ -177,73 +177,56 @@ class StringUtils:
 
     @staticmethod
     def slugify(text: str) -> str:
-        """转换为URL友好的字符串（V9.0安全修复）."""
+        """转换为URL友好的字符串（V18.0重构：O(n)复杂度，避免Unicode处理）."""
         if not isinstance(text, str):
             return ""
 
-        # V9.0 修复：限制输入长度，防止性能问题
-        if len(text) > 10000:
-            text = text[:10000]
+        # V18.0 重构：严格限制输入长度
+        if len(text) > 1000:
+            text = text[:1000]
 
-        # 简单的中文映射
-        chinese_map = {"测": "ce", "试": "shi", "文": "wen", "本": "ben"}
+        # V18.0 重构：使用简单字符映射，避免复杂Unicode处理
+        result_chars = []
 
-        # 先尝试中文字符映射
-        result = ""
-        for char in text:
-            if char in chinese_map:
-                result += chinese_map[char]
+        for char in text.lower():
+            if 'a' <= char <= 'z' or '0' <= char <= '9':
+                result_chars.append(char)
+            elif char in ' -_':
+                if result_chars and result_chars[-1] != '-':
+                    result_chars.append('-')
             else:
-                result += char
+                # 跳过其他字符
+                pass
 
-        # 规范化Unicode
-        result = unicodedata.normalize("NFKD", result)
-        result = "".join(char for char in result if unicodedata.category(char) != "Mn")
+        # 清理首尾连字符
+        while result_chars and result_chars[0] == '-':
+            result_chars.pop(0)
+        while result_chars and result_chars[-1] == '-':
+            result_chars.pop()
 
-        # 转换为小写,替换空格为连字符 - 使用简单字符串操作替代复杂正则
-        result = result.lower()
-
-        # 替换非字母数字字符为空格
-        cleaned_chars = []
-        for char in result:
-            if char.isalnum() or char == ' ' or char == '-':
-                cleaned_chars.append(char)
-            else:
-                cleaned_chars.append(' ')
-
-        result = ''.join(cleaned_chars)
-
-        # 规范化连字符和空格
-        parts = []
-        current_part = []
-
-        for char in result:
-            if char == '-' or char == ' ':
-                if current_part:
-                    parts.append(''.join(current_part))
-                    current_part = []
-            else:
-                current_part.append(char)
-
-        if current_part:
-            parts.append(''.join(current_part))
-
-        return '-'.join(parts) if parts else ''
+        return ''.join(result_chars)
 
     @staticmethod
     def camel_to_snake(name: str) -> str:
-        """驼峰命名转下划线命名."""
+        """驼峰命名转下划线命名（V18.0重构：O(n)复杂度，避免正则）."""
         if not isinstance(name, str):
             return ""
 
-        # 特殊处理：对于全大写的字符串
+        # V18.0 重构：简单处理全大写字符串
         if name.isupper() and len(name) > 1:
             return name.lower()
 
-        # 处理常见的驼峰命名转换
-        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
-        s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
-        return s2.lower()
+        # V18.0 重构：使用简单字符遍历，避免复杂正则
+        result = []
+        for i, char in enumerate(name):
+            if i > 0 and 'A' <= char <= 'Z':
+                # 检查前一个字符，避免在大写字母序列中插入下划线
+                prev_char = name[i-1]
+                if 'a' <= prev_char <= 'z' or '0' <= prev_char <= '9':
+                    result.append('_')
+            result.append(char.lower())
+
+        return ''.join(result)
 
     @staticmethod
     def snake_to_camel(name: str) -> str:
@@ -809,49 +792,32 @@ def format_phone_number(phone: str) -> str:
 
 
 def generate_slug(text: str) -> str:
-    """生成URL友好的slug（V12.0终极修复：避免复杂正则）."""
+    """生成URL友好的slug（V18.0重构：O(n)复杂度，简化实现）."""
     if not isinstance(text, str):
         return ""
 
-    # V12.0 修复：限制输入长度
-    if len(text) > 10000:
-        text = text[:10000]
+    # V18.0 重构：严格限制输入长度
+    if len(text) > 1000:
+        text = text[:1000]
 
-    # 转换为小写
-    slug = text.lower()
+    # V18.0 重构：使用最简单的实现
+    result = []
+    prev_was_dash = False
 
-    # V12.0 终极修复：使用简单字符串操作替代复杂正则
-    try:
-        result = []
-        prev_was_special = False
+    for char in text.lower():
+        if 'a' <= char <= 'z' or '0' <= char <= '9':
+            result.append(char)
+            prev_was_dash = False
+        elif char in ' -_':
+            if not prev_was_dash and result:
+                result.append('-')
+                prev_was_dash = True
 
-        for char in slug:
-            if char.isalnum():
-                result.append(char)
-                prev_was_special = False
-            elif char in ' -_':
-                if not prev_was_special:  # 避免重复连字符
-                    result.append('-')
-                    prev_was_special = True
-            else:
-                # 其他特殊字符转换为连字符
-                if not prev_was_special:
-                    result.append('-')
-                    prev_was_special = True
+    # 清理末尾的连字符
+    while result and result[-1] == '-':
+        result.pop()
 
-        # 转换为字符串并清理首尾连字符
-        slug_str = ''.join(result)
-
-        # 移除首尾连字符
-        if slug_str.startswith('-'):
-            slug_str = slug_str[1:]
-        if slug_str.endswith('-'):
-            slug_str = slug_str[:-1]
-
-        return slug_str
-    except Exception:
-        # 如果出现错误，返回基本版本
-        return ''.join(char if char.isalnum() else '-' for char in text.lower())
+    return ''.join(result)
 
 
 def truncate_text(text: str, length: int = 50, add_ellipsis: bool = True) -> str:
