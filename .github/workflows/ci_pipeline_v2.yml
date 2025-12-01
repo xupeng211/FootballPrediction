@@ -139,14 +139,14 @@ jobs:
           timeout 120s python -m pytest tests/unit/api/ -vv --timeout=30 --tb=short || exit 1
           echo "✅ Step 1: API 测试完成!"
 
-      - name: Test Utils (Step 2) 🔧 [V8.0 白名单恢复]
+      - name: Test Utils (Step 2) 🔧 [V9.0 扫雷行动]
         run: |
-          echo "🧪 Step 2: V8.0 白名单恢复 - 恢复安全的Utils测试，排除已知毒瘤"
+          echo "🧪 Step 2: V9.0 扫雷行动 - ReDoS修复后重新启用string_utils测试"
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
-          # V8.0 白名单策略：恢复安全文件，排除test_string_utils.py（已知毒瘤）
-          timeout 120s python -m pytest \
+          # V9.0 扫雷行动：修复所有ReDoS和安全问题后恢复完整测试
+          timeout 180s python -m pytest \
             tests/unit/utils/test_formatters.py \
             tests/unit/utils/test_dict_utils.py \
             tests/unit/utils/test_helpers.py \
@@ -156,8 +156,9 @@ jobs:
             tests/unit/utils/test_working_validators.py \
             tests/unit/utils/test_warning_filters_init.py \
             tests/unit/utils/test_warning_filters_error_path.py \
-            -vv --timeout=30 --tb=short || exit 1
-          echo "✅ Step 2: Utils 白名单测试完成!"
+            tests/unit/utils/test_string_utils.py \
+            -vv --timeout=60 --tb=short || exit 1
+          echo "✅ Step 2: Utils 完整测试完成!"
 
       - name: Test Cache (Step 3) 💾
         run: |

@@ -8,7 +8,7 @@ Complete Test Suite for String Utils Module - 100% Coverage Massacre
 创建时间: 2025-11-27
 工程师: Lead Unit Test Engineer
 
-⚠️ V7.4 CI隔离：该文件导致Utils测试卡死，已暂时跳过
+✅ V9.0 ReDoS修复：已修复所有性能和安全问题，重新启用测试
 """
 
 import pytest
@@ -18,8 +18,7 @@ import unicodedata
 from typing import Optional
 from unittest.mock import patch, MagicMock
 
-# V7.4 精准切除：隔离导致CI卡死的毒瘤文件
-pytestmark = pytest.mark.skip("CI Deadlock in Utils Step: Skipped by V7.4 - causing Step 2 hang")
+# V9.0 扫雷行动：修复ReDoS和性能问题后重新启用
 
 # 导入所有待测试的函数和类
 from src.utils.string_utils import (

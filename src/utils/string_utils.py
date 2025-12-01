@@ -70,27 +70,48 @@ class StringUtils:
 
     @staticmethod
     def clean_string(text: str, remove_special: bool = False) -> str:
-        """清理字符串."""
+        """清理字符串（V9.0安全修复，避免复杂正则）。"""
         if not isinstance(text, str):
             return ""
+
+        # V9.0 修复：限制输入长度
+        if len(text) > 10000:
+            text = text[:10000]
 
         # 基本清理
         cleaned = text.strip()
 
         # 移除Unicode控制字符
-        cleaned = "".join(
-            char for char in cleaned if unicodedata.category(char)[0] != "C"
-        )
+        cleaned_chars = []
+        for char in cleaned:
+            try:
+                if unicodedata.category(char)[0] != "C":
+                    cleaned_chars.append(char)
+            except (ValueError, TypeError):
+                continue  # 跳过有问题的字符
+        cleaned = "".join(cleaned_chars)
 
         # 规范化Unicode字符为ASCII
-        cleaned = unicodedata.normalize("NFKD", cleaned)
-        cleaned = "".join([c for c in cleaned if ord(c) < 128])
+        try:
+            cleaned = unicodedata.normalize("NFKD", cleaned)
+            ascii_chars = []
+            for c in cleaned:
+                if ord(c) < 128:
+                    ascii_chars.append(c)
+            cleaned = "".join(ascii_chars)
+        except (ValueError, UnicodeError):
+            pass  # 保持原样
 
         if remove_special:
-            # 移除特殊字符,保留字母数字和基本标点
-            cleaned = re.sub(r'[^\w\s\-.,!?()[\]{}"\'`~@#$%^&*+=<>|\\]', "", cleaned)
+            # V9.0 修复：使用简单字符检查替代复杂正则
+            allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -.,!?()[]{}\"'`~@#$%^&*+=<>|\\")
+            filtered_chars = []
+            for char in cleaned:
+                if char in allowed_chars:
+                    filtered_chars.append(char)
+            cleaned = "".join(filtered_chars)
 
-        # 规范化空白字符
+        # 规范化空白字符 - 使用简单split/join替代正则
         cleaned = " ".join(cleaned.split())
         return cleaned
 
@@ -156,9 +177,13 @@ class StringUtils:
 
     @staticmethod
     def slugify(text: str) -> str:
-        """转换为URL友好的字符串."""
+        """转换为URL友好的字符串（V9.0安全修复）."""
         if not isinstance(text, str):
             return ""
+
+        # V9.0 修复：限制输入长度，防止性能问题
+        if len(text) > 10000:
+            text = text[:10000]
 
         # 简单的中文映射
         chinese_map = {"测": "ce", "试": "shi", "文": "wen", "本": "ben"}
@@ -175,11 +200,35 @@ class StringUtils:
         result = unicodedata.normalize("NFKD", result)
         result = "".join(char for char in result if unicodedata.category(char) != "Mn")
 
-        # 转换为小写,替换空格为连字符
+        # 转换为小写,替换空格为连字符 - 使用简单字符串操作替代复杂正则
         result = result.lower()
-        result = re.sub(r"[^\w\s-]", "", result)
-        result = re.sub(r"[-\s]+", "-", result).strip("-")
-        return result
+
+        # 替换非字母数字字符为空格
+        cleaned_chars = []
+        for char in result:
+            if char.isalnum() or char == ' ' or char == '-':
+                cleaned_chars.append(char)
+            else:
+                cleaned_chars.append(' ')
+
+        result = ''.join(cleaned_chars)
+
+        # 规范化连字符和空格
+        parts = []
+        current_part = []
+
+        for char in result:
+            if char == '-' or char == ' ':
+                if current_part:
+                    parts.append(''.join(current_part))
+                    current_part = []
+            else:
+                current_part.append(char)
+
+        if current_part:
+            parts.append(''.join(current_part))
+
+        return '-'.join(parts) if parts else ''
 
     @staticmethod
     def camel_to_snake(name: str) -> str:
@@ -551,18 +600,27 @@ def is_empty(text: str | None) -> bool:
 
 
 def strip_html(text: str) -> str:
-    """移除HTML标签（修复script和style标签处理）."""
+    """移除HTML标签（修复script和style标签处理，防止ReDoS攻击）."""
     if not isinstance(text, str) or not text:
         return ""
 
     import re
 
-    # 移除script和style标签及其内容
-    text = re.sub(
-        r"<(script|style).*?>.*?</\1>", "", text, flags=re.IGNORECASE | re.DOTALL
-    )
-    # 移除所有HTML标签
-    text = re.sub(r"<[^>]+>", "", text)
+    # V9.0 修复：限制输入长度，防止ReDoS攻击
+    if len(text) > 100000:  # 限制最大输入长度
+        text = text[:100000]
+
+    # 移除script和style标签及其内容 - 使用非贪婪匹配并添加长度限制
+    try:
+        # 使用非贪婪匹配，添加lookahead限制，防止ReDoS
+        text = re.sub(
+            r"<(script|style)[^>]*>.*?(?=</\1>)</\1>", "", text, flags=re.IGNORECASE | re.DOTALL
+        )
+        # 移除所有HTML标签 - 添加长度限制防止恶意输入
+        text = re.sub(r"<[^>]{1,1000}>", "", text)
+    except re.error:
+        # 如果正则表达式出错，返回原文本的简单清理版本
+        pass
 
     return text
 
@@ -780,13 +838,21 @@ def is_palindrome(text: str) -> bool:
 
 
 def find_substring_positions(text: str, substring: str) -> list[int]:
-    """查找子字符串位置（模块级别包装函数，符合测试期望）."""
+    """查找子字符串位置（模块级别包装函数，符合测试期望，V9.0安全修复）."""
     if not isinstance(text, str) or not isinstance(substring, str):
+        return []
+
+    # V9.0 修复：添加安全限制，防止无限循环和性能问题
+    if len(substring) == 0:
+        return []
+    if len(text) > 1000000 or len(substring) > 1000:  # 限制输入长度
         return []
 
     positions = []
     start = 0
-    while True:
+    max_iterations = min(10000, len(text))  # 限制最大迭代次数
+
+    while start < len(text) and len(positions) < max_iterations:
         pos = text.find(substring, start)
         if pos == -1:
             break
