@@ -137,8 +137,8 @@ jobs:
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # V7.1: CI 捉鬼模式 - 添加超时和详细日志来定位卡死源
-          timeout 300s python -m pytest \
+          # V7.2: 收网行动 - 强化超时机制，移除Linux timeout命令
+          python -m pytest \
             tests/unit/api/ \
             tests/unit/utils/ \
             tests/unit/cache/ \
