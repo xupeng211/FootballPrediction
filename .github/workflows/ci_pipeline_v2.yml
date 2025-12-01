@@ -137,18 +137,19 @@ jobs:
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
 
-          # V7.0: 极简模式 - 只运行最关键的核心测试
+          # V7.1: CI 捉鬼模式 - 添加超时和详细日志来定位卡死源
           timeout 300s python -m pytest \
             tests/unit/api/ \
             tests/unit/utils/ \
             tests/unit/cache/ \
             tests/unit/events/ \
-            --timeout=15 \
+            --timeout=60 \
             --timeout-method=thread \
             --maxfail=3 \
             -x \
-            -v \
+            -vv \
             --tb=short \
+            --durations=10 \
             --junit-xml=test-results.xml || exit 1
           echo "✅ 全量测试套件执行完成!"
 
