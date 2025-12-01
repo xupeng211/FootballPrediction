@@ -8,7 +8,7 @@ Complete Test Suite for String Utils Module - 100% Coverage Massacre
 创建时间: 2025-11-27
 工程师: Lead Unit Test Engineer
 
-⚠️ V10.0 保底方案：V9.0修复后仍有性能问题，暂时禁用待进一步调试
+🔍 V11.0 终极拆解：移除skip，使用排除过滤器精准定位卡死函数
 """
 
 import pytest
@@ -29,7 +29,6 @@ from src.utils.string_utils import (
 )
 
 
-@pytest.mark.skip(reason="V10.0 保底方案：V9.0修复后仍有性能问题，暂时禁用待进一步调试")
 class TestStringUtilsClass:
     """StringUtils类测试 - 覆盖所有17个静态方法."""
 
