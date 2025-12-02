@@ -42,15 +42,16 @@ make coverage
 
 **FootballPrediction** is an enterprise-grade football prediction system based on modern async architecture, integrating machine learning, data collection, real-time prediction, and event-driven architecture.
 
-### Quality Baseline (v1.0.0-rc1)
-| Metric | Status | Target |
-|--------|--------|--------|
+### Quality Baseline (v1.0.0)
+| Metric | Current Status | Target |
+|--------|---------------|--------|
 | Build Status | ✅ Stable (Green Baseline) | Maintain |
-| Test Coverage | 29.0% | 80%+ |
+| Test Coverage | 29.0% (README.md) | 78%+ (CI Requirement) |
 | Test Count | 385 tests | 500+ |
 | Code Quality | A+ (ruff) | Maintain |
 | Python Version | 3.10/3.11/3.12 | Recommend 3.11 |
 | Security Status | ✅ Bandit Passed | Continuous Monitoring |
+| CI Environment | GitHub Actions + Docker | Consistent Local/CI |
 
 ### Tech Stack
 - **Backend**: FastAPI + PostgreSQL 15 + Redis 7.0+ + SQLAlchemy 2.0+
@@ -206,6 +207,7 @@ make sync-issues      # Sync GitHub Issues (双向同步工具)
 ### Environment Configuration
 
 #### .env File Configuration
+Use `.env.example` as template:
 ```bash
 # Core configuration
 ENV=development
@@ -220,7 +222,8 @@ REDIS_URL=redis://redis:6379/0
 
 # External API keys
 FOOTBALL_DATA_API_KEY=your-football-data-api-key
-FOTMOB_API_KEY=your-fotmob-api-key
+FOTMOB_CLIENT_VERSION=production:208a8f87c2cc13343f1dd8671471cf5a039dced3
+FOTMOB_KNOWN_SIGNATURE=eyJib2R5Ijp7InVybCI6Ii9hcGkvZGF0YS9hdWRpby1tYXRjaGVzIiwiY29kZSI6MTc2NDA1NTcxMjgyOCwiZm9vIjoicHJvZHVjdGlvbjoyMDhhOGY4N2MyY2MxMzM0M2YxZGQ4NjcxNDcxY2Y1YTAzOWRjZWQzIn0sInNpZ25hdHVyZSI6IkMyMkI0MUQ5Njk2NUJBREM1NjMyNzcwRDgyNzVFRTQ4In0=
 
 # ML model configuration
 ML_MODEL_PATH=/app/models
@@ -230,8 +233,10 @@ MLFLOW_TRACKING_URI=http://localhost:5000
 PROMETHEUS_ENABLED=true
 JAEGER_ENABLED=false
 
-# Additional environment files available
-# .env.ci - CI environment variables
+# Available environment files:
+# .env.example - Template (copy to .env)
+# .env.docker - Docker-specific configuration
+# .env.ci - CI environment variables (auto-generated)
 # .env.prod - Production environment variables
 ```
 
@@ -265,26 +270,44 @@ make db-shell         # Enter PostgreSQL interactive terminal
 ### Local CI Verification
 ```bash
 ./ci-verify.sh        # Full local CI verification (checks coverage >= 78%)
+                      # ⚠️  Note: This script may not exist - use make ci instead
 ./simulate_ci_in_dev.sh  # Simulate CI environment
 ./scripts/run_tests_in_docker.sh  # Run tests in Docker for isolation
 ```
 
+### ⚠️ Important: CI Coverage Discrepancy
+- **README.md shows**: 29.0% coverage
+- **CI requires**: 78% coverage to pass
+- **Use `make ci`** for complete local verification before pushing
+
 ### Container Development Workflow
 ```bash
 # Start development environment
-docker-compose up --build
+make dev              # Recommended: uses docker-compose.yml
+# OR: docker-compose up --build
+
+# Choose specific environment:
+# docker-compose.yml           - Standard development
+# docker-compose.dev.yml       - Extended development
+# docker-compose.ci.yml        - CI environment
+# docker-compose.prod.yml      - Production
+# docker-compose.lightweight.yml - Minimal setup
+# docker-compose.crawler.yml   - Web scraping focused
 
 # Check service status
 docker-compose ps
+make status           # Makefile equivalent
 
 # View logs for specific services
 docker-compose logs app      # Application logs
 docker-compose logs db       # Database logs
 docker-compose logs redis    # Redis logs
+make logs                    # Makefile equivalent
 
 # Execute commands in containers
 docker-compose exec app bash # Enter app container
 docker-compose exec db psql -U postgres # Connect to database
+make shell                   # Makefile equivalent
 ```
 
 ## 🧪 Testing Strategy: SWAT Methodology
@@ -652,8 +675,9 @@ curl -X POST http://localhost:8000/api/v1/data/etl \
 | **Dependency Issues** | Run `make clean-all && make dev` to rebuild from scratch |
 | **ML Model Loading Failed** | Check model file paths, view `mlruns/` and `models/trained/` directories |
 | **Celery Task Failures** | View logs `make logs`, check Redis connection |
-| **Coverage < 78%** | Run `./ci-verify.sh` to see specific coverage gaps |
-| **Docker Build Failures** | Check `Dockerfile` and ensure all dependencies in requirements.txt |
+| **Coverage < 78%** | Run `make coverage` or `./ci-verify.sh` (if exists) to see specific coverage gaps |
+| **Docker Build Failures** | Check `Dockerfile` and ensure all dependencies in requirements*.txt |
+| **Missing ci-verify.sh** | Use `make ci` for complete local verification instead |
 
 ## 📚 Additional Documentation
 
@@ -674,9 +698,10 @@ curl -X POST http://localhost:8000/api/v1/data/etl \
 - **requirements.txt** - Core dependencies
 - **requirements-dev.txt** - Development dependencies
 - **requirements-ci.txt** - CI-specific dependencies
-- **pytest.ini** - Test configuration and markers
+- **requirements_updated.txt** - Updated dependencies (may be newer than main)
+- **pytest.ini** - Test configuration and markers (see coverage settings)
 - **Dockerfile** - Multi-stage container build
-- **docker-compose.yml** - Development environment setup
+- **docker-compose.yml** - Development environment setup (6 other variants available)
 
 ## 💡 Important Reminders
 
