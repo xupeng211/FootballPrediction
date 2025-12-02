@@ -542,14 +542,16 @@ class GlobalBackfillService:
                     # 验证即将使用的球队ID是否都存在
                     team_ids = list({ht[0] for ht in all_teams_to_save if ht[0] > 0})
                     missing_teams_check = await session.execute(
-                        text(f"""
+                        text(
+                            f"""
                         SELECT COUNT(DISTINCT home_team_id) as missing_home
                         FROM (
                             SELECT DISTINCT home_team_id
                             FROM unnest(ARRAY{team_ids}::int[]) as home_team_id
                         ) h
                         WHERE h.home_team_id NOT IN (SELECT id FROM teams)
-                    """)
+                    """
+                        )
                     )
 
                     missing_count = missing_teams_check.scalar() or 0
@@ -612,11 +614,13 @@ class GlobalBackfillService:
                                 league_id=match_data.get("competition", {}).get(
                                     "id", 0
                                 ),
-                                season=match_data.get("season", {}).get(
-                                    "startDate", ""
-                                )[:4]
-                                if match_data.get("season")
-                                else result.date[:4],
+                                season=(
+                                    match_data.get("season", {}).get("startDate", "")[
+                                        :4
+                                    ]
+                                    if match_data.get("season")
+                                    else result.date[:4]
+                                ),
                                 created_at=datetime.now(),
                                 updated_at=datetime.now(),
                             )

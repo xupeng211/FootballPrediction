@@ -326,36 +326,46 @@ class HealthMonitor:
             "data_points": len(trends),
             "health_score": {
                 "current": health_scores[-1] if health_scores else 0,
-                "average": round(sum(health_scores) / len(health_scores), 1)
-                if health_scores
-                else 0,
+                "average": (
+                    round(sum(health_scores) / len(health_scores), 1)
+                    if health_scores
+                    else 0
+                ),
                 "min": min(health_scores) if health_scores else 0,
                 "max": max(health_scores) if health_scores else 0,
-                "trend": "improving"
-                if len(health_scores) > 1 and health_scores[-1] > health_scores[0]
-                else "stable",
+                "trend": (
+                    "improving"
+                    if len(health_scores) > 1 and health_scores[-1] > health_scores[0]
+                    else "stable"
+                ),
             },
             "root_files": {
                 "current": root_files[-1] if root_files else 0,
-                "average": round(sum(root_files) / len(root_files), 1)
-                if root_files
-                else 0,
+                "average": (
+                    round(sum(root_files) / len(root_files), 1) if root_files else 0
+                ),
                 "min": min(root_files) if root_files else 0,
                 "max": max(root_files) if root_files else 0,
-                "trend": "increasing"
-                if len(root_files) > 1 and root_files[-1] > root_files[0]
-                else "stable",
+                "trend": (
+                    "increasing"
+                    if len(root_files) > 1 and root_files[-1] > root_files[0]
+                    else "stable"
+                ),
             },
             "project_size": {
                 "current_mb": project_sizes[-1] if project_sizes else 0,
-                "average_mb": round(sum(project_sizes) / len(project_sizes), 1)
-                if project_sizes
-                else 0,
+                "average_mb": (
+                    round(sum(project_sizes) / len(project_sizes), 1)
+                    if project_sizes
+                    else 0
+                ),
                 "min_mb": min(project_sizes) if project_sizes else 0,
                 "max_mb": max(project_sizes) if project_sizes else 0,
-                "trend": "growing"
-                if len(project_sizes) > 1 and project_sizes[-1] > project_sizes[0]
-                else "stable",
+                "trend": (
+                    "growing"
+                    if len(project_sizes) > 1 and project_sizes[-1] > project_sizes[0]
+                    else "stable"
+                ),
             },
             "raw_data": trends[-10:] if trends else [],  # 最近10个数据点
         }

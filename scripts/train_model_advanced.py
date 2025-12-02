@@ -140,12 +140,12 @@ class AdvancedXGBoostTrainer:
 
         # XGBoost参数
         params = {
-            "objective": "multi:softprob"
-            if len(np.unique(y_encoded)) > 2
-            else "binary:logistic",
-            "num_class": len(np.unique(y_encoded))
-            if len(np.unique(y_encoded)) > 2
-            else None,
+            "objective": (
+                "multi:softprob" if len(np.unique(y_encoded)) > 2 else "binary:logistic"
+            ),
+            "num_class": (
+                len(np.unique(y_encoded)) if len(np.unique(y_encoded)) > 2 else None
+            ),
             "max_depth": 6,
             "learning_rate": 0.1,
             "n_estimators": 100,

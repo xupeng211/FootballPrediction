@@ -101,16 +101,20 @@ class AnalyticsService:
                 "form_summary": {
                     "points": performance_metrics["wins"] * 3
                     + performance_metrics["draws"],
-                    "form_trend": "stable"
-                    if performance_metrics["matches_played"] > 0
-                    else "no_data",
+                    "form_trend": (
+                        "stable"
+                        if performance_metrics["matches_played"] > 0
+                        else "no_data"
+                    ),
                     "last_match_date": None,
                 },
                 "metadata": {
                     "generated_at": datetime.utcnow().isoformat(),
-                    "data_freshness": "live"
-                    if performance_metrics["matches_played"] > 0
-                    else "no_data",
+                    "data_freshness": (
+                        "live"
+                        if performance_metrics["matches_played"] > 0
+                        else "no_data"
+                    ),
                 },
             }
 

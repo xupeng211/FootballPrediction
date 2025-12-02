@@ -1,3 +1,4 @@
+# Prometheus配置文件
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -6,11 +7,19 @@ rule_files:
   - "alert_rules.yml"
 
 scrape_configs:
+  # 现有应用监控
   - job_name: 'footballprediction-app'
     static_configs:
       - targets: ['app:8000']
     metrics_path: '/metrics'
     scrape_interval: 10s
+
+  # FotMob爬虫监控（新增）
+  - job_name: 'fotmob-crawler'
+    static_configs:
+      - targets: ['fotmob-crawler:8080']  # 如果爬虫有HTTP端点
+    scrape_interval: 30s
+    metrics_path: '/metrics'
 
   - job_name: 'postgres'
     static_configs:

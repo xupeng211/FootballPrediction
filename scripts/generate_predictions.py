@@ -58,13 +58,15 @@ class BatchPredictionGenerator:
         """
         async with self.async_session() as session:
             if only_unpredicted:
-                query = text("""
+                query = text(
+                    """
                     SELECT m.id FROM matches m
                     LEFT JOIN predictions p ON m.id = p.match_id
                     WHERE p.match_id IS NULL
                     ORDER BY m.match_date DESC
                     LIMIT :limit
-                """)
+                """
+                )
             else:
                 query = text(
                     "SELECT id FROM matches ORDER BY match_date DESC LIMIT :limit"
@@ -107,12 +109,14 @@ class BatchPredictionGenerator:
                     score = "1-1"
 
                 await session.execute(
-                    text("""
+                    text(
+                        """
                         INSERT INTO predictions
                         (user_id, match_id, score, confidence, status, created_at, updated_at)
                         VALUES
                         (:user_id, :match_id, :score, :confidence, 'COMPLETED', :created_at, :updated_at)
-                    """),
+                    """
+                    ),
                     {
                         "user_id": user_id,
                         "match_id": match_id,
@@ -274,9 +278,9 @@ class BatchPredictionGenerator:
             return {
                 "matches_count": matches_count,
                 "predictions_count": predictions_count,
-                "coverage_rate": predictions_count / matches_count
-                if matches_count > 0
-                else 0,
+                "coverage_rate": (
+                    predictions_count / matches_count if matches_count > 0 else 0
+                ),
             }
 
     async def generate_all_predictions(self):

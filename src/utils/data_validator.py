@@ -25,7 +25,9 @@ class DataValidator:
         return isinstance(value, str)
 
     @staticmethod
-    def validate_number(value: Union[int, float], min_value: float = None, max_value: float = None) -> bool:
+    def validate_number(
+        value: Union[int, float], min_value: float = None, max_value: float = None
+    ) -> bool:
         """验证数字."""
         try:
             num = float(value)
@@ -45,7 +47,7 @@ class DataValidator:
             return True
         if isinstance(value, str):
             try:
-                datetime.fromisoformat(value.replace('Z', '+00:00'))
+                datetime.fromisoformat(value.replace("Z", "+00:00"))
                 return True
             except ValueError:
                 try:

@@ -24,11 +24,11 @@ SKIP_ML_MODEL_LOADING = os.getenv("SKIP_ML_MODEL_LOADING", "false").lower() == "
 
 # 如果设置为Mock模式，完全跳过ML相关导入和加载
 FORCE_MOCK_MODE = (
-    ML_MODE == "mock" or
-    INFERENCE_SERVICE_MOCK or
-    SKIP_ML_MODEL_LOADING or
-    os.getenv("XGBOOST_MOCK", "false").lower() == "true" or
-    os.getenv("JOBLIB_MOCK", "false").lower() == "true"
+    ML_MODE == "mock"
+    or INFERENCE_SERVICE_MOCK
+    or SKIP_ML_MODEL_LOADING
+    or os.getenv("XGBOOST_MOCK", "false").lower() == "true"
+    or os.getenv("JOBLIB_MOCK", "false").lower() == "true"
 )
 
 if FORCE_MOCK_MODE:
@@ -39,6 +39,7 @@ else:
     # FIX: 导入安全的模型加载库，替代不安全的pickle
     try:
         import joblib
+
         HAVE_JOBLIB = True
     except ImportError:
         HAVE_JOBLIB = False
@@ -47,6 +48,7 @@ else:
     # 尝试导入XGBoost，如果失败则运行在Mock模式
     try:
         import xgboost as xgb
+
         HAVE_XGBOOST = True
     except ImportError:
         HAVE_XGBOOST = False
@@ -90,7 +92,7 @@ class InferenceService:
                 "model_version": "mock_v6",
                 "target_classes": ["平局", "主队胜", "客队胜"],
                 "mock_mode": True,
-                "force_reason": "ENV_VARS_SET"
+                "force_reason": "ENV_VARS_SET",
             }
             self._feature_columns = [
                 "home_team_id",
@@ -768,9 +770,9 @@ class InferenceService:
                     "status": "degraded",
                     "model_loaded": False,
                     "feature_data_loaded": not self._feature_data.empty,
-                    "feature_count": len(self._feature_columns)
-                    if self._feature_columns
-                    else 0,
+                    "feature_count": (
+                        len(self._feature_columns) if self._feature_columns else 0
+                    ),
                     "initialized": self._initialized,
                     "note": "XGBoost not available - running in mock mode",
                     "xgboost_available": False,
@@ -783,9 +785,9 @@ class InferenceService:
             return {
                 "status": "healthy" if model_loaded else "unhealthy",
                 "model_loaded": model_loaded,
-                "feature_data_loaded": not self._feature_data.empty
-                if feature_data_loaded
-                else False,
+                "feature_data_loaded": (
+                    not self._feature_data.empty if feature_data_loaded else False
+                ),
                 "feature_count": feature_count,
                 "initialized": self._initialized,
                 "xgboost_available": True,

@@ -252,9 +252,11 @@ class OptunaHyperparameterTuner:
         """
         # 定义超参数搜索空间
         param = {
-            "objective": "binary:logistic"
-            if len(np.unique(self.y_train)) == 2
-            else "multi:softprob",
+            "objective": (
+                "binary:logistic"
+                if len(np.unique(self.y_train)) == 2
+                else "multi:softprob"
+            ),
             "eval_metric": "mlogloss",
             "random_state": self.random_state,
             "use_label_encoder": False,
@@ -358,9 +360,11 @@ class OptunaHyperparameterTuner:
         best_params_full = self.best_params.copy()
         best_params_full.update(
             {
-                "objective": "binary:logistic"
-                if len(np.unique(self.y_train)) == 2
-                else "multi:softprob",
+                "objective": (
+                    "binary:logistic"
+                    if len(np.unique(self.y_train)) == 2
+                    else "multi:softprob"
+                ),
                 "eval_metric": "mlogloss",
                 "random_state": self.random_state,
                 "use_label_encoder": False,
@@ -420,9 +424,9 @@ class OptunaHyperparameterTuner:
                 "study_name": self.study.study_name,
                 "feature_names": self.feature_names,
                 "optimization_time": datetime.now().isoformat(),
-                "label_encoder_classes": self.label_encoder.classes_.tolist()
-                if self.label_encoder
-                else None,
+                "label_encoder_classes": (
+                    self.label_encoder.classes_.tolist() if self.label_encoder else None
+                ),
             }
 
             results_path = self.model_save_path.replace(".pkl", "_results.json")

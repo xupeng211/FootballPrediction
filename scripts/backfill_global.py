@@ -752,11 +752,13 @@ class GlobalBackfillService:
                                 league_id=match_data.get("competition", {}).get(
                                     "id", 0
                                 ),
-                                season=match_data.get("season", {}).get(
-                                    "startDate", ""
-                                )[:4]
-                                if match_data.get("season")
-                                else result.date[:4],
+                                season=(
+                                    match_data.get("season", {}).get("startDate", "")[
+                                        :4
+                                    ]
+                                    if match_data.get("season")
+                                    else result.date[:4]
+                                ),
                                 created_at=datetime.now(),
                                 updated_at=datetime.now(),
                             )

@@ -43,6 +43,13 @@ class Team(BaseModel):
     venue: Mapped[str | None] = mapped_column(String(255), nullable=True)
     logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     website: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # FBref数据字段
+    fbref_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    fbref_external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # 实力指标字段
+    fifa_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total_wage_bill: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 年薪总额（欧元）
+    market_value: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 球队总市值（欧元）
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, onupdate=datetime.utcnow)
 

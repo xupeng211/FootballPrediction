@@ -62,7 +62,8 @@ class PredictionService:
                 total = total_result.scalar()
 
                 # 获取分页数据
-                query = text("""
+                query = text(
+                    """
                     SELECT p.id, p.match_id, p.score, p.confidence, p.status,
                            p.created_at, p.updated_at,
                            ht.name as home_team_name, at.name as away_team_name
@@ -72,7 +73,8 @@ class PredictionService:
                     JOIN teams at ON m.away_team_id = at.id
                     ORDER BY p.created_at DESC
                     LIMIT :limit OFFSET :offset
-                """)
+                """
+                )
 
                 result = await session.execute(
                     query, {"limit": limit, "offset": offset}
@@ -142,7 +144,8 @@ class PredictionService:
 
         try:
             async with db_manager.get_async_session() as session:
-                query = text("""
+                query = text(
+                    """
                     SELECT p.id, p.match_id, p.score, p.confidence, p.status,
                            p.created_at, p.updated_at,
                            ht.name as home_team_name, at.name as away_team_name
@@ -152,7 +155,8 @@ class PredictionService:
                     JOIN teams at ON m.away_team_id = at.id
                     WHERE p.match_id = :match_id
                     ORDER BY p.created_at DESC
-                """)
+                """
+                )
 
                 result = await session.execute(query, {"match_id": match_id})
                 rows = result.fetchall()

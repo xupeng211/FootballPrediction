@@ -110,49 +110,94 @@ class BaseModel(Base, TimestampMixin):
         return f"<{self.__class__.__name__}(id={getattr(self, 'id', None)})>"
 
 
-# 数据库连接配置 - 支持环境变量覆盖，提供安全默认值
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./football_prediction.db")
-ASYNC_DATABASE_URL = os.getenv(
-    "ASYNC_DATABASE_URL", "sqlite+aiosqlite:///./football_prediction.db"
-)
+# ============================================================================
+# ⚠️ 过时的数据库配置 - 已迁移到 async_manager.py
+# ⚠️ DEPRECATED DATABASE CONFIG - Moved to async_manager.py
+# ============================================================================
 
-# 同步数据库引擎和会话
-engine = create_engine(DATABASE_URL, echo=False)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+"""
+⚠️ 警告：以下代码已弃用！
 
-# 异步数据库引擎和会话
-async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False)
-AsyncSessionLocal = async_sessionmaker(
-    bind=async_engine, class_=AsyncSession, expire_on_commit=False
-)
+旧的连接配置已经移动到 src/database/async_manager.py。
+请使用新的统一接口：
 
+    from src.database.async_manager import initialize_database, get_async_db_session
 
-def get_db() -> Generator[Session, None, None]:
-    """获取同步数据库会话
-    Get synchronous database session.
+旧的代码（已弃用）:
 
-    用于FastAPI的依赖注入。
-    Used for FastAPI dependency injection.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    # 同步数据库引擎和会话
+    engine = create_engine(DATABASE_URL, echo=False)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+    # 异步数据库引擎和会话
+    async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False)
+    AsyncSessionLocal = async_sessionmaker(
+        bind=async_engine, class_=AsyncSession, expire_on_commit=False
+    )
 
-async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
-    """获取异步数据库会话
-    Get asynchronous database session.
-
-    用于异步操作的依赖注入。
-    Used for async operation dependency injection.
-    """
-    async with AsyncSessionLocal() as session:
+    def get_db() -> Generator[Session, None, None]:
+        db = SessionLocal()
         try:
-            yield session
+            yield db
         finally:
-            await session.close()
+            db.close()
+
+    async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+        async with AsyncSessionLocal() as session:
+            try:
+                yield session
+            finally:
+                await session.close()
+
+新的代码:
+
+    from src.database.async_manager import initialize_database, get_async_db_session
+
+    # 1. 应用启动时初始化
+    initialize_database()
+
+    # 2. 在路由中使用（自动依赖注入）
+    @app.get("/matches/")
+    async def get_matches(session: AsyncSession = Depends(get_async_db_session)):
+        result = await session.execute(select(Match))
+        return result.scalars().all()
+
+    # 3. 在脚本中使用（上下文管理器）
+    async def my_script():
+        async with get_async_db_session() as session:
+            result = await session.execute(select(Match))
+            return result.scalars().all()
+"""
+
+
+def get_db():
+    """⚠️ DEPRECATED: 使用 src.database.async_manager.get_async_db_session"""
+    import warnings
+
+    warnings.warn(
+        "get_db() 已弃用，请使用 src.database.async_manager.get_async_db_session",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from .async_manager import get_async_db_session
+
+    # 直接返回新的实现
+    return get_async_db_session()
+
+
+async def get_async_db():
+    """⚠️ DEPRECATED: 使用 src.database.async_manager.get_async_db_session"""
+    import warnings
+
+    warnings.warn(
+        "get_async_db() 已弃用，请使用 src.database.async_manager.get_async_db_session",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from .async_manager import get_async_db_session
+
+    async for session in get_async_db_session():
+        yield session
 
 
 class DatabaseManager:
@@ -193,5 +238,82 @@ class DatabaseManager:
         pass
 
 
-# 导出基础类,供其他模型使用
-__all__ = ["Base", "BaseModel", "TimestampMixin", "DatabaseManager"]
+# ============================================================================
+# 导出列表
+# Export List
+# ============================================================================
+
+__all__ = [
+    # 基础模型类（保留，继续使用）
+    "Base",
+    "BaseModel",
+    "TimestampMixin",
+    # 旧的依赖注入函数（已弃用，保留向后兼容）
+    "get_db",  # ⚠️ DEPRECATED
+    "get_async_db",  # ⚠️ DEPRECATED
+    # 测试用数据库管理器（保留）
+    "DatabaseManager",
+]
+
+# ============================================================================
+# 使用说明
+# Usage Guide
+# ============================================================================
+
+"""
+📚 新代码应该从哪里导入？
+
+1. 模型和基础类:
+   from src.database.base import Base, BaseModel, TimestampMixin
+
+2. 数据库会话管理（推荐）:
+   from src.database.async_manager import (
+       initialize_database,
+       get_async_db_session,
+       get_db_session,
+   )
+
+3. 依赖注入（FastAPI）:
+   from src.database.async_manager import get_async_db_session
+   from fastapi import Depends
+
+   @app.get("/")
+   async def handler(session: AsyncSession = Depends(get_async_db_session)):
+       pass
+
+4. 脚本和爬虫:
+   from src.database.async_manager import get_db_session
+
+   async def my_script():
+       async with get_db_session() as session:
+           # 使用 session 执行查询
+           pass
+
+⚠️ 注意: get_db() 和 get_async_db() 已弃用，请迁移到新接口。
+"""
+
+# ============================================================================
+# 向后兼容的别名
+# Backward Compatibility Aliases
+# ============================================================================
+
+# AsyncSessionLocal 别名（向后兼容）
+try:
+    from .async_manager import get_database_manager
+
+    # 创建一个虚拟的 AsyncSessionLocal 类以保持向后兼容
+    class AsyncSessionLocal:
+        """
+        ⚠️ DEPRECATED: 使用 src.database.async_manager.get_db_session
+
+        为向后兼容而保留的 AsyncSessionLocal 类
+        """
+        pass
+
+    # 将其添加到模块命名空间（但不推荐使用）
+    import sys
+    current_module = sys.modules[__name__]
+    setattr(current_module, 'AsyncSessionLocal', AsyncSessionLocal)
+
+except ImportError:
+    pass

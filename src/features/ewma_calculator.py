@@ -153,9 +153,11 @@ class EWMACalculator:
         # 初始化结果字典
         ewma_results = {
             "team_name": team_name,
-            "team_id": team_matches["home_team_id"].iloc[0]
-            if team_matches["is_home"].iloc[0]
-            else team_matches["away_team_id"].iloc[0],
+            "team_id": (
+                team_matches["home_team_id"].iloc[0]
+                if team_matches["is_home"].iloc[0]
+                else team_matches["away_team_id"].iloc[0]
+            ),
             "total_matches": len(team_matches),
             "latest_date": team_matches["match_date"].max(),
             "ewma_features": {},

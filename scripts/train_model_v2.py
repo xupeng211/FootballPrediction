@@ -43,7 +43,8 @@ def load_training_data_from_database():
         async def async_load_data():
             async with db_manager.get_async_session() as session:
                 # 查询SQL：关联features和matches表，提取特征和标签
-                query = text("""
+                query = text(
+                    """
                 SELECT
                     f.feature_data,
                     m.home_score,
@@ -60,7 +61,8 @@ def load_training_data_from_database():
                   AND m.away_score IS NOT NULL
                   AND f.feature_data IS NOT NULL
                 ORDER BY m.match_date
-                """)
+                """
+                )
 
                 result = await session.execute(query)
                 data = result.fetchall()

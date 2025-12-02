@@ -1,354 +1,332 @@
 #!/usr/bin/env python3
 """
-数据考古学家专用 - JSON结构全方位解剖
-探索FotMob数据中的隐藏宝藏
+FotMob JSON 结构分析器
+深度解析137KB响应中的隐藏数据
 """
 
 import json
 import sys
-import os
-from collections import defaultdict
-from typing import Any
-
-# 添加项目路径
-sys.path.append("/app/src")
-
-from sqlalchemy import create_engine, text
+from pathlib import Path
+from typing import Any, Dict, List, Set
 
 
-class DataArchaeologist:
-    """数据考古学家 - 发掘隐藏的数据宝藏"""
-
+class JSONPathAnalyzer:
     def __init__(self):
-        self.database_url = os.getenv(
-            "DATABASE_URL", "postgresql://postgres:postgres@db:5432/football_prediction"
-        )
-        self.engine = create_engine(self.database_url)
-        self.all_keys = set()
-        self.key_paths = defaultdict(list)
-        self.special_findings = {}
+        self.match_paths: List[str] = []
+        self.team_paths: List[str] = []
+        self.score_paths: List[str] = []
+        self.interesting_paths: List[str] = []
+        self.visited_paths: Set[str] = set()
 
-    def find_sample_matches(self) -> list:
-        """寻找样本已完赛比赛进行分析"""
-        with self.engine.connect() as conn:
-            # 寻找已完赛的比赛，不限定联赛
-            result = conn.execute(
-                text("""
-                SELECT id, external_id, match_data
-                FROM raw_match_data
-                WHERE match_data::text LIKE '%Full-Time%'
-                  AND source = 'fotmob'
-                LIMIT 5
-            """)
-            ).fetchall()
+    def analyze_json_structure(self, json_file: Path):
+        """分析JSON文件结构"""
+        print("🔍 FotMob JSON 结构深度分析器")
+        print("=" * 60)
 
-            matches = []
+        # 加载JSON数据
+        with open(json_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-            for row in result:
-                # 从match_data中提取信息
-                match_data_json = (
-                    json.loads(row[2]) if isinstance(row[2], str) else row[2]
-                )
-                league_name = (
-                    match_data_json.get("raw_data", {})
-                    .get("league_info", {})
-                    .get("name", "Unknown")
-                )
+        print(f"📁 分析文件: {json_file}")
+        print(f"📊 文件大小: {json_file.stat().st_size:,} 字节")
 
-                matches.append(
-                    {
-                        "raw_id": row[0],
-                        "external_id": row[1],
-                        "match_data": row[2],
-                        "league_name": league_name,
-                    }
-                )
+        # 显示顶级结构
+        self.analyze_top_level(data)
 
-            return matches
+        # 深度分析pageProps
+        if "pageProps" in data:
+            print(f"\n🎯 深度分析 pageProps:")
+            self.recursive_analyze(data["pageProps"], "pageProps")
 
-    def deep_json_exploration(
-        self, obj: Any, path: str = "", depth: int = 0, max_depth: int = 10
-    ) -> None:
-        """深度递归探索JSON结构"""
-        if depth > max_depth:
+        # 深度分析translations (可能包含比赛数据)
+        if "translations" in data:
+            print(f"\n🌐 深度分析 translations:")
+            self.recursive_analyze(data["translations"], "translations")
+
+        # 显示找到的路径
+        self.display_findings()
+
+    def analyze_top_level(self, data: Dict[str, Any]):
+        """分析顶级结构"""
+        print(f"\n📋 顶级键 (共 {len(data)} 个):")
+        for i, (key, value) in enumerate(data.items(), 1):
+            value_type = type(value).__name__
+            size_info = ""
+
+            if isinstance(value, dict):
+                size_info = f" ({len(value)} 键)"
+            elif isinstance(value, list):
+                size_info = f" ({len(value)} 元素)"
+            elif isinstance(value, str):
+                size_info = f" ({len(value)} 字符)"
+
+            print(f"  {i:2d}. {key}: {value_type}{size_info}")
+
+    def recursive_analyze(
+        self, obj: Any, path: str, depth: int = 0, max_depth: int = 6
+    ):
+        """递归分析JSON对象"""
+        if depth > max_depth or path in self.visited_paths:
             return
 
+        self.visited_paths.add(path)
+
+        # 显示当前路径
+        indent = "  " * depth
+        obj_type = type(obj).__name__
+
         if isinstance(obj, dict):
+            print(f"{indent}📁 {path} [dict, {len(obj)} 键]")
+
+            # 检查是否包含关键词
+            self.check_for_keywords(obj, path)
+
+            # 只显示有意义的键
+            important_keys = []
             for key, value in obj.items():
-                current_path = f"{path}.{key}" if path else key
-                self.all_keys.add(key)
-                self.key_paths[key].append(current_path)
+                if self.is_important_key(key, value):
+                    important_keys.append(key)
 
-                # 特殊侦查：检查关键字段
-                self.check_special_findings(key, value, current_path, depth)
+            if important_keys:
+                print(f"{indent}   重要键: {important_keys}")
 
-                # 递归探索
-                self.deep_json_exploration(value, current_path, depth + 1, max_depth)
+            # 递归分析重要内容
+            for key, value in obj.items():
+                if self.should_recurse(key, value, depth):
+                    new_path = f"{path} -> {key}"
+                    self.recursive_analyze(value, new_path, depth + 1, max_depth)
 
-        elif isinstance(obj, list) and obj:
-            # 检查列表内容
-            if len(obj) > 0:
-                # 记录列表长度信息
-                list_type = type(obj[0]).__name__
-                key_info = f"{path}[len:{len(obj)},type:{list_type}]"
-                self.key_paths[
-                    f"list_{path.split('.')[-1] if '.' in path else 'root'}"
-                ].append(key_info)
+        elif isinstance(obj, list):
+            print(f"{indent}📋 {path} [list, {len(obj)} 元素]")
 
-                # 递归探索前几个元素（避免过多重复）
-                for i, item in enumerate(obj[:3]):  # 只检查前3个元素
-                    item_path = f"{path}[{i}]"
-                    self.deep_json_exploration(item, item_path, depth + 1, max_depth)
+            # 检查列表元素
+            if obj and len(obj) > 0:
+                first_element = obj[0]
+                first_type = type(first_element).__name__
+                print(f"{indent}   首元素类型: {first_type}")
 
-    def check_special_findings(
-        self, key: str, value: Any, path: str, depth: int
-    ) -> None:
-        """特殊侦查：检查关键字段"""
+                # 如果列表包含重要数据，递归分析前几个元素
+                if self.important_list_content(obj):
+                    for i, element in enumerate(obj[:3]):  # 只分析前3个
+                        new_path = f"{path}[{i}]"
+                        self.recursive_analyze(element, new_path, depth + 1, max_depth)
+
+        elif isinstance(obj, str):
+            # 检查字符串是否包含比赛相关信息
+            if self.contains_match_info(obj):
+                print(
+                    f"{indent}📄 {path} [string, {len(obj)} 字符] 🎯 可能包含比赛数据!"
+                )
+                self.interesting_paths.append(path)
+
+    def check_for_keywords(self, obj: Dict[str, Any], path: str):
+        """检查字典是否包含关键词"""
+        obj_str = json.dumps(obj, ensure_ascii=False).lower()
+        keywords = [
+            "match",
+            "team",
+            "home",
+            "away",
+            "score",
+            "goal",
+            "league",
+            "tournament",
+        ]
+
+        found_keywords = [kw for kw in keywords if kw in obj_str]
+
+        if found_keywords:
+            print(f"  🔍 找到关键词: {found_keywords}")
+
+            # 记录路径
+            if "match" in obj_str:
+                self.match_paths.append(path)
+            if any(kw in obj_str for kw in ["home", "away", "team"]):
+                self.team_paths.append(path)
+            if "score" in obj_str:
+                self.score_paths.append(path)
+
+    def is_important_key(self, key: str, value: Any) -> bool:
+        """判断是否为重要键"""
         key_lower = key.lower()
+        important_patterns = [
+            "match",
+            "team",
+            "home",
+            "away",
+            "score",
+            "goal",
+            "league",
+            "tournament",
+            "fixture",
+            "game",
+            "player",
+            "club",
+            "venue",
+            "status",
+            "result",
+        ]
 
-        # 进阶数据检查
-        if any(term in key_lower for term in ["xg", "expected_goal", "xg"]):
-            self.special_findings["xG_data"] = f"Found: {path} = {value}"
+        # 检查键名
+        if any(pattern in key_lower for pattern in important_patterns):
+            return True
 
-        if any(term in key_lower for term in ["possession", "possession_rate", "ball"]):
-            self.special_findings["possession"] = f"Found: {path} = {value}"
+        # 检查值的特征
+        if isinstance(value, (dict, list)) and len(str(value)) > 1000:
+            return True
 
-        if any(term in key_lower for term in ["shot", "shots_on_target", "sot"]):
-            self.special_findings["shots"] = f"Found: {path} = {value}"
+        return False
 
-        if any(term in key_lower for term in ["corner", "corners"]):
-            self.special_findings["corners"] = f"Found: {path} = {value}"
+    def should_recurse(self, key: str, value: Any, depth: int) -> bool:
+        """判断是否应该递归分析"""
+        # 限制深度
+        if depth >= 4:
+            return False
 
-        # 人员数据检查
-        if any(term in key_lower for term in ["lineup", "squad", "starting_11"]):
-            self.special_findings["lineup"] = (
-                f"Found: {path} (type: {type(value).__name__})"
+        # 重要键总是递归
+        if self.is_important_key(key, value):
+            return True
+
+        # 小数据结构不递归
+        if isinstance(value, (dict, list)) and len(str(value)) < 500:
+            return False
+
+        return True
+
+    def important_list_content(self, lst: List[Any]) -> bool:
+        """检查列表是否包含重要内容"""
+        if not lst:
+            return False
+
+        first_element = lst[0]
+
+        # 检查是否包含字典且有比赛相关键
+        if isinstance(first_element, dict):
+            element_str = json.dumps(first_element, ensure_ascii=False).lower()
+            return any(
+                keyword in element_str for keyword in ["match", "team", "home", "away"]
             )
 
-        if any(term in key_lower for term in ["sub", "substitute", "bench"]):
-            self.special_findings["substitutes"] = (
-                f"Found: {path} (type: {type(value).__name__})"
-            )
+        return False
 
-        if any(term in key_lower for term in ["player", "rating", "score"]):
-            if "player" not in self.special_findings:
-                self.special_findings["player_data"] = []
-            self.special_findings["player_data"].append(
-                f"{path}: {type(value).__name__}"
-            )
+    def contains_match_info(self, text: str) -> bool:
+        """检查字符串是否包含比赛信息"""
+        text_lower = text.lower()
+        match_indicators = [
+            "vs",
+            "versus",
+            "v ",
+            " - ",
+            ":",
+            "score",
+            "goal",
+            "win",
+            "lose",
+            "draw",
+            "premier league",
+            "la liga",
+            "serie a",
+            "bundesliga",
+            "ligue 1",
+        ]
 
-        # 博彩数据检查
-        if any(term in key_lower for term in ["odd", "bet", "price"]):
-            self.special_findings["odds"] = f"Found: {path} = {value}"
-
-        # 事件数据检查
-        if any(
-            term in key_lower
-            for term in ["event", "incident", "card", "goal", "substitution"]
-        ):
-            if "events" not in self.special_findings:
-                self.special_findings["events"] = []
-            self.special_findings["events"].append(f"{path}: {type(value).__name__}")
-
-        # 技术统计检查
-        if any(term in key_lower for term in ["stat", "performance", "analysis"]):
-            self.special_findings["advanced_stats"] = (
-                f"Found: {path} = {type(value).__name__}"
-            )
-
-    def analyze_single_match(self, match_info: dict) -> dict:
-        """分析单场比赛的完整JSON结构"""
-        print(
-            f"\\n🔍 分析比赛: {match_info['league_name']} (ID: {match_info['external_id']})"
+        # 需要包含多个指示词才认为可能包含比赛数据
+        found_count = sum(
+            1 for indicator in match_indicators if indicator in text_lower
         )
-        print("=" * 80)
+        return found_count >= 2
 
-        # 重置分析结果
-        self.all_keys = set()
-        self.key_paths = defaultdict(list)
-        self.special_findings = {}
+    def display_findings(self):
+        """显示分析发现"""
+        print("\n" + "=" * 60)
+        print("🔍 分析发现总结")
+        print("=" * 60)
 
-        try:
-            # 解析JSON
-            match_data_str = match_info["match_data"]
-            data = (
-                json.loads(match_data_str)
-                if isinstance(match_data_str, str)
-                else match_data_str
-            )
+        if self.match_paths:
+            print(f"\n🎯 找到可能包含比赛数据的路径 ({len(self.match_paths)} 个):")
+            for path in self.match_paths:
+                print(f"  • {path}")
 
-            # 深度探索
-            self.deep_json_exploration(data)
+        if self.team_paths:
+            print(f"\n👥 找到可能包含球队数据的路径 ({len(self.team_paths)} 个):")
+            for path in self.team_paths[:5]:  # 只显示前5个
+                print(f"  • {path}")
+            if len(self.team_paths) > 5:
+                print(f"  ... 还有 {len(self.team_paths) - 5} 个路径")
 
-            # 显示基本信息
-            print("\\n📋 比赛基本信息:")
-            raw_data = data.get("raw_data", {})
-            status = data.get("status", {})
+        if self.score_paths:
+            print(f"\n⚽ 找到可能包含比分数据的路径 ({len(self.score_paths)} 个):")
+            for path in self.score_paths:
+                print(f"  • {path}")
 
-            if raw_data:
-                home = raw_data.get("home", {})
-                away = raw_data.get("away", {})
-                league = raw_data.get("league_info", {})
+        if self.interesting_paths:
+            print(f"\n🌟 有趣的数据路径 ({len(self.interesting_paths)} 个):")
+            for path in self.interesting_paths:
+                print(f"  • {path}")
 
-                print(
-                    f"   主队: {home.get('longName', home.get('name', 'Unknown'))} ({home.get('score', '?')})"
-                )
-                print(
-                    f"   客队: {away.get('longName', away.get('name', 'Unknown'))} ({away.get('score', '?')})"
-                )
-                print(f"   联赛: {league.get('name', 'Unknown')}")
-                print(f"   状态: {status.get('reason', {}).get('long', 'Unknown')}")
-                print(f"   比分: {status.get('scoreStr', 'Unknown')}")
+        # 提供具体的数据提取建议
+        print(f"\n💡 数据提取建议:")
+        if self.match_paths:
+            print(f"  • 优先检查: {self.match_paths[0]}")
+        if self.team_paths:
+            print(f"  • 球队数据可能在: {self.team_paths[0]}")
 
-            # 显示所有发现的键
-            print(f"\\n🔑 发现的所有键名 (总计 {len(self.all_keys)} 个):")
-            for i, key in enumerate(sorted(self.all_keys), 1):
-                paths = self.key_paths[key]
-                sample_path = paths[0] if paths else "N/A"
-                print(f"   {i:3d}. {key:<20} | 样例路径: {sample_path}")
+    def extract_sample_data(self, json_file: Path):
+        """提取示例数据"""
+        print(f"\n🔬 提取示例数据:")
+        print("-" * 40)
 
-            # 显示特殊发现
-            print("\\n🎯 特殊数据发现:")
+        with open(json_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-            categories = {
-                "进阶数据": [
-                    "xG_data",
-                    "possession",
-                    "shots",
-                    "corners",
-                    "advanced_stats",
-                ],
-                "人员数据": ["lineup", "substitutes", "player_data"],
-                "博彩数据": ["odds"],
-                "事件数据": ["events"],
-            }
+        # 尝试从不同路径提取数据
+        if "translations" in data:
+            translations = data["translations"]
+            print(f"translations类型: {type(translations)}")
 
-            for category, keys in categories.items():
-                print(f"\\n   {category}:")
-                found_any = False
-                for key in keys:
-                    if key in self.special_findings:
-                        found_any = True
-                        print(f"      ✅ {key}: {self.special_findings[key]}")
-                if not found_any:
-                    print("      ❌ 未发现相关数据")
+            if isinstance(translations, dict):
+                print(f"translations键数量: {len(translations)}")
 
-            return {
-                "total_keys": len(self.all_keys),
-                "special_findings": dict(self.special_findings),
-                "all_keys": sorted(self.all_keys),
-            }
+                # 查找可能包含比赛数据的键
+                match_keys = [
+                    k
+                    for k in translations.keys()
+                    if any(
+                        keyword in k.lower()
+                        for keyword in ["match", "team", "league", "fixture"]
+                    )
+                ]
+                print(f"可能的比赛相关键: {match_keys[:10]}")  # 显示前10个
 
-        except Exception:
-            print(f"❌ 分析失败: {e}")
-            return None
+                # 显示一个示例
+                if match_keys:
+                    sample_key = match_keys[0]
+                    sample_value = translations[sample_key]
+                    print(f"\n示例键: {sample_key}")
+                    print(f"示例值类型: {type(sample_value)}")
+                    print(f"示例值: {str(sample_value)[:200]}...")
 
-    def generate_data_inventory_report(self, analyses: list) -> None:
-        """生成数据资产清单报告"""
-        print("\\n" + "=" * 80)
-        print("📋 数据资产清单报告")
-        print("=" * 80)
-
-        # 统计所有发现的键
-        all_keys_across_matches = set()
-        for analysis in analyses:
-            if analysis:
-                all_keys_across_matches.update(analysis["all_keys"])
-
-        print("\\n📊 统计摘要:")
-        print(f"   分析比赛数: {len(analyses)}")
-        print(f"   发现键总数: {len(all_keys_across_matches)}")
-
-        # 分类统计
-        categories = {
-            "🥅 比赛核心数据": [
-                "score",
-                "status",
-                "time",
-                "match_time",
-                "utcTime",
-                "scoreStr",
-            ],
-            "⚽ 球队数据": ["home", "away", "team", "squad", "lineup"],
-            "🏆 联赛数据": ["league", "league_info", "tournament", "stage"],
-            "📊 技术统计": ["stat", "stats", "possession", "shots", "corners", "xg"],
-            "👥 球员数据": ["player", "rating", "lineup", "substitute", "bench"],
-            "⚡ 比赛事件": ["event", "incident", "goal", "card", "substitution"],
-            "💰 博彩数据": ["odd", "bet", "price", "odds"],
-            "📈 高级分析": ["xg", "expected_goal", "performance", "analysis"],
-        }
-
-        print("\\n🗂️  数据分类盘点:")
-        for category, keywords in categories.items():
-            found_keys = [
-                key
-                for key in all_keys_across_matches
-                if any(keyword.lower() in key.lower() for keyword in keywords)
-            ]
-
-            if found_keys:
-                print(f"\\n   {category} ({len(found_keys)} 个字段):")
-                for key in sorted(found_keys):
-                    print(f"      • {key}")
-            else:
-                print(f"\\n   {category}: ❌ 未发现")
-
-        # 特殊发现汇总
-        print("\\n🎯 关键数据可用性总结:")
-
-        data_types = {
-            "期望进球 (xG)": "xG_data",
-            "控球率": "possession",
-            "射门数据": "shots",
-            "角球数据": "corners",
-            "首发阵容": "lineup",
-            "替补名单": "substitutes",
-            "球员评分": "player_data",
-            "赛前赔率": "odds",
-            "比赛事件": "events",
-            "技术统计": "advanced_stats",
-        }
-
-        for data_name, key in data_types.items():
-            available = any(
-                key in analysis.get("special_findings", {})
-                for analysis in analyses
-                if analysis
-            )
-            status = "✅ 可用" if available else "❌ 不可用"
-            print(f"   {data_name:<15}: {status}")
+        # 分析pageProps.fallback
+        if "pageProps" in data and "fallback" in data["pageProps"]:
+            fallback = data["pageProps"]["fallback"]
+            print(f"\nfallback结构:")
+            for key, value in fallback.items():
+                value_size = len(json.dumps(value, ensure_ascii=False))
+                print(f"  {key}: {type(value).__name__} ({value_size:,} 字节)")
 
 
 def main():
     """主函数"""
-    print("🔬 数据考古学家 - JSON结构全方位解剖")
-    print("🗺️  探索FotMob数据中的隐藏宝藏")
-    print("=" * 80)
+    json_file = Path(__file__).parent.parent / "debug_fotmob_full_response.json"
 
-    archaeologist = DataArchaeologist()
-
-    # 寻找样本比赛进行分析
-    print("🔍 寻找已完赛比赛进行结构分析...")
-    matches = archaeologist.find_sample_matches()
-
-    if not matches:
-        print("❌ 未找到合适的比赛数据")
+    if not json_file.exists():
+        print(f"❌ 找不到文件: {json_file}")
+        print("请先运行: python scripts/dump_fotmob_json.py")
         return
 
-    print(f"✅ 找到 {len(matches)} 场比赛可供分析")
-
-    # 分析每场比赛
-    analyses = []
-    for match in matches:
-        analysis = archaeologist.analyze_single_match(match)
-        if analysis:
-            analyses.append(analysis)
-
-    # 生成最终报告
-    archaeologist.generate_data_inventory_report(analyses)
-
-    print("\\n🎉 数据考古完成!")
-    print("💡 基于以上分析，我们可以确定数据资产的完整性和可用性")
+    analyzer = JSONPathAnalyzer()
+    analyzer.analyze_json_structure(json_file)
+    analyzer.extract_sample_data(json_file)
 
 
 if __name__ == "__main__":

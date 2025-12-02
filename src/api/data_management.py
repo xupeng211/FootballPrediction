@@ -67,9 +67,9 @@ async def get_matches_list(
                     "id": match.league_id or 1,  # 默认值
                     "name": match.league.name if match.league else "Premier League",
                 },
-                "match_date": match.match_date.isoformat()
-                if match.match_date
-                else None,
+                "match_date": (
+                    match.match_date.isoformat() if match.match_date else None
+                ),
                 "home_score": match.home_score,
                 "away_score": match.away_score,
                 "status": match.status or "SCHEDULED",

@@ -79,7 +79,8 @@ class AdvancedFeatureGenerator:
         logger.info("📊 加载所有比赛数据...")
 
         async with self.AsyncSessionLocal() as session:
-            query = text("""
+            query = text(
+                """
                 SELECT
                     id,
                     home_team_id,
@@ -100,7 +101,8 @@ class AdvancedFeatureGenerator:
                 AND home_team_id IS NOT NULL
                 AND away_team_id IS NOT NULL
                 ORDER BY match_date ASC
-            """)
+            """
+            )
 
             result = await session.execute(query)
             rows = result.fetchall()

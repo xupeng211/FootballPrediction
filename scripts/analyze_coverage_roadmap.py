@@ -218,9 +218,7 @@ def generate_roadmap_report(
         difficulty = (
             "🟢 简单"
             if win["missing_lines"] < 30
-            else "🟡 中等"
-            if win["missing_lines"] < 50
-            else "🔠 较难"
+            else "🟡 中等" if win["missing_lines"] < 50 else "🔠 较难"
         )
         report += f"| {i} | `{win['file']}` | {win['module']} | {win['missing_lines']} | {difficulty} |\n"
 
@@ -248,9 +246,7 @@ def generate_roadmap_report(
         difficulty_desc = (
             "🔴 极难"
             if battle["difficulty_score"] > 100
-            else "🟠 困难"
-            if battle["difficulty_score"] > 50
-            else "🟡 中等"
+            else "🟠 困难" if battle["difficulty_score"] > 50 else "🟡 中等"
         )
         report += f"| {i} | `{battle['file']}` | {battle['module']} | {battle['missing_lines']} | {difficulty_desc} |\n"
 

@@ -69,12 +69,12 @@ class RealDataService:
                     "founded": team.founded_year,
                     "stadium": team.venue,
                     "website": team.website,
-                    "created_at": team.created_at.isoformat()
-                    if team.created_at
-                    else None,
-                    "updated_at": team.updated_at.isoformat()
-                    if team.updated_at
-                    else None,
+                    "created_at": (
+                        team.created_at.isoformat() if team.created_at else None
+                    ),
+                    "updated_at": (
+                        team.updated_at.isoformat() if team.updated_at else None
+                    ),
                 }
                 teams_data.append(team_dict)
 
@@ -181,18 +181,18 @@ class RealDataService:
                     "home_score": match.home_score,
                     "away_score": match.away_score,
                     "status": match.status,
-                    "match_date": match.match_date.isoformat()
-                    if match.match_date
-                    else None,
+                    "match_date": (
+                        match.match_date.isoformat() if match.match_date else None
+                    ),
                     "venue": match.venue,
                     "league_id": match.league_id,
                     "season": match.season,
-                    "created_at": match.created_at.isoformat()
-                    if match.created_at
-                    else None,
-                    "updated_at": match.updated_at.isoformat()
-                    if match.updated_at
-                    else None,
+                    "created_at": (
+                        match.created_at.isoformat() if match.created_at else None
+                    ),
+                    "updated_at": (
+                        match.updated_at.isoformat() if match.updated_at else None
+                    ),
                 }
                 matches_data.append(match_dict)
 
@@ -247,18 +247,18 @@ class RealDataService:
                 "home_score": match.home_score,
                 "away_score": match.away_score,
                 "status": match.status,
-                "match_date": match.match_date.isoformat()
-                if match.match_date
-                else None,
+                "match_date": (
+                    match.match_date.isoformat() if match.match_date else None
+                ),
                 "venue": match.venue,
                 "league_id": match.league_id,
                 "season": match.season,
-                "created_at": match.created_at.isoformat()
-                if match.created_at
-                else None,
-                "updated_at": match.updated_at.isoformat()
-                if match.updated_at
-                else None,
+                "created_at": (
+                    match.created_at.isoformat() if match.created_at else None
+                ),
+                "updated_at": (
+                    match.updated_at.isoformat() if match.updated_at else None
+                ),
             }
 
             self.logger.info(f"Successfully retrieved match {match_id} from database")

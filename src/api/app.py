@@ -256,8 +256,8 @@ async def api_info():
             "docs": "/docs",
             "predictions": "/api/v1/predictions",
             "monitoring": "/api/monitoring",
-            "data": "/api/v1/data"
-        }
+            "data": "/api/v1/data",
+        },
     }
 
 

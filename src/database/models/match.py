@@ -15,7 +15,7 @@
 
 from enum import Enum
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, JSON, Text
 from sqlalchemy.orm import relationship
 
 from src.database.base import BaseModel
@@ -59,6 +59,19 @@ class Match(BaseModel):
     venue = Column(String(255))
     league_id = Column(Integer, ForeignKey("leagues.id"))
     season = Column(String(20))
+
+    # 🚀 V2深度数据字段 - 全栈架构师升级
+    # 使用JSON类型存储复杂数据结构
+    lineups = Column(JSON, nullable=True)  # 阵容数据 (首发+替补)
+    stats = Column(JSON, nullable=True)    # 技术统计 (控球率、射门等)
+    events = Column(JSON, nullable=True)   # 比赛事件 (进球、红黄牌、换人)
+    odds = Column(JSON, nullable=True)     # 赔率信息
+    match_metadata = Column(JSON, nullable=True)  # 其他元数据 (xG、rating等)
+
+    # 数据来源和质量追踪
+    data_source = Column(String(50), default="fotmob_v2")  # 数据来源标识
+    data_completeness = Column(String(20), default="partial")  # 数据完整度 (partial/detailed/complete)
+    collection_time = Column(DateTime, nullable=True)  # 数据采集时间
 
     # 关系
     home_team = relationship("Team", foreign_keys=[home_team_id])

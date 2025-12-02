@@ -85,12 +85,14 @@ async def batch_data_cleaning_with_ids() -> tuple[int, list[int]]:
                 # 方法2：如果方法1失败，使用原生SQL查询
                 if not batch_raw_matches:
                     try:
-                        sql_query = text("""
+                        sql_query = text(
+                            """
                             SELECT * FROM raw_match_data
                             WHERE processed = false
                             ORDER BY created_at ASC
                             LIMIT :limit OFFSET :offset
-                        """)
+                        """
+                        )
                         result = await session.execute(
                             sql_query, {"limit": BATCH_SIZE, "offset": offset}
                         )

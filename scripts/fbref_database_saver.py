@@ -176,6 +176,9 @@ class FBrefDatabaseSaver:
                 score_str = row.get("score", "")
                 match_date_str = row.get("date", "")
 
+                # 🔥 提取原始HTML文件路径 (ELT架构支持)
+                raw_file_path = row.get("raw_file_path")
+
                 if not home_team or not away_team:
                     logger.warning(f"⚠️ 跳过无效行: 主客队信息缺失")
                     continue
@@ -251,6 +254,7 @@ class FBrefDatabaseSaver:
                     "stats": stats_data,
                     "data_source": "fbref",
                     "data_completeness": "complete" if xg_data else "partial",
+                    "raw_file_path": raw_file_path,  # 🔥 ELT架构支持
                 }
 
                 match_records.append(match_record)
@@ -322,11 +326,13 @@ class FBrefDatabaseSaver:
                                 home_team_id, away_team_id, home_score, away_score,
                                 status, match_date, venue, season,
                                 stats, data_source, data_completeness,
+                                raw_file_path,
                                 created_at, updated_at
                             ) VALUES (
                                 :home_id, :away_id, :home_score, :away_score,
                                 :status, :match_date, :venue, :season,
                                 :stats, :data_source, :data_completeness,
+                                :raw_file_path,
                                 NOW(), NOW()
                             )
                         """
@@ -343,6 +349,7 @@ class FBrefDatabaseSaver:
                             "stats": json.dumps(record["stats"]),
                             "data_source": record["data_source"],
                             "data_completeness": record["data_completeness"],
+                            "raw_file_path": record.get("raw_file_path"),  # 🔥 ELT架构支持
                         },
                     )
 

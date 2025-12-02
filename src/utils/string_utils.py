@@ -56,7 +56,7 @@ class StringUtils:
         if not isinstance(text, str):
             return ""
         # 移除非字母数字字符
-        return re.sub(r'[^a-zA-Z0-9]', '', text)
+        return re.sub(r"[^a-zA-Z0-9]", "", text)
 
     @staticmethod
     def is_email(email: str) -> bool:
@@ -104,7 +104,9 @@ class StringUtils:
 
         if remove_special:
             # V9.0 修复：使用简单字符检查替代复杂正则
-            allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -.,!?()[]{}\"'`~@#$%^&*+=<>|\\")
+            allowed_chars = set(
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -.,!?()[]{}\"'`~@#$%^&*+=<>|\\"
+            )
             filtered_chars = []
             for char in cleaned:
                 if char in allowed_chars:
@@ -186,53 +188,95 @@ class StringUtils:
             text = text[:1000]
 
         # V20.0 特殊情况：纯下划线直接返回
-        if text and all(c == '_' for c in text):
+        if text and all(c == "_" for c in text):
             return text
 
         # V20.0 安全处理：使用Unicode规范化但不依赖复杂正则表达式
         import unicodedata
 
         # 转换为ASCII表示，但保持基本功能
-        text = unicodedata.normalize('NFD', text)
+        text = unicodedata.normalize("NFD", text)
 
         # V20.0 字符级处理：避免正则表达式ReDoS
         result_chars = []
 
         for char in text.lower():
             # ASCII字母数字
-            if 'a' <= char <= 'z' or '0' <= char <= '9':
+            if "a" <= char <= "z" or "0" <= char <= "9":
                 result_chars.append(char)
             # 空格转为连字符
-            elif char == ' ':
-                if result_chars and result_chars[-1] != '-':
-                    result_chars.append('-')
+            elif char == " ":
+                if result_chars and result_chars[-1] != "-":
+                    result_chars.append("-")
             # 下划线直接保留（重要：保留纯下划线）
-            elif char == '_':
-                result_chars.append('_')
+            elif char == "_":
+                result_chars.append("_")
             # Unicode重音符号处理：获取基字符
-            elif unicodedata.category(char) == 'Mn' and len(text) < 500:  # 限制Unicode处理复杂度
+            elif (
+                unicodedata.category(char) == "Mn" and len(text) < 500
+            ):  # 限制Unicode处理复杂度
                 # 跳过组合标记，让基字符处理
                 pass
             # 基本Unicode字母（受限处理）
             elif char.isalpha() and len(text) < 200:  # 对长文本跳过Unicode处理
                 # V20.0 检查是否为纯下划线情况
-                if all(c == '_' for c in text):
-                    result_chars.append('_')
+                if all(c == "_" for c in text):
+                    result_chars.append("_")
                 else:
                     # 简化的ASCII转换
                     simplified_char = {
-                        'ç': 'c', 'ñ': 'n', 'é': 'e', 'è': 'e', 'ê': 'e',
-                        'ë': 'e', 'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
-                        'ó': 'o', 'ò': 'o', 'ô': 'o', 'ö': 'o', 'õ': 'o',
-                        'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u', 'ý': 'y',
-                        'ÿ': 'y', 'ß': 'ss', 'ā': 'a', 'ē': 'e',
-                        'ī': 'i', 'ō': 'o', 'ū': 'u', 'α': 'a', 'β': 'b',
-                        'γ': 'g', 'δ': 'd', 'ε': 'e', 'ζ': 'z', 'η': 'h',
-                        'θ': 'th', 'ι': 'i', 'κ': 'k', 'λ': 'l', 'μ': 'm',
-                        'ν': 'n', 'ξ': 'x', 'ο': 'o', 'π': 'π', 'ρ': 'r',
-                        'σ': 's', 'τ': 't', 'υ': 'y', 'φ': 'f', 'χ': 'ch',
-                        'ψ': 'ps', 'ω': 'w'
-                    }.get(char, '')
+                        "ç": "c",
+                        "ñ": "n",
+                        "é": "e",
+                        "è": "e",
+                        "ê": "e",
+                        "ë": "e",
+                        "í": "i",
+                        "ì": "i",
+                        "î": "i",
+                        "ï": "i",
+                        "ó": "o",
+                        "ò": "o",
+                        "ô": "o",
+                        "ö": "o",
+                        "õ": "o",
+                        "ú": "u",
+                        "ù": "u",
+                        "û": "u",
+                        "ü": "u",
+                        "ý": "y",
+                        "ÿ": "y",
+                        "ß": "ss",
+                        "ā": "a",
+                        "ē": "e",
+                        "ī": "i",
+                        "ō": "o",
+                        "ū": "u",
+                        "α": "a",
+                        "β": "b",
+                        "γ": "g",
+                        "δ": "d",
+                        "ε": "e",
+                        "ζ": "z",
+                        "η": "h",
+                        "θ": "th",
+                        "ι": "i",
+                        "κ": "k",
+                        "λ": "l",
+                        "μ": "m",
+                        "ν": "n",
+                        "ξ": "x",
+                        "ο": "o",
+                        "π": "π",
+                        "ρ": "r",
+                        "σ": "s",
+                        "τ": "t",
+                        "υ": "y",
+                        "φ": "f",
+                        "χ": "ch",
+                        "ψ": "ps",
+                        "ω": "w",
+                    }.get(char, "")
                     if simplified_char:
                         result_chars.append(simplified_char)
             # 其他字符跳过
@@ -240,19 +284,19 @@ class StringUtils:
                 pass
 
         # V20.0 清理：移除首尾连字符和重复连字符
-        while result_chars and result_chars[0] == '-':
+        while result_chars and result_chars[0] == "-":
             result_chars.pop(0)
-        while result_chars and result_chars[-1] == '-':
+        while result_chars and result_chars[-1] == "-":
             result_chars.pop()
 
         # 压缩重复连字符
         compressed_chars = []
         for char in result_chars:
-            if char == '-' and compressed_chars and compressed_chars[-1] == '-':
+            if char == "-" and compressed_chars and compressed_chars[-1] == "-":
                 continue
             compressed_chars.append(char)
 
-        return ''.join(compressed_chars)
+        return "".join(compressed_chars)
 
     @staticmethod
     def camel_to_snake(name: str) -> str:
@@ -265,7 +309,7 @@ class StringUtils:
             name = name[:500]
 
         # V20.0 简单边界情况
-        if not name or name.islower() and '_' not in name:
+        if not name or name.islower() and "_" not in name:
             return name.lower()
 
         # V20.0 字符级处理：避免正则表达式ReDoS，但保留原始逻辑
@@ -274,10 +318,10 @@ class StringUtils:
 
         for i, char in enumerate(name):
             # 小写字母和数字直接添加
-            if 'a' <= char <= 'z' or '0' <= char <= '9':
+            if "a" <= char <= "z" or "0" <= char <= "9":
                 result.append(char)
             # 大写字母处理
-            elif 'A' <= char <= 'Z':
+            elif "A" <= char <= "Z":
                 lower_char = char.lower()
 
                 # V20.0 智能下划线插入逻辑：
@@ -285,41 +329,45 @@ class StringUtils:
                     # 首字母大写，直接转小写
                     result.append(lower_char)
                 else:
-                    prev_char = name[i-1]
+                    prev_char = name[i - 1]
 
                     # 检查是否需要插入下划线
                     need_underscore = False
 
-                    if 'a' <= prev_char <= 'z' or '0' <= prev_char <= '9':
+                    if "a" <= prev_char <= "z" or "0" <= prev_char <= "9":
                         # 前一个是小写字母或数字，需要下划线
                         need_underscore = True
-                    elif prev_char == '_':
+                    elif prev_char == "_":
                         # 前一个是下划线，不需要额外下划线
                         need_underscore = False
                     elif i < length - 1:
                         # 检查后一个字符来判断是否是缩写
-                        next_char = name[i+1]
-                        if 'a' <= next_char <= 'z':
+                        next_char = name[i + 1]
+                        if "a" <= next_char <= "z":
                             # XMLHttp -> XML_http (在Http前插入下划线)
                             need_underscore = True
-                        elif 'A' <= next_char <= 'Z' and i > 0 and 'a' <= name[i-1] <= 'z':
+                        elif (
+                            "A" <= next_char <= "Z"
+                            and i > 0
+                            and "a" <= name[i - 1] <= "z"
+                        ):
                             # parseXMLString -> parse_XML_string (在XML前插入下划线)
                             need_underscore = True
                         else:
                             need_underscore = False
 
                     if need_underscore:
-                        result.append('_')
+                        result.append("_")
                     result.append(lower_char)
             # 下划线直接保留
-            elif char == '_':
+            elif char == "_":
                 result.append(char)
             # 其他字符转为下划线
             else:
-                if i > 0 and result[-1] != '_':
-                    result.append('_')
+                if i > 0 and result[-1] != "_":
+                    result.append("_")
 
-        return ''.join(result)
+        return "".join(result)
 
     @staticmethod
     def snake_to_camel(name: str) -> str:
@@ -370,7 +418,11 @@ class StringUtils:
             return True
 
         # 验证国际号码格式 (+开头，8-15位数字，包含+号)
-        if digits_only.startswith('+') and len(digits_only) >= 8 and len(digits_only) <= 16:
+        if (
+            digits_only.startswith("+")
+            and len(digits_only) >= 8
+            and len(digits_only) <= 16
+        ):
             return True
 
         return False
@@ -466,19 +518,19 @@ class StringUtils:
 
             words = []
             current_word = []
-            separators = set(' ,.!?;:()[]{}"\'-_\n\t\r')
+            separators = set(" ,.!?;:()[]{}\"'-_\n\t\r")
 
             for char in text:
                 if char in separators:
                     if current_word:
-                        words.append(''.join(current_word))
+                        words.append("".join(current_word))
                         current_word = []
                 else:
                     current_word.append(char)
 
             # 添加最后一个单词
             if current_word:
-                words.append(''.join(current_word))
+                words.append("".join(current_word))
 
             return len(words)
         except Exception:
@@ -715,13 +767,13 @@ def strip_html(text: str) -> str:
 
         # 移除script标签内容
         while True:
-            start_script = text_lower.find('<script')
+            start_script = text_lower.find("<script")
             if start_script == -1:
                 break
-            end_script = text_lower.find('</script>', start_script)
+            end_script = text_lower.find("</script>", start_script)
             if end_script == -1:
                 break
-            text = text[:start_script] + text[end_script + 9:]
+            text = text[:start_script] + text[end_script + 9 :]
             text_lower = text.lower()
             # 防止无限循环
             if len(text) < 100:
@@ -729,13 +781,13 @@ def strip_html(text: str) -> str:
 
         # 移除style标签内容
         while True:
-            start_style = text_lower.find('<style')
+            start_style = text_lower.find("<style")
             if start_style == -1:
                 break
-            end_style = text_lower.find('</style>', start_style)
+            end_style = text_lower.find("</style>", start_style)
             if end_style == -1:
                 break
-            text = text[:start_style] + text[end_style + 8:]
+            text = text[:start_style] + text[end_style + 8 :]
             text_lower = text.lower()
             # 防止无限循环
             if len(text) < 100:
@@ -748,10 +800,10 @@ def strip_html(text: str) -> str:
         max_tag_length = 100  # 限制标签长度
 
         for char in text:
-            if char == '<':
+            if char == "<":
                 in_tag = True
                 tag_content_length = 0
-            elif char == '>':
+            elif char == ">":
                 in_tag = False
                 tag_content_length = 0
             elif not in_tag:
@@ -763,10 +815,10 @@ def strip_html(text: str) -> str:
                     in_tag = False
                     tag_content_length = 0
 
-        return ''.join(result)
+        return "".join(result)
     except Exception:
         # 如果出现任何错误，返回原文本的基本清理
-        return ''.join(char for char in text if char != '<' and char != '>')
+        return "".join(char for char in text if char != "<" and char != ">")
 
 
 def format_currency(amount: float, currency: str = "$") -> str:
@@ -898,19 +950,19 @@ def generate_slug(text: str) -> str:
     prev_was_dash = False
 
     for char in text.lower():
-        if 'a' <= char <= 'z' or '0' <= char <= '9':
+        if "a" <= char <= "z" or "0" <= char <= "9":
             result.append(char)
             prev_was_dash = False
-        elif char in ' -_':
+        elif char in " -_":
             if not prev_was_dash and result:
-                result.append('-')
+                result.append("-")
                 prev_was_dash = True
 
     # 清理末尾的连字符
-    while result and result[-1] == '-':
+    while result and result[-1] == "-":
         result.pop()
 
-    return ''.join(result)
+    return "".join(result)
 
 
 def truncate_text(text: str, length: int = 50, add_ellipsis: bool = True) -> str:
@@ -968,7 +1020,9 @@ def remove_special_chars(text: str, keep_chars: str = "") -> str:
     else:
         # 默认处理：将特殊字符替换为空格（不包括下划线，下划线被移除）
         # 将非字母数字、空格、连字符的字符替换为空格，下划线直接移除
-        result = re.sub(r"_[^a-zA-Z0-9\\s-]|_[^a-zA-Z0-9\\s-]|_", "", text)  # 移除下划线
+        result = re.sub(
+            r"_[^a-zA-Z0-9\\s-]|_[^a-zA-Z0-9\\s-]|_", "", text
+        )  # 移除下划线
         result = re.sub(r"[^a-zA-Z0-9\\s-]+", " ", result)  # 其他特殊字符替换为空格
 
     # 规范化空格：将连续空格替换为单个空格，并去掉首尾空格

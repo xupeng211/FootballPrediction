@@ -85,12 +85,14 @@ async def check_and_trigger_initial_data_fill() -> None:
 
             # 查询最近的数据采集时间
             collection_result = conn.execute(
-                text("""
+                text(
+                    """
                     SELECT MAX(collected_at) as latest_collection,
                            COUNT(*) as recent_collections
                     FROM raw_match_data
                     WHERE collected_at IS NOT NULL
-                """)
+                """
+                )
             )
             collection_data = collection_result.fetchone()
             latest_collection = collection_data[0] if collection_data[0] else None

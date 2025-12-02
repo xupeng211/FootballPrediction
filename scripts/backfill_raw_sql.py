@@ -137,11 +137,13 @@ class RawSQLBackfillService:
                 if all_teams_to_save:
                     print(f"🏆 纯SQL保存 {len(all_teams_to_save)} 个球队...")
 
-                    sql_team = text("""
+                    sql_team = text(
+                        """
                         INSERT INTO teams (id, name, short_name, country, venue, website, created_at, updated_at)
                         VALUES (:id, :name, :short_name, 'Unknown', '', '', NOW(), NOW())
                         ON CONFLICT (id) DO NOTHING
-                    """)
+                    """
+                    )
 
                     for team_id, name, short_name in all_teams_to_save:
                         if team_id > 0:
@@ -161,13 +163,15 @@ class RawSQLBackfillService:
                                 print(f"❌ 球队插入失败 {team_id}: {e}")
 
                 # 纯SQL插入比赛
-                sql_match = text("""
+                sql_match = text(
+                    """
                     INSERT INTO matches (home_team_id, away_team_id, home_score, away_score,
                                         match_date, status, league_id, season, created_at, updated_at)
                     VALUES (:home_team_id, :away_team_id, :home_score, :away_score,
                             :match_date, :status, :league_id, :season, NOW(), NOW())
                     ON CONFLICT DO NOTHING
-                """)
+                """
+                )
 
                 # 处理Football-Data.org比赛
                 for match_data in data_result["football_data_matches"]:
@@ -206,11 +210,13 @@ class RawSQLBackfillService:
                                 "league_id": match_data.get("competition", {}).get(
                                     "id", 0
                                 ),
-                                "season": match_data.get("season", {}).get(
-                                    "startDate", ""
-                                )[:4]
-                                if match_data.get("season")
-                                else data_result["date"][:4],
+                                "season": (
+                                    match_data.get("season", {}).get("startDate", "")[
+                                        :4
+                                    ]
+                                    if match_data.get("season")
+                                    else data_result["date"][:4]
+                                ),
                             },
                         )
 

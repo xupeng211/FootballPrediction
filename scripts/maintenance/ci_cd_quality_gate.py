@@ -419,9 +419,7 @@ class QualityGate:
         overall_result = (
             GateResult.FAIL
             if critical_failures
-            else GateResult.WARN
-            if failed > 0
-            else GateResult.PASS
+            else GateResult.WARN if failed > 0 else GateResult.PASS
         )
 
         # 生成建议
@@ -513,9 +511,7 @@ class QualityGate:
             category = (
                 "testing"
                 if "test" in metric.name
-                else "security"
-                if "security" in metric.name
-                else "quality"
+                else "security" if "security" in metric.name else "quality"
             )
             summary["categories"][category][metric.status.value] += 1
 

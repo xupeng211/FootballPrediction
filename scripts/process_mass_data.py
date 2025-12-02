@@ -52,13 +52,15 @@ def process_raw_data_batch():
 
             while True:
                 # 获取一批未处理的数据
-                query = text("""
+                query = text(
+                    """
                     SELECT id, external_id, match_data, collected_at
                     FROM raw_match_data
                     WHERE processed = FALSE
                     ORDER BY collected_at
                     LIMIT :batch_size OFFSET :offset
-                """)
+                """
+                )
 
                 result = session.execute(
                     query, {"batch_size": batch_size, "offset": offset}
@@ -119,7 +121,8 @@ def process_raw_data_batch():
                             continue
 
                         # 插入match记录
-                        match_insert = text("""
+                        match_insert = text(
+                            """
                             INSERT INTO matches (
                                 external_id,
                                 home_team_name,
@@ -149,7 +152,8 @@ def process_raw_data_batch():
                                 :created_at,
                                 :updated_at
                             )
-                        """)
+                        """
+                        )
 
                         session.execute(
                             match_insert,
@@ -165,11 +169,13 @@ def process_raw_data_batch():
                                 "away_team_external_id": str(away_team.get("id", "")),
                                 "league_name": league_info.get("name", ""),
                                 "league_external_id": str(league_info.get("id", "")),
-                                "match_date": datetime.strptime(
-                                    raw_data.get("time", ""), "%d.%m.%Y %H:%M"
-                                )
-                                if raw_data.get("time")
-                                else None,
+                                "match_date": (
+                                    datetime.strptime(
+                                        raw_data.get("time", ""), "%d.%m.%Y %H:%M"
+                                    )
+                                    if raw_data.get("time")
+                                    else None
+                                ),
                                 "status": status.get("reason", {}).get(
                                     "short", "unknown"
                                 ),

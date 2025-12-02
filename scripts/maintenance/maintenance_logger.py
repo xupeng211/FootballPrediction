@@ -53,7 +53,8 @@ class MaintenanceLogger:
         cursor = conn.cursor()
 
         # 创建维护记录表
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS maintenance_records (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT NOT NULL,
@@ -70,10 +71,12 @@ class MaintenanceLogger:
                 error_message TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
         # 创建健康趋势表
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS health_trends (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT NOT NULL,
@@ -84,7 +87,8 @@ class MaintenanceLogger:
                 total_size_mb REAL DEFAULT 0.0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
         conn.commit()
         conn.close()
@@ -244,11 +248,11 @@ class MaintenanceLogger:
             "maintenance_summary": {
                 "total_maintenance_activities": total_maintenance,
                 "successful_activities": successful_maintenance,
-                "success_rate": round(
-                    successful_maintenance / total_maintenance * 100, 2
-                )
-                if total_maintenance > 0
-                else 0,
+                "success_rate": (
+                    round(successful_maintenance / total_maintenance * 100, 2)
+                    if total_maintenance > 0
+                    else 0
+                ),
                 "total_files_affected": total_files_affected,
                 "total_size_freed_mb": round(total_size_freed, 2),
                 "total_issues_fixed": total_issues_fixed,
@@ -256,16 +260,16 @@ class MaintenanceLogger:
             "health_analysis": {
                 "current_health_score": latest_health,
                 "health_score_change": health_change,
-                "health_trend": "improving"
-                if health_change > 0
-                else "declining"
-                if health_change < 0
-                else "stable",
+                "health_trend": (
+                    "improving"
+                    if health_change > 0
+                    else "declining" if health_change < 0 else "stable"
+                ),
             },
             "recent_activities": recent_activities,
-            "health_trends": health_trends[-10:]
-            if health_trends
-            else [],  # 最近10个数据点
+            "health_trends": (
+                health_trends[-10:] if health_trends else []
+            ),  # 最近10个数据点
         }
 
         return report

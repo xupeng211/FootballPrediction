@@ -83,7 +83,9 @@ class DateUtils:
     @staticmethod
     def days_between(start_date: dt_datetime, end_date: dt_datetime) -> int:
         """计算两个日期之间的天数差."""
-        if not isinstance(start_date, dt_datetime) or not isinstance(end_date, dt_datetime):
+        if not isinstance(start_date, dt_datetime) or not isinstance(
+            end_date, dt_datetime
+        ):
             return 0
         delta = end_date - start_date
         return abs(delta.days)
