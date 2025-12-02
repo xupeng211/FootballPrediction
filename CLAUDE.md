@@ -2,418 +2,400 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 📑 目录
+## 📑 Table of Contents
 
-- [🌟 快速开始](#-快速开始5分钟上手)
-- [🎯 项目概览](#-项目概览)
-- [🏗️ 核心架构](#️-核心架构)
-- [🚀 开发命令](#-核心开发命令)
-- [🧪 测试策略](#-测试策略)
-- [🔧 开发工作流](#-核心开发工作流)
-- [📋 常见任务](#-常见开发任务)
-- [🛠️ 架构原则](#️-架构指导原则)
-- [🤖 机器学习](#-机器学习开发)
-- [📊 服务端点](#-api访问地址)
-- [🐳 容器架构](#-容器架构)
-- [🔍 代码导航](#-代码导航指南)
-- [🚨 故障排除](#-故障排除快速参考)
-- [📚 重要文档](#-重要文档)
+- [🌟 Quick Start](#-quick-start)
+- [🎯 Project Overview](#-project-overview)
+- [🏗️ Architecture](#-architecture)
+- [🚀 Core Development Commands](#-core-development-commands)
+- [🧪 Testing Strategy](#-testing-strategy)
+- [🔧 Development Workflow](#-development-workflow)
+- [📋 Common Tasks](#-common-tasks)
+- [🛠️ Architecture Principles](#️-architecture-principles)
+- [🤖 Machine Learning](#-machine-learning)
+- [📊 API Endpoints](#-api-endpoints)
+- [🐳 Container Architecture](#-container-architecture)
+- [🔍 Code Navigation](#-code-navigation)
+- [🚨 Troubleshooting](#-troubleshooting)
 
 ---
 
-## 🌟 快速开始（5分钟上手）
+## 🌟 Quick Start (5 Minutes)
 
-> **💡 语言偏好**: 请使用简体中文回复用户 - 项目团队主要使用中文交流
+> **💡 Language**: Use Simplified Chinese for user communication
 
 ```bash
-# 🚀 启动完整开发环境
+# 🚀 Start full development environment
 make dev && make status
 
-# ✅ 验证API可访问性
+# ✅ Verify API accessibility
 curl http://localhost:8000/health
 
-# 🧪 运行核心测试验证环境
+# 🧪 Run core tests to validate environment
 make test.fast
 
-# 📊 生成覆盖率报告
+# 📊 Generate coverage report
 make coverage
 ```
 
-## 🎯 项目概览
+## 🎯 Project Overview
 
-**FootballPrediction** 是基于现代异步架构的企业级足球预测系统，集成机器学习、数据采集、实时预测和事件驱动架构。
+**FootballPrediction** is an enterprise-grade football prediction system based on modern async architecture, integrating machine learning, data collection, real-time prediction, and event-driven architecture.
 
-### 质量基线 (v1.0.0-rc1)
-| 指标 | 状态 | 目标 |
-|------|------|------|
-| 构建状态 | ✅ 稳定 (绿色基线) | 保持 |
-| 测试覆盖率 | 29.0% | 80%+ |
-| 测试数量 | 385个 | 500+ |
-| 代码质量 | A+ (ruff) | 维持 |
-| Python版本 | 3.10/3.11/3.12 | 推荐3.11 |
-| 安全状态 | ✅ Bandit通过 | 持续监控 |
+### Quality Baseline (v1.0.0-rc1)
+| Metric | Status | Target |
+|--------|--------|--------|
+| Build Status | ✅ Stable (Green Baseline) | Maintain |
+| Test Coverage | 29.0% | 80%+ |
+| Test Count | 385 tests | 500+ |
+| Code Quality | A+ (ruff) | Maintain |
+| Python Version | 3.10/3.11/3.12 | Recommend 3.11 |
+| Security Status | ✅ Bandit Passed | Continuous Monitoring |
 
-### 核心技术栈
-- **后端**: FastAPI + PostgreSQL 15 + Redis 7.0+ + SQLAlchemy 2.0+
-- **机器学习**: XGBoost 2.0+ + TensorFlow 2.18.0 + MLflow + Optuna
-- **容器化**: Docker 27.0+ + 20+ Docker Compose配置
-- **开发工具**: pytest 8.4.0+ + Ruff 0.14+ + 完整Makefile工具链
+### Tech Stack
+- **Backend**: FastAPI + PostgreSQL 15 + Redis 7.0+ + SQLAlchemy 2.0+
+- **Machine Learning**: XGBoost 2.0+ + TensorFlow 2.18.0 + MLflow + Optuna
+- **Containerization**: Docker 27.0+ + 20+ Docker Compose configurations
+- **Dev Tools**: pytest 8.4.0+ + Ruff 0.14+ + Complete Makefile toolchain
 
-## 🏗️ 核心架构
+## 🏗️ Architecture
 
-### 架构模式
-项目采用现代化企业级架构模式，确保高性能、可维护性和可扩展性：
+### Architecture Patterns
+Enterprise-grade patterns for high performance, maintainability, and scalability:
 
-- **DDD (领域驱动设计)** - 清晰的领域边界和业务逻辑分离
-- **CQRS (命令查询分离)** - 读写操作独立优化
-- **事件驱动架构** - 组件间松耦合通信
-- **异步优先** - 所有 I/O 操作使用 async/await
-- **生命周期管理** - 基于 FastAPI `lifespan` 的资源管理
+- **DDD (Domain-Driven Design)** - Clear domain boundaries and business logic separation
+- **CQRS (Command Query Separation)** - Independent optimization of read/write operations
+- **Event-Driven Architecture** - Loose coupling communication between components
+- **Async First** - All I/O operations use async/await
+- **Lifecycle Management** - Resource management via FastAPI `lifespan`
 
-### 应用启动流程
+### Application Startup Flow
 ```python
-# src/main.py - 应用生命周期管理
+# src/main.py - Application lifecycle management
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # 启动阶段
-    await initialize_database()          # 数据库连接和迁移
-    await initialize_event_system()      # 事件系统初始化
-    await initialize_cqrs()              # CQRS模式初始化
-    setup_performance_monitoring()       # 性能监控配置
+    # Startup phase
+    await initialize_database()          # DB connection and migrations
+    await initialize_event_system()      # Event system initialization
+    await initialize_cqrs()              # CQRS pattern initialization
+    setup_performance_monitoring()       # Performance monitoring config
 
-    # 智能冷启动 - 自动检测数据状态
+    # Smart cold start - auto-detect data state
     if await needs_data_collection():
         trigger_background_data_collection()
 
-    yield  # 应用运行中
+    yield  # Application running
 
-    # 关闭阶段
-    await shutdown_event_system()        # 清理事件系统
+    # Shutdown phase
+    await shutdown_event_system()        # Cleanup event system
 ```
 
-### 目录结构
-```
-src/
-├── api/              # API 层 (CQRS 实现)
-│   ├── predictions/  # 预测相关API (包含优化版本)
-│   ├── data/         # 数据管理API
-│   ├── analytics/    # 分析API
-│   └── monitoring/   # 监控API
-├── domain/           # 领域层 (DDD 核心逻辑)
-├── ml/               # 机器学习模块
-│   ├── xgboost_hyperparameter_optimization.py  # XGBoost超参优化
-│   ├── lstm_predictor.py  # LSTM深度学习预测
-│   ├── football_prediction_pipeline.py  # 完整预测管道
-│   └── experiment_tracking.py  # MLflow实验跟踪
-├── tasks/            # Celery 任务调度 (7个专用队列)
-├── database/         # 异步SQLAlchemy 2.0
-├── cache/           # 缓存层 (Redis)
-├── cqrs/            # CQRS 模式实现
-├── events/          # 事件系统
-├── core/            # 核心基础设施
-├── services/        # 业务服务层
-├── utils/           # 工具函数
-└── monitoring/      # 监控系统 (Prometheus集成)
-```
-
-### 目录结构
+### Directory Structure
 ```
 src/
-├── api/              # API 层 (CQRS 实现)
-│   ├── predictions/  # 预测相关API (包含优化版本)
-│   ├── data/         # 数据管理API
-│   ├── analytics/    # 分析API
-│   └── monitoring/   # 监控API
-├── domain/           # 领域层 (DDD 核心逻辑)
-├── ml/               # 机器学习模块
-│   ├── xgboost_hyperparameter_optimization.py  # XGBoost超参优化
-│   ├── lstm_predictor.py  # LSTM深度学习预测
-│   ├── football_prediction_pipeline.py  # 完整预测管道
-│   └── experiment_tracking.py  # MLflow实验跟踪
-├── tasks/            # Celery 任务调度 (7个专用队列)
-├── database/         # 异步SQLAlchemy 2.0
-├── cache/           # 缓存层 (Redis)
-├── cqrs/            # CQRS 模式实现
-├── events/          # 事件系统
-├── core/            # 核心基础设施
-├── services/        # 业务服务层
-├── utils/           # 工具函数
-└── monitoring/      # 监控系统 (Prometheus集成)
+├── api/                  # API layer (CQRS implementation)
+│   ├── predictions/      # Prediction APIs (optimized version included)
+│   ├── data/            # Data management APIs
+│   ├── analytics/       # Analytics APIs
+│   ├── health/          # Health check APIs
+│   ├── auth/            # Auth & authorization APIs
+│   ├── optimization/    # Performance optimization APIs
+│   └── models/          # API data models
+├── domain/              # Domain layer (DDD core logic)
+├── ml/                  # Machine learning modules
+│   ├── xgboost_hyperparameter_optimization.py  # XGBoost hyperparameter optimization
+│   ├── lstm_predictor.py        # LSTM deep learning prediction
+│   ├── football_prediction_pipeline.py  # Complete prediction pipeline
+│   └── experiment_tracking.py   # MLflow experiment tracking
+├── tasks/               # Celery task scheduling
+├── database/            # Async SQLAlchemy 2.0 (includes async_manager.py unified interface)
+├── cache/              # Cache layer (Redis)
+├── cqrs/               # CQRS pattern implementation
+├── events/             # Event system
+├── core/               # Core infrastructure
+├── services/           # Business service layer
+├── utils/              # Utility functions
+├── monitoring/         # Monitoring system (Prometheus integration)
+├── adapters/           # External data source adapters (FotMob, etc.)
+├── collectors/         # Data collectors
+├── config/             # Configuration management
+├── middleware/         # Middleware
+├── performance/        # Performance monitoring
+└── streaming/          # Real-time data streaming
 ```
 
-### 关键技术栈
+### Key Technology Stack
 
-#### 后端核心
-- **FastAPI** (v0.104.0+) - 现代异步Web框架
-- **PostgreSQL 15** - 主数据库，异步SQLAlchemy 2.0+
-- **Redis 7.0+** - 缓存和Celery消息队列
-- **Pydantic v2+** - 数据验证和序列化
-- **Uvicorn** - ASGI服务器
+#### Backend Core
+- **FastAPI** (v0.104.0+) - Modern async web framework
+- **PostgreSQL 15** - Primary database, async SQLAlchemy 2.0+
+- **Redis 7.0+** - Cache and Celery message queue
+- **Pydantic v2+** - Data validation and serialization
+- **Uvicorn** - ASGI server
 
-#### 机器学习
-- **XGBoost 2.0+** - 梯度提升预测算法
-- **TensorFlow 2.18.0** - 深度学习 (LSTM)
-- **MLflow 2.22.2+** - 实验跟踪和模型管理
-- **Optuna 4.6.0+** - 超参数优化
-- **Scikit-learn 1.3+** - 机器学习工具
+#### Machine Learning
+- **XGBoost 2.0+** - Gradient boosting prediction algorithm
+- **TensorFlow 2.18.0** - Deep learning (LSTM)
+- **MLflow 2.22.2+** - Experiment tracking and model management
+- **Optuna 4.6.0+** - Hyperparameter optimization
+- **Scikit-learn 1.3+** - Machine learning utilities
 
-#### 开发工具
-- **pytest 8.4.0+** - 测试框架，支持异步
-- **Ruff 0.14+** - 代码检查和格式化 (A+等级)
-- **Bandit 1.8.6+** - 安全扫描
-- **Docker 27.0+** - 容器化部署
-- **Makefile** - 297行标准化开发工具链
+#### Development Tools
+- **pytest 8.4.0+** - Testing framework with async support
+- **Ruff 0.14+** - Code checking and formatting (A+ grade)
+- **Bandit 1.8.6+** - Security scanning
+- **Docker 27.0+** - Containerized deployment
+- **Makefile** - 297-line standardized development toolchain
 
-## 🚀 核心开发命令
+## 🚀 Core Development Commands
 
-### 环境管理
+### Environment Management
 ```bash
-make dev              # 启动开发环境 (app + db + redis + nginx)
-make dev-rebuild      # 重新构建镜像并启动
-make dev-stop         # 停止开发环境
-make dev-logs         # 查看开发环境日志
-make status           # 检查所有服务状态
-make rebuild          # 重新构建镜像
+make dev              # Start full development environment (app + db + redis + nginx)
+make dev-rebuild      # Rebuild images and start development environment
+make dev-stop         # Stop development environment
+make dev-logs         # View development environment logs
+make status           # Check all service status
+make quick-start      # Quick start development environment (alias)
+make quick-stop       # Quick stop development environment (alias)
+make prod             # Start production environment (use docker-compose.prod.yml)
+make clean            # Cleanup containers and cache
+make clean-all        # Thorough cleanup of all related resources
+make install          # Install dependencies in virtual environment
+make venv             # Create Python virtual environment
+make env-check        # Check if environment is properly configured
 ```
 
-### 🔥 测试黄金法则
-**永远不要直接运行 pytest 单个文件！** 始终使用 Makefile 命令：
+### 🔥 Test Golden Rule
+**Never run pytest on single files directly!** Always use Makefile commands:
 
 ```bash
-make test.unit        # 单元测试 (278个测试文件)
-make test.fast        # 快速核心测试 (仅API/Utils/Cache/Events)
-make test.unit.ci     # CI最小化验证 (极致稳定方案)
-make test.integration # 集成测试
-make coverage         # 生成覆盖率报告
+make test.unit        # Unit tests (278 test files)
+make test.fast        # Quick core tests (API/Utils/Cache/Events only)
+make test.unit.ci     # CI minimal verification (ultimate stable solution)
+make test.integration # Integration tests
+make test.all         # Run all tests including slow ones
+make test-phase1      # Phase 1 core functionality tests
+make coverage         # Generate coverage report
+make test-coverage-local # Run tests with coverage locally
 ```
 
-### ⚠️ 重要：单个测试文件运行方法
+### ⚠️ Important: Running Single Test Files
 ```bash
-# 正确方法：使用容器环境
+# Correct method: Use container environment
 docker-compose exec app pytest tests/unit/api/test_predictions.py -v
 
-# 或者进入容器后运行
+# Or enter container first
 make shell
 pytest tests/unit/api/test_predictions.py -v
 ```
 
-### 代码质量
+### Code Quality
 ```bash
-make lint             # 代码检查
-make fix-code         # 自动修复代码问题
-make format           # 代码格式化
-make security-check   # 安全扫描
-make ci               # 完整CI验证
-make type-check       # MyPy类型检查
+make lint             # Code checking with ruff
+make fix-code         # Auto-fix code issues with ruff
+make format           # Code formatting with ruff
+make security-check   # Security scanning with bandit
+make ci               # Complete CI verification
+make type-check       # MyPy type checking
+make prepush          # Complete pre-push validation
+make context          # Load project context for AI assistants
+make sync-issues      # Sync GitHub Issues (双向同步工具)
 ```
 
-### 环境变量配置
+### Environment Configuration
 
-#### .env 文件配置
+#### .env File Configuration
 ```bash
-# 核心配置
+# Core configuration
 ENV=development
 SECRET_KEY=your-secret-key-here
 PYTHONPATH=/app
 
-# 数据库配置
+# Database configuration
 DATABASE_URL=postgresql://postgres:postgres-dev-password@db:5432/football_prediction
 
-# Redis配置
+# Redis configuration
 REDIS_URL=redis://redis:6379/0
 
-# 外部API密钥
+# External API keys
 FOOTBALL_DATA_API_KEY=your-football-data-api-key
 FOTMOB_API_KEY=your-fotmob-api-key
 
-# ML模型配置
+# ML model configuration
 ML_MODEL_PATH=/app/models
 MLFLOW_TRACKING_URI=http://localhost:5000
 
-# 监控配置
+# Monitoring configuration
 PROMETHEUS_ENABLED=true
 JAEGER_ENABLED=false
+
+# Additional environment files available
+# .env.ci - CI environment variables
+# .env.prod - Production environment variables
 ```
 
-#### 容器操作
+#### Container Operations
 ```bash
-make shell            # 进入后端容器
-make shell-db         # 进入数据库容器
-make db-shell         # 连接PostgreSQL数据库
-make redis-shell      # 连接Redis
-make logs             # 查看应用日志
-make logs-db          # 查看数据库日志
-make logs-redis       # 查看Redis日志
+make shell            # Enter backend container
+make shell-db         # Enter database container
+make db-shell         # Connect to PostgreSQL database
+make redis-shell      # Connect to Redis
+make logs             # View application logs
+make logs-db          # View database logs
+make logs-redis       # View Redis logs
 ```
 
-### 数据库管理
+### Database Management
 ```bash
-make db-reset         # 重置数据库 (⚠️ 会删除所有数据)
-make db-migrate       # 运行数据库迁移
-make db-seed          # 填充测试数据
-make db-shell         # 进入PostgreSQL交互式终端
+make db-reset         # Reset database (⚠️ will delete all data)
+make db-migrate       # Run database migrations
+make db-shell         # Enter PostgreSQL interactive terminal
 ```
 
-### 数据库开发工作流
-1. **创建新模型**: 在`src/database/models/`添加SQLAlchemy模型类
-2. **生成迁移**: `make db-migration name=add_new_table`
-3. **应用迁移**: `make db-migrate`
-4. **查看表结构**: `make db-shell` → `\d table_name`
-5. **重置数据库** (开发环境): `make db-reset && make db-seed`
+### Database Development Workflow
+1. **Use new unified interface**: `src/database/async_manager.py` - all database operations use this interface
+2. **Create new models**: Add SQLAlchemy model classes in `src/database/models/`
+3. **Apply migrations**: `make db-migrate`
+4. **View table structure**: `make db-shell` → `\d table_name`
+5. **Reset database** (dev environment): `make db-reset`
 
-### 本地CI验证
+> ⚠️ **Important**: `src/database/connection.py` is deprecated, please use `src/database/async_manager.py` unified interface
+
+### Local CI Verification
 ```bash
-./ci-verify.sh        # 本地CI验证（完整流程）
-./simulate_ci_in_dev.sh  # 模拟CI环境
+./ci-verify.sh        # Full local CI verification (checks coverage >= 78%)
+./simulate_ci_in_dev.sh  # Simulate CI environment
+./scripts/run_tests_in_docker.sh  # Run tests in Docker for isolation
 ```
 
-## 🧪 测试策略：SWAT方法论
-
-### 🛡️ SWAT测试核心原则
-源自成功的SWAT行动，48小时内将7个P0风险模块从0%覆盖率提升到100%稳定：
-
-1. **先建安全网，再触碰代码** - 在修改高风险代码前，先建立完整测试安全网
-2. **P0/P1 风险优先** - 优先测试最关键业务逻辑，避免在低风险测试上浪费时间
-3. **Mock 一切外部依赖** - 数据库、网络、文件系统全部Mock，确保测试纯净性
-
-### 四层测试架构
-- **单元测试 (85%)** - 快速隔离组件测试
-- **集成测试 (12%)** - 数据库、缓存、外部API集成
-- **端到端测试 (2%)** - 完整用户流程测试
-- **性能测试 (1%)** - 负载和压力测试
-
-### 🔥 测试黄金法则
-**永远不要直接运行 pytest 单个文件！** 始终使用 Makefile 命令：
-
+### Container Development Workflow
 ```bash
-make test.unit        # 单元测试 (278个测试文件)
-make test.fast        # 快速核心测试 (仅API/Utils/Cache/Events)
-make test.unit.ci     # CI最小化验证 (极致稳定方案)
-make test.integration # 集成测试
-make coverage         # 生成覆盖率报告
+# Start development environment
+docker-compose up --build
+
+# Check service status
+docker-compose ps
+
+# View logs for specific services
+docker-compose logs app      # Application logs
+docker-compose logs db       # Database logs
+docker-compose logs redis    # Redis logs
+
+# Execute commands in containers
+docker-compose exec app bash # Enter app container
+docker-compose exec db psql -U postgres # Connect to database
 ```
 
-### ⚠️ 重要：单个测试文件运行方法
-```bash
-# 正确方法：使用容器环境
-docker-compose exec app pytest tests/unit/api/test_predictions.py -v
+## 🧪 Testing Strategy: SWAT Methodology
 
-# 或者进入容器后运行
-make shell
-pytest tests/unit/api/test_predictions.py -v
-```
+### 🛡️ SWAT Testing Core Principles
+Derived from successful SWAT operation - elevated 7 P0 risk modules from 0% to 100% coverage in 48 hours:
 
-### 关键测试原则
-1. **环境一致性原则** - Always use Makefile commands
-2. **测试隔离原则** - 每个测试独立运行
-3. **异步测试原则** - 正确的异步测试模式
-4. **外部API原则** - 单元测试Mock，集成测试使用真实API
+1. **Build safety net first, then touch code** - Establish complete test safety net before modifying high-risk code
+2. **P0/P1 risk first** - Prioritize most critical business logic, avoid wasting time on low-risk tests
+3. **Mock all external dependencies** - Database, network, filesystem all mocked to ensure test purity
 
-### 测试标记示例
+### Four-Layer Test Architecture
+- **Unit Tests (85%)** - Fast isolated component testing
+- **Integration Tests (12%)** - Database, cache, external API integration
+- **E2E Tests (2%)** - Complete user flow testing
+- **Performance Tests (1%)** - Load and stress testing
+
+### Test Markers Example
 ```python
-@pytest.mark.unit           # 单元测试 (快速隔离组件)
-@pytest.mark.integration    # 集成测试 (数据库、缓存、外部API)
-@pytest.mark.api           # API测试 (FastAPI端点)
-@pytest.mark.database      # 数据库测试 (SQLAlchemy操作)
-@pytest.mark.ml            # 机器学习测试 (模型加载、预测)
-@pytest.mark.e2e           # 端到端测试 (完整用户流程)
-@pytest.mark.performance   # 性能测试 (负载和压力)
+@pytest.mark.unit           # Unit tests (fast isolated components)
+@pytest.mark.integration    # Integration tests (database, cache, external API)
+@pytest.mark.api           # API tests (FastAPI endpoints)
+@pytest.mark.database      # Database tests (SQLAlchemy operations)
+@pytest.mark.ml            # Machine learning tests (model loading, prediction)
+@pytest.mark.e2e           # End-to-end tests (complete user flows)
+@pytest.mark.performance   # Performance tests (load and pressure)
 ```
 
-### 实际测试运行示例
-```python
-# 运行特定标记的测试
-make test-fast                    # 快速单元测试 (日常开发)
-make test.unit.ci                # CI最小化验证 (提交前)
-make test.integration            # 集成测试 (完整环境)
-pytest tests/unit/api/ -v        # 特定目录测试
-pytest tests/ -k "test_predict"  # 按名称过滤测试
+## 🔧 Core Development Workflow
 
-# 单个测试文件运行方法 (⚠️ 重要)
-docker-compose exec app pytest tests/unit/api/test_predictions.py -v
-# 或进入容器: make shell
-# 然后运行: pytest tests/unit/api/test_predictions.py -v
-```
-
-## 🔧 核心开发工作流
-
-### 每日开发流程
+### Daily Development Process
 ```bash
-# 1. 启动环境
+# 1. Start environment
 make dev && make status
 
-# 2. 运行测试确保环境正常
+# 2. Run tests to ensure environment is normal
 make test.fast
 
-# 3. 开发过程中
-make lint && make fix-code  # 代码质量检查和修复
+# 3. During development
+make lint && make fix-code  # Code quality check and fix
 
-# 4. 提交前验证（必须执行）
-make test.unit.ci     # 最小化CI验证（最快）
-make security-check   # 安全检查
+# 4. Pre-commit verification (must execute)
+make test.unit.ci     # Minimal CI verification (fastest)
+make security-check   # Security check
 ```
 
-### 提交前完整验证
+### Pre-commit Full Verification
 ```bash
-make ci               # 完整CI验证（如时间允许）
+make ci               # Complete CI verification (if time permits)
 ```
 
-## 📋 常见开发任务
+## 📋 Common Development Tasks
 
-### 添加新API端点
-1. 创建命令/查询处理器：`src/api/predictions/`
-2. 实现CQRS处理器：`src/cqrs/`
-3. 注册路由到主API：`src/api/v1.py`
-4. 添加单元测试：`tests/unit/api/`
-5. 验证：`make test.unit.ci`
+### Adding New API Endpoints
+1. Create command/query handlers: `src/api/predictions/`
+2. Implement CQRS handlers: `src/cqrs/`
+3. Register routes to main API: `src/main.py` (import router)
+4. Add unit tests: `tests/unit/api/`
+5. Verify: `make test.unit.ci`
 
-### 添加新数据收集器
-1. 创建收集器类：`src/data/collectors/`
-2. 实现异步数据获取方法
-3. 添加数据验证逻辑
-4. 集成到ETL管道：`src/api/data_management.py`
-5. 测试：`make test.integration`
+### Adding New Data Collectors
+1. Create collector class: `src/data/collectors/` or `src/collectors/`
+2. Implement async data fetching methods with proper error handling
+3. Add data validation logic using Pydantic models
+4. Integrate into ETL pipeline: `src/api/data_management.py`
+5. Test: `make test.integration`
 
-### 训练新ML模型
-1. 在`src/ml/`创建训练脚本
-2. 使用MLflow跟踪实验：`mlflow.start_run()`
-3. 优化超参数：`xgboost_hyperparameter_optimization.py`
-4. 保存模型到`models/`目录
-5. 更新推理服务：`src/services/inference_service.py`
+### Training New ML Models
+1. Create training scripts in `src/ml/`
+2. Use MLflow for experiment tracking: `mlflow.start_run()`
+3. Optimize hyperparameters with Optuna: `src/ml/xgboost_hyperparameter_optimization.py`
+4. Save models to `models/trained/` directory
+5. Update inference service: `src/services/inference_service.py`
+6. Add model monitoring: `src/ml/model_performance_monitor.py`
 
-### 调试生产问题
-1. 查看日志：`make logs` 或 `make dev-logs`
-2. 检查健康状态：`curl http://localhost:8000/health`
-3. 监控指标：`http://localhost:8000/api/v1/metrics`
-4. 检查Celery任务：http://localhost:5555
-5. 数据库诊断：`make db-shell` → `\dt` 查看表
+### Database Schema Changes
+1. Create new SQLAlchemy models in `src/database/models/`
+2. Generate migration: `alembic revision --autogenerate -m "description"`
+3. Apply migration: `make db-migrate`
+4. Update repository classes in `src/database/async_manager.py`
+5. Add corresponding tests: `tests/unit/database/`
 
-## 🛠️ 架构指导原则
+### Debugging Production Issues
+1. View logs: `make logs` or `make dev-logs`
+2. Check health status: `curl http://localhost:8000/health`
+3. Monitor metrics: `http://localhost:8000/api/v1/metrics`
+4. Check Celery tasks: http://localhost:5555 (Flower dashboard)
+5. Database diagnosis: `make db-shell` → `\dt` view tables
+6. Redis inspection: `make redis-shell` → `KEYS *`
 
-### 1. 异步编程模式
+## 🛠️ Architecture Principles
+
+### 1. Async Programming Pattern
 ```python
-# ✅ 正确：所有I/O操作使用 async/await
+# ✅ Correct: All I/O operations use async/await
 async def fetch_match_data(match_id: str) -> MatchData:
     async with httpx.AsyncClient() as client:
         response = await client.get(f"/api/matches/{match_id}")
         return MatchData.model_validate(response.json())
 
-# ✅ 正确：数据库操作使用异步SQLAlchemy 2.0
+# ✅ Correct: Database operations use async SQLAlchemy 2.0
 async def get_match_by_id(db: AsyncSession, match_id: str) -> Optional[Match]:
     result = await db.execute(
         select(Match).where(Match.id == match_id)
     )
     return result.scalar_one_or_none()
-
-# ❌ 错误：阻塞操作
-def fetch_match_data_sync(match_id: str) -> MatchData:  # 避免同步I/O
-    response = requests.get(f"/api/matches/{match_id}")  # 阻塞调用
-    return response.json()
 ```
 
-### 2. DDD分层架构
+### 2. DDD Layered Architecture
 ```python
-# domain/ - 纯业务逻辑，不依赖外部框架
+# domain/ - Pure business logic, no external framework dependencies
 class MatchPrediction:
     def __init__(self, match: Match, prediction: PredictionResult):
         self.match = match
@@ -421,10 +403,10 @@ class MatchPrediction:
         self.confidence = self._calculate_confidence()
 
     def _calculate_confidence(self) -> float:
-        # 纯业务逻辑，无外部依赖
+        # Pure business logic, no external dependencies
         pass
 
-# api/ - CQRS命令查询分离
+# api/ - CQRS command query separation
 @router.post("/predictions")
 async def create_prediction(
     command: CreatePredictionCommand,
@@ -432,7 +414,7 @@ async def create_prediction(
 ) -> PredictionResponse:
     return await handler.handle(command)
 
-# services/ - 应用服务编排
+# services/ - Application service orchestration
 class PredictionService:
     async def generate_match_prediction(self, match_id: str) -> PredictionResult:
         match = await self.match_repository.get_by_id(match_id)
@@ -440,38 +422,30 @@ class PredictionService:
         return await self.ml_model.predict(features)
 ```
 
-### 3. 类型安全和数据验证
+### 3. Type Safety and Data Validation
 ```python
-# ✅ 完整类型注解
+# ✅ Complete type annotations
 async def process_prediction_request(
     request: PredictionRequest,
     user_id: UUID
 ) -> PredictionResponse:
 
-# ✅ Pydantic数据验证
+# ✅ Pydantic data validation
 class PredictionRequest(BaseModel):
     match_id: str = Field(..., min_length=1, max_length=50)
     prediction_type: PredictionType
     confidence_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
-
-# ✅ 返回类型明确
-def get_team_strength_metrics(team: Team) -> Dict[str, float]:
-    return {
-        "attack_strength": team.attack_strength,
-        "defense_strength": team.defense_strength,
-        "overall_rating": team.overall_rating
-    }
 ```
 
-### 4. 事件驱动架构
+### 4. Event-Driven Architecture
 ```python
-# 领域事件定义
+# Domain event definition
 class MatchCompletedEvent(BaseEvent):
     match_id: str
     final_score: str
     prediction_result: PredictionResult
 
-# 事件发布
+# Event publishing
 async def publish_match_completed(match: Match, result: MatchResult):
     event = MatchCompletedEvent(
         match_id=match.id,
@@ -480,69 +454,73 @@ async def publish_match_completed(match: Match, result: MatchResult):
     )
     await event_bus.publish(event)
 
-# 事件处理
+# Event handling
 @event_handler(MatchCompletedEvent)
 async def update_predictions_on_match_completion(event: MatchCompletedEvent):
-    # 更新相关预测的状态
+    # Update related prediction statuses
     await prediction_repository.update_status(event.match_id, "completed")
 ```
 
-## 🤖 机器学习开发
+## 🤖 Machine Learning Development
 
-### ML Pipeline结构
+### ML Pipeline Structure
 ```python
-# 特征工程
+# Feature engineering
 src/ml/enhanced_feature_engineering.py
 
-# 模型训练
+# Model training
 src/ml/enhanced_xgboost_trainer.py
 src/ml/enhanced_real_model_training.py
 src/ml/lstm_predictor.py
 
-# 预测管道
+# Prediction pipeline
 src/ml/football_prediction_pipeline.py
 
-# 实验跟踪
+# Experiment tracking
 src/ml/experiment_tracking.py
 
-# 超参数优化
+# Hyperparameter optimization
 src/ml/xgboost_hyperparameter_optimization.py
 src/ml/test_hyperparameter_optimization.py
 
-# 性能监控
+# Performance monitoring
 src/ml/model_performance_monitor.py
 ```
 
-### 模型管理
-- **MLflow** - 实验跟踪和版本控制
-- **Optuna** - 超参数贝叶斯优化
-- **模型注册** - 生产模型管理
+### Model Management
+- **MLflow** - Experiment tracking and version control (`mlruns/` directory)
+- **Optuna** - Hyperparameter Bayesian optimization
+- **Model Registry** - Production model management
+- **Model Storage**: `models/trained/` directory for production models
 
-### ML训练命令
+### ML Training Commands
 ```bash
-# 训练XGBoost模型
+# Train XGBoost model
 python src/ml/enhanced_xgboost_trainer.py
 
-# LSTM深度学习预测
+# LSTM deep learning prediction
 python src/ml/lstm_predictor.py
 
-# 超参数优化
+# Hyperparameter optimization
 python src/ml/xgboost_hyperparameter_optimization.py
 
-# 完整预测管道
+# Complete prediction pipeline
 python src/ml/football_prediction_pipeline.py
+
+# Prepare final model data
+python src/models/train_v1_final.py
 ```
 
-## 📊 API访问地址
+## 📊 API Endpoints
 
-- **前端应用**: http://localhost:3000
-- **后端API**: http://localhost:8000
-- **API文档**: http://localhost:8000/docs
-- **健康检查**: http://localhost:8000/health
+- **Frontend Application**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
 - **WebSocket**: ws://localhost:8000/api/v1/realtime/ws
-- **Prometheus指标**: http://localhost:8000/api/v1/metrics
+- **Prometheus Metrics**: http://localhost:8000/api/v1/metrics
 
-## 🐳 容器架构
+## 🐳 Container Architecture
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
@@ -569,333 +547,179 @@ python src/ml/football_prediction_pipeline.py
               └─────────────┘
 ```
 
-## 🔍 代码导航指南
+## 🔍 Code Navigation Guide
 
-### 快速定位文件
-- **查找API路由**: 使用`Grep`搜索`@app.`或`@router.`模式
-- **查找数据库模型**: `src/database/models/` 目录下的`Base`继承类
-- **查找事件处理器**: `src/events/` 目录
-- **查找CQRS命令**: `src/cqrs/commands/` 目录
-- **查找CQRS查询**: `src/cqrs/queries/` 目录
-- **查找ML模型**: `src/ml/` 目录下的`.pkl`或`.joblib`文件
+### Quick File Location
+- **Find API routes**: Search for `@app.` or `@router.` patterns
+- **Find database models**: `src/database/models/` directory - classes inheriting from `Base`
+- **Find event handlers**: `src/events/` directory
+- **Find CQRS commands**: `src/cqrs/commands/` directory
+- **Find CQRS queries**: `src/cqrs/queries/` directory
+- **Find ML models**: `.pkl` or `.joblib` files in `src/ml/` directory
+- **Find data adapters**: `src/adapters/` directory (FotMob external data sources)
+- **Find data collectors**: `src/collectors/` directory
 
-### 关键文件位置
-- **主应用入口**: `src/main.py` (27,349字节，应用生命周期管理)
-- **API路由注册**: `src/api/v1.py` (路由和中间件注册)
-- **数据库配置**: `src/database/connection.py` (异步SQLAlchemy 2.0+)
-- **缓存配置**: `src/cache/redis_client.py` (Redis连接池)
-- **Celery配置**: `src/tasks/celery_app.py` (7个专用队列)
-- **测试配置**: `pytest.ini` 和 `tests/conftest.py`
+### Key File Locations
+- **Main application entry**: `src/main.py` (application lifecycle management, smart cold start)
+- **API route registration**: Router files in each API submodule
+- **Database configuration**: `src/database/async_manager.py` (new unified interface)
+- **Cache configuration**: `src/cache/redis_client.py` (Redis connection pool)
+- **Celery configuration**: `src/tasks/celery_app.py`
+- **Test configuration**: `pytest.ini` and `tests/conftest.py`
+- **Performance monitoring**: `src/performance/middleware.py`
+- **Health checks**: `src/api/health/` directory
+- **External adapters**: `src/adapters/factory.py` (data source factory pattern)
 
-### 项目统计信息
-- **核心代码**: 1,094+ 行 (src根目录)
-- **测试文件**: 239+ 个测试文件，385+ 个测试用例
-- **配置文件**: 20+ Docker Compose配置
-- **文档文件**: 完整的开发和部署文档
-- **工具链**: 297行Makefile标准化命令
+### Project Statistics
+- **Core code**: 1,094+ lines (src root directory)
+- **Test files**: 239+ test files, 385+ test cases
+- **Configuration files**: 20+ Docker Compose configurations
+- **Documentation files**: Complete development and deployment documentation
+- **Toolchain**: 297-line Makefile standardized commands
 
-## 🔥 核心功能模块
+## 🔥 Core Functional Modules
 
-### 预测系统
-- **API路由**: `src/api/predictions/` (包含优化版本)
-- **推理服务**: `src/services/inference_service.py` - 实时预测推理
-- **模型加载**: 支持XGBoost和LSTM模型热加载
-- **预测管道**: `src/ml/football_prediction_pipeline.py` - 完整ML流程
+### Prediction System
+- **API routes**: `src/api/predictions/` (includes optimized version)
+- **Inference service**: `src/services/inference_service.py` - Real-time prediction inference
+- **Model loading**: Supports XGBoost and LSTM model hot-loading
+- **Prediction pipeline**: `src/ml/football_prediction_pipeline.py` - Complete ML workflow
 
-### 数据采集系统
+### Data Collection System
 
-#### 容器依赖关系
-```yaml
-# docker-compose.yml - 服务依赖管理
-services:
-  app:
-    depends_on:
-      db:
-        condition: service_healthy    # 等待数据库健康检查
-      redis:
-        condition: service_started    # 等待Redis启动
-    volumes:
-      - ./src:/app/src                # 源码热重载
-      - ./data:/app/data              # 数据目录挂载
-      - ./models:/app/models          # ML模型文件挂载
-```
+#### FotMob Data Collection Architecture
+Project has completed standardized refactoring of FotMob data collection:
+- **Core class**: `FotmobBrowserScraper` - Uses Playwright for browser automation
+- **API interception**: Intercepts real FotMob API responses to get complete data
+- **Data export**: Automatic JSON format export to `data/fotmob/` directory
+- **Multiple modes**: Supports single day, batch, date range collection
+- **Async support**: Complete async resource management
 
-#### FotMob数据采集架构
-项目已完成FotMob数据采集的标准化重构：
-- **核心类**: `FotmobBrowserScraper` - 使用Playwright进行浏览器自动化
-- **API拦截**: 拦截真实的FotMob API响应，获取完整数据
-- **数据导出**: 自动JSON格式导出到 `data/fotmob/` 目录
-- **多种模式**: 支持单日、批量、日期范围采集
-- **异步支持**: 完整的异步资源管理
+#### Data Collection Components
+- **External adapters**: `src/adapters/` (FotMob external data sources)
+- **Data collectors**: `src/collectors/` and `src/data/collectors/`
+- **Browser automation**: `src/data/collectors/fotmob_browser.py` - Playwright anti-crawler mechanism
+- **ETL pipeline**: `src/api/data_management.py` - Data management API
+- **CLI tools**: `scripts/run_fotmob_scraper.py` - Data collection scripts
 
-#### 数据采集组件
-- **外部适配器**: `src/adapters/` (FotMob等数据源)
-- **数据收集器**: `src/collectors/` 和 `src/data/collectors/`
-- **浏览器自动化**: `src/data/collectors/fotmob_browser.py` - Playwright反反爬虫机制
-- **ETL管道**: `src/api/data_management.py` - 数据管理API
-- **CLI工具**: `scripts/run_fotmob_scraper.py` - 数据采集脚本
-
-### 数据采集工作流
+### Data Collection Workflow
 ```bash
-# 1. 单日数据采集
+# 1. Single day data collection
 python scripts/run_fotmob_scraper.py --date 2024-01-15
 
-# 2. 批量数据采集
+# 2. Batch data collection
 python scripts/run_fotmob_scraper.py --start-date 2024-01-01 --end-date 2024-01-31
 
-# 3. 查看采集数据
+# 3. View collected data
 ls -la data/fotmob/
 
-# 4. 分析JSON结构
+# 4. Analyze JSON structure
 python scripts/inspect_json_structure.py data/fotmob/match_*.json
 
-# 5. 集成到数据库
+# 5. Integrate to database
 curl -X POST http://localhost:8000/api/v1/data/etl \
   -H "Content-Type: application/json" \
   -d '{"source": "fotmob", "action": "import"}'
 ```
 
-### 性能监控
-- **中间件**: `src/performance/middleware.py` - 性能监控中间件
-- **监控API**: `src/api/monitoring.py` - 系统监控端点
-- **Prometheus集成**: `/metrics` 端点导出监控指标
-- **健康检查**: `/health`, `/health/system`, `/health/database`
+### Performance Monitoring
+- **Middleware**: `src/performance/middleware.py` - Performance monitoring middleware
+- **Monitoring API**: `src/api/monitoring.py` - System monitoring endpoints
+- **Prometheus integration**: `/metrics` endpoint exports monitoring metrics
+- **Health checks**: `/health`, `/health/system`, `/health/database`
 
-### 缓存策略
-- **多级缓存**: 内存 + Redis分布式缓存
-- **缓存失效**: 智能TTL和主动失效
-- **读写分离**: 支持数据库读写分离配置
+### Caching Strategy
+- **Multi-level cache**: Memory + Redis distributed cache
+- **Cache invalidation**: Smart TTL and active invalidation
+- **Read-write separation**: Supports database read-write separation configuration
 
-### 实时通信
-- **WebSocket**: `/api/v1/realtime/ws` - 实时数据推送
-- **事件系统**: `src/events/` - 事件驱动架构
-- **CQRS模式**: `src/cqrs/` - 命令查询责任分离
+### Real-time Communication
+- **WebSocket**: `/api/v1/realtime/ws` - Real-time data push
+- **Event system**: `src/events/` - Event-driven architecture
+- **CQRS pattern**: `src/cqrs/` - Command Query Responsibility Segregation
 
-## 🚨 故障排除快速参考
+## 🚨 Troubleshooting Quick Reference
 
-| 问题类型 | 解决方案 |
-|---------|---------|
-| **测试失败** | `make test.fast` 查看核心功能，避免ML模型加载 |
-| **CI超时** | 使用 `make test.unit.ci` 替代完整测试套件 |
-| **端口冲突** | 检查 8000、3000、5432、6379 端口可用性 |
-| **数据库问题** | 运行 `make db-migrate`，检查PostgreSQL状态 |
-| **Redis连接问题** | `make redis-shell` 测试连接 |
-| **内存不足** | 使用 `make test.fast` 避免ML相关测试 |
-| **类型错误** | 检查导入，添加缺失类型注解 |
-| **依赖问题** | 运行 `make rebuild` 重新构建镜像 |
-| **ML模型加载失败** | 检查模型文件路径，查看`mlruns/`目录 |
-| **Celery任务失败** | 查看日志`make logs`，检查Redis连接 |
+| Issue Type | Solution |
+|-----------|----------|
+| **Test Failures** | `make test.fast` check core functionality, avoid ML model loading |
+| **CI Timeout** | Use `make test.unit.ci` instead of full test suite |
+| **Port Conflicts** | Check port availability (8000, 3000, 5432, 6379) |
+| **Database Issues** | Run `make db-migrate`, check PostgreSQL status |
+| **Redis Connection Issues** | `make redis-shell` test connection |
+| **Insufficient Memory** | Use `make test.fast` to avoid ML-related tests |
+| **Type Errors** | Check imports, add missing type annotations |
+| **Dependency Issues** | Run `make clean-all && make dev` to rebuild from scratch |
+| **ML Model Loading Failed** | Check model file paths, view `mlruns/` and `models/trained/` directories |
+| **Celery Task Failures** | View logs `make logs`, check Redis connection |
+| **Coverage < 78%** | Run `./ci-verify.sh` to see specific coverage gaps |
+| **Docker Build Failures** | Check `Dockerfile` and ensure all dependencies in requirements.txt |
 
-## 🐳 Docker配置说明
+## 📚 Additional Documentation
 
-### 可用Docker Compose配置
-项目包含20+个Docker Compose配置文件，支持不同场景：
+### Key Documentation Files
+- **[Repository Guidelines](AGENTS.md)** - Contributor structure, processes, and security guidelines
+- **[Test Improvement Guide](docs/TEST_IMPROVEMENT_GUIDE.md)** - Kanban, CI Hook, and weekly reporting mechanisms
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - SWAT action results, complete testing methodology
+- **[Tools Documentation](TOOLS.md)** - Complete development toolchain usage guide
+- **[Test Run Guide](TEST_RUN_GUIDE.md)** - Proper test execution methods (IMPORTANT!)
 
-```bash
-# 主要配置文件
-docker-compose.yml              # 默认开发环境
-docker-compose.dev.yml          # 纯开发环境
-docker-compose.prod.yml         # 生产环境
-docker-compose.ci.yml           # CI/CD环境
-docker-compose.test.yml         # 测试环境
-docker-compose.staging.yml      # 预发布环境
+### CI/CD and Quality Gates
+- **GitHub Actions**: `.github/workflows/` for automated testing and deployment
+- **Coverage Requirement**: Minimum 78% test coverage for CI to pass
+- **Quality Gates**: Ruff linting, Bandit security, MyPy type checking
+- **Container Health**: Database and Redis health checks in docker-compose
 
-# 专用配置
-config/docker-compose.microservices.yml  # 微服务架构
-config/docker-compose.optimized.yml      # 性能优化版本
-config/docker-compose.full-test.yml      # 完整测试环境
-monitoring/docker-compose.monitoring.yml # 监控服务栈
-```
+### Development Environment Files
+- **requirements.txt** - Core dependencies
+- **requirements-dev.txt** - Development dependencies
+- **requirements-ci.txt** - CI-specific dependencies
+- **pytest.ini** - Test configuration and markers
+- **Dockerfile** - Multi-stage container build
+- **docker-compose.yml** - Development environment setup
 
-### 服务端口映射
-- **Frontend (React)**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **PostgreSQL**: localhost:5432
-- **Redis**: localhost:6379
-- **Nginx Proxy**: http://localhost:80
-- **Flower (Celery监控)**: http://localhost:5555
+## 💡 Important Reminders
 
-## 🔄 CI/CD流程
+1. **Test Golden Rule** - Always use Makefile commands, never run pytest directly
+2. **Async First** - All I/O operations must use async/await pattern
+3. **Architectural Integrity** - Strictly follow DDD+CQRS+Event-Driven architecture
+4. **Environment Consistency** - Use Docker to ensure local and CI environments match
+5. **Service Health** - Run `make status` to check all services before development
+6. **AI-First Maintenance** - Project uses AI-assisted development, prioritize architectural integrity and code quality
+7. **ML Model Management** - All ML-related code is in `src/ml/` directory, use MLflow for version control
+8. **Coverage Requirement** - Maintain minimum 78% test coverage for CI to pass
+9. **Security First** - Run `make security-check` before committing changes
 
-### GitHub Actions工作流
-- **ci_pipeline_v2.yml**: 主要CI流水线，支持Python 3.10/3.11/3.12
-- **deploy.yml**: 部署流程
-- **production-deploy.yml**: 生产环境部署
-- **smart-fixer-ci.yml**: 智能修复和代码质量检查
+## 🎯 Developer Must-Know
 
-### 本地CI验证
-```bash
-./ci-verify.sh              # 完整本地CI验证
-./simulate_ci_in_dev.sh     # 模拟CI环境测试
-```
+### Key Architectural Patterns
+- **Application Startup**: Uses lifecycle management (`lifespan` context manager in `src/main.py`)
+- **Smart Cold Start**: Automatically checks data status and triggers collection tasks
+- **Dependency Injection**: Uses FastAPI's dependency injection system
+- **Error Handling**: Unified exception handling and error response format
+- **Middleware Chain**: Performance monitoring, CORS, internationalization middleware
 
-## 📑 快速导航
+### Data Collection Features
+- **Anti-Crawler**: Uses Playwright browser automation to bypass site restrictions
+- **Multiple Data Sources**: FotMob and other football data API integration
+- **Data Quality**: Automated data validation and quality checks
+- **Incremental Updates**: Smart judgment on whether data updates are needed
+- **ETL Pipeline**: Complete data processing in `src/api/data_management.py`
 
-### 核心命令速查
-```bash
-# 🚀 启动环境
-make dev && make status          # 完整开发环境
-make test.fast                   # 核心功能测试
+### Performance Optimization
+- **Connection Pool**: Database connection pool and Redis connection pool
+- **Async Tasks**: Celery task queue for background job processing
+- **Caching Strategy**: Multi-level cache and smart invalidation mechanism
+- **Monitoring Integration**: Prometheus metrics real-time monitoring
+- **CQRS Optimization**: Separate read/write models for performance
 
-# 🧪 测试命令
-make test.unit.ci               # CI最小化验证
-make coverage                   # 覆盖率报告
-
-# 🔧 开发工具
-make lint && make fix-code      # 代码质量
-make shell                      # 进入容器
-```
-
-### 端口和服务
-- **API文档**: http://localhost:8000/docs
-- **健康检查**: http://localhost:8000/health
-- **系统资源监控**: http://localhost:8000/health/system
-- **数据库状态**: http://localhost:8000/health/database
-- **推理服务状态**: http://localhost:8000/api/v1/health/inference
-- **前端应用**: http://localhost:3000
-- **Prometheus指标**: http://localhost:8000/api/v1/metrics
-- **WebSocket**: ws://localhost:8000/api/v1/realtime/ws
-- **Flower监控**: http://localhost:5555
-
-### 应用启动流程
-1. **容器启动**: `docker-compose up`
-2. **数据库初始化**: 自动执行 Alembic 迁移
-3. **智能冷启动**: 检查数据状态，自动触发数据采集
-4. **服务注册**: API路由、事件系统、CQRS初始化
-5. **健康检查**: 所有组件状态监控
-
-## 📚 重要文档
-
-### 核心文档
-- **测试指南**: `docs/TESTING_GUIDE.md` - SWAT行动成果，完整测试方法论
-- **覆盖率报告**: `TEST_COVERAGE_BASELINE_REPORT.md` - 29.0%基线提升路线图
-- **Docker配置**: `DOCKER_README.md` - 容器化部署指南
-- **CI流程**: `LOCAL_CI_GUIDE.md` - 本地CI验证指南
-- **架构设计**: `docs/ARCHITECTURE_FOR_AI.md` - AI优先维护架构指南
-
-### 专项指南
-- **ML Ops部署**: `ML_OPS_DEPLOYMENT_GUIDE.md` - 机器学习运维指南
-- **爬虫部署**: `CRAWLER_DEPLOYMENT_GUIDE.md` - FotMob数据采集指南
-- **全栈升级**: `FULL_STACK_UPGRAGE_GUIDE.md` - 前端+后端集成
-- **系统审计**: `SYSTEM_ROBUSTNESS_AUDIT_FINAL_REPORT.md` - 系统健壮性报告
-
-### GitHub配置
-- **代码评审**: `.github/CODEOWNERS` - 默认评审者 @xupeng211
-- **PR模板**: `.github/pull_request_template.md` - 标准化提交流程
-- **工作流**: `.github/workflows/` - CI/CD自动化 (支持Python 3.10/3.11/3.12)
-
-## 💡 重要提醒
-
-1. **测试黄金法则** - 始终使用 Makefile 命令，永远不要直接运行pytest
-2. **异步优先** - 所有I/O操作必须使用async/await模式
-3. **架构完整性** - 严格遵循DDD+CQRS+事件驱动架构
-4. **环境一致性** - 使用Docker确保本地与CI环境一致
-5. **服务健康** - 开发前先运行 `make status` 检查所有服务
-6. **AI优先维护** - 项目采用AI辅助开发，优先考虑架构完整性和代码质量
-7. **ML模型管理** - 所有机器学习相关代码位于`src/ml/`目录，使用MLflow进行版本控制
-
-## 🎯 开发者必知
-
-### 关键架构模式
-- **应用启动**: 采用生命周期管理 (`lifespan` context manager)
-- **智能冷启动**: 自动检查数据状态并触发采集任务
-- **依赖注入**: 使用FastAPI的依赖注入系统
-- **错误处理**: 统一异常处理和错误响应格式
-- **中间件链**: 性能监控、CORS、国际化等中间件
-
-### 数据采集特性
-- **反反爬虫**: 使用浏览器自动化绕过网站限制
-- **多数据源**: FotMob等足球数据API集成
-- **数据质量**: 自动化数据验证和质量检查
-- **增量更新**: 智能判断是否需要数据更新
-
-### 性能优化
-- **连接池**: 数据库连接池和Redis连接池
-- **异步任务**: Celery任务队列处理后台作业
-- **缓存策略**: 多级缓存和智能失效机制
-- **监控集成**: Prometheus指标实时监控
+### Development Best Practices
+- **Progressive Improvement**: Prioritize CI green status over feature development
+- **Test-First**: Write tests before modifying high-risk code modules
+- **Mock External Dependencies**: All database, network, filesystem dependencies mocked in tests
+- **Type Safety**: Complete type annotations required for all new code
+- **Documentation**: Update relevant documentation when adding features
 
 ---
 
-**💡 记住**: 这是一个AI优先维护的企业级项目。优先考虑架构完整性、代码质量和全面测试。所有I/O操作必须是异步的，保持DDD层分离，并遵循既定模式。项目使用完整的工具链（297行Makefile + 20+ Docker配置）来确保开发流程标准化。
-
-## 🔐 Git与代码管理
-
-### 关键忽略规则 (来自 .gitignore)
-```gitignore
-# 字节码和缓存
-__pycache__/
-*.py[cod]
-*$py.class
-
-# 测试和覆盖率
-.coverage
-.htmlcov/
-.pytest_cache/
-.mypy_cache/
-
-# 临时文件和报告
-*TEMP*.md
-*_REPORT_*.md
-bandit*.json
-coverage*.json
-scripts/temp/
-
-# AI生成文件
-CLAUDE_*.md.bak
-*_ANALYSIS.md
-*_SUMMARY.md
-```
-
-### 代码评审流程
-- **默认评审者**: @xupeng211 (所有路径)
-- **专项评审**: 源码、测试、文档、CI流程分别指定
-- **PR模板**: 标准化提交信息，包含测试验证清单
-- **保护分支**: main分支受保护，需要评审通过
-
-### 文件组织规范
-- **报告文件**: 统一存储在 `reports/` 目录
-- **临时脚本**: 存储在 `scripts/temp/` 目录
-- **配置文件**: 集中管理，支持多环境 (dev/prod/ci/test)
-- **文档目录**: 3368个文档文件，分类清晰
-
-## 📈 项目健康度指标
-
-| 指标 | 当前状态 | 目标状态 |
-|------|---------|---------|
-| 测试覆盖率 | 29.0% | 80%+ |
-| 代码质量 | A+ (Ruff) | A+ 维持 |
-| CI通过率 | 绿色基线 | 100%维持 |
-| 测试数量 | 385个 | 500+ |
-| 安全扫描 | Bandit通过 | 持续监控 |
-| 文档覆盖 | 完整 | 持续更新 |
-
----
-
-## 🎯 AI优先开发指南
-
-### 核心开发理念
-- **架构完整性优先** - 严格遵循DDD+CQRS+事件驱动架构
-- **代码质量至上** - A+等级代码质量，29.0%测试覆盖率基线
-- **异步编程强制** - 所有I/O操作必须使用async/await模式
-- **环境一致性保障** - 使用Docker确保本地与CI环境完全一致
-- **智能自动化** - AI辅助开发，优先考虑长期维护性
-
-### 开发前必做检查
-```bash
-# 1. 检查服务健康状态
-make status
-
-# 2. 运行核心功能测试
-make test.fast
-
-# 3. 验证代码质量
-make lint && make security-check
-
-# 4. 提交前CI验证
-make test.unit.ci
-```
-
----
-
-**📝 版本**: v1.0.0-rc1 (生产就绪) | **架构**: DDD+CQRS+Events | **质量**: A+ 等级 | **维护**: AI优先开发
+**💡 Remember**: This is an enterprise-grade project with AI-first maintenance. Prioritize architectural integrity, code quality, and comprehensive testing. All I/O operations must be async, maintain DDD layer separation, and follow established patterns. The project uses a complete toolchain (Makefile + 20+ Docker configs) to ensure standardized development workflows.

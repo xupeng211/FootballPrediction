@@ -258,47 +258,36 @@ class RobustCoverageCollector:
 
             logger.info(f"✅ 获取到 {len(data)} 条比赛记录")
 
-            # 保存到数据库 - 简化版本
+            # 使用增强数据库保存器进行UPSERT
+            from scripts.enhanced_database_saver import EnhancedDatabaseSaver
+
             saved_count = 0
             try:
-                # 直接插入数据（简化版）
-                with self.engine.connect() as conn:
-                    for _, row in data.iterrows():
-                        try:
-                            # 这里只是示例，实际需要根据数据结构调整
-                            conn.execute(
-                                text("""
-                                    INSERT INTO matches (
-                                        home_team_id, away_team_id, home_score, away_score,
-                                        match_date, league_id, season, status, data_source
-                                    ) VALUES (
-                                        :home_team_id, :away_team_id, :home_score, :away_score,
-                                        :match_date, :league_id, :season, 'completed', 'fbref'
-                                    )
-                                """),
-                                {
-                                    'home_team_id': 1,  # 需要根据实际数据映射
-                                    'away_team_id': 2,  # 需要根据实际数据映射
-                                    'home_score': row.get('home_score', 0),
-                                    'away_score': row.get('away_score', 0),
-                                    'match_date': row.get('match_date'),
-                                    'league_id': league['id'],
-                                    'season': '2025-2026'
-                                }
-                            )
-                            saved_count += 1
-                        except Exception as e:
-                            # 忽略重复键错误
-                            if "duplicate key" not in str(e).lower():
-                                logger.debug(f"  插入失败: {e}")
+                # 初始化增强保存器
+                saver = EnhancedDatabaseSaver()
 
-                    conn.commit()
+                # 直接保存DataFrame，让增强保存器处理所有逻辑
+                result = saver.save_matches_dataframe(
+                    data,
+                    league_name=league_name,
+                    season='2025-2026'
+                )
+
+                if result['status'] == 'success':
+                    saved_count = result['saved_count']
+                    logger.info(f"✅ 成功保存 {saved_count} 场比赛: {league_name}")
+                    self.completed_leagues.add(league_id)
+                    return True
+                else:
+                    logger.error(f"❌ 数据库保存失败: {result['message']}")
+                    return False
 
             except Exception as e:
                 logger.error(f"❌ 数据库保存失败: {e}")
                 self._log_failure(league_id, league_name, f"Database save failed: {str(e)}")
                 return False
 
+            # 最终检查
             if saved_count > 0:
                 logger.info(f"✅ 成功保存 {saved_count} 场比赛: {league_name}")
                 self.completed_leagues.add(league_id)

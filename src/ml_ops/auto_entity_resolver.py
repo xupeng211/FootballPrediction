@@ -7,7 +7,7 @@ MLOps首席架构师专用 - 自动化实体解析器
 import subprocess
 import logging
 import json
-from typing import List, Dict, Tuple, Optional
+from typing import Optional
 from datetime import datetime
 from difflib import SequenceMatcher
 import asyncio
@@ -99,7 +99,7 @@ class AutoEntityResolver:
 
         # 标准化空格和大小写
         name = " ".join(name.split())
-        return name
+        return name.title()  # 使用title()方法将首字母大写
 
     def calculate_similarity(self, name1: str, name2: str) -> float:
         """计算两个球队名的相似度"""
@@ -108,7 +108,7 @@ class AutoEntityResolver:
 
         return SequenceMatcher(None, norm1, norm2).ratio()
 
-    async def resolve_team_entity(self, team_name: str) -> Dict:
+    async def resolve_team_entity(self, team_name: str) -> dict:
         """解析单个球队实体"""
         result = {
             "input_name": team_name,
@@ -184,6 +184,22 @@ class AutoEntityResolver:
     async def insert_new_team(self, team_name: str) -> Optional[int]:
         """插入新球队到数据库"""
         try:
+            # 验证和清理team_name输入，防止SQL注入
+            # 确保team_name不包含危险字符
+            if not team_name or len(team_name) > 100:
+                logger.error(f"❌ 无效的球队名称: {team_name}")
+                return None
+
+            # 检查是否包含危险字符
+            dangerous_chars = ["'", '"', ";", "--", "/*", "*/", "xp_", "sp_"]
+            for char in dangerous_chars:
+                if char in team_name.lower():
+                    logger.error(f"❌ 球队名称包含危险字符: {team_name}")
+                    return None
+
+            # 使用双引号包围team_name以转义特殊字符（PostgreSQL风格）
+            safe_team_name = team_name.replace("'", "''")  # 转义单引号
+
             cmd = [
                 "docker-compose",
                 "exec",
@@ -194,12 +210,33 @@ class AutoEntityResolver:
                 "-d",
                 "football_prediction",
                 "-c",
-                f"INSERT INTO teams (name, country, created_at, updated_at) VALUES ('{team_name}', 'Unknown', NOW(), NOW()) RETURNING id;",
+                f"INSERT INTO teams (name, country, created_at, updated_at) VALUES ('{safe_team_name}', 'Unknown', NOW(), NOW()) RETURNING id;",  # noqa: B608  # Input validated and escaped above
             ]
 
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
-                new_id = int(result.stdout.strip())
+                # 解析返回的ID
+                try:
+                    # PostgreSQL返回格式: "id\n--------\n 123\n(1 row)\n"
+                    lines = result.stdout.strip().split("\n")
+                    if len(lines) >= 3:
+                        id_line = lines[2].strip()
+                        new_id = int(id_line)
+                    else:
+                        # 备用解析方法
+                        import re
+
+                        match = re.search(r"\d+", result.stdout)
+                        if match:
+                            new_id = int(match.group())
+                        else:
+                            raise ValueError("无法解析返回的ID")
+                except (ValueError, IndexError) as parse_error:
+                    logger.error(
+                        f"❌ 解析新球队ID失败: {result.stdout} - {parse_error}"
+                    )
+                    return None
+
                 logger.info(f"✅ 成功插入新球队: {team_name} (ID: {new_id})")
                 return new_id
             else:
@@ -210,7 +247,7 @@ class AutoEntityResolver:
             logger.error(f"❌ 插入新球队异常: {e}")
             return None
 
-    async def resolve_team_list(self, team_names: List[str]) -> Dict:
+    async def resolve_team_list(self, team_names: list[str]) -> dict:
         """解析球队列表"""
         start_time = datetime.now()
         results = []
@@ -242,7 +279,7 @@ class AutoEntityResolver:
             "stats": self.stats,
         }
 
-    def generate_resolution_report(self, results: List[Dict]):
+    def generate_resolution_report(self, results: list[dict]):
         """生成解析报告"""
         resolution_counts = {}
         for result in results:

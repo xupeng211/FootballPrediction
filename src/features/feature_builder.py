@@ -14,7 +14,6 @@ Purpose: 构建用于机器学习的时间序列特征，防止未来数据泄�
 import logging
 import pandas as pd
 import numpy as np
-from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +81,7 @@ class FeatureBuilder:
         ]
 
     def build_features(
-        self, df: pd.DataFrame, window_sizes: List[int] = None
+        self, df: pd.DataFrame, window_sizes: list[int] = None
     ) -> pd.DataFrame:
         """
         构建完整的特征集
@@ -246,7 +245,7 @@ class FeatureBuilder:
             )
 
             # 为每场比赛计算疲劳度特征
-            for idx, match in team_matches.iterrows():
+            for _idx, match in team_matches.iterrows():
                 current_date = match["match_date"]
                 is_home = match["home_team_id"] == team_id
 
@@ -330,13 +329,13 @@ class FeatureBuilder:
 
         logger.info("疲劳度特征计算完成")
         logger.info(
-            f"  新增特征: home_days_since_last_match, home_last_match_minutes, home_rotation_score"
+            "  新增特征: home_days_since_last_match, home_last_match_minutes, home_rotation_score"
         )
         logger.info(
-            f"  新增特征: away_days_since_last_match, away_last_match_minutes, away_rotation_score"
+            "  新增特征: away_days_since_last_match, away_last_match_minutes, away_rotation_score"
         )
         logger.info(
-            f"  衍生特征: home_fatigue_score, away_fatigue_score, fatigue_advantage"
+            "  衍生特征: home_fatigue_score, away_fatigue_score, fatigue_advantage"
         )
 
         return df
@@ -362,7 +361,7 @@ class FeatureBuilder:
         return df
 
     def _build_team_features(
-        self, df: pd.DataFrame, team_id: int, window_sizes: List[int]
+        self, df: pd.DataFrame, team_id: int, window_sizes: list[int]
     ) -> pd.DataFrame:
         """为特定球队构建特征"""
         # 提取该球队的所有比赛（作为主队或客队）
@@ -376,7 +375,7 @@ class FeatureBuilder:
         for prefix in ["stat_", "lineup_", "odds_"]:
             for suffix in ["home", "away"]:
                 home_col = f"{prefix}{suffix}"
-                away_col = f"{prefix}{away}"
+                away_col = f"{prefix}{suffix}"
 
                 if (
                     home_col in away_matches.columns
@@ -444,7 +443,7 @@ class FeatureBuilder:
         return team_features
 
     def _calculate_derived_features(
-        self, df: pd.DataFrame, window_sizes: List[int]
+        self, df: pd.DataFrame, window_sizes: list[int]
     ) -> pd.DataFrame:
         """计算衍生特征"""
         logger.info("计算衍生特征")
@@ -568,8 +567,8 @@ class FeatureBuilder:
                         )
 
                 # 实力评分对比
-                home_strength = f"home_team_strength_rolling_5"
-                away_strength = f"away_team_strength_rolling_5"
+                home_strength = "home_team_strength_rolling_5"
+                away_strength = "away_team_strength_rolling_5"
 
                 if home_strength in feature_dict and away_strength in feature_dict:
                     feature_dict["strength_advantage"] = (
@@ -620,7 +619,7 @@ class FeatureBuilder:
 
     def get_feature_columns(
         self, df: pd.DataFrame, exclude_target: bool = True
-    ) -> List[str]:
+    ) -> list[str]:
         """获取特征列名"""
         exclude_cols = {
             "match_id",
@@ -647,7 +646,7 @@ class FeatureBuilder:
 
         return feature_cols
 
-    def validate_features(self, df: pd.DataFrame) -> Tuple[bool, List[str]]:
+    def validate_features(self, df: pd.DataFrame) -> tuple[bool, list[str]]:
         """验证特征数据"""
         issues = []
 
