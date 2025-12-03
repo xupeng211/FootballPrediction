@@ -180,13 +180,13 @@ app.conf.beat_schedule = {
     },
     # 完整数据管道 - 每日凌晨3:30执行（在采集后，清理前）
     "daily-complete-pipeline": {
-        "task": "tasks.pipeline_tasks.complete_data_pipeline",
+        "task": "complete_data_pipeline",
         "schedule": crontab(hour=3, minute=30),
         "options": {"queue": "features"},
     },
     # 特征计算任务 - 每小时检查一次是否有新数据需要特征计算
     "hourly-feature-calculation": {
-        "task": "tasks.pipeline_tasks.trigger_feature_calculation_for_new_matches",
+        "task": "trigger_feature_calculation_for_new_matches",
         "schedule": crontab(minute=30),  # 每小时30分执行
         "options": {"queue": "features"},
     },

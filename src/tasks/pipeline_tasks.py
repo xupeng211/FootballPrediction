@@ -4,9 +4,9 @@
 使用Celery Chain和Group来编排任务依赖关系。
 """
 
+from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
-from typing import Any
 
 from celery import chain, group, shared_task
 from celery.schedules import crontab
@@ -921,8 +921,8 @@ def complete_data_pipeline(self) -> dict[str, Any]:
 
 @shared_task(bind=True, name="trigger_feature_calculation_for_new_matches")
 def trigger_feature_calculation_for_new_matches(
-    self, match_ids: list[int]
-) -> dict[str, Any]:
+    self, match_ids: list
+) -> dict:
     """为新采集的比赛触发特征计算.
 
     Args:

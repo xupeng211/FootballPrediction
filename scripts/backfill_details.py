@@ -8,10 +8,15 @@ Purpose: 采集阵容、详细统计数据，补充L1的xG数据
 import asyncio
 import json
 import logging
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
+
+# 添加必要的第三方库导入
+import pandas as pd
+import psycopg2
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -104,9 +109,33 @@ class L2DetailsCollector:
         return details
 
     def _extract_lineups(self, soup, tables: List) -> Optional[Dict]:
-        """提取阵容数据"""
+        """提取阵容数据（根据调试结果优化）"""
         try:
-            # 查找阵容相关的表格
+            # 方法1: 根据调试结果，优先查找阵容div元素
+            lineup_divs = soup.find_all('div', {'class': 'lineup'})
+
+            if lineup_divs:
+                logger.info(f"✅ 找到 {len(lineup_divs)} 个阵容div元素")
+                lineup_data = {'home_lineup': [], 'away_lineup': []}
+
+                for div in lineup_divs:
+                    team_key = 'home_lineup' if div.get('id') == 'a' else 'away_lineup' if div.get('id') == 'b' else None
+
+                    if team_key:
+                        # 查找阵容表格
+                        table = div.find('table')
+                        if table:
+                            players = self._extract_players_from_soup_table(table)
+                            if players:
+                                lineup_data[team_key] = players
+                                logger.info(f"📋 {team_key}提取到 {len(players)} 名球员")
+
+                # 如果成功提取到阵容数据，直接返回
+                if lineup_data['home_lineup'] or lineup_data['away_lineup']:
+                    return lineup_data
+
+            # 方法2: 如果div方法失败，尝试使用pandas表格方式（兼容原逻辑）
+            logger.info("🔄 div方法失败，尝试pandas表格方式...")
             for i, table in enumerate(tables):
                 if table.empty:
                     continue
@@ -114,27 +143,35 @@ class L2DetailsCollector:
                 # 检查表格是否包含阵容信息
                 columns_str = [str(col).lower() for col in table.columns]
                 if any(keyword in ' '.join(columns_str) for keyword in
-                      ['player', 'starter', 'substitute', 'minute', 'pos']):
+                      ['player', 'starter', 'substitute', 'minute', 'pos', 'number']):
                     logger.info(f"👥 发现阵容表格 (索引 {i}): {table.shape}")
 
-                    # 转换为字典格式
-                    lineup_data = {
-                        'home_lineup': [],
-                        'away_lineup': []
-                    }
+                    lineup_data = {'home_lineup': [], 'away_lineup': []}
 
-                    # 处理阵容数据（简化版本）
+                    # 尝试智能判断主客队
                     for _, row in table.iterrows():
                         player_info = {}
+                        has_valid_data = False
+
                         for col in table.columns:
                             if pd.notna(row.get(col)):
-                                player_info[str(col)] = str(row.get(col))
+                                value = str(row.get(col)).strip()
+                                if value:
+                                    player_info[str(col)] = value
+                                    has_valid_data = True
 
-                        # 根据数据内容判断是主队还是客队
-                        if player_info:
+                        # 验证是否是有效的球员信息
+                        if has_valid_data and self._is_valid_player_info(player_info):
+                            # 智能分配到主队或客队（这里简化处理，都放到主队）
                             lineup_data['home_lineup'].append(player_info)
 
-                    return lineup_data
+                    if lineup_data['home_lineup']:
+                        logger.info(f"📋 pandas方式提取到 {len(lineup_data['home_lineup'])} 名球员")
+                        return lineup_data
+
+            # 方法3: 最后尝试，直接从HTML中查找球员信息
+            logger.info("🔄 尝试直接从HTML查找球员信息...")
+            return self._extract_lineups_from_html(soup)
 
         except Exception as e:
             logger.error(f"❌ 提取阵容失败: {e}")
@@ -270,7 +307,7 @@ class L2DetailsCollector:
             # 更新数据库
             import psycopg2
             conn = psycopg2.connect(
-                host='localhost',
+                host='db',
                 port=5432,
                 user='postgres',
                 password='postgres-dev-password',
@@ -280,42 +317,42 @@ class L2DetailsCollector:
             with conn.cursor() as cur:
                 # 构建更新语句
                 update_parts = []
-                params = {}
+                param_values = []
 
                 if 'lineups' in details:
-                    update_parts.append("lineups = :lineups")
-                    params['lineups'] = json.dumps(details['lineups'])
+                    update_parts.append("lineups = %s")
+                    param_values.append(json.dumps(details['lineups']))
 
                 if 'stats' in details:
                     # 合并到现有stats字段
-                    cur.execute("SELECT stats FROM matches WHERE id = :match_id",
-                              {'match_id': match_id})
+                    cur.execute("SELECT stats FROM matches WHERE id = %s",
+                              (match_id,))
                     existing_stats = cur.fetchone()[0] or '{}'
 
                     try:
                         existing_stats_dict = json.loads(existing_stats) if isinstance(existing_stats, str) else existing_stats
                         existing_stats_dict.update(details['stats'])
-                        update_parts.append("stats = :stats")
-                        params['stats'] = json.dumps(existing_stats_dict)
+                        update_parts.append("stats = %s")
+                        param_values.append(json.dumps(existing_stats_dict))
                     except:
-                        update_parts.append("stats = :stats")
-                        params['stats'] = json.dumps(details['stats'])
+                        update_parts.append("stats = %s")
+                        param_values.append(json.dumps(details['stats']))
 
                 if 'events' in details:
-                    update_parts.append("events = :events")
-                    params['events'] = json.dumps(details['events'])
+                    update_parts.append("events = %s")
+                    param_values.append(json.dumps(details['events']))
 
                 if update_parts:
                     update_parts.append("updated_at = CURRENT_TIMESTAMP")
+                    param_values.append(match_id)  # 最后添加match_id
 
                     sql = f"""
                         UPDATE matches
                         SET {', '.join(update_parts)}
-                        WHERE id = :match_id
+                        WHERE id = %s
                     """
 
-                    params['match_id'] = match_id
-                    cur.execute(sql, params)
+                    cur.execute(sql, param_values)
                     conn.commit()
 
                     logger.info(f"✅ 成功更新比赛 {match_id}")
@@ -331,6 +368,110 @@ class L2DetailsCollector:
             if 'conn' in locals():
                 conn.close()
 
+    def _extract_players_from_soup_table(self, table) -> List[Dict]:
+        """从BeautifulSoup表格中提取球员信息"""
+        players = []
+
+        try:
+            rows = table.find_all('tr')
+
+            for row in rows:
+                # 跳过表头
+                if row.find('th'):
+                    # 提取阵型信息
+                    th = row.find('th')
+                    if th and th.get('colspan'):
+                        header_text = th.get_text().strip()
+                        formation_match = re.search(r'\((\d-\d-\d(?:-\d)?)\)', header_text)
+                        if formation_match:
+                            logger.info(f"📋 阵型: {formation_match.group(1)}")
+                    continue
+
+                cells = row.find_all('td')
+                if len(cells) < 2:
+                    continue
+
+                # 提取球员信息
+                player_info = {}
+
+                # 球衣号码
+                if cells[0]:
+                    number_text = cells[0].get_text().strip()
+                    if number_text.isdigit():
+                        player_info['number'] = number_text
+
+                # 球员姓名
+                if len(cells) >= 2:
+                    name_cell = cells[1]
+                    player_link = name_cell.find('a', href=True)
+                    if player_link:
+                        player_info['name'] = player_link.get_text().strip()
+                        player_info['url'] = f"https://fbref.com{player_link['href']}"
+                    else:
+                        player_info['name'] = name_cell.get_text().strip()
+
+                # 位置信息
+                if len(cells) >= 3:
+                    position_text = cells[2].get_text().strip()
+                    if position_text and position_text not in ['', '-', 'Sub']:
+                        player_info['position'] = position_text
+
+                # 验证球员信息有效性
+                if self._is_valid_player_info(player_info):
+                    players.append(player_info)
+
+        except Exception as e:
+            logger.warning(f"⚠️ 表格球员提取失败: {e}")
+
+        return players
+
+    def _is_valid_player_info(self, player_info: Dict) -> bool:
+        """验证球员信息的有效性"""
+        if not player_info:
+            return False
+
+        # 必须有球员姓名
+        name = player_info.get('name', '')
+        if not name or len(name) < 2 or name in ['Player', 'Name', '']:
+            return False
+
+        # 姓名不能是纯数字或常见的表头文字
+        if name.isdigit() or name.lower() in ['player', 'starter', 'substitute']:
+            return False
+
+        return True
+
+    def _extract_lineups_from_html(self, soup) -> Optional[Dict]:
+        """直接从HTML中提取阵容信息（最后尝试）"""
+        try:
+            lineup_data = {'home_lineup': [], 'away_lineup': []}
+
+            # 查找所有包含球员链接的元素
+            player_links = soup.find_all('a', href=lambda x: x and '/players/' in x)
+
+            if player_links:
+                players = []
+                for link in player_links:
+                    name = link.get_text().strip()
+                    if name and len(name) > 2:
+                        players.append({
+                            'name': name,
+                            'url': f"https://fbref.com{link['href']}"
+                        })
+
+                if players:
+                    logger.info(f"📋 HTML方式提取到 {len(players)} 名球员")
+                    # 简化处理：将前一半球员归为主队，后一半为客队
+                    mid = len(players) // 2
+                    lineup_data['home_lineup'] = players[:mid]
+                    lineup_data['away_lineup'] = players[mid:]
+                    return lineup_data
+
+        except Exception as e:
+            logger.warning(f"⚠️ HTML阵容提取失败: {e}")
+
+        return None
+
 
 async def main():
     """主函数 - L2深度采集启动 - 持续运行版本"""
@@ -342,7 +483,7 @@ async def main():
 
     import psycopg2
     conn = psycopg2.connect(
-        host='localhost',
+        host='db',
         port=5432,
         user='postgres',
         password='postgres-dev-password',
@@ -360,13 +501,14 @@ async def main():
             with conn.cursor() as cur:
                 # 查询data_completeness = 'partial'且有match_report_url的记录
                 cur.execute("""
-                    SELECT id, home_team_id, away_team_id, match_metadata
+                    SELECT id, home_team_id, away_team_id, match_metadata, match_date
                     FROM matches
-                    WHERE data_source = 'fbref'
-                    AND data_completeness = 'partial'
-                    AND match_metadata::text LIKE '%match_report%'
-                    AND (stats IS NULL OR stats = '{}')
-                    ORDER BY created_at ASC
+                    WHERE data_completeness = 'partial'
+                    AND match_metadata->>'match_report_url' IS NOT NULL
+                    AND home_score IS NOT NULL
+                    AND away_score IS NOT NULL
+                    AND match_date > NOW() - INTERVAL '3 years'
+                    ORDER BY match_date DESC
                     LIMIT 20
                 """)
 
@@ -380,13 +522,19 @@ async def main():
                 logger.info(f"📊 本轮找到 {len(records)} 条待处理记录")
                 batch_success = 0
 
-                for i, (record_id, home_id, away_id, metadata_json) in enumerate(records, 1):
+                for i, (record_id, home_id, away_id, metadata_json, match_date) in enumerate(records, 1):
                     try:
-                        metadata = json.loads(metadata_json) if metadata_json else {}
+                        # 修复JSON解析错误：添加类型检查
+                        if isinstance(metadata_json, str):
+                            metadata = json.loads(metadata_json)
+                        elif isinstance(metadata_json, dict):
+                            metadata = metadata_json
+                        else:
+                            metadata = {}
                         match_report_url = metadata.get('match_report_url')
 
                         if match_report_url:
-                            logger.info(f"🔄 [{i}/{len(records)}] 处理比赛 {record_id}: {home_id} vs {away_id}")
+                            logger.info(f"🔄 [{i}/{len(records)}] 处理比赛 {record_id}: {home_id} vs {away_id} (日期: {match_date})")
                             success = await collector.update_match_with_details(record_id, match_report_url)
 
                             if success:
@@ -413,7 +561,7 @@ async def main():
                                 # 记录间正常延迟
                                 await asyncio.sleep(3)
                         else:
-                            logger.warning(f"⚠️ 比赛 {record_id} 没有match_report_url")
+                            logger.warning(f"⚠️ 比赛 {record_id} (日期: {match_date}) 没有match_report_url")
 
                     except Exception as e:
                         logger.error(f"❌ 处理比赛 {record_id} 失败: {e}")

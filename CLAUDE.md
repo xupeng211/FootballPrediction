@@ -46,8 +46,8 @@ make coverage
 | Metric | Current Status | Target |
 |--------|---------------|--------|
 | Build Status | ✅ Stable (Green Baseline) | Maintain |
-| Test Coverage | 29.0% (README.md) | 78%+ (CI Requirement) |
-| Test Count | 385 tests | 500+ |
+| Test Coverage | 6.5% (config/quality_baseline.json) | 18%+ (Monthly Target) |
+| Test Count | 264 tests | 500+ |
 | Code Quality | A+ (ruff) | Maintain |
 | Python Version | 3.10/3.11/3.12 | Recommend 3.11 |
 | Security Status | ✅ Bandit Passed | Continuous Monitoring |
@@ -202,6 +202,9 @@ make type-check       # MyPy type checking
 make prepush          # Complete pre-push validation
 make context          # Load project context for AI assistants
 make sync-issues      # Sync GitHub Issues (双向同步工具)
+make test-quality     # Advanced quality checks
+make monitor-all      # Monitor all containers
+make prod-rebuild     # Production rebuild
 ```
 
 ### Environment Configuration
@@ -228,6 +231,13 @@ FOTMOB_KNOWN_SIGNATURE=eyJib2R5Ijp7InVybCI6Ii9hcGkvZGF0YS9hdWRpby1tYXRjaGVzIiwiY
 # ML model configuration
 ML_MODEL_PATH=/app/models
 MLFLOW_TRACKING_URI=http://localhost:5000
+
+# ML Mode Configuration (Critical for Development)
+FOOTBALL_PREDICTION_ML_MODE=real|mock          # Set to 'mock' in CI/development
+INFERENCE_SERVICE_MOCK=true|false              # Mock ML inference service
+SKIP_ML_MODEL_LOADING=true|false               # Skip model loading for faster tests
+XGBOOST_MOCK=true|false                        # Mock XGBoost models
+JOBLIB_MOCK=true|false                         # Mock joblib loading
 
 # Monitoring configuration
 PROMETHEUS_ENABLED=true
@@ -275,9 +285,12 @@ make db-shell         # Enter PostgreSQL interactive terminal
 ./scripts/run_tests_in_docker.sh  # Run tests in Docker for isolation
 ```
 
-### ⚠️ Important: CI Coverage Discrepancy
-- **README.md shows**: 29.0% coverage
-- **CI requires**: 78% coverage to pass
+### ⚠️ Important: Coverage Information
+- **Current Coverage**: 6.5% total (config/quality_baseline.json)
+- **Monthly Target**: 18.0% (continuous improvement goal)
+- **Domain Coverage**: 0.0% (priority area for improvement)
+- **Utils Coverage**: 73.0% (strong foundation)
+- **Quality Gates**: Minimum 6.0% total coverage enforced
 - **Use `make ci`** for complete local verification before pushing
 
 ### Container Development Workflow
@@ -290,6 +303,7 @@ make dev              # Recommended: uses docker-compose.yml
 # docker-compose.yml           - Standard development
 # docker-compose.dev.yml       - Extended development
 # docker-compose.ci.yml        - CI environment
+# docker-compose.ci.simple.yml - Simplified CI
 # docker-compose.prod.yml      - Production
 # docker-compose.lightweight.yml - Minimal setup
 # docker-compose.crawler.yml   - Web scraping focused
@@ -334,6 +348,47 @@ Derived from successful SWAT operation - elevated 7 P0 risk modules from 0% to 1
 @pytest.mark.ml            # Machine learning tests (model loading, prediction)
 @pytest.mark.e2e           # End-to-end tests (complete user flows)
 @pytest.mark.performance   # Performance tests (load and pressure)
+@pytest.mark.skip_ci       # Skip these tests in CI environment
+@pytest.mark.unstable      # Known flaky tests (run separately)
+@pytest.mark.slow          # Time-intensive tests (>10 seconds)
+```
+
+### Test Environment Configuration
+```bash
+# Development testing (default)
+make test.fast        # Core functionality only
+make test.unit        # All unit tests
+
+# CI Environment Testing
+export FOOTBALL_PREDICTION_ML_MODE=mock
+export SKIP_ML_MODEL_LOADING=true
+make test.unit.ci     # Minimal verification for CI
+
+# Local testing with real ML models
+export FOOTBALL_PREDICTION_ML_MODE=real
+make test.integration # Full integration with real models
+```
+
+### Quality Gates Configuration
+The project enforces quality gates via `config/quality_baseline.json`:
+
+```json
+{
+  "quality_gates": {
+    "minimum_total_coverage": 6.0,
+    "minimum_utils_coverage": 70.0,
+    "minimum_pass_rate": 100.0,
+    "maximum_regression": 0.5
+  },
+  "protection_rules": {
+    "pre_commit_checks": [
+      "syntax_check",
+      "type_check",
+      "unit_tests",
+      "coverage_check"
+    ]
+  }
+}
 ```
 
 ## 🔧 Core Development Workflow
@@ -527,11 +582,67 @@ python src/ml/lstm_predictor.py
 # Hyperparameter optimization
 python src/ml/xgboost_hyperparameter_optimization.py
 
+# Advanced hyperparameter tuning
+python scripts/tune_model_optuna.py
+
 # Complete prediction pipeline
 python src/ml/football_prediction_pipeline.py
 
 # Prepare final model data
 python src/models/train_v1_final.py
+```
+
+## 🔄 Advanced Development Workflows
+
+### FotMob Data Collection System
+The project uses a sophisticated browser automation system for data collection:
+
+```bash
+# Single day data collection
+python scripts/run_fotmob_scraper.py --date 2024-01-15
+
+# Batch data collection (date range)
+python scripts/run_fotmob_scraper.py --start-date 2024-01-01 --end-date 2024-01-31
+
+# View collected data
+ls -la data/fotmob/
+
+# Analyze JSON structure
+python scripts/inspect_json_structure.py data/fotmob/match_*.json
+
+# Integrate to database via ETL API
+curl -X POST http://localhost:8000/api/v1/data/etl \
+  -H "Content-Type: application/json" \
+  -d '{"source": "fotmob", "action": "import"}'
+```
+
+### ML Model Management Workflow
+```bash
+# Model training with experiment tracking
+mlflow run src/ml/  # MLflow experiment tracking
+
+# Hyperparameter optimization studies
+optuna study create --study-name "football_prediction_v2"
+python src/ml/xgboost_hyperparameter_optimization.py
+
+# Model performance monitoring
+python src/ml/model_performance_monitor.py
+
+# Safe model loading with validation
+python src/services/inference_service.py  # Auto-detects available models
+```
+
+### Smart Cold Start System
+The application automatically manages data freshness:
+
+```python
+# Smart startup logic in src/main.py
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Check data freshness (24-hour threshold)
+    if await needs_data_collection():
+        # Trigger intelligent collection (full vs incremental)
+        trigger_background_data_collection()
 ```
 
 ## 📊 API Endpoints
@@ -737,6 +848,10 @@ curl -X POST http://localhost:8000/api/v1/data/etl \
 - **Caching Strategy**: Multi-level cache and smart invalidation mechanism
 - **Monitoring Integration**: Prometheus metrics real-time monitoring
 - **CQRS Optimization**: Separate read/write models for performance
+- **Command Bus**: Handles write operations with validation and events
+- **Query Bus**: Optimized read operations with caching strategies
+- **Service Factory**: `CQRSServiceFactory` creates domain services
+- **Middleware Pipeline**: Logging and validation middleware for all operations
 
 ### Development Best Practices
 - **Progressive Improvement**: Prioritize CI green status over feature development

@@ -2,7 +2,7 @@
 # 支持开发环境和生产环境的不同需求
 
 # ================== Base 阶段 ==================
-FROM python:3.11-slim as base
+FROM mcr.microsoft.com/playwright/python:latest as base
 
 # 设置工作目录
 WORKDIR /app
@@ -48,9 +48,9 @@ RUN pip install --no-cache-dir --prefer-binary \
     aiohttp==3.10.5 \
     backoff==2.2.0 \
     tenacity==8.2.0 \
-    pandas==2.3.3 \
-    numpy==2.3.4 \
-    scikit-learn==1.7.2 \
+    pandas==2.2.3 \
+    numpy==1.26.4 \
+    scikit-learn==1.5.2 \
     xgboost==2.0.3 \
     requests==2.31.0 \
     psutil==5.9.8 \
@@ -59,7 +59,13 @@ RUN pip install --no-cache-dir --prefer-binary \
     mlflow==2.22.2 \
     alembic==1.12.0 \
     asyncpg==0.29.0 \
-    celery==5.4.0
+    celery==5.4.0 \
+    playwright==1.56.0 \
+    curl_cffi==0.13.0 \
+    beautifulsoup4==4.12.3
+
+# 安装Playwright浏览器
+RUN playwright install chromium
 
 # ================== Development 阶段 ==================
 FROM base as development
