@@ -39,6 +39,14 @@ from typing import Any, Optional
 from dataclasses import dataclass, asdict
 from contextlib import asynccontextmanager
 
+# Python版本兼容性处理
+try:
+    # Python 3.7+
+    all_tasks = asyncio.all_tasks
+except AttributeError:
+    # Python 3.6
+    all_tasks = asyncio.Task.all_tasks
+
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -409,17 +417,17 @@ class GlobalBackfillService:
     def generate_date_range(
         self, start_date: datetime, end_date: datetime
     ) -> list[str]:
-        """生成日期范围列表"""
-        logger.info("📅 生成日期范围...")
+        """生成日期范围列表（倒序：从今天到过去）"""
+        logger.info("📅 生成倒序日期范围...")
 
         dates = []
-        current_date = start_date
+        current_date = end_date  # 从结束日期开始
 
-        while current_date <= end_date:
+        while current_date >= start_date:
             dates.append(current_date.strftime("%Y-%m-%d"))
-            current_date += timedelta(days=1)
+            current_date -= timedelta(days=1)
 
-        logger.info(f"📋 生成 {len(dates)} 个采集日期 ({dates[0]} to {dates[-1]})")
+        logger.info(f"📋 生成 {len(dates)} 个倒序采集日期 ({dates[0]} to {dates[-1]})")
         return dates
 
     def load_resume_state(self) -> Optional[dict[str, Any]]:
@@ -923,17 +931,71 @@ class GlobalBackfillService:
     def _process_single_date_sync(
         self, date_str: str, sources: list[str] = None
     ) -> tuple[str, DailyDataResult]:
-        """同步处理单日数据的方法，用于ThreadPoolExecutor"""
-        # 在新的事件循环中运行异步方法
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            result = loop.run_until_complete(self.collect_daily_data(date_str, sources))
-            return (date_str, result)
-        finally:
-            loop.close()
-            # 清理事件循环，避免内存泄漏
-            asyncio.set_event_loop(None)
+        """同步处理单日数据的方法，用于ThreadPoolExecutor - 增强版自动重启机制"""
+        max_retries = 3
+        retry_delay = 10
+
+        for attempt in range(max_retries):
+            loop = None
+            try:
+                # 在新的事件循环中运行异步方法
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+                logger.info(f"🔄 [{date_str}] 尝试采集 (第 {attempt + 1}/{max_retries} 次)")
+
+                result = loop.run_until_complete(self.collect_daily_data(date_str, sources))
+                logger.info(f"✅ [{date_str}] 采集成功: {result.total_matches} 场比赛")
+                return (date_str, result)
+
+            except RuntimeError as e:
+                if "Event loop is closed" in str(e) or "Event loop is closed" in str(e).lower():
+                    logger.error(f"❌ [{date_str}] Event loop错误 (尝试 {attempt + 1}): {e}")
+                    if attempt < max_retries - 1:
+                        logger.warning(f"⏳ [{date_str}] {retry_delay}秒后重试...")
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # 指数退避
+                        continue
+                    else:
+                        logger.error(f"💀 [{date_str}] 达到最大重试次数，采集失败")
+                        # 返回失败结果而不是抛出异常
+                        return (date_str, DailyDataResult(date=date_str, success=False, errors=[str(e)]))
+                else:
+                    # 其他RuntimeError，直接抛出
+                    raise
+
+            except Exception as e:
+                logger.error(f"❌ [{date_str}] 采集异常 (尝试 {attempt + 1}): {e}")
+                if attempt < max_retries - 1:
+                    logger.warning(f"⏳ [{date_str}] {retry_delay}秒后重试...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # 指数退避
+                    continue
+                else:
+                    logger.error(f"💀 [{date_str}] 达到最大重试次数，采集失败")
+                    # 返回失败结果而不是抛出异常
+                    return (date_str, DailyDataResult(date=date_str, success=False, errors=[str(e)]))
+
+            finally:
+                # 确保事件循环被正确清理
+                if loop is not None:
+                    try:
+                        if not loop.is_closed():
+                            # 取消所有待处理的任务
+                            pending = all_tasks(loop)
+                            for task in pending:
+                                task.cancel()
+
+                            # 等待任务取消完成
+                            if pending:
+                                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+
+                            loop.close()
+                        logger.debug(f"✅ [{date_str}] 事件循环已清理")
+                    except Exception as cleanup_error:
+                        logger.warning(f"⚠️ [{date_str}] 事件循环清理警告: {cleanup_error}")
+                    finally:
+                        asyncio.set_event_loop(None)
 
     async def run_backfill(
         self,
@@ -1111,8 +1173,8 @@ async def main():
     parser = argparse.ArgumentParser(description="全球足球数据全量回填脚本")
     parser.add_argument(
         "--start-date",
-        default="2022-01-01",
-        help="开始日期 (YYYY-MM-DD格式，默认: 2022-01-01)",
+        default="2023-08-01",  # 本赛季开始
+        help="开始日期 (YYYY-MM-DD格式，默认: 2023-08-01)",
     )
     parser.add_argument(
         "--end-date",

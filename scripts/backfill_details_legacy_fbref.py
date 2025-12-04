@@ -545,8 +545,8 @@ async def main():
                                 cur.execute("""
                                     UPDATE matches
                                     SET data_completeness = 'complete'
-                                    WHERE id = :record_id
-                                """, {'record_id': record_id})
+                                    WHERE id = %s
+                                """, (record_id,))
                                 conn.commit()
 
                                 logger.info(f"✅ 比赛 {record_id} 已升级为完整数据")

@@ -279,9 +279,7 @@ make db-shell         # Enter PostgreSQL interactive terminal
 
 ### Local CI Verification
 ```bash
-./ci-verify.sh        # Full local CI verification (checks coverage >= 78%)
-                      # ⚠️  Note: This script may not exist - use make ci instead
-./simulate_ci_in_dev.sh  # Simulate CI environment
+make ci               # Complete local CI verification (checks coverage >= 6.0%)
 ./scripts/run_tests_in_docker.sh  # Run tests in Docker for isolation
 ```
 
@@ -359,14 +357,22 @@ Derived from successful SWAT operation - elevated 7 P0 risk modules from 0% to 1
 make test.fast        # Core functionality only
 make test.unit        # All unit tests
 
-# CI Environment Testing
+# CI Environment Testing (Required for CI)
 export FOOTBALL_PREDICTION_ML_MODE=mock
 export SKIP_ML_MODEL_LOADING=true
-make test.unit.ci     # Minimal verification for CI
+export INFERENCE_SERVICE_MOCK=true
+export XGBOOST_MOCK=true
+make test.unit.ci     # Minimal verification for CI (fastest, no ML models)
 
 # Local testing with real ML models
 export FOOTBALL_PREDICTION_ML_MODE=real
+export SKIP_ML_MODEL_LOADING=false
+export INFERENCE_SERVICE_MOCK=false
 make test.integration # Full integration with real models
+
+# Quick development without ML dependency
+export FOOTBALL_PREDICTION_ML_MODE=mock
+make test.fast        # Skip ML model loading for faster development
 ```
 
 ### Quality Gates Configuration
@@ -395,18 +401,26 @@ The project enforces quality gates via `config/quality_baseline.json`:
 
 ### Daily Development Process
 ```bash
-# 1. Start environment
+# 1. Start environment and verify services
 make dev && make status
 
-# 2. Run tests to ensure environment is normal
+# 2. Verify API accessibility
+curl http://localhost:8000/health
+
+# 3. Run core tests to ensure environment is normal
 make test.fast
 
-# 3. During development
+# 4. During development
 make lint && make fix-code  # Code quality check and fix
 
-# 4. Pre-commit verification (must execute)
+# 5. Pre-commit verification (must execute)
+export FOOTBALL_PREDICTION_ML_MODE=mock
+export SKIP_ML_MODEL_LOADING=true
 make test.unit.ci     # Minimal CI verification (fastest)
 make security-check   # Security check
+
+# 6. Optional: Full verification if time permits
+make ci               # Complete CI verification including coverage
 ```
 
 ### Pre-commit Full Verification
@@ -446,12 +460,38 @@ make ci               # Complete CI verification (if time permits)
 5. Add corresponding tests: `tests/unit/database/`
 
 ### Debugging Production Issues
-1. View logs: `make logs` or `make dev-logs`
-2. Check health status: `curl http://localhost:8000/health`
-3. Monitor metrics: `http://localhost:8000/api/v1/metrics`
-4. Check Celery tasks: http://localhost:5555 (Flower dashboard)
-5. Database diagnosis: `make db-shell` → `\dt` view tables
-6. Redis inspection: `make redis-shell` → `KEYS *`
+```bash
+# 1. View application logs
+make logs              # All service logs
+make logs-app          # Application logs only
+make logs-db           # Database logs only
+make logs-redis        # Redis logs only
+
+# 2. Check service health
+curl http://localhost:8000/health              # Basic health check
+curl http://localhost:8000/health/system       # System resources
+curl http://localhost:8000/health/database     # Database connectivity
+
+# 3. Monitor metrics and performance
+curl http://localhost:8000/api/v1/metrics       # Prometheus metrics
+http://localhost:8000/docs                      # API documentation
+
+# 4. Check background tasks
+http://localhost:5555                           # Flower dashboard (Celery tasks)
+
+# 5. Database diagnosis
+make db-shell                                   # PostgreSQL terminal
+\dt                                            # List all tables
+SELECT COUNT(*) FROM matches;                   # Check data volume
+
+# 6. Cache and queue inspection
+make redis-shell                                 # Redis CLI
+KEYS *                                          # View all keys
+INFO memory                                     # Memory usage
+
+# 7. Pipeline stability monitoring
+./monitor_l2_stability.sh                       # Real-time L2 monitoring
+```
 
 ## 🛠️ Architecture Principles
 
@@ -592,6 +632,24 @@ python src/ml/football_prediction_pipeline.py
 python src/models/train_v1_final.py
 ```
 
+### Monitoring and Stability Tools
+```bash
+# Monitor L2 pipeline stability
+./monitor_l2_stability.sh              # Real-time L2 stability monitoring
+
+# Restart pipeline services
+./scripts/restart_pipeline.sh           # Safe pipeline restart
+
+# Smoke test backfill operations
+python scripts/smoke_test_backfill.py   # Quick backfill validation
+
+# Data collection discovery
+python scripts/fotmob_league_discovery.py  # Explore available leagues
+
+# Model validation
+python src/utils/prediction_validator.py   # Validate prediction outputs
+```
+
 ## 🔄 Advanced Development Workflows
 
 ### FotMob Data Collection System
@@ -603,6 +661,18 @@ python scripts/run_fotmob_scraper.py --date 2024-01-15
 
 # Batch data collection (date range)
 python scripts/run_fotmob_scraper.py --start-date 2024-01-01 --end-date 2024-01-31
+
+# Backfill operations with different engines
+python scripts/backfill_details_fotmob.py        # FotMob engine backfill
+python scripts/backfill_details_legacy_fbref.py  # Legacy FBRef engine
+python scripts/backfill_details_legacy_playwright.py  # Legacy Playwright engine
+
+# Historical data collection
+python scripts/backfill_fotmob_history.py        # Historical match data
+
+# FotMob demo and exploration
+python scripts/fotmob_history_demo.py            # Demo collection workflow
+python scripts/fotmob_league_discovery.py        # Explore available leagues
 
 # View collected data
 ls -la data/fotmob/
@@ -786,7 +856,7 @@ curl -X POST http://localhost:8000/api/v1/data/etl \
 | **Dependency Issues** | Run `make clean-all && make dev` to rebuild from scratch |
 | **ML Model Loading Failed** | Check model file paths, view `mlruns/` and `models/trained/` directories |
 | **Celery Task Failures** | View logs `make logs`, check Redis connection |
-| **Coverage < 78%** | Run `make coverage` or `./ci-verify.sh` (if exists) to see specific coverage gaps |
+| **Coverage < 6.0%** | Run `make coverage` or `make ci` to see specific coverage gaps |
 | **Docker Build Failures** | Check `Dockerfile` and ensure all dependencies in requirements*.txt |
 | **Missing ci-verify.sh** | Use `make ci` for complete local verification instead |
 
@@ -801,7 +871,7 @@ curl -X POST http://localhost:8000/api/v1/data/etl \
 
 ### CI/CD and Quality Gates
 - **GitHub Actions**: `.github/workflows/` for automated testing and deployment
-- **Coverage Requirement**: Minimum 78% test coverage for CI to pass
+- **Coverage Requirement**: Minimum 6.0% test coverage for CI to pass (config/quality_baseline.json)
 - **Quality Gates**: Ruff linting, Bandit security, MyPy type checking
 - **Container Health**: Database and Redis health checks in docker-compose
 
@@ -823,7 +893,7 @@ curl -X POST http://localhost:8000/api/v1/data/etl \
 5. **Service Health** - Run `make status` to check all services before development
 6. **AI-First Maintenance** - Project uses AI-assisted development, prioritize architectural integrity and code quality
 7. **ML Model Management** - All ML-related code is in `src/ml/` directory, use MLflow for version control
-8. **Coverage Requirement** - Maintain minimum 78% test coverage for CI to pass
+8. **Coverage Requirement** - Maintain minimum 6.0% test coverage for CI to pass (config/quality_baseline.json)
 9. **Security First** - Run `make security-check` before committing changes
 
 ## 🎯 Developer Must-Know

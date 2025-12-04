@@ -21,6 +21,7 @@ class League(BaseModel):
     country: Mapped[str] = mapped_column(String(50), nullable=False)
     season: Mapped[str] = mapped_column(String(20), nullable=False)
     external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    fotmob_id: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)  # 新增FotMob ID字段
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, onupdate=datetime.utcnow)

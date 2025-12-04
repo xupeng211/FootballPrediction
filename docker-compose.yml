@@ -214,7 +214,7 @@ services:
       "--schedule=/tmp/celerybeat-schedule"
     ]
 
-  # L2深度数据采集器 - 专门处理阵容和详细统计数据
+  # L2深度数据采集器 - FotMob版本 (新架构)
   data-collector-l2:
     build:
       context: .
@@ -229,6 +229,11 @@ services:
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-development-only}
       - FOOTBALL_DATA_API_KEY=${FOOTBALL_DATA_API_KEY}
       - PYTHONPATH=/app
+      - POSTGRES_HOST=${POSTGRES_HOST:-db}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-football_prediction}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres-dev-password}
     depends_on:
       db:
         condition: service_healthy
@@ -239,8 +244,9 @@ services:
       - ./scripts:/app/scripts
       - ./models:/app/models
       - ./logs:/app/logs
+      - ./data:/app/data  # FotMob数据存储目录
     restart: always  # 关键！确保自动重启
-    command: ["python", "scripts/backfill_details.py"]
+    command: ["python", "scripts/backfill_details_fotmob.py"]
     healthcheck:
       test: ["CMD", "python", "-c", "import psycopg2; psycopg2.connect('postgresql://postgres:postgres-dev-password@db:5432/football_prediction').close()"]
       interval: 60s

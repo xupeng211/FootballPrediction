@@ -50,6 +50,7 @@ class Match(BaseModel):
 
     # 基本字段
     id = Column(Integer, primary_key=True)
+    fotmob_id = Column(String(50), nullable=True, index=True)  # FotMob外部ID
     home_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     home_score = Column(Integer, default=0)
