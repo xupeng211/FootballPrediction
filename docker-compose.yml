@@ -246,7 +246,7 @@ services:
       - ./logs:/app/logs
       - ./data:/app/data  # FotMob数据存储目录
     restart: always  # 关键！确保自动重启
-    command: ["python", "scripts/backfill_details_fotmob.py"]
+    command: ["python", "scripts/backfill_details_fotmob_v2.py"]
     healthcheck:
       test: ["CMD", "python", "-c", "import psycopg2; psycopg2.connect('postgresql://postgres:postgres-dev-password@db:5432/football_prediction').close()"]
       interval: 60s

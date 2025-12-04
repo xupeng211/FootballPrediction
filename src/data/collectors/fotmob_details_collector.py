@@ -10,7 +10,7 @@ FotMob 比赛详情采集器
 import asyncio
 import json
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Dict, List
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -84,18 +84,39 @@ class FotmobDetailsCollector:
         self.logger = logging.getLogger(__name__)
         self.session = None
         self.base_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            # 核心请求头 - 模拟最新 Chrome 131
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
             "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+            "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8",
             "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Referer": "https://www.fotmob.com/",
-            "Origin": "https://www.fotmob.com",
-            "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not_A Brand";v="99"',
+
+            # 浏览器安全头 - 最新 Chrome 指纹
+            "sec-ch-ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
+            "sec-ch-ua-arch": '"x86"',
+            "sec-ch-ua-bitness": '"64"',
+
+            # 来源和引用 - 模拟真实浏览
+            "Referer": "https://www.fotmob.com/matches",
+            "Origin": "https://www.fotmob.com",
+
+            # Fetch API 相关头
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
+            "sec-fetch-user": "?1",
+
+            # 缓存控制
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+
+            # 连接管理
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+
+            # DNT (Do Not Track) - 可选
+            # "DNT": "1",
         }
 
     async def _init_session(self):
@@ -128,46 +149,210 @@ class FotmobDetailsCollector:
         Returns:
             MatchDetails 对象或 None
         """
-        self.logger.info(f"开始采集比赛详情，match_id: {match_id}")
+
+    async def get_match_details(self, match_id: str) -> Optional[Dict[str, Any]]:
+        """
+        获取比赛详情数据 (兼容测试用的新接口)
+
+        Args:
+            match_id: FotMob 比赛 ID
+
+        Returns:
+            比赛详情数据，包含结构化的阵容、射门和统计信息
+            如果获取失败返回 None
+        """
+        # 调用现有的 matchDetails API endpoint
+        url = f"https://www.fotmob.com/api/matchDetails?matchId={match_id}"
 
         try:
             await self._init_session()
 
-            # 使用已验证的工作接口
-            raw_data = await self._fetch_match_data(match_id)
+            self.logger.info(f"Fetching match details for match_id: {match_id}")
+            response = await self.session.get(url, headers=self.base_headers, timeout=30.0)
 
-            if not raw_data:
-                self.logger.warning(f"无法获取比赛 {match_id} 的数据")
+            if response.status_code == 200:
+                # 处理响应数据
+                if hasattr(response, "json"):
+                    if asyncio.iscoroutinefunction(response.json):
+                        data = await response.json()
+                    elif callable(response.json):
+                        data = response.json()
+                    else:
+                        # 如果json是属性而不是方法
+                        data = response.json
+                else:
+                    data = json.loads(response.text)
+
+                # 提取并结构化数据
+                structured_data = self._structure_match_data(data)
+                self.logger.info(f"Successfully fetched details for match {match_id}")
+                return structured_data
+            else:
+                self.logger.error(f"HTTP {response.status_code} when fetching match {match_id}")
                 return None
-
-            # 解析基础信息
-            match_details = self._parse_basic_info(raw_data, match_id)
-
-            if not match_details:
-                self.logger.warning(f"解析比赛 {match_id} 基础信息失败")
-                return None
-
-            # 尝试解析统计数据
-            stats = self._parse_stats(raw_data)
-            if stats:
-                match_details.stats = stats
-
-            # 尝试解析阵容数据
-            home_lineup, away_lineup = self._parse_lineups(raw_data)
-            if home_lineup:
-                match_details.home_lineup = home_lineup
-            if away_lineup:
-                match_details.away_lineup = away_lineup
-
-            # 保存原始数据
-            match_details.raw_data = raw_data
-
-            self.logger.info(f"比赛 {match_id} 详情采集完成")
-            return match_details
 
         except Exception as e:
-            self.logger.error(f"采集比赛 {match_id} 详情时发生错误: {e}")
+            self.logger.error(f"Error fetching match details for {match_id}: {str(e)}")
             return None
+
+    def _structure_match_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        结构化原始比赛数据
+
+        Args:
+            raw_data: FotMob API 返回的原始数据
+
+        Returns:
+            结构化的比赛数据
+        """
+        structured = {
+            "matchId": self._extract_match_id(raw_data),
+            "match_info": self._extract_match_info(raw_data),
+            "lineup": self._extract_lineup_data(raw_data),
+            "shots": self._extract_shot_data(raw_data),
+            "stats": self._extract_match_stats(raw_data),
+            "fetched_at": datetime.utcnow().isoformat()
+        }
+
+        return structured
+
+    def _extract_match_id(self, data: Dict[str, Any]) -> str:
+        """提取比赛 ID"""
+        try:
+            return data.get("match", {}).get("matchId", "")
+        except Exception:
+            return ""
+
+    def _extract_match_info(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """提取比赛基本信息"""
+        try:
+            match = data.get("match", {})
+            return {
+                "home_team": match.get("home", {}).get("name", ""),
+                "away_team": match.get("away", {}).get("name", ""),
+                "home_score": match.get("home", {}).get("score", 0),
+                "away_score": match.get("away", {}).get("score", 0),
+                "status": match.get("status", {}),
+                "start_time": match.get("status", {}).get("startTimeStr", ""),
+                "finished": match.get("status", {}).get("finished", False)
+            }
+        except Exception as e:
+            self.logger.error(f"Error extracting match info: {str(e)}")
+            return {}
+
+    def _extract_lineup_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        提取阵容数据
+
+        Returns:
+            {
+                "home": {
+                    "starters": [球员列表],
+                    "substitutes": [替补列表]
+                },
+                "away": {
+                    "starters": [球员列表],
+                    "substitutes": [替补列表]
+                }
+            }
+        """
+        try:
+            lineup_content = data.get("content", {}).get("lineup", {})
+            lineup_data = {
+                "home": self._process_team_lineup(lineup_content.get("home", {})),
+                "away": self._process_team_lineup(lineup_content.get("away", {}))
+            }
+            return lineup_data
+        except Exception as e:
+            self.logger.error(f"Error extracting lineup data: {str(e)}")
+            return {"home": {"starters": [], "substitutes": []}, "away": {"starters": [], "substitutes": []}}
+
+    def _process_team_lineup(self, team_lineup: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+        """处理单个球队的阵容数据"""
+        return {
+            "starters": self._process_players(team_lineup.get("starters", [])),
+            "substitutes": self._process_players(team_lineup.get("substitutes", []))
+        }
+
+    def _process_players(self, players: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """处理球员数据列表"""
+        processed_players = []
+        for player in players:
+            processed_player = {
+                "id": player.get("id"),
+                "name": player.get("name", ""),
+                "position": player.get("position", ""),
+                "shirtNumber": player.get("shirtNumber"),
+                "captain": player.get("captain", False)
+            }
+            processed_players.append(processed_player)
+        return processed_players
+
+    def _extract_shot_data(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        提取射门数据
+
+        Returns:
+            射门数据列表，包含 xG 值、射门类型等信息
+        """
+        try:
+            shotmap_content = data.get("content", {}).get("shotmap", {})
+            shots = shotmap_content.get("shots", [])
+
+            processed_shots = []
+            for shot in shots:
+                processed_shot = {
+                    "id": shot.get("id"),
+                    "team": shot.get("team"),
+                    "player": shot.get("player", {}),
+                    "minute": shot.get("minute"),
+                    "xg": shot.get("xg", 0.0),
+                    "situation": shot.get("situation"),
+                    "shotType": shot.get("shotType"),
+                    "isGoal": shot.get("isGoal", False),
+                    "bodyPart": shot.get("bodyPart")
+                }
+                processed_shots.append(processed_shot)
+
+            return processed_shots
+        except Exception as e:
+            self.logger.error(f"Error extracting shot data: {str(e)}")
+            return []
+
+    def _extract_match_stats(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        提取比赛统计数据
+
+        Returns:
+            统计数据列表，如控球率、射门数等
+        """
+        try:
+            stats_content = data.get("content", {}).get("stats", {})
+            stats = stats_content.get("stats", [])
+
+            processed_stats = []
+            for stat_group in stats:
+                stat_type = stat_group.get("type", "")
+                stat_values = stat_group.get("stats", [])
+
+                for stat in stat_values:
+                    processed_stat = {
+                        "type": stat_type,
+                        "statType": stat.get("type", ""),
+                        "value": stat.get("value", "")
+                    }
+                    processed_stats.append(processed_stat)
+
+            return processed_stats
+        except Exception as e:
+            self.logger.error(f"Error extracting match stats: {str(e)}")
+            return []
+
+    # 添加 headers 属性以兼容测试
+    @property
+    def headers(self) -> Dict[str, str]:
+        """获取 HTTP 头部"""
+        return self.base_headers
 
     async def _fetch_match_data(self, match_id: str) -> dict[str, Any] | None:
         """获取比赛原始数据"""

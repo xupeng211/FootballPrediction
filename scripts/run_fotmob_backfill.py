@@ -22,7 +22,7 @@ from sqlalchemy import select, update, insert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from src.data.collectors.fotmob_universal_collector import FotMobUniversalCollector
-from src.database.definitions import get_async_session
+from src.database.definitions import get_async_session, initialize_database
 from src.database.models.league import League
 from src.database.models.match import Match
 
@@ -35,12 +35,12 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BackfillConfig:
-    """回填配置"""
+    """回填配置 - 首席数据架构师优化版"""
     seasons: List[str]
-    max_concurrent_leagues: int = 10
-    max_concurrent_requests: int = 20
-    batch_size: int = 100
-    rate_limit_delay: float = 0.2
+    max_concurrent_leagues: int = 5  # 降低并发避免过载
+    max_concurrent_requests: int = 10  # 降低并发避免过载
+    batch_size: int = 50  # 减小批处理大小
+    rate_limit_delay: float = 1.5  # 增加延迟，追求稳定
     retry_attempts: int = 3
     dry_run: bool = False
     skip_existing: bool = True
@@ -446,6 +446,7 @@ async def run_backfill(
 async def main():
     """主函数"""
     import argparse
+    import os
 
     parser = argparse.ArgumentParser(description='FotMob智能回填引擎')
     parser.add_argument('--seasons', nargs='+', help='要回填的赛季 (如: 2023/2024 2022/2023)')
@@ -454,6 +455,11 @@ async def main():
     parser.add_argument('--recent-years', type=int, default=5, help='回填最近N年的数据')
 
     args = parser.parse_args()
+
+    # 初始化数据库
+    database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres-dev-password@db:5432/football_prediction')
+    logger.info(f"🔧 初始化数据库: {database_url}")
+    initialize_database(database_url)
 
     # 确定赛季
     if args.seasons:
