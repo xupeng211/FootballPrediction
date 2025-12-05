@@ -4,6 +4,7 @@
 """
 
 from typing import Any, Optional
+
 # Kafka配置
 KAFKA_CONFIG = {
     "bootstrap_servers": ["localhost:9092"],
@@ -19,9 +20,21 @@ KAFKA_CONFIG = {
 # 流处理主题配置
 STREAM_TOPICS = {
     "match_events": {"topic": "match_events", "partitions": 3, "replication_factor": 1},
-    "prediction_updates": {"topic": "prediction_updates", "partitions": 2, "replication_factor": 1},
-    "user_activities": {"topic": "user_activities", "partitions": 2, "replication_factor": 1},
-    "system_metrics": {"topic": "system_metrics", "partitions": 1, "replication_factor": 1},
+    "prediction_updates": {
+        "topic": "prediction_updates",
+        "partitions": 2,
+        "replication_factor": 1,
+    },
+    "user_activities": {
+        "topic": "user_activities",
+        "partitions": 2,
+        "replication_factor": 1,
+    },
+    "system_metrics": {
+        "topic": "system_metrics",
+        "partitions": 1,
+        "replication_factor": 1,
+    },
 }
 
 # 流处理消费者配置
@@ -45,12 +58,18 @@ STREAM_PROCESSING_CONFIG = {
         "retry_delay": 1.0,
         "dead_letter_queue": "dlq_stream_processing",
     },
-    "monitoring": {"enabled": True, "metrics_interval": 60, "performance_tracking": True},
+    "monitoring": {
+        "enabled": True,
+        "metrics_interval": 60,
+        "performance_tracking": True,
+    },
 }
 
 # 流处理使用示例
 import asyncio
 from kafka import KafkaConsumer, KafkaProducer
+
+
 class StreamProcessor:
     def __init__(self):
         self.consumer_config = STREAM_CONSUMER_CONFIG

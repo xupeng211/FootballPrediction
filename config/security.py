@@ -6,6 +6,7 @@ Security Configuration
 """
 
 import os
+
 # Optional imports remain
 
 
@@ -18,27 +19,33 @@ class SecuritySettings:
         self.debug = os.getenv("DEBUG", "false").lower() == "true"
 
         # JWT设置
-        self.jwt_secret_key = os.getenv("JWT_SECRET_KEY",
-    "your-secret-key-here-please-change-this")
+        self.jwt_secret_key = os.getenv(
+            "JWT_SECRET_KEY", "your-secret-key-here-please-change-this"
+        )
         self.jwt_algorithm = os.getenv("JWT_ALGORITHM", "HS256")
-        self.jwt_access_token_expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES",
-    "30"))
-        self.jwt_refresh_token_expire_days = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS",
-    "7"))
+        self.jwt_access_token_expire_minutes = int(
+            os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+        )
+        self.jwt_refresh_token_expire_days = int(
+            os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7")
+        )
 
         # 速率限制
         self.rate_limit_per_minute = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
         self.rate_limit_burst = int(os.getenv("RATE_LIMIT_BURST", "10"))
-        self.rate_limit_enabled = os.getenv("RATE_LIMIT_ENABLED",
-    "true").lower() == "true"
+        self.rate_limit_enabled = (
+            os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
+        )
 
         # CORS设置
         self.cors_origins = (
             os.getenv("CORS_ORIGINS", "*").split(",")
-            if os.getenv("CORS_ORIGINS") else ["*"]
+            if os.getenv("CORS_ORIGINS")
+            else ["*"]
         )
-        self.cors_allow_credentials = os.getenv("CORS_ALLOW_CREDENTIALS",
-    "false").lower() == "true"
+        self.cors_allow_credentials = (
+            os.getenv("CORS_ALLOW_CREDENTIALS", "false").lower() == "true"
+        )
         self.cors_allow_methods = os.getenv(
             "CORS_ALLOW_METHODS", "GET,POST,PUT,DELETE,OPTIONS"
         ).split(",")
@@ -50,8 +57,9 @@ class SecuritySettings:
         self.ssl_key_path = os.getenv("SSL_KEY_PATH")
 
         # 安全头
-        self.secure_headers_enabled = os.getenv("SECURE_HEADERS_ENABLED",
-    "true").lower() == "true"
+        self.secure_headers_enabled = (
+            os.getenv("SECURE_HEADERS_ENABLED", "true").lower() == "true"
+        )
         self.x_frame_options = os.getenv("X_FRAME_OPTIONS", "DENY")
         self.x_content_type_options = os.getenv("X_CONTENT_TYPE_OPTIONS", "nosniff")
         self.x_xss_protection = os.getenv("X_XSS_PROTECTION", "1; mode=block")
@@ -87,22 +95,25 @@ class SecuritySettings:
 
         # 会话安全
         self.session_timeout_minutes = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
-        self.session_secure_cookie = os.getenv("SESSION_SECURE_COOKIE",
-    "true").lower() == "true"
+        self.session_secure_cookie = (
+            os.getenv("SESSION_SECURE_COOKIE", "true").lower() == "true"
+        )
         self.session_http_only_cookie = (
             os.getenv("SESSION_HTTP_ONLY_COOKIE", "true").lower() == "true"
         )
         self.session_samesite_cookie = os.getenv("SESSION_SAMESITE_COOKIE", "Strict")
 
         # 审计日志
-        self.audit_log_enabled = os.getenv("AUDIT_LOG_ENABLED",
-    "true").lower() == "true"
+        self.audit_log_enabled = (
+            os.getenv("AUDIT_LOG_ENABLED", "true").lower() == "true"
+        )
         self.audit_log_level = os.getenv("AUDIT_LOG_LEVEL", "INFO").upper()
         self.audit_log_file = os.getenv("AUDIT_LOG_FILE", "/var/log/app/audit.log")
 
         # 数据保护
-        self.encrypt_data_at_rest = os.getenv("ENCRYPT_DATA_AT_REST",
-    "true").lower() == "true"
+        self.encrypt_data_at_rest = (
+            os.getenv("ENCRYPT_DATA_AT_REST", "true").lower() == "true"
+        )
         self.encrypt_data_in_transit = (
             os.getenv("ENCRYPT_DATA_IN_TRANSIT", "true").lower() == "true"
         )
@@ -181,7 +192,9 @@ def get_security_headers() -> Dict[str, str]:
         headers["X-XSS-Protection"] = security_settings.x_xss_protection
 
     if security_settings.force_https:
-        headers["Strict-Transport-Security"] = security_settings.strict_transport_security
+        headers["Strict-Transport-Security"] = (
+            security_settings.strict_transport_security
+        )
 
     return headers
 

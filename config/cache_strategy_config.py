@@ -4,6 +4,7 @@
 """
 
 from typing import Any, Optional
+
 # 缓存策略配置
 CACHE_STRATEGIES = {
     "cache_invalidation": {
@@ -30,6 +31,7 @@ CACHE_STRATEGIES = {
     },
 }
 
+
 # 缓存键命名策略
 class CacheKeyManager:
     @staticmethod
@@ -48,6 +50,7 @@ class CacheKeyManager:
         """解析缓存键"""
         parts = key.split(":")
         return {part.split(":") for part in parts if ":" in part}
+
 
 # 缓存装饰器
 def cache_result(prefix: str, ttl: int = 300, level: str = "L1_MEMORY"):
