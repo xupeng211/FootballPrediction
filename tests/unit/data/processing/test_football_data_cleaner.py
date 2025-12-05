@@ -20,7 +20,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any, List
+from typing import Any
 import warnings
 
 # 添加项目根目录到路径
@@ -33,8 +33,8 @@ sys.path.insert(0, str(project_root))
 # 导入测试目标
 try:
     from src.data.processing.football_data_cleaner import (
-        FootballDataCleaner,
-        clean_football_data,
+        FootballDataCleaner
+        clean_football_data
     )
 
     IMPORTS_AVAILABLE = True
@@ -55,46 +55,46 @@ class TestFootballDataCleaner:
     def perfect_api_response(self):
         """完美的API响应fixture - 基准测试数据"""
         return {
-            "id": 12345,
-            "utcDate": "2025-01-15T15:00:00Z",
-            "status": "FINISHED",
-            "matchday": 21,
+            "id": 12345
+            "utcDate": "2025-01-15T15:00:00Z"
+            "status": "FINISHED"
+            "matchday": 21
             "season": {
-                "id": 2024,
-                "startDate": "2024-08-01",
-                "endDate": "2025-05-01",
-                "currentMatchday": 21,
-            },
+                "id": 2024
+                "startDate": "2024-08-01"
+                "endDate": "2025-05-01"
+                "currentMatchday": 21
+            }
             "score": {
-                "winner": "HOME_TEAM",
-                "duration": "REGULAR",
-                "fullTime": {"home": 3, "away": 1},
-                "halfTime": {"home": 1, "away": 1},
-                "extraTime": None,
-                "penalties": None,
-            },
+                "winner": "HOME_TEAM"
+                "duration": "REGULAR"
+                "fullTime": {"home": 3, "away": 1}
+                "halfTime": {"home": 1, "away": 1}
+                "extraTime": None
+                "penalties": None
+            }
             "homeTeam": {
-                "id": 57,
-                "name": "Arsenal FC",
-                "shortName": "Arsenal",
-                "tla": "ARS",
-                "crest": "https://crests.football-data.org/arsenal.svg",
-            },
+                "id": 57
+                "name": "Arsenal FC"
+                "shortName": "Arsenal"
+                "tla": "ARS"
+                "crest": "https://crests.football-data.org/arsenal.svg"
+            }
             "awayTeam": {
-                "id": 61,
-                "name": "Chelsea FC",
-                "shortName": "Chelsea",
-                "tla": "CHE",
-                "crest": "https://crests.football-data.org/chelsea.svg",
-            },
+                "id": 61
+                "name": "Chelsea FC"
+                "shortName": "Chelsea"
+                "tla": "CHE"
+                "crest": "https://crests.football-data.org/chelsea.svg"
+            }
             "competition": {
-                "id": 39,
-                "name": "Premier League",
-                "code": "PL",
-                "type": "LEAGUE",
-                "emblem": "https://crests.football-data.org/pl.png",
-            },
-            "venue": "Emirates Stadium",
+                "id": 39
+                "name": "Premier League"
+                "code": "PL"
+                "type": "LEAGUE"
+                "emblem": "https://crests.football-data.org/pl.png"
+            }
+            "venue": "Emirates Stadium"
         }
 
     @pytest.fixture
@@ -102,19 +102,19 @@ class TestFootballDataCleaner:
         """样本比赛DataFrame fixture"""
         return pd.DataFrame(
             {
-                "match_id": [1, 2, 3],
-                "home_team_id": [1, 2, 3],
-                "away_team_id": [2, 3, 1],
-                "home_score": [2, 1, 0],
-                "away_score": [1, 1, 2],
+                "match_id": [1, 2, 3]
+                "home_team_id": [1, 2, 3]
+                "away_team_id": [2, 3, 1]
+                "home_score": [2, 1, 0]
+                "away_score": [1, 1, 2]
                 "match_date": [
-                    pd.Timestamp("2025-01-01"),
-                    pd.Timestamp("2025-01-02"),
-                    pd.Timestamp("2025-01-03"),
-                ],
-                "home_win_odds": [2.1, 1.8, 3.2],
-                "draw_odds": [3.4, 3.6, 3.1],
-                "away_win_odds": [3.5, 4.2, 2.3],
+                    pd.Timestamp("2025-01-01")
+                    pd.Timestamp("2025-01-02")
+                    pd.Timestamp("2025-01-03")
+                ]
+                "home_win_odds": [2.1, 1.8, 3.2]
+                "draw_odds": [3.4, 3.6, 3.1]
+                "away_win_odds": [3.5, 4.2, 2.3]
             }
         )
 
@@ -135,9 +135,9 @@ class TestFootballDataCleaner:
     def test_cleaner_initialization_custom_config(self):
         """测试清洗器自定义配置初始化"""
         custom_config = {
-            "remove_duplicates": False,
-            "outlier_method": "zscore",
-            "missing_strategy": "drop_rows",
+            "remove_duplicates": False
+            "outlier_method": "zscore"
+            "missing_strategy": "drop_rows"
         }
         cleaner = FootballDataCleaner(custom_config)
 
@@ -208,24 +208,24 @@ class TestFootballDataCleaner:
         duplicated_data = pd.DataFrame(
             {
                 "match_id": [1, 1, 2, 2, 3],  # 重复的match_id
-                "home_team_id": [1, 1, 2, 2, 3],
-                "away_team_id": [2, 2, 3, 3, 1],
+                "home_team_id": [1, 1, 2, 2, 3]
+                "away_team_id": [2, 2, 3, 3, 1]
                 "match_date": [
-                    pd.Timestamp("2025-01-01"),
+                    pd.Timestamp("2025-01-01")
                     pd.Timestamp("2025-01-01"),  # 重复
-                    pd.Timestamp("2025-01-02"),
+                    pd.Timestamp("2025-01-02")
                     pd.Timestamp("2025-01-02"),  # 重复
-                    pd.Timestamp("2025-01-03"),
-                ],
+                    pd.Timestamp("2025-01-03")
+                ]
             }
         )
 
         # 创建包含所有必要配置的cleaner
         config = {
-            "remove_duplicates": True,
+            "remove_duplicates": True
             "validate_data": True,  # 添加缺失的配置
-            "handle_missing": True,
-            "detect_outliers": True,
+            "handle_missing": True
+            "detect_outliers": True
             "outlier_method": "iqr",  # 异常值检测方法
         }
         cleaner = FootballDataCleaner(config)
@@ -244,12 +244,12 @@ class TestFootballDataCleaner:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "missing_field,expected_error",
+        "missing_field,expected_error"
         [
-            ("id", "缺少external_id字段"),
-            ("homeTeam", "缺少球队ID信息"),
-            ("awayTeam", "缺少球队ID信息"),
-        ],
+            ("id", "缺少external_id字段")
+            ("homeTeam", "缺少球队ID信息")
+            ("awayTeam", "缺少球队ID信息")
+        ]
     )
     def test_parse_match_json_missing_critical_fields(
         self, cleaner, perfect_api_response, missing_field, expected_error
@@ -314,7 +314,7 @@ class TestFootballDataCleaner:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "datetime_str,should_use_current",
+        "datetime_str,should_use_current"
         [
             ("2025-01-15T15:00:00Z", False),  # 标准UTC格式
             ("2025-01-15T15:00:00+00:00", False),  # 标准格式带时区
@@ -323,7 +323,7 @@ class TestFootballDataCleaner:
             ("2025-13-32T25:99:99Z", True),  # 无效日期时间
             ("2025-01-15", False),  # 只有日期，实际上是有效格式
             ("2025-01-15T15:00:00.123Z", False),  # 带毫秒
-        ],
+        ]
     )
     def test_parse_datetime_various_formats(
         self, cleaner, datetime_str, should_use_current
@@ -349,8 +349,8 @@ class TestFootballDataCleaner:
     ):
         """测试带有raw_data包装的API响应"""
         wrapped_data = {
-            "raw_data": perfect_api_response,
-            "metadata": {"source": "api", "timestamp": "2025-01-15T16:00:00Z"},
+            "raw_data": perfect_api_response
+            "metadata": {"source": "api", "timestamp": "2025-01-15T16:00:00Z"}
         }
 
         result = cleaner.parse_match_json(wrapped_data)
@@ -380,7 +380,7 @@ class TestFootballDataCleaner:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "home_score,away_score,should_be_invalid",
+        "home_score,away_score,should_be_invalid"
         [
             (0, 0, False),  # 正常比分
             (1, 0, False),  # 正常比分
@@ -390,7 +390,7 @@ class TestFootballDataCleaner:
             (25, 0, True),  # 过高比分 - 不合理
             (0, 30, True),  # 过高比分 - 不合理
             (100, 50, True),  # 极端比分 - 不合理
-        ],
+        ]
     )
     def test_advanced_validation_score_ranges(
         self, cleaner, home_score, away_score, should_be_invalid
@@ -399,12 +399,12 @@ class TestFootballDataCleaner:
         # 创建包含测试比分的数据
         test_data = pd.DataFrame(
             {
-                "match_id": [1],
-                "home_team_id": [1],
-                "away_team_id": [2],
-                "home_score": [home_score],
-                "away_score": [away_score],
-                "match_date": [pd.Timestamp("2025-01-01")],
+                "match_id": [1]
+                "home_team_id": [1]
+                "away_team_id": [2]
+                "home_score": [home_score]
+                "away_score": [away_score]
+                "match_date": [pd.Timestamp("2025-01-01")]
             }
         )
 
@@ -428,7 +428,7 @@ class TestFootballDataCleaner:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "home_odds,draw_odds,away_odds,should_be_invalid",
+        "home_odds,draw_odds,away_odds,should_be_invalid"
         [
             (1.5, 3.6, 5.2, False),  # 正常赔率
             (1.01, 50.0, 100.0, False),  # 边缘但合理
@@ -437,7 +437,7 @@ class TestFootballDataCleaner:
             (1.2, 1.1, 1.0, True),  # 赔率和为1.0 - 不合理
             (150.0, 200.0, 250.0, True),  # 过高赔率 - 不合理
             (-1.0, 2.0, 3.0, True),  # 负数赔率 - 不合理
-        ],
+        ]
     )
     def test_advanced_validation_odds_ranges(
         self, cleaner, home_odds, draw_odds, away_odds, should_be_invalid
@@ -446,10 +446,10 @@ class TestFootballDataCleaner:
         # 创建包含测试赔率的数据
         test_data = pd.DataFrame(
             {
-                "match_id": [1],
-                "home_win_odds": [home_odds],
-                "draw_odds": [draw_odds],
-                "away_win_odds": [away_odds],
+                "match_id": [1]
+                "home_win_odds": [home_odds]
+                "draw_odds": [draw_odds]
+                "away_win_odds": [away_odds]
             }
         )
 
@@ -475,11 +475,11 @@ class TestFootballDataCleaner:
         future_date = datetime.now() + timedelta(days=400)  # 超过1年
         test_data = pd.DataFrame(
             {
-                "match_id": [1, 2],
+                "match_id": [1, 2]
                 "match_date": [
                     pd.Timestamp("2025-01-01"),  # 正常日期
                     future_date,  # 过远的未来日期
-                ],
+                ]
             }
         )
 
@@ -498,10 +498,10 @@ class TestFootballDataCleaner:
         # 创建主队相同的不合理数据
         test_data = pd.DataFrame(
             {
-                "match_id": [1, 2],
+                "match_id": [1, 2]
                 "home_team_id": [1, 1],  # 主队相同
                 "away_team_id": [2, 1],  # 第二场主客队相同
-                "match_date": [pd.Timestamp("2025-01-01"), pd.Timestamp("2025-01-02")],
+                "match_date": [pd.Timestamp("2025-01-01"), pd.Timestamp("2025-01-02")]
             }
         )
 
@@ -522,7 +522,7 @@ class TestFootballDataCleaner:
         # 创建包含不同缺失比例的数据
         test_data = pd.DataFrame(
             {
-                "match_id": [1, 2, 3, 4, 5, 6],
+                "match_id": [1, 2, 3, 4, 5, 6]
                 "home_score": [2, None, 1, None, 3, None],  # 50%缺失
                 "away_score": [1, 2, None, 0, None, 1],  # 50%缺失
                 "team_name": ["A", None, "C", "D", None, "F"],  # 33%缺失
@@ -544,9 +544,9 @@ class TestFootballDataCleaner:
 
         # 验证策略选择
         assert missing_info["home_score"]["strategy"] in [
-            "median",
-            "mean",
-            "model_based",
+            "median"
+            "mean"
+            "model_based"
         ]
         assert missing_info["team_name"]["strategy"] in ["mode", "model_based"]
 
@@ -580,16 +580,16 @@ class TestFootballDataCleaner:
                 "int16_range": [1000, 30000, 50000, 60000],  # 可以转换为uint16
                 "float_col": [1.1, 2.2, 3.3, 4.4],  # 可以优化为float32
                 "date_str_col": [
-                    "2025-01-01",
-                    "invalid",
-                    "2025-01-03",
-                    "2025-01-04",
+                    "2025-01-01"
+                    "invalid"
+                    "2025-01-03"
+                    "2025-01-04"
                 ],  # 日期字符串
                 "datetime_col": [
-                    "2025-01-01T10:00:00",
-                    "2025-01-02T11:00:00",
-                    None,
-                    "2025-01-04T12:00:00",
+                    "2025-01-01T10:00:00"
+                    "2025-01-02T11:00:00"
+                    None
+                    "2025-01-04T12:00:00"
                 ],  # datetime
             }
         )
@@ -599,8 +599,8 @@ class TestFootballDataCleaner:
         # 验证类型转换
         assert str(result["int8_range"].dtype) in ["uint8", "int64"]  # 可能优化为uint8
         assert str(result["int16_range"].dtype) in [
-            "uint16",
-            "int64",
+            "uint16"
+            "int64"
         ]  # 可能优化为uint16
         # 日期列可能因为包含'invalid'值而无法完全转换，但至少尝试了转换
         if result["date_str_col"].dtype.kind == "M":
@@ -624,10 +624,10 @@ class TestFootballDataCleaner:
         """测试便捷函数clean_match_data"""
         sample_data = pd.DataFrame(
             {
-                "match_id": [1, 2],
-                "home_team_id": [1, 2],
-                "away_team_id": [2, 1],
-                "match_date": ["2025-01-01", "2025-01-02"],
+                "match_id": [1, 2]
+                "home_team_id": [1, 2]
+                "away_team_id": [2, 1]
+                "match_date": ["2025-01-01", "2025-01-02"]
             }
         )
 
@@ -651,10 +651,10 @@ class TestFootballDataCleaner:
         # 测试odds类型
         odds_data = pd.DataFrame(
             {
-                "match_id": [1, 2],
-                "home_win_odds": [2.1, 1.8],
-                "draw_odds": [3.4, 3.6],
-                "away_win_odds": [3.5, 4.2],
+                "match_id": [1, 2]
+                "home_win_odds": [2.1, 1.8]
+                "draw_odds": [3.4, 3.6]
+                "away_win_odds": [3.5, 4.2]
             }
         )
         result_odds = clean_football_data(odds_data, "odds")
@@ -693,13 +693,13 @@ class TestFootballDataCleaner:
         # 创建大数据集
         large_data = pd.DataFrame(
             {
-                "match_id": range(10000),
-                "home_team_id": np.random.randint(1, 100, 10000),
-                "away_team_id": np.random.randint(1, 100, 10000),
-                "home_score": np.random.randint(0, 10, 10000),
-                "away_score": np.random.randint(0, 10, 10000),
-                "match_date": pd.date_range("2020-01-01", periods=10000, freq="D"),
-                "odds": np.random.uniform(1.1, 10.0, 10000),
+                "match_id": range(10000)
+                "home_team_id": np.random.randint(1, 100, 10000)
+                "away_team_id": np.random.randint(1, 100, 10000)
+                "home_score": np.random.randint(0, 10, 10000)
+                "away_score": np.random.randint(0, 10, 10000)
+                "match_date": pd.date_range("2020-01-01", periods=10000, freq="D")
+                "odds": np.random.uniform(1.1, 10.0, 10000)
             }
         )
 
@@ -770,11 +770,11 @@ class TestFootballDataCleaner:
 
         # 验证报告包含所有必需字段
         required_fields = [
-            "original_shape",
-            "cleaned_shape",
-            "cleaning_steps",
-            "data_reduction_ratio",
-            "cleaning_timestamp",
+            "original_shape"
+            "cleaned_shape"
+            "cleaning_steps"
+            "data_reduction_ratio"
+            "cleaning_timestamp"
         ]
         for field in required_fields:
             assert field in report, (
