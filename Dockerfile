@@ -13,8 +13,30 @@ ENV PYTHONUNBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/home/app/.local/bin:$PATH"
 
-# 更新包源并安装基础系统依赖
+# 更新包源并安装基础系统依赖 (包含Playwright浏览器依赖)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Playwright浏览器必需依赖 (使用标准Ubuntu包名)
+    libglib2.0-0 \
+    libnspr4 \
+    libnss3 \
+    libdbus-1-3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libxcb1 \
+    libxkbcommon0 \
+    libatspi2.0-0 \
+    libx11-6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libcairo2 \
+    libpango-1.0-0 \
+    libasound2 \
+    # 基础开发工具
     curl \
     cron \
     gcc \
@@ -25,7 +47,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     wget \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # 复制依赖文件
 COPY requirements.txt .
@@ -65,7 +88,9 @@ RUN pip install --no-cache-dir --prefer-binary \
     beautifulsoup4==4.12.3
 
 # 安装Playwright浏览器
-RUN playwright install chromium
+RUN playwright install chromium \
+    && playwright install-deps \
+    && echo "Playwright installation completed successfully"
 
 # ================== Development 阶段 ==================
 FROM base as development

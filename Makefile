@@ -38,7 +38,7 @@ DB_NAME := $(PROJECT_NAME)_db
 REDIS_NAME := $(PROJECT_NAME)_redis
 
 # .PHONY声明所有命令
-.PHONY: help dev prod clean shell logs db-shell test lint build format fix-code type-check security-check coverage test.unit test.all test-fast test-integration test-coverage-local
+.PHONY: help dev prod clean shell logs db-shell install test lint build format fix-code type-check security-check coverage test.unit test.all test-fast test-integration test-coverage-local run-l1 run-l2
 
 help: ## 📋 显示可用命令
 	@echo "$(BLUE)🐳 Football Prediction Docker Commands$(RESET)"
@@ -70,6 +70,12 @@ dev-stop: ## 开发/停止开发环境
 	@echo "$(YELLOW)⏹️ 停止开发环境...$(RESET)"
 	docker-compose down
 	@echo "$(GREEN)✅ 开发环境已停止$(RESET)"
+
+# 依赖管理
+install: ## 📦 安装项目依赖
+	@echo "$(YELLOW)📦 安装项目依赖...$(RESET)"
+	pip install -r requirements.txt
+	@echo "$(GREEN)✅ 依赖安装完成$(RESET)"
 
 # 生产环境命令
 prod: ## 生产/启动生产环境 (使用 docker-compose.prod.yml)
@@ -242,18 +248,46 @@ build-no-cache: ## 管理/无缓存构建镜像
 	@echo "$(GREEN)✅ 无缓存构建完成$(RESET)"
 
 # 数据库管理
-db-reset: ## 管理/重置数据库
-	@echo "$(YELLOW)🗄️ 重置数据库...$(RESET)"
-	docker-compose down -v
-	docker-compose up -d db redis
-	sleep 5
-	docker-compose exec app python -m alembic upgrade head
-	@echo "$(GREEN)✅ 数据库重置完成$(RESET)"
+db-reset: ## 管理/清空比赛数据表 (matches)
+	@echo "$(YELLOW)🗄️ 清空比赛数据表...$(RESET)"
+	docker-compose exec db psql -U postgres -d football_prediction -c "DELETE FROM matches;"
+	docker-compose exec db psql -U postgres -d football_prediction -c "DELETE FROM teams WHERE fotmob_external_id IS NOT NULL;"
+	@echo "$(GREEN)✅ 比赛数据表已清空$(RESET)"
 
 db-migrate: ## 管理/运行数据库迁移
 	@echo "$(YELLOW)🔄 运行数据库迁移...$(RESET)"
 	docker-compose exec app python -m alembic upgrade head
 	@echo "$(GREEN)✅ 数据库迁移完成$(RESET)"
+
+# 数据采集命令
+run-l1: ## 🏃 运行 L1 赛季数据采集
+	@echo "$(YELLOW)🏃 运行 L1 赛季数据采集...$(RESET)"
+	docker-compose exec app python3 src/jobs/run_season_fixtures.py
+
+run-l2: ## 🎯 运行 L2 详情数据采集 (旧版HTML解析)
+	@echo "$(YELLOW)🎯 运行 L2 详情数据采集 (旧版)...$(RESET)"
+	docker-compose exec app python3 src/jobs/run_l2_details.py
+
+# L2 API采集器命令
+run-l2-api: ## 🚀 运行 L2 API 详情数据采集
+	@echo "$(YELLOW)🚀 运行 L2 API 详情数据采集...$(RESET)"
+	docker-compose exec app python3 src/jobs/run_l2_api_details.py full
+
+run-l2-api-dry: ## 🔍 试运行 L2 API 采集 (不写入数据库)
+	@echo "$(YELLOW)🔍 试运行 L2 API 采集...$(RESET)"
+	docker-compose exec app python3 src/jobs/run_l2_api_details.py dry-run
+
+run-l2-api-backfill: ## 🔄 运行 L2 API 增量回填
+	@echo "$(YELLOW)🔄 运行 L2 API 增量回填...$(RESET)"
+	docker-compose exec app python3 src/jobs/run_l2_api_details.py backfill
+
+run-l2-api-debug: ## 🐛 调试模式 L2 API 采集 (少量数据)
+	@echo "$(YELLOW)🐛 调试模式 L2 API 采集...$(RESET)"
+	LIMIT=10 BATCH_SIZE=5 MAX_CONCURRENT=1 docker-compose exec app python3 src/jobs/run_l2_api_details.py dry-run
+
+run-l2-api-performance: ## ⚡ 高性能 L2 API 采集
+	@echo "$(YELLOW)⚡ 高性能 L2 API 采集...$(RESET)"
+	LIMIT=50000 BATCH_SIZE=200 MAX_CONCURRENT=20 docker-compose exec app python3 src/jobs/run_l2_api_details.py full
 
 # 监控命令
 monitor: ## 管理/实时监控应用资源使用
