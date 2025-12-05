@@ -3,8 +3,7 @@ Match Repository Implementation with V2 Deep Data Support.
 """
 
 from datetime import datetime
-from typing import Dict, Any, Optional
-
+from typing import Any
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -79,33 +78,31 @@ class MatchRepository(AbstractRepository[Match]):
         """从FotMob V2数据创建比赛记录."""
         # 转换FotMob数据格式到数据库格式
         match_data = {
-            'id': fotmob_data.get('match_id'),
-            'home_team_id': fotmob_data.get('home_team_id'),
-            'away_team_id': fotmob_data.get('away_team_id'),
-            'home_score': fotmob_data.get('home_score', 0),
-            'away_score': fotmob_data.get('away_score', 0),
-            'status': fotmob_data.get('status', 'scheduled'),
-            'venue': fotmob_data.get('venue'),
-            'league_id': fotmob_data.get('league_id'),
-            'season': fotmob_data.get('season', '2024-25'),
-
+            'id': fotmob_data.get('match_id')
+            'home_team_id': fotmob_data.get('home_team_id')
+            'away_team_id': fotmob_data.get('away_team_id')
+            'home_score': fotmob_data.get('home_score', 0)
+            'away_score': fotmob_data.get('away_score', 0)
+            'status': fotmob_data.get('status', 'scheduled')
+            'venue': fotmob_data.get('venue')
+            'league_id': fotmob_data.get('league_id')
+            'season': fotmob_data.get('season', '2024-25')
             # V2深度数据字段
-            'lineups': fotmob_data.get('lineups'),
-            'stats': fotmob_data.get('stats'),
-            'events': fotmob_data.get('events'),
-            'odds': fotmob_data.get('odds'),
+            'lineups': fotmob_data.get('lineups')
+            'stats': fotmob_data.get('stats')
+            'events': fotmob_data.get('events')
+            'odds': fotmob_data.get('odds')
             'metadata': {
-                'kickoff_time': fotmob_data.get('kickoff_time'),
-                'utc_time': fotmob_data.get('utc_time'),
-                'league_name': fotmob_data.get('league_name'),
-                'home_team_name': fotmob_data.get('home_team_name'),
-                'away_team_name': fotmob_data.get('away_team_name'),
-            },
-
+                'kickoff_time': fotmob_data.get('kickoff_time')
+                'utc_time': fotmob_data.get('utc_time')
+                'league_name': fotmob_data.get('league_name')
+                'home_team_name': fotmob_data.get('home_team_name')
+                'away_team_name': fotmob_data.get('away_team_name')
+            }
             # 数据来源和质量追踪
-            'data_source': 'fotmob_v2',
-            'data_completeness': fotmob_data.get('data_completeness', 'partial'),
-            'collection_time': datetime.now(),
+            'data_source': 'fotmob_v2'
+            'data_completeness': fotmob_data.get('data_completeness', 'partial')
+            'collection_time': datetime.now()
         }
 
         return await self.create(match_data)
@@ -134,8 +131,8 @@ class MatchRepository(AbstractRepository[Match]):
             select(Match)
             .where(
                 and_(
-                    Match.lineups.isnot(None),
-                    Match.stats.isnot(None),
+                    Match.lineups.isnot(None)
+                    Match.stats.isnot(None)
                     Match.data_completeness == 'complete'
                 )
             )
@@ -202,11 +199,11 @@ class MatchRepository(AbstractRepository[Match]):
         complete = len(complete_result.scalars().all())
 
         return {
-            'total_matches': total,
-            'matches_with_lineups': with_lineups,
-            'matches_with_stats': with_stats,
-            'complete_matches': complete,
-            'lineups_coverage': with_lineups / total if total > 0 else 0,
-            'stats_coverage': with_stats / total if total > 0 else 0,
-            'complete_coverage': complete / total if total > 0 else 0,
+            'total_matches': total
+            'matches_with_lineups': with_lineups
+            'matches_with_stats': with_stats
+            'complete_matches': complete
+            'lineups_coverage': with_lineups / total if total > 0 else 0
+            'stats_coverage': with_stats / total if total > 0 else 0
+            'complete_coverage': complete / total if total > 0 else 0
         }

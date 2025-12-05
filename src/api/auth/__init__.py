@@ -110,16 +110,26 @@ def authenticate_user(email: str, password: str):
         from hashlib import sha256
 
         # 使用环境变量存储测试密码哈希，避免硬编码
-        admin_password_hash = os.getenv("ADMIN_PASSWORD_HASH", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")  # 默认为空字符串哈希
-        test_password_hash = os.getenv("TEST_PASSWORD_HASH", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")   # 默认为空字符串哈希
+        admin_password_hash = os.getenv(
+            "ADMIN_PASSWORD_HASH",
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        )  # 默认为空字符串哈希
+        test_password_hash = os.getenv(
+            "TEST_PASSWORD_HASH",
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        )  # 默认为空字符串哈希
 
         def verify_password(input_password: str, stored_hash: str) -> bool:
             """安全密码验证函数"""
             return sha256(input_password.encode()).hexdigest() == stored_hash
 
-        if email == "admin@example.com" and verify_password(password, admin_password_hash):
+        if email == "admin@example.com" and verify_password(
+            password, admin_password_hash
+        ):
             return user
-        elif email == "test@example.com" and verify_password(password, test_password_hash):
+        elif email == "test@example.com" and verify_password(
+            password, test_password_hash
+        ):
             return user
         # 如果密码不匹配，返回None
     return None

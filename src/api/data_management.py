@@ -129,14 +129,34 @@ async def get_teams_list(
     """
     # 返回模拟数据以保持API兼容性和测试通过
     mock_teams = [
-        {"id": 1, "name": "Manchester United", "league": "Premier League", "country": "England"},
-        {"id": 2, "name": "Liverpool", "league": "Premier League", "country": "England"},
+        {
+            "id": 1,
+            "name": "Manchester United",
+            "league": "Premier League",
+            "country": "England",
+        },
+        {
+            "id": 2,
+            "name": "Liverpool",
+            "league": "Premier League",
+            "country": "England",
+        },
         {"id": 3, "name": "Arsenal", "league": "Premier League", "country": "England"},
         {"id": 4, "name": "Chelsea", "league": "Premier League", "country": "England"},
-        {"id": 5, "name": "Manchester City", "league": "Premier League", "country": "England"},
+        {
+            "id": 5,
+            "name": "Manchester City",
+            "league": "Premier League",
+            "country": "England",
+        },
         {"id": 6, "name": "Barcelona", "league": "La Liga", "country": "Spain"},
         {"id": 7, "name": "Real Madrid", "league": "La Liga", "country": "Spain"},
-        {"id": 8, "name": "Bayern Munich", "league": "Bundesliga", "country": "Germany"},
+        {
+            "id": 8,
+            "name": "Bayern Munich",
+            "league": "Bundesliga",
+            "country": "Germany",
+        },
     ]
 
     # 应用分页
@@ -163,14 +183,62 @@ async def get_team_by_id(
     """
     # 模拟球队数据
     mock_teams = {
-        1: {"id": 1, "name": "Manchester United", "league": "Premier League", "country": "England", "founded": 1878},
-        2: {"id": 2, "name": "Liverpool", "league": "Premier League", "country": "England", "founded": 1892},
-        3: {"id": 3, "name": "Arsenal", "league": "Premier League", "country": "England", "founded": 1886},
-        4: {"id": 4, "name": "Chelsea", "league": "Premier League", "country": "England", "founded": 1905},
-        5: {"id": 5, "name": "Manchester City", "league": "Premier League", "country": "England", "founded": 1880},
-        6: {"id": 6, "name": "Barcelona", "league": "La Liga", "country": "Spain", "founded": 1899},
-        7: {"id": 7, "name": "Real Madrid", "league": "La Liga", "country": "Spain", "founded": 1902},
-        8: {"id": 8, "name": "Bayern Munich", "league": "Bundesliga", "country": "Germany", "founded": 1900},
+        1: {
+            "id": 1,
+            "name": "Manchester United",
+            "league": "Premier League",
+            "country": "England",
+            "founded": 1878,
+        },
+        2: {
+            "id": 2,
+            "name": "Liverpool",
+            "league": "Premier League",
+            "country": "England",
+            "founded": 1892,
+        },
+        3: {
+            "id": 3,
+            "name": "Arsenal",
+            "league": "Premier League",
+            "country": "England",
+            "founded": 1886,
+        },
+        4: {
+            "id": 4,
+            "name": "Chelsea",
+            "league": "Premier League",
+            "country": "England",
+            "founded": 1905,
+        },
+        5: {
+            "id": 5,
+            "name": "Manchester City",
+            "league": "Premier League",
+            "country": "England",
+            "founded": 1880,
+        },
+        6: {
+            "id": 6,
+            "name": "Barcelona",
+            "league": "La Liga",
+            "country": "Spain",
+            "founded": 1899,
+        },
+        7: {
+            "id": 7,
+            "name": "Real Madrid",
+            "league": "La Liga",
+            "country": "Spain",
+            "founded": 1902,
+        },
+        8: {
+            "id": 8,
+            "name": "Bayern Munich",
+            "league": "Bundesliga",
+            "country": "Germany",
+            "founded": 1900,
+        },
     }
 
     if team_id not in mock_teams:
