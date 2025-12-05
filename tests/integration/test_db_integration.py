@@ -9,18 +9,18 @@ Database Integration Tests
 import pytest
 import asyncio
 import os
-from typing import Dict, Any, Optional
+from typing import Any
 from sqlalchemy import text, create_engine, MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from unittest.mock import patch
 
 from src.database.async_manager import (
-    initialize_database,
-    get_database_manager,
-    get_db_session,
-    fetch_all,
-    fetch_one,
-    execute,
+    initialize_database
+    get_database_manager
+    get_db_session
+    fetch_all
+    fetch_one
+    execute
     AsyncDatabaseManager
 )
 
@@ -40,6 +40,11 @@ class TestDatabaseIntegration:
         if "postgresql://" in db_url and "+asyncpg" not in db_url:
             db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
 
+        # 重置单例状态以避免测试间干扰
+        from src.database.async_manager import AsyncDatabaseManager
+        AsyncDatabaseManager._instance = None
+        AsyncDatabaseManager._initialized = False
+
         # 初始化数据库
         initialize_database(db_url)
 
@@ -57,10 +62,10 @@ class TestDatabaseIntegration:
             # 创建测试用户表
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS integration_test_users (
-                    id SERIAL PRIMARY KEY,
-                    username VARCHAR(50) UNIQUE NOT NULL,
-                    email VARCHAR(100) UNIQUE NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    id SERIAL PRIMARY KEY
+                    username VARCHAR(50) UNIQUE NOT NULL
+                    email VARCHAR(100) UNIQUE NOT NULL
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     is_active BOOLEAN DEFAULT TRUE
                 )
             """))
@@ -68,11 +73,11 @@ class TestDatabaseIntegration:
             # 创建测试比赛表
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS integration_test_matches (
-                    id SERIAL PRIMARY KEY,
-                    home_team VARCHAR(100) NOT NULL,
-                    away_team VARCHAR(100) NOT NULL,
-                    match_date TIMESTAMP,
-                    competition VARCHAR(50),
+                    id SERIAL PRIMARY KEY
+                    home_team VARCHAR(100) NOT NULL
+                    away_team VARCHAR(100) NOT NULL
+                    match_date TIMESTAMP
+                    competition VARCHAR(50)
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """))
@@ -80,11 +85,11 @@ class TestDatabaseIntegration:
             # 创建测试预测表
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS integration_test_predictions (
-                    id SERIAL PRIMARY KEY,
-                    match_id INTEGER REFERENCES integration_test_matches(id),
-                    predicted_home_score INTEGER,
-                    predicted_away_score INTEGER,
-                    confidence DECIMAL(5,4),
+                    id SERIAL PRIMARY KEY
+                    match_id INTEGER REFERENCES integration_test_matches(id)
+                    predicted_home_score INTEGER
+                    predicted_away_score INTEGER
+                    confidence DECIMAL(5,4)
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """))
@@ -137,17 +142,17 @@ class TestDatabaseIntegration:
                 INSERT INTO integration_test_users (username, email, is_active)
                 VALUES (:username, :email, :is_active)
                 RETURNING id, username, email
-            """),
+            """)
             {
-                "username": "testuser1",
-                "email": "testuser1@example.com",
+                "username": "testuser1"
+                "email": "testuser1@example.com"
                 "is_active": True
             }
         )
 
         # 读取用户
         user = await fetch_one(
-            text("SELECT * FROM integration_test_users WHERE username = :username"),
+            text("SELECT * FROM integration_test_users WHERE username = :username")
             {"username": "testuser1"}
         )
 
@@ -158,26 +163,26 @@ class TestDatabaseIntegration:
 
         # 更新用户
         await execute(
-            text("UPDATE integration_test_users SET email = :new_email WHERE username = :username"),
+            text("UPDATE integration_test_users SET email = :new_email WHERE username = :username")
             {"username": "testuser1", "new_email": "updated@example.com"}
         )
 
         # 验证更新
         updated_user = await fetch_one(
-            text("SELECT * FROM integration_test_users WHERE username = :username"),
+            text("SELECT * FROM integration_test_users WHERE username = :username")
             {"username": "testuser1"}
         )
         assert updated_user["email"] == "updated@example.com", "邮箱应该已更新"
 
         # 删除用户
         await execute(
-            text("DELETE FROM integration_test_users WHERE username = :username"),
+            text("DELETE FROM integration_test_users WHERE username = :username")
             {"username": "testuser1"}
         )
 
         # 验证删除
         deleted_user = await fetch_one(
-            text("SELECT * FROM integration_test_users WHERE username = :username"),
+            text("SELECT * FROM integration_test_users WHERE username = :username")
             {"username": "testuser1"}
         )
         assert deleted_user is None, "用户应该被删除"
@@ -194,7 +199,7 @@ class TestDatabaseIntegration:
             text("""
                 INSERT INTO integration_test_users (username, email, is_active)
                 VALUES (:username, :email, :is_active)
-            """),
+            """)
             users_data
         )
 
@@ -237,11 +242,11 @@ class TestDatabaseIntegration:
                         INSERT INTO integration_test_predictions
                         (match_id, predicted_home_score, predicted_away_score, confidence)
                         VALUES (:match_id, :home_score, :away_score, :confidence)
-                    """),
+                    """)
                     {
-                        "match_id": match_id,
-                        "home_score": 2,
-                        "away_score": 1,
+                        "match_id": match_id
+                        "home_score": 2
+                        "away_score": 1
                         "confidence": 0.85
                     }
                 )
@@ -252,7 +257,7 @@ class TestDatabaseIntegration:
 
         # 验证事务提交
         prediction = await fetch_one(
-            text("SELECT * FROM integration_test_predictions WHERE match_id = :match_id"),
+            text("SELECT * FROM integration_test_predictions WHERE match_id = :match_id")
             {"match_id": match_id}
         )
         assert prediction is not None, "预测应该被提交"
@@ -266,11 +271,11 @@ class TestDatabaseIntegration:
                         INSERT INTO integration_test_predictions
                         (match_id, predicted_home_score, predicted_away_score, confidence)
                         VALUES (:match_id, :home_score, :away_score, :confidence)
-                    """),
+                    """)
                     {
-                        "match_id": match_id,
-                        "home_score": 1,
-                        "away_score": 2,
+                        "match_id": match_id
+                        "home_score": 1
+                        "away_score": 2
                         "confidence": 0.75
                     }
                 )
@@ -283,7 +288,7 @@ class TestDatabaseIntegration:
 
         # 验证回滚
         predictions = await fetch_all(
-            text("SELECT * FROM integration_test_predictions WHERE match_id = :match_id AND predicted_home_score = 1"),
+            text("SELECT * FROM integration_test_predictions WHERE match_id = :match_id AND predicted_home_score = 1")
             {"match_id": match_id}
         )
         assert len(predictions) == 0, "回滚的预测不应该存在"
@@ -295,8 +300,8 @@ class TestDatabaseIntegration:
         await execute(
             text("""
                 INSERT INTO integration_test_matches (home_team, away_team, competition) VALUES
-                ('Manchester United', 'Liverpool', 'Premier League'),
-                ('Chelsea', 'Arsenal', 'Premier League'),
+                ('Manchester United', 'Liverpool', 'Premier League')
+                ('Chelsea', 'Arsenal', 'Premier League')
                 ('Barcelona', 'Real Madrid', 'La Liga')
             """)
         )
@@ -316,12 +321,12 @@ class TestDatabaseIntegration:
         # 复杂连接查询
         results = await fetch_all(text("""
             SELECT
-                m.home_team,
-                m.away_team,
-                m.competition,
-                p.predicted_home_score,
-                p.predicted_away_score,
-                p.confidence,
+                m.home_team
+                m.away_team
+                m.competition
+                p.predicted_home_score
+                p.predicted_away_score
+                p.confidence
                 p.created_at as prediction_time
             FROM integration_test_matches m
             JOIN integration_test_predictions p ON m.id = p.match_id
@@ -345,7 +350,7 @@ class TestDatabaseIntegration:
         ]
 
         await execute(
-            text("INSERT INTO integration_test_users (username, email, is_active) VALUES (:username, :email, :is_active)"),
+            text("INSERT INTO integration_test_users (username, email, is_active) VALUES (:username, :email, :is_active)")
             batch_data
         )
 
@@ -390,8 +395,8 @@ class TestDatabaseIntegration:
             """))
 
             expected_tables = {
-                'integration_test_matches',
-                'integration_test_predictions',
+                'integration_test_matches'
+                'integration_test_predictions'
                 'integration_test_users'
             }
 
@@ -414,6 +419,80 @@ class TestDatabaseIntegration:
 class TestRealWorldScenarios:
     """真实世界场景测试"""
 
+    @pytest.fixture(scope="class", autouse=True)
+    async def setup_database(self):
+        """设置集成测试数据库环境"""
+        # 检查环境变量
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            pytest.skip("DATABASE_URL 环境变量未设置，跳过集成测试")
+
+        # 如果是同步URL，转换为异步URL
+        if "postgresql://" in db_url and "+asyncpg" not in db_url:
+            db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
+
+        # 重置单例状态
+        from src.database.async_manager import AsyncDatabaseManager
+        AsyncDatabaseManager._instance = None
+        AsyncDatabaseManager._initialized = False
+
+        # 初始化数据库
+        initialize_database(db_url)
+
+        # 创建测试表
+        await self._create_test_tables()
+
+        yield db_url
+
+        # 清理测试数据
+        await self._cleanup_test_data()
+
+    async def _create_test_tables(self):
+        """创建集成测试所需的表"""
+        # 创建测试比赛表
+        await execute(text("""
+            CREATE TABLE IF NOT EXISTS integration_test_matches (
+                id SERIAL PRIMARY KEY
+                home_team VARCHAR(100) NOT NULL
+                away_team VARCHAR(100) NOT NULL
+                competition VARCHAR(50) NOT NULL
+                match_date TIMESTAMP NOT NULL
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+
+        # 创建测试预测表
+        await execute(text("""
+            CREATE TABLE IF NOT EXISTS integration_test_predictions (
+                id SERIAL PRIMARY KEY
+                match_id INTEGER REFERENCES integration_test_matches(id) ON DELETE CASCADE
+                predicted_home_score INTEGER NOT NULL
+                predicted_away_score INTEGER NOT NULL
+                confidence DECIMAL(3,2) NOT NULL CHECK (confidence >= 0 AND confidence <= 1)
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+
+        # 创建测试用户表
+        await execute(text("""
+            CREATE TABLE IF NOT EXISTS integration_test_users (
+                id SERIAL PRIMARY KEY
+                username VARCHAR(50) UNIQUE NOT NULL
+                email VARCHAR(100) UNIQUE NOT NULL
+                is_active BOOLEAN DEFAULT TRUE
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+
+    async def _cleanup_test_data(self):
+        """清理测试数据"""
+        try:
+            await execute(text("DELETE FROM integration_test_predictions"))
+            await execute(text("DELETE FROM integration_test_matches"))
+            await execute(text("DELETE FROM integration_test_users"))
+        except Exception:
+            pass  # 清理时忽略错误
+
     async def test_football_prediction_workflow(self, setup_database):
         """测试足球预测工作流"""
         # 1. 创建比赛数据
@@ -421,8 +500,8 @@ class TestRealWorldScenarios:
             text("""
                 INSERT INTO integration_test_matches (home_team, away_team, competition, match_date)
                 VALUES
-                ('Real Madrid', 'Barcelona', 'La Liga', '2024-01-15 20:00:00'),
-                ('Manchester City', 'Liverpool', 'Premier League', '2024-01-16 15:00:00'),
+                ('Real Madrid', 'Barcelona', 'La Liga', '2024-01-15 20:00:00')
+                ('Manchester City', 'Liverpool', 'Premier League', '2024-01-16 15:00:00')
                 ('Bayern Munich', 'Borussia Dortmund', 'Bundesliga', '2024-01-17 18:30:00')
                 RETURNING id, home_team, away_team
             """)
@@ -445,18 +524,18 @@ class TestRealWorldScenarios:
                     INSERT INTO integration_test_predictions
                     (match_id, predicted_home_score, predicted_away_score, confidence)
                     VALUES (:match_id, :home_score, :away_score, :confidence)
-                """),
+                """)
                 {
-                    "match_id": match["id"],
-                    "home_score": predicted_home,
-                    "away_score": predicted_away,
+                    "match_id": match["id"]
+                    "home_score": predicted_home
+                    "away_score": predicted_away
                     "confidence": min(confidence, 0.95)  # 确保不超过0.95
                 }
             )
             predictions.append({
-                "match_id": match["id"],
-                "predicted_home_score": predicted_home,
-                "predicted_away_score": predicted_away,
+                "match_id": match["id"]
+                "predicted_home_score": predicted_home
+                "predicted_away_score": predicted_away
                 "confidence": min(confidence, 0.95)
             })
 
@@ -485,8 +564,8 @@ class TestRealWorldScenarios:
         # 1. 模拟旧表结构
         await execute(text("""
             CREATE TABLE IF NOT EXISTS old_users (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(100),
+                id SERIAL PRIMARY KEY
+                name VARCHAR(100)
                 contact_info TEXT
             )
         """))
@@ -495,8 +574,8 @@ class TestRealWorldScenarios:
         await execute(
             text("""
                 INSERT INTO old_users (name, contact_info) VALUES
-                ('Alice', 'alice@old.com'),
-                ('Bob', 'bob@old.com'),
+                ('Alice', 'alice@old.com')
+                ('Bob', 'bob@old.com')
                 ('Charlie', 'charlie@old.com')
             """)
         )
@@ -505,8 +584,8 @@ class TestRealWorldScenarios:
         await execute(text("""
             INSERT INTO integration_test_users (username, email, is_active)
             SELECT
-                LOWER(REPLACE(name, ' ', '_')),
-                contact_info,
+                LOWER(REPLACE(name, ' ', '_'))
+                contact_info
                 TRUE
             FROM old_users
             WHERE contact_info LIKE '%@%'
@@ -534,22 +613,22 @@ class TestRealWorldScenarios:
         async def insert_user_batch(start_id: int, count: int):
             """批量插入用户的并发任务"""
             users = [
-                {"username": f"concurrent_user_{start_id + i}",
-                 "email": f"concurrent_user_{start_id + i}@example.com",
+                {"username": f"concurrent_user_{start_id + i}"
+                 "email": f"concurrent_user_{start_id + i}@example.com"
                  "is_active": True}
                 for i in range(count)
             ]
 
             await execute(
-                text("INSERT INTO integration_test_users (username, email, is_active) VALUES (:username, :email, :is_active)"),
+                text("INSERT INTO integration_test_users (username, email, is_active) VALUES (:username, :email, :is_active)")
                 users
             )
 
         # 并发执行多个批量插入任务
         tasks = [
-            insert_user_batch(0, 20),
-            insert_user_batch(20, 20),
-            insert_user_batch(40, 20),
+            insert_user_batch(0, 20)
+            insert_user_batch(20, 20)
+            insert_user_batch(40, 20)
             insert_user_batch(60, 20)
         ]
 
