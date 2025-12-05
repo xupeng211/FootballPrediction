@@ -61,8 +61,9 @@ def get_system_status():
     if maintenance_logs:
         last_maintenance = maintenance_logs[-1]
         status_data["last_maintenance"] = last_maintenance.get("timestamp", "未知")
-        status_data["maintenance_actions"] = len(last_maintenance.get("actions_performed",
-    []))
+        status_data["maintenance_actions"] = len(
+            last_maintenance.get("actions_performed", [])
+        )
     else:
         status_data["last_maintenance"] = "无记录"
         status_data["maintenance_actions"] = 0

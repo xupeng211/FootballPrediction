@@ -25,48 +25,44 @@ app = FastAPI(title="Football Prediction Health Server", version="1.0.0")
 
 # Prometheus指标
 http_requests_total = Counter(
-    'http_requests_total',
-    'Total HTTP requests',
-    ['method', 'endpoint', 'status_code']
+    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status_code"]
 )
 
 http_request_duration_seconds = Histogram(
-    'http_request_duration_seconds',
-    'HTTP request duration in seconds',
-    ['method', 'endpoint'],
-    buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+    "http_request_duration_seconds",
+    "HTTP request duration in seconds",
+    ["method", "endpoint"],
+    buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
 )
 
 prediction_requests_total = Counter(
-    'prediction_requests_total',
-    'Total prediction requests',
-    ['model_type', 'status']
+    "prediction_requests_total", "Total prediction requests", ["model_type", "status"]
 )
 
-active_users = Gauge(
-    'active_users',
-    'Number of active users'
-)
+active_users = Gauge("active_users", "Number of active users")
 
-system_cpu_usage = Gauge(
-    'system_cpu_usage_percent',
-    'System CPU usage percentage'
-)
+system_cpu_usage = Gauge("system_cpu_usage_percent", "System CPU usage percentage")
 
 system_memory_usage = Gauge(
-    'system_memory_usage_percent',
-    'System memory usage percentage'
+    "system_memory_usage_percent", "System memory usage percentage"
 )
+
 
 @app.get("/")
 async def root():
     """根端点."""
-    return {"status": "healthy", "service": "football-prediction-health", "version": "1.0.0"}
+    return {
+        "status": "healthy",
+        "service": "football-prediction-health",
+        "version": "1.0.0",
+    }
+
 
 @app.get("/health")
 async def health():
     """健康检查."""
     return {"status": "healthy", "timestamp": time.time()}
+
 
 @app.get("/metrics")
 async def metrics():
@@ -77,16 +73,11 @@ async def metrics():
 
         # 生成指标数据
         metrics_data = generate_latest()
-        return Response(
-            content=metrics_data,
-            media_type=CONTENT_TYPE_LATEST
-        )
+        return Response(content=metrics_data, media_type=CONTENT_TYPE_LATEST)
     except Exception as e:
         logger.error(f"Error generating metrics: {e}")
-        return Response(
-            content="# Error generating metrics",
-            media_type="text/plain"
-        )
+        return Response(content="# Error generating metrics", media_type="text/plain")
+
 
 async def update_system_metrics():
     """更新系统指标."""
@@ -109,6 +100,7 @@ async def update_system_metrics():
     except Exception as e:
         logger.error(f"Error updating system metrics: {e}")
 
+
 @app.middleware("http")
 async def metrics_middleware(request, call_next):
     """指标收集中间件."""
@@ -121,15 +113,15 @@ async def metrics_middleware(request, call_next):
     http_requests_total.labels(
         method=request.method,
         endpoint=request.url.path,
-        status_code=str(response.status_code)
+        status_code=str(response.status_code),
     ).inc()
 
     http_request_duration_seconds.labels(
-        method=request.method,
-        endpoint=request.url.path
+        method=request.method, endpoint=request.url.path
     ).observe(duration)
 
     return response
+
 
 if __name__ == "__main__":
     logger.info("Starting Football Prediction Health Server...")
@@ -138,9 +130,4 @@ if __name__ == "__main__":
     logger.info("  GET /health - Health check")
     logger.info("  GET /metrics - Prometheus metrics")
 
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8000,
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
