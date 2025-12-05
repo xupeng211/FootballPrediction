@@ -27,7 +27,7 @@ def retry_with_backoff(
     max_delay: float = 60.0,
     exponential_base: float = 2.0,
     jitter: bool = True,
-    retryable_status_codes: list[int] | None = None
+    retryable_status_codes: list[int] | None = None,
 ):
     """带退避策略的重试装饰器.
 
@@ -67,7 +67,7 @@ def retry_with_backoff(
                         break
 
                     should_retry = False
-                    if hasattr(e, 'response') and e.response is not None:
+                    if hasattr(e, "response") and e.response is not None:
                         status_code = e.response.status_code
                         if status_code in retryable_status_codes:
                             should_retry = True
@@ -84,10 +84,7 @@ def retry_with_backoff(
                         break
 
                     # 计算延迟时间
-                    delay = min(
-                        base_delay * (exponential_base ** attempt),
-                        max_delay
-                    )
+                    delay = min(base_delay * (exponential_base**attempt), max_delay)
 
                     # 添加随机抖动
                     if jitter:
@@ -99,6 +96,7 @@ def retry_with_backoff(
             raise last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -121,7 +119,9 @@ def extract_retry_after(response: requests.Response) -> int | None:
     # 2. 尝试解析Retry-After头中的HTTP日期
     if "Retry-After" in response.headers:
         try:
-            retry_date = datetime.strptime(response.headers["Retry-After"], "%a, %d %b %Y %H:%M:%S GMT")
+            retry_date = datetime.strptime(
+                response.headers["Retry-After"], "%a, %d %b %Y %H:%M:%S GMT"
+            )
             now = datetime.utcnow()
             delta = retry_date - now
             if delta.total_seconds() > 0:
@@ -150,7 +150,9 @@ def extract_retry_after(response: requests.Response) -> int | None:
     return None
 
 
-def validate_request_data(data: dict[str, Any], required_fields: list[str] = None) -> None:
+def validate_request_data(
+    data: dict[str, Any], required_fields: list[str] = None
+) -> None:
     """验证请求数据.
 
     Args:
@@ -164,8 +166,11 @@ def validate_request_data(data: dict[str, Any], required_fields: list[str] = Non
         raise ValidationError("请求数据必须是字典格式")
 
     if required_fields:
-        missing_fields = [field for field in required_fields
-                         if field not in data or data[field] is None or data[field] == ""]
+        missing_fields = [
+            field
+            for field in required_fields
+            if field not in data or data[field] is None or data[field] == ""
+        ]
         if missing_fields:
             raise ValidationError(f"缺少必填字段: {', '.join(missing_fields)}")
 
@@ -188,8 +193,8 @@ def validate_date_string(date_string: str, format_name: str = "ISO 8601") -> dat
 
     try:
         # 尝试ISO 8601格式
-        if date_string.endswith('Z'):
-            return datetime.fromisoformat(date_string.replace('Z', '+00:00'))
+        if date_string.endswith("Z"):
+            return datetime.fromisoformat(date_string.replace("Z", "+00:00"))
         else:
             return datetime.fromisoformat(date_string)
     except ValueError as e:
@@ -233,7 +238,9 @@ def validate_confidence_score(value: float) -> float:
     return validate_probability(value, "confidence_score")
 
 
-def sanitize_string(value: str, max_length: int = None, allow_empty: bool = True) -> str:
+def sanitize_string(
+    value: str, max_length: int = None, allow_empty: bool = True
+) -> str:
     """清理和验证字符串.
 
     Args:
@@ -269,7 +276,7 @@ def generate_request_id() -> str:
         str: 请求ID
     """
     timestamp = datetime.now().isoformat()
-    random_str = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=8))
+    random_str = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=8))
     return f"req_{timestamp}_{random_str}"
 
 
@@ -283,7 +290,7 @@ def build_url(base_url: str, path: str) -> str:
     Returns:
         str: 完整的URL
     """
-    return urljoin(base_url.rstrip('/') + '/', path.lstrip('/'))
+    return urljoin(base_url.rstrip("/") + "/", path.lstrip("/"))
 
 
 def parse_api_error(response: requests.Response) -> dict[str, Any]:
@@ -303,7 +310,7 @@ def parse_api_error(response: requests.Response) -> dict[str, Any]:
             "message": error_data.get("error", {}).get("message"),
             "details": error_data.get("error", {}).get("details", {}),
             "request_id": error_data.get("meta", {}).get("request_id"),
-            "timestamp": error_data.get("meta", {}).get("timestamp")
+            "timestamp": error_data.get("meta", {}).get("timestamp"),
         }
     except (json.JSONDecodeError, KeyError):
         return {
@@ -312,7 +319,7 @@ def parse_api_error(response: requests.Response) -> dict[str, Any]:
             "error_code": None,
             "details": {},
             "request_id": None,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
@@ -372,7 +379,7 @@ def calculate_hash(data: Any, algorithm: str = "sha256") -> str:
         data_str = str(data)
 
     hash_obj = hashlib.new(algorithm)
-    hash_obj.update(data_str.encode('utf-8'))
+    hash_obj.update(data_str.encode("utf-8"))
     return hash_obj.hexdigest()
 
 
@@ -386,7 +393,7 @@ def chunk_list(items: list[Any], chunk_size: int) -> list[list[Any]]:
     Returns:
         List[List[Any]]: 分割后的列表块
     """
-    return [items[i:i + chunk_size] for i in range(0, len(items), chunk_size)]
+    return [items[i : i + chunk_size] for i in range(0, len(items), chunk_size)]
 
 
 def merge_dicts(*dicts: dict[str, Any]) -> dict[str, Any]:
@@ -405,7 +412,9 @@ def merge_dicts(*dicts: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def safe_get_nested_value(data: dict[str, Any], key_path: str, default: Any = None) -> Any:
+def safe_get_nested_value(
+    data: dict[str, Any], key_path: str, default: Any = None
+) -> Any:
     """安全获取嵌套字典的值.
 
     Args:
@@ -420,7 +429,7 @@ def safe_get_nested_value(data: dict[str, Any], key_path: str, default: Any = No
         data = {"user": {"profile": {"name": "John"}}}
         name = safe_get_nested_value(data, "user.profile.name", "Unknown")
     """
-    keys = key_path.split('.')
+    keys = key_path.split(".")
     current = data
 
     try:
@@ -458,14 +467,14 @@ def rate_limit_handler(response: requests.Response) -> RateLimitError | None:
             response=response,
             retry_after=details.get("retry_after"),
             limit=details.get("limit"),
-            window=details.get("window")
+            window=details.get("window"),
         )
 
     except (json.JSONDecodeError, KeyError):
         return RateLimitError(
             message="请求频率超限",
             response=response,
-            retry_after=extract_retry_after(response)
+            retry_after=extract_retry_after(response),
         )
 
 
@@ -500,8 +509,8 @@ def convert_timestamp(timestamp: str | int | float | datetime) -> datetime:
         return datetime.fromtimestamp(timestamp)
     elif isinstance(timestamp, str):
         # 尝试ISO 8601格式
-        if timestamp.endswith('Z'):
-            return datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+        if timestamp.endswith("Z"):
+            return datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
         else:
             return datetime.fromisoformat(timestamp)
     else:
@@ -549,8 +558,9 @@ class RateLimiter:
         now = time.time()
 
         # 清理过期的调用记录
-        self.calls = [call_time for call_time in self.calls
-                     if now - call_time < self.time_window]
+        self.calls = [
+            call_time for call_time in self.calls if now - call_time < self.time_window
+        ]
 
         if len(self.calls) < self.max_calls:
             self.calls.append(now)

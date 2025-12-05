@@ -14,6 +14,7 @@ from typing import Any
 
 class MatchStatus(Enum):
     """比赛状态枚举."""
+
     SCHEDULED = "scheduled"
     LIVE = "live"
     COMPLETED = "completed"
@@ -23,6 +24,7 @@ class MatchStatus(Enum):
 
 class PredictionStatus(Enum):
     """预测状态枚举."""
+
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -30,6 +32,7 @@ class PredictionStatus(Enum):
 
 class SubscriptionPlan(Enum):
     """订阅计划枚举."""
+
     FREE = "free"
     BASIC = "basic"
     PREMIUM = "premium"
@@ -39,6 +42,7 @@ class SubscriptionPlan(Enum):
 @dataclass
 class Team:
     """球队模型."""
+
     team_id: str
     name: str
     short_name: str | None = None
@@ -65,7 +69,7 @@ class Team:
             current_form=data.get("current_form"),
             position=data.get("position"),
             points=data.get("points"),
-            logo_url=data.get("logo_url")
+            logo_url=data.get("logo_url"),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -81,13 +85,14 @@ class Team:
             "current_form": self.current_form,
             "position": self.position,
             "points": self.points,
-            "logo_url": self.logo_url
+            "logo_url": self.logo_url,
         }
 
 
 @dataclass
 class Match:
     """比赛模型."""
+
     match_id: str
     home_team: Team | dict[str, Any]
     away_team: Team | dict[str, Any]
@@ -112,7 +117,9 @@ class Match:
 
         # 确保match_date是datetime对象
         if isinstance(self.match_date, str):
-            self.match_date = datetime.fromisoformat(self.match_date.replace("Z", "+00:00"))
+            self.match_date = datetime.fromisoformat(
+                self.match_date.replace("Z", "+00:00")
+            )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Match":
@@ -127,28 +134,37 @@ class Match:
             venue=data.get("venue"),
             score=data.get("score"),
             weather=data.get("weather"),
-            odds=data.get("odds")
+            odds=data.get("odds"),
         )
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典."""
         return {
             "match_id": self.match_id,
-            "home_team": self.home_team.to_dict() if isinstance(self.home_team, Team) else self.home_team,
-            "away_team": self.away_team.to_dict() if isinstance(self.away_team, Team) else self.away_team,
+            "home_team": (
+                self.home_team.to_dict()
+                if isinstance(self.home_team, Team)
+                else self.home_team
+            ),
+            "away_team": (
+                self.away_team.to_dict()
+                if isinstance(self.away_team, Team)
+                else self.away_team
+            ),
             "league": self.league,
             "match_date": self.match_date.isoformat(),
             "status": self.status.value,
             "venue": self.venue,
             "score": self.score,
             "weather": self.weather,
-            "odds": self.odds
+            "odds": self.odds,
         }
 
 
 @dataclass
 class Prediction:
     """预测模型."""
+
     prediction_id: str
     match_id: str
     probabilities: dict[str, float]
@@ -170,7 +186,9 @@ class Prediction:
 
         # 确保created_at是datetime对象
         if isinstance(self.created_at, str):
-            self.created_at = datetime.fromisoformat(self.created_at.replace("Z", "+00:00"))
+            self.created_at = datetime.fromisoformat(
+                self.created_at.replace("Z", "+00:00")
+            )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Prediction":
@@ -187,7 +205,7 @@ class Prediction:
             actual_result=data.get("actual_result"),
             is_correct=data.get("is_correct"),
             features_used=data.get("features_used"),
-            explanation=data.get("explanation")
+            explanation=data.get("explanation"),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -204,13 +222,14 @@ class Prediction:
             "actual_result": self.actual_result,
             "is_correct": self.is_correct,
             "features_used": self.features_used,
-            "explanation": self.explanation
+            "explanation": self.explanation,
         }
 
 
 @dataclass
 class PredictionRequest:
     """预测请求模型."""
+
     match_id: str
     home_team: str
     away_team: str
@@ -223,7 +242,9 @@ class PredictionRequest:
     def __post_init__(self):
         """后处理：确保match_date是datetime对象."""
         if isinstance(self.match_date, str):
-            self.match_date = datetime.fromisoformat(self.match_date.replace("Z", "+00:00"))
+            self.match_date = datetime.fromisoformat(
+                self.match_date.replace("Z", "+00:00")
+            )
 
     def to_dict(self) -> dict[str, Any]:
         """转换为请求字典."""
@@ -232,7 +253,7 @@ class PredictionRequest:
             "home_team": self.home_team,
             "away_team": self.away_team,
             "match_date": self.match_date.isoformat(),
-            "league": self.league
+            "league": self.league,
         }
 
         if self.features:
@@ -250,6 +271,7 @@ class PredictionRequest:
 @dataclass
 class PredictionResponse:
     """预测响应模型."""
+
     success: bool
     prediction: Prediction | None = None
     error: dict[str, Any] | None = None
@@ -270,25 +292,34 @@ class PredictionResponse:
                 prediction = Prediction(
                     prediction_id=prediction_data.get("prediction_id", ""),
                     match_id=prediction_data.get("match_id", ""),
-                    probabilities=prediction_data.get("prediction", {}).get("probabilities", {}),
-                    recommended_bet=prediction_data.get("prediction", {}).get("recommended_bet", ""),
-                    confidence_score=prediction_data.get("prediction", {}).get("confidence_score", 0.0),
-                    model_version=prediction_data.get("model_info", {}).get("model_version", ""),
+                    probabilities=prediction_data.get("prediction", {}).get(
+                        "probabilities", {}
+                    ),
+                    recommended_bet=prediction_data.get("prediction", {}).get(
+                        "recommended_bet", ""
+                    ),
+                    confidence_score=prediction_data.get("prediction", {}).get(
+                        "confidence_score", 0.0
+                    ),
+                    model_version=prediction_data.get("model_info", {}).get(
+                        "model_version", ""
+                    ),
                     created_at=data.get("meta", {}).get("timestamp", datetime.now()),
-                    status=PredictionStatus.PROCESSING
+                    status=PredictionStatus.PROCESSING,
                 )
 
         return cls(
             success=data.get("success", False),
             prediction=prediction,
             error=data.get("error"),
-            meta=data.get("meta")
+            meta=data.get("meta"),
         )
 
 
 @dataclass
 class MatchListResponse:
     """比赛列表响应模型."""
+
     success: bool
     matches: list[Match] = field(default_factory=list)
     pagination: dict[str, Any] | None = None
@@ -304,13 +335,14 @@ class MatchListResponse:
             success=data.get("success", False),
             matches=matches,
             pagination=data.get("meta", {}).get("pagination"),
-            meta=data.get("meta")
+            meta=data.get("meta"),
         )
 
 
 @dataclass
 class SubscriptionInfo:
     """订阅信息模型."""
+
     plan: SubscriptionPlan
     expires_at: datetime | None = None
     features: list[str] = field(default_factory=list)
@@ -324,7 +356,9 @@ class SubscriptionInfo:
 
         # 确保expires_at是datetime对象
         if isinstance(self.expires_at, str):
-            self.expires_at = datetime.fromisoformat(self.expires_at.replace("Z", "+00:00"))
+            self.expires_at = datetime.fromisoformat(
+                self.expires_at.replace("Z", "+00:00")
+            )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "SubscriptionInfo":
@@ -333,13 +367,14 @@ class SubscriptionInfo:
             plan=data.get("plan", "free"),
             expires_at=data.get("expires_at"),
             features=data.get("features", []),
-            auto_renew=data.get("auto_renew", False)
+            auto_renew=data.get("auto_renew", False),
         )
 
 
 @dataclass
 class UserPreferences:
     """用户偏好设置模型."""
+
     favorite_teams: list[str] = field(default_factory=list)
     notification_settings: dict[str, bool] = field(default_factory=dict)
     language: str = "zh-CN"
@@ -352,13 +387,14 @@ class UserPreferences:
             favorite_teams=data.get("favorite_teams", []),
             notification_settings=data.get("notification_settings", {}),
             language=data.get("language", "zh-CN"),
-            timezone=data.get("timezone", "UTC+8")
+            timezone=data.get("timezone", "UTC+8"),
         )
 
 
 @dataclass
 class User:
     """用户模型."""
+
     user_id: str
     username: str
     email: str
@@ -379,9 +415,13 @@ class User:
 
         # 确保时间字段是datetime对象
         if isinstance(self.created_at, str):
-            self.created_at = datetime.fromisoformat(self.created_at.replace("Z", "+00:00"))
+            self.created_at = datetime.fromisoformat(
+                self.created_at.replace("Z", "+00:00")
+            )
         if isinstance(self.last_login, str):
-            self.last_login = datetime.fromisoformat(self.last_login.replace("Z", "+00:00"))
+            self.last_login = datetime.fromisoformat(
+                self.last_login.replace("Z", "+00:00")
+            )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "User":
@@ -393,13 +433,14 @@ class User:
             subscription=data.get("subscription", {}),
             preferences=data.get("preferences", {}),
             created_at=data.get("created_at"),
-            last_login=data.get("last_login")
+            last_login=data.get("last_login"),
         )
 
 
 @dataclass
 class UserProfileResponse:
     """用户配置响应模型."""
+
     success: bool
     user: User | None = None
     error: dict[str, Any] | None = None
@@ -418,13 +459,14 @@ class UserProfileResponse:
             success=data.get("success", False),
             user=user,
             error=data.get("error"),
-            meta=data.get("meta")
+            meta=data.get("meta"),
         )
 
 
 @dataclass
 class UserStatistics:
     """用户统计信息模型."""
+
     total_predictions: int
     successful_predictions: int
     success_rate: float
@@ -455,5 +497,5 @@ class UserStatistics:
             monthly_stats=data.get("monthly_stats", []),
             average_confidence=data.get("average_confidence", 0.0),
             best_streak=data.get("best_streak", 0),
-            current_streak=data.get("current_streak", 0)
+            current_streak=data.get("current_streak", 0),
         )

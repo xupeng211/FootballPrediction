@@ -17,7 +17,7 @@ class FootballPredictionError(Exception):
         message: str,
         error_code: str | None = None,
         details: dict[str, Any] | None = None,
-        response: Any | None = None
+        response: Any | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -36,7 +36,7 @@ class FootballPredictionError(Exception):
             "error_type": self.__class__.__name__,
             "message": self.message,
             "error_code": self.error_code,
-            "details": self.details
+            "details": self.details,
         }
 
 
@@ -77,7 +77,7 @@ class RateLimitError(FootballPredictionError):
         retry_after: int | None = None,
         limit: int | None = None,
         window: int | None = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(message, **kwargs)
         self.retry_after = retry_after
@@ -85,10 +85,9 @@ class RateLimitError(FootballPredictionError):
         self.window = window
 
         if retry_after:
-            self.details.update({
-                "retry_after": retry_after,
-                "retry_after_human": f"{retry_after}秒"
-            })
+            self.details.update(
+                {"retry_after": retry_after, "retry_after_human": f"{retry_after}秒"}
+            )
 
     def get_retry_after_seconds(self) -> int | None:
         """获取重试等待时间（秒）."""
@@ -98,7 +97,13 @@ class RateLimitError(FootballPredictionError):
 class NotFoundError(BusinessError):
     """资源不存在错误."""
 
-    def __init__(self, message: str = "资源不存在", resource_type: str = None, resource_id: str = None, **kwargs):
+    def __init__(
+        self,
+        message: str = "资源不存在",
+        resource_type: str = None,
+        resource_id: str = None,
+        **kwargs,
+    ):
         super().__init__(message, **kwargs)
         if resource_type:
             self.details["resource_type"] = resource_type
@@ -116,7 +121,9 @@ class ConflictError(BusinessError):
 class ExternalServiceError(SystemError):
     """外部服务错误."""
 
-    def __init__(self, message: str = "外部服务错误", service_name: str = None, **kwargs):
+    def __init__(
+        self, message: str = "外部服务错误", service_name: str = None, **kwargs
+    ):
         super().__init__(message, **kwargs)
         if service_name:
             self.details["service_name"] = service_name
@@ -137,35 +144,32 @@ ERROR_CODE_MAP = {
     "AUTH_003": AuthenticationError,
     "AUTH_004": AuthenticationError,
     "AUTH_005": AuthenticationError,
-
     # 验证错误
     "VALIDATION_001": ValidationError,
     "VALIDATION_002": ValidationError,
     "VALIDATION_003": ValidationError,
     "VALIDATION_004": ValidationError,
-
     # 业务错误
     "BUSINESS_001": NotFoundError,
     "BUSINESS_002": BusinessError,
     "BUSINESS_003": ConflictError,
     "BUSINESS_004": BusinessError,
-
     # 系统错误
     "SYSTEM_001": SystemError,
     "SYSTEM_002": ExternalServiceError,
     "SYSTEM_003": SystemError,
     "SYSTEM_004": SystemError,
-
     # 外部服务错误
     "EXTERNAL_001": ExternalServiceError,
     "EXTERNAL_002": ExternalServiceError,
-
     # 限流错误
     "RATE_LIMIT_001": RateLimitError,
 }
 
 
-def create_exception_from_response(response_data: dict[str, Any], response: Any = None) -> FootballPredictionError:
+def create_exception_from_response(
+    response_data: dict[str, Any], response: Any = None
+) -> FootballPredictionError:
     """从API响应创建对应的异常实例.
 
     Args:
@@ -195,7 +199,7 @@ def create_exception_from_response(response_data: dict[str, Any], response: Any 
             response=response,
             retry_after=retry_after,
             limit=limit,
-            window=window
+            window=window,
         )
 
     # 特殊处理资源不存在错误
@@ -208,13 +212,10 @@ def create_exception_from_response(response_data: dict[str, Any], response: Any 
             details=details,
             response=response,
             resource_type=resource_type,
-            resource_id=resource_id
+            resource_id=resource_id,
         )
 
     # 通用异常创建
     return exception_class(
-        message=message,
-        error_code=error_code,
-        details=details,
-        response=response
+        message=message, error_code=error_code, details=details, response=response
     )

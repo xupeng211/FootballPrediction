@@ -19,11 +19,7 @@ class AuthManager:
     """认证管理器."""
 
     def __init__(
-        self,
-        api_key: str,
-        base_url: str,
-        timeout: int = 30,
-        auto_refresh: bool = True
+        self, api_key: str, base_url: str, timeout: int = 30, auto_refresh: bool = True
     ):
         """初始化认证管理器.
 
@@ -34,7 +30,7 @@ class AuthManager:
             auto_refresh: 是否自动刷新token
         """
         self.api_key = api_key
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.auto_refresh = auto_refresh
 
@@ -46,10 +42,12 @@ class AuthManager:
 
         # 会话管理
         self._session = requests.Session()
-        self._session.headers.update({
-            "Content-Type": "application/json",
-            "User-Agent": "football-prediction-sdk/1.0.0"
-        })
+        self._session.headers.update(
+            {
+                "Content-Type": "application/json",
+                "User-Agent": "football-prediction-sdk/1.0.0",
+            }
+        )
 
     @property
     def is_authenticated(self) -> bool:
@@ -84,7 +82,9 @@ class AuthManager:
 
         return {"Authorization": f"Bearer {token}"}
 
-    def authenticate_with_api_key(self, username: str | None = None, password: str | None = None) -> bool:
+    def authenticate_with_api_key(
+        self, username: str | None = None, password: str | None = None
+    ) -> bool:
         """使用API密钥进行认证.
 
         Args:
@@ -114,9 +114,7 @@ class AuthManager:
 
         try:
             response = self._session.post(
-                auth_url,
-                json={"api_key": self.api_key},
-                timeout=self.timeout
+                auth_url, json={"api_key": self.api_key}, timeout=self.timeout
             )
 
             if response.status_code == 200:
@@ -138,7 +136,7 @@ class AuthManager:
             response = self._session.post(
                 auth_url,
                 json={"username": username, "password": password},
-                timeout=self.timeout
+                timeout=self.timeout,
             )
 
             if response.status_code == 200:
@@ -172,9 +170,9 @@ class AuthManager:
 
         # 更新session头
         if self._access_token:
-            self._session.headers.update({
-                "Authorization": f"Bearer {self._access_token}"
-            })
+            self._session.headers.update(
+                {"Authorization": f"Bearer {self._access_token}"}
+            )
 
     def _handle_auth_error(self, response: requests.Response) -> None:
         """处理认证错误响应."""
@@ -223,7 +221,7 @@ class AuthManager:
             response = self._session.post(
                 refresh_url,
                 json={"refresh_token": self._refresh_token},
-                timeout=self.timeout
+                timeout=self.timeout,
             )
 
             if response.status_code == 200:
@@ -312,9 +310,9 @@ class AuthManager:
                 change_url,
                 json={
                     "current_password": current_password,
-                    "new_password": new_password
+                    "new_password": new_password,
                 },
-                timeout=self.timeout
+                timeout=self.timeout,
             )
 
             return response.status_code == 200
@@ -332,11 +330,8 @@ class AuthManager:
         try:
             response = self._session.post(
                 generate_url,
-                json={
-                    "name": name,
-                    "description": description or ""
-                },
-                timeout=self.timeout
+                json={"name": name, "description": description or ""},
+                timeout=self.timeout,
             )
 
             if response.status_code == 200:

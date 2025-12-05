@@ -58,9 +58,7 @@ class PredictionAPI:
             data = request.to_dict()
 
             response = self.client.session.post(
-                url,
-                json=data,
-                timeout=self.client.timeout
+                url, json=data, timeout=self.client.timeout
             )
 
             if response.status_code == 200:
@@ -118,7 +116,7 @@ class PredictionAPI:
         page: int = 1,
         page_size: int = 20,
         date_from: datetime | None = None,
-        date_to: datetime | None = None
+        date_to: datetime | None = None,
     ) -> list[Prediction]:
         """获取预测历史列表.
 
@@ -143,7 +141,7 @@ class PredictionAPI:
         try:
             params = {
                 "page": page,
-                "page_size": min(page_size, 100)  # 限制最大页面大小
+                "page_size": min(page_size, 100),  # 限制最大页面大小
             }
 
             if status:
@@ -154,12 +152,16 @@ class PredictionAPI:
                 params["date_to"] = date_to.isoformat()
 
             url = f"{self.client.base_url}/predictions/history"
-            response = self.client.session.get(url, params=params, timeout=self.client.timeout)
+            response = self.client.session.get(
+                url, params=params, timeout=self.client.timeout
+            )
 
             if response.status_code == 200:
                 data = response.json()
                 predictions_data = data.get("data", [])
-                return [Prediction.from_dict(pred_data) for pred_data in predictions_data]
+                return [
+                    Prediction.from_dict(pred_data) for pred_data in predictions_data
+                ]
             else:
                 error_data = parse_api_error(response)
                 raise create_exception_from_response(error_data, response)
@@ -168,7 +170,9 @@ class PredictionAPI:
             raise FootballPredictionError(f"获取预测列表失败: {str(e)}")
 
     @retry_with_backoff(max_retries=3)
-    def batch_create(self, requests: builtins.list[PredictionRequest]) -> dict[str, Any]:
+    def batch_create(
+        self, requests: builtins.list[PredictionRequest]
+    ) -> dict[str, Any]:
         """批量创建预测.
 
         Args:
@@ -190,14 +194,10 @@ class PredictionAPI:
 
         try:
             url = f"{self.client.base_url}/predictions/batch"
-            data = {
-                "predictions": [req.to_dict() for req in requests]
-            }
+            data = {"predictions": [req.to_dict() for req in requests]}
 
             response = self.client.session.post(
-                url,
-                json=data,
-                timeout=self.client.timeout * 2  # 批量请求需要更长时间
+                url, json=data, timeout=self.client.timeout * 2  # 批量请求需要更长时间
             )
 
             if response.status_code == 200:
@@ -257,7 +257,7 @@ class MatchAPI:
         date_to: datetime | None = None,
         status: str | None = None,
         page: int = 1,
-        page_size: int = 20
+        page_size: int = 20,
     ) -> MatchListResponse:
         """获取比赛列表.
 
@@ -282,10 +282,7 @@ class MatchAPI:
             >>> print(f"找到 {len(response.matches)} 场比赛")
         """
         try:
-            params = {
-                "page": page,
-                "page_size": min(page_size, 100)
-            }
+            params = {"page": page, "page_size": min(page_size, 100)}
 
             if league:
                 params["league"] = league
@@ -297,7 +294,9 @@ class MatchAPI:
                 params["status"] = status
 
             url = f"{self.client.base_url}/matches"
-            response = self.client.session.get(url, params=params, timeout=self.client.timeout)
+            response = self.client.session.get(
+                url, params=params, timeout=self.client.timeout
+            )
 
             if response.status_code == 200:
                 return MatchListResponse.from_dict(response.json())
@@ -386,9 +385,7 @@ class UserAPI:
         try:
             url = f"{self.client.base_url}/user/profile"
             response = self.client.session.put(
-                url,
-                json={"preferences": preferences},
-                timeout=self.client.timeout
+                url, json={"preferences": preferences}, timeout=self.client.timeout
             )
 
             return response.status_code == 200
@@ -434,7 +431,7 @@ class FootballPredictionClient:
         timeout: int = 30,
         auto_retry: bool = True,
         user_agent: str = None,
-        offline_mode: bool = False
+        offline_mode: bool = False,
     ):
         """初始化客户端.
 
@@ -452,17 +449,14 @@ class FootballPredictionClient:
             ...     base_url="https://api.football-prediction.com/v1"
             ... )
         """
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.auto_retry = auto_retry
         self.offline_mode = offline_mode
 
         # 初始化认证管理器
         self.auth = AuthManager(
-            api_key=api_key,
-            base_url=base_url,
-            timeout=timeout,
-            auto_refresh=True
+            api_key=api_key, base_url=base_url, timeout=timeout, auto_refresh=True
         )
 
         # 初始化API管理器
@@ -480,10 +474,9 @@ class FootballPredictionClient:
             self.session.headers["User-Agent"] = "football-prediction-sdk/1.0.0"
 
         # 默认请求头
-        self.session.headers.update({
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        })
+        self.session.headers.update(
+            {"Content-Type": "application/json", "Accept": "application/json"}
+        )
 
         # 认证（仅在非离线模式下）
         if not offline_mode:
@@ -577,7 +570,7 @@ class FootballPredictionClient:
         endpoint: str,
         params: dict[str, Any] = None,
         json: dict[str, Any] = None,
-        **kwargs
+        **kwargs,
     ) -> dict[str, Any]:
         """发起HTTP请求.
 
@@ -598,12 +591,7 @@ class FootballPredictionClient:
 
         try:
             response = self.session.request(
-                method,
-                url,
-                params=params,
-                json=json,
-                timeout=self.timeout,
-                **kwargs
+                method, url, params=params, json=json, timeout=self.timeout, **kwargs
             )
 
             # 检查限流错误
@@ -614,8 +602,11 @@ class FootballPredictionClient:
                     retry_after = rate_limit_error.get_retry_after_seconds()
                     if retry_after and retry_after > 0:
                         import time
+
                         time.sleep(retry_after)
-                        return self._make_request(method, endpoint, params, json, **kwargs)
+                        return self._make_request(
+                            method, endpoint, params, json, **kwargs
+                        )
 
                 raise rate_limit_error
 

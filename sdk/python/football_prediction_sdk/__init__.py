@@ -37,7 +37,6 @@ __url__ = "https://docs.football-prediction.com/sdk/python"
 __all__ = [
     # 核心客户端
     "FootballPredictionClient",
-
     # 异常类
     "FootballPredictionError",
     "AuthenticationError",
@@ -45,7 +44,6 @@ __all__ = [
     "BusinessError",
     "SystemServiceError",
     "RateLimitError",
-
     # 数据模型
     "Prediction",
     "Match",
@@ -55,11 +53,10 @@ __all__ = [
     "PredictionResponse",
     "MatchListResponse",
     "UserProfileResponse",
-
     # 工具类
     "AuthManager",
     "retry_with_backoff",
-    "validate_request_data"
+    "validate_request_data",
 ]
 
 # SDK版本检查
@@ -70,30 +67,36 @@ import warnings
 def check_python_version():
     """检查Python版本兼容性."""
 
+
 def check_sdk_version():
     """检查SDK版本更新."""
     try:
         import requests
+
         response = requests.get(
-            "https://pypi.org/pypi/football-prediction-sdk/json",
-            timeout=5
+            "https://pypi.org/pypi/football-prediction-sdk/json", timeout=5
         )
         if response.status_code == 200:
             latest_version = response.json()["info"]["version"]
             if latest_version != __version__:
                 warnings.warn(
                     f"New SDK version available: {latest_version} (current: {__version__})",
-                    UserWarning, stacklevel=2
+                    UserWarning,
+                    stacklevel=2,
                 )
     except Exception:
         pass  # 忽略网络错误
+
 
 # 初始化检查
 check_python_version()
 check_sdk_version()
 
+
 # 模块级便捷函数
-def create_client(api_key: str, base_url: str = "https://api.football-prediction.com/v1", **kwargs) -> FootballPredictionClient:
+def create_client(
+    api_key: str, base_url: str = "https://api.football-prediction.com/v1", **kwargs
+) -> FootballPredictionClient:
     """便捷函数：创建客户端实例.
 
     Args:

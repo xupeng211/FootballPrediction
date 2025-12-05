@@ -14,13 +14,17 @@ def read_readme():
             return f.read()
     return "Football Prediction Python SDK"
 
+
 # 读取requirements文件
 def read_requirements():
     requirements_path = os.path.join(os.path.dirname(__file__), "requirements.txt")
     if os.path.exists(requirements_path):
         with open(requirements_path, encoding="utf-8") as f:
-            return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+            return [
+                line.strip() for line in f if line.strip() and not line.startswith("#")
+            ]
     return ["requests>=2.25.0", "python-dateutil>=2.8.0"]
+
 
 setup(
     name="football-prediction-sdk",
@@ -71,7 +75,7 @@ setup(
         "performance": [
             "aiohttp>=3.8.0",
             "uvloop>=0.16.0",
-        ]
+        ],
     },
     py_modules=["football_prediction_sdk"],
     entry_points={
@@ -80,8 +84,16 @@ setup(
         ],
     },
     keywords=[
-        "football", "soccer", "prediction", "api", "sdk", "machine learning",
-        "sports analytics", "prediction model", "betting", "odds"
+        "football",
+        "soccer",
+        "prediction",
+        "api",
+        "sdk",
+        "machine learning",
+        "sports analytics",
+        "prediction model",
+        "betting",
+        "odds",
     ],
     include_package_data=True,
     zip_safe=False,
