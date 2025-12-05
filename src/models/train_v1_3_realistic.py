@@ -138,7 +138,7 @@ class RealisticModelTrainer:
 
         return df
 
-    def parse_xg_data(self, stats_json: str) -> Dict[str, float]:
+    def parse_xg_data(self, stats_json: str) -> dict[str, float]:
         """解析xG数据 - 更严格的验证"""
         try:
             if not stats_json or stats_json == 'null':
@@ -181,7 +181,7 @@ class RealisticModelTrainer:
             logger.debug(f"解析xG数据失败: {e}")
             return {'xg_home': None, 'xg_away': None}
 
-    def parse_odds_data(self, odds_json: str, metadata_json: str) -> Dict[str, float]:
+    def parse_odds_data(self, odds_json: str, metadata_json: str) -> dict[str, float]:
         """解析赔率数据 - 从多个来源提取"""
         odds = {
             'home_win': None,
@@ -262,7 +262,7 @@ class RealisticModelTrainer:
 
         return odds
 
-    def generate_realistic_odds(self, row) -> Dict[str, float]:
+    def generate_realistic_odds(self, row) -> dict[str, float]:
         """生成现实的随机赔率"""
         # 基于排名和实力差距生成赔率
         home_team_rank = row.get('home_team_rank', 10)
@@ -477,7 +477,7 @@ class RealisticModelTrainer:
         logger.info("✅ 高质量滚动特征计算完成")
         return df
 
-    def prepare_features_and_labels(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
+    def prepare_features_and_labels(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
         """准备特征和标签"""
         logger.info("🔧 准备特征和标签...")
 
@@ -590,7 +590,7 @@ class RealisticModelTrainer:
         self.feature_names = feature_columns
 
         logger.info(f"✅ 特征准备完成: {X.shape[0]} 样本, {X.shape[1]} 特征")
-        logger.info(f"📊 结果分布: {dict(zip(le_result.classes_, np.bincount(y_encoded)))}")
+        logger.info(f"📊 结果分布: {dict(zip(le_result.classes_, np.bincount(y_encoded), strict=False))}")
 
         return X, y_encoded
 
@@ -616,7 +616,7 @@ class RealisticModelTrainer:
 
         logger.info("✅ 模型训练完成")
 
-    def realistic_backtest(self, X_test: pd.DataFrame, y_test: pd.Series, df_test: pd.DataFrame) -> Dict:
+    def realistic_backtest(self, X_test: pd.DataFrame, y_test: pd.Series, df_test: pd.DataFrame) -> dict:
         """现实投注策略回测"""
         logger.info("💰 开始现实投注策略回测...")
 
@@ -706,12 +706,12 @@ class RealisticModelTrainer:
         logger.info("✅ 现实策略回测完成")
         return results
 
-    def generate_feature_importance(self) -> Dict:
+    def generate_feature_importance(self) -> dict:
         """生成特征重要性报告"""
         if not self.model:
             return {}
 
-        feature_importance = dict(zip(self.feature_names, self.model.feature_importances_))
+        feature_importance = dict(zip(self.feature_names, self.model.feature_importances_, strict=False))
 
         # 按重要性排序
         sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
@@ -780,7 +780,7 @@ class RealisticModelTrainer:
 
         report_file = model_dir / f"{model_name}_{timestamp}_summary.txt"
         with open(report_file, 'w') as f:
-            f.write(f"Football Prediction Model V1.3 Realistic Summary\n")
+            f.write("Football Prediction Model V1.3 Realistic Summary\n")
             f.write(f"{'='*50}\n\n")
             f.write(f"Model Name: {report['model_name']}\n")
             f.write(f"Version: {report['version']}\n")
@@ -789,7 +789,7 @@ class RealisticModelTrainer:
             f.write(f"Feature Count: {report['feature_count']}\n")
             f.write(f"Rolling Window: {report['rolling_window']}\n")
             f.write(f"Confidence Threshold: {report['confidence_threshold']}\n\n")
-            f.write(f"Features:\n")
+            f.write("Features:\n")
             for i, feature in enumerate(report['feature_names'], 1):
                 f.write(f"  {i:2d}. {feature}\n")
 
@@ -868,20 +868,20 @@ class RealisticModelTrainer:
         print("📊 首席量化分析师 - XGBoost V1.3真实性验证报告")
         print("="*80)
 
-        print(f"\n📊 训练基本信息:")
+        print("\n📊 训练基本信息:")
         print(f"   ⏱️ 训练时间: {training_time:.2f}秒")
-        print(f"   🎯 模型类型: XGBoost Classifier (现实版本)")
+        print("   🎯 模型类型: XGBoost Classifier (现实版本)")
         print(f"   🔄 滚动窗口: {self.rolling_window}场")
         print(f"   📊 信心阈值: {self.confidence_threshold}")
-        print(f"   🔍 数据质量: 仅xG+赔率的高质量样本")
+        print("   🔍 数据质量: 仅xG+赔率的高质量样本")
         print(f"   📊 总样本数: {sample_count:,}")
 
-        print(f"\n📈 模型性能:")
+        print("\n📈 模型性能:")
         print(f"   🏋️ 训练集准确率: {train_acc:.4f} ({train_acc*100:.2f}%)")
         print(f"   🧪 测试集准确率: {test_acc:.4f} ({test_acc*100:.2f}%)")
         print(f"   📉 过拟合程度: {(train_acc - test_acc)*100:.2f}%")
 
-        print(f"\n💰 现实投注结果:")
+        print("\n💰 现实投注结果:")
         print(f"   🎯 总投注次数: {backtest_results['total_bets']}")
         print(f"   ✅ 获胜次数: {backtest_results['wins']}")
         print(f"   📊 命中率: {backtest_results['win_rate']:.2f}%")
@@ -891,11 +891,11 @@ class RealisticModelTrainer:
         print(f"   🎖️ 投资回报率(ROI): {backtest_results['roi']:+.2f}%")
         print(f"   📊 平均赔率: {backtest_results['avg_odds']:.2f}")
 
-        print(f"\n🏆 特征重要性 Top 10:")
+        print("\n🏆 特征重要性 Top 10:")
         for i, (feature, importance) in enumerate(feature_importance['top_10_features'], 1):
             print(f"   {i:2d}. {feature}: {importance:.4f}")
 
-        print(f"\n📊 特征类别重要性:")
+        print("\n📊 特征类别重要性:")
         categories = feature_importance['feature_categories']
         for category, features in categories.items():
             total_importance = sum(features.values())
@@ -913,39 +913,39 @@ class RealisticModelTrainer:
             avg_profit = np.mean([bet['profit'] for bet in profitable_bets]) if profitable_bets else 0
             avg_loss = np.mean([bet['profit'] for bet in losing_bets]) if losing_bets else 0
 
-            print(f"\n📊 详细投注分析:")
+            print("\n📊 详细投注分析:")
             print(f"   💰 盈利投注: {len(profitable_bets)} 场")
             print(f"   📊 平均盈利: {avg_profit:.3f}")
             print(f"   ❌ 亏损投注: {len(losing_bets)} 场")
             print(f"   📊 平均亏损: {avg_loss:.3f}")
 
         # 结论
-        print(f"\n🎯 现实模型结论:")
+        print("\n🎯 现实模型结论:")
         if backtest_results['roi'] > 0:
             print(f"   ✅ 正盈利! ROI: {backtest_results['roi']:+.2f}%")
-            print(f"   💡 模型具备真实盈利能力，可以谨慎考虑实盘应用")
+            print("   💡 模型具备真实盈利能力，可以谨慎考虑实盘应用")
         elif backtest_results['roi'] > -10:
             print(f"   ⚠️ 轻微亏损: ROI: {backtest_results['roi']:+.2f}%")
-            print(f"   💡 模型接近盈亏平衡，可以尝试优化参数或扩大样本")
+            print("   💡 模型接近盈亏平衡，可以尝试优化参数或扩大样本")
         else:
             print(f"   ❌ 显著亏损: ROI: {backtest_results['roi']:+.2f}%")
-            print(f"   💡 需要重新评估模型策略或数据质量")
+            print("   💡 需要重新评估模型策略或数据质量")
 
-        print(f"\n🚀 现实性改进建议:")
+        print("\n🚀 现实性改进建议:")
         if sample_count < 1000:
             print(f"   📊 样本数量较少({sample_count})，建议:")
-            print(f"      • 扩展xG和赔率数据收集")
-            print(f"      • 降低信心阈值到0.50-0.60")
-            print(f"      • 优化特征工程方法")
+            print("      • 扩展xG和赔率数据收集")
+            print("      • 降低信心阈值到0.50-0.60")
+            print("      • 优化特征工程方法")
 
         xg_importance = feature_importance['feature_categories']['xg']
         if xg_importance < 0.1:
             print(f"   📊 xG特征重要性较低({xg_importance:.3f})，建议:")
-            print(f"      • 验证xG数据质量")
-            print(f"      • 优化xG特征工程")
-            print(f"      • 考虑xG预测准确性")
+            print("      • 验证xG数据质量")
+            print("      • 优化xG特征工程")
+            print("      • 考虑xG预测准确性")
 
-        print(f"\n" + "="*80)
+        print("\n" + "="*80)
         print("📊 首席量化分析师现实验证完成 - V1.3真实模型已就绪")
         print("="*80)
 

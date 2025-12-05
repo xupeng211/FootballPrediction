@@ -76,7 +76,7 @@ class FinalFBrefCollector:
         self.base_delay = 15
         self.timeout = 60
 
-    async def _fetch_with_method(self, config: Dict, url: str) -> Optional[str]:
+    async def _fetch_with_method(self, config: dict, url: str) -> Optional[str]:
         """使用指定方法获取HTML"""
         method = config["method"]
         headers = config["headers"]
@@ -89,7 +89,7 @@ class FinalFBrefCollector:
             return await self._fetch_with_requests(url, headers)
 
     async def _fetch_with_curl_cffi(
-        self, url: str, headers: Dict, impersonate: str = None
+        self, url: str, headers: dict, impersonate: str = None
     ) -> Optional[str]:
         """使用curl_cffi获取数据"""
         try:
@@ -116,7 +116,7 @@ class FinalFBrefCollector:
             logger.warning(f"⚠️ curl_cffi异常: {e}")
             return None
 
-    async def _fetch_with_requests(self, url: str, headers: Dict) -> Optional[str]:
+    async def _fetch_with_requests(self, url: str, headers: dict) -> Optional[str]:
         """使用requests获取数据"""
         try:
             import requests
@@ -236,7 +236,7 @@ class FinalFBrefCollector:
         logger.info(f"🎭 生成{len(mock_matches)}场模拟比赛数据")
         return mock_html
 
-    def parse_html_tables(self, html_content: str) -> List[pd.DataFrame]:
+    def parse_html_tables(self, html_content: str) -> list[pd.DataFrame]:
         """解析HTML表格"""
         try:
             tables = pd.read_html(StringIO(html_content))
@@ -324,7 +324,7 @@ class FinalFBrefCollector:
 
         return schedule_table
 
-    def get_available_leagues(self) -> Dict[str, str]:
+    def get_available_leagues(self) -> dict[str, str]:
         """获取支持的联赛URL"""
         return {
             "Premier League": "https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures",
@@ -407,7 +407,7 @@ async def run_final_backfill():
                     # 🚀 关键：保存到数据库
                     if db_saver and match_count > 0:
                         try:
-                            logger.info(f"   💾 开始保存到数据库...")
+                            logger.info("   💾 开始保存到数据库...")
                             saved_count = db_saver.save_dataframe_to_database(
                                 cleaned_data, league_name, season
                             )
@@ -424,12 +424,12 @@ async def run_final_backfill():
 
                         except Exception as db_error:
                             logger.error(f"   ❌ 数据库保存失败: {db_error}")
-                            logger.error(f"   💡 将继续采集下一任务...")
+                            logger.error("   💡 将继续采集下一任务...")
                     else:
                         logger.info(f"   📊 仅采集模式: {match_count} 场比赛 (未保存)")
 
                 else:
-                    logger.error(f"   ❌ 失败: 无数据")
+                    logger.error("   ❌ 失败: 无数据")
 
                 # 赛季间延迟
                 await asyncio.sleep(random.uniform(5.0, 15.0))
@@ -448,7 +448,7 @@ async def run_final_backfill():
     logger.info("=" * 80)
     logger.info("🎉 FBref最终历史回填完成!")
     logger.info("=" * 80)
-    logger.info(f"📊 最终统计:")
+    logger.info("📊 最终统计:")
     logger.info(f"   处理联赛: {successful_leagues}/{len(target_leagues)}")
     logger.info(f"   总采集: {total_collected:,} 场比赛")
     logger.info(f"   总入库: {total_saved:,} 场比赛")

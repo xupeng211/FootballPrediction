@@ -23,7 +23,7 @@ class OperationsDashboard:
         self.logs_dir = self.project_root / "logs"
         self.start_time = datetime.now()
 
-    def get_crontab_status(self) -> Dict[str, Any]:
+    def get_crontab_status(self) -> dict[str, Any]:
         """获取crontab任务状态"""
         try:
             result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
@@ -42,7 +42,7 @@ class OperationsDashboard:
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    def get_system_resources(self) -> Dict[str, Any]:
+    def get_system_resources(self) -> dict[str, Any]:
         """获取系统资源状态"""
         try:
             # 磁盘使用情况
@@ -75,7 +75,7 @@ class OperationsDashboard:
         except Exception as e:
             return {"error": str(e)}
 
-    def get_log_summary(self) -> Dict[str, Any]:
+    def get_log_summary(self) -> dict[str, Any]:
         """获取日志摘要"""
         if not self.logs_dir.exists():
             return {"status": "no_logs", "message": "Logs directory not found"}
@@ -110,7 +110,7 @@ class OperationsDashboard:
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    def get_pipeline_health(self) -> Dict[str, Any]:
+    def get_pipeline_health(self) -> dict[str, Any]:
         """获取数据管道健康状态"""
         health_score = 100
         issues = []
@@ -175,7 +175,7 @@ class OperationsDashboard:
 """
 
         if pipeline_health["issues"]:
-            report += "\│ 发现问题:\n"
+            report += "\\│ 发现问题:\n"
             for issue in pipeline_health["issues"]:
                 report += f"   • {issue}\n"
 
@@ -196,9 +196,9 @@ class OperationsDashboard:
 │   每月1号 03:45 UTC - 历史数据同步
 │   每小时整点 - 系统健康检查"""
         else:
-            report += f"\│ 错误: {crontab_status.get('message', 'Unknown error')}"
+            report += rf"\│ 错误: {crontab_status.get('message', 'Unknown error')}"
 
-        report += f"""
+        report += """
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ 💻 系统资源状态 ─────────────────────────────────────────────────────────────┐"""
@@ -213,7 +213,7 @@ class OperationsDashboard:
             report += f"""
 │ 内存使用: {mem.get('used', 'N/A')} / {mem.get('total', 'N/A')} ({mem.get('usage_percent', 'N/A')})"""
 
-        report += f"""
+        report += """
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ 📝 日志文件状态 ─────────────────────────────────────────────────────────────┐"""
@@ -234,9 +234,9 @@ class OperationsDashboard:
                 report += f"""
 │   • {log['name']} ({log['size_mb']}MB, {age_text})"""
         else:
-            report += f"\│ 状态: {log_summary.get('message', 'Unknown')}"
+            report += rf"\│ 状态: {log_summary.get('message', 'Unknown')}"
 
-        report += f"""
+        report += """
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ 🎯 运营建议 ────────────────────────────────────────────────────────────────┐"""

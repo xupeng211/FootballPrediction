@@ -126,7 +126,7 @@ class PredictionResultValidator:
         else:
             return DRAW
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取验证统计信息.
 
         Returns:

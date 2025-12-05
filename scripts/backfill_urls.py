@@ -61,7 +61,7 @@ class URLBackfiller:
             'database': 'football_prediction'
         }
 
-    def get_league_seasons_to_process(self) -> List[Tuple[str, str, str]]:
+    def get_league_seasons_to_process(self) -> list[tuple[str, str, str]]:
         """
         获取需要处理的联赛-赛季组合
 
@@ -184,7 +184,7 @@ class URLBackfiller:
             logger.error(f"❌ 获取赛程失败 {league_name} {season}: {e}")
             return pd.DataFrame()
 
-    def _extract_match_report_urls(self, html_content: str) -> List[str]:
+    def _extract_match_report_urls(self, html_content: str) -> list[str]:
         """
         从HTML中提取match_report_url
 
@@ -235,7 +235,7 @@ class URLBackfiller:
         return str(name).strip().lower().replace(" ", "").replace("-", "").replace(".", "")
 
     def find_matching_records(self, conn, league_name: str, season: str,
-                            schedule_df: pd.DataFrame) -> List[Tuple[int, str]]:
+                            schedule_df: pd.DataFrame) -> list[tuple[int, str]]:
         """
         根据date和队名匹配数据库记录
 
@@ -355,7 +355,7 @@ class URLBackfiller:
 
         return matches_to_update
 
-    def update_database_urls(self, matches_to_update: List[Tuple[int, str]]) -> int:
+    def update_database_urls(self, matches_to_update: list[tuple[int, str]]) -> int:
         """
         批量更新数据库中的match_report_url
 
@@ -467,7 +467,7 @@ class URLBackfiller:
                 logger.error(f"❌ 处理 {league_name} {season} 失败: {e}")
                 continue
 
-        logger.info(f"\n🎉 URL补全完成!")
+        logger.info("\n🎉 URL补全完成!")
         logger.info(f"📊 处理联赛-赛季: {total_processed}/{len(league_seasons)}")
         logger.info(f"🔗 更新记录总数: {total_updated}")
 
@@ -499,7 +499,7 @@ class URLBackfiller:
                 """)
                 has_urls = cur.fetchone()[0]
 
-                logger.info(f"📊 验证结果:")
+                logger.info("📊 验证结果:")
                 logger.info(f"  ❌ 仍缺少URL: {missing_urls:,} 条记录")
                 logger.info(f"  ✅ 已有URL: {has_urls:,} 条记录")
 

@@ -262,7 +262,7 @@ async def main():
             elif arg.startswith("--max-concurrent="):
                 max_concurrent = int(arg.split("=")[1])
 
-    logger.info(f"📋 配置:")
+    logger.info("📋 配置:")
     logger.info(f"   赛季: {seasons}")
     logger.info(f"   并发数: {max_concurrent}")
     logger.info(f"   核心联赛: {len(['Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1'])} 个")

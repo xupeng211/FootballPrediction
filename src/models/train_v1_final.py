@@ -71,7 +71,7 @@ class V1FinalModelTrainer:
             logger.error(f"❌ 加载训练数据失败: {e}")
             return pd.DataFrame()
 
-    def prepare_features_and_target(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
+    def prepare_features_and_target(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
         """
         准备特征和目标变量
 
@@ -130,7 +130,7 @@ class V1FinalModelTrainer:
             return pd.DataFrame(), pd.Series()
 
     def time_split_data(self, X: pd.DataFrame, y: pd.Series,
-                       test_size: float = 0.2) -> Tuple[pd.DataFrame, pd.DataFrame,
+                       test_size: float = 0.2) -> tuple[pd.DataFrame, pd.DataFrame,
                                                     pd.Series, pd.Series]:
         """
         基于时间的数据切分（避免数据泄露）
@@ -158,7 +158,7 @@ class V1FinalModelTrainer:
                     X, y, test_size=test_size, random_state=42, stratify=y
                 )
 
-            logger.info(f"📊 数据切分完成:")
+            logger.info("📊 数据切分完成:")
             logger.info(f"   训练集: {X_train.shape} (标签分布: {dict(y_train.value_counts())})")
             logger.info(f"   测试集: {X_test.shape} (标签分布: {dict(y_test.value_counts())})")
 
@@ -172,7 +172,7 @@ class V1FinalModelTrainer:
                 if train_size >= 1:  # 确保训练集至少有1个样本
                     X_train, X_test = X.iloc[:train_size], X.iloc[train_size:]
                     y_train, y_test = y.iloc[:train_size], y.iloc[train_size:]
-                    logger.info(f"📊 简单切分完成:")
+                    logger.info("📊 简单切分完成:")
                     logger.info(f"   训练集: {X_train.shape} (标签分布: {dict(y_train.value_counts())})")
                     logger.info(f"   测试集: {X_test.shape} (标签分布: {dict(y_test.value_counts())})")
                     return X_train, X_test, y_train, y_test
@@ -244,7 +244,7 @@ class V1FinalModelTrainer:
             self.model.fit(X_train_scaled, y_train_encoded)
 
             avg_cv_score = np.mean(cv_scores) if cv_scores else 0
-            logger.info(f"✅ 模型训练完成")
+            logger.info("✅ 模型训练完成")
             logger.info(f"📈 交叉验证平均准确率: {avg_cv_score:.4f}")
 
             # 保存训练结果
@@ -259,7 +259,7 @@ class V1FinalModelTrainer:
             traceback.print_exc()
             return None
 
-    def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict:
+    def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
         """
         评估模型性能
 
@@ -300,13 +300,13 @@ class V1FinalModelTrainer:
                 'importance': self.model.feature_importances_
             }).sort_values('importance', ascending=False)
 
-            logger.info(f"🎯 模型评估结果:")
+            logger.info("🎯 模型评估结果:")
             logger.info(f"   准确率: {accuracy:.4f}")
             logger.info(f"   各类别F1-score: {class_report}")
 
             # 显示前10个重要特征
             top_features = feature_importance.head(10)
-            logger.info(f"📊 Top 10 重要特征:")
+            logger.info("📊 Top 10 重要特征:")
             for _, row in top_features.iterrows():
                 logger.info(f"   {row['feature']}: {row['importance']:.4f}")
 
@@ -327,7 +327,7 @@ class V1FinalModelTrainer:
                 # 在真实场景中，这些数据应该来自比赛的实际比分
                 logger.info(f"🎮 开始验证 {len(predicted_labels)} 个预测结果...")
 
-                for i, (pred_label, actual_label) in enumerate(zip(predicted_labels, actual_labels)):
+                for i, (pred_label, actual_label) in enumerate(zip(predicted_labels, actual_labels, strict=False)):
                     try:
                         # 根据预测结果和实际结果生成模拟比分
                         # 这里我们使用一个简单的启发式规则来生成比分
@@ -383,7 +383,7 @@ class V1FinalModelTrainer:
                 logger.info("=" * 70)
                 logger.info("🔍 独立验证报告 (Independent Validation Report)")
                 logger.info("=" * 70)
-                logger.info(f"📊 验证器统计:")
+                logger.info("📊 验证器统计:")
                 logger.info(f"   总验证场次: {validation_stats['total_validations']}")
                 logger.info(f"   正确预测: {validation_stats['correct_predictions']}")
                 logger.info(f"   验证准确率: {validation_stats['accuracy']:.4f} ({validation_stats['accuracy']:.2%})")
@@ -445,7 +445,7 @@ class V1FinalModelTrainer:
         }
         return label_mapping.get(label, 'draw')
 
-    def simulate_betting_roi(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict:
+    def simulate_betting_roi(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
         """
         模拟投注ROI - 这是检验模型商业价值的唯一标准
 
@@ -514,7 +514,7 @@ class V1FinalModelTrainer:
             roi = ((total_return - total_investment) / total_investment * 100) if total_investment > 0 else 0
             win_rate = (winning_bets / total_bets * 100) if total_bets > 0 else 0
 
-            logger.info(f"💰 ROI模拟结果:")
+            logger.info("💰 ROI模拟结果:")
             logger.info(f"   总投注次数: {total_bets}")
             logger.info(f"   总投资: {total_investment}")
             logger.info(f"   总回报: {total_return}")
@@ -579,8 +579,8 @@ class V1FinalModelTrainer:
             # 保存训练摘要
             summary_path = save_dir / f"{model_name}_summary.txt"
             with open(summary_path, 'w', encoding='utf-8') as f:
-                f.write(f"足球预测模型 V1.1 训练摘要\n")
-                f.write(f"=" * 50 + "\n")
+                f.write("足球预测模型 V1.1 训练摘要\n")
+                f.write("=" * 50 + "\n")
                 f.write(f"训练时间: {datetime.now()}\n")
                 f.write(f"模型特征数量: {len(self.feature_names)}\n")
 
@@ -594,7 +594,7 @@ class V1FinalModelTrainer:
                     f.write(f"投注胜率: {roi_result['win_rate']:.2f}%\n")
 
             logger.info(f"📄 模型摘要已保存: {summary_path}")
-            logger.info(f"🎉 模型保存完成!")
+            logger.info("🎉 模型保存完成!")
 
             return str(save_dir)
 

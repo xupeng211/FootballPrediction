@@ -34,7 +34,7 @@ class IntelligentCopyImporter:
 
     def detect_csv_structure(self, csv_file: Path) -> dict:
         """检测CSV文件结构"""
-        with open(csv_file, "r", encoding="utf-8") as f:
+        with open(csv_file, encoding="utf-8") as f:
             reader = csv.reader(f)
             headers = next(reader)
 
@@ -146,7 +146,7 @@ class IntelligentCopyImporter:
 
         output = io.StringIO()
 
-        with open(csv_file, "r", encoding="utf-8") as f:
+        with open(csv_file, encoding="utf-8") as f:
             reader = csv.DictReader(f)
 
             # 写入表头

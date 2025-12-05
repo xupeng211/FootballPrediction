@@ -64,7 +64,7 @@ class CSVStatsReviver:
         """获取数据库连接"""
         return await asyncpg.connect(self.database_url)
 
-    def parse_csv_match_data(self, csv_file: Path) -> List[Dict]:
+    def parse_csv_match_data(self, csv_file: Path) -> list[dict]:
         """解析CSV文件中的比赛数据"""
         matches = []
 
@@ -142,7 +142,7 @@ class CSVStatsReviver:
 
         return matches
 
-    async def find_matching_database_records(self, conn, csv_matches: List[Dict]) -> List[Tuple]:
+    async def find_matching_database_records(self, conn, csv_matches: list[dict]) -> list[tuple]:
         """在数据库中查找匹配的记录"""
         matching_records = []
 
@@ -192,7 +192,7 @@ class CSVStatsReviver:
 
         return matching_records
 
-    async def revive_database_records(self, conn, matching_records: List[Tuple]):
+    async def revive_database_records(self, conn, matching_records: list[tuple]):
         """更新数据库记录"""
         for record_id, stats, metadata, has_xg, home_name, away_name in matching_records:
             try:

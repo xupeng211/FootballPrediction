@@ -71,7 +71,7 @@ class PremierLeagueBackfill:
         # 确保日志目录存在
         Path("logs").mkdir(exist_ok=True)
 
-    async def collect_season(self, season_name: str, season_config: Dict) -> bool:
+    async def collect_season(self, season_name: str, season_config: dict) -> bool:
         """
         采集单个赛季数据
         """
@@ -88,7 +88,7 @@ class PremierLeagueBackfill:
             await asyncio.sleep(delay)
 
             # 执行采集
-            logger.info(f"📡 连接FBref服务器...")
+            logger.info("📡 连接FBref服务器...")
             season_data = await self.collector.get_season_schedule_stealth(url)
 
             if season_data is None or season_data.empty:
@@ -107,7 +107,7 @@ class PremierLeagueBackfill:
                 return False
 
             # 数据清洗和验证
-            logger.info(f"🧹 数据清洗和验证...")
+            logger.info("🧹 数据清洗和验证...")
             cleaned_data = self._validate_and_clean_data(season_data_dict, season_name)
 
             if not cleaned_data:
@@ -118,7 +118,7 @@ class PremierLeagueBackfill:
             logger.info(f"✅ {season_name}: 有效数据 {len(cleaned_data)} 场比赛")
 
             # 数据入库
-            logger.info(f"💾 开始数据入库...")
+            logger.info("💾 开始数据入库...")
             success = await self._save_to_database(cleaned_data, season_name, season_id)
 
             if success:
@@ -140,7 +140,7 @@ class PremierLeagueBackfill:
             traceback.print_exc()
             return False
 
-    def _validate_and_clean_data(self, data: List[Dict], season_name: str) -> List[Dict]:
+    def _validate_and_clean_data(self, data: list[dict], season_name: str) -> list[dict]:
         """
         数据验证和清洗
         """
@@ -177,7 +177,7 @@ class PremierLeagueBackfill:
         logger.info(f"🔍 {season_name}: {len(data)} → {len(cleaned_data)} 条有效记录")
         return cleaned_data
 
-    async def _save_to_database(self, data: List[Dict], season_name: str, season_id: str) -> bool:
+    async def _save_to_database(self, data: list[dict], season_name: str, season_id: str) -> bool:
         """
         保存数据到数据库
         """
@@ -209,7 +209,7 @@ class PremierLeagueBackfill:
         logger.info("🎯 英超专项采集任务完成!")
         logger.info("="*80)
 
-        logger.info(f"\n📊 采集统计:")
+        logger.info("\n📊 采集统计:")
         logger.info(f"  目标赛季: {self.stats['total_seasons']} 个")
         logger.info(f"  成功赛季: {self.stats['completed_seasons']} 个")
         logger.info(f"  失败赛季: {len(self.stats['failed_seasons'])} 个")
@@ -218,11 +218,11 @@ class PremierLeagueBackfill:
         logger.info(f"  采集时长: {duration.total_seconds()/60:.1f} 分钟")
 
         if self.stats['failed_seasons']:
-            logger.info(f"\n❌ 失败赛季:")
+            logger.info("\n❌ 失败赛季:")
             for season in self.stats['failed_seasons']:
                 logger.info(f"  - {season}")
 
-        logger.info(f"\n🎯 模型训练数据准备情况:")
+        logger.info("\n🎯 模型训练数据准备情况:")
         expected_matches = 38 * 20 * 3  # 3赛季 * 20队 * 38场比赛
         actual_matches = self.stats['total_matches']
         coverage = (actual_matches / expected_matches) * 100 if expected_matches > 0 else 0
@@ -232,18 +232,18 @@ class PremierLeagueBackfill:
         logger.info(f"  数据覆盖率: {coverage:.1f}%")
 
         if coverage >= 80:
-            logger.info(f"  ✅ 数据充足，适合模型训练!")
+            logger.info("  ✅ 数据充足，适合模型训练!")
         elif coverage >= 50:
-            logger.info(f"  ⚠️ 数据基本够用，建议补充")
+            logger.info("  ⚠️ 数据基本够用，建议补充")
         else:
-            logger.info(f"  ❌ 数据不足，需要进一步采集")
+            logger.info("  ❌ 数据不足，需要进一步采集")
 
         logger.info("="*80)
 
     async def run_backfill(self):
         """执行回填任务"""
         logger.info("🚀 英超专项采集器启动")
-        logger.info(f"目标: 采集3个赛季约1000场英超比赛")
+        logger.info("目标: 采集3个赛季约1000场英超比赛")
         logger.info(f"开始时间: {self.stats['start_time'].strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("="*80)
 

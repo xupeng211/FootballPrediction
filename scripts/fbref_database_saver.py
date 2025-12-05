@@ -123,7 +123,7 @@ class FBrefDatabaseSaver:
             session.rollback()
             raise
 
-    def parse_score(self, score_str: str) -> Tuple[Optional[int], Optional[int]]:
+    def parse_score(self, score_str: str) -> tuple[Optional[int], Optional[int]]:
         """解析比分字符串"""
         if pd.isna(score_str) or score_str == "" or score_str == "-":
             return None, None
@@ -161,7 +161,7 @@ class FBrefDatabaseSaver:
 
     def convert_dataframe_to_match_records(
         self, df: pd.DataFrame, league_name: str, season: str
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """将DataFrame转换为比赛记录列表"""
         logger.info(f"🔄 转换DataFrame: {df.shape} -> 比赛记录")
 
@@ -180,7 +180,7 @@ class FBrefDatabaseSaver:
                 raw_file_path = row.get("raw_file_path")
 
                 if not home_team or not away_team:
-                    logger.warning(f"⚠️ 跳过无效行: 主客队信息缺失")
+                    logger.warning("⚠️ 跳过无效行: 主客队信息缺失")
                     continue
 
                 # 解析比分
@@ -272,7 +272,7 @@ class FBrefDatabaseSaver:
         logger.info(f"✅ DataFrame转换完成: {len(match_records)} 条有效记录")
         return match_records
 
-    def save_matches_to_database(self, match_records: List[Dict]) -> int:
+    def save_matches_to_database(self, match_records: list[dict]) -> int:
         """批量保存比赛记录到数据库"""
         if not match_records:
             logger.warning("⚠️ 没有比赛记录需要保存")

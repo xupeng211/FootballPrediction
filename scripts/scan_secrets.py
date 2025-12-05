@@ -95,12 +95,12 @@ class SecretScanner:
 
         return False
 
-    def scan_file(self, file_path: Path) -> List[Tuple[str, int, str, str]]:
+    def scan_file(self, file_path: Path) -> list[tuple[str, int, str, str]]:
         """扫描单个文件"""
         secrets = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding='utf-8', errors='ignore') as f:
                 lines = f.readlines()
 
             for line_num, line in enumerate(lines, 1):

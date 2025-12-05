@@ -85,7 +85,7 @@ class FBrefLeagueDiscovery:
             logger.error(f"❌ 获取页面失败: {e}")
             return None
 
-    def parse_league_tables(self, soup: BeautifulSoup) -> List[Dict]:
+    def parse_league_tables(self, soup: BeautifulSoup) -> list[dict]:
         """解析所有联赛表格"""
         logger.info("🏆 开始解析联赛表格...")
 
@@ -272,7 +272,7 @@ class FBrefLeagueDiscovery:
 
         return "Other"
 
-    def save_to_database(self, leagues: List[Dict]) -> int:
+    def save_to_database(self, leagues: list[dict]) -> int:
         """将发现的联赛存入数据库"""
         if not leagues:
             logger.warning("⚠️ 没有联赛需要保存")
@@ -317,7 +317,7 @@ class FBrefLeagueDiscovery:
         logger.info(f"✅ 成功保存 {saved_count} 个联赛")
         return saved_count
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """获取联赛统计信息"""
         with engine.connect() as conn:
             # 总数
@@ -362,7 +362,7 @@ class FBrefLeagueDiscovery:
             "top_countries": country_stats,
         }
 
-    def run_discovery(self) -> Dict:
+    def run_discovery(self) -> dict:
         """运行完整的联赛发现流程"""
         logger.info("🚀 启动FBref赛事发现器")
         logger.info("=" * 80)
@@ -388,15 +388,15 @@ class FBrefLeagueDiscovery:
         logger.info("🎉 赛事发现完成!")
         logger.info("=" * 80)
 
-        logger.info(f"\n📊 统计信息:")
+        logger.info("\n📊 统计信息:")
         logger.info(f"  总联赛数: {stats['total_leagues']:,}")
         logger.info(f"  新增联赛: {saved_count}")
 
-        logger.info(f"\n🏆 分类分布:")
+        logger.info("\n🏆 分类分布:")
         for category, count in stats["category_distribution"].items():
             logger.info(f"  {category:30s}: {count:3d}")
 
-        logger.info(f"\n🌍 Top 10 国家:")
+        logger.info("\n🌍 Top 10 国家:")
         for country, count in stats["top_countries"].items():
             logger.info(f"  {country:20s}: {count:3d}")
 
@@ -414,7 +414,7 @@ async def main():
     discovery = FBrefLeagueDiscovery()
     result = discovery.run_discovery()
 
-    logger.info(f"\n✅ 程序执行完成")
+    logger.info("\n✅ 程序执行完成")
     logger.info(f"   发现: {result.get('discovered', 0)} 个联赛")
     logger.info(f"   保存: {result.get('saved', 0)} 个联赛")
 

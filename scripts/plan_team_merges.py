@@ -25,7 +25,7 @@ class TeamMergePlanner:
         self.merge_plan = []
         self.similarity_threshold = 0.85
 
-    def load_teams_from_db(self) -> List[Dict]:
+    def load_teams_from_db(self) -> list[dict]:
         """从数据库加载所有球队"""
         try:
             cmd = [
@@ -101,7 +101,7 @@ class TeamMergePlanner:
         similarity = SequenceMatcher(None, norm1, norm2).ratio()
         return similarity
 
-    def find_duplicate_teams(self) -> List[Tuple]:
+    def find_duplicate_teams(self) -> list[tuple]:
         """找出重复的球队"""
         duplicates = []
         processed_ids = set()
@@ -142,7 +142,7 @@ class TeamMergePlanner:
 
         return duplicates
 
-    def generate_merge_plan(self, duplicates: List[Tuple]) -> Dict:
+    def generate_merge_plan(self, duplicates: list[tuple]) -> dict:
         """生成合并计划"""
         merge_plan = {
             "generated_at": datetime.now().isoformat(),
@@ -164,7 +164,7 @@ class TeamMergePlanner:
 
         return merge_plan
 
-    def save_merge_plan(self, merge_plan: Dict, filename: str = "merge_plan.json"):
+    def save_merge_plan(self, merge_plan: dict, filename: str = "merge_plan.json"):
         """保存合并计划到文件"""
         try:
             with open(filename, "w", encoding="utf-8") as f:
@@ -202,8 +202,8 @@ class TeamMergePlanner:
             logger.info("=" * 60)
             logger.info(f"📊 总球队数: {len(teams)}")
             logger.info(f"🔄 合并对数: {len(duplicates)}")
-            logger.info(f"💾 计划文件: merge_plan.json")
-            logger.info(f"⏱️  下一步: python scripts/execute_team_merges.py")
+            logger.info("💾 计划文件: merge_plan.json")
+            logger.info("⏱️  下一步: python scripts/execute_team_merges.py")
 
         return success
 

@@ -282,7 +282,7 @@ class FeaturePipeline:
 
         return df
 
-    def build_features(self, window: int = 5) -> Tuple[pd.DataFrame, List[str]]:
+    def build_features(self, window: int = 5) -> tuple[pd.DataFrame, list[str]]:
         """
         构建完整的特征数据集
 
@@ -335,7 +335,7 @@ class FeaturePipeline:
 
     def split_data(
         self, df: pd.DataFrame, train_end_date: str = "2024-05-01"
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         时间切分训练集和测试集
 

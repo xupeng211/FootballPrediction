@@ -75,7 +75,7 @@ class MatchRepository(AbstractRepository[Match]):
         return []
 
     # 🚀 V2深度数据专用方法 - 全栈架构师添加
-    async def create_from_fotmob_v2(self, fotmob_data: Dict[str, Any]) -> Match:
+    async def create_from_fotmob_v2(self, fotmob_data: dict[str, Any]) -> Match:
         """从FotMob V2数据创建比赛记录."""
         # 转换FotMob数据格式到数据库格式
         match_data = {
@@ -143,7 +143,7 @@ class MatchRepository(AbstractRepository[Match]):
         )
         return result.scalars().all()
 
-    async def update_deep_data(self, match_id: int, deep_data: Dict[str, Any]) -> Match | None:
+    async def update_deep_data(self, match_id: int, deep_data: dict[str, Any]) -> Match | None:
         """更新比赛的深度数据."""
         match = await self.get_by_id(match_id)
         if match:
@@ -181,7 +181,7 @@ class MatchRepository(AbstractRepository[Match]):
             await self.session.refresh(match)
         return match
 
-    async def get_data_quality_stats(self) -> Dict[str, int]:
+    async def get_data_quality_stats(self) -> dict[str, int]:
         """获取数据质量统计."""
         total_result = await self.session.execute(select(Match))
         total = len(total_result.scalars().all())

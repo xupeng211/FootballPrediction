@@ -32,7 +32,7 @@ class TeamMergeExecutor:
     def load_merge_plan(self, filename: str = "merge_plan.json") -> bool:
         """加载合并计划"""
         try:
-            with open(filename, "r", encoding="utf-8") as f:
+            with open(filename, encoding="utf-8") as f:
                 self.merge_plan = json.load(f)
 
             self.stats["total_merges"] = len(self.merge_plan.get("merges", []))
@@ -49,7 +49,7 @@ class TeamMergeExecutor:
             logger.error(f"❌ 加载合并计划失败: {e}")
             return False
 
-    def execute_team_merge(self, master_id: int, duplicate_id: int) -> Tuple[bool, int]:
+    def execute_team_merge(self, master_id: int, duplicate_id: int) -> tuple[bool, int]:
         """执行单个球队合并"""
         try:
             # 开始事务
@@ -188,7 +188,7 @@ class TeamMergeExecutor:
 
         return self.stats["failed_merges"] == 0
 
-    def verify_merge_results(self) -> Dict:
+    def verify_merge_results(self) -> dict:
         """验证合并结果"""
         try:
             logger.info("🔍 验证合并结果...")
@@ -283,7 +283,7 @@ class TeamMergeExecutor:
                     (original_duplicates - remaining_duplicates) / original_duplicates
                 ) * 100
 
-            logger.info(f"📊 验证结果:")
+            logger.info("📊 验证结果:")
             logger.info(f"   最终球队数: {final_team_count}")
             logger.info(f"   剩余重复: {remaining_duplicates}")
             logger.info(f"   比赛记录: {final_match_count}")

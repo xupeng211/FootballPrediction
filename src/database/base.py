@@ -313,7 +313,7 @@ try:
     # 将其添加到模块命名空间（但不推荐使用）
     import sys
     current_module = sys.modules[__name__]
-    setattr(current_module, 'AsyncSessionLocal', AsyncSessionLocal)
+    current_module.AsyncSessionLocal = AsyncSessionLocal
 
 except ImportError:
     pass

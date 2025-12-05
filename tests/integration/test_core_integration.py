@@ -103,7 +103,7 @@ class TestCoreModuleIntegration:
             assert hasattr(test_logger, 'info')
             assert hasattr(test_logger, 'warning')
             assert hasattr(test_logger, 'error')
-        except Exception as e:
+        except Exception:
             # 如果get_logger失败，至少确保它能导入
             assert get_logger is not None
 
@@ -229,7 +229,7 @@ class TestCoreModuleIntegration:
             assert validator.validate_string("", required=True) is False
             assert validator.validate_number(-1, min_value=0) is False
             assert validator.validate_email("invalid") is False
-        except Exception as e:
+        except Exception:
             # 如果有错误，至少确保validator不是None
             assert validator is not None
 

@@ -97,7 +97,7 @@ class EliteTeamsIndexer:
             logger.error(f"❌ 获取 {league_name} 失败: {e}")
             return None
 
-    def extract_teams_from_standings(self, df: pd.DataFrame, league_name: str) -> List[Dict]:
+    def extract_teams_from_standings(self, df: pd.DataFrame, league_name: str) -> list[dict]:
         """从积分榜中提取球队信息"""
         logger.info(f"\n🔍 从 {league_name} 提取球队信息...")
 
@@ -169,7 +169,7 @@ class EliteTeamsIndexer:
 
         return teams
 
-    def save_teams_to_db(self, teams: List[Dict], league_name: str, country: str) -> Tuple[int, int]:
+    def save_teams_to_db(self, teams: list[dict], league_name: str, country: str) -> tuple[int, int]:
         """保存球队信息到数据库"""
         logger.info(f"\n💾 保存 {league_name} 的 {len(teams)} 支球队...")
 
@@ -261,7 +261,7 @@ class EliteTeamsIndexer:
         logger.info("⚽ 天网计划 - Step 2 完成：豪门球队索引构建")
         logger.info("="*80)
 
-        logger.info(f"\n📊 统计信息:")
+        logger.info("\n📊 统计信息:")
         logger.info(f"  处理联赛: {self.stats['processed_leagues']}/{self.stats['total_leagues']}")
         logger.info(f"  发现球队总数: {self.stats['total_teams']}")
         logger.info(f"  新增球队: {self.stats['new_teams']}")
@@ -269,7 +269,7 @@ class EliteTeamsIndexer:
         logger.info(f"  失败球队: {len(self.stats['failed_teams'])}")
 
         if self.stats['failed_teams']:
-            logger.info(f"\n❌ 失败列表:")
+            logger.info("\n❌ 失败列表:")
             for team in self.stats['failed_teams'][:10]:  # 只显示前10个
                 logger.info(f"  - {team}")
 
@@ -284,7 +284,7 @@ class EliteTeamsIndexer:
                     ORDER BY count DESC
                 """)).fetchall()
 
-                logger.info(f"\n📋 五大联赛球队统计:")
+                logger.info("\n📋 五大联赛球队统计:")
                 for row in result:
                     logger.info(f"  {row.country}: {row.count} 支球队")
 
@@ -307,7 +307,7 @@ class EliteTeamsIndexer:
 
         # 遍历五大联赛
         for league_name, league_info in self.big5_leagues.items():
-            logger.info(f"\n" + "="*60)
+            logger.info("\n" + "="*60)
             logger.info(f"🏆 处理联赛: {league_name} ({league_info['country']})")
             logger.info(f"📡 URL: {league_info['url']}")
             logger.info("="*60)

@@ -32,7 +32,7 @@ class UltimateCopyImporter:
 
     def analyze_csv_structure(self, csv_file: Path) -> dict:
         """分析CSV文件结构"""
-        with open(csv_file, "r", encoding="utf-8") as f:
+        with open(csv_file, encoding="utf-8") as f:
             reader = csv.reader(f)
             headers = next(reader)
 
@@ -51,7 +51,7 @@ class UltimateCopyImporter:
         """创建与数据库表完美匹配的CSV数据"""
         output = io.StringIO()
 
-        with open(csv_file, "r", encoding="utf-8") as f:
+        with open(csv_file, encoding="utf-8") as f:
             reader = csv.DictReader(f)
 
             # 定义标准列名（与数据库表完全一致）

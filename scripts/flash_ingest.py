@@ -63,7 +63,7 @@ class FlashIngester:
 
             # 获取文件大小和行数
             file_size = csv_file.stat().st_size
-            with open(csv_file, "r", encoding="utf-8") as f:
+            with open(csv_file, encoding="utf-8") as f:
                 # 快速估算行数
                 sample_size = 1024
                 sample = f.read(sample_size)
@@ -79,10 +79,10 @@ class FlashIngester:
             source_file = csv_file.name
 
             # 使用COPY命令导入 - PostgreSQL最快的批量导入方式
-            with open(csv_file, "r", encoding="utf-8") as f:
+            with open(csv_file, encoding="utf-8") as f:
                 # 先添加source_file列
                 cursor.execute(
-                    f"""
+                    """
                     ALTER TABLE stg_fbref_matches
                     ADD COLUMN IF NOT EXISTS source_file TEXT,
                     ADD COLUMN IF NOT EXISTS loaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -91,7 +91,7 @@ class FlashIngester:
                 )
 
                 # 使用COPY命令导入（PostgreSQL内部优化，极快）
-                copy_sql = f"""
+                copy_sql = """
                 COPY stg_fbref_matches (wk, "Day", "Date", "Time", "Home", "xG", "Score", "xG.1", "Away",
                                          "Attendance", "Venue", "Referee", "Match Report", "Notes", source_file)
                 FROM STDIN WITH CSV HEADER
@@ -139,7 +139,7 @@ class FlashIngester:
         self.stats["total_files"] = len(csv_files)
 
         logger.info(f"📁 发现 {len(csv_files)} 个CSV文件")
-        logger.info(f"📋 目标: 使用PostgreSQL COPY命令极速导入")
+        logger.info("📋 目标: 使用PostgreSQL COPY命令极速导入")
 
         # 获取数据库连接
         conn = self.get_connection()

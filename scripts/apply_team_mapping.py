@@ -50,10 +50,10 @@ class TeamMappingApplier:
             print("请先运行 scripts/refine_team_mapping.py")
             sys.exit(1)
 
-        with open(MAPPING_FILE, "r", encoding="utf-8") as f:
+        with open(MAPPING_FILE, encoding="utf-8") as f:
             self.mapping_data = json.load(f)
 
-        print(f"✅ 映射文件加载完成:")
+        print("✅ 映射文件加载完成:")
         print(f"  - 高可信度映射: {len(self.mapping_data['high_confidence'])}")
         print(f"  - 低可信度映射: {len(self.mapping_data['low_confidence'])}")
         print(
@@ -74,7 +74,7 @@ class TeamMappingApplier:
 
         for json_file in json_files:
             print(f"  📖 读取: {json_file.name}")
-            with open(json_file, "r", encoding="utf-8") as f:
+            with open(json_file, encoding="utf-8") as f:
                 data = json.load(f)
 
                 for match in data.get("matches", []):
@@ -240,7 +240,7 @@ class TeamMappingApplier:
                 self.stats["mappings_applied"] = success_count
                 self.stats["mappings_failed"] = failed_count
 
-                print(f"✅ 映射应用完成:")
+                print("✅ 映射应用完成:")
                 print(f"  - 成功: {success_count}")
                 print(f"  - 失败: {failed_count}")
 
@@ -271,7 +271,7 @@ class TeamMappingApplier:
                 row = result.fetchone()
                 total_mapped, fotmob_mapped, fbref_mapped = row
 
-                print(f"✅ 映射统计:")
+                print("✅ 映射统计:")
                 print(f"  - 已映射球队总数: {total_mapped}")
                 print(f"  - 有FotMob ID的球队: {fbref_mapped}")
                 print(f"  - 有FBref ID的球队: {fotmob_mapped}")
@@ -288,13 +288,13 @@ class TeamMappingApplier:
                     )
                 )
 
-                print(f"\n📋 映射示例 (前10个):")
+                print("\n📋 映射示例 (前10个):")
                 for row in result:
                     name, fbref_id, fotmob_id = row
                     print(f"  {name:30s} FBref={fbref_id} FotMob={fotmob_id}")
 
                 # 验证跨数据源查询
-                print(f"\n🧪 测试跨数据源查询...")
+                print("\n🧪 测试跨数据源查询...")
                 try:
                     result = conn.execute(
                         text(
@@ -395,15 +395,15 @@ ORDER BY team_name;
         print("📋 数据库实装报告")
         print("=" * 80)
 
-        print(f"\n📊 执行统计:")
+        print("\n📊 执行统计:")
         for key, value in self.stats.items():
             print(f"  {key}: {value}")
 
-        print(f"\n💡 下一步操作:")
-        print(f"  1. 查看生成的SQL查询文件:")
+        print("\n💡 下一步操作:")
+        print("  1. 查看生成的SQL查询文件:")
         print(f"     {project_root / 'config' / 'team_mapping_validation_queries.sql'}")
-        print(f"  2. 运行验证查询测试数据关联")
-        print(f"  3. 监控数据质量，修正剩余未映射的球队")
+        print("  2. 运行验证查询测试数据关联")
+        print("  3. 监控数据质量，修正剩余未映射的球队")
 
         print("\n" + "=" * 80)
 

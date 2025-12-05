@@ -100,7 +100,7 @@ async def run_historical_backfill():
                     league_success = True
 
                 else:
-                    logger.error(f"   ❌ 失败: 未获取到数据")
+                    logger.error("   ❌ 失败: 未获取到数据")
 
                 # 赛季间延迟 (避免反爬检测)
                 if season != seasons[-1]:
@@ -131,7 +131,7 @@ async def run_historical_backfill():
     logger.info("=" * 80)
     logger.info("🎉 FBref历史数据回填任务完成!")
     logger.info("=" * 80)
-    logger.info(f"📊 最终统计:")
+    logger.info("📊 最终统计:")
     logger.info(f"   成功联赛: {successful_leagues}/{len(target_leagues)}")
     logger.info(f"   总比赛数: {total_matches:,}")
     logger.info(f"   总耗时: {total_time/60:.1f} 分钟 ({hours:.2f} 小时)")

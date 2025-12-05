@@ -260,7 +260,7 @@ API状态: {self.status['api_status']}
     async def run(self):
         """运行监控主循环"""
         logger.info("🐕 数据流看门狗启动")
-        logger.info(f"📊 配置信息:")
+        logger.info("📊 配置信息:")
         logger.info(f"  - 进程检查间隔: {self.check_interval/60:.1f} 分钟")
         logger.info(f"  - 心跳检查间隔: {self.heartbeat_interval/60:.1f} 分钟")
         logger.info(f"  - 最小记录阈值: {self.min_records_threshold} 条/30分钟")

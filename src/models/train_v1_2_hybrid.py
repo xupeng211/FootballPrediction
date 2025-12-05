@@ -133,7 +133,7 @@ class HybridModelTrainer:
 
         return df
 
-    def parse_xg_data(self, stats_json: str) -> Dict[str, float]:
+    def parse_xg_data(self, stats_json: str) -> dict[str, float]:
         """解析xG数据"""
         try:
             if not stats_json or stats_json == 'null':
@@ -257,7 +257,7 @@ class HybridModelTrainer:
         logger.info("✅ 滚动特征计算完成")
         return df
 
-    def prepare_features_and_labels(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
+    def prepare_features_and_labels(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
         """准备特征和标签"""
         logger.info("🔧 准备特征和标签...")
 
@@ -331,7 +331,7 @@ class HybridModelTrainer:
         self.feature_names = feature_columns
 
         logger.info(f"✅ 特征准备完成: {X.shape[0]} 样本, {X.shape[1]} 特征")
-        logger.info(f"📊 结果分布: {dict(zip(le_result.classes_, np.bincount(y_encoded)))}")
+        logger.info(f"📊 结果分布: {dict(zip(le_result.classes_, np.bincount(y_encoded), strict=False))}")
 
         return X, y_encoded
 
@@ -354,7 +354,7 @@ class HybridModelTrainer:
 
         logger.info("✅ 模型训练完成")
 
-    def backtest_strategy(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict:
+    def backtest_strategy(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
         """策略回测"""
         logger.info("💰 开始策略回测...")
 
@@ -421,12 +421,12 @@ class HybridModelTrainer:
         logger.info("✅ 策略回测完成")
         return results
 
-    def generate_feature_importance(self) -> Dict:
+    def generate_feature_importance(self) -> dict:
         """生成特征重要性报告"""
         if not self.model:
             return {}
 
-        feature_importance = dict(zip(self.feature_names, self.model.feature_importances_))
+        feature_importance = dict(zip(self.feature_names, self.model.feature_importances_, strict=False))
 
         # 按重要性排序
         sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
@@ -485,7 +485,7 @@ class HybridModelTrainer:
 
         report_file = model_dir / f"{model_name}_{timestamp}_summary.txt"
         with open(report_file, 'w') as f:
-            f.write(f"Football Prediction Model V1.2 Hybrid Summary\n")
+            f.write("Football Prediction Model V1.2 Hybrid Summary\n")
             f.write(f"{'='*50}\n\n")
             f.write(f"Model Name: {report['model_name']}\n")
             f.write(f"Version: {report['version']}\n")
@@ -493,7 +493,7 @@ class HybridModelTrainer:
             f.write(f"Feature Count: {report['feature_count']}\n")
             f.write(f"Rolling Window: {report['rolling_window']}\n")
             f.write(f"Confidence Threshold: {report['confidence_threshold']}\n\n")
-            f.write(f"Features:\n")
+            f.write("Features:\n")
             for i, feature in enumerate(report['feature_names'], 1):
                 f.write(f"  {i:2d}. {feature}\n")
 
@@ -567,18 +567,18 @@ class HybridModelTrainer:
         print("🧠 首席AI科学家 - XGBoost V1.2混合模型训练报告")
         print("="*80)
 
-        print(f"\n📊 训练基本信息:")
+        print("\n📊 训练基本信息:")
         print(f"   ⏱️ 训练时间: {training_time:.2f}秒")
-        print(f"   🎯 模型类型: XGBoost Classifier")
+        print("   🎯 模型类型: XGBoost Classifier")
         print(f"   🔄 滚动窗口: {self.rolling_window}场")
         print(f"   📊 信心阈值: {self.confidence_threshold}")
 
-        print(f"\n📈 模型性能:")
+        print("\n📈 模型性能:")
         print(f"   🏋️ 训练集准确率: {train_acc:.4f} ({train_acc*100:.2f}%)")
         print(f"   🧪 测试集准确率: {test_acc:.4f} ({test_acc*100:.2f}%)")
         print(f"   📉 过拟合程度: {(train_acc - test_acc)*100:.2f}%")
 
-        print(f"\n💰 模拟投注结果:")
+        print("\n💰 模拟投注结果:")
         print(f"   🎯 总投注次数: {backtest_results['total_bets']}")
         print(f"   ✅ 获胜次数: {backtest_results['wins']}")
         print(f"   📊 命中率: {backtest_results['win_rate']:.2f}%")
@@ -587,11 +587,11 @@ class HybridModelTrainer:
         print(f"   📈 净盈亏: {backtest_results['profit_loss']:+.2f}")
         print(f"   🎖️ 投资回报率(ROI): {backtest_results['roi']:+.2f}%")
 
-        print(f"\n🏆 特征重要性 Top 5:")
+        print("\n🏆 特征重要性 Top 5:")
         for i, (feature, importance) in enumerate(feature_importance['top_5_features'], 1):
             print(f"   {i}. {feature}: {importance:.4f}")
 
-        print(f"\n📊 XG特征重要性:")
+        print("\n📊 XG特征重要性:")
         xg_importance = feature_importance['xg_features_importance']
         total_xg_importance = sum(xg_importance.values())
         print(f"   📈 总xG特征重要性: {total_xg_importance:.4f}")
@@ -600,29 +600,29 @@ class HybridModelTrainer:
                 print(f"   📊 {feature}: {imp:.4f}")
 
         # 结论
-        print(f"\n🎯 模型结论:")
+        print("\n🎯 模型结论:")
         if backtest_results['roi'] > 0:
             print(f"   ✅ 正盈利! ROI: {backtest_results['roi']:+.2f}%")
-            print(f"   💡 模型具备实战价值，可以考虑实盘应用")
+            print("   💡 模型具备实战价值，可以考虑实盘应用")
         elif backtest_results['roi'] > -5:
             print(f"   ⚠️ 微亏损: ROI: {backtest_results['roi']:+.2f}%")
-            print(f"   💡 模型接近盈利边界，可以尝试优化阈值或特征")
+            print("   💡 模型接近盈利边界，可以尝试优化阈值或特征")
         else:
             print(f"   ❌ 显著亏损: ROI: {backtest_results['roi']:+.2f}%")
-            print(f"   💡 需要进一步优化模型或调整策略")
+            print("   💡 需要进一步优化模型或调整策略")
 
-        print(f"\n🚀 后续改进建议:")
+        print("\n🚀 后续改进建议:")
         if total_xg_importance < 0.1:
             print(f"   📊 XG特征重要性较低({total_xg_importance:.3f})，建议:")
-            print(f"      • 增加更多xG数据样本")
-            print(f"   • 优化xG特征工程方法")
+            print("      • 增加更多xG数据样本")
+            print("   • 优化xG特征工程方法")
 
         if backtest_results['total_bets'] < len(test_acc) * 0.1:
-            print(f"   🎯 投注次数较少，建议:")
-            print(f"      • 降低信心阈值到0.50-0.52")
-            print(f"      • 扩大样本规模")
+            print("   🎯 投注次数较少，建议:")
+            print("      • 降低信心阈值到0.50-0.52")
+            print("      • 扩大样本规模")
 
-        print(f"\n" + "="*80)
+        print("\n" + "="*80)
         print("🧠 首席AI科学家训练完成 - V1.2混合模型已就绪")
         print("="*80)
 

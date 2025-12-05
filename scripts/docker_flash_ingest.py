@@ -56,8 +56,8 @@ class DockerFlashIngester:
             source_file = csv_file.name
 
             # 使用COPY命令导入
-            with open(csv_file, "r", encoding="utf-8") as f:
-                copy_sql = f"""
+            with open(csv_file, encoding="utf-8") as f:
+                copy_sql = """
                 COPY stg_fbref_matches (wk, "Day", "Date", "Time", "Home", "xG", "Score", "xG.1", "Away",
                                          "Attendance", "Venue", "Referee", "Match Report", "Notes", source_file)
                 FROM STDIN WITH CSV HEADER

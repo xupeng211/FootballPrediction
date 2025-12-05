@@ -47,7 +47,7 @@ class MatchRecord:
     home_score: Optional[int]
     away_score: Optional[int]
     data_completeness: str
-    metadata: Dict
+    metadata: dict
 
 
 class FotMobMatchMatcher:
@@ -253,7 +253,7 @@ class FotmobDetailsCollector:
             'password': os.getenv('POSTGRES_PASSWORD', 'postgres-dev-password')
         }
 
-    def get_pending_matches(self, limit: int = 50) -> List[MatchRecord]:
+    def get_pending_matches(self, limit: int = 50) -> list[MatchRecord]:
         """获取待处理的比赛记录"""
         try:
             conn = psycopg2.connect(**self.db_config)
@@ -301,7 +301,7 @@ class FotmobDetailsCollector:
             logger.error(f"❌ 获取待处理记录失败: {e}")
             return []
 
-    async def collect_match_fotmob_data(self, match_record: MatchRecord) -> Dict[str, any]:
+    async def collect_match_fotmob_data(self, match_record: MatchRecord) -> dict[str, any]:
         """采集单场比赛的FotMob数据"""
         try:
             logger.info(f"🔍 开始采集FotMob数据: {match_record.home_team} vs {match_record.away_team}")
@@ -340,7 +340,7 @@ class FotmobDetailsCollector:
             logger.error(f"❌ 采集FotMob数据失败: {e}")
             return {"success": False, "reason": str(e)}
 
-    def _process_fotmob_data(self, fotmob_data: Dict) -> Dict[str, any]:
+    def _process_fotmob_data(self, fotmob_data: dict) -> dict[str, any]:
         """处理FotMob数据格式"""
         processed = {}
 
@@ -394,7 +394,7 @@ class FotmobDetailsCollector:
 
         return processed
 
-    def update_match_record(self, match_record: MatchRecord, fotmob_data: Dict) -> bool:
+    def update_match_record(self, match_record: MatchRecord, fotmob_data: dict) -> bool:
         """更新比赛记录"""
         try:
             conn = psycopg2.connect(**self.db_config)
@@ -454,7 +454,7 @@ class FotmobDetailsCollector:
             if 'conn' in locals():
                 conn.close()
 
-    async def run_collection_batch(self, batch_size: int = 20, max_batches: int = None) -> Dict:
+    async def run_collection_batch(self, batch_size: int = 20, max_batches: int = None) -> dict:
         """运行批量采集"""
         stats = {
             'total_processed': 0,

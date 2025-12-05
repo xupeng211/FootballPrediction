@@ -12,11 +12,11 @@ from typing import Any, Dict, List, Set
 
 class JSONPathAnalyzer:
     def __init__(self):
-        self.match_paths: List[str] = []
-        self.team_paths: List[str] = []
-        self.score_paths: List[str] = []
-        self.interesting_paths: List[str] = []
-        self.visited_paths: Set[str] = set()
+        self.match_paths: list[str] = []
+        self.team_paths: list[str] = []
+        self.score_paths: list[str] = []
+        self.interesting_paths: list[str] = []
+        self.visited_paths: set[str] = set()
 
     def analyze_json_structure(self, json_file: Path):
         """分析JSON文件结构"""
@@ -24,7 +24,7 @@ class JSONPathAnalyzer:
         print("=" * 60)
 
         # 加载JSON数据
-        with open(json_file, "r", encoding="utf-8") as f:
+        with open(json_file, encoding="utf-8") as f:
             data = json.load(f)
 
         print(f"📁 分析文件: {json_file}")
@@ -35,18 +35,18 @@ class JSONPathAnalyzer:
 
         # 深度分析pageProps
         if "pageProps" in data:
-            print(f"\n🎯 深度分析 pageProps:")
+            print("\n🎯 深度分析 pageProps:")
             self.recursive_analyze(data["pageProps"], "pageProps")
 
         # 深度分析translations (可能包含比赛数据)
         if "translations" in data:
-            print(f"\n🌐 深度分析 translations:")
+            print("\n🌐 深度分析 translations:")
             self.recursive_analyze(data["translations"], "translations")
 
         # 显示找到的路径
         self.display_findings()
 
-    def analyze_top_level(self, data: Dict[str, Any]):
+    def analyze_top_level(self, data: dict[str, Any]):
         """分析顶级结构"""
         print(f"\n📋 顶级键 (共 {len(data)} 个):")
         for i, (key, value) in enumerate(data.items(), 1):
@@ -119,7 +119,7 @@ class JSONPathAnalyzer:
                 )
                 self.interesting_paths.append(path)
 
-    def check_for_keywords(self, obj: Dict[str, Any], path: str):
+    def check_for_keywords(self, obj: dict[str, Any], path: str):
         """检查字典是否包含关键词"""
         obj_str = json.dumps(obj, ensure_ascii=False).lower()
         keywords = [
@@ -193,7 +193,7 @@ class JSONPathAnalyzer:
 
         return True
 
-    def important_list_content(self, lst: List[Any]) -> bool:
+    def important_list_content(self, lst: list[Any]) -> bool:
         """检查列表是否包含重要内容"""
         if not lst:
             return False
@@ -265,7 +265,7 @@ class JSONPathAnalyzer:
                 print(f"  • {path}")
 
         # 提供具体的数据提取建议
-        print(f"\n💡 数据提取建议:")
+        print("\n💡 数据提取建议:")
         if self.match_paths:
             print(f"  • 优先检查: {self.match_paths[0]}")
         if self.team_paths:
@@ -273,10 +273,10 @@ class JSONPathAnalyzer:
 
     def extract_sample_data(self, json_file: Path):
         """提取示例数据"""
-        print(f"\n🔬 提取示例数据:")
+        print("\n🔬 提取示例数据:")
         print("-" * 40)
 
-        with open(json_file, "r", encoding="utf-8") as f:
+        with open(json_file, encoding="utf-8") as f:
             data = json.load(f)
 
         # 尝试从不同路径提取数据
@@ -309,7 +309,7 @@ class JSONPathAnalyzer:
         # 分析pageProps.fallback
         if "pageProps" in data and "fallback" in data["pageProps"]:
             fallback = data["pageProps"]["fallback"]
-            print(f"\nfallback结构:")
+            print("\nfallback结构:")
             for key, value in fallback.items():
                 value_size = len(json.dumps(value, ensure_ascii=False))
                 print(f"  {key}: {type(value).__name__} ({value_size:,} 字节)")

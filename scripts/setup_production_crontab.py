@@ -130,7 +130,7 @@ def install_crontab():
 
 def create_health_check_script():
     """创建健康检查脚本"""
-    health_check_content = f"""#!/usr/bin/env python3
+    health_check_content = """#!/usr/bin/env python3
 '''
 FBref数据管道健康检查脚本
 运营总监监控系统
@@ -144,21 +144,21 @@ from pathlib import Path
 def check_system_health():
     '''检查系统健康状态'''
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(f"[{{timestamp}}] 🏥 FBref数据管道健康检查")
+    print(f"[{timestamp}] 🏥 FBref数据管道健康检查")
 
     # 检查磁盘空间
     disk_usage = subprocess.run(['df', '-h', '/'], capture_output=True, text=True)
-    print(f"磁盘状态: {{disk_usage.stdout.split('\\\\n')[1]}}")
+    print(f"磁盘状态: {disk_usage.stdout.split('\\\\n')[1]}")
 
     # 检查内存使用
     memory = subprocess.run(['free', '-h'], capture_output=True, text=True)
-    print(f"内存状态: {{memory.stdout.split('\\\\n')[1]}}")
+    print(f"内存状态: {memory.stdout.split('\\\\n')[1]}")
 
     # 检查最近的日志
     log_dir = Path(__file__).parent / 'logs'
     if log_dir.exists():
         recent_logs = list(log_dir.glob('*.log'))[-3:]  # 最近3个日志文件
-        print(f"最近日志文件: {{[f.name for f in recent_logs]}}")
+        print(f"最近日志文件: {[f.name for f in recent_logs]}")
 
     print("✅ 系统健康检查完成\\n")
 

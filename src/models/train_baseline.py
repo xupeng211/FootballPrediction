@@ -57,7 +57,7 @@ class BaselineTrainer:
 
     def prepare_data(
         self, train_end_date: str = "2024-05-01"
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray]:
         """
         准备训练和测试数据
 
@@ -93,7 +93,7 @@ class BaselineTrainer:
             X_test = X_test[test_mask]
             y_test = y_test[test_mask]
 
-            logger.info(f"✅ 数据准备完成:")
+            logger.info("✅ 数据准备完成:")
             logger.info(f"   训练集: {X_train.shape[0]} 样本, {X_train.shape[1]} 特征")
             logger.info(f"   测试集: {X_test.shape[0]} 样本, {X_test.shape[1]} 特征")
             logger.info(f"   特征列: {len(feature_cols)} 个")
@@ -102,8 +102,8 @@ class BaselineTrainer:
             unique_train, counts_train = np.unique(y_train, return_counts=True)
             unique_test, counts_test = np.unique(y_test, return_counts=True)
 
-            logger.info(f"   训练集分布: {dict(zip(unique_train, counts_train))}")
-            logger.info(f"   测试集分布: {dict(zip(unique_test, counts_test))}")
+            logger.info(f"   训练集分布: {dict(zip(unique_train, counts_train, strict=False))}")
+            logger.info(f"   测试集分布: {dict(zip(unique_test, counts_test, strict=False))}")
 
             return X_train, X_test, y_train, y_test
 
@@ -155,7 +155,7 @@ class BaselineTrainer:
 
     def evaluate_model(
         self, model: xgb.XGBClassifier, X_test: pd.DataFrame, y_test: np.ndarray
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         评估模型性能
 
@@ -217,7 +217,7 @@ class BaselineTrainer:
         return results
 
     def save_results(
-        self, results: Dict[str, Any], model_name: str = "baseline_xgboost"
+        self, results: dict[str, Any], model_name: str = "baseline_xgboost"
     ) -> None:
         """
         保存训练结果和模型
@@ -226,7 +226,7 @@ class BaselineTrainer:
             results: 评估结果
             model_name: 模型名称
         """
-        logger.info(f"💾 保存训练结果...")
+        logger.info("💾 保存训练结果...")
 
         # 创建输出目录
         output_dir = Path("results") / model_name
@@ -237,7 +237,7 @@ class BaselineTrainer:
         # 保存评估报告
         report_path = output_dir / f"report_{timestamp}.txt"
         with open(report_path, "w", encoding="utf-8") as f:
-            f.write(f"Phase 3 基线模型训练报告\n")
+            f.write("Phase 3 基线模型训练报告\n")
             f.write(f"生成时间: {datetime.now()}\n")
             f.write(f"模型名称: {model_name}\n")
             f.write("=" * 50 + "\n\n")
@@ -265,7 +265,7 @@ class BaselineTrainer:
 
     def run_training(
         self, train_end_date: str = "2024-05-01", save_results: bool = True
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         运行完整的训练流程
 

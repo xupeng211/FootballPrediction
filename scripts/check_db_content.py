@@ -47,7 +47,7 @@ class FBrefDataQA:
             logger.error(f"❌ 数据库连接失败: {e}")
             return False
 
-    def get_latest_fbref_match(self) -> Optional[Dict[str, Any]]:
+    def get_latest_fbref_match(self) -> Optional[dict[str, Any]]:
         """获取最新入库的FBref比赛数据"""
         try:
             query = self.text(
@@ -88,7 +88,7 @@ class FBrefDataQA:
             logger.error(f"❌ 查询最新比赛失败: {e}")
             return None
 
-    def analyze_xg_data(self, stats_data: Dict) -> Dict[str, Any]:
+    def analyze_xg_data(self, stats_data: dict) -> dict[str, Any]:
         """分析xG数据质量"""
         if not stats_data:
             return {"status": "missing", "details": "stats字段为空"}
@@ -128,7 +128,7 @@ class FBrefDataQA:
 
         return xg_analysis
 
-    def analyze_raw_data_depth(self, raw_data: Dict) -> Dict[str, Any]:
+    def analyze_raw_data_depth(self, raw_data: dict) -> dict[str, Any]:
         """分析原始数据深度，特别关注Match Report链接"""
         if not raw_data:
             return {"status": "missing", "details": "raw_data字段为空"}
@@ -171,7 +171,7 @@ class FBrefDataQA:
 
         return depth_analysis
 
-    def analyze_metadata_depth(self, metadata: Dict) -> Dict[str, Any]:
+    def analyze_metadata_depth(self, metadata: dict) -> dict[str, Any]:
         """分析metadata深度"""
         if not metadata:
             return {"status": "missing", "details": "metadata字段为空"}
@@ -200,7 +200,7 @@ class FBrefDataQA:
 
         return meta_analysis
 
-    def generate_qa_report(self, match_data: Dict) -> str:
+    def generate_qa_report(self, match_data: dict) -> str:
         """生成数据质检报告"""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -228,7 +228,7 @@ class FBrefDataQA:
             report += f"""
 │ 比分: {match_data['home_score']}-{match_data['away_score']}"""
         else:
-            report += f"""
+            report += """
 │ 比分: 未开始"""
 
         report += f"""
@@ -239,7 +239,7 @@ class FBrefDataQA:
 
         # xG数据分析
         xg_analysis = self.analyze_xg_data(match_data["stats"])
-        report += f"""
+        report += """
 └────────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ 📈 xG数据深度分析 ───────────────────────────────────────────────────────────────┐"""
@@ -276,7 +276,7 @@ class FBrefDataQA:
         metadata = match_data.get("match_metadata", {})
 
         raw_analysis = self.analyze_raw_data_depth(raw_data)
-        report += f"""
+        report += """
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ 🔗 链接深度分析 ───────────────────────────────────────────────────────────────┐"""
@@ -312,7 +312,7 @@ class FBrefDataQA:
                 not raw_analysis["has_url_fields"]
                 and not raw_analysis["link_column_names"]
             ):
-                report += f"""
+                report += """
 │ 🔍 建议检查字段: date, score, home, away 之外的其他列"""
         else:
             report += f"""
@@ -321,7 +321,7 @@ class FBrefDataQA:
 
         # metadata深度分析
         meta_analysis = self.analyze_metadata_depth(metadata)
-        report += f"""
+        report += """
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ 📋 Metadata深度分析 ────────────────────────────────────────────────────────────┐"""
@@ -350,7 +350,7 @@ class FBrefDataQA:
 │ 详情: {meta_analysis.get('details', '未知错误')}"""
 
         # 生成建议
-        report += f"""
+        report += """
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ 🎯 质检结论与建议 ────────────────────────────────────────────────────────────────┐"""

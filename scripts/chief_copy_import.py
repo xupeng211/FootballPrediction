@@ -67,7 +67,7 @@ class ChiefCopyImporter:
                 copy_sql,
             ]
 
-            with open(csv_file, "r", encoding="utf-8") as f:
+            with open(csv_file, encoding="utf-8") as f:
                 result = subprocess.run(cmd, stdin=f, capture_output=True, text=True)
 
             if result.returncode == 0:

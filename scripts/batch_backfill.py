@@ -92,7 +92,7 @@ class FotMobBackfill:
         """加载回填状态"""
         try:
             if self.status_file.exists():
-                with open(self.status_file, "r", encoding="utf-8") as f:
+                with open(self.status_file, encoding="utf-8") as f:
                     saved_stats = json.load(f)
 
                     # 检查是否有正在进行的中断任务
@@ -172,7 +172,7 @@ class FotMobBackfill:
 
         return cleaned_count
 
-    def generate_date_range(self, start_date: str, end_date: str) -> List[str]:
+    def generate_date_range(self, start_date: str, end_date: str) -> list[str]:
         """生成倒序日期范围列表（从end_date到start_date）"""
         try:
             start_dt = datetime.strptime(start_date, "%Y%m%d")
@@ -268,7 +268,7 @@ class FotMobBackfill:
                             if m.data_completeness == "complete"
                         )
 
-                        self.log(f"  ✅ V2深度采集成功:")
+                        self.log("  ✅ V2深度采集成功:")
                         self.log(f"    📊 总比赛: {len(match_data_list)} 场")
                         self.log(
                             f"    📋 阵容数据: {lineups_count} 场 ({lineups_count/len(match_data_list)*100:.1f}%)"
@@ -283,7 +283,7 @@ class FotMobBackfill:
 
                         return True
                     else:
-                        self.log(f"  ⚠️ 警告: V2深度采集未获取到任何比赛数据")
+                        self.log("  ⚠️ 警告: V2深度采集未获取到任何比赛数据")
                         return False
 
             except Exception as e:
@@ -296,12 +296,12 @@ class FotMobBackfill:
                     self.log(f"  ⏳ 等待 {wait_time:.1f} 秒后重试...")
                     await asyncio.sleep(wait_time)
                 else:
-                    self.log(f"  💥 超过最大重试次数，放弃此日期")
+                    self.log("  💥 超过最大重试次数，放弃此日期")
                     return False
 
     async def run_backfill(
         self, start_date: str, end_date: str, dry_run: bool = False
-    ) -> Dict:
+    ) -> dict:
         """运行批量回填"""
         self.log("🚀 启动FotMob历史数据批量回填")
         self.log("🎯 采集策略: 倒序回填 - 从最近日期开始，优先获取高价值数据")
@@ -517,11 +517,11 @@ async def main():
 
         # 输出结果
         if args.dry_run:
-            print(f"\n🔍 预览模式完成")
+            print("\n🔍 预览模式完成")
             print(f"📅 计划处理: {result.get('total_days', 0)} 天")
         else:
-            print(f"\n🎉 批量回填完成!")
-            print(f"📊 结果统计:")
+            print("\n🎉 批量回填完成!")
+            print("📊 结果统计:")
             print(f"  📅 总天数: {result.get('total_days', 0)}")
             print(f"  ✅ 成功: {result.get('successful_days', 0)} 天")
             print(f"  ❌ 失败: {result.get('failed_days', 0)} 天")
@@ -530,14 +530,14 @@ async def main():
             print(f"  📈 成功率: {result.get('success_rate', 0):.2%}")
 
             if result.get("success_rate", 0) > 0.9:
-                print(f"🎊 优秀! 成功率超过90%")
+                print("🎊 优秀! 成功率超过90%")
             elif result.get("success_rate", 0) > 0.7:
-                print(f"👍 良好! 成功率超过70%")
+                print("👍 良好! 成功率超过70%")
             else:
-                print(f"⚠️  注意: 成功率较低，建议检查网络连接")
+                print("⚠️  注意: 成功率较低，建议检查网络连接")
 
     except KeyboardInterrupt:
-        print(f"\n⚠️ 用户中断了回填过程")
+        print("\n⚠️ 用户中断了回填过程")
         sys.exit(130)
 
     except Exception as e:

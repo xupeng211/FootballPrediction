@@ -187,7 +187,7 @@ class V1XGBoostTrainer:
         # 混淆矩阵
         cm = confusion_matrix(self.y_test, y_pred)
         logger.info("🔀 混淆矩阵:")
-        logger.info(f"   实际\\预测  客胜  平局  主胜")
+        logger.info("   实际\\预测  客胜  平局  主胜")
         for i, row in enumerate(cm):
             logger.info(
                 f"   {['客胜','平局','主胜'][i]:6} {row[0]:6} {row[1]:6} {row[2]:6}"

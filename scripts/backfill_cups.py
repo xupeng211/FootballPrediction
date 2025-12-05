@@ -131,7 +131,7 @@ async def backfill_all_teams_concurrent(teams: list, max_concurrent: int = 3):
         teams: 球队名称列表
         max_concurrent: 最大并发数
     """
-    logger.info(f"🚀 开始杯赛补全计划")
+    logger.info("🚀 开始杯赛补全计划")
     logger.info(f"📋 计划采集 {len(teams)} 支球队")
     logger.info(f"🔧 最大并发数: {max_concurrent}")
     logger.info("=" * 80)
@@ -162,19 +162,19 @@ async def backfill_all_teams_concurrent(teams: list, max_concurrent: int = 3):
     logger.info(f"❌ 失败球队: {len(failed)}")
     logger.info(f"⚠️ 无数据球队: {len(no_data)}")
 
-    logger.info(f"\n📈 总计统计:")
+    logger.info("\n📈 总计统计:")
     logger.info(f"   采集比赛: {total_collected}")
     logger.info(f"   保存比赛: {total_saved}")
 
     # 列出成功的球队
     if successful:
-        logger.info(f"\n✅ 成功球队列表:")
+        logger.info("\n✅ 成功球队列表:")
         for r in successful:
             logger.info(f"   • {r['team']:25s}: {r['saved']:3d} 场比赛")
 
     # 列出失败的球队
     if failed:
-        logger.info(f"\n❌ 失败球队列表:")
+        logger.info("\n❌ 失败球队列表:")
         for r in failed:
             logger.info(f"   • {r['team']:25s}: {r['error']}")
 
@@ -235,7 +235,7 @@ def verify_cup_data():
         source_matches = result.fetchall()
 
         if source_matches:
-            logger.info(f"\n📊 发现相关数据源:")
+            logger.info("\n📊 发现相关数据源:")
             for (source,) in source_matches:
                 logger.info(f"   • {source}")
 

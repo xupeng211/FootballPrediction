@@ -71,7 +71,7 @@ class FotmobMatchMatcher:
             "bayern munich": ["fc bayern munich", "bayern", "fc bayern"],
         }
 
-    async def find_match_by_fuzzy_match(self, fbref_record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def find_match_by_fuzzy_match(self, fbref_record: dict[str, Any]) -> Optional[dict[str, Any]]:
         """
         通过模糊匹配查找对应的 FotMob 比赛
 
@@ -131,7 +131,7 @@ class FotmobMatchMatcher:
             logger.error(f"匹配比赛时发生错误: {str(e)}")
             return None
 
-    async def _get_matches_by_date(self, date_str: str) -> Optional[Dict[str, Any]]:
+    async def _get_matches_by_date(self, date_str: str) -> Optional[dict[str, Any]]:
         """
         获取指定日期的所有比赛
 
@@ -163,7 +163,7 @@ class FotmobMatchMatcher:
             logger.error(f"Error fetching matches for {date_str}: {str(e)}")
             return None
 
-    def _calculate_match_similarity(self, fotmob_match: Dict[str, Any], fbref_record: Dict[str, Any]) -> float:
+    def _calculate_match_similarity(self, fotmob_match: dict[str, Any], fbref_record: dict[str, Any]) -> float:
         """
         计算两场比赛的相似度
 

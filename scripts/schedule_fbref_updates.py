@@ -48,7 +48,7 @@ class FBrefScheduler:
         # 联赛配置
         self.leagues = self.collector.get_available_leagues()
 
-    def get_optimal_schedule_times(self) -> List[Dict[str, any]]:
+    def get_optimal_schedule_times(self) -> list[dict[str, any]]:
         """
         获取最优调度时间配置
 

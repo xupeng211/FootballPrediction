@@ -61,7 +61,7 @@ class MatchStatsReviver:
             'possession_away': ['possession_away', 'away_possession', 'possession_against']
         }
 
-    async def identify_dead_records(self) -> List[int]:
+    async def identify_dead_records(self) -> list[int]:
         """识别需要复活的记录 (stats字段为空的记录)"""
         logger.info("🔍 识别需要复活的记录...")
 
@@ -80,20 +80,20 @@ class MatchStatsReviver:
             logger.info(f"📊 发现 {len(records)} 条需要复活的记录")
             return [(record.id, record.raw_file_path) for record in records]
 
-    def load_raw_data_from_file(self, file_path: str) -> Optional[Dict]:
+    def load_raw_data_from_file(self, file_path: str) -> Optional[dict]:
         """从原始文件加载数据"""
         if not file_path or not os.path.exists(file_path):
             return None
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 data = json.load(f)
                 return data
         except Exception as e:
             logger.error(f"❌ 加载文件失败 {file_path}: {e}")
             return None
 
-    def extract_stats_from_raw_data(self, raw_data: Dict) -> Dict:
+    def extract_stats_from_raw_data(self, raw_data: dict) -> dict:
         """从原始数据中提取stats字段"""
         if not raw_data:
             return {}
@@ -163,7 +163,7 @@ class MatchStatsReviver:
 
         return cleaned_stats
 
-    def extract_metadata_from_raw_data(self, raw_data: Dict) -> Dict:
+    def extract_metadata_from_raw_data(self, raw_data: dict) -> dict:
         """从原始数据中提取match_metadata字段"""
         if not raw_data:
             return {}

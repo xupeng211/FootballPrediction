@@ -170,7 +170,7 @@ class FotmobCollector(BaseCollector):
 
         return base_api_url
 
-    async def _make_nextjs_request(self, url: str) -> Dict[str, Any]:
+    async def _make_nextjs_request(self, url: str) -> dict[str, Any]:
         """
         发送Next.js Data API请求
 
@@ -220,7 +220,7 @@ class FotmobCollector(BaseCollector):
             self.logger.error(f"❌ Next.js API request exception: {e}")
             raise
 
-    def _extract_matches_from_response(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_matches_from_response(self, data: dict[str, Any]) -> list[dict[str, Any]]:
         """
         从Next.js响应中提取比赛数据
 
@@ -254,7 +254,7 @@ class FotmobCollector(BaseCollector):
 
         return matches
 
-    def _standardize_match_data(self, raw_match: Dict[str, Any]) -> Dict[str, Any]:
+    def _standardize_match_data(self, raw_match: dict[str, Any]) -> dict[str, Any]:
         """
         标准化比赛数据格式
 

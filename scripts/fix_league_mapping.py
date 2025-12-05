@@ -46,7 +46,7 @@ class LeagueMappingFixer:
         # NULL联赛数据 - 这些可能需要删除或特殊处理
         # 这些是2023-2026年的未来日期，可能是测试数据
 
-    def analyze_league_by_teams(self, league_id: int) -> Tuple[List[str], str]:
+    def analyze_league_by_teams(self, league_id: int) -> tuple[list[str], str]:
         """
         通过球队名称分析联赛类型
         Returns: (team_names, suggested_country)
@@ -68,7 +68,7 @@ class LeagueMappingFixer:
 
             return team_names, country
 
-    def infer_country_from_teams(self, team_names: List[str]) -> str:
+    def infer_country_from_teams(self, team_names: list[str]) -> str:
         """
         基于球队名称推断国家
         """
@@ -89,7 +89,7 @@ class LeagueMappingFixer:
 
         return 'unknown'
 
-    def find_matching_league(self, country: str, team_names: List[str]) -> int:
+    def find_matching_league(self, country: str, team_names: list[str]) -> int:
         """
         在leagues表中找到匹配的联赛
         """
@@ -139,7 +139,7 @@ class LeagueMappingFixer:
                 count = count_result.iloc[0]['count']
 
                 if count == 0:
-                    print(f"   ❌ 无比赛数据")
+                    print("   ❌ 无比赛数据")
                     continue
 
                 print(f"   📈 比赛数量: {count}")
@@ -156,9 +156,9 @@ class LeagueMappingFixer:
                     print(f"   💡 建议映射到: League ID {suggested_league_id}")
                     self.league_mappings[league_id] = suggested_league_id
                 else:
-                    print(f"   ⚠️ 未找到匹配的联赛")
+                    print("   ⚠️ 未找到匹配的联赛")
             else:
-                print(f"   ❓ 无法确定联赛类型")
+                print("   ❓ 无法确定联赛类型")
 
     def execute_fix(self):
         """
@@ -179,7 +179,7 @@ class LeagueMappingFixer:
                 count = count_result.iloc[0]['count']
 
                 if count == 0:
-                    print(f"   ✅ 无需修复 (0条记录)")
+                    print("   ✅ 无需修复 (0条记录)")
                     continue
 
                 print(f"   📊 需要修复: {count}条记录")
@@ -235,10 +235,10 @@ class LeagueMappingFixer:
 
             # 分析这些数据的特点
             if row['earliest'] and row['earliest'].year > 2024:
-                print(f"   ⚠️ 大部分是未来日期数据，可能是测试数据")
-                print(f"   💡 建议考虑删除这些测试数据")
+                print("   ⚠️ 大部分是未来日期数据，可能是测试数据")
+                print("   💡 建议考虑删除这些测试数据")
             else:
-                print(f"   🔍 包含历史数据，需要进一步分析")
+                print("   🔍 包含历史数据，需要进一步分析")
 
     def generate_fix_report(self):
         """
@@ -277,11 +277,11 @@ class LeagueMappingFixer:
             premier_result = pd.read_sql_query(text(premier_query), conn)
             premier_count = premier_result.iloc[0]['count']
 
-            print(f"\n🏆 英超数据状态:")
+            print("\n🏆 英超数据状态:")
             if premier_count > 0:
                 print(f"   ✅ 英超联赛数据: {premier_count}场比赛")
             else:
-                print(f"   ❌ 英超联赛仍无数据，需要专门采集")
+                print("   ❌ 英超联赛仍无数据，需要专门采集")
 
     def run_full_fix(self):
         """
@@ -302,9 +302,9 @@ class LeagueMappingFixer:
         # Step 4: 生成报告
         self.generate_fix_report()
 
-        print(f"\n🎯 修复完成!")
+        print("\n🎯 修复完成!")
         print(f"✅ 总计修复: {fixed_count}条记录")
-        print(f"🔍 建议运行: python scripts/audit_season_continuity.py 验证修复效果")
+        print("🔍 建议运行: python scripts/audit_season_continuity.py 验证修复效果")
 
         return fixed_count > 0
 

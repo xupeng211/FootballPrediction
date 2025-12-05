@@ -49,7 +49,7 @@ class RealFBrefCollector:
         # 使用容器网络连接数据库（使用正确密码）
         self.engine = create_engine("postgresql://postgres:football_prediction_2024@db:5432/football_prediction")
 
-    def clean_fbref_data(self, df, season_name: str) -> List[Dict]:
+    def clean_fbref_data(self, df, season_name: str) -> list[dict]:
         """
         修复版数据清洗 - 使用正确的字段名
         """
@@ -119,7 +119,7 @@ class RealFBrefCollector:
         logger.info(f"🔍 {season_name}: {len(df)} → {len(cleaned_matches)} 条有效记录")
         return cleaned_matches
 
-    def save_to_database(self, matches: List[Dict]) -> int:
+    def save_to_database(self, matches: list[dict]) -> int:
         """
         保存数据到数据库
         """
@@ -187,7 +187,7 @@ class RealFBrefCollector:
             logger.warning(f"获取球队ID失败 {team_name}: {e}")
             return None
 
-    async def collect_season(self, season_name: str, season_config: Dict) -> bool:
+    async def collect_season(self, season_name: str, season_config: dict) -> bool:
         """采集单个赛季"""
         url = season_config['url']
         season_id = season_config['season_id']
@@ -201,7 +201,7 @@ class RealFBrefCollector:
             logger.info(f"⏱️ 延迟 {delay} 秒...")
             await asyncio.sleep(delay)
 
-            logger.info(f"📡 连接FBref服务器...")
+            logger.info("📡 连接FBref服务器...")
             season_data = await self.collector.get_season_schedule_stealth(url)
 
             if season_data is None or season_data.empty:
@@ -270,7 +270,7 @@ class RealFBrefCollector:
                     LIMIT 5
                 """)).fetchall()
 
-                logger.info(f"\n🔍 最新5场比赛样本:")
+                logger.info("\n🔍 最新5场比赛样本:")
                 for row in sample:
                     logger.info(f"  {row.home_team} {row.home_score}-{row.away_score} {row.away_team}")
 

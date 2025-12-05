@@ -122,7 +122,7 @@ class PureRealisticTrainer:
 
         return df
 
-    def extract_real_xg(self, stats_json: str) -> Dict[str, float]:
+    def extract_real_xg(self, stats_json: str) -> dict[str, float]:
         """提取真实的xG数据 - 严格验证"""
         try:
             if not stats_json or stats_json == 'null':
@@ -206,7 +206,7 @@ class PureRealisticTrainer:
 
         return df_pure
 
-    def prepare_simple_features(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
+    def prepare_simple_features(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
         """准备简单特征 - 基于有限的真实数据"""
         logger.info("🔧 准备简单特征（基于有限真实数据）...")
 
@@ -260,7 +260,7 @@ class PureRealisticTrainer:
         self.feature_names = feature_columns
 
         logger.info(f"✅ 特征准备完成: {X.shape[0]} 样本, {X.shape[1]} 特征")
-        logger.info(f"📊 结果分布: {dict(zip(le_result.classes_, np.bincount(y_encoded)))}")
+        logger.info(f"📊 结果分布: {dict(zip(le_result.classes_, np.bincount(y_encoded), strict=False))}")
 
         return X, y_encoded
 
@@ -286,7 +286,7 @@ class PureRealisticTrainer:
 
         logger.info("✅ 简单模型训练完成")
 
-    def realistic_evaluation(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict:
+    def realistic_evaluation(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
         """现实评估 - 不使用赔率（因为没有真实赔率数据）"""
         logger.info("📊 开始现实评估...")
 
@@ -306,7 +306,7 @@ class PureRealisticTrainer:
             'high_confidence_predictions': high_confidence_count,
             'confidence_threshold': self.confidence_threshold,
             'avg_max_confidence': np.mean(max_proba),
-            'feature_importance': dict(zip(self.feature_names, self.model.feature_importances_))
+            'feature_importance': dict(zip(self.feature_names, self.model.feature_importances_, strict=False))
         }
 
         logger.info("✅ 现实评估完成")
@@ -335,14 +335,14 @@ class PureRealisticTrainer:
         # 保存报告
         report_file = model_dir / f"{model_name}_{timestamp}_summary.txt"
         with open(report_file, 'w') as f:
-            f.write(f"Pure Realistic Model Summary\n")
+            f.write("Pure Realistic Model Summary\n")
             f.write(f"{'='*50}\n\n")
             f.write(f"Model: {model_name}\n")
             f.write(f"Training Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Data Type: PURE REAL - No Imputation\n")
+            f.write("Data Type: PURE REAL - No Imputation\n")
             f.write(f"Feature Count: {len(self.feature_names)}\n")
             f.write(f"Features: {', '.join(self.feature_names)}\n")
-            f.write(f"\nDATA PURITY AUDITOR CERTIFIED: 100% REAL DATA\n")
+            f.write("\nDATA PURITY AUDITOR CERTIFIED: 100% REAL DATA\n")
 
         logger.info(f"✅ 纯真实模型已保存: {model_file}")
 
@@ -415,21 +415,21 @@ class PureRealisticTrainer:
         print("🔍 数据洁癖审计师 - 纯真实数据训练报告")
         print("="*80)
 
-        print(f"\n📊 纯真实数据统计:")
+        print("\n📊 纯真实数据统计:")
         print(f"   🔍 真实样本数: {sample_count}")
         print(f"   ⏱️ 训练时间: {training_time:.2f}秒")
-        print(f"   🎯 模型类型: XGBoost Classifier (纯真实版)")
-        print(f"   🚫 数据填充: 绝对禁止！")
-        print(f"   ✅ 数据纯度: 100%真实")
+        print("   🎯 模型类型: XGBoost Classifier (纯真实版)")
+        print("   🚫 数据填充: 绝对禁止！")
+        print("   ✅ 数据纯度: 100%真实")
 
-        print(f"\n📈 模型性能:")
+        print("\n📈 模型性能:")
         print(f"   🏋️ 训练准确率: {train_acc:.4f} ({train_acc*100:.2f}%)")
         print(f"   🧪 测试准确率: {eval_results['accuracy']:.4f} ({eval_results['accuracy']*100:.2f}%)")
         print(f"   📊 测试样本: {eval_results['test_samples']}")
         print(f"   🎯 高信心预测: {eval_results['high_confidence_predictions']}")
         print(f"   📊 平均最大置信度: {eval_results['avg_max_confidence']:.3f}")
 
-        print(f"\n🏆 特征重要性:")
+        print("\n🏆 特征重要性:")
         sorted_features = sorted(
             eval_results['feature_importance'].items(),
             key=lambda x: x[1],
@@ -438,7 +438,7 @@ class PureRealisticTrainer:
         for i, (feature, importance) in enumerate(sorted_features, 1):
             print(f"   {i:2d}. {feature}: {importance:.4f}")
 
-        print(f"\n🎯 数据洁癖审计师结论:")
+        print("\n🎯 数据洁癖审计师结论:")
         if sample_count >= 50:
             print(f"   ✅ 数据量充足({sample_count}条)，结果可信度较高")
         elif sample_count >= 20:
@@ -447,18 +447,18 @@ class PureRealisticTrainer:
             print(f"   ❌ 数据量极少({sample_count}条)，统计意义有限")
 
         if eval_results['accuracy'] > 0.6:
-            print(f"   ✅ 模型显示出一定预测能力")
+            print("   ✅ 模型显示出一定预测能力")
         elif eval_results['accuracy'] > 0.4:
-            print(f"   ⚠️  模型预测能力有限")
+            print("   ⚠️  模型预测能力有限")
         else:
-            print(f"   ❌ 模型预测能力不足")
+            print("   ❌ 模型预测能力不足")
 
-        print(f"\n💡 审计师建议:")
-        print(f"   1. 继续收集更多真实xG数据")
-        print(f"   2. 当前结果仅作为技术验证")
-        print(f"   3. 实际应用需要更大的真实数据集")
+        print("\n💡 审计师建议:")
+        print("   1. 继续收集更多真实xG数据")
+        print("   2. 当前结果仅作为技术验证")
+        print("   3. 实际应用需要更大的真实数据集")
 
-        print(f"\n" + "="*80)
+        print("\n" + "="*80)
         print("🔍 数据洁癖审计师 - 纯真实训练完成")
         print("🚫 绝对真实，零填充，零模拟！")
         print("="*80)

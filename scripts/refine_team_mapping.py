@@ -152,7 +152,7 @@ class TeamMappingRefiner:
         """加载原始映射文件"""
         print("📥 加载原始映射文件...")
 
-        with open(INPUT_FILE, "r", encoding="utf-8") as f:
+        with open(INPUT_FILE, encoding="utf-8") as f:
             data = json.load(f)
 
         self.high_confidence = data.get("high_confidence", {})
@@ -160,7 +160,7 @@ class TeamMappingRefiner:
         self.unmatched = data.get("unmatched", {})
         self.metadata = data.get("metadata", {})
 
-        print(f"✅ 加载完成:")
+        print("✅ 加载完成:")
         print(f"  - 高可信度映射: {len(self.high_confidence)}")
         print(f"  - 低可信度映射: {len(self.low_confidence)}")
         print(f"  - 未匹配: {len(self.unmatched)}")
@@ -372,14 +372,14 @@ class TeamMappingRefiner:
         print("📋 映射修正报告")
         print("=" * 80)
 
-        print(f"\n📊 修正后统计:")
+        print("\n📊 修正后统计:")
         print(f"  - 高可信度映射: {len(self.high_confidence)}")
         print(f"  - 低可信度映射: {len(self.low_confidence)}")
         print(f"  - 未匹配: {len(self.unmatched)}")
         print(f"  - 修正数量: {len(self.corrections_log)}")
 
         if self.corrections_log:
-            print(f"\n🔧 修正详情:")
+            print("\n🔧 修正详情:")
             for correction in self.corrections_log[:10]:  # 只显示前10个
                 print(
                     f"  - {correction['fbref_team']}: {correction['old_mapping']} → {correction['new_mapping']} ({correction['reason']})"

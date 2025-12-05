@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
 
 # 导入核心组件
 from utils.fotmob_match_matcher import FotmobMatchMatcher
-from data.collectors.fotmob_details_collector import FotmobDetailsCollector
+# 🌐 降维打击：使用 Playwright 浏览器采集器
+from data.collectors.fotmob_browser import FotmobBrowserScraper
 from database.async_manager import get_db_session, initialize_database
 from sqlalchemy import text
 
@@ -128,8 +129,9 @@ class FotMobL2CollectorV2:
 
         # 初始化核心组件
         self.logger.info("🚀 初始化 L2 采集器组件...")
+        self.logger.info("🌐 降维打击：使用 Playwright 浏览器采集器")
         self.matcher = FotmobMatchMatcher(similarity_threshold=similarity_threshold)
-        self.collector = FotmobDetailsCollector()
+        # ✅ 浏览器采集器将在运行时动态创建，避免资源浪费
 
         # 初始化数据库
         self.logger.info("📡 初始化数据库连接...")
@@ -150,7 +152,7 @@ class FotMobL2CollectorV2:
 
         self.logger.info("✅ L2 采集器初始化完成")
 
-    async def run_backfill_pipeline(self, limit: Optional[int] = None) -> Dict[str, Any]:
+    async def run_backfill_pipeline(self, limit: Optional[int] = None) -> dict[str, Any]:
         """
         运行 L2 数据回填管道
 
@@ -177,9 +179,9 @@ class FotMobL2CollectorV2:
                 try:
                     await self._process_single_record(record, i, len(partial_records))
 
-                    # 风控：每处理一条记录，使用随机等待时间模拟人类行为
-                    wait_seconds = random.uniform(2.0, 4.0)
-                    logger.info(f"⏱️  隐身等待: {wait_seconds:.2f} 秒 (模拟人类浏览行为)")
+                    # 风控：每处理一条记录，使用更长的等待时间（浏览器操作较慢）
+                    wait_seconds = random.uniform(8.0, 15.0)  # 🌐 降维打击：更长的浏览器等待时间
+                    logger.info(f"⏱️  浏览器等待: {wait_seconds:.2f} 秒 (降维打击模式)")
                     await asyncio.sleep(wait_seconds)
 
                 except Exception as e:
@@ -198,7 +200,7 @@ class FotMobL2CollectorV2:
             self.logger.error(f"🚨 L2 管道运行失败: {str(e)}")
             raise
 
-    async def _get_partial_records(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    async def _get_partial_records(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
         """
         从数据库获取 data_completeness='partial' 的记录
 
@@ -209,7 +211,7 @@ class FotMobL2CollectorV2:
             待处理记录列表
         """
         try:
-            # 构建查询
+            # 构建查询 - 终极调度策略：只处理绝对安全的历史数据，彻底避免未来数据干扰
             query = """
                 SELECT m.id, ht.name as home_team, at.name as away_team, m.match_date, l.name as competition, m.season, m.data_completeness
                 FROM matches m
@@ -217,7 +219,9 @@ class FotMobL2CollectorV2:
                 JOIN teams at ON m.away_team_id = at.id
                 LEFT JOIN leagues l ON m.league_id = l.id
                 WHERE m.data_completeness = 'partial'
-                ORDER BY m.match_date DESC
+                  AND m.match_date < CURRENT_DATE - INTERVAL '7 days'  -- 【终极安全】只处理至少7天前的数据，100%避免未来数据
+                  AND m.match_date >= CURRENT_DATE - INTERVAL '2 years'  -- 时间窗口：最近2年（优化算力分配）
+                ORDER BY m.match_date DESC  -- 倒序：从最新向过去回溯，优先处理刚结束的比赛
             """
 
             if limit:
@@ -248,7 +252,7 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ 获取 partial 记录失败: {str(e)}")
             raise
 
-    async def _process_single_record(self, record: Dict[str, Any], current: int, total: int):
+    async def _process_single_record(self, record: dict[str, Any], current: int, total: int):
         """
         处理单条记录的完整流程：Bridge -> Harvest -> Save
 
@@ -300,7 +304,7 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ 保存记录 {record_id} 失败")
             self.stats["failed_save"] += 1
 
-    async def _bridge_fbref_to_fotmob(self, fbref_record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def _bridge_fbref_to_fotmob(self, fbref_record: dict[str, Any]) -> Optional[dict[str, Any]]:
         """
         The Bridge: 将 FBref 记录匹配到 FotMob ID
 
@@ -335,9 +339,10 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ Bridge 匹配失败: {str(e)}")
             return None
 
-    async def _harvest_match_details(self, fotmob_id: str) -> Optional[Dict[str, Any]]:
+    async def _harvest_match_details(self, fotmob_id: str) -> Optional[dict[str, Any]]:
         """
         The Harvest: 采集比赛详情数据
+        🌐 降维打击：使用 Playwright 浏览器采集器
 
         Args:
             fotmob_id: FotMob 比赛 ID
@@ -346,24 +351,47 @@ class FotMobL2CollectorV2:
             详情数据或 None
         """
         try:
-            # 采集比赛详情，应用指数退避
-            async def details_request():
-                return await self.collector.get_match_details(fotmob_id)
+            self.logger.info(f"🌐 启动 Playwright 浏览器采集: {fotmob_id}")
 
+            # 创建浏览器采集器实例 - 动态创建避免资源浪费
+            async def details_request():
+                async with FotmobBrowserScraper() as browser_scraper:
+                    result = await browser_scraper.scrape_match_details(fotmob_id)
+
+                    # 转换为现有格式
+                    if result:
+                        return {
+                            "matchId": result.match_id,
+                            "match_info": {
+                                "home_team": result.home_team,
+                                "away_team": result.away_team,
+                                "home_score": result.home_score,
+                                "away_score": result.away_score,
+                                "status": result.status,
+                                "start_time": result.start_time
+                            },
+                            "lineup": result.lineups,
+                            "shots": result.shots,
+                            "stats": result.stats,
+                            "fetched_at": datetime.utcnow().isoformat()
+                        }
+                    return None
+
+            # 执行浏览器采集 (浏览器操作需要更长时间)
             details = await exponential_backoff_request(
                 details_request,
-                max_retries=3,
-                base_delay=45.0,
-                max_delay=300.0
+                max_retries=2,  # 减少重试次数
+                base_delay=15.0,  # 增加延迟适应浏览器操作
+                max_delay=45.0
             )
 
             return details
 
         except Exception as e:
-            self.logger.error(f"❌ Harvest 采集失败: {str(e)}")
+            self.logger.error(f"❌ Playwright 浏览器采集失败: {str(e)}")
             return None
 
-    async def _save_match_details(self, record_id: int, details_data: Dict[str, Any]) -> bool:
+    async def _save_match_details(self, record_id: int, details_data: dict[str, Any]) -> bool:
         """
         The Save: 保存比赛详情到数据库
 
@@ -394,7 +422,7 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ Save 保存失败: {str(e)}")
             return False
 
-    async def _save_shotmap_data(self, session, record_id: int, shots: List[Dict[str, Any]]):
+    async def _save_shotmap_data(self, session, record_id: int, shots: list[dict[str, Any]]):
         """保存射门数据到 events 表"""
         if not shots:
             return
@@ -429,7 +457,7 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ 保存射门数据失败: {str(e)}")
             raise
 
-    async def _save_lineup_data(self, session, record_id: int, lineup: Dict[str, Any]):
+    async def _save_lineup_data(self, session, record_id: int, lineup: dict[str, Any]):
         """保存阵容数据到 lineups 表"""
         if not lineup or not lineup.get('home') or not lineup.get('away'):
             return
@@ -441,13 +469,13 @@ class FotMobL2CollectorV2:
             # 保存客队阵容
             await self._save_team_lineup(session, record_id, 'away', lineup['away'])
 
-            self.logger.debug(f"💾 保存了阵容数据")
+            self.logger.debug("💾 保存了阵容数据")
 
         except Exception as e:
             self.logger.error(f"❌ 保存阵容数据失败: {str(e)}")
             raise
 
-    async def _save_team_lineup(self, session, record_id: int, team_side: str, team_lineup: Dict[str, Any]):
+    async def _save_team_lineup(self, session, record_id: int, team_side: str, team_lineup: dict[str, Any]):
         """保存单支球队阵容"""
         starters = team_lineup.get('starters', [])
         substitutes = team_lineup.get('substitutes', [])
@@ -486,7 +514,7 @@ class FotMobL2CollectorV2:
 
             await self._insert_lineup_record(session, player_data)
 
-    async def _insert_lineup_record(self, session, player_data: Dict[str, Any]):
+    async def _insert_lineup_record(self, session, player_data: dict[str, Any]):
         """插入阵容记录"""
         columns = ', '.join(player_data.keys())
         placeholders = ', '.join([f':{key}' for key in player_data.keys()])
@@ -521,7 +549,7 @@ class FotMobL2CollectorV2:
         except Exception as e:
             self.logger.error(f"❌ 标记记录失败状态时出错: {str(e)}")
 
-    def _generate_final_stats(self) -> Dict[str, Any]:
+    def _generate_final_stats(self) -> dict[str, Any]:
         """生成最终统计信息"""
         end_time = datetime.now()
         duration = end_time - self.stats["start_time"]
@@ -537,7 +565,7 @@ class FotMobL2CollectorV2:
 
         return final_stats
 
-    def _log_final_stats(self, stats: Dict[str, Any]):
+    def _log_final_stats(self, stats: dict[str, Any]):
         """记录最终统计信息"""
         self.logger.info("=" * 80)
         self.logger.info("📊 L2 深度数据回填统计报告")

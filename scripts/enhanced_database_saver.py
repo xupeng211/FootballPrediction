@@ -111,7 +111,7 @@ class EnhancedDatabaseSaver:
 
         return cleaned.strip()
 
-    def clean_score(self, score: str) -> Tuple[Optional[int], Optional[int]]:
+    def clean_score(self, score: str) -> tuple[Optional[int], Optional[int]]:
         """清理比分字符串，返回(home_score, away_score)"""
         if not score or pd.isna(score) or score == '':
             return None, None
@@ -284,7 +284,7 @@ class EnhancedDatabaseSaver:
             logger.error(f"❌ 创建联赛失败 ({league_name}): {e}")
             raise
 
-    def save_matches_dataframe(self, df: pd.DataFrame, league_name: str, season: str = None) -> Dict[str, Any]:
+    def save_matches_dataframe(self, df: pd.DataFrame, league_name: str, season: str = None) -> dict[str, Any]:
         """保存比赛DataFrame - 故障免疫版"""
         if df.empty:
             logger.warning("⚠️ DataFrame为空，无需保存")
@@ -403,20 +403,20 @@ class EnhancedDatabaseSaver:
                         # 确保关键字段存在
                         if 'xg_home' in json_stats and 'xg_away' not in json_stats:
                             json_stats['xg_away'] = 1.0  # 合理默认值
-                            logger.debug(f"    补充默认xg_away值: 1.0")
+                            logger.debug("    补充默认xg_away值: 1.0")
 
                         if 'xg_away' in json_stats and 'xg_home' not in json_stats:
                             json_stats['xg_home'] = 1.0  # 合理默认值
-                            logger.debug(f"    补充默认xg_home值: 1.0")
+                            logger.debug("    补充默认xg_home值: 1.0")
 
                         # 如果有xG数据但没有控球率，添加默认值
                         if ('xg_home' in json_stats or 'xg_away' in json_stats):
                             if 'possession_home' not in json_stats:
                                 json_stats['possession_home'] = 50.0
-                                logger.debug(f"    补充默认possession_home值: 50.0")
+                                logger.debug("    补充默认possession_home值: 50.0")
                             if 'possession_away' not in json_stats:
                                 json_stats['possession_away'] = 50.0
-                                logger.debug(f"    补充默认possession_away值: 50.0")
+                                logger.debug("    补充默认possession_away值: 50.0")
 
                         # 如果有统计数据，记录日志
                         if json_stats:
@@ -480,7 +480,7 @@ class EnhancedDatabaseSaver:
 
                 return {
                     "status": "success",
-                    "message": f"保存完成",
+                    "message": "保存完成",
                     "saved_count": saved_count,
                     "failed_count": failed_count,
                     "total_count": total_count
@@ -497,7 +497,7 @@ class EnhancedDatabaseSaver:
                     "total_count": total_count
                 }
 
-    def verify_pipeline(self) -> Dict[str, Any]:
+    def verify_pipeline(self) -> dict[str, Any]:
         """验证数据管道状态"""
         try:
             with self.engine.connect() as conn:

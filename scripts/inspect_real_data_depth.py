@@ -191,7 +191,7 @@ class DataForensicsExpert:
             logger.error(f"❌ 备用方案也失败: {e}")
             return None
 
-    def inspect_data_depth(self, data_str: str) -> Dict[str, Any]:
+    def inspect_data_depth(self, data_str: str) -> dict[str, Any]:
         """
         深度检查数据字段
 
@@ -259,7 +259,7 @@ class DataForensicsExpert:
 
         return results
 
-    def _check_xg_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_xg_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """检查xG数据"""
         results = {"has_xG": False, "xg_details": {}}
 
@@ -278,7 +278,7 @@ class DataForensicsExpert:
 
         return results
 
-    def _check_lineup_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_lineup_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """检查阵容数据"""
         results = {"has_lineups": False, "lineup_details": {}}
 
@@ -297,7 +297,7 @@ class DataForensicsExpert:
 
         return results
 
-    def _check_rating_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_rating_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """检查球员评分"""
         results = {"has_ratings": False, "rating_details": {}}
 
@@ -316,7 +316,7 @@ class DataForensicsExpert:
 
         return results
 
-    def _check_odds_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_odds_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """检查赔率数据"""
         results = {"has_odds": False, "odds_details": {}}
 
@@ -336,7 +336,7 @@ class DataForensicsExpert:
 
         return results
 
-    def _check_running_distance(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_running_distance(self, data: dict[str, Any]) -> dict[str, Any]:
         """检查跑动距离"""
         results = {"has_running_distance": False, "distance_details": {}}
 
@@ -357,7 +357,7 @@ class DataForensicsExpert:
 
         return results
 
-    def _check_momentum_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_momentum_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """检查势头图数据"""
         results = {"has_momentum": False, "momentum_details": {}}
 
@@ -376,7 +376,7 @@ class DataForensicsExpert:
 
         return results
 
-    def _deep_search(self, data: Any, keywords: List[str], path: str = "") -> List[str]:
+    def _deep_search(self, data: Any, keywords: list[str], path: str = "") -> list[str]:
         """深度搜索关键词"""
         found_paths = []
 
@@ -398,7 +398,7 @@ class DataForensicsExpert:
 
         return found_paths
 
-    def _extract_forward_names(self, data: Dict[str, Any]) -> List[str]:
+    def _extract_forward_names(self, data: dict[str, Any]) -> list[str]:
         """提取前锋名字"""
         forwards = []
 
@@ -427,7 +427,7 @@ class DataForensicsExpert:
         extract_names_recursive(data)
         return forwards[:5]  # 返回前5个前锋名字
 
-    def _extract_bookmakers(self, data: Dict[str, Any]) -> List[str]:
+    def _extract_bookmakers(self, data: dict[str, Any]) -> list[str]:
         """提取博彩公司名称"""
         bookmakers = set()
 
@@ -466,7 +466,7 @@ class DataForensicsExpert:
         find_bookmakers_recursive(data)
         return list(bookmakers)
 
-    def _determine_odds_type(self, data: Dict[str, Any]) -> str:
+    def _determine_odds_type(self, data: dict[str, Any]) -> str:
         """判断赔率类型"""
         # 简单判断：如果有opening或initial关键字，可能是初盘
         if self._deep_search(data, ["opening", "initial", "first"]):
@@ -478,8 +478,8 @@ class DataForensicsExpert:
             return "无法确定类型"
 
     def _extract_sample_values(
-        self, data: Dict[str, Any], paths: List[str]
-    ) -> Dict[str, Any]:
+        self, data: dict[str, Any], paths: list[str]
+    ) -> dict[str, Any]:
         """提取指定路径的样本值"""
         samples = {}
 
@@ -493,7 +493,7 @@ class DataForensicsExpert:
 
         return samples
 
-    def _get_value_by_path(self, data: Dict[str, Any], path: str) -> Any:
+    def _get_value_by_path(self, data: dict[str, Any], path: str) -> Any:
         """根据路径获取值"""
         current = data
         parts = path.split(".")
@@ -510,8 +510,8 @@ class DataForensicsExpert:
         return current
 
     def _generate_structure_sample(
-        self, data: Dict[str, Any], max_depth: int = 2
-    ) -> Dict[str, Any]:
+        self, data: dict[str, Any], max_depth: int = 2
+    ) -> dict[str, Any]:
         """生成数据结构样本"""
 
         def get_structure(d, depth=0):
@@ -527,7 +527,7 @@ class DataForensicsExpert:
 
         return get_structure(data)
 
-    def generate_forensics_report(self, results: Dict[str, Any]) -> str:
+    def generate_forensics_report(self, results: dict[str, Any]) -> str:
         """生成取证报告"""
         report = f"""
 # 🔍 数据取证专家报告
@@ -572,7 +572,7 @@ class DataForensicsExpert:
 """
         return report
 
-    def _format_details(self, details: Dict[str, Any], category: str) -> str:
+    def _format_details(self, details: dict[str, Any], category: str) -> str:
         """格式化详情信息"""
         if not details:
             return "   - 无详细信息"
@@ -598,7 +598,7 @@ class DataForensicsExpert:
 
         return "\n".join(formatted)
 
-    def _generate_conclusion(self, results: Dict[str, Any]) -> str:
+    def _generate_conclusion(self, results: dict[str, Any]) -> str:
         """生成结论"""
         positive_count = sum(
             [

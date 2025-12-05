@@ -16,7 +16,7 @@ For new code, please use the new interface in src/database/async_manager.py
 """
 
 import logging
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

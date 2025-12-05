@@ -116,7 +116,7 @@ class WorldCompetitionsIndexer:
             traceback.print_exc()
             return pd.DataFrame()
 
-    def parse_competition_urls(self) -> List[Dict]:
+    def parse_competition_urls(self) -> list[dict]:
         """解析目标赛事URL列表"""
         competitions = []
 
@@ -143,7 +143,7 @@ class WorldCompetitionsIndexer:
 
         return competitions
 
-    def save_competitions_to_db(self, competitions: List[Dict]) -> int:
+    def save_competitions_to_db(self, competitions: list[dict]) -> int:
         """保存赛事到数据库"""
         logger.info(f"\n💾 保存 {len(competitions)} 个赛事到数据库...")
 
@@ -225,14 +225,14 @@ class WorldCompetitionsIndexer:
         logger.info("🌍 天网计划 - Step 1 完成：世界赛事索引构建")
         logger.info("="*80)
 
-        logger.info(f"\n📊 统计信息:")
+        logger.info("\n📊 统计信息:")
         logger.info(f"  目标赛事总数: {self.stats['total_competitions']}")
         logger.info(f"  新增赛事: {self.stats['new_competitions']}")
         logger.info(f"  更新赛事: {self.stats['existing_competitions']}")
         logger.info(f"  失败赛事: {len(self.stats['failed_competitions'])}")
 
         if self.stats['failed_competitions']:
-            logger.info(f"\n❌ 失败列表:")
+            logger.info("\n❌ 失败列表:")
             for comp in self.stats['failed_competitions']:
                 logger.info(f"  - {comp}")
 
@@ -246,7 +246,7 @@ class WorldCompetitionsIndexer:
                     ORDER BY category, tier
                 """)).fetchall()
 
-                logger.info(f"\n📋 数据库中赛事分类:")
+                logger.info("\n📋 数据库中赛事分类:")
                 for row in result:
                     logger.info(f"  {row.category} (Tier {row.tier}): {row.count} 个")
 

@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_completed_leagues() -> Set[str]:
+def get_completed_leagues() -> set[str]:
     """获取已完成的联赛ID"""
     csv_dir = Path("data/fbref")
     completed_leagues = set()
@@ -32,7 +32,7 @@ def get_completed_leagues() -> Set[str]:
     return completed_leagues
 
 
-def get_all_target_leagues() -> List[tuple]:
+def get_all_target_leagues() -> list[tuple]:
     """获取所有目标联赛"""
     return [
         # Premier League and related competitions
@@ -266,13 +266,13 @@ def main():
         # 生成专用的采集脚本
         generate_missing_leagues_script(missing_leagues)
 
-        logger.info(f"\n💡 已生成专用采集脚本: scripts/collect_missing_leagues.py")
+        logger.info("\n💡 已生成专用采集脚本: scripts/collect_missing_leagues.py")
         logger.info("🔧 运行命令: python scripts/collect_missing_leagues.py")
     else:
         logger.info("\n🎉 所有联赛采集完成！")
 
 
-def generate_missing_leagues_script(missing_leagues: List[tuple]):
+def generate_missing_leagues_script(missing_leagues: list[tuple]):
     """生成缺失联赛的专用采集脚本"""
     script_content = f'''#!/usr/bin/env python3
 """

@@ -26,6 +26,7 @@ try:
         create_default_football_pipeline,
     )
     from src.models.model_training import HAS_XGB, BaselineModelTrainer
+    from src.ml.feature_selector import FeatureSelector
 
     HAS_PROJECT_MODULES = True
 except ImportError:
@@ -46,6 +47,8 @@ class FootballPredictionPipeline:
         output_dir: str = "models",
         use_mlflow: bool = True,
         random_state: int = 42,
+        enable_feature_selection: bool = True,
+        feature_selection_params: dict = None,
     ):
         """初始化预测管道.
 
@@ -54,6 +57,8 @@ class FootballPredictionPipeline:
             output_dir: 模型输出目录
             use_mlflow: 是否使用 MLflow
             random_state: 随机种子
+            enable_feature_selection: 是否启用特征选择
+            feature_selection_params: 特征选择参数
         """
         if not HAS_DEPENDENCIES:
             raise ImportError(
@@ -67,16 +72,33 @@ class FootballPredictionPipeline:
         self.output_dir = Path(output_dir)
         self.use_mlflow = use_mlflow
         self.random_state = random_state
+        self.enable_feature_selection = enable_feature_selection
 
         # 初始化组件
         self.feature_pipeline = None
         self.model_trainer = None
+        self.feature_selector = None
         self.is_fitted = False
+
+        # 特征选择参数
+        default_feature_selection_params = {
+            "task_type": "classification",
+            "correlation_threshold": 0.95,
+            "min_features": 5,
+            "max_features": 50,
+            "random_state": random_state,
+        }
+        self.feature_selection_params = {
+            **default_feature_selection_params,
+            **(feature_selection_params or {})
+        }
 
         # 创建输出目录
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Initialized FootballPredictionPipeline: {model_name}")
+        if self.enable_feature_selection:
+            logger.info(f"Feature selection enabled with params: {self.feature_selection_params}")
 
     def build_feature_pipeline(
         self,
@@ -168,6 +190,7 @@ class FootballPredictionPipeline:
         xgboost_params: dict[str, Any] = None,
         optimize_hyperparameters: bool = False,
         n_trials: int = 50,
+        feature_selection_top_k: int = 20,
     ) -> dict[str, Any]:
         """训练预测模型.
 
@@ -180,6 +203,7 @@ class FootballPredictionPipeline:
             xgboost_params: XGBoost 参数
             optimize_hyperparameters: 是否优化超参数
             n_trials: 优化试验次数
+            feature_selection_top_k: 特征选择保留的top_k特征数
 
         Returns:
             训练结果字典
@@ -194,6 +218,51 @@ class FootballPredictionPipeline:
         else:
             X_train_processed = X_train
             X_val_processed = X_val
+
+        # 特征选择
+        if self.enable_feature_selection:
+            logger.info("开始特征选择...")
+
+            # 确定任务类型
+            task_type = "classification" if len(y_train.unique()) < 20 else "regression"
+
+            # 初始化特征选择器
+            self.feature_selector = FeatureSelector(
+                task_type=task_type,
+                **self.feature_selection_params
+            )
+
+            # 执行特征选择
+            selected_features = self.feature_selector.select_features(
+                X_train_processed,
+                y_train,
+                top_k=feature_selection_top_k,
+                remove_collinear=True
+            )
+
+            # 应用特征选择
+            X_train_processed = X_train_processed[selected_features]
+            if X_val_processed is not None:
+                X_val_processed = X_val_processed[selected_features]
+
+            # 保存选择的特征列表
+            selected_features_path = self.output_dir / "selected_features.json"
+            with open(selected_features_path, 'w', encoding='utf-8') as f:
+                import json
+                json.dump({
+                    "selected_features": selected_features,
+                    "removed_features": self.feature_selector.removed_features,
+                    "selection_params": self.feature_selection_params,
+                    "task_type": task_type,
+                    "selection_time": pd.Timestamp.now().isoformat()
+                }, f, indent=2, ensure_ascii=False)
+
+            logger.info(f"特征选择完成: 从 {X_train.shape[1]} 个特征中选择 {len(selected_features)} 个")
+            logger.info(f"选择的特征: {selected_features}")
+
+            # 保存特征选择结果
+            feature_selection_path = self.output_dir / "feature_selection_results.json"
+            self.feature_selector.save_selection_results(str(feature_selection_path))
 
         # 创建模型训练器
         self.model_trainer = BaselineModelTrainer(
@@ -243,6 +312,19 @@ class FootballPredictionPipeline:
                 X_train_processed, y_train, X_val_processed, y_val
             )
 
+        # 在训练结果中添加特征选择信息
+        if self.enable_feature_selection and self.feature_selector:
+            training_result["feature_selection"] = {
+                "enabled": True,
+                "original_features": X_train.shape[1] if self.feature_pipeline else X_train.shape[1],
+                "selected_features": len(selected_features),
+                "selected_feature_names": selected_features,
+                "removed_features": len(self.feature_selector.removed_features),
+                "feature_importance_available": self.feature_selector.feature_importance_df is not None
+            }
+        else:
+            training_result["feature_selection"] = {"enabled": False}
+
         self.is_fitted = True
         return training_result
 
@@ -264,6 +346,10 @@ class FootballPredictionPipeline:
         else:
             X_processed = X
 
+        # 应用特征选择
+        if self.enable_feature_selection and self.feature_selector and self.feature_selector.selected_features:
+            X_processed = X_processed[self.feature_selector.selected_features]
+
         # 模型预测
         return self.model_trainer.predict(X_processed)
 
@@ -284,6 +370,10 @@ class FootballPredictionPipeline:
             X_processed = self.feature_pipeline.transform(X)
         else:
             X_processed = X
+
+        # 应用特征选择
+        if self.enable_feature_selection and self.feature_selector and self.feature_selector.selected_features:
+            X_processed = X_processed[self.feature_selector.selected_features]
 
         # 模型预测概率
         return self.model_trainer.predict_proba(X_processed)
