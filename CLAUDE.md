@@ -31,8 +31,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🌟 Quick Start (3 Minutes)
 
-> **💡 Language**: Use Simplified Chinese for user communication
-
 ```bash
 # 1️⃣ 启动完整开发环境
 make dev && make status
@@ -52,7 +50,8 @@ make shell  # 进入容器开始编码
 | Metric | Current Status | Target |
 |--------|---------------|--------|
 | Build Status | ✅ Stable (Green Baseline) | Maintain |
-| Test Coverage | 29.0% (README.md measured) | 18%+ (Achieved) |
+| Test Coverage | 29.0% total (measured) | 18%+ (Achieved) |
+| Quality Gates | 6.0% minimum (enforced) | Maintain |
 | Test Files | 250+ test files | 300+ |
 | Code Quality | A+ (ruff) | Maintain |
 | Python Version | 3.10/3.11/3.12 | Recommend 3.11 |
@@ -99,36 +98,43 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 ### Directory Structure
 ```
-src/
-├── api/                  # API layer (CQRS implementation)
-│   ├── predictions/      # Prediction APIs (optimized version included)
-│   ├── data/            # Data management APIs
-│   ├── analytics/       # Analytics APIs
-│   ├── health/          # Health check APIs
-│   ├── auth/            # Auth & authorization APIs
-│   ├── optimization/    # Performance optimization APIs
-│   └── models/          # API data models
-├── domain/              # Domain layer (DDD core logic)
-├── ml/                  # Machine learning modules
-│   ├── xgboost_hyperparameter_optimization.py  # XGBoost hyperparameter optimization
-│   ├── lstm_predictor.py        # LSTM deep learning prediction
-│   ├── football_prediction_pipeline.py  # Complete prediction pipeline
-│   └── experiment_tracking.py   # MLflow experiment tracking
-├── tasks/               # Celery task scheduling
-├── database/            # Async SQLAlchemy 2.0 (includes async_manager.py unified interface)
-├── cache/              # Cache layer (Redis)
-├── cqrs/               # CQRS pattern implementation
-├── events/             # Event system
-├── core/               # Core infrastructure
-├── services/           # Business service layer
-├── utils/              # Utility functions
-├── monitoring/         # Monitoring system (Prometheus integration)
-├── adapters/           # External data source adapters (FotMob, etc.)
-├── collectors/         # Data collectors
-├── config/             # Configuration management
-├── middleware/         # Middleware
-├── performance/        # Performance monitoring
-└── streaming/          # Real-time data streaming
+FootballPrediction/         # Project root directory
+├── src/                   # Main source code
+│   ├── api/              # API layer (CQRS implementation)
+│   │   ├── predictions/  # Prediction APIs (optimized version included)
+│   │   ├── data/         # Data management APIs
+│   │   ├── analytics/    # Analytics APIs
+│   │   ├── health/       # Health check APIs
+│   │   ├── auth/         # Auth & authorization APIs
+│   │   ├── optimization/ # Performance optimization APIs
+│   │   └── models/       # API data models
+│   ├── domain/           # Domain layer (DDD core logic)
+│   ├── ml/               # Machine learning modules
+│   │   ├── xgboost_hyperparameter_optimization.py  # XGBoost hyperparameter optimization
+│   │   ├── lstm_predictor.py        # LSTM deep learning prediction
+│   │   ├── football_prediction_pipeline.py  # Complete prediction pipeline
+│   │   └── experiment_tracking.py   # MLflow experiment tracking
+│   ├── tasks/            # Celery task scheduling
+│   ├── database/         # Async SQLAlchemy 2.0 (includes async_manager.py unified interface)
+│   ├── cache/            # Cache layer (Redis)
+│   ├── cqrs/             # CQRS pattern implementation
+│   ├── events/           # Event system
+│   ├── core/             # Core infrastructure
+│   ├── services/         # Business service layer
+│   ├── utils/            # Utility functions
+│   ├── monitoring/       # Monitoring system (Prometheus integration)
+│   ├── adapters/         # External data source adapters (FotMob, etc.)
+│   ├── collectors/       # Data collectors
+│   ├── config/           # Configuration management
+│   ├── middleware/       # Middleware
+│   ├── performance/      # Performance monitoring
+│   └── streaming/        # Real-time data streaming
+├── tests/                # Test suites (250+ test files)
+├── models/               # Trained ML models
+├── scripts/              # Utility scripts
+├── docker-compose*.yml   # Multiple Docker configurations (20+ files)
+├── requirements*.txt     # Dependency management
+└── config/               # Configuration files including quality gates
 ```
 
 ### Key Technology Stack
@@ -314,11 +320,11 @@ make ci               # Complete local CI verification (checks coverage >= 6.0%)
 ```
 
 ### ⚠️ Important: Coverage Information
-- **Current Coverage**: 29.0% total (README.md measured)
-- **Monthly Target**: 18.0% (✅ Achieved)
+- **Current Coverage**: 29.0% total (measured)
+- **Quality Gates**: 6.0% minimum enforced (config/quality_baseline.json)
 - **Domain Coverage**: Improved from 0.0% baseline
 - **Utils Coverage**: 73.0% (strong foundation)
-- **Quality Gates**: Minimum 6.0% total coverage enforced
+- **Monthly Target**: 18.0% (✅ Achieved)
 - **Use `make ci`** for complete local verification before pushing
 
 ### Container Development Workflow
@@ -404,6 +410,16 @@ make test.integration # Full integration with real models
 export FOOTBALL_PREDICTION_ML_MODE=mock
 make test.fast        # Skip ML model loading for faster development
 ```
+
+### Environment Configuration Matrix
+| Variable | Development | CI | Production | Purpose |
+|----------|-------------|----|------------|---------|
+| `FOOTBALL_PREDICTION_ML_MODE` | real | mock | real | ML model loading mode |
+| `SKIP_ML_MODEL_LOADING` | false | true | false | Skip model loading for speed |
+| `INFERENCE_SERVICE_MOCK` | false | true | false | Mock ML inference service |
+| `XGBOOST_MOCK` | false | true | false | Mock XGBoost models |
+| `JOBLIB_MOCK` | false | true | false | Mock joblib model loading |
+| `ENV` | development | ci | production | Environment identifier |
 
 ### Quality Gates Configuration
 The project enforces quality gates via `config/quality_baseline.json`:
@@ -704,6 +720,40 @@ FotMob requires specific headers for API access. **Missing these headers will re
 - **Proxy Pool**: `src/collectors/proxy_pool.py` - Rotating proxy management
 - **User-Agent Rotation**: `src/collectors/user_agent.py` - Mobile/desktop mixing
 
+## 🔄 Microservices Architecture
+
+### Service Overview
+While the application follows a modular monolith structure in `src/`, it implements microservice patterns for scalability:
+
+```
+Service Communication Patterns:
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Predictions    │    │   Data          │    │   Analytics     │
+│  Service        │◄──►│   Collection    │◄──►│   Service       │
+│  (src/api/)     │    │   (src/collectors/) │ │  (src/api/analytics/) │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   Core Events   │
+                    │   (src/events/) │
+                    └─────────────────┘
+```
+
+### Service Communication
+- **Event-Driven**: Services communicate via `src/events/` system
+- **CQRS Separation**: Command/Query separation in `src/cqrs/`
+- **Async Processing**: Celery tasks in `src/tasks/` for background operations
+- **Database Sharing**: PostgreSQL with unified async interface in `src/database/async_manager.py`
+
+### Service Boundaries
+- **Predictions Service**: `src/api/predictions/` + ML models in `src/ml/`
+- **Data Collection Service**: `src/collectors/` + `src/adapters/` for external APIs
+- **Analytics Service**: `src/api/analytics/` + metrics in `src/monitoring/`
+- **User Management**: `src/api/auth/` + user domain logic
+- **Real-time Streaming**: `src/streaming/` for WebSocket communications
+
 ## 📊 API Endpoints
 
 - **Frontend Application**: http://localhost:3000
@@ -712,6 +762,54 @@ FotMob requires specific headers for API access. **Missing these headers will re
 - **Health Check**: http://localhost:8000/health
 - **WebSocket**: ws://localhost:8000/api/v1/realtime/ws
 - **Prometheus Metrics**: http://localhost:8000/api/v1/metrics
+
+## 📈 Performance Monitoring & Debugging
+
+### Performance Monitoring Commands
+```bash
+# Real-time performance metrics
+curl http://localhost:8000/api/v1/metrics                    # Prometheus metrics
+curl http://localhost:8000/health/system                   # System resource usage
+curl http://localhost:8000/health/database                 # Database performance
+
+# Application performance profiling
+export DEBUG=true                                          # Enable debug mode
+make dev                                                   # Start with debugging
+make logs | grep "performance"                            # Filter performance logs
+
+# ML model performance
+python src/ml/model_performance_monitor.py                 # Model performance dashboard
+mlflow ui                                                  # MLflow experiment tracking
+```
+
+### Debugging Tools & Techniques
+```bash
+# Container debugging
+make shell                                                 # Enter app container
+docker-compose exec app python -m pdb src/main.py         # Debug with pdb
+docker-compose logs app --tail=100                        # Recent app logs
+
+# Database debugging
+make db-shell                                              # PostgreSQL debugging
+\dt                                                       # List all tables
+EXPLAIN ANALYZE SELECT * FROM matches LIMIT 10;           # Query performance
+
+# Redis debugging
+make redis-shell                                           # Redis CLI
+MONITOR                                                   # Real-time Redis commands
+INFO memory                                               # Memory usage analysis
+
+# Background task debugging
+curl http://localhost:5555                                 # Flower dashboard
+docker-compose exec worker celery -A src.tasks.celery_app inspect active  # Active tasks
+```
+
+### Performance Benchmarks
+- **API Response Time**: < 200ms for 95th percentile
+- **Database Query Time**: < 100ms average
+- **ML Model Inference**: < 500ms per prediction
+- **Memory Usage**: < 2GB per container
+- **CPU Usage**: < 80% under normal load
 
 ## 🐳 Container Architecture
 
@@ -763,63 +861,166 @@ FotMob requires specific headers for API access. **Missing these headers will re
 - **Health checks**: `src/api/health/` directory
 - **External adapters**: `src/adapters/factory.py` (data source factory pattern)
 
-## 🚨 Troubleshooting Quick Reference
+## 🚨 Troubleshooting Guide
 
-| Issue Type | Solution |
-|-----------|----------|
-| **Test Failures** | `make test.fast` check core functionality, avoid ML model loading |
-| **CI Timeout** | Use `make test.unit.ci` instead of full test suite |
-| **Port Conflicts** | `lsof -i :8000` to check, then `kill -9 PID` or change ports |
-| **Database Issues** | `make db-migrate`, check PostgreSQL status with `make status` |
-| **Redis Connection Issues** | `make redis-shell` test connection, check if Redis is running |
-| **Insufficient Memory** | Use `make test.fast` to avoid ML-related tests |
-| **Type Errors** | Check imports, add missing type annotations, run `make type-check` |
-| **Dependency Issues** | Run `make clean-all && make dev` to rebuild from scratch |
-| **ML Model Loading Failed** | Check model file paths in `models/trained/`, verify MLflow registry |
-| **Celery Task Failures** | View logs `make logs`, check Redis connection, use Flower UI |
-| **Coverage < 6.0%** | Run `make coverage` to see specific coverage gaps |
-| **Docker Build Failures** | Check `Dockerfile`, verify all dependencies in requirements*.txt |
-| **FotMob 403 Errors** | Check `.env` for FOTMOB_CLIENT_VERSION and FOTMOB_KNOWN_SIGNATURE |
-| **Container Permission Issues** | Use `sudo chown -R $USER:$USER ./` for local file permissions |
+### Quick Reference Table
+| Issue Type | Primary Command | Secondary Checks |
+|-----------|----------------|------------------|
+| **Test Failures** | `make test.fast` | `make logs`, `export FOOTBALL_PREDICTION_ML_MODE=mock` |
+| **CI Timeout** | `make test.unit.ci` | Check memory usage, reduce parallel jobs |
+| **Port Conflicts** | `lsof -i :8000` | `kill -9 <PID>`, modify docker-compose.yml |
+| **Database Issues** | `make db-migrate` | `make status`, `make db-shell` |
+| **Redis Connection** | `make redis-shell` | `make logs-redis`, check docker-compose.yml |
+| **Memory Issues** | `make test.fast` | `docker stats`, reduce ML model loading |
+| **Type Errors** | `make type-check` | Check imports, add type annotations |
+| **Dependency Issues** | `make clean-all && make dev` | Verify requirements*.txt files |
+| **ML Model Loading** | Check `models/trained/` | `mlflow experiments list`, model paths |
+| **Celery Task Failures** | `make logs` | `curl http://localhost:5555`, Redis status |
+| **Coverage < 6.0%** | `make coverage` | Check specific test files coverage gaps |
+| **Docker Build Failures** | Check `Dockerfile` | Verify requirements, build context |
+| **FotMob 403 Errors** | Check `.env` auth | `python scripts/manual_token_test.py` |
+| **Container Permissions** | `sudo chown -R $USER:$USER ./` | Check Docker user mapping |
 
-### 常见问题详细解决方案
+### Error-Specific Solutions
 
-#### 🔥 FotMob API 认证失败 (403 Error)
+#### 🔥 FotMob API Authentication Failures
 ```bash
-# 1. 验证认证配置
+# Symptom: HTTP 403 errors from FotMob API
+# Diagnosis:
 python scripts/manual_token_test.py
 
-# 2. 更新认证token
+# Solution:
 python scripts/refresh_fotmob_tokens.py
-
-# 3. 检查环境变量
+# Verify environment variables:
 cat .env | grep FOTMOB
+
+# Common fixes:
+# 1. Update FOTMOB_CLIENT_VERSION in .env
+# 2. Refresh FOTMOB_KNOWN_SIGNATURE
+# 3. Check network connectivity
 ```
 
-#### 🐳 Docker 端口冲突
+#### 🐳 Docker Port Conflicts
 ```bash
-# 查看端口占用
+# Symptom: "port already allocated" errors
+# Diagnosis:
 lsof -i :8000  # Backend API
 lsof -i :3000  # Frontend
 lsof -i :5432  # PostgreSQL
 lsof -i :6379  # Redis
 
-# 强制结束占用进程
-kill -9 <PID>
-
-# 或者修改 docker-compose.yml 中的端口映射
+# Solution:
+kill -9 <PID>  # Force kill process
+# OR modify ports in docker-compose.yml:
+ports:
+  - "8001:8000"  # Change external port
 ```
 
-#### 🧠 ML 模型加载问题
+#### 🧠 ML Model Loading Problems
 ```bash
-# 检查模型文件
+# Symptom: Model loading failures during startup
+# Diagnosis:
 ls -la models/trained/
-
-# 检查 MLflow 实验记录
 mlflow experiments list
 
-# 重新训练模型
+# Solution:
+# Re-train models:
 python src/ml/enhanced_xgboost_trainer.py
+
+# Or use mock mode for development:
+export FOOTBALL_PREDICTION_ML_MODE=mock
+export SKIP_ML_MODEL_LOADING=true
+make dev
+```
+
+#### 📊 Database Connection Issues
+```bash
+# Symptom: Database connection timeouts
+# Diagnosis:
+make db-shell
+# Check connection string in .env:
+echo $DATABASE_URL
+
+# Common solutions:
+make db-migrate      # Run pending migrations
+make db-reset        # Reset database (dev only)
+# Check PostgreSQL status:
+docker-compose exec db pg_isready
+```
+
+#### ⚡ Performance Issues
+```bash
+# Symptom: Slow API responses, high memory usage
+# Monitoring:
+curl http://localhost:8000/health/system
+docker stats
+
+# Common fixes:
+# 1. Enable mock mode to skip ML models:
+export FOOTBALL_PREDICTION_ML_MODE=mock
+
+# 2. Check for memory leaks:
+make logs | grep "memory"
+
+# 3. Optimize database queries:
+make db-shell
+EXPLAIN ANALYZE SELECT * FROM matches LIMIT 10;
+```
+
+## ⚡ Quick Command Reference
+
+### Most Used Commands (90% of Daily Tasks)
+```bash
+# Environment Management
+make dev && make status          # Start and check all services
+make shell                       # Enter app container
+make logs                        # View application logs
+
+# Testing (Always use Makefile commands!)
+make test.fast                   # Quick core tests (2-3 min)
+make test.unit.ci                # CI verification (fastest)
+make ci                          # Complete validation (if time permits)
+
+# Code Quality
+make lint && make fix-code       # Check and fix code issues
+make security-check              # Security scanning
+
+# Database Operations
+make db-migrate                  # Run database migrations
+make db-shell                    # PostgreSQL terminal
+```
+
+### Development Workflow Commands
+```bash
+# Daily Development
+make dev && make status          # 1. Start environment
+curl http://localhost:8000/health  # 2. Verify API
+make test.fast                   # 3. Run core tests
+# 4. Development work...
+make lint && make fix-code       # 5. Code quality
+make test.unit.ci                # 6. Pre-commit verification
+
+# Environment Switching
+export FOOTBALL_PREDICTION_ML_MODE=mock     # Fast development
+export FOOTBALL_PREDICTION_ML_MODE=real     # Full ML features
+make clean-all && make dev                  # Fresh environment
+```
+
+### Troubleshooting Commands
+```bash
+# Service Health
+make status                      # Check all services
+curl http://localhost:8000/health/system   # System resources
+curl http://localhost:8000/health/database  # DB connectivity
+
+# Debug Information
+make logs | grep -i error       # Find errors in logs
+docker-compose ps               # Check container status
+docker stats                    # Resource usage
+
+# Reset & Recovery
+make clean-all && make dev      # Complete rebuild
+make db-reset                   # Reset database (dev only)
 ```
 
 ## 💡 Important Reminders
