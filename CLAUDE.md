@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📋 Latest Updates (2025-12-04)
+
+### v2.1.0 Improvements Applied
+- **Updated Quality Metrics**: Real coverage increased from 6.5% to 29.0% (target achieved)
+- **Enhanced FotMob Guidelines**: Added critical HTTP-only policy and authentication requirements
+- **Database Interface Clarification**: Stronger emphasis on async_manager.py usage
+- **Critical Development Rules**: Added non-negotiable protocol section
+- **Architecture Pattern Updates**: Refined DDD+CQRS+Event-Driven guidance
+
 ## 📑 Table of Contents
 
 - [🌟 Quick Start](#-quick-start)
@@ -11,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [🧪 Testing Strategy](#-testing-strategy)
 - [🔧 Development Workflow](#-development-workflow)
 - [📋 Common Tasks](#-common-tasks)
-- [🛠️ Architecture Principles](#️-architecture-principles)
+- [🛠️ Architecture Principles](️-architecture-principles)
 - [🤖 Machine Learning](#-machine-learning)
 - [📊 API Endpoints](#-api-endpoints)
 - [🐳 Container Architecture](#-container-architecture)
@@ -20,34 +29,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## 🌟 Quick Start (5 Minutes)
+## 🌟 Quick Start (3 Minutes)
 
 > **💡 Language**: Use Simplified Chinese for user communication
 
 ```bash
-# 🚀 Start full development environment
+# 1️⃣ 启动完整开发环境
 make dev && make status
 
-# ✅ Verify API accessibility
-curl http://localhost:8000/health
+# 2️⃣ 验证环境 (必须执行)
+curl http://localhost:8000/health && make test.fast
 
-# 🧪 Run core tests to validate environment
-make test.fast
-
-# 📊 Generate coverage report
-make coverage
+# 3️⃣ 开始开发
+make shell  # 进入容器开始编码
 ```
 
 ## 🎯 Project Overview
 
 **FootballPrediction** is an enterprise-grade football prediction system based on modern async architecture, integrating machine learning, data collection, real-time prediction, and event-driven architecture.
 
-### Quality Baseline (v1.0.0)
+### Quality Baseline (v2.1.0)
 | Metric | Current Status | Target |
 |--------|---------------|--------|
 | Build Status | ✅ Stable (Green Baseline) | Maintain |
-| Test Coverage | 6.5% (config/quality_baseline.json) | 18%+ (Monthly Target) |
-| Test Count | 264 tests | 500+ |
+| Test Coverage | 29.0% (README.md measured) | 18%+ (Achieved) |
+| Test Files | 250+ test files | 300+ |
 | Code Quality | A+ (ruff) | Maintain |
 | Python Version | 3.10/3.11/3.12 | Recommend 3.11 |
 | Security Status | ✅ Bandit Passed | Continuous Monitoring |
@@ -142,11 +148,11 @@ src/
 - **Scikit-learn 1.3+** - Machine learning utilities
 
 #### Development Tools
-- **pytest 8.4.0+** - Testing framework with async support
-- **Ruff 0.14+** - Code checking and formatting (A+ grade)
-- **Bandit 1.8.6+** - Security scanning
-- **Docker 27.0+** - Containerized deployment
-- **Makefile** - 297-line standardized development toolchain
+- **pytest 8.0.0+** - Testing framework with async support
+- **Ruff** - Code checking and formatting (A+ grade)
+- **Bandit** - Security scanning
+- **Docker** - Containerized deployment with Playwright
+- **Makefile** - 613-line standardized development toolchain
 
 ## 🚀 Core Development Commands
 
@@ -165,6 +171,14 @@ make clean-all        # Thorough cleanup of all related resources
 make install          # Install dependencies in virtual environment
 make venv             # Create Python virtual environment
 make env-check        # Check if environment is properly configured
+```
+
+### Data Collection Commands
+```bash
+make run-l1           # L1: Fixtures data collection from FotMob
+make run-l2           # L2: Match details collection from FotMob
+python scripts/backfill_details_fotmob_v2.py  # Primary FotMob data engine
+python scripts/refresh_fotmob_tokens.py       # Update API authentication tokens
 ```
 
 ### 🔥 Test Golden Rule
@@ -269,13 +283,29 @@ make db-shell         # Enter PostgreSQL interactive terminal
 ```
 
 ### Database Development Workflow
-1. **Use new unified interface**: `src/database/async_manager.py` - all database operations use this interface
+1. **Use unified interface**: `src/database/async_manager.py` - **"One Way to do it"** principle
 2. **Create new models**: Add SQLAlchemy model classes in `src/database/models/`
 3. **Apply migrations**: `make db-migrate`
 4. **View table structure**: `make db-shell` → `\d table_name`
 5. **Reset database** (dev environment): `make db-reset`
 
-> ⚠️ **Important**: `src/database/connection.py` is deprecated, please use `src/database/async_manager.py` unified interface
+> ⚠️ **Critical**: Always use `src/database/async_manager.py` - `src/database/connection.py` is deprecated
+
+### Async Database Pattern Examples
+```python
+# ✅ Correct: Use unified async manager
+from src.database.async_manager import get_db_session
+
+# FastAPI dependency injection
+async def get_matches(session: AsyncSession = Depends(get_db_session)):
+    result = await session.execute(select(Match))
+    return result.scalars().all()
+
+# Context manager usage
+async with get_db_session() as session:
+    # Database operations here
+    await session.commit()
+```
 
 ### Local CI Verification
 ```bash
@@ -284,9 +314,9 @@ make ci               # Complete local CI verification (checks coverage >= 6.0%)
 ```
 
 ### ⚠️ Important: Coverage Information
-- **Current Coverage**: 6.5% total (config/quality_baseline.json)
-- **Monthly Target**: 18.0% (continuous improvement goal)
-- **Domain Coverage**: 0.0% (priority area for improvement)
+- **Current Coverage**: 29.0% total (README.md measured)
+- **Monthly Target**: 18.0% (✅ Achieved)
+- **Domain Coverage**: Improved from 0.0% baseline
 - **Utils Coverage**: 73.0% (strong foundation)
 - **Quality Gates**: Minimum 6.0% total coverage enforced
 - **Use `make ci`** for complete local verification before pushing
@@ -298,13 +328,13 @@ make dev              # Recommended: uses docker-compose.yml
 # OR: docker-compose up --build
 
 # Choose specific environment:
-# docker-compose.yml           - Standard development
-# docker-compose.dev.yml       - Extended development
-# docker-compose.ci.yml        - CI environment
-# docker-compose.ci.simple.yml - Simplified CI
-# docker-compose.prod.yml      - Production
-# docker-compose.lightweight.yml - Minimal setup
-# docker-compose.crawler.yml   - Web scraping focused
+# docker-compose.yml              - Standard development
+# docker-compose.dev.yml          - Extended development
+# docker-compose.ci.yml           - CI environment
+# docker-compose.ci.simple.yml    - Simplified CI
+# docker-compose.prod.yml         - Production
+# docker-compose.lightweight.yml  - Minimal setup
+# docker-compose.crawler.yml      - Web scraping focused
 
 # Check service status
 docker-compose ps
@@ -438,7 +468,7 @@ make ci               # Complete CI verification (if time permits)
 5. Verify: `make test.unit.ci`
 
 ### Adding New Data Collectors
-1. Create collector class: `src/data/collectors/` or `src/collectors/`
+1. Create collector class: `src/collectors/`
 2. Implement async data fetching methods with proper error handling
 3. Add data validation logic using Pydantic models
 4. Integrate into ETL pipeline: `src/api/data_management.py`
@@ -488,9 +518,6 @@ SELECT COUNT(*) FROM matches;                   # Check data volume
 make redis-shell                                 # Redis CLI
 KEYS *                                          # View all keys
 INFO memory                                     # Memory usage
-
-# 7. Pipeline stability monitoring
-./monitor_l2_stability.sh                       # Real-time L2 monitoring
 ```
 
 ## 🛠️ Architecture Principles
@@ -619,7 +646,7 @@ python src/ml/enhanced_xgboost_trainer.py
 # LSTM deep learning prediction
 python src/ml/lstm_predictor.py
 
-# Hyperparameter optimization
+# Hyperparameter optimization with Optuna
 python src/ml/xgboost_hyperparameter_optimization.py
 
 # Advanced hyperparameter tuning
@@ -630,55 +657,29 @@ python src/ml/football_prediction_pipeline.py
 
 # Prepare final model data
 python src/models/train_v1_final.py
+
+# MLflow experiment tracking
+mlflow ui  # Start MLflow UI at http://localhost:5000
+mlflow experiments list  # List all experiments
 ```
 
-### Monitoring and Stability Tools
-```bash
-# Monitor L2 pipeline stability
-./monitor_l2_stability.sh              # Real-time L2 stability monitoring
+### Data Collection System
 
-# Restart pipeline services
-./scripts/restart_pipeline.sh           # Safe pipeline restart
-
-# Smoke test backfill operations
-python scripts/smoke_test_backfill.py   # Quick backfill validation
-
-# Data collection discovery
-python scripts/fotmob_league_discovery.py  # Explore available leagues
-
-# Model validation
-python src/utils/prediction_validator.py   # Validate prediction outputs
-```
-
-## 🔄 Advanced Development Workflows
-
-### FotMob Data Collection System
-The project uses a sophisticated browser automation system for data collection:
+#### ⚠️ FotMob HTTP-Only Policy (Critical)
+**Strict prohibition of Playwright/browser automation** - All data collection uses HTTP requests only:
 
 ```bash
-# Single day data collection
-python scripts/run_fotmob_scraper.py --date 2024-01-15
+# FotMob data collection (HTTP-based, no browser automation)
+python scripts/backfill_details_fotmob_v2.py      # Primary FotMob engine
+python scripts/refresh_fotmob_tokens.py           # Update authentication tokens
 
-# Batch data collection (date range)
-python scripts/run_fotmob_scraper.py --start-date 2024-01-01 --end-date 2024-01-31
+# L1-L3 Data Pipeline (Makefile commands)
+make run-l1              # L1: Fixtures data collection
+make run-l2              # L2: Match details collection
 
-# Backfill operations with different engines
-python scripts/backfill_details_fotmob.py        # FotMob engine backfill
-python scripts/backfill_details_legacy_fbref.py  # Legacy FBRef engine
-python scripts/backfill_details_legacy_playwright.py  # Legacy Playwright engine
-
-# Historical data collection
-python scripts/backfill_fotmob_history.py        # Historical match data
-
-# FotMob demo and exploration
-python scripts/fotmob_history_demo.py            # Demo collection workflow
-python scripts/fotmob_league_discovery.py        # Explore available leagues
-
-# View collected data
-ls -la data/fotmob/
-
-# Analyze JSON structure
-python scripts/inspect_json_structure.py data/fotmob/match_*.json
+# Token management for FotMob API (IMPORTANT!)
+python scripts/manual_token_test.py               # Test API authentication
+python scripts/explore_fotmob_urls.py             # Explore API endpoints
 
 # Integrate to database via ETL API
 curl -X POST http://localhost:8000/api/v1/data/etl \
@@ -686,34 +687,22 @@ curl -X POST http://localhost:8000/api/v1/data/etl \
   -d '{"source": "fotmob", "action": "import"}'
 ```
 
-### ML Model Management Workflow
-```bash
-# Model training with experiment tracking
-mlflow run src/ml/  # MLflow experiment tracking
+#### FotMob Authentication Requirements (Critical)
+FotMob requires specific headers for API access. **Missing these headers will result in 403 errors**:
 
-# Hyperparameter optimization studies
-optuna study create --study-name "football_prediction_v2"
-python src/ml/xgboost_hyperparameter_optimization.py
+- **x-mas**: Authentication token (from .env.example)
+- **x-foo**: Request signature (from .env.example)
+- **User-Agent**: Proper browser headers (automatically rotated)
 
-# Model performance monitoring
-python src/ml/model_performance_monitor.py
+**获取认证信息**：
+1. 从 `.env.example` 复制 `FOTMOB_CLIENT_VERSION` 和 `FOTMOB_KNOWN_SIGNATURE`
+2. 运行 `python scripts/manual_token_test.py` 验证认证
+3. 如需更新token，运行 `python scripts/refresh_fotmob_tokens.py`
 
-# Safe model loading with validation
-python src/services/inference_service.py  # Auto-detects available models
-```
-
-### Smart Cold Start System
-The application automatically manages data freshness:
-
-```python
-# Smart startup logic in src/main.py
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Check data freshness (24-hour threshold)
-    if await needs_data_collection():
-        # Trigger intelligent collection (full vs incremental)
-        trigger_background_data_collection()
-```
+#### Rate Limiting & Anti-Scraping
+- **Rate Limiter**: `src/collectors/rate_limiter.py` - Adaptive delay strategies
+- **Proxy Pool**: `src/collectors/proxy_pool.py` - Rotating proxy management
+- **User-Agent Rotation**: `src/collectors/user_agent.py` - Mobile/desktop mixing
 
 ## 📊 API Endpoints
 
@@ -774,115 +763,64 @@ async def lifespan(app: FastAPI):
 - **Health checks**: `src/api/health/` directory
 - **External adapters**: `src/adapters/factory.py` (data source factory pattern)
 
-### Project Statistics
-- **Core code**: 1,094+ lines (src root directory)
-- **Test files**: 239+ test files, 385+ test cases
-- **Configuration files**: 20+ Docker Compose configurations
-- **Documentation files**: Complete development and deployment documentation
-- **Toolchain**: 297-line Makefile standardized commands
-
-## 🔥 Core Functional Modules
-
-### Prediction System
-- **API routes**: `src/api/predictions/` (includes optimized version)
-- **Inference service**: `src/services/inference_service.py` - Real-time prediction inference
-- **Model loading**: Supports XGBoost and LSTM model hot-loading
-- **Prediction pipeline**: `src/ml/football_prediction_pipeline.py` - Complete ML workflow
-
-### Data Collection System
-
-#### FotMob Data Collection Architecture
-Project has completed standardized refactoring of FotMob data collection:
-- **Core class**: `FotmobBrowserScraper` - Uses Playwright for browser automation
-- **API interception**: Intercepts real FotMob API responses to get complete data
-- **Data export**: Automatic JSON format export to `data/fotmob/` directory
-- **Multiple modes**: Supports single day, batch, date range collection
-- **Async support**: Complete async resource management
-
-#### Data Collection Components
-- **External adapters**: `src/adapters/` (FotMob external data sources)
-- **Data collectors**: `src/collectors/` and `src/data/collectors/`
-- **Browser automation**: `src/data/collectors/fotmob_browser.py` - Playwright anti-crawler mechanism
-- **ETL pipeline**: `src/api/data_management.py` - Data management API
-- **CLI tools**: `scripts/run_fotmob_scraper.py` - Data collection scripts
-
-### Data Collection Workflow
-```bash
-# 1. Single day data collection
-python scripts/run_fotmob_scraper.py --date 2024-01-15
-
-# 2. Batch data collection
-python scripts/run_fotmob_scraper.py --start-date 2024-01-01 --end-date 2024-01-31
-
-# 3. View collected data
-ls -la data/fotmob/
-
-# 4. Analyze JSON structure
-python scripts/inspect_json_structure.py data/fotmob/match_*.json
-
-# 5. Integrate to database
-curl -X POST http://localhost:8000/api/v1/data/etl \
-  -H "Content-Type: application/json" \
-  -d '{"source": "fotmob", "action": "import"}'
-```
-
-### Performance Monitoring
-- **Middleware**: `src/performance/middleware.py` - Performance monitoring middleware
-- **Monitoring API**: `src/api/monitoring.py` - System monitoring endpoints
-- **Prometheus integration**: `/metrics` endpoint exports monitoring metrics
-- **Health checks**: `/health`, `/health/system`, `/health/database`
-
-### Caching Strategy
-- **Multi-level cache**: Memory + Redis distributed cache
-- **Cache invalidation**: Smart TTL and active invalidation
-- **Read-write separation**: Supports database read-write separation configuration
-
-### Real-time Communication
-- **WebSocket**: `/api/v1/realtime/ws` - Real-time data push
-- **Event system**: `src/events/` - Event-driven architecture
-- **CQRS pattern**: `src/cqrs/` - Command Query Responsibility Segregation
-
 ## 🚨 Troubleshooting Quick Reference
 
 | Issue Type | Solution |
 |-----------|----------|
 | **Test Failures** | `make test.fast` check core functionality, avoid ML model loading |
 | **CI Timeout** | Use `make test.unit.ci` instead of full test suite |
-| **Port Conflicts** | Check port availability (8000, 3000, 5432, 6379) |
-| **Database Issues** | Run `make db-migrate`, check PostgreSQL status |
-| **Redis Connection Issues** | `make redis-shell` test connection |
+| **Port Conflicts** | `lsof -i :8000` to check, then `kill -9 PID` or change ports |
+| **Database Issues** | `make db-migrate`, check PostgreSQL status with `make status` |
+| **Redis Connection Issues** | `make redis-shell` test connection, check if Redis is running |
 | **Insufficient Memory** | Use `make test.fast` to avoid ML-related tests |
-| **Type Errors** | Check imports, add missing type annotations |
+| **Type Errors** | Check imports, add missing type annotations, run `make type-check` |
 | **Dependency Issues** | Run `make clean-all && make dev` to rebuild from scratch |
-| **ML Model Loading Failed** | Check model file paths, view `mlruns/` and `models/trained/` directories |
-| **Celery Task Failures** | View logs `make logs`, check Redis connection |
-| **Coverage < 6.0%** | Run `make coverage` or `make ci` to see specific coverage gaps |
-| **Docker Build Failures** | Check `Dockerfile` and ensure all dependencies in requirements*.txt |
-| **Missing ci-verify.sh** | Use `make ci` for complete local verification instead |
+| **ML Model Loading Failed** | Check model file paths in `models/trained/`, verify MLflow registry |
+| **Celery Task Failures** | View logs `make logs`, check Redis connection, use Flower UI |
+| **Coverage < 6.0%** | Run `make coverage` to see specific coverage gaps |
+| **Docker Build Failures** | Check `Dockerfile`, verify all dependencies in requirements*.txt |
+| **FotMob 403 Errors** | Check `.env` for FOTMOB_CLIENT_VERSION and FOTMOB_KNOWN_SIGNATURE |
+| **Container Permission Issues** | Use `sudo chown -R $USER:$USER ./` for local file permissions |
 
-## 📚 Additional Documentation
+### 常见问题详细解决方案
 
-### Key Documentation Files
-- **[Repository Guidelines](AGENTS.md)** - Contributor structure, processes, and security guidelines
-- **[Test Improvement Guide](docs/TEST_IMPROVEMENT_GUIDE.md)** - Kanban, CI Hook, and weekly reporting mechanisms
-- **[Testing Guide](docs/TESTING_GUIDE.md)** - SWAT action results, complete testing methodology
-- **[Tools Documentation](TOOLS.md)** - Complete development toolchain usage guide
-- **[Test Run Guide](TEST_RUN_GUIDE.md)** - Proper test execution methods (IMPORTANT!)
+#### 🔥 FotMob API 认证失败 (403 Error)
+```bash
+# 1. 验证认证配置
+python scripts/manual_token_test.py
 
-### CI/CD and Quality Gates
-- **GitHub Actions**: `.github/workflows/` for automated testing and deployment
-- **Coverage Requirement**: Minimum 6.0% test coverage for CI to pass (config/quality_baseline.json)
-- **Quality Gates**: Ruff linting, Bandit security, MyPy type checking
-- **Container Health**: Database and Redis health checks in docker-compose
+# 2. 更新认证token
+python scripts/refresh_fotmob_tokens.py
 
-### Development Environment Files
-- **requirements.txt** - Core dependencies
-- **requirements-dev.txt** - Development dependencies
-- **requirements-ci.txt** - CI-specific dependencies
-- **requirements_updated.txt** - Updated dependencies (may be newer than main)
-- **pytest.ini** - Test configuration and markers (see coverage settings)
-- **Dockerfile** - Multi-stage container build
-- **docker-compose.yml** - Development environment setup (6 other variants available)
+# 3. 检查环境变量
+cat .env | grep FOTMOB
+```
+
+#### 🐳 Docker 端口冲突
+```bash
+# 查看端口占用
+lsof -i :8000  # Backend API
+lsof -i :3000  # Frontend
+lsof -i :5432  # PostgreSQL
+lsof -i :6379  # Redis
+
+# 强制结束占用进程
+kill -9 <PID>
+
+# 或者修改 docker-compose.yml 中的端口映射
+```
+
+#### 🧠 ML 模型加载问题
+```bash
+# 检查模型文件
+ls -la models/trained/
+
+# 检查 MLflow 实验记录
+mlflow experiments list
+
+# 重新训练模型
+python src/ml/enhanced_xgboost_trainer.py
+```
 
 ## 💡 Important Reminders
 
@@ -895,41 +833,35 @@ curl -X POST http://localhost:8000/api/v1/data/etl \
 7. **ML Model Management** - All ML-related code is in `src/ml/` directory, use MLflow for version control
 8. **Coverage Requirement** - Maintain minimum 6.0% test coverage for CI to pass (config/quality_baseline.json)
 9. **Security First** - Run `make security-check` before committing changes
-
-## 🎯 Developer Must-Know
-
-### Key Architectural Patterns
-- **Application Startup**: Uses lifecycle management (`lifespan` context manager in `src/main.py`)
-- **Smart Cold Start**: Automatically checks data status and triggers collection tasks
-- **Dependency Injection**: Uses FastAPI's dependency injection system
-- **Error Handling**: Unified exception handling and error response format
-- **Middleware Chain**: Performance monitoring, CORS, internationalization middleware
-
-### Data Collection Features
-- **Anti-Crawler**: Uses Playwright browser automation to bypass site restrictions
-- **Multiple Data Sources**: FotMob and other football data API integration
-- **Data Quality**: Automated data validation and quality checks
-- **Incremental Updates**: Smart judgment on whether data updates are needed
-- **ETL Pipeline**: Complete data processing in `src/api/data_management.py`
-
-### Performance Optimization
-- **Connection Pool**: Database connection pool and Redis connection pool
-- **Async Tasks**: Celery task queue for background job processing
-- **Caching Strategy**: Multi-level cache and smart invalidation mechanism
-- **Monitoring Integration**: Prometheus metrics real-time monitoring
-- **CQRS Optimization**: Separate read/write models for performance
-- **Command Bus**: Handles write operations with validation and events
-- **Query Bus**: Optimized read operations with caching strategies
-- **Service Factory**: `CQRSServiceFactory` creates domain services
-- **Middleware Pipeline**: Logging and validation middleware for all operations
-
-### Development Best Practices
-- **Progressive Improvement**: Prioritize CI green status over feature development
-- **Test-First**: Write tests before modifying high-risk code modules
-- **Mock External Dependencies**: All database, network, filesystem dependencies mocked in tests
-- **Type Safety**: Complete type annotations required for all new code
-- **Documentation**: Update relevant documentation when adding features
+10. **Celery Task Management** - Use Flower UI at http://localhost:5555 to monitor background tasks
+11. **FotMob Authentication** - Always verify x-mas and x-foo headers before data collection
 
 ---
 
-**💡 Remember**: This is an enterprise-grade project with AI-first maintenance. Prioritize architectural integrity, code quality, and comprehensive testing. All I/O operations must be async, maintain DDD layer separation, and follow established patterns. The project uses a complete toolchain (Makefile + 20+ Docker configs) to ensure standardized development workflows.
+## 🔑 Critical Development Rules
+
+### 1. FotMob Data Collection (Critical)
+- **🚫 NEVER use Playwright or browser automation** - HTTP requests only
+- **✅ Always use rate limiting** - `src/collectors/rate_limiter.py`
+- **🔐 Proper authentication required** - x-mas and x-foo headers mandatory
+- **🔄 Rotate User-Agents** - Mix mobile/desktop patterns
+
+### 2. Database Operations (Mandatory)
+- **📌 Always use `src/database/async_manager.py`** - "One Way to do it" principle
+- **🚫 NEVER use `src/database/connection.py`** - Deprecated interface
+- **⚡ All operations must be async** - Use `async/await` consistently
+- **🔒 Use proper session management** - Context managers or dependency injection
+
+### 3. Testing Protocol (Non-negotiable)
+- **🛡️ ALWAYS use Makefile commands** - Never pytest directly on files
+- **🎯 Mock all external dependencies** - Database, network, filesystem
+- **📊 Maintain 6.0%+ coverage** - CI will fail below this threshold
+- **⚡ Use mock ML mode in CI** - Set `FOOTBALL_PREDICTION_ML_MODE=mock`
+
+### 4. Architecture Integrity (Enterprise Standards)
+- **🏗️ Follow DDD patterns** - Domain layer purity essential
+- **📡 Implement CQRS separation** - Commands vs queries distinct
+- **🔄 Event-driven communication** - Use event system for loose coupling
+- **🎯 Type safety mandatory** - Complete type annotations required
+
+**💡 Remember**: This is an enterprise-grade project with AI-first maintenance. Violating these critical rules will break the system's architectural integrity and quality standards.
