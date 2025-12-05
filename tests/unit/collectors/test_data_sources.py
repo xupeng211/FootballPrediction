@@ -409,7 +409,7 @@ class TestEnhancedFootballDataOrgAdapter:
         with patch.object(
             enhanced_adapter, "get_matches", return_value=[]
         ) as mock_get_matches:
-            matches = await enhanced_adapter.get_matches_by_date(target_date)
+            await enhanced_adapter.get_matches_by_date(target_date)
 
             # 验证调用参数
             mock_get_matches.assert_called_once()
@@ -423,7 +423,7 @@ class TestEnhancedFootballDataOrgAdapter:
         with patch.object(
             enhanced_adapter, "get_matches", return_value=[]
         ) as mock_get_matches:
-            matches = await enhanced_adapter.get_upcoming_matches(days=7)
+            await enhanced_adapter.get_upcoming_matches(days=7)
 
             # 验证调用参数
             mock_get_matches.assert_called_once()
@@ -680,7 +680,7 @@ class TestDataSourcesSecurityEnhanced:
             # 模拟429响应
             mock_request.side_effect = Exception("API错误 429: Rate limit exceeded")
 
-            with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+            with patch("asyncio.sleep", new_callable=AsyncMock):
                 result = await enhanced_adapter.get_matches()
 
                 # 应该返回空列表
@@ -868,7 +868,7 @@ class TestDataSourcesSecurityEnhanced:
     async def test_massive_data_payload_dos_protection(self, football_adapter):
         """测试大数据负载DoS防护"""
         # 创建大量数据
-        large_matches = [
+        [
             {
                 "id": i,
                 "homeTeam": {"name": f"Team {i}"},

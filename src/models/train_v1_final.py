@@ -462,7 +462,7 @@ class V1FinalModelTrainer:
             # 获取预测概率
             X_test_scaled = self.scaler.transform(X_test)
             y_pred_proba = self.model.predict_proba(X_test_scaled)
-            y_pred = self.model.predict(X_test_scaled)
+            self.model.predict(X_test_scaled)
 
             # 假设的赔率（主胜/平局/客胜）
             odds = {
@@ -653,10 +653,10 @@ def main():
             return False
 
         # 5. 评估模型
-        evaluation_results = trainer.evaluate_model(X_test, y_test)
+        trainer.evaluate_model(X_test, y_test)
 
         # 6. ROI模拟
-        roi_results = trainer.simulate_betting_roi(X_test, y_test)
+        trainer.simulate_betting_roi(X_test, y_test)
 
         # 7. 保存模型
         save_path = trainer.save_model()

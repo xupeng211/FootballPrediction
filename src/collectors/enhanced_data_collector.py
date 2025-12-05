@@ -112,7 +112,7 @@ class EnhancedHTTPClient:
             domain = urlparse(url).netloc
 
         # 等待请求时机
-        wait_time = await wait_for_request_slot(domain)
+        await wait_for_request_slot(domain)
         start_time = time.time()
 
         try:

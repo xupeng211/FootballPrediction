@@ -249,7 +249,7 @@ async def main():
 
     # Step 1: 采集BIG_TEAMS
     logger.info("\n📋 Phase 1: 采集英超前20球队")
-    results1 = await backfill_all_teams_concurrent(BIG_TEAMS, max_concurrent=1)
+    await backfill_all_teams_concurrent(BIG_TEAMS, max_concurrent=1)
 
     # Step 2: 验证数据
     logger.info("\n📋 Phase 2: 验证数据")

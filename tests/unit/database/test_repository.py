@@ -294,8 +294,8 @@ class TestBaseRepository:
 
         # 模拟数据库执行
         with (
-            patch("sqlalchemy.select") as mock_select,
-            patch("sqlalchemy.update") as mock_update,
+            patch("sqlalchemy.select"),
+            patch("sqlalchemy.update"),
             patch.object(self.db_manager, "get_async_session") as mock_get_session,
         ):
             mock_session = MockAsyncSession()
@@ -526,7 +526,7 @@ class TestBaseRepository:
         """测试使用外部会话统计记录数量."""
         mock_session = MockAsyncSession()
 
-        with patch.object(self.db_manager, "get_async_session") as mock_get_session:
+        with patch.object(self.db_manager, "get_async_session"):
             # 因为传入了session，不应该调用get_async_session
             result = await self.repository.count(session=mock_session)
 

@@ -259,7 +259,7 @@ class PremierLeagueBackfill:
 
             logger.info(f"\n📈 进度: {i+1}/{len(season_order)} ({((i+1)/len(season_order))*100:.1f}%)")
 
-            success = await self.collect_season(season_name, season_config)
+            await self.collect_season(season_name, season_config)
 
             # 赛季间休息 - 避免被封
             if i < len(season_order) - 1:

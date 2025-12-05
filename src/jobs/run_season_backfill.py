@@ -385,7 +385,6 @@ class SeasonBackfillJob:
         """验证是否是有效的比赛数据"""
         # 检查是否包含基本的比赛字段
         required_fields = ["home", "away"]  # 至少要有主客队
-        optional_fields = ["id", "status", "score", "leagueId"]
 
         # 如果包含主客队信息，认为是有效比赛
         has_home_away = any(field in match for field in required_fields)

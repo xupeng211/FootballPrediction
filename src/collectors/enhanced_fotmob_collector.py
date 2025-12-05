@@ -184,7 +184,7 @@ class EnhancedFotMobCollector:
                                 matches.extend(league["matches"])
                     else:
                         logger.info(f"🔍 L1数据结构: {list(data.keys())}")
-                        for key, value in data.items():
+                        for _key, value in data.items():
                             if isinstance(value, list) and value and isinstance(value[0], dict):
                                 matches.extend(value)
                                 break

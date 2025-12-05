@@ -268,8 +268,8 @@ class HybridModelTrainer:
         )
 
         # 编码类别特征
-        leagues = df['league_name'].unique()
-        teams = pd.concat([df['home_team_name'], df['away_team_name']]).unique()
+        df['league_name'].unique()
+        pd.concat([df['home_team_name'], df['away_team_name']]).unique()
 
         # 创建标签编码器
         le_league = LabelEncoder()

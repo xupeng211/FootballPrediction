@@ -95,7 +95,7 @@ class FootballDataExtractor:
             lineups_features = []
             odds_features = []
 
-            for idx, row in self.data.iterrows():
+            for _idx, row in self.data.iterrows():
                 # 解析stats
                 stats_data = {}
                 if row['stats']:
@@ -287,11 +287,11 @@ class FootballDataExtractor:
 
             # 2. 提取原始数据
             logger.info("📊 步骤 1: 提取比赛数据...")
-            raw_data = self.extract_match_data()
+            self.extract_match_data()
 
             # 3. 解析JSON字段
             logger.info("🔧 步骤 2: 解析JSONB字段并拉平特征...")
-            enriched_data = self.parse_json_fields()
+            self.parse_json_fields()
 
             # 4. 创建目标变量
             logger.info("🎯 步骤 3: 创建目标变量...")

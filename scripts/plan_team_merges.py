@@ -114,7 +114,7 @@ class TeamMergePlanner:
 
             similar_teams = [team1]
 
-            for j, team2 in enumerate(self.teams[i + 1 :], i + 1):
+            for _j, team2 in enumerate(self.teams[i + 1 :], i + 1):
                 if team2["id"] in processed_ids:
                     continue
 

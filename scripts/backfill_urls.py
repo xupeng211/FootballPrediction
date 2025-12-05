@@ -331,7 +331,7 @@ class URLBackfiller:
                     db_matches = cur.fetchall()
 
                     # 智能匹配：检查队名相似度
-                    for db_match_id, db_home_team_id, db_away_team_id, db_home_name, db_away_name in db_matches:
+                    for db_match_id, _db_home_team_id, _db_away_team_id, db_home_name, db_away_name in db_matches:
                         # 标准化数据库中的队名
                         db_home_name_norm = self.normalize_team_name(db_home_name)
                         db_away_name_norm = self.normalize_team_name(db_away_name)

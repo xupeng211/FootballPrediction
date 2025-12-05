@@ -172,7 +172,7 @@ def find_match_data_recursive(obj, max_depth=3, current_depth=0):
                 return obj  # 找到了包含ML特征的比赛数据
 
         # 递归检查值
-        for key, value in obj.items():
+        for _key, value in obj.items():
             result = find_match_data_recursive(value, max_depth, current_depth + 1)
             if result:
                 return result

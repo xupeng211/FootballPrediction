@@ -145,7 +145,6 @@ class FeaturePipeline:
 
         for team_type in ["home", "away"]:
             team_id_col = f"{team_type}_team_id"
-            team_name_col = f"{team_type}_team_name"
             score_col = f"{team_type}_score"
             xg_col = f"{team_type}_xg"
 

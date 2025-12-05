@@ -206,7 +206,7 @@ class V1XGBoostTrainer:
         ).sort_values("importance", ascending=False)
 
         logger.info("📊 特征重要性排名:")
-        for idx, row in feature_importance_df.iterrows():
+        for _idx, row in feature_importance_df.iterrows():
             logger.info(f"   {row['feature']:25} {row['importance']:.4f}")
 
         # 可视化特征重要性
@@ -342,7 +342,7 @@ class V1XGBoostTrainer:
         accuracy, cm, y_pred_proba = self.evaluate_model()
 
         # 6. 分析特征重要性
-        feature_importance = self.analyze_feature_importance()
+        self.analyze_feature_importance()
 
         # 7. 模拟下注
         roi, hit_rate = self.simulate_betting(y_pred_proba)

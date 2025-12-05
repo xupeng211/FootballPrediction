@@ -190,7 +190,7 @@ class RealFBrefCollector:
     async def collect_season(self, season_name: str, season_config: dict) -> bool:
         """采集单个赛季"""
         url = season_config['url']
-        season_id = season_config['season_id']
+        season_config['season_id']
 
         logger.info(f"🏆 开始采集 {season_name} 赛季")
         logger.info(f"🔗 URL: {url}")

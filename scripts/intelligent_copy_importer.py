@@ -50,23 +50,9 @@ class IntelligentCopyImporter:
 
     def build_copy_sql(self, structure: dict, filename: str) -> str:
         """根据CSV结构构建COPY SQL"""
-        headers = structure["headers"]
+        structure["headers"]
 
         # 基础列（所有文件都有的列）
-        base_columns = [
-            "wk",
-            "Day",
-            "Date",
-            "Time",
-            "Home",
-            "Score",
-            "Away",
-            "Attendance",
-            "Venue",
-            "Referee",
-            "Match Report",
-            "Notes",
-        ]
 
         # 根据结构调整列映射
         if structure["has_xg"]:

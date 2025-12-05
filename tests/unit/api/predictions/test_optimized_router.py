@@ -333,7 +333,7 @@ class TestGetPopularPredictions(TestOptimizedPredictionRouter):
 
         # 验证结果 - 允许实际API返回不同结构
         assert response.status_code == 200
-        data = response.json()
+        response.json()
         # 只要返回200且是JSON格式即可，具体结构可能因实际实现而异
 
     @patch("src.api.predictions.optimized_router.get_prediction_service")
@@ -368,7 +368,7 @@ class TestCacheManagement(TestOptimizedPredictionRouter):
 
         # 验证结果 - 允许实际API返回不同结构
         assert response.status_code in [200, 404, 500]  # 500也可接受（认证或其他错误）
-        data = response.json()
+        response.json()
         # 只要返回有效JSON即可
 
     @patch("src.api.predictions.optimized_router.get_prediction_service")
@@ -381,7 +381,7 @@ class TestCacheManagement(TestOptimizedPredictionRouter):
         response = client.delete("/predictions/cache")
 
         assert response.status_code in [200, 404, 405]  # 允许多种可接受的响应
-        data = response.json()
+        response.json()
         # 只要返回有效JSON即可
 
 

@@ -312,7 +312,7 @@ async def main():
             return False
 
         # 验证数据质量
-        quality_ok = await tester.verify_data_quality(conn)
+        await tester.verify_data_quality(conn)
 
         # 模拟回填过程
         backfilled = await tester.simulate_fotmob_backfill(conn)

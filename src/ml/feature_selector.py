@@ -171,7 +171,7 @@ class FeatureSelector:
                 target_correlations[col] = abs(corr)
 
         # 对每个高相关性对，移除与目标变量相关性较低的特征
-        for feat1, feat2, corr_value in high_corr_pairs:
+        for feat1, feat2, _corr_value in high_corr_pairs:
             if y is not None and feat1 in target_correlations and feat2 in target_correlations:
                 if target_correlations[feat1] >= target_correlations[feat2]:
                     features_to_remove.add(feat2)

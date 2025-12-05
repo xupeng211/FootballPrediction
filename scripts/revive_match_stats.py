@@ -260,7 +260,7 @@ class MatchStatsReviver:
         # 2. 逐条复活记录
         total_records = len(dead_records)
         for i, (record_id, raw_file_path) in enumerate(dead_records, 1):
-            success = await self.revive_single_record(record_id, raw_file_path)
+            await self.revive_single_record(record_id, raw_file_path)
 
             # 每处理100条记录输出进度
             if i % 100 == 0:
@@ -317,7 +317,7 @@ async def main():
 修复方法: 从原始FBref数据重新提取stats字段
 预期结果: 将空数据复活为包含xG和控球率的完整数据
 
-开始时间: {0}
+开始时间: {}
 =====================================
 """.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 

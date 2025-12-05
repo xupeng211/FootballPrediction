@@ -88,7 +88,7 @@ class TestDateUtils:
     @pytest.mark.skip(reason="CI Flaky: Type/Environment mismatch")
     def test_format_datetime_value_error(self):
         """测试格式化时的ValueError."""
-        dt = datetime(2024, 1, 15, 14, 30, 45)
+        datetime(2024, 1, 15, 14, 30, 45)
         # 模拟一个无效的日期对象，让其strftime方法抛出异常
         with patch("src.utils.date_utils.datetime") as mock_dt:
             mock_dt.strftime.side_effect = ValueError("Invalid format")

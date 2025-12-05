@@ -213,7 +213,7 @@ asyncio.run(run_schedule())
             )
 
             if not data.empty:
-                cleaned = self.collector._clean_schedule_data(data)
+                self.collector._clean_schedule_data(data)
                 completed = self.collector._filter_completed_matches(cleaned_data)
 
                 logger.info(f"✅ 测试成功: {len(completed)} 场已完成比赛")

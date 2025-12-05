@@ -105,12 +105,21 @@ def authenticate_user(email: str, password: str):
     """模拟用户认证函数."""
     user = MOCK_USERS.get(email)
     if user and user["email"] == email:
-        # 对于测试环境，我们简化密码验证
-        # admin@example.com 的密码是 "wrongpassword" 应该失败
-        # admin@example.com 的正确密码是 "admin123"
-        if email == "admin@example.com" and password == "admin123":
+        # 对于测试环境，使用环境变量或更安全的验证方式
+        import os
+        from hashlib import sha256
+
+        # 使用环境变量存储测试密码哈希，避免硬编码
+        admin_password_hash = os.getenv("ADMIN_PASSWORD_HASH", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")  # 默认为空字符串哈希
+        test_password_hash = os.getenv("TEST_PASSWORD_HASH", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")   # 默认为空字符串哈希
+
+        def verify_password(input_password: str, stored_hash: str) -> bool:
+            """安全密码验证函数"""
+            return sha256(input_password.encode()).hexdigest() == stored_hash
+
+        if email == "admin@example.com" and verify_password(password, admin_password_hash):
             return user
-        elif email == "test@example.com" and password == "TestPassword123!":
+        elif email == "test@example.com" and verify_password(password, test_password_hash):
             return user
         # 如果密码不匹配，返回None
     return None

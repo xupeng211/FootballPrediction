@@ -85,7 +85,7 @@ class FotMobRealDataAnalyzer:
                 if len(unique_values) <= 20:
                     structure["categorical_fields"][field_name] = {
                         "unique_values": len(unique_values),
-                        "values": sorted(list(unique_values))[:10]  # 只显示前10个值
+                        "values": sorted(unique_values)[:10]  # 只显示前10个值
                     }
 
             # 检查数据完整性

@@ -57,7 +57,7 @@ def search_for_shopping_list_items(data, path=""):
 
             # 检查是否匹配我们的目标
             key_lower = key.lower()
-            value_str = str(value).lower()
+            str(value).lower()
 
             # Shotmap相关
             if any(term in key_lower for term in ['shotmap', 'shot', 'xg', 'expectedgoals']):

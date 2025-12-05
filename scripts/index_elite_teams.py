@@ -102,7 +102,6 @@ class EliteTeamsIndexer:
         logger.info(f"\n🔍 从 {league_name} 提取球队信息...")
 
         teams = []
-        team_links = []  # 存储球队链接URL
 
         try:
             # 查找包含球队名称和链接的列
@@ -117,7 +116,7 @@ class EliteTeamsIndexer:
             if len(df) > 0:
                 # 查找第一列中的链接
                 first_col = df.iloc[:, 0]  # 第一列
-                for idx, value in enumerate(first_col):
+                for _idx, value in enumerate(first_col):
                     if pd.notna(value) and isinstance(value, str):
                         # 检查是否包含链接格式
                         if '/en/squads/' in str(value):

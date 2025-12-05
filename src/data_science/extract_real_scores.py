@@ -73,7 +73,7 @@ def extract_real_scores():
 
                     # 方法3：查找events中的最终比分
                     if not real_score and 'events' in stats_data:
-                        events = stats_data['events']
+                        stats_data['events']
                         # 这里可以查找比赛结束事件中的比分信息
 
                     # 方法4：查找match相关字段

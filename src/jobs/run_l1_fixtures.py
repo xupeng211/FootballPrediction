@@ -158,7 +158,7 @@ class FotMobL1FixturesJob:
                         RETURNING id
                     """)
 
-                    result = await session.execute(insert_query, {
+                    await session.execute(insert_query, {
                         "home_team_id": match["home_team_id"],
                         "away_team_id": match["away_team_id"],
                         "home_score": match["home_score"],

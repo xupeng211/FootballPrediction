@@ -163,7 +163,7 @@ class ProxyPool:
             ) as session:
                 async with session.get(test_url, proxy=proxy.url) as response:
                     if response.status == 200:
-                        data = await response.json()
+                        await response.json()
                         response_time = time.time() - start_time
 
                         # 更新统计信息

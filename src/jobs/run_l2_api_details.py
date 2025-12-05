@@ -279,7 +279,7 @@ async def run_l2_incremental_backfill(
         回填结果统计信息
     """
     log = get_run_logger()
-    start_time = datetime.now()
+    datetime.now()
 
     log.info("🔄 开始L2增量回填流程")
     log.info(f"📋 参数: days_back={days_back}, batch_size={batch_size}")

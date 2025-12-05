@@ -78,7 +78,7 @@ def analyze_fotmob_structure():
             '比赛环境': ['weather', 'venue', 'attendance', 'referee', 'stadium']
         }
 
-        for i, (fotmob_id, stats, lineups, match_metadata) in enumerate(matches, 1):
+        for i, (fotmob_id, stats, lineups, _match_metadata) in enumerate(matches, 1):
             print(f"\n⚽ 比赛 {i}: ID {fotmob_id}")
             print("-" * 40)
 

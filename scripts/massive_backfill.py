@@ -270,7 +270,7 @@ async def main():
     try:
         async with MassiveFotMobBackfill(seasons, max_concurrent) as backfill:
             logger.info("🔄 开始大规模回填...")
-            success = await backfill.run_backfill()
+            await backfill.run_backfill()
 
             # 获取进度报告
             report = backfill.get_progress_report()

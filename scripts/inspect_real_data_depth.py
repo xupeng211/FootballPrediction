@@ -147,7 +147,6 @@ class DataForensicsExpert:
                 logger.info("🌐 启动浏览器，拦截API调用...")
 
                 # 导航到比赛详情页
-                detail_url = f"https://www.fotmob.com/match/{match_id}"
                 detailed_data = await scraper.scrape_match_details(match_id)
 
                 if detailed_data:

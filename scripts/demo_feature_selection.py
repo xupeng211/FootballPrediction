@@ -307,7 +307,7 @@ def demo_feature_importance_analysis():
     )
 
     # 执行特征选择
-    selected_features = selector.select_features(X, y, top_k=10)
+    selector.select_features(X, y, top_k=10)
 
     # 分析特征重要性
     if selector.feature_importance_df is not None:
@@ -318,20 +318,20 @@ def demo_feature_importance_analysis():
         # 按不同重要性指标排序
         print("\n1️⃣ 按平均重要性排序:")
         avg_top = importance_df.nlargest(5, 'importance_avg')
-        for i, row in avg_top.iterrows():
+        for _i, row in avg_top.iterrows():
             print(f"   {row['feature']:<20} (平均: {row['importance_avg']:.4f}, "
                   f"最大: {row['importance_max']:.4f})")
 
         print("\n2️⃣ 按随机森林重要性排序:")
         if 'rf_importance' in importance_df.columns:
             rf_top = importance_df.nlargest(5, 'rf_importance')
-            for i, row in rf_top.iterrows():
+            for _i, row in rf_top.iterrows():
                 print(f"   {row['feature']:<20} (RF重要性: {row['rf_importance']:.4f})")
 
         print("\n3️⃣ 按互信息排序:")
         if 'mi_importance' in importance_df.columns:
             mi_top = importance_df.nlargest(5, 'mi_importance')
-            for i, row in mi_top.iterrows():
+            for _i, row in mi_top.iterrows():
                 print(f"   {row['feature']:<20} (互信息: {row['mi_importance']:.4f})")
 
     # 尝试生成特征重要性图

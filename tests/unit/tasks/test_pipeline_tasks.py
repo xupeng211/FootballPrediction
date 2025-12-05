@@ -295,7 +295,7 @@ class TestDatabaseInitialization:
     @patch("src.database.connection.DatabaseManager")
     def test_ensure_database_initialized_with_env_url(self, mock_db_manager):
         """测试使用环境变量数据库URL初始化."""
-        mock_instance = MagicMock()
+        MagicMock()
         mock_manager = MagicMock()
         mock_db_manager.return_value = mock_manager
         mock_manager.initialize.return_value = None
@@ -574,7 +574,7 @@ class TestPerformanceAndOptimization:
 
             with patch("asyncio.run") as mock_asyncio:
                 # 模拟高性能批处理
-                mock_asyncio.return_value = (100, [i for i in range(1, 101)])
+                mock_asyncio.return_value = (100, list(range(1, 101)))
 
                 collection_result = {"status": "success", "records_collected": 100}
                 result = pipeline_module.data_cleaning_task.__wrapped__(

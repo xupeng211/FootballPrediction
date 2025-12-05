@@ -73,7 +73,7 @@ class JSONPathAnalyzer:
 
         # 显示当前路径
         indent = "  " * depth
-        obj_type = type(obj).__name__
+        type(obj).__name__
 
         if isinstance(obj, dict):
             print(f"{indent}📁 {path} [dict, {len(obj)} 键]")

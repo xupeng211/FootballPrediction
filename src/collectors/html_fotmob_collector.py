@@ -117,12 +117,16 @@ class HTMLFotMobCollector:
             # 发起请求
             headers = self._get_current_headers()
 
+            # 安全的SSL验证配置
+            import os
+            ssl_verify = os.getenv("SSL_VERIFY", "true").lower() == "true"
+
             response = requests.get(
                 url,
                 headers=headers,
                 timeout=self.timeout,
                 allow_redirects=True,
-                verify=False  # 禁用SSL验证，避免Docker环境证书问题
+                verify=ssl_verify  # 可通过环境变量控制，默认启用SSL验证
             )
 
             self.stats["requests_made"] += 1

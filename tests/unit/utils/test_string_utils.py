@@ -945,7 +945,7 @@ class TestErrorHandling:
             object(),
             type("CustomClass", (), {}),
             lambda x: x,
-            set([1, 2, 3]),
+            {1, 2, 3},
             b"bytes",
             bytearray(b"bytes"),
         ]

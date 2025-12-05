@@ -345,7 +345,7 @@ if __name__ == "__main__":
   - /tmp/watchdog_alerts.log (告警日志)
   - /tmp/watchdog_status.log (状态日志)
 
-启动时间: {0}
+启动时间: {}
 =====================================
 """.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 

@@ -22,7 +22,7 @@ def get_real_matches_from_fbref():
     print("📡 正在从FBref采集真实数据...")
 
     # 使用现有的采集器
-    collector = StealthFBrefCollector()
+    StealthFBrefCollector()
 
     # 由于容器环境限制，我们先创建一个示例数据集
     # 基于我们之前看到的数据结构
