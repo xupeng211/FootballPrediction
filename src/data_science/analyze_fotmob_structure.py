@@ -12,7 +12,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-DATABASE_URL = "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
+DATABASE_URL = (
+    "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
+)
+
 
 def deep_search_json(obj, path="", target_keys=None, results=None):
     """深度搜索JSON中的目标键"""
@@ -20,8 +23,19 @@ def deep_search_json(obj, path="", target_keys=None, results=None):
         results = []
 
     if target_keys is None:
-        target_keys = ['score', 'homeScore', 'awayScore', 'rating', 'yellowCard', 'redCard',
-                      'big chances', 'weather', 'venue', 'attendance', 'referee']
+        target_keys = [
+            "score",
+            "homeScore",
+            "awayScore",
+            "rating",
+            "yellowCard",
+            "redCard",
+            "big chances",
+            "weather",
+            "venue",
+            "attendance",
+            "referee",
+        ]
 
     if isinstance(obj, dict):
         for key, value in obj.items():
@@ -31,12 +45,14 @@ def deep_search_json(obj, path="", target_keys=None, results=None):
             key_lower = key.lower()
             for target in target_keys:
                 if target.lower() in key_lower:
-                    results.append({
-                        'path': current_path,
-                        'key': key,
-                        'value': value,
-                        'type': type(value).__name__
-                    })
+                    results.append(
+                        {
+                            "path": current_path,
+                            "key": key,
+                            "value": value,
+                            "type": type(value).__name__,
+                        }
+                    )
 
             # 递归搜索
             if isinstance(value, (dict, list)):
@@ -48,6 +64,7 @@ def deep_search_json(obj, path="", target_keys=None, results=None):
                 deep_search_json(item, f"{path}[{i}]", target_keys, results)
 
     return results
+
 
 def analyze_fotmob_structure():
     """分析FotMob数据结构"""
@@ -71,11 +88,11 @@ def analyze_fotmob_structure():
         print("=" * 80)
 
         target_categories = {
-            '比分数据': ['score', 'homeScore', 'awayScore', 'result', 'finalScore'],
-            '红黄牌': ['yellowCard', 'redCard', 'card', 'booking'],
-            '球员评分': ['rating', 'average', 'score', 'performance'],
-            '绝佳机会': ['big chances', 'big chances created', 'clear-cut chances'],
-            '比赛环境': ['weather', 'venue', 'attendance', 'referee', 'stadium']
+            "比分数据": ["score", "homeScore", "awayScore", "result", "finalScore"],
+            "红黄牌": ["yellowCard", "redCard", "card", "booking"],
+            "球员评分": ["rating", "average", "score", "performance"],
+            "绝佳机会": ["big chances", "big chances created", "clear-cut chances"],
+            "比赛环境": ["weather", "venue", "attendance", "referee", "stadium"],
         }
 
         for i, (fotmob_id, stats, lineups, _match_metadata) in enumerate(matches, 1):
@@ -97,7 +114,9 @@ def analyze_fotmob_structure():
                         if results:
                             print(f"\n🎯 {category}:")
                             for result in results[:5]:  # 只显示前5个结果
-                                print(f"   {result['path']}: {result['value']} ({result['type']})")
+                                print(
+                                    f"   {result['path']}: {result['value']} ({result['type']})"
+                                )
 
                 except Exception as e:
                     print(f"❌ Stats解析失败: {e}")
@@ -113,24 +132,28 @@ def analyze_fotmob_structure():
                     print("\n👥 Lineups结构分析:")
 
                     # 寻找球员评分
-                    rating_results = deep_search_json(lineups_data, "lineups", ['rating'])
+                    rating_results = deep_search_json(
+                        lineups_data, "lineups", ["rating"]
+                    )
                     if rating_results:
                         print(f"   发现评分数据: {len(rating_results)} 个")
                         for result in rating_results[:3]:
                             print(f"   {result['path']}: {result['value']}")
 
                     # 分析主客队结构
-                    home_team = lineups_data.get('homeTeam', {})
-                    away_team = lineups_data.get('awayTeam', {})
+                    home_team = lineups_data.get("homeTeam", {})
+                    away_team = lineups_data.get("awayTeam", {})
 
                     if home_team:
                         print(f"   主队阵容结构: {list(home_team.keys())}")
-                        lineup = home_team.get('lineUp', [])
+                        lineup = home_team.get("lineUp", [])
                         if isinstance(lineup, list) and len(lineup) > 0:
                             print(f"   主队首发球员数: {len(lineup)}")
                             if len(lineup) > 0:
                                 first_player = lineup[0]
-                                print(f"   球员数据结构: {list(first_player.keys()) if isinstance(first_player, dict) else type(first_player).__name__}")
+                                print(
+                                    f"   球员数据结构: {list(first_player.keys()) if isinstance(first_player, dict) else type(first_player).__name__}"
+                                )
 
                     if away_team:
                         print(f"   客队阵容结构: {list(away_team.keys())}")
@@ -145,7 +168,9 @@ def analyze_fotmob_structure():
     except Exception as e:
         print(f"❌ 分析失败: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     analyze_fotmob_structure()

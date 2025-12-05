@@ -920,9 +920,7 @@ def complete_data_pipeline(self) -> dict[str, Any]:
 
 
 @shared_task(bind=True, name="trigger_feature_calculation_for_new_matches")
-def trigger_feature_calculation_for_new_matches(
-    self, match_ids: list
-) -> dict:
+def trigger_feature_calculation_for_new_matches(self, match_ids: list) -> dict:
     """为新采集的比赛触发特征计算.
 
     Args:

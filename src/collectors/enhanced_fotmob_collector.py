@@ -92,7 +92,9 @@ class EnhancedFotMobCollector:
                         return None
                 else:
                     response_text = await response.text()
-                    logger.error(f"❌ L2请求失败，状态码: {response.status}, URL: {full_url}")
+                    logger.error(
+                        f"❌ L2请求失败，状态码: {response.status}, URL: {full_url}"
+                    )
                     logger.error(f"🔍 响应内容: {response_text[:200]}...")
                     self.stats["failed_requests"] += 1
                     return None
@@ -100,6 +102,7 @@ class EnhancedFotMobCollector:
         except Exception as e:
             logger.error(f"❌ L2采集异常 {match_id}: {e}")
             import traceback
+
             logger.error(f"🔍 详细错误: {traceback.format_exc()}")
             self.stats["failed_requests"] += 1
             return None
@@ -139,7 +142,9 @@ class EnhancedFotMobCollector:
             # 至少需要一个关键特征
             quality_score = sum([has_xg, has_lineups, has_odds])
 
-            logger.info(f"📊 数据质量评估 {match_id}: xG={has_xg}, lineups={has_lineups}, odds={has_odds}, score={quality_score}/3")
+            logger.info(
+                f"📊 数据质量评估 {match_id}: xG={has_xg}, lineups={has_lineups}, odds={has_odds}, score={quality_score}/3"
+            )
 
             return quality_score >= 1  # 至少有一个特征
 
@@ -159,7 +164,7 @@ class EnhancedFotMobCollector:
             params = {
                 "date": formatted_date,
                 "timezone": "Asia/Shanghai",
-                "ccode3": "CHN"
+                "ccode3": "CHN",
             }
 
             full_url = f"{url}?date={formatted_date}&timezone=Asia/Shanghai&ccode3=CHN"
@@ -185,7 +190,11 @@ class EnhancedFotMobCollector:
                     else:
                         logger.info(f"🔍 L1数据结构: {list(data.keys())}")
                         for _key, value in data.items():
-                            if isinstance(value, list) and value and isinstance(value[0], dict):
+                            if (
+                                isinstance(value, list)
+                                and value
+                                and isinstance(value[0], dict)
+                            ):
                                 matches.extend(value)
                                 break
 
@@ -193,17 +202,22 @@ class EnhancedFotMobCollector:
                     return matches
                 else:
                     response_text = await response.text()
-                    logger.error(f"❌ L1请求失败，状态码: {response.status}, URL: {full_url}")
+                    logger.error(
+                        f"❌ L1请求失败，状态码: {response.status}, URL: {full_url}"
+                    )
                     logger.error(f"🔍 响应内容: {response_text[:200]}...")
                     return []
 
         except Exception as e:
             logger.error(f"❌ L1采集异常 {date_str}: {e}")
             import traceback
+
             logger.error(f"🔍 详细错误: {traceback.format_exc()}")
             return []
 
-    async def batch_collect_matches(self, match_ids: list[str], delay_between_requests: float = 2.0) -> list[dict[str, Any]]:
+    async def batch_collect_matches(
+        self, match_ids: list[str], delay_between_requests: float = 2.0
+    ) -> list[dict[str, Any]]:
         """批量采集比赛数据."""
         results = []
         total_matches = len(match_ids)
@@ -239,7 +253,9 @@ class EnhancedFotMobCollector:
 
         # 添加成功率
         if stats["requests_made"] > 0:
-            stats["success_rate"] = stats["successful_requests"] / stats["requests_made"]
+            stats["success_rate"] = (
+                stats["successful_requests"] / stats["requests_made"]
+            )
         else:
             stats["success_rate"] = 0.0
 

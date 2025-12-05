@@ -22,11 +22,11 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('logs/l2_qa_test.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler("logs/l2_qa_test.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 
 from src.collectors.html_fotmob_collector import HTMLFotMobCollector
@@ -56,38 +56,48 @@ class FotMobL2DetailsJob:
             if not isinstance(api_stats, dict):
                 return
 
-            periods = api_stats.get('Periods') or {}
-            all_period = periods.get('All') or {}
-            stats_list = all_period.get('stats', [])
+            periods = api_stats.get("Periods") or {}
+            all_period = periods.get("All") or {}
+            stats_list = all_period.get("stats", [])
 
             xg_data = None
             for stat_group in stats_list:
-                if isinstance(stat_group, dict) and 'stats' in stat_group:
-                    for stat in stat_group.get('stats', []):
+                if isinstance(stat_group, dict) and "stats" in stat_group:
+                    for stat in stat_group.get("stats", []):
                         if isinstance(stat, dict):
-                            title = stat.get('title', '').lower()
-                            if 'expected goals' in title or 'xg' in title:
-                                xg_values = stat.get('stats', [])
+                            title = stat.get("title", "").lower()
+                            if "expected goals" in title or "xg" in title:
+                                xg_values = stat.get("stats", [])
                                 if xg_values and len(xg_values) >= 2:
                                     # 🎯 关键：提取和验证xG数值
                                     home_xg = 0.0
                                     away_xg = 0.0
 
                                     try:
-                                        home_xg = float(str(xg_values[0])) if xg_values[0] else 0.0
-                                        away_xg = float(str(xg_values[1])) if xg_values[1] else 0.0
+                                        home_xg = (
+                                            float(str(xg_values[0]))
+                                            if xg_values[0]
+                                            else 0.0
+                                        )
+                                        away_xg = (
+                                            float(str(xg_values[1]))
+                                            if xg_values[1]
+                                            else 0.0
+                                        )
                                     except (ValueError, TypeError):
                                         # 转换失败，使用默认值
                                         pass
 
                                     xg_data = {
-                                        'home_xg': home_xg,
-                                        'away_xg': away_xg,
-                                        'xg_source': 'fotmob_stats_verified',
-                                        'xg_extraction_timestamp': datetime.now().isoformat()
+                                        "home_xg": home_xg,
+                                        "away_xg": away_xg,
+                                        "xg_source": "fotmob_stats_verified",
+                                        "xg_extraction_timestamp": datetime.now().isoformat(),
                                     }
 
-                                    self.logger.info(f"🎯 提取xG数据: 主队={home_xg}, 客队={away_xg}")
+                                    self.logger.info(
+                                        f"🎯 提取xG数据: 主队={home_xg}, 客队={away_xg}"
+                                    )
                                     break
                     if xg_data:
                         break
@@ -114,7 +124,7 @@ class FotMobL2DetailsJob:
         # 初始化HTML采集器
         self.collector = HTMLFotMobCollector(
             enable_stealth=False,  # 禁用隐身模式避免反爬
-            enable_proxy=False     # 暂不使用代理
+            enable_proxy=False,  # 暂不使用代理
         )
         await self.collector.initialize()
         self.logger.info("✅ L2采集器初始化完成")
@@ -122,7 +132,8 @@ class FotMobL2DetailsJob:
     async def get_pending_matches(self, limit: int = 1000) -> list[str]:
         """获取待处理的比赛ID列表"""
         async with get_db_session() as session:
-            query = text("""
+            query = text(
+                """
                 SELECT fotmob_id
                 FROM matches
                 WHERE data_completeness = 'partial'
@@ -130,7 +141,8 @@ class FotMobL2DetailsJob:
                 AND fotmob_id IS NOT NULL
                 ORDER BY match_date DESC
                 LIMIT :limit
-            """)
+            """
+            )
 
             result = await session.execute(query, {"limit": limit})
             matches = [row[0] for row in result.fetchall()]
@@ -179,116 +191,124 @@ class FotMobL2DetailsJob:
         提取S-Tier特征：比分、红黄牌、评分、绝佳机会、环境数据
         """
         features = {
-            'home_score': 0,
-            'away_score': 0,
-            'home_yellow_cards': 0,
-            'away_yellow_cards': 0,
-            'home_red_cards': 0,
-            'away_red_cards': 0,
-            'home_team_rating': 0.0,
-            'away_team_rating': 0.0,
-            'home_avg_player_rating': 0.0,
-            'away_avg_player_rating': 0.0,
-            'home_big_chances': 0,
-            'away_big_chances': 0,
-            'stadium_name': '',
-            'attendance': 0,
-            'referee_name': '',
-            'weather': ''
+            "home_score": 0,
+            "away_score": 0,
+            "home_yellow_cards": 0,
+            "away_yellow_cards": 0,
+            "home_red_cards": 0,
+            "away_red_cards": 0,
+            "home_team_rating": 0.0,
+            "away_team_rating": 0.0,
+            "home_avg_player_rating": 0.0,
+            "away_avg_player_rating": 0.0,
+            "home_big_chances": 0,
+            "away_big_chances": 0,
+            "stadium_name": "",
+            "attendance": 0,
+            "referee_name": "",
+            "weather": "",
         }
 
         try:
             # 1. 提取最终比分 (从events.newScore)
-            if 'events' in api_stats and 'events' in api_stats['events']:
-                events = api_stats['events']['events']
+            if "events" in api_stats and "events" in api_stats["events"]:
+                events = api_stats["events"]["events"]
                 final_scores = []
 
                 for event in events:
-                    if 'newScore' in event:
-                        score_list = event['newScore']
+                    if "newScore" in event:
+                        score_list = event["newScore"]
                         if isinstance(score_list, list) and len(score_list) == 2:
                             final_scores.append(score_list)
 
                 if final_scores:
-                    features['home_score'], features['away_score'] = final_scores[-1]
+                    features["home_score"], features["away_score"] = final_scores[-1]
 
             # 2. 提取红黄牌数据 (简化版本，需要完善teamId映射)
-            if 'events' in api_stats and 'events' in api_stats['events']:
-                events = api_stats['events']['events']
-                home_team_id = api_lineups.get('homeTeam', {}).get('id') if api_lineups else None
-                away_team_id = api_lineups.get('awayTeam', {}).get('id') if api_lineups else None
+            if "events" in api_stats and "events" in api_stats["events"]:
+                events = api_stats["events"]["events"]
+                home_team_id = (
+                    api_lineups.get("homeTeam", {}).get("id") if api_lineups else None
+                )
+                away_team_id = (
+                    api_lineups.get("awayTeam", {}).get("id") if api_lineups else None
+                )
 
                 for event in events:
-                    card_type = event.get('card')
-                    team_id = event.get('teamId')
+                    card_type = event.get("card")
+                    team_id = event.get("teamId")
 
-                    if card_type == 'Yellow' and team_id:
+                    if card_type == "Yellow" and team_id:
                         if team_id == home_team_id:
-                            features['home_yellow_cards'] += 1
+                            features["home_yellow_cards"] += 1
                         elif team_id == away_team_id:
-                            features['away_yellow_cards'] += 1
-                    elif card_type == 'Red' and team_id:
+                            features["away_yellow_cards"] += 1
+                    elif card_type == "Red" and team_id:
                         if team_id == home_team_id:
-                            features['home_red_cards'] += 1
+                            features["home_red_cards"] += 1
                         elif team_id == away_team_id:
-                            features['away_red_cards'] += 1
+                            features["away_red_cards"] += 1
 
             # 3. 提取球队评分和球员平均评分
             if api_lineups:
-                home_team = api_lineups.get('homeTeam', {})
-                away_team = api_lineups.get('awayTeam', {})
+                home_team = api_lineups.get("homeTeam", {})
+                away_team = api_lineups.get("awayTeam", {})
 
                 # 球队评分
-                features['home_team_rating'] = float(home_team.get('rating', 0.0))
-                features['away_team_rating'] = float(away_team.get('rating', 0.0))
+                features["home_team_rating"] = float(home_team.get("rating", 0.0))
+                features["away_team_rating"] = float(away_team.get("rating", 0.0))
 
                 # 球员平均评分
-                home_starters = home_team.get('starters', [])
-                away_starters = away_team.get('starters', [])
+                home_starters = home_team.get("starters", [])
+                away_starters = away_team.get("starters", [])
 
                 home_player_ratings = []
                 away_player_ratings = []
 
                 for player in home_starters:
-                    if isinstance(player, dict) and 'performance' in player:
-                        rating = player['performance'].get('rating', 0)
+                    if isinstance(player, dict) and "performance" in player:
+                        rating = player["performance"].get("rating", 0)
                         if rating:
                             home_player_ratings.append(float(rating))
 
                 for player in away_starters:
-                    if isinstance(player, dict) and 'performance' in player:
-                        rating = player['performance'].get('rating', 0)
+                    if isinstance(player, dict) and "performance" in player:
+                        rating = player["performance"].get("rating", 0)
                         if rating:
                             away_player_ratings.append(float(rating))
 
                 if home_player_ratings:
-                    features['home_avg_player_rating'] = sum(home_player_ratings) / len(home_player_ratings)
+                    features["home_avg_player_rating"] = sum(home_player_ratings) / len(
+                        home_player_ratings
+                    )
 
                 if away_player_ratings:
-                    features['away_avg_player_rating'] = sum(away_player_ratings) / len(away_player_ratings)
+                    features["away_avg_player_rating"] = sum(away_player_ratings) / len(
+                        away_player_ratings
+                    )
 
             # 4. 提取绝佳机会数据 (从stats中的统计指标)
             # 这里需要根据实际数据结构提取Big Chances
             # 暂时设为0，后续完善
 
             # 5. 提取环境数据
-            if 'infoBox' in api_stats:
-                info_box = api_stats['infoBox']
+            if "infoBox" in api_stats:
+                info_box = api_stats["infoBox"]
                 if isinstance(info_box, dict):
                     # 体育场信息
-                    stadium = info_box.get('Stadium', {})
+                    stadium = info_box.get("Stadium", {})
                     if stadium:
-                        features['stadium_name'] = stadium.get('name', '')
+                        features["stadium_name"] = stadium.get("name", "")
 
                     # 上座率
-                    attendance = info_box.get('Attendance', 0)
+                    attendance = info_box.get("Attendance", 0)
                     if attendance:
-                        features['attendance'] = int(attendance)
+                        features["attendance"] = int(attendance)
 
                     # 裁判信息
-                    referee = info_box.get('Referee', {})
+                    referee = info_box.get("Referee", {})
                     if referee:
-                        features['referee_name'] = referee.get('text', '')
+                        features["referee_name"] = referee.get("text", "")
 
         except Exception as e:
             self.logger.warning(f"⚠️ S-Tier特征提取异常: {e}")
@@ -340,11 +360,12 @@ class FotMobL2DetailsJob:
                     "job_version": "s_tier_v1",
                     "xg_extraction_method": "enhanced_stats_parsing",
                     "s_tier_features_extracted": True,
-                    "feature_extraction_timestamp": datetime.now().isoformat()
+                    "feature_extraction_timestamp": datetime.now().isoformat(),
                 }
 
                 # === 6. 更新数据库 (包含S-Tier特征) ===
-                update_query = text("""
+                update_query = text(
+                    """
                     UPDATE matches
                     SET stats = :stats,
                         lineups = :lineups,
@@ -366,39 +387,49 @@ class FotMobL2DetailsJob:
                         data_completeness = 'complete',
                         updated_at = :updated_at
                     WHERE fotmob_id = :fotmob_id
-                """)
+                """
+                )
 
-                await session.execute(update_query, {
-                    "stats": json.dumps(api_stats) if api_stats else None,
-                    "lineups": json.dumps(api_lineups) if api_lineups else None,
-                    "odds": json.dumps(api_odds) if api_odds else None,
-                    "match_metadata": json.dumps(match_metadata) if match_metadata else None,
-                    "home_score": s_tier_features['home_score'],
-                    "away_score": s_tier_features['away_score'],
-                    "home_yellow_cards": s_tier_features['home_yellow_cards'],
-                    "away_yellow_cards": s_tier_features['away_yellow_cards'],
-                    "home_red_cards": s_tier_features['home_red_cards'],
-                    "away_red_cards": s_tier_features['away_red_cards'],
-                    "home_team_rating": s_tier_features['home_team_rating'],
-                    "away_team_rating": s_tier_features['away_team_rating'],
-                    "home_avg_player_rating": s_tier_features['home_avg_player_rating'],
-                    "away_avg_player_rating": s_tier_features['away_avg_player_rating'],
-                    "stadium_name": s_tier_features['stadium_name'],
-                    "attendance": s_tier_features['attendance'],
-                    "referee_name": s_tier_features['referee_name'],
-                    "updated_at": datetime.now(),
-                    "fotmob_id": fotmob_id
-                })
+                await session.execute(
+                    update_query,
+                    {
+                        "stats": json.dumps(api_stats) if api_stats else None,
+                        "lineups": json.dumps(api_lineups) if api_lineups else None,
+                        "odds": json.dumps(api_odds) if api_odds else None,
+                        "match_metadata": (
+                            json.dumps(match_metadata) if match_metadata else None
+                        ),
+                        "home_score": s_tier_features["home_score"],
+                        "away_score": s_tier_features["away_score"],
+                        "home_yellow_cards": s_tier_features["home_yellow_cards"],
+                        "away_yellow_cards": s_tier_features["away_yellow_cards"],
+                        "home_red_cards": s_tier_features["home_red_cards"],
+                        "away_red_cards": s_tier_features["away_red_cards"],
+                        "home_team_rating": s_tier_features["home_team_rating"],
+                        "away_team_rating": s_tier_features["away_team_rating"],
+                        "home_avg_player_rating": s_tier_features[
+                            "home_avg_player_rating"
+                        ],
+                        "away_avg_player_rating": s_tier_features[
+                            "away_avg_player_rating"
+                        ],
+                        "stadium_name": s_tier_features["stadium_name"],
+                        "attendance": s_tier_features["attendance"],
+                        "referee_name": s_tier_features["referee_name"],
+                        "updated_at": datetime.now(),
+                        "fotmob_id": fotmob_id,
+                    },
+                )
 
                 # 🎯 关键：显式提交事务
                 await session.commit()
 
                 # 🎯 关键验证：检查xG数据提取结果
                 has_xg = (
-                    "home_xg" in api_stats and
-                    "away_xg" in api_stats and
-                    api_stats["home_xg"] > 0 and
-                    api_stats["away_xg"] > 0
+                    "home_xg" in api_stats
+                    and "away_xg" in api_stats
+                    and api_stats["home_xg"] > 0
+                    and api_stats["away_xg"] > 0
                 )
 
                 has_lineups = bool(api_lineups)
@@ -406,33 +437,55 @@ class FotMobL2DetailsJob:
 
                 # 🚨 关键指标输出 - S-Tier特征提取确认
                 self.logger.info(f"✅ S-Tier数据保存成功: {fotmob_id}")
-                self.logger.info(f"   🎯 最终比分: 主队{s_tier_features['home_score']} - 客队{s_tier_features['away_score']}")
-                self.logger.info(f"   🟨 红黄牌: 主队Y{s_tier_features['home_yellow_cards']}/R{s_tier_features['home_red_cards']} - 客队Y{s_tier_features['away_yellow_cards']}/R{s_tier_features['away_red_cards']}")
-                self.logger.info(f"   ⭐ 球队评分: 主队{s_tier_features['home_team_rating']} - 客队{s_tier_features['away_team_rating']}")
-                self.logger.info(f"   👥 球员平均评分: 主队{s_tier_features['home_avg_player_rating']:.2f} - 客队{s_tier_features['away_avg_player_rating']:.2f}")
-                self.logger.info(f"   📊 xG数据: {'✅提取成功' if has_xg else '❌未提取'}")
-                self.logger.info(f"   📊 阵容数据: {'✅完整' if has_lineups else '❌缺失'}")
-                self.logger.info(f"   📊 赔率数据: {'✅完整' if has_odds else '❌缺失'}")
+                self.logger.info(
+                    f"   🎯 最终比分: 主队{s_tier_features['home_score']} - 客队{s_tier_features['away_score']}"
+                )
+                self.logger.info(
+                    f"   🟨 红黄牌: 主队Y{s_tier_features['home_yellow_cards']}/R{s_tier_features['home_red_cards']} - 客队Y{s_tier_features['away_yellow_cards']}/R{s_tier_features['away_red_cards']}"
+                )
+                self.logger.info(
+                    f"   ⭐ 球队评分: 主队{s_tier_features['home_team_rating']} - 客队{s_tier_features['away_team_rating']}"
+                )
+                self.logger.info(
+                    f"   👥 球员平均评分: 主队{s_tier_features['home_avg_player_rating']:.2f} - 客队{s_tier_features['away_avg_player_rating']:.2f}"
+                )
+                self.logger.info(
+                    f"   📊 xG数据: {'✅提取成功' if has_xg else '❌未提取'}"
+                )
+                self.logger.info(
+                    f"   📊 阵容数据: {'✅完整' if has_lineups else '❌缺失'}"
+                )
+                self.logger.info(
+                    f"   📊 赔率数据: {'✅完整' if has_odds else '❌缺失'}"
+                )
                 self.logger.info(f"   🏟️ 体育场: {s_tier_features['stadium_name']}")
                 self.logger.info(f"   👥 上座率: {s_tier_features['attendance']:,}")
                 self.logger.info(f"   👨‍⚖️ 裁判: {s_tier_features['referee_name']}")
 
                 # 如果有xG数据，显示具体值
                 if has_xg:
-                    self.logger.info(f"   🎯 xG数值: 主队={api_stats.get('home_xg', 0)}, 客队={api_stats.get('away_xg', 0)}")
+                    self.logger.info(
+                        f"   🎯 xG数值: 主队={api_stats.get('home_xg', 0)}, 客队={api_stats.get('away_xg', 0)}"
+                    )
 
                 # 成功标准：有真实比分或至少一个其他特征
-                has_real_score = s_tier_features['home_score'] > 0 or s_tier_features['away_score'] > 0
+                has_real_score = (
+                    s_tier_features["home_score"] > 0
+                    or s_tier_features["away_score"] > 0
+                )
                 success = any([has_real_score, has_xg, has_lineups, has_odds])
 
                 if has_real_score:
-                    self.logger.info(f"   🏆 成功修复比分数据: {s_tier_features['home_score']}:{s_tier_features['away_score']}")
+                    self.logger.info(
+                        f"   🏆 成功修复比分数据: {s_tier_features['home_score']}:{s_tier_features['away_score']}"
+                    )
 
                 return success
 
         except Exception as e:
             self.logger.error(f"❌ 保存比赛详情失败 {fotmob_id}: {e}")
             import traceback
+
             self.logger.error(f"🔍 详细错误: {traceback.format_exc()}")
             return False
 
@@ -440,17 +493,18 @@ class FotMobL2DetailsJob:
         """标记比赛数据完整"""
         try:
             async with get_db_session() as session:
-                update_query = text("""
+                update_query = text(
+                    """
                     UPDATE matches
                     SET data_completeness = 'complete',
                         updated_at = :updated_at
                     WHERE fotmob_id = :fotmob_id
-                """)
+                """
+                )
 
-                await session.execute(update_query, {
-                    "updated_at": datetime.now(),
-                    "fotmob_id": fotmob_id
-                })
+                await session.execute(
+                    update_query, {"updated_at": datetime.now(), "fotmob_id": fotmob_id}
+                )
 
                 # 🎯 关键：显式提交事务
                 await session.commit()
@@ -496,7 +550,11 @@ class FotMobL2DetailsJob:
                     continue
 
             # 最终统计
-            completion_rate = (self.success_count / self.processed_count) * 100 if self.processed_count > 0 else 0
+            completion_rate = (
+                (self.success_count / self.processed_count) * 100
+                if self.processed_count > 0
+                else 0
+            )
 
             self.logger.info("🎉 L2详情采集完成:")
             self.logger.info(f"   总处理: {self.processed_count} 场")

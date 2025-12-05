@@ -4,7 +4,6 @@ FotMob 比赛匹配器
 使用模糊匹配算法处理队名差异
 """
 import logging
-from typing import Dict, List, Optional, Any, Tuple
 from difflib import SequenceMatcher
 import httpx
 from datetime import datetime

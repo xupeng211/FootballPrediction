@@ -22,11 +22,11 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 # 配置日志 - 标准化路径
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('logs/l2_details_fixed.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler("logs/l2_details_fixed.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 
 # 使用修复版采集器
@@ -46,7 +46,8 @@ class FotMobL2DetailsFixedJob:
     async def get_pending_matches(self, limit: int = 50) -> list[str]:
         """获取待处理的比赛ID列表"""
         async with get_db_session() as session:
-            query = text("""
+            query = text(
+                """
                 SELECT fotmob_id
                 FROM matches
                 WHERE data_completeness = 'partial'
@@ -54,7 +55,8 @@ class FotMobL2DetailsFixedJob:
                 AND fotmob_id IS NOT NULL
                 ORDER BY match_date DESC
                 LIMIT :limit
-            """)
+            """
+            )
 
             result = await session.execute(query, {"limit": limit})
             return [row[0] for row in result.fetchall()]
@@ -103,17 +105,25 @@ class FotMobL2DetailsFixedJob:
         lineups = match_data.lineups or {}
 
         print(f"\n🎯 比赛 {fotmob_id} 数据摘要:")
-        print(f"   比赛: {match_data.home_team} {match_data.home_score}-{match_data.away_score} {match_data.away_team}")
+        print(
+            f"   比赛: {match_data.home_team} {match_data.home_score}-{match_data.away_score} {match_data.away_team}"
+        )
         print(f"   🎯 射门数据: {len(shots)} 次")
-        print(f"   📈 xG数据: 主队 {stats.get('home_xg', 0):.2f}, 客队 {stats.get('away_xg', 0):.2f}")
-        print(f"   👥 阵容数据: 主队 {len(lineups.get('home', {}).get('players', []))} 人, 客队 {len(lineups.get('away', {}).get('players', []))} 人")
+        print(
+            f"   📈 xG数据: 主队 {stats.get('home_xg', 0):.2f}, 客队 {stats.get('away_xg', 0):.2f}"
+        )
+        print(
+            f"   👥 阵容数据: 主队 {len(lineups.get('home', {}).get('players', []))} 人, 客队 {len(lineups.get('away', {}).get('players', []))} 人"
+        )
         print(f"   💰 赔率数据: {len(odds.get('providers', []))} 个提供商")
 
         # 显示前3个射门样本
         if shots:
             print("   🔍 射门样本 (前3次):")
             for i, shot in enumerate(shots[:3], 1):
-                print(f"      {i}. 第{shot.get('minute', 0)}分钟 - {shot.get('player', 'Unknown')} ({shot.get('team', 'unknown')}) - xG: {shot.get('xg', 0):.3f}")
+                print(
+                    f"      {i}. 第{shot.get('minute', 0)}分钟 - {shot.get('player', 'Unknown')} ({shot.get('team', 'unknown')}) - xG: {shot.get('xg', 0):.3f}"
+                )
 
     async def save_match_details_to_db(self, fotmob_id: str, match_data) -> bool:
         """保存比赛详情到数据库 - 修复版"""
@@ -133,13 +143,13 @@ class FotMobL2DetailsFixedJob:
                     "corners": stats_data.get("corners", {}),
                     "home_xg": stats_data.get("home_xg", 0.0),
                     "away_xg": stats_data.get("away_xg", 0.0),
-                    "total_xg": stats_data.get("total_xg", 0.0)
+                    "total_xg": stats_data.get("total_xg", 0.0),
                 }
 
                 # 构建阵容JSON
                 lineup_json = {
                     "home": lineup_data.get("home", {}),
-                    "away": lineup_data.get("away", {})
+                    "away": lineup_data.get("away", {}),
                 }
 
                 # 构建赔率JSON
@@ -147,7 +157,7 @@ class FotMobL2DetailsFixedJob:
                     "providers": odds_data.get("providers", []),
                     "bet365": odds_data.get("bet365", {}),
                     "williamHill": odds_data.get("williamHill", {}),
-                    "raw_data": odds_data.get("raw_data", {})
+                    "raw_data": odds_data.get("raw_data", {}),
                 }
 
                 # 构建比赛元数据JSON
@@ -159,11 +169,15 @@ class FotMobL2DetailsFixedJob:
                     "venue": "Unknown",  # 可以从match_data中提取
                     "weather": {},  # 可以从match_data中提取
                     "shot_count": len(shots_data),
-                    "lineup_players": len(lineup_json.get("home", {}).get("players", [])) + len(lineup_json.get("away", {}).get("players", []))
+                    "lineup_players": len(
+                        lineup_json.get("home", {}).get("players", [])
+                    )
+                    + len(lineup_json.get("away", {}).get("players", [])),
                 }
 
                 # 更新数据库记录
-                update_query = text("""
+                update_query = text(
+                    """
                     UPDATE matches
                     SET
                         stats = :stats,
@@ -172,16 +186,20 @@ class FotMobL2DetailsFixedJob:
                         match_metadata = :metadata,
                         updated_at = :updated_at
                     WHERE fotmob_id = :fotmob_id
-                """)
+                """
+                )
 
-                await session.execute(update_query, {
-                    "fotmob_id": fotmob_id,
-                    "stats": json.dumps(stats_json),
-                    "lineups": json.dumps(lineup_json),
-                    "odds": json.dumps(odds_json),
-                    "metadata": json.dumps(metadata_json),
-                    "updated_at": datetime.now()
-                })
+                await session.execute(
+                    update_query,
+                    {
+                        "fotmob_id": fotmob_id,
+                        "stats": json.dumps(stats_json),
+                        "lineups": json.dumps(lineup_json),
+                        "odds": json.dumps(odds_json),
+                        "metadata": json.dumps(metadata_json),
+                        "updated_at": datetime.now(),
+                    },
+                )
 
                 self.logger.info(f"✅ 保存比赛详情成功: {fotmob_id}")
                 self.logger.info(f"   📊 统计数据: {len(json.dumps(stats_json))} 字符")
@@ -199,17 +217,18 @@ class FotMobL2DetailsFixedJob:
         """标记比赛数据完整"""
         try:
             async with get_db_session() as session:
-                update_query = text("""
+                update_query = text(
+                    """
                     UPDATE matches
                     SET data_completeness = 'complete',
                         updated_at = :updated_at
                     WHERE fotmob_id = :fotmob_id
-                """)
+                """
+                )
 
-                await session.execute(update_query, {
-                    "updated_at": datetime.now(),
-                    "fotmob_id": fotmob_id
-                })
+                await session.execute(
+                    update_query, {"updated_at": datetime.now(), "fotmob_id": fotmob_id}
+                )
 
         except Exception as e:
             self.logger.error(f"❌ 标记比赛完整失败 {fotmob_id}: {e}")
@@ -247,8 +266,12 @@ class FotMobL2DetailsFixedJob:
                     self.logger.error(f"❌ 处理比赛 {fotmob_id} 时发生异常: {e}")
                     continue
 
-            completion_rate = (success_count / total_count) * 100 if total_count > 0 else 0
-            self.logger.info(f"🎉 修复版L2详情采集完成: {success_count}/{total_count} ({completion_rate:.1f}%)")
+            completion_rate = (
+                (success_count / total_count) * 100 if total_count > 0 else 0
+            )
+            self.logger.info(
+                f"🎉 修复版L2详情采集完成: {success_count}/{total_count} ({completion_rate:.1f}%)"
+            )
 
         except Exception as e:
             self.logger.error(f"❌ L2详情采集失败: {e}")

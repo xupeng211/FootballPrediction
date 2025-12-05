@@ -13,7 +13,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-DATABASE_URL = "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
+DATABASE_URL = (
+    "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
+)
+
 
 def extract_real_scores():
     """从stats字段中提取真实比分"""
@@ -36,55 +39,63 @@ def extract_real_scores():
         print("=" * 80)
 
         for idx, row in df.iterrows():
-            print(f"\n⚽ 比赛 {idx+1}: {row['home_team_name']} vs {row['away_team_name']}")
+            print(
+                f"\n⚽ 比赛 {idx+1}: {row['home_team_name']} vs {row['away_team_name']}"
+            )
             print(f"   数据库比分: {row['home_score']}:{row['away_score']}")
 
             # 解析stats数据
-            if row['stats']:
+            if row["stats"]:
                 try:
-                    if isinstance(row['stats'], str):
-                        stats_data = json.loads(row['stats'])
+                    if isinstance(row["stats"], str):
+                        stats_data = json.loads(row["stats"])
                     else:
-                        stats_data = row['stats']
+                        stats_data = row["stats"]
 
                     # 寻找比分信息
                     real_score = None
 
                     # 方法1：查找general字段中的比分
-                    if 'general' in stats_data:
-                        general = stats_data['general']
-                        if 'homeTeam' in general and 'awayTeam' in general:
-                            home_score = general['homeTeam'].get('score')
-                            away_score = general['awayTeam'].get('score')
+                    if "general" in stats_data:
+                        general = stats_data["general"]
+                        if "homeTeam" in general and "awayTeam" in general:
+                            home_score = general["homeTeam"].get("score")
+                            away_score = general["awayTeam"].get("score")
                             if home_score is not None and away_score is not None:
                                 real_score = f"{home_score}:{away_score}"
 
                     # 方法2：查找infoBox中的比分
-                    if not real_score and 'infoBox' in stats_data:
-                        info_box = stats_data['infoBox']
+                    if not real_score and "infoBox" in stats_data:
+                        info_box = stats_data["infoBox"]
                         if isinstance(info_box, list):
                             for item in info_box:
-                                if 'title' in item and 'FT' in str(item['title']):
+                                if "title" in item and "FT" in str(item["title"]):
                                     # 寻找比分格式
-                                    if 'value' in item:
-                                        score_str = str(item['value'])
-                                        if ':' in score_str or '-' in score_str:
+                                    if "value" in item:
+                                        score_str = str(item["value"])
+                                        if ":" in score_str or "-" in score_str:
                                             real_score = score_str
 
                     # 方法3：查找events中的最终比分
-                    if not real_score and 'events' in stats_data:
-                        stats_data['events']
+                    if not real_score and "events" in stats_data:
+                        stats_data["events"]
                         # 这里可以查找比赛结束事件中的比分信息
 
                     # 方法4：查找match相关字段
-                    score_fields = ['homeScore', 'awayScore', 'score', 'result', 'finalScore']
+                    score_fields = [
+                        "homeScore",
+                        "awayScore",
+                        "score",
+                        "result",
+                        "finalScore",
+                    ]
                     for field in score_fields:
                         if field in stats_data:
                             print(f"   发现比分字段: {field} = {stats_data[field]}")
 
                     # 检查teamForm或其他字段
-                    if 'teamForm' in stats_data:
-                        team_form = stats_data['teamForm']
+                    if "teamForm" in stats_data:
+                        team_form = stats_data["teamForm"]
                         print(f"   TeamForm数据类型: {type(team_form)}")
 
                     if real_score:
@@ -107,6 +118,7 @@ def extract_real_scores():
 
     except Exception as e:
         print(f"❌ 检查失败: {e}")
+
 
 if __name__ == "__main__":
     extract_real_scores()

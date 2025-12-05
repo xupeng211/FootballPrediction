@@ -19,7 +19,6 @@ __all__ = [
     "CollectorError",
     "FootballDataCollector",
     "MatchCollector",
-
     # 简化版采集器
     "EnhancedFotMobCollector",
     "create_fotmob_collector",

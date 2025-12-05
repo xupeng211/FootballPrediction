@@ -10,7 +10,6 @@ Purpose: 构建基线XGBoost模型的训练特征
 import logging
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine, text
 import json
@@ -51,14 +50,14 @@ class FeaturePipeline:
         query = text(
             """
             SELECT
-                m.id,
-                m.match_date,
-                m.home_team_id,
-                m.away_team_id,
-                m.home_score,
-                m.away_score,
-                m.stats,
-                ht.name as home_team_name,
+                m.id
+                m.match_date
+                m.home_team_id
+                m.away_team_id
+                m.home_score
+                m.away_score
+                m.stats
+                ht.name as home_team_name
                 at.name as away_team_name
             FROM matches m
             LEFT JOIN teams ht ON m.home_team_id = ht.id
@@ -184,8 +183,8 @@ class FeaturePipeline:
 
         # 合并时序特征
         df_with_features = df.merge(
-            features[0].merge(features[1], on="id", suffixes=("_home", "_away")),
-            on="id",
+            features[0].merge(features[1], on="id", suffixes=("_home", "_away"))
+            on="id"
         )
 
         logger.info(
@@ -195,12 +194,12 @@ class FeaturePipeline:
         return df_with_features
 
     def _calculate_team_rolling_stats(
-        self,
-        group: pd.DataFrame,
-        score_col: str,
-        xg_col: str,
-        result_col: str,
-        window: int,
+        self
+        group: pd.DataFrame
+        score_col: str
+        xg_col: str
+        result_col: str
+        window: int
     ) -> pd.DataFrame:
         """
         计算单个球队的滚动统计
@@ -228,22 +227,22 @@ class FeaturePipeline:
         # 计算滚动统计
         rolling_stats = pd.DataFrame(
             {
-                "id": group["id"],
+                "id": group["id"]
                 f"rolling_avg_goals_scored_{window}": goals_scored.rolling(
                     window, min_periods=1
-                ).mean(),
+                ).mean()
                 f"rolling_avg_goals_conceded_{window}": goals_conceded.rolling(
                     window, min_periods=1
-                ).mean(),
+                ).mean()
                 f"rolling_avg_xg_{window}": xg_values.rolling(
                     window, min_periods=1
-                ).mean(),
+                ).mean()
                 f"rolling_win_rate_{window}": (results == 1)
                 .rolling(window, min_periods=1)
-                .mean(),
+                .mean()
                 f"rolling_goal_diff_{window}": (goals_scored - goals_conceded)
                 .rolling(window, min_periods=1)
-                .mean(),
+                .mean()
             }
         )
 
@@ -317,18 +316,18 @@ class FeaturePipeline:
     def _is_feature_column(self, col_name: str) -> bool:
         """判断是否为特征列"""
         exclude_cols = {
-            "id",
-            "match_date",
-            "home_team_id",
-            "away_team_id",
-            "home_team_name",
-            "away_team_name",
-            "home_score",
-            "away_score",
-            "stats",
-            "result",
-            "home_result",
-            "away_result",
+            "id"
+            "match_date"
+            "home_team_id"
+            "away_team_id"
+            "home_team_name"
+            "away_team_name"
+            "home_score"
+            "away_score"
+            "stats"
+            "result"
+            "home_result"
+            "away_result"
         }
         return col_name not in exclude_cols
 
@@ -362,9 +361,9 @@ class FeaturePipeline:
 def main():
     """测试特征流水线"""
     logging.basicConfig(
-        level=logging.INFO,
-        format="🧠 %(asctime)s [%(levelname)8s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.INFO
+        format="🧠 %(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     pipeline = FeaturePipeline()

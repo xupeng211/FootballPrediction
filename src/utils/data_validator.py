@@ -26,7 +26,7 @@ class DataValidator:
 
     @staticmethod
     def validate_number(
-        value: Union[int, float], min_value: float = None, max_value: float = None
+        value: [int, float], min_value: float = None, max_value: float = None
     ) -> bool:
         """验证数字."""
         try:

@@ -9,7 +9,7 @@ import random
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Set
 from urllib.parse import urlparse
 
 import aiohttp
@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 
 class ProxyStatus(Enum):
     """代理状态枚举."""
+
     ACTIVE = "active"
     FAILED = "failed"
     TESTING = "testing"
@@ -30,6 +31,7 @@ class ProxyStatus(Enum):
 @dataclass
 class ProxyConfig:
     """代理配置."""
+
     host: str
     port: int
     username: Optional[str] = None
@@ -50,6 +52,7 @@ class ProxyConfig:
 @dataclass
 class ProxyStats:
     """代理统计信息."""
+
     success_count: int = 0
     failure_count: int = 0
     total_response_time: float = 0.0
@@ -73,15 +76,17 @@ class ProxyPool:
     """智能代理池管理器."""
 
     def __init__(
-        self,
-        proxy_list: list[ProxyConfig],
-        max_retries: int = 3,
-        test_timeout: int = 10,
+        self
+        proxy_list: list[ProxyConfig]
+        max_retries: int = 3
+        test_timeout: int = 10
         health_check_interval: int = 300,  # 5分钟
         ban_threshold: int = 5,  # 连续失败5次视为被封
         cooldown_time: int = 3600,  # 冷却时间1小时
     ):
-        self.proxies: dict[ProxyConfig, ProxyStats] = {proxy: ProxyStats() for proxy in proxy_list}
+        self.proxies: dict[ProxyConfig, ProxyStats] = {
+            proxy: ProxyStats() for proxy in proxy_list
+        }
         self.active_proxies: set[ProxyConfig] = set(proxy_list)
         self.failed_proxies: set[ProxyConfig] = set()
         self.banned_proxies: set[ProxyConfig] = set()
@@ -142,10 +147,10 @@ class ProxyPool:
         )
 
     @backoff.on_exception(
-        backoff.expo,
-        (aiohttp.ClientError, asyncio.TimeoutError),
-        max_tries=2,
-        base=1,
+        backoff.expo
+        (aiohttp.ClientError, asyncio.TimeoutError)
+        max_tries=2
+        base=1
         max_value=10
     )
     async def _test_proxy(self, proxy: ProxyConfig) -> bool:
@@ -182,7 +187,9 @@ class ProxyPool:
                                 self.active_proxies.add(proxy)
                                 logger.info(f"代理 {proxy} 已恢复")
 
-                        logger.debug(f"代理 {proxy} 测试成功，响应时间: {response_time:.2f}s")
+                        logger.debug(
+                            f"代理 {proxy} 测试成功，响应时间: {response_time:.2f}s"
+                        )
                         return True
                     else:
                         raise aiohttp.ClientError(f"HTTP {response.status}")
@@ -200,13 +207,17 @@ class ProxyPool:
                         self.active_proxies.remove(proxy)
                     if proxy in self.failed_proxies:
                         self.failed_proxies.remove(proxy)
-                    logger.warning(f"代理 {proxy} 连续失败{stats.failure_count}次，标记为封禁")
+                    logger.warning(
+                        f"代理 {proxy} 连续失败{stats.failure_count}次，标记为封禁"
+                    )
                 else:
                     if proxy not in self.failed_proxies:
                         self.failed_proxies.add(proxy)
                         if proxy in self.active_proxies:
                             self.active_proxies.remove(proxy)
-                    logger.warning(f"代理 {proxy} 测试失败 ({stats.failure_count}/{self.ban_threshold}): {e}")
+                    logger.warning(
+                        f"代理 {proxy} 测试失败 ({stats.failure_count}/{self.ban_threshold}): {e}"
+                    )
 
             return False
 
@@ -226,8 +237,7 @@ class ProxyPool:
 
             # 选择响应时间最短的活跃代理
             best_proxy = min(
-                self.active_proxies,
-                key=lambda p: self.proxies[p].avg_response_time
+                self.active_proxies, key=lambda p: self.proxies[p].avg_response_time
             )
 
             # 更新使用时间
@@ -276,7 +286,10 @@ class ProxyPool:
                 self.failed_proxies.remove(proxy)
             if proxy in self.banned_proxies:
                 # 检查是否可以解封（冷却时间）
-                if stats.last_success and (time.time() - stats.last_success) > self.cooldown_time:
+                if (
+                    stats.last_success
+                    and (time.time() - stats.last_success) > self.cooldown_time
+                ):
                     self.banned_proxies.remove(proxy)
                     logger.info(f"代理 {proxy} 冷却时间已过，解封")
 
@@ -302,14 +315,16 @@ class ProxyPool:
         avg_response_time = total_response_time / max(proxy_count, 1)
 
         return {
-            "total_proxies": total_proxies,
-            "active_proxies": active_count,
-            "failed_proxies": failed_count,
-            "banned_proxies": banned_count,
-            "availability_rate": active_count / total_proxies if total_proxies > 0 else 0,
-            "avg_success_rate": avg_success_rate,
-            "avg_response_time": avg_response_time,
-            "health_check_interval": self.health_check_interval,
+            "total_proxies": total_proxies
+            "active_proxies": active_count
+            "failed_proxies": failed_count
+            "banned_proxies": banned_count
+            "availability_rate": (
+                active_count / total_proxies if total_proxies > 0 else 0
+            )
+            "avg_success_rate": avg_success_rate
+            "avg_response_time": avg_response_time
+            "health_check_interval": self.health_check_interval
         }
 
     @classmethod
@@ -340,12 +355,14 @@ class ProxyPool:
                         host, port_str = addr_part.split(":", 1)
                         port = int(port_str)
 
-                        proxy_configs.append(ProxyConfig(
-                            host=host.strip(),
-                            port=port,
-                            username=username,
-                            password=password
-                        ))
+                        proxy_configs.append(
+                            ProxyConfig(
+                                host=host.strip()
+                                port=port
+                                username=username
+                                password=password
+                            )
+                        )
 
         # 如果没有配置代理，返回空代理池
         if not proxy_configs:

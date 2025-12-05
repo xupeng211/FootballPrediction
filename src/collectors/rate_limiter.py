@@ -9,8 +9,6 @@ import random
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
-
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -18,20 +16,22 @@ logger = get_logger(__name__)
 
 class RateLimitStrategy(Enum):
     """频率限制策略."""
+
     CONSERVATIVE = "conservative"  # 保守策略：较长延迟
-    NORMAL = "normal"             # 正常策略：标准延迟
-    AGGRESSIVE = "aggressive"     # 激进策略：较短延迟
-    ADAPTIVE = "adaptive"         # 自适应策略：根据响应调整
+    NORMAL = "normal"  # 正常策略：标准延迟
+    AGGRESSIVE = "aggressive"  # 激进策略：较短延迟
+    ADAPTIVE = "adaptive"  # 自适应策略：根据响应调整
 
 
 @dataclass
 class RequestConfig:
     """请求配置."""
-    min_delay: float = 1.0        # 最小延迟（秒）
-    max_delay: float = 10.0       # 最大延迟（秒）
-    base_delay: float = 2.0       # 基础延迟（秒）
-    burst_limit: int = 5          # 突发请求限制
-    recovery_time: float = 30.0   # 恢复时间（秒）
+
+    min_delay: float = 1.0  # 最小延迟（秒）
+    max_delay: float = 10.0  # 最大延迟（秒）
+    base_delay: float = 2.0  # 基础延迟（秒）
+    burst_limit: int = 5  # 突发请求限制
+    recovery_time: float = 30.0  # 恢复时间（秒）
 
     # 延迟增加因子
     error_delay_multiplier: float = 2.0  # 错误时延迟倍数
@@ -41,6 +41,7 @@ class RequestConfig:
 @dataclass
 class DomainStats:
     """域名统计信息."""
+
     domain: str
     request_count: int = 0
     success_count: int = 0
@@ -73,9 +74,9 @@ class RateLimiter:
     """智能请求频率控制器."""
 
     def __init__(
-        self,
-        strategy: RateLimitStrategy = RateLimitStrategy.ADAPTIVE,
-        config: RequestConfig = None,
+        self
+        strategy: RateLimitStrategy = RateLimitStrategy.ADAPTIVE
+        config: RequestConfig = None
         max_domains: int = 100
     ):
         self.strategy = strategy
@@ -134,7 +135,7 @@ class RateLimiter:
 
         # 考虑连续错误
         if stats.consecutive_errors > 0:
-            base_delay *= (1 + stats.consecutive_errors * 0.5)
+            base_delay *= 1 + stats.consecutive_errors * 0.5
 
         # 确保最小延迟
         return max(base_delay, self.config.min_delay * 2.0)
@@ -146,7 +147,7 @@ class RateLimiter:
 
         # 错误惩罚
         if stats.consecutive_errors > 0:
-            delay *= (1 + stats.consecutive_errors * 0.3)
+            delay *= 1 + stats.consecutive_errors * 0.3
 
         return max(delay, self.config.min_delay)
 
@@ -160,7 +161,7 @@ class RateLimiter:
 
         # 错误惩罚较轻
         if stats.consecutive_errors > 0:
-            delay *= (1 + stats.consecutive_errors * 0.2)
+            delay *= 1 + stats.consecutive_errors * 0.2
 
         return max(delay, self.config.min_delay * 0.5)
 
@@ -180,7 +181,7 @@ class RateLimiter:
 
         # 根据连续错误调整
         if stats.consecutive_errors > 0:
-            delay *= (1 + stats.consecutive_errors * 0.4)
+            delay *= 1 + stats.consecutive_errors * 0.4
 
         # 根据响应时间调整
         if stats.avg_response_time > 5.0:  # 响应慢，增加延迟
@@ -213,7 +214,9 @@ class RateLimiter:
                 # 连续成功时逐渐减少延迟
                 if stats.consecutive_successes >= 3:
                     stats.current_delay *= self.config.success_delay_reduction
-                    stats.current_delay = max(stats.current_delay, self.config.min_delay)
+                    stats.current_delay = max(
+                        stats.current_delay, self.config.min_delay
+                    )
 
             logger.debug(f"域名 {domain} 成功记录，响应时间: {response_time:.2f}s")
 
@@ -234,7 +237,9 @@ class RateLimiter:
                 stats.current_delay *= self.config.error_delay_multiplier
                 stats.current_delay = min(stats.current_delay, self.config.max_delay)
 
-            logger.warning(f"域名 {domain} 错误记录 ({error_type})，连续错误: {stats.consecutive_errors}")
+            logger.warning(
+                f"域名 {domain} 错误记录 ({error_type})，连续错误: {stats.consecutive_errors}"
+            )
 
     def _get_or_create_stats(self, domain: str) -> DomainStats:
         """获取或创建域名统计信息."""
@@ -243,15 +248,14 @@ class RateLimiter:
             if len(self.domain_stats) >= self.max_domains:
                 # 移除最旧的域名
                 oldest_domain = min(
-                    self.domain_stats.keys(),
+                    self.domain_stats.keys()
                     key=lambda d: self.domain_stats[d].last_request_time
                 )
                 del self.domain_stats[oldest_domain]
                 logger.info(f"移除最旧域名统计: {oldest_domain}")
 
             self.domain_stats[domain] = DomainStats(
-                domain=domain,
-                current_delay=self.config.base_delay
+                domain=domain, current_delay=self.config.base_delay
             )
 
         return self.domain_stats[domain]
@@ -266,24 +270,30 @@ class RateLimiter:
 
     def get_global_stats(self) -> dict:
         """获取全局统计信息."""
-        total_requests = sum(stats.request_count for stats in self.domain_stats.values())
-        total_successes = sum(stats.success_count for stats in self.domain_stats.values())
+        total_requests = sum(
+            stats.request_count for stats in self.domain_stats.values()
+        )
+        total_successes = sum(
+            stats.success_count for stats in self.domain_stats.values()
+        )
         total_errors = sum(stats.error_count for stats in self.domain_stats.values())
 
-        avg_success_rate = total_successes / total_requests if total_requests > 0 else 0.0
+        avg_success_rate = (
+            total_successes / total_requests if total_requests > 0 else 0.0
+        )
 
         return {
-            "strategy": self.strategy.value,
-            "total_requests": total_requests,
-            "global_request_count": self.global_request_count,
-            "total_successes": total_successes,
-            "total_errors": total_errors,
-            "success_rate": avg_success_rate,
-            "active_domains": len(self.domain_stats),
+            "strategy": self.strategy.value
+            "total_requests": total_requests
+            "global_request_count": self.global_request_count
+            "total_successes": total_successes
+            "total_errors": total_errors
+            "success_rate": avg_success_rate
+            "active_domains": len(self.domain_stats)
             "config": {
-                "min_delay": self.config.min_delay,
-                "max_delay": self.config.max_delay,
-                "base_delay": self.config.base_delay,
+                "min_delay": self.config.min_delay
+                "max_delay": self.config.max_delay
+                "base_delay": self.config.base_delay
             }
         }
 

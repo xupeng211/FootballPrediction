@@ -16,7 +16,7 @@ import json
 import re
 
 # 添加src路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from database.async_manager import get_db_session
 from collectors.html_fotmob_collector import HTMLFotMobCollector
@@ -24,8 +24,7 @@ import requests
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -37,15 +36,13 @@ class SeasonBackfillJob:
         self.logger = logger
         # 使用 HTML 采集器（与 L2 相同的技术栈）
         self.html_collector = HTMLFotMobCollector(
-            max_retries=3,
-            timeout=(10, 30),
-            enable_stealth=True
+            max_retries=3, timeout=(10, 30), enable_stealth=True
         )
 
         # 2023-2024 赛季英超配置 - 正式生产模式
         self.premier_league_id = 47
-        self.season_start_date = datetime(2023, 8, 11)    # 2023-08-11 赛季开始
-        self.season_end_date = datetime(2024, 5, 19)      # 2024-05-19 赛季结束
+        self.season_start_date = datetime(2023, 8, 11)  # 2023-08-11 赛季开始
+        self.season_end_date = datetime(2024, 5, 19)  # 2024-05-19 赛季结束
 
         # 联赛页面URL - 经过验证的成功URL
         self.league_urls = [
@@ -63,7 +60,7 @@ class SeasonBackfillJob:
             "start_time": None,
             "end_time": None,
             "teams_found": 0,
-            "fixtures_extracted": 0
+            "fixtures_extracted": 0,
         }
 
     async def initialize(self):
@@ -95,34 +92,44 @@ class SeasonBackfillJob:
                         headers=self.html_collector._get_current_headers(),
                         timeout=self.html_collector.timeout,
                         allow_redirects=True,
-                        verify=False
+                        verify=False,
                     )
 
-                    self.logger.info(f"📊 响应状态: {response.status_code}, 大小: {len(response.text):,} 字符")
+                    self.logger.info(
+                        f"📊 响应状态: {response.status_code}, 大小: {len(response.text):,} 字符"
+                    )
 
                     if response.status_code != 200:
-                        self.logger.warning(f"   ❌ HTTP状态码错误: {response.status_code}")
+                        self.logger.warning(
+                            f"   ❌ HTTP状态码错误: {response.status_code}"
+                        )
                         continue
 
                     # 优先使用 response.text (requests已自动处理GZIP解压)
                     # 只在 response.text 为空且检测到GZIP时才使用手动解压
                     if response.text and len(response.text) > 1000:
                         html_content = response.text
-                        self.logger.debug("   🔧 使用response.text (requests已自动解压)")
-                    elif response.content and response.content[:2] == b'\x1f\x8b':
+                        self.logger.debug(
+                            "   🔧 使用response.text (requests已自动解压)"
+                        )
+                    elif response.content and response.content[:2] == b"\x1f\x8b":
                         self.logger.info("   🔧 检测到GZIP压缩，使用手动解压...")
-                        html_content = self.html_collector._manual_decompress_response(response)
+                        html_content = self.html_collector._manual_decompress_response(
+                            response
+                        )
                     else:
                         self.logger.warning("   ⚠️ 响应内容异常，尝试使用response.text")
                         html_content = response.text
 
                     # 解析Next.js数据
-                    if '__NEXT_DATA__' not in html_content:
+                    if "__NEXT_DATA__" not in html_content:
                         self.logger.warning("   ❌ 页面无Next.js数据")
                         continue
 
                     # 提取Next.js数据
-                    nextjs_data = self._extract_nextjs_data(html_content, f"league_page_{i}")
+                    nextjs_data = self._extract_nextjs_data(
+                        html_content, f"league_page_{i}"
+                    )
                     if not nextjs_data:
                         self.logger.warning("   ❌ Next.js数据解析失败")
                         continue
@@ -132,7 +139,9 @@ class SeasonBackfillJob:
                     # 提取赛季数据
                     season_data = self._extract_season_data(nextjs_data, url)
                     if season_data:
-                        self.logger.info(f"   🎉 成功提取赛季数据: {len(season_data.get('teams', []))} 支球队, {len(season_data.get('matches', []))} 场比赛")
+                        self.logger.info(
+                            f"   🎉 成功提取赛季数据: {len(season_data.get('teams', []))} 支球队, {len(season_data.get('matches', []))} 场比赛"
+                        )
                         return season_data
 
                 except Exception as e:
@@ -148,7 +157,9 @@ class SeasonBackfillJob:
             self.stats["errors"] += 1
             return {}
 
-    def _extract_season_data(self, nextjs_data: dict[str, Any], source_url: str) -> dict[str, Any]:
+    def _extract_season_data(
+        self, nextjs_data: dict[str, Any], source_url: str
+    ) -> dict[str, Any]:
         """
         从Next.js数据中提取完整的赛季数据
 
@@ -167,7 +178,7 @@ class SeasonBackfillJob:
                 "matches": [],
                 "season_info": {},
                 "leagues": [],
-                "overview": {}
+                "overview": {},
             }
 
             # 解析主要数据结构
@@ -188,7 +199,9 @@ class SeasonBackfillJob:
                     teams_data = fixture_info.get("teams", [])
                     if isinstance(teams_data, list):
                         season_data["teams"] = teams_data
-                        self.logger.info(f"   📊 从overview提取到 {len(teams_data)} 支球队")
+                        self.logger.info(
+                            f"   📊 从overview提取到 {len(teams_data)} 支球队"
+                        )
 
                         # 显示球队列表
                         for team in teams_data[:5]:  # 显示前5支球队
@@ -197,22 +210,36 @@ class SeasonBackfillJob:
                             self.logger.info(f"      ⚽ {team_name} (ID: {team_id})")
 
                         if len(teams_data) > 5:
-                            self.logger.info(f"      ... 还有 {len(teams_data) - 5} 支球队")
+                            self.logger.info(
+                                f"      ... 还有 {len(teams_data) - 5} 支球队"
+                            )
                     else:
-                        self.logger.warning(f"   ⚠️ fixtureInfo.teams不是数组: {type(teams_data)}")
+                        self.logger.warning(
+                            f"   ⚠️ fixtureInfo.teams不是数组: {type(teams_data)}"
+                        )
                 elif isinstance(fixture_info, list):
                     # 备选方案：如果fixtureInfo是列表
                     season_data["teams"] = fixture_info
-                    self.logger.info(f"   📊 从overview提取到 {len(fixture_info)} 支球队 (列表格式)")
+                    self.logger.info(
+                        f"   📊 从overview提取到 {len(fixture_info)} 支球队 (列表格式)"
+                    )
                 else:
-                    self.logger.warning(f"   ⚠️ fixtureInfo类型异常: {type(fixture_info)}")
+                    self.logger.warning(
+                        f"   ⚠️ fixtureInfo类型异常: {type(fixture_info)}"
+                    )
 
                 # 提取当前赛季信息
                 season_info = matches_data.get("seasons", [])
-                if season_info and isinstance(season_info, list) and len(season_info) > 0:
+                if (
+                    season_info
+                    and isinstance(season_info, list)
+                    and len(season_info) > 0
+                ):
                     current_season = season_info[0]  # 通常是当前赛季
                     season_data["season_info"] = current_season
-                    self.logger.info(f"   📅 赛季信息: {current_season.get('name', 'Unknown')}")
+                    self.logger.info(
+                        f"   📅 赛季信息: {current_season.get('name', 'Unknown')}"
+                    )
 
             # 2. 提取fixtures数据（比赛赛程）
             fixtures = page_props.get("fixtures", {})
@@ -229,7 +256,9 @@ class SeasonBackfillJob:
                         away_team = match.get("away", {}).get("name", "Unknown")
                         status = match.get("status", {}).get("finished", False)
                         status_text = "已结束" if status else "未结束"
-                        self.logger.info(f"      {i+1}. {home_team} vs {away_team} ({status_text})")
+                        self.logger.info(
+                            f"      {i+1}. {home_team} vs {away_team} ({status_text})"
+                        )
 
                     if len(matches) > 3:
                         self.logger.info(f"      ... 还有 {len(matches) - 3} 场比赛")
@@ -253,7 +282,9 @@ class SeasonBackfillJob:
             self.logger.error(f"❌ 赛季数据提取异常: {e}")
             return {}
 
-    def _extract_matches_from_fixtures(self, fixtures_data: dict[str, Any]) -> list[dict[str, Any]]:
+    def _extract_matches_from_fixtures(
+        self, fixtures_data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """
         从fixtures数据中提取比赛列表
 
@@ -312,7 +343,9 @@ class SeasonBackfillJob:
             self.logger.error(f"❌ fixtures比赛提取异常: {e}")
             return []
 
-    def _recursive_search_matches(self, data: Any, path: str = "", depth: int = 0, max_depth: int = 6) -> list[dict[str, Any]]:
+    def _recursive_search_matches(
+        self, data: Any, path: str = "", depth: int = 0, max_depth: int = 6
+    ) -> list[dict[str, Any]]:
         """递归搜索matches数据"""
         matches = []
 
@@ -327,7 +360,9 @@ class SeasonBackfillJob:
 
                     # 如果是matches字段
                     if key_lower == "matches" and isinstance(value, list):
-                        self.logger.debug(f"   🔍 在 {path}.{key} 找到matches: {len(value)} 场比赛")
+                        self.logger.debug(
+                            f"   🔍 在 {path}.{key} 找到matches: {len(value)} 场比赛"
+                        )
                         for match in value:
                             if isinstance(match, dict) and self._is_valid_match(match):
                                 matches.append(match)
@@ -335,13 +370,21 @@ class SeasonBackfillJob:
                     # 继续递归搜索
                     elif isinstance(value, (dict, list)):
                         new_path = f"{path}.{key}" if path else key
-                        matches.extend(self._recursive_search_matches(value, new_path, depth + 1, max_depth))
+                        matches.extend(
+                            self._recursive_search_matches(
+                                value, new_path, depth + 1, max_depth
+                            )
+                        )
 
             elif isinstance(data, list) and len(data) > 0:
                 for i, item in enumerate(data):
                     if isinstance(item, (dict, list)):
                         new_path = f"{path}[{i}]" if path else f"[{i}]"
-                        matches.extend(self._recursive_search_matches(item, new_path, depth + 1, max_depth))
+                        matches.extend(
+                            self._recursive_search_matches(
+                                item, new_path, depth + 1, max_depth
+                            )
+                        )
 
         except Exception as e:
             self.logger.debug(f"递归搜索异常 (路径: {path}): {e}")
@@ -354,7 +397,7 @@ class SeasonBackfillJob:
             patterns = [
                 r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
                 r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
-                r'window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>'
+                r"window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>",
             ]
 
             for pattern in patterns:
@@ -362,9 +405,13 @@ class SeasonBackfillJob:
                 if matches:
                     nextjs_data_str = matches[0].strip()
 
-                    if nextjs_data_str.startswith('window.__NEXT_DATA__'):
-                        nextjs_data_str = nextjs_data_str.replace('window.__NEXT_DATA__', '').replace('=', '').strip()
-                        if nextjs_data_str.endswith(';'):
+                    if nextjs_data_str.startswith("window.__NEXT_DATA__"):
+                        nextjs_data_str = (
+                            nextjs_data_str.replace("window.__NEXT_DATA__", "")
+                            .replace("=", "")
+                            .strip()
+                        )
+                        if nextjs_data_str.endswith(";"):
                             nextjs_data_str = nextjs_data_str[:-1]
 
                     try:
@@ -424,23 +471,27 @@ class SeasonBackfillJob:
                                 continue
 
                             # 插入或更新球队信息
-                            insert_team_sql = text("""
+                            insert_team_sql = text(
+                                """
                                 INSERT INTO teams (fotmob_id, name, created_at, updated_at)
                                 VALUES (:fotmob_id, :name, NOW(), NOW())
                                 ON CONFLICT (fotmob_id) DO UPDATE SET
                                     name = EXCLUDED.name,
                                     updated_at = NOW()
-                            """)
+                            """
+                            )
 
-                            await session.execute(insert_team_sql, {
-                                "fotmob_id": team_id,
-                                "name": team_name
-                            })
+                            await session.execute(
+                                insert_team_sql,
+                                {"fotmob_id": team_id, "name": team_name},
+                            )
 
                             saved_count += 1
 
                         except Exception as e:
-                            self.logger.warning(f"   ⚠️ 保存球队失败: {team.get('name', 'unknown')} - {e}")
+                            self.logger.warning(
+                                f"   ⚠️ 保存球队失败: {team.get('name', 'unknown')} - {e}"
+                            )
 
                 # 保存比赛信息
                 matches = season_data.get("matches", [])
@@ -453,13 +504,20 @@ class SeasonBackfillJob:
                             away_team = match.get("away", {}).get("name", "")
                             home_score = match.get("home", {}).get("score", 0)
                             away_score = match.get("away", {}).get("score", 0)
-                            status = "completed" if match.get("status", {}).get("finished", False) else "pending"
+                            status = (
+                                "completed"
+                                if match.get("status", {}).get("finished", False)
+                                else "pending"
+                            )
 
                             # 提取比赛时间（如果有）
-                            match_time = match.get("time") or match.get("date") or datetime.now()
+                            match_time = (
+                                match.get("time") or match.get("date") or datetime.now()
+                            )
 
                             # 插入比赛信息
-                            insert_match_sql = text("""
+                            insert_match_sql = text(
+                                """
                                 INSERT INTO matches (
                                     fotmob_id, home_team_id, away_team_id,
                                     home_score, away_score, status, match_date,
@@ -472,23 +530,31 @@ class SeasonBackfillJob:
                                     NOW(), NOW(), 'fotmob_season_backfill'
                                 )
                                 ON CONFLICT (fotmob_id) DO NOTHING
-                            """)
+                            """
+                            )
 
-                            await session.execute(insert_match_sql, {
-                                "fotmob_id": fotmob_id,
-                                "home_team": home_team,
-                                "away_team": away_team,
-                                "home_score": home_score,
-                                "away_score": away_score,
-                                "status": status,
-                                "match_time": match_time
-                            })
+                            await session.execute(
+                                insert_match_sql,
+                                {
+                                    "fotmob_id": fotmob_id,
+                                    "home_team": home_team,
+                                    "away_team": away_team,
+                                    "home_score": home_score,
+                                    "away_score": away_score,
+                                    "status": status,
+                                    "match_time": match_time,
+                                },
+                            )
 
                             saved_count += 1
-                            self.logger.debug(f"      💾 保存比赛: {fotmob_id} - {home_team} vs {away_team}")
+                            self.logger.debug(
+                                f"      💾 保存比赛: {fotmob_id} - {home_team} vs {away_team}"
+                            )
 
                         except Exception as e:
-                            self.logger.warning(f"   ⚠️ 保存比赛失败: {match.get('id', 'unknown')} - {e}")
+                            self.logger.warning(
+                                f"   ⚠️ 保存比赛失败: {match.get('id', 'unknown')} - {e}"
+                            )
                             self.stats["errors"] += 1
 
                 await session.commit()
@@ -515,7 +581,7 @@ class SeasonBackfillJob:
         self.logger.info(f"💾 已保存数据: {self.stats['saved_matches']} 条")
         self.logger.info(f"❌ 错误次数: {self.stats['errors']}")
 
-        if self.stats['errors'] == 0:
+        if self.stats["errors"] == 0:
             self.logger.info("🎉 采集任务完美完成！")
         else:
             self.logger.warning(f"⚠️ 采集完成，但有 {self.stats['errors']} 个错误")
@@ -568,7 +634,7 @@ class SeasonBackfillJob:
             raise
         finally:
             # 清理 HTML 采集器
-            if hasattr(self, 'html_collector'):
+            if hasattr(self, "html_collector"):
                 await self.html_collector.close()
 
 

@@ -89,12 +89,12 @@ class HTMLFotMobCollector:
         """获取当前请求头"""
         # 使用标准的浏览器请求头，让requests自动处理GZIP解压
         return {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Language': 'en-GB,en;q=0.9,en;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',  # 让requests自动处理GZIP
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "en-GB,en;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",  # 让requests自动处理GZIP
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
         }
 
     async def collect_match_data(self, match_id: str) -> Optional[dict[str, Any]]:
@@ -119,6 +119,7 @@ class HTMLFotMobCollector:
 
             # 安全的SSL验证配置
             import os
+
             ssl_verify = os.getenv("SSL_VERIFY", "true").lower() == "true"
 
             response = requests.get(
@@ -126,19 +127,21 @@ class HTMLFotMobCollector:
                 headers=headers,
                 timeout=self.timeout,
                 allow_redirects=True,
-                verify=ssl_verify  # 可通过环境变量控制，默认启用SSL验证
+                verify=ssl_verify,  # 可通过环境变量控制，默认启用SSL验证
             )
 
             self.stats["requests_made"] += 1
 
-            logger.info(f"📊 响应状态: {response.status_code}, 大小: {len(response.text):,} 字符")
+            logger.info(
+                f"📊 响应状态: {response.status_code}, 大小: {len(response.text):,} 字符"
+            )
 
             # 🎯 关键处理：即使是404也要继续解析
             if response.status_code in [200, 404]:
                 self.stats["successful_requests"] += 1
 
                 # 检查是否包含Next.js数据
-                if '__NEXT_DATA__' in response.text:
+                if "__NEXT_DATA__" in response.text:
                     logger.info("✅ 发现Next.js SSR数据")
 
                     # 🎯 关键：提取Next.js数据
@@ -153,10 +156,7 @@ class HTMLFotMobCollector:
                             logger.info(f"✅ 数据提取成功: {match_id}")
 
                             # 返回标准API格式
-                            return {
-                                "match": {"id": match_id},
-                                "content": content_data
-                            }
+                            return {"match": {"id": match_id}, "content": content_data}
                         else:
                             logger.warning(f"⚠️ content数据提取失败: {match_id}")
                             return None
@@ -197,38 +197,45 @@ class HTMLFotMobCollector:
         """手动解压响应内容（处理GZIP压缩问题）"""
         try:
             # 检查是否需要手动解压GZIP
-            if hasattr(response, 'content') and response.content:
+            if hasattr(response, "content") and response.content:
                 # 检查GZIP魔数 (1f 8b)
-                if response.content[:2] == b'\x1f\x8b':
+                if response.content[:2] == b"\x1f\x8b":
                     import gzip
                     import io
+
                     try:
-                        decompressed = gzip.GzipFile(fileobj=io.BytesIO(response.content)).read().decode('utf-8')
+                        decompressed = (
+                            gzip.GzipFile(fileobj=io.BytesIO(response.content))
+                            .read()
+                            .decode("utf-8")
+                        )
                         self.logger.info("✅ 手动GZIP解压成功")
                         return decompressed
                     except Exception as e:
                         self.logger.error(f"❌ 手动GZIP解压失败: {e}")
                         # 回退到原始文本
-                        if hasattr(response, 'text'):
+                        if hasattr(response, "text"):
                             return response.text
                         else:
-                            return response.content.decode('utf-8', errors='ignore')
+                            return response.content.decode("utf-8", errors="ignore")
 
             # 如果不是GZIP，尝试正常方式
-            if hasattr(response, 'text'):
+            if hasattr(response, "text"):
                 return response.text
             else:
-                return response.content.decode('utf-8', errors='ignore')
+                return response.content.decode("utf-8", errors="ignore")
 
         except Exception as e:
             self.logger.error(f"❌ 响应解压异常: {e}")
             # 最后回退方案
             try:
-                return str(response.content, errors='ignore')
+                return str(response.content, errors="ignore")
             except:
                 return ""
 
-    def _extract_nextjs_data(self, html: str, match_id: str) -> Optional[dict[str, Any]]:
+    def _extract_nextjs_data(
+        self, html: str, match_id: str
+    ) -> Optional[dict[str, Any]]:
         """
         从HTML中提取Next.js数据 - QA验证版本
 
@@ -239,7 +246,7 @@ class HTMLFotMobCollector:
             patterns = [
                 r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
                 r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
-                r'window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>'
+                r"window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>",
             ]
 
             for pattern in patterns:
@@ -248,9 +255,13 @@ class HTMLFotMobCollector:
                     nextjs_data_str = matches[0].strip()
 
                     # 清理可能的JavaScript包装
-                    if nextjs_data_str.startswith('window.__NEXT_DATA__'):
-                        nextjs_data_str = nextjs_data_str.replace('window.__NEXT_DATA__', '').replace('=', '').strip()
-                        if nextjs_data_str.endswith(';'):
+                    if nextjs_data_str.startswith("window.__NEXT_DATA__"):
+                        nextjs_data_str = (
+                            nextjs_data_str.replace("window.__NEXT_DATA__", "")
+                            .replace("=", "")
+                            .strip()
+                        )
+                        if nextjs_data_str.endswith(";"):
                             nextjs_data_str = nextjs_data_str[:-1]
 
                     try:
@@ -269,27 +280,29 @@ class HTMLFotMobCollector:
             logger.error(f"❌ Next.js提取异常 {match_id}: {e}")
             return None
 
-    def _extract_content_data(self, nextjs_data: dict[str, Any], match_id: str) -> Optional[dict[str, Any]]:
+    def _extract_content_data(
+        self, nextjs_data: dict[str, Any], match_id: str
+    ) -> Optional[dict[str, Any]]:
         """
         从Next.js数据中提取content - QA验证版本
 
         🎯 关键：解析props.pageProps.content并提取ML特征
         """
         try:
-            props = nextjs_data.get('props', {})
+            props = nextjs_data.get("props", {})
             if not props:
                 logger.warning(f"⚠️ 未找到props: {match_id}")
                 return None
 
-            page_props = props.get('pageProps', {})
+            page_props = props.get("pageProps", {})
             if not page_props:
                 # 检查是否是404页面
-                url = props.get('url', '')
-                if '/404' in url:
+                url = props.get("url", "")
+                if "/404" in url:
                     logger.info(f"ℹ️ 跳过404页面: {match_id}")
                 return None
 
-            content = page_props.get('content', {})
+            content = page_props.get("content", {})
             if not content:
                 logger.warning(f"⚠️ 未找到content: {match_id}")
                 return None
@@ -298,29 +311,39 @@ class HTMLFotMobCollector:
             logger.info(f"   Content Keys: {list(content.keys())}")
 
             # 🎯 关键：验证ML特征字段
-            required_features = ['matchFacts', 'stats', 'lineup', 'shotmap', 'playerStats']
-            found_features = [feature for feature in required_features if feature in content]
+            required_features = [
+                "matchFacts",
+                "stats",
+                "lineup",
+                "shotmap",
+                "playerStats",
+            ]
+            found_features = [
+                feature for feature in required_features if feature in content
+            ]
 
             logger.info(f"   找到ML特征: {found_features}/{len(required_features)}")
 
             # 🎯 关键：检查xG数据
-            if 'stats' in content:
-                stats = content.get('stats', {})
+            if "stats" in content:
+                stats = content.get("stats", {})
                 if isinstance(stats, dict):
-                    periods = stats.get('Periods', {})
-                    all_stats = periods.get('All', {})
-                    stats_list = all_stats.get('stats', [])
+                    periods = stats.get("Periods", {})
+                    all_stats = periods.get("All", {})
+                    stats_list = all_stats.get("stats", [])
 
                     xg_found = False
                     for stat_group in stats_list:
-                        if isinstance(stat_group, dict) and 'stats' in stat_group:
-                            for stat in stat_group.get('stats', []):
+                        if isinstance(stat_group, dict) and "stats" in stat_group:
+                            for stat in stat_group.get("stats", []):
                                 if isinstance(stat, dict):
-                                    title = stat.get('title', '').lower()
-                                    if 'expected goals' in title or 'xg' in title:
-                                        xg_values = stat.get('stats', [])
+                                    title = stat.get("title", "").lower()
+                                    if "expected goals" in title or "xg" in title:
+                                        xg_values = stat.get("stats", [])
                                         if xg_values and len(xg_values) >= 2:
-                                            logger.info(f"🎯 找到xG数据: 主队={xg_values[0]}, 客队={xg_values[1]}")
+                                            logger.info(
+                                                f"🎯 找到xG数据: 主队={xg_values[0]}, 客队={xg_values[1]}"
+                                            )
                                             xg_found = True
                                             break
                         if xg_found:
@@ -334,6 +357,7 @@ class HTMLFotMobCollector:
         except Exception as e:
             logger.error(f"❌ content提取异常 {match_id}: {e}")
             import traceback
+
             logger.debug(f"🔍 详细错误: {traceback.format_exc()}")
             return None
 
@@ -341,7 +365,9 @@ class HTMLFotMobCollector:
         """获取采集统计信息"""
         stats = self.stats.copy()
         if stats["requests_made"] > 0:
-            stats["success_rate"] = stats["successful_requests"] / stats["requests_made"]
+            stats["success_rate"] = (
+                stats["successful_requests"] / stats["requests_made"]
+            )
         else:
             stats["success_rate"] = 0.0
 

@@ -25,13 +25,14 @@ import re
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # 数据库配置
-DATABASE_URL = "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
+DATABASE_URL = (
+    "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
+)
 
 
 def save_teams_to_db(teams_data):
@@ -49,11 +50,14 @@ def save_teams_to_db(teams_data):
                     continue
 
                 # 简单插入，跳过重复
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO teams (name, country, fotmob_external_id, created_at, updated_at)
                     VALUES (%s, %s, %s, NOW(), NOW())
                     ON CONFLICT (fotmob_external_id) DO NOTHING
-                """, (team_name, "England", team_id))
+                """,
+                    (team_name, "England", team_id),
+                )
 
                 if cur.rowcount > 0:
                     saved_count += 1
@@ -79,7 +83,9 @@ def save_matches_to_db(match_data):
         cur = conn.cursor()
 
         # 获取球队映射
-        cur.execute("SELECT fotmob_external_id, id FROM teams WHERE fotmob_external_id IS NOT NULL")
+        cur.execute(
+            "SELECT fotmob_external_id, id FROM teams WHERE fotmob_external_id IS NOT NULL"
+        )
         team_mapping = {row[0]: row[1] for row in cur.fetchall()}
 
         saved_count = 0
@@ -97,11 +103,14 @@ def save_matches_to_db(match_data):
                 away_team_id = team_mapping.get(away_fotmob_id)
 
                 if not home_team_id or not away_team_id:
-                    logger.warning(f"⚠️ 跳过比赛（找不到球队）: {fotmob_id} - {home_team} vs {away_team}")
+                    logger.warning(
+                        f"⚠️ 跳过比赛（找不到球队）: {fotmob_id} - {home_team} vs {away_team}"
+                    )
                     continue
 
                 # 插入比赛
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO matches (
                         home_team_id, away_team_id,
                         home_score, away_score, status, match_date,
@@ -111,11 +120,15 @@ def save_matches_to_db(match_data):
                         %s, 'fotmob_v2', 'partial', NOW(), NOW()
                     )
                     ON CONFLICT (fotmob_id) DO NOTHING
-                """, (home_team_id, away_team_id, fotmob_id))
+                """,
+                    (home_team_id, away_team_id, fotmob_id),
+                )
 
                 if cur.rowcount > 0:
                     saved_count += 1
-                    logger.info(f"💾 保存比赛: {fotmob_id} - {home_team} vs {away_team}")
+                    logger.info(
+                        f"💾 保存比赛: {fotmob_id} - {home_team} vs {away_team}"
+                    )
 
             except Exception as e:
                 logger.warning(f"⚠️ 保存比赛失败: {match.get('id', 'unknown')} - {e}")
@@ -135,16 +148,20 @@ def extract_nextjs_data(html):
     patterns = [
         r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
         r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
-        r'window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>'
+        r"window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>",
     ]
 
     for pattern in patterns:
         matches = re.findall(pattern, html, re.DOTALL)
         if matches:
             nextjs_data_str = matches[0].strip()
-            if nextjs_data_str.startswith('window.__NEXT_DATA__'):
-                nextjs_data_str = nextjs_data_str.replace('window.__NEXT_DATA__', '').replace('=', '').strip()
-                if nextjs_data_str.endswith(';'):
+            if nextjs_data_str.startswith("window.__NEXT_DATA__"):
+                nextjs_data_str = (
+                    nextjs_data_str.replace("window.__NEXT_DATA__", "")
+                    .replace("=", "")
+                    .strip()
+                )
+                if nextjs_data_str.endswith(";"):
                     nextjs_data_str = nextjs_data_str[:-1]
             try:
                 return json.loads(nextjs_data_str)
@@ -178,7 +195,9 @@ def extract_fixtures_data(nextjs_data):
                     if isinstance(all_matches, list):
                         valid_matches = [m for m in all_matches if is_valid_match(m)]
                         matches.extend(valid_matches)
-                        logger.info(f"📅 从overview.allMatches提取到 {len(valid_matches)} 场比赛")
+                        logger.info(
+                            f"📅 从overview.allMatches提取到 {len(valid_matches)} 场比赛"
+                        )
 
         # 路径3: 页面级深度搜索
         if not matches:
@@ -248,13 +267,17 @@ def recursive_search_matches(data, path="", depth=0, max_depth=6):
 
                 elif isinstance(value, (dict, list)):
                     new_path = f"{path}.{key}" if path else key
-                    matches.extend(recursive_search_matches(value, new_path, depth + 1, max_depth))
+                    matches.extend(
+                        recursive_search_matches(value, new_path, depth + 1, max_depth)
+                    )
 
         elif isinstance(data, list) and len(data) > 0:
             for i, item in enumerate(data):
                 if isinstance(item, (dict, list)):
                     new_path = f"{path}[{i}]" if path else f"[{i}]"
-                    matches.extend(recursive_search_matches(item, new_path, depth + 1, max_depth))
+                    matches.extend(
+                        recursive_search_matches(item, new_path, depth + 1, max_depth)
+                    )
 
     except Exception as e:
         logger.debug(f"递归搜索异常 (路径: {path}): {e}")
@@ -272,7 +295,8 @@ def is_valid_match(match):
 
 def print_help():
     """打印帮助信息"""
-    print("""
+    print(
+        """
 🏆 英超赛季数据采集工具
 ==========================
 
@@ -294,17 +318,18 @@ def print_help():
   - 此脚本会采集完整的赛季数据并保存到数据库
   - 确保数据库服务正在运行
   - 首次运行会创建球队和比赛记录
-    """)
+    """
+    )
 
 
 async def main():
     """主函数 - 全赛季采集"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='英超赛季数据采集工具')
-    parser.add_argument('--dry-run', action='store_true', help='仅测试，不写入数据库')
-    parser.add_argument('--league-id', type=int, default=47, help='联赛ID (默认: 47)')
-    parser.add_argument('--verbose', action='store_true', help='详细日志')
+    parser = argparse.ArgumentParser(description="英超赛季数据采集工具")
+    parser.add_argument("--dry-run", action="store_true", help="仅测试，不写入数据库")
+    parser.add_argument("--league-id", type=int, default=47, help="联赛ID (默认: 47)")
+    parser.add_argument("--verbose", action="store_true", help="详细日志")
 
     args = parser.parse_args()
 
@@ -319,15 +344,15 @@ async def main():
 
     # 初始化采集器
     collector = HTMLFotMobCollector(
-        max_retries=3,
-        timeout=(10, 30),
-        enable_stealth=True
+        max_retries=3, timeout=(10, 30), enable_stealth=True
     )
     await collector.initialize()
 
     try:
         # 联赛页面URL
-        test_url = f"https://www.fotmob.com/leagues/{args.league_id}/overview/premier-league"
+        test_url = (
+            f"https://www.fotmob.com/leagues/{args.league_id}/overview/premier-league"
+        )
         logger.info(f"🕷️ 访问英超联赛页面: {test_url}")
 
         # 发起请求
@@ -336,17 +361,19 @@ async def main():
             headers=collector._get_current_headers(),
             timeout=collector.timeout,
             allow_redirects=True,
-            verify=False
+            verify=False,
         )
 
-        logger.info(f"📊 响应状态: {response.status_code}, 大小: {len(response.text):,} 字符")
+        logger.info(
+            f"📊 响应状态: {response.status_code}, 大小: {len(response.text):,} 字符"
+        )
 
         if response.status_code != 200:
             logger.error(f"❌ HTTP请求失败: {response.status_code}")
             return 1
 
         # 提取Next.js数据
-        if '__NEXT_DATA__' not in response.text:
+        if "__NEXT_DATA__" not in response.text:
             logger.error("❌ 页面无Next.js数据")
             return 1
 
@@ -380,7 +407,9 @@ async def main():
                     for match in matches  # 全部比赛，无切片
                     for team in [match.get("home", {}), match.get("away", {})]
                 ]
-                unique_teams = {team["id"]: team for team in teams_data if team.get("id")}
+                unique_teams = {
+                    team["id"]: team for team in teams_data if team.get("id")
+                }
                 unique_team_list = list(unique_teams.values())
 
                 logger.info(f"🏆 发现 {len(unique_team_list)} 支独特球队")
@@ -418,6 +447,7 @@ async def main():
     except Exception as e:
         logger.error(f"❌ 全赛季采集异常: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

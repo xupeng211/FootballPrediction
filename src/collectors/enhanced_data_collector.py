@@ -13,7 +13,11 @@ import backoff
 from playwright.async_api import async_playwright
 
 from src.collectors.proxy_pool import ProxyConfig, get_proxy_pool
-from src.collectors.rate_limiter import RateLimitStrategy, get_rate_limiter, wait_for_request_slot
+from src.collectors.rate_limiter import (
+    RateLimitStrategy,
+    get_rate_limiter,
+    wait_for_request_slot,
+)
 from src.collectors.user_agent import get_realistic_headers, get_user_agent_manager
 from src.core.logging import get_logger
 
@@ -65,12 +69,12 @@ class EnhancedHTTPClient:
         domain: str = None,
         headers: dict[str, str] = None,
         params: dict[str, Any] = None,
-        **kwargs
+        **kwargs,
     ) -> aiohttp.ClientResponse:
         """发送GET请求."""
         # 将 params 添加到 kwargs 中
         if params:
-            kwargs['params'] = params
+            kwargs["params"] = params
         return await self._request("GET", url, domain, headers, **kwargs)
 
     async def post(
@@ -80,14 +84,14 @@ class EnhancedHTTPClient:
         headers: dict[str, str] = None,
         json: dict[str, Any] = None,
         data: Any = None,
-        **kwargs
+        **kwargs,
     ) -> aiohttp.ClientResponse:
         """发送POST请求."""
         # 将 json 和 data 添加到 kwargs 中
         if json:
-            kwargs['json'] = json
+            kwargs["json"] = json
         if data:
-            kwargs['data'] = data
+            kwargs["data"] = data
         return await self._request("POST", url, domain, headers, **kwargs)
 
     @backoff.on_exception(
@@ -95,7 +99,7 @@ class EnhancedHTTPClient:
         (aiohttp.ClientError, asyncio.TimeoutError),
         max_tries=3,
         base=2,
-        max_value=30
+        max_value=30,
     )
     async def _request(
         self,
@@ -103,12 +107,13 @@ class EnhancedHTTPClient:
         url: str,
         domain: str = None,
         headers: dict[str, str] = None,
-        **kwargs
+        **kwargs,
     ) -> aiohttp.ClientResponse:
         """发送HTTP请求的核心方法."""
         # 提取域名
         if domain is None:
             from urllib.parse import urlparse
+
             domain = urlparse(url).netloc
 
         # 等待请求时机
@@ -141,14 +146,16 @@ class EnhancedHTTPClient:
                     url=url,
                     headers=request_headers,
                     proxy=proxy_url,
-                    **kwargs
+                    **kwargs,
                 ) as response:
                     response_time = time.time() - start_time
 
                     # 记录成功
                     await self._record_success(domain, response_time, proxy_config)
 
-                    logger.debug(f"请求成功: {method} {url} - {response.status} ({response_time:.2f}s)")
+                    logger.debug(
+                        f"请求成功: {method} {url} - {response.status} ({response_time:.2f}s)"
+                    )
                     return response
 
         except Exception as e:
@@ -157,7 +164,9 @@ class EnhancedHTTPClient:
             await self._record_error(domain, str(e), proxy_config)
             raise
 
-    async def _prepare_headers(self, custom_headers: dict[str, str] = None) -> dict[str, str]:
+    async def _prepare_headers(
+        self, custom_headers: dict[str, str] = None
+    ) -> dict[str, str]:
         """准备请求头."""
         headers = {}
 
@@ -179,7 +188,9 @@ class EnhancedHTTPClient:
 
         return headers
 
-    async def _record_success(self, domain: str, response_time: float, proxy_config: ProxyConfig = None):
+    async def _record_success(
+        self, domain: str, response_time: float, proxy_config: ProxyConfig = None
+    ):
         """记录成功请求."""
         self.request_count += 1
         self.success_count += 1
@@ -191,7 +202,9 @@ class EnhancedHTTPClient:
         if proxy_config and self.proxy_pool:
             await self.proxy_pool.mark_proxy_success(proxy_config, response_time)
 
-    async def _record_error(self, domain: str, error_msg: str, proxy_config: ProxyConfig = None):
+    async def _record_error(
+        self, domain: str, error_msg: str, proxy_config: ProxyConfig = None
+    ):
         """记录错误请求."""
         self.request_count += 1
         self.error_count += 1
@@ -216,7 +229,7 @@ class EnhancedHTTPClient:
                 "rate_limit_strategy": self.rate_limit_strategy.value,
                 "timeout": self.timeout,
                 "max_retries": self.max_retries,
-            }
+            },
         }
 
         # 添加代理池统计
@@ -290,16 +303,18 @@ class EnhancedPlaywrightCollector:
         ]
 
         if self.stealth_mode:
-            launch_args.extend([
-                "--disable-blink-features=AutomationControlled",
-                "--disable-extensions",
-                "--no-first-run",
-                "--disable-default-apps",
-                "--disable-background-timer-throttling",
-                "--disable-backgrounding-occluded-windows",
-                "--disable-renderer-backgrounding",
-                "--disable-background-networking",
-            ])
+            launch_args.extend(
+                [
+                    "--disable-blink-features=AutomationControlled",
+                    "--disable-extensions",
+                    "--no-first-run",
+                    "--disable-default-apps",
+                    "--disable-background-timer-throttling",
+                    "--disable-backgrounding-occluded-windows",
+                    "--disable-renderer-backgrounding",
+                    "--disable-background-networking",
+                ]
+            )
 
         # 确保代理池已初始化
         await self._ensure_proxy_pool()
@@ -318,9 +333,7 @@ class EnhancedPlaywrightCollector:
 
         # 启动浏览器
         self.browser = await self.playwright.chromium.launch(
-            headless=self.headless,
-            args=launch_args,
-            proxy=proxy_config
+            headless=self.headless, args=launch_args, proxy=proxy_config
         )
 
         # 创建浏览器上下文
@@ -330,19 +343,22 @@ class EnhancedPlaywrightCollector:
             context_options["user_agent"] = user_agent
 
         if self.stealth_mode:
-            context_options.update({
-                "viewport": {"width": 1920, "height": 1080},
-                "locale": "zh-CN",
-                "timezone_id": "Asia/Shanghai",
-                "permissions": [],
-                "ignore_https_errors": True,
-            })
+            context_options.update(
+                {
+                    "viewport": {"width": 1920, "height": 1080},
+                    "locale": "zh-CN",
+                    "timezone_id": "Asia/Shanghai",
+                    "permissions": [],
+                    "ignore_https_errors": True,
+                }
+            )
 
         self.context = await self.browser.new_context(**context_options)
 
         # 隐身模式设置
         if self.stealth_mode:
-            await self.context.add_init_script("""
+            await self.context.add_init_script(
+                """
                 // 移除webdriver标识
                 Object.defineProperty(navigator, 'webdriver', {
                     get: () => undefined,
@@ -365,7 +381,8 @@ class EnhancedPlaywrightCollector:
                 Object.defineProperty(navigator, 'languages', {
                     get: () => ['zh-CN', 'zh', 'en'],
                 });
-            """)
+            """
+            )
 
         logger.info("浏览器启动完成")
 

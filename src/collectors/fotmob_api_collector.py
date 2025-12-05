@@ -17,7 +17,12 @@ from dataclasses import dataclass
 from enum import Enum
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 from .user_agent import UserAgentManager
 from .rate_limiter import RateLimiter
@@ -28,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 class APIResponseStatus(Enum):
     """API响应状态"""
+
     SUCCESS = "success"
     RATE_LIMIT = "rate_limit"
     NOT_FOUND = "not_found"
@@ -38,6 +44,7 @@ class APIResponseStatus(Enum):
 @dataclass
 class MatchDetailData:
     """比赛详情数据结构"""
+
     fotmob_id: str
     home_score: int
     away_score: int
@@ -89,7 +96,7 @@ class FotMobAPICollector:
         self.rate_limiter = RateLimiter(
             base_delay=base_delay,
             max_delay=base_delay * 10,
-            enable_jitter=enable_jitter
+            enable_jitter=enable_jitter,
         )
         self.proxy_pool = ProxyPool() if enable_proxy else None
 
@@ -114,12 +121,12 @@ class FotMobAPICollector:
         """初始化HTTP客户端"""
         if self._client is None:
             timeout = httpx.Timeout(self.timeout)
-            limits = httpx.Limits(max_connections=self.max_concurrent, max_keepalive_connections=20)
+            limits = httpx.Limits(
+                max_connections=self.max_concurrent, max_keepalive_connections=20
+            )
 
             self._client = httpx.AsyncClient(
-                timeout=timeout,
-                limits=limits,
-                headers=self._get_default_headers()
+                timeout=timeout, limits=limits, headers=self._get_default_headers()
             )
 
             logger.info("✅ FotMob API采集器初始化完成")
@@ -127,16 +134,16 @@ class FotMobAPICollector:
     def _get_default_headers(self) -> dict[str, str]:
         """获取默认请求头"""
         return {
-            'User-Agent': self.ua_manager.get_current_ua(),
-            'Accept': 'application/json',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
+            "User-Agent": self.ua_manager.get_current_ua(),
+            "Accept": "application/json",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
         }
 
     async def close(self):
@@ -149,9 +156,13 @@ class FotMobAPICollector:
     @retry(
         stop=stop_after_attempt(5),
         wait=wait_exponential(multiplier=1.5, min=2, max=60),
-        retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException, httpx.NetworkError))
+        retry=retry_if_exception_type(
+            (httpx.RequestError, httpx.TimeoutException, httpx.NetworkError)
+        ),
     )
-    async def _make_request(self, url: str, match_id: str) -> tuple[Optional[dict], APIResponseStatus]:
+    async def _make_request(
+        self, url: str, match_id: str
+    ) -> tuple[Optional[dict], APIResponseStatus]:
         """发起API请求"""
         await self.rate_limiter.acquire()
 
@@ -164,15 +175,12 @@ class FotMobAPICollector:
             # 构建请求头
             headers = self._get_default_headers()
             if random.random() < 0.1:  # 10%概率切换UA
-                headers['User-Agent'] = self.ua_manager.switch_ua()
+                headers["User-Agent"] = self.ua_manager.switch_ua()
                 self.stats["ua_switches"] += 1
 
             # 发起请求
             response = await self._client.get(
-                url,
-                headers=headers,
-                proxy=proxy,
-                follow_redirects=True
+                url, headers=headers, proxy=proxy, follow_redirects=True
             )
 
             self.stats["requests_made"] += 1
@@ -237,7 +245,9 @@ class FotMobAPICollector:
                 logger.warning(f"⚠️ API请求失败 {fotmob_id}: {status.value}")
                 return None
 
-    def _parse_match_data(self, fotmob_id: str, data: dict[str, Any]) -> MatchDetailData:
+    def _parse_match_data(
+        self, fotmob_id: str, data: dict[str, Any]
+    ) -> MatchDetailData:
         """解析API返回的JSON数据"""
         # 解析通用信息
         general = data.get("general", {})
@@ -248,16 +258,30 @@ class FotMobAPICollector:
             fotmob_id=fotmob_id,
             home_score=general.get("homeTeam", {}).get("score", 0),
             away_score=general.get("awayTeam", {}).get("score", 0),
-            status="finished" if general.get("status", {}).get("finished", False) else "",
+            status=(
+                "finished" if general.get("status", {}).get("finished", False) else ""
+            ),
             match_time=general.get("statusStr"),
             venue=general.get("venue", {}).get("name"),
             attendance=general.get("attendance"),
             referee=general.get("referee", {}).get("name"),
             weather=general.get("weather", {}).get("condition"),
-            home_yellow_cards=content.get("stats", {}).get("cards", {}).get("homeTeam", {}).get("yellowCards", 0),
-            away_yellow_cards=content.get("stats", {}).get("cards", {}).get("awayTeam", {}).get("yellowCards", 0),
-            home_red_cards=content.get("stats", {}).get("cards", {}).get("homeTeam", {}).get("redCards", 0),
-            away_red_cards=content.get("stats", {}).get("cards", {}).get("awayTeam", {}).get("redCards", 0),
+            home_yellow_cards=content.get("stats", {})
+            .get("cards", {})
+            .get("homeTeam", {})
+            .get("yellowCards", 0),
+            away_yellow_cards=content.get("stats", {})
+            .get("cards", {})
+            .get("awayTeam", {})
+            .get("yellowCards", 0),
+            home_red_cards=content.get("stats", {})
+            .get("cards", {})
+            .get("homeTeam", {})
+            .get("redCards", 0),
+            away_red_cards=content.get("stats", {})
+            .get("cards", {})
+            .get("awayTeam", {})
+            .get("redCards", 0),
             home_team_rating=general.get("homeTeam", {}).get("rating", 0.0),
             away_team_rating=general.get("awayTeam", {}).get("rating", 0.0),
         )
@@ -271,20 +295,36 @@ class FotMobAPICollector:
         # 解析球员评分
         ratings = content.get("stats", {}).get("playerRating", {})
         if ratings:
-            home_ratings = [r.get("rating", 0.0) for r in ratings.get("homeTeam", []) if r.get("rating")]
-            away_ratings = [r.get("rating", 0.0) for r in ratings.get("awayTeam", []) if r.get("rating")]
+            home_ratings = [
+                r.get("rating", 0.0)
+                for r in ratings.get("homeTeam", [])
+                if r.get("rating")
+            ]
+            away_ratings = [
+                r.get("rating", 0.0)
+                for r in ratings.get("awayTeam", [])
+                if r.get("rating")
+            ]
 
             if home_ratings:
-                match_data.home_avg_player_rating = sum(home_ratings) / len(home_ratings)
+                match_data.home_avg_player_rating = sum(home_ratings) / len(
+                    home_ratings
+                )
             if away_ratings:
-                match_data.away_avg_player_rating = sum(away_ratings) / len(away_ratings)
+                match_data.away_avg_player_rating = sum(away_ratings) / len(
+                    away_ratings
+                )
 
         # 解析big chances
         stats = content.get("stats", {})
         shots_stats = stats.get("shots", {})
         if shots_stats:
-            match_data.home_big_chances = shots_stats.get("homeTeam", {}).get("bigChances", 0)
-            match_data.away_big_chances = shots_stats.get("awayTeam", {}).get("bigChances", 0)
+            match_data.home_big_chances = shots_stats.get("homeTeam", {}).get(
+                "bigChances", 0
+            )
+            match_data.away_big_chances = shots_stats.get("awayTeam", {}).get(
+                "bigChances", 0
+            )
 
         # 解析结构化数据
         match_data.lineups = self._extract_lineups(content)
@@ -303,8 +343,8 @@ class FotMobAPICollector:
                 "away_team": lineups.get("awayTeam"),
                 "formation": {
                     "home": lineups.get("homeTeam", {}).get("formation"),
-                    "away": lineups.get("awayTeam", {}).get("formation")
-                }
+                    "away": lineups.get("awayTeam", {}).get("formation"),
+                },
             }
         except Exception as e:
             logger.warning(f"⚠️ 阵容数据提取失败: {e}")
@@ -333,7 +373,9 @@ class FotMobAPICollector:
             logger.warning(f"⚠️ 统计数据提取失败: {e}")
             return None
 
-    def _extract_events(self, content: dict[str, Any]) -> Optional[list[dict[str, Any]]]:
+    def _extract_events(
+        self, content: dict[str, Any]
+    ) -> Optional[list[dict[str, Any]]]:
         """提取比赛事件数据"""
         try:
             events = content.get("timeline", {}).get("event", [])
@@ -364,7 +406,7 @@ class FotMobAPICollector:
                 "collection_time": datetime.now().isoformat(),
                 "raw_response_size": len(str(data)),
                 "data_source": "fotmob_api_v2",
-                "processing_status": "completed"
+                "processing_status": "completed",
             }
         except Exception as e:
             logger.warning(f"⚠️ 元数据提取失败: {e}")
@@ -391,7 +433,9 @@ class FotMobAPICollector:
                 logger.error(f"❌ 批量采集异常: {e}")
 
         success_rate = len(results) / len(fotmob_ids) * 100 if fotmob_ids else 0
-        logger.info(f"📊 批量采集完成: {len(results)}/{len(fotmob_ids)} ({success_rate:.1f}%)")
+        logger.info(
+            f"📊 批量采集完成: {len(results)}/{len(fotmob_ids)} ({success_rate:.1f}%)"
+        )
 
         return results
 

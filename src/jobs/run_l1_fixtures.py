@@ -11,8 +11,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List
-
+from typing import Any
 # 添加项目根路径 - 标准化导入
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
@@ -22,10 +21,10 @@ from sqlalchemy import text
 
 # 配置日志 - 标准化路径
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     handlers=[
-        logging.FileHandler('logs/l1_fixtures.log'),
+        logging.FileHandler("logs/l1_fixtures.log")
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -59,18 +58,23 @@ class FotMobL1FixturesJob:
             new_id = max_result.scalar() + 1
 
             # 创建新team记录
-            insert_query = text("""
+            insert_query = text(
+                """
                 INSERT INTO teams (id, name, country, created_at, updated_at)
                 VALUES (:id, :name, :country, :created_at, :updated_at)
                 ON CONFLICT (id) DO NOTHING
-            """)
-            await session.execute(insert_query, {
-                "id": new_id,
-                "name": team_name,
-                "country": "Unknown",
-                "created_at": datetime.now(),
-                "updated_at": datetime.now()
-            })
+            """
+            )
+            await session.execute(
+                insert_query
+                {
+                    "id": new_id
+                    "name": team_name
+                    "country": "Unknown"
+                    "created_at": datetime.now()
+                    "updated_at": datetime.now()
+                }
+            )
 
             self.logger.info(f"✅ 创建新球队记录: {team_name} (ID: {new_id})")
             return new_id
@@ -79,7 +83,9 @@ class FotMobL1FixturesJob:
             self.logger.error(f"❌ 创建球队记录失败 {team_name}: {e}")
             raise
 
-    async def process_match_data(self, matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    async def process_match_data(
+        self, matches: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         处理比赛数据，确保球队记录存在
 
@@ -101,21 +107,25 @@ class FotMobL1FixturesJob:
                     away_team_name = away_team.get("name", "Unknown")
 
                     # 确保球队记录存在 - 关键依赖关系
-                    home_team_id = await self.ensure_team_exists(session, home_team_name)
-                    away_team_id = await self.ensure_team_exists(session, away_team_name)
+                    home_team_id = await self.ensure_team_exists(
+                        session, home_team_name
+                    )
+                    away_team_id = await self.ensure_team_exists(
+                        session, away_team_name
+                    )
 
                     # 处理比赛数据
                     processed_match = {
-                        "home_team_id": home_team_id,
-                        "away_team_id": away_team_id,
-                        "home_team_name": home_team_name,
-                        "away_team_name": away_team_name,
-                        "home_score": home_team.get("score", 0),
-                        "away_score": away_team.get("score", 0),
-                        "status": match.get("status", "NS"),
-                        "match_date": match.get("start_time"),
-                        "venue": match.get("venue", "Unknown"),
-                        "fotmob_id": match.get("id"),
+                        "home_team_id": home_team_id
+                        "away_team_id": away_team_id
+                        "home_team_name": home_team_name
+                        "away_team_name": away_team_name
+                        "home_score": home_team.get("score", 0)
+                        "away_score": away_team.get("score", 0)
+                        "status": match.get("status", "NS")
+                        "match_date": match.get("start_time")
+                        "venue": match.get("venue", "Unknown")
+                        "fotmob_id": match.get("id")
                         "league_id": match.get("league_id", 47),  # 默认英超
                         "season": "2023/2024"
                     }
@@ -135,45 +145,50 @@ class FotMobL1FixturesJob:
         async with get_db_session() as session:
             for match in matches:
                 try:
-                    insert_query = text("""
+                    insert_query = text(
+                        """
                         INSERT INTO matches (
-                            home_team_id, away_team_id, home_score, away_score,
-                            status, match_date, venue, league_id, season,
-                            created_at, updated_at, fotmob_id, data_source,
+                            home_team_id, away_team_id, home_score, away_score
+                            status, match_date, venue, league_id, season
+                            created_at, updated_at, fotmob_id, data_source
                             data_completeness
                         ) VALUES (
-                            :home_team_id, :away_team_id, :home_score, :away_score,
-                            :status, :match_date, :venue, :league_id, :season,
-                            :created_at, :updated_at, :fotmob_id, :data_source,
+                            :home_team_id, :away_team_id, :home_score, :away_score
+                            :status, :match_date, :venue, :league_id, :season
+                            :created_at, :updated_at, :fotmob_id, :data_source
                             :data_completeness
                         )
                         ON CONFLICT (home_team_id, away_team_id, match_date)
                         DO UPDATE SET
-                            home_score = EXCLUDED.home_score,
-                            away_score = EXCLUDED.away_score,
-                            status = EXCLUDED.status,
-                            updated_at = EXCLUDED.updated_at,
-                            fotmob_id = EXCLUDED.fotmob_id,
+                            home_score = EXCLUDED.home_score
+                            away_score = EXCLUDED.away_score
+                            status = EXCLUDED.status
+                            updated_at = EXCLUDED.updated_at
+                            fotmob_id = EXCLUDED.fotmob_id
                             data_source = EXCLUDED.data_source
                         RETURNING id
-                    """)
+                    """
+                    )
 
-                    await session.execute(insert_query, {
-                        "home_team_id": match["home_team_id"],
-                        "away_team_id": match["away_team_id"],
-                        "home_score": match["home_score"],
-                        "away_score": match["away_score"],
-                        "status": match["status"],
-                        "match_date": match["match_date"] or datetime.now(),
-                        "venue": match["venue"],
-                        "league_id": match["league_id"],
-                        "season": match["season"],
-                        "created_at": datetime.now(),
-                        "updated_at": datetime.now(),
-                        "fotmob_id": match["fotmob_id"],
-                        "data_source": "fotmob_v2",
-                        "data_completeness": "partial"
-                    })
+                    await session.execute(
+                        insert_query
+                        {
+                            "home_team_id": match["home_team_id"]
+                            "away_team_id": match["away_team_id"]
+                            "home_score": match["home_score"]
+                            "away_score": match["away_score"]
+                            "status": match["status"]
+                            "match_date": match["match_date"] or datetime.now()
+                            "venue": match["venue"]
+                            "league_id": match["league_id"]
+                            "season": match["season"]
+                            "created_at": datetime.now()
+                            "updated_at": datetime.now()
+                            "fotmob_id": match["fotmob_id"]
+                            "data_source": "fotmob_v2"
+                            "data_completeness": "partial"
+                        }
+                    )
 
                     saved_count += 1
 

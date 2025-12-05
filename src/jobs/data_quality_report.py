@@ -10,12 +10,13 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 # 添加项目根路径
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.collectors.enhanced_fotmob_collector import EnhancedFotMobCollector
+
 
 class DataQualityReporter:
     """数据质量报告生成器"""
@@ -25,10 +26,10 @@ class DataQualityReporter:
 
     def print_header(self):
         """打印报告头部"""
-        print("🔬" + "="*60)
+        print("🔬" + "=" * 60)
         print("📊 Football Prediction System - 数据质量检查报告")
         print("👨‍🔬 Chief Data Scientist 专项分析")
-        print("="*64)
+        print("=" * 64)
 
     def print_critical_finding(self, title: str, content: dict[str, Any]):
         """打印关键发现"""
@@ -53,22 +54,48 @@ class DataQualityReporter:
 
                 # 测试L2 - 获取比赛详情
                 if matches and len(matches) > 0:
-                    first_match_id = matches[0].get('id')
+                    first_match_id = matches[0].get("id")
                     if first_match_id:
                         print(f"🎯 测试L2 API (比赛详情): {first_match_id}")
-                        details = await self.collector.collect_match_data(first_match_id)
+                        details = await self.collector.collect_match_data(
+                            first_match_id
+                        )
 
                         if details:
                             self.print_fotmob_data_structure(details)
-                            return {"status": "success", "l1_count": len(matches), "l2_success": True, "l2_data": details}
+                            return {
+                                "status": "success"
+                                "l1_count": len(matches)
+                                "l2_success": True
+                                "l2_data": details
+                            }
                         else:
-                            return {"status": "partial", "l1_count": len(matches), "l2_success": False}
+                            return {
+                                "status": "partial"
+                                "l1_count": len(matches)
+                                "l2_success": False
+                            }
                     else:
-                        return {"status": "partial", "l1_count": len(matches), "l2_success": False, "reason": "no_match_id"}
+                        return {
+                            "status": "partial"
+                            "l1_count": len(matches)
+                            "l2_success": False
+                            "reason": "no_match_id"
+                        }
                 else:
-                    return {"status": "success", "l1_count": len(matches), "l2_success": False, "reason": "no_matches"}
+                    return {
+                        "status": "success"
+                        "l1_count": len(matches)
+                        "l2_success": False
+                        "reason": "no_matches"
+                    }
             else:
-                return {"status": "failed", "l1_count": 0, "l2_success": False, "reason": "no_l1_data"}
+                return {
+                    "status": "failed"
+                    "l1_count": 0
+                    "l2_success": False
+                    "reason": "no_l1_data"
+                }
 
         except Exception as e:
             return {"status": "error", "error": str(e)}
@@ -85,10 +112,10 @@ class DataQualityReporter:
         if "match" in details:
             match = details["match"]
             basic_info = {
-                "比赛ID": match.get("id"),
-                "主队": match.get("home", {}).get("name"),
-                "客队": match.get("away", {}).get("name"),
-                "比分": f"{match.get('home', {}).get('score', 0)}-{match.get('away', {}).get('score', 0)}",
+                "比赛ID": match.get("id")
+                "主队": match.get("home", {}).get("name")
+                "客队": match.get("away", {}).get("name")
+                "比分": f"{match.get('home', {}).get('score', 0)}-{match.get('away', {}).get('score', 0)}"
                 "状态": match.get("status", "Unknown")
             }
             print(json.dumps(basic_info, indent=6, ensure_ascii=False))
@@ -98,9 +125,9 @@ class DataQualityReporter:
         away_xg = details.get("match", {}).get("away", {}).get("xg")
         if home_xg is not None or away_xg is not None:
             xg_info = {
-                "主队xG": home_xg,
-                "客队xG": away_xg,
-                "总xG": (home_xg or 0) + (away_xg or 0),
+                "主队xG": home_xg
+                "客队xG": away_xg
+                "总xG": (home_xg or 0) + (away_xg or 0)
                 "xG优势": (home_xg or 0) - (away_xg or 0)
             }
             print("\n      ⚽ xG (进球期望) 数据:")
@@ -131,21 +158,23 @@ class DataQualityReporter:
                 print("         样本射门:")
                 for i, shot in enumerate(shotmap["shots"][:3]):
                     shot_info = {
-                        "时间": shot.get("time"),
-                        "队伍": shot.get("team"),
-                        "xG": shot.get("xg"),
-                        "类型": shot.get("type"),
+                        "时间": shot.get("time")
+                        "队伍": shot.get("team")
+                        "xG": shot.get("xg")
+                        "类型": shot.get("type")
                         "结果": shot.get("outcome")
                     }
-                    print(f"           {i+1}. {json.dumps(shot_info, ensure_ascii=False)}")
+                    print(
+                        f"           {i+1}. {json.dumps(shot_info, ensure_ascii=False)}"
+                    )
 
     def generate_recommendations(self):
         """生成改进建议"""
         recommendations = [
-            "🔧 修复L2采集器: 确保xG、赔率、射门数据保存到数据库",
-            "📊 重构数据模型: 将FotMob数据结构映射到正确的数据库字段",
-            "🔄 数据迁移: 重新运行L2采集，补全366场比赛的高级特征",
-            "📈 实时监控: 建立数据质量监控，确保新采集数据完整性",
+            "🔧 修复L2采集器: 确保xG、赔率、射门数据保存到数据库"
+            "📊 重构数据模型: 将FotMob数据结构映射到正确的数据库字段"
+            "🔄 数据迁移: 重新运行L2采集，补全366场比赛的高级特征"
+            "📈 实时监控: 建立数据质量监控，确保新采集数据完整性"
             "🧪 特征工程: 基于真实xG数据构建预测特征"
         ]
 
@@ -168,24 +197,24 @@ class DataQualityReporter:
         # 关键发现
         critical_finding = {
             "数据现状": {
-                "总比赛数": 2284,
-                "L1采集状态": "✅ 完成 (100% FotMob数据)",
-                "L2采集状态": "❌ 存在问题",
+                "总比赛数": 2284
+                "L1采集状态": "✅ 完成 (100% FotMob数据)"
+                "L2采集状态": "❌ 存在问题"
                 "高级特征覆盖": {
-                    "xG数据": "❌ 未保存到数据库",
-                    "赔率数据": "❌ 未保存到数据库",
-                    "射门数据": "❌ 未保存到数据库",
+                    "xG数据": "❌ 未保存到数据库"
+                    "赔率数据": "❌ 未保存到数据库"
+                    "射门数据": "❌ 未保存到数据库"
                     "阵容数据": "❌ 未保存到数据库"
                 }
-            },
+            }
             "根本原因": {
-                "L2采集器逻辑": "数据采集成功，但未正确保存到数据库字段",
-                "数据模型": "当前数据库结构与FotMob数据结构不匹配",
+                "L2采集器逻辑": "数据采集成功，但未正确保存到数据库字段"
+                "数据模型": "当前数据库结构与FotMob数据结构不匹配"
                 "技术债务": "需要重构L2采集器的数据保存逻辑"
-            },
+            }
             "数据价值评估": {
-                "当前价值": "基础赛程数据 ✅",
-                "ML就绪度": "❌ 缺乏高级特征",
+                "当前价值": "基础赛程数据 ✅"
+                "ML就绪度": "❌ 缺乏高级特征"
                 "预测能力": "📊 受限 (仅有基础数据)"
             }
         }
@@ -193,15 +222,17 @@ class DataQualityReporter:
         self.print_critical_finding("关键发现 - 数据资产评估", critical_finding)
         self.generate_recommendations()
 
-        print("\n" + "="*64)
+        print("\n" + "=" * 64)
         print("📝 数据质量检查报告完成")
         print("👨‍🔬 Chief Data Scientist - 分析结束")
-        print("="*64)
+        print("=" * 64)
+
 
 async def main():
     """主函数"""
     reporter = DataQualityReporter()
     await reporter.run_analysis()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

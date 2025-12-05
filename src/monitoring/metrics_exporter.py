@@ -21,7 +21,7 @@ from prometheus_client import (
 from sqlalchemy import text
 
 from src.core.config import get_settings
-from src.database.connection import get_async_session
+from src.database.async_manager import get_db_session
 
 logger = logging.getLogger(__name__)
 
