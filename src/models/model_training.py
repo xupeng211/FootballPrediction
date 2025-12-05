@@ -211,8 +211,8 @@ class BaselineModelTrainer:
         self,
         X_train: pd.DataFrame,
         y_train: pd.Series,
-        X_val: Union[pd.DataFrame, None] = None,
-        y_val: Union[pd.Series, None] = None,
+        X_val: [pd.DataFrame, None] = None,
+        y_val: [pd.Series, None] = None,
         **model_params,
     ) -> dict[str, Any]:
         """训练模型."""
@@ -237,8 +237,8 @@ class BaselineModelTrainer:
         self,
         X_train: pd.DataFrame,
         y_train: pd.Series,
-        X_val: Union[pd.DataFrame, None],
-        y_val: Union[pd.Series, None],
+        X_val: [pd.DataFrame, None],
+        y_val: [pd.Series, None],
         **model_params,
     ) -> dict[str, Any]:
         """不使用MLflow训练模型."""

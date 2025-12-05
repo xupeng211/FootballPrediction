@@ -9,7 +9,7 @@ import json
 import logging
 import pickle
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -23,6 +23,7 @@ from sklearn.model_selection import cross_val_score
 # XGBoost 支持
 try:
     import xgboost as xgb
+
     HAS_XGB = True
 except ImportError:
     HAS_XGB = False
@@ -38,13 +39,13 @@ class FeatureSelector:
     """
 
     def __init__(
-        self,
+        self
         task_type: str = "classification",  # "classification" 或 "regression"
-        correlation_threshold: float = 0.95,
-        min_features: int = 5,
-        max_features: int = 100,
-        random_state: int = 42,
-        n_jobs: int = -1,
+        correlation_threshold: float = 0.95
+        min_features: int = 5
+        max_features: int = 100
+        random_state: int = 42
+        n_jobs: int = -1
     ):
         """初始化特征选择器.
 
@@ -83,17 +84,17 @@ class FeatureSelector:
         # 随机森林模型
         self.rf_model = (
             RandomForestClassifier(
-                n_estimators=100,
-                random_state=self.random_state,
-                n_jobs=self.n_jobs,
-                max_depth=10,
+                n_estimators=100
+                random_state=self.random_state
+                n_jobs=self.n_jobs
+                max_depth=10
             )
             if self.task_type == "classification"
             else RandomForestRegressor(
-                n_estimators=100,
-                random_state=self.random_state,
-                n_jobs=self.n_jobs,
-                max_depth=10,
+                n_estimators=100
+                random_state=self.random_state
+                n_jobs=self.n_jobs
+                max_depth=10
             )
         )
 
@@ -102,19 +103,19 @@ class FeatureSelector:
         if HAS_XGB:
             self.xgb_model = (
                 xgb.XGBClassifier(
-                    n_estimators=100,
-                    random_state=self.random_state,
-                    n_jobs=self.n_jobs,
-                    max_depth=6,
-                    learning_rate=0.1,
+                    n_estimators=100
+                    random_state=self.random_state
+                    n_jobs=self.n_jobs
+                    max_depth=6
+                    learning_rate=0.1
                 )
                 if self.task_type == "classification"
                 else xgb.XGBRegressor(
-                    n_estimators=100,
-                    random_state=self.random_state,
-                    n_jobs=self.n_jobs,
-                    max_depth=6,
-                    learning_rate=0.1,
+                    n_estimators=100
+                    random_state=self.random_state
+                    n_jobs=self.n_jobs
+                    max_depth=6
+                    learning_rate=0.1
                 )
             )
 
@@ -145,11 +146,13 @@ class FeatureSelector:
         for i in range(len(correlation_matrix.columns)):
             for j in range(i + 1, len(correlation_matrix.columns)):
                 if correlation_matrix.iloc[i, j] > self.correlation_threshold:
-                    high_corr_pairs.append((
-                        correlation_matrix.columns[i],
-                        correlation_matrix.columns[j],
-                        correlation_matrix.iloc[i, j]
-                    ))
+                    high_corr_pairs.append(
+                        (
+                            correlation_matrix.columns[i]
+                            correlation_matrix.columns[j]
+                            correlation_matrix.iloc[i, j]
+                        )
+                    )
 
         # 移除共线性特征
         features_to_remove = set()
@@ -172,7 +175,11 @@ class FeatureSelector:
 
         # 对每个高相关性对，移除与目标变量相关性较低的特征
         for feat1, feat2, _corr_value in high_corr_pairs:
-            if y is not None and feat1 in target_correlations and feat2 in target_correlations:
+            if (
+                y is not None
+                and feat1 in target_correlations
+                and feat2 in target_correlations
+            ):
                 if target_correlations[feat1] >= target_correlations[feat2]:
                     features_to_remove.add(feat2)
                     features_to_keep.discard(feat2)
@@ -256,15 +263,17 @@ class FeatureSelector:
 
             avg_importance = np.mean(scores) if scores else 0
             max_importance = np.max(scores) if scores else 0
-            feature_importance_list.append({
-                "feature": feature,
-                "importance_avg": avg_importance,
-                "importance_max": max_importance,
-                "rf_importance": importance_scores.get(f"{feature}_rf", 0),
-                "xgb_importance": importance_scores.get(f"{feature}_xgb", 0),
-                "mi_importance": importance_scores.get(f"{feature}_mi", 0),
-                "score_count": len(scores)
-            })
+            feature_importance_list.append(
+                {
+                    "feature": feature
+                    "importance_avg": avg_importance
+                    "importance_max": max_importance
+                    "rf_importance": importance_scores.get(f"{feature}_rf", 0)
+                    "xgb_importance": importance_scores.get(f"{feature}_xgb", 0)
+                    "mi_importance": importance_scores.get(f"{feature}_mi", 0)
+                    "score_count": len(scores)
+                }
+            )
 
         self.feature_importance_df = pd.DataFrame(feature_importance_list)
         self.feature_importance_df = self.feature_importance_df.sort_values(
@@ -276,12 +285,12 @@ class FeatureSelector:
         return self.feature_importance_df
 
     def select_features(
-        self,
-        X: pd.DataFrame,
-        y: pd.Series,
-        top_k: int = 20,
-        remove_collinear: bool = True,
-        importance_threshold: Optional[float] = None,
+        self
+        X: pd.DataFrame
+        y: pd.Series
+        top_k: int = 20
+        remove_collinear: bool = True
+        importance_threshold: Optional[float] = None
     ) -> list[str]:
         """选择最重要的特征.
 
@@ -338,12 +347,12 @@ class FeatureSelector:
 
         # 记录选择历史
         selection_record = {
-            "total_features": len(X.columns),
-            "selected_features": len(self.selected_features),
-            "removed_features": len(self.removed_features),
-            "collinear_removed": len(collinear_removed),
-            "top_k": top_k,
-            "importance_threshold": importance_threshold,
+            "total_features": len(X.columns)
+            "selected_features": len(self.selected_features)
+            "removed_features": len(self.removed_features)
+            "collinear_removed": len(collinear_removed)
+            "top_k": top_k
+            "importance_threshold": importance_threshold
         }
         self.selection_history.append(selection_record)
 
@@ -383,8 +392,8 @@ class FeatureSelector:
             )
 
             return {
-                "score": scores.mean(),
-                "score_std": scores.std(),
+                "score": scores.mean()
+                "score_std": scores.std()
                 "features_count": len(feature_subset)
             }
         except Exception as e:
@@ -398,13 +407,13 @@ class FeatureSelector:
             详细的选择报告
         """
         report = {
-            "task_type": self.task_type,
-            "correlation_threshold": self.correlation_threshold,
-            "selected_features": self.selected_features,
-            "removed_features": self.removed_features,
-            "selection_history": self.selection_history,
-            "feature_importance": None,
-            "correlation_matrix": None,
+            "task_type": self.task_type
+            "correlation_threshold": self.correlation_threshold
+            "selected_features": self.selected_features
+            "removed_features": self.removed_features
+            "selection_history": self.selection_history
+            "feature_importance": None
+            "correlation_matrix": None
         }
 
         if self.feature_importance_df is not None:
@@ -422,19 +431,19 @@ class FeatureSelector:
             filepath: 保存路径
         """
         results = {
-            "selected_features": self.selected_features,
-            "removed_features": self.removed_features,
-            "selection_report": self.get_selection_report(),
+            "selected_features": self.selected_features
+            "removed_features": self.removed_features
+            "selection_report": self.get_selection_report()
             "parameters": {
-                "task_type": self.task_type,
-                "correlation_threshold": self.correlation_threshold,
-                "min_features": self.min_features,
-                "max_features": self.max_features,
-                "random_state": self.random_state,
+                "task_type": self.task_type
+                "correlation_threshold": self.correlation_threshold
+                "min_features": self.min_features
+                "max_features": self.max_features
+                "random_state": self.random_state
             }
         }
 
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, ensure_ascii=False, default=str)
 
         logger.info(f"特征选择结果已保存到: {filepath}")
@@ -445,7 +454,7 @@ class FeatureSelector:
         Args:
             filepath: 加载路径
         """
-        with open(filepath, encoding='utf-8') as f:
+        with open(filepath, encoding="utf-8") as f:
             results = json.load(f)
 
         self.selected_features = results["selected_features"]
@@ -481,10 +490,7 @@ class FeatureSelector:
 
             plt.figure(figsize=(12, 8))
             sns.barplot(
-                data=plot_data,
-                x="importance_avg",
-                y="feature",
-                palette="viridis"
+                data=plot_data, x="importance_avg", y="feature", palette="viridis"
             )
             plt.title(f"前 {top_k} 个特征的重要性")
             plt.xlabel("平均重要性")
@@ -502,9 +508,7 @@ class FeatureSelector:
 
 
 def create_feature_selector(
-    task_type: str = "classification",
-    correlation_threshold: float = 0.95,
-    **kwargs
+    task_type: str = "classification", correlation_threshold: float = 0.95, **kwargs
 ) -> FeatureSelector:
     """创建特征选择器的便捷函数.
 
@@ -517,7 +521,5 @@ def create_feature_selector(
         FeatureSelector实例
     """
     return FeatureSelector(
-        task_type=task_type,
-        correlation_threshold=correlation_threshold,
-        **kwargs
+        task_type=task_type, correlation_threshold=correlation_threshold, **kwargs
     )

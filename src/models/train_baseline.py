@@ -12,16 +12,16 @@ import sys
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Dict, Tuple, Any
+from typing import Any
 from datetime import datetime
 
 # 机器学习库
 import xgboost as xgb
 from sklearn.metrics import (
-    accuracy_score,
-    log_loss,
-    classification_report,
-    confusion_matrix,
+    accuracy_score
+    log_loss
+    classification_report
+    confusion_matrix
 )
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
@@ -102,8 +102,12 @@ class BaselineTrainer:
             unique_train, counts_train = np.unique(y_train, return_counts=True)
             unique_test, counts_test = np.unique(y_test, return_counts=True)
 
-            logger.info(f"   训练集分布: {dict(zip(unique_train, counts_train, strict=False))}")
-            logger.info(f"   测试集分布: {dict(zip(unique_test, counts_test, strict=False))}")
+            logger.info(
+                f"   训练集分布: {dict(zip(unique_train, counts_train, strict=False))}"
+            )
+            logger.info(
+                f"   测试集分布: {dict(zip(unique_test, counts_test, strict=False))}"
+            )
 
             return X_train, X_test, y_train, y_test
 
@@ -130,14 +134,14 @@ class BaselineTrainer:
         params = {
             "objective": "multi:softprob",  # 多分类
             "num_class": 3,  # 3分类 (客胜/平/主胜)
-            "eval_metric": "mlogloss",
-            "max_depth": 6,
-            "learning_rate": 0.1,
-            "n_estimators": 100,
-            "subsample": 0.8,
-            "colsample_bytree": 0.8,
-            "random_state": 42,
-            "n_jobs": -1,
+            "eval_metric": "mlogloss"
+            "max_depth": 6
+            "learning_rate": 0.1
+            "n_estimators": 100
+            "subsample": 0.8
+            "colsample_bytree": 0.8
+            "random_state": 42
+            "n_jobs": -1
         }
 
         # 创建模型
@@ -207,11 +211,11 @@ class BaselineTrainer:
 
         # 保存结果
         results = {
-            "accuracy": accuracy,
-            "logloss": logloss,
-            "classification_report": report,
-            "confusion_matrix": cm,
-            "feature_importance": feature_importance,
+            "accuracy": accuracy
+            "logloss": logloss
+            "classification_report": report
+            "confusion_matrix": cm
+            "feature_importance": feature_importance
         }
 
         return results
@@ -311,9 +315,9 @@ class BaselineTrainer:
 def main():
     """主函数 - 运行基线模型训练"""
     logging.basicConfig(
-        level=logging.INFO,
-        format="🧠 %(asctime)s [%(levelname)8s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.INFO
+        format="🧠 %(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     logger.info("🚀 Phase 3 基线模型训练系统启动")

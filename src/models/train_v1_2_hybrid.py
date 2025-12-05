@@ -13,8 +13,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Tuple
-
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -25,12 +23,17 @@ from sqlalchemy import select, text, func
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, classification_report
+from sklearn.metrics import (
+    accuracy_score
+    precision_score
+    recall_score
+    confusion_matrix
+    classification_report
+)
 import joblib
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -39,8 +42,13 @@ class HybridModelTrainer:
     """V1.2混合模型训练器 - 首席AI科学家版"""
 
     def __init__(self):
-        self.database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres-dev-password@db:5432/football_prediction")
-        self.async_database_url = self.database_url.replace("postgresql://", "postgresql+asyncpg://")
+        self.database_url = os.getenv(
+            "DATABASE_URL"
+            "postgresql://postgres:postgres-dev-password@db:5432/football_prediction"
+        )
+        self.async_database_url = self.database_url.replace(
+            "postgresql://", "postgresql+asyncpg://"
+        )
 
         # 在Docker环境中使用正确的数据库URL
         if "localhost" in self.database_url:
@@ -53,11 +61,7 @@ class HybridModelTrainer:
         self.test_size = 0.2  # 测试集比例
 
         # 假设赔率 (如果没有真实赔率数据)
-        self.default_odds = {
-            'home_win': 2.0,
-            'draw': 3.2,
-            'away_win': 2.5
-        }
+        self.default_odds = {"home_win": 2.0, "draw": 3.2, "away_win": 2.5}
 
         # 存储模型和组件
         self.model = None
@@ -76,19 +80,20 @@ class HybridModelTrainer:
 
             async with async_session() as session:
                 # 查询已完成的比赛数据
-                query = text("""
+                query = text(
+                    """
                     SELECT
-                        m.id,
-                        m.home_team_id,
-                        m.away_team_id,
-                        m.league_id,
-                        m.home_score,
-                        m.away_score,
-                        m.status,
-                        m.match_date,
-                        m.stats,
-                        home.name as home_team_name,
-                        away.name as away_team_name,
+                        m.id
+                        m.home_team_id
+                        m.away_team_id
+                        m.league_id
+                        m.home_score
+                        m.away_score
+                        m.status
+                        m.match_date
+                        m.stats
+                        home.name as home_team_name
+                        away.name as away_team_name
                         league.name as league_name
                     FROM matches m
                     JOIN teams home ON m.home_team_id = home.id
@@ -99,7 +104,8 @@ class HybridModelTrainer:
                       AND m.away_score IS NOT NULL
                       AND m.match_date IS NOT NULL
                     ORDER BY m.match_date
-                """)
+                """
+                )
 
                 result = await session.execute(query)
                 matches = result.fetchall()
@@ -107,23 +113,25 @@ class HybridModelTrainer:
                 logger.info(f"✅ 加载了 {len(matches)} 场比赛数据")
 
                 # 转换为DataFrame
-                df = pd.DataFrame([
-                    {
-                        'match_id': match.id,
-                        'home_team_id': match.home_team_id,
-                        'away_team_id': match.away_team_id,
-                        'league_id': match.league_id,
-                        'home_score': match.home_score,
-                        'away_score': match.away_score,
-                        'status': match.status,
-                        'match_date': match.match_date,
-                        'stats': match.stats,
-                        'home_team_name': match.home_team_name,
-                        'away_team_name': match.away_team_name,
-                        'league_name': match.league_name
-                    }
-                    for match in matches
-                ])
+                df = pd.DataFrame(
+                    [
+                        {
+                            "match_id": match.id
+                            "home_team_id": match.home_team_id
+                            "away_team_id": match.away_team_id
+                            "league_id": match.league_id
+                            "home_score": match.home_score
+                            "away_score": match.away_score
+                            "status": match.status
+                            "match_date": match.match_date
+                            "stats": match.stats
+                            "home_team_name": match.home_team_name
+                            "away_team_name": match.away_team_name
+                            "league_name": match.league_name
+                        }
+                        for match in matches
+                    ]
+                )
 
                 await engine.dispose()
 
@@ -136,69 +144,84 @@ class HybridModelTrainer:
     def parse_xg_data(self, stats_json: str) -> dict[str, float]:
         """解析xG数据"""
         try:
-            if not stats_json or stats_json == 'null':
-                return {'xg_home': None, 'xg_away': None}
+            if not stats_json or stats_json == "null":
+                return {"xg_home": None, "xg_away": None}
 
             stats = json.loads(stats_json)
 
             # 尝试多种xG字段名
-            xg_home = (stats.get('xg_home') or
-                      stats.get('xG_home') or
-                      stats.get('expected_goals_home') or
-                      stats.get('xg_for_home') or
-                      None)
+            xg_home = (
+                stats.get("xg_home")
+                or stats.get("xG_home")
+                or stats.get("expected_goals_home")
+                or stats.get("xg_for_home")
+                or None
+            )
 
-            xg_away = (stats.get('xg_away') or
-                      stats.get('xG_away') or
-                      stats.get('expected_goals_away') or
-                      stats.get('xg_for_away') or
-                      None)
+            xg_away = (
+                stats.get("xg_away")
+                or stats.get("xG_away")
+                or stats.get("expected_goals_away")
+                or stats.get("xg_for_away")
+                or None
+            )
 
             # 尝试转换为float
             xg_home = float(xg_home) if xg_home is not None else None
             xg_away = float(xg_away) if xg_away is not None else None
 
-            return {'xg_home': xg_home, 'xg_away': xg_away}
+            return {"xg_home": xg_home, "xg_away": xg_away}
 
         except (json.JSONDecodeError, ValueError, TypeError) as e:
             logger.debug(f"解析xG数据失败: {e}")
-            return {'xg_home': None, 'xg_away': None}
+            return {"xg_home": None, "xg_away": None}
 
     def calculate_match_result(self, home_score: int, away_score: int) -> str:
         """计算比赛结果"""
         if home_score > away_score:
-            return 'home_win'
+            return "home_win"
         elif home_score < away_score:
-            return 'away_win'
+            return "away_win"
         else:
-            return 'draw'
+            return "draw"
 
     def calculate_rolling_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """计算滚动特征"""
         logger.info("📈 计算滚动特征...")
 
         # 首先计算基础特征
-        df['total_goals'] = df['home_score'] + df['away_score']
-        df['goal_difference'] = df['home_score'] - df['away_score']
+        df["total_goals"] = df["home_score"] + df["away_score"]
+        df["goal_difference"] = df["home_score"] - df["away_score"]
 
         # 解析xG数据
-        xg_data = df['stats'].apply(self.parse_xg_data)
-        df['xg_home'] = xg_data.apply(lambda x: x['xg_home'])
-        df['xg_away'] = xg_data.apply(lambda x: x['xg_away'])
-        df['total_xg'] = df['xg_home'] + df['xg_away']
+        xg_data = df["stats"].apply(self.parse_xg_data)
+        df["xg_home"] = xg_data.apply(lambda x: x["xg_home"])
+        df["xg_away"] = xg_data.apply(lambda x: x["xg_away"])
+        df["total_xg"] = df["xg_home"] + df["xg_away"]
 
         # 按球队分组计算滚动特征
-        for team_col in ['home_team_id', 'away_team_id']:
-            goal_col = 'home_score' if team_col == 'home_team_id' else 'away_score'
-            opponent_goal_col = 'away_score' if team_col == 'home_team_id' else 'home_score'
-            xg_col = 'xg_home' if team_col == 'home_team_id' else 'xg_away'
-            opponent_xg_col = 'xg_away' if team_col == 'home_team_id' else 'xg_home'
+        for team_col in ["home_team_id", "away_team_id"]:
+            goal_col = "home_score" if team_col == "home_team_id" else "away_score"
+            opponent_goal_col = (
+                "away_score" if team_col == "home_team_id" else "home_score"
+            )
+            xg_col = "xg_home" if team_col == "home_team_id" else "xg_away"
+            opponent_xg_col = "xg_away" if team_col == "home_team_id" else "xg_home"
 
             # 为每个球队计算滚动特征
-            team_df = df[['match_date', team_col, goal_col, opponent_goal_col, xg_col, opponent_xg_col]].copy()
+            team_df = df[
+                [
+                    "match_date"
+                    team_col
+                    goal_col
+                    opponent_goal_col
+                    xg_col
+                    opponent_xg_col
+                ]
+            ].copy()
 
             # 按球队分组并按时间排序
-            team_df = team_df.sort_values([team_col, 'match_date'])
+            team_df = team_df.sort_values([team_col, "match_date"])
 
             # 计算滚动平均
             team_df[f'avg_goals_scored_{team_col.split("_")[0]}'] = (
@@ -232,44 +255,48 @@ class HybridModelTrainer:
 
             # 合并回原DataFrame
             rolling_cols = [
-                f'avg_goals_scored_{team_col.split("_")[0]}',
-                f'avg_goals_conceded_{team_col.split("_")[0]}',
-                f'avg_xg_created_{team_col.split("_")[0]}',
+                f'avg_goals_scored_{team_col.split("_")[0]}'
+                f'avg_goals_conceded_{team_col.split("_")[0]}'
+                f'avg_xg_created_{team_col.split("_")[0]}'
                 f'avg_xg_conceded_{team_col.split("_")[0]}'
             ]
 
             df = df.merge(
-                team_df[['match_date', team_col] + rolling_cols],
-                left_on=['match_date', team_col],
-                right_on=['match_date', team_col],
-                how='left'
+                team_df[["match_date", team_col] + rolling_cols]
+                left_on=["match_date", team_col]
+                right_on=["match_date", team_col]
+                how="left"
             )
 
         # 计算主队 vs 客队的相对特征
-        df['goal_diff_advantage'] = (
-            df.get('avg_goals_scored_home', 0) - df.get('avg_goals_conceded_away', 0)
+        df["goal_diff_advantage"] = df.get("avg_goals_scored_home", 0) - df.get(
+            "avg_goals_conceded_away", 0
         )
 
-        df['xg_advantage'] = (
-            df.get('avg_xg_created_home', 0) - df.get('avg_xg_conceded_away', 0)
+        df["xg_advantage"] = df.get("avg_xg_created_home", 0) - df.get(
+            "avg_xg_conceded_away", 0
         )
 
         logger.info("✅ 滚动特征计算完成")
         return df
 
-    def prepare_features_and_labels(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
+    def prepare_features_and_labels(
+        self, df: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.Series]:
         """准备特征和标签"""
         logger.info("🔧 准备特征和标签...")
 
         # 创建目标变量
-        df['result'] = df.apply(
-            lambda row: self.calculate_match_result(row['home_score'], row['away_score']),
+        df["result"] = df.apply(
+            lambda row: self.calculate_match_result(
+                row["home_score"], row["away_score"]
+            )
             axis=1
         )
 
         # 编码类别特征
-        df['league_name'].unique()
-        pd.concat([df['home_team_name'], df['away_team_name']]).unique()
+        df["league_name"].unique()
+        pd.concat([df["home_team_name"], df["away_team_name"]]).unique()
 
         # 创建标签编码器
         le_league = LabelEncoder()
@@ -277,32 +304,29 @@ class HybridModelTrainer:
         le_away_team = LabelEncoder()
 
         # 训练标签编码器
-        df['league_encoded'] = le_league.fit_transform(df['league_name'])
-        df['home_team_encoded'] = le_home_team.fit_transform(df['home_team_name'])
-        df['away_team_encoded'] = le_away_team.fit_transform(df['away_team_name'])
+        df["league_encoded"] = le_league.fit_transform(df["league_name"])
+        df["home_team_encoded"] = le_home_team.fit_transform(df["home_team_name"])
+        df["away_team_encoded"] = le_away_team.fit_transform(df["away_team_name"])
 
         # 选择特征列
         feature_columns = [
             # 基础特征
-            'league_encoded',
-            'home_team_encoded',
-            'away_team_encoded',
-
+            "league_encoded"
+            "home_team_encoded"
+            "away_team_encoded"
             # 滚动进球特征
-            'avg_goals_scored_home',
-            'avg_goals_conceded_home',
-            'avg_goals_scored_away',
-            'avg_goals_conceded_away',
-
+            "avg_goals_scored_home"
+            "avg_goals_conceded_home"
+            "avg_goals_scored_away"
+            "avg_goals_conceded_away"
             # 滚动xG特征（可能有NaN）
-            'avg_xg_created_home',
-            'avg_xg_conceded_home',
-            'avg_xg_created_away',
-            'avg_xg_conceded_away',
-
+            "avg_xg_created_home"
+            "avg_xg_conceded_home"
+            "avg_xg_created_away"
+            "avg_xg_conceded_away"
             # 相对特征
-            'goal_diff_advantage',
-            'xg_advantage',
+            "goal_diff_advantage"
+            "xg_advantage"
         ]
 
         # 确保所有特征列都存在
@@ -315,7 +339,7 @@ class HybridModelTrainer:
 
         # 特征矩阵和目标向量
         X = df[feature_columns]
-        y = df['result']
+        y = df["result"]
 
         # 编码目标变量
         le_result = LabelEncoder()
@@ -323,15 +347,17 @@ class HybridModelTrainer:
 
         # 保存编码器和特征名称
         self.label_encoders = {
-            'league': le_league,
-            'home_team': le_home_team,
-            'away_team': le_away_team,
-            'result': le_result
+            "league": le_league
+            "home_team": le_home_team
+            "away_team": le_away_team
+            "result": le_result
         }
         self.feature_names = feature_columns
 
         logger.info(f"✅ 特征准备完成: {X.shape[0]} 样本, {X.shape[1]} 特征")
-        logger.info(f"📊 结果分布: {dict(zip(le_result.classes_, np.bincount(y_encoded), strict=False))}")
+        logger.info(
+            f"📊 结果分布: {dict(zip(le_result.classes_, np.bincount(y_encoded), strict=False))}"
+        )
 
         return X, y_encoded
 
@@ -341,12 +367,12 @@ class HybridModelTrainer:
 
         # 训练XGBoost分类器
         self.model = xgb.XGBClassifier(
-            n_estimators=100,
-            max_depth=6,
-            learning_rate=0.1,
-            random_state=42,
-            n_jobs=-1,
-            eval_metric='mlogloss'
+            n_estimators=100
+            max_depth=6
+            learning_rate=0.1
+            random_state=42
+            n_jobs=-1
+            eval_metric="mlogloss"
         )
 
         # 训练模型
@@ -389,12 +415,15 @@ class HybridModelTrainer:
                 total_stake += stake
 
                 # 简化的赔率计算（基于历史平均）
-                if prediction == self.label_encoders['result'].transform(['home_win'])[0]:
-                    odds = self.default_odds['home_win']
-                elif prediction == self.label_encoders['result'].transform(['draw'])[0]:
-                    odds = self.default_odds['draw']
+                if (
+                    prediction
+                    == self.label_encoders["result"].transform(["home_win"])[0]
+                ):
+                    odds = self.default_odds["home_win"]
+                elif prediction == self.label_encoders["result"].transform(["draw"])[0]:
+                    odds = self.default_odds["draw"]
                 else:
-                    odds = self.default_odds['away_win']
+                    odds = self.default_odds["away_win"]
 
                 # 计算收益
                 if prediction == actual:  # 预测正确
@@ -403,19 +432,23 @@ class HybridModelTrainer:
                     wins += 1
 
         # 计算ROI
-        roi = ((total_winnings - total_stake) / total_stake * 100) if total_stake > 0 else 0
+        roi = (
+            ((total_winnings - total_stake) / total_stake * 100)
+            if total_stake > 0
+            else 0
+        )
         win_rate = (wins / total_bets * 100) if total_bets > 0 else 0
 
         results = {
-            'accuracy': accuracy,
-            'total_bets': total_bets,
-            'wins': wins,
-            'win_rate': win_rate,
-            'total_stake': total_stake,
-            'total_winnings': total_winnings,
-            'profit_loss': total_winnings - total_stake,
-            'roi': roi,
-            'confidence_threshold': self.confidence_threshold
+            "accuracy": accuracy
+            "total_bets": total_bets
+            "wins": wins
+            "win_rate": win_rate
+            "total_stake": total_stake
+            "total_winnings": total_winnings
+            "profit_loss": total_winnings - total_stake
+            "roi": roi
+            "confidence_threshold": self.confidence_threshold
         }
 
         logger.info("✅ 策略回测完成")
@@ -426,20 +459,28 @@ class HybridModelTrainer:
         if not self.model:
             return {}
 
-        feature_importance = dict(zip(self.feature_names, self.model.feature_importances_, strict=False))
+        feature_importance = dict(
+            zip(self.feature_names, self.model.feature_importances_, strict=False)
+        )
 
         # 按重要性排序
-        sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
+        sorted_features = sorted(
+            feature_importance.items(), key=lambda x: x[1], reverse=True
+        )
 
         return {
-            'feature_importance': dict(sorted_features),
-            'top_5_features': sorted_features[:5],
-            'xg_features_importance': {
-                'avg_xg_created_home': feature_importance.get('avg_xg_created_home', 0),
-                'avg_xg_conceded_home': feature_importance.get('avg_xg_conceded_home', 0),
-                'avg_xg_created_away': feature_importance.get('avg_xg_created_away', 0),
-                'avg_xg_conceded_away': feature_importance.get('avg_xg_conceded_away', 0),
-                'xg_advantage': feature_importance.get('xg_advantage', 0)
+            "feature_importance": dict(sorted_features)
+            "top_5_features": sorted_features[:5]
+            "xg_features_importance": {
+                "avg_xg_created_home": feature_importance.get("avg_xg_created_home", 0)
+                "avg_xg_conceded_home": feature_importance.get(
+                    "avg_xg_conceded_home", 0
+                )
+                "avg_xg_created_away": feature_importance.get("avg_xg_created_away", 0)
+                "avg_xg_conceded_away": feature_importance.get(
+                    "avg_xg_conceded_away", 0
+                )
+                "xg_advantage": feature_importance.get("xg_advantage", 0)
             }
         }
 
@@ -473,18 +514,18 @@ class HybridModelTrainer:
         # 保存训练报告
         timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         report = {
-            'model_name': model_name,
-            'version': '1.2',
-            'training_date': timestamp_str,
-            'feature_count': len(self.feature_names),
-            'feature_names': self.feature_names,
-            'rolling_window': self.rolling_window,
-            'confidence_threshold': self.confidence_threshold,
-            'xg_data_ratio': 'N/A',  # 将在训练完成后更新
+            "model_name": model_name
+            "version": "1.2"
+            "training_date": timestamp_str
+            "feature_count": len(self.feature_names)
+            "feature_names": self.feature_names
+            "rolling_window": self.rolling_window
+            "confidence_threshold": self.confidence_threshold
+            "xg_data_ratio": "N/A",  # 将在训练完成后更新
         }
 
         report_file = model_dir / f"{model_name}_{timestamp}_summary.txt"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             f.write("Football Prediction Model V1.2 Hybrid Summary\n")
             f.write(f"{'='*50}\n\n")
             f.write(f"Model Name: {report['model_name']}\n")
@@ -494,7 +535,7 @@ class HybridModelTrainer:
             f.write(f"Rolling Window: {report['rolling_window']}\n")
             f.write(f"Confidence Threshold: {report['confidence_threshold']}\n\n")
             f.write("Features:\n")
-            for i, feature in enumerate(report['feature_names'], 1):
+            for i, feature in enumerate(report["feature_names"], 1):
                 f.write(f"  {i:2d}. {feature}\n")
 
         logger.info(f"✅ 模型已保存: {model_file}")
@@ -503,7 +544,7 @@ class HybridModelTrainer:
     async def train(self):
         """主训练流程"""
         logger.info("🚀 开始V1.2混合模型训练流程")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         start_time = datetime.now()
 
@@ -520,7 +561,7 @@ class HybridModelTrainer:
             X, y = self.prepare_features_and_labels(df)
 
             # 4. 时间序列切分
-            df_sorted = df.sort_values('match_date').reset_index(drop=True)
+            df_sorted = df.sort_values("match_date").reset_index(drop=True)
             split_index = int(len(df_sorted) * (1 - self.test_size))
 
             X_train = X.iloc[:split_index]
@@ -549,23 +590,29 @@ class HybridModelTrainer:
 
             # 10. 输出报告
             self.generate_training_report(
-                start_time, train_accuracy, test_accuracy,
-                backtest_results, feature_importance
+                start_time
+                train_accuracy
+                test_accuracy
+                backtest_results
+                feature_importance
             )
 
         except Exception as e:
             logger.error(f"❌ 训练流程失败: {e}")
             import traceback
+
             traceback.print_exc()
 
-    def generate_training_report(self, start_time, train_acc, test_acc, backtest_results, feature_importance):
+    def generate_training_report(
+        self, start_time, train_acc, test_acc, backtest_results, feature_importance
+    ):
         """生成训练报告"""
         end_time = datetime.now()
         training_time = (end_time - start_time).total_seconds()
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🧠 首席AI科学家 - XGBoost V1.2混合模型训练报告")
-        print("="*80)
+        print("=" * 80)
 
         print("\n📊 训练基本信息:")
         print(f"   ⏱️ 训练时间: {training_time:.2f}秒")
@@ -588,11 +635,13 @@ class HybridModelTrainer:
         print(f"   🎖️ 投资回报率(ROI): {backtest_results['roi']:+.2f}%")
 
         print("\n🏆 特征重要性 Top 5:")
-        for i, (feature, importance) in enumerate(feature_importance['top_5_features'], 1):
+        for i, (feature, importance) in enumerate(
+            feature_importance["top_5_features"], 1
+        ):
             print(f"   {i}. {feature}: {importance:.4f}")
 
         print("\n📊 XG特征重要性:")
-        xg_importance = feature_importance['xg_features_importance']
+        xg_importance = feature_importance["xg_features_importance"]
         total_xg_importance = sum(xg_importance.values())
         print(f"   📈 总xG特征重要性: {total_xg_importance:.4f}")
         for feature, imp in xg_importance.items():
@@ -601,10 +650,10 @@ class HybridModelTrainer:
 
         # 结论
         print("\n🎯 模型结论:")
-        if backtest_results['roi'] > 0:
+        if backtest_results["roi"] > 0:
             print(f"   ✅ 正盈利! ROI: {backtest_results['roi']:+.2f}%")
             print("   💡 模型具备实战价值，可以考虑实盘应用")
-        elif backtest_results['roi'] > -5:
+        elif backtest_results["roi"] > -5:
             print(f"   ⚠️ 微亏损: ROI: {backtest_results['roi']:+.2f}%")
             print("   💡 模型接近盈利边界，可以尝试优化阈值或特征")
         else:
@@ -617,14 +666,14 @@ class HybridModelTrainer:
             print("      • 增加更多xG数据样本")
             print("   • 优化xG特征工程方法")
 
-        if backtest_results['total_bets'] < len(test_acc) * 0.1:
+        if backtest_results["total_bets"] < len(test_acc) * 0.1:
             print("   🎯 投注次数较少，建议:")
             print("      • 降低信心阈值到0.50-0.52")
             print("      • 扩大样本规模")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🧠 首席AI科学家训练完成 - V1.2混合模型已就绪")
-        print("="*80)
+        print("=" * 80)
 
 
 async def main():

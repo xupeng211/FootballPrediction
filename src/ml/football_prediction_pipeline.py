@@ -90,7 +90,7 @@ class FootballPredictionPipeline:
         }
         self.feature_selection_params = {
             **default_feature_selection_params,
-            **(feature_selection_params or {})
+            **(feature_selection_params or {}),
         }
 
         # 创建输出目录
@@ -98,7 +98,9 @@ class FootballPredictionPipeline:
 
         logger.info(f"Initialized FootballPredictionPipeline: {model_name}")
         if self.enable_feature_selection:
-            logger.info(f"Feature selection enabled with params: {self.feature_selection_params}")
+            logger.info(
+                f"Feature selection enabled with params: {self.feature_selection_params}"
+            )
 
     def build_feature_pipeline(
         self,
@@ -228,8 +230,7 @@ class FootballPredictionPipeline:
 
             # 初始化特征选择器
             self.feature_selector = FeatureSelector(
-                task_type=task_type,
-                **self.feature_selection_params
+                task_type=task_type, **self.feature_selection_params
             )
 
             # 执行特征选择
@@ -237,7 +238,7 @@ class FootballPredictionPipeline:
                 X_train_processed,
                 y_train,
                 top_k=feature_selection_top_k,
-                remove_collinear=True
+                remove_collinear=True,
             )
 
             # 应用特征选择
@@ -247,17 +248,25 @@ class FootballPredictionPipeline:
 
             # 保存选择的特征列表
             selected_features_path = self.output_dir / "selected_features.json"
-            with open(selected_features_path, 'w', encoding='utf-8') as f:
+            with open(selected_features_path, "w", encoding="utf-8") as f:
                 import json
-                json.dump({
-                    "selected_features": selected_features,
-                    "removed_features": self.feature_selector.removed_features,
-                    "selection_params": self.feature_selection_params,
-                    "task_type": task_type,
-                    "selection_time": pd.Timestamp.now().isoformat()
-                }, f, indent=2, ensure_ascii=False)
 
-            logger.info(f"特征选择完成: 从 {X_train.shape[1]} 个特征中选择 {len(selected_features)} 个")
+                json.dump(
+                    {
+                        "selected_features": selected_features,
+                        "removed_features": self.feature_selector.removed_features,
+                        "selection_params": self.feature_selection_params,
+                        "task_type": task_type,
+                        "selection_time": pd.Timestamp.now().isoformat(),
+                    },
+                    f,
+                    indent=2,
+                    ensure_ascii=False,
+                )
+
+            logger.info(
+                f"特征选择完成: 从 {X_train.shape[1]} 个特征中选择 {len(selected_features)} 个"
+            )
             logger.info(f"选择的特征: {selected_features}")
 
             # 保存特征选择结果
@@ -316,11 +325,14 @@ class FootballPredictionPipeline:
         if self.enable_feature_selection and self.feature_selector:
             training_result["feature_selection"] = {
                 "enabled": True,
-                "original_features": X_train.shape[1] if self.feature_pipeline else X_train.shape[1],
+                "original_features": (
+                    X_train.shape[1] if self.feature_pipeline else X_train.shape[1]
+                ),
                 "selected_features": len(selected_features),
                 "selected_feature_names": selected_features,
                 "removed_features": len(self.feature_selector.removed_features),
-                "feature_importance_available": self.feature_selector.feature_importance_df is not None
+                "feature_importance_available": self.feature_selector.feature_importance_df
+                is not None,
             }
         else:
             training_result["feature_selection"] = {"enabled": False}
@@ -347,7 +359,11 @@ class FootballPredictionPipeline:
             X_processed = X
 
         # 应用特征选择
-        if self.enable_feature_selection and self.feature_selector and self.feature_selector.selected_features:
+        if (
+            self.enable_feature_selection
+            and self.feature_selector
+            and self.feature_selector.selected_features
+        ):
             X_processed = X_processed[self.feature_selector.selected_features]
 
         # 模型预测
@@ -372,7 +388,11 @@ class FootballPredictionPipeline:
             X_processed = X
 
         # 应用特征选择
-        if self.enable_feature_selection and self.feature_selector and self.feature_selector.selected_features:
+        if (
+            self.enable_feature_selection
+            and self.feature_selector
+            and self.feature_selector.selected_features
+        ):
             X_processed = X_processed[self.feature_selector.selected_features]
 
         # 模型预测概率
