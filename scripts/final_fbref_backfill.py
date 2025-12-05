@@ -14,7 +14,6 @@ import time
 import random
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional
 import pandas as pd
 from io import StringIO
 
@@ -31,9 +30,9 @@ except ImportError as e:
     DB_SAVER_AVAILABLE = False
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO
+    format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
 logger = logging.getLogger(__name__)
 
@@ -52,24 +51,24 @@ class FinalFBrefCollector:
     def __init__(self):
         self.session_configs = [
             {
-                "method": "curl_cffi",
-                "impersonate": "chrome",
+                "method": "curl_cffi"
+                "impersonate": "chrome"
                 "headers": {
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                },
-            },
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+                    "Accept-Language": "en-US,en;q=0.9"
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
+            }
             {
-                "method": "requests",
+                "method": "requests"
                 "headers": {
-                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8",
-                    "Accept-Encoding": "gzip, deflate",
-                    "Connection": "keep-alive",
-                },
-            },
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+                    "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8"
+                    "Accept-Encoding": "gzip, deflate"
+                    "Connection": "keep-alive"
+                }
+            }
         ]
 
         self.max_retries = 3
@@ -201,16 +200,16 @@ class FinalFBrefCollector:
 
         # 生成2023-24赛季英超数据 (基于真实比赛记录)
         mock_matches = [
-            ("2023-08-11", "Burnley", "0-3", "Manchester City", 0.8, 2.6, 21947),
-            ("2023-08-12", "Arsenal", "2-1", "Nottingham Forest", 2.1, 0.9, 60331),
-            ("2023-08-12", "Bournemouth", "1-1", "West Ham", 1.2, 1.5, 10590),
-            ("2023-08-12", "Brighton", "4-1", "Luton Town", 3.8, 1.1, 31614),
-            ("2023-08-12", "Liverpool", "1-1", "Chelsea", 1.8, 1.4, 53171),
-            ("2023-08-13", "Crystal Palace", "1-0", "Sheffield Utd", 1.5, 0.7, 25184),
-            ("2023-08-14", "Fulham", "0-1", "Brentford", 0.9, 1.3, 24441),
-            ("2023-08-15", "Newcastle", "5-1", "Aston Villa", 3.2, 1.8, 52226),
-            ("2023-08-18", "Manchester Utd", "3-2", "Tottenham", 2.1, 2.4, 73781),
-            ("2023-08-19", "Wolves", "1-4", "Brighton", 0.8, 2.9, 31642),
+            ("2023-08-11", "Burnley", "0-3", "Manchester City", 0.8, 2.6, 21947)
+            ("2023-08-12", "Arsenal", "2-1", "Nottingham Forest", 2.1, 0.9, 60331)
+            ("2023-08-12", "Bournemouth", "1-1", "West Ham", 1.2, 1.5, 10590)
+            ("2023-08-12", "Brighton", "4-1", "Luton Town", 3.8, 1.1, 31614)
+            ("2023-08-12", "Liverpool", "1-1", "Chelsea", 1.8, 1.4, 53171)
+            ("2023-08-13", "Crystal Palace", "1-0", "Sheffield Utd", 1.5, 0.7, 25184)
+            ("2023-08-14", "Fulham", "0-1", "Brentford", 0.9, 1.3, 24441)
+            ("2023-08-15", "Newcastle", "5-1", "Aston Villa", 3.2, 1.8, 52226)
+            ("2023-08-18", "Manchester Utd", "3-2", "Tottenham", 2.1, 2.4, 73781)
+            ("2023-08-19", "Wolves", "1-4", "Brighton", 0.8, 2.9, 31642)
         ]
 
         for date, home, score, away, xg, xga, attendance in mock_matches:
@@ -327,11 +326,11 @@ class FinalFBrefCollector:
     def get_available_leagues(self) -> dict[str, str]:
         """获取支持的联赛URL"""
         return {
-            "Premier League": "https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures",
-            "La Liga": "https://fbref.com/en/comps/12/schedule/La-Liga-Scores-and-Fixtures",
-            "Serie A": "https://fbref.com/en/comps/11/schedule/Serie-A-Scores-and-Fixtures",
-            "Bundesliga": "https://fbref.com/en/comps/20/schedule/Bundesliga-Scores-and-Fixtures",
-            "Ligue 1": "https://fbref.com/en/comps/13/schedule/Ligue-1-Scores-and-Fixtures",
+            "Premier League": "https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures"
+            "La Liga": "https://fbref.com/en/comps/12/schedule/La-Liga-Scores-and-Fixtures"
+            "Serie A": "https://fbref.com/en/comps/11/schedule/Serie-A-Scores-and-Fixtures"
+            "Bundesliga": "https://fbref.com/en/comps/20/schedule/Bundesliga-Scores-and-Fixtures"
+            "Ligue 1": "https://fbref.com/en/comps/13/schedule/Ligue-1-Scores-and-Fixtures"
         }
 
 

@@ -14,13 +14,9 @@ TOKEN_COMBINATIONS = [
     {
         "name": "原始tokens",
         "x-mas": "eyJib2R5Ijp7InVybCI6Ii9hcGkvZGF0YS9hdWRpby1tYXRjaGVzIiwiY29kZSI6MTc2NDA1NTcxMjgyOCwiZm9vIjoicHJvZHVjdGlvbjoyMDhhOGY4N2MyY2MxMzM0M2YxZGQ4NjcxNDcxY2Y1YTAzOWRjZWQzIn0sInNpZ25hdHVyZSI6IkMyMkI0MUQ5Njk2NUJBREM1NjMyNzcwRDgyNzVFRTQ4In0=",
-        "x-foo": "production:208a8f87c2cc13343f1dd8671471cf5a039dced3"
+        "x-foo": "production:208a8f87c2cc13343f1dd8671471cf5a039dced3",
     },
-    {
-        "name": "简化tokens",
-        "x-mas": "",
-        "x-foo": ""
-    }
+    {"name": "简化tokens", "x-mas": "", "x-foo": ""},
 ]
 
 # 多种可能的API端点
@@ -31,6 +27,7 @@ API_ENDPOINTS = [
     "https://www.fotmob.com/api/translations",
     "https://fotmob.com/api/leagues",  # 尝试无www
 ]
+
 
 def test_combination(tokens, endpoint):
     """测试单个组合"""
@@ -53,16 +50,18 @@ def test_combination(tokens, endpoint):
 
         result = {
             "status_code": response.status_code,
-            "content_type": response.headers.get('content-type', 'unknown'),
-            "content_length": response.headers.get('content-length', '0'),
-            "success": response.status_code == 200
+            "content_type": response.headers.get("content-type", "unknown"),
+            "content_length": response.headers.get("content-length", "0"),
+            "success": response.status_code == 200,
         }
 
         if response.status_code == 200:
             try:
                 data = response.json()
                 result["data_type"] = type(data).__name__
-                result["data_keys"] = list(data.keys()) if isinstance(data, dict) else []
+                result["data_keys"] = (
+                    list(data.keys()) if isinstance(data, dict) else []
+                )
             except:
                 result["data_type"] = "text"
                 result["data_preview"] = response.text[:200]
@@ -70,17 +69,15 @@ def test_combination(tokens, endpoint):
         return result
 
     except Exception as e:
-        return {
-            "error": str(e),
-            "success": False
-        }
+        return {"error": str(e), "success": False}
+
 
 def main():
     """主函数"""
-    print("🔧" + "="*60)
+    print("🔧" + "=" * 60)
     print("🔐 手动Token测试")
     print("👨‍💻 运维工程师 - 组合测试")
-    print("="*62)
+    print("=" * 62)
 
     successful_combinations = []
 
@@ -99,20 +96,18 @@ def main():
                 print(f"      数据类型: {result.get('data_type', 'unknown')}")
                 print(f"      数据键: {result.get('data_keys', [])}")
 
-                successful_combinations.append({
-                    'tokens': tokens['name'],
-                    'endpoint': endpoint,
-                    'result': result
-                })
+                successful_combinations.append(
+                    {"tokens": tokens["name"], "endpoint": endpoint, "result": result}
+                )
             else:
-                status = result.get('status_code', 'ERROR')
-                error = result.get('error', '')
+                status = result.get("status_code", "ERROR")
+                error = result.get("error", "")
                 print(f"      ❌ 失败: {status} {error}")
 
     # 总结结果
-    print("\n" + "="*62)
+    print("\n" + "=" * 62)
     print("📊 测试总结")
-    print("="*62)
+    print("=" * 62)
 
     if successful_combinations:
         print(f"✅ 找到 {len(successful_combinations)} 个可用组合:")
@@ -124,11 +119,15 @@ def main():
 
             # 如果找到可用的组合，生成更新代码
             if i == 1:  # 使用第一个成功的组合
-                tokens_obj = next(t for t in TOKEN_COMBINATIONS if t['name'] == combo['tokens'])
+                tokens_obj = next(
+                    t for t in TOKEN_COMBINATIONS if t["name"] == combo["tokens"]
+                )
 
                 print("\n🔧 更新代码:")
                 print("headers = {")
-                print("    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...'")
+                print(
+                    "    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...'"
+                )
                 print("    'Accept': 'application/json, text/plain, */*'")
                 print("    'Referer': 'https://www.fotmob.com/'")
                 print("    'Origin': 'https://www.fotmob.com'")
@@ -150,6 +149,7 @@ def main():
         print("4. 需要更新的token获取方式")
 
         return False
+
 
 if __name__ == "__main__":
     success = main()

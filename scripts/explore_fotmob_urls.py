@@ -10,19 +10,22 @@ import requests
 import re
 from typing import List, Dict
 
+
 def explore_fotmob_structure():
     """探索FotMob网站结构"""
-    print("🔍" + "="*60)
+    print("🔍" + "=" * 60)
     print("🌐 FotMob URL 结构探索")
     print("👨‍💻 网页爬虫专家 - 寻找正确URL格式")
-    print("="*62)
+    print("=" * 62)
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    )
 
     # 尝试不同的URL格式
     url_formats = [
@@ -54,7 +57,7 @@ def explore_fotmob_structure():
             elif response.status_code == 404:
                 print("   ❌ 404 Not Found")
             elif response.status_code == 302:
-                location = response.headers.get('location', 'Unknown')
+                location = response.headers.get("location", "Unknown")
                 print(f"   🔄 302 Redirect: {location}")
             else:
                 print(f"   ⚠️ 其他状态: {response.status_code}")
@@ -92,18 +95,19 @@ def explore_fotmob_structure():
 
     return working_urls
 
+
 def analyze_page_structure(html: str, url: str):
     """分析页面结构"""
     print("   📋 页面结构分析:")
 
     # 检查是否是Next.js
-    if '__NEXT_DATA__' in html:
+    if "__NEXT_DATA__" in html:
         print("      🟢 Next.js SSR页面")
-    elif 'window.__INITIAL_STATE__' in html:
+    elif "window.__INITIAL_STATE__" in html:
         print("      🟢 客户端状态注入")
 
     # 检查是否包含数据
-    data_indicators = ['props', 'content', 'match', 'fixture', 'game']
+    data_indicators = ["props", "content", "match", "fixture", "game"]
     html_lower = html.lower()
 
     found_indicators = []
@@ -114,15 +118,18 @@ def analyze_page_structure(html: str, url: str):
     if found_indicators:
         print(f"      📊 发现数据指示器: {found_indicators}")
 
+
 def test_recent_matches(match_ids: list[str]):
     """测试最近的比赛"""
     print("\n🎯 测试最近比赛:")
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "text/html",
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "text/html",
+        }
+    )
 
     for match_id in match_ids:
         url = f"https://www.fotmob.com/match/{match_id}"
@@ -136,11 +143,11 @@ def test_recent_matches(match_ids: list[str]):
                 html = response.text
 
                 # 快速检查是否包含数据
-                if '__NEXT_DATA__' in html or 'content' in html:
+                if "__NEXT_DATA__" in html or "content" in html:
                     print("   ✅ 包含数据结构")
 
                     # 简单检查xG相关
-                    if 'xg' in html.lower() or 'expected' in html.lower():
+                    if "xg" in html.lower() or "expected" in html.lower():
                         print("   🎯 可能包含xG数据")
                         return True, url, html
                     else:
@@ -152,6 +159,7 @@ def test_recent_matches(match_ids: list[str]):
             print(f"   ❌ 请求失败: {e}")
 
     return False, None, None
+
 
 def main():
     """主函数"""
@@ -173,9 +181,9 @@ def main():
                 print(f"   HTML大小: {len(html)} 字符")
 
                 # 快速分析
-                if '__NEXT_DATA__' in html:
+                if "__NEXT_DATA__" in html:
                     print("   ✅ Next.js SSR - 可以提取JSON数据")
-                if 'xg' in html.lower():
+                if "xg" in html.lower():
                     print("   ✅ 包含xG相关数据")
 
                 return True
@@ -188,6 +196,7 @@ def main():
     print("   4. 考虑使用代理或VPN")
 
     return False
+
 
 if __name__ == "__main__":
     success = main()

@@ -24,8 +24,7 @@ warnings.filterwarnings("ignore")
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -48,41 +47,46 @@ def generate_synthetic_football_data(n_samples=1000, n_features=50, random_state
 
     # 球队实力特征 (10个)
     for i in range(5):
-        feature_names.extend([
-            f'home_team_strength_{i}',
-            f'away_team_strength_{i}',
-            f'strength_diff_{i}'
-        ])
+        feature_names.extend(
+            [f"home_team_strength_{i}", f"away_team_strength_{i}", f"strength_diff_{i}"]
+        )
 
     # 历史交锋特征 (8个)
     for i in range(4):
-        feature_names.extend([
-            f'historical_home_wins_{i}',
-            f'historical_away_wins_{i}'
-        ])
+        feature_names.extend([f"historical_home_wins_{i}", f"historical_away_wins_{i}"])
 
     # 近期状态特征 (12个)
     for i in range(6):
-        feature_names.extend([
-            f'home_recent_form_{i}',
-            f'away_recent_form_{i}'
-        ])
+        feature_names.extend([f"home_recent_form_{i}", f"away_recent_form_{i}"])
 
     # 统计数据特征 (15个)
     stats_features = [
-        'home_goals_scored', 'home_goals_conceded',
-        'away_goals_scored', 'away_goals_conceded',
-        'home_shots_on_target', 'away_shots_on_target',
-        'home_possession', 'away_possession',
-        'home_pass_accuracy', 'away_pass_accuracy',
-        'home_fouls', 'away_fouls',
-        'home_corners', 'away_corners',
-        'home_yellow_cards'
+        "home_goals_scored",
+        "home_goals_conceded",
+        "away_goals_scored",
+        "away_goals_conceded",
+        "home_shots_on_target",
+        "away_shots_on_target",
+        "home_possession",
+        "away_possession",
+        "home_pass_accuracy",
+        "away_pass_accuracy",
+        "home_fouls",
+        "away_fouls",
+        "home_corners",
+        "away_corners",
+        "home_yellow_cards",
     ]
     feature_names.extend(stats_features)
 
     # 环境特征 (5个)
-    env_features = ['home_advantage', 'weather_condition', 'crowd_factor', 'travel_distance', 'rest_days']
+    env_features = [
+        "home_advantage",
+        "weather_condition",
+        "crowd_factor",
+        "travel_distance",
+        "rest_days",
+    ]
     feature_names.extend(env_features)
 
     # 确保特征数量正确
@@ -94,19 +98,23 @@ def generate_synthetic_football_data(n_samples=1000, n_features=50, random_state
     # 添加一些相关性特征（模拟共线性）
     if n_features >= 20:
         # 创建高度相关的特征对
-        if 'home_team_strength_0' in X.columns and 'away_team_strength_0' in X.columns:
-            X['home_strength_copy'] = X['home_team_strength_0'] * 0.95 + np.random.normal(0, 0.05, n_samples)
-            X['away_strength_copy'] = X['away_team_strength_0'] * 0.98 + np.random.normal(0, 0.02, n_samples)
+        if "home_team_strength_0" in X.columns and "away_team_strength_0" in X.columns:
+            X["home_strength_copy"] = X[
+                "home_team_strength_0"
+            ] * 0.95 + np.random.normal(0, 0.05, n_samples)
+            X["away_strength_copy"] = X[
+                "away_team_strength_0"
+            ] * 0.98 + np.random.normal(0, 0.02, n_samples)
 
             # 添加这些新特征到DataFrame
-            additional_features = ['home_strength_copy', 'away_strength_copy']
+            additional_features = ["home_strength_copy", "away_strength_copy"]
         else:
             additional_features = []
 
         # 只有当相关特征存在时才添加比值特征
-        if 'home_goals_scored' in X.columns and 'away_goals_conceded' in X.columns:
-            X['goals_ratio'] = X['home_goals_scored'] / (X['away_goals_conceded'] + 1)
-            additional_features.append('goals_ratio')
+        if "home_goals_scored" in X.columns and "away_goals_conceded" in X.columns:
+            X["goals_ratio"] = X["home_goals_scored"] / (X["away_goals_conceded"] + 1)
+            additional_features.append("goals_ratio")
 
         # 更新特征名称列表
         if additional_features:
@@ -116,10 +124,14 @@ def generate_synthetic_football_data(n_samples=1000, n_features=50, random_state
     # 生成目标变量（比赛结果）
     # 基于几个重要特征的线性组合
     important_features = [
-        'home_team_strength_0', 'away_team_strength_0', 'strength_diff_0',
-        'historical_home_wins_0', 'historical_away_wins_0',
-        'home_recent_form_0', 'away_recent_form_0',
-        'home_advantage'
+        "home_team_strength_0",
+        "away_team_strength_0",
+        "strength_diff_0",
+        "historical_home_wins_0",
+        "historical_away_wins_0",
+        "home_recent_form_0",
+        "away_recent_form_0",
+        "home_advantage",
     ]
 
     # 确保重要特征存在
@@ -127,10 +139,9 @@ def generate_synthetic_football_data(n_samples=1000, n_features=50, random_state
 
     if available_important:
         # 计算比赛结果的概率
-        logit = (
-            X[available_important].sum(axis=1) * 0.3 +
-            np.random.normal(0, 0.5, n_samples)  # 添加噪声
-        )
+        logit = X[available_important].sum(axis=1) * 0.3 + np.random.normal(
+            0, 0.5, n_samples
+        )  # 添加噪声
 
         # 转换为概率
         prob = 1 / (1 + np.exp(-logit))
@@ -149,9 +160,9 @@ def generate_synthetic_football_data(n_samples=1000, n_features=50, random_state
 
 def demo_basic_feature_selection():
     """演示基础特征选择功能."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🎯 演示1: 基础特征选择功能")
-    print("="*60)
+    print("=" * 60)
 
     # 生成数据
     X, y = generate_synthetic_football_data(n_samples=1000, n_features=30)
@@ -161,15 +172,11 @@ def demo_basic_feature_selection():
         task_type="classification",
         correlation_threshold=0.9,
         min_features=5,
-        max_features=20
+        max_features=20,
     )
 
     # 执行特征选择
-    selected_features = selector.select_features(
-        X, y,
-        top_k=15,
-        remove_collinear=True
-    )
+    selected_features = selector.select_features(X, y, top_k=15, remove_collinear=True)
 
     # 显示结果
     print("\n📊 特征选择结果:")
@@ -195,11 +202,13 @@ def demo_basic_feature_selection():
         for i in range(len(corr_matrix.columns)):
             for j in range(i + 1, len(corr_matrix.columns)):
                 if corr_matrix.iloc[i, j] > 0.9:
-                    high_corr_pairs.append((
-                        corr_matrix.columns[i],
-                        corr_matrix.columns[j],
-                        corr_matrix.iloc[i, j]
-                    ))
+                    high_corr_pairs.append(
+                        (
+                            corr_matrix.columns[i],
+                            corr_matrix.columns[j],
+                            corr_matrix.iloc[i, j],
+                        )
+                    )
 
         if high_corr_pairs:
             print("\n⚠️  检测到的高相关性特征对 (r > 0.9):")
@@ -211,15 +220,16 @@ def demo_basic_feature_selection():
 
 def demo_feature_selection_pipeline():
     """演示集成到训练流水线中的特征选择."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🚀 演示2: 集成特征选择的训练流水线")
-    print("="*60)
+    print("=" * 60)
 
     # 生成数据
     X, y = generate_synthetic_football_data(n_samples=800, n_features=25)
 
     # 分割数据
     from sklearn.model_selection import train_test_split
+
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
@@ -237,18 +247,20 @@ def demo_feature_selection_pipeline():
                 "task_type": "classification",
                 "correlation_threshold": 0.85,
                 "min_features": 3,
-                "max_features": 15
-            }
+                "max_features": 15,
+            },
         )
 
         # 训练模型
         print("\n🏃 开始训练模型...")
         training_result = pipeline.train_model(
-            X_train, y_train,
-            X_test, y_test,
+            X_train,
+            y_train,
+            X_test,
+            y_test,
             model_type="xgboost",
             feature_selection_top_k=10,
-            optimize_hyperparameters=False  # 为了演示速度，跳过超参数优化
+            optimize_hyperparameters=False,  # 为了演示速度，跳过超参数优化
         )
 
         # 显示训练结果
@@ -256,14 +268,20 @@ def demo_feature_selection_pipeline():
         print(f"模型性能: {training_result.get('metrics', {})}")
 
         # 显示特征选择信息
-        feature_selection_info = training_result.get('feature_selection', {})
-        if feature_selection_info.get('enabled'):
+        feature_selection_info = training_result.get("feature_selection", {})
+        if feature_selection_info.get("enabled"):
             print("\n🎯 特征选择结果:")
-            print(f"原始特征数: {feature_selection_info.get('original_features', 'N/A')}")
-            print(f"选择特征数: {feature_selection_info.get('selected_features', 'N/A')}")
-            print(f"移除特征数: {feature_selection_info.get('removed_features', 'N/A')}")
+            print(
+                f"原始特征数: {feature_selection_info.get('original_features', 'N/A')}"
+            )
+            print(
+                f"选择特征数: {feature_selection_info.get('selected_features', 'N/A')}"
+            )
+            print(
+                f"移除特征数: {feature_selection_info.get('removed_features', 'N/A')}"
+            )
 
-            selected_features = feature_selection_info.get('selected_feature_names', [])
+            selected_features = feature_selection_info.get("selected_feature_names", [])
             if selected_features:
                 print("\n✅ 最终选择的特征:")
                 for i, feature in enumerate(selected_features, 1):
@@ -292,18 +310,16 @@ def demo_feature_selection_pipeline():
 
 def demo_feature_importance_analysis():
     """演示特征重要性分析."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 演示3: 特征重要性分析")
-    print("="*60)
+    print("=" * 60)
 
     # 生成具有明确重要性结构的数据
     X, y = generate_synthetic_football_data(n_samples=500, n_features=20)
 
     # 创建特征选择器
     selector = FeatureSelector(
-        task_type="classification",
-        correlation_threshold=0.95,
-        random_state=42
+        task_type="classification", correlation_threshold=0.95, random_state=42
     )
 
     # 执行特征选择
@@ -317,26 +333,30 @@ def demo_feature_importance_analysis():
 
         # 按不同重要性指标排序
         print("\n1️⃣ 按平均重要性排序:")
-        avg_top = importance_df.nlargest(5, 'importance_avg')
+        avg_top = importance_df.nlargest(5, "importance_avg")
         for _i, row in avg_top.iterrows():
-            print(f"   {row['feature']:<20} (平均: {row['importance_avg']:.4f}, "
-                  f"最大: {row['importance_max']:.4f})")
+            print(
+                f"   {row['feature']:<20} (平均: {row['importance_avg']:.4f}, "
+                f"最大: {row['importance_max']:.4f})"
+            )
 
         print("\n2️⃣ 按随机森林重要性排序:")
-        if 'rf_importance' in importance_df.columns:
-            rf_top = importance_df.nlargest(5, 'rf_importance')
+        if "rf_importance" in importance_df.columns:
+            rf_top = importance_df.nlargest(5, "rf_importance")
             for _i, row in rf_top.iterrows():
                 print(f"   {row['feature']:<20} (RF重要性: {row['rf_importance']:.4f})")
 
         print("\n3️⃣ 按互信息排序:")
-        if 'mi_importance' in importance_df.columns:
-            mi_top = importance_df.nlargest(5, 'mi_importance')
+        if "mi_importance" in importance_df.columns:
+            mi_top = importance_df.nlargest(5, "mi_importance")
             for _i, row in mi_top.iterrows():
                 print(f"   {row['feature']:<20} (互信息: {row['mi_importance']:.4f})")
 
     # 尝试生成特征重要性图
     try:
-        selector.plot_feature_importance(top_k=10, save_path="feature_importance_demo.png")
+        selector.plot_feature_importance(
+            top_k=10, save_path="feature_importance_demo.png"
+        )
         print("\n📈 特征重要性图已保存到: feature_importance_demo.png")
     except Exception as e:
         print(f"\n⚠️  绘图失败（可能缺少matplotlib）: {e}")
@@ -344,9 +364,9 @@ def demo_feature_importance_analysis():
 
 def demo_collinearity_detection():
     """演示共线性检测功能."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🔗 演示4: 共线性检测")
-    print("="*60)
+    print("=" * 60)
 
     # 生成具有高相关性的数据
     np.random.seed(42)
@@ -354,25 +374,31 @@ def demo_collinearity_detection():
 
     # 创建基础特征
     base_data = {
-        'feature_A': np.random.randn(n_samples),
-        'feature_B': np.random.randn(n_samples),
-        'feature_C': np.random.randn(n_samples),
+        "feature_A": np.random.randn(n_samples),
+        "feature_B": np.random.randn(n_samples),
+        "feature_C": np.random.randn(n_samples),
     }
 
     # 创建高相关性的特征
-    base_data['feature_A_copy'] = base_data['feature_A'] * 0.97 + np.random.normal(0, 0.03, n_samples)
-    base_data['feature_A_copy2'] = base_data['feature_A'] * 0.99 + np.random.normal(0, 0.01, n_samples)
-    base_data['feature_B_near_duplicate'] = base_data['feature_B'] * 0.94 + np.random.normal(0, 0.06, n_samples)
+    base_data["feature_A_copy"] = base_data["feature_A"] * 0.97 + np.random.normal(
+        0, 0.03, n_samples
+    )
+    base_data["feature_A_copy2"] = base_data["feature_A"] * 0.99 + np.random.normal(
+        0, 0.01, n_samples
+    )
+    base_data["feature_B_near_duplicate"] = base_data[
+        "feature_B"
+    ] * 0.94 + np.random.normal(0, 0.06, n_samples)
 
     # 创建一些不相关的特征
-    base_data['independent_1'] = np.random.randn(n_samples)
-    base_data['independent_2'] = np.random.randn(n_samples)
-    base_data['independent_3'] = np.random.randn(n_samples)
+    base_data["independent_1"] = np.random.randn(n_samples)
+    base_data["independent_2"] = np.random.randn(n_samples)
+    base_data["independent_3"] = np.random.randn(n_samples)
 
     X = pd.DataFrame(base_data)
 
     # 生成目标变量（只与某些特征相关）
-    y = ((base_data['feature_A'] + base_data['feature_B'] * 0.5) > 0).astype(int)
+    y = ((base_data["feature_A"] + base_data["feature_B"] * 0.5) > 0).astype(int)
 
     print("📋 生成的数据特征:")
     print(f"  样本数: {n_samples}")
@@ -383,14 +409,14 @@ def demo_collinearity_detection():
     print("\n📊 特征相关性矩阵:")
     corr_matrix = X.corr()
     for i, col in enumerate(corr_matrix.columns):
-        correlations = [f"{corr_matrix.iloc[i, j]:.3f}" for j in range(len(corr_matrix.columns))]
+        correlations = [
+            f"{corr_matrix.iloc[i, j]:.3f}" for j in range(len(corr_matrix.columns))
+        ]
         print(f"  {col:<20} {'  '.join(correlations)}")
 
     # 使用特征选择器检测共线性
     selector = FeatureSelector(
-        task_type="classification",
-        correlation_threshold=0.9,
-        random_state=42
+        task_type="classification", correlation_threshold=0.9, random_state=42
     )
 
     print("\n🔍 执行共线性检测...")
@@ -407,11 +433,13 @@ def demo_collinearity_detection():
             for j in range(i + 1, len(selector.correlation_matrix.columns)):
                 corr_val = selector.correlation_matrix.iloc[i, j]
                 if corr_val > 0.9:
-                    high_corr_pairs.append((
-                        selector.correlation_matrix.columns[i],
-                        selector.correlation_matrix.columns[j],
-                        corr_val
-                    ))
+                    high_corr_pairs.append(
+                        (
+                            selector.correlation_matrix.columns[i],
+                            selector.correlation_matrix.columns[j],
+                            corr_val,
+                        )
+                    )
 
         if high_corr_pairs:
             print("\n⚠️  发现的高相关性特征对:")
@@ -424,7 +452,7 @@ def demo_collinearity_detection():
 def main():
     """主函数."""
     print("🚀 特征选择系统演示")
-    print("="*60)
+    print("=" * 60)
     print("本演示将展示智能特征选择器的各种功能:")
     print("1. 基础特征选择功能")
     print("2. 集成到训练流水线")
@@ -444,9 +472,9 @@ def main():
         # 演示4: 共线性检测
         demo_collinearity_detection()
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🎉 所有演示完成!")
-        print("="*60)
+        print("=" * 60)
         print("\n💡 主要特性总结:")
         print("✅ 基于多种模型的特征重要性评估")
         print("✅ 智能共线性检测和移除")
@@ -459,7 +487,7 @@ def main():
         output_files = [
             "models/demo/selected_features.json",
             "models/demo/feature_selection_results.json",
-            "feature_importance_demo.png"
+            "feature_importance_demo.png",
         ]
         for file in output_files:
             if Path(file).exists():
@@ -470,6 +498,7 @@ def main():
     except Exception as e:
         logger.error(f"演示过程中发生错误: {e}")
         import traceback
+
         traceback.print_exc()
 
 

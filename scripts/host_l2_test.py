@@ -21,10 +21,10 @@ from src.database.async_manager import AsyncDatabaseManager
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class HostL2Tester:
     """宿主机L2采集测试器"""
@@ -38,14 +38,12 @@ class HostL2Tester:
         try:
             print("🔧 初始化数据库管理器...")
             self.db_manager = AsyncDatabaseManager()
-            await self.db_manager.initialize(database_url=os.getenv('DATABASE_URL'))
+            await self.db_manager.initialize(database_url=os.getenv("DATABASE_URL"))
             print("✅ 数据库管理器初始化成功")
 
             print("🔧 初始化FotMob采集器...")
             self.collector = HTMLFotMobCollector(
-                max_concurrent=1,  # 单线程测试
-                timeout=30,
-                max_retries=2
+                max_concurrent=1, timeout=30, max_retries=2  # 单线程测试
             )
             await self.collector.initialize()
             print("✅ FotMob采集器初始化成功")
@@ -68,41 +66,51 @@ class HostL2Tester:
             if match_data:
                 print("✅ 成功获取比赛数据!")
                 print("📊 基本信息:")
-                print(f"   比赛: {match_data.get('home_team', 'Unknown')} vs {match_data.get('away_team', 'Unknown')}")
-                print(f"   比分: {match_data.get('home_score', 0)} - {match_data.get('away_score', 0)}")
+                print(
+                    f"   比赛: {match_data.get('home_team', 'Unknown')} vs {match_data.get('away_team', 'Unknown')}"
+                )
+                print(
+                    f"   比分: {match_data.get('home_score', 0)} - {match_data.get('away_score', 0)}"
+                )
                 print(f"   状态: {match_data.get('status', 'Unknown')}")
 
                 # 检查S-Tier特征
-                details = match_data.get('details', {})
+                details = match_data.get("details", {})
 
                 # xG数据检查
-                if 'xg' in details:
-                    xg_home = details['xg'].get('home', 0)
-                    xg_away = details['xg'].get('away', 0)
+                if "xg" in details:
+                    xg_home = details["xg"].get("home", 0)
+                    xg_away = details["xg"].get("away", 0)
                     print(f"🎯 xG数据: 主队 {xg_home:.2f} - 客队 {xg_away:.2f}")
                     print("✅ xG数据提取成功!")
                 else:
                     print("❌ xG数据缺失")
 
                 # 球员评分检查
-                if 'player_ratings' in details:
-                    home_ratings = details['player_ratings'].get('home', [])
-                    away_ratings = details['player_ratings'].get('away', [])
+                if "player_ratings" in details:
+                    home_ratings = details["player_ratings"].get("home", [])
+                    away_ratings = details["player_ratings"].get("away", [])
                     if home_ratings:
-                        home_avg = sum(r for r in home_ratings if r) / len([r for r in home_ratings if r])
+                        home_avg = sum(r for r in home_ratings if r) / len(
+                            [r for r in home_ratings if r]
+                        )
                         print(f"⭐ 主队平均评分: {home_avg:.2f}")
                     if away_ratings:
-                        away_avg = sum(r for r in away_ratings if r) / len([r for r in away_ratings if r])
+                        away_avg = sum(r for r in away_ratings if r) / len(
+                            [r for r in away_ratings if r]
+                        )
                         print(f"⭐ 客队平均评分: {away_avg:.2f}")
                     print("✅ 球员评分提取成功!")
                 else:
                     print("❌ 球员评分缺失")
 
                 # 大机会数据检查
-                if 'big_chances' in details:
-                    big_chances_home = details['big_chances'].get('home', 0)
-                    big_chances_away = details['big_chances'].get('away', 0)
-                    print(f"🎯 大机会: 主队 {big_chances_home} - 客队 {big_chances_away}")
+                if "big_chances" in details:
+                    big_chances_home = details["big_chances"].get("home", 0)
+                    big_chances_away = details["big_chances"].get("away", 0)
+                    print(
+                        f"🎯 大机会: 主队 {big_chances_home} - 客队 {big_chances_away}"
+                    )
                     print("✅ 大机会数据提取成功!")
                 else:
                     print("❌ 大机会数据缺失")
@@ -119,6 +127,7 @@ class HostL2Tester:
         except Exception as e:
             print(f"❌ 采集失败: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -135,13 +144,14 @@ class HostL2Tester:
         except Exception as e:
             print(f"⚠️ 清理过程中出现错误: {e}")
 
+
 async def main():
     """主测试函数"""
     print("🚀 宿主机L2采集网络连通性测试")
     print("=" * 60)
 
     # 检查环境变量
-    if not os.getenv('DATABASE_URL'):
+    if not os.getenv("DATABASE_URL"):
         print("❌ 缺少DATABASE_URL环境变量")
         sys.exit(1)
 
@@ -176,6 +186,7 @@ async def main():
         sys.exit(1)
     finally:
         await tester.cleanup()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

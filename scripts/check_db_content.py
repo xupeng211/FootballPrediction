@@ -12,15 +12,14 @@ import json
 import logging
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-
+from typing import Any
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="🔍 %(asctime)s [%(levelname)8s] %(name)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO
+    format="🔍 %(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
 logger = logging.getLogger(__name__)
 
@@ -52,9 +51,9 @@ class FBrefDataQA:
         try:
             query = self.text(
                 """
-                SELECT m.id, m.match_date, m.home_score, m.away_score,
-                       m.stats, m.match_metadata, m.data_source, m.season,
-                       m.created_at,
+                SELECT m.id, m.match_date, m.home_score, m.away_score
+                       m.stats, m.match_metadata, m.data_source, m.season
+                       m.created_at
                        ht.name as home_team, at.name as away_team
                 FROM matches m
                 LEFT JOIN teams ht ON m.home_team_id = ht.id
@@ -70,17 +69,17 @@ class FBrefDataQA:
 
             if row:
                 return {
-                    "id": row[0],
-                    "match_date": row[1],
-                    "home_score": row[2],
-                    "away_score": row[3],
-                    "stats": row[4],
-                    "match_metadata": row[5],
-                    "data_source": row[6],
-                    "season": row[7],
-                    "created_at": row[8],
-                    "home_team": row[9],
-                    "away_team": row[10],
+                    "id": row[0]
+                    "match_date": row[1]
+                    "home_score": row[2]
+                    "away_score": row[3]
+                    "stats": row[4]
+                    "match_metadata": row[5]
+                    "data_source": row[6]
+                    "season": row[7]
+                    "created_at": row[8]
+                    "home_team": row[9]
+                    "away_team": row[10]
                 }
             return None
 
@@ -94,10 +93,10 @@ class FBrefDataQA:
             return {"status": "missing", "details": "stats字段为空"}
 
         xg_analysis = {
-            "status": "available",
-            "has_xg_field": "xg" in stats_data,
-            "xg_keys": [],
-            "xg_content": {},
+            "status": "available"
+            "has_xg_field": "xg" in stats_data
+            "xg_keys": []
+            "xg_content": {}
         }
 
         # 检查xg字段
@@ -134,12 +133,12 @@ class FBrefDataQA:
             return {"status": "missing", "details": "raw_data字段为空"}
 
         depth_analysis = {
-            "status": "available",
-            "total_fields": len(raw_data),
-            "field_names": list(raw_data.keys()),
-            "has_url_fields": [],
-            "url_content": {},
-            "potential_match_report_urls": [],
+            "status": "available"
+            "total_fields": len(raw_data)
+            "field_names": list(raw_data.keys())
+            "has_url_fields": []
+            "url_content": {}
+            "potential_match_report_urls": []
         }
 
         # 检查URL相关字段
@@ -153,9 +152,9 @@ class FBrefDataQA:
                 if "match" in field_name.lower() or "report" in field_name.lower():
                     depth_analysis["potential_match_report_urls"].append(
                         {
-                            "field": field_name,
-                            "value": str(field_value),
-                            "contains_fbref": "fbref" in str(field_value).lower(),
+                            "field": field_name
+                            "value": str(field_value)
+                            "contains_fbref": "fbref" in str(field_value).lower()
                         }
                     )
 
@@ -177,12 +176,12 @@ class FBrefDataQA:
             return {"status": "missing", "details": "metadata字段为空"}
 
         meta_analysis = {
-            "status": "available",
-            "total_fields": len(metadata),
-            "field_names": list(metadata.keys()),
-            "has_urls": False,
-            "url_fields": {},
-            "potential_match_report_urls": [],
+            "status": "available"
+            "total_fields": len(metadata)
+            "field_names": list(metadata.keys())
+            "has_urls": False
+            "url_fields": {}
+            "potential_match_report_urls": []
         }
 
         # 检查metadata中的URL

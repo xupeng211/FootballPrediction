@@ -10,19 +10,22 @@ import requests
 import json
 import re
 
+
 def extract_and_analyze_l1():
     """深度分析L1数据结构"""
-    print("🔬" + "="*70)
+    print("🔬" + "=" * 70)
     print("📊 L1数据结构深度分析")
     print("👨‍💻 数据架构师 - 深度解析HTML数据结构")
-    print("="*72)
+    print("=" * 72)
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    )
 
     url = "https://www.fotmob.com/matches?date=20241201"
     print(f"\n📡 分析L1页面: {url}")
@@ -65,7 +68,9 @@ def extract_and_analyze_l1():
     except Exception as e:
         print(f"❌ 分析失败: {e}")
         import traceback
+
         print(traceback.format_exc())
+
 
 def find_all_matches_data(obj, path=""):
     """递归查找所有matches相关数据"""
@@ -75,7 +80,18 @@ def find_all_matches_data(obj, path=""):
 
             # 检查是否是matches相关的key
             key_lower = key.lower()
-            if any(term in key_lower for term in ["match", "league", "fixture", "game", "event", "data", "content"]):
+            if any(
+                term in key_lower
+                for term in [
+                    "match",
+                    "league",
+                    "fixture",
+                    "game",
+                    "event",
+                    "data",
+                    "content",
+                ]
+            ):
                 print(f"\n📋 发现潜在数据路径: {new_path}")
                 print(f"   类型: {type(value).__name__}")
 
@@ -83,7 +99,15 @@ def find_all_matches_data(obj, path=""):
                     print(f"   Keys: {list(value.keys())[:10]}")  # 只显示前10个
 
                     # 检查是否包含比赛列表
-                    if any(league_term in str(value.keys()).lower() for league_term in ["premier", "la liga", "bundesliga", "serie a"]):
+                    if any(
+                        league_term in str(value.keys()).lower()
+                        for league_term in [
+                            "premier",
+                            "la liga",
+                            "bundesliga",
+                            "serie a",
+                        ]
+                    ):
                         print("   ⚽ 可能包含联赛数据!")
 
                         # 尝试统计比赛数量
@@ -105,6 +129,7 @@ def find_all_matches_data(obj, path=""):
         for i, item in enumerate(obj[:3]):
             find_all_matches_data(item, f"{path}[{i}]")
 
+
 def count_matches_in_structure(obj, path):
     """尝试统计结构中的比赛数量"""
     match_count = 0
@@ -114,14 +139,26 @@ def count_matches_in_structure(obj, path):
         for key, value in obj.items():
             if isinstance(value, list):
                 key_lower = key.lower()
-                if any(term in key_lower for term in ["match", "fixture", "game", "event"]):
+                if any(
+                    term in key_lower for term in ["match", "fixture", "game", "event"]
+                ):
                     match_count += len(value)
                     print(f"   📊 {key}: {len(value)} 个项目")
                 else:
                     # 检查列表项是否是比赛数据
                     if value and isinstance(value[0], dict):
                         sample = value[0]
-                        if any(match_field in str(sample.keys()).lower() for match_field in ["team", "club", "home", "away", "score", "time"]):
+                        if any(
+                            match_field in str(sample.keys()).lower()
+                            for match_field in [
+                                "team",
+                                "club",
+                                "home",
+                                "away",
+                                "score",
+                                "time",
+                            ]
+                        ):
                             match_count += len(value)
                             print(f"   📊 {key}: {len(value)} 个潜在比赛数据")
 
@@ -129,12 +166,16 @@ def count_matches_in_structure(obj, path):
         # 直接检查列表
         if obj and isinstance(obj[0], dict):
             sample = obj[0]
-            if any(match_field in str(sample.keys()).lower() for match_field in ["team", "club", "home", "away", "score", "time"]):
+            if any(
+                match_field in str(sample.keys()).lower()
+                for match_field in ["team", "club", "home", "away", "score", "time"]
+            ):
                 match_count = len(obj)
                 print(f"   📊 列表包含: {len(obj)} 个潜在比赛数据")
 
     if match_count > 0:
         print(f"   🎯 {path} 总计: {match_count} 个比赛数据")
+
 
 def search_all_paths(obj, max_depth=3, current_depth=0, path=""):
     """全面搜索所有路径，找到包含实际数据的路径"""
@@ -172,6 +213,7 @@ def search_all_paths(obj, max_depth=3, current_depth=0, path=""):
         # 检查列表的前几个元素
         for i in range(min(3, len(obj))):
             search_all_paths(obj[i], max_depth, current_depth + 1, f"{path}[{i}]")
+
 
 if __name__ == "__main__":
     extract_and_analyze_l1()

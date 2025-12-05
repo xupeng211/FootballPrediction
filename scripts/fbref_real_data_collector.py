@@ -14,8 +14,6 @@ import logging
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
-
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -23,9 +21,9 @@ from src.data.collectors.fbref_collector_stealth import StealthFBrefCollector
 from sqlalchemy import create_engine, text
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("logs/fbref_real_data.log"), logging.StreamHandler()],
+    level=logging.INFO
+    format="%(asctime)s - %(levelname)s - %(message)s"
+    handlers=[logging.FileHandler("logs/fbref_real_data.log"), logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
 
@@ -39,15 +37,17 @@ class RealFBrefCollector:
 
         # FBref真实URLs
         self.seasons = {
-            '2023-2024': {
-                'url': 'https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures',
-                'season_id': '2023-2024'
-            },
+            "2023-2024": {
+                "url": "https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures"
+                "season_id": "2023-2024"
+            }
         }
 
         self.collector = StealthFBrefCollector()
         # 使用容器网络连接数据库（使用正确密码）
-        self.engine = create_engine("postgresql://postgres:football_prediction_2024@db:5432/football_prediction")
+        self.engine = create_engine(
+            "postgresql://postgres:football_prediction_2024@db:5432/football_prediction"
+        )
 
     def clean_fbref_data(self, df, season_name: str) -> list[dict]:
         """
@@ -60,10 +60,10 @@ class RealFBrefCollector:
         for _, row in df.iterrows():
             try:
                 # 使用正确的字段名
-                home_team = row.get('Home')
-                away_team = row.get('Away')
-                score = row.get('Score')
-                match_date = row.get('Date')
+                home_team = row.get("Home")
+                away_team = row.get("Away")
+                score = row.get("Score")
+                match_date = row.get("Date")
 
                 # 基本验证
                 if not home_team or not away_team:
@@ -71,7 +71,7 @@ class RealFBrefCollector:
 
                 # 检查是否已完成比赛 - 关键修复！
                 # FBref中，如果Score为空或包含特定标记，则表示未完成
-                if pd.isna(score) or score == '' or str(score).strip() == '':
+                if pd.isna(score) or score == "" or str(score).strip() == "":
                     logger.debug(f"跳过未完成比赛: {home_team} vs {away_team}")
                     continue
 
@@ -79,12 +79,12 @@ class RealFBrefCollector:
                 try:
                     score_str = str(score).strip()
                     # 支持多种分隔符：en dash (–), em dash (—), 普通连字符 (-)
-                    if '–' in score_str:
-                        home_goals, away_goals = score_str.split('–')
-                    elif '—' in score_str:
-                        home_goals, away_goals = score_str.split('—')
-                    elif '-' in score_str:
-                        home_goals, away_goals = score_str.split('-')
+                    if "–" in score_str:
+                        home_goals, away_goals = score_str.split("–")
+                    elif "—" in score_str:
+                        home_goals, away_goals = score_str.split("—")
+                    elif "-" in score_str:
+                        home_goals, away_goals = score_str.split("-")
                     else:
                         # 如果不是标准比分格式，跳过
                         logger.debug(f"跳过非标准比分: {score}")
@@ -98,19 +98,21 @@ class RealFBrefCollector:
 
                 # 构建匹配记录
                 match_data = {
-                    'home_team': home_team.strip(),
-                    'away_team': away_team.strip(),
-                    'home_score': home_score,
-                    'away_score': away_score,
-                    'date': match_date,
-                    'season': season_name,
-                    'league_id': self.premier_league_id,
-                    'data_source': 'fbref',  # 标记为真实数据
-                    'status': 'completed'
+                    "home_team": home_team.strip()
+                    "away_team": away_team.strip()
+                    "home_score": home_score
+                    "away_score": away_score
+                    "date": match_date
+                    "season": season_name
+                    "league_id": self.premier_league_id
+                    "data_source": "fbref",  # 标记为真实数据
+                    "status": "completed"
                 }
 
                 cleaned_matches.append(match_data)
-                logger.debug(f"✅ 有效比赛: {home_team} {home_score}-{away_score} {away_team}")
+                logger.debug(
+                    f"✅ 有效比赛: {home_team} {home_score}-{away_score} {away_team}"
+                )
 
             except Exception as e:
                 logger.warning(f"清洗记录失败: {e}")
@@ -130,37 +132,44 @@ class RealFBrefCollector:
                 for match in matches:
                     try:
                         # 获取球队ID
-                        home_team_id = self.get_team_id(conn, match['home_team'])
-                        away_team_id = self.get_team_id(conn, match['away_team'])
+                        home_team_id = self.get_team_id(conn, match["home_team"])
+                        away_team_id = self.get_team_id(conn, match["away_team"])
 
                         if not home_team_id or not away_team_id:
-                            logger.warning(f"球队未找到: {match['home_team']} / {match['away_team']}")
+                            logger.warning(
+                                f"球队未找到: {match['home_team']} / {match['away_team']}"
+                            )
                             continue
 
                         # 插入比赛
-                        query = text("""
+                        query = text(
+                            """
                             INSERT INTO matches (
-                                home_team_id, away_team_id, home_score, away_score,
-                                match_date, league_id, season, status, data_source,
+                                home_team_id, away_team_id, home_score, away_score
+                                match_date, league_id, season, status, data_source
                                 created_at, updated_at
                             ) VALUES (
-                                :home_team_id, :away_team_id, :home_score, :away_score,
-                                :match_date, :league_id, :season, :status, :data_source,
+                                :home_team_id, :away_team_id, :home_score, :away_score
+                                :match_date, :league_id, :season, :status, :data_source
                                 NOW(), NOW()
                             )
-                        """)
+                        """
+                        )
 
-                        conn.execute(query, {
-                            'home_team_id': home_team_id,
-                            'away_team_id': away_team_id,
-                            'home_score': match['home_score'],
-                            'away_score': match['away_score'],
-                            'match_date': match['date'],
-                            'league_id': match['league_id'],
-                            'season': match['season'],
-                            'status': match['status'],
-                            'data_source': match['data_source']
-                        })
+                        conn.execute(
+                            query
+                            {
+                                "home_team_id": home_team_id
+                                "away_team_id": away_team_id
+                                "home_score": match["home_score"]
+                                "away_score": match["away_score"]
+                                "match_date": match["date"]
+                                "league_id": match["league_id"]
+                                "season": match["season"]
+                                "status": match["status"]
+                                "data_source": match["data_source"]
+                            }
+                        )
 
                         saved_count += 1
 
@@ -181,7 +190,7 @@ class RealFBrefCollector:
         """获取球队ID"""
         try:
             query = text("SELECT id FROM teams WHERE name ILIKE :team_name")
-            result = conn.execute(query, {'team_name': f'%{team_name}%'}).fetchone()
+            result = conn.execute(query, {"team_name": f"%{team_name}%"}).fetchone()
             return result.id if result else None
         except Exception as e:
             logger.warning(f"获取球队ID失败 {team_name}: {e}")
@@ -189,8 +198,8 @@ class RealFBrefCollector:
 
     async def collect_season(self, season_name: str, season_config: dict) -> bool:
         """采集单个赛季"""
-        url = season_config['url']
-        season_config['season_id']
+        url = season_config["url"]
+        season_config["season_id"]
 
         logger.info(f"🏆 开始采集 {season_name} 赛季")
         logger.info(f"🔗 URL: {url}")
@@ -233,6 +242,7 @@ class RealFBrefCollector:
         except Exception as e:
             logger.error(f"❌ {season_name}: 采集异常 - {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -240,17 +250,21 @@ class RealFBrefCollector:
         """打印采集摘要"""
         try:
             with self.engine.connect() as conn:
-                result = conn.execute(text("""
+                result = conn.execute(
+                    text(
+                        """
                     SELECT season, COUNT(*) as match_count
                     FROM matches
                     WHERE data_source = 'fbref'
                     GROUP BY season
                     ORDER BY season DESC
-                """)).fetchall()
+                """
+                    )
+                ).fetchall()
 
-                logger.info("\n" + "="*60)
+                logger.info("\n" + "=" * 60)
                 logger.info("📊 真实数据采集摘要")
-                logger.info("="*60)
+                logger.info("=" * 60)
 
                 total = 0
                 for row in result:
@@ -260,7 +274,9 @@ class RealFBrefCollector:
                 logger.info(f"\n✅ 总计: {total} 场真实比赛数据")
 
                 # 验证数据
-                sample = conn.execute(text("""
+                sample = conn.execute(
+                    text(
+                        """
                     SELECT m.home_score, m.away_score, ht.name as home_team, at.name as away_team
                     FROM matches m
                     JOIN teams ht ON m.home_team_id = ht.id
@@ -268,13 +284,17 @@ class RealFBrefCollector:
                     WHERE m.data_source = 'fbref'
                     ORDER BY m.created_at DESC
                     LIMIT 5
-                """)).fetchall()
+                """
+                    )
+                ).fetchall()
 
                 logger.info("\n🔍 最新5场比赛样本:")
                 for row in sample:
-                    logger.info(f"  {row.home_team} {row.home_score}-{row.away_score} {row.away_team}")
+                    logger.info(
+                        f"  {row.home_team} {row.home_score}-{row.away_score} {row.away_team}"
+                    )
 
-                logger.info("="*60)
+                logger.info("=" * 60)
 
         except Exception as e:
             logger.error(f"打印摘要失败: {e}")
@@ -314,6 +334,7 @@ def main():
     except Exception as e:
         logger.error(f"采集失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

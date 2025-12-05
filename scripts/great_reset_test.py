@@ -16,21 +16,23 @@ sys.path.insert(0, str(project_root))
 
 try:
     import asyncpg
+
     print("✅ PostgreSQL驱动导入成功")
 except ImportError as e:
     print(f"❌ 导入失败: {e}")
     sys.exit(1)
+
 
 class GreatResetTester:
     """Great Reset测试器"""
 
     def __init__(self):
         self.db_config = {
-            'host': 'db',
-            'port': 5432,
-            'user': 'postgres',
-            'password': 'postgres-dev-password',
-            'database': 'football_prediction'
+            "host": "db",
+            "port": 5432,
+            "user": "postgres",
+            "password": "postgres-dev-password",
+            "database": "football_prediction",
         }
 
     async def test_database_connection(self):
@@ -39,10 +41,12 @@ class GreatResetTester:
             conn = await asyncpg.connect(**self.db_config)
 
             # 检查表结构
-            result = await conn.fetchval("""
+            result = await conn.fetchval(
+                """
                 SELECT COUNT(*) FROM information_schema.tables
                 WHERE table_name = 'matches'
-            """)
+            """
+            )
 
             if result == 1:
                 print("✅ matches表存在")
@@ -61,7 +65,8 @@ class GreatResetTester:
             print("🏗️ 创建测试数据...")
 
             # 插入测试球队
-            await conn.execute("""
+            await conn.execute(
+                """
                 INSERT INTO teams (name, created_at, updated_at) VALUES
                 ('Manchester City', NOW(), NOW()),
                 ('Manchester United', NOW(), NOW()),
@@ -72,55 +77,57 @@ class GreatResetTester:
                 ('Barcelona', NOW(), NOW()),
                 ('Real Madrid', NOW(), NOW())
                 ON CONFLICT (name) DO NOTHING
-            """)
+            """
+            )
 
             # 获取球队ID
             teams = await conn.fetch("SELECT id, name FROM teams ORDER BY id")
-            team_map = {row['name']: row['id'] for row in teams}
+            team_map = {row["name"]: row["id"] for row in teams}
 
             print(f"✅ 创建了 {len(team_map)} 个球队")
 
             # 插入测试比赛 (FotMob单一数据源)
             test_matches = [
                 {
-                    'home_team': 'Manchester City',
-                    'away_team': 'Manchester United',
-                    'fotmob_id': 'FMB_4189362',
-                    'home_score': 3,
-                    'away_score': 1,
-                    'match_date': '2024-03-03 15:00:00',
-                    'league_id': 47,
-                    'season': '2023-2024'
+                    "home_team": "Manchester City",
+                    "away_team": "Manchester United",
+                    "fotmob_id": "FMB_4189362",
+                    "home_score": 3,
+                    "away_score": 1,
+                    "match_date": "2024-03-03 15:00:00",
+                    "league_id": 47,
+                    "season": "2023-2024",
                 },
                 {
-                    'home_team': 'Liverpool',
-                    'away_team': 'Chelsea',
-                    'fotmob_id': 'FMB_4189363',
-                    'home_score': 2,
-                    'away_score': 2,
-                    'match_date': '2024-03-04 15:00:00',
-                    'league_id': 47,
-                    'season': '2023-2024'
+                    "home_team": "Liverpool",
+                    "away_team": "Chelsea",
+                    "fotmob_id": "FMB_4189363",
+                    "home_score": 2,
+                    "away_score": 2,
+                    "match_date": "2024-03-04 15:00:00",
+                    "league_id": 47,
+                    "season": "2023-2024",
                 },
                 {
-                    'home_team': 'Barcelona',
-                    'away_team': 'Real Madrid',
-                    'fotmob_id': 'FMB_4189364',
-                    'home_score': 1,
-                    'away_score': 2,
-                    'match_date': '2024-03-05 20:00:00',
-                    'league_id': 87,
-                    'season': '2023-2024'
-                }
+                    "home_team": "Barcelona",
+                    "away_team": "Real Madrid",
+                    "fotmob_id": "FMB_4189364",
+                    "home_score": 1,
+                    "away_score": 2,
+                    "match_date": "2024-03-05 20:00:00",
+                    "league_id": 87,
+                    "season": "2023-2024",
+                },
             ]
 
             inserted_count = 0
             for match in test_matches:
                 try:
-                    home_id = team_map[match['home_team']]
-                    away_id = team_map[match['away_team']]
+                    home_id = team_map[match["home_team"]]
+                    away_id = team_map[match["away_team"]]
 
-                    await conn.execute("""
+                    await conn.execute(
+                        """
                         INSERT INTO matches (
                             home_team_id, away_team_id, fotmob_id, home_score, away_score,
                             match_date, status, league_id, season, data_source, data_completeness,
@@ -129,14 +136,26 @@ class GreatResetTester:
                             $1, $2, $3, $4, $5, $6, 'FT', $7, $8, 'fotmob_l1', 'basic',
                             NOW(), NOW()
                         )
-                    """, home_id, away_id, match['fotmob_id'], match['home_score'],
-                         match['away_score'], match['match_date'], match['league_id'], match['season'])
+                    """,
+                        home_id,
+                        away_id,
+                        match["fotmob_id"],
+                        match["home_score"],
+                        match["away_score"],
+                        match["match_date"],
+                        match["league_id"],
+                        match["season"],
+                    )
 
                     inserted_count += 1
-                    print(f"  ✅ {match['home_team']} vs {match['away_team']} (ID: {match['fotmob_id']})")
+                    print(
+                        f"  ✅ {match['home_team']} vs {match['away_team']} (ID: {match['fotmob_id']})"
+                    )
 
                 except Exception as e:
-                    print(f"  ❌ 插入失败 {match['home_team']} vs {match['away_team']}: {e}")
+                    print(
+                        f"  ❌ 插入失败 {match['home_team']} vs {match['away_team']}: {e}"
+                    )
 
             print(f"✅ 成功插入 {inserted_count} 场测试比赛")
             return True
@@ -151,7 +170,8 @@ class GreatResetTester:
             print("🔍 验证数据质量...")
 
             # 统计查询
-            stats = await conn.fetchrow("""
+            stats = await conn.fetchrow(
+                """
                 SELECT
                     COUNT(*) as total_matches,
                     COUNT(CASE WHEN fotmob_id IS NOT NULL THEN 1 END) as with_fotmob_id,
@@ -160,7 +180,8 @@ class GreatResetTester:
                     MIN(match_date) as earliest_match,
                     MAX(match_date) as latest_match
                 FROM matches
-            """)
+            """
+            )
 
             print("📊 数据统计:")
             print(f"  总比赛数: {stats['total_matches']}")
@@ -171,7 +192,8 @@ class GreatResetTester:
             print(f"  最新比赛: {stats['latest_match']}")
 
             # 详细数据展示
-            matches = await conn.fetch("""
+            matches = await conn.fetch(
+                """
                 SELECT
                     m.fotmob_id,
                     ht.name as home_team,
@@ -186,11 +208,14 @@ class GreatResetTester:
                 JOIN teams at ON m.away_team_id = at.id
                 LEFT JOIN leagues l ON m.league_id = l.id
                 ORDER BY m.match_date
-            """)
+            """
+            )
 
             print("\n📋 详细比赛列表:")
             for i, match in enumerate(matches, 1):
-                print(f"  {i}. {match['home_team']} {match['home_score']}-{match['away_score']} {match['away_team']}")
+                print(
+                    f"  {i}. {match['home_team']} {match['home_score']}-{match['away_score']} {match['away_team']}"
+                )
                 print(f"     🆔 FotMob ID: {match['fotmob_id']}")
                 print(f"     📅 比赛时间: {match['match_date']}")
                 print(f"     🏆 联赛: {match['league_name'] or '未知'}")
@@ -199,13 +224,13 @@ class GreatResetTester:
 
             # 数据质量评估
             quality_score = 0
-            if stats['total_matches'] > 0:
+            if stats["total_matches"] > 0:
                 quality_score += 25
-            if stats['with_fotmob_id'] == stats['total_matches']:
+            if stats["with_fotmob_id"] == stats["total_matches"]:
                 quality_score += 25
-            if stats['fotmob_l1_source'] == stats['total_matches']:
+            if stats["fotmob_l1_source"] == stats["total_matches"]:
                 quality_score += 25
-            if stats['basic_completeness'] == stats['total_matches']:
+            if stats["basic_completeness"] == stats["total_matches"]:
                 quality_score += 25
 
             print(f"🎯 数据质量评分: {quality_score}/100")
@@ -224,39 +249,40 @@ class GreatResetTester:
             # 模拟从FotMob API获取的数据
             simulated_matches = [
                 {
-                    'fotmob_id': 'FMB_4189365',
-                    'home_team': 'Arsenal',
-                    'away_team': 'Tottenham',
-                    'home_score': 2,
-                    'away_score': 1,
-                    'match_date': '2024-03-06 19:45:00',
-                    'league_id': 47,
-                    'season': '2023-2024'
+                    "fotmob_id": "FMB_4189365",
+                    "home_team": "Arsenal",
+                    "away_team": "Tottenham",
+                    "home_score": 2,
+                    "away_score": 1,
+                    "match_date": "2024-03-06 19:45:00",
+                    "league_id": 47,
+                    "season": "2023-2024",
                 },
                 {
-                    'fotmob_id': 'FMB_4189366',
-                    'home_team': 'Chelsea',
-                    'away_team': 'Liverpool',
-                    'home_score': 1,
-                    'away_score': 3,
-                    'match_date': '2024-03-07 16:30:00',
-                    'league_id': 47,
-                    'season': '2023-2024'
-                }
+                    "fotmob_id": "FMB_4189366",
+                    "home_team": "Chelsea",
+                    "away_team": "Liverpool",
+                    "home_score": 1,
+                    "away_score": 3,
+                    "match_date": "2024-03-07 16:30:00",
+                    "league_id": 47,
+                    "season": "2023-2024",
+                },
             ]
 
             # 获取球队ID映射
             teams = await conn.fetch("SELECT id, name FROM teams")
-            team_map = {row['name']: row['id'] for row in teams}
+            team_map = {row["name"]: row["id"] for row in teams}
 
             backfilled_count = 0
             for match in simulated_matches:
-                if match['home_team'] in team_map and match['away_team'] in team_map:
+                if match["home_team"] in team_map and match["away_team"] in team_map:
                     try:
-                        home_id = team_map[match['home_team']]
-                        away_id = team_map[match['away_team']]
+                        home_id = team_map[match["home_team"]]
+                        away_id = team_map[match["away_team"]]
 
-                        await conn.execute("""
+                        await conn.execute(
+                            """
                             INSERT INTO matches (
                                 home_team_id, away_team_id, fotmob_id, home_score, away_score,
                                 match_date, status, league_id, season, data_source, data_completeness,
@@ -265,16 +291,28 @@ class GreatResetTester:
                                 $1, $2, $3, $4, $5, $6, 'FT', $7, $8, 'fotmob_l1', 'basic',
                                 NOW(), NOW()
                             )
-                        """, home_id, away_id, match['fotmob_id'], match['home_score'],
-                             match['away_score'], match['match_date'], match['league_id'], match['season'])
+                        """,
+                            home_id,
+                            away_id,
+                            match["fotmob_id"],
+                            match["home_score"],
+                            match["away_score"],
+                            match["match_date"],
+                            match["league_id"],
+                            match["season"],
+                        )
 
                         backfilled_count += 1
-                        print(f"  ✅ 回填: {match['home_team']} vs {match['away_team']}")
+                        print(
+                            f"  ✅ 回填: {match['home_team']} vs {match['away_team']}"
+                        )
 
                     except Exception as e:
                         print(f"  ❌ 回填失败: {e}")
                 else:
-                    print(f"  ⚠️ 跳过: 球队未找到 {match['home_team']} 或 {match['away_team']}")
+                    print(
+                        f"  ⚠️ 跳过: 球队未找到 {match['home_team']} 或 {match['away_team']}"
+                    )
 
             print(f"✅ 模拟回填完成: {backfilled_count} 场比赛")
             return backfilled_count
@@ -290,6 +328,7 @@ class GreatResetTester:
             print("✅ 数据库连接已关闭")
         except Exception as e:
             print(f"⚠️ 关闭连接时出现警告: {e}")
+
 
 async def main():
     """主函数"""
@@ -319,19 +358,23 @@ async def main():
 
         # 最终验证
         print("\n🔍 最终验证:")
-        final_stats = await conn.fetchrow("""
+        final_stats = await conn.fetchrow(
+            """
             SELECT COUNT(*) as total_matches,
                    COUNT(CASE WHEN data_source = 'fotmob_l1' THEN 1 END) as fotmob_l1_count
             FROM matches
-        """)
+        """
+        )
 
         print("📊 最终统计:")
         print(f"  总比赛数: {final_stats['total_matches']}")
         print(f"  FotMob L1源: {final_stats['fotmob_l1_count']}")
         print(f"  回填新增: {backfilled}")
 
-        success = (final_stats['total_matches'] > 0 and
-                  final_stats['fotmob_l1_count'] == final_stats['total_matches'])
+        success = (
+            final_stats["total_matches"] > 0
+            and final_stats["fotmob_l1_count"] == final_stats["total_matches"]
+        )
 
         print("\n" + "=" * 60)
         print("🎯 测试结果:")
@@ -349,12 +392,14 @@ async def main():
     except Exception as e:
         print(f"💥 测试过程中出现异常: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
     finally:
         if conn:
             await tester.close(conn)
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

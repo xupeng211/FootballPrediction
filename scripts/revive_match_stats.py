@@ -18,8 +18,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-
 import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,14 +30,15 @@ from src.database.async_manager import get_db_session
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     handlers=[
-        logging.FileHandler('/tmp/revive_match_stats.log'),
+        logging.FileHandler("/tmp/revive_match_stats.log")
         logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)
+
 
 class MatchStatsReviver:
     """数据复活器 - 专门修复空stats字段"""
@@ -55,10 +54,14 @@ class MatchStatsReviver:
 
         # xG字段映射 - 基于实际FBref数据结构
         self.xg_field_mapping = {
-            'xg_home': ['xg_home', 'home_xg', 'xg_for', 'expected_goals_home'],
-            'xg_away': ['xg_away', 'away_xg', 'xg_against', 'expected_goals_away'],
-            'possession_home': ['possession_home', 'home_possession', 'possession_for'],
-            'possession_away': ['possession_away', 'away_possession', 'possession_against']
+            "xg_home": ["xg_home", "home_xg", "xg_for", "expected_goals_home"]
+            "xg_away": ["xg_away", "away_xg", "xg_against", "expected_goals_away"]
+            "possession_home": ["possession_home", "home_possession", "possession_for"]
+            "possession_away": [
+                "possession_away"
+                "away_possession"
+                "possession_against"
+            ]
         }
 
     async def identify_dead_records(self) -> list[int]:
@@ -67,13 +70,15 @@ class MatchStatsReviver:
 
         async with get_db_session() as session:
             result = await session.execute(
-                text("""
+                text(
+                    """
                     SELECT id, raw_file_path
                     FROM matches
                     WHERE data_source = 'fbref'
                     AND (stats = '{}' OR stats IS NULL)
                     ORDER BY created_at DESC
-                """)
+                """
+                )
             )
             records = result.fetchall()
 
@@ -86,7 +91,7 @@ class MatchStatsReviver:
             return None
 
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
                 return data
         except Exception as e:
@@ -101,24 +106,24 @@ class MatchStatsReviver:
         stats = {}
 
         # 方法1: 直接从stats字段提取
-        if 'stats' in raw_data and raw_data['stats']:
-            stats.update(raw_data['stats'])
+        if "stats" in raw_data and raw_data["stats"]:
+            stats.update(raw_data["stats"])
 
         # 方法2: 从team_stats提取 (常见于FBref数据)
-        if 'team_stats' in raw_data and raw_data['team_stats']:
-            team_stats = raw_data['team_stats']
+        if "team_stats" in raw_data and raw_data["team_stats"]:
+            team_stats = raw_data["team_stats"]
             if isinstance(team_stats, dict):
                 # 提取xG数据
-                if 'home_xg' in team_stats:
-                    stats['xg_home'] = str(team_stats['home_xg'])
-                if 'away_xg' in team_stats:
-                    stats['xg_away'] = str(team_stats['away_xg'])
+                if "home_xg" in team_stats:
+                    stats["xg_home"] = str(team_stats["home_xg"])
+                if "away_xg" in team_stats:
+                    stats["xg_away"] = str(team_stats["away_xg"])
 
                 # 提取控球率数据
-                if 'home_possession' in team_stats:
-                    stats['possession_home'] = str(team_stats['home_possession'])
-                if 'away_possession' in team_stats:
-                    stats['possession_away'] = str(team_stats['away_possession'])
+                if "home_possession" in team_stats:
+                    stats["possession_home"] = str(team_stats["home_possession"])
+                if "away_possession" in team_stats:
+                    stats["possession_away"] = str(team_stats["away_possession"])
 
         # 方法3: 从flat统计字段提取
         for target_field, possible_names in self.xg_field_mapping.items():
@@ -129,32 +134,37 @@ class MatchStatsReviver:
                         break
 
         # 方法4: 从teams数组提取
-        if 'teams' in raw_data and isinstance(raw_data['teams'], list):
-            teams = raw_data['teams']
+        if "teams" in raw_data and isinstance(raw_data["teams"], list):
+            teams = raw_data["teams"]
             if len(teams) >= 2:
                 home_team = teams[0]
                 away_team = teams[1]
 
-                if 'xg' in home_team:
-                    stats['xg_home'] = str(home_team['xg'])
-                if 'xg' in away_team:
-                    stats['xg_away'] = str(away_team['xg'])
-                if 'possession' in home_team:
-                    stats['possession_home'] = str(home_team['possession'])
-                if 'possession' in away_team:
-                    stats['possession_away'] = str(away_team['possession'])
+                if "xg" in home_team:
+                    stats["xg_home"] = str(home_team["xg"])
+                if "xg" in away_team:
+                    stats["xg_away"] = str(away_team["xg"])
+                if "possession" in home_team:
+                    stats["possession_home"] = str(home_team["possession"])
+                if "possession" in away_team:
+                    stats["possession_away"] = str(away_team["possession"])
 
         # 数据清理和验证
         cleaned_stats = {}
         for key, value in stats.items():
-            if value and str(value).strip() and str(value) != 'nan' and str(value) != 'None':
+            if (
+                value
+                and str(value).strip()
+                and str(value) != "nan"
+                and str(value) != "None"
+            ):
                 # 清理数值
                 try:
-                    if 'possession' in key:
+                    if "possession" in key:
                         clean_value = float(value)
                         if 0 <= clean_value <= 100:
                             cleaned_stats[key] = str(round(clean_value, 1))
-                    elif 'xg' in key:
+                    elif "xg" in key:
                         clean_value = float(value)
                         if 0 <= clean_value <= 10:  # xG通常在0-10之间
                             cleaned_stats[key] = str(round(clean_value, 2))
@@ -171,22 +181,22 @@ class MatchStatsReviver:
         metadata = {}
 
         # 提取基础元数据
-        if 'referee' in raw_data and raw_data['referee']:
-            metadata['referee'] = str(raw_data['referee'])
+        if "referee" in raw_data and raw_data["referee"]:
+            metadata["referee"] = str(raw_data["referee"])
 
-        if 'attendance' in raw_data and raw_data['attendance']:
+        if "attendance" in raw_data and raw_data["attendance"]:
             try:
-                attendance = int(raw_data['attendance'])
+                attendance = int(raw_data["attendance"])
                 if attendance > 0:
-                    metadata['attendance'] = attendance
+                    metadata["attendance"] = attendance
             except (ValueError, TypeError):
                 pass
 
-        if 'match_report_url' in raw_data and raw_data['match_report_url']:
-            metadata['match_report_url'] = str(raw_data['match_report_url'])
+        if "match_report_url" in raw_data and raw_data["match_report_url"]:
+            metadata["match_report_url"] = str(raw_data["match_report_url"])
 
-        if 'venue' in raw_data and raw_data['venue']:
-            metadata['venue'] = str(raw_data['venue'])
+        if "venue" in raw_data and raw_data["venue"]:
+            metadata["venue"] = str(raw_data["venue"])
 
         return metadata
 
@@ -212,22 +222,24 @@ class MatchStatsReviver:
 
             # 更新数据库
             async with get_db_session() as session:
-                update_query = text("""
+                update_query = text(
+                    """
                     UPDATE matches
-                    SET stats = :stats,
-                        match_metadata = COALESCE(match_metadata, '{}'::jsonb) || :metadata::jsonb,
-                        data_completeness = :completeness,
+                    SET stats = :stats
+                        match_metadata = COALESCE(match_metadata, '{}'::jsonb) || :metadata::jsonb
+                        data_completeness = :completeness
                         updated_at = NOW()
                     WHERE id = :id
-                """)
+                """
+                )
 
                 await session.execute(
-                    update_query,
+                    update_query
                     {
-                        'id': record_id,
-                        'stats': json.dumps(stats),
-                        'metadata': json.dumps(metadata) if metadata else '{}',
-                        'completeness': 'complete' if stats else 'partial'
+                        "id": record_id
+                        "stats": json.dumps(stats)
+                        "metadata": json.dumps(metadata) if metadata else "{}"
+                        "completeness": "complete" if stats else "partial"
                     }
                 )
                 await session.commit()
@@ -275,7 +287,9 @@ class MatchStatsReviver:
         end_time = datetime.now()
         duration = end_time - self.start_time
 
-        success_rate = (self.revived_count / total_records * 100) if total_records > 0 else 0
+        success_rate = (
+            (self.revived_count / total_records * 100) if total_records > 0 else 0
+        )
 
         report = f"""
 🎉 数据复活修复完成报告
@@ -299,7 +313,7 @@ class MatchStatsReviver:
 
         # 写入报告文件
         try:
-            with open('/tmp/revival_report.txt', 'w', encoding='utf-8') as f:
+            with open("/tmp/revival_report.txt", "w", encoding="utf-8") as f:
                 f.write(report)
         except Exception as e:
             logger.error(f"❌ 无法写入报告文件: {e}")
@@ -307,7 +321,8 @@ class MatchStatsReviver:
 
 async def main():
     """主函数"""
-    print("""
+    print(
+        """
 🚀 数据复活脚本 - Match Stats Revival Tool
 =====================================
 首席数据修复官 (Chief Data Remediation Officer)
@@ -319,7 +334,10 @@ async def main():
 
 开始时间: {}
 =====================================
-""".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+""".format(
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+    )
 
     # 创建修复器实例
     reviver = MatchStatsReviver()

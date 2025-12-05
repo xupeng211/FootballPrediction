@@ -9,8 +9,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-
+from typing import Any
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -31,11 +30,11 @@ class FotMobRealDataAnalyzer:
         for file_path in sorted(data_files):
             print(f"📁 加载文件: {file_path.name}")
             try:
-                with open(file_path, encoding='utf-8') as f:
+                with open(file_path, encoding="utf-8") as f:
                     data = json.load(f)
 
-                if 'matches' in data:
-                    matches = data['matches']
+                if "matches" in data:
+                    matches = data["matches"]
                     print(f"  ✅ 包含 {len(matches)} 场比赛")
                     all_matches.extend(matches)
 
@@ -53,10 +52,10 @@ class FotMobRealDataAnalyzer:
         sample_match = matches[0]
 
         structure = {
-            "basic_fields": {},
-            "numeric_fields": {},
-            "categorical_fields": {},
-            "data_completeness": {},
+            "basic_fields": {}
+            "numeric_fields": {}
+            "categorical_fields": {}
+            "data_completeness": {}
             "sample_values": {}
         }
 
@@ -65,7 +64,7 @@ class FotMobRealDataAnalyzer:
             field_type = type(field_value).__name__
 
             structure["basic_fields"][field_name] = {
-                "type": field_type,
+                "type": field_type
                 "description": self._get_field_description(field_name)
             }
 
@@ -84,15 +83,17 @@ class FotMobRealDataAnalyzer:
 
                 if len(unique_values) <= 20:
                     structure["categorical_fields"][field_name] = {
-                        "unique_values": len(unique_values),
-                        "values": sorted(unique_values)[:10]  # 只显示前10个值
+                        "unique_values": len(unique_values)
+                        "values": sorted(unique_values)[:10],  # 只显示前10个值
                     }
 
             # 检查数据完整性
-            non_null_count = sum(1 for match in matches if match.get(field_name) is not None)
+            non_null_count = sum(
+                1 for match in matches if match.get(field_name) is not None
+            )
             structure["data_completeness"][field_name] = {
-                "available": non_null_count,
-                "total": len(matches),
+                "available": non_null_count
+                "total": len(matches)
                 "percentage": (non_null_count / len(matches)) * 100
             }
 
@@ -104,39 +105,48 @@ class FotMobRealDataAnalyzer:
     def _get_field_description(self, field_name: str) -> str:
         """获取字段描述."""
         descriptions = {
-            "match_id": "比赛唯一标识符",
-            "league_id": "联赛唯一标识符",
-            "league_name": "联赛名称",
-            "home_team_id": "主队唯一标识符",
-            "home_team_name": "主队名称",
-            "away_team_id": "客队唯一标识符",
-            "away_team_name": "客队名称",
-            "home_score": "主队得分",
-            "away_score": "客队得分",
-            "status_id": "比赛状态ID",
-            "status": "比赛状态（如FT-全场结束）",
-            "finished": "比赛是否已结束",
-            "started": "比赛是否已开始",
-            "kickoff_time": "开球时间（本地时间）",
-            "utc_time": "开球时间（UTC时间）",
+            "match_id": "比赛唯一标识符"
+            "league_id": "联赛唯一标识符"
+            "league_name": "联赛名称"
+            "home_team_id": "主队唯一标识符"
+            "home_team_name": "主队名称"
+            "away_team_id": "客队唯一标识符"
+            "away_team_name": "客队名称"
+            "home_score": "主队得分"
+            "away_score": "客队得分"
+            "status_id": "比赛状态ID"
+            "status": "比赛状态（如FT-全场结束）"
+            "finished": "比赛是否已结束"
+            "started": "比赛是否已开始"
+            "kickoff_time": "开球时间（本地时间）"
+            "utc_time": "开球时间（UTC时间）"
         }
 
         return descriptions.get(field_name, "未知字段")
 
-    def analyze_advanced_features(self, matches: list[dict[str, Any]]) -> dict[str, Any]:
+    def analyze_advanced_features(
+        self, matches: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """分析高级特征的可能性."""
         features = {
-            "basic_features": [],
-            "derived_features": [],
-            "team_strength_features": [],
-            "time_features": [],
+            "basic_features": []
+            "derived_features": []
+            "team_strength_features": []
+            "time_features": []
             "league_features": []
         }
 
         # 基础特征
         basic_fields = [
-            "home_team_name", "away_team_name", "home_score", "away_score",
-            "status", "finished", "started", "kickoff_time", "utc_time",
+            "home_team_name"
+            "away_team_name"
+            "home_score"
+            "away_score"
+            "status"
+            "finished"
+            "started"
+            "kickoff_time"
+            "utc_time"
             "league_name"
         ]
 
@@ -147,43 +157,48 @@ class FotMobRealDataAnalyzer:
         # 可派生特征
         features["derived_features"] = [
             "goal_difference",  # 比分差
-            "total_goals",      # 总进球数
-            "match_duration",    # 比赛时长
-            "is_draw",         # 是否平局
-            "home_win",         # 主队是否获胜
-            "away_win",         # 客队是否获胜
-            "scoring_match",    # 是否有进球
+            "total_goals",  # 总进球数
+            "match_duration",  # 比赛时长
+            "is_draw",  # 是否平局
+            "home_win",  # 主队是否获胜
+            "away_win",  # 客队是否获胜
+            "scoring_match",  # 是否有进球
         ]
 
         # 球队实力特征（需要历史数据）
         features["team_strength_features"] = [
-            "team_form_recent",      # 最近状态
-            "head_to_head",         # 历史交锋
-            "home_advantage",       # 主场优势
-            "team_ranking",         # 球队排名
-            "points_per_game",      # 场均积分
+            "team_form_recent",  # 最近状态
+            "head_to_head",  # 历史交锋
+            "home_advantage",  # 主场优势
+            "team_ranking",  # 球队排名
+            "points_per_game",  # 场均积分
         ]
 
         # 时间特征
         features["time_features"] = [
-            "day_of_week",          # 星期几
-            "month",                # 月份
-            "season_stage",         # 赛季阶段
-            "time_slot",            # 时间段
-            "is_weekend",           # 是否周末
+            "day_of_week",  # 星期几
+            "month",  # 月份
+            "season_stage",  # 赛季阶段
+            "time_slot",  # 时间段
+            "is_weekend",  # 是否周末
         ]
 
         # 联赛特征
         features["league_features"] = [
-            "league_importance",    # 联赛重要性
-            "derby_match",          # 德比战
-            "cup_match",            # 杯赛
+            "league_importance",  # 联赛重要性
+            "derby_match",  # 德比战
+            "cup_match",  # 杯赛
             "international_match",  # 国际比赛
         ]
 
         return features
 
-    def generate_comprehensive_report(self, matches: list[dict[str, Any]], structure: dict[str, Any], features: dict[str, Any]) -> str:
+    def generate_comprehensive_report(
+        self
+        matches: list[dict[str, Any]]
+        structure: dict[str, Any]
+        features: dict[str, Any]
+    ) -> str:
         """生成综合报告."""
         report = []
 
@@ -208,7 +223,9 @@ class FotMobRealDataAnalyzer:
             league_stats[league] = league_stats.get(league, 0) + 1
 
         report.append("### 联赛分布:")
-        for league, count in sorted(league_stats.items(), key=lambda x: x[1], reverse=True):
+        for league, count in sorted(
+            league_stats.items(), key=lambda x: x[1], reverse=True
+        ):
             report.append(f"- **{league}**: {count} 场比赛")
         report.append("")
 
@@ -228,13 +245,13 @@ class FotMobRealDataAnalyzer:
         report.append("")
 
         basic_info_fields = [
-            ("比赛ID", "match_id"),
-            ("主队信息", "home_team_name", "home_team_id"),
-            ("客队信息", "away_team_name", "away_team_id"),
-            ("比分信息", "home_score", "away_score"),
-            ("比赛状态", "status", "status_id", "finished", "started"),
-            ("时间信息", "kickoff_time", "utc_time"),
-            ("联赛信息", "league_name", "league_id"),
+            ("比赛ID", "match_id")
+            ("主队信息", "home_team_name", "home_team_id")
+            ("客队信息", "away_team_name", "away_team_id")
+            ("比分信息", "home_score", "away_score")
+            ("比赛状态", "status", "status_id", "finished", "started")
+            ("时间信息", "kickoff_time", "utc_time")
+            ("联赛信息", "league_name", "league_id")
         ]
 
         for category, *fields in basic_info_fields:
@@ -250,11 +267,17 @@ class FotMobRealDataAnalyzer:
                     field_info = structure["basic_fields"][field]
                     completeness = structure["data_completeness"].get(field, {})
                     percentage = completeness.get("percentage", 0)
-                    status = "✅" if percentage > 90 else "⚠️" if percentage > 50 else "❌"
+                    status = (
+                        "✅" if percentage > 90 else "⚠️" if percentage > 50 else "❌"
+                    )
                     sample = structure["sample_values"].get(field, "N/A")
 
-                    report.append(f"- {status} **{field_info.get('description', field)}** (`{field}`)")
-                    report.append(f"  - 数据完整性: {percentage:.1f}% ({completeness.get('available', 0)}/{len(matches)})")
+                    report.append(
+                        f"- {status} **{field_info.get('description', field)}** (`{field}`)"
+                    )
+                    report.append(
+                        f"  - 数据完整性: {percentage:.1f}% ({completeness.get('available', 0)}/{len(matches)})"
+                    )
                     report.append(f"  - 数据类型: {field_info.get('type', 'Unknown')}")
                     if sample and sample != "N/A":
                         report.append(f"  - 样例: `{sample}`")
@@ -269,22 +292,45 @@ class FotMobRealDataAnalyzer:
 
         # 基础信息
         basic_completeness = []
-        basic_required = ["match_id", "home_team_name", "away_team_name", "home_score", "away_score", "status"]
+        basic_required = [
+            "match_id"
+            "home_team_name"
+            "away_team_name"
+            "home_score"
+            "away_score"
+            "status"
+        ]
         for field in basic_required:
             if field in structure.get("data_completeness", {}):
-                basic_completeness.append(structure["data_completeness"][field].get("percentage", 0))
+                basic_completeness.append(
+                    structure["data_completeness"][field].get("percentage", 0)
+                )
 
-        avg_basic = sum(basic_completeness) / len(basic_completeness) if basic_completeness else 0
+        avg_basic = (
+            sum(basic_completeness) / len(basic_completeness)
+            if basic_completeness
+            else 0
+        )
         report.append(f"- **基础信息**: {avg_basic:.1f}% 平均完整度")
 
         # 核心数据
         core_completeness = []
-        core_required = ["home_score", "away_score", "status", "finished", "kickoff_time"]
+        core_required = [
+            "home_score"
+            "away_score"
+            "status"
+            "finished"
+            "kickoff_time"
+        ]
         for field in core_required:
             if field in structure.get("data_completeness", {}):
-                core_completeness.append(structure["data_completeness"][field].get("percentage", 0))
+                core_completeness.append(
+                    structure["data_completeness"][field].get("percentage", 0)
+                )
 
-        avg_core = sum(core_completeness) / len(core_completeness) if core_completeness else 0
+        avg_core = (
+            sum(core_completeness) / len(core_completeness) if core_completeness else 0
+        )
         report.append(f"- **核心数据**: {avg_core:.1f}% 平均完整度")
 
         # 时间数据
@@ -292,9 +338,13 @@ class FotMobRealDataAnalyzer:
         time_required = ["kickoff_time", "utc_time"]
         for field in time_required:
             if field in structure.get("data_completeness", {}):
-                time_completeness.append(structure["data_completeness"][field].get("percentage", 0))
+                time_completeness.append(
+                    structure["data_completeness"][field].get("percentage", 0)
+                )
 
-        avg_time = sum(time_completeness) / len(time_completeness) if time_completeness else 0
+        avg_time = (
+            sum(time_completeness) / len(time_completeness) if time_completeness else 0
+        )
         report.append(f"- **时间数据**: {avg_time:.1f}% 平均完整度")
         report.append("")
 
@@ -304,7 +354,11 @@ class FotMobRealDataAnalyzer:
 
         report.append("### ✅ 可直接使用的特征:")
         for feature in features.get("basic_features", []):
-            desc = structure.get("basic_fields", {}).get(feature, {}).get("description", feature)
+            desc = (
+                structure.get("basic_fields", {})
+                .get(feature, {})
+                .get("description", feature)
+            )
             report.append(f"- **{desc}** (`{feature}`)")
 
         report.append("")
@@ -337,15 +391,27 @@ class FotMobRealDataAnalyzer:
             report.append("```json")
             # 显示部分字段作为示例
             sample_data = {}
-            important_fields = ["match_id", "league_name", "home_team_name", "away_team_name",
-                               "home_score", "away_score", "status", "kickoff_time"]
+            important_fields = [
+                "match_id"
+                "league_name"
+                "home_team_name"
+                "away_team_name"
+                "home_score"
+                "away_score"
+                "status"
+                "kickoff_time"
+            ]
 
             for field in important_fields:
                 if field in sample_match:
                     sample_data[field] = sample_match[field]
 
             import json as json_module
-            report.append(json_module.dumps(sample_data, indent=2, ensure_ascii=False)[:1000] + "...")
+
+            report.append(
+                json_module.dumps(sample_data, indent=2, ensure_ascii=False)[:1000]
+                + "..."
+            )
             report.append("```")
             report.append("")
 
@@ -372,7 +438,9 @@ class FotMobRealDataAnalyzer:
         report.append("### 特征工程建议:")
 
         if avg_basic > 80:
-            report.append("- ✅ **基础特征完整**: 可以直接提取球队、比分、时间等基础特征")
+            report.append(
+                "- ✅ **基础特征完整**: 可以直接提取球队、比分、时间等基础特征"
+            )
         else:
             report.append("- ⚠️ **基础特征不完整**: 需要补齐基础信息字段")
 
@@ -389,7 +457,9 @@ class FotMobRealDataAnalyzer:
         # 数据增强建议
         report.append("")
         report.append("### 数据增强建议:")
-        report.append("- 🔗 **增强数据采集**: 集成更多详细统计数据（xG、射门、控球率等）")
+        report.append(
+            "- 🔗 **增强数据采集**: 集成更多详细统计数据（xG、射门、控球率等）"
+        )
         report.append("- 📊 **历史数据**: 建立球队历史表现数据库")
         report.append("- 🔍 **实时数据**: 考虑实时赔率和技术统计数据")
         report.append("- 🏆 **标签数据**: 建立更丰富的预测目标（如半场比分、大小球等）")
@@ -408,7 +478,7 @@ class FotMobRealDataAnalyzer:
 def main():
     """主函数."""
     print("🚀 启动FotMob真实数据深度分析")
-    print("="*60)
+    print("=" * 60)
 
     analyzer = FotMobRealDataAnalyzer()
 
@@ -437,26 +507,32 @@ def main():
     report = analyzer.generate_comprehensive_report(matches, structure, features)
 
     # 输出报告
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(report)
 
     # 保存报告
     report_path = Path("fotmob_real_data_analysis.md")
-    with open(report_path, 'w', encoding='utf-8') as f:
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
 
     print(f"\n💾 详细报告已保存到: {report_path}")
 
     # 保存分析结果
     analysis_path = Path("fotmob_analysis_results.json")
-    with open(analysis_path, 'w', encoding='utf-8') as f:
-        json.dump({
-            "timestamp": datetime.now().isoformat(),
-            "total_matches": len(matches),
-            "structure": structure,
-            "features": features,
-            "sample_matches": matches[:5]  # 保存前5个样本
-        }, f, indent=2, ensure_ascii=False, default=str)
+    with open(analysis_path, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "timestamp": datetime.now().isoformat()
+                "total_matches": len(matches)
+                "structure": structure
+                "features": features
+                "sample_matches": matches[:5],  # 保存前5个样本
+            }
+            f
+            indent=2
+            ensure_ascii=False
+            default=str
+        )
 
     print(f"💾 分析结果已保存到: {analysis_path}")
     print("\n🎉 FotMob真实数据深度分析完成!")

@@ -11,7 +11,7 @@ import subprocess
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
 import pandas as pd
 
 
@@ -33,9 +33,9 @@ class OperationsDashboard:
                     line for line in lines if line.strip() and not line.startswith("#")
                 ]
                 return {
-                    "status": "active",
-                    "total_jobs": len(active_jobs),
-                    "jobs": active_jobs,
+                    "status": "active"
+                    "total_jobs": len(active_jobs)
+                    "jobs": active_jobs
                 }
             else:
                 return {"status": "error", "message": result.stderr}
@@ -58,19 +58,19 @@ class OperationsDashboard:
             mem_info = mem_lines[1].split() if len(mem_lines) > 1 else []
 
             return {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now().isoformat()
                 "disk": {
-                    "total": disk_info[1] if len(disk_info) > 1 else "N/A",
-                    "used": disk_info[2] if len(disk_info) > 2 else "N/A",
-                    "available": disk_info[3] if len(disk_info) > 3 else "N/A",
-                    "usage_percent": disk_info[4] if len(disk_info) > 4 else "N/A",
-                },
+                    "total": disk_info[1] if len(disk_info) > 1 else "N/A"
+                    "used": disk_info[2] if len(disk_info) > 2 else "N/A"
+                    "available": disk_info[3] if len(disk_info) > 3 else "N/A"
+                    "usage_percent": disk_info[4] if len(disk_info) > 4 else "N/A"
+                }
                 "memory": {
-                    "total": mem_info[1] if len(mem_info) > 1 else "N/A",
-                    "used": mem_info[2] if len(mem_info) > 2 else "N/A",
-                    "free": mem_info[3] if len(mem_info) > 3 else "N/A",
-                    "usage_percent": mem_info[2] if len(mem_info) > 2 else "N/A",
-                },
+                    "total": mem_info[1] if len(mem_info) > 1 else "N/A"
+                    "used": mem_info[2] if len(mem_info) > 2 else "N/A"
+                    "free": mem_info[3] if len(mem_info) > 3 else "N/A"
+                    "usage_percent": mem_info[2] if len(mem_info) > 2 else "N/A"
+                }
             }
         except Exception as e:
             return {"error": str(e)}
@@ -91,20 +91,20 @@ class OperationsDashboard:
                 stat = log_file.stat()
                 recent_logs.append(
                     {
-                        "name": log_file.name,
-                        "size_mb": round(stat.st_size / (1024 * 1024), 2),
-                        "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                        "name": log_file.name
+                        "size_mb": round(stat.st_size / (1024 * 1024), 2)
+                        "modified": datetime.fromtimestamp(stat.st_mtime).isoformat()
                         "age_hours": (
                             datetime.now() - datetime.fromtimestamp(stat.st_mtime)
                         ).total_seconds()
-                        / 3600,
+                        / 3600
                     }
                 )
 
             return {
-                "status": "success",
-                "total_log_files": len(log_files),
-                "recent_logs": recent_logs,
+                "status": "success"
+                "total_log_files": len(log_files)
+                "recent_logs": recent_logs
             }
 
         except Exception as e:
@@ -140,14 +140,14 @@ class OperationsDashboard:
                 issues.append("无最近日志记录")
 
         return {
-            "overall_score": max(0, health_score),
+            "overall_score": max(0, health_score)
             "status": (
                 "healthy"
                 if health_score >= 80
                 else "warning" if health_score >= 60 else "critical"
-            ),
-            "issues": issues,
-            "last_check": datetime.now().isoformat(),
+            )
+            "issues": issues
+            "last_check": datetime.now().isoformat()
         }
 
     def generate_dashboard_report(self) -> str:

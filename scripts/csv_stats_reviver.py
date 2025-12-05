@@ -18,8 +18,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-
 import pandas as pd
 import asyncpg
 from sqlalchemy import text
@@ -31,14 +29,15 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     handlers=[
-        logging.FileHandler('/tmp/csv_stats_reviver.log'),
+        logging.FileHandler("/tmp/csv_stats_reviver.log")
         logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)
+
 
 class CSVStatsReviver:
     """基于CSV的数据复活器"""
@@ -50,7 +49,10 @@ class CSVStatsReviver:
         self.start_time = datetime.now()
 
         # 数据库连接
-        self.database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction')
+        self.database_url = os.getenv(
+            "DATABASE_URL"
+            "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
+        )
 
         # 数据文件路径
         self.data_dir = project_root / "data" / "fbref"
@@ -73,76 +75,108 @@ class CSVStatsReviver:
 
             for _, row in df.iterrows():
                 # 跳过空行
-                if pd.isna(row['Home']) or pd.isna(row['Away']):
+                if pd.isna(row["Home"]) or pd.isna(row["Away"]):
                     continue
 
                 match_data = {
-                    'home_team': str(row['Home']).strip(),
-                    'away_team': str(row['Away']).strip(),
-                    'date': str(row['Date']).strip(),
-                    'time': str(row['Time']).strip() if 'Time' in row and not pd.isna(row['Time']) else '',
-                    'score': str(row['Score']).strip() if 'Score' in row and not pd.isna(row['Score']) else '',
-                    'venue': str(row['Venue']).strip() if 'Venue' in row and not pd.isna(row['Venue']) else '',
-                    'attendance': str(row['Attendance']).strip() if 'Attendance' in row and not pd.isna(row['Attendance']) else '',
-                    'referee': str(row['Referee']).strip() if 'Referee' in row and not pd.isna(row['Referee']) else '',
-                    'match_report': str(row['Match Report']).strip() if 'Match Report' in row and not pd.isna(row['Match Report']) else '',
-                    'week': str(row['Wk']).strip() if 'Wk' in row and not pd.isna(row['Wk']) else '',
+                    "home_team": str(row["Home"]).strip()
+                    "away_team": str(row["Away"]).strip()
+                    "date": str(row["Date"]).strip()
+                    "time": (
+                        str(row["Time"]).strip()
+                        if "Time" in row and not pd.isna(row["Time"])
+                        else ""
+                    )
+                    "score": (
+                        str(row["Score"]).strip()
+                        if "Score" in row and not pd.isna(row["Score"])
+                        else ""
+                    )
+                    "venue": (
+                        str(row["Venue"]).strip()
+                        if "Venue" in row and not pd.isna(row["Venue"])
+                        else ""
+                    )
+                    "attendance": (
+                        str(row["Attendance"]).strip()
+                        if "Attendance" in row and not pd.isna(row["Attendance"])
+                        else ""
+                    )
+                    "referee": (
+                        str(row["Referee"]).strip()
+                        if "Referee" in row and not pd.isna(row["Referee"])
+                        else ""
+                    )
+                    "match_report": (
+                        str(row["Match Report"]).strip()
+                        if "Match Report" in row and not pd.isna(row["Match Report"])
+                        else ""
+                    )
+                    "week": (
+                        str(row["Wk"]).strip()
+                        if "Wk" in row and not pd.isna(row["Wk"])
+                        else ""
+                    )
                 }
 
                 # 解析xG数据
                 xg_home = None
                 xg_away = None
 
-                if 'xG' in row and not pd.isna(row['xG']):
+                if "xG" in row and not pd.isna(row["xG"]):
                     try:
-                        xg_home = float(row['xG'])
+                        xg_home = float(row["xG"])
                     except (ValueError, TypeError):
                         pass
 
-                if 'xG.1' in row and not pd.isna(row['xG.1']):
+                if "xG.1" in row and not pd.isna(row["xG.1"]):
                     try:
-                        xg_away = float(row['xG.1'])
+                        xg_away = float(row["xG.1"])
                     except (ValueError, TypeError):
                         pass
 
                 # 创建stats字段
                 stats = {}
                 if xg_home is not None:
-                    stats['xg_home'] = str(round(xg_home, 2))
+                    stats["xg_home"] = str(round(xg_home, 2))
                 if xg_away is not None:
-                    stats['xg_away'] = str(round(xg_away, 2))
+                    stats["xg_away"] = str(round(xg_away, 2))
 
                 # 创建metadata字段
                 metadata = {}
-                if match_data['referee']:
-                    metadata['referee'] = match_data['referee']
-                if match_data['venue']:
-                    metadata['venue'] = match_data['venue']
-                if match_data['attendance'] and match_data['attendance'] != '':
+                if match_data["referee"]:
+                    metadata["referee"] = match_data["referee"]
+                if match_data["venue"]:
+                    metadata["venue"] = match_data["venue"]
+                if match_data["attendance"] and match_data["attendance"] != "":
                     try:
-                        attendance = int(match_data['attendance'].replace(',', ''))
+                        attendance = int(match_data["attendance"].replace(",", ""))
                         if attendance > 0:
-                            metadata['attendance'] = attendance
+                            metadata["attendance"] = attendance
                     except (ValueError, TypeError):
                         pass
-                if match_data['match_report']:
-                    metadata['match_report_url'] = match_data['match_report']
+                if match_data["match_report"]:
+                    metadata["match_report_url"] = match_data["match_report"]
 
-                matches.append({
-                    'home_team': match_data['home_team'],
-                    'away_team': match_data['away_team'],
-                    'date': match_data['date'],
-                    'stats': json.dumps(stats) if stats else '{}',
-                    'metadata': json.dumps(metadata) if metadata else '{}',
-                    'has_xg': len(stats) > 0
-                })
+                matches.append(
+                    {
+                        "home_team": match_data["home_team"]
+                        "away_team": match_data["away_team"]
+                        "date": match_data["date"]
+                        "stats": json.dumps(stats) if stats else "{}"
+                        "metadata": json.dumps(metadata) if metadata else "{}"
+                        "has_xg": len(stats) > 0
+                    }
+                )
 
         except Exception as e:
             logger.error(f"❌ 解析CSV文件失败 {csv_file}: {e}")
 
         return matches
 
-    async def find_matching_database_records(self, conn, csv_matches: list[dict]) -> list[tuple]:
+    async def find_matching_database_records(
+        self, conn, csv_matches: list[dict]
+    ) -> list[tuple]:
         """在数据库中查找匹配的记录"""
         matching_records = []
 
@@ -163,7 +197,7 @@ class CSVStatsReviver:
                 """
 
                 # 处理日期格式
-                csv_date = csv_match['date']
+                csv_date = csv_match["date"]
                 if len(csv_date) == 10:  # YYYY-MM-DD format
                     pass  # 直接使用
                 else:
@@ -171,21 +205,23 @@ class CSVStatsReviver:
                     pass
 
                 result = await conn.fetchrow(
-                    query,
-                    csv_date,
-                    f"%{csv_match['home_team']}%",
+                    query
+                    csv_date
+                    f"%{csv_match['home_team']}%"
                     f"%{csv_match['away_team']}%"
                 )
 
                 if result:
-                    matching_records.append((
-                        result['id'],
-                        csv_match['stats'],
-                        csv_match['metadata'],
-                        csv_match['has_xg'],
-                        result['home_name'],
-                        result['away_name']
-                    ))
+                    matching_records.append(
+                        (
+                            result["id"]
+                            csv_match["stats"]
+                            csv_match["metadata"]
+                            csv_match["has_xg"]
+                            result["home_name"]
+                            result["away_name"]
+                        )
+                    )
 
             except Exception as e:
                 logger.error(f"❌ 查找匹配记录失败: {e}")
@@ -194,26 +230,29 @@ class CSVStatsReviver:
 
     async def revive_database_records(self, conn, matching_records: list[tuple]):
         """更新数据库记录"""
-        for record_id, stats, metadata, has_xg, home_name, away_name in matching_records:
+        for (
+            record_id
+            stats
+            metadata
+            has_xg
+            home_name
+            away_name
+        ) in matching_records:
             try:
                 # 更新数据库记录
                 update_query = """
                     UPDATE matches
-                    SET stats = $1,
-                        match_metadata = COALESCE(match_metadata, '{}'::jsonb) || $2::jsonb,
-                        data_completeness = $3,
+                    SET stats = $1
+                        match_metadata = COALESCE(match_metadata, '{}'::jsonb) || $2::jsonb
+                        data_completeness = $3
                         updated_at = NOW()
                     WHERE id = $4
                 """
 
-                completeness = 'complete' if has_xg else 'partial'
+                completeness = "complete" if has_xg else "partial"
 
                 await conn.execute(
-                    update_query,
-                    stats,
-                    metadata,
-                    completeness,
-                    record_id
+                    update_query, stats, metadata, completeness, record_id
                 )
 
                 self.revived_count += 1
@@ -246,10 +285,14 @@ class CSVStatsReviver:
                 csv_matches = self.parse_csv_match_data(csv_file)
                 total_csv_matches += len(csv_matches)
 
-                logger.info(f"📊 从 {csv_file.name} 解析出 {len(csv_matches)} 条比赛记录")
+                logger.info(
+                    f"📊 从 {csv_file.name} 解析出 {len(csv_matches)} 条比赛记录"
+                )
 
                 # 查找匹配的数据库记录
-                matching_records = await self.find_matching_database_records(conn, csv_matches)
+                matching_records = await self.find_matching_database_records(
+                    conn, csv_matches
+                )
 
                 logger.info(f"🎯 找到 {len(matching_records)} 条匹配的数据库记录")
 
@@ -290,7 +333,7 @@ CSV总记录: {total_csv_matches} 条
 
         # 写入报告文件
         try:
-            with open('/tmp/csv_revival_report.txt', 'w', encoding='utf-8') as f:
+            with open("/tmp/csv_revival_report.txt", "w", encoding="utf-8") as f:
                 f.write(report)
         except Exception as e:
             logger.error(f"❌ 无法写入报告文件: {e}")
@@ -298,7 +341,8 @@ CSV总记录: {total_csv_matches} 条
 
 async def main():
     """主函数"""
-    print("""
+    print(
+        """
 🚀 CSV数据复活脚本 - CSV Stats Revival Tool
 =====================================
 首席数据修复官 (Chief Data Remediation Officer)
@@ -310,7 +354,10 @@ async def main():
 
 开始时间: {}
 =====================================
-""".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+""".format(
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+    )
 
     # 创建修复器实例
     reviver = CSVStatsReviver()

@@ -18,8 +18,7 @@ import asyncpg
 import os
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -28,9 +27,18 @@ class MassiveFotMobBackfill:
     """大规模FotMob回填引擎"""
 
     def __init__(self, seasons=None, max_concurrent=10):
-        self.seasons = seasons or ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+        self.seasons = seasons or [
+            "2020/2021",
+            "2021/2022",
+            "2022/2023",
+            "2023/2024",
+            "2024/2025",
+        ]
         self.max_concurrent = max_concurrent
-        self.database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres-dev-password@db:5432/football_prediction")
+        self.database_url = os.getenv(
+            "DATABASE_URL",
+            "postgresql://postgres:postgres-dev-password@db:5432/football_prediction",
+        )
 
         # 核心联赛FotMob ID映射
         self.league_mapping = {
@@ -38,22 +46,22 @@ class MassiveFotMobBackfill:
             "La Liga": "87",
             "Bundesliga": "54",
             "Serie A": "131",
-            "Ligue 1": "60"
+            "Ligue 1": "60",
         }
 
         # HTTP客户端池
         self.client = httpx.AsyncClient(
             timeout=30.0,
-            limits=httpx.Limits(max_keepalive_connections=20, max_connections=50)
+            limits=httpx.Limits(max_keepalive_connections=20, max_connections=50),
         )
 
         # 统计数据
         self.stats = {
-            'leagues_processed': 0,
-            'matches_found': 0,
-            'matches_saved': 0,
-            'start_time': datetime.utcnow(),
-            'leagues_failed': 0
+            "leagues_processed": 0,
+            "matches_found": 0,
+            "matches_saved": 0,
+            "start_time": datetime.utcnow(),
+            "leagues_failed": 0,
         }
 
     async def __aenter__(self):
@@ -77,15 +85,17 @@ class MassiveFotMobBackfill:
                     SELECT id, name FROM leagues
                     WHERE name = $1 LIMIT 1
                     """,
-                    league_name
+                    league_name,
                 )
 
                 if result:
-                    leagues.append({
-                        'id': result['id'],
-                        'name': result['name'],
-                        'fotmob_id': fotmob_id
-                    })
+                    leagues.append(
+                        {
+                            "id": result["id"],
+                            "name": result["name"],
+                            "fotmob_id": fotmob_id,
+                        }
+                    )
                 else:
                     logger.warning(f"⚠️ 未找到联赛: {league_name}")
 
@@ -128,12 +138,13 @@ class MassiveFotMobBackfill:
                     # 检查是否已存在
                     existing = await self.conn.fetchval(
                         "SELECT id FROM matches WHERE fotmob_id = $1",
-                        str(match.get('id', ''))
+                        str(match.get("id", "")),
                     )
 
                     if not existing:
                         # 插入新比赛
-                        await self.conn.execute("""
+                        await self.conn.execute(
+                            """
                             INSERT INTO matches (
                                 fotmob_id, league_id, home_team_id, away_team_id,
                                 home_score, away_score, status, match_date,
@@ -141,20 +152,20 @@ class MassiveFotMobBackfill:
                                 created_at, updated_at
                             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                         """,
-                            str(match.get('id', '')),  # fotmob_id
-                            league_id,                       # league_id
-                            1,                                 # home_team_id (简化)
-                            2,                                 # away_team_id (简化)
-                            match.get('home', {}).get('score', 0),  # home_score
-                            match.get('away', {}).get('score', 0),  # away_score
-                            'FINISHED',                         # status (简化)
-                            datetime.now(),                      # match_date (简化)
-                            match.get('venue', {}).get('name', ''), # venue
-                            season,                             # season
-                            'fotmob_massive_v1',               # data_source
-                            'complete',                         # data_completeness
-                            datetime.utcnow(),                 # created_at
-                            datetime.utcnow()                  # updated_at
+                            str(match.get("id", "")),  # fotmob_id
+                            league_id,  # league_id
+                            1,  # home_team_id (简化)
+                            2,  # away_team_id (简化)
+                            match.get("home", {}).get("score", 0),  # home_score
+                            match.get("away", {}).get("score", 0),  # away_score
+                            "FINISHED",  # status (简化)
+                            datetime.now(),  # match_date (简化)
+                            match.get("venue", {}).get("name", ""),  # venue
+                            season,  # season
+                            "fotmob_massive_v1",  # data_source
+                            "complete",  # data_completeness
+                            datetime.utcnow(),  # created_at
+                            datetime.utcnow(),  # updated_at
                         )
                         saved_count += 1
 
@@ -165,9 +176,9 @@ class MassiveFotMobBackfill:
 
     async def process_league_season(self, league, season):
         """处理单个联赛的单个赛季"""
-        league_name = league['name']
-        fotmob_id = league['fotmob_id']
-        league_id = league['id']
+        league_name = league["name"]
+        fotmob_id = league["fotmob_id"]
+        league_id = league["id"]
 
         try:
             logger.info(f"🏆 处理 {league_name} {season} (ID: {fotmob_id})")
@@ -175,14 +186,14 @@ class MassiveFotMobBackfill:
             # 获取比赛数据
             data = await self.fetch_league_data(fotmob_id, season)
 
-            if data and 'matches' in data:
-                matches = data['matches']
-                self.stats['matches_found'] += len(matches)
+            if data and "matches" in data:
+                matches = data["matches"]
+                self.stats["matches_found"] += len(matches)
                 logger.info(f"📊 发现 {len(matches)} 场比赛")
 
                 # 保存数据
                 saved = await self.save_matches_batch(matches, league_id, season)
-                self.stats['matches_saved'] += saved
+                self.stats["matches_saved"] += saved
                 logger.info(f"✅ 保存 {saved} 场比赛")
 
             else:
@@ -190,7 +201,7 @@ class MassiveFotMobBackfill:
 
         except Exception as e:
             logger.error(f"❌ 处理失败 {league_name} {season}: {e}")
-            self.stats['leagues_failed'] += 1
+            self.stats["leagues_failed"] += 1
 
     async def run_backfill(self):
         """执行大规模回填"""
@@ -224,23 +235,27 @@ class MassiveFotMobBackfill:
 
         # 统计结果
         success_count = sum(1 for r in results if not isinstance(r, Exception))
-        self.stats['leagues_processed'] = success_count
+        self.stats["leagues_processed"] = success_count
 
         return success_count == len(leagues) * len(self.seasons)
 
     def get_progress_report(self):
         """获取进度报告"""
-        elapsed = datetime.utcnow() - self.stats['start_time']
-        rate = self.stats['matches_saved'] / max(elapsed.total_seconds(), 1) if elapsed.total_seconds() > 0 else 0
+        elapsed = datetime.utcnow() - self.stats["start_time"]
+        rate = (
+            self.stats["matches_saved"] / max(elapsed.total_seconds(), 1)
+            if elapsed.total_seconds() > 0
+            else 0
+        )
 
         return {
-            'elapsed_time': f"{elapsed.total_seconds():.1f}秒",
-            'leagues_processed': f"{self.stats['leagues_processed']}/{len(self.league_mapping) * len(self.seasons)}",
-            'matches_found': self.stats['matches_found'],
-            'matches_saved': self.stats['matches_saved'],
-            'processing_rate': f"{rate:.1f} 场/秒",
-            'leagues_failed': self.stats['leagues_failed'],
-            'success_rate': f"{(self.stats['leagues_processed'] / (len(self.league_mapping) * len(self.seasons)) * 100):.1f}%"
+            "elapsed_time": f"{elapsed.total_seconds():.1f}秒",
+            "leagues_processed": f"{self.stats['leagues_processed']}/{len(self.league_mapping) * len(self.seasons)}",
+            "matches_found": self.stats["matches_found"],
+            "matches_saved": self.stats["matches_saved"],
+            "processing_rate": f"{rate:.1f} 场/秒",
+            "leagues_failed": self.stats["leagues_failed"],
+            "success_rate": f"{(self.stats['leagues_processed'] / (len(self.league_mapping) * len(self.seasons)) * 100):.1f}%",
         }
 
 
@@ -258,14 +273,19 @@ async def main():
             if arg.startswith("--recent-years="):
                 years = int(arg.split("=")[1])
                 current_year = datetime.now().year
-                seasons = [f"{year}/{year+1}" for year in range(current_year - years, current_year)]
+                seasons = [
+                    f"{year}/{year+1}"
+                    for year in range(current_year - years, current_year)
+                ]
             elif arg.startswith("--max-concurrent="):
                 max_concurrent = int(arg.split("=")[1])
 
     logger.info("📋 配置:")
     logger.info(f"   赛季: {seasons}")
     logger.info(f"   并发数: {max_concurrent}")
-    logger.info(f"   核心联赛: {len(['Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1'])} 个")
+    logger.info(
+        f"   核心联赛: {len(['Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1'])} 个"
+    )
 
     try:
         async with MassiveFotMobBackfill(seasons, max_concurrent) as backfill:
@@ -284,7 +304,7 @@ async def main():
             logger.info(f"   处理速率: {report['processing_rate']}")
             logger.info(f"   成功率: {report['success_rate']}")
 
-            if report['matches_saved'] > 0:
+            if report["matches_saved"] > 0:
                 logger.info("🎉 大规模回填作业成功完成!")
             else:
                 logger.warning("⚠️ 未保存任何比赛数据")
@@ -292,6 +312,7 @@ async def main():
     except Exception as e:
         logger.error(f"💥 大规模回填失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

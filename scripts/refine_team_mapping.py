@@ -12,7 +12,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Dict, Set
+from typing import Set
 
 # 配置路径
 CONFIG_DIR = Path(__file__).parent.parent / "config"
@@ -25,114 +25,114 @@ UNMATCHED_FILE = CONFIG_DIR / "team_mapping_unmatched.json"
 # 规则1: 五大联赛豪门球队映射（硬编码）
 TOP_TEAMS_MAPPING = {
     # 英超
-    "Arsenal": "Arsenal",
+    "Arsenal": "Arsenal"
     "Aston Villa": None,  # FotMob中未找到
-    "Brentford": "Brentford",
-    "Brighton": "Brighton",
-    "Chelsea": "Chelsea",
-    "Crystal Palace": "Crystal Palace",
+    "Brentford": "Brentford"
+    "Brighton": "Brighton"
+    "Chelsea": "Chelsea"
+    "Crystal Palace": "Crystal Palace"
     "Everton": "Everton",  # FotMob数据可能不完整
-    "Fulham": None,
-    "Leeds United": "Leeds",
-    "Leicester": None,
-    "Liverpool": "Liverpool FC",
+    "Fulham": None
+    "Leeds United": "Leeds"
+    "Leicester": None
+    "Liverpool": "Liverpool FC"
     "Manchester City": None,  # FotMob数据中没有顶级队
-    "Manchester Utd": None,
-    "Newcastle Utd": "Newcastle",
-    "Nottingham Forest": "Nottm Forest",
-    "Southampton": "Southampton",
-    "Tottenham": "Tottenham",
-    "West Ham": "West Ham",
-    "Wolves": "Wolves",
+    "Manchester Utd": None
+    "Newcastle Utd": "Newcastle"
+    "Nottingham Forest": "Nottm Forest"
+    "Southampton": "Southampton"
+    "Tottenham": "Tottenham"
+    "West Ham": "West Ham"
+    "Wolves": "Wolves"
     # 西甲
-    "Athletic Club": "Athletic Club",
-    "Atlético Madrid": "Atletico Madrid",
-    "Barcelona": "Barcelona",
-    "Betis": None,
-    "Celta Vigo": "Celta Vigo",
-    "Elche": "Elche",
-    "Espanyol": "Espanyol",
-    "Getafe": None,
-    "Girona": None,
-    "Granada": None,
-    "Las Palmas": None,
-    "Mallorca": "Mallorca",
-    "Osasuna": None,
-    "Rayo Vallecano": None,
+    "Athletic Club": "Athletic Club"
+    "Atlético Madrid": "Atletico Madrid"
+    "Barcelona": "Barcelona"
+    "Betis": None
+    "Celta Vigo": "Celta Vigo"
+    "Elche": "Elche"
+    "Espanyol": "Espanyol"
+    "Getafe": None
+    "Girona": None
+    "Granada": None
+    "Las Palmas": None
+    "Mallorca": "Mallorca"
+    "Osasuna": None
+    "Rayo Vallecano": None
     "Real Madrid": None,  # FotMob中没有
-    "Real Sociedad": "Real Sociedad",
-    "Sevilla": None,
-    "Valencia": "Valencia",
-    "Villarreal": None,
+    "Real Sociedad": "Real Sociedad"
+    "Sevilla": None
+    "Valencia": "Valencia"
+    "Villarreal": None
     # 德甲
-    "Augsburg": "Augsburg",
+    "Augsburg": "Augsburg"
     "Bayern Munich": None,  # FotMob中没有
-    "Borussia Dortmund": "Dortmund",
-    "Borussia Mönchengladbach": "M'gladbach",
-    "Eintracht Frankfurt": None,
-    "Freiburg": "Freiburg",
-    "Hertha BSC": None,
-    "Hoffenheim": "Hoffenheim",
-    "Köln": "Köln",
-    "Leverkusen": "Leverkusen",
-    "Mainz 05": None,
-    "RB Leipzig": "RB Leipzig",
-    "VfB Stuttgart": None,
-    "Werder Bremen": "Werder Bremen",
-    "Wolfsburg": "Wolfsburg",
-    "Union Berlin": "Union Berlin",
-    "Heidenheim": "FC Heidenheim",
+    "Borussia Dortmund": "Dortmund"
+    "Borussia Mönchengladbach": "M'gladbach"
+    "Eintracht Frankfurt": None
+    "Freiburg": "Freiburg"
+    "Hertha BSC": None
+    "Hoffenheim": "Hoffenheim"
+    "Köln": "Köln"
+    "Leverkusen": "Leverkusen"
+    "Mainz 05": None
+    "RB Leipzig": "RB Leipzig"
+    "VfB Stuttgart": None
+    "Werder Bremen": "Werder Bremen"
+    "Wolfsburg": "Wolfsburg"
+    "Union Berlin": "Union Berlin"
+    "Heidenheim": "FC Heidenheim"
     # 意甲
-    "AC Milan": "Milan",
-    "AS Roma": "Roma",
-    "Atalanta": "Atalanta",
-    "Bologna": "Bologna",
-    "Cagliari": "Cagliari",
-    "Como": "Como",
-    "Cremonese": "Cremonese",
-    "Empoli": None,
-    "Fiorentina": "Fiorentina",
-    "Genoa": None,
-    "Hellas Verona": "Hellas Verona",
-    "Inter": None,
-    "Juventus": None,
-    "Lazio": "Lazio",
-    "Lecce": None,
-    "Monza": None,
-    "Napoli": None,
-    "Parma": None,
-    "Sassuolo": "Sassuolo",
-    "Torino": None,
-    "Udinese": None,
-    "Venezia": None,
+    "AC Milan": "Milan"
+    "AS Roma": "Roma"
+    "Atalanta": "Atalanta"
+    "Bologna": "Bologna"
+    "Cagliari": "Cagliari"
+    "Como": "Como"
+    "Cremonese": "Cremonese"
+    "Empoli": None
+    "Fiorentina": "Fiorentina"
+    "Genoa": None
+    "Hellas Verona": "Hellas Verona"
+    "Inter": None
+    "Juventus": None
+    "Lazio": "Lazio"
+    "Lecce": None
+    "Monza": None
+    "Napoli": None
+    "Parma": None
+    "Sassuolo": "Sassuolo"
+    "Torino": None
+    "Udinese": None
+    "Venezia": None
     # 法甲
-    "Auxerre": None,
-    "Brest": "Brest",
-    "Clermont": None,
-    "Le Havre": None,
-    "Lille": None,
-    "Lyon": "Lyon",
-    "Marseille": None,
-    "Monaco": None,
-    "Montpellier": None,
-    "Nantes": "Nantes",
-    "Nice": "Nice",
-    "Paris S-G": None,
-    "PSG": None,
-    "Reims": "Reims",
-    "Rennes": "Rennes",
-    "Strasbourg": "Strasbourg",
-    "Toulouse": None,
+    "Auxerre": None
+    "Brest": "Brest"
+    "Clermont": None
+    "Le Havre": None
+    "Lille": None
+    "Lyon": "Lyon"
+    "Marseille": None
+    "Monaco": None
+    "Montpellier": None
+    "Nantes": "Nantes"
+    "Nice": "Nice"
+    "Paris S-G": None
+    "PSG": None
+    "Reims": "Reims"
+    "Rennes": "Rennes"
+    "Strasbourg": "Strasbourg"
+    "Toulouse": None
     # 其他知名球队
-    "Ajax": None,
-    "Benfica": None,
-    "Porto": None,
-    "Celtic": None,
-    "Rangers": "Rangers",
-    "Shakhtar Donetsk": None,
-    "Galatasaray": None,
-    "Fenerbahçe": None,
-    "Beşiktaş": None,
+    "Ajax": None
+    "Benfica": None
+    "Porto": None
+    "Celtic": None
+    "Rangers": "Rangers"
+    "Shakhtar Donetsk": None
+    "Galatasaray": None
+    "Fenerbahçe": None
+    "Beşiktaş": None
 }
 
 
@@ -201,10 +201,10 @@ class TeamMappingRefiner:
                 # 检查当前映射是否为青年队
                 if self.is_youth_team(current_mapping):
                     self.log_correction(
-                        fbref_name,
-                        current_mapping,
-                        fotmob_name,
-                        "ERROR: 顶级球队映射到青年队",
+                        fbref_name
+                        current_mapping
+                        fotmob_name
+                        "ERROR: 顶级球队映射到青年队"
                     )
                     corrections_count += 1
 
@@ -219,10 +219,10 @@ class TeamMappingRefiner:
                     # 修正映射
                     if current_mapping != fotmob_name:
                         self.log_correction(
-                            fbref_name,
-                            current_mapping,
-                            fotmob_name,
-                            "HARDCODE: 硬编码修正",
+                            fbref_name
+                            current_mapping
+                            fotmob_name
+                            "HARDCODE: 硬编码修正"
                         )
                         corrections_count += 1
 
@@ -235,10 +235,10 @@ class TeamMappingRefiner:
                 if self.is_youth_team(current_mapping):
                     if fotmob_name is not None:
                         self.log_correction(
-                            fbref_name,
-                            current_mapping,
-                            fotmob_name,
-                            "ERROR: 低可信度青年队映射修正",
+                            fbref_name
+                            current_mapping
+                            fotmob_name
+                            "ERROR: 低可信度青年队映射修正"
                         )
                         corrections_count += 1
                         self.high_confidence[fbref_name] = fotmob_name
@@ -326,10 +326,10 @@ class TeamMappingRefiner:
         """记录修正日志"""
         self.corrections_log.append(
             {
-                "fbref_team": fbref,
-                "old_mapping": old,
-                "new_mapping": new,
-                "reason": reason,
+                "fbref_team": fbref
+                "old_mapping": old
+                "new_mapping": new
+                "reason": reason
             }
         )
 
@@ -338,20 +338,20 @@ class TeamMappingRefiner:
         print("\n💾 保存修正后的映射文件...")
 
         refined_mapping = {
-            "high_confidence": self.high_confidence,
-            "low_confidence": self.low_confidence,
-            "unmatched": self.unmatched,
+            "high_confidence": self.high_confidence
+            "low_confidence": self.low_confidence
+            "unmatched": self.unmatched
             "metadata": {
-                **self.metadata,
-                "refined": True,
-                "corrections_count": len(self.corrections_log),
+                **self.metadata
+                "refined": True
+                "corrections_count": len(self.corrections_log)
                 "refinement_rules": [
-                    "RULE_1: 严禁将顶级球队映射到U18/U21/青年队",
-                    "RULE_2: 硬编码五大联赛豪门映射",
-                    "RULE_3: 移除跨联赛可疑映射",
-                ],
-            },
-            "corrections_log": self.corrections_log,
+                    "RULE_1: 严禁将顶级球队映射到U18/U21/青年队"
+                    "RULE_2: 硬编码五大联赛豪门映射"
+                    "RULE_3: 移除跨联赛可疑映射"
+                ]
+            }
+            "corrections_log": self.corrections_log
         }
 
         with open(OUTPUT_FILE, "w", encoding="utf-8") as f:

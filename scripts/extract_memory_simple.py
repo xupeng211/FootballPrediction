@@ -16,12 +16,13 @@ except ImportError:
     print("❌ 需要安装 playwright: pip install playwright")
     sys.exit(1)
 
+
 async def extract_memory_simple():
     """简化版内存提取"""
-    print("🎭" + "="*60)
+    print("🎭" + "=" * 60)
     print("🔍 简化版浏览器内存提取")
     print("👨‍💻 前端逆向工程师 - headless模式")
-    print("="*62)
+    print("=" * 62)
 
     try:
         async with async_playwright() as p:
@@ -31,27 +32,31 @@ async def extract_memory_simple():
             browser = await p.chromium.launch(
                 headless=True,
                 args=[
-                    '--no-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-setuid-sandbox',
-                    '--disable-gpu',
-                    '--no-first-run',
-                    '--no-default-browser-check',
-                    '--disable-default-apps'
-                ]
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-setuid-sandbox",
+                    "--disable-gpu",
+                    "--no-first-run",
+                    "--no-default-browser-check",
+                    "--disable-default-apps",
+                ],
             )
 
             page = await browser.new_page()
 
             # 设置简单的用户代理
-            await page.set_user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+            await page.set_user_agent(
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
 
             # 访问页面
             target_url = "https://www.fotmob.com/match/4189362"
             print(f"📡 访问页面: {target_url}")
 
             try:
-                await page.goto(target_url, timeout=30000, wait_until="domcontentloaded")
+                await page.goto(
+                    target_url, timeout=30000, wait_until="domcontentloaded"
+                )
                 print("✅ 页面加载完成")
             except Exception as e:
                 print(f"⚠️ 页面加载问题: {e}")
@@ -115,32 +120,32 @@ async def extract_memory_simple():
             results = await page.evaluate(extract_script)
 
             print("\n📊 提取结果:")
-            print("="*50)
+            print("=" * 50)
 
             success_count = 0
 
             # 分析结果
-            if 'nextData' in results and results['nextData']['exists']:
+            if "nextData" in results and results["nextData"]["exists"]:
                 print("✅ 找到 __NEXT_DATA__")
-                next_data = results['nextData']
+                next_data = results["nextData"]
                 print(f"   Keys: {next_data['keys']}")
-                if next_data['hasProps']:
+                if next_data["hasProps"]:
                     print(f"   Props Keys: {next_data['propsKeys']}")
-                    if 'pageProps' in next_data['propsKeys']:
+                    if "pageProps" in next_data["propsKeys"]:
                         print("   ✅ 发现 pageProps - 这可能包含比赛数据!")
                         success_count += 1
 
-            if 'pageContent' in results:
-                content = results['pageContent']
+            if "pageContent" in results:
+                content = results["pageContent"]
                 print("\n🔍 页面内容分析:")
                 indicators = {
-                    'hasShotmap': '射门图',
-                    'hasStats': '统计数据',
-                    'hasLineups': '阵容数据',
-                    'hasOdds': '赔率数据',
-                    'hasXG': 'xG数据',
-                    'hasRating': '评分数据',
-                    'hasBigChances': '绝佳机会'
+                    "hasShotmap": "射门图",
+                    "hasStats": "统计数据",
+                    "hasLineups": "阵容数据",
+                    "hasOdds": "赔率数据",
+                    "hasXG": "xG数据",
+                    "hasRating": "评分数据",
+                    "hasBigChances": "绝佳机会",
                 }
 
                 found_indicators = []
@@ -157,16 +162,16 @@ async def extract_memory_simple():
                 if len(found_indicators) >= 4:
                     print("   🎉 页面包含丰富的比赛数据指示器!")
 
-            if 'jsonScripts' in results:
+            if "jsonScripts" in results:
                 print("\n📋 脚本分析:")
                 print(f"   JSON脚本: {results['jsonScripts']}")
                 print(f"   匹配脚本: {results['matchScripts']}")
-                if results['matchScripts'] > 0:
+                if results["matchScripts"] > 0:
                     print("   ✅ 找到可能包含比赛数据的脚本!")
                     success_count += 1
 
             # 保存结果
-            with open("memory_extract_simple.json", 'w', encoding='utf-8') as f:
+            with open("memory_extract_simple.json", "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2, ensure_ascii=False)
 
             print("\n💾 结果已保存到: memory_extract_simple.json")
@@ -174,9 +179,9 @@ async def extract_memory_simple():
             await browser.close()
 
             # 结论
-            print("\n" + "🎯"*15)
+            print("\n" + "🎯" * 15)
             print("📊 简化版提取总结")
-            print("🎯"*15)
+            print("🎯" * 15)
 
             print(f"🔍 成功指标: {success_count} 个数据源找到")
 
@@ -197,8 +202,10 @@ async def extract_memory_simple():
     except Exception as e:
         print(f"\n❌ 提取失败: {e}")
         import traceback
+
         print(traceback.format_exc())
         return False
+
 
 async def main():
     """主函数"""
@@ -207,6 +214,7 @@ async def main():
     success = await extract_memory_simple()
 
     return success
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

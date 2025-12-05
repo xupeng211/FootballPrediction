@@ -10,19 +10,22 @@ import requests
 import json
 import re
 
+
 def detailed_l1_check():
     """详细检查L1数据"""
-    print("🔬" + "="*70)
+    print("🔬" + "=" * 70)
     print("📊 详细L1数据检查")
     print("👨‍💻 数据架构师 - 深度检查比赛数据结构")
-    print("="*72)
+    print("=" * 72)
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    )
 
     # 使用有数据的日期
     date = "20241204"
@@ -68,40 +71,80 @@ def detailed_l1_check():
                                     matches_data = value["matches"]
                                     print("   🎯 发现matches数据!")
                                     print(f"      类型: {type(matches_data).__name__}")
-                                    print(f"      长度: {len(matches_data) if isinstance(matches_data, list) else 'N/A'}")
+                                    print(
+                                        f"      长度: {len(matches_data) if isinstance(matches_data, list) else 'N/A'}"
+                                    )
 
-                                    if isinstance(matches_data, list) and len(matches_data) > 0:
+                                    if (
+                                        isinstance(matches_data, list)
+                                        and len(matches_data) > 0
+                                    ):
                                         print("      🏆 第一场比赛分析:")
                                         first_match = matches_data[0]
 
                                         if isinstance(first_match, dict):
-                                            print(f"         Keys: {list(first_match.keys())}")
+                                            print(
+                                                f"         Keys: {list(first_match.keys())}"
+                                            )
 
                                             # 检查关键信息
-                                            essential_keys = ['id', 'homeTeam', 'awayTeam', 'status', 'tournamentId']
+                                            essential_keys = [
+                                                "id",
+                                                "homeTeam",
+                                                "awayTeam",
+                                                "status",
+                                                "tournamentId",
+                                            ]
                                             for essential_key in essential_keys:
                                                 if essential_key in first_match:
-                                                    print(f"         ✅ {essential_key}: {first_match[essential_key]}")
+                                                    print(
+                                                        f"         ✅ {essential_key}: {first_match[essential_key]}"
+                                                    )
                                                 else:
-                                                    print(f"         ❌ {essential_key}: 缺失")
+                                                    print(
+                                                        f"         ❌ {essential_key}: 缺失"
+                                                    )
 
                                             # 检查嵌套的team数据
-                                            if 'homeTeam' in first_match and isinstance(first_match['homeTeam'], dict):
-                                                home_team = first_match['homeTeam']
-                                                print(f"         🔵 主队: {home_team.get('name', 'Unknown')} (ID: {home_team.get('id', 'Unknown')})")
+                                            if (
+                                                "homeTeam" in first_match
+                                                and isinstance(
+                                                    first_match["homeTeam"], dict
+                                                )
+                                            ):
+                                                home_team = first_match["homeTeam"]
+                                                print(
+                                                    f"         🔵 主队: {home_team.get('name', 'Unknown')} (ID: {home_team.get('id', 'Unknown')})"
+                                                )
 
-                                            if 'awayTeam' in first_match and isinstance(first_match['awayTeam'], dict):
-                                                away_team = first_match['awayTeam']
-                                                print(f"         🔴 客队: {away_team.get('name', 'Unknown')} (ID: {away_team.get('id', 'Unknown')})")
+                                            if (
+                                                "awayTeam" in first_match
+                                                and isinstance(
+                                                    first_match["awayTeam"], dict
+                                                )
+                                            ):
+                                                away_team = first_match["awayTeam"]
+                                                print(
+                                                    f"         🔴 客队: {away_team.get('name', 'Unknown')} (ID: {away_team.get('id', 'Unknown')})"
+                                                )
 
                                             # 检查联赛信息
-                                            if 'tournament' in first_match and isinstance(first_match['tournament'], dict):
-                                                tournament = first_match['tournament']
-                                                print(f"         🏆 联赛: {tournament.get('name', 'Unknown')}")
+                                            if (
+                                                "tournament" in first_match
+                                                and isinstance(
+                                                    first_match["tournament"], dict
+                                                )
+                                            ):
+                                                tournament = first_match["tournament"]
+                                                print(
+                                                    f"         🏆 联赛: {tournament.get('name', 'Unknown')}"
+                                                )
 
                                             # 显示完整的第一场比赛数据
                                             print("         📊 完整数据:")
-                                            print(f"            {json.dumps(first_match, indent=12, ensure_ascii=False)}")
+                                            print(
+                                                f"            {json.dumps(first_match, indent=12, ensure_ascii=False)}"
+                                            )
 
                                             return True
 
@@ -120,18 +163,15 @@ def detailed_l1_check():
     except Exception as e:
         print(f"❌ 检查失败: {e}")
         import traceback
+
         print(traceback.format_exc())
 
     return False
 
+
 def search_alternative_locations(data):
     """搜索其他可能的数据位置"""
-    locations_to_check = [
-        "query",
-        "buildId",
-        "props.context",
-        "props.url"
-    ]
+    locations_to_check = ["query", "buildId", "props.context", "props.url"]
 
     for location in locations_to_check:
         keys = location.split(".")
@@ -152,17 +192,20 @@ def search_alternative_locations(data):
         except (KeyError, TypeError):
             continue
 
+
 def check_api_directly():
     """直接检查API"""
     print("\n🔌 尝试直接API调用...")
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Referer": "https://www.fotmob.com/matches"
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.fotmob.com/matches",
+        }
+    )
 
     # 基于HTML中发现的API模式
     api_urls = [
@@ -188,7 +231,10 @@ def check_api_directly():
                         print(f"   Keys: {list(data.keys())[:10]}")
 
                         # 检查是否包含比赛数据
-                        if any(key in data for key in ['matches', 'games', 'fixtures', 'events']):
+                        if any(
+                            key in data
+                            for key in ["matches", "games", "fixtures", "events"]
+                        ):
                             print("   🎯 可能包含比赛数据!")
 
                     elif isinstance(data, list):
@@ -203,6 +249,7 @@ def check_api_directly():
         except Exception as e:
             print(f"   ❌ 请求失败: {e}")
 
+
 if __name__ == "__main__":
     print("🚀 详细L1数据检查启动...")
 
@@ -213,7 +260,7 @@ if __name__ == "__main__":
         # 尝试API调用
         check_api_directly()
 
-    print("\n" + "="*72)
+    print("\n" + "=" * 72)
     if success:
         print("🎉 数据架构师结论: L1 HTML解析可行!")
         print("✅ 发现完整比赛数据结构，可以开发HTML L1采集器")

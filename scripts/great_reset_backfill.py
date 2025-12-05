@@ -12,7 +12,7 @@ import sys
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
 from datetime import datetime
 
 # 添加项目路径
@@ -21,10 +21,10 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class GreatResetBackfiller:
     """Great Reset 数据重建器"""
@@ -34,60 +34,102 @@ class GreatResetBackfiller:
         self.leagues = {
             # 五大联赛
             47: {
-                "name": "Premier League",
-                "country": "England",
-                "priority": 1,
-                "seasons": ["2024-2025", "2023-2024", "2022-2023", "2021-2022", "2020-2021"],
+                "name": "Premier League"
+                "country": "England"
+                "priority": 1
+                "seasons": [
+                    "2024-2025"
+                    "2023-2024"
+                    "2022-2023"
+                    "2021-2022"
+                    "2020-2021"
+                ]
                 "matches_per_season": 380
-            },
+            }
             87: {
-                "name": "La Liga",
-                "country": "Spain",
-                "priority": 1,
-                "seasons": ["2024-2025", "2023-2024", "2022-2023", "2021-2022", "2020-2021"],
+                "name": "La Liga"
+                "country": "Spain"
+                "priority": 1
+                "seasons": [
+                    "2024-2025"
+                    "2023-2024"
+                    "2022-2023"
+                    "2021-2022"
+                    "2020-2021"
+                ]
                 "matches_per_season": 380
-            },
+            }
             54: {
-                "name": "Bundesliga",
-                "country": "Germany",
-                "priority": 1,
-                "seasons": ["2024-2025", "2023-2024", "2022-2023", "2021-2022", "2020-2021"],
+                "name": "Bundesliga"
+                "country": "Germany"
+                "priority": 1
+                "seasons": [
+                    "2024-2025"
+                    "2023-2024"
+                    "2022-2023"
+                    "2021-2022"
+                    "2020-2021"
+                ]
                 "matches_per_season": 306
-            },
+            }
             55: {
-                "name": "Serie A",
-                "country": "Italy",
-                "priority": 1,
-                "seasons": ["2024-2025", "2023-2024", "2022-2023", "2021-2022", "2020-2021"],
+                "name": "Serie A"
+                "country": "Italy"
+                "priority": 1
+                "seasons": [
+                    "2024-2025"
+                    "2023-2024"
+                    "2022-2023"
+                    "2021-2022"
+                    "2020-2021"
+                ]
                 "matches_per_season": 380
-            },
+            }
             53: {
-                "name": "Ligue 1",
-                "country": "France",
-                "priority": 1,
-                "seasons": ["2024-2025", "2023-2024", "2022-2023", "2021-2022", "2020-2021"],
+                "name": "Ligue 1"
+                "country": "France"
+                "priority": 1
+                "seasons": [
+                    "2024-2025"
+                    "2023-2024"
+                    "2022-2023"
+                    "2021-2022"
+                    "2020-2021"
+                ]
                 "matches_per_season": 380
-            },
+            }
             # 欧战
             7: {
-                "name": "Champions League",
-                "country": "Europe",
-                "priority": 2,
-                "seasons": ["2024-2025", "2023-2024", "2022-2023", "2021-2022", "2020-2021"],
+                "name": "Champions League"
+                "country": "Europe"
+                "priority": 2
+                "seasons": [
+                    "2024-2025"
+                    "2023-2024"
+                    "2022-2023"
+                    "2021-2022"
+                    "2020-2021"
+                ]
                 "matches_per_season": 125
-            },
+            }
             8: {
-                "name": "Europa League",
-                "country": "Europe",
-                "priority": 2,
-                "seasons": ["2024-2025", "2023-2024", "2022-2023", "2021-2022", "2020-2021"],
+                "name": "Europa League"
+                "country": "Europe"
+                "priority": 2
+                "seasons": [
+                    "2024-2025"
+                    "2023-2024"
+                    "2022-2023"
+                    "2021-2022"
+                    "2020-2021"
+                ]
                 "matches_per_season": 141
-            },
+            }
             612: {
-                "name": "Conference League",
-                "country": "Europe",
-                "priority": 3,
-                "seasons": ["2023-2024", "2022-2023", "2021-2022"],
+                "name": "Conference League"
+                "country": "Europe"
+                "priority": 3
+                "seasons": ["2023-2024", "2022-2023", "2021-2022"]
                 "matches_per_season": 141
             }
         }
@@ -102,15 +144,19 @@ class GreatResetBackfiller:
         total_matches = 0
 
         # 按优先级排序
-        sorted_leagues = sorted(self.leagues.items(), key=lambda x: x[1]['priority'])
+        sorted_leagues = sorted(self.leagues.items(), key=lambda x: x[1]["priority"])
 
         print("📋 联赛优先级顺序:")
         for i, (league_id, info) in enumerate(sorted_leagues):
-            seasons_count = len(info['seasons'])
+            seasons_count = len(info["seasons"])
             total_seasons += seasons_count
-            total_matches += seasons_count * info['matches_per_season']
+            total_matches += seasons_count * info["matches_per_season"]
 
-            priority_emoji = "🏆" if info['priority'] == 1 else "🥈" if info['priority'] == 2 else "🥉"
+            priority_emoji = (
+                "🏆"
+                if info["priority"] == 1
+                else "🥈" if info["priority"] == 2 else "🥉"
+            )
             print(f"  {i+1:2d}. {priority_emoji} {info['name']} (ID: {league_id})")
             print(f"      🏴󐁧󐁢󐁥󐁮󐁧󐁿: {info['country']}")
             print(f"      🗓️  赛季: {seasons_count} 个 ({', '.join(info['seasons'])})")
@@ -121,13 +167,15 @@ class GreatResetBackfiller:
         print(f"  🏆 总联赛数: {total_leagues} 个")
         print(f"  🗓️  总赛季数: {total_seasons} 个")
         print(f"  ⚽ 预计比赛: {total_matches:,} 场")
-        print(f"  📊 按优先级: {sum(1 for l in self.leagues.values() if l['priority'] == 1)} 个顶级联赛")
+        print(
+            f"  📊 按优先级: {sum(1 for l in self.leagues.values() if l['priority'] == 1)} 个顶级联赛"
+        )
         print("=" * 60)
 
         return {
-            "total_leagues": total_leagues,
-            "total_seasons": total_seasons,
-            "total_matches": total_matches,
+            "total_leagues": total_leagues
+            "total_seasons": total_seasons
+            "total_matches": total_matches
             "sorted_leagues": sorted_leagues
         }
 
@@ -155,14 +203,14 @@ async def execute_great_reset():
 
         # 按优先级和赛季倒序生成任务
         task_count = 0
-        for league_id, info in plan['sorted_leagues']:
-            for season in reversed(info['seasons']):  # 倒序：从最新到最老
+        for league_id, info in plan["sorted_leagues"]:
+            for season in reversed(info["seasons"]):  # 倒序：从最新到最老
                 task_count += 1
-                script_content += f'''        # 任务 {task_count:3d}: {info['name']} {season}
-        {{'league_id': {league_id}, 'league_name': '{info['name']}', 'season': '{season}', 'priority': {info['priority']}}},
-'''
+                script_content += f"""        # 任务 {task_count:3d}: {info['name']} {season}
+        {{'league_id': {league_id}, 'league_name': '{info['name']}', 'season': '{season}', 'priority': {info['priority']}}}
+"""
 
-        script_content += '''
+        script_content += """
     ]
 
     total_tasks = len(backfill_tasks)
@@ -177,29 +225,29 @@ async def execute_great_reset():
 
 if __name__ == "__main__":
     asyncio.run(execute_great_reset())
-'''
+"""
 
         return script_content
 
     def save_rebirth_config(self, plan: dict[str, Any]):
         """保存重生配置"""
         config = {
-            "great_reset_version": "1.0.0",
-            "generated_at": datetime.now().isoformat(),
-            "leagues": self.leagues,
+            "great_reset_version": "1.0.0"
+            "generated_at": datetime.now().isoformat()
+            "leagues": self.leagues
             "statistics": {
-                "total_leagues": plan['total_leagues'],
-                "total_seasons": plan['total_seasons'],
-                "total_matches": plan['total_matches']
-            },
-            "execution_order": [league_id for league_id, _ in plan['sorted_leagues']],
-            "season_order": "descending"  # 从最新到最老
+                "total_leagues": plan["total_leagues"]
+                "total_seasons": plan["total_seasons"]
+                "total_matches": plan["total_matches"]
+            }
+            "execution_order": [league_id for league_id, _ in plan["sorted_leagues"]]
+            "season_order": "descending",  # 从最新到最老
         }
 
         config_path = project_root / "config" / "great_reset_config.json"
         config_path.parent.mkdir(exist_ok=True)
 
-        with open(config_path, 'w', encoding='utf-8') as f:
+        with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
 
         print(f"💾 重生配置已保存: {config_path}")
@@ -209,7 +257,9 @@ if __name__ == "__main__":
         print("\n🚀 下一步执行命令:")
         print("=" * 60)
         print("1️⃣ 启动L2容器中的回填器:")
-        print("   docker-compose exec data-collector-l2 python scripts/backfill_fotmob_history_playwright.py")
+        print(
+            "   docker-compose exec data-collector-l2 python scripts/backfill_fotmob_history_playwright.py"
+        )
         print()
         print("2️⃣ 或者创建简化回填脚本:")
         print("   # 在容器中执行以下SQL，插入基础测试数据")
@@ -223,6 +273,7 @@ if __name__ == "__main__":
         print("   docker-compose exec db psql -U postgres -d football_prediction -c \\")
         print("   \"SELECT COUNT(*) FROM matches WHERE data_source = 'fotmob_l1';\"")
         print("=" * 60)
+
 
 def main():
     """主函数"""
@@ -247,6 +298,7 @@ def main():
     print("⚡ 下一步：执行FotMob历史回填器")
 
     return True
+
 
 if __name__ == "__main__":
     success = main()

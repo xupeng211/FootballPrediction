@@ -10,7 +10,6 @@ Purpose: 修复数据入库断链，确保采集数据成功存储
 import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 import pandas as pd
 import json
 from pathlib import Path
@@ -108,12 +107,12 @@ class FBrefDatabaseSaver:
                     VALUES (:name, :short_name, :country, NOW(), NOW())
                     RETURNING id
                 """
-                ),
+                )
                 {
-                    "name": team_name,
-                    "short_name": team_name[:10] if len(team_name) > 10 else team_name,
-                    "country": country,
-                },
+                    "name": team_name
+                    "short_name": team_name[:10] if len(team_name) > 10 else team_name
+                    "country": country
+                }
             )
             session.commit()
             return result.scalar()
@@ -219,11 +218,11 @@ class FBrefDatabaseSaver:
                             )
 
                 stats_data = {
-                    "source": "fbref",
-                    "league": league_name,
-                    "season": season,
-                    "raw_data": clean_row_data,
-                    "xg": xg_data,
+                    "source": "fbref"
+                    "league": league_name
+                    "season": season
+                    "raw_data": clean_row_data
+                    "xg": xg_data
                 }
 
                 # 🔥 关键修复：将URL单独保存到raw_data中，确保可访问性
@@ -242,18 +241,18 @@ class FBrefDatabaseSaver:
 
                 # 构建比赛记录
                 match_record = {
-                    "home_team_name": home_team,
-                    "away_team_name": away_team,
-                    "home_score": home_score,
-                    "away_score": away_score,
-                    "match_date": match_date,
-                    "status": "completed" if home_score is not None else "scheduled",
-                    "venue": row.get("venue"),
-                    "league_name": league_name,
-                    "season": season,
-                    "stats": stats_data,
-                    "data_source": "fbref",
-                    "data_completeness": "complete" if xg_data else "partial",
+                    "home_team_name": home_team
+                    "away_team_name": away_team
+                    "home_score": home_score
+                    "away_score": away_score
+                    "match_date": match_date
+                    "status": "completed" if home_score is not None else "scheduled"
+                    "venue": row.get("venue")
+                    "league_name": league_name
+                    "season": season
+                    "stats": stats_data
+                    "data_source": "fbref"
+                    "data_completeness": "complete" if xg_data else "partial"
                     "raw_file_path": raw_file_path,  # 🔥 ELT架构支持
                 }
 
@@ -303,12 +302,12 @@ class FBrefDatabaseSaver:
                             AND away_team_id = :away_id
                             AND match_date = :match_date
                         """
-                        ),
+                        )
                         {
-                            "home_id": home_team_id,
-                            "away_id": away_team_id,
-                            "match_date": record["match_date"],
-                        },
+                            "home_id": home_team_id
+                            "away_id": away_team_id
+                            "match_date": record["match_date"]
+                        }
                     )
                     existing_id = existing_result.scalar()
 
@@ -323,34 +322,36 @@ class FBrefDatabaseSaver:
                         text(
                             """
                             INSERT INTO matches (
-                                home_team_id, away_team_id, home_score, away_score,
-                                status, match_date, venue, season,
-                                stats, data_source, data_completeness,
-                                raw_file_path,
+                                home_team_id, away_team_id, home_score, away_score
+                                status, match_date, venue, season
+                                stats, data_source, data_completeness
+                                raw_file_path
                                 created_at, updated_at
                             ) VALUES (
-                                :home_id, :away_id, :home_score, :away_score,
-                                :status, :match_date, :venue, :season,
-                                :stats, :data_source, :data_completeness,
-                                :raw_file_path,
+                                :home_id, :away_id, :home_score, :away_score
+                                :status, :match_date, :venue, :season
+                                :stats, :data_source, :data_completeness
+                                :raw_file_path
                                 NOW(), NOW()
                             )
                         """
-                        ),
+                        )
                         {
-                            "home_id": home_team_id,
-                            "away_id": away_team_id,
-                            "home_score": record["home_score"],
-                            "away_score": record["away_score"],
-                            "status": record["status"],
-                            "match_date": record["match_date"],
-                            "venue": record.get("venue"),
-                            "season": record["season"],
-                            "stats": json.dumps(record["stats"]),
-                            "data_source": record["data_source"],
-                            "data_completeness": record["data_completeness"],
-                            "raw_file_path": record.get("raw_file_path"),  # 🔥 ELT架构支持
-                        },
+                            "home_id": home_team_id
+                            "away_id": away_team_id
+                            "home_score": record["home_score"]
+                            "away_score": record["away_score"]
+                            "status": record["status"]
+                            "match_date": record["match_date"]
+                            "venue": record.get("venue")
+                            "season": record["season"]
+                            "stats": json.dumps(record["stats"])
+                            "data_source": record["data_source"]
+                            "data_completeness": record["data_completeness"]
+                            "raw_file_path": record.get(
+                                "raw_file_path"
+                            ),  # 🔥 ELT架构支持
+                        }
                     )
 
                     saved_count += 1
@@ -414,13 +415,13 @@ def test_database_saver():
         test_data = pd.DataFrame(
             [
                 {
-                    "date": "2024-05-19",
-                    "home": "Manchester City",
-                    "away": "West Ham United",
-                    "score": "2-1",
-                    "xg_home": 2.3,
-                    "xg_away": 1.1,
-                    "venue": "Etihad Stadium",
+                    "date": "2024-05-19"
+                    "home": "Manchester City"
+                    "away": "West Ham United"
+                    "score": "2-1"
+                    "xg_home": 2.3
+                    "xg_away": 1.1
+                    "venue": "Etihad Stadium"
                 }
             ]
         )

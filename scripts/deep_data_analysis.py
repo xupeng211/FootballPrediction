@@ -10,19 +10,22 @@ import requests
 import json
 import re
 
+
 def deep_analyze_data(match_id: str):
     """深度分析数据结构"""
-    print("🔬" + "="*70)
+    print("🔬" + "=" * 70)
     print("🔍 深度数据分析")
     print(f"👨‍💻 数据分析师 & QA工程师 - 深度解析比赛 {match_id}")
-    print("="*72)
+    print("=" * 72)
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    )
 
     try:
         url = f"https://www.fotmob.com/match/{match_id}"
@@ -56,13 +59,22 @@ def deep_analyze_data(match_id: str):
                             print(f"   Keys数量: {len(fallback)}")
 
                             for key, value in fallback.items():
-                                if isinstance(value, (dict, list)) and len(str(value)) > 1000:
-                                    print(f"   📦 大数据: {key} ({len(str(value)):,} 字符)")
+                                if (
+                                    isinstance(value, (dict, list))
+                                    and len(str(value)) > 1000
+                                ):
+                                    print(
+                                        f"   📦 大数据: {key} ({len(str(value)):,} 字符)"
+                                    )
 
                                     if isinstance(value, dict):
-                                        analyze_structure(value, f"fallback.{key}", max_depth=3)
+                                        analyze_structure(
+                                            value, f"fallback.{key}", max_depth=3
+                                        )
                                     elif isinstance(value, list) and value:
-                                        print(f"      首项类型: {type(value[0]).__name__}")
+                                        print(
+                                            f"      首项类型: {type(value[0]).__name__}"
+                                        )
 
                     # 搜索所有可能的数据
                     print("\n🔍 全面搜索比赛相关数据...")
@@ -74,7 +86,9 @@ def deep_analyze_data(match_id: str):
     except Exception as e:
         print(f"❌ 分析失败: {e}")
         import traceback
+
         print(traceback.format_exc())
+
 
 def analyze_structure(obj, path: str, max_depth: int = 3, current_depth: int = 0):
     """分析数据结构"""
@@ -93,10 +107,21 @@ def analyze_structure(obj, path: str, max_depth: int = 3, current_depth: int = 0
             print(f"{indent}   Keys: {keys[:5]}... (+{len(keys)-5})")
 
         # 递归分析重要的子项
-        important_keys = ['content', 'data', 'stats', 'shotmap', 'lineups', 'odds', 'matches', 'matchData']
+        important_keys = [
+            "content",
+            "data",
+            "stats",
+            "shotmap",
+            "lineups",
+            "odds",
+            "matches",
+            "matchData",
+        ]
         for key in important_keys:
             if key in obj and isinstance(obj[key], (dict, list)):
-                analyze_structure(obj[key], f"{path}.{key}", max_depth, current_depth + 1)
+                analyze_structure(
+                    obj[key], f"{path}.{key}", max_depth, current_depth + 1
+                )
 
     elif isinstance(obj, list):
         print(f"{indent}   长度: {len(obj)}")
@@ -110,10 +135,21 @@ def analyze_structure(obj, path: str, max_depth: int = 3, current_depth: int = 0
                     print(f"{indent}   首项Keys: {item_keys[:3]}...")
 
                 # 检查是否包含关键数据
-                data_indicators = ['id', 'name', 'rating', 'xg', 'expectedGoals', 'team', 'player']
-                found_indicators = [ind for ind in data_indicators if ind in str(first_item).lower()]
+                data_indicators = [
+                    "id",
+                    "name",
+                    "rating",
+                    "xg",
+                    "expectedGoals",
+                    "team",
+                    "player",
+                ]
+                found_indicators = [
+                    ind for ind in data_indicators if ind in str(first_item).lower()
+                ]
                 if found_indicators:
                     print(f"{indent}   🎯 包含指示器: {found_indicators}")
+
 
 def search_all_data(obj, path: str = "", max_depth: int = 3, current_depth: int = 0):
     """搜索所有数据"""
@@ -130,10 +166,10 @@ def search_all_data(obj, path: str = "", max_depth: int = 3, current_depth: int 
 
             # 搜索目标数据
             target_patterns = {
-                'shotmap': ['shotmap', 'shot', 'xg', 'expectedgoals'],
-                'stats': ['stats', 'statistics', 'possession', 'big chances'],
-                'lineups': ['lineup', 'player', 'rating', 'starting'],
-                'odds': ['odds', 'betting', '1x2', 'bet365']
+                "shotmap": ["shotmap", "shot", "xg", "expectedgoals"],
+                "stats": ["stats", "statistics", "possession", "big chances"],
+                "lineups": ["lineup", "player", "rating", "starting"],
+                "odds": ["odds", "betting", "1x2", "bet365"],
             }
 
             for category, patterns in target_patterns.items():
@@ -145,9 +181,9 @@ def search_all_data(obj, path: str = "", max_depth: int = 3, current_depth: int 
                         print(f"   Keys: {list(value.keys())[:5]}")
 
                         # 查找具体值
-                        if category == 'stats' and 'possession' in obj_str:
+                        if category == "stats" and "possession" in obj_str:
                             print("   ✅ 包含控球率数据")
-                        if category == 'lineups' and 'rating' in obj_str:
+                        if category == "lineups" and "rating" in obj_str:
                             print("   ✅ 包含球员评分数据")
 
                     elif isinstance(value, list):
@@ -165,6 +201,7 @@ def search_all_data(obj, path: str = "", max_depth: int = 3, current_depth: int 
         for i, item in enumerate(obj[:3]):
             search_all_data(item, f"{path}[{i}]", max_depth, current_depth + 1)
 
+
 def test_known_working_match():
     """测试已知工作的比赛"""
     print("\n🎯 测试已知工作的比赛ID...")
@@ -175,6 +212,7 @@ def test_known_working_match():
     for match_id in known_matches:
         deep_analyze_data(match_id)
 
+
 if __name__ == "__main__":
     print("🚀 深度数据分析启动...")
 
@@ -182,5 +220,5 @@ if __name__ == "__main__":
     test_known_working_match()
 
     # 也测试一些其他比赛
-    print("\n" + "="*72)
+    print("\n" + "=" * 72)
     deep_analyze_data("4189362")

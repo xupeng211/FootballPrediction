@@ -942,15 +942,24 @@ class GlobalBackfillService:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
-                logger.info(f"🔄 [{date_str}] 尝试采集 (第 {attempt + 1}/{max_retries} 次)")
+                logger.info(
+                    f"🔄 [{date_str}] 尝试采集 (第 {attempt + 1}/{max_retries} 次)"
+                )
 
-                result = loop.run_until_complete(self.collect_daily_data(date_str, sources))
+                result = loop.run_until_complete(
+                    self.collect_daily_data(date_str, sources)
+                )
                 logger.info(f"✅ [{date_str}] 采集成功: {result.total_matches} 场比赛")
                 return (date_str, result)
 
             except RuntimeError as e:
-                if "Event loop is closed" in str(e) or "Event loop is closed" in str(e).lower():
-                    logger.error(f"❌ [{date_str}] Event loop错误 (尝试 {attempt + 1}): {e}")
+                if (
+                    "Event loop is closed" in str(e)
+                    or "Event loop is closed" in str(e).lower()
+                ):
+                    logger.error(
+                        f"❌ [{date_str}] Event loop错误 (尝试 {attempt + 1}): {e}"
+                    )
                     if attempt < max_retries - 1:
                         logger.warning(f"⏳ [{date_str}] {retry_delay}秒后重试...")
                         time.sleep(retry_delay)
@@ -959,7 +968,12 @@ class GlobalBackfillService:
                     else:
                         logger.error(f"💀 [{date_str}] 达到最大重试次数，采集失败")
                         # 返回失败结果而不是抛出异常
-                        return (date_str, DailyDataResult(date=date_str, success=False, errors=[str(e)]))
+                        return (
+                            date_str,
+                            DailyDataResult(
+                                date=date_str, success=False, errors=[str(e)]
+                            ),
+                        )
                 else:
                     # 其他RuntimeError，直接抛出
                     raise
@@ -974,7 +988,10 @@ class GlobalBackfillService:
                 else:
                     logger.error(f"💀 [{date_str}] 达到最大重试次数，采集失败")
                     # 返回失败结果而不是抛出异常
-                    return (date_str, DailyDataResult(date=date_str, success=False, errors=[str(e)]))
+                    return (
+                        date_str,
+                        DailyDataResult(date=date_str, success=False, errors=[str(e)]),
+                    )
 
             finally:
                 # 确保事件循环被正确清理
@@ -988,12 +1005,16 @@ class GlobalBackfillService:
 
                             # 等待任务取消完成
                             if pending:
-                                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                                loop.run_until_complete(
+                                    asyncio.gather(*pending, return_exceptions=True)
+                                )
 
                             loop.close()
                         logger.debug(f"✅ [{date_str}] 事件循环已清理")
                     except Exception as cleanup_error:
-                        logger.warning(f"⚠️ [{date_str}] 事件循环清理警告: {cleanup_error}")
+                        logger.warning(
+                            f"⚠️ [{date_str}] 事件循环清理警告: {cleanup_error}"
+                        )
                     finally:
                         asyncio.set_event_loop(None)
 

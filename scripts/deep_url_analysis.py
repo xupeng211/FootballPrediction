@@ -18,30 +18,24 @@ def test_various_url_patterns():
     url_patterns = [
         # 基础模式
         f"https://www.fotmob.com/matches?date={base_date}",
-
         # 带时区
         f"https://www.fotmob.com/matches?date={base_date}&timezone=Europe/London",
         f"https://www.fotmob.com/matches?date={base_date}&tz=Europe/London",
-
         # 带地区
         f"https://www.fotmob.com/matches?date={base_date}&ccode3=GBR",
         f"https://www.fotmob.com/matches?date={base_date}&country=GB",
         f"https://www.fotmob.com/matches?date={base_date}&locale=en-GB",
-
         # 组合参数
         f"https://www.fotmob.com/matches?date={base_date}&timezone=Europe/London&ccode3=GBR",
         f"https://www.fotmob.com/matches?date={base_date}&tz=Europe/London&country=GB",
         f"https://www.fotmob.com/matches?date={base_date}&timezone=GMT&ccode3=GBR",
-
         # 英超特定
         f"https://www.fotmob.com/matches?date={base_date}&timezone=Europe/London&ccode3=GBR&league=47",
         f"https://www.fotmob.com/en-GB/matches?date={base_date}",
         f"https://www.fotmob.com/uk/matches?date={base_date}",
-
         # API格式
         f"https://www.fotmob.com/api/matches?date={base_date}",
         f"https://www.fotmob.com/api/matches?date={base_date}&timezone=Europe/London&ccode3=GBR",
-
         # 其他可能模式
         f"https://www.fotmob.com/matches/{base_date}",
         f"https://www.fotmob.com/fixtures?date={base_date}",
@@ -49,12 +43,12 @@ def test_various_url_patterns():
     ]
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-GB,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-GB,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
     }
 
     print("🔬 测试不同的FotMob URL模式...")
@@ -67,15 +61,20 @@ def test_various_url_patterns():
             print(f"\n{i:2d}. {url}")
             response = requests.get(url, headers=headers, timeout=10, verify=False)
 
-            status_info = f"Status: {response.status_code}, Size: {len(response.text):,}"
+            status_info = (
+                f"Status: {response.status_code}, Size: {len(response.text):,}"
+            )
 
             if response.status_code == 200:
                 print(f"     ✅ {status_info}")
 
                 # 检查是否包含比赛数据
-                has_nextjs = '__NEXT_DATA__' in response.text
+                has_nextjs = "__NEXT_DATA__" in response.text
                 size_varies = len(response.text) > 350000 or len(response.text) < 300000
-                has_matches = 'match' in response.text.lower() and 'premier' in response.text.lower()
+                has_matches = (
+                    "match" in response.text.lower()
+                    and "premier" in response.text.lower()
+                )
 
                 if has_nextjs:
                     print("     📊 Next.js: ✓")
@@ -86,18 +85,24 @@ def test_various_url_patterns():
 
                 # 评分系统
                 score = 0
-                if has_nextjs: score += 3
-                if size_varies: score += 2
-                if has_matches: score += 2
-                if response.status_code == 200: score += 1
+                if has_nextjs:
+                    score += 3
+                if size_varies:
+                    score += 2
+                if has_matches:
+                    score += 2
+                if response.status_code == 200:
+                    score += 1
 
-                best_urls.append({
-                    'url': url,
-                    'score': score,
-                    'size': len(response.text),
-                    'has_nextjs': has_nextjs,
-                    'has_matches': has_matches
-                })
+                best_urls.append(
+                    {
+                        "url": url,
+                        "score": score,
+                        "size": len(response.text),
+                        "has_nextjs": has_nextjs,
+                        "has_matches": has_matches,
+                    }
+                )
 
                 print(f"     🎯 评分: {score}/8")
 
@@ -110,12 +115,12 @@ def test_various_url_patterns():
     # 显示最佳URL
     print(f"\n{'='*70}")
     print("🏆 最佳URL排名:")
-    best_urls.sort(key=lambda x: x['score'], reverse=True)
+    best_urls.sort(key=lambda x: x["score"], reverse=True)
 
     for i, url_info in enumerate(best_urls[:5], 1):
-        url = url_info['url']
-        score = url_info['score']
-        size = url_info['size']
+        url = url_info["url"]
+        score = url_info["score"]
+        size = url_info["size"]
         print(f"{i}. [{score}/8] {size:,} bytes")
         print(f"   {url}")
         print()
@@ -129,8 +134,8 @@ def analyze_response_content(url):
     print("-" * 50)
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-GB,en;q=0.5',
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-GB,en;q=0.5",
     }
 
     try:
@@ -144,12 +149,17 @@ def analyze_response_content(url):
 
         # 检查关键指标
         indicators = {
-            'Next.js数据': '__NEXT_DATA__' in response.text,
-            '比赛关键词': any(word in response.text.lower() for word in ['match', 'fixture', 'game']),
-            '英超关键词': any(word in response.text.lower() for word in ['premier', 'manchester', 'london', 'arsenal']),
-            'JSON数据': '{' in response.text and '}' in response.text,
-            'fallback': 'fallback' in response.text,
-            'matches': '"matches"' in response.text or "'matches'" in response.text,
+            "Next.js数据": "__NEXT_DATA__" in response.text,
+            "比赛关键词": any(
+                word in response.text.lower() for word in ["match", "fixture", "game"]
+            ),
+            "英超关键词": any(
+                word in response.text.lower()
+                for word in ["premier", "manchester", "london", "arsenal"]
+            ),
+            "JSON数据": "{" in response.text and "}" in response.text,
+            "fallback": "fallback" in response.text,
+            "matches": '"matches"' in response.text or "'matches'" in response.text,
         }
 
         print("\n📊 内容指标:")
@@ -158,7 +168,7 @@ def analyze_response_content(url):
             print(f"   {status} {indicator}")
 
         # 尝试提取Next.js数据
-        if '__NEXT_DATA__' in response.text:
+        if "__NEXT_DATA__" in response.text:
             print("\n🔬 分析Next.js数据结构...")
 
             nextjs_data = extract_nextjs_data(response.text)
@@ -166,9 +176,9 @@ def analyze_response_content(url):
                 print("✅ Next.js数据解析成功")
 
                 # 检查数据路径
-                props = nextjs_data.get('props', {})
-                pageProps = props.get('pageProps', {})
-                fallback = pageProps.get('fallback', {})
+                props = nextjs_data.get("props", {})
+                pageProps = props.get("pageProps", {})
+                fallback = pageProps.get("fallback", {})
 
                 print(f"   📁 props字段数: {len(props)}")
                 print(f"   📁 pageProps字段数: {len(pageProps)}")
@@ -180,8 +190,8 @@ def analyze_response_content(url):
                     # 检查是否有比赛数据
                     matches_found = 0
                     for key, value in fallback.items():
-                        if isinstance(value, dict) and 'matches' in value:
-                            matches_count = len(value.get('matches', []))
+                        if isinstance(value, dict) and "matches" in value:
+                            matches_count = len(value.get("matches", []))
                             matches_found += matches_count
                             print(f"   ⚽ {key}: {matches_count} 场比赛")
 
@@ -200,7 +210,7 @@ def extract_nextjs_data(html):
     patterns = [
         r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
         r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
-        r'window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>'
+        r"window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>",
     ]
 
     for pattern in patterns:
@@ -208,9 +218,13 @@ def extract_nextjs_data(html):
         if matches:
             try:
                 nextjs_data_str = matches[0].strip()
-                if nextjs_data_str.startswith('window.__NEXT_DATA__'):
-                    nextjs_data_str = nextjs_data_str.replace('window.__NEXT_DATA__', '').replace('=', '').strip()
-                    if nextjs_data_str.endswith(';'):
+                if nextjs_data_str.startswith("window.__NEXT_DATA__"):
+                    nextjs_data_str = (
+                        nextjs_data_str.replace("window.__NEXT_DATA__", "")
+                        .replace("=", "")
+                        .strip()
+                    )
+                    if nextjs_data_str.endswith(";"):
                         nextjs_data_str = nextjs_data_str[:-1]
                 return json.loads(nextjs_data_str)
             except json.JSONDecodeError:
@@ -229,7 +243,7 @@ def main():
 
     if best_url_info:
         # 深度分析最佳URL
-        analyze_response_content(best_url_info['url'])
+        analyze_response_content(best_url_info["url"])
 
         print(f"\n{'='*70}")
         print("🎯 结论:")

@@ -17,7 +17,6 @@ import subprocess
 import psutil
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
 import pandas as pd
 
 # 添加项目路径
@@ -36,9 +35,9 @@ except ImportError as e:
     DB_AVAILABLE = False
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO
+    format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
 logger = logging.getLogger(__name__)
 
@@ -69,30 +68,30 @@ class OpsMonitor:
             # 方法1: 通过psutil查找
             for proc in psutil.process_iter(
                 [
-                    "pid",
-                    "name",
-                    "cmdline",
-                    "cpu_percent",
-                    "memory_percent",
-                    "create_time",
+                    "pid"
+                    "name"
+                    "cmdline"
+                    "cpu_percent"
+                    "memory_percent"
+                    "create_time"
                 ]
             ):
                 try:
                     cmdline = " ".join(proc.info["cmdline"] or [])
                     if self.process_name in cmdline:
                         return {
-                            "pid": proc.info["pid"],
-                            "name": proc.info["name"],
-                            "cmdline": cmdline,
-                            "cpu_percent": proc.info["cpu_percent"],
-                            "memory_percent": proc.info["memory_percent"],
-                            "memory_mb": proc.memory_info().rss / 1024 / 1024,
+                            "pid": proc.info["pid"]
+                            "name": proc.info["name"]
+                            "cmdline": cmdline
+                            "cpu_percent": proc.info["cpu_percent"]
+                            "memory_percent": proc.info["memory_percent"]
+                            "memory_mb": proc.memory_info().rss / 1024 / 1024
                             "create_time": datetime.fromtimestamp(
                                 proc.info["create_time"]
-                            ),
-                            "status": proc.status(),
+                            )
+                            "status": proc.status()
                             "running_time": datetime.now()
-                            - datetime.fromtimestamp(proc.info["create_time"]),
+                            - datetime.fromtimestamp(proc.info["create_time"])
                         }
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
@@ -110,18 +109,18 @@ class OpsMonitor:
                             cmdline = " ".join(proc.cmdline() or [])
                             if self.process_name in cmdline:
                                 return {
-                                    "pid": pid,
-                                    "name": proc.name(),
-                                    "cmdline": cmdline,
-                                    "cpu_percent": proc.cpu_percent(),
-                                    "memory_percent": proc.memory_percent(),
-                                    "memory_mb": proc.memory_info().rss / 1024 / 1024,
+                                    "pid": pid
+                                    "name": proc.name()
+                                    "cmdline": cmdline
+                                    "cpu_percent": proc.cpu_percent()
+                                    "memory_percent": proc.memory_percent()
+                                    "memory_mb": proc.memory_info().rss / 1024 / 1024
                                     "create_time": datetime.fromtimestamp(
                                         proc.create_time()
-                                    ),
-                                    "status": proc.status(),
+                                    )
+                                    "status": proc.status()
                                     "running_time": datetime.now()
-                                    - datetime.fromtimestamp(proc.create_time()),
+                                    - datetime.fromtimestamp(proc.create_time())
                                 }
                         except (psutil.NoSuchProcess, psutil.AccessDenied):
                             continue
@@ -139,12 +138,12 @@ class OpsMonitor:
 
         if not self.log_file.exists():
             return {
-                "file_exists": False,
-                "error": "日志文件不存在",
-                "last_50_lines": [],
-                "success_count": 0,
-                "error_count": 0,
-                "last_timestamp": None,
+                "file_exists": False
+                "error": "日志文件不存在"
+                "last_50_lines": []
+                "success_count": 0
+                "error_count": 0
+                "last_timestamp": None
             }
 
         try:
@@ -174,28 +173,28 @@ class OpsMonitor:
                         continue
 
             return {
-                "file_exists": True,
-                "total_lines": len(lines),
-                "last_50_lines": [line.strip() for line in last_50_lines],
-                "success_count": success_count,
-                "error_count": error_count,
-                "warning_count": warning_count,
-                "last_timestamp": last_timestamp,
+                "file_exists": True
+                "total_lines": len(lines)
+                "last_50_lines": [line.strip() for line in last_50_lines]
+                "success_count": success_count
+                "error_count": error_count
+                "warning_count": warning_count
+                "last_timestamp": last_timestamp
                 "log_age_minutes": (
                     (datetime.now() - last_timestamp).total_seconds() / 60
                     if last_timestamp
                     else None
-                ),
+                )
             }
 
         except Exception as e:
             return {
-                "file_exists": True,
-                "error": str(e),
-                "last_50_lines": [],
-                "success_count": 0,
-                "error_count": 0,
-                "last_timestamp": None,
+                "file_exists": True
+                "error": str(e)
+                "last_50_lines": []
+                "success_count": 0
+                "error_count": 0
+                "last_timestamp": None
             }
 
     async def check_database(self) -> dict:
@@ -204,13 +203,13 @@ class OpsMonitor:
 
         if not DB_AVAILABLE:
             return {
-                "connected": False,
-                "error": "数据库模块不可用",
-                "total_matches": 0,
-                "fbref_matches": 0,
-                "matches_with_stats": 0,
-                "matches_with_xg": 0,
-                "latest_match": None,
+                "connected": False
+                "error": "数据库模块不可用"
+                "total_matches": 0
+                "fbref_matches": 0
+                "matches_with_stats": 0
+                "matches_with_xg": 0
+                "latest_match": None
             }
 
         try:
@@ -261,12 +260,12 @@ class OpsMonitor:
                 latest_match = None
                 if latest_row:
                     latest_match = {
-                        "match_date": latest_row[0],
-                        "home_team": latest_row[1],
-                        "away_team": latest_row[2],
-                        "score": latest_row[3],
-                        "data_source": latest_row[4],
-                        "created_at": latest_row[5],
+                        "match_date": latest_row[0]
+                        "home_team": latest_row[1]
+                        "away_team": latest_row[2]
+                        "score": latest_row[3]
+                        "data_source": latest_row[4]
+                        "created_at": latest_row[5]
                     }
 
                 # 6. 最近一小时的数据增长
@@ -281,39 +280,39 @@ class OpsMonitor:
                 recent_matches = recent_result.scalar() or 0
 
                 return {
-                    "connected": True,
-                    "total_matches": total_matches,
-                    "fbref_matches": fbref_matches,
-                    "matches_with_stats": matches_with_stats,
-                    "matches_with_xg": matches_with_xg,
-                    "latest_match": latest_match,
-                    "recent_matches_1h": recent_matches,
+                    "connected": True
+                    "total_matches": total_matches
+                    "fbref_matches": fbref_matches
+                    "matches_with_stats": matches_with_stats
+                    "matches_with_xg": matches_with_xg
+                    "latest_match": latest_match
+                    "recent_matches_1h": recent_matches
                     "fbref_percentage": (
                         (fbref_matches / total_matches * 100)
                         if total_matches > 0
                         else 0
-                    ),
+                    )
                     "stats_percentage": (
                         (matches_with_stats / total_matches * 100)
                         if total_matches > 0
                         else 0
-                    ),
+                    )
                     "xg_percentage": (
                         (matches_with_xg / total_matches * 100)
                         if total_matches > 0
                         else 0
-                    ),
+                    )
                 }
 
         except Exception as e:
             return {
-                "connected": False,
-                "error": str(e),
-                "total_matches": 0,
-                "fbref_matches": 0,
-                "matches_with_stats": 0,
-                "matches_with_xg": 0,
-                "latest_match": None,
+                "connected": False
+                "error": str(e)
+                "total_matches": 0
+                "fbref_matches": 0
+                "matches_with_stats": 0
+                "matches_with_xg": 0
+                "latest_match": None
             }
 
     def get_system_resources(self) -> dict:
@@ -333,18 +332,18 @@ class OpsMonitor:
             network = psutil.net_io_counters()
 
             return {
-                "cpu_percent": cpu_percent,
-                "cpu_count": cpu_count,
-                "memory_total_gb": memory.total / (1024**3),
-                "memory_used_gb": memory.used / (1024**3),
-                "memory_available_gb": memory.available / (1024**3),
-                "memory_percent": memory.percent,
-                "disk_total_gb": disk.total / (1024**3),
-                "disk_used_gb": disk.used / (1024**3),
-                "disk_free_gb": disk.free / (1024**3),
-                "disk_percent": disk.percent,
-                "network_bytes_sent": network.bytes_sent,
-                "network_bytes_recv": network.bytes_recv,
+                "cpu_percent": cpu_percent
+                "cpu_count": cpu_count
+                "memory_total_gb": memory.total / (1024**3)
+                "memory_used_gb": memory.used / (1024**3)
+                "memory_available_gb": memory.available / (1024**3)
+                "memory_percent": memory.percent
+                "disk_total_gb": disk.total / (1024**3)
+                "disk_used_gb": disk.used / (1024**3)
+                "disk_free_gb": disk.free / (1024**3)
+                "disk_percent": disk.percent
+                "network_bytes_sent": network.bytes_sent
+                "network_bytes_recv": network.bytes_recv
             }
         except Exception as e:
             return {"error": str(e)}
@@ -381,12 +380,12 @@ class OpsMonitor:
             status = "Not Started"
 
         return {
-            "estimated_progress": round(final_progress, 1),
-            "status": status,
-            "log_based_progress": round(estimated_progress, 1),
+            "estimated_progress": round(final_progress, 1)
+            "status": status
+            "log_based_progress": round(estimated_progress, 1)
             "db_based_progress": (
                 round(db_progress, 1) if db_stats.get("fbref_matches", 0) > 0 else 0
-            ),
+            )
         }
 
     async def generate_dashboard(self) -> str:
@@ -484,10 +483,10 @@ class OpsMonitor:
 
         progress_status = progress_info["status"]
         progress_emoji = {
-            "Completed": "🟢",
-            "In Progress": "🟡",
-            "Starting": "🟠",
-            "Not Started": "🔴",
+            "Completed": "🟢"
+            "In Progress": "🟡"
+            "Starting": "🟠"
+            "Not Started": "🔴"
         }.get(progress_status, "⚪")
 
         dashboard += f"""

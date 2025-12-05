@@ -8,8 +8,6 @@ import subprocess
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Tuple
-
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -22,11 +20,11 @@ class TeamMergeExecutor:
     def __init__(self):
         self.merge_plan = {}
         self.stats = {
-            "total_merges": 0,
-            "successful_merges": 0,
-            "failed_merges": 0,
-            "matches_updated": 0,
-            "teams_deleted": 0,
+            "total_merges": 0
+            "successful_merges": 0
+            "failed_merges": 0
+            "matches_updated": 0
+            "teams_deleted": 0
         }
 
     def load_merge_plan(self, filename: str = "merge_plan.json") -> bool:
@@ -57,16 +55,16 @@ class TeamMergeExecutor:
 
             # 1. 更新matches表中的主队ID
             update_home_cmd = [
-                "docker-compose",
-                "exec",
-                "db",
-                "psql",
-                "-U",
-                "postgres",
-                "-d",
-                "football_prediction",
-                "-c",
-                f"UPDATE matches SET home_team_id = {master_id} WHERE home_team_id = {duplicate_id} AND data_source = 'fbref';",
+                "docker-compose"
+                "exec"
+                "db"
+                "psql"
+                "-U"
+                "postgres"
+                "-d"
+                "football_prediction"
+                "-c"
+                f"UPDATE matches SET home_team_id = {master_id} WHERE home_team_id = {duplicate_id} AND data_source = 'fbref';"
             ]
 
             home_result = subprocess.run(
@@ -89,16 +87,16 @@ class TeamMergeExecutor:
 
             # 2. 更新matches表中的客队ID
             update_away_cmd = [
-                "docker-compose",
-                "exec",
-                "db",
-                "psql",
-                "-U",
-                "postgres",
-                "-d",
-                "football_prediction",
-                "-c",
-                f"UPDATE matches SET away_team_id = {master_id} WHERE away_team_id = {duplicate_id} AND data_source = 'fbref';",
+                "docker-compose"
+                "exec"
+                "db"
+                "psql"
+                "-U"
+                "postgres"
+                "-d"
+                "football_prediction"
+                "-c"
+                f"UPDATE matches SET away_team_id = {master_id} WHERE away_team_id = {duplicate_id} AND data_source = 'fbref';"
             ]
 
             away_result = subprocess.run(
@@ -121,16 +119,16 @@ class TeamMergeExecutor:
 
             # 3. 删除重复球队记录
             delete_cmd = [
-                "docker-compose",
-                "exec",
-                "db",
-                "psql",
-                "-U",
-                "postgres",
-                "-d",
-                "football_prediction",
-                "-c",
-                f"DELETE FROM teams WHERE id = {duplicate_id};",
+                "docker-compose"
+                "exec"
+                "db"
+                "psql"
+                "-U"
+                "postgres"
+                "-d"
+                "football_prediction"
+                "-c"
+                f"DELETE FROM teams WHERE id = {duplicate_id};"
             ]
 
             delete_result = subprocess.run(delete_cmd, capture_output=True, text=True)
@@ -195,16 +193,16 @@ class TeamMergeExecutor:
 
             # 统计球队总数
             team_count_cmd = [
-                "docker-compose",
-                "exec",
-                "db",
-                "psql",
-                "-U",
-                "postgres",
-                "-d",
-                "football_prediction",
-                "-tAc",
-                "SELECT COUNT(*) FROM teams;",
+                "docker-compose"
+                "exec"
+                "db"
+                "psql"
+                "-U"
+                "postgres"
+                "-d"
+                "football_prediction"
+                "-tAc"
+                "SELECT COUNT(*) FROM teams;"
             ]
 
             team_result = subprocess.run(team_count_cmd, capture_output=True, text=True)
@@ -214,15 +212,15 @@ class TeamMergeExecutor:
 
             # 检查重复球队数量
             duplicate_cmd = [
-                "docker-compose",
-                "exec",
-                "db",
-                "psql",
-                "-U",
-                "postgres",
-                "-d",
-                "football_prediction",
-                "-tAc",
+                "docker-compose"
+                "exec"
+                "db"
+                "psql"
+                "-U"
+                "postgres"
+                "-d"
+                "football_prediction"
+                "-tAc"
                 """
                 SELECT COUNT(*)
                 FROM (
@@ -236,7 +234,7 @@ class TeamMergeExecutor:
                     GROUP BY clean_name
                     HAVING COUNT(*) > 1
                 ) duplicates;
-                """,
+                """
             ]
 
             duplicate_result = subprocess.run(
@@ -250,16 +248,16 @@ class TeamMergeExecutor:
 
             # 统计比赛记录数
             match_count_cmd = [
-                "docker-compose",
-                "exec",
-                "db",
-                "psql",
-                "-U",
-                "postgres",
-                "-d",
-                "football_prediction",
-                "-tAc",
-                "SELECT COUNT(*) FROM matches WHERE data_source = 'fbref';",
+                "docker-compose"
+                "exec"
+                "db"
+                "psql"
+                "-U"
+                "postgres"
+                "-d"
+                "football_prediction"
+                "-tAc"
+                "SELECT COUNT(*) FROM matches WHERE data_source = 'fbref';"
             ]
 
             match_result = subprocess.run(
@@ -270,10 +268,10 @@ class TeamMergeExecutor:
             )
 
             verification_results = {
-                "final_team_count": final_team_count,
-                "remaining_duplicates": remaining_duplicates,
-                "final_match_count": final_match_count,
-                "duplicate_reduction_pct": 0,
+                "final_team_count": final_team_count
+                "remaining_duplicates": remaining_duplicates
+                "final_match_count": final_match_count
+                "duplicate_reduction_pct": 0
                 "success": remaining_duplicates <= 5,  # 允许少量剩余
             }
 

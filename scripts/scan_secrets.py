@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from typing import List, Tuple
 
+
 class SecretScanner:
     """敏感信息扫描器"""
 
@@ -49,32 +50,51 @@ class SecretScanner:
                 r'CONNECTION[_-]?STRING\s*=\s*["\'][^"\']*password[^"\']*["\']',
             ],
             "hardcoded_credentials": [
-                r'postgres[^a-zA-Z]*:([^@\s]){4,}[^@\s]*@',
-                r'mysql[^a-zA-Z]*:([^@\s]){4,}[^@\s]*@',
-                r'root:[^@\s]{4,}@',
-                r'admin:[^@\s]{4,}@',
+                r"postgres[^a-zA-Z]*:([^@\s]){4,}[^@\s]*@",
+                r"mysql[^a-zA-Z]*:([^@\s]){4,}[^@\s]*@",
+                r"root:[^@\s]{4,}@",
+                r"admin:[^@\s]{4,}@",
             ],
             "private_key": [
-                r'-----BEGIN (RSA |OPENSSH |DSA |EC |PGP )?PRIVATE KEY-----',
-                r'-----BEGIN ENCRYPTED PRIVATE KEY-----',
+                r"-----BEGIN (RSA |OPENSSH |DSA |EC |PGP )?PRIVATE KEY-----",
+                r"-----BEGIN ENCRYPTED PRIVATE KEY-----",
             ],
             "aws_credentials": [
-                r'AKIA[0-9A-Z]{16}',  # AWS Access Key ID
-                r'[0-9a-zA-Z/+=]{40}',  # AWS Secret Access Key pattern
+                r"AKIA[0-9A-Z]{16}",  # AWS Access Key ID
+                r"[0-9a-zA-Z/+=]{40}",  # AWS Secret Access Key pattern
             ],
         }
 
         # 排除的目录
         self.exclude_dirs = {
-            '.git', '__pycache__', '.pytest_cache', 'node_modules',
-            'venv', 'env', '.venv', '.env', 'htmlcov', '.mypy_cache',
-            '.coverage', 'dist', 'build', '.tox'
+            ".git",
+            "__pycache__",
+            ".pytest_cache",
+            "node_modules",
+            "venv",
+            "env",
+            ".venv",
+            ".env",
+            "htmlcov",
+            ".mypy_cache",
+            ".coverage",
+            "dist",
+            "build",
+            ".tox",
         }
 
         # 排除的文件模式
         self.exclude_files = {
-            '*.pyc', '*.pyo', '*.pyd', '*.log', '*.tmp', '*.swp',
-            '*.swo', '*~', '.DS_Store', 'Thumbs.db'
+            "*.pyc",
+            "*.pyo",
+            "*.pyd",
+            "*.log",
+            "*.tmp",
+            "*.swp",
+            "*.swo",
+            "*~",
+            ".DS_Store",
+            "Thumbs.db",
         }
 
     def should_exclude_file(self, file_path: Path) -> bool:
@@ -90,7 +110,7 @@ class SecretScanner:
                 return True
 
         # 只扫描Python文件
-        if not file_path.suffix == '.py':
+        if not file_path.suffix == ".py":
             return True
 
         return False
@@ -100,30 +120,31 @@ class SecretScanner:
         secrets = []
 
         try:
-            with open(file_path, encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
 
             for line_num, line in enumerate(lines, 1):
                 line_content = line.strip()
 
                 # 跳过注释行
-                if line_content.startswith('#') or line_content.startswith('"""') or line_content.startswith("'''"):
+                if (
+                    line_content.startswith("#")
+                    or line_content.startswith('"""')
+                    or line_content.startswith("'''")
+                ):
                     continue
 
                 # 跳过明显的示例代码
-                if 'example' in line_content.lower() or 'dummy' in line_content.lower():
+                if "example" in line_content.lower() or "dummy" in line_content.lower():
                     continue
 
                 for secret_type, patterns in self.patterns.items():
                     for pattern in patterns:
                         matches = re.finditer(pattern, line_content, re.IGNORECASE)
                         for match in matches:
-                            secrets.append((
-                                secret_type,
-                                line_num,
-                                line_content,
-                                match.group()
-                            ))
+                            secrets.append(
+                                (secret_type, line_num, line_content, match.group())
+                            )
 
         except Exception as e:
             print(f"警告：无法读取文件 {file_path}: {e}")
@@ -144,7 +165,9 @@ class SecretScanner:
                 file_secrets = self.scan_file(py_file)
 
                 if file_secrets:
-                    self.secrets_found.extend([(str(py_file), *secret) for secret in file_secrets])
+                    self.secrets_found.extend(
+                        [(str(py_file), *secret) for secret in file_secrets]
+                    )
 
         print(f"📊 扫描完成！共检查 {scanned_files} 个 Python 文件")
         print("=" * 60)
@@ -186,6 +209,7 @@ class SecretScanner:
 
         return False
 
+
 def main():
     """主函数"""
     if len(sys.argv) > 1:
@@ -212,6 +236,7 @@ def main():
     except Exception as e:
         print(f"\n💥 扫描过程中发生错误: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

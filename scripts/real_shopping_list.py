@@ -16,6 +16,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from src.collectors.html_fotmob_collector import HTMLFotMobCollector
 
+
 def print_json_structure(obj, indent=0, max_depth=3, current_depth=0):
     """打印JSON结构"""
     if current_depth >= max_depth:
@@ -29,7 +30,9 @@ def print_json_structure(obj, indent=0, max_depth=3, current_depth=0):
             if isinstance(value, (dict, list)):
                 print(f"{prefix}📁 {key}: {type(value).__name__}")
                 if len(str(value)) < 1000:  # 只显示小对象的结构
-                    print_json_structure(value, indent + 1, max_depth, current_depth + 1)
+                    print_json_structure(
+                        value, indent + 1, max_depth, current_depth + 1
+                    )
             else:
                 value_preview = str(value)[:50]
                 print(f"{prefix}📄 {key}: {value_preview}...")
@@ -40,16 +43,14 @@ def print_json_structure(obj, indent=0, max_depth=3, current_depth=0):
             first_item = obj[0]
             print(f"{prefix}   首项: {type(first_item).__name__}")
             if isinstance(first_item, dict):
-                print_json_structure(first_item, indent + 1, max_depth, current_depth + 1)
+                print_json_structure(
+                    first_item, indent + 1, max_depth, current_depth + 1
+                )
+
 
 def search_for_shopping_list_items(data, path=""):
     """搜索购物清单项目"""
-    results = {
-        'shotmap': [],
-        'stats': [],
-        'lineups': [],
-        'odds': []
-    }
+    results = {"shotmap": [], "stats": [], "lineups": [], "odds": []}
 
     if isinstance(data, dict):
         for key, value in data.items():
@@ -60,36 +61,67 @@ def search_for_shopping_list_items(data, path=""):
             str(value).lower()
 
             # Shotmap相关
-            if any(term in key_lower for term in ['shotmap', 'shot', 'xg', 'expectedgoals']):
-                results['shotmap'].append({
-                    'path': new_path,
-                    'type': type(value).__name__,
-                    'sample': value if not isinstance(value, (dict, list)) else f"<{type(value).__name__}>"
-                })
+            if any(
+                term in key_lower for term in ["shotmap", "shot", "xg", "expectedgoals"]
+            ):
+                results["shotmap"].append(
+                    {
+                        "path": new_path,
+                        "type": type(value).__name__,
+                        "sample": (
+                            value
+                            if not isinstance(value, (dict, list))
+                            else f"<{type(value).__name__}>"
+                        ),
+                    }
+                )
 
             # Stats相关
-            if any(term in key_lower for term in ['stats', 'possession', 'big chances', 'shots']):
-                results['stats'].append({
-                    'path': new_path,
-                    'type': type(value).__name__,
-                    'sample': value if not isinstance(value, (dict, list)) else f"<{type(value).__name__}>"
-                })
+            if any(
+                term in key_lower
+                for term in ["stats", "possession", "big chances", "shots"]
+            ):
+                results["stats"].append(
+                    {
+                        "path": new_path,
+                        "type": type(value).__name__,
+                        "sample": (
+                            value
+                            if not isinstance(value, (dict, list))
+                            else f"<{type(value).__name__}>"
+                        ),
+                    }
+                )
 
             # Lineups相关
-            if any(term in key_lower for term in ['lineup', 'player', 'rating', 'starting']):
-                results['lineups'].append({
-                    'path': new_path,
-                    'type': type(value).__name__,
-                    'sample': value if not isinstance(value, (dict, list)) else f"<{type(value).__name__}>"
-                })
+            if any(
+                term in key_lower for term in ["lineup", "player", "rating", "starting"]
+            ):
+                results["lineups"].append(
+                    {
+                        "path": new_path,
+                        "type": type(value).__name__,
+                        "sample": (
+                            value
+                            if not isinstance(value, (dict, list))
+                            else f"<{type(value).__name__}>"
+                        ),
+                    }
+                )
 
             # Odds相关
-            if any(term in key_lower for term in ['odds', 'betting', '1x2', 'bet365']):
-                results['odds'].append({
-                    'path': new_path,
-                    'type': type(value).__name__,
-                    'sample': value if not isinstance(value, (dict, list)) else f"<{type(value).__name__}>"
-                })
+            if any(term in key_lower for term in ["odds", "betting", "1x2", "bet365"]):
+                results["odds"].append(
+                    {
+                        "path": new_path,
+                        "type": type(value).__name__,
+                        "sample": (
+                            value
+                            if not isinstance(value, (dict, list))
+                            else f"<{type(value).__name__}>"
+                        ),
+                    }
+                )
 
             # 递归搜索
             child_results = search_for_shopping_list_items(value, new_path)
@@ -105,6 +137,7 @@ def search_for_shopping_list_items(data, path=""):
 
     return results
 
+
 def detailed_inspection(category, items):
     """详细检查特定类别"""
     if not items:
@@ -115,15 +148,19 @@ def detailed_inspection(category, items):
 
     success = False
     for item in items[:5]:  # 只显示前5个
-        path = item['path']
-        data_type = item['type']
+        path = item["path"]
+        data_type = item["type"]
         print(f"      📍 {path} ({data_type})")
 
-        if data_type == 'dict':
-            print(f"         Keys: {list(item['sample'].keys()) if 'keys' in str(item['sample']) else 'Unknown'}")
+        if data_type == "dict":
+            print(
+                f"         Keys: {list(item['sample'].keys()) if 'keys' in str(item['sample']) else 'Unknown'}"
+            )
             success = True
-        elif data_type == 'list':
-            print(f"         长度: {len(item['sample']) if hasattr(item['sample'], '__len__') else 'Unknown'}")
+        elif data_type == "list":
+            print(
+                f"         长度: {len(item['sample']) if hasattr(item['sample'], '__len__') else 'Unknown'}"
+            )
             success = True
         else:
             print(f"         值: {item['sample']}")
@@ -131,12 +168,13 @@ def detailed_inspection(category, items):
 
     return success
 
+
 async def verify_shopping_list_with_real_collector():
     """使用真实HTML采集器验证购物清单"""
-    print("🛒" + "="*70)
+    print("🛒" + "=" * 70)
     print("📋 真实购物清单验证")
     print("👨‍💻 数据分析师 & QA工程师 - 使用HTML采集器验证4大类数据")
-    print("="*72)
+    print("=" * 72)
 
     try:
         # 初始化HTML采集器
@@ -177,31 +215,31 @@ async def verify_shopping_list_with_real_collector():
         results = search_for_shopping_list_items(content)
 
         # 详细检查每个类别
-        print("\n🎯" + "="*50)
+        print("\n🎯" + "=" * 50)
         verification_results = []
 
         # 1. 验证射门与xG
         print("🎯 1. 射门与xG (Shotmap)")
-        print("   " + "="*40)
-        shotmap_success = detailed_inspection("shotmap", results['shotmap'])
+        print("   " + "=" * 40)
+        shotmap_success = detailed_inspection("shotmap", results["shotmap"])
         verification_results.append(shotmap_success)
 
         # 2. 验证比赛统计
         print("\n📊 2. 比赛统计 (Stats)")
-        print("   " + "="*40)
-        stats_success = detailed_inspection("stats", results['stats'])
+        print("   " + "=" * 40)
+        stats_success = detailed_inspection("stats", results["stats"])
         verification_results.append(stats_success)
 
         # 3. 验证阵容与评分
         print("\n👥 3. 阵容与评分 (Lineups)")
-        print("   " + "="*40)
-        lineups_success = detailed_inspection("lineups", results['lineups'])
+        print("   " + "=" * 40)
+        lineups_success = detailed_inspection("lineups", results["lineups"])
         verification_results.append(lineups_success)
 
         # 4. 验证赔率
         print("\n💰 4. 赔率 (Odds)")
-        print("   " + "="*40)
-        odds_success = detailed_inspection("odds", results['odds'])
+        print("   " + "=" * 40)
+        odds_success = detailed_inspection("odds", results["odds"])
         verification_results.append(odds_success)
 
         # 深度检查找到的数据
@@ -210,30 +248,39 @@ async def verify_shopping_list_with_real_collector():
             if items:
                 print(f"\n📋 {category.upper()} 详细分析:")
                 for item in items[:2]:  # 只分析前2个
-                    if isinstance(item['sample'], dict) and len(str(item['sample'])) < 500:
+                    if (
+                        isinstance(item["sample"], dict)
+                        and len(str(item["sample"])) < 500
+                    ):
                         print(f"   📍 {item['path']}")
-                        print(f"   📄 完整数据: {json.dumps(item['sample'], indent=6, ensure_ascii=False)}")
+                        print(
+                            f"   📄 完整数据: {json.dumps(item['sample'], indent=6, ensure_ascii=False)}"
+                        )
 
         # 总结报告
-        print("\n" + "🎯"*18)
+        print("\n" + "🎯" * 18)
         print("📊 购物清单验证总结报告")
-        print("🎯"*18)
+        print("🎯" * 18)
 
         categories = [
             "🎯 射门与xG (Shotmap)",
             "📊 比赛统计 (Stats)",
             "👥 阵容与评分 (Lineups)",
-            "💰 赔率 (Odds)"
+            "💰 赔率 (Odds)",
         ]
 
         passed_count = sum(verification_results)
         total_count = len(verification_results)
 
-        for i, (category, result) in enumerate(zip(categories, verification_results, strict=False)):
+        for i, (category, result) in enumerate(
+            zip(categories, verification_results, strict=False)
+        ):
             status = "✅ 通过" if result else "❌ 失败"
             print(f"{i+1}. {category}: {status}")
 
-        print(f"\n📈 总体通过率: {passed_count}/{total_count} ({(passed_count/total_count)*100:.1f}%)")
+        print(
+            f"\n📈 总体通过率: {passed_count}/{total_count} ({(passed_count/total_count)*100:.1f}%)"
+        )
 
         # 显示采集器统计
         stats = collector.get_stats()
@@ -257,8 +304,10 @@ async def verify_shopping_list_with_real_collector():
     except Exception as e:
         print(f"\n❌ 验证过程失败: {e}")
         import traceback
+
         print(traceback.format_exc())
         return False
+
 
 async def main():
     """主函数"""
@@ -267,6 +316,7 @@ async def main():
     success = await verify_shopping_list_with_real_collector()
 
     return success
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

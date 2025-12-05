@@ -19,7 +19,7 @@ import random
 import time
 from datetime import datetime, timedelta
 import json
-from typing import Optional, Dict, Any, List
+from typing import Any
 from pathlib import Path
 
 # 添加项目根目录到 Python 路径
@@ -28,10 +28,10 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     handlers=[
-        logging.FileHandler('logs/fotmob_l2_v2.log'),
+        logging.FileHandler("logs/fotmob_l2_v2.log")
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 # 导入核心组件
 from utils.fotmob_match_matcher import FotmobMatchMatcher
+
 # 🌐 降维打击：使用 Playwright 浏览器采集器
 from data.collectors.fotmob_browser import FotmobBrowserScraper
 from database.async_manager import get_db_session, initialize_database
@@ -46,6 +47,7 @@ from sqlalchemy import text
 
 
 # ==================== 爬虫优化工具函数 ====================
+
 
 def wait_random(min_sec: float = 15.0, max_sec: float = 35.0) -> None:
     """
@@ -61,11 +63,12 @@ def wait_random(min_sec: float = 15.0, max_sec: float = 35.0) -> None:
 
 
 async def exponential_backoff_request(
-    request_func,
-    max_retries: int = 3,
-    base_delay: float = 60.0,
-    max_delay: float = 300.0,
-    *args, **kwargs
+    request_func
+    max_retries: int = 3
+    base_delay: float = 60.0
+    max_delay: float = 300.0
+    *args
+    **kwargs
 ) -> Any:
     """
     指数退避重试机制，处理 429/403 错误
@@ -91,14 +94,19 @@ async def exponential_backoff_request(
             error_msg = str(e).lower()
 
             # 检查是否是限流或禁止访问错误
-            if any(code in error_msg for code in ['429', 'too many requests', '403', 'forbidden']):
+            if any(
+                code in error_msg
+                for code in ["429", "too many requests", "403", "forbidden"]
+            ):
                 if attempt < max_retries:
                     # 指数退避计算延迟
-                    delay = min(base_delay * (2 ** attempt), max_delay)
+                    delay = min(base_delay * (2**attempt), max_delay)
                     jitter = random.uniform(0.8, 1.2)  # 添加 20% 的随机抖动
                     final_delay = delay * jitter
 
-                    logger.warning(f"⚠️  检测到限流/禁止访问，{final_delay:.1f}秒后重试 (第 {attempt + 1}/{max_retries + 1} 次)")
+                    logger.warning(
+                        f"⚠️  检测到限流/禁止访问，{final_delay:.1f}秒后重试 (第 {attempt + 1}/{max_retries + 1} 次)"
+                    )
                     await asyncio.sleep(final_delay)
                     continue
                 else:
@@ -140,19 +148,21 @@ class FotMobL2CollectorV2:
 
         # 统计信息
         self.stats = {
-            "processed": 0,
-            "matched": 0,
-            "collected": 0,
-            "saved": 0,
-            "failed_match": 0,
-            "failed_collection": 0,
-            "failed_save": 0,
+            "processed": 0
+            "matched": 0
+            "collected": 0
+            "saved": 0
+            "failed_match": 0
+            "failed_collection": 0
+            "failed_save": 0
             "start_time": datetime.now()
         }
 
         self.logger.info("✅ L2 采集器初始化完成")
 
-    async def run_backfill_pipeline(self, limit: Optional[int] = None) -> dict[str, Any]:
+    async def run_backfill_pipeline(
+        self, limit: Optional[int] = None
+    ) -> dict[str, Any]:
         """
         运行 L2 数据回填管道
 
@@ -180,12 +190,16 @@ class FotMobL2CollectorV2:
                     await self._process_single_record(record, i, len(partial_records))
 
                     # 风控：每处理一条记录，使用更长的等待时间（浏览器操作较慢）
-                    wait_seconds = random.uniform(8.0, 15.0)  # 🌐 降维打击：更长的浏览器等待时间
+                    wait_seconds = random.uniform(
+                        8.0, 15.0
+                    )  # 🌐 降维打击：更长的浏览器等待时间
                     logger.info(f"⏱️  浏览器等待: {wait_seconds:.2f} 秒 (降维打击模式)")
                     await asyncio.sleep(wait_seconds)
 
                 except Exception as e:
-                    self.logger.error(f"❌ 处理记录 {record.get('id', 'unknown')} 时发生错误: {str(e)}")
+                    self.logger.error(
+                        f"❌ 处理记录 {record.get('id', 'unknown')} 时发生错误: {str(e)}"
+                    )
                     self.stats["failed_save"] += 1
                     continue
 
@@ -200,7 +214,9 @@ class FotMobL2CollectorV2:
             self.logger.error(f"🚨 L2 管道运行失败: {str(e)}")
             raise
 
-    async def _get_partial_records(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
+    async def _get_partial_records(
+        self, limit: Optional[int] = None
+    ) -> list[dict[str, Any]]:
         """
         从数据库获取 data_completeness='partial' 的记录
 
@@ -235,15 +251,17 @@ class FotMobL2CollectorV2:
                 rows = result.fetchall()
                 records = []
                 for row in rows:
-                    records.append({
-                        'id': row[0],
-                        'home_team': row[1],
-                        'away_team': row[2],
-                        'match_date': row[3],
-                        'competition': row[4],
-                        'season': row[5],
-                        'data_completeness': row[6]
-                    })
+                    records.append(
+                        {
+                            "id": row[0]
+                            "home_team": row[1]
+                            "away_team": row[2]
+                            "match_date": row[3]
+                            "competition": row[4]
+                            "season": row[5]
+                            "data_completeness": row[6]
+                        }
+                    )
 
             self.logger.info(f"📋 从数据库获取到 {len(records)} 条 partial 记录")
             return records
@@ -252,7 +270,9 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ 获取 partial 记录失败: {str(e)}")
             raise
 
-    async def _process_single_record(self, record: dict[str, Any], current: int, total: int):
+    async def _process_single_record(
+        self, record: dict[str, Any], current: int, total: int
+    ):
         """
         处理单条记录的完整流程：Bridge -> Harvest -> Save
 
@@ -261,12 +281,14 @@ class FotMobL2CollectorV2:
             current: 当前处理序号
             total: 总记录数
         """
-        record_id = record.get('id')
-        home_team = record.get('home_team')
-        away_team = record.get('away_team')
-        match_date = record.get('match_date')
+        record_id = record.get("id")
+        home_team = record.get("home_team")
+        away_team = record.get("away_team")
+        match_date = record.get("match_date")
 
-        self.logger.info(f"🔄 [{current}/{total}] 处理记录: {home_team} vs {away_team} ({match_date})")
+        self.logger.info(
+            f"🔄 [{current}/{total}] 处理记录: {home_team} vs {away_team} ({match_date})"
+        )
         self.stats["processed"] += 1
 
         # Step A: The Bridge - 匹配 FotMob ID
@@ -279,7 +301,9 @@ class FotMobL2CollectorV2:
             return
 
         fotmob_id = fotmob_match["matchId"]
-        self.logger.info(f"✅ 成功匹配: {home_team} -> {fotmob_id} (相似度: {fotmob_match['similarity_score']:.1f}%)")
+        self.logger.info(
+            f"✅ 成功匹配: {home_team} -> {fotmob_id} (相似度: {fotmob_match['similarity_score']:.1f}%)"
+        )
         self.stats["matched"] += 1
 
         # Step B: The Harvest - 采集详情数据
@@ -304,7 +328,9 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ 保存记录 {record_id} 失败")
             self.stats["failed_save"] += 1
 
-    async def _bridge_fbref_to_fotmob(self, fbref_record: dict[str, Any]) -> Optional[dict[str, Any]]:
+    async def _bridge_fbref_to_fotmob(
+        self, fbref_record: dict[str, Any]
+    ) -> Optional[dict[str, Any]]:
         """
         The Bridge: 将 FBref 记录匹配到 FotMob ID
 
@@ -317,9 +343,9 @@ class FotMobL2CollectorV2:
         try:
             # 准备匹配数据
             match_data = {
-                "home": fbref_record.get('home_team', ''),
-                "away": fbref_record.get('away_team', ''),
-                "date": fbref_record.get('match_date', '')
+                "home": fbref_record.get("home_team", "")
+                "away": fbref_record.get("away_team", "")
+                "date": fbref_record.get("match_date", "")
             }
 
             # 执行模糊匹配，应用指数退避
@@ -327,10 +353,7 @@ class FotMobL2CollectorV2:
                 return await self.matcher.find_match_by_fuzzy_match(match_data)
 
             result = await exponential_backoff_request(
-                match_request,
-                max_retries=3,
-                base_delay=30.0,
-                max_delay=180.0
+                match_request, max_retries=3, base_delay=30.0, max_delay=180.0
             )
 
             return result
@@ -361,25 +384,25 @@ class FotMobL2CollectorV2:
                     # 转换为现有格式
                     if result:
                         return {
-                            "matchId": result.match_id,
+                            "matchId": result.match_id
                             "match_info": {
-                                "home_team": result.home_team,
-                                "away_team": result.away_team,
-                                "home_score": result.home_score,
-                                "away_score": result.away_score,
-                                "status": result.status,
+                                "home_team": result.home_team
+                                "away_team": result.away_team
+                                "home_score": result.home_score
+                                "away_score": result.away_score
+                                "status": result.status
                                 "start_time": result.start_time
-                            },
-                            "lineup": result.lineups,
-                            "shots": result.shots,
-                            "stats": result.stats,
+                            }
+                            "lineup": result.lineups
+                            "shots": result.shots
+                            "stats": result.stats
                             "fetched_at": datetime.utcnow().isoformat()
                         }
                     return None
 
             # 执行浏览器采集 (浏览器操作需要更长时间)
             details = await exponential_backoff_request(
-                details_request,
+                details_request
                 max_retries=2,  # 减少重试次数
                 base_delay=15.0,  # 增加延迟适应浏览器操作
                 max_delay=45.0
@@ -391,7 +414,9 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ Playwright 浏览器采集失败: {str(e)}")
             return None
 
-    async def _save_match_details(self, record_id: int, details_data: dict[str, Any]) -> bool:
+    async def _save_match_details(
+        self, record_id: int, details_data: dict[str, Any]
+    ) -> bool:
         """
         The Save: 保存比赛详情到数据库
 
@@ -405,10 +430,14 @@ class FotMobL2CollectorV2:
         try:
             async with get_db_session() as session:
                 # Step 1: 保存射门数据到 events 表
-                await self._save_shotmap_data(session, record_id, details_data.get('shots', []))
+                await self._save_shotmap_data(
+                    session, record_id, details_data.get("shots", [])
+                )
 
                 # Step 2: 保存阵容数据到 lineups 表
-                await self._save_lineup_data(session, record_id, details_data.get('lineup', {}))
+                await self._save_lineup_data(
+                    session, record_id, details_data.get("lineup", {})
+                )
 
                 # Step 3: 更新主表状态为 complete
                 await self._mark_record_as_complete(session, record_id)
@@ -422,7 +451,9 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ Save 保存失败: {str(e)}")
             return False
 
-    async def _save_shotmap_data(self, session, record_id: int, shots: list[dict[str, Any]]):
+    async def _save_shotmap_data(
+        self, session, record_id: int, shots: list[dict[str, Any]]
+    ):
         """保存射门数据到 events 表"""
         if not shots:
             return
@@ -430,23 +461,23 @@ class FotMobL2CollectorV2:
         try:
             for shot in shots:
                 shot_data = {
-                    'match_id': record_id,
-                    'event_type': 'shot',
-                    'minute': shot.get('minute'),
-                    'team': shot.get('team'),
-                    'player_name': shot.get('player', {}).get('name', ''),
-                    'player_id': shot.get('player', {}).get('id'),
-                    'xg': shot.get('xg', 0.0),
-                    'is_goal': shot.get('isGoal', False),
-                    'shot_type': shot.get('shotType'),
-                    'body_part': shot.get('bodyPart'),
-                    'situation': shot.get('situation'),
-                    'raw_data': json.dumps(shot)
+                    "match_id": record_id
+                    "event_type": "shot"
+                    "minute": shot.get("minute")
+                    "team": shot.get("team")
+                    "player_name": shot.get("player", {}).get("name", "")
+                    "player_id": shot.get("player", {}).get("id")
+                    "xg": shot.get("xg", 0.0)
+                    "is_goal": shot.get("isGoal", False)
+                    "shot_type": shot.get("shotType")
+                    "body_part": shot.get("bodyPart")
+                    "situation": shot.get("situation")
+                    "raw_data": json.dumps(shot)
                 }
 
                 # 插入射门数据
-                columns = ', '.join(shot_data.keys())
-                placeholders = ', '.join([f':{key}' for key in shot_data.keys()])
+                columns = ", ".join(shot_data.keys())
+                placeholders = ", ".join([f":{key}" for key in shot_data.keys()])
                 query = f"INSERT INTO events ({columns}) VALUES ({placeholders})"
 
                 await session.execute(text(query), shot_data)
@@ -459,15 +490,15 @@ class FotMobL2CollectorV2:
 
     async def _save_lineup_data(self, session, record_id: int, lineup: dict[str, Any]):
         """保存阵容数据到 lineups 表"""
-        if not lineup or not lineup.get('home') or not lineup.get('away'):
+        if not lineup or not lineup.get("home") or not lineup.get("away"):
             return
 
         try:
             # 保存主队阵容
-            await self._save_team_lineup(session, record_id, 'home', lineup['home'])
+            await self._save_team_lineup(session, record_id, "home", lineup["home"])
 
             # 保存客队阵容
-            await self._save_team_lineup(session, record_id, 'away', lineup['away'])
+            await self._save_team_lineup(session, record_id, "away", lineup["away"])
 
             self.logger.debug("💾 保存了阵容数据")
 
@@ -475,24 +506,26 @@ class FotMobL2CollectorV2:
             self.logger.error(f"❌ 保存阵容数据失败: {str(e)}")
             raise
 
-    async def _save_team_lineup(self, session, record_id: int, team_side: str, team_lineup: dict[str, Any]):
+    async def _save_team_lineup(
+        self, session, record_id: int, team_side: str, team_lineup: dict[str, Any]
+    ):
         """保存单支球队阵容"""
-        starters = team_lineup.get('starters', [])
-        substitutes = team_lineup.get('substitutes', [])
+        starters = team_lineup.get("starters", [])
+        substitutes = team_lineup.get("substitutes", [])
 
         # 保存首发阵容
         for i, player in enumerate(starters):
             player_data = {
-                'match_id': record_id,
-                'team_side': team_side,
-                'player_name': player.get('name', ''),
-                'player_id': player.get('id'),
-                'position': player.get('position', ''),
-                'shirt_number': player.get('shirtNumber'),
-                'is_starter': True,
-                'is_captain': player.get('captain', False),
-                'formation_order': i + 1,
-                'raw_data': json.dumps(player)
+                "match_id": record_id
+                "team_side": team_side
+                "player_name": player.get("name", "")
+                "player_id": player.get("id")
+                "position": player.get("position", "")
+                "shirt_number": player.get("shirtNumber")
+                "is_starter": True
+                "is_captain": player.get("captain", False)
+                "formation_order": i + 1
+                "raw_data": json.dumps(player)
             }
 
             await self._insert_lineup_record(session, player_data)
@@ -500,24 +533,24 @@ class FotMobL2CollectorV2:
         # 保存替补阵容
         for i, player in enumerate(substitutes):
             player_data = {
-                'match_id': record_id,
-                'team_side': team_side,
-                'player_name': player.get('name', ''),
-                'player_id': player.get('id'),
-                'position': player.get('position', ''),
-                'shirt_number': player.get('shirtNumber'),
-                'is_starter': False,
-                'is_captain': player.get('captain', False),
-                'formation_order': None,
-                'raw_data': json.dumps(player)
+                "match_id": record_id
+                "team_side": team_side
+                "player_name": player.get("name", "")
+                "player_id": player.get("id")
+                "position": player.get("position", "")
+                "shirt_number": player.get("shirtNumber")
+                "is_starter": False
+                "is_captain": player.get("captain", False)
+                "formation_order": None
+                "raw_data": json.dumps(player)
             }
 
             await self._insert_lineup_record(session, player_data)
 
     async def _insert_lineup_record(self, session, player_data: dict[str, Any]):
         """插入阵容记录"""
-        columns = ', '.join(player_data.keys())
-        placeholders = ', '.join([f':{key}' for key in player_data.keys()])
+        columns = ", ".join(player_data.keys())
+        placeholders = ", ".join([f":{key}" for key in player_data.keys()])
         query = f"INSERT INTO lineups ({columns}) VALUES ({placeholders})"
         await session.execute(text(query), player_data)
 
@@ -525,7 +558,7 @@ class FotMobL2CollectorV2:
         """标记记录为 complete"""
         query = """
             UPDATE matches
-            SET data_completeness = 'complete',
+            SET data_completeness = 'complete'
                 updated_at = NOW()
             WHERE id = :record_id
         """
@@ -537,13 +570,11 @@ class FotMobL2CollectorV2:
             async with get_db_session() as session:
                 query = """
                     UPDATE matches
-                    SET data_completeness = 'failed',
+                    SET data_completeness = 'failed'
                         updated_at = NOW()
                     WHERE id = :record_id
                 """
-                await session.execute(text(query), {
-                    "record_id": record_id
-                })
+                await session.execute(text(query), {"record_id": record_id})
                 await session.commit()
 
         except Exception as e:
@@ -555,12 +586,19 @@ class FotMobL2CollectorV2:
         duration = end_time - self.stats["start_time"]
 
         final_stats = {
-            **self.stats,
-            "end_time": end_time,
-            "duration_seconds": duration.total_seconds(),
-            "success_rate": (self.stats["saved"] / max(self.stats["processed"], 1)) * 100,
-            "match_success_rate": (self.stats["matched"] / max(self.stats["processed"], 1)) * 100,
-            "collection_success_rate": (self.stats["collected"] / max(self.stats["matched"], 1)) * 100,
+            **self.stats
+            "end_time": end_time
+            "duration_seconds": duration.total_seconds()
+            "success_rate": (self.stats["saved"] / max(self.stats["processed"], 1))
+            * 100
+            "match_success_rate": (
+                self.stats["matched"] / max(self.stats["processed"], 1)
+            )
+            * 100
+            "collection_success_rate": (
+                self.stats["collected"] / max(self.stats["matched"], 1)
+            )
+            * 100
         }
 
         return final_stats
@@ -572,9 +610,15 @@ class FotMobL2CollectorV2:
         self.logger.info("=" * 80)
         self.logger.info(f"⏱️  执行时间: {stats['duration_seconds']:.2f} 秒")
         self.logger.info(f"📋 处理记录: {stats['processed']}")
-        self.logger.info(f"🎯 成功匹配: {stats['matched']} ({stats['match_success_rate']:.1f}%)")
-        self.logger.info(f"📡 成功采集: {stats['collected']} ({stats['collection_success_rate']:.1f}%)")
-        self.logger.info(f"💾 成功保存: {stats['saved']} ({stats['success_rate']:.1f}%)")
+        self.logger.info(
+            f"🎯 成功匹配: {stats['matched']} ({stats['match_success_rate']:.1f}%)"
+        )
+        self.logger.info(
+            f"📡 成功采集: {stats['collected']} ({stats['collection_success_rate']:.1f}%)"
+        )
+        self.logger.info(
+            f"💾 成功保存: {stats['saved']} ({stats['success_rate']:.1f}%)"
+        )
         self.logger.info(f"❌ 匹配失败: {stats['failed_match']}")
         self.logger.info(f"❌ 采集失败: {stats['failed_collection']}")
         self.logger.info(f"❌ 保存失败: {stats['failed_save']}")
@@ -593,7 +637,9 @@ async def main():
 
     try:
         # 运行回填管道
-        stats = await collector.run_backfill_pipeline(limit=None)  # 🚀 全速运行：处理所有 24,000+ 条记录
+        stats = await collector.run_backfill_pipeline(
+            limit=None
+        )  # 🚀 全速运行：处理所有 24,000+ 条记录
 
         # 输出最终状态
         if stats["success_rate"] > 80:

@@ -10,19 +10,22 @@ import requests
 import re
 import json
 
+
 def analyze_404_response():
     """分析404响应"""
-    print("🔍" + "="*60)
+    print("🔍" + "=" * 60)
     print("🌐 FotMob 404页面分析")
     print("👨‍💻 网页爬虫专家 - 分析404响应")
-    print("="*62)
+    print("=" * 62)
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    )
 
     # 测试404页面
     url = "https://www.fotmob.com/match/4189362"
@@ -40,8 +43,10 @@ def analyze_404_response():
         print("\n🔍 分析页面内容...")
 
         # 检查常见404页面特征
-        not_found_indicators = ['404', 'not found', 'page not found', '页面未找到']
-        is_real_404 = any(indicator.lower() in html.lower() for indicator in not_found_indicators)
+        not_found_indicators = ["404", "not found", "page not found", "页面未找到"]
+        is_real_404 = any(
+            indicator.lower() in html.lower() for indicator in not_found_indicators
+        )
 
         if is_real_404:
             print("   ❌ 确实是404页面")
@@ -52,13 +57,13 @@ def analyze_404_response():
         print("\n📊 检查隐藏的数据...")
 
         data_indicators = {
-            'Next.js数据': '__NEXT_DATA__' in html,
-            '初始状态': '__INITIAL_STATE__' in html,
-            'JSON数据': '{' in html and '}' in html and '"' in html,
-            'Props数据': 'props' in html.lower(),
-            'Content数据': 'content' in html.lower(),
-            'Match数据': 'match' in html.lower(),
-            'xG数据': 'xg' in html.lower() or 'expected' in html.lower(),
+            "Next.js数据": "__NEXT_DATA__" in html,
+            "初始状态": "__INITIAL_STATE__" in html,
+            "JSON数据": "{" in html and "}" in html and '"' in html,
+            "Props数据": "props" in html.lower(),
+            "Content数据": "content" in html.lower(),
+            "Match数据": "match" in html.lower(),
+            "xG数据": "xg" in html.lower() or "expected" in html.lower(),
         }
 
         print("   数据指标:")
@@ -77,6 +82,7 @@ def analyze_404_response():
     except Exception as e:
         print(f"   ❌ 请求失败: {e}")
         return False
+
 
 def extract_hidden_data(html: str) -> bool:
     """提取隐藏的数据"""
@@ -98,15 +104,17 @@ def extract_hidden_data(html: str) -> bool:
                 match_data = find_match_data_recursive(parsed_data)
                 if match_data:
                     print("      🎉 找到比赛相关数据!")
-                    print(f"      数据结构: {list(match_data.keys()) if isinstance(match_data, dict) else type(match_data).__name__}")
+                    print(
+                        f"      数据结构: {list(match_data.keys()) if isinstance(match_data, dict) else type(match_data).__name__}"
+                    )
 
                     # 检查ML特征
                     data_str = json.dumps(match_data, ensure_ascii=False).lower()
                     features = {
-                        'xg': 'xg' in data_str or 'expected' in data_str,
-                        'shotmap': 'shotmap' in data_str or 'shot' in data_str,
-                        'odds': 'odds' in data_str or 'betting' in data_str,
-                        'lineups': 'lineups' in data_str or 'lineup' in data_str,
+                        "xg": "xg" in data_str or "expected" in data_str,
+                        "shotmap": "shotmap" in data_str or "shot" in data_str,
+                        "odds": "odds" in data_str or "betting" in data_str,
+                        "lineups": "lineups" in data_str or "lineup" in data_str,
                     }
 
                     print("      ML特征检查:")
@@ -121,9 +129,9 @@ def extract_hidden_data(html: str) -> bool:
 
     # 查找其他JSON模式
     json_patterns = [
-        r'window\.__INITIAL_STATE__\s*=\s*({.*?});',
-        r'window\.__PRELOADED_STATE__\s*=\s*({.*?});',
-        r'<script[^>]*>\s*(?:var|let|const)\s+\w+\s*=\s*({.*?});\s*</script>',
+        r"window\.__INITIAL_STATE__\s*=\s*({.*?});",
+        r"window\.__PRELOADED_STATE__\s*=\s*({.*?});",
+        r"<script[^>]*>\s*(?:var|let|const)\s+\w+\s*=\s*({.*?});\s*</script>",
     ]
 
     for pattern_name, pattern in [
@@ -154,6 +162,7 @@ def extract_hidden_data(html: str) -> bool:
     print("   ❌ 未找到可用的比赛数据")
     return False
 
+
 def find_match_data_recursive(obj, max_depth=3, current_depth=0):
     """递归查找比赛数据"""
     if current_depth > max_depth:
@@ -164,10 +173,12 @@ def find_match_data_recursive(obj, max_depth=3, current_depth=0):
         keys = list(obj.keys())
 
         # 关键指标
-        match_indicators = ['match', 'fixture', 'game', 'event', 'content', 'props']
-        ml_indicators = ['xg', 'expected', 'shotmap', 'odds', 'lineups', 'stats']
+        match_indicators = ["match", "fixture", "game", "event", "content", "props"]
+        ml_indicators = ["xg", "expected", "shotmap", "odds", "lineups", "stats"]
 
-        if any(indicator in [k.lower() for k in keys] for indicator in match_indicators):
+        if any(
+            indicator in [k.lower() for k in keys] for indicator in match_indicators
+        ):
             if any(indicator in str(obj).lower() for indicator in ml_indicators):
                 return obj  # 找到了包含ML特征的比赛数据
 
@@ -185,15 +196,18 @@ def find_match_data_recursive(obj, max_depth=3, current_depth=0):
 
     return None
 
+
 def test_alternative_urls():
     """测试替代URL"""
     print("\n🔄 测试替代URL...")
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15",
-        "Accept": "text/html",
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15",
+            "Accept": "text/html",
+        }
+    )
 
     # 尝试不同的域名和路径
     test_urls = [
@@ -228,6 +242,7 @@ def test_alternative_urls():
 
     return None
 
+
 def main():
     """主函数"""
     print("🚀 FotMob 404页面分析启动...")
@@ -253,6 +268,7 @@ def main():
         print("🔍 需要考虑其他方案")
 
     return success
+
 
 if __name__ == "__main__":
     success = main()

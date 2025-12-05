@@ -27,6 +27,7 @@ except ImportError:
     print("   playwright install chromium")
     sys.exit(1)
 
+
 class FotMobTokenExtractor:
     """FotMob Token 提取器"""
 
@@ -36,7 +37,7 @@ class FotMobTokenExtractor:
         self.target_api_patterns = [
             r"/api/.*",
             r".*/api/.*",
-            r"https://www\.fotmob\.com/api/.*"
+            r"https://www\.fotmob\.com/api/.*",
         ]
 
     async def extract_tokens(self) -> Optional[dict[str, str]]:
@@ -46,10 +47,10 @@ class FotMobTokenExtractor:
         Returns:
             Dict: 包含 'x-mas' 和 'x-foo' 的字典，失败返回None
         """
-        print("🕵️" + "="*70)
+        print("🕵️" + "=" * 70)
         print("🔐 FotMob API Token 刷新器")
         print("👨‍💻 逆向安全工程师 - 动态Token提取")
-        print("="*72)
+        print("=" * 72)
 
         try:
             async with async_playwright() as p:
@@ -59,19 +60,19 @@ class FotMobTokenExtractor:
                 browser = await p.chromium.launch(
                     headless=True,
                     args=[
-                        '--no-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-web-security',
-                        '--disable-features=VizDisplayCompositor'
-                    ]
+                        "--no-sandbox",
+                        "--disable-dev-shm-usage",
+                        "--disable-web-security",
+                        "--disable-features=VizDisplayCompositor",
+                    ],
                 )
 
                 print("✅ 浏览器启动成功")
 
                 # 创建页面上下文
                 context = await browser.new_context(
-                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    viewport={'width': 1920, 'height': 1080}
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    viewport={"width": 1920, "height": 1080},
                 )
 
                 page = await context.new_page()
@@ -84,9 +85,11 @@ class FotMobTokenExtractor:
 
                 # 访问首页
                 try:
-                    response = await page.goto("https://www.fotmob.com",
-                                           wait_until="networkidle",
-                                           timeout=30000)
+                    response = await page.goto(
+                        "https://www.fotmob.com",
+                        wait_until="networkidle",
+                        timeout=30000,
+                    )
 
                     print(f"   状态码: {response.status}")
                     print(f"   URL: {response.url}")
@@ -150,6 +153,7 @@ class FotMobTokenExtractor:
         except Exception as e:
             print(f"\n❌ 提取过程异常: {e}")
             import traceback
+
             print(f"🔍 详细错误: {traceback.format_exc()}")
             return None
 
@@ -161,7 +165,10 @@ class FotMobTokenExtractor:
             url = request.url
 
             # 检查是否为API请求
-            if any(re.search(pattern, url, re.IGNORECASE) for pattern in self.target_api_patterns):
+            if any(
+                re.search(pattern, url, re.IGNORECASE)
+                for pattern in self.target_api_patterns
+            ):
                 self.found_api_request = True
 
                 print("\n🎯 发现API请求!")
@@ -172,8 +179,8 @@ class FotMobTokenExtractor:
                 headers = request.headers
 
                 # 查找关键tokens
-                x_mas = headers.get('x-mas')
-                x_foo = headers.get('x-foo')
+                x_mas = headers.get("x-mas")
+                x_foo = headers.get("x-foo")
 
                 if x_mas and x_foo:
                     print("   ✅ 找到完整tokens:")
@@ -181,11 +188,11 @@ class FotMobTokenExtractor:
                     print(f"   x-foo: {x_foo}")
 
                     self.captured_tokens = {
-                        'x-mas': x_mas,
-                        'x-foo': x_foo,
-                        'user-agent': headers.get('user-agent', ''),
-                        'extracted_at': datetime.now().isoformat(),
-                        'source_url': url
+                        "x-mas": x_mas,
+                        "x-foo": x_foo,
+                        "user-agent": headers.get("user-agent", ""),
+                        "extracted_at": datetime.now().isoformat(),
+                        "source_url": url,
                     }
                 else:
                     print("   ⚠️ 缺少tokens:")
@@ -196,15 +203,17 @@ class FotMobTokenExtractor:
                     print(f"   所有headers: {dict(headers)}")
 
                 # 记录所有API请求用于分析
-                if not hasattr(self, 'api_requests'):
+                if not hasattr(self, "api_requests"):
                     self.api_requests = []
 
-                self.api_requests.append({
-                    'url': url,
-                    'method': request.method,
-                    'headers': dict(headers),
-                    'has_tokens': bool(x_mas and x_foo)
-                })
+                self.api_requests.append(
+                    {
+                        "url": url,
+                        "method": request.method,
+                        "headers": dict(headers),
+                        "has_tokens": bool(x_mas and x_foo),
+                    }
+                )
 
         # 设置请求监听
         page.on("request", handle_request)
@@ -227,10 +236,10 @@ class FotMobTokenExtractor:
                 selectors = [
                     'a[href*="/matches"]',
                     'a[href*="/leagues"]',
-                    'button',
+                    "button",
                     '[role="button"]',
-                    '.match',
-                    '.league'
+                    ".match",
+                    ".league",
                 ]
 
                 for selector in selectors:
@@ -253,13 +262,15 @@ class FotMobTokenExtractor:
                 api_urls = [
                     "https://www.fotmob.com/api/leagues",
                     "https://www.fotmob.com/api/matches?date=20241205",
-                    "https://www.fotmob.com/api/translations"
+                    "https://www.fotmob.com/api/translations",
                 ]
 
                 for api_url in api_urls:
                     try:
                         print(f"   直接访问: {api_url}")
-                        await page.goto(api_url, wait_until="domcontentloaded", timeout=10000)
+                        await page.goto(
+                            api_url, wait_until="domcontentloaded", timeout=10000
+                        )
                         await asyncio.sleep(1)
 
                         # 如果成功，会触发request拦截
@@ -286,7 +297,7 @@ class FotMobTokenExtractor:
             # 读取现有内容
             existing_content = ""
             if env_file.exists():
-                with open(env_file, encoding='utf-8') as f:
+                with open(env_file, encoding="utf-8") as f:
                     existing_content = f.read()
 
             # 准备新内容
@@ -297,10 +308,10 @@ class FotMobTokenExtractor:
                 "",
             ]
 
-            new_content = '\n'.join(new_lines) + existing_content
+            new_content = "\n".join(new_lines) + existing_content
 
             # 写入文件
-            with open(env_file, 'w', encoding='utf-8') as f:
+            with open(env_file, "w", encoding="utf-8") as f:
                 f.write(new_content)
 
             print("✅ Tokens已保存到 .env")
@@ -315,7 +326,7 @@ class FotMobTokenExtractor:
 
     def generate_collector_code(self, tokens: dict[str, str]) -> str:
         """生成更新后的采集器代码片段"""
-        code = f'''
+        code = f"""
 # 更新后的鉴权头 - {datetime.now().isoformat()}
 headers = {{
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -329,7 +340,7 @@ headers = {{
     "x-mas": "{tokens['x-mas']}",
     "x-foo": "{tokens['x-foo']}",
 }}
-        '''
+        """
         return code.strip()
 
 
@@ -345,7 +356,7 @@ async def main():
 
     if tokens:
         print("\n🎉 Token提取成功!")
-        print("="*50)
+        print("=" * 50)
 
         # 显示tokens
         print("📋 提取的Tokens:")

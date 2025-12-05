@@ -21,12 +21,13 @@ except ImportError:
     print("   然后运行: playwright install")
     sys.exit(1)
 
+
 async def extract_browser_memory():
     """提取浏览器内存数据"""
-    print("🎭" + "="*70)
+    print("🎭" + "=" * 70)
     print("🔍 浏览器内存数据提取")
     print("👨‍💻 前端逆向工程师 - Plan C: 读取浏览器内存对象")
-    print("="*72)
+    print("=" * 72)
 
     try:
         # 启动 Playwright
@@ -37,29 +38,31 @@ async def extract_browser_memory():
             browser = await p.chromium.launch(
                 headless=False,  # 设置为False以便观察
                 args=[
-                    '--disable-blink-features=AutomationControlled',
-                    '--disable-dev-shm-usage',
-                    '--no-sandbox',
-                    '--disable-web-security',
-                    '--disable-features=VizDisplayCompositor'
-                ]
+                    "--disable-blink-features=AutomationControlled",
+                    "--disable-dev-shm-usage",
+                    "--no-sandbox",
+                    "--disable-web-security",
+                    "--disable-features=VizDisplayCompositor",
+                ],
             )
 
             context = await browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                viewport={'width': 1920, 'height': 1080},
-                locale='en-US'
+                viewport={"width": 1920, "height": 1080},
+                locale="en-US",
             )
 
             page = await context.new_page()
 
             # 注入反检测脚本
-            await page.add_init_script("""
+            await page.add_init_script(
+                """
                 Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
                 Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
                 Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
                 window.chrome = { runtime: {} };
-            """)
+            """
+            )
 
             # 访问目标页面
             target_url = "https://www.fotmob.com/match/4189362"
@@ -191,35 +194,41 @@ async def extract_browser_memory():
             extracted_data = await page.evaluate(extract_script)
 
             print("\n📊 提取结果分析:")
-            print("="*60)
+            print("=" * 60)
 
             # 分析提取到的数据
             success_count = 0
 
             # 1. 检查 __NEXT_DATA__
-            if 'nextData' in extracted_data and extracted_data['nextData']:
-                next_data = extracted_data['nextData']
+            if "nextData" in extracted_data and extracted_data["nextData"]:
+                next_data = extracted_data["nextData"]
                 print("\n✅ 1. __NEXT_DATA__ 找到!")
                 print(f"   类型: {type(next_data).__name__}")
-                print(f"   Keys: {list(next_data.keys()) if isinstance(next_data, dict) else 'N/A'}")
+                print(
+                    f"   Keys: {list(next_data.keys()) if isinstance(next_data, dict) else 'N/A'}"
+                )
 
                 # 深度分析 nextData
-                if isinstance(next_data, dict) and 'props' in next_data:
-                    props = next_data['props']
-                    print(f"   props Keys: {list(props.keys()) if isinstance(props, dict) else 'N/A'}")
+                if isinstance(next_data, dict) and "props" in next_data:
+                    props = next_data["props"]
+                    print(
+                        f"   props Keys: {list(props.keys()) if isinstance(props, dict) else 'N/A'}"
+                    )
 
-                    if isinstance(props, dict) and 'pageProps' in props:
-                        page_props = props['pageProps']
-                        print(f"   pageProps Keys: {list(page_props.keys()) if isinstance(page_props, dict) else 'N/A'}")
+                    if isinstance(props, dict) and "pageProps" in props:
+                        page_props = props["pageProps"]
+                        print(
+                            f"   pageProps Keys: {list(page_props.keys()) if isinstance(page_props, dict) else 'N/A'}"
+                        )
 
                         if isinstance(page_props, dict) and len(page_props) > 0:
                             print("   pageProps 内容丰富，可能包含比赛数据")
                             success_count += 1
 
             # 2. 检查 __INITIAL_STATE__
-            if 'initialState' in extracted_data and extracted_data['initialState']:
+            if "initialState" in extracted_data and extracted_data["initialState"]:
                 print("\n✅ 2. __INITIAL_STATE__ 找到!")
-                initial_state = extracted_data['initialState']
+                initial_state = extracted_data["initialState"]
                 print(f"   类型: {type(initial_state).__name__}")
 
                 if isinstance(initial_state, dict):
@@ -227,9 +236,12 @@ async def extract_browser_memory():
                     success_count += 1
 
             # 3. 检查全局变量
-            if 'globalVariables' in extracted_data and extracted_data['globalVariables']:
+            if (
+                "globalVariables" in extracted_data
+                and extracted_data["globalVariables"]
+            ):
                 print("\n✅ 3. 全局变量找到!")
-                global_vars = extracted_data['globalVariables']
+                global_vars = extracted_data["globalVariables"]
                 for var_name, var_data in global_vars.items():
                     if var_data and not isinstance(var_data, str):
                         print(f"   {var_name}: {type(var_data).__name__}")
@@ -240,23 +252,25 @@ async def extract_browser_memory():
                 success_count += 1
 
             # 4. 检查 pageProps
-            if 'pageProps' in extracted_data and extracted_data['pageProps']:
+            if "pageProps" in extracted_data and extracted_data["pageProps"]:
                 print("\n✅ 4. pageProps 找到!")
-                page_props = extracted_data['pageProps']
+                page_props = extracted_data["pageProps"]
                 print(f"   类型: {type(page_props).__name__}")
-                print(f"   Keys: {list(page_props.keys()) if isinstance(page_props, dict) else 'N/A'}")
+                print(
+                    f"   Keys: {list(page_props.keys()) if isinstance(page_props, dict) else 'N/A'}"
+                )
                 success_count += 1
 
             # 5. 检查 React 状态
-            if 'reactState' in extracted_data and extracted_data['reactState']:
+            if "reactState" in extracted_data and extracted_data["reactState"]:
                 print("\n✅ 5. React 状态找到!")
-                react_state = extracted_data['reactState']
+                react_state = extracted_data["reactState"]
                 print(f"   类型: {type(react_state).__name__}")
                 success_count += 1
 
             # 6. 检查页面内容
-            if 'pageContent' in extracted_data:
-                page_content = extracted_data['pageContent']
+            if "pageContent" in extracted_data:
+                page_content = extracted_data["pageContent"]
                 print("\n🔍 6. 页面内容分析:")
                 indicators = {
                     "shotmap": "射门图数据",
@@ -264,12 +278,12 @@ async def extract_browser_memory():
                     "lineups": "阵容数据",
                     "odds": "赔率数据",
                     "xg": "xG数据",
-                    "rating": "评分数据"
+                    "rating": "评分数据",
                 }
 
                 found_indicators = []
                 for key, desc in indicators.items():
-                    has_key = page_content.get(f'has{key.capitalize()}', False)
+                    has_key = page_content.get(f"has{key.capitalize()}", False)
                     status = "✅" if has_key else "❌"
                     print(f"   {status} {desc}: {has_key}")
                     if has_key:
@@ -282,14 +296,14 @@ async def extract_browser_memory():
             # 7. 深度检查某些数据
             print("\n🔬 7. 深度数据检查:")
             for key, data in extracted_data.items():
-                if data and key not in ['pageContent'] and not isinstance(data, str):
+                if data and key not in ["pageContent"] and not isinstance(data, str):
                     data_str = json.dumps(data, ensure_ascii=False, default=str)
                     shopping_list_items = {
-                        'shotmap': ['shotmap', 'shotMap', 'shot'],
-                        'stats': ['stats', 'statistics', 'possession', 'big chances'],
-                        'lineups': ['lineup', 'player', 'rating'],
-                        'odds': ['odds', 'betting', '1x2'],
-                        'xg': ['xg', 'expectedGoals', 'expected goals']
+                        "shotmap": ["shotmap", "shotMap", "shot"],
+                        "stats": ["stats", "statistics", "possession", "big chances"],
+                        "lineups": ["lineup", "player", "rating"],
+                        "odds": ["odds", "betting", "1x2"],
+                        "xg": ["xg", "expectedGoals", "expected goals"],
                     }
 
                     for category, keywords in shopping_list_items.items():
@@ -300,15 +314,15 @@ async def extract_browser_memory():
 
             # 保存提取到的数据到文件
             output_file = "extracted_browser_data.json"
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(extracted_data, f, indent=2, ensure_ascii=False, default=str)
 
             print(f"\n💾 数据已保存到: {output_file}")
 
             # 最终结论
-            print("\n" + "🎯"*18)
+            print("\n" + "🎯" * 18)
             print("📊 浏览器内存提取总结报告")
-            print("🎯"*18)
+            print("🎯" * 18)
 
             print("🔍 提取到的数据源:")
             for key, data in extracted_data.items():
@@ -339,8 +353,10 @@ async def extract_browser_memory():
     except Exception as e:
         print(f"\n❌ 提取过程失败: {e}")
         import traceback
+
         print(traceback.format_exc())
         return False
+
 
 async def main():
     """主函数"""
@@ -355,6 +371,7 @@ async def main():
         print("\n❌ Plan C 失败，需要考虑其他方案")
 
     return success
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

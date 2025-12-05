@@ -16,15 +16,13 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Optional
-
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # 🚀 切换到V2采集器内核
 from src.data.collectors.fotmob_browser_v2 import (
-    FotmobBrowserScraperV2,
-    FotmobMatchDataV2,
+    FotmobBrowserScraperV2
+    FotmobMatchDataV2
 )
 from dataclasses import dataclass, asdict
 
@@ -54,14 +52,14 @@ class FotMobBackfill:
             "successful_days": [],
             "failed_days": [],
             "total_matches": 0,
-            "total_api_calls": 0,
+            "total_api_calls": 0
             # V2深度数据统计
             "deep_matches": 0,
             "lineups_found": 0,
             "stats_found": 0,
             "complete_matches": 0,
             "zombie_cleanups": 0,
-            "errors": [],
+            "errors": []
         }
 
     def log(self, message: str, level: str = "INFO"):
@@ -118,10 +116,10 @@ class FotMobBackfill:
             # 查找Chrome/Playwright相关进程
             zombie_commands = [
                 "chrome",
-                "chromium",
+                "chromium"
                 "chromium-browse",
-                "playwright",
-                "headless_shell",
+                "playwright"
+                "headless_shell"
             ]
 
             for cmd in zombie_commands:
@@ -155,10 +153,10 @@ class FotMobBackfill:
             for cmd in zombie_commands:
                 try:
                     result = subprocess.run(
-                        ["pkill", "-9", "-f", cmd],
-                        capture_output=True,
-                        text=True,
-                        timeout=5,
+                        ["pkill", "-9", "-f", cmd]
+                        capture_output=True
+                        text=True
+                        timeout=5
                     )
                 except:
                     pass
@@ -234,23 +232,23 @@ class FotMobBackfill:
                         )
 
                         export_data = {
-                            "collection_info": {
+                            "collection_info": {,
                                 "collector_version": "v2_deep",
                                 "collection_time": datetime.now().isoformat(),
                                 "target_date": date_str,
                                 "total_matches": len(match_data_list),
-                                "api_calls": len(scraper.captured_data),
+                                "api_calls": len(scraper.captured_data)
                             },
                             "collection_stats": scraper.stats,
-                            "data_quality": {
+                            "data_quality": {,
                                 "lineups_rate": self.stats["lineups_found"]
-                                / max(len(match_data_list), 1),
+                                / max(len(match_data_list), 1)
                                 "stats_rate": self.stats["stats_found"]
-                                / max(len(match_data_list), 1),
+                                / max(len(match_data_list), 1)
                                 "complete_rate": self.stats["complete_matches"]
-                                / max(len(match_data_list), 1),
+                                / max(len(match_data_list), 1)
                             },
-                            "matches": [asdict(match) for match in match_data_list],
+                            "matches": [asdict(match) for match in match_data_list]
                         }
 
                         with open(output_file, "w", encoding="utf-8") as f:
@@ -394,15 +392,15 @@ class FotMobBackfill:
             "errors_count": len(self.stats["errors"]),
             "success_rate": (
                 len(self.stats["successful_days"]) / len(date_list) if date_list else 0
-            ),
+            )
         }
 
 
 async def main():
     """主函数"""
     parser = argparse.ArgumentParser(
-        description="FotMob历史数据批量回填脚本",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="FotMob历史数据批量回填脚本"
+        formatter_class=argparse.RawDescriptionHelpFormatter
         epilog="""
 使用示例:
   # 🎯 倒序回填23/24赛季数据（推荐）
@@ -422,7 +420,7 @@ async def main():
 
   # 指定输出目录
   python batch_backfill.py --start 20230801 --end yesterday --output-dir /custom/path
-        """,
+        """
     )
 
     # 日期参数
@@ -431,9 +429,9 @@ async def main():
     )
 
     parser.add_argument(
-        "--end",
-        type=str,
-        help='结束日期，格式: YYYYMMDD，或使用 "yesterday"（默认为昨天）',
+        "--end"
+        type=str
+        help='结束日期，格式: YYYYMMDD，或使用 "yesterday"（默认为昨天）'
     )
 
     parser.add_argument(
@@ -443,28 +441,28 @@ async def main():
     parser.add_argument("--resume", action="store_true", help="继续之前中断的任务")
 
     parser.add_argument(
-        "--output-dir",
-        type=str,
-        default="data/fotmob/historical",
-        help="输出目录 (默认: data/fotmob/historical)",
+        "--output-dir"
+        type=str
+        default="data/fotmob/historical"
+        help="输出目录 (默认: data/fotmob/historical)"
     )
 
     parser.add_argument("--verbose", action="store_true", help="详细日志输出")
 
     # 🚀 V2专用参数 - 全栈架构师添加
     parser.add_argument(
-        "--max-concurrent",
-        type=int,
-        default=2,
-        help="V2采集器并发数 (默认: 2，推荐范围: 1-3)",
+        "--max-concurrent"
+        type=int
+        default=2
+        help="V2采集器并发数 (默认: 2，推荐范围: 1-3)"
     )
 
     parser.add_argument(
-        "--collector",
-        type=str,
-        default="v2",
-        choices=["v1", "v2"],
-        help="采集器版本 (默认: v2)",
+        "--collector"
+        type=str
+        default="v2"
+        choices=["v1", "v2"]
+        help="采集器版本 (默认: v2)"
     )
 
     args = parser.parse_args()

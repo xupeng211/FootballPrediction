@@ -11,18 +11,21 @@ import json
 import re
 from typing import List
 
+
 def analyze_page_routes():
     """分析页面中的路由信息"""
-    print("🔍" + "="*60)
+    print("🔍" + "=" * 60)
     print("📋 发现实际的路由模式")
     print("👨‍💻 Next.js架构专家 - 分析页面路由信息")
-    print("="*62)
+    print("=" * 62)
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+    )
 
     # 访问比赛页面
     match_id = "4189362"
@@ -51,7 +54,7 @@ def analyze_page_routes():
             fetch_patterns = [
                 r'fetch\(["\']([^"\']+)["\']',
                 r'api/[^\s"\']+',
-                r'/_next/static/chunks/[^\s"\']+\.js'
+                r'/_next/static/chunks/[^\s"\']+\.js',
             ]
 
             found_apis = []
@@ -79,7 +82,10 @@ def analyze_page_routes():
             if routes:
                 print(f"   📋 发现路由: {len(routes)} 个")
                 for route in list(set(routes))[:20]:
-                    if any(keyword in route.lower() for keyword in ['match', 'api', 'data', 'json']):
+                    if any(
+                        keyword in route.lower()
+                        for keyword in ["match", "api", "data", "json"]
+                    ):
                         print(f"      🛣️  {route}")
 
             # 4. 查找可能的端点
@@ -103,12 +109,12 @@ def analyze_page_routes():
 
             # 查找特定的数据获取模式
             data_patterns = [
-                r'matchDetails',
-                r'matchFacts',
-                r'lineups',
-                r'shotmap',
-                r'stats',
-                r'odds'
+                r"matchDetails",
+                r"matchFacts",
+                r"lineups",
+                r"shotmap",
+                r"stats",
+                r"odds",
             ]
 
             for pattern in data_patterns:
@@ -116,8 +122,10 @@ def analyze_page_routes():
                     print(f"   ✅ 发现 {pattern} 相关代码")
 
                     # 尝试找到相关的API调用
-                    context_pattern = rf'.{{0,200}}{pattern}.{{0,200}}'
-                    matches = re.findall(context_pattern, html, re.IGNORECASE | re.DOTALL)
+                    context_pattern = rf".{{0,200}}{pattern}.{{0,200}}"
+                    matches = re.findall(
+                        context_pattern, html, re.IGNORECASE | re.DOTALL
+                    )
                     if matches:
                         print("      上下文示例:")
                         for match in matches[:2]:
@@ -132,16 +140,19 @@ def analyze_page_routes():
         print(f"   ❌ 分析失败: {e}")
         return False
 
+
 def test_alternative_endpoints():
     """测试替代的端点"""
     print("\n🔄 测试替代的端点...")
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Referer": "https://www.fotmob.com/",
-    })
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Referer": "https://www.fotmob.com/",
+        }
+    )
 
     # 可能的API端点
     possible_endpoints = [
@@ -184,7 +195,10 @@ def test_alternative_endpoints():
 
                                 # 检查是否包含比赛数据
                                 data_str = json.dumps(data, ensure_ascii=False).lower()
-                                if any(keyword in data_str for keyword in ['shotmap', 'xg', 'lineup', 'stats']):
+                                if any(
+                                    keyword in data_str
+                                    for keyword in ["shotmap", "xg", "lineup", "stats"]
+                                ):
                                     print("      🎉 发现比赛数据!")
                                     return True
 
@@ -204,6 +218,7 @@ def test_alternative_endpoints():
 
     return False
 
+
 def main():
     """主函数"""
     print("🚀 发现实际路由模式启动...")
@@ -214,9 +229,9 @@ def main():
     # 2. 测试替代端点
     endpoints_found = test_alternative_endpoints()
 
-    print("\n" + "🎯"*15)
+    print("\n" + "🎯" * 15)
     print("📊 路由分析总结")
-    print("🎯"*15)
+    print("🎯" * 15)
 
     if routes_found:
         print("✅ 页面路由分析完成")
@@ -234,6 +249,7 @@ def main():
     else:
         print("\n⚠️ 需要探索其他方法或数据源")
         return False
+
 
 if __name__ == "__main__":
     success = main()

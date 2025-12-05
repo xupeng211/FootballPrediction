@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 
 # 添加src路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from collectors.html_fotmob_collector import HTMLFotMobCollector
 
@@ -24,9 +24,7 @@ class FallbackExplorer:
 
     def __init__(self):
         self.collector = HTMLFotMobCollector(
-            max_retries=3,
-            timeout=(10, 30),
-            enable_stealth=True
+            max_retries=3, timeout=(10, 30), enable_stealth=True
         )
         self.target_url = "https://www.fotmob.com/matches?date=20240225"
         self.premier_league_id = 47
@@ -39,7 +37,7 @@ class FallbackExplorer:
     def get_headers(self) -> dict[str, str]:
         """获取请求头"""
         return {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         }
 
     async def fetch_page(self) -> Optional[str]:
@@ -52,7 +50,7 @@ class FallbackExplorer:
                 headers=self.get_headers(),
                 timeout=(10, 30),
                 allow_redirects=True,
-                verify=False
+                verify=False,
             )
 
             print(f"📊 HTTP状态码: {response.status_code}")
@@ -71,7 +69,7 @@ class FallbackExplorer:
     def extract_nextjs_data(self, html: str) -> Optional[dict[str, Any]]:
         """提取 Next.js 数据"""
         try:
-            if '__NEXT_DATA__' not in html:
+            if "__NEXT_DATA__" not in html:
                 print("❌ 页面中未找到 __NEXT_DATA__")
                 return None
 
@@ -81,7 +79,7 @@ class FallbackExplorer:
             patterns = [
                 r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
                 r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
-                r'window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>'
+                r"window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>",
             ]
 
             for i, pattern in enumerate(patterns):
@@ -91,14 +89,20 @@ class FallbackExplorer:
                     nextjs_data_str = matches[0].strip()
 
                     # 清理 JavaScript 包装
-                    if nextjs_data_str.startswith('window.__NEXT_DATA__'):
-                        nextjs_data_str = nextjs_data_str.replace('window.__NEXT_DATA__', '').replace('=', '').strip()
-                        if nextjs_data_str.endswith(';'):
+                    if nextjs_data_str.startswith("window.__NEXT_DATA__"):
+                        nextjs_data_str = (
+                            nextjs_data_str.replace("window.__NEXT_DATA__", "")
+                            .replace("=", "")
+                            .strip()
+                        )
+                        if nextjs_data_str.endswith(";"):
                             nextjs_data_str = nextjs_data_str[:-1]
 
                     try:
                         nextjs_data = json.loads(nextjs_data_str)
-                        print(f"✅ Next.js JSON 解析成功，大小: {len(str(nextjs_data)):,} 字符")
+                        print(
+                            f"✅ Next.js JSON 解析成功，大小: {len(str(nextjs_data)):,} 字符"
+                        )
                         return nextjs_data
                     except json.JSONDecodeError as e:
                         print(f"❌ JSON 解析失败 (模式 {i+1}): {e}")
@@ -115,9 +119,9 @@ class FallbackExplorer:
         """深度探索fallback内容"""
         print("\n🔬 开始深度探索fallback内容...")
 
-        fallback_data = (nextjs_data.get("props", {})
-                                 .get("pageProps", {})
-                                 .get("fallback", {}))
+        fallback_data = (
+            nextjs_data.get("props", {}).get("pageProps", {}).get("fallback", {})
+        )
 
         if not fallback_data:
             print("❌ 未找到fallback数据")
@@ -166,7 +170,9 @@ class FallbackExplorer:
                             league_id = league.get("id")
                             league_name = league.get("name")
                             matches_count = len(league.get("matches", []))
-                            print(f"      {i}. {league_name} (ID: {league_id}) - {matches_count} 场比赛")
+                            print(
+                                f"      {i}. {league_name} (ID: {league_id}) - {matches_count} 场比赛"
+                            )
 
                 # 显示关键信息
                 important_keys = ["id", "name", "leagueId", "primaryId"]
@@ -185,9 +191,9 @@ class FallbackExplorer:
         """寻找所有联赛信息"""
         print("\n🏆 寻找所有联赛信息...")
 
-        fallback_data = (nextjs_data.get("props", {})
-                                 .get("pageProps", {})
-                                 .get("fallback", {}))
+        fallback_data = (
+            nextjs_data.get("props", {}).get("pageProps", {}).get("fallback", {})
+        )
 
         all_leagues = {}
 
@@ -197,7 +203,9 @@ class FallbackExplorer:
 
             # 直接在value中查找league信息
             if any(k in value for k in ["id", "name", "matches"]):
-                league_id = value.get("id") or value.get("primaryId") or value.get("leagueId")
+                league_id = (
+                    value.get("id") or value.get("primaryId") or value.get("leagueId")
+                )
                 league_name = value.get("name")
 
                 if league_id and league_name:
@@ -205,7 +213,11 @@ class FallbackExplorer:
                         "id": league_id,
                         "name": league_name,
                         "source_key": key,
-                        "matches_count": len(value.get("matches", [])) if isinstance(value.get("matches"), list) else 0
+                        "matches_count": (
+                            len(value.get("matches", []))
+                            if isinstance(value.get("matches"), list)
+                            else 0
+                        ),
                     }
 
             # 在matches中查找league信息
@@ -220,19 +232,29 @@ class FallbackExplorer:
                                     "id": league_id,
                                     "name": f"League-{league_id}",
                                     "source_key": key,
-                                    "matches_count": 1
+                                    "matches_count": 1,
                                 }
                                 if "leagueName" in match:
-                                    all_leagues[str(league_id)]["name"] = match["leagueName"]
+                                    all_leagues[str(league_id)]["name"] = match[
+                                        "leagueName"
+                                    ]
 
         print(f"📊 找到 {len(all_leagues)} 个联赛:")
-        for league_id, info in sorted(all_leagues.items(), key=lambda x: x[1].get("matches_count", 0), reverse=True):
-            print(f"  ID {league_id}: {info['name']} - {info['matches_count']} 场比赛 (来源: {info['source_key']})")
+        for league_id, info in sorted(
+            all_leagues.items(),
+            key=lambda x: x[1].get("matches_count", 0),
+            reverse=True,
+        ):
+            print(
+                f"  ID {league_id}: {info['name']} - {info['matches_count']} 场比赛 (来源: {info['source_key']})"
+            )
 
         # 检查英超
         if str(self.premier_league_id) in all_leagues:
             premier_info = all_leagues[str(self.premier_league_id)]
-            print(f"✅ 找到英超联赛: {premier_info['name']} - {premier_info['matches_count']} 场比赛")
+            print(
+                f"✅ 找到英超联赛: {premier_info['name']} - {premier_info['matches_count']} 场比赛"
+            )
         else:
             print(f"⚠️ 未找到英超联赛 (ID: {self.premier_league_id})")
 
@@ -280,4 +302,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"❌ 程序异常: {e}")
         import traceback
+
         traceback.print_exc()

@@ -59,7 +59,7 @@ try:
     from src.data.collectors.fixtures_collector import FixturesCollector
     from src.data.processing.football_data_cleaner import FootballDataCleaner
     from src.features.simple_feature_calculator import SimpleFeatureCalculator
-    from src.database.connection import get_async_session, initialize_database
+    from src.database.async_manager import get_db_session, initialize_database
     from src.database.models.raw_data import RawMatchData
     from src.database.models.match import Match
     from sqlalchemy import select
