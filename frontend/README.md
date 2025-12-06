@@ -1,46 +1,106 @@
-# Getting Started with Create React App
+# Football Prediction Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Modern Vue 3 + TypeScript frontend for the Football Prediction system.
 
-## Available Scripts
+## 🚀 Quick Start
 
-In the project directory, you can run:
+### Prerequisites
+- Node.js 18+
+- npm or yarn
 
-### `npm start`
+### Installation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```bash
+# Install dependencies
+npm install
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+# Start development server
+npm run dev
 
-### `npm test`
+# Build for production
+npm run build
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Preview production build
+npm run preview
+```
 
-### `npm run build`
+## 🛠️ Tech Stack
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **Framework**: Vue 3 (Composition API)
+- **Language**: TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **State Management**: Pinia
+- **Routing**: Vue Router
+- **API Client**: Axios
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 📁 Project Structure
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+src/
+├── api/           # API client and configuration
+├── components/    # Vue components
+├── composables/    # Vue composition functions
+├── router/         # Vue Router configuration
+├── stores/         # Pinia stores
+├── types/          # TypeScript type definitions
+├── views/          # Page components
+├── utils/          # Utility functions
+├── assets/         # Static assets
+├── App.vue         # Root component
+├── main.ts         # Application entry point
+└── style.css       # Global styles
+```
 
-### `npm run eject`
+## 🔗 Backend Integration
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+The frontend connects to the backend API at `http://localhost:8000/api/v1`.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### API Endpoints Used
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- `GET /api/v1/predictions` - Get predictions
+- `GET /api/v1/matches` - Get recent matches
+- `GET /api/v1/health` - Health check
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Environment Variables
 
-## Learn More
+Create `.env.development`:
+```
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🧪 Development
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Code Style
+
+This project uses ESLint and TypeScript for code quality.
+
+```bash
+# Lint code
+npm run lint
+
+# Type checking
+npm run type-check
+```
+
+### Mock Data
+
+When the backend API is not available, the frontend automatically falls back to mock data for development.
+
+## 📱 Features
+
+- **Dashboard**: Real-time prediction display
+- **Match Information**: Upcoming and live matches
+- **Prediction Analysis**: Confidence scores and probability breakdowns
+- **Responsive Design**: Works on all device sizes
+
+## 🚀 Deployment
+
+The frontend is configured for Docker deployment in the main project.
+
+```bash
+# From project root
+docker-compose -f docker-compose.yml -f docker-compose.scheduler.yml up
+```
+
+Then access the frontend at: http://localhost:3000
