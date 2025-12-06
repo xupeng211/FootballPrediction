@@ -14,6 +14,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from src.database.connection import DatabaseManager
+from src.core.cache import cached
 
 logger = logging.getLogger(__name__)
 
@@ -268,6 +269,12 @@ class PredictionService:
             )
             raise
 
+    @cached(
+        ttl=3600,  # 1小时缓存
+        namespace="predictions",
+        stampede_protection=True,
+        key_builder=lambda self, match_data, model_name="default": f"prediction:{match_data.get('match_id', 'unknown')}:{model_name}:{hash(str(sorted(match_data.items())))}"
+    )
     async def predict_match_async(
         self, match_data: dict[str, Any], model_name: str = "default"
     ) -> PredictionResult:

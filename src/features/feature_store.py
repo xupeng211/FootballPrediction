@@ -32,6 +32,9 @@ from src.features.feature_store_interface import (
     StorageError,
 )
 
+# 导入缓存装饰器
+from src.core.cache import cached
+
 logger = logging.getLogger(__name__)
 
 
@@ -168,6 +171,12 @@ class FootballFeatureStore(FeatureStoreProtocol):
             logger.error(f"Failed to save features for match {match_id}: {e}")
             raise StorageError(f"Save operation failed: {e}") from e
 
+    @cached(
+        ttl=300,  # 5分钟缓存
+        namespace="features",
+        stampede_protection=True,
+        key_builder=lambda match_id, version=DEFAULT_FEATURE_VERSION: f"feature:{match_id}:{version}"
+    )
     async def load_features(
         self,
         match_id: int,

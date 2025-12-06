@@ -10,6 +10,7 @@ from typing import Union
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..features.engineering import AllMatchFeatures, AllTeamFeatures, FeatureCalculator
+from ..core.cache import cached
 from ..features.feature_definitions import (
     HistoricalMatchupFeatures,
     OddsFeatures,
@@ -30,6 +31,12 @@ class FeatureService:
         self.calculator = FeatureCalculator(db_session)
         self.logger = logger
 
+    @cached(
+        ttl=300,  # 5分钟缓存
+        namespace="features",
+        stampede_protection=True,
+        key_builder=lambda self, match_id, calculation_date=None: f"match_features:{match_id}:{calculation_date.isoformat() if calculation_date else 'none'}"
+    )
     async def get_match_features(
         self, match_id: int, calculation_date: datetime | None = None
     ) -> AllMatchFeatures | None:
