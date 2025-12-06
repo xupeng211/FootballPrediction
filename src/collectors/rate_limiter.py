@@ -1,354 +1,419 @@
-"""智能请求频率控制器 - 反爬对抗组件
-Intelligent Rate Limiter - Anti-Scraping Component.
+"""
+统一速率限制器实现 (基于Token Bucket算法)
+Unified Rate Limiter Implementation (Token Bucket Algorithm)
 
-提供自适应请求频率控制、智能延迟调节等功能。
+基于 Token Bucket (令牌桶) 算法的异步速率限制器，支持：
+1. 分域名独立限流
+2. 配置驱动的动态策略
+3. Async Context Manager 接口
+4. 并发安全的令牌操作
+
+算法原理：
+- 令牌桶以恒定速率填充令牌
+- 每个请求消耗一个令牌
+- 桶容量限制了突发流量的大小
+- 无令牌时请求需要等待
+
+作者: Lead Collector Engineer
+创建时间: 2025-12-06
+版本: 1.0.0
 """
 
 import asyncio
-import random
 import time
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from enum import Enum
-from src.core.logging import get_logger
-
-logger = get_logger(__name__)
-
-
-class RateLimitStrategy(Enum):
-    """频率限制策略."""
-
-    CONSERVATIVE = "conservative"  # 保守策略：较长延迟
-    NORMAL = "normal"  # 正常策略：标准延迟
-    AGGRESSIVE = "aggressive"  # 激进策略：较短延迟
-    ADAPTIVE = "adaptive"  # 自适应策略：根据响应调整
+from typing import Any, Dict, Optional
 
 
 @dataclass
-class RequestConfig:
-    """请求配置."""
+class RateLimitConfig:
+    """
+    速率限制配置类
 
-    min_delay: float = 1.0  # 最小延迟（秒）
-    max_delay: float = 10.0  # 最大延迟（秒）
-    base_delay: float = 2.0  # 基础延迟（秒）
-    burst_limit: int = 5  # 突发请求限制
-    recovery_time: float = 30.0  # 恢复时间（秒）
+    Args:
+        rate: 每秒补充的令牌数 (QPS)
+        burst: 桶的最大容量 (突发令牌数)
+        max_wait_time: 最大等待时间 (秒)，None表示无限等待
+    """
+    rate: float
+    burst: int
+    max_wait_time: Optional[float] = None
 
-    # 延迟增加因子
-    error_delay_multiplier: float = 2.0  # 错误时延迟倍数
-    success_delay_reduction: float = 0.9  # 成功时延迟缩减因子
+    def __post_init__(self) -> None:
+        """验证配置参数"""
+        if self.rate <= 0:
+            raise ValueError("Rate must be positive")
+        if self.burst <= 0:
+            raise ValueError("Burst must be positive")
+        if self.max_wait_time is not None and self.max_wait_time < 0:
+            raise ValueError("max_wait_time must be non-negative")
 
 
 @dataclass
-class DomainStats:
-    """域名统计信息."""
+class TokenBucket:
+    """
+    令牌桶实现
 
-    domain: str
-    request_count: int = 0
-    success_count: int = 0
-    error_count: int = 0
-    last_request_time: float = 0.0
-    last_success_time: float = 0.0
-    last_error_time: float = 0.0
-    current_delay: float = 2.0
-    consecutive_errors: int = 0
-    consecutive_successes: int = 0
-    total_response_time: float = 0.0
-    avg_response_time: float = 0.0
+    使用 asyncio.Lock 保证并发安全
+    """
+    tokens: float
+    capacity: float
+    refill_rate: float
+    last_refill: float = field(default_factory=lambda: time.monotonic())
+    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
-    @property
-    def success_rate(self) -> float:
-        """成功率."""
-        if self.request_count == 0:
-            return 0.0
-        return self.success_count / self.request_count
+    def __post_init__(self) -> None:
+        """初始化令牌桶"""
+        if self.tokens > self.capacity:
+            self.tokens = self.capacity
 
-    @property
-    def error_rate(self) -> float:
-        """错误率."""
-        if self.request_count == 0:
-            return 0.0
-        return self.error_count / self.request_count
+    async def consume(self, tokens: int = 1) -> bool:
+        """
+        消耗令牌
+
+        Args:
+            tokens: 要消耗的令牌数
+
+        Returns:
+            bool: 是否成功消耗令牌
+        """
+        async with self.lock:
+            self._refill()
+            if self.tokens >= tokens:
+                self.tokens -= tokens
+                return True
+            return False
+
+    async def wait_for_tokens(self, tokens: int = 1, timeout: Optional[float] = None) -> bool:
+        """
+        等待直到有足够的令牌
+
+        Args:
+            tokens: 需要的令牌数
+            timeout: 超时时间 (秒)
+
+        Returns:
+            bool: 是否成功获取令牌
+        """
+        start_time = time.monotonic()
+
+        while True:
+            async with self.lock:
+                self._refill()
+
+                if self.tokens >= tokens:
+                    self.tokens -= tokens
+                    return True
+
+                # 计算需要等待的时间
+                tokens_needed = tokens - self.tokens
+                wait_time = tokens_needed / self.refill_rate
+
+                # 检查超时
+                if timeout is not None:
+                    elapsed = time.monotonic() - start_time
+                    remaining_time = timeout - elapsed
+
+                    if remaining_time <= 0:
+                        return False
+
+                    wait_time = min(wait_time, remaining_time)
+
+            # 等待令牌补充
+            await asyncio.sleep(wait_time)
+
+    def _refill(self) -> None:
+        """补充令牌（非线程安全，需要在锁内调用）"""
+        now = time.monotonic()
+        elapsed = now - self.last_refill
+        tokens_to_add = elapsed * self.refill_rate
+
+        self.tokens = min(self.capacity, self.tokens + tokens_to_add)
+        self.last_refill = now
 
 
 class RateLimiter:
-    """智能请求频率控制器."""
+    """
+    统一速率限制器
 
-    def __init__(
-        self
-        strategy: RateLimitStrategy = RateLimitStrategy.ADAPTIVE
-        config: RequestConfig = None
-        max_domains: int = 100
-    ):
-        self.strategy = strategy
-        self.config = config or RequestConfig()
-        self.max_domains = max_domains
+    基于 Token Bucket 算法实现多域名并发限流控制。
+    支持配置驱动的动态策略和 Async Context Manager 接口。
 
-        # 域名统计信息
-        self.domain_stats: dict[str, DomainStats] = {}
-        self._lock = asyncio.Lock()
-
-        # 全局请求计数器
-        self.global_request_count = 0
-        self.global_last_request_time = 0.0
-
-        logger.info(f"频率控制器初始化完成，策略: {strategy.value}")
-
-    async def wait_for_slot(self, domain: str) -> float:
-        """等待请求时机，返回实际延迟时间."""
-        async with self._lock:
-            stats = self._get_or_create_stats(domain)
-
-            # 计算延迟时间
-            delay = await self._calculate_delay(stats)
-
-            # 应用延迟
-            if delay > 0:
-                logger.debug(f"域名 {domain} 延迟 {delay:.2f}s")
-                await asyncio.sleep(delay)
-
-            # 更新统计信息
-            stats.last_request_time = time.time()
-            self.global_last_request_time = time.time()
-            self.global_request_count += 1
-
-            return delay
-
-    async def _calculate_delay(self, stats: DomainStats) -> float:
-        """计算延迟时间."""
-        current_time = time.time()
-
-        if self.strategy == RateLimitStrategy.CONSERVATIVE:
-            return self._conservative_delay(stats, current_time)
-        elif self.strategy == RateLimitStrategy.NORMAL:
-            return self._normal_delay(stats, current_time)
-        elif self.strategy == RateLimitStrategy.AGGRESSIVE:
-            return self._aggressive_delay(stats, current_time)
-        elif self.strategy == RateLimitStrategy.ADAPTIVE:
-            return await self._adaptive_delay(stats, current_time)
-        else:
-            return self.config.base_delay
-
-    def _conservative_delay(self, stats: DomainStats, current_time: float) -> float:
-        """保守策略延迟计算."""
-        # 使用较长的基础延迟
-        base_delay = self.config.base_delay * 2.0
-
-        # 考虑连续错误
-        if stats.consecutive_errors > 0:
-            base_delay *= 1 + stats.consecutive_errors * 0.5
-
-        # 确保最小延迟
-        return max(base_delay, self.config.min_delay * 2.0)
-
-    def _normal_delay(self, stats: DomainStats, current_time: float) -> float:
-        """正常策略延迟计算."""
-        # 基础延迟 + 随机波动
-        delay = self.config.base_delay + random.uniform(-0.5, 0.5)
-
-        # 错误惩罚
-        if stats.consecutive_errors > 0:
-            delay *= 1 + stats.consecutive_errors * 0.3
-
-        return max(delay, self.config.min_delay)
-
-    def _aggressive_delay(self, stats: DomainStats, current_time: float) -> float:
-        """激进策略延迟计算."""
-        # 较短的基础延迟
-        delay = self.config.base_delay * 0.7
-
-        # 随机波动较小
-        delay += random.uniform(-0.2, 0.2)
-
-        # 错误惩罚较轻
-        if stats.consecutive_errors > 0:
-            delay *= 1 + stats.consecutive_errors * 0.2
-
-        return max(delay, self.config.min_delay * 0.5)
-
-    async def _adaptive_delay(self, stats: DomainStats, current_time: float) -> float:
-        """自适应策略延迟计算."""
-        # 基于成功率和响应时间动态调整
-        delay = stats.current_delay
-
-        # 根据成功率调整
-        if stats.request_count > 5:  # 有足够样本时才调整
-            success_rate = stats.success_rate
-
-            if success_rate < 0.8:  # 成功率低，增加延迟
-                delay *= 1.5
-            elif success_rate > 0.95:  # 成功率高，减少延迟
-                delay *= 0.8
-
-        # 根据连续错误调整
-        if stats.consecutive_errors > 0:
-            delay *= 1 + stats.consecutive_errors * 0.4
-
-        # 根据响应时间调整
-        if stats.avg_response_time > 5.0:  # 响应慢，增加延迟
-            delay *= 1.2
-
-        # 添加随机性避免模式识别
-        delay += random.uniform(-delay * 0.1, delay * 0.1)
-
-        # 应用配置限制
-        delay = max(delay, self.config.min_delay)
-        delay = min(delay, self.config.max_delay)
-
-        return delay
-
-    async def record_success(self, domain: str, response_time: float):
-        """记录成功请求."""
-        async with self._lock:
-            stats = self._get_or_create_stats(domain)
-
-            stats.request_count += 1
-            stats.success_count += 1
-            stats.last_success_time = time.time()
-            stats.consecutive_errors = 0
-            stats.consecutive_successes += 1
-            stats.total_response_time += response_time
-            stats.avg_response_time = stats.total_response_time / stats.success_count
-
-            # 自适应调整当前延迟
-            if self.strategy == RateLimitStrategy.ADAPTIVE:
-                # 连续成功时逐渐减少延迟
-                if stats.consecutive_successes >= 3:
-                    stats.current_delay *= self.config.success_delay_reduction
-                    stats.current_delay = max(
-                        stats.current_delay, self.config.min_delay
-                    )
-
-            logger.debug(f"域名 {domain} 成功记录，响应时间: {response_time:.2f}s")
-
-    async def record_error(self, domain: str, error_type: str = "unknown"):
-        """记录错误请求."""
-        async with self._lock:
-            stats = self._get_or_create_stats(domain)
-
-            stats.request_count += 1
-            stats.error_count += 1
-            stats.last_error_time = time.time()
-            stats.consecutive_errors += 1
-            stats.consecutive_successes = 0
-
-            # 自适应调整当前延迟
-            if self.strategy == RateLimitStrategy.ADAPTIVE:
-                # 错误时增加延迟
-                stats.current_delay *= self.config.error_delay_multiplier
-                stats.current_delay = min(stats.current_delay, self.config.max_delay)
-
-            logger.warning(
-                f"域名 {domain} 错误记录 ({error_type})，连续错误: {stats.consecutive_errors}"
-            )
-
-    def _get_or_create_stats(self, domain: str) -> DomainStats:
-        """获取或创建域名统计信息."""
-        if domain not in self.domain_stats:
-            # 限制域名数量
-            if len(self.domain_stats) >= self.max_domains:
-                # 移除最旧的域名
-                oldest_domain = min(
-                    self.domain_stats.keys()
-                    key=lambda d: self.domain_stats[d].last_request_time
-                )
-                del self.domain_stats[oldest_domain]
-                logger.info(f"移除最旧域名统计: {oldest_domain}")
-
-            self.domain_stats[domain] = DomainStats(
-                domain=domain, current_delay=self.config.base_delay
-            )
-
-        return self.domain_stats[domain]
-
-    def get_domain_stats(self, domain: str) -> Optional[DomainStats]:
-        """获取域名统计信息."""
-        return self.domain_stats.get(domain)
-
-    def get_all_stats(self) -> dict[str, DomainStats]:
-        """获取所有域名统计信息."""
-        return self.domain_stats.copy()
-
-    def get_global_stats(self) -> dict:
-        """获取全局统计信息."""
-        total_requests = sum(
-            stats.request_count for stats in self.domain_stats.values()
-        )
-        total_successes = sum(
-            stats.success_count for stats in self.domain_stats.values()
-        )
-        total_errors = sum(stats.error_count for stats in self.domain_stats.values())
-
-        avg_success_rate = (
-            total_successes / total_requests if total_requests > 0 else 0.0
-        )
-
-        return {
-            "strategy": self.strategy.value
-            "total_requests": total_requests
-            "global_request_count": self.global_request_count
-            "total_successes": total_successes
-            "total_errors": total_errors
-            "success_rate": avg_success_rate
-            "active_domains": len(self.domain_stats)
-            "config": {
-                "min_delay": self.config.min_delay
-                "max_delay": self.config.max_delay
-                "base_delay": self.config.base_delay
-            }
+    使用示例:
+        config = {
+            "fotmob.com": {"rate": 2.0, "burst": 5},
+            "fbref.com": {"rate": 1.0, "burst": 3},
+            "default": {"rate": 1.0, "burst": 1}
         }
 
-    async def reset_stats(self, domain: str = None):
-        """重置统计信息."""
-        async with self._lock:
-            if domain:
-                if domain in self.domain_stats:
-                    del self.domain_stats[domain]
-                    logger.info(f"重置域名统计: {domain}")
+        limiter = RateLimiter(config)
+
+        # 使用 Async Context Manager
+        async with limiter.acquire("fotmob.com"):
+            # 在此范围内执行请求
+            await some_http_request()
+    """
+
+    def __init__(
+        self,
+        config: Optional[Dict[str, Any]] = None,
+        default_config: Optional[RateLimitConfig] = None
+    ) -> None:
+        """
+        初始化速率限制器
+
+        Args:
+            config: 域名配置字典
+            default_config: 默认配置
+        """
+        self.config: Dict[str, RateLimitConfig] = {}
+        self.buckets: Dict[str, TokenBucket] = {}
+        self._default_config = default_config or RateLimitConfig(
+            rate=1.0,
+            burst=1,
+            max_wait_time=30.0
+        )
+
+        # 解析配置
+        if config:
+            self._parse_config(config)
+
+        # 添加默认配置
+        if "default" not in self.config:
+            self.config["default"] = self._default_config
+
+    def _parse_config(self, config: Dict[str, Any]) -> None:
+        """
+        解析配置字典
+
+        Args:
+            config: 配置字典，支持两种格式：
+                1. {"domain": {"rate": 2.0, "burst": 5}}
+                2. {"domain": RateLimitConfig(2.0, 5)}
+        """
+        for domain, cfg in config.items():
+            if isinstance(cfg, dict):
+                # 字典格式配置
+                rate = cfg.get("rate", 1.0)
+                burst = cfg.get("burst", 1)
+                max_wait_time = cfg.get("max_wait_time")
+                self.config[domain] = RateLimitConfig(
+                    rate=float(rate),
+                    burst=int(burst),
+                    max_wait_time=max_wait_time
+                )
+            elif isinstance(cfg, RateLimitConfig):
+                # 直接使用 RateLimitConfig 对象
+                self.config[domain] = cfg
             else:
-                self.domain_stats.clear()
-                self.global_request_count = 0
-                self.global_last_request_time = 0.0
-                logger.info("重置所有统计信息")
+                raise ValueError(f"Invalid config for domain {domain}: {cfg}")
 
-    def set_strategy(self, strategy: RateLimitStrategy):
-        """设置频率限制策略."""
-        old_strategy = self.strategy
-        self.strategy = strategy
-        logger.info(f"频率策略变更: {old_strategy.value} -> {strategy.value}")
+    def _get_bucket(self, domain: str) -> TokenBucket:
+        """
+        获取或创建域名的令牌桶
 
-    async def adjust_delays(self, factor: float):
-        """批量调整所有域名的延迟."""
-        async with self._lock:
-            for stats in self.domain_stats.values():
-                stats.current_delay *= factor
-                stats.current_delay = max(stats.current_delay, self.config.min_delay)
-                stats.current_delay = min(stats.current_delay, self.config.max_delay)
+        Args:
+            domain: 域名
 
-            logger.info(f"所有域名延迟调整: {factor:.2f}x")
+        Returns:
+            TokenBucket: 令牌桶实例
+        """
+        if domain not in self.buckets:
+            # 使用域名特定配置或默认配置
+            config = self.config.get(domain, self.config["default"])
+            self.buckets[domain] = TokenBucket(
+                tokens=config.burst,
+                capacity=config.burst,
+                refill_rate=config.rate
+            )
+        return self.buckets[domain]
+
+    @asynccontextmanager
+    async def acquire(self, domain: str, tokens: int = 1):
+        """
+        获取令牌的 Async Context Manager
+
+        Args:
+            domain: 域名
+            tokens: 需要的令牌数
+
+        Yields:
+            None: 成功获取令牌
+
+        Raises:
+            asyncio.TimeoutError: 超时未获取令牌
+            RuntimeError: 速率限制配置错误
+        """
+        bucket = self._get_bucket(domain)
+        config = self.config.get(domain, self.config["default"])
+
+        # 尝试立即获取令牌
+        if await bucket.consume(tokens):
+            yield
+            return
+
+        # 需要等待令牌
+        try:
+            success = await bucket.wait_for_tokens(
+                tokens=tokens,
+                timeout=config.max_wait_time
+            )
+
+            if not success:
+                raise asyncio.TimeoutError(
+                    f"Rate limit exceeded for domain {domain}: "
+                    f"waited {config.max_wait_time}s without acquiring {tokens} tokens"
+                )
+
+            yield
+
+        except asyncio.CancelledError:
+            # 任务被取消，释放令牌
+            async with bucket.lock:
+                bucket.tokens = min(bucket.capacity, bucket.tokens + tokens)
+            raise
+
+    async def try_acquire(self, domain: str, tokens: int = 1) -> bool:
+        """
+        尝试立即获取令牌（非阻塞）
+
+        Args:
+            domain: 域名
+            tokens: 需要的令牌数
+
+        Returns:
+            bool: 是否成功获取令牌
+        """
+        bucket = self._get_bucket(domain)
+        return await bucket.consume(tokens)
+
+    async def wait_for_available(self, domain: str, tokens: int = 1) -> float:
+        """
+        等待令牌可用并返回等待时间
+
+        Args:
+            domain: 域名
+            tokens: 需要的令牌数
+
+        Returns:
+            float: 实际等待时间（秒）
+        """
+        start_time = time.monotonic()
+        bucket = self._get_bucket(domain)
+        config = self.config.get(domain, self.config["default"])
+
+        await bucket.wait_for_tokens(tokens, config.max_wait_time)
+        return time.monotonic() - start_time
+
+    def get_status(self, domain: Optional[str] = None) -> Dict[str, Any]:
+        """
+        获取速率限制器状态
+
+        Args:
+            domain: 特定域名，None表示所有域名
+
+        Returns:
+            Dict[str, Any]: 状态信息
+        """
+        if domain:
+            if domain not in self.buckets:
+                return {"error": f"No bucket found for domain: {domain}"}
+
+            bucket = self.buckets[domain]
+            config = self.config.get(domain, self.config["default"])
+
+            return {
+                "domain": domain,
+                "available_tokens": bucket.tokens,
+                "capacity": bucket.capacity,
+                "rate": bucket.refill_rate,
+                "config": {
+                    "rate": config.rate,
+                    "burst": config.burst,
+                    "max_wait_time": config.max_wait_time
+                }
+            }
+        else:
+            # 返回所有域名的状态
+            status = {}
+            for d, bucket in self.buckets.items():
+                config = self.config.get(d, self.config["default"])
+                status[d] = {
+                    "available_tokens": bucket.tokens,
+                    "capacity": bucket.capacity,
+                    "rate": bucket.refill_rate,
+                    "config": {
+                        "rate": config.rate,
+                        "burst": config.burst,
+                        "max_wait_time": config.max_wait_time
+                    }
+                }
+            return status
+
+    def update_config(self, domain: str, config: RateLimitConfig) -> None:
+        """
+        更新域名配置
+
+        Args:
+            domain: 域名
+            config: 新的速率限制配置
+        """
+        self.config[domain] = config
+
+        # 如果已存在令牌桶，需要重新创建以应用新配置
+        if domain in self.buckets:
+            del self.buckets[domain]
+
+    def remove_domain(self, domain: str) -> None:
+        """
+        移除域名配置和令牌桶
+
+        Args:
+            domain: 要移除的域名
+        """
+        if domain in self.config:
+            del self.config[domain]
+        if domain in self.buckets:
+            del self.buckets[domain]
+
+    async def clear_all(self) -> None:
+        """清空所有令牌桶"""
+        for bucket in self.buckets.values():
+            async with bucket.lock:
+                bucket.tokens = 0.0
 
 
-# 全局频率控制器实例
-_rate_limiter: Optional[RateLimiter] = None
+# 便利函数
+def create_rate_limiter(
+    config: Optional[Dict[str, Any]] = None,
+    default_rate: float = 1.0,
+    default_burst: int = 1
+) -> RateLimiter:
+    """
+    创建速率限制器的便利函数
+
+    Args:
+        config: 域名配置字典
+        default_rate: 默认速率
+        default_burst: 默认突发容量
+
+    Returns:
+        RateLimiter: 速率限制器实例
+    """
+    default_config = RateLimitConfig(
+        rate=default_rate,
+        burst=default_burst,
+        max_wait_time=30.0
+    )
+
+    return RateLimiter(config, default_config)
 
 
-def get_rate_limiter() -> RateLimiter:
-    """获取全局频率控制器实例."""
-    global _rate_limiter
-    if _rate_limiter is None:
-        _rate_limiter = RateLimiter()
-    return _rate_limiter
-
-
-async def wait_for_request_slot(domain: str) -> float:
-    """等待请求时机的便捷函数."""
-    return await get_rate_limiter().wait_for_slot(domain)
-
-
-async def record_request_success(domain: str, response_time: float):
-    """记录成功请求的便捷函数."""
-    await get_rate_limiter().record_success(domain, response_time)
-
-
-async def record_request_error(domain: str, error_type: str = "unknown"):
-    """记录错误请求的便捷函数."""
-    await get_rate_limiter().record_error(domain, error_type)
+# 模块导出
+__all__ = [
+    "RateLimiter",
+    "RateLimitConfig",
+    "TokenBucket",
+    "create_rate_limiter",
+]

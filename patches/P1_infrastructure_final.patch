@@ -1,0 +1,4641 @@
+diff --git a/scripts/collectors_dry_run.py b/scripts/collectors_dry_run.py
+new file mode 100644
+index 000000000..6a20403d6
+--- /dev/null
++++ b/scripts/collectors_dry_run.py
+@@ -0,0 +1,590 @@
++#!/usr/bin/env python3
++"""
++采集器全链路集成测试 (Dry-Run)
++Collectors Full-Chain Integration Test (Dry-Run)
++
++该脚本执行从工厂创建客户端到采集数据的完整流程验证：
++1. 使用 HttpClientFactory 创建 FotMob 采集器实例
++2. 执行真实的采集任务（限制数量）
++3. 验证请求成功率、速率限制、Token刷新机制
++4. 生成详细的运行报告
++
++使用示例:
++    python scripts/collectors_dry_run.py --source fotmob --max-fixtures 5
++    python scripts/collectors_dry_run.py --source fotmob --test-health --verbose
++    python scripts/collectors_dry_run.py --source fotmob --test-rate-limiting
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 1.0.0
++"""
++
++import argparse
++import asyncio
++import json
++import sys
++import time
++from pathlib import Path
++from typing import Any, Dict, List, Optional
++
++# 添加项目根目录到 Python 路径
++project_root = Path(__file__).parent.parent
++sys.path.insert(0, str(project_root))
++
++from src.collectors.http_client_factory import get_http_client_factory, FotMobConfig
++from src.collectors.interface import (
++    AuthenticationError,
++    RateLimitError,
++    NetworkError,
++    DataNotFoundError,
++)
++
++
++class DryRunTester:
++    """Dry-Run 测试器"""
++
++    def __init__(self, args):
++        self.args = args
++        self.source = getattr(args, 'source', 'fotmob')
++        self.verbose = getattr(args, 'verbose', False)
++        self.max_fixtures = getattr(args, 'max_fixtures', 5)
++        self.max_matches = getattr(args, 'max_matches', 10)
++        self.test_health = getattr(args, 'test_health', False)
++        self.test_rate_limiting = getattr(args, 'test_rate_limiting', False)
++        self.use_proxies = getattr(args, 'use_proxies', False)
++
++        # 测试结果
++        self.test_results = {
++            "test_start_time": time.time(),
++            "test_end_time": None,
++            "total_duration": 0.0,
++            "fixtures_collected": 0,
++            "matches_collected": 0,
++            "teams_collected": 0,
++            "health_checks": 0,
++            "errors": [],
++            "monitoring_stats": {},
++        }
++
++    async def setup(self) -> None:
++        """设置测试环境"""
++        print("🏭 设置 Dry-Run 测试环境...")
++
++        try:
++            # 获取工厂实例
++            self.factory = get_http_client_factory()
++            print(f"   ✅ HTTP客户端工厂获取完成")
++
++            # 配置数据源
++            if self.source == "fotmob":
++                config = FotMobConfig()
++
++                # 根据参数调整配置
++                if self.use_proxies:
++                    print("   🌐 启用代理配置")
++                    # 代理配置已在默认配置中
++                else:
++                    print("   ⚠️ 禁用代理配置")
++                    config.proxy_config = None
++
++                # 自定义配置用于测试
++                if self.test_rate_limiting:
++                    print("   🚦 调整速率限制用于测试")
++                    config.rate_limit_config = {
++                        "rate": 1.0,        # 1 QPS - 用于测试速率限制
++                        "burst": 2,         # 突发容量
++                        "max_wait_time": 15.0,
++                    }
++
++                self.factory.register_config(self.source, config)
++                print(f"   ✅ {self.source} 配置注册完成")
++
++            else:
++                raise ValueError(f"Unsupported data source: {self.source}")
++
++            print("✅ 测试环境设置完成")
++
++        except Exception as e:
++            print(f"❌ 环境设置失败: {e}")
++            raise
++
++    async def teardown(self) -> None:
++        """清理测试环境"""
++        print("\n🧹 清理测试环境...")
++
++        try:
++            # 记录测试结束时间
++            self.test_results["test_end_time"] = time.time()
++            self.test_results["total_duration"] = (
++                self.test_results["test_end_time"] - self.test_results["test_start_time"]
++            )
++
++            # 获取监控统计
++            monitor = self.factory.get_monitor()
++            self.test_results["monitoring_stats"] = monitor.get_stats()
++
++            print("   ✅ 统计信息已收集")
++
++        except Exception as e:
++            print(f"⚠️ 清理过程中出现错误: {e}")
++
++    async def run_health_check(self) -> bool:
++        """运行健康检查测试"""
++        print("\n🏥 运行健康检查测试...")
++
++        try:
++            # 创建采集器
++            collector = await self.factory.create_collector(self.source)
++
++            # 执行健康检查
++            health_result = await collector.check_health()
++
++            print(f"   📊 健康状态: {health_result['status']}")
++            print(f"   📊 响应时间: {health_result['response_time_ms']:.2f}ms")
++
++            if 'details' in health_result:
++                details = health_result['details']
++                if 'api_connectivity' in details:
++                    print(f"   📊 API连通性: {'✅ 正常' if details['api_connectivity'] else '❌ 异常'}")
++                if 'token_stats' in details:
++                    token_stats = details['token_stats']
++                    print(f"   📊 Token状态: 有效={token_stats['valid_tokens']}, 使用次数={token_stats['total_usage']}")
++
++            # 清理
++            await collector.close()
++            self.test_results["health_checks"] += 1
++
++            print("   ✅ 健康检查完成")
++            return True
++
++        except Exception as e:
++            error_msg = f"健康检查失败: {e}"
++            print(f"   ❌ {error_msg}")
++            self.test_results["errors"].append(error_msg)
++            return False
++
++    async def test_fixture_collection(self) -> bool:
++        """测试赛程数据采集"""
++        print(f"\n⚽ 测试赛程数据采集 (最多 {self.max_fixtures} 场比赛)...")
++
++        try:
++            # 创建采集器
++            collector = await self.factory.create_collector(self.source)
++
++            # 采集英超联赛赛程 (league_id=47)
++            print(f"   📋 开始采集英超赛程数据...")
++
++            fixtures = await collector.collect_fixtures(47, "2024-2025")
++
++            if not fixtures:
++                print("   ⚠️ 未获取到赛程数据")
++                self.test_results["errors"].append("未获取到赛程数据")
++                return False
++
++            print(f"   ✅ 成功采集 {len(fixtures)} 场比赛赛程")
++
++            # 显示前几场比赛信息
++            for i, fixture in enumerate(fixtures[:3], 1):
++                print(f"      {i}. {fixture['home_team']} vs {fixture['away_team']} "
++                      f"({fixture.get('status', 'N/A')})")
++
++            if len(fixtures) > self.max_fixtures:
++                fixtures = fixtures[:self.max_fixtures]
++                print(f"   📋 限制为 {self.max_fixtures} 场比赛进行后续测试")
++
++            self.test_results["fixtures_collected"] = len(fixtures)
++
++            # 清理
++            await collector.close()
++
++            return True
++
++        except Exception as e:
++            error_msg = f"赛程采集失败: {e}"
++            print(f"   ❌ {error_msg}")
++            self.test_results["errors"].append(error_msg)
++            return False
++
++    async def test_match_details_collection(self) -> bool:
++        """测试比赛详情采集"""
++        print(f"\n📊 测试比赛详情采集 (最多 {self.max_matches} 场比赛)...")
++
++        try:
++            # 先获取赛程数据
++            collector = await self.factory.create_collector(self.source)
++            fixtures = await collector.collect_fixtures(47, "2024-2025")
++            await collector.close()
++
++            if not fixtures:
++                print("   ⚠️ 无法获取赛程数据，跳过比赛详情测试")
++                return False
++
++            # 选择比赛进行详情采集
++            test_matches = fixtures[:self.max_matches]
++            print(f"   📋 开始采集 {len(test_matches)} 场比赛详情...")
++
++            successful_matches = 0
++            for i, fixture in enumerate(test_matches, 1):
++                match_id = fixture.get('match_id')
++                if not match_id:
++                    continue
++
++                try:
++                    print(f"   📊 {i}/{len(test_matches)} 采集比赛详情: {fixture['home_team']} vs {fixture['away_team']}")
++
++                    details = await collector.collect_match_details(match_id)
++
++                    # 验证关键字段
++                    if 'home_team' in details and 'away_team' in details:
++                        successful_matches += 1
++                        print(f"      ✅ 成功 - 比分: {details.get('home_score', 'N/A')}-{details.get('away_score', 'N/A')}")
++                    else:
++                        print(f"      ⚠️ 数据不完整")
++
++                except Exception as e:
++                    print(f"      ❌ 失败: {e}")
++
++            self.test_results["matches_collected"] = successful_matches
++            print(f"   ✅ 成功采集 {successful_matches}/{len(test_matches)} 场比赛详情")
++
++            # 清理
++            await collector.close()
++
++            return successful_matches > 0
++
++        except Exception as e:
++            error_msg = f"比赛详情采集失败: {e}"
++            print(f"   ❌ {error_msg}")
++            self.test_results["errors"].append(error_msg)
++            return False
++
++    async def test_rate_limiting(self) -> bool:
++        """测试速率限制"""
++        if not self.test_rate_limiting:
++            return True
++
++        print(f"\n🚦 测试速率限制机制...")
++
++        try:
++            # 创建采集器
++            collector = await self.factory.create_collector(self.source)
++
++            # 并发执行多个健康检查来测试速率限制
++            start_time = time.monotonic()
++
++            tasks = []
++            for i in range(5):  # 5个并发请求
++                task = asyncio.create_task(collector.check_health())
++                tasks.append(task)
++
++            # 等待所有任务完成
++            results = await asyncio.gather(*tasks, return_exceptions=True)
++
++            elapsed = time.monotonic() - start_time
++            successful = sum(1 for r in results if not isinstance(r, Exception))
++
++            print(f"   📊 5个并发请求耗时: {elapsed:.3f}s")
++            print(f"   📊 成功请求: {successful}/5")
++
++            # 验证速率限制是否生效
++            if elapsed >= 3.0:  # 应该被速率限制延迟
++                print(f"   ✅ 速率限制生效")
++                rate_limit_test_passed = True
++            else:
++                print(f"   ⚠️ 速率限制可能未生效")
++                rate_limit_test_passed = False
++
++            # 清理
++            await collector.close()
++
++            return rate_limit_test_passed
++
++        except Exception as e:
++            error_msg = f"速率限制测试失败: {e}"
++            print(f"   ❌ {error_msg}")
++            self.test_results["errors"].append(error_msg)
++            return False
++
++    async def run_concurrent_test(self) -> bool:
++        """运行并发测试"""
++        print(f"\n🔄 运行并发测试...")
++
++        try:
++            # 创建采集器
++            collector = await self.factory.create_collector(self.source)
++
++            # 并发执行多个不同类型的请求
++            async def task_health():
++                return await collector.check_health()
++
++            async def task_fixtures():
++                return await collector.collect_fixtures(47, "2024-2025")
++
++            async def task_team_info():
++                return await collector.collect_team_info("8456")  # Arsenal team ID
++
++            # 创建并发任务
++            tasks = [
++                asyncio.create_task(task_health()),
++                asyncio.create_task(task_fixtures()),
++                asyncio.create_task(task_team_info()),
++            ]
++
++            # 执行并发任务
++            start_time = time.monotonic()
++            results = await asyncio.gather(*tasks, return_exceptions=True)
++            elapsed = time.monotonic() - start_time
++
++            # 分析结果
++            successful = sum(1 for r in results if not isinstance(r, Exception))
++
++            print(f"   📊 并发测试耗时: {elapsed:.3f}s")
++            print(f"   📊 成功任务: {successful}/{len(tasks)}")
++
++            # 清理
++            await collector.close()
++
++            return successful >= len(tasks) // 2  # 至少一半成功
++
++        except Exception as e:
++            error_msg = f"并发测试失败: {e}"
++            print(f"   ❌ {error_msg}")
++            self.test_results["errors"].append(error_msg)
++            return False
++
++    async def generate_report(self) -> None:
++        """生成测试报告"""
++        print(f"\n📄 生成测试报告...")
++
++        # 创建报告目录
++        reports_dir = Path("reports")
++        reports_dir.mkdir(exist_ok=True)
++
++        # 生成报告内容
++        report = {
++            "test_summary": {
++                "test_source": self.source,
++                "test_duration": round(self.test_results["total_duration"], 2),
++                "test_start": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(self.test_results["test_start_time"])),
++                "test_end": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(self.test_results["test_end_time"])) if self.test_results["test_end_time"] else None,
++            },
++            "collection_results": {
++                "fixtures_collected": self.test_results["fixtures_collected"],
++                "matches_collected": self.test_results["matches_collected"],
++                "teams_collected": self.test_results["teams_collected"],
++                "health_checks": self.test_results["health_checks"],
++            },
++            "monitoring_statistics": self.test_results.get("monitoring_stats", {}),
++            "errors": self.test_results["errors"],
++        }
++
++        # 写入Markdown报告
++        report_file = reports_dir / "dry_run_results.md"
++
++        with open(report_file, 'w', encoding='utf-8') as f:
++            f.write("# 采集器 Dry-Run 测试报告\n\n")
++            f.write(f"## 测试概览\n")
++            f.write(f"- **数据源**: {report['test_summary']['test_source']}\n")
++            f.write(f"- **测试时长**: {report['test_summary']['test_duration']:.2f}秒\n")
++            f.write(f"- **测试开始**: {report['test_summary']['test_start']}\n")
++            if report['test_summary']['test_end']:
++                f.write(f"- **测试结束**: {report['test_summary']['test_end']}\n")
++            f.write(f"\n")
++
++            f.write(f"## 采集结果\n")
++            f.write(f"- **赛程数据采集**: {report['collection_results']['fixtures_collected']} 场\n")
++            f.write(f"- **比赛详情采集**: {report['collection_results']['matches_collected']} 场\n")
++            f.write(f"- **球队信息采集**: {report['collection_results']['teams_collected']} 个\n")
++            f.write(f"- **健康检查次数**: {report['collection_results']['health_checks']} 次\n")
++            f.write(f"\n")
++
++            f.write(f"## 监控统计\n")
++            monitor_stats = report.get("monitoring_statistics", {})
++            if monitor_stats:
++                f.write(f"- **总请求数**: {monitor_stats.get('total_requests', 0)}\n")
++                f.write(f"- **成功请求数**: {monitor_stats.get('successful_requests', 0)}\n")
++                f.write(f"- **失败请求数**: {monitor_stats.get('failed_requests', 0)}\n")
++                f.write(f"- **成功率**: {monitor_stats.get('success_rate', 0):.1f}%\n")
++                f.write(f"- **平均响应时间**: {monitor_stats.get('avg_response_time_ms', 0):.2f}ms\n")
++                f.write(f"- **Token刷新次数**: {monitor_stats.get('token_refreshes', 0)}\n")
++                f.write(f"- **代理轮换次数**: {monitor_stats.get('proxy_rotations', 0)}\n")
++            f.write(f"\n")
++
++            if report["errors"]:
++                f.write(f"## 错误信息\n")
++                for i, error in enumerate(report["errors"], 1):
++                    f.write(f"{i}. {error}\n")
++                f.write(f"\n")
++
++            f.write(f"## 测试配置\n")
++            f.write(f"- **数据源**: {self.source}\n")
++            f.write(f"- **最大赛程数**: {self.max_fixtures}\n")
++            f.write(f"- **最大比赛数**: {self.max_matches}\n")
++            f.write(f"- **健康检查**: {'启用' if self.test_health else '禁用'}\n")
++            f.write(f"- **速率限制测试**: {'启用' if self.test_rate_limiting else '禁用'}\n")
++            f.write(f"- **代理使用**: {'启用' if self.use_proxies else '禁用'}\n")
++            f.write(f"- **详细输出**: {'启用' if self.verbose else '禁用'}\n")
++
++        # 写入JSON报告
++        json_report_file = reports_dir / "dry_run_results.json"
++        with open(json_report_file, 'w', encoding='utf-8') as f:
++            json.dump(report, f, indent=2, ensure_ascii=False)
++
++        print(f"   ✅ 报告已保存:")
++        print(f"      📄 Markdown: {report_file}")
++        print(f"      📊 JSON: {json_report_file}")
++
++    async def run_all_tests(self) -> None:
++        """运行所有测试"""
++        print(f"🚀 开始执行 {self.source} 采集器 Dry-Run 测试...")
++        print(f"   配置: 最大赛程={self.max_fixtures}, 最大比赛={self.max_matches}")
++        print(f"   配置: 健康检查={'启用' if self.test_health else '禁用'}")
++        print(f"   配置: 速率限制测试={'启用' if self.test_rate_limiting else '禁用'}")
++        print(f"   配置: 代理={'启用' if self.use_proxies else '禁用'}")
++
++        # 定义测试列表
++        tests = []
++
++        if self.test_health:
++            tests.append(("健康检查测试", self.run_health_check))
++
++        tests.append(("赛程数据采集测试", self.test_fixture_collection))
++        tests.append(("比赛详情采集测试", self.test_match_details_collection))
++
++        if self.test_rate_limiting:
++            tests.append(("速率限制测试", self.test_rate_limiting))
++
++        tests.append(("并发测试", self.run_concurrent_test))
++
++        # 运行测试
++        passed_tests = 0
++        total_tests = len(tests)
++
++        for test_name, test_func in tests:
++            try:
++                result = await test_func()
++                if result:
++                    passed_tests += 1
++                    print(f"✅ {test_name}: 通过")
++                else:
++                    print(f"❌ {test_name}: 失败")
++            except Exception as e:
++                print(f"💥 {test_name}: 异常 - {e}")
++                self.test_results["errors"].append(f"{test_name} 异常: {e}")
++
++        # 生成测试结果摘要
++        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
++
++        print(f"\n📊 测试结果摘要:")
++        print(f"   总测试数: {total_tests}")
++        print(f"   通过测试: {passed_tests} ({success_rate:.1f}%)")
++        print(f"   失败测试: {total_tests - passed_tests} ({100 - success_rate:.1f}%)")
++
++        if self.test_results["errors"]:
++            print(f"\n❌ 错误详情:")
++            for i, error in enumerate(self.test_results["errors"], 1):
++                print(f"   {i}. {error}")
++
++        # 结果评估
++        if success_rate >= 80:
++            print(f"\n🎉 测试结果: 优秀 (成功率 >= 80%)")
++        elif success_rate >= 60:
++            print(f"\n✅ 测试结果: 良好 (成功率 >= 60%)")
++        else:
++            print(f"\n⚠️ 测试结果: 需要改进 (成功率 < 60%)")
++
++        # 生成报告
++        await self.generate_report()
++
++
++def parse_args():
++    """解析命令行参数"""
++    parser = argparse.ArgumentParser(
++        description="采集器全链路集成测试 (Dry-Run)",
++        formatter_class=argparse.RawDescriptionHelpFormatter,
++        epilog="""
++示例用法:
++  # 基础测试
++  python scripts/collectors_dry_run.py --source fotmob --max-fixtures 5
++
++  # 包含健康检查的完整测试
++  python scripts/collectors_dry_run.py --source fotmob --test-health --max-fixtures 10
++
++  # 测试速率限制
++  python scripts/collectors_dry_run.py --source fotmob --test-rate-limiting
++
++  # 使用代理的测试
++  python scripts/collectors_dry_run.py --source fotmob --use-proxies --verbose
++        """
++    )
++
++    parser.add_argument(
++        "--source",
++        default="fotmob",
++        choices=["fotmob"],
++        help="数据源 (默认: fotmob)"
++    )
++
++    parser.add_argument(
++        "--max-fixtures",
++        type=int,
++        default=5,
++        help="最大采集赛程数量 (默认: 5)"
++    )
++
++    parser.add_argument(
++        "--max-matches",
++        type=int,
++        default=10,
++        help="最大采集比赛详情数量 (默认: 10)"
++    )
++
++    parser.add_argument(
++        "--test-health",
++        action="store_true",
++        help="包含健康检查测试"
++    )
++
++    parser.add_argument(
++        "--test-rate-limiting",
++        action="store_true",
++        help="测试速率限制机制"
++    )
++
++    parser.add_argument(
++        "--use-proxies",
++        action="store_true",
++        help="使用代理进行测试"
++    )
++
++    parser.add_argument(
++        "--verbose", "-v",
++        action="store_true",
++        help="详细输出"
++    )
++
++    return parser.parse_args()
++
++
++async def main():
++    """主函数"""
++    args = parse_args()
++
++    try:
++        tester = DryRunTester(args)
++        await tester.setup()
++        await tester.run_all_tests()
++        await tester.teardown()
++
++    except KeyboardInterrupt:
++        print("\n⚠️ 用户中断操作")
++    except Exception as e:
++        print(f"❌ 错误: {e}")
++        if args.verbose:
++            import traceback
++            traceback.print_exc()
++        sys.exit(1)
++
++
++if __name__ == "__main__":
++    asyncio.run(main())
+\ No newline at end of file
+diff --git a/src/collectors/auth/__init__.py b/src/collectors/auth/__init__.py
+new file mode 100644
+index 000000000..de05fa999
+--- /dev/null
++++ b/src/collectors/auth/__init__.py
+@@ -0,0 +1,45 @@
++"""
++认证模块
++Authentication Module
++
++该模块提供动态认证功能，包括令牌管理、缓存和自动刷新。
++
++主要组件:
++- TokenManager: 令牌管理器
++- AuthProvider: 认证提供者协议
++- FotMobAuthProvider: FotMob 认证实现
++"""
++
++from .token_manager import (
++    Token,
++    TokenType,
++    AuthProvider,
++    TokenManager,
++    FotMobAuthProvider,
++    MockAuthProvider,
++    AuthenticationError,
++    TokenExpiredError,
++    TokenRefreshError,
++    get_token_manager,
++    close_token_manager,
++    create_token_manager,
++    create_fotmob_provider,
++    create_mock_provider,
++)
++
++__all__ = [
++    'Token',
++    'TokenType',
++    'AuthProvider',
++    'TokenManager',
++    'FotMobAuthProvider',
++    'MockAuthProvider',
++    'AuthenticationError',
++    'TokenExpiredError',
++    'TokenRefreshError',
++    'get_token_manager',
++    'close_token_manager',
++    'create_token_manager',
++    'create_fotmob_provider',
++    'create_mock_provider',
++]
+\ No newline at end of file
+diff --git a/src/collectors/auth/token_manager.py b/src/collectors/auth/token_manager.py
+new file mode 100644
+index 000000000..0ffd8fbdd
+--- /dev/null
++++ b/src/collectors/auth/token_manager.py
+@@ -0,0 +1,702 @@
++"""
++动态认证模块 - Token Manager
++Dynamic Authentication Module - Token Manager
++
++该模块实现了动态认证管理系统，支持：
++1. 多种认证提供者 (AuthProvider Protocol)
++2. Token 缓存和自动刷新机制
++3. FotMob 认证实现
++4. TTL 过期处理
++5. 线程安全的并发访问
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 1.0.0
++"""
++
++import asyncio
++import re
++import time
++from abc import abstractmethod
++from dataclasses import dataclass, field
++from enum import Enum
++from typing import Any, Dict, Optional, Protocol, runtime_checkable
++
++import aiohttp
++
++
++class TokenType(Enum):
++    """Token 类型"""
++    BEARER = "bearer"
++    API_KEY = "api_key"
++    CUSTOM_HEADER = "custom_header"
++
++
++@dataclass
++class Token:
++    """
++    认证令牌数据类
++
++    Attributes:
++        value: 令牌值
++        token_type: 令牌类型
++        headers: 关联的HTTP头部
++        expires_at: 过期时间戳
++        created_at: 创建时间戳
++        usage_count: 使用次数
++        provider: 提供者名称
++    """
++    value: str
++    token_type: TokenType
++    headers: Dict[str, str] = field(default_factory=dict)
++    expires_at: Optional[float] = None
++    created_at: float = field(default_factory=time.monotonic)
++    usage_count: int = 0
++    provider: str = "unknown"
++
++    def __post_init__(self) -> None:
++        """初始化后处理"""
++        if isinstance(self.token_type, str):
++            self.token_type = TokenType(self.token_type.lower())
++
++    @property
++    def is_expired(self) -> bool:
++        """检查令牌是否过期"""
++        if self.expires_at is None:
++            return False
++        return time.monotonic() >= self.expires_at
++
++    @property
++    def is_valid(self) -> bool:
++        """检查令牌是否有效（未过期且值不为空）"""
++        return not self.is_expired and bool(self.value)
++
++    @property
++    def ttl(self) -> Optional[float]:
++        """获取剩余生存时间（秒）"""
++        if self.expires_at is None:
++            return None
++        return max(0.0, self.expires_at - time.monotonic())
++
++    def record_usage(self) -> None:
++        """记录令牌使用"""
++        self.usage_count += 1
++
++    def to_dict(self) -> Dict[str, Any]:
++        """转换为字典格式"""
++        return {
++            'value': self.value[:20] + "..." if len(self.value) > 20 else self.value,  # 隐藏完整token
++            'token_type': self.token_type.value,
++            'headers': self.headers,
++            'expires_at': self.expires_at,
++            'created_at': self.created_at,
++            'usage_count': self.usage_count,
++            'provider': self.provider,
++            'is_expired': self.is_expired,
++            'is_valid': self.is_valid,
++            'ttl': self.ttl,
++        }
++
++    def __str__(self) -> str:
++        return f"Token({self.provider}, {self.token_type.value}, valid={self.is_valid})"
++
++    def __repr__(self) -> str:
++        return self.__str__()
++
++
++@runtime_checkable
++class AuthProvider(Protocol):
++    """
++    认证提供者协议
++
++    定义了获取认证令牌的标准接口
++    """
++
++    @abstractmethod
++    async def get_token(self) -> Token:
++        """
++        获取认证令牌
++
++        Returns:
++            Token: 认证令牌对象
++
++        Raises:
++            AuthenticationError: 认证失败
++        """
++        ...
++
++    @abstractmethod
++    async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++        """
++        刷新认证令牌
++
++        Args:
++            old_token: 旧的令牌（可选）
++
++        Returns:
++            Token: 新的认证令牌
++
++        Raises:
++            AuthenticationError: 认证失败
++        """
++        ...
++
++    @property
++    @abstractmethod
++    def provider_name(self) -> str:
++        """获取提供者名称"""
++        ...
++
++
++class AuthenticationError(Exception):
++    """认证错误基类"""
++    pass
++
++
++class TokenExpiredError(AuthenticationError):
++    """令牌过期错误"""
++    pass
++
++
++class TokenRefreshError(AuthenticationError):
++    """令牌刷新错误"""
++    pass
++
++
++class TokenManager:
++    """
++    令牌管理器
++
++    负责管理不同的认证提供者，处理令牌的缓存和自动刷新
++    """
++
++    def __init__(
++        self,
++        default_ttl: float = 3600.0,  # 1小时
++        cache_refresh_threshold: float = 300.0,  # 5分钟内过期时刷新
++        max_retry_attempts: int = 3,
++        retry_delay: float = 1.0,
++    ):
++        """
++        初始化令牌管理器
++
++        Args:
++            default_ttl: 默认令牌生存时间（秒）
++            cache_refresh_threshold: 缓存刷新阈值（秒）
++            max_retry_attempts: 最大重试次数
++            retry_delay: 重试延迟（秒）
++        """
++        self.default_ttl = default_ttl
++        self.cache_refresh_threshold = cache_refresh_threshold
++        self.max_retry_attempts = max_retry_attempts
++        self.retry_delay = retry_delay
++
++        # 令牌缓存: {provider_name: Token}
++        self.token_cache: Dict[str, Token] = {}
++        # 提供者缓存: {provider_name: AuthProvider}
++        self.provider_cache: Dict[str, AuthProvider] = {}
++        self.lock = asyncio.Lock()
++
++    async def register_provider(self, provider: AuthProvider) -> None:
++        """
++        注册认证提供者
++
++        Args:
++            provider: 认证提供者实例
++        """
++        async with self.lock:
++            provider_name = provider.provider_name
++            if provider_name not in self.token_cache:
++                # 存储provider引用
++                self.provider_cache[provider_name] = provider
++
++                # 预先获取一个令牌
++                try:
++                    token = await provider.get_token()
++                    self.token_cache[provider_name] = token
++                    print(f"🔑 Registered provider: {provider_name}")
++                except Exception as e:
++                    print(f"❌ Failed to register provider {provider_name}: {e}")
++                    raise AuthenticationError(f"Failed to register provider {provider_name}: {e}")
++
++    async def get_token(self, provider_name: str, force_refresh: bool = False) -> Token:
++        """
++        获取认证令牌
++
++        Args:
++            provider_name: 提供者名称
++            force_refresh: 是否强制刷新
++
++        Returns:
++            Token: 认证令牌
++
++        Raises:
++            AuthenticationError: 认证失败
++            TokenRefreshError: 令牌刷新失败
++        """
++        async with self.lock:
++            if provider_name not in self.token_cache:
++                raise AuthenticationError(f"Provider {provider_name} not registered")
++
++            cached_token = self.token_cache[provider_name]
++
++            # 检查是否需要刷新
++            should_refresh = (
++                force_refresh or
++                not cached_token.is_valid or
++                (cached_token.ttl and cached_token.ttl < self.cache_refresh_threshold)
++            )
++
++            if should_refresh:
++                print(f"🔄 Refreshing token for provider: {provider_name}")
++                # 这里需要重新获取provider实例进行刷新
++                # 实际实现中应该保存provider引用
++                provider = self._get_provider_by_name(provider_name)
++                if not provider:
++                    raise AuthenticationError(f"Provider {provider_name} not found for refresh")
++
++                try:
++                    new_token = await self._retry_token_refresh(provider, cached_token)
++                    self.token_cache[provider_name] = new_token
++                    print(f"✅ Token refreshed for provider: {provider_name}")
++                    return new_token
++                except Exception as e:
++                    print(f"❌ Failed to refresh token for {provider_name}: {e}")
++                    if not cached_token.is_valid:
++                        # 缓存的token也无效了，抛出异常
++                        raise TokenRefreshError(f"Failed to refresh token for {provider_name}: {e}")
++                    # 返回旧token（虽然快过期但仍然有效）
++                    print(f"⚠️ Using old token for {provider_name} (will expire soon)")
++                    return cached_token
++            else:
++                cached_token.record_usage()
++                if cached_token.usage_count % 10 == 0:  # 每10次使用打印一次
++                    print(f"📊 Token usage for {provider_name}: {cached_token.usage_count} times")
++                return cached_token
++
++    def _get_provider_by_name(self, provider_name: str) -> Optional[AuthProvider]:
++        """
++        根据名称获取提供者实例
++
++        Args:
++            provider_name: 提供者名称
++
++        Returns:
++            Optional[AuthProvider]: 提供者实例，如果不存在返回None
++        """
++        return self.provider_cache.get(provider_name)
++
++    async def _retry_token_refresh(self, provider: AuthProvider, old_token: Optional[Token] = None) -> Token:
++        """
++        重试令牌刷新
++
++        Args:
++            provider: 认证提供者
++            old_token: 旧令牌
++
++        Returns:
++            Token: 新令牌
++
++        Raises:
++            TokenRefreshError: 刷新失败
++        """
++        last_error = None
++
++        for attempt in range(self.max_retry_attempts):
++            try:
++                new_token = await provider.refresh_token(old_token)
++                return new_token
++            except Exception as e:
++                last_error = e
++                print(f"⚠️ Token refresh attempt {attempt + 1} failed: {e}")
++                if attempt < self.max_retry_attempts - 1:
++                    await asyncio.sleep(self.retry_delay * (2 ** attempt))  # 指数退避
++
++        raise TokenRefreshError(f"Token refresh failed after {self.max_retry_attempts} attempts: {last_error}")
++
++    async def invalidate_token(self, provider_name: str) -> None:
++        """
++        使令牌失效
++
++        Args:
++            provider_name: 提供者名称
++        """
++        async with self.lock:
++            if provider_name in self.token_cache:
++                del self.token_cache[provider_name]
++                print(f"🗑️ Invalidated token for provider: {provider_name}")
++
++    async def get_token_info(self, provider_name: Optional[str] = None) -> Dict[str, Any]:
++        """
++        获取令牌信息
++
++        Args:
++            provider_name: 提供者名称，None表示获取所有
++
++        Returns:
++            Dict[str, Any]: 令牌信息
++        """
++        async with self.lock:
++            if provider_name:
++                if provider_name in self.token_cache:
++                    return self.token_cache[provider_name].to_dict()
++                else:
++                    return {"error": f"Provider {provider_name} not found"}
++            else:
++                return {
++                    name: token.to_dict()
++                    for name, token in self.token_cache.items()
++                }
++
++    async def get_stats(self) -> Dict[str, Any]:
++        """
++        获取管理器统计信息
++
++        Returns:
++            Dict[str, Any]: 统计信息
++        """
++        async with self.lock:
++            total_providers = len(self.token_cache)
++            valid_tokens = sum(1 for token in self.token_cache.values() if token.is_valid)
++            expired_tokens = total_providers - valid_tokens
++
++            total_usage = sum(token.usage_count for token in self.token_cache.values())
++
++            return {
++                'total_providers': total_providers,
++                'valid_tokens': valid_tokens,
++                'expired_tokens': expired_tokens,
++                'total_usage': total_usage,
++                'cache_refresh_threshold': self.cache_refresh_threshold,
++                'default_ttl': self.default_ttl,
++            }
++
++
++class FotMobAuthProvider:
++    """
++    FotMob 认证提供者
++
++    模拟从 FotMob 首页 HTML 中提取认证签名的逻辑
++    """
++
++    def __init__(
++        self,
++        base_url: str = "https://www.fotmob.com",
++        timeout: float = 10.0,
++        token_ttl: float = 3600.0,  # 1小时
++        user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
++    ):
++        """
++        初始化 FotMob 认证提供者
++
++        Args:
++            base_url: FotMob 基础URL
++            timeout: 请求超时时间
++            token_ttl: 令牌生存时间
++            user_agent: 用户代理字符串
++        """
++        self.base_url = base_url
++        self.timeout = timeout
++        self.token_ttl = token_ttl
++        self.user_agent = user_agent
++
++    @property
++    def provider_name(self) -> str:
++        """获取提供者名称"""
++        return "fotmob"
++
++    async def get_token(self) -> Token:
++        """
++        获取 FotMob 认证令牌
++
++        Returns:
++            Token: 认证令牌
++
++        Raises:
++            AuthenticationError: 认证失败
++        """
++        try:
++            # 模拟从 FotMob 首页提取 token
++            html_content = await self._fetch_fotmob_homepage()
++            token_data = self._extract_token_from_html(html_content)
++
++            if not token_data:
++                raise AuthenticationError("Failed to extract token from FotMob homepage")
++
++            token = Token(
++                value=token_data['value'],
++                token_type=TokenType.CUSTOM_HEADER,
++                headers=token_data['headers'],
++                expires_at=time.monotonic() + self.token_ttl,
++                provider=self.provider_name
++            )
++
++            print(f"🔑 Obtained FotMob token: {token.value[:20]}...")
++            return token
++
++        except Exception as e:
++            print(f"❌ Failed to get FotMob token: {e}")
++            raise AuthenticationError(f"Failed to get FotMob token: {e}")
++
++    async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++        """
++        刷新 FotMob 认证令牌
++
++        Args:
++            old_token: 旧令牌（可选）
++
++        Returns:
++            Token: 新的认证令牌
++
++        Raises:
++            TokenRefreshError: 刷新失败
++        """
++        try:
++            print("🔄 Refreshing FotMob token...")
++            new_token = await self.get_token()
++            print(f"✅ FotMob token refreshed successfully")
++            return new_token
++        except Exception as e:
++            print(f"❌ Failed to refresh FotMob token: {e}")
++            raise TokenRefreshError(f"Failed to refresh FotMob token: {e}")
++
++    async def _fetch_fotmob_homepage(self) -> str:
++        """
++        获取 FotMob 首页 HTML
++
++        Returns:
++            str: HTML 内容
++
++        Raises:
++            AuthenticationError: 获取失败
++        """
++        try:
++            timeout = aiohttp.ClientTimeout(total=self.timeout)
++
++            headers = {
++                'User-Agent': self.user_agent,
++                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
++                'Accept-Language': 'en-US,en;q=0.5',
++                'Accept-Encoding': 'gzip, deflate',
++                'Connection': 'keep-alive',
++                'Upgrade-Insecure-Requests': '1',
++            }
++
++            async with aiohttp.ClientSession(timeout=timeout) as session:
++                async with session.get(self.base_url, headers=headers) as response:
++                    if response.status == 200:
++                        return await response.text()
++                    else:
++                        raise AuthenticationError(f"HTTP {response.status}: Failed to fetch FotMob homepage")
++
++        except aiohttp.ClientError as e:
++            raise AuthenticationError(f"Network error while fetching FotMob homepage: {e}")
++
++    def _extract_token_from_html(self, html_content: str) -> Optional[Dict[str, Any]]:
++        """
++        从 HTML 内容中提取认证令牌
++
++        Args:
++            html_content: HTML 内容
++
++        Returns:
++            Optional[Dict[str, Any]]: 令牌数据，如果提取失败返回None
++        """
++        try:
++            # 模拟从 HTML 中提取认证信息
++            # 实际实现中，这些值会从 HTML 的 JavaScript 或 meta 标签中提取
++
++            # 模拟提取 x-mas header
++            x_mas_match = re.search(r'"x-mas":"([^"]+)"', html_content)
++            x_mas_value = x_mas_match.group(1) if x_mas_match else self._generate_mock_x_mas()
++
++            # 模拟提取 x-foo signature
++            x_foo_match = re.search(r'"x-foo":"([^"]+)"', html_content)
++            x_foo_value = x_foo_match.group(1) if x_foo_match else self._generate_mock_x_foo()
++
++            # 模拟提取 client version
++            version_match = re.search(r'"clientVersion":"([^"]+)"', html_content)
++            client_version = version_match.group(1) if version_match else "production:mock_version"
++
++            if not x_mas_value or not x_foo_value:
++                print("⚠️ Token extraction incomplete, using mock values")
++
++            token_data = {
++                'value': f"{x_mas_value}:{x_foo_value}",
++                'headers': {
++                    'x-mas': x_mas_value,
++                    'x-foo': x_foo_value,
++                    'x-client-version': client_version,
++                }
++            }
++
++            return token_data
++
++        except Exception as e:
++            print(f"⚠️ Token extraction failed, using mock values: {e}")
++            return self._generate_mock_token_data()
++
++    def _generate_mock_x_mas(self) -> str:
++        """生成模拟的 x-mas 值"""
++        import hashlib
++        import random
++
++        timestamp = int(time.time())
++        random_str = f"fotmob_{timestamp}_{random.randint(1000, 9999)}"
++        return hashlib.sha256(random_str.encode()).hexdigest()[:32]
++
++    def _generate_mock_x_foo(self) -> str:
++        """生成模拟的 x-foo 签名"""
++        import hashlib
++        import base64
++
++        payload = f"fotmob_auth_{int(time.time())}".encode()
++        signature = hashlib.sha256(payload).digest()
++        return base64.b64encode(signature).decode()[:40]
++
++    def _generate_mock_token_data(self) -> Dict[str, Any]:
++        """生成模拟令牌数据"""
++        x_mas = self._generate_mock_x_mas()
++        x_foo = self._generate_mock_x_foo()
++
++        return {
++            'value': f"{x_mas}:{x_foo}",
++            'headers': {
++                'x-mas': x_mas,
++                'x-foo': x_foo,
++                'x-client-version': "production:mock_version",
++            }
++        }
++
++
++class MockAuthProvider:
++    """
++    模拟认证提供者（用于测试）
++    """
++
++    def __init__(self, provider_name: str, token_value: str = "mock_token", ttl: float = 300.0):
++        """
++        初始化模拟认证提供者
++
++        Args:
++            provider_name: 提供者名称
++            token_value: 令牌值
++            ttl: 生存时间
++        """
++        self._provider_name = provider_name
++        self.token_value = token_value
++        self.ttl = ttl
++
++    @property
++    def provider_name(self) -> str:
++        """获取提供者名称"""
++        return self._provider_name
++
++    async def get_token(self) -> Token:
++        """获取模拟令牌"""
++        return Token(
++            value=self.token_value,
++            token_type=TokenType.BEARER,
++            expires_at=time.monotonic() + self.ttl,
++            provider=self.provider_name
++        )
++
++    async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++        """刷新模拟令牌"""
++        new_value = f"{self.token_value}_refreshed_{int(time.time())}"
++        return Token(
++            value=new_value,
++            token_type=TokenType.BEARER,
++            expires_at=time.monotonic() + self.ttl,
++            provider=self.provider_name
++        )
++
++
++# 全局令牌管理器实例
++_token_manager: Optional[TokenManager] = None
++
++
++async def get_token_manager() -> TokenManager:
++    """
++    获取全局令牌管理器实例
++
++    Returns:
++        TokenManager: 令牌管理器实例
++    """
++    global _token_manager
++    if _token_manager is None:
++        _token_manager = TokenManager()
++    return _token_manager
++
++
++async def close_token_manager():
++    """关闭令牌管理器"""
++    global _token_manager
++    if _token_manager:
++        _token_manager = None
++
++
++# 便利函数
++def create_token_manager(
++    default_ttl: float = 3600.0,
++    cache_refresh_threshold: float = 300.0,
++    **kwargs
++) -> TokenManager:
++    """
++    创建令牌管理器的便利函数
++
++    Args:
++        default_ttl: 默认令牌生存时间
++        cache_refresh_threshold: 缓存刷新阈值
++        **kwargs: 其他参数
++
++    Returns:
++        TokenManager: 令牌管理器实例
++    """
++    return TokenManager(default_ttl, cache_refresh_threshold, **kwargs)
++
++
++def create_fotmob_provider(**kwargs) -> FotMobAuthProvider:
++    """
++    创建 FotMob 认证提供者的便利函数
++
++    Args:
++        **kwargs: FotMobAuthProvider 参数
++
++    Returns:
++        FotMobAuthProvider: FotMob 认证提供者实例
++    """
++    return FotMobAuthProvider(**kwargs)
++
++
++def create_mock_provider(provider_name: str, **kwargs) -> MockAuthProvider:
++    """
++    创建模拟认证提供者的便利函数
++
++    Args:
++        provider_name: 提供者名称
++        **kwargs: MockAuthProvider 参数
++
++    Returns:
++        MockAuthProvider: 模拟认证提供者实例
++    """
++    return MockAuthProvider(provider_name, **kwargs)
++
++
++# 模块导出
++__all__ = [
++    'Token',
++    'TokenType',
++    'AuthProvider',
++    'TokenManager',
++    'FotMobAuthProvider',
++    'MockAuthProvider',
++    'AuthenticationError',
++    'TokenExpiredError',
++    'TokenRefreshError',
++    'get_token_manager',
++    'close_token_manager',
++    'create_token_manager',
++    'create_fotmob_provider',
++    'create_mock_provider',
++]
+\ No newline at end of file
+diff --git a/src/collectors/fotmob/collector_v2.py b/src/collectors/fotmob/collector_v2.py
+new file mode 100644
+index 000000000..78a49b2e0
+--- /dev/null
++++ b/src/collectors/fotmob/collector_v2.py
+@@ -0,0 +1,602 @@
++"""
++FotMob 采集器 V2 - 生产级抗封锁实现
++FotMob Collector V2 - Production-Grade Anti-Blocking Implementation
++
++基于已建立的基础设施（接口、限流、代理、认证），重构 FotMob 采集器，
++实现一个生产级、抗封锁的新版采集器。
++
++核心特性:
++1. 实现 BaseCollectorProtocol 接口
++2. 依赖注入设计 (RateLimiter, ProxyPool, TokenManager)
++3. 动态代理配置和Token注入
++4. 智能错误处理和重试机制
++5. 401/403 自动Token刷新
++6. 代理健康状态管理
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 2.0.0
++"""
++
++import asyncio
++import json
++import time
++from typing import Any, Dict, List, Optional, Union
++from urllib.parse import urljoin
++
++import httpx
++
++from ..auth import TokenManager
++from ..interface import (
++    BaseCollectorProtocol,
++    CollectorError,
++    AuthenticationError,
++    RateLimitError,
++    NetworkError,
++    DataNotFoundError,
++    FixtureData,
++    MatchDetailData,
++    TeamInfoData,
++    HealthStatus,
++)
++from ..proxy_pool import Proxy, ProxyPool
++from ..rate_limiter import RateLimiter
++
++
++class FotMobCollectorV2:
++    """
++    FotMob 采集器 V2 版本
++
++    基于已建立的基础设施实现的生产级采集器，具备以下特性：
++    - 完全符合 BaseCollectorProtocol 接口
++    - 依赖注入设计，便于测试和扩展
++    - 智能代理管理和Token注入
++    - 健壮的错误处理和重试机制
++    - 401/403 自动Token刷新
++    """
++
++    def __init__(
++        self,
++        rate_limiter: RateLimiter,
++        proxy_pool: ProxyPool,
++        token_manager: TokenManager,
++        base_url: str = "https://www.fotmob.com",
++        timeout: float = 30.0,
++        max_retries: int = 3,
++        retry_delay: float = 1.0,
++    ):
++        """
++        初始化 FotMob 采集器
++
++        Args:
++            rate_limiter: 速率限制器实例
++            proxy_pool: 代理池实例
++            token_manager: Token管理器实例
++            base_url: FotMob API基础URL
++            timeout: HTTP请求超时时间（秒）
++            max_retries: 最大重试次数
++            retry_delay: 重试延迟（秒）
++        """
++        self.rate_limiter = rate_limiter
++        self.proxy_pool = proxy_pool
++        self.token_manager = token_manager
++        self.base_url = base_url.rstrip("/")
++        self.timeout = timeout
++        self.max_retries = max_retries
++        self.retry_delay = retry_delay
++
++        # 内部状态
++        self._error_count = 0
++        self._last_error: Optional[str] = None
++        self._closed = False
++
++        # 统计信息
++        self.stats = {
++            "total_requests": 0,
++            "successful_requests": 0,
++            "failed_requests": 0,
++            "token_refreshes": 0,
++            "proxy_rotations": 0,
++            "rate_limited_requests": 0,
++        }
++
++    async def _get_client(self, proxy: Optional[Proxy] = None) -> httpx.AsyncClient:
++        """
++        动态构建 HTTP 客户端
++
++        Args:
++            proxy: 可选的代理配置
++
++        Returns:
++            httpx.AsyncClient: 配置好的HTTP客户端
++        """
++        # 基础配置
++        client_config = {
++            "timeout": httpx.Timeout(self.timeout),
++            "headers": {
++                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
++                "Accept": "application/json, text/plain, */*",
++                "Accept-Language": "en-US,en;q=0.9",
++                "Accept-Encoding": "gzip, deflate, br",
++                "Connection": "keep-alive",
++                "Upgrade-Insecure-Requests": "1",
++            },
++            "follow_redirects": True,
++        }
++
++        # 配置代理
++        if proxy:
++            if proxy.protocol == "socks5":
++                client_config["proxies"] = {
++                    "http://": f"socks5://{proxy.host}:{proxy.port}",
++                    "https://": f"socks5://{proxy.host}:{proxy.port}",
++                }
++            else:
++                proxy_url = proxy.url
++                client_config["proxies"] = {
++                    "http://": proxy_url,
++                    "https://": proxy_url,
++                }
++
++            # 添加代理认证
++            if proxy.username and proxy.password:
++                client_config["auth"] = (proxy.username, proxy.password)
++
++        return httpx.AsyncClient(**client_config)
++
++    async def _inject_auth_headers(
++        self, headers: Dict[str, str], provider_name: str = "fotmob"
++    ) -> Dict[str, str]:
++        """
++        注入认证头部
++
++        Args:
++            headers: 原始请求头
++            provider_name: Token提供者名称
++
++        Returns:
++            Dict[str, str]: 包含认证信息的请求头
++        """
++        try:
++            token = await self.token_manager.get_token(provider_name)
++            if token.token_type.value == "custom_header":
++                # FotMob使用自定义头部
++                headers.update(token.headers)
++            elif token.token_type.value == "bearer":
++                headers["Authorization"] = f"Bearer {token.value}"
++            elif token.token_type.value == "api_key":
++                headers["X-API-Key"] = token.value
++
++            return headers
++        except Exception as e:
++            raise AuthenticationError(f"Failed to inject authentication headers: {e}")
++
++    async def _make_request(
++        self,
++        method: str,
++        url: str,
++        *,
++        params: Optional[Dict[str, Any]] = None,
++        headers: Optional[Dict[str, str]] = None,
++        provider_name: str = "fotmob",
++    ) -> httpx.Response:
++        """
++        发起HTTP请求，包含完整的错误处理和重试逻辑
++
++        Args:
++            method: HTTP方法
++            url: 请求URL
++            params: URL参数
++            headers: 请求头
++            provider_name: Token提供者名称
++
++        Returns:
++            httpx.Response: HTTP响应
++
++        Raises:
++            NetworkError: 网络错误
++            AuthenticationError: 认证失败
++            CollectorError: 其他采集错误
++        """
++        if self._closed:
++            raise CollectorError("Collector has been closed")
++
++        # 准备请求头
++        request_headers = headers or {}
++        request_headers = await self._inject_auth_headers(request_headers, provider_name)
++
++        # 记录请求开始
++        self.stats["total_requests"] += 1
++        start_time = time.monotonic()
++
++        for attempt in range(self.max_retries + 1):
++            proxy = None
++
++            try:
++                # 应用速率限制
++                async with self.rate_limiter.acquire("fotmob_api"):
++                    self.stats["rate_limited_requests"] += 1 if attempt > 0 else 0
++
++                    # 获取代理（如果配置了代理池）
++                    if self.proxy_pool:
++                        proxy = await self.proxy_pool.get_proxy()
++                        if proxy:
++                            self.stats["proxy_rotations"] += 1
++
++                    # 构建客户端并发起请求
++                    async with await self._get_client(proxy) as client:
++                        response = await client.request(
++                            method=method,
++                            url=url,
++                            params=params,
++                            headers=request_headers,
++                        )
++
++                    # 处理认证错误
++                    if response.status_code in (401, 403):
++                        if attempt < self.max_retries:
++                            # 强制刷新Token并重试
++                            await self.token_manager.get_token(provider_name, force_refresh=True)
++                            self.stats["token_refreshes"] += 1
++                            await asyncio.sleep(self.retry_delay * (2 ** attempt))
++                            continue
++                        else:
++                            raise AuthenticationError(
++                                f"Authentication failed after {self.max_retries} retries"
++                            )
++
++                    # 处理其他HTTP错误
++                    if response.status_code >= 400:
++                        if response.status_code == 404:
++                            raise DataNotFoundError(f"Resource not found: {url}")
++                        elif response.status_code == 429:
++                            if attempt < self.max_retries:
++                                await asyncio.sleep(self.retry_delay * (2 ** attempt))
++                                continue
++                            raise RateLimitError("Rate limit exceeded")
++                        elif response.status_code >= 500:
++                            raise NetworkError(f"Server error: {response.status_code}")
++                        else:
++                            raise CollectorError(f"HTTP error: {response.status_code}")
++
++                    # 记录成功
++                    self.stats["successful_requests"] += 1
++                    if proxy:
++                        await self.proxy_pool.record_proxy_result(
++                            proxy, True, (time.monotonic() - start_time) * 1000
++                        )
++
++                    return response
++
++            except httpx.TimeoutException:
++                error_msg = f"Request timeout after {self.timeout}s"
++                if proxy:
++                    await self.proxy_pool.record_proxy_result(proxy, False, self.timeout * 1000)
++            except httpx.NetworkError as e:
++                error_msg = f"Network error: {e}"
++                if proxy:
++                    await self.proxy_pool.record_proxy_result(proxy, False, self.timeout * 1000)
++            except httpx.HTTPError as e:
++                error_msg = f"HTTP error: {e}"
++            except (AuthenticationError, RateLimitError, DataNotFoundError):
++                # 这些是我们已知的业务错误，直接抛出
++                self.stats["failed_requests"] += 1
++                raise
++            except Exception as e:
++                error_msg = f"Unexpected error: {e}"
++                if proxy:
++                    await self.proxy_pool.record_proxy_result(proxy, False, self.timeout * 1000)
++
++            # 重试逻辑
++            if attempt < self.max_retries:
++                await asyncio.sleep(self.retry_delay * (2 ** attempt))
++            else:
++                # 所有重试都失败了
++                self.stats["failed_requests"] += 1
++                self._error_count += 1
++                self._last_error = error_msg
++                raise NetworkError(f"Request failed after {self.max_retries} retries: {error_msg}")
++
++    async def collect_fixtures(
++        self, league_id: int, season_id: Optional[str] = None
++    ) -> List[Dict[str, Any]]:
++        """
++        采集联赛赛程数据
++
++        Args:
++            league_id: 联赛ID (如: 47 for Premier League)
++            season_id: 赛季ID (可选，如: "2024-2025")
++
++        Returns:
++            List[Dict[str, Any]]: 赛程数据列表
++
++        Raises:
++            CollectorError: 采集过程中的通用错误
++            AuthenticationError: 认证失败
++            RateLimitError: 速率限制
++            NetworkError: 网络连接问题
++        """
++        url = f"{self.base_url}/api/matches"
++        params = {"leagueId": league_id}
++        if season_id:
++            params["seasonId"] = season_id
++
++        try:
++            response = await self._make_request("GET", url, params=params)
++            data = response.json()
++
++            # 解析赛程数据
++            fixtures = []
++            matches = data.get("matches", [])
++
++            for match in matches:
++                fixture = {
++                    "match_id": str(match.get("id", "")),
++                    "home_team": match.get("home", {}).get("name", ""),
++                    "away_team": match.get("away", {}).get("name", ""),
++                    "kickoff_time": match.get("status", {}).get("utcTime", ""),
++                    "venue": match.get("venue", {}).get("name"),
++                    "status": match.get("status", {}).get("statusCode", ""),
++                    "league_id": league_id,
++                    "season_id": season_id,
++                }
++                fixtures.append(fixture)
++
++            return fixtures
++
++        except json.JSONDecodeError as e:
++            raise CollectorError(f"Failed to parse JSON response: {e}")
++        except Exception as e:
++            if isinstance(e, (AuthenticationError, RateLimitError, NetworkError)):
++                raise
++            raise CollectorError(f"Failed to collect fixtures: {e}")
++
++    async def collect_match_details(self, match_id: str) -> Dict[str, Any]:
++        """
++        采集比赛详情数据
++
++        Args:
++            match_id: 比赛唯一标识
++
++        Returns:
++            Dict[str, Any]: 比赛详情数据
++
++        Raises:
++            CollectorError: 采集过程中的通用错误
++            DataNotFoundError: 比赛数据不存在
++            AuthenticationError: 认证失败
++            RateLimitError: 速率限制
++            NetworkError: 网络连接问题
++        """
++        url = f"{self.base_url}/api/matchDetails"
++        params = {"matchId": match_id}
++
++        try:
++            response = await self._make_request("GET", url, params=params)
++            data = response.json()
++
++            if not data:
++                raise DataNotFoundError(f"No data found for match {match_id}")
++
++            # 解析比赛详情
++            match_data = data.get("match", {})
++            content = data.get("content", {})
++
++            details = {
++                "match_id": match_id,
++                "home_team": match_data.get("home", {}).get("name", ""),
++                "away_team": match_data.get("away", {}).get("name", ""),
++                "home_score": match_data.get("home", {}).get("score"),
++                "away_score": match_data.get("away", {}).get("score"),
++                "status": match_data.get("status", {}).get("statusCode", ""),
++                "kickoff_time": match_data.get("status", {}).get("utcTime", ""),
++            }
++
++            # 添加期望进球数
++            xg_data = content.get("expectedGoals", {})
++            if xg_data:
++                details["home_xg"] = xg_data.get("home")
++                details["away_xg"] = xg_data.get("away")
++
++            # 添加射门数据
++            shot_stats = content.get("shotmap", {}).get("stats", {})
++            if shot_stats:
++                details["shots"] = {
++                    "home": shot_stats.get("home", {}).get("total", 0),
++                    "away": shot_stats.get("away", {}).get("total", 0),
++                }
++
++            # 添加控球率
++            possession_stats = content.get("possession", {})
++            if possession_stats:
++                details["possession"] = {
++                    "home": possession_stats.get("home", 0),
++                    "away": possession_stats.get("away", 0),
++                }
++
++            # 添加比赛事件
++            events = content.get("lineUp", {}).get("lineups", [])
++            details["events"] = events
++
++            # 添加阵容信息
++            lineups = content.get("lineUp", {})
++            details["lineups"] = {
++                "home": lineups.get("home", []),
++                "away": lineups.get("away", []),
++            }
++
++            # 添加赔率数据（如果有）
++            odds_data = content.get("matchStats", {}).get("odds", {})
++            if odds_data:
++                details["odds"] = odds_data
++
++            return details
++
++        except json.JSONDecodeError as e:
++            raise CollectorError(f"Failed to parse JSON response: {e}")
++        except Exception as e:
++            if isinstance(e, (DataNotFoundError, AuthenticationError, RateLimitError, NetworkError)):
++                raise
++            raise CollectorError(f"Failed to collect match details: {e}")
++
++    async def collect_team_info(self, team_id: str) -> Dict[str, Any]:
++        """
++        采集球队信息
++
++        Args:
++            team_id: 球队唯一标识
++
++        Returns:
++            Dict[str, Any]: 球队信息
++
++        Raises:
++            CollectorError: 采集过程中的通用错误
++            DataNotFoundError: 球队数据不存在
++        """
++        url = f"{self.base_url}/api/teamDetails"
++        params = {"teamId": team_id}
++
++        try:
++            response = await self._make_request("GET", url, params=params)
++            data = response.json()
++
++            if not data:
++                raise DataNotFoundError(f"No data found for team {team_id}")
++
++            team_data = data.get("teamDetails", {}).get("team", {})
++
++            info = {
++                "team_id": team_id,
++                "name": team_data.get("name", ""),
++                "country": team_data.get("country", ""),
++                "founded": team_data.get("founded"),
++                "stadium": team_data.get("venue", {}).get("name"),
++                "logo_url": team_data.get("logoUrl"),
++            }
++
++            return info
++
++        except json.JSONDecodeError as e:
++            raise CollectorError(f"Failed to parse JSON response: {e}")
++        except Exception as e:
++            if isinstance(e, (DataNotFoundError, AuthenticationError, RateLimitError, NetworkError)):
++                raise
++            raise CollectorError(f"Failed to collect team info: {e}")
++
++    async def check_health(self) -> Dict[str, Any]:
++        """
++        检查采集器健康状态
++
++        Returns:
++            Dict[str, Any]: 健康状态信息
++
++        Raises:
++            CollectorError: 健康检查失败
++        """
++        start_time = time.monotonic()
++        status = "healthy"
++        details = {}
++
++        try:
++            # 1. 检查API连通性
++            url = f"{self.base_url}/api/matches"
++            await self._make_request("GET", url, params={"leagueId": 47})  # Test with Premier League
++            details["api_connectivity"] = True
++        except Exception as e:
++            status = "unhealthy"
++            details["api_connectivity"] = False
++            details["api_error"] = str(e)
++
++        try:
++            # 2. 检查Token状态
++            token_stats = await self.token_manager.get_stats()
++            details["token_stats"] = token_stats
++            if token_stats["valid_tokens"] == 0:
++                status = "unhealthy"
++        except Exception as e:
++            details["token_error"] = str(e)
++
++        try:
++            # 3. 检查代理池状态
++            if self.proxy_pool:
++                proxy_stats = self.proxy_pool.get_stats()
++                details["proxy_stats"] = proxy_stats
++                if proxy_stats["active"] == 0:
++                    status = "degraded"
++        except Exception as e:
++            details["proxy_error"] = str(e)
++
++        # 计算响应时间
++        response_time_ms = (time.monotonic() - start_time) * 1000
++        if response_time_ms > 5000:  # 5秒阈值
++            if status == "healthy":
++                status = "degraded"
++
++        return {
++            "status": status,
++            "response_time_ms": round(response_time_ms, 2),
++            "last_check": time.strftime("%Y-%m-%d %H:%M:%S UTC"),
++            "error_count": self._error_count,
++            "last_error": self._last_error,
++            "stats": self.stats.copy(),
++            "details": details,
++        }
++
++    async def close(self) -> None:
++        """清理资源并关闭采集器"""
++        if self._closed:
++            return
++
++        self._closed = True
++
++        # 保存最终统计信息
++        final_stats = {
++            "total_requests": self.stats["total_requests"],
++            "successful_requests": self.stats["successful_requests"],
++            "failed_requests": self.stats["failed_requests"],
++            "success_rate": (
++                self.stats["successful_requests"] / max(self.stats["total_requests"], 1) * 100
++            ),
++            "token_refreshes": self.stats["token_refreshes"],
++            "proxy_rotations": self.stats["proxy_rotations"],
++            "rate_limited_requests": self.stats["rate_limited_requests"],
++            "error_count": self._error_count,
++        }
++
++        print(f"📊 FotMobCollectorV2 关闭统计: {final_stats}")
++        self.stats = final_stats
++
++    def __del__(self):
++        """析构函数，确保资源被清理"""
++        if not self._closed:
++            # 注意：这里不能使用await，因为析构函数是同步的
++            print("⚠️ FotMobCollectorV2 没有被正确关闭，请确保调用 close() 方法")
++
++
++# 便利函数，用于创建采集器实例
++def create_fotmob_collector_v2(
++    rate_limiter: RateLimiter,
++    proxy_pool: ProxyPool,
++    token_manager: TokenManager,
++    **kwargs
++) -> FotMobCollectorV2:
++    """
++    创建 FotMob 采集器 V2 实例的便利函数
++
++    Args:
++        rate_limiter: 速率限制器
++        proxy_pool: 代理池
++        token_manager: Token管理器
++        **kwargs: 其他传递给采集器的参数
++
++    Returns:
++        FotMobCollectorV2: 采集器实例
++    """
++    return FotMobCollectorV2(rate_limiter, proxy_pool, token_manager, **kwargs)
++
++
++# 导出
++__all__ = [
++    "FotMobCollectorV2",
++    "create_fotmob_collector_v2",
++]
+\ No newline at end of file
+diff --git a/src/collectors/http_client_factory.py b/src/collectors/http_client_factory.py
+new file mode 100644
+index 000000000..5953bd105
+--- /dev/null
++++ b/src/collectors/http_client_factory.py
+@@ -0,0 +1,601 @@
++"""
++统一 HTTP 客户端工厂
++Unified HTTP Client Factory
++
++该模块实现了一个统一的HTTP客户端工厂，用于：
++1. 自动装配采集器组件（RateLimiter、TokenManager、ProxyPool）
++2. 简化采集器的实例化过程
++3. 提供统一的配置和监控接口
++4. 支持多种数据源的客户端创建
++
++设计模式：
++- Factory Pattern: 统一创建HTTP客户端
++- Dependency Injection: 组件外部注入
++- Builder Pattern: 灵活的配置构建
++- Observer Pattern: 监控和事件通知
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 1.0.0
++"""
++
++import asyncio
++import json
++import time
++from abc import ABC, abstractmethod
++from dataclasses import dataclass, field
++from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
++from pathlib import Path
++
++import httpx
++
++from .auth import TokenManager, create_token_manager, create_fotmob_provider
++from .fotmob.collector_v2 import FotMobCollectorV2
++from .interface import BaseCollectorProtocol
++from .proxy_pool import ProxyPool, create_proxy_pool, RotationStrategy
++from .rate_limiter import RateLimiter, create_rate_limiter
++
++
++@runtime_checkable
++class CollectorConfig(Protocol):
++    """采集器配置协议"""
++
++    @property
++    def source_name(self) -> str:
++        """数据源名称"""
++        ...
++
++    @property
++    def base_url(self) -> str:
++        """基础URL"""
++        ...
++
++    @property
++    def rate_limit_config(self) -> Dict[str, Any]:
++        """速率限制配置"""
++        ...
++
++    @property
++    def token_manager_config(self) -> Dict[str, Any]:
++        """Token管理器配置"""
++        ...
++
++    @property
++    def proxy_config(self) -> Optional[Dict[str, Any]]:
++        """代理配置"""
++        ...
++
++
++@dataclass
++class FotMobConfig:
++    """FotMob 数据源配置"""
++    source_name: str = "fotmob"
++    base_url: str = "https://www.fotmob.com"
++
++    # 速率限制配置
++    rate_limit_config: Dict[str, Any] = field(default_factory=lambda: {
++        "rate": 3.0,        # 3 QPS (保守速率)
++        "burst": 8,         # 突发容量
++        "max_wait_time": 30.0,  # 最大等待时间
++    })
++
++    # Token管理器配置
++    token_manager_config: Dict[str, Any] = field(default_factory=lambda: {
++        "default_ttl": 3600.0,          # 1小时TTL
++        "cache_refresh_threshold": 300.0,  # 5分钟刷新阈值
++        "max_retry_attempts": 3,
++        "retry_delay": 1.0,
++    })
++
++    # 代理配置
++    proxy_config: Optional[Dict[str, Any]] = field(default_factory=lambda: {
++        "urls": [
++            "http://127.0.0.1:8080",
++            "http://127.0.0.1:8081",
++            "socks5://127.0.0.1:1080"
++        ],
++        "strategy": "weighted_random",
++        "auto_health_check": True,
++        "max_fail_count": 5,
++        "min_score_threshold": 30.0,
++    })
++
++    # HTTP客户端配置
++    timeout: float = 30.0
++    max_retries: int = 3
++    retry_delay: float = 1.0
++    user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
++
++
++class RequestEvent:
++    """请求事件数据类"""
++
++    def __init__(
++        self,
++        source: str,
++        method: str,
++        url: str,
++        status_code: Optional[int] = None,
++        response_time_ms: Optional[float] = None,
++        error: Optional[str] = None,
++        proxy_used: Optional[str] = None,
++        token_refreshed: bool = False,
++    ):
++        self.source = source
++        self.method = method
++        self.url = url
++        self.status_code = status_code
++        self.response_time_ms = response_time_ms
++        self.error = error
++        self.proxy_used = proxy_used
++        self.token_refreshed = token_refreshed
++        self.timestamp = time.monotonic()
++
++    def to_dict(self) -> Dict[str, Any]:
++        """转换为字典格式"""
++        return {
++            "source": self.source,
++            "method": self.method,
++            "url": self.url,
++            "status_code": self.status_code,
++            "response_time_ms": self.response_time_ms,
++            "error": self.error,
++            "proxy_used": self.proxy_used,
++            "token_refreshed": self.token_refreshed,
++            "timestamp": self.timestamp,
++        }
++
++
++class RequestMonitor:
++    """请求监控器"""
++
++    def __init__(self):
++        self.events: List[RequestEvent] = []
++        self.stats: Dict[str, Any] = {
++            "total_requests": 0,
++            "successful_requests": 0,
++            "failed_requests": 0,
++            "total_response_time_ms": 0.0,
++            "token_refreshes": 0,
++            "proxy_rotations": 0,
++        }
++
++    def record_event(self, event: RequestEvent) -> None:
++        """记录请求事件"""
++        self.events.append(event)
++
++        # 更新统计信息
++        self.stats["total_requests"] += 1
++
++        if event.status_code and 200 <= event.status_code < 400:
++            self.stats["successful_requests"] += 1
++        else:
++            self.stats["failed_requests"] += 1
++
++        if event.response_time_ms:
++            self.stats["total_response_time_ms"] += event.response_time_ms
++
++        if event.token_refreshed:
++            self.stats["token_refreshes"] += 1
++
++        if event.proxy_used:
++            self.stats["proxy_rotations"] += 1
++
++    def get_stats(self) -> Dict[str, Any]:
++        """获取统计信息"""
++        total_requests = self.stats["total_requests"]
++        avg_response_time = (
++            self.stats["total_response_time_ms"] / total_requests
++            if total_requests > 0 else 0.0
++        )
++
++        return {
++            **self.stats,
++            "avg_response_time_ms": round(avg_response_time, 2),
++            "success_rate": (
++                self.stats["successful_requests"] / total_requests * 100
++                if total_requests > 0 else 0.0
++            ),
++            "error_rate": (
++                self.stats["failed_requests"] / total_requests * 100
++                if total_requests > 0 else 0.0
++            ),
++        }
++
++    def get_events(self, source: Optional[str] = None, limit: Optional[int] = None) -> List[RequestEvent]:
++        """获取事件列表"""
++        events = self.events
++        if source:
++            events = [e for e in events if e.source == source]
++        if limit:
++            events = events[-limit:]
++        return events
++
++    def clear(self) -> None:
++        """清除所有事件和统计"""
++        self.events.clear()
++        self.stats = {
++            "total_requests": 0,
++            "successful_requests": 0,
++            "failed_requests": 0,
++            "total_response_time_ms": 0.0,
++            "token_refreshes": 0,
++            "proxy_rotations": 0,
++        }
++
++
++class HttpClientFactory:
++    """
++    统一HTTP客户端工厂
++
++    负责创建和配置不同数据源的HTTP客户端，提供：
++    1. 组件自动装配（RateLimiter、TokenManager、ProxyPool）
++    2. 统一的配置管理
++    3. 监控和事件记录
++    4. 可测试的依赖注入支持
++    """
++
++    def __init__(self):
++        self._components: Dict[str, Any] = {}
++        self._monitor = RequestMonitor()
++
++        # 预定义的数据源配置
++        self._configs: Dict[str, CollectorConfig] = {
++            "fotmob": FotMobConfig(),
++        }
++
++    def register_config(self, source: str, config: CollectorConfig) -> None:
++        """注册数据源配置"""
++        self._configs[source] = config
++
++    def register_component(self, name: str, component: Any) -> None:
++        """注册组件（用于依赖注入）"""
++        self._components[name] = component
++
++    def get_monitor(self) -> RequestMonitor:
++        """获取请求监控器"""
++        return self._monitor
++
++    async def create_rate_limiter(self, source: str, config: CollectorConfig) -> RateLimiter:
++        """创建速率限制器"""
++        if f"{source}_rate_limiter" in self._components:
++            return self._components[f"{source}_rate_limiter"]
++
++        return create_rate_limiter({
++            f"{source}_api": config.rate_limit_config
++        })
++
++    async def create_proxy_pool(self, source: str, config: CollectorConfig) -> ProxyPool:
++        """创建代理池"""
++        if f"{source}_proxy_pool" in self._components:
++            return self._components[f"{source}_proxy_pool"]
++
++        proxy_config = config.proxy_config
++        if not proxy_config:
++            # 返回空的代理池
++            return ProxyPool([])
++
++        return create_proxy_pool(
++            proxy_config["urls"],
++            strategy=RotationStrategy(proxy_config["strategy"]),
++            auto_health_check=proxy_config["auto_health_check"],
++            max_fail_count=proxy_config["max_fail_count"],
++            min_score_threshold=proxy_config["min_score_threshold"],
++        )
++
++    async def create_token_manager(self, source: str, config: CollectorConfig) -> TokenManager:
++        """创建Token管理器"""
++        if f"{source}_token_manager" in self._components:
++            return self._components[f"{source}_token_manager"]
++
++        token_manager = create_token_manager(**config.token_manager_config)
++
++        # 为特定数据源注册Token Provider
++        if source == "fotmob":
++            from .auth import create_fotmob_provider
++            fotmob_provider = create_fotmob_provider()
++            await token_manager.register_provider(fotmob_provider)
++
++        return token_manager
++
++    async def create_collector(self, source: str) -> BaseCollectorProtocol:
++        """
++        创建采集器实例
++
++        Args:
++            source: 数据源名称 (如: "fotmob")
++
++        Returns:
++            BaseCollectorProtocol: 配置好的采集器实例
++
++        Raises:
++            ValueError: 不支持的数据源
++        """
++        if source not in self._configs:
++            raise ValueError(f"Unsupported data source: {source}")
++
++        config = self._configs[source]
++
++        print(f"🏭 创建 {source} 采集器...")
++
++        # 创建组件
++        rate_limiter = await self.create_rate_limiter(source, config)
++        proxy_pool = await self.create_proxy_pool(source, config)
++        token_manager = await self.create_token_manager(source, config)
++
++        print(f"   ✅ RateLimiter: {config.rate_limit_config['rate']} QPS")
++        print(f"   ✅ ProxyPool: {len(proxy_pool.proxies) if proxy_pool else 0} 个代理")
++        print(f"   ✅ TokenManager: {len(token_manager.token_cache)} 个提供者")
++
++        # 创建采集器
++        if source == "fotmob":
++            collector = FotMobCollectorV2(
++                rate_limiter=rate_limiter,
++                proxy_pool=proxy_pool,
++                token_manager=token_manager,
++                base_url=config.base_url,
++                timeout=config.timeout,
++                max_retries=config.max_retries,
++                retry_delay=config.retry_delay,
++            )
++        else:
++            raise ValueError(f"No collector implementation for source: {source}")
++
++        # 包装采集器以添加监控
++        monitored_collector = MonitoredCollector(collector, source, self._monitor)
++
++        print(f"   ✅ {source} 采集器创建完成")
++        return monitored_collector
++
++    async def create_client(self, source: str) -> httpx.AsyncClient:
++        """
++        创建HTTP客户端
++
++        注意：这个方法主要提供HTTP客户端的基础配置，
++        对于完整的采集功能，建议使用 create_collector() 方法。
++
++        Args:
++            source: 数据源名称
++
++        Returns:
++            httpx.AsyncClient: 配置好的HTTP客户端
++        """
++        if source not in self._configs:
++            raise ValueError(f"Unsupported data source: {source}")
++
++        config = self._configs[source]
++
++        # 创建HTTP客户端配置
++        client_config = {
++            "timeout": httpx.Timeout(config.timeout),
++            "headers": {
++                "User-Agent": config.user_agent,
++                "Accept": "application/json, text/plain, */*",
++                "Accept-Language": "en-US,en;q=0.9",
++                "Accept-Encoding": "gzip, deflate, br",
++                "Connection": "keep-alive",
++                "Upgrade-Insecure-Requests": "1",
++            },
++            "follow_redirects": True,
++        }
++
++        # 注入Token（如果配置了TokenManager）
++        if f"{source}_token_manager" in self._components:
++            token_manager = self._components[f"{source}_token_manager"]
++            try:
++                token = await token_manager.get_token(source)
++                if token.token_type.value == "custom_header":
++                    client_config["headers"].update(token.headers)
++                elif token.token_type.value == "bearer":
++                    client_config["headers"]["Authorization"] = f"Bearer {token.value}"
++                elif token.token_type.value == "api_key":
++                    client_config["headers"]["X-API-Key"] = token.value
++            except Exception as e:
++                print(f"⚠️ Failed to inject token for {source}: {e}")
++
++        # 配置代理（如果需要）
++        if f"{source}_proxy_pool" in self._components:
++            proxy_pool = self._components[f"{source}_proxy_pool"]
++            if proxy_pool.proxies:
++                proxy = proxy_pool.proxies[0]  # 使用第一个代理
++                if proxy.protocol == "socks5":
++                    client_config["proxies"] = {
++                        "http://": f"socks5://{proxy.host}:{proxy.port}",
++                        "https://": f"socks5://{proxy.host}:{proxy.port}",
++                    }
++                else:
++                    proxy_url = proxy.url
++                    client_config["proxies"] = {
++                        "http://": proxy_url,
++                        "https://": proxy_url,
++                    }
++
++                # 添加代理认证
++                if proxy.username and proxy.password:
++                    client_config["auth"] = (proxy.username, proxy.password)
++
++        return httpx.AsyncClient(**client_config)
++
++    def get_available_sources(self) -> List[str]:
++        """获取可用的数据源列表"""
++        return list(self._configs.keys())
++
++    def get_config(self, source: str) -> Optional[CollectorConfig]:
++        """获取数据源配置"""
++        return self._configs.get(source)
++
++
++class MonitoredCollector:
++    """带监控功能的采集器包装器"""
++
++    def __init__(
++        self,
++        collector: BaseCollectorProtocol,
++        source: str,
++        monitor: RequestMonitor
++    ):
++        self.collector = collector
++        self.source = source
++        self.monitor = monitor
++
++    async def collect_fixtures(self, league_id: int, season_id: Optional[str] = None) -> List[Dict[str, Any]]:
++        """采集赛程数据（带监控）"""
++        start_time = time.monotonic()
++        try:
++            result = await self.collector.collect_fixtures(league_id, season_id)
++
++            # 记录成功事件
++            event = RequestEvent(
++                source=self.source,
++                method="collect_fixtures",
++                url=f"{self.source}://api/matches?leagueId={league_id}",
++                response_time_ms=(time.monotonic() - start_time) * 1000,
++            )
++            self.monitor.record_event(event)
++
++            return result
++
++        except Exception as e:
++            # 记录失败事件
++            event = RequestEvent(
++                source=self.source,
++                method="collect_fixtures",
++                url=f"{self.source}://api/matches?leagueId={league_id}",
++                error=str(e),
++                response_time_ms=(time.monotonic() - start_time) * 1000,
++            )
++            self.monitor.record_event(event)
++            raise
++
++    async def collect_match_details(self, match_id: str) -> Dict[str, Any]:
++        """采集比赛详情（带监控）"""
++        start_time = time.monotonic()
++        try:
++            result = await self.collector.collect_match_details(match_id)
++
++            # 记录成功事件
++            event = RequestEvent(
++                source=self.source,
++                method="collect_match_details",
++                url=f"{self.source}://api/matchDetails?matchId={match_id}",
++                response_time_ms=(time.monotonic() - start_time) * 1000,
++            )
++            self.monitor.record_event(event)
++
++            return result
++
++        except Exception as e:
++            # 记录失败事件
++            event = RequestEvent(
++                source=self.source,
++                method="collect_match_details",
++                url=f"{self.source}://api/matchDetails?matchId={match_id}",
++                error=str(e),
++                response_time_ms=(time.monotonic() - start_time) * 1000,
++            )
++            self.monitor.record_event(event)
++            raise
++
++    async def collect_team_info(self, team_id: str) -> Dict[str, Any]:
++        """采集球队信息（带监控）"""
++        start_time = time.monotonic()
++        try:
++            result = await self.collector.collect_team_info(team_id)
++
++            # 记录成功事件
++            event = RequestEvent(
++                source=self.source,
++                method="collect_team_info",
++                url=f"{self.source}://api/teamDetails?teamId={team_id}",
++                response_time_ms=(time.monotonic() - start_time) * 1000,
++            )
++            self.monitor.record_event(event)
++
++            return result
++
++        except Exception as e:
++            # 记录失败事件
++            event = RequestEvent(
++                source=self.source,
++                method="collect_team_info",
++                url=f"{self.source}://api/teamDetails?teamId={team_id}",
++                error=str(e),
++                response_time_ms=(time.monotonic() - start_time) * 1000,
++            )
++            self.monitor.record_event(event)
++            raise
++
++    async def check_health(self) -> Dict[str, Any]:
++        """健康检查（带监控）"""
++        start_time = time.monotonic()
++        try:
++            result = await self.collector.check_health()
++
++            # 记录成功事件
++            event = RequestEvent(
++                source=self.source,
++                method="check_health",
++                url=f"{self.source}://health",
++                response_time_ms=(time.monotonic() - start_time) * 1000,
++            )
++            self.monitor.record_event(event)
++
++            return result
++
++        except Exception as e:
++            # 记录失败事件
++            event = RequestEvent(
++                source=self.source,
++                method="check_health",
++                url=f"{self.source}://health",
++                error=str(e),
++                response_time_ms=(time.monotonic() - start_time) * 1000,
++            )
++            self.monitor.record_event(event)
++            raise
++
++    async def close(self) -> None:
++        """关闭采集器"""
++        await self.collector.close()
++
++    def __getattr__(self, name):
++        """转发其他属性调用到原始采集器"""
++        return getattr(self.collector, name)
++
++
++# 全局工厂实例
++_global_factory: Optional[HttpClientFactory] = None
++
++
++def get_http_client_factory() -> HttpClientFactory:
++    """获取全局HTTP客户端工厂实例"""
++    global _global_factory
++    if _global_factory is None:
++        _global_factory = HttpClientFactory()
++    return _global_factory
++
++
++async def create_collector(source: str) -> BaseCollectorProtocol:
++    """创建采集器的便利函数"""
++    factory = get_http_client_factory()
++    return await factory.create_collector(source)
++
++
++async def create_http_client(source: str) -> httpx.AsyncClient:
++    """创建HTTP客户端的便利函数"""
++    factory = get_http_client_factory()
++    return await factory.create_client(source)
++
++
++# 导出
++__all__ = [
++    "CollectorConfig",
++    "FotMobConfig",
++    "RequestEvent",
++    "RequestMonitor",
++    "HttpClientFactory",
++    "MonitoredCollector",
++    "get_http_client_factory",
++    "create_collector",
++    "create_http_client",
++]
+\ No newline at end of file
+diff --git a/src/collectors/interface.py b/src/collectors/interface.py
+new file mode 100644
+index 000000000..48798abc3
+--- /dev/null
++++ b/src/collectors/interface.py
+@@ -0,0 +1,269 @@
++"""
++统一采集器接口协议定义
++Base Collector Protocol Definition
++
++该模块定义了所有数据采集器必须实现的标准接口，确保：
++1. 统一的方法签名和返回类型
++2. 标准化的错误处理约定
++3. 可插拔的采集器架构
++4. 类型安全的异步操作
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 1.0.0
++"""
++
++from abc import abstractmethod
++from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
++
++
++@runtime_checkable
++class BaseCollectorProtocol(Protocol):
++    """
++    基础采集器协议接口
++
++    所有数据采集器都必须实现此协议，确保统一的行为契约。
++    使用 Python 的 Structural Subtyping (Protocol) 而非继承，
++    提供更大的灵活性和 Pythonic 的实现方式。
++
++    核心设计原则:
++    1. 所有网络IO操作必须是异步的
++    2. 统一的错误处理和重试策略
++    3. 标准化的数据格式
++    4. 资源管理和清理机制
++    """
++
++    @abstractmethod
++    async def collect_fixtures(
++        self,
++        league_id: int,
++        season_id: Optional[str] = None
++    ) -> List[Dict[str, Any]]:
++        """
++        采集联赛赛程数据
++
++        Args:
++            league_id: 联赛ID (如: 47 for Premier League)
++            season_id: 赛季ID (可选，如: "2024-2025")
++
++        Returns:
++            List[Dict[str, Any]]: 赛程数据列表，每个字典包含:
++                - match_id: str - 比赛唯一标识
++                - home_team: str - 主队名称
++                - away_team: str - 客队名称
++                - kickoff_time: str - 开赛时间 (ISO 8601)
++                - venue: Optional[str] - 场地信息
++                - status: str - 比赛状态
++
++        Raises:
++            CollectorError: 采集过程中的通用错误
++            AuthenticationError: 认证失败
++            RateLimitError: 速率限制
++            NetworkError: 网络连接问题
++        """
++        ...
++
++    @abstractmethod
++    async def collect_match_details(
++        self,
++        match_id: str
++    ) -> Dict[str, Any]:
++        """
++        采集比赛详情数据
++
++        Args:
++            match_id: 比赛唯一标识
++
++        Returns:
++            Dict[str, Any]: 比赛详情数据，包含:
++                - match_id: str - 比赛ID
++                - home_score: Optional[int] - 主队得分
++                - away_score: Optional[int] - 客队得分
++                - home_xg: Optional[float] - 主队期望进球数
++                - away_xg: Optional[float] - 客队期望进球数
++                - shots: Dict[str, int] - 射门数据
++                - possession: Dict[str, float] - 控球率
++                - events: List[Dict] - 比赛事件列表
++                - lineups: Dict[str, List] - 阵容信息
++                - odds: Optional[Dict] - 赔率数据
++
++        Raises:
++            CollectorError: 采集过程中的通用错误
++            DataNotFoundError: 比赛数据不存在
++            AuthenticationError: 认证失败
++            RateLimitError: 速率限制
++            NetworkError: 网络连接问题
++        """
++        ...
++
++    @abstractmethod
++    async def collect_team_info(
++        self,
++        team_id: str
++    ) -> Dict[str, Any]:
++        """
++        采集球队信息
++
++        Args:
++            team_id: 球队唯一标识
++
++        Returns:
++            Dict[str, Any]: 球队信息，包含:
++                - team_id: str - 球队ID
++                - name: str - 球队名称
++                - country: str - 国家
++                - founded: Optional[int] - 成立年份
++                - stadium: Optional[str] - 主场
++                - logo_url: Optional[str] - 球队徽标URL
++
++        Raises:
++            CollectorError: 采集过程中的通用错误
++            DataNotFoundError: 球队数据不存在
++        """
++        ...
++
++    @abstractmethod
++    async def check_health(self) -> Dict[str, Any]:
++        """
++        检查采集器健康状态
++
++        此方法用于：
++        1. 代理池健康检查
++        2. API连通性验证
++        3. 认证状态检查
++        4. 速率限制状态查询
++
++        Returns:
++            Dict[str, Any]: 健康状态信息，包含:
++                - status: str - "healthy" | "degraded" | "unhealthy"
++                - response_time_ms: float - 响应时间(毫秒)
++                - last_check: str - 最后检查时间
++                - error_count: int - 错误计数
++                - details: Dict[str, Any] - 额外详情
++
++        Example:
++            >>> health = await collector.check_health()
++            >>> if health["status"] == "healthy":
++            ...     print("采集器运行正常")
++        """
++        ...
++
++    @abstractmethod
++    async def close(self) -> None:
++        """
++        清理资源并关闭采集器
++
++        此方法负责：
++        1. 关闭HTTP客户端连接
++        2. 清理代理池资源
++        3. 保存缓存数据
++        4. 取消进行中的任务
++
++        注意:
++        - 必须在程序退出前调用
++        - 支持多次调用而无副作用
++        - 应该优雅地处理清理失败
++        """
++        ...
++
++
++@runtime_checkable
++class ExtendedCollectorProtocol(BaseCollectorProtocol, Protocol):
++    """
++    扩展采集器协议接口
++
++    为高级采集器提供额外的功能，如：
++    - 批量操作支持
++    - 流式数据处理
++    - 自定义配置管理
++    """
++
++    @abstractmethod
++    async def collect_batch_fixtures(
++        self,
++        league_ids: List[int],
++        season_id: Optional[str] = None
++    ) -> Dict[int, List[Dict[str, Any]]]:
++        """
++        批量采集多个联赛的赛程数据
++
++        Args:
++            league_ids: 联赛ID列表
++            season_id: 赛季ID
++
++        Returns:
++            Dict[int, List[Dict]]: 按联赛ID分组的赛程数据
++        """
++        ...
++
++    @abstractmethod
++    async def stream_fixtures(
++        self,
++        league_id: int,
++        season_id: Optional[str] = None
++    ):
++        """
++        流式采集赛程数据
++
++        Args:
++            league_id: 联赛ID
++            season_id: 赛季ID
++
++        Yields:
++            Dict[str, Any]: 单个赛程数据
++        """
++        ...
++
++
++# 采集器异常类型定义
++class CollectorError(Exception):
++    """采集器基础异常类"""
++    pass
++
++
++class AuthenticationError(CollectorError):
++    """认证失败异常"""
++    pass
++
++
++class RateLimitError(CollectorError):
++    """速率限制异常"""
++    pass
++
++
++class NetworkError(CollectorError):
++    """网络连接异常"""
++    pass
++
++
++class DataNotFoundError(CollectorError):
++    """数据未找到异常"""
++    pass
++
++
++class ConfigurationError(CollectorError):
++    """配置错误异常"""
++    pass
++
++
++# 类型别名，提高代码可读性
++FixtureData = Dict[str, Any]
++MatchDetailData = Dict[str, Any]
++TeamInfoData = Dict[str, Any]
++HealthStatus = Dict[str, Any]
++
++# 导出的公共接口
++__all__ = [
++    "BaseCollectorProtocol",
++    "ExtendedCollectorProtocol",
++    "CollectorError",
++    "AuthenticationError",
++    "RateLimitError",
++    "NetworkError",
++    "DataNotFoundError",
++    "ConfigurationError",
++    "FixtureData",
++    "MatchDetailData",
++    "TeamInfoData",
++    "HealthStatus",
++]
+\ No newline at end of file
+diff --git a/src/collectors/proxy_pool.py b/src/collectors/proxy_pool.py
+index 30de1caff..50ad39b6b 100644
+--- a/src/collectors/proxy_pool.py
++++ b/src/collectors/proxy_pool.py
+@@ -1,392 +1,708 @@
+-"""代理池管理器 - 反爬对抗核心组件
+-Proxy Pool Manager - Anti-Scraping Core Component.
+-
+-提供智能代理轮换、健康检查、性能监控等功能。
++"""
++代理池 (ProxyPool) 实现
++Proxy Pool Implementation
++
++该模块实现了一个高可用、可扩展的代理池系统，支持：
++1. 多种代理来源（文件/API/环境变量）
++2. 代理健康评分和黑名单机制
++3. 多策略轮询（随机/轮询）
++4. 自动剔除失效代理
++5. 异步接口设计
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 1.0.0
+ """
+ 
+ import asyncio
+ import random
+ import time
+-from dataclasses import dataclass
++from abc import abstractmethod
++from dataclasses import dataclass, field
+ from enum import Enum
+-from typing import Set
+-from urllib.parse import urlparse
++from pathlib import Path
++from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+ 
+ import aiohttp
+-import backoff
+-from src.core.logging import get_logger
+ 
+-logger = get_logger(__name__)
+ 
++class ProxyProtocol(Enum):
++    """代理协议类型"""
++    HTTP = "http"
++    HTTPS = "https"
++    SOCKS4 = "socks4"
++    SOCKS5 = "socks5"
+ 
+-class ProxyStatus(Enum):
+-    """代理状态枚举."""
+ 
+-    ACTIVE = "active"
+-    FAILED = "failed"
+-    TESTING = "testing"
+-    BANNED = "banned"
++class ProxyStatus(Enum):
++    """代理状态"""
++    ACTIVE = "active"      # 活跃可用
++    BANNED = "banned"      # 已被禁用
++    TESTING = "testing"    # 测试中
+ 
+ 
+ @dataclass
+-class ProxyConfig:
+-    """代理配置."""
+-
++class Proxy:
++    """
++    代理信息数据类
++
++    Attributes:
++        url: 代理完整URL (如: http://127.0.0.1:8080)
++        protocol: 代理协议类型
++        host: 代理主机地址
++        port: 代理端口
++        username: 用户名（可选）
++        password: 密码（可选）
++        score: 信誉分数 (0-100)
++        fail_count: 连续失败次数
++        success_count: 连续成功次数
++        last_used: 最后使用时间
++        last_check: 最后检查时间
++        status: 代理状态
++        response_time: 响应时间（毫秒）
++    """
++    url: str
++    protocol: ProxyProtocol
+     host: str
+     port: int
+     username: Optional[str] = None
+     password: Optional[str] = None
+-    proxy_type: str = "http"  # http, https, socks5
++    score: float = 100.0
++    fail_count: int = 0
++    success_count: int = 0
++    last_used: Optional[float] = field(default_factory=time.monotonic)
++    last_check: Optional[float] = field(default_factory=time.monotonic)
++    status: ProxyStatus = ProxyStatus.ACTIVE
++    response_time: Optional[float] = None
++
++    def __post_init__(self) -> None:
++        """初始化后处理"""
++        if isinstance(self.protocol, str):
++            self.protocol = ProxyProtocol(self.protocol.lower())
++        if isinstance(self.status, str):
++            self.status = ProxyStatus(self.status.lower())
++
++    @classmethod
++    def from_url(cls, url: str, **kwargs) -> 'Proxy':
++        """
++        从URL创建代理对象
++
++        Args:
++            url: 代理URL (如: http://127.0.0.1:8080)
++            **kwargs: 其他属性
++
++        Returns:
++            Proxy: 代理对象
++        """
++        if not url.startswith(('http://', 'https://', 'socks4://', 'socks5://')):
++            url = f'http://{url}'
++
++        # 解析URL
++        if '://' in url:
++            protocol_str, rest = url.split('://', 1)
++            protocol = ProxyProtocol(protocol_str.lower())
++
++            # 处理认证信息
++            credentials = None
++            if '@' in rest:
++                credentials, rest = rest.split('@', 1)
++                if ':' in credentials:
++                    username, password = credentials.split(':', 1)
++                else:
++                    username, password = credentials, None
++            else:
++                username, password = None, None
++
++            # 处理主机和端口
++            if ':' in rest:
++                host, port_str = rest.rsplit(':', 1)
++                try:
++                    port = int(port_str)
++                except ValueError:
++                    # 如果端口不是数字，可能是IPv6地址
++                    if '[' in rest and ']' in rest:
++                        host = rest.split(']')[0][1:]
++                        port_part = rest.split(']:')
++                        port = int(port_part[1]) if len(port_part) > 1 else 80
++                    else:
++                        raise ValueError(f"Invalid proxy URL: {url}")
++            else:
++                host = rest
++                port = 80
++        else:
++            raise ValueError(f"Invalid proxy URL: {url}")
++
++        return cls(
++            url=url,
++            protocol=protocol,
++            host=host,
++            port=port,
++            username=username,
++            password=password,
++            **kwargs
++        )
++
++    @property
++    def is_active(self) -> bool:
++        """检查代理是否活跃"""
++        return self.status == ProxyStatus.ACTIVE
+ 
+     @property
+-    def url(self) -> str:
+-        """生成代理URL."""
+-        if self.username and self.password:
+-            return f"{self.proxy_type}://{self.username}:{self.password}@{self.host}:{self.port}"
+-        return f"{self.proxy_type}://{self.host}:{self.port}"
++    def is_banned(self) -> bool:
++        """检查代理是否被禁用"""
++        return self.status == ProxyStatus.BANNED
++
++    @property
++    def is_healthy(self) -> bool:
++        """检查代理是否健康（分数>50且未被禁用）"""
++        return self.score > 50.0 and not self.is_banned
++
++    def record_success(self, response_time: Optional[float] = None) -> None:
++        """
++        记录成功使用
++
++        Args:
++            response_time: 响应时间（毫秒）
++        """
++        self.success_count += 1
++        self.fail_count = 0  # 重置失败计数
++        self.last_used = time.monotonic()
++
++        if response_time is not None:
++            self.response_time = response_time
++
++        # 增加分数，最高100
++        if self.score < 100.0:
++            self.score = min(100.0, self.score + 5.0)
++
++    def record_failure(self) -> None:
++        """记录失败使用"""
++        self.fail_count += 1
++        self.last_used = time.monotonic()
++
++        # 减少分数，最低0
++        if self.score > 0.0:
++            self.score = max(0.0, self.score - 10.0)
++
++    def ban(self) -> None:
++        """禁用代理"""
++        self.status = ProxyStatus.BANNED
++        self.score = 0.0
++
++    def reactivate(self) -> None:
++        """重新激活代理"""
++        self.status = ProxyStatus.ACTIVE
++        self.fail_count = 0
++        self.score = max(50.0, self.score)  # 恢复到最低50分
++
++    def to_dict(self) -> Dict[str, Any]:
++        """转换为字典格式"""
++        return {
++            'url': self.url,
++            'protocol': self.protocol.value,
++            'host': self.host,
++            'port': self.port,
++            'username': self.username,
++            'password': '***' if self.password else None,
++            'score': self.score,
++            'fail_count': self.fail_count,
++            'success_count': self.success_count,
++            'last_used': self.last_used,
++            'last_check': self.last_check,
++            'status': self.status.value,
++            'response_time': self.response_time,
++            'is_active': self.is_active,
++            'is_banned': self.is_banned,
++            'is_healthy': self.is_healthy,
++        }
+ 
+     def __str__(self) -> str:
+-        return f"{self.host}:{self.port}"
++        return f"Proxy({self.url}, score={self.score:.1f}, status={self.status.value})"
+ 
++    def __repr__(self) -> str:
++        return self.__str__()
+ 
+-@dataclass
+-class ProxyStats:
+-    """代理统计信息."""
+ 
+-    success_count: int = 0
+-    failure_count: int = 0
+-    total_response_time: float = 0.0
+-    last_used: Optional[float] = None
+-    last_success: Optional[float] = None
+-    ban_count: int = 0
++class RotationStrategy(Enum):
++    """轮询策略"""
++    RANDOM = "random"
++    ROUND_ROBIN = "round_robin"
++    WEIGHTED_RANDOM = "weighted_random"
++    HEALTH_FIRST = "health_first"
++
+ 
+-    @property
+-    def success_rate(self) -> float:
+-        """成功率."""
+-        total = self.success_count + self.failure_count
+-        return self.success_count / total if total > 0 else 0.0
++@runtime_checkable
++class ProxyProvider(Protocol):
++    """
++    代理提供者协议
+ 
+-    @property
+-    def avg_response_time(self) -> float:
+-        """平均响应时间."""
+-        return self.total_response_time / max(self.success_count, 1)
++    定义了从不同来源获取代理的标准接口
++    """
++
++    @abstractmethod
++    async def load_proxies(self) -> List[Proxy]:
++        """
++        加载代理列表
++
++        Returns:
++            List[Proxy]: 代理列表
++        """
++        ...
++
++    @abstractmethod
++    async def refresh_proxies(self) -> List[Proxy]:
++        """
++        刷新代理列表
++
++        Returns:
++            List[Proxy]: 更新后的代理列表
++        """
++        ...
++
++
++class StaticProxyProvider:
++    """
++    静态代理提供者
++
++    用于测试和演示，提供固定的代理列表
++    """
++
++    def __init__(self, proxies: List[str]):
++        """
++        初始化静态代理提供者
++
++        Args:
++            proxies: 代理URL列表
++        """
++        self.proxies = [Proxy.from_url(url) for url in proxies]
++
++    async def load_proxies(self) -> List[Proxy]:
++        """加载静态代理列表"""
++        return self.proxies.copy()
++
++    async def refresh_proxies(self) -> List[Proxy]:
++        """刷新代理列表（静态提供者返回相同列表）"""
++        return self.proxies.copy()
++
++
++class FileProxyProvider:
++    """
++    文件代理提供者
++
++    从文件中读取代理列表，支持多种格式
++    """
++
++    def __init__(self, file_path: str, encoding: str = 'utf-8'):
++        """
++        初始化文件代理提供者
++
++        Args:
++            file_path: 代理文件路径
++            encoding: 文件编码
++        """
++        self.file_path = Path(file_path)
++        self.encoding = encoding
++        self._cached_proxies: Optional[List[Proxy]] = None
++        self._last_modified: Optional[float] = None
++
++    async def load_proxies(self) -> List[Proxy]:
++        """加载代理文件"""
++        if not self.file_path.exists():
++            raise FileNotFoundError(f"Proxy file not found: {self.file_path}")
++
++        # 检查文件是否已修改
++        current_mtime = self.file_path.stat().st_mtime
++
++        if (self._cached_proxies is None or
++            self._last_modified is None or
++            current_mtime > self._last_modified):
++
++            proxies = []
++            with open(self.file_path, 'r', encoding=self.encoding) as f:
++                for line_num, line in enumerate(f, 1):
++                    line = line.strip()
++                    if not line or line.startswith('#'):
++                        continue
++
++                    try:
++                        proxy = Proxy.from_url(line)
++                        proxies.append(proxy)
++                    except ValueError as e:
++                        print(f"Warning: Invalid proxy format at line {line_num}: {line} - {e}")
++                        continue
++
++            self._cached_proxies = proxies
++            self._last_modified = current_mtime
++
++        return self._cached_proxies.copy() if self._cached_proxies else []
++
++    async def refresh_proxies(self) -> List[Proxy]:
++        """刷新代理列表（强制重新加载文件）"""
++        self._cached_proxies = None
++        self._last_modified = None
++        return await self.load_proxies()
+ 
+ 
+ class ProxyPool:
+-    """智能代理池管理器."""
++    """
++    代理池管理器
++
++    负责代理的获取、轮询、健康评分和黑名单管理
++    """
+ 
+     def __init__(
+-        self
+-        proxy_list: list[ProxyConfig]
+-        max_retries: int = 3
+-        test_timeout: int = 10
+-        health_check_interval: int = 300,  # 5分钟
+-        ban_threshold: int = 5,  # 连续失败5次视为被封
+-        cooldown_time: int = 3600,  # 冷却时间1小时
++        self,
++        provider: ProxyProvider,
++        strategy: RotationStrategy = RotationStrategy.WEIGHTED_RANDOM,
++        max_fail_count: int = 5,
++        min_score_threshold: float = 30.0,
++        health_check_url: str = "http://httpbin.org/ip",
++        health_check_timeout: float = 10.0,
++        auto_health_check: bool = True,
++        health_check_interval: float = 300.0,  # 5分钟
+     ):
+-        self.proxies: dict[ProxyConfig, ProxyStats] = {
+-            proxy: ProxyStats() for proxy in proxy_list
+-        }
+-        self.active_proxies: set[ProxyConfig] = set(proxy_list)
+-        self.failed_proxies: set[ProxyConfig] = set()
+-        self.banned_proxies: set[ProxyConfig] = set()
+-
+-        self.max_retries = max_retries
+-        self.test_timeout = test_timeout
++        """
++        初始化代理池
++
++        Args:
++            provider: 代理提供者
++            strategy: 轮询策略
++            max_fail_count: 最大连续失败次数
++            min_score_threshold: 最小分数阈值
++            health_check_url: 健康检查URL
++            health_check_timeout: 健康检查超时时间
++            auto_health_check: 是否自动健康检查
++            health_check_interval: 健康检查间隔
++        """
++        self.provider = provider
++        self.strategy = strategy
++        self.max_fail_count = max_fail_count
++        self.min_score_threshold = min_score_threshold
++        self.health_check_url = health_check_url
++        self.health_check_timeout = health_check_timeout
++        self.auto_health_check = auto_health_check
+         self.health_check_interval = health_check_interval
+-        self.ban_threshold = ban_threshold
+-        self.cooldown_time = cooldown_time
+ 
+-        self._lock = asyncio.Lock()
++        # 代理列表和状态
++        self.proxies: List[Proxy] = []
++        self.current_index = 0  # 用于轮询策略
++        self.lock = asyncio.Lock()
++
++        # 健康检查任务
+         self._health_check_task: Optional[asyncio.Task] = None
++        self._last_health_check = 0.0
+ 
+-        logger.info(f"代理池初始化完成，共{len(proxy_list)}个代理")
++    async def initialize(self) -> None:
++        """初始化代理池"""
++        async with self.lock:
++            self.proxies = await self.provider.load_proxies()
++            print(f"📋 Loaded {len(self.proxies)} proxies from provider")
+ 
+-    async def start_health_check(self):
+-        """启动健康检查任务."""
+-        if self._health_check_task is None or self._health_check_task.done():
+-            self._health_check_task = asyncio.create_task(self._health_check_loop())
+-            logger.info("代理池健康检查任务已启动")
++            # 启动健康检查任务
++            if self.auto_health_check:
++                self._health_check_task = asyncio.create_task(self._health_check_loop())
+ 
+-    async def stop_health_check(self):
+-        """停止健康检查任务."""
+-        if self._health_check_task and not self._health_check_task.done():
++    async def close(self) -> None:
++        """关闭代理池"""
++        if self._health_check_task:
+             self._health_check_task.cancel()
+-            logger.info("代理池健康检查任务已停止")
++            try:
++                await self._health_check_task
++            except asyncio.CancelledError:
++                pass
++
++    async def get_proxy(self) -> Optional[Proxy]:
++        """
++        获取一个可用代理
++
++        Returns:
++            Optional[Proxy]: 可用代理，如果没有则返回None
++        """
++        async with self.lock:
++            if not self.proxies:
++                return None
+ 
+-    async def _health_check_loop(self):
+-        """健康检查循环."""
++            # 过滤活跃且健康的代理
++            available_proxies = [
++                proxy for proxy in self.proxies
++                if proxy.is_active and proxy.is_healthy
++            ]
++
++            if not available_proxies:
++                # 如果没有健康的代理，尝试激活一些被禁用的代理
++                await self._reactivate_banned_proxies()
++                available_proxies = [
++                    proxy for proxy in self.proxies
++                    if proxy.is_active and proxy.is_healthy
++                ]
++
++                if not available_proxies:
++                    return None
++
++            # 根据策略选择代理
++            proxy = await self._select_proxy(available_proxies)
++            return proxy
++
++    async def _select_proxy(self, available_proxies: List[Proxy]) -> Proxy:
++        """根据策略选择代理"""
++        if self.strategy == RotationStrategy.RANDOM:
++            return random.choice(available_proxies)
++
++        elif self.strategy == RotationStrategy.ROUND_ROBIN:
++            proxy = available_proxies[self.current_index % len(available_proxies)]
++            self.current_index += 1
++            return proxy
++
++        elif self.strategy == RotationStrategy.WEIGHTED_RANDOM:
++            # 根据分数进行加权随机选择
++            total_score = sum(proxy.score for proxy in available_proxies)
++            if total_score == 0:
++                return random.choice(available_proxies)
++
++            rand = random.uniform(0, total_score)
++            current_score = 0.0
++
++            for proxy in available_proxies:
++                current_score += proxy.score
++                if rand <= current_score:
++                    return proxy
++
++            return available_proxies[-1]  # fallback
++
++        elif self.strategy == RotationStrategy.HEALTH_FIRST:
++            # 优先选择分数最高的代理
++            return max(available_proxies, key=lambda p: p.score)
++
++        else:
++            return random.choice(available_proxies)
++
++    async def record_proxy_result(self, proxy: Proxy, success: bool, response_time: Optional[float] = None) -> None:
++        """
++        记录代理使用结果
++
++        Args:
++            proxy: 使用的代理
++            success: 是否成功
++            response_time: 响应时间（毫秒）
++        """
++        async with self.lock:
++            if success:
++                proxy.record_success(response_time)
++            else:
++                proxy.record_failure()
++                # 检查是否需要禁用代理
++                if proxy.fail_count >= self.max_fail_count or proxy.score < self.min_score_threshold:
++                    proxy.ban()
++                    print(f"🚫 Proxy banned: {proxy.url} (fail_count={proxy.fail_count}, score={proxy.score:.1f})")
++
++    async def _reactivate_banned_proxies(self) -> None:
++        """重新激活部分被禁用的代理"""
++        banned_proxies = [proxy for proxy in self.proxies if proxy.is_banned]
++
++        # 随机选择一些代理进行重新激活
++        if banned_proxies:
++            reactivate_count = min(3, len(banned_proxies))  # 最多重新激活3个
++            selected_proxies = random.sample(banned_proxies, reactivate_count)
++
++            for proxy in selected_proxies:
++                proxy.reactivate()
++                print(f"🔄 Proxy reactivated: {proxy.url}")
++
++    async def _health_check_loop(self) -> None:
++        """健康检查循环"""
+         while True:
+             try:
+-                await self._check_all_proxies()
+                 await asyncio.sleep(self.health_check_interval)
++                await self._perform_health_check()
+             except asyncio.CancelledError:
+                 break
+             except Exception as e:
+-                logger.error(f"健康检查异常: {e}")
+-                await asyncio.sleep(60)  # 出错时等待1分钟
++                print(f"❌ Health check error: {e}")
+ 
+-    async def _check_all_proxies(self):
+-        """检查所有代理的健康状态."""
+-        logger.info("开始代理健康检查...")
++    async def _perform_health_check(self) -> None:
++        """执行健康检查"""
++        current_time = time.monotonic()
+ 
+-        tasks = []
+-        for proxy in list(self.proxies.keys()):
+-            if proxy not in self.banned_proxies:
+-                tasks.append(self._test_proxy(proxy))
++        # 避免频繁检查
++        if current_time - self._last_health_check < self.health_check_interval:
++            return
+ 
+-        if tasks:
+-            await asyncio.gather(*tasks, return_exceptions=True)
++        async with self.lock:
++            self._last_health_check = current_time
+ 
+-        active_count = len(self.active_proxies)
+-        failed_count = len(self.failed_proxies)
+-        banned_count = len(self.banned_proxies)
++            if not self.proxies:
++                return
+ 
+-        logger.info(
+-            f"代理健康检查完成: 活跃={active_count}, 失败={failed_count}, 封禁={banned_count}"
+-        )
++            print(f"🔍 Starting health check for {len(self.proxies)} proxies...")
+ 
+-    @backoff.on_exception(
+-        backoff.expo
+-        (aiohttp.ClientError, asyncio.TimeoutError)
+-        max_tries=2
+-        base=1
+-        max_value=10
+-    )
+-    async def _test_proxy(self, proxy: ProxyConfig) -> bool:
+-        """测试代理是否可用."""
+-        stats = self.proxies[proxy]
++            # 并发检查所有代理
++            tasks = [
++                self._check_single_proxy(proxy)
++                for proxy in self.proxies
++                if proxy.is_active
++            ]
+ 
+-        try:
+-            start_time = time.time()
++            if tasks:
++                results = await asyncio.gather(*tasks, return_exceptions=True)
+ 
+-            # 使用httpbin.org测试代理
+-            test_url = "http://httpbin.org/ip"
++                # 统计结果
++                healthy_count = 0
++                for i, result in enumerate(results):
++                    proxy = self.proxies[i]
++                    if isinstance(result, Exception):
++                        print(f"❌ Health check failed for {proxy.url}: {result}")
++                        self.record_proxy_result(proxy, False)
++                    elif result:
++                        healthy_count += 1
++                        print(f"✅ Health check passed for {proxy.url}")
+ 
+-            async with aiohttp.ClientSession(
+-                timeout=aiohttp.ClientTimeout(total=self.test_timeout)
+-            ) as session:
+-                async with session.get(test_url, proxy=proxy.url) as response:
++                print(f"📊 Health check completed: {healthy_count}/{len(tasks)} proxies healthy")
++
++    async def _check_single_proxy(self, proxy: Proxy) -> bool:
++        """检查单个代理的健康状况"""
++        try:
++            proxy_url = proxy.url
++            if proxy.username and proxy.password:
++                # 添加认证信息
++                from urllib.parse import quote
++                auth_string = f"{quote(proxy.username)}:{quote(proxy.password)}"
++                proxy_url = proxy_url.replace('://', f'://{auth_string}@')
++
++            timeout = aiohttp.ClientTimeout(total=self.health_check_timeout)
++
++            async with aiohttp.ClientSession(timeout=timeout) as session:
++                async with session.get(
++                    self.health_check_url,
++                    proxy=proxy_url,
++                    ssl=False  # 忽略SSL证书验证
++                ) as response:
+                     if response.status == 200:
+-                        await response.json()
+-                        response_time = time.time() - start_time
+-
+-                        # 更新统计信息
+-                        async with self._lock:
+-                            stats.success_count += 1
+-                            stats.total_response_time += response_time
+-                            stats.last_success = time.time()
+-                            stats.last_used = time.time()
+-
+-                            # 重置失败计数
+-                            stats.failure_count = 0
+-
+-                            # 如果代理之前失败，现在恢复
+-                            if proxy in self.failed_proxies:
+-                                self.failed_proxies.remove(proxy)
+-                                self.active_proxies.add(proxy)
+-                                logger.info(f"代理 {proxy} 已恢复")
+-
+-                        logger.debug(
+-                            f"代理 {proxy} 测试成功，响应时间: {response_time:.2f}s"
+-                        )
++                        start_time = time.monotonic()
++                        content = await response.text()
++                        end_time = time.monotonic()
++
++                        response_time = (end_time - start_time) * 1000  # 转换为毫秒
++                        proxy.record_success(response_time)
+                         return True
+                     else:
+-                        raise aiohttp.ClientError(f"HTTP {response.status}")
++                        proxy.record_failure()
++                        return False
+ 
+         except Exception as e:
+-            async with self._lock:
+-                stats.failure_count += 1
+-                stats.last_used = time.time()
+-
+-                # 检查是否达到封禁阈值
+-                if stats.failure_count >= self.ban_threshold:
+-                    stats.ban_count += 1
+-                    self.banned_proxies.add(proxy)
+-                    if proxy in self.active_proxies:
+-                        self.active_proxies.remove(proxy)
+-                    if proxy in self.failed_proxies:
+-                        self.failed_proxies.remove(proxy)
+-                    logger.warning(
+-                        f"代理 {proxy} 连续失败{stats.failure_count}次，标记为封禁"
+-                    )
+-                else:
+-                    if proxy not in self.failed_proxies:
+-                        self.failed_proxies.add(proxy)
+-                        if proxy in self.active_proxies:
+-                            self.active_proxies.remove(proxy)
+-                    logger.warning(
+-                        f"代理 {proxy} 测试失败 ({stats.failure_count}/{self.ban_threshold}): {e}"
+-                    )
+-
++            proxy.record_failure()
+             return False
+ 
+-    async def get_proxy(self) -> Optional[ProxyConfig]:
+-        """获取最佳代理."""
+-        async with self._lock:
+-            # 如果没有活跃代理，尝试恢复一些失败代理
+-            if not self.active_proxies:
+-                if self.failed_proxies:
+-                    # 随机选择一个失败代理进行测试
+-                    proxy = random.choice(list(self.failed_proxies))
+-                    if await self._test_proxy(proxy):
+-                        return proxy
+-
+-                logger.error("没有可用的代理")
+-                return None
+-
+-            # 选择响应时间最短的活跃代理
+-            best_proxy = min(
+-                self.active_proxies, key=lambda p: self.proxies[p].avg_response_time
+-            )
+-
+-            # 更新使用时间
+-            self.proxies[best_proxy].last_used = time.time()
+-
+-            return best_proxy
+-
+-    async def mark_proxy_failed(self, proxy: ProxyConfig, error: Exception):
+-        """标记代理失败."""
+-        async with self._lock:
+-            stats = self.proxies[proxy]
+-            stats.failure_count += 1
+-
+-            # 检查是否需要封禁
+-            if stats.failure_count >= self.ban_threshold:
+-                stats.ban_count += 1
+-                self.banned_proxies.add(proxy)
+-                if proxy in self.active_proxies:
+-                    self.active_proxies.remove(proxy)
+-                if proxy in self.failed_proxies:
+-                    self.failed_proxies.remove(proxy)
+-                logger.error(f"代理 {proxy} 被标记为封禁，错误: {error}")
+-            else:
+-                if proxy not in self.failed_proxies:
+-                    self.failed_proxies.add(proxy)
+-                    if proxy in self.active_proxies:
+-                        self.active_proxies.remove(proxy)
+-                logger.warning(f"代理 {proxy} 标记为失败，错误: {error}")
+-
+-    async def mark_proxy_success(self, proxy: ProxyConfig, response_time: float):
+-        """标记代理成功."""
+-        async with self._lock:
+-            stats = self.proxies[proxy]
+-            stats.success_count += 1
+-            stats.total_response_time += response_time
+-            stats.last_success = time.time()
+-            stats.last_used = time.time()
+-
+-            # 重置失败计数
+-            stats.failure_count = 0
+-
+-            # 确保代理在活跃集合中
+-            if proxy not in self.active_proxies:
+-                self.active_proxies.add(proxy)
+-            if proxy in self.failed_proxies:
+-                self.failed_proxies.remove(proxy)
+-            if proxy in self.banned_proxies:
+-                # 检查是否可以解封（冷却时间）
+-                if (
+-                    stats.last_success
+-                    and (time.time() - stats.last_success) > self.cooldown_time
+-                ):
+-                    self.banned_proxies.remove(proxy)
+-                    logger.info(f"代理 {proxy} 冷却时间已过，解封")
+-
+-    def get_stats(self) -> dict:
+-        """获取代理池统计信息."""
+-        total_proxies = len(self.proxies)
+-        active_count = len(self.active_proxies)
+-        failed_count = len(self.failed_proxies)
+-        banned_count = len(self.banned_proxies)
+-
+-        # 计算平均成功率
+-        total_success_rate = 0.0
+-        total_response_time = 0.0
+-        proxy_count = 0
+-
+-        for stats in self.proxies.values():
+-            if stats.success_count > 0:
+-                total_success_rate += stats.success_rate
+-                total_response_time += stats.avg_response_time
+-                proxy_count += 1
+-
+-        avg_success_rate = total_success_rate / max(proxy_count, 1)
+-        avg_response_time = total_response_time / max(proxy_count, 1)
+-
+-        return {
+-            "total_proxies": total_proxies
+-            "active_proxies": active_count
+-            "failed_proxies": failed_count
+-            "banned_proxies": banned_count
+-            "availability_rate": (
+-                active_count / total_proxies if total_proxies > 0 else 0
+-            )
+-            "avg_success_rate": avg_success_rate
+-            "avg_response_time": avg_response_time
+-            "health_check_interval": self.health_check_interval
+-        }
+-
+-    @classmethod
+-    def from_env(cls) -> "ProxyPool":
+-        """从环境变量创建代理池."""
+-        import os
+-
+-        proxy_configs = []
+-
+-        # 从环境变量读取代理列表
+-        proxy_list_str = os.getenv("PROXY_LIST", "")
+-        if proxy_list_str:
+-            for proxy_str in proxy_list_str.split(","):
+-                proxy_str = proxy_str.strip()
+-                if proxy_str:
+-                    # 支持格式: host:port 或 username:password@host:port
+-                    if "@" in proxy_str:
+-                        auth_part, addr_part = proxy_str.split("@", 1)
+-                        if ":" in auth_part:
+-                            username, password = auth_part.split(":", 1)
+-                        else:
+-                            username, password = auth_part, None
+-                    else:
+-                        username, password = None, None
+-                        addr_part = proxy_str
+-
+-                    if ":" in addr_part:
+-                        host, port_str = addr_part.split(":", 1)
+-                        port = int(port_str)
+-
+-                        proxy_configs.append(
+-                            ProxyConfig(
+-                                host=host.strip()
+-                                port=port
+-                                username=username
+-                                password=password
+-                            )
+-                        )
+-
+-        # 如果没有配置代理，返回空代理池
+-        if not proxy_configs:
+-            logger.warning("未配置代理列表，代理池将为空")
++    async def refresh_proxies(self) -> None:
++        """刷新代理列表"""
++        async with self.lock:
++            try:
++                new_proxies = await self.provider.refresh_proxies()
++                old_urls = {proxy.url for proxy in self.proxies}
++                new_urls = {proxy.url for proxy in new_proxies}
+ 
+-        return cls(proxy_configs)
++                # 合并代理列表，保留已有的分数和统计信息
++                merged_proxies = []
+ 
++                # 保留已有的代理
++                for old_proxy in self.proxies:
++                    if old_proxy.url in new_urls:
++                        merged_proxies.append(old_proxy)
+ 
+-# 全局代理池实例
+-_proxy_pool: Optional[ProxyPool] = None
++                # 添加新的代理
++                for new_proxy in new_proxies:
++                    if new_proxy.url not in old_urls:
++                        merged_proxies.append(new_proxy)
+ 
++                self.proxies = merged_proxies
++                print(f"🔄 Proxies refreshed: {len(self.proxies)} total")
+ 
+-async def get_proxy_pool() -> ProxyPool:
+-    """获取全局代理池实例."""
+-    global _proxy_pool
+-    if _proxy_pool is None:
+-        _proxy_pool = ProxyPool.from_env()
+-        await _proxy_pool.start_health_check()
+-    return _proxy_pool
++            except Exception as e:
++                print(f"❌ Failed to refresh proxies: {e}")
++
++    def get_stats(self) -> Dict[str, Any]:
++        """获取代理池统计信息"""
++        if not self.proxies:
++            return {
++                'total': 0,
++                'active': 0,
++                'banned': 0,
++                'healthy': 0,
++                'avg_score': 0.0,
++                'avg_response_time': None,
++            }
++
++        active_proxies = [p for p in self.proxies if p.is_active]
++        healthy_proxies = [p for p in self.proxies if p.is_healthy]
++        avg_score = sum(p.score for p in self.proxies) / len(self.proxies)
++
++        response_times = [p.response_time for p in self.proxies if p.response_time is not None]
++        avg_response_time = sum(response_times) / len(response_times) if response_times else None
+ 
++        return {
++            'total': len(self.proxies),
++            'active': len(active_proxies),
++            'banned': len(self.proxies) - len(active_proxies),
++            'healthy': len(healthy_proxies),
++            'avg_score': round(avg_score, 2),
++            'avg_response_time': round(avg_response_time, 2) if avg_response_time else None,
++        }
+ 
+-async def close_proxy_pool():
+-    """关闭代理池."""
+-    global _proxy_pool
+-    if _proxy_pool:
+-        await _proxy_pool.stop_health_check()
+-        _proxy_pool = None
++    def get_proxies_info(self) -> List[Dict[str, Any]]:
++        """获取所有代理的详细信息"""
++        return [proxy.to_dict() for proxy in self.proxies]
++
++
++# 便利函数
++def create_proxy_pool(
++    proxies: List[str],
++    strategy: RotationStrategy = RotationStrategy.WEIGHTED_RANDOM,
++    **kwargs
++) -> ProxyPool:
++    """
++    创建代理池的便利函数
++
++    Args:
++        proxies: 代理URL列表
++        strategy: 轮询策略
++        **kwargs: 其他ProxyPool参数
++
++    Returns:
++        ProxyPool: 代理池实例
++    """
++    provider = StaticProxyProvider(proxies)
++    return ProxyPool(provider, strategy, **kwargs)
++
++
++def create_file_proxy_pool(
++    file_path: str,
++    strategy: RotationStrategy = RotationStrategy.WEIGHTED_RANDOM,
++    **kwargs
++) -> ProxyPool:
++    """
++    创建基于文件的代理池
++
++    Args:
++        file_path: 代理文件路径
++        strategy: 轮询策略
++        **kwargs: 其他ProxyPool参数
++
++    Returns:
++        ProxyPool: 代理池实例
++    """
++    provider = FileProxyProvider(file_path)
++    return ProxyPool(provider, strategy, **kwargs)
++
++
++# 模块导出
++__all__ = [
++    'Proxy',
++    'ProxyProtocol',
++    'ProxyStatus',
++    'RotationStrategy',
++    'ProxyProvider',
++    'StaticProxyProvider',
++    'FileProxyProvider',
++    'ProxyPool',
++    'create_proxy_pool',
++    'create_file_proxy_pool',
++]
+\ No newline at end of file
+diff --git a/src/collectors/rate_limiter.py b/src/collectors/rate_limiter.py
+index 4922ac084..8472540ed 100644
+--- a/src/collectors/rate_limiter.py
++++ b/src/collectors/rate_limiter.py
+@@ -1,354 +1,419 @@
+-"""智能请求频率控制器 - 反爬对抗组件
+-Intelligent Rate Limiter - Anti-Scraping Component.
+-
+-提供自适应请求频率控制、智能延迟调节等功能。
++"""
++统一速率限制器实现 (基于Token Bucket算法)
++Unified Rate Limiter Implementation (Token Bucket Algorithm)
++
++基于 Token Bucket (令牌桶) 算法的异步速率限制器，支持：
++1. 分域名独立限流
++2. 配置驱动的动态策略
++3. Async Context Manager 接口
++4. 并发安全的令牌操作
++
++算法原理：
++- 令牌桶以恒定速率填充令牌
++- 每个请求消耗一个令牌
++- 桶容量限制了突发流量的大小
++- 无令牌时请求需要等待
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 1.0.0
+ """
+ 
+ import asyncio
+-import random
+ import time
++from contextlib import asynccontextmanager
+ from dataclasses import dataclass, field
+-from enum import Enum
+-from src.core.logging import get_logger
+-
+-logger = get_logger(__name__)
+-
+-
+-class RateLimitStrategy(Enum):
+-    """频率限制策略."""
+-
+-    CONSERVATIVE = "conservative"  # 保守策略：较长延迟
+-    NORMAL = "normal"  # 正常策略：标准延迟
+-    AGGRESSIVE = "aggressive"  # 激进策略：较短延迟
+-    ADAPTIVE = "adaptive"  # 自适应策略：根据响应调整
++from typing import Any, Dict, Optional
+ 
+ 
+ @dataclass
+-class RequestConfig:
+-    """请求配置."""
+-
+-    min_delay: float = 1.0  # 最小延迟（秒）
+-    max_delay: float = 10.0  # 最大延迟（秒）
+-    base_delay: float = 2.0  # 基础延迟（秒）
+-    burst_limit: int = 5  # 突发请求限制
+-    recovery_time: float = 30.0  # 恢复时间（秒）
+-
+-    # 延迟增加因子
+-    error_delay_multiplier: float = 2.0  # 错误时延迟倍数
+-    success_delay_reduction: float = 0.9  # 成功时延迟缩减因子
++class RateLimitConfig:
++    """
++    速率限制配置类
++
++    Args:
++        rate: 每秒补充的令牌数 (QPS)
++        burst: 桶的最大容量 (突发令牌数)
++        max_wait_time: 最大等待时间 (秒)，None表示无限等待
++    """
++    rate: float
++    burst: int
++    max_wait_time: Optional[float] = None
++
++    def __post_init__(self) -> None:
++        """验证配置参数"""
++        if self.rate <= 0:
++            raise ValueError("Rate must be positive")
++        if self.burst <= 0:
++            raise ValueError("Burst must be positive")
++        if self.max_wait_time is not None and self.max_wait_time < 0:
++            raise ValueError("max_wait_time must be non-negative")
+ 
+ 
+ @dataclass
+-class DomainStats:
+-    """域名统计信息."""
+-
+-    domain: str
+-    request_count: int = 0
+-    success_count: int = 0
+-    error_count: int = 0
+-    last_request_time: float = 0.0
+-    last_success_time: float = 0.0
+-    last_error_time: float = 0.0
+-    current_delay: float = 2.0
+-    consecutive_errors: int = 0
+-    consecutive_successes: int = 0
+-    total_response_time: float = 0.0
+-    avg_response_time: float = 0.0
+-
+-    @property
+-    def success_rate(self) -> float:
+-        """成功率."""
+-        if self.request_count == 0:
+-            return 0.0
+-        return self.success_count / self.request_count
+-
+-    @property
+-    def error_rate(self) -> float:
+-        """错误率."""
+-        if self.request_count == 0:
+-            return 0.0
+-        return self.error_count / self.request_count
++class TokenBucket:
++    """
++    令牌桶实现
++
++    使用 asyncio.Lock 保证并发安全
++    """
++    tokens: float
++    capacity: float
++    refill_rate: float
++    last_refill: float = field(default_factory=lambda: time.monotonic())
++    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
++
++    def __post_init__(self) -> None:
++        """初始化令牌桶"""
++        if self.tokens > self.capacity:
++            self.tokens = self.capacity
++
++    async def consume(self, tokens: int = 1) -> bool:
++        """
++        消耗令牌
++
++        Args:
++            tokens: 要消耗的令牌数
++
++        Returns:
++            bool: 是否成功消耗令牌
++        """
++        async with self.lock:
++            self._refill()
++            if self.tokens >= tokens:
++                self.tokens -= tokens
++                return True
++            return False
++
++    async def wait_for_tokens(self, tokens: int = 1, timeout: Optional[float] = None) -> bool:
++        """
++        等待直到有足够的令牌
++
++        Args:
++            tokens: 需要的令牌数
++            timeout: 超时时间 (秒)
++
++        Returns:
++            bool: 是否成功获取令牌
++        """
++        start_time = time.monotonic()
++
++        while True:
++            async with self.lock:
++                self._refill()
++
++                if self.tokens >= tokens:
++                    self.tokens -= tokens
++                    return True
++
++                # 计算需要等待的时间
++                tokens_needed = tokens - self.tokens
++                wait_time = tokens_needed / self.refill_rate
++
++                # 检查超时
++                if timeout is not None:
++                    elapsed = time.monotonic() - start_time
++                    remaining_time = timeout - elapsed
++
++                    if remaining_time <= 0:
++                        return False
++
++                    wait_time = min(wait_time, remaining_time)
++
++            # 等待令牌补充
++            await asyncio.sleep(wait_time)
++
++    def _refill(self) -> None:
++        """补充令牌（非线程安全，需要在锁内调用）"""
++        now = time.monotonic()
++        elapsed = now - self.last_refill
++        tokens_to_add = elapsed * self.refill_rate
++
++        self.tokens = min(self.capacity, self.tokens + tokens_to_add)
++        self.last_refill = now
+ 
+ 
+ class RateLimiter:
+-    """智能请求频率控制器."""
+-
+-    def __init__(
+-        self
+-        strategy: RateLimitStrategy = RateLimitStrategy.ADAPTIVE
+-        config: RequestConfig = None
+-        max_domains: int = 100
+-    ):
+-        self.strategy = strategy
+-        self.config = config or RequestConfig()
+-        self.max_domains = max_domains
+-
+-        # 域名统计信息
+-        self.domain_stats: dict[str, DomainStats] = {}
+-        self._lock = asyncio.Lock()
+-
+-        # 全局请求计数器
+-        self.global_request_count = 0
+-        self.global_last_request_time = 0.0
+-
+-        logger.info(f"频率控制器初始化完成，策略: {strategy.value}")
+-
+-    async def wait_for_slot(self, domain: str) -> float:
+-        """等待请求时机，返回实际延迟时间."""
+-        async with self._lock:
+-            stats = self._get_or_create_stats(domain)
+-
+-            # 计算延迟时间
+-            delay = await self._calculate_delay(stats)
+-
+-            # 应用延迟
+-            if delay > 0:
+-                logger.debug(f"域名 {domain} 延迟 {delay:.2f}s")
+-                await asyncio.sleep(delay)
+-
+-            # 更新统计信息
+-            stats.last_request_time = time.time()
+-            self.global_last_request_time = time.time()
+-            self.global_request_count += 1
+-
+-            return delay
+-
+-    async def _calculate_delay(self, stats: DomainStats) -> float:
+-        """计算延迟时间."""
+-        current_time = time.time()
+-
+-        if self.strategy == RateLimitStrategy.CONSERVATIVE:
+-            return self._conservative_delay(stats, current_time)
+-        elif self.strategy == RateLimitStrategy.NORMAL:
+-            return self._normal_delay(stats, current_time)
+-        elif self.strategy == RateLimitStrategy.AGGRESSIVE:
+-            return self._aggressive_delay(stats, current_time)
+-        elif self.strategy == RateLimitStrategy.ADAPTIVE:
+-            return await self._adaptive_delay(stats, current_time)
+-        else:
+-            return self.config.base_delay
+-
+-    def _conservative_delay(self, stats: DomainStats, current_time: float) -> float:
+-        """保守策略延迟计算."""
+-        # 使用较长的基础延迟
+-        base_delay = self.config.base_delay * 2.0
+-
+-        # 考虑连续错误
+-        if stats.consecutive_errors > 0:
+-            base_delay *= 1 + stats.consecutive_errors * 0.5
+-
+-        # 确保最小延迟
+-        return max(base_delay, self.config.min_delay * 2.0)
+-
+-    def _normal_delay(self, stats: DomainStats, current_time: float) -> float:
+-        """正常策略延迟计算."""
+-        # 基础延迟 + 随机波动
+-        delay = self.config.base_delay + random.uniform(-0.5, 0.5)
+-
+-        # 错误惩罚
+-        if stats.consecutive_errors > 0:
+-            delay *= 1 + stats.consecutive_errors * 0.3
+-
+-        return max(delay, self.config.min_delay)
+-
+-    def _aggressive_delay(self, stats: DomainStats, current_time: float) -> float:
+-        """激进策略延迟计算."""
+-        # 较短的基础延迟
+-        delay = self.config.base_delay * 0.7
+-
+-        # 随机波动较小
+-        delay += random.uniform(-0.2, 0.2)
+-
+-        # 错误惩罚较轻
+-        if stats.consecutive_errors > 0:
+-            delay *= 1 + stats.consecutive_errors * 0.2
+-
+-        return max(delay, self.config.min_delay * 0.5)
+-
+-    async def _adaptive_delay(self, stats: DomainStats, current_time: float) -> float:
+-        """自适应策略延迟计算."""
+-        # 基于成功率和响应时间动态调整
+-        delay = stats.current_delay
+-
+-        # 根据成功率调整
+-        if stats.request_count > 5:  # 有足够样本时才调整
+-            success_rate = stats.success_rate
+-
+-            if success_rate < 0.8:  # 成功率低，增加延迟
+-                delay *= 1.5
+-            elif success_rate > 0.95:  # 成功率高，减少延迟
+-                delay *= 0.8
+-
+-        # 根据连续错误调整
+-        if stats.consecutive_errors > 0:
+-            delay *= 1 + stats.consecutive_errors * 0.4
+-
+-        # 根据响应时间调整
+-        if stats.avg_response_time > 5.0:  # 响应慢，增加延迟
+-            delay *= 1.2
+-
+-        # 添加随机性避免模式识别
+-        delay += random.uniform(-delay * 0.1, delay * 0.1)
+-
+-        # 应用配置限制
+-        delay = max(delay, self.config.min_delay)
+-        delay = min(delay, self.config.max_delay)
+-
+-        return delay
+-
+-    async def record_success(self, domain: str, response_time: float):
+-        """记录成功请求."""
+-        async with self._lock:
+-            stats = self._get_or_create_stats(domain)
+-
+-            stats.request_count += 1
+-            stats.success_count += 1
+-            stats.last_success_time = time.time()
+-            stats.consecutive_errors = 0
+-            stats.consecutive_successes += 1
+-            stats.total_response_time += response_time
+-            stats.avg_response_time = stats.total_response_time / stats.success_count
+-
+-            # 自适应调整当前延迟
+-            if self.strategy == RateLimitStrategy.ADAPTIVE:
+-                # 连续成功时逐渐减少延迟
+-                if stats.consecutive_successes >= 3:
+-                    stats.current_delay *= self.config.success_delay_reduction
+-                    stats.current_delay = max(
+-                        stats.current_delay, self.config.min_delay
+-                    )
+-
+-            logger.debug(f"域名 {domain} 成功记录，响应时间: {response_time:.2f}s")
+-
+-    async def record_error(self, domain: str, error_type: str = "unknown"):
+-        """记录错误请求."""
+-        async with self._lock:
+-            stats = self._get_or_create_stats(domain)
+-
+-            stats.request_count += 1
+-            stats.error_count += 1
+-            stats.last_error_time = time.time()
+-            stats.consecutive_errors += 1
+-            stats.consecutive_successes = 0
+-
+-            # 自适应调整当前延迟
+-            if self.strategy == RateLimitStrategy.ADAPTIVE:
+-                # 错误时增加延迟
+-                stats.current_delay *= self.config.error_delay_multiplier
+-                stats.current_delay = min(stats.current_delay, self.config.max_delay)
+-
+-            logger.warning(
+-                f"域名 {domain} 错误记录 ({error_type})，连续错误: {stats.consecutive_errors}"
+-            )
+-
+-    def _get_or_create_stats(self, domain: str) -> DomainStats:
+-        """获取或创建域名统计信息."""
+-        if domain not in self.domain_stats:
+-            # 限制域名数量
+-            if len(self.domain_stats) >= self.max_domains:
+-                # 移除最旧的域名
+-                oldest_domain = min(
+-                    self.domain_stats.keys()
+-                    key=lambda d: self.domain_stats[d].last_request_time
+-                )
+-                del self.domain_stats[oldest_domain]
+-                logger.info(f"移除最旧域名统计: {oldest_domain}")
+-
+-            self.domain_stats[domain] = DomainStats(
+-                domain=domain, current_delay=self.config.base_delay
+-            )
++    """
++    统一速率限制器
+ 
+-        return self.domain_stats[domain]
++    基于 Token Bucket 算法实现多域名并发限流控制。
++    支持配置驱动的动态策略和 Async Context Manager 接口。
+ 
+-    def get_domain_stats(self, domain: str) -> Optional[DomainStats]:
+-        """获取域名统计信息."""
+-        return self.domain_stats.get(domain)
++    使用示例:
++        config = {
++            "fotmob.com": {"rate": 2.0, "burst": 5},
++            "fbref.com": {"rate": 1.0, "burst": 3},
++            "default": {"rate": 1.0, "burst": 1}
++        }
+ 
+-    def get_all_stats(self) -> dict[str, DomainStats]:
+-        """获取所有域名统计信息."""
+-        return self.domain_stats.copy()
++        limiter = RateLimiter(config)
+ 
+-    def get_global_stats(self) -> dict:
+-        """获取全局统计信息."""
+-        total_requests = sum(
+-            stats.request_count for stats in self.domain_stats.values()
+-        )
+-        total_successes = sum(
+-            stats.success_count for stats in self.domain_stats.values()
+-        )
+-        total_errors = sum(stats.error_count for stats in self.domain_stats.values())
++        # 使用 Async Context Manager
++        async with limiter.acquire("fotmob.com"):
++            # 在此范围内执行请求
++            await some_http_request()
++    """
+ 
+-        avg_success_rate = (
+-            total_successes / total_requests if total_requests > 0 else 0.0
++    def __init__(
++        self,
++        config: Optional[Dict[str, Any]] = None,
++        default_config: Optional[RateLimitConfig] = None
++    ) -> None:
++        """
++        初始化速率限制器
++
++        Args:
++            config: 域名配置字典
++            default_config: 默认配置
++        """
++        self.config: Dict[str, RateLimitConfig] = {}
++        self.buckets: Dict[str, TokenBucket] = {}
++        self._default_config = default_config or RateLimitConfig(
++            rate=1.0,
++            burst=1,
++            max_wait_time=30.0
+         )
+ 
+-        return {
+-            "strategy": self.strategy.value
+-            "total_requests": total_requests
+-            "global_request_count": self.global_request_count
+-            "total_successes": total_successes
+-            "total_errors": total_errors
+-            "success_rate": avg_success_rate
+-            "active_domains": len(self.domain_stats)
+-            "config": {
+-                "min_delay": self.config.min_delay
+-                "max_delay": self.config.max_delay
+-                "base_delay": self.config.base_delay
+-            }
+-        }
+-
+-    async def reset_stats(self, domain: str = None):
+-        """重置统计信息."""
+-        async with self._lock:
+-            if domain:
+-                if domain in self.domain_stats:
+-                    del self.domain_stats[domain]
+-                    logger.info(f"重置域名统计: {domain}")
++        # 解析配置
++        if config:
++            self._parse_config(config)
++
++        # 添加默认配置
++        if "default" not in self.config:
++            self.config["default"] = self._default_config
++
++    def _parse_config(self, config: Dict[str, Any]) -> None:
++        """
++        解析配置字典
++
++        Args:
++            config: 配置字典，支持两种格式：
++                1. {"domain": {"rate": 2.0, "burst": 5}}
++                2. {"domain": RateLimitConfig(2.0, 5)}
++        """
++        for domain, cfg in config.items():
++            if isinstance(cfg, dict):
++                # 字典格式配置
++                rate = cfg.get("rate", 1.0)
++                burst = cfg.get("burst", 1)
++                max_wait_time = cfg.get("max_wait_time")
++                self.config[domain] = RateLimitConfig(
++                    rate=float(rate),
++                    burst=int(burst),
++                    max_wait_time=max_wait_time
++                )
++            elif isinstance(cfg, RateLimitConfig):
++                # 直接使用 RateLimitConfig 对象
++                self.config[domain] = cfg
+             else:
+-                self.domain_stats.clear()
+-                self.global_request_count = 0
+-                self.global_last_request_time = 0.0
+-                logger.info("重置所有统计信息")
+-
+-    def set_strategy(self, strategy: RateLimitStrategy):
+-        """设置频率限制策略."""
+-        old_strategy = self.strategy
+-        self.strategy = strategy
+-        logger.info(f"频率策略变更: {old_strategy.value} -> {strategy.value}")
+-
+-    async def adjust_delays(self, factor: float):
+-        """批量调整所有域名的延迟."""
+-        async with self._lock:
+-            for stats in self.domain_stats.values():
+-                stats.current_delay *= factor
+-                stats.current_delay = max(stats.current_delay, self.config.min_delay)
+-                stats.current_delay = min(stats.current_delay, self.config.max_delay)
+-
+-            logger.info(f"所有域名延迟调整: {factor:.2f}x")
+-
+-
+-# 全局频率控制器实例
+-_rate_limiter: Optional[RateLimiter] = None
+-
+-
+-def get_rate_limiter() -> RateLimiter:
+-    """获取全局频率控制器实例."""
+-    global _rate_limiter
+-    if _rate_limiter is None:
+-        _rate_limiter = RateLimiter()
+-    return _rate_limiter
+-
+-
+-async def wait_for_request_slot(domain: str) -> float:
+-    """等待请求时机的便捷函数."""
+-    return await get_rate_limiter().wait_for_slot(domain)
+-
+-
+-async def record_request_success(domain: str, response_time: float):
+-    """记录成功请求的便捷函数."""
+-    await get_rate_limiter().record_success(domain, response_time)
++                raise ValueError(f"Invalid config for domain {domain}: {cfg}")
++
++    def _get_bucket(self, domain: str) -> TokenBucket:
++        """
++        获取或创建域名的令牌桶
++
++        Args:
++            domain: 域名
++
++        Returns:
++            TokenBucket: 令牌桶实例
++        """
++        if domain not in self.buckets:
++            # 使用域名特定配置或默认配置
++            config = self.config.get(domain, self.config["default"])
++            self.buckets[domain] = TokenBucket(
++                tokens=config.burst,
++                capacity=config.burst,
++                refill_rate=config.rate
++            )
++        return self.buckets[domain]
++
++    @asynccontextmanager
++    async def acquire(self, domain: str, tokens: int = 1):
++        """
++        获取令牌的 Async Context Manager
++
++        Args:
++            domain: 域名
++            tokens: 需要的令牌数
++
++        Yields:
++            None: 成功获取令牌
++
++        Raises:
++            asyncio.TimeoutError: 超时未获取令牌
++            RuntimeError: 速率限制配置错误
++        """
++        bucket = self._get_bucket(domain)
++        config = self.config.get(domain, self.config["default"])
++
++        # 尝试立即获取令牌
++        if await bucket.consume(tokens):
++            yield
++            return
++
++        # 需要等待令牌
++        try:
++            success = await bucket.wait_for_tokens(
++                tokens=tokens,
++                timeout=config.max_wait_time
++            )
+ 
++            if not success:
++                raise asyncio.TimeoutError(
++                    f"Rate limit exceeded for domain {domain}: "
++                    f"waited {config.max_wait_time}s without acquiring {tokens} tokens"
++                )
+ 
+-async def record_request_error(domain: str, error_type: str = "unknown"):
+-    """记录错误请求的便捷函数."""
+-    await get_rate_limiter().record_error(domain, error_type)
++            yield
++
++        except asyncio.CancelledError:
++            # 任务被取消，释放令牌
++            async with bucket.lock:
++                bucket.tokens = min(bucket.capacity, bucket.tokens + tokens)
++            raise
++
++    async def try_acquire(self, domain: str, tokens: int = 1) -> bool:
++        """
++        尝试立即获取令牌（非阻塞）
++
++        Args:
++            domain: 域名
++            tokens: 需要的令牌数
++
++        Returns:
++            bool: 是否成功获取令牌
++        """
++        bucket = self._get_bucket(domain)
++        return await bucket.consume(tokens)
++
++    async def wait_for_available(self, domain: str, tokens: int = 1) -> float:
++        """
++        等待令牌可用并返回等待时间
++
++        Args:
++            domain: 域名
++            tokens: 需要的令牌数
++
++        Returns:
++            float: 实际等待时间（秒）
++        """
++        start_time = time.monotonic()
++        bucket = self._get_bucket(domain)
++        config = self.config.get(domain, self.config["default"])
++
++        await bucket.wait_for_tokens(tokens, config.max_wait_time)
++        return time.monotonic() - start_time
++
++    def get_status(self, domain: Optional[str] = None) -> Dict[str, Any]:
++        """
++        获取速率限制器状态
++
++        Args:
++            domain: 特定域名，None表示所有域名
++
++        Returns:
++            Dict[str, Any]: 状态信息
++        """
++        if domain:
++            if domain not in self.buckets:
++                return {"error": f"No bucket found for domain: {domain}"}
++
++            bucket = self.buckets[domain]
++            config = self.config.get(domain, self.config["default"])
++
++            return {
++                "domain": domain,
++                "available_tokens": bucket.tokens,
++                "capacity": bucket.capacity,
++                "rate": bucket.refill_rate,
++                "config": {
++                    "rate": config.rate,
++                    "burst": config.burst,
++                    "max_wait_time": config.max_wait_time
++                }
++            }
++        else:
++            # 返回所有域名的状态
++            status = {}
++            for d, bucket in self.buckets.items():
++                config = self.config.get(d, self.config["default"])
++                status[d] = {
++                    "available_tokens": bucket.tokens,
++                    "capacity": bucket.capacity,
++                    "rate": bucket.refill_rate,
++                    "config": {
++                        "rate": config.rate,
++                        "burst": config.burst,
++                        "max_wait_time": config.max_wait_time
++                    }
++                }
++            return status
++
++    def update_config(self, domain: str, config: RateLimitConfig) -> None:
++        """
++        更新域名配置
++
++        Args:
++            domain: 域名
++            config: 新的速率限制配置
++        """
++        self.config[domain] = config
++
++        # 如果已存在令牌桶，需要重新创建以应用新配置
++        if domain in self.buckets:
++            del self.buckets[domain]
++
++    def remove_domain(self, domain: str) -> None:
++        """
++        移除域名配置和令牌桶
++
++        Args:
++            domain: 要移除的域名
++        """
++        if domain in self.config:
++            del self.config[domain]
++        if domain in self.buckets:
++            del self.buckets[domain]
++
++    async def clear_all(self) -> None:
++        """清空所有令牌桶"""
++        for bucket in self.buckets.values():
++            async with bucket.lock:
++                bucket.tokens = 0.0
++
++
++# 便利函数
++def create_rate_limiter(
++    config: Optional[Dict[str, Any]] = None,
++    default_rate: float = 1.0,
++    default_burst: int = 1
++) -> RateLimiter:
++    """
++    创建速率限制器的便利函数
++
++    Args:
++        config: 域名配置字典
++        default_rate: 默认速率
++        default_burst: 默认突发容量
++
++    Returns:
++        RateLimiter: 速率限制器实例
++    """
++    default_config = RateLimitConfig(
++        rate=default_rate,
++        burst=default_burst,
++        max_wait_time=30.0
++    )
++
++    return RateLimiter(config, default_config)
++
++
++# 模块导出
++__all__ = [
++    "RateLimiter",
++    "RateLimitConfig",
++    "TokenBucket",
++    "create_rate_limiter",
++]
+\ No newline at end of file
