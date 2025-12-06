@@ -329,57 +329,12 @@ setup_docs_routes(app)
 # 遵循架构分层原则，避免在main.py中直接定义业务逻辑
 
 
-@app.get("/api/v1/predictions/{match_id}")
-async def get_prediction(match_id: int):
-    """获取比赛预测 - 使用真实的XGBoost模型"""
-    try:
-        # 导入推理服务
-        from src.services.inference_service import inference_service
-
-        # 调用推理服务进行预测
-        prediction_result = await inference_service.predict_match(match_id)
-
-        if not prediction_result.get("success", False):
-            raise HTTPException(
-                status_code=404, detail=prediction_result.get("error", "预测失败")
-            )
-
-        return prediction_result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"获取预测失败: {e}")
-        raise HTTPException(status_code=500, detail="预测服务暂时不可用")
+# Note: 预测相关路由已移动到 src/api/predictions/router.py
+# 遵循架构分层原则，避免在main.py中直接定义业务逻辑路由
 
 
-@app.post("/api/v1/predictions/{match_id}/predict")
-async def generate_prediction(match_id: int):
-    """生成比赛预测 - 实时调用XGBoost模型"""
-    try:
-        # 导入推理服务
-        from src.services.inference_service import inference_service
-
-        # 调用推理服务进行实时预测
-        prediction_result = await inference_service.predict_match(match_id)
-
-        if not prediction_result.get("success", False):
-            raise HTTPException(
-                status_code=404, detail=prediction_result.get("error", "预测生成失败")
-            )
-
-        # 添加生成时间戳
-        from datetime import datetime
-
-        prediction_result["generated_at"] = datetime.now().isoformat()
-
-        return prediction_result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"生成预测失败: {e}")
-        raise HTTPException(status_code=500, detail="预测生成失败")
+# 预测相关路由已完全移动到 src/api/predictions/router.py
+# 包括: GET /api/v1/predictions/{match_id} 和 POST /api/v1/predictions/{match_id}/predict
 
 
 @app.get("/")

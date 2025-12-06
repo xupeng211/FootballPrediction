@@ -14,6 +14,9 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
+# 导入标准响应模型
+from src.inference.schemas import PredictionResponse, ModelType
+
 # 创建路由器
 router = APIRouter(prefix="/predictions", tags=["predictions"])
 
@@ -296,30 +299,89 @@ async def get_prediction_by_id_endpoint(prediction_id: str):
         raise HTTPException(status_code=500, detail=f"获取预测失败: {str(e)}") from e
 
 
-@router.get("/match/{match_id}")
+@router.get("/match/{match_id}", response_model=PredictionResponse)
 async def get_match_predictions(match_id: int):
-    """获取指定比赛的预测列表.
+    """获取指定比赛的预测.
 
-    返回指定比赛的所有预测记录，用于测试和数据验证.
+    返回符合PredictionResponse模型的标准预测结果.
     """
-    logger.info(f"获取比赛 {match_id} 的预测列表")
+    logger.info(f"获取比赛 {match_id} 的预测")
 
     try:
-        # 导入预测服务
-        from src.services.prediction_service import PredictionService
+        # 导入推理服务和响应模型
+        from src.services.inference_service import inference_service
+        from src.inference.schemas import PredictionResponse, ModelType
+        import uuid
+        from datetime import datetime
 
-        prediction_service = PredictionService()
+        # 调用推理服务进行预测
+        prediction_result = await inference_service.predict_match(match_id)
 
-        # 获取比赛的预测列表
-        predictions = await prediction_service.get_match_predictions(match_id)
+        if not prediction_result.get("success", False):
+            raise HTTPException(
+                status_code=404, detail=prediction_result.get("error", "预测生成失败")
+            )
 
-        logger.info(f"成功获取比赛 {match_id} 的 {len(predictions)} 条预测")
-        return predictions
+        # 转换为PredictionResponse格式
+        # 推理服务可能返回带有"data"字段的结构，或者直接返回预测数据
+        if "data" in prediction_result:
+            response_data = prediction_result["data"]
+        else:
+            response_data = prediction_result
 
+        # 映射推理服务字段到PredictionResponse
+        # 处理中文结果到英文枚举的映射
+        predicted_outcome_raw = response_data.get("prediction", response_data.get("predicted_outcome", "home_win"))
+        outcome_mapping = {
+            "home_win": "home_win",
+            "主队胜": "home_win",
+            "主胜": "home_win",
+            "draw": "draw",
+            "平局": "draw",
+            "away_win": "away_win",
+            "客队胜": "away_win",
+            "客胜": "away_win"
+        }
+        predicted_outcome = outcome_mapping.get(predicted_outcome_raw, "home_win")
+
+        prediction_response = PredictionResponse(
+            request_id=f"req_{uuid.uuid4().hex[:8]}",
+            match_id=str(match_id),
+            predicted_at=datetime.utcnow(),
+
+            # 预测结果 - 适配推理服务的字段名
+            home_win_prob=response_data.get("home_win_prob", 0.33),
+            draw_prob=response_data.get("draw_prob", 0.33),
+            away_win_prob=response_data.get("away_win_prob", 0.34),
+            predicted_outcome=predicted_outcome,
+            confidence=response_data.get("confidence", 0.5),
+
+            # 模型信息
+            model_name=response_data.get("model_name", "default_xgboost"),
+            model_version=response_data.get("model_version", "mock_v1"),
+            model_type=ModelType.MOCK if response_data.get("status") == "mock_data" else ModelType.XGBOOST,
+
+            # 元数据
+            features_used=response_data.get("features_used", []),
+            prediction_time_ms=response_data.get("prediction_time_ms"),
+            cached=response_data.get("cached", False),
+            metadata={
+                "status": response_data.get("status", "success"),
+                "note": response_data.get("note", ""),
+                "suggestion": response_data.get("suggestion", ""),
+                **response_data.get("metadata", {})
+            }
+        )
+
+        logger.info(f"成功生成比赛 {match_id} 的预测: {prediction_response.predicted_outcome}")
+        return prediction_response
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"获取比赛 {match_id} 预测列表失败: {e}")
+        logger.error(f"获取比赛 {match_id} 预测失败: {e}")
         raise HTTPException(
-            status_code=500, detail=f"获取预测列表失败: {str(e)}"
+            status_code=500, detail=f"获取预测失败: {str(e)}"
         ) from e
 
 

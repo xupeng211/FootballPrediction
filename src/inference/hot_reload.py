@@ -15,8 +15,15 @@ from typing import Any, Optional
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileModifiedEvent
+try:
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler, FileModifiedEvent
+    HAVE_WATCHDOG = True
+except ImportError:
+    HAVE_WATCHDOG = False
+    Observer = None
+    FileSystemEventHandler = object
+    FileModifiedEvent = object
 
 from .loader import get_model_loader, ModelLoader
 from .errors import HotReloadError, ErrorCode
@@ -134,18 +141,25 @@ class HotReloadManager:
             # 确保模型目录存在
             self.model_directory.mkdir(parents=True, exist_ok=True)
 
-            # 创建文件监控器
-            self._file_handler = ModelFileHandler(self)
-            self._observer = Observer()
-            self._observer.schedule(
-                self._file_handler,
-                str(self.model_directory),
-                recursive=True
-            )
+            # 创建文件监控器（仅在watchdog可用时）
+            if HAVE_WATCHDOG:
+                self._file_handler = ModelFileHandler(self)
+                self._observer = Observer()
+                self._observer.schedule(
+                    self._file_handler,
+                    str(self.model_directory),
+                    recursive=True
+                )
+            else:
+                self._observer = None
+                logger.warning("Watchdog not available, hot reload functionality disabled")
 
-            # 启动监控
-            self._observer.start()
-            self._is_monitoring = True
+            # 启动监控（仅在observer可用时）
+            if self._observer:
+                self._observer.start()
+                self._is_monitoring = True
+            else:
+                self._is_monitoring = False
             self._stats["monitoring_start"] = datetime.utcnow()
 
             # 启动健康检查任务

@@ -17,10 +17,28 @@ from typing import Any, Optional, Union
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 
-import joblib
-from cachetools import LRUCache
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+try:
+    import joblib
+    HAVE_JOBLIB = True
+except ImportError:
+    HAVE_JOBLIB = False
+    joblib = None
+
+try:
+    from cachetools import LRUCache
+    HAVE_CACHETOOLS = True
+except ImportError:
+    HAVE_CACHETOOLS = False
+    LRUCache = dict
+
+try:
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler
+    HAVE_WATCHDOG = True
+except ImportError:
+    HAVE_WATCHDOG = False
+    Observer = None
+    FileSystemEventHandler = object
 
 from .errors import ModelLoadError, ErrorCode
 from .schemas import ModelInfo, ModelType
@@ -100,7 +118,7 @@ class ModelLoader:
         self.max_loaded_models = max_loaded_models
 
         # 模型存储
-        self._loaded_models: LRUCache[str, LoadedModel] = LRUCache(maxsize=max_loaded_models)
+        self._loaded_models: LRUCache[str, LoadedModel] = LRUCache(maxsize=max_loaded_models) if HAVE_CACHETOOLS else {}
         self._model_metadata: dict[str, ModelMetadata] = {}
 
         # 线程池和锁

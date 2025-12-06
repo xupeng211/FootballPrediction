@@ -15,7 +15,7 @@
 
 from enum import Enum
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, JSON, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, JSON, Text, Float
 from sqlalchemy.orm import relationship
 
 from src.database.base import BaseModel
@@ -68,6 +68,39 @@ class Match(BaseModel):
     events = Column(JSON, nullable=True)   # 比赛事件 (进球、红黄牌、换人)
     odds = Column(JSON, nullable=True)     # 赔率信息
     match_metadata = Column(JSON, nullable=True)  # 其他元数据 (xG、rating等)
+
+    # 🎯 高级统计字段 - P2-3.1 数据库结构修复
+    # 期望进球数 (Expected Goals)
+    home_xg = Column(Float, nullable=True, comment="主场期望进球数")
+    away_xg = Column(Float, nullable=True, comment="客场期望进球数")
+
+    # 控球率 (Possession %)
+    home_possession = Column(Float, nullable=True, comment="主场控球率 (%)")
+    away_possession = Column(Float, nullable=True, comment="客场控球率 (%)")
+
+    # 射门数据
+    home_shots = Column(Integer, nullable=True, comment="主场射门数")
+    away_shots = Column(Integer, nullable=True, comment="客场射门数")
+    home_shots_on_target = Column(Integer, nullable=True, comment="主场射正数")
+    away_shots_on_target = Column(Integer, nullable=True, comment="客场射正数")
+
+    # 角球和犯规
+    home_corners = Column(Integer, nullable=True, comment="主场角球数")
+    away_corners = Column(Integer, nullable=True, comment="客场角球数")
+    home_fouls = Column(Integer, nullable=True, comment="主场犯规数")
+    away_fouls = Column(Integer, nullable=True, comment="客场犯规数")
+
+    # 黄牌和红牌
+    home_yellow_cards = Column(Integer, nullable=True, comment="主场黄牌数")
+    away_yellow_cards = Column(Integer, nullable=True, comment="客场黄牌数")
+    home_red_cards = Column(Integer, nullable=True, comment="主场红牌数")
+    away_red_cards = Column(Integer, nullable=True, comment="客场红牌数")
+
+    # 传球统计
+    home_passes = Column(Integer, nullable=True, comment="主场传球数")
+    away_passes = Column(Integer, nullable=True, comment="客场传球数")
+    home_pass_accuracy = Column(Float, nullable=True, comment="主场传球成功率 (%)")
+    away_pass_accuracy = Column(Float, nullable=True, comment="客场传球成功率 (%)")
 
     # 数据来源和质量追踪
     data_source = Column(String(50), default="fotmob_v2")  # 数据来源标识

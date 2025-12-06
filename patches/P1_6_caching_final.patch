@@ -1,0 +1,1772 @@
+diff --git a/src/core/cache/__init__.py b/src/core/cache/__init__.py
+index 974d58eb3..2f5967c75 100644
+--- a/src/core/cache/__init__.py
++++ b/src/core/cache/__init__.py
+@@ -1,8 +1,64 @@
+-from typing import Optional
++"""高性能异步缓存模块
++High-Performance Async Cache Module.
+ 
+-"""src.core.cache 模块 - 桩实现".
+-
+-临时创建的桩模块,用于解决导入错误.
++提供基于Redis的异步缓存基础设施，包括连接池管理、
++序列化处理、缓存装饰器和优雅降级机制。
++Provides Redis-based async cache infrastructure with connection pooling,
++serialization handling, cache decorators, and graceful degradation.
+ """
+ 
+-# 桩实现
++# 导入核心缓存模块
++from src.core.cache_main import (
++    RedisCache,
++    get_cache,
++    cache_get,
++    cache_set,
++    cache_delete,
++    cache_key_builder,
++    CacheSerializationError,
++    CacheConnectionError,
++)
++
++# 导入装饰器模块
++from src.core.cache_decorators import (
++    cached,
++    cached_long,
++    cached_short,
++    cached_medium,
++    cached_method,
++    BatchCache,
++    invalidate_pattern,
++    async_cache,
++    cache,
++)
++
++__all__ = [
++    # 核心缓存类
++    'RedisCache',
++    'get_cache',
++
++    # 便捷函数
++    'cache_get',
++    'cache_set',
++    'cache_delete',
++    'cache_key_builder',
++
++    # 异常类
++    'CacheSerializationError',
++    'CacheConnectionError',
++
++    # 装饰器
++    'cached',
++    'cached_long',
++    'cached_short',
++    'cached_medium',
++    'cached_method',
++
++    # 批量操作
++    'BatchCache',
++    'invalidate_pattern',
++
++    # 别名
++    'async_cache',
++    'cache',
++]
+diff --git a/src/core/cache/__pycache__/__init__.cpython-311.pyc b/src/core/cache/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 000000000..c7e5ef70a
+Binary files /dev/null and b/src/core/cache/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/src/core/cache_decorators.py b/src/core/cache_decorators.py
+new file mode 100644
+index 000000000..9b9beb7a3
+--- /dev/null
++++ b/src/core/cache_decorators.py
+@@ -0,0 +1,463 @@
++"""高性能缓存装饰器
++High-Performance Cache Decorators.
++
++提供异步缓存装饰器，支持TTL、键生成、并发保护等功能。
++Provides async cache decorators with TTL support, key generation,
++concurrency protection, and other features.
++
++Author: Claude Code
++Version: 1.0.0
++"""
++
++import asyncio
++import functools
++import inspect
++import logging
++from typing import Any, Callable, Optional, Union
++
++from .cache_main import RedisCache, get_cache, cache_key_builder
++
++logger = logging.getLogger(__name__)
++
++
++class CacheStampedeProtection:
++    """缓存击穿保护.
++
++    使用asyncio.Lock防止同一键的并发请求同时执行底层函数。
++    Uses asyncio.Lock to prevent concurrent requests for the same key
++    from executing the underlying function simultaneously.
++    """
++
++    def __init__(self):
++        self._locks: dict[str, asyncio.Lock] = {}
++        self._locks_lock = asyncio.Lock()
++
++    async def get_lock(self, key: str) -> asyncio.Lock:
++        """获取指定键的锁.
++
++        Args:
++            key: 缓存键
++
++        Returns:
++            asyncio.Lock: 对应的锁
++        """
++        async with self._locks_lock:
++            if key not in self._locks:
++                self._locks[key] = asyncio.Lock()
++            return self._locks[key]
++
++    async def cleanup(self):
++        """清理未使用的锁."""
++        async with self._locks_lock:
++            # 清理未被引用的锁
++            for key in list(self._locks.keys()):
++                if not self._locks[key].locked():
++                    del self._locks[key]
++
++
++# 全局击穿保护实例
++_stampede_protection = CacheStampedeProtection()
++
++
++def cached(
++    ttl: int = 300,
++    namespace: str = "",
++    key_builder: Optional[Callable] = None,
++    unless: Optional[Callable] = None,
++    prefix: str = "cache",
++    stampede_protection: bool = True,
++    cache_instance: Optional[RedisCache] = None
++):
++    """高性能异步缓存装饰器.
++
++    Args:
++        ttl: 缓存过期时间（秒），默认300秒
++        namespace: 缓存命名空间，用于分组相关缓存
++        key_builder: 自定义键生成函数，签名为 func(*args, **kwargs) -> str
++        unless: 条件函数，返回True时跳过缓存
++        prefix: 缓存键前缀
++        stampede_protection: 是否启用缓存击穿保护
++        cache_instance: 自定义缓存实例，默认使用全局实例
++
++    Returns:
++        装饰后的函数
++
++    Examples:
++        >>> @cached(ttl=3600, namespace="predictions")
++        >>> async def get_prediction(match_id: int):
++        ...     # 耗时的预测计算
++        ...     return prediction_result
++
++        >>> @cached(ttl=600, key_builder=lambda id: f"user_profile:{id}")
++        >>> async def get_user_profile(user_id: int):
++        ...     # 获取用户资料
++        ...     return profile_data
++    """
++    def decorator(func: Callable) -> Callable:
++        # 确保函数是异步的
++        if not inspect.iscoroutinefunction(func):
++            raise TypeError(f"@cached装饰器只能用于异步函数: {func}")
++
++        @functools.wraps(func)
++        async def wrapper(*args, **kwargs):
++            # 检查是否跳过缓存
++            if unless and unless(*args, **kwargs):
++                return await func(*args, **kwargs)
++
++            # 生成缓存键
++            if key_builder:
++                cache_key = key_builder(*args, **kwargs)
++            else:
++                cache_key = _default_key_builder(
++                    func, namespace, prefix, *args, **kwargs
++                )
++
++            # 获取缓存实例
++            cache = cache_instance or await get_cache()
++
++            # 尝试从缓存获取
++            try:
++                cached_result = await cache.get(cache_key)
++                if cached_result is not None:
++                    logger.debug(f"缓存命中: {cache_key}")
++                    return cached_result
++            except Exception as e:
++                logger.warning(f"缓存读取失败 {cache_key}: {e}")
++
++            logger.debug(f"缓存未命中: {cache_key}")
++
++            # 缓存击穿保护
++            if stampede_protection:
++                lock = await _stampede_protection.get_lock(cache_key)
++                async with lock:
++                    # 再次尝试从缓存获取（可能在等待期间已被其他请求设置）
++                    try:
++                        cached_result = await cache.get(cache_key)
++                        if cached_result is not None:
++                            return cached_result
++                    except Exception as e:
++                        logger.warning(f"缓存二次读取失败 {cache_key}: {e}")
++
++                    # 执行原函数
++                    try:
++                        result = await func(*args, **kwargs)
++
++                        # 写入缓存
++                        try:
++                            await cache.set(cache_key, result, ttl)
++                            logger.debug(f"缓存已设置: {cache_key} (TTL: {ttl}s)")
++                        except Exception as e:
++                            logger.warning(f"缓存写入失败 {cache_key}: {e}")
++
++                        return result
++
++                    except Exception as e:
++                        logger.error(f"函数执行失败 {func.__name__}: {e}")
++                        raise
++            else:
++                # 不使用击穿保护，直接执行
++                try:
++                    result = await func(*args, **kwargs)
++
++                    # 写入缓存
++                    try:
++                        await cache.set(cache_key, result, ttl)
++                        logger.debug(f"缓存已设置: {cache_key} (TTL: {ttl}s)")
++                    except Exception as e:
++                        logger.warning(f"缓存写入失败 {cache_key}: {e}")
++
++                    return result
++
++                except Exception as e:
++                    logger.error(f"函数执行失败 {func.__name__}: {e}")
++                    raise
++
++        # 添加缓存控制方法
++        wrapper.cache_key = functools.partial(
++            _default_key_builder, func, namespace, prefix
++        )
++        wrapper.invalidate = functools.partial(
++            _invalidate_cache, func, namespace, prefix, cache_instance
++        )
++
++        return wrapper
++
++    return decorator
++
++
++def _default_key_builder(
++    func: Callable,
++    namespace: str,
++    prefix: str,
++    *args,
++    **kwargs
++) -> str:
++    """默认的缓存键生成器.
++
++    Args:
++        func: 被装饰的函数
++        namespace: 命名空间
++        prefix: 键前缀
++        *args: 函数位置参数
++        **kwargs: 函数关键字参数
++
++    Returns:
++        str: 缓存键
++    """
++    # 构建基础键
++    parts = [prefix, func.__module__, func.__qualname__]
++
++    if namespace:
++        parts.insert(1, namespace)
++
++    # 跳过第一个参数（通常是self或cls）
++    func_args = args[1:] if args and hasattr(args[0], '__class__') else args
++
++    # 生成参数键
++    if func_args or kwargs:
++        args_key = cache_key_builder("", *func_args, **kwargs)
++        parts.append(args_key)
++
++    return ":".join(parts)
++
++
++async def _invalidate_cache(
++    func: Callable,
++    namespace: str,
++    prefix: str,
++    cache_instance: Optional[RedisCache],
++    *args,
++    **kwargs
++):
++    """使缓存失效.
++
++    Args:
++        func: 被装饰的函数
++        namespace: 命名空间
++        prefix: 键前缀
++        cache_instance: 缓存实例
++        *args: 函数位置参数
++        **kwargs: 函数关键字参数
++    """
++    try:
++        cache = cache_instance or await get_cache()
++        cache_key = _default_key_builder(func, namespace, prefix, *args, **kwargs)
++        await cache.delete(cache_key)
++        logger.info(f"缓存已失效: {cache_key}")
++    except Exception as e:
++        logger.error(f"缓存失效失败: {e}")
++
++
++# 便捷装饰器
++def cached_long(ttl: int = 3600, **kwargs):
++    """长期缓存装饰器（1小时默认）.
++
++    Args:
++        ttl: 缓存时间，默认3600秒
++        **kwargs: 其他缓存参数
++    """
++    return cached(ttl=ttl, **kwargs)
++
++
++def cached_short(ttl: int = 60, **kwargs):
++    """短期缓存装饰器（1分钟默认）.
++
++    Args:
++        ttl: 缓存时间，默认60秒
++        **kwargs: 其他缓存参数
++    """
++    return cached(ttl=ttl, **kwargs)
++
++
++def cached_medium(ttl: int = 300, **kwargs):
++    """中期缓存装饰器（5分钟默认）.
++
++    Args:
++        ttl: 缓存时间，默认300秒
++        **kwargs: 其他缓存参数
++    """
++    return cached(ttl=ttl, **kwargs)
++
++
++# 类方法缓存装饰器
++def cached_method(
++    ttl: int = 300,
++    namespace: Optional[str] = None,
++    **kwargs
++):
++    """类方法缓存装饰器.
++
++    自动处理self参数，生成基于实例的缓存键.
++
++    Args:
++        ttl: 缓存时间
++        namespace: 命名空间
++        **kwargs: 其他缓存参数
++    """
++    def decorator(func: Callable) -> Callable:
++        if not inspect.iscoroutinefunction(func):
++            raise TypeError(f"@cached_method装饰器只能用于异步函数: {func}")
++
++        @functools.wraps(func)
++        async def wrapper(self, *args, **kwargs):
++            # 生成实例特定的命名空间
++            instance_namespace = f"{namespace or func.__name__}:{id(self)}"
++
++            # 调用原始缓存装饰器
++            inner_decorator = cached(ttl=ttl, namespace=instance_namespace, **kwargs)
++            inner_func = inner_decorator(func)
++
++            return await inner_func(self, *args, **kwargs)
++
++        # 添加缓存控制方法
++        wrapper.invalidate = lambda *args, **kwargs: _invalidate_cache(
++            func, f"{namespace or func.__name__}:{id(self)}", "cache", None, self, *args, **kwargs
++        )
++
++        return wrapper
++
++    return decorator
++
++
++# 批量缓存操作
++class BatchCache:
++    """批量缓存操作工具.
++
++    提供批量获取、设置和删除操作，优化Redis操作性能。
++    Provides batch get, set, and delete operations to optimize Redis performance.
++    """
++
++    def __init__(self, cache_instance: Optional[RedisCache] = None):
++        self.cache = cache_instance
++
++    async def get_many(self, keys: list[str]) -> dict[str, Any]:
++        """批量获取缓存值.
++
++        Args:
++            keys: 缓存键列表
++
++        Returns:
++            dict: 键值对字典
++        """
++        if not self.cache:
++            self.cache = await get_cache()
++
++        results = {}
++        try:
++            redis_client = await self.cache._get_connection()
++            values = await redis_client.mget(keys)
++
++            for key, value in zip(keys, values):
++                if value is not None:
++                    try:
++                        results[key] = self.cache._deserialize(value.decode('utf-8'))
++                    except Exception as e:
++                        logger.warning(f"反序列化失败 {key}: {e}")
++
++        except Exception as e:
++            logger.error(f"批量获取缓存失败: {e}")
++
++        return results
++
++    async def set_many(
++        self,
++        items: dict[str, Any],
++        ttl: int = 300
++    ) -> dict[str, bool]:
++        """批量设置缓存值.
++
++        Args:
++            items: 键值对字典
++            ttl: 过期时间
++
++        Returns:
++            dict: 设置结果字典
++        """
++        if not self.cache:
++            self.cache = await get_cache()
++
++        results = {}
++        try:
++            redis_client = await self.cache._get_connection()
++
++            # 使用pipeline提高性能
++            pipe = redis_client.pipeline()
++            for key, value in items.items():
++                try:
++                    serialized_value = self.cache._serialize(value)
++                    pipe.setex(key, ttl, serialized_value)
++                except Exception as e:
++                    results[key] = False
++                    logger.warning(f"序列化失败 {key}: {e}")
++
++            if pipe:
++                pipe_results = await pipe.execute()
++                for key in items:
++                    if key not in results:
++                        results[key] = True
++
++        except Exception as e:
++            logger.error(f"批量设置缓存失败: {e}")
++            for key in items:
++                if key not in results:
++                    results[key] = False
++
++        return results
++
++    async def delete_many(self, keys: list[str]) -> dict[str, bool]:
++        """批量删除缓存值.
++
++        Args:
++            keys: 缓存键列表
++
++        Returns:
++            dict: 删除结果字典
++        """
++        if not self.cache:
++            self.cache = await get_cache()
++
++        results = {}
++        try:
++            redis_client = await self.cache._get_connection()
++            deleted_count = await redis_client.delete(*keys)
++
++            # 简单的删除结果估算
++            for key in keys:
++                results[key] = True
++
++        except Exception as e:
++            logger.error(f"批量删除缓存失败: {e}")
++            for key in keys:
++                results[key] = False
++
++        return results
++
++
++# 便捷函数
++async def invalidate_pattern(pattern: str, cache_instance: Optional[RedisCache] = None):
++    """根据模式删除缓存.
++
++    Args:
++        pattern: 匹配模式
++        cache_instance: 缓存实例
++    """
++    try:
++        cache = cache_instance or await get_cache()
++        redis_client = await cache._get_connection()
++
++        # 获取匹配的键
++        keys = []
++        async for key in redis_client.scan_iter(match=pattern):
++            keys.append(key)
++
++        if keys:
++            deleted_count = await redis_client.delete(*keys)
++            logger.info(f"删除了 {deleted_count} 个匹配的缓存键: {pattern}")
++
++    except Exception as e:
++        logger.error(f"模式删除缓存失败 {pattern}: {e}")
++
++
++# 缓存装饰器的便捷别名
++async_cache = cached  # 向后兼容
++cache = cached        # 简化别名
+\ No newline at end of file
+diff --git a/src/core/cache_main.py b/src/core/cache_main.py
+new file mode 100644
+index 000000000..2f79bf4eb
+--- /dev/null
++++ b/src/core/cache_main.py
+@@ -0,0 +1,501 @@
++"""高性能异步缓存模块
++High-Performance Async Cache Module.
++
++提供基于Redis的异步缓存基础设施，包括连接池管理、
++序列化处理和优雅降级机制。
++Provides Redis-based async cache infrastructure with connection pooling,
++serialization handling, and graceful degradation.
++
++Author: Claude Code
++Version: 1.0.0
++"""
++
++import asyncio
++import json
++import logging
++import pickle
++from functools import wraps
++from typing import Any, Callable, Optional, Union
++import hashlib
++
++import redis.asyncio as redis
++from redis.asyncio import ConnectionPool, Redis
++from redis.exceptions import ConnectionError, RedisError
++
++from .config import get_settings
++
++logger = logging.getLogger(__name__)
++
++
++class CacheSerializationError(Exception):
++    """缓存序列化错误"""
++    pass
++
++
++class CacheConnectionError(Exception):
++    """缓存连接错误"""
++    pass
++
++
++class RedisCache:
++    """高性能异步Redis缓存客户端.
++
++    特性:
++    - 连接池管理
++    - 自动序列化/反序列化 (JSON/Pickle)
++    - 优雅降级
++    - 性能监控
++    - 并发保护
++
++    Features:
++    - Connection pool management
++    - Automatic serialization/deserialization (JSON/Pickle)
++    - Graceful degradation
++    - Performance monitoring
++    - Concurrency protection
++    """
++
++    def __init__(self, redis_url: Optional[str] = None, **kwargs):
++        """初始化Redis缓存客户端.
++
++        Args:
++            redis_url: Redis连接URL
++            **kwargs: 额外的连接参数
++        """
++        self.settings = get_settings()
++        self.redis_url = redis_url or self.settings.redis_url
++
++        # 连接池配置
++        self.pool_config = {
++            'max_connections': kwargs.get('max_connections', 50),
++            'retry_on_timeout': kwargs.get('retry_on_timeout', True),
++            'socket_keepalive': kwargs.get('socket_keepalive', True),
++            'socket_keepalive_options': kwargs.get('socket_keepalive_options', {}),
++            'health_check_interval': kwargs.get('health_check_interval', 30),
++        }
++
++        self._pool: Optional[ConnectionPool] = None
++        self._redis: Optional[Redis] = None
++        self._lock = asyncio.Lock()
++
++        # 统计信息
++        self.stats = {
++            'hits': 0,
++            'misses': 0,
++            'sets': 0,
++            'deletes': 0,
++            'errors': 0,
++            'connections': 0,
++        }
++
++        # 并发保护锁字典
++        self._locks: dict[str, asyncio.Lock] = {}
++        self._locks_lock = asyncio.Lock()
++
++    async def _get_connection(self) -> Redis:
++        """获取Redis连接.
++
++        Returns:
++            Redis: Redis客户端实例
++
++        Raises:
++            CacheConnectionError: 连接失败时抛出
++        """
++        if self._redis is None:
++            async with self._lock:
++                if self._redis is None:
++                    try:
++                        self._pool = ConnectionPool.from_url(
++                            self.redis_url,
++                            **self.pool_config
++                        )
++                        self._redis = Redis(connection_pool=self._pool)
++                        # 测试连接
++                        await self._redis.ping()
++                        self.stats['connections'] += 1
++                        logger.info(f"Redis连接建立成功: {self.redis_url}")
++                    except (ConnectionError, RedisError) as e:
++                        logger.error(f"Redis连接失败: {e}")
++                        raise CacheConnectionError(f"无法连接到Redis: {e}")
++
++        return self._redis
++
++    def _serialize(self, value: Any) -> str:
++        """序列化值.
++
++        Args:
++            value: 要序列化的值
++
++        Returns:
++            str: 序列化后的字符串
++
++        Raises:
++            CacheSerializationError: 序列化失败时抛出
++        """
++        try:
++            # 对于简单类型，直接JSON序列化
++            if isinstance(value, (str, int, float, bool)) or value is None:
++                return json.dumps({'_type': 'simple', 'value': value})
++
++            # 对于复杂类型，尝试JSON序列化
++            if isinstance(value, (dict, list, tuple)):
++                try:
++                    return json.dumps({'_type': 'json', 'value': value})
++                except (TypeError, ValueError):
++                    pass
++
++            # 对于其他复杂对象，使用pickle
++            try:
++                serialized = pickle.dumps(value)
++                return json.dumps({'_type': 'pickle', 'value': serialized.hex()})
++            except (pickle.PickleError, ValueError) as e:
++                raise CacheSerializationError(f"无法序列化对象: {e}")
++
++        except Exception as e:
++            raise CacheSerializationError(f"序列化失败: {e}")
++
++    def _deserialize(self, value: str) -> Any:
++        """反序列化值.
++
++        Args:
++            value: 要反序列化的字符串
++
++        Returns:
++            Any: 反序列化后的值
++
++        Raises:
++            CacheSerializationError: 反序列化失败时抛出
++        """
++        try:
++            data = json.loads(value)
++
++            if data.get('_type') == 'simple':
++                return data['value']
++            elif data.get('_type') == 'json':
++                return data['value']
++            elif data.get('_type') == 'pickle':
++                serialized_bytes = bytes.fromhex(data['value'])
++                return pickle.loads(serialized_bytes)
++            else:
++                # 兼容旧格式
++                try:
++                    return json.loads(value)
++                except json.JSONDecodeError:
++                    return value
++
++        except Exception as e:
++            raise CacheSerializationError(f"反序列化失败: {e}")
++
++    async def get(self, key: str) -> Optional[Any]:
++        """获取缓存值.
++
++        Args:
++            key: 缓存键
++
++        Returns:
++            Optional[Any]: 缓存值，如果不存在则返回None
++        """
++        try:
++            redis_client = await self._get_connection()
++            value = await redis_client.get(key)
++
++            if value is None:
++                self.stats['misses'] += 1
++                return None
++
++            self.stats['hits'] += 1
++            return self._deserialize(value.decode('utf-8'))
++
++        except (CacheConnectionError, CacheSerializationError):
++            raise
++        except Exception as e:
++            self.stats['errors'] += 1
++            logger.warning(f"缓存获取失败 {key}: {e}")
++            return None
++
++    async def set(
++        self,
++        key: str,
++        value: Any,
++        ttl: int = 300,
++        nx: bool = False,
++        xx: bool = False
++    ) -> bool:
++        """设置缓存值.
++
++        Args:
++            key: 缓存键
++            value: 缓存值
++            ttl: 过期时间（秒），默认300秒
++            nx: 仅当键不存在时设置
++            xx: 仅当键存在时设置
++
++        Returns:
++            bool: 设置成功返回True，失败返回False
++        """
++        try:
++            redis_client = await self._get_connection()
++            serialized_value = self._serialize(value)
++
++            result = await redis_client.set(
++                key,
++                serialized_value,
++                ex=ttl,
++                nx=nx,
++                xx=xx
++            )
++
++            if result:
++                self.stats['sets'] += 1
++            return result
++
++        except (CacheConnectionError, CacheSerializationError):
++            raise
++        except Exception as e:
++            self.stats['errors'] += 1
++            logger.warning(f"缓存设置失败 {key}: {e}")
++            return False
++
++    async def delete(self, key: str) -> bool:
++        """删除缓存值.
++
++        Args:
++            key: 缓存键
++
++        Returns:
++            bool: 删除成功返回True，键不存在返回False
++        """
++        try:
++            redis_client = await self._get_connection()
++            result = await redis_client.delete(key)
++
++            if result > 0:
++                self.stats['deletes'] += 1
++                return True
++            return False
++
++        except CacheConnectionError:
++            raise
++        except Exception as e:
++            self.stats['errors'] += 1
++            logger.warning(f"缓存删除失败 {key}: {e}")
++            return False
++
++    async def exists(self, key: str) -> bool:
++        """检查键是否存在.
++
++        Args:
++            key: 缓存键
++
++        Returns:
++            bool: 键存在返回True，否则返回False
++        """
++        try:
++            redis_client = await self._get_connection()
++            return bool(await redis_client.exists(key))
++
++        except CacheConnectionError:
++            raise
++        except Exception as e:
++            self.stats['errors'] += 1
++            logger.warning(f"缓存检查失败 {key}: {e}")
++            return False
++
++    async def expire(self, key: str, ttl: int) -> bool:
++        """设置键的过期时间.
++
++        Args:
++            key: 缓存键
++            ttl: 过期时间（秒）
++
++        Returns:
++            bool: 设置成功返回True，键不存在返回False
++        """
++        try:
++            redis_client = await self._get_connection()
++            return bool(await redis_client.expire(key, ttl))
++
++        except CacheConnectionError:
++            raise
++        except Exception as e:
++            self.stats['errors'] += 1
++            logger.warning(f"缓存过期设置失败 {key}: {e}")
++            return False
++
++    async def ttl(self, key: str) -> int:
++        """获取键的剩余过期时间.
++
++        Args:
++            key: 缓存键
++
++        Returns:
++            int: 剩余时间（秒），键不存在返回-2，永不过期返回-1
++        """
++        try:
++            redis_client = await self._get_connection()
++            return await redis_client.ttl(key)
++
++        except CacheConnectionError:
++            raise
++        except Exception as e:
++            self.stats['errors'] += 1
++            logger.warning(f"获取TTL失败 {key}: {e}")
++            return -2
++
++    async def clear(self) -> bool:
++        """清空所有缓存.
++
++        Returns:
++            bool: 清空成功返回True
++        """
++        try:
++            redis_client = await self._get_connection()
++            await redis_client.flushdb()
++            logger.info("缓存已清空")
++            return True
++
++        except CacheConnectionError:
++            raise
++        except Exception as e:
++            self.stats['errors'] += 1
++            logger.error(f"清空缓存失败: {e}")
++            return False
++
++    async def get_stats(self) -> dict[str, Any]:
++        """获取缓存统计信息.
++
++        Returns:
++            dict: 统计信息字典
++        """
++        stats = self.stats.copy()
++
++        # 计算命中率
++        total_requests = stats['hits'] + stats['misses']
++        stats['hit_rate'] = stats['hits'] / total_requests if total_requests > 0 else 0
++
++        # 获取Redis信息
++        try:
++            redis_client = await self._get_connection()
++            info = await redis_client.info()
++            stats['redis_info'] = {
++                'used_memory': info.get('used_memory_human', 'N/A'),
++                'connected_clients': info.get('connected_clients', 'N/A'),
++                'total_commands_processed': info.get('total_commands_processed', 'N/A'),
++            }
++        except Exception:
++            stats['redis_info'] = 'N/A'
++
++        return stats
++
++    async def health_check(self) -> dict[str, Any]:
++        """健康检查.
++
++        Returns:
++            dict: 健康检查结果
++        """
++        try:
++            redis_client = await self._get_connection()
++            start_time = asyncio.get_event_loop().time()
++            await redis_client.ping()
++            response_time = asyncio.get_event_loop().time() - start_time
++
++            return {
++                'status': 'healthy',
++                'response_time': f"{response_time:.3f}s",
++                'connection_pool_size': self._pool.max_connections if self._pool else 'N/A',
++            }
++        except Exception as e:
++            return {
++                'status': 'unhealthy',
++                'error': str(e),
++                'response_time': 'N/A',
++            }
++
++    async def close(self):
++        """关闭Redis连接."""
++        if self._redis:
++            await self._redis.close()
++            self._redis = None
++        if self._pool:
++            await self._pool.disconnect()
++            self._pool = None
++        logger.info("Redis连接已关闭")
++
++    async def __aenter__(self):
++        """异步上下文管理器入口."""
++        return self
++
++    async def __aexit__(self, exc_type, exc_val, exc_tb):
++        """异步上下文管理器出口."""
++        await self.close()
++
++
++# 全局缓存实例
++_global_cache: Optional[RedisCache] = None
++
++
++async def get_cache() -> RedisCache:
++    """获取全局缓存实例.
++
++    Returns:
++        RedisCache: 全局缓存实例
++    """
++    global _global_cache
++    if _global_cache is None:
++        _global_cache = RedisCache()
++    return _global_cache
++
++
++def cache_key_builder(
++    namespace: str = "",
++    *args,
++    **kwargs
++) -> str:
++    """构建缓存键.
++
++    Args:
++        namespace: 键命名空间
++        *args: 位置参数
++        **kwargs: 关键字参数
++
++    Returns:
++        str: 缓存键
++    """
++    # 构建键的组成部分
++    parts = [namespace] if namespace else []
++
++    # 添加位置参数
++    for arg in args:
++        if isinstance(arg, (str, int, float, bool)):
++            parts.append(str(arg))
++        else:
++            # 对于复杂对象，使用哈希
++            parts.append(hashlib.md5(str(arg).encode()).hexdigest()[:8])
++
++    # 添加关键字参数
++    for key, value in sorted(kwargs.items()):
++        if isinstance(value, (str, int, float, bool)):
++            parts.append(f"{key}:{value}")
++        else:
++            parts.append(f"{key}:{hashlib.md5(str(value).encode()).hexdigest()[:8]}")
++
++    return ":".join(parts)
++
++
++# 便捷函数
++async def cache_get(key: str) -> Optional[Any]:
++    """便捷的缓存获取函数."""
++    cache = await get_cache()
++    return await cache.get(key)
++
++
++async def cache_set(key: str, value: Any, ttl: int = 300) -> bool:
++    """便捷的缓存设置函数."""
++    cache = await get_cache()
++    return await cache.set(key, value, ttl)
++
++
++async def cache_delete(key: str) -> bool:
++    """便捷的缓存删除函数."""
++    cache = await get_cache()
++    return await cache.delete(key)
+\ No newline at end of file
+diff --git a/src/features/feature_store.py b/src/features/feature_store.py
+index 4694abbc5..43472ef44 100644
+--- a/src/features/feature_store.py
++++ b/src/features/feature_store.py
+@@ -32,6 +32,9 @@ from src.features.feature_store_interface import (
+     StorageError,
+ )
+ 
++# 导入缓存装饰器
++from src.core.cache import cached
++
+ logger = logging.getLogger(__name__)
+ 
+ 
+@@ -168,6 +171,12 @@ class FootballFeatureStore(FeatureStoreProtocol):
+             logger.error(f"Failed to save features for match {match_id}: {e}")
+             raise StorageError(f"Save operation failed: {e}") from e
+ 
++    @cached(
++        ttl=300,  # 5分钟缓存
++        namespace="features",
++        stampede_protection=True,
++        key_builder=lambda match_id, version=DEFAULT_FEATURE_VERSION: f"feature:{match_id}:{version}"
++    )
+     async def load_features(
+         self,
+         match_id: int,
+diff --git a/src/services/feature_service.py b/src/services/feature_service.py
+index 99bbac539..dc7a1da3a 100644
+--- a/src/services/feature_service.py
++++ b/src/services/feature_service.py
+@@ -10,6 +10,7 @@ from typing import Union
+ from sqlalchemy.ext.asyncio import AsyncSession
+ 
+ from ..features.engineering import AllMatchFeatures, AllTeamFeatures, FeatureCalculator
++from ..core.cache import cached
+ from ..features.feature_definitions import (
+     HistoricalMatchupFeatures,
+     OddsFeatures,
+@@ -30,6 +31,12 @@ class FeatureService:
+         self.calculator = FeatureCalculator(db_session)
+         self.logger = logger
+ 
++    @cached(
++        ttl=300,  # 5分钟缓存
++        namespace="features",
++        stampede_protection=True,
++        key_builder=lambda self, match_id, calculation_date=None: f"match_features:{match_id}:{calculation_date.isoformat() if calculation_date else 'none'}"
++    )
+     async def get_match_features(
+         self, match_id: int, calculation_date: datetime | None = None
+     ) -> AllMatchFeatures | None:
+diff --git a/src/services/prediction_service.py b/src/services/prediction_service.py
+index ee3bf5ff7..5b70458b7 100644
+--- a/src/services/prediction_service.py
++++ b/src/services/prediction_service.py
+@@ -14,6 +14,7 @@ from typing import Any
+ from sqlalchemy.ext.asyncio import AsyncSession
+ from sqlalchemy import select, text
+ from src.database.connection import DatabaseManager
++from src.core.cache import cached
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -268,6 +269,12 @@ class PredictionService:
+             )
+             raise
+ 
++    @cached(
++        ttl=3600,  # 1小时缓存
++        namespace="predictions",
++        stampede_protection=True,
++        key_builder=lambda self, match_data, model_name="default": f"prediction:{match_data.get('match_id', 'unknown')}:{model_name}:{hash(str(sorted(match_data.items())))}"
++    )
+     async def predict_match_async(
+         self, match_data: dict[str, Any], model_name: str = "default"
+     ) -> PredictionResult:
+diff --git a/tests/unit/core/test_cache.py b/tests/unit/core/test_cache.py
+new file mode 100644
+index 000000000..f95e9b80f
+--- /dev/null
++++ b/tests/unit/core/test_cache.py
+@@ -0,0 +1,632 @@
++"""核心缓存模块单元测试
++Unit Tests for Core Cache Module.
++
++测试Redis缓存基础设施和装饰器的功能。
++Tests the functionality of Redis cache infrastructure and decorators.
++
++Author: Claude Code
++Version: 1.0.0
++"""
++
++import asyncio
++import json
++import pickle
++import pytest
++from unittest.mock import AsyncMock, MagicMock, patch
++from typing import Any
++
++from src.core.cache_main import (
++    RedisCache,
++    get_cache,
++    cache_key_builder,
++    CacheSerializationError,
++    CacheConnectionError,
++    cache_get,
++    cache_set,
++    cache_delete
++)
++from src.core.cache_decorators import (
++    cached,
++    cached_long,
++    cached_short,
++    cached_method,
++    BatchCache,
++    invalidate_pattern
++)
++
++
++class TestRedisCache:
++    """RedisCache类测试."""
++
++    @pytest.fixture
++    async def cache_instance(self):
++        """创建缓存实例."""
++        cache = RedisCache("redis://localhost:6379/1")  # 使用测试数据库
++        yield cache
++        await cache.close()
++
++    @pytest.mark.asyncio
++    async def test_cache_serialization_simple_types(self, cache_instance):
++        """测试简单类型序列化."""
++        # 测试字符串
++        serialized = cache_instance._serialize("test_string")
++        deserialized = cache_instance._deserialize(serialized)
++        assert deserialized == "test_string"
++
++        # 测试数字
++        serialized = cache_instance._serialize(42)
++        deserialized = cache_instance._deserialize(serialized)
++        assert deserialized == 42
++
++        # 测试布尔值
++        serialized = cache_instance._serialize(True)
++        deserialized = cache_instance._deserialize(serialized)
++        assert deserialized is True
++
++        # 测试None
++        serialized = cache_instance._serialize(None)
++        deserialized = cache_instance._deserialize(serialized)
++        assert deserialized is None
++
++    @pytest.mark.asyncio
++    async def test_cache_serialization_complex_types(self, cache_instance):
++        """测试复杂类型序列化."""
++        # 测试字典
++        test_dict = {"key1": "value1", "key2": 123, "key3": True}
++        serialized = cache_instance._serialize(test_dict)
++        deserialized = cache_instance._deserialize(serialized)
++        assert deserialized == test_dict
++
++        # 测试列表
++        test_list = [1, "two", {"three": 3}]
++        serialized = cache_instance._serialize(test_list)
++        deserialized = cache_instance._deserialize(serialized)
++        assert deserialized == test_list
++
++        # 测试元组
++        test_tuple = (1, "two", {"three": 3})
++        serialized = cache_instance._serialize(test_tuple)
++        deserialized = cache_instance._deserialize(serialized)
++        assert deserialized == [1, "two", {"three": 3}]  # 元组会被转为列表
++
++    @pytest.mark.asyncio
++    async def test_cache_serialization_pickle(self, cache_instance):
++        """测试Pickle序列化."""
++        class CustomObject:
++            def __init__(self, value):
++                self.value = value
++
++            def __eq__(self, other):
++                return isinstance(other, CustomObject) and self.value == other.value
++
++        test_obj = CustomObject("test_value")
++        serialized = cache_instance._serialize(test_obj)
++        deserialized = cache_instance._deserialize(serialized)
++        assert deserialized.value == test_obj.value
++
++    @pytest.mark.asyncio
++    async def test_cache_set_and_get(self, cache_instance):
++        """测试缓存设置和获取."""
++        key = "test_key"
++        value = {"test": "data"}
++
++        # 设置缓存
++        result = await cache_instance.set(key, value, ttl=60)
++        assert result is True
++
++        # 获取缓存
++        cached_value = await cache_instance.get(key)
++        assert cached_value == value
++
++        # 检查统计
++        stats = await cache_instance.get_stats()
++        assert stats['sets'] >= 1
++        assert stats['hits'] >= 1
++
++    @pytest.mark.asyncio
++    async def test_cache_get_nonexistent(self, cache_instance):
++        """测试获取不存在的缓存."""
++        result = await cache_instance.get("nonexistent_key")
++        assert result is None
++
++        # 检查miss统计
++        stats = await cache_instance.get_stats()
++        assert stats['misses'] >= 1
++
++    @pytest.mark.asyncio
++    async def test_cache_delete(self, cache_instance):
++        """测试缓存删除."""
++        key = "test_delete_key"
++        value = "test_value"
++
++        # 先设置缓存
++        await cache_instance.set(key, value)
++
++        # 删除缓存
++        result = await cache_instance.delete(key)
++        assert result is True
++
++        # 确认缓存已删除
++        cached_value = await cache_instance.get(key)
++        assert cached_value is None
++
++    @pytest.mark.asyncio
++    async def test_cache_exists(self, cache_instance):
++        """测试缓存存在性检查."""
++        key = "test_exists_key"
++        value = "test_value"
++
++        # 设置前检查
++        exists = await cache_instance.exists(key)
++        assert exists is False
++
++        # 设置缓存
++        await cache_instance.set(key, value)
++
++        # 设置后检查
++        exists = await cache_instance.exists(key)
++        assert exists is True
++
++    @pytest.mark.asyncio
++    async def test_cache_ttl(self, cache_instance):
++        """测试缓存TTL."""
++        key = "test_ttl_key"
++        value = "test_value"
++        ttl = 60
++
++        # 设置缓存
++        await cache_instance.set(key, value, ttl=ttl)
++
++        # 检查TTL
++        remaining_ttl = await cache_instance.ttl(key)
++        assert 0 < remaining_ttl <= ttl
++
++    @pytest.mark.asyncio
++    async def test_cache_expire(self, cache_instance):
++        """测试缓存过期设置."""
++        key = "test_expire_key"
++        value = "test_value"
++
++        # 设置缓存（无过期）
++        await cache_instance.set(key, value, ttl=0)
++
++        # 检查TTL（应该为-1，表示永不过期）
++        ttl_before = await cache_instance.ttl(key)
++        assert ttl_before == -1
++
++        # 设置过期时间
++        result = await cache_instance.expire(key, 60)
++        assert result is True
++
++        # 检查TTL
++        ttl_after = await cache_instance.ttl(key)
++        assert 0 < ttl_after <= 60
++
++    @pytest.mark.asyncio
++    async def test_cache_stats(self, cache_instance):
++        """测试缓存统计."""
++        # 执行一些操作
++        await cache_instance.set("stat_test", "value")
++        await cache_instance.get("stat_test")
++        await cache_instance.get("nonexistent")
++
++        stats = await cache_instance.get_stats()
++        assert 'hits' in stats
++        assert 'misses' in stats
++        assert 'sets' in stats
++        assert 'hit_rate' in stats
++        assert 0 <= stats['hit_rate'] <= 1
++
++    @pytest.mark.asyncio
++    async def test_cache_health_check(self, cache_instance):
++        """测试健康检查."""
++        health = await cache_instance.health_check()
++        assert 'status' in health
++        assert 'response_time' in health
++
++    @pytest.mark.asyncio
++    async def test_cache_context_manager(self):
++        """测试异步上下文管理器."""
++        async with RedisCache("redis://localhost:6379/1") as cache:
++            # 测试基本功能
++            await cache.set("context_test", "value")
++            value = await cache.get("context_test")
++            assert value == "value"
++
++        # 上下文退出后，连接应该已关闭
++        # 这里我们无法直接测试连接状态，但可以确保没有异常
++
++
++class TestCacheFunctions:
++    """缓存功能函数测试."""
++
++    @pytest.mark.asyncio
++    async def test_cache_key_builder(self):
++        """测试缓存键生成器."""
++        # 测试简单参数
++        key = cache_key_builder("test", "arg1", param2="value2")
++        assert "test" in key
++        assert "arg1" in key
++        assert "param2:value2" in key
++
++        # 测试复杂参数
++        complex_obj = {"key": "value"}
++        key = cache_key_builder("test", complex_obj)
++        assert "test" in key
++        assert len(key.split(":")) >= 2
++
++    @pytest.mark.asyncio
++    async def test_global_cache_functions(self):
++        """测试全局缓存函数."""
++        value = {"test": "global_functions"}
++
++        # 使用便捷函数设置缓存
++        result = await cache_set("global_test", value, ttl=60)
++        assert result is True
++
++        # 使用便捷函数获取缓存
++        cached_value = await cache_get("global_test")
++        assert cached_value == value
++
++        # 使用便捷函数删除缓存
++        result = await cache_delete("global_test")
++        assert result is True
++
++
++class TestCacheDecorators:
++    """缓存装饰器测试."""
++
++    @pytest.mark.asyncio
++    async def test_cached_decorator(self):
++        """测试基本缓存装饰器."""
++        call_count = 0
++
++        @cached(ttl=60, namespace="test")
++        async def test_function(x: int) -> int:
++            nonlocal call_count
++            call_count += 1
++            await asyncio.sleep(0.01)  # 模拟耗时操作
++            return x * 2
++
++        # 第一次调用 - 应该执行函数
++        result1 = await test_function(5)
++        assert result1 == 10
++        assert call_count == 1
++
++        # 第二次调用 - 应该从缓存获取
++        result2 = await test_function(5)
++        assert result2 == 10
++        assert call_count == 1  # 函数没有被再次调用
++
++        # 不同参数 - 应该执行函数
++        result3 = await test_function(10)
++        assert result3 == 20
++        assert call_count == 2
++
++    @pytest.mark.asyncio
++    async def test_cached_decorator_unless(self):
++        """测试unless条件."""
++        call_count = 0
++
++        @cached(ttl=60, unless=lambda x: x > 10)
++        async def test_function(x: int) -> int:
++            nonlocal call_count
++            call_count += 1
++            return x * 2
++
++        # 条件为True - 跳过缓存
++        result1 = await test_function(20)
++        assert result1 == 40
++        assert call_count == 1
++
++        # 再次调用相同参数 - 仍然跳过缓存
++        result2 = await test_function(20)
++        assert result2 == 40
++        assert call_count == 2
++
++        # 条件为False - 使用缓存
++        result3 = await test_function(5)
++        assert result3 == 10
++        assert call_count == 3
++
++        result4 = await test_function(5)
++        assert result4 == 10
++        assert call_count == 3  # 没有再次调用
++
++    @pytest.mark.asyncio
++    async def test_cached_decorator_custom_key_builder(self):
++        """测试自定义键生成器."""
++        call_count = 0
++
++        def custom_key(x: int) -> str:
++            return f"custom:{x}"
++
++        @cached(ttl=60, key_builder=custom_key)
++        async def test_function(x: int) -> int:
++            nonlocal call_count
++            call_count += 1
++            return x * 3
++
++        # 第一次调用
++        result1 = await test_function(5)
++        assert result1 == 15
++        assert call_count == 1
++
++        # 第二次调用 - 应该命中缓存
++        result2 = await test_function(5)
++        assert result2 == 15
++        assert call_count == 1
++
++    @pytest.mark.asyncio
++    async def test_cached_long_short_medium(self):
++        """测试便捷装饰器."""
++        call_count = 0
++
++        @cached_long(ttl=7200)  # 2小时
++        async def long_func():
++            nonlocal call_count
++            call_count += 1
++            return "long"
++
++        @cached_short(ttl=30)  # 30秒
++        async def short_func():
++            nonlocal call_count
++            call_count += 1
++            return "short"
++
++        @cached_medium(ttl=300)  # 5分钟
++        async def medium_func():
++            nonlocal call_count
++            call_count += 1
++            return "medium"
++
++        # 测试所有函数
++        assert await long_func() == "long"
++        assert await short_func() == "short"
++        assert await medium_func() == "medium"
++        assert call_count == 3
++
++        # 第二次调用 - 应该都从缓存获取
++        assert await long_func() == "long"
++        assert await short_func() == "short"
++        assert await medium_func() == "medium"
++        assert call_count == 3
++
++    @pytest.mark.asyncio
++    async def test_cached_method_decorator(self):
++        """测试方法装饰器."""
++        call_count = 0
++
++        class TestClass:
++            def __init__(self, value):
++                self.value = value
++
++            @cached_method(ttl=60, namespace="test_method")
++            async def get_value(self) -> int:
++                nonlocal call_count
++                call_count += 1
++                await asyncio.sleep(0.01)
++                return self.value * 2
++
++        # 测试实例缓存
++        instance1 = TestClass(10)
++        instance2 = TestClass(20)
++
++        # 第一次调用
++        result1a = await instance1.get_value()
++        result2a = await instance2.get_value()
++        assert result1a == 20
++        assert result2a == 40
++        assert call_count == 2
++
++        # 第二次调用 - 应该命中缓存
++        result1b = await instance1.get_value()
++        result2b = await instance2.get_value()
++        assert result1b == 20
++        assert result2b == 40
++        assert call_count == 2  # 没有再次调用
++
++
++class TestBatchCache:
++    """批量缓存操作测试."""
++
++    @pytest.mark.asyncio
++    async def test_batch_cache_get_many(self):
++        """测试批量获取."""
++        batch_cache = BatchCache()
++
++        # 模拟一些缓存数据（通过直接操作Redis）
++        cache = await get_cache()
++        test_data = {
++            "batch_key1": "value1",
++            "batch_key2": {"nested": "data"},
++            "batch_key3": [1, 2, 3]
++        }
++
++        for key, value in test_data.items():
++            await cache.set(key, value, ttl=60)
++
++        # 批量获取
++        keys = list(test_data.keys())
++        results = await batch_cache.get_many(keys)
++
++        assert len(results) == len(test_data)
++        for key, expected_value in test_data.items():
++            assert key in results
++            assert results[key] == expected_value
++
++    @pytest.mark.asyncio
++    async def test_batch_cache_set_many(self):
++        """测试批量设置."""
++        batch_cache = BatchCache()
++
++        test_data = {
++            "batch_set1": "value1",
++            "batch_set2": {"nested": "data"},
++            "batch_set3": [1, 2, 3]
++        }
++
++        # 批量设置
++        results = await batch_cache.set_many(test_data, ttl=60)
++        assert len(results) == len(test_data)
++        for key in test_data:
++            assert results.get(key, False) is True
++
++        # 验证设置成功
++        cache = await get_cache()
++        for key, expected_value in test_data.items():
++            cached_value = await cache.get(key)
++            assert cached_value == expected_value
++
++    @pytest.mark.asyncio
++    async def test_batch_cache_delete_many(self):
++        """测试批量删除."""
++        batch_cache = BatchCache()
++        cache = await get_cache()
++
++        # 设置一些数据
++        test_keys = ["batch_del1", "batch_del2", "batch_del3"]
++        for key in test_keys:
++            await cache.set(key, f"value_{key}", ttl=60)
++
++        # 验证数据存在
++        for key in test_keys:
++            assert await cache.get(key) is not None
++
++        # 批量删除
++        results = await batch_cache.delete_many(test_keys)
++        assert len(results) == len(test_keys)
++
++        # 验证删除成功
++        for key in test_keys:
++            assert await cache.get(key) is None
++
++
++class TestCacheErrorHandling:
++    """缓存错误处理测试."""
++
++    @pytest.mark.asyncio
++    async def test_cache_graceful_degradation(self):
++        """测试优雅降级."""
++        # 使用无效的Redis URL
++        cache = RedisCache("redis://invalid-host:6379/0")
++
++        # 所有操作都应该优雅失败，不抛出异常
++        assert await cache.get("test_key") is None
++        assert await cache.set("test_key", "test_value") is False
++        assert await cache.delete("test_key") is False
++        assert await cache.exists("test_key") is False
++
++    @pytest.mark.asyncio
++    async def test_cache_serialization_error(self):
++        """测试序列化错误处理."""
++        cache = RedisCache("redis://localhost:6379/1")
++
++        # 创建无法序列化的对象（通过mock模拟）
++        class UnserializableObject:
++            def __reduce__(self):
++                raise TypeError("Cannot serialize")
++
++        obj = UnserializableObject()
++
++        # 序列化应该抛出CacheSerializationError
++        with pytest.raises(CacheSerializationError):
++            cache._serialize(obj)
++
++    @pytest.mark.asyncio
++    async def test_non_async_function_error(self):
++        """测试非异步函数错误."""
++        with pytest.raises(TypeError):
++            @cached()
++            def sync_function():
++                return "sync"
++
++
++class TestCachePerformance:
++    """缓存性能测试."""
++
++    @pytest.mark.asyncio
++    async def test_cache_performance_improvement(self):
++        """测试缓存性能提升."""
++        call_count = 0
++
++        @cached(ttl=60, namespace="performance")
++        async def expensive_operation(delay: float = 0.1) -> str:
++            nonlocal call_count
++            call_count += 1
++            await asyncio.sleep(delay)
++            return "result"
++
++        # 第一次调用 - 应该较慢
++        import time
++        start_time = time.time()
++        result1 = await expensive_operation()
++        first_duration = time.time() - start_time
++
++        # 第二次调用 - 应该很快
++        start_time = time.time()
++        result2 = await expensive_operation()
++        second_duration = time.time() - start_time
++
++        # 验证结果一致性
++        assert result1 == result2
++        assert call_count == 1  # 函数只被调用一次
++
++        # 验证性能提升（第二次应该快很多）
++        assert second_duration < first_duration / 2
++        assert second_duration < 0.01  # 应该小于10ms
++
++    @pytest.mark.asyncio
++    async def test_concurrent_cache_access(self):
++        """测试并发缓存访问."""
++        call_count = 0
++
++        @cached(ttl=60, namespace="concurrent", stampede_protection=True)
++        async def concurrent_function(x: int) -> int:
++            nonlocal call_count
++            call_count += 1
++            await asyncio.sleep(0.05)  # 模拟耗时操作
++            return x * 2
++
++        # 并发调用相同参数
++        tasks = [concurrent_function(5) for _ in range(10)]
++        results = await asyncio.gather(*tasks)
++
++        # 验证结果
++        assert all(result == 10 for result in results)
++
++        # 由于击穿保护，函数应该只被调用一次
++        assert call_count == 1
++
++    @pytest.mark.asyncio
++    async def test_cache_invalidation(self):
++        """测试缓存失效."""
++        call_count = 0
++
++        @cached(ttl=60, namespace="invalidate")
++        async def test_func(x: int) -> int:
++            nonlocal call_count
++            call_count += 1
++            return x * 3
++
++        # 第一次调用
++        result1 = await test_func(5)
++        assert result1 == 15
++        assert call_count == 1
++
++        # 第二次调用 - 应该命中缓存
++        result2 = await test_func(5)
++        assert result2 == 15
++        assert call_count == 1
++
++        # 使缓存失效
++        await test_func.invalidate(5)
++
++        # 第三次调用 - 应该重新执行函数
++        result3 = await test_func(5)
++        assert result3 == 15
++        assert call_count == 2
++
++
++if __name__ == "__main__":
++    pytest.main([__file__])
+\ No newline at end of file

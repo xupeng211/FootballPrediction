@@ -34,20 +34,42 @@
 - 🎯 **类型安全** - 完整的Python类型注解和静态检查
 
 
-### 🚀 技术架构
+### 🚀 技术架构 (v2.5)
 
 - 🏗️ **现代化架构** - FastAPI + SQLAlchemy + Redis + PostgreSQL
 - 🔧 **标准化项目结构** - 严格遵循Python最佳实践
 - 🐳 **容器化部署** - Docker + docker-compose生产就绪配置
 - ⚡ **自动化CI/CD** - GitHub Actions + 本地CI模拟
+- 🔄 **混合调度架构** - Prefect 2.x + Celery Beat 企业级工作流编排
+
+
+### 🎯 P2 新增功能
+
+#### 🤖 机器学习流水线 (v2.5)
+- **📈 真实模型推理** - 生产级XGBoost模型，v3.0智能降级系统
+- **🧠 自动模型训练** - P2-5完整训练流水线，超参数优化，MLflow跟踪
+- **🔍 特征工程** - P0-2生产级Feature Store，14个核心特征，数据质量监控
+- **⚡ 模型热更新** - 无停机推理服务更新，自动性能验证
+
+#### 📊 自动化调度 (v2.5)
+- **🔄 日常数据采集** - 并行FotMob和FBref数据采集，智能重试机制
+- **🧠 每周模型重训** - 定时模型优化，质量门控，实验对比
+- **🚨 紧急重训练** - 性能监控，自动触发，降级策略
+- **📈 回测系统** - 历史数据验证，策略评估，风险管理
+
+#### 🛡️ 生产级监控 (v2.5)
+- **📊 Prefect UI** - 工作流编排和监控 (http://localhost:4200)
+- **🌼 Flower UI** - Celery任务监控 (http://localhost:5555)
+- **🧪 MLflow UI** - 实验跟踪和模型管理 (http://localhost:5000)
+- **📈 实时质量监控** - 数据质量规则，性能指标，告警系统
 
 
 ### 🤖 开发体验
 
 - 🛠️ **完整工具链** - 613行Makefile驱动的开发流程
 - 🔍 **AI辅助开发** - 内置Cursor规则和AI工作流程指引
-- 📚 **完善文档** - 10+个文档文件，覆盖开发到部署全流程
-- 🔄 **实时监控** - CI状态监控、代码质量分析
+- 📚 **完善文档** - 20+个文档文件，覆盖开发到部署全流程
+- 🔄 **实时监控** - CI状态监控、代码质量分析、生产级运维仪表板
 
 
 ## 🚀 快速开始
@@ -90,6 +112,21 @@ xdg-open htmlcov/index.html  # Linux
 ```bash
 ./ci-verify.sh    # 本地CI验证
 make ci           # 完整质量检查
+```
+
+### 4. 启动完整调度系统 (v2.5新功能)
+
+```bash
+# 启动包含调度器的完整服务栈
+docker-compose -f docker-compose.yml -f docker-compose.scheduler.yml up -d
+
+# 验证调度服务
+curl http://localhost:4200  # Prefect UI
+curl http://localhost:5555  # Flower UI
+curl http://localhost:5000  # MLflow UI
+
+# 检查调度状态
+docker-compose ps
 ```
 
 ## 📁 项目结构

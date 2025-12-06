@@ -1,0 +1,301 @@
+# Docker Compose configuration for P2-7 Task Scheduler Standardization
+# This file extends the base docker-compose.yml with Prefect orchestration services
+
+services:
+  # Prefect Server - Orchestration API and UI
+  prefect-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "4200:4200"  # Prefect UI
+      - "4201:4201"  # Prefect API
+    env_file:
+      - .env
+    environment:
+      - ENV=development
+      - PREFECT_API_DATABASE_CONNECTION_URL=${PREFECT_DB_URL:-postgresql+asyncpg://postgres:postgres-dev-password@prefect-db:5432/prefect}
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_SERVER_API_PORT=4201
+      - PREFECT_UI_API_URL=http://localhost:4201/api
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - PYTHONPATH=/app
+      - FOOTBALL_PREDICTION_ML_MODE=mock  # Use mock mode for stable operation
+      - SKIP_ML_MODEL_LOADING=true
+    depends_on:
+      prefect-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+      - ./models:/app/models
+      - prefect_data:/root/.prefect
+    restart: unless-stopped
+    command: [
+      "prefect", "server", "start",
+      "--host", "0.0.0.0",
+      "--port", "4201",
+      "--ui", "serve",
+      "--ui-port", "4200"
+    ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4201/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Prefect Database - PostgreSQL for Prefect metadata
+  prefect-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=prefect
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres-dev-password
+    ports:
+      - "5433:5432"  # Different port to avoid conflict with main db
+    volumes:
+      - prefect_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d prefect"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prefect Agent - Executes flows and tasks
+  prefect-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      - .env
+    environment:
+      - ENV=development
+      - PREFECT_API_URL=http://prefect-server:4201/api
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - PYTHONPATH=/app
+      - FOOTBALL_PREDICTION_ML_MODE=real  # Allow real model training
+      - SKIP_ML_MODEL_LOADING=false
+      # Proxy configuration for external API access
+      - HTTP_PROXY=http://172.17.0.1:7890
+      - HTTPS_PROXY=http://172.17.0.1:7890
+      - NO_PROXY=localhost,127.0.0.1,0.0.0.0,db,redis,prefect-server,prefect-db,prefect-agent
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+      - ./models:/app/models
+      - ./logs:/app/logs
+      - prefect_data:/root/.prefect
+    restart: unless-stopped
+    command: [
+      "prefect", "agent", "start",
+      "--pool", "default-agent-pool",
+      "--work-queue", "default",
+      "--limit", "10"
+    ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://prefect-server:4201/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Enhanced Celery Worker with Flow Integration
+  scheduler-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      - .env
+    environment:
+      - ENV=development
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - PREFECT_API_URL=http://prefect-server:4201/api
+      - PYTHONPATH=/app
+      - C_FORCE_ROOT=true
+      - FOOTBALL_PREDICTION_ML_MODE=real
+      - SKIP_ML_MODEL_LOADING=false
+      # Proxy configuration for external API access
+      - HTTP_PROXY=http://172.17.0.1:7890
+      - HTTPS_PROXY=http://172.17.0.1:7890
+      - NO_PROXY=localhost,127.0.0.1,0.0.0.0,db,redis,prefect-server,prefect-db,scheduler-worker
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      prefect-server:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+      - ./models:/app/models
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "celery", "-A", "src.tasks.celery_app", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: [
+      "celery",
+      "-A", "src.tasks.celery_app",
+      "worker",
+      "--loglevel=info",
+      "--concurrency=4",
+      "--prefetch-multiplier=1",
+      "-Q", "default,fixtures,odds,scores,maintenance,backup,streaming,features,fotmob,scheduler"
+    ]
+
+  # Enhanced Celery Beat with Flow Triggers
+  scheduler-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      - .env
+    environment:
+      - ENV=development
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - PREFECT_API_URL=http://prefect-server:4201/api
+      - PYTHONPATH=/app
+      - C_FORCE_ROOT=true
+      # Proxy configuration for external API access
+      - HTTP_PROXY=http://172.17.0.1:7890
+      - HTTPS_PROXY=http://172.17.0.1:7890
+      - NO_PROXY=localhost,127.0.0.1,0.0.0.0,db,redis,prefect-server,prefect-db,scheduler-beat
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      prefect-server:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+      - ./models:/app/models
+      - scheduler_beat_data:/app/celerybeat-schedule
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "celery", "-A", "src.tasks.celery_app", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: [
+      "celery",
+      "-A", "src.tasks.celery_app",
+      "beat",
+      "--loglevel=info",
+      "--pidfile=/tmp/celerybeat.pid",
+      "--schedule=/tmp/celerybeat-schedule",
+      "--scheduler", "src.tasks.scheduler_prefect.PrefectFlowScheduler"
+    ]
+
+  # Flower - Celery Monitoring Dashboard
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    environment:
+      - ENV=development
+      - CELERY_BROKER_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_RESULT_BACKEND=${REDIS_URL:-redis://redis:6379/0}
+      - FLOWER_PORT=5555
+      - PYTHONPATH=/app
+    depends_on:
+      redis:
+        condition: service_started
+      scheduler-worker:
+        condition: service_healthy
+    restart: unless-stopped
+    command: [
+      "celery",
+      "-A", "src.tasks.celery_app",
+      "flower",
+      "--port=5555",
+      "--broker=redis://redis:6379/0"
+    ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # MLflow Tracking Server - Model Experiment Tracking
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - ENV=development
+      - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_STORE_URI:-postgresql://postgres:postgres-dev-password@db:5432/mlflow}
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/app/mlflow/artifacts
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres-dev-password@db:5432/football_prediction}
+      - PYTHONPATH=/app
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+      - ./models:/app/models
+      - mlflow_artifacts:/app/mlflow/artifacts
+    restart: unless-stopped
+    command: [
+      "mlflow", "server",
+      "--backend-store-uri", "postgresql://postgres:postgres-dev-password@db:5432/mlflow",
+      "--default-artifact-root", "/app/mlflow/artifacts",
+      "--host", "0.0.0.0",
+      "--port", "5000"
+    ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  prefect_postgres_data:
+  prefect_data:
+  scheduler_beat_data:
+  mlflow_artifacts:
+
+networks:
+  default:
+    name: football-prediction-scheduler
+    external: true
