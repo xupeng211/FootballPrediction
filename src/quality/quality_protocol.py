@@ -82,7 +82,7 @@ class DataQualityResult:
         self,
         rule_name: str,
         passed: bool,
-        errors: List[str],
+        errors: list[str],
         severity: str = RuleSeverity.MEDIUM,
         metadata: dict[str, Any] = None
     ):

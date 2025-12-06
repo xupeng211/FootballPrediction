@@ -1,0 +1,80 @@
+--- a/src/core/di_setup.py+++ b/src/core/di_setup.py@@ -25,14 +25,14 @@     pass  # 添加pass语句
+     """依赖注入设置类"""
+ 
+-    def __init__(self, profile: str | None = None):
++async def __init__(self, profile: str | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.profile = profile or os.getenv("APP_PROFILE", "development")
+         self.container: DIContainer | None = None
+         self.lifecycle_manager: ServiceLifecycleManager | None = None
+ 
+-    def initialize(
++async def initialize(
+         self,
+         config_file: str | None = None,
+         auto_scan_modules: list | None = None,
+@@ -68,7 +68,7 @@         logger.info("依赖注入初始化完成")
+         return self.container
+ 
+-    def _register_core_services(self) -> None:
++async def _register_core_services(self) -> None:
+         """注册核心服务."""
+         # 注册生命周期管理器
+         self.container.register_singleton(
+@@ -81,7 +81,7 @@         # 自动注册所有服务
+         self._auto_register_services()
+ 
+-    def _auto_register_repositories(self) -> None:
++async def _auto_register_repositories(self) -> None:
+         """自动注册仓储."""
+         # 这里可以扫描并自动注册所有仓储类
+         # 简化示例,手动注册主要仓储
+@@ -100,7 +100,7 @@         except ImportError as e:
+             logger.warning(f"无法导入仓储类: {e}")
+ 
+-    def _auto_register_services(self) -> None:
++async def _auto_register_services(self) -> None:
+         """自动注册服务."""
+         # 这里可以扫描并自动注册所有服务类
+         try:
+@@ -133,7 +133,7 @@ _di_setup: DISetup | None = None
+ 
+ 
+-def get_di_setup() -> DISetup:
++async def get_di_setup() -> DISetup:
+     """获取DI设置实例."""
+     global _di_setup
+     if _di_setup is None:
+@@ -141,7 +141,7 @@     return _di_setup
+ 
+ 
+-def configure_di(
++async def configure_di(
+     config_file: str | None = None,
+     profile: str | None = None,
+     auto_scan_modules: list | None = None,
+@@ -152,14 +152,14 @@ 
+ 
+ # 装饰器:自动注册服务
+-def register_service(
++async def register_service(
+     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
+     interface: type | None = None,
+     name: str | None = None,
+ ):
+     """自动注册服务装饰器."""
+ 
+-    def decorator(cls):
++async def decorator(cls):
+         """函数文档字符串."""
+         # 添加pass语句
+         # 保存注册信息
+@@ -191,7 +191,7 @@ 
+ 
+ # 示例:创建配置文件的便捷函数
+-def create_di_config(
++async def create_di_config(
+     output_path: str = "configs/di-config.yaml", output_format: str = "yaml"
+ ) -> None:
+     """创建依赖注入配置文件."""

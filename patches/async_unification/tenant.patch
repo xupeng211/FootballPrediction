@@ -1,0 +1,137 @@
+--- a/src/database/models/tenant.py+++ b/src/database/models/tenant.py@@ -133,12 +133,12 @@     )
+ 
+     @hybrid_property
+-    def is_trial(self) -> bool:
++async def is_trial(self) -> bool:
+         """是否为试用状态."""
+         return self.status == TenantStatus.TRIAL
+ 
+     @hybrid_property
+-    def is_subscription_active(self) -> bool:
++async def is_subscription_active(self) -> bool:
+         """订阅是否激活."""
+         if self.status != TenantStatus.ACTIVE:
+             return False
+@@ -147,7 +147,7 @@         return datetime.utcnow() < self.subscription_ends_at
+ 
+     @hybrid_property
+-    def days_until_expiry(self) -> int | None:
++async def days_until_expiry(self) -> int | None:
+         """距离过期的天数."""
+         if self.subscription_ends_at is None:
+             return None
+@@ -155,55 +155,55 @@         return max(0, delta.days)
+ 
+     @hybrid_property
+-    def usage_percentage(self) -> float:
++async def usage_percentage(self) -> float:
+         """存储使用百分比."""
+         if self.storage_quota_mb <= 0:
+             return 0.0
+         used_mb = (
+-            self.usage_metrics.get("storage_used_mb", 0) if self.usage_metrics else 0
++            self.usage_metrics.await get("storage_used_mb", 0) if self.usage_metrics else 0
+         )
+         return min(100.0, (used_mb / self.storage_quota_mb) * 100)
+ 
+-    def can_add_user(self) -> bool:
++async def can_add_user(self) -> bool:
+         """是否可以添加新用户."""
+         current_users = (
+-            self.usage_metrics.get("current_users", 0) if self.usage_metrics else 0
++            self.usage_metrics.await get("current_users", 0) if self.usage_metrics else 0
+         )
+         return current_users < self.max_users
+ 
+-    def can_make_prediction(self) -> bool:
++async def can_make_prediction(self) -> bool:
+         """是否可以创建新预测."""
+         if not self.is_subscription_active:
+             return False
+ 
+         daily_predictions = (
+-            self.usage_metrics.get("daily_predictions", 0) if self.usage_metrics else 0
++            self.usage_metrics.await get("daily_predictions", 0) if self.usage_metrics else 0
+         )
+         return daily_predictions < self.max_predictions_per_day
+ 
+-    def can_make_api_call(self) -> bool:
++async def can_make_api_call(self) -> bool:
+         """是否可以调用API."""
+         if not self.is_subscription_active:
+             return False
+ 
+         hourly_api_calls = (
+-            self.usage_metrics.get("hourly_api_calls", 0) if self.usage_metrics else 0
++            self.usage_metrics.await get("hourly_api_calls", 0) if self.usage_metrics else 0
+         )
+         return hourly_api_calls < self.max_api_calls_per_hour
+ 
+-    def get_feature_access(self, feature_name: str) -> bool:
++async def get_feature_access(self, feature_name: str) -> bool:
+         """检查功能访问权限."""
+         if not self.features:
+             return False
+-        return self.features.get(feature_name, False)
+-
+-    def update_usage_metrics(self, metrics: dict[str, Any]) -> None:
++        return self.features.await get(feature_name, False)
++
++async def update_usage_metrics(self, metrics: dict[str, Any]) -> None:
+         """更新使用指标."""
+         if self.usage_metrics is None:
+             self.usage_metrics = {}
+         self.usage_metrics.update(metrics)
+ 
+-    def to_dict(self, exclude_fields: set | None = None) -> dict:
++async def to_dict(self, exclude_fields: set | None = None) -> dict:
+         """转换为字典."""
+         result = super().to_dict(exclude_fields)
+         # 添加计算属性
+@@ -213,7 +213,7 @@         result["usage_percentage"] = self.usage_percentage
+         return result
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         """安全的__repr__方法，只访问自己的列字段."""
+         return (
+             f"Tenant(id={self.id}, "
+@@ -290,7 +290,7 @@         Index("idx_tenant_permission_resource", "resource_type", "resource_id"),
+     )
+ 
+-    def can_perform_action(
++async def can_perform_action(
+         self, action: str, resource_context: dict[str, Any] | None = None
+     ) -> bool:
+         """检查是否可以执行指定动作."""
+@@ -307,7 +307,7 @@ 
+         return True
+ 
+-    def _evaluate_conditions(self, context: dict[str, Any]) -> bool:
++async def _evaluate_conditions(self, context: dict[str, Any]) -> bool:
+         """评估权限条件."""
+         # 简单的条件评估逻辑,可根据需要扩展
+         for condition_key, condition_value in self.conditions.items():
+@@ -367,7 +367,7 @@         Index("idx_tenant_role_level", "tenant_id", "level"),
+     )
+ 
+-    def has_permission(self, permission_code: str) -> bool:
++async def has_permission(self, permission_code: str) -> bool:
+         """检查是否拥有指定权限."""
+         if not self.is_active:
+             return False
+@@ -459,13 +459,13 @@     )
+ 
+     @hybrid_property
+-    def is_expired(self) -> bool:
++async def is_expired(self) -> bool:
+         """是否已过期."""
+         if self.expires_at is None:
+             return False
+         return datetime.utcnow() > self.expires_at
+ 
+     @hybrid_property
+-    def is_valid(self) -> bool:
++async def is_valid(self) -> bool:
+         """是否有效."""
+         return self.is_active and not self.is_expired

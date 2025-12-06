@@ -1,0 +1,264 @@
+--- a/src/evaluation/backtest.py+++ b/src/evaluation/backtest.py@@ -46,7 +46,7 @@     ev: float  # 期望值
+     confidence: float  # 预测置信度
+ 
+-    def to_dict(self) -> dict:
++async def to_dict(self) -> dict:
+         """转换为字典"""
+         return {
+             "match_id": self.match_id,
+@@ -91,7 +91,7 @@     equity_curve: list[float]
+     metadata: dict[str, Any]
+ 
+-    def to_dict(self) -> dict:
++async def to_dict(self) -> dict:
+         """转换为字典"""
+         return {
+             "initial_bankroll": self.initial_bankroll,
+@@ -118,7 +118,7 @@             "metadata": self.metadata
+         }
+ 
+-    def to_json(self) -> str:
++async def to_json(self) -> str:
+         """转换为JSON"""
+         # 将bets转换为字典列表
+         result_dict = self.to_dict()
+@@ -129,7 +129,7 @@ class StakingStrategy:
+     """投注策略基类"""
+ 
+-    def calculate_stake(self, bankroll: float, **kwargs) -> float:
++async def calculate_stake(self, bankroll: float, **kwargs) -> float:
+         """计算投注金额"""
+         raise NotImplementedError("Subclasses must implement calculate_stake method")
+ 
+@@ -137,7 +137,7 @@ class FlatStakingStrategy(StakingStrategy):
+     """固定投注策略"""
+ 
+-    def __init__(self, stake_amount: float):
++async def __init__(self, stake_amount: float):
+         """
+         初始化固定投注策略
+ 
+@@ -146,7 +146,7 @@         """
+         self.stake_amount = stake_amount
+ 
+-    def calculate_stake(self, bankroll: float, **kwargs) -> float:
++async def calculate_stake(self, bankroll: float, **kwargs) -> float:
+         """返回固定投注金额"""
+         return min(self.stake_amount, bankroll * 0.1)  # 最多投注10%资金
+ 
+@@ -154,7 +154,7 @@ class PercentageStakingStrategy(StakingStrategy):
+     """百分比投注策略"""
+ 
+-    def __init__(self, percentage: float):
++async def __init__(self, percentage: float):
+         """
+         初始化百分比投注策略
+ 
+@@ -163,7 +163,7 @@         """
+         self.percentage = percentage
+ 
+-    def calculate_stake(self, bankroll: float, **kwargs) -> float:
++async def calculate_stake(self, bankroll: float, **kwargs) -> float:
+         """按百分比计算投注金额"""
+         return bankroll * self.percentage
+ 
+@@ -171,7 +171,7 @@ class KellyStakingStrategy(StakingStrategy):
+     """凯利投注策略"""
+ 
+-    def __init__(self, kelly_fraction: float = 0.25, min_stake: float = 1.0, max_stake_percentage: float = 0.05):
++async def __init__(self, kelly_fraction: float = 0.25, min_stake: float = 1.0, max_stake_percentage: float = 0.05):
+         """
+         初始化凯利投注策略
+ 
+@@ -184,7 +184,7 @@         self.min_stake = min_stake
+         self.max_stake_percentage = max_stake_percentage
+ 
+-    def calculate_stake(self, bankroll: float, predicted_proba: list[float],
++async def calculate_stake(self, bankroll: float, predicted_proba: list[float],
+                        odds: list[float], prediction: int, **kwargs) -> float:
+         """
+         计算凯利投注金额
+@@ -231,7 +231,7 @@ class ValueBettingStrategy(StakingStrategy):
+     """价值投注策略"""
+ 
+-    def __init__(self, min_ev_threshold: float = 0.1, base_stake: float = 10.0, max_stake_percentage: float = 0.05):
++async def __init__(self, min_ev_threshold: float = 0.1, base_stake: float = 10.0, max_stake_percentage: float = 0.05):
+         """
+         初始化价值投注策略
+ 
+@@ -244,7 +244,7 @@         self.base_stake = base_stake
+         self.max_stake_percentage = max_stake_percentage
+ 
+-    def calculate_stake(self, bankroll: float, predicted_proba: list[float],
++async def calculate_stake(self, bankroll: float, predicted_proba: list[float],
+                        odds: list[float], prediction: int, **kwargs) -> float:
+         """
+         计算价值投注金额
+@@ -280,7 +280,7 @@ class Backtester:
+     """足球预测回测器"""
+ 
+-    def __init__(self, initial_bankroll: float = 1000.0, random_seed: int = 42):
++async def __init__(self, initial_bankroll: float = 1000.0, random_seed: int = 42):
+         """
+         初始化回测器
+ 
+@@ -296,7 +296,7 @@         # 设置随机种子
+         np.random.seed(random_seed)
+ 
+-    def calculate_expected_value(self, predicted_proba: list[float], odds: list[float]) -> list[float]:
++async def calculate_expected_value(self, predicted_proba: list[float], odds: list[float]) -> list[float]:
+         """
+         计算期望值
+ 
+@@ -313,7 +313,7 @@             ev_values.append(ev)
+         return ev_values
+ 
+-    def should_bet(self, predicted_proba: list[float], odds: list[float],
++async def should_bet(self, predicted_proba: list[float], odds: list[float],
+                    strategy: str = "value", threshold: float = 0.1) -> bool:
+         """
+         判断是否应该下注
+@@ -337,7 +337,7 @@         else:
+             return True  # 默认都下注
+ 
+-    def get_best_bet(self, predicted_proba: list[float], odds: list[float],
++async def get_best_bet(self, predicted_proba: list[float], odds: list[float],
+                     strategy: str = "ev") -> tuple[int, float]:
+         """
+         获取最佳投注选择
+@@ -367,7 +367,7 @@             best_idx = np.argmax(predicted_proba)
+             return best_idx, predicted_proba[best_idx]
+ 
+-    def simulate_bet(self, match_id: str, date: str, predicted_proba: list[float],
++async def simulate_bet(self, match_id: str, date: str, predicted_proba: list[float],
+                     odds: list[float], actual_result: int, stake_strategy: StakingStrategy,
+                     bet_selection_strategy: str = "ev", bankroll: float = None) -> Optional[Bet]:
+         """
+@@ -446,7 +446,7 @@ 
+         return bet
+ 
+-    def simulate(self,
++async def simulate(self,
+                  predictions: pd.DataFrame,
+                  odds: pd.DataFrame,
+                  stake_strategy: StakingStrategy,
+@@ -491,16 +491,16 @@             try:
+                 # 提取预测概率
+                 predicted_proba = [
+-                    pred_row.get('prob_H', pred_row.get('prob_0', 0)),
+-                    pred_row.get('prob_D', pred_row.get('prob_1', 0)),
+-                    pred_row.get('prob_A', pred_row.get('prob_2', 0))
++                    pred_row.await await get('prob_H', pred_row.get('prob_0', 0)),
++                    pred_row.await await get('prob_D', pred_row.get('prob_1', 0)),
++                    pred_row.await await get('prob_A', pred_row.get('prob_2', 0))
+                 ]
+ 
+                 # 提取赔率
+                 match_odds = [
+-                    odds_row.get('odds_H', odds_row.get('odds_0', 1.0)),
+-                    odds_row.get('odds_D', odds_row.get('odds_1', 1.0)),
+-                    odds_row.get('odds_A', odds_row.get('odds_2', 1.0))
++                    odds_row.await await get('odds_H', odds_row.get('odds_0', 1.0)),
++                    odds_row.await await get('odds_D', odds_row.get('odds_1', 1.0)),
++                    odds_row.await await get('odds_A', odds_row.get('odds_2', 1.0))
+                 ]
+ 
+                 # 检查赔率范围
+@@ -513,12 +513,12 @@                     continue
+ 
+                 # 获取实际结果（如果有的话）
+-                actual_result = pred_row.get('actual_result', pred_row.get('predicted_class', -1))
++                actual_result = pred_row.await await get('actual_result', pred_row.get('predicted_class', -1))
+                 if actual_result == -1:
+                     continue  # 没有实际结果，跳过
+ 
+                 # 获取比赛日期
+-                date = pred_row.get('date', pred_row.get('match_date', f"2024-01-{i+1:02d}"))
++                date = pred_row.await await get('date', pred_row.get('match_date', f"2024-01-{i+1:02d}"))
+ 
+                 # 模拟投注
+                 bet = self.simulate_bet(
+@@ -550,7 +550,7 @@ 
+         return result
+ 
+-    def _calculate_backtest_result(self, stake_strategy: StakingStrategy) -> BacktestResult:
++async def _calculate_backtest_result(self, stake_strategy: StakingStrategy) -> BacktestResult:
+         """计算回测统计结果"""
+         if not self.bets:
+             return BacktestResult(
+@@ -648,7 +648,7 @@             }
+         )
+ 
+-    def _calculate_consecutive_streaks(self) -> tuple[int, int]:
++async def _calculate_consecutive_streaks(self) -> tuple[int, int]:
+         """计算最大连胜和连败次数"""
+         if not self.bets:
+             return 0, 0
+@@ -670,7 +670,7 @@ 
+         return max_consecutive_wins, max_consecutive_losses
+ 
+-    def _calculate_max_drawdown(self) -> tuple[float, float]:
++async def _calculate_max_drawdown(self) -> tuple[float, float]:
+         """计算最大回撤"""
+         if len(self.equity_curve) < 2:
+             return 0.0, 0.0
+@@ -685,7 +685,7 @@ 
+         return max_drawdown, max_drawdown_percentage
+ 
+-    def save_results(self, result: BacktestResult, filepath: Union[str, Path],
++async def save_results(self, result: BacktestResult, filepath: Union[str, Path],
+                     save_csv: bool = True) -> None:
+         """
+         保存回测结果
+@@ -718,7 +718,7 @@             logger.info(f"Backtest results saved to {filepath}")
+ 
+     @classmethod
+-    def load_results(cls, filepath: Union[str, Path]) -> BacktestResult:
++async def load_results(cls, filepath: Union[str, Path]) -> BacktestResult:
+         """
+         加载回测结果
+ 
+@@ -733,7 +733,7 @@ 
+         # 重建Bet对象
+         bets = []
+-        for bet_data in data.get("bets", []):
++        for bet_data in data.await get("bets", []):
+             bet = Bet(
+                 match_id=bet_data["match_id"],
+                 date=bet_data["date"],
+@@ -778,7 +778,7 @@ 
+ 
+ # 便捷函数
+-def run_backtest(predictions_file: Union[str, Path],
++async def run_backtest(predictions_file: Union[str, Path],
+                 odds_file: Union[str, Path],
+                 stake_strategy: str = "flat",
+                 initial_bankroll: float = 1000.0,
+@@ -802,20 +802,20 @@ 
+     # 创建投注策略
+     if stake_strategy == "flat":
+-        strategy = FlatStakingStrategy(stake_amount=kwargs.get("stake_amount", 10.0))
++        strategy = await FlatStakingStrategy(stake_amount=kwargs.get("stake_amount", 10.0))
+     elif stake_strategy == "percentage":
+-        strategy = PercentageStakingStrategy(percentage=kwargs.get("percentage", 0.01))
++        strategy = await PercentageStakingStrategy(percentage=kwargs.get("percentage", 0.01))
+     elif stake_strategy == "kelly":
+         strategy = KellyStakingStrategy(
+-            kelly_fraction=kwargs.get("kelly_fraction", 0.25),
+-            min_stake=kwargs.get("min_stake", 1.0),
+-            max_stake_percentage=kwargs.get("max_stake_percentage", 0.05)
++            kelly_fraction=kwargs.await get("kelly_fraction", 0.25),
++            min_stake=kwargs.await get("min_stake", 1.0),
++            max_stake_percentage=kwargs.await get("max_stake_percentage", 0.05)
+         )
+     elif stake_strategy == "value":
+         strategy = ValueBettingStrategy(
+-            min_ev_threshold=kwargs.get("min_ev_threshold", 0.1),
+-            base_stake=kwargs.get("base_stake", 10.0),
+-            max_stake_percentage=kwargs.get("max_stake_percentage", 0.05)
++            min_ev_threshold=kwargs.await get("min_ev_threshold", 0.1),
++            base_stake=kwargs.await get("base_stake", 10.0),
++            max_stake_percentage=kwargs.await get("max_stake_percentage", 0.05)
+         )
+     else:
+         raise ValueError(f"Unknown staking strategy: {stake_strategy}")

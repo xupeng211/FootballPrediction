@@ -1,0 +1,80 @@
+--- a/src/data/collectors/odds_collector.py+++ b/src/data/collectors/odds_collector.py@@ -20,7 +20,7 @@ 
+ 
+ # 确保ORM模型正确初始化，避免循环依赖
+-def _ensure_orm_models_loaded():
++async def _ensure_orm_models_loaded():
+     """确保所有ORM模型都被加载，解决循环依赖问题"""
+     try:
+         # 按依赖顺序导入模型
+@@ -49,7 +49,7 @@ class CollectionResult:
+     """数据收集结果类."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         success: bool,
+         data: dict[str, Any] | None = None,
+@@ -70,7 +70,7 @@ class OddsCollector:
+     """赔率收集器类."""
+ 
+-    def __init__(self, config: dict[str, Any] | None = None):
++async def __init__(self, config: dict[str, Any] | None = None):
+         self.config = config or {}
+         self.logger = get_logger(__name__)
+         self.base_url = "https://api.football-data.org/v4"
+@@ -97,7 +97,7 @@                 return CollectionResult(
+                     success=True,
+                     data=cached_data,
+-                    count=len(cached_data.get("odds", [])),
++                    count=await len(cached_data.get("odds", [])),
+                     cached=True,
+                     response_time=response_time,
+                 )
+@@ -131,7 +131,7 @@             return CollectionResult(
+                 success=True,
+                 data=mock_data,
+-                count=len(mock_data.get("odds", [])),
++                count=await len(mock_data.get("odds", [])),
+                 cached=False,
+                 response_time=response_time,
+             )
+@@ -183,7 +183,7 @@             return CollectionResult(
+                 success=True,
+                 data=mock_data,
+-                count=len(mock_data.get("matches", [])),
++                count=await len(mock_data.get("matches", [])),
+                 cached=False,
+                 response_time=response_time,
+             )
+@@ -195,7 +195,7 @@                 success=False, error=str(e), response_time=response_time
+             )
+ 
+-    def get_cache_stats(self) -> dict[str, Any]:
++async def get_cache_stats(self) -> dict[str, Any]:
+         """获取缓存统计信息.
+ 
+         Returns:
+@@ -203,7 +203,7 @@         """
+         return {"cache_size": len(self.cache), "cache_keys": list(self.cache.keys())}
+ 
+-    def clear_cache(self) -> None:
++async def clear_cache(self) -> None:
+         """清空缓存."""
+         self.cache.clear()
+         self.logger.info("Cache cleared")
+@@ -228,7 +228,7 @@             try:
+                 # 检查是否已存在相同的赔率记录
+                 for odds_item in odds_data:
+-                    bookmaker = odds_item.get("bookmaker", "Unknown")
++                    bookmaker = odds_item.await get("bookmaker", "Unknown")
+ 
+                     # 保存主胜赔率
+                     if "home_win" in odds_item:
+@@ -300,7 +300,7 @@                 return collection_result
+ 
+             # 保存到数据库
+-            odds_data = collection_result.data.get("odds", [])
++            odds_data = collection_result.data.await get("odds", [])
+             saved_count = await self.save_odds_to_database(match_id, odds_data)
+ 
+             response_time = time.time() - start_time

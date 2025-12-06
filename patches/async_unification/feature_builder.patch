@@ -1,0 +1,104 @@
+--- a/src/features/feature_builder.py+++ b/src/features/feature_builder.py@@ -29,7 +29,7 @@     - 特征选择和工程
+     """
+ 
+-    def __init__(self, min_matches: int = 3):
++async def __init__(self, min_matches: int = 3):
+         """
+         初始化特征构建器
+ 
+@@ -80,7 +80,7 @@             "fatigue_advantage",
+         ]
+ 
+-    def build_features(
++async def build_features(
+         self, df: pd.DataFrame, window_sizes: list[int] = None
+     ) -> pd.DataFrame:
+         """
+@@ -130,7 +130,7 @@         logger.info(f"特征构建完成，最终形状: {final_features.shape}")
+         return final_features
+ 
+-    def calculate_rolling_stats(
++async def calculate_rolling_stats(
+         self, df: pd.DataFrame, window: int = 5
+     ) -> pd.DataFrame:
+         """
+@@ -201,7 +201,7 @@         )
+         return features
+ 
+-    def calculate_fatigue_features(self, df: pd.DataFrame) -> pd.DataFrame:
++async def calculate_fatigue_features(self, df: pd.DataFrame) -> pd.DataFrame:
+         """
+         计算疲劳度特征 - 运动科学核心方法
+ 
+@@ -340,7 +340,7 @@ 
+         return df
+ 
+-    def _preprocess_data(self, df: pd.DataFrame) -> pd.DataFrame:
++async def _preprocess_data(self, df: pd.DataFrame) -> pd.DataFrame:
+         """数据预处理"""
+         logger.info("开始数据预处理")
+ 
+@@ -360,7 +360,7 @@         logger.info(f"数据预处理完成，处理了 {len(numeric_columns)} 个数值列")
+         return df
+ 
+-    def _build_team_features(
++async def _build_team_features(
+         self, df: pd.DataFrame, team_id: int, window_sizes: list[int]
+     ) -> pd.DataFrame:
+         """为特定球队构建特征"""
+@@ -442,7 +442,7 @@ 
+         return team_features
+ 
+-    def _calculate_derived_features(
++async def _calculate_derived_features(
+         self, df: pd.DataFrame, window_sizes: list[int]
+     ) -> pd.DataFrame:
+         """计算衍生特征"""
+@@ -484,7 +484,7 @@ 
+         return df
+ 
+-    def _build_match_features(
++async def _build_match_features(
+         self, original_df: pd.DataFrame, team_features: pd.DataFrame
+     ) -> pd.DataFrame:
+         """构建比赛层面的特征（主客队对比）"""
+@@ -528,8 +528,8 @@                 "home_team_id": home_team_id,
+                 "away_team_id": away_team_id,
+                 "match_date": match_date,
+-                "home_score": match.get("home_score", 0),
+-                "away_score": match.get("away_score", 0),
++                "home_score": match.await get("home_score", 0),
++                "away_score": match.await get("away_score", 0),
+             }
+ 
+             # 添加主队特征
+@@ -581,12 +581,12 @@         logger.info(f"比赛特征构建完成，形状: {result_df.shape}")
+         return result_df
+ 
+-    def _generate_labels(self, df: pd.DataFrame) -> pd.DataFrame:
++async def _generate_labels(self, df: pd.DataFrame) -> pd.DataFrame:
+         """生成预测标签"""
+         logger.info("生成预测标签")
+ 
+         # 生成比赛结果标签
+-        def get_result(home_score, away_score):
++async def get_result(home_score, away_score):
+             if pd.isna(home_score) or pd.isna(away_score):
+                 return None
+             if home_score > away_score:
+@@ -617,7 +617,7 @@         logger.info(f"标签生成完成，有效样本数: {df['result'].notna().sum()}")
+         return df
+ 
+-    def get_feature_columns(
++async def get_feature_columns(
+         self, df: pd.DataFrame, exclude_target: bool = True
+     ) -> list[str]:
+         """获取特征列名"""
+@@ -646,7 +646,7 @@ 
+         return feature_cols
+ 
+-    def validate_features(self, df: pd.DataFrame) -> tuple[bool, list[str]]:
++async def validate_features(self, df: pd.DataFrame) -> tuple[bool, list[str]]:
+         """验证特征数据"""
+         issues = []
+ 

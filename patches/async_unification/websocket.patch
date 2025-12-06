@@ -1,0 +1,13 @@
+--- a/src/realtime/websocket.py+++ b/src/realtime/websocket.py@@ -2,11 +2,11 @@ 
+ 
+ class Websocket:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

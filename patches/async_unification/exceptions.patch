@@ -1,0 +1,38 @@
+--- a/src/core/exceptions.py+++ b/src/core/exceptions.py@@ -7,7 +7,7 @@ class FootballPredictionError(Exception):
+     """足球预测系统基础异常类."""
+ 
+-    def __init__(self, message: str, **kwargs):
++async def __init__(self, message: str, **kwargs):
+         """初始化异常.
+ 
+         Args:
+@@ -49,7 +49,7 @@ class ServiceError(FootballPredictionError):
+     """服务错误."""
+ 
+-    def __init__(self, message: str, service_name: str = None):
++async def __init__(self, message: str, service_name: str = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.message = message
+@@ -169,19 +169,19 @@ class TeamNotFoundError(FootballPredictionError):
+     """球队未找到异常."""
+ 
+-    def __init__(self, team_id: int):
++async def __init__(self, team_id: int):
+         super().__init__(f"Team with ID {team_id} not found", team_id=team_id)
+ 
+ 
+ class LeagueNotFoundError(FootballPredictionError):
+     """联赛未找到异常."""
+ 
+-    def __init__(self, league_id: int):
++async def __init__(self, league_id: int):
+         super().__init__(f"League with ID {league_id} not found", league_id=league_id)
+ 
+ 
+ class MatchNotFoundError(FootballPredictionError):
+     """比赛未找到异常."""
+ 
+-    def __init__(self, match_id: int):
++async def __init__(self, match_id: int):
+         super().__init__(f"Match with ID {match_id} not found", match_id=match_id)

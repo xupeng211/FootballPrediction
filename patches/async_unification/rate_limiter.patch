@@ -1,0 +1,130 @@
+--- a/src/collectors/rate_limiter.py+++ b/src/collectors/rate_limiter.py@@ -40,7 +40,7 @@     burst: int
+     max_wait_time: Optional[float] = None
+ 
+-    def __post_init__(self) -> None:
++async def __post_init__(self) -> None:
+         """验证配置参数"""
+         if self.rate <= 0:
+             raise ValueError("Rate must be positive")
+@@ -63,7 +63,7 @@     last_refill: float = field(default_factory=lambda: time.monotonic())
+     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+ 
+-    def __post_init__(self) -> None:
++async def __post_init__(self) -> None:
+         """初始化令牌桶"""
+         if self.tokens > self.capacity:
+             self.tokens = self.capacity
+@@ -123,7 +123,7 @@             # 等待令牌补充
+             await asyncio.sleep(wait_time)
+ 
+-    def _refill(self) -> None:
++async def _refill(self) -> None:
+         """补充令牌（非线程安全，需要在锁内调用）"""
+         now = time.monotonic()
+         elapsed = now - self.last_refill
+@@ -155,7 +155,7 @@             await some_http_request()
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         config: Optional[Dict[str, Any]] = None,
+         default_config: Optional[RateLimitConfig] = None
+@@ -183,7 +183,7 @@         if "default" not in self.config:
+             self.config["default"] = self._default_config
+ 
+-    def _parse_config(self, config: Dict[str, Any]) -> None:
++async def _parse_config(self, config: Dict[str, Any]) -> None:
+         """
+         解析配置字典
+ 
+@@ -195,9 +195,9 @@         for domain, cfg in config.items():
+             if isinstance(cfg, dict):
+                 # 字典格式配置
+-                rate = cfg.get("rate", 1.0)
+-                burst = cfg.get("burst", 1)
+-                max_wait_time = cfg.get("max_wait_time")
++                rate = cfg.await get("rate", 1.0)
++                burst = cfg.await get("burst", 1)
++                max_wait_time = cfg.await get("max_wait_time")
+                 self.config[domain] = RateLimitConfig(
+                     rate=float(rate),
+                     burst=int(burst),
+@@ -209,7 +209,7 @@             else:
+                 raise ValueError(f"Invalid config for domain {domain}: {cfg}")
+ 
+-    def _get_bucket(self, domain: str) -> TokenBucket:
++async def _get_bucket(self, domain: str) -> TokenBucket:
+         """
+         获取或创建域名的令牌桶
+ 
+@@ -221,7 +221,7 @@         """
+         if domain not in self.buckets:
+             # 使用域名特定配置或默认配置
+-            config = self.config.get(domain, self.config["default"])
++            config = self.config.await get(domain, self.config["default"])
+             self.buckets[domain] = TokenBucket(
+                 tokens=config.burst,
+                 capacity=config.burst,
+@@ -246,7 +246,7 @@             RuntimeError: 速率限制配置错误
+         """
+         bucket = self._get_bucket(domain)
+-        config = self.config.get(domain, self.config["default"])
++        config = self.config.await get(domain, self.config["default"])
+ 
+         # 尝试立即获取令牌
+         if await bucket.consume(tokens):
+@@ -301,12 +301,12 @@         """
+         start_time = time.monotonic()
+         bucket = self._get_bucket(domain)
+-        config = self.config.get(domain, self.config["default"])
++        config = self.config.await get(domain, self.config["default"])
+ 
+         await bucket.wait_for_tokens(tokens, config.max_wait_time)
+         return time.monotonic() - start_time
+ 
+-    def get_status(self, domain: Optional[str] = None) -> Dict[str, Any]:
++async def get_status(self, domain: Optional[str] = None) -> Dict[str, Any]:
+         """
+         获取速率限制器状态
+ 
+@@ -321,7 +321,7 @@                 return {"error": f"No bucket found for domain: {domain}"}
+ 
+             bucket = self.buckets[domain]
+-            config = self.config.get(domain, self.config["default"])
++            config = self.config.await get(domain, self.config["default"])
+ 
+             return {
+                 "domain": domain,
+@@ -338,7 +338,7 @@             # 返回所有域名的状态
+             status = {}
+             for d, bucket in self.buckets.items():
+-                config = self.config.get(d, self.config["default"])
++                config = self.config.await get(d, self.config["default"])
+                 status[d] = {
+                     "available_tokens": bucket.tokens,
+                     "capacity": bucket.capacity,
+@@ -351,7 +351,7 @@                 }
+             return status
+ 
+-    def update_config(self, domain: str, config: RateLimitConfig) -> None:
++async def update_config(self, domain: str, config: RateLimitConfig) -> None:
+         """
+         更新域名配置
+ 
+@@ -365,7 +365,7 @@         if domain in self.buckets:
+             del self.buckets[domain]
+ 
+-    def remove_domain(self, domain: str) -> None:
++async def remove_domain(self, domain: str) -> None:
+         """
+         移除域名配置和令牌桶
+ 
+@@ -385,7 +385,7 @@ 
+ 
+ # 便利函数
+-def create_rate_limiter(
++async def create_rate_limiter(
+     config: Optional[Dict[str, Any]] = None,
+     default_rate: float = 1.0,
+     default_burst: int = 1

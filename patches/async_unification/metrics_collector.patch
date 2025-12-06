@@ -1,0 +1,150 @@
+--- a/src/monitoring/metrics_collector.py+++ b/src/monitoring/metrics_collector.py@@ -15,23 +15,23 @@ class MetricsCollector:
+     """向后兼容的 MetricsCollector 类."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化指标收集器."""
+         self.metrics = {}
+ 
+-    def initialize(self):
++async def initialize(self):
+         """初始化指标收集器."""
+         logger.info("✅ MetricsCollector initialized successfully")
+ 
+-    def collect(self) -> dict[str, Any]:
++async def collect(self) -> dict[str, Any]:
+         """收集指标."""
+         return {"timestamp": datetime.utcnow(), "metrics": self.metrics}
+ 
+-    def add_metric(self, name: str, value: Any):
++async def add_metric(self, name: str, value: Any):
+         """添加指标."""
+         self.metrics[name] = value
+ 
+-    def get_status(self) -> dict[str, Any]:
++async def get_status(self) -> dict[str, Any]:
+         """获取收集器状态."""
+         return {
+             "status": "active",
+@@ -41,25 +41,25 @@         }
+ 
+     # 添加测试期望的方法
+-    def collect_cpu_usage(self) -> float:
++async def collect_cpu_usage(self) -> float:
+         """收集CPU使用率."""
+         import psutil
+ 
+         return psutil.cpu_percent(interval=1)
+ 
+-    def collect_memory_usage(self) -> float:
++async def collect_memory_usage(self) -> float:
+         """收集内存使用率."""
+         import psutil
+ 
+         return psutil.virtual_memory().percent
+ 
+-    def collect_disk_usage(self) -> float:
++async def collect_disk_usage(self) -> float:
+         """收集磁盘使用率."""
+         import psutil
+ 
+         return psutil.disk_usage("/").percent
+ 
+-    def collect_network_stats(self) -> dict[str, Any]:
++async def collect_network_stats(self) -> dict[str, Any]:
+         """收集网络统计."""
+         import psutil
+ 
+@@ -71,19 +71,19 @@             "packets_recv": net_io.packets_recv,
+         }
+ 
+-    def collect_process_count(self) -> int:
++async def collect_process_count(self) -> int:
+         """收集进程数量."""
+         import psutil
+ 
+         return len(psutil.pids())
+ 
+-    def collect_active_connections(self) -> int:
++async def collect_active_connections(self) -> int:
+         """收集活跃连接数."""
+         import psutil
+ 
+         return len(psutil.net_connections())
+ 
+-    def collect_system_load(self) -> dict[str, float]:
++async def collect_system_load(self) -> dict[str, float]:
+         """收集系统负载."""
+         import psutil
+ 
+@@ -98,7 +98,7 @@ class MetricPoint:
+     """指标数据点."""
+ 
+-    def __init__(self, name: str, value: float, timestamp: datetime = None):
++async def __init__(self, name: str, value: float, timestamp: datetime = None):
+         self.name = name
+         self.value = value
+         self.timestamp = timestamp or datetime.utcnow()
+@@ -107,19 +107,19 @@ class MetricsAggregator:
+     """指标聚合器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.metrics = []
+ 
+-    def add_metric(self, metric_point: MetricPoint):
++async def add_metric(self, metric_point: MetricPoint):
+         """添加指标数据点."""
+         self.metrics.append(metric_point)
+ 
+-    def get_average(self, metric_name: str) -> float:
++async def get_average(self, metric_name: str) -> float:
+         """获取指标平均值."""
+         values = [m.value for m in self.metrics if m.name == metric_name]
+         return sum(values) / len(values) if values else 0.0
+ 
+-    def get_latest(self, metric_name: str) -> float:
++async def get_latest(self, metric_name: str) -> float:
+         """获取最新指标值."""
+         for m in reversed(self.metrics):
+             if m.name == metric_name:
+@@ -131,7 +131,7 @@ _metrics_collector = None
+ 
+ 
+-def get_metrics_collector():
++async def get_metrics_collector():
+     """获取全局指标收集器实例."""
+     global _metrics_collector
+     if _metrics_collector is None:
+@@ -141,7 +141,7 @@ 
+ 
+ # 便捷函数 - 直接实现以保持向后兼容
+-def start_metrics_collection():
++async def start_metrics_collection():
+     """开始指标收集."""
+     collector = get_metrics_collector()
+     collector.initialize()
+@@ -149,7 +149,7 @@     return True
+ 
+ 
+-def stop_metrics_collection():
++async def stop_metrics_collection():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """停止指标收集"""
+@@ -159,7 +159,7 @@     return True
+ 
+ 
+-def track_prediction_performance(prediction_id: int, accuracy: float):
++async def track_prediction_performance(prediction_id: int, accuracy: float):
+     """跟踪预测性能."""
+     collector = get_metrics_collector()
+     if hasattr(collector, "add_metric"):
+@@ -167,7 +167,7 @@     return True
+ 
+ 
+-def track_cache_performance(hit_rate: float):
++async def track_cache_performance(hit_rate: float):
+     """跟踪缓存性能."""
+     collector = get_metrics_collector()
+     if hasattr(collector, "add_metric"):

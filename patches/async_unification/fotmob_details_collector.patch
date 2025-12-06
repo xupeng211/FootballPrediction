@@ -1,0 +1,646 @@
+--- a/src/data/collectors/fotmob_details_collector.py+++ b/src/data/collectors/fotmob_details_collector.py@@ -124,7 +124,7 @@     formation: str | None = None
+     players: list[Player] = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         if self.players is None:
+             self.players = []
+ 
+@@ -149,7 +149,7 @@     events: list[MatchEvent] | None = None  # 详细事件流 (关键)
+     raw_data: dict[str, Any] | None = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         if self.events is None:
+             self.events = []
+ 
+@@ -157,7 +157,7 @@ class FotmobDetailsCollector:
+     """FotMob 详情采集器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.logger = logging.getLogger(__name__)
+         self.session = None
+         self.base_headers = {
+@@ -216,11 +216,11 @@             try:
+                 # 第一步：访问主页建立基础会话
+                 self.logger.info("第一步：建立基础会话...")
+-                await self.session.get("https://www.fotmob.com/", timeout=15)
++                await self.session.await get("https://www.fotmob.com/", timeout=15)
+ 
+                 # 第二步：访问比赛列表页激活API访问权限
+                 self.logger.info("第二步：激活API访问权限...")
+-                await self.session.get("https://www.fotmob.com/matches", timeout=15)
++                await self.session.await get("https://www.fotmob.com/matches", timeout=15)
+ 
+                 # 第三步：等待几秒让认证生效
+                 await asyncio.sleep(2)
+@@ -268,7 +268,7 @@             self.logger.info(f"尝试端点 {i}/{len(endpoints)}: {url}")
+ 
+             try:
+-                response = await self.session.get(url, headers=self.base_headers, timeout=30.0)
++                response = await self.session.await get(url, headers=self.base_headers, timeout=30.0)
+ 
+                 self.logger.info(f"端点 {i} 响应: HTTP {response.status_code}")
+ 
+@@ -320,7 +320,7 @@         self.logger.error(f"❌ 所有API端点都无法访问比赛 {match_id}")
+         return None
+ 
+-    def _structure_match_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
++async def _structure_match_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
+         """
+         结构化原始比赛数据
+ 
+@@ -362,31 +362,31 @@ 
+         return structured
+ 
+-    def _extract_match_id(self, data: dict[str, Any]) -> str:
++async def _extract_match_id(self, data: dict[str, Any]) -> str:
+         """提取比赛 ID"""
+         try:
+-            return data.get("match", {}).get("matchId", "")
++            return data.await await get("match", {}).get("matchId", "")
+         except Exception:
+             return ""
+ 
+-    def _extract_match_info(self, data: dict[str, Any]) -> dict[str, Any]:
++async def _extract_match_info(self, data: dict[str, Any]) -> dict[str, Any]:
+         """提取比赛基本信息"""
+         try:
+-            match = data.get("match", {})
++            match = data.await get("match", {})
+             return {
+-                "home_team": match.get("home", {}).get("name", ""),
+-                "away_team": match.get("away", {}).get("name", ""),
+-                "home_score": match.get("home", {}).get("score", 0),
+-                "away_score": match.get("away", {}).get("score", 0),
+-                "status": match.get("status", {}),
+-                "start_time": match.get("status", {}).get("startTimeStr", ""),
+-                "finished": match.get("status", {}).get("finished", False)
++                "home_team": match.await await get("home", {}).get("name", ""),
++                "away_team": match.await await get("away", {}).get("name", ""),
++                "home_score": match.await await get("home", {}).get("score", 0),
++                "away_score": match.await await get("away", {}).get("score", 0),
++                "status": match.await get("status", {}),
++                "start_time": match.await await get("status", {}).get("startTimeStr", ""),
++                "finished": match.await await get("status", {}).get("finished", False)
+             }
+         except Exception as e:
+             self.logger.error(f"Error extracting match info: {str(e)}")
+             return {}
+ 
+-    def _extract_lineup_data(self, data: dict[str, Any]) -> dict[str, Any]:
++async def _extract_lineup_data(self, data: dict[str, Any]) -> dict[str, Any]:
+         """
+         提取阵容数据
+ 
+@@ -403,38 +403,38 @@             }
+         """
+         try:
+-            lineup_content = data.get("content", {}).get("lineup", {})
++            lineup_content = data.await await get("content", {}).get("lineup", {})
+             lineup_data = {
+-                "home": self._process_team_lineup(lineup_content.get("home", {})),
+-                "away": self._process_team_lineup(lineup_content.get("away", {}))
++                "home": self.await _process_team_lineup(lineup_content.get("home", {})),
++                "away": self.await _process_team_lineup(lineup_content.get("away", {}))
+             }
+             return lineup_data
+         except Exception as e:
+             self.logger.error(f"Error extracting lineup data: {str(e)}")
+             return {"home": {"starters": [], "substitutes": []}, "away": {"starters": [], "substitutes": []}}
+ 
+-    def _process_team_lineup(self, team_lineup: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
++async def _process_team_lineup(self, team_lineup: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+         """处理单个球队的阵容数据"""
+         return {
+-            "starters": self._process_players(team_lineup.get("starters", [])),
+-            "substitutes": self._process_players(team_lineup.get("substitutes", []))
++            "starters": self.await _process_players(team_lineup.get("starters", [])),
++            "substitutes": self.await _process_players(team_lineup.get("substitutes", []))
+         }
+ 
+-    def _process_players(self, players: list[dict[str, Any]]) -> list[dict[str, Any]]:
++async def _process_players(self, players: list[dict[str, Any]]) -> list[dict[str, Any]]:
+         """处理球员数据列表"""
+         processed_players = []
+         for player in players:
+             processed_player = {
+-                "id": player.get("id"),
+-                "name": player.get("name", ""),
+-                "position": player.get("position", ""),
+-                "shirtNumber": player.get("shirtNumber"),
+-                "captain": player.get("captain", False)
++                "id": player.await get("id"),
++                "name": player.await get("name", ""),
++                "position": player.await get("position", ""),
++                "shirtNumber": player.await get("shirtNumber"),
++                "captain": player.await get("captain", False)
+             }
+             processed_players.append(processed_player)
+         return processed_players
+ 
+-    def _extract_shot_data(self, data: dict[str, Any]) -> list[dict[str, Any]]:
++async def _extract_shot_data(self, data: dict[str, Any]) -> list[dict[str, Any]]:
+         """
+         提取射门数据
+ 
+@@ -442,21 +442,21 @@             射门数据列表，包含 xG 值、射门类型等信息
+         """
+         try:
+-            shotmap_content = data.get("content", {}).get("shotmap", {})
+-            shots = shotmap_content.get("shots", [])
++            shotmap_content = data.await await get("content", {}).get("shotmap", {})
++            shots = shotmap_content.await get("shots", [])
+ 
+             processed_shots = []
+             for shot in shots:
+                 processed_shot = {
+-                    "id": shot.get("id"),
+-                    "team": shot.get("team"),
+-                    "player": shot.get("player", {}),
+-                    "minute": shot.get("minute"),
+-                    "xg": shot.get("xg", 0.0),
+-                    "situation": shot.get("situation"),
+-                    "shotType": shot.get("shotType"),
+-                    "isGoal": shot.get("isGoal", False),
+-                    "bodyPart": shot.get("bodyPart")
++                    "id": shot.await get("id"),
++                    "team": shot.await get("team"),
++                    "player": shot.await get("player", {}),
++                    "minute": shot.await get("minute"),
++                    "xg": shot.await get("xg", 0.0),
++                    "situation": shot.await get("situation"),
++                    "shotType": shot.await get("shotType"),
++                    "isGoal": shot.await get("isGoal", False),
++                    "bodyPart": shot.await get("bodyPart")
+                 }
+                 processed_shots.append(processed_shot)
+ 
+@@ -465,7 +465,7 @@             self.logger.error(f"Error extracting shot data: {str(e)}")
+             return []
+ 
+-    def _calculate_team_xg(self, shots: list[dict[str, Any]], match_info: dict[str, Any]) -> dict[str, Any]:
++async def _calculate_team_xg(self, shots: list[dict[str, Any]], match_info: dict[str, Any]) -> dict[str, Any]:
+         """
+         基于FotMob射门图计算真实的xG数据
+ 
+@@ -477,16 +477,16 @@             包含xg_home和xg_away的字典
+         """
+         try:
+-            home_team = match_info.get("home_team", "")
+-            away_team = match_info.get("away_team", "")
++            home_team = match_info.await get("home_team", "")
++            away_team = match_info.await get("away_team", "")
+ 
+             xg_home = 0.0
+             xg_away = 0.0
+ 
+             # 统计每支球队的xG总和
+             for shot in shots:
+-                xg_value = float(shot.get("xg", 0.0))
+-                shot_team = shot.get("team", "")
++                xg_value = await float(shot.get("xg", 0.0))
++                shot_team = shot.await get("team", "")
+ 
+                 # 通过队名判断是主队还是客队的射门
+                 if shot_team == home_team:
+@@ -512,7 +512,7 @@             # 如果计算失败，返回空值而不是假数据
+             return {"xg_home": None, "xg_away": None}
+ 
+-    def _extract_match_stats(self, data: dict[str, Any]) -> list[dict[str, Any]]:
++async def _extract_match_stats(self, data: dict[str, Any]) -> list[dict[str, Any]]:
+         """
+         提取比赛统计数据
+ 
+@@ -520,19 +520,19 @@             统计数据列表，如控球率、射门数等
+         """
+         try:
+-            stats_content = data.get("content", {}).get("stats", {})
+-            stats = stats_content.get("stats", [])
++            stats_content = data.await await get("content", {}).get("stats", {})
++            stats = stats_content.await get("stats", [])
+ 
+             processed_stats = []
+             for stat_group in stats:
+-                stat_type = stat_group.get("type", "")
+-                stat_values = stat_group.get("stats", [])
++                stat_type = stat_group.await get("type", "")
++                stat_values = stat_group.await get("stats", [])
+ 
+                 for stat in stat_values:
+                     processed_stat = {
+                         "type": stat_type,
+-                        "statType": stat.get("type", ""),
+-                        "value": stat.get("value", "")
++                        "statType": stat.await get("type", ""),
++                        "value": stat.await get("value", "")
+                     }
+                     processed_stats.append(processed_stat)
+ 
+@@ -543,7 +543,7 @@ 
+     # 添加 headers 属性以兼容测试
+     @property
+-    def headers(self) -> dict[str, str]:
++async def headers(self) -> dict[str, str]:
+         """获取 HTTP 头部"""
+         return self.base_headers
+ 
+@@ -595,13 +595,13 @@             self.logger.error(f"请求比赛 {match_id} 数据时发生异常: {e}")
+             return None
+ 
+-    def _parse_basic_info(
++async def _parse_basic_info(
+         self, raw_data: dict[str, Any], match_id: str
+     ) -> MatchDetails | None:
+         """解析基础比赛信息"""
+         try:
+-            home_info = raw_data.get("home", {})
+-            away_info = raw_data.get("away", {})
++            home_info = raw_data.await get("home", {})
++            away_info = raw_data.await get("away", {})
+ 
+             if not home_info or not away_info:
+                 self.logger.warning(f"比赛 {match_id} 缺少主客队信息")
+@@ -609,12 +609,12 @@ 
+             match_details = MatchDetails(
+                 match_id=int(match_id),
+-                home_team=home_info.get("name", ""),
+-                away_team=away_info.get("name", ""),
+-                match_date=raw_data.get("matchDate", ""),
+-                status=raw_data.get("status", {}),
+-                home_score=int(home_info.get("score", 0)),
+-                away_score=int(away_info.get("score", 0)),
++                home_team=home_info.await get("name", ""),
++                away_team=away_info.await get("name", ""),
++                match_date=raw_data.await get("matchDate", ""),
++                status=raw_data.await get("status", {}),
++                home_score=await int(home_info.get("score", 0)),
++                away_score=await int(away_info.get("score", 0)),
+             )
+ 
+             return match_details
+@@ -623,25 +623,25 @@             self.logger.error(f"解析基础信息时发生错误: {e}")
+             return None
+ 
+-    def _parse_stats(self, raw_data: dict[str, Any]) -> MatchStats | None:
++async def _parse_stats(self, raw_data: dict[str, Any]) -> MatchStats | None:
+         """解析统计数据"""
+         try:
+             # FotMob的统计数据可能在stats字段中
+-            stats_data = raw_data.get("stats")
++            stats_data = raw_data.await get("stats")
+ 
+             if not stats_data:
+                 # 如果stats为空，尝试从其他地方寻找xG数据
+                 return self._extract_xg_from_alternative_sources(raw_data)
+ 
+             if isinstance(stats_data, dict):
+-                home_info = raw_data.get("home", {})
+-                away_info = raw_data.get("away", {})
++                home_info = raw_data.await get("home", {})
++                away_info = raw_data.await get("away", {})
+ 
+                 stats = MatchStats(
+-                    home_team=home_info.get("name", ""),
+-                    away_team=away_info.get("name", ""),
+-                    home_score=int(home_info.get("score", 0)),
+-                    away_score=int(away_info.get("score", 0)),
++                    home_team=home_info.await get("name", ""),
++                    away_team=away_info.await get("name", ""),
++                    home_score=await int(home_info.get("score", 0)),
++                    away_score=await int(away_info.get("score", 0)),
+                 )
+ 
+                 # 尝试提取xG数据
+@@ -654,22 +654,22 @@ 
+         return None
+ 
+-    def _extract_xg_from_alternative_sources(
++async def _extract_xg_from_alternative_sources(
+         self, raw_data: dict[str, Any]
+     ) -> MatchStats | None:
+         """从其他数据源提取xG信息"""
+         # 尝试从不同的数据结构中提取xG
+         # 这是一个占位符，实际实现需要根据真实的数据结构
+         try:
+-            home_info = raw_data.get("home", {})
+-            away_info = raw_data.get("away", {})
++            home_info = raw_data.await get("home", {})
++            away_info = raw_data.await get("away", {})
+ 
+             # 基础统计，xG暂时为空
+             stats = MatchStats(
+-                home_team=home_info.get("name", ""),
+-                away_team=away_info.get("name", ""),
+-                home_score=int(home_info.get("score", 0)),
+-                away_score=int(away_info.get("score", 0)),
++                home_team=home_info.await get("name", ""),
++                away_team=away_info.await get("name", ""),
++                home_score=await int(home_info.get("score", 0)),
++                away_score=await int(away_info.get("score", 0)),
+             )
+ 
+             return stats
+@@ -678,7 +678,7 @@             self.logger.error(f"从替代源提取xG时发生错误: {e}")
+             return None
+ 
+-    def _parse_lineups(
++async def _parse_lineups(
+         self, raw_data: dict[str, Any]
+     ) -> tuple[TeamLineup | None, TeamLineup | None]:
+         """解析阵容数据"""
+@@ -689,22 +689,22 @@             # FotMob的阵容数据可能在lineup字段或其他位置
+             # 这里提供一个基础框架，实际实现需要根据真实数据结构调整
+ 
+-            home_info = raw_data.get("home", {})
+-            away_info = raw_data.get("away", {})
++            home_info = raw_data.await get("home", {})
++            away_info = raw_data.await get("away", {})
+ 
+             # 创建基础阵容结构
+             if home_info:
+                 home_lineup = TeamLineup(
+-                    team_id=home_info.get("id"),
+-                    team_name=home_info.get("name", ""),
++                    team_id=home_info.await get("id"),
++                    team_name=home_info.await get("name", ""),
+                     formation=None,  # 需要从数据中提取
+                     players=[],  # 需要从数据中提取
+                 )
+ 
+             if away_info:
+                 away_lineup = TeamLineup(
+-                    team_id=away_info.get("id"),
+-                    team_name=away_info.get("name", ""),
++                    team_id=away_info.await get("id"),
++                    team_name=away_info.await get("name", ""),
+                     formation=None,
+                     players=[],
+                 )
+@@ -747,7 +747,7 @@ 
+     # ==================== 全量收割数据提取方法 ====================
+ 
+-    def _extract_enhanced_lineup_data(self, data: dict[str, Any]) -> dict[str, Any]:
++async def _extract_enhanced_lineup_data(self, data: dict[str, Any]) -> dict[str, Any]:
+         """
+         增强的阵容数据提取 - 包含球员评分和详细统计
+         Returns:
+@@ -763,17 +763,17 @@             }
+         """
+         try:
+-            lineup_content = data.get("content", {}).get("lineup", {})
+-            lineup_stats = data.get("content", {}).get("stats", {})
++            lineup_content = data.await await get("content", {}).get("lineup", {})
++            lineup_stats = data.await await get("content", {}).get("stats", {})
+ 
+             lineup_data = {
+                 "home": self._process_enhanced_team_lineup(
+-                    lineup_content.get("home", {}),
+-                    lineup_stats.get("home", [])
++                    lineup_content.await get("home", {}),
++                    lineup_stats.await get("home", [])
+                 ),
+                 "away": self._process_enhanced_team_lineup(
+-                    lineup_content.get("away", {}),
+-                    lineup_stats.get("away", [])
++                    lineup_content.await get("away", {}),
++                    lineup_stats.await get("away", [])
+                 )
+             }
+             return lineup_data
+@@ -781,59 +781,59 @@             self.logger.error(f"Error extracting enhanced lineup data: {str(e)}")
+             return {"home": {"starters": [], "substitutes": []}, "away": {"starters": [], "substitutes": []}}
+ 
+-    def _process_enhanced_team_lineup(self, team_lineup: dict[str, Any], team_stats: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
++async def _process_enhanced_team_lineup(self, team_lineup: dict[str, Any], team_stats: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+         """处理增强的单个球队阵容数据"""
+         processed = {
+-            "starters": self._process_enhanced_players(team_lineup.get("starters", []), team_stats),
+-            "substitutes": self._process_enhanced_players(team_lineup.get("substitutes", []), team_stats)
++            "starters": self.await _process_enhanced_players(team_lineup.get("starters", []), team_stats),
++            "substitutes": self.await _process_enhanced_players(team_lineup.get("substitutes", []), team_stats)
+         }
+         return processed
+ 
+-    def _process_enhanced_players(self, players: list[dict[str, Any]], team_stats: list[dict[str, Any]]) -> list[dict[str, Any]]:
++async def _process_enhanced_players(self, players: list[dict[str, Any]], team_stats: list[dict[str, Any]]) -> list[dict[str, Any]]:
+         """处理增强的球员数据，提取评分和详细统计"""
+         processed_players = []
+ 
+         # 创建统计数据的快速查找字典
+         stats_dict = {}
+         for stat in team_stats:
+-            if stat.get("statsType") == "player" and "playerStats" in stat:
++            if stat.await get("statsType") == "player" and "playerStats" in stat:
+                 for player_stat in stat["playerStats"]:
+-                    player_id = player_stat.get("playerId")
++                    player_id = player_stat.await get("playerId")
+                     if player_id:
+-                        stats_dict[player_id] = player_stat.get("stats", {})
++                        stats_dict[player_id] = player_stat.await get("stats", {})
+ 
+         for player in players:
+             try:
+-                player_id = player.get("id")
++                player_id = player.await get("id")
+ 
+                 # 从统计数据中获取详细信息
+-                player_stats = stats_dict.get(player_id, {})
++                player_stats = stats_dict.await get(player_id, {})
+ 
+                 enhanced_player = {
+                     "id": player_id,
+-                    "name": player.get("name", ""),
+-                    "position": player.get("position", {}).get("name", ""),
+-                    "shirt_number": player.get("shirtNo", player.get("shirtNumber")),
++                    "name": player.await get("name", ""),
++                    "position": player.await await get("position", {}).get("name", ""),
++                    "shirt_number": player.await await get("shirtNo", player.get("shirtNumber")),
+                     "is_starter": True,  # 这个参数需要根据调用上下文调整
+ 
+                     # 全量收割关键字段
+-                    "rating": player_stats.get("rating"),  # 球员评分 (关键)
+-                    "minutes_played": player_stats.get("minutesPlayed"),  # 出场时间
+-                    "goals": player_stats.get("goals"),  # 进球数
+-                    "assists": player_stats.get("assists"),  # 助攻数
+-                    "shots": player_stats.get("shotsTotal"),  # 射门数
+-                    "shots_on_target": player_stats.get("shotsOnTarget"),  # 射正数
+-                    "yellow_cards": player_stats.get("yellowCards"),  # 黄牌
+-                    "red_cards": player_stats.get("redCards"),  # 红牌
+-                    "fouls": player_stats.get("fouls"),  # 犯规
+-                    "fouled_against": player_stats.get("fouledAgainst"),  # 被犯规
+-                    "passes_completed": player_stats.get("passesCompleted"),  # 传球成功数
+-                    "passes_attempted": player_stats.get("passesAttempted"),  # 传球尝试数
+-                    "pass_accuracy": player_stats.get("passAccuracy"),  # 传球成功率
+-                    "duels_won": player_stats.get("duelsWon"),  # 对抗胜利数
+-                    "duels_lost": player_stats.get("duelsLost"),  # 对抗失败数
+-                    "aerials_won": player_stats.get("aerialsWon"),  # 空中对抗胜利数
+-                    "aerials_lost": player_stats.get("aerialsLost"),  # 空中对抗失败数
++                    "rating": player_stats.await get("rating"),  # 球员评分 (关键)
++                    "minutes_played": player_stats.await get("minutesPlayed"),  # 出场时间
++                    "goals": player_stats.await get("goals"),  # 进球数
++                    "assists": player_stats.await get("assists"),  # 助攻数
++                    "shots": player_stats.await get("shotsTotal"),  # 射门数
++                    "shots_on_target": player_stats.await get("shotsOnTarget"),  # 射正数
++                    "yellow_cards": player_stats.await get("yellowCards"),  # 黄牌
++                    "red_cards": player_stats.await get("redCards"),  # 红牌
++                    "fouls": player_stats.await get("fouls"),  # 犯规
++                    "fouled_against": player_stats.await get("fouledAgainst"),  # 被犯规
++                    "passes_completed": player_stats.await get("passesCompleted"),  # 传球成功数
++                    "passes_attempted": player_stats.await get("passesAttempted"),  # 传球尝试数
++                    "pass_accuracy": player_stats.await get("passAccuracy"),  # 传球成功率
++                    "duels_won": player_stats.await get("duelsWon"),  # 对抗胜利数
++                    "duels_lost": player_stats.await get("duelsLost"),  # 对抗失败数
++                    "aerials_won": player_stats.await get("aerialsWon"),  # 空中对抗胜利数
++                    "aerials_lost": player_stats.await get("aerialsLost"),  # 空中对抗失败数
+                 }
+ 
+                 processed_players.append(enhanced_player)
+@@ -843,39 +843,39 @@ 
+         return processed_players
+ 
+-    def _extract_odds_data(self, data: dict[str, Any]) -> dict[str, Any]:
++async def _extract_odds_data(self, data: dict[str, Any]) -> dict[str, Any]:
+         """
+         提取赔率数据 - 1x2、大小球、让球盘等
+         """
+         try:
+-            odds_content = data.get("content", {}).get("matchFacts", {}).get("odds", {})
++            odds_content = data.await await await get("content", {}).get("matchFacts", {}).get("odds", {})
+             if not odds_content:
+                 return {}
+ 
+             # 提取主要赔率
+-            primary_odds = odds_content.get("primary", {})
+-            all_odds = odds_content.get("all", [])
++            primary_odds = odds_content.await get("primary", {})
++            all_odds = odds_content.await get("all", [])
+ 
+             extracted_odds = {
+-                "home_win": primary_odds.get("homeWin"),
+-                "draw": primary_odds.get("draw"),
+-                "away_win": primary_odds.get("awayWin"),
+-                "over_25": primary_odds.get("over25"),
+-                "under_25": primary_odds.get("under25"),
+-                "both_teams_score": primary_odds.get("bothTeamsToScore"),
++                "home_win": primary_odds.await get("homeWin"),
++                "draw": primary_odds.await get("draw"),
++                "away_win": primary_odds.await get("awayWin"),
++                "over_25": primary_odds.await get("over25"),
++                "under_25": primary_odds.await get("under25"),
++                "both_teams_score": primary_odds.await get("bothTeamsToScore"),
+             }
+ 
+             # 提取所有博彩公司的赔率
+             providers = {}
+             for provider in all_odds:
+-                provider_name = provider.get("provider", {}).get("name")
++                provider_name = provider.await await get("provider", {}).get("name")
+                 if provider_name:
+                     providers[provider_name] = {
+-                        "home_win": provider.get("homeWin"),
+-                        "draw": provider.get("draw"),
+-                        "away_win": provider.get("awayWin"),
+-                        "over_25": provider.get("over25"),
+-                        "under_25": provider.get("under25"),
++                        "home_win": provider.await get("homeWin"),
++                        "draw": provider.await get("draw"),
++                        "away_win": provider.await get("awayWin"),
++                        "over_25": provider.await get("over25"),
++                        "under_25": provider.await get("under25"),
+                     }
+ 
+             if providers:
+@@ -886,23 +886,23 @@             self.logger.error(f"Error extracting odds data: {str(e)}")
+             return {}
+ 
+-    def _extract_match_metadata(self, data: dict[str, Any]) -> dict[str, Any]:
++async def _extract_match_metadata(self, data: dict[str, Any]) -> dict[str, Any]:
+         """
+         提取比赛元数据 - 裁判、球场、观众等
+         """
+         try:
+-            match_facts = data.get("content", {}).get("matchFacts", {})
+-            general = match_facts.get("general", {})
++            match_facts = data.await await get("content", {}).get("matchFacts", {})
++            general = match_facts.await get("general", {})
+ 
+             metadata = {
+-                "referee": general.get("referee", {}).get("name"),  # 裁判姓名 (关键)
+-                "stadium": general.get("stadium", {}).get("name"),  # 球场名称
+-                "attendance": general.get("attendance"),  # 观众人数
+-                "city": general.get("city"),
+-                "country": general.get("country"),
+-                "match_day": general.get("matchDay"),
+-                "round": general.get("round"),
+-                "competition_stage": general.get("stage"),
++                "referee": general.await await get("referee", {}).get("name"),  # 裁判姓名 (关键)
++                "stadium": general.await await get("stadium", {}).get("name"),  # 球场名称
++                "attendance": general.await get("attendance"),  # 观众人数
++                "city": general.await get("city"),
++                "country": general.await get("country"),
++                "match_day": general.await get("matchDay"),
++                "round": general.await get("round"),
++                "competition_stage": general.await get("stage"),
+             }
+ 
+             return metadata
+@@ -910,14 +910,14 @@             self.logger.error(f"Error extracting match metadata: {str(e)}")
+             return {}
+ 
+-    def _extract_match_events(self, data: dict[str, Any]) -> list[dict[str, Any]]:
++async def _extract_match_events(self, data: dict[str, Any]) -> list[dict[str, Any]]:
+         """
+         提取详细比赛事件流 - 进球、卡牌、换人等
+         """
+         try:
+-            events_content = data.get("content", {}).get("lineup", {})
+-            home_events = events_content.get("home", {}).get("events", [])
+-            away_events = events_content.get("away", {}).get("events", [])
++            events_content = data.await await get("content", {}).get("lineup", {})
++            home_events = events_content.await await get("home", {}).get("events", [])
++            away_events = events_content.await await get("away", {}).get("events", [])
+ 
+             all_events = []
+ 
+@@ -934,28 +934,28 @@                     all_events.append(processed_event)
+ 
+             # 按时间排序
+-            all_events.sort(key=lambda x: x.get("minute", 0))
++            all_events.await sort(key=lambda x: x.get("minute", 0))
+ 
+             return all_events
+         except Exception as e:
+             self.logger.error(f"Error extracting match events: {str(e)}")
+             return []
+ 
+-    def _process_match_event(self, event: dict[str, Any], team_side: str) -> dict[str, Any]:
++async def _process_match_event(self, event: dict[str, Any], team_side: str) -> dict[str, Any]:
+         """处理单个比赛事件"""
+         try:
+             processed_event = {
+-                "id": event.get("id"),
+-                "minute": event.get("minute"),
++                "id": event.await get("id"),
++                "minute": event.await get("minute"),
+                 "team_side": team_side,  # 标记是主队还是客队事件
+-                "player_name": event.get("player", {}).get("name"),
+-                "event_type": event.get("eventType"),
+-                "sub_type": event.get("subEventType"),
+-                "is_assist": event.get("isAssist", False),
+-                "assist_player_name": event.get("assistPlayer", {}).get("name"),
+-                "coordinate_x": event.get("coordinate", {}).get("x"),
+-                "coordinate_y": event.get("coordinate", {}).get("y"),
+-                "timestamp": event.get("timestamp"),
++                "player_name": event.await await get("player", {}).get("name"),
++                "event_type": event.await get("eventType"),
++                "sub_type": event.await get("subEventType"),
++                "is_assist": event.await get("isAssist", False),
++                "assist_player_name": event.await await get("assistPlayer", {}).get("name"),
++                "coordinate_x": event.await await get("coordinate", {}).get("x"),
++                "coordinate_y": event.await await get("coordinate", {}).get("y"),
++                "timestamp": event.await get("timestamp"),
+             }
+ 
+             return processed_event

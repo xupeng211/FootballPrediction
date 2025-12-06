@@ -1,0 +1,8 @@
+--- a/src/core/prediction_engine.py+++ b/src/core/prediction_engine.py@@ -13,7 +13,7 @@ PredictionStatistics = None
+ 
+ 
+-def _lazy_import():
++async def _lazy_import():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """延迟导入以避免循环导入"""

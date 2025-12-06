@@ -1,0 +1,96 @@
+--- a/src/ml/football_prediction_pipeline.py+++ b/src/ml/football_prediction_pipeline.py@@ -41,7 +41,7 @@     整合特征工程、模型训练和预测的端到端解决方案。
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         model_name: str = "football_xgboost",
+         output_dir: str = "models",
+@@ -102,7 +102,7 @@                 f"Feature selection enabled with params: {self.feature_selection_params}"
+             )
+ 
+-    def build_feature_pipeline(
++async def build_feature_pipeline(
+         self,
+         numeric_features: list = None,
+         categorical_features: list = None,
+@@ -151,7 +151,7 @@         logger.info("Feature pipeline built successfully")
+         return self
+ 
+-    def prepare_data(
++async def prepare_data(
+         self,
+         X: pd.DataFrame,
+         y: pd.Series,
+@@ -182,7 +182,7 @@         logger.info(f"Data prepared - Train: {len(X_train)}, Test: {len(X_test)}")
+         return X_train, X_test, y_train, y_test
+ 
+-    def train_model(
++async def train_model(
+         self,
+         X_train: pd.DataFrame,
+         y_train: pd.Series,
+@@ -340,7 +340,7 @@         self.is_fitted = True
+         return training_result
+ 
+-    def predict(self, X: pd.DataFrame) -> np.ndarray:
++async def predict(self, X: pd.DataFrame) -> np.ndarray:
+         """进行预测.
+ 
+         Args:
+@@ -369,7 +369,7 @@         # 模型预测
+         return self.model_trainer.predict(X_processed)
+ 
+-    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
++async def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+         """获取预测概率.
+ 
+         Args:
+@@ -398,7 +398,7 @@         # 模型预测概率
+         return self.model_trainer.predict_proba(X_processed)
+ 
+-    def evaluate(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict[str, Any]:
++async def evaluate(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict[str, Any]:
+         """评估模型性能.
+ 
+         Args:
+@@ -434,7 +434,7 @@             logger.error(f"Evaluation failed: {e}")
+             return {"error": str(e)}
+ 
+-    def save_pipeline(self, filepath: str = None) -> str:
++async def save_pipeline(self, filepath: str = None) -> str:
+         """保存完整管道.
+ 
+         Args:
+@@ -466,7 +466,7 @@         logger.info(f"Pipeline saved to {filepath}")
+         return str(filepath)
+ 
+-    def load_pipeline(self, filepath: str) -> "FootballPredictionPipeline":
++async def load_pipeline(self, filepath: str) -> "FootballPredictionPipeline":
+         """加载完整管道.
+ 
+         Args:
+@@ -490,14 +490,14 @@ 
+ 
+ # 便捷函数
+-def create_simple_prediction_pipeline() -> FootballPredictionPipeline:
++async def create_simple_prediction_pipeline() -> FootballPredictionPipeline:
+     """创建简单的足球预测管道."""
+     return FootballPredictionPipeline(
+         model_name="simple_football_predictor", use_mlflow=False
+     ).build_feature_pipeline()
+ 
+ 
+-def create_advanced_prediction_pipeline() -> FootballPredictionPipeline:
++async def create_advanced_prediction_pipeline() -> FootballPredictionPipeline:
+     """创建高级的足球预测管道."""
+     return FootballPredictionPipeline(
+         model_name="advanced_football_predictor", use_mlflow=True
+@@ -509,7 +509,7 @@ 
+ 
+ # 使用示例
+-def example_usage():
++async def example_usage():
+     """使用示例."""
+     if not HAS_DEPENDENCIES:
+         return

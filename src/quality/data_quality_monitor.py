@@ -55,9 +55,9 @@ class DataQualityStats:
     medium_severity_errors: int = field(default=0)
     low_severity_errors: int = field(default=0)
     last_check_time: Optional[datetime] = field(default=None)
-    rule_execution_stats: Dict[str, int] = field(default_factory=dict)
+    rule_execution_stats: dict[str, int] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为JSON-safe字典格式。"""
         return {
             "total_checks": self.total_checks,
@@ -104,7 +104,7 @@ class DataQualityMonitor:
 
     def __init__(
         self,
-        rules: List[DataQualityRule],
+        rules: list[DataQualityRule],
         feature_store: FeatureStoreProtocol,
         enable_stats: bool = True,
         max_concurrent_checks: int = 10
@@ -154,7 +154,7 @@ class DataQualityMonitor:
         wait=wait_exponential(multiplier=1, min=4, max=10),
         retry=retry_if_exception_type((ConnectionError, TimeoutError)),
     )
-    async def check_match(self, match_id: int) -> Dict[str, Any]:
+    async def check_match(self, match_id: int) -> dict[str, Any]:
         """
         检查单个比赛的数据质量。
 
@@ -285,7 +285,7 @@ class DataQualityMonitor:
                 ).total_seconds() * 1000,
             }
 
-    async def check_batch(self, match_ids: List[int]) -> List[Dict[str, Any]]:
+    async def check_batch(self, match_ids: list[int]) -> list[dict[str, Any]]:
         """
         批量检查多个比赛的数据质量。
 
@@ -303,7 +303,7 @@ class DataQualityMonitor:
         # 控制并发数量
         semaphore = asyncio.Semaphore(self.max_concurrent_checks)
 
-        async def check_single_match(match_id: int) -> Dict[str, Any]:
+        async def check_single_match(match_id: int) -> dict[str, Any]:
             async with semaphore:
                 return await self.check_match(match_id)
 
@@ -339,7 +339,7 @@ class DataQualityMonitor:
 
         return processed_results
 
-    async def _execute_rules(self, features: Dict[str, Any]) -> List[DataQualityResult]:
+    async def _execute_rules(self, features: dict[str, Any]) -> list[DataQualityResult]:
         """
         执行所有规则的数据质量检查。
 
@@ -400,7 +400,7 @@ class DataQualityMonitor:
 
         return processed_results
 
-    def _determine_severity(self, errors: List[str]) -> str:
+    def _determine_severity(self, errors: list[str]) -> str:
         """
         根据错误信息确定严重程度。
 
@@ -423,7 +423,7 @@ class DataQualityMonitor:
         else:
             return RuleSeverity.LOW
 
-    def _generate_summary(self, results: List[DataQualityResult]) -> Dict[str, Any]:
+    def _generate_summary(self, results: list[DataQualityResult]) -> dict[str, Any]:
         """
         生成检查结果摘要。
 
@@ -464,7 +464,7 @@ class DataQualityMonitor:
             ]
         }
 
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """
         获取数据质量监控的统计信息。
 
@@ -479,7 +479,7 @@ class DataQualityMonitor:
 
         return self.stats.to_dict()
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """
         健康检查，评估DataQualityMonitor的状态。
 
@@ -574,7 +574,7 @@ class DataQualityMonitor:
         self.logger.warning(f"未找到要移除的规则: {rule_name}")
         return False
 
-    def get_rule_names(self) -> List[str]:
+    def get_rule_names(self) -> list[str]:
         """
         获取所有已配置的规则名称。
 

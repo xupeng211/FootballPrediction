@@ -37,9 +37,9 @@ class MissingValueRule(MissingValueRuleProtocol):
 
     def __init__(
         self,
-        critical_fields: List[str] = None,
-        optional_fields: List[str] = None,
-        missing_value_indicators: List[str] = None,
+        critical_fields: list[str] = None,
+        optional_fields: list[str] = None,
+        missing_value_indicators: list[str] = None,
         case_sensitive: bool = True
     ):
         """
@@ -108,7 +108,7 @@ class MissingValueRule(MissingValueRuleProtocol):
             f"可选字段 {len(self.optional_fields)} 个"
         )
 
-    async def check(self, features: Dict[str, Any]) -> List[str]:
+    async def check(self, features: dict[str, Any]) -> list[str]:
         """
         检查特征数据中的缺失值。
 
@@ -145,7 +145,7 @@ class MissingValueRule(MissingValueRuleProtocol):
 
         return errors
 
-    def _check_critical_fields(self, features: Dict[str, Any]) -> List[str]:
+    def _check_critical_fields(self, features: dict[str, Any]) -> list[str]:
         """
         检查关键字段的缺失值。
 
@@ -168,7 +168,7 @@ class MissingValueRule(MissingValueRuleProtocol):
 
         return errors
 
-    def _check_optional_fields(self, features: Dict[str, Any]) -> List[str]:
+    def _check_optional_fields(self, features: dict[str, Any]) -> list[str]:
         """
         检查可选字段的缺失值。
 
@@ -244,7 +244,7 @@ class MissingValueRule(MissingValueRuleProtocol):
         else:
             return str(value)
 
-    def get_missing_field_summary(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def get_missing_field_summary(self, features: dict[str, Any]) -> dict[str, Any]:
         """
         获取缺失字段的详细摘要。
 
@@ -297,7 +297,7 @@ class MissingValueRule(MissingValueRuleProtocol):
 
         return summary
 
-    def configure_critical_fields(self, fields: List[str]) -> None:
+    def configure_critical_fields(self, fields: list[str]) -> None:
         """
         配置关键字段列表。
 
@@ -307,7 +307,7 @@ class MissingValueRule(MissingValueRuleProtocol):
         self.critical_fields = fields
         logger.info(f"关键字段已更新为: {fields}")
 
-    def configure_optional_fields(self, fields: List[str]) -> None:
+    def configure_optional_fields(self, fields: list[str]) -> None:
         """
         配置可选字段列表。
 
@@ -317,7 +317,7 @@ class MissingValueRule(MissingValueRuleProtocol):
         self.optional_fields = fields
         logger.info(f"可选字段已更新为: {fields}")
 
-    def configure_missing_indicators(self, indicators: List[str]) -> None:
+    def configure_missing_indicators(self, indicators: list[str]) -> None:
         """
         配置缺失值标记列表。
 

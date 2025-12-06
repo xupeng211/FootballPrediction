@@ -1,0 +1,40 @@
+--- a/src/api/app.py+++ b/src/api/app.py@@ -233,7 +233,7 @@     )
+ 
+ 
+-@app.get("/")
++@app.await get("/")
+ async def root():
+     """根路径."""
+     return {
+@@ -244,7 +244,7 @@     }
+ 
+ 
+-@app.get("/api")
++@app.await get("/api")
+ async def api_info():
+     """API信息端点."""
+     return {
+@@ -261,7 +261,7 @@     }
+ 
+ 
+-@app.get("/api/health")
++@app.await get("/api/health")
+ async def health_check():
+     """健康检查端点."""
+     return {
+@@ -271,7 +271,7 @@     }
+ 
+ 
+-@app.get("/metrics")
++@app.await get("/metrics")
+ async def metrics_endpoint():
+     """Prometheus 格式的指标端点."""
+     metrics_data = """# HELP http_requests_total Total number of HTTP requests"
+@@ -284,7 +284,7 @@     return Response(content=metrics_data, media_type="text/plain")
+ 
+ 
+-@app.get("/api/test")
++@app.await get("/api/test")
+ async def test_endpoint():
+     """测试端点."""
+     return {

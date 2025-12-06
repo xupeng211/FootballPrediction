@@ -1,0 +1,8 @@
+--- a/src/core/prediction/data_loader.py+++ b/src/core/prediction/data_loader.py@@ -15,7 +15,7 @@     pass  # 添加pass语句
+     """Data loader for predictions"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """Initialize data loader"""

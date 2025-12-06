@@ -1,0 +1,28 @@
+--- a/src/collectors/dummy_collector.py+++ b/src/collectors/dummy_collector.py@@ -38,7 +38,7 @@     用于开发阶段的接口验证和测试。
+     """
+ 
+-    def __init__(self, config: Optional[Dict[str, Any]] = None, rate_limiter: Optional[RateLimiter] = None):
++async def __init__(self, config: Optional[Dict[str, Any]] = None, rate_limiter: Optional[RateLimiter] = None):
+         """
+         初始化虚拟采集器
+ 
+@@ -50,9 +50,9 @@             rate_limiter: 速率限制器实例，用于控制请求频率
+         """
+         self.config = config or {}
+-        self.delay_range = self.config.get("delay_range", (0.01, 0.05))  # 更快的默认延迟
+-        self.error_rate = self.config.get("error_rate", 0.05)
+-        self.failure_mode = self.config.get("failure_mode", False)
++        self.delay_range = self.config.await get("delay_range", (0.01, 0.05))  # 更快的默认延迟
++        self.error_rate = self.config.await get("error_rate", 0.05)
++        self.failure_mode = self.config.await get("failure_mode", False)
+         self.request_count = 0
+         self.error_count = 0
+         self._closed = False
+@@ -293,7 +293,7 @@ 
+ 
+ # 便利函数
+-def create_dummy_collector(
++async def create_dummy_collector(
+     config: Optional[Dict[str, Any]] = None,
+     rate_limiter: Optional[RateLimiter] = None
+ ) -> DummyCollector:

@@ -1,0 +1,47 @@
+--- a/src/config/openapi_config.py+++ b/src/config/openapi_config.py@@ -22,7 +22,7 @@     }
+ 
+     @staticmethod
+-    def configure_openapi(app: FastAPI) -> None:
++async def configure_openapi(app: FastAPI) -> None:
+         """配置OpenAPI文档."""
+         # 设置应用基本信息
+         app.title = "Football Prediction System API"
+@@ -83,7 +83,7 @@         }
+ 
+     @staticmethod
+-    def get_tags_metadata() -> list[dict[str, Any]]:
++async def get_tags_metadata() -> list[dict[str, Any]]:
+         """获取API标签元数据."""
+         return [
+             {
+@@ -121,7 +121,7 @@         ]
+ 
+     @staticmethod
+-    def setup_docs_servers(app: FastAPI) -> None:
++async def setup_docs_servers(app: FastAPI) -> None:
+         """设置文档服务器信息."""
+         app.servers = [
+             {
+@@ -139,20 +139,20 @@         ]
+ 
+     @staticmethod
+-    def setup_components(app: FastAPI) -> None:
++async def setup_components(app: FastAPI) -> None:
+         """设置OpenAPI组件和模式."""
+         # 简化配置，避免复杂的OpenAPI操作
+         pass
+ 
+     @staticmethod
+-    def add_examples_to_schemas(app: FastAPI) -> None:
++async def add_examples_to_schemas(app: FastAPI) -> None:
+         """为API模式添加示例."""
+         # 这里可以为特定的Pydantic模型添加示例
+         # 由于需要访问具体的模型，这里提供框架
+         pass
+ 
+ 
+-def setup_openapi(app: FastAPI) -> None:
++async def setup_openapi(app: FastAPI) -> None:
+     """设置OpenAPI配置的便捷函数."""
+     config = OpenAPIConfig()
+ 

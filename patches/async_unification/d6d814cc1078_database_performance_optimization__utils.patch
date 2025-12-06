@@ -1,0 +1,16 @@
+--- a/src/database/migrations/versions/database/migrations/versions/d6d814cc1078_database_performance_optimization__utils.py+++ b/src/database/migrations/versions/database/migrations/versions/d6d814cc1078_database_performance_optimization__utils.py@@ -4,14 +4,14 @@ 
+ 
+ # 函数定义
+-def upgrade():
++async def upgrade():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """数据库性能优化升级"""
+     pass  # ISSUE: 实现函数逻辑
+ 
+ 
+-def downgrade():
++async def downgrade():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """回滚数据库性能优化"""

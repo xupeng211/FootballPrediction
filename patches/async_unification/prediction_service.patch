@@ -1,0 +1,190 @@
+--- a/src/services/prediction_service.py+++ b/src/services/prediction_service.py@@ -36,7 +36,7 @@ class PredictionService:
+     """预测服务类."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化预测服务."""
+         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+ 
+@@ -54,7 +54,7 @@         db_manager = DatabaseManager()
+ 
+         try:
+-            async with db_manager.get_async_session() as session:
++            async with db_manager.await get_async_session() as session:
+                 # 获取总数
+                 total_result = await session.execute(
+                     text("SELECT COUNT(*) FROM predictions")
+@@ -143,7 +143,7 @@         db_manager = DatabaseManager()
+ 
+         try:
+-            async with db_manager.get_async_session() as session:
++            async with db_manager.await get_async_session() as session:
+                 query = text(
+                     """
+                     SELECT p.id, p.match_id, p.score, p.confidence, p.status,
+@@ -158,7 +158,7 @@                 """
+                 )
+ 
+-                result = await session.execute(query, {"match_id": match_id})
++                result = await session.await execute(query, {"match_id": match_id})
+                 rows = result.fetchall()
+ 
+                 # 格式化预测数据
+@@ -199,7 +199,7 @@             logger.error(f"获取比赛 {match_id} 预测数据失败: {e}")
+             return []
+ 
+-    def predict_match(
++async def predict_match(
+         self, match_data: dict[str, Any], model_name: str = "default"
+     ) -> PredictionResult:
+         """预测单场比赛结果
+@@ -214,12 +214,12 @@         """
+         try:
+             self.logger.info(
+-                f"Predicting match {match_data.get('match_id')} using model {model_name}"
++                f"Predicting match {match_data.await get('match_id')} using model {model_name}"
+             )
+ 
+             # 基础预测逻辑（这里应该实现实际的机器学习模型）
+-            home_team_id = match_data.get("home_team_id")
+-            away_team_id = match_data.get("away_team_id")
++            home_team_id = match_data.await get("home_team_id")
++            away_team_id = match_data.await get("away_team_id")
+ 
+             # 简单的预测算法（实际应该使用机器学习模型）
+             import random
+@@ -246,7 +246,7 @@             confidence_score = max(home_prob, draw_prob, away_prob)
+ 
+             result = PredictionResult(
+-                match_id=match_data.get("match_id"),
++                match_id=match_data.await get("match_id"),
+                 home_team_id=home_team_id,
+                 away_team_id=away_team_id,
+                 home_win_prob=home_prob,
+@@ -258,13 +258,13 @@             )
+ 
+             self.logger.info(
+-                f"Prediction completed for match {match_data.get('match_id')}"
++                f"Prediction completed for match {match_data.await get('match_id')}"
+             )
+             return result
+ 
+         except Exception as e:
+             self.logger.error(
+-                f"Error predicting match {match_data.get('match_id')}: {e}"
++                f"Error predicting match {match_data.await get('match_id')}: {e}"
+             )
+             raise
+ 
+@@ -285,7 +285,7 @@             None, self.predict_match, match_data, model_name
+         )
+ 
+-    def predict_batch(
++async def predict_batch(
+         self, matches_data: list[dict[str, Any]], model_name: str = "default"
+     ) -> list[PredictionResult]:
+         """批量预测比赛结果
+@@ -305,7 +305,7 @@                 results.append(result)
+             except Exception as e:
+                 self.logger.error(
+-                    f"Error in batch prediction for match {match_data.get('match_id')}: {e}"
++                    f"Error in batch prediction for match {match_data.await get('match_id')}: {e}"
+                 )
+                 # 可以选择跳过失败的预测或创建一个默认结果
+                 continue
+@@ -351,7 +351,7 @@ 
+         return valid_results
+ 
+-    def get_prediction_confidence(
++async def get_prediction_confidence(
+         self, prediction_result: PredictionResult
+     ) -> dict[str, Any]:
+         """获取预测置信度分析
+@@ -382,7 +382,7 @@             "recommended": confidence >= 0.6,
+         }
+ 
+-    def validate_prediction_input(self, match_data: dict[str, Any]) -> bool:
++async def validate_prediction_input(self, match_data: dict[str, Any]) -> bool:
+         """验证预测输入数据
+         Validate prediction input data.
+ 
+@@ -401,7 +401,7 @@ 
+         return True
+ 
+-    def get_prediction_by_id(self, prediction_id: str) -> dict[str, Any] | None:
++async def get_prediction_by_id(self, prediction_id: str) -> dict[str, Any] | None:
+         """根据ID获取预测
+         Get prediction by ID.
+ 
+@@ -430,7 +430,7 @@ 
+         return None
+ 
+-    def create_prediction(self, prediction_data: dict[str, Any]) -> dict[str, Any]:
++async def create_prediction(self, prediction_data: dict[str, Any]) -> dict[str, Any]:
+         """创建新预测
+         Create new prediction.
+ 
+@@ -447,18 +447,18 @@ 
+         new_prediction = {
+             "id": new_id,
+-            "match_id": prediction_data.get("match_id"),
+-            "home_team": prediction_data.get("home_team", "Unknown"),
+-            "away_team": prediction_data.get("away_team", "Unknown"),
+-            "predicted_outcome": prediction_data.get("predicted_outcome", "home_win"),
+-            "confidence": prediction_data.get("confidence", 0.5),
++            "match_id": prediction_data.await get("match_id"),
++            "home_team": prediction_data.await get("home_team", "Unknown"),
++            "away_team": prediction_data.await get("away_team", "Unknown"),
++            "predicted_outcome": prediction_data.await get("predicted_outcome", "home_win"),
++            "confidence": prediction_data.await get("confidence", 0.5),
+             "created_at": datetime.utcnow().isoformat() + "Z",
+         }
+ 
+         self.logger.info(f"Created new prediction: {new_id}")
+         return new_prediction
+ 
+-    def update_prediction(
++async def update_prediction(
+         self, prediction_id: str, update_data: dict[str, Any]
+     ) -> dict[str, Any] | None:
+         """更新预测
+@@ -479,7 +479,7 @@ 
+         return None
+ 
+-    def delete_prediction(self, prediction_id: str) -> bool:
++async def delete_prediction(self, prediction_id: str) -> bool:
+         """删除预测
+         Delete prediction.
+ 
+@@ -501,7 +501,7 @@ _prediction_service: PredictionService | None = None
+ 
+ 
+-def get_prediction_service() -> PredictionService:
++async def get_prediction_service() -> PredictionService:
+     """获取预测服务实例."""
+     global _prediction_service
+     if _prediction_service is None:
+@@ -510,7 +510,7 @@ 
+ 
+ # 便捷函数
+-def predict_match(
++async def predict_match(
+     match_data: dict[str, Any], model_name: str = "default"
+ ) -> PredictionResult:
+     """便捷的预测函数
+@@ -545,7 +545,7 @@ 
+ 
+ # 为测试添加缺少的方法
+-def get_prediction_by_id(prediction_id: str) -> dict[str, Any] | None:
++async def get_prediction_by_id(prediction_id: str) -> dict[str, Any] | None:
+     """根据ID获取预测 - 为测试提供Mock接口
+     Get prediction by ID - Mock interface for testing.
+     """
+@@ -563,7 +563,7 @@     return None
+ 
+ 
+-def get_match_predictions_mock(match_id: int) -> list[dict[str, Any]]:
++async def get_match_predictions_mock(match_id: int) -> list[dict[str, Any]]:
+     """获取比赛的预测 - 为测试提供Mock接口
+     Get match predictions - Mock interface for testing.
+     """

@@ -1,0 +1,90 @@
+--- a/src/services/data.py+++ b/src/services/data.py@@ -14,11 +14,11 @@ class DataService:
+     """数据服务类 - 统一的数据管理服务."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化数据服务."""
+         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+ 
+-    def get_matches_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
++async def get_matches_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
+         """获取比赛列表
+         Get matches list.
+ 
+@@ -70,7 +70,7 @@             "offset": offset,
+         }
+ 
+-    def get_match_by_id(self, match_id: int) -> dict[str, Any] | None:
++async def get_match_by_id(self, match_id: int) -> dict[str, Any] | None:
+         """根据ID获取比赛信息
+         Get match information by ID.
+ 
+@@ -111,9 +111,9 @@             },
+         }
+ 
+-        return sample_matches.get(match_id)
+-
+-    def get_teams_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
++        return sample_matches.await get(match_id)
++
++async def get_teams_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
+         """获取球队列表
+         Get teams list.
+ 
+@@ -192,7 +192,7 @@             "offset": offset,
+         }
+ 
+-    def get_team_by_id(self, team_id: int) -> dict[str, Any] | None:
++async def get_team_by_id(self, team_id: int) -> dict[str, Any] | None:
+         """根据ID获取球队信息
+         Get team information by ID.
+ 
+@@ -239,9 +239,9 @@             },
+         }
+ 
+-        return sample_teams.get(team_id)
+-
+-    def get_leagues_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
++        return sample_teams.await get(team_id)
++
++async def get_leagues_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
+         """获取联赛列表
+         Get leagues list.
+ 
+@@ -302,7 +302,7 @@             "offset": offset,
+         }
+ 
+-    def get_odds_data(self, match_id: int | None = None) -> dict[str, Any]:
++async def get_odds_data(self, match_id: int | None = None) -> dict[str, Any]:
+         """获取赔率数据
+         Get odds data.
+ 
+@@ -348,11 +348,11 @@ class MatchService:
+     """比赛数据服务类."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化比赛数据服务."""
+         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+ 
+-    def get_matches(self, limit: int = 10, offset: int = 0) -> dict[str, Any]:
++async def get_matches(self, limit: int = 10, offset: int = 0) -> dict[str, Any]:
+         """获取比赛列表
+         Get matches list.
+ 
+@@ -395,7 +395,7 @@             "offset": offset,
+         }
+ 
+-    def get_match_by_id(self, match_id: int) -> dict[str, Any]:
++async def get_match_by_id(self, match_id: int) -> dict[str, Any]:
+         """根据ID获取比赛
+         Get match by ID.
+ 
+@@ -424,7 +424,7 @@ _data_service: DataService | None = None
+ 
+ 
+-def get_data_service() -> DataService:
++async def get_data_service() -> DataService:
+     """获取数据服务实例."""
+     global _data_service
+     if _data_service is None:

@@ -1,0 +1,38 @@
+--- a/src/api/auth_dependencies.py+++ b/src/api/auth_dependencies.py@@ -18,7 +18,7 @@ class RateLimiter:
+     """简单的速率限制器."""
+ 
+-    def is_allowed(self) -> bool:
++async def is_allowed(self) -> bool:
+         """检查是否允许请求."""
+         return True
+ 
+@@ -27,7 +27,7 @@ class SecurityConfig:
+     """安全头部配置."""
+ 
+-    def get_headers(self) -> dict[str, str]:
++async def get_headers(self) -> dict[str, str]:
+         """获取安全头部."""
+         return {
+             "x-Content-Type-Options": "nosniff",
+@@ -41,19 +41,19 @@ security_config = SecurityConfig()
+ 
+ 
+-def get_current_user() -> TokenData:
++async def get_current_user() -> TokenData:
+     """获取当前用户."""
+     # 这里应该解析JWT token,暂时返回模拟数据
+     return TokenData()
+ 
+ 
+-def get_current_user_optional() -> TokenData | None:
++async def get_current_user_optional() -> TokenData | None:
+     """获取当前用户(可选)."""
+     # 尝试从Authorization头获取token
+     return TokenData()
+ 
+ 
+-def require_admin() -> bool:
++async def require_admin() -> bool:
+     """需要管理员权限."""
+     return True
+ 

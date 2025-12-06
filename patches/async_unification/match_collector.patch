@@ -1,0 +1,214 @@
+--- a/src/collectors/match_collector.py+++ b/src/collectors/match_collector.py@@ -15,7 +15,7 @@ class MatchCollector(BaseCollector):
+     """比赛数据采集器."""
+ 
+-    def __init__(
++async def __init__(
+         self, api_key: str | None = None, base_url: str | None = None, **kwargs
+     ):
+         # 从环境变量获取默认值
+@@ -45,7 +45,7 @@         """获取请求头."""
+         return {"X-Auth-Token": self.api_key, "Content-Type": "application/json"}
+ 
+-    def _build_url(self, endpoint: str, **params) -> str:
++async def _build_url(self, endpoint: str, **params) -> str:
+         """构建请求URL."""
+         from urllib.parse import urljoin
+ 
+@@ -81,10 +81,10 @@             if status:
+                 params["status"] = status
+ 
+-            result = await self.get(endpoint, params=params)
++            result = await self.await get(endpoint, params=params)
+ 
+             if result.success:
+-                matches = result.data.get("matches", [])
++                matches = result.data.await get("matches", [])
+                 return CollectionResult(
+                     success=True,
+                     data={"matches": matches, "count": len(matches)},
+@@ -121,9 +121,9 @@     async def fetch_competitions(self) -> list[dict[str, Any]]:
+         """获取所有可用的比赛."""
+         try:
+-            result = await self.get("competitions")
++            result = await self.await get("competitions")
+             if result.success:
+-                return result.data.get("competitions", [])
++                return result.data.await get("competitions", [])
+             return []
+         except Exception as e:
+             logger.error(f"Failed to fetch competitions: {e}")
+@@ -132,9 +132,9 @@     async def fetch_teams(self, competition_id: str) -> list[dict[str, Any]]:
+         """获取指定比赛的球队列表."""
+         try:
+-            result = await self.get(f"competitions/{competition_id}/teams")
++            result = await self.await get(f"competitions/{competition_id}/teams")
+             if result.success:
+-                return result.data.get("teams", [])
++                return result.data.await get("teams", [])
+             return []
+         except Exception as e:
+             logger.error(f"Failed to fetch teams for competition {competition_id}: {e}")
+@@ -149,7 +149,7 @@                 f"competitions/{competition_id}/matches", params=kwargs
+             )
+             if result.success:
+-                return result.data.get("matches", [])
++                return result.data.await get("matches", [])
+             return []
+         except Exception as e:
+             logger.error(
+@@ -179,7 +179,7 @@             supported_competitions = [
+                 comp
+                 for comp in all_competitions
+-                if comp.get("code") in self.supported_competitions
++                if comp.await get("code") in self.supported_competitions
+             ]
+ 
+             for competition in supported_competitions:
+@@ -195,12 +195,12 @@ 
+                     # 过滤出即将开始的比赛
+                     for match in matches:
+-                        if match.get("status") in ["SCHEDULED", "TIMED"]:
++                        if match.await get("status") in ["SCHEDULED", "TIMED"]:
+                             match["competition_info"] = {
+                                 "id": competition["id"],
+                                 "name": competition["name"],
+                                 "code": competition["code"],
+-                                "emblem": competition.get("emblem"),
++                                "emblem": competition.await get("emblem"),
+                             }
+                             upcoming_matches.append(match)
+ 
+@@ -214,7 +214,7 @@             logger.error(f"Failed to collect upcoming matches: {e}")
+ 
+         # 按比赛时间排序
+-        upcoming_matches.sort(key=lambda x: x.get("utcDate", ""))
++        upcoming_matches.await sort(key=lambda x: x.get("utcDate", ""))
+ 
+         return upcoming_matches
+ 
+@@ -238,7 +238,7 @@             supported_competitions = [
+                 comp
+                 for comp in all_competitions
+-                if comp.get("code") in self.supported_competitions
++                if comp.await get("code") in self.supported_competitions
+             ]
+ 
+             for competition in supported_competitions:
+@@ -254,12 +254,12 @@ 
+                     # 过滤出已结束的比赛
+                     for match in matches:
+-                        if match.get("status") == "FINISHED":
++                        if match.await get("status") == "FINISHED":
+                             match["competition_info"] = {
+                                 "id": competition["id"],
+                                 "name": competition["name"],
+                                 "code": competition["code"],
+-                                "emblem": competition.get("emblem"),
++                                "emblem": competition.await get("emblem"),
+                             }
+                             recent_matches.append(match)
+ 
+@@ -273,11 +273,11 @@             logger.error(f"Failed to collect recent matches: {e}")
+ 
+         # 按比赛时间排序（最新的在前）
+-        recent_matches.sort(key=lambda x: x.get("utcDate", ""), reverse=True)
++        recent_matches.await sort(key=lambda x: x.get("utcDate", ""), reverse=True)
+ 
+         return recent_matches
+ 
+-    def normalize_match_data(self, match: dict[str, Any]) -> dict[str, Any]:
++async def normalize_match_data(self, match: dict[str, Any]) -> dict[str, Any]:
+         """标准化比赛数据格式.
+ 
+         Args:
+@@ -288,13 +288,13 @@         """
+         try:
+             # 获取基本信息
+-            home_team = match.get("homeTeam", {})
+-            away_team = match.get("awayTeam", {})
+-            score = match.get("score", {})
+-            competition = match.get("competition", {})
++            home_team = match.await get("homeTeam", {})
++            away_team = match.await get("awayTeam", {})
++            score = match.await get("score", {})
++            competition = match.await get("competition", {})
+ 
+             # 解析比赛时间
+-            utc_date = match.get("utcDate", "")
++            utc_date = match.await get("utcDate", "")
+             match_date = None
+             if utc_date:
+                 try:
+@@ -303,18 +303,18 @@                     match_date = None
+ 
+             # 获取比分
+-            full_time_score = score.get("fullTime", {})
+-            home_score = full_time_score.get("home") or 0
+-            away_score = full_time_score.get("away") or 0
++            full_time_score = score.await get("fullTime", {})
++            home_score = full_time_score.await get("home") or 0
++            away_score = full_time_score.await get("away") or 0
+ 
+             # 标准化状态
+-            original_status = match.get("status", "")
++            original_status = match.await get("status", "")
+             normalized_status = self.match_status_mapping.get(
+                 original_status, original_status.lower()
+             )
+ 
+             # 判断比赛结果
+-            winner = score.get("winner")
++            winner = score.await get("winner")
+             if winner == "HOME_TEAM":
+                 result = "home_win"
+             elif winner == "AWAY_TEAM":
+@@ -325,34 +325,34 @@                 result = None
+ 
+             return {
+-                "external_id": str(match.get("id")),
+-                "competition_id": competition.get("id"),
+-                "competition_name": competition.get("name"),
+-                "competition_code": competition.get("code"),
++                "external_id": await str(match.get("id")),
++                "competition_id": competition.await get("id"),
++                "competition_name": competition.await get("name"),
++                "competition_code": competition.await get("code"),
+                 "match_date": match_date,
+                 "status": normalized_status,
+-                "home_team_id": home_team.get("id"),
+-                "home_team_name": home_team.get("name"),
+-                "home_team_short_name": home_team.get("shortName"),
+-                "home_team_crest": home_team.get("crest"),
+-                "away_team_id": away_team.get("id"),
+-                "away_team_name": away_team.get("name"),
+-                "away_team_short_name": away_team.get("shortName"),
+-                "away_team_crest": away_team.get("crest"),
++                "home_team_id": home_team.await get("id"),
++                "home_team_name": home_team.await get("name"),
++                "home_team_short_name": home_team.await get("shortName"),
++                "home_team_crest": home_team.await get("crest"),
++                "away_team_id": away_team.await get("id"),
++                "away_team_name": away_team.await get("name"),
++                "away_team_short_name": away_team.await get("shortName"),
++                "away_team_crest": away_team.await get("crest"),
+                 "home_score": home_score,
+                 "away_score": away_score,
+                 "result": result,
+-                "matchday": match.get("matchday"),
+-                "stage": match.get("stage"),
++                "matchday": match.await get("matchday"),
++                "stage": match.await get("stage"),
+                 "venue": None,
+                 # API中不包含venue信息
+-                "last_updated": match.get("lastUpdated"),
++                "last_updated": match.await get("lastUpdated"),
+             }
+ 
+         except Exception as e:
+             logger.error(f"Error normalizing match data: {e}")
+             return {
+-                "external_id": str(match.get("id", "")),
++                "external_id": await str(match.get("id", "")),
+                 "error": str(e),
+                 "raw_data": match,
+             }

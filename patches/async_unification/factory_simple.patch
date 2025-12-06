@@ -1,0 +1,35 @@
+--- a/src/adapters/factory_simple.py+++ b/src/adapters/factory_simple.py@@ -24,16 +24,16 @@ class BaseAdapterFactory:
+     """适配器工厂类."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化工厂."""
+         self.adapters: dict[str, type[BaseAdapter]] = {}
+         self.singletons: dict[str, BaseAdapter] = {}
+ 
+-    def register_adapter(self, name: str, adapter_class: type[BaseAdapter]) -> None:
++async def register_adapter(self, name: str, adapter_class: type[BaseAdapter]) -> None:
+         """注册适配器类."""
+         self.adapters[name] = adapter_class
+ 
+-    def create_adapter(
++async def create_adapter(
+         self, name: str, config: dict[str, Any] | None = None, singleton: bool = True
+     ) -> BaseAdapter:
+         """创建适配器实例."""
+@@ -66,7 +66,7 @@ _global_factory = BaseAdapterFactory()
+ 
+ 
+-def get_adapter(
++async def get_adapter(
+     name: str, config: dict[str, Any] | None = None, singleton: bool = True
+ ) -> BaseAdapter:
+     """获取适配器实例(便捷函数).
+@@ -81,7 +81,7 @@     return _global_factory.create_adapter(name, config, singleton)
+ 
+ 
+-def get_global_factory() -> BaseAdapterFactory:
++async def get_global_factory() -> BaseAdapterFactory:
+     """获取全局工厂实例."""
+     return _global_factory
+ 

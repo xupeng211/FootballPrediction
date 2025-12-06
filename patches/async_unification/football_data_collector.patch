@@ -1,0 +1,168 @@
+--- a/src/collectors/football_data_collector.py+++ b/src/collectors/football_data_collector.py@@ -15,7 +15,7 @@ class FootballDataCollector(BaseCollector):
+     """Football-Data.org 数据采集器."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         api_key: str | None = None,
+         base_url: str = "https://api.football-data.org/v4",
+@@ -51,7 +51,7 @@             "Accept": "application/json",
+         }
+ 
+-    def _build_url(self, endpoint: str, **params) -> str:
++async def _build_url(self, endpoint: str, **params) -> str:
+         """构建请求URL."""
+         # 移除开头的斜杠并确保正确的路径
+         endpoint = endpoint.lstrip("/")
+@@ -83,11 +83,11 @@                 endpoint = "matches"
+                 params = {"limit": limit}
+ 
+-            result = await self.get(endpoint, params=params)
++            result = await self.await get(endpoint, params=params)
+ 
+             if result.success and result.data:
+                 # 提取比赛数据
+-                matches = result.data.get("matches", [])
++                matches = result.data.await get("matches", [])
+                 logger.info(f"Successfully collected {len(matches)} matches")
+ 
+                 return CollectionResult(
+@@ -118,10 +118,10 @@                 endpoint = "teams"
+                 params = {"limit": limit}
+ 
+-            result = await self.get(endpoint, params=params)
+-
+-            if result.success and result.data:
+-                teams = result.data.get("teams", [])
++            result = await self.await get(endpoint, params=params)
++
++            if result.success and result.data:
++                teams = result.data.await get("teams", [])
+                 logger.info(f"Successfully collected {len(teams)} teams")
+ 
+                 return CollectionResult(
+@@ -149,11 +149,11 @@                 )
+ 
+             endpoint = f"teams/{team_id}"
+-            result = await self.get(endpoint)
++            result = await self.await get(endpoint)
+ 
+             if result.success and result.data:
+                 # Football-Data.org球员数据在team信息中的squad字段
+-                squad = result.data.get("squad", [])
++                squad = result.data.await get("squad", [])
+                 logger.info(
+                     f"Successfully collected {len(squad)} players for team {team_id}"
+                 )
+@@ -165,9 +165,9 @@                         "count": len(squad),
+                         "team_id": team_id,
+                         "team_info": {
+-                            "id": result.data.get("id"),
+-                            "name": result.data.get("name"),
+-                            "crest": result.data.get("crest"),
++                            "id": result.data.await get("id"),
++                            "name": result.data.await get("name"),
++                            "crest": result.data.await get("crest"),
+                         },
+                     },
+                     response_time=result.response_time,
+@@ -190,17 +190,17 @@             if areas:
+                 params["areas"] = ",".join(map(str, areas))
+ 
+-            result = await self.get(endpoint, params=params)
+-
+-            if result.success and result.data:
+-                competitions = result.data.get("competitions", [])
++            result = await self.await get(endpoint, params=params)
++
++            if result.success and result.data:
++                competitions = result.data.await get("competitions", [])
+ 
+                 # 过滤支持的联赛
+                 if self.supported_competitions:
+                     supported_competitions = [
+                         comp
+                         for comp in competitions
+-                        if comp.get("code") in self.supported_competitions
++                        if comp.await get("code") in self.supported_competitions
+                     ]
+                 else:
+                     supported_competitions = competitions
+@@ -232,10 +232,10 @@         """采集联赛积分榜."""
+         try:
+             endpoint = f"competitions/{league_id}/standings"
+-            result = await self.get(endpoint)
+-
+-            if result.success and result.data:
+-                standings = result.data.get("standings", [])
++            result = await self.await get(endpoint)
++
++            if result.success and result.data:
++                standings = result.data.await get("standings", [])
+                 logger.info(f"Successfully collected standings for league {league_id}")
+ 
+                 return CollectionResult(
+@@ -306,7 +306,7 @@             target_competitions = [
+                 comp
+                 for comp in all_competitions
+-                if comp.get("code") in competition_codes
++                if comp.await get("code") in competition_codes
+             ]
+ 
+             logger.info(f"Collecting data for {len(target_competitions)} competitions")
+@@ -314,7 +314,7 @@             # 为每个联赛采集数据
+             for competition in target_competitions:
+                 comp_id = competition["id"]
+-                comp_code = competition.get("code", "UNKNOWN")
++                comp_code = competition.await get("code", "UNKNOWN")
+ 
+                 try:
+                     logger.info(f"Collecting data for competition: {comp_code}")
+@@ -407,21 +407,21 @@ 
+             # 计算总体统计
+             total_teams = sum(
+-                len(comp.get("teams", {}).get("teams", []))
++                await await len(comp.get("teams", {}).get("teams", []))
+                 for comp in comprehensive_data["competitions"].values()
+-                if comp.get("teams")
++                if comp.await get("teams")
+             )
+ 
+             total_matches_finished = sum(
+-                len(comp.get("matches_finished", {}).get("matches", []))
++                await await len(comp.get("matches_finished", {}).get("matches", []))
+                 for comp in comprehensive_data["competitions"].values()
+-                if comp.get("matches_finished")
++                if comp.await get("matches_finished")
+             )
+ 
+             total_matches_scheduled = sum(
+-                len(comp.get("matches_scheduled", {}).get("matches", []))
++                await await len(comp.get("matches_scheduled", {}).get("matches", []))
+                 for comp in comprehensive_data["competitions"].values()
+-                if comp.get("matches_scheduled")
++                if comp.await get("matches_scheduled")
+             )
+ 
+             comprehensive_data["stats"].update(
+@@ -467,7 +467,7 @@             logger.error(f"Health check failed: {e}")
+             return False
+ 
+-    def get_supported_competitions(self) -> list[str]:
++async def get_supported_competitions(self) -> list[str]:
+         """获取支持的联赛代码列表."""
+         return self.supported_competitions.copy()
+ 
+@@ -476,10 +476,10 @@         try:
+             result = await self.collect_leagues()
+             if result.success and result.data:
+-                competitions = result.data.get("competitions", [])
++                competitions = result.data.await get("competitions", [])
+                 for comp in competitions:
+-                    if comp.get("code") == code:
+-                        return comp.get("id")
++                    if comp.await get("code") == code:
++                        return comp.await get("id")
+             return None
+         except Exception as e:
+             logger.error(f"Error getting competition ID for {code}: {e}")

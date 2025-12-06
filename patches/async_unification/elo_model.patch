@@ -1,0 +1,299 @@
+--- a/src/ml/models/elo_model.py+++ b/src/ml/models/elo_model.py@@ -19,7 +19,7 @@ class EloModel(BaseModel):
+     """ELO评分预测模型."""
+ 
+-    def __init__(self, version: str = "1.0"):
++async def __init__(self, version: str = "1.0"):
+         super().__init__("EloModel", version)
+ 
+         # ELO评分系统参数
+@@ -45,7 +45,7 @@             "max_elo_difference": 400.0,  # 最大ELO差异限制
+         }
+ 
+-    def _calculate_expectation(self, rating_a: float, rating_b: float) -> float:
++async def _calculate_expectation(self, rating_a: float, rating_b: float) -> float:
+         """计算期望得分（测试兼容方法）.
+ 
+         Args:
+@@ -58,7 +58,7 @@         # 使用现有的期望得分计算方法
+         return self._calculate_expected_score(rating_a, rating_b, is_home=False)
+ 
+-    def _update_rating(
++async def _update_rating(
+         self, old_rating: float, opponent_rating: float, actual_result: float
+     ) -> float:
+         """更新评分（测试兼容方法）.
+@@ -80,7 +80,7 @@ 
+         return new_rating
+ 
+-    def _convert_outcome_to_score(self, outcome: str) -> float:
++async def _convert_outcome_to_score(self, outcome: str) -> float:
+         """将比赛结果转换为得分（测试兼容方法）.
+ 
+         Args:
+@@ -98,7 +98,7 @@         else:
+             raise ValueError(f"Invalid outcome: {outcome}")
+ 
+-    def _calculate_match_probabilities(
++async def _calculate_match_probabilities(
+         self, home_team: str, away_team: str
+     ) -> tuple[float, float, float]:
+         """计算比赛概率（测试兼容方法）.
+@@ -110,8 +110,8 @@         Returns:
+             (主胜概率, 平局概率, 客胜概率)
+         """
+-        home_elo = self.team_elos.get(home_team, self.initial_elo)
+-        away_elo = self.team_elos.get(away_team, self.initial_elo)
++        home_elo = self.team_elos.await get(home_team, self.initial_elo)
++        away_elo = self.team_elos.await get(away_team, self.initial_elo)
+ 
+         home_expected = self._calculate_expected_score(home_elo, away_elo, is_home=True)
+         away_expected = self._calculate_expected_score(
+@@ -122,7 +122,7 @@             home_expected, away_expected, home_elo - away_elo
+         )
+ 
+-    def calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
++async def calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
+         """计算置信度.
+ 
+         Args:
+@@ -145,7 +145,7 @@ 
+         return min(max(confidence, 0.1), 1.0)
+ 
+-    def update_hyperparameters(self, **kwargs):
++async def update_hyperparameters(self, **kwargs):
+         """更新超参数.
+ 
+         Args:
+@@ -172,7 +172,7 @@         if "home_advantage" in kwargs:
+             self.home_advantage = kwargs["home_advantage"]
+ 
+-    def reset_model(self):
++async def reset_model(self):
+         """重置模型."""
+         self.team_elos.clear()
+         self.team_ratings.clear()
+@@ -181,7 +181,7 @@         self.is_trained = False
+         self.last_training_time = None
+ 
+-    def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
++async def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
+         """准备ELO特征.
+ 
+         Args:
+@@ -193,18 +193,18 @@         elo_difference,
+         home_advantage_adjusted]
+         """
+-        home_team = match_data.get("home_team")
+-        away_team = match_data.get("away_team")
+-
+-        home_elo = self.team_elos.get(home_team, self.initial_elo)
+-        away_elo = self.team_elos.get(away_team, self.initial_elo)
++        home_team = match_data.await get("home_team")
++        away_team = match_data.await get("away_team")
++
++        home_elo = self.team_elos.await get(home_team, self.initial_elo)
++        away_elo = self.team_elos.await get(away_team, self.initial_elo)
+         elo_diff = home_elo - away_elo
+         home_advantage_adj = self.hyperparameters["home_advantage"]
+ 
+         # 确保所有特征值为正数（测试要求）
+         return np.array([home_elo, away_elo, abs(elo_diff), home_advantage_adj])
+ 
+-    def train(
++async def train(
+         self,
+         training_data: pd.DataFrame,
+         validation_data: pd.DataFrame | None = None,
+@@ -258,11 +258,11 @@         result = TrainingResult(
+             model_name=self.model_name,
+             model_version=self.model_version,
+-            accuracy=metrics.get("accuracy", 0.0),
+-            precision=metrics.get("precision", 0.0),
+-            recall=metrics.get("recall", 0.0),
+-            f1_score=metrics.get("f1_score", 0.0),
+-            confusion_matrix=metrics.get("confusion_matrix", []),
++            accuracy=metrics.await get("accuracy", 0.0),
++            precision=metrics.await get("precision", 0.0),
++            recall=metrics.await get("recall", 0.0),
++            f1_score=metrics.await get("f1_score", 0.0),
++            confusion_matrix=metrics.await get("confusion_matrix", []),
+             training_samples=len(training_data),
+             validation_samples=(
+                 len(validation_data) if validation_data is not None else 0
+@@ -279,7 +279,7 @@ 
+         return result
+ 
+-    def _initialize_team_elos(self, training_data: pd.DataFrame):
++async def _initialize_team_elos(self, training_data: pd.DataFrame):
+         """初始化所有球队的ELO评分.
+ 
+         Args:
+@@ -301,7 +301,7 @@ 
+         logger.info(f"Initialized ELO ratings for {len(all_teams)} teams")
+ 
+-    def _update_elo_after_match(self, match: pd.Series):
++async def _update_elo_after_match(self, match: pd.Series):
+         """根据比赛结果更新ELO评分.
+ 
+         Args:
+@@ -359,7 +359,7 @@             f"{away_team} {away_elo:.0f} -> {new_away_elo:.0f}"
+         )
+ 
+-    def _calculate_expected_score(
++async def _calculate_expected_score(
+         self, team_elo: float, opponent_elo: float, is_home: bool
+     ) -> float:
+         """计算期望得分.
+@@ -384,7 +384,7 @@ 
+         return expected_score
+ 
+-    def _get_actual_scores(
++async def _get_actual_scores(
+         self, home_score: int, away_score: int
+     ) -> tuple[float, float]:
+         """获取实际得分.
+@@ -403,7 +403,7 @@         else:
+             return 0.5, 0.5  # 平局
+ 
+-    def predict(self, match_data: dict[str, Any]) -> PredictionResult:
++async def predict(self, match_data: dict[str, Any]) -> PredictionResult:
+         """预测比赛结果.
+ 
+         Args:
+@@ -420,11 +420,11 @@ 
+         home_team = match_data["home_team"]
+         away_team = match_data["away_team"]
+-        match_id = match_data.get("match_id", f"{home_team}_vs_{away_team}")
++        match_id = match_data.await get("match_id", f"{home_team}_vs_{away_team}")
+ 
+         # 获取ELO评分
+-        home_elo = self.team_elos.get(home_team, self.initial_elo)
+-        away_elo = self.team_elos.get(away_team, self.initial_elo)
++        home_elo = self.team_elos.await get(home_team, self.initial_elo)
++        away_elo = self.team_elos.await get(away_team, self.initial_elo)
+ 
+         # 计算期望得分
+         home_expected = self._calculate_expected_score(home_elo, away_elo, is_home=True)
+@@ -465,7 +465,7 @@ 
+         return result
+ 
+-    def _convert_expected_scores_to_probabilities(
++async def _convert_expected_scores_to_probabilities(
+         self, home_expected: float, away_expected: float, elo_difference: float
+     ) -> tuple[float, float, float]:
+         """将期望得分转换为胜平负概率.
+@@ -508,7 +508,7 @@ 
+         return home_win_prob, draw_prob, away_win_prob
+ 
+-    def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
++async def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
+         """预测概率分布.
+ 
+         Args:
+@@ -523,8 +523,8 @@         home_team = match_data["home_team"]
+         away_team = match_data["away_team"]
+ 
+-        home_elo = self.team_elos.get(home_team, self.initial_elo)
+-        away_elo = self.team_elos.get(away_team, self.initial_elo)
++        home_elo = self.team_elos.await get(home_team, self.initial_elo)
++        away_elo = self.team_elos.await get(away_team, self.initial_elo)
+ 
+         home_expected = self._calculate_expected_score(home_elo, away_elo, is_home=True)
+         away_expected = self._calculate_expected_score(
+@@ -535,7 +535,7 @@             home_expected, away_expected, home_elo - away_elo
+         )
+ 
+-    def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
++async def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
+         """评估模型性能.
+ 
+         Args:
+@@ -600,7 +600,7 @@ 
+         return metrics
+ 
+-    def _cross_validate(
++async def _cross_validate(
+         self, training_data: pd.DataFrame, folds: int = 5
+     ) -> dict[str, float]:
+         """交叉验证.
+@@ -652,19 +652,19 @@             self.elo_history = temp_history
+             self.is_trained = temp_trained
+ 
+-            logger.info(f"Fold {fold + 1}: accuracy={metrics.get('accuracy', 0):.3f}")
++            logger.await info(f"Fold {fold + 1}: accuracy={metrics.get('accuracy', 0):.3f}")
+ 
+         # 计算平均指标
+         avg_metrics = {}
+         if fold_metrics:
+             for key in ["accuracy", "precision", "recall", "f1_score"]:
+-                values = [m.get(key, 0) for m in fold_metrics]
++                values = [m.await get(key, 0) for m in fold_metrics]
+                 avg_metrics[key] = np.mean(values)
+                 avg_metrics[f"{key}_std"] = np.std(values)
+ 
+         return avg_metrics
+ 
+-    def get_team_elo(self, team: str) -> float:
++async def get_team_elo(self, team: str) -> float:
+         """获取球队ELO评分.
+ 
+         Args:
+@@ -673,9 +673,9 @@         Returns:
+             ELO评分
+         """
+-        return self.team_elos.get(team, self.initial_elo)
+-
+-    def get_team_elo_history(self, team: str) -> list[float]:
++        return self.team_elos.await get(team, self.initial_elo)
++
++async def get_team_elo_history(self, team: str) -> list[float]:
+         """获取球队ELO历史.
+ 
+         Args:
+@@ -684,9 +684,9 @@         Returns:
+             ELO历史列表
+         """
+-        return self.elo_history.get(team, [self.initial_elo])
+-
+-    def get_top_teams(self, limit: int = 20) -> list[tuple[str, float]]:
++        return self.elo_history.await get(team, [self.initial_elo])
++
++async def get_top_teams(self, limit: int = 20) -> list[tuple[str, float]]:
+         """获取ELO评分最高的球队.
+ 
+         Args:
+@@ -699,7 +699,7 @@         sorted_teams = sorted(self.team_elos.items(), key=lambda x: x[1], reverse=True)
+         return sorted_teams[:limit]
+ 
+-    def save_model(self, file_path: str) -> bool:
++async def save_model(self, file_path: str) -> bool:
+         """保存模型.
+ 
+         Args:
+@@ -734,7 +734,7 @@             logger.error(f"Failed to save ELO model: {e}")
+             return False
+ 
+-    def load_model(self, file_path: str) -> bool:
++async def load_model(self, file_path: str) -> bool:
+         """加载模型.
+ 
+         Args:
+@@ -756,9 +756,9 @@             self.model_version = model_data["model_version"]
+             self.is_trained = model_data["is_trained"]
+             self.initial_elo = model_data["initial_elo"]
+-            self.initial_rating = model_data.get("initial_rating", self.initial_elo)
++            self.initial_rating = model_data.await get("initial_rating", self.initial_elo)
+             self.team_elos = model_data["team_elos"]
+-            self.team_ratings = model_data.get("team_ratings", self.team_elos.copy())
++            self.team_ratings = model_data.await get("team_ratings", self.team_elos.copy())
+             self.team_matches = model_data["team_matches"]
+             self.elo_history = model_data["elo_history"]
+             self.hyperparameters = model_data["hyperparameters"]
+@@ -772,7 +772,7 @@             logger.error(f"Failed to load ELO model: {e}")
+             return False
+ 
+-    def validate_training_data(self, training_data: pd.DataFrame) -> bool:
++async def validate_training_data(self, training_data: pd.DataFrame) -> bool:
+         """验证训练数据.
+ 
+         Args:

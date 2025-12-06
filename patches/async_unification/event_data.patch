@@ -1,0 +1,48 @@
+--- a/src/domain/events/event_data.py+++ b/src/domain/events/event_data.py@@ -23,7 +23,7 @@     venue: str | None = None
+     competition_id: int | None = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         if not hasattr(self, "data") or self.data is None:
+             self.data = {}
+ 
+@@ -49,7 +49,7 @@     updated_fields: dict[str, Any]
+     updated_at: datetime
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         if not hasattr(self, "data") or self.data is None:
+             self.data = {}
+ 
+@@ -74,7 +74,7 @@     confidence: float | None = None
+     prediction_time: datetime = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         if not hasattr(self, "data") or self.data is None:
+             self.data = {}
+ 
+@@ -97,7 +97,7 @@ 
+ 
+ # 为了向后兼容，提供工厂函数
+-def create_match_created_data(
++async def create_match_created_data(
+     match_id: int,
+     home_team_id: int,
+     away_team_id: int,
+@@ -116,7 +116,7 @@     )
+ 
+ 
+-def create_match_updated_data(
++async def create_match_updated_data(
+     match_id: int,
+     updated_fields: dict[str, Any],
+     updated_at: datetime | None = None,
+@@ -132,7 +132,7 @@     )
+ 
+ 
+-def create_prediction_made_data(
++async def create_prediction_made_data(
+     prediction_id: int,
+     user_id: int,
+     match_id: int,

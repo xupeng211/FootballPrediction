@@ -1,0 +1,343 @@
+--- a/src/data/collectors/scores_collector.py+++ b/src/data/collectors/scores_collector.py@@ -28,7 +28,7 @@     包含比分更新、事件记录、统计数据收集等功能。
+     """
+ 
+-    def __init__(self, **kwargs):
++async def __init__(self, **kwargs):
+         super().__init__(**kwargs)
+         self.match_events = {
+             "goal": "进球",
+@@ -132,7 +132,7 @@                 return CollectionResult(
+                     success=True,
+                     data=processed_events,
+-                    count=len(processed_events.get("events", [])),
++                    count=await len(processed_events.get("events", [])),
+                     cached=result.cached,
+                     response_time=result.response_time,
+                 )
+@@ -167,7 +167,7 @@                 return CollectionResult(
+                     success=True,
+                     data=processed_stats,
+-                    count=len(processed_stats.get("statistics", [])),
++                    count=await len(processed_stats.get("statistics", [])),
+                     cached=result.cached,
+                     response_time=result.response_time,
+                 )
+@@ -202,7 +202,7 @@                 return CollectionResult(
+                     success=True,
+                     data=processed_lineups,
+-                    count=len(processed_lineups.get("teams", [])),
++                    count=await len(processed_lineups.get("teams", [])),
+                     cached=result.cached,
+                     response_time=result.response_time,
+                 )
+@@ -227,116 +227,116 @@             return self._process_match_score(result.data)
+         return {}
+ 
+-    def _process_match_score(self, raw_data: dict) -> dict:
++async def _process_match_score(self, raw_data: dict) -> dict:
+         """处理比分数据."""
+-        match = raw_data.get("match", {})
+-        score = match.get("score", {})
++        match = raw_data.await get("match", {})
++        score = match.await get("score", {})
+ 
+         processed = {
+-            "match_id": match.get("id"),
++            "match_id": match.await get("id"),
+             "match_info": {
+-                "home_team": match.get("homeTeam", {}).get("name"),
+-                "away_team": match.get("awayTeam", {}).get("name"),
+-                "competition": match.get("competition", {}).get("name"),
+-                "utc_date": match.get("utcDate"),
+-                "status": match.get("status"),
+-                "matchday": match.get("matchday"),
+-                "stage": match.get("stage"),
+-                "group": match.get("group"),
++                "home_team": match.await await get("homeTeam", {}).get("name"),
++                "away_team": match.await await get("awayTeam", {}).get("name"),
++                "competition": match.await await get("competition", {}).get("name"),
++                "utc_date": match.await get("utcDate"),
++                "status": match.await get("status"),
++                "matchday": match.await get("matchday"),
++                "stage": match.await get("stage"),
++                "group": match.await get("group"),
+             },
+             "score": {
+-                "home_team": score.get("fullTime", {}).get("home"),
+-                "away_team": score.get("fullTime", {}).get("away"),
+-                "winner": score.get("fullTime", {}).get("winner"),
+-                "duration": match.get("duration"),
+-                "regular_time": score.get("regularTime"),
+-                "extra_time": score.get("extraTime"),
+-                "penalties": score.get("penalties"),
++                "home_team": score.await await get("fullTime", {}).get("home"),
++                "away_team": score.await await get("fullTime", {}).get("away"),
++                "winner": score.await await get("fullTime", {}).get("winner"),
++                "duration": match.await get("duration"),
++                "regular_time": score.await get("regularTime"),
++                "extra_time": score.await get("extraTime"),
++                "penalties": score.await get("penalties"),
+             },
+             "half_time_score": {
+-                "home_team": score.get("halfTime", {}).get("home"),
+-                "away_team": score.get("halfTime", {}).get("away"),
+-                "winner": score.get("halfTime", {}).get("winner"),
++                "home_team": score.await await get("halfTime", {}).get("home"),
++                "away_team": score.await await get("halfTime", {}).get("away"),
++                "winner": score.await await get("halfTime", {}).get("winner"),
+             },
+             "last_updated": datetime.now().isoformat(),
+         }
+ 
+         return processed
+ 
+-    def _process_match_events(self, raw_data: dict) -> dict:
++async def _process_match_events(self, raw_data: dict) -> dict:
+         """处理比赛事件数据."""
+-        events = raw_data.get("events", [])
++        events = raw_data.await get("events", [])
+         processed_events = []
+ 
+         for event in events:
+             processed_event = {
+-                "id": event.get("id"),
++                "id": event.await get("id"),
+                 "type": {
+-                    "id": event.get("type", {}).get("id"),
+-                    "name": event.get("type", {}).get("name"),
++                    "id": event.await await get("type", {}).get("id"),
++                    "name": event.await await get("type", {}).get("name"),
+                 },
+-                "minute": event.get("minute"),
++                "minute": event.await get("minute"),
+                 "team": {
+-                    "id": event.get("team", {}).get("id"),
+-                    "name": event.get("team", {}).get("name"),
++                    "id": event.await await get("team", {}).get("id"),
++                    "name": event.await await get("team", {}).get("name"),
+                 },
+                 "player": {
+-                    "id": event.get("player", {}).get("id"),
+-                    "name": event.get("player", {}).get("name"),
++                    "id": event.await await get("player", {}).get("id"),
++                    "name": event.await await get("player", {}).get("name"),
+                 },
+                 "assist": (
+                     {
+-                        "id": event.get("assist", {}).get("id"),
+-                        "name": event.get("assist", {}).get("name"),
++                        "id": event.await await get("assist", {}).get("id"),
++                        "name": event.await await get("assist", {}).get("name"),
+                     }
+-                    if event.get("assist")
++                    if event.await get("assist")
+                     else None
+                 ),
+-                "extra_time": event.get("extraTime"),
+-                "comments": event.get("comments"),
++                "extra_time": event.await get("extraTime"),
++                "comments": event.await get("comments"),
+                 "timestamp": self._parse_event_timestamp(event),
+             }
+             processed_events.append(processed_event)
+ 
+         return {
+-            "match_id": raw_data.get("match", {}).get("id"),
++            "match_id": raw_data.await await get("match", {}).get("id"),
+             "events": processed_events,
+             "total_events": len(processed_events),
+             "last_updated": datetime.now().isoformat(),
+         }
+ 
+-    def _process_match_statistics(self, raw_data: dict) -> dict:
++async def _process_match_statistics(self, raw_data: dict) -> dict:
+         """处理比赛统计数据."""
+-        match = raw_data.get("match", {})
+-        statistics = raw_data.get("statistics", [])
+-
+-        processed_stats = {"match_id": match.get("id"), "teams": {}}
++        match = raw_data.await get("match", {})
++        statistics = raw_data.await get("statistics", [])
++
++        processed_stats = {"match_id": match.await get("id"), "teams": {}}
+ 
+         for team_stats in statistics:
+-            team = team_stats.get("team", {})
+-            team_name = team.get("name")
++            team = team_stats.await get("team", {})
++            team_name = team.await get("name")
+ 
+             stats = {
+-                "team_id": team.get("id"),
++                "team_id": team.await get("id"),
+                 "team_name": team_name,
+                 "shots": {
+-                    "total": team_stats.get("shots", {}).get("total"),
+-                    "on_target": team_stats.get("shots", {}).get("onTarget"),
+-                    "off_target": team_stats.get("shots", {}).get("offTarget"),
++                    "total": team_stats.await await get("shots", {}).get("total"),
++                    "on_target": team_stats.await await get("shots", {}).get("onTarget"),
++                    "off_target": team_stats.await await get("shots", {}).get("offTarget"),
+                 },
+-                "possession": team_stats.get("possession"),
++                "possession": team_stats.await get("possession"),
+                 "passes": {
+-                    "total": team_stats.get("passes", {}).get("total"),
+-                    "accurate": team_stats.get("passes", {}).get("accurate"),
+-                    "inaccurate": team_stats.get("passes", {}).get("inaccurate"),
++                    "total": team_stats.await await get("passes", {}).get("total"),
++                    "accurate": team_stats.await await get("passes", {}).get("accurate"),
++                    "inaccurate": team_stats.await await get("passes", {}).get("inaccurate"),
+                 },
+-                "fouls": team_stats.get("fouls"),
+-                "corners": team_stats.get("corners"),
+-                "offsides": team_stats.get("offsides"),
+-                "yellow_cards": team_stats.get("yellowCards"),
+-                "red_cards": team_stats.get("redCards"),
+-                "tackles": team_stats.get("tackles"),
+-                " interceptions": team_stats.get("interceptions"),
++                "fouls": team_stats.await get("fouls"),
++                "corners": team_stats.await get("corners"),
++                "offsides": team_stats.await get("offsides"),
++                "yellow_cards": team_stats.await get("yellowCards"),
++                "red_cards": team_stats.await get("redCards"),
++                "tackles": team_stats.await get("tackles"),
++                " interceptions": team_stats.await get("interceptions"),
+             }
+ 
+             processed_stats["teams"][team_name] = stats
+@@ -344,46 +344,46 @@         processed_stats["last_updated"] = datetime.now().isoformat()
+         return processed_stats
+ 
+-    def _process_lineups(self, raw_data: dict) -> dict:
++async def _process_lineups(self, raw_data: dict) -> dict:
+         """处理阵容数据."""
+-        match = raw_data.get("match", {})
+-
+-        processed_lineups = {"match_id": match.get("id"), "teams": {}}
+-
+-        for team_data in raw_data.get("teams", []):
+-            team = team_data.get("team", {})
+-            team_name = team.get("name")
++        match = raw_data.await get("match", {})
++
++        processed_lineups = {"match_id": match.await get("id"), "teams": {}}
++
++        for team_data in raw_data.await get("teams", []):
++            team = team_data.await get("team", {})
++            team_name = team.await get("name")
+ 
+             lineup = {
+-                "team_id": team.get("id"),
++                "team_id": team.await get("id"),
+                 "team_name": team_name,
+-                "formation": team_data.get("formation"),
++                "formation": team_data.await get("formation"),
+                 "coach": {
+-                    "id": team_data.get("coach", {}).get("id"),
+-                    "name": team_data.get("coach", {}).get("name"),
++                    "id": team_data.await await get("coach", {}).get("id"),
++                    "name": team_data.await await get("coach", {}).get("name"),
+                 },
+                 "startXI": [],
+                 "substitutes": [],
+             }
+ 
+             # 处理首发阵容
+-            for player in team_data.get("startXI", []):
++            for player in team_data.await get("startXI", []):
+                 player_info = {
+-                    "id": player.get("id"),
+-                    "name": player.get("name"),
+-                    "position": player.get("position"),
+-                    "shirt_number": player.get("shirtNumber"),
+-                    "captain": player.get("captain"),
++                    "id": player.await get("id"),
++                    "name": player.await get("name"),
++                    "position": player.await get("position"),
++                    "shirt_number": player.await get("shirtNumber"),
++                    "captain": player.await get("captain"),
+                 }
+                 lineup["startXI"].append(player_info)
+ 
+             # 处理替补阵容
+-            for player in team_data.get("substitutes", []):
++            for player in team_data.await get("substitutes", []):
+                 player_info = {
+-                    "id": player.get("id"),
+-                    "name": player.get("name"),
+-                    "position": player.get("position"),
+-                    "shirt_number": player.get("shirtNumber"),
++                    "id": player.await get("id"),
++                    "name": player.await get("name"),
++                    "position": player.await get("position"),
++                    "shirt_number": player.await get("shirtNumber"),
+                 }
+                 lineup["substitutes"].append(player_info)
+ 
+@@ -392,7 +392,7 @@         processed_lineups["last_updated"] = datetime.now().isoformat()
+         return processed_lineups
+ 
+-    def _parse_event_timestamp(self, event: dict) -> str | None:
++async def _parse_event_timestamp(self, event: dict) -> str | None:
+         """解析事件时间戳."""
+         # 这里可以根据实际API响应格式来解析时间戳
+         if "timestamp" in event:
+@@ -420,7 +420,7 @@                 score_result = await self.collect_match_score(match_id)
+ 
+                 if score_result.success:
+-                    match_status = score_result.data.get("match_info", {}).get("status")
++                    match_status = score_result.data.await await get("match_info", {}).get("status")
+ 
+                     if match_status in ["FINISHED", "POSTPONED", "CANCELLED"]:
+                         logger.info(f"比赛 {match_id} 已结束，状态: {match_status}")
+@@ -429,13 +429,13 @@                     # 采集比分数据
+                     logger.debug(
+                         f"比赛 {match_id} 当前比分: "
+-                        f"{score_result.data.get('score', {}).get('home_team', 0)} - "
+-                        f"{score_result.data.get('score', {}).get('away_team', 0)}"
++                        f"{score_result.data.await await get('score', {}).get('home_team', 0)} - "
++                        f"{score_result.data.await await get('score', {}).get('away_team', 0)}"
+                     )
+ 
+                     # 采集最新事件
+                     events_result = await self.collect_match_events(match_id)
+-                    if events_result.success and events_result.data.get("events"):
++                    if events_result.success and events_result.data.await get("events"):
+                         latest_event = events_result.data["events"][-1]
+                         logger.debug(
+                             f"比赛 {match_id} 最新事件: {latest_event['type']['name']} "
+@@ -465,7 +465,7 @@             result = await self._make_request("GET", endpoint)
+ 
+             if result.success and result.data:
+-                matches = result.data.get("matches", [])
++                matches = result.data.await get("matches", [])
+                 summary = {
+                     "date": today,
+                     "total_live_matches": len(matches),
+@@ -474,19 +474,19 @@ 
+                 for match in matches:
+                     match_summary = {
+-                        "id": match.get("id"),
+-                        "home_team": match.get("homeTeam", {}).get("name"),
+-                        "away_team": match.get("awayTeam", {}).get("name"),
++                        "id": match.await get("id"),
++                        "home_team": match.await await get("homeTeam", {}).get("name"),
++                        "away_team": match.await await get("awayTeam", {}).get("name"),
+                         "score": {
+-                            "home": match.get("score", {})
++                            "home": match.await await await get("score", {})
+                             .get("fullTime", {})
+                             .get("home", 0),
+-                            "away": match.get("score", {})
++                            "away": match.await await await get("score", {})
+                             .get("fullTime", {})
+                             .get("away", 0),
+                         },
+-                        "minute": match.get("minute"),
+-                        "status": match.get("status"),
++                        "minute": match.await get("minute"),
++                        "status": match.await get("status"),
+                     }
+                     summary["matches"].append(match_summary)
+ 

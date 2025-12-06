@@ -38,7 +38,7 @@ class RangeRule(RangeRuleProtocol):
 
     def __init__(
         self,
-        field_ranges: Optional[Dict[str, Tuple[float, float]]] = None,
+        field_ranges: Optional[dict[str, tuple[float, float]]] = None,
         tolerance: float = 0.0,
         strict_mode: bool = True
     ):
@@ -120,7 +120,7 @@ class RangeRule(RangeRuleProtocol):
             f"容忍度 {self.tolerance}, 严格模式 {self.strict_mode}"
         )
 
-    async def check(self, features: Dict[str, Any]) -> List[str]:
+    async def check(self, features: dict[str, Any]) -> list[str]:
         """
         检查特征数据中的数值范围。
 
@@ -236,7 +236,7 @@ class RangeRule(RangeRuleProtocol):
         else:
             return RuleSeverity.LOW
 
-    def get_field_range(self, field_name: str) -> Optional[Tuple[float, float]]:
+    def get_field_range(self, field_name: str) -> Optional[tuple[float, float]]:
         """
         获取指定字段的范围配置。
 
@@ -291,7 +291,7 @@ class RangeRule(RangeRuleProtocol):
         self.strict_mode = strict_mode
         logger.info(f"严格模式已设置为: {strict_mode}")
 
-    def validate_field_ranges(self) -> List[str]:
+    def validate_field_ranges(self) -> list[str]:
         """
         验证所有字段范围配置的有效性。
 
@@ -313,7 +313,7 @@ class RangeRule(RangeRuleProtocol):
 
         return errors
 
-    def get_range_summary(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def get_range_summary(self, features: dict[str, Any]) -> dict[str, Any]:
         """
         获取范围检查的详细摘要。
 

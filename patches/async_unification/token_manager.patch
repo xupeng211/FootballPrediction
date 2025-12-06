@@ -1,0 +1,181 @@
+--- a/src/collectors/auth/token_manager.py+++ b/src/collectors/auth/token_manager.py@@ -54,35 +54,35 @@     usage_count: int = 0
+     provider: str = "unknown"
+ 
+-    def __post_init__(self) -> None:
++async def __post_init__(self) -> None:
+         """初始化后处理"""
+         if isinstance(self.token_type, str):
+             self.token_type = TokenType(self.token_type.lower())
+ 
+     @property
+-    def is_expired(self) -> bool:
++async def is_expired(self) -> bool:
+         """检查令牌是否过期"""
+         if self.expires_at is None:
+             return False
+         return time.monotonic() >= self.expires_at
+ 
+     @property
+-    def is_valid(self) -> bool:
++async def is_valid(self) -> bool:
+         """检查令牌是否有效（未过期且值不为空）"""
+         return not self.is_expired and bool(self.value)
+ 
+     @property
+-    def ttl(self) -> Optional[float]:
++async def ttl(self) -> Optional[float]:
+         """获取剩余生存时间（秒）"""
+         if self.expires_at is None:
+             return None
+         return max(0.0, self.expires_at - time.monotonic())
+ 
+-    def record_usage(self) -> None:
++async def record_usage(self) -> None:
+         """记录令牌使用"""
+         self.usage_count += 1
+ 
+-    def to_dict(self) -> Dict[str, Any]:
++async def to_dict(self) -> Dict[str, Any]:
+         """转换为字典格式"""
+         return {
+             'value': self.value[:20] + "..." if len(self.value) > 20 else self.value,  # 隐藏完整token
+@@ -97,10 +97,10 @@             'ttl': self.ttl,
+         }
+ 
+-    def __str__(self) -> str:
++async def __str__(self) -> str:
+         return f"Token({self.provider}, {self.token_type.value}, valid={self.is_valid})"
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         return self.__str__()
+ 
+ 
+@@ -143,7 +143,7 @@ 
+     @property
+     @abstractmethod
+-    def provider_name(self) -> str:
++async def provider_name(self) -> str:
+         """获取提供者名称"""
+         ...
+ 
+@@ -170,7 +170,7 @@     负责管理不同的认证提供者，处理令牌的缓存和自动刷新
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         default_ttl: float = 3600.0,  # 1小时
+         cache_refresh_threshold: float = 300.0,  # 5分钟内过期时刷新
+@@ -274,7 +274,7 @@                     print(f"📊 Token usage for {provider_name}: {cached_token.usage_count} times")
+                 return cached_token
+ 
+-    def _get_provider_by_name(self, provider_name: str) -> Optional[AuthProvider]:
++async def _get_provider_by_name(self, provider_name: str) -> Optional[AuthProvider]:
+         """
+         根据名称获取提供者实例
+ 
+@@ -284,7 +284,7 @@         Returns:
+             Optional[AuthProvider]: 提供者实例，如果不存在返回None
+         """
+-        return self.provider_cache.get(provider_name)
++        return self.provider_cache.await get(provider_name)
+ 
+     async def _retry_token_refresh(self, provider: AuthProvider, old_token: Optional[Token] = None) -> Token:
+         """
+@@ -379,7 +379,7 @@     模拟从 FotMob 首页 HTML 中提取认证签名的逻辑
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         base_url: str = "https://www.fotmob.com",
+         timeout: float = 10.0,
+@@ -401,7 +401,7 @@         self.user_agent = user_agent
+ 
+     @property
+-    def provider_name(self) -> str:
++async def provider_name(self) -> str:
+         """获取提供者名称"""
+         return "fotmob"
+ 
+@@ -483,7 +483,7 @@             }
+ 
+             async with aiohttp.ClientSession(timeout=timeout) as session:
+-                async with session.get(self.base_url, headers=headers) as response:
++                async with session.await get(self.base_url, headers=headers) as response:
+                     if response.status == 200:
+                         return await response.text()
+                     else:
+@@ -492,7 +492,7 @@         except aiohttp.ClientError as e:
+             raise AuthenticationError(f"Network error while fetching FotMob homepage: {e}")
+ 
+-    def _extract_token_from_html(self, html_content: str) -> Optional[Dict[str, Any]]:
++async def _extract_token_from_html(self, html_content: str) -> Optional[Dict[str, Any]]:
+         """
+         从 HTML 内容中提取认证令牌
+ 
+@@ -536,7 +536,7 @@             print(f"⚠️ Token extraction failed, using mock values: {e}")
+             return self._generate_mock_token_data()
+ 
+-    def _generate_mock_x_mas(self) -> str:
++async def _generate_mock_x_mas(self) -> str:
+         """生成模拟的 x-mas 值"""
+         import hashlib
+         import random
+@@ -545,7 +545,7 @@         random_str = f"fotmob_{timestamp}_{random.randint(1000, 9999)}"
+         return hashlib.sha256(random_str.encode()).hexdigest()[:32]
+ 
+-    def _generate_mock_x_foo(self) -> str:
++async def _generate_mock_x_foo(self) -> str:
+         """生成模拟的 x-foo 签名"""
+         import hashlib
+         import base64
+@@ -554,7 +554,7 @@         signature = hashlib.sha256(payload).digest()
+         return base64.b64encode(signature).decode()[:40]
+ 
+-    def _generate_mock_token_data(self) -> Dict[str, Any]:
++async def _generate_mock_token_data(self) -> Dict[str, Any]:
+         """生成模拟令牌数据"""
+         x_mas = self._generate_mock_x_mas()
+         x_foo = self._generate_mock_x_foo()
+@@ -574,7 +574,7 @@     模拟认证提供者（用于测试）
+     """
+ 
+-    def __init__(self, provider_name: str, token_value: str = "mock_token", ttl: float = 300.0):
++async def __init__(self, provider_name: str, token_value: str = "mock_token", ttl: float = 300.0):
+         """
+         初始化模拟认证提供者
+ 
+@@ -588,7 +588,7 @@         self.ttl = ttl
+ 
+     @property
+-    def provider_name(self) -> str:
++async def provider_name(self) -> str:
+         """获取提供者名称"""
+         return self._provider_name
+ 
+@@ -637,7 +637,7 @@ 
+ 
+ # 便利函数
+-def create_token_manager(
++async def create_token_manager(
+     default_ttl: float = 3600.0,
+     cache_refresh_threshold: float = 300.0,
+     **kwargs
+@@ -656,7 +656,7 @@     return TokenManager(default_ttl, cache_refresh_threshold, **kwargs)
+ 
+ 
+-def create_fotmob_provider(**kwargs) -> FotMobAuthProvider:
++async def create_fotmob_provider(**kwargs) -> FotMobAuthProvider:
+     """
+     创建 FotMob 认证提供者的便利函数
+ 
+@@ -669,7 +669,7 @@     return FotMobAuthProvider(**kwargs)
+ 
+ 
+-def create_mock_provider(provider_name: str, **kwargs) -> MockAuthProvider:
++async def create_mock_provider(provider_name: str, **kwargs) -> MockAuthProvider:
+     """
+     创建模拟认证提供者的便利函数
+ 

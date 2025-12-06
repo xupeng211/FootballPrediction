@@ -1,0 +1,13 @@
+--- a/src/data/features/examples.py+++ b/src/data/features/examples.py@@ -2,11 +2,11 @@ 
+ 
+ class Examples:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

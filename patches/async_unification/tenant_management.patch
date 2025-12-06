@@ -1,0 +1,198 @@
+--- a/src/api/tenant_management.py+++ b/src/api/tenant_management.py@@ -91,7 +91,7 @@ 
+     @field_validator("slug")
+     @classmethod
+-    def validate_slug(cls, v):
++async def validate_slug(cls, v):
+         """验证租户标识符."""
+         if not re.match(r"^[a-z0-9-]+$", v):
+             raise ValueError("租户标识符只能包含小写字母、数字和连字符")
+@@ -208,7 +208,7 @@ 
+     需要权限: tenant.create
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+ 
+         # 获取当前用户ID
+@@ -232,14 +232,14 @@         return TenantResponseModel.from_orm(tenant)
+ 
+ 
+-@router.get("/{tenant_id}", response_model=TenantResponseModel)
++@router.await get("/{tenant_id}", response_model=TenantResponseModel)
+ @require_permission("tenant.view")
+ async def get_tenant(tenant_id: int):
+     """获取租户详情.
+ 
+     需要权限: tenant.view
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         tenant = await tenant_service.get_tenant_by_id(tenant_id)
+ 
+@@ -258,7 +258,7 @@ 
+     需要权限: tenant.manage
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+ 
+         # 构建更新数据
+@@ -270,7 +270,7 @@         return TenantResponseModel.from_orm(tenant)
+ 
+ 
+-@router.post("/{tenant_id}/suspend")
++@router.await post("/{tenant_id}/suspend")
+ @require_permission("tenant.manage")
+ async def suspend_tenant(
+     tenant_id: int, reason: str = Query(..., description="暂停原因")
+@@ -279,13 +279,13 @@ 
+     需要权限: tenant.manage
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         tenant = await tenant_service.suspend_tenant(tenant_id, reason)
+         return {"message": "租户已暂停", "tenant_id": tenant.id}
+ 
+ 
+-@router.post("/{tenant_id}/activate")
++@router.await post("/{tenant_id}/activate")
+ @require_permission("tenant.manage")
+ async def activate_tenant(
+     tenant_id: int, plan: str | None = Query(None, description="租户计划")
+@@ -294,20 +294,20 @@ 
+     需要权限: tenant.manage
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         tenant = await tenant_service.activate_tenant(tenant_id, plan)
+         return {"message": "租户已激活", "tenant_id": tenant.id}
+ 
+ 
+-@router.get("/{tenant_id}/statistics", response_model=TenantStatisticsResponseModel)
++@router.await get("/{tenant_id}/statistics", response_model=TenantStatisticsResponseModel)
+ @require_permission("tenant.analytics")
+ async def get_tenant_statistics(tenant_id: int):
+     """获取租户统计信息.
+ 
+     需要权限: tenant.analytics
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         stats = await tenant_service.get_tenant_statistics(tenant_id)
+         return TenantStatisticsResponseModel(**stats)
+@@ -316,7 +316,7 @@ # ==================== 权限管理端点 ==================== None
+ 
+ 
+-@router.post("/{tenant_id}/users/{user_id}/roles")
++@router.await post("/{tenant_id}/users/{user_id}/roles")
+ @require_permission("roles.manage")
+ async def assign_user_role(
+     tenant_id: int,
+@@ -328,7 +328,7 @@ 
+     需要权限: roles.manage
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         tenant_context = get_tenant_context(request)
+ 
+@@ -350,7 +350,7 @@ 
+     需要权限: roles.manage
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         success = await tenant_service.revoke_user_role(user_id, tenant_id, role_code)
+ 
+@@ -362,7 +362,7 @@         return {"message": "角色撤销成功"}
+ 
+ 
+-@router.post("/{tenant_id}/permissions/check")
++@router.await post("/{tenant_id}/permissions/check")
+ @require_permission("permissions.check")
+ async def check_permission(
+     tenant_id: int, permission_data: PermissionCheckRequestModel, request: Request
+@@ -375,7 +375,7 @@     if not tenant_context:
+         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="未认证")
+ 
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         result = await tenant_service.check_user_permission(
+             user_id=tenant_context.user_id,
+@@ -408,7 +408,7 @@ 
+     需要权限: quota.view
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         quota_check = await tenant_service.check_resource_quota(
+             tenant_id=tenant_id, resource_type=resource_type, additional_amount=amount
+@@ -423,14 +423,14 @@         )
+ 
+ 
+-@router.post("/{tenant_id}/usage/update")
++@router.await post("/{tenant_id}/usage/update")
+ @require_permission("usage.update")
+ async def update_usage_metrics(tenant_id: int, metrics: dict[str, Any]):
+     """更新使用指标.
+ 
+     需要权限: usage.update
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         await tenant_service.update_usage_metrics(tenant_id, metrics)
+         return {"message": "使用指标更新成功"}
+@@ -439,7 +439,7 @@ # ==================== 租户列表和搜索 ==================== None
+ 
+ 
+-@router.get("/", response_model=list[TenantResponseModel])
++@router.await get("/", response_model=list[TenantResponseModel])
+ @require_permission("tenant.list")
+ async def list_tenants(
+     skip: int = Query(0, ge=0, description="跳过数量"),
+@@ -457,7 +457,7 @@ 
+     需要权限: tenant.list
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         TenantService(db)
+ 
+         # 这里应该实现分页查询逻辑
+@@ -470,7 +470,7 @@ # ==================== 健康检查和状态端点 ==================== None
+ 
+ 
+-@router.get("/health", tags=["健康检查"])
++@router.await get("/health", tags=["健康检查"])
+ async def tenant_management_health():
+     """多租户管理健康检查."""
+     return {
+@@ -480,14 +480,14 @@     }
+ 
+ 
+-@router.get("/{tenant_id}/health")
++@router.await get("/{tenant_id}/health")
+ @require_permission("tenant.view")
+ async def tenant_health_check(tenant_id: int):
+     """租户健康检查.
+ 
+     需要权限: tenant.view
+     """
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         tenant_service = TenantService(db)
+         tenant = await tenant_service.get_tenant_by_id(tenant_id)
+ 
+@@ -509,7 +509,7 @@ 
+ 
+ # 重复的类定义已清理
+-def _calculate_health_score(tenant: Tenant) -> float:
++async def _calculate_health_score(tenant: Tenant) -> float:
+     """计算租户健康分数."""
+     score = DEFAULT_HEALTH_SCORE
+ 

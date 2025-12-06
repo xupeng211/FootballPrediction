@@ -1,0 +1,24 @@
+--- a/src/collectors/enhanced_data_collector.py+++ b/src/collectors/enhanced_data_collector.py@@ -27,7 +27,7 @@ class EnhancedHTTPClient:
+     """增强版HTTP客户端 - 集成反爬技术."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         use_proxy: bool = True,
+         use_random_ua: bool = True,
+@@ -216,7 +216,7 @@         if proxy_config and self.proxy_pool:
+             await self.proxy_pool.mark_proxy_failed(proxy_config, Exception(error_msg))
+ 
+-    def get_stats(self) -> dict[str, Any]:
++async def get_stats(self) -> dict[str, Any]:
+         """获取客户端统计信息."""
+         stats = {
+             "request_count": self.request_count,
+@@ -257,7 +257,7 @@ class EnhancedPlaywrightCollector:
+     """增强版Playwright采集器."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         use_proxy: bool = True,
+         use_random_ua: bool = True,

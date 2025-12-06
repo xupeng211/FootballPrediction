@@ -1,0 +1,266 @@
+--- a/src/cache/ttl_cache_enhanced/ttl_cache.py+++ b/src/cache/ttl_cache_enhanced/ttl_cache.py@@ -16,20 +16,20 @@ class CacheEntry:
+     """缓存条目."""
+ 
+-    def __init__(self, value: Any, ttl: float | None = None):
++async def __init__(self, value: Any, ttl: float | None = None):
+         self.value = value
+         self.created_at = time.time()
+         self.ttl = ttl
+         self.access_count = 0
+         self.last_accessed = self.created_at
+ 
+-    def is_expired(self) -> bool:
++async def is_expired(self) -> bool:
+         """检查是否过期."""
+         if self.ttl is None:
+             return False
+         return time.time() - self.created_at > self.ttl
+ 
+-    def get_ttl_remaining(self) -> float | None:
++async def get_ttl_remaining(self) -> float | None:
+         """获取剩余TTL."""
+         if self.ttl is None:
+             return None
+@@ -41,7 +41,7 @@ class TTLCache:
+     """带TTL的缓存."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         max_size: int = 1000,
+         default_ttl: float | None = None,
+@@ -71,7 +71,7 @@         # 启动自动清理
+         self.start_auto_cleanup()
+ 
+-    def get(self, key: str, default: Any = None) -> Any:
++async def get(self, key: str, default: Any = None) -> Any:
+         """获取缓存值.
+ 
+         Args:
+@@ -82,7 +82,7 @@             缓存值或默认值
+         """
+         with self._lock:
+-            entry = self._cache.get(key)
++            entry = self._cache.await get(key)
+ 
+             if entry is None:
+                 self._misses += 1
+@@ -98,7 +98,7 @@             self._hits += 1
+             return entry.value
+ 
+-    def set(self, key: str, value: Any, ttl: float | None = None) -> None:
++async def set(self, key: str, value: Any, ttl: float | None = None) -> None:
+         """设置缓存值.
+ 
+         Args:
+@@ -116,7 +116,7 @@             self._cache[key] = entry
+             self._sets += 1
+ 
+-    def delete(self, key: str) -> bool:
++async def delete(self, key: str) -> bool:
+         """删除缓存项.
+ 
+         Args:
+@@ -132,12 +132,12 @@                 return True
+             return False
+ 
+-    def clear(self) -> None:
++async def clear(self) -> None:
+         """清空缓存."""
+         with self._lock:
+             self._cache.clear()
+ 
+-    def pop(self, key: str, default: Any = None) -> Any:
++async def pop(self, key: str, default: Any = None) -> Any:
+         """弹出并删除缓存项.
+ 
+         Args:
+@@ -148,26 +148,26 @@             缓存值或默认值
+         """
+         with self._lock:
+-            value = self.get(key, default)
++            value = self.await get(key, default)
+             self.delete(key)
+             return value
+ 
+-    def keys(self) -> list[str]:
++async def keys(self) -> list[str]:
+         """获取所有键."""
+         with self._lock:
+             return list(self._cache.keys())
+ 
+-    def values(self) -> list[Any]:
++async def values(self) -> list[Any]:
+         """获取所有值."""
+         with self._lock:
+             return [entry.value for entry in self._cache.values()]
+ 
+-    def items(self) -> list[tuple[str, Any]]:
++async def items(self) -> list[tuple[str, Any]]:
+         """获取所有键值对."""
+         with self._lock:
+             return [(key, entry.value) for key, entry in self._cache.items()]
+ 
+-    def get_many(self, keys: list[str]) -> dict[str, Any]:
++async def get_many(self, keys: list[str]) -> dict[str, Any]:
+         """批量获取.
+ 
+         Args:
+@@ -178,12 +178,12 @@         """
+         result = {}
+         for key in keys:
+-            value = self.get(key)
++            value = self.await get(key)
+             if value is not None:
+                 result[key] = value
+         return result
+ 
+-    def set_many(self, mapping: dict[str, Any], ttl: float | None = None) -> None:
++async def set_many(self, mapping: dict[str, Any], ttl: float | None = None) -> None:
+         """批量设置.
+ 
+         Args:
+@@ -193,7 +193,7 @@         for key, value in mapping.items():
+             self.set(key, value, ttl)
+ 
+-    def delete_many(self, keys: list[str]) -> int:
++async def delete_many(self, keys: list[str]) -> int:
+         """批量删除.
+ 
+         Args:
+@@ -208,7 +208,7 @@                 count += 1
+         return count
+ 
+-    def increment(self, key: str, delta: int = 1, default: int = 0) -> int:
++async def increment(self, key: str, delta: int = 1, default: int = 0) -> int:
+         """递增数值.
+ 
+         Args:
+@@ -219,14 +219,14 @@         Returns:
+             递增后的值
+         """
+-        current = self.get(key, default)
++        current = self.await get(key, default)
+         if not isinstance(current, int):
+             current = default
+         new_value = current + delta
+         self.set(key, new_value)
+         return new_value
+ 
+-    def touch(self, key: str, ttl: float | None = None) -> bool:
++async def touch(self, key: str, ttl: float | None = None) -> bool:
+         """更新缓存项的TTL.
+ 
+         Args:
+@@ -237,7 +237,7 @@             是否更新成功
+         """
+         with self._lock:
+-            entry = self._cache.get(key)
++            entry = self._cache.await get(key)
+             if entry is None:
+                 return False
+ 
+@@ -246,7 +246,7 @@             entry.created_at = time.time()
+             return True
+ 
+-    def ttl(self, key: str) -> int | None:
++async def ttl(self, key: str) -> int | None:
+         """获取剩余TTL.
+ 
+         Args:
+@@ -256,24 +256,24 @@             剩余TTL（秒）
+         """
+         with self._lock:
+-            entry = self._cache.get(key)
++            entry = self._cache.await get(key)
+             if entry is None:
+                 return None
+ 
+             remaining = entry.get_ttl_remaining()
+             return int(remaining) if remaining is not None else None
+ 
+-    def size(self) -> int:
++async def size(self) -> int:
+         """获取缓存大小."""
+         with self._lock:
+             return len(self._cache)
+ 
+-    def is_empty(self) -> bool:
++async def is_empty(self) -> bool:
+         """检查缓存是否为空."""
+         with self._lock:
+             return len(self._cache) == 0
+ 
+-    def cleanup_expired(self) -> int:
++async def cleanup_expired(self) -> int:
+         """清理过期项.
+ 
+         Returns:
+@@ -289,7 +289,7 @@ 
+             return len(expired_keys)
+ 
+-    def get_stats(self) -> dict[str, Any]:
++async def get_stats(self) -> dict[str, Any]:
+         """获取统计信息."""
+         with self._lock:
+             total_requests = self._hits + self._misses
+@@ -305,7 +305,7 @@                 "max_size": self.max_size,
+             }
+ 
+-    def reset_stats(self) -> None:
++async def reset_stats(self) -> None:
+         """重置统计信息."""
+         with self._lock:
+             self._hits = 0
+@@ -313,7 +313,7 @@             self._sets = 0
+             self._deletes = 0
+ 
+-    def _evict_lru(self) -> None:
++async def _evict_lru(self) -> None:
+         """淘汰最近最少使用的项."""
+         if not self._cache:
+             return
+@@ -321,16 +321,16 @@         lru_key = min(self._cache.keys(), key=lambda k: self._cache[k].last_accessed)
+         del self._cache[lru_key]
+ 
+-    def _cleanup_worker(self) -> None:
++async def _cleanup_worker(self) -> None:
+         """清理工作线程."""
+         while self._running:
+             try:
+                 self.cleanup_expired()
+-                time.sleep(self.cleanup_interval)
++                await asyncio.sleep(self.cleanup_interval)
+             except Exception as e:
+                 logger.error(f"缓存清理错误: {e}")
+ 
+-    def start_auto_cleanup(self) -> None:
++async def start_auto_cleanup(self) -> None:
+         """启动自动清理."""
+         if self._cleanup_thread is None or not self._cleanup_thread.is_alive():
+             self._running = True
+@@ -339,19 +339,19 @@             )
+             self._cleanup_thread.start()
+ 
+-    def stop_auto_cleanup(self) -> None:
++async def stop_auto_cleanup(self) -> None:
+         """停止自动清理."""
+         self._running = False
+         if self._cleanup_thread and self._cleanup_thread.is_alive():
+             self._cleanup_thread.join(timeout=1.0)
+ 
+-    def __len__(self) -> int:
++async def __len__(self) -> int:
+         return self.size()
+ 
+-    def __contains__(self, key: str) -> bool:
+-        return self.get(key) is not None
+-
+-    def __repr__(self) -> str:
++async def __contains__(self, key: str) -> bool:
++        return self.await get(key) is not None
++
++async def __repr__(self) -> str:
+         stats = self.get_stats()
+         return f"TTLCache(size={stats['size']}, max_size={self.max_size}, hit_rate={stats['hit_rate']:.2f})"
+ 

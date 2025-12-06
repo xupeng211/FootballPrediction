@@ -1,0 +1,24 @@
+--- a/src/database/repositories/analytics_repository.py+++ b/src/database/repositories/analytics_repository.py@@ -30,7 +30,7 @@     - Aggregated metrics
+     """
+ 
+-    def __init__(self, db_session: AsyncSession):
++async def __init__(self, db_session: AsyncSession):
+         """
+         Initialize AnalyticsRepository with database session.
+ 
+@@ -118,7 +118,7 @@                 WHERE id = :team_id
+             """)
+ 
+-            result = await self._db.execute(team_query, {"team_id": team_id})
++            result = await self._db.await execute(team_query, {"team_id": team_id})
+             row = result.first()
+ 
+             if row:
+@@ -154,7 +154,7 @@         """
+         try:
+             query = select(League).where(League.id == league_id)
+-            result = await self._db.execute(query)
++            result = await self._db.await execute(query)
+             league = result.scalar_one_or_none()
+ 
+             if league:

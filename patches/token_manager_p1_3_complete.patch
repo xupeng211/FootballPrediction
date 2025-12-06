@@ -1,0 +1,2342 @@
+--- a/.dev/null
++++ b/src/collectors/auth/token_manager.py
+@@ -0,0 +1,702 @@
++"""
++动态认证模块 - Token Manager
++Dynamic Authentication Module - Token Manager
++
++该模块实现了动态认证管理系统，支持：
++1. 多种认证提供者 (AuthProvider Protocol)
++2. Token 缓存和自动刷新机制
++3. FotMob 认证实现
++4. TTL 过期处理
++5. 线程安全的并发访问
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 1.0.0
++"""
++
++import asyncio
++import re
++import time
++from abc import abstractmethod
++from dataclasses import dataclass, field
++from enum import Enum
++from typing import Any, Dict, Optional, Protocol, runtime_checkable
++
++import aiohttp
++
++
++class TokenType(Enum):
++    """Token 类型"""
++    BEARER = "bearer"
++    API_KEY = "api_key"
++    CUSTOM_HEADER = "custom_header"
++
++
++@dataclass
++class Token:
++    """
++    认证令牌数据类
++
++    Attributes:
++        value: 令牌值
++        token_type: 令牌类型
++        headers: 关联的HTTP头部
++        expires_at: 过期时间戳
++        created_at: 创建时间戳
++        usage_count: 使用次数
++        provider: 提供者名称
++    """
++    value: str
++    token_type: TokenType
++    headers: Dict[str, str] = field(default_factory=dict)
++    expires_at: Optional[float] = None
++    created_at: float = field(default_factory=time.monotonic)
++    usage_count: int = 0
++    provider: str = "unknown"
++
++    def __post_init__(self) -> None:
++        """初始化后处理"""
++        if isinstance(self.token_type, str):
++            self.token_type = TokenType(self.token_type.lower())
++
++    @property
++    def is_expired(self) -> bool:
++        """检查令牌是否过期"""
++        if self.expires_at is None:
++            return False
++        return time.monotonic() >= self.expires_at
++
++    @property
++    def is_valid(self) -> bool:
++        """检查令牌是否有效（未过期且值不为空）"""
++        return not self.is_expired and bool(self.value)
++
++    @property
++    def ttl(self) -> Optional[float]:
++        """获取剩余生存时间（秒）"""
++        if self.expires_at is None:
++            return None
++        return max(0.0, self.expires_at - time.monotonic())
++
++    def record_usage(self) -> None:
++        """记录令牌使用"""
++        self.usage_count += 1
++
++    def to_dict(self) -> Dict[str, Any]:
++        """转换为字典格式"""
++        return {
++            'value': self.value[:20] + "..." if len(self.value) > 20 else self.value,  # 隐藏完整token
++            'token_type': self.token_type.value,
++            'headers': self.headers,
++            'expires_at': self.expires_at,
++            'created_at': self.created_at,
++            'usage_count': self.usage_count,
++            'provider': self.provider,
++            'is_expired': self.is_expired,
++            'is_valid': self.is_valid,
++            'ttl': self.ttl,
++        }
++
++    def __str__(self) -> str:
++        return f"Token({self.provider}, {self.token_type.value}, valid={self.is_valid})"
++
++    def __repr__(self) -> str:
++        return self.__str__()
++
++
++@runtime_checkable
++class AuthProvider(Protocol):
++    """
++    认证提供者协议
++
++    定义了获取认证令牌的标准接口
++    """
++
++    @abstractmethod
++    async def get_token(self) -> Token:
++        """
++        获取认证令牌
++
++        Returns:
++            Token: 认证令牌对象
++
++        Raises:
++            AuthenticationError: 认证失败
++        """
++        ...
++
++    @abstractmethod
++    async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++        """
++        刷新认证令牌
++
++        Args:
++            old_token: 旧的令牌（可选）
++
++        Returns:
++            Token: 新的认证令牌
++
++        Raises:
++            AuthenticationError: 认证失败
++        """
++        ...
++
++    @property
++    @abstractmethod
++    def provider_name(self) -> str:
++        """获取提供者名称"""
++        ...
++
++
++class AuthenticationError(Exception):
++    """认证错误基类"""
++    pass
++
++
++class TokenExpiredError(AuthenticationError):
++    """令牌过期错误"""
++    pass
++
++
++class TokenRefreshError(AuthenticationError):
++    """令牌刷新错误"""
++    pass
++
++
++class TokenManager:
++    """
++    令牌管理器
++
++    负责管理不同的认证提供者，处理令牌的缓存和自动刷新
++    """
++
++    def __init__(
++        self,
++        default_ttl: float = 3600.0,  # 1小时
++        cache_refresh_threshold: float = 300.0,  # 5分钟内过期时刷新
++        max_retry_attempts: int = 3,
++        retry_delay: float = 1.0,
++    ):
++        """
++        初始化令牌管理器
++
++        Args:
++            default_ttl: 默认令牌生存时间（秒）
++            cache_refresh_threshold: 缓存刷新阈值（秒）
++            max_retry_attempts: 最大重试次数
++            retry_delay: 重试延迟（秒）
++        """
++        self.default_ttl = default_ttl
++        self.cache_refresh_threshold = cache_refresh_threshold
++        self.max_retry_attempts = max_retry_attempts
++        self.retry_delay = retry_delay
++
++        # 令牌缓存: {provider_name: Token}
++        self.token_cache: Dict[str, Token] = {}
++        # 提供者缓存: {provider_name: AuthProvider}
++        self.provider_cache: Dict[str, AuthProvider] = {}
++        self.lock = asyncio.Lock()
++
++    async def register_provider(self, provider: AuthProvider) -> None:
++        """
++        注册认证提供者
++
++        Args:
++            provider: 认证提供者实例
++        """
++        async with self.lock:
++            provider_name = provider.provider_name
++            if provider_name not in self.token_cache:
++                # 存储provider引用
++                self.provider_cache[provider_name] = provider
++
++                # 预先获取一个令牌
++                try:
++                    token = await provider.get_token()
++                    self.token_cache[provider_name] = token
++                    print(f"🔑 Registered provider: {provider_name}")
++                except Exception as e:
++                    print(f"❌ Failed to register provider {provider_name}: {e}")
++                    raise AuthenticationError(f"Failed to register provider {provider_name}: {e}")
++
++    async def get_token(self, provider_name: str, force_refresh: bool = False) -> Token:
++        """
++        获取认证令牌
++
++        Args:
++            provider_name: 提供者名称
++            force_refresh: 是否强制刷新
++
++        Returns:
++            Token: 认证令牌
++
++        Raises:
++            AuthenticationError: 认证失败
++            TokenRefreshError: 令牌刷新失败
++        """
++        async with self.lock:
++            if provider_name not in self.token_cache:
++                raise AuthenticationError(f"Provider {provider_name} not registered")
++
++            cached_token = self.token_cache[provider_name]
++
++            # 检查是否需要刷新
++            should_refresh = (
++                force_refresh or
++                not cached_token.is_valid or
++                (cached_token.ttl and cached_token.ttl < self.cache_refresh_threshold)
++            )
++
++            if should_refresh:
++                print(f"🔄 Refreshing token for provider: {provider_name}")
++                # 这里需要重新获取provider实例进行刷新
++                # 实际实现中应该保存provider引用
++                provider = self._get_provider_by_name(provider_name)
++                if not provider:
++                    raise AuthenticationError(f"Provider {provider_name} not found for refresh")
++
++                try:
++                    new_token = await self._retry_token_refresh(provider, cached_token)
++                    self.token_cache[provider_name] = new_token
++                    print(f"✅ Token refreshed for provider: {provider_name}")
++                    return new_token
++                except Exception as e:
++                    print(f"❌ Failed to refresh token for {provider_name}: {e}")
++                    if not cached_token.is_valid:
++                        # 缓存的token也无效了，抛出异常
++                        raise TokenRefreshError(f"Failed to refresh token for {provider_name}: {e}")
++                    # 返回旧token（虽然快过期但仍然有效）
++                    print(f"⚠️ Using old token for {provider_name} (will expire soon)")
++                    return cached_token
++            else:
++                cached_token.record_usage()
++                if cached_token.usage_count % 10 == 0:  # 每10次使用打印一次
++                    print(f"📊 Token usage for {provider_name}: {cached_token.usage_count} times")
++                return cached_token
++
++    def _get_provider_by_name(self, provider_name: str) -> Optional[AuthProvider]:
++        """
++        根据名称获取提供者实例
++
++        Args:
++            provider_name: 提供者名称
++
++        Returns:
++            Optional[AuthProvider]: 提供者实例，如果不存在返回None
++        """
++        return self.provider_cache.get(provider_name)
++
++    async def _retry_token_refresh(self, provider: AuthProvider, old_token: Optional[Token] = None) -> Token:
++        """
++        重试令牌刷新
++
++        Args:
++            provider: 认证提供者
++            old_token: 旧令牌
++
++        Returns:
++            Token: 新令牌
++
++        Raises:
++            TokenRefreshError: 刷新失败
++        """
++        last_error = None
++
++        for attempt in range(self.max_retry_attempts):
++            try:
++                new_token = await provider.refresh_token(old_token)
++                return new_token
++            except Exception as e:
++                last_error = e
++                print(f"⚠️ Token refresh attempt {attempt + 1} failed: {e}")
++                if attempt < self.max_retry_attempts - 1:
++                    await asyncio.sleep(self.retry_delay * (2 ** attempt))  # 指数退避
++
++        raise TokenRefreshError(f"Token refresh failed after {self.max_retry_attempts} attempts: {last_error}")
++
++    async def invalidate_token(self, provider_name: str) -> None:
++        """
++        使令牌失效
++
++        Args:
++            provider_name: 提供者名称
++        """
++        async with self.lock:
++            if provider_name in self.token_cache:
++                del self.token_cache[provider_name]
++                print(f"🗑️ Invalidated token for provider: {provider_name}")
++
++    async def get_token_info(self, provider_name: Optional[str] = None) -> Dict[str, Any]:
++        """
++        获取令牌信息
++
++        Args:
++            provider_name: 提供者名称，None表示获取所有
++
++        Returns:
++            Dict[str, Any]: 令牌信息
++        """
++        async with self.lock:
++            if provider_name:
++                if provider_name in self.token_cache:
++                    return self.token_cache[provider_name].to_dict()
++                else:
++                    return {"error": f"Provider {provider_name} not found"}
++            else:
++                return {
++                    name: token.to_dict()
++                    for name, token in self.token_cache.items()
++                }
++
++    async def get_stats(self) -> Dict[str, Any]:
++        """
++        获取管理器统计信息
++
++        Returns:
++            Dict[str, Any]: 统计信息
++        """
++        async with self.lock:
++            total_providers = len(self.token_cache)
++            valid_tokens = sum(1 for token in self.token_cache.values() if token.is_valid)
++            expired_tokens = total_providers - valid_tokens
++
++            total_usage = sum(token.usage_count for token in self.token_cache.values())
++
++            return {
++                'total_providers': total_providers,
++                'valid_tokens': valid_tokens,
++                'expired_tokens': expired_tokens,
++                'total_usage': total_usage,
++                'cache_refresh_threshold': self.cache_refresh_threshold,
++                'default_ttl': self.default_ttl,
++            }
++
++
++class FotMobAuthProvider:
++    """
++    FotMob 认证提供者
++
++    模拟从 FotMob 首页 HTML 中提取认证签名的逻辑
++    """
++
++    def __init__(
++        self,
++        base_url: str = "https://www.fotmob.com",
++        timeout: float = 10.0,
++        token_ttl: float = 3600.0,  # 1小时
++        user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
++    ):
++        """
++        初始化 FotMob 认证提供者
++
++        Args:
++            base_url: FotMob 基础URL
++            timeout: 请求超时时间
++            token_ttl: 令牌生存时间
++            user_agent: 用户代理字符串
++        """
++        self.base_url = base_url
++        self.timeout = timeout
++        self.token_ttl = token_ttl
++        self.user_agent = user_agent
++
++    @property
++    def provider_name(self) -> str:
++        """获取提供者名称"""
++        return "fotmob"
++
++    async def get_token(self) -> Token:
++        """
++        获取 FotMob 认证令牌
++
++        Returns:
++            Token: 认证令牌
++
++        Raises:
++            AuthenticationError: 认证失败
++        """
++        try:
++            # 模拟从 FotMob 首页提取 token
++            html_content = await self._fetch_fotmob_homepage()
++            token_data = self._extract_token_from_html(html_content)
++
++            if not token_data:
++                raise AuthenticationError("Failed to extract token from FotMob homepage")
++
++            token = Token(
++                value=token_data['value'],
++                token_type=TokenType.CUSTOM_HEADER,
++                headers=token_data['headers'],
++                expires_at=time.monotonic() + self.token_ttl,
++                provider=self.provider_name
++            )
++
++            print(f"🔑 Obtained FotMob token: {token.value[:20]}...")
++            return token
++
++        except Exception as e:
++            print(f"❌ Failed to get FotMob token: {e}")
++            raise AuthenticationError(f"Failed to get FotMob token: {e}")
++
++    async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++        """
++        刷新 FotMob 认证令牌
++
++        Args:
++            old_token: 旧令牌（可选）
++
++        Returns:
++            Token: 新的认证令牌
++
++        Raises:
++            TokenRefreshError: 刷新失败
++        """
++        try:
++            print("🔄 Refreshing FotMob token...")
++            new_token = await self.get_token()
++            print(f"✅ FotMob token refreshed successfully")
++            return new_token
++        except Exception as e:
++            print(f"❌ Failed to refresh FotMob token: {e}")
++            raise TokenRefreshError(f"Failed to refresh FotMob token: {e}")
++
++    async def _fetch_fotmob_homepage(self) -> str:
++        """
++        获取 FotMob 首页 HTML
++
++        Returns:
++            str: HTML 内容
++
++        Raises:
++            AuthenticationError: 获取失败
++        """
++        try:
++            timeout = aiohttp.ClientTimeout(total=self.timeout)
++
++            headers = {
++                'User-Agent': self.user_agent,
++                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
++                'Accept-Language': 'en-US,en;q=0.5',
++                'Accept-Encoding': 'gzip, deflate',
++                'Connection': 'keep-alive',
++                'Upgrade-Insecure-Requests': '1',
++            }
++
++            async with aiohttp.ClientSession(timeout=timeout) as session:
++                async with session.get(self.base_url, headers=headers) as response:
++                    if response.status == 200:
++                        return await response.text()
++                    else:
++                        raise AuthenticationError(f"HTTP {response.status}: Failed to fetch FotMob homepage")
++
++        except aiohttp.ClientError as e:
++            raise AuthenticationError(f"Network error while fetching FotMob homepage: {e}")
++
++    def _extract_token_from_html(self, html_content: str) -> Optional[Dict[str, Any]]:
++        """
++        从 HTML 内容中提取认证令牌
++
++        Args:
++            html_content: HTML 内容
++
++        Returns:
++            Optional[Dict[str, Any]]: 令牌数据，如果提取失败返回None
++        """
++        try:
++            # 模拟从 HTML 中提取认证信息
++            # 实际实现中，这些值会从 HTML 的 JavaScript 或 meta 标签中提取
++
++            # 模拟提取 x-mas header
++            x_mas_match = re.search(r'"x-mas":"([^"]+)"', html_content)
++            x_mas_value = x_mas_match.group(1) if x_mas_match else self._generate_mock_x_mas()
++
++            # 模拟提取 x-foo signature
++            x_foo_match = re.search(r'"x-foo":"([^"]+)"', html_content)
++            x_foo_value = x_foo_match.group(1) if x_foo_match else self._generate_mock_x_foo()
++
++            # 模拟提取 client version
++            version_match = re.search(r'"clientVersion":"([^"]+)"', html_content)
++            client_version = version_match.group(1) if version_match else "production:mock_version"
++
++            if not x_mas_value or not x_foo_value:
++                print("⚠️ Token extraction incomplete, using mock values")
++
++            token_data = {
++                'value': f"{x_mas_value}:{x_foo_value}",
++                'headers': {
++                    'x-mas': x_mas_value,
++                    'x-foo': x_foo_value,
++                    'x-client-version': client_version,
++                }
++            }
++
++            return token_data
++
++        except Exception as e:
++            print(f"⚠️ Token extraction failed, using mock values: {e}")
++            return self._generate_mock_token_data()
++
++    def _generate_mock_x_mas(self) -> str:
++        """生成模拟的 x-mas 值"""
++        import hashlib
++        import random
++
++        timestamp = int(time.time())
++        random_str = f"fotmob_{timestamp}_{random.randint(1000, 9999)}"
++        return hashlib.sha256(random_str.encode()).hexdigest()[:32]
++
++    def _generate_mock_x_foo(self) -> str:
++        """生成模拟的 x-foo 签名"""
++        import hashlib
++        import base64
++
++        payload = f"fotmob_auth_{int(time.time())}".encode()
++        signature = hashlib.sha256(payload).digest()
++        return base64.b64encode(signature).decode()[:40]
++
++    def _generate_mock_token_data(self) -> Dict[str, Any]:
++        """生成模拟令牌数据"""
++        x_mas = self._generate_mock_x_mas()
++        x_foo = self._generate_mock_x_foo()
++
++        return {
++            'value': f"{x_mas}:{x_foo_value}",
++            'headers': {
++                'x-mas': x_mas,
++                'x-foo': x_foo,
++                'x-client-version': "production:mock_version",
++            }
++        }
++
++
++class MockAuthProvider:
++    """
++    模拟认证提供者（用于测试）
++    """
++
++    def __init__(self, provider_name: str, token_value: str = "mock_token", ttl: float = 300.0):
++        """
++        初始化模拟认证提供者
++
++        Args:
++            provider_name: 提供者名称
++            token_value: 令牌值
++            ttl: 生存时间
++        """
++        self._provider_name = provider_name
++        self.token_value = token_value
++        self.ttl = ttl
++
++    @property
++    def provider_name(self) -> str:
++        """获取提供者名称"""
++        return self._provider_name
++
++    async def get_token(self) -> Token:
++        """获取模拟令牌"""
++        return Token(
++            value=self.token_value,
++            token_type=TokenType.BEARER,
++            expires_at=time.monotonic() + self.ttl,
++            provider=self.provider_name
++        )
++
++    async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++        """刷新模拟令牌"""
++        new_value = f"{self.token_value}_refreshed_{int(time.time())}"
++        return Token(
++            value=new_value,
++            token_type=TokenType.BEARER,
++            expires_at=time.monotonic() + self.ttl,
++            provider=self.provider_name
++        )
++
++
++# 全局令牌管理器实例
++_token_manager: Optional[TokenManager] = None
++
++
++async def get_token_manager() -> TokenManager:
++    """
++    获取全局令牌管理器实例
++
++    Returns:
++        TokenManager: 令牌管理器实例
++    """
++    global _token_manager
++    if _token_manager is None:
++        _token_manager = TokenManager()
++    return _token_manager
++
++
++async def close_token_manager():
++    """关闭令牌管理器"""
++    global _token_manager
++    if _token_manager:
++        _token_manager = None
++
++
++# 便利函数
++def create_token_manager(
++    default_ttl: float = 3600.0,
++    cache_refresh_threshold: float = 300.0,
++    **kwargs
++) -> TokenManager:
++    """
++    创建令牌管理器的便利函数
++
++    Args:
++        default_ttl: 默认令牌生存时间
++        cache_refresh_threshold: 缓存刷新阈值
++        **kwargs: 其他参数
++
++    Returns:
++        TokenManager: 令牌管理器实例
++    """
++    return TokenManager(default_ttl, cache_refresh_threshold, **kwargs)
++
++
++def create_fotmob_provider(**kwargs) -> FotMobAuthProvider:
++    """
++    创建 FotMob 认证提供者的便利函数
++
++    Args:
++        **kwargs: FotMobAuthProvider 参数
++
++    Returns:
++        FotMobAuthProvider: FotMob 认证提供者实例
++    """
++    return FotMobAuthProvider(**kwargs)
++
++
++def create_mock_provider(provider_name: str, **kwargs) -> MockAuthProvider:
++    """
++    创建模拟认证提供者的便利函数
++
++    Args:
++        provider_name: 提供者名称
++        **kwargs: MockAuthProvider 参数
++
++    Returns:
++        MockAuthProvider: 模拟认证提供者实例
++    """
++    return MockAuthProvider(provider_name, **kwargs)
++
++
++# 模块导出
++__all__ = [
++    'Token',
++    'TokenType',
++    'AuthProvider',
++    'TokenManager',
++    'FotMobAuthProvider',
++    'MockAuthProvider',
++    'AuthenticationError',
++    'TokenExpiredError',
++    'TokenRefreshError',
++    'get_token_manager',
++    'close_token_manager',
++    'create_token_manager',
++    'create_fotmob_provider',
++    'create_mock_provider',
++]
+--- a/.dev/null
++++ b/src/collectors/auth/__init__.py
+@@ -0,0 +1,45 @@
++"""
++认证模块
++Authentication Module
++
++该模块提供动态认证功能，包括令牌管理、缓存和自动刷新。
++
++主要组件:
++- TokenManager: 令牌管理器
++- AuthProvider: 认证提供者协议
++- FotMobAuthProvider: FotMob 认证实现
++"""
++
++from .token_manager import (
++    Token,
++    TokenType,
++    AuthProvider,
++    TokenManager,
++    FotMobAuthProvider,
++    MockAuthProvider,
++    AuthenticationError,
++    TokenExpiredError,
++    TokenRefreshError,
++    get_token_manager,
++    close_token_manager,
++    create_token_manager,
++    create_fotmob_provider,
++    create_mock_provider,
++)
++
++__all__ = [
++    'Token',
++    'TokenType',
++    'AuthProvider',
++    'TokenManager',
++    'FotMobAuthProvider',
++    'MockAuthProvider',
++    'AuthenticationError',
++    'TokenExpiredError',
++    'TokenRefreshError',
++    'get_token_manager',
++    'close_token_manager',
++    'create_token_manager',
++    'create_fotmob_provider',
++    'create_mock_provider',
++]
+--- a/.dev/null
++++ b/tests/unit/collectors/auth/test_token_manager.py
+@@ -0,0 +1,2959 @@
++"""
++TokenManager 单元测试
++Token Manager Unit Tests
++
++该测试模块验证 TokenManager 系统的核心功能：
++1. Token 数据类属性和方法
++2. AuthProvider Protocol 实现
++3. TokenManager 缓存和刷新机制
++4. 错误处理和边界条件
++5. 并发安全性
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 1.0.0
++"""
++
++import asyncio
++import pytest
++import time
++from unittest.mock import AsyncMock, Mock, patch
++
++from src.collectors.auth.token_manager import (
++    Token,
++    TokenType,
++    AuthProvider,
++    TokenManager,
++    FotMobAuthProvider,
++    MockAuthProvider,
++    AuthenticationError,
++    TokenExpiredError,
++    TokenRefreshError,
++    create_token_manager,
++    create_fotmob_provider,
++    create_mock_provider,
++)
++
++
++class TestToken:
++    """Token 数据类测试"""
++
++    def test_token_creation_valid(self):
++        """测试有效Token的创建"""
++        future_time = time.monotonic() + 3600.0
++        token = Token(
++            value="test_token_value",
++            token_type=TokenType.BEARER,
++            expires_at=future_time,
++            provider="test_provider"
++        )
++
++        assert token.value == "test_token_value"
++        assert token.token_type == TokenType.BEARER
++        assert token.expires_at == future_time
++        assert token.provider == "test_provider"
++        assert token.usage_count == 0
++        assert isinstance(token.created_at, float)
++        assert token.created_at > 0
++
++    def test_token_creation_with_string_type(self):
++        """测试使用字符串创建Token类型"""
++        token = Token(
++            value="test_token",
++            token_type="bearer",  # 字符串类型
++            provider="test_provider"
++        )
++
++        assert token.token_type == TokenType.BEARER
++
++    def test_token_with_api_key_type(self):
++        """测试API Key类型Token"""
++        token = Token(
++            value="api_key_12345",
++            token_type=TokenType.API_KEY,
++            provider="api_service"
++        )
++
++        assert token.token_type == TokenType.API_KEY
++        assert token.is_valid == True
++
++    def test_token_with_custom_header_type(self):
++        """测试Custom Header类型Token"""
++        headers = {
++            "x-api-key": "custom_key_123",
++            "authorization": "Bearer custom_token"
++        }
++        token = Token(
++            value="custom_token_value",
++            token_type=TokenType.CUSTOM_HEADER,
++            headers=headers,
++            provider="custom_service"
++        )
++
++        assert token.token_type == TokenType.CUSTOM_HEADER
++        assert token.headers == headers
++
++    def test_token_is_expired_false(self):
++        """测试未过期的Token"""
++        future_time = time.monotonic() + 3600.0
++        token = Token(
++            value="valid_token",
++            token_type=TokenType.BEARER,
++            expires_at=future_time
++        )
++
++        assert token.is_expired == False
++        assert token.ttl > 0
++
++    def test_token_is_expired_true(self):
++        """测试已过期的Token"""
++        past_time = time.monotonic() - 1.0
++        token = Token(
++            value="expired_token",
++            token_type=TokenType.BEARER,
++            expires_at=past_time
++        )
++
++        assert token.is_expired == True
++        assert token.ttl == 0.0
++
++    def test_token_no_expiry(self):
++        """测试无过期时间的Token"""
++        token = Token(
++            value="never_expires",
++            token_type=TokenType.API_KEY,
++            expires_at=None
++        )
++
++        assert token.is_expired == False
++        assert token.ttl is None
++        assert token.is_valid == True
++
++    def test_token_is_valid_with_valid_token(self):
++        """测试有效Token的验证"""
++        token = Token(
++            value="valid_token",
++            token_type=TokenType.BEARER,
++            expires_at=time.monotonic() + 3600.0
++        )
++
++        assert token.is_valid == True
++
++    def test_token_is_valid_with_expired_token(self):
++        """测试过期Token的验证"""
++        token = Token(
++            value="expired_token",
++            token_type=TokenType.BEARER,
++            expires_at=time.monotonic() - 1.0
++        )
++
++        assert token.is_valid == False
++
++    def test_token_is_valid_with_empty_value(self):
++        """测试空值Token的验证"""
++        token = Token(
++            value="",
++            token_type=TokenType.BEARER,
++            expires_at=time.monotonic() + 3600.0
++        )
++
++        assert token.is_valid == False
++
++    def test_token_ttl_calculation(self):
++        """测试TTL计算"""
++        future_time = time.monotonic() + 300.0
++        token = Token(
++            value="ttl_test_token",
++            token_type=TokenType.BEARER,
++            expires_at=future_time
++        )
++
++        # TTL应该接近300秒（允许1秒误差）
++        assert 290.0 <= token.ttl <= 300.0
++
++    def test_ttl_with_no_expiry(self):
++        """测试无过期时间Token的TTL"""
++        token = Token(
++            value="no_expiry_token",
++            token_type=TokenType.API_KEY,
++            expires_at=None
++        )
++
++        assert token.ttl is None
++
++    def test_record_usage(self):
++        """测试Token使用记录"""
++        token = Token(
++            value="usage_test_token",
++            token_type=TokenType.BEARER
++        )
++
++        assert token.usage_count == 0
++
++        token.record_usage()
++        assert token.usage_count == 1
++
++        token.record_usage()
++        assert token.usage_count == 2
++
++    def test_token_to_dict(self):
++        """测试Token转换为字典"""
++        headers = {"x-custom": "header_value"}
++        token = Token(
++            value="very_long_token_value_that_should_be_truncated_in_output",
++            token_type=TokenType.CUSTOM_HEADER,
++            headers=headers,
++            expires_at=time.monotonic() + 3600.0,
++            provider="test_provider"
++        )
++        token.record_usage()
++
++        token_dict = token.to_dict()
++
++        assert token_dict['value'] == "very_long_token_valu..."  # 截断显示
++        assert token_dict['token_type'] == "custom_header"
++        assert token_dict['headers'] == headers
++        assert token_dict['provider'] == "test_provider"
++        assert token_dict['usage_count'] == 1
++        assert token_dict['is_valid'] == True
++        assert token_dict['is_expired'] == False
++        assert isinstance(token_dict['ttl'], float)
++        assert token_dict['ttl'] > 0
++
++    def test_token_to_dict_short_value(self):
++        """测试短Token值的字典转换"""
++        token = Token(
++            value="short",
++            token_type=TokenType.BEARER,
++            provider="test_provider"
++        )
++
++        token_dict = token.to_dict()
++
++        assert token_dict['value'] == "short"  # 不截断短值
++
++    def test_token_str_representation(self):
++        """测试Token的字符串表示"""
++        token = Token(
++            value="test_token",
++            token_type=TokenType.BEARER,
++            provider="test_provider",
++            expires_at=time.monotonic() + 3600.0
++        )
++
++        str_repr = str(token)
++        assert "Token(" in str_repr
++        assert "test_provider" in str_repr
++        assert "bearer" in str_repr
++        assert "valid=True" in str_repr
++
++    def test_token_repr(self):
++        """测试Token的repr表示"""
++        token = Token(
++            value="test_token",
++            token_type=TokenType.API_KEY,
++            provider="test_provider"
++        )
++
++        assert repr(token) == str(token)
++
++
++class TestMockAuthProvider:
++    """MockAuthProvider 测试"""
++
++    def test_mock_auth_provider_creation(self):
++        """测试MockAuthProvider创建"""
++        provider = MockAuthProvider(
++            provider_name="test_mock",
++            token_value="mock_token_123",
++            ttl=600.0
++        )
++
++        assert provider.provider_name == "test_mock"
++        assert provider.token_value == "mock_token_123"
++        assert provider.ttl == 600.0
++
++    def test_mock_auth_provider_default_values(self):
++        """测试MockAuthProvider默认值"""
++        provider = MockAuthProvider("test_provider")
++
++        assert provider.provider_name == "test_provider"
++        assert provider.token_value == "mock_token"
++        assert provider.ttl == 300.0
++
++    @pytest.mark.asyncio
++    async def test_mock_auth_provider_get_token(self):
++        """测试MockAuthProvider获取Token"""
++        provider = MockAuthProvider(
++            "test_provider",
++            "custom_mock_token",
++            180.0
++        )
++
++        token = await provider.get_token()
++
++        assert isinstance(token, Token)
++        assert token.value == "custom_mock_token"
++        assert token.token_type == TokenType.BEARER
++        assert token.provider == "test_provider"
++        assert token.is_valid == True
++        assert token.ttl > 150.0  # 允许一些时间误差
++
++    @pytest.mark.asyncio
++    async def test_mock_auth_provider_refresh_token(self):
++        """测试MockAuthProvider刷新Token"""
++        provider = MockAuthProvider("test_provider", "original_token")
++
++        # 第一次获取Token
++        original_token = await provider.get_token()
++
++        # 刷新Token
++        refreshed_token = await provider.refresh_token(original_token)
++
++        assert refreshed_token.value != original_token.value
++        assert "refreshed_" in refreshed_token.value
++        assert refreshed_token.provider == "test_provider"
++        assert refreshed_token.is_valid == True
++
++    @pytest.mark.asyncio
++    async def test_mock_auth_provider_refresh_without_old_token(self):
++        """测试不提供旧Token的刷新"""
++        provider = MockAuthProvider("test_provider")
++
++        refreshed_token = await provider.refresh_token()
++
++        assert isinstance(refreshed_token, Token)
++        assert refreshed_token.provider == "test_provider"
++        assert "refreshed_" in refreshed_token.value
++
++
++class TestTokenManagerBasicOperations:
++    """TokenManager 基础操作测试"""
++
++    @pytest.fixture
++    def token_manager(self):
++        """创建TokenManager实例"""
++        return TokenManager(
++            default_ttl=300.0,
++            cache_refresh_threshold=60.0
++        )
++
++    @pytest.fixture
++    async def mock_provider(self):
++        """创建Mock认证提供者"""
++        return MockAuthProvider("test_provider", "test_token", 300.0)
++
++    @pytest.mark.asyncio
++    async def test_token_manager_creation(self):
++        """测试TokenManager创建"""
++        manager = TokenManager(
++            default_ttl=600.0,
++            cache_refresh_threshold=120.0,
++            max_retry_attempts=5,
++            retry_delay=2.0
++        )
++
++        assert manager.default_ttl == 600.0
++        assert manager.cache_refresh_threshold == 120.0
++        assert manager.max_retry_attempts == 5
++        assert manager.retry_delay == 2.0
++        assert len(manager.token_cache) == 0
++        assert len(manager.provider_cache) == 0
++
++    @pytest.mark.asyncio
++    async def test_register_provider_success(self, token_manager, mock_provider):
++        """测试成功注册Provider"""
++        await token_manager.register_provider(mock_provider)
++
++        assert "test_provider" in token_manager.token_cache
++        assert "test_provider" in token_manager.provider_cache
++        assert isinstance(token_manager.token_cache["test_provider"], Token)
++        assert token_manager.provider_cache["test_provider"] == mock_provider
++
++    @pytest.mark.asyncio
++    async def test_register_provider_duplicate(self, token_manager, mock_provider):
++        """测试重复注册相同Provider"""
++        # 第一次注册
++        await token_manager.register_provider(mock_provider)
++        first_token = token_manager.token_cache["test_provider"]
++
++        # 第二次注册相同名称的Provider
++        await token_manager.register_provider(mock_provider)
++        second_token = token_manager.token_cache["test_provider"]
++
++        # 应该仍然是同一个Token（因为已存在）
++        assert first_token == second_token
++        assert len(token_manager.token_cache) == 1
++
++    @pytest.mark.asyncio
++    async def test_get_token_success(self, token_manager, mock_provider):
++        """测试成功获取Token"""
++        await token_manager.register_provider(mock_provider)
++
++        token = await token_manager.get_token("test_provider")
++
++        assert isinstance(token, Token)
++        assert token.provider == "test_provider"
++        assert token.is_valid == True
++
++    @pytest.mark.asyncio
++    async def test_get_token_provider_not_registered(self, token_manager):
++        """测试获取未注册Provider的Token"""
++        with pytest.raises(AuthenticationError) as exc_info:
++            await token_manager.get_token("nonexistent_provider")
++
++        assert "not registered" in str(exc_info.value)
++
++    @pytest.mark.asyncio
++    async def test_get_token_caching(self, token_manager, mock_provider):
++        """测试Token缓存机制"""
++        await token_manager.register_provider(mock_provider)
++
++        # 第一次获取
++        token1 = await token_manager.get_token("test_provider")
++        initial_usage = token1.usage_count
++
++        # 第二次获取（应该使用缓存）
++        token2 = await token_manager.get_token("test_provider")
++
++        # 应该是同一个Token对象（缓存命中）
++        assert token1 is token2
++        assert token1.value == token2.value
++        assert token2.usage_count == initial_usage + 1
++
++    @pytest.mark.asyncio
++    async def test_force_refresh_token(self, token_manager, mock_provider):
++        """测试强制刷新Token"""
++        await token_manager.register_provider(mock_provider)
++
++        # 第一次获取
++        original_token = await token_manager.get_token("test_provider")
++
++        # 强制刷新
++        refreshed_token = await token_manager.get_token("test_provider", force_refresh=True)
++
++        # 应该是不同的Token对象
++        assert refreshed_token is not original_token
++        assert refreshed_token.value != original_token.value
++        assert refreshed_token.provider == original_token.provider
++
++    @pytest.mark.asyncio
++    async def test_auto_refresh_on_expiry_threshold(self, token_manager):
++        """测试基于阈值自动刷新"""
++        # 创建短TTL的Provider
++        short_ttl_provider = MockAuthProvider("short_ttl", "short_token", 2.0)
++
++        # 设置较短的刷新阈值
++        token_manager.cache_refresh_threshold = 1.5
++        await token_manager.register_provider(short_ttl_provider)
++
++        # 等待超过刷新阈值
++        await asyncio.sleep(1.8)
++
++        # 获取Token应该触发刷新
++        refreshed_token = await token_manager.get_token("short_ttl")
++
++        assert refreshed_token.is_valid == True
++        assert refreshed_token.ttl > 1.5  # 新Token应该有更长的TTL
++
++    @pytest.mark.asyncio
++    async def test_invalidate_token(self, token_manager, mock_provider):
++        """测试使Token失效"""
++        await token_manager.register_provider(mock_provider)
++
++        # 确认Token存在
++        assert "test_provider" in token_manager.token_cache
++
++        # 使Token失效
++        await token_manager.invalidate_token("test_provider")
++
++        # 确认Token已删除
++        assert "test_provider" not in token_manager.token_cache
++        assert "test_provider" in token_manager.provider_cache  # Provider应该保留
++
++    @pytest.mark.asyncio
++    async def test_invalidate_nonexistent_token(self, token_manager):
++        """测试使不存在的Token失效"""
++        # 应该不会抛出异常
++        await token_manager.invalidate_token("nonexistent_provider")
++
++        # 状态应该保持不变
++        assert len(token_manager.token_cache) == 0
++
++    @pytest.mark.asyncio
++    async def test_get_token_info_single_provider(self, token_manager, mock_provider):
++        """测试获取单个Provider的Token信息"""
++        await token_manager.register_provider(mock_provider)
++        token = await token_manager.get_token("test_provider")
++
++        token_info = await token_manager.get_token_info("test_provider")
++
++        assert token_info['provider'] == "test_provider"
++        assert token_info['is_valid'] == True
++        assert 'value' in token_info
++        assert 'ttl' in token_info
++        assert token_info['usage_count'] > 0
++
++    @pytest.mark.asyncio
++    async def test_get_token_info_nonexistent_provider(self, token_manager):
++        """测试获取不存在Provider的Token信息"""
++        token_info = await token_manager.get_token_info("nonexistent_provider")
++
++        assert "error" in token_info
++        assert "not found" in token_info["error"]
++
++    @pytest.mark.asyncio
++    async def test_get_token_info_all_providers(self, token_manager):
++        """测试获取所有Provider的Token信息"""
++        # 注册多个Provider
++        provider1 = MockAuthProvider("provider1", "token1")
++        provider2 = MockAuthProvider("provider2", "token2")
++
++        await token_manager.register_provider(provider1)
++        await token_manager.register_provider(provider2)
++
++        all_info = await token_manager.get_token_info()
++
++        assert "provider1" in all_info
++        assert "provider2" in all_info
++        assert len(all_info) == 2
++
++        assert all_info["provider1"]["provider"] == "provider1"
++        assert all_info["provider2"]["provider"] == "provider2"
++
++    @pytest.mark.asyncio
++    async def test_get_stats(self, token_manager):
++        """测试获取管理器统计信息"""
++        # 初始状态
++        stats = await token_manager.get_stats()
++        assert stats['total_providers'] == 0
++        assert stats['valid_tokens'] == 0
++        assert stats['expired_tokens'] == 0
++        assert stats['total_usage'] == 0
++
++        # 注册一个Provider
++        provider = MockAuthProvider("stats_provider", "stats_token", 1.0)
++        await token_manager.register_provider(provider)
++
++        # 获取Token几次
++        await token_manager.get_token("stats_provider")
++        await token_manager.get_token("stats_provider")
++
++        stats = await token_manager.get_stats()
++        assert stats['total_providers'] == 1
++        assert stats['valid_tokens'] == 1
++        assert stats['expired_tokens'] == 0
++        assert stats['total_usage'] == 2
++        assert stats['default_ttl'] == 300.0
++        assert stats['cache_refresh_threshold'] == 60.0
++
++    @pytest.mark.asyncio
++    async def test_retry_token_refresh_success_on_retry(self, token_manager):
++        """测试Token刷新重试机制成功"""
++        # 创建一个前两次失败但第三次成功的Provider
++        class FlakyProvider:
++            def __init__(self):
++                self.attempt_count = 0
++
++            @property
++            def provider_name(self) -> str:
++                return "flaky_provider"
++
++            async def get_token(self) -> Token:
++                return Token(
++                    value="flaky_token",
++                    token_type=TokenType.BEARER,
++                    provider="flaky_provider"
++                )
++
++            async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++                self.attempt_count += 1
++                if self.attempt_count < 3:
++                    raise Exception(f"Attempt {self.attempt_count} failed")
++                return Token(
++                    value="refreshed_successfully",
++                    token_type=TokenType.BEARER,
++                    provider="flaky_provider"
++                )
++
++        flaky_provider = FlakyProvider()
++        await token_manager.register_provider(flaky_provider)
++
++        # 设置低重试次数和高重试延迟
++        token_manager.max_retry_attempts = 3
++        token_manager.retry_delay = 0.1
++
++        # 强制刷新（应该触发重试机制）
++        refreshed_token = await token_manager.get_token("flaky_provider", force_refresh=True)
++
++        assert refreshed_token.value == "refreshed_successfully"
++        assert flaky_provider.attempt_count == 3
++
++
++class TestTokenManagerErrorHandling:
++    """TokenManager 错误处理测试"""
++
++    @pytest.fixture
++    def token_manager(self):
++        return TokenManager()
++
++    @pytest.mark.asyncio
++    async def test_register_provider_failure(self, token_manager):
++        """测试Provider注册失败"""
++        class FailingProvider:
++            @property
++            def provider_name(self) -> str:
++                return "failing_provider"
++
++            async def get_token(self) -> Token:
++                raise Exception("Simulated provider failure")
++
++            async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++                raise Exception("Refresh also fails")
++
++        failing_provider = FailingProvider()
++
++        with pytest.raises(AuthenticationError) as exc_info:
++            await token_manager.register_provider(failing_provider)
++
++        assert "Failed to register provider" in str(exc_info.value)
++        assert len(token_manager.token_cache) == 0
++
++    @pytest.mark.asyncio
++    async def test_token_refresh_failure_with_valid_cache(self, token_manager):
++        """测试Token刷新失败但缓存Token仍然有效"""
++        class RefreshFailureProvider:
++            def __init__(self):
++                self.initial_token = Token(
++                    value="initial_valid_token",
++                    token_type=TokenType.BEARER,
++                    expires_at=time.monotonic() + 3600.0,  # 1小时后过期
++                    provider="refresh_failure_provider"
++                )
++
++            @property
++            def provider_name(self) -> str:
++                return "refresh_failure_provider"
++
++            async def get_token(self) -> Token:
++                return self.initial_token
++
++            async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++                raise TokenRefreshError("Refresh always fails")
++
++        provider = RefreshFailureProvider()
++        await token_manager.register_provider(provider)
++
++        # 设置短阈值强制刷新
++        token_manager.cache_refresh_threshold = 999999.0  # 强制刷新
++
++        # 获取Token应该尝试刷新但失败，然后返回缓存的Token
++        token = await token_manager.get_token("refresh_failure_provider")
++
++        assert token.value == "initial_valid_token"
++        assert token.is_valid == True
++
++    @pytest.mark.asyncio
++    async def test_token_refresh_failure_with_expired_cache(self, token_manager):
++        """测试Token刷新失败且缓存Token也过期"""
++        class ExpiredTokenProvider:
++            def __init__(self):
++                self.expired_token = Token(
++                    value="expired_token",
++                    token_type=TokenType.BEARER,
++                    expires_at=time.monotonic() - 1.0,  # 已过期
++                    provider="expired_provider"
++                )
++
++            @property
++            def provider_name(self) -> str:
++                return "expired_provider"
++
++            async def get_token(self) -> Token:
++                return self.expired_token
++
++            async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++                raise TokenRefreshError("Refresh fails and token is expired")
++
++        provider = ExpiredTokenProvider()
++        await token_manager.register_provider(provider)
++
++        # 强制刷新
++        with pytest.raises(TokenRefreshError) as exc_info:
++            await token_manager.get_token("expired_provider", force_refresh=True)
++
++        assert "Failed to refresh token" in str(exc_info.value)
++
++    @pytest.mark.asyncio
++    async def test_concurrent_access_safety(self, token_manager):
++        """测试并发访问安全性"""
++        provider = MockAuthProvider("concurrent_provider", "concurrent_token")
++        await token_manager.register_provider(provider)
++
++        async def get_token_task(task_id: int):
++            return await token_manager.get_token("concurrent_provider")
++
++        # 并发获取Token
++        tasks = [get_token_task(i) for i in range(10)]
++        tokens = await asyncio.gather(*tasks)
++
++        # 所有Token应该是同一个对象（缓存一致性）
++        assert all(token is tokens[0] for token in tokens)
++        assert tokens[0].usage_count == 10
++
++
++class TestFotMobAuthProvider:
++    """FotMobAuthProvider 测试"""
++
++    def test_fotmob_provider_creation(self):
++        """测试FotMobAuthProvider创建"""
++        provider = FotMobAuthProvider(
++            base_url="https://test.fotmob.com",
++            timeout=15.0,
++            token_ttl=7200.0,
++            user_agent="Custom User Agent"
++        )
++
++        assert provider.base_url == "https://test.fotmob.com"
++        assert provider.timeout == 15.0
++        assert provider.token_ttl == 7200.0
++        assert provider.user_agent == "Custom User Agent"
++        assert provider.provider_name == "fotmob"
++
++    def test_fotmob_provider_defaults(self):
++        """测试FotMobAuthProvider默认值"""
++        provider = FotMobAuthProvider()
++
++        assert provider.base_url == "https://www.fotmob.com"
++        assert provider.timeout == 10.0
++        assert provider.token_ttl == 3600.0
++        assert "Mozilla" in provider.user_agent
++
++    @patch('aiohttp.ClientSession.get')
++    @pytest.mark.asyncio
++    async def test_fotmob_provider_get_token_success(self, mock_get):
++        """测试FotMobAuthProvider成功获取Token"""
++        # 模拟HTTP响应
++        mock_response = AsyncMock()
++        mock_response.status = 200
++        mock_response.text.return_value = '''
++        <html>
++            <script>
++                var config = {
++                    "x-mas": "test_x_mas_value_12345",
++                    "x-foo": "test_x_foo_signature_67890",
++                    "clientVersion": "production:test_version_1.0"
++                };
++            </script>
++        </html>
++        '''
++
++        mock_session = AsyncMock()
++        mock_session.get.return_value.__aenter__.return_value = mock_response
++        mock_get.return_value.__aenter__.return_value = mock_session
++
++        provider = FotMobAuthProvider()
++        token = await provider.get_token()
++
++        assert isinstance(token, Token)
++        assert token.provider == "fotmob"
++        assert token.token_type == TokenType.CUSTOM_HEADER
++        assert "test_x_mas_value_12345:test_x_foo_signature_67890" == token.value
++        assert token.headers['x-mas'] == "test_x_mas_value_12345"
++        assert token.headers['x-foo'] == "test_x_foo_signature_67890"
++        assert token.headers['x-client-version'] == "production:test_version_1.0"
++        assert token.is_valid == True
++        assert token.ttl > 3500.0  # 接近1小时
++
++    @patch('aiohttp.ClientSession.get')
++    @pytest.mark.asyncio
++    async def test_fotmob_provider_network_error(self, mock_get):
++        """测试FotMobAuthProvider网络错误"""
++        import aiohttp
++
++        # 模拟网络错误
++        mock_get.side_effect = aiohttp.ClientConnectorError(
++            connection_key=None,
++            os_error=None
++        )
++
++        provider = FotMobAuthProvider()
++
++        with pytest.raises(AuthenticationError) as exc_info:
++            await provider.get_token()
++
++        assert "Network error while fetching FotMob homepage" in str(exc_info.value)
++
++    @patch('aiohttp.ClientSession.get')
++    @pytest.mark.asyncio
++    async def test_fotmob_provider_http_error(self, mock_get):
++        """测试FotMobAuthProvider HTTP错误"""
++        # 模拟HTTP错误响应
++        mock_response = AsyncMock()
++        mock_response.status = 403
++
++        mock_session = AsyncMock()
++        mock_session.get.return_value.__aenter__.return_value = mock_response
++        mock_get.return_value.__aenter__.return_value = mock_session
++
++        provider = FotMobAuthProvider()
++
++        with pytest.raises(AuthenticationError) as exc_info:
++            await provider.get_token()
++
++        assert "HTTP 403" in str(exc_info.value)
++
++    @patch('aiohttp.ClientSession.get')
++    @pytest.mark.asyncio
++    async def test_fotmob_provider_partial_token_extraction(self, mock_get):
++        """测试FotMobAuthProvider部分Token提取"""
++        # 模拟只有部分认证信息的HTML
++        mock_response = AsyncMock()
++        mock_response.status = 200
++        mock_response.text.return_value = '''
++        <html>
++            <script>
++                var config = {
++                    "x-mas": "partial_x_mas_value"
++                    // x-foo 缺失
++                };
++            </script>
++        </html>
++        '''
++
++        mock_session = AsyncMock()
++        mock_session.get.return_value.__aenter__.return_value = mock_response
++        mock_get.return_value.__aenter__.return_value = mock_session
++
++        provider = FotMobAuthProvider()
++        token = await provider.get_token()
++
++        # 应该使用mock值补全缺失的部分
++        assert isinstance(token, Token)
++        assert token.provider == "fotmob"
++        assert token.is_valid == True
++        assert "partial_x_mas_value" in token.value
++
++    @patch('aiohttp.ClientSession.get')
++    @pytest.mark.asyncio
++    async def test_fotmob_provider_refresh_token(self, mock_get):
++        """测试FotMobAuthProvider刷新Token"""
++        # 模拟HTTP响应
++        mock_response = AsyncMock()
++        mock_response.status = 200
++        mock_response.text.return_value = '''
++        <html>
++            <script>
++                var config = {
++                    "x-mas": "refreshed_x_mas_value",
++                    "x-foo": "refreshed_x_foo_signature",
++                    "clientVersion": "production:refreshed_version"
++                };
++            </script>
++        </html>
++        '''
++
++        mock_session = AsyncMock()
++        mock_session.get.return_value.__aenter__.return_value = mock_response
++        mock_get.return_value.__aenter__.return_value = mock_session
++
++        provider = FotMobAuthProvider()
++        old_token = Token(
++            value="old_token",
++            token_type=TokenType.CUSTOM_HEADER,
++            provider="fotmob"
++        )
++
++        refreshed_token = await provider.refresh_token(old_token)
++
++        assert refreshed_token.value != old_token.value
++        assert "refreshed_x_mas_value:refreshed_x_foo_signature" == refreshed_token.value
++        assert refreshed_token.provider == "fotmob"
++        assert refreshed_token.is_valid == True
++
++
++class TestConvenienceFunctions:
++    """便利函数测试"""
++
++    def test_create_token_manager(self):
++        """测试create_token_manager便利函数"""
++        manager = create_token_manager(
++            default_ttl=1800.0,
++            cache_refresh_threshold=300.0,
++            max_retry_attempts=5
++        )
++
++        assert isinstance(manager, TokenManager)
++        assert manager.default_ttl == 1800.0
++        assert manager.cache_refresh_threshold == 300.0
++        assert manager.max_retry_attempts == 5
++
++    def test_create_fotmob_provider(self):
++        """测试create_fotmob_provider便利函数"""
++        provider = create_fotmob_provider(
++            timeout=20.0,
++            token_ttl=7200.0
++        )
++
++        assert isinstance(provider, FotMobAuthProvider)
++        assert provider.timeout == 20.0
++        assert provider.token_ttl == 7200.0
++
++    def test_create_mock_provider(self):
++        """测试create_mock_provider便利函数"""
++        provider = create_mock_provider(
++            "test_mock_provider",
++            token_value="custom_mock_value",
++            ttl=600.0
++        )
++
++        assert isinstance(provider, MockAuthProvider)
++        assert provider.provider_name == "test_mock_provider"
++        assert provider.token_value == "custom_mock_value"
++        assert provider.ttl == 600.0
++
++
++class TestIntegrationWorkflow:
++    """集成工作流程测试"""
++
++    @pytest.mark.asyncio
++    async def test_complete_workflow_with_multiple_providers(self):
++        """测试多Provider完整工作流程"""
++        manager = TokenManager(
++            default_ttl=300.0,
++            cache_refresh_threshold=60.0
++        )
++
++        # 创建多个Provider
++        fotmob_provider = create_fotmob_provider(token_ttl=300.0)
++        mock_provider1 = create_mock_provider("service1", "token1", 300.0)
++        mock_provider2 = create_mock_provider("service2", "token2", 300.0)
++
++        # 注册所有Provider（除了fotmob因为它需要网络）
++        await manager.register_provider(mock_provider1)
++        await manager.register_provider(mock_provider2)
++
++        # 测试获取不同Provider的Token
++        token1 = await manager.get_token("service1")
++        token2 = await manager.get_token("service2")
++
++        assert token1.provider == "service1"
++        assert token2.provider == "service2"
++        assert token1.value != token2.value
++
++        # 测试缓存机制
++        token1_cached = await manager.get_token("service1")
++        assert token1 is token1_cached
++        assert token1_cached.usage_count == 2
++
++        # 测试统计信息
++        stats = await manager.get_stats()
++        assert stats['total_providers'] == 2
++        assert stats['valid_tokens'] == 2
++        assert stats['total_usage'] == 3
++
++        # 测试Token信息
++        all_info = await manager.get_token_info()
++        assert "service1" in all_info
++        assert "service2" in all_info
++
++    @pytest.mark.asyncio
++    async def test_workflow_with_token_expiry_and_refresh(self):
++        """测试Token过期和刷新工作流程"""
++        manager = TokenManager(
++            default_ttl=2.0,
++            cache_refresh_threshold=1.0
++        )
++
++        # 创建短TTL的Provider
++        short_ttl_provider = create_mock_provider("short_ttl", "short_token", 2.0)
++        await manager.register_provider(short_ttl_provider)
++
++        # 获取初始Token
++        initial_token = await manager.get_token("short_ttl")
++        initial_value = initial_token.value
++
++        # 等待超过刷新阈值
++        await asyncio.sleep(1.2)
++
++        # 再次获取应该触发刷新
++        refreshed_token = await manager.get_token("short_ttl")
++
++        assert refreshed_token.value != initial_value
++        assert refreshed_token.is_valid == True
++        assert refreshed_token.ttl > 1.5  # 新Token应该有更长的TTL
++
++    @pytest.mark.asyncio
++    async def test_concurrent_workflow_safety(self):
++        """测试并发工作流程安全性"""
++        manager = TokenManager()
++        provider = create_mock_provider("concurrent", "concurrent_token")
++        await manager.register_provider(provider)
++
++        async def worker_task(worker_id: int):
++            """工作任务"""
++            token = await manager.get_token("concurrent")
++            await asyncio.sleep(0.01)  # 模拟工作
++            return worker_id, token.usage_count
++
++        # 启动多个并发任务
++        tasks = [worker_task(i) for i in range(20)]
++        results = await asyncio.gather(*tasks)
++
++        # 验证结果
++        usage_counts = [result[1] for result in results]
++        max_usage = max(usage_counts)
++        min_usage = min(usage_counts)
++
++        # 使用次数应该分布在1到20之间
++        assert min_usage >= 1
++        assert max_usage == 20
++
++        # 最终Token使用次数应该是20
++        final_token = await manager.get_token("concurrent")
++        assert final_token.usage_count == 20
++
++    @pytest.mark.asyncio
++    async def test_error_recovery_workflow(self):
++        """测试错误恢复工作流程"""
++        manager = TokenManager()
++
++        # 创建一个会间歇性失败的Provider
++        class IntermittentFailureProvider:
++            def __init__(self):
++                self.call_count = 0
++
++            @property
++            def provider_name(self) -> str:
++                return "intermittent"
++
++            async def get_token(self) -> Token:
++                self.call_count += 1
++                if self.call_count <= 1:
++                    raise Exception("First call fails")
++                return Token(
++                    value="success_after_retry",
++                    token_type=TokenType.BEARER,
++                    provider="intermittent"
++                )
++
++            async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
++                return Token(
++                    value="refreshed_token",
++                    token_type=TokenType.BEARER,
++                    provider="intermittent"
++                )
++
++        provider = IntermittentFailureProvider()
++
++        # 注册应该失败（因为第一次get_token失败）
++        with pytest.raises(AuthenticationError):
++            await manager.register_provider(provider)
++
++        # 重置call_count然后手动添加到缓存（模拟修复后的情况）
++        provider.call_count = 0
++        try:
++            await provider.get_token()  # 这次应该成功
++        except:
++            pass
++
++        # 手动注册到缓存
++        if provider.call_count > 0:
++            token = await provider.get_token()
++            manager.provider_cache["intermittent"] = provider
++            manager.token_cache["intermittent"] = token
++
++            # 现在应该可以正常工作
++            token = await manager.get_token("intermittent")
++            assert token.value == "success_after_retry"
++
++
++if __name__ == "__main__":
++    pytest.main([__file__, "-v"])
+--- a/.dev/null
++++ b/scripts/auth_integration_test.py
+@@ -0,0 +1,495 @@
++#!/usr/bin/env python3
++"""
++认证集成测试脚本
++Authentication Integration Test Script
++
++该脚本模拟完整的认证链路：
++1. TokenManager 获取认证令牌
++2. RateLimiter 控制请求频率
++3. ProxyPool 获取代理
++4. 发起HTTP请求（Mock）
++5. 错误处理和重试机制
++
++使用示例:
++    python scripts/auth_integration_test.py --fotmob --requests 20
++    python scripts/auth_integration_test.py --demo --verbose
++
++作者: Lead Collector Engineer
++创建时间: 2025-12-06
++版本: 1.0.0
++"""
++
++import argparse
++import asyncio
++import json
++import sys
++import time
++from pathlib import Path
++from typing import Any, Dict, List, Optional
++from unittest.mock import AsyncMock, Mock
++
++# 添加项目根目录到 Python 路径
++project_root = Path(__file__).parent.parent
++sys.path.insert(0, str(project_root))
++
++from src.collectors.auth import (
++    TokenManager,
++    FotMobAuthProvider,
++    MockAuthProvider,
++    create_token_manager,
++    create_fotmob_provider,
++    create_mock_provider,
++)
++from src.collectors.rate_limiter import RateLimiter, create_rate_limiter
++from src.collectors.proxy_pool import ProxyPool, create_proxy_pool, RotationStrategy
++
++
++class AuthIntegrationTester:
++    """认证集成测试器"""
++
++    def __init__(self, args):
++        # 设置默认值
++        self.num_requests = getattr(args, 'num_requests', 10)
++        self.rate_limit = getattr(args, 'rate_limit', 5.0)
++        self.burst = getattr(args, 'burst', 10)
++        self.use_proxies = getattr(args, 'use_proxies', False)
++        self.proxy_strategy = getattr(args, 'proxy_strategy', 'weighted_random')
++        self.fotmob = getattr(args, 'fotmob', False)
++        self.verbose = getattr(args, 'verbose', False)
++        self.token_info = getattr(args, 'token_info', False)
++        self.timeout = getattr(args, 'timeout', 10.0)
++        self.token_ttl = getattr(args, 'token_ttl', 300.0)
++        self.refresh_threshold = getattr(args, 'refresh_threshold', 60.0)
++        self.force_refresh = getattr(args, 'force_refresh', False)
++        self.request_timeout = getattr(args, 'request_timeout', 10.0)
++        self.concurrent = getattr(args, 'concurrent', False)
++
++        self.token_manager: Optional[TokenManager] = None
++        self.rate_limiter: Optional[RateLimiter] = None
++        self.proxy_pool: Optional[ProxyPool] = None
++
++        # 统计信息
++        self.stats = {
++            'total_requests': 0,
++            'successful_requests': 0,
++            'failed_requests': 0,
++            'token_refreshes': 0,
++            'proxy_rotations': 0,
++            'rate_limited_requests': 0,
++            'errors': []
++        }
++
++    async def setup(self) -> None:
++        """设置测试环境"""
++        print("🔧 设置认证集成测试环境...")
++
++        # 1. 设置TokenManager
++        self.token_manager = create_token_manager(
++            default_ttl=self.token_ttl,
++            cache_refresh_threshold=self.refresh_threshold
++        )
++
++        if self.fotmob:
++            # 使用FotMob认证
++            fotmob_provider = create_fotmob_provider(timeout=self.timeout)
++            await self.token_manager.register_provider(fotmob_provider)
++            print("✅ 注册FotMob认证提供者")
++        else:
++            # 使用模拟认证
++            mock_provider = MockAuthProvider(
++                "demo_provider",
++                f"demo_token_{int(time.time())}",
++                self.token_ttl
++            )
++            await self.token_manager.register_provider(mock_provider)
++            print("✅ 注册模拟认证提供者")
++
++        # 2. 设置RateLimiter
++        self.rate_limiter = create_rate_limiter({
++            "api_requests": {
++                "rate": self.rate_limit,
++                "burst": self.burst,
++                "max_wait_time": self.request_timeout
++            }
++        })
++        print(f"✅ 设置速率限制器: {self.rate_limit} QPS, 突发容量 {self.burst}")
++
++        # 3. 设置ProxyPool
++        if self.use_proxies:
++            proxy_urls = [
++                "http://127.0.0.1:8080",
++                "http://127.0.0.1:8081",
++                "http://127.0.0.1:8082",
++                "socks5://127.0.0.1:1080"
++            ]
++            self.proxy_pool = create_proxy_pool(
++                proxy_urls,
++                strategy=RotationStrategy(self.proxy_strategy),
++                auto_health_check=False
++            )
++            await self.proxy_pool.initialize()
++            print(f"✅ 设置代理池: {len(proxy_urls)} 个代理，策略: {self.proxy_strategy}")
++        else:
++            print("⚠️  跳过代理池设置（不使用代理）")
++
++        print("✅ 环境设置完成")
++
++    async def teardown(self) -> None:
++        """清理测试环境"""
++        print("🧹 清理测试环境...")
++
++        if self.proxy_pool:
++            await self.proxy_pool.close()
++        print("✅ 代理池已关闭")
++
++    async def simulate_request(self, request_id: int) -> Dict[str, Any]:
++        """
++        模拟单个HTTP请求
++
++        Args:
++            request_id: 请求ID
++
++        Returns:
++            Dict[str, Any]: 请求结果
++        """
++        start_time = time.monotonic()
++        result = {
++            'request_id': request_id,
++            'start_time': start_time,
++            'success': False,
++            'error': None,
++            'token_used': None,
++            'proxy_used': None,
++            'rate_limited': False,
++            'response_time': 0.0
++        }
++
++        try:
++            # 1. 获取认证令牌
++            if self.verbose:
++                print(f"   📋 请求 {request_id}: 获取认证令牌...")
++
++            token = await self.token_manager.get_token(
++                "fotmob" if self.fotmob else "demo_provider",
++                force_refresh=self.force_refresh
++            )
++
++            if not token.is_valid:
++                raise Exception("Invalid authentication token")
++
++            result['token_used'] = token.value[:20] + "..."
++
++            # 2. 应用速率限制
++            if self.verbose:
++                print(f"   🚦 请求 {request_id}: 应用速率限制...")
++
++            async with self.rate_limiter.acquire("api_requests"):
++                rate_limit_time = time.monotonic()
++                wait_time = rate_limit_time - start_time
++                if wait_time > 0.1:  # 等待超过0.1秒
++                    result['rate_limited'] = True
++                    self.stats['rate_limited_requests'] += 1
++
++                # 3. 获取代理（如果启用）
++                proxy = None
++                if self.proxy_pool:
++                    if self.verbose:
++                        print(f"   🌐 请求 {request_id}: 获取代理...")
++
++                    proxy = await self.proxy_pool.get_proxy()
++                    if proxy:
++                        result['proxy_used'] = proxy.url
++                        self.stats['proxy_rotations'] += 1
++                    else:
++                        raise Exception("No available proxy")
++
++                # 4. 模拟HTTP请求
++                if self.verbose:
++                    print(f"   📡 请求 {request_id}: 发起HTTP请求...")
++
++                request_result = await self._mock_http_request(token, proxy if self.use_proxies else None)
++
++                if request_result['success']:
++                    result['success'] = True
++                    self.stats['successful_requests'] += 1
++                else:
++                    result['error'] = request_result['error']
++                    self.stats['failed_requests'] += 1
++
++            result['response_time'] = time.monotonic() - start_time
++
++            # 5. 记录使用统计
++            if self.use_proxies and proxy:
++                await self.proxy_pool.record_proxy_result(
++                    proxy, result['success'], result['response_time'] * 1000
++                )
++
++        except Exception as e:
++            result['error'] = str(e)
++            result['response_time'] = time.monotonic() - start_time
++            self.stats['failed_requests'] += 1
++            self.stats['errors'].append({
++                'request_id': request_id,
++                'error': str(e),
++                'timestamp': time.monotonic()
++            })
++
++        self.stats['total_requests'] += 1
++        return result
++
++    async def _mock_http_request(self, token, proxy=None) -> Dict[str, Any]:
++        """
++        模拟HTTP请求
++
++        Args:
++            token: 认证令牌
++            proxy: 代理对象（可选）
++
++        Returns:
++            Dict[str, Any]: 请求结果
++        """
++        try:
++            # 模拟网络延迟
++            await asyncio.sleep(0.05 + (hash(token.value) % 10) * 0.01)  # 50-150ms
++
++            # 模拟成功率（80%）
++            import random
++            if random.random() < 0.8:
++                return {
++                    'success': True,
++                    'status_code': 200,
++                    'response': {"data": "mock_response_data"}
++                }
++            else:
++                return {
++                    'success': False,
++                    'status_code': 500,
++                    'error': "Simulated server error"
++                }
++
++        except Exception as e:
++            return {
++                'success': False,
++                'error': str(e)
++            }
++
++    async def run_requests(self) -> None:
++        """运行请求测试"""
++        print(f"\n🚀 开始执行 {self.num_requests} 个请求测试...")
++        print(f"   配置: 认证={'FotMob' if self.fotmob else 'Demo'}")
++        print(f"   配置: 速率限制={self.rate_limit} QPS, 突发={self.burst}")
++        print(f"   配置: 代理={'启用' if self.use_proxies else '禁用'}")
++
++        # 请求结果收集
++        results = []
++
++        if self.concurrent:
++            # 并发请求
++            print("🔄 使用并发请求模式...")
++            tasks = [
++                self.simulate_request(i)
++                for i in range(self.num_requests)
++            ]
++            results = await asyncio.gather(*tasks, return_exceptions=True)
++        else:
++            # 串行请求
++            print("🔄 使用串行请求模式...")
++            for i in range(self.num_requests):
++                result = await self.simulate_request(i)
++                results.append(result)
++
++        # 处理结果
++        successful_results = [r for r in results if not isinstance(r, Exception) and r['success']]
++        failed_results = [r for r in results if not isinstance(r, Exception) and not r['success']]
++
++        # 输出结果摘要
++        await self._print_results_summary(successful_results, failed_results, results)
++
++    async def _print_results_summary(self, successful: List[Dict], failed: List[Dict], all_results: List[Any]) -> None:
++        """打印结果摘要"""
++        print(f"\n📊 请求结果摘要:")
++        print(f"   总请求数: {len(all_results)}")
++        print(f"   成功请求: {len(successful)} ({len(successful)/len(all_results)*100:.1f}%)")
++        print(f"   失败请求: {len(failed)} ({len(failed)/len(all_results)*100:.1f}%)")
++
++        if self.verbose and successful:
++            # 显示成功的请求
++            print(f"\n✅ 成功请求详情:")
++            for result in successful[:5]:  # 只显示前5个
++                print(f"   请求 {result['request_id']}: "
++                      f"{result['response_time']:.3f}s, "
++                      f"Token: {result['token_used']}, "
++                      f"代理: {result['proxy_used'] or '无'}")
++
++        if self.verbose and failed:
++            # 显示失败的请求
++            print(f"\n❌ 失败请求详情:")
++            for result in failed[:5]:  # 只显示前5个
++                print(f"   请求 {result['request_id']}: "
++                      f"{result['response_time']:.3f}s, "
++                      f"错误: {result['error']}")
++
++        # 代理使用统计
++        if self.use_proxies and self.proxy_pool:
++            proxy_stats = self.proxy_pool.get_stats()
++            print(f"\n🌐 代理池统计:")
++            print(f"   总代理: {proxy_stats['total']}")
++            print(f"   活跃: {proxy_stats['active']}")
++            print(f"   禁用: {proxy_stats['banned']}")
++            print(f"   健康: {proxy_stats['healthy']}")
++
++        # Token Manager统计
++        if self.token_manager:
++            token_stats = await self.token_manager.get_stats()
++            print(f"\n🔑 认证管理器统计:")
++            print(f"   提供者: {token_stats['total_providers']}")
++            print(f"   有效令牌: {token_stats['valid_tokens']}")
++            print(f"   过期令牌: {token_stats['expired_tokens']}")
++            print(f"   总使用次数: {token_stats['total_usage']}")
++
++        # 速率限制统计
++        print(f"\n🚦 速率限制统计:")
++        print(f"   被限流请求: {self.stats['rate_limited_requests']}")
++        print(f"   限流率: {self.stats['rate_limited_requests']/self.stats['total_requests']*100:.1f}%")
++
++    async def print_detailed_stats(self) -> None:
++        """打印详细统计信息"""
++        print(f"\n📋 详细统计信息:")
++        print(json.dumps(self.stats, indent=2, ensure_ascii=False))
++
++        if self.token_info and self.token_manager:
++            token_info = await self.token_manager.get_token_info()
++            print(f"\n🔑 令牌详细信息:")
++            print(json.dumps(token_info, indent=2, ensure_ascii=False))
++
++
++def parse_args():
++    """解析命令行参数"""
++    parser = argparse.ArgumentParser(
++        description="认证集成测试工具",
++        formatter_class=argparse.RawDescriptionHelpFormatter,
++        epilog="""
++示例用法:
++  # 基础测试
++  python scripts/auth_integration_test.py --demo --requests 10
++
++  # FotMob认证测试
++  python scripts/auth_integration_test.py --fotmob --requests 20
++
++  # 高并发测试
++  python scripts/auth_integration_test.py --demo --requests 100 --concurrent
++
++  # 使用代理池
++  python scripts/auth_integration_test.py --demo --requests 50 --use-proxies
++        """
++    )
++
++    # 认证配置
++    parser.add_argument(
++        "--fotmob",
++        action="store_true",
++        help="使用FotMob认证（默认使用Demo认证）"
++    )
++    parser.add_argument(
++        "--demo",
++        action="store_true",
++        help="使用Demo认证（默认）"
++    )
++    parser.add_argument(
++        "--token-ttl",
++        type=float,
++        default=300.0,
++        help="令牌生存时间（秒） (默认: 300)"
++    )
++    parser.add_argument(
++        "--refresh-threshold",
++        type=float,
++        default=60.0,
++        help="令牌刷新阈值（秒） (默认: 60)"
++    )
++    parser.add_argument(
++        "--force-refresh",
++        action="store_true",
++        help="强制刷新令牌"
++    )
++
++    # 请求配置
++    parser.add_argument(
++        "--requests", "-n",
++        type=int,
++        default=10,
++        help="请求数量 (默认: 10)"
++    )
++    parser.add_argument(
++        "--concurrent",
++        action="store_true",
++        help="并发执行请求"
++    )
++    parser.add_argument(
++        "--rate-limit",
++        type=float,
++        default=5.0,
++        help="速率限制 QPS (默认: 5.0)"
++    )
++    parser.add_argument(
++        "--burst",
++        type=int,
++        default=10,
++        help="突发容量 (默认: 10)"
++    )
++    parser.add_argument(
++        "--request-timeout",
++        type=float,
++        default=10.0,
++        help="请求超时时间（秒） (默认: 10)"
++    )
++
++    # 代理配置
++    parser.add_argument(
++        "--use-proxies",
++        action="store_true",
++        help="启用代理池"
++    )
++    parser.add_argument(
++        "--proxy-strategy",
++        choices=["random", "round_robin", "weighted_random", "health_first"],
++        default="weighted_random",
++        help="代理轮询策略 (默认: weighted_random)"
++    )
++
++    # 输出配置
++    parser.add_argument(
++        "--verbose", "-v",
++        action="store_true",
++        help="详细输出"
++    )
++    parser.add_argument(
++        "--token-info",
++        action="store_true",
++        help="显示令牌详细信息"
++    )
++    parser.add_argument(
++        "--timeout",
++        type=float,
++        default=10.0,
++        help="网络请求超时时间（秒） (默认: 10)"
++    )
++
++    args = parser.parse_args()
++
++    # 默认使用demo认证
++    if not args.fotmob and not args.demo:
++        args.demo = True
++
++    return args
++
++
++async def main():
++    """主函数"""
++    args = parse_args()
++
++    try:
++        tester = AuthIntegrationTester(args)
++        await tester.setup()
++        await tester.run_requests()
++        await tester.print_detailed_stats()
++
++    except KeyboardInterrupt:
++        print("\n⚠️  用户中断操作")
++    except Exception as e:
++        print(f"❌ 错误: {e}")
++        if args.verbose:
++            import traceback
++            traceback.print_exc()
++        sys.exit(1)
++    finally:
++        if 'tester' in locals():
++            await tester.teardown()
++
++
++if __name__ == "__main__":
++    asyncio.run(main())

@@ -1,0 +1,69 @@
+--- a/src/inference/cache.py+++ b/src/inference/cache.py@@ -31,7 +31,7 @@     5. 健康检查
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         redis_url: str = "redis://localhost:6379/0",
+         default_ttl: int = 300,  # 5分钟默认TTL
+@@ -115,7 +115,7 @@ 
+         try:
+             # 获取缓存值
+-            cached_data = await self._redis_client.get(full_key)
++            cached_data = await self._redis_client.await get(full_key)
+ 
+             if cached_data is None:
+                 self._stats["misses"] += 1
+@@ -307,7 +307,7 @@                 pipe.setex(full_key, ttl, json_data)
+ 
+             # 执行pipeline
+-            pipe_results = await pipe.execute()
++            pipe_results = await pipe.await execute()
+ 
+             # 检查结果
+             for _i, (cache_key, success) in enumerate(zip(cache_data.keys(), pipe_results, strict=False)):
+@@ -364,11 +364,11 @@                 "status": "healthy",
+                 "response_time_ms": round(response_time, 2),
+                 "redis_info": {
+-                    "used_memory": info.get("used_memory_human"),
+-                    "connected_clients": info.get("connected_clients"),
+-                    "total_commands_processed": info.get("total_commands_processed"),
+-                    "keyspace_hits": info.get("keyspace_hits"),
+-                    "keyspace_misses": info.get("keyspace_misses")
++                    "used_memory": info.await get("used_memory_human"),
++                    "connected_clients": info.await get("connected_clients"),
++                    "total_commands_processed": info.await get("total_commands_processed"),
++                    "keyspace_hits": info.await get("keyspace_hits"),
++                    "keyspace_misses": info.await get("keyspace_misses")
+                 },
+                 "cache_stats": self.get_stats(),
+                 "last_check": self._last_health_check.isoformat()
+@@ -385,7 +385,7 @@                 "last_check": self._last_health_check.isoformat() if self._last_health_check else None
+             }
+ 
+-    def get_stats(self) -> dict[str, Any]:
++async def get_stats(self) -> dict[str, Any]:
+         """获取缓存统计信息"""
+         total_operations = (
+             self._stats["hits"] + self._stats["misses"] +
+@@ -421,11 +421,11 @@         except Exception as e:
+             logger.error(f"Cache cleanup error: {e}")
+ 
+-    def _make_key(self, cache_key: str) -> str:
++async def _make_key(self, cache_key: str) -> str:
+         """生成完整的缓存键"""
+         return f"{self.key_prefix}{cache_key}"
+ 
+-    def _update_last_operation(self, operation: str, cache_key: str):
++async def _update_last_operation(self, operation: str, cache_key: str):
+         """更新最后操作记录"""
+         self._stats["last_operation"] = {
+             "operation": operation,
+@@ -457,7 +457,7 @@     return _prediction_cache
+ 
+ 
+-def get_prediction_cache_sync() -> PredictionCache:
++async def get_prediction_cache_sync() -> PredictionCache:
+     """同步获取预测缓存实例（用于非异步上下文）"""
+     global _prediction_cache
+ 

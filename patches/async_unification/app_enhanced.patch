@@ -1,0 +1,46 @@
+--- a/src/app_enhanced.py+++ b/src/app_enhanced.py@@ -66,7 +66,7 @@     away_team: str
+     confidence: float | None = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         # 验证confidence范围
+         if self.confidence is not None and not (0 <= self.confidence <= 1):
+             raise HTTPException(status_code=400, detail="confidence必须在0-1之间")
+@@ -82,19 +82,19 @@ 
+ 
+ # 路由端点
+-@app.get("/")
++@app.await get("/")
+ async def root():
+     """根端点."""
+     return {"message": "足球预测系统 API", "version": "1.0.0"}
+ 
+ 
+-@app.get("/health")
++@app.await get("/health")
+ async def health_check():
+     """健康检查."""
+     return {"status": "healthy", "database": "connected" if db_pool else "disconnected"}
+ 
+ 
+-@app.get("/db")
++@app.await get("/db")
+ async def get_db_connection():
+     """获取数据库连接."""
+     if not db_pool:
+@@ -105,7 +105,7 @@         return {"db_status": "connected", "test_result": result}
+ 
+ 
+-@app.get("/predictions", response_model=list[PredictionResponse])
++@app.await get("/predictions", response_model=list[PredictionResponse])
+ async def get_predictions():
+     """获取所有预测."""
+     if not db_pool:
+@@ -127,7 +127,7 @@         raise HTTPException(status_code=500, detail=f"查询失败: {str(e)}") from e
+ 
+ 
+-@app.post("/predictions", response_model=PredictionResponse)
++@app.await post("/predictions", response_model=PredictionResponse)
+ async def create_prediction(request: PredictionRequest):
+     """创建新预测."""
+     if not db_pool:

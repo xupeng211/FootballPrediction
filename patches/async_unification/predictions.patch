@@ -1,0 +1,14 @@
+--- a/src/api/predictions.py+++ b/src/api/predictions.py@@ -31,12 +31,12 @@     # 获取比赛预测
+     response = None
+     base_url = f"http://{DEFAULT_API_HOST}:{DEFAULT_API_PORT}"
+-    requests.get(f"{base_url}/api/v1/predictions/12345")
++    await httpx.AsyncClient().get(f"{base_url}/api/v1/predictions/12345")
+     _prediction = response.json()
+ 
+     # 实时预测
+     response = None
+-    requests.post(f"{base_url}/api/v1/predictions/12345/predict")
++    await httpx.AsyncClient().post(f"{base_url}/api/v1/predictions/12345/predict")
+     result = response.json()
+     ```
+ 

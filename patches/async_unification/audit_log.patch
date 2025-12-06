@@ -1,0 +1,24 @@
+--- a/src/database/models/audit_log.py+++ b/src/database/models/audit_log.py@@ -78,7 +78,7 @@         {"extend_existing": True},
+     )
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         """返回日志的字符串表示."""
+         return (
+             f"AuditLog(id={self.id}, user_id={self.user_id}, "
+@@ -86,7 +86,7 @@             f"resource_id='{self.resource_id}')"
+         )
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典格式."""
+         return {
+             "id": self.id,
+@@ -125,7 +125,7 @@     # 索引定义
+     __table_args__ = (Index("idx_summary_date", "date"), {"extend_existing": True})
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典格式."""
+         return {
+             "id": self.id,

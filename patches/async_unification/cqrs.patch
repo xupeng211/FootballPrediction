@@ -1,0 +1,90 @@
+--- a/src/api/cqrs.py+++ b/src/api/cqrs.py@@ -15,22 +15,22 @@ router = APIRouter(prefix="/cqrs", tags=["CQRS"])
+ 
+ 
+-def get_prediction_cqrs_service():
++async def get_prediction_cqrs_service():
+     """获取预测CQRS服务."""
+     return CQRSServiceFactory.create_prediction_service()
+ 
+ 
+-def get_match_cqrs_service():
++async def get_match_cqrs_service():
+     """获取比赛CQRS服务."""
+     return CQRSServiceFactory.create_match_service()
+ 
+ 
+-def get_user_cqrs_service():
++async def get_user_cqrs_service():
+     """获取用户CQRS服务."""
+     return CQRSServiceFactory.create_user_service()
+ 
+ 
+-def get_analytics_cqrs_service():
++async def get_analytics_cqrs_service():
+     """获取分析CQRS服务."""
+     return CQRSServiceFactory.create_analytics_service()
+ 
+@@ -65,7 +65,7 @@     updated_at: datetime
+ 
+ 
+-@router.post("/predictions/", response_model=PredictionResponse)
++@router.await post("/predictions/", response_model=PredictionResponse)
+ async def create_prediction(
+     command: PredictionCreateCommand,
+     background_tasks: BackgroundTasks,
+@@ -79,7 +79,7 @@         raise HTTPException(status_code=400, detail=str(e)) from e
+ 
+ 
+-@router.get("/predictions/{prediction_id}", response_model=PredictionResponse)
++@router.await get("/predictions/{prediction_id}", response_model=PredictionResponse)
+ async def get_prediction(
+     prediction_id: int,
+     service=Depends(get_prediction_cqrs_service),
+@@ -92,7 +92,7 @@         raise HTTPException(status_code=404, detail=str(e)) from e
+ 
+ 
+-@router.get("/predictions/", response_model=list[PredictionResponse])
++@router.await get("/predictions/", response_model=list[PredictionResponse])
+ async def list_predictions(
+     user_id: int | None = Query(None, description="用户ID"),
+     limit: int = Query(10, ge=1, le=100, description="限制数量"),
+@@ -124,7 +124,7 @@     updated_at: datetime
+ 
+ 
+-@router.get("/matches/{match_id}", response_model=MatchResponse)
++@router.await get("/matches/{match_id}", response_model=MatchResponse)
+ async def get_match(
+     match_id: int,
+     service=Depends(get_match_cqrs_service),
+@@ -137,7 +137,7 @@         raise HTTPException(status_code=404, detail=str(e)) from e
+ 
+ 
+-@router.get("/matches/", response_model=list[MatchResponse])
++@router.await get("/matches/", response_model=list[MatchResponse])
+ async def list_matches(
+     date_from: date | None = Query(None, description="开始日期"),
+     date_to: date | None = Query(None, description="结束日期"),
+@@ -166,7 +166,7 @@     updated_at: datetime
+ 
+ 
+-@router.get("/users/{user_id}", response_model=UserResponse)
++@router.await get("/users/{user_id}", response_model=UserResponse)
+ async def get_user(
+     user_id: int,
+     service=Depends(get_user_cqrs_service),
+@@ -179,7 +179,7 @@         raise HTTPException(status_code=404, detail=str(e)) from e
+ 
+ 
+-@router.get("/users/", response_model=list[UserResponse])
++@router.await get("/users/", response_model=list[UserResponse])
+ async def list_users(
+     limit: int = Query(10, ge=1, le=100, description="限制数量"),
+     offset: int = Query(0, ge=0, description="偏移量"),
+@@ -206,7 +206,7 @@     recent_predictions: list[dict]
+ 
+ 
+-@router.get("/analytics/", response_model=AnalyticsResponse)
++@router.await get("/analytics/", response_model=AnalyticsResponse)
+ async def get_analytics(
+     user_id: int | None = Query(None, description="用户ID"),
+     days: int = Query(30, ge=1, le=365, description="分析天数"),

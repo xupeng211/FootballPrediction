@@ -1,0 +1,55 @@
+--- a/src/data/collectors/fbref_collector_stealth.py+++ b/src/data/collectors/fbref_collector_stealth.py@@ -41,13 +41,13 @@     5. 长期调度优化
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.ua = UserAgent()
+         self.retry_count = 0
+         self.max_retries = 3
+         self.backoff_base = 60  # 429退避基数
+ 
+-    def _get_random_user_agent(self) -> str:
++async def _get_random_user_agent(self) -> str:
+         """获取随机User-Agent"""
+         # 偏向于最新Chrome版本
+         browsers = ['chrome', 'firefox', 'safari', 'edge']
+@@ -56,7 +56,7 @@         browser = random.choices(browsers, weights=weights)[0]
+         return self.ua[browser]
+ 
+-    def _get_random_viewport(self) -> dict[str, int]:
++async def _get_random_viewport(self) -> dict[str, int]:
+         """获取随机视窗大小，模拟真实显示器"""
+         viewports = [
+             {"width": 1920, "height": 1080},  # Full HD
+@@ -67,7 +67,7 @@         ]
+         return random.choice(viewports)
+ 
+-    def _get_random_delay(self, min_seconds: float = 3.0, max_seconds: float = 8.0) -> float:
++async def _get_random_delay(self, min_seconds: float = 3.0, max_seconds: float = 8.0) -> float:
+         """获取随机延迟时间"""
+         return random.uniform(min_seconds, max_seconds)
+ 
+@@ -339,7 +339,7 @@             logger.error("❌ 没有采集到任何数据")
+             return pd.DataFrame()
+ 
+-    def _clean_schedule_data(self, df: pd.DataFrame) -> pd.DataFrame:
++async def _clean_schedule_data(self, df: pd.DataFrame) -> pd.DataFrame:
+         """清洗赛程数据（与原版相同）"""
+         logger.info("🧹 开始清洗数据...")
+ 
+@@ -374,7 +374,7 @@ 
+         return cleaned_df
+ 
+-    def _filter_completed_matches(self, df: pd.DataFrame) -> pd.DataFrame:
++async def _filter_completed_matches(self, df: pd.DataFrame) -> pd.DataFrame:
+         """过滤已完成的比赛"""
+         if df.empty:
+             return df
+@@ -412,7 +412,7 @@         logger.info(f"🔄 增量更新完成: {len(completed_matches)} 场已完成比赛")
+         return completed_matches
+ 
+-    def get_available_leagues(self) -> dict[str, str]:
++async def get_available_leagues(self) -> dict[str, str]:
+         """获取支持的联赛URL"""
+         return {
+             "Premier League": "https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures"

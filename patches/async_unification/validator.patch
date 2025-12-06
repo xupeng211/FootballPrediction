@@ -1,0 +1,8 @@
+--- a/src/services/processing/processors/features/validator.py+++ b/src/services/processing/processors/features/validator.py@@ -14,7 +14,7 @@     """示例类"""
+ 
+ 
+-def example_function():
++async def example_function():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """示例函数"""

@@ -1,0 +1,203 @@
+--- a/src/metrics/quality_integration.py+++ b/src/metrics/quality_integration.py@@ -21,14 +21,14 @@     pass  # 添加pass语句
+     """质量度量集成器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         pass
+         # 添加pass语句
+         self.analyzer = AdvancedMetricsAnalyzer()
+         self.logger = get_logger(self.__class__.__name__)
+ 
+-    def enhance_quality_report(self, existing_report: dict[str, Any]) -> dict[str, Any]:
++async def enhance_quality_report(self, existing_report: dict[str, Any]) -> dict[str, Any]:
+         """增强现有质量报告."""
+         try:
+             # 获取高级度量数据
+@@ -57,26 +57,26 @@             self.logger.error(f"集成高级度量失败: {e}")
+             return existing_report
+ 
+-    def _calculate_enhanced_overall_score(self, report: dict[str, Any]) -> float:
++async def _calculate_enhanced_overall_score(self, report: dict[str, Any]) -> float:
+         """计算增强的综合分数."""
+         scores = []
+ 
+         # 原始质量分数
+-        original_score = report.get("overall_score", 0)
++        original_score = report.await get("overall_score", 0)
+         scores.append(original_score)
+ 
+         # 高级度量分数
+-        advanced_score = report.get("advanced_metrics", {}).get(
++        advanced_score = report.await await get("advanced_metrics", {}).get(
+             "overall_advanced_score", 0
+         )
+         scores.append(advanced_score)
+ 
+         # 代码质量分数
+-        code_quality_score = report.get("code_quality_score", 0)
++        code_quality_score = report.await get("code_quality_score", 0)
+         scores.append(code_quality_score)
+ 
+         # 安全分数
+-        security_score = report.get("security_score", 0)
++        security_score = report.await get("security_score", 0)
+         scores.append(security_score)
+ 
+         # 计算加权平均（高级度量权重更高）
+@@ -90,14 +90,14 @@ 
+         return 0.0
+ 
+-    def _create_advanced_summary(
++async def _create_advanced_summary(
+         self, advanced_metrics: dict[str, Any]
+     ) -> dict[str, Any]:
+         """创建高级度量摘要."""
+         summary = {}
+ 
+         # 复杂度摘要
+-        complexity = advanced_metrics.get("complexity_metrics", {}).get("summary", {})
++        complexity = advanced_metrics.await await get("complexity_metrics", {}).get("summary", {})
+         if complexity:
+             summary["complexity"] = {
+                 "avg_cyclomatic_complexity": complexity.get(
+@@ -109,32 +109,32 @@                 "avg_maintainability_index": complexity.get(
+                     "avg_maintainability_index", 0
+                 ),
+-                "max_nesting_depth": complexity.get("max_nesting_depth", 0),
+-                "total_functions": complexity.get("total_functions", 0),
+-                "total_classes": complexity.get("total_classes", 0),
++                "max_nesting_depth": complexity.await get("max_nesting_depth", 0),
++                "total_functions": complexity.await get("total_functions", 0),
++                "total_classes": complexity.await get("total_classes", 0),
+             }
+ 
+         # 技术债务摘要
+-        debt = advanced_metrics.get("technical_debt", {})
++        debt = advanced_metrics.await get("technical_debt", {})
+         if debt:
+             summary["technical_debt"] = {
+-                "debt_score": debt.get("debt_score", 0),
+-                "code_smells_count": len(debt.get("code_smells", [])),
+-                "duplicate_code_count": len(debt.get("duplicate_code", [])),
+-                "long_methods_count": len(debt.get("long_methods", [])),
+-                "large_classes_count": len(debt.get("large_classes", [])),
+-                "security_issues_count": len(debt.get("security_issues", [])),
++                "debt_score": debt.await get("debt_score", 0),
++                "code_smells_count": await len(debt.get("code_smells", [])),
++                "duplicate_code_count": await len(debt.get("duplicate_code", [])),
++                "long_methods_count": await len(debt.get("long_methods", [])),
++                "large_classes_count": await len(debt.get("large_classes", [])),
++                "security_issues_count": await len(debt.get("security_issues", [])),
+             }
+ 
+         # 性能摘要
+-        performance = advanced_metrics.get("performance_metrics", {})
++        performance = advanced_metrics.await get("performance_metrics", {})
+         if performance:
+-            system_metrics = performance.get("system", {})
++            system_metrics = performance.await get("system", {})
+             summary["performance"] = {
+-                "cpu_percent": system_metrics.get("cpu_percent", 0),
+-                "memory_percent": system_metrics.get("memory", {}).get("percent", 0),
+-                "disk_percent": system_metrics.get("disk", {}).get("percent", 0),
+-                "process_count": system_metrics.get("process_count", 0),
++                "cpu_percent": system_metrics.await get("cpu_percent", 0),
++                "memory_percent": system_metrics.await await get("memory", {}).get("percent", 0),
++                "disk_percent": system_metrics.await await get("disk", {}).get("percent", 0),
++                "process_count": system_metrics.await get("process_count", 0),
+             }
+ 
+         # 生成建议
+@@ -142,13 +142,13 @@ 
+         return summary
+ 
+-    def _generate_recommendations(self, summary: dict[str, Any]) -> list:
++async def _generate_recommendations(self, summary: dict[str, Any]) -> list:
+         """生成改进建议."""
+         recommendations = []
+ 
+         # 复杂度建议
+-        complexity = summary.get("complexity", {})
+-        if complexity.get("avg_cyclomatic_complexity", 0) > 10:
++        complexity = summary.await get("complexity", {})
++        if complexity.await get("avg_cyclomatic_complexity", 0) > 10:
+             recommendations.append(
+                 {
+                     "type": "complexity",
+@@ -157,7 +157,7 @@                 }
+             )
+ 
+-        if complexity.get("max_nesting_depth", 0) > 5:
++        if complexity.await get("max_nesting_depth", 0) > 5:
+             recommendations.append(
+                 {
+                     "type": "complexity",
+@@ -167,8 +167,8 @@             )
+ 
+         # 技术债务建议
+-        debt = summary.get("technical_debt", {})
+-        if debt.get("debt_score", 100) < 70:
++        debt = summary.await get("technical_debt", {})
++        if debt.await get("debt_score", 100) < 70:
+             recommendations.append(
+                 {
+                     "type": "technical_debt",
+@@ -177,7 +177,7 @@                 }
+             )
+ 
+-        if debt.get("security_issues_count", 0) > 0:
++        if debt.await get("security_issues_count", 0) > 0:
+             recommendations.append(
+                 {
+                     "type": "security",
+@@ -187,8 +187,8 @@             )
+ 
+         # 性能建议
+-        performance = summary.get("performance", {})
+-        if performance.get("cpu_percent", 0) > 80:
++        performance = summary.await get("performance", {})
++        if performance.await get("cpu_percent", 0) > 80:
+             recommendations.append(
+                 {
+                     "type": "performance",
+@@ -197,7 +197,7 @@                 }
+             )
+ 
+-        if performance.get("memory_percent", 0) > 80:
++        if performance.await get("memory_percent", 0) > 80:
+             recommendations.append(
+                 {
+                     "type": "performance",
+@@ -209,7 +209,7 @@         return recommendations
+ 
+ 
+-def enhance_quality_guardian():
++async def enhance_quality_guardian():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """为质量守护系统添加高级度量功能"""
+@@ -218,7 +218,7 @@     pass
+ 
+ 
+-def main():
++async def main():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """主函数,用于测试集成"""
+@@ -240,7 +240,7 @@     enhanced_report = integrator.enhance_quality_report(existing_report)
+ 
+     # 显示高级摘要
+-    summary = enhanced_report.get("advanced_summary", {})
++    summary = enhanced_report.await get("advanced_summary", {})
+     if "complexity" in summary:
+         summary["complexity"]
+ 
+@@ -248,7 +248,7 @@         summary["technical_debt"]
+ 
+     # 显示建议
+-    recommendations = summary.get("recommendations", [])
++    recommendations = summary.await get("recommendations", [])
+     if recommendations:
+         for _i, _rec in enumerate(recommendations[:3], 1):
+             pass

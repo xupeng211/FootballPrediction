@@ -1,0 +1,308 @@
+--- a/src/cache/redis_enhanced.py+++ b/src/cache/redis_enhanced.py@@ -64,7 +64,7 @@ class EnhancedRedisManager:
+     """增强Redis管理器."""
+ 
+-    def __init__(self, config: RedisConfig = None, use_mock: bool = None):
++async def __init__(self, config: RedisConfig = None, use_mock: bool = None):
+         """初始化Redis管理器.
+ 
+         Args:
+@@ -85,7 +85,7 @@ 
+         logger.info(f"Redis管理器初始化完成，使用{'模拟' if use_mock else '真实'}Redis")
+ 
+-    def _create_sync_client(self):
++async def _create_sync_client(self):
+         """创建同步Redis客户端."""
+         if self.use_mock:
+             return MockRedisManager()
+@@ -157,7 +157,7 @@             logger.error(f"Redis同步连接失败: {e}")
+             raise
+ 
+-    def _create_async_client(self):
++async def _create_async_client(self):
+         """创建异步Redis客户端."""
+         if self.use_mock:
+             return MockRedisManager()
+@@ -193,31 +193,31 @@             raise
+ 
+     @property
+-    def sync_client(self):
++async def sync_client(self):
+         """获取同步客户端（懒加载）."""
+         if self._sync_client is None:
+             self._sync_client = self._create_sync_client()
+         return self._sync_client
+ 
+     @property
+-    def async_client(self):
++async def async_client(self):
+         """获取异步客户端（懒加载）."""
+         if self._async_client is None:
+             self._async_client = self._create_async_client()
+         return self._async_client
+ 
+     # 基础操作方法
+-    def get(self, key: str) -> str | None:
++async def get(self, key: str) -> str | None:
+         """获取缓存值."""
+-        return self.sync_client.get(key)
+-
+-    def set(
++        return self.sync_client.await get(key)
++
++async def set(
+         self, key: str, value: str, ex: int | None = None, px: int | None = None
+     ) -> bool:
+         """设置缓存值."""
+         return self.sync_client.set(key, value, ex=ex, px=px)
+ 
+-    def set_cache_value(self, key: str, value: Any, ex: int | None = None) -> bool:
++async def set_cache_value(self, key: str, value: Any, ex: int | None = None) -> bool:
+         """设置缓存值（支持任意类型，自动序列化）.
+ 
+         Args:
+@@ -238,56 +238,56 @@             # 其他类型使用pickle序列化
+             return self.set_pickle(key, value, ex=ex)
+ 
+-    def setex(self, key: str, seconds: int, value: str) -> bool:
++async def setex(self, key: str, seconds: int, value: str) -> bool:
+         """设置带TTL的缓存值."""
+         return self.sync_client.setex(key, seconds, value)
+ 
+-    def psetex(self, key: str, milliseconds: int, value: str) -> bool:
++async def psetex(self, key: str, milliseconds: int, value: str) -> bool:
+         """设置带毫秒TTL的缓存值."""
+         return self.sync_client.psetex(key, milliseconds, value)
+ 
+-    def delete(self, *keys: str) -> int:
++async def delete(self, *keys: str) -> int:
+         """删除缓存键."""
+         return self.sync_client.delete(*keys)
+ 
+-    def exists(self, key: str) -> bool:
++async def exists(self, key: str) -> bool:
+         """检查键是否存在."""
+         return bool(self.sync_client.exists(key))
+ 
+-    def expire(self, key: str, seconds: int) -> bool:
++async def expire(self, key: str, seconds: int) -> bool:
+         """设置键的过期时间."""
+         return bool(self.sync_client.expire(key, seconds))
+ 
+-    def pexpire(self, key: str, milliseconds: int) -> bool:
++async def pexpire(self, key: str, milliseconds: int) -> bool:
+         """设置键的毫秒过期时间."""
+         return bool(self.sync_client.pexpire(key, milliseconds))
+ 
+-    def ttl(self, key: str) -> int:
++async def ttl(self, key: str) -> int:
+         """获取键的TTL（秒）."""
+         return self.sync_client.ttl(key)
+ 
+-    def pttl(self, key: str) -> int:
++async def pttl(self, key: str) -> int:
+         """获取键的TTL（毫秒）."""
+         return self.sync_client.pttl(key)
+ 
+-    def keys(self, pattern: str = "*") -> list[str]:
++async def keys(self, pattern: str = "*") -> list[str]:
+         """获取匹配模式的所有键."""
+         return self.sync_client.keys(pattern)
+ 
+-    def flushdb(self) -> bool:
++async def flushdb(self) -> bool:
+         """清空当前数据库."""
+         return self.sync_client.flushdb()
+ 
+-    def flushall(self) -> bool:
++async def flushall(self) -> bool:
+         """清空所有数据库."""
+         return self.sync_client.flushall()
+ 
+     # 批量操作
+-    def mget(self, keys: list[str]) -> list[str | None]:
++async def mget(self, keys: list[str]) -> list[str | None]:
+         """批量获取缓存值."""
+         return self.sync_client.mget(keys)
+ 
+-    def mset(self, mapping: dict[str, str]) -> bool:
++async def mset(self, mapping: dict[str, str]) -> bool:
+         """批量设置缓存值."""
+         return self.sync_client.mset(mapping)
+ 
+@@ -297,7 +297,7 @@         if self.use_mock:
+             return self.sync_client.aget(key)
+         else:
+-            return await self.async_client.get(key)
++            return await self.async_client.await get(key)
+ 
+     async def aset(
+         self, key: str, value: str, ex: int | None = None, px: int | None = None
+@@ -394,81 +394,81 @@             return await self.async_client.mset(mapping)
+ 
+     # 高级操作
+-    def incr(self, key: str, amount: int = 1) -> int:
++async def incr(self, key: str, amount: int = 1) -> int:
+         """递增数值."""
+         return self.sync_client.incr(key, amount)
+ 
+-    def decr(self, key: str, amount: int = 1) -> int:
++async def decr(self, key: str, amount: int = 1) -> int:
+         """递减数值."""
+         return self.sync_client.decr(key, amount)
+ 
+-    def hget(self, name: str, key: str) -> str | None:
++async def hget(self, name: str, key: str) -> str | None:
+         """获取哈希字段值."""
+         return self.sync_client.hget(name, key)
+ 
+-    def hset(self, name: str, mapping: dict[str, str]) -> int:
++async def hset(self, name: str, mapping: dict[str, str]) -> int:
+         """设置哈希字段值."""
+         return self.sync_client.hset(name, mapping=mapping)
+ 
+-    def hgetall(self, name: str) -> dict[str, str]:
++async def hgetall(self, name: str) -> dict[str, str]:
+         """获取所有哈希字段值."""
+         return self.sync_client.hgetall(name)
+ 
+-    def lpush(self, name: str, *values: str) -> int:
++async def lpush(self, name: str, *values: str) -> int:
+         """左侧推入列表."""
+         return self.sync_client.lpush(name, *values)
+ 
+-    def rpush(self, name: str, *values: str) -> int:
++async def rpush(self, name: str, *values: str) -> int:
+         """右侧推入列表."""
+         return self.sync_client.rpush(name, *values)
+ 
+-    def lpop(self, name: str) -> str | None:
++async def lpop(self, name: str) -> str | None:
+         """左侧弹出列表元素."""
+         return self.sync_client.lpop(name)
+ 
+-    def rpop(self, name: str) -> str | None:
++async def rpop(self, name: str) -> str | None:
+         """右侧弹出列表元素."""
+         return self.sync_client.rpop(name)
+ 
+-    def lrange(self, name: str, start: int = 0, end: int = -1) -> list[str]:
++async def lrange(self, name: str, start: int = 0, end: int = -1) -> list[str]:
+         """获取列表范围内的元素."""
+         return self.sync_client.lrange(name, start, end)
+ 
+-    def sadd(self, name: str, *values: str) -> int:
++async def sadd(self, name: str, *values: str) -> int:
+         """添加到集合."""
+         return self.sync_client.sadd(name, *values)
+ 
+-    def srem(self, name: str, *values: str) -> int:
++async def srem(self, name: str, *values: str) -> int:
+         """从集合中删除."""
+         return self.sync_client.srem(name, *values)
+ 
+-    def smembers(self, name: str):
++async def smembers(self, name: str):
+         """获取集合所有成员."""
+         return self.sync_client.smembers(name)
+ 
+-    def zadd(self, name: str, mapping: dict[str, float]) -> int:
++async def zadd(self, name: str, mapping: dict[str, float]) -> int:
+         """添加到有序集合."""
+         return self.sync_client.zadd(name, mapping)
+ 
+-    def zrange(
++async def zrange(
+         self, name: str, start: int = 0, end: int = -1, desc: bool = False
+     ) -> list[str]:
+         """获取有序集合范围内的元素."""
+         return self.sync_client.zrange(name, start, end, desc=desc)
+ 
+-    def zrem(self, name: str, *values: str) -> int:
++async def zrem(self, name: str, *values: str) -> int:
+         """从有序集合中删除."""
+         return self.sync_client.zrem(name, *values)
+ 
+     # 序列化操作
+-    def set_json(self, key: str, obj: Any, ex: int | None = None) -> bool:
++async def set_json(self, key: str, obj: Any, ex: int | None = None) -> bool:
+         """设置JSON对象."""
+         json_str = json.dumps(obj, ensure_ascii=False)
+         return self.set(key, json_str, ex=ex)
+ 
+-    def get_json(self, key: str) -> Any | None:
++async def get_json(self, key: str) -> Any | None:
+         """获取JSON对象."""
+-        value = self.get(key)
++        value = self.await get(key)
+         if value is None:
+             return None
+         try:
+@@ -476,14 +476,14 @@         except json.JSONDecodeError:
+             return value
+ 
+-    def set_pickle(self, key: str, obj: Any, ex: int | None = None) -> bool:
++async def set_pickle(self, key: str, obj: Any, ex: int | None = None) -> bool:
+         """设置pickle对象."""
+         pickle_bytes = pickle.dumps(obj)
+         return self.sync_client.set(key, pickle_bytes, ex=ex)
+ 
+-    def get_pickle(self, key: str) -> Any | None:
++async def get_pickle(self, key: str) -> Any | None:
+         """获取pickle对象."""
+-        value = self.sync_client.get(key)
++        value = self.sync_client.await get(key)
+         if value is None:
+             return None
+         try:
+@@ -492,7 +492,7 @@             return value
+ 
+     # 健康检查
+-    def ping(self) -> bool:
++async def ping(self) -> bool:
+         """健康检查."""
+         try:
+             result = self.sync_client.ping()
+@@ -508,7 +508,7 @@         except Exception:
+             return False
+ 
+-    def info(self) -> dict[str, Any]:
++async def info(self) -> dict[str, Any]:
+         """获取Redis信息."""
+         try:
+             info = self.sync_client.info()
+@@ -518,7 +518,7 @@             return {}
+ 
+     # 关闭连接
+-    def close(self):
++async def close(self):
+         """关闭连接."""
+         if self._connection_pool:
+             self._connection_pool.disconnect()
+@@ -532,10 +532,10 @@         if self._async_client and hasattr(self._async_client, "close"):
+             await self._async_client.close()
+ 
+-    def __enter__(self):
++async def __enter__(self):
+         return self
+ 
+-    def __exit__(self, exc_type, exc_val, exc_tb):
++async def __exit__(self, exc_type, exc_val, exc_tb):
+         self.close()
+ 
+     async def __aenter__(self):
+@@ -549,7 +549,7 @@ _global_redis_manager: EnhancedRedisManager | None = None
+ 
+ 
+-def get_redis_manager(
++async def get_redis_manager(
+     config: RedisConfig = None, use_mock: bool = None
+ ) -> EnhancedRedisManager:
+     """获取全局Redis管理器实例."""
+@@ -559,7 +559,7 @@     return _global_redis_manager
+ 
+ 
+-def reset_redis_manager():
++async def reset_redis_manager():
+     """重置全局Redis管理器."""
+     global _global_redis_manager
+     if _global_redis_manager:

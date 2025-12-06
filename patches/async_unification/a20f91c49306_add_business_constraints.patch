@@ -1,0 +1,44 @@
+--- a/src/database/migrations/versions/a20f91c49306_add_business_constraints.py+++ b/src/database/migrations/versions/a20f91c49306_add_business_constraints.py@@ -28,7 +28,7 @@ depends_on: str | Sequence[str] | None = None
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     """添加业务逻辑约束和触发器."""
+     # 检查是否在SQLite环境中（测试环境）
+     conn = op.get_bind()
+@@ -36,7 +36,7 @@ 
+     if db_dialect == "sqlite":
+         logger.info("⚠️  SQLite环境:跳过业务约束和触发器创建")
+-        op.execute("-- SQLite environment: skipped business constraints and triggers")
++        op.await execute("-- SQLite environment: skipped business constraints and triggers")
+         op.execute(
+             "-- SQLite environment: SQLite does not support ALTER ADD CONSTRAINT"
+         )
+@@ -201,7 +201,7 @@     )
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     """移除业务逻辑约束和触发器."""
+     # 检查是否在SQLite环境中（测试环境）
+     conn = op.get_bind()
+@@ -212,15 +212,15 @@         op.execute(
+             "-- SQLite environment: skipped business constraints and triggers removal"
+         )
+-        op.execute("-- SQLite environment: SQLite does not support DROP CONSTRAINT")
++        op.await execute("-- SQLite environment: SQLite does not support DROP CONSTRAINT")
+         return None
+     # 移除触发器
+-    op.execute("DROP TRIGGER IF EXISTS tr_check_odds_consistency ON odds;")
+-    op.execute("DROP TRIGGER IF EXISTS tr_check_match_teams_consistency ON matches;")
++    op.await execute("DROP TRIGGER IF EXISTS tr_check_odds_consistency ON odds;")
++    op.await execute("DROP TRIGGER IF EXISTS tr_check_match_teams_consistency ON matches;")
+ 
+     # 移除触发器函数
+-    op.execute("DROP FUNCTION IF EXISTS check_odds_consistency();")
+-    op.execute("DROP FUNCTION IF EXISTS check_match_teams_consistency();")
++    op.await execute("DROP FUNCTION IF EXISTS check_odds_consistency();")
++    op.await execute("DROP FUNCTION IF EXISTS check_match_teams_consistency();")
+ 
+     # 移除CHECK约束
+     op.drop_constraint("ck_matches_match_time_range", "matches", type_="check")

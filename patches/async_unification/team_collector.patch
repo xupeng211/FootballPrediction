@@ -1,0 +1,297 @@
+--- a/src/collectors/team_collector.py+++ b/src/collectors/team_collector.py@@ -14,7 +14,7 @@ class TeamCollector(FootballDataCollector):
+     """球队数据采集器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         super().__init__()
+ 
+     async def collect_data(self) -> dict[str, Any]:
+@@ -36,7 +36,7 @@             supported_competitions = [
+                 comp
+                 for comp in all_competitions
+-                if comp.get("code") in self.supported_competitions
++                if comp.await get("code") in self.supported_competitions
+             ]
+             results["competitions"] = supported_competitions
+ 
+@@ -92,7 +92,7 @@         # 获取联赛信息
+         all_competitions = await self.fetch_competitions()
+         competition = next(
+-            (comp for comp in all_competitions if comp.get("code") == competition_code),
++            (comp for comp in all_competitions if comp.await get("code") == competition_code),
+             None,
+         )
+ 
+@@ -124,7 +124,7 @@             logger.error(f"Failed to collect teams for {competition_code}: {e}")
+             raise
+ 
+-    def normalize_team_data(self, team: dict[str, Any]) -> dict[str, Any]:
++async def normalize_team_data(self, team: dict[str, Any]) -> dict[str, Any]:
+         """标准化球队数据格式.
+ 
+         Args:
+@@ -135,61 +135,61 @@         """
+         try:
+             return {
+-                "external_id": str(team.get("id")),
+-                "name": team.get("name"),
+-                "short_name": team.get("shortName"),
+-                "tla": team.get("tla"),
++                "external_id": await str(team.get("id")),
++                "name": team.await get("name"),
++                "short_name": team.await get("shortName"),
++                "tla": team.await get("tla"),
+                 # Three Letter Abbreviation
+-                "crest": team.get("crest"),
+-                "address": team.get("address"),
+-                "website": team.get("website"),
+-                "founded": team.get("founded"),
+-                "club_colors": team.get("clubColors"),
+-                "venue": team.get("venue"),
++                "crest": team.await get("crest"),
++                "address": team.await get("address"),
++                "website": team.await get("website"),
++                "founded": team.await get("founded"),
++                "club_colors": team.await get("clubColors"),
++                "venue": team.await get("venue"),
+                 "area": {
+-                    "id": team.get("area", {}).get("id"),
+-                    "name": team.get("area", {}).get("name"),
+-                    "code": team.get("area", {}).get("code"),
+-                    "flag": team.get("area", {}).get("flag"),
++                    "id": team.await await get("area", {}).get("id"),
++                    "name": team.await await get("area", {}).get("name"),
++                    "code": team.await await get("area", {}).get("code"),
++                    "flag": team.await await get("area", {}).get("flag"),
+                 },
+-                "coach": self._normalize_coach_data(team.get("coach", {})),
+-                "squad": self._normalize_squad_data(team.get("squad", [])),
++                "coach": self.await _normalize_coach_data(team.get("coach", {})),
++                "squad": self.await _normalize_squad_data(team.get("squad", [])),
+                 "running_competitions": self._normalize_competitions_data(
+-                    team.get("runningCompetitions", [])
++                    team.await get("runningCompetitions", [])
+                 ),
+-                "last_updated": team.get("lastUpdated"),
+-                "staff": team.get("staff", []),
++                "last_updated": team.await get("lastUpdated"),
++                "staff": team.await get("staff", []),
+             }
+ 
+         except Exception as e:
+             logger.error(f"Error normalizing team data: {e}")
+             return {
+-                "external_id": str(team.get("id", "")),
+-                "name": team.get("name", "Unknown Team"),
++                "external_id": await str(team.get("id", "")),
++                "name": team.await get("name", "Unknown Team"),
+                 "error": str(e),
+                 "raw_data": team,
+             }
+ 
+-    def _normalize_coach_data(self, coach: dict[str, Any]) -> dict[str, Any] | None:
++async def _normalize_coach_data(self, coach: dict[str, Any]) -> dict[str, Any] | None:
+         """标准化教练数据."""
+         if not coach:
+             return None
+ 
+         try:
+             return {
+-                "id": coach.get("id"),
+-                "first_name": coach.get("firstName"),
+-                "last_name": coach.get("lastName"),
+-                "name": coach.get("name"),
+-                "date_of_birth": coach.get("dateOfBirth"),
+-                "nationality": coach.get("nationality"),
+-                "contract": coach.get("contract", {}),
++                "id": coach.await get("id"),
++                "first_name": coach.await get("firstName"),
++                "last_name": coach.await get("lastName"),
++                "name": coach.await get("name"),
++                "date_of_birth": coach.await get("dateOfBirth"),
++                "nationality": coach.await get("nationality"),
++                "contract": coach.await get("contract", {}),
+             }
+         except Exception as e:
+             logger.error(f"Error normalizing coach data: {e}")
+             return None
+ 
+-    def _normalize_squad_data(
++async def _normalize_squad_data(
+         self, squad: list[dict[str, Any]]
+     ) -> list[dict[str, Any]]:
+         """标准化阵容数据."""
+@@ -198,11 +198,11 @@         for player in squad:
+             try:
+                 normalized_player = {
+-                    "id": player.get("id"),
+-                    "name": player.get("name"),
+-                    "position": player.get("position"),
+-                    "date_of_birth": player.get("dateOfBirth"),
+-                    "nationality": player.get("nationality"),
++                    "id": player.await get("id"),
++                    "name": player.await get("name"),
++                    "position": player.await get("position"),
++                    "date_of_birth": player.await get("dateOfBirth"),
++                    "nationality": player.await get("nationality"),
+                     "shirt_number": None,  # API中不包含球衣号码
+                     "contract_until": None,
+                 }
+@@ -213,7 +213,7 @@ 
+         return normalized_squad
+ 
+-    def _normalize_competitions_data(
++async def _normalize_competitions_data(
+         self, competitions: list[dict[str, Any]]
+     ) -> list[dict[str, Any]]:
+         """标准化参赛联赛数据."""
+@@ -222,11 +222,11 @@         for comp in competitions:
+             try:
+                 normalized_comp = {
+-                    "id": comp.get("id"),
+-                    "name": comp.get("name"),
+-                    "code": comp.get("code"),
+-                    "type": comp.get("type"),
+-                    "emblem": comp.get("emblem"),
++                    "id": comp.await get("id"),
++                    "name": comp.await get("name"),
++                    "code": comp.await get("code"),
++                    "type": comp.await get("type"),
++                    "emblem": comp.await get("emblem"),
+                 }
+                 normalized_competitions.append(normalized_comp)
+             except Exception as e:
+@@ -252,13 +252,13 @@             supported_competitions = [
+                 comp
+                 for comp in all_competitions
+-                if comp.get("code") in self.supported_competitions
++                if comp.await get("code") in self.supported_competitions
+             ]
+ 
+             for competition in supported_competitions:
+                 try:
+                     teams = await self.fetch_teams(str(competition["id"]))
+-                    team = next((t for t in teams if str(t.get("id")) == team_id), None)
++                    team = await next((t for t in teams if str(t.get("id")) == team_id), None)
+ 
+                     if team:
+                         normalized_team = self.normalize_team_data(team)
+@@ -271,7 +271,7 @@ 
+                 except Exception as e:
+                     logger.error(
+-                        f"Failed to get team {team_id} from competition {competition.get('code')}: {e}"
++                        f"Failed to get team {team_id} from competition {competition.await get('code')}: {e}"
+                     )
+                     continue
+ 
+@@ -312,30 +312,30 @@             logger.error(f"Failed to collect matches for team {team_id}: {e}")
+             return []
+ 
+-    def _normalize_match_for_team(
++async def _normalize_match_for_team(
+         self, match: dict[str, Any], team_id: str
+     ) -> dict[str, Any] | None:
+         """为球队视角标准化比赛数据."""
+         try:
+-            home_team = match.get("homeTeam", {})
+-            away_team = match.get("awayTeam", {})
+-            score = match.get("score", {})
++            home_team = match.await get("homeTeam", {})
++            away_team = match.await get("awayTeam", {})
++            score = match.await get("score", {})
+ 
+             # 判断球队是主队还是客队
+-            is_home_team = str(home_team.get("id")) == team_id
++            is_home_team = await str(home_team.get("id")) == team_id
+             opponent = away_team if is_home_team else home_team
+ 
+             # 获取比分
+-            full_time_score = score.get("fullTime", {})
++            full_time_score = score.await get("fullTime", {})
+             if is_home_team:
+-                team_score = full_time_score.get("home") or 0
+-                opponent_score = full_time_score.get("away") or 0
++                team_score = full_time_score.await get("home") or 0
++                opponent_score = full_time_score.await get("away") or 0
+             else:
+-                team_score = full_time_score.get("away") or 0
+-                opponent_score = full_time_score.get("home") or 0
++                team_score = full_time_score.await get("away") or 0
++                opponent_score = full_time_score.await get("home") or 0
+ 
+             # 判断比赛结果
+-            winner = score.get("winner")
++            winner = score.await get("winner")
+             if winner == "HOME_TEAM" and is_home_team:
+                 result = "win"
+             elif winner == "AWAY_TEAM" and not is_home_team:
+@@ -346,28 +346,28 @@                 result = "loss" if winner else None
+ 
+             return {
+-                "external_id": str(match.get("id")),
+-                "match_date": match.get("utcDate"),
+-                "status": match.get("status", "").lower(),
++                "external_id": await str(match.get("id")),
++                "match_date": match.await get("utcDate"),
++                "status": match.await get("status", "").lower(),
+                 "is_home_team": is_home_team,
+                 "opponent": {
+-                    "id": opponent.get("id"),
+-                    "name": opponent.get("name"),
+-                    "short_name": opponent.get("shortName"),
+-                    "crest": opponent.get("crest"),
++                    "id": opponent.await get("id"),
++                    "name": opponent.await get("name"),
++                    "short_name": opponent.await get("shortName"),
++                    "crest": opponent.await get("crest"),
+                 },
+                 "team_score": team_score,
+                 "opponent_score": opponent_score,
+                 "result": result,
+-                "matchday": match.get("matchday"),
+-                "stage": match.get("stage"),
++                "matchday": match.await get("matchday"),
++                "stage": match.await get("stage"),
+                 "competition": {
+-                    "id": match.get("competition", {}).get("id"),
+-                    "name": match.get("competition", {}).get("name"),
+-                    "code": match.get("competition", {}).get("code"),
++                    "id": match.await await get("competition", {}).get("id"),
++                    "name": match.await await get("competition", {}).get("name"),
++                    "code": match.await await get("competition", {}).get("code"),
+                 },
+-                "venue": match.get("venue"),
+-                "last_updated": match.get("lastUpdated"),
++                "venue": match.await get("venue"),
++                "last_updated": match.await get("lastUpdated"),
+             }
+ 
+         except Exception as e:
+@@ -392,7 +392,7 @@             supported_competitions = [
+                 comp
+                 for comp in all_competitions
+-                if comp.get("code") in self.supported_competitions
++                if comp.await get("code") in self.supported_competitions
+             ]
+ 
+             for competition in supported_competitions:
+@@ -400,9 +400,9 @@                     teams = await self.fetch_teams(str(competition["id"]))
+ 
+                     for team in teams:
+-                        team_name = team.get("name", "").lower()
+-                        short_name = team.get("shortName", "").lower()
+-                        tla = team.get("tla", "").lower()
++                        team_name = team.await get("name", "").lower()
++                        short_name = team.await get("shortName", "").lower()
++                        tla = team.await get("tla", "").lower()
+ 
+                         # 检查是否匹配搜索词
+                         if (
+@@ -421,7 +421,7 @@ 
+                 except Exception as e:
+                     logger.error(
+-                        f"Failed to search teams in competition {competition.get('code')}: {e}"
++                        f"Failed to search teams in competition {competition.await get('code')}: {e}"
+                     )
+                     continue
+ 

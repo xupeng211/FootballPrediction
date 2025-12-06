@@ -17,7 +17,8 @@ Logical Relation Rule - 逻辑关系检查规则
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple
+from collections.abc import Callable
 
 from src.quality.quality_protocol import (
     LogicalRelationRule as LogicalRelationRuleProtocol,
@@ -38,7 +39,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
 
     def __init__(
         self,
-        relations: Optional[List[Dict[str, Any]]] = None,
+        relations: Optional[list[dict[str, Any]]] = None,
         tolerance: float = 0.0,
         strict_mode: bool = True
     ):
@@ -226,7 +227,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             f"容忍度 {self.tolerance}, 严格模式 {self.strict_mode}"
         )
 
-    async def check(self, features: Dict[str, Any]) -> List[str]:
+    async def check(self, features: dict[str, Any]) -> list[str]:
         """
         检查特征数据中的逻辑关系。
 
@@ -264,7 +265,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
 
         return errors
 
-    def _check_single_relation(self, features: Dict[str, Any], relation: Dict[str, Any]) -> Optional[str]:
+    def _check_single_relation(self, features: dict[str, Any], relation: dict[str, Any]) -> Optional[str]:
         """
         检查单个逻辑关系。
 
@@ -301,7 +302,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         return check_function(relation_name, field_a, value_a, field_b, value_b, relation_tolerance, relation)
 
     def _check_gte(self, relation_name: str, field_a: str, value_a: float,
-                   field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
+                   field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
         """检查 value_a >= value_b"""
         if value_a + tolerance < value_b:
             return (
@@ -311,7 +312,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         return None
 
     def _check_lte(self, relation_name: str, field_a: str, value_a: float,
-                   field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
+                   field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
         """检查 value_a <= value_b"""
         if value_a > value_b + tolerance:
             return (
@@ -321,7 +322,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         return None
 
     def _check_gt(self, relation_name: str, field_a: str, value_a: float,
-                  field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
+                  field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
         """检查 value_a > value_b"""
         if value_a <= value_b + tolerance:
             return (
@@ -331,7 +332,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         return None
 
     def _check_lt(self, relation_name: str, field_a: str, value_a: float,
-                  field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
+                  field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
         """检查 value_a < value_b"""
         if value_a >= value_b - tolerance:
             return (
@@ -341,7 +342,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         return None
 
     def _check_eq(self, relation_name: str, field_a: str, value_a: float,
-                  field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
+                  field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
         """检查 value_a == value_b"""
         if abs(value_a - value_b) > tolerance:
             return (
@@ -351,7 +352,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         return None
 
     def _check_sum_close_to_100(self, relation_name: str, field_a: str, value_a: float,
-                                field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
+                                field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
         """检查两个值的和是否接近100%"""
         total = value_a + value_b
         deviation = abs(total - 100.0)
@@ -363,7 +364,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         return None
 
     def _check_xg_reasonable(self, relation_name: str, field_a: str, xg_value: float,
-                             field_b: str, goals: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
+                             field_b: str, goals: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
         """检查xG值与实际进球数的合理性"""
         # xG值应该在合理范围内，且与进球数不应该差异过大
         if xg_value < 0 or xg_value > 10:  # xG应该在0-10之间
@@ -379,7 +380,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         return None
 
     def _check_total_cards_composition(self, relation_name: str, field_a: str, yellow_home: float,
-                                       field_b: str, red_home: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
+                                       field_b: str, red_home: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
         """检查总牌数的组成（这里简化为逻辑合理性检查）"""
         extra_fields = relation.get("extra_fields", [])
         if len(extra_fields) >= 2:
@@ -395,7 +396,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
 
         return None
 
-    def get_relation_summary(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def get_relation_summary(self, features: dict[str, Any]) -> dict[str, Any]:
         """
         获取逻辑关系检查的详细摘要。
 
@@ -479,7 +480,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
 
         return summary
 
-    def add_relation(self, relation: Dict[str, Any]) -> None:
+    def add_relation(self, relation: dict[str, Any]) -> None:
         """
         添加新的逻辑关系检查。
 
@@ -521,7 +522,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         logger.warning(f"未找到要移除的逻辑关系检查: {relation_name}")
         return False
 
-    def get_relation_names(self) -> List[str]:
+    def get_relation_names(self) -> list[str]:
         """
         获取所有已配置的逻辑关系名称。
 
@@ -553,7 +554,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         self.strict_mode = strict_mode
         logger.info(f"严格模式已设置为: {strict_mode}")
 
-    def validate_relation_config(self) -> List[str]:
+    def validate_relation_config(self) -> list[str]:
         """
         验证所有逻辑关系配置的有效性。
 

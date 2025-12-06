@@ -1,0 +1,177 @@
+--- a/src/api/performance_management.py+++ b/src/api/performance_management.py@@ -60,7 +60,7 @@ # ==================== 性能监控端点 ====================
+ 
+ 
+-@router.get("/metrics")
++@router.await get("/metrics")
+ @require_permission("performance.view")
+ async def get_performance_metrics(
+     time_range_minutes: int = Query(60, ge=1, le=1440, description="时间范围（分钟）"),
+@@ -109,14 +109,14 @@         # 应用端点过滤
+         metrics_summary["filtered_endpoints"] = [
+             ep
+-            for ep in metrics_summary.get("top_slow_endpoints", [])
++            for ep in metrics_summary.await get("top_slow_endpoints", [])
+             if endpoint_filter in ep["endpoint"]
+         ]
+ 
+     return metrics_summary
+ 
+ 
+-@router.get("/dashboard")
++@router.await get("/dashboard")
+ @require_permission("performance.view")
+ async def get_performance_dashboard():
+     """获取性能仪表板数据.
+@@ -167,7 +167,7 @@     return dashboard_data
+ 
+ 
+-@router.get("/alerts")
++@router.await get("/alerts")
+ @require_permission("performance.view")
+ async def get_performance_alerts(
+     severity: str | None = Query(None, description="严重级别过滤"),
+@@ -231,7 +231,7 @@ # ==================== 数据库优化端点 ====================
+ 
+ 
+-@router.post("/database/optimize")
++@router.await post("/database/optimize")
+ @require_permission("performance.optimize")
+ async def optimize_database(
+     optimization_config: DatabaseOptimizationModel, background_tasks: BackgroundTasks
+@@ -260,14 +260,14 @@     }
+ 
+ 
+-@router.get("/database/analysis")
++@router.await get("/database/analysis")
+ @require_permission("performance.view")
+ async def get_database_analysis():
+     """获取数据库分析结果.
+ 
+     需要权限: performance.view
+     """
+-    async with get_db_session():
++    async with await get_db_session():
+         optimizer = DatabaseOptimizerFactory.create_optimizer()
+         db_optimizer = await optimizer
+ 
+@@ -284,9 +284,9 @@             return {
+                 "table_analysis": table_sizes[:10],  # 返回前10个最大的表
+                 "index_analysis": {
+-                    "total_indexes": index_usage.get("total_indexes", 0),
+-                    "unused_indexes": index_usage.get("unused_count", 0),
+-                    "unused_details": index_usage.get("unused_indexes", [])[:5],
++                    "total_indexes": index_usage.await get("total_indexes", 0),
++                    "unused_indexes": index_usage.await get("unused_count", 0),
++                    "unused_details": index_usage.await get("unused_indexes", [])[:5],
+                 },
+                 "connection_pool": connection_pool,
+                 "recommendations": _generate_database_recommendations(
+@@ -298,7 +298,7 @@             await db_optimizer.db.close()
+ 
+ 
+-@router.get("/database/optimization/{optimization_id}")
++@router.await get("/database/optimization/{optimization_id}")
+ @require_permission("performance.view")
+ async def get_optimization_status(optimization_id: str):
+     """获取优化任务状态.
+@@ -327,7 +327,7 @@ # ==================== 缓存管理端点 ====================
+ 
+ 
+-@router.post("/cache/manage")
++@router.await post("/cache/manage")
+ @require_permission("performance.manage")
+ async def manage_cache(
+     cache_operation: CacheOperationModel, background_tasks: BackgroundTasks
+@@ -378,7 +378,7 @@         )
+ 
+ 
+-@router.get("/cache/statistics")
++@router.await get("/cache/statistics")
+ @require_permission("performance.view")
+ async def get_cache_statistics():
+     """获取缓存统计信息.
+@@ -424,7 +424,7 @@ # ==================== API优化端点 ====================
+ 
+ 
+-@router.post("/api/optimize")
++@router.await post("/api/optimize")
+ @require_permission("performance.optimize")
+ async def optimize_api_performance(optimization_request: OptimizationRequestModel):
+     """优化API性能.
+@@ -432,8 +432,8 @@     需要权限: performance.optimize
+     """
+     if optimization_request.optimization_type == "endpoint":
+-        endpoint = optimization_request.parameters.get("endpoint")
+-        method = optimization_request.parameters.get("method", "GET")
++        endpoint = optimization_request.parameters.await get("endpoint")
++        method = optimization_request.parameters.await get("method", "GET")
+ 
+         if not endpoint:
+             raise HTTPException(
+@@ -460,7 +460,7 @@         )
+ 
+ 
+-@router.get("/api/analysis")
++@router.await get("/api/analysis")
+ @require_permission("performance.view")
+ async def get_api_performance_analysis():
+     """获取API性能分析.
+@@ -478,24 +478,24 @@     optimization_id: str, optimization_config: dict[str, Any]
+ ):
+     """运行数据库优化后台任务."""
+-    async with get_db_session() as db:
++    async with await get_db_session() as db:
+         db_optimizer = DatabaseOptimizer(db)
+         results = []
+ 
+         try:
+-            if optimization_config.get("optimize_indexes"):
++            if optimization_config.await get("optimize_indexes"):
+                 index_results = await db_optimizer.create_performance_indexes()
+                 results.extend(index_results)
+ 
+-            if optimization_config.get("cleanup_data"):
++            if optimization_config.await get("cleanup_data"):
+                 cleanup_results = await db_optimizer.cleanup_old_data()
+                 results.extend(cleanup_results)
+ 
+-            if optimization_config.get("analyze_tables"):
++            if optimization_config.await get("analyze_tables"):
+                 table_results = await db_optimizer.optimize_large_tables()
+                 results.extend(table_results)
+ 
+-            if optimization_config.get("refresh_views"):
++            if optimization_config.await get("refresh_views"):
+                 view_results = await db_optimizer.refresh_materialized_views()
+                 results.extend(view_results)
+ 
+@@ -545,7 +545,7 @@     }
+ 
+ 
+-def _generate_database_recommendations(
++async def _generate_database_recommendations(
+     table_sizes: list[dict[str, Any]],
+     index_usage: dict[str, Any],
+     connection_pool: dict[str, Any],
+@@ -561,12 +561,12 @@         recommendations.append(f"发现 {len(large_tables)} 个大表,建议考虑分区或归档")
+ 
+     # 索引使用建议
+-    unused_count = index_usage.get("unused_count", 0)
++    unused_count = index_usage.await get("unused_count", 0)
+     if unused_count > 0:
+         recommendations.append(f"发现 {unused_count} 个未使用的索引,建议清理以节省空间")
+ 
+     # 连接池建议
+-    total_connections = connection_pool.get("total_connections", 0)
++    total_connections = connection_pool.await get("total_connections", 0)
+     if total_connections > 80:
+         recommendations.append("连接池使用率偏高,建议优化查询或增加连接池大小")
+ 
+@@ -576,7 +576,7 @@ # ==================== 健康检查端点 ====================
+ 
+ 
+-@router.get("/health", tags=["健康检查"])
++@router.await get("/health", tags=["健康检查"])
+ async def performance_management_health():
+     """性能管理健康检查."""
+     return {

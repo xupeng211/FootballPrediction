@@ -1,0 +1,40 @@
+--- a/src/api/system.py+++ b/src/api/system.py@@ -21,7 +21,7 @@ router = APIRouter(tags=["系统管理"])
+ 
+ 
+-@router.get("/stats")
++@router.await get("/stats")
+ async def get_system_stats() -> dict[str, Any]:
+     """获取系统统计信息
+     Get system statistics.
+@@ -43,7 +43,7 @@         ) from e
+ 
+ 
+-@router.get("/version")
++@router.await get("/version")
+ async def get_api_version() -> dict[str, Any]:
+     """获取API版本信息
+     Get API version information.
+@@ -65,7 +65,7 @@         ) from e
+ 
+ 
+-@router.get("/queue")
++@router.await get("/queue")
+ async def get_queue_status() -> dict[str, Any]:
+     """获取队列状态信息
+     Get queue status information.
+@@ -87,7 +87,7 @@         ) from e
+ 
+ 
+-@router.post("/queue/status")
++@router.await post("/queue/status")
+ async def get_queue_status_post() -> dict[str, Any]:
+     """获取队列状态信息 (POST端点)
+     Get queue status information (POST endpoint).
+@@ -109,7 +109,7 @@         ) from e
+ 
+ 
+-@router.get("/health")
++@router.await get("/health")
+ async def system_health_check() -> dict[str, Any]:
+     """系统健康检查
+     System health check.

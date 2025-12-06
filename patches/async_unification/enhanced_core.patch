@@ -1,0 +1,121 @@
+--- a/src/services/enhanced_core.py+++ b/src/services/enhanced_core.py@@ -18,7 +18,7 @@     pass  # 添加pass语句
+     """服务配置类"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         name: str,
+         version: str = "1.0.0",
+@@ -40,7 +40,7 @@     pass  # 添加pass语句
+     """服务指标收集器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.metrics = {
+@@ -51,7 +51,7 @@             "last_call": None,
+         }
+ 
+-    def record_call(self, duration: float, success: bool = True):
++async def record_call(self, duration: float, success: bool = True):
+         """函数文档字符串."""
+         # 添加pass语句
+         """记录调用"""
+@@ -62,7 +62,7 @@         if not success:
+             self.metrics["errors"] += 1
+ 
+-    def get_metrics(self) -> dict[str, Any]:
++async def get_metrics(self) -> dict[str, Any]:
+         """获取指标."""
+         return self.metrics.copy()
+ 
+@@ -74,7 +74,7 @@     并添加了指标收集,配置管理,健康检查等功能.
+     """
+ 
+-    def __init__(self, config: ServiceConfig | None = None):
++async def __init__(self, config: ServiceConfig | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化服务"
+@@ -150,17 +150,17 @@             self.logger.error(f"Failed to stop service {self.name}: {e}")
+             return False
+ 
+-    def get_status(self) -> str:
++async def get_status(self) -> str:
+         """获取服务状态."""
+         if not self._initialized:
+             return "not_initialized"
+         return "running" if self._running else "stopped"
+ 
+-    def is_healthy(self) -> bool:
++async def is_healthy(self) -> bool:
+         """检查服务是否健康."""
+         return self._health_status["status"] == "healthy"
+ 
+-    def get_health_info(self) -> dict[str, Any]:
++async def get_health_info(self) -> dict[str, Any]:
+         """获取健康信息."""
+         health_info = self._health_status.copy()
+         health_info.update(
+@@ -214,22 +214,22 @@                 f"Operation {operation_name} completed in {duration:.3f}s"
+             )
+ 
+-    def add_dependency(self, name: str, service: "EnhancedBaseService"):
++async def add_dependency(self, name: str, service: "EnhancedBaseService"):
+         """函数文档字符串."""
+         # 添加pass语句
+         """添加依赖服务"""
+         self._dependencies[name] = service
+         self.logger.debug(f"Added dependency: {name}")
+ 
+-    def get_dependency(self, name: str) -> Optional["EnhancedBaseService"]:
++async def get_dependency(self, name: str) -> Optional["EnhancedBaseService"]:
+         """获取依赖服务."""
+-        return self._dependencies.get(name)
+-
+-    def get_config(self, key: str, default: Any = None) -> Any:
++        return self._dependencies.await get(name)
++
++async def get_config(self, key: str, default: Any = None) -> Any:
+         """获取配置值."""
+-        return self.config.config.get(key, default)
+-
+-    def _update_health_status(
++        return self.config.config.await get(key, default)
++
++async def _update_health_status(
+         self, status: str, message: str, details: dict[str, Any] | None = None
+     ):
+         """更新健康状态."""
+@@ -242,13 +242,13 @@             }
+         )
+ 
+-    def _get_uptime_seconds(self) -> float | None:
++async def _get_uptime_seconds(self) -> float | None:
+         """获取运行时间（秒）."""
+         if self._startup_time:
+             return (datetime.now() - self._startup_time).total_seconds()
+         return None
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         return (
+             f"<{self.__class__.__name__}(name={self.name}, status={self.get_status()})>"
+         )
+@@ -258,7 +258,7 @@ class BaseService(EnhancedBaseService):
+     """向后兼容的基础服务类."""
+ 
+-    def __init__(self, name: str = "BaseService"):
++async def __init__(self, name: str = "BaseService"):
+         """函数文档字符串."""
+         # 添加pass语句
+         config = ServiceConfig(name=name)
+@@ -277,7 +277,7 @@ class AbstractBaseService(EnhancedBaseService):
+     """抽象基础服务类 - 强制子类实现所有方法."""
+ 
+-    def __init__(self, name: str):
++async def __init__(self, name: str):
+         """函数文档字符串."""
+         # 添加pass语句
+         config = ServiceConfig(name=name)

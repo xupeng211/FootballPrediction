@@ -1,0 +1,15 @@
+--- a/src/api/repositories.py+++ b/src/api/repositories.py@@ -11,13 +11,13 @@ router = APIRouter(prefix="/repositories", tags=["Repositories"])
+ 
+ 
+-@router.get("/")
++@router.await get("/")
+ async def list_repositories():
+     """列出所有仓储."""
+     return {"message": "Repository list endpoint"}
+ 
+ 
+-@router.get("/{repo_id}")
++@router.await get("/{repo_id}")
+ async def get_repository(repo_id: str):
+     """获取特定仓储."""
+     return {"repository_id": repo_id, "message": "Repository details"}

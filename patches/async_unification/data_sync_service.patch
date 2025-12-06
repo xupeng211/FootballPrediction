@@ -1,0 +1,109 @@
+--- a/src/services/data_sync_service.py+++ b/src/services/data_sync_service.py@@ -21,7 +21,7 @@ class DataSyncService:
+     """数据同步服务."""
+ 
+-    def __init__(self, database_url: str | None = None):
++async def __init__(self, database_url: str | None = None):
+         self.database_url = database_url or os.getenv(
+             "DATABASE_URL",
+             "postgresql+asyncpg://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging",
+@@ -140,7 +140,7 @@                         result["success"] += 1
+                     except Exception as e:
+                         logger.error(
+-                            f"Failed to process upcoming match {match_data.get('id')}: {e}"
++                            f"Failed to process upcoming match {match_data.await get('id')}: {e}"
+                         )
+                         result["failed"] += 1
+ 
+@@ -186,7 +186,7 @@                         result["success"] += 1
+                     except Exception as e:
+                         logger.error(
+-                            f"Failed to process recent match {match_data.get('id')}: {e}"
++                            f"Failed to process recent match {match_data.await get('id')}: {e}"
+                         )
+                         result["failed"] += 1
+ 
+@@ -214,11 +214,11 @@         Returns:
+             处理后的比赛模型
+         """
+-        external_id = str(match_data.get("id"))
++        external_id = await str(match_data.get("id"))
+ 
+         # 检查是否已存在
+         stmt = select(ExternalMatch).where(ExternalMatch.external_id == external_id)
+-        existing_match = await session.execute(stmt)
++        existing_match = await session.await execute(stmt)
+         match_record = existing_match.scalar_one_or_none()
+ 
+         if match_record:
+@@ -251,7 +251,7 @@         cache_key = f"matches:status:{status}:limit:{limit}"
+ 
+         # 尝试从缓存获取
+-        cached_data = await self.redis_manager.get(cache_key)
++        cached_data = await self.redis_manager.await get(cache_key)
+         if cached_data:
+             logger.info(f"Cache hit for {cache_key}")
+             return cached_data
+@@ -266,7 +266,7 @@                     .limit(limit)
+                 )
+ 
+-                result = await session.execute(stmt)
++                result = await session.await execute(stmt)
+                 matches = result.scalars().all()
+ 
+                 # 转换为字典列表
+@@ -293,7 +293,7 @@         cache_key = f"matches:upcoming:limit:{limit}"
+ 
+         # 尝试从缓存获取
+-        cached_data = await self.redis_manager.get(cache_key)
++        cached_data = await self.redis_manager.await get(cache_key)
+         if cached_data:
+             return cached_data
+ 
+@@ -308,7 +308,7 @@                     .limit(limit)
+                 )
+ 
+-                result = await session.execute(stmt)
++                result = await session.await execute(stmt)
+                 matches = result.scalars().all()
+ 
+                 match_dicts = [match.to_dict() for match in matches]
+@@ -336,7 +336,7 @@         cache_key = f"matches:recent_finished:limit:{limit}"
+ 
+         # 尝试从缓存获取
+-        cached_data = await self.redis_manager.get(cache_key)
++        cached_data = await self.redis_manager.await get(cache_key)
+         if cached_data:
+             return cached_data
+ 
+@@ -350,7 +350,7 @@                     .limit(limit)
+                 )
+ 
+-                result = await session.execute(stmt)
++                result = await session.await execute(stmt)
+                 matches = result.scalars().all()
+ 
+                 match_dicts = [match.to_dict() for match in matches]
+@@ -383,7 +383,7 @@                     .where(ExternalMatch.status == "finished")
+                 )
+ 
+-                result = await session.execute(stmt)
++                result = await session.await execute(stmt)
+                 deleted_count = result.rowcount
+                 await session.commit()
+ 
+@@ -413,7 +413,7 @@                     "cancelled",
+                 ]:
+                     stmt = select(ExternalMatch).where(ExternalMatch.status == status)
+-                    result = await session.execute(stmt)
++                    result = await session.await execute(stmt)
+                     count = len(result.scalars().all())
+                     stats[f"{status}_count"] = count
+ 
+@@ -423,7 +423,7 @@                     .order_by(ExternalMatch.updated_at.desc())
+                     .limit(1)
+                 )
+-                result = await session.execute(stmt)
++                result = await session.await execute(stmt)
+                 latest_match = result.scalar_one_or_none()
+ 
+                 if latest_match:

@@ -1,0 +1,24 @@
+--- a/src/api/advanced_predictions.py+++ b/src/api/advanced_predictions.py@@ -30,7 +30,7 @@     timestamp: datetime
+ 
+ 
+-@router.post("/advanced_prediction_api/execute")
++@router.await post("/advanced_prediction_api/execute")
+ async def execute_advanced_prediction_api(
+     request: AdvancedPredictionAPIRequest, background_tasks: BackgroundTasks
+ ) -> AdvancedPredictionAPIResponse:
+@@ -55,7 +55,7 @@         ) from e  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性
+ 
+ 
+-@router.get("/advanced_prediction_api/status/{job_id}")
++@router.await get("/advanced_prediction_api/status/{job_id}")
+ async def get_advanced_prediction_api_status(job_id: str):
+     """获取Advanced Prediction API执行状态."""
+     # ISSUE: 需要实现状态查询的业务逻辑，包括数据库查询和状态聚合
+@@ -67,7 +67,7 @@     }
+ 
+ 
+-@router.get("/advanced_prediction_api/health")
++@router.await get("/advanced_prediction_api/health")
+ async def health_check():
+     """健康检查."""
+     return {

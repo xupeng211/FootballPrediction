@@ -1,0 +1,8 @@
+--- a/src/features/feature_calculator.py+++ b/src/features/feature_calculator.py@@ -13,7 +13,7 @@     class FeatureCalculator:
+         """FeatureCalculator 占位符实现."""
+ 
+-        def __init__(self, *args, **kwargs):
++async def __init__(self, *args, **kwargs):
+             pass
+ 
+ 

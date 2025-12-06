@@ -1,0 +1,48 @@
+--- a/src/cache/multi_level_cache.py+++ b/src/cache/multi_level_cache.py@@ -19,14 +19,14 @@     pass  # 添加pass语句
+     """多级缓存管理器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.l1_cache = {}  # 内存缓存
+         self.l2_cache = {}  # Redis缓存（模拟）
+         self.l3_cache = {}  # 数据库缓存（模拟）
+ 
+-    def get(self, key: str) -> Any | None:
++async def get(self, key: str) -> Any | None:
+         """从缓存获取值（按级别依次检查）."""
+         # L1缓存检查
+         if key in self.l1_cache:
+@@ -68,7 +68,7 @@ 
+         return None
+ 
+-    def set(
++async def set(
+         self,
+         key: str,
+         value: Any,
+@@ -92,7 +92,7 @@         elif level == CacheLevel.L3_DATABASE:
+             self.l3_cache[key] = cache_item
+ 
+-    def invalidate(self, key: str):
++async def invalidate(self, key: str):
+         """函数文档字符串."""
+         # 添加pass语句
+         """使缓存失效"""
+@@ -100,7 +100,7 @@             if key in cache:
+                 del cache[key]
+ 
+-    def clear_level(self, level: CacheLevel):
++async def clear_level(self, level: CacheLevel):
+         """函数文档字符串."""
+         # 添加pass语句
+         """清空指定级别的缓存"""
+@@ -111,7 +111,7 @@         elif level == CacheLevel.L3_DATABASE:
+             self.l3_cache.clear()
+ 
+-    def get_cache_stats(self) -> dict[str, Any]:
++async def get_cache_stats(self) -> dict[str, Any]:
+         """获取缓存统计信息."""
+         return {
+             "l1_cache_size": len(self.l1_cache),

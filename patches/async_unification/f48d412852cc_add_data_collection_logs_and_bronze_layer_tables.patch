@@ -1,0 +1,16 @@
+--- a/src/database/migrations/versions/f48d412852cc_add_data_collection_logs_and_bronze_layer_tables.py+++ b/src/database/migrations/versions/f48d412852cc_add_data_collection_logs_and_bronze_layer_tables.py@@ -22,7 +22,7 @@ depends_on: str | Sequence[str] | None = None
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     """创建数据采集日志表和Bronze层原始数据表.
+ 
+     基于 DATA_DESIGN.md 第1.3节和第2.1节设计:
+@@ -226,7 +226,7 @@         logger.info(f"Warning: Could not add columns to features table: {e}")
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     """回滚数据采集日志表和Bronze层表的创建."""
+     # 删除Gold层特征表的扩展字段
+     try:

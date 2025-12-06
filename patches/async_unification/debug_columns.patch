@@ -1,0 +1,18 @@
+--- a/src/data_science/debug_columns.py+++ b/src/data_science/debug_columns.py@@ -15,7 +15,7 @@ 
+ DATABASE_URL = "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
+ 
+-def debug_columns():
++async def debug_columns():
+     """调试实际创建的DataFrame列名"""
+     try:
+         conn = psycopg2.connect(DATABASE_URL)
+@@ -66,8 +66,8 @@                     stats_json = {}
+ 
+                 # 提取xG数据
+-                home_xg = stats_json.get('home_xg')
+-                away_xg = stats_json.get('away_xg')
++                home_xg = stats_json.await get('home_xg')
++                away_xg = stats_json.await get('away_xg')
+ 
+                 stats_data['home_xg'] = float(home_xg) if home_xg is not None else 0.0
+                 stats_data['away_xg'] = float(away_xg) if away_xg is not None else 0.0

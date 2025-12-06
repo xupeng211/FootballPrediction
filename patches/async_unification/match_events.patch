@@ -1,0 +1,88 @@
+--- a/src/domain/events/match_events.py+++ b/src/domain/events/match_events.py@@ -15,7 +15,7 @@     event_type: str
+     data: dict[str, Any] = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         if self.data is None:
+             self.data = {}
+ 
+@@ -44,7 +44,7 @@ class MatchStartedEvent(DomainEvent):
+     """比赛开始事件."""
+ 
+-    def __init__(self, match_id: int, home_team_id: int, away_team_id: int, **kwargs):
++async def __init__(self, match_id: int, home_team_id: int, away_team_id: int, **kwargs):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(aggregate_id=match_id)
+@@ -52,10 +52,10 @@         self.home_team_id = home_team_id
+         self.away_team_id = away_team_id
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         return "match_started"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {
+             "match_id": self.match_id,
+             "home_team_id": self.home_team_id,
+@@ -66,7 +66,7 @@ class MatchFinishedEvent(DomainEvent):
+     """比赛结束事件."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         match_id: int,
+         home_team_id: int,
+@@ -82,10 +82,10 @@         self.final_score = final_score
+         self.result = result
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         return "match_finished"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {
+             "match_id": self.match_id,
+             "home_team_id": self.home_team_id,
+@@ -101,24 +101,24 @@ class MatchCancelledEvent(DomainEvent):
+     """比赛取消事件."""
+ 
+-    def __init__(self, match_id: int, reason: str, **kwargs):
++async def __init__(self, match_id: int, reason: str, **kwargs):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(aggregate_id=match_id)
+         self.match_id = match_id
+         self.reason = reason
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         return "match_cancelled"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {"match_id": self.match_id, "reason": self.reason}
+ 
+ 
+ class MatchPostponedEvent(DomainEvent):
+     """比赛延期事件."""
+ 
+-    def __init__(self, match_id: int, new_date: str, reason: str, **kwargs):
++async def __init__(self, match_id: int, new_date: str, reason: str, **kwargs):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(aggregate_id=match_id)
+@@ -126,10 +126,10 @@         self.new_date = new_date
+         self.reason = reason
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         return "match_postponed"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {
+             "match_id": self.match_id,
+             "new_date": self.new_date,

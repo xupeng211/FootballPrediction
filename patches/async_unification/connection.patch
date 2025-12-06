@@ -1,0 +1,16 @@
+--- a/src/database/connection.py+++ b/src/database/connection.py@@ -61,7 +61,7 @@ # ============================================================================
+ 
+ # 新的初始化函数
+-def initialize_database(database_url=None, **kwargs):
++async def initialize_database(database_url=None, **kwargs):
+     """⚠️ DEPRECATED: 使用 src.database.async_manager.initialize_database"""
+     import warnings
+ 
+@@ -128,7 +128,7 @@     )
+ 
+     # 直接使用新的实现
+-    async with get_db_session() as session:
++    async with await get_db_session() as session:
+         yield session
+ 
+ 

@@ -1,0 +1,44 @@
+--- a/src/data/collectors/base_collector.py+++ b/src/data/collectors/base_collector.py@@ -20,7 +20,7 @@     metadata: dict[str, Any] | None = None
+     timestamp: datetime | None = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         if self.timestamp is None:
+             self.timestamp = datetime.now()
+ 
+@@ -28,10 +28,10 @@ class BaseCollector:
+     """数据收集器基类."""
+ 
+-    def __init__(self, config: dict[str, Any] | None = None):
++async def __init__(self, config: dict[str, Any] | None = None):
+         self.config = config or {}
+-        self.timeout = self.config.get("timeout", 30.0)
+-        self.max_retries = self.config.get("max_retries", 3)
++        self.timeout = self.config.await get("timeout", 30.0)
++        self.max_retries = self.config.await get("max_retries", 3)
+         self.logger = logger
+ 
+     async def collect(self, *args, **kwargs) -> CollectionResult:
+@@ -114,20 +114,20 @@                 self.logger.error(f"Request error for {url}: {e}")
+                 raise httpx.RequestError(f"Request error for {url}: {e}")
+ 
+-    def create_success_result(
++async def create_success_result(
+         self, data: Any, metadata: dict[str, Any] | None = None
+     ) -> CollectionResult:
+         """创建成功的结果."""
+         return CollectionResult(success=True, data=data, metadata=metadata)
+ 
+-    def create_error_result(
++async def create_error_result(
+         self, error: str, metadata: dict[str, Any] | None = None
+     ) -> CollectionResult:
+         """创建错误的结果."""
+         return CollectionResult(success=False, error=error, metadata=metadata)
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

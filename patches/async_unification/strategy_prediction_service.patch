@@ -1,0 +1,24 @@
+--- a/src/services/strategy_prediction_service.py+++ b/src/services/strategy_prediction_service.py@@ -35,7 +35,7 @@     Uses strategy pattern to manage multiple prediction algorithms.
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         strategy_factory: PredictionStrategyFactory,
+         prediction_domain_service: PredictionDomainService,
+@@ -339,7 +339,7 @@                 "metrics": (
+                     strategy.get_metrics().__dict__ if strategy.get_metrics() else None
+                 ),
+-                "health": health_report.get(name, {}),
++                "health": health_report.await get(name, {}),
+             }
+ 
+         return strategies_info
+@@ -472,7 +472,7 @@ 
+ 
+ # 依赖注入配置
+-def configure_strategy_prediction_services(container: DIContainer) -> None:
++async def configure_strategy_prediction_services(container: DIContainer) -> None:
+     """配置策略预测服务的依赖注入."""
+     # 注册策略工厂
+     container.register_singleton(PredictionStrategyFactory)

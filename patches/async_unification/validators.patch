@@ -1,0 +1,40 @@
+--- a/src/utils/validators.py+++ b/src/utils/validators.py@@ -4,7 +4,7 @@ from typing import Any
+ 
+ 
+-def is_valid_email(email: str) -> bool:
++async def is_valid_email(email: str) -> bool:
+     """Validate email address."""
+     if not isinstance(email, str) or not email:
+         return False
+@@ -34,7 +34,7 @@     return True
+ 
+ 
+-def is_valid_phone(phone: str) -> bool:
++async def is_valid_phone(phone: str) -> bool:
+     """Validate phone number."""
+     # 检查输入类型
+     if not isinstance(phone, str) or not phone:
+@@ -50,7 +50,7 @@     return len(digits_only) >= 10
+ 
+ 
+-def is_valid_url(url: str) -> bool:
++async def is_valid_url(url: str) -> bool:
+     """Validate URL."""
+     # 检查输入类型
+     if not isinstance(url, str) or not url:
+@@ -89,7 +89,7 @@     return True
+ 
+ 
+-def validate_required_fields(
++async def validate_required_fields(
+     data: dict[str, Any], required_fields: list[str]
+ ) -> list[str]:
+     """Check if all required fields are present."""
+@@ -100,7 +100,7 @@     return missing_fields
+ 
+ 
+-def validate_data_types(data: dict, schema: dict) -> list[str]:
++async def validate_data_types(data: dict, schema: dict) -> list[str]:
+     """验证数据类型."""
+     errors = []
+     for field, expected_type in schema.items():

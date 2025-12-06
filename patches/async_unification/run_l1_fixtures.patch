@@ -1,0 +1,8 @@
+--- a/src/jobs/run_l1_fixtures.py+++ b/src/jobs/run_l1_fixtures.py@@ -34,7 +34,7 @@ class FotMobL1FixturesJob:
+     """FotMob L1 赛程采集任务"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.logger = logger
+ 
+     async def ensure_team_exists(self, session, team_name: str) -> int:

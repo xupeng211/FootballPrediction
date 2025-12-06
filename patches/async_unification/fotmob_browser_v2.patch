@@ -1,0 +1,88 @@
+--- a/src/data/collectors/fotmob_browser_v2.py+++ b/src/data/collectors/fotmob_browser_v2.py@@ -65,7 +65,7 @@     2. Stage 2: 并发获取每场比赛的详细信息
+     """
+ 
+-    def __init__(self, max_concurrent_details: int = 3):
++async def __init__(self, max_concurrent_details: int = 3):
+         self.base_url = "https://www.fotmob.com"
+         self.captured_data: list[dict] = []
+         self.browser: Optional[Browser] = None
+@@ -146,7 +146,7 @@         except Exception as e:
+             print(f"⚠️ 浏览器关闭警告: {e}")
+ 
+-    def _setup_comprehensive_api_interception(self, page: Page):
++async def _setup_comprehensive_api_interception(self, page: Page):
+         """设置全面的API拦截 - V2版本"""
+ 
+         async def handle_response(response):
+@@ -213,7 +213,7 @@         # 添加响应监听器
+         page.on("response", handle_response)
+ 
+-    def _extract_endpoint(self, url: str) -> str:
++async def _extract_endpoint(self, url: str) -> str:
+         """从URL提取API端点"""
+         try:
+             from urllib.parse import urlparse
+@@ -419,7 +419,7 @@             print(f"  ❌ 详情采集失败: {match_id} - {e}")
+             return None
+ 
+-    def _parse_detailed_match_data(self, match_id: int) -> Optional[FotmobMatchDataV2]:
++async def _parse_detailed_match_data(self, match_id: int) -> Optional[FotmobMatchDataV2]:
+         """解析详细的比赛数据"""
+         # 从原始API数据中提取基础信息
+         basic_match_data = None
+@@ -484,7 +484,7 @@ 
+         return match_data
+ 
+-    def _extract_lineup_data(self, match_id: int) -> Optional[dict[str, Any]]:
++async def _extract_lineup_data(self, match_id: int) -> Optional[dict[str, Any]]:
+         """提取阵容数据"""
+         for api_info in self.captured_data:
+             if f'match/{match_id}' in api_info['url'] and ('lineup' in api_info['url'].lower() or 'matchDetails' in api_info['url']):
+@@ -495,7 +495,7 @@                     return lineup_data
+         return None
+ 
+-    def _extract_stats_data(self, match_id: int) -> Optional[dict[str, Any]]:
++async def _extract_stats_data(self, match_id: int) -> Optional[dict[str, Any]]:
+         """提取统计数据"""
+         for api_info in self.captured_data:
+             if f'match/{match_id}' in api_info['url'] and ('stats' in api_info['url'].lower() or 'matchDetails' in api_info['url']):
+@@ -506,7 +506,7 @@                     return stats_data
+         return None
+ 
+-    def _extract_events_data(self, match_id: int) -> Optional[list[dict[str, Any]]]:
++async def _extract_events_data(self, match_id: int) -> Optional[list[dict[str, Any]]]:
+         """提取事件数据"""
+         for api_info in self.captured_data:
+             if f'match/{match_id}' in api_info['url']:
+@@ -517,7 +517,7 @@                     return events_data
+         return None
+ 
+-    def _extract_odds_data(self, match_id: int) -> Optional[dict[str, Any]]:
++async def _extract_odds_data(self, match_id: int) -> Optional[dict[str, Any]]:
+         """提取赔率数据"""
+         for api_info in self.captured_data:
+             if 'odds' in api_info['url'].lower():
+@@ -527,7 +527,7 @@                     return odds_data
+         return None
+ 
+-    def _extract_venue_data(self, match_id: int) -> Optional[dict[str, Any]]:
++async def _extract_venue_data(self, match_id: int) -> Optional[dict[str, Any]]:
+         """提取场地信息"""
+         for api_info in self.captured_data:
+             if f'match/{match_id}' in api_info['url']:
+@@ -537,7 +537,7 @@                     return venue_data
+         return None
+ 
+-    def _deep_search_key(self, obj: Any, target_keys: list[str]) -> Any:
++async def _deep_search_key(self, obj: Any, target_keys: list[str]) -> Any:
+         """深度搜索对象中的目标键"""
+         if isinstance(obj, dict):
+             for key, value in obj.items():
+@@ -555,7 +555,7 @@                     return result
+         return None
+ 
+-    def _calculate_completeness_rate(self) -> float:
++async def _calculate_completeness_rate(self) -> float:
+         """计算数据完整度比率"""
+         total_matches = max(self.stats['stage1_matches'], 1)
+         detailed_matches = self.stats['stage2_details']

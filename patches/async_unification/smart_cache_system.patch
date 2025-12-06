@@ -1,0 +1,124 @@
+--- a/src/api/optimization/smart_cache_system.py+++ b/src/api/optimization/smart_cache_system.py@@ -21,7 +21,7 @@ class CacheEntry:
+     """缓存条目."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         key: str,
+         value: Any,
+@@ -38,24 +38,24 @@         self.metadata = metadata or {}
+         self.size = self._calculate_size()
+ 
+-    def _calculate_size(self) -> int:
++async def _calculate_size(self) -> int:
+         """计算条目大小."""
+         try:
+             return len(json.dumps(self.value, default=str))
+         except Exception:
+             return len(str(self.value))
+ 
+-    def is_expired(self) -> bool:
++async def is_expired(self) -> bool:
+         """检查是否过期."""
+         return time.time() > self.expires_at
+ 
+-    def access(self) -> Any:
++async def access(self) -> Any:
+         """访问缓存条目."""
+         self.access_count += 1
+         self.last_accessed = time.time()
+         return self.value
+ 
+-    def extend_ttl(self, additional_ttl: int):
++async def extend_ttl(self, additional_ttl: int):
+         """延长TTL."""
+         self.expires_at += additional_ttl
+         self.ttl = self.expires_at - time.time()
+@@ -64,7 +64,7 @@ class SmartCacheManager:
+     """智能缓存管理器."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         redis_client: EnhancedRedisManager | None = None,
+         max_memory_size: int = 100 * 1024 * 1024,
+@@ -97,7 +97,7 @@         # 检查Redis缓存
+         if self.redis_client:
+             try:
+-                redis_value = await self.redis_client.get(key)
++                redis_value = await self.redis_client.await get(key)
+                 if redis_value is not None:
+                     self.cache_stats["hits"] += 1
+                     # 将Redis缓存同步到本地缓存
+@@ -105,8 +105,8 @@                     entry = CacheEntry(
+                         key=key,
+                         value=cache_data["value"],
+-                        ttl=cache_data.get("ttl", 3600),
+-                        metadata=cache_data.get("metadata", {}),
++                        ttl=cache_data.await get("ttl", 3600),
++                        metadata=cache_data.await get("metadata", {}),
+                     )
+                     self.local_cache[key] = entry
+                     return entry.value
+@@ -209,7 +209,7 @@             logger.error(f"Cache clear error: {e}")
+             return 0
+ 
+-    def register_preload_handler(self, key_pattern: str, handler: Callable):
++async def register_preload_handler(self, key_pattern: str, handler: Callable):
+         """注册预加载处理器."""
+         self.preload_tasks[key_pattern] = handler
+ 
+@@ -255,7 +255,7 @@                 except Exception as e:
+                     logger.error(f"Cache warm error for key {key}: {e}")
+ 
+-    def get_cache_stats(self) -> dict[str, Any]:
++async def get_cache_stats(self) -> dict[str, Any]:
+         """获取缓存统计信息."""
+         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
+         hit_rate = (
+@@ -342,7 +342,7 @@ class CacheMiddleware:
+     """缓存中间件."""
+ 
+-    def __init__(self, cache_manager: SmartCacheManager):
++async def __init__(self, cache_manager: SmartCacheManager):
+         self.cache_manager = cache_manager
+         self.cacheable_patterns = [
+             "/api/v1/matches/",
+@@ -353,7 +353,7 @@         ]
+         self.excluded_patterns = ["/api/v1/auth/", "/api/v1/users/", "/api/v1/admin/"]
+ 
+-    def should_cache(self, method: str, path: str) -> bool:
++async def should_cache(self, method: str, path: str) -> bool:
+         """判断是否应该缓存."""
+         if method != "GET":
+             return False
+@@ -370,7 +370,7 @@ 
+         return False
+ 
+-    def generate_cache_key(
++async def generate_cache_key(
+         self, method: str, path: str, query_params: dict[str, Any]
+     ) -> str:
+         """生成缓存键."""
+@@ -397,7 +397,7 @@             return None
+ 
+         cache_key = self.generate_cache_key(method, path, query_params)
+-        return await self.cache_manager.get(cache_key)
++        return await self.cache_manager.await get(cache_key)
+ 
+     async def cache_response(
+         self,
+@@ -428,12 +428,12 @@ _cache_middleware: CacheMiddleware | None = None
+ 
+ 
+-def get_cache_manager() -> SmartCacheManager | None:
++async def get_cache_manager() -> SmartCacheManager | None:
+     """获取全局缓存管理器实例."""
+     return _cache_manager
+ 
+ 
+-def get_cache_middleware() -> CacheMiddleware | None:
++async def get_cache_middleware() -> CacheMiddleware | None:
+     """获取全局缓存中间件实例."""
+     return _cache_middleware
+ 

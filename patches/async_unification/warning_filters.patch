@@ -1,0 +1,8 @@
+--- a/src/utils/warning_filters.py+++ b/src/utils/warning_filters.py@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
+ 
+ 
+-def setup_warning_filters():
++async def setup_warning_filters():
+     """设置警告过滤器."""
+     try:
+         # 忽略一些常见的警告

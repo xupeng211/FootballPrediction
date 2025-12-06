@@ -38,7 +38,7 @@ class TypeRule(TypeRuleProtocol):
 
     def __init__(
         self,
-        field_types: Optional[Dict[str, Type]] = None,
+        field_types: Optional[dict[str, type]] = None,
         strict_type_checking: bool = True,
         allow_type_conversion: bool = True
     ):
@@ -132,7 +132,7 @@ class TypeRule(TypeRuleProtocol):
             f"严格模式 {self.strict_type_checking}, 允许转换 {self.allow_type_conversion}"
         )
 
-    async def check(self, features: Dict[str, Any]) -> List[str]:
+    async def check(self, features: dict[str, Any]) -> list[str]:
         """
         检查特征数据中的数据类型。
 
@@ -172,7 +172,7 @@ class TypeRule(TypeRuleProtocol):
         self,
         field_name: str,
         value: Any,
-        expected_type: Type
+        expected_type: type
     ) -> Optional[str]:
         """
         检查单个字段的数据类型。
@@ -222,7 +222,7 @@ class TypeRule(TypeRuleProtocol):
                 f"实际 {type(value).__name__}, 值: {self._format_value(value)}"
             )
 
-    def _convert_type(self, value: Any, target_type: Type) -> Optional[Any]:
+    def _convert_type(self, value: Any, target_type: type) -> Optional[Any]:
         """
         尝试将值转换为目标类型。
 
@@ -321,7 +321,7 @@ class TypeRule(TypeRuleProtocol):
         else:
             return f"{value} ({type(value).__name__})"
 
-    def get_expected_type(self, field_name: str) -> Optional[Type]:
+    def get_expected_type(self, field_name: str) -> Optional[type]:
         """
         获取指定字段的期望类型。
 
@@ -333,7 +333,7 @@ class TypeRule(TypeRuleProtocol):
         """
         return self.field_types.get(field_name)
 
-    def configure_field_type(self, field_name: str, expected_type: Type) -> None:
+    def configure_field_type(self, field_name: str, expected_type: type) -> None:
         """
         配置字段的期望类型。
 
@@ -367,7 +367,7 @@ class TypeRule(TypeRuleProtocol):
         self.allow_type_conversion = allow_conversion
         logger.info(f"类型转换已设置为: {allow_conversion}")
 
-    def validate_type_configuration(self) -> List[str]:
+    def validate_type_configuration(self) -> list[str]:
         """
         验证类型配置的有效性。
 
@@ -389,7 +389,7 @@ class TypeRule(TypeRuleProtocol):
 
         return errors
 
-    def get_type_summary(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def get_type_summary(self, features: dict[str, Any]) -> dict[str, Any]:
         """
         获取类型检查的详细摘要。
 
@@ -452,7 +452,7 @@ class TypeRule(TypeRuleProtocol):
 
         return summary
 
-    def _can_convert_type(self, value: Any, target_type: Type) -> bool:
+    def _can_convert_type(self, value: Any, target_type: type) -> bool:
         """
         检查值是否可以转换为目标类型。
 
@@ -468,6 +468,7 @@ class TypeRule(TypeRuleProtocol):
                 converted = self._convert_type(value, target_type)
                 return converted is not None
             except Exception:
-                pass
+                # 类型转换失败是预期的行为，返回False即可
+                return False
 
         return False

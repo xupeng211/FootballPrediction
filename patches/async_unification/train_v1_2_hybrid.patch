@@ -1,0 +1,80 @@
+--- a/src/models/train_v1_2_hybrid.py+++ b/src/models/train_v1_2_hybrid.py@@ -41,7 +41,7 @@ class HybridModelTrainer:
+     """V1.2混合模型训练器 - 首席AI科学家版"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.database_url = os.getenv(
+             "DATABASE_URL"
+             "postgresql://postgres:postgres-dev-password@db:5432/football_prediction"
+@@ -141,7 +141,7 @@ 
+         return df
+ 
+-    def parse_xg_data(self, stats_json: str) -> dict[str, float]:
++async def parse_xg_data(self, stats_json: str) -> dict[str, float]:
+         """解析xG数据"""
+         try:
+             if not stats_json or stats_json == "null":
+@@ -176,7 +176,7 @@             logger.debug(f"解析xG数据失败: {e}")
+             return {"xg_home": None, "xg_away": None}
+ 
+-    def calculate_match_result(self, home_score: int, away_score: int) -> str:
++async def calculate_match_result(self, home_score: int, away_score: int) -> str:
+         """计算比赛结果"""
+         if home_score > away_score:
+             return "home_win"
+@@ -185,7 +185,7 @@         else:
+             return "draw"
+ 
+-    def calculate_rolling_features(self, df: pd.DataFrame) -> pd.DataFrame:
++async def calculate_rolling_features(self, df: pd.DataFrame) -> pd.DataFrame:
+         """计算滚动特征"""
+         logger.info("📈 计算滚动特征...")
+ 
+@@ -280,7 +280,7 @@         logger.info("✅ 滚动特征计算完成")
+         return df
+ 
+-    def prepare_features_and_labels(
++async def prepare_features_and_labels(
+         self, df: pd.DataFrame
+     ) -> tuple[pd.DataFrame, pd.Series]:
+         """准备特征和标签"""
+@@ -361,7 +361,7 @@ 
+         return X, y_encoded
+ 
+-    def train_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
++async def train_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
+         """训练XGBoost模型"""
+         logger.info("🎯 开始训练XGBoost模型...")
+ 
+@@ -380,7 +380,7 @@ 
+         logger.info("✅ 模型训练完成")
+ 
+-    def backtest_strategy(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
++async def backtest_strategy(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
+         """策略回测"""
+         logger.info("💰 开始策略回测...")
+ 
+@@ -454,7 +454,7 @@         logger.info("✅ 策略回测完成")
+         return results
+ 
+-    def generate_feature_importance(self) -> dict:
++async def generate_feature_importance(self) -> dict:
+         """生成特征重要性报告"""
+         if not self.model:
+             return {}
+@@ -484,7 +484,7 @@             }
+         }
+ 
+-    def save_model(self, model_name: str = "football_prediction_v1_2_hybrid") -> None:
++async def save_model(self, model_name: str = "football_prediction_v1_2_hybrid") -> None:
+         """保存模型和组件"""
+         logger.info("💾 保存模型和组件...")
+ 
+@@ -603,7 +603,7 @@ 
+             traceback.print_exc()
+ 
+-    def generate_training_report(
++async def generate_training_report(
+         self, start_time, train_acc, test_acc, backtest_results, feature_importance
+     ):
+         """生成训练报告"""

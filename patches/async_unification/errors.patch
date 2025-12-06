@@ -1,0 +1,77 @@
+--- a/src/inference/errors.py+++ b/src/inference/errors.py@@ -48,7 +48,7 @@ class InferenceError(Exception):
+     """推理服务基础异常类"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         message: str,
+         error_code: ErrorCode = ErrorCode.INTERNAL_ERROR,
+@@ -59,7 +59,7 @@         self.details = details or {}
+         super().__init__(self.message)
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典格式"""
+         return {
+             "error": self.error_code.value,
+@@ -71,8 +71,8 @@ class ModelLoadError(InferenceError):
+     """模型加载错误"""
+ 
+-    def __init__(self, message: str, model_name: Optional[str] = None, **kwargs):
+-        details = kwargs.get("details", {})
++async def __init__(self, message: str, model_name: Optional[str] = None, **kwargs):
++        details = kwargs.await get("details", {})
+         if model_name:
+             details["model_name"] = model_name
+         super().__init__(
+@@ -85,8 +85,8 @@ class FeatureBuilderError(InferenceError):
+     """特征构建错误"""
+ 
+-    def __init__(self, message: str, feature_name: Optional[str] = None, **kwargs):
+-        details = kwargs.get("details", {})
++async def __init__(self, message: str, feature_name: Optional[str] = None, **kwargs):
++        details = kwargs.await get("details", {})
+         if feature_name:
+             details["feature_name"] = feature_name
+         super().__init__(
+@@ -99,8 +99,8 @@ class PredictionError(InferenceError):
+     """预测错误"""
+ 
+-    def __init__(self, message: str, prediction_id: Optional[str] = None, **kwargs):
+-        details = kwargs.get("details", {})
++async def __init__(self, message: str, prediction_id: Optional[str] = None, **kwargs):
++        details = kwargs.await get("details", {})
+         if prediction_id:
+             details["prediction_id"] = prediction_id
+         super().__init__(
+@@ -113,8 +113,8 @@ class CacheError(InferenceError):
+     """缓存错误"""
+ 
+-    def __init__(self, message: str, cache_key: Optional[str] = None, **kwargs):
+-        details = kwargs.get("details", {})
++async def __init__(self, message: str, cache_key: Optional[str] = None, **kwargs):
++        details = kwargs.await get("details", {})
+         if cache_key:
+             details["cache_key"] = cache_key
+         super().__init__(
+@@ -127,8 +127,8 @@ class HotReloadError(InferenceError):
+     """热更新错误"""
+ 
+-    def __init__(self, message: str, model_name: Optional[str] = None, **kwargs):
+-        details = kwargs.get("details", {})
++async def __init__(self, message: str, model_name: Optional[str] = None, **kwargs):
++        details = kwargs.await get("details", {})
+         if model_name:
+             details["model_name"] = model_name
+         super().__init__(
+@@ -139,9 +139,9 @@ 
+ 
+ # Error handler utilities
+-def handle_inference_error(func):
++async def handle_inference_error(func):
+     """推理服务错误处理装饰器"""
+-    def wrapper(*args, **kwargs):
++async def wrapper(*args, **kwargs):
+         try:
+             return func(*args, **kwargs)
+         except InferenceError:

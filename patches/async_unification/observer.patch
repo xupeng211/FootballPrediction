@@ -1,0 +1,456 @@
+--- a/src/patterns/observer.py+++ b/src/patterns/observer.py@@ -19,7 +19,7 @@     """
+ 
+     @abstractmethod
+-    def update(self, subject: "Subject", data: Any | None = None) -> None:
++async def update(self, subject: "Subject", data: Any | None = None) -> None:
+         """接收主题更新的通知.
+ 
+         Args:
+@@ -28,7 +28,7 @@         """
+ 
+     @abstractmethod
+-    def get_observer_id(self) -> str:
++async def get_observer_id(self) -> str:
+         """获取观察者ID."""
+ 
+ 
+@@ -38,18 +38,18 @@     管理观察者并发出通知.
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化主题."""
+         self._observers: list[Observer] = []
+         self._changed = False
+         self._lock = threading.Lock()
+ 
+     @abstractmethod
+-    def get_subject_id(self) -> str:
++async def get_subject_id(self) -> str:
+         """获取主题ID - 子类必须实现."""
+         pass
+ 
+-    def attach(self, observer: Observer) -> None:
++async def attach(self, observer: Observer) -> None:
+         """添加观察者.
+ 
+         Args:
+@@ -59,7 +59,7 @@             if observer not in self._observers:
+                 self._observers.append(observer)
+ 
+-    def detach(self, observer: Observer) -> None:
++async def detach(self, observer: Observer) -> None:
+         """移除观察者.
+ 
+         Args:
+@@ -69,7 +69,7 @@             if observer in self._observers:
+                 self._observers.remove(observer)
+ 
+-    def notify(self, data: Any | None = None) -> None:
++async def notify(self, data: Any | None = None) -> None:
+         """通知所有观察者.
+ 
+         Args:
+@@ -84,24 +84,24 @@             except Exception:
+                 pass
+ 
+-    def clear_observers(self) -> None:
++async def clear_observers(self) -> None:
+         """清除所有观察者."""
+         with self._lock:
+             self._observers.clear()
+ 
+-    def get_observer_count(self) -> int:
++async def get_observer_count(self) -> int:
+         """获取观察者数量."""
+         return len(self._observers)
+ 
+-    def has_changed(self) -> bool:
++async def has_changed(self) -> bool:
+         """检查是否发生变化."""
+         return self._changed
+ 
+-    def set_changed(self) -> None:
++async def set_changed(self) -> None:
+         """标记为已变化."""
+         self._changed = True
+ 
+-    def clear_changed(self) -> None:
++async def clear_changed(self) -> None:
+         """清除变化标记."""
+         self._changed = False
+ 
+@@ -112,7 +112,7 @@     实现具体的状态管理逻辑.
+     """
+ 
+-    def __init__(self, name: str = "ConcreteSubject"):
++async def __init__(self, name: str = "ConcreteSubject"):
+         """初始化具体主题.
+ 
+         Args:
+@@ -123,11 +123,11 @@         self._state: dict[str, Any] = {}
+         self._history: list[dict[str, Any]] = []
+ 
+-    def get_subject_id(self) -> str:
++async def get_subject_id(self) -> str:
+         """获取主题ID."""
+         return self.name
+ 
+-    def get_state(self, key: str) -> Any:
++async def get_state(self, key: str) -> Any:
+         """获取状态值.
+ 
+         Args:
+@@ -136,16 +136,16 @@         Returns:
+             Any: 状态值
+         """
+-        return self._state.get(key)
+-
+-    def set_state(self, key: str, value: Any) -> None:
++        return self._state.await get(key)
++
++async def set_state(self, key: str, value: Any) -> None:
+         """设置状态值.
+ 
+         Args:
+             key: 状态键
+             value: 状态值
+         """
+-        old_value = self._state.get(key)
++        old_value = self._state.await get(key)
+         self._state[key] = value
+ 
+         if old_value != value:
+@@ -153,7 +153,7 @@             self._record_change(key, old_value, value)
+             self.notify({"key": key, "old_value": old_value, "new_value": value})
+ 
+-    def get_all_states(self) -> dict[str, Any]:
++async def get_all_states(self) -> dict[str, Any]:
+         """获取所有状态.
+ 
+         Returns:
+@@ -161,7 +161,7 @@         """
+         return self._state.copy()
+ 
+-    def update_states(self, states: dict[str, Any]) -> None:
++async def update_states(self, states: dict[str, Any]) -> None:
+         """批量更新状态.
+ 
+         Args:
+@@ -170,7 +170,7 @@         for key, value in states.items():
+             self.set_state(key, value)
+ 
+-    def _record_change(self, key: str, old_value: Any, new_value: Any) -> None:
++async def _record_change(self, key: str, old_value: Any, new_value: Any) -> None:
+         """记录状态变化.
+ 
+         Args:
+@@ -190,7 +190,7 @@         if len(self._history) > 1000:
+             self._history = self._history[-500:]
+ 
+-    def get_change_history(self, limit: int = 50) -> list[dict[str, Any]]:
++async def get_change_history(self, limit: int = 50) -> list[dict[str, Any]]:
+         """获取变化历史.
+ 
+         Args:
+@@ -208,7 +208,7 @@     实现具体的观察逻辑.
+     """
+ 
+-    def __init__(self, observer_id: str, callback: Callable | None = None):
++async def __init__(self, observer_id: str, callback: Callable | None = None):
+         """初始化具体观察者.
+ 
+         Args:
+@@ -220,7 +220,7 @@         self.notifications: list[dict[str, Any]] = []
+         self.created_at = datetime.utcnow()
+ 
+-    def update(self, subject: Subject, data: Any | None = None) -> None:
++async def update(self, subject: Subject, data: Any | None = None) -> None:
+         """接收更新通知.
+ 
+         Args:
+@@ -246,11 +246,11 @@             except Exception:
+                 pass
+ 
+-    def get_observer_id(self) -> str:
++async def get_observer_id(self) -> str:
+         """获取观察者ID."""
+         return self.observer_id
+ 
+-    def get_notifications(self, limit: int = 50) -> list[dict[str, Any]]:
++async def get_notifications(self, limit: int = 50) -> list[dict[str, Any]]:
+         """获取通知记录.
+ 
+         Args:
+@@ -261,7 +261,7 @@         """
+         return self.notifications[-limit:]
+ 
+-    def clear_notifications(self) -> None:
++async def clear_notifications(self) -> None:
+         """清除通知记录."""
+         self.notifications.clear()
+ 
+@@ -272,7 +272,7 @@     将通知记录到日志.
+     """
+ 
+-    def __init__(self, observer_id: str = "logging_observer"):
++async def __init__(self, observer_id: str = "logging_observer"):
+         """初始化日志观察者.
+ 
+         Args:
+@@ -281,7 +281,7 @@         self.observer_id = observer_id
+         self.log_entries: list[dict[str, Any]] = []
+ 
+-    def update(self, subject: Subject, data: Any | None = None) -> None:
++async def update(self, subject: Subject, data: Any | None = None) -> None:
+         """记录日志.
+ 
+         Args:
+@@ -298,11 +298,11 @@ 
+         self.log_entries.append(log_entry)
+ 
+-    def get_observer_id(self) -> str:
++async def get_observer_id(self) -> str:
+         """获取观察者ID."""
+         return self.observer_id
+ 
+-    def get_logs(self, limit: int = 100) -> list[dict[str, Any]]:
++async def get_logs(self, limit: int = 100) -> list[dict[str, Any]]:
+         """获取日志记录.
+ 
+         Args:
+@@ -320,7 +320,7 @@     收集指标数据.
+     """
+ 
+-    def __init__(self, observer_id: str = "metrics_observer"):
++async def __init__(self, observer_id: str = "metrics_observer"):
+         """初始化指标观察者.
+ 
+         Args:
+@@ -333,7 +333,7 @@             "last_notification": None,
+         }
+ 
+-    def update(self, subject: Subject, data: Any | None = None) -> None:
++async def update(self, subject: Subject, data: Any | None = None) -> None:
+         """更新指标.
+ 
+         Args:
+@@ -348,11 +348,11 @@             "data": data,
+         }
+ 
+-    def get_observer_id(self) -> str:
++async def get_observer_id(self) -> str:
+         """获取观察者ID."""
+         return self.observer_id
+ 
+-    def get_metrics(self) -> dict[str, Any]:
++async def get_metrics(self) -> dict[str, Any]:
+         """获取指标数据.
+ 
+         Returns:
+@@ -362,7 +362,7 @@         result["subjects_notified"] = list(result["subjects_notified"])
+         return result
+ 
+-    def reset_metrics(self) -> None:
++async def reset_metrics(self) -> None:
+         """重置指标."""
+         self.metrics = {
+             "notification_count": 0,
+@@ -377,7 +377,7 @@     根据条件触发告警.
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         observer_id: str = "alerting_observer",
+         alert_conditions: list[Callable] | None = None,
+@@ -392,7 +392,7 @@         self.alert_conditions = alert_conditions or []
+         self.alerts: list[dict[str, Any]] = []
+ 
+-    def add_alert_condition(self, condition: Callable) -> None:
++async def add_alert_condition(self, condition: Callable) -> None:
+         """添加告警条件.
+ 
+         Args:
+@@ -400,7 +400,7 @@         """
+         self.alert_conditions.append(condition)
+ 
+-    def update(self, subject: Subject, data: Any | None = None) -> None:
++async def update(self, subject: Subject, data: Any | None = None) -> None:
+         """检查告警条件.
+ 
+         Args:
+@@ -422,11 +422,11 @@             except Exception:
+                 pass
+ 
+-    def get_observer_id(self) -> str:
++async def get_observer_id(self) -> str:
+         """获取观察者ID."""
+         return self.observer_id
+ 
+-    def get_alerts(self, limit: int = 50) -> list[dict[str, Any]]:
++async def get_alerts(self, limit: int = 50) -> list[dict[str, Any]]:
+         """获取告警记录.
+ 
+         Args:
+@@ -444,7 +444,7 @@     异步处理观察者通知.
+     """
+ 
+-    def __init__(self, max_size: int = 1000):
++async def __init__(self, max_size: int = 1000):
+         """初始化事件队列.
+ 
+         Args:
+@@ -454,7 +454,7 @@         self._running = False
+         self._worker_thread: threading.Thread | None = None
+ 
+-    def start(self) -> None:
++async def start(self) -> None:
+         """启动事件处理."""
+         if not self._running:
+             self._running = True
+@@ -463,13 +463,13 @@             )
+             self._worker_thread.start()
+ 
+-    def stop(self) -> None:
++async def stop(self) -> None:
+         """停止事件处理."""
+         self._running = False
+         if self._worker_thread:
+             self._worker_thread.join(timeout=5.0)
+ 
+-    def put_event(self, observer: Observer, subject: Subject, data: Any) -> None:
++async def put_event(self, observer: Observer, subject: Subject, data: Any) -> None:
+         """添加事件到队列.
+ 
+         Args:
+@@ -483,11 +483,11 @@         except queue.Full:
+             pass
+ 
+-    def _process_events(self) -> None:
++async def _process_events(self) -> None:
+         """处理事件队列."""
+         while self._running:
+             try:
+-                event = self._queue.get(timeout=1.0)
++                event = self._queue.await get(timeout=1.0)
+                 observer = event["observer"]
+                 subject = event["subject"]
+                 data = event["data"]
+@@ -511,7 +511,7 @@     使用队列异步通知观察者.
+     """
+ 
+-    def __init__(self, name: str = "AsyncSubject", queue_size: int = 1000):
++async def __init__(self, name: str = "AsyncSubject", queue_size: int = 1000):
+         """初始化异步主题.
+ 
+         Args:
+@@ -522,19 +522,19 @@         self.name = name
+         self.event_queue = EventQueue(queue_size)
+ 
+-    def get_subject_id(self) -> str:
++async def get_subject_id(self) -> str:
+         """获取主题ID."""
+         return self.name
+ 
+-    def start_async_notifications(self) -> None:
++async def start_async_notifications(self) -> None:
+         """启动异步通知."""
+         self.event_queue.start()
+ 
+-    def stop_async_notifications(self) -> None:
++async def stop_async_notifications(self) -> None:
+         """停止异步通知."""
+         self.event_queue.stop()
+ 
+-    def notify(self, data: Any | None = None) -> None:
++async def notify(self, data: Any | None = None) -> None:
+         """异步通知观察者.
+ 
+         Args:
+@@ -548,7 +548,7 @@ 
+ 
+ # 便捷函数
+-def create_observer_system() -> tuple[ConcreteSubject, list[Observer]]:
++async def create_observer_system() -> tuple[ConcreteSubject, list[Observer]]:
+     """创建观察者系统.
+ 
+     Returns:
+@@ -565,8 +565,8 @@     alerting_observer.add_alert_condition(
+         lambda subject, data: data
+         and isinstance(data, dict)
+-        and data.get("key") == "error_count"
+-        and data.get("new_value", 0) > 10
++        and data.await get("key") == "error_count"
++        and data.await get("new_value", 0) > 10
+     )
+ 
+     observers = [logging_observer, metrics_observer, alerting_observer]
+@@ -578,7 +578,7 @@     return subject, observers
+ 
+ 
+-def demonstrate_observer_pattern():
++async def demonstrate_observer_pattern():
+     """演示观察者模式的使用."""
+     subject, observers = create_observer_system()
+ 
+@@ -607,7 +607,7 @@     提供服务级别的观察者功能.
+     """
+ 
+-    def __init__(self, service_name: str):
++async def __init__(self, service_name: str):
+         """初始化可观察服务.
+ 
+         Args:
+@@ -618,21 +618,21 @@         self._status = "stopped"
+         self._metrics = {}
+ 
+-    def get_subject_id(self) -> str:
++async def get_subject_id(self) -> str:
+         """获取主题ID."""
+         return self.service_name
+ 
+-    def start(self):
++async def start(self):
+         """启动服务."""
+         self._status = "running"
+         self.notify({"event": "service_started", "service": self.service_name})
+ 
+-    def stop(self):
++async def stop(self):
+         """停止服务."""
+         self._status = "stopped"
+         self.notify({"event": "service_stopped", "service": self.service_name})
+ 
+-    def update_metrics(self, metrics: dict[str, Any]):
++async def update_metrics(self, metrics: dict[str, Any]):
+         """更新服务指标.
+ 
+         Args:
+@@ -647,16 +647,16 @@             }
+         )
+ 
+-    def get_status(self) -> str:
++async def get_status(self) -> str:
+         """获取服务状态."""
+         return self._status
+ 
+-    def get_metrics(self) -> dict[str, Any]:
++async def get_metrics(self) -> dict[str, Any]:
+         """获取服务指标."""
+         return self._metrics.copy()
+ 
+ 
+-def create_service_observer_system(service_name: str) -> dict[str, Any]:
++async def create_service_observer_system(service_name: str) -> dict[str, Any]:
+     """创建服务观察者系统.
+ 
+     Args:
+@@ -688,7 +688,7 @@     }
+ 
+ 
+-def setup_service_observers(service: ObservableService) -> dict[str, Any]:
++async def setup_service_observers(service: ObservableService) -> dict[str, Any]:
+     """设置服务观察者.
+ 
+     Args:

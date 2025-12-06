@@ -1,0 +1,103 @@
+--- a/src/domain/services/team_service.py+++ b/src/domain/services/team_service.py@@ -14,10 +14,10 @@ class TeamRepositoryProtocol(Protocol):
+     """球队仓储协议."""
+ 
+-    def save(self, team: Team) -> Team:  # pragma: no cover - 协议定义
++async def save(self, team: Team) -> Team:  # pragma: no cover - 协议定义
+         ...
+ 
+-    def update(self, team: Team) -> Team:  # pragma: no cover - 协议定义
++async def update(self, team: Team) -> Team:  # pragma: no cover - 协议定义
+         ...
+ 
+ 
+@@ -66,7 +66,7 @@     pass  # 添加pass语句
+     """球队领域服务"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         config: dict[str, Any] | None = None,
+         repository: TeamRepositoryProtocol | None = None,
+@@ -79,24 +79,24 @@         self._health_status = "healthy"
+         self._created_at = datetime.utcnow()
+ 
+-    def initialize(self) -> bool:
++async def initialize(self) -> bool:
+         """初始化服务."""
+         if self._is_disposed:
+             raise RuntimeError("Cannot initialize disposed service")
+         self._is_initialized = True
+         return True
+ 
+-    def dispose(self) -> None:
++async def dispose(self) -> None:
+         """销毁服务."""
+         self._is_disposed = True
+         self._is_initialized = False
+         self._events.clear()
+ 
+-    def is_healthy(self) -> bool:
++async def is_healthy(self) -> bool:
+         """检查服务健康状态."""
+         return self._health_status == "healthy" and not self._is_disposed
+ 
+-    def get_service_info(self) -> dict[str, Any]:
++async def get_service_info(self) -> dict[str, Any]:
+         """获取服务信息."""
+         return {
+             "name": "TeamDomainService",
+@@ -108,11 +108,11 @@             "config": self._config,
+         }
+ 
+-    def attach_repository(self, repository: TeamRepositoryProtocol) -> None:
++async def attach_repository(self, repository: TeamRepositoryProtocol) -> None:
+         """绑定仓储实现."""
+         self._repository = repository
+ 
+-    def update_team_profile(
++async def update_team_profile(
+         self,
+         team: Team,
+         name: str | None = None,
+@@ -150,7 +150,7 @@             )
+             self._persist(team)
+ 
+-    def record_match_result(
++async def record_match_result(
+         self,
+         team: Team,
+         result: str,
+@@ -176,14 +176,14 @@ 
+         return team
+ 
+-    def reset_team_performance(self, team: Team) -> None:
++async def reset_team_performance(self, team: Team) -> None:
+         """重置球队的统计和状态信息."""
+         team.stats = TeamStats()
+         team.form = TeamForm()
+         self._events.append(TeamPerformanceResetEvent(team_id=team.id or 0))
+         self._persist(team)
+ 
+-    def calculate_league_table(self, teams: list[Team]) -> list[dict[str, Any]]:
++async def calculate_league_table(self, teams: list[Team]) -> list[dict[str, Any]]:
+         """根据球队当前统计生成积分榜."""
+         table = []
+         for team in teams:
+@@ -209,15 +209,15 @@         )
+         return table
+ 
+-    def get_domain_events(self) -> list[Any]:
++async def get_domain_events(self) -> list[Any]:
+         """返回当前收集到的领域事件快照."""
+         return self._events.copy()
+ 
+-    def clear_domain_events(self) -> None:
++async def clear_domain_events(self) -> None:
+         """清空领域事件缓存."""
+         self._events.clear()
+ 
+-    def _persist(self, team: Team) -> Team:
++async def _persist(self, team: Team) -> Team:
+         """将球队状态同步到仓储（如有）."""
+         if not self._repository:
+             return team

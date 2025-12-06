@@ -1,0 +1,149 @@
+--- a/src/data/processors/match_parser.py+++ b/src/data/processors/match_parser.py@@ -29,7 +29,7 @@     - 扁平化嵌套JSON结构
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化解析器"""
+         self.default_values = {
+             'possession': 50.0,  # 默认50%控球率
+@@ -44,7 +44,7 @@             'value_millions': 0.0,  # 默认身价（百万欧元）
+         }
+ 
+-    def safe_get(self, data: dict[str, Any], key: str, default: Any = None) -> Any:
++async def safe_get(self, data: dict[str, Any], key: str, default: Any = None) -> Any:
+         """安全获取字典值，支持嵌套键路径"""
+         if not data or not isinstance(data, dict):
+             return default
+@@ -62,7 +62,7 @@         except (TypeError, KeyError, AttributeError):
+             return default
+ 
+-    def parse_stats(self, stats_json: [dict, str, None]) -> dict[str, float]:
++async def parse_stats(self, stats_json: [dict, str, None]) -> dict[str, float]:
+         """
+         解析比赛统计数据
+ 
+@@ -137,7 +137,7 @@         logger.debug(f"解析统计结果: {result}")
+         return result
+ 
+-    def parse_lineups(self, lineups_json: [dict, str, None]) -> dict[str, float]:
++async def parse_lineups(self, lineups_json: [dict, str, None]) -> dict[str, float]:
+         """
+         解析阵容数据
+ 
+@@ -196,7 +196,7 @@         logger.debug(f"解析阵容结果: {result}")
+         return result
+ 
+-    def parse_odds(self, odds_json: [dict, str, None]) -> dict[str, float]:
++async def parse_odds(self, odds_json: [dict, str, None]) -> dict[str, float]:
+         """
+         解析赔率数据
+ 
+@@ -288,7 +288,7 @@         logger.debug(f"解析赔率结果: {result}")
+         return result
+ 
+-    def parse_match(self, match_data: dict[str, Any]) -> dict[str, Any]:
++async def parse_match(self, match_data: dict[str, Any]) -> dict[str, Any]:
+         """
+         解析完整比赛数据
+ 
+@@ -302,27 +302,27 @@             result = {}
+ 
+             # 解析统计数据
+-            stats = self.parse_stats(match_data.get('stats'))
++            stats = self.await parse_stats(match_data.get('stats'))
+             result.update({f"stat_{k}": v for k, v in stats.items()})
+ 
+             # 解析阵容数据
+-            lineups = self.parse_lineups(match_data.get('lineups'))
++            lineups = self.await parse_lineups(match_data.get('lineups'))
+             result.update({f"lineup_{k}": v for k, v in lineups.items()})
+ 
+             # 解析赔率数据
+-            odds = self.parse_odds(match_data.get('odds'))
++            odds = self.await parse_odds(match_data.get('odds'))
+             result.update({f"odds_{k}": v for k, v in odds.items()})
+ 
+             # 添加基础信息
+             result.update({
+-                'match_id': match_data.get('id'),
+-                'home_team_id': match_data.get('home_team_id'),
+-                'away_team_id': match_data.get('away_team_id'),
+-                'home_score': match_data.get('home_score', 0),
+-                'away_score': match_data.get('away_score', 0),
+-                'match_date': match_data.get('match_date'),
+-                'data_source': match_data.get('data_source', 'unknown'),
+-                'data_completeness': match_data.get('data_completeness', 'partial'),
++                'match_id': match_data.await get('id'),
++                'home_team_id': match_data.await get('home_team_id'),
++                'away_team_id': match_data.await get('away_team_id'),
++                'home_score': match_data.await get('home_score', 0),
++                'away_score': match_data.await get('away_score', 0),
++                'match_date': match_data.await get('match_date'),
++                'data_source': match_data.await get('data_source', 'unknown'),
++                'data_completeness': match_data.await get('data_completeness', 'partial'),
+             })
+ 
+             logger.debug(f"解析完整比赛数据成功: {len(result)} 个特征")
+@@ -332,18 +332,18 @@             logger.error(f"解析比赛数据失败: {e}")
+             # 返回基础信息，确保不会完全失败
+             return {
+-                'match_id': match_data.get('id'),
+-                'home_team_id': match_data.get('home_team_id'),
+-                'away_team_id': match_data.get('away_team_id'),
++                'match_id': match_data.await get('id'),
++                'home_team_id': match_data.await get('home_team_id'),
++                'away_team_id': match_data.await get('away_team_id'),
+                 'parse_error': str(e),
+             }
+ 
+-    def _get_default_stats(self) -> dict[str, float]:
++async def _get_default_stats(self) -> dict[str, float]:
+         """获取默认统计数据"""
+         result = {}
+         for prefix in ['home_', 'away_']:
+             for key in ['possession', 'shots', 'shots_on_target', 'corners', 'fouls', 'offsides', 'yellow_cards', 'red_cards']:
+-                result[f"{prefix}{key}"] = self.default_values.get(key, 0.0)
++                result[f"{prefix}{key}"] = self.default_values.await get(key, 0.0)
+ 
+         # 添加差异统计
+         for key in ['possession', 'shots', 'shots_on_target', 'corners']:
+@@ -351,7 +351,7 @@ 
+         return result
+ 
+-    def _get_default_lineups(self) -> dict[str, float]:
++async def _get_default_lineups(self) -> dict[str, float]:
+         """获取默认阵容数据"""
+         return {
+             'home_players_count': 11.0,  # 标准首发
+@@ -363,7 +363,7 @@             'lineups_completeness': 0.5,  # 默认50%完整度
+         }
+ 
+-    def _get_default_odds(self) -> dict[str, float]:
++async def _get_default_odds(self) -> dict[str, float]:
+         """获取默认赔率数据"""
+         return {
+             'avg_home_odds': 2.5,
+@@ -375,7 +375,7 @@             'implied_away_prob': 33.34,
+         }
+ 
+-    def _calculate_avg_rating(self, players: list[dict[str, Any]]) -> float:
++async def _calculate_avg_rating(self, players: list[dict[str, Any]]) -> float:
+         """计算球员平均评分"""
+         if not players:
+             return self.default_values['rating']
+@@ -391,7 +391,7 @@ 
+         return sum(ratings) / len(ratings) if ratings else self.default_values['rating']
+ 
+-    def _calculate_total_value(self, players: list[dict[str, Any]]) -> float:
++async def _calculate_total_value(self, players: list[dict[str, Any]]) -> float:
+         """计算球队总身价（百万欧元）"""
+         if not players:
+             return self.default_values['value_millions']
+@@ -411,7 +411,7 @@ 
+         return total_value
+ 
+-    def _assess_lineup_completeness(self, home_players: list[dict[str, Any]], away_players: list[dict[str, Any]]) -> float:
++async def _assess_lineup_completeness(self, home_players: list[dict[str, Any]], away_players: list[dict[str, Any]]) -> float:
+         """评估阵容数据完整度"""
+         home_completeness = min(len(home_players) / 11.0, 1.0) if home_players else 0.0
+         away_completeness = min(len(away_players) / 11.0, 1.0) if away_players else 0.0

@@ -1,0 +1,8 @@
+--- a/src/tasks/router.py+++ b/src/tasks/router.py@@ -7,7 +7,7 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
+ 
+ 
+-@router.get("/health")
++@router.await get("/health")
+ async def health_check():
+     """健康检查端点."""
+     return {"status": "ok", "module": "tasks"}

@@ -1,0 +1,47 @@
+--- a/src/api/docs.py+++ b/src/api/docs.py@@ -19,7 +19,7 @@ settings = get_settings()
+ 
+ 
+-@router.get("/enhanced", response_class=HTMLResponse)
++@router.await get("/enhanced", response_class=HTMLResponse)
+ async def enhanced_swagger_ui():
+     """获取增强版Swagger UI页面.
+ 
+@@ -49,7 +49,7 @@     )
+ 
+ 
+-@router.get("/interactive", response_class=HTMLResponse)
++@router.await get("/interactive", response_class=HTMLResponse)
+ async def interactive_playground():
+     """获取交互式API测试页面.
+ 
+@@ -532,7 +532,7 @@     return interactive_html
+ 
+ 
+-@router.get("/examples", response_class=HTMLResponse)
++@router.await get("/examples", response_class=HTMLResponse)
+ async def api_examples():
+     """获取API使用示例页面.
+ 
+@@ -899,7 +899,7 @@     return examples_html
+ 
+ 
+-@router.get("/openapi.json")
++@router.await get("/openapi.json")
+ async def get_openapi_spec() -> dict[str, Any]:
+     """获取OpenAPI规范JSON."""
+     # 这里应该从应用获取OpenAPI规范
+@@ -924,7 +924,7 @@     }
+ 
+ 
+-@router.get("/status")
++@router.await get("/status")
+ async def docs_status():
+     """获取文档系统状态."""
+     return {
+@@ -947,6 +947,6 @@     }
+ 
+ 
+-def setup_docs_routes(app) -> None:
++async def setup_docs_routes(app) -> None:
+     """设置文档路由."""
+     app.include_router(router)

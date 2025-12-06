@@ -1,0 +1,64 @@
+--- a/src/repositories/match_fixed.py+++ b/src/repositories/match_fixed.py@@ -28,7 +28,7 @@ class MatchRepository(BaseRepository):
+     """比赛仓储实现 - 简化版本."""
+ 
+-    def __init__(self, session: AsyncSession):
++async def __init__(self, session: AsyncSession):
+         """初始化比赛仓储."""
+         # 假设有一个Match模型类
+         from ..database.models import Match
+@@ -38,7 +38,7 @@     async def get_by_id(self, match_id: int) -> Optional["Match"]:
+         """根据ID获取比赛."""
+         query = select(self.model_class).where(self.model_class.id == match_id)
+-        result = await self.session.execute(query)
++        result = await self.session.await execute(query)
+         return result.scalar_one_or_none()
+ 
+     async def get_all(self, query_spec: QuerySpec | None = None) -> list["Match"]:
+@@ -48,7 +48,7 @@         if query_spec:
+             query = self._build_query(query_spec)
+ 
+-        result = await self.session.execute(query)
++        result = await self.session.await execute(query)
+         return result.scalars().all()
+ 
+     async def create(self, match_data: dict[str, Any]) -> "Match":
+@@ -56,11 +56,11 @@         match = self.model_class(
+             home_team_id=match_data["home_team_id"],
+             away_team_id=match_data["away_team_id"],
+-            match_time=match_data.get("match_time", datetime.utcnow()),
+-            venue=match_data.get("venue", ""),
+-            status=match_data.get("status", MatchStatus.SCHEDULED),
+-            home_score=match_data.get("home_score", 0),
+-            away_score=match_data.get("away_score", 0),
++            match_time=match_data.await get("match_time", datetime.utcnow()),
++            venue=match_data.await get("venue", ""),
++            status=match_data.await get("status", MatchStatus.SCHEDULED),
++            home_score=match_data.await get("home_score", 0),
++            away_score=match_data.await get("away_score", 0),
+             created_at=datetime.utcnow(),
+             updated_at=datetime.utcnow(),
+         )
+@@ -82,7 +82,7 @@             .values(**update_data)
+         )
+ 
+-        await self.session.execute(query)
++        await self.session.await execute(query)
+         await self.session.commit()
+ 
+         return await self.get_by_id(match_id)
+@@ -246,11 +246,11 @@             match = self.model_class(
+                 home_team_id=match_data["home_team_id"],
+                 away_team_id=match_data["away_team_id"],
+-                match_time=match_data.get("match_time", datetime.utcnow()),
+-                venue=match_data.get("venue", ""),
+-                status=match_data.get("status", MatchStatus.SCHEDULED),
+-                home_score=match_data.get("home_score", 0),
+-                away_score=match_data.get("away_score", 0),
++                match_time=match_data.await get("match_time", datetime.utcnow()),
++                venue=match_data.await get("venue", ""),
++                status=match_data.await get("status", MatchStatus.SCHEDULED),
++                home_score=match_data.await get("home_score", 0),
++                away_score=match_data.await get("away_score", 0),
+                 created_at=datetime.utcnow(),
+                 updated_at=datetime.utcnow(),
+             )

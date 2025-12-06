@@ -1,0 +1,16 @@
+--- a/src/data_science/debug_data_structure.py+++ b/src/data_science/debug_data_structure.py@@ -14,7 +14,7 @@ 
+ DATABASE_URL = "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction"
+ 
+-def check_data_structure():
++async def check_data_structure():
+     """检查数据库中的实际数据结构"""
+     try:
+         conn = psycopg2.connect(DATABASE_URL)
+@@ -47,7 +47,7 @@                 print(f"📈 Stats 字段键: {list(stats_data.keys()) if isinstance(stats_data, dict) else 'Not a dict'}")
+ 
+                 # 递归搜索 xG 相关字段
+-                def find_xg_fields(data, path=""):
++async def find_xg_fields(data, path=""):
+                     xg_fields = []
+                     if isinstance(data, dict):
+                         for key, value in data.items():

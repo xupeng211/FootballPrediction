@@ -1,0 +1,8 @@
+--- a/src/domain/strategies/ml_model.py+++ b/src/domain/strategies/ml_model.py@@ -28,7 +28,7 @@     Uses trained machine learning models for match prediction.
+     """
+ 
+-    def __init__(self, config: dict[str, Any] | None = None):
++async def __init__(self, config: dict[str, Any] | None = None):
+         super().__init__("ml_model", StrategyType.MACHINE_LEARNING)
+         self.config = config or {}
+         self.model = None

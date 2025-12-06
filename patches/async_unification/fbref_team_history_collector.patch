@@ -1,0 +1,72 @@
+--- a/src/data/collectors/fbref_team_history_collector.py+++ b/src/data/collectors/fbref_team_history_collector.py@@ -22,7 +22,7 @@ class TeamHistoryOmniScraper:
+     """球队全赛程采集器"""
+ 
+-    def __init__(self, db_engine=None):
++async def __init__(self, db_engine=None):
+         self.collector = StealthFBrefCollector()
+         self.engine = db_engine or create_engine("postgresql://postgres@db:5432/football_prediction")
+ 
+@@ -36,7 +36,7 @@             'competitions': set()
+         }
+ 
+-    def convert_team_url_to_matchlogs(self, fbref_url: str) -> str:
++async def convert_team_url_to_matchlogs(self, fbref_url: str) -> str:
+         """
+         将球队统计页URL转换为全赛事日志页URL
+         规则: /en/squads/{id}/{team-name}-Stats -> /en/squads/{id}/{team-name}-Match-Logs-All-Competitions
+@@ -64,7 +64,7 @@ 
+         return base_url
+ 
+-    def get_historical_season_urls(self, base_url: str) -> list[str]:
++async def get_historical_season_urls(self, base_url: str) -> list[str]:
+         """
+         生成历史赛季的URL列表
+         FBref支持通过查询参数指定赛季
+@@ -122,7 +122,7 @@             logger.error(f"❌ 获取 {season} 数据失败: {e}")
+             return None
+ 
+-    def clean_match_data(self, df: pd.DataFrame) -> list[dict]:
++async def clean_match_data(self, df: pd.DataFrame) -> list[dict]:
+         """
+         清洗和解析比赛数据
+         """
+@@ -205,7 +205,7 @@         logger.info(f"  清洗完成: {len(matches)} 场有效比赛")
+         return matches
+ 
+-    def get_or_create_league(self, league_name: str) -> Optional[int]:
++async def get_or_create_league(self, league_name: str) -> Optional[int]:
+         """
+         获取或创建联赛记录
+         """
+@@ -250,7 +250,7 @@             logger.error(f"获取/创建联赛失败 {league_name}: {e}")
+             return None
+ 
+-    def save_matches_to_db(self, matches: list[dict], team_name: str) -> int:
++async def save_matches_to_db(self, matches: list[dict], team_name: str) -> int:
+         """
+         保存比赛数据到数据库
+         """
+@@ -358,7 +358,7 @@ 
+         return saved_count
+ 
+-    def get_team_id(self, conn, team_name: str) -> Optional[int]:
++async def get_team_id(self, conn, team_name: str) -> Optional[int]:
+         """获取球队ID"""
+         if not team_name:
+             return None
+@@ -459,7 +459,7 @@             traceback.print_exc()
+             return self.stats
+ 
+-    def print_team_summary(self, stats: dict):
++async def print_team_summary(self, stats: dict):
+         """打印球队采集摘要"""
+         logger.info("\n" + "="*60)
+         logger.info(f"⚽ 球队采集完成: {stats['team_name']}")
+@@ -488,7 +488,7 @@ _scraper_instance = None
+ 
+ 
+-def get_global_scraper() -> TeamHistoryOmniScraper:
++async def get_global_scraper() -> TeamHistoryOmniScraper:
+     """获取全局采集器实例"""
+     global _scraper_instance
+     if _scraper_instance is None:

@@ -1,0 +1,79 @@
+--- a/src/pipeline/trainer.py+++ b/src/pipeline/trainer.py@@ -40,7 +40,7 @@     支持多种机器学习算法的训练和优化。
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         config: Optional[PipelineConfig] = None,
+         model_registry: Optional[Any] = None,
+@@ -68,7 +68,7 @@             "random_forest": self._train_random_forest,
+         }
+ 
+-    def train(
++async def train(
+         self,
+         X: pd.DataFrame,
+         y: pd.Series,
+@@ -160,7 +160,7 @@             logger.error(f"Training failed: {e}")
+             raise
+ 
+-    def _validate_input_data(self, X: pd.DataFrame, y: pd.Series) -> None:
++async def _validate_input_data(self, X: pd.DataFrame, y: pd.Series) -> None:
+         """验证输入数据."""
+         if len(X) != len(y):
+             raise ValueError(f"Feature data length ({len(X)}) != target length ({len(y)})")
+@@ -175,7 +175,7 @@         if missing_ratio > 0.5:
+             logger.warning(f"High missing value ratio: {missing_ratio:.2%}")
+ 
+-    def _train_xgboost(
++async def _train_xgboost(
+         self,
+         X_train: pd.DataFrame,
+         y_train: pd.Series,
+@@ -241,19 +241,19 @@ 
+         return best_model, metrics
+ 
+-    def _train_lightgbm(self, *args, **kwargs):
++async def _train_lightgbm(self, *args, **kwargs):
+         """训练LightGBM模型 (待实现)."""
+         raise NotImplementedError("LightGBM training not implemented yet")
+ 
+-    def _train_logistic_regression(self, *args, **kwargs):
++async def _train_logistic_regression(self, *args, **kwargs):
+         """训练Logistic回归模型 (待实现)."""
+         raise NotImplementedError("Logistic regression training not implemented yet")
+ 
+-    def _train_random_forest(self, *args, **kwargs):
++async def _train_random_forest(self, *args, **kwargs):
+         """训练随机森林模型 (待实现)."""
+         raise NotImplementedError("Random forest training not implemented yet")
+ 
+-    def _evaluate_model(
++async def _evaluate_model(
+         self, model: Any, X_test: pd.DataFrame, y_test: pd.Series
+     ) -> Dict[str, Any]:
+         """评估模型."""
+@@ -291,7 +291,7 @@ 
+         return metrics
+ 
+-    def save_training_history(self, path: str) -> None:
++async def save_training_history(self, path: str) -> None:
+         """保存训练历史."""
+         import json
+         from pathlib import Path
+@@ -304,7 +304,7 @@ 
+         logger.info(f"Training history saved to {save_path}")
+ 
+-    def get_best_model(self, metric: str = "f1_weighted") -> Optional[Dict[str, Any]]:
++async def get_best_model(self, metric: str = "f1_weighted") -> Optional[Dict[str, Any]]:
+         """获取历史训练中的最佳模型."""
+         if not self.training_history:
+             return None
+@@ -313,7 +313,7 @@         best_score = -float("inf")
+ 
+         for record in self.training_history:
+-            score = record["metrics"].get("classification_report", {}).get("weighted avg", {}).get(metric, 0)
++            score = record["metrics"].await await await get("classification_report", {}).get("weighted avg", {}).get(metric, 0)
+             if score > best_score:
+                 best_score = score
+                 best_record = record

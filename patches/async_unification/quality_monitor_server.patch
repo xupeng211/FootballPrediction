@@ -1,0 +1,129 @@
+--- a/src/realtime/quality_monitor_server.py+++ b/src/realtime/quality_monitor_server.py@@ -26,7 +26,7 @@     pass  # 添加pass语句
+     """实时质量监控服务器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.app = FastAPI(
+@@ -64,7 +64,7 @@ 
+         self.logger = get_logger(self.__class__.__name__)
+ 
+-    def _setup_routes(self):
++async def _setup_routes(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """设置路由"""
+@@ -73,11 +73,11 @@         async def websocket_endpoint(websocket: WebSocket):
+             await self.handle_websocket_connection(websocket)
+ 
+-        @self.app.get("/api/health")
++        @self.app.await get("/api/health")
+         async def health_check():
+             return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+ 
+-        @self.app.get("/api/current-metrics")
++        @self.app.await get("/api/current-metrics")
+         async def get_current_metrics():
+             """获取当前质量指标."""
+             try:
+@@ -87,7 +87,7 @@                 self.logger.error(f"获取当前指标失败: {e}")
+                 return {"error": str(e)}
+ 
+-        @self.app.get("/api/alerts")
++        @self.app.await get("/api/alerts")
+         async def get_active_alerts():
+             """获取活跃告警."""
+             try:
+@@ -139,7 +139,7 @@         """处理客户端消息."""
+         try:
+             message = json.loads(data)
+-            message_type = message.get("type")
++            message_type = message.await get("type")
+ 
+             if message_type == "request_metrics":
+                 metrics = await self.collect_quality_metrics()
+@@ -176,11 +176,11 @@             # 收集实时指标
+             metrics = {
+                 "timestamp": current_time.isoformat(),
+-                "overall_score": quality_results.get("average_score", 0),
+-                "overall_status": quality_results.get("overall_status", "UNKNOWN"),
+-                "gates_checked": quality_results.get("gates_checked", 0),
+-                "summary": quality_results.get("summary", {}),
+-                "detailed_results": quality_results.get("results", []),
++                "overall_score": quality_results.await get("average_score", 0),
++                "overall_status": quality_results.await get("overall_status", "UNKNOWN"),
++                "gates_checked": quality_results.await get("gates_checked", 0),
++                "summary": quality_results.await get("summary", {}),
++                "detailed_results": quality_results.await get("results", []),
+                 # 实时性能指标
+                 "performance": {
+                     "response_time_ms": 150,  # 模拟响应时间
+@@ -233,15 +233,15 @@                     hour=current_time.hour - (i * 5) // 60,
+                 )
+                 key = f"quality_metrics_{timestamp.strftime('%Y%m%d_%H%M')}"
+-                data = self.redis_client.get(key)
++                data = self.redis_client.await get(key)
+ 
+                 if data:
+                     metrics = json.loads(data)
+                     trend_data.append(
+                         {
+                             "timestamp": timestamp.isoformat(),
+-                            "score": metrics.get("overall_score", 0),
+-                            "status": metrics.get("overall_status", "UNKNOWN"),
++                            "score": metrics.await get("overall_score", 0),
++                            "status": metrics.await get("overall_status", "UNKNOWN"),
+                         }
+                     )
+ 
+@@ -262,7 +262,7 @@             # 从Redis获取告警
+             alert_keys = self.redis_client.keys("alert:*")
+             for key in alert_keys:
+-                alert_data = self.redis_client.get(key)
++                alert_data = self.redis_client.await get(key)
+                 if alert_data:
+                     alerts.append(json.loads(alert_data))
+ 
+@@ -270,22 +270,22 @@             current_metrics = await self.collect_quality_metrics()
+ 
+             # 质量分数告警
+-            if current_metrics.get("overall_score", 0) < 8.0:
++            if current_metrics.await get("overall_score", 0) < 8.0:
+                 alerts.append(
+                     {
+                         "id": "quality_score_low",
+                         "type": "quality",
+                         "severity": "warning",
+                         "title": "质量分数偏低",
+-                        "message": f"当前质量分数: {current_metrics.get('overall_score', 0):.2f}",
++                        "message": f"当前质量分数: {current_metrics.await get('overall_score', 0):.2f}",
+                         "timestamp": datetime.now().isoformat(),
+                         "active": True,
+                     }
+                 )
+ 
+             # 系统健康告警
+-            system_health = current_metrics.get("system_health", {})
+-            if system_health.get("redis_status") != "healthy":
++            system_health = current_metrics.await get("system_health", {})
++            if system_health.await get("redis_status") != "healthy":
+                 alerts.append(
+                     {
+                         "id": "redis_unhealthy",
+@@ -356,7 +356,7 @@             alerts = []
+ 
+             # 质量分数告警
+-            score = metrics.get("overall_score", 0)
++            score = metrics.await get("overall_score", 0)
+             if score < 7.0:
+                 alerts.append(
+                     {
+@@ -420,7 +420,7 @@ 
+         self.logger.info("实时质量监控服务器启动完成")
+ 
+-    def stop_server(self):
++async def stop_server(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """停止服务器"""

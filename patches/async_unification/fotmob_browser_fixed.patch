@@ -1,0 +1,24 @@
+--- a/src/data/collectors/fotmob_browser_fixed.py+++ b/src/data/collectors/fotmob_browser_fixed.py@@ -33,7 +33,7 @@ class FotmobFixedScraper:
+     """修复版FotMob采集器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.logger = logging.getLogger(__name__)
+         self.browser = None
+         self.context = None
+@@ -229,7 +229,7 @@         self.logger.info("✅ 模拟获取FotMob API数据成功")
+         return mock_data
+ 
+-    def _parse_page_data(self, data: dict[str, Any], match_id: str) -> Optional[MatchData]:
++async def _parse_page_data(self, data: dict[str, Any], match_id: str) -> Optional[MatchData]:
+         """解析页面数据 - 修复版"""
+         try:
+             self.logger.info("🔍 解析页面数据...")
+@@ -333,7 +333,7 @@             self.logger.error(f"❌ 数据解析失败: {e}")
+             return None
+ 
+-    def get_extraction_stats(self) -> dict[str, Any]:
++async def get_extraction_stats(self) -> dict[str, Any]:
+         """获取采集统计信息"""
+         return {
+             "status": "fixed_mode"

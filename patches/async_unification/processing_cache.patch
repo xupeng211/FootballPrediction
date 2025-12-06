@@ -1,0 +1,90 @@
+--- a/src/services/processing/caching/processing_cache.py+++ b/src/services/processing/caching/processing_cache.py@@ -19,7 +19,7 @@     提供内存和Redis缓存功能，避免重复计算
+     """
+ 
+-    def __init__(self, redis_client=None):
++async def __init__(self, redis_client=None):
+         """初始化缓存管理器."""
+         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
+         self.redis_client = redis_client
+@@ -156,7 +156,7 @@     ) -> Any:
+         """获取缓存数据或计算新数据."""
+         # 尝试从缓存获取
+-        cached_data = await self.get(cache_key)
++        cached_data = await self.await get(cache_key)
+         if cached_data is not None:
+             return cached_data
+ 
+@@ -179,7 +179,7 @@             self.logger.error(f"计算数据失败 {cache_key}: {e}")
+             raise
+ 
+-    def generate_cache_key(self, prefix: str, *args, **kwargs) -> str:
++async def generate_cache_key(self, prefix: str, *args, **kwargs) -> str:
+         """生成缓存键."""
+         try:
+             # 组合所有参数
+@@ -214,7 +214,7 @@                     del self._memory_cache_timestamps[cache_key]
+                     return None
+ 
+-            return self._memory_cache.get(cache_key)
++            return self._memory_cache.await get(cache_key)
+ 
+         except Exception:
+             return None
+@@ -243,7 +243,7 @@     async def _get_from_redis(self, cache_key: str) -> Any | None:
+         """从Redis获取数据."""
+         try:
+-            data = await self.redis_client.get(cache_key)
++            data = await self.redis_client.await get(cache_key)
+             if data:
+                 return json.loads(data.decode("utf-8"))
+             return None
+@@ -277,10 +277,10 @@             if self.redis_client:
+                 try:
+                     info = await self.redis_client.info()
+-                    stats["redis_memory_used"] = info.get("used_memory_human", "N/A")
+-                    stats["redis_connected_clients"] = info.get("connected_clients", 0)
+-                    stats["redis_keyspace_hits"] = info.get("keyspace_hits", 0)
+-                    stats["redis_keyspace_misses"] = info.get("keyspace_misses", 0)
++                    stats["redis_memory_used"] = info.await get("used_memory_human", "N/A")
++                    stats["redis_connected_clients"] = info.await get("connected_clients", 0)
++                    stats["redis_keyspace_hits"] = info.await get("keyspace_hits", 0)
++                    stats["redis_keyspace_misses"] = info.await get("keyspace_misses", 0)
+                 except RedisError:
+                     stats["redis_status"] = "error"
+                 else:
+@@ -325,7 +325,7 @@             self.logger.error(f"清理过期缓存失败: {e}")
+             return 0
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         """字符串表示."""
+         return (
+             f"ProcessingCache(enabled={self.cache_enabled}, "
+@@ -350,10 +350,10 @@ 
+ 
+ # 缓存装饰器
+-def cache_result(ttl: int = 3600, key_prefix: str = None):
++async def cache_result(ttl: int = 3600, key_prefix: str = None):
+     """缓存结果装饰器."""
+ 
+-    def decorator(func):
++async def decorator(func):
+         async def wrapper(*args, **kwargs):
+             # 获取缓存实例
+             cache = getattr(wrapper, "_cache_instance", None)
+@@ -365,7 +365,7 @@             cache_key = cache.generate_cache_key(prefix, *args, **kwargs)
+ 
+             # 尝试获取缓存
+-            result = await cache.get(cache_key)
++            result = await cache.await get(cache_key)
+             if result is not None:
+                 return result
+ 
+@@ -377,7 +377,7 @@             return result
+ 
+         # 设置缓存实例的方法
+-        def set_cache_instance(cache_instance: ProcessingCache):
++async def set_cache_instance(cache_instance: ProcessingCache):
+             wrapper._cache_instance = cache_instance
+ 
+         wrapper.set_cache_instance = set_cache_instance

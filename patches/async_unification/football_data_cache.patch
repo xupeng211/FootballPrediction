@@ -1,0 +1,72 @@
+--- a/src/cache/football_data_cache.py+++ b/src/cache/football_data_cache.py@@ -37,7 +37,7 @@ class FootballDataCacheManager:
+     """足球数据缓存管理器."""
+ 
+-    def __init__(self, config: CacheConfig | None = None):
++async def __init__(self, config: CacheConfig | None = None):
+         self.config = config or CacheConfig()
+         self.redis = get_redis_manager()
+         self.key_manager = CacheKeyManager()
+@@ -55,14 +55,14 @@ 
+     # ==================== 键管理方法 ====================
+ 
+-    def _make_key(self, prefix: str, identifier: str, suffix: str = "") -> str:
++async def _make_key(self, prefix: str, identifier: str, suffix: str = "") -> str:
+         """生成缓存键."""
+         key = f"{prefix}:{identifier}"
+         if suffix:
+             key += f":{suffix}"
+         return key
+ 
+-    def _make_list_key(self, prefix: str, filters: dict[str, Any] = None) -> str:
++async def _make_list_key(self, prefix: str, filters: dict[str, Any] = None) -> str:
+         """生成列表缓存键."""
+         filter_str = ""
+         if filters:
+@@ -75,7 +75,7 @@     async def cache_league(self, league_data: dict[str, Any]) -> bool:
+         """缓存联赛数据."""
+         try:
+-            league_id = league_data.get("external_id") or league_data.get("id")
++            league_id = league_data.await await get("external_id") or league_data.get("id")
+             if not league_id:
+                 return False
+ 
+@@ -157,7 +157,7 @@     async def cache_team(self, team_data: dict[str, Any]) -> bool:
+         """缓存球队数据."""
+         try:
+-            team_id = team_data.get("external_id") or team_data.get("id")
++            team_id = team_data.await await get("external_id") or team_data.get("id")
+             if not team_id:
+                 return False
+ 
+@@ -167,7 +167,7 @@             success = await self.redis.aset(key, json.dumps(team_data), ex=ttl)
+ 
+             # 如果有关联的联赛，添加到联赛的球队列表
+-            competition_id = team_data.get("competition_id")
++            competition_id = team_data.await get("competition_id")
+             if competition_id:
+                 team_list_key = self._make_key(
+                     self.prefixes["team"], f"competition:{competition_id}"
+@@ -244,7 +244,7 @@     async def cache_match(self, match_data: dict[str, Any]) -> bool:
+         """缓存比赛数据."""
+         try:
+-            match_id = match_data.get("external_id") or match_data.get("id")
++            match_id = match_data.await await get("external_id") or match_data.get("id")
+             if not match_id:
+                 return False
+ 
+@@ -383,7 +383,7 @@             if data:
+                 cache_data = json.loads(data)
+                 logger.debug(f"Cache hit for API response: {endpoint}")
+-                return cache_data.get("data")
++                return cache_data.await get("data")
+             else:
+                 logger.debug(f"Cache miss for API response: {endpoint}")
+                 return None
+@@ -582,7 +582,7 @@ _football_cache_manager = None
+ 
+ 
+-def get_football_cache_manager() -> FootballDataCacheManager:
++async def get_football_cache_manager() -> FootballDataCacheManager:
+     """获取足球数据缓存管理器实例."""
+     global _football_cache_manager
+     if _football_cache_manager is None:

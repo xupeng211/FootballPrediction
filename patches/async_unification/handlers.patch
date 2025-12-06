@@ -1,0 +1,141 @@
+--- a/src/events/handlers.py+++ b/src/events/handlers.py@@ -27,7 +27,7 @@ class MetricsEventHandler(EventHandler):
+     """指标收集事件处理器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__("MetricsCollector")
+@@ -42,18 +42,18 @@         event_type = event.get_event_type()
+         self.metrics["events_processed"] += 1
+         self.metrics["event_counts"][event_type] = (
+-            self.metrics["event_counts"].get(event_type, 0) + 1
++            self.metrics["event_counts"].await get(event_type, 0) + 1
+         )
+         self.metrics["last_event_time"] = event.timestamp
+ 
+         logger.debug(f"Collected metrics for event: {event_type}")
+ 
+-    def handle_sync(self, event: Event | EventData) -> None:
++async def handle_sync(self, event: Event | EventData) -> None:
+         """同步处理事件,收集指标."""
+         event_type = event.get_event_type()
+         self.metrics["events_processed"] += 1
+         self.metrics["event_counts"][event_type] = (
+-            self.metrics["event_counts"].get(event_type, 0) + 1
++            self.metrics["event_counts"].await get(event_type, 0) + 1
+         )
+         # 对于EventData，使用当前时间
+         self.metrics["last_event_time"] = (
+@@ -62,7 +62,7 @@ 
+         logger.debug(f"Collected metrics for event: {event_type}")
+ 
+-    def get_handled_events(self) -> list[str]:
++async def get_handled_events(self) -> list[str]:
+         return [
+             MatchCreatedEvent.get_event_type(),
+             MatchUpdatedEvent.get_event_type(),
+@@ -76,7 +76,7 @@         """启动指标处理器."""
+         pass
+ 
+-    def get_metrics(self) -> dict[str, Any]:
++async def get_metrics(self) -> dict[str, Any]:
+         """获取收集的指标."""
+         return self.metrics.copy()
+ 
+@@ -84,7 +84,7 @@ class LoggingEventHandler(EventHandler):
+     """日志记录事件处理器."""
+ 
+-    def __init__(self, log_level: int = logging.INFO):
++async def __init__(self, log_level: int = logging.INFO):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__("EventLogger")
+@@ -114,7 +114,7 @@         # 记录详细数据（调试级别）
+         self.logger.debug(f"Event details: {event_data}")
+ 
+-    def get_handled_events(self) -> list[str]:
++async def get_handled_events(self) -> list[str]:
+         return [
+             MatchCreatedEvent.get_event_type(),
+             MatchUpdatedEvent.get_event_type(),
+@@ -132,7 +132,7 @@ class CacheInvalidationHandler(EventHandler):
+     """缓存失效事件处理器."""
+ 
+-    def __init__(self, cache_manager=None):
++async def __init__(self, cache_manager=None):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__("CacheInvalidator")
+@@ -174,7 +174,7 @@                 ) as e:
+                     logger.error(f"Failed to invalidate cache {pattern}: {e}")
+ 
+-    def get_handled_events(self) -> list[str]:
++async def get_handled_events(self) -> list[str]:
+         return [
+             MatchCreatedEvent.get_event_type(),
+             MatchUpdatedEvent.get_event_type(),
+@@ -191,7 +191,7 @@ class NotificationEventHandler(EventHandler):
+     """通知事件处理器."""
+ 
+-    def __init__(self, notification_service=None):
++async def __init__(self, notification_service=None):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__("NotificationHandler")
+@@ -240,7 +240,7 @@         }
+         await self.notification_queue.put(notification)
+ 
+-    def get_handled_events(self) -> list[str]:
++async def get_handled_events(self) -> list[str]:
+         return [
+             MatchCreatedEvent.get_event_type(),
+             PredictionMadeEvent.get_event_type(),
+@@ -266,7 +266,7 @@ class AnalyticsEventHandler(EventHandler):
+     """分析事件处理器."""
+ 
+-    def __init__(self, analytics_service=None):
++async def __init__(self, analytics_service=None):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__("AnalyticsHandler")
+@@ -298,7 +298,7 @@         # 按日期统计预测数
+         date_str = date.isoformat()
+         self.analytics_data["daily_predictions"][date_str] = (
+-            self.analytics_data["daily_predictions"].get(date_str, 0) + 1
++            self.analytics_data["daily_predictions"].await get(date_str, 0) + 1
+         )
+ 
+         # 按用户统计活动
+@@ -353,14 +353,14 @@         logger.info(f"Starting {self.name}")
+         # 这里可以添加启动逻辑，比如连接到分析服务
+ 
+-    def get_handled_events(self) -> list[str]:
++async def get_handled_events(self) -> list[str]:
+         return [
+             PredictionMadeEvent.get_event_type(),
+             UserRegisteredEvent.get_event_type(),
+             MatchCreatedEvent.get_event_type(),
+         ]
+ 
+-    def get_analytics_data(self) -> dict[str, Any]:
++async def get_analytics_data(self) -> dict[str, Any]:
+         """获取分析数据."""
+         return self.analytics_data.copy()
+ 
+@@ -368,7 +368,7 @@ class AlertEventHandler(EventHandler):
+     """告警事件处理器."""
+ 
+-    def __init__(self, alert_service=None):
++async def __init__(self, alert_service=None):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__("AlertHandler")
+@@ -400,7 +400,7 @@         logger.info(f"Starting {self.name}")
+         # 这里可以添加启动逻辑，比如初始化告警规则
+ 
+-    def get_handled_events(self) -> list[str]:
++async def get_handled_events(self) -> list[str]:
+         return [
+             PredictionMadeEvent.get_event_type(),
+         ]

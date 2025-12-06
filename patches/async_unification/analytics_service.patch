@@ -1,0 +1,56 @@
+--- a/src/services/analytics_service.py+++ b/src/services/analytics_service.py@@ -28,7 +28,7 @@     - Statistical insights and metrics
+     """
+ 
+-    def __init__(self, analytics_repository: AnalyticsRepository):
++async def __init__(self, analytics_repository: AnalyticsRepository):
+         """
+         Initialize AnalyticsService with repository dependency.
+ 
+@@ -182,7 +182,7 @@             logger.error(f"Error getting league standings: {e}")
+             raise
+ 
+-    def _get_mock_team_performance_123(self, days: int) -> dict[str, Any]:
++async def _get_mock_team_performance_123(self, days: int) -> dict[str, Any]:
+         """Mock data for team ID 123 matching test expectations."""
+         return {
+             "team_id": 123,
+@@ -217,7 +217,7 @@             },
+         }
+ 
+-    def _get_mock_team_performance_456(self, days: int) -> dict[str, Any]:
++async def _get_mock_team_performance_456(self, days: int) -> dict[str, Any]:
+         """Mock data for team ID 456 matching test expectations."""
+         return {
+             "team_id": 456,
+@@ -252,7 +252,7 @@             },
+         }
+ 
+-    def _get_mock_team_performance_empty(self, days: int) -> dict[str, Any]:
++async def _get_mock_team_performance_empty(self, days: int) -> dict[str, Any]:
+         """Mock data for team with no performance data."""
+         return {
+             "team_id": 789,
+@@ -287,7 +287,7 @@             },
+         }
+ 
+-    def _get_mock_league_standings_39(self) -> dict[str, Any]:
++async def _get_mock_league_standings_39(self) -> dict[str, Any]:
+         """Mock data for Premier League standings matching test expectations."""
+         return {
+             "league_id": 39,
+@@ -333,7 +333,7 @@             },
+         }
+ 
+-    def _extract_recent_form_from_matches(self, matches: list[Match]) -> list[str]:
++async def _extract_recent_form_from_matches(self, matches: list[Match]) -> list[str]:
+         """Extract recent form (W/D/L) from match list."""
+         form = []
+         for match in matches[:5]:  # Last 5 matches
+@@ -347,7 +347,7 @@             form.append(result)
+         return form
+ 
+-    def _calculate_form_trend(self, matches: list[Match]) -> str:
++async def _calculate_form_trend(self, matches: list[Match]) -> str:
+         """Calculate form trend based on recent matches."""
+         if not matches:
+             return "no_data"

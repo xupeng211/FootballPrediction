@@ -1,0 +1,116 @@
+--- a/src/ml/experiment_tracking.py+++ b/src/ml/experiment_tracking.py@@ -41,7 +41,7 @@ class MLflowExperimentTracker:
+     """MLflow实验跟踪器类"""
+ 
+-    def __init__(self, experiment_name: str = "football-prediction"):
++async def __init__(self, experiment_name: str = "football-prediction"):
+         """
+         初始化实验跟踪器
+ 
+@@ -57,7 +57,7 @@         else:
+             logger.warning("MLflow is not available. Tracking will be disabled.")
+ 
+-    def _get_tracking_uri(self) -> str:
++async def _get_tracking_uri(self) -> str:
+         """获取MLflow跟踪URI"""
+         # 优先使用环境变量
+         if "MLFLOW_TRACKING_URI" in os.environ:
+@@ -72,7 +72,7 @@ 
+         return f"file://{mlruns_dir}"
+ 
+-    def _setup_mlflow(self):
++async def _setup_mlflow(self):
+         """设置MLflow配置"""
+         try:
+             mlflow.set_tracking_uri(self.tracking_uri)
+@@ -97,7 +97,7 @@             logger.error(f"Failed to setup MLflow: {e}")
+             raise
+ 
+-    def start_run(self, run_name: str | None = None) -> str | None:
++async def start_run(self, run_name: str | None = None) -> str | None:
+         """
+         开始新的实验运行
+ 
+@@ -132,7 +132,7 @@             logger.error(f"Failed to start MLflow run: {e}")
+             return None
+ 
+-    def log_params(self, params: dict[str, Any]):
++async def log_params(self, params: dict[str, Any]):
+         """
+         记录参数
+ 
+@@ -149,7 +149,7 @@         except Exception as e:
+             logger.error(f"Failed to log parameters: {e}")
+ 
+-    def log_metrics(self, metrics: dict[str, int | float], step: int | None = None):
++async def log_metrics(self, metrics: dict[str, int | float], step: int | None = None):
+         """
+         记录指标
+ 
+@@ -167,7 +167,7 @@         except Exception as e:
+             logger.error(f"Failed to log metrics: {e}")
+ 
+-    def log_artifact(self, local_path: str, artifact_path: str | None = None):
++async def log_artifact(self, local_path: str, artifact_path: str | None = None):
+         """
+         记录工件
+ 
+@@ -184,7 +184,7 @@         except Exception as e:
+             logger.error(f"Failed to log artifact: {e}")
+ 
+-    def log_model(self, model: Any, artifact_path: str = "model"):
++async def log_model(self, model: Any, artifact_path: str = "model"):
+         """
+         记录模型
+ 
+@@ -216,7 +216,7 @@         except Exception as e:
+             logger.error(f"Failed to log model: {e}")
+ 
+-    def set_tags(self, tags: dict[str, str]):
++async def set_tags(self, tags: dict[str, str]):
+         """
+         设置标签
+ 
+@@ -232,7 +232,7 @@         except Exception as e:
+             logger.error(f"Failed to set tags: {e}")
+ 
+-    def end_run(self, status: str = "FINISHED"):
++async def end_run(self, status: str = "FINISHED"):
+         """
+         结束运行
+ 
+@@ -248,7 +248,7 @@         except Exception as e:
+             logger.error(f"Failed to end run: {e}")
+ 
+-    def run_experiment(self, experiment_func, params: dict[str, Any] = None):
++async def run_experiment(self, experiment_func, params: dict[str, Any] = None):
+         """
+         运行实验的便捷方法
+ 
+@@ -306,7 +306,7 @@             self.end_run()
+ 
+ 
+-def dummy_football_prediction_experiment(params: dict[str, Any]) -> dict[str, Any]:
++async def dummy_football_prediction_experiment(params: dict[str, Any]) -> dict[str, Any]:
+     """
+     模拟足球预测实验
+ 
+@@ -319,9 +319,9 @@     # 模拟训练过程
+     import random
+ 
+-    learning_rate = params.get("learning_rate", 0.001)
+-    epochs = params.get("epochs", 100)
+-    model_type = params.get("model_type", "lstm")
++    learning_rate = params.await get("learning_rate", 0.001)
++    epochs = params.await get("epochs", 100)
++    model_type = params.await get("model_type", "lstm")
+ 
+     # 模拟训练指标
+     train_losses = []
+@@ -348,7 +348,7 @@     }
+ 
+ 
+-def main():
++async def main():
+     """主函数 - 演示MLflow集成"""
+     logger.info("🚀 Starting MLflow Integration Test")
+     logger.info("=" * 50)

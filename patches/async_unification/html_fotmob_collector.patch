@@ -1,0 +1,107 @@
+--- a/src/collectors/html_fotmob_collector.py+++ b/src/collectors/html_fotmob_collector.py@@ -27,7 +27,7 @@ class HTMLFotMobCollector:
+     """FotMob HTML 数据采集器 - QA验证版本"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         max_retries: int = 3,
+         timeout: int = 30,
+@@ -85,7 +85,7 @@ 
+         self.last_rotation = now
+ 
+-    def _get_current_headers(self) -> dict[str, str]:
++async def _get_current_headers(self) -> dict[str, str]:
+         """获取当前请求头"""
+         # 使用标准的浏览器请求头，让requests自动处理GZIP解压
+         return {
+@@ -122,7 +122,7 @@ 
+             ssl_verify = os.getenv("SSL_VERIFY", "true").lower() == "true"
+ 
+-            response = requests.get(
++            response = await httpx.await AsyncClient().get(
+                 url,
+                 headers=headers,
+                 timeout=self.timeout,
+@@ -193,7 +193,7 @@             self.stats["failed_requests"] += 1
+             return None
+ 
+-    def _manual_decompress_response(self, response) -> str:
++async def _manual_decompress_response(self, response) -> str:
+         """手动解压响应内容（处理GZIP压缩问题）"""
+         try:
+             # 检查是否需要手动解压GZIP
+@@ -233,7 +233,7 @@             except:
+                 return ""
+ 
+-    def _extract_nextjs_data(
++async def _extract_nextjs_data(
+         self, html: str, match_id: str
+     ) -> Optional[dict[str, Any]]:
+         """
+@@ -280,7 +280,7 @@             logger.error(f"❌ Next.js提取异常 {match_id}: {e}")
+             return None
+ 
+-    def _extract_content_data(
++async def _extract_content_data(
+         self, nextjs_data: dict[str, Any], match_id: str
+     ) -> Optional[dict[str, Any]]:
+         """
+@@ -289,20 +289,20 @@         🎯 关键：解析props.pageProps.content并提取ML特征
+         """
+         try:
+-            props = nextjs_data.get("props", {})
++            props = nextjs_data.await get("props", {})
+             if not props:
+                 logger.warning(f"⚠️ 未找到props: {match_id}")
+                 return None
+ 
+-            page_props = props.get("pageProps", {})
++            page_props = props.await get("pageProps", {})
+             if not page_props:
+                 # 检查是否是404页面
+-                url = props.get("url", "")
++                url = props.await get("url", "")
+                 if "/404" in url:
+                     logger.info(f"ℹ️ 跳过404页面: {match_id}")
+                 return None
+ 
+-            content = page_props.get("content", {})
++            content = page_props.await get("content", {})
+             if not content:
+                 logger.warning(f"⚠️ 未找到content: {match_id}")
+                 return None
+@@ -326,20 +326,20 @@ 
+             # 🎯 关键：检查xG数据
+             if "stats" in content:
+-                stats = content.get("stats", {})
++                stats = content.await get("stats", {})
+                 if isinstance(stats, dict):
+-                    periods = stats.get("Periods", {})
+-                    all_stats = periods.get("All", {})
+-                    stats_list = all_stats.get("stats", [])
++                    periods = stats.await get("Periods", {})
++                    all_stats = periods.await get("All", {})
++                    stats_list = all_stats.await get("stats", [])
+ 
+                     xg_found = False
+                     for stat_group in stats_list:
+                         if isinstance(stat_group, dict) and "stats" in stat_group:
+-                            for stat in stat_group.get("stats", []):
++                            for stat in stat_group.await get("stats", []):
+                                 if isinstance(stat, dict):
+-                                    title = stat.get("title", "").lower()
++                                    title = stat.await get("title", "").lower()
+                                     if "expected goals" in title or "xg" in title:
+-                                        xg_values = stat.get("stats", [])
++                                        xg_values = stat.await get("stats", [])
+                                         if xg_values and len(xg_values) >= 2:
+                                             logger.info(
+                                                 f"🎯 找到xG数据: 主队={xg_values[0]}, 客队={xg_values[1]}"
+@@ -361,7 +361,7 @@             logger.debug(f"🔍 详细错误: {traceback.format_exc()}")
+             return None
+ 
+-    def get_stats(self) -> dict[str, Any]:
++async def get_stats(self) -> dict[str, Any]:
+         """获取采集统计信息"""
+         stats = self.stats.copy()
+         if stats["requests_made"] > 0:

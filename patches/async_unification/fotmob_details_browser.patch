@@ -1,0 +1,103 @@
+--- a/src/data/collectors/fotmob_details_browser.py+++ b/src/data/collectors/fotmob_details_browser.py@@ -35,7 +35,7 @@     - xG 数据 (通过射门图计算)
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.base_url = "https://www.fotmob.com"
+         self.browser: Optional[Browser] = None
+         self.context: Optional[BrowserContext] = None
+@@ -353,7 +353,7 @@                 return None
+ 
+             # 递归查找shotmap数据
+-            def find_shotmap(obj, depth=0):
++async def find_shotmap(obj, depth=0):
+                 if depth > 5:  # 防止无限递归
+                     return None
+ 
+@@ -387,7 +387,7 @@             self.logger.debug(f"⚠️ shotmap数据提取失败: {e}")
+             return None
+ 
+-    def _structure_match_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
++async def _structure_match_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
+         """结构化比赛数据，使其符合现有的数据格式"""
+         try:
+             # 提取基础比赛信息
+@@ -423,7 +423,7 @@             self.logger.error(f"❌ 数据结构化失败: {e}")
+             return {}
+ 
+-    def _extract_match_id(self, data: dict[str, Any]) -> str:
++async def _extract_match_id(self, data: dict[str, Any]) -> str:
+         """提取比赛ID"""
+         # 尝试多种可能的ID字段
+         for key in ['matchId', 'id', 'match_id']:
+@@ -433,7 +433,7 @@         # 如果没有找到，返回默认值
+         return "unknown"
+ 
+-    def _extract_match_info(self, data: dict[str, Any]) -> dict[str, Any]:
++async def _extract_match_info(self, data: dict[str, Any]) -> dict[str, Any]:
+         """提取比赛基本信息"""
+         try:
+             # 尝试从不同的位置获取比赛信息
+@@ -473,14 +473,14 @@             self.logger.debug(f"⚠️ 比赛信息提取失败: {e}")
+             return {}
+ 
+-    def _extract_shot_data(self, data: dict[str, Any]) -> list[dict[str, Any]]:
++async def _extract_shot_data(self, data: dict[str, Any]) -> list[dict[str, Any]]:
+         """提取射门数据"""
+         try:
+             # 查找shotmap数据
+             shotmap_data = None
+ 
+             # 递归查找shotmap
+-            def find_shotmap_recursive(obj):
++async def find_shotmap_recursive(obj):
+                 if isinstance(obj, dict):
+                     for key, value in obj.items():
+                         if 'shotmap' in key.lower() and isinstance(value, dict):
+@@ -530,13 +530,13 @@             self.logger.error(f"❌ 射门数据提取失败: {e}")
+             return []
+ 
+-    def _extract_lineup_data(self, data: dict[str, Any]) -> dict[str, Any]:
++async def _extract_lineup_data(self, data: dict[str, Any]) -> dict[str, Any]:
+         """提取阵容数据"""
+         try:
+             # 查找lineup数据
+             lineup_data = None
+ 
+-            def find_lineup_recursive(obj):
++async def find_lineup_recursive(obj):
+                 if isinstance(obj, dict):
+                     for key, value in obj.items():
+                         if 'lineup' in key.lower() and isinstance(value, dict):
+@@ -571,7 +571,7 @@             self.logger.error(f"❌ 阵容数据提取失败: {e}")
+             return {"home": {"starters": [], "substitutes": []}, "away": {"starters": [], "substitutes": []}}
+ 
+-    def _process_team_lineup(self, team_lineup: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
++async def _process_team_lineup(self, team_lineup: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+         """处理单个球队的阵容数据"""
+         if not isinstance(team_lineup, dict):
+             return {"starters": [], "substitutes": []}
+@@ -584,7 +584,7 @@             "substitutes": self._process_players(substitutes)
+         }
+ 
+-    def _process_players(self, players: list) -> list[dict[str, Any]]:
++async def _process_players(self, players: list) -> list[dict[str, Any]]:
+         """处理球员数据列表"""
+         processed_players = []
+ 
+@@ -604,7 +604,7 @@ 
+         return processed_players
+ 
+-    def _calculate_team_xg(self, shots: list[dict[str, Any]], match_info: dict[str, Any]) -> dict[str, Any]:
++async def _calculate_team_xg(self, shots: list[dict[str, Any]], match_info: dict[str, Any]) -> dict[str, Any]:
+         """基于射门图计算xG数据"""
+         try:
+             home_team = match_info.get("home_team", "")
+@@ -634,7 +634,7 @@             self.logger.error(f"❌ xG计算失败: {e}")
+             return {"xg_home": None, "xg_away": None}
+ 
+-    def _extract_match_stats(self, data: dict[str, Any]) -> dict[str, Any]:
++async def _extract_match_stats(self, data: dict[str, Any]) -> dict[str, Any]:
+         """提取比赛统计数据"""
+         # 这里可以扩展以提取更多统计数据
+         # 目前返回基础结构

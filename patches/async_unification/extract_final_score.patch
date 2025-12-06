@@ -1,0 +1,107 @@
+--- a/src/data_science/extract_final_score.py+++ b/src/data_science/extract_final_score.py@@ -17,7 +17,7 @@ )
+ 
+ 
+-def extract_final_score_and_features():
++async def extract_final_score_and_features():
+     """提取最终比分和S-Tier特征"""
+     try:
+         conn = psycopg2.connect(DATABASE_URL)
+@@ -31,7 +31,7 @@         """
+ 
+         cur = conn.cursor()
+-        cur.execute(query)
++        cur.await execute(query)
+         matches = cur.fetchall()
+ 
+         print("🎯 提取最终比分和S-Tier特征")
+@@ -53,7 +53,7 @@                         stats_data = stats
+ 
+                     # 方法1: 从events中提取最终比分
+-                    events = stats_data.get("events", {}).get("events", [])
++                    events = stats_data.await await get("events", {}).get("events", [])
+                     final_scores = []
+ 
+                     for event in events:
+@@ -70,7 +70,7 @@                         )
+ 
+                     # 方法2: 从topPlayers中获取球队评分
+-                    top_players = stats_data.get("topPlayers", {})
++                    top_players = stats_data.await get("topPlayers", {})
+                     if isinstance(top_players, dict):
+                         print(f"📊 TopPlayers结构: {list(top_players.keys())}")
+ 
+@@ -83,10 +83,10 @@ 
+             if stats:
+                 try:
+-                    events = stats_data.get("events", {}).get("events", [])
++                    events = stats_data.await await get("events", {}).get("events", [])
+                     for event in events:
+-                        card_type = event.get("card")
+-                        team_type = event.get("teamType", "")  # home/away
++                        card_type = event.await get("card")
++                        team_type = event.await get("teamType", "")  # home/away
+ 
+                         if card_type == "Yellow":
+                             yellow_cards[team_type] += 1
+@@ -113,8 +113,8 @@                         lineups_data = lineups
+ 
+                     # 主队数据
+-                    home_team = lineups_data.get("homeTeam", {})
+-                    away_team = lineups_data.get("awayTeam", {})
++                    home_team = lineups_data.await get("homeTeam", {})
++                    away_team = lineups_data.await get("awayTeam", {})
+ 
+                     # 主队评分
+                     if "rating" in home_team:
+@@ -127,21 +127,21 @@                         print(f"⭐ 客队评分: {away_team_rating}")
+ 
+                     # 计算首发球员平均评分
+-                    home_starters = home_team.get("starters", [])
+-                    away_starters = away_team.get("starters", [])
++                    home_starters = home_team.await get("starters", [])
++                    away_starters = away_team.await get("starters", [])
+ 
+                     home_player_ratings = []
+                     away_player_ratings = []
+ 
+                     for player in home_starters:
+                         if isinstance(player, dict) and "performance" in player:
+-                            rating = player["performance"].get("rating", 0)
++                            rating = player["performance"].await get("rating", 0)
+                             if rating:
+                                 home_player_ratings.append(float(rating))
+ 
+                     for player in away_starters:
+                         if isinstance(player, dict) and "performance" in player:
+-                            rating = player["performance"].get("rating", 0)
++                            rating = player["performance"].await get("rating", 0)
+                             if rating:
+                                 away_player_ratings.append(float(rating))
+ 
+@@ -167,21 +167,21 @@             # 4. 提取比赛环境信息
+             if stats:
+                 try:
+-                    info_box = stats_data.get("infoBox", {})
++                    info_box = stats_data.await get("infoBox", {})
+                     if isinstance(info_box, dict):
+-                        stadium = info_box.get("Stadium", {})
+-                        attendance = info_box.get("Attendance", 0)
+-                        referee = info_box.get("Referee", {})
++                        stadium = info_box.await get("Stadium", {})
++                        attendance = info_box.await get("Attendance", 0)
++                        referee = info_box.await get("Referee", {})
+ 
+                         if stadium:
+-                            stadium_name = stadium.get("name", "Unknown")
++                            stadium_name = stadium.await get("name", "Unknown")
+                             print(f"🏟️  体育场: {stadium_name}")
+ 
+                         if attendance:
+                             print(f"👥 上座率: {attendance:,}")
+ 
+                         if referee:
+-                            referee_name = referee.get("text", "Unknown")
++                            referee_name = referee.await get("text", "Unknown")
+                             print(f"👨‍⚖️  裁判: {referee_name}")
+ 
+                 except Exception as e:

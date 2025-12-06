@@ -1,0 +1,16 @@
+--- a/src/services/database/database_service.py+++ b/src/services/database/database_service.py@@ -19,7 +19,7 @@     pass  # 添加pass语句
+     """数据库服务类 - 提供高级数据库操作接口"""
+ 
+-    def __init__(self, session: AsyncSession):
++async def __init__(self, session: AsyncSession):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.session = session
+@@ -39,7 +39,7 @@         """数据库健康检查."""
+         try:
+             # 简单的连接测试
+-            await self.session.execute("SELECT 1")
++            await self.session.await execute("SELECT 1")
+             return {"status": "healthy", "database": "connected"}
+         except Exception as e:
+             return {"status": "unhealthy", "database": "disconnected", "error": str(e)}

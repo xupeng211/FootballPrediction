@@ -1,0 +1,83 @@
+--- a/src/realtime/match_api.py+++ b/src/realtime/match_api.py@@ -89,7 +89,7 @@ # ============================================================================
+ 
+ 
+-@router.post("/add", summary="添加比赛到监控")
++@router.await post("/add", summary="添加比赛到监控")
+ async def add_match_to_monitoring(
+     request: AddMatchRequest, background_tasks: BackgroundTasks
+ ):
+@@ -265,9 +265,9 @@             {
+                 "new_status": request.status,
+                 "current_score": (
+-                    match_info.get("display_score") if match_info else None
++                    match_info.await get("display_score") if match_info else None
+                 ),
+-                "minute": match_info.get("minute") if match_info else None,
++                "minute": match_info.await get("minute") if match_info else None,
+             },
+         )
+ 
+@@ -291,7 +291,7 @@         ) from e
+ 
+ 
+-@router.get("/{match_id}", summary="获取比赛信息")
++@router.await get("/{match_id}", summary="获取比赛信息")
+ async def get_match_info(match_id: int):
+     """获取指定比赛的信息.
+ 
+@@ -317,7 +317,7 @@         raise HTTPException(status_code=500, detail="Failed to get match info") from e
+ 
+ 
+-@router.get("/league/{league}", summary="获取联赛比赛")
++@router.await get("/league/{league}", summary="获取联赛比赛")
+ async def get_league_matches(
+     league: str,
+     status: str | None = Query(None, description="状态过滤"),
+@@ -339,7 +339,7 @@ 
+         # 状态过滤
+         if status:
+-            matches = [m for m in matches if m.get("status") == status]
++            matches = [m for m in matches if m.await get("status") == status]
+ 
+         # 限制数量
+         matches = matches[:limit]
+@@ -360,7 +360,7 @@         ) from e
+ 
+ 
+-@router.get("/live", summary="获取直播比赛")
++@router.await get("/live", summary="获取直播比赛")
+ async def get_live_matches(
+     league: str | None = Query(None, description="联赛过滤"),
+     limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
+@@ -380,7 +380,7 @@ 
+         # 联赛过滤
+         if league:
+-            live_matches = [m for m in live_matches if m.get("league") == league]
++            live_matches = [m for m in live_matches if m.await get("league") == league]
+ 
+         # 限制数量
+         live_matches = live_matches[:limit]
+@@ -398,7 +398,7 @@         raise HTTPException(status_code=500, detail="Failed to get live matches") from e
+ 
+ 
+-@router.get("/stats", response_model=MatchStatsResponse, summary="获取比赛服务统计")
++@router.await get("/stats", response_model=MatchStatsResponse, summary="获取比赛服务统计")
+ async def get_match_service_stats():
+     """获取实时比赛服务统计信息.
+ 
+@@ -418,7 +418,7 @@         ) from e
+ 
+ 
+-@router.post("/{match_id}/subscribe", summary="订阅比赛更新")
++@router.await post("/{match_id}/subscribe", summary="订阅比赛更新")
+ async def subscribe_to_match_updates(
+     match_id: int, user_id: str = Query(..., description="用户ID")
+ ):
+@@ -492,7 +492,7 @@         ) from e
+ 
+ 
+-@router.post("/broadcast/alert", summary="广播比赛告警")
++@router.await post("/broadcast/alert", summary="广播比赛告警")
+ async def broadcast_match_alert(
+     message: str,
+     match_id: int | None = None,

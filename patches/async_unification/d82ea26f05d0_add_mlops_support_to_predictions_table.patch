@@ -1,0 +1,16 @@
+--- a/src/database/migrations/versions/d82ea26f05d0_add_mlops_support_to_predictions_table.py+++ b/src/database/migrations/versions/d82ea26f05d0_add_mlops_support_to_predictions_table.py@@ -17,7 +17,7 @@ depends_on = None
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     """添加MLOps支持到predictions表."""
+     # 添加验证相关字段
+     op.add_column(
+@@ -65,7 +65,7 @@     op.create_index("idx_predictions_actual_result", "predictions", ["actual_result"])
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     """移除MLOps支持字段."""
+     # 删除索引
+     op.drop_index("idx_predictions_actual_result", table_name="predictions")

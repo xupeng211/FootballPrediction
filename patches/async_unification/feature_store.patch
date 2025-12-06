@@ -1,0 +1,13 @@
+--- a/src/data/features/feature_store.py+++ b/src/data/features/feature_store.py@@ -2,11 +2,11 @@ 
+ 
+ class FeatureStore:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

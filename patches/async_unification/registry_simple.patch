@@ -1,0 +1,63 @@
+--- a/src/adapters/registry_simple.py+++ b/src/adapters/registry_simple.py@@ -21,30 +21,30 @@ class AdapterRegistry:
+     """适配器注册表."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化适配器注册表."""
+         self._registry: dict[str, dict] = {}
+         self._instances: dict[str, Any] = {}
+ 
+-    def register(self, name: str, adapter_class: type, **kwargs) -> None:
++async def register(self, name: str, adapter_class: type, **kwargs) -> None:
+         """注册适配器."""
+         self._registry[name] = {"class": adapter_class, **kwargs}
+ 
+-    def unregister(self, name: str) -> None:
++async def unregister(self, name: str) -> None:
+         """注销适配器."""
+         if name not in self._registry:
+             raise AdapterError(f"No adapter registered with name '{name}'")
+         del self._registry[name]
+ 
+-    def get_adapter_class(self, name: str) -> type | None:
++async def get_adapter_class(self, name: str) -> type | None:
+         """获取适配器类."""
+         if name in self._registry:
+             return self._registry[name]["class"]
+         return None
+ 
+-    def create_adapter(self, name: str, **kwargs) -> Any:
++async def create_adapter(self, name: str, **kwargs) -> Any:
+         """创建适配器实例."""
+-        adapter_info = self._registry.get(name)
++        adapter_info = self._registry.await get(name)
+         if not adapter_info:
+             raise AdapterError(f"No adapter registered with name '{name}'")
+ 
+@@ -56,15 +56,15 @@         self._instances[name] = instance
+         return instance
+ 
+-    def get_adapter(self, name: str) -> Any | None:
++async def get_adapter(self, name: str) -> Any | None:
+         """获取适配器实例."""
+-        return self._instances.get(name)
++        return self._instances.await get(name)
+ 
+-    def get_adapter_names(self) -> list[str]:
++async def get_adapter_names(self) -> list[str]:
+         """获取所有适配器名称."""
+         return list(self._registry.keys())
+ 
+-    def clear(self) -> None:
++async def clear(self) -> None:
+         """清除所有适配器."""
+         self._registry.clear()
+         self._instances.clear()
+@@ -74,7 +74,7 @@ _global_registry: AdapterRegistry | None = None
+ 
+ 
+-def get_global_registry() -> AdapterRegistry:
++async def get_global_registry() -> AdapterRegistry:
+     """获取全局注册表实例."""
+     global _global_registry
+     if _global_registry is None:

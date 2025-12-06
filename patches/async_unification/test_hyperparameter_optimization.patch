@@ -1,0 +1,16 @@
+--- a/src/ml/test_hyperparameter_optimization.py+++ b/src/ml/test_hyperparameter_optimization.py@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
+ 
+ 
+-def test_xgboost_hyperparameter_optimization():
++async def test_xgboost_hyperparameter_optimization():
+     """测试 XGBoost 超参数优化功能."""
+     logger.info("=== 开始测试 XGBoost 超参数优化功能 ===")
+ 
+@@ -176,7 +176,7 @@         return False
+ 
+ 
+-def test_integration_with_existing_pipeline():
++async def test_integration_with_existing_pipeline():
+     """测试与现有训练管道的集成."""
+     logger.info("\n=== 测试与现有管道集成 ===")
+ 

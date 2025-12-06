@@ -1,0 +1,84 @@
+--- a/src/api/optimization/connection_pool_optimizer.py+++ b/src/api/optimization/connection_pool_optimizer.py@@ -51,7 +51,7 @@ class ConnectionPoolOptimizer:
+     """连接池优化器."""
+ 
+-    def __init__(self, config: PoolOptimizationConfig | None = None):
++async def __init__(self, config: PoolOptimizationConfig | None = None):
+         self.config = config or PoolOptimizationConfig()
+         self.pools: dict[str, Pool] = {}
+         self.pool_metrics: dict[str, PoolMetrics] = {}
+@@ -59,7 +59,7 @@         self.is_monitoring = False
+         self.monitoring_task: asyncio.Task | None = None
+ 
+-    def register_pool(self, pool_name: str, pool: Pool):
++async def register_pool(self, pool_name: str, pool: Pool):
+         """注册连接池."""
+         self.pools[pool_name] = pool
+         self.pool_metrics[pool_name] = PoolMetrics(creation_time=datetime.utcnow())
+@@ -69,24 +69,24 @@ 
+         logger.info(f"Registered connection pool: {pool_name}")
+ 
+-    def _register_pool_events(self, pool_name: str, pool: Pool):
++async def _register_pool_events(self, pool_name: str, pool: Pool):
+         """注册连接池事件监听器."""
+ 
+         @event.listens_for(pool, "connect")
+-        def on_connect(dbapi_connection, connection_record):
++async def on_connect(dbapi_connection, connection_record):
+             metrics = self.pool_metrics[pool_name]
+             metrics.last_activity = datetime.utcnow()
+             logger.debug(f"New connection established in pool: {pool_name}")
+ 
+         @event.listens_for(pool, "checkout")
+-        def on_checkout(dbapi_connection, connection_record, connection_proxy):
++async def on_checkout(dbapi_connection, connection_record, connection_proxy):
+             metrics = self.pool_metrics[pool_name]
+             metrics.last_activity = datetime.utcnow()
+             metrics.checked_out += 1
+             logger.debug(f"Connection checked out from pool: {pool_name}")
+ 
+         @event.listens_for(pool, "checkin")
+-        def on_checkin(dbapi_connection, connection_record):
++async def on_checkin(dbapi_connection, connection_record):
+             metrics = self.pool_metrics[pool_name]
+             metrics.last_activity = datetime.utcnow()
+             metrics.checked_in += 1
+@@ -263,7 +263,7 @@ 
+         return status
+ 
+-    def _get_pool_config(self, pool: Pool) -> dict[str, Any]:
++async def _get_pool_config(self, pool: Pool) -> dict[str, Any]:
+         """获取连接池配置."""
+         config = {}
+ 
+@@ -280,7 +280,7 @@ 
+         return config
+ 
+-    def _evaluate_pool_health(self, metrics: PoolMetrics) -> dict[str, Any]:
++async def _evaluate_pool_health(self, metrics: PoolMetrics) -> dict[str, Any]:
+         """评估连接池健康状态."""
+         health_status = {"overall": "healthy", "issues": [], "warnings": []}
+ 
+@@ -313,7 +313,7 @@ 
+         return health_status
+ 
+-    def _generate_pool_recommendations(self, metrics: PoolMetrics) -> list[str]:
++async def _generate_pool_recommendations(self, metrics: PoolMetrics) -> list[str]:
+         """生成连接池优化建议."""
+         recommendations = []
+ 
+@@ -446,7 +446,7 @@ 
+         return result
+ 
+-    def get_optimization_history(self, limit: int = 50) -> list[dict[str, Any]]:
++async def get_optimization_history(self, limit: int = 50) -> list[dict[str, Any]]:
+         """获取优化历史."""
+         return self.optimization_history[-limit:]
+ 
+@@ -455,7 +455,7 @@ _pool_optimizer: ConnectionPoolOptimizer | None = None
+ 
+ 
+-def get_connection_pool_optimizer() -> ConnectionPoolOptimizer:
++async def get_connection_pool_optimizer() -> ConnectionPoolOptimizer:
+     """获取全局连接池优化器实例."""
+     global _pool_optimizer
+     if _pool_optimizer is None:

@@ -1,0 +1,161 @@
+--- a/src/realtime/subscriptions.py+++ b/src/realtime/subscriptions.py@@ -85,23 +85,23 @@     event_sources: list[str] | None = field(default_factory=list)  # 事件源
+     custom_filters: dict[str, Any] | None = field(default_factory=dict)  # 自定义过滤器
+ 
+-    def matches(self, event_data: dict[str, Any]) -> bool:
++async def matches(self, event_data: dict[str, Any]) -> bool:
+         """检查事件是否匹配过滤器."""
+-        if self.match_ids and event_data.get("match_id") not in self.match_ids:
+-            return False
+-        if self.leagues and event_data.get("league") not in self.leagues:
+-            return False
+-        if self.users and event_data.get("user_id") not in self.users:
++        if self.match_ids and event_data.await get("match_id") not in self.match_ids:
++            return False
++        if self.leagues and event_data.await get("league") not in self.leagues:
++            return False
++        if self.users and event_data.await get("user_id") not in self.users:
+             return False
+         if self.min_confidence is not None:
+-            confidence = event_data.get("confidence", 0)
++            confidence = event_data.await get("confidence", 0)
+             if confidence < self.min_confidence:
+                 return False
+-        if self.event_sources and event_data.get("source") not in self.event_sources:
++        if self.event_sources and event_data.await get("source") not in self.event_sources:
+             return False
+         if self.custom_filters:
+             for key, value in self.custom_filters.items():
+-                if event_data.get(key) != value:
++                if event_data.await get(key) != value:
+                     return False
+         return True
+ 
+@@ -121,11 +121,11 @@     last_activity: datetime = field(default_factory=datetime.now)
+     is_active: bool = True
+ 
+-    def update_activity(self) -> None:
++async def update_activity(self) -> None:
+         """更新最后活动时间."""
+         self.last_activity = datetime.now()
+ 
+-    def should_receive_event(self, event: RealtimeEvent) -> bool:
++async def should_receive_event(self, event: RealtimeEvent) -> bool:
+         """检查是否应该接收此事件."""
+         if not self.is_active:
+             return False
+@@ -140,7 +140,7 @@     pass  # 添加pass语句
+     """订阅管理器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         pass
+         # 添加pass语句
+@@ -154,7 +154,7 @@         asyncio.create_task(self._cleanup_inactive_subscriptions())
+         self.logger.info("SubscriptionManager initialized")
+ 
+-    def subscribe(
++async def subscribe(
+         self,
+         connection_id: str,
+         event_type: EventType,
+@@ -182,7 +182,7 @@             self.logger.error(f"Failed to create subscription: {e}")
+             return False
+ 
+-    def unsubscribe(self, connection_id: str, event_type: EventType) -> bool:
++async def unsubscribe(self, connection_id: str, event_type: EventType) -> bool:
+         """取消订阅事件."""
+         if connection_id not in self.subscriptions:
+             return False
+@@ -204,7 +204,7 @@             return True
+         return False
+ 
+-    def remove_all_subscriptions(self, connection_id: str) -> None:
++async def remove_all_subscriptions(self, connection_id: str) -> None:
+         """移除连接的所有订阅."""
+         if connection_id not in self.subscriptions:
+             return None
+@@ -215,7 +215,7 @@         del self.subscriptions[connection_id]
+         self.logger.info(f"Removed all subscriptions for connection {connection_id}")
+ 
+-    def get_subscribers(
++async def get_subscribers(
+         self, event_type: EventType, event_data: dict[str, Any]
+     ) -> list[str]:
+         """获取事件的订阅者."""
+@@ -236,7 +236,7 @@                         break
+         return list(subscribers)
+ 
+-    def get_connection_subscriptions(self, connection_id: str) -> list[dict[str, Any]]:
++async def get_connection_subscriptions(self, connection_id: str) -> list[dict[str, Any]]:
+         """获取连接的所有订阅."""
+         if connection_id not in self.subscriptions:
+             return []
+@@ -259,24 +259,24 @@             for sub in self.subscriptions[connection_id]
+         ]
+ 
+-    def update_subscription_activity(self, connection_id: str) -> None:
++async def update_subscription_activity(self, connection_id: str) -> None:
+         """更新订阅活动时间."""
+         if connection_id in self.subscriptions:
+             for subscription in self.subscriptions[connection_id]:
+                 subscription.update_activity()
+ 
+-    def get_total_subscriptions(self) -> int:
++async def get_total_subscriptions(self) -> int:
+         """获取总订阅数."""
+         return sum(len(subs) for subs in self.subscriptions.values())
+ 
+-    def get_stats(self) -> dict[str, Any]:
++async def get_stats(self) -> dict[str, Any]:
+         """获取统计信息."""
+         event_type_counts = {}
+         for subscriptions in self.subscriptions.values():
+             for subscription in subscriptions:
+                 for event_type in subscription.event_types:
+                     event_type_counts[event_type.value] = (
+-                        event_type_counts.get(event_type.value, 0) + 1
++                        event_type_counts.await get(event_type.value, 0) + 1
+                     )
+         return {
+             "total_connections": len(self.subscriptions),
+@@ -316,7 +316,7 @@                 self.logger.error(f"Cleanup task error: {e}")
+ 
+ 
+-def subscribe_to_predictions(
++async def subscribe_to_predictions(
+     connection_id: str,
+     match_ids: list[int] | None = None,
+     min_confidence: float | None = None,
+@@ -336,7 +336,7 @@     )
+ 
+ 
+-def subscribe_to_matches(
++async def subscribe_to_matches(
+     connection_id: str,
+     match_ids: list[int] | None = None,
+     leagues: list[str] | None = None,
+@@ -363,7 +363,7 @@     return success
+ 
+ 
+-def subscribe_to_odds(
++async def subscribe_to_odds(
+     connection_id: str,
+     match_ids: list[int] | None = None,
+     bookmakers: list[str] | None = None,
+@@ -385,7 +385,7 @@     return success
+ 
+ 
+-def subscribe_to_system_alerts(
++async def subscribe_to_system_alerts(
+     connection_id: str, severity_levels: list[str] | None = None
+ ) -> bool:
+     """订阅系统告警."""
+@@ -401,7 +401,7 @@ _global_subscription_manager: SubscriptionManager | None = None
+ 
+ 
+-def get_subscription_manager() -> SubscriptionManager:
++async def get_subscription_manager() -> SubscriptionManager:
+     """获取全局订阅管理器."""
+     global _global_subscription_manager
+     if _global_subscription_manager is None:

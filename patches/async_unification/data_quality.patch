@@ -1,0 +1,120 @@
+--- a/src/api/data/models/data_quality.py+++ b/src/api/data/models/data_quality.py@@ -18,7 +18,7 @@ class DataQualityConfig:
+     """数据质量配置."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         min_success_rate: float = 0.95,
+         min_quality_score: float = 70.0,
+@@ -36,7 +36,7 @@ class DataQualityReport:
+     """综合数据质量报告."""
+ 
+-    def __init__(self, config: DataQualityConfig = None):
++async def __init__(self, config: DataQualityConfig = None):
+         self.config = config or DataQualityConfig()
+         self.reports = {
+             'matches': MatchDataQualityReport(),
+@@ -48,7 +48,7 @@         self.start_time = datetime.now()
+         self.end_time = None
+ 
+-    def add_match_result(self, validation_result):
++async def add_match_result(self, validation_result):
+         """添加比赛验证结果."""
+         self.reports['matches'].add_record_result(validation_result)
+ 
+@@ -58,7 +58,7 @@         if self.config.enable_warnings:
+             self.validation_warnings.extend(validation_result.warnings)
+ 
+-    def add_odds_result(self, validation_result, market_type: str = None):
++async def add_odds_result(self, validation_result, market_type: str = None):
+         """添加赔率验证结果."""
+         self.reports['odds'].add_record_result(validation_result, market_type)
+ 
+@@ -68,7 +68,7 @@         if self.config.enable_warnings:
+             self.validation_warnings.extend(validation_result.warnings)
+ 
+-    def add_team_result(self, validation_result, country: str = None):
++async def add_team_result(self, validation_result, country: str = None):
+         """添加球队验证结果."""
+         self.reports['teams'].add_record_result(validation_result, country)
+ 
+@@ -78,7 +78,7 @@         if self.config.enable_warnings:
+             self.validation_warnings.extend(validation_result.warnings)
+ 
+-    def get_summary(self) -> dict[str, Any]:
++async def get_summary(self) -> dict[str, Any]:
+         """获取综合质量报告摘要."""
+         if self.end_time is None:
+             self.end_time = datetime.now()
+@@ -113,7 +113,7 @@             'recommendations': self._get_recommendations()
+         }
+ 
+-    def _calculate_overall_health(self) -> dict[str, Any]:
++async def _calculate_overall_health(self) -> dict[str, Any]:
+         """计算整体健康状况."""
+         scores = []
+         for report in self.reports.values():
+@@ -143,7 +143,7 @@             'status': status
+         }
+ 
+-    def _get_common_errors(self) -> list[dict[str, Any]]:
++async def _get_common_errors(self) -> list[dict[str, Any]]:
+         """获取常见错误."""
+         from collections import Counter
+         error_counter = Counter(self.validation_errors)
+@@ -157,7 +157,7 @@             for error, count in error_counter.most_common(self.config.max_error_sample)
+         ]
+ 
+-    def _get_recommendations(self) -> list[str]:
++async def _get_recommendations(self) -> list[str]:
+         """获取改进建议."""
+         recommendations = []
+ 
+@@ -178,7 +178,7 @@ 
+         return recommendations
+ 
+-    def export_to_json(self, filepath: str = None) -> str:
++async def export_to_json(self, filepath: str = None) -> str:
+         """导出报告为JSON."""
+         report_data = self.get_summary()
+ 
+@@ -188,7 +188,7 @@ 
+         return json.dumps(report_data, indent=2, ensure_ascii=False, default=str)
+ 
+-    def export_to_csv(self, filepath: str = None) -> str:
++async def export_to_csv(self, filepath: str = None) -> str:
+         """导出错误详情为CSV."""
+         import csv
+         from io import StringIO
+@@ -221,7 +221,7 @@ 
+         return csv_content
+ 
+-    def is_healthy(self) -> bool:
++async def is_healthy(self) -> bool:
+         """判断整体数据质量是否健康."""
+         overall_health = self._calculate_overall_health()
+         return (
+@@ -229,7 +229,7 @@             overall_health['status'] in ['excellent', 'good']
+         )
+ 
+-    def get_quick_stats(self) -> dict[str, Any]:
++async def get_quick_stats(self) -> dict[str, Any]:
+         """获取快速统计信息."""
+         return {
+             'total_records': sum(report.total_records for report in self.reports.values()),
+@@ -246,7 +246,7 @@ 
+ 
+ # 便捷函数
+-def create_quality_report(
++async def create_quality_report(
+     min_success_rate: float = 0.95,
+     min_quality_score: float = 70.0,
+     strict_mode: bool = False
+@@ -260,7 +260,7 @@     return DataQualityReport(config)
+ 
+ 
+-def validate_dataset(
++async def validate_dataset(
+     dataset_name: str,
+     data_list: list[[BaseModel, dict[str, Any]]],
+     validator_class: type[BaseModel],

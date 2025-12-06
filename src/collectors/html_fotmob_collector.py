@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-FotMob HTML 数据采集器 - QA验证版本
-FotMob HTML Data Collector - QA Verified Version
+FotMob HTML 数据采集器 - 异步标准化版本
+FotMob HTML Data Collector - Async Standard Version
 
-经过调试验证的稳定版本，专注于核心功能和xG数据提取
+基于Async Base Class的标准化异步采集器
 """
 
 import asyncio
@@ -11,62 +11,90 @@ import json
 import logging
 import random
 import re
-import time
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+import httpx
+from httpx import AsyncClient, Response
 
+from src.core.async_base import AsyncBaseCollector, AsyncConfig
 from .user_agent import UserAgentManager
 
 logger = logging.getLogger(__name__)
 
 
-class HTMLFotMobCollector:
-    """FotMob HTML 数据采集器 - QA验证版本"""
+class AsyncHTMLFotMobCollector(AsyncBaseCollector):
+    """
+    FotMob HTML 异步数据采集器
+
+    继承AsyncBaseCollector，使用标准异步基础设施
+    """
 
     def __init__(
         self,
         max_retries: int = 3,
         timeout: int = 30,
-        enable_stealth: bool = True,  # 强制启用隐身模式对抗Docker检测
+        enable_stealth: bool = True,
         enable_proxy: bool = False,
     ):
+        # 创建异步配置
+        config = AsyncConfig(
+            http_timeout=timeout,
+            max_retries=max_retries,
+            retry_delay=1.0,
+            rate_limit_delay=0.5,  # 500ms间隔避免频率限制
+        )
+
+        # 初始化异步基类
+        super().__init__(config=config, name="AsyncHTMLFotMobCollector")
+
+        # FotMob特定配置
         self.max_retries = max_retries
-        self.timeout = (10, 30)  # 连接超时10秒，读取超时30秒
         self.enable_stealth = enable_stealth
         self.enable_proxy = enable_proxy
 
         # 统计信息
-        self.stats = {
-            "requests_made": 0,
-            "successful_requests": 0,
-            "failed_requests": 0,
+        self.fotmob_stats = {
             "matches_collected": 0,
             "ua_switches": 0,
             "retry_count": 0,
         }
 
-        # 会话和用户代理
-        self.session = None
-        # 强制初始化用户代理管理器以对抗Docker检测
+        # 用户代理管理器
         self.user_manager = UserAgentManager()
         self.current_headers = None
-        self.last_rotation = time.time()
+        self.last_rotation = 0.0
 
-        logger.info("🕷️ FotMob HTML采集器初始化完成 - QA验证版本")
+        logger.info("🕷️ FotMob HTML异步采集器初始化完成")
 
-    async def initialize(self):
-        """初始化HTTP客户端"""
-        # 不使用Session避免Docker环境下的反爬检测
-        self.session = None
+    async def _get_headers(self) -> Dict[str, str]:
+        """获取当前请求头"""
+        if self.enable_stealth:
+            await self._refresh_disguise()
 
-        # 初始化伪装
-        await self._refresh_disguise()
+        # 使用FotMob特定的请求头
+        headers = await super()._get_headers()
+        headers.update({
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "en-GB,en;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Cache-Control": "max-age=0",
+        })
 
-        logger.info("✅ HTTP客户端初始化完成")
+        return headers
+
+    async def _get_user_agent(self) -> str:
+        """获取FotMob特定的User-Agent"""
+        if self.enable_stealth and self.user_manager:
+            headers = self.user_manager.get_realistic_headers()
+            return headers.get("User-Agent", await super()._get_user_agent())
+
+        return await super()._get_user_agent()
 
     async def _refresh_disguise(self):
         """刷新User-Agent伪装"""
@@ -74,88 +102,60 @@ class HTMLFotMobCollector:
             return
 
         # 检查是否需要轮换
-        now = time.time()
+        now = asyncio.get_event_loop().time()
         rotation_interval = 300  # 5分钟
         if now - self.last_rotation < rotation_interval:
             return
 
         if self.user_manager:
             self.current_headers = self.user_manager.get_realistic_headers()
-            self.stats["ua_switches"] += 1
+            self.fotmob_stats["ua_switches"] += 1
+            logger.info(f"🔄 User-Agent轮换 (#{self.fotmob_stats['ua_switches']})")
 
         self.last_rotation = now
 
-    def _get_current_headers(self) -> dict[str, str]:
-        """获取当前请求头"""
-        # 使用标准的浏览器请求头，让requests自动处理GZIP解压
-        return {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Language": "en-GB,en;q=0.9,en;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",  # 让requests自动处理GZIP
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-        }
-
-    async def collect_match_data(self, match_id: str) -> Optional[dict[str, Any]]:
+    async def collect_match_data(self, match_id: str) -> Optional[Dict[str, Any]]:
         """
-        采集单场比赛数据 - QA验证版本
+        采集单场比赛数据
 
-        关键逻辑：
-        1. 遇到404状态码不返回None，继续解析response.text
-        2. 使用正则提取__NEXT_DATA__ JSON
-        3. 解析props.pageProps.content提取核心数据
+        Args:
+            match_id (str): 比赛ID
+
+        Returns:
+            Optional[Dict[str, Any]]: 比赛数据
         """
         try:
             url = f"https://www.fotmob.com/match/{match_id}"
             logger.info(f"🕷️ 请求比赛数据: {url}")
 
-            # 定期刷新伪装
-            if random.random() < 0.2:  # 20%概率刷新伪装
+            # 20%概率刷新伪装
+            if random.random() < 0.2:
                 await self._refresh_disguise()
 
-            # 发起请求
-            headers = self._get_current_headers()
-
-            # 安全的SSL验证配置
-            import os
-
-            ssl_verify = os.getenv("SSL_VERIFY", "true").lower() == "true"
-
-            response = requests.get(
-                url,
-                headers=headers,
-                timeout=self.timeout,
-                allow_redirects=True,
-                verify=ssl_verify,  # 可通过环境变量控制，默认启用SSL验证
-            )
-
-            self.stats["requests_made"] += 1
+            # 发起异步请求
+            response = await self.fetch_with_retry(url)
 
             logger.info(
                 f"📊 响应状态: {response.status_code}, 大小: {len(response.text):,} 字符"
             )
 
-            # 🎯 关键处理：即使是404也要继续解析
+            # 处理不同的响应状态
             if response.status_code in [200, 404]:
-                self.stats["successful_requests"] += 1
+                self.fotmob_stats["matches_collected"] += 1
 
                 # 检查是否包含Next.js数据
                 if "__NEXT_DATA__" in response.text:
                     logger.info("✅ 发现Next.js SSR数据")
 
-                    # 🎯 关键：提取Next.js数据
-                    nextjs_data = self._extract_nextjs_data(response.text, match_id)
+                    # 提取Next.js数据
+                    nextjs_data = await self._extract_nextjs_data(response.text, match_id)
 
                     if nextjs_data:
-                        # 🎯 关键：提取content数据
-                        content_data = self._extract_content_data(nextjs_data, match_id)
+                        # 提取content数据
+                        content_data = await self._extract_content_data(nextjs_data, match_id)
 
                         if content_data:
-                            self.stats["matches_collected"] += 1
                             logger.info(f"✅ 数据提取成功: {match_id}")
-
-                            # 返回标准API格式
                             return {"match": {"id": match_id}, "content": content_data}
                         else:
                             logger.warning(f"⚠️ content数据提取失败: {match_id}")
@@ -172,74 +172,37 @@ class HTMLFotMobCollector:
 
             elif response.status_code == 429:
                 logger.warning("⚠️ 触发频率限制")
-                self.stats["retry_count"] += 1
+                self.fotmob_stats["retry_count"] += 1
                 await asyncio.sleep(random.uniform(10, 20))
                 return await self.collect_match_data(match_id)
 
             elif response.status_code == 403:
                 logger.warning("⚠️ 触发反爬检测")
-                self.stats["retry_count"] += 1
+                self.fotmob_stats["retry_count"] += 1
                 await self._refresh_disguise()
                 await asyncio.sleep(random.uniform(5, 10))
                 return await self.collect_match_data(match_id)
 
             else:
                 logger.error(f"❌ 未处理的状态码: {response.status_code}")
-                self.stats["failed_requests"] += 1
                 return None
 
         except Exception as e:
             logger.error(f"❌ 采集异常 {match_id}: {e}")
-            self.stats["failed_requests"] += 1
             return None
 
-    def _manual_decompress_response(self, response) -> str:
-        """手动解压响应内容（处理GZIP压缩问题）"""
-        try:
-            # 检查是否需要手动解压GZIP
-            if hasattr(response, "content") and response.content:
-                # 检查GZIP魔数 (1f 8b)
-                if response.content[:2] == b"\x1f\x8b":
-                    import gzip
-                    import io
-
-                    try:
-                        decompressed = (
-                            gzip.GzipFile(fileobj=io.BytesIO(response.content))
-                            .read()
-                            .decode("utf-8")
-                        )
-                        self.logger.info("✅ 手动GZIP解压成功")
-                        return decompressed
-                    except Exception as e:
-                        self.logger.error(f"❌ 手动GZIP解压失败: {e}")
-                        # 回退到原始文本
-                        if hasattr(response, "text"):
-                            return response.text
-                        else:
-                            return response.content.decode("utf-8", errors="ignore")
-
-            # 如果不是GZIP，尝试正常方式
-            if hasattr(response, "text"):
-                return response.text
-            else:
-                return response.content.decode("utf-8", errors="ignore")
-
-        except Exception as e:
-            self.logger.error(f"❌ 响应解压异常: {e}")
-            # 最后回退方案
-            try:
-                return str(response.content, errors="ignore")
-            except:
-                return ""
-
-    def _extract_nextjs_data(
+    async def _extract_nextjs_data(
         self, html: str, match_id: str
-    ) -> Optional[dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]]:
         """
-        从HTML中提取Next.js数据 - QA验证版本
+        从HTML中提取Next.js数据
 
-        🎯 关键：使用正则表达式精确匹配__NEXT_DATA__ JSON
+        Args:
+            html (str): HTML内容
+            match_id (str): 比赛ID
+
+        Returns:
+            Optional[Dict[str, Any]]: Next.js数据
         """
         try:
             # 改进的正则表达式，精确匹配script标签
@@ -280,13 +243,18 @@ class HTMLFotMobCollector:
             logger.error(f"❌ Next.js提取异常 {match_id}: {e}")
             return None
 
-    def _extract_content_data(
-        self, nextjs_data: dict[str, Any], match_id: str
-    ) -> Optional[dict[str, Any]]:
+    async def _extract_content_data(
+        self, nextjs_data: Dict[str, Any], match_id: str
+    ) -> Optional[Dict[str, Any]]:
         """
-        从Next.js数据中提取content - QA验证版本
+        从Next.js数据中提取content
 
-        🎯 关键：解析props.pageProps.content并提取ML特征
+        Args:
+            nextjs_data (Dict[str, Any]): Next.js数据
+            match_id (str): 比赛ID
+
+        Returns:
+            Optional[Dict[str, Any]]: content数据
         """
         try:
             props = nextjs_data.get("props", {})
@@ -310,7 +278,7 @@ class HTMLFotMobCollector:
             logger.info(f"✅ 成功提取content: {match_id}")
             logger.info(f"   Content Keys: {list(content.keys())}")
 
-            # 🎯 关键：验证ML特征字段
+            # 验证ML特征字段
             required_features = [
                 "matchFacts",
                 "stats",
@@ -324,7 +292,7 @@ class HTMLFotMobCollector:
 
             logger.info(f"   找到ML特征: {found_features}/{len(required_features)}")
 
-            # 🎯 关键：检查xG数据
+            # 检查xG数据
             if "stats" in content:
                 stats = content.get("stats", {})
                 if isinstance(stats, dict):
@@ -357,27 +325,26 @@ class HTMLFotMobCollector:
         except Exception as e:
             logger.error(f"❌ content提取异常 {match_id}: {e}")
             import traceback
-
             logger.debug(f"🔍 详细错误: {traceback.format_exc()}")
             return None
 
-    def get_stats(self) -> dict[str, Any]:
+    async def get_stats(self) -> Dict[str, Any]:
         """获取采集统计信息"""
-        stats = self.stats.copy()
-        if stats["requests_made"] > 0:
-            stats["success_rate"] = (
-                stats["successful_requests"] / stats["requests_made"]
-            )
-        else:
-            stats["success_rate"] = 0.0
+        # 获取基类统计
+        base_stats = super().get_stats()
 
-        stats["stealth_mode"] = self.enable_stealth
-        stats["proxy_enabled"] = self.enable_proxy
+        # 添加FotMob特定统计
+        fotmob_stats = self.fotmob_stats.copy()
+        fotmob_stats.update(base_stats)
 
-        return stats
+        fotmob_stats["stealth_mode"] = self.enable_stealth
+        fotmob_stats["proxy_enabled"] = self.enable_proxy
+        fotmob_stats["collection_rate"] = (
+            fotmob_stats["matches_collected"] / max(fotmob_stats["total_requests"], 1)
+        )
 
-    async def close(self):
-        """关闭采集器"""
-        # 不使用Session，无需清理
-        self.session = None
-        logger.info("🔒 采集器已关闭")
+        return fotmob_stats
+
+
+# 向后兼容的别名
+HTMLFotMobCollector = AsyncHTMLFotMobCollector

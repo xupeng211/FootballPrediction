@@ -1,0 +1,11 @@
+--- a/src/database/migrations/versions/9ac2aff86228_merge_multiple_migration_heads.py+++ b/src/database/migrations/versions/9ac2aff86228_merge_multiple_migration_heads.py@@ -22,9 +22,9 @@ depends_on: str | Sequence[str] | None = None
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     pass
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     pass

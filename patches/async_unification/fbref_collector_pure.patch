@@ -1,0 +1,64 @@
+--- a/src/data/collectors/fbref_collector_pure.py+++ b/src/data/collectors/fbref_collector_pure.py@@ -41,7 +41,7 @@     4. Truthful Logging - 诚实的日志记录
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         # 浏览器配置（不再轮换，保持稳定）
+         self.browser_configs = ["chrome120"]
+         self.current_config_index = 0
+@@ -56,7 +56,7 @@         # 创建初始会话
+         self.session = self._create_session()
+ 
+-    def _create_session(self):
++async def _create_session(self):
+         """创建稳定的curl_cffi会话"""
+         # 固定浏览器配置，不轮换
+         browser_type = self.browser_configs[0]
+@@ -82,7 +82,7 @@             logger.error(f"❌ 无法创建会话: {e}")
+             raise
+ 
+-    def _get_fixed_delay(self, seconds: float = 3.0) -> float:
++async def _get_fixed_delay(self, seconds: float = 3.0) -> float:
+         """获取固定延迟时间 - 不使用随机"""
+         return seconds
+ 
+@@ -154,7 +154,7 @@         logger.error("💥 所有协议请求均失败")
+         return None
+ 
+-    def _save_raw_html(self, html_content: str, url: str, league_id: str = None, season: str = None) -> Optional[str]:
++async def _save_raw_html(self, html_content: str, url: str, league_id: str = None, season: str = None) -> Optional[str]:
+         """保存原始HTML内容"""
+         try:
+             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+@@ -188,7 +188,7 @@             logger.warning(f"⚠️ 原始HTML保存失败: {e}")
+             return None
+ 
+-    def parse_html_tables(self, html_content: str) -> tuple[list[pd.DataFrame], dict[str, pd.DataFrame]]:
++async def parse_html_tables(self, html_content: str) -> tuple[list[pd.DataFrame], dict[str, pd.DataFrame]]:
+         """
+         解析HTML中的表格数据 - 纯真实版本
+         只使用pandas.read_html，不进行任何数据填充
+@@ -223,7 +223,7 @@             logger.error(f"❌ HTML表格解析失败: {e}")
+             return [], {}
+ 
+-    def extract_schedule_table(self, tables: list[pd.DataFrame]) -> Optional[pd.DataFrame]:
++async def extract_schedule_table(self, tables: list[pd.DataFrame]) -> Optional[pd.DataFrame]:
+         """
+         从表格中提取赛程表 - 严格识别版本
+         """
+@@ -341,7 +341,7 @@         logger.info(f"🎉 纯真实数据采集成功，表格形状: {schedule_table.shape}")
+         return schedule_table
+ 
+-    def clean_real_data(self, df: pd.DataFrame) -> pd.DataFrame:
++async def clean_real_data(self, df: pd.DataFrame) -> pd.DataFrame:
+         """
+         清洗真实数据 - 不填充任何值
+         """
+@@ -413,7 +413,7 @@ 
+         return cleaned_df
+ 
+-    def filter_completed_matches(self, df: pd.DataFrame) -> pd.DataFrame:
++async def filter_completed_matches(self, df: pd.DataFrame) -> pd.DataFrame:
+         """
+         过滤已完成的比赛 - 严格过滤
+         """

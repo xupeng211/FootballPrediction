@@ -1,0 +1,24 @@
+--- a/src/api/batch_analytics.py+++ b/src/api/batch_analytics.py@@ -30,7 +30,7 @@     timestamp: datetime
+ 
+ 
+-@router.post("/batch_analytics_api/execute")
++@router.await post("/batch_analytics_api/execute")
+ async def execute_batch_analytics_api(
+     request: BatchAnalyticsAPIRequest, background_tasks: BackgroundTasks
+ ) -> BatchAnalyticsAPIResponse:
+@@ -54,7 +54,7 @@         ) from e  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性，B904 exception chaining
+ 
+ 
+-@router.get("/batch_analytics_api/status/{job_id}")
++@router.await get("/batch_analytics_api/status/{job_id}")
+ async def get_batch_analytics_api_status(job_id: str):
+     """获取Batch Analytics API执行状态."""
+     # ISSUE: 需要实现状态查询的业务逻辑，包括数据库查询和状态聚合
+@@ -66,7 +66,7 @@     }
+ 
+ 
+-@router.get("/batch_analytics_api/health")
++@router.await get("/batch_analytics_api/health")
+ async def health_check():
+     """健康检查."""
+     return {

@@ -1,0 +1,46 @@
+--- a/src/cache/redis/operations/sync_operations.py+++ b/src/cache/redis/operations/sync_operations.py@@ -19,19 +19,19 @@     pass  # 添加pass语句
+     """Synchronous Redis operations"""
+ 
+-    def __init__(self, redis_client=None):
++async def __init__(self, redis_client=None):
+         """函数文档字符串."""
+         # 添加pass语句
+         """Initialize sync operations"""
+         self.client = redis_client
+         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+ 
+-    def get(self, key: str) -> Any | None:
++async def get(self, key: str) -> Any | None:
+         """Get value from Redis."""
+         if not self.client:
+             return None
+         try:
+-            value = self.client.get(key)
++            value = self.client.await get(key)
+             if value:
+                 return json.loads(value)
+             return None
+@@ -39,7 +39,7 @@             self.logger.error(f"Error getting key {key}: {str(e)}")
+             return None
+ 
+-    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
++async def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
+         """Set value in Redis."""
+         if not self.client:
+             return False
+@@ -53,7 +53,7 @@             self.logger.error(f"Error setting key {key}: {str(e)}")
+             return False
+ 
+-    def delete(self, key: str) -> bool:
++async def delete(self, key: str) -> bool:
+         """Delete key from Redis."""
+         if not self.client:
+             return False
+@@ -63,7 +63,7 @@             self.logger.error(f"Error deleting key {key}: {str(e)}")
+             return False
+ 
+-    def exists(self, key: str) -> bool:
++async def exists(self, key: str) -> bool:
+         """Check if key exists."""
+         if not self.client:
+             return False

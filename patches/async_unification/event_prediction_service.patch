@@ -1,0 +1,32 @@
+--- a/src/services/event_prediction_service.py+++ b/src/services/event_prediction_service.py@@ -33,7 +33,7 @@     Inherits from strategy prediction service, adding event publishing capabilities.
+     """
+ 
+-    def __init__(self, *args, **kwargs):
++async def __init__(self, *args, **kwargs):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化事件驱动预测服务"""
+@@ -268,7 +268,7 @@     Handles match-related event publishing.
+     """
+ 
+-    def __init__(self, match_repository):
++async def __init__(self, match_repository):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化比赛服务"
+@@ -377,7 +377,7 @@     Handles user-related event publishing.
+     """
+ 
+-    def __init__(self, user_repository):
++async def __init__(self, user_repository):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化用户服务"
+@@ -469,7 +469,7 @@ 
+ 
+ # 依赖注入配置
+-def configure_event_driven_services(container: DIContainer) -> None:
++async def configure_event_driven_services(container: DIContainer) -> None:
+     """配置事件驱动服务的依赖注入."""
+     # 注册事件驱动的预测服务
+     container.register_scoped(EventDrivenPredictionService)

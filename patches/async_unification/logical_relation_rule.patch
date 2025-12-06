@@ -1,0 +1,238 @@
+--- a/src/quality/rules/logical_relation_rule.py+++ b/src/quality/rules/logical_relation_rule.py@@ -37,7 +37,7 @@     例如：进球数 <= 射门数，射正数 >= 进球数等。
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         relations: Optional[list[dict[str, Any]]] = None,
+         tolerance: float = 0.0,
+@@ -244,12 +244,12 @@ 
+         # 检查每个配置的逻辑关系
+         for relation in self.relations:
+-            relation_name = relation.get("name", "unknown")
++            relation_name = relation.await get("name", "unknown")
+ 
+             try:
+                 violation = self._check_single_relation(features, relation)
+                 if violation:
+-                    severity = relation.get("severity", "medium")
++                    severity = relation.await get("severity", "medium")
+                     errors.append(violation)
+ 
+             except Exception as e:
+@@ -265,7 +265,7 @@ 
+         return errors
+ 
+-    def _check_single_relation(self, features: dict[str, Any], relation: dict[str, Any]) -> Optional[str]:
++async def _check_single_relation(self, features: dict[str, Any], relation: dict[str, Any]) -> Optional[str]:
+         """
+         检查单个逻辑关系。
+ 
+@@ -276,10 +276,10 @@         Returns:
+             Optional[str]: 逻辑违规描述，如果没有违规返回None
+         """
+-        relation_name = relation.get("name", "unknown")
+-        relation_type = relation.get("relation")
+-        field_a = relation.get("field_a")
+-        field_b = relation.get("field_b")
++        relation_name = relation.await get("name", "unknown")
++        relation_type = relation.await get("relation")
++        field_a = relation.await get("field_a")
++        field_b = relation.await get("field_b")
+ 
+         # 检查必需字段是否存在
+         if field_a not in features or field_b not in features:
+@@ -293,15 +293,15 @@             return None  # 非数值类型由 TypeRule 检查
+ 
+         # 获取关系检查函数
+-        check_function = self.relation_functions.get(relation_type)
++        check_function = self.relation_functions.await get(relation_type)
+         if not check_function:
+             return f"未知的逻辑关系类型: {relation_type}"
+ 
+         # 执行关系检查
+-        relation_tolerance = relation.get("tolerance", self.tolerance)
++        relation_tolerance = relation.await get("tolerance", self.tolerance)
+         return check_function(relation_name, field_a, value_a, field_b, value_b, relation_tolerance, relation)
+ 
+-    def _check_gte(self, relation_name: str, field_a: str, value_a: float,
++async def _check_gte(self, relation_name: str, field_a: str, value_a: float,
+                    field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+         """检查 value_a >= value_b"""
+         if value_a + tolerance < value_b:
+@@ -311,7 +311,7 @@             )
+         return None
+ 
+-    def _check_lte(self, relation_name: str, field_a: str, value_a: float,
++async def _check_lte(self, relation_name: str, field_a: str, value_a: float,
+                    field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+         """检查 value_a <= value_b"""
+         if value_a > value_b + tolerance:
+@@ -321,7 +321,7 @@             )
+         return None
+ 
+-    def _check_gt(self, relation_name: str, field_a: str, value_a: float,
++async def _check_gt(self, relation_name: str, field_a: str, value_a: float,
+                   field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+         """检查 value_a > value_b"""
+         if value_a <= value_b + tolerance:
+@@ -331,7 +331,7 @@             )
+         return None
+ 
+-    def _check_lt(self, relation_name: str, field_a: str, value_a: float,
++async def _check_lt(self, relation_name: str, field_a: str, value_a: float,
+                   field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+         """检查 value_a < value_b"""
+         if value_a >= value_b - tolerance:
+@@ -341,7 +341,7 @@             )
+         return None
+ 
+-    def _check_eq(self, relation_name: str, field_a: str, value_a: float,
++async def _check_eq(self, relation_name: str, field_a: str, value_a: float,
+                   field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+         """检查 value_a == value_b"""
+         if abs(value_a - value_b) > tolerance:
+@@ -351,7 +351,7 @@             )
+         return None
+ 
+-    def _check_sum_close_to_100(self, relation_name: str, field_a: str, value_a: float,
++async def _check_sum_close_to_100(self, relation_name: str, field_a: str, value_a: float,
+                                 field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+         """检查两个值的和是否接近100%"""
+         total = value_a + value_b
+@@ -363,7 +363,7 @@             )
+         return None
+ 
+-    def _check_xg_reasonable(self, relation_name: str, field_a: str, xg_value: float,
++async def _check_xg_reasonable(self, relation_name: str, field_a: str, xg_value: float,
+                              field_b: str, goals: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+         """检查xG值与实际进球数的合理性"""
+         # xG值应该在合理范围内，且与进球数不应该差异过大
+@@ -379,10 +379,10 @@             )
+         return None
+ 
+-    def _check_total_cards_composition(self, relation_name: str, field_a: str, yellow_home: float,
++async def _check_total_cards_composition(self, relation_name: str, field_a: str, yellow_home: float,
+                                        field_b: str, red_home: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+         """检查总牌数的组成（这里简化为逻辑合理性检查）"""
+-        extra_fields = relation.get("extra_fields", [])
++        extra_fields = relation.await get("extra_fields", [])
+         if len(extra_fields) >= 2:
+             yellow_away = extra_fields[0]
+             red_away = extra_fields[1]
+@@ -396,7 +396,7 @@ 
+         return None
+ 
+-    def get_relation_summary(self, features: dict[str, Any]) -> dict[str, Any]:
++async def get_relation_summary(self, features: dict[str, Any]) -> dict[str, Any]:
+         """
+         获取逻辑关系检查的详细摘要。
+ 
+@@ -416,11 +416,11 @@         }
+ 
+         for relation in self.relations:
+-            relation_name = relation.get("name", "unknown")
++            relation_name = relation.await get("name", "unknown")
+ 
+             # 检查是否可以执行检查
+-            field_a = relation.get("field_a")
+-            field_b = relation.get("field_b")
++            field_a = relation.await get("field_a")
++            field_b = relation.await get("field_b")
+ 
+             if field_a not in features or field_b not in features:
+                 # 字段缺失，跳过检查
+@@ -457,8 +457,8 @@                 "field_b": field_b,
+                 "value_a": value_a,
+                 "value_b": value_b,
+-                "relation": relation.get("relation"),
+-                "severity": relation.get("severity", "medium"),
++                "relation": relation.await get("relation"),
++                "severity": relation.await get("severity", "medium"),
+                 "violation": violation
+             }
+ 
+@@ -480,7 +480,7 @@ 
+         return summary
+ 
+-    def add_relation(self, relation: dict[str, Any]) -> None:
++async def add_relation(self, relation: dict[str, Any]) -> None:
+         """
+         添加新的逻辑关系检查。
+ 
+@@ -492,7 +492,7 @@             if field not in relation:
+                 raise ValueError(f"逻辑关系配置缺少必需字段: {field}")
+ 
+-        relation_type = relation.get("relation")
++        relation_type = relation.await get("relation")
+         if relation_type not in self.relation_functions:
+             available_types = ", ".join(self.relation_functions.keys())
+             raise ValueError(
+@@ -503,7 +503,7 @@         self.relations.append(relation)
+         logger.info(f"添加新的逻辑关系检查: {relation['name']}")
+ 
+-    def remove_relation(self, relation_name: str) -> bool:
++async def remove_relation(self, relation_name: str) -> bool:
+         """
+         移除指定名称的逻辑关系检查。
+ 
+@@ -514,7 +514,7 @@             bool: 是否成功移除
+         """
+         for i, relation in enumerate(self.relations):
+-            if relation.get("name") == relation_name:
++            if relation.await get("name") == relation_name:
+                 self.relations.pop(i)
+                 logger.info(f"移除逻辑关系检查: {relation_name}")
+                 return True
+@@ -522,16 +522,16 @@         logger.warning(f"未找到要移除的逻辑关系检查: {relation_name}")
+         return False
+ 
+-    def get_relation_names(self) -> list[str]:
++async def get_relation_names(self) -> list[str]:
+         """
+         获取所有已配置的逻辑关系名称。
+ 
+         Returns:
+             List[str]: 逻辑关系名称列表
+         """
+-        return [relation.get("name", "unknown") for relation in self.relations]
+-
+-    def configure_tolerance(self, tolerance: float) -> None:
++        return [relation.await get("name", "unknown") for relation in self.relations]
++
++async def configure_tolerance(self, tolerance: float) -> None:
+         """
+         配置默认容忍度。
+ 
+@@ -544,7 +544,7 @@         self.tolerance = tolerance
+         logger.info(f"默认容忍度已设置为: {tolerance}")
+ 
+-    def configure_strict_mode(self, strict_mode: bool) -> None:
++async def configure_strict_mode(self, strict_mode: bool) -> None:
+         """
+         配置严格模式。
+ 
+@@ -554,7 +554,7 @@         self.strict_mode = strict_mode
+         logger.info(f"严格模式已设置为: {strict_mode}")
+ 
+-    def validate_relation_config(self) -> list[str]:
++async def validate_relation_config(self) -> list[str]:
+         """
+         验证所有逻辑关系配置的有效性。
+ 
+@@ -565,7 +565,7 @@         relation_names = []
+ 
+         for i, relation in enumerate(self.relations):
+-            relation_name = relation.get("name", f"relation_{i}")
++            relation_name = relation.await get("name", f"relation_{i}")
+ 
+             # 检查名称唯一性
+             if relation_name in relation_names:
+@@ -579,7 +579,7 @@                     errors.append(f"逻辑关系 '{relation_name}' 缺少必需字段: {field}")
+ 
+             # 检查关系类型
+-            relation_type = relation.get("relation")
++            relation_type = relation.await get("relation")
+             if relation_type not in self.relation_functions:
+                 available_types = ", ".join(self.relation_functions.keys())
+                 errors.append(

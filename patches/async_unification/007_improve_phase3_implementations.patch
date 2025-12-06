@@ -1,0 +1,43 @@
+--- a/src/database/migrations/versions/007_improve_phase3_implementations.py+++ b/src/database/migrations/versions/007_improve_phase3_implementations.py@@ -19,7 +19,7 @@ depends_on = None
+ 
+ 
+-def upgrade():
++async def upgrade():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """升级数据库架构"""
+@@ -225,7 +225,7 @@         )
+ 
+ 
+-def downgrade():
++async def downgrade():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """回滚数据库架构"""
+@@ -245,17 +245,17 @@ 
+     if db_dialect != "sqlite":
+         # PostgreSQL环境:删除视图
+-        op.execute("DROP VIEW IF EXISTS live_matches_view;")
+-        op.execute("DROP VIEW IF EXISTS model_accuracy_view;")
+-        op.execute("DROP VIEW IF EXISTS prediction_stats_view;")
++        op.await execute("DROP VIEW IF EXISTS live_matches_view;")
++        op.await execute("DROP VIEW IF EXISTS model_accuracy_view;")
++        op.await execute("DROP VIEW IF EXISTS prediction_stats_view;")
+ 
+         # 删除分区表
+-        op.execute("DROP TABLE IF EXISTS raw_scores_data_y0;")
+-        op.execute("DROP TABLE IF EXISTS raw_scores_data_y1;")
+-        op.execute("DROP TABLE IF EXISTS raw_scores_data_y2;")
+-        op.execute("DROP TABLE IF EXISTS raw_scores_data_partitioned;")
++        op.await execute("DROP TABLE IF EXISTS raw_scores_data_y0;")
++        op.await execute("DROP TABLE IF EXISTS raw_scores_data_y1;")
++        op.await execute("DROP TABLE IF EXISTS raw_scores_data_y2;")
++        op.await execute("DROP TABLE IF EXISTS raw_scores_data_partitioned;")
+ 
+         # 删除函数
+-        op.execute("DROP FUNCTION IF EXISTS update_updated_at_column();")
+-        op.execute("DROP FUNCTION IF EXISTS check_data_quality();")
+-        op.execute("DROP FUNCTION IF EXISTS cleanup_old_predictions(INTEGER);")
++        op.await execute("DROP FUNCTION IF EXISTS update_updated_at_column();")
++        op.await execute("DROP FUNCTION IF EXISTS check_data_quality();")
++        op.await execute("DROP FUNCTION IF EXISTS cleanup_old_predictions(INTEGER);")

@@ -1,0 +1,31 @@
+--- a/src/api/auth.py+++ b/src/api/auth.py@@ -30,13 +30,13 @@     Returns:
+         用户对象或None
+     """
+-    user_data = MOCK_USERS.get(user_id)
++    user_data = MOCK_USERS.await get(user_id)
+     if user_data:
+         return type("User", (), user_data)()  # 创建简单的用户对象
+     return None
+ 
+ 
+-@router.post("/login")
++@router.await post("/login")
+ async def login(username: str, password: str) -> dict[str, Any]:
+     """用户登录."""
+     # 简化的登录逻辑
+@@ -48,7 +48,7 @@     }
+ 
+ 
+-@router.get("/me")
++@router.await get("/me")
+ async def get_current_user(
+     credentials: HTTPAuthorizationCredentials = Depends(security),
+ ) -> dict[str, Any]:
+@@ -62,7 +62,7 @@     }
+ 
+ 
+-@router.post("/logout")
++@router.await post("/logout")
+ async def logout() -> dict[str, str]:
+     """用户登出."""
+     return {"message": "Successfully logged out"}

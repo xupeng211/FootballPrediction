@@ -1,0 +1,46 @@
+--- a/src/services/audit_service_mod/audit_service.py+++ b/src/services/audit_service_mod/audit_service.py@@ -18,12 +18,12 @@     pass  # 添加pass语句
+     """审计服务"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.events: list[AuditEvent] = []
+ 
+-    def log_event(
++async def log_event(
+         self,
+         action: AuditAction,
+         user_id: str,
+@@ -49,7 +49,7 @@         logger.info(f"Audit event: {event}")
+         return event
+ 
+-    def get_events(
++async def get_events(
+         self,
+         user_id: str | None = None,
+         action: AuditAction | None = None,
+@@ -76,7 +76,7 @@     """数据清理器"""
+ 
+     @staticmethod
+-    def sanitize_email(email: str) -> str:
++async def sanitize_email(email: str) -> str:
+         """清理邮箱地址."""
+         if "@" in email:
+             local, domain = email.split("@", 1)
+@@ -84,7 +84,7 @@         return "***@***.com"
+ 
+     @staticmethod
+-    def sanitize_phone(phone: str) -> str:
++async def sanitize_phone(phone: str) -> str:
+         """清理电话号码."""
+         if len(phone) > 4:
+             return phone[:2] + "*" * (len(phone) - 4) + phone[-2:]
+@@ -98,7 +98,7 @@     """严重程度分析器"""
+ 
+     @staticmethod
+-    def analyze_severity(
++async def analyze_severity(
+         action: AuditAction, resource_type: str, user_role: str = "user"
+     ) -> AuditSeverity:
+         """分析事件严重程度."""

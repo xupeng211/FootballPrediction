@@ -7,6 +7,7 @@ import logging
 from difflib import SequenceMatcher
 import httpx
 from datetime import datetime
+from typing import Any, Optional
 import re
 
 logger = logging.getLogger(__name__)

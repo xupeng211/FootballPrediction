@@ -1,0 +1,220 @@
+--- a/src/models/model_training.py+++ b/src/models/model_training.py@@ -29,11 +29,11 @@     # 创建模拟模块
+     class MockNumpy:
+         @staticmethod
+-        def array(data):
++async def array(data):
+             return data
+ 
+         @staticmethod
+-        def zeros(shape):
++async def zeros(shape):
+             return [0] * (shape[0] if isinstance(shape, tuple) else shape)
+ 
+         # 添加ndarray类型
+@@ -41,11 +41,11 @@ 
+     class MockPandas:
+         @staticmethod
+-        def DataFrame(data):
++async def DataFrame(data):
+             return data
+ 
+         @staticmethod
+-        def Series(data):
++async def Series(data):
+             return data
+ 
+     np = MockNumpy()
+@@ -65,18 +65,18 @@     class MockMLflow:
+         """Mock MLflow class for environments without MLflow."""
+ 
+-        def start_run(self, **kwargs):
++async def start_run(self, **kwargs):
+             """Start a mock MLflow run."""
+ 
+-        def __enter__(self):
++async def __enter__(self):
+             """Context manager entry."""
+             return self
+ 
+-        def __exit__(self, exc_type, exc_val, exc_tb):
++async def __exit__(self, exc_type, exc_val, exc_tb):
+             """Context manager exit."""
+ 
+         @staticmethod
+-        def sklearn():
++async def sklearn():
+             """Mock sklearn module."""
+             return MockMLflow.SklearnWrapper()
+ 
+@@ -84,16 +84,16 @@             """Mock sklearn module."""
+ 
+             @staticmethod
+-            def log_model(*args, **kwargs):
++async def log_model(*args, **kwargs):
+                 """Log a mock sklearn model."""
+ 
+-        def log_metric(self, *args, **kwargs):
++async def log_metric(self, *args, **kwargs):
+             """Log a mock metric."""
+ 
+-        def log_param(self, *args, **kwargs):
++async def log_param(self, *args, **kwargs):
+             """Log a mock parameter."""
+ 
+-        def log_artifacts(self, *args, **kwargs):
++async def log_artifacts(self, *args, **kwargs):
+             """Log mock artifacts."""
+ 
+     mlflow = MockMLflow()
+@@ -103,10 +103,10 @@     class MockMlflowClient:
+         """Mock MLflow client."""
+ 
+-        def __init__(self, *args, **kwargs):
++async def __init__(self, *args, **kwargs):
+             """Initialize mock client."""
+ 
+-        def get_latest_versions(self, *args, **kwargs):
++async def get_latest_versions(self, *args, **kwargs):
+             """Get latest versions (mock)."""
+             return []
+ 
+@@ -142,7 +142,7 @@ class BaselineModelTrainer:
+     """基础模型训练器."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         model_name: str,
+         model_type: str = "random_forest",
+@@ -169,7 +169,7 @@ 
+         logger.info(f"Initialized {model_name} trainer with {model_type} model")
+ 
+-    def prepare_data(
++async def prepare_data(
+         self,
+         X: pd.DataFrame,
+         y: pd.Series,
+@@ -207,7 +207,7 @@         logger.info(f"Data split - Train: {len(X_train)}, Test: {len(X_test)}")
+         return X_train, X_test, y_train, y_test
+ 
+-    def train(
++async def train(
+         self,
+         X_train: pd.DataFrame,
+         y_train: pd.Series,
+@@ -233,7 +233,7 @@             logger.error(f"Training failed: {e}")
+             raise
+ 
+-    def _train_without_mlflow(
++async def _train_without_mlflow(
+         self,
+         X_train: pd.DataFrame,
+         y_train: pd.Series,
+@@ -274,23 +274,23 @@             "training_history": self.training_history,
+         }
+ 
+-    def _create_model(self, **params):
++async def _create_model(self, **params):
+         """创建模型实例."""
+         if not HAS_SCIPY:
+             # 返回模拟模型
+             class MockModel:
+-                def __init__(self, **params):
++async def __init__(self, **params):
+                     self.params = params
+                     self.is_trained = False
+ 
+-                def fit(self, X, y):
++async def fit(self, X, y):
+                     self.is_trained = True
+                     return self
+ 
+-                def predict(self, X):
++async def predict(self, X):
+                     return [0] * len(X) if hasattr(X, "__len__") else [0]
+ 
+-                def predict_proba(self, X):
++async def predict_proba(self, X):
+                     return [[0.5, 0.5]] * (len(X) if hasattr(X, "__len__") else 1)
+ 
+             return MockModel(**params)
+@@ -308,7 +308,7 @@         else:
+             raise ValueError(f"Unsupported model type: {self.model_type}")
+ 
+-    def _evaluate_model(
++async def _evaluate_model(
+         self, X_test: pd.DataFrame, y_test: pd.Series
+     ) -> dict[str, float]:
+         """评估模型性能."""
+@@ -332,7 +332,7 @@             "f1": f1_score(y_test, y_pred, average="weighted"),
+         }
+ 
+-    def save_model(self) -> str:
++async def save_model(self) -> str:
+         """保存模型到文件."""
+         if not self.is_trained:
+             raise ValueError("Model must be trained before saving")
+@@ -349,7 +349,7 @@         logger.info(f"Model saved to {model_path}")
+         return str(model_path)
+ 
+-    def load_model(self, model_path: str) -> Any:
++async def load_model(self, model_path: str) -> Any:
+         """从文件加载模型."""
+         with open(model_path, "rb") as f:
+             self.model = pickle.load(f)
+@@ -358,14 +358,14 @@         logger.info(f"Model loaded from {model_path}")
+         return self.model
+ 
+-    def predict(self, X: pd.DataFrame) -> np.ndarray:
++async def predict(self, X: pd.DataFrame) -> np.ndarray:
+         """使用模型进行预测."""
+         if not self.is_trained:
+             raise ValueError("Model must be trained before making predictions")
+ 
+         return self.model.predict(X)
+ 
+-    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
++async def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+         """获取预测概率."""
+         if not self.is_trained:
+             raise ValueError("Model must be trained before making predictions")
+@@ -375,7 +375,7 @@         else:
+             raise ValueError("Model does not support probability predictions")
+ 
+-    def train_xgboost(
++async def train_xgboost(
+         self,
+         X_train: pd.DataFrame,
+         y_train: pd.Series,
+@@ -465,7 +465,7 @@                 verbose,
+             )
+ 
+-    def _train_xgboost_without_mlflow(
++async def _train_xgboost_without_mlflow(
+         self,
+         X_train: pd.DataFrame,
+         y_train: pd.Series,
+@@ -534,7 +534,7 @@             logger.error(f"XGBoost training failed: {e}")
+             raise
+ 
+-    def _train_xgboost_with_mlflow(
++async def _train_xgboost_with_mlflow(
+         self,
+         X_train: pd.DataFrame,
+         y_train: pd.Series,
+@@ -585,7 +585,7 @@             logger.error(f"XGBoost training with MLflow failed: {e}")
+             raise
+ 
+-    def _get_feature_importance(self) -> np.ndarray:
++async def _get_feature_importance(self) -> np.ndarray:
+         """获取特征重要性."""
+         if not self.is_trained or not HAS_XGB:
+             return None
+@@ -610,7 +610,7 @@             logger.warning(f"Could not get feature importance: {e}")
+             return None
+ 
+-    def optimize_xgboost_hyperparameters(
++async def optimize_xgboost_hyperparameters(
+         self,
+         X_train: pd.DataFrame,
+         y_train: pd.Series,

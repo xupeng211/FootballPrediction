@@ -1,0 +1,58 @@
+--- a/src/cqrs/application.py+++ b/src/cqrs/application.py@@ -48,7 +48,7 @@     Provides command and query operations for predictions.
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.command_bus = get_command_bus()
+@@ -146,7 +146,7 @@     Provides command and query operations for matches.
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.command_bus = get_command_bus()
+@@ -225,7 +225,7 @@     Provides command and query operations for users.
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.command_bus = get_command_bus()
+@@ -268,7 +268,7 @@     Provides analytics-related query operations.
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.query_bus = get_query_bus()
+@@ -308,22 +308,22 @@     """CQRS服务工厂"""
+ 
+     @staticmethod
+-    def create_prediction_service() -> PredictionCQRSService:
++async def create_prediction_service() -> PredictionCQRSService:
+         """创建预测服务."""
+         return PredictionCQRSService()
+ 
+     @staticmethod
+-    def create_match_service() -> MatchCQRSService:
++async def create_match_service() -> MatchCQRSService:
+         """创建比赛服务."""
+         return MatchCQRSService()
+ 
+     @staticmethod
+-    def create_user_service() -> UserCQRSService:
++async def create_user_service() -> UserCQRSService:
+         """创建用户服务."""
+         return UserCQRSService()
+ 
+     @staticmethod
+-    def create_analytics_service() -> AnalyticsCQRSService:
++async def create_analytics_service() -> AnalyticsCQRSService:
+         """创建分析服务."""
+         return AnalyticsCQRSService()
+ 

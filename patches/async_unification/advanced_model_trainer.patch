@@ -1,0 +1,13 @@
+--- a/src/ml/advanced_model_trainer.py+++ b/src/ml/advanced_model_trainer.py@@ -15,11 +15,11 @@ 
+ 
+ class AdvancedModelTrainer:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

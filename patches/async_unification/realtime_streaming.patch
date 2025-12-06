@@ -1,0 +1,24 @@
+--- a/src/api/realtime_streaming.py+++ b/src/api/realtime_streaming.py@@ -41,7 +41,7 @@     timestamp: datetime
+ 
+ 
+-@router.post("/real_time_data_streaming_api/execute")
++@router.await post("/real_time_data_streaming_api/execute")
+ async def execute_real_time_data_streaming_api(
+     request: RealTimeDataStreamingAPIRequest, background_tasks: BackgroundTasks
+ ) -> RealTimeDataStreamingAPIResponse:
+@@ -59,7 +59,7 @@         raise HTTPException(status_code=500, detail=str(e)) from e
+ 
+ 
+-@router.get("/real_time_data_streaming_api/status/{job_id}")
++@router.await get("/real_time_data_streaming_api/status/{job_id}")
+ async def get_real_time_data_streaming_api_status(job_id: str):
+     """获取Real-time Data Streaming API执行状态."""
+     # ISSUE: 需要实现状态查询的业务逻辑，包括数据库查询和状态聚合
+@@ -71,7 +71,7 @@     }
+ 
+ 
+-@router.get("/real_time_data_streaming_api/health")
++@router.await get("/real_time_data_streaming_api/health")
+ async def health_check():
+     """健康检查."""
+     return {

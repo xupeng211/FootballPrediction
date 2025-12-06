@@ -1,0 +1,13 @@
+--- a/src/monitoring/advanced_monitoring_system.py+++ b/src/monitoring/advanced_monitoring_system.py@@ -2,11 +2,11 @@ 
+ 
+ class AdvancedMonitoringSystem:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

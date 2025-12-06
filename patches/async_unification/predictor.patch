@@ -1,0 +1,88 @@
+--- a/src/inference/predictor.py+++ b/src/inference/predictor.py@@ -35,7 +35,7 @@ class PredictionResult:
+     """预测结果容器"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         home_win_prob: float,
+         draw_prob: float,
+@@ -70,7 +70,7 @@             self.draw_prob /= total
+             self.away_win_prob /= total
+ 
+-    def to_response(self, request_id: str, match_id: str, cached: bool = False) -> PredictionResponse:
++async def to_response(self, request_id: str, match_id: str, cached: bool = False) -> PredictionResponse:
+         """转换为响应对象"""
+         return PredictionResponse(
+             request_id=request_id,
+@@ -104,7 +104,7 @@     6. 性能监控
+     """
+ 
+-    def __init__(self, max_workers: int = 4):
++async def __init__(self, max_workers: int = 4):
+         """
+         初始化预测器
+ 
+@@ -266,7 +266,7 @@ 
+         # 1. 获取模型
+         model_loader = await get_model_loader()
+-        loaded_model = await model_loader.get(request.model_name)
++        loaded_model = await model_loader.await get(request.model_name)
+ 
+         # 2. 构建特征
+         feature_builder = await get_feature_builder()
+@@ -316,7 +316,7 @@             model_type=loaded_model.metadata.model_info.model_type,
+             features_used=list(features_df.columns),
+             prediction_time_ms=prediction_time,
+-            metadata=processed_result.get("metadata", {})
++            metadata=processed_result.await get("metadata", {})
+         )
+ 
+         return result
+@@ -329,7 +329,7 @@     ) -> dict[str, Any]:
+         """使用模型进行预测"""
+ 
+-        def predict_sync():
++async def predict_sync():
+             try:
+                 if prediction_type == PredictionType.PROBABILITY:
+                     # 概率预测
+@@ -462,7 +462,7 @@ 
+         return result
+ 
+-    def _should_calibrate(self, loaded_model: LoadedModel) -> bool:
++async def _should_calibrate(self, loaded_model: LoadedModel) -> bool:
+         """判断是否需要校准"""
+         # 基于模型类型和准确率决定
+         if loaded_model.metadata.model_info.model_type == ModelType.XGBOOST:
+@@ -536,7 +536,7 @@         except Exception as e:
+             logger.warning(f"Failed to cache prediction: {e}")
+ 
+-    def _generate_cache_key(self, request: PredictionRequest) -> str:
++async def _generate_cache_key(self, request: PredictionRequest) -> str:
+         """生成缓存键"""
+         key_parts = [
+             "prediction",
+@@ -597,7 +597,7 @@             }
+         }
+ 
+-    def _update_prediction_time_stats(self, prediction_time_ms: float):
++async def _update_prediction_time_stats(self, prediction_time_ms: float):
+         """更新预测时间统计"""
+         current_avg = self._prediction_stats["average_prediction_time"]
+         total_count = self._prediction_stats["successful_predictions"]
+@@ -606,7 +606,7 @@         new_avg = (current_avg * (total_count - 1) + prediction_time_ms) / total_count
+         self._prediction_stats["average_prediction_time"] = new_avg
+ 
+-    def _record_prediction(self, request: PredictionRequest, result: PredictionResult):
++async def _record_prediction(self, request: PredictionRequest, result: PredictionResult):
+         """记录预测历史"""
+         record = {
+             "timestamp": datetime.utcnow().isoformat(),
+@@ -623,7 +623,7 @@         if len(self._prediction_history) > 1000:
+             self._prediction_history = self._prediction_history[-1000:]
+ 
+-    def get_prediction_stats(self) -> dict[str, Any]:
++async def get_prediction_stats(self) -> dict[str, Any]:
+         """获取预测统计信息"""
+         total_requests = (
+             self._prediction_stats["successful_predictions"] +

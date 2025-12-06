@@ -1,0 +1,32 @@
+--- a/src/database/models/raw_data.py+++ b/src/database/models/raw_data.py@@ -20,7 +20,7 @@     processed_at = Column(DateTime, nullable=True)
+     created_at = Column(DateTime, nullable=False, default=func.now())
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         """安全的__repr__方法，只访问自己的列字段."""
+         processed_val = self.processed if self.processed is not None else False
+         return (
+@@ -46,7 +46,7 @@     created_at = Column(DateTime, nullable=False, default=func.now())
+     updated_at = Column(DateTime, nullable=False, default=func.now())
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         """安全的__repr__方法，只访问自己的列字段."""
+         return (
+             f"RawMatchData(id={self.id}, "
+@@ -69,7 +69,7 @@     collected_at = Column(DateTime, nullable=False, default=func.now())
+     processed = Column(Boolean, default=False)
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         """安全的__repr__方法，只访问自己的列字段."""
+         return (
+             f"RawOddsData(id={self.id}, "
+@@ -92,7 +92,7 @@     collected_at = Column(DateTime, nullable=False, default=func.now())
+     processed = Column(Boolean, default=False)
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         """安全的__repr__方法，只访问自己的列字段."""
+         return (
+             f"RawScoresData(id={self.id}, "

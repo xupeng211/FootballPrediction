@@ -1,0 +1,67 @@
+--- a/src/api/predictions_enhanced.py+++ b/src/api/predictions_enhanced.py@@ -13,29 +13,29 @@ 
+ # Mock implementations for missing dependencies
+ class MockAdvancedModelTrainer:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+ class MockAutoMLPipeline:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+ class MockRedisManager:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def get_mock_redis_manager():
++async def get_mock_redis_manager():
+     return MockRedisManager()
+ 
+ 
+-def get_mock_async_session():
++async def get_mock_async_session():
+     return None
+ 
+ 
+-def get_mock_logger(name=None):
++async def get_mock_logger(name=None):
+     import logging
+ 
+     return logging.getLogger(name)
+@@ -137,7 +137,7 @@ class EnhancedPredictionService:
+     """增强版预测服务."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.model_trainer = AdvancedModelTrainer()
+         self.automl_pipeline = AutoMLPipeline()
+         self.metrics = PredictionMetrics()
+@@ -296,7 +296,7 @@ prediction_service = EnhancedPredictionService()
+ 
+ 
+-@router.post("/predict", response_model=PredictionResponse)
++@router.await post("/predict", response_model=PredictionResponse)
+ async def predict_match(
+     request: PredictionRequest,
+     background_tasks: BackgroundTasks,
+@@ -346,7 +346,7 @@     return response
+ 
+ 
+-@router.post("/predict/batch", response_model=BatchPredictionResponse)
++@router.await post("/predict/batch", response_model=BatchPredictionResponse)
+ async def predict_batch(
+     request: BatchPredictionRequest,
+     background_tasks: BackgroundTasks,
+@@ -441,7 +441,7 @@     return response
+ 
+ 
+-@router.get("/metrics")
++@router.await get("/metrics")
+ async def get_prediction_metrics(token: str = Depends(prediction_service.verify_token)):
+     """获取预测性能指标."""
+     return {

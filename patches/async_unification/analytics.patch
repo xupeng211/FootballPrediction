@@ -1,0 +1,32 @@
+--- a/src/api/analytics.py+++ b/src/api/analytics.py@@ -23,7 +23,7 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
+ 
+ 
+-def get_analytics_service(db_session=Depends(get_async_db)) -> AnalyticsService:
++async def get_analytics_service(db_session=Depends(get_async_db)) -> AnalyticsService:
+     """
+     Dependency injection for AnalyticsService.
+ 
+@@ -37,7 +37,7 @@     return AnalyticsService(analytics_repository)
+ 
+ 
+-@router.get("/teams/{team_id}/performance", response_model=dict[str, Any])
++@router.await get("/teams/{team_id}/performance", response_model=dict[str, Any])
+ async def get_team_performance(
+     team_id: int,
+     days: int = Query(
+@@ -100,7 +100,7 @@         )
+ 
+ 
+-@router.get("/leagues/{league_id}/standings", response_model=dict[str, Any])
++@router.await get("/leagues/{league_id}/standings", response_model=dict[str, Any])
+ async def get_league_standings(
+     league_id: int,
+     season: str = Query(default="2024", description="Season identifier"),
+@@ -163,7 +163,7 @@         )
+ 
+ 
+-@router.get("/health", response_model=dict[str, str])
++@router.await get("/health", response_model=dict[str, str])
+ async def analytics_health_check(
+     analytics_service: AnalyticsService = Depends(get_analytics_service),
+ ) -> dict[str, str]:

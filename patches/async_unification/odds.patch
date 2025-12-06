@@ -1,0 +1,194 @@
+--- a/src/domain_simple/odds.py+++ b/src/domain_simple/odds.py@@ -31,7 +31,7 @@     pass  # 添加pass语句
+     """赔率变化"""
+ 
+-    def __init__(self, old_odds: float, new_odds: float, timestamp: datetime):
++async def __init__(self, old_odds: float, new_odds: float, timestamp: datetime):
+         """函数文档字符串."""
+         pass
+         # 添加pass语句
+@@ -41,7 +41,7 @@         self.change = new_odds - old_odds
+         self.change_percent = (self.change / old_odds) * 100 if old_odds != 0 else 0
+ 
+-    def is_significant(self, threshold: float = 5.0) -> bool:
++async def is_significant(self, threshold: float = 5.0) -> bool:
+         """是否为显著变化."""
+         return abs(self.change_percent) >= threshold
+ 
+@@ -52,7 +52,7 @@     pass  # 添加pass语句
+     """价值投注"""
+ 
+-    def __init__(self, odds: float, probability: float, threshold: float = 1.0):
++async def __init__(self, odds: float, probability: float, threshold: float = 1.0):
+         """函数文档字符串."""
+         pass
+         # 添加pass语句
+@@ -61,11 +61,11 @@         self.threshold = threshold
+         self.expected_value = (odds * probability) - 1
+ 
+-    def is_value(self) -> bool:
++async def is_value(self) -> bool:
+         """是否为价值投注."""
+         return self.expected_value > self.threshold
+ 
+-    def get_confidence(self) -> float:
++async def get_confidence(self) -> float:
+         """获取价值置信度."""
+         if not self.is_value():
+             return 0.0
+@@ -78,7 +78,7 @@     pass  # 添加pass语句
+     """赔率领域模型"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         odds_id: int | None = None,
+         match_id: int = 0,
+@@ -117,7 +117,7 @@         self.updated_at = datetime.now()
+         self.last_movement: datetime | None = None
+ 
+-    def update_odds(
++async def update_odds(
+         self,
+         home_odds: float | None = None,
+         draw_odds: float | None = None,
+@@ -151,7 +151,7 @@         self.updated_at = datetime.now()
+         self.last_movement = datetime.now()
+ 
+-    def get_implied_probability(self) -> dict[str, float]:
++async def get_implied_probability(self) -> dict[str, float]:
+         """获取隐含概率."""
+         probabilities = {}
+ 
+@@ -166,7 +166,7 @@ 
+         return probabilities
+ 
+-    def get_vig_percentage(self) -> float:
++async def get_vig_percentage(self) -> float:
+         """获取抽水百分比."""
+         probs = self.get_implied_probability()
+         total_prob = sum(probs.values())
+@@ -175,7 +175,7 @@             return total_prob - 100
+         return 0.0
+ 
+-    def get_true_probability(self) -> dict[str, float]:
++async def get_true_probability(self) -> dict[str, float]:
+         """获取真实概率（去除抽水）."""
+         implied = self.get_implied_probability()
+         vig = self.get_vig_percentage()
+@@ -190,7 +190,7 @@ 
+         return adjusted
+ 
+-    def find_value_bets(
++async def find_value_bets(
+         self, predicted_probs: dict[str, float], threshold: float = 1.0
+     ) -> list[ValueBet]:
+         """寻找价值投注."""
+@@ -219,7 +219,7 @@ 
+         return value_bets
+ 
+-    def convert_format(self, target_format: OddsFormat) -> dict[str, float]:
++async def convert_format(self, target_format: OddsFormat) -> dict[str, float]:
+         """转换赔率格式."""
+         result = {}
+ 
+@@ -249,7 +249,7 @@ 
+         return result
+ 
+-    def _decimal_to_fractional(self, decimal: float) -> str:
++async def _decimal_to_fractional(self, decimal: float) -> str:
+         """小数转分数."""
+         if decimal <= 1:
+             return "1/1"
+@@ -264,31 +264,31 @@ 
+         return f"{fraction:.2f}/1"
+ 
+-    def _decimal_to_american(self, decimal: float) -> int:
++async def _decimal_to_american(self, decimal: float) -> int:
+         """小数转美式."""
+         if decimal >= 2.0:
+             return int((decimal - 1) * 100)
+         else:
+             return int(-100 / (decimal - 1))
+ 
+-    def suspend(self) -> None:
++async def suspend(self) -> None:
+         """暂停赔率."""
+         self.is_suspended = True
+         self.is_active = False
+         self.updated_at = datetime.now()
+ 
+-    def resume(self) -> None:
++async def resume(self) -> None:
+         """恢复赔率."""
+         self.is_suspended = False
+         self.is_active = True
+         self.updated_at = datetime.now()
+ 
+-    def get_recent_movements(self, hours: int = 24) -> list[OddsMovement]:
++async def get_recent_movements(self, hours: int = 24) -> list[OddsMovement]:
+         """获取最近的赔率变化."""
+         cutoff = datetime.now().timestamp() - (hours * 3600)
+         return [m for m in self.movements if m.timestamp.timestamp() > cutoff]
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         return {
+             "id": self.id,
+@@ -315,39 +315,39 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "Odds":
++async def from_dict(cls, data: dict[str, Any]) -> "Odds":
+         """从字典创建实例."""
+         odds = cls(
+-            id=data.get("id"),
+-            match_id=data.get("match_id", 0),
+-            market_type=MarketType(data.get("market_type", "1X2")),
+-            bookmaker=data.get("bookmaker", ""),
+-            home_odds=data.get("home_odds"),
+-            draw_odds=data.get("draw_odds"),
+-            away_odds=data.get("away_odds"),
++            id=data.await get("id"),
++            match_id=data.await get("match_id", 0),
++            market_type=await MarketType(data.get("market_type", "1X2")),
++            bookmaker=data.await get("bookmaker", ""),
++            home_odds=data.await get("home_odds"),
++            draw_odds=data.await get("draw_odds"),
++            away_odds=data.await get("away_odds"),
+         )
+ 
+         # 设置扩展赔率
+-        odds.over_odds = data.get("over_odds")
+-        odds.under_odds = data.get("under_odds")
+-        odds.handicap = data.get("handicap")
++        odds.over_odds = data.await get("over_odds")
++        odds.under_odds = data.await get("under_odds")
++        odds.handicap = data.await get("handicap")
+ 
+         # 设置状态
+-        odds.is_active = data.get("is_active", True)
+-        odds.is_suspended = data.get("is_suspended", False)
++        odds.is_active = data.await get("is_active", True)
++        odds.is_suspended = data.await get("is_suspended", False)
+ 
+         # 设置时间戳
+-        if data.get("created_at"):
++        if data.await get("created_at"):
+             odds.created_at = datetime.fromisoformat(data["created_at"])
+-        if data.get("updated_at"):
++        if data.await get("updated_at"):
+             odds.updated_at = datetime.fromisoformat(data["updated_at"])
+-        if data.get("last_movement"):
++        if data.await get("last_movement"):
+             odds.last_movement = datetime.fromisoformat(data["last_movement"])
+ 
+         return odds
+ 
+-    def __str__(self) -> str:
++async def __str__(self) -> str:
+         return f"Odds({self.market_type.value}: {self.home_odds}/{self.draw_odds}/{self.away_odds})"
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         return f"<Odds(id={self.id}, match_id={self.match_id}, bookmaker={self.bookmaker})>"

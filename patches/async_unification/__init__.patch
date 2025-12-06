@@ -1,0 +1,8 @@
+--- a/src/events/__init__.py+++ b/src/events/__init__.py@@ -41,7 +41,7 @@     class NotificationEventHandler:
+         pass
+ 
+-    def register_default_handlers():
++async def register_default_handlers():
+         pass
+ 
+ 

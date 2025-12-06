@@ -1,0 +1,13 @@
+--- a/src/monitoring/apm_integration.py+++ b/src/monitoring/apm_integration.py@@ -2,11 +2,11 @@ 
+ 
+ class ApmIntegration:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

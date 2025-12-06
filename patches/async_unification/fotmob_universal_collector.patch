@@ -1,0 +1,72 @@
+--- a/src/data/collectors/fotmob_universal_collector.py+++ b/src/data/collectors/fotmob_universal_collector.py@@ -23,7 +23,7 @@ class FotMobUniversalCollector:
+     """生产级FotMob数据采集器"""
+ 
+-    def __init__(
++async def __init__(
+         self
+         max_concurrent: int = 20
+         timeout: float = 30.0
+@@ -87,7 +87,7 @@         await self.session.aclose()
+         logger.info(f"📊 采集器统计: {self._get_performance_stats()}")
+ 
+-    def _get_performance_stats(self) -> dict[str, Any]:
++async def _get_performance_stats(self) -> dict[str, Any]:
+         """获取性能统计"""
+         avg_response_time = (
+             self.stats['total_response_time'] / self.stats['requests_made']
+@@ -253,7 +253,7 @@ 
+         return matches
+ 
+-    def _parse_match_data(self, match_data: dict, league_id: str, season: str, date_str: Optional[str] = None) -> Optional[dict]:
++async def _parse_match_data(self, match_data: dict, league_id: str, season: str, date_str: Optional[str] = None) -> Optional[dict]:
+         """解析比赛数据"""
+         try:
+             # 提取基本信息
+@@ -420,7 +420,7 @@                 'stats': self._get_performance_stats()
+             }
+ 
+-    def _extract_advanced_stats(self, match_data: dict) -> dict:
++async def _extract_advanced_stats(self, match_data: dict) -> dict:
+         """从FotMob数据中提取高级统计信息"""
+         try:
+             stats = {}
+@@ -451,7 +451,7 @@             logger.debug(f"提取高级统计失败: {e}")
+             return {}
+ 
+-    def _extract_xg_data(self, match_data: dict) -> Optional[dict]:
++async def _extract_xg_data(self, match_data: dict) -> Optional[dict]:
+         """提取xG数据"""
+         try:
+             # FotMob的xG数据通常在特定字段中
+@@ -485,7 +485,7 @@             logger.debug(f"提取xG数据失败: {e}")
+             return None
+ 
+-    def _extract_lineup_data(self, match_data: dict) -> Optional[dict]:
++async def _extract_lineup_data(self, match_data: dict) -> Optional[dict]:
+         """提取阵容数据"""
+         try:
+             lineups = {}
+@@ -511,7 +511,7 @@             logger.debug(f"提取阵容数据失败: {e}")
+             return None
+ 
+-    def _extract_match_stats(self, match_data: dict) -> Optional[dict]:
++async def _extract_match_stats(self, match_data: dict) -> Optional[dict]:
+         """提取比赛统计"""
+         try:
+             stats = {}
+@@ -542,7 +542,7 @@             logger.debug(f"提取比赛统计失败: {e}")
+             return None
+ 
+-    def _extract_player_stats(self, match_data: dict) -> Optional[list]:
++async def _extract_player_stats(self, match_data: dict) -> Optional[list]:
+         """提取球员统计数据"""
+         try:
+             player_stats = []
+@@ -567,7 +567,7 @@             logger.debug(f"提取球员统计失败: {e}")
+             return None
+ 
+-    def _extract_odds_data(self, match_data: dict) -> Optional[dict]:
++async def _extract_odds_data(self, match_data: dict) -> Optional[dict]:
+         """提取赔率数据"""
+         try:
+             odds = {}

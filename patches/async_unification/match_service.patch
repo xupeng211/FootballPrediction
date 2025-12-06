@@ -1,0 +1,180 @@
+--- a/src/domain/services/match_service.py+++ b/src/domain/services/match_service.py@@ -24,7 +24,7 @@     pass  # 添加pass语句
+     """比赛领域服务"""
+ 
+-    def __init__(self, config: dict[str, Any] | None = None):
++async def __init__(self, config: dict[str, Any] | None = None):
+         """函数文档字符串."""
+         self._config = config or {}
+ 
+@@ -38,20 +38,20 @@         self._health_status = "healthy"
+         self._created_at = datetime.utcnow()
+ 
+-    def initialize(self) -> bool:
++async def initialize(self) -> bool:
+         """初始化服务."""
+         if self._is_disposed:
+             raise RuntimeError("Cannot initialize disposed service")
+         self._is_initialized = True
+         return True
+ 
+-    def dispose(self) -> None:
++async def dispose(self) -> None:
+         """销毁服务."""
+         self._is_disposed = True
+         self._is_initialized = False
+         self._events.clear()
+ 
+-    def is_healthy(self) -> bool:
++async def is_healthy(self) -> bool:
+         """检查服务健康状态."""
+         return (
+             self._health_status == "healthy"
+@@ -59,7 +59,7 @@             and self._is_initialized
+         )
+ 
+-    def get_service_info(self) -> dict[str, Any]:
++async def get_service_info(self) -> dict[str, Any]:
+         """获取服务信息."""
+         return {
+             "name": "MatchDomainService",
+@@ -71,19 +71,19 @@             "config": self._config,
+         }
+ 
+-    def is_disposed(self) -> bool:
++async def is_disposed(self) -> bool:
+         """检查是否已销毁."""
+         return self._disposed
+ 
+-    def is_initialized(self) -> bool:
++async def is_initialized(self) -> bool:
+         """检查是否已初始化."""
+         return self._is_initialized
+ 
+-    def get_created_at(self) -> datetime:
++async def get_created_at(self) -> datetime:
+         """获取创建时间."""
+         return self._created_at
+ 
+-    def _validate_config(self, config: dict[str, Any]) -> None:
++async def _validate_config(self, config: dict[str, Any]) -> None:
+         """验证配置参数."""
+         # 检查明显无效的配置键（更宽松的验证）
+         invalid_keys = set(config.keys()) & {"invalid_key"}  # 只测试明显无效的键
+@@ -91,7 +91,7 @@         if invalid_keys:
+             raise ValueError(f"Invalid configuration keys: {invalid_keys}")
+ 
+-    def get_detailed_service_info(self) -> dict[str, Any]:
++async def get_detailed_service_info(self) -> dict[str, Any]:
+         """获取详细服务信息."""
+         return {
+             "name": self.__class__.__name__,
+@@ -102,7 +102,7 @@             "config": self._config,
+         }
+ 
+-    def schedule_match(
++async def schedule_match(
+         self,
+         home_team: Team,
+         away_team: Team,
+@@ -129,7 +129,7 @@ 
+         return match
+ 
+-    def start_match(self, match: Match) -> Match:
++async def start_match(self, match: Match) -> Match:
+         """开始比赛."""
+         if match.status != MatchStatus.SCHEDULED:
+             raise ValueError("只能开始预定的比赛")
+@@ -156,7 +156,7 @@ 
+         return match
+ 
+-    def update_match_score(
++async def update_match_score(
+         self,
+         match: Match,
+         home_score: int,
+@@ -176,7 +176,7 @@         # event = GoalScoredEvent(...)
+         # self._events.append(event)
+ 
+-    def update_score(
++async def update_score(
+         self,
+         match: Match,
+         home_score: int,
+@@ -195,7 +195,7 @@ 
+         return match
+ 
+-    def finish_match(
++async def finish_match(
+         self, match: Match, home_score: int = None, away_score: int = None
+     ) -> Match:
+         """结束比赛."""
+@@ -223,7 +223,7 @@ 
+         return match
+ 
+-    def cancel_match(self, match: Match, reason: str) -> Match:
++async def cancel_match(self, match: Match, reason: str) -> Match:
+         """取消比赛."""
+         if match.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
+             raise ValueError("不能取消已结束或已取消的比赛")
+@@ -236,7 +236,7 @@ 
+         return match
+ 
+-    def postpone_match(self, match: Match, new_date: datetime, reason: str) -> Match:
++async def postpone_match(self, match: Match, new_date: datetime, reason: str) -> Match:
+         """延期比赛."""
+         if match.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
+             raise ValueError("只能延期预定或进行中的比赛")
+@@ -256,7 +256,7 @@ 
+         return match
+ 
+-    def is_match_valid_to_start(self, match: Match) -> bool:
++async def is_match_valid_to_start(self, match: Match) -> bool:
+         """检查比赛是否可以开始."""
+         return (
+             match.status == MatchStatus.SCHEDULED
+@@ -267,7 +267,7 @@             and match.away_team_id > 0
+         )
+ 
+-    def calculate_match_duration(self, match: Match) -> timedelta:
++async def calculate_match_duration(self, match: Match) -> timedelta:
+         """计算比赛持续时间."""
+         if match.status != MatchStatus.FINISHED:
+             return timedelta(0)
+@@ -276,7 +276,7 @@         # 在实际实现中，这里应该计算实际开始时间和结束时间的差值
+         return timedelta(minutes=90)
+ 
+-    def validate_match_schedule(self, match: Match) -> list[str]:
++async def validate_match_schedule(self, match: Match) -> list[str]:
+         """验证比赛安排."""
+         errors = []
+ 
+@@ -302,7 +302,7 @@ 
+         return errors
+ 
+-    def calculate_match_importance(
++async def calculate_match_importance(
+         self,
+         match: Match,
+         home_team_position: int | None = None,
+@@ -334,18 +334,18 @@ 
+         return min(importance, 1.0)
+ 
+-    def get_domain_events(self) -> list[Any]:
++async def get_domain_events(self) -> list[Any]:
+         """获取领域事件."""
+         return self._events.copy()
+ 
+-    def get_events(self) -> list[Any]:
++async def get_events(self) -> list[Any]:
+         """获取领域事件（别名方法）."""
+         return self.get_domain_events()
+ 
+-    def clear_domain_events(self) -> None:
++async def clear_domain_events(self) -> None:
+         """清除领域事件."""
+         self._events.clear()
+ 
+-    def clear_events(self) -> None:
++async def clear_events(self) -> None:
+         """清除事件（别名方法）."""
+         return self.clear_domain_events()

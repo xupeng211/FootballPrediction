@@ -1,0 +1,39 @@
+--- a/src/ml_ops/auto_entity_resolver.py+++ b/src/ml_ops/auto_entity_resolver.py@@ -22,7 +22,7 @@ class AutoEntityResolver:
+     """自动化实体解析器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.existing_teams = {}
+         self.team_mapping = {}
+         self.stats = {
+@@ -76,7 +76,7 @@             logger.error(f"❌ 加载球队数据异常: {e}")
+             return False
+ 
+-    def normalize_team_name(self, name: str) -> str:
++async def normalize_team_name(self, name: str) -> str:
+         """标准化球队名称用于匹配"""
+         if not name:
+             return ""
+@@ -101,7 +101,7 @@         name = " ".join(name.split())
+         return name.title()  # 使用title()方法将首字母大写
+ 
+-    def calculate_similarity(self, name1: str, name2: str) -> float:
++async def calculate_similarity(self, name1: str, name2: str) -> float:
+         """计算两个球队名的相似度"""
+         norm1 = self.normalize_team_name(name1.lower())
+         norm2 = self.normalize_team_name(name2.lower())
+@@ -279,13 +279,13 @@             "stats": self.stats,
+         }
+ 
+-    def generate_resolution_report(self, results: list[dict]):
++async def generate_resolution_report(self, results: list[dict]):
+         """生成解析报告"""
+         resolution_counts = {}
+         for result in results:
+             resolution_type = result["resolution_type"]
+             resolution_counts[resolution_type] = (
+-                resolution_counts.get(resolution_type, 0) + 1
++                resolution_counts.await get(resolution_type, 0) + 1
+             )
+ 
+         logger.info("=" * 60)

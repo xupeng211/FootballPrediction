@@ -1,0 +1,13 @@
+--- a/src/patterns/facade_simple.py+++ b/src/patterns/facade_simple.py@@ -2,11 +2,11 @@ 
+ 
+ class FacadeSimple:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

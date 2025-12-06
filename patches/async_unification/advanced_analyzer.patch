@@ -1,0 +1,13 @@
+--- a/src/metrics/advanced_analyzer.py+++ b/src/metrics/advanced_analyzer.py@@ -2,11 +2,11 @@ 
+ 
+ class AdvancedAnalyzer:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

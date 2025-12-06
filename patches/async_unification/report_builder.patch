@@ -1,0 +1,102 @@
+--- a/src/evaluation/report_builder.py+++ b/src/evaluation/report_builder.py@@ -38,7 +38,7 @@ class ReportBuilder:
+     """评估报告构建器"""
+ 
+-    def __init__(self, output_dir: Union[str, Path] = None):
++async def __init__(self, output_dir: Union[str, Path] = None):
+         """
+         初始化报告构建器
+ 
+@@ -56,7 +56,7 @@         # 创建模板
+         self.template_env = self._create_template_environment()
+ 
+-    def _create_template_environment(self) -> Environment:
++async def _create_template_environment(self) -> Environment:
+         """创建Jinja2模板环境"""
+         if not HAS_JINJA2:
+             return None
+@@ -71,7 +71,7 @@ 
+         return env
+ 
+-    def _get_html_template(self) -> str:
++async def _get_html_template(self) -> str:
+         """获取HTML模板字符串"""
+         return """
+ <!DOCTYPE html>
+@@ -398,7 +398,7 @@ </html>
+         """
+ 
+-    def _get_metric_status(self, metric_name: str, value: float) -> str:
++async def _get_metric_status(self, metric_name: str, value: float) -> str:
+         """获取指标状态"""
+         if metric_name in ['accuracy', 'f1_weighted', 'precision_weighted', 'recall_weighted']:
+             if value >= 0.8:
+@@ -417,7 +417,7 @@         else:
+             return '标准'
+ 
+-    def _get_metric_class(self, metric_name: str, value: float) -> str:
++async def _get_metric_class(self, metric_name: str, value: float) -> str:
+         """获取指标CSS类"""
+         if self._get_metric_status(metric_name, value) == '优秀':
+             return 'good'
+@@ -426,7 +426,7 @@         else:
+             return 'warning'
+ 
+-    def build_summary_metrics(self, metrics_result: dict, backtest_result=None) -> list[dict]:
++async def build_summary_metrics(self, metrics_result: dict, backtest_result=None) -> list[dict]:
+         """构建摘要指标"""
+         summary = []
+ 
+@@ -479,12 +479,12 @@ 
+         return summary
+ 
+-    def generate_recommendations(self, metrics_result: dict, backtest_result=None) -> list[dict]:
++async def generate_recommendations(self, metrics_result: dict, backtest_result=None) -> list[dict]:
+         """生成改进建议"""
+         recommendations = []
+ 
+         # 基于分类指标的建议
+-        accuracy = metrics_result.get('accuracy', 0)
++        accuracy = metrics_result.await get('accuracy', 0)
+         if accuracy < 0.6:
+             recommendations.append({
+                 'title': '提高模型准确率',
+@@ -524,7 +524,7 @@ 
+         return recommendations
+ 
+-    def build_html_report(self, metrics_result: dict, calibration_result=None,
++async def build_html_report(self, metrics_result: dict, calibration_result=None,
+                          backtest_result=None, charts: list[dict] = None,
+                          model_name: str = "Football Prediction Model",
+                          model_version: str = "1.0.0") -> str:
+@@ -592,7 +592,7 @@         logger.info(f"HTML report generated: {output_file}")
+         return str(output_file)
+ 
+-    def build_json_report(self, metrics_result: dict, calibration_result=None,
++async def build_json_report(self, metrics_result: dict, calibration_result=None,
+                          backtest_result=None, charts: list[dict] = None,
+                          model_name: str = "Football Prediction Model",
+                          model_version: str = "1.0.0") -> str:
+@@ -642,7 +642,7 @@         logger.info(f"JSON report generated: {output_file}")
+         return str(output_file)
+ 
+-    def build_pdf_report(self, html_file: str = None, **kwargs) -> str:
++async def build_pdf_report(self, html_file: str = None, **kwargs) -> str:
+         """
+         构建PDF评估报告
+ 
+@@ -675,7 +675,7 @@             logger.error(f"Error generating PDF report: {e}")
+             return ""
+ 
+-    def build_comprehensive_report(self, metrics_result: dict, calibration_result=None,
++async def build_comprehensive_report(self, metrics_result: dict, calibration_result=None,
+                                  backtest_result=None, charts: list[dict] = None,
+                                  model_name: str = "Football Prediction Model",
+                                  model_version: str = "1.0.0",
+@@ -736,7 +736,7 @@ 
+ 
+ # 便捷函数
+-def generate_evaluation_report(metrics_result: dict, calibration_result=None,
++async def generate_evaluation_report(metrics_result: dict, calibration_result=None,
+                              backtest_result=None, charts: list[dict] = None,
+                              output_dir: str = None, model_name: str = "Model",
+                              formats: list[str] = None) -> dict[str, str]:

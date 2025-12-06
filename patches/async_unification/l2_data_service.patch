@@ -1,0 +1,8 @@
+--- a/src/services/l2_data_service.py+++ b/src/services/l2_data_service.py@@ -22,7 +22,7 @@ class L2DataService:
+     """L2 数据写入服务"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.logger = logger
+ 
+     async def save_match_details(self, match_data: MatchDetailData) -> bool:

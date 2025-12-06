@@ -1,0 +1,37 @@
+--- a/src/ml/real_model_training.py+++ b/src/ml/real_model_training.py@@ -8,14 +8,14 @@ 
+ 
+ class RealModelTraining:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+ class RealModelTrainingPipeline:
+     """简化的机器学习训练管道，用于测试."""
+ 
+-    def __init__(self, model_type: str = "random_forest"):
++async def __init__(self, model_type: str = "random_forest"):
+         self.model_type = model_type
+         self.logger = logger
+ 
+@@ -29,11 +29,11 @@             "accuracy": 0.85,
+         }
+ 
+-    def preprocess_data(self, raw_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
++async def preprocess_data(self, raw_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+         """数据预处理."""
+         return raw_data
+ 
+-    def evaluate_model(
++async def evaluate_model(
+         self, model: Any, test_data: list[dict[str, Any]]
+     ) -> dict[str, float]:
+         """模型评估."""
+@@ -48,7 +48,7 @@     return await pipeline.train(data)
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

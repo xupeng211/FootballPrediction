@@ -1,0 +1,94 @@
+--- a/src/core/logging.py+++ b/src/core/logging.py@@ -38,35 +38,35 @@     pass  # 添加pass语句
+     """结构化日志记录器"""
+ 
+-    def __init__(self, name: str, category: str | None = None):
++async def __init__(self, name: str, category: str | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化结构化日志记录器"""
+         self.logger = logging.getLogger(name)
+         self.category = category or LogCategory["SYSTEM"]
+ 
+-    def info(self, message: str, **kwargs):
++async def info(self, message: str, **kwargs):
+         """函数文档字符串."""
+         # 添加pass语句
+         """记录信息日志"""
+         extra = {"category": self.category, **kwargs}
+         self.logger.info(message, extra=extra)
+ 
+-    def error(self, message: str, **kwargs):
++async def error(self, message: str, **kwargs):
+         """函数文档字符串."""
+         # 添加pass语句
+         """记录错误日志"""
+         extra = {"category": self.category, **kwargs}
+         self.logger.error(message, extra=extra)
+ 
+-    def warning(self, message: str, **kwargs):
++async def warning(self, message: str, **kwargs):
+         """函数文档字符串."""
+         # 添加pass语句
+         """记录警告日志"""
+         extra = {"category": self.category, **kwargs}
+         self.logger.warning(message, extra=extra)
+ 
+-    def debug(self, message: str, **kwargs):
++async def debug(self, message: str, **kwargs):
+         """函数文档字符串."""
+         # 添加pass语句
+         """记录调试日志"""
+@@ -83,7 +83,7 @@     _instance = None
+     _configured = False
+ 
+-    def __new__(cls):
++async def __new__(cls):
+         """函数文档字符串."""
+         # 添加pass语句
+         if cls._instance is None:
+@@ -91,19 +91,19 @@         return cls._instance
+ 
+     @classmethod
+-    def configure(
++async def configure(
+         cls, level: int = logging.INFO, enable_json: bool = True, log_dir: str = "logs"
+     ):
+         """配置日志系统."""
+         cls._configured = True
+ 
+     @classmethod
+-    def is_configured(cls) -> bool:
++async def is_configured(cls) -> bool:
+         """检查是否已配置."""
+         return cls._configured
+ 
+ 
+-def log_performance(func_name: str, duration: float, **kwargs):
++async def log_performance(func_name: str, duration: float, **kwargs):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """记录性能日志"""
+@@ -111,7 +111,7 @@     logger.info(f"Performance: {func_name} took {duration:.4f}s", **kwargs)
+ 
+ 
+-def log_async_performance(func_name: str, duration: float, **kwargs):
++async def log_async_performance(func_name: str, duration: float, **kwargs):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """记录异步性能日志"""
+@@ -119,7 +119,7 @@     logger.info(f"Async Performance: {func_name} took {duration:.4f}s", **kwargs)
+ 
+ 
+-def log_audit(action: str, user: str, resource: str, **kwargs):
++async def log_audit(action: str, user: str, resource: str, **kwargs):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """记录审计日志"""
+@@ -127,7 +127,7 @@     logger.info(f"Audit: {action} by {user} on {resource}", **kwargs)
+ 
+ 
+-def get_logger(name: str, level: str | None = "INFO") -> logging.Logger:
++async def get_logger(name: str, level: str | None = "INFO") -> logging.Logger:
+     """获取指定名称的日志器。".
+ 
+     Args:

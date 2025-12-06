@@ -1,0 +1,34 @@
+--- a/src/stubs/mocks/feast.py+++ b/src/stubs/mocks/feast.py@@ -6,9 +6,9 @@ class Feast:
+     """简化的feast类."""
+ 
+-    def __init__(self, **kwargs):
++async def __init__(self, **kwargs):
+         """初始化."""
+-        self.id = kwargs.get("id")
++        self.id = kwargs.await get("id")
+         self.created_at = datetime.utcnow()
+         self.updated_at = datetime.utcnow()
+ 
+@@ -17,7 +17,7 @@             if key not in ["id", "created_at", "updated_at"]:
+                 setattr(self, key, value)
+ 
+-    def process(self, data: Any = None) -> dict[str, Any]:
++async def process(self, data: Any = None) -> dict[str, Any]:
+         """处理数据."""
+         return {
+             "status": "processed",
+@@ -25,13 +25,13 @@             "data": data,
+         }
+ 
+-    def validate(self) -> bool:
++async def validate(self) -> bool:
+         """验证数据."""
+         return self.id is not None
+ 
+ 
+ # 模块级函数
+-def helper_function(data: Any) -> str:
++async def helper_function(data: Any) -> str:
+     """辅助函数."""
+     return f"processed_{data}"
+ 

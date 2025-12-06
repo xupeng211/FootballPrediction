@@ -1,0 +1,28 @@
+--- a/src/utils/formatters.py+++ b/src/utils/formatters.py@@ -6,17 +6,17 @@ from typing import Any
+ 
+ 
+-def format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
++async def format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+     """Format datetime to string."""
+     return dt.strftime(format_str)
+ 
+ 
+-def format_json(data: Any, indent: int | None = None) -> str:
++async def format_json(data: Any, indent: int | None = None) -> str:
+     """Format data as JSON string."""
+     return json.dumps(data, indent=indent, ensure_ascii=False)
+ 
+ 
+-def format_currency(amount: float, currency: str = "USD") -> str:
++async def format_currency(amount: float, currency: str = "USD") -> str:
+     """Format currency amount with proper rounding."""
+     # 使用Decimal进行精确的四舍五入
+     decimal_amount = Decimal(str(amount))
+@@ -24,7 +24,7 @@     return f"{float(rounded_amount):.2f} {currency}"
+ 
+ 
+-def format_percentage(value: float, decimals: int = 2) -> str:
++async def format_percentage(value: float, decimals: int = 2) -> str:
+     """Format as percentage with proper rounding."""
+     # 使用Decimal进行精确的四舍五入
+     decimal_value = Decimal(str(value))

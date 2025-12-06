@@ -1,0 +1,18 @@
+--- a/src/data_science/extract_real_scores.py+++ b/src/data_science/extract_real_scores.py@@ -18,7 +18,7 @@ )
+ 
+ 
+-def extract_real_scores():
++async def extract_real_scores():
+     """从stats字段中提取真实比分"""
+     try:
+         conn = psycopg2.connect(DATABASE_URL)
+@@ -59,8 +59,8 @@                     if "general" in stats_data:
+                         general = stats_data["general"]
+                         if "homeTeam" in general and "awayTeam" in general:
+-                            home_score = general["homeTeam"].get("score")
+-                            away_score = general["awayTeam"].get("score")
++                            home_score = general["homeTeam"].await get("score")
++                            away_score = general["awayTeam"].await get("score")
+                             if home_score is not None and away_score is not None:
+                                 real_score = f"{home_score}:{away_score}"
+ 

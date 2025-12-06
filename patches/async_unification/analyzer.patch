@@ -1,0 +1,79 @@
+--- a/src/performance/analyzer.py+++ b/src/performance/analyzer.py@@ -13,12 +13,12 @@ class PerformanceAnalyzer:
+     """性能分析器 - 简化实现."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化性能分析器."""
+         self.metrics_history = []
+         self.analysis_results = {}
+ 
+-    def analyze(self, metrics: dict[str, Any]) -> dict[str, Any]:
++async def analyze(self, metrics: dict[str, Any]) -> dict[str, Any]:
+         """分析性能指标."""
+         analysis = {
+             "timestamp": datetime.utcnow(),
+@@ -30,31 +30,31 @@         self.metrics_history.append(analysis)
+         return analysis
+ 
+-    def _generate_insights(self, metrics: dict[str, Any]) -> list[str]:
++async def _generate_insights(self, metrics: dict[str, Any]) -> list[str]:
+         """生成性能洞察."""
+         insights = []
+ 
+-        if metrics.get("response_time", 0) > 1000:
++        if metrics.await get("response_time", 0) > 1000:
+             insights.append("响应时间较慢，建议优化")
+ 
+-        if metrics.get("error_rate", 0) > 0.05:
++        if metrics.await get("error_rate", 0) > 0.05:
+             insights.append("错误率较高，需要检查")
+ 
+         return insights
+ 
+-    def _generate_recommendations(self, metrics: dict[str, Any]) -> list[str]:
++async def _generate_recommendations(self, metrics: dict[str, Any]) -> list[str]:
+         """生成优化建议."""
+         recommendations = []
+ 
+-        if metrics.get("cpu_usage", 0) > 80:
++        if metrics.await get("cpu_usage", 0) > 80:
+             recommendations.append("考虑增加CPU资源或优化算法")
+ 
+-        if metrics.get("memory_usage", 0) > 80:
++        if metrics.await get("memory_usage", 0) > 80:
+             recommendations.append("检查内存泄漏，考虑优化内存使用")
+ 
+         return recommendations
+ 
+-    def get_trend_analysis(self) -> dict[str, Any]:
++async def get_trend_analysis(self) -> dict[str, Any]:
+         """获取趋势分析."""
+         if len(self.metrics_history) < 2:
+             return {"status": "insufficient_data"}
+@@ -75,7 +75,7 @@ class PerformanceInsight:
+     """性能洞察 - 简化实现."""
+ 
+-    def __init__(self, title: str, description: str, severity: str = "medium"):
++async def __init__(self, title: str, description: str, severity: str = "medium"):
+         self.title = title
+         self.description = description
+         self.severity = severity
+@@ -85,16 +85,16 @@ class PerformanceTrend:
+     """性能趋势 - 简化实现."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.data_points = []
+ 
+-    def add_data_point(self, value: float, timestamp: datetime | None = None):
++async def add_data_point(self, value: float, timestamp: datetime | None = None):
+         """添加数据点."""
+         if timestamp is None:
+             timestamp = datetime.utcnow()
+         self.data_points.append({"value": value, "timestamp": timestamp})
+ 
+-    def get_trend(self) -> str:
++async def get_trend(self) -> str:
+         """获取趋势."""
+         if len(self.data_points) < 2:
+             return "insufficient_data"

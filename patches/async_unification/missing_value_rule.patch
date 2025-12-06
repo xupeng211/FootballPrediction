@@ -1,0 +1,72 @@
+--- a/src/quality/rules/missing_value_rule.py+++ b/src/quality/rules/missing_value_rule.py@@ -35,7 +35,7 @@     主要用于确保核心特征字段的完整性和数据质量。
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         critical_fields: list[str] = None,
+         optional_fields: list[str] = None,
+@@ -145,7 +145,7 @@ 
+         return errors
+ 
+-    def _check_critical_fields(self, features: dict[str, Any]) -> list[str]:
++async def _check_critical_fields(self, features: dict[str, Any]) -> list[str]:
+         """
+         检查关键字段的缺失值。
+ 
+@@ -168,7 +168,7 @@ 
+         return errors
+ 
+-    def _check_optional_fields(self, features: dict[str, Any]) -> list[str]:
++async def _check_optional_fields(self, features: dict[str, Any]) -> list[str]:
+         """
+         检查可选字段的缺失值。
+ 
+@@ -194,7 +194,7 @@ 
+         return warnings
+ 
+-    def _is_missing_value(self, value: Any) -> bool:
++async def _is_missing_value(self, value: Any) -> bool:
+         """
+         判断值是否为缺失值。
+ 
+@@ -227,7 +227,7 @@ 
+         return False
+ 
+-    def _format_value(self, value: Any) -> str:
++async def _format_value(self, value: Any) -> str:
+         """
+         格式化值用于显示。
+ 
+@@ -244,7 +244,7 @@         else:
+             return str(value)
+ 
+-    def get_missing_field_summary(self, features: dict[str, Any]) -> dict[str, Any]:
++async def get_missing_field_summary(self, features: dict[str, Any]) -> dict[str, Any]:
+         """
+         获取缺失字段的详细摘要。
+ 
+@@ -297,7 +297,7 @@ 
+         return summary
+ 
+-    def configure_critical_fields(self, fields: list[str]) -> None:
++async def configure_critical_fields(self, fields: list[str]) -> None:
+         """
+         配置关键字段列表。
+ 
+@@ -307,7 +307,7 @@         self.critical_fields = fields
+         logger.info(f"关键字段已更新为: {fields}")
+ 
+-    def configure_optional_fields(self, fields: list[str]) -> None:
++async def configure_optional_fields(self, fields: list[str]) -> None:
+         """
+         配置可选字段列表。
+ 
+@@ -317,7 +317,7 @@         self.optional_fields = fields
+         logger.info(f"可选字段已更新为: {fields}")
+ 
+-    def configure_missing_indicators(self, indicators: list[str]) -> None:
++async def configure_missing_indicators(self, indicators: list[str]) -> None:
+         """
+         配置缺失值标记列表。
+ 

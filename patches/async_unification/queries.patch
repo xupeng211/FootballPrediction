@@ -1,0 +1,76 @@
+--- a/src/cqrs/queries.py+++ b/src/cqrs/queries.py@@ -14,7 +14,7 @@ class GetPredictionByIdQuery(ValidatableQuery):
+     """根据ID获取预测查询."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         metadata: dict[str, Any] | None = None,
+@@ -39,10 +39,10 @@ class GetUserByIdQuery(ValidatableQuery):
+     """根据ID获取用户查询."""
+ 
+-    def __init__(self, user_id: int):
++async def __init__(self, user_id: int):
+         self.user_id = user_id
+ 
+-    def validate(self) -> ValidationResult:
++async def validate(self) -> ValidationResult:
+         """验证查询参数."""
+         errors = []
+ 
+@@ -59,7 +59,7 @@ class GetPredictionsByUserQuery(ValidatableQuery):
+     """获取用户的所有预测查询."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         user_id: int,
+         limit: int | None = None,
+@@ -121,7 +121,7 @@ class GetMatchPredictionsQuery(ValidatableQuery):
+     """获取比赛的所有预测查询."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         match_id: int,
+         include_user_details: bool = False,
+@@ -168,7 +168,7 @@ class GetUserStatsQuery(ValidatableQuery):
+     """获取用户统计查询."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         user_id: int,
+         include_predictions: bool = False,
+@@ -215,7 +215,7 @@ class GetMatchByIdQuery(ValidatableQuery):
+     """根据ID获取比赛查询."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         match_id: int,
+         include_predictions: bool = False,
+@@ -262,7 +262,7 @@ class GetUpcomingMatchesQuery(ValidatableQuery):
+     """获取即将到来的比赛查询."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         days_ahead: int = 7,
+         competition: str | None = None,
+@@ -319,7 +319,7 @@ class GetPredictionAnalyticsQuery(ValidatableQuery):
+     """获取预测分析查询."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         start_date: date | None = None,
+         end_date: date | None = None,
+@@ -373,7 +373,7 @@ class GetLeaderboardQuery(ValidatableQuery):
+     """获取排行榜查询."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         period: str = "all_time",  # all_time, monthly, weekly
+         limit: int | None = 10,

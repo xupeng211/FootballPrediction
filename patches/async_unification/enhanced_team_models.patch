@@ -1,0 +1,245 @@
+--- a/src/api/data/models/enhanced_team_models.py+++ b/src/api/data/models/enhanced_team_models.py@@ -31,7 +31,7 @@ 
+     @field_validator('country')
+     @classmethod
+-    def clean_country(cls, v: Optional[str]) -> Optional[str]:
++async def clean_country(cls, v: Optional[str]) -> Optional[str]:
+         """清理国家名称."""
+         if v is None:
+             return v
+@@ -41,7 +41,7 @@ 
+     @field_validator('search')
+     @classmethod
+-    def clean_search(cls, v: Optional[str]) -> Optional[str]:
++async def clean_search(cls, v: Optional[str]) -> Optional[str]:
+         """清理搜索关键词."""
+         if v is None:
+             return v
+@@ -50,10 +50,10 @@         return cleaned or None
+ 
+     @model_validator(mode='after')
+-    def validate_year_range(self, values):
++async def validate_year_range(self, values):
+         """验证年份范围."""
+-        min_year = values.get('founded_year_min')
+-        max_year = values.get('founded_year_max')
++        min_year = values.await get('founded_year_min')
++        max_year = values.await get('founded_year_max')
+ 
+         if min_year is not None and max_year is not None and min_year > max_year:
+             raise ValueError("最小成立年份不能大于最大成立年份")
+@@ -76,7 +76,7 @@ 
+     @field_validator('name')
+     @classmethod
+-    def clean_team_name(cls, v: str) -> str:
++async def clean_team_name(cls, v: str) -> str:
+         """清理球队名称."""
+         if not v or not v.strip():
+             raise ValueError("球队名称不能为空")
+@@ -89,7 +89,7 @@ 
+     @field_validator('short_name')
+     @classmethod
+-    def clean_short_name(cls, v: Optional[str]) -> Optional[str]:
++async def clean_short_name(cls, v: Optional[str]) -> Optional[str]:
+         """清理简称."""
+         if v is None:
+             return v
+@@ -99,7 +99,7 @@ 
+     @field_validator('country')
+     @classmethod
+-    def clean_country(cls, v: str) -> str:
++async def clean_country(cls, v: str) -> str:
+         """清理国家名称."""
+         cleaned = v.strip().title()
+         if not cleaned:
+@@ -113,7 +113,7 @@ 
+     @field_validator('stadium')
+     @classmethod
+-    def clean_stadium(cls, v: Optional[str]) -> Optional[str]:
++async def clean_stadium(cls, v: Optional[str]) -> Optional[str]:
+         """清理球场名称."""
+         if v is None:
+             return v
+@@ -123,7 +123,7 @@ 
+     @field_validator('logo_url')
+     @classmethod
+-    def validate_logo_url(cls, v: Optional[str]) -> Optional[str]:
++async def validate_logo_url(cls, v: Optional[str]) -> Optional[str]:
+         """验证队徽URL."""
+         if v is None:
+             return v
+@@ -145,7 +145,7 @@ 
+     @field_validator('website')
+     @classmethod
+-    def validate_website(cls, v: Optional[str]) -> Optional[str]:
++async def validate_website(cls, v: Optional[str]) -> Optional[str]:
+         """验证官方网站."""
+         if v is None:
+             return v
+@@ -161,7 +161,7 @@ 
+     @field_validator('external_id')
+     @classmethod
+-    def clean_external_id(cls, v: Optional[str]) -> Optional[str]:
++async def clean_external_id(cls, v: Optional[str]) -> Optional[str]:
+         """清理外部系统ID."""
+         if v is None:
+             return v
+@@ -170,7 +170,7 @@         return cleaned or None
+ 
+     @model_validator(mode='after')
+-    def validate_team_consistency(self):
++async def validate_team_consistency(self):
+         """验证球队一致性."""
+         name = self.name
+         short_name = self.short_name
+@@ -213,7 +213,7 @@ 
+     @field_validator('name')
+     @classmethod
+-    def clean_team_name(cls, v: Optional[str]) -> Optional[str]:
++async def clean_team_name(cls, v: Optional[str]) -> Optional[str]:
+         """清理球队名称."""
+         if v is None:
+             return v
+@@ -229,7 +229,7 @@ 
+     @field_validator('short_name')
+     @classmethod
+-    def clean_short_name(cls, v: Optional[str]) -> Optional[str]:
++async def clean_short_name(cls, v: Optional[str]) -> Optional[str]:
+         """清理简称."""
+         if v is None:
+             return v
+@@ -239,7 +239,7 @@ 
+     @field_validator('country')
+     @classmethod
+-    def clean_country(cls, v: Optional[str]) -> Optional[str]:
++async def clean_country(cls, v: Optional[str]) -> Optional[str]:
+         """清理国家名称."""
+         if v is None:
+             return v
+@@ -255,7 +255,7 @@ 
+     @field_validator('stadium')
+     @classmethod
+-    def clean_stadium(cls, v: Optional[str]) -> Optional[str]:
++async def clean_stadium(cls, v: Optional[str]) -> Optional[str]:
+         """清理球场名称."""
+         if v is None:
+             return v
+@@ -264,7 +264,7 @@ 
+     @field_validator('logo_url')
+     @classmethod
+-    def validate_logo_url(cls, v: Optional[str]) -> Optional[str]:
++async def validate_logo_url(cls, v: Optional[str]) -> Optional[str]:
+         """验证队徽URL."""
+         if v is None:
+             return v
+@@ -284,7 +284,7 @@ 
+     @field_validator('website')
+     @classmethod
+-    def validate_website(cls, v: Optional[str]) -> Optional[str]:
++async def validate_website(cls, v: Optional[str]) -> Optional[str]:
+         """验证官方网站."""
+         if v is None:
+             return v
+@@ -299,7 +299,7 @@         return cleaned
+ 
+     @model_validator(mode='after')
+-    def validate_update_consistency(self):
++async def validate_update_consistency(self):
+         """验证更新一致性."""
+         name = self.name
+         short_name = self.short_name
+@@ -329,7 +329,7 @@     updated_at: Optional[datetime] = None
+ 
+     @model_validator(mode='after')
+-    def validate_response_data(self):
++async def validate_response_data(self):
+         """验证响应数据一致性."""
+         name = self.name
+         short_name = self.short_name
+@@ -341,23 +341,23 @@ 
+         return self
+ 
+-    def get_display_name(self) -> str:
++async def get_display_name(self) -> str:
+         """获取显示名称（优先使用简称）."""
+         return self.short_name or self.name
+ 
+-    def get_establishment_age(self) -> Optional[int]:
++async def get_establishment_age(self) -> Optional[int]:
+         """获取球队年龄."""
+         if self.founded_year:
+             current_year = datetime.now().year
+             return current_year - self.founded_year
+         return None
+ 
+-    def is_veteran_team(self, min_age: int = 50) -> bool:
++async def is_veteran_team(self, min_age: int = 50) -> bool:
+         """判断是否为老牌球队."""
+         age = self.get_establishment_age()
+         return age is not None and age >= min_age
+ 
+-    def has_complete_profile(self) -> bool:
++async def has_complete_profile(self) -> bool:
+         """判断是否资料完整."""
+         required_fields = ['stadium', 'logo_url', 'website']
+         optional_fields = ['short_name', 'founded_year']
+@@ -372,7 +372,7 @@ class TeamDataQualityReport:
+     """球队数据质量报告."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.total_records = 0
+         self.valid_records = 0
+         self.invalid_records = 0
+@@ -386,7 +386,7 @@             'minimal_profile': 0
+         }
+ 
+-    def add_record_result(self, validation_result: ValidationResult, country: str = None):
++async def add_record_result(self, validation_result: ValidationResult, country: str = None):
+         """添加验证结果."""
+         self.total_records += 1
+ 
+@@ -405,11 +405,11 @@                 self.country_stats[country] = 0
+             self.country_stats[country] += 1
+ 
+-    def update_completeness_stats(self, team_data: dict):
++async def update_completeness_stats(self, team_data: dict):
+         """更新完整性统计."""
+-        has_required = all(team_data.get(field) for field in ['stadium', 'logo_url'])
++        has_required = await all(team_data.get(field) for field in ['stadium', 'logo_url'])
+         has_optional = sum(1 for field in ['short_name', 'founded_year', 'website']
+-                          if team_data.get(field) is not None)
++                          if team_data.await get(field) is not None)
+ 
+         if has_required and has_optional >= 2:
+             self.completeness_stats['complete_profile'] += 1
+@@ -418,7 +418,7 @@         else:
+             self.completeness_stats['minimal_profile'] += 1
+ 
+-    def get_summary(self) -> dict:
++async def get_summary(self) -> dict:
+         """获取质量报告摘要."""
+         return {
+             'total_records': self.total_records,
+@@ -431,13 +431,13 @@             'data_quality_score': self._calculate_quality_score()
+         }
+ 
+-    def _get_common_errors(self) -> list:
++async def _get_common_errors(self) -> list:
+         """获取常见错误."""
+         from collections import Counter
+         error_counter = Counter(self.errors)
+         return [{'error': error, 'count': count} for error, count in error_counter.most_common(5)]
+ 
+-    def _calculate_quality_score(self) -> float:
++async def _calculate_quality_score(self) -> float:
+         """计算数据质量评分 (0-100)."""
+         if self.total_records == 0:
+             return 100.0
+@@ -458,7 +458,7 @@         total_score = success_score + completeness_score + diversity_score
+         return round(min(total_score, 100.0), 2)
+ 
+-    def is_healthy(self, min_success_rate: float = 0.95, min_quality_score: float = 70.0) -> bool:
++async def is_healthy(self, min_success_rate: float = 0.95, min_quality_score: float = 70.0) -> bool:
+         """判断数据是否健康."""
+         success_rate = self.valid_records / max(self.total_records, 1)
+         quality_score = self._calculate_quality_score()

@@ -1,0 +1,75 @@
+--- a/src/data_science/extract_features.py+++ b/src/data_science/extract_features.py@@ -37,11 +37,11 @@ class FootballDataExtractor:
+     """足球数据提取器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.conn = None
+         self.data = None
+ 
+-    def connect_database(self):
++async def connect_database(self):
+         """连接数据库"""
+         try:
+             self.conn = psycopg2.connect(DATABASE_URL)
+@@ -50,7 +50,7 @@             logger.error(f"❌ 数据库连接失败: {e}")
+             raise
+ 
+-    def extract_match_data(self) -> pd.DataFrame:
++async def extract_match_data(self) -> pd.DataFrame:
+         """提取比赛数据"""
+         try:
+             query = """
+@@ -88,7 +88,7 @@             logger.error(f"❌ 数据提取失败: {e}")
+             raise
+ 
+-    def parse_json_fields(self) -> pd.DataFrame:
++async def parse_json_fields(self) -> pd.DataFrame:
+         """解析JSONB字段并拉平特征"""
+         try:
+             # 解析stats字段
+@@ -229,13 +229,13 @@             logger.error(f"❌ 特征解析失败: {e}")
+             raise
+ 
+-    def create_target_variable(self) -> pd.DataFrame:
++async def create_target_variable(self) -> pd.DataFrame:
+         """创建目标变量"""
+         try:
+             df = self.data.copy()
+ 
+             # 基于比分创建结果标签
+-            def determine_result(row):
++async def determine_result(row):
+                 if row["home_score"] > row["away_score"]:
+                     return "Home Win"
+                 elif row["home_score"] < row["away_score"]:
+@@ -252,7 +252,7 @@             logger.error(f"❌ 目标变量创建失败: {e}")
+             raise
+ 
+-    def generate_eda_report(self, df: pd.DataFrame) -> dict:
++async def generate_eda_report(self, df: pd.DataFrame) -> dict:
+         """生成探索性数据分析报告"""
+         try:
+             report = {}
+@@ -313,13 +313,13 @@             logger.error(f"❌ EDA报告生成失败: {e}")
+             raise
+ 
+-    def close_connection(self):
++async def close_connection(self):
+         """关闭数据库连接"""
+         if self.conn:
+             self.conn.close()
+             logger.info("✅ 数据库连接已关闭")
+ 
+-    def run_extraction(self):
++async def run_extraction(self):
+         """执行完整的数据提取流程"""
+         try:
+             logger.info("🚀 开始足球数据特征提取流程")
+@@ -359,7 +359,7 @@             raise
+ 
+ 
+-def main():
++async def main():
+     """主函数"""
+     extractor = FootballDataExtractor()
+ 

@@ -1,0 +1,13 @@
+--- a/src/optimizations/database_optimizations.py+++ b/src/optimizations/database_optimizations.py@@ -2,11 +2,11 @@ 
+ 
+ class DatabaseOptimizations:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

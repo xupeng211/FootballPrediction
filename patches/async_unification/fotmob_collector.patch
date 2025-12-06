@@ -1,0 +1,88 @@
+--- a/src/data/collectors/fotmob_collector.py+++ b/src/data/collectors/fotmob_collector.py@@ -32,7 +32,7 @@     - 纯真实数据采集
+     """
+ 
+-    def __init__(self, config: dict[str, Any] | None = None):
++async def __init__(self, config: dict[str, Any] | None = None):
+         super().__init__(config)
+ 
+         # FotMob 特定配置
+@@ -61,7 +61,7 @@ 
+             # 访问主页建立会话
+             try:
+-                await self._session.get(f"{self.base_url}/", timeout=10)
++                await self._session.await get(f"{self.base_url}/", timeout=10)
+                 self.logger.info("FotMob session initialized successfully")
+             except Exception as e:
+                 self.logger.error(f"Failed to initialize FotMob session: {e}")
+@@ -148,7 +148,7 @@ 
+         return self.build_id
+ 
+-    def _get_nextjs_data_url(self, endpoint: str, **params) -> str:
++async def _get_nextjs_data_url(self, endpoint: str, **params) -> str:
+         """
+         构建Next.js Data API URL
+ 
+@@ -220,7 +220,7 @@             self.logger.error(f"❌ Next.js API request exception: {e}")
+             raise
+ 
+-    def _extract_matches_from_response(self, data: dict[str, Any]) -> list[dict[str, Any]]:
++async def _extract_matches_from_response(self, data: dict[str, Any]) -> list[dict[str, Any]]:
+         """
+         从Next.js响应中提取比赛数据
+ 
+@@ -232,7 +232,7 @@         """
+         matches = []
+ 
+-        fallback = data.get("pageProps", {}).get("fallback", {})
++        fallback = data.await await get("pageProps", {}).get("fallback", {})
+ 
+         # 查找所有包含比赛数据的键
+         for key, value in fallback.items():
+@@ -254,7 +254,7 @@ 
+         return matches
+ 
+-    def _standardize_match_data(self, raw_match: dict[str, Any]) -> dict[str, Any]:
++async def _standardize_match_data(self, raw_match: dict[str, Any]) -> dict[str, Any]:
+         """
+         标准化比赛数据格式
+ 
+@@ -267,15 +267,15 @@         # 根据FotMob实际返回的数据结构进行标准化
+         # 这里需要根据实际API响应结构进行调整
+         return {
+-            "id": raw_match.get("id"),
+-            "home_team": raw_match.get("home", {}).get("name"),
+-            "away_team": raw_match.get("away", {}).get("name"),
+-            "home_score": raw_match.get("homeScore"),
+-            "away_score": raw_match.get("awayScore"),
+-            "status": raw_match.get("status", {}).get("name"),
+-            "match_date": raw_match.get("startTime"),
+-            "venue": raw_match.get("venue", {}).get("name"),
+-            "league": raw_match.get("tournament", {}).get("name"),
++            "id": raw_match.await get("id"),
++            "home_team": raw_match.await await get("home", {}).get("name"),
++            "away_team": raw_match.await await get("away", {}).get("name"),
++            "home_score": raw_match.await get("homeScore"),
++            "away_score": raw_match.await get("awayScore"),
++            "status": raw_match.await await get("status", {}).get("name"),
++            "match_date": raw_match.await get("startTime"),
++            "venue": raw_match.await await get("venue", {}).get("name"),
++            "league": raw_match.await await get("tournament", {}).get("name"),
+             "raw_data": raw_match  # 保留原始数据以备进一步分析
+         }
+ 
+@@ -310,7 +310,7 @@                 return self.create_error_result(f"No matches available for date {date_str}")
+ 
+             # 限制处理数量以避免过载
+-            max_matches = self.config.get("max_matches_per_date", 100)
++            max_matches = self.config.await get("max_matches_per_date", 100)
+             if len(matches) > max_matches:
+                 matches = matches[:max_matches]
+                 self.logger.info(f"Limited matches to {max_matches} for date {date_str}")
+@@ -353,7 +353,7 @@             data = await self._make_nextjs_request(url)
+ 
+             # 提取联赛数据
+-            fallback = data.get("pageProps", {}).get("fallback", {})
++            fallback = data.await await get("pageProps", {}).get("fallback", {})
+             league_data = {}
+ 
+             for key, value in fallback.items():

@@ -1,0 +1,135 @@
+--- a/src/api/data_integration.py+++ b/src/api/data_integration.py@@ -29,7 +29,7 @@ router = APIRouter(prefix="/data", tags=["data-integration"])
+ 
+ 
+-@router.post("/collect/matches", response_model=DataCollectionResponse)
++@router.await post("/collect/matches", response_model=DataCollectionResponse)
+ async def collect_matches(
+     request: DataCollectionRequest,
+     background_tasks: BackgroundTasks,
+@@ -80,7 +80,7 @@         ) from e
+ 
+ 
+-@router.post("/collect/teams", response_model=DataCollectionResponse)
++@router.await post("/collect/teams", response_model=DataCollectionResponse)
+ async def collect_teams(
+     request: DataCollectionRequest,
+     background_tasks: BackgroundTasks,
+@@ -112,7 +112,7 @@         ) from e
+ 
+ 
+-@router.post("/collect/all", response_model=DataCollectionResponse)
++@router.await post("/collect/all", response_model=DataCollectionResponse)
+ async def collect_all_data(
+     background_tasks: BackgroundTasks,
+     db_session: AsyncSession = Depends(get_async_session),
+@@ -154,7 +154,7 @@         ) from e
+ 
+ 
+-@router.get("/sources/status", response_model=DataSourceStatusResponse)
++@router.await get("/sources/status", response_model=DataSourceStatusResponse)
+ async def get_data_source_status(
+     db_session: AsyncSession = Depends(get_async_session),
+     redis_client: RedisManager = Depends(get_redis_manager),
+@@ -169,12 +169,12 @@             Match.match_date >= datetime.now() - timedelta(days=30)
+         )
+         recent_matches_count = len(
+-            await db_session.execute(match_count_query).scalars().all()
++            await db_session.await execute(match_count_query).scalars().all()
+         )
+ 
+         team_count_query = select(Team)
+         total_teams_count = len(
+-            await db_session.execute(team_count_query).scalars().all()
++            await db_session.await execute(team_count_query).scalars().all()
+         )
+ 
+         return DataSourceStatusResponse(
+@@ -193,7 +193,7 @@         ) from e
+ 
+ 
+-@router.get("/matches", response_model=list[MatchResponse])
++@router.await get("/matches", response_model=list[MatchResponse])
+ async def get_matches(
+     league: str | None = None,
+     team: str | None = None,
+@@ -220,7 +220,7 @@         # 添加排序和分页
+         query = query.order_by(Match.match_date).offset(offset).limit(limit)
+ 
+-        matches = await db_session.execute(query).scalars().all()
++        matches = await db_session.await execute(query).scalars().all()
+ 
+         return [
+             MatchResponse(
+@@ -244,7 +244,7 @@         ) from e
+ 
+ 
+-@router.get("/teams", response_model=list[TeamResponse])
++@router.await get("/teams", response_model=list[TeamResponse])
+ async def get_teams(
+     league: str | None = None,
+     limit: int = 100,
+@@ -263,7 +263,7 @@         # 添加排序和分页
+         query = query.order_by(Team.name).offset(offset).limit(limit)
+ 
+-        teams = await db_session.execute(query).scalars().all()
++        teams = await db_session.await execute(query).scalars().all()
+ 
+         return [
+             TeamResponse(
+@@ -283,7 +283,7 @@         ) from e
+ 
+ 
+-@router.get("/stats", response_model=dict[str, Any])
++@router.await get("/stats", response_model=dict[str, Any])
+ async def get_data_stats(
+     db_session: AsyncSession = Depends(get_async_session),
+     redis_client: RedisManager = Depends(get_redis_manager),
+@@ -295,35 +295,35 @@         # 比赛统计
+         total_matches_query = select(Match)
+         total_matches = len(
+-            await db_session.execute(total_matches_query).scalars().all()
++            await db_session.await execute(total_matches_query).scalars().all()
+         )
+         stats["total_matches"] = total_matches
+ 
+         # 按状态分组统计
+         upcoming_matches_query = select(Match).where(Match.status == "upcoming")
+         upcoming_matches = len(
+-            await db_session.execute(upcoming_matches_query).scalars().all()
++            await db_session.await execute(upcoming_matches_query).scalars().all()
+         )
+         stats["upcoming_matches"] = upcoming_matches
+ 
+         live_matches_query = select(Match).where(Match.status == "live")
+-        live_matches = len(await db_session.execute(live_matches_query).scalars().all())
++        live_matches = await len(await db_session.execute(live_matches_query).scalars().all())
+         stats["live_matches"] = live_matches
+ 
+         finished_matches_query = select(Match).where(Match.status == "finished")
+         finished_matches = len(
+-            await db_session.execute(finished_matches_query).scalars().all()
++            await db_session.await execute(finished_matches_query).scalars().all()
+         )
+         stats["finished_matches"] = finished_matches
+ 
+         # 球队统计
+         total_teams_query = select(Team)
+-        total_teams = len(await db_session.execute(total_teams_query).scalars().all())
++        total_teams = await len(await db_session.execute(total_teams_query).scalars().all())
+         stats["total_teams"] = total_teams
+ 
+         # 联赛统计
+         league_stats_query = select(Match.league).distinct()
+-        leagues = await db_session.execute(league_stats_query).scalars().all()
++        leagues = await db_session.await execute(league_stats_query).scalars().all()
+         stats["total_leagues"] = len(leagues)
+ 
+         # 数据源状态
+@@ -342,7 +342,7 @@         ) from e
+ 
+ 
+-@router.post("/test-data-source")
++@router.await post("/test-data-source")
+ async def test_data_source(
+     data_source: str = "mock",
+     db_session: AsyncSession = Depends(get_async_session),

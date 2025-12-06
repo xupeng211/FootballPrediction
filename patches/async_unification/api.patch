@@ -1,0 +1,52 @@
+--- a/src/performance/api.py+++ b/src/performance/api.py@@ -64,7 +64,7 @@     include_database: bool = Field(default=True, description="是否包含数据库分析")
+ 
+ 
+-@router.get("/metrics")
++@router.await get("/metrics")
+ async def get_performance_metrics():
+     """获取实时性能指标."""
+     try:
+@@ -113,7 +113,7 @@         ) from e
+ 
+ 
+-@router.post("/profiling/start")
++@router.await post("/profiling/start")
+ async def start_profiling(config: PerformanceRequest):
+     """启动性能分析."""
+     try:
+@@ -148,7 +148,7 @@         ) from e
+ 
+ 
+-@router.post("/profiling/stop")
++@router.await post("/profiling/stop")
+ async def stop_profiling():
+     """停止性能分析."""
+     try:
+@@ -163,9 +163,9 @@         return {
+             "message": "Performance profiling stopped",
+             "results": {
+-                "function_count": len(results.get("function_profiles", [])),
+-                "memory_peak_mb": results.get("memory_peak", 0) / 1024 / 1024,
+-                "top_slow_functions": results.get("function_profiles", [])[:5],
++                "function_count": await len(results.get("function_profiles", [])),
++                "memory_peak_mb": results.await get("memory_peak", 0) / 1024 / 1024,
++                "top_slow_functions": results.await get("function_profiles", [])[:5],
+             },
+         }
+ 
+@@ -176,7 +176,7 @@         ) from e
+ 
+ 
+-@router.get("/profiling/results")
++@router.await get("/profiling/results")
+ async def get_profiling_results():
+     """获取性能分析结果."""
+     try:
+@@ -221,7 +221,7 @@         ) from e
+ 
+ 
+-@router.get("/report")
++@router.await get("/report")
+ async def get_performance_report(
+     background_tasks: BackgroundTasks,
+     export_format: str = Query(default="json", regex="^(json|html)$"),

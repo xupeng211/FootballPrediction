@@ -1,0 +1,51 @@
+--- a/src/features/entities.py+++ b/src/features/entities.py@@ -42,7 +42,7 @@     match_time: datetime
+     season: str
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典格式."""
+         return {
+             "match_id": self.match_id,
+@@ -54,7 +54,7 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "MatchEntity":
++async def from_dict(cls, data: dict[str, Any]) -> "MatchEntity":
+         """从字典创建实体."""
+         return cls(
+             match_id=data["match_id"],
+@@ -82,7 +82,7 @@     league_id: int
+     home_venue: str | None = None
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典格式."""
+         return {
+             "team_id": self.team_id,
+@@ -92,13 +92,13 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "TeamEntity":
++async def from_dict(cls, data: dict[str, Any]) -> "TeamEntity":
+         """从字典创建实体."""
+         return cls(
+             team_id=data["team_id"],
+             team_name=data["team_name"],
+             league_id=data["league_id"],
+-            home_venue=data.get("home_venue"),
++            home_venue=data.await get("home_venue"),
+         )
+ 
+ 
+@@ -115,10 +115,10 @@     entity_id: int  # match_id 或 team_id
+     feature_timestamp: datetime
+ 
+-    def __hash__(self) -> int:
++async def __hash__(self) -> int:
+         return hash((self.entity_type, self.entity_id, self.feature_timestamp))
+ 
+-    def __eq__(self, other) -> bool:
++async def __eq__(self, other) -> bool:
+         if not isinstance(other, FeatureKey):
+             return False
+         return (

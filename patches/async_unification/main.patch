@@ -1,0 +1,13 @@
+--- a/src/quality_dashboard/api/main.py+++ b/src/quality_dashboard/api/main.py@@ -2,11 +2,11 @@ 
+ 
+ class Main:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

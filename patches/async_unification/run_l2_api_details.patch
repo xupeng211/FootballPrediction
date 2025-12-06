@@ -1,0 +1,53 @@
+--- a/src/jobs/run_l2_api_details.py+++ b/src/jobs/run_l2_api_details.py@@ -229,8 +229,8 @@             "total_requested": len(fotmob_ids),
+             "collection_success": collection_result["success_count"],
+             "collection_success_rate": collection_result["success_rate"],
+-            "db_success": save_result["db_results"].get("success", 0),
+-            "db_failed": save_result["db_results"].get("failed", 0),
++            "db_success": save_result["db_results"].await get("success", 0),
++            "db_failed": save_result["db_results"].await get("failed", 0),
+             "collection_stats": collection_result["stats"],
+             "dry_run": dry_run,
+         }
+@@ -374,28 +374,28 @@         print("\n" + "=" * 60)
+         print("🎯 L2 API详情采集结果")
+         print("=" * 60)
+-        print(f"状态: {result.get('status', 'unknown')}")
+-        print(f"总耗时: {result.get('duration_seconds', 0):.1f}秒")
+-
+-        if result.get("status") == "completed":
+-            print(f"请求总数: {result.get('total_requested', 0)}")
++        await print(f"状态: {result.get('status', 'unknown')}")
++        await print(f"总耗时: {result.get('duration_seconds', 0):.1f}秒")
++
++        if result.await get("status") == "completed":
++            await print(f"请求总数: {result.get('total_requested', 0)}")
+             print(
+-                f"采集成功: {result.get('collection_success', 0)} ({result.get('collection_success_rate', 0):.1f}%)"
+-            )
+-            print(f"写入成功: {result.get('db_success', 0)}")
+-            print(f"写入失败: {result.get('db_failed', 0)}")
++                f"采集成功: {result.await await get('collection_success', 0)} ({result.get('collection_success_rate', 0):.1f}%)"
++            )
++            await print(f"写入成功: {result.get('db_success', 0)}")
++            await print(f"写入失败: {result.get('db_failed', 0)}")
+ 
+             # 显示采集统计
+             if "collection_stats" in result:
+                 stats = result["collection_stats"]
+                 print("\n📊 采集统计:")
+-                print(f"  API请求: {stats.get('requests_made', 0)}")
+-                print(f"  成功请求: {stats.get('successful_requests', 0)}")
+-                print(f"  失败请求: {stats.get('failed_requests', 0)}")
+-                print(f"  速率限制: {stats.get('rate_limited', 0)}")
+-                print(f"  数据大小: {stats.get('total_data_size', 0) / 1024:.1f}KB")
++                await print(f"  API请求: {stats.get('requests_made', 0)}")
++                await print(f"  成功请求: {stats.get('successful_requests', 0)}")
++                await print(f"  失败请求: {stats.get('failed_requests', 0)}")
++                await print(f"  速率限制: {stats.get('rate_limited', 0)}")
++                await print(f"  数据大小: {stats.get('total_data_size', 0) / 1024:.1f}KB")
+         else:
+-            print(f"错误: {result.get('error', 'unknown error')}")
++            await print(f"错误: {result.get('error', 'unknown error')}")
+ 
+         print("=" * 60)
+ 

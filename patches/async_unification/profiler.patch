@@ -1,0 +1,313 @@
+--- a/src/performance/profiler.py+++ b/src/performance/profiler.py@@ -32,13 +32,13 @@ class APIEndpointProfiler:
+     """API端点性能分析器."""
+ 
+-    def __init__(self, max_history: int = 1000):
++async def __init__(self, max_history: int = 1000):
+         self.max_history = max_history
+         self.stats: dict[str, ProfileStats] = defaultdict(ProfileStats)
+         self.lock = threading.RLock()
+         self.enabled = True
+ 
+-    def record_call(
++async def record_call(
+         self,
+         endpoint: str,
+         duration: float,
+@@ -63,7 +63,7 @@                 stats.error_count += 1
+                 stats.last_error = error
+ 
+-    def get_stats(
++async def get_stats(
+         self, endpoint: str | None = None
+     ) -> ProfileStats | dict[str, ProfileStats]:
+         """获取性能统计."""
+@@ -72,7 +72,7 @@                 return self.stats[endpoint]
+             return dict(self.stats)
+ 
+-    def get_top_slowest(self, limit: int = 10) -> list[tuple]:
++async def get_top_slowest(self, limit: int = 10) -> list[tuple]:
+         """获取最慢的端点."""
+         with self.lock:
+             return sorted(
+@@ -85,7 +85,7 @@                 reverse=True,
+             )[:limit]
+ 
+-    def get_recent_performance(self, endpoint: str, minutes: int = 5) -> dict[str, Any]:
++async def get_recent_performance(self, endpoint: str, minutes: int = 5) -> dict[str, Any]:
+         """获取最近的性能数据."""
+         _cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+ 
+@@ -107,7 +107,7 @@                 "max_time": max(recent_times),
+             }
+ 
+-    def clear_stats(self, endpoint: str | None = None):
++async def clear_stats(self, endpoint: str | None = None):
+         """清空统计数据."""
+         with self.lock:
+             if endpoint:
+@@ -116,18 +116,18 @@             else:
+                 self.stats.clear()
+ 
+-    def enable(self):
++async def enable(self):
+         """启用性能分析."""
+         self.enabled = True
+ 
+-    def disable(self):
++async def disable(self):
+         """禁用性能分析."""
+         self.enabled = False
+ 
+-    def profile_endpoint(self, endpoint_name: str):
++async def profile_endpoint(self, endpoint_name: str):
+         """装饰器：分析API端点性能."""
+ 
+-        def decorator(func: Callable):
++async def decorator(func: Callable):
+             if asyncio.iscoroutinefunction(func):
+ 
+                 @functools.wraps(func)
+@@ -152,7 +152,7 @@             else:
+ 
+                 @functools.wraps(func)
+-                def sync_wrapper(*args, **kwargs):
++async def sync_wrapper(*args, **kwargs):
+                     if not self.enabled:
+                         return func(*args, **kwargs)
+ 
+@@ -173,7 +173,7 @@ 
+         return decorator
+ 
+-    def record_endpoint_request(
++async def record_endpoint_request(
+         self,
+         endpoint: str,
+         method: str,
+@@ -219,7 +219,7 @@             method_stats["request_size_total"] += request_size
+             method_stats["response_size_total"] += response_size
+ 
+-    def get_endpoint_stats(self, endpoint: str) -> dict[str, Any]:
++async def get_endpoint_stats(self, endpoint: str) -> dict[str, Any]:
+         """获取端点性能统计.
+ 
+         Args:
+@@ -229,7 +229,7 @@             端点性能统计数据
+         """
+         with self.lock:
+-            stats = self.stats.get(endpoint, ProfileStats())
++            stats = self.stats.await get(endpoint, ProfileStats())
+ 
+             result = {
+                 "call_count": stats.call_count,
+@@ -275,7 +275,7 @@ 
+             return result
+ 
+-    def get_slow_endpoints(self, threshold: float = 0.5) -> list[dict[str, Any]]:
++async def get_slow_endpoints(self, threshold: float = 0.5) -> list[dict[str, Any]]:
+         """获取慢端点列表.
+ 
+         Args:
+@@ -306,7 +306,7 @@         # 按平均响应时间降序排列
+         return sorted(slow_endpoints, key=lambda x: x["avg_time"], reverse=True)
+ 
+-    def get_summary_report(self) -> dict[str, Any]:
++async def get_summary_report(self) -> dict[str, Any]:
+         """获取摘要报告."""
+         with self.lock:
+             total_calls = sum(stats.call_count for stats in self.stats.values())
+@@ -336,7 +336,7 @@ _profiler_lock = threading.Lock()
+ 
+ 
+-def get_profiler() -> APIEndpointProfiler:
++async def get_profiler() -> APIEndpointProfiler:
+     """获取全局性能分析器实例."""
+     global _profiler_instance
+     if _profiler_instance is None:
+@@ -346,7 +346,7 @@     return _profiler_instance
+ 
+ 
+-def profile_api_endpoint(endpoint_name: str):
++async def profile_api_endpoint(endpoint_name: str):
+     """便捷的API端点性能分析装饰器."""
+     return get_profiler().profile_endpoint(endpoint_name)
+ 
+@@ -355,13 +355,13 @@ class DatabaseQueryProfiler:
+     """数据库查询性能分析器."""
+ 
+-    def __init__(self, max_history: int = 1000):
++async def __init__(self, max_history: int = 1000):
+         self.max_history = max_history
+         self.queries: dict[str, list[float]] = defaultdict(list)
+         self.lock = threading.Lock()
+         self.enabled = True
+ 
+-    def record_query(self, query_type: str, duration: float):
++async def record_query(self, query_type: str, duration: float):
+         """记录数据库查询."""
+         if not self.enabled:
+             return
+@@ -372,10 +372,10 @@             if len(self.queries[query_type]) > self.max_history:
+                 self.queries[query_type] = self.queries[query_type][-self.max_history :]
+ 
+-    def get_query_stats(self, query_type: str) -> dict[str, float]:
++async def get_query_stats(self, query_type: str) -> dict[str, float]:
+         """获取查询统计."""
+         with self.lock:
+-            times = self.queries.get(query_type, [])
++            times = self.queries.await get(query_type, [])
+             if not times:
+                 return {
+                     "avg_time": 0.0,
+@@ -393,7 +393,7 @@                 "total_time": sum(times),
+             }
+ 
+-    def get_all_stats(self) -> dict[str, dict[str, float]]:
++async def get_all_stats(self) -> dict[str, dict[str, float]]:
+         """获取所有查询统计."""
+         with self.lock:
+             return {
+@@ -406,12 +406,12 @@ class MemoryProfiler:
+     """内存性能分析器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.samples: list[dict[str, Any]] = []
+         self.lock = threading.Lock()
+         self.enabled = True
+ 
+-    def sample_memory(self):
++async def sample_memory(self):
+         """采样内存使用情况."""
+         if not self.enabled:
+             return
+@@ -443,7 +443,7 @@             # psutil不可用时跳过内存采样
+             pass
+ 
+-    def get_memory_trend(self, minutes: int = 5) -> dict[str, Any]:
++async def get_memory_trend(self, minutes: int = 5) -> dict[str, Any]:
+         """获取内存使用趋势."""
+         cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+ 
+@@ -470,13 +470,13 @@ class PerformanceProfiler:
+     """通用性能分析器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.api_profiler = APIEndpointProfiler()
+         self.db_profiler = DatabaseQueryProfiler()
+         self.memory_profiler = MemoryProfiler()
+         self.system_profiler = SystemProfiler()
+ 
+-    def get_comprehensive_report(self) -> dict[str, Any]:
++async def get_comprehensive_report(self) -> dict[str, Any]:
+         """获取综合性能报告."""
+         return {
+             "api_stats": self.api_profiler.get_summary_report(),
+@@ -485,20 +485,20 @@             "timestamp": datetime.utcnow().isoformat(),
+         }
+ 
+-    def enable_all(self):
++async def enable_all(self):
+         """启用所有分析器."""
+         self.api_profiler.enable()
+         self.db_profiler.enabled = True
+         self.memory_profiler.enabled = True
+ 
+-    def disable_all(self):
++async def disable_all(self):
+         """禁用所有分析器."""
+         self.api_profiler.disable()
+         self.db_profiler.enabled = False
+         self.memory_profiler.enabled = False
+ 
+ 
+-def get_performance_report() -> dict[str, Any]:
++async def get_performance_report() -> dict[str, Any]:
+     """获取性能报告的便捷函数."""
+     profiler = PerformanceProfiler()
+     return profiler.get_comprehensive_report()
+@@ -508,11 +508,11 @@ class SystemProfiler:
+     """系统性能分析器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.metrics: dict[str, list[float]] = defaultdict(list)
+         self.lock = threading.Lock()
+ 
+-    def record_metric(self, name: str, value: float):
++async def record_metric(self, name: str, value: float):
+         """记录系统指标."""
+         with self.lock:
+             self.metrics[name].append(value)
+@@ -520,12 +520,12 @@             if len(self.metrics[name]) > 1000:
+                 self.metrics[name] = self.metrics[name][-1000:]
+ 
+-    def get_metric_summary(self, name: str, minutes: int = 5) -> dict[str, float]:
++async def get_metric_summary(self, name: str, minutes: int = 5) -> dict[str, float]:
+         """获取指标摘要."""
+         _cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+ 
+         with self.lock:
+-            values = self.metrics.get(name, [])
++            values = self.metrics.await get(name, [])
+             if not values:
+                 return {"avg": 0.0, "min": 0.0, "max": 0.0, "count": 0}
+ 
+@@ -541,7 +541,7 @@ _system_profiler: SystemProfiler | None = None
+ 
+ 
+-def get_system_profiler() -> SystemProfiler:
++async def get_system_profiler() -> SystemProfiler:
+     """获取系统分析器实例."""
+     global _system_profiler
+     if _system_profiler is None:
+@@ -552,22 +552,22 @@ 
+ 
+ # 装饰器函数
+-def profile_function(func: Callable) -> Callable:
++async def profile_function(func: Callable) -> Callable:
+     """函数性能分析装饰器."""
+ 
+     @functools.wraps(func)
+-    def wrapper(*args, **kwargs):
++async def wrapper(*args, **kwargs):
+         profiler = get_profiler()
+         return profiler.profile_function(func.__name__)(func)(*args, **kwargs)
+ 
+     return wrapper
+ 
+ 
+-def profile_method(method: Callable) -> Callable:
++async def profile_method(method: Callable) -> Callable:
+     """方法性能分析装饰器."""
+ 
+     @functools.wraps(method)
+-    def wrapper(*args, **kwargs):
++async def wrapper(*args, **kwargs):
+         profiler = get_profiler()
+         return profiler.profile_method(method.__name__)(method)(*args, **kwargs)
+ 
+@@ -579,7 +579,7 @@ _profiler_lock = threading.Lock()
+ 
+ 
+-def start_profiling():
++async def start_profiling():
+     """启动性能分析."""
+     global _profiling_enabled
+     with _profiler_lock:
+@@ -588,7 +588,7 @@         profiler.enabled = True
+ 
+ 
+-def stop_profiling():
++async def stop_profiling():
+     """停止性能分析."""
+     global _profiling_enabled
+     with _profiler_lock:
+@@ -597,7 +597,7 @@         profiler.enabled = False
+ 
+ 
+-def is_profiling_enabled() -> bool:
++async def is_profiling_enabled() -> bool:
+     """检查是否启用性能分析."""
+     return _profiling_enabled
+ 

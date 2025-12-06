@@ -1,0 +1,21 @@
+--- a/src/services/queue.py+++ b/src/services/queue.py@@ -15,11 +15,11 @@ class QueueService:
+     """队列服务类."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化队列服务."""
+         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+ 
+-    def get_status(self) -> dict[str, Any]:
++async def get_status(self) -> dict[str, Any]:
+         """获取队列状态信息
+         Get queue status information.
+ 
+@@ -77,7 +77,7 @@ _queue_service: QueueService | None = None
+ 
+ 
+-def get_queue_service() -> QueueService:
++async def get_queue_service() -> QueueService:
+     """获取队列服务实例."""
+     global _queue_service
+     if _queue_service is None:

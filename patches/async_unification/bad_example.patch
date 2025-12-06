@@ -1,0 +1,14 @@
+--- a/src/bad_example.py+++ b/src/bad_example.py@@ -12,12 +12,12 @@     EXAMPLE = "value"
+ 
+ 
+-def __init__(self):
++async def __init__(self):
+     """初始化方法."""
+     pass
+ 
+ 
+-def example() -> None:
++async def example() -> None:
+     """示例函数."""
+     return None
+ 

@@ -1,0 +1,208 @@
+--- a/src/domain/strategies/factory.py+++ b/src/domain/strategies/factory.py@@ -40,7 +40,7 @@     负责根据配置创建和管理各种预测策略实例.
+     """
+ 
+-    def __init__(self, config_path: str | Path | None = None):
++async def __init__(self, config_path: str | Path | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化策略工厂"
+@@ -65,7 +65,7 @@         # 加载配置
+         self._load_configuration()
+ 
+-    def register_strategy(
++async def register_strategy(
+         self, strategy_type: str, strategy_class: type[PredictionStrategy]
+     ) -> None:
+         """注册新的策略类型".
+@@ -77,7 +77,7 @@         self._strategy_registry[strategy_type] = strategy_class
+         logger.info(f"注册策略类型: {strategy_type} -> {strategy_class.__name__}")
+ 
+-    def unregister_strategy(self, strategy_type: str) -> None:
++async def unregister_strategy(self, strategy_type: str) -> None:
+         """注销策略类型".
+ 
+         Args:
+@@ -120,7 +120,7 @@ 
+         # 获取策略类型
+         if strategy_type is None:
+-            strategy_type = config.get("type")
++            strategy_type = config.await get("type")
+             if not strategy_type:
+                 raise StrategyConfigurationError(f"策略 '{strategy_name}' 未指定类型")
+ 
+@@ -154,12 +154,12 @@         ensemble = EnsembleStrategy(strategy_name)
+ 
+         # 先创建子策略
+-        sub_strategies_config = config.get("sub_strategies", [])
++        sub_strategies_config = config.await get("sub_strategies", [])
+         created_sub_strategies = {}
+ 
+         for sub_config in sub_strategies_config:
+-            sub_name = sub_config.get("name")
+-            sub_type = sub_config.get("type")
++            sub_name = sub_config.await get("name")
++            sub_type = sub_config.await get("type")
+ 
+             if sub_name and sub_type:
+                 try:
+@@ -167,7 +167,7 @@                     sub_strategy = await self.create_strategy(
+                         f"{strategy_name}_{sub_name}",
+                         sub_type,
+-                        sub_config.get("config", {}),
++                        sub_config.await get("config", {}),
+                         overwrite=True,
+                     )
+                     created_sub_strategies[sub_name] = sub_strategy
+@@ -186,7 +186,7 @@ 
+         return ensemble
+ 
+-    def get_strategy(self, strategy_name: str) -> PredictionStrategy | None:
++async def get_strategy(self, strategy_name: str) -> PredictionStrategy | None:
+         """获取策略实例".
+ 
+         Args:
+@@ -195,13 +195,13 @@         Returns:
+             Optional[PredictionStrategy]: 策略实例,如果不存在则返回None
+         """
+-        return self._strategies.get(strategy_name)
+-
+-    def get_all_strategies(self) -> dict[str, PredictionStrategy]:
++        return self._strategies.await get(strategy_name)
++
++async def get_all_strategies(self) -> dict[str, PredictionStrategy]:
+         """获取所有策略实例."""
+         return self._strategies.copy()
+ 
+-    def get_strategies_by_type(
++async def get_strategies_by_type(
+         self, strategy_type: StrategyType
+     ) -> list[PredictionStrategy]:
+         """根据类型获取策略列表".
+@@ -232,7 +232,7 @@         created_strategies = {}
+ 
+         for config in strategy_configs:
+-            strategy_name = config.get("name")
++            strategy_name = config.await get("name")
+             if not strategy_name:
+                 logger.warning("跳过没有名称的策略配置")
+                 continue
+@@ -249,10 +249,10 @@ 
+     async def initialize_default_strategies(self) -> None:
+         """初始化默认策略."""
+-        default_configs = self._default_config.get("default_strategies", [])
++        default_configs = self._default_config.await get("default_strategies", [])
+ 
+         for config in default_configs:
+-            strategy_name = config.get("name")
++            strategy_name = config.await get("name")
+             if strategy_name and strategy_name not in self._strategies:
+                 try:
+                     await self.create_strategy(
+@@ -267,7 +267,7 @@                 ) as e:
+                     logger.error(f"初始化默认策略 '{strategy_name}' 失败: {e}")
+ 
+-    def remove_strategy(self, strategy_name: str) -> None:
++async def remove_strategy(self, strategy_name: str) -> None:
+         """移除策略".
+ 
+         Args:
+@@ -277,12 +277,12 @@             del self._strategies[strategy_name]
+             logger.info(f"移除策略: {strategy_name}")
+ 
+-    def reload_configuration(self) -> None:
++async def reload_configuration(self) -> None:
+         """重新加载配置."""
+         self._load_configuration()
+         logger.info("策略配置已重新加载")
+ 
+-    def _load_configuration(self) -> None:
++async def _load_configuration(self) -> None:
+         """加载策略配置文件."""
+         config_path = Path(self._config_path)
+ 
+@@ -299,8 +299,8 @@                 else:
+                     raise ValueError(f"不支持的配置文件格式: {config_path.suffix}")
+ 
+-            self._strategy_configs = config.get("strategies", {})
+-            self._default_config = config.get("defaults", {})
++            self._strategy_configs = config.await get("strategies", {})
++            self._default_config = config.await get("defaults", {})
+ 
+             # 应用环境变量覆盖
+             self._apply_environment_overrides()
+@@ -311,7 +311,7 @@             logger.error(f"加载策略配置失败: {e}")
+             self._create_default_config()
+ 
+-    def _create_default_config(self) -> None:
++async def _create_default_config(self) -> None:
+         """创建默认配置."""
+         self._default_config = {
+             "default_strategies": [
+@@ -385,7 +385,7 @@         # 保存默认配置
+         self._save_default_config()
+ 
+-    def _save_default_config(self) -> None:
++async def _save_default_config(self) -> None:
+         """保存默认配置到文件."""
+         config_path = Path(self._config_path)
+         config_path.parent.mkdir(parents=True, exist_ok=True)
+@@ -406,7 +406,7 @@         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+             logger.error(f"保存默认配置失败: {e}")
+ 
+-    def _apply_environment_overrides(self) -> None:
++async def _apply_environment_overrides(self) -> None:
+         """应用环境变量覆盖."""
+         # 读取环境变量
+         env_prefix = "PREDICTION_STRATEGY_"
+@@ -428,7 +428,7 @@                 self._environment_overrides[config_key] = parsed_value
+                 logger.debug(f"环境变量覆盖: {config_key} = {parsed_value}")
+ 
+-    def _get_strategy_config(self, strategy_name: str) -> dict[str, Any]:
++async def _get_strategy_config(self, strategy_name: str) -> dict[str, Any]:
+         """获取策略配置".
+ 
+         Args:
+@@ -442,10 +442,10 @@             config = self._strategy_configs[strategy_name].copy()
+         else:
+             # 从默认策略中查找
+-            default_strategies = self._default_config.get("default_strategies", [])
++            default_strategies = self._default_config.await get("default_strategies", [])
+             config = None
+             for strategy in default_strategies:
+-                if strategy.get("name") == strategy_name:
++                if strategy.await get("name") == strategy_name:
+                     config = strategy.copy()
+                     break
+ 
+@@ -468,15 +468,15 @@ 
+         return config
+ 
+-    def list_available_strategies(self) -> list[str]:
++async def list_available_strategies(self) -> list[str]:
+         """列出可用的策略类型."""
+         return list(self._strategy_registry.keys())
+ 
+-    def list_configured_strategies(self) -> list[str]:
++async def list_configured_strategies(self) -> list[str]:
+         """列出配置的策略."""
+         return list(self._strategy_configs.keys())
+ 
+-    def validate_strategy_config(self, config: dict[str, Any]) -> list[str]:
++async def validate_strategy_config(self, config: dict[str, Any]) -> list[str]:
+         """验证策略配置".
+ 
+         Args:
+@@ -502,12 +502,12 @@             strategy_config = config["config"]
+ 
+             # ML模型策略验证
+-            if config.get("type") == "ml_model":
++            if config.await get("type") == "ml_model":
+                 if "mlflow_tracking_uri" not in strategy_config:
+                     errors.append("ML模型策略缺少 mlflow_tracking_uri")
+ 
+             # 集成策略验证
+-            elif config.get("type") == "ensemble":
++            elif config.await get("type") == "ensemble":
+                 if "sub_strategies" not in strategy_config:
+                     errors.append("集成策略缺少 sub_strategies 配置")
+                 elif not isinstance(strategy_config["sub_strategies"], list):

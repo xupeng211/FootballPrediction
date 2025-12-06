@@ -1,0 +1,16 @@
+--- a/src/database/migrations/versions/d56c8d0d5aa0_initial_database_schema.py+++ b/src/database/migrations/versions/d56c8d0d5aa0_initial_database_schema.py@@ -20,7 +20,7 @@ depends_on: str | Sequence[str] | None = None
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     # 创建联赛表
+     op.create_table(
+         "leagues",
+@@ -488,7 +488,7 @@     )
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     # 删除表（按相反顺序）
+     op.drop_table("predictions")
+     op.drop_table("features")

@@ -1,0 +1,80 @@
+--- a/src/api/data_router.py+++ b/src/api/data_router.py@@ -118,7 +118,7 @@ # ============================================================================
+ 
+ 
+-@router.get("/leagues", response_model=list[LeagueInfo])
++@router.await get("/leagues", response_model=list[LeagueInfo])
+ async def get_leagues(
+     country: str | None = Query(None, description="国家筛选"),
+     season: str | None = Query(None, description="赛季"),
+@@ -161,7 +161,7 @@         ) from e  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性，B904 exception chaining
+ 
+ 
+-@router.get("/leagues/{league_id}", response_model=LeagueInfo)
++@router.await get("/leagues/{league_id}", response_model=LeagueInfo)
+ async def get_league(league_id: int):
+     """获取单个联赛详情."""
+     logger.info(f"获取联赛 {league_id} 详情")
+@@ -188,7 +188,7 @@ # ============================================================================
+ 
+ 
+-@router.get("/teams", response_model=list[TeamInfo])
++@router.await get("/teams", response_model=list[TeamInfo])
+ async def get_teams(
+     league_id: int | None = Query(None, description="联赛ID"),
+     country: str | None = Query(None, description="国家"),
+@@ -243,7 +243,7 @@         ) from e  # ISSUE: 魔法数字 500 应该提取为命名常量以提高代码可维护性，B904 exception chaining
+ 
+ 
+-@router.get("/teams/{team_id}", response_model=TeamInfo)
++@router.await get("/teams/{team_id}", response_model=TeamInfo)
+ async def get_team(team_id: int):
+     """获取单个球队详情."""
+     logger.info(f"获取球队 {team_id} 详情")
+@@ -264,7 +264,7 @@         ) from e
+ 
+ 
+-@router.get("/teams/{team_id}/statistics", response_model=TeamStatistics)
++@router.await get("/teams/{team_id}/statistics", response_model=TeamStatistics)
+ async def get_team_statistics(
+     team_id: int, season: str | None = Query(None, description="赛季")
+ ):
+@@ -296,7 +296,7 @@ # ============================================================================
+ 
+ 
+-@router.get("/matches", response_model=list[MatchInfo])
++@router.await get("/matches", response_model=list[MatchInfo])
+ async def get_matches(
+     league_id: int | None = Query(None, description="联赛ID"),
+     team_id: int | None = Query(None, description="球队ID"),
+@@ -370,7 +370,7 @@         ) from e
+ 
+ 
+-@router.get("/matches/{match_id}", response_model=MatchInfo)
++@router.await get("/matches/{match_id}", response_model=MatchInfo)
+ async def get_match(match_id: int):
+     """获取单场比赛详情."""
+     logger.info(f"获取比赛 {match_id} 详情")
+@@ -396,7 +396,7 @@         ) from e
+ 
+ 
+-@router.get("/matches/{match_id}/statistics", response_model=MatchStatistics)
++@router.await get("/matches/{match_id}/statistics", response_model=MatchStatistics)
+ async def get_match_statistics(match_id: int):
+     """获取比赛统计数据."""
+     logger.info(f"获取比赛 {match_id} 统计")
+@@ -427,7 +427,7 @@ # ============================================================================
+ 
+ 
+-@router.get("/odds", response_model=list[OddsInfo])
++@router.await get("/odds", response_model=list[OddsInfo])
+ async def get_odds(
+     match_id: int | None = Query(None, description="比赛ID"),
+     bookmaker: str | None = Query(None, description="博彩公司"),
+@@ -468,7 +468,7 @@         ) from e
+ 
+ 
+-@router.get("/odds/{match_id}", response_model=list[OddsInfo])
++@router.await get("/odds/{match_id}", response_model=list[OddsInfo])
+ async def get_match_odds(match_id: int):
+     """获取指定比赛的所有赔率."""
+     logger.info(f"获取比赛 {match_id} 的赔率")

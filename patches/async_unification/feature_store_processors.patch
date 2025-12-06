@@ -1,0 +1,11 @@
+--- a/src/features/features/feature_store_processors.py+++ b/src/features/features/feature_store_processors.py@@ -72,9 +72,9 @@ class FeatureProcessor:
+     """特征处理器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+-    def process(self, data):
++async def process(self, data):
+         """处理特征数据."""
+         return data

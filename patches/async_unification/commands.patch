@@ -1,0 +1,88 @@
+--- a/src/cqrs/commands.py+++ b/src/cqrs/commands.py@@ -16,7 +16,7 @@ class CreatePredictionCommand(ValidatableCommand):
+     """创建预测命令."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         match_id: int,
+         user_id: int,
+@@ -64,7 +64,7 @@ class UpdatePredictionCommand(ValidatableCommand):
+     """更新预测命令."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         predicted_home: int | None = None,
+@@ -90,7 +90,7 @@         from ..database.connection_mod import get_session
+ 
+         async with get_session() as session:
+-            prediction = await session.get(Prediction, self.prediction_id)
++            prediction = await session.await get(Prediction, self.prediction_id)
+             if not prediction:
+                 errors.append("指定的预测不存在")
+             elif prediction.match.match_date < datetime.utcnow():
+@@ -116,7 +116,7 @@ class DeletePredictionCommand(ValidatableCommand):
+     """删除预测命令."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         metadata: dict[str, Any] | None = None,
+@@ -132,7 +132,7 @@         from ..database.connection_mod import get_session
+ 
+         async with get_session() as session:
+-            prediction = await session.get(Prediction, self.prediction_id)
++            prediction = await session.await get(Prediction, self.prediction_id)
+             if not prediction:
+                 errors.append("指定的预测不存在")
+             elif prediction.match.match_date < datetime.utcnow():
+@@ -148,7 +148,7 @@ class CreateUserCommand(ValidatableCommand):
+     """创建用户命令."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         username: str,
+         email: str,
+@@ -197,7 +197,7 @@ class UpdateUserCommand(ValidatableCommand):
+     """更新用户命令."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         user_id: int,
+         username: str | None = None,
+@@ -219,7 +219,7 @@         from ..database.connection_mod import get_session
+ 
+         async with get_session() as session:
+-            user = await session.get(User, self.user_id)
++            user = await session.await get(User, self.user_id)
+             if not user:
+                 errors.append("指定的用户不存在")
+ 
+@@ -233,7 +233,7 @@ class CreateMatchCommand(ValidatableCommand):
+     """创建比赛命令."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         home_team: str,
+         away_team: str,
+@@ -275,7 +275,7 @@ class UpdateMatchCommand(ValidatableCommand):
+     """更新比赛命令."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         match_id: int,
+         home_score: int | None = None,
+@@ -301,7 +301,7 @@         from ..database.connection_mod import get_session
+ 
+         async with get_session() as session:
+-            match = await session.get(Match, self.match_id)
++            match = await session.await get(Match, self.match_id)
+             if not match:
+                 errors.append("指定的比赛不存在")
+ 

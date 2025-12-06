@@ -1,0 +1,29 @@
+--- a/src/domain/services/user_service.py+++ b/src/domain/services/user_service.py@@ -10,11 +10,11 @@ class UserService:
+     """用户领域服务."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化用户服务."""
+         pass
+ 
+-    def get_user_by_id(self, user_id: int) -> dict[str, Any] | None:
++async def get_user_by_id(self, user_id: int) -> dict[str, Any] | None:
+         """根据ID获取用户.
+ 
+         Args:
+@@ -26,7 +26,7 @@         # 占位符实现
+         return None
+ 
+-    def create_user(self, user_data: dict[str, Any]) -> dict[str, Any]:
++async def create_user(self, user_data: dict[str, Any]) -> dict[str, Any]:
+         """创建用户.
+ 
+         Args:
+@@ -38,7 +38,7 @@         # 占位符实现
+         return {"id": 1, "status": "created"}
+ 
+-    def authenticate_user(self, email: str, password: str) -> dict[str, Any] | None:
++async def authenticate_user(self, email: str, password: str) -> dict[str, Any] | None:
+         """用户认证.
+ 
+         Args:

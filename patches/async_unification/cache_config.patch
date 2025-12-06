@@ -1,0 +1,21 @@
+--- a/src/services/processing/caching/config/cache_config.py+++ b/src/services/processing/caching/config/cache_config.py@@ -27,7 +27,7 @@     # 序列化方式
+     serializer: str = "json"
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化后处理"""
+@@ -45,7 +45,7 @@ CACHE_CONFIG = CacheConfig()
+ 
+ 
+-def get_cache_ttl(cache_type: str) -> int:
++async def get_cache_ttl(cache_type: str) -> int:
+     """获取指定类型的缓存TTL".
+ 
+     Args:
+@@ -56,4 +56,4 @@     """
+     if CACHE_CONFIG.ttl_config is None:
+         return CACHE_CONFIG.default_ttl
+-    return CACHE_CONFIG.ttl_config.get(cache_type, CACHE_CONFIG.default_ttl)
++    return CACHE_CONFIG.ttl_config.await get(cache_type, CACHE_CONFIG.default_ttl)

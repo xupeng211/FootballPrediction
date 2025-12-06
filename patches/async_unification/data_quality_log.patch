@@ -1,0 +1,40 @@
+--- a/src/database/models/data_quality_log.py+++ b/src/database/models/data_quality_log.py@@ -74,7 +74,7 @@     resolution_notes = Column(Text, nullable=True, comment="解决备注")
+ 
+     @validates("issue_type")
+-    def validate_issue_type(self, key: str, issue_type: str) -> str:
++async def validate_issue_type(self, key: str, issue_type: str) -> str:
+         """验证问题类型."""
+         valid_types = [it.value for it in IssueType]
+         if issue_type not in valid_types:
+@@ -84,7 +84,7 @@         return issue_type
+ 
+     @validates("severity")
+-    def validate_severity(self, key: str, severity: str) -> str:
++async def validate_severity(self, key: str, severity: str) -> str:
+         """验证严重程度."""
+         valid_severities = [s.value for s in Severity]
+         if severity not in valid_severities:
+@@ -94,7 +94,7 @@         return severity
+ 
+     @validates("status")
+-    def validate_status(self, key: str, status: str) -> str:
++async def validate_status(self, key: str, status: str) -> str:
+         """验证处理状态."""
+         valid_statuses = [s.value for s in QualityStatus]
+         if status not in valid_statuses:
+@@ -103,14 +103,14 @@             )
+         return status
+ 
+-    def mark_resolved(self, resolution_notes: str = None) -> None:
++async def mark_resolved(self, resolution_notes: str = None) -> None:
+         """标记为已解决."""
+         self.status = QualityStatus.RESOLVED.value
+         self.resolved_at = datetime.now()
+         if resolution_notes:
+             self.resolution_notes = resolution_notes
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         """字符串表示."""
+         return (
+             f"<DataQualityLog("

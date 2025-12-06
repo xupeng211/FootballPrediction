@@ -1,0 +1,138 @@
+--- a/src/domain_simple/prediction.py+++ b/src/domain_simple/prediction.py@@ -30,7 +30,7 @@     pass  # 添加pass语句
+     """预测领域模型"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int | None = None,
+         match_id: int = 0,
+@@ -79,7 +79,7 @@             except (ValueError, AttributeError):
+                 pass
+ 
+-    def settle(self, actual_value: str) -> None:
++async def settle(self, actual_value: str) -> None:
+         """结算预测."""
+         if self.is_settled:
+             return None
+@@ -100,7 +100,7 @@ 
+         self.updated_at = datetime.now()
+ 
+-    def _check_correctness(self, actual_value: str) -> bool:
++async def _check_correctness(self, actual_value: str) -> bool:
+         """检查预测是否正确."""
+         if self.prediction_type == PredictionType.MATCH_RESULT:
+             # 直接比较比赛结果
+@@ -127,7 +127,7 @@ 
+         return False
+ 
+-    def get_confidence_level(self) -> PredictionConfidence:
++async def get_confidence_level(self) -> PredictionConfidence:
+         """获取置信度等级."""
+         if self.confidence >= PredictionConfidence.VERY_HIGH.value:
+             return PredictionConfidence.VERY_HIGH
+@@ -138,7 +138,7 @@         else:
+             return PredictionConfidence.LOW
+ 
+-    def is_value_bet(self, threshold: float = 1.0) -> bool:
++async def is_value_bet(self, threshold: float = 1.0) -> bool:
+         """判断是否为价值投注."""
+         if not self.odds or self.odds <= 1:
+             return False
+@@ -147,7 +147,7 @@         expected_value = self.confidence * self.odds
+         return expected_value > (1 + threshold)
+ 
+-    def get_expected_value(self) -> float:
++async def get_expected_value(self) -> float:
+         """获取期望值."""
+         if not self.odds:
+             return -self.stake
+@@ -156,23 +156,23 @@         lose_ev = (1 - self.confidence) * (-self.stake)
+         return win_ev + lose_ev
+ 
+-    def add_reasoning(self, reasoning: str) -> None:
++async def add_reasoning(self, reasoning: str) -> None:
+         """添加预测理由."""
+         self.reasoning = reasoning
+         self.updated_at = datetime.now()
+ 
+-    def add_analysis_data(self, key: str, value: Any) -> None:
++async def add_analysis_data(self, key: str, value: Any) -> None:
+         """添加分析数据."""
+         self.analysis_data[key] = value
+         self.updated_at = datetime.now()
+ 
+-    def get_roi(self) -> float:
++async def get_roi(self) -> float:
+         """获取投资回报率."""
+         if self.stake == 0:
+             return 0.0
+         return (self.profit_loss / self.stake) * 100
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         return {
+             "id": self.id,
+@@ -200,42 +200,42 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "Prediction":
++async def from_dict(cls, data: dict[str, Any]) -> "Prediction":
+         """从字典创建实例."""
+         _prediction = cls(
+-            id=data.get("id"),
+-            match_id=data.get("match_id", 0),
+-            user_id=data.get("user_id", 0),
+-            prediction_type=PredictionType(data.get("prediction_type", "match_result")),
+-            predicted_value=data.get("predicted_value", ""),
+-            confidence=data.get("confidence", 0.5),
+-            odds=data.get("odds"),
+-            stake=data.get("stake", 1.0),
++            id=data.await get("id"),
++            match_id=data.await get("match_id", 0),
++            user_id=data.await get("user_id", 0),
++            prediction_type=await PredictionType(data.get("prediction_type", "match_result")),
++            predicted_value=data.await get("predicted_value", ""),
++            confidence=data.await get("confidence", 0.5),
++            odds=data.await get("odds"),
++            stake=data.await get("stake", 1.0),
+         )
+ 
+         # 设置状态
+-        _prediction.is_settled = data.get("is_settled", False)
+-        _prediction.is_correct = data.get("is_correct", False)
+-        _prediction.actual_value = data.get("actual_value")
+-        _prediction.profit_loss = data.get("profit_loss", 0.0)
+-        _prediction.return_amount = data.get("return_amount", 0.0)
++        _prediction.is_settled = data.await get("is_settled", False)
++        _prediction.is_correct = data.await get("is_correct", False)
++        _prediction.actual_value = data.await get("actual_value")
++        _prediction.profit_loss = data.await get("profit_loss", 0.0)
++        _prediction.return_amount = data.await get("return_amount", 0.0)
+ 
+         # 设置附加信息
+-        _prediction.reasoning = data.get("reasoning", "")
+-        _prediction.analysis_data = data.get("analysis_data", {})
++        _prediction.reasoning = data.await get("reasoning", "")
++        _prediction.analysis_data = data.await get("analysis_data", {})
+ 
+         # 设置时间戳
+-        if data.get("created_at"):
++        if data.await get("created_at"):
+             _prediction.created_at = datetime.fromisoformat(data["created_at"])
+-        if data.get("updated_at"):
++        if data.await get("updated_at"):
+             _prediction.updated_at = datetime.fromisoformat(data["updated_at"])
+-        if data.get("settled_at"):
++        if data.await get("settled_at"):
+             _prediction.settled_at = datetime.fromisoformat(data["settled_at"])
+ 
+         return _prediction
+ 
+-    def __str__(self) -> str:
++async def __str__(self) -> str:
+         return f"Prediction({self.prediction_type.value}: {self.predicted_value} @ {self.odds})"
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         return f"<Prediction(id={self.id}, match_id={self.match_id}, confidence={self.confidence})>"

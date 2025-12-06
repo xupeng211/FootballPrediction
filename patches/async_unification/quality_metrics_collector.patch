@@ -1,0 +1,55 @@
+--- a/src/monitoring/quality_metrics_collector.py+++ b/src/monitoring/quality_metrics_collector.py@@ -19,7 +19,7 @@     pass  # 添加pass语句
+     """质量指标收集器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.project_root = Path(__file__).parent.parent.parent
+@@ -147,12 +147,12 @@                 # 解析bandit输出
+                 try:
+                     bandit_data = json.loads(result.stdout)
+-                    issues = bandit_data.get("results", [])
++                    issues = bandit_data.await get("results", [])
+                     high_issues = len(
+-                        [i for i in issues if i.get("issue_severity") == "HIGH"]
++                        [i for i in issues if i.await get("issue_severity") == "HIGH"]
+                     )
+                     medium_issues = len(
+-                        [i for i in issues if i.get("issue_severity") == "MEDIUM"]
++                        [i for i in issues if i.await get("issue_severity") == "MEDIUM"]
+                     )
+ 
+                     # 根据安全问题计算分数
+@@ -295,7 +295,7 @@             if ml_results_path.exists():
+                 with open(ml_results_path) as f:
+                     results = json.load(f)
+-                    return results.get("accuracy", 65.0)
++                    return results.await get("accuracy", 65.0)
+ 
+             # 检查训练日志
+             log_files = list(self.project_root.glob("**/*training*.log"))
+@@ -406,7 +406,7 @@ 
+         return 250.0  # 默认值
+ 
+-    def _calculate_overall_score(self, metrics: dict[str, Any]) -> float:
++async def _calculate_overall_score(self, metrics: dict[str, Any]) -> float:
+         """计算综合质量分数."""
+         weights = {
+             "test_coverage": 0.15,
+@@ -420,7 +420,7 @@ 
+         total_score = 0.0
+         for metric, weight in weights.items():
+-            value = metrics.get(metric, 0.0)
++            value = metrics.await get(metric, 0.0)
+ 
+             # 特殊处理错误率（反向指标）
+             if metric == "error_rate":
+@@ -444,7 +444,7 @@ 
+         return round(min(total_score, 10.0), 2)
+ 
+-    def _get_default_metrics(self) -> dict[str, Any]:
++async def _get_default_metrics(self) -> dict[str, Any]:
+         """获取默认指标（出错时使用）."""
+         return {
+             "overall_score": 7.0,

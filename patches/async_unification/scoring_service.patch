@@ -1,0 +1,151 @@
+--- a/src/domain/services/scoring_service.py+++ b/src/domain/services/scoring_service.py@@ -15,7 +15,7 @@ class ScoringService:
+     """计分服务."""
+ 
+-    def __init__(self, scoring_config: dict[str, Any] | None = None):
++async def __init__(self, scoring_config: dict[str, Any] | None = None):
+         """初始化计分服务."""
+         self._config = scoring_config or self._default_scoring_config()
+         self.config = self._config  # 保持向后兼容性
+@@ -25,20 +25,20 @@         self._health_status = "healthy"
+         self._created_at = datetime.utcnow()
+ 
+-    def initialize(self) -> bool:
++async def initialize(self) -> bool:
+         """初始化服务."""
+         if self._is_disposed:
+             raise RuntimeError("Cannot initialize disposed service")
+         self._is_initialized = True
+         return True
+ 
+-    def dispose(self) -> None:
++async def dispose(self) -> None:
+         """销毁服务."""
+         self._is_disposed = True
+         self._is_initialized = False
+         self._events.clear()
+ 
+-    def is_healthy(self) -> bool:
++async def is_healthy(self) -> bool:
+         """检查服务健康状态."""
+         return (
+             self._health_status == "healthy"
+@@ -46,7 +46,7 @@             and self._is_initialized
+         )
+ 
+-    def get_service_info(self) -> dict[str, Any]:
++async def get_service_info(self) -> dict[str, Any]:
+         """获取服务信息."""
+         return {
+             "name": "ScoringService",
+@@ -58,7 +58,7 @@             "config": self.config,
+         }
+ 
+-    def _default_scoring_config(self) -> dict[str, Any]:
++async def _default_scoring_config(self) -> dict[str, Any]:
+         """默认计分配置."""
+         return {
+             "exact_score": {"points": 10, "multiplier": 1.0},
+@@ -69,7 +69,7 @@             "difficulty_multiplier": {"enabled": True, "base_multiplier": 1.0},
+         }
+ 
+-    def calculate_prediction_points(
++async def calculate_prediction_points(
+         self,
+         predicted_home: int,
+         predicted_away: int,
+@@ -115,7 +115,7 @@             confidence_bonus=confidence_bonus_value,
+         )
+ 
+-    def _calculate_exact_score_points(
++async def _calculate_exact_score_points(
+         self,
+         predicted_home: int,
+         predicted_away: int,
+@@ -130,7 +130,7 @@             )
+         return 0
+ 
+-    def _calculate_outcome_points(
++async def _calculate_outcome_points(
+         self,
+         predicted_home: int,
+         predicted_away: int,
+@@ -148,7 +148,7 @@             )
+         return 0
+ 
+-    def _calculate_goal_difference_points(
++async def _calculate_goal_difference_points(
+         self,
+         predicted_home: int,
+         predicted_away: int,
+@@ -166,7 +166,7 @@             )
+         return 0
+ 
+-    def _calculate_confidence_bonus(self, confidence: float | None) -> int:
++async def _calculate_confidence_bonus(self, confidence: float | None) -> int:
+         """计算信心度奖励."""
+         if not confidence:
+             return 0
+@@ -178,7 +178,7 @@             return int(max_bonus * confidence)
+         return 0
+ 
+-    def _calculate_streak_bonus(self, streak: int) -> int:
++async def _calculate_streak_bonus(self, streak: int) -> int:
+         """计算连胜奖励."""
+         if not self.config["streak_bonus"]["enabled"]:
+             return 0
+@@ -190,7 +190,7 @@             return min(streak * bonus_per_streak, max_bonus)
+         return 0
+ 
+-    def _calculate_difficulty_bonus(
++async def _calculate_difficulty_bonus(
+         self, match_importance: float, predicted_home: int, predicted_away: int
+     ) -> int:
+         """计算难度奖励."""
+@@ -216,7 +216,7 @@         # 返回整数奖励分
+         return int(difficulty_multiplier * 2)  # 基础2分,根据难度调整
+ 
+-    def _get_outcome(self, home: int, away: int) -> str:
++async def _get_outcome(self, home: int, away: int) -> str:
+         """获取比赛结果."""
+         if home > away:
+             return "home_win"
+@@ -225,7 +225,7 @@         else:
+             return "draw"
+ 
+-    def calculate_leaderboard_position(
++async def calculate_leaderboard_position(
+         self, user_points: int, all_users_points: list[int]
+     ) -> int:
+         """计算排行榜位置."""
+@@ -238,7 +238,7 @@         except ValueError:
+             return len(sorted_points) + 1
+ 
+-    def calculate_rank_percentile(self, position: int, total_users: int) -> float:
++async def calculate_rank_percentile(self, position: int, total_users: int) -> float:
+         """计算排名百分位."""
+         if total_users == 0:
+             return 0.0
+@@ -247,7 +247,7 @@         percentile = (position - 1) / total_users * 100
+         return round(percentile, 2)
+ 
+-    def update_scoring_config(self, new_config: dict[str, Any]) -> None:
++async def update_scoring_config(self, new_config: dict[str, Any]) -> None:
+         """更新计分配置."""
+         # 验证配置
+         self._validate_config(new_config)
+@@ -255,7 +255,7 @@         # 合并配置
+         self.config.update(new_config)
+ 
+-    def _validate_config(self, config: dict[str, Any]) -> None:
++async def _validate_config(self, config: dict[str, Any]) -> None:
+         """验证计分配置."""
+         required_keys = ["exact_score", "outcome_only", "goal_difference"]
+ 
+@@ -272,7 +272,7 @@             if config[key]["points"] < 0:
+                 raise ValueError(f"计分配置 {key}.points 不能为负数")
+ 
+-    def get_scoring_rules_summary(self) -> dict[str, Any]:
++async def get_scoring_rules_summary(self) -> dict[str, Any]:
+         """获取计分规则摘要."""
+         return {
+             "exact_score": f"{self.config['exact_score']['points']}分",

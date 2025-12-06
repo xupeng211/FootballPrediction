@@ -1,0 +1,243 @@
+--- a/src/features/feature_engineer.py+++ b/src/features/feature_engineer.py@@ -30,51 +30,51 @@     class MockTransformer:
+         """Mock transformer for environments without sklearn."""
+ 
+-        def __init__(self, **kwargs):
++async def __init__(self, **kwargs):
+             pass
+ 
+-        def fit(self, X, y=None):
++async def fit(self, X, y=None):
+             return self
+ 
+-        def transform(self, X):
+-            return X
+-
+-        def fit_transform(self, X, y=None):
++async def transform(self, X):
++            return X
++
++async def fit_transform(self, X, y=None):
+             return X
+ 
+     class MockPipeline:
+         """Mock Pipeline for environments without sklearn."""
+ 
+-        def __init__(self, steps, **kwargs):
++async def __init__(self, steps, **kwargs):
+             self.steps = steps
+             self.named_steps = dict(steps)
+ 
+-        def fit(self, X, y=None):
++async def fit(self, X, y=None):
+             return self
+ 
+-        def transform(self, X):
+-            return X
+-
+-        def fit_transform(self, X, y=None):
+-            return X
+-
+-        def predict(self, X):
++async def transform(self, X):
++            return X
++
++async def fit_transform(self, X, y=None):
++            return X
++
++async def predict(self, X):
+             return [0] * len(X) if hasattr(X, "__len__") else [0]
+ 
+     class MockColumnTransformer:
+         """Mock ColumnTransformer for environments without sklearn."""
+ 
+-        def __init__(self, transformers, **kwargs):
++async def __init__(self, transformers, **kwargs):
+             self.transformers = transformers
+             self.named_transformers_ = dict(transformers)
+ 
+-        def fit(self, X, y=None):
++async def fit(self, X, y=None):
+             return self
+ 
+-        def transform(self, X):
+-            return X
+-
+-        def fit_transform(self, X, y=None):
++async def transform(self, X):
++            return X
++
++async def fit_transform(self, X, y=None):
+             return X
+ 
+     # 分配模拟类
+@@ -104,7 +104,7 @@     - 伤病情况影响
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         include_head_to_head: bool = True,
+         include_home_advantage: bool = True,
+@@ -126,7 +126,7 @@         self.team_stats = {}
+         self.head_to_head_cache = {}
+ 
+-    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> "FootballFeatureTransformer":
++async def fit(self, X: pd.DataFrame, y: pd.Series = None) -> "FootballFeatureTransformer":
+         """拟合转换器，计算球队统计信息."""
+         if not HAS_SCIPY:
+             logger.warning("Scikit-learn not available, using mock implementation")
+@@ -140,7 +140,7 @@         logger.info("FootballFeatureTransformer fitted successfully")
+         return self
+ 
+-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
++async def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+         """转换特征数据."""
+         if not HAS_SCIPY:
+             logger.warning("Scikit-learn not available, returning original data")
+@@ -162,7 +162,7 @@ 
+         return X_transformed
+ 
+-    def _compute_team_statistics(self, X: pd.DataFrame) -> None:
++async def _compute_team_statistics(self, X: pd.DataFrame) -> None:
+         """计算球队基础统计信息."""
+         if not hasattr(X, "columns"):
+             return
+@@ -184,26 +184,26 @@                             "goals_conceded": 0,
+                         }
+ 
+-    def _compute_head_to_head_stats(self, X: pd.DataFrame) -> None:
++async def _compute_head_to_head_stats(self, X: pd.DataFrame) -> None:
+         """计算历史对战统计信息."""
+         # 简化实现，实际中应该从历史数据计算
+         self.head_to_head_cache = {}
+ 
+-    def _add_home_advantage_features(self, X: pd.DataFrame) -> pd.DataFrame:
++async def _add_home_advantage_features(self, X: pd.DataFrame) -> pd.DataFrame:
+         """添加主客场优势特征."""
+         # 简化实现，添加主客场标识
+         if hasattr(X, "assign"):
+             X = X.assign(is_home_match=1)  # 假设都是主场
+         return X
+ 
+-    def _add_recent_form_features(self, X: pd.DataFrame) -> pd.DataFrame:
++async def _add_recent_form_features(self, X: pd.DataFrame) -> pd.DataFrame:
+         """添加近期状态特征."""
+         # 简化实现，添加近期得分趋势
+         if hasattr(X, "assign"):
+             X = X.assign(recent_form_score=0.5)  # 默认中性状态
+         return X
+ 
+-    def _add_head_to_head_features(self, X: pd.DataFrame) -> pd.DataFrame:
++async def _add_head_to_head_features(self, X: pd.DataFrame) -> pd.DataFrame:
+         """添加历史对战特征."""
+         # 简化实现，添加历史对战优势
+         if hasattr(X, "assign"):
+@@ -218,7 +218,7 @@     支持数值特征、类别特征和自定义足球特征的组合处理。
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化特征管道构建器."""
+         self.numeric_features: list[str] = []
+         self.categorical_features: list[str] = []
+@@ -228,7 +228,7 @@         # 默认特征分类
+         self._default_feature_classification()
+ 
+-    def _default_feature_classification(self) -> None:
++async def _default_feature_classification(self) -> None:
+         """默认特征分类."""
+         # 常见的数值特征
+         self.numeric_features = [
+@@ -280,25 +280,25 @@             "manager_changes",
+         ]
+ 
+-    def add_numeric_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
++async def add_numeric_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
+         """添加数值特征."""
+         if feature_name not in self.numeric_features:
+             self.numeric_features.append(feature_name)
+         return self
+ 
+-    def add_categorical_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
++async def add_categorical_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
+         """添加类别特征."""
+         if feature_name not in self.categorical_features:
+             self.categorical_features.append(feature_name)
+         return self
+ 
+-    def add_custom_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
++async def add_custom_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
+         """添加自定义特征."""
+         if feature_name not in self.custom_features:
+             self.custom_features.append(feature_name)
+         return self
+ 
+-    def remove_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
++async def remove_feature(self, feature_name: str) -> "FeaturePipelineBuilder":
+         """移除特征."""
+         self.numeric_features = [f for f in self.numeric_features if f != feature_name]
+         self.categorical_features = [
+@@ -307,7 +307,7 @@         self.custom_features = [f for f in self.custom_features if f != feature_name]
+         return self
+ 
+-    def build_pipeline(
++async def build_pipeline(
+         self,
+         numeric_strategy: str = "standard",
+         categorical_strategy: str = "onehot",
+@@ -378,7 +378,7 @@ 
+         return self.pipeline
+ 
+-    def _build_numeric_transformer(
++async def _build_numeric_transformer(
+         self, strategy: str, handle_missing: bool
+     ) -> Pipeline:
+         """构建数值特征转换器."""
+@@ -398,7 +398,7 @@ 
+         return Pipeline(steps)
+ 
+-    def _build_categorical_transformer(
++async def _build_categorical_transformer(
+         self, strategy: str, handle_missing: bool
+     ) -> Pipeline:
+         """构建类别特征转换器."""
+@@ -420,7 +420,7 @@ 
+         return Pipeline(steps)
+ 
+-    def get_feature_names(self) -> list[str]:
++async def get_feature_names(self) -> list[str]:
+         """获取处理后的特征名称."""
+         if self.pipeline is None:
+             return (
+@@ -441,7 +441,7 @@ 
+         return self.numeric_features + self.categorical_features + self.custom_features
+ 
+-    def validate_features(self, X: pd.DataFrame) -> tuple[bool, list[str]]:
++async def validate_features(self, X: pd.DataFrame) -> tuple[bool, list[str]]:
+         """验证数据中的特征."""
+         missing_features = []
+ 
+@@ -461,7 +461,7 @@ 
+         return is_valid, missing_features
+ 
+-    def get_pipeline_summary(self) -> dict[str, Any]:
++async def get_pipeline_summary(self) -> dict[str, Any]:
+         """获取管道摘要信息."""
+         return {
+             "numeric_features_count": len(self.numeric_features),
+@@ -478,7 +478,7 @@ 
+ 
+ # 便捷函数
+-def create_default_football_pipeline() -> Pipeline:
++async def create_default_football_pipeline() -> Pipeline:
+     """创建默认的足球特征工程管道."""
+     builder = FeaturePipelineBuilder()
+     return builder.build_pipeline(
+@@ -489,7 +489,7 @@     )
+ 
+ 
+-def create_simple_pipeline(features: list[str]) -> Pipeline:
++async def create_simple_pipeline(features: list[str]) -> Pipeline:
+     """创建简单的特征管道."""
+     builder = FeaturePipelineBuilder()
+ 

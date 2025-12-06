@@ -1,0 +1,170 @@
+--- a/src/security/middleware.py+++ b/src/security/middleware.py@@ -34,14 +34,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+     """安全头中间件."""
+ 
+-    def __init__(self, app: ASGIApp, enabled: bool = True):
++async def __init__(self, app: ASGIApp, enabled: bool = True):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(app)
+         self.enabled = enabled
+         self.headers = self._get_security_headers()
+ 
+-    def _get_security_headers(self) -> dict[str, str]:
++async def _get_security_headers(self) -> dict[str, str]:
+         """获取安全头配置."""
+         return {
+             "X-Frame-Options": os.getenv("X_FRAME_OPTIONS", "DENY"),
+@@ -76,7 +76,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
+     """速率限制中间件."""
+ 
+-    def __init__(
++async def __init__(
+         self, app: ASGIApp, requests_per_minute: int = 60, burst_size: int = 10
+     ):
+         super().__init__(app)
+@@ -104,22 +104,22 @@ 
+         return await call_next(request)
+ 
+-    def _get_client_ip(self, request: Request) -> str:
++async def _get_client_ip(self, request: Request) -> str:
+         """获取客户端IP地址."""
+         # 优先使用X-Forwarded-For头（在代理后）
+-        forwarded_for = request.headers.get("X-Forwarded-For")
++        forwarded_for = request.headers.await get("X-Forwarded-For")
+         if forwarded_for:
+             return forwarded_for.split(",")[0].strip()
+ 
+         # 使用X-Real-IP头
+-        real_ip = request.headers.get("X-Real-IP")
++        real_ip = request.headers.await get("X-Real-IP")
+         if real_ip:
+             return real_ip.strip()
+ 
+         # 使用直接连接的IP
+         return request.client.host if request.client else "unknown"
+ 
+-    def _cleanup_old_requests(self, client_ip: str, current_time: float):
++async def _cleanup_old_requests(self, client_ip: str, current_time: float):
+         """函数文档字符串."""
+         # 添加pass语句
+         """清理过期的请求记录"""
+@@ -128,7 +128,7 @@             req_time for req_time in self.clients[client_ip] if req_time > cutoff_time
+         ]
+ 
+-    def _is_rate_limited(self, client_ip: str, current_time: float) -> bool:
++async def _is_rate_limited(self, client_ip: str, current_time: float) -> bool:
+         """检查是否超过速率限制."""
+         requests = self.clients[client_ip]
+ 
+@@ -148,14 +148,14 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
+     """审计日志中间件."""
+ 
+-    def __init__(self, app: ASGIApp, enabled: bool = True):
++async def __init__(self, app: ASGIApp, enabled: bool = True):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(app)
+         self.enabled = enabled
+         self.setup_audit_logger()
+ 
+-    def setup_audit_logger(self):
++async def setup_audit_logger(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """设置审计日志记录器"""
+@@ -206,17 +206,17 @@             self._log_request_error(request, e, duration)
+             raise
+ 
+-    def _log_request_start(self, request: Request):
++async def _log_request_start(self, request: Request):
+         """函数文档字符串."""
+         # 添加pass语句
+         """记录请求开始"""
+         self.audit_logger.info(
+             f"Request started: {request.method} {request.url} - "
+             f"Client: {self._get_client_info(request)} - "
+-            f"User-Agent: {request.headers.get('User-Agent', 'Unknown')}"
+-        )
+-
+-    def _log_request_complete(
++            f"User-Agent: {request.headers.await get('User-Agent', 'Unknown')}"
++        )
++
++async def _log_request_complete(
+         self, request: Request, response: Response, duration: float
+     ):
+         """记录请求完成."""
+@@ -227,7 +227,7 @@             f"Client: {self._get_client_info(request)}"
+         )
+ 
+-    def _log_request_error(self, request: Request, error: Exception, duration: float):
++async def _log_request_error(self, request: Request, error: Exception, duration: float):
+         """函数文档字符串."""
+         # 添加pass语句
+         """记录请求错误"""
+@@ -238,10 +238,10 @@             f"Client: {self._get_client_info(request)}"
+         )
+ 
+-    def _get_client_info(self, request: Request) -> str:
++async def _get_client_info(self, request: Request) -> str:
+         """获取客户端信息."""
+         client_ip = request.client.host if request.client else "unknown"
+-        forwarded_for = request.headers.get("X-Forwarded-For")
++        forwarded_for = request.headers.await get("X-Forwarded-For")
+         if forwarded_for:
+             client_ip = f"{forwarded_for.split(',')[0].strip()} (via {client_ip})"
+         return client_ip
+@@ -250,14 +250,14 @@ class CSPMiddleware(BaseHTTPMiddleware):
+     """内容安全策略中间件."""
+ 
+-    def __init__(self, app: ASGIApp, enabled: bool = True):
++async def __init__(self, app: ASGIApp, enabled: bool = True):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(app)
+         self.enabled = enabled
+         self.csp_policy = self._build_csp_policy()
+ 
+-    def _build_csp_policy(self) -> str:
++async def _build_csp_policy(self) -> str:
+         """构建CSP策略."""
+         if not self.enabled:
+             return ""
+@@ -291,7 +291,7 @@         return response
+ 
+ 
+-def setup_security_middleware(app: ASGIApp) -> ASGIApp:
++async def setup_security_middleware(app: ASGIApp) -> ASGIApp:
+     """设置所有安全中间件."""
+     # CORS中间件
+     app.add_middleware(
+@@ -337,12 +337,12 @@     pass  # 添加pass语句
+     """安全配置类"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.load_config()
+ 
+-    def load_config(self):
++async def load_config(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """加载安全配置"""
+@@ -389,7 +389,7 @@         )
+         self.session_samesite_cookie = os.getenv("SESSION_SAMESITE_COOKIE", "Strict")
+ 
+-    def validate_password(self, password: str) -> bool:
++async def validate_password(self, password: str) -> bool:
+         """验证密码强度."""
+         if len(password) < self.password_min_length:
+             return False
+@@ -410,7 +410,7 @@ 
+         return True
+ 
+-    def get_session_config(self) -> dict[str, Any]:
++async def get_session_config(self) -> dict[str, Any]:
+         """获取会话配置."""
+         return {
+             "max_age": self.session_timeout_minutes * 60,

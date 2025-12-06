@@ -1,0 +1,117 @@
+--- a/src/queues/task_scheduler.py+++ b/src/queues/task_scheduler.py@@ -42,7 +42,7 @@     max_attempts: int = 3
+     attempts: int = 0
+ 
+-    def to_queue_task(self) -> QueueTask:
++async def to_queue_task(self) -> QueueTask:
+         """转换为队列任务."""
+         return QueueTask(
+             id=self.id,
+@@ -54,7 +54,7 @@             scheduled_at=self.schedule_time,
+         )
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         return {
+             "id": self.id,
+@@ -73,7 +73,7 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "ScheduledTask":
++async def from_dict(cls, data: dict[str, Any]) -> "ScheduledTask":
+         """从字典创建."""
+         return cls(
+             id=data["id"],
+@@ -81,14 +81,14 @@             schedule_time=datetime.fromisoformat(data["schedule_time"]),
+             data=data["data"],
+             priority=TaskPriority(data["priority"]),
+-            is_recurring=data.get("is_recurring", False),
++            is_recurring=data.await get("is_recurring", False),
+             recurrence_interval=(
+                 timedelta(seconds=data["recurrence_interval"])
+-                if data.get("recurrence_interval")
++                if data.await get("recurrence_interval")
+                 else None
+             ),
+-            max_attempts=data.get("max_attempts", 3),
+-            attempts=data.get("attempts", 0),
++            max_attempts=data.await get("max_attempts", 3),
++            attempts=data.await get("attempts", 0),
+         )
+ 
+ 
+@@ -125,7 +125,7 @@ class TaskScheduler:
+     """任务调度器."""
+ 
+-    def __init__(self, max_workers: int = 4):
++async def __init__(self, max_workers: int = 4):
+         self.max_workers = max_workers
+         self.current_workers = 0
+         self.status = SchedulerStatus.IDLE
+@@ -141,12 +141,12 @@             "created_at": datetime.now().isoformat(),
+         }
+ 
+-    def register_handler(self, task_type: str, handler: TaskHandler):
++async def register_handler(self, task_type: str, handler: TaskHandler):
+         """注册任务处理器."""
+         self.handlers[task_type] = handler
+         logger.info(f"注册任务处理器: {task_type}")
+ 
+-    def schedule_task(
++async def schedule_task(
+         self,
+         task_type: str,
+         data: dict[str, Any],
+@@ -302,7 +302,7 @@ 
+         try:
+             # 获取任务处理器
+-            handler = self.handlers.get(task.task_type, DefaultTaskHandler())
++            handler = self.handlers.await get(task.task_type, DefaultTaskHandler())
+ 
+             # 处理任务
+             result = await handler.handle_task(task)
+@@ -382,7 +382,7 @@ 
+         logger.error(f"任务 {task.id} 处理失败: {error_message}")
+ 
+-    def _cleanup_task(self, task_name: str):
++async def _cleanup_task(self, task_name: str):
+         """清理完成的任务."""
+         task_id = task_name.split("_")[-1]  # 从任务名称提取ID
+ 
+@@ -403,7 +403,7 @@             del self.worker_tasks[task_id]
+             self.current_workers = max(0, self.current_workers - 1)
+ 
+-    def get_statistics(self) -> dict[str, Any]:
++async def get_statistics(self) -> dict[str, Any]:
+         """获取调度器统计信息."""
+         stats = self.statistics.copy()
+         stats["status"] = self.status.value
+@@ -413,7 +413,7 @@ 
+         return stats
+ 
+-    def get_scheduled_tasks(self) -> list[dict[str, Any]]:
++async def get_scheduled_tasks(self) -> list[dict[str, Any]]:
+         """获取定时任务列表."""
+         return [task.to_dict() for task in self.scheduled_tasks]
+ 
+@@ -423,12 +423,12 @@ 
+ 
+ # 便捷函数
+-def get_scheduler() -> TaskScheduler:
++async def get_scheduler() -> TaskScheduler:
+     """获取全局调度器实例."""
+     return global_scheduler
+ 
+ 
+-def schedule_task(
++async def schedule_task(
+     task_type: str,
+     data: dict[str, Any],
+     schedule_time: datetime | None = None,
+@@ -445,6 +445,6 @@     )
+ 
+ 
+-def register_task_handler(task_type: str, handler: TaskHandler):
++async def register_task_handler(task_type: str, handler: TaskHandler):
+     """便捷的处理器注册函数."""
+     global_scheduler.register_handler(task_type, handler)

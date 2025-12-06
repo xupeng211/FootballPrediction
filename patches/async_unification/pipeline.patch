@@ -1,0 +1,104 @@
+--- a/src/features/pipeline.py+++ b/src/features/pipeline.py@@ -29,7 +29,7 @@     5. 生成训练目标变量
+     """
+ 
+-    def __init__(self, db_url: str = None):
++async def __init__(self, db_url: str = None):
+         """初始化特征流水线"""
+         if db_url is None:
+             # 使用项目默认数据库连接
+@@ -38,7 +38,7 @@         self.engine = create_engine(db_url)
+         logger.info("✅ 特征流水线初始化成功")
+ 
+-    def load_fbref_matches(self) -> pd.DataFrame:
++async def load_fbref_matches(self) -> pd.DataFrame:
+         """
+         从数据库加载所有FBref比赛数据
+ 
+@@ -84,7 +84,7 @@             logger.error(f"❌ 加载数据失败: {e}")
+             raise
+ 
+-    def extract_basic_features(self, df: pd.DataFrame) -> pd.DataFrame:
++async def extract_basic_features(self, df: pd.DataFrame) -> pd.DataFrame:
+         """
+         提取基础特征
+ 
+@@ -99,7 +99,7 @@         df = df.copy()
+ 
+         # 解析stats JSON字段获取xG数据
+-        def extract_xg(stats_str):
++async def extract_xg(stats_str):
+             try:
+                 if pd.isna(stats_str):
+                     return 0.0
+@@ -123,7 +123,7 @@ 
+         return df
+ 
+-    def build_rolling_features(self, df: pd.DataFrame, window: int = 5) -> pd.DataFrame:
++async def build_rolling_features(self, df: pd.DataFrame, window: int = 5) -> pd.DataFrame:
+         """
+         构建时序特征 (过去N场比赛的滚动统计)
+ 
+@@ -150,7 +150,7 @@             logger.info(f"📊 计算{team_type}队时序特征...")
+ 
+             # 计算每场比赛的胜负结果
+-            def get_result(row, team_type):
++async def get_result(row, team_type):
+                 if team_type == "home":
+                     if row["home_score"] > row["away_score"]:
+                         return 1  # 胜
+@@ -193,7 +193,7 @@ 
+         return df_with_features
+ 
+-    def _calculate_team_rolling_stats(
++async def _calculate_team_rolling_stats(
+         self
+         group: pd.DataFrame
+         score_col: str
+@@ -248,7 +248,7 @@ 
+         return rolling_stats
+ 
+-    def create_target_variable(self, df: pd.DataFrame) -> pd.DataFrame:
++async def create_target_variable(self, df: pd.DataFrame) -> pd.DataFrame:
+         """
+         创建目标变量 (比赛结果)
+ 
+@@ -262,7 +262,7 @@ 
+         df = df.copy()
+ 
+-        def get_match_result(row):
++async def get_match_result(row):
+             if row["home_score"] > row["away_score"]:
+                 return 2  # 主胜
+             elif row["home_score"] == row["away_score"]:
+@@ -280,7 +280,7 @@ 
+         return df
+ 
+-    def build_features(self, window: int = 5) -> tuple[pd.DataFrame, list[str]]:
++async def build_features(self, window: int = 5) -> tuple[pd.DataFrame, list[str]]:
+         """
+         构建完整的特征数据集
+ 
+@@ -313,7 +313,7 @@ 
+         return df, feature_cols
+ 
+-    def _is_feature_column(self, col_name: str) -> bool:
++async def _is_feature_column(self, col_name: str) -> bool:
+         """判断是否为特征列"""
+         exclude_cols = {
+             "id"
+@@ -331,7 +331,7 @@         }
+         return col_name not in exclude_cols
+ 
+-    def split_data(
++async def split_data(
+         self, df: pd.DataFrame, train_end_date: str = "2024-05-01"
+     ) -> tuple[pd.DataFrame, pd.DataFrame]:
+         """
+@@ -358,7 +358,7 @@         return train_df, test_df
+ 
+ 
+-def main():
++async def main():
+     """测试特征流水线"""
+     logging.basicConfig(
+         level=logging.INFO

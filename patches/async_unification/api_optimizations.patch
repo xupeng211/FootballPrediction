@@ -1,0 +1,13 @@
+--- a/src/optimizations/api_optimizations.py+++ b/src/optimizations/api_optimizations.py@@ -2,11 +2,11 @@ 
+ 
+ class ApiOptimizations:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

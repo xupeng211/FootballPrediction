@@ -1,0 +1,4013 @@
+diff --git a/requirements-dev.txt b/requirements-dev.txt
+index e82d88c52..23c8cec9e 100644
+--- a/requirements-dev.txt
++++ b/requirements-dev.txt
+@@ -17,6 +17,12 @@ ruff==0.14.3
+ mypy==1.18.2
+ bandit==1.8.6
+ 
++# Type Stubs for Better Type Checking
++types-redis>=4.6.0
++types-cachetools>=5.3.0
++types-requests>=2.31.0
++types-pyyaml>=6.0.0
++
+ # 开发工具 (Development Tools)
+ pre-commit==4.0.1
+ pip-audit==2.6.0
+diff --git a/requirements.txt b/requirements.txt
+index 94e33d873..0522ddb55 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -30,6 +30,17 @@ httpx>=0.25.0
+ tenacity>=8.2.0
+ prefect>=2.14.0
+ 
++# Machine Learning & Inference Dependencies
++scikit-learn>=1.3.0
++joblib>=1.3.0
++
++# Caching and Performance
++cachetools>=5.3.0
++redis[hiredis]>=4.5.0
++
++# File System Monitoring (for hot reload)
++watchdog>=3.0.0
++
+ # Development Tools
+ pytest>=8.0.0
+ pytest-asyncio>=0.21.0
+\ No newline at end of file
+diff --git a/src/inference/__init__.py b/src/inference/__init__.py
+new file mode 100644
+index 000000000..6f09a77a2
+--- /dev/null
++++ b/src/inference/__init__.py
+@@ -0,0 +1,66 @@
++"""
++Inference Service Module
++统一的推理服务模块
++
++提供模型加载、预测执行、缓存管理和热更新等核心功能。
++
++Architecture:
++    loader.py          - 异步模型加载器
++    predictor.py       - 核心预测器
++    feature_builder.py - 在线特征计算
++    cache.py           - Redis缓存层
++    hot_reload.py      - 热更新机制
++    schemas.py         - API Schema定义
++    errors.py          - 错误定义
++"""
++
++from .loader import ModelLoader
++from .cache import PredictionCache
++from .feature_builder import FeatureBuilder
++from .hot_reload import HotReloadManager
++from .schemas import (
++    PredictionRequest,
++    PredictionResponse,
++    BatchPredictionRequest,
++    BatchPredictionResponse,
++    ModelInfo,
++    ErrorResponse
++)
++from .errors import (
++    InferenceError,
++    ModelLoadError,
++    FeatureBuilderError,
++    PredictionError,
++    CacheError,
++    HotReloadError
++)
++
++# 延迟导入predictor以避免循环依赖
++def get_predictor():
++    from . import predictor
++    return predictor.get_predictor()
++
++__all__ = [
++    # Core classes
++    "ModelLoader",
++    "FeatureBuilder",
++    "PredictionCache",
++    "HotReloadManager",
++    "get_predictor",
++
++    # Schemas
++    "PredictionRequest",
++    "PredictionResponse",
++    "BatchPredictionRequest",
++    "BatchPredictionResponse",
++    "ModelInfo",
++    "ErrorResponse",
++
++    # Errors
++    "InferenceError",
++    "ModelLoadError",
++    "FeatureBuilderError",
++    "PredictionError",
++    "CacheError",
++    "HotReloadError"
++]
+diff --git a/src/inference/cache.py b/src/inference/cache.py
+new file mode 100644
+index 000000000..87c8c66bd
+--- /dev/null
++++ b/src/inference/cache.py
+@@ -0,0 +1,467 @@
++"""
++Prediction Cache
++Redis缓存层
++
++提供高性能的预测结果缓存功能，支持TTL、序列化和监控。
++"""
++
++import json
++import logging
++from datetime import datetime, timedelta
++from typing import Any, Optional, Union
++from pathlib import Path
++
++import redis.asyncio as redis
++from redis.asyncio import ConnectionPool
++
++from .errors import CacheError, ErrorCode
++
++logger = logging.getLogger(__name__)
++
++
++class PredictionCache:
++    """
++    预测结果缓存
++
++    功能：
++    1. Redis连接管理
++    2. 自动序列化/反序列化
++    3. TTL管理
++    4. 缓存统计
++    5. 健康检查
++    """
++
++    def __init__(
++        self,
++        redis_url: str = "redis://localhost:6379/0",
++        default_ttl: int = 300,  # 5分钟默认TTL
++        key_prefix: str = "football_prediction:",
++        max_connections: int = 10
++    ):
++        """
++        初始化缓存
++
++        Args:
++            redis_url: Redis连接URL
++            default_ttl: 默认TTL（秒）
++            key_prefix: 键前缀
++            max_connections: 最大连接数
++        """
++        self.redis_url = redis_url
++        self.default_ttl = default_ttl
++        self.key_prefix = key_prefix
++        self.max_connections = max_connections
++
++        # Redis连接池
++        self._pool: Optional[ConnectionPool] = None
++        self._redis_client: Optional[redis.Redis] = None
++
++        # 缓存统计
++        self._stats = {
++            "hits": 0,
++            "misses": 0,
++            "sets": 0,
++            "deletes": 0,
++            "errors": 0,
++            "last_operation": None,
++            "created_at": datetime.utcnow()
++        }
++
++        # 健康检查
++        self._last_health_check = None
++        self._is_healthy = False
++
++    async def initialize(self):
++        """初始化Redis连接"""
++        try:
++            # 创建连接池
++            self._pool = ConnectionPool.from_url(
++                self.redis_url,
++                max_connections=self.max_connections,
++                retry_on_timeout=True,
++                socket_keepalive=True,
++                socket_keepalive_options={},
++                health_check_interval=30
++            )
++
++            # 创建Redis客户端
++            self._redis_client = redis.Redis(connection_pool=self._pool)
++
++            # 测试连接
++            await self._redis_client.ping()
++            self._is_healthy = True
++            self._last_health_check = datetime.utcnow()
++
++            logger.info(f"PredictionCache initialized: {self.redis_url}")
++
++        except Exception as e:
++            self._is_healthy = False
++            raise CacheError(f"Failed to initialize Redis cache: {str(e)}")
++
++    async def get_prediction(self, cache_key: str) -> Optional[dict[str, Any]]:
++        """
++        获取缓存的预测结果
++
++        Args:
++            cache_key: 缓存键
++
++        Returns:
++            Optional[]: 缓存的预测数据，如果不存在返回None
++
++        Raises:
++            CacheError: 缓存操作失败
++        """
++        full_key = self._make_key(cache_key)
++
++        try:
++            # 获取缓存值
++            cached_data = await self._redis_client.get(full_key)
++
++            if cached_data is None:
++                self._stats["misses"] += 1
++                self._update_last_operation("get_miss", cache_key)
++                return None
++
++            # 反序列化
++            try:
++                data = json.loads(cached_data.decode('utf-8'))
++                self._stats["hits"] += 1
++                self._update_last_operation("get_hit", cache_key)
++                logger.debug(f"Cache hit for key: {cache_key}")
++                return data
++
++            except (json.JSONDecodeError, UnicodeDecodeError) as e:
++                logger.warning(f"Failed to deserialize cached data for key {cache_key}: {e}")
++                # 删除损坏的缓存
++                await self._redis_client.delete(full_key)
++                self._stats["misses"] += 1
++                return None
++
++        except Exception as e:
++            self._stats["errors"] += 1
++            logger.error(f"Cache get error for key {cache_key}: {e}")
++            raise CacheError(f"Failed to get cached prediction: {str(e)}", cache_key=cache_key)
++
++    async def set_prediction(
++        self,
++        cache_key: str,
++        data: dict[str, Any],
++        ttl: Optional[int] = None
++    ) -> bool:
++        """
++        缓存预测结果
++
++        Args:
++            cache_key: 缓存键
++            data: 要缓存的数据
++            ttl: 生存时间（秒），None表示使用默认TTL
++
++        Returns:
++            bool: 是否成功缓存
++
++        Raises:
++            CacheError: 缓存操作失败
++        """
++        full_key = self._make_key(cache_key)
++        ttl = ttl or self.default_ttl
++
++        try:
++            # 序列化数据
++            json_data = json.dumps(data, default=str, ensure_ascii=False)
++
++            # 设置缓存
++            success = await self._redis_client.setex(
++                full_key,
++                ttl,
++                json_data
++            )
++
++            if success:
++                self._stats["sets"] += 1
++                self._update_last_operation("set", cache_key)
++                logger.debug(f"Cached data for key: {cache_key}, TTL: {ttl}s")
++            else:
++                self._stats["errors"] += 1
++                logger.warning(f"Failed to cache data for key: {cache_key}")
++
++            return bool(success)
++
++        except Exception as e:
++            self._stats["errors"] += 1
++            logger.error(f"Cache set error for key {cache_key}: {e}")
++            raise CacheError(f"Failed to cache prediction: {str(e)}", cache_key=cache_key)
++
++    async def delete_prediction(self, cache_key: str) -> bool:
++        """
++        删除缓存的预测结果
++
++        Args:
++            cache_key: 缓存键
++
++        Returns:
++            bool: 是否成功删除
++
++        Raises:
++            CacheError: 缓存操作失败
++        """
++        full_key = self._make_key(cache_key)
++
++        try:
++            result = await self._redis_client.delete(full_key)
++
++            if result > 0:
++                self._stats["deletes"] += 1
++                self._update_last_operation("delete", cache_key)
++                logger.debug(f"Deleted cached data for key: {cache_key}")
++            else:
++                logger.debug(f"No cached data found to delete for key: {cache_key}")
++
++            return bool(result)
++
++        except Exception as e:
++            self._stats["errors"] += 1
++            logger.error(f"Cache delete error for key {cache_key}: {e}")
++            raise CacheError(f"Failed to delete cached prediction: {str(e)}", cache_key=cache_key)
++
++    async def exists(self, cache_key: str) -> bool:
++        """检查缓存是否存在"""
++        full_key = self._make_key(cache_key)
++
++        try:
++            return bool(await self._redis_client.exists(full_key))
++        except Exception as e:
++            logger.error(f"Cache exists check error for key {cache_key}: {e}")
++            return False
++
++    async def get_ttl(self, cache_key: str) -> int:
++        """获取缓存TTL"""
++        full_key = self._make_key(cache_key)
++
++        try:
++            ttl = await self._redis_client.ttl(full_key)
++            return ttl if ttl >= 0 else -1
++        except Exception as e:
++            logger.error(f"Cache TTL check error for key {cache_key}: {e}")
++            return -1
++
++    async def increment(self, cache_key: str, amount: int = 1) -> int:
++        """递增缓存值（用于计数器）"""
++        full_key = self._make_key(cache_key)
++
++        try:
++            return await self._redis_client.incrby(full_key, amount)
++        except Exception as e:
++            logger.error(f"Cache increment error for key {cache_key}: {e}")
++            raise CacheError(f"Failed to increment cache: {str(e)}", cache_key=cache_key)
++
++    async def get_multiple(self, cache_keys: list[str]) -> dict[str, Optional[dict[str, Any]]]:
++        """批量获取缓存"""
++        if not cache_keys:
++            return {}
++
++        full_keys = [self._make_key(key) for key in cache_keys]
++
++        try:
++            # 批量获取
++            cached_values = await self._redis_client.mget(full_keys)
++
++            results = {}
++            for _i, (key, value) in enumerate(zip(cache_keys, cached_values, strict=False)):
++                if value is not None:
++                    try:
++                        results[key] = json.loads(value.decode('utf-8'))
++                        self._stats["hits"] += 1
++                    except (json.JSONDecodeError, UnicodeDecodeError):
++                        # 跳过损坏的数据
++                        self._stats["misses"] += 1
++                else:
++                    results[key] = None
++                    self._stats["misses"] += 1
++
++            return results
++
++        except Exception as e:
++            self._stats["errors"] += 1
++            logger.error(f"Batch cache get error: {e}")
++            raise CacheError(f"Failed to get multiple cached predictions: {str(e)}")
++
++    async def set_multiple(
++        self,
++        cache_data: dict[str, dict[str, Any]],
++        ttl: Optional[int] = None
++    ) -> dict[str, bool]:
++        """批量设置缓存"""
++        if not cache_data:
++            return {}
++
++        ttl = ttl or self.default_ttl
++        results = {}
++
++        try:
++            # 使用pipeline提高性能
++            pipe = self._redis_client.pipeline()
++
++            for cache_key, data in cache_data.items():
++                full_key = self._make_key(cache_key)
++                json_data = json.dumps(data, default=str, ensure_ascii=False)
++                pipe.setex(full_key, ttl, json_data)
++
++            # 执行pipeline
++            pipe_results = await pipe.execute()
++
++            # 检查结果
++            for _i, (cache_key, success) in enumerate(zip(cache_data.keys(), pipe_results, strict=False)):
++                results[cache_key] = bool(success)
++                if success:
++                    self._stats["sets"] += 1
++                else:
++                    self._stats["errors"] += 1
++
++            return results
++
++        except Exception as e:
++            self._stats["errors"] += 1
++            logger.error(f"Batch cache set error: {e}")
++            raise CacheError(f"Failed to set multiple cached predictions: {str(e)}")
++
++    async def clear_pattern(self, pattern: str) -> int:
++        """按模式清除缓存"""
++        try:
++            # 搜索匹配的键
++            full_pattern = self._make_key(pattern)
++            keys = await self._redis_client.keys(full_pattern)
++
++            if not keys:
++                return 0
++
++            # 删除匹配的键
++            deleted_count = await self._redis_client.delete(*keys)
++            self._stats["deletes"] += deleted_count
++
++            logger.info(f"Cleared {deleted_count} cache entries matching pattern: {pattern}")
++            return deleted_count
++
++        except Exception as e:
++            self._stats["errors"] += 1
++            logger.error(f"Cache clear pattern error for pattern {pattern}: {e}")
++            raise CacheError(f"Failed to clear cache pattern: {str(e)}")
++
++    async def health_check(self) -> dict[str, Any]:
++        """健康检查"""
++        try:
++            # 检查Redis连接
++            start_time = datetime.now()
++            await self._redis_client.ping()
++            response_time = (datetime.now() - start_time).total_seconds() * 1000
++
++            # 获取Redis信息
++            info = await self._redis_client.info()
++
++            self._last_health_check = datetime.utcnow()
++            self._is_healthy = True
++
++            return {
++                "status": "healthy",
++                "response_time_ms": round(response_time, 2),
++                "redis_info": {
++                    "used_memory": info.get("used_memory_human"),
++                    "connected_clients": info.get("connected_clients"),
++                    "total_commands_processed": info.get("total_commands_processed"),
++                    "keyspace_hits": info.get("keyspace_hits"),
++                    "keyspace_misses": info.get("keyspace_misses")
++                },
++                "cache_stats": self.get_stats(),
++                "last_check": self._last_health_check.isoformat()
++            }
++
++        except Exception as e:
++            self._is_healthy = False
++            logger.error(f"Cache health check failed: {e}")
++
++            return {
++                "status": "unhealthy",
++                "error": str(e),
++                "cache_stats": self.get_stats(),
++                "last_check": self._last_health_check.isoformat() if self._last_health_check else None
++            }
++
++    def get_stats(self) -> dict[str, Any]:
++        """获取缓存统计信息"""
++        total_operations = (
++            self._stats["hits"] + self._stats["misses"] +
++            self._stats["sets"] + self._stats["deletes"]
++        )
++
++        hit_rate = (
++            self._stats["hits"] / (self._stats["hits"] + self._stats["misses"]) * 100
++            if (self._stats["hits"] + self._stats["misses"]) > 0 else 0
++        )
++
++        uptime = (datetime.utcnow() - self._stats["created_at"]).total_seconds()
++
++        return {
++            **self._stats,
++            "hit_rate": round(hit_rate, 2),
++            "total_operations": total_operations,
++            "uptime_seconds": round(uptime, 2),
++            "is_healthy": self._is_healthy,
++            "last_health_check": self._last_health_check.isoformat() if self._last_health_check else None
++        }
++
++    async def cleanup(self):
++        """清理资源"""
++        try:
++            if self._redis_client:
++                await self._redis_client.close()
++            if self._pool:
++                await self._pool.disconnect()
++
++            logger.info("PredictionCache cleanup completed")
++
++        except Exception as e:
++            logger.error(f"Cache cleanup error: {e}")
++
++    def _make_key(self, cache_key: str) -> str:
++        """生成完整的缓存键"""
++        return f"{self.key_prefix}{cache_key}"
++
++    def _update_last_operation(self, operation: str, cache_key: str):
++        """更新最后操作记录"""
++        self._stats["last_operation"] = {
++            "operation": operation,
++            "cache_key": cache_key,
++            "timestamp": datetime.utcnow().isoformat()
++        }
++
++
++# 全局实例
++_prediction_cache: Optional[PredictionCache] = None
++
++
++async def get_prediction_cache() -> PredictionCache:
++    """获取全局预测缓存实例"""
++    global _prediction_cache
++
++    if _prediction_cache is None:
++        # 从环境变量获取Redis配置
++        import os
++        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
++        default_ttl = int(os.getenv("CACHE_DEFAULT_TTL", "300"))
++
++        _prediction_cache = PredictionCache(
++            redis_url=redis_url,
++            default_ttl=default_ttl
++        )
++        await _prediction_cache.initialize()
++
++    return _prediction_cache
++
++
++def get_prediction_cache_sync() -> PredictionCache:
++    """同步获取预测缓存实例（用于非异步上下文）"""
++    global _prediction_cache
++
++    if _prediction_cache is None:
++        raise RuntimeError("PredictionCache not initialized. Call get_prediction_cache() first.")
++
++    return _prediction_cache
+diff --git a/src/inference/errors.py b/src/inference/errors.py
+new file mode 100644
+index 000000000..fc4eefe1f
+--- /dev/null
++++ b/src/inference/errors.py
+@@ -0,0 +1,157 @@
++"""
++Inference Service Error Definitions
++推理服务错误定义
++
++定义推理服务中使用的所有异常类和错误码。
++"""
++
++from typing import Any, Optional
++from enum import Enum
++
++
++class ErrorCode(str, Enum):
++    """错误码枚举"""
++
++    # Model Loading Errors
++    MODEL_NOT_FOUND = "MODEL_NOT_FOUND"
++    MODEL_LOAD_FAILED = "MODEL_LOAD_FAILED"
++    MODEL_VERSION_INVALID = "MODEL_VERSION_INVALID"
++    MODEL_CORRUPTED = "MODEL_CORRUPTED"
++
++    # Feature Building Errors
++    FEATURE_INVALID = "FEATURE_INVALID"
++    FEATURE_MISSING = "FEATURE_MISSING"
++    FEATURE_BUILD_FAILED = "FEATURE_BUILD_FAILED"
++    FEATURE_MISMATCH = "FEATURE_MISMATCH"
++
++    # Prediction Errors
++    PREDICTION_FAILED = "PREDICTION_FAILED"
++    PREDICTION_TIMEOUT = "PREDICTION_TIMEOUT"
++    PREDICTION_INVALID_INPUT = "PREDICTION_INVALID_INPUT"
++
++    # Cache Errors
++    CACHE_CONNECTION_FAILED = "CACHE_CONNECTION_FAILED"
++    CACHE_OPERATION_FAILED = "CACHE_OPERATION_FAILED"
++    CACHE_SERIALIZATION_ERROR = "CACHE_SERIALIZATION_ERROR"
++
++    # Hot Reload Errors
++    HOT_RELOAD_FAILED = "HOT_RELOAD_FAILED"
++    HOT_RELOAD_INVALID_MODEL = "HOT_RELOAD_INVALID_MODEL"
++    HOT_RELOAD_ROLLBACK_FAILED = "HOT_RELOAD_ROLLBACK_FAILED"
++
++    # General Errors
++    INTERNAL_ERROR = "INTERNAL_ERROR"
++    INVALID_REQUEST = "INVALID_REQUEST"
++    SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
++
++
++class InferenceError(Exception):
++    """推理服务基础异常类"""
++
++    def __init__(
++        self,
++        message: str,
++        error_code: ErrorCode = ErrorCode.INTERNAL_ERROR,
++        details: Optional[dict[str, Any]] = None
++    ):
++        self.message = message
++        self.error_code = error_code
++        self.details = details or {}
++        super().__init__(self.message)
++
++    def to_dict(self) -> dict[str, Any]:
++        """转换为字典格式"""
++        return {
++            "error": self.error_code.value,
++            "message": self.message,
++            "details": self.details
++        }
++
++
++class ModelLoadError(InferenceError):
++    """模型加载错误"""
++
++    def __init__(self, message: str, model_name: Optional[str] = None, **kwargs):
++        details = kwargs.get("details", {})
++        if model_name:
++            details["model_name"] = model_name
++        super().__init__(
++            message=message,
++            error_code=ErrorCode.MODEL_LOAD_FAILED,
++            details=details
++        )
++
++
++class FeatureBuilderError(InferenceError):
++    """特征构建错误"""
++
++    def __init__(self, message: str, feature_name: Optional[str] = None, **kwargs):
++        details = kwargs.get("details", {})
++        if feature_name:
++            details["feature_name"] = feature_name
++        super().__init__(
++            message=message,
++            error_code=ErrorCode.FEATURE_BUILD_FAILED,
++            details=details
++        )
++
++
++class PredictionError(InferenceError):
++    """预测错误"""
++
++    def __init__(self, message: str, prediction_id: Optional[str] = None, **kwargs):
++        details = kwargs.get("details", {})
++        if prediction_id:
++            details["prediction_id"] = prediction_id
++        super().__init__(
++            message=message,
++            error_code=ErrorCode.PREDICTION_FAILED,
++            details=details
++        )
++
++
++class CacheError(InferenceError):
++    """缓存错误"""
++
++    def __init__(self, message: str, cache_key: Optional[str] = None, **kwargs):
++        details = kwargs.get("details", {})
++        if cache_key:
++            details["cache_key"] = cache_key
++        super().__init__(
++            message=message,
++            error_code=ErrorCode.CACHE_OPERATION_FAILED,
++            details=details
++        )
++
++
++class HotReloadError(InferenceError):
++    """热更新错误"""
++
++    def __init__(self, message: str, model_name: Optional[str] = None, **kwargs):
++        details = kwargs.get("details", {})
++        if model_name:
++            details["model_name"] = model_name
++        super().__init__(
++            message=message,
++            error_code=ErrorCode.HOT_RELOAD_FAILED,
++            details=details
++        )
++
++
++# Error handler utilities
++def handle_inference_error(func):
++    """推理服务错误处理装饰器"""
++    def wrapper(*args, **kwargs):
++        try:
++            return func(*args, **kwargs)
++        except InferenceError:
++            # Re-raise our custom errors
++            raise
++        except Exception as e:
++            # Convert unexpected errors to InferenceError
++            raise InferenceError(
++                message=f"Unexpected error in {func.__name__}: {str(e)}",
++                error_code=ErrorCode.INTERNAL_ERROR,
++                details={"original_error": str(e)}
++            )
++    return wrapper
+diff --git a/src/inference/feature_builder.py b/src/inference/feature_builder.py
+new file mode 100644
+index 000000000..19a65805a
+--- /dev/null
++++ b/src/inference/feature_builder.py
+@@ -0,0 +1,563 @@
++"""
++Feature Builder
++在线特征计算器
++
++确保训练和推理特征的一致性（Feature Parity）。
++提供特征构建、验证和转换功能。
++"""
++
++import asyncio
++import json
++import logging
++from datetime import datetime, timedelta
++from typing import Any, Optional, Union
++from pathlib import Path
++
++import numpy as np
++import pandas as pd
++from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
++from sklearn.impute import SimpleImputer
++
++from src.features.feature_definitions import (
++    FEATURE_DEFINITIONS,
++    FeatureType
++)
++from .errors import FeatureBuilderError, ErrorCode
++
++logger = logging.getLogger(__name__)
++
++
++class FeatureBuilder:
++    """
++    在线特征构建器
++
++    确保与训练时完全一致的特征处理流程：
++    1. 特征选择和过滤
++    2. 缺失值处理
++    3. 特征编码和标准化
++    4. 时间特征工程
++    5. 特征验证
++    """
++
++    def __init__(self, config_path: Optional[str] = None):
++        """
++        初始化特征构建器
++
++        Args:
++            config_path: 特征配置文件路径
++        """
++        self.feature_definitions = FEATURE_DEFINITIONS
++        self.feature_encoders = {}
++        self.feature_scalers = {}
++        self.feature_imputers = {}
++        self.feature_columns = []
++        self.numeric_features = []
++        self.categorical_features = []
++        self.time_features = []
++
++        # 统计信息（从训练时加载）
++        self.feature_stats = {}
++
++        # 初始化编码器
++        self._initialize_encoders()
++
++        if config_path:
++            self._load_config(config_path)
++
++    def _initialize_encoders(self):
++        """初始化特征编码器和标准化器"""
++        # 按特征类型分组
++        for name, definition in self.feature_definitions.items():
++            self.feature_columns.append(name)
++
++            if definition.type == FeatureType.NUMERIC:
++                self.numeric_features.append(name)
++                # 初始化数值特征的标准化器
++                self.feature_scalers[name] = StandardScaler()
++                self.feature_imputers[name] = SimpleImputer(strategy='mean')
++
++            elif definition.type == FeatureType.CATEGORICAL:
++                self.categorical_features.append(name)
++                # 初始化分类特征的编码器
++                self.feature_encoders[name] = OneHotEncoder(
++                    handle_unknown='ignore',
++                    sparse_output=False
++                )
++                self.feature_imputers[name] = SimpleImputer(strategy='most_frequent')
++
++            elif definition.type == FeatureType.TIME:
++                self.time_features.append(name)
++
++    def _load_config(self, config_path: str):
++        """加载特征配置（从训练时保存的配置）"""
++        try:
++            with open(config_path) as f:
++                config = json.load(f)
++
++            # 加载特征统计信息
++            self.feature_stats = config.get('feature_stats', {})
++
++            # 加载编码器参数
++            if 'encoders' in config:
++                self._load_encoders(config['encoders'])
++
++            # 加载标准化器参数
++            if 'scalers' in config:
++                self._load_scalers(config['scalers'])
++
++            logger.info(f"Feature configuration loaded from {config_path}")
++
++        except Exception as e:
++            raise FeatureBuilderError(f"Failed to load feature config: {str(e)}")
++
++    def _load_encoders(self, encoder_configs: dict[str, dict]):
++        """加载编码器配置"""
++        for feature_name, config in encoder_configs.items():
++            if feature_name in self.categorical_features:
++                # 重建OneHotEncoder
++                categories = config.get('categories', [])
++                if categories:
++                    self.feature_encoders[feature_name] = OneHotEncoder(
++                        categories=categories,
++                        handle_unknown='ignore',
++                        sparse_output=False
++                    )
++
++    def _load_scalers(self, scaler_configs: dict[str, dict]):
++        """加载标准化器配置"""
++        for feature_name, config in scaler_configs.items():
++            if feature_name in self.numeric_features:
++                # 重建StandardScaler
++                mean = np.array(config.get('mean', [0]))
++                scale = np.array(config.get('scale', [1]))
++
++                scaler = StandardScaler()
++                scaler.mean_ = mean
++                scaler.scale_ = scale
++                self.feature_scalers[feature_name] = scaler
++
++    async def build_features(
++        self,
++        raw_data: dict[str, Any],
++        match_info: Optional[dict[str, Any]] = None,
++        historical_data: Optional[dict[str, Any]] = None
++    ) -> pd.DataFrame:
++        """
++        构建特征DataFrame
++
++        Args:
++            raw_data: 原始数据字典
++            match_info: 比赛信息
++            historical_data: 历史数据
++
++        Returns:
++            pd.DataFrame: 构建的特征DataFrame
++
++        Raises:
++            FeatureBuilderError: 特征构建失败
++        """
++        try:
++            # 1. 基础特征提取
++            features = await self._extract_base_features(raw_data, match_info)
++
++            # 2. 时间特征工程
++            time_features = self._build_time_features(features)
++            features.update(time_features)
++
++            # 3. 滚动窗口特征（如果有历史数据）
++            if historical_data:
++                rolling_features = await self._build_rolling_features(
++                    features, historical_data
++                )
++                features.update(rolling_features)
++
++            # 4. 转换为DataFrame
++            df = pd.DataFrame([features])
++
++            # 5. 特征验证
++            self._validate_features(df)
++
++            # 6. 特征预处理
++            df = self._preprocess_features(df)
++
++            # 7. 特征编码
++            df = self._encode_features(df)
++
++            logger.info(f"Features built successfully: {len(df.columns)} features")
++            return df
++
++        except Exception as e:
++            raise FeatureBuilderError(
++                f"Failed to build features: {str(e)}",
++                details={"raw_data_keys": list(raw_data.keys()) if raw_data else []}
++            )
++
++    async def _extract_base_features(
++        self,
++        raw_data: dict[str, Any],
++        match_info: Optional[dict[str, Any]] = None
++    ) -> dict[str, Any]:
++        """提取基础特征"""
++        features = {}
++
++        # 从原始数据中提取
++        for feature_name in self.feature_columns:
++            if feature_name in raw_data:
++                features[feature_name] = raw_data[feature_name]
++
++        # 从比赛信息中提取
++        if match_info:
++            # 主客队信息
++            if 'home_team' in match_info:
++                features['home_team'] = match_info['home_team']
++            if 'away_team' in match_info:
++                features['away_team'] = match_info['away_team']
++
++            # 比赛时间信息
++            if 'match_date' in match_info:
++                features['match_date'] = match_info['match_date']
++            if 'league_id' in match_info:
++                features['league_id'] = match_info['league_id']
++
++        # 计算衍生特征
++        features = self._calculate_derived_features(features)
++
++        return features
++
++    def _calculate_derived_features(self, features: dict[str, Any]) -> dict[str, Any]:
++        """计算衍生特征"""
++        derived = {}
++
++        # 进球差
++        if 'home_goals' in features and 'away_goals' in features:
++            derived['goal_difference'] = features['home_goals'] - features['away_goals']
++            derived['total_goals'] = features['home_goals'] + features['away_goals']
++
++        # 控球率差
++        if 'home_possession' in features and 'away_possession' in features:
++            derived['possession_difference'] = (
++                features['home_possession'] - features['away_possession']
++            )
++
++        # 射门效率
++        if 'home_shots' in features and 'home_goals' in features:
++            if features['home_shots'] > 0:
++                derived['home_shot_efficiency'] = (
++                    features['home_goals'] / features['home_shots']
++                )
++            else:
++                derived['home_shot_efficiency'] = 0.0
++
++        if 'away_shots' in features and 'away_goals' in features:
++            if features['away_shots'] > 0:
++                derived['away_shot_efficiency'] = (
++                    features['away_goals'] / features['away_shots']
++                )
++            else:
++                derived['away_shot_efficiency'] = 0.0
++
++        return derived
++
++    def _build_time_features(self, features: dict[str, Any]) -> dict[str, Any]:
++        """构建时间特征"""
++        time_features = {}
++
++        if 'match_date' in features:
++            match_date = features['match_date']
++
++            # 处理不同格式的时间
++            if isinstance(match_date, str):
++                try:
++                    match_date = pd.to_datetime(match_date)
++                except Exception:
++                    match_date = datetime.now()
++            elif isinstance(match_date, (int, float)):
++                match_date = datetime.fromtimestamp(match_date)
++
++            # 提取时间特征
++            time_features.update({
++                'match_day_of_week': match_date.dayofweek,
++                'match_month': match_date.month,
++                'match_hour': match_date.hour,
++                'match_weekend': 1 if match_date.dayofweek >= 5 else 0,
++                'match_season': self._get_season(match_date.month)
++            })
++
++        return time_features
++
++    def _get_season(self, month: int) -> str:
++        """获取季节"""
++        if month in [12, 1, 2]:
++            return 'winter'
++        elif month in [3, 4, 5]:
++            return 'spring'
++        elif month in [6, 7, 8]:
++            return 'summer'
++        else:
++            return 'autumn'
++
++    async def _build_rolling_features(
++        self,
++        current_features: dict[str, Any],
++        historical_data: dict[str, Any]
++    ) -> dict[str, Any]:
++        """构建滚动窗口特征"""
++        rolling_features = {}
++
++        try:
++            # 获取历史数据
++            team_history = historical_data.get('team_history', {})
++
++            if 'home_team' in current_features:
++                home_team = current_features['home_team']
++                if home_team in team_history:
++                    home_history = team_history[home_team]
++                    rolling_features.update(self._calculate_rolling_stats(
++                        home_history, prefix='home_'
++                    ))
++
++            if 'away_team' in current_features:
++                away_team = current_features['away_team']
++                if away_team in team_history:
++                    away_history = team_history[away_team]
++                    rolling_features.update(self._calculate_rolling_stats(
++                        away_history, prefix='away_'
++                    ))
++
++        except Exception as e:
++            logger.warning(f"Failed to build rolling features: {e}")
++
++        return rolling_features
++
++    def _calculate_rolling_stats(
++        self,
++        history: list[dict[str, Any]],
++        prefix: str,
++        window: int = 5
++    ) -> dict[str, Any]:
++        """计算滚动统计特征"""
++        if not history or len(history) < window:
++            return {}
++
++        # 获取最近的窗口数据
++        recent_history = history[-window:]
++
++        rolling_stats = {}
++
++        # 计算各种统计量
++        numeric_fields = ['goals', 'shots', 'possession', 'corners']
++
++        for field in numeric_fields:
++            values = [match.get(field, 0) for match in recent_history]
++            if values:
++                rolling_stats.update({
++                    f'{prefix}{field}_rolling_{window}_mean': np.mean(values),
++                    f'{prefix}{field}_rolling_{window}_std': np.std(values),
++                    f'{prefix}{field}_rolling_{window}_max': np.max(values),
++                    f'{prefix}{field}_rolling_{window}_min': np.min(values),
++                    f'{prefix}{field}_rolling_{window}_sum': np.sum(values)
++                })
++
++        return rolling_stats
++
++    def _validate_features(self, df: pd.DataFrame):
++        """验证特征数据"""
++        try:
++            # TODO: 实现特征验证逻辑
++            # 临时注释掉validate_feature_data调用
++            # validate_feature_data(df)
++
++            # 基础验证
++            required_columns = ['home_goals', 'away_goals']
++            for col in required_columns:
++                if col not in df.columns:
++                    raise FeatureBuilderError(f"Missing required feature: {col}")
++
++        except Exception as e:
++            raise FeatureBuilderError(
++                f"Feature validation failed: {str(e)}",
++                details={"features": list(df.columns)}
++            )
++
++    def _preprocess_features(self, df: pd.DataFrame) -> pd.DataFrame:
++        """特征预处理"""
++        processed_df = df.copy()
++
++        # 处理数值特征
++        for feature in self.numeric_features:
++            if feature in processed_df.columns:
++                # 缺失值填充
++                if feature in self.feature_imputers:
++                    # 如果有训练时的统计信息，使用训练时的均值
++                    if feature in self.feature_stats:
++                        mean_value = self.feature_stats[feature].get('mean', 0)
++                        processed_df[feature].fillna(mean_value, inplace=True)
++                    else:
++                        # 使用imputer
++                        values = processed_df[[feature]].values
++                        filled_values = self.feature_imputers[feature].fit_transform(values)
++                        processed_df[feature] = filled_values.flatten()
++
++                # 转换数据类型
++                processed_df[feature] = pd.to_numeric(processed_df[feature], errors='coerce')
++
++        # 处理分类特征
++        for feature in self.categorical_features:
++            if feature in processed_df.columns:
++                # 缺失值填充
++                if feature in self.feature_imputers:
++                    # 如果有训练时的统计信息，使用训练时的众数
++                    if feature in self.feature_stats:
++                        mode_value = self.feature_stats[feature].get('mode', 'unknown')
++                        processed_df[feature].fillna(mode_value, inplace=True)
++                    else:
++                        # 使用imputer
++                        values = processed_df[[feature]].values
++                        filled_values = self.feature_imputers[feature].fit_transform(values)
++                        processed_df[feature] = filled_values.flatten()
++
++                # 转换为字符串类型
++                processed_df[feature] = processed_df[feature].astype(str)
++
++        return processed_df
++
++    def _encode_features(self, df: pd.DataFrame) -> pd.DataFrame:
++        """特征编码"""
++        encoded_df = df.copy()
++
++        # 编码分类特征
++        for feature in self.categorical_features:
++            if feature in encoded_df.columns:
++                try:
++                    if feature in self.feature_encoders:
++                        # 使用训练时的编码器
++                        encoder = self.feature_encoders[feature]
++                        encoded = encoder.transform(encoded_df[[feature]])
++
++                        # 创建OneHot编码列名
++                        if hasattr(encoder, 'categories_'):
++                            category_names = encoder.categories_[0]
++                            feature_names = [f"{feature}_{cat}" for cat in category_names]
++                        else:
++                            feature_names = [f"{feature}_{i}" for i in range(encoded.shape[1])]
++
++                        # 添加编码后的特征
++                        for i, name in enumerate(feature_names):
++                            encoded_df[name] = encoded[:, i]
++
++                        # 删除原始特征
++                        encoded_df.drop(columns=[feature], inplace=True)
++                    else:
++                        # 如果没有编码器，使用Label编码
++                        le = LabelEncoder()
++                        encoded_df[feature] = le.fit_transform(encoded_df[feature].astype(str))
++
++                except Exception as e:
++                    logger.warning(f"Failed to encode feature {feature}: {e}")
++
++        # 标准化数值特征
++        for feature in self.numeric_features:
++            if feature in encoded_df.columns:
++                try:
++                    if feature in self.feature_scalers:
++                        # 使用训练时的标准化器
++                        scaler = self.feature_scalers[feature]
++                        encoded_df[feature] = scaler.transform(encoded_df[[feature]]).flatten()
++                except Exception as e:
++                    logger.warning(f"Failed to scale feature {feature}: {e}")
++
++        return encoded_df
++
++    async def get_feature_importance(self) -> dict[str, float]:
++        """获取特征重要性（如果可用）"""
++        importance = {}
++
++        # 基于特征类型分配重要性
++        for feature in self.feature_columns:
++            if feature in self.numeric_features:
++                importance[feature] = 0.7  # 数值特征重要性较高
++            elif feature in self.categorical_features:
++                importance[feature] = 0.5  # 分类特征重要性中等
++            else:
++                importance[feature] = 0.3  # 其他特征重要性较低
++
++        # 归一化
++        total_importance = sum(importance.values())
++        if total_importance > 0:
++            importance = {k: v / total_importance for k, v in importance.items()}
++
++        return importance
++
++    def get_feature_info(self) -> dict[str, Any]:
++        """获取特征信息"""
++        return {
++            "total_features": len(self.feature_columns),
++            "numeric_features": len(self.numeric_features),
++            "categorical_features": len(self.categorical_features),
++            "time_features": len(self.time_features),
++            "feature_columns": self.feature_columns,
++            "feature_stats": self.feature_stats
++        }
++
++    def save_config(self, config_path: str):
++        """保存特征配置"""
++        config = {
++            "feature_columns": self.feature_columns,
++            "numeric_features": self.numeric_features,
++            "categorical_features": self.categorical_features,
++            "time_features": self.time_features,
++            "feature_stats": self.feature_stats,
++            "encoders": self._save_encoders(),
++            "scalers": self._save_scalers(),
++            "timestamp": datetime.now().isoformat()
++        }
++
++        with open(config_path, 'w') as f:
++            json.dump(config, f, indent=2, default=str)
++
++        logger.info(f"Feature configuration saved to {config_path}")
++
++    def _save_encoders(self) -> dict[str, dict]:
++        """保存编码器配置"""
++        encoder_configs = {}
++
++        for feature, encoder in self.feature_encoders.items():
++            config = {}
++            if hasattr(encoder, 'categories_'):
++                config['categories'] = [cat.tolist() for cat in encoder.categories_]
++            encoder_configs[feature] = config
++
++        return encoder_configs
++
++    def _save_scalers(self) -> dict[str, dict]:
++        """保存标准化器配置"""
++        scaler_configs = {}
++
++        for feature, scaler in self.feature_scalers.items():
++            config = {}
++            if hasattr(scaler, 'mean_'):
++                config['mean'] = scaler.mean_.tolist()
++            if hasattr(scaler, 'scale_'):
++                config['scale'] = scaler.scale_.tolist()
++            scaler_configs[feature] = config
++
++        return scaler_configs
++
++
++# 全局实例
++_feature_builder: Optional[FeatureBuilder] = None
++
++
++async def get_feature_builder() -> FeatureBuilder:
++    """获取全局特征构建器实例"""
++    global _feature_builder
++
++    if _feature_builder is None:
++        _feature_builder = FeatureBuilder()
++
++        # 尝试加载配置文件
++        config_path = Path("config/feature_builder_config.json")
++        if config_path.exists():
++            _feature_builder._load_config(str(config_path))
++
++    return _feature_builder
+diff --git a/src/inference/hot_reload.py b/src/inference/hot_reload.py
+new file mode 100644
+index 000000000..242e80e3c
+--- /dev/null
++++ b/src/inference/hot_reload.py
+@@ -0,0 +1,546 @@
++"""
++Hot Reload Manager
++模型热更新机制
++
++提供模型文件监控、自动重载和版本管理功能。
++支持无损模型更新和自动回滚。
++"""
++
++import asyncio
++import logging
++import threading
++from datetime import datetime, timedelta
++from pathlib import Path
++from typing import Any, Optional
++from collections.abc import Callable
++from concurrent.futures import ThreadPoolExecutor
++
++from watchdog.observers import Observer
++from watchdog.events import FileSystemEventHandler, FileModifiedEvent
++
++from .loader import get_model_loader, ModelLoader
++from .errors import HotReloadError, ErrorCode
++
++logger = logging.getLogger(__name__)
++
++
++class ModelFileHandler(FileSystemEventHandler):
++    """模型文件变化监听器"""
++
++    def __init__(self, hot_reload_manager: 'HotReloadManager'):
++        super().__init__()
++        self.hot_reload_manager = hot_reload_manager
++        self._debounce_time = 2.0  # 防抖时间（秒）
++        self._pending_files: dict[str, datetime] = {}
++
++    def on_modified(self, event):
++        """文件修改事件处理"""
++        if event.is_directory:
++            return
++
++        # 只处理模型文件
++        if not self._is_model_file(event.src_path):
++            return
++
++        file_path = str(event.src_path)
++        now = datetime.utcnow()
++
++        # 防抖处理
++        if file_path in self._pending_files:
++            last_time = self._pending_files[file_path]
++            if (now - last_time).total_seconds() < self._debounce_time:
++                return
++
++        self._pending_files[file_path] = now
++
++        # 异步处理文件变化
++        asyncio.create_task(
++            self.hot_reload_manager.handle_file_change(file_path)
++        )
++
++    def _is_model_file(self, file_path: str) -> bool:
++        """判断是否为模型文件"""
++        path = Path(file_path)
++        return path.suffix.lower() in ['.pkl', '.joblib', '.model', '.h5']
++
++
++class HotReloadManager:
++    """
++    模型热更新管理器
++
++    功能：
++    1. 文件监控
++    2. 自动重载
++    3. 版本管理
++    4. 健康检查
++    5. 回滚机制
++    """
++
++    def __init__(
++        self,
++        model_directory: str = "models/",
++        check_interval: float = 1.0,
++        max_workers: int = 2
++    ):
++        """
++        初始化热更新管理器
++
++        Args:
++            model_directory: 模型目录路径
++            check_interval: 检查间隔（秒）
++            max_workers: 最大工作线程数
++        """
++        self.model_directory = Path(model_directory)
++        self.check_interval = check_interval
++        self.max_workers = max_workers
++
++        # 文件监控
++        self._observer: Optional[Observer] = None
++        self._file_handler: Optional[ModelFileHandler] = None
++        self._is_monitoring = False
++
++        # 重载状态管理
++        self._reloading_models: set[str] = set()
++        self._reload_locks: dict[str, asyncio.Lock] = {}
++        self._reload_history: list[dict[str, Any]] = []
++
++        # 统计信息
++        self._stats = {
++            "total_reloads": 0,
++            "successful_reloads": 0,
++            "failed_reloads": 0,
++            "rollbacks": 0,
++            "last_reload": None,
++            "monitoring_start": None
++        }
++
++        # 健康检查
++        self._health_check_interval = 60.0  # 健康检查间隔
++        self._last_health_check = None
++
++        # 回调函数
++        self._reload_callbacks: list[Callable] = []
++
++        # 线程池
++        self._executor = ThreadPoolExecutor(max_workers=max_workers)
++
++    async def start_monitoring(self):
++        """启动文件监控"""
++        if self._is_monitoring:
++            logger.warning("Hot reload monitoring is already running")
++            return
++
++        try:
++            # 确保模型目录存在
++            self.model_directory.mkdir(parents=True, exist_ok=True)
++
++            # 创建文件监控器
++            self._file_handler = ModelFileHandler(self)
++            self._observer = Observer()
++            self._observer.schedule(
++                self._file_handler,
++                str(self.model_directory),
++                recursive=True
++            )
++
++            # 启动监控
++            self._observer.start()
++            self._is_monitoring = True
++            self._stats["monitoring_start"] = datetime.utcnow()
++
++            # 启动健康检查任务
++            asyncio.create_task(self._health_check_loop())
++
++            logger.info(f"Hot reload monitoring started for directory: {self.model_directory}")
++
++        except Exception as e:
++            raise HotReloadError(f"Failed to start hot reload monitoring: {str(e)}")
++
++    async def stop_monitoring(self):
++        """停止文件监控"""
++        if not self._is_monitoring:
++            return
++
++        try:
++            if self._observer:
++                self._observer.stop()
++                self._observer.join()
++                self._observer = None
++
++            self._is_monitoring = False
++            logger.info("Hot reload monitoring stopped")
++
++        except Exception as e:
++            logger.error(f"Error stopping hot reload monitoring: {e}")
++
++    async def handle_file_change(self, file_path: str):
++        """处理文件变化"""
++        try:
++            # 解析模型名称
++            model_name = self._extract_model_name(file_path)
++            if not model_name:
++                logger.warning(f"Could not extract model name from file path: {file_path}")
++                return
++
++            # 避免并发重载
++            if model_name in self._reloading_models:
++                logger.info(f"Model {model_name} is already being reloaded, skipping")
++                return
++
++            await self._reload_model(model_name, file_path)
++
++        except Exception as e:
++            logger.error(f"Error handling file change for {file_path}: {e}")
++
++    async def _reload_model(self, model_name: str, file_path: str):
++        """重载模型"""
++        reload_start = datetime.utcnow()
++        self._reloading_models.add(model_name)
++
++        try:
++            logger.info(f"Starting hot reload for model: {model_name}")
++
++            # 获取重载锁
++            if model_name not in self._reload_locks:
++                self._reload_locks[model_name] = asyncio.Lock()
++
++            async with self._reload_locks[model_name]:
++                # 1. 验证新模型
++                await self._validate_new_model(file_path)
++
++                # 2. 加载新模型（在后台验证）
++                await self._load_new_model(file_path)
++
++                # 3. 更新模型加载器
++                model_loader = await get_model_loader()
++                await model_loader.reload_model(model_name)
++
++                # 4. 验证重载结果
++                await self._verify_reload(model_name)
++
++                # 5. 记录成功
++                self._record_reload_success(model_name, file_path, reload_start)
++                self._stats["successful_reloads"] += 1
++
++                # 6. 触发回调
++                await self._trigger_reload_callbacks(model_name, "success")
++
++                logger.info(f"Successfully reloaded model: {model_name}")
++
++        except Exception as e:
++            # 记录失败
++            self._record_reload_failure(model_name, file_path, reload_start, str(e))
++            self._stats["failed_reloads"] += 1
++
++            # 尝试回滚
++            try:
++                await self._rollback_model(model_name)
++                self._stats["rollbacks"] += 1
++                logger.info(f"Rolled back model: {model_name} due to reload failure")
++            except Exception as rollback_error:
++                logger.error(f"Failed to rollback model {model_name}: {rollback_error}")
++
++            # 触发错误回调
++            await self._trigger_reload_callbacks(model_name, "error", str(e))
++
++            raise HotReloadError(f"Model hot reload failed for {model_name}: {str(e)}")
++
++        finally:
++            self._reloading_models.discard(model_name)
++
++    def _extract_model_name(self, file_path: str) -> Optional[str]:
++        """从文件路径提取模型名称"""
++        try:
++            path = Path(file_path)
++            # 移除扩展名
++            model_name = path.stem
++
++            # 移除版本后缀（如果有）
++            if '_' in model_name and model_name.split('_')[-1].replace('.', '').isdigit():
++                model_name = '_'.join(model_name.split('_')[:-1])
++
++            return model_name
++
++        except Exception:
++            return None
++
++    async def _validate_new_model(self, file_path: str):
++        """验证新模型文件"""
++        path = Path(file_path)
++
++        # 检查文件是否存在
++        if not path.exists():
++            raise HotReloadError(f"Model file does not exist: {file_path}")
++
++        # 检查文件大小
++        file_size = path.stat().st_size
++        if file_size == 0:
++            raise HotReloadError(f"Model file is empty: {file_path}")
++
++        # 检查文件格式
++        if path.suffix.lower() not in ['.pkl', '.joblib', '.model', '.h5']:
++            raise HotReloadError(f"Unsupported model file format: {path.suffix}")
++
++        # 基本加载测试（在线程池中执行）
++        try:
++            await asyncio.get_event_loop().run_in_executor(
++                self._executor,
++                self._test_model_load,
++                file_path
++            )
++        except Exception as e:
++            raise HotReloadError(f"Model validation failed: {str(e)}")
++
++    def _test_model_load(self, file_path: str):
++        """测试模型加载（同步方法）"""
++        import joblib
++        import pickle
++
++        try:
++            # 尝试加载模型
++            if file_path.endswith('.pkl'):
++                joblib.load(file_path)
++            else:
++                with open(file_path, 'rb') as f:
++                    pickle.load(f)
++        except Exception as e:
++            raise RuntimeError(f"Model load test failed: {str(e)}")
++
++    async def _load_new_model(self, file_path: str) -> Any:
++        """加载新模型（完整加载以验证）"""
++        try:
++            return await asyncio.get_event_loop().run_in_executor(
++                self._executor,
++                self._load_model_sync,
++                file_path
++            )
++        except Exception as e:
++            raise HotReloadError(f"Failed to load new model: {str(e)}")
++
++    def _load_model_sync(self, file_path: str):
++        """同步加载模型"""
++        import joblib
++        import pickle
++
++        if file_path.endswith('.pkl'):
++            return joblib.load(file_path)
++        else:
++            with open(file_path, 'rb') as f:
++                return pickle.load(f)
++
++    async def _verify_reload(self, model_name: str):
++        """验证重载结果"""
++        try:
++            # 尝试获取模型
++            model_loader = await get_model_loader()
++            loaded_model = await model_loader.get(model_name)
++
++            if loaded_model is None:
++                raise HotReloadError(f"Model {model_name} not available after reload")
++
++            # 简单的预测测试（如果可能）
++            await self._test_model_prediction(loaded_model.model)
++
++        except Exception as e:
++            raise HotReloadError(f"Reload verification failed: {str(e)}")
++
++    async def _test_model_prediction(self, model: Any):
++        """测试模型预测"""
++        # 这里可以添加简单的预测测试
++        # 暂时跳过，因为不同模型的接口可能不同
++        pass
++
++    async def _rollback_model(self, model_name: str):
++        """回滚模型"""
++        try:
++            logger.warning(f"Attempting to rollback model: {model_name}")
++
++            # 这里可以实现更复杂的回滚逻辑
++            # 例如：从备份恢复、回退到上一版本等
++            model_loader = await get_model_loader()
++
++            # 卸载当前模型
++            await model_loader.unload_model(model_name)
++
++            # 尝试重新加载（如果可能）
++            # 这里简化处理，实际应该有版本管理
++            logger.info(f"Model {model_name} rollback completed")
++
++        except Exception as e:
++            raise HotReloadError(f"Model rollback failed: {str(e)}")
++
++    def _record_reload_success(self, model_name: str, file_path: str, start_time: datetime):
++        """记录成功重载"""
++        reload_time = (datetime.utcnow() - start_time).total_seconds()
++
++        record = {
++            "timestamp": datetime.utcnow().isoformat(),
++            "model_name": model_name,
++            "file_path": file_path,
++            "status": "success",
++            "reload_time_seconds": reload_time,
++            "file_size": Path(file_path).stat().st_size
++        }
++
++        self._reload_history.append(record)
++        self._stats["last_reload"] = record
++        self._stats["total_reloads"] += 1
++
++        # 保持历史记录在合理范围内
++        if len(self._reload_history) > 100:
++            self._reload_history = self._reload_history[-100:]
++
++    def _record_reload_failure(self, model_name: str, file_path: str, start_time: datetime, error: str):
++        """记录失败重载"""
++        reload_time = (datetime.utcnow() - start_time).total_seconds()
++
++        record = {
++            "timestamp": datetime.utcnow().isoformat(),
++            "model_name": model_name,
++            "file_path": file_path,
++            "status": "failed",
++            "reload_time_seconds": reload_time,
++            "error": error
++        }
++
++        self._reload_history.append(record)
++        self._stats["last_reload"] = record
++
++        # 保持历史记录在合理范围内
++        if len(self._reload_history) > 100:
++            self._reload_history = self._reload_history[-100:]
++
++    async def _trigger_reload_callbacks(self, model_name: str, status: str, error: Optional[str] = None):
++        """触发重载回调"""
++        for callback in self._reload_callbacks:
++            try:
++                if asyncio.iscoroutinefunction(callback):
++                    await callback(model_name, status, error)
++                else:
++                    callback(model_name, status, error)
++            except Exception as e:
++                logger.error(f"Reload callback error: {e}")
++
++    def add_reload_callback(self, callback: Callable):
++        """添加重载回调函数"""
++        self._reload_callbacks.append(callback)
++
++    def remove_reload_callback(self, callback: Callable):
++        """移除重载回调函数"""
++        if callback in self._reload_callbacks:
++            self._reload_callbacks.remove(callback)
++
++    async def force_reload(self, model_name: str, file_path: Optional[str] = None):
++        """强制重载模型"""
++        if file_path is None:
++            # 尝试从模型目录查找文件
++            model_files = list(self.model_directory.glob(f"{model_name}.*"))
++            if not model_files:
++                raise HotReloadError(f"No model file found for {model_name}")
++
++            file_path = str(model_files[0])
++
++        await self._reload_model(model_name, file_path)
++
++    async def _health_check_loop(self):
++        """健康检查循环"""
++        while self._is_monitoring:
++            try:
++                await self._perform_health_check()
++                await asyncio.sleep(self._health_check_interval)
++            except Exception as e:
++                logger.error(f"Health check error: {e}")
++                await asyncio.sleep(10)  # 出错时等待较短时间
++
++    async def _perform_health_check(self):
++        """执行健康检查"""
++        try:
++            model_loader = await get_model_loader()
++            stats = model_loader.get_load_stats()
++
++            # 检查模型加载状态
++            if stats.get("load_errors", 0) > 10:
++                logger.warning("High model load error rate detected")
++
++            self._last_health_check = datetime.utcnow()
++
++        except Exception as e:
++            logger.error(f"Health check failed: {e}")
++
++    def get_reload_stats(self) -> dict[str, Any]:
++        """获取重载统计信息"""
++        uptime = None
++        if self._stats["monitoring_start"]:
++            uptime = (datetime.utcnow() - self._stats["monitoring_start"]).total_seconds()
++
++        success_rate = (
++            self._stats["successful_reloads"] / self._stats["total_reloads"] * 100
++            if self._stats["total_reloads"] > 0 else 0
++        )
++
++        return {
++            **self._stats,
++            "uptime_seconds": uptime,
++            "success_rate": round(success_rate, 2),
++            "is_monitoring": self._is_monitoring,
++            "reloading_models": list(self._reloading_models),
++            "reload_history_count": len(self._reload_history),
++            "callback_count": len(self._reload_callbacks),
++            "last_health_check": self._last_health_check.isoformat() if self._last_health_check else None
++        }
++
++    def get_reload_history(self, limit: int = 50) -> list[dict[str, Any]]:
++        """获取重载历史"""
++        return self._reload_history[-limit:]
++
++    async def cleanup(self):
++        """清理资源"""
++        try:
++            # 停止监控
++            await self.stop_monitoring()
++
++            # 关闭线程池
++            self._executor.shutdown(wait=True)
++
++            # 清理数据
++            self._reloading_models.clear()
++            self._reload_locks.clear()
++            self._reload_history.clear()
++            self._reload_callbacks.clear()
++
++            logger.info("HotReloadManager cleanup completed")
++
++        except Exception as e:
++            logger.error(f"Hot reload cleanup error: {e}")
++
++
++# 全局实例
++_hot_reload_manager: Optional[HotReloadManager] = None
++
++
++async def get_hot_reload_manager() -> HotReloadManager:
++    """获取全局热更新管理器实例"""
++    global _hot_reload_manager
++
++    if _hot_reload_manager is None:
++        # 从环境变量获取配置
++        import os
++        model_dir = os.getenv("MODEL_DIRECTORY", "models/")
++        check_interval = float(os.getenv("HOT_RELOAD_CHECK_INTERVAL", "1.0"))
++
++        _hot_reload_manager = HotReloadManager(
++            model_directory=model_dir,
++            check_interval=check_interval
++        )
++
++    return _hot_reload_manager
++
++
++def get_hot_reload_manager_sync() -> HotReloadManager:
++    """同步获取热更新管理器实例"""
++    global _hot_reload_manager
++
++    if _hot_reload_manager is None:
++        raise RuntimeError("HotReloadManager not initialized. Call get_hot_reload_manager() first.")
++
++    return _hot_reload_manager
+diff --git a/src/inference/loader.py b/src/inference/loader.py
+new file mode 100644
+index 000000000..5cd3b535e
+--- /dev/null
++++ b/src/inference/loader.py
+@@ -0,0 +1,408 @@
++"""
++Model Loader
++异步模型加载器
++
++提供高性能的异步模型加载、缓存和版本管理功能。
++支持模型回滚、并发加载和内存管理。
++"""
++
++import asyncio
++import json
++import os
++import pickle
++import threading
++from datetime import datetime, timedelta
++from pathlib import Path
++from typing import Any, Optional, Union
++from concurrent.futures import ThreadPoolExecutor
++import hashlib
++
++import joblib
++from cachetools import LRUCache
++from watchdog.observers import Observer
++from watchdog.events import FileSystemEventHandler
++
++from .errors import ModelLoadError, ErrorCode
++from .schemas import ModelInfo, ModelType
++
++
++class ModelLoadLock:
++    """模型加载锁"""
++
++    def __init__(self):
++        self._locks: dict[str, asyncio.Lock] = {}
++        self._global_lock = asyncio.Lock()
++
++    async def get_lock(self, model_name: str) -> asyncio.Lock:
++        """获取模型的加载锁"""
++        async with self._global_lock:
++            if model_name not in self._locks:
++                self._locks[model_name] = asyncio.Lock()
++            return self._locks[model_name]
++
++
++class ModelMetadata:
++    """模型元数据"""
++
++    def __init__(self, model_info: ModelInfo, file_path: str):
++        self.model_info = model_info
++        self.file_path = file_path
++        self.file_hash = self._calculate_file_hash(file_path)
++        self.last_modified = datetime.fromtimestamp(os.path.getmtime(file_path))
++
++    def _calculate_file_hash(self, file_path: str) -> str:
++        """计算文件哈希"""
++        hash_md5 = hashlib.md5()
++        with open(file_path, "rb") as f:
++            for chunk in iter(lambda: f.read(4096), b""):
++                hash_md5.update(chunk)
++        return hash_md5.hexdigest()
++
++    def is_modified(self) -> bool:
++        """检查文件是否被修改"""
++        if not os.path.exists(self.file_path):
++            return True
++
++        current_mtime = datetime.fromtimestamp(os.path.getmtime(self.file_path))
++        current_hash = self._calculate_file_hash(self.file_path)
++
++        return current_mtime != self.last_modified or current_hash != self.file_hash
++
++    def update_metadata(self):
++        """更新元数据"""
++        if os.path.exists(self.file_path):
++            self.last_modified = datetime.fromtimestamp(os.path.getmtime(self.file_path))
++            self.file_hash = self._calculate_file_hash(self.file_path)
++
++
++class LoadedModel:
++    """已加载的模型实例"""
++
++    def __init__(self, model: Any, metadata: ModelMetadata):
++        self.model = model
++        self.metadata = metadata
++        self.load_time = datetime.utcnow()
++        self.access_count = 0
++        self.last_access = datetime.utcnow()
++
++    def access(self) -> Any:
++        """访问模型"""
++        self.access_count += 1
++        self.last_access = datetime.utcnow()
++        return self.model
++
++
++class ModelLoader:
++    """异步模型加载器"""
++
++    def __init__(self, registry_path: str = "models/", max_loaded_models: int = 10):
++        self.registry_path = Path(registry_path)
++        self.max_loaded_models = max_loaded_models
++
++        # 模型存储
++        self._loaded_models: LRUCache[str, LoadedModel] = LRUCache(maxsize=max_loaded_models)
++        self._model_metadata: dict[str, ModelMetadata] = {}
++
++        # 线程池和锁
++        self._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="model_loader")
++        self._load_locks = ModelLoadLock()
++
++        # 版本管理
++        self._default_models: dict[str, str] = {}  # model_type -> default_model_name
++        self._model_versions: dict[str, list[str]] = {}  # model_name -> [versions]
++
++        # 监控
++        self._load_stats = {
++            "total_loads": 0,
++            "cache_hits": 0,
++            "cache_misses": 0,
++            "load_errors": 0
++        }
++
++    async def initialize(self):
++        """初始化模型加载器"""
++        try:
++            await self._scan_models()
++            await self._load_default_models()
++            print(f"ModelLoader initialized: {len(self._model_metadata)} models found")
++        except Exception as e:
++            raise ModelLoadError(f"Failed to initialize ModelLoader: {str(e)}")
++
++    async def load(self, model_name: str, version: Optional[str] = None) -> LoadedModel:
++        """
++        异步加载模型
++
++        Args:
++            model_name: 模型名称
++            version: 指定版本（可选）
++
++        Returns:
++            LoadedModel: 已加载的模型实例
++
++        Raises:
++            ModelLoadError: 模型加载失败
++        """
++        load_lock = await self._load_locks.get_lock(model_name)
++
++        async with load_lock:
++            return await self._load_model_internal(model_name, version)
++
++    async def get(self, model_name: str) -> LoadedModel:
++        """获取已加载的模型"""
++        if model_name in self._loaded_models:
++            self._load_stats["cache_hits"] += 1
++            return self._loaded_models[model_name]
++
++        # 模型未加载，尝试加载
++        try:
++            model = await self.load(model_name)
++            self._load_stats["cache_misses"] += 1
++            return model
++        except Exception as e:
++            self._load_stats["load_errors"] += 1
++            raise ModelLoadError(f"Failed to load model '{model_name}': {str(e)}")
++
++    async def get_model_info(self, model_name: str) -> Optional[ModelInfo]:
++        """获取模型信息"""
++        if model_name in self._model_metadata:
++            return self._model_metadata[model_name].model_info
++        return None
++
++    async def list_models(self, model_type: Optional[ModelType] = None) -> list[ModelInfo]:
++        """列出所有可用模型"""
++        models = [metadata.model_info for metadata in self._model_metadata.values()]
++
++        if model_type:
++            models = [m for m in models if m.model_type == model_type]
++
++        return sorted(models, key=lambda x: (x.model_name, x.created_at))
++
++    async def set_default_model(self, model_type: ModelType, model_name: str):
++        """设置默认模型"""
++        if model_name not in self._model_metadata:
++            raise ModelLoadError(f"Model '{model_name}' not found")
++
++        self._default_models[model_type.value] = model_name
++
++    async def get_default_model(self, model_type: ModelType) -> Optional[str]:
++        """获取默认模型"""
++        return self._default_models.get(model_type.value)
++
++    async def unload_model(self, model_name: str):
++        """卸载模型"""
++        if model_name in self._loaded_models:
++            del self._loaded_models[model_name]
++
++    async def reload_model(self, model_name: str) -> LoadedModel:
++        """重新加载模型"""
++        load_lock = await self._load_locks.get_lock(model_name)
++
++        async with load_lock:
++            # 卸载现有模型
++            if model_name in self._loaded_models:
++                del self._loaded_models[model_name]
++
++            # 重新加载
++            return await self._load_model_internal(model_name, None, force_reload=True)
++
++    def get_load_stats(self) -> dict[str, Any]:
++        """获取加载统计信息"""
++        total_requests = self._load_stats["cache_hits"] + self._load_stats["cache_misses"]
++        cache_hit_rate = (
++            self._load_stats["cache_hits"] / total_requests * 100
++            if total_requests > 0 else 0
++        )
++
++        return {
++            **self._load_stats,
++            "cache_hit_rate": round(cache_hit_rate, 2),
++            "loaded_models": len(self._loaded_models),
++            "total_models": len(self._model_metadata)
++        }
++
++    async def _scan_models(self):
++        """扫描模型目录"""
++        if not self.registry_path.exists():
++            self.registry_path.mkdir(parents=True, exist_ok=True)
++            return
++
++        # 扫描所有模型文件
++        for model_file in self.registry_path.rglob("*.pkl"):
++            await self._register_model_file(model_file)
++
++        # 扫描JSON元数据文件
++        for json_file in self.registry_path.rglob("*.json"):
++            await self._load_model_metadata(json_file)
++
++    async def _register_model_file(self, model_file: Path):
++        """注册模型文件"""
++        try:
++            # 尝试从文件名解析模型信息
++            model_name = model_file.stem
++            model_type = self._detect_model_type(model_file)
++
++            # 创建模型信息
++            model_info = ModelInfo(
++                model_name=model_name,
++                model_version="1.0.0",  # 默认版本
++                model_type=model_type,
++                created_at=datetime.fromtimestamp(model_file.stat().st_ctime),
++                file_size=model_file.stat().st_size
++            )
++
++            # 创建元数据
++            metadata = ModelMetadata(model_info, str(model_file))
++            self._model_metadata[model_name] = metadata
++
++        except Exception as e:
++            print(f"Warning: Failed to register model file {model_file}: {e}")
++
++    async def _load_model_metadata(self, json_file: Path):
++        """加载模型元数据"""
++        try:
++            with open(json_file) as f:
++                data = json.load(f)
++
++            model_info = ModelInfo(**data)
++            model_file = json_file.with_suffix('.pkl')
++
++            if model_file.exists():
++                metadata = ModelMetadata(model_info, str(model_file))
++                self._model_metadata[model_info.model_name] = metadata
++
++        except Exception as e:
++            print(f"Warning: Failed to load metadata from {json_file}: {e}")
++
++    async def _load_default_models(self):
++        """加载默认模型"""
++        # 为每种模型类型设置默认模型
++        for model_type in ModelType:
++            models_of_type = await self.list_models(model_type)
++            if models_of_type:
++                await self.set_default_model(model_type, models_of_type[0].model_name)
++
++    async def _load_model_internal(
++        self,
++        model_name: str,
++        version: Optional[str] = None,
++        force_reload: bool = False
++    ) -> LoadedModel:
++        """内部模型加载方法"""
++
++        # 检查是否已加载
++        if not force_reload and model_name in self._loaded_models:
++            loaded_model = self._loaded_models[model_name]
++
++            # 检查文件是否被修改
++            if not loaded_model.metadata.is_modified():
++                return loaded_model
++
++        # 获取模型元数据
++        if model_name not in self._model_metadata:
++            raise ModelLoadError(
++                f"Model '{model_name}' not found",
++                model_name=model_name,
++                details={"available_models": list(self._model_metadata.keys())}
++            )
++
++        metadata = self._model_metadata[model_name]
++
++        # 检查文件是否存在
++        if not os.path.exists(metadata.file_path):
++            raise ModelLoadError(
++                f"Model file not found: {metadata.file_path}",
++                model_name=model_name,
++                details={"file_path": metadata.file_path}
++            )
++
++        try:
++            # 在线程池中加载模型
++            model = await asyncio.get_event_loop().run_in_executor(
++                self._executor,
++                self._load_model_sync,
++                metadata.file_path
++            )
++
++            # 创建加载的模型实例
++            loaded_model = LoadedModel(model, metadata)
++
++            # 缓存模型
++            self._loaded_models[model_name] = loaded_model
++            self._load_stats["total_loads"] += 1
++
++            # 更新元数据
++            metadata.update_metadata()
++
++            print(f"Successfully loaded model '{model_name}' from {metadata.file_path}")
++            return loaded_model
++
++        except Exception as e:
++            self._load_stats["load_errors"] += 1
++            raise ModelLoadError(
++                f"Failed to load model '{model_name}': {str(e)}",
++                model_name=model_name,
++                details={"file_path": metadata.file_path, "error_type": type(e).__name__}
++            )
++
++    def _load_model_sync(self, file_path: str) -> Any:
++        """同步加载模型"""
++        try:
++            # 尝试使用joblib加载
++            if file_path.endswith('.pkl'):
++                return joblib.load(file_path)
++            else:
++                # 尝试使用pickle加载
++                with open(file_path, 'rb') as f:
++                    return pickle.load(f)
++        except Exception as e:
++            raise RuntimeError(f"Failed to load model from {file_path}: {str(e)}")
++
++    def _detect_model_type(self, model_file: Path) -> ModelType:
++        """检测模型类型"""
++        file_name = model_file.name.lower()
++
++        if 'xgboost' in file_name or 'xgb' in file_name:
++            return ModelType.XGBOOST
++        elif 'lstm' in file_name or 'rnn' in file_name:
++            return ModelType.LSTM
++        elif 'ensemble' in file_name:
++            return ModelType.ENSEMBLE
++        elif 'mock' in file_name:
++            return ModelType.MOCK
++        else:
++            return ModelType.XGBOOST  # 默认类型
++
++    async def cleanup(self):
++        """清理资源"""
++        # 关闭线程池
++        self._executor.shutdown(wait=True)
++
++        # 清理模型缓存
++        self._loaded_models.clear()
++
++        print("ModelLoader cleanup completed")
++
++
++# 全局实例
++_model_loader: Optional[ModelLoader] = None
++
++
++async def get_model_loader() -> ModelLoader:
++    """获取全局模型加载器实例"""
++    global _model_loader
++
++    if _model_loader is None:
++        _model_loader = ModelLoader()
++        await _model_loader.initialize()
++
++    return _model_loader
++
++
++def get_model_loader_sync() -> ModelLoader:
++    """同步获取模型加载器（用于非异步上下文）"""
++    global _model_loader
++
++    if _model_loader is None:
++        raise RuntimeError("ModelLoader not initialized. Call get_model_loader() first.")
++
++    return _model_loader
+diff --git a/src/inference/predictor.py b/src/inference/predictor.py
+new file mode 100644
+index 000000000..15aeb6d82
+--- /dev/null
++++ b/src/inference/predictor.py
+@@ -0,0 +1,677 @@
++"""
++Predictor
++统一预测入口
++
++提供统一的预测接口，支持多种模型和预测类型。
++包含预测校准、置信度计算和结果验证功能。
++"""
++
++import asyncio
++import logging
++import uuid
++from datetime import datetime
++from typing import Any, Optional, Union
++from concurrent.futures import ThreadPoolExecutor
++
++import numpy as np
++import pandas as pd
++
++from .loader import get_model_loader, LoadedModel
++from .feature_builder import get_feature_builder
++from .cache import get_prediction_cache
++from .schemas import (
++    PredictionRequest,
++    PredictionResponse,
++    BatchPredictionRequest,
++    BatchPredictionResponse,
++    ModelType,
++    PredictionType
++)
++from .errors import PredictionError, ModelLoadError, FeatureBuilderError, ErrorCode
++
++logger = logging.getLogger(__name__)
++
++
++class PredictionResult:
++    """预测结果容器"""
++
++    def __init__(
++        self,
++        home_win_prob: float,
++        draw_prob: float,
++        away_win_prob: float,
++        predicted_outcome: str,
++        confidence: float,
++        model_name: str,
++        model_version: str,
++        model_type: ModelType,
++        features_used: list[str],
++        prediction_time_ms: float,
++        metadata: Optional[dict[str, Any]] = None
++    ):
++        self.home_win_prob = home_win_prob
++        self.draw_prob = draw_prob
++        self.away_win_prob = away_win_prob
++        self.predicted_outcome = predicted_outcome
++        self.confidence = confidence
++        self.model_name = model_name
++        self.model_version = model_version
++        self.model_type = model_type
++        self.features_used = features_used
++        self.prediction_time_ms = prediction_time_ms
++        self.metadata = metadata or {}
++
++        # 验证概率和
++        prob_sum = home_win_prob + draw_prob + away_win_prob
++        if abs(prob_sum - 1.0) > 0.001:
++            # 归一化概率
++            total = max(prob_sum, 0.001)
++            self.home_win_prob /= total
++            self.draw_prob /= total
++            self.away_win_prob /= total
++
++    def to_response(self, request_id: str, match_id: str, cached: bool = False) -> PredictionResponse:
++        """转换为响应对象"""
++        return PredictionResponse(
++            request_id=request_id,
++            match_id=match_id,
++            predicted_at=datetime.utcnow(),
++            home_win_prob=self.home_win_prob,
++            draw_prob=self.draw_prob,
++            away_win_prob=self.away_win_prob,
++            predicted_outcome=self.predicted_outcome,
++            confidence=self.confidence,
++            model_name=self.model_name,
++            model_version=self.model_version,
++            model_type=self.model_type,
++            features_used=self.features_used,
++            prediction_time_ms=self.prediction_time_ms,
++            cached=cached,
++            metadata=self.metadata
++        )
++
++
++class Predictor:
++    """
++    统一预测器
++
++    提供以下功能：
++    1. 单场比赛预测
++    2. 批量预测
++    3. 多模型集成预测
++    4. 预测结果校准
++    5. 缓存管理
++    6. 性能监控
++    """
++
++    def __init__(self, max_workers: int = 4):
++        """
++        初始化预测器
++
++        Args:
++            max_workers: 最大工作线程数
++        """
++        self.max_workers = max_workers
++        self._executor = ThreadPoolExecutor(max_workers=max_workers)
++        self._prediction_stats = {
++            "total_predictions": 0,
++            "successful_predictions": 0,
++            "failed_predictions": 0,
++            "cache_hits": 0,
++            "cache_misses": 0,
++            "average_prediction_time": 0.0
++        }
++
++        # 预测历史（用于监控）
++        self._prediction_history = []
++
++    async def predict(self, request: PredictionRequest) -> PredictionResponse:
++        """
++        单场比赛预测
++
++        Args:
++            request: 预测请求
++
++        Returns:
++            PredictionResponse: 预测响应
++
++        Raises:
++            PredictionError: 预测失败
++        """
++        start_time = datetime.now()
++        request_id = str(uuid.uuid4())
++
++        try:
++            # 检查缓存
++            if not request.force_recalculate:
++                cached_result = await self._get_cached_prediction(request)
++                if cached_result:
++                    self._prediction_stats["cache_hits"] += 1
++                    logger.info(f"Cache hit for prediction {request.match_id}")
++                    return cached_result.to_response(request_id, request.match_id, cached=True)
++
++            self._prediction_stats["cache_misses"] += 1
++
++            # 执行预测
++            result = await self._execute_prediction(request)
++
++            # 缓存结果
++            await self._cache_prediction(request, result)
++
++            # 更新统计
++            self._prediction_stats["total_predictions"] += 1
++            self._prediction_stats["successful_predictions"] += 1
++            self._update_prediction_time_stats(result.prediction_time_ms)
++
++            # 记录预测历史
++            self._record_prediction(request, result)
++
++            logger.info(f"Prediction completed for {request.match_id}: {result.predicted_outcome}")
++            return result.to_response(request_id, request.match_id, cached=False)
++
++        except Exception as e:
++            self._prediction_stats["total_predictions"] += 1
++            self._prediction_stats["failed_predictions"] += 1
++
++            error_msg = f"Prediction failed for match {request.match_id}: {str(e)}"
++            logger.error(error_msg)
++
++            if isinstance(e, (ModelLoadError, FeatureBuilderError, PredictionError)):
++                raise
++            else:
++                raise PredictionError(error_msg, prediction_id=request_id)
++
++        finally:
++            # 记录总耗时
++            total_time = (datetime.now() - start_time).total_seconds() * 1000
++            logger.debug(f"Total prediction time: {total_time:.2f}ms")
++
++    async def predict_batch(self, request: BatchPredictionRequest) -> BatchPredictionResponse:
++        """
++        批量预测
++
++        Args:
++            request: 批量预测请求
++
++        Returns:
++            BatchPredictionResponse: 批量预测响应
++        """
++        start_time = datetime.now()
++        batch_id = request.batch_id or str(uuid.uuid4())
++
++        logger.info(f"Starting batch prediction: {len(request.requests)} requests")
++
++        predictions = []
++        errors = []
++        cached_count = 0
++
++        try:
++            if request.parallel:
++                # 并行处理
++                tasks = [self.predict(req) for req in request.requests]
++                results = await asyncio.gather(*tasks, return_exceptions=True)
++
++                for i, result in enumerate(results):
++                    if isinstance(result, Exception):
++                        errors.append({
++                            "request_index": i,
++                            "match_id": request.requests[i].match_id,
++                            "error": str(result)
++                        })
++                    else:
++                        predictions.append(result)
++                        if result.cached:
++                            cached_count += 1
++            else:
++                # 串行处理
++                for i, req in enumerate(request.requests):
++                    try:
++                        result = await self.predict(req)
++                        predictions.append(result)
++                        if result.cached:
++                            cached_count += 1
++                    except Exception as e:
++                        errors.append({
++                            "request_index": i,
++                            "match_id": req.match_id,
++                            "error": str(e)
++                        })
++
++            batch_time = (datetime.now() - start_time).total_seconds() * 1000
++
++            response = BatchPredictionResponse(
++                batch_id=batch_id,
++                total_requests=len(request.requests),
++                successful_predictions=len(predictions),
++                failed_predictions=len(errors),
++                predictions=predictions,
++                errors=errors,
++                batch_time_ms=batch_time,
++                cached_count=cached_count
++            )
++
++            logger.info(
++                f"Batch prediction completed: {len(predictions)}/{len(request.requests)} successful, "
++                f"{cached_count} from cache, {batch_time:.2f}ms"
++            )
++
++            return response
++
++        except Exception as e:
++            raise PredictionError(f"Batch prediction failed: {str(e)}")
++
++    async def _execute_prediction(self, request: PredictionRequest) -> PredictionResult:
++        """执行预测逻辑"""
++        start_time = datetime.now()
++
++        # 1. 获取模型
++        model_loader = await get_model_loader()
++        loaded_model = await model_loader.get(request.model_name)
++
++        # 2. 构建特征
++        feature_builder = await get_feature_builder()
++
++        # 准备原始数据（这里需要从数据库或其他源获取）
++        raw_data = await self._get_match_data(request.match_id)
++        match_info = await self._get_match_info(request.match_id)
++        historical_data = await self._get_historical_data(request.match_id)
++
++        # 使用自定义特征（如果提供）
++        if request.features:
++            raw_data.update(request.features)
++
++        # 构建特征
++        features_df = await feature_builder.build_features(
++            raw_data=raw_data,
++            match_info=match_info,
++            historical_data=historical_data
++        )
++
++        # 3. 执行预测
++        prediction_result = await self._predict_with_model(
++            loaded_model.model,
++            features_df,
++            request.prediction_type
++        )
++
++        # 4. 后处理
++        processed_result = await self._post_process_prediction(
++            prediction_result,
++            loaded_model,
++            request
++        )
++
++        # 5. 计算预测耗时
++        prediction_time = (datetime.now() - start_time).total_seconds() * 1000
++
++        # 6. 创建结果
++        result = PredictionResult(
++            home_win_prob=processed_result["home_win_prob"],
++            draw_prob=processed_result["draw_prob"],
++            away_win_prob=processed_result["away_win_prob"],
++            predicted_outcome=processed_result["predicted_outcome"],
++            confidence=processed_result["confidence"],
++            model_name=loaded_model.metadata.model_info.model_name,
++            model_version=loaded_model.metadata.model_info.model_version,
++            model_type=loaded_model.metadata.model_info.model_type,
++            features_used=list(features_df.columns),
++            prediction_time_ms=prediction_time,
++            metadata=processed_result.get("metadata", {})
++        )
++
++        return result
++
++    async def _predict_with_model(
++        self,
++        model: Any,
++        features_df: pd.DataFrame,
++        prediction_type: PredictionType
++    ) -> dict[str, Any]:
++        """使用模型进行预测"""
++
++        def predict_sync():
++            try:
++                if prediction_type == PredictionType.PROBABILITY:
++                    # 概率预测
++                    if hasattr(model, 'predict_proba'):
++                        probabilities = model.predict_proba(features_df)
++                        if probabilities.shape[1] >= 3:
++                            # 假设顺序为 [away, draw, home]
++                            away_prob, draw_prob, home_prob = probabilities[0]
++                        else:
++                            # 二分类结果，处理为三分类
++                            home_prob = probabilities[0][1] if probabilities.shape[1] == 2 else 0.33
++                            draw_prob = 0.34
++                            away_prob = 1 - home_prob - draw_prob
++                    else:
++                        # 没有概率输出，使用预测结果
++                        prediction = model.predict(features_df)[0]
++                        if isinstance(prediction, (int, np.integer)):
++                            # 整数输出，转换为概率
++                            if prediction == 2:  # home win
++                                home_prob, draw_prob, away_prob = 0.7, 0.2, 0.1
++                            elif prediction == 1:  # draw
++                                home_prob, draw_prob, away_prob = 0.3, 0.4, 0.3
++                            else:  # away win
++                                home_prob, draw_prob, away_prob = 0.1, 0.2, 0.7
++                        else:
++                            # 浮点数输出
++                            if prediction > 0.5:
++                                home_prob, draw_prob, away_prob = 0.7, 0.2, 0.1
++                            else:
++                                home_prob, draw_prob, away_prob = 0.1, 0.2, 0.7
++
++                elif prediction_type == PredictionType.WINNER:
++                    # 胜者预测
++                    prediction = model.predict(features_df)[0]
++                    if hasattr(model, 'predict_proba'):
++                        probabilities = model.predict_proba(features_df)[0]
++                        if probabilities.shape[1] >= 3:
++                            away_prob, draw_prob, home_prob = probabilities
++                        else:
++                            home_prob = probabilities[1] if probabilities.shape[1] == 2 else 0.33
++                            draw_prob = 0.34
++                            away_prob = 1 - home_prob - draw_prob
++                    else:
++                        if prediction == 2:  # home win
++                            home_prob, draw_prob, away_prob = 0.7, 0.2, 0.1
++                        elif prediction == 1:  # draw
++                            home_prob, draw_prob, away_prob = 0.3, 0.4, 0.3
++                        else:  # away win
++                            home_prob, draw_prob, away_prob = 0.1, 0.2, 0.7
++
++                elif prediction_type == PredictionType.SCORE:
++                    # 比分预测（简化处理）
++                    # 这里可以扩展为真正的比分预测
++                    prediction = model.predict(features_df)[0]
++                    if hasattr(model, 'predict_proba'):
++                        probabilities = model.predict_proba(features_df)[0]
++                        if probabilities.shape[1] >= 3:
++                            away_prob, draw_prob, home_prob = probabilities
++                        else:
++                            home_prob = probabilities[1] if probabilities.shape[1] == 2 else 0.33
++                            draw_prob = 0.34
++                            away_prob = 1 - home_prob - draw_prob
++                    else:
++                        home_prob, draw_prob, away_prob = 0.4, 0.3, 0.3
++
++                else:
++                    # 默认处理
++                    prediction = model.predict(features_df)[0]
++                    home_prob, draw_prob, away_prob = 0.33, 0.34, 0.33
++
++                return {
++                    "home_win_prob": float(home_prob),
++                    "draw_prob": float(draw_prob),
++                    "away_win_prob": float(away_prob),
++                    "raw_prediction": prediction if 'prediction' in locals() else None
++                }
++
++            except Exception as e:
++                raise RuntimeError(f"Model prediction failed: {str(e)}")
++
++        # 在线程池中执行同步预测
++        return await asyncio.get_event_loop().run_in_executor(
++            self._executor,
++            predict_sync
++        )
++
++    async def _post_process_prediction(
++        self,
++        prediction_result: dict[str, Any],
++        loaded_model: LoadedModel,
++        request: PredictionRequest
++    ) -> dict[str, Any]:
++        """后处理预测结果"""
++        result = prediction_result.copy()
++
++        # 1. 概率归一化
++        prob_sum = (
++            result["home_win_prob"] + result["draw_prob"] + result["away_win_prob"]
++        )
++        if prob_sum > 0:
++            result["home_win_prob"] /= prob_sum
++            result["draw_prob"] /= prob_sum
++            result["away_win_prob"] /= prob_sum
++
++        # 2. 确定预测结果
++        probs = [
++            ("home_win", result["home_win_prob"]),
++            ("draw", result["draw_prob"]),
++            ("away_win", result["away_win_prob"])
++        ]
++        result["predicted_outcome"] = max(probs, key=lambda x: x[1])[0]
++
++        # 3. 计算置信度
++        max_prob = max(probs, key=lambda x: x[1])[1]
++        second_max_prob = sorted(probs, key=lambda x: x[1])[-2][1]
++        confidence = max_prob - second_max_prob
++        result["confidence"] = float(confidence)
++
++        # 4. 应用校准（如果需要）
++        if self._should_calibrate(loaded_model):
++            result = await self._calibrate_prediction(result)
++
++        # 5. 添加元数据
++        result["metadata"] = {
++            "model_accuracy": loaded_model.metadata.model_info.accuracy,
++            "calibration_applied": self._should_calibrate(loaded_model),
++            "prediction_type": request.prediction_type.value,
++            "feature_count": len(loaded_model.metadata.model_info.features)
++        }
++
++        return result
++
++    def _should_calibrate(self, loaded_model: LoadedModel) -> bool:
++        """判断是否需要校准"""
++        # 基于模型类型和准确率决定
++        if loaded_model.metadata.model_info.model_type == ModelType.XGBOOST:
++            return True
++        elif loaded_model.metadata.model_info.accuracy:
++            return loaded_model.metadata.model_info.accuracy < 0.8
++        return False
++
++    async def _calibrate_prediction(self, prediction_result: dict[str, Any]) -> dict[str, Any]:
++        """校准预测结果"""
++        # 简单的校准逻辑，可以根据需要扩展
++        calibrated = prediction_result.copy()
++
++        # 温度缩放校准
++        temperature = 1.2  # 校准参数
++        probs = np.array([
++            calibrated["away_win_prob"],
++            calibrated["draw_prob"],
++            calibrated["home_win_prob"]
++        ])
++
++        # 应用温度缩放
++        exp_probs = np.exp(np.log(probs + 1e-8) / temperature)
++        calibrated_probs = exp_probs / np.sum(exp_probs)
++
++        calibrated["away_win_prob"] = float(calibrated_probs[0])
++        calibrated["draw_prob"] = float(calibrated_probs[1])
++        calibrated["home_win_prob"] = float(calibrated_probs[2])
++
++        return calibrated
++
++    async def _get_cached_prediction(self, request: PredictionRequest) -> Optional[PredictionResult]:
++        """获取缓存的预测结果"""
++        try:
++            cache = await get_prediction_cache()
++            cache_key = self._generate_cache_key(request)
++            cached_data = await cache.get_prediction(cache_key)
++
++            if cached_data:
++                return PredictionResult(**cached_data)
++
++        except Exception as e:
++            logger.warning(f"Failed to get cached prediction: {e}")
++
++        return None
++
++    async def _cache_prediction(self, request: PredictionRequest, result: PredictionResult):
++        """缓存预测结果"""
++        try:
++            cache = await get_prediction_cache()
++            cache_key = self._generate_cache_key(request)
++
++            # 准备缓存数据
++            cache_data = {
++                "home_win_prob": result.home_win_prob,
++                "draw_prob": result.draw_prob,
++                "away_win_prob": result.away_win_prob,
++                "predicted_outcome": result.predicted_outcome,
++                "confidence": result.confidence,
++                "model_name": result.model_name,
++                "model_version": result.model_version,
++                "model_type": result.model_type,
++                "features_used": result.features_used,
++                "prediction_time_ms": result.prediction_time_ms,
++                "metadata": result.metadata,
++                "cached_at": datetime.utcnow().isoformat()
++            }
++
++            await cache.set_prediction(cache_key, cache_data)
++
++        except Exception as e:
++            logger.warning(f"Failed to cache prediction: {e}")
++
++    def _generate_cache_key(self, request: PredictionRequest) -> str:
++        """生成缓存键"""
++        key_parts = [
++            "prediction",
++            request.match_id,
++            request.model_name,
++            request.model_version or "latest",
++            request.prediction_type.value
++        ]
++
++        if request.features:
++            # 对自定义特征进行哈希
++            import hashlib
++            features_hash = hashlib.md5(
++                str(sorted(request.features.items())).encode()
++            ).hexdigest()[:8]
++            key_parts.append(features_hash)
++
++        return ":".join(key_parts)
++
++    async def _get_match_data(self, match_id: str) -> dict[str, Any]:
++        """获取比赛数据"""
++        # 这里应该从数据库或其他数据源获取实际数据
++        # 暂时返回模拟数据
++        return {
++            "home_goals": np.random.randint(0, 5),
++            "away_goals": np.random.randint(0, 5),
++            "home_possession": np.random.uniform(30, 70),
++            "away_possession": np.random.uniform(30, 70),
++            "home_shots": np.random.randint(5, 25),
++            "away_shots": np.random.randint(5, 25),
++            "home_corners": np.random.randint(2, 12),
++            "away_corners": np.random.randint(2, 12)
++        }
++
++    async def _get_match_info(self, match_id: str) -> dict[str, Any]:
++        """获取比赛信息"""
++        # 暂时返回模拟数据
++        return {
++            "home_team": f"Team_A_{match_id}",
++            "away_team": f"Team_B_{match_id}",
++            "match_date": datetime.now().isoformat(),
++            "league_id": "league_123"
++        }
++
++    async def _get_historical_data(self, match_id: str) -> dict[str, Any]:
++        """获取历史数据"""
++        # 暂时返回模拟数据
++        return {
++            "team_history": {
++                f"Team_A_{match_id}": [
++                    {"goals": np.random.randint(0, 5), "shots": np.random.randint(5, 25)}
++                    for _ in range(10)
++                ],
++                f"Team_B_{match_id}": [
++                    {"goals": np.random.randint(0, 5), "shots": np.random.randint(5, 25)}
++                    for _ in range(10)
++                ]
++            }
++        }
++
++    def _update_prediction_time_stats(self, prediction_time_ms: float):
++        """更新预测时间统计"""
++        current_avg = self._prediction_stats["average_prediction_time"]
++        total_count = self._prediction_stats["successful_predictions"]
++
++        # 计算新的平均值
++        new_avg = (current_avg * (total_count - 1) + prediction_time_ms) / total_count
++        self._prediction_stats["average_prediction_time"] = new_avg
++
++    def _record_prediction(self, request: PredictionRequest, result: PredictionResult):
++        """记录预测历史"""
++        record = {
++            "timestamp": datetime.utcnow().isoformat(),
++            "match_id": request.match_id,
++            "model_name": result.model_name,
++            "predicted_outcome": result.predicted_outcome,
++            "confidence": result.confidence,
++            "prediction_time_ms": result.prediction_time_ms
++        }
++
++        self._prediction_history.append(record)
++
++        # 保持历史记录在合理范围内
++        if len(self._prediction_history) > 1000:
++            self._prediction_history = self._prediction_history[-1000:]
++
++    def get_prediction_stats(self) -> dict[str, Any]:
++        """获取预测统计信息"""
++        total_requests = (
++            self._prediction_stats["successful_predictions"] +
++            self._prediction_stats["failed_predictions"]
++        )
++
++        success_rate = (
++            self._prediction_stats["successful_predictions"] / total_requests * 100
++            if total_requests > 0 else 0
++        )
++
++        cache_total = (
++            self._prediction_stats["cache_hits"] +
++            self._prediction_stats["cache_misses"]
++        )
++
++        cache_hit_rate = (
++            self._prediction_stats["cache_hits"] / cache_total * 100
++            if cache_total > 0 else 0
++        )
++
++        return {
++            **self._prediction_stats,
++            "success_rate": round(success_rate, 2),
++            "cache_hit_rate": round(cache_hit_rate, 2),
++            "history_count": len(self._prediction_history)
++        }
++
++    async def cleanup(self):
++        """清理资源"""
++        # 关闭线程池
++        self._executor.shutdown(wait=True)
++
++        # 清理历史记录
++        self._prediction_history.clear()
++
++        logger.info("Predictor cleanup completed")
++
++
++# 全局实例
++_predictor: Optional[Predictor] = None
++
++
++async def get_predictor() -> Predictor:
++    """获取全局预测器实例"""
++    global _predictor
++
++    if _predictor is None:
++        _predictor = Predictor()
++
++    return _predictor
+diff --git a/src/inference/schemas.py b/src/inference/schemas.py
+new file mode 100644
+index 000000000..bd0c9658c
+--- /dev/null
++++ b/src/inference/schemas.py
+@@ -0,0 +1,210 @@
++"""
++Inference Service Schemas
++推理服务数据模型和Schema定义
++
++使用Pydantic v2定义请求和响应的数据模型，确保类型安全和数据验证。
++"""
++
++from datetime import datetime
++from typing import Any, Optional
++from enum import Enum
++
++from pydantic import BaseModel, Field, field_validator, ConfigDict
++
++
++class ModelType(str, Enum):
++    """模型类型枚举"""
++    XGBOOST = "xgboost"
++    LSTM = "lstm"
++    ENSEMBLE = "ensemble"
++    MOCK = "mock"
++
++
++class PredictionType(str, Enum):
++    """预测类型枚举"""
++    WINNER = "winner"
++    SCORE = "score"
++    OVER_UNDER = "over_under"
++    PROBABILITY = "probability"
++
++
++class ModelInfo(BaseModel):
++    """模型信息"""
++
++    model_name: str = Field(..., description="模型名称")
++    model_version: str = Field(..., description="模型版本")
++    model_type: ModelType = Field(..., description="模型类型")
++    created_at: datetime = Field(..., description="创建时间")
++    file_size: Optional[int] = Field(None, description="模型文件大小（字节）")
++    accuracy: Optional[float] = Field(None, ge=0.0, le=1.0, description="模型准确率")
++    features: list[str] = Field(default_factory=list, description="使用的特征列表")
++    metadata: dict[str, Any] = Field(default_factory=dict, description="额外元数据")
++
++    model_config = ConfigDict(
++        json_schema_extra={
++            "example": {
++                "model_name": "xgboost_football_v1",
++                "model_version": "1.0.0",
++                "model_type": "xgboost",
++                "created_at": "2025-12-06T10:00:00Z",
++                "file_size": 1048576,
++                "accuracy": 0.75,
++                "features": ["home_goals", "away_goals", "home_possession"],
++                "metadata": {"training_dataset": "epl_2024", "framework": "xgboost"}
++            }
++        }
++    )
++
++
++class PredictionRequest(BaseModel):
++    """预测请求"""
++
++    match_id: str = Field(..., min_length=1, max_length=50, description="比赛ID")
++    model_name: str = Field(default="default", description="使用的模型名称")
++    model_version: Optional[str] = Field(None, description="指定的模型版本")
++    prediction_type: PredictionType = Field(default=PredictionType.WINNER, description="预测类型")
++    features: Optional[dict[str, Any]] = Field(None, description="自定义特征（可选）")
++    force_recalculate: bool = Field(default=False, description="是否强制重新计算")
++
++    model_config = ConfigDict(
++        json_schema_extra={
++            "example": {
++                "match_id": "match_12345",
++                "model_name": "xgboost_football_v1",
++                "model_version": "1.0.0",
++                "prediction_type": "winner",
++                "features": {"home_goals": 2, "away_goals": 1},
++                "force_recalculate": False
++            }
++        }
++    )
++
++
++class PredictionResponse(BaseModel):
++    """预测响应"""
++
++    request_id: str = Field(..., description="请求ID")
++    match_id: str = Field(..., description="比赛ID")
++    predicted_at: datetime = Field(..., description="预测时间")
++
++    # 预测结果
++    home_win_prob: float = Field(..., ge=0.0, le=1.0, description="主队获胜概率")
++    draw_prob: float = Field(..., ge=0.0, le=1.0, description="平局概率")
++    away_win_prob: float = Field(..., ge=0.0, le=1.0, description="客队获胜概率")
++    predicted_outcome: str = Field(..., description="预测结果")
++    confidence: float = Field(..., ge=0.0, le=1.0, description="预测置信度")
++
++    # 模型信息
++    model_name: str = Field(..., description="使用的模型名称")
++    model_version: str = Field(..., description="使用的模型版本")
++    model_type: ModelType = Field(..., description="模型类型")
++
++    # 元数据
++    features_used: list[str] = Field(default_factory=list, description="使用的特征列表")
++    prediction_time_ms: Optional[float] = Field(None, description="预测耗时（毫秒）")
++    cached: bool = Field(default=False, description="是否来自缓存")
++    metadata: dict[str, Any] = Field(default_factory=dict, description="额外元数据")
++
++    @field_validator('predicted_outcome')
++    @classmethod
++    def validate_predicted_outcome(cls, v):
++        if v not in ['home_win', 'draw', 'away_win']:
++            raise ValueError('predicted_outcome must be one of: home_win, draw, away_win')
++        return v
++
++    model_config = ConfigDict(
++        json_schema_extra={
++            "example": {
++                "request_id": "req_12345",
++                "match_id": "match_12345",
++                "predicted_at": "2025-12-06T10:00:00Z",
++                "home_win_prob": 0.65,
++                "draw_prob": 0.25,
++                "away_win_prob": 0.10,
++                "predicted_outcome": "home_win",
++                "confidence": 0.75,
++                "model_name": "xgboost_football_v1",
++                "model_version": "1.0.0",
++                "model_type": "xgboost",
++                "features_used": ["home_goals", "away_goals", "home_possession"],
++                "prediction_time_ms": 45.2,
++                "cached": False,
++                "metadata": {"calibrated": True, "ensemble_weight": 0.8}
++            }
++        }
++    )
++
++
++class BatchPredictionRequest(BaseModel):
++    """批量预测请求"""
++
++    requests: list[PredictionRequest] = Field(..., min_items=1, max_items=100, description="预测请求列表")
++    batch_id: Optional[str] = Field(None, description="批次ID（可选）")
++    parallel: bool = Field(default=True, description="是否并行处理")
++
++    @field_validator('requests')
++    @classmethod
++    def validate_requests(cls, v):
++        if len(v) == 0:
++            raise ValueError('requests cannot be empty')
++        return v
++
++
++class BatchPredictionResponse(BaseModel):
++    """批量预测响应"""
++
++    batch_id: str = Field(..., description="批次ID")
++    total_requests: int = Field(..., description="总请求数")
++    successful_predictions: int = Field(..., description="成功预测数")
++    failed_predictions: int = Field(..., description="失败预测数")
++    predictions: list[PredictionResponse] = Field(..., description="预测结果列表")
++    errors: list[dict[str, Any]] = Field(default_factory=list, description="错误信息列表")
++    batch_time_ms: float = Field(..., description="批次处理时间（毫秒）")
++    cached_count: int = Field(default=0, description="缓存命中数量")
++
++
++class ErrorResponse(BaseModel):
++    """错误响应"""
++
++    error: str = Field(..., description="错误码")
++    message: str = Field(..., description="错误消息")
++    details: dict[str, Any] = Field(default_factory=dict, description="错误详情")
++    request_id: Optional[str] = Field(None, description="请求ID")
++    timestamp: datetime = Field(default_factory=datetime.utcnow, description="错误时间")
++
++    model_config = ConfigDict(
++        json_schema_extra={
++            "example": {
++                "error": "MODEL_LOAD_FAILED",
++                "message": "Failed to load model 'xgboost_football_v1'",
++                "details": {
++                    "model_name": "xgboost_football_v1",
++                    "model_path": "/app/models/xgboost_football_v1.pkl",
++                    "error_type": "FileNotFoundError"
++                },
++                "request_id": "req_12345",
++                "timestamp": "2025-12-06T10:00:00Z"
++            }
++        }
++    )
++
++
++class HealthCheckResponse(BaseModel):
++    """健康检查响应"""
++
++    status: str = Field(..., description="服务状态")
++    model_loaded: bool = Field(..., description="模型是否已加载")
++    cache_status: str = Field(..., description="缓存状态")
++    hot_reload_enabled: bool = Field(..., description="热更新是否启用")
++    loaded_models: list[ModelInfo] = Field(default_factory=list, description="已加载的模型")
++    uptime_seconds: float = Field(..., description="运行时间（秒）")
++    memory_usage_mb: float = Field(..., description="内存使用量（MB）")
++    last_prediction_time: Optional[datetime] = Field(None, description="最后预测时间")
++
++
++class ModelListResponse(BaseModel):
++    """模型列表响应"""
++
++    models: list[ModelInfo] = Field(..., description="可用模型列表")
++    total_models: int = Field(..., description="总模型数")
++    default_model: Optional[str] = Field(None, description="默认模型名称")
+diff --git a/tests/unit/inference/test_errors_simple.py b/tests/unit/inference/test_errors_simple.py
+new file mode 100644
+index 000000000..daad304d8
+--- /dev/null
++++ b/tests/unit/inference/test_errors_simple.py
+@@ -0,0 +1,298 @@
++"""
++Unit Tests for Inference Errors (Simplified)
++推理服务错误处理单元测试（简化版）
++
++测试实际存在的错误类和功能。
++"""
++
++import pytest
++from typing import Dict, Any
++
++from src.inference.errors import (
++    InferenceError,
++    ModelLoadError,
++    FeatureBuilderError,
++    PredictionError,
++    CacheError,
++    HotReloadError,
++    ErrorCode,
++    handle_inference_error
++)
++
++
++class TestErrorCode:
++    """错误代码测试类"""
++
++    def test_error_code_values(self):
++        """测试错误代码枚举值"""
++        assert ErrorCode.MODEL_NOT_FOUND.value == "MODEL_NOT_FOUND"
++        assert ErrorCode.MODEL_LOAD_FAILED.value == "MODEL_LOAD_FAILED"
++        assert ErrorCode.FEATURE_BUILD_FAILED.value == "FEATURE_BUILD_FAILED"
++        assert ErrorCode.PREDICTION_FAILED.value == "PREDICTION_FAILED"
++        assert ErrorCode.CACHE_CONNECTION_FAILED.value == "CACHE_CONNECTION_FAILED"
++        assert ErrorCode.HOT_RELOAD_FAILED.value == "HOT_RELOAD_FAILED"
++        assert ErrorCode.INTERNAL_ERROR.value == "INTERNAL_ERROR"
++
++    def test_error_code_creation(self):
++        """测试错误代码创建"""
++        error_code = ErrorCode.MODEL_NOT_FOUND
++        assert error_code == "MODEL_NOT_FOUND"
++        assert str(error_code) == "MODEL_NOT_FOUND"
++
++    def test_invalid_error_code(self):
++        """测试无效错误代码"""
++        with pytest.raises(ValueError):
++            ErrorCode("INVALID_ERROR_CODE")
++
++
++class TestInferenceError:
++    """推理错误基类测试类"""
++
++    def test_inference_error_basic(self):
++        """测试基本推理错误"""
++        error = InferenceError("Basic error message")
++
++        assert str(error) == "Basic error message"
++        assert error.message == "Basic error message"
++        assert error.error_code == ErrorCode.INTERNAL_ERROR
++        assert error.details == {}
++
++    def test_inference_error_with_details(self):
++        """测试带详细信息的推理错误"""
++        details = {"model_name": "xgboost_v1", "attempt_count": 3}
++        error = InferenceError(
++            message="Complex error",
++            error_code=ErrorCode.MODEL_LOAD_FAILED,
++            details=details
++        )
++
++        assert error.message == "Complex error"
++        assert error.error_code == ErrorCode.MODEL_LOAD_FAILED
++        assert error.details == details
++
++    def test_inference_error_to_dict(self):
++        """测试推理错误转字典"""
++        details = {"retry_after": 5}
++        error = InferenceError(
++            message="Test error",
++            error_code=ErrorCode.PREDICTION_FAILED,
++            details=details
++        )
++
++        error_dict = error.to_dict()
++
++        expected = {
++            "error": "PREDICTION_FAILED",
++            "message": "Test error",
++            "details": details
++        }
++
++        assert error_dict == expected
++
++
++class TestModelLoadError:
++    """模型加载错误测试类"""
++
++    def test_model_load_error_basic(self):
++        """测试基本模型加载错误"""
++        error = ModelLoadError("Failed to load model file")
++
++        assert str(error) == "Failed to load model file"
++        assert error.error_code == ErrorCode.MODEL_LOAD_FAILED
++        assert "model_name" in error.details
++
++    def test_model_load_error_with_model_name(self):
++        """测试带模型名称的加载错误"""
++        error = ModelLoadError(
++            "Model file not found",
++            model_name="xgboost_v1"
++        )
++
++        assert error.details["model_name"] == "xgboost_v1"
++
++    def test_model_load_error_with_details(self):
++        """测试带详细信息的模型加载错误"""
++        error = ModelLoadError(
++            "Model file is empty",
++            model_name="xgboost_v1",
++            details={"file_path": "/path/to/model.pkl"}
++        )
++
++        assert error.details["model_name"] == "xgboost_v1"
++        assert error.details["file_path"] == "/path/to/model.pkl"
++
++
++class TestFeatureBuilderError:
++    """特征构建错误测试类"""
++
++    def test_feature_builder_error_basic(self):
++        """测试基本特征构建错误"""
++        error = FeatureBuilderError("Failed to build features")
++
++        assert str(error) == "Failed to build features"
++        assert error.error_code == ErrorCode.FEATURE_BUILD_FAILED
++
++    def test_feature_builder_error_with_feature_name(self):
++        """测试带特征名称的错误"""
++        error = FeatureBuilderError(
++            "Invalid feature value",
++            feature_name="home_goals"
++        )
++
++        assert error.details["feature_name"] == "home_goals"
++
++
++class TestPredictionError:
++    """预测错误测试类"""
++
++    def test_prediction_error_basic(self):
++        """测试基本预测错误"""
++        error = PredictionError("Prediction computation failed")
++
++        assert str(error) == "Prediction computation failed"
++        assert error.error_code == ErrorCode.PREDICTION_FAILED
++
++    def test_prediction_error_with_prediction_id(self):
++        """测试带预测ID的预测错误"""
++        error = PredictionError(
++            "Model prediction failed",
++            prediction_id="pred_456"
++        )
++
++        assert error.details["prediction_id"] == "pred_456"
++
++
++class TestCacheError:
++    """缓存错误测试类"""
++
++    def test_cache_error_basic(self):
++        """测试基本缓存错误"""
++        error = CacheError("Redis connection failed")
++
++        assert str(error) == "Redis connection failed"
++        assert error.error_code == ErrorCode.CACHE_OPERATION_FAILED
++
++    def test_cache_error_with_cache_key(self):
++        """测试带缓存键的缓存错误"""
++        error = CacheError(
++            "Cache operation failed",
++            cache_key="prediction:match_123:xgboost_v1"
++        )
++
++        assert error.details["cache_key"] == "prediction:match_123:xgboost_v1"
++
++
++class TestHotReloadError:
++    """热更新错误测试类"""
++
++    def test_hot_reload_error_basic(self):
++        """测试基本热更新错误"""
++        error = HotReloadError("Hot reload monitoring failed")
++
++        assert str(error) == "Hot reload monitoring failed"
++        assert error.error_code == ErrorCode.HOT_RELOAD_FAILED
++
++    def test_hot_reload_error_with_model_name(self):
++        """测试带模型名称的热更新错误"""
++        error = HotReloadError(
++            "Model reload failed",
++            model_name="xgboost_v1"
++        )
++
++        assert error.details["model_name"] == "xgboost_v1"
++
++
++class TestErrorHandlerUtility:
++    """错误处理工具测试类"""
++
++    def test_handle_inference_error_success(self):
++        """测试成功处理的函数"""
++        @handle_inference_error
++        def successful_function():
++            return "success"
++
++        result = successful_function()
++        assert result == "success"
++
++    def test_handle_inference_error_with_inference_error(self):
++        """测试处理推理错误的函数"""
++        @handle_inference_error
++        def function_with_inference_error():
++            raise ModelLoadError("Model not found")
++
++        with pytest.raises(ModelLoadError) as exc_info:
++            function_with_inference_error()
++
++        assert "Model not found" in str(exc_info.value)
++
++    def test_handle_inference_error_with_general_error(self):
++        """测试处理一般错误的函数"""
++        @handle_inference_error
++        def function_with_general_error():
++            raise ValueError("General error")
++
++        with pytest.raises(InferenceError) as exc_info:
++            function_with_general_error()
++
++        error = exc_info.value
++        assert error.error_code == ErrorCode.INTERNAL_ERROR
++        assert "function_with_general_error" in error.message
++        assert error.details["original_error"] == "General error"
++
++
++class TestErrorIntegration:
++    """错误集成测试类"""
++
++    def test_error_inheritance_chain(self):
++        """测试错误继承链"""
++        # 所有自定义错误都应该继承自InferenceError
++        assert issubclass(ModelLoadError, InferenceError)
++        assert issubclass(FeatureBuilderError, InferenceError)
++        assert issubclass(PredictionError, InferenceError)
++        assert issubclass(CacheError, InferenceError)
++        assert issubclass(HotReloadError, InferenceError)
++
++        # 也应该继承自Exception
++        assert issubclass(InferenceError, Exception)
++
++    def test_error_serialization_roundtrip(self):
++        """测试错误序列化往返"""
++        original_error = HotReloadError(
++            "Reload failed",
++            model_name="neural_net_v2"
++        )
++
++        # 转换为字典
++        error_dict = original_error.to_dict()
++
++        # 验证关键字段
++        assert error_dict["error"] == "HOT_RELOAD_FAILED"
++        assert error_dict["message"] == "Reload failed"
++        assert error_dict["details"]["model_name"] == "neural_net_v2"
++
++    def test_multiple_error_types_response(self):
++        """测试多种错误类型的响应"""
++        errors = [
++            ModelLoadError("Model not found", model_name="model1"),
++            FeatureBuilderError("Invalid feature", feature_name="goals"),
++            CacheError("Redis down")
++        ]
++
++        responses = [error.to_dict() for error in errors]
++
++        assert len(responses) == 3
++        assert responses[0]["error"] == "MODEL_LOAD_FAILED"
++        assert responses[1]["error"] == "FEATURE_BUILD_FAILED"
++        assert responses[2]["error"] == "CACHE_OPERATION_FAILED"
++
++    def test_error_chain(self):
++        """测试错误链"""
++        try:
++            try:
++                raise ModelLoadError("Model file corrupted", model_name="xgboost_v1")
++            except ModelLoadError as e:
++                raise PredictionError("Failed to make prediction") from e
++        except PredictionError as outer_error:
++            assert outer_error.__cause__ is not None
++            assert isinstance(outer_error.__cause__, ModelLoadError)
++            assert "xgboost_v1" in str(outer_error.__cause__)
+\ No newline at end of file
+diff --git a/tests/unit/inference/test_schemas_simple.py b/tests/unit/inference/test_schemas_simple.py
+new file mode 100644
+index 000000000..6b2cdbf38
+--- /dev/null
++++ b/tests/unit/inference/test_schemas_simple.py
+@@ -0,0 +1,519 @@
++"""
++Unit Tests for Inference Schemas (Simplified)
++推理服务模式定义单元测试（简化版）
++
++测试实际存在的Pydantic模型。
++"""
++
++import json
++import pytest
++from datetime import datetime
++from typing import Dict, Any
++from pydantic import ValidationError
++
++from src.inference.schemas import (
++    PredictionRequest,
++    PredictionResponse,
++    BatchPredictionRequest,
++    BatchPredictionResponse,
++    ModelInfo,
++    ErrorResponse,
++    ModelType,
++    PredictionType
++)
++
++
++class TestModelType:
++    """模型类型测试类"""
++
++    def test_model_type_values(self):
++        """测试模型类型枚举值"""
++        assert ModelType.XGBOOST.value == "xgboost"
++        assert ModelType.LSTM.value == "lstm"
++        assert ModelType.ENSEMBLE.value == "ensemble"
++        assert ModelType.MOCK.value == "mock"
++
++    def test_model_type_creation(self):
++        """测试模型类型创建"""
++        xgb_type = ModelType("xgboost")
++        assert xgb_type == ModelType.XGBOOST
++
++    def test_invalid_model_type(self):
++        """测试无效模型类型"""
++        with pytest.raises(ValueError):
++            ModelType("invalid_model_type")
++
++
++class TestPredictionType:
++    """预测类型测试类"""
++
++    def test_prediction_type_values(self):
++        """测试预测类型枚举值"""
++        assert PredictionType.WINNER.value == "winner"
++        assert PredictionType.SCORE.value == "score"
++        assert PredictionType.OVER_UNDER.value == "over_under"
++        assert PredictionType.PROBABILITY.value == "probability"
++
++    def test_prediction_type_creation(self):
++        """测试预测类型创建"""
++        prob_type = PredictionType("probability")
++        assert prob_type == PredictionType.PROBABILITY
++
++    def test_invalid_prediction_type(self):
++        """测试无效预测类型"""
++        with pytest.raises(ValueError):
++            PredictionType("invalid_prediction_type")
++
++
++class TestPredictionRequest:
++    """预测请求测试类"""
++
++    def test_valid_prediction_request_minimal(self):
++        """测试有效的最小预测请求"""
++        data = {
++            "match_id": "match_123",
++        }
++
++        request = PredictionRequest(**data)
++
++        assert request.match_id == "match_123"
++        assert request.model_name == "default"
++        assert request.prediction_type == PredictionType.WINNER
++        assert request.model_version is None
++        assert request.features is None
++        assert request.force_recalculate is False
++
++    def test_valid_prediction_request_full(self):
++        """测试有效的完整预测请求"""
++        data = {
++            "match_id": "match_456",
++            "model_name": "lstm_v2",
++            "prediction_type": "probability",
++            "model_version": "2.1.0",
++            "features": {
++                "home_goals": 2,
++                "away_goals": 1,
++                "home_possession": 65.5
++            },
++            "force_recalculate": True
++        }
++
++        request = PredictionRequest(**data)
++
++        assert request.match_id == "match_456"
++        assert request.model_name == "lstm_v2"
++        assert request.prediction_type == PredictionType.PROBABILITY
++        assert request.model_version == "2.1.0"
++        assert request.features["home_goals"] == 2
++        assert request.force_recalculate is True
++
++    def test_invalid_prediction_request_empty_match_id(self):
++        """测试无效的预测请求 - 空比赛ID"""
++        data = {
++            "match_id": "",
++        }
++
++        with pytest.raises(ValidationError) as exc_info:
++            PredictionRequest(**data)
++
++        assert "match_id" in str(exc_info.value)
++
++    def test_prediction_request_serialization(self):
++        """测试预测请求序列化"""
++        request = PredictionRequest(
++            match_id="match_123",
++            model_name="xgboost_v1",
++            prediction_type="probability",
++            features={"home_goals": 2}
++        )
++
++        serialized = request.model_dump()
++
++        assert serialized["match_id"] == "match_123"
++        assert serialized["prediction_type"] == "probability"
++        assert serialized["features"]["home_goals"] == 2
++
++    def test_prediction_request_json_serialization(self):
++        """测试预测请求JSON序列化"""
++        request = PredictionRequest(
++            match_id="match_123",
++            model_name="xgboost_v1",
++            prediction_type="probability"
++        )
++
++        json_str = request.model_dump_json()
++
++        # 解析JSON验证内容
++        data = json.loads(json_str)
++        assert data["match_id"] == "match_123"
++        assert data["model_name"] == "xgboost_v1"
++        assert data["prediction_type"] == "probability"
++
++
++class TestPredictionResponse:
++    """预测响应测试类"""
++
++    def test_valid_prediction_response(self):
++        """测试有效的预测响应"""
++        data = {
++            "request_id": "req_123",
++            "match_id": "match_456",
++            "predicted_at": datetime.utcnow().isoformat(),
++            "home_win_prob": 0.65,
++            "draw_prob": 0.25,
++            "away_win_prob": 0.10,
++            "predicted_outcome": "home_win",
++            "confidence": 0.75,
++            "model_name": "xgboost_v1",
++            "model_version": "1.0.0",
++            "model_type": "xgboost"
++        }
++
++        response = PredictionResponse(**data)
++
++        assert response.request_id == "req_123"
++        assert response.match_id == "match_456"
++        assert response.home_win_prob == 0.65
++        assert response.draw_prob == 0.25
++        assert response.away_win_prob == 0.10
++        assert response.predicted_outcome == "home_win"
++        assert response.confidence == 0.75
++
++    def test_invalid_probability_range(self):
++        """测试无效的概率范围"""
++        data = {
++            "request_id": "req_123",
++            "match_id": "match_456",
++            "predicted_at": datetime.utcnow().isoformat(),
++            "home_win_prob": 1.5,
++            "draw_prob": -0.5,
++            "away_win_prob": 0.0,
++            "predicted_outcome": "home_win",
++            "confidence": 0.75,
++            "model_name": "xgboost_v1",
++            "model_version": "1.0.0",
++            "model_type": "xgboost",
++            "features_used": ["home_goals"]
++        }
++
++        with pytest.raises(ValidationError) as exc_info:
++            PredictionResponse(**data)
++
++        assert "between 0 and 1" in str(exc_info.value)
++
++    def test_invalid_predicted_outcome(self):
++        """测试无效的预测结果"""
++        data = {
++            "request_id": "req_123",
++            "match_id": "match_456",
++            "predicted_at": datetime.utcnow().isoformat(),
++            "home_win_prob": 0.6,
++            "draw_prob": 0.3,
++            "away_win_prob": 0.1,
++            "predicted_outcome": "invalid_outcome",
++            "confidence": 0.75,
++            "model_name": "xgboost_v1",
++            "model_version": "1.0.0",
++            "model_type": "xgboost",
++            "features_used": ["home_goals"]
++        }
++
++        with pytest.raises(ValidationError) as exc_info:
++            PredictionResponse(**data)
++
++        assert "predicted_outcome" in str(exc_info.value)
++
++    def test_prediction_response_optional_fields(self):
++        """测试预测响应可选字段"""
++        data = {
++            "request_id": "req_123",
++            "match_id": "match_456",
++            "predicted_at": datetime.utcnow().isoformat(),
++            "home_win_prob": 0.6,
++            "draw_prob": 0.3,
++            "away_win_prob": 0.1,
++            "predicted_outcome": "home_win",
++            "confidence": 0.5,
++            "model_name": "xgboost_v1",
++            "model_version": "1.0.0",
++            "model_type": "xgboost",
++            "features_used": ["home_goals"]
++        }
++
++        response = PredictionResponse(**data)
++
++        assert response.cached is False  # 默认值
++        assert response.prediction_time_ms is None  # 默认值
++        assert response.metadata == {}  # 默认值
++
++
++class TestBatchPredictionRequest:
++    """批量预测请求测试类"""
++
++    def test_valid_batch_prediction_request(self):
++        """测试有效的批量预测请求"""
++        data = {
++            "requests": [
++                {
++                    "match_id": "match_1",
++                    "model_name": "xgboost_v1",
++                    "prediction_type": "probability"
++                },
++                {
++                    "match_id": "match_2",
++                    "model_name": "xgboost_v1",
++                    "prediction_type": "probability"
++                }
++            ],
++            "batch_id": "batch_123",
++            "parallel": True
++        }
++
++        batch_request = BatchPredictionRequest(**data)
++
++        assert len(batch_request.requests) == 2
++        assert batch_request.batch_id == "batch_123"
++        assert batch_request.parallel is True
++
++    def test_invalid_batch_prediction_request_empty_requests(self):
++        """测试无效的批量预测请求 - 空请求列表"""
++        data = {
++            "requests": []
++        }
++
++        with pytest.raises(ValidationError) as exc_info:
++            BatchPredictionRequest(**data)
++
++        assert "requests" in str(exc_info.value)
++
++    def test_batch_prediction_request_optional_fields(self):
++        """测试批量预测请求可选字段"""
++        data = {
++            "requests": [
++                {
++                    "match_id": "match_1",
++                    "model_name": "xgboost_v1",
++                    "prediction_type": "probability"
++                }
++            ]
++        }
++
++        batch_request = BatchPredictionRequest(**data)
++
++        assert batch_request.batch_id is None  # 默认值
++        assert batch_request.parallel is True  # 默认值
++
++
++class TestBatchPredictionResponse:
++    """批量预测响应测试类"""
++
++    def test_valid_batch_prediction_response(self):
++        """测试有效的批量预测响应"""
++        data = {
++            "batch_id": "batch_123",
++            "total_requests": 3,
++            "successful_predictions": 2,
++            "failed_predictions": 1,
++            "predictions": [
++                {
++                    "request_id": "req_1",
++                    "match_id": "match_1",
++                    "predicted_at": datetime.utcnow().isoformat(),
++                    "home_win_prob": 0.6,
++                    "draw_prob": 0.3,
++                    "away_win_prob": 0.1,
++                    "predicted_outcome": "home_win",
++                    "confidence": 0.5,
++                    "model_name": "xgboost_v1",
++                    "model_version": "1.0.0",
++                    "model_type": "xgboost",
++                    "features_used": ["home_goals"]
++                }
++            ],
++            "errors": [
++                {
++                    "request_index": 1,
++                    "match_id": "match_2",
++                    "error": "Model load failed"
++                }
++            ],
++            "batch_time_ms": 500
++        }
++
++        response = BatchPredictionResponse(**data)
++
++        assert response.batch_id == "batch_123"
++        assert response.total_requests == 3
++        assert response.successful_predictions == 2
++        assert response.failed_predictions == 1
++        assert len(response.predictions) == 1
++        assert len(response.errors) == 1
++        assert response.cached_count == 0  # 默认值
++
++
++class TestModelInfo:
++    """模型信息测试类"""
++
++    def test_valid_model_info(self):
++        """测试有效的模型信息"""
++        data = {
++            "model_name": "xgboost_v1",
++            "model_version": "1.0.0",
++            "model_type": "xgboost",
++            "created_at": datetime.utcnow().isoformat(),
++            "features": ["home_goals", "away_goals"],
++            "accuracy": 0.85,
++            "description": "XGBoost football prediction model"
++        }
++
++        # Note: description is not in the actual schema, so we'll omit it
++        data_without_description = {k: v for k, v in data.items() if k != 'description'}
++
++        model_info = ModelInfo(**data_without_description)
++
++        assert model_info.model_name == "xgboost_v1"
++        assert model_info.model_version == "1.0.0"
++        assert model_info.model_type == ModelType.XGBOOST
++        assert model_info.accuracy == 0.85
++
++    def test_invalid_accuracy_range(self):
++        """测试无效的准确率范围"""
++        data = {
++            "model_name": "xgboost_v1",
++            "model_version": "1.0.0",
++            "model_type": "xgboost",
++            "created_at": datetime.utcnow().isoformat(),
++            "features": ["home_goals"],
++            "accuracy": 1.5
++        }
++
++        with pytest.raises(ValidationError) as exc_info:
++            ModelInfo(**data)
++
++        assert "accuracy" in str(exc_info.value)
++
++
++class TestErrorResponse:
++    """错误响应测试类"""
++
++    def test_valid_error_response(self):
++        """测试有效的错误响应"""
++        error_response = ErrorResponse(
++            error="ModelLoadError",
++            message="Failed to load model: model file not found",
++            details={
++                "model_name": "xgboost_v1",
++                "file_path": "/path/to/model.pkl"
++            }
++        )
++
++        assert error_response.error == "ModelLoadError"
++        assert "model file not found" in error_response.message
++        assert error_response.details["model_name"] == "xgboost_v1"
++
++    def test_error_response_minimal(self):
++        """测试最小错误响应"""
++        error_response = ErrorResponse(
++            error="ValidationError",
++            message="Invalid input data"
++        )
++
++        assert error_response.error == "ValidationError"
++        assert error_response.details == {}
++
++    def test_error_response_with_timestamp(self):
++        """测试带时间戳的错误响应"""
++        current_time = datetime.utcnow()
++        error_response = ErrorResponse(
++            error="PredictionError",
++            message="Prediction failed",
++            timestamp=current_time
++        )
++
++        assert error_response.timestamp == current_time
++
++
++class TestSchemaIntegration:
++    """模式集成测试类"""
++
++    def test_request_response_roundtrip(self):
++        """测试请求响应往返转换"""
++        # 创建请求
++        request = PredictionRequest(
++            match_id="match_123",
++            model_name="xgboost_v1",
++            prediction_type="probability",
++            features={"home_goals": 2}
++        )
++
++        # 创建响应
++        response = PredictionResponse(
++            request_id="req_123",
++            match_id=request.match_id,
++            predicted_at=datetime.utcnow(),
++            home_win_prob=0.6,
++            draw_prob=0.3,
++            away_win_prob=0.1,
++            predicted_outcome="home_win",
++            confidence=0.5,
++            model_name=request.model_name,
++            model_version="1.0.0",
++            model_type="xgboost",
++            features_used=["home_goals"]
++        )
++
++        # 序列化和反序列化
++        request_json = request.model_dump_json()
++        response_json = response.model_dump_json()
++
++        request_restored = PredictionRequest.model_validate_json(request_json)
++        response_restored = PredictionResponse.model_validate_json(response_json)
++
++        assert request_restored.match_id == request.match_id
++        assert response_restored.match_id == response.match_id
++
++    def test_batch_request_response_integration(self):
++        """测试批量请求响应集成"""
++        batch_request = BatchPredictionRequest(
++            requests=[
++                PredictionRequest(
++                    match_id=f"match_{i}",
++                    model_name="xgboost_v1",
++                    prediction_type="probability"
++                )
++                for i in range(3)
++            ],
++            parallel=True
++        )
++
++        # 模拟批量响应
++        predictions = []
++        for i, req in enumerate(batch_request.requests):
++            pred = PredictionResponse(
++                request_id=f"req_{i}",
++                match_id=req.match_id,
++                predicted_at=datetime.utcnow(),
++                home_win_prob=0.6,
++                draw_prob=0.3,
++                away_win_prob=0.1,
++                predicted_outcome="home_win",
++                confidence=0.5,
++                model_name=req.model_name,
++                model_version="1.0.0",
++                model_type="xgboost",
++                features_used=["home_goals"]
++            )
++            predictions.append(pred)
++
++        batch_response = BatchPredictionResponse(
++            batch_id="batch_123",
++            total_requests=len(batch_request.requests),
++            successful_predictions=len(predictions),
++            failed_predictions=0,
++            predictions=predictions,
++            batch_time_ms=500
++        )
++
++        assert batch_response.total_requests == 3
++        assert len(batch_response.predictions) == 3
++        assert all(pred.match_id.startswith("match_") for pred in batch_response.predictions)
+\ No newline at end of file

@@ -1,0 +1,29 @@
+--- a/src/config/fastapi_config.py+++ b/src/config/fastapi_config.py@@ -8,11 +8,11 @@ # Mock implementation for missing I18nUtils
+ class MockI18nUtils:
+     @staticmethod
+-    def translate(text: str) -> str:
++async def translate(text: str) -> str:
+         return text
+ 
+ 
+-def init_i18n():
++async def init_i18n():
+     pass
+ 
+ 
+@@ -20,7 +20,7 @@ I18nUtils = MockI18nUtils
+ 
+ 
+-def create_chinese_app() -> FastAPI:
++async def create_chinese_app() -> FastAPI:
+     """创建中文界面的 FastAPI 应用."""
+     # 初始化中文
+     init_i18n()
+@@ -38,7 +38,7 @@     # 保存原始的openapi方法
+     original_openapi = app.openapi
+ 
+-    def custom_openapi():
++async def custom_openapi():
+         """自定义OpenAPI文档."""
+         if app.openapi_schema:
+             return app.openapi_schema

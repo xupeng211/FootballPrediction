@@ -1,0 +1,81 @@
+--- a/src/api/middleware/cache_middleware.py+++ b/src/api/middleware/cache_middleware.py@@ -16,7 +16,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
+     """API缓存中间件."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         app,
+         config: ApiCacheConfig | None = None,
+@@ -81,7 +81,7 @@ 
+         return response
+ 
+-    def _should_skip_cache(self, request: Request) -> bool:
++async def _should_skip_cache(self, request: Request) -> bool:
+         """检查是否应该跳过缓存."""
+         # 检查请求方法
+         if request.method not in self.cacheable_methods:
+@@ -100,11 +100,11 @@ 
+         return False
+ 
+-    def _generate_cache_key(self, request: Request) -> str:
++async def _generate_cache_key(self, request: Request) -> str:
+         """生成缓存键."""
+         return f"{request.method}:{request.url.path}"
+ 
+-    def _get_user_id(self, request: Request) -> str | None:
++async def _get_user_id(self, request: Request) -> str | None:
+         """获取用户ID."""
+         # 从请求状态或头部获取用户信息
+         if hasattr(request.state, "user_id"):
+@@ -115,7 +115,7 @@ 
+         return None
+ 
+-    def _should_cache_response(self, response: Response) -> bool:
++async def _should_cache_response(self, response: Response) -> bool:
+         """检查是否应该缓存响应."""
+         # 检查状态码
+         if response.status_code not in self.cacheable_status_codes:
+@@ -133,7 +133,7 @@ 
+         return True
+ 
+-    def _calculate_ttl(self, request: Request, response: Response) -> int:
++async def _calculate_ttl(self, request: Request, response: Response) -> int:
+         """计算TTL."""
+         # 从响应头获取缓存控制信息
+         if "cache-control" in response.headers:
+@@ -146,7 +146,7 @@                     pass
+ 
+         # 根据内容类型设置默认TTL
+-        content_type = response.headers.get("content-type", "").lower()
++        content_type = response.headers.await get("content-type", "").lower()
+ 
+         if "application/json" in content_type:
+             return 300  # 5分钟
+@@ -157,22 +157,22 @@         else:
+             return 180  # 3分钟
+ 
+-    def _build_response_from_cache(self, cached_data: dict) -> Response:
++async def _build_response_from_cache(self, cached_data: dict) -> Response:
+         """从缓存数据构建响应."""
+         response = Response(
+-            content=cached_data.get("body"),
+-            status_code=cached_data.get("status_code", 200),
+-            headers=cached_data.get("headers", {}),
++            content=cached_data.await get("body"),
++            status_code=cached_data.await get("status_code", 200),
++            headers=cached_data.await get("headers", {}),
+         )
+ 
+         # 添加缓存标识头
+         response.headers["x-Cache"] = "HIT"
+-        response.headers["x-Cache-TTL"] = str(cached_data.get("process_time", 0))
++        response.headers["x-Cache-TTL"] = await str(cached_data.get("process_time", 0))
+ 
+         return response
+ 
+ 
+-def add_cache_middleware(app, config: ApiCacheConfig | None = None) -> None:
++async def add_cache_middleware(app, config: ApiCacheConfig | None = None) -> None:
+     """为FastAPI应用添加缓存中间件."""
+     app.add_middleware(CacheMiddleware, config=config)
+ 

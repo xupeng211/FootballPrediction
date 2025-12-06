@@ -1,0 +1,36 @@
+--- a/src/cache/cache/decorators_functions.py+++ b/src/cache/cache/decorators_functions.py@@ -9,30 +9,30 @@ T = TypeVar("T")
+ 
+ 
+-def cache_decorator(func: F) -> F:
++async def cache_decorator(func: F) -> F:
+     """缓存装饰器."""
+ 
+-    def wrapper(*args, **kwargs):
++async def wrapper(*args, **kwargs):
+         # ISSUE: 实现缓存逻辑
+         return func(*args, **kwargs)
+ 
+     return wrapper
+ 
+ 
+-def retry_decorator(func: F) -> F:
++async def retry_decorator(func: F) -> F:
+     """重试装饰器."""
+ 
+-    def wrapper(*args, **kwargs):
++async def wrapper(*args, **kwargs):
+         # ISSUE: 实现重试逻辑
+         return func(*args, **kwargs)
+ 
+     return wrapper
+ 
+ 
+-def performance_monitor_decorator(func: F) -> F:
++async def performance_monitor_decorator(func: F) -> F:
+     """性能监控装饰器."""
+ 
+-    def wrapper(*args, **kwargs):
++async def wrapper(*args, **kwargs):
+         # ISSUE: 实现性能监控逻辑
+         return func(*args, **kwargs)
+ 

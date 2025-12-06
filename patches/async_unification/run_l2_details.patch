@@ -1,0 +1,212 @@
+--- a/src/jobs/run_l2_details.py+++ b/src/jobs/run_l2_details.py@@ -39,14 +39,14 @@ class FotMobL2DetailsJob:
+     """FotMob L2 详情采集任务 - QA验证版本"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.logger = logger
+         self.collector = None
+         self.processed_count = 0
+         self.success_count = 0
+         self.failed_count = 0
+ 
+-    def _extract_xg_data(self, api_stats: dict, content: dict):
++async def _extract_xg_data(self, api_stats: dict, content: dict):
+         """
+         从复杂的stats结构中提取xG数据 - QA验证版本
+ 
+@@ -56,18 +56,18 @@             if not isinstance(api_stats, dict):
+                 return
+ 
+-            periods = api_stats.get("Periods") or {}
+-            all_period = periods.get("All") or {}
+-            stats_list = all_period.get("stats", [])
++            periods = api_stats.await get("Periods") or {}
++            all_period = periods.await get("All") or {}
++            stats_list = all_period.await get("stats", [])
+ 
+             xg_data = None
+             for stat_group in stats_list:
+                 if isinstance(stat_group, dict) and "stats" in stat_group:
+-                    for stat in stat_group.get("stats", []):
++                    for stat in stat_group.await get("stats", []):
+                         if isinstance(stat, dict):
+-                            title = stat.get("title", "").lower()
++                            title = stat.await get("title", "").lower()
+                             if "expected goals" in title or "xg" in title:
+-                                xg_values = stat.get("stats", [])
++                                xg_values = stat.await get("stats", [])
+                                 if xg_values and len(xg_values) >= 2:
+                                     # 🎯 关键：提取和验证xG数值
+                                     home_xg = 0.0
+@@ -131,7 +131,7 @@ 
+     async def get_pending_matches(self, limit: int = 1000) -> list[str]:
+         """获取待处理的比赛ID列表"""
+-        async with get_db_session() as session:
++        async with await get_db_session() as session:
+             query = text(
+                 """
+                 SELECT fotmob_id
+@@ -144,7 +144,7 @@             """
+             )
+ 
+-            result = await session.execute(query, {"limit": limit})
++            result = await session.await execute(query, {"limit": limit})
+             matches = [row[0] for row in result.fetchall()]
+ 
+             # 🎯 关键：过滤脏数据
+@@ -186,7 +186,7 @@             self.logger.error(f"❌ 处理比赛详情失败 {fotmob_id}: {e}")
+             return False
+ 
+-    def extract_s_tier_features(self, api_stats: dict, api_lineups: dict) -> dict:
++async def extract_s_tier_features(self, api_stats: dict, api_lineups: dict) -> dict:
+         """
+         提取S-Tier特征：比分、红黄牌、评分、绝佳机会、环境数据
+         """
+@@ -228,15 +228,15 @@             if "events" in api_stats and "events" in api_stats["events"]:
+                 events = api_stats["events"]["events"]
+                 home_team_id = (
+-                    api_lineups.get("homeTeam", {}).get("id") if api_lineups else None
++                    api_lineups.await await get("homeTeam", {}).get("id") if api_lineups else None
+                 )
+                 away_team_id = (
+-                    api_lineups.get("awayTeam", {}).get("id") if api_lineups else None
++                    api_lineups.await await get("awayTeam", {}).get("id") if api_lineups else None
+                 )
+ 
+                 for event in events:
+-                    card_type = event.get("card")
+-                    team_id = event.get("teamId")
++                    card_type = event.await get("card")
++                    team_id = event.await get("teamId")
+ 
+                     if card_type == "Yellow" and team_id:
+                         if team_id == home_team_id:
+@@ -251,29 +251,29 @@ 
+             # 3. 提取球队评分和球员平均评分
+             if api_lineups:
+-                home_team = api_lineups.get("homeTeam", {})
+-                away_team = api_lineups.get("awayTeam", {})
++                home_team = api_lineups.await get("homeTeam", {})
++                away_team = api_lineups.await get("awayTeam", {})
+ 
+                 # 球队评分
+-                features["home_team_rating"] = float(home_team.get("rating", 0.0))
+-                features["away_team_rating"] = float(away_team.get("rating", 0.0))
++                features["home_team_rating"] = await float(home_team.get("rating", 0.0))
++                features["away_team_rating"] = await float(away_team.get("rating", 0.0))
+ 
+                 # 球员平均评分
+-                home_starters = home_team.get("starters", [])
+-                away_starters = away_team.get("starters", [])
++                home_starters = home_team.await get("starters", [])
++                away_starters = away_team.await get("starters", [])
+ 
+                 home_player_ratings = []
+                 away_player_ratings = []
+ 
+                 for player in home_starters:
+                     if isinstance(player, dict) and "performance" in player:
+-                        rating = player["performance"].get("rating", 0)
++                        rating = player["performance"].await get("rating", 0)
+                         if rating:
+                             home_player_ratings.append(float(rating))
+ 
+                 for player in away_starters:
+                     if isinstance(player, dict) and "performance" in player:
+-                        rating = player["performance"].get("rating", 0)
++                        rating = player["performance"].await get("rating", 0)
+                         if rating:
+                             away_player_ratings.append(float(rating))
+ 
+@@ -296,19 +296,19 @@                 info_box = api_stats["infoBox"]
+                 if isinstance(info_box, dict):
+                     # 体育场信息
+-                    stadium = info_box.get("Stadium", {})
++                    stadium = info_box.await get("Stadium", {})
+                     if stadium:
+-                        features["stadium_name"] = stadium.get("name", "")
++                        features["stadium_name"] = stadium.await get("name", "")
+ 
+                     # 上座率
+-                    attendance = info_box.get("Attendance", 0)
++                    attendance = info_box.await get("Attendance", 0)
+                     if attendance:
+                         features["attendance"] = int(attendance)
+ 
+                     # 裁判信息
+-                    referee = info_box.get("Referee", {})
++                    referee = info_box.await get("Referee", {})
+                     if referee:
+-                        features["referee_name"] = referee.get("text", "")
++                        features["referee_name"] = referee.await get("text", "")
+ 
+         except Exception as e:
+             self.logger.warning(f"⚠️ S-Tier特征提取异常: {e}")
+@@ -318,31 +318,31 @@     async def save_match_details(self, fotmob_id: str, details: dict[str, Any]) -> bool:
+         """保存比赛详情到数据库 - QA验证版本"""
+         try:
+-            async with get_db_session() as session:
++            async with await get_db_session() as session:
+                 # 🎯 直接映射FotMob数据结构
+-                content = details.get("content") or {}
++                content = details.await get("content") or {}
+ 
+                 # === 1. 直接映射统计数据 ===
+-                api_stats = content.get("stats") or {}
++                api_stats = content.await get("stats") or {}
+ 
+                 # 🎯 关键：调用xG数据提取方法
+                 self._extract_xg_data(api_stats, content)
+ 
+                 # 合并 matchFacts 数据
+-                match_facts = content.get("matchFacts") or {}
++                match_facts = content.await get("matchFacts") or {}
+                 if match_facts:
+                     api_stats.update(match_facts)
+ 
+                 # === 2. 直接映射阵容数据 ===
+-                api_lineups = content.get("lineup") or {}  # 注意：字段名是lineup
++                api_lineups = content.await get("lineup") or {}  # 注意：字段名是lineup
+ 
+                 # === 3. 直接映射赔率数据 ===
+                 api_odds = None
+                 odds_candidates = ["superlive", "betting", "odds", "preMatchOdds"]
+                 for candidate in odds_candidates:
+-                    if candidate in content and content.get(candidate):
++                    if candidate in content and content.await get(candidate):
+                         if candidate == "superlive":
+-                            api_odds = content[candidate].get("odds") or {}
++                            api_odds = content[candidate].await get("odds") or {}
+                         elif candidate == "betting":
+                             api_odds = content[candidate] or {}
+                         else:
+@@ -465,7 +465,7 @@                 # 如果有xG数据，显示具体值
+                 if has_xg:
+                     self.logger.info(
+-                        f"   🎯 xG数值: 主队={api_stats.get('home_xg', 0)}, 客队={api_stats.get('away_xg', 0)}"
++                        f"   🎯 xG数值: 主队={api_stats.await await get('home_xg', 0)}, 客队={api_stats.get('away_xg', 0)}"
+                     )
+ 
+                 # 成功标准：有真实比分或至少一个其他特征
+@@ -492,7 +492,7 @@     async def mark_match_complete(self, fotmob_id: str):
+         """标记比赛数据完整"""
+         try:
+-            async with get_db_session() as session:
++            async with await get_db_session() as session:
+                 update_query = text(
+                     """
+                     UPDATE matches
+@@ -566,10 +566,10 @@             if self.collector:
+                 stats = self.collector.get_stats()
+                 self.logger.info("📊 采集器统计:")
+-                self.logger.info(f"   总请求: {stats.get('requests_made', 0)}")
+-                self.logger.info(f"   成功请求: {stats.get('successful_requests', 0)}")
+-                self.logger.info(f"   成功率: {stats.get('success_rate', 0):.1%}")
+-                self.logger.info(f"   UA切换: {stats.get('ua_switches', 0)} 次")
++                self.logger.await info(f"   总请求: {stats.get('requests_made', 0)}")
++                self.logger.await info(f"   成功请求: {stats.get('successful_requests', 0)}")
++                self.logger.await info(f"   成功率: {stats.get('success_rate', 0):.1%}")
++                self.logger.await info(f"   UA切换: {stats.get('ua_switches', 0)} 次")
+ 
+         except Exception as e:
+             self.logger.error(f"❌ L2详情采集失败: {e}")

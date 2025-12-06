@@ -1,0 +1,210 @@
+--- a/src/utils/file_utils.py+++ b/src/utils/file_utils.py@@ -19,14 +19,14 @@     """文件处理工具类"""
+ 
+     @staticmethod
+-    def ensure_dir(path: str | Path) -> Path:
++async def ensure_dir(path: str | Path) -> Path:
+         """确保目录存在."""
+         path = Path(path)
+         path.mkdir(parents=True, exist_ok=True)
+         return path
+ 
+     @staticmethod
+-    def read_json(file_path: str | Path) -> dict[str, Any]:
++async def read_json(file_path: str | Path) -> dict[str, Any]:
+         """读取JSON文件."""
+         try:
+             with open(file_path, encoding="utf-8") as f:
+@@ -35,7 +35,7 @@             raise FileNotFoundError(f"无法读取JSON文件 {file_path}: {e}") from e
+ 
+     @staticmethod
+-    def write_json(
++async def write_json(
+         data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
+     ) -> None:
+         """写入JSON文件."""
+@@ -47,7 +47,7 @@             json.dump(data, f, ensure_ascii=False, indent=2)
+ 
+     @staticmethod
+-    def get_file_hash(file_path: str | Path) -> str:
++async def get_file_hash(file_path: str | Path) -> str:
+         """获取文件MD5哈希值."""
+         hash_md5 = hashlib.md5(usedforsecurity=False)
+         with open(file_path, "rb") as f:
+@@ -56,7 +56,7 @@         return hash_md5.hexdigest()
+ 
+     @staticmethod
+-    def get_file_size(file_path: str | Path) -> int:
++async def get_file_size(file_path: str | Path) -> int:
+         """获取文件大小（字节）."""
+         try:
+             if not os.path.exists(file_path):
+@@ -66,12 +66,12 @@             return 0
+ 
+     @staticmethod
+-    def ensure_directory(path: str | Path) -> Path:
++async def ensure_directory(path: str | Path) -> Path:
+         """确保目录存在（别名方法）."""
+         return FileUtils.ensure_dir(path)
+ 
+     @staticmethod
+-    def read_json_file(file_path: str | Path) -> dict[str, Any] | None:
++async def read_json_file(file_path: str | Path) -> dict[str, Any] | None:
+         """读取JSON文件（别名方法）."""
+         try:
+             return FileUtils.read_json(file_path)
+@@ -79,7 +79,7 @@             return None
+ 
+     @staticmethod
+-    def write_json_file(
++async def write_json_file(
+         data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
+     ) -> bool:
+         """写入JSON文件（别名方法）."""
+@@ -90,7 +90,7 @@             return False
+ 
+     @staticmethod
+-    def cleanup_old_files(directory: str | Path, days: int = 30) -> int:
++async def cleanup_old_files(directory: str | Path, days: int = 30) -> int:
+         """清理旧文件."""
+         directory = Path(directory)
+         if not directory.exists():
+@@ -110,7 +110,7 @@         return removed_count
+ 
+     @staticmethod
+-    def copy_file(src: str | Path, dst: str | Path) -> bool:
++async def copy_file(src: str | Path, dst: str | Path) -> bool:
+         """复制文件."""
+         try:
+             src_path = Path(src)
+@@ -121,7 +121,7 @@             return False
+ 
+     @staticmethod
+-    def move_file(src: str | Path, dst: str | Path) -> bool:
++async def move_file(src: str | Path, dst: str | Path) -> bool:
+         """移动文件."""
+         try:
+             src_path = Path(src)
+@@ -133,7 +133,7 @@             return False
+ 
+     @staticmethod
+-    def delete_file(file_path: str | Path) -> bool:
++async def delete_file(file_path: str | Path) -> bool:
+         """删除文件."""
+         try:
+             path = Path(file_path)
+@@ -145,22 +145,22 @@             return False
+ 
+     @staticmethod
+-    def file_exists(file_path: str | Path) -> bool:
++async def file_exists(file_path: str | Path) -> bool:
+         """检查文件是否存在."""
+         return Path(file_path).exists()
+ 
+     @staticmethod
+-    def is_file(file_path: str | Path) -> bool:
++async def is_file(file_path: str | Path) -> bool:
+         """检查路径是否为文件."""
+         return Path(file_path).is_file()
+ 
+     @staticmethod
+-    def is_directory(dir_path: str | Path) -> bool:
++async def is_directory(dir_path: str | Path) -> bool:
+         """检查路径是否为目录."""
+         return Path(dir_path).is_dir()
+ 
+     @staticmethod
+-    def list_files(directory: str | Path, pattern: str = "*") -> list[Path]:
++async def list_files(directory: str | Path, pattern: str = "*") -> list[Path]:
+         """列出目录中的文件."""
+         try:
+             dir_path = Path(directory)
+@@ -171,7 +171,7 @@             return []
+ 
+     @staticmethod
+-    def list_files_recursive(directory: str | Path, pattern: str = "*") -> list[Path]:
++async def list_files_recursive(directory: str | Path, pattern: str = "*") -> list[Path]:
+         """递归列出目录中的所有文件."""
+         try:
+             dir_path = Path(directory)
+@@ -182,22 +182,22 @@             return []
+ 
+     @staticmethod
+-    def get_file_extension(file_path: str | Path) -> str:
++async def get_file_extension(file_path: str | Path) -> str:
+         """获取文件扩展名."""
+         return Path(file_path).suffix
+ 
+     @staticmethod
+-    def get_file_name(file_path: str | Path) -> str:
++async def get_file_name(file_path: str | Path) -> str:
+         """获取文件名（不含扩展名）."""
+         return Path(file_path).stem
+ 
+     @staticmethod
+-    def get_file_full_name(file_path: str | Path) -> str:
++async def get_file_full_name(file_path: str | Path) -> str:
+         """获取文件全名（含扩展名）."""
+         return Path(file_path).name
+ 
+     @staticmethod
+-    def create_backup(
++async def create_backup(
+         file_path: str | Path, backup_dir: str | Path | None = None
+     ) -> Path | None:
+         """创建文件备份."""
+@@ -223,7 +223,7 @@             return None
+ 
+     @staticmethod
+-    def read_text_file(file_path: str | Path, encoding: str = "utf-8") -> str | None:
++async def read_text_file(file_path: str | Path, encoding: str = "utf-8") -> str | None:
+         """读取文本文件."""
+         try:
+             with open(file_path, encoding=encoding) as f:
+@@ -232,7 +232,7 @@             return None
+ 
+     @staticmethod
+-    def write_text_file(
++async def write_text_file(
+         content: str,
+         file_path: str | Path,
+         encoding: str = "utf-8",
+@@ -251,7 +251,7 @@             return False
+ 
+     @staticmethod
+-    def append_to_file(
++async def append_to_file(
+         content: str, file_path: str | Path, encoding: str = "utf-8"
+     ) -> bool:
+         """追加内容到文件."""
+@@ -263,7 +263,7 @@             return False
+ 
+     @staticmethod
+-    def get_directory_size(directory: str | Path) -> int:
++async def get_directory_size(directory: str | Path) -> int:
+         """获取目录总大小（字节）."""
+         try:
+             dir_path = Path(directory)
+@@ -279,7 +279,7 @@             return 0
+ 
+     @staticmethod
+-    def count_files(directory: str | Path) -> int:
++async def count_files(directory: str | Path) -> int:
+         """统计目录中的文件数量."""
+         try:
+             dir_path = Path(directory)
+@@ -291,7 +291,7 @@             return 0
+ 
+     @staticmethod
+-    def safe_remove_directory(directory: str | Path) -> bool:
++async def safe_remove_directory(directory: str | Path) -> bool:
+         """安全删除目录（仅删除空目录）."""
+         try:
+             dir_path = Path(directory)
+@@ -303,7 +303,7 @@             return False
+ 
+     @staticmethod
+-    def remove_directory_force(directory: str | Path) -> bool:
++async def remove_directory_force(directory: str | Path) -> bool:
+         """强制删除目录及其内容."""
+         try:
+             dir_path = Path(directory)

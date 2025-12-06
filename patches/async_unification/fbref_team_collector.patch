@@ -1,0 +1,48 @@
+--- a/src/data/collectors/fbref_team_collector.py+++ b/src/data/collectors/fbref_team_collector.py@@ -49,7 +49,7 @@     4. 支持增量更新
+     """
+ 
+-    def __init__(self, db_url: str):
++async def __init__(self, db_url: str):
+         self.db_url = db_url
+         self.engine = create_engine(db_url)
+         self.session = requests.Session(impersonate="chrome")
+@@ -125,7 +125,7 @@             logger.error(f"❌ 采集异常: {e}")
+             return []
+ 
+-    def parse_team_schedule_html(self, html: str, team_name: str, squad_id: str) -> list[dict]:
++async def parse_team_schedule_html(self, html: str, team_name: str, squad_id: str) -> list[dict]:
+         """
+         解析球队赛程HTML
+ 
+@@ -169,7 +169,7 @@             logger.error(f"❌ HTML解析失败: {e}")
+             return []
+ 
+-    def parse_match_row(self, row: pd.Series, team_name: str, squad_id: str) -> Optional[dict]:
++async def parse_match_row(self, row: pd.Series, team_name: str, squad_id: str) -> Optional[dict]:
+         """
+         解析单行比赛数据
+ 
+@@ -261,7 +261,7 @@             logger.error(f"❌ 解析比赛行失败: {e}")
+             return None
+ 
+-    def _extract_opponent(self, row: pd.Series, team_name: str) -> Optional[str]:
++async def _extract_opponent(self, row: pd.Series, team_name: str) -> Optional[str]:
+         """提取对手"""
+         opponent = row.get('Opponent', '')
+         if not opponent or str(opponent) == 'nan':
+@@ -274,7 +274,7 @@ 
+         return opponent
+ 
+-    def _extract_score(self, row: pd.Series) -> Optional[tuple[int, int]]:
++async def _extract_score(self, row: pd.Series) -> Optional[tuple[int, int]]:
+         """提取比分"""
+         score = row.get('GF', '')
+         ga = row.get('GA', '')
+@@ -298,7 +298,7 @@ 
+         return None
+ 
+-    def _extract_competition(self, row: pd.Series) -> str:
++async def _extract_competition(self, row: pd.Series) -> str:
+         """提取赛事名称"""
+         comp = row.get('Comp', '')
+         if not comp or str(comp) == 'nan':

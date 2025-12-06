@@ -1,0 +1,86 @@
+--- a/src/monitoring/system_monitor.py+++ b/src/monitoring/system_monitor.py@@ -10,12 +10,12 @@ class SystemMonitor:
+     """系统监控器类."""
+ 
+-    def __init__(self, metrics_collector=None):
++async def __init__(self, metrics_collector=None):
+         """初始化系统监控器."""
+         self.metrics_collector = metrics_collector
+         self.metrics = {}
+ 
+-    def record_request(
++async def record_request(
+         self, method: str, endpoint: str, status_code: int, duration: float
+     ):
+         """记录HTTP请求."""
+@@ -31,7 +31,7 @@             self.metrics[key]["status_codes"][status_key] = 0
+         self.metrics[key]["status_codes"][status_key] += 1
+ 
+-    def record_database_query(
++async def record_database_query(
+         self, operation: str, table: str, duration: float, is_slow: bool = False
+     ):
+         """记录数据库查询."""
+@@ -44,7 +44,7 @@         if is_slow:
+             self.metrics[key]["slow_queries"] += 1
+ 
+-    def record_cache_operation(self, operation: str, cache_type: str, result: str):
++async def record_cache_operation(self, operation: str, cache_type: str, result: str):
+         """记录缓存操作."""
+         key = f"{operation} {cache_type}"
+         if key not in self.metrics:
+@@ -55,7 +55,7 @@             self.metrics[key]["results"][result] = 0
+         self.metrics[key]["results"][result] += 1
+ 
+-    def record_prediction(self, model_version: str, league: str):
++async def record_prediction(self, model_version: str, league: str):
+         """记录预测."""
+         key = f"{model_version} {league}"
+         if key not in self.metrics:
+@@ -63,7 +63,7 @@ 
+         self.metrics[key]["count"] += 1
+ 
+-    def get_metrics(self) -> dict[str, Any]:
++async def get_metrics(self) -> dict[str, Any]:
+         """获取监控指标."""
+         return self.metrics.copy()
+ 
+@@ -72,7 +72,7 @@ _global_monitor = None
+ 
+ 
+-def get_system_monitor() -> SystemMonitor:
++async def get_system_monitor() -> SystemMonitor:
+     """获取全局系统监控器实例."""
+     global _global_monitor
+     if _global_monitor is None:
+@@ -81,7 +81,7 @@ 
+ 
+ # 便捷函数 - 直接实现以保持向后兼容
+-def record_http_request(method: str, endpoint: str, status_code: int, duration: float):
++async def record_http_request(method: str, endpoint: str, status_code: int, duration: float):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """记录HTTP请求"""
+@@ -89,7 +89,7 @@     monitor.record_request(method, endpoint, status_code, duration)
+ 
+ 
+-def record_db_query(operation: str, table: str, duration: float, is_slow: bool = False):
++async def record_db_query(operation: str, table: str, duration: float, is_slow: bool = False):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """记录数据库查询"""
+@@ -97,7 +97,7 @@     monitor.record_database_query(operation, table, duration, is_slow)
+ 
+ 
+-def record_cache_op(operation: str, cache_type: str, result: str):
++async def record_cache_op(operation: str, cache_type: str, result: str):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """记录缓存操作"""
+@@ -105,7 +105,7 @@     monitor.record_cache_operation(operation, cache_type, result)
+ 
+ 
+-def record_prediction(model_version: str, league: str):
++async def record_prediction(model_version: str, league: str):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """记录预测"""

@@ -1,0 +1,166 @@
+--- a/src/ml/models/base_model.py+++ b/src/ml/models/base_model.py@@ -30,7 +30,7 @@     model_version: str
+     created_at: datetime
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         return {
+             "match_id": self.match_id,
+@@ -65,7 +65,7 @@     hyperparameters: dict[str, Any]
+     created_at: datetime
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         return {
+             "model_name": self.model_name,
+@@ -87,7 +87,7 @@ class BaseModel(abc.ABC):
+     """基础预测模型抽象类."""
+ 
+-    def __init__(self, model_name: str, version: str = "1.0"):
++async def __init__(self, model_name: str, version: str = "1.0"):
+         self.model_name = model_name
+         self.model_version = version
+         self.is_trained = False
+@@ -98,7 +98,7 @@         self.last_training_time = None
+ 
+     @abc.abstractmethod
+-    def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
++async def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
+         """准备特征.
+ 
+         Args:
+@@ -109,7 +109,7 @@         """
+ 
+     @abc.abstractmethod
+-    def train(
++async def train(
+         self,
+         training_data: pd.DataFrame,
+         validation_data: pd.DataFrame | None = None,
+@@ -125,7 +125,7 @@         """
+ 
+     @abc.abstractmethod
+-    def predict(self, match_data: dict[str, Any]) -> PredictionResult:
++async def predict(self, match_data: dict[str, Any]) -> PredictionResult:
+         """预测比赛结果.
+ 
+         Args:
+@@ -136,7 +136,7 @@         """
+ 
+     @abc.abstractmethod
+-    def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
++async def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
+         """预测概率分布.
+ 
+         Args:
+@@ -147,7 +147,7 @@         """
+ 
+     @abc.abstractmethod
+-    def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
++async def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
+         """评估模型性能.
+ 
+         Args:
+@@ -158,7 +158,7 @@         """
+ 
+     @abc.abstractmethod
+-    def save_model(self, file_path: str) -> bool:
++async def save_model(self, file_path: str) -> bool:
+         """保存模型.
+ 
+         Args:
+@@ -169,7 +169,7 @@         """
+ 
+     @abc.abstractmethod
+-    def load_model(self, file_path: str) -> bool:
++async def load_model(self, file_path: str) -> bool:
+         """加载模型.
+ 
+         Args:
+@@ -179,7 +179,7 @@             是否加载成功
+         """
+ 
+-    def get_feature_importance(self) -> dict[str, float]:
++async def get_feature_importance(self) -> dict[str, float]:
+         """获取特征重要性.
+ 
+         Returns:
+@@ -195,7 +195,7 @@             zip(self.feature_names, self.model.feature_importances_, strict=False)
+         )
+ 
+-    def get_model_info(self) -> dict[str, Any]:
++async def get_model_info(self) -> dict[str, Any]:
+         """获取模型信息.
+ 
+         Returns:
+@@ -213,7 +213,7 @@             "feature_importance": self.get_feature_importance(),
+         }
+ 
+-    def validate_prediction_input(self, match_data: dict[str, Any]) -> bool:
++async def validate_prediction_input(self, match_data: dict[str, Any]) -> bool:
+         """验证预测输入数据.
+ 
+         Args:
+@@ -236,7 +236,7 @@ 
+         return True
+ 
+-    def calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
++async def calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
+         """计算预测置信度.
+ 
+         Args:
+@@ -264,7 +264,7 @@ 
+         return min(max(confidence, 0.1), 1.0)  # 限制在0.1-1.0之间
+ 
+-    def get_outcome_from_probabilities(
++async def get_outcome_from_probabilities(
+         self, probabilities: tuple[float, float, float]
+     ) -> str:
+         """从概率分布获取预测结果.
+@@ -279,7 +279,7 @@         max_index = np.argmax(probabilities)
+         return outcomes[max_index]
+ 
+-    def validate_training_data(self, training_data: pd.DataFrame) -> bool:
++async def validate_training_data(self, training_data: pd.DataFrame) -> bool:
+         """验证训练数据.
+ 
+         Args:
+@@ -311,7 +311,7 @@ 
+         return True
+ 
+-    def log_training_step(self, step: int, metrics: dict[str, float]):
++async def log_training_step(self, step: int, metrics: dict[str, float]):
+         """记录训练步骤.
+ 
+         Args:
+@@ -323,7 +323,7 @@ 
+         logger.info(f"Training step {step}: {metrics}")
+ 
+-    def get_training_curve(self) -> dict[str, list[float]]:
++async def get_training_curve(self) -> dict[str, list[float]]:
+         """获取训练曲线.
+ 
+         Returns:
+@@ -340,7 +340,7 @@ 
+         return curves
+ 
+-    def update_hyperparameters(self, **kwargs):
++async def update_hyperparameters(self, **kwargs):
+         """更新超参数.
+ 
+         Args:
+@@ -349,7 +349,7 @@         self.hyperparameters.update(kwargs)
+         logger.info(f"Updated hyperparameters: {kwargs}")
+ 
+-    def reset_model(self):
++async def reset_model(self):
+         """重置模型."""
+         self.model = None
+         self.is_trained = False
+@@ -357,5 +357,5 @@         self.last_training_time = None
+         logger.info("Model has been reset")
+ 
+-    def __repr__(self):
++async def __repr__(self):
+         return f"<{self.__class__.__name__}(name='{self.model_name}', version='{self.model_version}', trained={self.is_trained})>"

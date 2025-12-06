@@ -1,0 +1,64 @@
+--- a/src/models/metrics_exporter.py+++ b/src/models/metrics_exporter.py@@ -26,7 +26,7 @@     - 响应时间监控
+     """
+ 
+-    def __init__(self, registry=None):
++async def __init__(self, registry=None):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化Prometheus指标"""
+@@ -102,7 +102,7 @@             registry=self.registry,
+         )
+ 
+-    def export_prediction_metrics(self, result: Any) -> None:
++async def export_prediction_metrics(self, result: Any) -> None:
+         """导出预测指标.
+ 
+         Args:
+@@ -134,7 +134,7 @@         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+             logger.error(f"导出预测指标失败: {e}")
+ 
+-    def export_accuracy_metrics(
++async def export_accuracy_metrics(
+         self,
+         model_name: str,
+         model_version: str,
+@@ -163,7 +163,7 @@         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+             logger.error(f"导出准确率指标失败: {e}")
+ 
+-    def export_duration_metrics(
++async def export_duration_metrics(
+         self, model_name: str, model_version: str, duration: float
+     ) -> None:
+         """导出响应时间指标.
+@@ -181,7 +181,7 @@         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+             logger.error(f"导出响应时间指标失败: {e}")
+ 
+-    def export_coverage_metrics(
++async def export_coverage_metrics(
+         self, model_name: str, model_version: str, coverage_rate: float
+     ) -> None:
+         """导出模型覆盖率指标.
+@@ -199,7 +199,7 @@         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+             logger.error(f"导出覆盖率指标失败: {e}")
+ 
+-    def export_error_metrics(
++async def export_error_metrics(
+         self, model_name: str, model_version: str, error_type: str
+     ) -> None:
+         """导出错误指标.
+@@ -219,7 +219,7 @@         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+             logger.error(f"导出错误指标失败: {e}")
+ 
+-    def export_model_load_duration(
++async def export_model_load_duration(
+         self, model_name: str, model_version: str, duration: float
+     ) -> None:
+         """导出模型加载时间指标.
+@@ -237,7 +237,7 @@         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+             logger.error(f"导出模型加载时间指标失败: {e}")
+ 
+-    def get_metrics_summary(self) -> dict[str, Any]:
++async def get_metrics_summary(self) -> dict[str, Any]:
+         """获取指标摘要.
+ 
+         Returns:

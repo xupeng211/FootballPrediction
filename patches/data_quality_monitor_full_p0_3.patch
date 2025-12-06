@@ -1,0 +1,3273 @@
+diff --git a/src/features/feature_store.py b/src/features/feature_store.py
+index f2f585e4a..4694abbc5 100644
+--- a/src/features/feature_store.py
++++ b/src/features/feature_store.py
+@@ -1,25 +1,609 @@
+-"""feature_store 主模块.
+-
+-此文件由长文件拆分工具自动生成
++"""
++Football Prediction FeatureStore 实现.
+ 
+-拆分策略: component_split
++基于 async_manager.py 的异步特征存储实现，支持高并发特征访问。
++这个实现遵循 FeatureStoreProtocol 接口，提供生产就绪的特征管理功能。
+ """
+ 
+-# 导入拆分的模块
+-try:
+-    from .components.feature_store_core import (
+-        FootballFeatureStore,
+-        MockEntity,
+-        MockFeatureStore,
++from __future__ import annotations
++
++import json
++import logging
++from datetime import datetime, timezone
++from typing import Any, Optional
++
++from tenacity import (
++    retry,
++    retry_if_exception_type,
++    stop_after_attempt,
++    wait_exponential,
++)
++
++from src.database.async_manager import get_db_session
++from src.features.feature_store_interface import (
++    DEFAULT_FEATURE_VERSION,
++    FeatureData,
++    FeatureNotFoundError,
++    FeatureStoreProtocol,
++    FeatureQueryResult,
++    FeatureStats,
++    FeatureStoreError,
++    FeatureValidationError,
++    StorageError,
++)
++
++logger = logging.getLogger(__name__)
++
++
++class FootballFeatureStore(FeatureStoreProtocol):
++    """
++    足球预测特征存储实现.
++
++    基于 PostgreSQL + JSONB 的特征存储，支持:
++    - 异步高并发读写
++    - 版本管理
++    - 批量操作
++    - 自动重试
++    - 性能监控
++    - 数据完整性检查
++    """
++
++    def __init__(
++        self,
++        max_batch_size: int = 1000,
++        retry_attempts: int = 3,
++        enable_logging: bool = True
++    ):
++        """
++        初始化 FeatureStore.
++
++        Args:
++            max_batch_size: 批量操作的最大大小
++            retry_attempts: 重试次数
++            enable_logging: 是否启用详细日志
++        """
++        self.max_batch_size = max_batch_size
++        self.retry_attempts = retry_attempts
++        self.enable_logging = enable_logging
++        self._initialized = False
++
++    async def initialize(self) -> None:
++        """初始化存储后端，确保表结构存在."""
++        if self._initialized:
++            return
++
++        try:
++            async with get_db_session() as session:
++                # 创建表结构（通过执行迁移）
++                await session.execute("""
++                    CREATE TABLE IF NOT EXISTS feature_store (
++                        match_id BIGINT NOT NULL,
++                        version VARCHAR(50) NOT NULL DEFAULT 'latest',
++                        features JSONB NOT NULL,
++                        metadata JSONB,
++                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
++                        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
++                        PRIMARY KEY (match_id, version)
++                    )
++                """)
++
++                # 创建索引
++                await session.execute("""
++                    CREATE INDEX IF NOT EXISTS idx_featurestore_match_id
++                    ON feature_store(match_id)
++                """)
++
++                await session.execute("""
++                    CREATE INDEX IF NOT EXISTS idx_featurestore_features_gin
++                    ON feature_store USING GIN(features)
++                """)
++
++                await session.commit()
++                self._initialized = True
++
++                if self.enable_logging:
++                    logger.info("FeatureStore initialized successfully")
++
++        except Exception as e:
++            logger.error(f"Failed to initialize FeatureStore: {e}")
++            raise StorageError(f"Initialization failed: {e}") from e
++
++    @retry(
++        stop=stop_after_attempt(3),
++        wait=wait_exponential(multiplier=1, min=4, max=10),
++        retry=retry_if_exception_type((StorageError,)),
++        reraise=True
+     )
+-except ImportError:
+-    FootballFeatureStore = None
+-    MockEntity = None
+-    MockFeatureStore = None
+-
+-# 导出所有公共接口
+-__all__ = [
+-    "FootballFeatureStore",
+-    "MockEntity",
+-    "MockFeatureStore",
+-]
++    async def save_features(
++        self,
++        match_id: int,
++        features: dict[str, Any],
++        version: str = DEFAULT_FEATURE_VERSION,
++        metadata: Optional[dict[str, Any]] = None
++    ) -> None:
++        """
++        保存特征数据到存储.
++
++        Args:
++            match_id: 比赛ID
++            features: 特征数据字典
++            version: 特征版本
++            metadata: 可选的元数据
++
++        Raises:
++            FeatureValidationError: 当输入数据无效时
++            StorageError: 当存储操作失败时
++        """
++        await self._ensure_initialized()
++
++        # 输入验证
++        self._validate_match_id(match_id)
++        self._validate_features(features)
++        self._validate_version(version)
++
++        try:
++            async with get_db_session() as session:
++                # 使用 UPSERT 操作 (ON CONFLICT UPDATE)
++                query = """
++                    INSERT INTO feature_store (match_id, version, features, metadata, created_at, updated_at)
++                    VALUES (%s, %s, %s, %s, NOW(), NOW())
++                    ON CONFLICT (match_id, version)
++                    DO UPDATE SET
++                        features = EXCLUDED.features,
++                        metadata = EXCLUDED.metadata,
++                        updated_at = NOW()
++                """
++
++                await session.execute(
++                    query,
++                    (match_id, version, json.dumps(features), json.dumps(metadata) if metadata else None)
++                )
++
++                await session.commit()
++
++                if self.enable_logging:
++                    logger.debug(f"Saved features for match {match_id}, version {version}")
++
++        except Exception as e:
++            logger.error(f"Failed to save features for match {match_id}: {e}")
++            raise StorageError(f"Save operation failed: {e}") from e
++
++    async def load_features(
++        self,
++        match_id: int,
++        version: str = DEFAULT_FEATURE_VERSION
++    ) -> Optional[FeatureData]:
++        """
++        加载单个比赛的特征数据.
++
++        Args:
++            match_id: 比赛ID
++            version: 特征版本
++
++        Returns:
++            FeatureData 对象，如果不存在则返回 None
++        """
++        await self._ensure_initialized()
++        self._validate_match_id(match_id)
++        self._validate_version(version)
++
++        try:
++            async with get_db_session() as session:
++                query = """
++                    SELECT match_id, features, version, metadata, created_at, updated_at
++                    FROM feature_store
++                    WHERE match_id = %s AND version = %s
++                """
++
++                result = await session.execute(query, (match_id, version))
++                row = result.fetchone()
++
++                if row:
++                    return FeatureData(
++                        match_id=row[0],
++                        features=json.loads(row[1]) if isinstance(row[1], str) else row[1],
++                        version=row[2],
++                        metadata=json.loads(row[3]) if row[3] else None,
++                        created_at=row[4],
++                        updated_at=row[5]
++                    )
++                return None
++
++        except Exception as e:
++            logger.error(f"Failed to load features for match {match_id}: {e}")
++            raise StorageError(f"Load operation failed: {e}") from e
++
++    async def load_batch(
++        self,
++        match_ids: list[int],
++        version: str = DEFAULT_FEATURE_VERSION
++    ) -> dict[int, FeatureData]:
++        """
++        批量加载多个比赛的特征数据.
++
++        Args:
++            match_ids: 比赛ID列表
++            version: 特征版本
++
++        Returns:
++            字典，key为match_id，value为FeatureData
++        """
++        await self._ensure_initialized()
++
++        if not match_ids:
++            return {}
++
++        if len(match_ids) > self.max_batch_size:
++            raise FeatureValidationError(f"Batch size {len(match_ids)} exceeds maximum {self.max_batch_size}")
++
++        self._validate_version(version)
++
++        try:
++            async with get_db_session() as session:
++                # 使用 IN 查询批量加载
++                placeholders = ','.join(['%s'] * len(match_ids))
++                query = f"""
++                    SELECT match_id, features, version, metadata, created_at, updated_at
++                    FROM feature_store
++                    WHERE match_id IN ({placeholders}) AND version = %s
++                """
++
++                result = await session.execute(query, match_ids + [version])
++                rows = result.fetchall()
++
++                # 构建结果字典
++                batch_data = {}
++                for row in rows:
++                    batch_data[row[0]] = FeatureData(
++                        match_id=row[0],
++                        features=json.loads(row[1]) if isinstance(row[1], str) else row[1],
++                        version=row[2],
++                        metadata=json.loads(row[3]) if row[3] else None,
++                        created_at=row[4],
++                        updated_at=row[5]
++                    )
++
++                if self.enable_logging:
++                    logger.debug(f"Loaded {len(batch_data)} feature sets from {len(match_ids)} requests")
++
++                return batch_data
++
++        except Exception as e:
++            logger.error(f"Failed to load batch features: {e}")
++            raise StorageError(f"Batch load operation failed: {e}") from e
++
++    async def query_features(
++        self,
++        match_ids: list[int],
++        feature_names: Optional[list[str]] = None,
++        version: str = DEFAULT_FEATURE_VERSION
++    ) -> list[FeatureQueryResult]:
++        """
++        查询特定的特征字段.
++
++        Args:
++            match_ids: 比赛ID列表
++            feature_names: 需要查询的特征名列表，None表示查询所有
++            version: 特征版本
++
++        Returns:
++            查询结果列表
++        """
++        await self._ensure_initialized()
++
++        if not match_ids:
++            return []
++
++        if len(match_ids) > self.max_batch_size:
++            raise FeatureValidationError(f"Batch size {len(match_ids)} exceeds maximum {self.max_batch_size}")
++
++        try:
++            async with get_db_session() as session:
++                if feature_names:
++                    # 查询特定特征字段
++                    placeholders = ','.join(['%s'] * len(match_ids))
++
++                    query = f"""
++                        SELECT match_id, features, version, updated_at
++                        FROM feature_store
++                        WHERE match_id IN ({placeholders}) AND version = %s
++                    """
++
++                    result = await session.execute(query, match_ids + [version])
++                    rows = result.fetchall()
++
++                    results = []
++                    for row in rows:
++                        features = json.loads(row[1]) if isinstance(row[1], str) else row[1]
++                        # 只返回请求的特征
++                        filtered_features = {k: v for k, v in features.items() if k in feature_names}
++
++                        results.append(FeatureQueryResult(
++                            match_id=row[0],
++                            features=filtered_features,
++                            version=row[2],
++                            timestamp=row[3],
++                            is_complete=len(filtered_features) == len(feature_names)
++                        ))
++
++                    return results
++                else:
++                    # 查询所有特征
++                    batch_data = await self.load_batch(match_ids, version)
++                    return [
++                        FeatureQueryResult(
++                            match_id=match_id,
++                            features=data["features"],
++                            version=data["version"],
++                            timestamp=data["updated_at"],
++                            is_complete=True
++                        )
++                        for match_id, data in batch_data.items()
++                    ]
++
++        except Exception as e:
++            logger.error(f"Failed to query features: {e}")
++            raise StorageError(f"Query operation failed: {e}") from e
++
++    async def latest_feature_timestamp(
++        self,
++        version: str = DEFAULT_FEATURE_VERSION
++    ) -> Optional[datetime]:
++        """
++        获取最新特征的时间戳.
++
++        Args:
++            version: 特征版本
++
++        Returns:
++            最新特征的创建时间，如果没有特征则返回 None
++        """
++        await self._ensure_initialized()
++        self._validate_version(version)
++
++        try:
++            async with get_db_session() as session:
++                query = """
++                    SELECT MAX(created_at) as latest_timestamp
++                    FROM feature_store
++                    WHERE version = %s
++                """
++
++                result = await session.execute(query, (version,))
++                row = result.fetchone()
++
++                return row[0] if row and row[0] else None
++
++        except Exception as e:
++            logger.error(f"Failed to get latest timestamp: {e}")
++            raise StorageError(f"Timestamp query failed: {e}") from e
++
++    async def stats(self) -> FeatureStats:
++        """
++        获取特征存储的统计信息.
++
++        Returns:
++            包含各种统计指标的字典
++        """
++        await self._ensure_initialized()
++
++        try:
++            async with get_db_session() as session:
++                query = """
++                    SELECT
++                        COUNT(DISTINCT match_id) as total_matches,
++                        COUNT(*) as total_features,
++                        COUNT(DISTINCT version) as feature_versions,
++                        MAX(created_at) as latest_timestamp,
++                        pg_size_pretty(pg_total_relation_size('feature_store')) as storage_size
++                    FROM feature_store
++                """
++
++                result = await session.execute(query)
++                row = result.fetchone()
++
++                return FeatureStats(
++                    total_features=row[1] if row else 0,
++                    total_matches=row[0] if row else 0,
++                    feature_versions=list(row[2].split(',')) if row and row[2] else [],
++                    latest_timestamp=row[3] if row and row[3] else None,
++                    storage_size_mb=self._parse_storage_size(row[4]) if row and row[4] else None
++                )
++
++        except Exception as e:
++            logger.error(f"Failed to get stats: {e}")
++            raise StorageError(f"Stats query failed: {e}") from e
++
++    async def delete_features(
++        self,
++        match_id: int,
++        version: Optional[str] = None
++    ) -> bool:
++        """
++        删除指定的特征数据.
++
++        Args:
++            match_id: 比赛ID
++            version: 特征版本号，None表示删除所有版本
++
++        Returns:
++            删除是否成功
++        """
++        await self._ensure_initialized()
++        self._validate_match_id(match_id)
++
++        try:
++            async with get_db_session() as session:
++                if version:
++                    # 删除特定版本
++                    query = "DELETE FROM feature_store WHERE match_id = %s AND version = %s"
++                    await session.execute(query, (match_id, version))
++                else:
++                    # 删除所有版本
++                    query = "DELETE FROM feature_store WHERE match_id = %s"
++                    await session.execute(query, (match_id,))
++
++                await session.commit()
++
++                if self.enable_logging:
++                    logger.info(f"Deleted features for match {match_id}, version: {version or 'all'}")
++
++                return True
++
++        except Exception as e:
++            logger.error(f"Failed to delete features for match {match_id}: {e}")
++            raise StorageError(f"Delete operation failed: {e}") from e
++
++    async def list_feature_versions(
++        self,
++        match_id: int
++    ) -> list[str]:
++        """
++        列出指定比赛的所有特征版本.
++
++        Args:
++            match_id: 比赛ID
++
++        Returns:
++            版本号列表
++        """
++        await self._ensure_initialized()
++        self._validate_match_id(match_id)
++
++        try:
++            async with get_db_session() as session:
++                query = """
++                    SELECT DISTINCT version
++                    FROM feature_store
++                    WHERE match_id = %s
++                    ORDER BY version
++                """
++
++                result = await session.execute(query, (match_id,))
++                rows = result.fetchall()
++
++                return [row[0] for row in rows]
++
++        except Exception as e:
++            logger.error(f"Failed to list versions for match {match_id}: {e}")
++            raise StorageError(f"Version listing failed: {e}") from e
++
++    async def health_check(self) -> dict[str, Any]:
++        """
++        健康检查接口.
++
++        Returns:
++            健康状态信息
++        """
++        try:
++            stats = await self.stats()
++            latest_timestamp = await self.latest_feature_timestamp()
++
++            # 计算数据新鲜度（秒）
++            data_age = None
++            if latest_timestamp:
++                data_age = (datetime.now(timezone.utc) - latest_timestamp).total_seconds()
++
++            return {
++                "status": "healthy" if self._initialized else "uninitialized",
++                "initialized": self._initialized,
++                "total_matches": stats["total_matches"],
++                "total_features": stats["total_features"],
++                "latest_timestamp": latest_timestamp.isoformat() if latest_timestamp else None,
++                "data_age_seconds": data_age,
++                "storage_size": stats["storage_size_mb"],
++                "max_batch_size": self.max_batch_size,
++                "retry_attempts": self.retry_attempts
++            }
++
++        except Exception as e:
++            logger.error(f"Health check failed: {e}")
++            return {
++                "status": "unhealthy",
++                "error": str(e),
++                "initialized": self._initialized
++            }
++
++    async def close(self) -> None:
++        """关闭连接，清理资源."""
++        self._initialized = False
++        if self.enable_logging:
++            logger.info("FeatureStore closed")
++
++    # 私有辅助方法
++
++    async def _ensure_initialized(self) -> None:
++        """确保FeatureStore已初始化."""
++        if not self._initialized:
++            await self.initialize()
++
++    def _validate_match_id(self, match_id: int) -> None:
++        """验证match_id的有效性."""
++        if not isinstance(match_id, int) or match_id <= 0:
++            raise FeatureValidationError(f"Invalid match_id: {match_id}. Must be a positive integer.")
++
++    def _validate_features(self, features: dict[str, Any]) -> None:
++        """验证features字典的有效性."""
++        if not isinstance(features, dict):
++            raise FeatureValidationError(f"Features must be a dictionary, got {type(features)}")
++
++        if not features:
++            raise FeatureValidationError("Features dictionary cannot be empty")
++
++        # 验证特征名的有效性
++        for key in features.keys():
++            if not isinstance(key, str) or not key.strip():
++                raise FeatureValidationError(f"Invalid feature name: {key}. Must be a non-empty string.")
++
++    def _validate_version(self, version: str) -> None:
++        """验证version的有效性."""
++        if not isinstance(version, str) or not version.strip():
++            raise FeatureValidationError(f"Invalid version: {version}. Must be a non-empty string.")
++
++    def _parse_storage_size(self, size_str: Optional[str]) -> Optional[float]:
++        """解析PostgreSQL的存储大小字符串为MB."""
++        if not size_str:
++            return None
++
++        try:
++            size_str = size_str.strip().upper()
++            if size_str.endswith('KB'):
++                return float(size_str[:-2]) / 1024
++            elif size_str.endswith('MB'):
++                return float(size_str[:-2])
++            elif size_str.endswith('GB'):
++                return float(size_str[:-2]) * 1024
++            else:
++                return float(size_str)
++        except (ValueError, AttributeError):
++            return None
++
++
++# 创建全局实例（惰性初始化）
++_global_feature_store: Optional[FootballFeatureStore] = None
++
++
++async def get_feature_store() -> FootballFeatureStore:
++    """
++    获取全局FeatureStore实例（单例模式）.
++
++    Returns:
++        FootballFeatureStore 实例
++    """
++    global _global_feature_store
++    if _global_feature_store is None:
++        _global_feature_store = FootballFeatureStore()
++        await _global_feature_store.initialize()
++    return _global_feature_store
++
++
++def reset_feature_store() -> None:
++    """
++    重置全局FeatureStore实例（主要用于测试）.
++    """
++    global _global_feature_store
++    _global_feature_store = None
++
++
++# 为了向后兼容，保留旧的导入别名
++FootballFeatureStoreClass = FootballFeatureStore
+diff --git a/src/quality/data_quality_monitor.py b/src/quality/data_quality_monitor.py
+new file mode 100644
+index 000000000..fd821b1ea
+--- /dev/null
++++ b/src/quality/data_quality_monitor.py
+@@ -0,0 +1,584 @@
++"""
++Data Quality Monitor - 数据质量监控器
++
++与 P0-2 FeatureStore 完全集成的现代化数据质量监控器。
++支持基于协议的可插拔规则系统，提供异步批量数据质量检查能力。
++
++核心功能：
++- 与 FeatureStoreProtocol 完全集成
++- 支持多种数据质量规则
++- 异步批量处理能力
++- JSON-safe 错误报告
++- 重试机制和错误处理
++- 统计信息和健康检查
++
++重构版本: P0-3
++重构时间: 2025-12-05
++重构原因: 原实现只有pass语句，与FeatureStore脱节
++"""
++
++import asyncio
++import logging
++from datetime import datetime, timezone
++from typing import Any, Dict, List, Optional
++from dataclasses import dataclass, field
++
++from tenacity import (
++    retry,
++    stop_after_attempt,
++    wait_exponential,
++    retry_if_exception_type,
++)
++
++# 导入P0-2修复的FeatureStore
++from src.features.feature_store_interface import FeatureStoreProtocol
++from src.quality.quality_protocol import (
++    DataQualityRule,
++    DataQualityResult,
++    RuleSeverity,
++)
++
++logger = logging.getLogger(__name__)
++
++
++@dataclass
++class DataQualityStats:
++    """数据质量统计信息。
++
++    跟踪数据质量检查的历史记录和统计指标。
++    支持序列化和持久化存储。
++    """
++    total_checks: int = field(default=0)
++    passed_checks: int = field(default=0)
++    failed_checks: int = field(default=0)
++    high_severity_errors: int = field(default=0)
++    medium_severity_errors: int = field(default=0)
++    low_severity_errors: int = field(default=0)
++    last_check_time: Optional[datetime] = field(default=None)
++    rule_execution_stats: Dict[str, int] = field(default_factory=dict)
++
++    def to_dict(self) -> Dict[str, Any]:
++        """转换为JSON-safe字典格式。"""
++        return {
++            "total_checks": self.total_checks,
++            "passed_checks": self.passed_checks,
++            "failed_checks": self.failed_checks,
++            "high_severity_errors": self.high_severity_errors,
++            "medium_severity_errors": self.medium_severity_errors,
++            "low_severity_errors": self.low_severity_errors,
++            "last_check_time": self.last_check_time.isoformat() if self.last_check_time else None,
++            "rule_execution_stats": self.rule_execution_stats,
++            "success_rate": self.success_rate,
++            "error_rate": self.error_rate,
++        }
++
++    @property
++    def success_rate(self) -> float:
++        """计算成功率。"""
++        if self.total_checks == 0:
++            return 0.0
++        return (self.passed_checks / self.total_checks) * 100.0
++
++    @property
++    def error_rate(self) -> float:
++        """计算错误率。"""
++        if self.total_checks == 0:
++            return 0.0
++        return (self.failed_checks / self.total_checks) * 100.0
++
++
++class DataQualityMonitor:
++    """
++    数据质量监控器主实现。
++
++    与 P0-2 FeatureStore 完全集成，提供现代化的数据质量检查能力。
++    支持基于协议的可插拔规则系统和异步批量处理。
++
++    主要特性：
++    - 异步处理能力，支持大规模数据检查
++    - 与 FeatureStoreProtocol 完全集成
++    - 支持多种数据质量规则
++    - 内置重试机制和错误处理
++    - 提供详细的统计信息和健康检查
++    """
++
++    def __init__(
++        self,
++        rules: List[DataQualityRule],
++        feature_store: FeatureStoreProtocol,
++        enable_stats: bool = True,
++        max_concurrent_checks: int = 10
++    ):
++        """
++        初始化数据质量监控器。
++
++        Args:
++            rules: 数据质量规则列表
++            feature_store: FeatureStore协议实例
++            enable_stats: 是否启用统计信息收集
++            max_concurrent_checks: 最大并发检查数量
++        """
++        self.rules = rules
++        self.feature_store = feature_store
++        self.enable_stats = enable_stats
++        self.max_concurrent_checks = max_concurrent_checks
++
++        # 统计信息
++        self.stats = DataQualityStats() if enable_stats else None
++
++        # 日志记录器
++        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
++
++        # 验证规则
++        self._validate_rules()
++
++        self.logger.info(
++            f"DataQualityMonitor 初始化完成，加载了 {len(rules)} 个规则"
++        )
++
++    def _validate_rules(self) -> None:
++        """验证规则配置的有效性。"""
++        if not self.rules:
++            raise ValueError("至少需要提供一个数据质量规则")
++
++        rule_names = [rule.rule_name for rule in self.rules]
++        if len(rule_names) != len(set(rule_names)):
++            raise ValueError("规则名称必须唯一")
++
++        for rule in self.rules:
++            if not hasattr(rule, 'check') or not callable(rule.check):
++                raise ValueError(f"规则 {rule.rule_name} 必须实现 check 方法")
++
++    @retry(
++        stop=stop_after_attempt(3),
++        wait=wait_exponential(multiplier=1, min=4, max=10),
++        retry=retry_if_exception_type((ConnectionError, TimeoutError)),
++    )
++    async def check_match(self, match_id: int) -> Dict[str, Any]:
++        """
++        检查单个比赛的数据质量。
++
++        Args:
++            match_id: 比赛ID
++
++        Returns:
++            Dict[str, Any]: 包含检查结果的字典
++                {
++                    "match_id": int,
++                    "passed": bool,
++                    "results": List[Dict],  # 各规则的检查结果
++                    "summary": Dict,       # 检查摘要
++                    "timestamp": str       # 检查时间
++                }
++        """
++        start_time = datetime.now(timezone.utc)
++
++        try:
++            self.logger.debug(f"开始检查比赛 {match_id} 的数据质量")
++
++            # 从 FeatureStore 加载特征数据
++            feature_data = await self.feature_store.load_features(match_id)
++
++            if feature_data is None:
++                result = {
++                    "match_id": match_id,
++                    "passed": False,
++                    "results": [],
++                    "summary": {
++                        "error": "比赛特征数据未找到",
++                        "total_rules": len(self.rules),
++                        "passed_rules": 0,
++                        "failed_rules": len(self.rules)
++                    },
++                    "timestamp": start_time.isoformat(),
++                    "check_duration_ms": (
++                        datetime.now(timezone.utc) - start_time
++                    ).total_seconds() * 1000,
++                }
++
++                if self.stats:
++                    self.stats.total_checks += 1
++                    self.stats.failed_checks += 1
++
++                return result
++
++            # 提取特征数据字典
++            if isinstance(feature_data, dict):
++                features = feature_data.get('features', feature_data)
++            else:
++                # FeatureData 对象，取 features 字段
++                features = getattr(feature_data, 'features', {})
++
++            # 执行所有规则的检查
++            rule_results = await self._execute_rules(features)
++
++            # 分析结果
++            passed_count = sum(1 for r in rule_results if r.passed)
++            failed_count = len(rule_results) - passed_count
++
++            # 生成检查摘要
++            summary = self._generate_summary(rule_results)
++
++            # 更新统计信息
++            if self.stats:
++                self.stats.total_checks += 1
++                if failed_count == 0:
++                    self.stats.passed_checks += 1
++                else:
++                    self.stats.failed_checks += 1
++
++                # 更新错误统计
++                for result in rule_results:
++                    if result.severity == RuleSeverity.HIGH:
++                        self.stats.high_severity_errors += len(result.errors)
++                    elif result.severity == RuleSeverity.MEDIUM:
++                        self.stats.medium_severity_errors += len(result.errors)
++                    elif result.severity == RuleSeverity.LOW:
++                        self.stats.low_severity_errors += len(result.errors)
++
++                self.stats.last_check_time = datetime.now(timezone.utc)
++
++            check_duration = (
++                datetime.now(timezone.utc) - start_time
++            ).total_seconds() * 1000
++
++            result = {
++                "match_id": match_id,
++                "passed": failed_count == 0,
++                "results": [r.to_dict() for r in rule_results],
++                "summary": summary,
++                "timestamp": start_time.isoformat(),
++                "check_duration_ms": round(check_duration, 2),
++            }
++
++            self.logger.debug(
++                f"比赛 {match_id} 数据质量检查完成: "
++                f"通过 {passed_count}/{len(self.rules)} 个规则, "
++                f"耗时 {check_duration:.2f}ms"
++            )
++
++            return result
++
++        except Exception as e:
++            error_msg = f"检查比赛 {match_id} 数据质量时发生错误: {str(e)}"
++            self.logger.error(error_msg, exc_info=True)
++
++            # 更新错误统计
++            if self.stats:
++                self.stats.total_checks += 1
++                self.stats.failed_checks += 1
++                self.stats.last_check_time = datetime.now(timezone.utc)
++
++            return {
++                "match_id": match_id,
++                "passed": False,
++                "results": [],
++                "summary": {
++                    "error": error_msg,
++                    "total_rules": len(self.rules),
++                    "passed_rules": 0,
++                    "failed_rules": len(self.rules)
++                },
++                "timestamp": start_time.isoformat(),
++                "check_duration_ms": (
++                    datetime.now(timezone.utc) - start_time
++                ).total_seconds() * 1000,
++            }
++
++    async def check_batch(self, match_ids: List[int]) -> List[Dict[str, Any]]:
++        """
++        批量检查多个比赛的数据质量。
++
++        Args:
++            match_ids: 比赛ID列表
++
++        Returns:
++            List[Dict]: 每个比赛的检查结果列表
++        """
++        if not match_ids:
++            return []
++
++        self.logger.info(f"开始批量检查 {len(match_ids)} 个比赛的数据质量")
++
++        # 控制并发数量
++        semaphore = asyncio.Semaphore(self.max_concurrent_checks)
++
++        async def check_single_match(match_id: int) -> Dict[str, Any]:
++            async with semaphore:
++                return await self.check_match(match_id)
++
++        # 并发执行检查
++        tasks = [check_single_match(mid) for mid in match_ids]
++        results = await asyncio.gather(*tasks, return_exceptions=True)
++
++        # 处理异常结果
++        processed_results = []
++        for i, result in enumerate(results):
++            if isinstance(result, Exception):
++                match_id = match_ids[i]
++                processed_results.append({
++                    "match_id": match_id,
++                    "passed": False,
++                    "results": [],
++                    "summary": {
++                        "error": f"批量检查异常: {str(result)}",
++                        "total_rules": len(self.rules),
++                        "passed_rules": 0,
++                        "failed_rules": len(self.rules)
++                    },
++                    "timestamp": datetime.now(timezone.utc).isoformat(),
++                    "check_duration_ms": 0,
++                })
++            else:
++                processed_results.append(result)
++
++        passed_count = sum(1 for r in processed_results if r.get("passed", False))
++        self.logger.info(
++            f"批量检查完成: {passed_count}/{len(match_ids)} 个比赛通过检查"
++        )
++
++        return processed_results
++
++    async def _execute_rules(self, features: Dict[str, Any]) -> List[DataQualityResult]:
++        """
++        执行所有规则的数据质量检查。
++
++        Args:
++            features: 特征数据字典
++
++        Returns:
++            List[DataQualityResult]: 规则检查结果列表
++        """
++        results = []
++
++        # 并发执行规则检查
++        async def check_single_rule(rule: DataQualityRule) -> DataQualityResult:
++            try:
++                errors = await rule.check(features)
++                passed = len(errors) == 0
++                severity = self._determine_severity(errors)
++
++                return DataQualityResult(
++                    rule_name=rule.rule_name,
++                    passed=passed,
++                    errors=errors,
++                    severity=severity,
++                    metadata={
++                        "check_time": datetime.now(timezone.utc).isoformat(),
++                        "feature_count": len(features)
++                    }
++                )
++            except Exception as e:
++                self.logger.error(f"规则 {rule.rule_name} 执行失败: {str(e)}")
++                return DataQualityResult(
++                    rule_name=rule.rule_name,
++                    passed=False,
++                    errors=[f"规则执行异常: {str(e)}"],
++                    severity=RuleSeverity.HIGH,
++                    metadata={
++                        "error": str(e),
++                        "check_time": datetime.now(timezone.utc).isoformat()
++                    }
++                )
++
++        tasks = [check_single_rule(rule) for rule in self.rules]
++        results = await asyncio.gather(*tasks, return_exceptions=True)
++
++        # 处理异常结果
++        processed_results = []
++        for result in results:
++            if isinstance(result, Exception):
++                processed_results.append(DataQualityResult(
++                    rule_name="unknown_rule",
++                    passed=False,
++                    errors=[f"规则检查异常: {str(result)}"],
++                    severity=RuleSeverity.HIGH,
++                    metadata={"error": str(result)}
++                ))
++            else:
++                processed_results.append(result)
++
++        return processed_results
++
++    def _determine_severity(self, errors: List[str]) -> str:
++        """
++        根据错误信息确定严重程度。
++
++        Args:
++            errors: 错误信息列表
++
++        Returns:
++            str: 严重程度 (LOW/MEDIUM/HIGH)
++        """
++        if not errors:
++            return RuleSeverity.LOW
++
++        # 基于错误关键词判断严重程度
++        error_text = " ".join(errors).lower()
++
++        if any(keyword in error_text for keyword in ["缺失", "null", "missing", "critical"]):
++            return RuleSeverity.HIGH
++        elif any(keyword in error_text for keyword in ["超出", "异常", "错误", "invalid"]):
++            return RuleSeverity.MEDIUM
++        else:
++            return RuleSeverity.LOW
++
++    def _generate_summary(self, results: List[DataQualityResult]) -> Dict[str, Any]:
++        """
++        生成检查结果摘要。
++
++        Args:
++            results: 规则检查结果列表
++
++        Returns:
++            Dict[str, Any]: 检查摘要
++        """
++        passed_count = sum(1 for r in results if r.passed)
++        failed_count = len(results) - passed_count
++
++        # 按严重程度统计错误
++        severity_counts = {
++            RuleSeverity.HIGH: 0,
++            RuleSeverity.MEDIUM: 0,
++            RuleSeverity.LOW: 0,
++        }
++
++        total_errors = 0
++        for result in results:
++            severity_counts[result.severity] += len(result.errors)
++            total_errors += len(result.errors)
++
++        return {
++            "total_rules": len(results),
++            "passed_rules": passed_count,
++            "failed_rules": failed_count,
++            "pass_rate": (passed_count / len(results)) * 100 if results else 0,
++            "total_errors": total_errors,
++            "error_severity_distribution": {
++                "high": severity_counts[RuleSeverity.HIGH],
++                "medium": severity_counts[RuleSeverity.MEDIUM],
++                "low": severity_counts[RuleSeverity.LOW],
++            },
++            "failed_rule_names": [
++                r.rule_name for r in results if not r.passed
++            ]
++        }
++
++    async def get_stats(self) -> Dict[str, Any]:
++        """
++        获取数据质量监控的统计信息。
++
++        Returns:
++            Dict[str, Any]: 统计信息字典
++        """
++        if not self.stats:
++            return {
++                "stats_enabled": False,
++                "message": "统计信息收集未启用"
++            }
++
++        return self.stats.to_dict()
++
++    async def health_check(self) -> Dict[str, Any]:
++        """
++        健康检查，评估DataQualityMonitor的状态。
++
++        Returns:
++            Dict[str, Any]: 健康状态信息
++        """
++        try:
++            # 检查基本配置
++            if not self.rules:
++                return {
++                    "status": "unhealthy",
++                    "reason": "没有配置数据质量规则"
++                }
++
++            if not self.feature_store:
++                return {
++                    "status": "unhealthy",
++                    "reason": "FeatureStore未配置"
++                }
++
++            # 测试FeatureStore连接
++            try:
++                # 尝试加载一个测试用的特征数据
++                test_match_id = 1  # 使用一个可能存在的ID
++                await self.feature_store.load_features(test_match_id)
++                feature_store_status = "healthy"
++            except Exception:
++                feature_store_status = "warning"
++
++            # 获取统计信息
++            stats = await self.get_stats()
++
++            # 计算整体健康状态
++            if (stats.get("success_rate", 0) >= 80 and
++                feature_store_status == "healthy"):
++                overall_status = "healthy"
++            elif stats.get("success_rate", 0) >= 50:
++                overall_status = "warning"
++            else:
++                overall_status = "unhealthy"
++
++            return {
++                "status": overall_status,
++                "feature_store_status": feature_store_status,
++                "rules_count": len(self.rules),
++                "stats": stats,
++                "last_check": datetime.now(timezone.utc).isoformat()
++            }
++
++        except Exception as e:
++            self.logger.error(f"健康检查失败: {str(e)}")
++            return {
++                "status": "error",
++                "reason": f"健康检查异常: {str(e)}",
++                "last_check": datetime.now(timezone.utc).isoformat()
++            }
++
++    def add_rule(self, rule: DataQualityRule) -> None:
++        """
++        添加新的数据质量规则。
++
++        Args:
++            rule: 要添加的规则实例
++        """
++        if not hasattr(rule, 'check') or not callable(rule.check):
++            raise ValueError("规则必须实现 check 方法")
++
++        # 检查规则名称唯一性
++        existing_names = [r.rule_name for r in self.rules]
++        if rule.rule_name in existing_names:
++            raise ValueError(f"规则名称 '{rule.rule_name}' 已存在")
++
++        self.rules.append(rule)
++        self.logger.info(f"添加新规则: {rule.rule_name}")
++
++    def remove_rule(self, rule_name: str) -> bool:
++        """
++        移除指定名称的数据质量规则。
++
++        Args:
++            rule_name: 要移除的规则名称
++
++        Returns:
++            bool: 是否成功移除
++        """
++        for i, rule in enumerate(self.rules):
++            if rule.rule_name == rule_name:
++                self.rules.pop(i)
++                self.logger.info(f"移除规则: {rule_name}")
++                return True
++
++        self.logger.warning(f"未找到要移除的规则: {rule_name}")
++        return False
++
++    def get_rule_names(self) -> List[str]:
++        """
++        获取所有已配置的规则名称。
++
++        Returns:
++            List[str]: 规则名称列表
++        """
++        return [rule.rule_name for rule in self.rules]
+\ No newline at end of file
+diff --git a/src/quality/quality_protocol.py b/src/quality/quality_protocol.py
+new file mode 100644
+index 000000000..2123bc405
+--- /dev/null
++++ b/src/quality/quality_protocol.py
+@@ -0,0 +1,248 @@
++"""
++Data Quality Rules Protocol - 数据质量规则标准接口
++
++定义数据质量检查的统一协议接口，支持可插拔的规则系统。
++与 P0-2 FeatureStore 完全集成，提供现代化的异步数据质量检查能力。
++
++核心功能：
++- 统一的数据质量规则接口定义
++- 支持多种类型的数据质量检查规则
++- 与 FeatureStoreProtocol 完全兼容
++- 异步处理支持
++- JSON-safe 错误报告格式
++
++生成时间: 2025-12-05
++作者: Data Engineering Lead
++"""
++
++from typing import Protocol, Any, List
++from src.features.feature_store_interface import FeatureStoreProtocol
++
++
++class DataQualityRule(Protocol):
++    """数据质量规则的抽象协议。
++
++    定义所有数据质量规则必须实现的标准接口，确保规则的可插拔性和一致性。
++    所有规则都应该是异步的，以支持大规模数据处理场景。
++    """
++
++    # 规则的唯一名称，用于报告输出和日志记录
++    rule_name: str
++
++    # 规则的描述，说明规则的具体用途和检查内容
++    rule_description: str
++
++    async def check(self, features: dict[str, Any]) -> list[str]:
++        """
++        检查特征数据是否满足规则要求。
++
++        Args:
++            features: 从 FeatureStore 加载的特征数据字典，包含所有相关特征字段
++                     格式: {feature_name: feature_value, ...}
++
++        Returns:
++            list[str]: 如果发现数据质量问题，返回错误描述字符串列表；
++                     如果数据完全符合规则要求，返回空列表 []。
++                     错误描述应该简洁明了，便于后续分析和报告。
++
++        Examples:
++            >>> # 示例：MissingValueRule 的实现
++            >>> if features.get('xg_home') is None:
++            ...     return ["xg_home 字段缺失"]
++            >>> return []
++
++            >>> # 示例：RangeRule 的实现
++            >>> xg = features.get('xg_home', 0)
++            >>> if xg < 0 or xg > 10:
++            ...     return [f"xg_home 值 {xg} 超出合理范围 [0, 10]"]
++            >>> return []
++        """
++        ...
++
++
++class RuleSeverity:
++    """规则严重程度枚举。
++
++    定义不同严重程度的数据质量问题，用于优先级处理和告警分级。
++    """
++    LOW = "low"          # 低严重性：轻微的数据质量问题，不影响核心功能
++    MEDIUM = "medium"    # 中等严重性：可能影响分析结果，需要关注
++    HIGH = "high"        # 高严重性：严重影响数据质量，需要立即处理
++    CRITICAL = "critical" # 关键严重性：导致系统无法正常工作，必须立即修复
++
++
++class DataQualityResult:
++    """数据质量检查结果的标准格式。
++
++    提供统一的数据质量检查结果数据结构，便于报告生成和分析。
++    所有结果都应该是 JSON-safe 的，便于序列化和存储。
++    """
++
++    def __init__(
++        self,
++        rule_name: str,
++        passed: bool,
++        errors: List[str],
++        severity: str = RuleSeverity.MEDIUM,
++        metadata: dict[str, Any] = None
++    ):
++        """
++        初始化数据质量检查结果。
++
++        Args:
++            rule_name: 执行的规则名称
++            passed: 是否通过检查 (True/False)
++            errors: 错误信息列表，通过时为空列表
++            severity: 问题严重程度 (LOW/MEDIUM/HIGH/CRITICAL)
++            metadata: 额外的元数据信息，如检查时间、数据版本等
++        """
++        self.rule_name = rule_name
++        self.passed = passed
++        self.errors = errors
++        self.severity = severity
++        self.metadata = metadata or {}
++
++    def to_dict(self) -> dict[str, Any]:
++        """转换为字典格式，确保 JSON-safe。"""
++        return {
++            "rule_name": self.rule_name,
++            "passed": self.passed,
++            "errors": self.errors,
++            "severity": self.severity,
++            "metadata": self.metadata
++        }
++
++
++# 具体规则类型的 Protocol 定义
++class MissingValueRule(DataQualityRule):
++    """检查关键特征的缺失值规则。
++
++    检查特征数据中关键字段是否为 None、空字符串或特殊标记值。
++    主要用于确保核心特征字段的完整性。
++    """
++    rule_name: str = "missing_value_check"
++    rule_description: str = "检查关键特征字段的缺失值"
++
++
++class RangeRule(DataQualityRule):
++    """检查数值特征是否在预期的合理范围内。
++
++    基于业务知识和统计分布，定义数值特征的合理取值范围。
++    用于发现异常值和可能的数据录入错误。
++    """
++    rule_name: str = "range_check"
++    rule_description: str = "检查数值特征的取值范围是否合理"
++
++
++class TypeRule(DataQualityRule):
++    """检查特征的数据类型是否正确。
++
++    确保特征字段的数据类型符合预期，如数值字段为 float/int，
++    字符串字段为 str 等。防止类型错误导致的计算异常。
++    """
++    rule_name: str = "type_check"
++    rule_description: str = "检查特征字段的数据类型是否正确"
++
++
++class LogicalRelationRule(DataQualityRule):
++    """检查特征之间是否满足逻辑关系。
++
++    基于足球业务的逻辑约束，检查不同特征之间的逻辑一致性。
++    例如：进球数 <= 射门数，xG 值合理等。
++    """
++    rule_name: str = "logical_relation_check"
++    rule_description: str = "检查特征之间的逻辑关系是否一致"
++
++
++class ConsistencyRule(DataQualityRule):
++    """检查数据一致性的通用规则。
++
++    检查数据在不同时间点或不同来源间的一致性，
++    确保数据的可信度和可靠性。
++    """
++    rule_name: str = "consistency_check"
++    rule_description: str = "检查数据的一致性和可信度"
++
++
++class CompletenessRule(DataQualityRule):
++    """检查数据完整性的规则。
++
++    评估数据集的完整性，包括字段覆盖率、
++    记录完整度等方面。
++    """
++    rule_name: str = "completeness_check"
++    rule_description: str = "检查数据的完整性和覆盖率"
++
++
++class TimelinessRule(DataQualityRule):
++    """检查数据及时性的规则。
++
++    评估数据的新鲜度和更新频率，
++    确保数据的时效性满足业务需求。
++    """
++    rule_name: str = "timeliness_check"
++    rule_description: str = "检查数据的及时性和新鲜度"
++
++
++class UniquenessRule(DataQualityRule):
++    """检查数据唯一性的规则。
++
++    检查关键字段或记录组合的唯一性，
++    防止重复数据导致的统计偏差。
++    """
++    rule_name: str = "uniqueness_check"
++    rule_description: str = "检查数据的唯一性，防止重复记录"
++
++
++# 规则工厂接口定义
++class RuleFactory(Protocol):
++    """规则工厂协议，用于创建和配置数据质量规则实例。"""
++
++    def create_rule(self, rule_type: str, config: dict[str, Any]) -> DataQualityRule:
++        """
++        根据规则类型和配置创建规则实例。
++
++        Args:
++            rule_type: 规则类型标识符
++            config: 规则配置参数
++
++        Returns:
++            DataQualityRule: 配置好的规则实例
++        """
++        ...
++
++
++# 常用规则类型映射
++RULE_TYPES = {
++    "missing_value": MissingValueRule,
++    "range": RangeRule,
++    "type": TypeRule,
++    "logical_relation": LogicalRelationRule,
++    "consistency": ConsistencyRule,
++    "completeness": CompletenessRule,
++    "timeliness": TimelinessRule,
++    "uniqueness": UniquenessRule,
++}
++
++
++def get_rule_class(rule_type: str) -> type[DataQualityRule]:
++    """
++    根据规则类型获取对应的规则类。
++
++    Args:
++        rule_type: 规则类型字符串
++
++    Returns:
++        type[DataQualityRule]: 对应的规则类
++
++    Raises:
++        ValueError: 当规则类型不存在时
++    """
++    if rule_type not in RULE_TYPES:
++        available_types = ", ".join(RULE_TYPES.keys())
++        raise ValueError(
++            f"未知的规则类型: {rule_type}. "
++            f"可用的规则类型: {available_types}"
++        )
++
++    return RULE_TYPES[rule_type]
+\ No newline at end of file
+diff --git a/src/quality/rules/logical_relation_rule.py b/src/quality/rules/logical_relation_rule.py
+new file mode 100644
+index 000000000..058ddf556
+--- /dev/null
++++ b/src/quality/rules/logical_relation_rule.py
+@@ -0,0 +1,589 @@
++"""
++Logical Relation Rule - 逻辑关系检查规则
++
++检查特征之间是否满足预期的逻辑关系。
++基于足球业务的业务逻辑，验证不同特征字段之间的一致性和合理性。
++
++核心功能：
++- 支持多种逻辑关系检查（大于等于、小于等于、等于、范围包含等）
++- 预定义足球业务的核心逻辑关系
++- 可配置的字段关系和容忍度
++- 提供详细的逻辑违规报告
++- 支持复合条件检查
++
++实现版本: P0-3
++实现时间: 2025-12-05
++依赖: quality_protocol.py
++"""
++
++import logging
++from typing import Any, Dict, List, Optional, Tuple, Callable
++
++from src.quality.quality_protocol import (
++    LogicalRelationRule as LogicalRelationRuleProtocol,
++    DataQualityResult,
++    RuleSeverity,
++)
++
++logger = logging.getLogger(__name__)
++
++
++class LogicalRelationRule(LogicalRelationRuleProtocol):
++    """
++    检查特征之间逻辑关系的数据质量规则实现。
++
++    基于足球业务的逻辑约束，检查不同特征之间的逻辑一致性。
++    例如：进球数 <= 射门数，射正数 >= 进球数等。
++    """
++
++    def __init__(
++        self,
++        relations: Optional[List[Dict[str, Any]]] = None,
++        tolerance: float = 0.0,
++        strict_mode: bool = True
++    ):
++        """
++        初始化逻辑关系检查规则。
++
++        Args:
++            relations: 逻辑关系配置列表，每个元素包含字段和关系定义
++            tolerance: 容忍度，用于浮点数比较的误差范围
++            strict_mode: 严格模式，为True时违反逻辑直接失败，为False时仅警告
++        """
++        self.rule_name = "logical_relation_check"
++        self.rule_description = "检查特征之间的逻辑关系是否一致"
++
++        # 默认的足球业务逻辑关系配置
++        self.relations = relations or [
++            # 比分相关逻辑关系
++            {
++                "name": "full_time_score_consistency",
++                "description": "全场比分一致性检查",
++                "field_a": "full_time_score_home",
++                "field_b": "half_time_score_home",
++                "relation": "gte",  # 全场主队得分 >= 半场主队得分
++                "severity": "high"
++            },
++            {
++                "name": "full_time_score_away_consistency",
++                "description": "全场客队比分一致性检查",
++                "field_a": "full_time_score_away",
++                "field_b": "half_time_score_away",
++                "relation": "gte",
++                "severity": "high"
++            },
++
++            # 射门和进球的逻辑关系
++            {
++                "name": "shots_vs_goals_home",
++                "description": "主队射门数应大于等于进球数",
++                "field_a": "shot_home",
++                "field_b": "full_time_score_home",
++                "relation": "gte",
++                "severity": "high"
++            },
++            {
++                "name": "shots_vs_goals_away",
++                "description": "客队射门数应大于等于进球数",
++                "field_a": "shot_away",
++                "field_b": "full_time_score_away",
++                "relation": "gte",
++                "severity": "high"
++            },
++
++            # 射正和进球的逻辑关系
++            {
++                "name": "shots_on_target_vs_goals_home",
++                "description": "主队射正数应大于等于进球数",
++                "field_a": "shot_on_target_home",
++                "field_b": "full_time_score_home",
++                "relation": "gte",
++                "severity": "high"
++            },
++            {
++                "name": "shots_on_target_vs_goals_away",
++                "description": "客队射正数应大于等于进球数",
++                "field_a": "shot_on_target_away",
++                "field_b": "full_time_score_away",
++                "relation": "gte",
++                "severity": "high"
++            },
++
++            # 射正和总射门的逻辑关系
++            {
++                "name": "shots_on_target_vs_total_shots_home",
++                "description": "主队射正数应小于等于总射门数",
++                "field_a": "shot_on_target_home",
++                "field_b": "shot_home",
++                "relation": "lte",
++                "severity": "medium"
++            },
++            {
++                "name": "shots_on_target_vs_total_shots_away",
++                "description": "客队射正数应小于等于总射门数",
++                "field_a": "shot_on_target_away",
++                "field_b": "shot_away",
++                "relation": "lte",
++                "severity": "medium"
++            },
++
++            # 控球率的逻辑关系
++            {
++                "name": "possession_sum",
++                "description": "主客场控球率之和应接近100%",
++                "field_a": "possession_home",
++                "field_b": "possession_away",
++                "relation": "sum_close_to_100",
++                "tolerance": 5.0,  # 允许5%的误差
++                "severity": "medium"
++            },
++
++            # 传球成功率的逻辑关系
++            {
++                "name": "accurate_vs_total_passes_home",
++                "description": "主队成功传球数应小于等于总传球数",
++                "field_a": "passes_accurate_home",
++                "field_b": "passes_home",
++                "relation": "lte",
++                "severity": "medium"
++            },
++            {
++                "name": "accurate_vs_total_passes_away",
++                "description": "客队成功传球数应小于等于总传球数",
++                "field_a": "passes_accurate_away",
++                "field_b": "passes_away",
++                "relation": "lte",
++                "severity": "medium"
++            },
++
++            # 传中成功率的逻辑关系
++            {
++                "name": "accurate_vs_total_crosses_home",
++                "description": "主队成功传中数应小于等于总传中数",
++                "field_a": "crosses_accurate_home",
++                "field_b": "crosses_home",
++                "relation": "lte",
++                "severity": "low"
++            },
++            {
++                "name": "accurate_vs_total_crosses_away",
++                "description": "客队成功传中数应小于等于总传中数",
++                "field_a": "crosses_accurate_away",
++                "field_b": "crosses_away",
++                "relation": "lte",
++                "severity": "low"
++            },
++
++            # xG和实际进球的逻辑关系
++            {
++                "name": "xg_vs_goals_home",
++                "description": "主队xG应与实际进球数合理相关",
++                "field_a": "xg_home",
++                "field_b": "full_time_score_home",
++                "relation": "xg_reasonable",  # xG应在进球数的合理范围内
++                "tolerance": 2.0,  # 允许2球的差异
++                "severity": "medium"
++            },
++            {
++                "name": "xg_vs_goals_away",
++                "description": "客队xG应与实际进球数合理相关",
++                "field_a": "xg_away",
++                "field_b": "full_time_score_away",
++                "relation": "xg_reasonable",
++                "tolerance": 2.0,
++                "severity": "medium"
++            },
++
++            # 牌数的逻辑关系
++            {
++                "name": "total_cards_composition",
++                "description": "总牌数应等于黄牌数加红牌数",
++                "field_a": "cards_yellow_home",
++                "field_b": "cards_red_home",
++                "relation": "total_cards",
++                "extra_fields": ["cards_yellow_away", "cards_red_away"],
++                "severity": "low"
++            }
++        ]
++
++        self.tolerance = tolerance
++        self.strict_mode = strict_mode
++
++        # 逻辑关系检查函数映射
++        self.relation_functions = {
++            "gte": self._check_gte,  # greater than or equal
++            "lte": self._check_lte,  # less than or equal
++            "gt": self._check_gt,   # greater than
++            "lt": self._check_lt,   # less than
++            "eq": self._check_eq,   # equal
++            "sum_close_to_100": self._check_sum_close_to_100,
++            "xg_reasonable": self._check_xg_reasonable,
++            "total_cards": self._check_total_cards_composition
++        }
++
++        logger.debug(
++            f"LogicalRelationRule 初始化: 配置了 {len(self.relations)} 个逻辑关系检查, "
++            f"容忍度 {self.tolerance}, 严格模式 {self.strict_mode}"
++        )
++
++    async def check(self, features: Dict[str, Any]) -> List[str]:
++        """
++        检查特征数据中的逻辑关系。
++
++        Args:
++            features: 从 FeatureStore 加载的特征数据字典
++
++        Returns:
++            List[str]: 发现的逻辑关系错误描述列表
++        """
++        errors = []
++
++        if not features:
++            return ["特征数据字典为空"]
++
++        # 检查每个配置的逻辑关系
++        for relation in self.relations:
++            relation_name = relation.get("name", "unknown")
++
++            try:
++                violation = self._check_single_relation(features, relation)
++                if violation:
++                    severity = relation.get("severity", "medium")
++                    errors.append(violation)
++
++            except Exception as e:
++                error_msg = f"逻辑关系检查 '{relation_name}' 执行失败: {str(e)}"
++                logger.warning(error_msg)
++                if self.strict_mode:
++                    errors.append(error_msg)
++
++        logger.debug(
++            f"逻辑关系检查完成: 检查了 {len(self.relations)} 个关系, "
++            f"发现 {len(errors)} 个逻辑违规"
++        )
++
++        return errors
++
++    def _check_single_relation(self, features: Dict[str, Any], relation: Dict[str, Any]) -> Optional[str]:
++        """
++        检查单个逻辑关系。
++
++        Args:
++            features: 特征数据字典
++            relation: 逻辑关系配置
++
++        Returns:
++            Optional[str]: 逻辑违规描述，如果没有违规返回None
++        """
++        relation_name = relation.get("name", "unknown")
++        relation_type = relation.get("relation")
++        field_a = relation.get("field_a")
++        field_b = relation.get("field_b")
++
++        # 检查必需字段是否存在
++        if field_a not in features or field_b not in features:
++            return None  # 字段缺失由 MissingValueRule 检查
++
++        value_a = features[field_a]
++        value_b = features[field_b]
++
++        # 检查字段值是否为数值类型
++        if not isinstance(value_a, (int, float)) or not isinstance(value_b, (int, float)):
++            return None  # 非数值类型由 TypeRule 检查
++
++        # 获取关系检查函数
++        check_function = self.relation_functions.get(relation_type)
++        if not check_function:
++            return f"未知的逻辑关系类型: {relation_type}"
++
++        # 执行关系检查
++        relation_tolerance = relation.get("tolerance", self.tolerance)
++        return check_function(relation_name, field_a, value_a, field_b, value_b, relation_tolerance, relation)
++
++    def _check_gte(self, relation_name: str, field_a: str, value_a: float,
++                   field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
++        """检查 value_a >= value_b"""
++        if value_a + tolerance < value_b:
++            return (
++                f"{relation_name}: {field_a}({value_a}) 应大于等于 {field_b}({value_b}), "
++                f"实际差异: {value_b - value_a:.2f}"
++            )
++        return None
++
++    def _check_lte(self, relation_name: str, field_a: str, value_a: float,
++                   field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
++        """检查 value_a <= value_b"""
++        if value_a > value_b + tolerance:
++            return (
++                f"{relation_name}: {field_a}({value_a}) 应小于等于 {field_b}({value_b}), "
++                f"实际差异: {value_a - value_b:.2f}"
++            )
++        return None
++
++    def _check_gt(self, relation_name: str, field_a: str, value_a: float,
++                  field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
++        """检查 value_a > value_b"""
++        if value_a <= value_b + tolerance:
++            return (
++                f"{relation_name}: {field_a}({value_a}) 应大于 {field_b}({value_b}), "
++                f"实际差异: {value_b - value_a + tolerance:.2f}"
++            )
++        return None
++
++    def _check_lt(self, relation_name: str, field_a: str, value_a: float,
++                  field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
++        """检查 value_a < value_b"""
++        if value_a >= value_b - tolerance:
++            return (
++                f"{relation_name}: {field_a}({value_a}) 应小于 {field_b}({value_b}), "
++                f"实际差异: {value_a - value_b + tolerance:.2f}"
++            )
++        return None
++
++    def _check_eq(self, relation_name: str, field_a: str, value_a: float,
++                  field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
++        """检查 value_a == value_b"""
++        if abs(value_a - value_b) > tolerance:
++            return (
++                f"{relation_name}: {field_a}({value_a}) 应等于 {field_b}({value_b}), "
++                f"实际差异: {abs(value_a - value_b):.2f}"
++            )
++        return None
++
++    def _check_sum_close_to_100(self, relation_name: str, field_a: str, value_a: float,
++                                field_b: str, value_b: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
++        """检查两个值的和是否接近100%"""
++        total = value_a + value_b
++        deviation = abs(total - 100.0)
++        if deviation > tolerance:
++            return (
++                f"{relation_name}: {field_a}({value_a}) + {field_b}({value_b}) = {total:.1f}%, "
++                f"应接近100%, 偏差: {deviation:.1f}%"
++            )
++        return None
++
++    def _check_xg_reasonable(self, relation_name: str, field_a: str, xg_value: float,
++                             field_b: str, goals: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
++        """检查xG值与实际进球数的合理性"""
++        # xG值应该在合理范围内，且与进球数不应该差异过大
++        if xg_value < 0 or xg_value > 10:  # xG应该在0-10之间
++            return f"{relation_name}: {field_a}({xg_value}) 超出合理范围[0, 10]"
++
++        if abs(xg_value - goals) > tolerance:
++            # 注意：这不是严格的错误，足球比赛中xG和实际进球可能有差异
++            # 所以这里只返回警告
++            return (
++                f"{relation_name}: {field_a}({xg_value:.2f}) 与实际进球({goals}) 差异较大: "
++                f"{abs(xg_value - goals):.2f}"
++            )
++        return None
++
++    def _check_total_cards_composition(self, relation_name: str, field_a: str, yellow_home: float,
++                                       field_b: str, red_home: float, tolerance: float, relation: Dict[str, Any]) -> Optional[str]:
++        """检查总牌数的组成（这里简化为逻辑合理性检查）"""
++        extra_fields = relation.get("extra_fields", [])
++        if len(extra_fields) >= 2:
++            yellow_away = extra_fields[0]
++            red_away = extra_fields[1]
++
++            # 简单的合理性检查：红牌数应该小于等于黄牌数（通常情况下）
++            if red_home > yellow_home and yellow_home > 0:
++                return (
++                    f"{relation_name}: 主队红牌({red_home}) 多于黄牌({yellow_home}), "
++                    "这在不正常情况下可能出现但值得关注"
++                )
++
++        return None
++
++    def get_relation_summary(self, features: Dict[str, Any]) -> Dict[str, Any]:
++        """
++        获取逻辑关系检查的详细摘要。
++
++        Args:
++            features: 特征数据字典
++
++        Returns:
++            Dict[str, Any]: 逻辑关系检查摘要
++        """
++        summary = {
++            "total_configured_relations": len(self.relations),
++            "checked_relations": 0,
++            "passed_relations": 0,
++            "failed_relations": 0,
++            "relation_details": {},
++            "violations": []
++        }
++
++        for relation in self.relations:
++            relation_name = relation.get("name", "unknown")
++
++            # 检查是否可以执行检查
++            field_a = relation.get("field_a")
++            field_b = relation.get("field_b")
++
++            if field_a not in features or field_b not in features:
++                # 字段缺失，跳过检查
++                summary["relation_details"][relation_name] = {
++                    "status": "skipped",
++                    "reason": "required_fields_missing",
++                    "field_a": field_a,
++                    "field_b": field_b
++                }
++                continue
++
++            value_a = features[field_a]
++            value_b = features[field_b]
++
++            if not isinstance(value_a, (int, float)) or not isinstance(value_b, (int, float)):
++                # 非数值类型，跳过检查
++                summary["relation_details"][relation_name] = {
++                    "status": "skipped",
++                    "reason": "non_numeric_fields",
++                    "field_a": field_a,
++                    "field_b": field_b,
++                    "value_a_type": type(value_a).__name__,
++                    "value_b_type": type(value_b).__name__
++                }
++                continue
++
++            # 执行检查
++            summary["checked_relations"] += 1
++            violation = self._check_single_relation(features, relation)
++
++            relation_detail = {
++                "status": "passed" if violation is None else "failed",
++                "field_a": field_a,
++                "field_b": field_b,
++                "value_a": value_a,
++                "value_b": value_b,
++                "relation": relation.get("relation"),
++                "severity": relation.get("severity", "medium"),
++                "violation": violation
++            }
++
++            summary["relation_details"][relation_name] = relation_detail
++
++            if violation is None:
++                summary["passed_relations"] += 1
++            else:
++                summary["failed_relations"] += 1
++                summary["violations"].append(violation)
++
++        # 计算合规率
++        if summary["checked_relations"] > 0:
++            summary["compliance_rate"] = (
++                summary["passed_relations"] / summary["checked_relations"] * 100
++            )
++        else:
++            summary["compliance_rate"] = 0
++
++        return summary
++
++    def add_relation(self, relation: Dict[str, Any]) -> None:
++        """
++        添加新的逻辑关系检查。
++
++        Args:
++            relation: 逻辑关系配置字典
++        """
++        required_fields = ["name", "field_a", "field_b", "relation"]
++        for field in required_fields:
++            if field not in relation:
++                raise ValueError(f"逻辑关系配置缺少必需字段: {field}")
++
++        relation_type = relation.get("relation")
++        if relation_type not in self.relation_functions:
++            available_types = ", ".join(self.relation_functions.keys())
++            raise ValueError(
++                f"未知的逻辑关系类型: {relation_type}. "
++                f"可用的关系类型: {available_types}"
++            )
++
++        self.relations.append(relation)
++        logger.info(f"添加新的逻辑关系检查: {relation['name']}")
++
++    def remove_relation(self, relation_name: str) -> bool:
++        """
++        移除指定名称的逻辑关系检查。
++
++        Args:
++            relation_name: 要移除的逻辑关系名称
++
++        Returns:
++            bool: 是否成功移除
++        """
++        for i, relation in enumerate(self.relations):
++            if relation.get("name") == relation_name:
++                self.relations.pop(i)
++                logger.info(f"移除逻辑关系检查: {relation_name}")
++                return True
++
++        logger.warning(f"未找到要移除的逻辑关系检查: {relation_name}")
++        return False
++
++    def get_relation_names(self) -> List[str]:
++        """
++        获取所有已配置的逻辑关系名称。
++
++        Returns:
++            List[str]: 逻辑关系名称列表
++        """
++        return [relation.get("name", "unknown") for relation in self.relations]
++
++    def configure_tolerance(self, tolerance: float) -> None:
++        """
++        配置默认容忍度。
++
++        Args:
++            tolerance: 容忍度值
++        """
++        if tolerance < 0:
++            raise ValueError("容忍度不能为负数")
++
++        self.tolerance = tolerance
++        logger.info(f"默认容忍度已设置为: {tolerance}")
++
++    def configure_strict_mode(self, strict_mode: bool) -> None:
++        """
++        配置严格模式。
++
++        Args:
++            strict_mode: 是否启用严格模式
++        """
++        self.strict_mode = strict_mode
++        logger.info(f"严格模式已设置为: {strict_mode}")
++
++    def validate_relation_config(self) -> List[str]:
++        """
++        验证所有逻辑关系配置的有效性。
++
++        Returns:
++            List[str]: 配置错误列表，空列表表示配置有效
++        """
++        errors = []
++        relation_names = []
++
++        for i, relation in enumerate(self.relations):
++            relation_name = relation.get("name", f"relation_{i}")
++
++            # 检查名称唯一性
++            if relation_name in relation_names:
++                errors.append(f"逻辑关系名称重复: {relation_name}")
++            relation_names.append(relation_name)
++
++            # 检查必需字段
++            required_fields = ["name", "field_a", "field_b", "relation"]
++            for field in required_fields:
++                if field not in relation:
++                    errors.append(f"逻辑关系 '{relation_name}' 缺少必需字段: {field}")
++
++            # 检查关系类型
++            relation_type = relation.get("relation")
++            if relation_type not in self.relation_functions:
++                available_types = ", ".join(self.relation_functions.keys())
++                errors.append(
++                    f"逻辑关系 '{relation_name}' 包含未知类型: {relation_type}. "
++                    f"可用类型: {available_types}"
++                )
++
++        return errors
+\ No newline at end of file
+diff --git a/src/quality/rules/missing_value_rule.py b/src/quality/rules/missing_value_rule.py
+new file mode 100644
+index 000000000..e28f7288d
+--- /dev/null
++++ b/src/quality/rules/missing_value_rule.py
+@@ -0,0 +1,328 @@
++"""
++Missing Value Rule - 缺失值检查规则
++
++检查关键特征字段是否存在缺失值（None、空字符串、特殊标记值等）。
++确保核心特征数据的完整性，防止因数据缺失导致的分析错误。
++
++核心功能：
++- 检查多种类型的缺失值（None、空字符串、'N/A'、'-'等）
++- 支持配置化的重要字段列表
++- 提供详细的缺失值报告
++- 支持字段级别的缺失值容忍度
++
++实现版本: P0-3
++实现时间: 2025-12-05
++依赖: quality_protocol.py
++"""
++
++import logging
++from typing import Any, Dict, List
++
++from src.quality.quality_protocol import (
++    MissingValueRule as MissingValueRuleProtocol,
++    DataQualityResult,
++    RuleSeverity,
++)
++
++logger = logging.getLogger(__name__)
++
++
++class MissingValueRule(MissingValueRuleProtocol):
++    """
++    检查关键特征缺失值的数据质量规则实现。
++
++    检查特征数据中关键字段是否为 None、空字符串或特殊标记值。
++    主要用于确保核心特征字段的完整性和数据质量。
++    """
++
++    def __init__(
++        self,
++        critical_fields: List[str] = None,
++        optional_fields: List[str] = None,
++        missing_value_indicators: List[str] = None,
++        case_sensitive: bool = True
++    ):
++        """
++        初始化缺失值检查规则。
++
++        Args:
++            critical_fields: 必须存在的字段列表，缺失时报告高严重性错误
++            optional_fields: 可选字段列表，缺失时报告低严重性警告
++            missing_value_indicators: 被视为缺失值的标记列表
++            case_sensitive: 是否区分大小写
++        """
++        self.rule_name = "missing_value_check"
++        self.rule_description = "检查关键特征字段的缺失值"
++
++        # 默认关键字段 - 足球预测中的核心特征
++        self.critical_fields = critical_fields or [
++            "match_id",
++            "full_time_score_home",
++            "full_time_score_away",
++            "xg_home",
++            "xg_away",
++            "odds_b365_home",
++            "odds_b365_draw",
++            "odds_b365_away"
++        ]
++
++        # 可选字段 - 有用但不是必需的
++        self.optional_fields = optional_fields or [
++            "shot_home",
++            "shot_away",
++            "shot_on_target_home",
++            "shot_on_target_away",
++            "possession_home",
++            "possession_away",
++            "corners_home",
++            "corners_away",
++            "fouls_home",
++            "fouls_away",
++            "cards_yellow_home",
++            "cards_yellow_away",
++            "cards_red_home",
++            "cards_red_away"
++        ]
++
++        # 被视为缺失值的标记
++        self.missing_value_indicators = missing_value_indicators or [
++            None,
++            "",
++            "null",
++            "NULL",
++            "n/a",
++            "N/A",
++            "-",
++            "--",
++            "na",
++            "NA",
++            "missing",
++            "MISSING"
++        ]
++
++        self.case_sensitive = case_sensitive
++
++        logger.debug(
++            f"MissingValueRule 初始化: "
++            f"关键字段 {len(self.critical_fields)} 个, "
++            f"可选字段 {len(self.optional_fields)} 个"
++        )
++
++    async def check(self, features: Dict[str, Any]) -> List[str]:
++        """
++        检查特征数据中的缺失值。
++
++        Args:
++            features: 从 FeatureStore 加载的特征数据字典
++
++        Returns:
++            List[str]: 发现的缺失值错误描述列表
++        """
++        errors = []
++
++        if not features:
++            return ["特征数据字典为空"]
++
++        # 检查关键字段
++        critical_errors = self._check_critical_fields(features)
++        errors.extend(critical_errors)
++
++        # 检查可选字段
++        optional_errors = self._check_optional_fields(features)
++        errors.extend(optional_errors)
++
++        # 记录检查结果
++        field_count = len(features)
++        critical_count = len([f for f in self.critical_fields if f in features])
++        optional_count = len([f for f in self.optional_fields if f in features])
++
++        logger.debug(
++            f"缺失值检查完成: 总字段 {field_count} 个, "
++            f"关键字段 {critical_count}/{len(self.critical_fields)} 个, "
++            f"可选字段 {optional_count}/{len(self.optional_fields)} 个, "
++            f"发现 {len(errors)} 个问题"
++        )
++
++        return errors
++
++    def _check_critical_fields(self, features: Dict[str, Any]) -> List[str]:
++        """
++        检查关键字段的缺失值。
++
++        Args:
++            features: 特征数据字典
++
++        Returns:
++            List[str]: 关键字段的缺失值错误列表
++        """
++        errors = []
++
++        for field in self.critical_fields:
++            if field not in features:
++                errors.append(f"关键字段 '{field}' 缺失")
++                continue
++
++            value = features[field]
++            if self._is_missing_value(value):
++                errors.append(f"关键字段 '{field}' 值为缺失: {self._format_value(value)}")
++
++        return errors
++
++    def _check_optional_fields(self, features: Dict[str, Any]) -> List[str]:
++        """
++        检查可选字段的缺失值。
++
++        Args:
++            features: 特征数据字典
++
++        Returns:
++            List[str]: 可选字段的缺失值警告列表
++        """
++        warnings = []
++
++        for field in self.optional_fields:
++            if field not in features:
++                warnings.append(f"可选字段 '{field}' 缺失")
++                continue
++
++            value = features[field]
++            if self._is_missing_value(value):
++                warnings.append(f"可选字段 '{field}' 值为缺失: {self._format_value(value)}")
++
++        # 可选字段的警告级别较低，这里只是记录
++        # 实际使用中可以通过配置决定是否包含在错误中
++
++        return warnings
++
++    def _is_missing_value(self, value: Any) -> bool:
++        """
++        判断值是否为缺失值。
++
++        Args:
++            value: 要检查的值
++
++        Returns:
++            bool: 是否为缺失值
++        """
++        # 直接检查 None
++        if value is None:
++            return True
++
++        # 检查字符串类型的缺失值
++        if isinstance(value, str):
++            check_value = value if self.case_sensitive else value.lower()
++            indicators = self.missing_value_indicators if self.case_sensitive else [
++                indicator.lower() for indicator in self.missing_value_indicators
++            ]
++            return check_value in indicators
++
++        # 检查数字类型的特殊值（如 NaN, inf 等）
++        if isinstance(value, (int, float)):
++            try:
++                import math
++                if math.isnan(value) or math.isinf(value):
++                    return True
++            except (TypeError, ValueError):
++                pass
++
++        return False
++
++    def _format_value(self, value: Any) -> str:
++        """
++        格式化值用于显示。
++
++        Args:
++            value: 要格式化的值
++
++        Returns:
++            str: 格式化后的字符串表示
++        """
++        if value is None:
++            return "None"
++        elif isinstance(value, str):
++            return f"'{value}'"
++        else:
++            return str(value)
++
++    def get_missing_field_summary(self, features: Dict[str, Any]) -> Dict[str, Any]:
++        """
++        获取缺失字段的详细摘要。
++
++        Args:
++            features: 特征数据字典
++
++        Returns:
++            Dict[str, Any]: 缺失字段摘要
++        """
++        summary = {
++            "total_fields": len(self.critical_fields + self.optional_fields),
++            "available_fields": len(features),
++            "critical_missing": [],
++            "optional_missing": [],
++            "critical_available": [],
++            "optional_available": []
++        }
++
++        for field in self.critical_fields:
++            if field in features and not self._is_missing_value(features[field]):
++                summary["critical_available"].append(field)
++            else:
++                summary["critical_missing"].append(field)
++
++        for field in self.optional_fields:
++            if field in features and not self._is_missing_value(features[field]):
++                summary["optional_available"].append(field)
++            else:
++                summary["optional_missing"].append(field)
++
++        # 计算完整性指标
++        total_critical = len(self.critical_fields)
++        total_optional = len(self.optional_fields)
++
++        summary["critical_completeness"] = (
++            (len(summary["critical_available"]) / total_critical) * 100
++            if total_critical > 0 else 0
++        )
++
++        summary["optional_completeness"] = (
++            (len(summary["optional_available"]) / total_optional) * 100
++            if total_optional > 0 else 0
++        )
++
++        summary["overall_completeness"] = (
++            (summary["critical_available"].count + summary["optional_available"].count) /
++            (total_critical + total_optional) * 100
++            if (total_critical + total_optional) > 0 else 0
++        )
++
++        return summary
++
++    def configure_critical_fields(self, fields: List[str]) -> None:
++        """
++        配置关键字段列表。
++
++        Args:
++            fields: 关键字段列表
++        """
++        self.critical_fields = fields
++        logger.info(f"关键字段已更新为: {fields}")
++
++    def configure_optional_fields(self, fields: List[str]) -> None:
++        """
++        配置可选字段列表。
++
++        Args:
++            fields: 可选字段列表
++        """
++        self.optional_fields = fields
++        logger.info(f"可选字段已更新为: {fields}")
++
++    def configure_missing_indicators(self, indicators: List[str]) -> None:
++        """
++        配置缺失值标记列表。
++
++        Args:
++            indicators: 缺失值标记列表
++        """
++        self.missing_value_indicators = indicators
++        logger.info(f"缺失值标记已更新为: {indicators}")
+\ No newline at end of file
+diff --git a/src/quality/rules/range_rule.py b/src/quality/rules/range_rule.py
+new file mode 100644
+index 000000000..92e69e5a5
+--- /dev/null
++++ b/src/quality/rules/range_rule.py
+@@ -0,0 +1,374 @@
++"""
++Range Rule - 数值范围检查规则
++
++检查数值特征是否在预期的合理范围内。
++基于业务知识和统计分布，定义数值特征的合理取值范围，用于发现异常值和可能的数据录入错误。
++
++核心功能：
++- 支持不同类型数值的范围检查（整数、浮点数）
++- 可配置的范围阈值和容忍度
++- 支持相对范围和绝对范围检查
++- 提供详细的范围违规报告
++- 支持字段级别的自定义范围
++
++实现版本: P0-3
++实现时间: 2025-12-05
++依赖: quality_protocol.py
++"""
++
++import logging
++from typing import Any, Dict, List, Optional, Tuple
++
++from src.quality.quality_protocol import (
++    RangeRule as RangeRuleProtocol,
++    DataQualityResult,
++    RuleSeverity,
++)
++
++logger = logging.getLogger(__name__)
++
++
++class RangeRule(RangeRuleProtocol):
++    """
++    检查数值特征范围的数据质量规则实现。
++
++    基于业务知识和统计分布，定义数值特征的合理取值范围。
++    用于发现异常值、数据录入错误和不合理的数值。
++    """
++
++    def __init__(
++        self,
++        field_ranges: Optional[Dict[str, Tuple[float, float]]] = None,
++        tolerance: float = 0.0,
++        strict_mode: bool = True
++    ):
++        """
++        初始化数值范围检查规则。
++
++        Args:
++            field_ranges: 字段范围配置字典 {field_name: (min_value, max_value)}
++            tolerance: 容忍度，允许超出范围的百分比 (0.0-1.0)
++            strict_mode: 严格模式，为True时超出范围直接失败，为False时仅警告
++        """
++        self.rule_name = "range_check"
++        self.rule_description = "检查数值特征的取值范围是否合理"
++
++        # 默认的字段范围配置 - 基于足球业务常识
++        self.field_ranges = field_ranges or {
++            # 比分相关范围 (0-99, 足过正常足球比分)
++            "full_time_score_home": (0, 99),
++            "full_time_score_away": (0, 99),
++            "half_time_score_home": (0, 99),
++            "half_time_score_away": (0, 99),
++
++            # xG 期望进球数 (0-10, 足过极端情况)
++            "xg_home": (0.0, 10.0),
++            "xg_away": (0.0, 10.0),
++            "xg_draw": (0.0, 5.0),
++
++            # 射门数 (0-50, 超过正常比赛数据)
++            "shot_home": (0, 50),
++            "shot_away": (0, 50),
++            "shot_on_target_home": (0, 30),
++            "shot_on_target_away": (0, 30),
++
++            # 控球率 (0-100, 百分比)
++            "possession_home": (0.0, 100.0),
++            "possession_away": (0.0, 100.0),
++
++            # 角球数 (0-30, 超过正常比赛)
++            "corners_home": (0, 30),
++            "corners_away": (0, 30),
++
++            # 犯规数 (0-20, 超过正常比赛)
++            "fouls_home": (0, 20),
++            "fouls_away": (0, 20),
++
++            # 黄牌数 (0-10, 超过正常比赛)
++            "cards_yellow_home": (0, 10),
++            "cards_yellow_away": (0, 10),
++
++            # 红牌数 (0-5, 超过正常比赛)
++            "cards_red_home": (0, 5),
++            "cards_red_away": (0, 5),
++
++            # 赔率相关 (1.01-100.0, 正常赔率范围)
++            "odds_b365_home": (1.01, 100.0),
++            "odds_b365_draw": (1.01, 100.0),
++            "odds_b365_away": (1.01, 100.0),
++
++            # 传球数 (0-1000, 超过正常比赛)
++            "passes_home": (0, 1000),
++            "passes_away": (0, 1000),
++
++            # 越位数 (0-100, 超过正常比赛)
++            "crosses_home": (0, 100),
++            "crosses_away": (0, 100),
++
++            # 比分差计算范围 (-50, 50)
++            "score_difference": (-50, 50),
++
++            # 总进球数范围 (0-150)
++            "total_goals": (0, 150),
++        }
++
++        self.tolerance = tolerance
++        self.strict_mode = strict_mode
++
++        logger.debug(
++            f"RangeRule 初始化: 配置了 {len(self.field_ranges)} 个字段的范围检查, "
++            f"容忍度 {self.tolerance}, 严格模式 {self.strict_mode}"
++        )
++
++    async def check(self, features: Dict[str, Any]) -> List[str]:
++        """
++        检查特征数据中的数值范围。
++
++        Args:
++            features: 从 FeatureStore 加载的特征数据字典
++
++        Returns:
++            List[str]: 发现的范围违规错误描述列表
++        """
++        errors = []
++
++        if not features:
++            return ["特征数据字典为空"]
++
++        # 检查每个配置了范围的字段
++        for field_name, (min_val, max_val) in self.field_ranges.items():
++            if field_name not in features:
++                continue  # 字段缺失由 MissingValueRule 检查
++
++            value = features[field_name]
++
++            # 检查值是否为数值类型
++            if not isinstance(value, (int, float)):
++                continue  # 非数值类型由 TypeRule 检查
++
++            # 检查范围
++            violation = self._check_value_range(
++                field_name, value, min_val, max_val
++            )
++
++            if violation:
++                severity = self._determine_severity(violation)
++                errors.append(violation)
++
++        logger.debug(
++            f"范围检查完成: 检查了 {len(self.field_ranges)} 个字段, "
++            f"发现 {len(errors)} 个范围违规"
++        )
++
++        return errors
++
++    def _check_value_range(
++        self,
++        field_name: str,
++        value: float,
++        min_val: float,
++        max_val: float
++    ) -> Optional[str]:
++        """
++        检查单个值是否在指定范围内。
++
++        Args:
++            field_name: 字段名称
++            value: 要检查的数值
++            min_val: 最小值
++            max_val: 最大值
++
++        Returns:
++            Optional[str]: 范围违规描述，如果没有违规返回None
++        """
++        # 处理特殊情况：无穷大值
++        try:
++            import math
++            if math.isinf(value):
++                return f"字段 '{field_name}' 值为无穷大: {value}"
++            if math.isnan(value):
++                return f"字段 '{field_name}' 值为 NaN"
++        except (ValueError, TypeError):
++            pass
++
++        # 检查范围
++        if value < min_val or value > max_val:
++            # 应用容忍度
++            if self.tolerance > 0:
++                range_width = max_val - min_val
++                tolerance_amount = range_width * self.tolerance
++
++                min_with_tolerance = min_val - tolerance_amount
++                max_with_tolerance = max_val + tolerance_amount
++
++                if min_with_tolerance <= value <= max_with_tolerance:
++                    return None  # 在容忍范围内
++
++            # 构造错误信息
++            if value < min_val:
++                return (
++                    f"字段 '{field_name}' 值 {value} 小于最小值 {min_val} "
++                    f"(超出范围 {abs(value - min_val):.2f})"
++                )
++            else:
++                return (
++                    f"字段 '{field_name}' 值 {value} 大于最大值 {max_val} "
++                    f"(超出范围 {abs(value - max_val):.2f})"
++                )
++
++        return None
++
++    def _determine_severity(self, error_message: str) -> str:
++        """
++        根据错误信息确定严重程度。
++
++        Args:
++            error_message: 错误信息
++
++        Returns:
++            str: 严重程度
++        """
++        # 基于违规程度确定严重性
++        if any(keyword in error_message.lower() for keyword in ["无穷大", "nan", "超出范围 1e"]):
++            return RuleSeverity.HIGH
++        elif any(keyword in error_message.lower() for keyword in ["超出范围 1", "超出范围 5"]):
++            return RuleSeverity.MEDIUM
++        else:
++            return RuleSeverity.LOW
++
++    def get_field_range(self, field_name: str) -> Optional[Tuple[float, float]]:
++        """
++        获取指定字段的范围配置。
++
++        Args:
++            field_name: 字段名称
++
++        Returns:
++            Optional[Tuple[float, float]]: (min_value, max_value)，如果未配置返回None
++        """
++        return self.field_ranges.get(field_name)
++
++    def configure_field_range(
++        self,
++        field_name: str,
++        min_value: float,
++        max_value: float
++    ) -> None:
++        """
++        配置字段的检查范围。
++
++        Args:
++            field_name: 字段名称
++            min_value: 最小值
++            max_value: 最大值
++        """
++        if min_value > max_value:
++            raise ValueError(f"最小值 {min_value} 不能大于最大值 {max_value}")
++
++        self.field_ranges[field_name] = (min_value, max_value)
++        logger.info(f"字段 '{field_name}' 范围已设置为: [{min_value}, {max_value}]")
++
++    def configure_tolerance(self, tolerance: float) -> None:
++        """
++        配置容忍度。
++
++        Args:
++            tolerance: 容忍度 (0.0-1.0)
++        """
++        if not 0.0 <= tolerance <= 1.0:
++            raise ValueError("容忍度必须在 0.0 到 1.0 之间")
++
++        self.tolerance = tolerance
++        logger.info(f"容忍度已设置为: {tolerance}")
++
++    def configure_strict_mode(self, strict_mode: bool) -> None:
++        """
++        配置严格模式。
++
++        Args:
++            strict_mode: 是否启用严格模式
++        """
++        self.strict_mode = strict_mode
++        logger.info(f"严格模式已设置为: {strict_mode}")
++
++    def validate_field_ranges(self) -> List[str]:
++        """
++        验证所有字段范围配置的有效性。
++
++        Returns:
++            List[str]: 配置错误列表，空列表表示配置有效
++        """
++        errors = []
++
++        for field_name, (min_val, max_val) in self.field_ranges.items():
++            try:
++                if min_val > max_val:
++                    errors.append(
++                        f"字段 '{field_name}' 最小值 {min_val} 大于最大值 {max_val}"
++                    )
++            except Exception as e:
++                errors.append(
++                    f"字段 '{field_name}' 范围配置错误: {str(e)}"
++                )
++
++        return errors
++
++    def get_range_summary(self, features: Dict[str, Any]) -> Dict[str, Any]:
++        """
++        获取范围检查的详细摘要。
++
++        Args:
++            features: 特征数据字典
++
++        Returns:
++            Dict[str, Any]: 范围检查摘要
++        """
++        summary = {
++            "total_configured_fields": len(self.field_ranges),
++            "checked_fields": 0,
++            "within_range": 0,
++            "out_of_range": 0,
++            "field_details": {},
++            "violations": []
++        }
++
++        for field_name, (min_val, max_val) in self.field_ranges.items():
++            if field_name not in features:
++                continue  # 字段缺失
++
++            value = features[field_name]
++            if not isinstance(value, (int, float)):
++                continue  # 非数值，跳过范围检查
++
++            summary["checked_fields"] += 1
++
++            violation = self._check_value_range(
++                field_name, value, min_val, max_val
++            )
++
++            field_detail = {
++                "field_name": field_name,
++                "value": value,
++                "min_val": min_val,
++                "max_val": max_val,
++                "in_range": violation is None,
++                "violation": violation
++            }
++
++            summary["field_details"][field_name] = field_detail
++
++            if violation is None:
++                summary["within_range"] += 1
++            else:
++                summary["out_of_range"] += 1
++                summary["violations"].append(violation)
++
++        # 计算合规率
++        if summary["checked_fields"] > 0:
++            summary["compliance_rate"] = (
++                summary["within_range"] / summary["checked_fields"] * 100
++            )
++        else:
++            summary["compliance_rate"] = 0
++
++        return summary
+\ No newline at end of file
+diff --git a/src/quality/rules/type_rule.py b/src/quality/rules/type_rule.py
+new file mode 100644
+index 000000000..424e1b55c
+--- /dev/null
++++ b/src/quality/rules/type_rule.py
+@@ -0,0 +1,473 @@
++"""
++Type Rule - 数据类型检查规则
++
++检查特征字段的数据类型是否正确。
++确保数值字段为float/int，字符串字段为str，防止类型错误导致的计算异常。
++
++核心功能：
++- 支持多种数据类型的检查（int, float, str, bool等）
++- 支持类型转换和兼容性检查
++- 可配置的类型映射关系
++- 提供详细的类型错误报告
++- 支持字段级别的类型要求
++
++实现版本: P0-3
++实现时间: 2025-12-05
++依赖: quality_protocol.py
++"""
++
++import logging
++from typing import Any, Dict, List, Optional, Type
++
++from src.quality.quality_protocol import (
++    TypeRule as TypeRuleProtocol,
++    DataQualityResult,
++    RuleSeverity,
++)
++
++logger = logging.getLogger(__name__)
++
++
++class TypeRule(TypeRuleProtocol):
++    """
++    检查特征数据类型的数据质量规则实现。
++
++    确保特征字段的数据类型符合预期，如数值字段为 float/int，
++    字符串字段为 str 等。防止类型错误导致的计算异常。
++    """
++
++    def __init__(
++        self,
++        field_types: Optional[Dict[str, Type]] = None,
++        strict_type_checking: bool = True,
++        allow_type_conversion: bool = True
++    ):
++        """
++        初始化数据类型检查规则。
++
++        Args:
++            field_types: 字段类型映射字典 {field_name: expected_type}
++            strict_type_checking: 是否进行严格类型检查
++            allow_type_conversion: 是否允许类型转换
++        """
++        self.rule_name = "type_check"
++        self.rule_description = "检查特征字段的数据类型是否正确"
++
++        # 默认的字段类型配置 - 基于足球预测业务
++        self.field_types = field_types or {
++            # 比分相关 - 应该为整数
++            "full_time_score_home": int,
++            "full_time_score_away": int,
++            "half_time_score_home": int,
++            "half_time_score_away": int,
++
++            # xG相关 - 应该为浮点数
++            "xg_home": float,
++            "xg_away": float,
++            "xg_draw": float,
++
++            # 射门相关 - 应该为整数
++            "shot_home": int,
++            "shot_away": int,
++            "shot_on_target_home": int,
++            "shot_on_target_away": int,
++
++            # 控球率 - 应该为浮点数（百分比）
++            "possession_home": float,
++            "possession_away": float,
++
++            # 角球数 - 应该为整数
++            "corners_home": int,
++            "corners_away": int,
++
++            # 犯规数 - 应该为整数
++            "fouls_home": int,
++            "fouls_away": int,
++
++            # 牌牌数 - 应该为整数
++            "cards_yellow_home": int,
++            "cards_yellow_away": int,
++            "cards_red_home": int,
++            "cards_red_away": int,
++
++            # 赔率相关 - 应该为浮点数
++            "odds_b365_home": float,
++            "odds_b365_draw": float,
++            "odds_b365_away": float,
++
++            # 传球数 - 应该为整数
++            "passes_home": int,
++            "passes_away": int,
++            "passes_accurate_home": int,
++            "passes_accurate_away": int,
++
++            # 越位数 - 应该为整数
++            "crosses_home": int,
++            "crosses_away": int,
++            "crosses_accurate_home": int,
++            "crosses_accurate_away": int,
++
++            # 比赛ID - 应该为整数
++            "match_id": int,
++
++            # 时间戳 - 应该为字符串或数字
++            "match_time": str,  # ISO格式字符串
++
++            # 比赛状态 - 应该为字符串
++            "match_status": str,
++
++            # 球队ID - 应该为整数
++            "home_team_id": int,
++            "away_team_id": int,
++
++            # 联赛日 - 应该为字符串或数字
++            "match_date": str,
++        }
++
++        self.strict_type_checking = strict_type_checking
++        self.allow_type_conversion = allow_type_conversion
++
++        logger.debug(
++            f"TypeRule 初始化: 配置了 {len(self.field_types)} 个字段的类型检查, "
++            f"严格模式 {self.strict_type_checking}, 允许转换 {self.allow_type_conversion}"
++        )
++
++    async def check(self, features: Dict[str, Any]) -> List[str]:
++        """
++        检查特征数据中的数据类型。
++
++        Args:
++            features: 从 FeatureStore 加载的特征数据字典
++
++        Returns:
++            List[str]: 发现的类型错误描述列表
++        """
++        errors = []
++
++        if not features:
++            return ["特征数据字典为空"]
++
++        # 检查每个配置了类型的字段
++        for field_name, expected_type in self.field_types.items():
++            if field_name not in features:
++                continue  # 字段缺失由 MissingValueRule 检查
++
++            value = features[field_name]
++            type_error = self._check_field_type(
++                field_name, value, expected_type
++            )
++
++            if type_error:
++                severity = self._determine_severity(type_error)
++                errors.append(type_error)
++
++        logger.debug(
++            f"类型检查完成: 检查了 {len(self.field_types)} 个字段, "
++            f"发现 {len(errors)} 个类型错误"
++        )
++
++        return errors
++
++    def _check_field_type(
++        self,
++        field_name: str,
++        value: Any,
++        expected_type: Type
++    ) -> Optional[str]:
++        """
++        检查单个字段的数据类型。
++
++        Args:
++            field_name: 字段名称
++            value: 要检查的值
++            expected_type: 期望的类型
++
++        Returns:
++            Optional[str]: 类型错误描述，如果没有错误返回None
++        """
++        # 处理 None 值 - 由 MissingValueRule 检查
++        if value is None:
++            return None
++
++        # 直接类型检查
++        if isinstance(value, expected_type):
++            return None
++
++        # 允许类型转换的情况
++        if self.allow_type_conversion:
++            try:
++                converted_value = self._convert_type(value, expected_type)
++                if converted_value is not None:
++                    # 转换成功，更新字段值（这里只是模拟，实际不会修改原数据）
++                    logger.debug(
++                        f"字段 '{field_name}' 类型转换成功: "
++                        f"{type(value).__name__} -> {expected_type.__name__}"
++                    )
++                    return None
++            except Exception as e:
++                return (
++                    f"字段 '{field_name}' 类型转换失败: {type(value).__name__} -> {expected_type.__name__}, "
++                    f"错误: {str(e)}"
++                )
++
++        # 严格模式或转换失败时报告错误
++        if self.strict_type_checking:
++            return (
++                f"字段 '{field_name}' 类型错误: 期望 {expected_type.__name__}, "
++                f"实际 {type(value).__name__}, 值: {self._format_value(value)}"
++            )
++        else:
++            return (
++                f"字段 '{field_name}' 类型警告: 期望 {expected_type.__name__}, "
++                f"实际 {type(value).__name__}, 值: {self._format_value(value)}"
++            )
++
++    def _convert_type(self, value: Any, target_type: Type) -> Optional[Any]:
++        """
++        尝试将值转换为目标类型。
++
++        Args:
++            value: 要转换的值
++            target_type: 目标类型
++
++        Returns:
++            Optional[Any]: 转换后的值，失败返回None
++        """
++        try:
++            # 特殊处理 None 值
++            if value is None:
++                return None
++
++            # 转换到整数
++            if target_type is int:
++                if isinstance(value, (int, float)):
++                    return int(float(value))
++                elif isinstance(value, str):
++                    # 尝试解析字符串为整数
++                    stripped_value = value.strip()
++                    if stripped_value.isdigit() or (
++                        stripped_value.startswith('-') and stripped_value[1:].isdigit()
++                    ):
++                        return int(stripped_value)
++                return None
++
++            # 转换到浮点数
++            elif target_type is float:
++                if isinstance(value, (int, float)):
++                    return float(value)
++                elif isinstance(value, str):
++                    stripped_value = value.strip()
++                    try:
++                        return float(stripped_value)
++                    except ValueError:
++                        return None
++                return None
++
++            # 转换到字符串
++            elif target_type is str:
++                return str(value)
++
++            # 转换到布尔值
++            elif target_type is bool:
++                if isinstance(value, bool):
++                    return value
++                elif isinstance(value, (int, float)):
++                    return bool(value)
++                elif isinstance(value, str):
++                    lowered = value.lower().strip()
++                    if lowered in ('true', '1', 'yes', 'on'):
++                        return True
++                    elif lowered in ('false', '0', 'no', 'off'):
++                        return False
++                return None
++
++            return None
++
++        except Exception:
++            return None
++
++    def _determine_severity(self, error_message: str) -> str:
++        """
++        根据错误信息确定严重程度。
++
++        Args:
++            error_message: 错误信息
++
++        Returns:
++            str: 严重程度
++        """
++        # 基于字段类型和错误类型确定严重性
++        if any(keyword in error_message.lower() for keyword in ["match_id", "team_id", "score"]):
++            return RuleSeverity.HIGH
++        elif any(keyword in error_message.lower() for keyword in ["xg", "odds", "critical"]):
++            return RuleSeverity.MEDIUM
++        else:
++            return RuleSeverity.LOW
++
++    def _format_value(self, value: Any) -> str:
++        """
++        格式化值用于显示。
++
++        Args:
++            value: 要格式化的值
++
++        Returns:
++            str: 格式化后的字符串表示
++        """
++        if value is None:
++            return "None"
++        elif isinstance(value, str):
++            return f"'{value}'"
++        else:
++            return f"{value} ({type(value).__name__})"
++
++    def get_expected_type(self, field_name: str) -> Optional[Type]:
++        """
++        获取指定字段的期望类型。
++
++        Args:
++            field_name: 字段名称
++
++        Returns:
++            Optional[Type]: 期望的类型，如果未配置返回None
++        """
++        return self.field_types.get(field_name)
++
++    def configure_field_type(self, field_name: str, expected_type: Type) -> None:
++        """
++        配置字段的期望类型。
++
++        Args:
++            field_name: 字段名称
++            expected_type: 期望的类型
++        """
++        if not isinstance(expected_type, type):
++            raise ValueError("expected_type 必须是一个类型对象")
++
++        self.field_types[field_name] = expected_type
++        logger.info(f"字段 '{field_name}' 期望类型已设置为: {expected_type.__name__}")
++
++    def configure_strict_mode(self, strict_mode: bool) -> None:
++        """
++        配置严格模式。
++
++        Args:
++            strict_mode: 是否启用严格模式
++        """
++        self.strict_type_checking = strict_mode
++        logger.info(f"严格模式已设置为: {strict_mode}")
++
++    def configure_type_conversion(self, allow_conversion: bool) -> None:
++        """
++        配置是否允许类型转换。
++
++        Args:
++            allow_conversion: 是否允许类型转换
++        """
++        self.allow_type_conversion = allow_conversion
++        logger.info(f"类型转换已设置为: {allow_conversion}")
++
++    def validate_type_configuration(self) -> List[str]:
++        """
++        验证类型配置的有效性。
++
++        Returns:
++            List[str]: 配置错误列表，空列表表示配置有效
++        """
++        errors = []
++
++        for field_name, expected_type in self.field_types.items():
++            try:
++                if not isinstance(expected_type, type):
++                    errors.append(
++                        f"字段 '{field_name}' 配置的类型 {expected_type} 不是有效的类型对象"
++                    )
++            except Exception as e:
++                errors.append(
++                    f"字段 '{field_name}' 类型配置错误: {str(e)}"
++                )
++
++        return errors
++
++    def get_type_summary(self, features: Dict[str, Any]) -> Dict[str, Any]:
++        """
++        获取类型检查的详细摘要。
++
++        Args:
++            features: 特征数据字典
++
++        Returns:
++            Dict[str, Any]: 类型检查摘要
++        """
++        summary = {
++            "total_configured_fields": len(self.field_types),
++            "checked_fields": 0,
++            "type_matches": 0,
++            "type_mismatches": 0,
++            "type_conversions": 0,
++            "field_details": {},
++            "errors": []
++        }
++
++        for field_name, expected_type in self.field_types.items():
++            if field_name not in features:
++                continue  # 字段缺失
++
++            value = features[field_name]
++            summary["checked_fields"] += 1
++
++            field_detail = {
++                "field_name": field_name,
++                "actual_type": type(value).__name__,
++                "expected_type": expected_type.__name__,
++                "value": self._format_value(value),
++                "type_match": isinstance(value, expected_type),
++                "can_convert": self._can_convert_type(value, expected_type)
++            }
++
++            summary["field_details"][field_name] = field_detail
++
++            if isinstance(value, expected_type):
++                summary["type_matches"] += 1
++            else:
++                summary["type_mismatches"] += 1
++
++                # 检查是否可以转换
++                if self.allow_type_conversion and field_detail["can_convert"]:
++                    summary["type_conversions"] += 1
++
++            # 模拟类型检查（仅用于摘要）
++            error = self._check_field_type(field_name, value, expected_type)
++            if error:
++                summary["errors"].append(error)
++
++        # 计算合规率
++        if summary["checked_fields"] > 0:
++            summary["compliance_rate"] = (
++                (summary["type_matches"] + summary["type_conversions"]) /
++                summary["checked_fields"] * 100
++            )
++        else:
++            summary["compliance_rate"] = 0
++
++        return summary
++
++    def _can_convert_type(self, value: Any, target_type: Type) -> bool:
++        """
++        检查值是否可以转换为目标类型。
++
++        Args:
++            value: 要检查的值
++            target_type: 目标类型
++
++        Returns:
++            bool: 是否可以转换
++        """
++        if self.allow_type_conversion:
++            try:
++                converted = self._convert_type(value, target_type)
++                return converted is not None
++            except Exception:
++                pass
++
++        return False
+\ No newline at end of file

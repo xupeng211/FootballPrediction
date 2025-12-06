@@ -1,0 +1,94 @@
+--- a/src/services/data_processing.py+++ b/src/services/data_processing.py@@ -26,7 +26,7 @@ 
+     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
+         """处理比赛数据."""
+-        logger.debug(f"Processing match data: {data.get('id')}")
++        logger.await debug(f"Processing match data: {data.get('id')}")
+ 
+         return {**data, "processed_at": datetime.utcnow(), "type": "match"}
+ 
+@@ -36,7 +36,7 @@ 
+     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
+         """处理赔率数据."""
+-        logger.debug(f"Processing odds data: {data.get('match_id')}")
++        logger.await debug(f"Processing odds data: {data.get('match_id')}")
+ 
+         return {**data, "processed_at": datetime.utcnow(), "type": "odds"}
+ 
+@@ -46,7 +46,7 @@ 
+     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
+         """处理比分数据."""
+-        logger.debug(f"Processing scores data: {data.get('match_id')}")
++        logger.await debug(f"Processing scores data: {data.get('match_id')}")
+ 
+         return {**data, "processed_at": datetime.utcnow(), "type": "scores"}
+ 
+@@ -56,7 +56,7 @@ 
+     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
+         """处理特征数据."""
+-        logger.debug(f"Processing features data: {data.get('match_id')}")
++        logger.await debug(f"Processing features data: {data.get('match_id')}")
+ 
+         return {**data, "processed_at": datetime.utcnow(), "type": "features"}
+ 
+@@ -67,12 +67,12 @@     pass  # 添加pass语句
+     """数据质量验证器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.errors = []
+ 
+-    def validate(self, data: dict[str, Any]) -> bool:
++async def validate(self, data: dict[str, Any]) -> bool:
+         """验证数据质量."""
+         self.errors.clear()
+ 
+@@ -95,12 +95,12 @@     pass  # 添加pass语句
+     """异常检测器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.threshold = 3.0  # 标准差阈值
+ 
+-    def detect(self, data: dict[str, Any]) -> list[str]:
++async def detect(self, data: dict[str, Any]) -> list[str]:
+         """检测异常."""
+         anomalies = []
+ 
+@@ -121,7 +121,7 @@     pass  # 添加pass语句
+     """缺失数据处理基类"""
+ 
+-    def handle(self, data: dict[str, Any]) -> dict[str, Any]:
++async def handle(self, data: dict[str, Any]) -> dict[str, Any]:
+         """处理缺失球队信息."""
+         if "home_team" not in data:
+             data["home_team"] = "Unknown"
+@@ -136,7 +136,7 @@     pass  # 添加pass语句
+     """青铜到银层数据处理器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.validators = [DataQualityValidator()]
+@@ -166,7 +166,7 @@ class DataProcessingService:
+     """数据处理服务 - 简化版本."""
+ 
+-    def __init__(self, repository=None, cache=None, session=None):
++async def __init__(self, repository=None, cache=None, session=None):
+         """初始化服务."""
+         self.repository = repository
+         self.cache = cache
+@@ -193,8 +193,8 @@             await self.initialize()
+ 
+         # 简化的数据处理逻辑
+-        data_type = data.get("type", "match")
+-        processor = self.processors.get(data_type)
++        data_type = data.await get("type", "match")
++        processor = self.processors.await get(data_type)
+ 
+         if processor:
+             result = await processor.process(data)

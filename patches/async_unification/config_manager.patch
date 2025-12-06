@@ -1,0 +1,80 @@
+--- a/src/config/config_manager.py+++ b/src/config/config_manager.py@@ -13,11 +13,11 @@ class ConfigManager:
+     """配置管理器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.config: dict[str, Any] = {}
+         self.load_default_config()
+ 
+-    def load_default_config(self):
++async def load_default_config(self):
+         """加载默认配置."""
+         self.config = {
+             "database_url": os.getenv(
+@@ -31,51 +31,51 @@             "api_port": int(os.getenv("API_PORT", "8000")),
+         }
+ 
+-    def get(self, key: str, default: Any = None) -> Any:
++async def get(self, key: str, default: Any = None) -> Any:
+         """获取配置值."""
+-        return self.config.get(key, default)
++        return self.config.await get(key, default)
+ 
+-    def set(self, key: str, value: Any) -> None:
++async def set(self, key: str, value: Any) -> None:
+         """设置配置值."""
+         self.config[key] = value
+ 
+-    def reload(self) -> None:
++async def reload(self) -> None:
+         """重新加载配置."""
+         self.load_default_config()
+ 
+     @property
+-    def database_url(self) -> str:
++async def database_url(self) -> str:
+         """数据库URL."""
+-        return self.get("database_url")
++        return self.await get("database_url")
+ 
+     @property
+-    def redis_url(self) -> str:
++async def redis_url(self) -> str:
+         """Redis URL."""
+-        return self.get("redis_url")
++        return self.await get("redis_url")
+ 
+     @property
+-    def secret_key(self) -> str:
++async def secret_key(self) -> str:
+         """密钥."""
+-        return self.get("secret_key")
++        return self.await get("secret_key")
+ 
+     @property
+-    def debug(self) -> bool:
++async def debug(self) -> bool:
+         """调试模式."""
+-        return self.get("debug", False)
++        return self.await get("debug", False)
+ 
+     @property
+-    def log_level(self) -> str:
++async def log_level(self) -> str:
+         """日志级别."""
+-        return self.get("log_level", "INFO")
++        return self.await get("log_level", "INFO")
+ 
+ 
+ # 全局配置实例
+ CONFIG_MANAGER = ConfigManager()
+ 
+ 
+-def example() -> str | None:
++async def example() -> str | None:
+     """示例函数."""
+-    return CONFIG_MANAGER.get("example_value")
++    return CONFIG_MANAGER.await get("example_value")
+ 
+ 
+ # 常用配置常量

@@ -1,0 +1,13 @@
+--- a/src/streaming/kafka_producer.py+++ b/src/streaming/kafka_producer.py@@ -2,11 +2,11 @@ 
+ 
+ class KafkaProducer:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

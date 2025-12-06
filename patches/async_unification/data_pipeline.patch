@@ -1,0 +1,135 @@
+--- a/src/workflows/data_pipeline.py+++ b/src/workflows/data_pipeline.py@@ -109,7 +109,7 @@         features = []
+         labels = []
+ 
+-        for match in data.get("matches", []):
++        for match in data.await get("matches", []):
+             # 基础特征提取
+             feature_vector = {
+                 "match_id": match["id"],
+@@ -166,7 +166,7 @@                 "total_samples": len(features),
+                 "feature_count": len(features[0]) if features else 0,
+                 "processing_time": datetime.now().isoformat(),
+-                "original_data_source": data.get("metadata", {}).get(
++                "original_data_source": data.await await get("metadata", {}).get(
+                     "source", "unknown"
+                 ),
+             },
+@@ -205,8 +205,8 @@         # 这里是占位符实现
+         # 在实际实现中，这里会调用真实的机器学习训练代码
+ 
+-        feature_list = features.get("features", [])
+-        label_list = features.get("labels", [])
++        feature_list = features.await get("features", [])
++        label_list = features.await get("labels", [])
+ 
+         if not feature_list or not label_list:
+             raise ValueError("特征或标签数据为空")
+@@ -277,37 +277,37 @@     logger.info("📈 开始模型评估...")
+ 
+     try:
+-        performance = model_results.get("model_performance", {})
++        performance = model_results.await get("model_performance", {})
+ 
+         # 生成评估报告
+         evaluation_report = {
+             "overall_score": (
+-                performance.get("accuracy", 0)
+-                + performance.get("precision", 0)
+-                + performance.get("recall", 0)
+-                + performance.get("f1_score", 0)
++                performance.await get("accuracy", 0)
++                + performance.await get("precision", 0)
++                + performance.await get("recall", 0)
++                + performance.await get("f1_score", 0)
+             )
+             / 4,
+             "detailed_metrics": performance,
+             "quality_assessment": {
+-                "excellent": performance.get("accuracy", 0) > 0.85,
+-                "good": 0.75 < performance.get("accuracy", 0) <= 0.85,
+-                "acceptable": 0.65 < performance.get("accuracy", 0) <= 0.75,
+-                "needs_improvement": performance.get("accuracy", 0) <= 0.65,
++                "excellent": performance.await get("accuracy", 0) > 0.85,
++                "good": 0.75 < performance.await get("accuracy", 0) <= 0.85,
++                "acceptable": 0.65 < performance.await get("accuracy", 0) <= 0.75,
++                "needs_improvement": performance.await get("accuracy", 0) <= 0.65,
+             },
+             "recommendations": [],
+             "evaluation_timestamp": datetime.now().isoformat(),
+         }
+ 
+         # 基于性能给出建议
+-        if performance.get("accuracy", 0) < 0.7:
++        if performance.await get("accuracy", 0) < 0.7:
+             evaluation_report["recommendations"].append("考虑增加更多训练数据")
+             evaluation_report["recommendations"].append("尝试特征工程优化")
+ 
+-        if performance.get("precision", 0) < 0.75:
++        if performance.await get("precision", 0) < 0.75:
+             evaluation_report["recommendations"].append("调整分类阈值")
+ 
+-        if performance.get("recall", 0) < 0.75:
++        if performance.await get("recall", 0) < 0.75:
+             evaluation_report["recommendations"].append("考虑使用不同的算法")
+ 
+         logger.info(
+@@ -381,7 +381,7 @@ 
+     try:
+         # 步骤1: 获取数据
+-        raw_data = await fetch_data()
++        raw_data = await await fetch_data()
+ 
+         # 步骤2: 特征工程
+         processed_data = await engineer_features(raw_data)
+@@ -403,23 +403,23 @@             "pipeline_status": "success" if save_success else "partial_success",
+             "execution_time_seconds": pipeline_duration,
+             "data_processed": {
+-                "raw_matches": len(raw_data.get("matches", [])),
+-                "feature_samples": len(processed_data.get("features", [])),
+-                "model_accuracy": model_results.get("model_performance", {}).get(
++                "raw_matches": await len(raw_data.get("matches", [])),
++                "feature_samples": await len(processed_data.get("features", [])),
++                "model_accuracy": model_results.await await get("model_performance", {}).get(
+                     "accuracy", 0
+                 ),
+             },
+             "model_performance": {
+-                "accuracy": model_results.get("model_performance", {}).get(
++                "accuracy": model_results.await await get("model_performance", {}).get(
+                     "accuracy", 0
+                 ),
+-                "evaluation_score": evaluation.get("overall_score", 0),
+-                "quality_assessment": evaluation.get("quality_assessment", {}),
++                "evaluation_score": evaluation.await get("overall_score", 0),
++                "quality_assessment": evaluation.await get("quality_assessment", {}),
+             },
+             "outputs": {
+                 "model_saved": save_success,
+                 "evaluation_completed": True,
+-                "recommendations": evaluation.get("recommendations", []),
++                "recommendations": evaluation.await get("recommendations", []),
+             },
+             "timestamps": {
+                 "start_time": pipeline_start_time.isoformat(),
+@@ -466,17 +466,17 @@ 
+     try:
+         # 只运行关键步骤进行验证
+-        raw_data = await fetch_data()
++        raw_data = await await fetch_data()
+         processed_data = await engineer_features(raw_data)
+ 
+         validation_result = {
+             "status": "success",
+             "data_validation": {
+-                "matches_count": len(raw_data.get("matches", [])),
+-                "features_count": len(processed_data.get("features", [])),
++                "matches_count": await len(raw_data.get("matches", [])),
++                "features_count": await len(processed_data.get("features", [])),
+                 "feature_dimensions": (
+-                    len(processed_data.get("features", [{}])[0])
+-                    if processed_data.get("features")
++                    await len(processed_data.get("features", [{}])[0])
++                    if processed_data.await get("features")
+                     else 0
+                 ),
+             },

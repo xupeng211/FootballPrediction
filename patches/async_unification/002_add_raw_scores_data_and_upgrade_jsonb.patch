@@ -1,0 +1,26 @@
+--- a/src/database/migrations/versions/002_add_raw_scores_data_and_upgrade_jsonb.py+++ b/src/database/migrations/versions/002_add_raw_scores_data_and_upgrade_jsonb.py@@ -78,7 +78,7 @@ depends_on: str | Sequence[str] | None = None
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     """添加raw_scores_data表并升级现有Bronze层表为JSONB
+     变更内容:
+     1. 创建raw_scores_data表（Bronze层比分数据）
+@@ -237,7 +237,7 @@         )
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     """回滚raw_scores_data表和JSONB升级的更改."""
+     conn = op.get_bind()
+     db_dialect = conn.dialect.name.lower()
+@@ -245,8 +245,8 @@         op.execute(
+             "DROP TRIGGER IF EXISTS trigger_raw_scores_data_updated_at ON raw_scores_data"
+         )
+-        op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
+-        op.execute("DROP FUNCTION IF EXISTS create_monthly_partition(TEXT, TEXT)")
++        op.await execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
++        op.await execute("DROP FUNCTION IF EXISTS create_monthly_partition(TEXT, TEXT)")
+     else:
+         logger.info("⚠️  SQLite环境:跳过触发器和函数删除")
+     try:

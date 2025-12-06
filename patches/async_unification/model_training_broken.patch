@@ -1,0 +1,13 @@
+--- a/src/models/model_training_broken.py+++ b/src/models/model_training_broken.py@@ -2,11 +2,11 @@ 
+ 
+ class ModelTrainingBroken:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

@@ -1,0 +1,117 @@
+--- a/src/api/simple_auth.py+++ b/src/api/simple_auth.py@@ -53,7 +53,7 @@ 
+     pass  # 添加pass语句
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         # 简化的用户存储（实际应用中应该使用数据库）
+@@ -74,13 +74,13 @@             },
+         }
+ 
+-    def verify_password(self, plain_password: str, stored_password: str) -> bool:
++async def verify_password(self, plain_password: str, stored_password: str) -> bool:
+         """简单密码验证（实际应用中应该使用bcrypt）."""
+         return plain_password == stored_password
+ 
+-    def authenticate_user(self, username: str, password: str) -> SimpleUser | None:
++async def authenticate_user(self, username: str, password: str) -> SimpleUser | None:
+         """验证用户凭据."""
+-        user_data = self.users.get(username)
++        user_data = self.users.await get(username)
+         if not user_data:
+             return None
+ 
+@@ -96,7 +96,7 @@             created_at=datetime.utcnow(),
+         )
+ 
+-    def create_user(self, username: str, email: str, password: str) -> SimpleUser:
++async def create_user(self, username: str, email: str, password: str) -> SimpleUser:
+         """创建新用户."""
+         if username in self.users:
+             raise ValueError("用户名已存在")
+@@ -123,7 +123,7 @@             created_at=datetime.utcnow(),
+         )
+ 
+-    def store_user(self, user: SimpleUser) -> None:
++async def store_user(self, user: SimpleUser) -> None:
+         """存储用户对象."""
+         self.users[user.username] = {
+             "id": user.id,
+@@ -133,9 +133,9 @@             "role": user.role,
+         }
+ 
+-    def get_user(self, username: str) -> SimpleUser | None:
++async def get_user(self, username: str) -> SimpleUser | None:
+         """获取用户对象."""
+-        user_data = self.users.get(username)
++        user_data = self.users.await get(username)
+         if not user_data:
+             return None
+ 
+@@ -148,14 +148,14 @@             created_at=datetime.utcnow(),
+         )
+ 
+-    def generate_token(self, user: SimpleUser) -> str:
++async def generate_token(self, user: SimpleUser) -> str:
+         """生成简单的访问令牌."""
+         # 在实际应用中应该使用JWT或其他安全的令牌机制
+         timestamp = datetime.utcnow().timestamp()
+         token_data = f"{user.username}:{user.id}:{timestamp}"
+         return f"Bearer {token_data}"
+ 
+-    def verify_token(self, token: str) -> SimpleUser | None:
++async def verify_token(self, token: str) -> SimpleUser | None:
+         """验证访问令牌."""
+         if not token.startswith("Bearer "):
+             return None
+@@ -174,7 +174,7 @@             if datetime.utcnow().timestamp() - token_time > 86400:  # 24小时
+                 return None
+ 
+-            user_data = self.users.get(username)
++            user_data = self.users.await get(username)
+             if not user_data or str(user_data["id"]) != user_id_str:
+                 return None
+ 
+@@ -190,9 +190,9 @@         except (ValueError, IndexError):
+             return None
+ 
+-    def get_user_by_username(self, username: str) -> SimpleUser | None:
++async def get_user_by_username(self, username: str) -> SimpleUser | None:
+         """根据用户名获取用户."""
+-        user_data = self.users.get(username)
++        user_data = self.users.await get(username)
+         if not user_data:
+             return None
+ 
+@@ -238,7 +238,7 @@ 
+ 
+ # API端点
+-@router.post("/register", status_code=status.HTTP_201_CREATED)
++@router.await post("/register", status_code=status.HTTP_201_CREATED)
+ async def register_user(user_data: SimpleUserRegister):
+     """用户注册."""
+     try:
+@@ -252,7 +252,7 @@         ) from e
+ 
+ 
+-@router.post("/login")
++@router.await post("/login")
+ async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
+     """用户登录."""
+     user = auth_service.authenticate_user(form_data.username, form_data.password)
+@@ -271,13 +271,13 @@     )
+ 
+ 
+-@router.get("/me")
++@router.await get("/me")
+ async def get_current_user_info(current_user: SimpleUser = Depends(get_current_user)):
+     """获取当前用户信息."""
+     return {"user": current_user.dict(), "message": "用户信息获取成功"}
+ 
+ 
+-@router.post("/logout")
++@router.await post("/logout")
+ async def logout_user():
+     """用户登出."""
+     return {"message": "登出成功"}

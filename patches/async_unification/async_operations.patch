@@ -1,0 +1,16 @@
+--- a/src/cache/redis/operations/async_operations.py+++ b/src/cache/redis/operations/async_operations.py@@ -18,7 +18,7 @@     pass  # 添加pass语句
+     """Asynchronous Redis operations"""
+ 
+-    def __init__(self, redis_url: str | None = None):
++async def __init__(self, redis_url: str | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         """Initialize async operations"""
+@@ -42,7 +42,7 @@         if not self.client:
+             await self.connect()
+         try:
+-            value = await self.client.get(key)
++            value = await self.client.await get(key)
+             if value:
+                 return json.loads(value)
+             return None

@@ -1,0 +1,22 @@
+--- a/src/core/logger.py+++ b/src/core/logger.py@@ -13,7 +13,7 @@     """日志管理类"""
+ 
+     @staticmethod
+-    def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
++async def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
+         """设置日志器 - 创建具有标准格式的日志器."""
+         logger = logging.getLogger(name)
+         logger.setLevel(getattr(logging, level.upper()))
+@@ -29,12 +29,12 @@         return logger
+ 
+ 
+-def get_logger(name: str, level: str = "INFO") -> logging.Logger:
++async def get_logger(name: str, level: str = "INFO") -> logging.Logger:
+     """获取日志器 - 全局函数,方便使用."""
+     return Logger.setup_logger(name, level)
+ 
+ 
+-def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
++async def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
+     """设置日志器 - 模块级别函数,方便使用."""
+     return Logger.setup_logger(name, level)
+ 

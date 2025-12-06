@@ -1,0 +1,64 @@
+--- a/src/pipeline/evaluators/metrics_calculator.py+++ b/src/pipeline/evaluators/metrics_calculator.py@@ -31,7 +31,7 @@     """模型评估指标计算器."""
+ 
+     @staticmethod
+-    def calculate_classification_metrics(
++async def calculate_classification_metrics(
+         y_true: Union[np.ndarray, pd.Series],
+         y_pred: Union[np.ndarray, pd.Series],
+         y_pred_proba: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+@@ -103,7 +103,7 @@         return metrics
+ 
+     @staticmethod
+-    def calculate_regression_metrics(
++async def calculate_regression_metrics(
+         y_true: Union[np.ndarray, pd.Series],
+         y_pred: Union[np.ndarray, pd.Series],
+     ) -> Dict[str, float]:
+@@ -137,7 +137,7 @@         return metrics
+ 
+     @staticmethod
+-    def generate_classification_report(
++async def generate_classification_report(
+         y_true: Union[np.ndarray, pd.Series],
+         y_pred: Union[np.ndarray, pd.Series],
+         y_pred_proba: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+@@ -169,7 +169,7 @@             report["sklearn_classification_report"] = sklearn_report
+ 
+             # 转换numpy类型为原生类型
+-            def convert_numpy_types(obj):
++async def convert_numpy_types(obj):
+                 if isinstance(obj, np.integer):
+                     return int(obj)
+                 elif isinstance(obj, np.floating):
+@@ -191,7 +191,7 @@         return report
+ 
+     @staticmethod
+-    def calculate_custom_metrics(
++async def calculate_custom_metrics(
+         y_true: Union[np.ndarray, pd.Series],
+         y_pred: Union[np.ndarray, pd.Series],
+         custom_functions: Dict[str, callable],
+@@ -222,7 +222,7 @@         return metrics
+ 
+     @staticmethod
+-    def compare_models(
++async def compare_models(
+         y_true: Union[np.ndarray, pd.Series],
+         predictions_dict: Dict[str, Union[np.ndarray, pd.Series]],
+         probabilities_dict: Optional[Dict[str, Union[np.ndarray, pd.DataFrame]]] = None,
+@@ -241,7 +241,7 @@         results = []
+ 
+         for model_name, y_pred in predictions_dict.items():
+-            y_pred_proba = probabilities_dict.get(model_name) if probabilities_dict else None
++            y_pred_proba = probabilities_dict.await get(model_name) if probabilities_dict else None
+ 
+             metrics = MetricsCalculator.calculate_classification_metrics(
+                 y_true, y_pred, y_pred_proba
+@@ -252,7 +252,7 @@         return pd.DataFrame(results)
+ 
+     @staticmethod
+-    def calculate_calibration_metrics(
++async def calculate_calibration_metrics(
+         y_true: Union[np.ndarray, pd.Series],
+         y_pred_proba: Union[np.ndarray, pd.DataFrame],
+         n_bins: int = 10,

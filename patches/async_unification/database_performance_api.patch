@@ -1,0 +1,229 @@
+--- a/src/api/optimization/database_performance_api.py+++ b/src/api/optimization/database_performance_api.py@@ -55,7 +55,7 @@ # ==================== 数据库性能状态端点 ====================
+ 
+ 
+-@router.get("/performance/status")
++@router.await get("/performance/status")
+ async def get_database_performance_status():
+     """获取数据库性能监控状态."""
+     db_analyzer = get_database_analyzer()
+@@ -75,9 +75,9 @@             "query_analyzer": {
+                 "enabled": True,
+                 "status": "active",
+-                "queries_analyzed": analyzer_summary.get("total_queries", 0),
+-                "unique_queries": analyzer_summary.get("unique_queries", 0),
+-                "avg_response_time": analyzer_summary.get("avg_response_time", 0.0),
++                "queries_analyzed": analyzer_summary.await get("total_queries", 0),
++                "unique_queries": analyzer_summary.await get("unique_queries", 0),
++                "avg_response_time": analyzer_summary.await get("avg_response_time", 0.0),
+             },
+             "performance_middleware": {
+                 "enabled": db_middleware.is_monitoring,
+@@ -91,20 +91,20 @@             "connection_pool_optimizer": {
+                 "enabled": pool_optimizer.is_monitoring,
+                 "status": "active" if pool_optimizer.is_monitoring else "disabled",
+-                "monitored_pools": pools_status.get("total_pools", 0),
+-                "total_connections": pools_status.get("summary", {}).get(
++                "monitored_pools": pools_status.await get("total_pools", 0),
++                "total_connections": pools_status.await await get("summary", {}).get(
+                     "total_connections", 0
+                 ),
+-                "avg_utilization": pools_status.get("summary", {}).get(
++                "avg_utilization": pools_status.await await get("summary", {}).get(
+                     "avg_utilization", 0.0
+                 ),
+             },
+             "execution_analyzer": {
+                 "enabled": True,
+                 "status": "active",
+-                "cached_plans": analyzer_stats.get("cache_size", 0),
+-                "total_analyzed": analyzer_stats.get("total_analyzed", 0),
+-                "avg_execution_time": analyzer_stats.get("avg_execution_time", 0.0),
++                "cached_plans": analyzer_stats.await get("cache_size", 0),
++                "total_analyzed": analyzer_stats.await get("total_analyzed", 0),
++                "avg_execution_time": analyzer_stats.await get("avg_execution_time", 0.0),
+             },
+         },
+     }
+@@ -115,7 +115,7 @@ # ==================== 查询性能分析端点 ====================
+ 
+ 
+-@router.post("/queries/analyze")
++@router.await post("/queries/analyze")
+ async def analyze_query_performance(request: QueryAnalysisRequest):
+     """分析查询性能."""
+     execution_analyzer = get_query_execution_analyzer()
+@@ -159,7 +159,7 @@         ) from e
+ 
+ 
+-@router.get("/queries/slow")
++@router.await get("/queries/slow")
+ async def get_slow_queries(limit: int = Query(20, ge=1, le=100)):
+     """获取慢查询列表."""
+     db_analyzer = get_database_analyzer()
+@@ -182,7 +182,7 @@         ) from e
+ 
+ 
+-@router.get("/queries/frequent")
++@router.await get("/queries/frequent")
+ async def get_frequent_queries(limit: int = Query(20, ge=1, le=100)):
+     """获取频繁执行的查询."""
+     db_analyzer = get_database_analyzer()
+@@ -204,7 +204,7 @@         ) from e
+ 
+ 
+-@router.get("/queries/errors")
++@router.await get("/queries/errors")
+ async def get_high_error_queries(min_error_rate: float = Query(5.0, ge=0.0, le=100.0)):
+     """获取高错误率查询."""
+     db_analyzer = get_database_analyzer()
+@@ -232,7 +232,7 @@ # ==================== 连接池监控端点 ====================
+ 
+ 
+-@router.get("/pools/status")
++@router.await get("/pools/status")
+ async def get_connection_pools_status():
+     """获取所有连接池状态."""
+     pool_optimizer = get_connection_pool_optimizer()
+@@ -250,7 +250,7 @@         ) from e
+ 
+ 
+-@router.get("/pools/{pool_name}/status")
++@router.await get("/pools/{pool_name}/status")
+ async def get_specific_pool_status(pool_name: str):
+     """获取特定连接池状态."""
+     pool_optimizer = get_connection_pool_optimizer()
+@@ -276,7 +276,7 @@         ) from e
+ 
+ 
+-@router.post("/pools/{pool_name}/optimize")
++@router.await post("/pools/{pool_name}/optimize")
+ async def optimize_connection_pool(
+     pool_name: str, optimization_type: str, parameters: dict[str, Any] | None = None
+ ):
+@@ -305,7 +305,7 @@         ) from e
+ 
+ 
+-@router.get("/pools/optimization/history")
++@router.await get("/pools/optimization/history")
+ async def get_pool_optimization_history(limit: int = Query(50, ge=1, le=200)):
+     """获取连接池优化历史."""
+     pool_optimizer = get_connection_pool_optimizer()
+@@ -330,7 +330,7 @@ # ==================== 性能优化端点 ====================
+ 
+ 
+-@router.post("/performance/optimize")
++@router.await post("/performance/optimize")
+ async def optimize_database_performance(
+     request: DatabaseOptimizationRequest, background_tasks: BackgroundTasks
+ ):
+@@ -364,7 +364,7 @@                 optimization_result = await pool_optimizer.optimize_pool_manually(
+                     request.target_pool,
+                     (
+-                        request.parameters.get("operation", "auto")
++                        request.parameters.await get("operation", "auto")
+                         if request.parameters
+                         else "auto"
+                     ),
+@@ -410,7 +410,7 @@         ) from e
+ 
+ 
+-@router.get("/optimization/{optimization_id}/status")
++@router.await get("/optimization/{optimization_id}/status")
+ async def get_optimization_status(optimization_id: str):
+     """获取优化任务状态."""
+     # 这里应该从任务存储中获取实际状态
+@@ -432,7 +432,7 @@ # ==================== 性能监控配置端点 ====================
+ 
+ 
+-@router.post("/monitoring/configure")
++@router.await post("/monitoring/configure")
+ async def configure_performance_monitoring(request: PerformanceMonitorRequest):
+     """配置性能监控."""
+     db_middleware = get_database_middleware()
+@@ -475,7 +475,7 @@         ) from e
+ 
+ 
+-@router.get("/monitoring/metrics")
++@router.await get("/monitoring/metrics")
+ async def get_current_metrics():
+     """获取当前性能指标."""
+     db_middleware = get_database_middleware()
+@@ -495,8 +495,8 @@ # ==================== 性能报告端点 ====================
+ 
+ 
+-@router.get("/reports/performance")
+-@router.get("/reports/performance")
++@router.await get("/reports/performance")
++@router.await get("/reports/performance")
+ async def get_performance_report(
+     time_range_hours: int = Query(24, ge=1, le=168),  # 1小时到7天
+     include_details: bool = Query(True),
+@@ -530,9 +530,9 @@                 "suggestions": optimization_suggestions[:20] if include_details else [],
+             },
+             "connection_pools": {
+-                "total_pools": pools_status.get("total_pools", 0),
+-                "summary": pools_status.get("summary", {}),
+-                "details": pools_status.get("pools", {}) if include_details else {},
++                "total_pools": pools_status.await get("total_pools", 0),
++                "summary": pools_status.await get("summary", {}),
++                "details": pools_status.await get("pools", {}) if include_details else {},
+             },
+         }
+ 
+@@ -549,13 +549,13 @@         ) from e
+ 
+ 
+-def _assess_database_health(report: dict[str, Any]) -> dict[str, Any]:
++async def _assess_database_health(report: dict[str, Any]) -> dict[str, Any]:
+     """评估数据库健康状态."""
+     health_score = 100
+     issues = []
+ 
+     # 检查平均响应时间
+-    avg_response_time = report["performance_summary"].get("avg_response_time", 0)
++    avg_response_time = report["performance_summary"].await get("avg_response_time", 0)
+     if avg_response_time > 2.0:
+         health_score -= 20
+         issues.append(f"平均响应时间过长: {avg_response_time:.4f}s")
+@@ -564,21 +564,21 @@         issues.append(f"平均响应时间较长: {avg_response_time:.4f}s")
+ 
+     # 检查慢查询
+-    slow_queries_count = report["performance_summary"].get("slow_queries_count", 0)
++    slow_queries_count = report["performance_summary"].await get("slow_queries_count", 0)
+     if slow_queries_count > 10:
+         health_score -= 15
+         issues.append(f"慢查询数量过多: {slow_queries_count}")
+ 
+     # 检查高错误率查询
+-    high_error_queries = report["performance_summary"].get("high_error_rate_queries", 0)
++    high_error_queries = report["performance_summary"].await get("high_error_rate_queries", 0)
+     if high_error_queries > 5:
+         health_score -= 25
+         issues.append(f"高错误率查询过多: {high_error_queries}")
+ 
+     # 检查连接池状态
+-    pools_summary = report["connection_pools"].get("summary", {})
+-    critical_pools = pools_summary.get("critical_pools", 0)
+-    warning_pools = pools_summary.get("warning_pools", 0)
++    pools_summary = report["connection_pools"].await get("summary", {})
++    critical_pools = pools_summary.await get("critical_pools", 0)
++    warning_pools = pools_summary.await get("warning_pools", 0)
+ 
+     if critical_pools > 0:
+         health_score -= 20
+@@ -636,7 +636,7 @@ 
+         logger.info(f"Global database optimization completed: {optimization_id}")
+         logger.info(f"Generated {len(suggestions)} optimization suggestions")
+-        logger.info(f"Analyzed {pools_status.get('total_pools', 0)} connection pools")
++        logger.await info(f"Analyzed {pools_status.get('total_pools', 0)} connection pools")
+ 
+     except Exception as e:
+         logger.error(f"Global database optimization error: {e}")
+@@ -645,7 +645,7 @@ # ==================== 健康检查端点 ====================
+ 
+ 
+-@router.get("/health", tags=["健康检查"])
++@router.await get("/health", tags=["健康检查"])
+ async def database_performance_health():
+     """数据库性能监控服务健康检查."""
+     db_middleware = get_database_middleware()

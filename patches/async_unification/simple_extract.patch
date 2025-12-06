@@ -1,0 +1,44 @@
+--- a/src/data_science/simple_extract.py+++ b/src/data_science/simple_extract.py@@ -31,11 +31,11 @@ class SimpleDataExtractor:
+     """简化的数据提取器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.conn = None
+         self.data = None
+ 
+-    def connect_database(self):
++async def connect_database(self):
+         """连接数据库"""
+         try:
+             self.conn = psycopg2.connect(DATABASE_URL)
+@@ -44,7 +44,7 @@             logger.error(f"❌ 数据库连接失败: {e}")
+             raise
+ 
+-    def extract_and_process_data(self) -> pd.DataFrame:
++async def extract_and_process_data(self) -> pd.DataFrame:
+         """提取和处理数据"""
+         try:
+             query = """
+@@ -194,7 +194,7 @@             logger.error(f"❌ 数据处理失败: {e}")
+             raise
+ 
+-    def generate_eda_report(self, df: pd.DataFrame) -> dict:
++async def generate_eda_report(self, df: pd.DataFrame) -> dict:
+         """生成探索性数据分析报告"""
+         try:
+             report = {}
+@@ -263,13 +263,13 @@             logger.error(f"❌ EDA报告生成失败: {e}")
+             raise
+ 
+-    def close_connection(self):
++async def close_connection(self):
+         """关闭数据库连接"""
+         if self.conn:
+             self.conn.close()
+             logger.info("✅ 数据库连接已关闭")
+ 
+-def main():
++async def main():
+     """主函数"""
+     extractor = SimpleDataExtractor()
+ 

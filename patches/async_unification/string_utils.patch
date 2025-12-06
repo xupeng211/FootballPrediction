@@ -1,0 +1,451 @@
+--- a/src/utils/string_utils.py+++ b/src/utils/string_utils.py@@ -29,21 +29,21 @@     _PHONE_REGEX = re.compile(r"^1[3-9]\d{9}$")
+ 
+     @staticmethod
+-    def is_empty(text: str) -> bool:
++async def is_empty(text: str) -> bool:
+         """检查字符串是否为空或只包含空白字符."""
+         if not isinstance(text, str):
+             return True
+         return not text.strip()
+ 
+     @staticmethod
+-    def capitalize(text: str) -> str:
++async def capitalize(text: str) -> str:
+         """首字母大写."""
+         if not isinstance(text, str):
+             return ""
+         return text.capitalize()
+ 
+     @staticmethod
+-    def clean_whitespace(text: str) -> str:
++async def clean_whitespace(text: str) -> str:
+         """清理多余的空白字符."""
+         if not isinstance(text, str):
+             return ""
+@@ -51,7 +51,7 @@         return " ".join(text.split())
+ 
+     @staticmethod
+-    def remove_special_chars(text: str) -> str:
++async def remove_special_chars(text: str) -> str:
+         """移除特殊字符."""
+         if not isinstance(text, str):
+             return ""
+@@ -59,17 +59,17 @@         return re.sub(r"[^a-zA-Z0-9]", "", text)
+ 
+     @staticmethod
+-    def is_email(email: str) -> bool:
++async def is_email(email: str) -> bool:
+         """检查是否为有效邮箱."""
+         return StringUtils.validate_email(email)
+ 
+     @staticmethod
+-    def is_phone(phone: str) -> bool:
++async def is_phone(phone: str) -> bool:
+         """检查是否为有效手机号."""
+         return StringUtils.validate_phone_number(phone)
+ 
+     @staticmethod
+-    def clean_string(text: str, remove_special: bool = False) -> str:
++async def clean_string(text: str, remove_special: bool = False) -> str:
+         """清理字符串（V9.0安全修复，避免复杂正则）。"""
+         if not isinstance(text, str):
+             return ""
+@@ -118,7 +118,7 @@         return cleaned
+ 
+     @staticmethod
+-    def truncate(text: str, length: int = 50, suffix: str = "...") -> str:
++async def truncate(text: str, length: int = 50, suffix: str = "...") -> str:
+         """截断字符串."""
+         if not isinstance(text, str):
+             return ""
+@@ -141,7 +141,7 @@         return text[: length - len(suffix)] + suffix
+ 
+     @staticmethod
+-    def validate_email(email: str) -> bool:
++async def validate_email(email: str) -> bool:
+         """验证邮箱格式."""
+         if not isinstance(email, str):
+             return False
+@@ -178,7 +178,7 @@         return bool(StringUtils._EMAIL_REGEX.match(email))
+ 
+     @staticmethod
+-    def slugify(text: str) -> str:
++async def slugify(text: str) -> str:
+         """转换为URL友好的字符串（V20.0智能优化：保留Unicode功能，防止ReDoS攻击）."""
+         if not isinstance(text, str):
+             return ""
+@@ -299,7 +299,7 @@         return "".join(compressed_chars)
+ 
+     @staticmethod
+-    def camel_to_snake(name: str) -> str:
++async def camel_to_snake(name: str) -> str:
+         """驼峰命名转下划线命名（V20.0智能优化：保留原始功能，避免正则ReDoS）."""
+         if not isinstance(name, str):
+             return ""
+@@ -370,7 +370,7 @@         return "".join(result)
+ 
+     @staticmethod
+-    def snake_to_camel(name: str) -> str:
++async def snake_to_camel(name: str) -> str:
+         """下划线命名转驼峰命名."""
+         if not isinstance(name, str):
+             return ""
+@@ -394,7 +394,7 @@         return first_component + "".join(other_components)
+ 
+     @staticmethod
+-    def clean_text(text: str) -> str:
++async def clean_text(text: str) -> str:
+         """清理文本（移除多余空白等）."""
+         if not isinstance(text, str):
+             return ""
+@@ -405,7 +405,7 @@ 
+     @staticmethod
+     @lru_cache(maxsize=1000)
+-    def validate_phone_number(phone: str) -> bool:
++async def validate_phone_number(phone: str) -> bool:
+         """验证手机号格式（支持国际号码）."""
+         if not isinstance(phone, str):
+             return False
+@@ -428,7 +428,7 @@         return False
+ 
+     @staticmethod
+-    def sanitize_phone_number(phone: str) -> str:
++async def sanitize_phone_number(phone: str) -> str:
+         """清理电话号码（添加格式化功能）."""
+         if not isinstance(phone, str):
+             return ""
+@@ -448,7 +448,7 @@         return digits_only if digits_only else ""
+ 
+     @staticmethod
+-    def extract_numbers(text: str) -> list[float]:
++async def extract_numbers(text: str) -> list[float]:
+         """从文本中提取数字."""
+         if not isinstance(text, str):
+             return []
+@@ -458,7 +458,7 @@         return [float(num) for num in numbers if num]
+ 
+     @staticmethod
+-    def mask_sensitive_data(
++async def mask_sensitive_data(
+         text: str, visible_chars: int = 4, mask_char: str = "*"
+     ) -> str:
+         """遮蔽敏感数据."""
+@@ -477,12 +477,12 @@             return visible + mask_char * (len(text) - visible_chars)
+ 
+     @staticmethod
+-    def generate_slug(text: str) -> str:
++async def generate_slug(text: str) -> str:
+         """生成URL友好的slug（与slugify功能相同）."""
+         return StringUtils.slugify(text)
+ 
+     @staticmethod
+-    def format_bytes(bytes_count: float, precision: int = 2) -> str:
++async def format_bytes(bytes_count: float, precision: int = 2) -> str:
+         """格式化字节数为人类可读格式."""
+         if bytes_count == 0:
+             return f"0.{('0' * precision)} B"
+@@ -501,7 +501,7 @@         return f"{bytes_count:.{precision}f} {units[unit_index]}"
+ 
+     @staticmethod
+-    def count_words(text: str) -> int:
++async def count_words(text: str) -> int:
+         """计算文本中的单词数（V12.0终极修复：避免复杂正则）."""
+         if not isinstance(text, str):
+             return 0
+@@ -538,7 +538,7 @@             return len(text.split())
+ 
+     @staticmethod
+-    def escape_html(text: str) -> str:
++async def escape_html(text: str) -> str:
+         """HTML转义（使用标准库）."""
+         if not isinstance(text, str):
+             return ""
+@@ -546,7 +546,7 @@         return html.escape(text)
+ 
+     @staticmethod
+-    def unescape_html(text: str) -> str:
++async def unescape_html(text: str) -> str:
+         """HTML反转义（使用标准库）."""
+         if not isinstance(text, str):
+             return ""
+@@ -554,7 +554,7 @@         return html.unescape(text)
+ 
+     @staticmethod
+-    def is_url(text: str) -> bool:
++async def is_url(text: str) -> bool:
+         """检查字符串是否为URL."""
+         if not isinstance(text, str):
+             return False
+@@ -569,14 +569,14 @@         return url_pattern.match(text.strip()) is not None
+ 
+     @staticmethod
+-    def reverse_string(text: str) -> str:
++async def reverse_string(text: str) -> str:
+         """反转字符串."""
+         if not isinstance(text, str):
+             return ""
+         return text[::-1]
+ 
+     @staticmethod
+-    def is_palindrome(text: str) -> bool:
++async def is_palindrome(text: str) -> bool:
+         """检查是否为回文."""
+         if not isinstance(text, str):
+             return False
+@@ -591,14 +591,14 @@         return cleaned == cleaned[::-1]
+ 
+     @staticmethod
+-    def capitalize_words(text: str) -> str:
++async def capitalize_words(text: str) -> str:
+         """首字母大写每个单词."""
+         if not isinstance(text, str):
+             return ""
+         return " ".join(word.capitalize() for word in text.split())
+ 
+     @staticmethod
+-    def random_string(
++async def random_string(
+         length: int = 10,
+         chars: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+     ) -> str:
+@@ -610,7 +610,7 @@         return "".join(secrets.choice(chars) for _ in range(length))
+ 
+     @staticmethod
+-    def remove_duplicates(text: str) -> str:
++async def remove_duplicates(text: str) -> str:
+         """移除重复的字符."""
+         if not isinstance(text, str):
+             return ""
+@@ -618,48 +618,48 @@         return "".join(char for char in text if not (char in seen or seen.add(char)))
+ 
+     @staticmethod
+-    def word_count(text: str) -> int:
++async def word_count(text: str) -> int:
+         """计算单词数."""
+         if not isinstance(text, str):
+             return 0
+         return len(text.split())
+ 
+     @staticmethod
+-    def char_frequency(text: str) -> dict:
++async def char_frequency(text: str) -> dict:
+         """计算字符频率."""
+         if not isinstance(text, str):
+             return {}
+         frequency = {}
+         for char in text:
+-            frequency[char] = frequency.get(char, 0) + 1
++            frequency[char] = frequency.await get(char, 0) + 1
+         return frequency
+ 
+     @staticmethod
+-    def is_valid_email(email: str) -> bool:
++async def is_valid_email(email: str) -> bool:
+         """验证邮箱格式（别名方法）."""
+         return StringUtils.validate_email(email)
+ 
+     @staticmethod
+-    def is_valid_phone(phone: str) -> bool:
++async def is_valid_phone(phone: str) -> bool:
+         """验证手机号格式（别名方法）."""
+         return StringUtils.validate_phone_number(phone)
+ 
+ 
+ # 性能优化的字符串处理函数
+ @lru_cache(maxsize=256)
+-def cached_slug(text: str) -> str:
++async def cached_slug(text: str) -> str:
+     """缓存的slug生成函数."""
+     if not isinstance(text, str):
+         return ""
+     return StringUtils.slugify(text)
+ 
+ 
+-def batch_clean_strings(strings: list[str]) -> list[str]:
++async def batch_clean_strings(strings: list[str]) -> list[str]:
+     """批量清理字符串."""
+     return [StringUtils.clean_string(s) if s is not None else "" for s in strings]
+ 
+ 
+-def validate_batch_emails(emails: list[str]) -> dict:
++async def validate_batch_emails(emails: list[str]) -> dict:
+     """批量验证邮箱（修复返回格式）."""
+     valid_emails = []
+     invalid_emails = []
+@@ -681,7 +681,7 @@     }
+ 
+ 
+-def normalize_string(text: str) -> str:
++async def normalize_string(text: str) -> str:
+     """标准化字符串."""
+     if text is None:
+         return ""
+@@ -706,7 +706,7 @@     return result.lower()
+ 
+ 
+-def truncate_string(text: str, length: int, suffix: str = "...") -> str:
++async def truncate_string(text: str, length: int, suffix: str = "...") -> str:
+     """截断字符串."""
+     if text is None:
+         return ""
+@@ -739,7 +739,7 @@     return text[:truncate_pos] + suffix
+ 
+ 
+-def is_empty(text: str | None) -> bool:
++async def is_empty(text: str | None) -> bool:
+     """检查字符串是否为空."""
+     if text is None:
+         return True
+@@ -751,7 +751,7 @@     return False
+ 
+ 
+-def strip_html(text: str) -> str:
++async def strip_html(text: str) -> str:
+     """移除HTML标签（V12.0终极修复：完全避免复杂正则）."""
+     if not isinstance(text, str) or not text:
+         return ""
+@@ -821,7 +821,7 @@         return "".join(char for char in text if char != "<" and char != ">")
+ 
+ 
+-def format_currency(amount: float, currency: str = "$") -> str:
++async def format_currency(amount: float, currency: str = "$") -> str:
+     """格式化货币."""
+     if amount < 0:
+         return f"-{currency}{abs(amount):,.2f}"
+@@ -829,17 +829,17 @@ 
+ 
+ # 模块级别的包装函数，用于向后兼容
+-def snake_to_camel(name: str) -> str:
++async def snake_to_camel(name: str) -> str:
+     """下划线命名转驼峰命名（包装函数）."""
+     return StringUtils.snake_to_camel(name)
+ 
+ 
+-def camel_to_snake(name: str) -> str:
++async def camel_to_snake(name: str) -> str:
+     """驼峰命名转下划线命名（包装函数）."""
+     return StringUtils.camel_to_snake(name)
+ 
+ 
+-def clean_string(
++async def clean_string(
+     text: str,
+     remove_special_chars: bool = False,
+     keep_chars: str = "",
+@@ -872,7 +872,7 @@     return cleaned
+ 
+ 
+-def normalize_text(text: str) -> str:
++async def normalize_text(text: str) -> str:
+     """标准化文本（模块级别包装函数，符合测试期望）."""
+     if not isinstance(text, str):
+         return str(text) if text is not None else ""
+@@ -890,7 +890,7 @@     return result.lower()
+ 
+ 
+-def extract_numbers(text: str) -> list[str]:
++async def extract_numbers(text: str) -> list[str]:
+     """提取数字（模块级别包装函数，符合测试期望）."""
+     if not isinstance(text, str):
+         return []
+@@ -917,7 +917,7 @@     return result
+ 
+ 
+-def format_phone_number(phone: str) -> str:
++async def format_phone_number(phone: str) -> str:
+     """格式化电话号码（模块级别包装函数，符合测试期望）."""
+     if not isinstance(phone, str):
+         return str(phone) if phone is not None else ""
+@@ -936,7 +936,7 @@     return cleaned
+ 
+ 
+-def generate_slug(text: str) -> str:
++async def generate_slug(text: str) -> str:
+     """生成URL友好的slug（V18.0重构：O(n)复杂度，简化实现）."""
+     if not isinstance(text, str):
+         return ""
+@@ -965,7 +965,7 @@     return "".join(result)
+ 
+ 
+-def truncate_text(text: str, length: int = 50, add_ellipsis: bool = True) -> str:
++async def truncate_text(text: str, length: int = 50, add_ellipsis: bool = True) -> str:
+     """截断文本（模块级别包装函数，符合测试期望）."""
+     if not isinstance(text, str):
+         text = str(text) if text is not None else ""
+@@ -984,14 +984,14 @@         return text[:length]
+ 
+ 
+-def reverse_string(text: str) -> str:
++async def reverse_string(text: str) -> str:
+     """反转字符串（模块级别包装函数）."""
+     if not isinstance(text, str):
+         return ""
+     return StringUtils.reverse_string(text)
+ 
+ 
+-def count_words(text: str) -> int:
++async def count_words(text: str) -> int:
+     """计算单词数（模块级别包装函数）."""
+     if not isinstance(text, str):
+         return 0
+@@ -999,14 +999,14 @@     return StringUtils.count_words(text)
+ 
+ 
+-def capitalize_words(text: str) -> str:
++async def capitalize_words(text: str) -> str:
+     """首字母大写（模块级别包装函数）."""
+     if not isinstance(text, str):
+         return ""
+     return StringUtils.capitalize_words(text)
+ 
+ 
+-def remove_special_chars(text: str, keep_chars: str = "") -> str:
++async def remove_special_chars(text: str, keep_chars: str = "") -> str:
+     """移除特殊字符（模块级别包装函数，符合测试期望）."""
+     if not isinstance(text, str):
+         return ""
+@@ -1031,12 +1031,12 @@     return result
+ 
+ 
+-def is_palindrome(text: str) -> bool:
++async def is_palindrome(text: str) -> bool:
+     """检查是否为回文（模块级别包装函数）."""
+     return StringUtils.is_palindrome(text)
+ 
+ 
+-def find_substring_positions(text: str, substring: str) -> list[int]:
++async def find_substring_positions(text: str, substring: str) -> list[int]:
+     """查找子字符串位置（模块级别包装函数，符合测试期望，V9.0安全修复）."""
+     if not isinstance(text, str) or not isinstance(substring, str):
+         return []
+@@ -1060,7 +1060,7 @@     return positions
+ 
+ 
+-def replace_multiple(text: str, replacements: dict[str, str]) -> str:
++async def replace_multiple(text: str, replacements: dict[str, str]) -> str:
+     """批量替换文本（模块级别包装函数）."""
+     if not isinstance(text, str):
+         return ""
+@@ -1071,7 +1071,7 @@     return result
+ 
+ 
+-def split_text(text: str, separator=None, maxsplit: int = -1) -> list[str]:
++async def split_text(text: str, separator=None, maxsplit: int = -1) -> list[str]:
+     """分割文本（模块级别包装函数，符合测试期望）."""
+     if not isinstance(text, str):
+         text = str(text) if text is not None else ""
+@@ -1100,13 +1100,13 @@             return text.split(separator)
+ 
+ 
+-def join_text(texts: list[str], separator: str = ",") -> str:
++async def join_text(texts: list[str], separator: str = ",") -> str:
+     """连接文本（模块级别包装函数，符合测试期望）."""
+     if texts is None:
+         return ""
+     return separator.join(str(text) if text is not None else "" for text in texts)
+ 
+ 
+-def validate_email(email: str) -> bool:
++async def validate_email(email: str) -> bool:
+     """验证邮箱地址（模块级别包装函数）."""
+     return StringUtils.validate_email(email)

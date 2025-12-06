@@ -1,0 +1,90 @@
+--- a/src/cache/api_cache.py+++ b/src/cache/api_cache.py@@ -49,12 +49,12 @@     deletes: int = 0
+     errors: int = 0
+ 
+-    def get_hit_rate(self) -> float:
++async def get_hit_rate(self) -> float:
+         """获取缓存命中率."""
+         total = self.hits + self.misses
+         return self.hits / total if total > 0 else 0.0
+ 
+-    def reset(self) -> None:
++async def reset(self) -> None:
+         """重置指标."""
+         self.hits = self.misses = self.sets = self.deletes = self.errors = 0
+ 
+@@ -62,7 +62,7 @@ class ApiCache:
+     """高性能API缓存系统."""
+ 
+-    def __init__(self, config: ApiCacheConfig | None = None):
++async def __init__(self, config: ApiCacheConfig | None = None):
+         self.config = config or ApiCacheConfig()
+         self.redis_manager = get_redis_manager()
+         self.metrics = CacheMetrics()
+@@ -70,7 +70,7 @@ 
+         logger.info(f"API缓存初始化完成 - TTL: {self.config.default_ttl}s")
+ 
+-    def _generate_cache_key(
++async def _generate_cache_key(
+         self,
+         endpoint: str,
+         method: str = "GET",
+@@ -112,7 +112,7 @@ 
+         return ":".join(key_parts)
+ 
+-    def _serialize_value(self, value: Any) -> bytes:
++async def _serialize_value(self, value: Any) -> bytes:
+         """序列化缓存值."""
+         try:
+             if isinstance(value, (dict, list, tuple)):
+@@ -132,7 +132,7 @@             self.metrics.errors += 1
+             raise
+ 
+-    def _deserialize_value(self, data: bytes) -> Any:
++async def _deserialize_value(self, data: bytes) -> Any:
+         """反序列化缓存值."""
+         try:
+             # 尝试解压缩
+@@ -154,7 +154,7 @@             self.metrics.errors += 1
+             return None
+ 
+-    def _calculate_ttl(self, base_ttl: int | None = None) -> int:
++async def _calculate_ttl(self, base_ttl: int | None = None) -> int:
+         """计算TTL."""
+         if base_ttl is None:
+             return self.config.default_ttl
+@@ -339,7 +339,7 @@             "total_requests": self.metrics.hits + self.metrics.misses,
+         }
+ 
+-    def reset_metrics(self) -> None:
++async def reset_metrics(self) -> None:
+         """重置性能指标."""
+         self.metrics.reset()
+ 
+@@ -363,7 +363,7 @@ _api_cache_instance: ApiCache | None = None
+ 
+ 
+-def get_api_cache(config: ApiCacheConfig | None = None) -> ApiCache:
++async def get_api_cache(config: ApiCacheConfig | None = None) -> ApiCache:
+     """获取全局API缓存实例."""
+     global _api_cache_instance
+ 
+@@ -374,7 +374,7 @@ 
+ 
+ # 便捷装饰器
+-def cache_api_response(
++async def cache_api_response(
+     ttl: int = 300,
+     tags: list[str] | None = None,
+     key_params: list[str] | None = None,
+@@ -382,10 +382,10 @@ ):
+     """API响应缓存装饰器."""
+ 
+-    def decorator(func):
++async def decorator(func):
+         async def wrapper(*args, **kwargs):
+             # 提取请求上下文信息
+-            request = kwargs.get("request")
++            request = kwargs.await get("request")
+             if not request:
+                 return await func(*args, **kwargs)
+ 

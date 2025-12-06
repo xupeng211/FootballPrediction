@@ -1,0 +1,8 @@
+--- a/src/domain/strategies/enhanced_ml_model.py+++ b/src/domain/strategies/enhanced_ml_model.py@@ -28,7 +28,7 @@     Uses ensemble learning and advanced feature engineering for match prediction.
+     """
+ 
+-    def __init__(self, config: dict[str, Any] | None = None):
++async def __init__(self, config: dict[str, Any] | None = None):
+         super().__init__("enhanced_ml_model", StrategyType.ENHANCED_ML)
+         self.config = config or {}
+         self.models = []

@@ -1,0 +1,85 @@
+--- a/src/database/compat.py+++ b/src/database/compat.py@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
+ 
+ 
+-def fetch_all_sync(query, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
++async def fetch_all_sync(query, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+     """
+     同步版本的 fetch_all（适配器）
+ 
+@@ -59,7 +59,7 @@         return asyncio.run(fetch_all(query, params))
+ 
+ 
+-def fetch_one_sync(query, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
++async def fetch_one_sync(query, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+     """
+     同步版本的 fetch_one（适配器）
+ 
+@@ -91,7 +91,7 @@         return asyncio.run(fetch_one(query, params))
+ 
+ 
+-def execute_sync(query, params: Optional[Dict[str, Any]] = None) -> Any:
++async def execute_sync(query, params: Optional[Dict[str, Any]] = None) -> Any:
+     """
+     同步版本的 execute（适配器）
+ 
+@@ -135,11 +135,11 @@     临时用于减少迁移风险
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化兼容管理器"""
+         logger.warning("⚠️ 使用 DatabaseCompatManager，建议迁移到 AsyncDatabaseManager")
+ 
+-    def get_session(self):
++async def get_session(self):
+         """获取数据库会话（同步接口 - 临时兼容）"""
+         logger.warning("⚠️ get_session() 同步接口已弃用，请改为异步实现")
+         # 返回一个兼容的会话包装器
+@@ -153,39 +153,39 @@     提供类似旧版同步会话的接口，但内部使用异步实现
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         self._closed = False
+ 
+-    def __enter__(self):
++async def __enter__(self):
+         return self
+ 
+-    def __exit__(self, exc_type, exc_val, exc_tb):
++async def __exit__(self, exc_type, exc_val, exc_tb):
+         self.close()
+ 
+-    def execute(self, query, params=None):
++async def execute(self, query, params=None):
+         """执行查询（同步包装）"""
+         if isinstance(query, str):
+             query = text(query)
+         return execute_sync(query, params)
+ 
+-    def fetchall(self, query, params=None):
++async def fetchall(self, query, params=None):
+         """获取所有结果（同步包装）"""
+         return fetch_all_sync(query, params)
+ 
+-    def fetchone(self, query, params=None):
++async def fetchone(self, query, params=None):
+         """获取单个结果（同步包装）"""
+         return fetch_one_sync(query, params)
+ 
+-    def close(self):
++async def close(self):
+         """关闭会话"""
+         self._closed = True
+         logger.debug("SyncSessionWrapper 已关闭")
+ 
+-    def commit(self):
++async def commit(self):
+         """提交事务（兼容方法）"""
+         logger.debug("SyncSessionWrapper commit (兼容方法)")
+ 
+-    def rollback(self):
++async def rollback(self):
+         """回滚事务（兼容方法）"""
+         logger.debug("SyncSessionWrapper rollback (兼容方法)")
+ 

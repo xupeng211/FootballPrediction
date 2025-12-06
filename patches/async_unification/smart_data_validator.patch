@@ -1,0 +1,16 @@
+--- a/src/services/smart_data_validator.py+++ b/src/services/smart_data_validator.py@@ -20,7 +20,7 @@     pass  # 添加pass语句
+     """Smart Data Validator"""
+ 
+-    def __init__(self, config: dict[str, Any] = None):
++async def __init__(self, config: dict[str, Any] = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.config = config or {}
+@@ -77,7 +77,7 @@                 "recommendations": ["检查数据格式"],
+             }
+ 
+-    def get_metrics(self) -> dict[str, Any]:
++async def get_metrics(self) -> dict[str, Any]:
+         """获取处理指标."""
+         return {
+             **self.metrics,

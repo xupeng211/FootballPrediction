@@ -1,0 +1,75 @@
+--- a/src/monitoring/system_metrics.py+++ b/src/monitoring/system_metrics.py@@ -20,7 +20,7 @@     pass  # 添加pass语句
+     """系统指标收集器"""
+ 
+-    def __init__(self, registry: CollectorRegistry | None = None) -> None:
++async def __init__(self, registry: CollectorRegistry | None = None) -> None:
+         self.registry = registry or CollectorRegistry()
+         self.db_manager: DatabaseManager | None = None
+         self.redis_manager: RedisConnectionManager | None = None
+@@ -67,11 +67,11 @@             "cache_size_bytes", "Cache size in bytes", registry=self.registry
+         )
+ 
+-    def set_database_manager(self, db_manager: DatabaseManager) -> None:
++async def set_database_manager(self, db_manager: DatabaseManager) -> None:
+         """设置数据库管理器."""
+         self.db_manager = db_manager
+ 
+-    def set_redis_manager(self, redis_manager: RedisConnectionManager) -> None:
++async def set_redis_manager(self, redis_manager: RedisConnectionManager) -> None:
+         """设置Redis管理器."""
+         self.redis_manager = redis_manager
+ 
+@@ -156,7 +156,7 @@ 
+             # 执行测试查询
+             start_time = datetime.utcnow()
+-            await self.db_manager.execute("SELECT 1")
++            await self.db_manager.await execute("SELECT 1")
+             duration = (datetime.utcnow() - start_time).total_seconds()
+ 
+             self.db_query_duration.labels(operation="test", table="system").observe(
+@@ -181,33 +181,33 @@             info = await self.redis_manager.redis.info()
+ 
+             metrics["memory"] = {
+-                "used": info.get("used_memory", 0),
+-                "used_human": info.get("used_memory_human"),
+-                "peak": info.get("used_memory_peak", 0),
+-                "rss": info.get("used_memory_rss", 0),
++                "used": info.await get("used_memory", 0),
++                "used_human": info.await get("used_memory_human"),
++                "peak": info.await get("used_memory_peak", 0),
++                "rss": info.await get("used_memory_rss", 0),
+             }
+ 
+             metrics["clients"] = {
+-                "connected": info.get("connected_clients", 0),
+-                "blocked": info.get("blocked_clients", 0),
++                "connected": info.await get("connected_clients", 0),
++                "blocked": info.await get("blocked_clients", 0),
+             }
+ 
+             metrics["stats"] = {
+-                "total_commands_processed": info.get("total_commands_processed", 0),
+-                "total_connections_received": info.get("total_connections_received", 0),
+-                "keyspace_hits": info.get("keyspace_hits", 0),
+-                "keyspace_misses": info.get("keyspace_misses", 0),
++                "total_commands_processed": info.await get("total_commands_processed", 0),
++                "total_connections_received": info.await get("total_connections_received", 0),
++                "keyspace_hits": info.await get("keyspace_hits", 0),
++                "keyspace_misses": info.await get("keyspace_misses", 0),
+             }
+ 
+             # 计算命中率
+-            hits = info.get("keyspace_hits", 0)
+-            misses = info.get("keyspace_misses", 0)
++            hits = info.await get("keyspace_hits", 0)
++            misses = info.await get("keyspace_misses", 0)
+             if hits + misses > 0:
+                 hit_rate = (hits / (hits + misses)) * 100
+                 metrics["hit_rate"] = hit_rate
+ 
+             # 缓存大小
+-            self.cache_size.set(info.get("used_memory", 0))
++            self.cache_size.await set(info.get("used_memory", 0))
+ 
+         except (ValueError, RuntimeError, TimeoutError) as e:
+             metrics["error"] = str(e)

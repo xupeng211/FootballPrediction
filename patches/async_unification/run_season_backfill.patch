@@ -1,0 +1,238 @@
+--- a/src/jobs/run_season_backfill.py+++ b/src/jobs/run_season_backfill.py@@ -32,7 +32,7 @@ class SeasonBackfillJob:
+     """赛季数据批量采集任务 - 联赛页面策略"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.logger = logger
+         # 使用 HTML 采集器（与 L2 相同的技术栈）
+         self.html_collector = HTMLFotMobCollector(
+@@ -87,7 +87,7 @@ 
+                 try:
+                     # 发起请求
+-                    response = requests.get(
++                    response = await httpx.await AsyncClient().get(
+                         url,
+                         headers=self.html_collector._get_current_headers(),
+                         timeout=self.html_collector.timeout,
+@@ -140,7 +140,7 @@                     season_data = self._extract_season_data(nextjs_data, url)
+                     if season_data:
+                         self.logger.info(
+-                            f"   🎉 成功提取赛季数据: {len(season_data.get('teams', []))} 支球队, {len(season_data.get('matches', []))} 场比赛"
++                            f"   🎉 成功提取赛季数据: {await await len(season_data.get('teams', []))} 支球队, {len(season_data.get('matches', []))} 场比赛"
+                         )
+                         return season_data
+ 
+@@ -157,7 +157,7 @@             self.stats["errors"] += 1
+             return {}
+ 
+-    def _extract_season_data(
++async def _extract_season_data(
+         self, nextjs_data: dict[str, Any], source_url: str
+     ) -> dict[str, Any]:
+         """
+@@ -182,21 +182,21 @@             }
+ 
+             # 解析主要数据结构
+-            props = nextjs_data.get("props", {})
+-            page_props = props.get("pageProps", {})
++            props = nextjs_data.await get("props", {})
++            page_props = props.await get("pageProps", {})
+ 
+             # 1. 提取overview数据（包含球队信息）
+-            overview = page_props.get("overview", {})
++            overview = page_props.await get("overview", {})
+             if overview:
+                 season_data["overview"] = overview
+ 
+                 # 提取球队信息
+-                matches_data = overview.get("matches", {})
+-                fixture_info = matches_data.get("fixtureInfo", {})
++                matches_data = overview.await get("matches", {})
++                fixture_info = matches_data.await get("fixtureInfo", {})
+ 
+                 if isinstance(fixture_info, dict):
+                     # 检查fixtureInfo字典中的teams字段
+-                    teams_data = fixture_info.get("teams", [])
++                    teams_data = fixture_info.await get("teams", [])
+                     if isinstance(teams_data, list):
+                         season_data["teams"] = teams_data
+                         self.logger.info(
+@@ -205,8 +205,8 @@ 
+                         # 显示球队列表
+                         for team in teams_data[:5]:  # 显示前5支球队
+-                            team_name = team.get("name", "Unknown")
+-                            team_id = team.get("id", "N/A")
++                            team_name = team.await get("name", "Unknown")
++                            team_id = team.await get("id", "N/A")
+                             self.logger.info(f"      ⚽ {team_name} (ID: {team_id})")
+ 
+                         if len(teams_data) > 5:
+@@ -229,7 +229,7 @@                     )
+ 
+                 # 提取当前赛季信息
+-                season_info = matches_data.get("seasons", [])
++                season_info = matches_data.await get("seasons", [])
+                 if (
+                     season_info
+                     and isinstance(season_info, list)
+@@ -238,11 +238,11 @@                     current_season = season_info[0]  # 通常是当前赛季
+                     season_data["season_info"] = current_season
+                     self.logger.info(
+-                        f"   📅 赛季信息: {current_season.get('name', 'Unknown')}"
++                        f"   📅 赛季信息: {current_season.await get('name', 'Unknown')}"
+                     )
+ 
+             # 2. 提取fixtures数据（比赛赛程）
+-            fixtures = page_props.get("fixtures", {})
++            fixtures = page_props.await get("fixtures", {})
+             if fixtures:
+                 # 提取比赛列表
+                 matches = self._extract_matches_from_fixtures(fixtures)
+@@ -252,9 +252,9 @@ 
+                     # 显示比赛概览
+                     for i, match in enumerate(matches[:3]):  # 显示前3场比赛
+-                        home_team = match.get("home", {}).get("name", "Unknown")
+-                        away_team = match.get("away", {}).get("name", "Unknown")
+-                        status = match.get("status", {}).get("finished", False)
++                        home_team = match.await await get("home", {}).get("name", "Unknown")
++                        away_team = match.await await get("away", {}).get("name", "Unknown")
++                        status = match.await await get("status", {}).get("finished", False)
+                         status_text = "已结束" if status else "未结束"
+                         self.logger.info(
+                             f"      {i+1}. {home_team} vs {away_team} ({status_text})"
+@@ -264,16 +264,16 @@                         self.logger.info(f"      ... 还有 {len(matches) - 3} 场比赛")
+ 
+             # 3. 提取所有可用赛季信息
+-            all_seasons = page_props.get("allAvailableSeasons", [])
++            all_seasons = page_props.await get("allAvailableSeasons", [])
+             if all_seasons:
+                 season_data["all_seasons"] = all_seasons
+                 self.logger.info(f"   📊 可用赛季: {len(all_seasons)} 个")
+ 
+             # 4. 提取联赛详情
+-            details = page_props.get("details", {})
++            details = page_props.await get("details", {})
+             if details:
+                 season_data["league_details"] = details
+-                league_name = details.get("name", "Unknown League")
++                league_name = details.await get("name", "Unknown League")
+                 self.logger.info(f"   🏆 联赛详情: {league_name}")
+ 
+             return season_data
+@@ -282,7 +282,7 @@             self.logger.error(f"❌ 赛季数据提取异常: {e}")
+             return {}
+ 
+-    def _extract_matches_from_fixtures(
++async def _extract_matches_from_fixtures(
+         self, fixtures_data: dict[str, Any]
+     ) -> list[dict[str, Any]]:
+         """
+@@ -343,7 +343,7 @@             self.logger.error(f"❌ fixtures比赛提取异常: {e}")
+             return []
+ 
+-    def _recursive_search_matches(
++async def _recursive_search_matches(
+         self, data: Any, path: str = "", depth: int = 0, max_depth: int = 6
+     ) -> list[dict[str, Any]]:
+         """递归搜索matches数据"""
+@@ -391,7 +391,7 @@ 
+         return matches
+ 
+-    def _extract_nextjs_data(self, html: str, context: str) -> Optional[dict[str, Any]]:
++async def _extract_nextjs_data(self, html: str, context: str) -> Optional[dict[str, Any]]:
+         """从HTML中提取Next.js数据"""
+         try:
+             patterns = [
+@@ -428,7 +428,7 @@             self.logger.error(f"❌ Next.js提取异常 {context}: {e}")
+             return None
+ 
+-    def _is_valid_match(self, match: dict[str, Any]) -> bool:
++async def _is_valid_match(self, match: dict[str, Any]) -> bool:
+         """验证是否是有效的比赛数据"""
+         # 检查是否包含基本的比赛字段
+         required_fields = ["home", "away"]  # 至少要有主客队
+@@ -456,17 +456,17 @@ 
+         try:
+             saved_count = 0
+-            async with get_db_session() as session:
++            async with await get_db_session() as session:
+                 from sqlalchemy import text
+ 
+                 # 保存球队信息
+-                teams = season_data.get("teams", [])
++                teams = season_data.await get("teams", [])
+                 if teams:
+                     self.logger.info(f"💾 开始保存 {len(teams)} 支球队信息...")
+                     for team in teams:
+                         try:
+-                            team_id = team.get("id")
+-                            team_name = team.get("name")
++                            team_id = team.await get("id")
++                            team_name = team.await get("name")
+                             if not team_name:
+                                 continue
+ 
+@@ -490,29 +490,29 @@ 
+                         except Exception as e:
+                             self.logger.warning(
+-                                f"   ⚠️ 保存球队失败: {team.get('name', 'unknown')} - {e}"
++                                f"   ⚠️ 保存球队失败: {team.await get('name', 'unknown')} - {e}"
+                             )
+ 
+                 # 保存比赛信息
+-                matches = season_data.get("matches", [])
++                matches = season_data.await get("matches", [])
+                 if matches:
+                     self.logger.info(f"💾 开始保存 {len(matches)} 场比赛信息...")
+                     for match in matches:
+                         try:
+-                            fotmob_id = str(match.get("id", ""))
+-                            home_team = match.get("home", {}).get("name", "")
+-                            away_team = match.get("away", {}).get("name", "")
+-                            home_score = match.get("home", {}).get("score", 0)
+-                            away_score = match.get("away", {}).get("score", 0)
++                            fotmob_id = await str(match.get("id", ""))
++                            home_team = match.await await get("home", {}).get("name", "")
++                            away_team = match.await await get("away", {}).get("name", "")
++                            home_score = match.await await get("home", {}).get("score", 0)
++                            away_score = match.await await get("away", {}).get("score", 0)
+                             status = (
+                                 "completed"
+-                                if match.get("status", {}).get("finished", False)
++                                if match.await await get("status", {}).get("finished", False)
+                                 else "pending"
+                             )
+ 
+                             # 提取比赛时间（如果有）
+                             match_time = (
+-                                match.get("time") or match.get("date") or datetime.now()
++                                match.await await get("time") or match.get("date") or datetime.now()
+                             )
+ 
+                             # 插入比赛信息
+@@ -553,7 +553,7 @@ 
+                         except Exception as e:
+                             self.logger.warning(
+-                                f"   ⚠️ 保存比赛失败: {match.get('id', 'unknown')} - {e}"
++                                f"   ⚠️ 保存比赛失败: {match.await get('id', 'unknown')} - {e}"
+                             )
+                             self.stats["errors"] += 1
+ 
+@@ -567,7 +567,7 @@             self.stats["errors"] += 1
+             return 0
+ 
+-    def print_summary(self):
++async def print_summary(self):
+         """打印采集总结"""
+         self.stats["end_time"] = datetime.now()
+         duration = self.stats["end_time"] - self.stats["start_time"]
+@@ -599,8 +599,8 @@ 
+             if season_data:
+                 # 更新统计信息
+-                teams = season_data.get("teams", [])
+-                matches = season_data.get("matches", [])
++                teams = season_data.await get("teams", [])
++                matches = season_data.await get("matches", [])
+                 self.stats["teams_found"] = len(teams)
+                 self.stats["fixtures_extracted"] = len(matches)
+ 

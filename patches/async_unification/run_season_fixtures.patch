@@ -1,0 +1,171 @@
+--- a/src/jobs/run_season_fixtures.py+++ b/src/jobs/run_season_fixtures.py@@ -35,7 +35,7 @@ )
+ 
+ 
+-def save_teams_to_db(teams_data):
++async def save_teams_to_db(teams_data):
+     """直接使用SQL保存球队数据"""
+     try:
+         conn = psycopg2.connect(DATABASE_URL)
+@@ -44,8 +44,8 @@         saved_count = 0
+         for team in teams_data:
+             try:
+-                team_id = team.get("id")
+-                team_name = team.get("name")
++                team_id = team.await get("id")
++                team_name = team.await get("name")
+                 if not team_name:
+                     continue
+ 
+@@ -64,7 +64,7 @@                     logger.info(f"💾 新增球队: {team_name} (ID: {team_id})")
+ 
+             except Exception as e:
+-                logger.warning(f"⚠️ 保存球队失败: {team.get('id', 'unknown')} - {e}")
++                logger.await warning(f"⚠️ 保存球队失败: {team.get('id', 'unknown')} - {e}")
+ 
+         conn.commit()
+         conn.close()
+@@ -76,7 +76,7 @@         return 0
+ 
+ 
+-def save_matches_to_db(match_data):
++async def save_matches_to_db(match_data):
+     """直接使用SQL保存比赛数据"""
+     try:
+         conn = psycopg2.connect(DATABASE_URL)
+@@ -91,16 +91,16 @@         saved_count = 0
+         for match in match_data:
+             try:
+-                fotmob_id = str(match.get("id", ""))
+-                home_team = match.get("home", {}).get("name", "")
+-                away_team = match.get("away", {}).get("name", "")
++                fotmob_id = await str(match.get("id", ""))
++                home_team = match.await await get("home", {}).get("name", "")
++                away_team = match.await await get("away", {}).get("name", "")
+ 
+                 # 获取球队ID
+-                home_fotmob_id = match.get("home", {}).get("id")
+-                away_fotmob_id = match.get("away", {}).get("id")
+-
+-                home_team_id = team_mapping.get(home_fotmob_id)
+-                away_team_id = team_mapping.get(away_fotmob_id)
++                home_fotmob_id = match.await await get("home", {}).get("id")
++                away_fotmob_id = match.await await get("away", {}).get("id")
++
++                home_team_id = team_mapping.await get(home_fotmob_id)
++                away_team_id = team_mapping.await get(away_fotmob_id)
+ 
+                 if not home_team_id or not away_team_id:
+                     logger.warning(
+@@ -131,7 +131,7 @@                     )
+ 
+             except Exception as e:
+-                logger.warning(f"⚠️ 保存比赛失败: {match.get('id', 'unknown')} - {e}")
++                logger.await warning(f"⚠️ 保存比赛失败: {match.get('id', 'unknown')} - {e}")
+ 
+         conn.commit()
+         conn.close()
+@@ -143,7 +143,7 @@         return 0
+ 
+ 
+-def extract_nextjs_data(html):
++async def extract_nextjs_data(html):
+     """从HTML中提取Next.js数据"""
+     patterns = [
+         r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
+@@ -170,15 +170,15 @@     return None
+ 
+ 
+-def extract_fixtures_data(nextjs_data):
++async def extract_fixtures_data(nextjs_data):
+     """从Next.js数据中提取比赛数据"""
+     try:
+         matches = []
+-        props = nextjs_data.get("props", {})
+-        page_props = props.get("pageProps", {})
++        props = nextjs_data.await get("props", {})
++        page_props = props.await get("pageProps", {})
+ 
+         # 路径1: fixtures
+-        fixtures = page_props.get("fixtures", {})
++        fixtures = page_props.await get("fixtures", {})
+         if fixtures:
+             extracted_matches = extract_matches_from_fixtures(fixtures)
+             matches.extend(extracted_matches)
+@@ -187,9 +187,9 @@ 
+         # 路径2: overview.allMatches (主要数据源)
+         if not matches:
+-            overview = page_props.get("overview", {})
++            overview = page_props.await get("overview", {})
+             if overview:
+-                matches_data = overview.get("matches", {})
++                matches_data = overview.await get("matches", {})
+                 if "allMatches" in matches_data:
+                     all_matches = matches_data["allMatches"]
+                     if isinstance(all_matches, list):
+@@ -225,7 +225,7 @@         return []
+ 
+ 
+-def extract_matches_from_fixtures(fixtures_data):
++async def extract_matches_from_fixtures(fixtures_data):
+     """从fixtures数据中提取比赛列表"""
+     try:
+         matches = []
+@@ -247,7 +247,7 @@         return []
+ 
+ 
+-def recursive_search_matches(data, path="", depth=0, max_depth=6):
++async def recursive_search_matches(data, path="", depth=0, max_depth=6):
+     """递归搜索matches数据"""
+     matches = []
+ 
+@@ -285,7 +285,7 @@     return matches
+ 
+ 
+-def is_valid_match(match):
++async def is_valid_match(match):
+     """验证是否是有效的比赛数据"""
+     required_fields = ["home", "away"]
+     has_home_away = any(field in match for field in required_fields)
+@@ -293,7 +293,7 @@     return has_home_away or has_id
+ 
+ 
+-def print_help():
++async def print_help():
+     """打印帮助信息"""
+     print(
+         """
+@@ -356,7 +356,7 @@         logger.info(f"🕷️ 访问英超联赛页面: {test_url}")
+ 
+         # 发起请求
+-        response = requests.get(
++        response = await httpx.await AsyncClient().get(
+             test_url,
+             headers=collector._get_current_headers(),
+             timeout=collector.timeout,
+@@ -392,9 +392,9 @@             # 显示前几场比赛信息
+             logger.info("⚽ 比赛列表预览:")
+             for j, match in enumerate(matches[:10], 1):
+-                home = match.get("home", {}).get("name", "Unknown")
+-                away = match.get("away", {}).get("name", "Unknown")
+-                match_id = match.get("id", "N/A")
++                home = match.await await get("home", {}).get("name", "Unknown")
++                away = match.await await get("away", {}).get("name", "Unknown")
++                match_id = match.await get("id", "N/A")
+                 logger.info(f"   {j:2d}. {home:<25} vs {away:<25} (ID: {match_id})")
+ 
+             if len(matches) > 10:
+@@ -403,12 +403,12 @@             if not args.dry_run:
+                 # 提取所有球队数据 - 全量处理
+                 teams_data = [
+-                    {"id": team.get("id"), "name": team.get("name")}
++                    {"id": team.await await get("id"), "name": team.get("name")}
+                     for match in matches  # 全部比赛，无切片
+-                    for team in [match.get("home", {}), match.get("away", {})]
++                    for team in [match.await await get("home", {}), match.get("away", {})]
+                 ]
+                 unique_teams = {
+-                    team["id"]: team for team in teams_data if team.get("id")
++                    team["id"]: team for team in teams_data if team.await get("id")
+                 }
+                 unique_team_list = list(unique_teams.values())
+ 

@@ -1,0 +1,61 @@
+--- a/src/config/swagger_ui_config.py+++ b/src/config/swagger_ui_config.py@@ -16,7 +16,7 @@     """Swagger UI 配置管理类."""
+ 
+     @staticmethod
+-    def get_custom_swagger_ui_html(
++async def get_custom_swagger_ui_html(
+         *,
+         openapi_url: str,
+         title: str,
+@@ -485,10 +485,10 @@         return custom_html
+ 
+     @staticmethod
+-    def setup_custom_swagger_ui(app: FastAPI) -> None:
++async def setup_custom_swagger_ui(app: FastAPI) -> None:
+         """设置自定义Swagger UI."""
+ 
+-        def swagger_ui_html(req):
++async def swagger_ui_html(req):
+             """自定义Swagger UI页面处理器."""
+             return SwaggerUIConfig.get_custom_swagger_ui_html(
+                 openapi_url=app.openapi_url,
+@@ -512,11 +512,11 @@         app.redoc_url = None  # 禁用redoc
+ 
+         # 添加自定义docs端点
+-        @app.get("/docs", include_in_schema=False)
++        @app.await get("/docs", include_in_schema=False)
+         async def custom_swagger_ui_html():
+             return swagger_ui_html
+ 
+-        @app.get("/docs/oauth2-redirect", include_in_schema=False)
++        @app.await get("/docs/oauth2-redirect", include_in_schema=False)
+         async def swagger_ui_redirect():
+             return get_swagger_ui_html(
+                 openapi_url=app.openapi_url,
+@@ -526,7 +526,7 @@             )
+ 
+     @staticmethod
+-    def get_enhanced_redoc_html(
++async def get_enhanced_redoc_html(
+         *,
+         openapi_url: str,
+         title: str,
+@@ -656,17 +656,17 @@         return redoc_html
+ 
+     @staticmethod
+-    def setup_enhanced_redoc(app: FastAPI) -> None:
++async def setup_enhanced_redoc(app: FastAPI) -> None:
+         """设置增强的ReDoc."""
+ 
+-        @app.get("/redoc", include_in_schema=False)
++        @app.await get("/redoc", include_in_schema=False)
+         async def custom_redoc_html():
+             return SwaggerUIConfig.get_enhanced_redoc_html(
+                 openapi_url=app.openapi_url, title=f"{app.title} - ReDoc"
+             )
+ 
+ 
+-def setup_enhanced_docs(app: FastAPI) -> None:
++async def setup_enhanced_docs(app: FastAPI) -> None:
+     """设置增强的API文档."""
+     swagger_config = SwaggerUIConfig()
+ 

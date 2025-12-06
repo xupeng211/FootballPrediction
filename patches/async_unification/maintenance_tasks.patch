@@ -1,0 +1,48 @@
+--- a/src/tasks/maintenance_tasks.py+++ b/src/tasks/maintenance_tasks.py@@ -22,14 +22,14 @@ 
+ 
+ @app.task
+-def quality_check_task() -> dict[str, Any]:
++async def quality_check_task() -> dict[str, Any]:
+     """数据质量检查任务."""
+     try:
+         db_manager = DatabaseManager()
+ 
+         # 检查数据库连接
+         with db_manager.get_session() as session:
+-            result = session.execute(text("SELECT 1"))
++            result = session.await execute(text("SELECT 1"))
+             db_status = "healthy" if result else "unhealthy"
+ 
+         # 检查Redis连接
+@@ -57,7 +57,7 @@ 
+ 
+ @app.task
+-def cleanup_logs_task() -> dict[str, Any]:
++async def cleanup_logs_task() -> dict[str, Any]:
+     """日志清理任务."""
+     try:
+         log_dir = "logs"
+@@ -85,7 +85,7 @@ 
+ 
+ @app.task
+-def system_health_task() -> dict[str, Any]:
++async def system_health_task() -> dict[str, Any]:
+     """系统健康检查任务."""
+     try:
+         import psutil
+@@ -117,14 +117,14 @@ 
+ 
+ @app.task
+-def database_maintenance_task() -> dict[str, Any]:
++async def database_maintenance_task() -> dict[str, Any]:
+     """数据库维护任务."""
+     try:
+         db_manager = DatabaseManager()
+ 
+         with db_manager.get_session() as session:
+             # 更新统计信息
+-            session.execute(text("ANALYZE"))
++            session.await execute(text("ANALYZE"))
+ 
+             # 清理过期数据（示例：删除30天前的日志）
+             result = session.execute(

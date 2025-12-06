@@ -1,0 +1,252 @@
+--- a/src/domain_simple/user.py+++ b/src/domain_simple/user.py@@ -20,7 +20,7 @@     pass  # 添加pass语句
+     """用户偏好设置"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.favorite_teams: list[int] = []
+@@ -31,22 +31,22 @@         self.timezone = "UTC+8"
+         self.odds_format = "decimal"  # decimal, fractional, american
+ 
+-    def add_favorite_team(self, team_id: int) -> None:
++async def add_favorite_team(self, team_id: int) -> None:
+         """添加喜欢的球队."""
+         if team_id not in self.favorite_teams:
+             self.favorite_teams.append(team_id)
+ 
+-    def remove_favorite_team(self, team_id: int) -> None:
++async def remove_favorite_team(self, team_id: int) -> None:
+         """移除喜欢的球队."""
+         if team_id in self.favorite_teams:
+             self.favorite_teams.remove(team_id)
+ 
+-    def add_favorite_league(self, league_id: int) -> None:
++async def add_favorite_league(self, league_id: int) -> None:
+         """添加喜欢的联赛."""
+         if league_id not in self.favorite_leagues:
+             self.favorite_leagues.append(league_id)
+ 
+-    def remove_favorite_league(self, league_id: int) -> None:
++async def remove_favorite_league(self, league_id: int) -> None:
+         """移除喜欢的联赛."""
+         if league_id in self.favorite_leagues:
+             self.favorite_leagues.remove(league_id)
+@@ -58,7 +58,7 @@     pass  # 添加pass语句
+     """用户统计数据"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.total_predictions = 0
+@@ -69,7 +69,7 @@         self.average_odds = 0.0
+         self.average_confidence = 0.0
+ 
+-    def update_prediction(
++async def update_prediction(
+         self,
+         is_correct: bool,
+         profit_loss: float,
+@@ -99,13 +99,13 @@                 (self.average_confidence * (self.total_predictions - 1)) + confidence
+             ) / self.total_predictions
+ 
+-    def get_accuracy_rate(self) -> float:
++async def get_accuracy_rate(self) -> float:
+         """获取准确率."""
+         if self.total_predictions == 0:
+             return 0.0
+         return (self.correct_predictions / self.total_predictions) * 100
+ 
+-    def get_roi(self) -> float:
++async def get_roi(self) -> float:
+         """获取投资回报率（假设每注1单位）."""
+         if self.total_predictions == 0:
+             return 0.0
+@@ -118,7 +118,7 @@     pass  # 添加pass语句
+     """用户领域模型"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         user_id: int | None = None,
+         username: str = "",
+@@ -154,43 +154,43 @@         self.created_at = datetime.now()
+         self.updated_at = datetime.now()
+ 
+-    def get_full_name(self) -> str:
++async def get_full_name(self) -> str:
+         """获取全名."""
+         if self.first_name and self.last_name:
+             return f"{self.first_name} {self.last_name}"
+         return self.username
+ 
+-    def is_premium(self) -> bool:
++async def is_premium(self) -> bool:
+         """是否为高级用户."""
+         return self.role in [UserRole.PREMIUM, UserRole.ADMIN, UserRole.ANALYST]
+ 
+-    def is_admin(self) -> bool:
++async def is_admin(self) -> bool:
+         """是否为管理员."""
+         return self.role == UserRole.ADMIN
+ 
+-    def update_last_login(self) -> None:
++async def update_last_login(self) -> None:
+         """更新最后登录时间."""
+         self.last_login = datetime.now()
+         self.updated_at = datetime.now()
+ 
+-    def add_experience(self, points: int) -> None:
++async def add_experience(self, points: int) -> None:
+         """添加经验值."""
+         self.experience_points += points
+         self._update_level()
+ 
+-    def _update_level(self) -> None:
++async def _update_level(self) -> None:
+         """更新等级（简单的等级计算）."""
+         # 每100经验值升一级
+         new_level = self.experience_points // 100 + 1
+         if new_level > self.level:
+             self.level = new_level
+ 
+-    def add_achievement(self, achievement: str) -> None:
++async def add_achievement(self, achievement: str) -> None:
+         """添加成就."""
+         if achievement not in self.achievements:
+             self.achievements.append(achievement)
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         return {
+             "id": self.id,
+@@ -235,59 +235,59 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "User":
++async def from_dict(cls, data: dict[str, Any]) -> "User":
+         """从字典创建实例."""
+         _user = cls(
+-            id=data.get("id"),
+-            username=data.get("username", ""),
+-            email=data.get("email", ""),
+-            role=UserRole(data.get("role", "user")),
++            id=data.await get("id"),
++            username=data.await get("username", ""),
++            email=data.await get("email", ""),
++            role=await UserRole(data.get("role", "user")),
+         )
+ 
+         # 设置个人资料
+-        _user.first_name = data.get("first_name", "")
+-        _user.last_name = data.get("last_name", "")
+-        _user.avatar_url = data.get("avatar_url", "")
+-        _user.bio = data.get("bio", "")
++        _user.first_name = data.await get("first_name", "")
++        _user.last_name = data.await get("last_name", "")
++        _user.avatar_url = data.await get("avatar_url", "")
++        _user.bio = data.await get("bio", "")
+ 
+         # 设置状态
+-        _user.is_active = data.get("is_active", True)
+-        _user.is_verified = data.get("is_verified", False)
++        _user.is_active = data.await get("is_active", True)
++        _user.is_verified = data.await get("is_verified", False)
+ 
+         # 设置等级和成就
+-        _user.level = data.get("level", 1)
+-        _user.experience_points = data.get("experience_points", 0)
+-        _user.achievements = data.get("achievements", [])
++        _user.level = data.await get("level", 1)
++        _user.experience_points = data.await get("experience_points", 0)
++        _user.achievements = data.await get("achievements", [])
+ 
+         # 设置偏好
+         if "preferences" in data:
+             pref = data["preferences"]
+-            _user.preferences.favorite_teams = pref.get("favorite_teams", [])
+-            _user.preferences.favorite_leagues = pref.get("favorite_leagues", [])
++            _user.preferences.favorite_teams = pref.await get("favorite_teams", [])
++            _user.preferences.favorite_leagues = pref.await get("favorite_leagues", [])
+             _user.preferences.notification_enabled = pref.get(
+                 "notification_enabled", True
+             )
+             _user.preferences.email_notifications = pref.get(
+                 "email_notifications", True
+             )
+-            _user.preferences.language = pref.get("language", "zh-CN")
+-            _user.preferences.timezone = pref.get("timezone", "UTC+8")
+-            _user.preferences.odds_format = pref.get("odds_format", "decimal")
++            _user.preferences.language = pref.await get("language", "zh-CN")
++            _user.preferences.timezone = pref.await get("timezone", "UTC+8")
++            _user.preferences.odds_format = pref.await get("odds_format", "decimal")
+ 
+         # 设置时间戳
+-        if data.get("created_at"):
++        if data.await get("created_at"):
+             _user.created_at = datetime.fromisoformat(data["created_at"])
+-        if data.get("updated_at"):
++        if data.await get("updated_at"):
+             _user.updated_at = datetime.fromisoformat(data["updated_at"])
+-        if data.get("last_login"):
++        if data.await get("last_login"):
+             _user.last_login = datetime.fromisoformat(data["last_login"])
+ 
+         return _user
+ 
+-    def __str__(self) -> str:
++async def __str__(self) -> str:
+         return f"User({self.username})"
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         return f"<User(id={self.id}, username={self.username}, role={self.role.value})>"
+ 
+ 
+@@ -297,7 +297,7 @@     pass  # 添加pass语句
+     """用户档案（扩展的用户信息）"""
+ 
+-    def __init__(self, user: User):
++async def __init__(self, user: User):
+         """函数文档字符串."""
+         # 添加pass语句
+         self._user = user
+@@ -306,31 +306,31 @@         self.followers: list[int] = []  # 粉丝列表
+         self.reputation_score = 0.0
+ 
+-    def follow_user(self, user_id: int) -> None:
++async def follow_user(self, user_id: int) -> None:
+         """关注用户."""
+         if user_id not in self.following:
+             self.following.append(user_id)
+ 
+-    def unfollow_user(self, user_id: int) -> None:
++async def unfollow_user(self, user_id: int) -> None:
+         """取消关注."""
+         if user_id in self.following:
+             self.following.remove(user_id)
+ 
+-    def add_follower(self, user_id: int) -> None:
++async def add_follower(self, user_id: int) -> None:
+         """添加粉丝."""
+         if user_id not in self.followers:
+             self.followers.append(user_id)
+ 
+-    def remove_follower(self, user_id: int) -> None:
++async def remove_follower(self, user_id: int) -> None:
+         """移除粉丝."""
+         if user_id in self.followers:
+             self.followers.remove(user_id)
+ 
+-    def update_reputation(self, score: float) -> None:
++async def update_reputation(self, score: float) -> None:
+         """更新声誉分数."""
+         self.reputation_score = max(0, min(100, score))
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         return {
+             "user": self._user.to_dict(),

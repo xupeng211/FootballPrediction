@@ -1,0 +1,40 @@
+--- a/src/services/user_management_service.py+++ b/src/services/user_management_service.py@@ -63,7 +63,7 @@ class UserManagementService:
+     """用户管理服务类."""
+ 
+-    def __init__(self, user_repository: UserRepository):
++async def __init__(self, user_repository: UserRepository):
+         self.user_repository = user_repository
+ 
+     async def create_user(self, request: UserCreateRequest) -> UserResponse:
+@@ -231,7 +231,7 @@         updated_user = await self.user_repository.update(user_id, update_data)
+         return self._convert_to_response(updated_user)
+ 
+-    def _validate_create_request(self, request: UserCreateRequest) -> None:
++async def _validate_create_request(self, request: UserCreateRequest) -> None:
+         """验证创建用户请求."""
+         # 验证用户名
+         if not request.username or len(request.username.strip()) < 3:
+@@ -246,7 +246,7 @@         # 验证密码强度
+         validate_password_strength(request.password)
+ 
+-    def _validate_update_request(self, request: UserUpdateRequest) -> dict[str, Any]:
++async def _validate_update_request(self, request: UserUpdateRequest) -> dict[str, Any]:
+         """验证更新用户请求."""
+         update_data = {}
+ 
+@@ -265,7 +265,7 @@ 
+         return update_data
+ 
+-    def _convert_to_response(self, user) -> UserResponse:
++async def _convert_to_response(self, user) -> UserResponse:
+         """转换为响应模型."""
+         return UserResponse(
+             id=user.id,
+@@ -277,7 +277,7 @@             updated_at=user.updated_at,
+         )
+ 
+-    def _generate_access_token(self, user) -> str:
++async def _generate_access_token(self, user) -> str:
+         """生成访问令牌."""
+         # 简单的令牌生成，实际项目中应该使用JWT
+         token_data = f"{user.id}:{user.email}:{datetime.utcnow().timestamp()}"

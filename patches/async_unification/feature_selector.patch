@@ -1,0 +1,88 @@
+--- a/src/ml/feature_selector.py+++ b/src/ml/feature_selector.py@@ -38,7 +38,7 @@     支持分类和回归任务，提供详细的特征分析报告。
+     """
+ 
+-    def __init__(
++async def __init__(
+         self
+         task_type: str = "classification",  # "classification" 或 "regression"
+         correlation_threshold: float = 0.95
+@@ -79,7 +79,7 @@             f"correlation_threshold={correlation_threshold}"
+         )
+ 
+-    def _init_base_models(self):
++async def _init_base_models(self):
+         """初始化基础模型用于特征重要性评估."""
+         # 随机森林模型
+         self.rf_model = (
+@@ -119,7 +119,7 @@                 )
+             )
+ 
+-    def detect_collinearity(
++async def detect_collinearity(
+         self, X: pd.DataFrame, y: Optional[pd.Series] = None
+     ) -> tuple[list[str], list[str]]:
+         """检测并处理特征间的共线性.
+@@ -202,7 +202,7 @@ 
+         return list(features_to_keep), list(features_to_remove)
+ 
+-    def calculate_feature_importance(
++async def calculate_feature_importance(
+         self, X: pd.DataFrame, y: pd.Series
+     ) -> pd.DataFrame:
+         """计算特征重要性.
+@@ -284,7 +284,7 @@ 
+         return self.feature_importance_df
+ 
+-    def select_features(
++async def select_features(
+         self
+         X: pd.DataFrame
+         y: pd.Series
+@@ -362,7 +362,7 @@ 
+         return self.selected_features
+ 
+-    def evaluate_feature_subset(
++async def evaluate_feature_subset(
+         self, X: pd.DataFrame, y: pd.Series, feature_subset: list[str]
+     ) -> dict[str, float]:
+         """评估特征子集的性能.
+@@ -400,7 +400,7 @@             logger.warning(f"特征子集评估失败: {e}")
+             return {"score": 0.0, "features_count": len(feature_subset)}
+ 
+-    def get_selection_report(self) -> dict:
++async def get_selection_report(self) -> dict:
+         """获取特征选择报告.
+ 
+         Returns:
+@@ -424,7 +424,7 @@ 
+         return report
+ 
+-    def save_selection_results(self, filepath: str):
++async def save_selection_results(self, filepath: str):
+         """保存特征选择结果.
+ 
+         Args:
+@@ -448,7 +448,7 @@ 
+         logger.info(f"特征选择结果已保存到: {filepath}")
+ 
+-    def load_selection_results(self, filepath: str):
++async def load_selection_results(self, filepath: str):
+         """加载特征选择结果.
+ 
+         Args:
+@@ -470,7 +470,7 @@ 
+         logger.info(f"特征选择结果已从 {filepath} 加载")
+ 
+-    def plot_feature_importance(self, top_k: int = 20, save_path: Optional[str] = None):
++async def plot_feature_importance(self, top_k: int = 20, save_path: Optional[str] = None):
+         """绘制特征重要性图.
+ 
+         Args:
+@@ -507,7 +507,7 @@             logger.warning("绘图需要安装 matplotlib 和 seaborn")
+ 
+ 
+-def create_feature_selector(
++async def create_feature_selector(
+     task_type: str = "classification", correlation_threshold: float = 0.95, **kwargs
+ ) -> FeatureSelector:
+     """创建特征选择器的便捷函数.

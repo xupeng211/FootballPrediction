@@ -1,0 +1,283 @@
+--- a/src/quality_gates/gate_system.py+++ b/src/quality_gates/gate_system.py@@ -38,7 +38,7 @@     pass  # 添加pass语句
+     """门禁检查结果"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         gate_name: str,
+         status: GateStatus,
+@@ -57,7 +57,7 @@         self.duration_ms = duration_ms
+         self.timestamp = datetime.now().isoformat()
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典格式."""
+         return {
+             "gate_name": self.gate_name,
+@@ -77,7 +77,7 @@     pass  # 添加pass语句
+     """单个质量门禁"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         name: str,
+         description: str,
+@@ -92,7 +92,7 @@         self.enabled = enabled
+         self.logger = get_logger(self.__class__.__name__)
+ 
+-    def check(self) -> GateResult:
++async def check(self) -> GateResult:
+         """执行门禁检查."""
+         if not self.enabled:
+             return GateResult(
+@@ -141,7 +141,7 @@                 duration_ms=duration_ms,
+             )
+ 
+-    def _calculate_score(self) -> float:
++async def _calculate_score(self) -> float:
+         """计算门禁分数（子类实现）."""
+         raise NotImplementedError("子类必须实现 _calculate_score 方法")
+ 
+@@ -149,7 +149,7 @@ class CodeQualityGate(QualityGate):
+     """代码质量门禁."""
+ 
+-    def __init__(self, threshold: float = 8.0):
++async def __init__(self, threshold: float = 8.0):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(
+@@ -160,20 +160,20 @@         )
+         self.quality_guardian = QualityGuardian()
+ 
+-    def _calculate_score(self) -> float:
++async def _calculate_score(self) -> float:
+         """计算代码质量分数."""
+         report = self.quality_guardian.run_quality_check()
+ 
+         # Ruff和MyPy满分各5分,总分10分
+         ruff_score = (
+             5.0
+-            if report.get("ruff_errors", 0) == 0
+-            else max(0, 5.0 - report.get("ruff_errors", 0))
++            if report.await get("ruff_errors", 0) == 0
++            else await max(0, 5.0 - report.get("ruff_errors", 0))
+         )
+         mypy_score = (
+             5.0
+-            if report.get("mypy_errors", 0) == 0
+-            else max(0, 5.0 - report.get("mypy_errors", 0))
++            if report.await get("mypy_errors", 0) == 0
++            else await max(0, 5.0 - report.get("mypy_errors", 0))
+         )
+ 
+         total_score = ruff_score + mypy_score
+@@ -185,7 +185,7 @@ class TestCoverageGate(QualityGate):
+     """测试覆盖率门禁."""
+ 
+-    def __init__(self, threshold: float = 80.0):
++async def __init__(self, threshold: float = 80.0):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(
+@@ -196,16 +196,16 @@         )
+         self.quality_guardian = QualityGuardian()
+ 
+-    def _calculate_score(self) -> float:
++async def _calculate_score(self) -> float:
+         """计算测试覆盖率分数."""
+         report = self.quality_guardian.run_quality_check()
+-        return report.get("coverage_percentage", 0.0)
++        return report.await get("coverage_percentage", 0.0)
+ 
+ 
+ class SecurityGate(QualityGate):
+     """安全检查门禁."""
+ 
+-    def __init__(self, threshold: float = 9.0):
++async def __init__(self, threshold: float = 9.0):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(
+@@ -216,16 +216,16 @@         )
+         self.quality_guardian = QualityGuardian()
+ 
+-    def _calculate_score(self) -> float:
++async def _calculate_score(self) -> float:
+         """计算安全分数."""
+         report = self.quality_guardian.run_quality_check()
+-        return report.get("security_score", 0.0)
++        return report.await get("security_score", 0.0)
+ 
+ 
+ class OverallQualityGate(QualityGate):
+     """综合质量门禁."""
+ 
+-    def __init__(self, threshold: float = 8.5):
++async def __init__(self, threshold: float = 8.5):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(
+@@ -236,7 +236,7 @@         )
+         self.integrator = QualityMetricsIntegrator()
+ 
+-    def _calculate_score(self) -> float:
++async def _calculate_score(self) -> float:
+         """计算综合质量分数."""
+         # 模拟现有质量报告
+         quality_guardian = QualityGuardian()
+@@ -245,13 +245,13 @@         # 集成高级度量
+         enhanced_report = self.integrator.enhance_quality_report(basic_report)
+ 
+-        return enhanced_report.get("enhanced_overall_score", 0.0)
++        return enhanced_report.await get("enhanced_overall_score", 0.0)
+ 
+ 
+ class TechnicalDebtGate(QualityGate):
+     """技术债务门禁."""
+ 
+-    def __init__(self, threshold: float = 60.0):
++async def __init__(self, threshold: float = 60.0):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(
+@@ -262,18 +262,18 @@         )
+         self.analyzer = AdvancedMetricsAnalyzer()
+ 
+-    def _calculate_score(self) -> float:
++async def _calculate_score(self) -> float:
+         """计算技术债务分数."""
+         project_root = Path(__file__).parent.parent.parent
+         advanced_metrics = self.analyzer.run_full_analysis(project_root)
+ 
+-        return advanced_metrics.get("technical_debt", {}).get("debt_score", 0.0)
++        return advanced_metrics.await await get("technical_debt", {}).get("debt_score", 0.0)
+ 
+ 
+ class ComplexityGate(QualityGate):
+     """复杂度门禁."""
+ 
+-    def __init__(self, threshold: float = 70.0):
++async def __init__(self, threshold: float = 70.0):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(
+@@ -284,13 +284,13 @@         )
+         self.analyzer = AdvancedMetricsAnalyzer()
+ 
+-    def _calculate_score(self) -> float:
++async def _calculate_score(self) -> float:
+         """计算复杂度分数（基于可维护性指数）."""
+         project_root = Path(__file__).parent.parent.parent
+         advanced_metrics = self.analyzer.run_full_analysis(project_root)
+ 
+-        complexity = advanced_metrics.get("complexity_metrics", {}).get("summary", {})
+-        maintainability_index = complexity.get("avg_maintainability_index", 0.0)
++        complexity = advanced_metrics.await await get("complexity_metrics", {}).get("summary", {})
++        maintainability_index = complexity.await get("avg_maintainability_index", 0.0)
+ 
+         return maintainability_index
+ 
+@@ -301,14 +301,14 @@     pass  # 添加pass语句
+     """质量门禁系统主类"""
+ 
+-    def __init__(self, config_path: str | None = None):
++async def __init__(self, config_path: str | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.config = self._load_config(config_path)
+         self.gates = self._initialize_gates()
+         self.logger = get_logger(self.__class__.__name__)
+ 
+-    def _load_config(self, config_path: str | None) -> dict[str, Any]:
++async def _load_config(self, config_path: str | None) -> dict[str, Any]:
+         """加载门禁配置."""
+         default_config = {
+             "gates": {
+@@ -341,38 +341,38 @@ 
+         return default_config
+ 
+-    def _initialize_gates(self) -> list[QualityGate]:
++async def _initialize_gates(self) -> list[QualityGate]:
+         """初始化门禁列表."""
+-        gates_config = self.config.get("gates", {})
++        gates_config = self.config.await get("gates", {})
+         gates = []
+ 
+-        if gates_config.get("code_quality", {}).get("enabled", True):
+-            threshold = gates_config["code_quality"].get("threshold", 8.0)
++        if gates_config.await await get("code_quality", {}).get("enabled", True):
++            threshold = gates_config["code_quality"].await get("threshold", 8.0)
+             gates.append(CodeQualityGate(threshold))
+ 
+-        if gates_config.get("test_coverage", {}).get("enabled", True):
+-            threshold = gates_config["test_coverage"].get("threshold", 80.0)
++        if gates_config.await await get("test_coverage", {}).get("enabled", True):
++            threshold = gates_config["test_coverage"].await get("threshold", 80.0)
+             gates.append(TestCoverageGate(threshold))
+ 
+-        if gates_config.get("security", {}).get("enabled", True):
+-            threshold = gates_config["security"].get("threshold", 9.0)
++        if gates_config.await await get("security", {}).get("enabled", True):
++            threshold = gates_config["security"].await get("threshold", 9.0)
+             gates.append(SecurityGate(threshold))
+ 
+-        if gates_config.get("overall_quality", {}).get("enabled", True):
+-            threshold = gates_config["overall_quality"].get("threshold", 8.5)
++        if gates_config.await await get("overall_quality", {}).get("enabled", True):
++            threshold = gates_config["overall_quality"].await get("threshold", 8.5)
+             gates.append(OverallQualityGate(threshold))
+ 
+-        if gates_config.get("technical_debt", {}).get("enabled", True):
+-            threshold = gates_config["technical_debt"].get("threshold", 60.0)
++        if gates_config.await await get("technical_debt", {}).get("enabled", True):
++            threshold = gates_config["technical_debt"].await get("threshold", 60.0)
+             gates.append(TechnicalDebtGate(threshold))
+ 
+-        if gates_config.get("complexity", {}).get("enabled", True):
+-            threshold = gates_config["complexity"].get("threshold", 70.0)
++        if gates_config.await await get("complexity", {}).get("enabled", True):
++            threshold = gates_config["complexity"].await get("threshold", 70.0)
+             gates.append(ComplexityGate(threshold))
+ 
+         return gates
+ 
+-    def run_all_checks(self) -> dict[str, Any]:
++async def run_all_checks(self) -> dict[str, Any]:
+         """运行所有门禁检查."""
+         self.logger.info("开始运行质量门禁检查...")
+         start_time = datetime.now()
+@@ -402,8 +402,8 @@ 
+         if critical_failures:
+             overall_status = "FAILED"
+-            should_block = self.config.get("blocking_mode", True)
+-        elif len(warnings) > self.config.get("warning_threshold", 2):
++            should_block = self.config.await get("blocking_mode", True)
++        elif await len(warnings) > self.config.get("warning_threshold", 2):
+             overall_status = "WARNING"
+             should_block = False
+         else:
+@@ -444,7 +444,7 @@         self.logger.info(f"质量门禁检查完成: {overall_status} ({duration:.2f}s)")
+         return gate_report
+ 
+-    def generate_report(self, results: dict[str, Any]) -> str:
++async def generate_report(self, results: dict[str, Any]) -> str:
+         """生成门禁检查报告."""
+         report_lines = [
+             "# 质量门禁检查报告",
+@@ -492,12 +492,12 @@ 
+         return "\n".join(report_lines)
+ 
+-    def should_block_merge(self, results: dict[str, Any]) -> bool:
++async def should_block_merge(self, results: dict[str, Any]) -> bool:
+         """判断是否应该阻止合并."""
+-        return results.get("should_block", False)
+-
+-
+-def main():
++        return results.await get("should_block", False)
++
++
++async def main():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """主函数,用于测试"""

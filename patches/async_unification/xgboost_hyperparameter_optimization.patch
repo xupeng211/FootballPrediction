@@ -1,0 +1,136 @@
+--- a/src/ml/xgboost_hyperparameter_optimization.py+++ b/src/ml/xgboost_hyperparameter_optimization.py@@ -35,7 +35,7 @@ class XGBoostHyperparameterOptimizer:
+     """XGBoost 超参数优化器."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         model_name: str = "xgboost_optimized",
+         output_dir: str = "models",
+@@ -81,7 +81,7 @@ 
+         logger.info(f"Initialized XGBoostHyperparameterOptimizer: {model_name}")
+ 
+-    def create_parameter_grid(self, debug_mode: bool = False) -> dict[str, list[Any]]:
++async def create_parameter_grid(self, debug_mode: bool = False) -> dict[str, list[Any]]:
+         """创建参数搜索网格.
+ 
+         Args:
+@@ -115,7 +115,7 @@ 
+         return param_grid
+ 
+-    def validate_data(
++async def validate_data(
+         self, X: pd.DataFrame, y: pd.Series
+     ) -> tuple[pd.DataFrame, pd.Series]:
+         """验证和准备训练数据.
+@@ -153,7 +153,7 @@         logger.info(f"Validated data shape: X={X.shape}, y={y_encoded.shape}")
+         return X, y_encoded
+ 
+-    def optimize(
++async def optimize(
+         self,
+         X: pd.DataFrame,
+         y: pd.Series,
+@@ -250,14 +250,14 @@             logger.error(f"Hyperparameter optimization failed: {e}")
+             raise
+ 
+-    def _calculate_grid_size(self, param_grid: dict[str, list[Any]]) -> int:
++async def _calculate_grid_size(self, param_grid: dict[str, list[Any]]) -> int:
+         """计算参数网格大小."""
+         size = 1
+         for param_values in param_grid.values():
+             size *= len(param_values)
+         return size
+ 
+-    def _extract_optimization_history(
++async def _extract_optimization_history(
+         self, grid_search: GridSearchCV
+     ) -> list[dict[str, Any]]:
+         """提取优化历史记录."""
+@@ -281,7 +281,7 @@         history.sort(key=lambda x: x["rank"])
+         return history
+ 
+-    def _convert_history_for_json(self) -> list[dict[str, Any]]:
++async def _convert_history_for_json(self) -> list[dict[str, Any]]:
+         """转换优化历史为JSON可序列化格式."""
+         json_history = []
+         for record in self.optimization_history:
+@@ -298,7 +298,7 @@             json_history.append(json_record)
+         return json_history
+ 
+-    def _save_optimization_results(self) -> None:
++async def _save_optimization_results(self) -> None:
+         """保存优化结果."""
+         if not self.is_optimized:
+             logger.warning("No optimization results to save")
+@@ -346,7 +346,7 @@         except Exception as e:
+             logger.error(f"Failed to save optimization results: {e}")
+ 
+-    def predict(self, X: pd.DataFrame) -> np.ndarray:
++async def predict(self, X: pd.DataFrame) -> np.ndarray:
+         """使用最佳模型进行预测.
+ 
+         Args:
+@@ -366,7 +366,7 @@ 
+         return predictions
+ 
+-    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
++async def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+         """获取预测概率.
+ 
+         Args:
+@@ -380,7 +380,7 @@ 
+         return self.best_model.predict_proba(X)
+ 
+-    def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict[str, Any]:
++async def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict[str, Any]:
+         """评估最佳模型性能.
+ 
+         Args:
+@@ -413,7 +413,7 @@         logger.info(f"Model evaluation - Accuracy: {accuracy:.4f}, F1: {f1:.4f}")
+         return results
+ 
+-    def get_feature_importance(self) -> np.ndarray | None:
++async def get_feature_importance(self) -> np.ndarray | None:
+         """获取特征重要性."""
+         if not self.is_optimized:
+             logger.warning("Model not optimized, no feature importance available")
+@@ -429,7 +429,7 @@             logger.error(f"Error getting feature importance: {e}")
+             return None
+ 
+-    def load_optimization_results(
++async def load_optimization_results(
+         self, results_path: str, model_path: str
+     ) -> "XGBoostHyperparameterOptimizer":
+         """加载优化结果.
+@@ -448,7 +448,7 @@ 
+             self.best_params = results["best_params"]
+             self.best_score = results["best_score"]
+-            self.optimization_history = results.get("optimization_history", [])
++            self.optimization_history = results.await get("optimization_history", [])
+             self.label_encoder = None  # 初始化label_encoder属性
+ 
+             # 加载最佳模型
+@@ -468,7 +468,7 @@             raise
+ 
+     @staticmethod
+-    def create_default_optimizer() -> "XGBoostHyperparameterOptimizer":
++async def create_default_optimizer() -> "XGBoostHyperparameterOptimizer":
+         """创建默认配置的优化器."""
+         return XGBoostHyperparameterOptimizer(
+             model_name="football_xgboost_v2",
+@@ -478,7 +478,7 @@         )
+ 
+     @staticmethod
+-    def create_debug_optimizer() -> "XGBoostHyperparameterOptimizer":
++async def create_debug_optimizer() -> "XGBoostHyperparameterOptimizer":
+         """创建调试模式的优化器."""
+         return XGBoostHyperparameterOptimizer(
+             model_name="football_xgboost_debug",
+@@ -490,7 +490,7 @@ 
+ 
+ # 便捷函数
+-def optimize_xgboost_model(
++async def optimize_xgboost_model(
+     X: pd.DataFrame,
+     y: pd.Series,
+     model_name: str = "football_xgboost_optimized",

@@ -5,7 +5,7 @@
 """
 
 import re
-from typing import Literal
+from typing import Any, Literal
 
 # 常量定义，避免魔法值
 VALID_PREDICTIONS = {"home_win", "away_win", "draw"}

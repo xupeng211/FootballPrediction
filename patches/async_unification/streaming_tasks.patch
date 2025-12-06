@@ -1,0 +1,40 @@
+--- a/src/tasks/streaming_tasks.py+++ b/src/tasks/streaming_tasks.py@@ -11,27 +11,27 @@ class FootballKafkaConsumer:
+     """Mock FootballKafkaConsumer implementation."""
+ 
+-    def __init__(self, consumer_group_id=None):
++async def __init__(self, consumer_group_id=None):
+         self.consumer_group_id = consumer_group_id
+ 
+-    def subscribe_topics(self, topics):
++async def subscribe_topics(self, topics):
+         pass
+ 
+-    def subscribe_all_topics(self):
++async def subscribe_all_topics(self):
+         pass
+ 
+ 
+ class FootballKafkaProducer:
+     """Mock FootballKafkaProducer implementation."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+ class StreamProcessor:
+     """Mock StreamProcessor implementation."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+     async def health_check(self):
+@@ -44,7 +44,7 @@ class StreamConfig:
+     """Mock StreamConfig implementation."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 

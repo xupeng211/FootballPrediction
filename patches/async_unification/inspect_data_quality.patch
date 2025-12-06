@@ -1,0 +1,52 @@
+--- a/src/jobs/inspect_data_quality.py+++ b/src/jobs/inspect_data_quality.py@@ -22,10 +22,10 @@ class DataQualityInspector:
+     """数据质量检查器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.print_json = self._pretty_print_json
+ 
+-    def _pretty_print_json(self, data: dict[str, Any], title: str = ""):
++async def _pretty_print_json(self, data: dict[str, Any], title: str = ""):
+         """漂亮的JSON打印"""
+         if title:
+             print(f"\n🎯 {title}")
+@@ -160,14 +160,14 @@ 
+             return matches
+ 
+-    def _parse_json(self, json_str: str) -> Optional[dict[str, Any]]:
++async def _parse_json(self, json_str: str) -> Optional[dict[str, Any]]:
+         """安全解析JSON字符串"""
+         try:
+             return json.loads(json_str) if json_str else None
+         except (json.JSONDecodeError, TypeError):
+             return None
+ 
+-    def _parse_odds(self, odds_json: str) -> Optional[dict[str, Any]]:
++async def _parse_odds(self, odds_json: str) -> Optional[dict[str, Any]]:
+         """解析赔率数据"""
+         odds_data = self._parse_json(odds_json)
+         if not odds_data:
+@@ -192,7 +192,7 @@ 
+         return parsed_odds
+ 
+-    def _get_sample_shots(self, shotmap_json: str) -> list[dict[str, Any]]:
++async def _get_sample_shots(self, shotmap_json: str) -> list[dict[str, Any]]:
+         """获取射门样本数据"""
+         shotmap_data = self._parse_json(shotmap_json)
+         if not shotmap_data or not isinstance(shotmap_data, list):
+@@ -214,7 +214,7 @@ 
+         return sample_shots
+ 
+-    def print_macro_stats(self, stats: dict[str, int]):
++async def print_macro_stats(self, stats: dict[str, int]):
+         """打印宏观统计"""
+         print("\n" + "=" * 60)
+         print("🔬 数据质量检查 - 宏观统计")
+@@ -256,7 +256,7 @@         else:
+             print("❌ 需改进 - 数据质量不足，建议增加采集覆盖")
+ 
+-    def print_micro_inspection(self, matches: list[dict[str, Any]]):
++async def print_micro_inspection(self, matches: list[dict[str, Any]]):
+         """打印微观检查结果"""
+         print("\n" + "=" * 60)
+         print("🔬 数据质量检查 - 微观采样")

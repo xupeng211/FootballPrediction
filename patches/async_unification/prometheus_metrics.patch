@@ -1,0 +1,48 @@
+--- a/src/api/prometheus_metrics.py+++ b/src/api/prometheus_metrics.py@@ -53,7 +53,7 @@ )
+ 
+ 
+-@router.get("/")
++@router.await get("/")
+ async def prometheus_metrics():
+     """Prometheus指标端点."""
+     try:
+@@ -89,7 +89,7 @@         logger.error(f"Error updating system metrics: {e}")
+ 
+ 
+-def record_http_request(method: str, endpoint: str, status_code: int, duration: float):
++async def record_http_request(method: str, endpoint: str, status_code: int, duration: float):
+     """记录HTTP请求指标."""
+     try:
+         http_requests_total.labels(
+@@ -104,7 +104,7 @@         logger.error(f"Error recording HTTP request metrics: {e}")
+ 
+ 
+-def record_prediction_request(model_type: str, status: str):
++async def record_prediction_request(model_type: str, status: str):
+     """记录预测请求指标."""
+     try:
+         prediction_requests_total.labels(model_type=model_type, status=status).inc()
+@@ -113,7 +113,7 @@         logger.error(f"Error recording prediction request metrics: {e}")
+ 
+ 
+-def update_active_users(count: int):
++async def update_active_users(count: int):
+     """更新活跃用户数."""
+     try:
+         active_users.set(count)
+@@ -121,7 +121,7 @@         logger.error(f"Error updating active users metric: {e}")
+ 
+ 
+-def update_db_connections(count: int):
++async def update_db_connections(count: int):
+     """更新数据库连接数."""
+     try:
+         db_connections_active.set(count)
+@@ -129,7 +129,7 @@         logger.error(f"Error updating DB connections metric: {e}")
+ 
+ 
+-def update_redis_connections(count: int):
++async def update_redis_connections(count: int):
+     """更新Redis连接数."""
+     try:
+         redis_connections_active.set(count)

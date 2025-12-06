@@ -1,0 +1,176 @@
+--- a/src/api/optimization/cache_performance_api.py+++ b/src/api/optimization/cache_performance_api.py@@ -94,7 +94,7 @@ # ==================== 缓存状态监控端点 ====================
+ 
+ 
+-@router.get("/status")
++@router.await get("/status")
+ async def get_cache_status():
+     """获取缓存系统整体状态."""
+     redis_manager = get_redis_cluster_manager()
+@@ -176,7 +176,7 @@     return status
+ 
+ 
+-@router.get("/performance/metrics")
++@router.await get("/performance/metrics")
+ async def get_performance_metrics(
+     time_range_hours: int = Query(24, ge=1, le=168),
+     component: str | None = Query(
+@@ -242,7 +242,7 @@ # ==================== Redis集群管理端点 ====================
+ 
+ 
+-@router.get("/cluster/status")
++@router.await get("/cluster/status")
+ async def get_redis_cluster_status():
+     """获取Redis集群状态."""
+     redis_manager = get_redis_cluster_manager()
+@@ -264,7 +264,7 @@         ) from None
+ 
+ 
+-@router.post("/cluster/nodes")
++@router.await post("/cluster/nodes")
+ async def add_redis_node(node_config: dict[str, Any]):
+     """添加Redis节点."""
+     redis_manager = get_redis_cluster_manager()
+@@ -277,7 +277,7 @@     try:
+         success = await redis_manager.add_node(node_config)
+         if success:
+-            return {"message": f"Redis节点 {node_config.get('node_id')} 添加成功"}
++            return {"message": f"Redis节点 {node_config.await get('node_id')} 添加成功"}
+         else:
+             raise HTTPException(
+                 status_code=status.HTTP_400_BAD_REQUEST, detail="添加Redis节点失败"
+@@ -328,7 +328,7 @@ # ==================== 分布式缓存管理端点 ====================
+ 
+ 
+-@router.get("/distributed/status")
++@router.await get("/distributed/status")
+ async def get_distributed_cache_status():
+     """获取分布式缓存状态."""
+     distributed_cache = get_distributed_cache_manager()
+@@ -350,7 +350,7 @@         ) from e
+ 
+ 
+-@router.post("/distributed/invalidate")
++@router.await post("/distributed/invalidate")
+ async def invalidate_cache_keys(request: CacheInvalidateRequest):
+     """失效缓存键."""
+     distributed_cache = get_distributed_cache_manager()
+@@ -369,7 +369,7 @@             count = 0
+             for key in request.keys:
+                 result = await distributed_cache.invalidate_keys([key])
+-                count += result.get("invalidated", 0)
++                count += result.await get("invalidated", 0)
+ 
+         return {
+             "invalidated": count,
+@@ -385,7 +385,7 @@         ) from e
+ 
+ 
+-@router.post("/distributed/warmup")
++@router.await post("/distributed/warmup")
+ async def warmup_cache(request: CacheWarmupRequest):
+     """缓存预热."""
+     distributed_cache = get_distributed_cache_manager()
+@@ -411,7 +411,7 @@ # ==================== 缓存一致性管理端点 ====================
+ 
+ 
+-@router.post("/consistency/operations")
++@router.await post("/consistency/operations")
+ async def consistency_operation(request: ConsistencyOperationRequest):
+     """一致性操作."""
+     consistency_manager = get_cache_consistency_manager()
+@@ -434,7 +434,7 @@                 if callable(method):
+                     result = await method(request.target_keys, **request.parameters)
+                     success = (
+-                        result.get("success", True)
++                        result.await get("success", True)
+                         if isinstance(result, dict)
+                         else True
+                     )
+@@ -455,7 +455,7 @@         ) from e
+ 
+ 
+-@router.get("/consistency/statistics")
++@router.await get("/consistency/statistics")
+ async def get_consistency_statistics():
+     """获取一致性统计信息."""
+     consistency_manager = get_cache_consistency_manager()
+@@ -502,7 +502,7 @@ # ==================== 智能预热管理端点 ====================
+ 
+ 
+-@router.post("/warmup/plans")
++@router.await post("/warmup/plans")
+ async def create_warmup_plan(request: WarmupRequest, background_tasks: BackgroundTasks):
+     """创建预热计划."""
+     warmup_manager = get_intelligent_warmup_manager()
+@@ -524,7 +524,7 @@             "scheduled": WarmupStrategy.SCHEDULED,
+         }
+ 
+-        strategy = strategy_map.get(request.strategy, WarmupStrategy.HYBRID)
++        strategy = strategy_map.await get(request.strategy, WarmupStrategy.HYBRID)
+ 
+         # 创建预热计划
+         plan_id = await warmup_manager.create_warmup_plan(
+@@ -556,7 +556,7 @@         ) from e
+ 
+ 
+-@router.get("/warmup/plans/{plan_id}/status")
++@router.await get("/warmup/plans/{plan_id}/status")
+ async def get_warmup_plan_status(plan_id: str):
+     """获取预热计划状态."""
+     warmup_manager = get_intelligent_warmup_manager()
+@@ -597,7 +597,7 @@         ) from e
+ 
+ 
+-@router.post("/warmup/plans/{plan_id}/execute")
++@router.await post("/warmup/plans/{plan_id}/execute")
+ async def execute_warmup_plan(plan_id: str, background_tasks: BackgroundTasks):
+     """执行预热计划."""
+     warmup_manager = get_intelligent_warmup_manager()
+@@ -659,7 +659,7 @@         ) from e
+ 
+ 
+-@router.get("/warmup/statistics")
++@router.await get("/warmup/statistics")
+ async def get_warmup_statistics():
+     """获取预热统计信息."""
+     warmup_manager = get_intelligent_warmup_manager()
+@@ -681,7 +681,7 @@         ) from e
+ 
+ 
+-@router.post("/warmup/record-access")
++@router.await post("/warmup/record-access")
+ async def record_cache_access(
+     key: str = Query(..., description="缓存键"),
+     session_id: str | None = Query(None, description="会话ID"),
+@@ -710,7 +710,7 @@ # ==================== 缓存分析和优化端点 ====================
+ 
+ 
+-@router.post("/analysis")
++@router.await post("/analysis")
+ async def analyze_cache_performance(request: CacheAnalysisRequest):
+     """分析缓存性能."""
+     try:
+@@ -777,7 +777,7 @@         ) from e
+ 
+ 
+-@router.post("/optimization")
++@router.await post("/optimization")
+ async def optimize_cache_system(
+     request: CacheOptimizationRequest, background_tasks: BackgroundTasks
+ ):
+@@ -811,7 +811,7 @@             if warmup_manager and request.target_keys:
+                 # 创建预热计划
+                 plan_id = await warmup_manager.create_warmup_plan(
+-                    strategy=warmup_manager.strategies.get("hybrid"),
++                    strategy=warmup_manager.strategies.await get("hybrid"),
+                     keys=request.target_keys,
+                 )
+                 background_tasks.add_task(warmup_manager.execute_warmup_plan, plan_id)
+@@ -850,7 +850,7 @@ # ==================== 健康检查端点 ====================
+ 
+ 
+-@router.get("/health", tags=["健康检查"])
++@router.await get("/health", tags=["健康检查"])
+ async def cache_system_health():
+     """缓存系统健康检查."""
+     components = {

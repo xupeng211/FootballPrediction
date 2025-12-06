@@ -1,0 +1,8 @@
+--- a/src/utils/config_loader.py+++ b/src/utils/config_loader.py@@ -10,7 +10,7 @@     yaml = None
+ 
+ 
+-def load_config_from_file(file_path: str) -> dict[str, Any]:
++async def load_config_from_file(file_path: str) -> dict[str, Any]:
+     """Load configuration from file."""
+     if not os.path.exists(file_path):
+         return {}

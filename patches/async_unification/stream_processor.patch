@@ -1,0 +1,68 @@
+--- a/src/streaming/stream_processor.py+++ b/src/streaming/stream_processor.py@@ -17,7 +17,7 @@     pass  # 添加pass语句
+     """流数据处理器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化流处理器"""
+@@ -54,7 +54,7 @@     pass  # 添加pass语句
+     """流处理器管理器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化管理器"""
+@@ -92,7 +92,7 @@     pass  # 添加pass语句
+     """处理统计"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化统计"""
+@@ -101,31 +101,31 @@         self.total_processed = 0
+         self.total_errors = 0
+ 
+-    def start_timing(self):
++async def start_timing(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """开始计时"""
+         self.start_time = asyncio.get_event_loop().time()
+ 
+-    def stop_timing(self):
++async def stop_timing(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """停止计时"""
+         self.end_time = asyncio.get_event_loop().time()
+ 
+-    def record_processed(self):
++async def record_processed(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """记录处理"""
+         self.total_processed += 1
+ 
+-    def record_error(self):
++async def record_error(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """记录错误"""
+         self.total_errors += 1
+ 
+-    def get_stats(self) -> dict[str, Any]:
++async def get_stats(self) -> dict[str, Any]:
+         """获取统计信息."""
+         duration = 0
+         if self.start_time and self.end_time:
+@@ -147,7 +147,7 @@     pass  # 添加pass语句
+     """健康检查器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化健康检查器"""

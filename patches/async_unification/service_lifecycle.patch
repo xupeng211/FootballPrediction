@@ -1,0 +1,94 @@
+--- a/src/core/service_lifecycle.py+++ b/src/core/service_lifecycle.py@@ -56,7 +56,7 @@     pass  # 添加pass语句
+     """服务生命周期管理器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self._services: dict[str, ServiceInfo] = {}
+@@ -65,7 +65,7 @@         self._monitoring_task: asyncio.Task | None = None
+         self._loop: asyncio.AbstractEventLoop | None = None
+ 
+-    def register_service(
++async def register_service(
+         self,
+         name: str,
+         service: Any,
+@@ -99,7 +99,7 @@ 
+             logger.info(f"注册服务: {name}")
+ 
+-    def unregister_service(self, name: str) -> None:
++async def unregister_service(self, name: str) -> None:
+         """注销服务."""
+         with self._lock:
+             if name not in self._services:
+@@ -119,7 +119,7 @@             del self._services[name]
+             logger.info(f"注销服务: {name}")
+ 
+-    def start_service(self, name: str) -> None:
++async def start_service(self, name: str) -> None:
+         """启动服务."""
+         with self._lock:
+             if name not in self._services:
+@@ -161,7 +161,7 @@             logger.error(f"服务启动失败: {name} - {e}")
+             raise ServiceLifecycleError(f"服务启动失败: {name}") from e
+ 
+-    def stop_service(self, name: str) -> None:
++async def stop_service(self, name: str) -> None:
+         """停止服务."""
+         with self._lock:
+             if name not in self._services:
+@@ -174,7 +174,7 @@                 return None
+             self._stop_service_sync(name)
+ 
+-    def _stop_service_sync(self, name: str) -> None:
++async def _stop_service_sync(self, name: str) -> None:
+         """同步停止服务."""
+         service_info = self._services[name]
+         service_info.state = ServiceState.STOPPING
+@@ -257,17 +257,17 @@ 
+         return health_results
+ 
+-    def get_service_status(self, name: str) -> ServiceInfo | None:
++async def get_service_status(self, name: str) -> ServiceInfo | None:
+         """获取服务状态."""
+         with self._lock:
+-            return self._services.get(name)
+-
+-    def get_all_services(self) -> dict[str, ServiceInfo]:
++            return self._services.await get(name)
++
++async def get_all_services(self) -> dict[str, ServiceInfo]:
+         """获取所有服务."""
+         with self._lock:
+             return self._services.copy()
+ 
+-    def start_monitoring(self, interval: float = 30.0) -> None:
++async def start_monitoring(self, interval: float = 30.0) -> None:
+         """启动监控."""
+         if self._monitoring_task is not None:
+             logger.warning("监控已在运行")
+@@ -281,7 +281,7 @@         self._monitoring_task = self._loop.create_task(self._monitoring_loop(interval))
+         logger.info("启动服务监控")
+ 
+-    def stop_monitoring(self) -> None:
++async def stop_monitoring(self) -> None:
+         """停止监控."""
+         if self._monitoring_task is None:
+             return None
+@@ -319,7 +319,7 @@                 logger.error(f"监控循环错误: {e}")
+                 await asyncio.sleep(5)  # 错误时短暂等待
+ 
+-    def shutdown_all(self) -> None:
++async def shutdown_all(self) -> None:
+         """关闭所有服务."""
+         logger.info("开始关闭所有服务")
+ 
+@@ -348,7 +348,7 @@ _lifecycle_manager: ServiceLifecycleManager | None = None
+ 
+ 
+-def get_lifecycle_manager() -> ServiceLifecycleManager:
++async def get_lifecycle_manager() -> ServiceLifecycleManager:
+     """获取全局服务生命周期管理器."""
+     global _lifecycle_manager
+     if _lifecycle_manager is None:

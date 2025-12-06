@@ -1,0 +1,21 @@
+--- a/src/services/version.py+++ b/src/services/version.py@@ -15,11 +15,11 @@ class VersionService:
+     """版本服务类."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化版本服务."""
+         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+ 
+-    def get_version(self) -> dict[str, Any]:
++async def get_version(self) -> dict[str, Any]:
+         """获取版本信息
+         Get version information.
+ 
+@@ -63,7 +63,7 @@ _version_service: VersionService | None = None
+ 
+ 
+-def get_version_service() -> VersionService:
++async def get_version_service() -> VersionService:
+     """获取版本服务实例."""
+     global _version_service
+     if _version_service is None:

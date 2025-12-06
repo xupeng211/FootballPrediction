@@ -1,0 +1,16 @@
+--- a/src/database/migrations/versions/005_add_multi_tenant_support.py+++ b/src/database/migrations/versions/005_add_multi_tenant_support.py@@ -21,7 +21,7 @@ depends_on: str | Sequence[str] | None = None
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     """升级数据库,添加多租户支持."""
+     # 创建租户表
+     op.create_table(
+@@ -424,7 +424,7 @@     )
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     """降级数据库,移除多租户支持."""
+     # 删除索引
+     op.drop_index("idx_users_tenant_id", table_name="users")

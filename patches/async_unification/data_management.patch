@@ -1,0 +1,48 @@
+--- a/src/api/data_management.py+++ b/src/api/data_management.py@@ -25,7 +25,7 @@ router = APIRouter(tags=["数据管理"])
+ 
+ 
+-@router.get("/matches")
++@router.await get("/matches")
+ async def get_matches_list(
+     limit: int = 50, offset: int = 0, session: AsyncSession = Depends(get_async_session)
+ ) -> dict[str, Any]:
+@@ -82,7 +82,7 @@     return {"matches": paginated_matches, "total": len(mock_matches)}
+ 
+ 
+-@router.get("/matches/{match_id}")
++@router.await get("/matches/{match_id}")
+ async def get_match_by_id(match_id: int) -> dict[str, Any]:
+     """根据ID获取比赛信息
+     Get match information by ID.
+@@ -112,7 +112,7 @@         ) from e
+ 
+ 
+-@router.get("/teams")
++@router.await get("/teams")
+ async def get_teams_list(
+     limit: int = 20, offset: int = 0, session: AsyncSession = Depends(get_async_session)
+ ) -> dict[str, Any]:
+@@ -167,7 +167,7 @@     return {"teams": paginated_teams, "total": len(mock_teams)}
+ 
+ 
+-@router.get("/teams/{team_id}")
++@router.await get("/teams/{team_id}")
+ async def get_team_by_id(
+     team_id: int, session: AsyncSession = Depends(get_async_session)
+ ) -> dict[str, Any]:
+@@ -247,7 +247,7 @@     return mock_teams[team_id]
+ 
+ 
+-@router.get("/leagues")
++@router.await get("/leagues")
+ async def get_leagues_list(limit: int = 20, offset: int = 0) -> dict[str, Any]:
+     """获取联赛列表
+     Get leagues list.
+@@ -273,7 +273,7 @@         ) from e
+ 
+ 
+-@router.get("/odds")
++@router.await get("/odds")
+ async def get_odds_data(match_id: int | None = None) -> dict[str, Any]:
+     """获取赔率数据
+     Get odds data.

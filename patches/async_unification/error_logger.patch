@@ -1,0 +1,93 @@
+--- a/src/tasks/error_logger.py+++ b/src/tasks/error_logger.py@@ -34,7 +34,7 @@     pass  # 添加pass语句
+     """任务错误日志记录器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.db_manager = DatabaseManager()
+@@ -163,7 +163,7 @@             日志记录ID
+         """
+         try:
+-            async with self.db_manager.get_async_session() as session:
++            async with self.db_manager.await get_async_session() as session:
+                 # 创建数据采集日志记录
+                 log_entry = DataCollectionLog(
+                     data_source=data_source,
+@@ -198,7 +198,7 @@         由于没有专门的 error_logs 表,这里使用原始SQL创建表并插入数据
+         """
+         try:
+-            async with self.db_manager.get_async_session() as session:
++            async with self.db_manager.await get_async_session() as session:
+                 # 确保 error_logs 表存在
+                 await self._ensure_error_logs_table_exists(session)
+ 
+@@ -218,13 +218,13 @@                 await session.execute(
+                     insert_sql,
+                     {
+-                        "task_name": error_details.get("task_name"),
+-                        "task_id": error_details.get("task_id"),
+-                        "error_type": error_details.get("error_type"),
+-                        "error_message": error_details.get("error_message"),
+-                        "traceback": error_details.get("traceback"),
+-                        "retry_count": error_details.get("retry_count", 0),
+-                        "context_data": str(error_details.get("context", {})),
++                        "task_name": error_details.await get("task_name"),
++                        "task_id": error_details.await get("task_id"),
++                        "error_type": error_details.await get("error_type"),
++                        "error_message": error_details.await get("error_message"),
++                        "traceback": error_details.await get("traceback"),
++                        "retry_count": error_details.await get("retry_count", 0),
++                        "context_data": await str(error_details.get("context", {})),
+                         "created_at": datetime.now(),
+                     },
+                 )
+@@ -263,7 +263,7 @@                 SQLCompatibilityHelper.create_error_logs_table_sql(db_type)
+             )
+ 
+-            await session.execute(create_table_sql)
++            await session.await execute(create_table_sql)
+             await session.commit()
+ 
+         except (RuntimeError, ValueError, ConnectionError) as create_error:
+@@ -281,17 +281,17 @@         try:
+             query_builder = await self._get_query_builder()
+ 
+-            async with self.db_manager.get_async_session() as session:
++            async with self.db_manager.await get_async_session() as session:
+                 # 获取错误总数
+                 error_count_sql = text(
+                     query_builder.build_error_statistics_query(hours)
+                 )
+-                result = await session.execute(error_count_sql)
++                result = await session.await execute(error_count_sql)
+                 total_errors = result.scalar() or 0
+ 
+                 # 按任务类型统计错误
+                 task_errors_sql = text(query_builder.build_task_errors_query(hours))
+-                result = await session.execute(task_errors_sql)
++                result = await session.await execute(task_errors_sql)
+                 task_errors = [
+                     {"task_name": row.task_name, "error_count": row.error_count}
+                     for row in result
+@@ -299,7 +299,7 @@ 
+                 # 按错误类型统计
+                 type_errors_sql = text(query_builder.build_type_errors_query(hours))
+-                result = await session.execute(type_errors_sql)
++                result = await session.await execute(type_errors_sql)
+                 type_errors = [
+                     {"error_type": row.error_type, "error_count": row.error_count}
+                     for row in result
+@@ -334,11 +334,11 @@         try:
+             query_builder = await self._get_query_builder()
+ 
+-            async with self.db_manager.get_async_session() as session:
++            async with self.db_manager.await get_async_session() as session:
+                 cleanup_sql = text(
+                     query_builder.build_cleanup_old_logs_query(days_to_keep)
+                 )
+-                result = await session.execute(cleanup_sql)
++                result = await session.await execute(cleanup_sql)
+                 await session.commit()
+ 
+                 deleted_count = result.rowcount

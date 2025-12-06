@@ -1,0 +1,134 @@
+--- a/src/pipeline/model_registry.py+++ b/src/pipeline/model_registry.py@@ -38,7 +38,7 @@     提供统一的模型保存、加载和版本管理功能。
+     """
+ 
+-    def __init__(self, config: Optional[PipelineConfig] = None):
++async def __init__(self, config: Optional[PipelineConfig] = None):
+         """初始化模型注册表.
+ 
+         Args:
+@@ -54,7 +54,7 @@         self._model_index: Dict[str, List[Dict[str, Any]]] = {}
+         self._load_model_index()
+ 
+-    def save_model(
++async def save_model(
+         self,
+         model: Any,
+         name: str,
+@@ -118,7 +118,7 @@         logger.info(f"Model saved: {name}:{version} at {model_path}")
+         return str(model_path)
+ 
+-    def load_model(
++async def load_model(
+         self,
+         name: str,
+         version: Optional[str] = None,
+@@ -161,13 +161,13 @@         logger.info(f"Model loaded: {name}:{version}")
+         return model, metadata
+ 
+-    def list_models(self, name: Optional[str] = None) -> Dict[str, List[Dict[str, Any]]]:
++async def list_models(self, name: Optional[str] = None) -> Dict[str, List[Dict[str, Any]]]:
+         """列出所有模型."""
+         if name:
+-            return {name: self._model_index.get(name, [])}
++            return {name: self._model_index.await get(name, [])}
+         return self._model_index.copy()
+ 
+-    def get_latest_version(self, name: str) -> str:
++async def get_latest_version(self, name: str) -> str:
+         """获取模型的最新版本."""
+         if name not in self._model_index or not self._model_index[name]:
+             raise ValueError(f"No versions found for model: {name}")
+@@ -177,12 +177,12 @@         latest = max(versions, key=lambda x: x["created_at"])
+         return latest["version"]
+ 
+-    def compare_models(
++async def compare_models(
+         self, name: str, versions: Optional[List[str]] = None
+     ) -> pd.DataFrame:
+         """比较模型版本."""
+         if versions is None:
+-            versions = [v["version"] for v in self._model_index.get(name, [])]
++            versions = [v["version"] for v in self._model_index.await get(name, [])]
+ 
+         comparison_data = []
+ 
+@@ -205,7 +205,7 @@ 
+         return pd.DataFrame(comparison_data)
+ 
+-    def delete_model(self, name: str, version: Optional[str] = None) -> bool:
++async def delete_model(self, name: str, version: Optional[str] = None) -> bool:
+         """删除模型."""
+         if version is None:
+             # 删除所有版本
+@@ -237,7 +237,7 @@ 
+         return False
+ 
+-    def export_model(
++async def export_model(
+         self,
+         name: str,
+         version: Optional[str] = None,
+@@ -292,7 +292,7 @@ import json
+ from pathlib import Path
+ 
+-def load_model():
++async def load_model():
+     """加载模型."""
+     model_path = Path(__file__).parent / "model" / "model.joblib"
+     metadata_path = Path(__file__).parent / "model" / "metadata.json"
+@@ -303,7 +303,7 @@ 
+     return model, metadata
+ 
+-def predict(features):
++async def predict(features):
+     """执行预测."""
+     model, metadata = load_model()
+     return model.predict(features)
+@@ -323,7 +323,7 @@         logger.info(f"Model exported to: {export_dir}")
+         return str(export_dir)
+ 
+-    def _load_model_index(self) -> None:
++async def _load_model_index(self) -> None:
+         """加载模型索引."""
+         index_path = self.models_dir / "model_index.json"
+ 
+@@ -339,7 +339,7 @@             self._model_index = {}
+             self._rebuild_model_index()
+ 
+-    def _save_model_index(self) -> None:
++async def _save_model_index(self) -> None:
+         """保存模型索引."""
+         index_path = self.models_dir / "model_index.json"
+ 
+@@ -348,7 +348,7 @@ 
+         logger.debug("Model index saved")
+ 
+-    def _update_model_index(self, name: str, metadata: Dict[str, Any]) -> None:
++async def _update_model_index(self, name: str, metadata: Dict[str, Any]) -> None:
+         """更新模型索引."""
+         if name not in self._model_index:
+             self._model_index[name] = []
+@@ -373,7 +373,7 @@         # 保存索引
+         self._save_model_index()
+ 
+-    def _rebuild_model_index(self) -> None:
++async def _rebuild_model_index(self) -> None:
+         """重建模型索引."""
+         logger.info("Rebuilding model index from file system")
+ 
+@@ -406,7 +406,7 @@         self._save_model_index()
+         logger.info(f"Model index rebuilt with {len(self._model_index)} models")
+ 
+-    def get_model_info(self, name: str, version: Optional[str] = None) -> Dict[str, Any]:
++async def get_model_info(self, name: str, version: Optional[str] = None) -> Dict[str, Any]:
+         """获取模型详细信息."""
+         if version is None:
+             version = self.get_latest_version(name)
+@@ -414,7 +414,7 @@         _, metadata = self.load_model(name, version, load_preprocessors=False)
+         return metadata
+ 
+-    def cleanup_old_versions(self, name: str, keep_count: int = 5) -> int:
++async def cleanup_old_versions(self, name: str, keep_count: int = 5) -> int:
+         """清理旧版本，保留最近的几个版本."""
+         if name not in self._model_index:
+             return 0

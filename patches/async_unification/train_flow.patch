@@ -1,0 +1,48 @@
+--- a/src/pipeline/flows/train_flow.py+++ b/src/pipeline/flows/train_flow.py@@ -28,7 +28,7 @@ 
+ 
+ @task(retries=3, retry_delay_seconds=60)
+-def load_training_data_task(
++async def load_training_data_task(
+     match_ids: List[int],
+     config: PipelineConfig,
+ ) -> tuple:
+@@ -56,7 +56,7 @@ 
+ 
+ @task(retries=2, retry_delay_seconds=30)
+-def train_model_task(
++async def train_model_task(
+     X,
+     y,
+     config: PipelineConfig,
+@@ -86,7 +86,7 @@ 
+ 
+ @task
+-def save_model_task(
++async def save_model_task(
+     training_result: dict,
+     model_name: str,
+     config: PipelineConfig,
+@@ -123,7 +123,7 @@ 
+ 
+ @flow(name="Football Model Training Flow")
+-def train_flow(
++async def train_flow(
+     season: str,
+     league_id: Optional[str] = None,
+     match_ids: Optional[List[int]] = None,
+@@ -195,7 +195,7 @@         }
+ 
+ 
+-def _get_season_matches(season: str, league_id: Optional[str] = None) -> List[int]:
++async def _get_season_matches(season: str, league_id: Optional[str] = None) -> List[int]:
+     """
+     获取赛季比赛ID.
+ 
+@@ -214,7 +214,7 @@ 
+ # 用于开发测试的简化流程
+ @flow(name="Quick Training Flow")
+-def quick_train_flow(
++async def quick_train_flow(
+     match_ids: List[int],
+     algorithm: str = "xgboost",
+     model_name: str = "quick_model",

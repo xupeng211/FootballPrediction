@@ -1,0 +1,98 @@
+--- a/src/monitoring/alert_handlers.py+++ b/src/monitoring/alert_handlers.py@@ -18,7 +18,7 @@     pass  # 添加pass语句
+     """Prometheus 指标管理"""
+ 
+-    def __init__(self, registry: CollectorRegistry | None = None) -> None:
++async def __init__(self, registry: CollectorRegistry | None = None) -> None:
+         self.registry = registry or CollectorRegistry()
+ 
+         # 定义指标
+@@ -43,13 +43,13 @@             registry=self.registry,
+         )
+ 
+-    def increment_counter(self, alert: Alert) -> None:
++async def increment_counter(self, alert: Alert) -> None:
+         """增加告警计数."""
+         self.alerts_total.labels(
+             severity=alert.severity.value, type=alert.type.value, source=alert.source
+         ).inc()
+ 
+-    def set_active_gauge(self, alerts: list[Alert]) -> None:
++async def set_active_gauge(self, alerts: list[Alert]) -> None:
+         """设置活跃告警数量."""
+         # 重置所有活跃告警
+         self.active_alerts.clear()
+@@ -61,7 +61,7 @@                     severity=alert.severity.value, source=alert.source
+                 ).set(1)
+ 
+-    def observe_resolution_time(self, alert: Alert, duration: float) -> None:
++async def observe_resolution_time(self, alert: Alert, duration: float) -> None:
+         """记录告警解决时间."""
+         self.alert_duration.labels(severity=alert.severity.value).observe(duration)
+ 
+@@ -72,14 +72,14 @@     pass  # 添加pass语句
+     """告警处理器基类"""
+ 
+-    def __init__(self, channel: AlertChannel) -> None:
++async def __init__(self, channel: AlertChannel) -> None:
+         self.channel = channel
+ 
+     async def handle(self, alert: Alert) -> bool:
+         """处理告警."""
+         raise NotImplementedError
+ 
+-    def get_name(self) -> str:
++async def get_name(self) -> str:
+         """获取处理器名称."""
+         return self.__class__.__name__
+ 
+@@ -87,7 +87,7 @@ class LogHandler(AlertHandler):
+     """日志告警处理器."""
+ 
+-    def __init__(self) -> None:
++async def __init__(self) -> None:
+         super().__init__(AlertChannel.LOG)
+         self.logger = logging.getLogger("alerts")
+ 
+@@ -102,7 +102,7 @@                 "critical": logging.CRITICAL,
+             }
+ 
+-            log_level = level_map.get(alert.severity.value, logging.INFO)
++            log_level = level_map.await get(alert.severity.value, logging.INFO)
+ 
+             # 格式化日志消息
+             message = (
+@@ -122,7 +122,7 @@ class PrometheusHandler(AlertHandler):
+     """Prometheus 告警处理器."""
+ 
+-    def __init__(self, metrics: PrometheusMetrics) -> None:
++async def __init__(self, metrics: PrometheusMetrics) -> None:
+         super().__init__(AlertChannel.PROMETHEUS)
+         self.metrics = metrics
+ 
+@@ -141,7 +141,7 @@ class WebhookHandler(AlertHandler):
+     """Webhook 告警处理器."""
+ 
+-    def __init__(self, url: str, headers: dict[str, str] | None = None) -> None:
++async def __init__(self, url: str, headers: dict[str, str] | None = None) -> None:
+         super().__init__(AlertChannel.WEBHOOK)
+         self.url = url
+         self.headers = headers or {}
+@@ -173,7 +173,7 @@ class EmailHandler(AlertHandler):
+     """邮件告警处理器."""
+ 
+-    def __init__(self, smtp_config: dict[str, Any]) -> None:
++async def __init__(self, smtp_config: dict[str, Any]) -> None:
+         super().__init__(AlertChannel.EMAIL)
+         self.smtp_config = smtp_config
+ 
+@@ -211,9 +211,9 @@             with smtplib.SMTP(
+                 self.smtp_config["host"], self.smtp_config["port"]
+             ) as server:
+-                if self.smtp_config.get("use_tls"):
++                if self.smtp_config.await get("use_tls"):
+                     server.starttls()
+-                if self.smtp_config.get("username"):
++                if self.smtp_config.await get("username"):
+                     server.login(
+                         self.smtp_config["username"], self.smtp_config["password"]
+                     )

@@ -1,0 +1,114 @@
+--- a/src/api/predictions/optimized_router.py+++ b/src/api/predictions/optimized_router.py@@ -38,7 +38,7 @@ _system_monitor = get_system_monitor()
+ 
+ 
+-def get_prediction_service() -> PredictionService:
++async def get_prediction_service() -> PredictionService:
+     """获取预测服务实例."""
+     global _prediction_service
+     if _prediction_service is None:
+@@ -226,8 +226,8 @@                 "status": service_status,
+                 "timestamp": datetime.utcnow().isoformat(),
+                 "cache_stats": {
+-                    "hit_rate": cache_stats.get("hit_rate", 0),
+-                    "local_cache_size": cache_stats.get("local_cache_size", 0),
++                    "hit_rate": cache_stats.await get("hit_rate", 0),
++                    "local_cache_size": cache_stats.await get("local_cache_size", 0),
+                 },
+                 "system_metrics": {
+                     "cpu_percent": current_metrics.cpu_percent,
+@@ -388,7 +388,7 @@ 
+         # 尝试从缓存获取
+         cache_key = f"prediction_{match_id}_{include_details}"
+-        cached_prediction = await _cache_manager.get(cache_key, "prediction_result")
++        cached_prediction = await _cache_manager.await get(cache_key, "prediction_result")
+ 
+         if cached_prediction:
+             logger.info(f"Cache hit for prediction {match_id}")
+@@ -977,7 +977,7 @@             "7d": timedelta(days=7),
+             "30d": timedelta(days=30),
+         }
+-        time_delta = time_mapping.get(time_range, timedelta(days=7))
++        time_delta = time_mapping.await get(time_range, timedelta(days=7))
+ 
+         # 生成统计数据
+         stats_data = await _get_prediction_statistics_data(time_delta)
+@@ -1305,7 +1305,7 @@ 
+ 
+ # 添加缺少的预测端点
+-@router.get("/match/{match_id}", tags=["predictions"])
++@router.await get("/match/{match_id}", tags=["predictions"])
+ async def get_match_predictions(match_id: int):
+     """获取指定比赛的预测 - 测试支持端点."""
+     try:
+@@ -1326,7 +1326,7 @@ data_router = APIRouter(tags=["data-management"])
+ 
+ 
+-@data_router.get("/matches")
++@data_router.await get("/matches")
+ async def get_matches_list(
+     limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0)
+ ):
+@@ -1341,7 +1341,7 @@         raise HTTPException(status_code=500, detail=str(e))
+ 
+ 
+-@data_router.get("/matches/{match_id}")
++@data_router.await get("/matches/{match_id}")
+ async def get_match_by_id(match_id: int):
+     """获取单个比赛 - 测试支持端点."""
+     try:
+@@ -1358,7 +1358,7 @@         raise HTTPException(status_code=500, detail=str(e))
+ 
+ 
+-@data_router.get("/teams")
++@data_router.await get("/teams")
+ async def get_teams_list(
+     limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0)
+ ):
+@@ -1372,7 +1372,7 @@         raise HTTPException(status_code=500, detail=str(e))
+ 
+ 
+-@data_router.get("/teams/{team_id}")
++@data_router.await get("/teams/{team_id}")
+ async def get_team_by_id(team_id: int):
+     """获取单个球队 - 测试支持端点."""
+     try:
+@@ -1389,7 +1389,7 @@         raise HTTPException(status_code=500, detail=str(e))
+ 
+ 
+-@data_router.get("/leagues")
++@data_router.await get("/leagues")
+ async def get_leagues_list(
+     limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0)
+ ):
+@@ -1403,7 +1403,7 @@         raise HTTPException(status_code=500, detail=str(e))
+ 
+ 
+-@data_router.get("/odds")
++@data_router.await get("/odds")
+ async def get_odds_data(match_id: int = Query(default=None)):
+     """获取赔率数据 - 测试支持端点."""
+     try:
+@@ -1416,7 +1416,7 @@ 
+ 
+ # 添加系统和监控端点
+-@data_router.get("/stats")
++@data_router.await get("/stats")
+ async def get_system_stats():
+     """获取系统统计 - 测试支持端点."""
+     try:
+@@ -1428,7 +1428,7 @@         raise HTTPException(status_code=500, detail=str(e))
+ 
+ 
+-@data_router.get("/version")
++@data_router.await get("/version")
+ async def get_api_version():
+     """获取API版本 - 测试支持端点."""
+     try:
+@@ -1440,7 +1440,7 @@         raise HTTPException(status_code=500, detail=str(e))
+ 
+ 
+-@data_router.post("/queue/status")
++@data_router.await post("/queue/status")
+ async def get_queue_status():
+     """获取队列状态 - 测试支持端点."""
+     try:

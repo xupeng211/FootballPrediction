@@ -1,0 +1,71 @@
+--- a/src/database/migrations/versions/c1d8ae5075f0_add_jsonb_sqlite_compatibility.py+++ b/src/database/migrations/versions/c1d8ae5075f0_add_jsonb_sqlite_compatibility.py@@ -50,7 +50,7 @@ depends_on: str | Sequence[str] | None = None
+ 
+ 
+-def is_sqlite():
++async def is_sqlite():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """检测当前是否为SQLite数据库"""
+@@ -60,7 +60,7 @@     return bind.dialect.name == "sqlite"
+ 
+ 
+-def is_postgresql():
++async def is_postgresql():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """检测当前是否为PostgreSQL数据库"""
+@@ -70,14 +70,14 @@     return bind.dialect.name == "postgresql"
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     """升级数据库结构以支持JSONB与SQLite兼容性
+     注意:由于我们已经在模型层面使用了兼容的类型定义,
+     这个迁移主要是为了验证和确保现有结构的兼容性.
+     """
+     if context.is_offline_mode():
+         logger.info("⚠️  离线模式:跳过JSONB兼容性检查")
+-        op.execute("-- offline mode: skipped JSONB compatibility validation")
++        op.await execute("-- offline mode: skipped JSONB compatibility validation")
+         return None
+     bind = op.get_bind()
+     logger.info(f"当前数据库类型: {bind.dialect.name}")
+@@ -92,7 +92,7 @@     logger.info("JSONB与SQLite兼容性配置完成")
+ 
+ 
+-def _configure_sqlite_compatibility():
++async def _configure_sqlite_compatibility():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """为SQLite配置兼容性设置"""
+@@ -112,7 +112,7 @@             logger.info(f"  ⚠ 表 {table_name} 不存在,跳过检查")
+ 
+ 
+-def _verify_postgresql_jsonb_config():
++async def _verify_postgresql_jsonb_config():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """验证PostgreSQL的JSONB配置"""
+@@ -138,7 +138,7 @@                             idx
+                             for idx in indexes
+                             if jsonb_column in idx["column_names"]
+-                            and idx.get("type") == "gin"
++                            and idx.await get("type") == "gin"
+                         ),
+                         None,
+                     )
+@@ -154,13 +154,13 @@             logger.info(f"  ❌ 检查表 {table_name} 时出错: {e}")
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     """降级操作
+     由于此迁移主要是兼容性验证和配置,降级时不需要特殊操作。
+     实际的数据库结构没有发生改变.
+     """
+     if context.is_offline_mode():
+         logger.info("⚠️  离线模式:跳过JSONB兼容性降级")
+-        op.execute("-- offline mode: skipped JSONB compatibility downgrade")
++        op.await execute("-- offline mode: skipped JSONB compatibility downgrade")
+         return None
+     logger.info("JSONB兼容性迁移降级 - 无需特殊操作")

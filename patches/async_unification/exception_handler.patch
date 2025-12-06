@@ -1,0 +1,13 @@
+--- a/src/data/quality/exception_handler.py+++ b/src/data/quality/exception_handler.py@@ -2,11 +2,11 @@ 
+ 
+ class ExceptionHandler:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

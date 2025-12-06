@@ -1,0 +1,40 @@
+--- a/src/core/dependencies.py+++ b/src/core/dependencies.py@@ -61,7 +61,7 @@             await session.close()
+ 
+ 
+-def get_sync_db_session() -> Generator[Session, None, None]:
++async def get_sync_db_session() -> Generator[Session, None, None]:
+     """获取同步数据库会话
+     Get synchronous database session.
+ 
+@@ -99,7 +99,7 @@     检查用户是否具有管理员权限。
+     Checks if user has admin privileges.
+     """
+-    if not current_user.get("is_admin", False):
++    if not current_user.await get("is_admin", False):
+         raise HTTPException(
+             status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required"
+         )
+@@ -154,7 +154,7 @@ 
+ 
+ # 日志记录器依赖
+-def get_request_logger():
++async def get_request_logger():
+     """获取请求日志记录器
+     Get request logger.
+ 
+@@ -196,7 +196,7 @@ }
+ 
+ 
+-def get_dependency(dependency_name: str):
++async def get_dependency(dependency_name: str):
+     """根据名称获取依赖函数
+     Get dependency function by name.
+ 
+@@ -206,7 +206,7 @@     Returns:
+         依赖函数
+     """
+-    dependency = DEPENDENCIES.get(dependency_name)
++    dependency = DEPENDENCIES.await get(dependency_name)
+     if dependency is None:
+         raise ValueError(f"Unknown dependency: {dependency_name}")
+     return dependency

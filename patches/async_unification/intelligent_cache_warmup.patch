@@ -1,0 +1,304 @@
+--- a/src/cache/intelligent_cache_warmup.py+++ b/src/cache/intelligent_cache_warmup.py@@ -54,7 +54,7 @@     access_duration: float = 0.0  # 平均访问持续时间
+     correlation_score: float = 0.0  # 与其他键的关联度
+ 
+-    def add_access(self, timestamp: datetime, duration: float = 0.0):
++async def add_access(self, timestamp: datetime, duration: float = 0.0):
+         """添加访问记录."""
+         self.access_times.append(timestamp)
+         self.last_access = timestamp
+@@ -68,7 +68,7 @@         self.hourly_distribution[hour] += 1
+         self.daily_distribution[day] += 1
+ 
+-    def calculate_frequency(self, time_window: timedelta = timedelta(days=7)) -> float:
++async def calculate_frequency(self, time_window: timedelta = timedelta(days=7)) -> float:
+         """计算访问频率."""
+         if not self.access_times:
+             return 0.0
+@@ -85,7 +85,7 @@ 
+         return len(recent_accesses) / (time_span / 3600)  # 每小时访问次数
+ 
+-    def predict_next_access(self) -> datetime | None:
++async def predict_next_access(self) -> datetime | None:
+         """预测下次访问时间."""
+         if len(self.access_times) < 3:
+             return None
+@@ -147,7 +147,7 @@ class AccessPatternAnalyzer:
+     """访问模式分析器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.patterns: dict[str, AccessPattern] = {}
+         self.correlation_matrix: dict[str, dict[str, float]] = defaultdict(
+             lambda: defaultdict(float)
+@@ -155,7 +155,7 @@         self.session_history: list[list[str]] = []  # 会话历史
+         self.lock = threading.Lock()
+ 
+-    def record_access(
++async def record_access(
+         self, key: str, session_id: str | None = None, duration: float = 0.0
+     ):
+         """记录访问."""
+@@ -170,7 +170,7 @@                 # 这里可以实现更复杂的会话跟踪
+                 pass
+ 
+-    def analyze_patterns(
++async def analyze_patterns(
+         self, time_window: timedelta = timedelta(days=7)
+     ) -> dict[str, Any]:
+         """分析访问模式."""
+@@ -215,7 +215,7 @@ 
+         return analysis
+ 
+-    def find_correlated_keys(self, key: str, threshold: float = 0.3) -> list[str]:
++async def find_correlated_keys(self, key: str, threshold: float = 0.3) -> list[str]:
+         """查找关联键."""
+         if key not in self.correlation_matrix:
+             return []
+@@ -223,7 +223,7 @@         correlations = self.correlation_matrix[key]
+         return [k for k, v in correlations.items() if v >= threshold]
+ 
+-    def update_correlation_matrix(self, access_sequence: list[str]):
++async def update_correlation_matrix(self, access_sequence: list[str]):
+         """更新关联矩阵."""
+         for i in range(len(access_sequence)):
+             for j in range(i + 1, len(access_sequence)):
+@@ -231,7 +231,7 @@                 self.correlation_matrix[key1][key2] += 1
+                 self.correlation_matrix[key2][key1] += 1
+ 
+-    def get_warmup_candidates(self, limit: int = 100) -> list[tuple[str, float]]:
++async def get_warmup_candidates(self, limit: int = 100) -> list[tuple[str, float]]:
+         """获取预热候选键."""
+         candidates = []
+ 
+@@ -259,7 +259,7 @@         candidates.sort(key=lambda x: x[1], reverse=True)
+         return candidates[:limit]
+ 
+-    def predict_next_access(self, key: str) -> float:
++async def predict_next_access(self, key: str) -> float:
+         """预测下一个访问时间（返回小时数）."""
+         if key not in self.patterns:
+             return 24.0  # 默认24小时后
+@@ -300,17 +300,17 @@     """预测模型抽象类."""
+ 
+     @abstractmethod
+-    def train(self, training_data: list[dict[str, Any]]) -> bool:
++async def train(self, training_data: list[dict[str, Any]]) -> bool:
+         """训练模型."""
+         pass
+ 
+     @abstractmethod
+-    def predict(self, input_data: dict[str, Any]) -> float:
++async def predict(self, input_data: dict[str, Any]) -> float:
+         """预测."""
+         pass
+ 
+     @abstractmethod
+-    def get_feature_importance(self) -> dict[str, float]:
++async def get_feature_importance(self) -> dict[str, float]:
+         """获取特征重要性."""
+         pass
+ 
+@@ -318,20 +318,20 @@ class SimpleFrequencyPredictor(PredictiveModel):
+     """简单频率预测器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.frequencies: dict[str, float] = {}
+         self.time_weights: dict[int, float] = {}
+ 
+-    def train(self, training_data: list[dict[str, Any]]) -> bool:
++async def train(self, training_data: list[dict[str, Any]]) -> bool:
+         """训练频率模型."""
+         try:
+             for record in training_data:
+                 key = record["key"]
+-                frequency = record.get("frequency", 0.0)
+-                hour = record.get("hour", datetime.utcnow().hour)
++                frequency = record.await get("frequency", 0.0)
++                hour = record.await get("hour", datetime.utcnow().hour)
+ 
+                 self.frequencies[key] = frequency
+-                self.time_weights[hour] = self.time_weights.get(hour, 0) + frequency
++                self.time_weights[hour] = self.time_weights.await get(hour, 0) + frequency
+ 
+             # 归一化时间权重
+             total_weight = sum(self.time_weights.values())
+@@ -345,17 +345,17 @@             logger.error(f"Error training frequency predictor: {e}")
+             return False
+ 
+-    def predict(self, input_data: dict[str, Any]) -> float:
++async def predict(self, input_data: dict[str, Any]) -> float:
+         """预测访问概率."""
+-        key = input_data.get("key", "")
+-        hour = input_data.get("hour", datetime.utcnow().hour)
+-
+-        base_frequency = self.frequencies.get(key, 0.0)
+-        time_weight = self.time_weights.get(hour, 0.1)
++        key = input_data.await get("key", "")
++        hour = input_data.await get("hour", datetime.utcnow().hour)
++
++        base_frequency = self.frequencies.await get(key, 0.0)
++        time_weight = self.time_weights.await get(hour, 0.1)
+ 
+         return base_frequency * time_weight
+ 
+-    def get_feature_importance(self) -> dict[str, float]:
++async def get_feature_importance(self) -> dict[str, float]:
+         """获取特征重要性."""
+         return {"frequency": 0.7, "time_weight": 0.3}
+ 
+@@ -363,7 +363,7 @@ class IntelligentCacheWarmupManager:
+     """智能缓存预热管理器."""
+ 
+-    def __init__(self, cache_manager, config: dict[str, Any] | None = None):
++async def __init__(self, cache_manager, config: dict[str, Any] | None = None):
+         self.cache_manager = cache_manager
+         self.config = config or {}
+ 
+@@ -377,7 +377,7 @@         self.task_queue = asyncio.PriorityQueue()
+ 
+         # 执行器
+-        self.max_concurrent_tasks = self.config.get("max_concurrent_tasks", 5)
++        self.max_concurrent_tasks = self.config.await get("max_concurrent_tasks", 5)
+         self.running_tasks: set[str] = set()
+         self.executor_running = False
+ 
+@@ -406,7 +406,7 @@         # 事件处理器
+         self.event_handlers: dict[str, list[Callable]] = defaultdict(list)
+ 
+-    def register_data_loader(self, key_pattern: str, loader: Callable):
++async def register_data_loader(self, key_pattern: str, loader: Callable):
+         """注册数据加载器."""
+         self.data_loaders[key_pattern] = loader
+ 
+@@ -512,11 +512,11 @@     ) -> list[WarmupTask]:
+         """基于业务规则的预热策略."""
+         tasks = []
+-        business_rules = self.config.get("business_rules", {})
+-
+-        for rule in business_rules.get("warmup_rules", []):
++        business_rules = self.config.await get("business_rules", {})
++
++        for rule in business_rules.await get("warmup_rules", []):
+             if self._evaluate_business_rule(rule):
+-                rule_keys = rule.get("keys", [])
++                rule_keys = rule.await get("keys", [])
+                 if keys:
+                     rule_keys = [k for k in rule_keys if k in keys]
+ 
+@@ -524,9 +524,9 @@                     if not self._should_include_key(key, priority_filter):
+                         continue
+ 
+-                    priority = PriorityLevel(rule.get("priority", "medium"))
++                    priority = await PriorityLevel(rule.get("priority", "medium"))
+                     data_loader = self._get_data_loader(key)
+-                    ttl = rule.get("ttl")
++                    ttl = rule.await get("ttl")
+ 
+                     if data_loader:
+                         task = WarmupTask(
+@@ -627,12 +627,12 @@     ) -> list[WarmupTask]:
+         """定时预热策略."""
+         current_hour = datetime.utcnow().hour
+-        scheduled_warmups = self.config.get("scheduled_warmups", {})
++        scheduled_warmups = self.config.await get("scheduled_warmups", {})
+ 
+         tasks = []
+         for _schedule_key, schedule_config in scheduled_warmups.items():
+-            if schedule_config.get("hour") == current_hour:
+-                schedule_keys = schedule_config.get("keys", [])
++            if schedule_config.await get("hour") == current_hour:
++                schedule_keys = schedule_config.await get("keys", [])
+ 
+                 if keys:
+                     schedule_keys = [k for k in schedule_keys if k in keys]
+@@ -641,9 +641,9 @@                     if not self._should_include_key(key, priority_filter):
+                         continue
+ 
+-                    priority = PriorityLevel(schedule_config.get("priority", "medium"))
++                    priority = await PriorityLevel(schedule_config.get("priority", "medium"))
+                     data_loader = self._get_data_loader(key)
+-                    ttl = schedule_config.get("ttl")
++                    ttl = schedule_config.await get("ttl")
+ 
+                     if data_loader:
+                         task = WarmupTask(
+@@ -658,7 +658,7 @@ 
+         return tasks
+ 
+-    def _should_include_key(
++async def _should_include_key(
+         self, key: str, priority_filter: list[PriorityLevel] | None
+     ) -> bool:
+         """检查是否应该包含键."""
+@@ -670,7 +670,7 @@         key_priority = PriorityLevel.MEDIUM
+         return key_priority in priority_filter
+ 
+-    def _determine_priority(self, score: float) -> PriorityLevel:
++async def _determine_priority(self, score: float) -> PriorityLevel:
+         """根据分数确定优先级."""
+         if score >= 80:
+             return PriorityLevel.CRITICAL
+@@ -683,7 +683,7 @@         else:
+             return PriorityLevel.BACKGROUND
+ 
+-    def _get_priority_value(self, priority: PriorityLevel) -> int:
++async def _get_priority_value(self, priority: PriorityLevel) -> int:
+         """获取优先级数值."""
+         priority_values = {
+             PriorityLevel.CRITICAL: 1,
+@@ -692,9 +692,9 @@             PriorityLevel.LOW: 4,
+             PriorityLevel.BACKGROUND: 5,
+         }
+-        return priority_values.get(priority, 3)
+-
+-    def _get_data_loader(self, key: str) -> Callable | None:
++        return priority_values.await get(priority, 3)
++
++async def _get_data_loader(self, key: str) -> Callable | None:
+         """获取数据加载器."""
+         # 查找匹配的加载器
+         for pattern, loader in self.data_loaders.items():
+@@ -710,14 +710,14 @@         logger.warning(f"Using default data loader for key: {key}")
+         return None
+ 
+-    def _evaluate_business_rule(self, rule: dict[str, Any]) -> bool:
++async def _evaluate_business_rule(self, rule: dict[str, Any]) -> bool:
+         """评估业务规则."""
+-        conditions = rule.get("conditions", [])
++        conditions = rule.await get("conditions", [])
+ 
+         for condition in conditions:
+-            field = condition.get("field")
+-            operator = condition.get("operator")
+-            value = condition.get("value")
++            field = condition.await get("field")
++            operator = condition.await get("operator")
++            value = condition.await get("value")
+ 
+             # 这里可以实现具体的条件评估逻辑
+             # 简化实现
+@@ -752,7 +752,7 @@                 # 获取下一个任务
+                 try:
+                     priority, task_id, task = await asyncio.wait_for(
+-                        self.task_queue.get(), timeout=1.0
++                        self.task_queue.await get(), timeout=1.0
+                     )
+                 except TimeoutError:
+                     continue
+@@ -905,7 +905,7 @@                 except Exception as e:
+                     logger.error(f"Error in event handler for {event_name}: {e}")
+ 
+-    def add_event_handler(self, event_name: str, handler: Callable):
++async def add_event_handler(self, event_name: str, handler: Callable):
+         """添加事件处理器."""
+         self.event_handlers[event_name].append(handler)
+ 
+@@ -939,7 +939,7 @@ _warmup_manager: IntelligentCacheWarmupManager | None = None
+ 
+ 
+-def get_intelligent_warmup_manager() -> IntelligentCacheWarmupManager | None:
++async def get_intelligent_warmup_manager() -> IntelligentCacheWarmupManager | None:
+     """获取全局智能缓存预热管理器实例."""
+     global _warmup_manager
+     return _warmup_manager

@@ -1,0 +1,40 @@
+--- a/src/api/predictions_srs_simple.py+++ b/src/api/predictions_srs_simple.py@@ -134,7 +134,7 @@     pass  # 添加pass语句
+     """简化版预测服务 - 不依赖数据库"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.request_count = 0
+@@ -341,7 +341,7 @@ simple_prediction_service = SimplePredictionService()
+ 
+ 
+-@router.post("/predict", response_model=PredictionResponse)
++@router.await post("/predict", response_model=PredictionResponse)
+ async def predict_match_simple(
+     request: PredictionRequest,
+     background_tasks: BackgroundTasks,
+@@ -396,7 +396,7 @@     return response
+ 
+ 
+-@router.post("/predict/batch", response_model=BatchPredictionResponse)
++@router.await post("/predict/batch", response_model=BatchPredictionResponse)
+ async def predict_batch_simple(
+     request: BatchPredictionRequest,
+     background_tasks: BackgroundTasks,
+@@ -489,7 +489,7 @@     return response
+ 
+ 
+-@router.get("/metrics")
++@router.await get("/metrics")
+ async def get_prediction_metrics_simple(
+     token: str = Depends(simple_prediction_service.verify_token),
+ ):
+@@ -526,7 +526,7 @@     }
+ 
+ 
+-@router.get("/health")
++@router.await get("/health")
+ async def health_check():
+     """健康检查接口 - 不依赖数据库."""
+     return {

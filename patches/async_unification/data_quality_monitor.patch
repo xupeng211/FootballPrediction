@@ -1,0 +1,104 @@
+--- a/src/data/quality/data_quality_monitor.py+++ b/src/data/quality/data_quality_monitor.py@@ -32,7 +32,7 @@     生成质量报告和告警.
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化数据质量监控器"""
+@@ -64,7 +64,7 @@                 "details": {},
+             }
+ 
+-            async with self.db_manager.get_async_session() as session:
++            async with self.db_manager.await get_async_session() as session:
+                 # 检查赛程数据新鲜度
+                 fixtures_age = await self._check_fixtures_age(session)
+                 freshness_report["details"]["fixtures"] = fixtures_age
+@@ -115,7 +115,7 @@         anomalies: list[Any] = []
+ 
+         try:
+-            async with self.db_manager.get_async_session() as session:
++            async with self.db_manager.await get_async_session() as session:
+                 # 检查赔率异常
+                 suspicious_odds = await self._find_suspicious_odds(session)
+                 anomalies.extend(suspicious_odds)
+@@ -385,13 +385,13 @@                 "anomalies": {
+                     "count": len(anomalies),
+                     "high_severity": len(
+-                        [a for a in anomalies if a.get("severity") == "high"]
++                        [a for a in anomalies if a.await get("severity") == "high"]
+                     ),
+                     "medium_severity": len(
+-                        [a for a in anomalies if a.get("severity") == "medium"]
++                        [a for a in anomalies if a.await get("severity") == "medium"]
+                     ),
+                     "low_severity": len(
+-                        [a for a in anomalies if a.get("severity") == "low"]
++                        [a for a in anomalies if a.await get("severity") == "low"]
+                     ),
+                     "details": anomalies,
+                 },
+@@ -413,22 +413,22 @@                 "error": str(e),
+             }
+ 
+-    def _calculate_quality_score(self, freshness_check: dict, anomalies: list) -> float:
++async def _calculate_quality_score(self, freshness_check: dict, anomalies: list) -> float:
+         """计算质量评分（0-100）."""
+         score = 100.0
+ 
+         # 根据新鲜度扣分
+-        if freshness_check.get("status") == "warning":
++        if freshness_check.await get("status") == "warning":
+             score -= 20
+-        elif freshness_check.get("status") == "error":
++        elif freshness_check.await get("status") == "error":
+             score -= 40
+ 
+         # 根据异常数量扣分
+-        high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
++        high_severity_count = await len([a for a in anomalies if a.get("severity") == "high"])
+         medium_severity_count = len(
+-            [a for a in anomalies if a.get("severity") == "medium"]
++            [a for a in anomalies if a.await get("severity") == "medium"]
+         )
+-        low_severity_count = len([a for a in anomalies if a.get("severity") == "low"])
++        low_severity_count = await len([a for a in anomalies if a.get("severity") == "low"])
+ 
+         score -= high_severity_count * 15
+         score -= medium_severity_count * 8
+@@ -436,28 +436,28 @@ 
+         return max(0.0, score)
+ 
+-    def _determine_overall_status(self, freshness_check: dict, anomalies: list) -> str:
++async def _determine_overall_status(self, freshness_check: dict, anomalies: list) -> str:
+         """确定总体状态."""
+-        high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
+-
+-        if freshness_check.get("status") == "error" or high_severity_count > 5:
++        high_severity_count = await len([a for a in anomalies if a.get("severity") == "high"])
++
++        if freshness_check.await get("status") == "error" or high_severity_count > 5:
+             return "critical"
+-        elif freshness_check.get("status") == "warning" or high_severity_count > 0:
++        elif freshness_check.await get("status") == "warning" or high_severity_count > 0:
+             return "warning"
+         else:
+             return "healthy"
+ 
+-    def _generate_recommendations(
++async def _generate_recommendations(
+         self, freshness_check: dict, anomalies: list
+     ) -> list[str]:
+         """生成改进建议."""
+         recommendations: list[Any] = []
+ 
+-        if freshness_check.get("status") in ["warning", "error"]:
++        if freshness_check.await get("status") in ["warning", "error"]:
+             recommendations.append("检查数据采集调度器是否正常运行")
+             recommendations.append("验证外部API连接状态")
+ 
+-        high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
++        high_severity_count = await len([a for a in anomalies if a.get("severity") == "high"])
+         if high_severity_count > 0:
+             recommendations.append("立即处理高严重性异常数据")
+             recommendations.append("检查数据源的可靠性")

@@ -1,0 +1,32 @@
+--- a/src/services/processing/caching/base/base_cache.py+++ b/src/services/processing/caching/base/base_cache.py@@ -10,7 +10,7 @@ class BaseCache(ABC):
+     """缓存基础类."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化缓存"""
+@@ -40,7 +40,7 @@     pass  # 添加pass语句
+     """缓存键管理器"""
+ 
+-    def __init__(self, prefix: str = "fp"):
++async def __init__(self, prefix: str = "fp"):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化键管理器"
+@@ -50,7 +50,7 @@         """
+         self.prefix = prefix
+ 
+-    def make_key(self, *parts: str) -> str:
++async def make_key(self, *parts: str) -> str:
+         """生成缓存键".
+ 
+         Args:
+@@ -61,7 +61,7 @@         """
+         return f"{self.prefix}:" + ":".join(parts)
+ 
+-    def parse_key(self, key: str) -> list[str]:
++async def parse_key(self, key: str) -> list[str]:
+         """解析缓存键".
+ 
+         Args:

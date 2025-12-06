@@ -1,0 +1,36 @@
+--- a/src/jobs/data_quality_report.py+++ b/src/jobs/data_quality_report.py@@ -21,17 +21,17 @@ class DataQualityReporter:
+     """数据质量报告生成器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.collector = None
+ 
+-    def print_header(self):
++async def print_header(self):
+         """打印报告头部"""
+         print("🔬" + "=" * 60)
+         print("📊 Football Prediction System - 数据质量检查报告")
+         print("👨‍🔬 Chief Data Scientist 专项分析")
+         print("=" * 64)
+ 
+-    def print_critical_finding(self, title: str, content: dict[str, Any]):
++async def print_critical_finding(self, title: str, content: dict[str, Any]):
+         """打印关键发现"""
+         print(f"\n⚠️  {title}")
+         print("-" * (len(title) + 5))
+@@ -104,7 +104,7 @@             if self.collector:
+                 await self.collector.close()
+ 
+-    def print_fotmob_data_structure(self, details: dict[str, Any]):
++async def print_fotmob_data_structure(self, details: dict[str, Any]):
+         """打印FotMob数据结构"""
+         print("\n📋 FotMob L2 数据结构分析:")
+ 
+@@ -168,7 +168,7 @@                         f"           {i+1}. {json.dumps(shot_info, ensure_ascii=False)}"
+                     )
+ 
+-    def generate_recommendations(self):
++async def generate_recommendations(self):
+         """生成改进建议"""
+         recommendations = [
+             "🔧 修复L2采集器: 确保xG、赔率、射门数据保存到数据库"

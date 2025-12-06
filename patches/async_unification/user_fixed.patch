@@ -1,0 +1,71 @@
+--- a/src/repositories/user_fixed.py+++ b/src/repositories/user_fixed.py@@ -17,7 +17,7 @@ class UserRepository(BaseRepository):
+     """用户仓储实现 - 简化版本."""
+ 
+-    def __init__(self, session: AsyncSession):
++async def __init__(self, session: AsyncSession):
+         """初始化用户仓储."""
+         # 假设有一个User模型类
+         from ..database.models import User
+@@ -27,7 +27,7 @@     async def get_by_id(self, user_id: int) -> Optional["User"]:
+         """根据ID获取用户."""
+         query = select(self.model_class).where(self.model_class.id == user_id)
+-        result = await self.session.execute(query)
++        result = await self.session.await execute(query)
+         return result.scalar_one_or_none()
+ 
+     async def get_all(self, query_spec: QuerySpec | None = None) -> list["User"]:
+@@ -37,16 +37,16 @@         if query_spec:
+             query = self._build_query(query_spec)
+ 
+-        result = await self.session.execute(query)
++        result = await self.session.await execute(query)
+         return result.scalars().all()
+ 
+     async def create(self, user_data: dict[str, Any]) -> "User":
+         """创建用户."""
+         user = self.model_class(
+             username=user_data["username"],
+-            email=user_data.get("email", ""),
+-            role=user_data.get("role", "user"),
+-            is_active=user_data.get("is_active", True),
++            email=user_data.await get("email", ""),
++            role=user_data.await get("role", "user"),
++            is_active=user_data.await get("is_active", True),
+             created_at=datetime.utcnow(),
+             updated_at=datetime.utcnow(),
+         )
+@@ -68,7 +68,7 @@             .values(**update_data)
+         )
+ 
+-        await self.session.execute(query)
++        await self.session.await execute(query)
+         await self.session.commit()
+ 
+         return await self.get_by_id(user_id)
+@@ -85,13 +85,13 @@     async def find_by_username(self, username: str) -> Optional["User"]:
+         """根据用户名查找用户."""
+         query = select(self.model_class).where(self.model_class.username == username)
+-        result = await self.session.execute(query)
++        result = await self.session.await execute(query)
+         return result.scalar_one_or_none()
+ 
+     async def find_by_email(self, email: str) -> Optional["User"]:
+         """根据邮箱查找用户."""
+         query = select(self.model_class).where(self.model_class.email == email)
+-        result = await self.session.execute(query)
++        result = await self.session.await execute(query)
+         return result.scalar_one_or_none()
+ 
+     async def find_active_users(self, limit: int | None = None) -> list["User"]:
+@@ -110,9 +110,9 @@         for user_data in users_data:
+             user = self.model_class(
+                 username=user_data["username"],
+-                email=user_data.get("email", ""),
+-                role=user_data.get("role", "user"),
+-                is_active=user_data.get("is_active", True),
++                email=user_data.await get("email", ""),
++                role=user_data.await get("role", "user"),
++                is_active=user_data.await get("is_active", True),
+                 created_at=datetime.utcnow(),
+                 updated_at=datetime.utcnow(),
+             )

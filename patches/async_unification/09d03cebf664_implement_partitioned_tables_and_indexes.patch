@@ -1,0 +1,161 @@
+--- a/src/database/migrations/versions/09d03cebf664_implement_partitioned_tables_and_indexes.py+++ b/src/database/migrations/versions/09d03cebf664_implement_partitioned_tables_and_indexes.py@@ -76,7 +76,7 @@ depends_on: str | Sequence[str] | None = None
+ 
+ 
+-def is_sqlite():
++async def is_sqlite():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """检测当前是否为SQLite数据库"""
+@@ -86,7 +86,7 @@     return bind.dialect.name == "sqlite"
+ 
+ 
+-def is_postgresql():
++async def is_postgresql():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """检测当前是否为PostgreSQL数据库"""
+@@ -96,15 +96,15 @@     return bind.dialect.name == "postgresql"
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     """升级数据库:实现分区表和索引优化
+     SQLite不支持分区表,但会创建相应的索引来优化查询性能。
+     PostgreSQL将实现完整的分区表策略和高级索引.
+     """
+     if context.is_offline_mode():
+         logger.info("⚠️  离线模式:跳过分区表实现")
+-        op.execute("-- offline mode: skipped partitioned tables implementation")
+-        op.execute("-- offline mode: skipped advanced indexes creation")
++        op.await execute("-- offline mode: skipped partitioned tables implementation")
++        op.await execute("-- offline mode: skipped advanced indexes creation")
+         return None
+     bind = op.get_bind()
+     logger.info(f"当前数据库类型: {bind.dialect.name}")
+@@ -120,7 +120,7 @@     logger.info("分区表和索引优化实施完成")
+ 
+ 
+-def _implement_postgresql_partitioning_and_indexes():
++async def _implement_postgresql_partitioning_and_indexes():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """PostgreSQL环境下实现分区表和高级索引"""
+@@ -188,7 +188,7 @@     )
+     try:
+         result = (
+-            op.get_bind()
++            op.await get_bind()
+             .execute(
+                 text(
+                     """
+@@ -206,7 +206,7 @@     current_year = 2025
+     for year in range(2020, current_year + 2):
+         try:
+-            op.execute(text(f"SELECT create_match_partition({year})"))
++            op.await execute(text(f"SELECT create_match_partition({year})"))
+         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+             logger.info(f"  创建分区 {year} 失败: {e}")
+     for year in [2024, 2025]:
+@@ -214,13 +214,13 @@             if year == 2024 and month < 9:  # 跳过太早的月份
+                 continue
+             try:
+-                op.execute(text(f"SELECT create_prediction_partition({year}, {month})"))
++                op.await execute(text(f"SELECT create_prediction_partition({year}, {month})"))
+             except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+                 logger.info(f"  创建预测分区 {year}-{month:02d} 失败: {e}")
+     _create_postgresql_advanced_indexes()
+ 
+ 
+-def _create_postgresql_advanced_indexes():
++async def _create_postgresql_advanced_indexes():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """创建PostgreSQL高级索引"""
+@@ -275,7 +275,7 @@             logger.info(f"  创建索引 {idx['name']} 失败: {e}")
+ 
+ 
+-def _implement_sqlite_optimized_indexes():
++async def _implement_sqlite_optimized_indexes():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """SQLite环境下实现优化索引"""
+@@ -323,7 +323,7 @@             logger.info(f"  创建SQLite索引 {idx['name']} 失败: {e}")
+ 
+ 
+-def _implement_basic_indexes():
++async def _implement_basic_indexes():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """实现基础索引（通用数据库）"""
+@@ -346,12 +346,12 @@             logger.info(f"  创建基础索引 {idx['name']} 失败: {e}")
+ 
+ 
+-def _create_index_if_not_exists(name, table, columns, method="btree", condition=None):
++async def _create_index_if_not_exists(name, table, columns, method="btree", condition=None):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """创建PostgreSQL索引（如果不存在）"""
+     exists = (
+-        op.get_bind()
++        op.await get_bind()
+         .execute(
+             text(
+                 """
+@@ -373,11 +373,11 @@         index_sql = f"CREATE INDEX {name} ON {table} ({columns_str})"
+     if condition:
+         index_sql += f" WHERE {condition}"
+-    op.execute(text(index_sql))
++    op.await execute(text(index_sql))
+     logger.info(f"  ✓ 已创建索引: {name}")
+ 
+ 
+-def _create_simple_index(name, table, columns):
++async def _create_simple_index(name, table, columns):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """创建简单索引"""
+@@ -391,14 +391,14 @@             raise
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     """降级操作:移除分区表和索引
+     注意:分区表的降级需要谨慎操作,可能需要数据迁移.
+     """
+     if context.is_offline_mode():
+         logger.info("⚠️  离线模式:跳过分区表降级")
+-        op.execute("-- offline mode: skipped partitioned tables downgrade")
+-        op.execute("-- offline mode: skipped advanced indexes removal")
++        op.await execute("-- offline mode: skipped partitioned tables downgrade")
++        op.await execute("-- offline mode: skipped advanced indexes removal")
+         return None
+     logger.info("开始降级分区表和索引优化...")
+     if is_postgresql():
+@@ -408,11 +408,11 @@     logger.info("分区表和索引降级完成")
+ 
+ 
+-def _downgrade_postgresql_features():
++async def _downgrade_postgresql_features():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """降级PostgreSQL特性"""
+-    op.execute(text("DROP FUNCTION IF EXISTS create_match_partition(INTEGER)"))
++    op.await execute(text("DROP FUNCTION IF EXISTS create_match_partition(INTEGER)"))
+     op.execute(
+         text("DROP FUNCTION IF EXISTS create_prediction_partition(INTEGER, INTEGER)")
+     )
+@@ -426,13 +426,13 @@     ]
+     for idx_name in indexes_to_drop:
+         try:
+-            op.execute(text(f"DROP INDEX IF EXISTS {idx_name}"))
++            op.await execute(text(f"DROP INDEX IF EXISTS {idx_name}"))
+             logger.info(f"  ✓ 已删除索引: {idx_name}")
+         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+             logger.info(f"  删除索引 {idx_name} 失败: {e}")
+ 
+ 
+-def _downgrade_sqlite_features():
++async def _downgrade_sqlite_features():
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """降级SQLite特性"""

@@ -1,0 +1,74 @@
+--- a/src/database/migrations/versions/d3bf28af22ff_add_performance_critical_indexes.py+++ b/src/database/migrations/versions/d3bf28af22ff_add_performance_critical_indexes.py@@ -112,7 +112,7 @@ depends_on: str | Sequence[str] | None = None
+ 
+ 
+-def _create_predictions_indexes(conn) -> None:
++async def _create_predictions_indexes(conn) -> None:
+     """创建预测表索引."""
+     logger.info("1. 创建预测表性能索引...")
+     try:
+@@ -141,11 +141,11 @@         logger.info(f"   ✗ idx_predictions_match_created 创建失败: {e}")
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     """添加性能关键索引."""
+     if context.is_offline_mode():
+         logger.info("⚠️  离线模式:跳过性能索引创建")
+-        op.execute("-- offline mode: skipped performance indexes creation")
++        op.await execute("-- offline mode: skipped performance indexes creation")
+         return None
+     conn = op.get_bind()
+     logger.info("开始添加性能关键索引...")
+@@ -153,7 +153,7 @@     _create_matches_indexes(conn)
+ 
+ 
+-def _create_matches_indexes(conn) -> None:
++async def _create_matches_indexes(conn) -> None:
+     """创建比赛表索引."""
+     logger.info("2. 创建比赛表复合索引...")
+     try:
+@@ -194,7 +194,7 @@         logger.info(f"   ✗ idx_matches_home_time 创建失败: {e}")
+ 
+ 
+-def _create_features_indexes(conn) -> None:
++async def _create_features_indexes(conn) -> None:
+     """创建特征表索引."""
+     logger.info("3. 创建特征表性能索引...")
+     try:
+@@ -223,7 +223,7 @@         logger.info(f"   ✗ idx_features_type 创建失败: {e}")
+ 
+ 
+-def _create_data_quality_indexes(conn) -> None:
++async def _create_data_quality_indexes(conn) -> None:
+     """创建数据质量监控索引."""
+     logger.info("4. 创建数据质量监控索引...")
+     try:
+@@ -252,7 +252,7 @@         logger.info(f"   ✗ idx_data_quality_status 创建失败: {e}")
+ 
+ 
+-def _create_audit_logs_indexes(conn) -> None:
++async def _create_audit_logs_indexes(conn) -> None:
+     """创建审计日志索引."""
+     logger.info("5. 创建审计日志索引...")
+     try:
+@@ -359,11 +359,11 @@     logger.info("✅ 性能关键索引创建完成！")
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     """删除性能关键索引."""
+     if context.is_offline_mode():
+         logger.info("⚠️  离线模式:跳过索引删除")
+-        op.execute("-- offline mode: skipped performance indexes removal")
++        op.await execute("-- offline mode: skipped performance indexes removal")
+         return None
+     conn = op.get_bind()
+     logger.info("开始删除性能关键索引...")
+@@ -388,7 +388,7 @@     ]
+     for index_name in indexes_to_drop:
+         try:
+-            conn.execute(text(f"DROP INDEX IF EXISTS {index_name};"))
++            conn.await execute(text(f"DROP INDEX IF EXISTS {index_name};"))
+             logger.info(f"   ✓ {index_name} 删除成功")
+         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+             logger.info(f"   ✗ {index_name} 删除失败: {e}")

@@ -1,0 +1,46 @@
+--- a/src/cache/ttl_cache_enhanced/async_cache.py+++ b/src/cache/ttl_cache_enhanced/async_cache.py@@ -22,7 +22,7 @@     Provides async interface for TTLCache.
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         max_size: int = 1000,
+         default_ttl: float | None = None,
+@@ -47,7 +47,7 @@         Returns:
+             Any: 缓存值或默认值
+         """
+-        return self._cache.get(key, default)
++        return self._cache.await get(key, default)
+ 
+     async def set(
+         self,
+@@ -198,24 +198,24 @@         """异步重置统计信息."""
+         self._cache.reset_stats()
+ 
+-    def start_auto_cleanup(self):
++async def start_auto_cleanup(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """启动自动清理"""
+         self._cache.start_auto_cleanup()
+ 
+-    def stop_auto_cleanup(self):
++async def stop_auto_cleanup(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """停止自动清理"""
+         self._cache.stop_auto_cleanup()
+ 
+-    def __len__(self) -> int:
++async def __len__(self) -> int:
+         return len(self._cache)
+ 
+     async def __acontains__(self, key: str) -> bool:
+         """异步in操作符."""
+-        return await self.get(key) is not None
+-
+-    def __repr__(self) -> str:
++        return await self.await get(key) is not None
++
++async def __repr__(self) -> str:
+         return f"AsyncTTLCache({self._cache.__repr__()})"

@@ -1,0 +1,24 @@
+--- a/src/api/features_simple.py+++ b/src/api/features_simple.py@@ -19,7 +19,7 @@ router = APIRouter(prefix="/features", tags=["特征管理"])
+ 
+ 
+-@router.get("/match/{match_id}", response_model=dict[str, Any])
++@router.await get("/match/{match_id}", response_model=dict[str, Any])
+ async def get_match_features(
+     match_id: int, db: AsyncSession = Depends(get_async_db)
+ ) -> dict[str, Any]:
+@@ -66,7 +66,7 @@         raise HTTPException(status_code=500, detail="服务器内部错误") from e
+ 
+ 
+-@router.get("/health", response_model=dict[str, str])
++@router.await get("/health", response_model=dict[str, str])
+ async def health_check() -> dict[str, str]:
+     """简单的健康检查端点."""
+     try:
+@@ -80,7 +80,7 @@         raise HTTPException(status_code=500, detail="健康检查失败") from None
+ 
+ 
+-@router.get("/", response_model=dict[str, Any])
++@router.await get("/", response_model=dict[str, Any])
+ async def get_features_info() -> dict[str, Any]:
+     """获取特征服务信息."""
+     try:

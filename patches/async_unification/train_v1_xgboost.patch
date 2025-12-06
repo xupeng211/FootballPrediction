@@ -1,0 +1,88 @@
+--- a/src/models/train_v1_xgboost.py+++ b/src/models/train_v1_xgboost.py@@ -28,7 +28,7 @@ class V1XGBoostTrainer:
+     """V1 XGBoost训练器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.data = None
+         self.X_train = None
+         self.X_test = None
+@@ -38,7 +38,7 @@         self.scaler = StandardScaler()
+         self.feature_names = []
+ 
+-    def load_dataset(self):
++async def load_dataset(self):
+         """加载数据集"""
+         try:
+             dataset_path = Path("data/training_sets/v1_dataset.csv")
+@@ -61,7 +61,7 @@             logger.error(f"❌ 加载数据集失败: {e}")
+             return False
+ 
+-    def prepare_features(self):
++async def prepare_features(self):
+         """准备特征和目标变量"""
+         logger.info("🔧 准备特征和目标变量...")
+ 
+@@ -93,7 +93,7 @@ 
+         return X, y
+ 
+-    def time_split_data(self, X, y):
++async def time_split_data(self, X, y):
+         """按时间切分数据（模拟真实预测场景）"""
+         logger.info("📅 按时间切分数据...")
+ 
+@@ -126,7 +126,7 @@ 
+         return True
+ 
+-    def train_model(self):
++async def train_model(self):
+         """训练XGBoost模型"""
+         logger.info("🚀 开始训练XGBoost模型...")
+ 
+@@ -165,7 +165,7 @@ 
+         return True
+ 
+-    def evaluate_model(self):
++async def evaluate_model(self):
+         """评估模型性能"""
+         logger.info("📊 评估模型性能...")
+ 
+@@ -195,7 +195,7 @@ 
+         return accuracy, cm, y_pred_proba
+ 
+-    def analyze_feature_importance(self):
++async def analyze_feature_importance(self):
+         """分析特征重要性"""
+         logger.info("🔍 分析特征重要性...")
+ 
+@@ -231,7 +231,7 @@ 
+         return feature_importance_df
+ 
+-    def simulate_betting(self, y_pred_proba):
++async def simulate_betting(self, y_pred_proba):
+         """模拟下注ROI"""
+         logger.info("💰 模拟下注ROI分析...")
+ 
+@@ -285,7 +285,7 @@ 
+         return roi, hit_rate
+ 
+-    def save_model(self):
++async def save_model(self):
+         """保存模型"""
+         try:
+             model_dir = Path("models")
+@@ -318,7 +318,7 @@             logger.error(f"❌ 保存模型失败: {e}")
+             return False
+ 
+-    def run(self):
++async def run(self):
+         """执行完整的训练流程"""
+         logger.info("🚀 启动首席AI科学家 - V1 XGBoost训练器")
+         start_time = datetime.now()
+@@ -376,7 +376,7 @@         return True
+ 
+ 
+-def main():
++async def main():
+     """主函数"""
+     try:
+         trainer = V1XGBoostTrainer()

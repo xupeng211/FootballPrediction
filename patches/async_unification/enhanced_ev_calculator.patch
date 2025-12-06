@@ -1,0 +1,240 @@
+--- a/src/services/betting/enhanced_ev_calculator.py+++ b/src/services/betting/enhanced_ev_calculator.py@@ -162,7 +162,7 @@     pass  # 添加pass语句
+     """增强Kelly准则计算器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.logger = logger
+@@ -173,7 +173,7 @@         self.volatility_adjustment = True  # 启用波动率调整
+         self.confidence_weighting = True  # 启用置信度权重
+ 
+-    def calculate_fractional_kelly(
++async def calculate_fractional_kelly(
+         self,
+         edge=None,  # 期望的edge参数
+         odds=None,  # 期望的odds参数
+@@ -269,7 +269,7 @@             recommended_adjustment=recommendation,
+         )
+ 
+-    def _apply_kelly_optimizations(
++async def _apply_kelly_optimizations(
+         self,
+         kelly_standard: float,
+         probability: float,
+@@ -305,7 +305,7 @@ 
+         return kelly_fractional
+ 
+-    def _calculate_volatility_penalty(
++async def _calculate_volatility_penalty(
+         self, probability: float, net_odds: float
+     ) -> float:
+         """计算波动率惩罚."""
+@@ -317,7 +317,7 @@         penalty = min(volatility * 0.1, 0.5)
+         return penalty
+ 
+-    def _calculate_performance_factor(self, historical: dict[str, float]) -> float:
++async def _calculate_performance_factor(self, historical: dict[str, float]) -> float:
+         """基于历史表现计算调整因子."""
+         if not historical:
+             return 1.0
+@@ -327,7 +327,7 @@ 
+         factors = []
+         for metric, _weight in weights.items():
+-            value = historical.get(metric, 0.0)
++            value = historical.await get(metric, 0.0)
+ 
+             if metric == "accuracy":
+                 # 准确率转换为因子 (0.5-1.5范围)
+@@ -350,7 +350,7 @@         )
+         return max(0.5, min(performance_factor, 1.5))
+ 
+-    def _calculate_expected_growth(
++async def _calculate_expected_growth(
+         self, kelly_fraction: float, probability: float, net_odds: float
+     ) -> float:
+         """计算期望增长率."""
+@@ -369,7 +369,7 @@         growth_rate = p * math.log(1 + f * b) + q * math.log(1 - f)
+         return growth_rate
+ 
+-    def _calculate_risk_of_ruin(
++async def _calculate_risk_of_ruin(
+         self, kelly_fraction: float, probability: float, net_odds: float
+     ) -> float:
+         """计算破产风险."""
+@@ -394,7 +394,7 @@         risk = min(kelly_ratio * 0.2, 0.3)  # 限制在30%以下
+         return risk
+ 
+-    def _calculate_kelly_confidence_interval(
++async def _calculate_kelly_confidence_interval(
+         self,
+         kelly_fraction: float,
+         probability: float,
+@@ -413,7 +413,7 @@ 
+         return (lower, upper)
+ 
+-    def _perform_sensitivity_analysis(
++async def _perform_sensitivity_analysis(
+         self, kelly_fraction: float, probability: float, net_odds: float
+     ) -> dict[str, float]:
+         """执行敏感性分析."""
+@@ -454,7 +454,7 @@ 
+         return sensitivity
+ 
+-    def _generate_kelly_recommendation(
++async def _generate_kelly_recommendation(
+         self, kelly_fraction: float, risk_of_ruin: float, expected_growth: float
+     ) -> str:
+         """生成Kelly建议."""
+@@ -476,7 +476,7 @@     pass  # 添加pass语句
+     """增强价值评级计算器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.logger = logger
+@@ -490,7 +490,7 @@             "historical_performance": 0.05,  # 历史表现权重
+         }
+ 
+-    def calculate_enhanced_value_rating(
++async def calculate_enhanced_value_rating(
+         self,
+         ev=None,  # 新增的ev参数
+         probability=None,  # 原有参数
+@@ -590,7 +590,7 @@             rating_breakdown=rating_breakdown,
+         )
+ 
+-    def _calculate_ev_score(self, ev: float) -> float:
++async def _calculate_ev_score(self, ev: float) -> float:
+         """计算EV分数 (0-10)."""
+         if ev <= 0:
+             return 0.0
+@@ -604,7 +604,7 @@ 
+         return min(score, 10.0)
+ 
+-    def _calculate_probability_score(
++async def _calculate_probability_score(
+         self, probability: float, confidence: float
+     ) -> float:
+         """计算概率分数 (0-10)."""
+@@ -617,7 +617,7 @@         total_score = base_score + confidence_bonus
+         return min(total_score, 10.0)
+ 
+-    def _calculate_odds_fairness_score(self, probability: float, odds: float) -> float:
++async def _calculate_odds_fairness_score(self, probability: float, odds: float) -> float:
+         """计算赔率公平性分数 (0-10)."""
+         fair_odds = 1 / probability if probability > 0 else float("inf")
+         actual_odds = odds
+@@ -640,7 +640,7 @@         else:
+             return max(0.0, 2.0 - odds_deviation)
+ 
+-    def _calculate_market_efficiency_score(
++async def _calculate_market_efficiency_score(
+         self, probability: float, odds: float, market_data: dict[str, Any] | None
+     ) -> float:
+         """计算市场效率分数 (0-10)."""
+@@ -680,7 +680,7 @@         else:
+             return 6.0
+ 
+-    def _calculate_risk_adjusted_score(
++async def _calculate_risk_adjusted_score(
+         self, ev: float, probability: float, odds: float, confidence: float
+     ) -> float:
+         """计算风险调整分数 (0-10)."""
+@@ -725,7 +725,7 @@ 
+         return max(0.0, min(risk_adjusted_score, 10.0))
+ 
+-    def _calculate_historical_performance_score(
++async def _calculate_historical_performance_score(
+         self, historical_data: dict[str, Any] | None
+     ) -> float:
+         """计算历史表现分数 (0-10)."""
+@@ -772,7 +772,7 @@     pass  # 添加pass语句
+     """增强EV计算器主类"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.kelly_calculator = EnhancedKellyCalculator()
+@@ -783,7 +783,7 @@         # 优化后的策略配置
+         self.optimized_strategies = self._create_optimized_strategies()
+ 
+-    def _create_optimized_strategies(self) -> dict[str, BettingStrategy]:
++async def _create_optimized_strategies(self) -> dict[str, BettingStrategy]:
+         """创建优化后的策略."""
+         return {
+             "ultra_conservative": BettingStrategy(
+@@ -838,7 +838,7 @@             ),
+         }
+ 
+-    def calculate_enhanced_ev(
++async def calculate_enhanced_ev(
+         self,
+         odds,  # BettingOdds对象或float
+         probabilities=None,  # PredictionProbabilities对象
+@@ -921,7 +921,7 @@             suggested_stake=suggested_stake,
+         )
+ 
+-    def _assess_enhanced_risk(
++async def _assess_enhanced_risk(
+         self, probability: float, odds: float, ev: float, risk_of_ruin: float
+     ) -> RiskLevel:
+         """评估增强风险等级."""
+@@ -934,7 +934,7 @@         else:
+             return RiskLevel.MEDIUM
+ 
+-    def _generate_enhanced_recommendation(
++async def _generate_enhanced_recommendation(
+         self,
+         ev: float,
+         value_rating: float,
+@@ -984,10 +984,10 @@         else:
+             bets_data = []
+ 
+-        strategy = self.optimized_strategies.get(strategy_name)
++        strategy = self.optimized_strategies.await get(strategy_name)
+         if not strategy:
+             # 使用默认策略
+-            strategy = self.optimized_strategies.get("balanced_enhanced")
++            strategy = self.optimized_strategies.await get("balanced_enhanced")
+ 
+         # 回测结果
+         results = {
+@@ -1023,13 +1023,13 @@                 or "odds" not in bet_data
+             ):
+                 # 简化格式：只包含基本信息
+-                wins += 1 if bet_data.get("result", False) else 0
+-                losses += 0 if bet_data.get("result", False) else 1
++                wins += 1 if bet_data.await get("result", False) else 0
++                losses += 0 if bet_data.await get("result", False) else 1
+                 total_bets += 1
+ 
+                 # 模拟基于EV的结果
+-                if bet_data.get("result", False):
+-                    profit += bet_data.get("ev", 0.15) * 100  # 假设100单位本金
++                if bet_data.await get("result", False):
++                    profit += bet_data.await get("ev", 0.15) * 100  # 假设100单位本金
+                 else:
+                     profit -= 100
+                 continue
+@@ -1039,9 +1039,9 @@                 bet_type=BetType(bet_data["bet_type"]),
+                 probability=bet_data["probability"],
+                 odds=bet_data["odds"],
+-                confidence=bet_data.get("confidence", 1.0),
++                confidence=bet_data.await get("confidence", 1.0),
+                 strategy_name=strategy_name,
+-                historical_data=bet_data.get("historical_data"),
++                historical_data=bet_data.await get("historical_data"),
+             )
+ 
+             # 检查是否投注
+@@ -1062,7 +1062,7 @@             results["total_stake"] += stake
+ 
+             # 模拟结果
+-            won = bet_data.get("outcome", False)
++            won = bet_data.await get("outcome", False)
+             if won:
+                 winnings = stake * ev_calc.odds
+                 current_bankroll = current_bankroll - stake + winnings

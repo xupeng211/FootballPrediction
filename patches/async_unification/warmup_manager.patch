@@ -1,0 +1,8 @@
+--- a/src/cache/redis/warmup/warmup_manager.py+++ b/src/cache/redis/warmup/warmup_manager.py@@ -15,7 +15,7 @@     pass  # 添加pass语句
+     """Redis cache warmup manager"""
+ 
+-    def __init__(self, redis_manager=None):
++async def __init__(self, redis_manager=None):
+         """函数文档字符串."""
+         # 添加pass语句
+         """Initialize warmup manager"""

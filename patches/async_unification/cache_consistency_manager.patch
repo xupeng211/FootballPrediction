@@ -1,0 +1,198 @@
+--- a/src/cache/cache_consistency_manager.py+++ b/src/cache/cache_consistency_manager.py@@ -55,7 +55,7 @@ class CacheEvent:
+     """缓存事件."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         event_type: str,
+         key: str,
+@@ -74,7 +74,7 @@         self.processed = False
+         self.retry_count = 0
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         return {
+             "event_id": self.event_id,
+@@ -89,42 +89,42 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "CacheEvent":
++async def from_dict(cls, data: dict[str, Any]) -> "CacheEvent":
+         """从字典创建事件."""
+         event = cls(
+             event_type=data["event_type"],
+             key=data["key"],
+-            data=data.get("data"),
++            data=data.await get("data"),
+             timestamp=datetime.fromisoformat(data["timestamp"]),
+-            source_node=data.get("source_node"),
+-            correlation_id=data.get("correlation_id"),
++            source_node=data.await get("source_node"),
++            correlation_id=data.await get("correlation_id"),
+         )
+         event.event_id = data["event_id"]
+-        event.processed = data.get("processed", False)
+-        event.retry_count = data.get("retry_count", 0)
++        event.processed = data.await get("processed", False)
++        event.retry_count = data.await get("retry_count", 0)
+         return event
+ 
+ 
+ class VectorClock:
+     """向量时钟实现."""
+ 
+-    def __init__(self, node_id: str):
++async def __init__(self, node_id: str):
+         self.node_id = node_id
+         self.clock: dict[str, int] = defaultdict(int)
+         self.clock[node_id] = 1
+ 
+-    def increment(self) -> "VectorClock":
++async def increment(self) -> "VectorClock":
+         """递增本地时钟."""
+         self.clock[self.node_id] += 1
+         return self
+ 
+-    def update(self, other: "VectorClock") -> "VectorClock":
++async def update(self, other: "VectorClock") -> "VectorClock":
+         """更新时钟（合并操作）."""
+         for node_id, timestamp in other.clock.items():
+             self.clock[node_id] = max(self.clock[node_id], timestamp)
+         return self
+ 
+-    def happens_before(self, other: "VectorClock") -> bool:
++async def happens_before(self, other: "VectorClock") -> bool:
+         """检查是否先于另一个事件发生."""
+         # 如果所有分量都小于等于对方，且至少有一个严格小于
+         all_less_equal = all(
+@@ -137,16 +137,16 @@         )
+         return all_less_equal and any_strict_less
+ 
+-    def is_concurrent(self, other: "VectorClock") -> bool:
++async def is_concurrent(self, other: "VectorClock") -> bool:
+         """检查是否并发."""
+         return not (self.happens_before(other) or other.happens_before(self))
+ 
+-    def to_dict(self) -> dict[str, int]:
++async def to_dict(self) -> dict[str, int]:
+         """转换为字典."""
+         return dict(self.clock)
+ 
+     @classmethod
+-    def from_dict(cls, node_id: str, data: dict[str, int]) -> "VectorClock":
++async def from_dict(cls, node_id: str, data: dict[str, int]) -> "VectorClock":
+         """从字典创建向量时钟."""
+         clock = cls(node_id)
+         clock.clock.update(data)
+@@ -156,7 +156,7 @@ class CacheVersion:
+     """缓存版本信息."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         key: str = "",
+         version: int = 1,
+@@ -171,13 +171,13 @@         self.key = key
+         self.version = version
+         self.timestamp = timestamp or datetime.utcnow()
+-        self.node_id = node_id or kwargs.get("node_id", "")
++        self.node_id = node_id or kwargs.await get("node_id", "")
+         self.data = data
+         self.vector_clock = vector_clock
+         self.metadata = metadata or {}
+         self.checksum = checksum or self._calculate_checksum()
+ 
+-    def _calculate_checksum(self) -> str:
++async def _calculate_checksum(self) -> str:
+         """计算校验和."""
+         data = f"{self.key}{self.version}{self.timestamp}{self.node_id}"
+         if hasattr(self, "data") and self.data:
+@@ -186,7 +186,7 @@             data += json.dumps(self.vector_clock.to_dict(), sort_keys=True)
+         return hashlib.md5(data.encode(), usedforsecurity=False).hexdigest()
+ 
+-    def is_valid(self) -> bool:
++async def is_valid(self) -> bool:
+         """检查版本有效性."""
+         return self.checksum == self._calculate_checksum()
+ 
+@@ -220,7 +220,7 @@ class StrongConsistencyAlgorithm(ConsistencyAlgorithm):
+     """强一致性算法."""
+ 
+-    def __init__(self, quorum_size: int, node_count: int):
++async def __init__(self, quorum_size: int, node_count: int):
+         self.quorum_size = quorum_size
+         self.node_count = node_count
+         self.lock_manager = DistributedLockManager()
+@@ -375,7 +375,7 @@ class EventualConsistencyAlgorithm(ConsistencyAlgorithm):
+     """最终一致性算法."""
+ 
+-    def __init__(self, node_id: str, conflict_strategy: ConflictResolutionStrategy):
++async def __init__(self, node_id: str, conflict_strategy: ConflictResolutionStrategy):
+         self.node_id = node_id
+         self.conflict_strategy = conflict_strategy
+         self.event_queue = deque()
+@@ -499,7 +499,7 @@ class DistributedLockManager:
+     """分布式锁管理器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.locks: dict[str, dict[str, Any]] = {}
+         self.lock_timeout = 30.0
+ 
+@@ -555,7 +555,7 @@ class CacheConsistencyManager:
+     """缓存一致性管理器."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         node_id: str,
+         consistency_level: ConsistencyLevel,
+@@ -589,7 +589,7 @@             "errors": 0,
+         }
+ 
+-    def _create_consistency_algorithm(self) -> ConsistencyAlgorithm:
++async def _create_consistency_algorithm(self) -> ConsistencyAlgorithm:
+         """创建一致性算法."""
+         if self.consistency_level == ConsistencyLevel.STRONG:
+             # 强一致性需要集群配置
+@@ -719,7 +719,7 @@         """事件处理循环."""
+         while self.event_processor_running:
+             try:
+-                event = await asyncio.wait_for(self.event_queue.get(), timeout=1.0)
++                event = await asyncio.await wait_for(self.event_queue.get(), timeout=1.0)
+                 await self._process_event(event)
+             except TimeoutError:
+                 continue
+@@ -771,7 +771,7 @@                 except Exception as e:
+                     logger.error(f"Error in event handler for {event_name}: {e}")
+ 
+-    def add_event_handler(self, event_name: str, handler: Callable):
++async def add_event_handler(self, event_name: str, handler: Callable):
+         """添加事件处理器."""
+         self.event_handlers[event_name].append(handler)
+ 
+@@ -809,14 +809,14 @@ class VersionManager:
+     """版本管理器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.versions: dict[str, CacheVersion] = {}
+         self.lock = asyncio.Lock()
+ 
+     async def get_version(self, key: str) -> CacheVersion | None:
+         """获取版本."""
+         async with self.lock:
+-            return self.versions.get(key)
++            return self.versions.await get(key)
+ 
+     async def set_version(self, key: str, version: CacheVersion):
+         """设置版本."""
+@@ -839,7 +839,7 @@ _consistency_manager: CacheConsistencyManager | None = None
+ 
+ 
+-def get_cache_consistency_manager() -> CacheConsistencyManager | None:
++async def get_cache_consistency_manager() -> CacheConsistencyManager | None:
+     """获取全局缓存一致性管理器实例."""
+     global _consistency_manager
+     return _consistency_manager

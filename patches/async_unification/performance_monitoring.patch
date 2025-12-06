@@ -1,0 +1,24 @@
+--- a/src/middleware/performance_monitoring.py+++ b/src/middleware/performance_monitoring.py@@ -15,7 +15,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
+     """性能监控中间件."""
+ 
+-    def __init__(self, app, enabled: bool = True):
++async def __init__(self, app, enabled: bool = True):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(app)
+@@ -42,7 +42,7 @@                 "url": str(request.url),
+                 "status_code": response.status_code,
+                 "process_time": process_time,
+-                "user_agent": request.headers.get("user-agent"),
++                "user_agent": request.headers.await get("user-agent"),
+                 "remote_addr": request.client.host if request.client else None,
+             },
+         )
+@@ -56,7 +56,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
+     """请求日志中间件."""
+ 
+-    def __init__(self, app, enabled: bool = True):
++async def __init__(self, app, enabled: bool = True):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(app)

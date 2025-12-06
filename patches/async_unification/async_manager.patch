@@ -1,0 +1,155 @@
+--- a/src/database/async_manager.py+++ b/src/database/async_manager.py@@ -66,13 +66,13 @@     _instance: "AsyncDatabaseManager | None" = None
+     _initialized: bool = False
+ 
+-    def __new__(cls) -> "AsyncDatabaseManager":
++async def __new__(cls) -> "AsyncDatabaseManager":
+         """实现单例模式"""
+         if cls._instance is None:
+             cls._instance = super().__new__(cls)
+         return cls._instance
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化数据库管理器"""
+         if self._initialized:
+             return
+@@ -82,7 +82,7 @@         self._database_url: Optional[str] = None
+         self._initialized = False
+ 
+-    def initialize(self, database_url: Optional[str] = None, **kwargs) -> None:
++async def initialize(self, database_url: Optional[str] = None, **kwargs) -> None:
+         """
+         初始化数据库连接
+ 
+@@ -115,17 +115,17 @@ 
+         # 默认连接池配置 - 根据数据库类型动态配置
+         default_config = {
+-            "echo": kwargs.get("echo", False),
+-            "pool_pre_ping": kwargs.get("pool_pre_ping", True),
++            "echo": kwargs.await get("echo", False),
++            "pool_pre_ping": kwargs.await get("pool_pre_ping", True),
+         }
+ 
+         # 只有非SQLite数据库才使用连接池配置
+         if not database_url.startswith("sqlite+aiosqlite"):
+             default_config.update({
+-                "pool_size": kwargs.get("pool_size", 10),
+-                "max_overflow": kwargs.get("max_overflow", 20),
+-                "pool_timeout": kwargs.get("pool_timeout", 30),
+-                "pool_recycle": kwargs.get("pool_recycle", 3600),
++                "pool_size": kwargs.await get("pool_size", 10),
++                "max_overflow": kwargs.await get("max_overflow", 20),
++                "pool_timeout": kwargs.await get("pool_timeout", 30),
++                "pool_recycle": kwargs.await get("pool_recycle", 3600),
+             })
+ 
+         # 创建异步引擎
+@@ -153,12 +153,12 @@         logger.info(log_msg)
+ 
+     @property
+-    def is_initialized(self) -> bool:
++async def is_initialized(self) -> bool:
+         """检查是否已初始化"""
+         return self._initialized
+ 
+     @property
+-    def engine(self) -> AsyncEngine:
++async def engine(self) -> AsyncEngine:
+         """获取异步引擎"""
+         if not self._initialized or self._async_engine is None:
+             raise RuntimeError(
+@@ -168,7 +168,7 @@         return self._async_engine
+ 
+     @property
+-    def session_factory(self) -> async_sessionmaker:
++async def session_factory(self) -> async_sessionmaker:
+         """获取会话工厂"""
+         if not self._initialized or self._session_factory is None:
+             raise RuntimeError("AsyncDatabaseManager 未初始化！")
+@@ -222,7 +222,7 @@             logger.info("🔌 AsyncDatabaseManager 连接已关闭")
+         self._initialized = False
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         return (
+             f"AsyncDatabaseManager("
+             f"initialized={self._initialized}, "
+@@ -237,7 +237,7 @@     为向后兼容而保留，实际功能与 AsyncDatabaseManager 相同
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化多用户数据库管理器"""
+         super().__init__()
+         self.readers = []
+@@ -245,7 +245,7 @@         self.admins = []
+ 
+ 
+-def get_multi_user_database_manager() -> MultiUserDatabaseManager:
++async def get_multi_user_database_manager() -> MultiUserDatabaseManager:
+     """
+     获取多用户数据库管理器（向后兼容）
+ 
+@@ -259,7 +259,7 @@ _db_manager = AsyncDatabaseManager()
+ 
+ 
+-def initialize_database(database_url: Optional[str] = None, **kwargs) -> None:
++async def initialize_database(database_url: Optional[str] = None, **kwargs) -> None:
+     """
+     初始化数据库管理器（应用启动时调用一次）
+ 
+@@ -270,7 +270,7 @@     _db_manager.initialize(database_url, **kwargs)
+ 
+ 
+-def get_database_manager() -> AsyncDatabaseManager:
++async def get_database_manager() -> AsyncDatabaseManager:
+     """
+     获取数据库管理器单例
+ 
+@@ -325,7 +325,7 @@             result = await session.execute(select(Match))
+             return result.scalars().all()
+     """
+-    async with get_db_session() as session:
++    async with await get_db_session() as session:
+         yield session
+ 
+ 
+@@ -352,11 +352,11 @@         from sqlalchemy import text
+         results = await fetch_all(text("SELECT * FROM matches WHERE season = :season"), {"season": "2023"})
+     """
+-    async with get_db_session() as session:
++    async with await get_db_session() as session:
+         if isinstance(query, str):
+             query = text(query)
+ 
+-        result = await session.execute(query, params or {})
++        result = await session.await execute(query, params or {})
+         return [dict(row._mapping) for row in result.fetchall()]
+ 
+ 
+@@ -375,11 +375,11 @@         from sqlalchemy import text
+         result = await fetch_one(text("SELECT * FROM matches WHERE id = :match_id"), {"match_id": 123})
+     """
+-    async with get_db_session() as session:
++    async with await get_db_session() as session:
+         if isinstance(query, str):
+             query = text(query)
+ 
+-        result = await session.execute(query, params or {})
++        result = await session.await execute(query, params or {})
+         row = result.fetchone()
+         return dict(row._mapping) if row else None
+ 
+@@ -399,11 +399,11 @@         from sqlalchemy import text
+         await execute(text("INSERT INTO matches (id, name) VALUES (:id, :name)"), {"id": 1, "name": "Test Match"})
+     """
+-    async with get_db_session() as session:
++    async with await get_db_session() as session:
+         if isinstance(query, str):
+             query = text(query)
+ 
+-        result = await session.execute(query, params or {})
++        result = await session.await execute(query, params or {})
+         await session.commit()
+         return result
+ 

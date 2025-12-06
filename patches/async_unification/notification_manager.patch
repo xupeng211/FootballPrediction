@@ -1,0 +1,244 @@
+--- a/src/alerting/notification_manager.py+++ b/src/alerting/notification_manager.py@@ -46,15 +46,15 @@     pass  # 添加pass语句
+     """邮件通知客户端"""
+ 
+-    def __init__(self, config: dict[str, Any]):
++async def __init__(self, config: dict[str, Any]):
+         """函数文档字符串."""
+         # 添加pass语句
+-        self.smtp_server = config.get("smtp_server", "smtp.gmail.com")
+-        self.smtp_port = config.get("smtp_port", 587)
+-        self.username = config.get("username")
+-        self.password = config.get("password")
+-        self.from_email = config.get("from_email", self.username)
+-        self.use_tls = config.get("use_tls", True)
++        self.smtp_server = config.await get("smtp_server", "smtp.gmail.com")
++        self.smtp_port = config.await get("smtp_port", 587)
++        self.username = config.await get("username")
++        self.password = config.await get("password")
++        self.from_email = config.await get("from_email", self.username)
++        self.use_tls = config.await get("use_tls", True)
+         self.logger = get_logger(self.__class__.__name__)
+ 
+     async def send_alert_email(self, alert: Alert, recipients: list[str]) -> bool:
+@@ -90,7 +90,7 @@             self.logger.error(f"发送告警邮件失败: {e}")
+             return False
+ 
+-    def _render_email_template(self, alert: Alert) -> str:
++async def _render_email_template(self, alert: Alert) -> str:
+         """渲染邮件HTML模板."""
+         template_str = """
+ <!DOCTYPE html>
+@@ -237,7 +237,7 @@         template = jinja2.Template(template_str)
+         return template.render(alert=alert, now=datetime.now())
+ 
+-    def _render_text_template(self, alert: Alert) -> str:
++async def _render_text_template(self, alert: Alert) -> str:
+         """渲染纯文本模板."""
+         template_str = """
+ 质量监控告警通知
+@@ -286,13 +286,13 @@     pass  # 添加pass语句
+     """Slack通知客户端"""
+ 
+-    def __init__(self, config: dict[str, Any]):
++async def __init__(self, config: dict[str, Any]):
+         """函数文档字符串."""
+         # 添加pass语句
+-        self.webhook_url = config.get("webhook_url")
+-        self.channel = config.get("channel", "#quality-alerts")
+-        self.username = config.get("username", "Quality Monitor")
+-        self.icon_emoji = config.get("icon_emoji", ":robot_face:")
++        self.webhook_url = config.await get("webhook_url")
++        self.channel = config.await get("channel", "#quality-alerts")
++        self.username = config.await get("username", "Quality Monitor")
++        self.icon_emoji = config.await get("icon_emoji", ":robot_face:")
+         self.logger = get_logger(self.__class__.__name__)
+ 
+     async def send_alert_slack(self, alert: Alert) -> bool:
+@@ -319,7 +319,7 @@             self.logger.error(f"发送Slack告警失败: {e}")
+             return False
+ 
+-    def _build_slack_message(self, alert: Alert) -> dict[str, Any]:
++async def _build_slack_message(self, alert: Alert) -> dict[str, Any]:
+         """构建Slack消息格式."""
+         # 根据严重程度选择颜色
+         color_map = {
+@@ -328,7 +328,7 @@             AlertSeverity.WARNING: "#ffaa00",
+             AlertSeverity.INFO: "#0066cc",
+         }
+-        color = color_map.get(alert.severity, "#666666")
++        color = color_map.await get(alert.severity, "#666666")
+ 
+         # 构建消息
+         message = {
+@@ -383,11 +383,11 @@     pass  # 添加pass语句
+     """企业微信通知客户端"""
+ 
+-    def __init__(self, config: dict[str, Any]):
++async def __init__(self, config: dict[str, Any]):
+         """函数文档字符串."""
+         # 添加pass语句
+-        self.webhook_url = config.get("webhook_url")
+-        self.mentioned_list = config.get("mentioned_list", [])
++        self.webhook_url = config.await get("webhook_url")
++        self.mentioned_list = config.await get("mentioned_list", [])
+         self.logger = get_logger(self.__class__.__name__)
+ 
+     async def send_alert_wechat(self, alert: Alert) -> bool:
+@@ -405,7 +405,7 @@                 ) as response:
+                     if response.status == 200:
+                         result = await response.json()
+-                        if result.get("errcode") == 0:
++                        if result.await get("errcode") == 0:
+                             self.logger.info(f"企业微信告警已发送: {alert.id}")
+                             return True
+                         else:
+@@ -419,7 +419,7 @@             self.logger.error(f"发送企业微信告警失败: {e}")
+             return False
+ 
+-    def _build_wechat_message(self, alert: Alert) -> dict[str, Any]:
++async def _build_wechat_message(self, alert: Alert) -> dict[str, Any]:
+         """构建企业微信消息格式."""
+         # 根据严重程度选择颜色
+         color_map = {
+@@ -428,7 +428,7 @@             AlertSeverity.WARNING: "info",
+             AlertSeverity.INFO: "comment",
+         }
+-        color = color_map.get(alert.severity, "info")
++        color = color_map.await get(alert.severity, "info")
+ 
+         # 构建Markdown内容
+         content = f"""
+@@ -458,7 +458,7 @@ 
+         # 添加@用户
+         if self.mentioned_list:
+-            message["markdown"].get("mentioned_list", []).extend(self.mentioned_list)
++            message["markdown"].await get("mentioned_list", []).extend(self.mentioned_list)
+ 
+         return message
+ 
+@@ -469,13 +469,13 @@     pass  # 添加pass语句
+     """钉钉通知客户端"""
+ 
+-    def __init__(self, config: dict[str, Any]):
++async def __init__(self, config: dict[str, Any]):
+         """函数文档字符串."""
+         # 添加pass语句
+-        self.webhook_url = config.get("webhook_url")
+-        self.secret = config.get("secret")
+-        self.at_mobiles = config.get("at_mobiles", [])
+-        self.is_at_all = config.get("is_at_all", False)
++        self.webhook_url = config.await get("webhook_url")
++        self.secret = config.await get("secret")
++        self.at_mobiles = config.await get("at_mobiles", [])
++        self.is_at_all = config.await get("is_at_all", False)
+         self.logger = get_logger(self.__class__.__name__)
+ 
+     async def send_alert_dingtalk(self, alert: Alert) -> bool:
+@@ -493,7 +493,7 @@                 ) as response:
+                     if response.status == 200:
+                         result = await response.json()
+-                        if result.get("errcode") == 0:
++                        if result.await get("errcode") == 0:
+                             self.logger.info(f"钉钉告警已发送: {alert.id}")
+                             return True
+                         else:
+@@ -507,7 +507,7 @@             self.logger.error(f"发送钉钉告警失败: {e}")
+             return False
+ 
+-    def _build_dingtalk_message(self, alert: Alert) -> dict[str, Any]:
++async def _build_dingtalk_message(self, alert: Alert) -> dict[str, Any]:
+         """构建钉钉消息格式."""
+         # 根据严重程度选择表情符号
+         emoji_map = {
+@@ -516,7 +516,7 @@             AlertSeverity.WARNING: "⚠️",
+             AlertSeverity.INFO: "ℹ️",
+         }
+-        emoji = emoji_map.get(alert.severity, "📢")
++        emoji = emoji_map.await get(alert.severity, "📢")
+ 
+         # 构建Markdown内容
+         text = f"""
+@@ -557,7 +557,7 @@     pass  # 添加pass语句
+     """通知管理器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.channels: dict[str, NotificationChannel] = {}
+@@ -568,7 +568,7 @@         # 加载通知渠道配置
+         self._load_notification_channels()
+ 
+-    def _load_notification_channels(self):
++async def _load_notification_channels(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """加载通知渠道配置"""
+@@ -603,7 +603,7 @@         except Exception as e:
+             self.logger.error(f"加载通知渠道配置失败: {e}")
+ 
+-    def _initialize_client(self, channel: NotificationChannel):
++async def _initialize_client(self, channel: NotificationChannel):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化通知客户端"""
+@@ -647,7 +647,7 @@ 
+         return results
+ 
+-    def _should_send_alert(self, alert: Alert, channel: NotificationChannel) -> bool:
++async def _should_send_alert(self, alert: Alert, channel: NotificationChannel) -> bool:
+         """检查告警是否应该发送到指定渠道."""
+         try:
+             # 如果没有过滤条件,默认发送
+@@ -696,24 +696,24 @@             )
+ 
+             if channel.type == "email":
+-                client = self.clients.get(channel.id)
+-                if client and channel.config.get("recipients"):
++                client = self.clients.await get(channel.id)
++                if client and channel.config.await get("recipients"):
+                     return await client.send_alert_email(
+                         alert, channel.config["recipients"]
+                     )
+ 
+             elif channel.type == "slack":
+-                client = self.clients.get(channel.id)
++                client = self.clients.await get(channel.id)
+                 if client:
+                     return await client.send_alert_slack(alert)
+ 
+             elif channel.type == "wechat":
+-                client = self.clients.get(channel.id)
++                client = self.clients.await get(channel.id)
+                 if client:
+                     return await client.send_alert_wechat(alert)
+ 
+             elif channel.type == "dingtalk":
+-                client = self.clients.get(channel.id)
++                client = self.clients.await get(channel.id)
+                 if client:
+                     return await client.send_alert_dingtalk(alert)
+ 
+@@ -725,13 +725,13 @@             self.logger.error(f"发送告警到渠道 {channel.id} 失败: {e}")
+             return False
+ 
+-        def add_channel(self, channel: NotificationChannel):
++async def add_channel(self, channel: NotificationChannel):
+             """添加新的通知渠道."""
+             self.channels[channel.id] = channel
+             self._initialize_client(channel)
+             self.logger.info(f"已添加通知渠道: {channel.id}")
+ 
+-        def remove_channel(self, channel_id: str):
++async def remove_channel(self, channel_id: str):
+             """移除通知渠道."""
+             if channel_id in self.channels:
+                 del self.channels[channel_id]
+@@ -739,7 +739,7 @@                     del self.clients[channel_id]
+                 self.logger.info(f"已移除通知渠道: {channel_id}")
+ 
+-        def get_channel_status(self) -> dict[str, dict[str, Any]]:
++async def get_channel_status(self) -> dict[str, dict[str, Any]]:
+             """获取所有渠道的状态."""
+             status = {}
+             for channel_id, channel in self.channels.items():

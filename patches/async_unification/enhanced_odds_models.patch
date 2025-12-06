@@ -1,0 +1,168 @@
+--- a/src/api/data/models/enhanced_odds_models.py+++ b/src/api/data/models/enhanced_odds_models.py@@ -30,7 +30,7 @@ 
+     @field_validator('bookmaker')
+     @classmethod
+-    def clean_bookmaker(cls, v: Optional[str]) -> Optional[str]:
++async def clean_bookmaker(cls, v: Optional[str]) -> Optional[str]:
+         """清理博彩公司名称."""
+         if v is None:
+             return v
+@@ -40,7 +40,7 @@ 
+     @field_validator('market_type')
+     @classmethod
+-    def validate_market_type(cls, v: Optional[str]) -> Optional[str]:
++async def validate_market_type(cls, v: Optional[str]) -> Optional[str]:
+         """验证市场类型."""
+         if v is None:
+             return v
+@@ -59,10 +59,10 @@         return v_lower
+ 
+     @model_validator(mode='after')
+-    def validate_odds_range_filter(self, values):
++async def validate_odds_range_filter(self, values):
+         """验证赔率范围过滤器."""
+-        min_odds = values.get('min_odds')
+-        max_odds = values.get('max_odds')
++        min_odds = values.await get('min_odds')
++        max_odds = values.await get('max_odds')
+ 
+         if min_odds is not None and max_odds is not None and min_odds >= max_odds:
+             raise ValueError("最小赔率必须小于最大赔率")
+@@ -87,7 +87,7 @@ 
+     @field_validator('bookmaker')
+     @classmethod
+-    def clean_bookmaker(cls, v: str) -> str:
++async def clean_bookmaker(cls, v: str) -> str:
+         """清理博彩公司名称."""
+         cleaned = v.strip().title()
+         if not cleaned:
+@@ -96,7 +96,7 @@ 
+     @field_validator('market_type')
+     @classmethod
+-    def validate_market_type(cls, v: str) -> str:
++async def validate_market_type(cls, v: str) -> str:
+         """验证市场类型."""
+         valid_market_types = {
+             'home_win', 'draw', 'away_win', 'over_2_5', 'under_2_5',
+@@ -112,7 +112,7 @@ 
+     @field_validator('home_win', 'draw', 'away_win', 'over_2_5', 'under_2_5', 'btts_yes', 'btts_no')
+     @classmethod
+-    def validate_odds_value(cls, v: Optional[float]) -> Optional[float]:
++async def validate_odds_value(cls, v: Optional[float]) -> Optional[float]:
+         """验证赔率值."""
+         if v is None:
+             return v
+@@ -120,7 +120,7 @@         return validate_odds_range(v)
+ 
+     @model_validator(mode='after')
+-    def validate_market_specific_odds(self):
++async def validate_market_specific_odds(self):
+         """验证特定市场类型的赔率要求."""
+         market_type = self.market_type
+ 
+@@ -150,7 +150,7 @@         return self
+ 
+     @model_validator(mode='after')
+-    def detect_arbitrage(self):
++async def detect_arbitrage(self):
+         """检测套利机会."""
+         home_win = self.home_win
+         draw = self.draw
+@@ -185,7 +185,7 @@ 
+     @field_validator('home_win', 'draw', 'away_win', 'over_2_5', 'under_2_5', 'btts_yes', 'btts_no')
+     @classmethod
+-    def validate_odds_value(cls, v: Optional[float]) -> Optional[float]:
++async def validate_odds_value(cls, v: Optional[float]) -> Optional[float]:
+         """验证赔率值."""
+         if v is None:
+             return v
+@@ -212,33 +212,33 @@     updated_at: Optional[float] = None
+ 
+     @model_validator(mode='after')
+-    def validate_response_odds(self, values):
++async def validate_response_odds(self, values):
+         """验证响应中的赔率数据."""
+         # 检查是否有明显错误的赔率数据
+         odds_fields = ['home_win', 'draw', 'away_win', 'over_2_5', 'under_2_5', 'btts_yes', 'btts_no']
+ 
+         for field in odds_fields:
+-            value = values.get(field)
++            value = values.await get(field)
+             if value is not None:
+                 try:
+                     # 使用Decimal进行精确计算
+                     decimal_value = Decimal(str(value))
+                     if decimal_value <= Decimal('0') or decimal_value >= Decimal('1000'):
+                         warnings.warn(
+-                            f"赔率ID {values.get('id')} 的 {field} 值异常: {value}",
++                            f"赔率ID {values.await get('id')} 的 {field} 值异常: {value}",
+                             UserWarning,
+                             stacklevel=2
+                         )
+                 except (InvalidOperation, ValueError):
+                     warnings.warn(
+-                        f"赔率ID {values.get('id')} 的 {field} 值格式错误: {value}",
++                        f"赔率ID {values.await get('id')} 的 {field} 值格式错误: {value}",
+                         UserWarning,
+                         stacklevel=2
+                     )
+ 
+         return values
+ 
+-    def calculate_implied_probability(self, market: str = '1x2') -> Optional[float]:
++async def calculate_implied_probability(self, market: str = '1x2') -> Optional[float]:
+         """计算隐含概率.
+ 
+         Args:
+@@ -271,13 +271,13 @@ 
+         return None
+ 
+-    def has_arbitrage_opportunity(self) -> bool:
++async def has_arbitrage_opportunity(self) -> bool:
+         """检查是否有套利机会."""
+         if all(v is not None for v in [self.home_win, self.draw, self.away_win]):
+             return detect_arbitrage_opportunity(self.home_win, self.draw, self.away_win)
+         return False
+ 
+-    def calculate_vigorish(self, market: str = '1x2') -> Optional[float]:
++async def calculate_vigorish(self, market: str = '1x2') -> Optional[float]:
+         """计算抽水比例.
+ 
+         Args:
+@@ -295,7 +295,7 @@ class OddsDataQualityReport:
+     """赔率数据质量报告."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.total_records = 0
+         self.valid_records = 0
+         self.invalid_records = 0
+@@ -304,7 +304,7 @@         self.errors = []
+         self.market_type_stats = {}
+ 
+-    def add_record_result(self, validation_result: ValidationResult, market_type: str = None):
++async def add_record_result(self, validation_result: ValidationResult, market_type: str = None):
+         """添加验证结果."""
+         self.total_records += 1
+ 
+@@ -330,7 +330,7 @@             else:
+                 self.market_type_stats[market_type]['invalid'] += 1
+ 
+-    def get_summary(self) -> dict:
++async def get_summary(self) -> dict:
+         """获取质量报告摘要."""
+         return {
+             'total_records': self.total_records,
+@@ -343,12 +343,12 @@             'common_errors': self._get_common_errors()
+         }
+ 
+-    def _get_common_errors(self) -> list:
++async def _get_common_errors(self) -> list:
+         """获取常见错误."""
+         from collections import Counter
+         error_counter = Counter(self.errors)
+         return [{'error': error, 'count': count} for error, count in error_counter.most_common(5)]
+ 
+-    def is_healthy(self, min_success_rate: float = 0.98) -> bool:
++async def is_healthy(self, min_success_rate: float = 0.98) -> bool:
+         """判断数据是否健康."""
+         return (self.total_records == 0) or (self.valid_records / self.total_records >= min_success_rate)

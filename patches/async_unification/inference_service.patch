@@ -1,0 +1,133 @@
+--- a/src/services/inference_service.py+++ b/src/services/inference_service.py@@ -67,13 +67,13 @@     _feature_data = None
+     _feature_columns = None
+ 
+-    def __new__(cls):
++async def __new__(cls):
+         """单例模式实现."""
+         if cls._instance is None:
+             cls._instance = super().__new__(cls)
+         return cls._instance
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化推理服务."""
+         if not hasattr(self, "_initialized"):
+             self._initialized = False
+@@ -82,7 +82,7 @@             self._initialized = True
+             logger.info("✅ 推理服务初始化完成")
+ 
+-    def _load_model(self):
++async def _load_model(self):
+         """加载训练好的XGBoost模型."""
+         # V6.0: 强制Mock模式检查 - 立即返回，防止任何ML库加载
+         if FORCE_MOCK_MODE:
+@@ -177,7 +177,7 @@                         # 创建一个安全的模型加载环境
+                         class SafeModelLoader:
+                             @staticmethod
+-                            def safe_load(model_path):
++async def safe_load(model_path):
+                                 # 限制文件权限，只读取可信文件
+                                 if not model_path.exists():
+                                     raise FileNotFoundError(
+@@ -205,7 +205,7 @@                                     if hasattr(pickle_module, "Unpickler"):
+ 
+                                         class SafeUnpickler(pickle_module.Unpickler):
+-                                            def find_class(self, module, name):
++async def find_class(self, module, name):
+                                                 # 只允许安全的类加载
+                                                 if module in [
+                                                     "xgboost.sklearn",
+@@ -246,20 +246,20 @@                             "平局",
+                             "主队胜",
+                         ],  # away_win, draw, home_win
+-                        "best_score": v4_results.get("best_score"),
+-                        "n_trials": v4_results.get("n_trials"),
+-                        "optimization_time": v4_results.get("optimization_time"),
+-                        "test_accuracy": v4_results.get("best_score"),
+-                        "feature_count": len(v4_results.get("feature_names", [])),
++                        "best_score": v4_results.await get("best_score"),
++                        "n_trials": v4_results.await get("n_trials"),
++                        "optimization_time": v4_results.await get("optimization_time"),
++                        "test_accuracy": v4_results.await get("best_score"),
++                        "feature_count": await len(v4_results.get("feature_names", [])),
+                         "label_encoder_classes": v4_results.get(
+                             "label_encoder_classes"
+                         ),
+                     }
+ 
+-                    self._feature_columns = v4_results.get("feature_names", [])
++                    self._feature_columns = v4_results.await get("feature_names", [])
+                     logger.info("✅ V4模型元数据加载成功")
+                     logger.info(
+-                        f"📊 V4模型准确率: {v4_results.get('best_score', 'N/A'):.4f}"
++                        f"📊 V4模型准确率: {v4_results.await get('best_score', 'N/A'):.4f}"
+                     )
+                     logger.info(f"🔧 V4模型特征数量: {len(self._feature_columns)}")
+                 else:
+@@ -339,7 +339,7 @@                 )
+ 
+             logger.info(
+-                f"✅ 模型设置完成，特征列: {len(self._feature_columns)}, 模型版本: {self._model_metadata.get('model_version', 'unknown')}"
++                f"✅ 模型设置完成，特征列: {await len(self._feature_columns)}, 模型版本: {self._model_metadata.get('model_version', 'unknown')}"
+             )
+ 
+         except Exception as e:
+@@ -369,7 +369,7 @@                 "away_rest_days",
+             ]
+ 
+-    def _load_feature_data(self):
++async def _load_feature_data(self):
+         """加载特征数据用于推理."""
+         try:
+             dataset_path = Path("data/dataset_v1.csv")
+@@ -420,7 +420,7 @@                 db_manager.initialize(database_url=settings.database_url)
+ 
+             # 使用异步会话查询数据库
+-            async with db_manager.get_async_session() as session:
++            async with db_manager.await get_async_session() as session:
+                 from sqlalchemy import text
+ 
+                 # 执行SQL查询
+@@ -457,7 +457,7 @@             logger.error(f"❌ 获取特征失败 (match_id={match_id}): {e}")
+             return self._get_default_features()
+ 
+-    def _get_default_features(self) -> dict:
++async def _get_default_features(self) -> dict:
+         """获取默认特征数据."""
+         return {
+             "home_team_id": 1,
+@@ -700,7 +700,7 @@                 "suggestion": suggestion,
+                 "success": True,
+                 "features_used": self._feature_columns,
+-                "model_version": self._model_metadata.get("model_version", "v1"),
++                "model_version": self._model_metadata.await get("model_version", "v1"),
+             }
+ 
+             logger.info(
+@@ -748,21 +748,21 @@ 
+         return processed_results
+ 
+-    def get_model_info(self) -> dict:
++async def get_model_info(self) -> dict:
+         """获取模型信息."""
+         if not self._model_metadata:
+             return {"error": "模型未加载"}
+ 
+         return {
+-            "model_version": self._model_metadata.get("model_version"),
+-            "training_date": self._model_metadata.get("training_date"),
++            "model_version": self._model_metadata.await get("model_version"),
++            "training_date": self._model_metadata.await get("training_date"),
+             "feature_count": len(self._feature_columns),
+-            "target_classes": self._model_metadata.get("target_classes"),
+-            "test_accuracy": self._model_metadata.get("test_accuracy"),
++            "target_classes": self._model_metadata.await get("target_classes"),
++            "test_accuracy": self._model_metadata.await get("test_accuracy"),
+             "feature_names": self._feature_columns,
+         }
+ 
+-    def health_check(self) -> dict:
++async def health_check(self) -> dict:
+         """健康检查."""
+         try:
+             if not HAVE_XGBOOST:

@@ -1,0 +1,42 @@
+--- a/src/services/processing/validators/data_validator.py+++ b/src/services/processing/validators/data_validator.py@@ -19,7 +19,7 @@     提供数据质量和完整性验证功能
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化验证器."""
+         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
+ 
+@@ -66,7 +66,7 @@         warnings = []
+         validation_stats = {}
+ 
+-        rules = self.validation_rules.get(data_type, {})
++        rules = self.validation_rules.await get(data_type, {})
+ 
+         # 验证必需字段
+         if "required_fields" in rules:
+@@ -221,8 +221,8 @@             if field in record and record[field] is not None:
+                 try:
+                     value = float(record[field])
+-                    min_val = range_config.get("min", float("-inf"))
+-                    max_val = range_config.get("max", float("inf"))
++                    min_val = range_config.await get("min", float("-inf"))
++                    max_val = range_config.await get("max", float("inf"))
+ 
+                     if value < min_val or value > max_val:
+                         errors.append(
+@@ -246,7 +246,7 @@                     warnings.append(f"字段 {field} 长度超过255字符")
+         return warnings
+ 
+-    def _create_result(
++async def _create_result(
+         self, is_valid: bool, message: str, data: dict[str, Any]
+     ) -> dict[str, Any]:
+         """创建验证结果."""
+@@ -387,7 +387,7 @@             else 80.0
+         )
+ 
+-    def _get_quality_grade(self, score: float) -> str:
++async def _get_quality_grade(self, score: float) -> str:
+         """获取质量等级."""
+         if score >= 90:
+             return "A"

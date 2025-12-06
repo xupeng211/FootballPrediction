@@ -1,0 +1,107 @@
+--- a/src/services/auth_service.py+++ b/src/services/auth_service.py@@ -28,14 +28,14 @@     pass  # 添加pass语句
+     """用户认证服务"""
+ 
+-    def __init__(self, db: AsyncSession):
++async def __init__(self, db: AsyncSession):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.db = db
+         self.user_repo = AuthUserRepository(db)
+ 
+     @staticmethod
+-    def verify_password(plain_password: str, hashed_password: str) -> bool:
++async def verify_password(plain_password: str, hashed_password: str) -> bool:
+         """验证密码."""
+         try:
+             # 确保密码不超过72字节（bcrypt限制）
+@@ -48,7 +48,7 @@             return False
+ 
+     @staticmethod
+-    def get_password_hash(password: str) -> str:
++async def get_password_hash(password: str) -> str:
+         """生成密码哈希."""
+         # 确保密码不超过72字节（bcrypt限制）
+         if len(password.encode("utf-8")) > 72:
+@@ -57,7 +57,7 @@         hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+         return hashed.decode("utf-8")
+ 
+-    def create_access_token(
++async def create_access_token(
+         self, data: dict[str, Any], expires_delta: timedelta | None = None
+     ) -> str:
+         """创建访问令牌."""
+@@ -71,7 +71,7 @@         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+         return encoded_jwt
+ 
+-    def create_refresh_token(
++async def create_refresh_token(
+         self, data: dict[str, Any], expires_delta: timedelta | None = None
+     ) -> str:
+         """创建刷新令牌."""
+@@ -85,13 +85,13 @@         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+         return encoded_jwt
+ 
+-    def verify_token(
++async def verify_token(
+         self, token: str, token_type: str = "access"
+     ) -> dict[str, Any] | None:
+         """验证令牌."""
+         try:
+             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+-            if payload.get("type") != token_type:
++            if payload.await get("type") != token_type:
+                 return None
+             return payload
+         except JWTError:
+@@ -208,7 +208,7 @@         if not payload:
+             return None
+ 
+-        username = payload.get("sub")
++        username = payload.await get("sub")
+         user = await self.user_repo.get_by_username(username)
+         if not user or not user.is_active:
+             return None
+@@ -228,7 +228,7 @@         if not payload:
+             return None
+ 
+-        username = payload.get("sub")
++        username = payload.await get("sub")
+         if not username:
+             return None
+ 
+@@ -267,10 +267,10 @@     async def reset_password(self, reset_token: str, new_password: str) -> bool:
+         """重置密码."""
+         payload = self.verify_token(reset_token, "access")
+-        if not payload or payload.get("type") != "password_reset":
+-            return False
+-
+-        username = payload.get("sub")
++        if not payload or payload.await get("type") != "password_reset":
++            return False
++
++        username = payload.await get("sub")
+         user = await self.user_repo.get_by_username(username)
+         if not user:
+             return False
+@@ -282,10 +282,10 @@     async def verify_email(self, verification_token: str) -> bool:
+         """验证邮箱."""
+         payload = self.verify_token(verification_token, "access")
+-        if not payload or payload.get("type") != "email_verification":
+-            return False
+-
+-        username = payload.get("sub")
++        if not payload or payload.await get("type") != "email_verification":
++            return False
++
++        username = payload.await get("sub")
+         user = await self.user_repo.get_by_username(username)
+         if not user:
+             return False
+@@ -294,7 +294,7 @@         await self.user_repo.update(user)
+         return True
+ 
+-    def create_email_verification_token(self, user: User) -> str:
++async def create_email_verification_token(self, user: User) -> str:
+         """创建邮箱验证令牌."""
+         verification_data = {
+             "sub": user.username,

@@ -1,0 +1,8 @@
+--- a/src/api/predictions/health.py+++ b/src/api/predictions/health.py@@ -14,7 +14,7 @@ health_router = APIRouter(prefix="/predictions", tags=["predictions"])
+ 
+ 
+-@health_router.get("/health", summary="预测服务健康检查")
++@health_router.await get("/health", summary="预测服务健康检查")
+ async def health_check() -> dict[str, Any]:
+     """检查预测服务的健康状态.
+ 

@@ -1,0 +1,103 @@
+--- a/src/inference/loader.py+++ b/src/inference/loader.py@@ -29,7 +29,7 @@ class ModelLoadLock:
+     """模型加载锁"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self._locks: dict[str, asyncio.Lock] = {}
+         self._global_lock = asyncio.Lock()
+ 
+@@ -44,13 +44,13 @@ class ModelMetadata:
+     """模型元数据"""
+ 
+-    def __init__(self, model_info: ModelInfo, file_path: str):
++async def __init__(self, model_info: ModelInfo, file_path: str):
+         self.model_info = model_info
+         self.file_path = file_path
+         self.file_hash = self._calculate_file_hash(file_path)
+         self.last_modified = datetime.fromtimestamp(os.path.getmtime(file_path))
+ 
+-    def _calculate_file_hash(self, file_path: str) -> str:
++async def _calculate_file_hash(self, file_path: str) -> str:
+         """计算文件哈希"""
+         hash_md5 = hashlib.md5()
+         with open(file_path, "rb") as f:
+@@ -58,7 +58,7 @@                 hash_md5.update(chunk)
+         return hash_md5.hexdigest()
+ 
+-    def is_modified(self) -> bool:
++async def is_modified(self) -> bool:
+         """检查文件是否被修改"""
+         if not os.path.exists(self.file_path):
+             return True
+@@ -68,7 +68,7 @@ 
+         return current_mtime != self.last_modified or current_hash != self.file_hash
+ 
+-    def update_metadata(self):
++async def update_metadata(self):
+         """更新元数据"""
+         if os.path.exists(self.file_path):
+             self.last_modified = datetime.fromtimestamp(os.path.getmtime(self.file_path))
+@@ -78,14 +78,14 @@ class LoadedModel:
+     """已加载的模型实例"""
+ 
+-    def __init__(self, model: Any, metadata: ModelMetadata):
++async def __init__(self, model: Any, metadata: ModelMetadata):
+         self.model = model
+         self.metadata = metadata
+         self.load_time = datetime.utcnow()
+         self.access_count = 0
+         self.last_access = datetime.utcnow()
+ 
+-    def access(self) -> Any:
++async def access(self) -> Any:
+         """访问模型"""
+         self.access_count += 1
+         self.last_access = datetime.utcnow()
+@@ -95,7 +95,7 @@ class ModelLoader:
+     """异步模型加载器"""
+ 
+-    def __init__(self, registry_path: str = "models/", max_loaded_models: int = 10):
++async def __init__(self, registry_path: str = "models/", max_loaded_models: int = 10):
+         self.registry_path = Path(registry_path)
+         self.max_loaded_models = max_loaded_models
+ 
+@@ -186,7 +186,7 @@ 
+     async def get_default_model(self, model_type: ModelType) -> Optional[str]:
+         """获取默认模型"""
+-        return self._default_models.get(model_type.value)
++        return self._default_models.await get(model_type.value)
+ 
+     async def unload_model(self, model_name: str):
+         """卸载模型"""
+@@ -205,7 +205,7 @@             # 重新加载
+             return await self._load_model_internal(model_name, None, force_reload=True)
+ 
+-    def get_load_stats(self) -> dict[str, Any]:
++async def get_load_stats(self) -> dict[str, Any]:
+         """获取加载统计信息"""
+         total_requests = self._load_stats["cache_hits"] + self._load_stats["cache_misses"]
+         cache_hit_rate = (
+@@ -344,7 +344,7 @@                 details={"file_path": metadata.file_path, "error_type": type(e).__name__}
+             )
+ 
+-    def _load_model_sync(self, file_path: str) -> Any:
++async def _load_model_sync(self, file_path: str) -> Any:
+         """同步加载模型"""
+         try:
+             # 尝试使用joblib加载
+@@ -357,7 +357,7 @@         except Exception as e:
+             raise RuntimeError(f"Failed to load model from {file_path}: {str(e)}")
+ 
+-    def _detect_model_type(self, model_file: Path) -> ModelType:
++async def _detect_model_type(self, model_file: Path) -> ModelType:
+         """检测模型类型"""
+         file_name = model_file.name.lower()
+ 
+@@ -398,7 +398,7 @@     return _model_loader
+ 
+ 
+-def get_model_loader_sync() -> ModelLoader:
++async def get_model_loader_sync() -> ModelLoader:
+     """同步获取模型加载器（用于非异步上下文）"""
+     global _model_loader
+ 

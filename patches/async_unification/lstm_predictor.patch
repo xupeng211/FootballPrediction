@@ -1,0 +1,111 @@
+--- a/src/ml/lstm_predictor.py+++ b/src/ml/lstm_predictor.py@@ -64,7 +64,7 @@     rmse: float | None = None
+     r2: float | None = None
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典格式."""
+         data = asdict(self)
+         data["timestamp"] = self.timestamp.isoformat()
+@@ -91,7 +91,7 @@ class LSTMPredictor:
+     """LSTM时间序列预测器."""
+ 
+-    def __init__(self, config: TrainingConfig | None = None):
++async def __init__(self, config: TrainingConfig | None = None):
+         """初始化LSTM预测器."""
+         self.config = config or TrainingConfig()
+         self.logger = get_logger(self.__class__.__name__)
+@@ -113,7 +113,7 @@         self.model_path = self.model_dir / "lstm_quality_predictor.h5"
+         self.scaler_path = self.model_dir / "scalers.pkl"
+ 
+-    def prepare_data(
++async def prepare_data(
+         self, data: list[dict[str, Any]], target_column: str = "overall_score"
+     ) -> tuple[np.ndarray, np.ndarray]:
+         """准备训练数据."""
+@@ -171,7 +171,7 @@             self.logger.error(f"数据准备失败: {e}")
+             raise
+ 
+-    def _create_sequences(
++async def _create_sequences(
+         self, features: np.ndarray, target: np.ndarray
+     ) -> tuple[np.ndarray, np.ndarray]:
+         """创建时间序列数据."""
+@@ -197,7 +197,7 @@ 
+         return np.array(x), np.array(y)
+ 
+-    def build_model(self, input_shape: tuple[int, int]) -> None:
++async def build_model(self, input_shape: tuple[int, int]) -> None:
+         """构建LSTM模型."""
+         if tf is None:
+             raise ImportError("TensorFlow未安装,无法构建LSTM模型")
+@@ -238,7 +238,7 @@             self.logger.error(f"模型构建失败: {e}")
+             raise
+ 
+-    def train(
++async def train(
+         self,
+         x: np.ndarray,
+         y: np.ndarray,
+@@ -334,7 +334,7 @@             self.logger.error(f"模型训练失败: {e}")
+             raise
+ 
+-    def predict(
++async def predict(
+         self, input_sequence: np.ndarray, return_confidence: bool = True
+     ) -> PredictionResult:
+         """进行预测."""
+@@ -423,23 +423,23 @@             for point in recent_data:
+                 feature_vector = [
+                     (
+-                        point.get("value", 0)
+-                        if point.get("field") == "overall_score"
++                        point.await get("value", 0)
++                        if point.await get("field") == "overall_score"
+                         else 0
+                     ),
+                     (
+-                        point.get("cpu_usage", 0)
+-                        if point.get("field") == "cpu_usage"
++                        point.await get("cpu_usage", 0)
++                        if point.await get("field") == "cpu_usage"
+                         else 0
+                     ),
+                     (
+-                        point.get("memory_usage", 0)
+-                        if point.get("field") == "memory_usage"
++                        point.await get("memory_usage", 0)
++                        if point.await get("field") == "memory_usage"
+                         else 0
+                     ),
+                     (
+-                        point.get("active_connections", 0)
+-                        if point.get("field") == "active_connections"
++                        point.await get("active_connections", 0)
++                        if point.await get("field") == "active_connections"
+                         else 0
+                     ),
+                 ]
+@@ -462,7 +462,7 @@             self.logger.error(f"未来预测失败: {e}")
+             raise
+ 
+-    def evaluate_model(
++async def evaluate_model(
+         self, test_X: np.ndarray, test_y: np.ndarray
+     ) -> dict[str, float]:
+         """评估模型性能."""
+@@ -487,7 +487,7 @@             self.logger.error(f"模型评估失败: {e}")
+             return {}
+ 
+-    def save_model(self) -> bool:
++async def save_model(self) -> bool:
+         """保存模型和标准化器."""
+         try:
+             if self.model is None:
+@@ -516,7 +516,7 @@             self.logger.error(f"保存模型失败: {e}")
+             return False
+ 
+-    def load_model(self, model_path: str | Path) -> bool:
++async def load_model(self, model_path: str | Path) -> bool:
+         """加载模型和标准化器."""
+         try:
+             # 转换为Path对象

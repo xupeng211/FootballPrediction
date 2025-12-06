@@ -1,0 +1,384 @@
+--- a/src/tasks/pipeline_tasks.py+++ b/src/tasks/pipeline_tasks.py@@ -22,12 +22,12 @@ )
+ 
+ 
+-def sync_task_to_async(async_func):
++async def sync_task_to_async(async_func):
+     """将异步函数转换为同步的Celery任务"""
+     from functools import wraps
+ 
+     @wraps(async_func)
+-    def wrapper(*args, **kwargs):
++async def wrapper(*args, **kwargs):
+         import asyncio
+ 
+         return asyncio.run(async_func(*args, **kwargs))
+@@ -76,7 +76,7 @@                         .limit(BATCH_SIZE)
+                         .offset(offset)
+                     )
+-                    result = await session.execute(query)
++                    result = await session.await execute(query)
+                     batch_raw_matches = result.scalars().all()
+                     logger.info(f"✅ 方法1成功: 找到 {len(batch_raw_matches)} 条记录")
+                 except Exception as e:
+@@ -122,7 +122,7 @@                             all_query = (
+                                 select(RawMatchData).limit(BATCH_SIZE).offset(offset)
+                             )
+-                            result = await session.execute(all_query)
++                            result = await session.await execute(all_query)
+                             all_matches = result.scalars().all()
+ 
+                             # 在Python中过滤未处理的
+@@ -197,17 +197,17 @@     for raw_match in raw_matches:
+         try:
+             match_data = raw_match.match_data
+-            raw_content = match_data.get("raw_data", {})
++            raw_content = match_data.await get("raw_data", {})
+ 
+             # 优先从competition字段提取联赛信息
+             if "competition" in raw_content:
+                 comp = raw_content["competition"]
+-                league_name = comp.get("name", "Unknown League")
+-                league_country = comp.get("area", {}).get("name", "Unknown Country")
++                league_name = comp.await get("name", "Unknown League")
++                league_country = comp.await await get("area", {}).get("name", "Unknown Country")
+             else:
+                 # 回退到从顶层字段提取
+-                league_name = match_data.get("league_name", "International Friendlies")
+-                league_country = match_data.get("league_country", "International")
++                league_name = match_data.await get("league_name", "International Friendlies")
++                league_country = match_data.await get("league_country", "International")
+ 
+                 # 如果联赛名称为空，使用默认值
+                 if not league_name or league_name.strip() == "":
+@@ -239,7 +239,7 @@             query = text(
+                 "SELECT id FROM leagues WHERE name = :name AND country = :country"
+             )
+-            result = await session.execute(query, {"name": name, "country": country})
++            result = await session.await execute(query, {"name": name, "country": country})
+             existing = result.scalar_one_or_none()
+             if existing:
+                 existing_leagues[(name, country)] = existing
+@@ -263,7 +263,7 @@ 
+     # 步骤3：重新获取Leagues映射
+     leagues_query = text("SELECT id, name, country FROM leagues")
+-    leagues_result = await session.execute(leagues_query)
++    leagues_result = await session.await execute(leagues_query)
+     leagues_map = {(row[1], row[2]): row[0] for row in leagues_result.fetchall()}
+ 
+     # 🆕 添加League映射调试信息
+@@ -281,27 +281,27 @@             match_data = raw_match.match_data
+ 
+             # 🔄 适配不同数据源：优先使用match_data中的球队名称，回退到raw_data
+-            home_team_name = match_data.get("home_team_name")
+-            away_team_name = match_data.get("away_team_name")
++            home_team_name = match_data.await get("home_team_name")
++            away_team_name = match_data.await get("away_team_name")
+ 
+             # 如果match_data中没有球队信息，尝试从raw_data获取
+             if not home_team_name or not away_team_name:
+-                raw_content = match_data.get("raw_data", {})
++                raw_content = match_data.await get("raw_data", {})
+ 
+                 if not home_team_name and "homeTeam" in raw_content:
+                     home_team_info = raw_content["homeTeam"]
+-                    home_team_name = home_team_info.get("name", "Unknown Team")
++                    home_team_name = home_team_info.await get("name", "Unknown Team")
+ 
+                 if not away_team_name and "awayTeam" in raw_content:
+                     away_team_info = raw_content["awayTeam"]
+-                    away_team_name = away_team_info.get("name", "Unknown Team")
++                    away_team_name = away_team_info.await get("name", "Unknown Team")
+ 
+             # 处理主队
+             if home_team_name:
+                 team_short_name = (
+                     home_team_name[:10] if len(home_team_name) > 10 else home_team_name
+                 )
+-                team_country = match_data.get("league_country", "Unknown Country")
++                team_country = match_data.await get("league_country", "Unknown Country")
+ 
+                 if home_team_name not in unique_teams:
+                     unique_teams[home_team_name] = {
+@@ -315,7 +315,7 @@                 team_short_name = (
+                     away_team_name[:10] if len(away_team_name) > 10 else away_team_name
+                 )
+-                team_country = match_data.get("league_country", "Unknown Country")
++                team_country = match_data.await get("league_country", "Unknown Country")
+ 
+                 if away_team_name not in unique_teams:
+                     unique_teams[away_team_name] = {
+@@ -334,7 +334,7 @@         existing_teams = {}
+         for team_name, _team_data in unique_teams.items():
+             query = text("SELECT id FROM teams WHERE name = :name")
+-            result = await session.execute(query, {"name": team_name})
++            result = await session.await execute(query, {"name": team_name})
+             existing = result.scalar_one_or_none()
+             if existing:
+                 existing_teams[team_name] = existing
+@@ -359,7 +359,7 @@ 
+     # 步骤6：重新获取Teams映射
+     teams_query = text("SELECT id, name FROM teams")
+-    teams_result = await session.execute(teams_query)
++    teams_result = await session.await execute(teams_query)
+     teams_map = {row[1]: row[0] for row in teams_result.fetchall()}
+ 
+     # 步骤7：批量创建Matches
+@@ -370,44 +370,44 @@     for raw_match in raw_matches:
+         try:
+             match_data = raw_match.match_data
+-            raw_content = match_data.get("raw_data", {})
++            raw_content = match_data.await get("raw_data", {})
+ 
+             # 处理状态字段 - 修复状态提取逻辑，支持FotMob JSON结构
+             status = "SCHEDULED"  # 默认状态
+ 
+             # 方法1: 从 match_data.status 提取
+-            status_field = match_data.get("status", {})
++            status_field = match_data.await get("status", {})
+             if isinstance(status_field, dict):
+                 # FotMob 使用 'reason.short' == 'FT' 表示完赛
+-                if status_field.get("finished", False):
++                if status_field.await get("finished", False):
+                     status = "FINISHED"
+-                elif status_field.get("reason", {}).get("short") == "FT":
++                elif status_field.await await get("reason", {}).get("short") == "FT":
+                     status = "FINISHED"
+-                elif status_field.get("started", False):
++                elif status_field.await get("started", False):
+                     status = "LIVE"
+                 else:
+                     status = "SCHEDULED"
+ 
+             # 方法2: 从 raw_data.status 提取（备用）
+             if status == "SCHEDULED" and "status" in raw_content:
+-                raw_status = raw_content.get("status", {})
++                raw_status = raw_content.await get("status", {})
+                 if isinstance(raw_status, dict):
+-                    if raw_status.get("finished", False):
++                    if raw_status.await get("finished", False):
+                         status = "FINISHED"
+-                    elif raw_status.get("reason", {}).get("short") == "FT":
++                    elif raw_status.await await get("reason", {}).get("short") == "FT":
+                         status = "FINISHED"
+-                    elif raw_status.get("started", False):
++                    elif raw_status.await get("started", False):
+                         status = "LIVE"
+ 
+             # 获取关联的ID - 🔄 修复League映射不匹配问题
+             # 优先使用match_data中的结构化信息，回退到raw_data确保一致性
+-            league_name = match_data.get("league_name", "Unknown League")
++            league_name = match_data.await get("league_name", "Unknown League")
+ 
+             # 🆕 统一League查找逻辑，与League创建时保持一致
+-            raw_content = match_data.get("raw_data", {})
++            raw_content = match_data.await get("raw_data", {})
+             if "competition" in raw_content:
+                 comp = raw_content["competition"]
+-                league_country_lookup = comp.get("area", {}).get(
++                league_country_lookup = comp.await await get("area", {}).get(
+                     "name", "Unknown Country"
+                 )
+             else:
+@@ -420,13 +420,13 @@                 "league_country", league_country_lookup
+             )
+ 
+-            home_team_name = match_data.get("home_team_name", "Unknown Team")
+-            away_team_name = match_data.get("away_team_name", "Unknown Team")
++            home_team_name = match_data.await get("home_team_name", "Unknown Team")
++            away_team_name = match_data.await get("away_team_name", "Unknown Team")
+ 
+             # 🆕 使用统一查找逻辑
+-            league_id = leagues_map.get((league_name, league_country_lookup))
+-            home_team_id = teams_map.get(home_team_name)
+-            away_team_id = teams_map.get(away_team_name)
++            league_id = leagues_map.await get((league_name, league_country_lookup))
++            home_team_id = teams_map.await get(home_team_name)
++            away_team_id = teams_map.await get(away_team_name)
+ 
+             # 🆕 添加详细调试信息
+             logger.info("🔍 比赛数据检查:")
+@@ -447,7 +447,7 @@                 continue
+ 
+             # 处理时间
+-            match_time_str = match_data.get("match_time")
++            match_time_str = match_data.await get("match_time")
+             match_date = None
+             if match_time_str and isinstance(match_time_str, str):
+                 try:
+@@ -469,17 +469,17 @@ 
+             # 方法1: 从 raw_data.home.score 和 raw_data.away.score 提取
+             if "home" in raw_content and "away" in raw_content:
+-                home_info = raw_content.get("home", {})
+-                away_info = raw_content.get("away", {})
++                home_info = raw_content.await get("home", {})
++                away_info = raw_content.await get("away", {})
+ 
+                 if "score" in home_info and "score" in away_info:
+-                    home_score = home_info.get("score")
+-                    away_score = away_info.get("score")
++                    home_score = home_info.await get("score")
++                    away_score = away_info.await get("score")
+ 
+             # 方法2: 从 status.scoreStr 解析比分
+             if home_score is None or away_score is None:
+-                status_info = match_data.get("status", {})
+-                score_str = status_info.get("scoreStr", "")
++                status_info = match_data.await get("status", {})
++                score_str = status_info.await get("scoreStr", "")
+ 
+                 if score_str and " - " in score_str:
+                     try:
+@@ -494,9 +494,9 @@ 
+             # 方法3: 回退到原始逻辑（兼容性）
+             if home_score is None:
+-                home_score = raw_content.get("homeScore", 0)
++                home_score = raw_content.await get("homeScore", 0)
+             if away_score is None:
+-                away_score = raw_content.get("awayScore", 0)
++                away_score = raw_content.await get("awayScore", 0)
+ 
+             # 创建Match对象
+             new_match = Match(
+@@ -505,8 +505,8 @@                 league_id=league_id,
+                 status=status,
+                 match_date=match_date,
+-                season=str(match_data.get("season", "2024")),
+-                venue=raw_content.get("venue", "Unknown Venue"),
++                season=await str(match_data.get("season", "2024")),
++                venue=raw_content.await get("venue", "Unknown Venue"),
+                 home_score=home_score,
+                 away_score=away_score,
+                 created_at=datetime.utcnow(),
+@@ -526,7 +526,7 @@ 
+         # 🆕 获取插入前的当前最大ID，用于计算新插入的ID
+         max_id_query = text("SELECT COALESCE(MAX(id), 0) FROM matches")
+-        max_id_result = await session.execute(max_id_query)
++        max_id_result = await session.await execute(max_id_query)
+         max_id = max_id_result.scalar()
+ 
+         # 批量插入比赛
+@@ -545,7 +545,7 @@                 .where(RawMatchData.id.in_(raw_match_ids_to_update))
+                 .values(processed=True, updated_at=datetime.utcnow())
+             )
+-            await session.execute(update_stmt)
++            await session.await execute(update_stmt)
+ 
+         cleaned_count = len(matches_to_create)
+         logger.info(
+@@ -559,7 +559,7 @@ 
+ 
+ @shared_task(bind=True, name="data_cleaning_task")
+-def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any]:
++async def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any]:
+     """数据清洗任务 - 使用高性能批量操作 (增强版：返回新比赛ID列表).
+ 
+     Args:
+@@ -576,9 +576,9 @@ 
+         # 修复字段映射：采集任务返回的是 total_collected 或 records_collected
+         collected_records = (
+-            collection_result.get("records_collected")
+-            or collection_result.get("total_collected")
+-            or collection_result.get("collected_records", 0)
++            collection_result.await get("records_collected")
++            or collection_result.await get("total_collected")
++            or collection_result.await get("collected_records", 0)
+         )
+ 
+         logger.info(f"📊 采集到的原始数据记录数: {collected_records}")
+@@ -617,7 +617,7 @@                     import asyncio
+ 
+                     clean_result = asyncio.run(clean_data())
+-                    cleaned_count = clean_result.get("cleaned_records", 0)
++                    cleaned_count = clean_result.await get("cleaned_records", 0)
+                     logger.info(
+                         f"✅ FootballDataCleaner清洗完成，清洗记录数: {cleaned_count}"
+                     )
+@@ -660,7 +660,7 @@ 
+ 
+ @shared_task(bind=True, name="feature_engineering_task")
+-def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str, Any]:
++async def feature_engineering_task(self, cleaning_result: dict[str, Any]) -> dict[str, Any]:
+     """特征工程任务（增强版：增量更新，只为新比赛生成特征）.
+ 
+     Args:
+@@ -676,7 +676,7 @@         ensure_database_initialized()
+ 
+         # 🔥 核心改动：获取新处理的比赛ID列表
+-        new_match_ids = cleaning_result.get("new_match_ids", [])
++        new_match_ids = cleaning_result.await get("new_match_ids", [])
+ 
+         if not new_match_ids:
+             logger.info("📝 没有新比赛需要生成特征，跳过特征工程")
+@@ -733,8 +733,8 @@                 calculate_features_for_new_matches(new_match_ids)
+             )
+ 
+-            features_calculated = feature_task_result.get("calculated_features", 0)
+-            failed_calculations = feature_task_result.get("failed_calculations", 0)
++            features_calculated = feature_task_result.await get("calculated_features", 0)
++            failed_calculations = feature_task_result.await get("failed_calculations", 0)
+ 
+             logger.info(
+                 f"✅ 增量特征计算完成: 成功 {features_calculated}，失败 {failed_calculations}"
+@@ -800,7 +800,7 @@ 
+ 
+ @shared_task(bind=True, name="data_storage_task")
+-def data_storage_task(self, feature_result: dict[str, Any]) -> dict[str, Any]:
++async def data_storage_task(self, feature_result: dict[str, Any]) -> dict[str, Any]:
+     """数据存储任务.
+ 
+     Args:
+@@ -816,7 +816,7 @@         ensure_database_initialized()
+ 
+         # 这里实现特征数据到数据库的存储
+-        stored_features = feature_result.get("features_calculated", 0)
++        stored_features = feature_result.await get("features_calculated", 0)
+ 
+         storage_result = {
+             "status": "success",
+@@ -837,7 +837,7 @@         }
+ 
+ 
+-def ensure_database_initialized():
++async def ensure_database_initialized():
+     """确保数据库管理器已初始化."""
+     try:
+         from src.database.connection import DatabaseManager
+@@ -869,7 +869,7 @@ 
+ 
+ @shared_task(bind=True, name="complete_data_pipeline")
+-def complete_data_pipeline(self) -> dict[str, Any]:
++async def complete_data_pipeline(self) -> dict[str, Any]:
+     """完整的数据管道任务 - 升级至FotMob数据源.
+ 
+     按顺序执行：FotMob数据采集 -> 批量数据清洗 -> 特征工程 -> 数据存储
+@@ -920,7 +920,7 @@ 
+ 
+ @shared_task(bind=True, name="trigger_feature_calculation_for_new_matches")
+-def trigger_feature_calculation_for_new_matches(self, match_ids: list) -> dict:
++async def trigger_feature_calculation_for_new_matches(self, match_ids: list) -> dict:
+     """为新采集的比赛触发特征计算.
+ 
+     Args:
+@@ -945,7 +945,7 @@         async def calculate_features_for_match(match_id: int) -> bool:
+             """为单场比赛计算特征的异步函数"""
+             try:
+-                async with db_manager.get_async_session() as session:
++                async with db_manager.await get_async_session() as session:
+                     feature_service = FeatureService(session)
+ 
+                     # 计算特征
+@@ -996,13 +996,13 @@ 
+ 
+ # 回调函数：数据采集完成后自动触发特征计算
+-def on_collection_success(task_result, task_id, args, kwargs):
++async def on_collection_success(task_result, task_id, args, kwargs):
+     """数据采集成功后的回调函数."""
+     try:
+         logger.info(f"数据采集任务 {task_id} 成功完成，触发特征计算")
+ 
+         # 从采集结果中提取新比赛的match_ids
+-        collected_match_ids = task_result.get("new_match_ids", [])
++        collected_match_ids = task_result.await get("new_match_ids", [])
+ 
+         if collected_match_ids:
+             # 异步触发特征计算任务

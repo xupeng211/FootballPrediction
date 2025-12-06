@@ -1,0 +1,32 @@
+--- a/src/ml/model_performance_monitor.py+++ b/src/ml/model_performance_monitor.py@@ -33,7 +33,7 @@     pass  # 添加pass语句
+     """Model Performance Monitor"""
+ 
+-    def __init__(self, config: dict[str, Any] = None):
++async def __init__(self, config: dict[str, Any] = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.config = config or {}
+@@ -197,7 +197,7 @@ 
+             return {
+                 "current_performance": metric_value,
+-                "baseline_performance": self.performance_metrics.get(metric_name),
++                "baseline_performance": self.performance_metrics.await get(metric_name),
+                 "performance_drop": performance_drop,
+                 "needs_retraining": performance_drop > 0.1,
+                 "recommendation": (
+@@ -209,7 +209,7 @@             logger.error(f"性能监控失败: {e}")
+             return {"error": str(e), "needs_retraining": True}
+ 
+-    def save_model(self, filepath: str) -> bool:
++async def save_model(self, filepath: str) -> bool:
+         """保存模型."""
+         try:
+             model_data = {
+@@ -228,7 +228,7 @@             logger.error(f"模型保存失败: {e}")
+             return False
+ 
+-    def load_model(self, filepath: str) -> bool:
++async def load_model(self, filepath: str) -> bool:
+         """加载模型."""
+         try:
+             model_data = joblib.load(filepath)

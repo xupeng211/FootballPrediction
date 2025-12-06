@@ -1,0 +1,8 @@
+--- a/src/cache/redis/core/connection_manager.py+++ b/src/cache/redis/core/connection_manager.py@@ -12,7 +12,7 @@     pass  # 添加pass语句
+     """管理Redis连接的类"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self._pool: aioredis.ConnectionPool | None = None

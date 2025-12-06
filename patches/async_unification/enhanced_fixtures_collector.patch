@@ -1,0 +1,40 @@
+--- a/src/collectors/enhanced_fixtures_collector.py+++ b/src/collectors/enhanced_fixtures_collector.py@@ -23,7 +23,7 @@     pass  # 添加pass语句
+     """增强版比赛赛程收集器"""
+ 
+-    def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
++async def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.db_session = db_session
+@@ -293,7 +293,7 @@             logger.error(f"收集球队信息失败: {e}")
+             return []
+ 
+-    def _convert_match_data_to_dict(self, match_data: MatchData) -> dict[str, Any]:
++async def _convert_match_data_to_dict(self, match_data: MatchData) -> dict[str, Any]:
+         """将MatchData转换为字典格式."""
+         return {
+             "id": match_data.id,
+@@ -314,7 +314,7 @@             "data_source": "enhanced_collector",
+         }
+ 
+-    def _convert_team_data_to_dict(self, team_data: TeamData) -> dict[str, Any]:
++async def _convert_team_data_to_dict(self, team_data: TeamData) -> dict[str, Any]:
+         """将TeamData转换为字典格式."""
+         return {
+             "id": team_data.id,
+@@ -331,7 +331,7 @@         """保存比赛到数据库."""
+         try:
+             # 检查比赛是否已存在
+-            existing_match = await self.db_session.get(Match, fixture_dict["id"])
++            existing_match = await self.db_session.await get(Match, fixture_dict["id"])
+ 
+             if existing_match:
+                 # 更新现有比赛
+@@ -357,7 +357,7 @@         """保存球队到数据库."""
+         try:
+             # 检查球队是否已存在
+-            existing_team = await self.db_session.get(Team, team_dict["id"])
++            existing_team = await self.db_session.await get(Team, team_dict["id"])
+ 
+             if existing_team:
+                 # 更新现有球队

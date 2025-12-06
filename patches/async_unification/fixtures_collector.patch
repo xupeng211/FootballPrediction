@@ -1,0 +1,255 @@
+--- a/src/data/collectors/fixtures_collector.py+++ b/src/data/collectors/fixtures_collector.py@@ -40,7 +40,7 @@     支持基于配置文件的动态联赛管理和API速率限制保护.
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         data_source: str = "football_api",
+         config_file: str | None = None,
+@@ -72,15 +72,15 @@         # 采集统计
+         self.league_stats = {}
+ 
+-    def _load_config(self) -> dict[str, Any]:
++async def _load_config(self) -> dict[str, Any]:
+         """从配置文件加载数据源战略配置."""
+         try:
+             with open(self.config_file, encoding="utf-8") as f:
+                 config = json.load(f)
+             logger.info(f"✅ 成功加载数据战略配置: {self.config_file}")
+-            logger.info(f"📋 配置版本: {config.get('version', 'unknown')}")
++            logger.await info(f"📋 配置版本: {config.get('version', 'unknown')}")
+             logger.info(
+-                f"🎯 采集策略: {config.get('strategic_settings', {}).get('collection_strategy', 'unknown')}"
++                f"🎯 采集策略: {config.await await get('strategic_settings', {}).get('collection_strategy', 'unknown')}"
+             )
+             return config
+         except FileNotFoundError:
+@@ -96,7 +96,7 @@             logger.warning("⚠️ 使用默认配置作为回退")
+             return self._get_default_config()
+ 
+-    def _get_default_config(self) -> dict[str, Any]:
++async def _get_default_config(self) -> dict[str, Any]:
+         """获取默认配置（回退方案）."""
+         return {
+             "version": "2.0.0-fallback",
+@@ -154,20 +154,20 @@             },
+         }
+ 
+-    def _load_target_leagues(self) -> list[dict[str, Any]]:
++async def _load_target_leagues(self) -> list[dict[str, Any]]:
+         """从配置中加载目标联赛列表."""
+         leagues = []
+         try:
+-            for league_config in self.config.get("target_leagues", []):
++            for league_config in self.config.await get("target_leagues", []):
+                 # 转换新配置格式以兼容现有代码
+                 league_info = {
+                     "name": league_config["name"],
+-                    "country": league_config.get("country", "Unknown"),
++                    "country": league_config.await get("country", "Unknown"),
+                     "type": league_config["type"],
+-                    "priority": league_config.get("priority", "medium"),
++                    "priority": league_config.await get("priority", "medium"),
+                     "api_id": league_config["api_id"],
+                     "db_id": league_config["db_id"],
+-                    "teams_count": league_config.get("teams_count", 20),
++                    "teams_count": league_config.await get("teams_count", 20),
+                 }
+                 leagues.append(league_info)
+ 
+@@ -178,71 +178,71 @@             logger.error(f"❌ 加载联赛配置失败: {e}")
+             return []
+ 
+-    def get_strategic_settings(self) -> dict[str, Any]:
++async def get_strategic_settings(self) -> dict[str, Any]:
+         """获取战略设置."""
+-        return self.config.get("strategic_settings", {})
+-
+-    def get_league_by_name(self, name: str) -> dict[str, Any] | None:
++        return self.config.await get("strategic_settings", {})
++
++async def get_league_by_name(self, name: str) -> dict[str, Any] | None:
+         """根据联赛名称获取联赛配置."""
+         for league in self.target_leagues:
+             if league["name"] == name:
+                 return league
+         return None
+ 
+-    def get_backfill_seasons(self) -> int:
++async def get_backfill_seasons(self) -> int:
+         """获取历史回溯赛季数."""
+         strategic_settings = self.get_strategic_settings()
+-        return strategic_settings.get("backfill_seasons", 3)
+-
+-    def get_current_season(self) -> int:
++        return strategic_settings.await get("backfill_seasons", 3)
++
++async def get_current_season(self) -> int:
+         """获取当前赛季."""
+         strategic_settings = self.get_strategic_settings()
+-        return strategic_settings.get("current_season", 2024)
+-
+-    def get_backfill_years(self) -> list[int]:
++        return strategic_settings.await get("current_season", 2024)
++
++async def get_backfill_years(self) -> list[int]:
+         """获取历史回溯年限列表."""
+         current_season = self.get_current_season()
+         backfill_count = self.get_backfill_seasons()
+         return [current_season - i for i in range(1, backfill_count + 1)]
+ 
+-    def get_max_api_calls_per_minute(self) -> int:
++async def get_max_api_calls_per_minute(self) -> int:
+         """获取每分钟最大API调用次数."""
+         strategic_settings = self.get_strategic_settings()
+-        return strategic_settings.get("max_api_calls_per_minute", 10)
+-
+-    def get_collection_strategy(self) -> str:
++        return strategic_settings.await get("max_api_calls_per_minute", 10)
++
++async def get_collection_strategy(self) -> str:
+         """获取采集策略."""
+         strategic_settings = self.get_strategic_settings()
+-        return strategic_settings.get("collection_strategy", "high_value_focus")
+-
+-    def get_leagues_by_type(self, league_type: str = "Tier1") -> list[dict[str, Any]]:
++        return strategic_settings.await get("collection_strategy", "high_value_focus")
++
++async def get_leagues_by_type(self, league_type: str = "Tier1") -> list[dict[str, Any]]:
+         """根据联赛类型获取联赛列表."""
+         return [
+             league
+             for league in self.target_leagues
+-            if league.get("type", "Tier1") == league_type
++            if league.await get("type", "Tier1") == league_type
+         ]
+ 
+-    def get_leagues_by_priority(
++async def get_leagues_by_priority(
+         self, priority: str = "critical"
+     ) -> list[dict[str, Any]]:
+         """根据优先级获取联赛列表."""
+         return [
+             league
+             for league in self.target_leagues
+-            if league.get("priority", "medium") == priority
++            if league.await get("priority", "medium") == priority
+         ]
+ 
+-    def get_rate_limit_delay(self) -> float:
++async def get_rate_limit_delay(self) -> float:
+         """根据配置计算请求间隔."""
+         max_calls_per_minute = self.get_max_api_calls_per_minute()
+         # 保守的间隔计算：60秒 / (每分钟请求数 * 0.8)
+         delay = 60 / (max_calls_per_minute * 0.8)
+         return max(delay, 1.0)  # 至少1秒间隔
+ 
+-    def get_api_limits(self, api_name: str = "football_data_org") -> dict[str, Any]:
++async def get_api_limits(self, api_name: str = "football_data_org") -> dict[str, Any]:
+         """获取指定API的速率限制配置."""
+-        api_limits = self.config.get("api_limits", {})
++        api_limits = self.config.await get("api_limits", {})
+         return api_limits.get(
+             api_name,
+             {
+@@ -253,17 +253,17 @@             },
+         )
+ 
+-    def get_league_summary(self) -> dict[str, Any]:
++async def get_league_summary(self) -> dict[str, Any]:
+         """获取联赛配置摘要统计."""
+         type_count = {}
+         priority_count = {}
+ 
+         for league in self.target_leagues:
+-            league_type = league.get("type", "Unknown")
+-            priority = league.get("priority", "medium")
+-
+-            type_count[league_type] = type_count.get(league_type, 0) + 1
+-            priority_count[priority] = priority_count.get(priority, 0) + 1
++            league_type = league.await get("type", "Unknown")
++            priority = league.await get("priority", "medium")
++
++            type_count[league_type] = type_count.await get(league_type, 0) + 1
++            priority_count[priority] = priority_count.await get(priority, 0) + 1
+ 
+         return {
+             "total_leagues": len(self.target_leagues),
+@@ -497,12 +497,12 @@                             self._processed_matches.add(match_key)  # 标记为已处理
+                             self.league_stats[league_code]["success"] += 1
+                             logger.debug(
+-                                f"成功处理比赛: {cleaned_fixture.get('external_match_id')}"
++                                f"成功处理比赛: {cleaned_fixture.await get('external_match_id')}"
+                             )
+                         else:
+                             self.league_stats[league_code]["errors"] += 1
+                             logger.warning(
+-                                f"无效的比赛数据: {fixture_data.get('id', 'unknown')}"
++                                f"无效的比赛数据: {fixture_data.await get('id', 'unknown')}"
+                             )
+ 
+                     except (
+@@ -605,7 +605,7 @@             logger.error(f"获取活跃联赛列表失败: {str(e)}")
+             return ["PL", "PD"]  # 默认返回英超和西甲
+ 
+-    def _generate_match_key(self, fixture_data: dict[str, Any]) -> str:
++async def _generate_match_key(self, fixture_data: dict[str, Any]) -> str:
+         """生成比赛唯一键（防重复）.
+ 
+         Args:
+@@ -616,10 +616,10 @@         """
+         # 使用外部ID、主队、客队、比赛时间生成唯一键
+         key_components = [
+-            str(fixture_data.get("id", "")),
+-            str(fixture_data.get("homeTeam", {}).get("id", "")),
+-            str(fixture_data.get("awayTeam", {}).get("id", "")),
+-            str(fixture_data.get("utcDate", "")),
++            await str(fixture_data.get("id", "")),
++            await await str(fixture_data.get("homeTeam", {}).get("id", "")),
++            await await str(fixture_data.get("awayTeam", {}).get("id", "")),
++            await str(fixture_data.get("utcDate", "")),
+         ]
+ 
+         key_string = "|".join(key_components)
+@@ -651,14 +651,14 @@             cleaned_data = {
+                 "external_match_id": str(raw_fixture["id"]),
+                 "external_league_id": str(
+-                    raw_fixture.get("competition", {}).get("id", "")
++                    raw_fixture.await await get("competition", {}).get("id", "")
+                 ),
+                 "external_home_team_id": str(raw_fixture["homeTeam"]["id"]),
+                 "external_away_team_id": str(raw_fixture["awayTeam"]["id"]),
+                 "match_time": match_time.isoformat(),
+-                "status": raw_fixture.get("status", "SCHEDULED"),
+-                "season": raw_fixture.get("season", {}).get("id"),
+-                "matchday": raw_fixture.get("matchday"),
++                "status": raw_fixture.await get("status", "SCHEDULED"),
++                "season": raw_fixture.await await get("season", {}).get("id"),
++                "matchday": raw_fixture.await get("matchday"),
+                 "raw_data": raw_fixture,
+                 "collected_at": datetime.now().isoformat(),
+                 "processed": False,
+@@ -703,7 +703,7 @@                 for data in collected_data:
+                     try:
+                         # 检查是否已存在相同的记录（幂等性）
+-                        external_id = data.get("external_match_id")
++                        external_id = data.await get("external_match_id")
+                         if not external_id:
+                             logger.warning("跳过没有external_match_id的记录")
+                             continue
+@@ -715,7 +715,7 @@                             RawMatchData.external_id == external_id,
+                             RawMatchData.source == self.data_source,
+                         )
+-                        existing_result = await session.execute(existing_query)
++                        existing_result = await session.await execute(existing_query)
+                         existing_record = existing_result.scalar_one_or_none()
+ 
+                         if existing_record:
+@@ -739,7 +739,7 @@ 
+                     except Exception as e:
+                         logger.error(
+-                            f"保存单个记录失败 {data.get('external_match_id', 'unknown')}: {str(e)}"
++                            f"保存单个记录失败 {data.await get('external_match_id', 'unknown')}: {str(e)}"
+                         )
+                         continue
+ 

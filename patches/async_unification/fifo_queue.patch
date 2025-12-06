@@ -1,0 +1,137 @@
+--- a/src/queues/fifo_queue.py+++ b/src/queues/fifo_queue.py@@ -50,7 +50,7 @@     scheduled_at: datetime | None = None
+     metadata: dict[str, Any] | None = None
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         data = asdict(self)
+         data["created_at"] = self.created_at.isoformat()
+@@ -61,7 +61,7 @@         return data
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "QueueTask":
++async def from_dict(cls, data: dict[str, Any]) -> "QueueTask":
+         """从字典创建任务."""
+         data["created_at"] = datetime.fromisoformat(data["created_at"])
+         if data["scheduled_at"]:
+@@ -73,7 +73,7 @@ class FIFOQueue:
+     """FIFO队列基类."""
+ 
+-    def __init__(self, name: str):
++async def __init__(self, name: str):
+         self.name = name
+         self.status = QueueStatus.ACTIVE
+         self.statistics = {
+@@ -100,7 +100,7 @@         """清空队列."""
+         raise NotImplementedError
+ 
+-    def get_statistics(self) -> dict[str, Any]:
++async def get_statistics(self) -> dict[str, Any]:
+         """获取队列统计信息."""
+         return self.statistics.copy()
+ 
+@@ -108,7 +108,7 @@ class MemoryFIFOQueue(FIFOQueue):
+     """内存FIFO队列实现."""
+ 
+-    def __init__(self, name: str, max_size: int = 10000):
++async def __init__(self, name: str, max_size: int = 10000):
+         super().__init__(name)
+         self.max_size = max_size
+         self._queue = asyncio.Queue(maxsize=max_size)
+@@ -134,9 +134,9 @@         """从队列取出任务."""
+         try:
+             if timeout:
+-                task_data = await asyncio.wait_for(self._queue.get(), timeout=timeout)
++                task_data = await asyncio.await wait_for(self._queue.get(), timeout=timeout)
+             else:
+-                task_data = await self._queue.get()
++                task_data = await self._queue.await get()
+ 
+             task = QueueTask.from_dict(task_data)
+             self.statistics["total_dequeued"] += 1
+@@ -175,7 +175,7 @@ class RedisFIFOQueue(FIFOQueue):
+     """Redis FIFO队列实现."""
+ 
+-    def __init__(self, name: str, redis_client=None, **redis_config):
++async def __init__(self, name: str, redis_client=None, **redis_config):
+         super().__init__(name)
+         self.redis_client = redis_client
+         self.redis_config = redis_config
+@@ -236,9 +236,9 @@             pipe.llen(self.queue_key)
+ 
+             if timeout:
+-                result = await asyncio.wait_for(pipe.execute(), timeout=timeout)
++                result = await asyncio.await wait_for(pipe.execute(), timeout=timeout)
+             else:
+-                result = await pipe.execute()
++                result = await pipe.await execute()
+ 
+             if result and result[0]:
+                 task_data = json.loads(result[0])
+@@ -280,7 +280,7 @@             pipe.delete(self.queue_key)
+             pipe.delete(self.processing_key)
+             pipe.delete(self.failed_key)
+-            await pipe.execute()
++            await pipe.await execute()
+ 
+             self.statistics["queue_size"] = 0
+             logger.info(f"Redis队列 {self.name} 已清空")
+@@ -300,7 +300,7 @@             keys = await redis.keys(f"{self.processing_key}:*")
+ 
+             for key in keys:
+-                task_data = await redis.get(key)
++                task_data = await redis.await get(key)
+                 if task_data:
+                     task = QueueTask.from_dict(json.loads(task_data))
+                     if task.id == task_id:
+@@ -324,7 +324,7 @@             keys = await redis.keys(f"{self.processing_key}:*")
+ 
+             for key in keys:
+-                task_data = await redis.get(key)
++                task_data = await redis.await get(key)
+                 if task_data:
+                     task = QueueTask.from_dict(json.loads(task_data))
+                     if task.id == task_id:
+@@ -386,10 +386,10 @@ class QueueManager:
+     """队列管理器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.queues: dict[str, FIFOQueue] = {}
+ 
+-    def create_queue(
++async def create_queue(
+         self, name: str, queue_type: str = "memory", **kwargs
+     ) -> FIFOQueue:
+         """创建队列."""
+@@ -408,11 +408,11 @@         logger.info(f"创建 {queue_type} 队列: {name}")
+         return queue
+ 
+-    def get_queue(self, name: str) -> FIFOQueue | None:
++async def get_queue(self, name: str) -> FIFOQueue | None:
+         """获取队列."""
+-        return self.queues.get(name)
+-
+-    def remove_queue(self, name: str) -> bool:
++        return self.queues.await get(name)
++
++async def remove_queue(self, name: str) -> bool:
+         """移除队列."""
+         if name in self.queues:
+             del self.queues[name]
+@@ -438,7 +438,7 @@             return None
+         return await queue.dequeue(timeout)
+ 
+-    def get_all_statistics(self) -> dict[str, Any]:
++async def get_all_statistics(self) -> dict[str, Any]:
+         """获取所有队列的统计信息."""
+         return {
+             queue_name: queue.get_statistics()
+@@ -458,7 +458,7 @@ 
+ 
+ # 便捷函数
+-def create_task(
++async def create_task(
+     task_type: str,
+     data: dict[str, Any],
+     priority: TaskPriority = TaskPriority.NORMAL,

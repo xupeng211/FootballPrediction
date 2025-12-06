@@ -1,0 +1,72 @@
+--- a/src/models/train_pure_realistic.py+++ b/src/models/train_pure_realistic.py@@ -32,7 +32,7 @@ class PureRealisticTrainer:
+     """纯真实数据训练器 - 数据洁癖审计师版"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.database_url = os.getenv(
+             "DATABASE_URL"
+             "postgresql://postgres:postgres-dev-password@db:5432/football_prediction"
+@@ -128,7 +128,7 @@ 
+         return df
+ 
+-    def extract_real_xg(self, stats_json: str) -> dict[str, float]:
++async def extract_real_xg(self, stats_json: str) -> dict[str, float]:
+         """提取真实的xG数据 - 严格验证"""
+         try:
+             if not stats_json or stats_json == "null":
+@@ -137,7 +137,7 @@             stats = json.loads(stats_json)
+ 
+             # 递归搜索真实的球队xG数据
+-            def find_team_xg(obj, path=""):
++async def find_team_xg(obj, path=""):
+                 xg_data = {"home": None, "away": None}
+ 
+                 if isinstance(obj, dict):
+@@ -181,7 +181,7 @@         except (json.JSONDecodeError, ValueError, TypeError):
+             return {"xg_home": None, "xg_away": None}
+ 
+-    def filter_pure_real_data(self, df: pd.DataFrame) -> pd.DataFrame:
++async def filter_pure_real_data(self, df: pd.DataFrame) -> pd.DataFrame:
+         """过滤纯真实数据 - 绝对不允许填充"""
+         logger.info("🔍 严格过滤纯真实数据...")
+ 
+@@ -214,7 +214,7 @@ 
+         return df_pure
+ 
+-    def prepare_simple_features(
++async def prepare_simple_features(
+         self, df: pd.DataFrame
+     ) -> tuple[pd.DataFrame, pd.Series]:
+         """准备简单特征 - 基于有限的真实数据"""
+@@ -278,7 +278,7 @@ 
+         return X, y_encoded
+ 
+-    def train_simple_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
++async def train_simple_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
+         """训练简单模型 - 适合小数据量"""
+         logger.info("🎯 开始训练简单模型...")
+ 
+@@ -300,7 +300,7 @@ 
+         logger.info("✅ 简单模型训练完成")
+ 
+-    def realistic_evaluation(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
++async def realistic_evaluation(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
+         """现实评估 - 不使用赔率（因为没有真实赔率数据）"""
+         logger.info("📊 开始现实评估...")
+ 
+@@ -328,7 +328,7 @@         logger.info("✅ 现实评估完成")
+         return results
+ 
+-    def save_pure_model(
++async def save_pure_model(
+         self, model_name: str = "football_prediction_pure_real"
+     ) -> None:
+         """保存纯真实模型"""
+@@ -428,7 +428,7 @@ 
+             traceback.print_exc()
+ 
+-    def generate_pure_report(self, start_time, train_acc, eval_results, sample_count):
++async def generate_pure_report(self, start_time, train_acc, eval_results, sample_count):
+         """生成纯真实报告"""
+         end_time = datetime.now()
+         training_time = (end_time - start_time).total_seconds()

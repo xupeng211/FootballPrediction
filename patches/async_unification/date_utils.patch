@@ -1,0 +1,218 @@
+--- a/src/utils/date_utils.py+++ b/src/utils/date_utils.py@@ -23,14 +23,14 @@     }
+ 
+     @staticmethod
+-    def is_future(dt: dt_datetime) -> bool:
++async def is_future(dt: dt_datetime) -> bool:
+         """检查日期时间是否在未来."""
+         if not isinstance(dt, dt_datetime):
+             return False
+         return dt > dt_datetime.now()
+ 
+     @staticmethod
+-    def format_date(dt: dt_datetime, format_str: str = "%Y-%m-%d") -> str:
++async def format_date(dt: dt_datetime, format_str: str = "%Y-%m-%d") -> str:
+         """格式化日期."""
+         if not isinstance(dt, dt_datetime):
+             return ""
+@@ -40,7 +40,7 @@             return ""
+ 
+     @staticmethod
+-    def format_iso(dt: dt_datetime) -> str:
++async def format_iso(dt: dt_datetime) -> str:
+         """格式化为ISO格式."""
+         if not isinstance(dt, dt_datetime):
+             return ""
+@@ -50,7 +50,7 @@             return ""
+ 
+     @staticmethod
+-    def format_dt_datetime(
++async def format_dt_datetime(
+         dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S"
+     ) -> str:
+         """格式化日期时间."""
+@@ -63,12 +63,12 @@             return ""
+ 
+     @staticmethod
+-    def format_datetime(dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
++async def format_datetime(dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+         """格式化日期时间 (别名方法，为向后兼容性)."""
+         return DateUtils.format_dt_datetime(dt, format_str)
+ 
+     @staticmethod
+-    def parse_date(
++async def parse_date(
+         date_str: str, format_str: str = "%Y-%m-%d"
+     ) -> Optional[dt_datetime]:
+         """解析日期字符串."""
+@@ -81,7 +81,7 @@             return None
+ 
+     @staticmethod
+-    def days_between(start_date: dt_datetime, end_date: dt_datetime) -> int:
++async def days_between(start_date: dt_datetime, end_date: dt_datetime) -> int:
+         """计算两个日期之间的天数差."""
+         if not isinstance(start_date, dt_datetime) or not isinstance(
+             end_date, dt_datetime
+@@ -91,7 +91,7 @@         return abs(delta.days)
+ 
+     @staticmethod
+-    def parse_datetime(
++async def parse_datetime(
+         datetime_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
+     ) -> Optional[dt_datetime]:
+         """解析日期时间字符串."""
+@@ -104,7 +104,7 @@             return None
+ 
+     @staticmethod
+-    def time_ago(dt: dt_datetime) -> str:
++async def time_ago(dt: dt_datetime) -> str:
+         """计算相对时间."""
+         if not isinstance(dt, dt_datetime):
+             return ""
+@@ -126,14 +126,14 @@             return dt.strftime("%Y-%m-%d")
+ 
+     @staticmethod
+-    def is_weekend(dt: dt_datetime) -> bool:
++async def is_weekend(dt: dt_datetime) -> bool:
+         """判断是否为周末."""
+         if not isinstance(dt, dt_datetime):
+             return False
+         return dt.weekday() >= 5  # 5=Saturday, 6=Sunday
+ 
+     @staticmethod
+-    def get_weekday(dt: dt_datetime) -> int:
++async def get_weekday(dt: dt_datetime) -> int:
+         """获取星期几 (1=Monday, 7=Sunday)."""
+         if not isinstance(dt, dt_datetime):
+             return None
+@@ -141,12 +141,12 @@         return dt.weekday() + 1
+ 
+     @staticmethod
+-    def is_weekday(dt: dt_datetime) -> bool:
++async def is_weekday(dt: dt_datetime) -> bool:
+         """判断是否为工作日."""
+         return not DateUtils.is_weekend(dt)
+ 
+     @staticmethod
+-    def get_age(
++async def get_age(
+         birth_date: [dt_datetime, date],
+         current_date: Optional[[dt_datetime, date]] = None,
+     ) -> Optional[int]:
+@@ -179,7 +179,7 @@         return max(0, age)
+ 
+     @staticmethod
+-    def is_leap_year(year: int) -> bool:
++async def is_leap_year(year: int) -> bool:
+         """判断是否为闰年."""
+         if not isinstance(year, int):
+             return False
+@@ -195,7 +195,7 @@             return year % 400 == 0
+ 
+     @staticmethod
+-    def get_month_range(year: int, month: int) -> tuple:
++async def get_month_range(year: int, month: int) -> tuple:
+         """获取月份的开始和结束日期."""
+         if month < 1 or month > 12:
+             raise ValueError("无效的月份")
+@@ -211,13 +211,13 @@         return start_date, end_date
+ 
+     @staticmethod
+-    def get_days_in_month(year: int, month: int) -> int:
++async def get_days_in_month(year: int, month: int) -> int:
+         """获取月份的天数."""
+         start_date, end_date = DateUtils.get_month_range(year, month)
+         return end_date.day
+ 
+     @staticmethod
+-    def add_days(dt: dt_datetime, days: int) -> Optional[dt_datetime]:
++async def add_days(dt: dt_datetime, days: int) -> Optional[dt_datetime]:
+         """增加天数."""
+         if not isinstance(dt, dt_datetime):
+             raise ValueError("Invalid datetime object")
+@@ -226,7 +226,7 @@         return dt + timedelta(days=days)
+ 
+     @staticmethod
+-    def add_months(dt: dt_datetime, months: int) -> dt_datetime:
++async def add_months(dt: dt_datetime, months: int) -> dt_datetime:
+         """增加月份."""
+         if not isinstance(dt, dt_datetime):
+             raise ValueError("无效的日期时间对象")
+@@ -238,7 +238,7 @@         return dt_datetime(year, month, day, dt.hour, dt.minute, dt.second)
+ 
+     @staticmethod
+-    def get_timezone_aware(dt: dt_datetime, timezone_offset: int = 0) -> dt_datetime:
++async def get_timezone_aware(dt: dt_datetime, timezone_offset: int = 0) -> dt_datetime:
+         """获取时区感知的日期时间（简化版本）."""
+         if not isinstance(dt, dt_datetime):
+             raise ValueError("无效的日期时间对象")
+@@ -246,7 +246,7 @@         return dt + timedelta(hours=timezone_offset)
+ 
+     @staticmethod
+-    def get_holiday_info(dt: dt_datetime) -> dict[str, Any]:
++async def get_holiday_info(dt: dt_datetime) -> dict[str, Any]:
+         """获取节假日信息（简化版本）."""
+         # 这里简化处理，实际项目中应该使用节假日库
+         date_str = dt.strftime("%m-%d")
+@@ -255,7 +255,7 @@             "05-01": "劳动节",
+             "10-01": "国庆节",
+         }
+-        holiday_name = holidays.get(date_str)
++        holiday_name = holidays.await get(date_str)
+ 
+         return {
+             "is_holiday": bool(holiday_name),
+@@ -264,7 +264,7 @@         }
+ 
+     @staticmethod
+-    def get_month_start(dt: dt_datetime) -> Optional[dt_datetime]:
++async def get_month_start(dt: dt_datetime) -> Optional[dt_datetime]:
+         """获取月份开始日期."""
+         if not isinstance(dt, (dt_datetime, date)):
+             return None
+@@ -273,7 +273,7 @@         return dt_datetime(dt.year, dt.month, 1)
+ 
+     @staticmethod
+-    def get_month_end(dt: dt_datetime) -> Optional[dt_datetime]:
++async def get_month_end(dt: dt_datetime) -> Optional[dt_datetime]:
+         """获取月份结束日期."""
+         if not isinstance(dt, (dt_datetime, date)):
+             return None
+@@ -285,7 +285,7 @@             return dt_datetime(dt.year, dt.month + 1, 1) - timedelta(days=1)
+ 
+     @staticmethod
+-    def days_between(dt1: dt_datetime, dt2: dt_datetime) -> Optional[int]:
++async def days_between(dt1: dt_datetime, dt2: dt_datetime) -> Optional[int]:
+         """计算两个日期之间的天数."""
+         if not isinstance(dt1, (dt_datetime, date)) or not isinstance(
+             dt2, (dt_datetime, date)
+@@ -298,7 +298,7 @@         return (dt2 - dt1).days
+ 
+     @staticmethod
+-    def format_duration(seconds: int) -> str:
++async def format_duration(seconds: int) -> str:
+         """格式化时间长度为人类可读格式."""
+         if not isinstance(seconds, (int, float)):
+             return "0秒"
+@@ -325,7 +325,7 @@             return "0秒"
+ 
+     @staticmethod
+-    def format_duration_between(start: dt_datetime, end: dt_datetime) -> str:
++async def format_duration_between(start: dt_datetime, end: dt_datetime) -> str:
+         """格式化两个时间点之间的时长."""
+         if not isinstance(start, dt_datetime) or not isinstance(end, dt_datetime):
+             return "0秒"
+@@ -339,7 +339,7 @@ 
+ # 缓存版本的函数
+ @lru_cache(maxsize=128)
+-def cached_format_datetime(
++async def cached_format_datetime(
+     dt: dt_datetime, format_str: str = "%Y-%m-%d %H:%M:%S"
+ ) -> str:
+     """缓存版本的日期格式化."""
+@@ -347,6 +347,6 @@ 
+ 
+ @lru_cache(maxsize=256)
+-def cached_time_ago(dt: dt_datetime, reference: Optional[dt_datetime] = None) -> str:
++async def cached_time_ago(dt: dt_datetime, reference: Optional[dt_datetime] = None) -> str:
+     """缓存版本的时间差格式化."""
+     return DateUtils.time_ago(dt)

@@ -1,0 +1,16 @@
+--- a/src/inference/schemas.py+++ b/src/inference/schemas.py@@ -107,7 +107,7 @@ 
+     @field_validator('predicted_outcome')
+     @classmethod
+-    def validate_predicted_outcome(cls, v):
++async def validate_predicted_outcome(cls, v):
+         if v not in ['home_win', 'draw', 'away_win']:
+             raise ValueError('predicted_outcome must be one of: home_win, draw, away_win')
+         return v
+@@ -144,7 +144,7 @@ 
+     @field_validator('requests')
+     @classmethod
+-    def validate_requests(cls, v):
++async def validate_requests(cls, v):
+         if len(v) == 0:
+             raise ValueError('requests cannot be empty')
+         return v

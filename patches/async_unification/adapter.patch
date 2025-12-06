@@ -1,0 +1,145 @@
+--- a/src/patterns/adapter.py+++ b/src/patterns/adapter.py@@ -23,7 +23,7 @@     timestamp: datetime
+     metadata: dict[str, Any] | None = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         if self.metadata is None:
+             self.metadata = {}
+ 
+@@ -31,7 +31,7 @@ class ExternalAPI(ABC):
+     """外部API抽象基类."""
+ 
+-    def __init__(self, name: str, base_url: str):
++async def __init__(self, name: str, base_url: str):
+         self.name = name
+         self.base_url = base_url
+         self.is_connected = False
+@@ -59,7 +59,7 @@ class APIAdapter(ExternalAPI):
+     """API适配器基类."""
+ 
+-    def __init__(self, name: str, base_url: str, api_key: str | None = None):
++async def __init__(self, name: str, base_url: str, api_key: str | None = None):
+         super().__init__(name, base_url)
+         self.api_key = api_key
+         self.rate_limit = 100  # 每分钟请求数
+@@ -93,7 +93,7 @@ class FootballApiAdapter(APIAdapter):
+     """足球API适配器."""
+ 
+-    def __init__(self, base_url: str, api_key: str | None = None):
++async def __init__(self, base_url: str, api_key: str | None = None):
+         super().__init__("football_api", base_url, api_key)
+ 
+     async def fetch_data(
+@@ -128,7 +128,7 @@ class WeatherApiAdapter(APIAdapter):
+     """天气API适配器."""
+ 
+-    def __init__(self, base_url: str, api_key: str | None = None):
++async def __init__(self, base_url: str, api_key: str | None = None):
+         super().__init__("weather_api", base_url, api_key)
+ 
+     async def fetch_data(
+@@ -146,7 +146,7 @@             "humidity": 65,
+             "condition": "partly_cloudy",
+             "wind_speed": 15,
+-            "location": params.get("location", "Unknown") if params else "Unknown",
++            "location": params.await get("location", "Unknown") if params else "Unknown",
+         }
+ 
+         return ExternalData(
+@@ -160,7 +160,7 @@ class OddsApiAdapter(APIAdapter):
+     """赔率API适配器."""
+ 
+-    def __init__(self, base_url: str, api_key: str | None = None):
++async def __init__(self, base_url: str, api_key: str | None = None):
+         super().__init__("odds_api", base_url, api_key)
+ 
+     async def fetch_data(
+@@ -192,16 +192,16 @@ class UnifiedDataCollector:
+     """统一数据收集器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.adapters: dict[str, APIAdapter] = {}
+         self.is_initialized = False
+ 
+-    def register_adapter(self, adapter: APIAdapter):
++async def register_adapter(self, adapter: APIAdapter):
+         """注册适配器."""
+         self.adapters[adapter.name] = adapter
+         logger.info(f"Registered adapter: {adapter.name}")
+ 
+-    def unregister_adapter(self, name: str):
++async def unregister_adapter(self, name: str):
+         """注销适配器."""
+         if name in self.adapters:
+             del self.adapters[name]
+@@ -279,33 +279,33 @@     """适配器工厂类."""
+ 
+     @staticmethod
+-    def create_football_adapter(
++async def create_football_adapter(
+         base_url: str, api_key: str | None = None
+     ) -> FootballApiAdapter:
+         """创建足球API适配器."""
+         return FootballApiAdapter(base_url, api_key)
+ 
+     @staticmethod
+-    def create_weather_adapter(
++async def create_weather_adapter(
+         base_url: str, api_key: str | None = None
+     ) -> WeatherApiAdapter:
+         """创建天气API适配器."""
+         return WeatherApiAdapter(base_url, api_key)
+ 
+     @staticmethod
+-    def create_odds_adapter(
++async def create_odds_adapter(
+         base_url: str, api_key: str | None = None
+     ) -> OddsApiAdapter:
+         """创建赔率API适配器."""
+         return OddsApiAdapter(base_url, api_key)
+ 
+     @staticmethod
+-    def create_unified_collector() -> UnifiedDataCollector:
++async def create_unified_collector() -> UnifiedDataCollector:
+         """创建统一数据收集器."""
+         return UnifiedDataCollector()
+ 
+     @staticmethod
+-    def create_adapter(
++async def create_adapter(
+         adapter_type: str, base_url: str, api_key: str | None = None
+     ) -> APIAdapter:
+         """根据类型创建适配器."""
+@@ -321,7 +321,7 @@         return adapter_map[adapter_type](base_url, api_key)
+ 
+     @classmethod
+-    def create_standard_setup(cls, config: dict[str, Any]) -> UnifiedDataCollector:
++async def create_standard_setup(cls, config: dict[str, Any]) -> UnifiedDataCollector:
+         """创建标准设置."""
+         collector = cls.create_unified_collector()
+ 
+@@ -329,7 +329,7 @@         if "football_api" in config:
+             football_config = config["football_api"]
+             football_adapter = cls.create_football_adapter(
+-                football_config["base_url"], football_config.get("api_key")
++                football_config["base_url"], football_config.await get("api_key")
+             )
+             collector.register_adapter(football_adapter)
+ 
+@@ -337,7 +337,7 @@         if "weather_api" in config:
+             weather_config = config["weather_api"]
+             weather_adapter = cls.create_weather_adapter(
+-                weather_config["base_url"], weather_config.get("api_key")
++                weather_config["base_url"], weather_config.await get("api_key")
+             )
+             collector.register_adapter(weather_adapter)
+ 
+@@ -345,7 +345,7 @@         if "odds_api" in config:
+             odds_config = config["odds_api"]
+             odds_adapter = cls.create_odds_adapter(
+-                odds_config["base_url"], odds_config.get("api_key")
++                odds_config["base_url"], odds_config.await get("api_key")
+             )
+             collector.register_adapter(odds_adapter)
+ 

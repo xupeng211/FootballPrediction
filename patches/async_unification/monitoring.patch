@@ -1,0 +1,193 @@
+--- a/src/pipeline/monitoring.py+++ b/src/pipeline/monitoring.py@@ -46,12 +46,12 @@ class PipelineLogger:
+     """Pipeline专用日志记录器"""
+ 
+-    def __init__(self, config: PipelineConfig):
++async def __init__(self, config: PipelineConfig):
+         """初始化日志记录器"""
+         self.config = config
+         self.setup_logging()
+ 
+-    def setup_logging(self):
++async def setup_logging(self):
+         """设置日志配置"""
+         # 创建日志目录
+         log_dir = Path(self.config.project_root) / self.config.training.log_dir
+@@ -84,14 +84,14 @@ 
+         self.logger = root_logger
+ 
+-    def log_training_start(self, algorithm: str, sample_count: int, feature_count: int):
++async def log_training_start(self, algorithm: str, sample_count: int, feature_count: int):
+         """记录训练开始"""
+         self.logger.info(
+             f"🚀 训练开始 - 算法: {algorithm}, "
+             f"样本数: {sample_count}, 特征数: {feature_count}"
+         )
+ 
+-    def log_training_complete(self, metrics: TrainingMetrics):
++async def log_training_complete(self, metrics: TrainingMetrics):
+         """记录训练完成"""
+         self.logger.info(
+             f"✅ 训练完成 - 算法: {metrics.algorithm}, "
+@@ -99,26 +99,26 @@             f"训练时间: {metrics.training_time:.2f}s"
+         )
+ 
+-    def log_model_saved(self, model_name: str, model_path: str, size_mb: float):
++async def log_model_saved(self, model_name: str, model_path: str, size_mb: float):
+         """记录模型保存"""
+         self.logger.info(
+             f"💾 模型已保存 - 名称: {model_name}, "
+             f"路径: {model_path}, 大小: {size_mb:.2f}MB"
+         )
+ 
+-    def log_error(self, error: Exception, context: str = ""):
++async def log_error(self, error: Exception, context: str = ""):
+         """记录错误"""
+         self.logger.error(f"❌ 错误发生 - {context}: {str(error)}", exc_info=True)
+ 
+-    def log_warning(self, message: str):
++async def log_warning(self, message: str):
+         """记录警告"""
+         self.logger.warning(f"⚠️ {message}")
+ 
+-    def log_info(self, message: str):
++async def log_info(self, message: str):
+         """记录信息"""
+         self.logger.info(f"ℹ️ {message}")
+ 
+-    def log_debug(self, message: str):
++async def log_debug(self, message: str):
+         """记录调试信息"""
+         self.logger.debug(f"🔍 {message}")
+ 
+@@ -126,7 +126,7 @@ class MetricsCollector:
+     """指标收集器"""
+ 
+-    def __init__(self, config: PipelineConfig):
++async def __init__(self, config: PipelineConfig):
+         """初始化指标收集器"""
+         self.config = config
+         self.metrics_dir = Path(config.project_root) / "artifacts" / "metrics"
+@@ -135,12 +135,12 @@         self.training_metrics: List[TrainingMetrics] = []
+         self.system_metrics: List[SystemMetrics] = []
+ 
+-    def record_training_metrics(self, metrics: TrainingMetrics):
++async def record_training_metrics(self, metrics: TrainingMetrics):
+         """记录训练指标"""
+         self.training_metrics.append(metrics)
+         self._save_training_metrics()
+ 
+-    def record_system_metrics(self):
++async def record_system_metrics(self):
+         """记录系统指标"""
+         try:
+             import psutil
+@@ -162,7 +162,7 @@             # psutil未安装，跳过系统指标收集
+             pass
+ 
+-    def _save_training_metrics(self):
++async def _save_training_metrics(self):
+         """保存训练指标到文件"""
+         metrics_file = self.metrics_dir / "training_metrics.json"
+ 
+@@ -176,7 +176,7 @@         with open(metrics_file, 'w', encoding='utf-8') as f:
+             json.dump(serializable_metrics, f, indent=2, ensure_ascii=False)
+ 
+-    def get_training_summary(self) -> Dict[str, Any]:
++async def get_training_summary(self) -> Dict[str, Any]:
+         """获取训练指标摘要"""
+         if not self.training_metrics:
+             return {}
+@@ -203,7 +203,7 @@ 
+         return summary
+ 
+-    def export_metrics_csv(self, output_path: Optional[str] = None):
++async def export_metrics_csv(self, output_path: Optional[str] = None):
+         """导出指标为CSV格式"""
+         if not self.training_metrics:
+             return None
+@@ -220,26 +220,26 @@ class PerformanceMonitor:
+     """性能监控器"""
+ 
+-    def __init__(self, config: PipelineConfig):
++async def __init__(self, config: PipelineConfig):
+         """初始化性能监控器"""
+         self.config = config
+         self.logger = PipelineLogger(config)
+         self.metrics_collector = MetricsCollector(config)
+ 
+-    def monitor_training(self, algorithm: str):
++async def monitor_training(self, algorithm: str):
+         """训练过程监控上下文管理器"""
+         return TrainingContext(self, algorithm)
+ 
+-    def record_training_result(self, algorithm: str, result: Dict[str, Any],
++async def record_training_result(self, algorithm: str, result: Dict[str, Any],
+                              training_time: float, sample_count: int,
+                              feature_count: int, model_size_mb: float):
+         """记录训练结果"""
+         metrics = TrainingMetrics(
+             algorithm=algorithm,
+-            accuracy=result.get('accuracy', 0.0),
+-            precision=result.get('precision', 0.0),
+-            recall=result.get('recall', 0.0),
+-            f1_score=result.get('f1_score', 0.0),
++            accuracy=result.await get('accuracy', 0.0),
++            precision=result.await get('precision', 0.0),
++            recall=result.await get('recall', 0.0),
++            f1_score=result.await get('f1_score', 0.0),
+             training_time=training_time,
+             model_size_mb=model_size_mb,
+             sample_count=sample_count,
+@@ -250,7 +250,7 @@         self.metrics_collector.record_training_metrics(metrics)
+         self.logger.log_training_complete(metrics)
+ 
+-    def get_performance_dashboard(self) -> Dict[str, Any]:
++async def get_performance_dashboard(self) -> Dict[str, Any]:
+         """获取性能仪表板数据"""
+         summary = self.metrics_collector.get_training_summary()
+ 
+@@ -263,7 +263,7 @@ 
+         return dashboard
+ 
+-    def _get_system_health(self) -> Dict[str, str]:
++async def _get_system_health(self) -> Dict[str, str]:
+         """获取系统健康状态"""
+         try:
+             import psutil
+@@ -299,7 +299,7 @@ class TrainingContext:
+     """训练上下文管理器"""
+ 
+-    def __init__(self, monitor: PerformanceMonitor, algorithm: str):
++async def __init__(self, monitor: PerformanceMonitor, algorithm: str):
+         """初始化训练上下文"""
+         self.monitor = monitor
+         self.algorithm = algorithm
+@@ -307,7 +307,7 @@         self.sample_count = 0
+         self.feature_count = 0
+ 
+-    def __enter__(self):
++async def __enter__(self):
+         """进入训练上下文"""
+         self.start_time = time.time()
+         self.monitor.logger.log_training_start(
+@@ -319,7 +319,7 @@ 
+         return self
+ 
+-    def __exit__(self, exc_type, exc_val, exc_tb):
++async def __exit__(self, exc_type, exc_val, exc_tb):
+         """退出训练上下文"""
+         training_time = time.time() - self.start_time
+ 
+@@ -338,11 +338,11 @@ 
+ 
+ # 便捷函数
+-def create_monitor(config: PipelineConfig) -> PerformanceMonitor:
++async def create_monitor(config: PipelineConfig) -> PerformanceMonitor:
+     """创建性能监控器"""
+     return PerformanceMonitor(config)
+ 
+ 
+-def get_logger(config: PipelineConfig) -> PipelineLogger:
++async def get_logger(config: PipelineConfig) -> PipelineLogger:
+     """获取Pipeline日志记录器"""
+     return PipelineLogger(config)

@@ -1,0 +1,90 @@
+--- a/src/services/betting/ev_calculator.py+++ b/src/services/betting/ev_calculator.py@@ -85,12 +85,12 @@ class EVCalculator:
+     """期望价值计算器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化EV计算器."""
+         self.config = get_config()
+         self.logger = logger
+ 
+-    def calculate_ev(self, odds: float, probability: float) -> float:
++async def calculate_ev(self, odds: float, probability: float) -> float:
+         """计算期望价值.
+ 
+         Args:
+@@ -102,7 +102,7 @@         """
+         return (odds - 1) * probability - (1 - probability)
+ 
+-    def calculate_kelly_fraction(self, ev: float, odds: float) -> float:
++async def calculate_kelly_fraction(self, ev: float, odds: float) -> float:
+         """计算Kelly准则投注比例.
+ 
+         Args:
+@@ -124,7 +124,7 @@         kelly = (b * p - q) / b
+         return max(0, min(kelly, 0.25))  # 限制最大投注比例为25%
+ 
+-    def analyze_bet(
++async def analyze_bet(
+         self,
+         odds: float,
+         probability: float,
+@@ -164,7 +164,7 @@             recommendation=recommendation,
+         )
+ 
+-    def analyze_full_market(
++async def analyze_full_market(
+         self, bet_odds: BetOdds, probabilities: ProbabilityEstimate
+     ) -> list[EVResult]:
+         """分析完整市场.
+@@ -212,7 +212,7 @@ 
+         return results
+ 
+-    def get_best_bets(self, results: list[EVResult], top_n: int = 3) -> list[EVResult]:
++async def get_best_bets(self, results: list[EVResult], top_n: int = 3) -> list[EVResult]:
+         """获取最佳投注建议.
+ 
+         Args:
+@@ -234,12 +234,12 @@ class BettingStrategy:
+     """投注策略管理器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化投注策略."""
+         self.calculator = EVCalculator()
+         self.logger = logger
+ 
+-    def generate_betting_advice(
++async def generate_betting_advice(
+         self,
+         bet_odds: BetOdds,
+         probabilities: ProbabilityEstimate,
+@@ -295,7 +295,7 @@ 
+         return advice
+ 
+-    def calculate_portfolio_metrics(self, advice: dict[str, Any]) -> dict[str, float]:
++async def calculate_portfolio_metrics(self, advice: dict[str, Any]) -> dict[str, float]:
+         """计算投资组合指标.
+ 
+         Args:
+@@ -304,7 +304,7 @@         Returns:
+             投资组合指标
+         """
+-        bets = advice.get("recommended_bets", [])
++        bets = advice.await get("recommended_bets", [])
+ 
+         if not bets:
+             return {
+@@ -333,12 +333,12 @@ 
+ 
+ # 便捷函数
+-def create_ev_calculator() -> EVCalculator:
++async def create_ev_calculator() -> EVCalculator:
+     """创建EV计算器实例."""
+     return EVCalculator()
+ 
+ 
+-def create_betting_strategy() -> BettingStrategy:
++async def create_betting_strategy() -> BettingStrategy:
+     """创建投注策略实例."""
+     return BettingStrategy()
+ 

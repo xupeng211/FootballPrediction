@@ -1,0 +1,8 @@
+--- a/src/services/audit_service_mod/models.py+++ b/src/services/audit_service_mod/models.py@@ -46,7 +46,7 @@     timestamp: datetime
+     metadata: dict[str, Any] | None = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         if self.metadata is None:

@@ -1,0 +1,13 @@
+--- a/src/ml/enhanced_feature_engineering.py+++ b/src/ml/enhanced_feature_engineering.py@@ -2,11 +2,11 @@ 
+ 
+ class EnhancedFeatureEngineering:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

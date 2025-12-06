@@ -1,0 +1,308 @@
+--- a/src/collectors/data_sources.py+++ b/src/collectors/data_sources.py@@ -73,7 +73,7 @@ class DataSourceAdapter(ABC):
+     """数据源适配器基类."""
+ 
+-    def __init__(self, api_key: str | None = None):
++async def __init__(self, api_key: str | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.api_key = api_key
+@@ -102,7 +102,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
+     """Football-Data.org API适配器."""
+ 
+-    def __init__(self, api_key: str | None = None):
++async def __init__(self, api_key: str | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(api_key)
+@@ -142,10 +142,10 @@         async with aiohttp.ClientSession(
+             headers=self.headers, timeout=self.timeout
+         ) as session:
+-            async with session.get(url, params=params) as response:
++            async with session.await get(url, params=params) as response:
+                 if response.status == 200:
+                     data = await response.json()
+-                    for match in data.get("matches", []):
++                    for match in data.await get("matches", []):
+                         match_data = self._parse_match_data(match)
+                         if match_data:
+                             matches.append(match_data)
+@@ -154,7 +154,7 @@ 
+         return matches
+ 
+-    def _parse_match_data(self, match: dict) -> MatchData | None:
++async def _parse_match_data(self, match: dict) -> MatchData | None:
+         """解析比赛数据."""
+         try:
+             # 解析状态
+@@ -169,14 +169,14 @@                 "CANCELED": "postponed",
+             }
+ 
+-            status = status_map.get(match.get("status", "SCHEDULED"), "upcoming")
++            status = status_map.await await get(match.get("status", "SCHEDULED"), "upcoming")
+ 
+             # 解析比分
+             home_score = None
+             away_score = None
+-            if status == "finished" and match.get("score"):
+-                home_score = match["score"].get("fullTime", {}).get("home")
+-                away_score = match["score"].get("fullTime", {}).get("away")
++            if status == "finished" and match.await get("score"):
++                home_score = match["score"].await await get("fullTime", {}).get("home")
++                away_score = match["score"].await await get("fullTime", {}).get("away")
+ 
+             return MatchData(
+                 id=match["id"],
+@@ -187,13 +187,13 @@                 match_date=datetime.fromisoformat(
+                     match["utcDate"].replace("Z", "+00:00")
+                 ),
+-                league=match.get("competition", {}).get("name", ""),
+-                league_id=match.get("competition", {}).get("id"),
++                league=match.await await get("competition", {}).get("name", ""),
++                league_id=match.await await get("competition", {}).get("id"),
+                 status=status,
+                 home_score=home_score,
+                 away_score=away_score,
+-                round=match.get("matchday"),
+-                venue=match.get("venue"),
++                round=match.await get("matchday"),
++                venue=match.await get("venue"),
+             )
+         except Exception as e:
+             logger.error(f"解析比赛数据失败: {e}")
+@@ -212,10 +212,10 @@             async with aiohttp.ClientSession(
+                 headers=self.headers, timeout=self.timeout
+             ) as session:
+-                async with session.get(url) as response:
++                async with session.await get(url) as response:
+                     if response.status == 200:
+                         data = await response.json()
+-                        for team in data.get("teams", []):
++                        for team in data.await get("teams", []):
+                             team_data = self._parse_team_data(team)
+                             if team_data:
+                                 teams.append(team_data)
+@@ -227,17 +227,17 @@ 
+         return teams
+ 
+-    def _parse_team_data(self, team: dict) -> TeamData | None:
++async def _parse_team_data(self, team: dict) -> TeamData | None:
+         """解析球队数据."""
+         try:
+             return TeamData(
+                 id=team["id"],
+                 name=team["name"],
+-                short_name=team.get("shortName"),
+-                crest=team.get("crest"),
+-                founded=team.get("founded"),
+-                venue=team.get("venue"),
+-                website=team.get("website"),
++                short_name=team.await get("shortName"),
++                crest=team.await get("crest"),
++                founded=team.await get("founded"),
++                venue=team.await get("venue"),
++                website=team.await get("website"),
+             )
+         except Exception as e:
+             logger.error(f"解析球队数据失败: {e}")
+@@ -254,7 +254,7 @@ class MockDataAdapter(DataSourceAdapter):
+     """模拟数据适配器 - 用于演示和测试."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__()
+@@ -317,7 +317,7 @@ 
+                 return matches
+ 
+-    def _get_random_league(self) -> str:
++async def _get_random_league(self) -> str:
+         """获取随机联赛名称."""
+         import random
+ 
+@@ -378,7 +378,7 @@     速率限制和数据验证
+     """
+ 
+-    def __init__(self, api_key: str | None = None):
++async def __init__(self, api_key: str | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(api_key)
+@@ -411,7 +411,7 @@         self.max_retries = 3
+         self.retry_delay = 1
+ 
+-    def _check_rate_limit(self):
++async def _check_rate_limit(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """检查速率限制"""
+@@ -441,12 +441,12 @@                 ) as session:
+                     self.request_count += 1
+ 
+-                    async with session.get(url, params=params) as response:
++                    async with session.await get(url, params=params) as response:
+                         if response.status == 200:
+                             return await response.json()
+                         elif response.status == 429:
+                             # 速率限制错误
+-                            retry_after = response.headers.get("Retry-After", "60")
++                            retry_after = response.headers.await get("Retry-After", "60")
+                             wait_time = int(retry_after)
+                             logger.warning(f"触发API速率限制,等待 {wait_time} 秒")
+                             await asyncio.sleep(wait_time)
+@@ -477,8 +477,8 @@             # 过滤支持的联赛
+             competitions = [
+                 comp
+-                for comp in data.get("competitions", [])
+-                if comp.get("id") in self.supported_leagues
++                for comp in data.await get("competitions", [])
++                if comp.await get("id") in self.supported_leagues
+             ]
+ 
+             logger.info(f"获取到 {len(competitions)} 个支持的联赛")
+@@ -518,7 +518,7 @@             data = await self._make_request(url, params)
+             matches = []
+ 
+-            for match in data.get("matches", []):
++            for match in data.await get("matches", []):
+                 match_data = self._parse_match_data(match)
+                 if match_data:
+                     matches.append(match_data)
+@@ -541,7 +541,7 @@             data = await self._make_request(url)
+             teams = []
+ 
+-            for team in data.get("teams", []):
++            for team in data.await get("teams", []):
+                 team_data = self._parse_team_data(team)
+                 if team_data:
+                     teams.append(team_data)
+@@ -560,8 +560,8 @@             data = await self._make_request(url)
+ 
+             standings = []
+-            for standing in data.get("standings", []):
+-                for table in standing.get("table", []):
++            for standing in data.await get("standings", []):
++                for table in standing.await get("table", []):
+                     standings.append(table)
+ 
+             logger.info(f"获取到 {len(standings)} 支球队的积分榜数据")
+@@ -587,7 +587,7 @@             date_from=date_from, date_to=date_to, status="SCHEDULED"
+         )
+ 
+-    def _parse_match_data(self, match: dict) -> MatchData | None:
++async def _parse_match_data(self, match: dict) -> MatchData | None:
+         """解析比赛数据,
+         增强错误处理.
+         """
+@@ -611,19 +611,19 @@                 "CANCELED": "postponed",
+             }
+ 
+-            status = status_map.get(match.get("status", "SCHEDULED"), "upcoming")
++            status = status_map.await await get(match.get("status", "SCHEDULED"), "upcoming")
+ 
+             # 解析比分
+             home_score = None
+             away_score = None
+-            if status == "finished" and match.get("score"):
+-                home_score = match["score"].get("fullTime", {}).get("home")
+-                away_score = match["score"].get("fullTime", {}).get("away")
++            if status == "finished" and match.await get("score"):
++                home_score = match["score"].await await get("fullTime", {}).get("home")
++                away_score = match["score"].await await get("fullTime", {}).get("away")
+ 
+             # 解析联赛信息
+-            competition = match.get("competition", {})
+-            league_name = competition.get("name", "")
+-            league_id = competition.get("id")
++            competition = match.await get("competition", {})
++            league_name = competition.await get("name", "")
++            league_id = competition.await get("id")
+ 
+             # 如果是支持的联赛，使用中文名称
+             if league_id in self.supported_leagues:
+@@ -643,15 +643,15 @@                 status=status,
+                 home_score=home_score,
+                 away_score=away_score,
+-                round=match.get("matchday"),
+-                venue=match.get("venue"),
++                round=match.await get("matchday"),
++                venue=match.await get("venue"),
+             )
+ 
+         except Exception as e:
+-            logger.error(f"解析比赛数据失败 (ID: {match.get('id', 'unknown')}): {e}")
++            logger.await error(f"解析比赛数据失败 (ID: {match.get('id', 'unknown')}): {e}")
+             return None
+ 
+-    def _parse_team_data(self, team: dict) -> TeamData | None:
++async def _parse_team_data(self, team: dict) -> TeamData | None:
+         """解析球队数据,增强错误处理."""
+         try:
+             # 验证必要字段
+@@ -662,15 +662,15 @@             return TeamData(
+                 id=team["id"],
+                 name=team["name"],
+-                short_name=team.get("short_name"),
+-                crest=team.get("crest"),
+-                founded=team.get("founded"),
+-                venue=team.get("venue"),
+-                website=team.get("website"),
++                short_name=team.await get("short_name"),
++                crest=team.await get("crest"),
++                founded=team.await get("founded"),
++                venue=team.await get("venue"),
++                website=team.await get("website"),
+             )
+ 
+         except Exception as e:
+-            logger.error(f"解析球队数据失败 (ID: {team.get('id', 'unknown')}): {e}")
++            logger.await error(f"解析球队数据失败 (ID: {team.get('id', 'unknown')}): {e}")
+             return None
+ 
+     async def get_odds(self, match_id: int) -> list[OddsData]:
+@@ -685,7 +685,7 @@         try:
+             url = f"{self.base_url}/competitions"
+             data = await self._make_request(url)
+-            return bool(data.get("competitions"))
++            return await bool(data.get("competitions"))
+         except Exception as e:
+             logger.error(f"API密钥验证失败: {e}")
+             return False
+@@ -697,13 +697,13 @@     pass  # 添加pass语句
+     """数据源管理器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.adapters = {}
+         self._initialize_adapters()
+ 
+-    def _initialize_adapters(self):
++async def _initialize_adapters(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化数据源适配器"""
+@@ -737,7 +737,7 @@         self.adapters["mock"] = MockDataAdapter()
+         logger.info("模拟数据适配器初始化成功")
+ 
+-    def get_primary_adapter(self) -> DataSourceAdapter:
++async def get_primary_adapter(self) -> DataSourceAdapter:
+         """获取主要的数据源适配器."""
+         # 优先级:增强适配器 > 原始适配器 > 模拟适配器
+         if "football_data_org_enhanced" in self.adapters:
+@@ -763,11 +763,11 @@                 logger.error(f"适配器 {name} 验证失败: {e}")
+         return results
+ 
+-    def get_adapter(self, source_name: str = "mock") -> DataSourceAdapter | None:
++async def get_adapter(self, source_name: str = "mock") -> DataSourceAdapter | None:
+         """获取数据源适配器."""
+-        return self.adapters.get(source_name)
+-
+-    def get_available_sources(self) -> list[str]:
++        return self.adapters.await get(source_name)
++
++async def get_available_sources(self) -> list[str]:
+         """获取可用的数据源列表."""
+         return list(self.adapters.keys())
+ 

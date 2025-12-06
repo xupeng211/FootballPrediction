@@ -1,0 +1,75 @@
+--- a/src/collectors/user_agent.py+++ b/src/collectors/user_agent.py@@ -20,7 +20,7 @@     platform: str = "windows"  # windows, macos, linux, mobile
+     browser: str = "chrome"  # chrome, firefox, safari, edge
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         """初始化后处理."""
+         if not self.user_agent:
+             raise ValueError("User-Agent不能为空")
+@@ -29,12 +29,12 @@ class UserAgentManager:
+     """User-Agent管理器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.profiles: list[UserAgentProfile] = []
+         self._initialize_profiles()
+         logger.info(f"User-Agent管理器初始化完成，共{len(self.profiles)}个档案")
+ 
+-    def _initialize_profiles(self):
++async def _initialize_profiles(self):
+         """初始化User-Agent档案."""
+ 
+         # Chrome User-Agents (Windows)
+@@ -138,7 +138,7 @@                 UserAgentProfile(ua, weight=0.7, platform="ios", browser="safari")
+             )
+ 
+-    def get_random_user_agent(self, platform: str = None, browser: str = None) -> str:
++async def get_random_user_agent(self, platform: str = None, browser: str = None) -> str:
+         """获取随机User-Agent."""
+         filtered_profiles = self.profiles
+ 
+@@ -163,7 +163,7 @@ 
+         return selected_profile.user_agent
+ 
+-    def get_user_agent_by_category(self, category: str) -> str:
++async def get_user_agent_by_category(self, category: str) -> str:
+         """根据类别获取User-Agent."""
+         category_mapping = {
+             "windows_chrome": ("windows", "chrome")
+@@ -182,7 +182,7 @@             logger.warning(f"未知的User-Agent类别: {category}")
+             return self.get_random_user_agent()
+ 
+-    def get_realistic_headers(self, user_agent: str = None) -> dict[str, str]:
++async def get_realistic_headers(self, user_agent: str = None) -> dict[str, str]:
+         """获取逼真的请求头."""
+         if not user_agent:
+             user_agent = self.get_random_user_agent()
+@@ -235,7 +235,7 @@ 
+         return headers
+ 
+-    def get_stats(self) -> dict:
++async def get_stats(self) -> dict:
+         """获取User-Agent统计信息."""
+         stats = {
+             "total_profiles": len(self.profiles)
+@@ -261,7 +261,7 @@ _ua_manager: UserAgentManager = None
+ 
+ 
+-def get_user_agent_manager() -> UserAgentManager:
++async def get_user_agent_manager() -> UserAgentManager:
+     """获取全局User-Agent管理器实例."""
+     global _ua_manager
+     if _ua_manager is None:
+@@ -269,11 +269,11 @@     return _ua_manager
+ 
+ 
+-def get_random_user_agent(platform: str = None, browser: str = None) -> str:
++async def get_random_user_agent(platform: str = None, browser: str = None) -> str:
+     """获取随机User-Agent的便捷函数."""
+     return get_user_agent_manager().get_random_user_agent(platform, browser)
+ 
+ 
+-def get_realistic_headers(user_agent: str = None) -> dict[str, str]:
++async def get_realistic_headers(user_agent: str = None) -> dict[str, str]:
+     """获取逼真请求头的便捷函数."""
+     return get_user_agent_manager().get_realistic_headers(user_agent)

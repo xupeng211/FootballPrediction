@@ -1,0 +1,122 @@
+--- a/src/utils/fotmob_match_matcher.py+++ b/src/utils/fotmob_match_matcher.py@@ -19,7 +19,7 @@     通过队名模糊匹配将 FBref 记录关联到 FotMob 比赛 ID
+     """
+ 
+-    def __init__(self, similarity_threshold: float = 70.0):
++async def __init__(self, similarity_threshold: float = 70.0):
+         """
+         初始化匹配器
+ 
+@@ -82,9 +82,9 @@             如果找不到匹配返回 None
+         """
+         try:
+-            home_team = fbref_record.get("home", "")
+-            away_team = fbref_record.get("away", "")
+-            date_str = fbref_record.get("date", "")
++            home_team = fbref_record.await get("home", "")
++            away_team = fbref_record.await get("away", "")
++            date_str = fbref_record.await get("date", "")
+ 
+             if not all([home_team, away_team, date_str]):
+                 logger.warning(f"FBref 记录缺少必要信息: {fbref_record}")
+@@ -112,13 +112,13 @@ 
+             if best_match:
+                 result = {
+-                    "matchId": str(best_match.get("id", "")),
+-                    "home_team": best_match.get("home", {}).get("name", ""),
+-                    "away_team": best_match.get("away", {}).get("name", ""),
++                    "matchId": await str(best_match.get("id", "")),
++                    "home_team": best_match.await await get("home", {}).get("name", ""),
++                    "away_team": best_match.await await get("away", {}).get("name", ""),
+                     "similarity_score": best_similarity,
+-                    "tournament": best_match.get("tournament", {}).get("name", ""),
+-                    "status": best_match.get("status", {}),
+-                    "date": best_match.get("date", "")
++                    "tournament": best_match.await await get("tournament", {}).get("name", ""),
++                    "status": best_match.await get("status", {}),
++                    "date": best_match.await get("date", "")
+                 }
+                 logger.info(f"找到匹配: {home_team} vs {away_team} -> {result['home_team']} vs {result['away_team']} (相似度: {best_similarity:.1f}%)")
+                 return result
+@@ -148,11 +148,11 @@                 timeout=30.0
+             ) as client:
+                 logger.info(f"Fetching matches for date: {date_str}")
+-                response = await client.get(url)
++                response = await client.await get(url)
+ 
+                 if response.status_code == 200:
+                     data = response.json()
+-                    logger.info(f"Successfully fetched {len(data.get('matches', []))} matches for {date_str}")
++                    logger.await info(f"Successfully fetched {len(data.get('matches', []))} matches for {date_str}")
+                     return data
+                 else:
+                     logger.error(f"HTTP {response.status_code} when fetching matches for {date_str}")
+@@ -162,7 +162,7 @@             logger.error(f"Error fetching matches for {date_str}: {str(e)}")
+             return None
+ 
+-    def _calculate_match_similarity(self, fotmob_match: dict[str, Any], fbref_record: dict[str, Any]) -> float:
++async def _calculate_match_similarity(self, fotmob_match: dict[str, Any], fbref_record: dict[str, Any]) -> float:
+         """
+         计算两场比赛的相似度
+ 
+@@ -174,10 +174,10 @@             相似度分数 (0-100)
+         """
+         try:
+-            fotmob_home = fotmob_match.get("home", {}).get("name", "")
+-            fotmob_away = fotmob_match.get("away", {}).get("name", "")
+-            fbref_home = fbref_record.get("home", "")
+-            fbref_away = fbref_record.get("away", "")
++            fotmob_home = fotmob_match.await await get("home", {}).get("name", "")
++            fotmob_away = fotmob_match.await await get("away", {}).get("name", "")
++            fbref_home = fbref_record.await get("home", "")
++            fbref_away = fbref_record.await get("away", "")
+ 
+             # 计算主队相似度
+             home_similarity = self._calculate_team_similarity(fbref_home, fotmob_home)
+@@ -199,7 +199,7 @@             logger.error(f"计算比赛相似度时发生错误: {str(e)}")
+             return 0.0
+ 
+-    def _calculate_team_similarity(self, name1: str, name2: str) -> float:
++async def _calculate_team_similarity(self, name1: str, name2: str) -> float:
+         """
+         计算两个队名的相似度
+ 
+@@ -234,7 +234,7 @@             logger.error(f"计算队名相似度时发生错误: {str(e)}")
+             return 0.0
+ 
+-    def _normalize_team_name(self, name: str) -> str:
++async def _normalize_team_name(self, name: str) -> str:
+         """
+         标准化队名（移除常见后缀、统一大小写等）
+ 
+@@ -269,7 +269,7 @@ 
+         return normalized
+ 
+-    def _check_name_mapping(self, name1: str, name2: str) -> float:
++async def _check_name_mapping(self, name1: str, name2: str) -> float:
+         """
+         检查队名是否在预定义的映射表中
+ 
+@@ -290,7 +290,7 @@ 
+         return 0.0
+ 
+-    def _format_date_for_api(self, date_input) -> str:
++async def _format_date_for_api(self, date_input) -> str:
+         """
+         将日期格式化为 API 所需的格式 (YYYYMMDD)
+ 
+@@ -358,7 +358,7 @@                 headers=self.headers,
+                 timeout=10.0
+             ) as client:
+-                response = await client.get(test_url)
++                response = await client.await get(test_url)
+                 # 不要求 200，只要能连接上就行
+                 return response.status_code in [200, 404, 400]
+ 
+@@ -366,7 +366,7 @@             logger.error(f"Health check failed: {str(e)}")
+             return False
+ 
+-    def set_similarity_threshold(self, threshold: float):
++async def set_similarity_threshold(self, threshold: float):
+         """
+         设置相似度阈值
+ 

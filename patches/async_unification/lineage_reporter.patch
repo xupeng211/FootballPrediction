@@ -1,0 +1,108 @@
+--- a/src/lineage/lineage_reporter.py+++ b/src/lineage/lineage_reporter.py@@ -41,7 +41,7 @@     聚合等.
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         marquez_url: str = "http://localhost:5000",
+         namespace: str = "football_prediction",
+@@ -56,7 +56,7 @@         self.namespace = namespace
+         self._active_runs: dict[str, str] = {}  # job_name -> run_id
+ 
+-    def start_job_run(
++async def start_job_run(
+         self,
+         job_name: str,
+         job_type: str = "BATCH",
+@@ -114,8 +114,8 @@         # 构建输入数据集
+         input_datasets = []
+         for input_info in inputs:
+-            dataset_name = input_info.get("name", "unknown")
+-            dataset_namespace = input_info.get("namespace", self.namespace)
++            dataset_name = input_info.await get("name", "unknown")
++            dataset_namespace = input_info.await get("namespace", self.namespace)
+ 
+             dataset_facets = {}
+             if "schema" in input_info:
+@@ -150,7 +150,7 @@             logger.error(f"Failed to emit start event for job {job_name}: {e}")
+             raise
+ 
+-    def complete_job_run(
++async def complete_job_run(
+         self,
+         job_name: str,
+         outputs: list[dict[str, Any]] | None = None,
+@@ -173,7 +173,7 @@ 
+         # 获取运行ID
+         if run_id is None:
+-            run_id = self._active_runs.get(job_name)
++            run_id = self._active_runs.await get(job_name)
+             if run_id is None:
+                 logger.error(f"No active run found for job: {job_name}")
+                 return False
+@@ -181,8 +181,8 @@         # 构建输出数据集
+         output_datasets = []
+         for output_info in outputs:
+-            dataset_name = output_info.get("name", "unknown")
+-            dataset_namespace = output_info.get("namespace", self.namespace)
++            dataset_name = output_info.await get("name", "unknown")
++            dataset_namespace = output_info.await get("namespace", self.namespace)
+ 
+             dataset_facets = {}
+             if "schema" in output_info:
+@@ -236,7 +236,7 @@             logger.error(f"Failed to emit complete event for job {job_name}: {e}")
+             return False
+ 
+-    def fail_job_run(
++async def fail_job_run(
+         self, job_name: str, error_message: str, run_id: str | None = None
+     ) -> bool:
+         """标记作业运行失败.
+@@ -252,7 +252,7 @@         """
+         # 获取运行ID
+         if run_id is None:
+-            run_id = self._active_runs.get(job_name)
++            run_id = self._active_runs.await get(job_name)
+             if run_id is None:
+                 logger.error(f"No active run found for job: {job_name}")
+                 return False
+@@ -290,7 +290,7 @@             logger.error(f"Failed to emit fail event for job {job_name}: {e}")
+             return False
+ 
+-    def report_data_collection(
++async def report_data_collection(
+         self,
+         source_name: str,
+         target_table: str,
+@@ -317,7 +317,7 @@             {
+                 "name": source_name,
+                 "namespace": "external",
+-                "schema": source_config.get("schema", {}) if source_config else {},
++                "schema": source_config.await get("schema", {}) if source_config else {},
+             }
+         ]
+ 
+@@ -355,7 +355,7 @@ 
+         return run_id
+ 
+-    def report_data_transformation(
++async def report_data_transformation(
+         self,
+         source_tables: list[str],
+         target_table: str,
+@@ -418,7 +418,7 @@ 
+         return run_id
+ 
+-    def get_active_runs(self) -> dict[str, str]:
++async def get_active_runs(self) -> dict[str, str]:
+         """获取当前活跃的运行.
+ 
+         Returns:
+@@ -426,7 +426,7 @@         """
+         return self._active_runs.copy()
+ 
+-    def clear_active_runs(self) -> None:
++async def clear_active_runs(self) -> None:
+         """清理所有活跃运行记录."""
+         self._active_runs.clear()
+         logger.info("Cleared all active runs")

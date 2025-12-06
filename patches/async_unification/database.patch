@@ -1,0 +1,8 @@
+--- a/src/facades/subsystems/database.py+++ b/src/facades/subsystems/database.py@@ -16,7 +16,7 @@ class DatabaseSubsystem(Subsystem):
+     """数据库子系统."""
+ 
+-    def __init__(self, name: str = "database", config: dict | None = None):
++async def __init__(self, name: str = "database", config: dict | None = None):
+         """初始化数据库子系统."""
+         super().__init__(name)
+         self.connection_pool = None

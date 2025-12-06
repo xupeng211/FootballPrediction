@@ -1,0 +1,103 @@
+--- a/src/api/data/models/validation_base.py+++ b/src/api/data/models/validation_base.py@@ -12,7 +12,7 @@ from pydantic import ValidationInfo, field_validator
+ 
+ 
+-def clean_team_name(name: str) -> str:
++async def clean_team_name(name: str) -> str:
+     """清理球队名称.
+ 
+     Args:
+@@ -42,7 +42,7 @@     return cleaned
+ 
+ 
+-def validate_date_range(date: datetime, min_year: int = 1990, max_year: int = 2030) -> datetime:
++async def validate_date_range(date: datetime, min_year: int = 1990, max_year: int = 2030) -> datetime:
+     """验证日期范围.
+ 
+     Args:
+@@ -61,7 +61,7 @@     return date
+ 
+ 
+-def validate_score_consistency(home_score: int, away_score: int, status: str) -> tuple[int, int]:
++async def validate_score_consistency(home_score: int, away_score: int, status: str) -> tuple[int, int]:
+     """验证比分一致性.
+ 
+     Args:
+@@ -84,7 +84,7 @@     return home_score, away_score
+ 
+ 
+-def validate_odds_range(odds_value: float, min_value: float = 1.0, max_value: float = 1000.0) -> float:
++async def validate_odds_range(odds_value: float, min_value: float = 1.0, max_value: float = 1000.0) -> float:
+     """验证赔率范围.
+ 
+     Args:
+@@ -110,7 +110,7 @@     return odds_value
+ 
+ 
+-def detect_arbitrage_opportunity(home_win: float, draw: float, away_win: float) -> bool:
++async def detect_arbitrage_opportunity(home_win: float, draw: float, away_win: float) -> bool:
+     """检测套利机会.
+ 
+     Args:
+@@ -129,7 +129,7 @@         return False
+ 
+ 
+-def time_order_validator(start_time: datetime, end_time: datetime) -> tuple[datetime, datetime]:
++async def time_order_validator(start_time: datetime, end_time: datetime) -> tuple[datetime, datetime]:
+     """验证时间顺序.
+ 
+     Args:
+@@ -149,12 +149,12 @@ 
+ 
+ # 常用的Pydantic验证器装饰器
+-def validate_name_cleaning(field_name: str = "name"):
++async def validate_name_cleaning(field_name: str = "name"):
+     """创建名称清理验证器."""
+ 
+     @field_validator(field_name, mode="before")
+     @classmethod
+-    def clean_name(cls, v: Any) -> Any:
++async def clean_name(cls, v: Any) -> Any:
+         if isinstance(v, str):
+             return clean_team_name(v)
+         return v
+@@ -162,7 +162,7 @@     return clean_name
+ 
+ 
+-def validate_positive_numbers(*field_names: str):
++async def validate_positive_numbers(*field_names: str):
+     """创建正数验证器."""
+ 
+     validators = []
+@@ -170,7 +170,7 @@ 
+         @field_validator(field_name)
+         @classmethod
+-        def validate_positive(cls, v: Any) -> Any:
++async def validate_positive(cls, v: Any) -> Any:
+             if v is not None and (not isinstance(v, (int, float)) or v < 0):
+                 raise ValueError(f"{field_name} 必须为非负数")
+             return v
+@@ -199,21 +199,21 @@ class ValidationResult:
+     """验证结果."""
+ 
+-    def __init__(self, is_valid: bool, errors: list[str] = None, warnings: list[str] = None):
++async def __init__(self, is_valid: bool, errors: list[str] = None, warnings: list[str] = None):
+         self.is_valid = is_valid
+         self.errors = errors or []
+         self.warnings = warnings or []
+ 
+-    def add_error(self, error: str):
++async def add_error(self, error: str):
+         """添加错误."""
+         self.errors.append(error)
+         self.is_valid = False
+ 
+-    def add_warning(self, warning: str):
++async def add_warning(self, warning: str):
+         """添加警告."""
+         self.warnings.append(warning)
+ 
+-    def to_dict(self) -> dict:
++async def to_dict(self) -> dict:
+         """转换为字典."""
+         return {
+             'is_valid': self.is_valid,

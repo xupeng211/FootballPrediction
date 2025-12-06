@@ -1,0 +1,30 @@
+--- a/src/ml/enhanced_real_model_training.py+++ b/src/ml/enhanced_real_model_training.py@@ -2,7 +2,7 @@ 
+ 
+ class EnhancedRealModelTraining:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+@@ -17,7 +17,7 @@         "max_training_time": 300,  # 最大训练时间(秒)
+     }
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.model = None
+         self.is_trained = False
+ 
+@@ -34,12 +34,12 @@             raise ValueError("模型尚未训练")
+         return [0.5] * len(features)
+ 
+-    def get_feature_importance(self):
++async def get_feature_importance(self):
+         """获取特征重要性."""
+         return {"feature1": 0.3, "feature2": 0.2, "feature3": 0.5}
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

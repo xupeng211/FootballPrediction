@@ -1,0 +1,105 @@
+--- a/src/api/optimization/database_query_optimizer.py+++ b/src/api/optimization/database_query_optimizer.py@@ -18,7 +18,7 @@ class QueryMetrics:
+     """查询指标类."""
+ 
+-    def __init__(self, query_hash: str, query_text: str):
++async def __init__(self, query_hash: str, query_text: str):
+         self.query_hash = query_hash
+         self.query_text = query_text
+         self.execution_count = 0
+@@ -33,7 +33,7 @@         self.rows_examined = 0
+         self.rows_returned = 0
+ 
+-    def record_execution(
++async def record_execution(
+         self,
+         execution_time: float,
+         rows_returned: int = 0,
+@@ -57,7 +57,7 @@         self.rows_returned += rows_returned
+         self.rows_examined += rows_examined
+ 
+-    def get_p50(self) -> float:
++async def get_p50(self) -> float:
+         """获取P50响应时间."""
+         if not self.recent_times:
+             return 0.0
+@@ -65,7 +65,7 @@         n = len(sorted_times)
+         return sorted_times[n // 2]
+ 
+-    def get_p95(self) -> float:
++async def get_p95(self) -> float:
+         """获取P95响应时间."""
+         if not self.recent_times:
+             return 0.0
+@@ -73,7 +73,7 @@         n = len(sorted_times)
+         return sorted_times[int(n * 0.95)]
+ 
+-    def get_p99(self) -> float:
++async def get_p99(self) -> float:
+         """获取P99响应时间."""
+         if not self.recent_times:
+             return 0.0
+@@ -81,13 +81,13 @@         n = len(sorted_times)
+         return sorted_times[int(n * 0.99)]
+ 
+-    def get_error_rate(self) -> float:
++async def get_error_rate(self) -> float:
+         """获取错误率."""
+         if self.execution_count == 0:
+             return 0.0
+         return (self.error_count / self.execution_count) * 100
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典格式."""
+         return {
+             "query_hash": self.query_hash,
+@@ -116,7 +116,7 @@ class DatabasePerformanceAnalyzer:
+     """数据库性能分析器."""
+ 
+-    def __init__(self, max_query_history: int = 1000):
++async def __init__(self, max_query_history: int = 1000):
+         self.max_query_history = max_query_history
+         self.query_metrics: dict[str, QueryMetrics] = {}
+         self.slow_queries: list[dict[str, Any]] = []
+@@ -126,7 +126,7 @@         self.connection_pool_stats = {}
+         self.analysis_start_time = datetime.utcnow()
+ 
+-    def generate_query_hash(self, query_text: str) -> str:
++async def generate_query_hash(self, query_text: str) -> str:
+         """生成查询哈希值."""
+         import hashlib
+ 
+@@ -299,7 +299,7 @@ 
+         return sorted(high_error_queries, key=lambda x: x["error_rate"], reverse=True)
+ 
+-    def get_performance_summary(self) -> dict[str, Any]:
++async def get_performance_summary(self) -> dict[str, Any]:
+         """获取性能摘要."""
+         if not self.query_metrics:
+             return {
+@@ -376,7 +376,7 @@ 
+         # 连接池优化建议
+         if self.connection_pool_stats:
+-            utilization = self.connection_pool_stats.get("pool_utilization", 0)
++            utilization = self.connection_pool_stats.await get("pool_utilization", 0)
+             if utilization > 80:
+                 suggestions.append(
+                     {
+@@ -395,8 +395,8 @@         return sorted(
+             suggestions,
+             key=lambda x: (
+-                {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(x["priority"], 4),
+-                {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(x["impact"], 4),
++                {"critical": 0, "high": 1, "medium": 2, "low": 3}.await get(x["priority"], 4),
++                {"critical": 0, "high": 1, "medium": 2, "low": 3}.await get(x["impact"], 4),
+             ),
+         )
+ 
+@@ -440,7 +440,7 @@ _db_analyzer: DatabasePerformanceAnalyzer | None = None
+ 
+ 
+-def get_database_analyzer() -> DatabasePerformanceAnalyzer:
++async def get_database_analyzer() -> DatabasePerformanceAnalyzer:
+     """获取全局数据库性能分析器实例."""
+     global _db_analyzer
+     if _db_analyzer is None:

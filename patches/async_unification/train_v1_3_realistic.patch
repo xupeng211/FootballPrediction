@@ -1,0 +1,104 @@
+--- a/src/models/train_v1_3_realistic.py+++ b/src/models/train_v1_3_realistic.py@@ -43,7 +43,7 @@ class RealisticModelTrainer:
+     """V1.3真实性验证模型训练器 - 首席量化分析师版"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.database_url = os.getenv(
+             "DATABASE_URL"
+             "postgresql://postgres:postgres-dev-password@db:5432/football_prediction"
+@@ -151,7 +151,7 @@ 
+         return df
+ 
+-    def parse_xg_data(self, stats_json: str) -> dict[str, float]:
++async def parse_xg_data(self, stats_json: str) -> dict[str, float]:
+         """解析xG数据 - 更严格的验证"""
+         try:
+             if not stats_json or stats_json == "null":
+@@ -200,7 +200,7 @@             logger.debug(f"解析xG数据失败: {e}")
+             return {"xg_home": None, "xg_away": None}
+ 
+-    def parse_odds_data(self, odds_json: str, metadata_json: str) -> dict[str, float]:
++async def parse_odds_data(self, odds_json: str, metadata_json: str) -> dict[str, float]:
+         """解析赔率数据 - 从多个来源提取"""
+         odds = {"home_win": None, "draw": None, "away_win": None}
+ 
+@@ -287,7 +287,7 @@ 
+         return odds
+ 
+-    def generate_realistic_odds(self, row) -> dict[str, float]:
++async def generate_realistic_odds(self, row) -> dict[str, float]:
+         """生成现实的随机赔率"""
+         # 基于排名和实力差距生成赔率
+         home_team_rank = row.get("home_team_rank", 10)
+@@ -320,7 +320,7 @@             "away_win": round(away_win_odds, 2)
+         }
+ 
+-    def calculate_match_result(self, home_score: int, away_score: int) -> str:
++async def calculate_match_result(self, home_score: int, away_score: int) -> str:
+         """计算比赛结果"""
+         if home_score > away_score:
+             return "home_win"
+@@ -329,7 +329,7 @@         else:
+             return "draw"
+ 
+-    def filter_quality_data(self, df: pd.DataFrame) -> pd.DataFrame:
++async def filter_quality_data(self, df: pd.DataFrame) -> pd.DataFrame:
+         """过滤高质量数据 - 使用更宽松的数据标准，处理实际数据格式"""
+         logger.info("🔍 过滤高质量数据...")
+ 
+@@ -423,7 +423,7 @@ 
+         return df_filtered
+ 
+-    def calculate_rolling_features(self, df: pd.DataFrame) -> pd.DataFrame:
++async def calculate_rolling_features(self, df: pd.DataFrame) -> pd.DataFrame:
+         """计算滚动特征 - 基于xG的高质量特征"""
+         logger.info("📈 计算高质量滚动特征...")
+ 
+@@ -534,7 +534,7 @@         logger.info("✅ 高质量滚动特征计算完成")
+         return df
+ 
+-    def prepare_features_and_labels(
++async def prepare_features_and_labels(
+         self, df: pd.DataFrame
+     ) -> tuple[pd.DataFrame, pd.Series]:
+         """准备特征和标签"""
+@@ -666,7 +666,7 @@ 
+         return X, y_encoded
+ 
+-    def train_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
++async def train_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
+         """训练XGBoost模型"""
+         logger.info("🎯 开始训练XGBoost模型...")
+ 
+@@ -688,7 +688,7 @@ 
+         logger.info("✅ 模型训练完成")
+ 
+-    def realistic_backtest(
++async def realistic_backtest(
+         self, X_test: pd.DataFrame, y_test: pd.Series, df_test: pd.DataFrame
+     ) -> dict:
+         """现实投注策略回测"""
+@@ -791,7 +791,7 @@         logger.info("✅ 现实策略回测完成")
+         return results
+ 
+-    def generate_feature_importance(self) -> dict:
++async def generate_feature_importance(self) -> dict:
+         """生成特征重要性报告"""
+         if not self.model:
+             return {}
+@@ -838,7 +838,7 @@             }
+         }
+ 
+-    def save_model(
++async def save_model(
+         self, model_name: str = "football_prediction_v1_3_realistic"
+     ) -> None:
+         """保存模型和组件"""
+@@ -967,7 +967,7 @@ 
+             traceback.print_exc()
+ 
+-    def generate_realistic_report(
++async def generate_realistic_report(
+         self
+         start_time
+         train_acc

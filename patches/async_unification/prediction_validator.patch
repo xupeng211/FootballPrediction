@@ -1,0 +1,46 @@
+--- a/src/utils/prediction_validator.py+++ b/src/utils/prediction_validator.py@@ -33,12 +33,12 @@     提供统计功能以跟踪验证准确率.
+     """
+ 
+-    def __init__(self) -> None:
++async def __init__(self) -> None:
+         """初始化验证器."""
+         self._total_validations: int = 0
+         self._correct_predictions: int = 0
+ 
+-    def validate_prediction(self, predicted_result: str, actual_result: str) -> bool:
++async def validate_prediction(self, predicted_result: str, actual_result: str) -> bool:
+         """验证预测结果是否正确.
+ 
+         Args:
+@@ -69,7 +69,7 @@ 
+         return is_correct
+ 
+-    def _validate_inputs(self, predicted_result: str, actual_result: str) -> None:
++async def _validate_inputs(self, predicted_result: str, actual_result: str) -> None:
+         """验证输入参数的有效性.
+ 
+         Args:
+@@ -95,7 +95,7 @@                 f"支持的格式: {sorted(VALID_PREDICTIONS)}"
+             )
+ 
+-    def _parse_score_to_outcome(self, score: str) -> Literal["home_win", "away_win", "draw"]:
++async def _parse_score_to_outcome(self, score: str) -> Literal["home_win", "away_win", "draw"]:
+         """将比分字符串转换为结果类型.
+ 
+         Args:
+@@ -126,7 +126,7 @@         else:
+             return DRAW
+ 
+-    def get_statistics(self) -> dict[str, Any]:
++async def get_statistics(self) -> dict[str, Any]:
+         """获取验证统计信息.
+ 
+         Returns:
+@@ -145,7 +145,7 @@             "accuracy": accuracy
+         }
+ 
+-    def reset_statistics(self) -> None:
++async def reset_statistics(self) -> None:
+         """重置验证统计信息."""
+         self._total_validations = 0
+         self._correct_predictions = 0

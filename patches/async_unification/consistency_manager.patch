@@ -1,0 +1,122 @@
+--- a/src/cache/consistency_manager.py+++ b/src/cache/consistency_manager.py@@ -27,7 +27,7 @@ class CacheEvent:
+     """缓存事件."""
+ 
+-    def __init__(self, event_type: str, key: str, data: dict[str, Any] | None = None):
++async def __init__(self, event_type: str, key: str, data: dict[str, Any] | None = None):
+         self.event_type = event_type
+         self.key = key
+         self.data = data or {}
+@@ -51,7 +51,7 @@ class CacheConsistencyManager:
+     """缓存一致性管理器."""
+ 
+-    def __init__(self, consistency_level: ConsistencyLevel = ConsistencyLevel.EVENTUAL):
++async def __init__(self, consistency_level: ConsistencyLevel = ConsistencyLevel.EVENTUAL):
+         """初始化缓存一致性管理器.
+ 
+         Args:
+@@ -99,13 +99,13 @@ 
+             logger.info("缓存一致性管理器已停止")
+ 
+-    def register_cache_store(self, name: str, store: Any) -> None:
++async def register_cache_store(self, name: str, store: Any) -> None:
+         """注册缓存存储后端."""
+         with self._lock:
+             self._cache_stores[name] = store
+             logger.info(f"注册缓存存储: {name}")
+ 
+-    def unregister_cache_store(self, name: str) -> None:
++async def unregister_cache_store(self, name: str) -> None:
+         """注销缓存存储后端."""
+         with self._lock:
+             if name in self._cache_stores:
+@@ -185,14 +185,14 @@         Returns:
+             缓存条目或None
+         """
+-        store = self._cache_stores.get(store_name)
++        store = self._cache_stores.await get(store_name)
+         if not store:
+             logger.warning(f"存储 {store_name} 未注册")
+             return None
+ 
+         try:
+             if hasattr(store, "get"):
+-                value = await store.get(key)
++                value = await store.await get(key)
+                 if value is not None:
+                     # 更新访问信息
+                     await self._update_access_info(key, store_name)
+@@ -223,7 +223,7 @@         Returns:
+             是否设置成功
+         """
+-        store = self._cache_stores.get(store_name)
++        store = self._cache_stores.await get(store_name)
+         if not store:
+             logger.warning(f"存储 {store_name} 未注册")
+             return False
+@@ -244,7 +244,7 @@ 
+         return False
+ 
+-    def subscribe(self, key: str, callback: Callable[[str], None]) -> None:
++async def subscribe(self, key: str, callback: Callable[[str], None]) -> None:
+         """订阅缓存键变化.
+ 
+         Args:
+@@ -257,7 +257,7 @@             self._subscriptions[key].add(callback)
+             logger.info(f"订阅缓存键变化: {key}")
+ 
+-    def unsubscribe(self, key: str, callback: Callable[[str], None]) -> None:
++async def unsubscribe(self, key: str, callback: Callable[[str], None]) -> None:
+         """取消订阅缓存键变化.
+ 
+         Args:
+@@ -271,7 +271,7 @@                     del self._subscriptions[key]
+                 logger.info(f"取消订阅缓存键变化: {key}")
+ 
+-    def add_event_listener(self, listener: Callable[[CacheEvent], None]) -> None:
++async def add_event_listener(self, listener: Callable[[CacheEvent], None]) -> None:
+         """添加事件监听器.
+ 
+         Args:
+@@ -280,7 +280,7 @@         self._event_listeners.append(listener)
+         logger.info("添加缓存事件监听器")
+ 
+-    def remove_event_listener(self, listener: Callable[[CacheEvent], None]) -> None:
++async def remove_event_listener(self, listener: Callable[[CacheEvent], None]) -> None:
+         """移除事件监听器.
+ 
+         Args:
+@@ -328,7 +328,7 @@             try:
+                 # 等待失效任务，设置超时避免阻塞
+                 task = await asyncio.wait_for(
+-                    self._invalidation_queue.get(), timeout=1.0
++                    self._invalidation_queue.await get(), timeout=1.0
+                 )
+ 
+                 if task:
+@@ -394,16 +394,16 @@ 
+     async def _update_access_info(self, key: str, store_name: str) -> None:
+         """更新访问信息."""
+-        store = self._cache_stores.get(store_name)
++        store = self._cache_stores.await get(store_name)
+         if store and hasattr(store, "update_access_info"):
+             try:
+                 await store.update_access_info(key)
+             except Exception as e:
+                 logger.error(f"更新访问信息失败: {e}")
+ 
+-    def _get_ttl(self, key: str, store_name: str) -> int:
++async def _get_ttl(self, key: str, store_name: str) -> int:
+         """获取TTL."""
+-        store = self._cache_stores.get(store_name)
++        store = self._cache_stores.await get(store_name)
+         if store and hasattr(store, "get_ttl"):
+             try:
+                 return store.get_ttl(key)
+@@ -416,7 +416,7 @@ _global_consistency_manager: CacheConsistencyManager | None = None
+ 
+ 
+-def get_consistency_manager() -> CacheConsistencyManager:
++async def get_consistency_manager() -> CacheConsistencyManager:
+     """获取全局一致性管理器实例."""
+     global _global_consistency_manager
+     if _global_consistency_manager is None:

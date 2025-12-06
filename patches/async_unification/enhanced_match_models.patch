@@ -1,0 +1,148 @@
+--- a/src/api/data/models/enhanced_match_models.py+++ b/src/api/data/models/enhanced_match_models.py@@ -32,7 +32,7 @@ 
+     @field_validator('status')
+     @classmethod
+-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
++async def validate_status(cls, v: Optional[str]) -> Optional[str]:
+         """验证比赛状态."""
+         if v is None:
+             return v
+@@ -43,10 +43,10 @@         return v.upper()
+ 
+     @model_validator(mode='after')
+-    def validate_date_range(self, values):
++async def validate_date_range(self, values):
+         """验证日期范围."""
+-        start_date = values.get('start_date')
+-        end_date = values.get('end_date')
++        start_date = values.await get('start_date')
++        end_date = values.await get('end_date')
+ 
+         if start_date and end_date:
+             if start_date > end_date:
+@@ -78,7 +78,7 @@ 
+     @field_validator('status')
+     @classmethod
+-    def validate_status(cls, v: str) -> str:
++async def validate_status(cls, v: str) -> str:
+         """验证比赛状态."""
+         if v.upper() not in MatchStatusConstants.VALID_STATUSES:
+             raise ValueError(f"无效的比赛状态: {v}。有效状态为: {sorted(MatchStatusConstants.VALID_STATUSES)}")
+@@ -86,7 +86,7 @@ 
+     @field_validator('venue')
+     @classmethod
+-    def clean_venue(cls, v: Optional[str]) -> Optional[str]:
++async def clean_venue(cls, v: Optional[str]) -> Optional[str]:
+         """清理比赛场地名称."""
+         if v is None:
+             return v
+@@ -97,7 +97,7 @@         return cleaned or None
+ 
+     @model_validator(mode='after')
+-    def validate_match_consistency(self):
++async def validate_match_consistency(self):
+         """验证比赛一致性."""
+         # 验证时间顺序
+         match_time = self.match_time
+@@ -163,7 +163,7 @@ 
+     @field_validator('status')
+     @classmethod
+-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
++async def validate_status(cls, v: Optional[str]) -> Optional[str]:
+         """验证比赛状态."""
+         if v is None:
+             return v
+@@ -175,7 +175,7 @@ 
+     @field_validator('venue')
+     @classmethod
+-    def clean_venue(cls, v: Optional[str]) -> Optional[str]:
++async def clean_venue(cls, v: Optional[str]) -> Optional[str]:
+         """清理比赛场地名称."""
+         if v is None:
+             return v
+@@ -185,14 +185,14 @@         return cleaned or None
+ 
+     @model_validator(mode='after')
+-    def validate_update_consistency(self, values):
++async def validate_update_consistency(self, values):
+         """验证更新一致性."""
+         # 只有提供的字段才进行验证
+-        status = values.get('status')
+-        home_score = values.get('home_score')
+-        away_score = values.get('away_score')
+-        home_half_score = values.get('home_half_score')
+-        away_half_score = values.get('away_half_score')
++        status = values.await get('status')
++        home_score = values.await get('home_score')
++        away_score = values.await get('away_score')
++        home_half_score = values.await get('home_half_score')
++        away_half_score = values.await get('away_half_score')
+ 
+         # 如果状态更新为已完成，必须有比分
+         if status in MatchStatusConstants.FINISHED_STATUSES:
+@@ -231,17 +231,17 @@     updated_at: datetime
+ 
+     @model_validator(mode='after')
+-    def validate_response_data(self, values):
++async def validate_response_data(self, values):
+         """验证响应数据的一致性."""
+         # 确保从数据库返回的数据也符合业务规则
+-        status = values.get('status', '')
+-        home_score = values.get('home_score')
+-        away_score = values.get('away_score')
++        status = values.await get('status', '')
++        home_score = values.await get('home_score')
++        away_score = values.await get('away_score')
+ 
+         if status in MatchStatusConstants.FINISHED_STATUSES:
+             if home_score is None or away_score is None:
+                 warnings.warn(
+-                    f"比赛ID {values.get('id')} 状态为已完成但缺少比分数据",
++                    f"比赛ID {values.await get('id')} 状态为已完成但缺少比分数据",
+                     UserWarning,
+                     stacklevel=2
+                 )
+@@ -252,7 +252,7 @@ class MatchDataQualityReport:
+     """比赛数据质量报告."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.total_records = 0
+         self.valid_records = 0
+         self.invalid_records = 0
+@@ -260,7 +260,7 @@         self.errors = []
+         self.warnings = []
+ 
+-    def add_record_result(self, validation_result: ValidationResult):
++async def add_record_result(self, validation_result: ValidationResult):
+         """添加验证结果."""
+         self.total_records += 1
+ 
+@@ -273,7 +273,7 @@         self.errors.extend(validation_result.errors)
+         self.warnings.extend(validation_result.warnings)
+ 
+-    def get_summary(self) -> dict:
++async def get_summary(self) -> dict:
+         """获取质量报告摘要."""
+         return {
+             'total_records': self.total_records,
+@@ -286,18 +286,18 @@             'common_warnings': self._get_common_warnings()
+         }
+ 
+-    def _get_common_errors(self) -> list:
++async def _get_common_errors(self) -> list:
+         """获取常见错误."""
+         from collections import Counter
+         error_counter = Counter(self.errors)
+         return [{'error': error, 'count': count} for error, count in error_counter.most_common(5)]
+ 
+-    def _get_common_warnings(self) -> list:
++async def _get_common_warnings(self) -> list:
+         """获取常见警告."""
+         from collections import Counter
+         warning_counter = Counter(self.warnings)
+         return [{'warning': warning, 'count': count} for warning, count in warning_counter.most_common(5)]
+ 
+-    def is_healthy(self, min_success_rate: float = 0.95) -> bool:
++async def is_healthy(self, min_success_rate: float = 0.95) -> bool:
+         """判断数据是否健康."""
+         return (self.total_records == 0) or (self.valid_records / self.total_records >= min_success_rate)

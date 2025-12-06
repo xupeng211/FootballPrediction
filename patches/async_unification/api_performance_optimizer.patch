@@ -1,0 +1,72 @@
+--- a/src/api/optimization/api_performance_optimizer.py+++ b/src/api/optimization/api_performance_optimizer.py@@ -62,7 +62,7 @@ # ==================== 性能监控端点 ====================
+ 
+ 
+-@router.get("/performance/status")
++@router.await get("/performance/status")
+ async def get_performance_status():
+     """获取性能监控状态."""
+     perf_middleware = get_performance_middleware()
+@@ -91,7 +91,7 @@     return status
+ 
+ 
+-@router.get("/performance/report")
++@router.await get("/performance/report")
+ async def get_performance_report(
+     time_range_minutes: int = Query(60, ge=1, le=1440),
+     endpoint_filter: str | None = Query(None),
+@@ -130,7 +130,7 @@     return report
+ 
+ 
+-@router.get("/performance/endpoints/{endpoint:path}")
++@router.await get("/performance/endpoints/{endpoint:path}")
+ async def get_endpoint_performance(endpoint: str):
+     """获取特定端点的性能统计."""
+     perf_middleware = get_performance_middleware()
+@@ -153,7 +153,7 @@ # ==================== 缓存优化端点 ====================
+ 
+ 
+-@router.post("/cache/optimize")
++@router.await post("/cache/optimize")
+ async def optimize_cache(
+     request: CacheOptimizationRequest, background_tasks: BackgroundTasks
+ ):
+@@ -182,7 +182,7 @@             result["cleared_count"] = cleared_count
+ 
+         result["message"] = (
+-            f"缓存清理完成，清理了 {result.get('cleared_count', 0)} 个条目"
++            f"缓存清理完成，清理了 {result.await get('cleared_count', 0)} 个条目"
+         )
+ 
+     elif request.operation == "warm":
+@@ -218,7 +218,7 @@     return result
+ 
+ 
+-@router.get("/cache/statistics")
++@router.await get("/cache/statistics")
+ async def get_cache_statistics():
+     """获取缓存统计信息."""
+     cache_manager = get_cache_manager()
+@@ -248,7 +248,7 @@ # ==================== 性能优化端点 ====================
+ 
+ 
+-@router.post("/performance/optimize")
++@router.await post("/performance/optimize")
+ async def optimize_performance(
+     request: PerformanceOptimizationRequest, background_tasks: BackgroundTasks
+ ):
+@@ -315,7 +315,7 @@     return result
+ 
+ 
+-@router.get("/optimization/{optimization_id}/status")
++@router.await get("/optimization/{optimization_id}/status")
+ async def get_optimization_status(optimization_id: str):
+     """获取优化任务状态."""
+     # 这里应该从任务存储中获取实际状态
+@@ -387,7 +387,7 @@ # ==================== 健康检查端点 ====================
+ 
+ 
+-@router.get("/health", tags=["健康检查"])
++@router.await get("/health", tags=["健康检查"])
+ async def performance_optimization_health():
+     """性能优化服务健康检查."""
+     perf_middleware = get_performance_middleware()

@@ -1,0 +1,52 @@
+--- a/src/features/features/feature_calculator_calculators.py+++ b/src/features/features/feature_calculator_calculators.py@@ -33,7 +33,7 @@     负责计算足球预测所需的各种特征
+     """
+ 
+-    def __init__(self, db_session: AsyncSession):
++async def __init__(self, db_session: AsyncSession):
+         self.db_session = db_session
+         self.logger = logger
+ 
+@@ -66,7 +66,7 @@                 .limit(5)
+             )
+ 
+-            result = await self.db_session.execute(query)
++            result = await self.db_session.await execute(query)
+             matches = result.scalars().all()
+ 
+             if not matches:
+@@ -177,7 +177,7 @@                 .order_by(Match.match_date.desc())
+             )
+ 
+-            result = await self.db_session.execute(query)
++            result = await self.db_session.await execute(query)
+             matches = result.scalars().all()
+ 
+             if not matches:
+@@ -302,9 +302,9 @@             )
+ 
+             # 执行查询
+-            home_odds_result = await self.db_session.execute(home_odds_query)
+-            draw_odds_result = await self.db_session.execute(draw_odds_query)
+-            away_odds_result = await self.db_session.execute(away_odds_query)
++            home_odds_result = await self.db_session.await execute(home_odds_query)
++            draw_odds_result = await self.db_session.await execute(draw_odds_query)
++            away_odds_result = await self.db_session.await execute(away_odds_query)
+ 
+             home_odds_data = home_odds_result.scalar_one_or_none()
+             draw_odds_data = draw_odds_result.scalar_one_or_none()
+@@ -363,7 +363,7 @@ 
+             # 获取比赛信息
+             match_query = select(Match).where(Match.id == match_id)
+-            match_result = await self.db_session.execute(match_query)
++            match_result = await self.db_session.await execute(match_query)
+             match = match_result.scalar_one_or_none()
+ 
+             if not match:
+@@ -434,7 +434,7 @@ 
+             # 获取球队信息
+             team_query = select(Team).where(Team.id == team_id)
+-            team_result = await self.db_session.execute(team_query)
++            team_result = await self.db_session.await execute(team_query)
+             team = team_result.scalar_one_or_none()
+ 
+             if not team:

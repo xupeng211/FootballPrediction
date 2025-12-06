@@ -1,0 +1,144 @@
+--- a/src/collectors/fotmob/collector_v2.py+++ b/src/collectors/fotmob/collector_v2.py@@ -55,7 +55,7 @@     - 401/403 自动Token刷新
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         rate_limiter: RateLimiter,
+         proxy_pool: ProxyPool,
+@@ -327,16 +327,16 @@ 
+             # 解析赛程数据
+             fixtures = []
+-            matches = data.get("matches", [])
++            matches = data.await get("matches", [])
+ 
+             for match in matches:
+                 fixture = {
+-                    "match_id": str(match.get("id", "")),
+-                    "home_team": match.get("home", {}).get("name", ""),
+-                    "away_team": match.get("away", {}).get("name", ""),
+-                    "kickoff_time": match.get("status", {}).get("utcTime", ""),
+-                    "venue": match.get("venue", {}).get("name"),
+-                    "status": match.get("status", {}).get("statusCode", ""),
++                    "match_id": await str(match.get("id", "")),
++                    "home_team": match.await await get("home", {}).get("name", ""),
++                    "away_team": match.await await get("away", {}).get("name", ""),
++                    "kickoff_time": match.await await get("status", {}).get("utcTime", ""),
++                    "venue": match.await await get("venue", {}).get("name"),
++                    "status": match.await await get("status", {}).get("statusCode", ""),
+                     "league_id": league_id,
+                     "season_id": season_id,
+                 }
+@@ -379,54 +379,54 @@                 raise DataNotFoundError(f"No data found for match {match_id}")
+ 
+             # 解析比赛详情
+-            match_data = data.get("match", {})
+-            content = data.get("content", {})
++            match_data = data.await get("match", {})
++            content = data.await get("content", {})
+ 
+             details = {
+                 "match_id": match_id,
+-                "home_team": match_data.get("home", {}).get("name", ""),
+-                "away_team": match_data.get("away", {}).get("name", ""),
+-                "home_score": match_data.get("home", {}).get("score"),
+-                "away_score": match_data.get("away", {}).get("score"),
+-                "status": match_data.get("status", {}).get("statusCode", ""),
+-                "kickoff_time": match_data.get("status", {}).get("utcTime", ""),
++                "home_team": match_data.await await get("home", {}).get("name", ""),
++                "away_team": match_data.await await get("away", {}).get("name", ""),
++                "home_score": match_data.await await get("home", {}).get("score"),
++                "away_score": match_data.await await get("away", {}).get("score"),
++                "status": match_data.await await get("status", {}).get("statusCode", ""),
++                "kickoff_time": match_data.await await get("status", {}).get("utcTime", ""),
+             }
+ 
+             # 添加期望进球数
+-            xg_data = content.get("expectedGoals", {})
++            xg_data = content.await get("expectedGoals", {})
+             if xg_data:
+-                details["home_xg"] = xg_data.get("home")
+-                details["away_xg"] = xg_data.get("away")
++                details["home_xg"] = xg_data.await get("home")
++                details["away_xg"] = xg_data.await get("away")
+ 
+             # 添加射门数据
+-            shot_stats = content.get("shotmap", {}).get("stats", {})
++            shot_stats = content.await await get("shotmap", {}).get("stats", {})
+             if shot_stats:
+                 details["shots"] = {
+-                    "home": shot_stats.get("home", {}).get("total", 0),
+-                    "away": shot_stats.get("away", {}).get("total", 0),
++                    "home": shot_stats.await await get("home", {}).get("total", 0),
++                    "away": shot_stats.await await get("away", {}).get("total", 0),
+                 }
+ 
+             # 添加控球率
+-            possession_stats = content.get("possession", {})
++            possession_stats = content.await get("possession", {})
+             if possession_stats:
+                 details["possession"] = {
+-                    "home": possession_stats.get("home", 0),
+-                    "away": possession_stats.get("away", 0),
++                    "home": possession_stats.await get("home", 0),
++                    "away": possession_stats.await get("away", 0),
+                 }
+ 
+             # 添加比赛事件
+-            events = content.get("lineUp", {}).get("lineups", [])
++            events = content.await await get("lineUp", {}).get("lineups", [])
+             details["events"] = events
+ 
+             # 添加阵容信息
+-            lineups = content.get("lineUp", {})
++            lineups = content.await get("lineUp", {})
+             details["lineups"] = {
+-                "home": lineups.get("home", []),
+-                "away": lineups.get("away", []),
++                "home": lineups.await get("home", []),
++                "away": lineups.await get("away", []),
+             }
+ 
+             # 添加赔率数据（如果有）
+-            odds_data = content.get("matchStats", {}).get("odds", {})
++            odds_data = content.await await get("matchStats", {}).get("odds", {})
+             if odds_data:
+                 details["odds"] = odds_data
+ 
+@@ -463,15 +463,15 @@             if not data:
+                 raise DataNotFoundError(f"No data found for team {team_id}")
+ 
+-            team_data = data.get("teamDetails", {}).get("team", {})
++            team_data = data.await await get("teamDetails", {}).get("team", {})
+ 
+             info = {
+                 "team_id": team_id,
+-                "name": team_data.get("name", ""),
+-                "country": team_data.get("country", ""),
+-                "founded": team_data.get("founded"),
+-                "stadium": team_data.get("venue", {}).get("name"),
+-                "logo_url": team_data.get("logoUrl"),
++                "name": team_data.await get("name", ""),
++                "country": team_data.await get("country", ""),
++                "founded": team_data.await get("founded"),
++                "stadium": team_data.await await get("venue", {}).get("name"),
++                "logo_url": team_data.await get("logoUrl"),
+             }
+ 
+             return info
+@@ -566,7 +566,7 @@         print(f"📊 FotMobCollectorV2 关闭统计: {final_stats}")
+         self.stats = final_stats
+ 
+-    def __del__(self):
++async def __del__(self):
+         """析构函数，确保资源被清理"""
+         if not self._closed:
+             # 注意：这里不能使用await，因为析构函数是同步的
+@@ -574,7 +574,7 @@ 
+ 
+ # 便利函数，用于创建采集器实例
+-def create_fotmob_collector_v2(
++async def create_fotmob_collector_v2(
+     rate_limiter: RateLimiter,
+     proxy_pool: ProxyPool,
+     token_manager: TokenManager,

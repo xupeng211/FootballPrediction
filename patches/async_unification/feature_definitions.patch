@@ -1,0 +1,24 @@
+--- a/src/data/features/feature_definitions.py+++ b/src/data/features/feature_definitions.py@@ -72,7 +72,7 @@ 
+     pass  # 添加pass语句
+ 
+-    def __init__(self, name: str, description: str, join_keys: list[str]) -> None:
++async def __init__(self, name: str, description: str, join_keys: list[str]) -> None:
+         self.name = name
+         self.description = description
+         self.join_keys = join_keys
+@@ -83,7 +83,7 @@ 
+     pass  # 添加pass语句
+ 
+-    def __init__(
++async def __init__(
+         self,
+         name: str,
+         entities: list[MockEntity] | None = None,
+@@ -103,7 +103,7 @@ 
+     pass  # 添加pass语句
+ 
+-    def __init__(self, name: str, path: str, timestamp_field: str) -> None:
++async def __init__(self, name: str, path: str, timestamp_field: str) -> None:
+         self.name = name
+         self.path = path
+         self.timestamp_field = timestamp_field

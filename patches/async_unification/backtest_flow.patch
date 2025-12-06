@@ -1,0 +1,136 @@
+--- a/src/evaluation/flows/backtest_flow.py+++ b/src/evaluation/flows/backtest_flow.py@@ -21,11 +21,11 @@ except ImportError:
+     HAS_PREFECT = False
+     # 创建占位符装饰器
+-    def flow(func):
++async def flow(func):
+         return func
+-    def task(func):
++async def task(func):
+         return func
+-    def get_run_logger():
++async def get_run_logger():
+         import logging
+         return logging.getLogger(__name__)
+ 
+@@ -41,7 +41,7 @@ 
+ 
+ @task
+-def load_odds_data_task(odds_path: Union[str, Path],
++async def load_odds_data_task(odds_path: Union[str, Path],
+                        odds_format: str = "csv") -> pd.DataFrame:
+     """
+     加载赔率数据
+@@ -77,7 +77,7 @@ 
+ 
+ @task
+-def load_predictions_task(predictions_path: Union[str, Path],
++async def load_predictions_task(predictions_path: Union[str, Path],
+                          predictions_format: str = "csv") -> pd.DataFrame:
+     """
+     加载预测数据
+@@ -113,7 +113,7 @@ 
+ 
+ @task
+-def prepare_backtest_data_task(predictions_df: pd.DataFrame,
++async def prepare_backtest_data_task(predictions_df: pd.DataFrame,
+                              odds_df: pd.DataFrame,
+                              match_id_column: str = "match_id") -> tuple:
+     """
+@@ -157,7 +157,7 @@ 
+ 
+ @task
+-def validate_data_quality_task(predictions_df: pd.DataFrame,
++async def validate_data_quality_task(predictions_df: pd.DataFrame,
+                              odds_df: pd.DataFrame) -> dict[str, Any]:
+     """
+     验证回测数据质量
+@@ -233,7 +233,7 @@ 
+ 
+ @task
+-def create_staking_strategy_task(strategy_type: str,
++async def create_staking_strategy_task(strategy_type: str,
+                                strategy_params: Optional[dict[str, Any]] = None) -> Any:
+     """
+     创建投注策略
+@@ -250,17 +250,17 @@ 
+     try:
+         if strategy_type == "flat":
+-            stake_amount = strategy_params.get("stake_amount", 10.0)
++            stake_amount = strategy_params.await get("stake_amount", 10.0)
+             strategy = FlatStakingStrategy(stake_amount=stake_amount)
+ 
+         elif strategy_type == "percentage":
+-            percentage = strategy_params.get("percentage", 0.01)
++            percentage = strategy_params.await get("percentage", 0.01)
+             strategy = PercentageStakingStrategy(percentage=percentage)
+ 
+         elif strategy_type == "kelly":
+-            kelly_fraction = strategy_params.get("kelly_fraction", 0.25)
+-            min_stake = strategy_params.get("min_stake", 1.0)
+-            max_stake_percentage = strategy_params.get("max_stake_percentage", 0.05)
++            kelly_fraction = strategy_params.await get("kelly_fraction", 0.25)
++            min_stake = strategy_params.await get("min_stake", 1.0)
++            max_stake_percentage = strategy_params.await get("max_stake_percentage", 0.05)
+             strategy = KellyStakingStrategy(
+                 kelly_fraction=kelly_fraction,
+                 min_stake=min_stake,
+@@ -268,9 +268,9 @@             )
+ 
+         elif strategy_type == "value":
+-            min_ev_threshold = strategy_params.get("min_ev_threshold", 0.1)
+-            base_stake = strategy_params.get("base_stake", 10.0)
+-            max_stake_percentage = strategy_params.get("max_stake_percentage", 0.05)
++            min_ev_threshold = strategy_params.await get("min_ev_threshold", 0.1)
++            base_stake = strategy_params.await get("base_stake", 10.0)
++            max_stake_percentage = strategy_params.await get("max_stake_percentage", 0.05)
+             strategy = ValueBettingStrategy(
+                 min_ev_threshold=min_ev_threshold,
+                 base_stake=base_stake,
+@@ -289,7 +289,7 @@ 
+ 
+ @task
+-def run_backtest_task(predictions_df: pd.DataFrame,
++async def run_backtest_task(predictions_df: pd.DataFrame,
+                      odds_df: pd.DataFrame,
+                      staking_strategy: Any,
+                      initial_bankroll: float = 1000.0,
+@@ -331,7 +331,7 @@ 
+ 
+ @task
+-def analyze_backtest_performance_task(backtest_result: BacktestResult) -> dict[str, Any]:
++async def analyze_backtest_performance_task(backtest_result: BacktestResult) -> dict[str, Any]:
+     """
+     分析回测性能
+ 
+@@ -398,7 +398,7 @@ 
+ 
+ @task
+-def generate_backtest_visualizations_task(backtest_result: BacktestResult,
++async def generate_backtest_visualizations_task(backtest_result: BacktestResult,
+                                        model_name: str = "Model") -> dict[str, list]:
+     """
+     生成回测可视化图表
+@@ -427,7 +427,7 @@ 
+ 
+ @task
+-def generate_backtest_report_task(backtest_result: BacktestResult,
++async def generate_backtest_report_task(backtest_result: BacktestResult,
+                                 performance_analysis: dict[str, Any],
+                                 chart_files: Optional[dict[str, list]] = None,
+                                 model_name: str = "Model",
+@@ -480,7 +480,7 @@ 
+ 
+ @flow(name="model_backtest_flow", log_prints=True)
+-def backtest_flow(
++async def backtest_flow(
+     predictions_path: Union[str, Path],
+     odds_path: Union[str, Path],
+     model_name: str = "Football Prediction Model",
+@@ -591,7 +591,7 @@ 
+ 
+ # 便捷函数
+-def run_backtest(
++async def run_backtest(
+     predictions_path: Union[str, Path],
+     odds_path: Union[str, Path],
+     model_name: str = "Football Prediction Model",

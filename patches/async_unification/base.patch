@@ -1,0 +1,214 @@
+--- a/src/events/base.py+++ b/src/events/base.py@@ -25,7 +25,7 @@     Base class for all event data, providing common metadata.
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         source: str | None = None,
+         version: str = "1.0",
+@@ -40,7 +40,7 @@         self.version = version
+         self.metadata = metadata
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         """获取事件类型."""
+         return self.__class__.__name__
+ 
+@@ -52,7 +52,7 @@     Defines the interface that all events must implement.
+     """
+ 
+-    def __init__(self, data: EventData):
++async def __init__(self, data: EventData):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化事件"
+@@ -63,43 +63,43 @@         self._data = data
+ 
+     @property
+-    def data(self) -> EventData:
++async def data(self) -> EventData:
+         """获取事件数据."""
+         return self._data
+ 
+     @data.setter
+-    def data(self, value: EventData) -> None:
++async def data(self, value: EventData) -> None:
+         """设置事件数据."""
+         self._data = value
+ 
+     @property
+-    def event_id(self) -> str:
++async def event_id(self) -> str:
+         """获取事件ID."""
+         return self.data.event_id
+ 
+     @property
+-    def timestamp(self) -> datetime:
++async def timestamp(self) -> datetime:
+         """获取事件时间戳."""
+         return self.data.timestamp
+ 
+     @property
+-    def source(self) -> str | None:
++async def source(self) -> str | None:
+         """获取事件源."""
+         return self.data.source
+ 
+     @property
+-    def version(self) -> str:
++async def version(self) -> str:
+         """获取事件版本."""
+         return self.data.version
+ 
+     @property
+-    def metadata(self) -> dict[str, Any]:
++async def metadata(self) -> dict[str, Any]:
+         """获取事件元数据."""
+         return self.data.metadata
+ 
+     @classmethod
+     @abstractmethod
+-    def get_event_type(cls) -> str:
++async def get_event_type(cls) -> str:
+         """获取事件类型".
+ 
+         Returns:
+@@ -107,7 +107,7 @@         """
+ 
+     @abstractmethod
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """将事件转换为字典".
+ 
+         Returns:
+@@ -116,7 +116,7 @@ 
+     @classmethod
+     @abstractmethod
+-    def from_dict(cls: type[T], data: dict[str, Any]) -> T:
++async def from_dict(cls: type[T], data: dict[str, Any]) -> T:
+         """从字典创建事件".
+ 
+         Args:
+@@ -126,10 +126,10 @@             T: 事件实例
+         """
+ 
+-    def __str__(self) -> str:
++async def __str__(self) -> str:
+         return f"{self.get_event_type()}(id={self.event_id}, ts={self.timestamp})"
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         return self.__str__()
+ 
+ 
+@@ -140,7 +140,7 @@     Defines the interface that all event handlers must implement.
+     """
+ 
+-    def __init__(self, name: str | None = None):
++async def __init__(self, name: str | None = None):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化事件处理器"
+@@ -160,7 +160,7 @@         """
+ 
+     @abstractmethod
+-    def get_handled_events(self) -> list[str]:
++async def get_handled_events(self) -> list[str]:
+         """获取处理器能处理的事件类型".
+ 
+         Returns:
+@@ -179,7 +179,7 @@             queue.put_nowait(None)
+         self._subscribed_events.clear()
+ 
+-    def add_subscription(self, event_type: str, queue: asyncio.Queue) -> None:
++async def add_subscription(self, event_type: str, queue: asyncio.Queue) -> None:
+         """添加事件订阅".
+ 
+         Args:
+@@ -188,7 +188,7 @@         """
+         self._subscribed_events[event_type] = queue
+ 
+-    def remove_subscription(self, event_type: str) -> None:
++async def remove_subscription(self, event_type: str) -> None:
+         """移除事件订阅".
+ 
+         Args:
+@@ -196,7 +196,7 @@         """
+         self._subscribed_events.pop(event_type, None)
+ 
+-    def is_subscribed_to(self, event_type: str) -> bool:
++async def is_subscribed_to(self, event_type: str) -> bool:
+         """检查是否订阅了指定事件类型".
+ 
+         Args:
+@@ -213,13 +213,13 @@         Args:
+             event_type: 事件类型
+         """
+-        queue = self._subscribed_events.get(event_type)
++        queue = self._subscribed_events.await get(event_type)
+         if not queue:
+             raise ValueError(f"Not subscribed to event type: {event_type}")
+ 
+         while True:
+             try:
+-                event = await queue.get()
++                event = await queue.await get()
+                 if event is None:  # 停止信号
+                     break
+                 await self.handle(event)
+@@ -237,7 +237,7 @@     """
+ 
+     @abstractmethod
+-    def should_process(self, event: Event) -> bool:
++async def should_process(self, event: Event) -> bool:
+         """判断是否应该处理事件".
+ 
+         Args:
+@@ -251,7 +251,7 @@ class EventTypeFilter(EventFilter):
+     """基于事件类型的过滤器."""
+ 
+-    def __init__(self, allowed_types: list[str]):
++async def __init__(self, allowed_types: list[str]):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化过滤器"
+@@ -261,14 +261,14 @@         """
+         self.allowed_types = set(allowed_types)
+ 
+-    def should_process(self, event: Event) -> bool:
++async def should_process(self, event: Event) -> bool:
+         return event.get_event_type() in self.allowed_types
+ 
+ 
+ class EventSourceFilter(EventFilter):
+     """基于事件源的过滤器."""
+ 
+-    def __init__(self, allowed_sources: list[str]):
++async def __init__(self, allowed_sources: list[str]):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化过滤器"
+@@ -278,14 +278,14 @@         """
+         self.allowed_sources = set(allowed_sources)
+ 
+-    def should_process(self, event: Event) -> bool:
++async def should_process(self, event: Event) -> bool:
+         return event.source in self.allowed_sources if event.source else False
+ 
+ 
+ class CompositeEventFilter(EventFilter):
+     """组合过滤器,支持AND和OR逻辑."""
+ 
+-    def __init__(self, filters: list[EventFilter], operator: str = "AND"):
++async def __init__(self, filters: list[EventFilter], operator: str = "AND"):
+         """函数文档字符串."""
+         # 添加pass语句
+         """初始化组合过滤器"
+@@ -300,7 +300,7 @@         if self.operator not in ["AND", "OR"]:
+             raise ValueError("Operator must be 'AND' or 'OR'")
+ 
+-    def should_process(self, event: Event) -> bool:
++async def should_process(self, event: Event) -> bool:
+         if not self.filters:
+             return True
+ 

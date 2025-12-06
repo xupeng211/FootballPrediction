@@ -1,0 +1,100 @@
+--- a/src/quality/rules/type_rule.py+++ b/src/quality/rules/type_rule.py@@ -36,7 +36,7 @@     字符串字段为 str 等。防止类型错误导致的计算异常。
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         field_types: Optional[dict[str, type]] = None,
+         strict_type_checking: bool = True,
+@@ -168,7 +168,7 @@ 
+         return errors
+ 
+-    def _check_field_type(
++async def _check_field_type(
+         self,
+         field_name: str,
+         value: Any,
+@@ -222,7 +222,7 @@                 f"实际 {type(value).__name__}, 值: {self._format_value(value)}"
+             )
+ 
+-    def _convert_type(self, value: Any, target_type: type) -> Optional[Any]:
++async def _convert_type(self, value: Any, target_type: type) -> Optional[Any]:
+         """
+         尝试将值转换为目标类型。
+ 
+@@ -286,7 +286,7 @@         except Exception:
+             return None
+ 
+-    def _determine_severity(self, error_message: str) -> str:
++async def _determine_severity(self, error_message: str) -> str:
+         """
+         根据错误信息确定严重程度。
+ 
+@@ -304,7 +304,7 @@         else:
+             return RuleSeverity.LOW
+ 
+-    def _format_value(self, value: Any) -> str:
++async def _format_value(self, value: Any) -> str:
+         """
+         格式化值用于显示。
+ 
+@@ -321,7 +321,7 @@         else:
+             return f"{value} ({type(value).__name__})"
+ 
+-    def get_expected_type(self, field_name: str) -> Optional[type]:
++async def get_expected_type(self, field_name: str) -> Optional[type]:
+         """
+         获取指定字段的期望类型。
+ 
+@@ -331,9 +331,9 @@         Returns:
+             Optional[Type]: 期望的类型，如果未配置返回None
+         """
+-        return self.field_types.get(field_name)
+-
+-    def configure_field_type(self, field_name: str, expected_type: type) -> None:
++        return self.field_types.await get(field_name)
++
++async def configure_field_type(self, field_name: str, expected_type: type) -> None:
+         """
+         配置字段的期望类型。
+ 
+@@ -347,7 +347,7 @@         self.field_types[field_name] = expected_type
+         logger.info(f"字段 '{field_name}' 期望类型已设置为: {expected_type.__name__}")
+ 
+-    def configure_strict_mode(self, strict_mode: bool) -> None:
++async def configure_strict_mode(self, strict_mode: bool) -> None:
+         """
+         配置严格模式。
+ 
+@@ -357,7 +357,7 @@         self.strict_type_checking = strict_mode
+         logger.info(f"严格模式已设置为: {strict_mode}")
+ 
+-    def configure_type_conversion(self, allow_conversion: bool) -> None:
++async def configure_type_conversion(self, allow_conversion: bool) -> None:
+         """
+         配置是否允许类型转换。
+ 
+@@ -367,7 +367,7 @@         self.allow_type_conversion = allow_conversion
+         logger.info(f"类型转换已设置为: {allow_conversion}")
+ 
+-    def validate_type_configuration(self) -> list[str]:
++async def validate_type_configuration(self) -> list[str]:
+         """
+         验证类型配置的有效性。
+ 
+@@ -389,7 +389,7 @@ 
+         return errors
+ 
+-    def get_type_summary(self, features: dict[str, Any]) -> dict[str, Any]:
++async def get_type_summary(self, features: dict[str, Any]) -> dict[str, Any]:
+         """
+         获取类型检查的详细摘要。
+ 
+@@ -452,7 +452,7 @@ 
+         return summary
+ 
+-    def _can_convert_type(self, value: Any, target_type: type) -> bool:
++async def _can_convert_type(self, value: Any, target_type: type) -> bool:
+         """
+         检查值是否可以转换为目标类型。
+ 

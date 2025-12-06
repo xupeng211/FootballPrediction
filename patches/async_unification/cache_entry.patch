@@ -1,0 +1,56 @@
+--- a/src/cache/ttl_cache_enhanced/cache_entry.py+++ b/src/cache/ttl_cache_enhanced/cache_entry.py@@ -20,7 +20,7 @@ 
+     __slots__ = ("key", "value", "expires_at", "access_count", "last_access")
+ 
+-    def __init__(
++async def __init__(
+         self,
+         key: str,
+         value: Any,
+@@ -39,7 +39,7 @@         self.access_count = 0
+         self.last_access = time.time()
+ 
+-    def is_expired(self) -> bool:
++async def is_expired(self) -> bool:
+         """检查是否过期.
+ 
+         Returns:
+@@ -47,7 +47,7 @@         """
+         return self.expires_at is not None and time.time() > self.expires_at
+ 
+-    def access(self) -> Any:
++async def access(self) -> Any:
+         """访问缓存项.
+ 
+         更新访问统计并返回值.
+@@ -59,7 +59,7 @@         self.last_access = time.time()
+         return self.value
+ 
+-    def update_ttl(self, ttl: float | None = None) -> None:
++async def update_ttl(self, ttl: float | None = None) -> None:
+         """更新过期时间.
+ 
+         Args:
+@@ -70,7 +70,7 @@         else:
+             self.expires_at = None
+ 
+-    def get_remaining_ttl(self) -> int | None:
++async def get_remaining_ttl(self) -> int | None:
+         """获取剩余TTL.
+ 
+         Returns:
+@@ -81,7 +81,7 @@         remaining = int(self.expires_at - time.time())
+         return remaining if remaining > 0 else 0
+ 
+-    def __lt__(self, other):
++async def __lt__(self, other):
+         """函数文档字符串."""
+         # 添加pass语句
+         """
+@@ -97,7 +97,7 @@             return True
+         return self.expires_at < other.expires_at
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         """字符串表示."""
+         ttl_str = f"TTL={self.get_remaining_ttl()}s" if self.expires_at else "TTL=∞"
+         return (

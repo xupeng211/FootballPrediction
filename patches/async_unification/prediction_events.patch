@@ -1,0 +1,141 @@
+--- a/src/domain/events/prediction_events.py+++ b/src/domain/events/prediction_events.py@@ -14,7 +14,7 @@ class PredictionEvent(DomainEvent):
+     """预测事件基类."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: str,
+         event_type: str,
+@@ -34,7 +34,7 @@         self.data = data
+         self.timestamp = timestamp
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         """获取事件类型."""
+         return self.event_type
+ 
+@@ -42,7 +42,7 @@ class PredictionCreatedEvent(DomainEvent):
+     """预测创建事件."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         user_id: int,
+@@ -60,11 +60,11 @@         self.predicted_away = predicted_away
+         self.confidence = confidence
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         """获取事件类型."""
+         return "prediction_created"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {
+             "prediction_id": self.prediction_id,
+             "user_id": self.user_id,
+@@ -78,7 +78,7 @@ class PredictionUpdatedEvent(DomainEvent):
+     """预测更新事件."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         old_predicted_home: int,
+@@ -94,11 +94,11 @@         self.new_predicted_home = new_predicted_home
+         self.new_predicted_away = new_predicted_away
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         """获取事件类型."""
+         return "prediction_updated"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {
+             "prediction_id": self.prediction_id,
+             "old_prediction": {
+@@ -115,7 +115,7 @@ class PredictionEvaluatedEvent(DomainEvent):
+     """预测评估事件."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         actual_home: int,
+@@ -133,11 +133,11 @@         self.points_earned = points_earned
+         self.accuracy_score = accuracy_score
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         """获取事件类型."""
+         return "prediction_evaluated"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {
+             "prediction_id": self.prediction_id,
+             "actual_score": {"home": self.actual_home, "away": self.actual_away},
+@@ -150,7 +150,7 @@ class PredictionCancelledEvent(DomainEvent):
+     """预测取消事件."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         reason: str,
+@@ -162,11 +162,11 @@         self.reason = reason
+         self.cancelled_by = cancelled_by
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         """获取事件类型."""
+         return "prediction_cancelled"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {
+             "prediction_id": self.prediction_id,
+             "reason": self.reason,
+@@ -177,17 +177,17 @@ class PredictionExpiredEvent(DomainEvent):
+     """预测过期事件."""
+ 
+-    def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs):
++async def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs):
+         super().__init__(aggregate_id=prediction_id)
+         self.prediction_id = prediction_id
+         self.match_id = match_id
+         self.expired_at = expired_at
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         """获取事件类型."""
+         return "prediction_expired"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {
+             "prediction_id": self.prediction_id,
+             "match_id": self.match_id,
+@@ -198,7 +198,7 @@ class PredictionPointsAdjustedEvent(DomainEvent):
+     """预测积分调整事件."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         user_id: int,
+@@ -214,11 +214,11 @@         self.new_points = new_points
+         self.adjustment_reason = adjustment_reason
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         """获取事件类型."""
+         return "prediction_points_adjusted"
+ 
+-    def _get_event_data(self) -> dict[str, Any]:
++async def _get_event_data(self) -> dict[str, Any]:
+         return {
+             "prediction_id": self.prediction_id,
+             "user_id": self.user_id,

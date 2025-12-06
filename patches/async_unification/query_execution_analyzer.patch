@@ -1,0 +1,228 @@
+--- a/src/api/optimization/query_execution_analyzer.py+++ b/src/api/optimization/query_execution_analyzer.py@@ -39,7 +39,7 @@     hash_condition: str | None = None
+     sort_key: list[str] | None = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         if self.plans is None:
+             self.plans = []
+ 
+@@ -61,7 +61,7 @@     optimization_suggestions: list[dict[str, Any]]
+     analysis_timestamp: datetime
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典格式."""
+         return {
+             "query_hash": self.query_hash,
+@@ -82,7 +82,7 @@             "execution_plan": self._serialize_plan_nodes(self.execution_plan),
+         }
+ 
+-    def _serialize_plan_nodes(
++async def _serialize_plan_nodes(
+         self, nodes: list[ExecutionPlanNode]
+     ) -> list[dict[str, Any]]:
+         """序列化执行计划节点."""
+@@ -115,7 +115,7 @@ class QueryExecutionAnalyzer:
+     """查询执行分析器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.plan_cache: dict[str, ExecutionPlanAnalysis] = {}
+         self.analysis_history: list[dict[str, Any]] = []
+         self.performance_patterns: dict[str, list[dict[str, Any]]] = {}
+@@ -177,9 +177,9 @@         options: dict[str, Any] | None = None,
+     ) -> dict[str, Any]:
+         """获取执行计划."""
+-        analyze_format = options.get("format", "JSON") if options else "JSON"
++        analyze_format = options.await get("format", "JSON") if options else "JSON"
+         analyze_options = (
+-            options.get("options", ["ANALYZE", "BUFFERS"])
++            options.await get("options", ["ANALYZE", "BUFFERS"])
+             if options
+             else ["ANALYZE", "BUFFERS"]
+         )
+@@ -190,7 +190,7 @@         )
+ 
+         try:
+-            result = await session.execute(text(explain_query))
++            result = await session.await execute(text(explain_query))
+             explain_data = result.fetchone()[0]
+ 
+             if isinstance(explain_data, str):
+@@ -215,7 +215,7 @@                 "Planning Time": 0.0,
+             }
+ 
+-    def _parse_text_explain(self, explain_text: str) -> dict[str, Any]:
++async def _parse_text_explain(self, explain_text: str) -> dict[str, Any]:
+         """解析文本格式的EXPLAIN输出."""
+         lines = explain_text.strip().split("\n")
+ 
+@@ -246,7 +246,7 @@             "Planning Time": planning_time,
+         }
+ 
+-    def _parse_execution_plan(
++async def _parse_execution_plan(
+         self, explain_data: dict[str, Any]
+     ) -> list[ExecutionPlanNode]:
+         """解析执行计划."""
+@@ -255,26 +255,26 @@ 
+         return [self._parse_plan_node(explain_data["Plan"])]
+ 
+-    def _parse_plan_node(self, node_data: dict[str, Any]) -> ExecutionPlanNode:
++async def _parse_plan_node(self, node_data: dict[str, Any]) -> ExecutionPlanNode:
+         """解析单个执行计划节点."""
+         node = ExecutionPlanNode(
+-            node_type=node_data.get("Node Type", "Unknown"),
+-            relation_name=node_data.get("Relation Name"),
+-            alias=node_data.get("Alias"),
+-            startup_cost=float(node_data.get("Startup Cost", 0.0)),
+-            total_cost=float(node_data.get("Total Cost", 0.0)),
+-            rows=int(node_data.get("Plan Rows", 0)),
+-            width=int(node_data.get("Plan Width", 0)),
+-            actual_rows=int(node_data.get("Actual Rows", 0)),
+-            actual_loops=int(node_data.get("Actual Loops", 0)),
+-            actual_total_time=float(node_data.get("Actual Total Time", 0.0)),
+-            actual_startup_time=float(node_data.get("Actual Startup Time", 0.0)),
+-            parent_relationship=node_data.get("Parent Relationship"),
+-            join_type=node_data.get("Join Type"),
+-            index_name=node_data.get("Index Name"),
+-            index_condition=node_data.get("Index Condition"),
+-            hash_condition=node_data.get("Hash Condition"),
+-            sort_key=node_data.get("Sort Key", []),
++            node_type=node_data.await get("Node Type", "Unknown"),
++            relation_name=node_data.await get("Relation Name"),
++            alias=node_data.await get("Alias"),
++            startup_cost=await float(node_data.get("Startup Cost", 0.0)),
++            total_cost=await float(node_data.get("Total Cost", 0.0)),
++            rows=await int(node_data.get("Plan Rows", 0)),
++            width=await int(node_data.get("Plan Width", 0)),
++            actual_rows=await int(node_data.get("Actual Rows", 0)),
++            actual_loops=await int(node_data.get("Actual Loops", 0)),
++            actual_total_time=await float(node_data.get("Actual Total Time", 0.0)),
++            actual_startup_time=await float(node_data.get("Actual Startup Time", 0.0)),
++            parent_relationship=node_data.await get("Parent Relationship"),
++            join_type=node_data.await get("Join Type"),
++            index_name=node_data.await get("Index Name"),
++            index_condition=node_data.await get("Index Condition"),
++            hash_condition=node_data.await get("Hash Condition"),
++            sort_key=node_data.await get("Sort Key", []),
+         )
+ 
+         # 递归解析子计划
+@@ -298,8 +298,8 @@         estimated_rows = sum(node.rows for node in execution_plan)
+ 
+         # 获取执行时间
+-        execution_time = explain_data.get("Execution Time", 0.0)
+-        planning_time = explain_data.get("Planning Time", 0.0)
++        execution_time = explain_data.await get("Execution Time", 0.0)
++        planning_time = explain_data.await get("Planning Time", 0.0)
+ 
+         # 识别使用的索引
+         indexes_used = self._identify_used_indexes(execution_plan)
+@@ -332,7 +332,7 @@             analysis_timestamp=datetime.utcnow(),
+         )
+ 
+-    def _identify_used_indexes(
++async def _identify_used_indexes(
+         self, execution_plan: list[ExecutionPlanNode]
+     ) -> list[str]:
+         """识别使用的索引."""
+@@ -394,7 +394,7 @@ 
+         return missing_indexes
+ 
+-    def _extract_where_fields(self, query: str) -> list[str]:
++async def _extract_where_fields(self, query: str) -> list[str]:
+         """提取WHERE条件中的字段."""
+         # 简化的字段提取逻辑
+         where_pattern = r"WHERE\s+([^;]+)"
+@@ -413,7 +413,7 @@ 
+         return []
+ 
+-    def _extract_order_fields(self, query: str) -> list[str]:
++async def _extract_order_fields(self, query: str) -> list[str]:
+         """提取ORDER BY字段."""
+         order_pattern = r"ORDER\s+BY\s+([^;\s]+(?:\s+(?:ASC|DESC))?)"
+         matches = re.findall(order_pattern, query, re.IGNORECASE)
+@@ -426,7 +426,7 @@ 
+         return fields
+ 
+-    def _identify_performance_issues(
++async def _identify_performance_issues(
+         self, execution_plan: list[ExecutionPlanNode], execution_time: float
+     ) -> list[dict[str, Any]]:
+         """识别性能问题."""
+@@ -458,7 +458,7 @@ 
+         return issues
+ 
+-    def _check_node_performance_issues(
++async def _check_node_performance_issues(
+         self, node: ExecutionPlanNode, issues: list[dict[str, Any]]
+     ):
+         """检查节点的性能问题."""
+@@ -561,10 +561,10 @@         unique_suggestions = self._deduplicate_suggestions(suggestions)
+         return sorted(
+             unique_suggestions,
+-            key=lambda x: {"high": 0, "medium": 1, "low": 2}.get(x["priority"], 3),
+-        )
+-
+-    def _analyze_query_patterns(self, query: str) -> list[dict[str, Any]]:
++            key=lambda x: {"high": 0, "medium": 1, "low": 2}.await get(x["priority"], 3),
++        )
++
++async def _analyze_query_patterns(self, query: str) -> list[dict[str, Any]]:
+         """分析查询模式."""
+         suggestions = []
+         query_lower = query.lower()
+@@ -613,7 +613,7 @@ 
+         return suggestions
+ 
+-    def _deduplicate_suggestions(
++async def _deduplicate_suggestions(
+         self, suggestions: list[dict[str, Any]]
+     ) -> list[dict[str, Any]]:
+         """去重建议."""
+@@ -622,14 +622,14 @@ 
+         for suggestion in suggestions:
+             # 创建唯一的标识符
+-            identifier = f"{suggestion['type']}_{suggestion.get('description', '')}"
++            identifier = f"{suggestion['type']}_{suggestion.await get('description', '')}"
+             if identifier not in seen:
+                 seen.add(identifier)
+                 unique_suggestions.append(suggestion)
+ 
+         return unique_suggestions
+ 
+-    def _generate_query_hash(self, query: str) -> str:
++async def _generate_query_hash(self, query: str) -> str:
+         """生成查询哈希值."""
+         import hashlib
+ 
+@@ -637,16 +637,16 @@         normalized_query = " ".join(query.strip().split()).lower()
+         return hashlib.sha256(normalized_query.encode()).hexdigest()
+ 
+-    def get_cached_analysis(self, query_hash: str) -> ExecutionPlanAnalysis | None:
++async def get_cached_analysis(self, query_hash: str) -> ExecutionPlanAnalysis | None:
+         """获取缓存的分析结果."""
+-        return self.plan_cache.get(query_hash)
+-
+-    def clear_cache(self):
++        return self.plan_cache.await get(query_hash)
++
++async def clear_cache(self):
+         """清空缓存."""
+         self.plan_cache.clear()
+         logger.info("Execution plan cache cleared")
+ 
+-    def get_analysis_statistics(self) -> dict[str, Any]:
++async def get_analysis_statistics(self) -> dict[str, Any]:
+         """获取分析统计信息."""
+         if not self.analysis_history:
+             return {
+@@ -688,7 +688,7 @@ _execution_analyzer: QueryExecutionAnalyzer | None = None
+ 
+ 
+-def get_query_execution_analyzer() -> QueryExecutionAnalyzer:
++async def get_query_execution_analyzer() -> QueryExecutionAnalyzer:
+     """获取全局查询执行分析器实例."""
+     global _execution_analyzer
+     if _execution_analyzer is None:

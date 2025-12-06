@@ -1,0 +1,176 @@
+--- a/src/domain_simple/rules.py+++ b/src/domain_simple/rules.py@@ -12,7 +12,7 @@     pass  # 添加pass语句
+     """验证结果"""
+ 
+-    def __init__(self, is_valid: bool = True, message: str = ""):
++async def __init__(self, is_valid: bool = True, message: str = ""):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.is_valid = is_valid
+@@ -21,24 +21,24 @@         self.warnings: list[str] = []
+         self.timestamp = datetime.now()
+ 
+-    def add_error(self, message: str) -> None:
++async def add_error(self, message: str) -> None:
+         """添加错误."""
+         self.errors.append(message)
+         self.is_valid = False
+ 
+-    def add_warning(self, message: str) -> None:
++async def add_warning(self, message: str) -> None:
+         """添加警告."""
+         self.warnings.append(message)
+ 
+-    def has_errors(self) -> bool:
++async def has_errors(self) -> bool:
+         """是否有错误."""
+         return len(self.errors) > 0
+ 
+-    def has_warnings(self) -> bool:
++async def has_warnings(self) -> bool:
+         """是否有警告."""
+         return len(self.warnings) > 0
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """转换为字典."""
+         return {
+             "is_valid": self.is_valid,
+@@ -52,7 +52,7 @@ class Rule(ABC):
+     """规则抽象基类."""
+ 
+-    def __init__(self, name: str, description: str = ""):
++async def __init__(self, name: str, description: str = ""):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.name = name
+@@ -60,14 +60,14 @@         self.enabled = True
+ 
+     @abstractmethod
+-    def validate(self, obj: Any) -> ValidationResult:
++async def validate(self, obj: Any) -> ValidationResult:
+         """验证对象."""
+ 
+ 
+ class BusinessRule(Rule):
+     """业务规则."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         name: str,
+         condition: Callable[[Any], bool],
+@@ -78,7 +78,7 @@         self.condition = condition
+         self.error_message = error_message
+ 
+-    def validate(self, obj: Any) -> ValidationResult:
++async def validate(self, obj: Any) -> ValidationResult:
+         """验证业务规则."""
+         result = ValidationResult()
+ 
+@@ -101,23 +101,23 @@     pass  # 添加pass语句
+     """验证引擎"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self._rules: dict[str, list[Rule]] = {}
+         self._global_rules: list[Rule] = []
+ 
+-    def add_rule(self, entity_type: str, rule: Rule) -> None:
++async def add_rule(self, entity_type: str, rule: Rule) -> None:
+         """为特定实体类型添加规则."""
+         if entity_type not in self._rules:
+             self._rules[entity_type] = []
+         self._rules[entity_type].append(rule)
+ 
+-    def add_global_rule(self, rule: Rule) -> None:
++async def add_global_rule(self, rule: Rule) -> None:
+         """添加全局规则（适用于所有实体）."""
+         self._global_rules.append(rule)
+ 
+-    def remove_rule(self, entity_type: str, rule_name: str) -> bool:
++async def remove_rule(self, entity_type: str, rule_name: str) -> bool:
+         """移除规则."""
+         if entity_type in self._rules:
+             self._rules[entity_type] = [
+@@ -126,7 +126,7 @@             return True
+         return False
+ 
+-    def get_rules(self, entity_type: str | None = None) -> list[Rule]:
++async def get_rules(self, entity_type: str | None = None) -> list[Rule]:
+         """获取规则."""
+         rules = self._global_rules.copy()
+ 
+@@ -135,7 +135,7 @@ 
+         return rules
+ 
+-    def validate(self, obj: Any, entity_type: str | None = None) -> ValidationResult:
++async def validate(self, obj: Any, entity_type: str | None = None) -> ValidationResult:
+         """验证对象."""
+         result = ValidationResult()
+ 
+@@ -164,7 +164,7 @@ 
+         return result
+ 
+-    def validate_batch(
++async def validate_batch(
+         self, objects: list[Any], entity_type: str | None = None
+     ) -> list[ValidationResult]:
+         """批量验证."""
+@@ -176,7 +176,7 @@ 
+         return results
+ 
+-    def enable_rule(self, rule_name: str) -> None:
++async def enable_rule(self, rule_name: str) -> None:
+         """启用规则."""
+         for rules in self._rules.values():
+             for rule in rules:
+@@ -187,7 +187,7 @@             if rule.name == rule_name:
+                 rule.enabled = True
+ 
+-    def disable_rule(self, rule_name: str) -> None:
++async def disable_rule(self, rule_name: str) -> None:
+         """禁用规则."""
+         for rules in self._rules.values():
+             for rule in rules:
+@@ -198,7 +198,7 @@             if rule.name == rule_name:
+                 rule.enabled = False
+ 
+-    def clear_rules(self, entity_type: str | None = None) -> None:
++async def clear_rules(self, entity_type: str | None = None) -> None:
+         """清除规则."""
+         if entity_type:
+             self._rules[entity_type] = []
+@@ -214,7 +214,7 @@     """预定义的业务规则集合"""
+ 
+     @staticmethod
+-    def create_match_rules() -> list[Rule]:
++async def create_match_rules() -> list[Rule]:
+         """创建比赛相关的业务规则."""
+         rules = []
+ 
+@@ -255,7 +255,7 @@         return rules
+ 
+     @staticmethod
+-    def create_prediction_rules() -> list[Rule]:
++async def create_prediction_rules() -> list[Rule]:
+         """创建预测相关的业务规则."""
+         rules = []
+ 
+@@ -292,7 +292,7 @@         return rules
+ 
+     @staticmethod
+-    def create_team_rules() -> list[Rule]:
++async def create_team_rules() -> list[Rule]:
+         """创建球队相关的业务规则."""
+         rules = []
+ 
+@@ -336,7 +336,7 @@ _validation_engine = None
+ 
+ 
+-def get_validation_engine() -> ValidationEngine:
++async def get_validation_engine() -> ValidationEngine:
+     """获取全局验证引擎实例."""
+     global _validation_engine
+     if _validation_engine is None:

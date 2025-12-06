@@ -1,0 +1,8 @@
+--- a/src/services/feature_service.py+++ b/src/services/feature_service.py@@ -25,7 +25,7 @@     提供特征计算和管理的高级接口
+     """
+ 
+-    def __init__(self, db_session: AsyncSession):
++async def __init__(self, db_session: AsyncSession):
+         self.db_session = db_session
+         self.calculator = FeatureCalculator(db_session)
+         self.logger = logger

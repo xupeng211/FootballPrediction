@@ -5,6 +5,7 @@ Data Service Module.
 Provides core business logic for match data management.
 """
 
+import asyncio
 import logging
 from typing import Any
 
@@ -19,6 +20,19 @@ class DataService:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def get_matches_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
+        """获取比赛列表 (同步版本，保持向后兼容)
+        Get matches list (sync version for backward compatibility).
+
+        Args:
+            limit: 返回数量限制
+            offset: 偏移量
+
+        Returns:
+            比赛列表数据
+        """
+        return asyncio.run(self.get_matches_list_async(limit, offset))
+
+    async def get_matches_list_async(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
         """获取比赛列表
         Get matches list.
 
@@ -71,6 +85,18 @@ class DataService:
         }
 
     def get_match_by_id(self, match_id: int) -> dict[str, Any] | None:
+        """根据ID获取比赛信息 (同步版本，保持向后兼容)
+        Get match information by ID (sync version for backward compatibility).
+
+        Args:
+            match_id: 比赛ID
+
+        Returns:
+            比赛信息
+        """
+        return asyncio.run(self.get_match_by_id_async(match_id))
+
+    async def get_match_by_id_async(self, match_id: int) -> dict[str, Any] | None:
         """根据ID获取比赛信息
         Get match information by ID.
 

@@ -1,0 +1,13 @@
+--- a/src/streaming/stream_config_simple.py+++ b/src/streaming/stream_config_simple.py@@ -2,11 +2,11 @@ 
+ 
+ class StreamConfigSimple:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

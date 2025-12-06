@@ -1,0 +1,13 @@
+--- a/src/data/quality/anomaly_detector.py+++ b/src/data/quality/anomaly_detector.py@@ -2,11 +2,11 @@ 
+ 
+ class AnomalyDetector:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

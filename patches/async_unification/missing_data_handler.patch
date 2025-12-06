@@ -1,0 +1,134 @@
+--- a/src/data/processing/missing_data_handler.py+++ b/src/data/processing/missing_data_handler.py@@ -19,11 +19,11 @@ class MissingDataHandler:
+     """高级缺失数据处理器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.missing_patterns = {}
+         self.imputation_history = {}
+ 
+-    def analyze_missing_patterns(self, data: pd.DataFrame) -> dict[str, Any]:
++async def analyze_missing_patterns(self, data: pd.DataFrame) -> dict[str, Any]:
+         """分析缺失数据模式.
+ 
+         Args:
+@@ -59,7 +59,7 @@         self.missing_patterns = analysis
+         return analysis
+ 
+-    def _classify_missing_type(self, series: pd.Series) -> str:
++async def _classify_missing_type(self, series: pd.Series) -> str:
+         """分类缺失值类型."""
+         missing_ratio = series.isnull().sum() / len(series)
+ 
+@@ -72,7 +72,7 @@         else:
+             return "extensive"
+ 
+-    def _detect_missing_mechanism(self, data: pd.DataFrame) -> str:
++async def _detect_missing_mechanism(self, data: pd.DataFrame) -> str:
+         """检测缺失机制（简化版）."""
+         total_cells = data.shape[0] * data.shape[1]
+         missing_cells = data.isnull().sum().sum()
+@@ -85,7 +85,7 @@         else:
+             return "likely_mnar"
+ 
+-    def _analyze_missing_correlation(self, data: pd.DataFrame) -> dict[str, Any]:
++async def _analyze_missing_correlation(self, data: pd.DataFrame) -> dict[str, Any]:
+         """分析缺失值之间的相关性."""
+         missing_indicators = data.isnull().astype(int)
+         correlation_matrix = missing_indicators.corr()
+@@ -109,7 +109,7 @@             "high_correlations": high_corr_pairs,
+         }
+ 
+-    def impute_missing_data(
++async def impute_missing_data(
+         self, data: pd.DataFrame, strategy: str = "adaptive"
+     ) -> pd.DataFrame:
+         """缺失数据插补.
+@@ -158,7 +158,7 @@         logger.info(f"缺失值插补完成，剩余缺失值: {imputed_data.isnull().sum().sum()}")
+         return imputed_data
+ 
+-    def _select_optimal_strategy(self, data: pd.DataFrame, columns: list[str]) -> str:
++async def _select_optimal_strategy(self, data: pd.DataFrame, columns: list[str]) -> str:
+         """选择最优插补策略."""
+         total_missing = data[columns].isnull().sum().sum()
+         total_cells = len(data) * len(columns)
+@@ -171,7 +171,7 @@         else:
+             return "mode"
+ 
+-    def _impute_numeric(self, data: pd.DataFrame, strategy: str) -> pd.DataFrame:
++async def _impute_numeric(self, data: pd.DataFrame, strategy: str) -> pd.DataFrame:
+         """数值型数据插补."""
+         imputed_data = data.copy()
+ 
+@@ -200,7 +200,7 @@ 
+         return imputed_data
+ 
+-    def _impute_categorical(self, data: pd.DataFrame, strategy: str) -> pd.DataFrame:
++async def _impute_categorical(self, data: pd.DataFrame, strategy: str) -> pd.DataFrame:
+         """分类型数据插补."""
+         imputed_data = data.copy()
+ 
+@@ -222,7 +222,7 @@ 
+         return imputed_data
+ 
+-    def handle_columns_with_excessive_missing(
++async def handle_columns_with_excessive_missing(
+         self, data: pd.DataFrame, threshold: float = 0.5
+     ) -> pd.DataFrame:
+         """处理缺失值过多的列.
+@@ -250,7 +250,7 @@ 
+         return data
+ 
+-    def validate_imputation_quality(
++async def validate_imputation_quality(
+         self, original_data: pd.DataFrame, imputed_data: pd.DataFrame
+     ) -> dict[str, Any]:
+         """验证插补质量.
+@@ -290,7 +290,7 @@ 
+         return validation
+ 
+-    def get_missing_data_report(self) -> dict[str, Any]:
++async def get_missing_data_report(self) -> dict[str, Any]:
+         """获取缺失数据处理报告."""
+         return {
+             "latest_patterns": self.missing_patterns,
+@@ -298,7 +298,7 @@             "recommendations": self._generate_recommendations(),
+         }
+ 
+-    def _generate_recommendations(self) -> list[str]:
++async def _generate_recommendations(self) -> list[str]:
+         """生成缺失数据处理建议."""
+         recommendations = []
+ 
+@@ -308,21 +308,21 @@         missing_ratio = self.missing_patterns["total_missing"] / (
+             sum(
+                 len(pattern.split())
+-                for pattern in self.missing_patterns.get("missing_patterns", {}).keys()
++                for pattern in self.missing_patterns.await get("missing_patterns", {}).keys()
+             )
+-            if self.missing_patterns.get("missing_patterns")
++            if self.missing_patterns.await get("missing_patterns")
+             else 1
+         )
+ 
+         if missing_ratio > 0.3:
+             recommendations.append("数据缺失率较高，建议检查数据收集过程")
+ 
+-        if self.missing_patterns.get("missing_mechanism") == "likely_mnar":
++        if self.missing_patterns.await get("missing_mechanism") == "likely_mnar":
+             recommendations.append("可能存在非随机缺失，建议深入调查缺失原因")
+ 
+         extensive_missing = [
+             col
+-            for col, info in self.missing_patterns.get("missing_by_column", {}).items()
++            for col, info in self.missing_patterns.await get("missing_by_column", {}).items()
+             if info["percentage"] > 50
+         ]
+ 
+@@ -333,7 +333,7 @@ 
+ 
+ # 便捷函数
+-def handle_missing_data(
++async def handle_missing_data(
+     data: pd.DataFrame, strategy: str = "adaptive", drop_threshold: float = 0.5
+ ) -> pd.DataFrame:
+     """便捷的缺失数据处理函数.

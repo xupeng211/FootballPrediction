@@ -1,0 +1,127 @@
+--- a/src/jobs/run_l2_details_fixed.py+++ b/src/jobs/run_l2_details_fixed.py@@ -40,12 +40,12 @@ class FotMobL2DetailsFixedJob:
+     """修复版FotMob L2 详情采集任务"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.logger = logger
+ 
+     async def get_pending_matches(self, limit: int = 50) -> list[str]:
+         """获取待处理的比赛ID列表"""
+-        async with get_db_session() as session:
++        async with await get_db_session() as session:
+             query = text(
+                 """
+                 SELECT fotmob_id
+@@ -58,7 +58,7 @@             """
+             )
+ 
+-            result = await session.execute(query, {"limit": limit})
++            result = await session.await execute(query, {"limit": limit})
+             return [row[0] for row in result.fetchall()]
+ 
+     async def process_match_details(self, fotmob_id: str) -> bool:
+@@ -97,7 +97,7 @@             self.logger.error(f"❌ 处理比赛详情失败 {fotmob_id}: {e}")
+             return False
+ 
+-    def print_match_summary(self, fotmob_id: str, match_data):
++async def print_match_summary(self, fotmob_id: str, match_data):
+         """打印比赛数据摘要用于验证"""
+         shots = match_data.shots or []
+         stats = match_data.stats or {}
+@@ -110,25 +110,25 @@         )
+         print(f"   🎯 射门数据: {len(shots)} 次")
+         print(
+-            f"   📈 xG数据: 主队 {stats.get('home_xg', 0):.2f}, 客队 {stats.get('away_xg', 0):.2f}"
++            f"   📈 xG数据: 主队 {stats.await await get('home_xg', 0):.2f}, 客队 {stats.get('away_xg', 0):.2f}"
+         )
+         print(
+-            f"   👥 阵容数据: 主队 {len(lineups.get('home', {}).get('players', []))} 人, 客队 {len(lineups.get('away', {}).get('players', []))} 人"
++            f"   👥 阵容数据: 主队 {await await await await len(lineups.get('home', {}).get('players', []))} 人, 客队 {len(lineups.get('away', {}).get('players', []))} 人"
+         )
+-        print(f"   💰 赔率数据: {len(odds.get('providers', []))} 个提供商")
++        await print(f"   💰 赔率数据: {len(odds.get('providers', []))} 个提供商")
+ 
+         # 显示前3个射门样本
+         if shots:
+             print("   🔍 射门样本 (前3次):")
+             for i, shot in enumerate(shots[:3], 1):
+                 print(
+-                    f"      {i}. 第{shot.get('minute', 0)}分钟 - {shot.get('player', 'Unknown')} ({shot.get('team', 'unknown')}) - xG: {shot.get('xg', 0):.3f}"
++                    f"      {i}. 第{shot.await await await await get('minute', 0)}分钟 - {shot.get('player', 'Unknown')} ({shot.get('team', 'unknown')}) - xG: {shot.get('xg', 0):.3f}"
+                 )
+ 
+     async def save_match_details_to_db(self, fotmob_id: str, match_data) -> bool:
+         """保存比赛详情到数据库 - 修复版"""
+         try:
+-            async with get_db_session() as session:
++            async with await get_db_session() as session:
+                 # 准备要更新的数据
+                 stats_data = match_data.stats or {}
+                 lineup_data = match_data.lineups or {}
+@@ -137,42 +137,42 @@ 
+                 # 构建统计JSON
+                 stats_json = {
+-                    "possession": stats_data.get("possession", {}),
+-                    "shots": stats_data.get("shots", {}),
+-                    "passes": stats_data.get("passes", {}),
+-                    "corners": stats_data.get("corners", {}),
+-                    "home_xg": stats_data.get("home_xg", 0.0),
+-                    "away_xg": stats_data.get("away_xg", 0.0),
+-                    "total_xg": stats_data.get("total_xg", 0.0),
++                    "possession": stats_data.await get("possession", {}),
++                    "shots": stats_data.await get("shots", {}),
++                    "passes": stats_data.await get("passes", {}),
++                    "corners": stats_data.await get("corners", {}),
++                    "home_xg": stats_data.await get("home_xg", 0.0),
++                    "away_xg": stats_data.await get("away_xg", 0.0),
++                    "total_xg": stats_data.await get("total_xg", 0.0),
+                 }
+ 
+                 # 构建阵容JSON
+                 lineup_json = {
+-                    "home": lineup_data.get("home", {}),
+-                    "away": lineup_data.get("away", {}),
++                    "home": lineup_data.await get("home", {}),
++                    "away": lineup_data.await get("away", {}),
+                 }
+ 
+                 # 构建赔率JSON
+                 odds_json = {
+-                    "providers": odds_data.get("providers", []),
+-                    "bet365": odds_data.get("bet365", {}),
+-                    "williamHill": odds_data.get("williamHill", {}),
+-                    "raw_data": odds_data.get("raw_data", {}),
++                    "providers": odds_data.await get("providers", []),
++                    "bet365": odds_data.await get("bet365", {}),
++                    "williamHill": odds_data.await get("williamHill", {}),
++                    "raw_data": odds_data.await get("raw_data", {}),
+                 }
+ 
+                 # 构建比赛元数据JSON
+                 metadata_json = {
+-                    "home_xg": stats_data.get("home_xg", 0.0),
+-                    "away_xg": stats_data.get("away_xg", 0.0),
++                    "home_xg": stats_data.await get("home_xg", 0.0),
++                    "away_xg": stats_data.await get("away_xg", 0.0),
+                     "total_shots": len(shots_data),
+                     "referee": "Unknown",  # 可以从match_data中提取
+                     "venue": "Unknown",  # 可以从match_data中提取
+                     "weather": {},  # 可以从match_data中提取
+                     "shot_count": len(shots_data),
+                     "lineup_players": len(
+-                        lineup_json.get("home", {}).get("players", [])
++                        lineup_json.await await get("home", {}).get("players", [])
+                     )
+-                    + len(lineup_json.get("away", {}).get("players", [])),
++                    + await await len(lineup_json.get("away", {}).get("players", [])),
+                 }
+ 
+                 # 更新数据库记录
+@@ -216,7 +216,7 @@     async def mark_match_complete(self, fotmob_id: str):
+         """标记比赛数据完整"""
+         try:
+-            async with get_db_session() as session:
++            async with await get_db_session() as session:
+                 update_query = text(
+                     """
+                     UPDATE matches

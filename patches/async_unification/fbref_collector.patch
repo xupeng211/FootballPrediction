@@ -1,0 +1,164 @@
+--- a/src/data/collectors/fbref_collector.py+++ b/src/data/collectors/fbref_collector.py@@ -43,7 +43,7 @@     4. 内存优化: 高效HTML解析和数据提取
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         # 初始化curl_cffi会话，使用有效的浏览器指纹轮换
+         self.browser_configs = [
+             "chrome", "chrome99", "chrome100", "chrome101", "chrome104"
+@@ -60,7 +60,7 @@         # 创建初始会话
+         self.session = self._create_session()
+ 
+-    def _create_session(self):
++async def _create_session(self):
+         """创建新的curl_cffi会话"""
+         # 轮换浏览器配置
+         browser_type = self.browser_configs[self.current_config_index]
+@@ -105,11 +105,11 @@                 logger.error(f"❌ 无法创建会话: {fallback_e}")
+                 raise
+ 
+-    def _rotate_session(self):
++async def _rotate_session(self):
+         """轮换会话配置"""
+         self.session = self._create_session()
+ 
+-    def _get_random_delay(self, min_seconds: float = 2.0, max_seconds: float = 6.0) -> float:
++async def _get_random_delay(self, min_seconds: float = 2.0, max_seconds: float = 6.0) -> float:
+         """获取随机延迟时间"""
+         return random.uniform(min_seconds, max_seconds)
+ 
+@@ -204,7 +204,7 @@         logger.error("💥 所有协议请求均失败")
+         return None
+ 
+-    def _unseal_html(self, html_content: str) -> str:
++async def _unseal_html(self, html_content: str) -> str:
+         """
+         HTML注释解封技术 - 解封FBref隐藏在注释中的xG数据
+ 
+@@ -268,7 +268,7 @@             # 如果解封失败，返回原始HTML
+             return html_content
+ 
+-    def _save_raw_html(self, html_content: str, url: str, league_id: str = None, season: str = None) -> Optional[str]:
++async def _save_raw_html(self, html_content: str, url: str, league_id: str = None, season: str = None) -> Optional[str]:
+         """
+         保存原始HTML内容到文件系统 (ELT架构核心功能)
+ 
+@@ -322,7 +322,7 @@             logger.debug(f"保存详情 - URL: {url}, 内容长度: {len(html_content)}")
+             return None
+ 
+-    def _generate_filename(self, content: str) -> str:
++async def _generate_filename(self, content: str) -> str:
+         """
+         生成标准化文件名 (用于测试)
+         """
+@@ -330,7 +330,7 @@         content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()[:16]
+         return f"{timestamp}_{content_hash}.html.gz"
+ 
+-    def parse_html_tables(self, html_content: str) -> tuple[list[pd.DataFrame], dict[str, pd.DataFrame]]:
++async def parse_html_tables(self, html_content: str) -> tuple[list[pd.DataFrame], dict[str, pd.DataFrame]]:
+         """
+         解析HTML中的表格数据 - 全表解析增强版，包含Match Report链接和统计表格
+ 
+@@ -398,7 +398,7 @@             logger.error(f"❌ HTML表格解析失败: {e}")
+             return [], {}
+ 
+-    def _extract_match_report_links(self, html_content: str) -> list[str]:
++async def _extract_match_report_links(self, html_content: str) -> list[str]:
+         """
+         从HTML内容中提取Match Report链接
+ 
+@@ -450,7 +450,7 @@             logger.error(f"❌ Match Report链接提取失败: {e}")
+             return []
+ 
+-    def _extract_advanced_stats(self, tables: list[pd.DataFrame]) -> dict[str, pd.DataFrame]:
++async def _extract_advanced_stats(self, tables: list[pd.DataFrame]) -> dict[str, pd.DataFrame]:
+         """
+         从表格中提取高级统计数据
+ 
+@@ -499,7 +499,7 @@ 
+         return stats_dict
+ 
+-    def _merge_stats_to_schedule(self, schedule_df: pd.DataFrame, stats_dict: dict[str, pd.DataFrame]) -> pd.DataFrame:
++async def _merge_stats_to_schedule(self, schedule_df: pd.DataFrame, stats_dict: dict[str, pd.DataFrame]) -> pd.DataFrame:
+         """
+         将统计数据合并到赛程表中
+ 
+@@ -557,7 +557,7 @@ 
+         return schedule_df
+ 
+-    def _map_xg_columns(self, columns):
++async def _map_xg_columns(self, columns):
+         """映射xG相关列名"""
+         mapping = {}
+         for col in columns:
+@@ -574,13 +574,13 @@ 
+         return mapping
+ 
+-    def _normalize_team_name(self, name):
++async def _normalize_team_name(self, name):
+         """标准化团队名称"""
+         if pd.isna(name) or name == '':
+             return ''
+         return str(name).strip().lower()
+ 
+-    def _safe_float(self, value):
++async def _safe_float(self, value):
+         """安全转换为float"""
+         try:
+             if pd.isna(value):
+@@ -589,7 +589,7 @@         except (ValueError, TypeError):
+             return 0.0
+ 
+-    def extract_schedule_table(self, tables: list[pd.DataFrame]) -> Optional[pd.DataFrame]:
++async def extract_schedule_table(self, tables: list[pd.DataFrame]) -> Optional[pd.DataFrame]:
+         """
+         从表格中提取赛程表
+ 
+@@ -720,7 +720,7 @@         logger.info(f"🎉 数据采集成功，表格形状: {schedule_table.shape}")
+         return schedule_table
+ 
+-    def _clean_schedule_data(self, df: pd.DataFrame) -> pd.DataFrame:
++async def _clean_schedule_data(self, df: pd.DataFrame) -> pd.DataFrame:
+         """
+         清洗赛程数据
+ 
+@@ -870,7 +870,7 @@         logger.info(f"✅ 数据清洗完成: {len(cleaned_df.columns)} 列")
+         return cleaned_df
+ 
+-    def _filter_completed_matches(self, df: pd.DataFrame) -> pd.DataFrame:
++async def _filter_completed_matches(self, df: pd.DataFrame) -> pd.DataFrame:
+         """
+         过滤已完成的比赛
+ 
+@@ -941,7 +941,7 @@             logger.error("❌ 没有采集到任何有效数据")
+             return pd.DataFrame()
+ 
+-    def load_leagues_from_db(self) -> dict[str, str]:
++async def load_leagues_from_db(self) -> dict[str, str]:
+         """
+         从数据库动态加载所有可用联赛
+         替代硬编码的get_available_leagues方法
+@@ -994,7 +994,7 @@         logger.info(f"✅ 从数据库加载了 {len(leagues)} 个联赛")
+         return leagues
+ 
+-    def get_available_leagues(self) -> dict[str, str]:
++async def get_available_leagues(self) -> dict[str, str]:
+         """
+         获取支持的联赛URL (兼容旧接口)
+         从数据库动态加载，废弃硬编码
+@@ -1003,7 +1003,7 @@         # 转换为旧格式：只返回URL
+         return {name: data['url'] for name, data in leagues_data.items()}
+ 
+-    def get_leagues_by_category(self, category: str = None, tier: str = None) -> dict[str, str]:
++async def get_leagues_by_category(self, category: str = None, tier: str = None) -> dict[str, str]:
+         """
+         按分类或级别获取联赛
+ 
+@@ -1147,7 +1147,7 @@             traceback.print_exc()
+             return None
+ 
+-    def _parse_monetary_value(self, value_str: str) -> Optional[int]:
++async def _parse_monetary_value(self, value_str: str) -> Optional[int]:
+         """
+         解析货币字符串为数值（欧元）
+ 

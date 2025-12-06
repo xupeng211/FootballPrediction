@@ -1,0 +1,88 @@
+--- a/src/data/collectors/fbref_details_collector.py+++ b/src/data/collectors/fbref_details_collector.py@@ -35,7 +35,7 @@     4. 获取阵型信息（Formation）
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         # 复用FBrefCollector的浏览器配置
+         self.browser_configs = [
+             "chrome", "chrome99", "chrome100", "chrome101", "chrome104"
+@@ -48,7 +48,7 @@         # 创建初始会话
+         self.session = self._create_session()
+ 
+-    def _create_session(self):
++async def _create_session(self):
+         """创建新的curl_cffi会话（复用FBrefCollector配置）"""
+         # 轮换浏览器配置
+         config = self.browser_configs[self.current_config_index]
+@@ -147,7 +147,7 @@         logger.error("❌ 详情页所有请求均失败")
+         return None
+ 
+-    def _parse_match_details(self, html_content: str, url: str) -> dict[str, Any]:
++async def _parse_match_details(self, html_content: str, url: str) -> dict[str, Any]:
+         """
+         解析比赛详情数据
+ 
+@@ -181,7 +181,7 @@             'extracted_at': datetime.now().isoformat()
+         }
+ 
+-    def _extract_match_info(self, soup: BeautifulSoup) -> dict[str, Any]:
++async def _extract_match_info(self, soup: BeautifulSoup) -> dict[str, Any]:
+         """提取比赛基本信息"""
+         match_info = {}
+ 
+@@ -210,7 +210,7 @@ 
+         return match_info
+ 
+-    def _extract_lineups(self, soup: BeautifulSoup) -> dict[str, list[dict[str, Any]]]:
++async def _extract_lineups(self, soup: BeautifulSoup) -> dict[str, list[dict[str, Any]]]:
+         """提取阵容信息"""
+         lineups = {'home': [], 'away': []}
+ 
+@@ -272,7 +272,7 @@ 
+         return lineups
+ 
+-    def _extract_players_from_lineup_table(self, table, team_key: str) -> list[dict[str, Any]]:
++async def _extract_players_from_lineup_table(self, table, team_key: str) -> list[dict[str, Any]]:
+         """从阵容表格中提取球员信息（根据调试结果优化）"""
+         players = []
+ 
+@@ -351,7 +351,7 @@ 
+         return players
+ 
+-    def _extract_player_info(self, row, team_key: str) -> Optional[dict[str, Any]]:
++async def _extract_player_info(self, row, team_key: str) -> Optional[dict[str, Any]]:
+         """提取单个球员信息"""
+         try:
+             cells = row.find_all('td')
+@@ -402,7 +402,7 @@             logger.warning(f"⚠️ 球员信息提取失败: {e}")
+             return None
+ 
+-    def _extract_team_stats(self, soup: BeautifulSoup) -> dict[str, Any]:
++async def _extract_team_stats(self, soup: BeautifulSoup) -> dict[str, Any]:
+         """提取详细统计数据"""
+         stats = {}
+ 
+@@ -434,7 +434,7 @@ 
+         return stats
+ 
+-    def _parse_stats_table(self, table) -> dict[str, Any]:
++async def _parse_stats_table(self, table) -> dict[str, Any]:
+         """解析统计表格"""
+         stats = {}
+ 
+@@ -467,7 +467,7 @@ 
+         return stats
+ 
+-    def _normalize_stat_name(self, stat_name: str) -> str:
++async def _normalize_stat_name(self, stat_name: str) -> str:
+         """标准化统计名称"""
+         # 统计名称映射
+         stat_mapping = {
+@@ -489,7 +489,7 @@ 
+         return stat_mapping.get(stat_name, stat_name.lower().replace(' ', '_'))
+ 
+-    def _extract_extra_info(self, soup: BeautifulSoup) -> dict[str, Any]:
++async def _extract_extra_info(self, soup: BeautifulSoup) -> dict[str, Any]:
+         """提取额外信息（如阵型）"""
+         extra_info = {}
+ 

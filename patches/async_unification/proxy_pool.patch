@@ -1,0 +1,137 @@
+--- a/src/collectors/proxy_pool.py+++ b/src/collectors/proxy_pool.py@@ -75,7 +75,7 @@     status: ProxyStatus = ProxyStatus.ACTIVE
+     response_time: Optional[float] = None
+ 
+-    def __post_init__(self) -> None:
++async def __post_init__(self) -> None:
+         """初始化后处理"""
+         if isinstance(self.protocol, str):
+             self.protocol = ProxyProtocol(self.protocol.lower())
+@@ -83,7 +83,7 @@             self.status = ProxyStatus(self.status.lower())
+ 
+     @classmethod
+-    def from_url(cls, url: str, **kwargs) -> 'Proxy':
++async def from_url(cls, url: str, **kwargs) -> 'Proxy':
+         """
+         从URL创建代理对象
+ 
+@@ -143,21 +143,21 @@         )
+ 
+     @property
+-    def is_active(self) -> bool:
++async def is_active(self) -> bool:
+         """检查代理是否活跃"""
+         return self.status == ProxyStatus.ACTIVE
+ 
+     @property
+-    def is_banned(self) -> bool:
++async def is_banned(self) -> bool:
+         """检查代理是否被禁用"""
+         return self.status == ProxyStatus.BANNED
+ 
+     @property
+-    def is_healthy(self) -> bool:
++async def is_healthy(self) -> bool:
+         """检查代理是否健康（分数>50且未被禁用）"""
+         return self.score > 50.0 and not self.is_banned
+ 
+-    def record_success(self, response_time: Optional[float] = None) -> None:
++async def record_success(self, response_time: Optional[float] = None) -> None:
+         """
+         记录成功使用
+ 
+@@ -175,7 +175,7 @@         if self.score < 100.0:
+             self.score = min(100.0, self.score + 5.0)
+ 
+-    def record_failure(self) -> None:
++async def record_failure(self) -> None:
+         """记录失败使用"""
+         self.fail_count += 1
+         self.last_used = time.monotonic()
+@@ -184,18 +184,18 @@         if self.score > 0.0:
+             self.score = max(0.0, self.score - 10.0)
+ 
+-    def ban(self) -> None:
++async def ban(self) -> None:
+         """禁用代理"""
+         self.status = ProxyStatus.BANNED
+         self.score = 0.0
+ 
+-    def reactivate(self) -> None:
++async def reactivate(self) -> None:
+         """重新激活代理"""
+         self.status = ProxyStatus.ACTIVE
+         self.fail_count = 0
+         self.score = max(50.0, self.score)  # 恢复到最低50分
+ 
+-    def to_dict(self) -> Dict[str, Any]:
++async def to_dict(self) -> Dict[str, Any]:
+         """转换为字典格式"""
+         return {
+             'url': self.url,
+@@ -216,10 +216,10 @@             'is_healthy': self.is_healthy,
+         }
+ 
+-    def __str__(self) -> str:
++async def __str__(self) -> str:
+         return f"Proxy({self.url}, score={self.score:.1f}, status={self.status.value})"
+ 
+-    def __repr__(self) -> str:
++async def __repr__(self) -> str:
+         return self.__str__()
+ 
+ 
+@@ -267,7 +267,7 @@     用于测试和演示，提供固定的代理列表
+     """
+ 
+-    def __init__(self, proxies: List[str]):
++async def __init__(self, proxies: List[str]):
+         """
+         初始化静态代理提供者
+ 
+@@ -292,7 +292,7 @@     从文件中读取代理列表，支持多种格式
+     """
+ 
+-    def __init__(self, file_path: str, encoding: str = 'utf-8'):
++async def __init__(self, file_path: str, encoding: str = 'utf-8'):
+         """
+         初始化文件代理提供者
+ 
+@@ -350,7 +350,7 @@     负责代理的获取、轮询、健康评分和黑名单管理
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         provider: ProxyProvider,
+         strategy: RotationStrategy = RotationStrategy.WEIGHTED_RANDOM,
+@@ -619,7 +619,7 @@             except Exception as e:
+                 print(f"❌ Failed to refresh proxies: {e}")
+ 
+-    def get_stats(self) -> Dict[str, Any]:
++async def get_stats(self) -> Dict[str, Any]:
+         """获取代理池统计信息"""
+         if not self.proxies:
+             return {
+@@ -647,13 +647,13 @@             'avg_response_time': round(avg_response_time, 2) if avg_response_time else None,
+         }
+ 
+-    def get_proxies_info(self) -> List[Dict[str, Any]]:
++async def get_proxies_info(self) -> List[Dict[str, Any]]:
+         """获取所有代理的详细信息"""
+         return [proxy.to_dict() for proxy in self.proxies]
+ 
+ 
+ # 便利函数
+-def create_proxy_pool(
++async def create_proxy_pool(
+     proxies: List[str],
+     strategy: RotationStrategy = RotationStrategy.WEIGHTED_RANDOM,
+     **kwargs
+@@ -673,7 +673,7 @@     return ProxyPool(provider, strategy, **kwargs)
+ 
+ 
+-def create_file_proxy_pool(
++async def create_file_proxy_pool(
+     file_path: str,
+     strategy: RotationStrategy = RotationStrategy.WEIGHTED_RANDOM,
+     **kwargs

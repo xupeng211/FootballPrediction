@@ -1,0 +1,201 @@
+--- a/src/evaluation/calibration.py+++ b/src/evaluation/calibration.py@@ -45,7 +45,7 @@     calibration_params: dict[str, Any]
+     metadata: dict[str, Any]
+ 
+-    def to_dict(self) -> dict:
++async def to_dict(self) -> dict:
+         """转换为字典格式"""
+         return {
+             "is_calibrated": self.is_calibrated,
+@@ -57,7 +57,7 @@             "metadata": self.metadata
+         }
+ 
+-    def to_json(self) -> str:
++async def to_json(self) -> str:
+         """转换为JSON字符串"""
+         return json.dumps(self.to_dict(), indent=2, ensure_ascii=False)
+ 
+@@ -65,7 +65,7 @@ class BaseCalibrator:
+     """校准器基类"""
+ 
+-    def __init__(self, n_classes: int = 3):
++async def __init__(self, n_classes: int = 3):
+         """
+         初始化校准器
+ 
+@@ -78,7 +78,7 @@         self.calibrators = {}
+         self.calibration_method = "base"
+ 
+-    def fit(self, y_true: Union[np.ndarray, pd.Series, list],
++async def fit(self, y_true: Union[np.ndarray, pd.Series, list],
+             y_proba: Union[np.ndarray, pd.DataFrame]) -> "BaseCalibrator":
+         """
+         训练校准器
+@@ -92,7 +92,7 @@         """
+         raise NotImplementedError("Subclasses must implement fit method")
+ 
+-    def transform(self, y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
++async def transform(self, y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+         """
+         应用校准
+ 
+@@ -104,12 +104,12 @@         """
+         raise NotImplementedError("Subclasses must implement transform method")
+ 
+-    def fit_transform(self, y_true: Union[np.ndarray, pd.Series, list],
++async def fit_transform(self, y_true: Union[np.ndarray, pd.Series, list],
+                      y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+         """训练并应用校准"""
+         return self.fit(y_true, y_proba).transform(y_proba)
+ 
+-    def needs_calibration(self, y_true: Union[np.ndarray, pd.Series, list],
++async def needs_calibration(self, y_true: Union[np.ndarray, pd.Series, list],
+                           y_proba: Union[np.ndarray, pd.DataFrame],
+                           threshold: float = 0.05) -> bool:
+         """
+@@ -143,7 +143,7 @@         # 注意：这个阈值可能需要根据实际情况调整
+         return avg_brier > threshold
+ 
+-    def save(self, filepath: Union[str, Path]) -> None:
++async def save(self, filepath: Union[str, Path]) -> None:
+         """保存校准器"""
+         filepath = Path(filepath)
+         filepath.parent.mkdir(parents=True, exist_ok=True)
+@@ -160,7 +160,7 @@             pickle.dump(calibration_data, f)
+ 
+     @classmethod
+-    def load(cls, filepath: Union[str, Path]) -> "BaseCalibrator":
++async def load(cls, filepath: Union[str, Path]) -> "BaseCalibrator":
+         """加载校准器"""
+         filepath = Path(filepath)
+ 
+@@ -179,7 +179,7 @@ class IsotonicCalibrator(BaseCalibrator):
+     """Isotonic回归校准器"""
+ 
+-    def __init__(self, n_classes: int = 3, out_of_bounds: str = "clip"):
++async def __init__(self, n_classes: int = 3, out_of_bounds: str = "clip"):
+         """
+         初始化Isotonic校准器
+ 
+@@ -194,7 +194,7 @@         if not HAS_SKLEARN:
+             raise ImportError("sklearn is required for IsotonicCalibrator")
+ 
+-    def fit(self, y_true: Union[np.ndarray, pd.Series, list],
++async def fit(self, y_true: Union[np.ndarray, pd.Series, list],
+             y_proba: Union[np.ndarray, pd.DataFrame]) -> "IsotonicCalibrator":
+         """
+         训练Isotonic校准器
+@@ -238,7 +238,7 @@         self.is_fitted = True
+         return self
+ 
+-    def transform(self, y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
++async def transform(self, y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+         """
+         应用Isotonic校准
+ 
+@@ -276,7 +276,7 @@ class PlattCalibrator(BaseCalibrator):
+     """Platt缩放校准器（Sigmoid校准）"""
+ 
+-    def __init__(self, n_classes: int = 3, method: str = "sigmoid"):
++async def __init__(self, n_classes: int = 3, method: str = "sigmoid"):
+         """
+         初始化Platt校准器
+ 
+@@ -291,7 +291,7 @@         if not HAS_SKLEARN:
+             raise ImportError("sklearn is required for PlattCalibrator")
+ 
+-    def fit(self, y_true: Union[np.ndarray, pd.Series, list],
++async def fit(self, y_true: Union[np.ndarray, pd.Series, list],
+             y_proba: Union[np.ndarray, pd.DataFrame]) -> "PlattCalibrator":
+         """
+         训练Platt校准器
+@@ -315,16 +315,16 @@ 
+         class DummyClassifier(BaseEstimator, ClassifierMixin):
+             """虚拟分类器，用于包装概率预测"""
+-            def __init__(self, proba_matrix):
++async def __init__(self, proba_matrix):
+                 self.proba_matrix = proba_matrix
+ 
+-            def fit(self, X, y):
++async def fit(self, X, y):
+                 return self
+ 
+-            def predict_proba(self, X):
++async def predict_proba(self, X):
+                 return self.proba_matrix
+ 
+-            def predict(self, X):
++async def predict(self, X):
+                 return np.argmax(self.proba_matrix, axis=1)
+ 
+         try:
+@@ -349,7 +349,7 @@         self.is_fitted = True
+         return self
+ 
+-    def transform(self, y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
++async def transform(self, y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+         """
+         应用Platt校准
+ 
+@@ -376,7 +376,7 @@ class AutoCalibrator:
+     """自动选择最佳校准方法的校准器"""
+ 
+-    def __init__(self, n_classes: int = 3, calibration_threshold: float = 0.05):
++async def __init__(self, n_classes: int = 3, calibration_threshold: float = 0.05):
+         """
+         初始化自动校准器
+ 
+@@ -389,7 +389,7 @@         self.best_calibrator = None
+         self.calibration_result = None
+ 
+-    def calibrate(self, y_true: Union[np.ndarray, pd.Series, list],
++async def calibrate(self, y_true: Union[np.ndarray, pd.Series, list],
+                   y_proba: Union[np.ndarray, pd.DataFrame]) -> CalibrationResult:
+         """
+         自动选择并应用最佳校准方法
+@@ -493,7 +493,7 @@         self.calibration_result = result
+         return result
+ 
+-    def _calculate_average_brier(self, y_true: np.ndarray, y_proba: np.ndarray) -> float:
++async def _calculate_average_brier(self, y_true: np.ndarray, y_proba: np.ndarray) -> float:
+         """计算平均Brier分数"""
+         brier_scores = []
+         for i in range(self.n_classes):
+@@ -503,7 +503,7 @@             brier_scores.append(brier)
+         return np.mean(brier_scores)
+ 
+-    def _cross_validate_calibration(self, calibrator: BaseCalibrator,
++async def _cross_validate_calibration(self, calibrator: BaseCalibrator,
+                                    y_true: np.ndarray, y_proba: np.ndarray,
+                                    cv_folds: int = 5) -> np.ndarray:
+         """交叉验证评估校准效果"""
+@@ -524,13 +524,13 @@ 
+         return calibrated_proba
+ 
+-    def transform(self, y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
++async def transform(self, y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+         """应用训练好的最佳校准器"""
+         if self.best_calibrator is None:
+             raise ValueError("No calibrator has been trained. Call calibrate() first.")
+         return self.best_calibrator.transform(y_proba)
+ 
+-    def save(self, filepath: Union[str, Path]) -> None:
++async def save(self, filepath: Union[str, Path]) -> None:
+         """保存自动校准器"""
+         filepath = Path(filepath)
+         filepath.parent.mkdir(parents=True, exist_ok=True)
+@@ -546,7 +546,7 @@             pickle.dump(calibration_data, f)
+ 
+     @classmethod
+-    def load(cls, filepath: Union[str, Path]) -> "AutoCalibrator":
++async def load(cls, filepath: Union[str, Path]) -> "AutoCalibrator":
+         """加载自动校准器"""
+         filepath = Path(filepath)
+ 
+@@ -564,7 +564,7 @@ 
+ 
+ # 便捷函数
+-def calibrate_probabilities(
++async def calibrate_probabilities(
+     y_true: Union[np.ndarray, pd.Series, list],
+     y_proba: Union[np.ndarray, pd.DataFrame],
+     method: str = "auto",

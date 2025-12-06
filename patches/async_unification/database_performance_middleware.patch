@@ -1,0 +1,154 @@
+--- a/src/api/optimization/database_performance_middleware.py+++ b/src/api/optimization/database_performance_middleware.py@@ -22,7 +22,7 @@ class DatabasePerformanceMiddleware:
+     """数据库性能监控中间件."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         enable_query_tracking: bool = True,
+         enable_slow_query_detection: bool = True,
+@@ -53,23 +53,23 @@ 
+         logger.info("Database performance monitoring started")
+ 
+-    def stop_monitoring(self):
++async def stop_monitoring(self):
+         """停止监控."""
+         self.is_monitoring = False
+         # 这里可以添加事件监听器的注销逻辑
+         logger.info("Database performance monitoring stopped")
+ 
+-    def _register_query_listeners(self):
++async def _register_query_listeners(self):
+         """注册查询监听器."""
+ 
+         @event.listens_for(AsyncSession, "before_cursor_execute")
+-        def before_cursor_execute_async(
++async def before_cursor_execute_async(
+             conn, cursor, statement, parameters, context, executemany
+         ):
+             context._query_start_time = time.time()
+ 
+         @event.listens_for(AsyncSession, "after_cursor_execute")
+-        def after_cursor_execute_async(
++async def after_cursor_execute_async(
+             conn, cursor, statement, parameters, context, executemany
+         ):
+             if not self.is_monitoring:
+@@ -106,13 +106,13 @@                 logger.error(f"Error in query monitoring: {e}")
+ 
+         @event.listens_for(Session, "before_cursor_execute")
+-        def before_cursor_execute_sync(
++async def before_cursor_execute_sync(
+             conn, cursor, statement, parameters, context, executemany
+         ):
+             context._query_start_time = time.time()
+ 
+         @event.listens_for(Session, "after_cursor_execute")
+-        def after_cursor_execute_sync(
++async def after_cursor_execute_sync(
+             conn, cursor, statement, parameters, context, executemany
+         ):
+             if not self.is_monitoring:
+@@ -147,44 +147,44 @@                 logger.error(f"Error in sync query monitoring: {e}")
+ 
+         @event.listens_for(AsyncSession, "handle_error")
+-        def handle_error_async(exc, context):
++async def handle_error_async(exc, context):
+             if self.is_monitoring and hasattr(context, "statement"):
+                 asyncio.create_task(
+                     self.db_analyzer.analyze_query(context.statement, 0.0, error=True)
+                 )
+ 
+         @event.listens_for(Session, "handle_error")
+-        def handle_error_sync(exc, context):
++async def handle_error_sync(exc, context):
+             if self.is_monitoring and hasattr(context, "statement"):
+                 asyncio.create_task(
+                     self.db_analyzer.analyze_query(context.statement, 0.0, error=True)
+                 )
+ 
+-    def _register_pool_listeners(self):
++async def _register_pool_listeners(self):
+         """注册连接池监听器."""
+ 
+         @event.listens_for(Pool, "connect")
+-        def on_connect(dbapi_connection, connection_record):
++async def on_connect(dbapi_connection, connection_record):
+             # 记录新连接
+             pass
+ 
+         @event.listens_for(Pool, "checkout")
+-        def on_checkout(dbapi_connection, connection_record, connection_proxy):
++async def on_checkout(dbapi_connection, connection_record, connection_proxy):
+             # 记录连接检出
+             pass
+ 
+         @event.listens_for(Pool, "checkin")
+-        def on_checkin(dbapi_connection, connection_record):
++async def on_checkin(dbapi_connection, connection_record):
+             # 记录连接检入
+             pass
+ 
+-    def _estimate_rows_examined(self, statement: str, parameters: Any) -> int:
++async def _estimate_rows_examined(self, statement: str, parameters: Any) -> int:
+         """估算检查的行数."""
+         # 这里可以实现更复杂的逻辑来估算检查的行数
+         # 目前返回0表示无法估算
+         return 0
+ 
+-    def _handle_slow_query(
++async def _handle_slow_query(
+         self, statement: str, execution_time: float, parameters: Any
+     ):
+         """处理慢查询."""
+@@ -251,10 +251,10 @@ class QueryOptimizationAdvisor:
+     """查询优化顾问."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.optimization_rules = self._initialize_optimization_rules()
+ 
+-    def _initialize_optimization_rules(self) -> dict[str, Any]:
++async def _initialize_optimization_rules(self) -> dict[str, Any]:
+         """初始化优化规则."""
+         return {
+             "select_star": {
+@@ -332,7 +332,7 @@             ),
+         }
+ 
+-    def _calculate_query_complexity(self, query_text: str) -> int:
++async def _calculate_query_complexity(self, query_text: str) -> int:
+         """计算查询复杂度分数."""
+         complexity = 0
+         query_lower = query_text.lower()
+@@ -357,7 +357,7 @@ 
+         return complexity
+ 
+-    def _suggest_indexes(self, query_text: str) -> list[str]:
++async def _suggest_indexes(self, query_text: str) -> list[str]:
+         """建议索引."""
+         import re
+ 
+@@ -393,7 +393,7 @@ 
+         return suggestions
+ 
+-    def _determine_overall_priority(
++async def _determine_overall_priority(
+         self, suggestions: list, complexity_score: int
+     ) -> str:
+         """确定整体优先级."""
+@@ -412,7 +412,7 @@ _optimization_advisor: QueryOptimizationAdvisor | None = None
+ 
+ 
+-def get_database_middleware() -> DatabasePerformanceMiddleware:
++async def get_database_middleware() -> DatabasePerformanceMiddleware:
+     """获取全局数据库中间件实例."""
+     global _db_middleware
+     if _db_middleware is None:
+@@ -420,7 +420,7 @@     return _db_middleware
+ 
+ 
+-def get_optimization_advisor() -> QueryOptimizationAdvisor:
++async def get_optimization_advisor() -> QueryOptimizationAdvisor:
+     """获取全局优化顾问实例."""
+     global _optimization_advisor
+     if _optimization_advisor is None:

@@ -1,0 +1,122 @@
+--- a/src/features/simple_feature_calculator.py+++ b/src/features/simple_feature_calculator.py@@ -17,7 +17,7 @@ class SimpleFeatureCalculator:
+     """简化的特征计算器."""
+ 
+-    def __init__(self, matches_df: pd.DataFrame):
++async def __init__(self, matches_df: pd.DataFrame):
+         """初始化特征计算器.
+ 
+         Args:
+@@ -31,7 +31,7 @@         )
+         logger.info(f"已加载 {len(self.matches_df)} 条比赛数据")
+ 
+-    def calculate_match_result(self, row: pd.Series) -> int:
++async def calculate_match_result(self, row: pd.Series) -> int:
+         """计算比赛结果.
+ 
+         Args:
+@@ -40,8 +40,8 @@         Returns:
+             int: 0=Draw, 1=HomeWin, 2=AwayWin
+         """
+-        home_score = row.get("home_score", 0)
+-        away_score = row.get("away_score", 0)
++        home_score = row.await get("home_score", 0)
++        away_score = row.await get("away_score", 0)
+ 
+         if home_score > away_score:
+             return 1  # HomeWin
+@@ -50,7 +50,7 @@         else:
+             return 0  # Draw
+ 
+-    def get_team_previous_matches(
++async def get_team_previous_matches(
+         self, team_id: int, match_date: datetime, limit: int = 5
+     ) -> pd.DataFrame:
+         """获取指定球队在特定日期之前的最近比赛.
+@@ -78,7 +78,7 @@ 
+         return previous_matches
+ 
+-    def calculate_team_recent_stats(
++async def calculate_team_recent_stats(
+         self, team_id: int, match_date: datetime
+     ) -> tuple[int, float]:
+         """计算球队近期战绩.
+@@ -124,7 +124,7 @@ 
+         return total_points, avg_goals
+ 
+-    def calculate_team_rest_days(self, team_id: int, match_date: datetime) -> int:
++async def calculate_team_rest_days(self, team_id: int, match_date: datetime) -> int:
+         """计算球队休息天数.
+ 
+         Args:
+@@ -147,7 +147,7 @@         # 最大值为14天
+         return min(rest_days, 14)
+ 
+-    def calculate_team_advanced_stats(
++async def calculate_team_advanced_stats(
+         self, team_id: int, match_date: datetime
+     ) -> tuple[int, float, int, float]:
+         """计算球队高级统计特征.
+@@ -196,7 +196,7 @@ 
+         return goal_diff_sum, win_rate, win_streak, rest_days
+ 
+-    def calculate_win_streak(self, team_id: int, match_date: datetime) -> int:
++async def calculate_win_streak(self, team_id: int, match_date: datetime) -> int:
+         """计算当前连胜场次.
+ 
+         Args:
+@@ -239,7 +239,7 @@ 
+         return streak
+ 
+-    def get_h2h_matches(
++async def get_h2h_matches(
+         self, home_team_id: int, away_team_id: int, match_date: datetime, limit: int = 3
+     ) -> pd.DataFrame:
+         """获取两支球队历史交锋记录.
+@@ -274,7 +274,7 @@ 
+         return h2h_matches
+ 
+-    def calculate_h2h_stats(
++async def calculate_h2h_stats(
+         self, home_team_id: int, away_team_id: int, match_date: datetime
+     ) -> int:
+         """计算历史交锋统计.
+@@ -304,7 +304,7 @@ 
+         return home_wins
+ 
+-    def calculate_features_for_match(self, row: pd.Series) -> dict:
++async def calculate_features_for_match(self, row: pd.Series) -> dict:
+         """为单场比赛计算所有特征.
+ 
+         Args:
+@@ -371,7 +371,7 @@ 
+         return features
+ 
+-    def generate_features_dataset(self) -> pd.DataFrame:
++async def generate_features_dataset(self) -> pd.DataFrame:
+         """生成包含所有特征的完整数据集.
+ 
+         Returns:
+@@ -396,7 +396,7 @@ 
+         return pd.DataFrame(features_list)
+ 
+-    def validate_features(self, features_df: pd.DataFrame) -> bool:
++async def validate_features(self, features_df: pd.DataFrame) -> bool:
+         """验证生成的特征数据.
+ 
+         Args:
+@@ -462,7 +462,7 @@         return True
+ 
+ 
+-def load_data_from_database() -> pd.DataFrame:
++async def load_data_from_database() -> pd.DataFrame:
+     """从数据库加载比赛数据."""
+     try:
+         import os
+@@ -517,7 +517,7 @@         return pd.DataFrame()
+ 
+ 
+-def save_features_to_csv(
++async def save_features_to_csv(
+     features_df: pd.DataFrame, filepath: str = "data/dataset_v1.csv"
+ ):
+     """将特征数据保存为CSV文件.

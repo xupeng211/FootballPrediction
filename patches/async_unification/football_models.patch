@@ -1,0 +1,19 @@
+--- a/src/adapters/adapters/football_models.py+++ b/src/adapters/adapters/football_models.py@@ -57,16 +57,16 @@     """足球API被适配者基类."""
+ 
+ 
+-def get_match_data(self, match_id: str) -> Match:
++async def get_match_data(self, match_id: str) -> Match:
+     """获取比赛数据."""
+     raise NotImplementedError
+ 
+ 
+-def get_team_data(self, team_id: str) -> Team:
++async def get_team_data(self, team_id: str) -> Team:
+     """获取球队数据."""
+     raise NotImplementedError
+ 
+ 
+-def get_player_data(self, player_id: str) -> Player:
++async def get_player_data(self, player_id: str) -> Player:
+     """获取球员数据."""
+     raise NotImplementedError

@@ -1,0 +1,16 @@
+--- a/src/api/health/routes.py+++ b/src/api/health/routes.py@@ -5,7 +5,7 @@ router = APIRouter(prefix="/health", tags=["health"])
+ 
+ 
+-@router.get("/")
++@router.await get("/")
+ async def health_check():
+     """基础健康检查."""
+     try:
+@@ -43,7 +43,7 @@         }
+ 
+ 
+-@router.get("/detailed")
++@router.await get("/detailed")
+ async def detailed_health_check():
+     """详细健康检查."""
+     health_status = {

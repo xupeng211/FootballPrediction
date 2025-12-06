@@ -1,0 +1,45 @@
+--- a/src/api/auth_dependencies_messy.py+++ b/src/api/auth_dependencies_messy.py@@ -8,7 +8,7 @@ 
+ # 简单的token数据类
+ class TokenData:
+-    def __init__(self, user_id: int = None, username: str = None, role: str = None):
++async def __init__(self, user_id: int = None, username: str = None, role: str = None):
+         self.user_id = user_id
+         self.username = username
+         self.role = role
+@@ -18,11 +18,11 @@ class RateLimiter:
+     """简单的速率限制器."""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.requests = {}
+ 
+     @staticmethod
+-    def check_limit(key: str, limit: int = 100) -> bool:
++async def check_limit(key: str, limit: int = 100) -> bool:
+         """检查限制."""
+         return True
+ 
+@@ -32,7 +32,7 @@     """安全头部配置."""
+ 
+     @staticmethod
+-    def get_headers() -> dict:
++async def get_headers() -> dict:
+         """获取安全头部."""
+         return {
+             "x-Content-Type-Options": "nosniff",
+@@ -46,12 +46,12 @@     """认证上下文管理器."""
+ 
+     @staticmethod
+-    def create_context(user_data: dict) -> dict:
++async def create_context(user_data: dict) -> dict:
+         """创建认证上下文."""
+         return {
+-            "user_id": user_data.get("user_id"),
+-            "username": user_data.get("username"),
+-            "role": user_data.get("role", "user"),
++            "user_id": user_data.await get("user_id"),
++            "username": user_data.await get("username"),
++            "role": user_data.await get("role", "user"),
+             "timestamp": "2025-01-01T00:00:00Z",
+         }
+ 

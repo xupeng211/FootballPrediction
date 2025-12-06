@@ -1,0 +1,62 @@
+--- a/src/data/collectors/fotmob_browser.py+++ b/src/data/collectors/fotmob_browser.py@@ -47,7 +47,7 @@     4. 返回结构化数据
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.logger = logging.getLogger(__name__)
+         self.browser: Optional[Browser] = None
+         self.context: Optional[BrowserContext] = None
+@@ -319,13 +319,13 @@             self.logger.error(f"❌ 网络拦截提取失败: {e}")
+             return None
+ 
+-    def _parse_page_data(self, page_data: dict[str, Any], match_id: str) -> Optional[MatchData]:
++async def _parse_page_data(self, page_data: dict[str, Any], match_id: str) -> Optional[MatchData]:
+         """
+         解析页面数据为结构化格式
+         """
+         try:
+             # 递归查找shotmap和lineup数据
+-            def find_data_structure(obj, key_path=""):
++async def find_data_structure(obj, key_path=""):
+                 if isinstance(obj, dict):
+                     # 直接检查当前层级
+                     for key in obj.keys():
+@@ -442,13 +442,13 @@             self.logger.error(f"❌ 页面数据解析失败: {e}")
+             return None
+ 
+-    def _extract_match_info(self, data: dict[str, Any]) -> dict[str, Any]:
++async def _extract_match_info(self, data: dict[str, Any]) -> dict[str, Any]:
+         """提取比赛基本信息"""
+         try:
+             # 查找比赛信息
+             match_data = None
+ 
+-            def find_match_recursive(obj):
++async def find_match_recursive(obj):
+                 if isinstance(obj, dict):
+                     for key, value in obj.items():
+                         if key.lower() in ['match', 'game', 'fixture']:
+@@ -512,7 +512,7 @@             self.logger.debug(f"⚠️ 比赛信息提取失败: {e}")
+             return {}
+ 
+-    def _process_lineup_data(self, lineup_data: Any) -> dict[str, Any]:
++async def _process_lineup_data(self, lineup_data: Any) -> dict[str, Any]:
+         """处理阵容数据"""
+         if not isinstance(lineup_data, dict):
+             return {}
+@@ -531,7 +531,7 @@             }
+         }
+ 
+-    def _process_players(self, players_data: list) -> list[dict[str, Any]]:
++async def _process_players(self, players_data: list) -> list[dict[str, Any]]:
+         """处理球员数据"""
+         if not isinstance(players_data, list):
+             return []
+@@ -549,7 +549,7 @@ 
+         return players
+ 
+-    def _calculate_xg_from_shots(self, shots: list[dict[str, Any]], match_info: dict[str, Any]) -> dict[str, Any]:
++async def _calculate_xg_from_shots(self, shots: list[dict[str, Any]], match_info: dict[str, Any]) -> dict[str, Any]:
+         """从射门数据计算xG统计"""
+         try:
+             home_team = match_info.get('home_team', '')

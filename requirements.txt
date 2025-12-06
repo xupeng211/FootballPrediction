@@ -6,11 +6,14 @@ beautifulsoup4>=4.12.0
 # Database Dependencies
 SQLAlchemy>=2.0.0
 asyncpg>=0.28.0
-psycopg2-binary>=2.9.0
+greenlet>=3.0.0  # Required for asyncpg
+psycopg2-binary>=2.9.0  # Legacy sync driver (for migrations only)
 alembic>=1.12.0
 
 # Configuration Management
 python-dotenv>=1.0.0
+dynaconf>=3.2.0
+pydantic>=2.5.0
 
 # Async Support
 aiofiles>=23.0.0

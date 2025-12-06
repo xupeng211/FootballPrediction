@@ -1,0 +1,76 @@
+--- a/src/quality/rules/range_rule.py+++ b/src/quality/rules/range_rule.py@@ -36,7 +36,7 @@     用于发现异常值、数据录入错误和不合理的数值。
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         field_ranges: Optional[dict[str, tuple[float, float]]] = None,
+         tolerance: float = 0.0,
+@@ -162,7 +162,7 @@ 
+         return errors
+ 
+-    def _check_value_range(
++async def _check_value_range(
+         self,
+         field_name: str,
+         value: float,
+@@ -218,7 +218,7 @@ 
+         return None
+ 
+-    def _determine_severity(self, error_message: str) -> str:
++async def _determine_severity(self, error_message: str) -> str:
+         """
+         根据错误信息确定严重程度。
+ 
+@@ -236,7 +236,7 @@         else:
+             return RuleSeverity.LOW
+ 
+-    def get_field_range(self, field_name: str) -> Optional[tuple[float, float]]:
++async def get_field_range(self, field_name: str) -> Optional[tuple[float, float]]:
+         """
+         获取指定字段的范围配置。
+ 
+@@ -246,9 +246,9 @@         Returns:
+             Optional[Tuple[float, float]]: (min_value, max_value)，如果未配置返回None
+         """
+-        return self.field_ranges.get(field_name)
+-
+-    def configure_field_range(
++        return self.field_ranges.await get(field_name)
++
++async def configure_field_range(
+         self,
+         field_name: str,
+         min_value: float,
+@@ -268,7 +268,7 @@         self.field_ranges[field_name] = (min_value, max_value)
+         logger.info(f"字段 '{field_name}' 范围已设置为: [{min_value}, {max_value}]")
+ 
+-    def configure_tolerance(self, tolerance: float) -> None:
++async def configure_tolerance(self, tolerance: float) -> None:
+         """
+         配置容忍度。
+ 
+@@ -281,7 +281,7 @@         self.tolerance = tolerance
+         logger.info(f"容忍度已设置为: {tolerance}")
+ 
+-    def configure_strict_mode(self, strict_mode: bool) -> None:
++async def configure_strict_mode(self, strict_mode: bool) -> None:
+         """
+         配置严格模式。
+ 
+@@ -291,7 +291,7 @@         self.strict_mode = strict_mode
+         logger.info(f"严格模式已设置为: {strict_mode}")
+ 
+-    def validate_field_ranges(self) -> list[str]:
++async def validate_field_ranges(self) -> list[str]:
+         """
+         验证所有字段范围配置的有效性。
+ 
+@@ -313,7 +313,7 @@ 
+         return errors
+ 
+-    def get_range_summary(self, features: dict[str, Any]) -> dict[str, Any]:
++async def get_range_summary(self, features: dict[str, Any]) -> dict[str, Any]:
+         """
+         获取范围检查的详细摘要。
+ 

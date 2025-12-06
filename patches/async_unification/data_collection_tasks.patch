@@ -1,0 +1,180 @@
+--- a/src/tasks/data_collection_tasks.py+++ b/src/tasks/data_collection_tasks.py@@ -15,11 +15,11 @@ from functools import wraps
+ 
+ 
+-def sync_task_to_async(async_func):
++async def sync_task_to_async(async_func):
+     """将异步函数转换为同步的Celery任务"""
+ 
+     @wraps(async_func)
+-    def wrapper(*args, **kwargs):
++async def wrapper(*args, **kwargs):
+         import asyncio
+ 
+         return asyncio.run(async_func(*args, **kwargs))
+@@ -28,28 +28,28 @@ 
+ 
+ # 暂时导入收集器，避免循环导入问题
+-def get_fixtures_collector(config):
++async def get_fixtures_collector(config):
+     """获取FixturesCollector实例"""
+     from src.data.collectors.fixtures_collector import FixturesCollector
+ 
+     return FixturesCollector(config=config)
+ 
+ 
+-def get_scores_collector(config):
++async def get_scores_collector(config):
+     """获取ScoresCollector实例"""
+     from src.data.collectors.scores_collector import ScoresCollector
+ 
+     return ScoresCollector(config=config)
+ 
+ 
+-def get_odds_collector(config):
++async def get_odds_collector(config):
+     """获取OddsCollector实例"""
+     from src.data.collectors.odds_collector import OddsCollector
+ 
+     return OddsCollector(config=config)
+ 
+ 
+-def get_fotmob_collector(config):
++async def get_fotmob_collector(config):
+     """获取FotmobCollector实例"""
+     from src.data.collectors.fotmob_collector import FotmobCollector
+ 
+@@ -69,7 +69,7 @@ ]
+ 
+ 
+-def ensure_database_initialized():
++async def ensure_database_initialized():
+     """确保数据库管理器已初始化."""
+     try:
+         from src.database.connection import DatabaseManager
+@@ -101,7 +101,7 @@ 
+ 
+ @shared_task(bind=True, name="collect_daily_fixtures")
+-def collect_daily_fixtures(self) -> dict[str, Any]:
++async def collect_daily_fixtures(self) -> dict[str, Any]:
+     """
+     每日赛程数据采集任务.
+ 
+@@ -179,7 +179,7 @@ 
+ 
+ @shared_task(bind=True, name="collect_live_scores")
+-def collect_live_scores(self, match_ids: list[int] = None, **kwargs) -> dict[str, Any]:
++async def collect_live_scores(self, match_ids: list[int] = None, **kwargs) -> dict[str, Any]:
+     """
+     实时比分数据采集任务.
+ 
+@@ -222,7 +222,7 @@ 
+ 
+ @shared_task(bind=True, name="collect_odds_data")
+-def collect_odds_data(
++async def collect_odds_data(
+     self, match_ids: list[int] = None, hours_ahead: int = 24
+ ) -> dict[str, Any]:
+     """
+@@ -259,7 +259,7 @@ 
+ 
+ @shared_task(bind=True, name="cleanup_old_data")
+-def cleanup_old_data(self, days_to_keep: int = 90) -> dict[str, Any]:
++async def cleanup_old_data(self, days_to_keep: int = 90) -> dict[str, Any]:
+     """
+     清理旧数据任务.
+ 
+@@ -292,7 +292,7 @@ 
+ 
+ @shared_task(bind=True, name="collect_fotmob_data")
+-def collect_fotmob_data(self, date: str = None) -> dict[str, Any]:
++async def collect_fotmob_data(self, date: str = None) -> dict[str, Any]:
+     """
+     FotMob 数据采集任务
+ 
+@@ -343,7 +343,7 @@                         f"   - 总比赛数: {len(match_data) if match_data else 0}"
+                     )
+                     logger.info(
+-                        f"   - 成功率: {metadata.get('successful_details', 0)}/{metadata.get('total_match_ids', 0)}"
++                        f"   - 成功率: {metadata.await await get('successful_details', 0)}/{metadata.get('total_match_ids', 0)}"
+                     )
+ 
+                     # 🆕 数据持久化：将采集到的数据保存到数据库
+@@ -363,12 +363,12 @@                                 # 准备批量插入数据
+                                 raw_records = []
+                                 for match in match_data:
+-                                    external_id = str(match.get("id", ""))
+-                                    home_team = match.get("home", {})
+-                                    away_team = match.get("away", {})
++                                    external_id = await str(match.get("id", ""))
++                                    home_team = match.await get("home", {})
++                                    away_team = match.await get("away", {})
+ 
+                                     # 🆕 支持新的历史数据API结构
+-                                    league_info = match.get("league_info", {})
++                                    league_info = match.await get("league_info", {})
+                                     competition = match.get(
+                                         "competition", league_info
+                                     )  # 兼容新旧API
+@@ -378,25 +378,25 @@                                         "external_match_id": external_id,
+                                         "external_league_id": str(
+                                             competition.get(
+-                                                "id", match.get("leagueId", "")
++                                                "id", match.await get("leagueId", "")
+                                             )
+                                         ),
+                                         "external_home_team_id": str(
+-                                            home_team.get("id", "")
++                                            home_team.await get("id", "")
+                                         ),
+                                         "external_away_team_id": str(
+-                                            away_team.get("id", "")
++                                            away_team.await get("id", "")
+                                         ),
+                                         "match_time": match.get(
+-                                            "time", match.get("matchDate", "")
++                                            "time", match.await get("matchDate", "")
+                                         ),  # 支持新旧时间字段
+-                                        "league_name": competition.get("name", ""),
++                                        "league_name": competition.await get("name", ""),
+                                         "league_country": competition.get(
+                                             "country",
+-                                            competition.get("area", {}).get("name", ""),
+-                                        ),
+-                                        "home_team_name": home_team.get("name", ""),
+-                                        "away_team_name": away_team.get("name", ""),
++                                            competition.await await get("area", {}).get("name", ""),
++                                        ),
++                                        "home_team_name": home_team.await get("name", ""),
++                                        "away_team_name": away_team.await get("name", ""),
+                                         "home_team_short_name": home_team.get(
+                                             "shortName", ""
+                                         ),
+@@ -404,7 +404,7 @@                                             "shortName", ""
+                                         ),
+                                         "status": match.get(
+-                                            "status", match.get("statusId", "UNKNOWN")
++                                            "status", match.await get("statusId", "UNKNOWN")
+                                         ),
+                                         "raw_data": match,  # 保存原始 JSON 数据
+                                     }
+@@ -431,17 +431,17 @@                                         # 记录具体的比赛信息
+                                         sample_matches = match_data[:3]  # 显示前3场比赛
+                                         for i, match in enumerate(sample_matches, 1):
+-                                            home_team = match.get("home", {}).get(
++                                            home_team = match.await await get("home", {}).get(
+                                                 "name", "Unknown"
+                                             )
+-                                            away_team = match.get("away", {}).get(
++                                            away_team = match.await await get("away", {}).get(
+                                                 "name", "Unknown"
+                                             )
+                                             match_date = match.get(
+                                                 "matchDate", "Unknown"
+                                             )
+-                                            home_score = match.get("homeScore", 0)
+-                                            away_score = match.get("awayScore", 0)
++                                            home_score = match.await get("homeScore", 0)
++                                            away_score = match.await get("awayScore", 0)
+ 
+                                             logger.info(
+                                                 f"   比赛 {i}: {home_team} {home_score} - {away_score} {away_team} ({match_date})"

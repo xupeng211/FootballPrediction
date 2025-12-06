@@ -1,0 +1,112 @@
+--- a/src/database/migrations/versions/004_configure_database_permissions.py+++ b/src/database/migrations/versions/004_configure_database_permissions.py@@ -138,18 +138,18 @@ depends_on = None
+ 
+ 
+-def upgrade() -> None:
++async def upgrade() -> None:
+     """配置数据库权限."""
+     if context.is_offline_mode():
+         logger.info("⚠️  离线模式:跳过数据库权限配置")
+-        op.execute("-- offline mode: skipped database user creation")
+-        op.execute("-- offline mode: skipped database permission configuration")
++        op.await execute("-- offline mode: skipped database user creation")
++        op.await execute("-- offline mode: skipped database permission configuration")
+         return None
+     connection = op.get_bind()
+     db_dialect = connection.dialect.name.lower()
+     if db_dialect == "sqlite":
+         logger.info("⚠️  SQLite环境:跳过PostgreSQL权限配置")
+-        op.execute("-- SQLite environment: skipped PostgreSQL permission configuration")
++        op.await execute("-- SQLite environment: skipped PostgreSQL permission configuration")
+         return None
+     connection = op.get_bind()
+     db_name = os.getenv("TEST_DB_NAME", "football_prediction")
+@@ -194,8 +194,8 @@     """
+         )
+     )
+-    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_reader;"))
+-    connection.execute(text("GRANT USAGE ON SCHEMA public TO football_reader;"))
++    connection.await execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_reader;"))
++    connection.await execute(text("GRANT USAGE ON SCHEMA public TO football_reader;"))
+     connection.execute(
+         text("GRANT SELECT ON ALL TABLES IN SCHEMA public TO football_reader;")
+     )
+@@ -212,8 +212,8 @@             "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON SEQUENCES TO football_reader;"
+         )
+     )
+-    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_writer;"))
+-    connection.execute(text("GRANT USAGE ON SCHEMA public TO football_writer;"))
++    connection.await execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_writer;"))
++    connection.await execute(text("GRANT USAGE ON SCHEMA public TO football_writer;"))
+     connection.execute(
+         text(
+             "GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO football_writer;"
+@@ -240,8 +240,8 @@         "raw_odds_data",
+     ]
+     for table in tables_with_delete_permission:
+-        connection.execute(text(f"GRANT DELETE ON {table} TO football_writer;"))
+-    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_admin;"))
++        connection.await execute(text(f"GRANT DELETE ON {table} TO football_writer;"))
++    connection.await execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_admin;"))
+     connection.execute(
+         text(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO football_admin;")
+     )
+@@ -271,7 +271,7 @@             "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO football_admin;"
+         )
+     )
+-    connection.execute(text(f"GRANT CREATE ON DATABASE {db_name} TO football_admin;"))
++    connection.await execute(text(f"GRANT CREATE ON DATABASE {db_name} TO football_admin;"))
+     connection.execute(
+         text(
+             """
+@@ -360,7 +360,7 @@     """
+         )
+     )
+-    connection.execute(text("GRANT SELECT ON permission_audit_log TO football_reader;"))
++    connection.await execute(text("GRANT SELECT ON permission_audit_log TO football_reader;"))
+     connection.execute(
+         text("GRANT SELECT, INSERT ON permission_audit_log TO football_writer;")
+     )
+@@ -404,27 +404,27 @@     )
+ 
+ 
+-def downgrade() -> None:
++async def downgrade() -> None:
+     """回滚数据库权限配置."""
+     if context.is_offline_mode():
+         logger.info("⚠️  离线模式:跳过数据库权限回滚")
+-        op.execute("-- offline mode: skipped database permission rollback")
+-        op.execute("-- offline mode: skipped database user deletion")
++        op.await execute("-- offline mode: skipped database permission rollback")
++        op.await execute("-- offline mode: skipped database user deletion")
+         return None
+     connection = op.get_bind()
+     db_dialect = connection.dialect.name.lower()
+     if db_dialect == "sqlite":
+         logger.info("⚠️  SQLite环境:跳过PostgreSQL权限回滚")
+-        op.execute("-- SQLite environment: skipped PostgreSQL permission rollback")
++        op.await execute("-- SQLite environment: skipped PostgreSQL permission rollback")
+         return None
+     connection = op.get_bind()
+     db_name = os.getenv("TEST_DB_NAME", "football_prediction")
+     if os.getenv("ENVIRONMENT") == "test":
+         db_name = os.getenv("TEST_DB_NAME", "football_prediction_test")
+-    connection.execute(text("DROP VIEW IF EXISTS user_permissions;"))
+-    connection.execute(text("DROP VIEW IF EXISTS table_permissions;"))
+-    connection.execute(text("DROP FUNCTION IF EXISTS check_user_permissions(TEXT);"))
+-    connection.execute(text("DROP TABLE IF EXISTS permission_audit_log;"))
++    connection.await execute(text("DROP VIEW IF EXISTS user_permissions;"))
++    connection.await execute(text("DROP VIEW IF EXISTS table_permissions;"))
++    connection.await execute(text("DROP FUNCTION IF EXISTS check_user_permissions(TEXT);"))
++    connection.await execute(text("DROP TABLE IF EXISTS permission_audit_log;"))
+     connection.execute(
+         text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_reader;")
+     )
+@@ -464,6 +464,6 @@             "REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_admin;"
+         )
+     )
+-    connection.execute(text("DROP USER IF EXISTS football_reader;"))
+-    connection.execute(text("DROP USER IF EXISTS football_writer;"))
+-    connection.execute(text("DROP USER IF EXISTS football_admin;"))
++    connection.await execute(text("DROP USER IF EXISTS football_reader;"))
++    connection.await execute(text("DROP USER IF EXISTS football_writer;"))
++    connection.await execute(text("DROP USER IF EXISTS football_admin;"))

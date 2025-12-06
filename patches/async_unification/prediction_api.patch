@@ -1,0 +1,13 @@
+--- a/src/realtime/prediction_api.py+++ b/src/realtime/prediction_api.py@@ -2,11 +2,11 @@ 
+ 
+ class PredictionApi:
+-    def __init__(self):
++async def __init__(self):
+         pass
+ 
+ 
+-def example():
++async def example():
+     return None
+ 
+ 

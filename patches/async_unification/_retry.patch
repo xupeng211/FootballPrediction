@@ -1,0 +1,210 @@
+--- a/src/utils/_retry.py+++ b/src/utils/_retry.py@@ -20,7 +20,7 @@ class RetryConfig:
+     """重试配置."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         max_attempts: int = 3,
+         delay: float = None,
+@@ -60,10 +60,10 @@ class BackoffStrategy:
+     """退避策略基类."""
+ 
+-    def __init__(self, initial_delay: float = 1.0):
++async def __init__(self, initial_delay: float = 1.0):
+         self.initial_delay = initial_delay
+ 
+-    def get_delay(self, attempt: int) -> float:
++async def get_delay(self, attempt: int) -> float:
+         """获取第attempt次重试的延迟时间."""
+         return self.initial_delay
+ 
+@@ -71,51 +71,51 @@ class FixedBackoffStrategy(BackoffStrategy):
+     """固定退避策略."""
+ 
+-    def __init__(self, delay: float = 1.0):
++async def __init__(self, delay: float = 1.0):
+         super().__init__(delay)
+         self.delay = delay
+ 
+-    def get_delay(self, attempt: int) -> float:
++async def get_delay(self, attempt: int) -> float:
+         return self.delay
+ 
+ 
+ class LinearBackoffStrategy(BackoffStrategy):
+     """线性退避策略."""
+ 
+-    def __init__(self, initial_delay: float = 1.0, increment: float = 0.5):
++async def __init__(self, initial_delay: float = 1.0, increment: float = 0.5):
+         super().__init__(initial_delay)
+         self.increment = increment
+ 
+-    def get_delay(self, attempt: int) -> float:
++async def get_delay(self, attempt: int) -> float:
+         return self.initial_delay + (attempt - 1) * self.increment
+ 
+ 
+ class ExponentialBackoffStrategy(BackoffStrategy):
+     """指数退避策略."""
+ 
+-    def __init__(self, initial_delay: float = 1.0, multiplier: float = 2.0):
++async def __init__(self, initial_delay: float = 1.0, multiplier: float = 2.0):
+         super().__init__(initial_delay)
+         self.multiplier = multiplier
+ 
+-    def get_delay(self, attempt: int) -> float:
++async def get_delay(self, attempt: int) -> float:
+         return self.initial_delay * (self.multiplier ** (attempt - 1))
+ 
+ 
+ class PolynomialBackoffStrategy(BackoffStrategy):
+     """多项式退避策略."""
+ 
+-    def __init__(self, initial_delay: float = 1.0, exponent: float = 2.0):
++async def __init__(self, initial_delay: float = 1.0, exponent: float = 2.0):
+         super().__init__(initial_delay)
+         self.exponent = exponent
+ 
+-    def get_delay(self, attempt: int) -> float:
++async def get_delay(self, attempt: int) -> float:
+         return self.initial_delay * (attempt**self.exponent)
+ 
+ 
+ class CircuitBreaker:
+     """熔断器."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         failure_threshold: int = 5,
+         recovery_timeout: float = 60.0,
+@@ -129,11 +129,11 @@         self.last_failure_time = None
+         self.state = CircuitState.CLOSED
+ 
+-    def __call__(self, func: Callable) -> Callable:
++async def __call__(self, func: Callable) -> Callable:
+         """装饰器语法糖."""
+         return self.wrap_function(func)
+ 
+-    def wrap_function(self, func: Callable) -> Callable:
++async def wrap_function(self, func: Callable) -> Callable:
+         """包装函数."""
+         if asyncio.iscoroutinefunction(func):
+ 
+@@ -145,7 +145,7 @@         else:
+ 
+             @wraps(func)
+-            def sync_wrapper(*args, **kwargs):
++async def sync_wrapper(*args, **kwargs):
+                 return self._call_sync(func, *args, **kwargs)
+ 
+             return sync_wrapper
+@@ -166,7 +166,7 @@             self._on_failure()
+             raise e
+ 
+-    def _call_sync(self, func: Callable, *args, **kwargs):
++async def _call_sync(self, func: Callable, *args, **kwargs):
+         """同步调用."""
+         if self.state == CircuitState.OPEN:
+             if self._should_attempt_reset():
+@@ -182,18 +182,18 @@             self._on_failure()
+             raise e
+ 
+-    def _should_attempt_reset(self) -> bool:
++async def _should_attempt_reset(self) -> bool:
+         """是否应该尝试重置."""
+         if self.last_failure_time is None:
+             return False
+         return time.time() - self.last_failure_time >= self.recovery_timeout
+ 
+-    def _on_success(self):
++async def _on_success(self):
+         """成功时的处理."""
+         self.failure_count = 0
+         self.state = CircuitState.CLOSED
+ 
+-    def _on_failure(self):
++async def _on_failure(self):
+         """失败时的处理."""
+         self.failure_count += 1
+         self.last_failure_time = time.time()
+@@ -202,7 +202,7 @@             self.state = CircuitState.OPEN
+ 
+ 
+-def retry(
++async def retry(
+     max_attempts: int = 3,
+     delay: float = None,
+     initial_delay: float = None,
+@@ -226,7 +226,7 @@     elif initial_delay is None:
+         initial_delay = 1.0
+ 
+-    def decorator(func: Callable) -> Callable:
++async def decorator(func: Callable) -> Callable:
+         if asyncio.iscoroutinefunction(func):
+             return _retry_async(
+                 func=func,
+@@ -249,7 +249,7 @@     return decorator
+ 
+ 
+-def retry_sync(
++async def retry_sync(
+     max_attempts: int = 3,
+     delay: float = None,
+     initial_delay: float = None,
+@@ -264,7 +264,7 @@     elif initial_delay is None:
+         initial_delay = 1.0
+ 
+-    def decorator(func: Callable) -> Callable:
++async def decorator(func: Callable) -> Callable:
+         return _retry_sync(
+             func=func,
+             max_attempts=max_attempts,
+@@ -277,7 +277,7 @@     return decorator
+ 
+ 
+-def retry_async(
++async def retry_async(
+     max_attempts: int = 3,
+     delay: float = None,
+     initial_delay: float = None,
+@@ -292,7 +292,7 @@     elif initial_delay is None:
+         initial_delay = 1.0
+ 
+-    def decorator(func: Callable) -> Callable:
++async def decorator(func: Callable) -> Callable:
+         return _retry_async(
+             func=func,
+             max_attempts=max_attempts,
+@@ -305,7 +305,7 @@     return decorator
+ 
+ 
+-def _retry_sync(
++async def _retry_sync(
+     func: Callable,
+     max_attempts: int,
+     delay: float,
+@@ -316,7 +316,7 @@     """同步重试实现."""
+ 
+     @wraps(func)
+-    def wrapper(*args, **kwargs):
++async def wrapper(*args, **kwargs):
+         last_exception = None
+ 
+         for attempt in range(1, max_attempts + 1):
+@@ -334,14 +334,14 @@                 else:
+                     sleep_time = delay * (backoff_factor ** (attempt - 1))
+ 
+-                time.sleep(sleep_time)
++                await asyncio.sleep(sleep_time)
+ 
+         raise last_exception
+ 
+     return wrapper
+ 
+ 
+-def _retry_async(
++async def _retry_async(
+     func: Callable,
+     max_attempts: int,
+     delay: float,

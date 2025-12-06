@@ -1,0 +1,108 @@
+--- a/src/data/processing/data_preprocessor.py+++ b/src/data/processing/data_preprocessor.py@@ -17,18 +17,18 @@ class DataPreprocessor:
+     """数据预处理器 - 整合清洗和缺失值处理功能."""
+ 
+-    def __init__(self, config: dict | None = None):
++async def __init__(self, config: dict | None = None):
+         """初始化数据预处理器.
+ 
+         Args:
+             config: 配置参数
+         """
+         self.config = config or self._get_default_config()
+-        self.cleaner = FootballDataCleaner(self.config.get("cleaning", {}))
++        self.cleaner = await FootballDataCleaner(self.config.get("cleaning", {}))
+         self.missing_handler = MissingDataHandler()
+         self.processing_history = []
+ 
+-    def _get_default_config(self) -> dict:
++async def _get_default_config(self) -> dict:
+         """获取默认配置."""
+         return {
+             "cleaning": {
+@@ -43,7 +43,7 @@             "validation": {"enable_quality_check": True, "quality_threshold": 0.8},
+         }
+ 
+-    def preprocess_dataset(
++async def preprocess_dataset(
+         self, raw_data: pd.DataFrame, data_type: str = "matches"
+     ) -> dict[str, Any]:
+         """预处理完整数据集.
+@@ -149,7 +149,7 @@ 
+         return processing_result
+ 
+-    def _assess_data_quality(
++async def _assess_data_quality(
+         self, original_data: pd.DataFrame, processed_data: pd.DataFrame, data_type: str
+     ) -> dict[str, Any]:
+         """评估数据质量.
+@@ -213,7 +213,7 @@ 
+         return assessment
+ 
+-    def _check_match_consistency(self, data: pd.DataFrame) -> list[str]:
++async def _check_match_consistency(self, data: pd.DataFrame) -> list[str]:
+         """检查比赛数据一致性."""
+         issues = []
+ 
+@@ -233,7 +233,7 @@ 
+         return issues
+ 
+-    def _check_data_validity(self, data: pd.DataFrame, data_type: str) -> list[str]:
++async def _check_data_validity(self, data: pd.DataFrame, data_type: str) -> list[str]:
+         """检查数据有效性."""
+         issues = []
+ 
+@@ -264,7 +264,7 @@ 
+         return issues
+ 
+-    def _generate_improvement_suggestions(
++async def _generate_improvement_suggestions(
+         self, assessment: dict[str, Any], data_type: str
+     ) -> list[str]:
+         """生成数据改进建议."""
+@@ -281,7 +281,7 @@ 
+         # 基于数据类型的特定建议
+         if data_type == "matches":
+-            if "match_date" not in assessment.get("quality_issues", []):
++            if "match_date" not in assessment.await get("quality_issues", []):
+                 suggestions.append("建议添加比赛时区信息")
+ 
+         if assessment["overall_score"] < self.config["validation"]["quality_threshold"]:
+@@ -289,19 +289,19 @@ 
+         return suggestions
+ 
+-    def preprocess_matches(self, raw_data: pd.DataFrame) -> dict[str, Any]:
++async def preprocess_matches(self, raw_data: pd.DataFrame) -> dict[str, Any]:
+         """预处理比赛数据的便捷方法."""
+         return self.preprocess_dataset(raw_data, "matches")
+ 
+-    def preprocess_teams(self, raw_data: pd.DataFrame) -> dict[str, Any]:
++async def preprocess_teams(self, raw_data: pd.DataFrame) -> dict[str, Any]:
+         """预处理球队数据的便捷方法."""
+         return self.preprocess_dataset(raw_data, "teams")
+ 
+-    def preprocess_odds(self, raw_data: pd.DataFrame) -> dict[str, Any]:
++async def preprocess_odds(self, raw_data: pd.DataFrame) -> dict[str, Any]:
+         """预处理赔率数据的便捷方法."""
+         return self.preprocess_dataset(raw_data, "odds")
+ 
+-    def get_processing_summary(self) -> dict[str, Any]:
++async def get_processing_summary(self) -> dict[str, Any]:
+         """获取处理摘要."""
+         if not self.processing_history:
+             return {"message": "还没有处理历史记录"}
+@@ -321,7 +321,7 @@             "processing_statistics": self._calculate_processing_stats(),
+         }
+ 
+-    def _calculate_processing_stats(self) -> dict[str, Any]:
++async def _calculate_processing_stats(self) -> dict[str, Any]:
+         """计算处理统计信息."""
+         if not self.processing_history:
+             return {}
+@@ -354,7 +354,7 @@ 
+ 
+ # 便捷函数
+-def preprocess_football_data(
++async def preprocess_football_data(
+     raw_data: pd.DataFrame, data_type: str = "matches", config: dict | None = None
+ ) -> dict[str, Any]:
+     """便捷的足球数据预处理函数.

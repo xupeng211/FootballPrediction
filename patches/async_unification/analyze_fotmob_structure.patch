@@ -1,0 +1,39 @@
+--- a/src/data_science/analyze_fotmob_structure.py+++ b/src/data_science/analyze_fotmob_structure.py@@ -17,7 +17,7 @@ )
+ 
+ 
+-def deep_search_json(obj, path="", target_keys=None, results=None):
++async def deep_search_json(obj, path="", target_keys=None, results=None):
+     """深度搜索JSON中的目标键"""
+     if results is None:
+         results = []
+@@ -66,7 +66,7 @@     return results
+ 
+ 
+-def analyze_fotmob_structure():
++async def analyze_fotmob_structure():
+     """分析FotMob数据结构"""
+     try:
+         conn = psycopg2.connect(DATABASE_URL)
+@@ -81,7 +81,7 @@         """
+ 
+         cur = conn.cursor()
+-        cur.execute(query)
++        cur.await execute(query)
+         matches = cur.fetchall()
+ 
+         print("🔍 深度分析FotMob数据结构")
+@@ -141,12 +141,12 @@                             print(f"   {result['path']}: {result['value']}")
+ 
+                     # 分析主客队结构
+-                    home_team = lineups_data.get("homeTeam", {})
+-                    away_team = lineups_data.get("awayTeam", {})
++                    home_team = lineups_data.await get("homeTeam", {})
++                    away_team = lineups_data.await get("awayTeam", {})
+ 
+                     if home_team:
+                         print(f"   主队阵容结构: {list(home_team.keys())}")
+-                        lineup = home_team.get("lineUp", [])
++                        lineup = home_team.await get("lineUp", [])
+                         if isinstance(lineup, list) and len(lineup) > 0:
+                             print(f"   主队首发球员数: {len(lineup)}")
+                             if len(lineup) > 0:

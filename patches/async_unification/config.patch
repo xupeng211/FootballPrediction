@@ -1,0 +1,8 @@
+--- a/src/pipeline/config.py+++ b/src/pipeline/config.py@@ -185,7 +185,7 @@     use_prefect: bool = True
+     use_gpu: bool = False
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         """初始化后配置验证."""
+         # 从环境变量读取配置
+         self.environment = os.getenv("ENVIRONMENT", self.environment)

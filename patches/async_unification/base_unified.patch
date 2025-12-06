@@ -1,0 +1,81 @@
+--- a/src/services/base_unified.py+++ b/src/services/base_unified.py@@ -21,7 +21,7 @@     - 操作追踪
+     """
+ 
+-    def __init__(
++async def __init__(
+         self, name: str | None = None, db_manager: DatabaseManager | None = None
+     ):
+         """初始化基础服务.
+@@ -85,7 +85,7 @@         except (ValueError, TypeError, AttributeError, KeyError) as e:
+             self.logger.error(f"服务 {self.name} 关闭异常: {e}")
+ 
+-    def start(self) -> bool:
++async def start(self) -> bool:
+         """启动服务.
+ 
+         Returns:
+@@ -132,9 +132,9 @@ 
+     async def get_async_session(self):
+         """获取异步数据库会话."""
+-        return self.db_manager.get_async_session()
+-
+-    def get_sync_session(self):
++        return self.db_manager.await get_async_session()
++
++async def get_sync_session(self):
+         """获取同步数据库会话."""
+         return self.db_manager.get_session()
+ 
+@@ -142,7 +142,7 @@     # 日志和操作追踪
+     # ========================================
+ 
+-    def log_operation(
++async def log_operation(
+         self,
+         operation: str,
+         details: dict[str, Any] | None = None,
+@@ -161,7 +161,7 @@ 
+         getattr(self.logger, level)(message)
+ 
+-    def log_error(
++async def log_error(
+         self, operation: str, error: Exception, details: dict[str, Any] | None = None
+     ) -> None:
+         """记录错误日志.
+@@ -181,7 +181,7 @@     # 服务状态和健康检查
+     # ========================================
+ 
+-    def get_status(self) -> str:
++async def get_status(self) -> str:
+         """获取服务状态."""
+         if not self._initialized:
+             return "uninitialized"
+@@ -190,7 +190,7 @@         else:
+             return "stopped"
+ 
+-    def is_healthy(self) -> bool:
++async def is_healthy(self) -> bool:
+         """检查服务健康状态.
+ 
+         子类可以重写此方法来实现自定义健康检查
+@@ -216,11 +216,11 @@             "database_connected": self._check_database_connection(),
+         }
+ 
+-    def _check_database_connection(self) -> bool:
++async def _check_database_connection(self) -> bool:
+         """检查数据库连接."""
+         try:
+             with self.db_manager.get_session() as session:
+-                session.execute("SELECT 1")
++                session.await execute("SELECT 1")
+             return True
+         except (ValueError, TypeError, AttributeError):
+             return False
+@@ -244,7 +244,7 @@         """关闭钩子方法 - 子类必须实现自定义清理逻辑."""
+         pass
+ 
+-    def _on_start(self) -> bool:
++async def _on_start(self) -> bool:
+         """启动钩子方法.
+ 
+         子类重写此方法来实现自定义启动逻辑

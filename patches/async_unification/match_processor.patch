@@ -1,0 +1,51 @@
+--- a/src/services/processing/processors/match_processor.py+++ b/src/services/processing/processors/match_processor.py@@ -17,7 +17,7 @@     负责原始比赛数据的清洗、转换和标准化处理
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化处理器."""
+         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
+         self.required_fields = {
+@@ -126,16 +126,16 @@     ) -> dict[str, Any]:
+         """标准化比赛数据格式."""
+         standardized = {
+-            "match_id": str(match_data.get("match_id", "")),
+-            "home_team": str(match_data.get("home_team", "")).title(),
+-            "away_team": str(match_data.get("away_team", "")).title(),
+-            "match_date": match_data.get("match_date"),
+-            "home_score": int(match_data.get("home_score", 0)),
+-            "away_score": int(match_data.get("away_score", 0)),
+-            "venue": str(match_data.get("venue", "")).title(),
+-            "competition": str(match_data.get("competition", "")).title(),
+-            "season": str(match_data.get("season", "")),
+-            "match_status": str(match_data.get("match_status", "finished")).lower(),
++            "match_id": await str(match_data.get("match_id", "")),
++            "home_team": await str(match_data.get("home_team", "")).title(),
++            "away_team": await str(match_data.get("away_team", "")).title(),
++            "match_date": match_data.await get("match_date"),
++            "home_score": await int(match_data.get("home_score", 0)),
++            "away_score": await int(match_data.get("away_score", 0)),
++            "venue": await str(match_data.get("venue", "")).title(),
++            "competition": await str(match_data.get("competition", "")).title(),
++            "season": await str(match_data.get("season", "")),
++            "match_status": await str(match_data.get("match_status", "finished")).lower(),
+             "processed_at": datetime.utcnow(),
+         }
+ 
+@@ -182,14 +182,14 @@         """验证比赛数据完整性."""
+         try:
+             # 检查比分合理性
+-            home_score = int(match_data.get("home_score", 0))
+-            away_score = int(match_data.get("away_score", 0))
++            home_score = await int(match_data.get("home_score", 0))
++            away_score = await int(match_data.get("away_score", 0))
+ 
+             if home_score < 0 or away_score < 0:
+                 return False
+ 
+             # 检查日期合理性
+-            match_date = match_data.get("match_date")
++            match_date = match_data.await get("match_date")
+             if match_date and isinstance(match_date, datetime):
+                 # 检查比赛日期是否在合理范围内
+                 now = datetime.utcnow()

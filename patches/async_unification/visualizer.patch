@@ -1,0 +1,94 @@
+--- a/src/evaluation/visualizer.py+++ b/src/evaluation/visualizer.py@@ -41,7 +41,7 @@ class EvaluationVisualizer:
+     """评估可视化器"""
+ 
+-    def __init__(self, output_dir: Union[str, Path] = None, dpi: int = 300):
++async def __init__(self, output_dir: Union[str, Path] = None, dpi: int = 300):
+         """
+         初始化可视化器
+ 
+@@ -73,7 +73,7 @@         self.class_names = ['主胜(H)', '平局(D)', '客胜(A)']
+         self.class_colors = ['#28a745', '#ffc107', '#dc3545']
+ 
+-    def save_figure(self, fig: plt.Figure, filename: str,
++async def save_figure(self, fig: plt.Figure, filename: str,
+                    formats: list[str] = None, bbox_inches: str = 'tight') -> list[str]:
+         """
+         保存图表到多种格式
+@@ -99,7 +99,7 @@ 
+         return saved_paths
+ 
+-    def plot_roc_curves(self, y_true: np.ndarray, y_proba: np.ndarray,
++async def plot_roc_curves(self, y_true: np.ndarray, y_proba: np.ndarray,
+                        title: str = "ROC曲线分析", save_name: str = "roc_curves") -> list[str]:
+         """
+         绘制ROC曲线
+@@ -168,7 +168,7 @@         plt.tight_layout()
+         return self.save_figure(fig, save_name)
+ 
+-    def plot_calibration_curves(self, y_true: np.ndarray, y_proba: np.ndarray,
++async def plot_calibration_curves(self, y_true: np.ndarray, y_proba: np.ndarray,
+                                n_bins: int = 10, title: str = "概率校准曲线",
+                                save_name: str = "calibration_curves") -> list[str]:
+         """
+@@ -252,7 +252,7 @@         plt.tight_layout()
+         return self.save_figure(fig, save_name)
+ 
+-    def plot_prediction_distribution(self, y_true: np.ndarray, y_pred: np.ndarray,
++async def plot_prediction_distribution(self, y_true: np.ndarray, y_pred: np.ndarray,
+                                    y_proba: np.ndarray, title: str = "预测分布分析",
+                                    save_name: str = "prediction_distribution") -> list[str]:
+         """
+@@ -345,7 +345,7 @@         plt.tight_layout()
+         return self.save_figure(fig, save_name)
+ 
+-    def plot_backtest_results(self, backtest_result, title: str = "回测结果分析",
++async def plot_backtest_results(self, backtest_result, title: str = "回测结果分析",
+                              save_name: str = "backtest_results") -> list[str]:
+         """
+         绘制回测结果图表
+@@ -497,7 +497,7 @@         plt.tight_layout()
+         return self.save_figure(fig, save_name)
+ 
+-    def plot_metrics_summary(self, metrics_result, title: str = "评估指标总览",
++async def plot_metrics_summary(self, metrics_result, title: str = "评估指标总览",
+                            save_name: str = "metrics_summary") -> list[str]:
+         """
+         绘制评估指标总览图
+@@ -514,10 +514,10 @@ 
+         # 选择关键指标进行可视化
+         key_metrics = {
+-            '准确率': metrics.get('accuracy', 0),
+-            '加权F1': metrics.get('f1_weighted', 0),
+-            '平均ECE': 1 - metrics.get('ece_avg', 0),  # 转换为准确率形式
+-            '平均Brier分数': 1 - metrics.get('brier_score_avg', 0)  # 转换为准确率形式
++            '准确率': metrics.await get('accuracy', 0),
++            '加权F1': metrics.await get('f1_weighted', 0),
++            '平均ECE': 1 - metrics.await get('ece_avg', 0),  # 转换为准确率形式
++            '平均Brier分数': 1 - metrics.await get('brier_score_avg', 0)  # 转换为准确率形式
+         }
+ 
+         if 'roi' in metrics:
+@@ -559,7 +559,7 @@         plt.tight_layout()
+         return self.save_figure(fig, save_name)
+ 
+-    def create_comprehensive_report(self, y_true: np.ndarray, y_pred: np.ndarray,
++async def create_comprehensive_report(self, y_true: np.ndarray, y_pred: np.ndarray,
+                                   y_proba: np.ndarray, backtest_result=None,
+                                   metrics_result=None,
+                                   model_name: str = "Football Prediction Model") -> dict[str, list[str]]:
+@@ -630,7 +630,7 @@         logger.info(f"Comprehensive report created with {len(report_files)} chart types")
+         return report_files
+ 
+-    def export_data_for_tableau(self, y_true: np.ndarray, y_pred: np.ndarray,
++async def export_data_for_tableau(self, y_true: np.ndarray, y_pred: np.ndarray,
+                                y_proba: np.ndarray, backtest_result=None,
+                                output_file: str = None) -> str:
+         """
+@@ -695,7 +695,7 @@ 
+ 
+ # 便捷函数
+-def create_evaluation_plots(y_true: np.ndarray, y_pred: np.ndarray, y_proba: np.ndarray,
++async def create_evaluation_plots(y_true: np.ndarray, y_pred: np.ndarray, y_proba: np.ndarray,
+                           backtest_result=None, metrics_result=None,
+                           output_dir: str = None, model_name: str = "Model") -> dict[str, list[str]]:
+     """

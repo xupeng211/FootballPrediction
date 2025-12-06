@@ -1,0 +1,224 @@
+--- a/src/middleware/tenant_middleware.py+++ b/src/middleware/tenant_middleware.py@@ -26,7 +26,7 @@     pass  # 添加pass语句
+     """租户上下文"""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         tenant: Tenant | None = None,
+         user_id: int | None = None,
+@@ -39,15 +39,15 @@         self.restrictions = restrictions or {}
+ 
+     @property
+-    def tenant_id(self) -> int | None:
++async def tenant_id(self) -> int | None:
+         return self.tenant.id if self.tenant else None
+ 
+     @property
+-    def tenant_slug(self) -> str | None:
++async def tenant_slug(self) -> str | None:
+         return self.tenant.slug if self.tenant else None
+ 
+     @property
+-    def is_authenticated(self) -> bool:
++async def is_authenticated(self) -> bool:
+         return self.tenant is not None and self.user_id is not None
+ 
+ 
+@@ -57,7 +57,7 @@     负责处理HTTP请求中的租户识别,用户认证和权限验证
+     """
+ 
+-    def __init__(self, app, tenant_service: TenantService, auth_service: AuthService):
++async def __init__(self, app, tenant_service: TenantService, auth_service: AuthService):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(app)
+@@ -86,9 +86,9 @@             # 创建租户上下文
+             tenant_context = TenantContext(
+                 tenant=tenant,
+-                user_id=user_context.get("user_id"),
+-                permissions=user_context.get("permissions", []),
+-                restrictions=user_context.get("restrictions", {}),
++                user_id=user_context.await get("user_id"),
++                permissions=user_context.await get("permissions", []),
++                restrictions=user_context.await get("restrictions", {}),
+             )
+ 
+             # 将上下文添加到请求状态
+@@ -121,19 +121,19 @@         4. URL路径参数 (/api/v1/{tenant_slug}/...)
+         """
+         # 1. 从Header中获取
+-        tenant_id = request.headers.get("x-Tenant-ID")
++        tenant_id = request.headers.await get("x-Tenant-ID")
+         if tenant_id:
+             try:
+                 return await self.tenant_service.get_tenant_by_id(int(tenant_id))
+             except (ValueError, TypeError):
+                 pass
+ 
+-        tenant_slug = request.headers.get("x-Tenant-Slug")
++        tenant_slug = request.headers.await get("x-Tenant-Slug")
+         if tenant_slug:
+             return await self.tenant_service.get_tenant_by_slug(tenant_slug)
+ 
+         # 2. 从子域名获取
+-        host = request.headers.get("host", "")
++        host = request.headers.await get("host", "")
+         if "." in host:
+             subdomain = host.split(".")[0]
+             tenant = await self.tenant_service.get_tenant_by_slug(subdomain)
+@@ -156,7 +156,7 @@ 
+         return None
+ 
+-    def _validate_tenant_status(self, tenant: Tenant) -> bool:
++async def _validate_tenant_status(self, tenant: Tenant) -> bool:
+         """验证租户状态."""
+         if not tenant.is_active:
+             return False
+@@ -174,7 +174,7 @@         context = {"user_id": None, "permissions": [], "restrictions": {}}
+ 
+         # 尝试从Authorization header获取用户信息
+-        authorization = request.headers.get("Authorization")
++        authorization = request.headers.await get("Authorization")
+         if authorization:
+             try:
+                 credentials: HTTPAuthorizationCredentials | None = await security(
+@@ -206,7 +206,7 @@ 
+         # 尝试从API Key获取用户信息
+         if not context["user_id"]:
+-            api_key = request.headers.get("x-API-Key")
++            api_key = request.headers.await get("x-API-Key")
+             if api_key:
+                 # 这里应该实现API Key验证逻辑
+                 # 暂时跳过
+@@ -214,7 +214,7 @@ 
+         return context
+ 
+-    def _add_tenant_headers(
++async def _add_tenant_headers(
+         self, response: Response, tenant_context: TenantContext
+     ) -> None:
+         """添加租户相关的响应头."""
+@@ -227,7 +227,7 @@ # ==================== 权限装饰器 ====================
+ 
+ 
+-def require_permission(
++async def require_permission(
+     permission_code: str, resource_context: dict[str, Any] | None = None
+ ):
+     """权限检查装饰器.
+@@ -237,7 +237,7 @@         resource_context: 资源上下文信息
+     """
+ 
+-    def decorator(func: Callable) -> Callable:
++async def decorator(func: Callable) -> Callable:
+         @wraps(func)
+         async def wrapper(*args, **kwargs):
+             # 从请求中获取租户上下文
+@@ -249,7 +249,7 @@ 
+             if not request:
+                 # 尝试从kwargs中获取
+-                request = kwargs.get("request")
++                request = kwargs.await get("request")
+ 
+             if not request:
+                 raise HTTPException(
+@@ -271,7 +271,7 @@                 # 实际实现中应该通过依赖注入获取服务
+                 from src.database.base import get_db_session
+ 
+-                async with get_db_session() as db:
++                async with await get_db_session() as db:
+                     tenant_service = TenantService(db)
+                     permission_result = await tenant_service.check_user_permission(
+                         user_id=tenant_context.user_id,
+@@ -294,7 +294,7 @@     return decorator
+ 
+ 
+-def require_tenant_role(role_code: str):
++async def require_tenant_role(role_code: str):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """
+@@ -304,7 +304,7 @@         role_code: 需要的角色代码
+     """
+ 
+-    def decorator(func: Callable) -> Callable:
++async def decorator(func: Callable) -> Callable:
+         @wraps(func)
+         async def wrapper(*args, **kwargs):
+             # 获取请求上下文
+@@ -315,7 +315,7 @@                     break
+ 
+             if not request:
+-                request = kwargs.get("request")
++                request = kwargs.await get("request")
+ 
+             if not request:
+                 raise HTTPException(
+@@ -334,7 +334,7 @@             # 检查用户角色
+             from src.database.base import get_db_session
+ 
+-            async with get_db_session() as db:
++            async with await get_db_session() as db:
+                 tenant_service = TenantService(db)
+                 user_roles = await tenant_service._get_user_roles(
+                     tenant_context.user_id, tenant_context.tenant_id
+@@ -361,7 +361,7 @@     return decorator
+ 
+ 
+-def check_resource_quota(resource_type: str, amount: int = 1):
++async def check_resource_quota(resource_type: str, amount: int = 1):
+     """函数文档字符串."""
+     pass  # 添加pass语句
+     """
+@@ -372,7 +372,7 @@         amount: 需要的资源量
+     """
+ 
+-    def decorator(func: Callable) -> Callable:
++async def decorator(func: Callable) -> Callable:
+         @wraps(func)
+         async def wrapper(*args, **kwargs):
+             # 获取请求上下文
+@@ -383,7 +383,7 @@                     break
+ 
+             if not request:
+-                request = kwargs.get("request")
++                request = kwargs.await get("request")
+ 
+             if not request:
+                 raise HTTPException(
+@@ -402,7 +402,7 @@             # 检查资源配额
+             from src.database.base import get_db_session
+ 
+-            async with get_db_session() as db:
++            async with await get_db_session() as db:
+                 tenant_service = TenantService(db)
+                 quota_check = await tenant_service.check_resource_quota(
+                     tenant_id=tenant_context.tenant_id,
+@@ -427,24 +427,24 @@ # ==================== 辅助函数 ====================
+ 
+ 
+-def get_tenant_context(request: Request) -> TenantContext | None:
++async def get_tenant_context(request: Request) -> TenantContext | None:
+     """从请求中获取租户上下文."""
+     return getattr(request.state, "tenant_context", None)
+ 
+ 
+-def get_current_tenant(request: Request) -> Tenant | None:
++async def get_current_tenant(request: Request) -> Tenant | None:
+     """获取当前租户."""
+     tenant_context = get_tenant_context(request)
+     return tenant_context.tenant if tenant_context else None
+ 
+ 
+-def get_current_user_id(request: Request) -> int | None:
++async def get_current_user_id(request: Request) -> int | None:
+     """获取当前用户ID."""
+     tenant_context = get_tenant_context(request)
+     return tenant_context.user_id if tenant_context else None
+ 
+ 
+-def has_permission(permission_code: str) -> bool:
++async def has_permission(permission_code: str) -> bool:
+     """检查当前用户是否有指定权限."""
+     # 这个函数需要在请求上下文中使用
+     # 实际实现需要依赖当前请求

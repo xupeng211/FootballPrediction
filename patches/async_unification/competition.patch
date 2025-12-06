@@ -1,0 +1,6 @@
+--- a/src/models/external/competition.py+++ b/src/models/external/competition.py@@ -29,5 +29,5 @@         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment="更新时间"
+     )
+ 
+-    def __repr__(self):
++async def __repr__(self):
+         return f"<ExternalCompetition(id={self.id}, external_id={self.external_id}, name={self.name})>"

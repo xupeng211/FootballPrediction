@@ -1,0 +1,126 @@
+--- a/src/events/bus.py+++ b/src/events/bus.py@@ -18,7 +18,7 @@ class Event:
+     """事件基类."""
+ 
+-    def __init__(self, event_type: str, data: dict | None = None):
++async def __init__(self, event_type: str, data: dict | None = None):
+         self.event_type = event_type
+         self.data = data or {}
+         # 使用time.time()替代asyncio.get_event_loop().time()以避免事件循环问题
+@@ -30,14 +30,14 @@             # 如果没有运行的事件循环，使用系统时间
+             self.timestamp = time.time()
+ 
+-    def get_event_type(self) -> str:
++async def get_event_type(self) -> str:
+         return self.event_type
+ 
+ 
+ class EventHandler:
+     """事件处理器基类."""
+ 
+-    def __init__(self, name: str):
++async def __init__(self, name: str):
+         self.name = name
+         self._subscribed_events: set[str] = set()
+ 
+@@ -45,10 +45,10 @@         """处理事件."""
+         raise NotImplementedError
+ 
+-    def is_subscribed_to(self, event_type: str) -> bool:
++async def is_subscribed_to(self, event_type: str) -> bool:
+         return event_type in self._subscribed_events
+ 
+-    def add_subscription(self, event_type: str, queue: Any) -> None:
++async def add_subscription(self, event_type: str, queue: Any) -> None:
+         """添加订阅."""
+         self._subscribed_events.add(event_type)
+ 
+@@ -56,7 +56,7 @@ class EventBus:
+     """事件总线."""
+ 
+-    def __init__(self, max_workers: int = 10):
++async def __init__(self, max_workers: int = 10):
+         self._subscribers: dict[str, list[EventHandler]] = {}
+         self._queues: dict[str, Any] = {}
+         self._tasks: list[asyncio.Task] = []
+@@ -126,22 +126,22 @@             logger.warning("EventBus is not running")
+             return
+ 
+-        handlers = self._subscribers.get(event_type, [])
++        handlers = self._subscribers.await get(event_type, [])
+         if not handlers:
+             return
+ 
+         # 将事件放入队列
+-        queue = self._queues.get(event_type)
++        queue = self._queues.await get(event_type)
+         if queue:
+             await queue.put(event)
+ 
+-    def publish_sync(self, event_type: str, event: Event | EventData) -> None:
++async def publish_sync(self, event_type: str, event: Event | EventData) -> None:
+         """同步发布事件."""
+         import asyncio
+ 
+         if not self._running:
+             # 如果总线未启动，直接同步调用处理器
+-            handlers = self._subscribers.get(event_type, [])
++            handlers = self._subscribers.await get(event_type, [])
+             for handler in handlers:
+                 try:
+                     # 检查过滤器
+@@ -241,7 +241,7 @@                     )
+             return
+ 
+-        handlers = self._subscribers.get(event_type, [])
++        handlers = self._subscribers.await get(event_type, [])
+         if not handlers:
+             return
+ 
+@@ -333,7 +333,7 @@                     f"Handler {handler_name} failed to process event {event_type}: {e}"
+                 )
+ 
+-    def add_filter(self, handler: EventHandler, event_filter: callable) -> None:
++async def add_filter(self, handler: EventHandler, event_filter: callable) -> None:
+         """添加事件过滤器."""
+         if handler not in self._filters:
+             self._filters[handler] = []
+@@ -372,7 +372,7 @@                 handler_name = getattr(handler, "name", type(handler).__name__)
+                 logger.info(f"Handler {handler_name} subscribed to {event_type}")
+ 
+-    def subscribe_sync(self, event_type: str, handler: EventHandler) -> None:
++async def subscribe_sync(self, event_type: str, handler: EventHandler) -> None:
+         """同步订阅事件."""
+         if event_type not in self._subscribers:
+             self._subscribers[event_type] = []
+@@ -382,7 +382,7 @@             handler_name = getattr(handler, "name", type(handler).__name__)
+             logger.info(f"Handler {handler_name} subscribed to {event_type}")
+ 
+-    def unsubscribe_sync(self, event_type: str, handler: EventHandler) -> None:
++async def unsubscribe_sync(self, event_type: str, handler: EventHandler) -> None:
+         """同步取消订阅事件."""
+         if event_type in self._subscribers and handler in self._subscribers[event_type]:
+             self._subscribers[event_type].remove(handler)
+@@ -412,7 +412,7 @@         while self._running:
+             try:
+                 # 等待事件，设置超时
+-                event = await asyncio.wait_for(queue.get(), timeout=1.0)
++                event = await asyncio.await wait_for(queue.get(), timeout=1.0)
+ 
+                 if self._should_handle(handler, event):
+                     await self._handle_event(handler, event)
+@@ -471,7 +471,7 @@                 exc_info=True,
+             )
+ 
+-    def _should_handle(self, handler: EventHandler, event: Event | EventData) -> bool:
++async def _should_handle(self, handler: EventHandler, event: Event | EventData) -> bool:
+         """检查处理器是否应该处理事件."""
+         # 检查过滤器
+         if handler in self._filters:
+@@ -490,7 +490,7 @@ _event_bus: EventBus | None = None
+ 
+ 
+-def get_event_bus() -> EventBus:
++async def get_event_bus() -> EventBus:
+     """获取事件总线实例."""
+     global _event_bus
+     if _event_bus is None:

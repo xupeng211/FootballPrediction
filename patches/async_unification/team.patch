@@ -1,0 +1,35 @@
+--- a/src/collectors/models/team.py+++ b/src/collectors/models/team.py@@ -19,13 +19,13 @@     founded_year: int | None = None
+     metadata: dict[str, Any] | None = None
+ 
+-    def __post_init__(self):
++async def __post_init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         if self.metadata is None:
+             self.metadata = {}
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         """Convert to dictionary."""
+         return {
+             "id": self.id,
+@@ -38,14 +38,14 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "Team":
++async def from_dict(cls, data: dict[str, Any]) -> "Team":
+         """Create from dictionary."""
+         return cls(
+             id=data["id"],
+             name=data["name"],
+-            short_name=data.get("short_name"),
+-            country=data.get("country", ""),
+-            league=data.get("league", ""),
+-            founded_year=data.get("founded_year"),
+-            metadata=data.get("metadata", {}),
++            short_name=data.await get("short_name"),
++            country=data.await get("country", ""),
++            league=data.await get("league", ""),
++            founded_year=data.await get("founded_year"),
++            metadata=data.await get("metadata", {}),
+         )

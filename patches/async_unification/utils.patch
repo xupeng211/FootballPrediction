@@ -1,0 +1,85 @@
+--- a/src/tasks/utils.py+++ b/src/tasks/utils.py@@ -24,7 +24,7 @@     try:
+         db_manager = DatabaseManager()
+ 
+-        async with db_manager.get_async_session() as session:
++        async with db_manager.await get_async_session() as session:
+             # 查询当前时间前后2小时内的比赛
+             now = datetime.now()
+             start_time = now - timedelta(hours=2)
+@@ -63,7 +63,7 @@     try:
+         db_manager = DatabaseManager()
+ 
+-        async with db_manager.get_async_session() as session:
++        async with db_manager.await get_async_session() as session:
+             now = datetime.now()
+             end_time = now + timedelta(hours=hours)
+ 
+@@ -83,7 +83,7 @@             """
+             )
+ 
+-            result = await session.execute(query, {"now": now, "end_time": end_time})
++            result = await session.await execute(query, {"now": now, "end_time": end_time})
+ 
+             _matches = []
+             for row in result:
+@@ -104,7 +104,7 @@         return []
+ 
+ 
+-def is_match_day(date: datetime | None = None) -> bool:
++async def is_match_day(date: datetime | None = None) -> bool:
+     """检查指定日期是否有比赛.
+ 
+     Args:
+@@ -130,7 +130,7 @@     try:
+         db_manager = DatabaseManager()
+ 
+-        async with db_manager.get_async_session() as session:
++        async with db_manager.await get_async_session() as session:
+             # 查询最近30天内有比赛的联赛
+             query = text(
+                 """
+@@ -142,7 +142,7 @@             """
+             )
+ 
+-            result = await session.execute(query)
++            result = await session.await execute(query)
+             leagues = [row.name for row in result]
+ 
+             return leagues
+@@ -152,7 +152,7 @@         return ["Premier League", "La Liga", "Serie A", "Bundesliga"]
+ 
+ 
+-def calculate_next_collection_time(
++async def calculate_next_collection_time(
+     task_name: str, interval_minutes: int = None
+ ) -> datetime:
+     """计算下次采集时间.
+@@ -202,7 +202,7 @@     try:
+         db_manager = DatabaseManager()
+ 
+-        async with db_manager.get_async_session() as session:
++        async with db_manager.await get_async_session() as session:
+             # 清理7天前的错误日志
+             cleanup_query = text(
+                 """
+@@ -211,7 +211,7 @@             """
+             )
+ 
+-            result = await session.execute(cleanup_query)
++            result = await session.await execute(cleanup_query)
+             await session.commit()
+ 
+             # For DELETE queries, we need to check if the result has rowcount
+@@ -223,7 +223,7 @@         return 0
+ 
+ 
+-def get_task_priority(task_name: str) -> int:
++async def get_task_priority(task_name: str) -> int:
+     """获取任务优先级.
+ 
+     Args:
+@@ -238,4 +238,4 @@         "collect_fixtures_task": 3,  # 赛程采集优先级较低
+     }
+ 
+-    return priorities.get(str(task_name), 5)  # 默认优先级为5
++    return priorities.await get(str(task_name), 5)  # 默认优先级为5

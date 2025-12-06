@@ -1,0 +1,50 @@
+--- a/src/tasks/celery_app.py+++ b/src/tasks/celery_app.py@@ -26,18 +26,18 @@     pass  # 添加pass语句
+     """数据库管理器模拟类,用于支持测试"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.logger = logging.getLogger(f"{__name__}.DatabaseManager")
+ 
+-    def get_connection(self):
++async def get_connection(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """获取数据库连接"""
+         return None
+ 
+-    def close_connection(self):
++async def close_connection(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """关闭数据库连接"""
+@@ -50,18 +50,18 @@     pass  # 添加pass语句
+     """Redis管理器模拟类,用于支持测试"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         self.logger = logging.getLogger(f"{__name__}.RedisManager")
+ 
+-    def get_redis_client(self):
++async def get_redis_client(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """获取Redis客户端"""
+         return None
+ 
+-    def close_connection(self):
++async def close_connection(self):
+         """函数文档字符串."""
+         # 添加pass语句
+         """关闭Redis连接"""
+@@ -250,7 +250,7 @@     }
+ 
+     @classmethod
+-    def get_retry_config(cls, task_name: str) -> dict:
++async def get_retry_config(cls, task_name: str) -> dict:
+         """获取任务的重试配置."""
+         return cls.TASK_RETRY_CONFIGS.get(
+             task_name,

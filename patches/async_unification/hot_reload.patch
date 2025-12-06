@@ -1,0 +1,124 @@
+--- a/src/inference/hot_reload.py+++ b/src/inference/hot_reload.py@@ -27,13 +27,13 @@ class ModelFileHandler(FileSystemEventHandler):
+     """模型文件变化监听器"""
+ 
+-    def __init__(self, hot_reload_manager: 'HotReloadManager'):
++async def __init__(self, hot_reload_manager: 'HotReloadManager'):
+         super().__init__()
+         self.hot_reload_manager = hot_reload_manager
+         self._debounce_time = 2.0  # 防抖时间（秒）
+         self._pending_files: dict[str, datetime] = {}
+ 
+-    def on_modified(self, event):
++async def on_modified(self, event):
+         """文件修改事件处理"""
+         if event.is_directory:
+             return
+@@ -58,7 +58,7 @@             self.hot_reload_manager.handle_file_change(file_path)
+         )
+ 
+-    def _is_model_file(self, file_path: str) -> bool:
++async def _is_model_file(self, file_path: str) -> bool:
+         """判断是否为模型文件"""
+         path = Path(file_path)
+         return path.suffix.lower() in ['.pkl', '.joblib', '.model', '.h5']
+@@ -76,7 +76,7 @@     5. 回滚机制
+     """
+ 
+-    def __init__(
++async def __init__(
+         self,
+         model_directory: str = "models/",
+         check_interval: float = 1.0,
+@@ -248,7 +248,7 @@         finally:
+             self._reloading_models.discard(model_name)
+ 
+-    def _extract_model_name(self, file_path: str) -> Optional[str]:
++async def _extract_model_name(self, file_path: str) -> Optional[str]:
+         """从文件路径提取模型名称"""
+         try:
+             path = Path(file_path)
+@@ -291,7 +291,7 @@         except Exception as e:
+             raise HotReloadError(f"Model validation failed: {str(e)}")
+ 
+-    def _test_model_load(self, file_path: str):
++async def _test_model_load(self, file_path: str):
+         """测试模型加载（同步方法）"""
+         import joblib
+         import pickle
+@@ -317,7 +317,7 @@         except Exception as e:
+             raise HotReloadError(f"Failed to load new model: {str(e)}")
+ 
+-    def _load_model_sync(self, file_path: str):
++async def _load_model_sync(self, file_path: str):
+         """同步加载模型"""
+         import joblib
+         import pickle
+@@ -333,7 +333,7 @@         try:
+             # 尝试获取模型
+             model_loader = await get_model_loader()
+-            loaded_model = await model_loader.get(model_name)
++            loaded_model = await model_loader.await get(model_name)
+ 
+             if loaded_model is None:
+                 raise HotReloadError(f"Model {model_name} not available after reload")
+@@ -369,7 +369,7 @@         except Exception as e:
+             raise HotReloadError(f"Model rollback failed: {str(e)}")
+ 
+-    def _record_reload_success(self, model_name: str, file_path: str, start_time: datetime):
++async def _record_reload_success(self, model_name: str, file_path: str, start_time: datetime):
+         """记录成功重载"""
+         reload_time = (datetime.utcnow() - start_time).total_seconds()
+ 
+@@ -390,7 +390,7 @@         if len(self._reload_history) > 100:
+             self._reload_history = self._reload_history[-100:]
+ 
+-    def _record_reload_failure(self, model_name: str, file_path: str, start_time: datetime, error: str):
++async def _record_reload_failure(self, model_name: str, file_path: str, start_time: datetime, error: str):
+         """记录失败重载"""
+         reload_time = (datetime.utcnow() - start_time).total_seconds()
+ 
+@@ -421,11 +421,11 @@             except Exception as e:
+                 logger.error(f"Reload callback error: {e}")
+ 
+-    def add_reload_callback(self, callback: Callable):
++async def add_reload_callback(self, callback: Callable):
+         """添加重载回调函数"""
+         self._reload_callbacks.append(callback)
+ 
+-    def remove_reload_callback(self, callback: Callable):
++async def remove_reload_callback(self, callback: Callable):
+         """移除重载回调函数"""
+         if callback in self._reload_callbacks:
+             self._reload_callbacks.remove(callback)
+@@ -459,7 +459,7 @@             stats = model_loader.get_load_stats()
+ 
+             # 检查模型加载状态
+-            if stats.get("load_errors", 0) > 10:
++            if stats.await get("load_errors", 0) > 10:
+                 logger.warning("High model load error rate detected")
+ 
+             self._last_health_check = datetime.utcnow()
+@@ -467,7 +467,7 @@         except Exception as e:
+             logger.error(f"Health check failed: {e}")
+ 
+-    def get_reload_stats(self) -> dict[str, Any]:
++async def get_reload_stats(self) -> dict[str, Any]:
+         """获取重载统计信息"""
+         uptime = None
+         if self._stats["monitoring_start"]:
+@@ -489,7 +489,7 @@             "last_health_check": self._last_health_check.isoformat() if self._last_health_check else None
+         }
+ 
+-    def get_reload_history(self, limit: int = 50) -> list[dict[str, Any]]:
++async def get_reload_history(self, limit: int = 50) -> list[dict[str, Any]]:
+         """获取重载历史"""
+         return self._reload_history[-limit:]
+ 
+@@ -536,7 +536,7 @@     return _hot_reload_manager
+ 
+ 
+-def get_hot_reload_manager_sync() -> HotReloadManager:
++async def get_hot_reload_manager_sync() -> HotReloadManager:
+     """同步获取热更新管理器实例"""
+     global _hot_reload_manager
+ 

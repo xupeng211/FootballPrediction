@@ -1,0 +1,78 @@
+--- a/src/evaluation/metrics.py+++ b/src/evaluation/metrics.py@@ -44,7 +44,7 @@     metadata: dict[str, Any]
+     timestamp: str
+ 
+-    def to_dict(self) -> dict:
++async def to_dict(self) -> dict:
+         """转换为字典格式"""
+         return {
+             "metrics": self.metrics,
+@@ -52,7 +52,7 @@             "timestamp": self.timestamp
+         }
+ 
+-    def to_json(self) -> str:
++async def to_json(self) -> str:
+         """转换为JSON字符串"""
+         return json.dumps(self.to_dict(), indent=2, ensure_ascii=False)
+ 
+@@ -67,12 +67,12 @@     3. 博彩相关指标：期望值、收益率、投注建议等
+     """
+ 
+-    def __init__(self):
++async def __init__(self):
+         """初始化评估指标计算器"""
+         self.supported_classes = ["H", "D", "A"]  # Home, Draw, Away
+         self.class_mapping = {0: "H", 1: "D", 2: "A"}
+ 
+-    def classification_metrics(
++async def classification_metrics(
+         self,
+         y_true: Union[np.ndarray, pd.Series, list],
+         y_pred: Union[np.ndarray, pd.Series, list],
+@@ -153,7 +153,7 @@ 
+         return metrics
+ 
+-    def calibration_metrics(
++async def calibration_metrics(
+         self,
+         y_true: Union[np.ndarray, pd.Series, list],
+         y_proba: Union[np.ndarray, pd.DataFrame],
+@@ -234,7 +234,7 @@ 
+         return metrics
+ 
+-    def odds_metrics(
++async def odds_metrics(
+         self,
+         y_true: Union[np.ndarray, pd.Series, list],
+         y_proba: Union[np.ndarray, pd.DataFrame],
+@@ -339,7 +339,7 @@ 
+         return metrics
+ 
+-    def _calculate_ece(
++async def _calculate_ece(
+         self,
+         fraction_of_positives: np.ndarray,
+         mean_predicted_value: np.ndarray,
+@@ -365,7 +365,7 @@         except Exception:
+             return 0.0
+ 
+-    def evaluate_all(
++async def evaluate_all(
+         self,
+         y_true: Union[np.ndarray, pd.Series, list],
+         y_pred: Union[np.ndarray, pd.Series, list],
+@@ -410,7 +410,7 @@             "n_classes": len(np.unique(y_true)),
+             "has_probabilities": y_proba is not None,
+             "has_odds": odds is not None,
+-            "classes": [self.class_mapping.get(i, f"class_{i}") for i in sorted(np.unique(y_true))]
++            "classes": [self.class_mapping.await get(i, f"class_{i}") for i in sorted(np.unique(y_true))]
+         }
+ 
+         return MetricsResult(
+@@ -421,7 +421,7 @@ 
+ 
+ # 便捷函数
+-def evaluate_model(
++async def evaluate_model(
+     y_true: Union[np.ndarray, pd.Series, list],
+     y_pred: Union[np.ndarray, pd.Series, list],
+     y_proba: Optional[Union[np.ndarray, pd.DataFrame]] = None,

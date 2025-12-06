@@ -1,0 +1,80 @@
+--- a/src/models/train_v1_final.py+++ b/src/models/train_v1_final.py@@ -39,14 +39,14 @@ class V1FinalModelTrainer:
+     """V1.1 实战级预测模型训练器"""
+ 
+-    def __init__(self):
++async def __init__(self):
+         self.model = None
+         self.scaler = None
+         self.label_encoder = None
+         self.feature_names = None
+         self.training_results = {}
+ 
+-    def load_training_data(self, data_path: str) -> pd.DataFrame:
++async def load_training_data(self, data_path: str) -> pd.DataFrame:
+         """
+         加载训练数据
+ 
+@@ -69,7 +69,7 @@             logger.error(f"❌ 加载训练数据失败: {e}")
+             return pd.DataFrame()
+ 
+-    def prepare_features_and_target(
++async def prepare_features_and_target(
+         self, df: pd.DataFrame
+     ) -> tuple[pd.DataFrame, pd.Series]:
+         """
+@@ -140,7 +140,7 @@             logger.error(f"❌ 特征准备失败: {e}")
+             return pd.DataFrame(), pd.Series()
+ 
+-    def time_split_data(
++async def time_split_data(
+         self, X: pd.DataFrame, y: pd.Series, test_size: float = 0.2
+     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+         """
+@@ -203,7 +203,7 @@                 logger.error(f"❌ 简单切分也失败: {e2}")
+                 return pd.DataFrame(), pd.DataFrame(), pd.Series(), pd.Series()
+ 
+-    def train_model(
++async def train_model(
+         self, X_train: pd.DataFrame, y_train: pd.Series
+     ) -> xgb.XGBClassifier:
+         """
+@@ -287,7 +287,7 @@             traceback.print_exc()
+             return None
+ 
+-    def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
++async def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
+         """
+         评估模型性能
+ 
+@@ -487,7 +487,7 @@             logger.error(f"❌ 模型评估失败: {e}")
+             return {}
+ 
+-    def _convert_label_to_validator_format(self, label: str) -> str:
++async def _convert_label_to_validator_format(self, label: str) -> str:
+         """
+         将标签转换为验证器期望的格式
+ 
+@@ -500,7 +500,7 @@         label_mapping = {"Home Win": "home_win", "Away Win": "away_win", "Draw": "draw"}
+         return label_mapping.get(label, "draw")
+ 
+-    def simulate_betting_roi(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
++async def simulate_betting_roi(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
+         """
+         模拟投注ROI - 这是检验模型商业价值的唯一标准
+ 
+@@ -597,7 +597,7 @@             logger.error(f"❌ ROI模拟失败: {e}")
+             return {}
+ 
+-    def save_model(self, save_dir: str = None) -> str:
++async def save_model(self, save_dir: str = None) -> str:
+         """
+         保存训练好的模型
+ 
+@@ -660,7 +660,7 @@             return None
+ 
+ 
+-def main():
++async def main():
+     """主函数"""
+     logger.info("🚀 首席AI科学家 - 开始V1.1实战级预测模型训练")
+     logger.info("=" * 70)

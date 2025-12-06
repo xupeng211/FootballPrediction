@@ -1,0 +1,358 @@
+--- a/src/events/types.py+++ b/src/events/types.py@@ -16,7 +16,7 @@ class MatchEventData(EventData):
+     """比赛事件数据."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         match_id: int,
+         home_team_id: int,
+@@ -42,7 +42,7 @@ class MatchCreatedEventData(MatchEventData):
+     """比赛创建事件数据."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         match_id: int,
+         home_team_id: int,
+@@ -68,7 +68,7 @@ class MatchUpdatedEventData(MatchEventData):
+     """比赛更新事件数据."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         match_id: int,
+         home_team_id: int,
+@@ -95,7 +95,7 @@ class PredictionEventData(EventData):
+     """预测事件数据."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         match_id: int,
+@@ -119,7 +119,7 @@ class PredictionMadeEventData(PredictionEventData):
+     """预测创建事件数据."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         match_id: int,
+@@ -149,7 +149,7 @@ class PredictionUpdatedEventData(PredictionEventData):
+     """预测更新事件数据."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         prediction_id: int,
+         match_id: int,
+@@ -180,7 +180,7 @@ class UserEventData(EventData):
+     """用户事件数据."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         user_id: int,
+         username: str,
+@@ -198,7 +198,7 @@ class UserRegisteredEventData(UserEventData):
+     """用户注册事件数据."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         user_id: int,
+         username: str,
+@@ -225,7 +225,7 @@ class TeamStatsEventData(EventData):
+     """球队统计事件数据."""
+ 
+-    def __init__(
++async def __init__(
+         self,
+         team_id: int,
+         season: str,
+@@ -256,16 +256,16 @@ class MatchCreatedEvent(Event):
+     """比赛创建事件."""
+ 
+-    def __init__(self, data: MatchCreatedEventData):
++async def __init__(self, data: MatchCreatedEventData):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(data)
+ 
+     @classmethod
+-    def get_event_type(cls) -> str:
++async def get_event_type(cls) -> str:
+         return "match.created"
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         return {
+             "event_type": self.get_event_type(),
+             "event_id": self.event_id,
+@@ -286,23 +286,23 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "MatchCreatedEvent":
++async def from_dict(cls, data: dict[str, Any]) -> "MatchCreatedEvent":
+         event_data = MatchCreatedEventData(
+-            event_id=data.get("event_id"),
++            event_id=data.await get("event_id"),
+             timestamp=datetime.fromisoformat(data["timestamp"]),
+-            source=data.get("source"),
+-            version=data.get("version", "1.0"),
+-            metadata=data.get("metadata", {}),
++            source=data.await get("source"),
++            version=data.await get("version", "1.0"),
++            metadata=data.await get("metadata", {}),
+             match_id=data["match_id"],
+             home_team_id=data["home_team_id"],
+             away_team_id=data["away_team_id"],
+             league_id=data["league_id"],
+             match_time=datetime.fromisoformat(data["match_time"]),
+-            status=data.get("status", "upcoming"),
+-            venue=data.get("venue"),
+-            weather=data.get("weather"),
+-            created_by=data.get("created_by"),
+-            initial_odds=data.get("initial_odds"),
++            status=data.await get("status", "upcoming"),
++            venue=data.await get("venue"),
++            weather=data.await get("weather"),
++            created_by=data.await get("created_by"),
++            initial_odds=data.await get("initial_odds"),
+         )
+         return cls(event_data)
+ 
+@@ -310,16 +310,16 @@ class MatchUpdatedEvent(Event):
+     """比赛更新事件."""
+ 
+-    def __init__(self, data: MatchUpdatedEventData):
++async def __init__(self, data: MatchUpdatedEventData):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(data)
+ 
+     @classmethod
+-    def get_event_type(cls) -> str:
++async def get_event_type(cls) -> str:
+         return "match.updated"
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         return {
+             "event_type": self.get_event_type(),
+             "event_id": self.event_id,
+@@ -340,23 +340,23 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "MatchUpdatedEvent":
++async def from_dict(cls, data: dict[str, Any]) -> "MatchUpdatedEvent":
+         event_data = MatchUpdatedEventData(
+-            event_id=data.get("event_id"),
++            event_id=data.await get("event_id"),
+             timestamp=datetime.fromisoformat(data["timestamp"]),
+-            source=data.get("source"),
+-            version=data.get("version", "1.0"),
+-            metadata=data.get("metadata", {}),
++            source=data.await get("source"),
++            version=data.await get("version", "1.0"),
++            metadata=data.await get("metadata", {}),
+             match_id=data["match_id"],
+             home_team_id=data["home_team_id"],
+             away_team_id=data["away_team_id"],
+             league_id=data["league_id"],
+             match_time=datetime.fromisoformat(data["match_time"]),
+-            status=data.get("status", "upcoming"),
+-            venue=data.get("venue"),
+-            weather=data.get("weather"),
+-            updated_fields=data.get("updated_fields", {}),
+-            previous_status=data.get("previous_status"),
++            status=data.await get("status", "upcoming"),
++            venue=data.await get("venue"),
++            weather=data.await get("weather"),
++            updated_fields=data.await get("updated_fields", {}),
++            previous_status=data.await get("previous_status"),
+         )
+         return cls(event_data)
+ 
+@@ -364,16 +364,16 @@ class PredictionMadeEvent(Event):
+     """预测创建事件."""
+ 
+-    def __init__(self, data: PredictionMadeEventData):
++async def __init__(self, data: PredictionMadeEventData):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(data)
+ 
+     @classmethod
+-    def get_event_type(cls) -> str:
++async def get_event_type(cls) -> str:
+         return "prediction.made"
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         return {
+             "event_type": self.get_event_type(),
+             "event_id": self.event_id,
+@@ -393,22 +393,22 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "PredictionMadeEvent":
++async def from_dict(cls, data: dict[str, Any]) -> "PredictionMadeEvent":
+         event_data = PredictionMadeEventData(
+-            event_id=data.get("event_id"),
++            event_id=data.await get("event_id"),
+             timestamp=datetime.fromisoformat(data["timestamp"]),
+-            source=data.get("source"),
+-            version=data.get("version", "1.0"),
+-            metadata=data.get("metadata", {}),
++            source=data.await get("source"),
++            version=data.await get("version", "1.0"),
++            metadata=data.await get("metadata", {}),
+             prediction_id=data["prediction_id"],
+             match_id=data["match_id"],
+             user_id=data["user_id"],
+             predicted_home=data["predicted_home"],
+             predicted_away=data["predicted_away"],
+             confidence=data["confidence"],
+-            strategy_used=data.get("strategy_used"),
+-            points_earned=data.get("points_earned"),
+-            accuracy_score=data.get("accuracy_score"),
++            strategy_used=data.await get("strategy_used"),
++            points_earned=data.await get("points_earned"),
++            accuracy_score=data.await get("accuracy_score"),
+         )
+         return cls(event_data)
+ 
+@@ -416,16 +416,16 @@ class PredictionUpdatedEvent(Event):
+     """预测更新事件."""
+ 
+-    def __init__(self, data: PredictionUpdatedEventData):
++async def __init__(self, data: PredictionUpdatedEventData):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(data)
+ 
+     @classmethod
+-    def get_event_type(cls) -> str:
++async def get_event_type(cls) -> str:
+         return "prediction.updated"
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         return {
+             "event_type": self.get_event_type(),
+             "event_id": self.event_id,
+@@ -445,22 +445,22 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "PredictionUpdatedEvent":
++async def from_dict(cls, data: dict[str, Any]) -> "PredictionUpdatedEvent":
+         event_data = PredictionUpdatedEventData(
+-            event_id=data.get("event_id"),
++            event_id=data.await get("event_id"),
+             timestamp=datetime.fromisoformat(data["timestamp"]),
+-            source=data.get("source"),
+-            version=data.get("version", "1.0"),
+-            metadata=data.get("metadata", {}),
++            source=data.await get("source"),
++            version=data.await get("version", "1.0"),
++            metadata=data.await get("metadata", {}),
+             prediction_id=data["prediction_id"],
+             match_id=data["match_id"],
+             user_id=data["user_id"],
+             predicted_home=data["predicted_home"],
+             predicted_away=data["predicted_away"],
+             confidence=data["confidence"],
+-            strategy_used=data.get("strategy_used"),
+-            previous_prediction=data.get("previous_prediction"),
+-            update_reason=data.get("update_reason"),
++            strategy_used=data.await get("strategy_used"),
++            previous_prediction=data.await get("previous_prediction"),
++            update_reason=data.await get("update_reason"),
+         )
+         return cls(event_data)
+ 
+@@ -468,16 +468,16 @@ class UserRegisteredEvent(Event):
+     """用户注册事件."""
+ 
+-    def __init__(self, data: UserRegisteredEventData):
++async def __init__(self, data: UserRegisteredEventData):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(data)
+ 
+     @classmethod
+-    def get_event_type(cls) -> str:
++async def get_event_type(cls) -> str:
+         return "user.registered"
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         return {
+             "event_type": self.get_event_type(),
+             "event_id": self.event_id,
+@@ -495,20 +495,20 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "UserRegisteredEvent":
++async def from_dict(cls, data: dict[str, Any]) -> "UserRegisteredEvent":
+         event_data = UserRegisteredEventData(
+-            event_id=data.get("event_id"),
++            event_id=data.await get("event_id"),
+             timestamp=datetime.fromisoformat(data["timestamp"]),
+-            source=data.get("source"),
+-            version=data.get("version", "1.0"),
+-            metadata=data.get("metadata", {}),
++            source=data.await get("source"),
++            version=data.await get("version", "1.0"),
++            metadata=data.await get("metadata", {}),
+             user_id=data["user_id"],
+             username=data["username"],
+             email=data["email"],
+             registration_date=datetime.fromisoformat(data["registration_date"]),
+-            referral_code=data.get("referral_code"),
+-            ip_address=data.get("ip_address"),
+-            user_agent=data.get("user_agent"),
++            referral_code=data.await get("referral_code"),
++            ip_address=data.await get("ip_address"),
++            user_agent=data.await get("user_agent"),
+         )
+         return cls(event_data)
+ 
+@@ -516,16 +516,16 @@ class TeamStatsUpdatedEvent(Event):
+     """球队统计更新事件."""
+ 
+-    def __init__(self, data: TeamStatsEventData):
++async def __init__(self, data: TeamStatsEventData):
+         """函数文档字符串."""
+         # 添加pass语句
+         super().__init__(data)
+ 
+     @classmethod
+-    def get_event_type(cls) -> str:
++async def get_event_type(cls) -> str:
+         return "team.stats_updated"
+ 
+-    def to_dict(self) -> dict[str, Any]:
++async def to_dict(self) -> dict[str, Any]:
+         return {
+             "event_type": self.get_event_type(),
+             "event_id": self.event_id,
+@@ -546,13 +546,13 @@         }
+ 
+     @classmethod
+-    def from_dict(cls, data: dict[str, Any]) -> "TeamStatsUpdatedEvent":
++async def from_dict(cls, data: dict[str, Any]) -> "TeamStatsUpdatedEvent":
+         event_data = TeamStatsEventData(
+-            event_id=data.get("event_id"),
++            event_id=data.await get("event_id"),
+             timestamp=datetime.fromisoformat(data["timestamp"]),
+-            source=data.get("source"),
+-            version=data.get("version", "1.0"),
+-            metadata=data.get("metadata", {}),
++            source=data.await get("source"),
++            version=data.await get("version", "1.0"),
++            metadata=data.await get("metadata", {}),
+             team_id=data["team_id"],
+             season=data["season"],
+             matches_played=data["matches_played"],
