@@ -17,6 +17,8 @@
 [![Tests](https://img.shields.io/badge/Tests-385%20passed-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-green?style=flat-square)](reports/security_audit.md)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square&logo=docker)](https://docker.com)
+[![Version](https://img.shields.io/badge/Version-v4.0.1-hotfix-green?style=flat-square)](RELEASE_NOTES.md)
+[![Lint Status](https://img.shields.io/badge/Lint-Passing-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 
 基于现代技术栈的**企业级足球预测系统**，采用 Python FastAPI + Vue.js 3 全栈架构，具备完整的开发基础设施和最佳实践配置。
 
