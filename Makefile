@@ -268,26 +268,26 @@ run-l2: ## 🎯 运行 L2 详情数据采集 (旧版HTML解析)
 	@echo "$(YELLOW)🎯 运行 L2 详情数据采集 (旧版)...$(RESET)"
 	docker-compose exec app python3 src/jobs/run_l2_details.py
 
-# L2 API采集器命令
+# L2 API采集器命令 (已移至legacy)
 run-l2-api: ## 🚀 运行 L2 API 详情数据采集
 	@echo "$(YELLOW)🚀 运行 L2 API 详情数据采集...$(RESET)"
-	docker-compose exec app python3 src/jobs/run_l2_api_details.py full
+	docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py full
 
 run-l2-api-dry: ## 🔍 试运行 L2 API 采集 (不写入数据库)
 	@echo "$(YELLOW)🔍 试运行 L2 API 采集...$(RESET)"
-	docker-compose exec app python3 src/jobs/run_l2_api_details.py dry-run
+	docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py dry-run
 
 run-l2-api-backfill: ## 🔄 运行 L2 API 增量回填
 	@echo "$(YELLOW)🔄 运行 L2 API 增量回填...$(RESET)"
-	docker-compose exec app python3 src/jobs/run_l2_api_details.py backfill
+	docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py backfill
 
 run-l2-api-debug: ## 🐛 调试模式 L2 API 采集 (少量数据)
 	@echo "$(YELLOW)🐛 调试模式 L2 API 采集...$(RESET)"
-	LIMIT=10 BATCH_SIZE=5 MAX_CONCURRENT=1 docker-compose exec app python3 src/jobs/run_l2_api_details.py dry-run
+	LIMIT=10 BATCH_SIZE=5 MAX_CONCURRENT=1 docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py dry-run
 
 run-l2-api-performance: ## ⚡ 高性能 L2 API 采集
 	@echo "$(YELLOW)⚡ 高性能 L2 API 采集...$(RESET)"
-	LIMIT=50000 BATCH_SIZE=200 MAX_CONCURRENT=20 docker-compose exec app python3 src/jobs/run_l2_api_details.py full
+	LIMIT=50000 BATCH_SIZE=200 MAX_CONCURRENT=20 docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py full
 
 # 监控命令
 monitor: ## 管理/实时监控应用资源使用
