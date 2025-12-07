@@ -14,6 +14,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Code Quality**: A+ rating with enterprise-grade security standards
 - **Full Stack Modernization**: Vue.js 3 + TypeScript + FastAPI + PostgreSQL 15
 
+### v4.0.2 Documentation Enhancement (2025-12-07)
+- **Enhanced Essential Scripts**: Added comprehensive script categorization with 20+ key commands
+- **Frontend Troubleshooting**: Detailed Vue.js, TypeScript, Vite, and Tailwind CSS troubleshooting guides
+- **Monitoring Tools Guide**: Complete Prefect, Flower, and MLflow UI usage instructions
+- **Daily Development Workflow**: Step-by-step checklist with morning, development, and end-of-day procedures
+- **Performance Monitoring**: Added system health checks and performance monitoring scripts
+
 ### v2.5.0 Backend Complete
 - **Complete Backend Architecture v2.5**: Enterprise-grade task orchestration with MLflow integration
 - **Prefect + Celery Scheduler**: Hybrid scheduling system for workflow orchestration
@@ -234,19 +241,35 @@ make db-shell         # Enter PostgreSQL interactive terminal
 
 ### 🔧 Essential Scripts & Tools
 ```bash
-# Data collection scripts
-python scripts/refresh_fotmob_tokens.py    # Refresh FotMob API tokens
-python scripts/daily_pipeline.py          # Run daily data collection
-python scripts/backfill_details_fotmob_v2.py  # Backfill missing match data
+# 数据采集脚本 (核心业务功能)
+python scripts/refresh_fotmob_tokens.py        # 刷新 FotMob API 令牌
+python scripts/daily_pipeline.py              # 运行每日数据采集
+python scripts/backfill_details_fotmob_v2.py   # 回填缺失的比赛数据
+python scripts/collect_l1_fixtures.py          # L1 基础数据采集
+python scripts/fbref_real_data_collector.py    # FBref 数据采集器
 
-# ML model scripts
-python scripts/train_model_v2.py          # Train ML models
-python scripts/tune_model_optuna.py       # Hyperparameter optimization
-python scripts/generate_predictions.py    # Generate match predictions
+# 机器学习脚本
+python scripts/train_model_v2.py               # 训练 ML 模型
+python scripts/tune_model_optuna.py            # 超参数优化
+python scripts/generate_predictions.py         # 生成比赛预测
+python scripts/generate_advanced_features.py   # 生成高级特征
+python scripts/backtest_standalone_demo.py     # 回测演示脚本
 
-# System maintenance
-python scripts/ops_monitor.py             # Operations monitoring dashboard
-python scripts/deploy_verify.py           # Deployment verification
+# 运维与监控脚本
+python scripts/ops_monitor.py                  # 运维监控仪表板
+python scripts/deploy_verify.py                # 部署验证
+python scripts/validate_data_integrity.py      # 数据完整性验证
+python scripts/scan_secrets.py                 # 敏感信息扫描
+
+# 数据库管理脚本
+python scripts/init_db.py                      # 初始化数据库
+python scripts/check_db_content.py             # 检查数据库内容
+python scripts/massive_backfill.py             # 大规模数据回填
+
+# 性能与调试脚本
+python scripts/proxy_check.py                  # 代理配置检查
+python scripts/data_flow_watchdog.py           # 数据流监控
+python scripts/fotmob_real_audit.py            # FotMob 数据审计
 ```
 
 ### 📈 Data Collection Commands
@@ -275,17 +298,176 @@ docker-compose exec prefect prefect work-queue ls                    # List work
 docker-compose exec prefect prefect deployment ls                   # List deployments
 docker-compose exec prefect prefect flow-run ls                    # List flow runs
 docker-compose exec prefect prefect flow-run get <flow-run-id>      # Get flow run details
+docker-compose exec prefect prefect flow-run cancel <flow-run-id>   # Cancel running flow
+docker-compose exec prefect prefect flow-run retry <flow-run-id>    # Retry failed flow
 
 # Celery Task Management
 docker-compose exec celery celery -A src.tasks.celery_app inspect active    # Active tasks
 docker-compose exec celery celery -A src.tasks.celery_app inspect scheduled  # Scheduled tasks
 docker-compose exec celery celery -A src.tasks.celery_app inspect stats      # Worker stats
+docker-compose exec celery celery -A src.tasks.celery_app inspect reserved   # Reserved tasks
 docker-compose exec celery celery -A src.tasks.celery_app purge               # Clear queue
+docker-compose exec celery celery -A src.tasks.celery_app control enable      # Enable tasks
+docker-compose exec celery celery -A src.tasks.celery_app control disable     # Disable tasks
 
 # MLflow Experiment Tracking
 docker-compose exec mlflow mlflow experiments list                    # List experiments
 docker-compose exec mlflow mlflow runs list -e <experiment-id>        # List runs in experiment
 docker-compose exec mlflow mlflow ui --port 5000                     # Start MLflow UI (if not running)
+docker-compose exec mlflow mlflow models list                        # List registered models
+docker-compose exec mlflow mlflow model-versions list --name <model>  # List model versions
+```
+
+### 📊 监控工具详细使用指南
+
+#### Prefect UI - 工作流编排 (http://localhost:4200)
+```bash
+# 启动 Prefect 服务
+docker-compose -f docker-compose.scheduler.yml up -d prefect
+
+# 检查 Prefect 服务状态
+curl http://localhost:4200/health
+
+# 常用 Prefect 命令
+docker-compose exec prefect prefect get-work-queue                 # 获取工作队列详情
+docker-compose exec prefect prefect schedule ls                    # 列出所有调度
+docker-compose exec prefect prefect block ls                      # 列出所有块（存储、认证等）
+
+# 日志查看
+docker-compose logs prefect | tail -50                            # 最近50行日志
+docker-compose logs prefect | grep -E "ERROR|WARN"               # 只看错误和警告
+
+# 故障排查
+# 如果工作流卡住：
+docker-compose exec prefect prefect flow-run cancel --force <run-id>
+
+# 如果队列堆积：
+docker-compose exec prefect prefect work-queue pause <queue-name>
+docker-compose exec prefect prefect work-queue resume <queue-name>
+```
+
+#### Flower UI - Celery 任务监控 (http://localhost:5555)
+```bash
+# 启动 Celery 监控
+docker-compose -f docker-compose.scheduler.yml up -d celery flower
+
+# 实时任务监控命令
+docker-compose exec celery celery -A src.tasks.celery_app inspect active      # 查看活跃任务
+docker-compose exec celery celery -A src.tasks.celery_app inspect reserved    # 查看预留任务
+docker-compose exec celery celery -A src.tasks.celery_app inspect scheduled   # 查看计划任务
+
+# 性能监控
+docker-compose exec celery celery -A src.tasks.celery_app inspect stats       # 工作进程统计
+docker-compose exec celery celery -A src.tasks.celery_app inspect report      # 详细报告
+
+# 任务管理
+docker-compose exec celery celery -A src.tasks.celery_app purge -Q <queue>    # 清空特定队列
+docker-compose exec celery celery -A src.tasks.celery_app control revoke <task-id>  # 撤销任务
+
+# 工作进程管理
+docker-compose exec celery celery -A src.tasks.celery_app control pool_restart  # 重启工作池
+docker-compose exec celery celery -A src.tasks.celery_app control pool_restart @worker1  # 重启特定工作器
+```
+
+#### MLflow UI - ML 实验跟踪 (http://localhost:5000)
+```bash
+# 启动 MLflow 服务
+docker-compose -f docker-compose.scheduler.yml up -d mlflow
+
+# 实验管理
+docker-compose exec mlflow mlflow experiments create --name <experiment-name>  # 创建新实验
+docker-compose exec mlflow mlflow experiments delete <experiment-id>          # 删除实验
+
+# 运行管理
+docker-compose exec mlflow mlflow runs delete --run-id <run-id>               # 删除运行
+docker-compose exec mlflow mlflow runs restore --run-id <run-id>              # 恢复删除的运行
+
+# 模型注册
+docker-compose exec mlflow mlflow model-register create --name <model-name>   # 注册新模型
+docker-compose exec mlflow mlflow model-transition --name <model> --stage Staging --version <version>  # 模型版本转换
+
+# 数据监控
+docker-compose exec mlflow mlflow artifacts download --run-id <run-id> -d ./artifacts  # 下载产物
+docker-compose exec mlflow mlflow artifacts list --run-id <run-id>            # 列出产物
+```
+
+### 🚨 监控告警设置
+
+#### 健康检查端点监控
+```bash
+# 系统健康检查脚本
+#!/bin/bash
+# save as monitor_system.sh
+
+# 检查各个服务状态
+echo "🔍 系统健康检查"
+echo "================"
+
+# 后端API
+if curl -s http://localhost:8000/health > /dev/null; then
+    echo "✅ 后端API健康"
+else
+    echo "❌ 后端API异常"
+fi
+
+# 前端开发服务器
+if curl -s http://localhost:5173 > /dev/null; then
+    echo "✅ 前端服务健康"
+else
+    echo "⚠️ 前端服务未启动"
+fi
+
+# 数据库连接
+if docker-compose exec -T db pg_isready -U football_prediction > /dev/null 2>&1; then
+    echo "✅ 数据库连接正常"
+else
+    echo "❌ 数据库连接失败"
+fi
+
+# Redis连接
+if docker-compose exec -T redis redis-cli ping > /dev/null 2>&1; then
+    echo "✅ Redis连接正常"
+else
+    echo "⚠️ Redis连接失败"
+fi
+
+# 调度系统服务
+for port in 4200 5555 5000; do
+    if curl -s http://localhost:$port > /dev/null; then
+        echo "✅ 监控服务 $port 正常"
+    else
+        echo "⚠️ 监控服务 $port 未启动"
+    fi
+done
+
+echo "================"
+echo "检查完成"
+```
+
+#### 性能监控命令
+```bash
+# 容器资源监控
+docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
+
+# 磁盘使用情况
+docker-compose exec df -h /app  # 应用容器内磁盘使用
+
+# 数据库性能监控
+docker-compose exec db psql -U football_prediction -c "
+SELECT
+    schemaname,
+    tablename,
+    n_tup_ins as inserts,
+    n_tup_upd as updates,
+    n_tup_del as deletes,
+    n_live_tup as live_rows
+FROM pg_stat_user_tables
+ORDER BY n_live_tup DESC
+LIMIT 10;"
+
+# Redis性能监控
+docker-compose exec redis redis-cli info memory | grep -E "used_memory|maxmemory"
+docker-compose exec redis redis-cli info stats | grep -E "total_commands|keyspace"
 ```
 
 ## 🧪 Testing Strategy
@@ -459,35 +641,139 @@ make ci               # 完整CI验证包括覆盖率
 ```
 
 ### 📋 Daily Development Checklist
+
+#### 🌅 早晨环境检查 (5分钟)
 ```bash
-# ✅ Morning Environment Check
-make status                           # Verify all services running
-curl http://localhost:8000/health     # Backend health
-curl http://localhost:5173            # Frontend (if running)
-make test.fast                       # Quick smoke test
+# 1️⃣ 检查服务状态
+make status                           # 验证所有容器运行状态
+docker-compose ps                    # 详细容器状态
 
-# ✅ Before Making Changes
-git branch <feature-name>             # Create feature branch
-make lint                            # Check code quality baseline
-make test.fast                       # Verify tests passing
+# 2️⃣ 健康检查
+curl http://localhost:8000/health     # 后端健康检查
+curl http://localhost:8000/health/system    # 系统资源检查
+curl http://localhost:5173            # 前端服务检查（如果运行）
 
-# ✅ During Development
-make lint && make fix-code           # Continuous code quality
-npm run type-check                   # Frontend type checking (cd frontend)
-docker-compose logs app --tail=50    # Check application logs
+# 3️⃣ 快速测试验证
+make test.fast                       # 核心功能冒烟测试 (2-3分钟)
 
-# ✅ Before Committing
+# 4️⃣ 环境清理（可选）
+make clean                          # 清理Docker缓存和旧容器
+```
+
+#### 🚀 开发前准备
+```bash
+# 1️⃣ 创建功能分支
+git checkout -b feature/your-feature-name
+git push -u origin feature/your-feature-name
+
+# 2️⃣ 代码质量基线检查
+make lint                            # 检查代码风格
+make test.fast                       # 确保测试通过
+npm run type-check                   # 前端类型检查 (cd frontend)
+
+# 3️⃣ 环境配置验证
+make env-check                       # 验证环境变量配置
+cat .env | grep -E "DATABASE|REDIS"  # 检查关键配置
+```
+
+#### 💻 开发过程中
+```bash
+# 1️⃣ 持续代码质量（每次保存后）
+make lint && make fix-code           # 自动修复代码问题
+npm run lint -- --fix               # 前端代码修复 (cd frontend)
+
+# 2️⃣ 实时监控（保持开发环境稳定）
+docker-compose logs app --tail=20    # 应用日志监控
+docker-compose logs db --tail=10     # 数据库日志
+make monitor                         # 系统资源监控
+
+# 3️⃣ 前端开发（如果是全栈开发）
+cd frontend && npm run dev           # 启动前端开发服务器
+npm run type-check -- --watch        # 实时类型检查
+
+# 4️⃣ 测试驱动开发
+# 运行相关测试文件（正确方式）
+docker-compose exec app bash -c "cd /app && pytest tests/test_api_health.py -v"
+```
+
+#### 🔍 提交前验证 (必须执行)
+```bash
+# 1️⃣ 设置CI环境变量（加速测试）
 export FOOTBALL_PREDICTION_ML_MODE=mock
 export SKIP_ML_MODEL_LOADING=true
-make test.unit.ci                    # Fast CI verification
-make security-check                  # Security scan
-make lint                            # Final lint check
-git add . && git commit -m "feat: description"
+export INFERENCE_SERVICE_MOCK=true
 
-# ✅ End of Day
-make test.fast                       # Verify nothing broken
-git push origin <feature-name>       # Push work
-make dev-stop                       # Optionally stop services
+# 2️⃣ 快速CI验证
+make test.unit.ci                    # 最小CI验证 (30秒)
+make security-check                  # 安全漏洞扫描
+make lint                            # 最终代码风格检查
+
+# 3️⃣ 前端验证（如果有前端更改）
+cd frontend && npm run type-check && npm run lint && npm run build
+
+# 4️⃣ 提交代码
+git add .
+git commit -m "feat: 描述你的更改
+
+- 更改点1
+- 更改点2
+- 测试覆盖
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+#### 📊 完整验证（有时间时执行）
+```bash
+# 1️⃣ 完整CI验证
+make ci                              # 完整质量检查 (5-10分钟)
+make coverage                        # 生成覆盖率报告
+open htmlcov/index.html              # 查看覆盖率详情
+
+# 2️⃣ 集成测试
+make test.integration                # 集成测试（需要数据库）
+make test-coverage-local             # 本地覆盖率测试
+
+# 3️⃣ 性能测试
+make performance-test                # 性能基准测试（如果存在）
+```
+
+#### 🌙 日结束清理
+```bash
+# 1️⃣ 最终验证
+make test.fast                       # 确保没有破坏核心功能
+make status                          # 检查服务状态
+
+# 2️⃣ 推送工作
+git push origin feature/your-feature-name
+
+# 3️⃣ 可选：停止服务（节省资源）
+make dev-stop                       # 停止开发环境
+docker-compose down                  # 完全关闭所有服务
+
+# 4️⃣ 创建PR（GitHub）
+# 在GitHub网站上创建Pull Request
+# 标题：feat: 你的功能描述
+# 描述：包含更改说明和测试结果
+```
+
+#### 🚨 紧急修复清单
+```bash
+# 如果生产环境出现紧急问题：
+# 1️⃣ 快速诊断
+make status                         # 检查所有服务状态
+docker-compose logs app --tail=100  # 查看最近100行日志
+
+# 2️⃣ 快速修复
+make hotfix-branch                  # 创建热修复分支（如果有这个命令）
+# 或
+git checkout -b hotfix/urgent-fix
+
+# 3️⃣ 最小验证
+make test.fast                      # 核心功能验证
+git commit -m "fix: 紧急修复"
+git push origin hotfix/urgent-fix
 ```
 
 ### 🔍 Environment Verification Script
@@ -819,22 +1105,116 @@ npm run type-check   # Identify TypeScript errors
 npm run lint         # Check for linting issues
 
 # Common fixes:
-# - Add missing type definitions
-# - Fix import paths
+# - Add missing type definitions in src/types/
+# - Fix import paths and module declarations
 # - Update vue-tsc version if needed
+# - Check Vue 3 Composition API syntax
+# - Verify Pinia store type definitions
+
+# Advanced TypeScript debugging
+npx vue-tsc --noEmit --project tsconfig.json --diagnostics  # Detailed diagnostics
 ```
 
 #### Vue.js Development Issues
 ```bash
 # Component not rendering?
 # 1. Check Vue DevTools browser extension
-# 2. Verify component imports and exports
+# 2. Verify component imports and exports (case-sensitive)
 # 3. Check console for JavaScript errors
+# 4. Verify <script setup lang="ts"> syntax
+# 5. Check Vue Router configuration
 
 # State not updating?
-# 1. Check Pinia store mutations
-# 2. Verify reactive data usage
+# 1. Check Pinia store mutations and actions
+# 2. Verify reactive data usage (ref/reactive)
 # 3. Use Vue DevTools to inspect state
+# 4. Check store persistence and hydration
+
+# Props/Emits not working?
+# 1. Verify defineProps<T>() and defineEmits<T>() syntax
+# 2. Check type definitions match parent component
+# 3. Use Vue DevTools component inspector
+```
+
+#### Vite Development Server Issues
+```bash
+# Dev server not starting or hot reload not working?
+cd frontend
+
+# Check common issues:
+npm run dev -- --host 0.0.0.0  # Bind to all interfaces
+npm run dev -- --port 3000     # Use different port
+
+# Clear Vite cache
+rm -rf node_modules/.vite
+npm run dev
+
+# Check proxy configuration in vite.config.ts
+# Verify API proxy to backend is working
+```
+
+#### Tailwind CSS Issues
+```bash
+# Styles not applying?
+cd frontend
+
+# Check Tailwind compilation
+npx tailwindcss -i ./src/assets/main.css -o ./dist/output.css --watch
+
+# Verify content sources in tailwind.config.js
+# Ensure all Vue components are included in content paths
+
+# Common fixes:
+# - Check PostCSS configuration
+# - Verify Tailwind CSS imports in main.css
+# - Ensure @apply directives have correct syntax
+```
+
+#### Chart.js Integration Issues
+```bash
+# Charts not rendering or updating?
+# 1. Check Chart.js version compatibility with vue-chartjs
+# 2. Verify data reactive updates in component
+# 3. Check chart options and type definitions
+
+# Example debugging component:
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { Bar } from 'vue-chartjs'
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement } from 'chart.js'
+
+ChartJS.register(Title, Tooltip, Legend, BarElement)
+
+const chartData = ref({
+  labels: [],
+  datasets: []
+})
+
+// Debug: Watch for data changes
+watch(chartData, (newData) => {
+  console.log('Chart data updated:', newData)
+}, { deep: true })
+</script>
+```
+
+#### Frontend Build and Deployment Issues
+```bash
+# Production build failing?
+cd frontend
+
+# Check build process
+npm run build
+
+# Common build errors:
+# 1. TypeScript type errors - fix with npm run type-check
+# 2. Import resolution issues - check vite.config.ts aliases
+# 3. Asset optimization issues - check public/ folder
+
+# Build analysis
+npm run build -- --analyze  # Analyze bundle size
+
+# Preview production build
+npm run preview
 ```
 
 #### 📊 Monitoring UI Issues
