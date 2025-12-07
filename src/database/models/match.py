@@ -17,6 +17,7 @@ from enum import Enum
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, JSON, Text, Float
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from src.database.base import BaseModel
 
@@ -55,11 +56,22 @@ class Match(BaseModel):
     away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
     home_score = Column(Integer, default=0)
     away_score = Column(Integer, default=0)
+
+    # DAO层需要的字段
+    home_team = Column(String(100), nullable=True)  # 主队名称 (用于DAO层)
+    away_team = Column(String(100), nullable=True)  # 客队名称 (用于DAO层)
+    match_time = Column(DateTime, nullable=False, default=datetime.utcnow)  # 比赛时间
+
+    # 保持向后兼容的字段
     status = Column(String(20), default="scheduled")
     match_date = Column(DateTime, nullable=False)
     venue = Column(String(255))
     league_id = Column(Integer, ForeignKey("leagues.id"))
     season = Column(String(20))
+
+    # 时间戳字段
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=True)
 
     # 🚀 V2深度数据字段 - 全栈架构师升级
     # 使用JSON类型存储复杂数据结构
