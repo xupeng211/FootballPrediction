@@ -64,8 +64,8 @@ class MatchDAO(BaseDAO):
         try:
             query = select(self.model).where(
                 and_(
-                    self.model.home_team == home_team,
-                    self.model.away_team == away_team
+                    self.model.home_team_name == home_team,
+                    self.model.away_team_name == away_team
                 )
             )
 
@@ -337,8 +337,8 @@ class MatchDAO(BaseDAO):
             # 构建搜索查询
             query = select(self.model).where(
                 or_(
-                    self.model.home_team.ilike(f"%{keyword}%"),
-                    self.model.away_team.ilike(f"%{keyword}%")
+                    self.model.home_team_name.ilike(f"%{keyword}%"),
+                    self.model.away_team_name.ilike(f"%{keyword}%")
                 )
             )
 

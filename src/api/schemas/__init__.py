@@ -1,9 +1,12 @@
 """API schemas package."""
 
 # 简单导入,避免循环导入
-from typing import Any, Optional
+from typing import Any, Optional, Generic, TypeVar
 
 from pydantic import BaseModel, Field
+
+# 定义泛型类型变量
+T = TypeVar('T')
 
 
 class APIResponse(BaseModel):
@@ -12,6 +15,27 @@ class APIResponse(BaseModel):
     success: bool = Field(..., description="请求是否成功")
     message: str = Field(..., description="响应消息")
     data: Any | None = Field(None, description="响应数据")
+    errors: list[str] | None = Field(None, description="错误信息列表")
+    timestamp: str | None = Field(None, description="响应时间戳")
+
+
+class StandardResponse(BaseModel, Generic[T]):
+    """标准化API响应模型."""
+
+    success: bool = Field(..., description="请求是否成功")
+    message: str = Field(..., description="响应消息")
+    data: T = Field(..., description="响应数据")
+    errors: list[str] | None = Field(None, description="错误信息列表")
+    timestamp: str | None = Field(None, description="响应时间戳")
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """分页响应模型."""
+
+    success: bool = Field(..., description="请求是否成功")
+    message: str = Field(..., description="响应消息")
+    data: list[T] = Field(..., description="响应数据列表")
+    pagination: dict[str, Any] = Field(..., description="分页信息")
     errors: list[str] | None = Field(None, description="错误信息列表")
     timestamp: str | None = Field(None, description="响应时间戳")
 
@@ -87,6 +111,8 @@ class ErrorResponse(BaseModel):
 
 __all__ = [
     "APIResponse",
+    "StandardResponse",
+    "PaginatedResponse",
     "ErrorResponse",
     "HealthCheckResponse",
     "HealthResponse",

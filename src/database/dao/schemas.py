@@ -14,12 +14,17 @@ from pydantic import BaseModel, Field, validator
 class MatchBase(BaseModel):
     """比赛基础模式"""
 
-    home_team: str = Field(..., min_length=1, max_length=100, description="主队名称")
-    away_team: str = Field(..., min_length=1, max_length=100, description="客队名称")
+    home_team_id: int = Field(..., description="主队ID")
+    away_team_id: int = Field(..., description="客队ID")
+    home_team_name: str = Field(..., min_length=1, max_length=100, description="主队名称")
+    away_team_name: str = Field(..., min_length=1, max_length=100, description="客队名称")
     league_id: Optional[int] = Field(None, description="联赛ID")
     match_time: datetime = Field(..., description="比赛时间")
+    match_date: Optional[datetime] = Field(None, description="比赛日期")
     venue: Optional[str] = Field(None, max_length=200, description="比赛场地")
     status: str = Field("scheduled", description="比赛状态")
+    home_score: Optional[int] = Field(0, description="主队得分")
+    away_score: Optional[int] = Field(0, description="客队得分")
 
     @validator('status')
     def validate_status(cls, v):
@@ -39,12 +44,17 @@ class MatchCreate(MatchBase):
 class MatchUpdate(BaseModel):
     """更新比赛模式"""
 
-    home_team: Optional[str] = Field(None, min_length=1, max_length=100)
-    away_team: Optional[str] = Field(None, min_length=1, max_length=100)
+    home_team_id: Optional[int] = None
+    away_team_id: Optional[int] = None
+    home_team_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    away_team_name: Optional[str] = Field(None, min_length=1, max_length=100)
     league_id: Optional[int] = None
     match_time: Optional[datetime] = None
+    match_date: Optional[datetime] = None
     venue: Optional[str] = Field(None, max_length=200)
     status: Optional[str] = None
+    home_score: Optional[int] = None
+    away_score: Optional[int] = None
 
     @validator('status')
     def validate_status(cls, v):
