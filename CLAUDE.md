@@ -182,6 +182,23 @@ make coverage         # Generate coverage report
 make test-coverage-local # Run tests with coverage locally
 ```
 
+### 🎯 Running Single Tests (Correct Way)
+When you need to run specific test files, use these container-aware commands:
+
+```bash
+# Run specific test module (use path relative to project root)
+docker-compose exec app bash -c "cd /app && pytest tests/test_api_health.py -v"
+
+# Run tests with specific pattern
+docker-compose exec app bash -c "cd /app && pytest tests/test_utils/ -v"
+
+# Run with coverage for specific file
+docker-compose exec app bash -c "cd /app && pytest tests/test_collectors/test_fotmob_adapter.py --cov=src.collectors.fotmob -v"
+
+# Run with debugger
+docker-compose exec app bash -c "cd /app && pytest tests/test_ml/test_inference.py -v --pdb"
+```
+
 #### CI 环境测试优化
 ```bash
 # CI 环境最小化验证 (终极稳定方案)
@@ -251,6 +268,26 @@ http://localhost:5000  # MLflow UI - ML experiment tracking
 docker-compose -f docker-compose.yml -f docker-compose.scheduler.yml up -d
 ```
 
+### 🔄 Scheduler Management Commands
+```bash
+# Prefect Workflow Management
+docker-compose exec prefect prefect work-queue ls                    # List work queues
+docker-compose exec prefect prefect deployment ls                   # List deployments
+docker-compose exec prefect prefect flow-run ls                    # List flow runs
+docker-compose exec prefect prefect flow-run get <flow-run-id>      # Get flow run details
+
+# Celery Task Management
+docker-compose exec celery celery -A src.tasks.celery_app inspect active    # Active tasks
+docker-compose exec celery celery -A src.tasks.celery_app inspect scheduled  # Scheduled tasks
+docker-compose exec celery celery -A src.tasks.celery_app inspect stats      # Worker stats
+docker-compose exec celery celery -A src.tasks.celery_app purge               # Clear queue
+
+# MLflow Experiment Tracking
+docker-compose exec mlflow mlflow experiments list                    # List experiments
+docker-compose exec mlflow mlflow runs list -e <experiment-id>        # List runs in experiment
+docker-compose exec mlflow mlflow ui --port 5000                     # Start MLflow UI (if not running)
+```
+
 ## 🧪 Testing Strategy
 
 ### SWAT Testing Core Principles
@@ -299,6 +336,44 @@ npm run preview      # 预览生产构建
 # 代码质量
 npm run lint         # ESLint代码检查
 npm run type-check   # TypeScript类型检查
+```
+
+### 🚀 Complete Frontend Workflow
+```bash
+# 1️⃣ Initialize frontend development environment
+cd frontend
+npm install
+
+# 2️⃣ Start development with real-time validation
+npm run dev           # Terminal 1: Development server
+npm run type-check -- --watch  # Terminal 2: Real-time type checking
+
+# 3️⃣ Development cycle
+npm run lint -- --fix          # Auto-fix linting issues
+npm run type-check             # Check TypeScript types
+# Make changes to components...
+
+# 4️⃣ Pre-build validation
+npm run lint && npm run type-check && npm run build
+
+# 5️⃣ Production deployment
+npm run build       # Build for production
+npm run preview     # Test production build locally
+```
+
+### 🔄 Frontend-Backend Integration Testing
+```bash
+# Start both services for full-stack testing
+# Terminal 1: Backend
+make dev
+
+# Terminal 2: Frontend (in another window)
+cd frontend && npm run dev
+
+# Verify integration
+curl http://localhost:8000/health     # Backend health
+curl http://localhost:5173            # Frontend dev server
+curl http://localhost:5173/api/health # Frontend proxy to backend
 ```
 
 ### Frontend Project Structure
@@ -381,6 +456,118 @@ make security-check   # 安全检查
 
 # 6. 可选: 如果时间允许进行完整验证
 make ci               # 完整CI验证包括覆盖率
+```
+
+### 📋 Daily Development Checklist
+```bash
+# ✅ Morning Environment Check
+make status                           # Verify all services running
+curl http://localhost:8000/health     # Backend health
+curl http://localhost:5173            # Frontend (if running)
+make test.fast                       # Quick smoke test
+
+# ✅ Before Making Changes
+git branch <feature-name>             # Create feature branch
+make lint                            # Check code quality baseline
+make test.fast                       # Verify tests passing
+
+# ✅ During Development
+make lint && make fix-code           # Continuous code quality
+npm run type-check                   # Frontend type checking (cd frontend)
+docker-compose logs app --tail=50    # Check application logs
+
+# ✅ Before Committing
+export FOOTBALL_PREDICTION_ML_MODE=mock
+export SKIP_ML_MODEL_LOADING=true
+make test.unit.ci                    # Fast CI verification
+make security-check                  # Security scan
+make lint                            # Final lint check
+git add . && git commit -m "feat: description"
+
+# ✅ End of Day
+make test.fast                       # Verify nothing broken
+git push origin <feature-name>       # Push work
+make dev-stop                       # Optionally stop services
+```
+
+### 🔍 Environment Verification Script
+```bash
+#!/bin/bash
+# save as verify_env.sh and run with: bash verify_env.sh
+
+echo "🔍 Environment Verification Script"
+echo "================================"
+
+# Check Docker services
+echo "📊 Checking Docker services..."
+docker-compose ps
+
+# Check backend health
+echo "🏥 Checking backend health..."
+if curl -s http://localhost:8000/health > /dev/null; then
+    echo "✅ Backend API healthy"
+else
+    echo "❌ Backend API not responding"
+fi
+
+# Check database connection
+echo "🗄️ Checking database connection..."
+if docker-compose exec -T db pg_isready -U football_prediction > /dev/null 2>&1; then
+    echo "✅ Database connection OK"
+else
+    echo "❌ Database connection failed"
+fi
+
+# Check Redis connection
+echo "🔴 Checking Redis connection..."
+if docker-compose exec -T redis redis-cli ping > /dev/null 2>&1; then
+    echo "✅ Redis connection OK"
+else
+    echo "⚠️ Redis connection failed (may not be critical)"
+fi
+
+# Check test environment
+echo "🧪 Running quick test verification..."
+make test.fast > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    echo "✅ Test environment OK"
+else
+    echo "❌ Test environment has issues"
+fi
+
+echo "================================"
+echo "Environment verification complete!"
+```
+
+### 📈 Performance Monitoring Commands
+```bash
+# Real-time resource monitoring
+make monitor                      # Monitor app container
+make monitor-all                  # Monitor all containers
+
+# System resource usage
+docker stats                      # Live container stats
+docker stats --no-stream          # Single snapshot
+
+# Application performance metrics
+curl http://localhost:8000/api/v1/metrics  # Prometheus metrics
+curl http://localhost:8000/health/system    # System resources
+
+# Database performance
+docker-compose exec db psql -U football_prediction -c "
+SELECT
+    schemaname,
+    tablename,
+    n_tup_ins as inserts,
+    n_tup_upd as updates,
+    n_tup_del as deletes
+FROM pg_stat_user_tables
+ORDER BY n_tup_ins + n_tup_upd + n_tup_del DESC
+LIMIT 10;"
+
+# Cache performance
+docker-compose exec redis redis-cli info memory
+docker-compose exec redis redis-cli info stats
 ```
 
 ### Pre-commit Full Verification
@@ -495,6 +682,55 @@ find frontend/src -name "*.ts" -name "types*"
 
 # Find Pinia stores
 find frontend/src/stores -name "*.ts"
+```
+
+### 🎯 Functionality-Based Navigation
+```bash
+# Find prediction-related code
+grep -r "prediction" src/ --include="*.py" | head -10
+
+# Find data collection logic
+grep -r "collect\|scrape\|fetch" src/collectors/ --include="*.py"
+
+# Find ML inference code
+grep -r "inference\|predict" src/ml/ --include="*.py"
+
+# Find authentication logic
+grep -r "auth\|login\|token" src/ --include="*.py"
+
+# Find database operations
+grep -r "async def.*\(get\|create\|update\|delete\)" src/ --include="*.py"
+```
+
+### 🔧 Advanced Search Patterns
+```bash
+# Find async database operations
+grep -r "await.*session\." src/ --include="*.py"
+
+# Find API response models
+grep -r "class.*Response" src/api/ --include="*.py"
+
+# Find dependency injection
+grep -r "Depends(" src/ --include="*.py"
+
+# Find error handling
+grep -r "raise.*Exception\|HTTPException" src/ --include="*.py"
+
+# Find configuration variables
+grep -r "getenv\|environ" src/ --include="*.py"
+```
+
+### 🌐 Frontend-Backend API Integration
+```bash
+# Find API endpoint definitions (backend)
+grep -r "@app\.\|@router\." src/api/ -A 2 | grep "def\|async def"
+
+# Find corresponding frontend API calls
+grep -r "axios\.\|fetch(" frontend/src/ -A 1 | grep -E "\/api\/|http"
+
+# Find data models mapping between frontend/backend
+grep -r "interface.*\|type.*=" frontend/src/types/
+grep -r "class.*BaseModel\|class.*Schema" src/api/schemas/
 ```
 
 ## 🚨 Troubleshooting
@@ -667,3 +903,152 @@ docker-compose logs mlflow
 - **🎯 Pinia for state management** - Use Pinia stores for application state
 
 **💡 Remember**: This is an enterprise-grade project with AI-first maintenance. Violating these critical rules will break the system's architectural integrity and quality standards.
+
+## 📊 Data Collection Operations
+
+### L1/L2/L3 Data Collection System
+```bash
+# L1 - Fixtures Data Collection (基础数据)
+make run-l1                           # Collect league fixtures and team data
+python scripts/collect_l1_fixtures.py    # Direct L1 collection script
+
+# L2 - Match Details Collection (详细数据)
+make run-l2                           # HTML parsing method
+make run-l2-api                       # API-based method
+python scripts/backfill_details_fotmob_v2.py  # Backfill missing data
+
+# L3 - Feature Engineering (特征工程)
+python scripts/compute_features_v2.py      # Compute ML features
+python scripts/validate_feature_store.py  # Validate feature data quality
+```
+
+### Data Collection Troubleshooting
+```bash
+# Check FotMob API authentication
+python scripts/manual_token_test.py        # Test API tokens
+python scripts/refresh_fotmob_tokens.py    # Refresh expired tokens
+
+# Monitor collection progress
+docker-compose logs app | grep -E "L1|L2|collect"  # Collection logs
+curl http://localhost:8000/api/v1/data/status      # Data collection status
+
+# Fix data collection issues
+make db-migrate                         # Ensure DB schema up-to-date
+python scripts/validate_data_integrity.py     # Check data consistency
+```
+
+### 🤖 Machine Learning Model Management
+
+### Model Training and Deployment
+```bash
+# Train new models
+python scripts/train_model_v2.py            # Training pipeline
+python scripts/tune_model_optuna.py         # Hyperparameter optimization
+
+# Model validation and testing
+python scripts/validate_model_v2.py         # Model performance validation
+python scripts/generate_predictions.py      # Generate predictions
+
+# Model deployment and monitoring
+python scripts/deploy_model.py              # Deploy to production
+curl http://localhost:8000/api/v1/ml/status # Model service health
+```
+
+### MLflow Model Registry
+```bash
+# Access MLflow UI
+http://localhost:5000                       # MLflow experiment tracking
+
+# Command line MLflow operations
+docker-compose exec mlflow mlflow experiments list      # List experiments
+docker-compose exec mlflow mlflow runs list -e <exp-id> # List experiment runs
+docker-compose exec mlflow mlflow models list          # List registered models
+
+# Model version management
+docker-compose exec mlflow mlflow models describe --name <model-name>
+docker-compose exec mlflow mlflow runs delete <run-id>  # Delete specific run
+```
+
+### Feature Store Management
+```bash
+# Feature computation and validation
+python scripts/compute_features_v2.py           # Compute all features
+python scripts/validate_feature_store.py        # Validate feature quality
+
+# Feature monitoring
+curl http://localhost:8000/api/v1/features/status     # Feature store status
+docker-compose logs app | grep -E "feature|Feature"    # Feature computation logs
+
+# Feature backfilling
+python scripts/backfill_features.py <date_range>     # Backfill missing features
+```
+
+## 🔒 Security Best Practices
+
+### 🔐 Credential Management
+```bash
+# Environment variable management
+cat .env | grep -E "FOTMOB|DATABASE|REDIS"           # Check configured credentials
+docker-compose exec app printenv | grep -E "SECRET|KEY|TOKEN"  # Check container env
+
+# Secure credential rotation
+python scripts/refresh_fotmob_tokens.py             # Rotate API tokens
+make generate-secret                              # Generate new app secret
+
+# Database security
+make db-shell                                    # Access database securely
+docker-compose exec db psql -U football_prediction -c "\du"  # List database users
+```
+
+### 🛡️ API Security Configuration
+```bash
+# FotMob API authentication (Critical)
+# Required headers in all requests:
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "x-mas": "your-production-token-here",      # Auth token
+    "x-foo": "production:your-secret-key",      # API secret
+}
+
+# Security headers verification
+curl -I http://localhost:8000/api/v1/health     # Check security headers
+curl -I http://localhost:5173                   # Frontend security headers
+```
+
+### 🔍 Code Security Scanning
+```bash
+# Automated security checks
+make security-check                             # Run bandit security scan
+docker run --rm -v "$(pwd)":/app securecodewarrior/python-security-scan:latest  # External scan
+
+# Dependency vulnerability scanning
+pip-audit                                       # Check for vulnerable Python packages
+cd frontend && npm audit                       # Check frontend vulnerabilities
+
+# Code quality security checks
+make lint                                       # Ruff includes some security checks
+make type-check                                 # Type safety prevents certain vulnerabilities
+
+# Secrets detection in code
+grep -r -i "password\|secret\|token\|key" src/ --include="*.py" | grep -v "test"
+git-secrets --scan                             # Detect secrets in git history
+```
+
+### 🚨 Security Incident Response
+```bash
+# If security issues found
+1. Immediate actions:
+   - make dev-stop                            # Stop all services
+   - change passwords/secrets immediately
+
+2. Investigation:
+   - docker-compose logs > investigation.log   # Save all logs
+   - check unauthorized access patterns
+   - run make security-check                  # Full security audit
+
+3. Recovery:
+   - rotate all credentials
+   - update all API tokens
+   - redeploy with clean images
+   - monitor for suspicious activity
+```
