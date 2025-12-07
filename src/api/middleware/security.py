@@ -102,8 +102,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Strict-Transport-Security"] = hsts_value
 
         # 8. 清除可能泄露服务器信息的不安全头
-        response.headers.pop("Server", None)
-        response.headers.pop("X-Powered-By", None)
+        if "Server" in response.headers:
+            del response.headers["Server"]
+        if "X-Powered-By" in response.headers:
+            del response.headers["X-Powered-By"]
 
         # 9. 添加缓存控制头（敏感内容）
         if self._is_sensitive_path(request.url.path):

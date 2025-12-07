@@ -315,7 +315,13 @@ async def get_match_predictions(match_id: int):
         from datetime import datetime
 
         # 调用推理服务进行预测
-        prediction_result = await inference_service.predict_match(match_id)
+        try:
+            prediction_result = await inference_service.predict_match(match_id)
+        except TypeError as e:
+            # 如果inference_service不是可调用的对象，返回错误
+            raise HTTPException(
+                status_code=500, detail=f"推理服务不可用: {str(e)}"
+            )
 
         if not prediction_result.get("success", False):
             raise HTTPException(

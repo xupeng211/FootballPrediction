@@ -147,12 +147,12 @@ class DateUtils:
 
     @staticmethod
     def get_age(
-        birth_date: [dt_datetime, date],
-        current_date: Optional[[dt_datetime, date]] = None,
+        birth_date: Union[dt_datetime, date],
+        current_date: Optional[Union[dt_datetime, date]] = None,
     ) -> Optional[int]:
         """计算年龄."""
         # 验证输入参数
-        if birth_date is None or not isinstance(birth_date, dt_datetime | date):
+        if birth_date is None or not isinstance(birth_date, (dt_datetime, date)):
             return None
 
         if isinstance(birth_date, dt_datetime):

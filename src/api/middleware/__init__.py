@@ -3,9 +3,11 @@
 """
 
 from .request_id import RequestIDMiddleware, add_request_id_middleware, get_request_id
+from .security import add_security_middleware
 
 __all__ = [
     "RequestIDMiddleware",
     "add_request_id_middleware",
     "get_request_id",
+    "add_security_middleware",
 ]
