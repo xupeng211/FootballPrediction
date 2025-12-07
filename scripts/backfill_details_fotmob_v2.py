@@ -19,19 +19,22 @@ import random
 import time
 from datetime import datetime, timedelta
 import json
-from typing import Any
+from typing import Any, Optional
 from pathlib import Path
 
 # 添加项目根目录到 Python 路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
-# 配置日志
+# 确保日志目录存在
+os.makedirs("logs", exist_ok=True)
+
+# 配置日志 (临时移除文件输出以解决权限问题)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("logs/fotmob_l2_v2.log"),
+        # logging.FileHandler("logs/fotmob_l2_v2.log"),  # 暂时注释掉
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -41,7 +44,7 @@ logger = logging.getLogger(__name__)
 from utils.fotmob_match_matcher import FotmobMatchMatcher
 
 # 🌐 降维打击：使用 Playwright 浏览器采集器
-from data.collectors.fotmob_browser import FotmobBrowserScraper
+from data.collectors.fotmob_details_collector import FotmobDetailsCollector
 from database.async_manager import get_db_session, initialize_database
 from sqlalchemy import text
 
@@ -376,10 +379,14 @@ class FotMobL2CollectorV2:
         try:
             self.logger.info(f"🌐 启动 Playwright 浏览器采集: {fotmob_id}")
 
-            # 创建浏览器采集器实例 - 动态创建避免资源浪费
+            # 创建详情采集器实例 - 动态创建避免资源浪费
             async def details_request():
-                async with FotmobBrowserScraper() as browser_scraper:
-                    result = await browser_scraper.scrape_match_details(fotmob_id)
+                collector = FotmobDetailsCollector()
+                try:
+                    await collector._init_session()
+                    result = await collector.collect_match_details(fotmob_id)
+                finally:
+                    await collector.close()
 
                     # 转换为现有格式
                     if result:
@@ -558,7 +565,7 @@ class FotMobL2CollectorV2:
         """标记记录为 complete"""
         query = """
             UPDATE matches
-            SET data_completeness = 'complete'
+            SET data_completeness = 'complete',
                 updated_at = NOW()
             WHERE id = :record_id
         """
@@ -570,7 +577,7 @@ class FotMobL2CollectorV2:
             async with get_db_session() as session:
                 query = """
                     UPDATE matches
-                    SET data_completeness = 'failed'
+                    SET data_completeness = 'failed',
                         updated_at = NOW()
                     WHERE id = :record_id
                 """
