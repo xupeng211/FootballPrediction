@@ -30,6 +30,7 @@ from src.api.docs import setup_docs_routes
 from src.api.health import router as health_router
 from src.api.predictions import router as predictions_router
 from src.api.predictions.optimized_router import router as optimized_predictions_router
+from src.api.matches import router as matches_router
 from src.api.prometheus_metrics import router as prometheus_router
 from src.api.schemas import RootResponse
 from src.api.system import router as system_router
@@ -375,6 +376,7 @@ app.include_router(predictions_router, prefix="/api/v1", tags=["预测"])
 app.include_router(
     optimized_predictions_router, prefix="/api/v2/predictions", tags=["预测"]
 )
+app.include_router(matches_router, prefix="/api/v1", tags=["比赛"])
 app.include_router(prometheus_router, tags=["监控"])
 
 # 配置OpenAPI

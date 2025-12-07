@@ -58,8 +58,8 @@ class Match(BaseModel):
     away_score = Column(Integer, default=0)
 
     # DAO层需要的字段
-    home_team = Column(String(100), nullable=True)  # 主队名称 (用于DAO层)
-    away_team = Column(String(100), nullable=True)  # 客队名称 (用于DAO层)
+    home_team_name = Column(String(100), nullable=True)  # 主队名称 (用于DAO层)
+    away_team_name = Column(String(100), nullable=True)  # 客队名称 (用于DAO层)
     match_time = Column(DateTime, nullable=False, default=datetime.utcnow)  # 比赛时间
 
     # 保持向后兼容的字段
