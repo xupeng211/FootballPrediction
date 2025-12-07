@@ -32,7 +32,9 @@ class DataService:
         """
         return asyncio.run(self.get_matches_list_async(limit, offset))
 
-    async def get_matches_list_async(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
+    async def get_matches_list_async(
+        self, limit: int = 20, offset: int = 0
+    ) -> dict[str, Any]:
         """获取比赛列表
         Get matches list.
 

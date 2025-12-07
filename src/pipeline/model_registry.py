@@ -51,7 +51,7 @@ class ModelRegistry:
         self.models_dir.mkdir(parents=True, exist_ok=True)
 
         # 模型索引
-        self._model_index: Dict[str, List[Dict[str, Any]]] = {}
+        self._model_index: dict[str, list[dict[str, Any]]] = {}
         self._load_model_index()
 
     def save_model(
@@ -59,7 +59,7 @@ class ModelRegistry:
         model: Any,
         name: str,
         version: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
         include_preprocessors: bool = True,
     ) -> str:
         """
@@ -108,7 +108,7 @@ class ModelRegistry:
             json.dump(model_metadata, f, indent=2, default=str)
 
         # 保存预处理器 (如果有)
-        if include_preprocessors and hasattr(self, '_preprocessors'):
+        if include_preprocessors and hasattr(self, "_preprocessors"):
             preprocessors_path = model_dir / "preprocessors.joblib"
             joblib.dump(self._preprocessors, preprocessors_path)
 
@@ -123,7 +123,7 @@ class ModelRegistry:
         name: str,
         version: Optional[str] = None,
         load_preprocessors: bool = True,
-    ) -> Tuple[Any, Dict[str, Any]]:
+    ) -> Tuple[Any, dict[str, Any]]:
         """
         加载模型.
 
@@ -149,7 +149,7 @@ class ModelRegistry:
 
         # 加载元数据
         metadata_path = model_dir / "metadata.json"
-        with open(metadata_path, "r", encoding="utf-8") as f:
+        with open(metadata_path, encoding="utf-8") as f:
             metadata = json.load(f)
 
         # 加载预处理器 (如果存在且需要)
@@ -161,7 +161,9 @@ class ModelRegistry:
         logger.info(f"Model loaded: {name}:{version}")
         return model, metadata
 
-    def list_models(self, name: Optional[str] = None) -> Dict[str, List[Dict[str, Any]]]:
+    def list_models(
+        self, name: Optional[str] = None
+    ) -> dict[str, list[dict[str, Any]]]:
         """列出所有模型."""
         if name:
             return {name: self._model_index.get(name, [])}
@@ -178,7 +180,7 @@ class ModelRegistry:
         return latest["version"]
 
     def compare_models(
-        self, name: str, versions: Optional[List[str]] = None
+        self, name: str, versions: Optional[list[str]] = None
     ) -> pd.DataFrame:
         """比较模型版本."""
         if versions is None:
@@ -189,17 +191,20 @@ class ModelRegistry:
         for version in versions:
             try:
                 _, metadata = self.load_model(name, version, load_preprocessors=False)
-                comparison_data.append({
-                    "version": version,
-                    "created_at": metadata["created_at"],
-                    "model_type": metadata["model_type"],
-                    "environment": metadata["environment"],
-                    # 添加指标比较 (如果元数据中有)
-                    **{
-                        k: v for k, v in metadata.items()
-                        if k.startswith("metric_") or k in ["accuracy", "f1_score"]
+                comparison_data.append(
+                    {
+                        "version": version,
+                        "created_at": metadata["created_at"],
+                        "model_type": metadata["model_type"],
+                        "environment": metadata["environment"],
+                        # 添加指标比较 (如果元数据中有)
+                        **{
+                            k: v
+                            for k, v in metadata.items()
+                            if k.startswith("metric_") or k in ["accuracy", "f1_score"]
+                        },
                     }
-                })
+                )
             except Exception as e:
                 logger.warning(f"Failed to load model {name}:{version} - {e}")
 
@@ -329,7 +334,7 @@ if __name__ == "__main__":
 
         if index_path.exists():
             try:
-                with open(index_path, "r", encoding="utf-8") as f:
+                with open(index_path, encoding="utf-8") as f:
                     self._model_index = json.load(f)
                 logger.debug("Model index loaded")
             except Exception as e:
@@ -348,7 +353,7 @@ if __name__ == "__main__":
 
         logger.debug("Model index saved")
 
-    def _update_model_index(self, name: str, metadata: Dict[str, Any]) -> None:
+    def _update_model_index(self, name: str, metadata: dict[str, Any]) -> None:
         """更新模型索引."""
         if name not in self._model_index:
             self._model_index[name] = []
@@ -356,8 +361,7 @@ if __name__ == "__main__":
         # 检查版本是否已存在
         version = metadata["version"]
         existing_indices = [
-            i for i, m in enumerate(self._model_index[name])
-            if m["version"] == version
+            i for i, m in enumerate(self._model_index[name]) if m["version"] == version
         ]
 
         if existing_indices:
@@ -392,7 +396,7 @@ if __name__ == "__main__":
                 metadata_path = version_dir / "metadata.json"
                 if metadata_path.exists():
                     try:
-                        with open(metadata_path, "r", encoding="utf-8") as f:
+                        with open(metadata_path, encoding="utf-8") as f:
                             metadata = json.load(f)
 
                         if model_name not in self._model_index:
@@ -400,13 +404,17 @@ if __name__ == "__main__":
 
                         self._model_index[model_name].append(metadata)
                     except Exception as e:
-                        logger.warning(f"Failed to load metadata from {metadata_path}: {e}")
+                        logger.warning(
+                            f"Failed to load metadata from {metadata_path}: {e}"
+                        )
 
         # 保存重建的索引
         self._save_model_index()
         logger.info(f"Model index rebuilt with {len(self._model_index)} models")
 
-    def get_model_info(self, name: str, version: Optional[str] = None) -> Dict[str, Any]:
+    def get_model_info(
+        self, name: str, version: Optional[str] = None
+    ) -> dict[str, Any]:
         """获取模型详细信息."""
         if version is None:
             version = self.get_latest_version(name)

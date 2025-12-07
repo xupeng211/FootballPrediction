@@ -4,13 +4,13 @@
 
 import uuid
 from contextvars import ContextVar
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # 上下文变量用于存储当前请求的 ID
-request_id_context: ContextVar[str] = ContextVar('request_id', default='')
+request_id_context: ContextVar[str] = ContextVar("request_id", default="")
 
 # 请求头名称
 REQUEST_ID_HEADER = "X-Request-ID"
@@ -26,11 +26,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     4. 在响应头中返回 Request ID
     """
 
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """处理请求并注入 Request ID"""
 
         # 1. 获取或生成 Request ID
@@ -73,7 +69,7 @@ def get_request_id() -> str:
     Returns:
         str: 当前请求的 ID
     """
-    return request_id_context.get('')
+    return request_id_context.get("")
 
 
 def add_request_id_middleware(app: FastAPI) -> None:
@@ -98,15 +94,15 @@ def request_id_formatter(record: dict) -> str:
     request_id = get_request_id()
     if request_id:
         return f"[{request_id}] {record['message']}"
-    return record['message']
+    return record["message"]
 
 
 # 导出主要接口
 __all__ = [
-    'RequestIDMiddleware',
-    'get_request_id',
-    'add_request_id_middleware',
-    'request_id_formatter',
-    'REQUEST_ID_HEADER',
-    'request_id_context',
+    "RequestIDMiddleware",
+    "get_request_id",
+    "add_request_id_middleware",
+    "request_id_formatter",
+    "REQUEST_ID_HEADER",
+    "request_id_context",
 ]

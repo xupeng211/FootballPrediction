@@ -13,7 +13,8 @@ import asyncio
 import functools
 import inspect
 import logging
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
+from collections.abc import Callable
 
 from .cache_main import RedisCache, get_cache, cache_key_builder
 
@@ -66,7 +67,7 @@ def cached(
     unless: Optional[Callable] = None,
     prefix: str = "cache",
     stampede_protection: bool = True,
-    cache_instance: Optional[RedisCache] = None
+    cache_instance: Optional[RedisCache] = None,
 ):
     """高性能异步缓存装饰器.
 
@@ -93,6 +94,7 @@ def cached(
         ...     # 获取用户资料
         ...     return profile_data
     """
+
     def decorator(func: Callable) -> Callable:
         # 确保函数是异步的
         if not inspect.iscoroutinefunction(func):
@@ -186,11 +188,7 @@ def cached(
 
 
 def _default_key_builder(
-    func: Callable,
-    namespace: str,
-    prefix: str,
-    *args,
-    **kwargs
+    func: Callable, namespace: str, prefix: str, *args, **kwargs
 ) -> str:
     """默认的缓存键生成器.
 
@@ -211,7 +209,7 @@ def _default_key_builder(
         parts.insert(1, namespace)
 
     # 跳过第一个参数（通常是self或cls）
-    func_args = args[1:] if args and hasattr(args[0], '__class__') else args
+    func_args = args[1:] if args and hasattr(args[0], "__class__") else args
 
     # 生成参数键
     if func_args or kwargs:
@@ -227,7 +225,7 @@ async def _invalidate_cache(
     prefix: str,
     cache_instance: Optional[RedisCache],
     *args,
-    **kwargs
+    **kwargs,
 ):
     """使缓存失效.
 
@@ -280,11 +278,7 @@ def cached_medium(ttl: int = 300, **kwargs):
 
 
 # 类方法缓存装饰器
-def cached_method(
-    ttl: int = 300,
-    namespace: Optional[str] = None,
-    **kwargs
-):
+def cached_method(ttl: int = 300, namespace: Optional[str] = None, **kwargs):
     """类方法缓存装饰器.
 
     自动处理self参数，生成基于实例的缓存键.
@@ -294,6 +288,7 @@ def cached_method(
         namespace: 命名空间
         **kwargs: 其他缓存参数
     """
+
     def decorator(func: Callable) -> Callable:
         if not inspect.iscoroutinefunction(func):
             raise TypeError(f"@cached_method装饰器只能用于异步函数: {func}")
@@ -311,7 +306,13 @@ def cached_method(
 
         # 添加缓存控制方法
         wrapper.invalidate = lambda *args, **kwargs: _invalidate_cache(
-            func, f"{namespace or func.__name__}:{id(self)}", "cache", None, self, *args, **kwargs
+            func,
+            f"{namespace or func.__name__}:{id(self)}",
+            "cache",
+            None,
+            self,
+            *args,
+            **kwargs,
         )
 
         return wrapper
@@ -347,10 +348,10 @@ class BatchCache:
             redis_client = await self.cache._get_connection()
             values = await redis_client.mget(keys)
 
-            for key, value in zip(keys, values):
+            for key, value in zip(keys, values, strict=False):
                 if value is not None:
                     try:
-                        results[key] = self.cache._deserialize(value.decode('utf-8'))
+                        results[key] = self.cache._deserialize(value.decode("utf-8"))
                     except Exception as e:
                         logger.warning(f"反序列化失败 {key}: {e}")
 
@@ -359,11 +360,7 @@ class BatchCache:
 
         return results
 
-    async def set_many(
-        self,
-        items: dict[str, Any],
-        ttl: int = 300
-    ) -> dict[str, bool]:
+    async def set_many(self, items: dict[str, Any], ttl: int = 300) -> dict[str, bool]:
         """批量设置缓存值.
 
         Args:
@@ -391,7 +388,7 @@ class BatchCache:
                     logger.warning(f"序列化失败 {key}: {e}")
 
             if pipe:
-                pipe_results = await pipe.execute()
+                await pipe.execute()
                 for key in items:
                     if key not in results:
                         results[key] = True
@@ -419,7 +416,7 @@ class BatchCache:
         results = {}
         try:
             redis_client = await self.cache._get_connection()
-            deleted_count = await redis_client.delete(*keys)
+            await redis_client.delete(*keys)
 
             # 简单的删除结果估算
             for key in keys:
@@ -460,4 +457,4 @@ async def invalidate_pattern(pattern: str, cache_instance: Optional[RedisCache] 
 
 # 缓存装饰器的便捷别名
 async_cache = cached  # 向后兼容
-cache = cached        # 简化别名
+cache = cached  # 简化别名

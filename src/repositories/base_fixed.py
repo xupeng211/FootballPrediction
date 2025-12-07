@@ -141,7 +141,7 @@ class BaseRepository(Generic[T, ID], ABC):
         """应用过滤条件."""
         for key, value in filters.items():
             if hasattr(self.model_class, key):
-                if isinstance(value, (list, tuple)):
+                if isinstance(value, list | tuple):
                     # 支持IN操作
                     query = query.where(getattr(self.model_class, key).in_(value))
                 elif isinstance(value, dict):

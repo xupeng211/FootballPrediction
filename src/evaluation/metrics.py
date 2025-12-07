@@ -29,6 +29,7 @@ try:
         confusion_matrix,
     )
     from sklearn.preprocessing import label_binarize
+
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
@@ -40,6 +41,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MetricsResult:
     """评估指标结果数据类"""
+
     metrics: dict[str, float]
     metadata: dict[str, Any]
     timestamp: str
@@ -49,7 +51,7 @@ class MetricsResult:
         return {
             "metrics": self.metrics,
             "metadata": self.metadata,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }
 
     def to_json(self) -> str:
@@ -77,7 +79,7 @@ class Metrics:
         y_true: Union[np.ndarray, pd.Series, list],
         y_pred: Union[np.ndarray, pd.Series, list],
         y_proba: Optional[Union[np.ndarray, pd.DataFrame]] = None,
-        average: str = "weighted"
+        average: str = "weighted",
     ) -> dict[str, float]:
         """
         计算分类指标
@@ -92,7 +94,9 @@ class Metrics:
             分类指标字典
         """
         if not HAS_SKLEARN:
-            logger.error("sklearn not available - cannot compute classification metrics")
+            logger.error(
+                "sklearn not available - cannot compute classification metrics"
+            )
             return {}
 
         # 转换为numpy数组
@@ -106,26 +110,26 @@ class Metrics:
             metrics["accuracy"] = float(accuracy_score(y_true, y_pred))
 
             # 多分类精确率、召回率、F1
-            metrics["precision_weighted"] = float(precision_score(
-                y_true, y_pred, average=average, zero_division=0
-            ))
-            metrics["recall_weighted"] = float(recall_score(
-                y_true, y_pred, average=average, zero_division=0
-            ))
-            metrics["f1_weighted"] = float(f1_score(
-                y_true, y_pred, average=average, zero_division=0
-            ))
+            metrics["precision_weighted"] = float(
+                precision_score(y_true, y_pred, average=average, zero_division=0)
+            )
+            metrics["recall_weighted"] = float(
+                recall_score(y_true, y_pred, average=average, zero_division=0)
+            )
+            metrics["f1_weighted"] = float(
+                f1_score(y_true, y_pred, average=average, zero_division=0)
+            )
 
             # Macro平均（对每个类别平等看待）
-            metrics["precision_macro"] = float(precision_score(
-                y_true, y_pred, average="macro", zero_division=0
-            ))
-            metrics["recall_macro"] = float(recall_score(
-                y_true, y_pred, average="macro", zero_division=0
-            ))
-            metrics["f1_macro"] = float(f1_score(
-                y_true, y_pred, average="macro", zero_division=0
-            ))
+            metrics["precision_macro"] = float(
+                precision_score(y_true, y_pred, average="macro", zero_division=0)
+            )
+            metrics["recall_macro"] = float(
+                recall_score(y_true, y_pred, average="macro", zero_division=0)
+            )
+            metrics["f1_macro"] = float(
+                f1_score(y_true, y_pred, average="macro", zero_division=0)
+            )
 
             # LogLoss (需要概率预测)
             if y_proba is not None:
@@ -133,20 +137,40 @@ class Metrics:
                 if y_proba.shape[1] == 3:  # 三分类
                     metrics["logloss"] = float(log_loss(y_true, y_proba))
                 else:
-                    logger.warning(f"Expected 3 classes for probabilities, got {y_proba.shape[1]}")
+                    logger.warning(
+                        f"Expected 3 classes for probabilities, got {y_proba.shape[1]}"
+                    )
 
             # 各类别单独指标
             for i, class_name in self.supported_classes:
                 if i < len(np.unique(y_true)):
-                    metrics[f"precision_{class_name}"] = float(precision_score(
-                        y_true, y_pred, labels=[i], average="binary", zero_division=0
-                    ))
-                    metrics[f"recall_{class_name}"] = float(recall_score(
-                        y_true, y_pred, labels=[i], average="binary", zero_division=0
-                    ))
-                    metrics[f"f1_{class_name}"] = float(f1_score(
-                        y_true, y_pred, labels=[i], average="binary", zero_division=0
-                    ))
+                    metrics[f"precision_{class_name}"] = float(
+                        precision_score(
+                            y_true,
+                            y_pred,
+                            labels=[i],
+                            average="binary",
+                            zero_division=0,
+                        )
+                    )
+                    metrics[f"recall_{class_name}"] = float(
+                        recall_score(
+                            y_true,
+                            y_pred,
+                            labels=[i],
+                            average="binary",
+                            zero_division=0,
+                        )
+                    )
+                    metrics[f"f1_{class_name}"] = float(
+                        f1_score(
+                            y_true,
+                            y_pred,
+                            labels=[i],
+                            average="binary",
+                            zero_division=0,
+                        )
+                    )
 
         except Exception as e:
             logger.error(f"Error calculating classification metrics: {e}")
@@ -157,7 +181,7 @@ class Metrics:
         self,
         y_true: Union[np.ndarray, pd.Series, list],
         y_proba: Union[np.ndarray, pd.DataFrame],
-        n_bins: int = 10
+        n_bins: int = 10,
     ) -> dict[str, float]:
         """
         计算概率校准指标
@@ -181,7 +205,9 @@ class Metrics:
 
         try:
             if y_proba.shape[1] != 3:
-                logger.warning(f"Expected 3 classes for calibration, got {y_proba.shape[1]}")
+                logger.warning(
+                    f"Expected 3 classes for calibration, got {y_proba.shape[1]}"
+                )
                 return metrics
 
             # 计算每个类别的校准指标
@@ -198,13 +224,17 @@ class Metrics:
                 # 计算校准曲线和误差
                 try:
                     from sklearn.calibration import calibration_curve
+
                     fraction_of_positives, mean_predicted_value = calibration_curve(
                         y_true_binary, y_prob_class, n_bins=n_bins
                     )
 
                     # 期望校准误差 (Expected Calibration Error, ECE)
                     ece = self._calculate_ece(
-                        fraction_of_positives, mean_predicted_value, y_prob_class, n_bins
+                        fraction_of_positives,
+                        mean_predicted_value,
+                        y_prob_class,
+                        n_bins,
                     )
                     metrics[f"ece_{class_name}"] = float(ece)
 
@@ -213,20 +243,28 @@ class Metrics:
                     metrics[f"mce_{class_name}"] = float(mce)
 
                 except Exception as e:
-                    logger.warning(f"Error calculating calibration for class {class_name}: {e}")
+                    logger.warning(
+                        f"Error calculating calibration for class {class_name}: {e}"
+                    )
 
             # 总体校准指标
             if len(metrics) > 0:
                 # 平均Brier分数
-                brier_scores = [metrics[k] for k in metrics.keys() if k.startswith("brier_score_")]
+                brier_scores = [
+                    metrics[k] for k in metrics.keys() if k.startswith("brier_score_")
+                ]
                 metrics["brier_score_avg"] = float(np.mean(brier_scores))
 
                 # 平均ECE
-                ece_scores = [metrics[k] for k in metrics.keys() if k.startswith("ece_")]
+                ece_scores = [
+                    metrics[k] for k in metrics.keys() if k.startswith("ece_")
+                ]
                 metrics["ece_avg"] = float(np.mean(ece_scores))
 
                 # 平均MCE
-                mce_scores = [metrics[k] for k in metrics.keys() if k.startswith("mce_")]
+                mce_scores = [
+                    metrics[k] for k in metrics.keys() if k.startswith("mce_")
+                ]
                 metrics["mce_avg"] = float(np.mean(mce_scores))
 
         except Exception as e:
@@ -240,7 +278,7 @@ class Metrics:
         y_proba: Union[np.ndarray, pd.DataFrame],
         odds: Union[np.ndarray, pd.DataFrame],
         stake: float = 1.0,
-        threshold: float = 0.1
+        threshold: float = 0.1,
     ) -> dict[str, float]:
         """
         计算博彩相关指标
@@ -263,7 +301,9 @@ class Metrics:
 
         try:
             if y_proba.shape != odds.shape:
-                logger.error(f"Probability shape {y_proba.shape} doesn't match odds shape {odds.shape}")
+                logger.error(
+                    f"Probability shape {y_proba.shape} doesn't match odds shape {odds.shape}"
+                )
                 return metrics
 
             n_samples = len(y_true)
@@ -303,7 +343,7 @@ class Metrics:
                         winning_bets += 1
                         actual_return = winnings - stake  # 净收益
                     else:
-                        actual_return = - stake  # 损失
+                        actual_return = -stake  # 损失
 
                     ev_values.append(best_ev)
                     actual_returns.append(actual_return)
@@ -315,7 +355,9 @@ class Metrics:
                 metrics["total_stake"] = float(total_stake)
                 metrics["total_winnings"] = float(total_winnings)
                 metrics["net_profit"] = float(total_winnings - total_stake)
-                metrics["roi"] = float(((total_winnings - total_stake) / total_stake) * 100)
+                metrics["roi"] = float(
+                    ((total_winnings - total_stake) / total_stake) * 100
+                )
 
                 if ev_values:
                     metrics["avg_ev"] = float(np.mean(ev_values))
@@ -326,13 +368,19 @@ class Metrics:
                     if len(actual_returns) > 1:
                         return_std = np.std(actual_returns)
                         if return_std > 0:
-                            metrics["sharpe_ratio"] = float(np.mean(actual_returns) / return_std)
+                            metrics["sharpe_ratio"] = float(
+                                np.mean(actual_returns) / return_std
+                            )
 
                 # 胜率与期望胜率对比
                 if ev_values:
-                    expected_win_rate = np.mean([1/3 for _ in ev_values])  # 假设随机胜率33%
+                    expected_win_rate = np.mean(
+                        [1 / 3 for _ in ev_values]
+                    )  # 假设随机胜率33%
                     actual_win_rate = winning_bets / total_bets
-                    metrics["win_rate_vs_random"] = float(actual_win_rate - expected_win_rate)
+                    metrics["win_rate_vs_random"] = float(
+                        actual_win_rate - expected_win_rate
+                    )
 
         except Exception as e:
             logger.error(f"Error calculating odds metrics: {e}")
@@ -344,7 +392,7 @@ class Metrics:
         fraction_of_positives: np.ndarray,
         mean_predicted_value: np.ndarray,
         y_prob: np.ndarray,
-        n_bins: int
+        n_bins: int,
     ) -> float:
         """计算期望校准误差 (Expected Calibration Error)"""
         try:
@@ -354,7 +402,7 @@ class Metrics:
 
             ece = 0.0
             for i in range(n_bins):
-                mask = (bin_indices == i)
+                mask = bin_indices == i
                 if np.sum(mask) > 0:
                     bin_weight = np.sum(mask) / len(y_prob)
                     ece += bin_weight * np.abs(
@@ -371,7 +419,7 @@ class Metrics:
         y_pred: Union[np.ndarray, pd.Series, list],
         y_proba: Optional[Union[np.ndarray, pd.DataFrame]] = None,
         odds: Optional[Union[np.ndarray, pd.DataFrame]] = None,
-        **kwargs
+        **kwargs,
     ) -> MetricsResult:
         """
         计算所有评估指标
@@ -410,13 +458,14 @@ class Metrics:
             "n_classes": len(np.unique(y_true)),
             "has_probabilities": y_proba is not None,
             "has_odds": odds is not None,
-            "classes": [self.class_mapping.get(i, f"class_{i}") for i in sorted(np.unique(y_true))]
+            "classes": [
+                self.class_mapping.get(i, f"class_{i}")
+                for i in sorted(np.unique(y_true))
+            ],
         }
 
         return MetricsResult(
-            metrics=all_metrics,
-            metadata=metadata,
-            timestamp=datetime.now().isoformat()
+            metrics=all_metrics, metadata=metadata, timestamp=datetime.now().isoformat()
         )
 
 
@@ -426,7 +475,7 @@ def evaluate_model(
     y_pred: Union[np.ndarray, pd.Series, list],
     y_proba: Optional[Union[np.ndarray, pd.DataFrame]] = None,
     odds: Optional[Union[np.ndarray, pd.DataFrame]] = None,
-    **kwargs
+    **kwargs,
 ) -> MetricsResult:
     """
     便捷的模型评估函数

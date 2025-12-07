@@ -14,7 +14,7 @@ AWAY_WIN = "away_win"
 DRAW = "draw"
 
 # 比分正则表达式模式
-SCORE_PATTERN = r'^(\d+)-(\d+)$'
+SCORE_PATTERN = r"^(\d+)-(\d+)$"
 
 
 class ValidationError(Exception):
@@ -22,6 +22,7 @@ class ValidationError(Exception):
 
     当输入参数格式无效或不符合预期时抛出此异常.
     """
+
     pass
 
 
@@ -95,7 +96,9 @@ class PredictionResultValidator:
                 f"支持的格式: {sorted(VALID_PREDICTIONS)}"
             )
 
-    def _parse_score_to_outcome(self, score: str) -> Literal["home_win", "away_win", "draw"]:
+    def _parse_score_to_outcome(
+        self, score: str
+    ) -> Literal["home_win", "away_win", "draw"]:
         """将比分字符串转换为结果类型.
 
         Args:
@@ -142,7 +145,7 @@ class PredictionResultValidator:
         return {
             "total_validations": self._total_validations,
             "correct_predictions": self._correct_predictions,
-            "accuracy": accuracy
+            "accuracy": accuracy,
         }
 
     def reset_statistics(self) -> None:

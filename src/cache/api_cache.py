@@ -115,7 +115,7 @@ class ApiCache:
     def _serialize_value(self, value: Any) -> bytes:
         """序列化缓存值."""
         try:
-            if isinstance(value, (dict, list, tuple)):
+            if isinstance(value, dict | list | tuple):
                 data = json.dumps(value, ensure_ascii=False, default=str)
             else:
                 data = str(value)

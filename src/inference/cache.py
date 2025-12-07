@@ -36,7 +36,7 @@ class PredictionCache:
         redis_url: str = "redis://localhost:6379/0",
         default_ttl: int = 300,  # 5分钟默认TTL
         key_prefix: str = "football_prediction:",
-        max_connections: int = 10
+        max_connections: int = 10,
     ):
         """
         初始化缓存
@@ -64,7 +64,7 @@ class PredictionCache:
             "deletes": 0,
             "errors": 0,
             "last_operation": None,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow(),
         }
 
         # 健康检查
@@ -81,7 +81,7 @@ class PredictionCache:
                 retry_on_timeout=True,
                 socket_keepalive=True,
                 socket_keepalive_options={},
-                health_check_interval=30
+                health_check_interval=30,
             )
 
             # 创建Redis客户端
@@ -124,14 +124,16 @@ class PredictionCache:
 
             # 反序列化
             try:
-                data = json.loads(cached_data.decode('utf-8'))
+                data = json.loads(cached_data.decode("utf-8"))
                 self._stats["hits"] += 1
                 self._update_last_operation("get_hit", cache_key)
                 logger.debug(f"Cache hit for key: {cache_key}")
                 return data
 
             except (json.JSONDecodeError, UnicodeDecodeError) as e:
-                logger.warning(f"Failed to deserialize cached data for key {cache_key}: {e}")
+                logger.warning(
+                    f"Failed to deserialize cached data for key {cache_key}: {e}"
+                )
                 # 删除损坏的缓存
                 await self._redis_client.delete(full_key)
                 self._stats["misses"] += 1
@@ -140,13 +142,12 @@ class PredictionCache:
         except Exception as e:
             self._stats["errors"] += 1
             logger.error(f"Cache get error for key {cache_key}: {e}")
-            raise CacheError(f"Failed to get cached prediction: {str(e)}", cache_key=cache_key)
+            raise CacheError(
+                f"Failed to get cached prediction: {str(e)}", cache_key=cache_key
+            )
 
     async def set_prediction(
-        self,
-        cache_key: str,
-        data: dict[str, Any],
-        ttl: Optional[int] = None
+        self, cache_key: str, data: dict[str, Any], ttl: Optional[int] = None
     ) -> bool:
         """
         缓存预测结果
@@ -170,11 +171,7 @@ class PredictionCache:
             json_data = json.dumps(data, default=str, ensure_ascii=False)
 
             # 设置缓存
-            success = await self._redis_client.setex(
-                full_key,
-                ttl,
-                json_data
-            )
+            success = await self._redis_client.setex(full_key, ttl, json_data)
 
             if success:
                 self._stats["sets"] += 1
@@ -189,7 +186,9 @@ class PredictionCache:
         except Exception as e:
             self._stats["errors"] += 1
             logger.error(f"Cache set error for key {cache_key}: {e}")
-            raise CacheError(f"Failed to cache prediction: {str(e)}", cache_key=cache_key)
+            raise CacheError(
+                f"Failed to cache prediction: {str(e)}", cache_key=cache_key
+            )
 
     async def delete_prediction(self, cache_key: str) -> bool:
         """
@@ -221,7 +220,9 @@ class PredictionCache:
         except Exception as e:
             self._stats["errors"] += 1
             logger.error(f"Cache delete error for key {cache_key}: {e}")
-            raise CacheError(f"Failed to delete cached prediction: {str(e)}", cache_key=cache_key)
+            raise CacheError(
+                f"Failed to delete cached prediction: {str(e)}", cache_key=cache_key
+            )
 
     async def exists(self, cache_key: str) -> bool:
         """检查缓存是否存在"""
@@ -252,9 +253,13 @@ class PredictionCache:
             return await self._redis_client.incrby(full_key, amount)
         except Exception as e:
             logger.error(f"Cache increment error for key {cache_key}: {e}")
-            raise CacheError(f"Failed to increment cache: {str(e)}", cache_key=cache_key)
+            raise CacheError(
+                f"Failed to increment cache: {str(e)}", cache_key=cache_key
+            )
 
-    async def get_multiple(self, cache_keys: list[str]) -> dict[str, Optional[dict[str, Any]]]:
+    async def get_multiple(
+        self, cache_keys: list[str]
+    ) -> dict[str, Optional[dict[str, Any]]]:
         """批量获取缓存"""
         if not cache_keys:
             return {}
@@ -266,10 +271,12 @@ class PredictionCache:
             cached_values = await self._redis_client.mget(full_keys)
 
             results = {}
-            for _i, (key, value) in enumerate(zip(cache_keys, cached_values, strict=False)):
+            for _i, (key, value) in enumerate(
+                zip(cache_keys, cached_values, strict=False)
+            ):
                 if value is not None:
                     try:
-                        results[key] = json.loads(value.decode('utf-8'))
+                        results[key] = json.loads(value.decode("utf-8"))
                         self._stats["hits"] += 1
                     except (json.JSONDecodeError, UnicodeDecodeError):
                         # 跳过损坏的数据
@@ -286,9 +293,7 @@ class PredictionCache:
             raise CacheError(f"Failed to get multiple cached predictions: {str(e)}")
 
     async def set_multiple(
-        self,
-        cache_data: dict[str, dict[str, Any]],
-        ttl: Optional[int] = None
+        self, cache_data: dict[str, dict[str, Any]], ttl: Optional[int] = None
     ) -> dict[str, bool]:
         """批量设置缓存"""
         if not cache_data:
@@ -310,7 +315,9 @@ class PredictionCache:
             pipe_results = await pipe.execute()
 
             # 检查结果
-            for _i, (cache_key, success) in enumerate(zip(cache_data.keys(), pipe_results, strict=False)):
+            for _i, (cache_key, success) in enumerate(
+                zip(cache_data.keys(), pipe_results, strict=False)
+            ):
                 results[cache_key] = bool(success)
                 if success:
                     self._stats["sets"] += 1
@@ -338,7 +345,9 @@ class PredictionCache:
             deleted_count = await self._redis_client.delete(*keys)
             self._stats["deletes"] += deleted_count
 
-            logger.info(f"Cleared {deleted_count} cache entries matching pattern: {pattern}")
+            logger.info(
+                f"Cleared {deleted_count} cache entries matching pattern: {pattern}"
+            )
             return deleted_count
 
         except Exception as e:
@@ -368,10 +377,10 @@ class PredictionCache:
                     "connected_clients": info.get("connected_clients"),
                     "total_commands_processed": info.get("total_commands_processed"),
                     "keyspace_hits": info.get("keyspace_hits"),
-                    "keyspace_misses": info.get("keyspace_misses")
+                    "keyspace_misses": info.get("keyspace_misses"),
                 },
                 "cache_stats": self.get_stats(),
-                "last_check": self._last_health_check.isoformat()
+                "last_check": self._last_health_check.isoformat(),
             }
 
         except Exception as e:
@@ -382,19 +391,26 @@ class PredictionCache:
                 "status": "unhealthy",
                 "error": str(e),
                 "cache_stats": self.get_stats(),
-                "last_check": self._last_health_check.isoformat() if self._last_health_check else None
+                "last_check": (
+                    self._last_health_check.isoformat()
+                    if self._last_health_check
+                    else None
+                ),
             }
 
     def get_stats(self) -> dict[str, Any]:
         """获取缓存统计信息"""
         total_operations = (
-            self._stats["hits"] + self._stats["misses"] +
-            self._stats["sets"] + self._stats["deletes"]
+            self._stats["hits"]
+            + self._stats["misses"]
+            + self._stats["sets"]
+            + self._stats["deletes"]
         )
 
         hit_rate = (
             self._stats["hits"] / (self._stats["hits"] + self._stats["misses"]) * 100
-            if (self._stats["hits"] + self._stats["misses"]) > 0 else 0
+            if (self._stats["hits"] + self._stats["misses"]) > 0
+            else 0
         )
 
         uptime = (datetime.utcnow() - self._stats["created_at"]).total_seconds()
@@ -405,7 +421,9 @@ class PredictionCache:
             "total_operations": total_operations,
             "uptime_seconds": round(uptime, 2),
             "is_healthy": self._is_healthy,
-            "last_health_check": self._last_health_check.isoformat() if self._last_health_check else None
+            "last_health_check": (
+                self._last_health_check.isoformat() if self._last_health_check else None
+            ),
         }
 
     async def cleanup(self):
@@ -430,7 +448,7 @@ class PredictionCache:
         self._stats["last_operation"] = {
             "operation": operation,
             "cache_key": cache_key,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
 
@@ -445,12 +463,12 @@ async def get_prediction_cache() -> PredictionCache:
     if _prediction_cache is None:
         # 从环境变量获取Redis配置
         import os
+
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         default_ttl = int(os.getenv("CACHE_DEFAULT_TTL", "300"))
 
         _prediction_cache = PredictionCache(
-            redis_url=redis_url,
-            default_ttl=default_ttl
+            redis_url=redis_url, default_ttl=default_ttl
         )
         await _prediction_cache.initialize()
 
@@ -462,6 +480,8 @@ def get_prediction_cache_sync() -> PredictionCache:
     global _prediction_cache
 
     if _prediction_cache is None:
-        raise RuntimeError("PredictionCache not initialized. Call get_prediction_cache() first.")
+        raise RuntimeError(
+            "PredictionCache not initialized. Call get_prediction_cache() first."
+        )
 
     return _prediction_cache

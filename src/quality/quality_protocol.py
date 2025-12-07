@@ -65,10 +65,11 @@ class RuleSeverity:
 
     定义不同严重程度的数据质量问题，用于优先级处理和告警分级。
     """
-    LOW = "low"          # 低严重性：轻微的数据质量问题，不影响核心功能
-    MEDIUM = "medium"    # 中等严重性：可能影响分析结果，需要关注
-    HIGH = "high"        # 高严重性：严重影响数据质量，需要立即处理
-    CRITICAL = "critical" # 关键严重性：导致系统无法正常工作，必须立即修复
+
+    LOW = "low"  # 低严重性：轻微的数据质量问题，不影响核心功能
+    MEDIUM = "medium"  # 中等严重性：可能影响分析结果，需要关注
+    HIGH = "high"  # 高严重性：严重影响数据质量，需要立即处理
+    CRITICAL = "critical"  # 关键严重性：导致系统无法正常工作，必须立即修复
 
 
 class DataQualityResult:
@@ -84,7 +85,7 @@ class DataQualityResult:
         passed: bool,
         errors: list[str],
         severity: str = RuleSeverity.MEDIUM,
-        metadata: dict[str, Any] = None
+        metadata: dict[str, Any] = None,
     ):
         """
         初始化数据质量检查结果。
@@ -109,7 +110,7 @@ class DataQualityResult:
             "passed": self.passed,
             "errors": self.errors,
             "severity": self.severity,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
@@ -120,6 +121,7 @@ class MissingValueRule(DataQualityRule):
     检查特征数据中关键字段是否为 None、空字符串或特殊标记值。
     主要用于确保核心特征字段的完整性。
     """
+
     rule_name: str = "missing_value_check"
     rule_description: str = "检查关键特征字段的缺失值"
 
@@ -130,6 +132,7 @@ class RangeRule(DataQualityRule):
     基于业务知识和统计分布，定义数值特征的合理取值范围。
     用于发现异常值和可能的数据录入错误。
     """
+
     rule_name: str = "range_check"
     rule_description: str = "检查数值特征的取值范围是否合理"
 
@@ -140,6 +143,7 @@ class TypeRule(DataQualityRule):
     确保特征字段的数据类型符合预期，如数值字段为 float/int，
     字符串字段为 str 等。防止类型错误导致的计算异常。
     """
+
     rule_name: str = "type_check"
     rule_description: str = "检查特征字段的数据类型是否正确"
 
@@ -150,6 +154,7 @@ class LogicalRelationRule(DataQualityRule):
     基于足球业务的逻辑约束，检查不同特征之间的逻辑一致性。
     例如：进球数 <= 射门数，xG 值合理等。
     """
+
     rule_name: str = "logical_relation_check"
     rule_description: str = "检查特征之间的逻辑关系是否一致"
 
@@ -160,6 +165,7 @@ class ConsistencyRule(DataQualityRule):
     检查数据在不同时间点或不同来源间的一致性，
     确保数据的可信度和可靠性。
     """
+
     rule_name: str = "consistency_check"
     rule_description: str = "检查数据的一致性和可信度"
 
@@ -170,6 +176,7 @@ class CompletenessRule(DataQualityRule):
     评估数据集的完整性，包括字段覆盖率、
     记录完整度等方面。
     """
+
     rule_name: str = "completeness_check"
     rule_description: str = "检查数据的完整性和覆盖率"
 
@@ -180,6 +187,7 @@ class TimelinessRule(DataQualityRule):
     评估数据的新鲜度和更新频率，
     确保数据的时效性满足业务需求。
     """
+
     rule_name: str = "timeliness_check"
     rule_description: str = "检查数据的及时性和新鲜度"
 
@@ -190,6 +198,7 @@ class UniquenessRule(DataQualityRule):
     检查关键字段或记录组合的唯一性，
     防止重复数据导致的统计偏差。
     """
+
     rule_name: str = "uniqueness_check"
     rule_description: str = "检查数据的唯一性，防止重复记录"
 
@@ -241,8 +250,7 @@ def get_rule_class(rule_type: str) -> type[DataQualityRule]:
     if rule_type not in RULE_TYPES:
         available_types = ", ".join(RULE_TYPES.keys())
         raise ValueError(
-            f"未知的规则类型: {rule_type}. "
-            f"可用的规则类型: {available_types}"
+            f"未知的规则类型: {rule_type}. " f"可用的规则类型: {available_types}"
         )
 
     return RULE_TYPES[rule_type]

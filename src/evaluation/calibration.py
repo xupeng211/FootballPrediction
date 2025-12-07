@@ -23,6 +23,7 @@ try:
     from sklearn.isotonic import IsotonicRegression
     from sklearn.preprocessing import LabelEncoder
     from sklearn.metrics import brier_score_loss
+
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
@@ -37,6 +38,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.isotonic
 @dataclass
 class CalibrationResult:
     """校准结果数据类"""
+
     is_calibrated: bool
     calibration_method: str
     original_score: float
@@ -54,7 +56,7 @@ class CalibrationResult:
             "calibrated_score": self.calibrated_score,
             "improvement": self.improvement,
             "calibration_params": self.calibration_params,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     def to_json(self) -> str:
@@ -78,8 +80,11 @@ class BaseCalibrator:
         self.calibrators = {}
         self.calibration_method = "base"
 
-    def fit(self, y_true: Union[np.ndarray, pd.Series, list],
-            y_proba: Union[np.ndarray, pd.DataFrame]) -> "BaseCalibrator":
+    def fit(
+        self,
+        y_true: Union[np.ndarray, pd.Series, list],
+        y_proba: Union[np.ndarray, pd.DataFrame],
+    ) -> "BaseCalibrator":
         """
         训练校准器
 
@@ -104,14 +109,20 @@ class BaseCalibrator:
         """
         raise NotImplementedError("Subclasses must implement transform method")
 
-    def fit_transform(self, y_true: Union[np.ndarray, pd.Series, list],
-                     y_proba: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def fit_transform(
+        self,
+        y_true: Union[np.ndarray, pd.Series, list],
+        y_proba: Union[np.ndarray, pd.DataFrame],
+    ) -> np.ndarray:
         """训练并应用校准"""
         return self.fit(y_true, y_proba).transform(y_proba)
 
-    def needs_calibration(self, y_true: Union[np.ndarray, pd.Series, list],
-                          y_proba: Union[np.ndarray, pd.DataFrame],
-                          threshold: float = 0.05) -> bool:
+    def needs_calibration(
+        self,
+        y_true: Union[np.ndarray, pd.Series, list],
+        y_proba: Union[np.ndarray, pd.DataFrame],
+        threshold: float = 0.05,
+    ) -> bool:
         """
         判断是否需要校准
 
@@ -153,10 +164,10 @@ class BaseCalibrator:
             "n_classes": self.n_classes,
             "class_names": self.class_names,
             "is_fitted": self.is_fitted,
-            "calibration_method": self.calibration_method
+            "calibration_method": self.calibration_method,
         }
 
-        with open(filepath, 'wb') as f:
+        with open(filepath, "wb") as f:
             pickle.dump(calibration_data, f)
 
     @classmethod
@@ -164,7 +175,7 @@ class BaseCalibrator:
         """加载校准器"""
         filepath = Path(filepath)
 
-        with open(filepath, 'rb') as f:
+        with open(filepath, "rb") as f:
             calibration_data = pickle.load(f)
 
         calibrator = cls(n_classes=calibration_data["n_classes"])
@@ -194,8 +205,11 @@ class IsotonicCalibrator(BaseCalibrator):
         if not HAS_SKLEARN:
             raise ImportError("sklearn is required for IsotonicCalibrator")
 
-    def fit(self, y_true: Union[np.ndarray, pd.Series, list],
-            y_proba: Union[np.ndarray, pd.DataFrame]) -> "IsotonicCalibrator":
+    def fit(
+        self,
+        y_true: Union[np.ndarray, pd.Series, list],
+        y_proba: Union[np.ndarray, pd.DataFrame],
+    ) -> "IsotonicCalibrator":
         """
         训练Isotonic校准器
 
@@ -210,7 +224,9 @@ class IsotonicCalibrator(BaseCalibrator):
         y_proba = np.array(y_proba)
 
         if y_proba.shape[1] != self.n_classes:
-            raise ValueError(f"Expected {self.n_classes} classes, got {y_proba.shape[1]}")
+            raise ValueError(
+                f"Expected {self.n_classes} classes, got {y_proba.shape[1]}"
+            )
 
         # 为每个类别训练独立的Isotonic回归器
         for i in range(self.n_classes):
@@ -220,8 +236,7 @@ class IsotonicCalibrator(BaseCalibrator):
 
             # 训练Isotonic回归器
             isotonic = IsotonicRegression(
-                out_of_bounds=self.out_of_bounds,
-                increasing=True
+                out_of_bounds=self.out_of_bounds, increasing=True
             )
 
             # 处理极端概率值，避免数值问题
@@ -253,7 +268,9 @@ class IsotonicCalibrator(BaseCalibrator):
 
         y_proba = np.array(y_proba)
         if y_proba.shape[1] != self.n_classes:
-            raise ValueError(f"Expected {self.n_classes} classes, got {y_proba.shape[1]}")
+            raise ValueError(
+                f"Expected {self.n_classes} classes, got {y_proba.shape[1]}"
+            )
 
         calibrated_proba = np.zeros_like(y_proba)
 
@@ -262,13 +279,17 @@ class IsotonicCalibrator(BaseCalibrator):
             y_prob_class_clipped = np.clip(y_prob_class, 1e-6, 1 - 1e-6)
 
             if self.calibrators[i] is not None:
-                calibrated_proba[:, i] = self.calibrators[i].transform(y_prob_class_clipped)
+                calibrated_proba[:, i] = self.calibrators[i].transform(
+                    y_prob_class_clipped
+                )
             else:
                 # 如果校准器拟合失败，使用原始概率
                 calibrated_proba[:, i] = y_prob_class
 
         # 确保概率和为1
-        calibrated_proba = calibrated_proba / calibrated_proba.sum(axis=1, keepdims=True)
+        calibrated_proba = calibrated_proba / calibrated_proba.sum(
+            axis=1, keepdims=True
+        )
 
         return calibrated_proba
 
@@ -291,8 +312,11 @@ class PlattCalibrator(BaseCalibrator):
         if not HAS_SKLEARN:
             raise ImportError("sklearn is required for PlattCalibrator")
 
-    def fit(self, y_true: Union[np.ndarray, pd.Series, list],
-            y_proba: Union[np.ndarray, pd.DataFrame]) -> "PlattCalibrator":
+    def fit(
+        self,
+        y_true: Union[np.ndarray, pd.Series, list],
+        y_proba: Union[np.ndarray, pd.DataFrame],
+    ) -> "PlattCalibrator":
         """
         训练Platt校准器
 
@@ -307,7 +331,9 @@ class PlattCalibrator(BaseCalibrator):
         y_proba = np.array(y_proba)
 
         if y_proba.shape[1] != self.n_classes:
-            raise ValueError(f"Expected {self.n_classes} classes, got {y_proba.shape[1]}")
+            raise ValueError(
+                f"Expected {self.n_classes} classes, got {y_proba.shape[1]}"
+            )
 
         # 使用sklearn的CalibratedClassifierCV进行Platt缩放
         # 注意：我们需要一个基础分类器来包装
@@ -315,6 +341,7 @@ class PlattCalibrator(BaseCalibrator):
 
         class DummyClassifier(BaseEstimator, ClassifierMixin):
             """虚拟分类器，用于包装概率预测"""
+
             def __init__(self, proba_matrix):
                 self.proba_matrix = proba_matrix
 
@@ -333,9 +360,7 @@ class PlattCalibrator(BaseCalibrator):
 
             # 使用CalibratedClassifierCV进行校准
             calibrated_clf = CalibratedClassifierCV(
-                dummy_clf,
-                method=self.method,
-                cv="prefit"  # 使用已拟合的分类器
+                dummy_clf, method=self.method, cv="prefit"  # 使用已拟合的分类器
             )
 
             # 拟合校准器
@@ -389,8 +414,11 @@ class AutoCalibrator:
         self.best_calibrator = None
         self.calibration_result = None
 
-    def calibrate(self, y_true: Union[np.ndarray, pd.Series, list],
-                  y_proba: Union[np.ndarray, pd.DataFrame]) -> CalibrationResult:
+    def calibrate(
+        self,
+        y_true: Union[np.ndarray, pd.Series, list],
+        y_proba: Union[np.ndarray, pd.DataFrame],
+    ) -> CalibrationResult:
         """
         自动选择并应用最佳校准方法
 
@@ -409,7 +437,7 @@ class AutoCalibrator:
                 calibrated_score=0.0,
                 improvement=0.0,
                 calibration_params={},
-                metadata={"error": "sklearn not available"}
+                metadata={"error": "sklearn not available"},
             )
 
         y_true = np.array(y_true)
@@ -432,13 +460,13 @@ class AutoCalibrator:
                 calibrated_score=original_brier,
                 improvement=0.0,
                 calibration_params={},
-                metadata={"message": "No calibration needed"}
+                metadata={"message": "No calibration needed"},
             )
 
         # 尝试不同的校准方法
         calibrators_to_try = [
             ("isotonic", IsotonicCalibrator),
-            ("platt", PlattCalibrator)
+            ("platt", PlattCalibrator),
         ]
 
         best_score = original_brier
@@ -455,7 +483,9 @@ class AutoCalibrator:
                     calibrator, y_true, y_proba
                 )
 
-                calibrated_brier = self._calculate_average_brier(y_true, calibrated_proba)
+                calibrated_brier = self._calculate_average_brier(
+                    y_true, calibrated_proba
+                )
 
                 if calibrated_brier < best_score:
                     best_score = calibrated_brier
@@ -463,7 +493,9 @@ class AutoCalibrator:
                     best_method = method_name
                     best_params = calibrator.calibrators
 
-                logger.info(f"{method_name} calibration: {original_brier:.4f} -> {calibrated_brier:.4f}")
+                logger.info(
+                    f"{method_name} calibration: {original_brier:.4f} -> {calibrated_brier:.4f}"
+                )
 
             except Exception as e:
                 logger.warning(f"Failed to test {method_name} calibration: {e}")
@@ -486,14 +518,16 @@ class AutoCalibrator:
                 "n_samples": len(y_true),
                 "n_classes": self.n_classes,
                 "threshold": self.calibration_threshold,
-                "tested_methods": [method for method, _ in calibrators_to_try]
-            }
+                "tested_methods": [method for method, _ in calibrators_to_try],
+            },
         )
 
         self.calibration_result = result
         return result
 
-    def _calculate_average_brier(self, y_true: np.ndarray, y_proba: np.ndarray) -> float:
+    def _calculate_average_brier(
+        self, y_true: np.ndarray, y_proba: np.ndarray
+    ) -> float:
         """计算平均Brier分数"""
         brier_scores = []
         for i in range(self.n_classes):
@@ -503,9 +537,13 @@ class AutoCalibrator:
             brier_scores.append(brier)
         return np.mean(brier_scores)
 
-    def _cross_validate_calibration(self, calibrator: BaseCalibrator,
-                                   y_true: np.ndarray, y_proba: np.ndarray,
-                                   cv_folds: int = 5) -> np.ndarray:
+    def _cross_validate_calibration(
+        self,
+        calibrator: BaseCalibrator,
+        y_true: np.ndarray,
+        y_proba: np.ndarray,
+        cv_folds: int = 5,
+    ) -> np.ndarray:
         """交叉验证评估校准效果"""
         from sklearn.model_selection import StratifiedKFold
 
@@ -539,10 +577,10 @@ class AutoCalibrator:
             "best_calibrator": self.best_calibrator,
             "calibration_result": self.calibration_result,
             "n_classes": self.n_classes,
-            "calibration_threshold": self.calibration_threshold
+            "calibration_threshold": self.calibration_threshold,
         }
 
-        with open(filepath, 'wb') as f:
+        with open(filepath, "wb") as f:
             pickle.dump(calibration_data, f)
 
     @classmethod
@@ -550,12 +588,12 @@ class AutoCalibrator:
         """加载自动校准器"""
         filepath = Path(filepath)
 
-        with open(filepath, 'rb') as f:
+        with open(filepath, "rb") as f:
             calibration_data = pickle.load(f)
 
         auto_calibrator = cls(
             n_classes=calibration_data["n_classes"],
-            calibration_threshold=calibration_data["calibration_threshold"]
+            calibration_threshold=calibration_data["calibration_threshold"],
         )
         auto_calibrator.best_calibrator = calibration_data["best_calibrator"]
         auto_calibrator.calibration_result = calibration_data["calibration_result"]
@@ -568,7 +606,7 @@ def calibrate_probabilities(
     y_true: Union[np.ndarray, pd.Series, list],
     y_proba: Union[np.ndarray, pd.DataFrame],
     method: str = "auto",
-    **kwargs
+    **kwargs,
 ) -> tuple[np.ndarray, CalibrationResult]:
     """
     便捷的概率校准函数
@@ -602,7 +640,7 @@ def calibrate_probabilities(
             calibrated_score=0.0,  # 需要计算
             improvement=0.0,  # 需要计算
             calibration_params=calibrator.calibrators,
-            metadata={}
+            metadata={},
         )
         return calibrated_proba, result
 
@@ -617,7 +655,7 @@ def calibrate_probabilities(
             calibrated_score=0.0,  # 需要计算
             improvement=0.0,  # 需要计算
             calibration_params=calibrator.calibrators,
-            metadata={}
+            metadata={},
         )
         return calibrated_proba, result
 

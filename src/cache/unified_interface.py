@@ -115,9 +115,9 @@ class RedisCacheAdapter(CacheInterface):
         """序列化值."""
         if isinstance(value, str):
             return value
-        elif isinstance(value, (int, float, bool)):
+        elif isinstance(value, int | float | bool):
             return str(value)
-        elif isinstance(value, (dict, list)):
+        elif isinstance(value, dict | list):
             import json
 
             return json.dumps(value, ensure_ascii=False)
@@ -396,7 +396,7 @@ class UnifiedCacheManager:
     def incr(self, key: str, amount: int = 1) -> int:
         """递增数值."""
         current = self.get(key, 0)
-        if not isinstance(current, (int, float)):
+        if not isinstance(current, int | float):
             current = 0
         new_value = current + amount
         self.set(key, new_value)

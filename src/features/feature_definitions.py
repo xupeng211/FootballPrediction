@@ -13,6 +13,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional, Union
 
+
 # 特征键常量定义
 class FeatureKeys:
     """特征键常量定义，避免字符串硬编码。"""
@@ -87,9 +88,9 @@ class FeatureType(Enum):
     """特征类型枚举。"""
 
     CATEGORICAL = "categorical"  # 分类特征
-    NUMERICAL = "numerical"     # 数值特征
-    BOOLEAN = "boolean"         # 布尔特征
-    TEMPORAL = "temporal"       # 时间特征
+    NUMERICAL = "numerical"  # 数值特征
+    BOOLEAN = "boolean"  # 布尔特征
+    TEMPORAL = "temporal"  # 时间特征
 
 
 @dataclass
@@ -115,27 +116,24 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         feature_type=FeatureType.NUMERICAL,
         description="比赛唯一标识符",
         min_value=1,
-        required=True
+        required=True,
     ),
-
     FeatureKeys.HOME_TEAM_ID: FeatureDefinition(
         key=FeatureKeys.HOME_TEAM_ID,
         name="Home Team ID",
         feature_type=FeatureType.NUMERICAL,
         description="主队ID",
         min_value=1,
-        required=True
+        required=True,
     ),
-
     FeatureKeys.AWAY_TEAM_ID: FeatureDefinition(
         key=FeatureKeys.AWAY_TEAM_ID,
         name="Away Team ID",
         feature_type=FeatureType.NUMERICAL,
         description="客队ID",
         min_value=1,
-        required=True
+        required=True,
     ),
-
     # 近期战绩特征
     FeatureKeys.HOME_RECENT_5_WINS: FeatureDefinition(
         key=FeatureKeys.HOME_RECENT_5_WINS,
@@ -144,9 +142,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="主队近5场比赛胜利数",
         min_value=0,
         max_value=5,
-        default_value=0
+        default_value=0,
     ),
-
     FeatureKeys.HOME_RECENT_5_WIN_RATE: FeatureDefinition(
         key=FeatureKeys.HOME_RECENT_5_WIN_RATE,
         name="Home Recent 5 Win Rate",
@@ -154,9 +151,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="主队近5场比赛胜率",
         min_value=0.0,
         max_value=1.0,
-        default_value=0.0
+        default_value=0.0,
     ),
-
     FeatureKeys.AWAY_RECENT_5_WINS: FeatureDefinition(
         key=FeatureKeys.AWAY_RECENT_5_WINS,
         name="Away Recent 5 Wins",
@@ -164,9 +160,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="客队近5场比赛胜利数",
         min_value=0,
         max_value=5,
-        default_value=0
+        default_value=0,
     ),
-
     FeatureKeys.AWAY_RECENT_5_WIN_RATE: FeatureDefinition(
         key=FeatureKeys.AWAY_RECENT_5_WIN_RATE,
         name="Away Recent 5 Win Rate",
@@ -174,9 +169,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="客队近5场比赛胜率",
         min_value=0.0,
         max_value=1.0,
-        default_value=0.0
+        default_value=0.0,
     ),
-
     # 历史对战特征
     FeatureKeys.H2H_TOTAL_MATCHES: FeatureDefinition(
         key=FeatureKeys.H2H_TOTAL_MATCHES,
@@ -184,9 +178,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         feature_type=FeatureType.NUMERICAL,
         description="两队历史交锋总场次",
         min_value=0,
-        default_value=0
+        default_value=0,
     ),
-
     FeatureKeys.H2H_HOME_WIN_RATE: FeatureDefinition(
         key=FeatureKeys.H2H_HOME_WIN_RATE,
         name="H2H Home Win Rate",
@@ -194,9 +187,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="历史交锋中主队胜率",
         min_value=0.0,
         max_value=1.0,
-        default_value=0.0
+        default_value=0.0,
     ),
-
     # 赔率特征
     FeatureKeys.HOME_WIN_ODDS: FeatureDefinition(
         key=FeatureKeys.HOME_WIN_ODDS,
@@ -204,9 +196,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         feature_type=FeatureType.NUMERICAL,
         description="主胜赔率",
         min_value=1.01,
-        default_value=0.0
+        default_value=0.0,
     ),
-
     FeatureKeys.HOME_IMPLIED_PROBABILITY: FeatureDefinition(
         key=FeatureKeys.HOME_IMPLIED_PROBABILITY,
         name="Home Implied Probability",
@@ -214,9 +205,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="主胜隐含概率",
         min_value=0.0,
         max_value=1.0,
-        default_value=0.0
+        default_value=0.0,
     ),
-
     # 高级分析特征
     FeatureKeys.HOME_XG: FeatureDefinition(
         key=FeatureKeys.HOME_XG,
@@ -225,9 +215,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="主队预期进球数",
         min_value=0.0,
         max_value=10.0,
-        default_value=0.0
+        default_value=0.0,
     ),
-
     FeatureKeys.AWAY_XG: FeatureDefinition(
         key=FeatureKeys.AWAY_XG,
         name="Away Expected Goals",
@@ -235,9 +224,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="客队预期进球数",
         min_value=0.0,
         max_value=10.0,
-        default_value=0.0
+        default_value=0.0,
     ),
-
     FeatureKeys.HOME_POSSESSION: FeatureDefinition(
         key=FeatureKeys.HOME_POSSESSION,
         name="Home Possession",
@@ -245,9 +233,8 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="主队控球率",
         min_value=0.0,
         max_value=100.0,
-        default_value=50.0
+        default_value=50.0,
     ),
-
     # 统计特征
     FeatureKeys.HOME_AVG_GOALS_SCORED: FeatureDefinition(
         key=FeatureKeys.HOME_AVG_GOALS_SCORED,
@@ -256,7 +243,7 @@ FEATURE_DEFINITIONS: dict[str, FeatureDefinition] = {
         description="主队场均进球数",
         min_value=0.0,
         max_value=10.0,
-        default_value=0.0
+        default_value=0.0,
     ),
 }
 
@@ -336,7 +323,11 @@ class HeadToHeadFeatures:
     @property
     def avg_total_goals(self) -> float:
         """历史场均总进球数。"""
-        return (self.home_goals + self.away_goals) / self.total_matches if self.total_matches > 0 else 0.0
+        return (
+            (self.home_goals + self.away_goals) / self.total_matches
+            if self.total_matches > 0
+            else 0.0
+        )
 
     def validate(self) -> list[str]:
         """验证数据完整性。"""
@@ -432,7 +423,9 @@ class AdvancedStatsFeatures:
         if self.xga is not None and (self.xga < 0 or self.xga > 10):
             errors.append(f"Invalid xga: {self.xga}")
 
-        if self.possession is not None and (self.possession < 0 or self.possession > 100):
+        if self.possession is not None and (
+            self.possession < 0 or self.possession > 100
+        ):
             errors.append(f"Invalid possession: {self.possession}")
 
         if self.ppda is not None and (self.ppda < 0 or self.ppda > 50):
@@ -469,16 +462,20 @@ class FeatureValidator:
 
             # 类型验证
             if definition.feature_type == FeatureType.NUMERICAL:
-                if not isinstance(value, (int, float)):
+                if not isinstance(value, int | float):
                     errors.append(f"Feature {key} must be numerical, got {type(value)}")
                     continue
 
                 # 范围验证
                 if definition.min_value is not None and value < definition.min_value:
-                    errors.append(f"Feature {key} value {value} below minimum {definition.min_value}")
+                    errors.append(
+                        f"Feature {key} value {value} below minimum {definition.min_value}"
+                    )
 
                 if definition.max_value is not None and value > definition.max_value:
-                    errors.append(f"Feature {key} value {value} above maximum {definition.max_value}")
+                    errors.append(
+                        f"Feature {key} value {value} above maximum {definition.max_value}"
+                    )
 
         return errors
 
@@ -523,7 +520,9 @@ def get_all_feature_keys() -> list[str]:
 
 def get_required_feature_keys() -> list[str]:
     """获取所有必需特征键列表。"""
-    return [key for key, definition in FEATURE_DEFINITIONS.items() if definition.required]
+    return [
+        key for key, definition in FEATURE_DEFINITIONS.items() if definition.required
+    ]
 
 
 def get_feature_definition(feature_key: str) -> Optional[FeatureDefinition]:
@@ -541,6 +540,6 @@ def validate_features_object(features_obj) -> list[str]:
     Returns:
         验证错误列表
     """
-    if hasattr(features_obj, 'validate'):
+    if hasattr(features_obj, "validate"):
         return features_obj.validate()
     return []

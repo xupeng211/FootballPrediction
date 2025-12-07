@@ -265,7 +265,7 @@ def recursive_search_matches(data, path="", depth=0, max_depth=6):
                         if isinstance(match, dict) and is_valid_match(match):
                             matches.append(match)
 
-                elif isinstance(value, (dict, list)):
+                elif isinstance(value, dict | list):
                     new_path = f"{path}.{key}" if path else key
                     matches.extend(
                         recursive_search_matches(value, new_path, depth + 1, max_depth)
@@ -273,7 +273,7 @@ def recursive_search_matches(data, path="", depth=0, max_depth=6):
 
         elif isinstance(data, list) and len(data) > 0:
             for i, item in enumerate(data):
-                if isinstance(item, (dict, list)):
+                if isinstance(item, dict | list):
                     new_path = f"{path}[{i}]" if path else f"[{i}]"
                     matches.extend(
                         recursive_search_matches(item, new_path, depth + 1, max_depth)

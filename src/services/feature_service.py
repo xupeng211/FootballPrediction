@@ -35,7 +35,7 @@ class FeatureService:
         ttl=300,  # 5分钟缓存
         namespace="features",
         stampede_protection=True,
-        key_builder=lambda self, match_id, calculation_date=None: f"match_features:{match_id}:{calculation_date.isoformat() if calculation_date else 'none'}"
+        key_builder=lambda self, match_id, calculation_date=None: f"match_features:{match_id}:{calculation_date.isoformat() if calculation_date else 'none'}",
     )
     async def get_match_features(
         self, match_id: int, calculation_date: datetime | None = None

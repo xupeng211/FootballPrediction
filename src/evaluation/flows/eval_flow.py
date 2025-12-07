@@ -19,17 +19,23 @@ from typing import Optional, Union, Any
 try:
     from prefect import flow, task, get_run_logger
     from prefect.client.orchestration import get_client
+
     HAS_PREFECT = True
 except ImportError:
     HAS_PREFECT = False
+
     # 创建占位符装饰器
     def flow(func):
         return func
+
     def task(func):
         return func
+
     def get_run_logger():
         import logging
+
         return logging.getLogger(__name__)
+
 
 from src.evaluation.metrics import Metrics, MetricsResult
 from src.evaluation.calibration import AutoCalibrator, CalibrationResult
@@ -59,6 +65,7 @@ def load_model_task(model_path: Union[str, Path]) -> Any:
         # 尝试使用joblib加载
         try:
             import joblib
+
             model = joblib.load(model_path)
             logger.info(f"Model loaded using joblib: {model_path}")
             return model
@@ -66,7 +73,7 @@ def load_model_task(model_path: Union[str, Path]) -> Any:
             pass
 
         # 尝试使用pickle加载
-        with open(model_path, 'rb') as f:
+        with open(model_path, "rb") as f:
             model = pickle.load(f)
 
         logger.info(f"Model loaded using pickle: {model_path}")
@@ -78,7 +85,9 @@ def load_model_task(model_path: Union[str, Path]) -> Any:
 
 
 @task
-def load_dataset_task(dataset_path: Union[str, Path], dataset_type: str = "validation") -> pd.DataFrame:
+def load_dataset_task(
+    dataset_path: Union[str, Path], dataset_type: str = "validation"
+) -> pd.DataFrame:
     """
     加载数据集
 
@@ -96,11 +105,11 @@ def load_dataset_task(dataset_path: Union[str, Path], dataset_type: str = "valid
 
     try:
         # 根据文件扩展名选择加载方式
-        if dataset_path.suffix == '.csv':
+        if dataset_path.suffix == ".csv":
             df = pd.read_csv(dataset_path)
-        elif dataset_path.suffix in ['.pkl', '.pickle']:
+        elif dataset_path.suffix in [".pkl", ".pickle"]:
             df = pd.read_pickle(dataset_path)
-        elif dataset_path.suffix in ['.parquet']:
+        elif dataset_path.suffix in [".parquet"]:
             df = pd.read_parquet(dataset_path)
         else:
             raise ValueError(f"Unsupported file format: {dataset_path.suffix}")
@@ -114,10 +123,12 @@ def load_dataset_task(dataset_path: Union[str, Path], dataset_type: str = "valid
 
 
 @task
-def extract_features_labels_task(dataset: pd.DataFrame,
-                               feature_columns: Optional[list] = None,
-                               label_column: str = "target",
-                               probability_columns: Optional[list] = None) -> tuple:
+def extract_features_labels_task(
+    dataset: pd.DataFrame,
+    feature_columns: Optional[list] = None,
+    label_column: str = "target",
+    probability_columns: Optional[list] = None,
+) -> tuple:
     """
     从数据集中提取特征和标签
 
@@ -137,7 +148,9 @@ def extract_features_labels_task(dataset: pd.DataFrame,
             exclude_columns = [label_column]
             if probability_columns:
                 exclude_columns.extend(probability_columns)
-            feature_columns = [col for col in dataset.columns if col not in exclude_columns]
+            feature_columns = [
+                col for col in dataset.columns if col not in exclude_columns
+            ]
 
         # 提取特征
         X = dataset[feature_columns].copy()
@@ -152,8 +165,8 @@ def extract_features_labels_task(dataset: pd.DataFrame,
         if probability_columns:
             probabilities = dataset[probability_columns].values
             logger.info(f"Extracted {len(probability_columns)} probability columns")
-        elif 'predicted_proba' in dataset.columns:
-            probabilities = np.array(dataset['predicted_proba'].tolist())
+        elif "predicted_proba" in dataset.columns:
+            probabilities = np.array(dataset["predicted_proba"].tolist())
 
         logger.info(f"Features extracted: {X.shape[1]} features, {X.shape[0]} samples")
         return X, y, probabilities
@@ -181,7 +194,7 @@ def model_predictions_task(model: Any, X: pd.DataFrame) -> tuple:
 
         # 预测概率（如果支持）
         probabilities = None
-        if hasattr(model, 'predict_proba'):
+        if hasattr(model, "predict_proba"):
             probabilities = model.predict_proba(X)
         else:
             logger.warning("Model does not support predict_proba method")
@@ -195,8 +208,9 @@ def model_predictions_task(model: Any, X: pd.DataFrame) -> tuple:
 
 
 @task
-def calculate_metrics_task(y_true: np.ndarray, y_pred: np.ndarray,
-                          y_proba: Optional[np.ndarray] = None) -> MetricsResult:
+def calculate_metrics_task(
+    y_true: np.ndarray, y_pred: np.ndarray, y_proba: Optional[np.ndarray] = None
+) -> MetricsResult:
     """
     计算评估指标
 
@@ -221,8 +235,9 @@ def calculate_metrics_task(y_true: np.ndarray, y_pred: np.ndarray,
 
 
 @task
-def calibrate_probabilities_task(y_true: np.ndarray, y_proba: np.ndarray,
-                                calibration_method: str = "auto") -> tuple:
+def calibrate_probabilities_task(
+    y_true: np.ndarray, y_proba: np.ndarray, calibration_method: str = "auto"
+) -> tuple:
     """
     校准预测概率
 
@@ -241,13 +256,16 @@ def calibrate_probabilities_task(y_true: np.ndarray, y_proba: np.ndarray,
             y_true, y_proba, method=calibration_method
         )
 
-        logger.info(f"Probability calibration completed: {calibration_result.is_calibrated}")
+        logger.info(
+            f"Probability calibration completed: {calibration_result.is_calibrated}"
+        )
         return calibrated_proba, calibration_result
 
     except Exception as e:
         logger.error(f"Error during probability calibration: {e}")
         # 返回原始概率和失败结果
         from src.evaluation.calibration import CalibrationResult
+
         failed_result = CalibrationResult(
             is_calibrated=False,
             calibration_method="none",
@@ -255,17 +273,21 @@ def calibrate_probabilities_task(y_true: np.ndarray, y_proba: np.ndarray,
             calibrated_score=0.0,
             improvement=0.0,
             calibration_params={},
-            metadata={"error": str(e)}
+            metadata={"error": str(e)},
         )
         return y_proba, failed_result
 
 
 @task
-def generate_visualizations_task(y_true: np.ndarray, y_pred: np.ndarray,
-                               y_proba: np.ndarray, calibrated_proba: Optional[np.ndarray] = None,
-                               backtest_result: Optional[Any] = None,
-                               metrics_result: Optional[MetricsResult] = None,
-                               model_name: str = "Model") -> dict[str, list]:
+def generate_visualizations_task(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_proba: np.ndarray,
+    calibrated_proba: Optional[np.ndarray] = None,
+    backtest_result: Optional[Any] = None,
+    metrics_result: Optional[MetricsResult] = None,
+    model_name: str = "Model",
+) -> dict[str, list]:
     """
     生成可视化图表
 
@@ -286,31 +308,37 @@ def generate_visualizations_task(y_true: np.ndarray, y_pred: np.ndarray,
         chart_files = {}
 
         # 生成标准评估图表
-        chart_files.update(visualizer.create_comprehensive_report(
-            y_true=y_true,
-            y_pred=y_pred,
-            y_proba=y_proba,
-            backtest_result=backtest_result,
-            metrics_result=metrics_result,
-            model_name=model_name
-        ))
+        chart_files.update(
+            visualizer.create_comprehensive_report(
+                y_true=y_true,
+                y_pred=y_pred,
+                y_proba=y_proba,
+                backtest_result=backtest_result,
+                metrics_result=metrics_result,
+                model_name=model_name,
+            )
+        )
 
         # 如果有校准后的概率，生成对比图表
         if calibrated_proba is not None:
             try:
                 # 原始概率校准曲线
                 original_calib_files = visualizer.plot_calibration_curves(
-                    y_true, y_proba, title=f"{model_name} - 原始概率校准曲线",
-                    save_name="original_calibration_curves"
+                    y_true,
+                    y_proba,
+                    title=f"{model_name} - 原始概率校准曲线",
+                    save_name="original_calibration_curves",
                 )
-                chart_files['original_calibration'] = original_calib_files
+                chart_files["original_calibration"] = original_calib_files
 
                 # 校准后概率校准曲线
                 calibrated_calib_files = visualizer.plot_calibration_curves(
-                    y_true, calibrated_proba, title=f"{model_name} - 校准后概率校准曲线",
-                    save_name="calibrated_calibration_curves"
+                    y_true,
+                    calibrated_proba,
+                    title=f"{model_name} - 校准后概率校准曲线",
+                    save_name="calibrated_calibration_curves",
                 )
-                chart_files['calibrated_calibration'] = calibrated_calib_files
+                chart_files["calibrated_calibration"] = calibrated_calib_files
 
             except Exception as e:
                 logger.warning(f"Error generating calibration comparison charts: {e}")
@@ -324,13 +352,15 @@ def generate_visualizations_task(y_true: np.ndarray, y_pred: np.ndarray,
 
 
 @task
-def generate_report_task(metrics_result: MetricsResult,
-                        calibration_result: Optional[CalibrationResult] = None,
-                        backtest_result: Optional[Any] = None,
-                        chart_files: Optional[dict[str, list]] = None,
-                        model_name: str = "Model",
-                        model_version: str = "1.0.0",
-                        output_dir: Optional[str] = None) -> dict[str, str]:
+def generate_report_task(
+    metrics_result: MetricsResult,
+    calibration_result: Optional[CalibrationResult] = None,
+    backtest_result: Optional[Any] = None,
+    chart_files: Optional[dict[str, list]] = None,
+    model_name: str = "Model",
+    model_version: str = "1.0.0",
+    output_dir: Optional[str] = None,
+) -> dict[str, str]:
     """
     生成评估报告
 
@@ -352,12 +382,14 @@ def generate_report_task(metrics_result: MetricsResult,
         if chart_files:
             for chart_type, file_paths in chart_files.items():
                 for file_path in file_paths:
-                    charts.append({
-                        'type': chart_type,
-                        'filename': Path(file_path).name,
-                        'path': file_path,
-                        'title': f"{chart_type.replace('_', ' ').title()} Chart"
-                    })
+                    charts.append(
+                        {
+                            "type": chart_type,
+                            "filename": Path(file_path).name,
+                            "path": file_path,
+                            "title": f"{chart_type.replace('_', ' ').title()} Chart",
+                        }
+                    )
 
         # 生成报告
         builder = ReportBuilder(output_dir=output_dir)
@@ -368,7 +400,7 @@ def generate_report_task(metrics_result: MetricsResult,
             charts=charts,
             model_name=model_name,
             model_version=model_version,
-            formats=['html', 'json']
+            formats=["html", "json"],
         )
 
         logger.info(f"Reports generated: {list(report_files.keys())}")
@@ -391,7 +423,7 @@ def eval_flow(
     feature_columns: Optional[list] = None,
     label_column: str = "target",
     probability_columns: Optional[list] = None,
-    output_dir: Optional[str] = None
+    output_dir: Optional[str] = None,
 ) -> dict[str, Any]:
     """
     完整的模型评估流程
@@ -417,7 +449,9 @@ def eval_flow(
     # 设置输出目录
     if output_dir is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_dir = f"artifacts/eval/{model_name.replace(' ', '_').lower()}_eval_{timestamp}"
+        output_dir = (
+            f"artifacts/eval/{model_name.replace(' ', '_').lower()}_eval_{timestamp}"
+        )
 
     # 1. 加载模型
     model = load_model_task(model_path)
@@ -447,8 +481,12 @@ def eval_flow(
 
     # 7. 生成可视化图表
     chart_files = generate_visualizations_task(
-        y, y_pred, y_proba, calibrated_proba,
-        metrics_result=metrics_result, model_name=model_name
+        y,
+        y_pred,
+        y_proba,
+        calibrated_proba,
+        metrics_result=metrics_result,
+        model_name=model_name,
     )
 
     # 8. 生成评估报告
@@ -458,7 +496,7 @@ def eval_flow(
         chart_files=chart_files,
         model_name=model_name,
         model_version=model_version,
-        output_dir=output_dir
+        output_dir=output_dir,
     )
 
     # 9. 整合结果
@@ -470,7 +508,7 @@ def eval_flow(
             "dataset_type": dataset_type,
             "dataset_path": str(dataset_path),
             "n_samples": len(X),
-            "n_features": X.shape[1]
+            "n_features": X.shape[1],
         },
         "metrics": metrics_result.to_dict(),
         "calibration": calibration_result.to_dict() if calibration_result else None,
@@ -478,22 +516,26 @@ def eval_flow(
             "y_true": y.tolist(),
             "y_pred": y_pred.tolist(),
             "y_proba": y_proba.tolist() if y_proba is not None else None,
-            "calibrated_proba": calibrated_proba.tolist() if calibrated_proba is not None else None
+            "calibrated_proba": (
+                calibrated_proba.tolist() if calibrated_proba is not None else None
+            ),
         },
         "visualizations": chart_files,
         "reports": report_files,
-        "output_dir": output_dir
+        "output_dir": output_dir,
     }
 
     # 保存完整结果
     result_file = Path(output_dir) / "complete_evaluation_result.json"
-    with open(result_file, 'w', encoding='utf-8') as f:
+    with open(result_file, "w", encoding="utf-8") as f:
         json.dump(evaluation_result, f, indent=2, ensure_ascii=False, default=str)
 
     logger.info("Evaluation flow completed successfully!")
     logger.info(f"Results saved to: {output_dir}")
-    logger.info(f"Key metrics: Accuracy={metrics_result.metrics.get('accuracy', 'N/A'):.4f}, "
-               f"LogLoss={metrics_result.metrics.get('logloss', 'N/A'):.4f}")
+    logger.info(
+        f"Key metrics: Accuracy={metrics_result.metrics.get('accuracy', 'N/A'):.4f}, "
+        f"LogLoss={metrics_result.metrics.get('logloss', 'N/A'):.4f}"
+    )
 
     return evaluation_result
 
@@ -503,7 +545,7 @@ def evaluate_model(
     model_path: Union[str, Path],
     dataset_path: Union[str, Path],
     model_name: str = "Football Prediction Model",
-    **kwargs
+    **kwargs,
 ) -> dict[str, Any]:
     """
     便捷的模型评估函数

@@ -53,6 +53,7 @@ else:
     # 尝试导入必要的库
     try:
         import joblib
+
         HAVE_JOBLIB = True
     except ImportError:
         HAVE_JOBLIB = False
@@ -60,6 +61,7 @@ else:
 
     try:
         import xgboost as xgb
+
         HAVE_XGBOOST = True
     except ImportError:
         HAVE_XGBOOST = False
@@ -88,7 +90,7 @@ class InferenceService:
             self._initialized = False
             # 尝试获取事件循环，如果不存在则创建新的
             try:
-                loop = asyncio.get_running_loop()
+                asyncio.get_running_loop()
                 # 如果已经在事件循环中，创建任务
                 asyncio.create_task(self._initialize_async())
             except RuntimeError:
@@ -112,6 +114,7 @@ class InferenceService:
 
         try:
             from src.inference.loader import get_model_loader
+
             self._model_loader = await get_model_loader()
             logger.info("✅ ModelLoader加载成功")
         except Exception as e:
@@ -141,13 +144,18 @@ class InferenceService:
             if self._model_loader:
                 try:
                     from src.inference.loader import ModelType
+
                     models = await self._model_loader.list_models(ModelType.XGBOOST)
 
                     if models:
                         latest_model = max(models, key=lambda x: x.created_at)
-                        logger.info(f"🚀 ModelLoader加载最新模型: {latest_model.model_name}")
+                        logger.info(
+                            f"🚀 ModelLoader加载最新模型: {latest_model.model_name}"
+                        )
 
-                        loaded_model = await self._model_loader.load(latest_model.model_name)
+                        loaded_model = await self._model_loader.load(
+                            latest_model.model_name
+                        )
                         self._model = loaded_model.access()
 
                         self._model_metadata = {
@@ -171,7 +179,10 @@ class InferenceService:
             if not model_loaded:
                 try:
                     model_paths = [
-                        ("artifacts/models/football_prediction_v1_xgboost_2023-2024_5000matches.pkl", "p2_5_pipeline"),
+                        (
+                            "artifacts/models/football_prediction_v1_xgboost_2023-2024_5000matches.pkl",
+                            "p2_5_pipeline",
+                        ),
                         ("models/football_prediction_v4_optuna.pkl", "v4_optuna"),
                         ("models/football_xgboost_v2_best.pkl", "v2_best"),
                     ]
@@ -192,12 +203,16 @@ class InferenceService:
                                     "source": "file_system",
                                 }
 
-                                self._feature_columns = self._extract_features_from_model()
+                                self._feature_columns = (
+                                    self._extract_features_from_model()
+                                )
                                 model_loaded = True
                                 logger.info(f"✅ 文件系统模型加载成功: {version_name}")
                                 break
                             else:
-                                raise ImportError("joblib not available for model loading")
+                                raise ImportError(
+                                    "joblib not available for model loading"
+                                )
 
                 except Exception as e:
                     if not load_error:
@@ -211,7 +226,9 @@ class InferenceService:
         # 4. 根据加载结果设置模式
         if model_loaded:
             self._mode = "real"
-            logger.info(f"✅ 真实模型加载成功 - 版本: {self._model_metadata.get('model_version')}")
+            logger.info(
+                f"✅ 真实模型加载成功 - 版本: {self._model_metadata.get('model_version')}"
+            )
         else:
             await self._switch_to_mock_mode(load_error or "模型加载失败")
 
@@ -236,27 +253,39 @@ class InferenceService:
     def _get_training_features(self) -> list[str]:
         """获取训练时使用的特征列（与feature_extractor.py一致）"""
         return [
-            "home_xg", "away_xg", "home_possession", "away_possession",
-            "home_shots", "away_shots", "home_shots_on_target", "away_shots_on_target",
-            "xg_difference", "xg_ratio", "possession_difference",
-            "shots_difference", "home_shot_efficiency", "away_shot_efficiency"
+            "home_xg",
+            "away_xg",
+            "home_possession",
+            "away_possession",
+            "home_shots",
+            "away_shots",
+            "home_shots_on_target",
+            "away_shots_on_target",
+            "xg_difference",
+            "xg_ratio",
+            "possession_difference",
+            "shots_difference",
+            "home_shot_efficiency",
+            "away_shot_efficiency",
         ]
 
     def _extract_features_from_model(self) -> list[str]:
         """从模型中提取特征列"""
         # 尝试从模型获取特征列
-        if hasattr(self._model, 'feature_names_in_'):
+        if hasattr(self._model, "feature_names_in_"):
             return list(self._model.feature_names_in_)
-        elif hasattr(self._model, 'feature_names'):
+        elif hasattr(self._model, "feature_names"):
             return list(self._model.feature_names)
-        elif hasattr(self._model, 'get_booster') and hasattr(self._model.get_booster(), 'feature_names'):
+        elif hasattr(self._model, "get_booster") and hasattr(
+            self._model.get_booster(), "feature_names"
+        ):
             return list(self._model.get_booster().feature_names)
         else:
             # 使用训练数据准备脚本中的特征
             logger.warning("⚠️ 无法从模型获取特征列，使用训练脚本中的特征")
             return self._get_training_features()
 
-    async def _get_features_for_match(self, match_id: int) -> Optional[Dict[str, Any]]:
+    async def _get_features_for_match(self, match_id: int) -> Optional[dict[str, Any]]:
         """从数据库获取比赛特征数据（与训练数据格式一致）"""
         try:
             logger.info(f"🔍 从数据库获取比赛 {match_id} 的特征数据")
@@ -280,18 +309,23 @@ class InferenceService:
                 # 使用特征提取器（如果可用）
                 try:
                     from src.features.feature_extractor import FeatureExtractor
+
                     match_data = {
-                        'home_xg': getattr(match, 'home_xg', None),
-                        'away_xg': getattr(match, 'away_xg', None),
-                        'home_possession': getattr(match, 'home_possession', None),
-                        'away_possession': getattr(match, 'away_possession', None),
-                        'home_shots': getattr(match, 'home_shots', None),
-                        'away_shots': getattr(match, 'away_shots', None),
-                        'home_shots_on_target': getattr(match, 'home_shots_on_target', None),
-                        'away_shots_on_target': getattr(match, 'away_shots_on_target', None),
+                        "home_xg": getattr(match, "home_xg", None),
+                        "away_xg": getattr(match, "away_xg", None),
+                        "home_possession": getattr(match, "home_possession", None),
+                        "away_possession": getattr(match, "away_possession", None),
+                        "home_shots": getattr(match, "home_shots", None),
+                        "away_shots": getattr(match, "away_shots", None),
+                        "home_shots_on_target": getattr(
+                            match, "home_shots_on_target", None
+                        ),
+                        "away_shots_on_target": getattr(
+                            match, "away_shots_on_target", None
+                        ),
                     }
                     features = FeatureExtractor.extract_features_from_match(match_data)
-                    logger.info(f"✅ 使用FeatureExtractor获取特征成功")
+                    logger.info("✅ 使用FeatureExtractor获取特征成功")
                     return features
                 except Exception as e:
                     logger.warning(f"⚠️ FeatureExtractor失败，使用传统方式: {e}")
@@ -299,23 +333,33 @@ class InferenceService:
                 # 传统方式特征提取
                 features = {
                     # 基础特征
-                    "home_xg": getattr(match, 'home_xg', 1.5),
-                    "away_xg": getattr(match, 'away_xg', 1.2),
-                    "home_possession": getattr(match, 'home_possession', 50.0),
-                    "away_possession": getattr(match, 'away_possession', 50.0),
-                    "home_shots": getattr(match, 'home_shots', 12),
-                    "away_shots": getattr(match, 'away_shots', 10),
-                    "home_shots_on_target": getattr(match, 'home_shots_on_target', 4),
-                    "away_shots_on_target": getattr(match, 'away_shots_on_target', 3),
+                    "home_xg": getattr(match, "home_xg", 1.5),
+                    "away_xg": getattr(match, "away_xg", 1.2),
+                    "home_possession": getattr(match, "home_possession", 50.0),
+                    "away_possession": getattr(match, "away_possession", 50.0),
+                    "home_shots": getattr(match, "home_shots", 12),
+                    "away_shots": getattr(match, "away_shots", 10),
+                    "home_shots_on_target": getattr(match, "home_shots_on_target", 4),
+                    "away_shots_on_target": getattr(match, "away_shots_on_target", 3),
                 }
 
                 # 特征工程（与训练数据准备脚本中的逻辑一致）
                 features["xg_difference"] = features["home_xg"] - features["away_xg"]
-                features["xg_ratio"] = features["home_xg"] / (features["away_xg"] + 0.001)
-                features["possession_difference"] = features["home_possession"] - features["away_possession"]
-                features["shots_difference"] = features["home_shots"] - features["away_shots"]
-                features["home_shot_efficiency"] = features["home_shots_on_target"] / (features["home_shots"] + 0.001)
-                features["away_shot_efficiency"] = features["away_shots_on_target"] / (features["away_shots"] + 0.001)
+                features["xg_ratio"] = features["home_xg"] / (
+                    features["away_xg"] + 0.001
+                )
+                features["possession_difference"] = (
+                    features["home_possession"] - features["away_possession"]
+                )
+                features["shots_difference"] = (
+                    features["home_shots"] - features["away_shots"]
+                )
+                features["home_shot_efficiency"] = features["home_shots_on_target"] / (
+                    features["home_shots"] + 0.001
+                )
+                features["away_shot_efficiency"] = features["away_shots_on_target"] / (
+                    features["away_shots"] + 0.001
+                )
 
                 logger.info(f"✅ 成功获取比赛 {match_id} 的特征数据")
                 return features
@@ -324,20 +368,26 @@ class InferenceService:
             logger.error(f"❌ 获取特征失败 (match_id={match_id}): {e}")
             return self._get_default_features()
 
-    def _get_default_features(self) -> Dict[str, Any]:
+    def _get_default_features(self) -> dict[str, Any]:
         """获取默认特征数据（与训练数据格式一致）"""
         return {
-            "home_xg": 1.5, "away_xg": 1.2,
-            "home_possession": 50.0, "away_possession": 50.0,
-            "home_shots": 12, "away_shots": 10,
-            "home_shots_on_target": 4, "away_shots_on_target": 3,
-            "xg_difference": 0.3, "xg_ratio": 1.25,
+            "home_xg": 1.5,
+            "away_xg": 1.2,
+            "home_possession": 50.0,
+            "away_possession": 50.0,
+            "home_shots": 12,
+            "away_shots": 10,
+            "home_shots_on_target": 4,
+            "away_shots_on_target": 3,
+            "xg_difference": 0.3,
+            "xg_ratio": 1.25,
             "possession_difference": 0.0,
             "shots_difference": 2,
-            "home_shot_efficiency": 0.33, "away_shot_efficiency": 0.30,
+            "home_shot_efficiency": 0.33,
+            "away_shot_efficiency": 0.30,
         }
 
-    async def predict_match(self, match_id: int) -> Dict[str, Any]:
+    async def predict_match(self, match_id: int) -> dict[str, Any]:
         """对指定比赛进行预测 - API兼容版本"""
         try:
             logger.info(f"🔮 开始预测比赛 {match_id}")
@@ -366,7 +416,9 @@ class InferenceService:
                 "success": False,
             }
 
-    async def _predict_with_real_model(self, match_id: int, features: Dict[str, Any]) -> Dict[str, Any]:
+    async def _predict_with_real_model(
+        self, match_id: int, features: dict[str, Any]
+    ) -> dict[str, Any]:
         """使用真实模型进行预测"""
         try:
             # 构建特征向量（确保特征顺序与训练时一致）
@@ -377,13 +429,13 @@ class InferenceService:
                 else:
                     logger.warning(f"⚠️ 缺失特征列: {col}，使用默认值")
                     # 使用默认值
-                    if 'efficiency' in col:
+                    if "efficiency" in col:
                         feature_vector.append(0.3)
-                    elif 'difference' in col or 'ratio' in col:
+                    elif "difference" in col or "ratio" in col:
                         feature_vector.append(0.0)
-                    elif 'possession' in col:
+                    elif "possession" in col:
                         feature_vector.append(50.0)
-                    elif 'shots' in col:
+                    elif "shots" in col:
                         feature_vector.append(10)
                     else:
                         feature_vector.append(1.0)
@@ -400,7 +452,9 @@ class InferenceService:
             # 解析预测结果
             result = self._parse_prediction_result(prediction, probabilities, match_id)
 
-            logger.info(f"✅ 预测完成: {result['prediction']} (置信度: {result['confidence']:.1%})")
+            logger.info(
+                f"✅ 预测完成: {result['prediction']} (置信度: {result['confidence']:.1%})"
+            )
             return result
 
         except Exception as e:
@@ -408,7 +462,9 @@ class InferenceService:
             # 降级到Mock预测
             return self._get_mock_prediction(match_id)
 
-    def _parse_prediction_result(self, prediction: int, probabilities: list, match_id: int) -> Dict[str, Any]:
+    def _parse_prediction_result(
+        self, prediction: int, probabilities: list, match_id: int
+    ) -> dict[str, Any]:
         """解析预测结果 - 保持API兼容性"""
         # 获取模型类别
         model_classes = self._model.classes_
@@ -420,7 +476,11 @@ class InferenceService:
         else:
             # 三分类模型
             class_list = list(model_classes)
-            if "away_win" in class_list and "draw" in class_list and "home_win" in class_list:
+            if (
+                "away_win" in class_list
+                and "draw" in class_list
+                and "home_win" in class_list
+            ):
                 # V4/P2-5模型英文标签映射
                 away_idx = class_list.index("away_win")
                 draw_idx = class_list.index("draw")
@@ -447,9 +507,9 @@ class InferenceService:
         else:
             # 三分类处理
             if "away_win" in class_list:
-                away_prob = float(probabilities[class_list.index("away_win")])
-                draw_prob = float(probabilities[class_list.index("draw")])
-                home_prob = float(probabilities[class_list.index("home_win")])
+                float(probabilities[class_list.index("away_win")])
+                float(probabilities[class_list.index("draw")])
+                float(probabilities[class_list.index("home_win")])
             else:
                 # 默认顺序处理
                 if len(probabilities) == 3:
@@ -473,7 +533,11 @@ class InferenceService:
                 else:
                     predicted_outcome = "away"
             else:
-                predicted_outcome = "home" if prediction == 1 else ("draw" if prediction == 0 else "away")
+                predicted_outcome = (
+                    "home"
+                    if prediction == 1
+                    else ("draw" if prediction == 0 else "away")
+                )
 
         # API兼容的返回格式
         return {
@@ -489,10 +553,12 @@ class InferenceService:
             "model_version": self._model_metadata.get("model_version", "v3.0"),
             "model_source": self._model_metadata.get("source", "unknown"),
             "mode": self._mode,  # 新增：指示当前模式
-            "mock_reason": self._model_metadata.get("reason") if self._mode == "mock" else None,  # 新增：Mock原因
+            "mock_reason": (
+                self._model_metadata.get("reason") if self._mode == "mock" else None
+            ),  # 新增：Mock原因
         }
 
-    def _get_mock_prediction(self, match_id: int) -> Dict[str, Any]:
+    def _get_mock_prediction(self, match_id: int) -> dict[str, Any]:
         """获取Mock预测结果 - API兼容版本"""
         return {
             "match_id": match_id,
@@ -509,7 +575,7 @@ class InferenceService:
             "model_source": self._model_metadata.get("source", "mock"),
         }
 
-    async def predict_batch(self, match_ids: list[int]) -> list[Dict[str, Any]]:
+    async def predict_batch(self, match_ids: list[int]) -> list[dict[str, Any]]:
         """批量预测比赛结果"""
         tasks = [self.predict_match(match_id) for match_id in match_ids]
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -518,17 +584,19 @@ class InferenceService:
         processed_results = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                processed_results.append({
-                    "match_id": match_ids[i],
-                    "error": f"预测服务错误: {str(result)}",
-                    "success": False,
-                })
+                processed_results.append(
+                    {
+                        "match_id": match_ids[i],
+                        "error": f"预测服务错误: {str(result)}",
+                        "success": False,
+                    }
+                )
             else:
                 processed_results.append(result)
 
         return processed_results
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """获取模型信息 - API兼容版本"""
         if not self._model_metadata:
             return {"error": "模型未加载"}
@@ -542,17 +610,21 @@ class InferenceService:
             "feature_names": self._feature_columns,
             "xgboost_available": HAVE_XGBOOST,
             "mode": self._mode,
-            "mock_reason": self._model_metadata.get("reason") if self._mode == "mock" else None,
+            "mock_reason": (
+                self._model_metadata.get("reason") if self._mode == "mock" else None
+            ),
         }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """健康检查 - API兼容版本"""
         try:
             if not HAVE_XGBOOST:
                 return {
                     "status": "degraded",
                     "model_loaded": False,
-                    "feature_count": len(self._feature_columns) if self._feature_columns else 0,
+                    "feature_count": (
+                        len(self._feature_columns) if self._feature_columns else 0
+                    ),
                     "initialized": self._initialized,
                     "mode": self._mode,
                     "note": "XGBoost not available - running in mock mode",
@@ -564,14 +636,20 @@ class InferenceService:
             feature_count = len(self._feature_columns) if self._feature_columns else 0
 
             return {
-                "status": "healthy" if self._mode == "real" and model_loaded else "degraded",
+                "status": (
+                    "healthy" if self._mode == "real" and model_loaded else "degraded"
+                ),
                 "model_loaded": model_loaded,
                 "feature_count": feature_count,
                 "initialized": self._initialized,
                 "mode": self._mode,
                 "xgboost_available": True,
                 "version": "v3.0",
-                "model_source": self._model_metadata.get("source", "unknown") if self._model_metadata else "unknown",
+                "model_source": (
+                    self._model_metadata.get("source", "unknown")
+                    if self._model_metadata
+                    else "unknown"
+                ),
             }
         except Exception as e:
             return {"status": "unhealthy", "error": str(e), "version": "v3.0"}
@@ -579,6 +657,7 @@ class InferenceService:
 
 # 全局推理服务实例 (保持向后兼容)
 inference_service = InferenceService()
+
 
 # 新增：获取服务实例的便捷方法
 async def get_inference_service() -> InferenceService:

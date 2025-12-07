@@ -40,7 +40,7 @@ class RangeRule(RangeRuleProtocol):
         self,
         field_ranges: Optional[dict[str, tuple[float, float]]] = None,
         tolerance: float = 0.0,
-        strict_mode: bool = True
+        strict_mode: bool = True,
     ):
         """
         初始化数值范围检查规则。
@@ -60,54 +60,42 @@ class RangeRule(RangeRuleProtocol):
             "full_time_score_away": (0, 99),
             "half_time_score_home": (0, 99),
             "half_time_score_away": (0, 99),
-
             # xG 期望进球数 (0-10, 足过极端情况)
             "xg_home": (0.0, 10.0),
             "xg_away": (0.0, 10.0),
             "xg_draw": (0.0, 5.0),
-
             # 射门数 (0-50, 超过正常比赛数据)
             "shot_home": (0, 50),
             "shot_away": (0, 50),
             "shot_on_target_home": (0, 30),
             "shot_on_target_away": (0, 30),
-
             # 控球率 (0-100, 百分比)
             "possession_home": (0.0, 100.0),
             "possession_away": (0.0, 100.0),
-
             # 角球数 (0-30, 超过正常比赛)
             "corners_home": (0, 30),
             "corners_away": (0, 30),
-
             # 犯规数 (0-20, 超过正常比赛)
             "fouls_home": (0, 20),
             "fouls_away": (0, 20),
-
             # 黄牌数 (0-10, 超过正常比赛)
             "cards_yellow_home": (0, 10),
             "cards_yellow_away": (0, 10),
-
             # 红牌数 (0-5, 超过正常比赛)
             "cards_red_home": (0, 5),
             "cards_red_away": (0, 5),
-
             # 赔率相关 (1.01-100.0, 正常赔率范围)
             "odds_b365_home": (1.01, 100.0),
             "odds_b365_draw": (1.01, 100.0),
             "odds_b365_away": (1.01, 100.0),
-
             # 传球数 (0-1000, 超过正常比赛)
             "passes_home": (0, 1000),
             "passes_away": (0, 1000),
-
             # 越位数 (0-100, 超过正常比赛)
             "crosses_home": (0, 100),
             "crosses_away": (0, 100),
-
             # 比分差计算范围 (-50, 50)
             "score_difference": (-50, 50),
-
             # 总进球数范围 (0-150)
             "total_goals": (0, 150),
         }
@@ -143,16 +131,14 @@ class RangeRule(RangeRuleProtocol):
             value = features[field_name]
 
             # 检查值是否为数值类型
-            if not isinstance(value, (int, float)):
+            if not isinstance(value, int | float):
                 continue  # 非数值类型由 TypeRule 检查
 
             # 检查范围
-            violation = self._check_value_range(
-                field_name, value, min_val, max_val
-            )
+            violation = self._check_value_range(field_name, value, min_val, max_val)
 
             if violation:
-                severity = self._determine_severity(violation)
+                self._determine_severity(violation)
                 errors.append(violation)
 
         logger.debug(
@@ -163,11 +149,7 @@ class RangeRule(RangeRuleProtocol):
         return errors
 
     def _check_value_range(
-        self,
-        field_name: str,
-        value: float,
-        min_val: float,
-        max_val: float
+        self, field_name: str, value: float, min_val: float, max_val: float
     ) -> Optional[str]:
         """
         检查单个值是否在指定范围内。
@@ -184,6 +166,7 @@ class RangeRule(RangeRuleProtocol):
         # 处理特殊情况：无穷大值
         try:
             import math
+
             if math.isinf(value):
                 return f"字段 '{field_name}' 值为无穷大: {value}"
             if math.isnan(value):
@@ -229,9 +212,14 @@ class RangeRule(RangeRuleProtocol):
             str: 严重程度
         """
         # 基于违规程度确定严重性
-        if any(keyword in error_message.lower() for keyword in ["无穷大", "nan", "超出范围 1e"]):
+        if any(
+            keyword in error_message.lower()
+            for keyword in ["无穷大", "nan", "超出范围 1e"]
+        ):
             return RuleSeverity.HIGH
-        elif any(keyword in error_message.lower() for keyword in ["超出范围 1", "超出范围 5"]):
+        elif any(
+            keyword in error_message.lower() for keyword in ["超出范围 1", "超出范围 5"]
+        ):
             return RuleSeverity.MEDIUM
         else:
             return RuleSeverity.LOW
@@ -249,10 +237,7 @@ class RangeRule(RangeRuleProtocol):
         return self.field_ranges.get(field_name)
 
     def configure_field_range(
-        self,
-        field_name: str,
-        min_value: float,
-        max_value: float
+        self, field_name: str, min_value: float, max_value: float
     ) -> None:
         """
         配置字段的检查范围。
@@ -307,9 +292,7 @@ class RangeRule(RangeRuleProtocol):
                         f"字段 '{field_name}' 最小值 {min_val} 大于最大值 {max_val}"
                     )
             except Exception as e:
-                errors.append(
-                    f"字段 '{field_name}' 范围配置错误: {str(e)}"
-                )
+                errors.append(f"字段 '{field_name}' 范围配置错误: {str(e)}")
 
         return errors
 
@@ -329,7 +312,7 @@ class RangeRule(RangeRuleProtocol):
             "within_range": 0,
             "out_of_range": 0,
             "field_details": {},
-            "violations": []
+            "violations": [],
         }
 
         for field_name, (min_val, max_val) in self.field_ranges.items():
@@ -337,14 +320,12 @@ class RangeRule(RangeRuleProtocol):
                 continue  # 字段缺失
 
             value = features[field_name]
-            if not isinstance(value, (int, float)):
+            if not isinstance(value, int | float):
                 continue  # 非数值，跳过范围检查
 
             summary["checked_fields"] += 1
 
-            violation = self._check_value_range(
-                field_name, value, min_val, max_val
-            )
+            violation = self._check_value_range(field_name, value, min_val, max_val)
 
             field_detail = {
                 "field_name": field_name,
@@ -352,7 +333,7 @@ class RangeRule(RangeRuleProtocol):
                 "min_val": min_val,
                 "max_val": max_val,
                 "in_range": violation is None,
-                "violation": violation
+                "violation": violation,
             }
 
             summary["field_details"][field_name] = field_detail

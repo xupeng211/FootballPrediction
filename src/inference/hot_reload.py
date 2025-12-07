@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 try:
     from watchdog.observers import Observer
     from watchdog.events import FileSystemEventHandler, FileModifiedEvent
+
     HAVE_WATCHDOG = True
 except ImportError:
     HAVE_WATCHDOG = False
@@ -34,7 +35,7 @@ logger = logging.getLogger(__name__)
 class ModelFileHandler(FileSystemEventHandler):
     """模型文件变化监听器"""
 
-    def __init__(self, hot_reload_manager: 'HotReloadManager'):
+    def __init__(self, hot_reload_manager: "HotReloadManager"):
         super().__init__()
         self.hot_reload_manager = hot_reload_manager
         self._debounce_time = 2.0  # 防抖时间（秒）
@@ -61,14 +62,12 @@ class ModelFileHandler(FileSystemEventHandler):
         self._pending_files[file_path] = now
 
         # 异步处理文件变化
-        asyncio.create_task(
-            self.hot_reload_manager.handle_file_change(file_path)
-        )
+        asyncio.create_task(self.hot_reload_manager.handle_file_change(file_path))
 
     def _is_model_file(self, file_path: str) -> bool:
         """判断是否为模型文件"""
         path = Path(file_path)
-        return path.suffix.lower() in ['.pkl', '.joblib', '.model', '.h5']
+        return path.suffix.lower() in [".pkl", ".joblib", ".model", ".h5"]
 
 
 class HotReloadManager:
@@ -87,7 +86,7 @@ class HotReloadManager:
         self,
         model_directory: str = "models/",
         check_interval: float = 1.0,
-        max_workers: int = 2
+        max_workers: int = 2,
     ):
         """
         初始化热更新管理器
@@ -118,7 +117,7 @@ class HotReloadManager:
             "failed_reloads": 0,
             "rollbacks": 0,
             "last_reload": None,
-            "monitoring_start": None
+            "monitoring_start": None,
         }
 
         # 健康检查
@@ -146,13 +145,13 @@ class HotReloadManager:
                 self._file_handler = ModelFileHandler(self)
                 self._observer = Observer()
                 self._observer.schedule(
-                    self._file_handler,
-                    str(self.model_directory),
-                    recursive=True
+                    self._file_handler, str(self.model_directory), recursive=True
                 )
             else:
                 self._observer = None
-                logger.warning("Watchdog not available, hot reload functionality disabled")
+                logger.warning(
+                    "Watchdog not available, hot reload functionality disabled"
+                )
 
             # 启动监控（仅在observer可用时）
             if self._observer:
@@ -165,7 +164,9 @@ class HotReloadManager:
             # 启动健康检查任务
             asyncio.create_task(self._health_check_loop())
 
-            logger.info(f"Hot reload monitoring started for directory: {self.model_directory}")
+            logger.info(
+                f"Hot reload monitoring started for directory: {self.model_directory}"
+            )
 
         except Exception as e:
             raise HotReloadError(f"Failed to start hot reload monitoring: {str(e)}")
@@ -193,7 +194,9 @@ class HotReloadManager:
             # 解析模型名称
             model_name = self._extract_model_name(file_path)
             if not model_name:
-                logger.warning(f"Could not extract model name from file path: {file_path}")
+                logger.warning(
+                    f"Could not extract model name from file path: {file_path}"
+                )
                 return
 
             # 避免并发重载
@@ -270,8 +273,11 @@ class HotReloadManager:
             model_name = path.stem
 
             # 移除版本后缀（如果有）
-            if '_' in model_name and model_name.split('_')[-1].replace('.', '').isdigit():
-                model_name = '_'.join(model_name.split('_')[:-1])
+            if (
+                "_" in model_name
+                and model_name.split("_")[-1].replace(".", "").isdigit()
+            ):
+                model_name = "_".join(model_name.split("_")[:-1])
 
             return model_name
 
@@ -292,15 +298,13 @@ class HotReloadManager:
             raise HotReloadError(f"Model file is empty: {file_path}")
 
         # 检查文件格式
-        if path.suffix.lower() not in ['.pkl', '.joblib', '.model', '.h5']:
+        if path.suffix.lower() not in [".pkl", ".joblib", ".model", ".h5"]:
             raise HotReloadError(f"Unsupported model file format: {path.suffix}")
 
         # 基本加载测试（在线程池中执行）
         try:
             await asyncio.get_event_loop().run_in_executor(
-                self._executor,
-                self._test_model_load,
-                file_path
+                self._executor, self._test_model_load, file_path
             )
         except Exception as e:
             raise HotReloadError(f"Model validation failed: {str(e)}")
@@ -312,10 +316,10 @@ class HotReloadManager:
 
         try:
             # 尝试加载模型
-            if file_path.endswith('.pkl'):
+            if file_path.endswith(".pkl"):
                 joblib.load(file_path)
             else:
-                with open(file_path, 'rb') as f:
+                with open(file_path, "rb") as f:
                     pickle.load(f)
         except Exception as e:
             raise RuntimeError(f"Model load test failed: {str(e)}")
@@ -324,9 +328,7 @@ class HotReloadManager:
         """加载新模型（完整加载以验证）"""
         try:
             return await asyncio.get_event_loop().run_in_executor(
-                self._executor,
-                self._load_model_sync,
-                file_path
+                self._executor, self._load_model_sync, file_path
             )
         except Exception as e:
             raise HotReloadError(f"Failed to load new model: {str(e)}")
@@ -336,10 +338,10 @@ class HotReloadManager:
         import joblib
         import pickle
 
-        if file_path.endswith('.pkl'):
+        if file_path.endswith(".pkl"):
             return joblib.load(file_path)
         else:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 return pickle.load(f)
 
     async def _verify_reload(self, model_name: str):
@@ -383,7 +385,9 @@ class HotReloadManager:
         except Exception as e:
             raise HotReloadError(f"Model rollback failed: {str(e)}")
 
-    def _record_reload_success(self, model_name: str, file_path: str, start_time: datetime):
+    def _record_reload_success(
+        self, model_name: str, file_path: str, start_time: datetime
+    ):
         """记录成功重载"""
         reload_time = (datetime.utcnow() - start_time).total_seconds()
 
@@ -393,7 +397,7 @@ class HotReloadManager:
             "file_path": file_path,
             "status": "success",
             "reload_time_seconds": reload_time,
-            "file_size": Path(file_path).stat().st_size
+            "file_size": Path(file_path).stat().st_size,
         }
 
         self._reload_history.append(record)
@@ -404,7 +408,9 @@ class HotReloadManager:
         if len(self._reload_history) > 100:
             self._reload_history = self._reload_history[-100:]
 
-    def _record_reload_failure(self, model_name: str, file_path: str, start_time: datetime, error: str):
+    def _record_reload_failure(
+        self, model_name: str, file_path: str, start_time: datetime, error: str
+    ):
         """记录失败重载"""
         reload_time = (datetime.utcnow() - start_time).total_seconds()
 
@@ -414,7 +420,7 @@ class HotReloadManager:
             "file_path": file_path,
             "status": "failed",
             "reload_time_seconds": reload_time,
-            "error": error
+            "error": error,
         }
 
         self._reload_history.append(record)
@@ -424,7 +430,9 @@ class HotReloadManager:
         if len(self._reload_history) > 100:
             self._reload_history = self._reload_history[-100:]
 
-    async def _trigger_reload_callbacks(self, model_name: str, status: str, error: Optional[str] = None):
+    async def _trigger_reload_callbacks(
+        self, model_name: str, status: str, error: Optional[str] = None
+    ):
         """触发重载回调"""
         for callback in self._reload_callbacks:
             try:
@@ -485,11 +493,14 @@ class HotReloadManager:
         """获取重载统计信息"""
         uptime = None
         if self._stats["monitoring_start"]:
-            uptime = (datetime.utcnow() - self._stats["monitoring_start"]).total_seconds()
+            uptime = (
+                datetime.utcnow() - self._stats["monitoring_start"]
+            ).total_seconds()
 
         success_rate = (
             self._stats["successful_reloads"] / self._stats["total_reloads"] * 100
-            if self._stats["total_reloads"] > 0 else 0
+            if self._stats["total_reloads"] > 0
+            else 0
         )
 
         return {
@@ -500,7 +511,9 @@ class HotReloadManager:
             "reloading_models": list(self._reloading_models),
             "reload_history_count": len(self._reload_history),
             "callback_count": len(self._reload_callbacks),
-            "last_health_check": self._last_health_check.isoformat() if self._last_health_check else None
+            "last_health_check": (
+                self._last_health_check.isoformat() if self._last_health_check else None
+            ),
         }
 
     def get_reload_history(self, limit: int = 50) -> list[dict[str, Any]]:
@@ -539,12 +552,12 @@ async def get_hot_reload_manager() -> HotReloadManager:
     if _hot_reload_manager is None:
         # 从环境变量获取配置
         import os
+
         model_dir = os.getenv("MODEL_DIRECTORY", "models/")
         check_interval = float(os.getenv("HOT_RELOAD_CHECK_INTERVAL", "1.0"))
 
         _hot_reload_manager = HotReloadManager(
-            model_directory=model_dir,
-            check_interval=check_interval
+            model_directory=model_dir, check_interval=check_interval
         )
 
     return _hot_reload_manager
@@ -555,6 +568,8 @@ def get_hot_reload_manager_sync() -> HotReloadManager:
     global _hot_reload_manager
 
     if _hot_reload_manager is None:
-        raise RuntimeError("HotReloadManager not initialized. Call get_hot_reload_manager() first.")
+        raise RuntimeError(
+            "HotReloadManager not initialized. Call get_hot_reload_manager() first."
+        )
 
     return _hot_reload_manager

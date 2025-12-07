@@ -76,18 +76,18 @@ class FeatureLoader:
         )
 
         # 特征工程组件
-        self.scalers: Dict[str, StandardScaler] = {}
-        self.encoders: Dict[str, LabelEncoder] = {}
+        self.scalers: dict[str, StandardScaler] = {}
+        self.encoders: dict[str, LabelEncoder] = {}
 
         # 缓存
-        self._feature_cache: Dict[str, pd.DataFrame] = {}
+        self._feature_cache: dict[str, pd.DataFrame] = {}
 
     def load_training_data(
         self,
-        match_ids: List[int],
+        match_ids: list[int],
         target_column: str = "result",
         validate_quality: bool = True,
-    ) -> Tuple[pd.DataFrame, pd.Series]:
+    ) -> tuple[pd.DataFrame, pd.Series]:
         """
         同步特征加载接口 (桥接异步FeatureStore).
 
@@ -119,10 +119,10 @@ class FeatureLoader:
 
     async def _load_training_data_async(
         self,
-        match_ids: List[int],
+        match_ids: list[int],
         target_column: str,
         validate_quality: bool,
-    ) -> Tuple[pd.DataFrame, pd.Series]:
+    ) -> tuple[pd.DataFrame, pd.Series]:
         """异步训练数据加载实现."""
         # 1. 批量加载特征
         feature_data = await self._load_features_batch(match_ids)
@@ -158,7 +158,7 @@ class FeatureLoader:
         logger.info(f"Loaded {len(X)} samples with {len(X.columns)} features")
         return X, y
 
-    async def _load_features_batch(self, match_ids: List[int]) -> List[FeatureData]:
+    async def _load_features_batch(self, match_ids: list[int]) -> list[FeatureData]:
         """批量加载特征数据."""
         logger.debug(f"Loading features for {len(match_ids)} matches")
 
@@ -167,12 +167,12 @@ class FeatureLoader:
 
         for i in range(0, len(match_ids), batch_size):
             batch_ids = match_ids[i : i + batch_size]
-            logger.debug(f"Loading batch {i // batch_size + 1}: {len(batch_ids)} matches")
+            logger.debug(
+                f"Loading batch {i // batch_size + 1}: {len(batch_ids)} matches"
+            )
 
             # 并行加载特征
-            tasks = [
-                self.store.load_features(match_id) for match_id in batch_ids
-            ]
+            tasks = [self.store.load_features(match_id) for match_id in batch_ids]
             batch_features = await asyncio.gather(*tasks, return_exceptions=True)
 
             # 处理加载结果
@@ -189,7 +189,7 @@ class FeatureLoader:
         return feature_data_list
 
     def _convert_to_dataframe(
-        self, feature_data_list: List[FeatureData], match_ids: List[int]
+        self, feature_data_list: list[FeatureData], match_ids: list[int]
     ) -> pd.DataFrame:
         """将特征数据转换为DataFrame."""
         if not feature_data_list:
@@ -250,9 +250,7 @@ class FeatureLoader:
                 df[numeric_columns].median()
             )
         elif self.feature_config.handle_missing == "mean":
-            df[numeric_columns] = df[numeric_columns].fillna(
-                df[numeric_columns].mean()
-            )
+            df[numeric_columns] = df[numeric_columns].fillna(df[numeric_columns].mean())
         elif self.feature_config.handle_missing == "drop":
             df = df.dropna(subset=numeric_columns)
 
@@ -292,8 +290,12 @@ class FeatureLoader:
                 if unknown_values:
                     logger.warning(f"Unknown categories in {col}: {unknown_values}")
                     # 将未知类别映射到已知类别或特殊值
-                    df[col] = df[col].astype(str).map(
-                        lambda x: x if x in known_values else list(known_values)[0]
+                    df[col] = (
+                        df[col]
+                        .astype(str)
+                        .map(
+                            lambda x: x if x in known_values else list(known_values)[0]
+                        )
                     )
 
                 df[col] = self.encoders[col].transform(df[col].astype(str))
@@ -319,7 +321,7 @@ class FeatureLoader:
 
         return quality_result
 
-    def _check_numeric_ranges(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _check_numeric_ranges(self, df: pd.DataFrame) -> dict[str, Any]:
         """检查数值范围."""
         numeric_cols = df.select_dtypes(include=[np.number]).columns
         range_info = {}
@@ -339,7 +341,7 @@ class FeatureLoader:
 
         return range_info
 
-    def get_feature_stats(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def get_feature_stats(self, df: pd.DataFrame) -> dict[str, Any]:
         """获取特征统计信息."""
         stats = {
             "shape": df.shape,

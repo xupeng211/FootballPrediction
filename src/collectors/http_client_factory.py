@@ -51,17 +51,17 @@ class CollectorConfig(Protocol):
         ...
 
     @property
-    def rate_limit_config(self) -> Dict[str, Any]:
+    def rate_limit_config(self) -> dict[str, Any]:
         """速率限制配置"""
         ...
 
     @property
-    def token_manager_config(self) -> Dict[str, Any]:
+    def token_manager_config(self) -> dict[str, Any]:
         """Token管理器配置"""
         ...
 
     @property
-    def proxy_config(self) -> Optional[Dict[str, Any]]:
+    def proxy_config(self) -> Optional[dict[str, Any]]:
         """代理配置"""
         ...
 
@@ -69,42 +69,51 @@ class CollectorConfig(Protocol):
 @dataclass
 class FotMobConfig:
     """FotMob 数据源配置"""
+
     source_name: str = "fotmob"
     base_url: str = "https://www.fotmob.com"
 
     # 速率限制配置
-    rate_limit_config: Dict[str, Any] = field(default_factory=lambda: {
-        "rate": 3.0,        # 3 QPS (保守速率)
-        "burst": 8,         # 突发容量
-        "max_wait_time": 30.0,  # 最大等待时间
-    })
+    rate_limit_config: dict[str, Any] = field(
+        default_factory=lambda: {
+            "rate": 3.0,  # 3 QPS (保守速率)
+            "burst": 8,  # 突发容量
+            "max_wait_time": 30.0,  # 最大等待时间
+        }
+    )
 
     # Token管理器配置
-    token_manager_config: Dict[str, Any] = field(default_factory=lambda: {
-        "default_ttl": 3600.0,          # 1小时TTL
-        "cache_refresh_threshold": 300.0,  # 5分钟刷新阈值
-        "max_retry_attempts": 3,
-        "retry_delay": 1.0,
-    })
+    token_manager_config: dict[str, Any] = field(
+        default_factory=lambda: {
+            "default_ttl": 3600.0,  # 1小时TTL
+            "cache_refresh_threshold": 300.0,  # 5分钟刷新阈值
+            "max_retry_attempts": 3,
+            "retry_delay": 1.0,
+        }
+    )
 
     # 代理配置
-    proxy_config: Optional[Dict[str, Any]] = field(default_factory=lambda: {
-        "urls": [
-            "http://127.0.0.1:8080",
-            "http://127.0.0.1:8081",
-            "socks5://127.0.0.1:1080"
-        ],
-        "strategy": "weighted_random",
-        "auto_health_check": True,
-        "max_fail_count": 5,
-        "min_score_threshold": 30.0,
-    })
+    proxy_config: Optional[dict[str, Any]] = field(
+        default_factory=lambda: {
+            "urls": [
+                "http://127.0.0.1:8080",
+                "http://127.0.0.1:8081",
+                "socks5://127.0.0.1:1080",
+            ],
+            "strategy": "weighted_random",
+            "auto_health_check": True,
+            "max_fail_count": 5,
+            "min_score_threshold": 30.0,
+        }
+    )
 
     # HTTP客户端配置
     timeout: float = 30.0
     max_retries: int = 3
     retry_delay: float = 1.0
-    user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    user_agent: str = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
 
 
 class RequestEvent:
@@ -131,7 +140,7 @@ class RequestEvent:
         self.token_refreshed = token_refreshed
         self.timestamp = time.monotonic()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "source": self.source,
@@ -150,8 +159,8 @@ class RequestMonitor:
     """请求监控器"""
 
     def __init__(self):
-        self.events: List[RequestEvent] = []
-        self.stats: Dict[str, Any] = {
+        self.events: list[RequestEvent] = []
+        self.stats: dict[str, Any] = {
             "total_requests": 0,
             "successful_requests": 0,
             "failed_requests": 0,
@@ -181,12 +190,13 @@ class RequestMonitor:
         if event.proxy_used:
             self.stats["proxy_rotations"] += 1
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         total_requests = self.stats["total_requests"]
         avg_response_time = (
             self.stats["total_response_time_ms"] / total_requests
-            if total_requests > 0 else 0.0
+            if total_requests > 0
+            else 0.0
         )
 
         return {
@@ -194,15 +204,19 @@ class RequestMonitor:
             "avg_response_time_ms": round(avg_response_time, 2),
             "success_rate": (
                 self.stats["successful_requests"] / total_requests * 100
-                if total_requests > 0 else 0.0
+                if total_requests > 0
+                else 0.0
             ),
             "error_rate": (
                 self.stats["failed_requests"] / total_requests * 100
-                if total_requests > 0 else 0.0
+                if total_requests > 0
+                else 0.0
             ),
         }
 
-    def get_events(self, source: Optional[str] = None, limit: Optional[int] = None) -> List[RequestEvent]:
+    def get_events(
+        self, source: Optional[str] = None, limit: Optional[int] = None
+    ) -> list[RequestEvent]:
         """获取事件列表"""
         events = self.events
         if source:
@@ -236,11 +250,11 @@ class HttpClientFactory:
     """
 
     def __init__(self):
-        self._components: Dict[str, Any] = {}
+        self._components: dict[str, Any] = {}
         self._monitor = RequestMonitor()
 
         # 预定义的数据源配置
-        self._configs: Dict[str, CollectorConfig] = {
+        self._configs: dict[str, CollectorConfig] = {
             "fotmob": FotMobConfig(),
         }
 
@@ -256,16 +270,18 @@ class HttpClientFactory:
         """获取请求监控器"""
         return self._monitor
 
-    async def create_rate_limiter(self, source: str, config: CollectorConfig) -> RateLimiter:
+    async def create_rate_limiter(
+        self, source: str, config: CollectorConfig
+    ) -> RateLimiter:
         """创建速率限制器"""
         if f"{source}_rate_limiter" in self._components:
             return self._components[f"{source}_rate_limiter"]
 
-        return create_rate_limiter({
-            f"{source}_api": config.rate_limit_config
-        })
+        return create_rate_limiter({f"{source}_api": config.rate_limit_config})
 
-    async def create_proxy_pool(self, source: str, config: CollectorConfig) -> ProxyPool:
+    async def create_proxy_pool(
+        self, source: str, config: CollectorConfig
+    ) -> ProxyPool:
         """创建代理池"""
         if f"{source}_proxy_pool" in self._components:
             return self._components[f"{source}_proxy_pool"]
@@ -283,7 +299,9 @@ class HttpClientFactory:
             min_score_threshold=proxy_config["min_score_threshold"],
         )
 
-    async def create_token_manager(self, source: str, config: CollectorConfig) -> TokenManager:
+    async def create_token_manager(
+        self, source: str, config: CollectorConfig
+    ) -> TokenManager:
         """创建Token管理器"""
         if f"{source}_token_manager" in self._components:
             return self._components[f"{source}_token_manager"]
@@ -293,6 +311,7 @@ class HttpClientFactory:
         # 为特定数据源注册Token Provider
         if source == "fotmob":
             from .auth import create_fotmob_provider
+
             fotmob_provider = create_fotmob_provider()
             await token_manager.register_provider(fotmob_provider)
 
@@ -416,7 +435,7 @@ class HttpClientFactory:
 
         return httpx.AsyncClient(**client_config)
 
-    def get_available_sources(self) -> List[str]:
+    def get_available_sources(self) -> list[str]:
         """获取可用的数据源列表"""
         return list(self._configs.keys())
 
@@ -429,16 +448,15 @@ class MonitoredCollector:
     """带监控功能的采集器包装器"""
 
     def __init__(
-        self,
-        collector: BaseCollectorProtocol,
-        source: str,
-        monitor: RequestMonitor
+        self, collector: BaseCollectorProtocol, source: str, monitor: RequestMonitor
     ):
         self.collector = collector
         self.source = source
         self.monitor = monitor
 
-    async def collect_fixtures(self, league_id: int, season_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def collect_fixtures(
+        self, league_id: int, season_id: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """采集赛程数据（带监控）"""
         start_time = time.monotonic()
         try:
@@ -467,7 +485,7 @@ class MonitoredCollector:
             self.monitor.record_event(event)
             raise
 
-    async def collect_match_details(self, match_id: str) -> Dict[str, Any]:
+    async def collect_match_details(self, match_id: str) -> dict[str, Any]:
         """采集比赛详情（带监控）"""
         start_time = time.monotonic()
         try:
@@ -496,7 +514,7 @@ class MonitoredCollector:
             self.monitor.record_event(event)
             raise
 
-    async def collect_team_info(self, team_id: str) -> Dict[str, Any]:
+    async def collect_team_info(self, team_id: str) -> dict[str, Any]:
         """采集球队信息（带监控）"""
         start_time = time.monotonic()
         try:
@@ -525,7 +543,7 @@ class MonitoredCollector:
             self.monitor.record_event(event)
             raise
 
-    async def check_health(self) -> Dict[str, Any]:
+    async def check_health(self) -> dict[str, Any]:
         """健康检查（带监控）"""
         start_time = time.monotonic()
         try:

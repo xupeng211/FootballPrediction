@@ -134,7 +134,7 @@ class UserProfileService(SimpleService):
         # 可以根据用户属性调整兴趣
         if hasattr(user, "profile") and hasattr(user.profile, "favorite_teams"):
             if user.profile.favorite_teams and isinstance(
-                user.profile.favorite_teams, (list, tuple)
+                user.profile.favorite_teams, list | tuple
             ):
                 default_interests.extend(user.profile.favorite_teams)
         return list(set(default_interests))  # 去重

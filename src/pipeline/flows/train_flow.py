@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 @task(retries=3, retry_delay_seconds=60)
 def load_training_data_task(
-    match_ids: List[int],
+    match_ids: list[int],
     config: PipelineConfig,
 ) -> tuple:
     """
@@ -126,7 +126,7 @@ def save_model_task(
 def train_flow(
     season: str,
     league_id: Optional[str] = None,
-    match_ids: Optional[List[int]] = None,
+    match_ids: Optional[list[int]] = None,
     model_name: Optional[str] = None,
     algorithm: str = "xgboost",
     config: Optional[PipelineConfig] = None,
@@ -195,7 +195,7 @@ def train_flow(
         }
 
 
-def _get_season_matches(season: str, league_id: Optional[str] = None) -> List[int]:
+def _get_season_matches(season: str, league_id: Optional[str] = None) -> list[int]:
     """
     获取赛季比赛ID.
 
@@ -215,7 +215,7 @@ def _get_season_matches(season: str, league_id: Optional[str] = None) -> List[in
 # 用于开发测试的简化流程
 @flow(name="Quick Training Flow")
 def quick_train_flow(
-    match_ids: List[int],
+    match_ids: list[int],
     algorithm: str = "xgboost",
     model_name: str = "quick_model",
 ) -> dict:

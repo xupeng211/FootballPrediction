@@ -18,10 +18,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.impute import SimpleImputer
 
-from src.features.feature_definitions import (
-    FEATURE_DEFINITIONS,
-    FeatureType
-)
+from src.features.feature_definitions import FEATURE_DEFINITIONS, FeatureType
 from .errors import FeatureBuilderError, ErrorCode
 
 logger = logging.getLogger(__name__)
@@ -74,16 +71,15 @@ class FeatureBuilder:
                 self.numeric_features.append(name)
                 # 初始化数值特征的标准化器
                 self.feature_scalers[name] = StandardScaler()
-                self.feature_imputers[name] = SimpleImputer(strategy='mean')
+                self.feature_imputers[name] = SimpleImputer(strategy="mean")
 
             elif definition.type == FeatureType.CATEGORICAL:
                 self.categorical_features.append(name)
                 # 初始化分类特征的编码器
                 self.feature_encoders[name] = OneHotEncoder(
-                    handle_unknown='ignore',
-                    sparse_output=False
+                    handle_unknown="ignore", sparse_output=False
                 )
-                self.feature_imputers[name] = SimpleImputer(strategy='most_frequent')
+                self.feature_imputers[name] = SimpleImputer(strategy="most_frequent")
 
             elif definition.type == FeatureType.TIME:
                 self.time_features.append(name)
@@ -95,15 +91,15 @@ class FeatureBuilder:
                 config = json.load(f)
 
             # 加载特征统计信息
-            self.feature_stats = config.get('feature_stats', {})
+            self.feature_stats = config.get("feature_stats", {})
 
             # 加载编码器参数
-            if 'encoders' in config:
-                self._load_encoders(config['encoders'])
+            if "encoders" in config:
+                self._load_encoders(config["encoders"])
 
             # 加载标准化器参数
-            if 'scalers' in config:
-                self._load_scalers(config['scalers'])
+            if "scalers" in config:
+                self._load_scalers(config["scalers"])
 
             logger.info(f"Feature configuration loaded from {config_path}")
 
@@ -115,12 +111,12 @@ class FeatureBuilder:
         for feature_name, config in encoder_configs.items():
             if feature_name in self.categorical_features:
                 # 重建OneHotEncoder
-                categories = config.get('categories', [])
+                categories = config.get("categories", [])
                 if categories:
                     self.feature_encoders[feature_name] = OneHotEncoder(
                         categories=categories,
-                        handle_unknown='ignore',
-                        sparse_output=False
+                        handle_unknown="ignore",
+                        sparse_output=False,
                     )
 
     def _load_scalers(self, scaler_configs: dict[str, dict]):
@@ -128,8 +124,8 @@ class FeatureBuilder:
         for feature_name, config in scaler_configs.items():
             if feature_name in self.numeric_features:
                 # 重建StandardScaler
-                mean = np.array(config.get('mean', [0]))
-                scale = np.array(config.get('scale', [1]))
+                mean = np.array(config.get("mean", [0]))
+                scale = np.array(config.get("scale", [1]))
 
                 scaler = StandardScaler()
                 scaler.mean_ = mean
@@ -140,7 +136,7 @@ class FeatureBuilder:
         self,
         raw_data: dict[str, Any],
         match_info: Optional[dict[str, Any]] = None,
-        historical_data: Optional[dict[str, Any]] = None
+        historical_data: Optional[dict[str, Any]] = None,
     ) -> pd.DataFrame:
         """
         构建特征DataFrame
@@ -189,13 +185,11 @@ class FeatureBuilder:
         except Exception as e:
             raise FeatureBuilderError(
                 f"Failed to build features: {str(e)}",
-                details={"raw_data_keys": list(raw_data.keys()) if raw_data else []}
+                details={"raw_data_keys": list(raw_data.keys()) if raw_data else []},
             )
 
     async def _extract_base_features(
-        self,
-        raw_data: dict[str, Any],
-        match_info: Optional[dict[str, Any]] = None
+        self, raw_data: dict[str, Any], match_info: Optional[dict[str, Any]] = None
     ) -> dict[str, Any]:
         """提取基础特征"""
         features = {}
@@ -208,16 +202,16 @@ class FeatureBuilder:
         # 从比赛信息中提取
         if match_info:
             # 主客队信息
-            if 'home_team' in match_info:
-                features['home_team'] = match_info['home_team']
-            if 'away_team' in match_info:
-                features['away_team'] = match_info['away_team']
+            if "home_team" in match_info:
+                features["home_team"] = match_info["home_team"]
+            if "away_team" in match_info:
+                features["away_team"] = match_info["away_team"]
 
             # 比赛时间信息
-            if 'match_date' in match_info:
-                features['match_date'] = match_info['match_date']
-            if 'league_id' in match_info:
-                features['league_id'] = match_info['league_id']
+            if "match_date" in match_info:
+                features["match_date"] = match_info["match_date"]
+            if "league_id" in match_info:
+                features["league_id"] = match_info["league_id"]
 
         # 计算衍生特征
         features = self._calculate_derived_features(features)
@@ -229,32 +223,32 @@ class FeatureBuilder:
         derived = {}
 
         # 进球差
-        if 'home_goals' in features and 'away_goals' in features:
-            derived['goal_difference'] = features['home_goals'] - features['away_goals']
-            derived['total_goals'] = features['home_goals'] + features['away_goals']
+        if "home_goals" in features and "away_goals" in features:
+            derived["goal_difference"] = features["home_goals"] - features["away_goals"]
+            derived["total_goals"] = features["home_goals"] + features["away_goals"]
 
         # 控球率差
-        if 'home_possession' in features and 'away_possession' in features:
-            derived['possession_difference'] = (
-                features['home_possession'] - features['away_possession']
+        if "home_possession" in features and "away_possession" in features:
+            derived["possession_difference"] = (
+                features["home_possession"] - features["away_possession"]
             )
 
         # 射门效率
-        if 'home_shots' in features and 'home_goals' in features:
-            if features['home_shots'] > 0:
-                derived['home_shot_efficiency'] = (
-                    features['home_goals'] / features['home_shots']
+        if "home_shots" in features and "home_goals" in features:
+            if features["home_shots"] > 0:
+                derived["home_shot_efficiency"] = (
+                    features["home_goals"] / features["home_shots"]
                 )
             else:
-                derived['home_shot_efficiency'] = 0.0
+                derived["home_shot_efficiency"] = 0.0
 
-        if 'away_shots' in features and 'away_goals' in features:
-            if features['away_shots'] > 0:
-                derived['away_shot_efficiency'] = (
-                    features['away_goals'] / features['away_shots']
+        if "away_shots" in features and "away_goals" in features:
+            if features["away_shots"] > 0:
+                derived["away_shot_efficiency"] = (
+                    features["away_goals"] / features["away_shots"]
                 )
             else:
-                derived['away_shot_efficiency'] = 0.0
+                derived["away_shot_efficiency"] = 0.0
 
         return derived
 
@@ -262,8 +256,8 @@ class FeatureBuilder:
         """构建时间特征"""
         time_features = {}
 
-        if 'match_date' in features:
-            match_date = features['match_date']
+        if "match_date" in features:
+            match_date = features["match_date"]
 
             # 处理不同格式的时间
             if isinstance(match_date, str):
@@ -271,58 +265,58 @@ class FeatureBuilder:
                     match_date = pd.to_datetime(match_date)
                 except Exception:
                     match_date = datetime.now()
-            elif isinstance(match_date, (int, float)):
+            elif isinstance(match_date, int | float):
                 match_date = datetime.fromtimestamp(match_date)
 
             # 提取时间特征
-            time_features.update({
-                'match_day_of_week': match_date.dayofweek,
-                'match_month': match_date.month,
-                'match_hour': match_date.hour,
-                'match_weekend': 1 if match_date.dayofweek >= 5 else 0,
-                'match_season': self._get_season(match_date.month)
-            })
+            time_features.update(
+                {
+                    "match_day_of_week": match_date.dayofweek,
+                    "match_month": match_date.month,
+                    "match_hour": match_date.hour,
+                    "match_weekend": 1 if match_date.dayofweek >= 5 else 0,
+                    "match_season": self._get_season(match_date.month),
+                }
+            )
 
         return time_features
 
     def _get_season(self, month: int) -> str:
         """获取季节"""
         if month in [12, 1, 2]:
-            return 'winter'
+            return "winter"
         elif month in [3, 4, 5]:
-            return 'spring'
+            return "spring"
         elif month in [6, 7, 8]:
-            return 'summer'
+            return "summer"
         else:
-            return 'autumn'
+            return "autumn"
 
     async def _build_rolling_features(
-        self,
-        current_features: dict[str, Any],
-        historical_data: dict[str, Any]
+        self, current_features: dict[str, Any], historical_data: dict[str, Any]
     ) -> dict[str, Any]:
         """构建滚动窗口特征"""
         rolling_features = {}
 
         try:
             # 获取历史数据
-            team_history = historical_data.get('team_history', {})
+            team_history = historical_data.get("team_history", {})
 
-            if 'home_team' in current_features:
-                home_team = current_features['home_team']
+            if "home_team" in current_features:
+                home_team = current_features["home_team"]
                 if home_team in team_history:
                     home_history = team_history[home_team]
-                    rolling_features.update(self._calculate_rolling_stats(
-                        home_history, prefix='home_'
-                    ))
+                    rolling_features.update(
+                        self._calculate_rolling_stats(home_history, prefix="home_")
+                    )
 
-            if 'away_team' in current_features:
-                away_team = current_features['away_team']
+            if "away_team" in current_features:
+                away_team = current_features["away_team"]
                 if away_team in team_history:
                     away_history = team_history[away_team]
-                    rolling_features.update(self._calculate_rolling_stats(
-                        away_history, prefix='away_'
-                    ))
+                    rolling_features.update(
+                        self._calculate_rolling_stats(away_history, prefix="away_")
+                    )
 
         except Exception as e:
             logger.warning(f"Failed to build rolling features: {e}")
@@ -330,10 +324,7 @@ class FeatureBuilder:
         return rolling_features
 
     def _calculate_rolling_stats(
-        self,
-        history: list[dict[str, Any]],
-        prefix: str,
-        window: int = 5
+        self, history: list[dict[str, Any]], prefix: str, window: int = 5
     ) -> dict[str, Any]:
         """计算滚动统计特征"""
         if not history or len(history) < window:
@@ -345,18 +336,20 @@ class FeatureBuilder:
         rolling_stats = {}
 
         # 计算各种统计量
-        numeric_fields = ['goals', 'shots', 'possession', 'corners']
+        numeric_fields = ["goals", "shots", "possession", "corners"]
 
         for field in numeric_fields:
             values = [match.get(field, 0) for match in recent_history]
             if values:
-                rolling_stats.update({
-                    f'{prefix}{field}_rolling_{window}_mean': np.mean(values),
-                    f'{prefix}{field}_rolling_{window}_std': np.std(values),
-                    f'{prefix}{field}_rolling_{window}_max': np.max(values),
-                    f'{prefix}{field}_rolling_{window}_min': np.min(values),
-                    f'{prefix}{field}_rolling_{window}_sum': np.sum(values)
-                })
+                rolling_stats.update(
+                    {
+                        f"{prefix}{field}_rolling_{window}_mean": np.mean(values),
+                        f"{prefix}{field}_rolling_{window}_std": np.std(values),
+                        f"{prefix}{field}_rolling_{window}_max": np.max(values),
+                        f"{prefix}{field}_rolling_{window}_min": np.min(values),
+                        f"{prefix}{field}_rolling_{window}_sum": np.sum(values),
+                    }
+                )
 
         return rolling_stats
 
@@ -368,7 +361,7 @@ class FeatureBuilder:
             # validate_feature_data(df)
 
             # 基础验证
-            required_columns = ['home_goals', 'away_goals']
+            required_columns = ["home_goals", "away_goals"]
             for col in required_columns:
                 if col not in df.columns:
                     raise FeatureBuilderError(f"Missing required feature: {col}")
@@ -376,7 +369,7 @@ class FeatureBuilder:
         except Exception as e:
             raise FeatureBuilderError(
                 f"Feature validation failed: {str(e)}",
-                details={"features": list(df.columns)}
+                details={"features": list(df.columns)},
             )
 
     def _preprocess_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -390,16 +383,20 @@ class FeatureBuilder:
                 if feature in self.feature_imputers:
                     # 如果有训练时的统计信息，使用训练时的均值
                     if feature in self.feature_stats:
-                        mean_value = self.feature_stats[feature].get('mean', 0)
+                        mean_value = self.feature_stats[feature].get("mean", 0)
                         processed_df[feature].fillna(mean_value, inplace=True)
                     else:
                         # 使用imputer
                         values = processed_df[[feature]].values
-                        filled_values = self.feature_imputers[feature].fit_transform(values)
+                        filled_values = self.feature_imputers[feature].fit_transform(
+                            values
+                        )
                         processed_df[feature] = filled_values.flatten()
 
                 # 转换数据类型
-                processed_df[feature] = pd.to_numeric(processed_df[feature], errors='coerce')
+                processed_df[feature] = pd.to_numeric(
+                    processed_df[feature], errors="coerce"
+                )
 
         # 处理分类特征
         for feature in self.categorical_features:
@@ -408,12 +405,14 @@ class FeatureBuilder:
                 if feature in self.feature_imputers:
                     # 如果有训练时的统计信息，使用训练时的众数
                     if feature in self.feature_stats:
-                        mode_value = self.feature_stats[feature].get('mode', 'unknown')
+                        mode_value = self.feature_stats[feature].get("mode", "unknown")
                         processed_df[feature].fillna(mode_value, inplace=True)
                     else:
                         # 使用imputer
                         values = processed_df[[feature]].values
-                        filled_values = self.feature_imputers[feature].fit_transform(values)
+                        filled_values = self.feature_imputers[feature].fit_transform(
+                            values
+                        )
                         processed_df[feature] = filled_values.flatten()
 
                 # 转换为字符串类型
@@ -435,11 +434,15 @@ class FeatureBuilder:
                         encoded = encoder.transform(encoded_df[[feature]])
 
                         # 创建OneHot编码列名
-                        if hasattr(encoder, 'categories_'):
+                        if hasattr(encoder, "categories_"):
                             category_names = encoder.categories_[0]
-                            feature_names = [f"{feature}_{cat}" for cat in category_names]
+                            feature_names = [
+                                f"{feature}_{cat}" for cat in category_names
+                            ]
                         else:
-                            feature_names = [f"{feature}_{i}" for i in range(encoded.shape[1])]
+                            feature_names = [
+                                f"{feature}_{i}" for i in range(encoded.shape[1])
+                            ]
 
                         # 添加编码后的特征
                         for i, name in enumerate(feature_names):
@@ -450,7 +453,9 @@ class FeatureBuilder:
                     else:
                         # 如果没有编码器，使用Label编码
                         le = LabelEncoder()
-                        encoded_df[feature] = le.fit_transform(encoded_df[feature].astype(str))
+                        encoded_df[feature] = le.fit_transform(
+                            encoded_df[feature].astype(str)
+                        )
 
                 except Exception as e:
                     logger.warning(f"Failed to encode feature {feature}: {e}")
@@ -462,7 +467,9 @@ class FeatureBuilder:
                     if feature in self.feature_scalers:
                         # 使用训练时的标准化器
                         scaler = self.feature_scalers[feature]
-                        encoded_df[feature] = scaler.transform(encoded_df[[feature]]).flatten()
+                        encoded_df[feature] = scaler.transform(
+                            encoded_df[[feature]]
+                        ).flatten()
                 except Exception as e:
                     logger.warning(f"Failed to scale feature {feature}: {e}")
 
@@ -496,7 +503,7 @@ class FeatureBuilder:
             "categorical_features": len(self.categorical_features),
             "time_features": len(self.time_features),
             "feature_columns": self.feature_columns,
-            "feature_stats": self.feature_stats
+            "feature_stats": self.feature_stats,
         }
 
     def save_config(self, config_path: str):
@@ -509,10 +516,10 @@ class FeatureBuilder:
             "feature_stats": self.feature_stats,
             "encoders": self._save_encoders(),
             "scalers": self._save_scalers(),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=2, default=str)
 
         logger.info(f"Feature configuration saved to {config_path}")
@@ -523,8 +530,8 @@ class FeatureBuilder:
 
         for feature, encoder in self.feature_encoders.items():
             config = {}
-            if hasattr(encoder, 'categories_'):
-                config['categories'] = [cat.tolist() for cat in encoder.categories_]
+            if hasattr(encoder, "categories_"):
+                config["categories"] = [cat.tolist() for cat in encoder.categories_]
             encoder_configs[feature] = config
 
         return encoder_configs
@@ -535,10 +542,10 @@ class FeatureBuilder:
 
         for feature, scaler in self.feature_scalers.items():
             config = {}
-            if hasattr(scaler, 'mean_'):
-                config['mean'] = scaler.mean_.tolist()
-            if hasattr(scaler, 'scale_'):
-                config['scale'] = scaler.scale_.tolist()
+            if hasattr(scaler, "mean_"):
+                config["mean"] = scaler.mean_.tolist()
+            if hasattr(scaler, "scale_"):
+                config["scale"] = scaler.scale_.tolist()
             scaler_configs[feature] = config
 
         return scaler_configs

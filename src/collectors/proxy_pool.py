@@ -28,6 +28,7 @@ import aiohttp
 
 class ProxyProtocol(Enum):
     """代理协议类型"""
+
     HTTP = "http"
     HTTPS = "https"
     SOCKS4 = "socks4"
@@ -36,9 +37,10 @@ class ProxyProtocol(Enum):
 
 class ProxyStatus(Enum):
     """代理状态"""
-    ACTIVE = "active"      # 活跃可用
-    BANNED = "banned"      # 已被禁用
-    TESTING = "testing"    # 测试中
+
+    ACTIVE = "active"  # 活跃可用
+    BANNED = "banned"  # 已被禁用
+    TESTING = "testing"  # 测试中
 
 
 @dataclass
@@ -61,6 +63,7 @@ class Proxy:
         status: 代理状态
         response_time: 响应时间（毫秒）
     """
+
     url: str
     protocol: ProxyProtocol
     host: str
@@ -83,7 +86,7 @@ class Proxy:
             self.status = ProxyStatus(self.status.lower())
 
     @classmethod
-    def from_url(cls, url: str, **kwargs) -> 'Proxy':
+    def from_url(cls, url: str, **kwargs) -> "Proxy":
         """
         从URL创建代理对象
 
@@ -94,35 +97,35 @@ class Proxy:
         Returns:
             Proxy: 代理对象
         """
-        if not url.startswith(('http://', 'https://', 'socks4://', 'socks5://')):
-            url = f'http://{url}'
+        if not url.startswith(("http://", "https://", "socks4://", "socks5://")):
+            url = f"http://{url}"
 
         # 解析URL
-        if '://' in url:
-            protocol_str, rest = url.split('://', 1)
+        if "://" in url:
+            protocol_str, rest = url.split("://", 1)
             protocol = ProxyProtocol(protocol_str.lower())
 
             # 处理认证信息
             credentials = None
-            if '@' in rest:
-                credentials, rest = rest.split('@', 1)
-                if ':' in credentials:
-                    username, password = credentials.split(':', 1)
+            if "@" in rest:
+                credentials, rest = rest.split("@", 1)
+                if ":" in credentials:
+                    username, password = credentials.split(":", 1)
                 else:
                     username, password = credentials, None
             else:
                 username, password = None, None
 
             # 处理主机和端口
-            if ':' in rest:
-                host, port_str = rest.rsplit(':', 1)
+            if ":" in rest:
+                host, port_str = rest.rsplit(":", 1)
                 try:
                     port = int(port_str)
                 except ValueError:
                     # 如果端口不是数字，可能是IPv6地址
-                    if '[' in rest and ']' in rest:
-                        host = rest.split(']')[0][1:]
-                        port_part = rest.split(']:')
+                    if "[" in rest and "]" in rest:
+                        host = rest.split("]")[0][1:]
+                        port_part = rest.split("]:")
                         port = int(port_part[1]) if len(port_part) > 1 else 80
                     else:
                         raise ValueError(f"Invalid proxy URL: {url}")
@@ -139,7 +142,7 @@ class Proxy:
             port=port,
             username=username,
             password=password,
-            **kwargs
+            **kwargs,
         )
 
     @property
@@ -195,25 +198,25 @@ class Proxy:
         self.fail_count = 0
         self.score = max(50.0, self.score)  # 恢复到最低50分
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            'url': self.url,
-            'protocol': self.protocol.value,
-            'host': self.host,
-            'port': self.port,
-            'username': self.username,
-            'password': '***' if self.password else None,
-            'score': self.score,
-            'fail_count': self.fail_count,
-            'success_count': self.success_count,
-            'last_used': self.last_used,
-            'last_check': self.last_check,
-            'status': self.status.value,
-            'response_time': self.response_time,
-            'is_active': self.is_active,
-            'is_banned': self.is_banned,
-            'is_healthy': self.is_healthy,
+            "url": self.url,
+            "protocol": self.protocol.value,
+            "host": self.host,
+            "port": self.port,
+            "username": self.username,
+            "password": "***" if self.password else None,
+            "score": self.score,
+            "fail_count": self.fail_count,
+            "success_count": self.success_count,
+            "last_used": self.last_used,
+            "last_check": self.last_check,
+            "status": self.status.value,
+            "response_time": self.response_time,
+            "is_active": self.is_active,
+            "is_banned": self.is_banned,
+            "is_healthy": self.is_healthy,
         }
 
     def __str__(self) -> str:
@@ -225,6 +228,7 @@ class Proxy:
 
 class RotationStrategy(Enum):
     """轮询策略"""
+
     RANDOM = "random"
     ROUND_ROBIN = "round_robin"
     WEIGHTED_RANDOM = "weighted_random"
@@ -240,7 +244,7 @@ class ProxyProvider(Protocol):
     """
 
     @abstractmethod
-    async def load_proxies(self) -> List[Proxy]:
+    async def load_proxies(self) -> list[Proxy]:
         """
         加载代理列表
 
@@ -250,7 +254,7 @@ class ProxyProvider(Protocol):
         ...
 
     @abstractmethod
-    async def refresh_proxies(self) -> List[Proxy]:
+    async def refresh_proxies(self) -> list[Proxy]:
         """
         刷新代理列表
 
@@ -267,7 +271,7 @@ class StaticProxyProvider:
     用于测试和演示，提供固定的代理列表
     """
 
-    def __init__(self, proxies: List[str]):
+    def __init__(self, proxies: list[str]):
         """
         初始化静态代理提供者
 
@@ -276,11 +280,11 @@ class StaticProxyProvider:
         """
         self.proxies = [Proxy.from_url(url) for url in proxies]
 
-    async def load_proxies(self) -> List[Proxy]:
+    async def load_proxies(self) -> list[Proxy]:
         """加载静态代理列表"""
         return self.proxies.copy()
 
-    async def refresh_proxies(self) -> List[Proxy]:
+    async def refresh_proxies(self) -> list[Proxy]:
         """刷新代理列表（静态提供者返回相同列表）"""
         return self.proxies.copy()
 
@@ -292,7 +296,7 @@ class FileProxyProvider:
     从文件中读取代理列表，支持多种格式
     """
 
-    def __init__(self, file_path: str, encoding: str = 'utf-8'):
+    def __init__(self, file_path: str, encoding: str = "utf-8"):
         """
         初始化文件代理提供者
 
@@ -302,10 +306,10 @@ class FileProxyProvider:
         """
         self.file_path = Path(file_path)
         self.encoding = encoding
-        self._cached_proxies: Optional[List[Proxy]] = None
+        self._cached_proxies: Optional[list[Proxy]] = None
         self._last_modified: Optional[float] = None
 
-    async def load_proxies(self) -> List[Proxy]:
+    async def load_proxies(self) -> list[Proxy]:
         """加载代理文件"""
         if not self.file_path.exists():
             raise FileNotFoundError(f"Proxy file not found: {self.file_path}")
@@ -313,22 +317,26 @@ class FileProxyProvider:
         # 检查文件是否已修改
         current_mtime = self.file_path.stat().st_mtime
 
-        if (self._cached_proxies is None or
-            self._last_modified is None or
-            current_mtime > self._last_modified):
+        if (
+            self._cached_proxies is None
+            or self._last_modified is None
+            or current_mtime > self._last_modified
+        ):
 
             proxies = []
-            with open(self.file_path, 'r', encoding=self.encoding) as f:
+            with open(self.file_path, encoding=self.encoding) as f:
                 for line_num, line in enumerate(f, 1):
                     line = line.strip()
-                    if not line or line.startswith('#'):
+                    if not line or line.startswith("#"):
                         continue
 
                     try:
                         proxy = Proxy.from_url(line)
                         proxies.append(proxy)
                     except ValueError as e:
-                        print(f"Warning: Invalid proxy format at line {line_num}: {line} - {e}")
+                        print(
+                            f"Warning: Invalid proxy format at line {line_num}: {line} - {e}"
+                        )
                         continue
 
             self._cached_proxies = proxies
@@ -336,7 +344,7 @@ class FileProxyProvider:
 
         return self._cached_proxies.copy() if self._cached_proxies else []
 
-    async def refresh_proxies(self) -> List[Proxy]:
+    async def refresh_proxies(self) -> list[Proxy]:
         """刷新代理列表（强制重新加载文件）"""
         self._cached_proxies = None
         self._last_modified = None
@@ -384,7 +392,7 @@ class ProxyPool:
         self.health_check_interval = health_check_interval
 
         # 代理列表和状态
-        self.proxies: List[Proxy] = []
+        self.proxies: list[Proxy] = []
         self.current_index = 0  # 用于轮询策略
         self.lock = asyncio.Lock()
 
@@ -424,15 +432,15 @@ class ProxyPool:
 
             # 过滤活跃且健康的代理
             available_proxies = [
-                proxy for proxy in self.proxies
-                if proxy.is_active and proxy.is_healthy
+                proxy for proxy in self.proxies if proxy.is_active and proxy.is_healthy
             ]
 
             if not available_proxies:
                 # 如果没有健康的代理，尝试激活一些被禁用的代理
                 await self._reactivate_banned_proxies()
                 available_proxies = [
-                    proxy for proxy in self.proxies
+                    proxy
+                    for proxy in self.proxies
                     if proxy.is_active and proxy.is_healthy
                 ]
 
@@ -443,7 +451,7 @@ class ProxyPool:
             proxy = await self._select_proxy(available_proxies)
             return proxy
 
-    async def _select_proxy(self, available_proxies: List[Proxy]) -> Proxy:
+    async def _select_proxy(self, available_proxies: list[Proxy]) -> Proxy:
         """根据策略选择代理"""
         if self.strategy == RotationStrategy.RANDOM:
             return random.choice(available_proxies)
@@ -476,7 +484,9 @@ class ProxyPool:
         else:
             return random.choice(available_proxies)
 
-    async def record_proxy_result(self, proxy: Proxy, success: bool, response_time: Optional[float] = None) -> None:
+    async def record_proxy_result(
+        self, proxy: Proxy, success: bool, response_time: Optional[float] = None
+    ) -> None:
         """
         记录代理使用结果
 
@@ -491,9 +501,14 @@ class ProxyPool:
             else:
                 proxy.record_failure()
                 # 检查是否需要禁用代理
-                if proxy.fail_count >= self.max_fail_count or proxy.score < self.min_score_threshold:
+                if (
+                    proxy.fail_count >= self.max_fail_count
+                    or proxy.score < self.min_score_threshold
+                ):
                     proxy.ban()
-                    print(f"🚫 Proxy banned: {proxy.url} (fail_count={proxy.fail_count}, score={proxy.score:.1f})")
+                    print(
+                        f"🚫 Proxy banned: {proxy.url} (fail_count={proxy.fail_count}, score={proxy.score:.1f})"
+                    )
 
     async def _reactivate_banned_proxies(self) -> None:
         """重新激活部分被禁用的代理"""
@@ -556,7 +571,9 @@ class ProxyPool:
                         healthy_count += 1
                         print(f"✅ Health check passed for {proxy.url}")
 
-                print(f"📊 Health check completed: {healthy_count}/{len(tasks)} proxies healthy")
+                print(
+                    f"📊 Health check completed: {healthy_count}/{len(tasks)} proxies healthy"
+                )
 
     async def _check_single_proxy(self, proxy: Proxy) -> bool:
         """检查单个代理的健康状况"""
@@ -565,20 +582,19 @@ class ProxyPool:
             if proxy.username and proxy.password:
                 # 添加认证信息
                 from urllib.parse import quote
+
                 auth_string = f"{quote(proxy.username)}:{quote(proxy.password)}"
-                proxy_url = proxy_url.replace('://', f'://{auth_string}@')
+                proxy_url = proxy_url.replace("://", f"://{auth_string}@")
 
             timeout = aiohttp.ClientTimeout(total=self.health_check_timeout)
 
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.get(
-                    self.health_check_url,
-                    proxy=proxy_url,
-                    ssl=False  # 忽略SSL证书验证
+                    self.health_check_url, proxy=proxy_url, ssl=False  # 忽略SSL证书验证
                 ) as response:
                     if response.status == 200:
                         start_time = time.monotonic()
-                        content = await response.text()
+                        await response.text()
                         end_time = time.monotonic()
 
                         response_time = (end_time - start_time) * 1000  # 转换为毫秒
@@ -588,7 +604,7 @@ class ProxyPool:
                         proxy.record_failure()
                         return False
 
-        except Exception as e:
+        except Exception:
             proxy.record_failure()
             return False
 
@@ -619,44 +635,50 @@ class ProxyPool:
             except Exception as e:
                 print(f"❌ Failed to refresh proxies: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取代理池统计信息"""
         if not self.proxies:
             return {
-                'total': 0,
-                'active': 0,
-                'banned': 0,
-                'healthy': 0,
-                'avg_score': 0.0,
-                'avg_response_time': None,
+                "total": 0,
+                "active": 0,
+                "banned": 0,
+                "healthy": 0,
+                "avg_score": 0.0,
+                "avg_response_time": None,
             }
 
         active_proxies = [p for p in self.proxies if p.is_active]
         healthy_proxies = [p for p in self.proxies if p.is_healthy]
         avg_score = sum(p.score for p in self.proxies) / len(self.proxies)
 
-        response_times = [p.response_time for p in self.proxies if p.response_time is not None]
-        avg_response_time = sum(response_times) / len(response_times) if response_times else None
+        response_times = [
+            p.response_time for p in self.proxies if p.response_time is not None
+        ]
+        avg_response_time = (
+            sum(response_times) / len(response_times) if response_times else None
+        )
 
         return {
-            'total': len(self.proxies),
-            'active': len(active_proxies),
-            'banned': len(self.proxies) - len(active_proxies),
-            'healthy': len(healthy_proxies),
-            'avg_score': round(avg_score, 2),
-            'avg_response_time': round(avg_response_time, 2) if avg_response_time else None,
+            "total": len(self.proxies),
+            "active": len(active_proxies),
+            "banned": len(self.proxies) - len(active_proxies),
+            "healthy": len(healthy_proxies),
+            "avg_score": round(avg_score, 2),
+            "avg_response_time": (
+                round(avg_response_time, 2) if avg_response_time else None
+            ),
         }
 
-    def get_proxies_info(self) -> List[Dict[str, Any]]:
+    def get_proxies_info(self) -> list[dict[str, Any]]:
         """获取所有代理的详细信息"""
         return [proxy.to_dict() for proxy in self.proxies]
 
 
 # 便利函数
 def create_proxy_pool(
-    proxies: List[str],
+    proxies: list[str],
     strategy: RotationStrategy = RotationStrategy.WEIGHTED_RANDOM,
-    **kwargs
+    **kwargs,
 ) -> ProxyPool:
     """
     创建代理池的便利函数
@@ -676,7 +698,7 @@ def create_proxy_pool(
 def create_file_proxy_pool(
     file_path: str,
     strategy: RotationStrategy = RotationStrategy.WEIGHTED_RANDOM,
-    **kwargs
+    **kwargs,
 ) -> ProxyPool:
     """
     创建基于文件的代理池
@@ -695,14 +717,14 @@ def create_file_proxy_pool(
 
 # 模块导出
 __all__ = [
-    'Proxy',
-    'ProxyProtocol',
-    'ProxyStatus',
-    'RotationStrategy',
-    'ProxyProvider',
-    'StaticProxyProvider',
-    'FileProxyProvider',
-    'ProxyPool',
-    'create_proxy_pool',
-    'create_file_proxy_pool',
+    "Proxy",
+    "ProxyProtocol",
+    "ProxyStatus",
+    "RotationStrategy",
+    "ProxyProvider",
+    "StaticProxyProvider",
+    "FileProxyProvider",
+    "ProxyPool",
+    "create_proxy_pool",
+    "create_file_proxy_pool",
 ]

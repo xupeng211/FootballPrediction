@@ -41,7 +41,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         self,
         relations: Optional[list[dict[str, Any]]] = None,
         tolerance: float = 0.0,
-        strict_mode: bool = True
+        strict_mode: bool = True,
     ):
         """
         初始化逻辑关系检查规则。
@@ -63,7 +63,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "full_time_score_home",
                 "field_b": "half_time_score_home",
                 "relation": "gte",  # 全场主队得分 >= 半场主队得分
-                "severity": "high"
+                "severity": "high",
             },
             {
                 "name": "full_time_score_away_consistency",
@@ -71,9 +71,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "full_time_score_away",
                 "field_b": "half_time_score_away",
                 "relation": "gte",
-                "severity": "high"
+                "severity": "high",
             },
-
             # 射门和进球的逻辑关系
             {
                 "name": "shots_vs_goals_home",
@@ -81,7 +80,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "shot_home",
                 "field_b": "full_time_score_home",
                 "relation": "gte",
-                "severity": "high"
+                "severity": "high",
             },
             {
                 "name": "shots_vs_goals_away",
@@ -89,9 +88,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "shot_away",
                 "field_b": "full_time_score_away",
                 "relation": "gte",
-                "severity": "high"
+                "severity": "high",
             },
-
             # 射正和进球的逻辑关系
             {
                 "name": "shots_on_target_vs_goals_home",
@@ -99,7 +97,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "shot_on_target_home",
                 "field_b": "full_time_score_home",
                 "relation": "gte",
-                "severity": "high"
+                "severity": "high",
             },
             {
                 "name": "shots_on_target_vs_goals_away",
@@ -107,9 +105,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "shot_on_target_away",
                 "field_b": "full_time_score_away",
                 "relation": "gte",
-                "severity": "high"
+                "severity": "high",
             },
-
             # 射正和总射门的逻辑关系
             {
                 "name": "shots_on_target_vs_total_shots_home",
@@ -117,7 +114,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "shot_on_target_home",
                 "field_b": "shot_home",
                 "relation": "lte",
-                "severity": "medium"
+                "severity": "medium",
             },
             {
                 "name": "shots_on_target_vs_total_shots_away",
@@ -125,9 +122,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "shot_on_target_away",
                 "field_b": "shot_away",
                 "relation": "lte",
-                "severity": "medium"
+                "severity": "medium",
             },
-
             # 控球率的逻辑关系
             {
                 "name": "possession_sum",
@@ -136,9 +132,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_b": "possession_away",
                 "relation": "sum_close_to_100",
                 "tolerance": 5.0,  # 允许5%的误差
-                "severity": "medium"
+                "severity": "medium",
             },
-
             # 传球成功率的逻辑关系
             {
                 "name": "accurate_vs_total_passes_home",
@@ -146,7 +141,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "passes_accurate_home",
                 "field_b": "passes_home",
                 "relation": "lte",
-                "severity": "medium"
+                "severity": "medium",
             },
             {
                 "name": "accurate_vs_total_passes_away",
@@ -154,9 +149,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "passes_accurate_away",
                 "field_b": "passes_away",
                 "relation": "lte",
-                "severity": "medium"
+                "severity": "medium",
             },
-
             # 传中成功率的逻辑关系
             {
                 "name": "accurate_vs_total_crosses_home",
@@ -164,7 +158,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "crosses_accurate_home",
                 "field_b": "crosses_home",
                 "relation": "lte",
-                "severity": "low"
+                "severity": "low",
             },
             {
                 "name": "accurate_vs_total_crosses_away",
@@ -172,9 +166,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_a": "crosses_accurate_away",
                 "field_b": "crosses_away",
                 "relation": "lte",
-                "severity": "low"
+                "severity": "low",
             },
-
             # xG和实际进球的逻辑关系
             {
                 "name": "xg_vs_goals_home",
@@ -183,7 +176,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_b": "full_time_score_home",
                 "relation": "xg_reasonable",  # xG应在进球数的合理范围内
                 "tolerance": 2.0,  # 允许2球的差异
-                "severity": "medium"
+                "severity": "medium",
             },
             {
                 "name": "xg_vs_goals_away",
@@ -192,9 +185,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_b": "full_time_score_away",
                 "relation": "xg_reasonable",
                 "tolerance": 2.0,
-                "severity": "medium"
+                "severity": "medium",
             },
-
             # 牌数的逻辑关系
             {
                 "name": "total_cards_composition",
@@ -203,8 +195,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "field_b": "cards_red_home",
                 "relation": "total_cards",
                 "extra_fields": ["cards_yellow_away", "cards_red_away"],
-                "severity": "low"
-            }
+                "severity": "low",
+            },
         ]
 
         self.tolerance = tolerance
@@ -214,12 +206,12 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         self.relation_functions = {
             "gte": self._check_gte,  # greater than or equal
             "lte": self._check_lte,  # less than or equal
-            "gt": self._check_gt,   # greater than
-            "lt": self._check_lt,   # less than
-            "eq": self._check_eq,   # equal
+            "gt": self._check_gt,  # greater than
+            "lt": self._check_lt,  # less than
+            "eq": self._check_eq,  # equal
             "sum_close_to_100": self._check_sum_close_to_100,
             "xg_reasonable": self._check_xg_reasonable,
-            "total_cards": self._check_total_cards_composition
+            "total_cards": self._check_total_cards_composition,
         }
 
         logger.debug(
@@ -249,7 +241,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             try:
                 violation = self._check_single_relation(features, relation)
                 if violation:
-                    severity = relation.get("severity", "medium")
+                    relation.get("severity", "medium")
                     errors.append(violation)
 
             except Exception as e:
@@ -265,7 +257,9 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
 
         return errors
 
-    def _check_single_relation(self, features: dict[str, Any], relation: dict[str, Any]) -> Optional[str]:
+    def _check_single_relation(
+        self, features: dict[str, Any], relation: dict[str, Any]
+    ) -> Optional[str]:
         """
         检查单个逻辑关系。
 
@@ -289,7 +283,9 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         value_b = features[field_b]
 
         # 检查字段值是否为数值类型
-        if not isinstance(value_a, (int, float)) or not isinstance(value_b, (int, float)):
+        if not isinstance(value_a, int | float) or not isinstance(
+            value_b, int | float
+        ):
             return None  # 非数值类型由 TypeRule 检查
 
         # 获取关系检查函数
@@ -299,10 +295,26 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
 
         # 执行关系检查
         relation_tolerance = relation.get("tolerance", self.tolerance)
-        return check_function(relation_name, field_a, value_a, field_b, value_b, relation_tolerance, relation)
+        return check_function(
+            relation_name,
+            field_a,
+            value_a,
+            field_b,
+            value_b,
+            relation_tolerance,
+            relation,
+        )
 
-    def _check_gte(self, relation_name: str, field_a: str, value_a: float,
-                   field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+    def _check_gte(
+        self,
+        relation_name: str,
+        field_a: str,
+        value_a: float,
+        field_b: str,
+        value_b: float,
+        tolerance: float,
+        relation: dict[str, Any],
+    ) -> Optional[str]:
         """检查 value_a >= value_b"""
         if value_a + tolerance < value_b:
             return (
@@ -311,8 +323,16 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             )
         return None
 
-    def _check_lte(self, relation_name: str, field_a: str, value_a: float,
-                   field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+    def _check_lte(
+        self,
+        relation_name: str,
+        field_a: str,
+        value_a: float,
+        field_b: str,
+        value_b: float,
+        tolerance: float,
+        relation: dict[str, Any],
+    ) -> Optional[str]:
         """检查 value_a <= value_b"""
         if value_a > value_b + tolerance:
             return (
@@ -321,8 +341,16 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             )
         return None
 
-    def _check_gt(self, relation_name: str, field_a: str, value_a: float,
-                  field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+    def _check_gt(
+        self,
+        relation_name: str,
+        field_a: str,
+        value_a: float,
+        field_b: str,
+        value_b: float,
+        tolerance: float,
+        relation: dict[str, Any],
+    ) -> Optional[str]:
         """检查 value_a > value_b"""
         if value_a <= value_b + tolerance:
             return (
@@ -331,8 +359,16 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             )
         return None
 
-    def _check_lt(self, relation_name: str, field_a: str, value_a: float,
-                  field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+    def _check_lt(
+        self,
+        relation_name: str,
+        field_a: str,
+        value_a: float,
+        field_b: str,
+        value_b: float,
+        tolerance: float,
+        relation: dict[str, Any],
+    ) -> Optional[str]:
         """检查 value_a < value_b"""
         if value_a >= value_b - tolerance:
             return (
@@ -341,8 +377,16 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             )
         return None
 
-    def _check_eq(self, relation_name: str, field_a: str, value_a: float,
-                  field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+    def _check_eq(
+        self,
+        relation_name: str,
+        field_a: str,
+        value_a: float,
+        field_b: str,
+        value_b: float,
+        tolerance: float,
+        relation: dict[str, Any],
+    ) -> Optional[str]:
         """检查 value_a == value_b"""
         if abs(value_a - value_b) > tolerance:
             return (
@@ -351,8 +395,16 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             )
         return None
 
-    def _check_sum_close_to_100(self, relation_name: str, field_a: str, value_a: float,
-                                field_b: str, value_b: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+    def _check_sum_close_to_100(
+        self,
+        relation_name: str,
+        field_a: str,
+        value_a: float,
+        field_b: str,
+        value_b: float,
+        tolerance: float,
+        relation: dict[str, Any],
+    ) -> Optional[str]:
         """检查两个值的和是否接近100%"""
         total = value_a + value_b
         deviation = abs(total - 100.0)
@@ -363,8 +415,16 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             )
         return None
 
-    def _check_xg_reasonable(self, relation_name: str, field_a: str, xg_value: float,
-                             field_b: str, goals: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+    def _check_xg_reasonable(
+        self,
+        relation_name: str,
+        field_a: str,
+        xg_value: float,
+        field_b: str,
+        goals: float,
+        tolerance: float,
+        relation: dict[str, Any],
+    ) -> Optional[str]:
         """检查xG值与实际进球数的合理性"""
         # xG值应该在合理范围内，且与进球数不应该差异过大
         if xg_value < 0 or xg_value > 10:  # xG应该在0-10之间
@@ -379,13 +439,21 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             )
         return None
 
-    def _check_total_cards_composition(self, relation_name: str, field_a: str, yellow_home: float,
-                                       field_b: str, red_home: float, tolerance: float, relation: dict[str, Any]) -> Optional[str]:
+    def _check_total_cards_composition(
+        self,
+        relation_name: str,
+        field_a: str,
+        yellow_home: float,
+        field_b: str,
+        red_home: float,
+        tolerance: float,
+        relation: dict[str, Any],
+    ) -> Optional[str]:
         """检查总牌数的组成（这里简化为逻辑合理性检查）"""
         extra_fields = relation.get("extra_fields", [])
         if len(extra_fields) >= 2:
-            yellow_away = extra_fields[0]
-            red_away = extra_fields[1]
+            extra_fields[0]
+            extra_fields[1]
 
             # 简单的合理性检查：红牌数应该小于等于黄牌数（通常情况下）
             if red_home > yellow_home and yellow_home > 0:
@@ -412,7 +480,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             "passed_relations": 0,
             "failed_relations": 0,
             "relation_details": {},
-            "violations": []
+            "violations": [],
         }
 
         for relation in self.relations:
@@ -428,14 +496,16 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                     "status": "skipped",
                     "reason": "required_fields_missing",
                     "field_a": field_a,
-                    "field_b": field_b
+                    "field_b": field_b,
                 }
                 continue
 
             value_a = features[field_a]
             value_b = features[field_b]
 
-            if not isinstance(value_a, (int, float)) or not isinstance(value_b, (int, float)):
+            if not isinstance(value_a, int | float) or not isinstance(
+                value_b, int | float
+            ):
                 # 非数值类型，跳过检查
                 summary["relation_details"][relation_name] = {
                     "status": "skipped",
@@ -443,7 +513,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                     "field_a": field_a,
                     "field_b": field_b,
                     "value_a_type": type(value_a).__name__,
-                    "value_b_type": type(value_b).__name__
+                    "value_b_type": type(value_b).__name__,
                 }
                 continue
 
@@ -459,7 +529,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                 "value_b": value_b,
                 "relation": relation.get("relation"),
                 "severity": relation.get("severity", "medium"),
-                "violation": violation
+                "violation": violation,
             }
 
             summary["relation_details"][relation_name] = relation_detail

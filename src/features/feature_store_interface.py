@@ -57,7 +57,7 @@ class FeatureStoreProtocol(Protocol):
         match_id: int,
         features: dict[str, Any],
         version: str = "latest",
-        metadata: Optional[dict[str, Any]] = None
+        metadata: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         保存特征数据到存储.
@@ -80,9 +80,7 @@ class FeatureStoreProtocol(Protocol):
         ...
 
     async def load_features(
-        self,
-        match_id: int,
-        version: str = "latest"
+        self, match_id: int, version: str = "latest"
     ) -> Optional[FeatureData]:
         """
         加载单个比赛的特征数据.
@@ -102,9 +100,7 @@ class FeatureStoreProtocol(Protocol):
         ...
 
     async def load_batch(
-        self,
-        match_ids: list[int],
-        version: str = "latest"
+        self, match_ids: list[int], version: str = "latest"
     ) -> dict[int, FeatureData]:
         """
         批量加载多个比赛的特征数据.
@@ -127,7 +123,7 @@ class FeatureStoreProtocol(Protocol):
         self,
         match_ids: list[int],
         feature_names: Optional[list[str]] = None,
-        version: str = "latest"
+        version: str = "latest",
     ) -> list[FeatureQueryResult]:
         """
         查询特定的特征字段.
@@ -149,8 +145,7 @@ class FeatureStoreProtocol(Protocol):
         ...
 
     async def latest_feature_timestamp(
-        self,
-        version: str = "latest"
+        self, version: str = "latest"
     ) -> Optional[datetime]:
         """
         获取最新特征的时间戳.
@@ -177,9 +172,7 @@ class FeatureStoreProtocol(Protocol):
         ...
 
     async def delete_features(
-        self,
-        match_id: int,
-        version: Optional[str] = None
+        self, match_id: int, version: Optional[str] = None
     ) -> bool:
         """
         删除指定的特征数据.
@@ -193,10 +186,7 @@ class FeatureStoreProtocol(Protocol):
         """
         ...
 
-    async def list_feature_versions(
-        self,
-        match_id: int
-    ) -> list[str]:
+    async def list_feature_versions(self, match_id: int) -> list[str]:
         """
         列出指定比赛的所有特征版本.
 
@@ -235,26 +225,31 @@ class FeatureStoreProtocol(Protocol):
 # 常用异常定义
 class FeatureStoreError(Exception):
     """FeatureStore 基础异常类."""
+
     pass
 
 
 class FeatureNotFoundError(FeatureStoreError):
     """特征未找到异常."""
+
     pass
 
 
 class FeatureValidationError(FeatureStoreError):
     """特征验证失败异常."""
+
     pass
 
 
 class StorageError(FeatureStoreError):
     """存储操作失败异常."""
+
     pass
 
 
 class ConfigurationError(FeatureStoreError):
     """配置错误异常."""
+
     pass
 
 

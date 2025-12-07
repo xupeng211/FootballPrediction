@@ -26,6 +26,7 @@ try:
         ACTIVE_CONNECTIONS,
         generate_latest as enhanced_generate_latest,
     )
+
     ENHANCED_MONITORING_AVAILABLE = True
     logger.info("✅ 增强监控模块加载成功")
 except ImportError as e:
@@ -96,7 +97,7 @@ async def prometheus_metrics(
         return Response(
             content="# Error generating metrics\n" + str(e),
             media_type="text/plain",
-            status_code=500
+            status_code=500,
         )
 
 
@@ -119,14 +120,16 @@ async def get_metrics_json():
         # 获取系统指标
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
 
         metrics = {
-            "timestamp": logger.handlers[0].formatter.formatTime(
-                logger.makeRecord(
-                    "metrics", logging.INFO, "", (), "", ""
+            "timestamp": (
+                logger.handlers[0].formatter.formatTime(
+                    logger.makeRecord("metrics", logging.INFO, "", (), "", "")
                 )
-            ) if logger.handlers else "",
+                if logger.handlers
+                else ""
+            ),
             "system": {
                 "cpu_usage_percent": cpu_percent,
                 "memory_usage_percent": memory.percent,
@@ -135,16 +138,30 @@ async def get_metrics_json():
                 "disk_free_gb": disk.free / (1024**3),
             },
             "application": {
-                "http_requests_total": HTTP_REQUESTS_TOTAL._value._sum._value if ENHANCED_MONITORING_AVAILABLE else 0,
+                "http_requests_total": (
+                    HTTP_REQUESTS_TOTAL._value._sum._value
+                    if ENHANCED_MONITORING_AVAILABLE
+                    else 0
+                ),
                 "active_connections": {
-                    "database": ACTIVE_CONNECTIONS.labels(connection_type="database")._value._value if ENHANCED_MONITORING_AVAILABLE else 0,
-                    "redis": ACTIVE_CONNECTIONS.labels(connection_type="redis")._value._value if ENHANCED_MONITORING_AVAILABLE else 0,
+                    "database": (
+                        ACTIVE_CONNECTIONS.labels(
+                            connection_type="database"
+                        )._value._value
+                        if ENHANCED_MONITORING_AVAILABLE
+                        else 0
+                    ),
+                    "redis": (
+                        ACTIVE_CONNECTIONS.labels(connection_type="redis")._value._value
+                        if ENHANCED_MONITORING_AVAILABLE
+                        else 0
+                    ),
                 },
             },
             "monitoring": {
                 "enhanced_monitoring": ENHANCED_MONITORING_AVAILABLE,
                 "prometheus_available": True,
-            }
+            },
         }
 
         return metrics
@@ -160,7 +177,7 @@ async def get_metrics_json():
             "monitoring": {
                 "enhanced_monitoring": ENHANCED_MONITORING_AVAILABLE,
                 "prometheus_available": False,
-            }
+            },
         }
 
 

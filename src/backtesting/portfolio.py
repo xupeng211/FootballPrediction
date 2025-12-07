@@ -39,15 +39,15 @@ class Portfolio:
         self.min_balance = config.initial_balance
 
         # 下注记录
-        self.bet_history: List[BetResult] = []
-        self.pending_bets: Dict[int, BetDecision] = {}  # match_id -> decision
+        self.bet_history: list[BetResult] = []
+        self.pending_bets: dict[int, BetDecision] = {}  # match_id -> decision
 
         # 统计数据
         self.total_staked = Decimal("0.00")
         self.total_wins = 0
         self.total_losses = 0
         self.total_skips = 0
-        self.daily_balance_history: Dict[datetime, Decimal] = {}
+        self.daily_balance_history: dict[datetime, Decimal] = {}
 
         logger.info(f"Portfolio initialized with balance: {self.initial_balance}")
 
@@ -82,15 +82,17 @@ class Portfolio:
             min(
                 value_adjusted,
                 self.config.max_stake,
-                self.current_balance  # 不能超过当前余额
-            )
+                self.current_balance,  # 不能超过当前余额
+            ),
         )
 
         # 向下舍入到分
         final_stake = final_stake.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
-        logger.debug(f"Stake calculation: base={base_stake}, confidence={decision.confidence}, "
-                    f"value_edge={decision.value_edge}, final={final_stake}")
+        logger.debug(
+            f"Stake calculation: base={base_stake}, confidence={decision.confidence}, "
+            f"value_edge={decision.value_edge}, final={final_stake}"
+        )
 
         return final_stake
 
@@ -116,18 +118,24 @@ class Portfolio:
 
         # 检查价值边际
         if abs(decision.value_edge) < self.config.value_threshold:
-            logger.debug(f"Value edge too small: {decision.value_edge} < {self.config.value_threshold}")
+            logger.debug(
+                f"Value edge too small: {decision.value_edge} < {self.config.value_threshold}"
+            )
             return False
 
         # 检查置信度
         if decision.confidence < self.config.min_confidence:
-            logger.debug(f"Confidence too low: {decision.confidence} < {self.config.min_confidence}")
+            logger.debug(
+                f"Confidence too low: {decision.confidence} < {self.config.min_confidence}"
+            )
             return False
 
         # 检查每日下注限制
         daily_bets = self._count_daily_bets(date)
         if daily_bets >= self.config.max_daily_bets:
-            logger.debug(f"Daily bet limit reached: {daily_bets} >= {self.config.max_daily_bets}")
+            logger.debug(
+                f"Daily bet limit reached: {daily_bets} >= {self.config.max_daily_bets}"
+            )
             return False
 
         # 计算并检查下注金额
@@ -162,7 +170,9 @@ class Portfolio:
 
         # 检查余额
         if stake > self.current_balance:
-            logger.error(f"Insufficient balance for stake {stake}, current: {self.current_balance}")
+            logger.error(
+                f"Insufficient balance for stake {stake}, current: {self.current_balance}"
+            )
             return False
 
         # 扣除下注金额
@@ -170,13 +180,19 @@ class Portfolio:
         self.total_staked += stake
         self.pending_bets[decision.match_id] = decision
 
-        logger.info(f"Bet placed: match={decision.match_id}, type={decision.bet_type.value}, "
-                   f"stake={stake}, odds={decision.odds}, balance={self.current_balance}")
+        logger.info(
+            f"Bet placed: match={decision.match_id}, type={decision.bet_type.value}, "
+            f"stake={stake}, odds={decision.odds}, balance={self.current_balance}"
+        )
 
         return True
 
-    def settle_bet(self, match_id: int, actual_outcome: BetOutcome,
-                  match_date: Optional[datetime] = None) -> Optional[BetResult]:
+    def settle_bet(
+        self,
+        match_id: int,
+        actual_outcome: BetOutcome,
+        match_date: Optional[datetime] = None,
+    ) -> Optional[BetResult]:
         """
         结算下注
 
@@ -197,7 +213,9 @@ class Portfolio:
         odds = decision.odds
 
         # 计算盈亏
-        profit_loss = self._calculate_profit_loss(decision.bet_type, actual_outcome, stake, odds)
+        profit_loss = self._calculate_profit_loss(
+            decision.bet_type, actual_outcome, stake, odds
+        )
         is_correct = self._is_bet_correct(decision.bet_type, actual_outcome)
 
         # 更新余额
@@ -219,18 +237,21 @@ class Portfolio:
             actual_outcome=actual_outcome,
             profit_loss=profit_loss,
             is_correct=is_correct,
-            settled_at=match_date or datetime.now()
+            settled_at=match_date or datetime.now(),
         )
 
         self.bet_history.append(result)
 
-        logger.info(f"Bet settled: match={match_id}, result={actual_outcome.value}, "
-                   f"profit_loss={profit_loss:+.2f}, balance={self.current_balance}")
+        logger.info(
+            f"Bet settled: match={match_id}, result={actual_outcome.value}, "
+            f"profit_loss={profit_loss:+.2f}, balance={self.current_balance}"
+        )
 
         return result
 
-    def _calculate_profit_loss(self, bet_type: str, outcome: BetOutcome,
-                              stake: Decimal, odds: Decimal) -> Decimal:
+    def _calculate_profit_loss(
+        self, bet_type: str, outcome: BetOutcome, stake: Decimal, odds: Decimal
+    ) -> Decimal:
         """
         计算盈亏
 
@@ -290,7 +311,7 @@ class Portfolio:
 
         return count
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> dict[str, any]:
         """
         获取资金统计信息
 
@@ -307,7 +328,11 @@ class Portfolio:
             avg_stake = Decimal("0.00")
 
         total_profit_loss = self.current_balance - self.initial_balance
-        roi = float(total_profit_loss / self.initial_balance * 100) if self.initial_balance > 0 else 0.0
+        roi = (
+            float(total_profit_loss / self.initial_balance * 100)
+            if self.initial_balance > 0
+            else 0.0
+        )
 
         return {
             "initial_balance": self.initial_balance,
@@ -323,11 +348,13 @@ class Portfolio:
             "avg_stake": avg_stake,
             "max_balance": self.max_balance,
             "min_balance": self.min_balance,
-            "max_drawdown": float((self.initial_balance - self.min_balance) / self.initial_balance * 100),
-            "pending_bets": len(self.pending_bets)
+            "max_drawdown": float(
+                (self.initial_balance - self.min_balance) / self.initial_balance * 100
+            ),
+            "pending_bets": len(self.pending_bets),
         }
 
-    def get_balance_history(self) -> List[Dict[str, any]]:
+    def get_balance_history(self) -> list[dict[str, any]]:
         """
         获取余额历史
 
@@ -337,25 +364,30 @@ class Portfolio:
         history = []
 
         # 添加初始余额
-        history.append({
-            "timestamp": datetime.now(),
-            "balance": self.initial_balance,
-            "event": "initial"
-        })
+        history.append(
+            {
+                "timestamp": datetime.now(),
+                "balance": self.initial_balance,
+                "event": "initial",
+            }
+        )
 
         # 添加每次下注后的余额变化
         for result in self.bet_history:
             balance_at_time = self.initial_balance + sum(
-                r.profit_loss for r in self.bet_history
+                r.profit_loss
+                for r in self.bet_history
                 if r.settled_at <= result.settled_at
             )
 
-            history.append({
-                "timestamp": result.settled_at,
-                "balance": balance_at_time,
-                "event": f"bet_{result.decision.bet_type.value}_{'win' if result.profit_loss > 0 else 'lose'}",
-                "profit_loss": result.profit_loss
-            })
+            history.append(
+                {
+                    "timestamp": result.settled_at,
+                    "balance": balance_at_time,
+                    "event": f"bet_{result.decision.bet_type.value}_{'win' if result.profit_loss > 0 else 'lose'}",
+                    "profit_loss": result.profit_loss,
+                }
+            )
 
         return sorted(history, key=lambda x: x["timestamp"])
 

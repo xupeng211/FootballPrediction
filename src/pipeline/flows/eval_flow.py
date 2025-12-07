@@ -49,7 +49,7 @@ def load_model_task(model_name: str, version: Optional[str], config: PipelineCon
 
 @task(retries=2, retry_delay_seconds=30)
 def load_test_data_task(
-    match_ids: List[int],
+    match_ids: list[int],
     config: PipelineConfig,
 ) -> tuple:
     """
@@ -81,7 +81,7 @@ def evaluate_model_task(
     X,
     y,
     config: PipelineConfig,
-) -> Dict:
+) -> dict:
     """
     评估模型任务.
 
@@ -121,16 +121,16 @@ def evaluate_model_task(
         "feature_count": len(X.columns),
     }
 
-    logger.info(f"Model evaluation completed")
+    logger.info("Model evaluation completed")
     return evaluation_result
 
 
 @task
 def compare_models_task(
-    models_data: Dict[str, Dict],
+    models_data: dict[str, dict],
     X,
     y,
-) -> Dict:
+) -> dict:
     """
     比较多个模型任务.
 
@@ -160,7 +160,9 @@ def compare_models_task(
                 logger.warning(f"Probability prediction failed for {model_name}: {e}")
 
     # 比较模型性能
-    comparison_df = MetricsCalculator.compare_models(y, predictions_dict, probabilities_dict)
+    comparison_df = MetricsCalculator.compare_models(
+        y, predictions_dict, probabilities_dict
+    )
 
     comparison_result = {
         "comparison_table": comparison_df.to_dict("records"),
@@ -168,7 +170,7 @@ def compare_models_task(
         "model_count": len(models_data),
     }
 
-    logger.info(f"Model comparison completed")
+    logger.info("Model comparison completed")
     return comparison_result
 
 
@@ -176,11 +178,11 @@ def compare_models_task(
 def eval_flow(
     model_name: str,
     version: Optional[str] = None,
-    test_match_ids: Optional[List[int]] = None,
+    test_match_ids: Optional[list[int]] = None,
     season: Optional[str] = None,
     compare_with_latest: bool = False,
     config: Optional[PipelineConfig] = None,
-) -> Dict:
+) -> dict:
     """
     足球模型评估工作流.
 
@@ -231,7 +233,9 @@ def eval_flow(
             model_registry = ModelRegistry(config)
             try:
                 # 获取其他模型版本
-                model_versions = model_registry.list_models(model_name).get(model_name, [])
+                model_versions = model_registry.list_models(model_name).get(
+                    model_name, []
+                )
 
                 if len(model_versions) > 1:
                     # 加载多个版本进行比较
@@ -249,10 +253,14 @@ def eval_flow(
                                     "metadata": other_metadata,
                                 }
                             except Exception as e:
-                                logger.warning(f"Failed to load model version {other_version}: {e}")
+                                logger.warning(
+                                    f"Failed to load model version {other_version}: {e}"
+                                )
 
                     if len(models_data) > 1:
-                        comparison_result = compare_models_task(models_data, X_test, y_test)
+                        comparison_result = compare_models_task(
+                            models_data, X_test, y_test
+                        )
                         result["comparison"] = comparison_result
 
             except Exception as e:
@@ -272,10 +280,10 @@ def eval_flow(
 
 @flow(name="Batch Model Evaluation Flow")
 def batch_eval_flow(
-    models: List[Dict[str, str]],  # [{"name": "model1", "version": "v1"}, ...]
-    test_match_ids: List[int],
+    models: list[dict[str, str]],  # [{"name": "model1", "version": "v1"}, ...]
+    test_match_ids: list[int],
     config: Optional[PipelineConfig] = None,
-) -> Dict:
+) -> dict:
     """
     批量模型评估工作流.
 
@@ -335,7 +343,7 @@ def batch_eval_flow(
         }
 
 
-def _get_test_matches(season: Optional[str] = None) -> List[int]:
+def _get_test_matches(season: Optional[str] = None) -> list[int]:
     """
     获取测试比赛ID.
 
@@ -355,8 +363,8 @@ def _get_test_matches(season: Optional[str] = None) -> List[int]:
 @flow(name="Quick Evaluation Flow")
 def quick_eval_flow(
     model_name: str,
-    test_match_ids: List[int],
-) -> Dict:
+    test_match_ids: list[int],
+) -> dict:
     """
     快速评估流程 (用于开发测试).
 

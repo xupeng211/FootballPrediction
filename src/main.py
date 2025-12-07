@@ -59,7 +59,11 @@ logger = get_logger(__name__)
 
 # P4-1: Prometheus 监控集成
 try:
-    from src.monitoring.prometheus_instrumentator import create_instrumentator, generate_latest
+    from src.monitoring.prometheus_instrumentator import (
+        create_instrumentator,
+        generate_latest,
+    )
+
     PROMETHEUS_AVAILABLE = True
     logger.info("✅ Prometheus 监控模块加载成功")
 except ImportError as e:
@@ -319,8 +323,7 @@ environment = os.getenv("ENV", "development").lower()
 if environment in ["production", "prod"]:
     # 生产环境：只允许指定域名
     allowed_origins = os.getenv(
-        "CORS_ORIGINS",
-        "https://yourdomain.com,https://www.yourdomain.com"
+        "CORS_ORIGINS", "https://yourdomain.com,https://www.yourdomain.com"
     ).split(",")
     allowed_origins = [origin.strip() for origin in allowed_origins if origin.strip()]
 else:

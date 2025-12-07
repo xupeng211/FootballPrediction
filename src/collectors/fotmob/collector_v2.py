@@ -145,8 +145,8 @@ class FotMobCollectorV2:
         return httpx.AsyncClient(**client_config)
 
     async def _inject_auth_headers(
-        self, headers: Dict[str, str], provider_name: str = "fotmob"
-    ) -> Dict[str, str]:
+        self, headers: dict[str, str], provider_name: str = "fotmob"
+    ) -> dict[str, str]:
         """
         注入认证头部
 
@@ -176,8 +176,8 @@ class FotMobCollectorV2:
         method: str,
         url: str,
         *,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
         provider_name: str = "fotmob",
     ) -> httpx.Response:
         """
@@ -203,7 +203,9 @@ class FotMobCollectorV2:
 
         # 准备请求头
         request_headers = headers or {}
-        request_headers = await self._inject_auth_headers(request_headers, provider_name)
+        request_headers = await self._inject_auth_headers(
+            request_headers, provider_name
+        )
 
         # 记录请求开始
         self.stats["total_requests"] += 1
@@ -236,9 +238,11 @@ class FotMobCollectorV2:
                     if response.status_code in (401, 403):
                         if attempt < self.max_retries:
                             # 强制刷新Token并重试
-                            await self.token_manager.get_token(provider_name, force_refresh=True)
+                            await self.token_manager.get_token(
+                                provider_name, force_refresh=True
+                            )
                             self.stats["token_refreshes"] += 1
-                            await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                            await asyncio.sleep(self.retry_delay * (2**attempt))
                             continue
                         else:
                             raise AuthenticationError(
@@ -251,7 +255,7 @@ class FotMobCollectorV2:
                             raise DataNotFoundError(f"Resource not found: {url}")
                         elif response.status_code == 429:
                             if attempt < self.max_retries:
-                                await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                                await asyncio.sleep(self.retry_delay * (2**attempt))
                                 continue
                             raise RateLimitError("Rate limit exceeded")
                         elif response.status_code >= 500:
@@ -271,11 +275,15 @@ class FotMobCollectorV2:
             except httpx.TimeoutException:
                 error_msg = f"Request timeout after {self.timeout}s"
                 if proxy:
-                    await self.proxy_pool.record_proxy_result(proxy, False, self.timeout * 1000)
+                    await self.proxy_pool.record_proxy_result(
+                        proxy, False, self.timeout * 1000
+                    )
             except httpx.NetworkError as e:
                 error_msg = f"Network error: {e}"
                 if proxy:
-                    await self.proxy_pool.record_proxy_result(proxy, False, self.timeout * 1000)
+                    await self.proxy_pool.record_proxy_result(
+                        proxy, False, self.timeout * 1000
+                    )
             except httpx.HTTPError as e:
                 error_msg = f"HTTP error: {e}"
             except (AuthenticationError, RateLimitError, DataNotFoundError):
@@ -285,21 +293,25 @@ class FotMobCollectorV2:
             except Exception as e:
                 error_msg = f"Unexpected error: {e}"
                 if proxy:
-                    await self.proxy_pool.record_proxy_result(proxy, False, self.timeout * 1000)
+                    await self.proxy_pool.record_proxy_result(
+                        proxy, False, self.timeout * 1000
+                    )
 
             # 重试逻辑
             if attempt < self.max_retries:
-                await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                await asyncio.sleep(self.retry_delay * (2**attempt))
             else:
                 # 所有重试都失败了
                 self.stats["failed_requests"] += 1
                 self._error_count += 1
                 self._last_error = error_msg
-                raise NetworkError(f"Request failed after {self.max_retries} retries: {error_msg}")
+                raise NetworkError(
+                    f"Request failed after {self.max_retries} retries: {error_msg}"
+                )
 
     async def collect_fixtures(
         self, league_id: int, season_id: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         采集联赛赛程数据
 
@@ -347,11 +359,11 @@ class FotMobCollectorV2:
         except json.JSONDecodeError as e:
             raise CollectorError(f"Failed to parse JSON response: {e}")
         except Exception as e:
-            if isinstance(e, (AuthenticationError, RateLimitError, NetworkError)):
+            if isinstance(e, AuthenticationError | RateLimitError | NetworkError):
                 raise
             raise CollectorError(f"Failed to collect fixtures: {e}")
 
-    async def collect_match_details(self, match_id: str) -> Dict[str, Any]:
+    async def collect_match_details(self, match_id: str) -> dict[str, Any]:
         """
         采集比赛详情数据
 
@@ -435,11 +447,14 @@ class FotMobCollectorV2:
         except json.JSONDecodeError as e:
             raise CollectorError(f"Failed to parse JSON response: {e}")
         except Exception as e:
-            if isinstance(e, (DataNotFoundError, AuthenticationError, RateLimitError, NetworkError)):
+            if isinstance(
+                e,
+                DataNotFoundError | AuthenticationError | RateLimitError | NetworkError,
+            ):
                 raise
             raise CollectorError(f"Failed to collect match details: {e}")
 
-    async def collect_team_info(self, team_id: str) -> Dict[str, Any]:
+    async def collect_team_info(self, team_id: str) -> dict[str, Any]:
         """
         采集球队信息
 
@@ -479,11 +494,14 @@ class FotMobCollectorV2:
         except json.JSONDecodeError as e:
             raise CollectorError(f"Failed to parse JSON response: {e}")
         except Exception as e:
-            if isinstance(e, (DataNotFoundError, AuthenticationError, RateLimitError, NetworkError)):
+            if isinstance(
+                e,
+                DataNotFoundError | AuthenticationError | RateLimitError | NetworkError,
+            ):
                 raise
             raise CollectorError(f"Failed to collect team info: {e}")
 
-    async def check_health(self) -> Dict[str, Any]:
+    async def check_health(self) -> dict[str, Any]:
         """
         检查采集器健康状态
 
@@ -500,7 +518,9 @@ class FotMobCollectorV2:
         try:
             # 1. 检查API连通性
             url = f"{self.base_url}/api/matches"
-            await self._make_request("GET", url, params={"leagueId": 47})  # Test with Premier League
+            await self._make_request(
+                "GET", url, params={"leagueId": 47}
+            )  # Test with Premier League
             details["api_connectivity"] = True
         except Exception as e:
             status = "unhealthy"
@@ -555,7 +575,9 @@ class FotMobCollectorV2:
             "successful_requests": self.stats["successful_requests"],
             "failed_requests": self.stats["failed_requests"],
             "success_rate": (
-                self.stats["successful_requests"] / max(self.stats["total_requests"], 1) * 100
+                self.stats["successful_requests"]
+                / max(self.stats["total_requests"], 1)
+                * 100
             ),
             "token_refreshes": self.stats["token_refreshes"],
             "proxy_rotations": self.stats["proxy_rotations"],
@@ -578,7 +600,7 @@ def create_fotmob_collector_v2(
     rate_limiter: RateLimiter,
     proxy_pool: ProxyPool,
     token_manager: TokenManager,
-    **kwargs
+    **kwargs,
 ) -> FotMobCollectorV2:
     """
     创建 FotMob 采集器 V2 实例的便利函数

@@ -17,7 +17,8 @@ Provides FastAPI async dependency injection functions, including:
 """
 
 import os
-from typing import Optional, AsyncGenerator
+from typing import Optional
+from collections.abc import AsyncGenerator
 
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
@@ -65,6 +66,7 @@ class User:
 # 数据库依赖注入
 # ============================================================================
 
+
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """获取异步数据库会话依赖
 
@@ -92,6 +94,7 @@ def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 # ============================================================================
 # 认证相关依赖注入
 # ============================================================================
+
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -132,14 +135,16 @@ async def get_current_user(
 
     except JWTError:
         raise credentials_exception from None
-    except Exception as e:
+    except Exception:
         # 开发环境的容错处理
         if os.getenv("ENV") == "development":
             return User(id=1, username="dev_user", is_active=True)
         raise credentials_exception from None
 
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+async def get_current_active_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
     """获取当前活跃用户.
 
     Args:
@@ -150,8 +155,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     """
     if not current_user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
     return current_user
 
@@ -175,6 +179,7 @@ async def _verify_user_active(user_id: int, username: str) -> Optional[User]:
 # 服务层依赖注入
 # ============================================================================
 
+
 async def get_prediction_service():
     """获取预测服务实例 (异步版本)."""
     return get_prediction_service()
@@ -194,9 +199,10 @@ async def get_data_service():
 # 业务逻辑依赖注入
 # ============================================================================
 
+
 async def get_user_predictions_service(
     current_user: User = Depends(get_current_active_user),
-    prediction_service = Depends(get_prediction_service)
+    prediction_service=Depends(get_prediction_service),
 ):
     """获取用户专属的预测服务.
 
@@ -211,9 +217,7 @@ async def get_user_predictions_service(
     return prediction_service
 
 
-async def get_admin_user(
-    current_user: User = Depends(get_current_active_user)
-) -> User:
+async def get_admin_user(current_user: User = Depends(get_current_active_user)) -> User:
     """获取管理员用户 (权限检查).
 
     Args:
@@ -230,8 +234,7 @@ async def get_admin_user(
 
     if current_user.id not in admin_users:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
         )
 
     return current_user
@@ -241,24 +244,17 @@ async def get_admin_user(
 # 分页依赖注入
 # ============================================================================
 
+
 class PaginationParams:
     """分页参数依赖."""
 
-    def __init__(
-        self,
-        page: int = 1,
-        size: int = 20,
-        max_size: int = 100
-    ):
+    def __init__(self, page: int = 1, size: int = 20, max_size: int = 100):
         self.page = max(1, page)
         self.size = min(max_size, max(1, size))
         self.offset = (self.page - 1) * self.size
 
 
-async def get_pagination_params(
-    page: int = 1,
-    size: int = 20
-) -> PaginationParams:
+async def get_pagination_params(page: int = 1, size: int = 20) -> PaginationParams:
     """获取分页参数.
 
     Args:
@@ -275,11 +271,8 @@ async def get_pagination_params(
 # 缓存依赖注入
 # ============================================================================
 
-async def get_cache_key(
-    prefix: str,
-    *args,
-    **kwargs
-) -> str:
+
+async def get_cache_key(prefix: str, *args, **kwargs) -> str:
     """生成缓存键.
 
     Args:
@@ -301,9 +294,8 @@ async def get_cache_key(
 # 请求验证依赖注入
 # ============================================================================
 
-async def validate_content_type(
-    content_type: str = "application/json"
-):
+
+async def validate_content_type(content_type: str = "application/json"):
     """验证请求内容类型.
 
     Args:
@@ -323,6 +315,7 @@ async def validate_content_type(
 # JWT Token管理
 # ============================================================================
 
+
 def create_access_token(data: dict, expires_delta: Optional = None) -> str:
     """创建访问令牌.
 
@@ -340,9 +333,11 @@ def create_access_token(data: dict, expires_delta: Optional = None) -> str:
             expire = expires_delta
         else:
             from datetime import timedelta
+
             expire = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
         from datetime import datetime
+
         to_encode.update({"exp": datetime.utcnow() + expire})
 
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -380,6 +375,7 @@ def verify_token(token: str) -> Optional[TokenData]:
 # 便捷函数
 # ============================================================================
 
+
 def create_user_token(user_id: int, username: str) -> str:
     """创建用户令牌的便捷函数.
 
@@ -390,14 +386,13 @@ def create_user_token(user_id: int, username: str) -> str:
     Returns:
         str: JWT访问令牌
     """
-    return create_access_token(
-        data={"sub": username, "user_id": user_id}
-    )
+    return create_access_token(data={"sub": username, "user_id": user_id})
 
 
 # ============================================================================
 # 开发和测试依赖
 # ============================================================================
+
 
 async def get_mock_db_session() -> AsyncGenerator[AsyncSession, None]:
     """获取模拟数据库会话 (用于测试).

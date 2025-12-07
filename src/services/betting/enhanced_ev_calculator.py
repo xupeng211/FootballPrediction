@@ -877,7 +877,7 @@ class EnhancedEVCalculator:
         else:
             # 设置默认值
             probability = 0.5
-            odds_float = odds if isinstance(odds, (int, float)) else 1.0
+            odds_float = odds if isinstance(odds, int | float) else 1.0
 
         # 1. 基础EV计算
         ev = (probability * odds_float) - 1

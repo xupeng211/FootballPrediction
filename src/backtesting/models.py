@@ -19,30 +19,33 @@ import numpy as np
 
 class BetOutcome(Enum):
     """下注结果枚举"""
-    HOME_WIN = "home_win"      # 主队胜
-    AWAY_WIN = "away_win"      # 客队胜
-    DRAW = "draw"             # 平局
-    PENDING = "pending"       # 待定（比赛未结束）
+
+    HOME_WIN = "home_win"  # 主队胜
+    AWAY_WIN = "away_win"  # 客队胜
+    DRAW = "draw"  # 平局
+    PENDING = "pending"  # 待定（比赛未结束）
 
 
 class BetType(Enum):
     """下注类型枚举"""
-    HOME = "home"             # 下注主队胜
-    AWAY = "away"             # 下注客队胜
-    DRAW = "draw"             # 下注平局
-    SKIP = "skip"             # 跳过（不下注）
+
+    HOME = "home"  # 下注主队胜
+    AWAY = "away"  # 下注客队胜
+    DRAW = "draw"  # 下注平局
+    SKIP = "skip"  # 跳过（不下注）
 
 
 @dataclass
 class BetDecision:
     """下注决策"""
+
     match_id: int
     bet_type: BetType
     stake: Decimal
     confidence: float  # 0.0-1.0，策略的置信度
     implied_probability: float  # 市场隐含概率
-    model_probability: float   # 模型预测概率
-    odds: Decimal              # 赔率
+    model_probability: float  # 模型预测概率
+    odds: Decimal  # 赔率
     timestamp: datetime = field(default_factory=datetime.now)
 
     @property
@@ -69,10 +72,11 @@ class BetDecision:
 @dataclass
 class BetResult:
     """下注结果"""
+
     decision: BetDecision
     actual_outcome: BetOutcome
     profit_loss: Decimal  # 盈亏（正数=盈利，负数=亏损）
-    is_correct: bool     # 预测是否正确
+    is_correct: bool  # 预测是否正确
     settled_at: datetime = field(default_factory=datetime.now)
 
     @property
@@ -86,6 +90,7 @@ class BetResult:
 @dataclass
 class BacktestConfig:
     """回测配置"""
+
     initial_balance: Decimal = Decimal("10000.00")  # 初始资金
     max_stake_pct: float = 0.05  # 单次下注最大比例（5%）
     min_stake: Decimal = Decimal("100.00")  # 最小下注金额
@@ -98,6 +103,7 @@ class BacktestConfig:
 @dataclass
 class BacktestResult:
     """回测结果统计"""
+
     config: BacktestConfig
     total_matches: int = 0
     total_bets: int = 0
@@ -126,9 +132,9 @@ class BacktestResult:
     sharpe_ratio: float = 0.0  # 夏普比率
 
     # 详细记录
-    bet_results: List[BetResult] = field(default_factory=list)
-    daily_balances: Dict[datetime, Decimal] = field(default_factory=dict)
-    balance_history: List[Decimal] = field(default_factory=list)
+    bet_results: list[BetResult] = field(default_factory=list)
+    daily_balances: dict[datetime, Decimal] = field(default_factory=dict)
+    balance_history: list[Decimal] = field(default_factory=list)
 
     def calculate_metrics(self) -> None:
         """计算性能指标"""
@@ -139,10 +145,16 @@ class BacktestResult:
         self.win_rate = self.winning_bets / self.total_bets
         self.total_profit_loss = self.final_balance - self.initial_balance
         self.roi = float(self.total_profit_loss / self.initial_balance * 100)
-        self.avg_stake = self.total_staked / self.total_bets if self.total_bets > 0 else Decimal("0.00")
+        self.avg_stake = (
+            self.total_staked / self.total_bets
+            if self.total_bets > 0
+            else Decimal("0.00")
+        )
 
         if self.winning_bets > 0:
-            winning_profits = [r.profit_loss for r in self.bet_results if r.profit_loss > 0]
+            winning_profits = [
+                r.profit_loss for r in self.bet_results if r.profit_loss > 0
+            ]
             self.avg_profit = sum(winning_profits) / len(winning_profits)
 
         # 高级统计
@@ -187,7 +199,9 @@ class BacktestResult:
 
         # 假设无风险收益率为0，使用实际收益标准差
         expected_return = self.roi / 100  # 转换为小数
-        self.sharpe_ratio = expected_return / (self.profit_volatility / abs(self.initial_balance))
+        self.sharpe_ratio = expected_return / (
+            self.profit_volatility / abs(self.initial_balance)
+        )
 
     def get_summary(self) -> str:
         """获取回测结果摘要"""
@@ -215,7 +229,9 @@ from typing import Protocol
 class StrategyProtocol(Protocol):
     """策略接口协议"""
 
-    async def decide(self, match_data: Dict[str, Any], odds_data: Dict[str, Any]) -> BetDecision:
+    async def decide(
+        self, match_data: dict[str, Any], odds_data: dict[str, Any]
+    ) -> BetDecision:
         """
         根据比赛数据和赔率做出下注决策
 

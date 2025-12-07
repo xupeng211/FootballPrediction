@@ -17,22 +17,31 @@ from typing import Optional, Union, Any
 
 try:
     from prefect import flow, task, get_run_logger
+
     HAS_PREFECT = True
 except ImportError:
     HAS_PREFECT = False
+
     # 创建占位符装饰器
     def flow(func):
         return func
+
     def task(func):
         return func
+
     def get_run_logger():
         import logging
+
         return logging.getLogger(__name__)
 
+
 from src.evaluation.backtest import (
-    Backtester, BacktestResult,
-    FlatStakingStrategy, PercentageStakingStrategy,
-    KellyStakingStrategy, ValueBettingStrategy
+    Backtester,
+    BacktestResult,
+    FlatStakingStrategy,
+    PercentageStakingStrategy,
+    KellyStakingStrategy,
+    ValueBettingStrategy,
 )
 from src.evaluation.visualizer import EvaluationVisualizer
 from src.evaluation.report_builder import ReportBuilder
@@ -41,8 +50,9 @@ logger = get_run_logger()
 
 
 @task
-def load_odds_data_task(odds_path: Union[str, Path],
-                       odds_format: str = "csv") -> pd.DataFrame:
+def load_odds_data_task(
+    odds_path: Union[str, Path], odds_format: str = "csv"
+) -> pd.DataFrame:
     """
     加载赔率数据
 
@@ -77,8 +87,9 @@ def load_odds_data_task(odds_path: Union[str, Path],
 
 
 @task
-def load_predictions_task(predictions_path: Union[str, Path],
-                         predictions_format: str = "csv") -> pd.DataFrame:
+def load_predictions_task(
+    predictions_path: Union[str, Path], predictions_format: str = "csv"
+) -> pd.DataFrame:
     """
     加载预测数据
 
@@ -104,7 +115,9 @@ def load_predictions_task(predictions_path: Union[str, Path],
         else:
             raise ValueError(f"Unsupported predictions format: {predictions_format}")
 
-        logger.info(f"Predictions data loaded: {predictions_path} ({len(predictions_df)} matches)")
+        logger.info(
+            f"Predictions data loaded: {predictions_path} ({len(predictions_df)} matches)"
+        )
         return predictions_df
 
     except Exception as e:
@@ -113,9 +126,11 @@ def load_predictions_task(predictions_path: Union[str, Path],
 
 
 @task
-def prepare_backtest_data_task(predictions_df: pd.DataFrame,
-                             odds_df: pd.DataFrame,
-                             match_id_column: str = "match_id") -> tuple:
+def prepare_backtest_data_task(
+    predictions_df: pd.DataFrame,
+    odds_df: pd.DataFrame,
+    match_id_column: str = "match_id",
+) -> tuple:
     """
     准备回测数据
 
@@ -130,7 +145,9 @@ def prepare_backtest_data_task(predictions_df: pd.DataFrame,
     try:
         # 确保都有匹配ID列
         if match_id_column not in predictions_df.columns:
-            raise ValueError(f"Match ID column '{match_id_column}' not found in predictions")
+            raise ValueError(
+                f"Match ID column '{match_id_column}' not found in predictions"
+            )
         if match_id_column not in odds_df.columns:
             raise ValueError(f"Match ID column '{match_id_column}' not found in odds")
 
@@ -143,7 +160,9 @@ def prepare_backtest_data_task(predictions_df: pd.DataFrame,
         logger.info(f"Found {len(common_matches)} common matches for backtesting")
 
         if len(common_matches) == 0:
-            raise ValueError("No common matches found between predictions and odds data")
+            raise ValueError(
+                "No common matches found between predictions and odds data"
+            )
 
         # 过滤数据
         filtered_predictions = predictions_df.loc[common_matches]
@@ -157,8 +176,9 @@ def prepare_backtest_data_task(predictions_df: pd.DataFrame,
 
 
 @task
-def validate_data_quality_task(predictions_df: pd.DataFrame,
-                             odds_df: pd.DataFrame) -> dict[str, Any]:
+def validate_data_quality_task(
+    predictions_df: pd.DataFrame, odds_df: pd.DataFrame
+) -> dict[str, Any]:
     """
     验证回测数据质量
 
@@ -173,27 +193,33 @@ def validate_data_quality_task(predictions_df: pd.DataFrame,
         "total_matches": len(predictions_df),
         "validation_passed": True,
         "issues": [],
-        "statistics": {}
+        "statistics": {},
     }
 
     try:
         # 检查概率列
-        prob_columns = [col for col in predictions_df.columns if 'prob' in col.lower()]
+        prob_columns = [col for col in predictions_df.columns if "prob" in col.lower()]
         if len(prob_columns) < 3:
-            quality_report["issues"].append("Insufficient probability columns (need at least 3)")
+            quality_report["issues"].append(
+                "Insufficient probability columns (need at least 3)"
+            )
             quality_report["validation_passed"] = False
 
         # 检查概率和为1
         for idx, row in predictions_df[prob_columns].iterrows():
             prob_sum = row.sum()
             if abs(prob_sum - 1.0) > 0.1:  # 允许10%的误差
-                quality_report["issues"].append(f"Probability sum not close to 1.0: {prob_sum:.3f} at match {idx}")
+                quality_report["issues"].append(
+                    f"Probability sum not close to 1.0: {prob_sum:.3f} at match {idx}"
+                )
                 break
 
         # 检查赔率列
-        odds_columns = [col for col in odds_df.columns if 'odds' in col.lower()]
+        odds_columns = [col for col in odds_df.columns if "odds" in col.lower()]
         if len(odds_columns) < 3:
-            quality_report["issues"].append("Insufficient odds columns (need at least 3)")
+            quality_report["issues"].append(
+                "Insufficient odds columns (need at least 3)"
+            )
             quality_report["validation_passed"] = False
 
         # 检查赔率合理性
@@ -211,18 +237,28 @@ def validate_data_quality_task(predictions_df: pd.DataFrame,
                     quality_report["issues"].append(f"Odds <= 1.0 found in {col}")
 
                 if max_odds > 1000:
-                    quality_report["issues"].append(f"Extremely high odds found in {col}")
+                    quality_report["issues"].append(
+                        f"Extremely high odds found in {col}"
+                    )
 
         # 检查实际结果（如果有）
-        result_columns = [col for col in predictions_df.columns if 'result' in col.lower() or 'target' in col.lower()]
+        result_columns = [
+            col
+            for col in predictions_df.columns
+            if "result" in col.lower() or "target" in col.lower()
+        ]
         if result_columns:
             quality_report["has_actual_results"] = True
             quality_report["result_column"] = result_columns[0]
         else:
             quality_report["has_actual_results"] = False
-            quality_report["issues"].append("No actual results found - backtesting will be simulated")
+            quality_report["issues"].append(
+                "No actual results found - backtesting will be simulated"
+            )
 
-        logger.info(f"Data validation completed. Issues found: {len(quality_report['issues'])}")
+        logger.info(
+            f"Data validation completed. Issues found: {len(quality_report['issues'])}"
+        )
         return quality_report
 
     except Exception as e:
@@ -233,8 +269,9 @@ def validate_data_quality_task(predictions_df: pd.DataFrame,
 
 
 @task
-def create_staking_strategy_task(strategy_type: str,
-                               strategy_params: Optional[dict[str, Any]] = None) -> Any:
+def create_staking_strategy_task(
+    strategy_type: str, strategy_params: Optional[dict[str, Any]] = None
+) -> Any:
     """
     创建投注策略
 
@@ -264,7 +301,7 @@ def create_staking_strategy_task(strategy_type: str,
             strategy = KellyStakingStrategy(
                 kelly_fraction=kelly_fraction,
                 min_stake=min_stake,
-                max_stake_percentage=max_stake_percentage
+                max_stake_percentage=max_stake_percentage,
             )
 
         elif strategy_type == "value":
@@ -274,13 +311,15 @@ def create_staking_strategy_task(strategy_type: str,
             strategy = ValueBettingStrategy(
                 min_ev_threshold=min_ev_threshold,
                 base_stake=base_stake,
-                max_stake_percentage=max_stake_percentage
+                max_stake_percentage=max_stake_percentage,
             )
 
         else:
             raise ValueError(f"Unknown staking strategy: {strategy_type}")
 
-        logger.info(f"Created {strategy_type} staking strategy with params: {strategy_params}")
+        logger.info(
+            f"Created {strategy_type} staking strategy with params: {strategy_params}"
+        )
         return strategy
 
     except Exception as e:
@@ -289,11 +328,13 @@ def create_staking_strategy_task(strategy_type: str,
 
 
 @task
-def run_backtest_task(predictions_df: pd.DataFrame,
-                     odds_df: pd.DataFrame,
-                     staking_strategy: Any,
-                     initial_bankroll: float = 1000.0,
-                     backtest_params: Optional[dict[str, Any]] = None) -> BacktestResult:
+def run_backtest_task(
+    predictions_df: pd.DataFrame,
+    odds_df: pd.DataFrame,
+    staking_strategy: Any,
+    initial_bankroll: float = 1000.0,
+    backtest_params: Optional[dict[str, Any]] = None,
+) -> BacktestResult:
     """
     运行回测模拟
 
@@ -319,10 +360,12 @@ def run_backtest_task(predictions_df: pd.DataFrame,
             predictions=predictions_df,
             odds=odds_df,
             stake_strategy=staking_strategy,
-            **backtest_params
+            **backtest_params,
         )
 
-        logger.info(f"Backtest completed: {result.total_bets} bets, ROI: {result.roi:.2f}%")
+        logger.info(
+            f"Backtest completed: {result.total_bets} bets, ROI: {result.roi:.2f}%"
+        )
         return result
 
     except Exception as e:
@@ -331,7 +374,9 @@ def run_backtest_task(predictions_df: pd.DataFrame,
 
 
 @task
-def analyze_backtest_performance_task(backtest_result: BacktestResult) -> dict[str, Any]:
+def analyze_backtest_performance_task(
+    backtest_result: BacktestResult,
+) -> dict[str, Any]:
     """
     分析回测性能
 
@@ -349,11 +394,11 @@ def analyze_backtest_performance_task(backtest_result: BacktestResult) -> dict[s
                 "roi": backtest_result.roi,
                 "net_profit": backtest_result.net_profit,
                 "max_drawdown": backtest_result.max_drawdown,
-                "sharpe_ratio": backtest_result.sharpe_ratio
+                "sharpe_ratio": backtest_result.sharpe_ratio,
             },
             "performance_rating": "unknown",
             "risk_assessment": "unknown",
-            "recommendations": []
+            "recommendations": [],
         }
 
         # 性能评级
@@ -378,7 +423,9 @@ def analyze_backtest_performance_task(backtest_result: BacktestResult) -> dict[s
 
         # 生成建议
         if backtest_result.roi < 0:
-            analysis["recommendations"].append("Consider adjusting your betting strategy or model")
+            analysis["recommendations"].append(
+                "Consider adjusting your betting strategy or model"
+            )
 
         if backtest_result.max_drawdown_percentage > 20:
             analysis["recommendations"].append("Implement stricter risk management")
@@ -389,7 +436,9 @@ def analyze_backtest_performance_task(backtest_result: BacktestResult) -> dict[s
         if backtest_result.win_rate < 0.4:
             analysis["recommendations"].append("Focus on improving prediction accuracy")
 
-        logger.info(f"Backtest performance analysis: {analysis['performance_rating']} performance, {analysis['risk_assessment']} risk")
+        logger.info(
+            f"Backtest performance analysis: {analysis['performance_rating']} performance, {analysis['risk_assessment']} risk"
+        )
         return analysis
 
     except Exception as e:
@@ -398,8 +447,9 @@ def analyze_backtest_performance_task(backtest_result: BacktestResult) -> dict[s
 
 
 @task
-def generate_backtest_visualizations_task(backtest_result: BacktestResult,
-                                       model_name: str = "Model") -> dict[str, list]:
+def generate_backtest_visualizations_task(
+    backtest_result: BacktestResult, model_name: str = "Model"
+) -> dict[str, list]:
     """
     生成回测可视化图表
 
@@ -415,7 +465,7 @@ def generate_backtest_visualizations_task(backtest_result: BacktestResult,
         chart_files = visualizer.plot_backtest_results(
             backtest_result,
             title=f"{model_name} - 回测结果分析",
-            save_name="backtest_results"
+            save_name="backtest_results",
         )
 
         logger.info(f"Backtest visualizations generated: {len(chart_files)} files")
@@ -427,12 +477,14 @@ def generate_backtest_visualizations_task(backtest_result: BacktestResult,
 
 
 @task
-def generate_backtest_report_task(backtest_result: BacktestResult,
-                                performance_analysis: dict[str, Any],
-                                chart_files: Optional[dict[str, list]] = None,
-                                model_name: str = "Model",
-                                model_version: str = "1.0.0",
-                                output_dir: Optional[str] = None) -> dict[str, str]:
+def generate_backtest_report_task(
+    backtest_result: BacktestResult,
+    performance_analysis: dict[str, Any],
+    chart_files: Optional[dict[str, list]] = None,
+    model_name: str = "Model",
+    model_version: str = "1.0.0",
+    output_dir: Optional[str] = None,
+) -> dict[str, str]:
     """
     生成回测报告
 
@@ -453,12 +505,14 @@ def generate_backtest_report_task(backtest_result: BacktestResult,
         if chart_files:
             for chart_type, file_paths in chart_files.items():
                 for file_path in file_paths:
-                    charts.append({
-                        'type': chart_type,
-                        'filename': Path(file_path).name,
-                        'path': file_path,
-                        'title': f"{chart_type.replace('_', ' ').title()} Chart"
-                    })
+                    charts.append(
+                        {
+                            "type": chart_type,
+                            "filename": Path(file_path).name,
+                            "path": file_path,
+                            "title": f"{chart_type.replace('_', ' ').title()} Chart",
+                        }
+                    )
 
         # 生成报告
         builder = ReportBuilder(output_dir=output_dir)
@@ -468,7 +522,7 @@ def generate_backtest_report_task(backtest_result: BacktestResult,
             charts=charts,
             model_name=model_name,
             model_version=model_version,
-            formats=['html', 'json']
+            formats=["html", "json"],
         )
 
         logger.info(f"Backtest reports generated: {list(report_files.keys())}")
@@ -490,7 +544,7 @@ def backtest_flow(
     initial_bankroll: float = 1000.0,
     backtest_params: Optional[dict[str, Any]] = None,
     match_id_column: str = "match_id",
-    output_dir: Optional[str] = None
+    output_dir: Optional[str] = None,
 ) -> dict[str, Any]:
     """
     完整的模型回测流程
@@ -550,8 +604,12 @@ def backtest_flow(
 
     # 9. 生成回测报告
     report_files = generate_backtest_report_task(
-        backtest_result, performance_analysis, chart_files,
-        model_name, model_version, output_dir
+        backtest_result,
+        performance_analysis,
+        chart_files,
+        model_name,
+        model_version,
+        output_dir,
     )
 
     # 10. 整合结果
@@ -560,32 +618,35 @@ def backtest_flow(
             "name": model_name,
             "version": model_version,
             "predictions_path": str(predictions_path),
-            "odds_path": str(odds_path)
+            "odds_path": str(odds_path),
         },
         "strategy_info": {
             "type": staking_strategy,
             "params": staking_params or {},
-            "initial_bankroll": initial_bankroll
+            "initial_bankroll": initial_bankroll,
         },
         "data_quality": quality_report,
         "backtest_result": backtest_result.to_dict(),
         "performance_analysis": performance_analysis,
         "visualizations": chart_files,
         "reports": report_files,
-        "output_dir": output_dir
+        "output_dir": output_dir,
     }
 
     # 保存完整结果
     result_file = Path(output_dir) / "complete_backtest_result.json"
-    with open(result_file, 'w', encoding='utf-8') as f:
+    with open(result_file, "w", encoding="utf-8") as f:
         import json
+
         json.dump(backtest_flow_result, f, indent=2, ensure_ascii=False, default=str)
 
     logger.info("Backtest flow completed successfully!")
     logger.info(f"Results saved to: {output_dir}")
-    logger.info(f"Backtest summary: {backtest_result.total_bets} bets, "
-               f"ROI: {backtest_result.roi:.2f}%, "
-               f"Performance: {performance_analysis['performance_rating']}")
+    logger.info(
+        f"Backtest summary: {backtest_result.total_bets} bets, "
+        f"ROI: {backtest_result.roi:.2f}%, "
+        f"Performance: {performance_analysis['performance_rating']}"
+    )
 
     return backtest_flow_result
 
@@ -595,7 +656,7 @@ def run_backtest(
     predictions_path: Union[str, Path],
     odds_path: Union[str, Path],
     model_name: str = "Football Prediction Model",
-    **kwargs
+    **kwargs,
 ) -> dict[str, Any]:
     """
     便捷的回测函数
@@ -612,7 +673,11 @@ def run_backtest(
     if not HAS_PREFECT:
         # 如果没有Prefect，直接调用回测逻辑
         logger.warning("Prefect not available - running backtest synchronously")
-        return backtest_flow.fn(predictions_path, odds_path, model_name=model_name, **kwargs)
+        return backtest_flow.fn(
+            predictions_path, odds_path, model_name=model_name, **kwargs
+        )
     else:
         # 使用Prefect flow
-        return backtest_flow(predictions_path, odds_path, model_name=model_name, **kwargs)
+        return backtest_flow(
+            predictions_path, odds_path, model_name=model_name, **kwargs
+        )

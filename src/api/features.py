@@ -173,7 +173,9 @@ def build_response_data(
 
 @router.get("/{match_id}")
 async def get_match_features_improved(
-    match_id: int, session: AsyncSession = Depends(get_async_db), include_raw: bool = False
+    match_id: int,
+    session: AsyncSession = Depends(get_async_db),
+    include_raw: bool = False,
 ) -> dict[str, Any]:
     """改进版本:获取比赛特征.
 

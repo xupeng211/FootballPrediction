@@ -55,7 +55,7 @@ class FootballFeatureStore(FeatureStoreProtocol):
         self,
         max_batch_size: int = 1000,
         retry_attempts: int = 3,
-        enable_logging: bool = True
+        enable_logging: bool = True,
     ):
         """
         初始化 FeatureStore.
@@ -78,7 +78,8 @@ class FootballFeatureStore(FeatureStoreProtocol):
         try:
             async with get_db_session() as session:
                 # 创建表结构（通过执行迁移）
-                await session.execute("""
+                await session.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS feature_store (
                         match_id BIGINT NOT NULL,
                         version VARCHAR(50) NOT NULL DEFAULT 'latest',
@@ -88,18 +89,23 @@ class FootballFeatureStore(FeatureStoreProtocol):
                         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                         PRIMARY KEY (match_id, version)
                     )
-                """)
+                """
+                )
 
                 # 创建索引
-                await session.execute("""
+                await session.execute(
+                    """
                     CREATE INDEX IF NOT EXISTS idx_featurestore_match_id
                     ON feature_store(match_id)
-                """)
+                """
+                )
 
-                await session.execute("""
+                await session.execute(
+                    """
                     CREATE INDEX IF NOT EXISTS idx_featurestore_features_gin
                     ON feature_store USING GIN(features)
-                """)
+                """
+                )
 
                 await session.commit()
                 self._initialized = True
@@ -115,14 +121,14 @@ class FootballFeatureStore(FeatureStoreProtocol):
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
         retry=retry_if_exception_type((StorageError,)),
-        reraise=True
+        reraise=True,
     )
     async def save_features(
         self,
         match_id: int,
         features: dict[str, Any],
         version: str = DEFAULT_FEATURE_VERSION,
-        metadata: Optional[dict[str, Any]] = None
+        metadata: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         保存特征数据到存储.
@@ -159,13 +165,20 @@ class FootballFeatureStore(FeatureStoreProtocol):
 
                 await session.execute(
                     query,
-                    (match_id, version, json.dumps(features), json.dumps(metadata) if metadata else None)
+                    (
+                        match_id,
+                        version,
+                        json.dumps(features),
+                        json.dumps(metadata) if metadata else None,
+                    ),
                 )
 
                 await session.commit()
 
                 if self.enable_logging:
-                    logger.debug(f"Saved features for match {match_id}, version {version}")
+                    logger.debug(
+                        f"Saved features for match {match_id}, version {version}"
+                    )
 
         except Exception as e:
             logger.error(f"Failed to save features for match {match_id}: {e}")
@@ -175,12 +188,10 @@ class FootballFeatureStore(FeatureStoreProtocol):
         ttl=300,  # 5分钟缓存
         namespace="features",
         stampede_protection=True,
-        key_builder=lambda match_id, version=DEFAULT_FEATURE_VERSION: f"feature:{match_id}:{version}"
+        key_builder=lambda match_id, version=DEFAULT_FEATURE_VERSION: f"feature:{match_id}:{version}",
     )
     async def load_features(
-        self,
-        match_id: int,
-        version: str = DEFAULT_FEATURE_VERSION
+        self, match_id: int, version: str = DEFAULT_FEATURE_VERSION
     ) -> Optional[FeatureData]:
         """
         加载单个比赛的特征数据.
@@ -210,11 +221,13 @@ class FootballFeatureStore(FeatureStoreProtocol):
                 if row:
                     return FeatureData(
                         match_id=row[0],
-                        features=json.loads(row[1]) if isinstance(row[1], str) else row[1],
+                        features=(
+                            json.loads(row[1]) if isinstance(row[1], str) else row[1]
+                        ),
                         version=row[2],
                         metadata=json.loads(row[3]) if row[3] else None,
                         created_at=row[4],
-                        updated_at=row[5]
+                        updated_at=row[5],
                     )
                 return None
 
@@ -223,9 +236,7 @@ class FootballFeatureStore(FeatureStoreProtocol):
             raise StorageError(f"Load operation failed: {e}") from e
 
     async def load_batch(
-        self,
-        match_ids: list[int],
-        version: str = DEFAULT_FEATURE_VERSION
+        self, match_ids: list[int], version: str = DEFAULT_FEATURE_VERSION
     ) -> dict[int, FeatureData]:
         """
         批量加载多个比赛的特征数据.
@@ -243,14 +254,16 @@ class FootballFeatureStore(FeatureStoreProtocol):
             return {}
 
         if len(match_ids) > self.max_batch_size:
-            raise FeatureValidationError(f"Batch size {len(match_ids)} exceeds maximum {self.max_batch_size}")
+            raise FeatureValidationError(
+                f"Batch size {len(match_ids)} exceeds maximum {self.max_batch_size}"
+            )
 
         self._validate_version(version)
 
         try:
             async with get_db_session() as session:
                 # 使用 IN 查询批量加载
-                placeholders = ','.join(['%s'] * len(match_ids))
+                placeholders = ",".join(["%s"] * len(match_ids))
                 query = f"""
                     SELECT match_id, features, version, metadata, created_at, updated_at
                     FROM feature_store
@@ -265,15 +278,19 @@ class FootballFeatureStore(FeatureStoreProtocol):
                 for row in rows:
                     batch_data[row[0]] = FeatureData(
                         match_id=row[0],
-                        features=json.loads(row[1]) if isinstance(row[1], str) else row[1],
+                        features=(
+                            json.loads(row[1]) if isinstance(row[1], str) else row[1]
+                        ),
                         version=row[2],
                         metadata=json.loads(row[3]) if row[3] else None,
                         created_at=row[4],
-                        updated_at=row[5]
+                        updated_at=row[5],
                     )
 
                 if self.enable_logging:
-                    logger.debug(f"Loaded {len(batch_data)} feature sets from {len(match_ids)} requests")
+                    logger.debug(
+                        f"Loaded {len(batch_data)} feature sets from {len(match_ids)} requests"
+                    )
 
                 return batch_data
 
@@ -285,7 +302,7 @@ class FootballFeatureStore(FeatureStoreProtocol):
         self,
         match_ids: list[int],
         feature_names: Optional[list[str]] = None,
-        version: str = DEFAULT_FEATURE_VERSION
+        version: str = DEFAULT_FEATURE_VERSION,
     ) -> list[FeatureQueryResult]:
         """
         查询特定的特征字段.
@@ -304,13 +321,15 @@ class FootballFeatureStore(FeatureStoreProtocol):
             return []
 
         if len(match_ids) > self.max_batch_size:
-            raise FeatureValidationError(f"Batch size {len(match_ids)} exceeds maximum {self.max_batch_size}")
+            raise FeatureValidationError(
+                f"Batch size {len(match_ids)} exceeds maximum {self.max_batch_size}"
+            )
 
         try:
             async with get_db_session() as session:
                 if feature_names:
                     # 查询特定特征字段
-                    placeholders = ','.join(['%s'] * len(match_ids))
+                    placeholders = ",".join(["%s"] * len(match_ids))
 
                     query = f"""
                         SELECT match_id, features, version, updated_at
@@ -323,17 +342,24 @@ class FootballFeatureStore(FeatureStoreProtocol):
 
                     results = []
                     for row in rows:
-                        features = json.loads(row[1]) if isinstance(row[1], str) else row[1]
+                        features = (
+                            json.loads(row[1]) if isinstance(row[1], str) else row[1]
+                        )
                         # 只返回请求的特征
-                        filtered_features = {k: v for k, v in features.items() if k in feature_names}
+                        filtered_features = {
+                            k: v for k, v in features.items() if k in feature_names
+                        }
 
-                        results.append(FeatureQueryResult(
-                            match_id=row[0],
-                            features=filtered_features,
-                            version=row[2],
-                            timestamp=row[3],
-                            is_complete=len(filtered_features) == len(feature_names)
-                        ))
+                        results.append(
+                            FeatureQueryResult(
+                                match_id=row[0],
+                                features=filtered_features,
+                                version=row[2],
+                                timestamp=row[3],
+                                is_complete=len(filtered_features)
+                                == len(feature_names),
+                            )
+                        )
 
                     return results
                 else:
@@ -345,7 +371,7 @@ class FootballFeatureStore(FeatureStoreProtocol):
                             features=data["features"],
                             version=data["version"],
                             timestamp=data["updated_at"],
-                            is_complete=True
+                            is_complete=True,
                         )
                         for match_id, data in batch_data.items()
                     ]
@@ -355,8 +381,7 @@ class FootballFeatureStore(FeatureStoreProtocol):
             raise StorageError(f"Query operation failed: {e}") from e
 
     async def latest_feature_timestamp(
-        self,
-        version: str = DEFAULT_FEATURE_VERSION
+        self, version: str = DEFAULT_FEATURE_VERSION
     ) -> Optional[datetime]:
         """
         获取最新特征的时间戳.
@@ -414,9 +439,11 @@ class FootballFeatureStore(FeatureStoreProtocol):
                 return FeatureStats(
                     total_features=row[1] if row else 0,
                     total_matches=row[0] if row else 0,
-                    feature_versions=list(row[2].split(',')) if row and row[2] else [],
+                    feature_versions=list(row[2].split(",")) if row and row[2] else [],
                     latest_timestamp=row[3] if row and row[3] else None,
-                    storage_size_mb=self._parse_storage_size(row[4]) if row and row[4] else None
+                    storage_size_mb=(
+                        self._parse_storage_size(row[4]) if row and row[4] else None
+                    ),
                 )
 
         except Exception as e:
@@ -424,9 +451,7 @@ class FootballFeatureStore(FeatureStoreProtocol):
             raise StorageError(f"Stats query failed: {e}") from e
 
     async def delete_features(
-        self,
-        match_id: int,
-        version: Optional[str] = None
+        self, match_id: int, version: Optional[str] = None
     ) -> bool:
         """
         删除指定的特征数据.
@@ -445,7 +470,9 @@ class FootballFeatureStore(FeatureStoreProtocol):
             async with get_db_session() as session:
                 if version:
                     # 删除特定版本
-                    query = "DELETE FROM feature_store WHERE match_id = %s AND version = %s"
+                    query = (
+                        "DELETE FROM feature_store WHERE match_id = %s AND version = %s"
+                    )
                     await session.execute(query, (match_id, version))
                 else:
                     # 删除所有版本
@@ -455,7 +482,9 @@ class FootballFeatureStore(FeatureStoreProtocol):
                 await session.commit()
 
                 if self.enable_logging:
-                    logger.info(f"Deleted features for match {match_id}, version: {version or 'all'}")
+                    logger.info(
+                        f"Deleted features for match {match_id}, version: {version or 'all'}"
+                    )
 
                 return True
 
@@ -463,10 +492,7 @@ class FootballFeatureStore(FeatureStoreProtocol):
             logger.error(f"Failed to delete features for match {match_id}: {e}")
             raise StorageError(f"Delete operation failed: {e}") from e
 
-    async def list_feature_versions(
-        self,
-        match_id: int
-    ) -> list[str]:
+    async def list_feature_versions(self, match_id: int) -> list[str]:
         """
         列出指定比赛的所有特征版本.
 
@@ -511,18 +537,22 @@ class FootballFeatureStore(FeatureStoreProtocol):
             # 计算数据新鲜度（秒）
             data_age = None
             if latest_timestamp:
-                data_age = (datetime.now(timezone.utc) - latest_timestamp).total_seconds()
+                data_age = (
+                    datetime.now(timezone.utc) - latest_timestamp
+                ).total_seconds()
 
             return {
                 "status": "healthy" if self._initialized else "uninitialized",
                 "initialized": self._initialized,
                 "total_matches": stats["total_matches"],
                 "total_features": stats["total_features"],
-                "latest_timestamp": latest_timestamp.isoformat() if latest_timestamp else None,
+                "latest_timestamp": (
+                    latest_timestamp.isoformat() if latest_timestamp else None
+                ),
                 "data_age_seconds": data_age,
                 "storage_size": stats["storage_size_mb"],
                 "max_batch_size": self.max_batch_size,
-                "retry_attempts": self.retry_attempts
+                "retry_attempts": self.retry_attempts,
             }
 
         except Exception as e:
@@ -530,7 +560,7 @@ class FootballFeatureStore(FeatureStoreProtocol):
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "initialized": self._initialized
+                "initialized": self._initialized,
             }
 
     async def close(self) -> None:
@@ -549,12 +579,16 @@ class FootballFeatureStore(FeatureStoreProtocol):
     def _validate_match_id(self, match_id: int) -> None:
         """验证match_id的有效性."""
         if not isinstance(match_id, int) or match_id <= 0:
-            raise FeatureValidationError(f"Invalid match_id: {match_id}. Must be a positive integer.")
+            raise FeatureValidationError(
+                f"Invalid match_id: {match_id}. Must be a positive integer."
+            )
 
     def _validate_features(self, features: dict[str, Any]) -> None:
         """验证features字典的有效性."""
         if not isinstance(features, dict):
-            raise FeatureValidationError(f"Features must be a dictionary, got {type(features)}")
+            raise FeatureValidationError(
+                f"Features must be a dictionary, got {type(features)}"
+            )
 
         if not features:
             raise FeatureValidationError("Features dictionary cannot be empty")
@@ -562,12 +596,16 @@ class FootballFeatureStore(FeatureStoreProtocol):
         # 验证特征名的有效性
         for key in features.keys():
             if not isinstance(key, str) or not key.strip():
-                raise FeatureValidationError(f"Invalid feature name: {key}. Must be a non-empty string.")
+                raise FeatureValidationError(
+                    f"Invalid feature name: {key}. Must be a non-empty string."
+                )
 
     def _validate_version(self, version: str) -> None:
         """验证version的有效性."""
         if not isinstance(version, str) or not version.strip():
-            raise FeatureValidationError(f"Invalid version: {version}. Must be a non-empty string.")
+            raise FeatureValidationError(
+                f"Invalid version: {version}. Must be a non-empty string."
+            )
 
     def _parse_storage_size(self, size_str: Optional[str]) -> Optional[float]:
         """解析PostgreSQL的存储大小字符串为MB."""
@@ -576,11 +614,11 @@ class FootballFeatureStore(FeatureStoreProtocol):
 
         try:
             size_str = size_str.strip().upper()
-            if size_str.endswith('KB'):
+            if size_str.endswith("KB"):
                 return float(size_str[:-2]) / 1024
-            elif size_str.endswith('MB'):
+            elif size_str.endswith("MB"):
                 return float(size_str[:-2])
-            elif size_str.endswith('GB'):
+            elif size_str.endswith("GB"):
                 return float(size_str[:-2]) * 1024
             else:
                 return float(size_str)

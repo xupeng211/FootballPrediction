@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import pandas as pd
 import numpy as np
+
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -24,11 +25,11 @@ import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import (
-    accuracy_score
-    precision_score
-    recall_score
-    confusion_matrix
-    classification_report
+    accuracy_score,
+    precision_score,
+    recall_score,
+    confusion_matrix,
+    classification_report,
 )
 import joblib
 
@@ -116,18 +117,18 @@ class HybridModelTrainer:
                 df = pd.DataFrame(
                     [
                         {
-                            "match_id": match.id
-                            "home_team_id": match.home_team_id
-                            "away_team_id": match.away_team_id
-                            "league_id": match.league_id
-                            "home_score": match.home_score
-                            "away_score": match.away_score
-                            "status": match.status
-                            "match_date": match.match_date
-                            "stats": match.stats
-                            "home_team_name": match.home_team_name
-                            "away_team_name": match.away_team_name
-                            "league_name": match.league_name
+                            "match_id": match.id,
+                            "home_team_id": match.home_team_id,
+                            "away_team_id": match.away_team_id,
+                            "league_id": match.league_id,
+                            "home_score": match.home_score,
+                            "away_score": match.away_score,
+                            "status": match.status,
+                            "match_date": match.match_date,
+                            "stats": match.stats,
+                            "home_team_name": match.home_team_name,
+                            "away_team_name": match.away_team_name,
+                            "league_name": match.league_name,
                         }
                         for match in matches
                     ]
@@ -211,12 +212,12 @@ class HybridModelTrainer:
             # 为每个球队计算滚动特征
             team_df = df[
                 [
-                    "match_date"
-                    team_col
-                    goal_col
-                    opponent_goal_col
-                    xg_col
-                    opponent_xg_col
+                    "match_date",
+                    team_col,
+                    goal_col,
+                    opponent_goal_col,
+                    xg_col,
+                    opponent_xg_col,
                 ]
             ].copy()
 
@@ -262,10 +263,10 @@ class HybridModelTrainer:
             ]
 
             df = df.merge(
-                team_df[["match_date", team_col] + rolling_cols]
-                left_on=["match_date", team_col]
-                right_on=["match_date", team_col]
-                how="left"
+                team_df[["match_date", team_col] + rolling_cols],
+                left_on=["match_date", team_col],
+                right_on=["match_date", team_col],
+                how="left",
             )
 
         # 计算主队 vs 客队的相对特征
@@ -290,8 +291,8 @@ class HybridModelTrainer:
         df["result"] = df.apply(
             lambda row: self.calculate_match_result(
                 row["home_score"], row["away_score"]
-            )
-            axis=1
+            ),
+            axis=1,
         )
 
         # 编码类别特征
@@ -347,10 +348,10 @@ class HybridModelTrainer:
 
         # 保存编码器和特征名称
         self.label_encoders = {
-            "league": le_league
-            "home_team": le_home_team
-            "away_team": le_away_team
-            "result": le_result
+            "league": le_league,
+            "home_team": le_home_team,
+            "away_team": le_away_team,
+            "result": le_result,
         }
         self.feature_names = feature_columns
 
@@ -367,12 +368,12 @@ class HybridModelTrainer:
 
         # 训练XGBoost分类器
         self.model = xgb.XGBClassifier(
-            n_estimators=100
-            max_depth=6
-            learning_rate=0.1
-            random_state=42
-            n_jobs=-1
-            eval_metric="mlogloss"
+            n_estimators=100,
+            max_depth=6,
+            learning_rate=0.1,
+            random_state=42,
+            n_jobs=-1,
+            eval_metric="mlogloss",
         )
 
         # 训练模型
@@ -440,15 +441,15 @@ class HybridModelTrainer:
         win_rate = (wins / total_bets * 100) if total_bets > 0 else 0
 
         results = {
-            "accuracy": accuracy
-            "total_bets": total_bets
-            "wins": wins
-            "win_rate": win_rate
-            "total_stake": total_stake
-            "total_winnings": total_winnings
-            "profit_loss": total_winnings - total_stake
-            "roi": roi
-            "confidence_threshold": self.confidence_threshold
+            "accuracy": accuracy,
+            "total_bets": total_bets,
+            "wins": wins,
+            "win_rate": win_rate,
+            "total_stake": total_stake,
+            "total_winnings": total_winnings,
+            "profit_loss": total_winnings - total_stake,
+            "roi": roi,
+            "confidence_threshold": self.confidence_threshold,
         }
 
         logger.info("✅ 策略回测完成")
@@ -469,19 +470,19 @@ class HybridModelTrainer:
         )
 
         return {
-            "feature_importance": dict(sorted_features)
-            "top_5_features": sorted_features[:5]
+            "feature_importance": dict(sorted_features),
+            "top_5_features": sorted_features[:5],
             "xg_features_importance": {
-                "avg_xg_created_home": feature_importance.get("avg_xg_created_home", 0)
+                "avg_xg_created_home": feature_importance.get("avg_xg_created_home", 0),
                 "avg_xg_conceded_home": feature_importance.get(
                     "avg_xg_conceded_home", 0
-                )
-                "avg_xg_created_away": feature_importance.get("avg_xg_created_away", 0)
+                ),
+                "avg_xg_created_away": feature_importance.get("avg_xg_created_away", 0),
                 "avg_xg_conceded_away": feature_importance.get(
                     "avg_xg_conceded_away", 0
-                )
-                "xg_advantage": feature_importance.get("xg_advantage", 0)
-            }
+                ),
+                "xg_advantage": feature_importance.get("xg_advantage", 0),
+            },
         }
 
     def save_model(self, model_name: str = "football_prediction_v1_2_hybrid") -> None:
@@ -514,13 +515,13 @@ class HybridModelTrainer:
         # 保存训练报告
         timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         report = {
-            "model_name": model_name
-            "version": "1.2"
-            "training_date": timestamp_str
-            "feature_count": len(self.feature_names)
-            "feature_names": self.feature_names
-            "rolling_window": self.rolling_window
-            "confidence_threshold": self.confidence_threshold
+            "model_name": model_name,
+            "version": "1.2",
+            "training_date": timestamp_str,
+            "feature_count": len(self.feature_names),
+            "feature_names": self.feature_names,
+            "rolling_window": self.rolling_window,
+            "confidence_threshold": self.confidence_threshold,
             "xg_data_ratio": "N/A",  # 将在训练完成后更新
         }
 
@@ -590,11 +591,11 @@ class HybridModelTrainer:
 
             # 10. 输出报告
             self.generate_training_report(
-                start_time
-                train_accuracy
-                test_accuracy
-                backtest_results
-                feature_importance
+                start_time,
+                train_accuracy,
+                test_accuracy,
+                backtest_results,
+                feature_importance,
             )
 
         except Exception as e:

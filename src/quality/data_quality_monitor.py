@@ -48,6 +48,7 @@ class DataQualityStats:
     跟踪数据质量检查的历史记录和统计指标。
     支持序列化和持久化存储。
     """
+
     total_checks: int = field(default=0)
     passed_checks: int = field(default=0)
     failed_checks: int = field(default=0)
@@ -66,7 +67,9 @@ class DataQualityStats:
             "high_severity_errors": self.high_severity_errors,
             "medium_severity_errors": self.medium_severity_errors,
             "low_severity_errors": self.low_severity_errors,
-            "last_check_time": self.last_check_time.isoformat() if self.last_check_time else None,
+            "last_check_time": (
+                self.last_check_time.isoformat() if self.last_check_time else None
+            ),
             "rule_execution_stats": self.rule_execution_stats,
             "success_rate": self.success_rate,
             "error_rate": self.error_rate,
@@ -107,7 +110,7 @@ class DataQualityMonitor:
         rules: list[DataQualityRule],
         feature_store: FeatureStoreProtocol,
         enable_stats: bool = True,
-        max_concurrent_checks: int = 10
+        max_concurrent_checks: int = 10,
     ):
         """
         初始化数据质量监控器。
@@ -132,9 +135,7 @@ class DataQualityMonitor:
         # 验证规则
         self._validate_rules()
 
-        self.logger.info(
-            f"DataQualityMonitor 初始化完成，加载了 {len(rules)} 个规则"
-        )
+        self.logger.info(f"DataQualityMonitor 初始化完成，加载了 {len(rules)} 个规则")
 
     def _validate_rules(self) -> None:
         """验证规则配置的有效性。"""
@@ -146,7 +147,7 @@ class DataQualityMonitor:
             raise ValueError("规则名称必须唯一")
 
         for rule in self.rules:
-            if not hasattr(rule, 'check') or not callable(rule.check):
+            if not hasattr(rule, "check") or not callable(rule.check):
                 raise ValueError(f"规则 {rule.rule_name} 必须实现 check 方法")
 
     @retry(
@@ -188,12 +189,13 @@ class DataQualityMonitor:
                         "error": "比赛特征数据未找到",
                         "total_rules": len(self.rules),
                         "passed_rules": 0,
-                        "failed_rules": len(self.rules)
+                        "failed_rules": len(self.rules),
                     },
                     "timestamp": start_time.isoformat(),
                     "check_duration_ms": (
                         datetime.now(timezone.utc) - start_time
-                    ).total_seconds() * 1000,
+                    ).total_seconds()
+                    * 1000,
                 }
 
                 if self.stats:
@@ -204,10 +206,10 @@ class DataQualityMonitor:
 
             # 提取特征数据字典
             if isinstance(feature_data, dict):
-                features = feature_data.get('features', feature_data)
+                features = feature_data.get("features", feature_data)
             else:
                 # FeatureData 对象，取 features 字段
-                features = getattr(feature_data, 'features', {})
+                features = getattr(feature_data, "features", {})
 
             # 执行所有规则的检查
             rule_results = await self._execute_rules(features)
@@ -277,12 +279,13 @@ class DataQualityMonitor:
                     "error": error_msg,
                     "total_rules": len(self.rules),
                     "passed_rules": 0,
-                    "failed_rules": len(self.rules)
+                    "failed_rules": len(self.rules),
                 },
                 "timestamp": start_time.isoformat(),
                 "check_duration_ms": (
                     datetime.now(timezone.utc) - start_time
-                ).total_seconds() * 1000,
+                ).total_seconds()
+                * 1000,
             }
 
     async def check_batch(self, match_ids: list[int]) -> list[dict[str, Any]]:
@@ -316,19 +319,21 @@ class DataQualityMonitor:
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 match_id = match_ids[i]
-                processed_results.append({
-                    "match_id": match_id,
-                    "passed": False,
-                    "results": [],
-                    "summary": {
-                        "error": f"批量检查异常: {str(result)}",
-                        "total_rules": len(self.rules),
-                        "passed_rules": 0,
-                        "failed_rules": len(self.rules)
-                    },
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "check_duration_ms": 0,
-                })
+                processed_results.append(
+                    {
+                        "match_id": match_id,
+                        "passed": False,
+                        "results": [],
+                        "summary": {
+                            "error": f"批量检查异常: {str(result)}",
+                            "total_rules": len(self.rules),
+                            "passed_rules": 0,
+                            "failed_rules": len(self.rules),
+                        },
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "check_duration_ms": 0,
+                    }
+                )
             else:
                 processed_results.append(result)
 
@@ -365,8 +370,8 @@ class DataQualityMonitor:
                     severity=severity,
                     metadata={
                         "check_time": datetime.now(timezone.utc).isoformat(),
-                        "feature_count": len(features)
-                    }
+                        "feature_count": len(features),
+                    },
                 )
             except Exception as e:
                 self.logger.error(f"规则 {rule.rule_name} 执行失败: {str(e)}")
@@ -377,8 +382,8 @@ class DataQualityMonitor:
                     severity=RuleSeverity.HIGH,
                     metadata={
                         "error": str(e),
-                        "check_time": datetime.now(timezone.utc).isoformat()
-                    }
+                        "check_time": datetime.now(timezone.utc).isoformat(),
+                    },
                 )
 
         tasks = [check_single_rule(rule) for rule in self.rules]
@@ -388,13 +393,15 @@ class DataQualityMonitor:
         processed_results = []
         for result in results:
             if isinstance(result, Exception):
-                processed_results.append(DataQualityResult(
-                    rule_name="unknown_rule",
-                    passed=False,
-                    errors=[f"规则检查异常: {str(result)}"],
-                    severity=RuleSeverity.HIGH,
-                    metadata={"error": str(result)}
-                ))
+                processed_results.append(
+                    DataQualityResult(
+                        rule_name="unknown_rule",
+                        passed=False,
+                        errors=[f"规则检查异常: {str(result)}"],
+                        severity=RuleSeverity.HIGH,
+                        metadata={"error": str(result)},
+                    )
+                )
             else:
                 processed_results.append(result)
 
@@ -416,9 +423,13 @@ class DataQualityMonitor:
         # 基于错误关键词判断严重程度
         error_text = " ".join(errors).lower()
 
-        if any(keyword in error_text for keyword in ["缺失", "null", "missing", "critical"]):
+        if any(
+            keyword in error_text for keyword in ["缺失", "null", "missing", "critical"]
+        ):
             return RuleSeverity.HIGH
-        elif any(keyword in error_text for keyword in ["超出", "异常", "错误", "invalid"]):
+        elif any(
+            keyword in error_text for keyword in ["超出", "异常", "错误", "invalid"]
+        ):
             return RuleSeverity.MEDIUM
         else:
             return RuleSeverity.LOW
@@ -459,9 +470,7 @@ class DataQualityMonitor:
                 "medium": severity_counts[RuleSeverity.MEDIUM],
                 "low": severity_counts[RuleSeverity.LOW],
             },
-            "failed_rule_names": [
-                r.rule_name for r in results if not r.passed
-            ]
+            "failed_rule_names": [r.rule_name for r in results if not r.passed],
         }
 
     async def get_stats(self) -> dict[str, Any]:
@@ -472,10 +481,7 @@ class DataQualityMonitor:
             Dict[str, Any]: 统计信息字典
         """
         if not self.stats:
-            return {
-                "stats_enabled": False,
-                "message": "统计信息收集未启用"
-            }
+            return {"stats_enabled": False, "message": "统计信息收集未启用"}
 
         return self.stats.to_dict()
 
@@ -489,16 +495,10 @@ class DataQualityMonitor:
         try:
             # 检查基本配置
             if not self.rules:
-                return {
-                    "status": "unhealthy",
-                    "reason": "没有配置数据质量规则"
-                }
+                return {"status": "unhealthy", "reason": "没有配置数据质量规则"}
 
             if not self.feature_store:
-                return {
-                    "status": "unhealthy",
-                    "reason": "FeatureStore未配置"
-                }
+                return {"status": "unhealthy", "reason": "FeatureStore未配置"}
 
             # 测试FeatureStore连接
             try:
@@ -513,8 +513,7 @@ class DataQualityMonitor:
             stats = await self.get_stats()
 
             # 计算整体健康状态
-            if (stats.get("success_rate", 0) >= 80 and
-                feature_store_status == "healthy"):
+            if stats.get("success_rate", 0) >= 80 and feature_store_status == "healthy":
                 overall_status = "healthy"
             elif stats.get("success_rate", 0) >= 50:
                 overall_status = "warning"
@@ -526,7 +525,7 @@ class DataQualityMonitor:
                 "feature_store_status": feature_store_status,
                 "rules_count": len(self.rules),
                 "stats": stats,
-                "last_check": datetime.now(timezone.utc).isoformat()
+                "last_check": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -534,7 +533,7 @@ class DataQualityMonitor:
             return {
                 "status": "error",
                 "reason": f"健康检查异常: {str(e)}",
-                "last_check": datetime.now(timezone.utc).isoformat()
+                "last_check": datetime.now(timezone.utc).isoformat(),
             }
 
     def add_rule(self, rule: DataQualityRule) -> None:
@@ -544,7 +543,7 @@ class DataQualityMonitor:
         Args:
             rule: 要添加的规则实例
         """
-        if not hasattr(rule, 'check') or not callable(rule.check):
+        if not hasattr(rule, "check") or not callable(rule.check):
             raise ValueError("规则必须实现 check 方法")
 
         # 检查规则名称唯一性

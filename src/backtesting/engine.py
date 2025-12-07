@@ -21,8 +21,13 @@ from src.database.async_manager import get_db_session
 from src.database.models import Match, Team
 
 from .models import (
-    BacktestConfig, BacktestResult, BetResult, BetDecision,
-    BetOutcome, BetType, StrategyProtocol
+    BacktestConfig,
+    BacktestResult,
+    BetResult,
+    BetDecision,
+    BetOutcome,
+    BetType,
+    StrategyProtocol,
 )
 from .portfolio import Portfolio
 from .strategy import BaseStrategy
@@ -52,7 +57,9 @@ class BacktestEngine:
         self.result = BacktestResult(config=config)
         self.progress_callback: Optional[callable] = None
 
-        logger.info(f"BacktestEngine initialized with initial balance: {config.initial_balance}")
+        logger.info(
+            f"BacktestEngine initialized with initial balance: {config.initial_balance}"
+        )
 
     def set_strategy(self, strategy: StrategyProtocol) -> None:
         """
@@ -62,7 +69,9 @@ class BacktestEngine:
             strategy: 策略实例
         """
         self.strategy = strategy
-        logger.info(f"Strategy set: {strategy.name if hasattr(strategy, 'name') else type(strategy).__name__}")
+        logger.info(
+            f"Strategy set: {strategy.name if hasattr(strategy, 'name') else type(strategy).__name__}"
+        )
 
     def set_progress_callback(self, callback: callable) -> None:
         """
@@ -73,10 +82,12 @@ class BacktestEngine:
         """
         self.progress_callback = callback
 
-    async def run_backtest(self,
-                          start_date: datetime,
-                          end_date: datetime,
-                          league_ids: Optional[List[int]] = None) -> BacktestResult:
+    async def run_backtest(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        league_ids: Optional[list[int]] = None,
+    ) -> BacktestResult:
         """
         执行回测
 
@@ -101,7 +112,9 @@ class BacktestEngine:
 
         try:
             # 获取历史比赛数据
-            matches = await self._get_historical_matches(start_date, end_date, league_ids)
+            matches = await self._get_historical_matches(
+                start_date, end_date, league_ids
+            )
 
             if not matches:
                 logger.warning("No matches found for the specified period")
@@ -116,7 +129,9 @@ class BacktestEngine:
             # 计算最终统计
             self._finalize_results()
 
-            logger.info(f"Backtest completed. Final balance: {self.result.final_balance}, ROI: {self.result.roi:.2f}%")
+            logger.info(
+                f"Backtest completed. Final balance: {self.result.final_balance}, ROI: {self.result.roi:.2f}%"
+            )
 
         except Exception as e:
             logger.error(f"Backtest failed: {e}")
@@ -124,10 +139,12 @@ class BacktestEngine:
 
         return self.result
 
-    async def _get_historical_matches(self,
-                                    start_date: datetime,
-                                    end_date: datetime,
-                                    league_ids: Optional[List[int]] = None) -> List[Dict[str, Any]]:
+    async def _get_historical_matches(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        league_ids: Optional[list[int]] = None,
+    ) -> list[dict[str, Any]]:
         """
         获取历史比赛数据
 
@@ -147,7 +164,7 @@ class BacktestEngine:
                 and_(
                     Match.match_date >= start_date,
                     Match.match_date <= end_date,
-                    Match.status.in_(["finished", "completed"])  # 只获取已完成的比赛
+                    Match.status.in_(["finished", "completed"]),  # 只获取已完成的比赛
                 )
             ]
 
@@ -182,14 +199,18 @@ class BacktestEngine:
                         "league_id": match.league_id,
                         "season": match.season,
                         # 包含新的统计字段
-                        "home_xg": getattr(match, 'home_xg', None),
-                        "away_xg": getattr(match, 'away_xg', None),
-                        "home_possession": getattr(match, 'home_possession', None),
-                        "away_possession": getattr(match, 'away_possession', None),
-                        "home_shots": getattr(match, 'home_shots', None),
-                        "away_shots": getattr(match, 'away_shots', None),
-                        "home_shots_on_target": getattr(match, 'home_shots_on_target', None),
-                        "away_shots_on_target": getattr(match, 'away_shots_on_target', None),
+                        "home_xg": getattr(match, "home_xg", None),
+                        "away_xg": getattr(match, "away_xg", None),
+                        "home_possession": getattr(match, "home_possession", None),
+                        "away_possession": getattr(match, "away_possession", None),
+                        "home_shots": getattr(match, "home_shots", None),
+                        "away_shots": getattr(match, "away_shots", None),
+                        "home_shots_on_target": getattr(
+                            match, "home_shots_on_target", None
+                        ),
+                        "away_shots_on_target": getattr(
+                            match, "away_shots_on_target", None
+                        ),
                     }
 
                     # 添加模拟的模型预测数据
@@ -207,7 +228,7 @@ class BacktestEngine:
 
         return matches
 
-    def _generate_mock_predictions(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_mock_predictions(self, match_data: dict[str, Any]) -> dict[str, Any]:
         """
         生成模拟的模型预测数据
 
@@ -230,10 +251,10 @@ class BacktestEngine:
             "home_win_prob": round(home_prob, 3),
             "draw_prob": round(draw_prob, 3),
             "away_win_prob": round(away_prob, 3),
-            "model_confidence": round(random.uniform(0.6, 0.9), 3)
+            "model_confidence": round(random.uniform(0.6, 0.9), 3),
         }
 
-    def _generate_mock_odds(self, match_data: Dict[str, Any]) -> Dict[str, Decimal]:
+    def _generate_mock_odds(self, match_data: dict[str, Any]) -> dict[str, Decimal]:
         """
         生成模拟的赔率数据
 
@@ -253,9 +274,15 @@ class BacktestEngine:
         away_prob = match_data.get("away_win_prob", 0.33)
 
         # 计算赔率（博彩公司赔率 = 1 / (概率 * 利润空间)）
-        home_odds = max(Decimal("1.1"), Decimal(str(1 / (home_prob * base_margin)))).quantize(Decimal("0.01"))
-        draw_odds = max(Decimal("1.1"), Decimal(str(1 / (draw_prob * base_margin)))).quantize(Decimal("0.01"))
-        away_odds = max(Decimal("1.1"), Decimal(str(1 / (away_prob * base_margin)))).quantize(Decimal("0.01"))
+        home_odds = max(
+            Decimal("1.1"), Decimal(str(1 / (home_prob * base_margin)))
+        ).quantize(Decimal("0.01"))
+        draw_odds = max(
+            Decimal("1.1"), Decimal(str(1 / (draw_prob * base_margin)))
+        ).quantize(Decimal("0.01"))
+        away_odds = max(
+            Decimal("1.1"), Decimal(str(1 / (away_prob * base_margin)))
+        ).quantize(Decimal("0.01"))
 
         return {
             "home": home_odds,
@@ -263,10 +290,10 @@ class BacktestEngine:
             "away": away_odds,
             "home_odds": home_odds,
             "draw_odds": draw_odds,
-            "away_odds": away_odds
+            "away_odds": away_odds,
         }
 
-    async def _execute_backtest_loop(self, matches: List[Dict[str, Any]]) -> None:
+    async def _execute_backtest_loop(self, matches: list[dict[str, Any]]) -> None:
         """
         执行回测主循环
 
@@ -279,7 +306,9 @@ class BacktestEngine:
             try:
                 # 报告进度
                 if self.progress_callback:
-                    self.progress_callback(i + 1, total_matches, f"Processing match {match['id']}")
+                    self.progress_callback(
+                        i + 1, total_matches, f"Processing match {match['id']}"
+                    )
 
                 # 执行策略决策
                 decision = await self.strategy.decide(match, match["odds"])
@@ -290,7 +319,9 @@ class BacktestEngine:
                     self.result.total_bets += 1
 
                     if decision.bet_type != BetType.SKIP:
-                        logger.debug(f"Bet placed on match {match['id']}: {decision.bet_type.value}")
+                        logger.debug(
+                            f"Bet placed on match {match['id']}: {decision.bet_type.value}"
+                        )
                     else:
                         self.result.skipped_bets += 1
                 else:
@@ -306,7 +337,7 @@ class BacktestEngine:
                 logger.error(f"Error processing match {match['id']}: {e}")
                 continue
 
-    async def _settle_match(self, match: Dict[str, Any]) -> None:
+    async def _settle_match(self, match: dict[str, Any]) -> None:
         """
         结算比赛
 
@@ -358,7 +389,7 @@ class BacktestEngine:
 
         logger.info(f"Backtest finalized: {self.result.get_summary()}")
 
-    def get_progress_info(self) -> Dict[str, Any]:
+    def get_progress_info(self) -> dict[str, Any]:
         """
         获取回测进度信息
 
@@ -371,16 +402,18 @@ class BacktestEngine:
             "total_bets": stats["total_bets"],
             "win_rate": stats["win_rate"],
             "roi_percent": stats["roi_percent"],
-            "max_drawdown": stats["max_drawdown"]
+            "max_drawdown": stats["max_drawdown"],
         }
 
 
 # 回测执行工具函数
-async def run_simple_backtest(strategy_name: str,
-                             start_date: Optional[datetime] = None,
-                             end_date: Optional[datetime] = None,
-                             initial_balance: Decimal = Decimal("10000.00"),
-                             **strategy_kwargs) -> BacktestResult:
+async def run_simple_backtest(
+    strategy_name: str,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    initial_balance: Decimal = Decimal("10000.00"),
+    **strategy_kwargs,
+) -> BacktestResult:
     """
     运行简单的回测
 

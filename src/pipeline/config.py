@@ -20,7 +20,7 @@ class FeatureConfig:
     """特征配置管理."""
 
     # 必需特征列表
-    required_features: List[str] = field(
+    required_features: list[str] = field(
         default_factory=lambda: [
             "home_team_strength",
             "away_team_strength",
@@ -33,7 +33,7 @@ class FeatureConfig:
     )
 
     # 特征映射 (旧列名 -> 新列名)
-    feature_mappings: Dict[str, str] = field(
+    feature_mappings: dict[str, str] = field(
         default_factory=lambda: {
             "home_goals": "home_score",
             "away_goals": "away_score",
@@ -43,7 +43,7 @@ class FeatureConfig:
     )
 
     # 数据质量配置
-    quality_checks: Dict[str, float] = field(
+    quality_checks: dict[str, float] = field(
         default_factory=lambda: {
             "missing_threshold": 0.1,  # 允许10%缺失值
             "outlier_threshold": 3.0,  # 3倍标准差
@@ -62,7 +62,7 @@ class ModelConfig:
     """模型配置管理."""
 
     # 支持的算法
-    supported_algorithms: List[str] = field(
+    supported_algorithms: list[str] = field(
         default_factory=lambda: [
             "xgboost",
             "lightgbm",
@@ -75,7 +75,7 @@ class ModelConfig:
     default_algorithm: str = "xgboost"
 
     # XGBoost参数
-    xgboost_params: Dict[str, Union[int, float, str]] = field(
+    xgboost_params: dict[str, Union[int, float, str]] = field(
         default_factory=lambda: {
             "n_estimators": 100,
             "max_depth": 6,
@@ -129,7 +129,7 @@ class EvaluationConfig:
     """评估配置管理."""
 
     # 评估指标
-    metrics: List[str] = field(
+    metrics: list[str] = field(
         default_factory=lambda: [
             "accuracy",
             "precision",
@@ -171,10 +171,10 @@ class PipelineConfig:
     reports_dir: str = "artifacts/reports"
 
     # 子配置
-    features: Union[FeatureConfig, Dict] = field(default_factory=FeatureConfig)
-    model: Union[ModelConfig, Dict] = field(default_factory=ModelConfig)
-    training: Union[TrainingConfig, Dict] = field(default_factory=TrainingConfig)
-    evaluation: Union[EvaluationConfig, Dict] = field(default_factory=EvaluationConfig)
+    features: Union[FeatureConfig, dict] = field(default_factory=FeatureConfig)
+    model: Union[ModelConfig, dict] = field(default_factory=ModelConfig)
+    training: Union[TrainingConfig, dict] = field(default_factory=TrainingConfig)
+    evaluation: Union[EvaluationConfig, dict] = field(default_factory=EvaluationConfig)
 
     # 环境配置
     environment: str = "development"  # development, staging, production

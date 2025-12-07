@@ -55,12 +55,12 @@ def deep_search_json(obj, path="", target_keys=None, results=None):
                     )
 
             # 递归搜索
-            if isinstance(value, (dict, list)):
+            if isinstance(value, dict | list):
                 deep_search_json(value, current_path, target_keys, results)
 
     elif isinstance(obj, list):
         for i, item in enumerate(obj):
-            if isinstance(item, (dict, list)):
+            if isinstance(item, dict | list):
                 deep_search_json(item, f"{path}[{i}]", target_keys, results)
 
     return results

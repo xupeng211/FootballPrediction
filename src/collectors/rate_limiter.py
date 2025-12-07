@@ -36,6 +36,7 @@ class RateLimitConfig:
         burst: 桶的最大容量 (突发令牌数)
         max_wait_time: 最大等待时间 (秒)，None表示无限等待
     """
+
     rate: float
     burst: int
     max_wait_time: Optional[float] = None
@@ -57,6 +58,7 @@ class TokenBucket:
 
     使用 asyncio.Lock 保证并发安全
     """
+
     tokens: float
     capacity: float
     refill_rate: float
@@ -85,7 +87,9 @@ class TokenBucket:
                 return True
             return False
 
-    async def wait_for_tokens(self, tokens: int = 1, timeout: Optional[float] = None) -> bool:
+    async def wait_for_tokens(
+        self, tokens: int = 1, timeout: Optional[float] = None
+    ) -> bool:
         """
         等待直到有足够的令牌
 
@@ -157,8 +161,8 @@ class RateLimiter:
 
     def __init__(
         self,
-        config: Optional[Dict[str, Any]] = None,
-        default_config: Optional[RateLimitConfig] = None
+        config: Optional[dict[str, Any]] = None,
+        default_config: Optional[RateLimitConfig] = None,
     ) -> None:
         """
         初始化速率限制器
@@ -167,12 +171,10 @@ class RateLimiter:
             config: 域名配置字典
             default_config: 默认配置
         """
-        self.config: Dict[str, RateLimitConfig] = {}
-        self.buckets: Dict[str, TokenBucket] = {}
+        self.config: dict[str, RateLimitConfig] = {}
+        self.buckets: dict[str, TokenBucket] = {}
         self._default_config = default_config or RateLimitConfig(
-            rate=1.0,
-            burst=1,
-            max_wait_time=30.0
+            rate=1.0, burst=1, max_wait_time=30.0
         )
 
         # 解析配置
@@ -183,7 +185,7 @@ class RateLimiter:
         if "default" not in self.config:
             self.config["default"] = self._default_config
 
-    def _parse_config(self, config: Dict[str, Any]) -> None:
+    def _parse_config(self, config: dict[str, Any]) -> None:
         """
         解析配置字典
 
@@ -199,9 +201,7 @@ class RateLimiter:
                 burst = cfg.get("burst", 1)
                 max_wait_time = cfg.get("max_wait_time")
                 self.config[domain] = RateLimitConfig(
-                    rate=float(rate),
-                    burst=int(burst),
-                    max_wait_time=max_wait_time
+                    rate=float(rate), burst=int(burst), max_wait_time=max_wait_time
                 )
             elif isinstance(cfg, RateLimitConfig):
                 # 直接使用 RateLimitConfig 对象
@@ -223,9 +223,7 @@ class RateLimiter:
             # 使用域名特定配置或默认配置
             config = self.config.get(domain, self.config["default"])
             self.buckets[domain] = TokenBucket(
-                tokens=config.burst,
-                capacity=config.burst,
-                refill_rate=config.rate
+                tokens=config.burst, capacity=config.burst, refill_rate=config.rate
             )
         return self.buckets[domain]
 
@@ -256,12 +254,11 @@ class RateLimiter:
         # 需要等待令牌
         try:
             success = await bucket.wait_for_tokens(
-                tokens=tokens,
-                timeout=config.max_wait_time
+                tokens=tokens, timeout=config.max_wait_time
             )
 
             if not success:
-                raise asyncio.TimeoutError(
+                raise TimeoutError(
                     f"Rate limit exceeded for domain {domain}: "
                     f"waited {config.max_wait_time}s without acquiring {tokens} tokens"
                 )
@@ -306,7 +303,7 @@ class RateLimiter:
         await bucket.wait_for_tokens(tokens, config.max_wait_time)
         return time.monotonic() - start_time
 
-    def get_status(self, domain: Optional[str] = None) -> Dict[str, Any]:
+    def get_status(self, domain: Optional[str] = None) -> dict[str, Any]:
         """
         获取速率限制器状态
 
@@ -331,8 +328,8 @@ class RateLimiter:
                 "config": {
                     "rate": config.rate,
                     "burst": config.burst,
-                    "max_wait_time": config.max_wait_time
-                }
+                    "max_wait_time": config.max_wait_time,
+                },
             }
         else:
             # 返回所有域名的状态
@@ -346,8 +343,8 @@ class RateLimiter:
                     "config": {
                         "rate": config.rate,
                         "burst": config.burst,
-                        "max_wait_time": config.max_wait_time
-                    }
+                        "max_wait_time": config.max_wait_time,
+                    },
                 }
             return status
 
@@ -386,9 +383,9 @@ class RateLimiter:
 
 # 便利函数
 def create_rate_limiter(
-    config: Optional[Dict[str, Any]] = None,
+    config: Optional[dict[str, Any]] = None,
     default_rate: float = 1.0,
-    default_burst: int = 1
+    default_burst: int = 1,
 ) -> RateLimiter:
     """
     创建速率限制器的便利函数
@@ -402,9 +399,7 @@ def create_rate_limiter(
         RateLimiter: 速率限制器实例
     """
     default_config = RateLimitConfig(
-        rate=default_rate,
-        burst=default_burst,
-        max_wait_time=30.0
+        rate=default_rate, burst=default_burst, max_wait_time=30.0
     )
 
     return RateLimiter(config, default_config)

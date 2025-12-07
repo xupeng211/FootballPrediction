@@ -35,10 +35,8 @@ class BaseCollectorProtocol(Protocol):
 
     @abstractmethod
     async def collect_fixtures(
-        self,
-        league_id: int,
-        season_id: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, league_id: int, season_id: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """
         采集联赛赛程数据
 
@@ -64,10 +62,7 @@ class BaseCollectorProtocol(Protocol):
         ...
 
     @abstractmethod
-    async def collect_match_details(
-        self,
-        match_id: str
-    ) -> Dict[str, Any]:
+    async def collect_match_details(self, match_id: str) -> dict[str, Any]:
         """
         采集比赛详情数据
 
@@ -97,10 +92,7 @@ class BaseCollectorProtocol(Protocol):
         ...
 
     @abstractmethod
-    async def collect_team_info(
-        self,
-        team_id: str
-    ) -> Dict[str, Any]:
+    async def collect_team_info(self, team_id: str) -> dict[str, Any]:
         """
         采集球队信息
 
@@ -123,7 +115,7 @@ class BaseCollectorProtocol(Protocol):
         ...
 
     @abstractmethod
-    async def check_health(self) -> Dict[str, Any]:
+    async def check_health(self) -> dict[str, Any]:
         """
         检查采集器健康状态
 
@@ -180,10 +172,8 @@ class ExtendedCollectorProtocol(BaseCollectorProtocol, Protocol):
 
     @abstractmethod
     async def collect_batch_fixtures(
-        self,
-        league_ids: List[int],
-        season_id: Optional[str] = None
-    ) -> Dict[int, List[Dict[str, Any]]]:
+        self, league_ids: list[int], season_id: Optional[str] = None
+    ) -> dict[int, list[dict[str, Any]]]:
         """
         批量采集多个联赛的赛程数据
 
@@ -197,11 +187,7 @@ class ExtendedCollectorProtocol(BaseCollectorProtocol, Protocol):
         ...
 
     @abstractmethod
-    async def stream_fixtures(
-        self,
-        league_id: int,
-        season_id: Optional[str] = None
-    ):
+    async def stream_fixtures(self, league_id: int, season_id: Optional[str] = None):
         """
         流式采集赛程数据
 
@@ -218,39 +204,45 @@ class ExtendedCollectorProtocol(BaseCollectorProtocol, Protocol):
 # 采集器异常类型定义
 class CollectorError(Exception):
     """采集器基础异常类"""
+
     pass
 
 
 class AuthenticationError(CollectorError):
     """认证失败异常"""
+
     pass
 
 
 class RateLimitError(CollectorError):
     """速率限制异常"""
+
     pass
 
 
 class NetworkError(CollectorError):
     """网络连接异常"""
+
     pass
 
 
 class DataNotFoundError(CollectorError):
     """数据未找到异常"""
+
     pass
 
 
 class ConfigurationError(CollectorError):
     """配置错误异常"""
+
     pass
 
 
 # 类型别名，提高代码可读性
-FixtureData = Dict[str, Any]
-MatchDetailData = Dict[str, Any]
-TeamInfoData = Dict[str, Any]
-HealthStatus = Dict[str, Any]
+FixtureData = dict[str, Any]
+MatchDetailData = dict[str, Any]
+TeamInfoData = dict[str, Any]
+HealthStatus = dict[str, Any]
 
 # 导出的公共接口
 __all__ = [

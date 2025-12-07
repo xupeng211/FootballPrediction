@@ -67,24 +67,26 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
 
         logger.info("🕷️ FotMob HTML异步采集器初始化完成")
 
-    async def _get_headers(self) -> Dict[str, str]:
+    async def _get_headers(self) -> dict[str, str]:
         """获取当前请求头"""
         if self.enable_stealth:
             await self._refresh_disguise()
 
         # 使用FotMob特定的请求头
         headers = await super()._get_headers()
-        headers.update({
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Language": "en-GB,en;q=0.9,en;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Cache-Control": "max-age=0",
-        })
+        headers.update(
+            {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Language": "en-GB,en;q=0.9,en;q=0.8",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Cache-Control": "max-age=0",
+            }
+        )
 
         return headers
 
@@ -114,7 +116,7 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
 
         self.last_rotation = now
 
-    async def collect_match_data(self, match_id: str) -> Optional[Dict[str, Any]]:
+    async def collect_match_data(self, match_id: str) -> Optional[dict[str, Any]]:
         """
         采集单场比赛数据
 
@@ -148,11 +150,15 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
                     logger.info("✅ 发现Next.js SSR数据")
 
                     # 提取Next.js数据
-                    nextjs_data = await self._extract_nextjs_data(response.text, match_id)
+                    nextjs_data = await self._extract_nextjs_data(
+                        response.text, match_id
+                    )
 
                     if nextjs_data:
                         # 提取content数据
-                        content_data = await self._extract_content_data(nextjs_data, match_id)
+                        content_data = await self._extract_content_data(
+                            nextjs_data, match_id
+                        )
 
                         if content_data:
                             logger.info(f"✅ 数据提取成功: {match_id}")
@@ -193,7 +199,7 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
 
     async def _extract_nextjs_data(
         self, html: str, match_id: str
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         从HTML中提取Next.js数据
 
@@ -244,8 +250,8 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
             return None
 
     async def _extract_content_data(
-        self, nextjs_data: Dict[str, Any], match_id: str
-    ) -> Optional[Dict[str, Any]]:
+        self, nextjs_data: dict[str, Any], match_id: str
+    ) -> Optional[dict[str, Any]]:
         """
         从Next.js数据中提取content
 
@@ -325,10 +331,11 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
         except Exception as e:
             logger.error(f"❌ content提取异常 {match_id}: {e}")
             import traceback
+
             logger.debug(f"🔍 详细错误: {traceback.format_exc()}")
             return None
 
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """获取采集统计信息"""
         # 获取基类统计
         base_stats = super().get_stats()
@@ -339,8 +346,8 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
 
         fotmob_stats["stealth_mode"] = self.enable_stealth
         fotmob_stats["proxy_enabled"] = self.enable_proxy
-        fotmob_stats["collection_rate"] = (
-            fotmob_stats["matches_collected"] / max(fotmob_stats["total_requests"], 1)
+        fotmob_stats["collection_rate"] = fotmob_stats["matches_collected"] / max(
+            fotmob_stats["total_requests"], 1
         )
 
         return fotmob_stats

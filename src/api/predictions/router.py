@@ -331,7 +331,9 @@ async def get_match_predictions(match_id: int):
 
         # 映射推理服务字段到PredictionResponse
         # 处理中文结果到英文枚举的映射
-        predicted_outcome_raw = response_data.get("prediction", response_data.get("predicted_outcome", "home_win"))
+        predicted_outcome_raw = response_data.get(
+            "prediction", response_data.get("predicted_outcome", "home_win")
+        )
         outcome_mapping = {
             "home_win": "home_win",
             "主队胜": "home_win",
@@ -340,7 +342,7 @@ async def get_match_predictions(match_id: int):
             "平局": "draw",
             "away_win": "away_win",
             "客队胜": "away_win",
-            "客胜": "away_win"
+            "客胜": "away_win",
         }
         predicted_outcome = outcome_mapping.get(predicted_outcome_raw, "home_win")
 
@@ -348,19 +350,20 @@ async def get_match_predictions(match_id: int):
             request_id=f"req_{uuid.uuid4().hex[:8]}",
             match_id=str(match_id),
             predicted_at=datetime.utcnow(),
-
             # 预测结果 - 适配推理服务的字段名
             home_win_prob=response_data.get("home_win_prob", 0.33),
             draw_prob=response_data.get("draw_prob", 0.33),
             away_win_prob=response_data.get("away_win_prob", 0.34),
             predicted_outcome=predicted_outcome,
             confidence=response_data.get("confidence", 0.5),
-
             # 模型信息
             model_name=response_data.get("model_name", "default_xgboost"),
             model_version=response_data.get("model_version", "mock_v1"),
-            model_type=ModelType.MOCK if response_data.get("status") == "mock_data" else ModelType.XGBOOST,
-
+            model_type=(
+                ModelType.MOCK
+                if response_data.get("status") == "mock_data"
+                else ModelType.XGBOOST
+            ),
             # 元数据
             features_used=response_data.get("features_used", []),
             prediction_time_ms=response_data.get("prediction_time_ms"),
@@ -369,20 +372,20 @@ async def get_match_predictions(match_id: int):
                 "status": response_data.get("status", "success"),
                 "note": response_data.get("note", ""),
                 "suggestion": response_data.get("suggestion", ""),
-                **response_data.get("metadata", {})
-            }
+                **response_data.get("metadata", {}),
+            },
         )
 
-        logger.info(f"成功生成比赛 {match_id} 的预测: {prediction_response.predicted_outcome}")
+        logger.info(
+            f"成功生成比赛 {match_id} 的预测: {prediction_response.predicted_outcome}"
+        )
         return prediction_response
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"获取比赛 {match_id} 预测失败: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"获取预测失败: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"获取预测失败: {str(e)}") from e
 
 
 @router.post("/{match_id}/predict", response_model=PredictionResult, status_code=201)

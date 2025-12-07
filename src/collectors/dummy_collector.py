@@ -38,7 +38,11 @@ class DummyCollector(BaseCollectorProtocol):
     用于开发阶段的接口验证和测试。
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None, rate_limiter: Optional[RateLimiter] = None):
+    def __init__(
+        self,
+        config: Optional[dict[str, Any]] = None,
+        rate_limiter: Optional[RateLimiter] = None,
+    ):
         """
         初始化虚拟采集器
 
@@ -50,7 +54,9 @@ class DummyCollector(BaseCollectorProtocol):
             rate_limiter: 速率限制器实例，用于控制请求频率
         """
         self.config = config or {}
-        self.delay_range = self.config.get("delay_range", (0.01, 0.05))  # 更快的默认延迟
+        self.delay_range = self.config.get(
+            "delay_range", (0.01, 0.05)
+        )  # 更快的默认延迟
         self.error_rate = self.config.get("error_rate", 0.05)
         self.failure_mode = self.config.get("failure_mode", False)
         self.request_count = 0
@@ -58,9 +64,9 @@ class DummyCollector(BaseCollectorProtocol):
         self._closed = False
 
         # 注入速率限制器
-        self.rate_limiter = rate_limiter or RateLimiter({
-            "dummy": {"rate": 10.0, "burst": 20}  # 默认10 QPS，突发20
-        })
+        self.rate_limiter = rate_limiter or RateLimiter(
+            {"dummy": {"rate": 10.0, "burst": 20}}  # 默认10 QPS，突发20
+        )
 
     async def _simulate_delay(self) -> None:
         """模拟网络延迟"""
@@ -80,10 +86,8 @@ class DummyCollector(BaseCollectorProtocol):
             raise random.choice(error_types)
 
     async def collect_fixtures(
-        self,
-        league_id: int,
-        season_id: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, league_id: int, season_id: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """
         采集联赛赛程数据（模拟）
 
@@ -109,9 +113,18 @@ class DummyCollector(BaseCollectorProtocol):
             fixtures = []
 
             teams = [
-                "Manchester United", "Liverpool", "Chelsea", "Arsenal",
-                "Manchester City", "Tottenham", "Newcastle", "Leicester",
-                "West Ham", "Aston Villa", "Southampton", "Everton",
+                "Manchester United",
+                "Liverpool",
+                "Chelsea",
+                "Arsenal",
+                "Manchester City",
+                "Tottenham",
+                "Newcastle",
+                "Leicester",
+                "West Ham",
+                "Aston Villa",
+                "Southampton",
+                "Everton",
             ]
 
             for i in range(num_fixtures):
@@ -132,7 +145,7 @@ class DummyCollector(BaseCollectorProtocol):
 
             return fixtures
 
-    async def collect_match_details(self, match_id: str) -> Dict[str, Any]:
+    async def collect_match_details(self, match_id: str) -> dict[str, Any]:
         """
         采集比赛详情数据（模拟）
 
@@ -185,16 +198,20 @@ class DummyCollector(BaseCollectorProtocol):
                 "home": [f"Home Player {i}" for i in range(1, 12)],
                 "away": [f"Away Player {i}" for i in range(1, 12)],
             },
-            "odds": {
-                "home_win": round(random.uniform(1.5, 5.0), 2),
-                "draw": round(random.uniform(2.5, 4.0), 2),
-                "away_win": round(random.uniform(1.5, 5.0), 2),
-            } if random.random() > 0.3 else None,
+            "odds": (
+                {
+                    "home_win": round(random.uniform(1.5, 5.0), 2),
+                    "draw": round(random.uniform(2.5, 4.0), 2),
+                    "away_win": round(random.uniform(1.5, 5.0), 2),
+                }
+                if random.random() > 0.3
+                else None
+            ),
         }
 
         return match_details
 
-    async def collect_team_info(self, team_id: str) -> Dict[str, Any]:
+    async def collect_team_info(self, team_id: str) -> dict[str, Any]:
         """
         采集球队信息（模拟）
 
@@ -213,8 +230,14 @@ class DummyCollector(BaseCollectorProtocol):
         self.request_count += 1
 
         team_names = [
-            "Manchester United", "Liverpool", "Chelsea", "Arsenal",
-            "Manchester City", "Tottenham", "Newcastle", "Leicester",
+            "Manchester United",
+            "Liverpool",
+            "Chelsea",
+            "Arsenal",
+            "Manchester City",
+            "Tottenham",
+            "Newcastle",
+            "Leicester",
         ]
         team_name = team_names[hash(team_id) % len(team_names)]
 
@@ -230,7 +253,7 @@ class DummyCollector(BaseCollectorProtocol):
 
         return team_info
 
-    async def check_health(self) -> Dict[str, Any]:
+    async def check_health(self) -> dict[str, Any]:
         """
         检查采集器健康状态
 
@@ -288,14 +311,13 @@ class DummyCollector(BaseCollectorProtocol):
         self._closed = True
 
         # 清理配置（可选）
-        if hasattr(self, 'config'):
+        if hasattr(self, "config"):
             self.config.clear()
 
 
 # 便利函数
 def create_dummy_collector(
-    config: Optional[Dict[str, Any]] = None,
-    rate_limiter: Optional[RateLimiter] = None
+    config: Optional[dict[str, Any]] = None, rate_limiter: Optional[RateLimiter] = None
 ) -> DummyCollector:
     """
     创建虚拟采集器实例

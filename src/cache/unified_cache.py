@@ -86,7 +86,7 @@ class UnifiedCacheManager:
     def _serialize_data(self, data: Any) -> bytes:
         """序列化数据."""
         try:
-            if isinstance(data, (str, int, float, bool)):
+            if isinstance(data, str | int | float | bool):
                 return str(data).encode("utf-8")
             else:
                 return pickle.dumps(data)

@@ -52,7 +52,7 @@ class InferenceError(Exception):
         self,
         message: str,
         error_code: ErrorCode = ErrorCode.INTERNAL_ERROR,
-        details: Optional[dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ):
         self.message = message
         self.error_code = error_code
@@ -64,7 +64,7 @@ class InferenceError(Exception):
         return {
             "error": self.error_code.value,
             "message": self.message,
-            "details": self.details
+            "details": self.details,
         }
 
 
@@ -76,9 +76,7 @@ class ModelLoadError(InferenceError):
         if model_name:
             details["model_name"] = model_name
         super().__init__(
-            message=message,
-            error_code=ErrorCode.MODEL_LOAD_FAILED,
-            details=details
+            message=message, error_code=ErrorCode.MODEL_LOAD_FAILED, details=details
         )
 
 
@@ -90,9 +88,7 @@ class FeatureBuilderError(InferenceError):
         if feature_name:
             details["feature_name"] = feature_name
         super().__init__(
-            message=message,
-            error_code=ErrorCode.FEATURE_BUILD_FAILED,
-            details=details
+            message=message, error_code=ErrorCode.FEATURE_BUILD_FAILED, details=details
         )
 
 
@@ -104,9 +100,7 @@ class PredictionError(InferenceError):
         if prediction_id:
             details["prediction_id"] = prediction_id
         super().__init__(
-            message=message,
-            error_code=ErrorCode.PREDICTION_FAILED,
-            details=details
+            message=message, error_code=ErrorCode.PREDICTION_FAILED, details=details
         )
 
 
@@ -120,7 +114,7 @@ class CacheError(InferenceError):
         super().__init__(
             message=message,
             error_code=ErrorCode.CACHE_OPERATION_FAILED,
-            details=details
+            details=details,
         )
 
 
@@ -132,15 +126,14 @@ class HotReloadError(InferenceError):
         if model_name:
             details["model_name"] = model_name
         super().__init__(
-            message=message,
-            error_code=ErrorCode.HOT_RELOAD_FAILED,
-            details=details
+            message=message, error_code=ErrorCode.HOT_RELOAD_FAILED, details=details
         )
 
 
 # Error handler utilities
 def handle_inference_error(func):
     """推理服务错误处理装饰器"""
+
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -152,6 +145,7 @@ def handle_inference_error(func):
             raise InferenceError(
                 message=f"Unexpected error in {func.__name__}: {str(e)}",
                 error_code=ErrorCode.INTERNAL_ERROR,
-                details={"original_error": str(e)}
+                details={"original_error": str(e)},
             )
+
     return wrapper

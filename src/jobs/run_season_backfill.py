@@ -368,7 +368,7 @@ class SeasonBackfillJob:
                                 matches.append(match)
 
                     # 继续递归搜索
-                    elif isinstance(value, (dict, list)):
+                    elif isinstance(value, dict | list):
                         new_path = f"{path}.{key}" if path else key
                         matches.extend(
                             self._recursive_search_matches(
@@ -378,7 +378,7 @@ class SeasonBackfillJob:
 
             elif isinstance(data, list) and len(data) > 0:
                 for i, item in enumerate(data):
-                    if isinstance(item, (dict, list)):
+                    if isinstance(item, dict | list):
                         new_path = f"{path}[{i}]" if path else f"[{i}]"
                         matches.extend(
                             self._recursive_search_matches(

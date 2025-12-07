@@ -19,7 +19,8 @@ import time
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, Optional, AsyncGenerator, Union, List
+from typing import Any, Dict, Optional, Union, List
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 
 import httpx
@@ -27,10 +28,13 @@ from httpx import AsyncClient, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.async_manager import get_db_session
+
 # from src.performance.monitoring import performance_monitor  # 暂时注释避免依赖问题
 
 # 简化的logger导入
 import logging
+
+
 def get_logger(name):
     return logging.getLogger(name)
 
@@ -38,6 +42,7 @@ def get_logger(name):
 @dataclass
 class AsyncConfig:
     """异步配置类"""
+
     http_timeout: float = 30.0
     max_retries: int = 3
     retry_delay: float = 1.0
@@ -49,6 +54,7 @@ class AsyncConfig:
 @dataclass
 class RequestStats:
     """请求统计信息"""
+
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
@@ -79,9 +85,7 @@ class AsyncBaseCollector(ABC):
     """
 
     def __init__(
-        self,
-        config: Optional[AsyncConfig] = None,
-        name: Optional[str] = None
+        self, config: Optional[AsyncConfig] = None, name: Optional[str] = None
     ):
         self.config = config or AsyncConfig()
         self.name = name or self.__class__.__name__
@@ -101,7 +105,9 @@ class AsyncBaseCollector(ABC):
         """异步上下文管理器出口"""
         await self._cleanup()
         if exc_type:
-            self.logger.error(f"Async collector '{self.name}' exited with error: {exc_val}")
+            self.logger.error(
+                f"Async collector '{self.name}' exited with error: {exc_val}"
+            )
         else:
             self.logger.info(f"Async collector '{self.name}' shutdown gracefully")
 
@@ -115,7 +121,7 @@ class AsyncBaseCollector(ABC):
                 headers=headers,
                 timeout=timeout,
                 limits=httpx.Limits(max_connections=self.config.max_connections),
-                follow_redirects=True
+                follow_redirects=True,
             )
             self.logger.debug(f"HTTP client initialized for {self.name}")
 
@@ -126,7 +132,7 @@ class AsyncBaseCollector(ABC):
             self.session = None
 
     @abstractmethod
-    async def _get_headers(self) -> Dict[str, str]:
+    async def _get_headers(self) -> dict[str, str]:
         """
         获取请求头
 
@@ -156,12 +162,7 @@ class AsyncBaseCollector(ABC):
         )
 
     # 性能监控装饰器 (暂时禁用)
-    async def fetch(
-        self,
-        url: str,
-        method: str = "GET",
-        **kwargs
-    ) -> Response:
+    async def fetch(self, url: str, method: str = "GET", **kwargs) -> Response:
         """
         异步HTTP请求获取数据
 
@@ -177,7 +178,9 @@ class AsyncBaseCollector(ABC):
             httpx.HTTPError: HTTP请求错误
         """
         if not self._is_initialized:
-            raise RuntimeError("Async collector not initialized. Use 'async with' statement.")
+            raise RuntimeError(
+                "Async collector not initialized. Use 'async with' statement."
+            )
 
         await self._ensure_session()
 
@@ -219,11 +222,7 @@ class AsyncBaseCollector(ABC):
             raise
 
     async def fetch_with_retry(
-        self,
-        url: str,
-        method: str = "GET",
-        max_retries: Optional[int] = None,
-        **kwargs
+        self, url: str, method: str = "GET", max_retries: Optional[int] = None, **kwargs
     ) -> Response:
         """
         带重试机制的异步HTTP请求
@@ -264,9 +263,7 @@ class AsyncBaseCollector(ABC):
                         f"Request attempt {attempt + 1} failed for {url}: {str(e)}"
                     )
                 else:
-                    self.logger.error(
-                        f"All retry attempts failed for {url}: {str(e)}"
-                    )
+                    self.logger.error(f"All retry attempts failed for {url}: {str(e)}")
 
         raise last_exception
 
@@ -276,11 +273,8 @@ class AsyncBaseCollector(ABC):
             await asyncio.sleep(self.config.rate_limit_delay)
 
     async def fetch_json(
-        self,
-        url: str,
-        method: str = "GET",
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, url: str, method: str = "GET", **kwargs
+    ) -> dict[str, Any]:
         """
         获取JSON响应数据
 
@@ -295,7 +289,7 @@ class AsyncBaseCollector(ABC):
         response = await self.fetch_with_retry(url, method, **kwargs)
         return response.json()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取采集器统计信息
 
@@ -309,8 +303,11 @@ class AsyncBaseCollector(ABC):
             "failed_requests": self.stats.failed_requests,
             "success_rate": self.stats.success_rate,
             "average_response_time_ms": self.stats.average_response_time_ms,
-            "last_request_time": self.stats.last_request_time.isoformat()
-                if self.stats.last_request_time else None,
+            "last_request_time": (
+                self.stats.last_request_time.isoformat()
+                if self.stats.last_request_time
+                else None
+            ),
             "is_initialized": self._is_initialized,
         }
 
@@ -349,11 +346,7 @@ class AsyncBaseService(ABC):
             finally:
                 await session.close()
 
-    async def execute_query(
-        self,
-        query,
-        params: Optional[Dict[str, Any]] = None
-    ):
+    async def execute_query(self, query, params: Optional[dict[str, Any]] = None):
         """
         执行数据库查询
 
@@ -372,7 +365,7 @@ class AsyncBaseService(ABC):
         self,
         operation: str,
         duration_ms: float,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ):
         """
         记录性能日志
@@ -382,9 +375,7 @@ class AsyncBaseService(ABC):
             duration_ms (float): 执行时间(毫秒)
             details (Optional[Dict[str, Any]]): 详细信息
         """
-        self.logger.info(
-            f"Performance: {operation} completed in {duration_ms:.2f}ms"
-        )
+        self.logger.info(f"Performance: {operation} completed in {duration_ms:.2f}ms")
         if details:
             self.logger.debug(f"Operation details: {details}")
 
@@ -401,11 +392,8 @@ class AsyncBatchProcessor(AsyncBaseService):
         self.batch_size = batch_size
 
     async def process_batch(
-        self,
-        items: List[Any],
-        processor_func: callable,
-        max_concurrent: int = 5
-    ) -> List[Any]:
+        self, items: list[Any], processor_func: callable, max_concurrent: int = 5
+    ) -> list[Any]:
         """
         批量处理数据
 
@@ -426,7 +414,7 @@ class AsyncBatchProcessor(AsyncBaseService):
         # 分批处理
         results = []
         for i in range(0, len(items), self.batch_size):
-            batch = items[i:i + self.batch_size]
+            batch = items[i : i + self.batch_size]
             batch_tasks = [process_with_semaphore(item) for item in batch]
             batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
 
@@ -444,9 +432,7 @@ class AsyncBatchProcessor(AsyncBaseService):
 
 # 便捷函数
 async def create_async_collector(
-    collector_class: type,
-    config: Optional[AsyncConfig] = None,
-    **kwargs
+    collector_class: type, config: Optional[AsyncConfig] = None, **kwargs
 ) -> AsyncBaseCollector:
     """
     创建异步采集器实例

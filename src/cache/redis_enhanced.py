@@ -228,7 +228,7 @@ class EnhancedRedisManager:
         Returns:
             是否设置成功
         """
-        if isinstance(value, (dict, list)):
+        if isinstance(value, dict | list):
             # JSON序列化复杂类型
             return self.set_json(key, value, ex=ex)
         elif isinstance(value, str):

@@ -36,7 +36,7 @@ class MetricsCalculator:
         y_pred: Union[np.ndarray, pd.Series],
         y_pred_proba: Optional[Union[np.ndarray, pd.DataFrame]] = None,
         average: str = "weighted",
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         计算分类指标.
 
@@ -54,9 +54,15 @@ class MetricsCalculator:
         try:
             # 基础分类指标
             metrics["accuracy"] = float(accuracy_score(y_true, y_pred))
-            metrics["precision"] = float(precision_score(y_true, y_pred, average=average, zero_division=0))
-            metrics["recall"] = float(recall_score(y_true, y_pred, average=average, zero_division=0))
-            metrics["f1_score"] = float(f1_score(y_true, y_pred, average=average, zero_division=0))
+            metrics["precision"] = float(
+                precision_score(y_true, y_pred, average=average, zero_division=0)
+            )
+            metrics["recall"] = float(
+                recall_score(y_true, y_pred, average=average, zero_division=0)
+            )
+            metrics["f1_score"] = float(
+                f1_score(y_true, y_pred, average=average, zero_division=0)
+            )
 
             # 混淆矩阵
             cm = confusion_matrix(y_true, y_pred)
@@ -69,11 +75,17 @@ class MetricsCalculator:
                     tp = cm[i, i]
                     fp = cm[:, i].sum() - tp
                     fn = cm[i, :].sum() - tp
-                    tn = cm.sum() - tp - fp - fn
+                    cm.sum() - tp - fp - fn
 
-                    metrics[f"class_{label}_precision"] = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-                    metrics[f"class_{label}_recall"] = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-                    metrics[f"class_{label}_f1"] = 2 * tp / (2 * tp + fp + fn) if (tp + fp + fn) > 0 else 0.0
+                    metrics[f"class_{label}_precision"] = (
+                        tp / (tp + fp) if (tp + fp) > 0 else 0.0
+                    )
+                    metrics[f"class_{label}_recall"] = (
+                        tp / (tp + fn) if (tp + fn) > 0 else 0.0
+                    )
+                    metrics[f"class_{label}_f1"] = (
+                        2 * tp / (2 * tp + fp + fn) if (tp + fp + fn) > 0 else 0.0
+                    )
 
             # 概率相关指标
             if y_pred_proba is not None:
@@ -83,15 +95,25 @@ class MetricsCalculator:
                     # ROC AUC (二分类或多分类)
                     if len(unique_labels) == 2:
                         if y_pred_proba.ndim == 2:
-                            metrics["roc_auc"] = float(roc_auc_score(y_true, y_pred_proba[:, 1]))
+                            metrics["roc_auc"] = float(
+                                roc_auc_score(y_true, y_pred_proba[:, 1])
+                            )
                         else:
-                            metrics["roc_auc"] = float(roc_auc_score(y_true, y_pred_proba))
+                            metrics["roc_auc"] = float(
+                                roc_auc_score(y_true, y_pred_proba)
+                            )
                     else:
-                        metrics["roc_auc"] = float(roc_auc_score(y_true, y_pred_proba, multi_class='ovr', average=average))
+                        metrics["roc_auc"] = float(
+                            roc_auc_score(
+                                y_true, y_pred_proba, multi_class="ovr", average=average
+                            )
+                        )
 
                     # Brier Score (概率校准)
                     if len(unique_labels) == 2 and y_pred_proba.ndim == 2:
-                        metrics["brier_score"] = float(brier_score_loss(y_true, y_pred_proba[:, 1]))
+                        metrics["brier_score"] = float(
+                            brier_score_loss(y_true, y_pred_proba[:, 1])
+                        )
 
                 except Exception as e:
                     logger.warning(f"Probability metrics calculation failed: {e}")
@@ -106,7 +128,7 @@ class MetricsCalculator:
     def calculate_regression_metrics(
         y_true: Union[np.ndarray, pd.Series],
         y_pred: Union[np.ndarray, pd.Series],
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         计算回归指标.
 
@@ -128,7 +150,9 @@ class MetricsCalculator:
             metrics["r2_score"] = float(r2_score(y_true, y_pred))
 
             # 平均绝对百分比误差
-            metrics["mape"] = float(np.mean(np.abs((y_true - y_pred) / np.where(y_true != 0, y_true, 1))))
+            metrics["mape"] = float(
+                np.mean(np.abs((y_true - y_pred) / np.where(y_true != 0, y_true, 1)))
+            )
 
         except Exception as e:
             logger.error(f"Regression metrics calculation failed: {e}")
@@ -141,8 +165,8 @@ class MetricsCalculator:
         y_true: Union[np.ndarray, pd.Series],
         y_pred: Union[np.ndarray, pd.Series],
         y_pred_proba: Optional[Union[np.ndarray, pd.DataFrame]] = None,
-        class_names: Optional[List[str]] = None,
-    ) -> Dict[str, any]:
+        class_names: Optional[list[str]] = None,
+    ) -> dict[str, any]:
         """
         生成详细分类报告.
 
@@ -164,7 +188,11 @@ class MetricsCalculator:
         # 添加sklearn分类报告
         try:
             sklearn_report = classification_report(
-                y_true, y_pred, target_names=class_names, output_dict=True, zero_division=0
+                y_true,
+                y_pred,
+                target_names=class_names,
+                output_dict=True,
+                zero_division=0,
             )
             report["sklearn_classification_report"] = sklearn_report
 
@@ -183,7 +211,9 @@ class MetricsCalculator:
                 else:
                     return obj
 
-            report["sklearn_classification_report"] = convert_numpy_types(sklearn_report)
+            report["sklearn_classification_report"] = convert_numpy_types(
+                sklearn_report
+            )
 
         except Exception as e:
             logger.warning(f"Sklearn classification report failed: {e}")
@@ -194,8 +224,8 @@ class MetricsCalculator:
     def calculate_custom_metrics(
         y_true: Union[np.ndarray, pd.Series],
         y_pred: Union[np.ndarray, pd.Series],
-        custom_functions: Dict[str, callable],
-    ) -> Dict[str, float]:
+        custom_functions: dict[str, callable],
+    ) -> dict[str, float]:
         """
         计算自定义指标.
 
@@ -212,10 +242,12 @@ class MetricsCalculator:
         for name, func in custom_functions.items():
             try:
                 metric_value = func(y_true, y_pred)
-                if isinstance(metric_value, (int, float, np.number)):
+                if isinstance(metric_value, int | float | np.number):
                     metrics[name] = float(metric_value)
                 else:
-                    logger.warning(f"Custom metric '{name}' did not return a numeric value: {metric_value}")
+                    logger.warning(
+                        f"Custom metric '{name}' did not return a numeric value: {metric_value}"
+                    )
             except Exception as e:
                 logger.error(f"Custom metric '{name}' calculation failed: {e}")
 
@@ -224,8 +256,8 @@ class MetricsCalculator:
     @staticmethod
     def compare_models(
         y_true: Union[np.ndarray, pd.Series],
-        predictions_dict: Dict[str, Union[np.ndarray, pd.Series]],
-        probabilities_dict: Optional[Dict[str, Union[np.ndarray, pd.DataFrame]]] = None,
+        predictions_dict: dict[str, Union[np.ndarray, pd.Series]],
+        probabilities_dict: Optional[dict[str, Union[np.ndarray, pd.DataFrame]]] = None,
     ) -> pd.DataFrame:
         """
         比较多个模型的性能.
@@ -241,7 +273,9 @@ class MetricsCalculator:
         results = []
 
         for model_name, y_pred in predictions_dict.items():
-            y_pred_proba = probabilities_dict.get(model_name) if probabilities_dict else None
+            y_pred_proba = (
+                probabilities_dict.get(model_name) if probabilities_dict else None
+            )
 
             metrics = MetricsCalculator.calculate_classification_metrics(
                 y_true, y_pred, y_pred_proba
@@ -256,7 +290,7 @@ class MetricsCalculator:
         y_true: Union[np.ndarray, pd.Series],
         y_pred_proba: Union[np.ndarray, pd.DataFrame],
         n_bins: int = 10,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         计算概率校准指标.
 
@@ -287,7 +321,9 @@ class MetricsCalculator:
             )
 
             # 计算校准误差
-            calibration_error = np.mean(np.abs(fraction_of_positives - mean_predicted_value))
+            calibration_error = np.mean(
+                np.abs(fraction_of_positives - mean_predicted_value)
+            )
 
             return {
                 "calibration_error": float(calibration_error),

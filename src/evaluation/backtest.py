@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class BetType(Enum):
     """投注类型枚举"""
+
     HOME_WIN = "H"
     DRAW = "D"
     AWAY_WIN = "A"
@@ -33,6 +34,7 @@ class BetType(Enum):
 @dataclass
 class Bet:
     """单笔投注记录"""
+
     match_id: str
     date: str
     prediction: int  # 0=H, 1=D, 2=A
@@ -60,13 +62,14 @@ class Bet:
             "won": self.won,
             "profit": self.profit,
             "ev": self.ev,
-            "confidence": self.confidence
+            "confidence": self.confidence,
         }
 
 
 @dataclass
 class BacktestResult:
     """回测结果"""
+
     initial_bankroll: float
     final_bankroll: float
     total_bets: int
@@ -115,7 +118,7 @@ class BacktestResult:
             "avg_profit_per_bet": self.avg_profit_per_bet,
             "std_profit_per_bet": self.std_profit_per_bet,
             "equity_curve": self.equity_curve,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     def to_json(self) -> str:
@@ -171,7 +174,12 @@ class PercentageStakingStrategy(StakingStrategy):
 class KellyStakingStrategy(StakingStrategy):
     """凯利投注策略"""
 
-    def __init__(self, kelly_fraction: float = 0.25, min_stake: float = 1.0, max_stake_percentage: float = 0.05):
+    def __init__(
+        self,
+        kelly_fraction: float = 0.25,
+        min_stake: float = 1.0,
+        max_stake_percentage: float = 0.05,
+    ):
         """
         初始化凯利投注策略
 
@@ -184,8 +192,14 @@ class KellyStakingStrategy(StakingStrategy):
         self.min_stake = min_stake
         self.max_stake_percentage = max_stake_percentage
 
-    def calculate_stake(self, bankroll: float, predicted_proba: list[float],
-                       odds: list[float], prediction: int, **kwargs) -> float:
+    def calculate_stake(
+        self,
+        bankroll: float,
+        predicted_proba: list[float],
+        odds: list[float],
+        prediction: int,
+        **kwargs,
+    ) -> float:
         """
         计算凯利投注金额
 
@@ -231,7 +245,12 @@ class KellyStakingStrategy(StakingStrategy):
 class ValueBettingStrategy(StakingStrategy):
     """价值投注策略"""
 
-    def __init__(self, min_ev_threshold: float = 0.1, base_stake: float = 10.0, max_stake_percentage: float = 0.05):
+    def __init__(
+        self,
+        min_ev_threshold: float = 0.1,
+        base_stake: float = 10.0,
+        max_stake_percentage: float = 0.05,
+    ):
         """
         初始化价值投注策略
 
@@ -244,8 +263,14 @@ class ValueBettingStrategy(StakingStrategy):
         self.base_stake = base_stake
         self.max_stake_percentage = max_stake_percentage
 
-    def calculate_stake(self, bankroll: float, predicted_proba: list[float],
-                       odds: list[float], prediction: int, **kwargs) -> float:
+    def calculate_stake(
+        self,
+        bankroll: float,
+        predicted_proba: list[float],
+        odds: list[float],
+        prediction: int,
+        **kwargs,
+    ) -> float:
         """
         计算价值投注金额
 
@@ -296,7 +321,9 @@ class Backtester:
         # 设置随机种子
         np.random.seed(random_seed)
 
-    def calculate_expected_value(self, predicted_proba: list[float], odds: list[float]) -> list[float]:
+    def calculate_expected_value(
+        self, predicted_proba: list[float], odds: list[float]
+    ) -> list[float]:
         """
         计算期望值
 
@@ -313,8 +340,13 @@ class Backtester:
             ev_values.append(ev)
         return ev_values
 
-    def should_bet(self, predicted_proba: list[float], odds: list[float],
-                   strategy: str = "value", threshold: float = 0.1) -> bool:
+    def should_bet(
+        self,
+        predicted_proba: list[float],
+        odds: list[float],
+        strategy: str = "value",
+        threshold: float = 0.1,
+    ) -> bool:
         """
         判断是否应该下注
 
@@ -337,8 +369,9 @@ class Backtester:
         else:
             return True  # 默认都下注
 
-    def get_best_bet(self, predicted_proba: list[float], odds: list[float],
-                    strategy: str = "ev") -> tuple[int, float]:
+    def get_best_bet(
+        self, predicted_proba: list[float], odds: list[float], strategy: str = "ev"
+    ) -> tuple[int, float]:
         """
         获取最佳投注选择
 
@@ -360,16 +393,27 @@ class Backtester:
         elif strategy == "combined":
             ev_values = self.calculate_expected_value(predicted_proba, odds)
             # 组合概率和期望值
-            combined_scores = [p * max(0, ev) for p, ev in zip(predicted_proba, ev_values, strict=False)]
+            combined_scores = [
+                p * max(0, ev)
+                for p, ev in zip(predicted_proba, ev_values, strict=False)
+            ]
             best_idx = np.argmax(combined_scores)
             return best_idx, combined_scores[best_idx]
         else:
             best_idx = np.argmax(predicted_proba)
             return best_idx, predicted_proba[best_idx]
 
-    def simulate_bet(self, match_id: str, date: str, predicted_proba: list[float],
-                    odds: list[float], actual_result: int, stake_strategy: StakingStrategy,
-                    bet_selection_strategy: str = "ev", bankroll: float = None) -> Optional[Bet]:
+    def simulate_bet(
+        self,
+        match_id: str,
+        date: str,
+        predicted_proba: list[float],
+        odds: list[float],
+        actual_result: int,
+        stake_strategy: StakingStrategy,
+        bet_selection_strategy: str = "ev",
+        bankroll: float = None,
+    ) -> Optional[Bet]:
         """
         模拟单笔投注
 
@@ -403,7 +447,7 @@ class Backtester:
             "bankroll": bankroll,
             "predicted_proba": predicted_proba,
             "odds": odds,
-            "prediction": prediction
+            "prediction": prediction,
         }
 
         stake = stake_strategy.calculate_stake(**stake_kwargs)
@@ -416,14 +460,14 @@ class Backtester:
         ev = ev_values[prediction]
 
         # 判断是否获胜
-        won = (prediction == actual_result)
+        won = prediction == actual_result
 
         # 计算收益
         if won:
             winnings = stake * odds[prediction]
             profit = winnings - stake
         else:
-            profit = - stake
+            profit = -stake
 
         # 计算置信度
         confidence = max(predicted_proba)
@@ -441,19 +485,21 @@ class Backtester:
             won=won,
             profit=profit,
             ev=ev,
-            confidence=confidence
+            confidence=confidence,
         )
 
         return bet
 
-    def simulate(self,
-                 predictions: pd.DataFrame,
-                 odds: pd.DataFrame,
-                 stake_strategy: StakingStrategy,
-                 bet_selection_strategy: str = "ev",
-                 min_confidence: float = 0.5,
-                 min_odds: float = 1.5,
-                 max_odds: float = 10.0) -> BacktestResult:
+    def simulate(
+        self,
+        predictions: pd.DataFrame,
+        odds: pd.DataFrame,
+        stake_strategy: StakingStrategy,
+        bet_selection_strategy: str = "ev",
+        min_confidence: float = 0.5,
+        min_odds: float = 1.5,
+        max_odds: float = 10.0,
+    ) -> BacktestResult:
         """
         执行回测模拟
 
@@ -491,16 +537,16 @@ class Backtester:
             try:
                 # 提取预测概率
                 predicted_proba = [
-                    pred_row.get('prob_H', pred_row.get('prob_0', 0)),
-                    pred_row.get('prob_D', pred_row.get('prob_1', 0)),
-                    pred_row.get('prob_A', pred_row.get('prob_2', 0))
+                    pred_row.get("prob_H", pred_row.get("prob_0", 0)),
+                    pred_row.get("prob_D", pred_row.get("prob_1", 0)),
+                    pred_row.get("prob_A", pred_row.get("prob_2", 0)),
                 ]
 
                 # 提取赔率
                 match_odds = [
-                    odds_row.get('odds_H', odds_row.get('odds_0', 1.0)),
-                    odds_row.get('odds_D', odds_row.get('odds_1', 1.0)),
-                    odds_row.get('odds_A', odds_row.get('odds_2', 1.0))
+                    odds_row.get("odds_H", odds_row.get("odds_0", 1.0)),
+                    odds_row.get("odds_D", odds_row.get("odds_1", 1.0)),
+                    odds_row.get("odds_A", odds_row.get("odds_2", 1.0)),
                 ]
 
                 # 检查赔率范围
@@ -513,12 +559,16 @@ class Backtester:
                     continue
 
                 # 获取实际结果（如果有的话）
-                actual_result = pred_row.get('actual_result', pred_row.get('predicted_class', -1))
+                actual_result = pred_row.get(
+                    "actual_result", pred_row.get("predicted_class", -1)
+                )
                 if actual_result == -1:
                     continue  # 没有实际结果，跳过
 
                 # 获取比赛日期
-                date = pred_row.get('date', pred_row.get('match_date', f"2024-01-{i+1:02d}"))
+                date = pred_row.get(
+                    "date", pred_row.get("match_date", f"2024-01-{i+1:02d}")
+                )
 
                 # 模拟投注
                 bet = self.simulate_bet(
@@ -529,7 +579,7 @@ class Backtester:
                     actual_result=int(actual_result),
                     stake_strategy=stake_strategy,
                     bet_selection_strategy=bet_selection_strategy,
-                    bankroll=current_bankroll
+                    bankroll=current_bankroll,
                 )
 
                 if bet:
@@ -538,7 +588,9 @@ class Backtester:
                     self.equity_curve.append(current_bankroll)
 
                     if i % 100 == 0:
-                        logger.info(f"Processed {i} matches, current bankroll: {current_bankroll:.2f}")
+                        logger.info(
+                            f"Processed {i} matches, current bankroll: {current_bankroll:.2f}"
+                        )
 
             except Exception as e:
                 logger.warning(f"Error processing match {match_id}: {e}")
@@ -546,11 +598,15 @@ class Backtester:
 
         # 计算回测结果
         result = self._calculate_backtest_result(stake_strategy)
-        logger.info(f"Backtest completed. Final bankroll: {result.final_bankroll:.2f}, ROI: {result.roi:.2f}%")
+        logger.info(
+            f"Backtest completed. Final bankroll: {result.final_bankroll:.2f}, ROI: {result.roi:.2f}%"
+        )
 
         return result
 
-    def _calculate_backtest_result(self, stake_strategy: StakingStrategy) -> BacktestResult:
+    def _calculate_backtest_result(
+        self, stake_strategy: StakingStrategy
+    ) -> BacktestResult:
         """计算回测统计结果"""
         if not self.bets:
             return BacktestResult(
@@ -576,7 +632,7 @@ class Backtester:
                 std_profit_per_bet=0.0,
                 bets=[],
                 equity_curve=self.equity_curve,
-                metadata={"message": "No bets placed"}
+                metadata={"message": "No bets placed"},
             )
 
         # 基本统计
@@ -585,7 +641,9 @@ class Backtester:
         losing_bets = total_bets - winning_bets
 
         total_stake = sum(bet.stake for bet in self.bets)
-        total_winnings = sum(bet.stake * bet.odds[bet.prediction] for bet in self.bets if bet.won)
+        total_winnings = sum(
+            bet.stake * bet.odds[bet.prediction] for bet in self.bets if bet.won
+        )
         net_profit = total_winnings - total_stake
 
         final_bankroll = self.initial_bankroll + net_profit
@@ -596,7 +654,9 @@ class Backtester:
         avg_odds = np.mean([bet.odds[bet.prediction] for bet in self.bets])
 
         # 连续统计
-        max_consecutive_wins, max_consecutive_losses = self._calculate_consecutive_streaks()
+        max_consecutive_wins, max_consecutive_losses = (
+            self._calculate_consecutive_streaks()
+        )
 
         # 最大回撤
         max_drawdown, max_drawdown_percentage = self._calculate_max_drawdown()
@@ -607,16 +667,22 @@ class Backtester:
         std_profit_per_bet = np.std(profits)
 
         # 夏普比率 (假设无风险利率为0)
-        sharpe_ratio = avg_profit_per_bet / std_profit_per_bet if std_profit_per_bet > 0 else 0.0
+        sharpe_ratio = (
+            avg_profit_per_bet / std_profit_per_bet if std_profit_per_bet > 0 else 0.0
+        )
 
         # Calmar比率 (年化收益/最大回撤)
         annualized_return = roi * 52  # 假设一年52周
-        calmar_ratio = annualized_return / abs(max_drawdown_percentage) if max_drawdown_percentage != 0 else 0.0
+        calmar_ratio = (
+            annualized_return / abs(max_drawdown_percentage)
+            if max_drawdown_percentage != 0
+            else 0.0
+        )
 
         # 盈利因子
         total_wins = sum(bet.profit for bet in self.bets if bet.profit > 0)
         total_losses = abs(sum(bet.profit for bet in self.bets if bet.profit < 0))
-        profit_factor = total_wins / total_losses if total_losses > 0 else float('inf')
+        profit_factor = total_wins / total_losses if total_losses > 0 else float("inf")
 
         return BacktestResult(
             initial_bankroll=self.initial_bankroll,
@@ -644,8 +710,8 @@ class Backtester:
             metadata={
                 "random_seed": self.random_seed,
                 "backtest_date": datetime.now().isoformat(),
-                "strategy_type": type(stake_strategy).__name__
-            }
+                "strategy_type": type(stake_strategy).__name__,
+            },
         )
 
     def _calculate_consecutive_streaks(self) -> tuple[int, int]:
@@ -681,12 +747,17 @@ class Backtester:
         max_drawdown = np.max(drawdown)
 
         # 计算百分比回撤
-        max_drawdown_percentage = (max_drawdown / np.max(equity_array)) * 100 if np.max(equity_array) > 0 else 0.0
+        max_drawdown_percentage = (
+            (max_drawdown / np.max(equity_array)) * 100
+            if np.max(equity_array) > 0
+            else 0.0
+        )
 
         return max_drawdown, max_drawdown_percentage
 
-    def save_results(self, result: BacktestResult, filepath: Union[str, Path],
-                    save_csv: bool = True) -> None:
+    def save_results(
+        self, result: BacktestResult, filepath: Union[str, Path], save_csv: bool = True
+    ) -> None:
         """
         保存回测结果
 
@@ -699,13 +770,13 @@ class Backtester:
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
         # 保存JSON结果
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(result.to_json())
 
         # 保存详细CSV
         if save_csv and result.bets:
-            csv_path = filepath.with_suffix('.csv')
-            with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+            csv_path = filepath.with_suffix(".csv")
+            with open(csv_path, "w", newline="", encoding="utf-8") as f:
                 if result.bets:
                     fieldnames = result.bets[0].to_dict().keys()
                     writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -728,7 +799,7 @@ class Backtester:
         Returns:
             回测结果
         """
-        with open(filepath, encoding='utf-8') as f:
+        with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
 
         # 重建Bet对象
@@ -746,7 +817,7 @@ class Backtester:
                 won=bet_data["won"],
                 profit=bet_data["profit"],
                 ev=bet_data["ev"],
-                confidence=bet_data["confidence"]
+                confidence=bet_data["confidence"],
             )
             bets.append(bet)
 
@@ -773,16 +844,18 @@ class Backtester:
             std_profit_per_bet=data["std_profit_per_bet"],
             bets=bets,
             equity_curve=data["equity_curve"],
-            metadata=data["metadata"]
+            metadata=data["metadata"],
         )
 
 
 # 便捷函数
-def run_backtest(predictions_file: Union[str, Path],
-                odds_file: Union[str, Path],
-                stake_strategy: str = "flat",
-                initial_bankroll: float = 1000.0,
-                **kwargs) -> BacktestResult:
+def run_backtest(
+    predictions_file: Union[str, Path],
+    odds_file: Union[str, Path],
+    stake_strategy: str = "flat",
+    initial_bankroll: float = 1000.0,
+    **kwargs,
+) -> BacktestResult:
     """
     便捷的回测函数
 
@@ -809,13 +882,13 @@ def run_backtest(predictions_file: Union[str, Path],
         strategy = KellyStakingStrategy(
             kelly_fraction=kwargs.get("kelly_fraction", 0.25),
             min_stake=kwargs.get("min_stake", 1.0),
-            max_stake_percentage=kwargs.get("max_stake_percentage", 0.05)
+            max_stake_percentage=kwargs.get("max_stake_percentage", 0.05),
         )
     elif stake_strategy == "value":
         strategy = ValueBettingStrategy(
             min_ev_threshold=kwargs.get("min_ev_threshold", 0.1),
             base_stake=kwargs.get("base_stake", 10.0),
-            max_stake_percentage=kwargs.get("max_stake_percentage", 0.05)
+            max_stake_percentage=kwargs.get("max_stake_percentage", 0.05),
         )
     else:
         raise ValueError(f"Unknown staking strategy: {stake_strategy}")
@@ -823,10 +896,7 @@ def run_backtest(predictions_file: Union[str, Path],
     # 创建回测器并运行
     backtester = Backtester(initial_bankroll=initial_bankroll)
     result = backtester.simulate(
-        predictions=predictions,
-        odds=odds,
-        stake_strategy=strategy,
-        **kwargs
+        predictions=predictions, odds=odds, stake_strategy=strategy, **kwargs
     )
 
     return result

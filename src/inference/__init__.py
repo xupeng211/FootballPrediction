@@ -24,7 +24,7 @@ from .schemas import (
     BatchPredictionRequest,
     BatchPredictionResponse,
     ModelInfo,
-    ErrorResponse
+    ErrorResponse,
 )
 from .errors import (
     InferenceError,
@@ -32,13 +32,16 @@ from .errors import (
     FeatureBuilderError,
     PredictionError,
     CacheError,
-    HotReloadError
+    HotReloadError,
 )
+
 
 # 延迟导入predictor以避免循环依赖
 def get_predictor():
     from . import predictor
+
     return predictor.get_predictor()
+
 
 __all__ = [
     # Core classes
@@ -47,7 +50,6 @@ __all__ = [
     "PredictionCache",
     "HotReloadManager",
     "get_predictor",
-
     # Schemas
     "PredictionRequest",
     "PredictionResponse",
@@ -55,12 +57,11 @@ __all__ = [
     "BatchPredictionResponse",
     "ModelInfo",
     "ErrorResponse",
-
     # Errors
     "InferenceError",
     "ModelLoadError",
     "FeatureBuilderError",
     "PredictionError",
     "CacheError",
-    "HotReloadError"
+    "HotReloadError",
 ]

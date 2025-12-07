@@ -20,6 +20,7 @@ from dataclasses import asdict
 
 try:
     from jinja2 import Environment, FileSystemLoader, Template
+
     HAS_JINJA2 = True
 except ImportError:
     HAS_JINJA2 = False
@@ -27,6 +28,7 @@ except ImportError:
 
 try:
     import weasyprint
+
     HAS_WEASYPRINT = True
 except ImportError:
     HAS_WEASYPRINT = False
@@ -67,7 +69,7 @@ class ReportBuilder:
 
         # 创建安全的环境（启用自动转义）
         env = Environment(autoescape=True)
-        env.globals['template'] = template
+        env.globals["template"] = template
 
         return env
 
@@ -400,134 +402,172 @@ class ReportBuilder:
 
     def _get_metric_status(self, metric_name: str, value: float) -> str:
         """获取指标状态"""
-        if metric_name in ['accuracy', 'f1_weighted', 'precision_weighted', 'recall_weighted']:
+        if metric_name in [
+            "accuracy",
+            "f1_weighted",
+            "precision_weighted",
+            "recall_weighted",
+        ]:
             if value >= 0.8:
-                return '优秀'
+                return "优秀"
             elif value >= 0.6:
-                return '良好'
+                return "良好"
             else:
-                return '需改进'
-        elif metric_name in ['logloss', 'brier_score_avg']:
+                return "需改进"
+        elif metric_name in ["logloss", "brier_score_avg"]:
             if value <= 0.3:
-                return '优秀'
+                return "优秀"
             elif value <= 0.5:
-                return '良好'
+                return "良好"
             else:
-                return '需改进'
+                return "需改进"
         else:
-            return '标准'
+            return "标准"
 
     def _get_metric_class(self, metric_name: str, value: float) -> str:
         """获取指标CSS类"""
-        if self._get_metric_status(metric_name, value) == '优秀':
-            return 'good'
-        elif self._get_metric_status(metric_name, value) == '需改进':
-            return 'danger'
+        if self._get_metric_status(metric_name, value) == "优秀":
+            return "good"
+        elif self._get_metric_status(metric_name, value) == "需改进":
+            return "danger"
         else:
-            return 'warning'
+            return "warning"
 
-    def build_summary_metrics(self, metrics_result: dict, backtest_result=None) -> list[dict]:
+    def build_summary_metrics(
+        self, metrics_result: dict, backtest_result=None
+    ) -> list[dict]:
         """构建摘要指标"""
         summary = []
 
         # 添加关键分类指标
-        if 'accuracy' in metrics_result:
-            summary.append({
-                'name': '准确率',
-                'value': f"{metrics_result['accuracy']:.4f}",
-                'unit': '',
-                'class': self._get_metric_class('accuracy', metrics_result['accuracy']),
-                'description': '模型预测正确的比例'
-            })
+        if "accuracy" in metrics_result:
+            summary.append(
+                {
+                    "name": "准确率",
+                    "value": f"{metrics_result['accuracy']:.4f}",
+                    "unit": "",
+                    "class": self._get_metric_class(
+                        "accuracy", metrics_result["accuracy"]
+                    ),
+                    "description": "模型预测正确的比例",
+                }
+            )
 
-        if 'logloss' in metrics_result:
-            summary.append({
-                'name': 'Log Loss',
-                'value': f"{metrics_result['logloss']:.4f}",
-                'unit': '',
-                'class': self._get_metric_class('logloss', metrics_result['logloss']),
-                'description': '概率预测质量指标，越小越好'
-            })
+        if "logloss" in metrics_result:
+            summary.append(
+                {
+                    "name": "Log Loss",
+                    "value": f"{metrics_result['logloss']:.4f}",
+                    "unit": "",
+                    "class": self._get_metric_class(
+                        "logloss", metrics_result["logloss"]
+                    ),
+                    "description": "概率预测质量指标，越小越好",
+                }
+            )
 
         # 添加校准指标
-        if 'brier_score_avg' in metrics_result:
-            summary.append({
-                'name': '平均Brier分数',
-                'value': f"{metrics_result['brier_score_avg']:.4f}",
-                'unit': '',
-                'class': self._get_metric_class('brier_score_avg', metrics_result['brier_score_avg']),
-                'description': '概率校准质量，越小越好'
-            })
+        if "brier_score_avg" in metrics_result:
+            summary.append(
+                {
+                    "name": "平均Brier分数",
+                    "value": f"{metrics_result['brier_score_avg']:.4f}",
+                    "unit": "",
+                    "class": self._get_metric_class(
+                        "brier_score_avg", metrics_result["brier_score_avg"]
+                    ),
+                    "description": "概率校准质量，越小越好",
+                }
+            )
 
         # 添加回测指标
         if backtest_result:
-            summary.append({
-                'name': 'ROI',
-                'value': f"{backtest_result.roi:.2f}",
-                'unit': '%',
-                'class': 'good' if backtest_result.roi > 0 else 'danger',
-                'description': '投资回报率'
-            })
+            summary.append(
+                {
+                    "name": "ROI",
+                    "value": f"{backtest_result.roi:.2f}",
+                    "unit": "%",
+                    "class": "good" if backtest_result.roi > 0 else "danger",
+                    "description": "投资回报率",
+                }
+            )
 
-            summary.append({
-                'name': '胜率',
-                'value': f"{backtest_result.win_rate:.2f}",
-                'unit': '%',
-                'class': 'good' if backtest_result.win_rate > 50 else 'warning',
-                'description': '投注获胜比例'
-            })
+            summary.append(
+                {
+                    "name": "胜率",
+                    "value": f"{backtest_result.win_rate:.2f}",
+                    "unit": "%",
+                    "class": "good" if backtest_result.win_rate > 50 else "warning",
+                    "description": "投注获胜比例",
+                }
+            )
 
         return summary
 
-    def generate_recommendations(self, metrics_result: dict, backtest_result=None) -> list[dict]:
+    def generate_recommendations(
+        self, metrics_result: dict, backtest_result=None
+    ) -> list[dict]:
         """生成改进建议"""
         recommendations = []
 
         # 基于分类指标的建议
-        accuracy = metrics_result.get('accuracy', 0)
+        accuracy = metrics_result.get("accuracy", 0)
         if accuracy < 0.6:
-            recommendations.append({
-                'title': '提高模型准确率',
-                'description': f'当前准确率{accuracy:.2%}较低，建议增加特征工程、调整模型参数或尝试其他算法。',
-                'priority': '高',
-                'priority_class': 'danger'
-            })
+            recommendations.append(
+                {
+                    "title": "提高模型准确率",
+                    "description": f"当前准确率{accuracy:.2%}较低，建议增加特征工程、调整模型参数或尝试其他算法。",
+                    "priority": "高",
+                    "priority_class": "danger",
+                }
+            )
 
         # 基于校准指标的建议
-        if 'brier_score_avg' in metrics_result:
-            brier_score = metrics_result['brier_score_avg']
+        if "brier_score_avg" in metrics_result:
+            brier_score = metrics_result["brier_score_avg"]
             if brier_score > 0.25:
-                recommendations.append({
-                    'title': '改进概率校准',
-                    'description': f'平均Brier分数{brier_score:.4f}较高，建议应用概率校准方法如Isotonic回归或Platt缩放。',
-                    'priority': '中',
-                    'priority_class': 'warning'
-                })
+                recommendations.append(
+                    {
+                        "title": "改进概率校准",
+                        "description": f"平均Brier分数{brier_score:.4f}较高，建议应用概率校准方法如Isotonic回归或Platt缩放。",
+                        "priority": "中",
+                        "priority_class": "warning",
+                    }
+                )
 
         # 基于回测指标的建议
         if backtest_result:
             if backtest_result.roi < 0:
-                recommendations.append({
-                    'title': '优化投注策略',
-                    'description': f'当前ROI为{backtest_result.roi:.2f}%，建议调整投注阈值、改进价值计算或采用更保守的资金管理策略。',
-                    'priority': '高',
-                    'priority_class': 'danger'
-                })
+                recommendations.append(
+                    {
+                        "title": "优化投注策略",
+                        "description": f"当前ROI为{backtest_result.roi:.2f}%，建议调整投注阈值、改进价值计算或采用更保守的资金管理策略。",
+                        "priority": "高",
+                        "priority_class": "danger",
+                    }
+                )
 
             if backtest_result.max_drawdown_percentage > 20:
-                recommendations.append({
-                    'title': '控制风险',
-                    'description': f'最大回撤达到{backtest_result.max_drawdown_percentage:.2f}%，建议实施更严格的资金管理策略。',
-                    'priority': '中',
-                    'priority_class': 'warning'
-                })
+                recommendations.append(
+                    {
+                        "title": "控制风险",
+                        "description": f"最大回撤达到{backtest_result.max_drawdown_percentage:.2f}%，建议实施更严格的资金管理策略。",
+                        "priority": "中",
+                        "priority_class": "warning",
+                    }
+                )
 
         return recommendations
 
-    def build_html_report(self, metrics_result: dict, calibration_result=None,
-                         backtest_result=None, charts: list[dict] = None,
-                         model_name: str = "Football Prediction Model",
-                         model_version: str = "1.0.0") -> str:
+    def build_html_report(
+        self,
+        metrics_result: dict,
+        calibration_result=None,
+        backtest_result=None,
+        charts: list[dict] = None,
+        model_name: str = "Football Prediction Model",
+        model_version: str = "1.0.0",
+    ) -> str:
         """
         构建HTML评估报告
 
@@ -551,51 +591,59 @@ class ReportBuilder:
 
         # 准备模板数据
         template_data = {
-            'title': f"{model_name} - 评估报告",
-            'generation_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'model_version': model_version,
-            'summary': self.build_summary_metrics(metrics_result, backtest_result),
-            'metrics': metrics_result,
-            'calibration_metrics': {k: v for k, v in metrics_result.items()
-                                  if k.startswith('brier_score_') or k.startswith('ece_') or k.startswith('mce_')},
-            'backtest_result': backtest_result,
-            'charts': charts or [],
-            'recommendations': self.generate_recommendations(metrics_result, backtest_result),
-            'metric_names': {
-                'accuracy': '准确率',
-                'precision_weighted': '加权精确率',
-                'recall_weighted': '加权召回率',
-                'f1_weighted': '加权F1分数',
-                'precision_macro': '宏平均精确率',
-                'recall_macro': '宏平均召回率',
-                'f1_macro': '宏平均F1分数',
-                'logloss': '对数损失',
-                'brier_score_avg': '平均Brier分数',
-                'ece_avg': '平均期望校准误差',
-                'mce_avg': '平均最大校准误差'
+            "title": f"{model_name} - 评估报告",
+            "generation_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "model_version": model_version,
+            "summary": self.build_summary_metrics(metrics_result, backtest_result),
+            "metrics": metrics_result,
+            "calibration_metrics": {
+                k: v
+                for k, v in metrics_result.items()
+                if k.startswith("brier_score_")
+                or k.startswith("ece_")
+                or k.startswith("mce_")
             },
-            'class_names': {
-                'H': '主胜',
-                'D': '平局',
-                'A': '客胜'
-            }
+            "backtest_result": backtest_result,
+            "charts": charts or [],
+            "recommendations": self.generate_recommendations(
+                metrics_result, backtest_result
+            ),
+            "metric_names": {
+                "accuracy": "准确率",
+                "precision_weighted": "加权精确率",
+                "recall_weighted": "加权召回率",
+                "f1_weighted": "加权F1分数",
+                "precision_macro": "宏平均精确率",
+                "recall_macro": "宏平均召回率",
+                "f1_macro": "宏平均F1分数",
+                "logloss": "对数损失",
+                "brier_score_avg": "平均Brier分数",
+                "ece_avg": "平均期望校准误差",
+                "mce_avg": "平均最大校准误差",
+            },
+            "class_names": {"H": "主胜", "D": "平局", "A": "客胜"},
         }
 
         # 渲染HTML
-        template = self.template_env.globals['template']
+        template = self.template_env.globals["template"]
         html_content = template.render(**template_data)
 
         # 保存HTML文件
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(html_content)
 
         logger.info(f"HTML report generated: {output_file}")
         return str(output_file)
 
-    def build_json_report(self, metrics_result: dict, calibration_result=None,
-                         backtest_result=None, charts: list[dict] = None,
-                         model_name: str = "Football Prediction Model",
-                         model_version: str = "1.0.0") -> str:
+    def build_json_report(
+        self,
+        metrics_result: dict,
+        calibration_result=None,
+        backtest_result=None,
+        charts: list[dict] = None,
+        model_name: str = "Football Prediction Model",
+        model_version: str = "1.0.0",
+    ) -> str:
         """
         构建JSON评估报告
 
@@ -615,28 +663,34 @@ class ReportBuilder:
 
         # 准备JSON数据
         report_data = {
-            'metadata': {
-                'model_name': model_name,
-                'model_version': model_version,
-                'generation_time': datetime.now().isoformat(),
-                'report_version': '1.0.0'
+            "metadata": {
+                "model_name": model_name,
+                "model_version": model_version,
+                "generation_time": datetime.now().isoformat(),
+                "report_version": "1.0.0",
             },
-            'summary': self.build_summary_metrics(metrics_result, backtest_result),
-            'metrics': metrics_result,
-            'recommendations': self.generate_recommendations(metrics_result, backtest_result),
-            'charts': charts or []
+            "summary": self.build_summary_metrics(metrics_result, backtest_result),
+            "metrics": metrics_result,
+            "recommendations": self.generate_recommendations(
+                metrics_result, backtest_result
+            ),
+            "charts": charts or [],
         }
 
         # 添加校准结果
         if calibration_result:
-            report_data['calibration'] = calibration_result.to_dict() if hasattr(calibration_result, 'to_dict') else calibration_result
+            report_data["calibration"] = (
+                calibration_result.to_dict()
+                if hasattr(calibration_result, "to_dict")
+                else calibration_result
+            )
 
         # 添加回测结果
         if backtest_result:
-            report_data['backtest'] = backtest_result.to_dict()
+            report_data["backtest"] = backtest_result.to_dict()
 
         # 保存JSON文件
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(report_data, f, indent=2, ensure_ascii=False, default=str)
 
         logger.info(f"JSON report generated: {output_file}")
@@ -675,11 +729,16 @@ class ReportBuilder:
             logger.error(f"Error generating PDF report: {e}")
             return ""
 
-    def build_comprehensive_report(self, metrics_result: dict, calibration_result=None,
-                                 backtest_result=None, charts: list[dict] = None,
-                                 model_name: str = "Football Prediction Model",
-                                 model_version: str = "1.0.0",
-                                 formats: list[str] = None) -> dict[str, str]:
+    def build_comprehensive_report(
+        self,
+        metrics_result: dict,
+        calibration_result=None,
+        backtest_result=None,
+        charts: list[dict] = None,
+        model_name: str = "Football Prediction Model",
+        model_version: str = "1.0.0",
+        formats: list[str] = None,
+    ) -> dict[str, str]:
         """
         构建综合评估报告
 
@@ -696,50 +755,57 @@ class ReportBuilder:
             生成的报告文件路径字典
         """
         if formats is None:
-            formats = ['html', 'json']
+            formats = ["html", "json"]
         report_files = {}
 
         # 生成HTML报告
-        if 'html' in formats:
+        if "html" in formats:
             html_file = self.build_html_report(
                 metrics_result=metrics_result,
                 calibration_result=calibration_result,
                 backtest_result=backtest_result,
                 charts=charts,
                 model_name=model_name,
-                model_version=model_version
+                model_version=model_version,
             )
             if html_file:
-                report_files['html'] = html_file
+                report_files["html"] = html_file
 
                 # 如果需要PDF且HTML已生成，尝试转换
-                if 'pdf' in formats:
+                if "pdf" in formats:
                     pdf_file = self.build_pdf_report(html_file=html_file)
                     if pdf_file:
-                        report_files['pdf'] = pdf_file
+                        report_files["pdf"] = pdf_file
 
         # 生成JSON报告
-        if 'json' in formats:
+        if "json" in formats:
             json_file = self.build_json_report(
                 metrics_result=metrics_result,
                 calibration_result=calibration_result,
                 backtest_result=backtest_result,
                 charts=charts,
                 model_name=model_name,
-                model_version=model_version
+                model_version=model_version,
             )
             if json_file:
-                report_files['json'] = json_file
+                report_files["json"] = json_file
 
-        logger.info(f"Comprehensive report generated with formats: {list(report_files.keys())}")
+        logger.info(
+            f"Comprehensive report generated with formats: {list(report_files.keys())}"
+        )
         return report_files
 
 
 # 便捷函数
-def generate_evaluation_report(metrics_result: dict, calibration_result=None,
-                             backtest_result=None, charts: list[dict] = None,
-                             output_dir: str = None, model_name: str = "Model",
-                             formats: list[str] = None) -> dict[str, str]:
+def generate_evaluation_report(
+    metrics_result: dict,
+    calibration_result=None,
+    backtest_result=None,
+    charts: list[dict] = None,
+    output_dir: str = None,
+    model_name: str = "Model",
+    formats: list[str] = None,
+) -> dict[str, str]:
     """
     便捷的评估报告生成函数
 
@@ -756,7 +822,7 @@ def generate_evaluation_report(metrics_result: dict, calibration_result=None,
         生成的报告文件路径字典
     """
     if formats is None:
-        formats = ['html', 'json']
+        formats = ["html", "json"]
     builder = ReportBuilder(output_dir=output_dir)
     return builder.build_comprehensive_report(
         metrics_result=metrics_result,
@@ -764,5 +830,5 @@ def generate_evaluation_report(metrics_result: dict, calibration_result=None,
         backtest_result=backtest_result,
         charts=charts,
         model_name=model_name,
-        formats=formats
+        formats=formats,
     )

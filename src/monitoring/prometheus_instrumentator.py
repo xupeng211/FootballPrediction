@@ -3,7 +3,7 @@
 """
 
 import time
-from typing import Callable
+from collections.abc import Callable
 from functools import wraps
 
 from prometheus_client import Counter, Histogram, Gauge, generate_latest
@@ -16,7 +16,7 @@ HTTP_REQUESTS_TOTAL = Counter(
     "football_prediction_http_requests_total",
     "Total HTTP requests",
     ["method", "endpoint", "status_code"],
-    registry=None
+    registry=None,
 )
 
 HTTP_REQUEST_DURATION_SECONDS = Histogram(
@@ -24,7 +24,7 @@ HTTP_REQUEST_DURATION_SECONDS = Histogram(
     "HTTP request duration in seconds",
     ["method", "endpoint"],
     buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
-    registry=None
+    registry=None,
 )
 
 # 业务特定指标
@@ -32,7 +32,7 @@ PREDICTION_REQUESTS_TOTAL = Counter(
     "football_prediction_requests_total",
     "Total prediction requests",
     ["prediction_type", "status"],
-    registry=None
+    registry=None,
 )
 
 PREDICTION_REQUEST_DURATION_SECONDS = Histogram(
@@ -40,14 +40,14 @@ PREDICTION_REQUEST_DURATION_SECONDS = Histogram(
     "Prediction request duration in seconds",
     ["prediction_type"],
     buckets=[0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0],
-    registry=None
+    registry=None,
 )
 
 DATABASE_OPERATIONS_TOTAL = Counter(
     "football_prediction_db_operations_total",
     "Total database operations",
     ["operation", "table", "status"],
-    registry=None
+    registry=None,
 )
 
 DATABASE_OPERATION_DURATION_SECONDS = Histogram(
@@ -55,28 +55,28 @@ DATABASE_OPERATION_DURATION_SECONDS = Histogram(
     "Database operation duration in seconds",
     ["operation", "table"],
     buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
-    registry=None
+    registry=None,
 )
 
 REDIS_OPERATIONS_TOTAL = Counter(
     "football_prediction_redis_operations_total",
     "Total Redis operations",
     ["operation", "status"],
-    registry=None
+    registry=None,
 )
 
 ACTIVE_CONNECTIONS = Gauge(
     "football_prediction_active_connections",
     "Number of active connections",
     ["connection_type"],
-    registry=None
+    registry=None,
 )
 
 ML_MODEL_INFERENCE_TOTAL = Counter(
     "football_prediction_ml_inference_total",
     "Total ML model inference requests",
     ["model_name", "status"],
-    registry=None
+    registry=None,
 )
 
 ML_MODEL_INFERENCE_DURATION_SECONDS = Histogram(
@@ -84,7 +84,7 @@ ML_MODEL_INFERENCE_DURATION_SECONDS = Histogram(
     "ML model inference duration in seconds",
     ["model_name"],
     buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
-    registry=None
+    registry=None,
 )
 
 # 数据收集指标
@@ -92,14 +92,14 @@ DATA_COLLECTION_REQUESTS_TOTAL = Counter(
     "football_prediction_data_collection_requests_total",
     "Total data collection requests",
     ["source", "status"],
-    registry=None
+    registry=None,
 )
 
 DATA_COLLECTED_RECORDS = Counter(
     "football_prediction_data_collected_records_total",
     "Total records collected",
     ["source", "table"],
-    registry=None
+    registry=None,
 )
 
 
@@ -117,9 +117,7 @@ def create_instrumentator() -> Instrumentator:
 
         # 更新 HTTP 指标
         HTTP_REQUESTS_TOTAL.labels(
-            method=method,
-            endpoint=endpoint,
-            status_code=status_code
+            method=method, endpoint=endpoint, status_code=status_code
         ).inc()
 
         # 如果是预测请求，额外记录预测指标
@@ -134,8 +132,7 @@ def create_instrumentator() -> Instrumentator:
 
             status = "success" if response.status_code < 400 else "error"
             PREDICTION_REQUESTS_TOTAL.labels(
-                prediction_type=prediction_type,
-                status=status
+                prediction_type=prediction_type, status=status
             ).inc()
 
     # 创建仪表化器
@@ -149,7 +146,7 @@ def create_instrumentator() -> Instrumentator:
         inprogress_name="football_prediction_http_requests_inprogress",
         inprogress_labels=True,
         latency_low_histogram_bucket=0.01,
-        latency_high_histogram_bucket=1.0
+        latency_high_histogram_bucket=1.0,
     )
 
     # 添加自定义指标
@@ -160,6 +157,7 @@ def create_instrumentator() -> Instrumentator:
 
 def instrument_database_operation(operation: str, table: str):
     """装饰器：数据库操作监控"""
+
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -175,20 +173,20 @@ def instrument_database_operation(operation: str, table: str):
             finally:
                 duration = time.time() - start_time
                 DATABASE_OPERATIONS_TOTAL.labels(
-                    operation=operation,
-                    table=table,
-                    status=status
+                    operation=operation, table=table, status=status
                 ).inc()
                 DATABASE_OPERATION_DURATION_SECONDS.labels(
-                    operation=operation,
-                    table=table
+                    operation=operation, table=table
                 ).observe(duration)
+
         return wrapper
+
     return decorator
 
 
 def instrument_redis_operation(operation: str):
     """装饰器：Redis 操作监控"""
+
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -201,16 +199,16 @@ def instrument_redis_operation(operation: str):
                 logger.error(f"Redis operation {operation} failed: {e}")
                 raise
             finally:
-                REDIS_OPERATIONS_TOTAL.labels(
-                    operation=operation,
-                    status=status
-                ).inc()
+                REDIS_OPERATIONS_TOTAL.labels(operation=operation, status=status).inc()
+
         return wrapper
+
     return decorator
 
 
 def instrument_ml_inference(model_name: str):
     """装饰器：ML 模型推理监控"""
+
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -226,13 +224,14 @@ def instrument_ml_inference(model_name: str):
             finally:
                 duration = time.time() - start_time
                 ML_MODEL_INFERENCE_TOTAL.labels(
-                    model_name=model_name,
-                    status=status
+                    model_name=model_name, status=status
                 ).inc()
                 ML_MODEL_INFERENCE_DURATION_SECONDS.labels(
                     model_name=model_name
                 ).observe(duration)
+
         return wrapper
+
     return decorator
 
 
@@ -241,7 +240,9 @@ def update_active_connections(connection_type: str, count: int):
     ACTIVE_CONNECTIONS.labels(connection_type=connection_type).set(count)
 
 
-def record_data_collection(source: str, status: str, records_count: int = 0, table: str = "unknown"):
+def record_data_collection(
+    source: str, status: str, records_count: int = 0, table: str = "unknown"
+):
     """记录数据收集指标"""
     DATA_COLLECTION_REQUESTS_TOTAL.labels(source=source, status=status).inc()
     if records_count > 0:

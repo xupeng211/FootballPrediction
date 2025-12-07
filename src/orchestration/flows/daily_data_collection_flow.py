@@ -23,7 +23,7 @@ from src.tasks.celery_app import celery_app
 from src.tasks.data_collection_tasks import (
     collect_fotmob_fixtures_task,
     collect_fotmob_details_task,
-    collect_fbref_data_task
+    collect_fbref_data_task,
 )
 from src.features.feature_store import FeatureStore
 from src.quality.data_quality_monitor import DataQualityMonitor
@@ -31,8 +31,7 @@ from src.database.async_manager import get_db_session
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -42,9 +41,9 @@ logger = logging.getLogger(__name__)
     retries=3,
     retry_delay_seconds=60,
     cache_key_fn=task_input_hash,
-    cache_expiration=timedelta(hours=1)
+    cache_expiration=timedelta(hours=1),
 )
-async def collect_fotmob_fixtures_flow_task() -> Dict[str, Any]:
+async def collect_fotmob_fixtures_flow_task() -> dict[str, Any]:
     """
     Collect fixture data from FotMob API.
 
@@ -70,7 +69,7 @@ async def collect_fotmob_fixtures_flow_task() -> Dict[str, Any]:
             "task_id": str(celery_task.id),
             "fixtures_collected": result.get("count", 0),
             "collection_time": datetime.utcnow().isoformat(),
-            "data": result
+            "data": result,
         }
 
     except Exception as e:
@@ -78,7 +77,7 @@ async def collect_fotmob_fixtures_flow_task() -> Dict[str, Any]:
         return {
             "status": "error",
             "error": str(e),
-            "collection_time": datetime.utcnow().isoformat()
+            "collection_time": datetime.utcnow().isoformat(),
         }
 
 
@@ -87,9 +86,9 @@ async def collect_fotmob_fixtures_flow_task() -> Dict[str, Any]:
     retries=3,
     retry_delay_seconds=60,
     cache_key_fn=task_input_hash,
-    cache_expiration=timedelta(hours=2)
+    cache_expiration=timedelta(hours=2),
 )
-async def collect_fotmob_details_flow_task() -> Dict[str, Any]:
+async def collect_fotmob_details_flow_task() -> dict[str, Any]:
     """
     Collect detailed match data from FotMob API.
 
@@ -115,7 +114,7 @@ async def collect_fotmob_details_flow_task() -> Dict[str, Any]:
             "task_id": str(celery_task.id),
             "matches_updated": result.get("updated_count", 0),
             "collection_time": datetime.utcnow().isoformat(),
-            "data": result
+            "data": result,
         }
 
     except Exception as e:
@@ -123,7 +122,7 @@ async def collect_fotmob_details_flow_task() -> Dict[str, Any]:
         return {
             "status": "error",
             "error": str(e),
-            "collection_time": datetime.utcnow().isoformat()
+            "collection_time": datetime.utcnow().isoformat(),
         }
 
 
@@ -132,9 +131,9 @@ async def collect_fotmob_details_flow_task() -> Dict[str, Any]:
     retries=3,
     retry_delay_seconds=60,
     cache_key_fn=task_input_hash,
-    cache_expiration=timedelta(hours=4)
+    cache_expiration=timedelta(hours=4),
 )
-async def collect_fbref_flow_task() -> Dict[str, Any]:
+async def collect_fbref_flow_task() -> dict[str, Any]:
     """
     Collect data from FBref API.
 
@@ -160,7 +159,7 @@ async def collect_fbref_flow_task() -> Dict[str, Any]:
             "task_id": str(celery_task.id),
             "records_processed": result.get("processed", 0),
             "collection_time": datetime.utcnow().isoformat(),
-            "data": result
+            "data": result,
         }
 
     except Exception as e:
@@ -168,12 +167,12 @@ async def collect_fbref_flow_task() -> Dict[str, Any]:
         return {
             "status": "error",
             "error": str(e),
-            "collection_time": datetime.utcnow().isoformat()
+            "collection_time": datetime.utcnow().isoformat(),
         }
 
 
 @task(name="Run Data Quality Checks")
-async def run_data_quality_checks() -> Dict[str, Any]:
+async def run_data_quality_checks() -> dict[str, Any]:
     """
     Run comprehensive data quality checks on newly collected data.
 
@@ -191,8 +190,7 @@ async def run_data_quality_checks() -> Dict[str, Any]:
 
         # Run quality checks on recent data
         quality_report = await quality_monitor.run_quality_checks(
-            data_sources=["fotmob", "fbref"],
-            time_window_hours=24
+            data_sources=["fotmob", "fbref"], time_window_hours=24
         )
 
         logger.info(f"Data quality checks completed: {quality_report.summary}")
@@ -203,7 +201,7 @@ async def run_data_quality_checks() -> Dict[str, Any]:
             "issues_found": len(quality_report.issues),
             "records_checked": quality_report.total_records,
             "check_time": datetime.utcnow().isoformat(),
-            "report": quality_report.to_dict()
+            "report": quality_report.to_dict(),
         }
 
     except Exception as e:
@@ -211,12 +209,12 @@ async def run_data_quality_checks() -> Dict[str, Any]:
         return {
             "status": "error",
             "error": str(e),
-            "check_time": datetime.utcnow().isoformat()
+            "check_time": datetime.utcnow().isoformat(),
         }
 
 
 @task(name="Update Feature Store")
-async def update_feature_store() -> Dict[str, Any]:
+async def update_feature_store() -> dict[str, Any]:
     """
     Update feature store with newly collected and validated data.
 
@@ -235,8 +233,7 @@ async def update_feature_store() -> Dict[str, Any]:
         # Process recent data into features
         async with get_db_session() as session:
             features_created = await feature_store.process_recent_data(
-                session=session,
-                lookback_hours=24
+                session=session, lookback_hours=24
             )
 
         logger.info(f"Feature store update completed: {features_created} features")
@@ -244,7 +241,7 @@ async def update_feature_store() -> Dict[str, Any]:
         return {
             "status": "success",
             "features_created": features_created,
-            "update_time": datetime.utcnow().isoformat()
+            "update_time": datetime.utcnow().isoformat(),
         }
 
     except Exception as e:
@@ -252,16 +249,16 @@ async def update_feature_store() -> Dict[str, Any]:
         return {
             "status": "error",
             "error": str(e),
-            "update_time": datetime.utcnow().isoformat()
+            "update_time": datetime.utcnow().isoformat(),
         }
 
 
 @flow(
     name="Daily Data Collection Flow",
     log_prints=True,
-    flow_run_name="daily-data-collection-{flow_run.expected_start_time}"
+    flow_run_name="daily-data-collection-{flow_run.expected_start_time}",
 )
-async def daily_data_collection_flow() -> Dict[str, Any]:
+async def daily_data_collection_flow() -> dict[str, Any]:
     """
     Daily automated data collection from FotMob and FBref.
 
@@ -288,7 +285,7 @@ async def daily_data_collection_flow() -> Dict[str, Any]:
         "flow_name": "daily_data_collection_flow",
         "flow_run_id": flow_run.id,
         "start_time": flow_start_time.isoformat(),
-        "tasks": {}
+        "tasks": {},
     }
 
     try:
@@ -299,20 +296,36 @@ async def daily_data_collection_flow() -> Dict[str, Any]:
             collect_fotmob_fixtures_flow_task(),
             collect_fotmob_details_flow_task(),
             collect_fbref_flow_task(),
-            return_exceptions=True
+            return_exceptions=True,
         )
 
         # Process collection results
         collection_results = {
-            "fotmob_fixtures": collection_tasks[0] if not isinstance(collection_tasks[0], Exception) else {"status": "error", "error": str(collection_tasks[0])},
-            "fotmob_details": collection_tasks[1] if not isinstance(collection_tasks[1], Exception) else {"status": "error", "error": str(collection_tasks[1])},
-            "fbref": collection_tasks[2] if not isinstance(collection_tasks[2], Exception) else {"status": "error", "error": str(collection_tasks[2])}
+            "fotmob_fixtures": (
+                collection_tasks[0]
+                if not isinstance(collection_tasks[0], Exception)
+                else {"status": "error", "error": str(collection_tasks[0])}
+            ),
+            "fotmob_details": (
+                collection_tasks[1]
+                if not isinstance(collection_tasks[1], Exception)
+                else {"status": "error", "error": str(collection_tasks[1])}
+            ),
+            "fbref": (
+                collection_tasks[2]
+                if not isinstance(collection_tasks[2], Exception)
+                else {"status": "error", "error": str(collection_tasks[2])}
+            ),
         }
 
         results["tasks"]["data_collection"] = collection_results
-        successful_collections = sum(1 for r in collection_results.values() if r.get("status") == "success")
+        successful_collections = sum(
+            1 for r in collection_results.values() if r.get("status") == "success"
+        )
 
-        logger.info(f"Data collection completed: {successful_collections}/3 sources successful")
+        logger.info(
+            f"Data collection completed: {successful_collections}/3 sources successful"
+        )
 
         # Step 2: Data quality validation
         logger.info("🔍 Step 2: Running data quality checks")
@@ -321,9 +334,13 @@ async def daily_data_collection_flow() -> Dict[str, Any]:
         results["tasks"]["quality_checks"] = quality_result
 
         if quality_result.get("status") == "success":
-            logger.info(f"Data quality score: {quality_result.get('quality_score', 'N/A')}")
+            logger.info(
+                f"Data quality score: {quality_result.get('quality_score', 'N/A')}"
+            )
         else:
-            logger.warning("Data quality checks failed - continuing with feature update")
+            logger.warning(
+                "Data quality checks failed - continuing with feature update"
+            )
 
         # Step 3: Feature store update
         logger.info("⚡ Step 3: Updating feature store")
@@ -335,17 +352,19 @@ async def daily_data_collection_flow() -> Dict[str, Any]:
         flow_end_time = datetime.utcnow()
         flow_duration = (flow_end_time - flow_start_time).total_seconds()
 
-        results.update({
-            "end_time": flow_end_time.isoformat(),
-            "duration_seconds": flow_duration,
-            "overall_status": "success",
-            "summary": {
-                "data_sources_success": successful_collections,
-                "quality_checks_passed": quality_result.get("status") == "success",
-                "feature_store_updated": feature_result.get("status") == "success",
-                "total_issues_found": quality_result.get("issues_found", 0)
+        results.update(
+            {
+                "end_time": flow_end_time.isoformat(),
+                "duration_seconds": flow_duration,
+                "overall_status": "success",
+                "summary": {
+                    "data_sources_success": successful_collections,
+                    "quality_checks_passed": quality_result.get("status") == "success",
+                    "feature_store_updated": feature_result.get("status") == "success",
+                    "total_issues_found": quality_result.get("issues_found", 0),
+                },
             }
-        })
+        )
 
         logger.info("=" * 60)
         logger.info("✅ Daily Data Collection Flow completed successfully")
@@ -362,12 +381,14 @@ async def daily_data_collection_flow() -> Dict[str, Any]:
 
         logger.error(f"Daily Data Collection Flow failed: {e}")
 
-        results.update({
-            "end_time": flow_end_time.isoformat(),
-            "duration_seconds": flow_duration,
-            "overall_status": "error",
-            "error": str(e)
-        })
+        results.update(
+            {
+                "end_time": flow_end_time.isoformat(),
+                "duration_seconds": flow_duration,
+                "overall_status": "error",
+                "error": str(e),
+            }
+        )
 
         return results
 
@@ -376,17 +397,14 @@ async def daily_data_collection_flow() -> Dict[str, Any]:
 daily_schedule = {
     "cron": "0 2 * * *",  # Run daily at 2 AM UTC
     "timezone": "UTC",
-    "active": True
+    "active": True,
 }
 
 
-@flow(
-    name="Manual Data Collection Flow",
-    log_prints=True
-)
+@flow(name="Manual Data Collection Flow", log_prints=True)
 async def manual_data_collection_flow(
-    sources: Optional[List[str]] = None
-) -> Dict[str, Any]:
+    sources: Optional[list[str]] = None,
+) -> dict[str, Any]:
     """
     Manual data collection flow for on-demand execution.
 
@@ -409,29 +427,30 @@ async def manual_data_collection_flow(
         "flow_name": "manual_data_collection_flow",
         "sources_requested": sources,
         "start_time": datetime.utcnow().isoformat(),
-        "tasks": {}
+        "tasks": {},
     }
 
     task_mapping = {
         "fotmob_fixtures": collect_fotmob_fixtures_flow_task,
         "fotmob_details": collect_fotmob_details_flow_task,
-        "fbref": collect_fbref_flow_task
+        "fbref": collect_fbref_flow_task,
     }
 
     try:
         # Execute requested collection tasks
-        tasks_to_run = [task_mapping[source] for source in sources if source in task_mapping]
+        tasks_to_run = [
+            task_mapping[source] for source in sources if source in task_mapping
+        ]
 
         if not tasks_to_run:
             raise ValueError(f"No valid sources found in: {sources}")
 
         collection_results = await asyncio.gather(
-            *[task() for task in tasks_to_run],
-            return_exceptions=True
+            *[task() for task in tasks_to_run], return_exceptions=True
         )
 
         # Map results back to source names
-        for i, source in enumerate(sources):
+        for _i, source in enumerate(sources):
             if source in task_mapping:
                 result = collection_results[sources.index(source)]
                 if isinstance(result, Exception):

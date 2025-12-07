@@ -26,5 +26,5 @@ __all__ = [
     "Portfolio",
     "BetDecision",
     "BetResult",
-    "BacktestResult"
+    "BacktestResult",
 ]

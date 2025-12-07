@@ -26,11 +26,11 @@ import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import (
-    accuracy_score
-    precision_score
-    recall_score
-    confusion_matrix
-    classification_report
+    accuracy_score,
+    precision_score,
+    recall_score,
+    confusion_matrix,
+    classification_report,
 )
 import joblib
 
@@ -64,9 +64,9 @@ class RealisticModelTrainer:
 
         # 真实赔率范围（基于市场实际）
         self.odds_ranges = {
-            "home_win": (1.5, 4.0)
-            "draw": (2.8, 4.5)
-            "away_win": (1.7, 5.0)
+            "home_win": (1.5, 4.0),
+            "draw": (2.8, 4.5),
+            "away_win": (1.7, 5.0),
         }
 
         # 存储模型和组件
@@ -124,20 +124,20 @@ class RealisticModelTrainer:
                 df = pd.DataFrame(
                     [
                         {
-                            "match_id": match.id
-                            "home_team_id": match.home_team_id
-                            "away_team_id": match.away_team_id
-                            "league_id": match.league_id
-                            "home_score": match.home_score
-                            "away_score": match.away_score
-                            "status": match.status
-                            "match_date": match.match_date
-                            "stats": match.stats
-                            "odds": match.odds
-                            "match_metadata": match.match_metadata
-                            "home_team_name": match.home_team_name
-                            "away_team_name": match.away_team_name
-                            "league_name": match.league_name
+                            "match_id": match.id,
+                            "home_team_id": match.home_team_id,
+                            "away_team_id": match.away_team_id,
+                            "league_id": match.league_id,
+                            "home_score": match.home_score,
+                            "away_score": match.away_score,
+                            "status": match.status,
+                            "match_date": match.match_date,
+                            "stats": match.stats,
+                            "odds": match.odds,
+                            "match_metadata": match.match_metadata,
+                            "home_team_name": match.home_team_name,
+                            "away_team_name": match.away_team_name,
+                            "league_name": match.league_name,
                         }
                         for match in matches
                     ]
@@ -171,7 +171,8 @@ class RealisticModelTrainer:
                 "xg_for_away"
             ]
 
-            xg_home = None
+            xg_home = (None,)
+
             xg_away = None
 
             for field in xg_fields:
@@ -211,16 +212,10 @@ class RealisticModelTrainer:
 
                 # 尝试不同的赔率字段名
                 home_odds_fields = [
-                    "avg_home_win_odds"
-                    "home_win_odds"
-                    "homeWinOdds"
-                    "1"
+                    "avg_home_win_odds" "home_win_odds" "homeWinOdds" "1"
                 ]
                 away_odds_fields = [
-                    "avg_away_win_odds"
-                    "away_win_odds"
-                    "awayWinOdds"
-                    "2"
+                    "avg_away_win_odds" "away_win_odds" "awayWinOdds" "2"
                 ]
                 draw_odds_fields = ["avg_draw_odds", "draw_odds", "drawOdds", "X"]
 
@@ -315,9 +310,9 @@ class RealisticModelTrainer:
             away_win_odds = random.uniform(1.8, 2.8)
 
         return {
-            "home_win": round(home_win_odds, 2)
-            "draw": round(draw_odds, 2)
-            "away_win": round(away_win_odds, 2)
+            "home_win": round(home_win_odds, 2),
+            "draw": round(draw_odds, 2),
+            "away_win": round(away_win_odds, 2),
         }
 
     def calculate_match_result(self, home_score: int, away_score: int) -> str:
@@ -434,24 +429,26 @@ class RealisticModelTrainer:
 
         # 按球队分组计算滚动特征
         for team_col in ["home_team_id", "away_team_id"]:
-            goal_col = "home_score" if team_col == "home_team_id" else "away_score"
+            goal_col = ("home_score" if team_col == "home_team_id" else "away_score",)
+
             opponent_goal_col = (
                 "away_score" if team_col == "home_team_id" else "home_score"
             )
-            xg_col = "xg_home" if team_col == "home_team_id" else "xg_away"
+            xg_col = ("xg_home" if team_col == "home_team_id" else "xg_away",)
+
             opponent_xg_col = "xg_away" if team_col == "home_team_id" else "xg_home"
 
             # 为每个球队计算滚动特征
             team_df = df[
                 [
-                    "match_date"
-                    team_col
-                    goal_col
-                    opponent_goal_col
-                    xg_col
-                    opponent_xg_col
-                    "total_goals"
-                    "total_xg"
+                    "match_date",
+                    team_col,
+                    goal_col,
+                    opponent_goal_col,
+                    xg_col,
+                    opponent_xg_col,
+                    "total_goals",
+                    "total_xg",
                 ]
             ].copy()
 
@@ -512,10 +509,10 @@ class RealisticModelTrainer:
             ]
 
             df = df.merge(
-                team_df[["match_date", team_col] + rolling_cols]
-                left_on=["match_date", team_col]
-                right_on=["match_date", team_col]
-                how="left"
+                team_df[["match_date", team_col] + rolling_cols],
+                left_on=["match_date", team_col],
+                right_on=["match_date", team_col],
+                how="left",
             )
 
         # 计算主队 vs 客队的相对特征
@@ -544,8 +541,8 @@ class RealisticModelTrainer:
         df["result"] = df.apply(
             lambda row: self.calculate_match_result(
                 row["home_score"], row["away_score"]
-            )
-            axis=1
+            ),
+            axis=1,
         )
 
         # 编码类别特征
@@ -643,7 +640,8 @@ class RealisticModelTrainer:
             df[odds_col] = df[odds_col].clip(lower=1.1, upper=10.0)
 
         # 特征矩阵和目标向量
-        X = df[feature_columns]
+        X = (df[feature_columns],)
+
         y = df["result"]
 
         # 编码目标变量
@@ -652,10 +650,10 @@ class RealisticModelTrainer:
 
         # 保存编码器和特征名称
         self.label_encoders = {
-            "league": le_league
-            "home_team": le_home_team
-            "away_team": le_away_team
-            "result": le_result
+            "league": le_league,
+            "home_team": le_home_team,
+            "away_team": le_away_team,
+            "result": le_result,
         }
         self.feature_names = feature_columns
 
@@ -678,9 +676,9 @@ class RealisticModelTrainer:
             min_child_weight=2,  # 增加最小子节点权重
             subsample=0.8,  # 行采样
             colsample_bytree=0.8,  # 列采样
-            random_state=42
-            n_jobs=-1
-            eval_metric="mlogloss"
+            random_state=42,
+            n_jobs=-1,
+            eval_metric="mlogloss",
         )
 
         # 训练模型
@@ -702,9 +700,11 @@ class RealisticModelTrainer:
         accuracy = accuracy_score(y_test, y_pred)
 
         # 现实投注模拟
-        total_bets = 0
+        total_bets = (0,)
+
         wins = 0
-        total_stake = 0
+        total_stake = (0,)
+
         total_winnings = 0
         detailed_bets = []
 
@@ -714,13 +714,14 @@ class RealisticModelTrainer:
 
         # 实际赔率
         actual_odds = {
-            "home_win": df_test["home_win_odds"].values
-            "draw": df_test["draw_odds"].values
-            "away_win": df_test["away_win_odds"].values
+            "home_win": df_test["home_win_odds"].values,
+            "draw": df_test["draw_odds"].values,
+            "away_win": df_test["away_win_odds"].values,
         }
 
         for i in range(len(y_test)):
-            confidence = max_proba[i]
+            confidence = (max_proba[i],)
+
             prediction = pred_class[i]
             actual = y_test[i]
 
@@ -744,7 +745,8 @@ class RealisticModelTrainer:
                     odds = actual_odds["away_win"][i]
 
                 # 计算收益
-                if prediction == actual:  # 预测正确
+                if prediction == actual:  # 预测正确,
+
                     winnings = stake * odds
                     total_winnings += winnings
                     wins += 1
@@ -752,14 +754,14 @@ class RealisticModelTrainer:
                     # 记录详细投注信息
                     detailed_bets.append(
                         {
-                            "index": i
-                            "confidence": confidence
-                            "prediction": prediction
-                            "actual": actual
-                            "odds": odds
-                            "stake": stake
-                            "winnings": winnings
-                            "profit": winnings - stake
+                            "index": i,
+                            "confidence": confidence,
+                            "prediction": prediction,
+                            "actual": actual,
+                            "odds": odds,
+                            "stake": stake,
+                            "winnings": winnings,
+                            "profit": winnings - stake,
                         }
                     )
 
@@ -775,17 +777,17 @@ class RealisticModelTrainer:
         )
 
         results = {
-            "accuracy": accuracy
-            "total_bets": total_bets
-            "wins": wins
-            "win_rate": win_rate
-            "total_stake": total_stake
-            "total_winnings": total_winnings
-            "profit_loss": total_winnings - total_stake
-            "roi": roi
-            "confidence_threshold": self.confidence_threshold
-            "avg_odds": avg_odds
-            "detailed_bets": detailed_bets
+            "accuracy": accuracy,
+            "total_bets": total_bets,
+            "wins": wins,
+            "win_rate": win_rate,
+            "total_stake": total_stake,
+            "total_winnings": total_winnings,
+            "profit_loss": total_winnings - total_stake,
+            "roi": roi,
+            "confidence_threshold": self.confidence_threshold,
+            "avg_odds": avg_odds,
+            "detailed_bets": detailed_bets,
         }
 
         logger.info("✅ 现实策略回测完成")
@@ -807,7 +809,8 @@ class RealisticModelTrainer:
 
         # 分类特征
         basic_features = ["league_encoded", "home_team_encoded", "away_team_encoded"]
-        goal_features = [f for f in sorted_features if "avg_goals_" in f[0]]
+        goal_features = ([f for f in sorted_features if "avg_goals_" in f[0]],)
+
         xg_features = [f for f in sorted_features if "avg_xg_" in f[0]]
         xg_efficiency_features = [
             f
@@ -816,26 +819,24 @@ class RealisticModelTrainer:
         ]
         odds_features = ["home_win_odds", "draw_odds", "away_win_odds"]
         relative_features = [
-            "goal_diff_advantage"
-            "xg_advantage"
-            "xg_efficiency_advantage"
+            "goal_diff_advantage" "xg_advantage" "xg_efficiency_advantage"
         ]
 
         return {
-            "feature_importance": dict(sorted_features)
-            "top_10_features": sorted_features[:10]
+            "feature_importance": dict(sorted_features),
+            "top_10_features": sorted_features[:10],
             "feature_categories": {
-                "basic": {f: feature_importance.get(f, 0) for f in basic_features}
-                "goals": {f: feature_importance.get(f, 0) for f in goal_features}
-                "xg": {f: feature_importance.get(f, 0) for f in xg_features}
+                "basic": {f: feature_importance.get(f, 0) for f in basic_features},
+                "goals": {f: feature_importance.get(f, 0) for f in goal_features},
+                "xg": {f: feature_importance.get(f, 0) for f in xg_features},
                 "xg_efficiency": {
                     f: feature_importance.get(f, 0) for f in xg_efficiency_features
-                }
-                "odds": {f: feature_importance.get(f, 0) for f in odds_features}
+                },
+                "odds": {f: feature_importance.get(f, 0) for f in odds_features},
                 "relative": {
                     f: feature_importance.get(f, 0) for f in relative_features
-                }
-            }
+                },
+            },
         }
 
     def save_model(
@@ -870,14 +871,14 @@ class RealisticModelTrainer:
         # 保存训练报告
         timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         report = {
-            "model_name": model_name
-            "version": "1.3"
-            "training_date": timestamp_str
-            "feature_count": len(self.feature_names)
-            "feature_names": self.feature_names
-            "rolling_window": self.rolling_window
-            "confidence_threshold": self.confidence_threshold
-            "data_quality": "xG + odds only"
+            "model_name": model_name,
+            "version": "1.3",
+            "training_date": timestamp_str,
+            "feature_count": len(self.feature_names),
+            "feature_names": self.feature_names,
+            "rolling_window": self.rolling_window,
+            "confidence_threshold": self.confidence_threshold,
+            "data_quality": "xG + odds only",
             "training_samples": "N/A",  # 将在训练完成后更新
         }
 
@@ -926,9 +927,11 @@ class RealisticModelTrainer:
             df_sorted = df.sort_values("match_date").reset_index(drop=True)
             split_index = int(len(df_sorted) * (1 - self.test_size))
 
-            X_train = X.iloc[:split_index]
+            X_train = (X.iloc[:split_index],)
+
             X_test = X.iloc[split_index:]
-            y_train = y[:split_index]
+            y_train = (y[:split_index],)
+
             y_test = y[split_index:]
             df_test = df_sorted.iloc[split_index:]
 
@@ -953,12 +956,12 @@ class RealisticModelTrainer:
 
             # 11. 输出报告
             self.generate_realistic_report(
-                start_time
-                train_accuracy
-                test_accuracy
-                backtest_results
-                feature_importance
-                len(df)
+                start_time,
+                train_accuracy,
+                test_accuracy,
+                backtest_results,
+                feature_importance,
+                len(df),
             )
 
         except Exception as e:
@@ -968,13 +971,13 @@ class RealisticModelTrainer:
             traceback.print_exc()
 
     def generate_realistic_report(
-        self
-        start_time
-        train_acc
-        test_acc
-        backtest_results
-        feature_importance
-        sample_count
+        self,
+        start_time,
+        train_acc,
+        test_acc,
+        backtest_results,
+        feature_importance,
+        sample_count,
     ):
         """生成真实评估报告"""
         end_time = datetime.now()

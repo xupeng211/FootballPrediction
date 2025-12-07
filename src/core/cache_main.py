@@ -15,7 +15,8 @@ import json
 import logging
 import pickle
 from functools import wraps
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
+from collections.abc import Callable
 import hashlib
 
 import redis.asyncio as redis
@@ -29,11 +30,13 @@ logger = logging.getLogger(__name__)
 
 class CacheSerializationError(Exception):
     """缓存序列化错误"""
+
     pass
 
 
 class CacheConnectionError(Exception):
     """缓存连接错误"""
+
     pass
 
 
@@ -67,11 +70,11 @@ class RedisCache:
 
         # 连接池配置
         self.pool_config = {
-            'max_connections': kwargs.get('max_connections', 50),
-            'retry_on_timeout': kwargs.get('retry_on_timeout', True),
-            'socket_keepalive': kwargs.get('socket_keepalive', True),
-            'socket_keepalive_options': kwargs.get('socket_keepalive_options', {}),
-            'health_check_interval': kwargs.get('health_check_interval', 30),
+            "max_connections": kwargs.get("max_connections", 50),
+            "retry_on_timeout": kwargs.get("retry_on_timeout", True),
+            "socket_keepalive": kwargs.get("socket_keepalive", True),
+            "socket_keepalive_options": kwargs.get("socket_keepalive_options", {}),
+            "health_check_interval": kwargs.get("health_check_interval", 30),
         }
 
         self._pool: Optional[ConnectionPool] = None
@@ -80,12 +83,12 @@ class RedisCache:
 
         # 统计信息
         self.stats = {
-            'hits': 0,
-            'misses': 0,
-            'sets': 0,
-            'deletes': 0,
-            'errors': 0,
-            'connections': 0,
+            "hits": 0,
+            "misses": 0,
+            "sets": 0,
+            "deletes": 0,
+            "errors": 0,
+            "connections": 0,
         }
 
         # 并发保护锁字典
@@ -106,13 +109,12 @@ class RedisCache:
                 if self._redis is None:
                     try:
                         self._pool = ConnectionPool.from_url(
-                            self.redis_url,
-                            **self.pool_config
+                            self.redis_url, **self.pool_config
                         )
                         self._redis = Redis(connection_pool=self._pool)
                         # 测试连接
                         await self._redis.ping()
-                        self.stats['connections'] += 1
+                        self.stats["connections"] += 1
                         logger.info(f"Redis连接建立成功: {self.redis_url}")
                     except (ConnectionError, RedisError) as e:
                         logger.error(f"Redis连接失败: {e}")
@@ -134,20 +136,20 @@ class RedisCache:
         """
         try:
             # 对于简单类型，直接JSON序列化
-            if isinstance(value, (str, int, float, bool)) or value is None:
-                return json.dumps({'_type': 'simple', 'value': value})
+            if isinstance(value, str | int | float | bool) or value is None:
+                return json.dumps({"_type": "simple", "value": value})
 
             # 对于复杂类型，尝试JSON序列化
-            if isinstance(value, (dict, list, tuple)):
+            if isinstance(value, dict | list | tuple):
                 try:
-                    return json.dumps({'_type': 'json', 'value': value})
+                    return json.dumps({"_type": "json", "value": value})
                 except (TypeError, ValueError):
                     pass
 
             # 对于其他复杂对象，使用pickle
             try:
                 serialized = pickle.dumps(value)
-                return json.dumps({'_type': 'pickle', 'value': serialized.hex()})
+                return json.dumps({"_type": "pickle", "value": serialized.hex()})
             except (pickle.PickleError, ValueError) as e:
                 raise CacheSerializationError(f"无法序列化对象: {e}")
 
@@ -169,12 +171,12 @@ class RedisCache:
         try:
             data = json.loads(value)
 
-            if data.get('_type') == 'simple':
-                return data['value']
-            elif data.get('_type') == 'json':
-                return data['value']
-            elif data.get('_type') == 'pickle':
-                serialized_bytes = bytes.fromhex(data['value'])
+            if data.get("_type") == "simple":
+                return data["value"]
+            elif data.get("_type") == "json":
+                return data["value"]
+            elif data.get("_type") == "pickle":
+                serialized_bytes = bytes.fromhex(data["value"])
                 return pickle.loads(serialized_bytes)
             else:
                 # 兼容旧格式
@@ -200,26 +202,21 @@ class RedisCache:
             value = await redis_client.get(key)
 
             if value is None:
-                self.stats['misses'] += 1
+                self.stats["misses"] += 1
                 return None
 
-            self.stats['hits'] += 1
-            return self._deserialize(value.decode('utf-8'))
+            self.stats["hits"] += 1
+            return self._deserialize(value.decode("utf-8"))
 
         except (CacheConnectionError, CacheSerializationError):
             raise
         except Exception as e:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             logger.warning(f"缓存获取失败 {key}: {e}")
             return None
 
     async def set(
-        self,
-        key: str,
-        value: Any,
-        ttl: int = 300,
-        nx: bool = False,
-        xx: bool = False
+        self, key: str, value: Any, ttl: int = 300, nx: bool = False, xx: bool = False
     ) -> bool:
         """设置缓存值.
 
@@ -237,22 +234,16 @@ class RedisCache:
             redis_client = await self._get_connection()
             serialized_value = self._serialize(value)
 
-            result = await redis_client.set(
-                key,
-                serialized_value,
-                ex=ttl,
-                nx=nx,
-                xx=xx
-            )
+            result = await redis_client.set(key, serialized_value, ex=ttl, nx=nx, xx=xx)
 
             if result:
-                self.stats['sets'] += 1
+                self.stats["sets"] += 1
             return result
 
         except (CacheConnectionError, CacheSerializationError):
             raise
         except Exception as e:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             logger.warning(f"缓存设置失败 {key}: {e}")
             return False
 
@@ -270,14 +261,14 @@ class RedisCache:
             result = await redis_client.delete(key)
 
             if result > 0:
-                self.stats['deletes'] += 1
+                self.stats["deletes"] += 1
                 return True
             return False
 
         except CacheConnectionError:
             raise
         except Exception as e:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             logger.warning(f"缓存删除失败 {key}: {e}")
             return False
 
@@ -297,7 +288,7 @@ class RedisCache:
         except CacheConnectionError:
             raise
         except Exception as e:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             logger.warning(f"缓存检查失败 {key}: {e}")
             return False
 
@@ -318,7 +309,7 @@ class RedisCache:
         except CacheConnectionError:
             raise
         except Exception as e:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             logger.warning(f"缓存过期设置失败 {key}: {e}")
             return False
 
@@ -338,7 +329,7 @@ class RedisCache:
         except CacheConnectionError:
             raise
         except Exception as e:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             logger.warning(f"获取TTL失败 {key}: {e}")
             return -2
 
@@ -357,7 +348,7 @@ class RedisCache:
         except CacheConnectionError:
             raise
         except Exception as e:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             logger.error(f"清空缓存失败: {e}")
             return False
 
@@ -370,20 +361,20 @@ class RedisCache:
         stats = self.stats.copy()
 
         # 计算命中率
-        total_requests = stats['hits'] + stats['misses']
-        stats['hit_rate'] = stats['hits'] / total_requests if total_requests > 0 else 0
+        total_requests = stats["hits"] + stats["misses"]
+        stats["hit_rate"] = stats["hits"] / total_requests if total_requests > 0 else 0
 
         # 获取Redis信息
         try:
             redis_client = await self._get_connection()
             info = await redis_client.info()
-            stats['redis_info'] = {
-                'used_memory': info.get('used_memory_human', 'N/A'),
-                'connected_clients': info.get('connected_clients', 'N/A'),
-                'total_commands_processed': info.get('total_commands_processed', 'N/A'),
+            stats["redis_info"] = {
+                "used_memory": info.get("used_memory_human", "N/A"),
+                "connected_clients": info.get("connected_clients", "N/A"),
+                "total_commands_processed": info.get("total_commands_processed", "N/A"),
             }
         except Exception:
-            stats['redis_info'] = 'N/A'
+            stats["redis_info"] = "N/A"
 
         return stats
 
@@ -400,15 +391,17 @@ class RedisCache:
             response_time = asyncio.get_event_loop().time() - start_time
 
             return {
-                'status': 'healthy',
-                'response_time': f"{response_time:.3f}s",
-                'connection_pool_size': self._pool.max_connections if self._pool else 'N/A',
+                "status": "healthy",
+                "response_time": f"{response_time:.3f}s",
+                "connection_pool_size": (
+                    self._pool.max_connections if self._pool else "N/A"
+                ),
             }
         except Exception as e:
             return {
-                'status': 'unhealthy',
-                'error': str(e),
-                'response_time': 'N/A',
+                "status": "unhealthy",
+                "error": str(e),
+                "response_time": "N/A",
             }
 
     async def close(self):
@@ -446,11 +439,7 @@ async def get_cache() -> RedisCache:
     return _global_cache
 
 
-def cache_key_builder(
-    namespace: str = "",
-    *args,
-    **kwargs
-) -> str:
+def cache_key_builder(namespace: str = "", *args, **kwargs) -> str:
     """构建缓存键.
 
     Args:
@@ -466,7 +455,7 @@ def cache_key_builder(
 
     # 添加位置参数
     for arg in args:
-        if isinstance(arg, (str, int, float, bool)):
+        if isinstance(arg, str | int | float | bool):
             parts.append(str(arg))
         else:
             # 对于复杂对象，使用安全哈希
@@ -474,7 +463,7 @@ def cache_key_builder(
 
     # 添加关键字参数
     for key, value in sorted(kwargs.items()):
-        if isinstance(value, (str, int, float, bool)):
+        if isinstance(value, str | int | float | bool):
             parts.append(f"{key}:{value}")
         else:
             parts.append(f"{key}:{hashlib.sha256(str(value).encode()).hexdigest()[:8]}")

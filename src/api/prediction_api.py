@@ -29,7 +29,7 @@ from src.inference import (
     BatchPredictionResponse,
     ModelListResponse,
     HealthCheckResponse,
-    ErrorResponse
+    ErrorResponse,
 )
 from src.inference.errors import (
     InferenceError,
@@ -37,13 +37,14 @@ from src.inference.errors import (
     ModelLoadError,
     FeatureBuilderError,
     CacheError,
-    ErrorCode
+    ErrorCode,
 )
 
 logger = logging.getLogger(__name__)
 
 # 创建统一路由器
 router = APIRouter(prefix="/v1/predictions", tags=["predictions"])
+
 
 # 依赖注入
 async def get_predictor_dependency() -> Predictor:
@@ -69,6 +70,7 @@ async def get_cache_dependency() -> PredictionCache:
 # 错误处理
 def handle_inference_error(func):
     """推理服务错误处理装饰器"""
+
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
@@ -78,8 +80,8 @@ def handle_inference_error(func):
                 detail={
                     "error": e.error_code.value,
                     "message": e.message,
-                    "details": e.details
-                }
+                    "details": e.details,
+                },
             )
         except ModelLoadError as e:
             raise HTTPException(
@@ -87,8 +89,8 @@ def handle_inference_error(func):
                 detail={
                     "error": e.error_code.value,
                     "message": e.message,
-                    "details": e.details
-                }
+                    "details": e.details,
+                },
             )
         except FeatureBuilderError as e:
             raise HTTPException(
@@ -96,8 +98,8 @@ def handle_inference_error(func):
                 detail={
                     "error": e.error_code.value,
                     "message": e.message,
-                    "details": e.details
-                }
+                    "details": e.details,
+                },
             )
         except CacheError as e:
             # 缓存错误不应该阻止请求
@@ -109,8 +111,8 @@ def handle_inference_error(func):
                 detail={
                     "error": e.error_code.value,
                     "message": e.message,
-                    "details": e.details
-                }
+                    "details": e.details,
+                },
             )
         except Exception as e:
             logger.error(f"Unexpected error in {func.__name__}: {e}")
@@ -119,15 +121,17 @@ def handle_inference_error(func):
                 detail={
                     "error": ErrorCode.INTERNAL_ERROR.value,
                     "message": "Internal server error",
-                    "details": {"original_error": str(e)}
-                }
+                    "details": {"original_error": str(e)},
+                },
             )
+
     return wrapper
 
 
 # ============================================================================
 # Prediction Endpoints
 # ============================================================================
+
 
 @router.post("/{model_name}/{match_id}", response_model=PredictionResponse)
 @handle_inference_error
@@ -136,7 +140,7 @@ async def create_prediction(
     match_id: str,
     request: PredictionRequest,
     background_tasks: BackgroundTasks,
-    predictor: Predictor = Depends(get_predictor_dependency)
+    predictor: Predictor = Depends(get_predictor_dependency),
 ):
     """
     创建单场预测
@@ -159,10 +163,7 @@ async def create_prediction(
 
     # 添加后台任务（例如：记录预测历史）
     background_tasks.add_task(
-        log_prediction,
-        model_name,
-        match_id,
-        result.predicted_outcome
+        log_prediction, model_name, match_id, result.predicted_outcome
     )
 
     return result
@@ -174,7 +175,7 @@ async def create_batch_prediction(
     model_name: str,
     request: BatchPredictionRequest,
     background_tasks: BackgroundTasks,
-    predictor: Predictor = Depends(get_predictor_dependency)
+    predictor: Predictor = Depends(get_predictor_dependency),
 ):
     """
     批量预测
@@ -200,7 +201,7 @@ async def create_batch_prediction(
         model_name,
         result.batch_id,
         result.successful_predictions,
-        result.failed_predictions
+        result.failed_predictions,
     )
 
     return result
@@ -211,7 +212,7 @@ async def create_batch_prediction(
 async def predict(
     request: PredictionRequest,
     background_tasks: BackgroundTasks,
-    predictor: Predictor = Depends(get_predictor_dependency)
+    predictor: Predictor = Depends(get_predictor_dependency),
 ):
     """
     通用预测接口（不指定模型名称和比赛ID）
@@ -228,10 +229,7 @@ async def predict(
 
     # 添加后台任务
     background_tasks.add_task(
-        log_prediction,
-        request.model_name,
-        request.match_id,
-        result.predicted_outcome
+        log_prediction, request.model_name, request.match_id, result.predicted_outcome
     )
 
     return result
@@ -242,7 +240,7 @@ async def predict(
 async def predict_batch(
     request: BatchPredictionRequest,
     background_tasks: BackgroundTasks,
-    predictor: Predictor = Depends(get_predictor_dependency)
+    predictor: Predictor = Depends(get_predictor_dependency),
 ):
     """
     通用批量预测接口
@@ -263,7 +261,7 @@ async def predict_batch(
         "mixed",  # 可能使用多个模型
         result.batch_id,
         result.successful_predictions,
-        result.failed_predictions
+        result.failed_predictions,
     )
 
     return result
@@ -273,11 +271,12 @@ async def predict_batch(
 # Model Management Endpoints
 # ============================================================================
 
+
 @router.get("/models", response_model=ModelListResponse)
 @handle_inference_error
 async def list_models(
     model_type: Optional[str] = Query(None, description="模型类型过滤"),
-    model_loader: ModelLoader = Depends(get_model_loader_dependency)
+    model_loader: ModelLoader = Depends(get_model_loader_dependency),
 ):
     """
     获取可用模型列表
@@ -298,8 +297,7 @@ async def list_models(
             model_type_enum = ModelType(model_type)
         except ValueError:
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid model type: {model_type}"
+                status_code=400, detail=f"Invalid model type: {model_type}"
             )
 
     # 获取模型列表
@@ -307,6 +305,7 @@ async def list_models(
 
     # 获取默认模型
     from src.inference.schemas import ModelType
+
     default_model = None
     try:
         default_model = await model_loader.get_default_model(ModelType.XGBOOST)
@@ -314,17 +313,14 @@ async def list_models(
         pass
 
     return ModelListResponse(
-        models=models,
-        total_models=len(models),
-        default_model=default_model
+        models=models, total_models=len(models), default_model=default_model
     )
 
 
 @router.get("/models/{model_name}")
 @handle_inference_error
 async def get_model_info(
-    model_name: str,
-    model_loader: ModelLoader = Depends(get_model_loader_dependency)
+    model_name: str, model_loader: ModelLoader = Depends(get_model_loader_dependency)
 ):
     """
     获取模型详细信息
@@ -338,10 +334,7 @@ async def get_model_info(
     """
     model_info = await model_loader.get_model_info(model_name)
     if not model_info:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Model '{model_name}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Model '{model_name}' not found")
 
     return model_info.model_dump()
 
@@ -352,7 +345,7 @@ async def reload_model(
     model_name: str,
     background_tasks: BackgroundTasks,
     model_loader: ModelLoader = Depends(get_model_loader_dependency),
-    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency)
+    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency),
 ):
     """
     重载指定模型
@@ -375,21 +368,19 @@ async def reload_model(
             "message": f"Model '{model_name}' reloaded successfully",
             "model_name": model_name,
             "model_version": loaded_model.metadata.model_info.model_version,
-            "reloaded_at": datetime.utcnow().isoformat()
+            "reloaded_at": datetime.utcnow().isoformat(),
         }
 
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to reload model '{model_name}': {str(e)}"
+            status_code=500, detail=f"Failed to reload model '{model_name}': {str(e)}"
         )
 
 
 @router.delete("/models/{model_name}/cache")
 @handle_inference_error
 async def clear_model_cache(
-    model_name: str,
-    cache: PredictionCache = Depends(get_cache_dependency)
+    model_name: str, cache: PredictionCache = Depends(get_cache_dependency)
 ):
     """
     清除指定模型的缓存
@@ -410,13 +401,13 @@ async def clear_model_cache(
             "status": "success",
             "message": f"Cleared {deleted_count} cache entries for model '{model_name}'",
             "model_name": model_name,
-            "deleted_count": deleted_count
+            "deleted_count": deleted_count,
         }
 
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to clear cache for model '{model_name}': {str(e)}"
+            detail=f"Failed to clear cache for model '{model_name}': {str(e)}",
         )
 
 
@@ -424,11 +415,12 @@ async def clear_model_cache(
 # Cache Management Endpoints
 # ============================================================================
 
+
 @router.delete("/cache")
 @handle_inference_error
 async def clear_cache(
     pattern: Optional[str] = Query(None, description="缓存模式，默认清除所有"),
-    cache: PredictionCache = Depends(get_cache_dependency)
+    cache: PredictionCache = Depends(get_cache_dependency),
 ):
     """
     清除缓存
@@ -450,21 +442,16 @@ async def clear_cache(
             "status": "success",
             "message": f"Cleared {deleted_count} cache entries",
             "pattern": pattern or "*",
-            "deleted_count": deleted_count
+            "deleted_count": deleted_count,
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to clear cache: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")
 
 
 @router.get("/cache/stats")
 @handle_inference_error
-async def get_cache_stats(
-    cache: PredictionCache = Depends(get_cache_dependency)
-):
+async def get_cache_stats(cache: PredictionCache = Depends(get_cache_dependency)):
     """
     获取缓存统计信息
 
@@ -479,9 +466,7 @@ async def get_cache_stats(
 
 @router.get("/cache/health")
 @handle_inference_error
-async def cache_health_check(
-    cache: PredictionCache = Depends(get_cache_dependency)
-):
+async def cache_health_check(cache: PredictionCache = Depends(get_cache_dependency)):
     """
     缓存健康检查
 
@@ -498,11 +483,12 @@ async def cache_health_check(
 # Hot Reload Management Endpoints
 # ============================================================================
 
+
 @router.post("/hot-reload/start")
 @handle_inference_error
 async def start_hot_reload(
     background_tasks: BackgroundTasks,
-    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency)
+    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency),
 ):
     """
     启动热更新监控
@@ -520,20 +506,19 @@ async def start_hot_reload(
         return {
             "status": "success",
             "message": "Hot reload monitoring started",
-            "started_at": datetime.utcnow().isoformat()
+            "started_at": datetime.utcnow().isoformat(),
         }
 
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to start hot reload: {str(e)}"
+            status_code=500, detail=f"Failed to start hot reload: {str(e)}"
         )
 
 
 @router.post("/hot-reload/stop")
 @handle_inference_error
 async def stop_hot_reload(
-    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency)
+    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency),
 ):
     """
     停止热更新监控
@@ -550,13 +535,12 @@ async def stop_hot_reload(
         return {
             "status": "success",
             "message": "Hot reload monitoring stopped",
-            "stopped_at": datetime.utcnow().isoformat()
+            "stopped_at": datetime.utcnow().isoformat(),
         }
 
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to stop hot reload: {str(e)}"
+            status_code=500, detail=f"Failed to stop hot reload: {str(e)}"
         )
 
 
@@ -565,7 +549,7 @@ async def stop_hot_reload(
 async def force_reload_model(
     model_name: str,
     background_tasks: BackgroundTasks,
-    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency)
+    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency),
 ):
     """
     强制重载指定模型
@@ -585,20 +569,20 @@ async def force_reload_model(
             "status": "success",
             "message": f"Force reload initiated for model '{model_name}'",
             "model_name": model_name,
-            "initiated_at": datetime.utcnow().isoformat()
+            "initiated_at": datetime.utcnow().isoformat(),
         }
 
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to force reload model '{model_name}': {str(e)}"
+            detail=f"Failed to force reload model '{model_name}': {str(e)}",
         )
 
 
 @router.get("/hot-reload/stats")
 @handle_inference_error
 async def get_hot_reload_stats(
-    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency)
+    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency),
 ):
     """
     获取热更新统计信息
@@ -616,13 +600,14 @@ async def get_hot_reload_stats(
 # Health Check Endpoints
 # ============================================================================
 
+
 @router.get("/health")
 @handle_inference_error
 async def health_check(
     predictor: Predictor = Depends(get_predictor_dependency),
     model_loader: ModelLoader = Depends(get_model_loader_dependency),
     cache: PredictionCache = Depends(get_cache_dependency),
-    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency)
+    hot_reload_manager: HotReloadManager = Depends(get_hot_reload_manager_dependency),
 ):
     """
     推理服务健康检查
@@ -633,7 +618,7 @@ async def health_check(
     try:
         # 获取各组件状态
         predictor_stats = predictor.get_prediction_stats()
-        model_stats = model_loader.get_load_stats()
+        model_loader.get_load_stats()
         cache_stats = cache.get_stats()
         hot_reload_stats = hot_reload_manager.get_reload_stats()
 
@@ -649,10 +634,10 @@ async def health_check(
             loaded_models=[info.model_dump() for info in model_info_list],
             uptime_seconds=predictor_stats.get("uptime_seconds", 0),
             memory_usage_mb=cache_stats.get("used_memory", 0) / 1024 / 1024,  # 转换为MB
-            last_prediction_time=datetime.utcnow()  # 这里应该是实际的最后预测时间
+            last_prediction_time=datetime.utcnow(),  # 这里应该是实际的最后预测时间
         )
 
-    except Exception as e:
+    except Exception:
         return HealthCheckResponse(
             status="unhealthy",
             model_loaded=False,
@@ -661,14 +646,14 @@ async def health_check(
             loaded_models=[],
             uptime_seconds=0,
             memory_usage_mb=0,
-            last_prediction_time=None
+            last_prediction_time=None,
         )
 
 
 @router.get("/stats")
 @handle_inference_error
 async def get_prediction_stats(
-    predictor: Predictor = Depends(get_predictor_dependency)
+    predictor: Predictor = Depends(get_predictor_dependency),
 ):
     """
     获取预测服务统计信息
@@ -686,20 +671,20 @@ async def get_prediction_stats(
 # Background Tasks
 # ============================================================================
 
+
 async def log_prediction(model_name: str, match_id: str, predicted_outcome: str):
     """记录预测历史"""
     try:
         # 这里可以记录到数据库或其他存储
-        logger.info(f"Prediction logged: {model_name} - {match_id} -> {predicted_outcome}")
+        logger.info(
+            f"Prediction logged: {model_name} - {match_id} -> {predicted_outcome}"
+        )
     except Exception as e:
         logger.error(f"Failed to log prediction: {e}")
 
 
 async def log_batch_prediction(
-    model_name: str,
-    batch_id: str,
-    successful_count: int,
-    failed_count: int
+    model_name: str, batch_id: str, successful_count: int, failed_count: int
 ):
     """记录批量预测历史"""
     try:
@@ -716,6 +701,7 @@ async def log_batch_prediction(
 # Application Lifecycle
 # ============================================================================
 
+
 @asynccontextmanager
 async def lifespan(app):
     """应用生命周期管理"""
@@ -725,12 +711,13 @@ async def lifespan(app):
     try:
         # 初始化各个组件
         predictor = await get_predictor()
-        model_loader = await get_model_loader()
+        await get_model_loader()
         cache = await get_prediction_cache()
         hot_reload_manager = await get_hot_reload_manager()
 
         # 启动热更新监控（如果启用）
         import os
+
         if os.getenv("HOT_RELOAD_ENABLED", "false").lower() == "true":
             await hot_reload_manager.start_monitoring()
             logger.info("Hot reload monitoring started")
@@ -748,7 +735,7 @@ async def lifespan(app):
 
     try:
         predictor = await get_predictor()
-        model_loader = await get_model_loader()
+        await get_model_loader()
         cache = await get_prediction_cache()
         hot_reload_manager = await get_hot_reload_manager()
 

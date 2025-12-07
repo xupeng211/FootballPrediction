@@ -3,7 +3,7 @@
 """
 
 import os
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -25,11 +25,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         self.environment = environment or os.getenv("ENV", "development").lower()
         self.is_production = self.environment in ["production", "prod"]
 
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """处理请求并添加安全头"""
 
         # 调用下一个中间件/路由处理器
@@ -102,11 +98,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # 7. Strict-Transport-Security: 强制 HTTPS（仅生产环境）
         if self.is_production and request.url.scheme == "https":
             # 1年有效期，包含子域名，预加载
-            hsts_value = (
-                "max-age=31536000; "
-                "includeSubDomains; "
-                "preload"
-            )
+            hsts_value = "max-age=31536000; " "includeSubDomains; " "preload"
             response.headers["Strict-Transport-Security"] = hsts_value
 
         # 8. 清除可能泄露服务器信息的不安全头
@@ -116,7 +108,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # 9. 添加缓存控制头（敏感内容）
         if self._is_sensitive_path(request.url.path):
             # 对于敏感路径，禁止缓存
-            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+            response.headers["Cache-Control"] = (
+                "no-store, no-cache, must-revalidate, private"
+            )
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
 
@@ -187,7 +181,9 @@ def apply_security_headers(response: Response, is_sensitive: bool = False) -> Re
 
     # 敏感内容的缓存控制
     if is_sensitive:
-        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+        response.headers["Cache-Control"] = (
+            "no-store, no-cache, must-revalidate, private"
+        )
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
 

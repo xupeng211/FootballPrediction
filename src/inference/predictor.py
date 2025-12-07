@@ -25,7 +25,7 @@ from .schemas import (
     BatchPredictionRequest,
     BatchPredictionResponse,
     ModelType,
-    PredictionType
+    PredictionType,
 )
 from .errors import PredictionError, ModelLoadError, FeatureBuilderError, ErrorCode
 
@@ -47,7 +47,7 @@ class PredictionResult:
         model_type: ModelType,
         features_used: list[str],
         prediction_time_ms: float,
-        metadata: Optional[dict[str, Any]] = None
+        metadata: Optional[dict[str, Any]] = None,
     ):
         self.home_win_prob = home_win_prob
         self.draw_prob = draw_prob
@@ -70,7 +70,9 @@ class PredictionResult:
             self.draw_prob /= total
             self.away_win_prob /= total
 
-    def to_response(self, request_id: str, match_id: str, cached: bool = False) -> PredictionResponse:
+    def to_response(
+        self, request_id: str, match_id: str, cached: bool = False
+    ) -> PredictionResponse:
         """转换为响应对象"""
         return PredictionResponse(
             request_id=request_id,
@@ -87,7 +89,7 @@ class PredictionResult:
             features_used=self.features_used,
             prediction_time_ms=self.prediction_time_ms,
             cached=cached,
-            metadata=self.metadata
+            metadata=self.metadata,
         )
 
 
@@ -119,7 +121,7 @@ class Predictor:
             "failed_predictions": 0,
             "cache_hits": 0,
             "cache_misses": 0,
-            "average_prediction_time": 0.0
+            "average_prediction_time": 0.0,
         }
 
         # 预测历史（用于监控）
@@ -148,7 +150,9 @@ class Predictor:
                 if cached_result:
                     self._prediction_stats["cache_hits"] += 1
                     logger.info(f"Cache hit for prediction {request.match_id}")
-                    return cached_result.to_response(request_id, request.match_id, cached=True)
+                    return cached_result.to_response(
+                        request_id, request.match_id, cached=True
+                    )
 
             self._prediction_stats["cache_misses"] += 1
 
@@ -166,7 +170,9 @@ class Predictor:
             # 记录预测历史
             self._record_prediction(request, result)
 
-            logger.info(f"Prediction completed for {request.match_id}: {result.predicted_outcome}")
+            logger.info(
+                f"Prediction completed for {request.match_id}: {result.predicted_outcome}"
+            )
             return result.to_response(request_id, request.match_id, cached=False)
 
         except Exception as e:
@@ -176,7 +182,7 @@ class Predictor:
             error_msg = f"Prediction failed for match {request.match_id}: {str(e)}"
             logger.error(error_msg)
 
-            if isinstance(e, (ModelLoadError, FeatureBuilderError, PredictionError)):
+            if isinstance(e, ModelLoadError | FeatureBuilderError | PredictionError):
                 raise
             else:
                 raise PredictionError(error_msg, prediction_id=request_id)
@@ -186,7 +192,9 @@ class Predictor:
             total_time = (datetime.now() - start_time).total_seconds() * 1000
             logger.debug(f"Total prediction time: {total_time:.2f}ms")
 
-    async def predict_batch(self, request: BatchPredictionRequest) -> BatchPredictionResponse:
+    async def predict_batch(
+        self, request: BatchPredictionRequest
+    ) -> BatchPredictionResponse:
         """
         批量预测
 
@@ -213,11 +221,13 @@ class Predictor:
 
                 for i, result in enumerate(results):
                     if isinstance(result, Exception):
-                        errors.append({
-                            "request_index": i,
-                            "match_id": request.requests[i].match_id,
-                            "error": str(result)
-                        })
+                        errors.append(
+                            {
+                                "request_index": i,
+                                "match_id": request.requests[i].match_id,
+                                "error": str(result),
+                            }
+                        )
                     else:
                         predictions.append(result)
                         if result.cached:
@@ -231,11 +241,13 @@ class Predictor:
                         if result.cached:
                             cached_count += 1
                     except Exception as e:
-                        errors.append({
-                            "request_index": i,
-                            "match_id": req.match_id,
-                            "error": str(e)
-                        })
+                        errors.append(
+                            {
+                                "request_index": i,
+                                "match_id": req.match_id,
+                                "error": str(e),
+                            }
+                        )
 
             batch_time = (datetime.now() - start_time).total_seconds() * 1000
 
@@ -247,7 +259,7 @@ class Predictor:
                 predictions=predictions,
                 errors=errors,
                 batch_time_ms=batch_time,
-                cached_count=cached_count
+                cached_count=cached_count,
             )
 
             logger.info(
@@ -282,23 +294,17 @@ class Predictor:
 
         # 构建特征
         features_df = await feature_builder.build_features(
-            raw_data=raw_data,
-            match_info=match_info,
-            historical_data=historical_data
+            raw_data=raw_data, match_info=match_info, historical_data=historical_data
         )
 
         # 3. 执行预测
         prediction_result = await self._predict_with_model(
-            loaded_model.model,
-            features_df,
-            request.prediction_type
+            loaded_model.model, features_df, request.prediction_type
         )
 
         # 4. 后处理
         processed_result = await self._post_process_prediction(
-            prediction_result,
-            loaded_model,
-            request
+            prediction_result, loaded_model, request
         )
 
         # 5. 计算预测耗时
@@ -316,16 +322,13 @@ class Predictor:
             model_type=loaded_model.metadata.model_info.model_type,
             features_used=list(features_df.columns),
             prediction_time_ms=prediction_time,
-            metadata=processed_result.get("metadata", {})
+            metadata=processed_result.get("metadata", {}),
         )
 
         return result
 
     async def _predict_with_model(
-        self,
-        model: Any,
-        features_df: pd.DataFrame,
-        prediction_type: PredictionType
+        self, model: Any, features_df: pd.DataFrame, prediction_type: PredictionType
     ) -> dict[str, Any]:
         """使用模型进行预测"""
 
@@ -333,20 +336,24 @@ class Predictor:
             try:
                 if prediction_type == PredictionType.PROBABILITY:
                     # 概率预测
-                    if hasattr(model, 'predict_proba'):
+                    if hasattr(model, "predict_proba"):
                         probabilities = model.predict_proba(features_df)
                         if probabilities.shape[1] >= 3:
                             # 假设顺序为 [away, draw, home]
                             away_prob, draw_prob, home_prob = probabilities[0]
                         else:
                             # 二分类结果，处理为三分类
-                            home_prob = probabilities[0][1] if probabilities.shape[1] == 2 else 0.33
+                            home_prob = (
+                                probabilities[0][1]
+                                if probabilities.shape[1] == 2
+                                else 0.33
+                            )
                             draw_prob = 0.34
                             away_prob = 1 - home_prob - draw_prob
                     else:
                         # 没有概率输出，使用预测结果
                         prediction = model.predict(features_df)[0]
-                        if isinstance(prediction, (int, np.integer)):
+                        if isinstance(prediction, int | np.integer):
                             # 整数输出，转换为概率
                             if prediction == 2:  # home win
                                 home_prob, draw_prob, away_prob = 0.7, 0.2, 0.1
@@ -364,12 +371,16 @@ class Predictor:
                 elif prediction_type == PredictionType.WINNER:
                     # 胜者预测
                     prediction = model.predict(features_df)[0]
-                    if hasattr(model, 'predict_proba'):
+                    if hasattr(model, "predict_proba"):
                         probabilities = model.predict_proba(features_df)[0]
                         if probabilities.shape[1] >= 3:
                             away_prob, draw_prob, home_prob = probabilities
                         else:
-                            home_prob = probabilities[1] if probabilities.shape[1] == 2 else 0.33
+                            home_prob = (
+                                probabilities[1]
+                                if probabilities.shape[1] == 2
+                                else 0.33
+                            )
                             draw_prob = 0.34
                             away_prob = 1 - home_prob - draw_prob
                     else:
@@ -384,12 +395,16 @@ class Predictor:
                     # 比分预测（简化处理）
                     # 这里可以扩展为真正的比分预测
                     prediction = model.predict(features_df)[0]
-                    if hasattr(model, 'predict_proba'):
+                    if hasattr(model, "predict_proba"):
                         probabilities = model.predict_proba(features_df)[0]
                         if probabilities.shape[1] >= 3:
                             away_prob, draw_prob, home_prob = probabilities
                         else:
-                            home_prob = probabilities[1] if probabilities.shape[1] == 2 else 0.33
+                            home_prob = (
+                                probabilities[1]
+                                if probabilities.shape[1] == 2
+                                else 0.33
+                            )
                             draw_prob = 0.34
                             away_prob = 1 - home_prob - draw_prob
                     else:
@@ -404,7 +419,7 @@ class Predictor:
                     "home_win_prob": float(home_prob),
                     "draw_prob": float(draw_prob),
                     "away_win_prob": float(away_prob),
-                    "raw_prediction": prediction if 'prediction' in locals() else None
+                    "raw_prediction": prediction if "prediction" in locals() else None,
                 }
 
             except Exception as e:
@@ -412,15 +427,14 @@ class Predictor:
 
         # 在线程池中执行同步预测
         return await asyncio.get_event_loop().run_in_executor(
-            self._executor,
-            predict_sync
+            self._executor, predict_sync
         )
 
     async def _post_process_prediction(
         self,
         prediction_result: dict[str, Any],
         loaded_model: LoadedModel,
-        request: PredictionRequest
+        request: PredictionRequest,
     ) -> dict[str, Any]:
         """后处理预测结果"""
         result = prediction_result.copy()
@@ -438,7 +452,7 @@ class Predictor:
         probs = [
             ("home_win", result["home_win_prob"]),
             ("draw", result["draw_prob"]),
-            ("away_win", result["away_win_prob"])
+            ("away_win", result["away_win_prob"]),
         ]
         result["predicted_outcome"] = max(probs, key=lambda x: x[1])[0]
 
@@ -457,7 +471,7 @@ class Predictor:
             "model_accuracy": loaded_model.metadata.model_info.accuracy,
             "calibration_applied": self._should_calibrate(loaded_model),
             "prediction_type": request.prediction_type.value,
-            "feature_count": len(loaded_model.metadata.model_info.features)
+            "feature_count": len(loaded_model.metadata.model_info.features),
         }
 
         return result
@@ -471,18 +485,22 @@ class Predictor:
             return loaded_model.metadata.model_info.accuracy < 0.8
         return False
 
-    async def _calibrate_prediction(self, prediction_result: dict[str, Any]) -> dict[str, Any]:
+    async def _calibrate_prediction(
+        self, prediction_result: dict[str, Any]
+    ) -> dict[str, Any]:
         """校准预测结果"""
         # 简单的校准逻辑，可以根据需要扩展
         calibrated = prediction_result.copy()
 
         # 温度缩放校准
         temperature = 1.2  # 校准参数
-        probs = np.array([
-            calibrated["away_win_prob"],
-            calibrated["draw_prob"],
-            calibrated["home_win_prob"]
-        ])
+        probs = np.array(
+            [
+                calibrated["away_win_prob"],
+                calibrated["draw_prob"],
+                calibrated["home_win_prob"],
+            ]
+        )
 
         # 应用温度缩放
         exp_probs = np.exp(np.log(probs + 1e-8) / temperature)
@@ -494,7 +512,9 @@ class Predictor:
 
         return calibrated
 
-    async def _get_cached_prediction(self, request: PredictionRequest) -> Optional[PredictionResult]:
+    async def _get_cached_prediction(
+        self, request: PredictionRequest
+    ) -> Optional[PredictionResult]:
         """获取缓存的预测结果"""
         try:
             cache = await get_prediction_cache()
@@ -509,7 +529,9 @@ class Predictor:
 
         return None
 
-    async def _cache_prediction(self, request: PredictionRequest, result: PredictionResult):
+    async def _cache_prediction(
+        self, request: PredictionRequest, result: PredictionResult
+    ):
         """缓存预测结果"""
         try:
             cache = await get_prediction_cache()
@@ -528,7 +550,7 @@ class Predictor:
                 "features_used": result.features_used,
                 "prediction_time_ms": result.prediction_time_ms,
                 "metadata": result.metadata,
-                "cached_at": datetime.utcnow().isoformat()
+                "cached_at": datetime.utcnow().isoformat(),
             }
 
             await cache.set_prediction(cache_key, cache_data)
@@ -543,12 +565,13 @@ class Predictor:
             request.match_id,
             request.model_name,
             request.model_version or "latest",
-            request.prediction_type.value
+            request.prediction_type.value,
         ]
 
         if request.features:
             # 对自定义特征进行安全哈希
             import hashlib
+
             features_hash = hashlib.sha256(
                 str(sorted(request.features.items())).encode()
             ).hexdigest()[:8]
@@ -568,7 +591,7 @@ class Predictor:
             "home_shots": np.random.randint(5, 25),
             "away_shots": np.random.randint(5, 25),
             "home_corners": np.random.randint(2, 12),
-            "away_corners": np.random.randint(2, 12)
+            "away_corners": np.random.randint(2, 12),
         }
 
     async def _get_match_info(self, match_id: str) -> dict[str, Any]:
@@ -578,7 +601,7 @@ class Predictor:
             "home_team": f"Team_A_{match_id}",
             "away_team": f"Team_B_{match_id}",
             "match_date": datetime.now().isoformat(),
-            "league_id": "league_123"
+            "league_id": "league_123",
         }
 
     async def _get_historical_data(self, match_id: str) -> dict[str, Any]:
@@ -587,13 +610,19 @@ class Predictor:
         return {
             "team_history": {
                 f"Team_A_{match_id}": [
-                    {"goals": np.random.randint(0, 5), "shots": np.random.randint(5, 25)}
+                    {
+                        "goals": np.random.randint(0, 5),
+                        "shots": np.random.randint(5, 25),
+                    }
                     for _ in range(10)
                 ],
                 f"Team_B_{match_id}": [
-                    {"goals": np.random.randint(0, 5), "shots": np.random.randint(5, 25)}
+                    {
+                        "goals": np.random.randint(0, 5),
+                        "shots": np.random.randint(5, 25),
+                    }
                     for _ in range(10)
-                ]
+                ],
             }
         }
 
@@ -614,7 +643,7 @@ class Predictor:
             "model_name": result.model_name,
             "predicted_outcome": result.predicted_outcome,
             "confidence": result.confidence,
-            "prediction_time_ms": result.prediction_time_ms
+            "prediction_time_ms": result.prediction_time_ms,
         }
 
         self._prediction_history.append(record)
@@ -626,30 +655,32 @@ class Predictor:
     def get_prediction_stats(self) -> dict[str, Any]:
         """获取预测统计信息"""
         total_requests = (
-            self._prediction_stats["successful_predictions"] +
-            self._prediction_stats["failed_predictions"]
+            self._prediction_stats["successful_predictions"]
+            + self._prediction_stats["failed_predictions"]
         )
 
         success_rate = (
             self._prediction_stats["successful_predictions"] / total_requests * 100
-            if total_requests > 0 else 0
+            if total_requests > 0
+            else 0
         )
 
         cache_total = (
-            self._prediction_stats["cache_hits"] +
-            self._prediction_stats["cache_misses"]
+            self._prediction_stats["cache_hits"]
+            + self._prediction_stats["cache_misses"]
         )
 
         cache_hit_rate = (
             self._prediction_stats["cache_hits"] / cache_total * 100
-            if cache_total > 0 else 0
+            if cache_total > 0
+            else 0
         )
 
         return {
             **self._prediction_stats,
             "success_rate": round(success_rate, 2),
             "cache_hit_rate": round(cache_hit_rate, 2),
-            "history_count": len(self._prediction_history)
+            "history_count": len(self._prediction_history),
         }
 
     async def cleanup(self):

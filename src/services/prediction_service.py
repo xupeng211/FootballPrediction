@@ -273,7 +273,7 @@ class PredictionService:
         ttl=3600,  # 1小时缓存
         namespace="predictions",
         stampede_protection=True,
-        key_builder=lambda self, match_data, model_name="default": f"prediction:{match_data.get('match_id', 'unknown')}:{model_name}:{hash(str(sorted(match_data.items())))}"
+        key_builder=lambda self, match_data, model_name="default": f"prediction:{match_data.get('match_id', 'unknown')}:{model_name}:{hash(str(sorted(match_data.items())))}",
     )
     async def predict_match_async(
         self, match_data: dict[str, Any], model_name: str = "default"

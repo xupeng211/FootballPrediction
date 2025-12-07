@@ -24,7 +24,9 @@ class AsyncDataService:
         """初始化异步数据服务."""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    async def get_matches_list(self, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+    async def get_matches_list(
+        self, limit: int = 20, offset: int = 0
+    ) -> dict[str, Any]:
         """获取比赛列表 (异步版本)
         Get matches list (async version).
 
@@ -44,7 +46,8 @@ class AsyncDataService:
                 total = count_result.scalar()
 
                 # 获取分页数据
-                query = text("""
+                query = text(
+                    """
                     SELECT
                         m.id,
                         m.home_team_id,
@@ -64,35 +67,40 @@ class AsyncDataService:
                     JOIN leagues l ON m.league_id = l.id
                     ORDER BY m.scheduled_at DESC
                     LIMIT :limit OFFSET :offset
-                """)
+                """
+                )
 
-                result = await session.execute(query, {"limit": limit, "offset": offset})
+                result = await session.execute(
+                    query, {"limit": limit, "offset": offset}
+                )
                 rows = result.fetchall()
 
                 # 格式化数据
                 matches = []
                 for row in rows:
-                    matches.append({
-                        "id": row[0],
-                        "home_team": {
-                            "id": row[1],
-                            "name": row[6],
-                            "short_name": row[7]
-                        },
-                        "away_team": {
-                            "id": row[2],
-                            "name": row[8],
-                            "short_name": row[9]
-                        },
-                        "date": row[3].isoformat() if row[3] else None,
-                        "status": row[4],
-                        "venue": row[5],
-                        "league": {
-                            "id": 0,  # 可以从查询中添加
-                            "name": row[10],
-                            "country": row[11]
+                    matches.append(
+                        {
+                            "id": row[0],
+                            "home_team": {
+                                "id": row[1],
+                                "name": row[6],
+                                "short_name": row[7],
+                            },
+                            "away_team": {
+                                "id": row[2],
+                                "name": row[8],
+                                "short_name": row[9],
+                            },
+                            "date": row[3].isoformat() if row[3] else None,
+                            "status": row[4],
+                            "venue": row[5],
+                            "league": {
+                                "id": 0,  # 可以从查询中添加
+                                "name": row[10],
+                                "country": row[11],
+                            },
                         }
-                    })
+                    )
 
                 self.logger.info(f"从数据库获取 {len(matches)} 条比赛记录")
                 return {
@@ -100,7 +108,7 @@ class AsyncDataService:
                     "total": total or len(matches),
                     "limit": limit,
                     "offset": offset,
-                    "source": "database"
+                    "source": "database",
                 }
 
         except Exception as e:
@@ -108,7 +116,9 @@ class AsyncDataService:
             # 降级到模拟数据
             return await self._get_mock_matches_list(limit, offset)
 
-    async def _get_mock_matches_list(self, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+    async def _get_mock_matches_list(
+        self, limit: int = 20, offset: int = 0
+    ) -> dict[str, Any]:
         """获取模拟比赛数据
         Get mock matches data.
         """
@@ -154,10 +164,10 @@ class AsyncDataService:
             "total": len(sample_matches),
             "limit": limit,
             "offset": offset,
-            "source": "mock"
+            "source": "mock",
         }
 
-    async def get_match_by_id(self, match_id: int) -> Optional[Dict[str, Any]]:
+    async def get_match_by_id(self, match_id: int) -> Optional[dict[str, Any]]:
         """根据ID获取比赛信息 (异步版本)
         Get match information by ID (async version).
 
@@ -170,7 +180,8 @@ class AsyncDataService:
         try:
             # 尝试从数据库获取数据
             async with get_async_session() as session:
-                query = text("""
+                query = text(
+                    """
                     SELECT
                         m.id,
                         m.home_team_id,
@@ -191,7 +202,8 @@ class AsyncDataService:
                     JOIN teams at ON m.away_team_id = at.id
                     JOIN leagues l ON m.league_id = l.id
                     WHERE m.id = :match_id
-                """)
+                """
+                )
 
                 result = await session.execute(query, {"match_id": match_id})
                 row = result.first()
@@ -203,25 +215,23 @@ class AsyncDataService:
                         "home_team": {
                             "id": row[1],
                             "name": row[7],
-                            "short_name": row[8]
+                            "short_name": row[8],
                         },
                         "away_team": {
                             "id": row[2],
                             "name": row[9],
-                            "short_name": row[10]
+                            "short_name": row[10],
                         },
                         "date": row[3].isoformat() if row[3] else None,
                         "status": row[4],
                         "venue": row[5],
-                        "score": {
-                            "home": row[6],
-                            "away": row[7]
-                        } if row[6] is not None and row[7] is not None else None,
-                        "league": {
-                            "name": row[11],
-                            "country": row[12]
-                        },
-                        "source": "database"
+                        "score": (
+                            {"home": row[6], "away": row[7]}
+                            if row[6] is not None and row[7] is not None
+                            else None
+                        ),
+                        "league": {"name": row[11], "country": row[12]},
+                        "source": "database",
                     }
                 else:
                     return await self._get_mock_match_by_id(match_id)
@@ -230,7 +240,7 @@ class AsyncDataService:
             self.logger.warning(f"从数据库获取比赛 {match_id} 失败，使用模拟数据: {e}")
             return await self._get_mock_match_by_id(match_id)
 
-    async def _get_mock_match_by_id(self, match_id: int) -> Optional[Dict[str, Any]]:
+    async def _get_mock_match_by_id(self, match_id: int) -> Optional[dict[str, Any]]:
         """获取模拟比赛信息
         Get mock match information.
         """
@@ -251,7 +261,7 @@ class AsyncDataService:
                     "shots": {"home": 12, "away": 8},
                     "corners": {"home": 6, "away": 4},
                 },
-                "source": "mock"
+                "source": "mock",
             },
             12346: {
                 "id": 12346,
@@ -266,13 +276,13 @@ class AsyncDataService:
                     "shots": {"home": 9, "away": 11},
                     "corners": {"home": 5, "away": 7},
                 },
-                "source": "mock"
+                "source": "mock",
             },
         }
 
         return sample_matches.get(match_id)
 
-    async def get_teams_list(self, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+    async def get_teams_list(self, limit: int = 20, offset: int = 0) -> dict[str, Any]:
         """获取球队列表 (异步版本)
         Get teams list (async version).
 
@@ -292,7 +302,8 @@ class AsyncDataService:
                 total = count_result.scalar()
 
                 # 获取分页数据
-                query = text("""
+                query = text(
+                    """
                     SELECT
                         t.id,
                         t.name,
@@ -305,23 +316,28 @@ class AsyncDataService:
                     LEFT JOIN leagues l ON t.league_id = l.id
                     ORDER BY t.name
                     LIMIT :limit OFFSET :offset
-                """)
+                """
+                )
 
-                result = await session.execute(query, {"limit": limit, "offset": offset})
+                result = await session.execute(
+                    query, {"limit": limit, "offset": offset}
+                )
                 rows = result.fetchall()
 
                 # 格式化数据
                 teams = []
                 for row in rows:
-                    teams.append({
-                        "id": row[0],
-                        "name": row[1],
-                        "short_name": row[2],
-                        "country": row[3],
-                        "founded": row[4],
-                        "stadium": row[5],
-                        "league": {"name": row[6]} if row[6] else None
-                    })
+                    teams.append(
+                        {
+                            "id": row[0],
+                            "name": row[1],
+                            "short_name": row[2],
+                            "country": row[3],
+                            "founded": row[4],
+                            "stadium": row[5],
+                            "league": {"name": row[6]} if row[6] else None,
+                        }
+                    )
 
                 self.logger.info(f"从数据库获取 {len(teams)} 支球队记录")
                 return {
@@ -329,14 +345,16 @@ class AsyncDataService:
                     "total": total or len(teams),
                     "limit": limit,
                     "offset": offset,
-                    "source": "database"
+                    "source": "database",
                 }
 
         except Exception as e:
             self.logger.warning(f"从数据库获取球队失败，使用模拟数据: {e}")
             return await self._get_mock_teams_list(limit, offset)
 
-    async def _get_mock_teams_list(self, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+    async def _get_mock_teams_list(
+        self, limit: int = 20, offset: int = 0
+    ) -> dict[str, Any]:
         """获取模拟球队数据
         Get mock teams data.
         """
@@ -408,10 +426,10 @@ class AsyncDataService:
             "total": len(sample_teams),
             "limit": limit,
             "offset": offset,
-            "source": "mock"
+            "source": "mock",
         }
 
-    async def get_team_by_id(self, team_id: int) -> Optional[Dict[str, Any]]:
+    async def get_team_by_id(self, team_id: int) -> Optional[dict[str, Any]]:
         """根据ID获取球队信息 (异步版本)
         Get team information by ID (async version).
 
@@ -423,7 +441,8 @@ class AsyncDataService:
         """
         try:
             async with get_async_session() as session:
-                query = text("""
+                query = text(
+                    """
                     SELECT
                         t.id,
                         t.name,
@@ -435,7 +454,8 @@ class AsyncDataService:
                     FROM teams t
                     LEFT JOIN leagues l ON t.league_id = l.id
                     WHERE t.id = :team_id
-                """)
+                """
+                )
 
                 result = await session.execute(query, {"team_id": team_id})
                 row = result.first()
@@ -449,7 +469,7 @@ class AsyncDataService:
                         "founded": row[4],
                         "stadium": row[5],
                         "league": {"name": row[6]} if row[6] else None,
-                        "source": "database"
+                        "source": "database",
                     }
                 else:
                     return await self._get_mock_team_by_id(team_id)
@@ -458,7 +478,7 @@ class AsyncDataService:
             self.logger.warning(f"从数据库获取球队 {team_id} 失败，使用模拟数据: {e}")
             return await self._get_mock_team_by_id(team_id)
 
-    async def _get_mock_team_by_id(self, team_id: int) -> Optional[Dict[str, Any]]:
+    async def _get_mock_team_by_id(self, team_id: int) -> Optional[dict[str, Any]]:
         """获取模拟球队信息
         Get mock team information.
         """
@@ -481,7 +501,7 @@ class AsyncDataService:
                     "goals_for": 62,
                     "goals_against": 38,
                 },
-                "source": "mock"
+                "source": "mock",
             },
             2: {
                 "id": 2,
@@ -499,13 +519,15 @@ class AsyncDataService:
                     "goals_for": 68,
                     "goals_against": 33,
                 },
-                "source": "mock"
+                "source": "mock",
             },
         }
 
         return sample_teams.get(team_id)
 
-    async def batch_get_matches(self, match_ids: List[int]) -> List[Optional[Dict[str, Any]]]:
+    async def batch_get_matches(
+        self, match_ids: list[int]
+    ) -> list[Optional[dict[str, Any]]]:
         """批量获取比赛信息 (异步版本)
         Batch get matches information (async version).
 
@@ -530,7 +552,7 @@ class AsyncDataService:
 
         return matches
 
-    async def get_upcoming_matches(self, limit: int = 20) -> Dict[str, Any]:
+    async def get_upcoming_matches(self, limit: int = 20) -> dict[str, Any]:
         """获取即将开始的比赛 (异步版本)
         Get upcoming matches (async version).
 
@@ -542,7 +564,8 @@ class AsyncDataService:
         """
         try:
             async with get_async_session() as session:
-                query = text("""
+                query = text(
+                    """
                     SELECT
                         m.id,
                         m.home_team_id,
@@ -563,36 +586,47 @@ class AsyncDataService:
                     AND m.scheduled_at >= NOW()
                     ORDER BY m.scheduled_at ASC
                     LIMIT :limit
-                """)
+                """
+                )
 
                 result = await session.execute(query, {"limit": limit})
                 rows = result.fetchall()
 
                 matches = []
                 for row in rows:
-                    matches.append({
-                        "id": row[0],
-                        "home_team": {"id": row[1], "name": row[6], "short_name": row[7]},
-                        "away_team": {"id": row[2], "name": row[8], "short_name": row[9]},
-                        "date": row[3].isoformat() if row[3] else None,
-                        "status": row[4],
-                        "venue": row[5],
-                        "league": {"name": row[10]},
-                        "source": "database"
-                    })
+                    matches.append(
+                        {
+                            "id": row[0],
+                            "home_team": {
+                                "id": row[1],
+                                "name": row[6],
+                                "short_name": row[7],
+                            },
+                            "away_team": {
+                                "id": row[2],
+                                "name": row[8],
+                                "short_name": row[9],
+                            },
+                            "date": row[3].isoformat() if row[3] else None,
+                            "status": row[4],
+                            "venue": row[5],
+                            "league": {"name": row[10]},
+                            "source": "database",
+                        }
+                    )
 
                 return {
                     "matches": matches,
                     "total": len(matches),
                     "limit": limit,
-                    "source": "database"
+                    "source": "database",
                 }
 
         except Exception as e:
             self.logger.warning(f"从数据库获取即将开始的比赛失败，使用模拟数据: {e}")
             return await self._get_mock_upcoming_matches(limit)
 
-    async def _get_mock_upcoming_matches(self, limit: int = 20) -> Dict[str, Any]:
+    async def _get_mock_upcoming_matches(self, limit: int = 20) -> dict[str, Any]:
         """获取模拟即将开始的比赛数据
         Get mock upcoming matches data.
         """
@@ -615,24 +649,26 @@ class AsyncDataService:
             home_team = random.choice(teams)
             away_team = random.choice([t for t in teams if t["id"] != home_team["id"]])
 
-            scheduled_at = datetime.utcnow() + timedelta(hours=i*6)
+            scheduled_at = datetime.utcnow() + timedelta(hours=i * 6)
 
-            matches.append({
-                "id": 10000 + i,
-                "home_team": home_team,
-                "away_team": away_team,
-                "date": scheduled_at.isoformat() + "Z",
-                "status": "SCHEDULED",
-                "venue": f"Stadium {i+1}",
-                "league": {"name": "Premier League"},
-                "source": "mock"
-            })
+            matches.append(
+                {
+                    "id": 10000 + i,
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "date": scheduled_at.isoformat() + "Z",
+                    "status": "SCHEDULED",
+                    "venue": f"Stadium {i+1}",
+                    "league": {"name": "Premier League"},
+                    "source": "mock",
+                }
+            )
 
         return {
             "matches": matches,
             "total": len(matches),
             "limit": limit,
-            "source": "mock"
+            "source": "mock",
         }
 
 
@@ -649,25 +685,25 @@ def get_async_data_service() -> AsyncDataService:
 
 
 # 向后兼容的便捷函数
-async def get_matches_async(limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+async def get_matches_async(limit: int = 20, offset: int = 0) -> dict[str, Any]:
     """便捷的异步获取比赛列表函数."""
     service = get_async_data_service()
     return await service.get_matches_list(limit, offset)
 
 
-async def get_match_async(match_id: int) -> Optional[Dict[str, Any]]:
+async def get_match_async(match_id: int) -> Optional[dict[str, Any]]:
     """便捷的异步获取比赛信息函数."""
     service = get_async_data_service()
     return await service.get_match_by_id(match_id)
 
 
-async def get_teams_async(limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+async def get_teams_async(limit: int = 20, offset: int = 0) -> dict[str, Any]:
     """便捷的异步获取球队列表函数."""
     service = get_async_data_service()
     return await service.get_teams_list(limit, offset)
 
 
-async def get_team_async(team_id: int) -> Optional[Dict[str, Any]]:
+async def get_team_async(team_id: int) -> Optional[dict[str, Any]]:
     """便捷的异步获取球队信息函数."""
     service = get_async_data_service()
     return await service.get_team_by_id(team_id)

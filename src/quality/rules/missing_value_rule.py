@@ -40,7 +40,7 @@ class MissingValueRule(MissingValueRuleProtocol):
         critical_fields: list[str] = None,
         optional_fields: list[str] = None,
         missing_value_indicators: list[str] = None,
-        case_sensitive: bool = True
+        case_sensitive: bool = True,
     ):
         """
         初始化缺失值检查规则。
@@ -63,7 +63,7 @@ class MissingValueRule(MissingValueRuleProtocol):
             "xg_away",
             "odds_b365_home",
             "odds_b365_draw",
-            "odds_b365_away"
+            "odds_b365_away",
         ]
 
         # 可选字段 - 有用但不是必需的
@@ -81,7 +81,7 @@ class MissingValueRule(MissingValueRuleProtocol):
             "cards_yellow_home",
             "cards_yellow_away",
             "cards_red_home",
-            "cards_red_away"
+            "cards_red_away",
         ]
 
         # 被视为缺失值的标记
@@ -97,7 +97,7 @@ class MissingValueRule(MissingValueRuleProtocol):
             "na",
             "NA",
             "missing",
-            "MISSING"
+            "MISSING",
         ]
 
         self.case_sensitive = case_sensitive
@@ -164,7 +164,9 @@ class MissingValueRule(MissingValueRuleProtocol):
 
             value = features[field]
             if self._is_missing_value(value):
-                errors.append(f"关键字段 '{field}' 值为缺失: {self._format_value(value)}")
+                errors.append(
+                    f"关键字段 '{field}' 值为缺失: {self._format_value(value)}"
+                )
 
         return errors
 
@@ -187,7 +189,9 @@ class MissingValueRule(MissingValueRuleProtocol):
 
             value = features[field]
             if self._is_missing_value(value):
-                warnings.append(f"可选字段 '{field}' 值为缺失: {self._format_value(value)}")
+                warnings.append(
+                    f"可选字段 '{field}' 值为缺失: {self._format_value(value)}"
+                )
 
         # 可选字段的警告级别较低，这里只是记录
         # 实际使用中可以通过配置决定是否包含在错误中
@@ -211,15 +215,18 @@ class MissingValueRule(MissingValueRuleProtocol):
         # 检查字符串类型的缺失值
         if isinstance(value, str):
             check_value = value if self.case_sensitive else value.lower()
-            indicators = self.missing_value_indicators if self.case_sensitive else [
-                indicator.lower() for indicator in self.missing_value_indicators
-            ]
+            indicators = (
+                self.missing_value_indicators
+                if self.case_sensitive
+                else [indicator.lower() for indicator in self.missing_value_indicators]
+            )
             return check_value in indicators
 
         # 检查数字类型的特殊值（如 NaN, inf 等）
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             try:
                 import math
+
                 if math.isnan(value) or math.isinf(value):
                     return True
             except (TypeError, ValueError):
@@ -260,7 +267,7 @@ class MissingValueRule(MissingValueRuleProtocol):
             "critical_missing": [],
             "optional_missing": [],
             "critical_available": [],
-            "optional_available": []
+            "optional_available": [],
         }
 
         for field in self.critical_fields:
@@ -281,18 +288,22 @@ class MissingValueRule(MissingValueRuleProtocol):
 
         summary["critical_completeness"] = (
             (len(summary["critical_available"]) / total_critical) * 100
-            if total_critical > 0 else 0
+            if total_critical > 0
+            else 0
         )
 
         summary["optional_completeness"] = (
             (len(summary["optional_available"]) / total_optional) * 100
-            if total_optional > 0 else 0
+            if total_optional > 0
+            else 0
         )
 
         summary["overall_completeness"] = (
-            (summary["critical_available"].count + summary["optional_available"].count) /
-            (total_critical + total_optional) * 100
-            if (total_critical + total_optional) > 0 else 0
+            (summary["critical_available"].count + summary["optional_available"].count)
+            / (total_critical + total_optional)
+            * 100
+            if (total_critical + total_optional) > 0
+            else 0
         )
 
         return summary

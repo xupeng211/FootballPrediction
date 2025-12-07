@@ -21,6 +21,7 @@ from .config import PipelineConfig
 @dataclass
 class TrainingMetrics:
     """训练指标数据结构"""
+
     algorithm: str
     accuracy: float
     precision: float
@@ -37,6 +38,7 @@ class TrainingMetrics:
 @dataclass
 class SystemMetrics:
     """系统指标数据结构"""
+
     cpu_usage: float
     memory_usage_mb: float
     disk_usage_gb: float
@@ -132,8 +134,8 @@ class MetricsCollector:
         self.metrics_dir = Path(config.project_root) / "artifacts" / "metrics"
         self.metrics_dir.mkdir(parents=True, exist_ok=True)
 
-        self.training_metrics: List[TrainingMetrics] = []
-        self.system_metrics: List[SystemMetrics] = []
+        self.training_metrics: list[TrainingMetrics] = []
+        self.system_metrics: list[SystemMetrics] = []
 
     def record_training_metrics(self, metrics: TrainingMetrics):
         """记录训练指标"""
@@ -148,8 +150,8 @@ class MetricsCollector:
             metrics = SystemMetrics(
                 cpu_usage=psutil.cpu_percent(),
                 memory_usage_mb=psutil.virtual_memory().used / 1024 / 1024,
-                disk_usage_gb=psutil.disk_usage('/').used / 1024 / 1024 / 1024,
-                timestamp=datetime.now()
+                disk_usage_gb=psutil.disk_usage("/").used / 1024 / 1024 / 1024,
+                timestamp=datetime.now(),
             )
 
             self.system_metrics.append(metrics)
@@ -170,13 +172,13 @@ class MetricsCollector:
         serializable_metrics = []
         for metric in self.training_metrics:
             metric_dict = asdict(metric)
-            metric_dict['timestamp'] = metric.timestamp.isoformat()
+            metric_dict["timestamp"] = metric.timestamp.isoformat()
             serializable_metrics.append(metric_dict)
 
-        with open(metrics_file, 'w', encoding='utf-8') as f:
+        with open(metrics_file, "w", encoding="utf-8") as f:
             json.dump(serializable_metrics, f, indent=2, ensure_ascii=False)
 
-    def get_training_summary(self) -> Dict[str, Any]:
+    def get_training_summary(self) -> dict[str, Any]:
         """获取训练指标摘要"""
         if not self.training_metrics:
             return {}
@@ -185,19 +187,22 @@ class MetricsCollector:
 
         summary = {
             "total_trainings": len(df),
-            "algorithms": df['algorithm'].unique().tolist(),
-            "average_accuracy": df['accuracy'].mean(),
-            "best_accuracy": df['accuracy'].max(),
-            "average_training_time": df['training_time'].mean(),
-            "total_training_time": df['training_time'].sum(),
-            "latest_training": df['timestamp'].max().isoformat() if not df.empty else None
+            "algorithms": df["algorithm"].unique().tolist(),
+            "average_accuracy": df["accuracy"].mean(),
+            "best_accuracy": df["accuracy"].max(),
+            "average_training_time": df["training_time"].mean(),
+            "total_training_time": df["training_time"].sum(),
+            "latest_training": (
+                df["timestamp"].max().isoformat() if not df.empty else None
+            ),
         }
 
         # 按算法分组统计
-        algorithm_stats = df.groupby('algorithm').agg({
-            'accuracy': ['mean', 'max', 'count'],
-            'training_time': 'mean'
-        }).round(4)
+        algorithm_stats = (
+            df.groupby("algorithm")
+            .agg({"accuracy": ["mean", "max", "count"], "training_time": "mean"})
+            .round(4)
+        )
 
         summary["algorithm_performance"] = algorithm_stats.to_dict()
 
@@ -230,27 +235,33 @@ class PerformanceMonitor:
         """训练过程监控上下文管理器"""
         return TrainingContext(self, algorithm)
 
-    def record_training_result(self, algorithm: str, result: Dict[str, Any],
-                             training_time: float, sample_count: int,
-                             feature_count: int, model_size_mb: float):
+    def record_training_result(
+        self,
+        algorithm: str,
+        result: dict[str, Any],
+        training_time: float,
+        sample_count: int,
+        feature_count: int,
+        model_size_mb: float,
+    ):
         """记录训练结果"""
         metrics = TrainingMetrics(
             algorithm=algorithm,
-            accuracy=result.get('accuracy', 0.0),
-            precision=result.get('precision', 0.0),
-            recall=result.get('recall', 0.0),
-            f1_score=result.get('f1_score', 0.0),
+            accuracy=result.get("accuracy", 0.0),
+            precision=result.get("precision", 0.0),
+            recall=result.get("recall", 0.0),
+            f1_score=result.get("f1_score", 0.0),
             training_time=training_time,
             model_size_mb=model_size_mb,
             sample_count=sample_count,
             feature_count=feature_count,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         self.metrics_collector.record_training_metrics(metrics)
         self.logger.log_training_complete(metrics)
 
-    def get_performance_dashboard(self) -> Dict[str, Any]:
+    def get_performance_dashboard(self) -> dict[str, Any]:
         """获取性能仪表板数据"""
         summary = self.metrics_collector.get_training_summary()
 
@@ -258,19 +269,19 @@ class PerformanceMonitor:
             "timestamp": datetime.now().isoformat(),
             "pipeline_version": "P0-4",
             "training_summary": summary,
-            "system_health": self._get_system_health()
+            "system_health": self._get_system_health(),
         }
 
         return dashboard
 
-    def _get_system_health(self) -> Dict[str, str]:
+    def _get_system_health(self) -> dict[str, str]:
         """获取系统健康状态"""
         try:
             import psutil
 
             cpu_percent = psutil.cpu_percent()
             memory_percent = psutil.virtual_memory().percent
-            disk_percent = psutil.disk_usage('/').percent
+            disk_percent = psutil.disk_usage("/").percent
 
             # 简单的健康评估
             if cpu_percent < 70 and memory_percent < 80 and disk_percent < 90:
@@ -284,7 +295,7 @@ class PerformanceMonitor:
                 "status": health_status,
                 "cpu_usage": f"{cpu_percent:.1f}%",
                 "memory_usage": f"{memory_percent:.1f}%",
-                "disk_usage": f"{disk_percent:.1f}%"
+                "disk_usage": f"{disk_percent:.1f}%",
             }
 
         except ImportError:
@@ -292,7 +303,7 @@ class PerformanceMonitor:
                 "status": "unknown",
                 "cpu_usage": "N/A",
                 "memory_usage": "N/A",
-                "disk_usage": "N/A"
+                "disk_usage": "N/A",
             }
 
 
@@ -324,9 +335,7 @@ class TrainingContext:
         training_time = time.time() - self.start_time
 
         if exc_type is not None:
-            self.monitor.logger.log_error(
-                exc_val, f"训练失败 - 算法: {self.algorithm}"
-            )
+            self.monitor.logger.log_error(exc_val, f"训练失败 - 算法: {self.algorithm}")
         else:
             self.monitor.logger.log_info(
                 f"训练上下文结束 - 算法: {self.algorithm}, "

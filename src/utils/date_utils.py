@@ -152,7 +152,7 @@ class DateUtils:
     ) -> Optional[int]:
         """计算年龄."""
         # 验证输入参数
-        if birth_date is None or not isinstance(birth_date, (dt_datetime, date)):
+        if birth_date is None or not isinstance(birth_date, dt_datetime | date):
             return None
 
         if isinstance(birth_date, dt_datetime):
@@ -161,7 +161,7 @@ class DateUtils:
         if current_date is None:
             today = date.today()
         else:
-            if not isinstance(current_date, (dt_datetime, date)):
+            if not isinstance(current_date, dt_datetime | date):
                 return None
             if isinstance(current_date, dt_datetime):
                 today = current_date.date()
@@ -266,7 +266,7 @@ class DateUtils:
     @staticmethod
     def get_month_start(dt: dt_datetime) -> Optional[dt_datetime]:
         """获取月份开始日期."""
-        if not isinstance(dt, (dt_datetime, date)):
+        if not isinstance(dt, dt_datetime | date):
             return None
         if isinstance(dt, date):
             dt = dt_datetime(dt.year, dt.month, dt.day)
@@ -275,7 +275,7 @@ class DateUtils:
     @staticmethod
     def get_month_end(dt: dt_datetime) -> Optional[dt_datetime]:
         """获取月份结束日期."""
-        if not isinstance(dt, (dt_datetime, date)):
+        if not isinstance(dt, dt_datetime | date):
             return None
         if isinstance(dt, date):
             dt = dt_datetime(dt.year, dt.month, dt.day)
@@ -287,8 +287,8 @@ class DateUtils:
     @staticmethod
     def days_between(dt1: dt_datetime, dt2: dt_datetime) -> Optional[int]:
         """计算两个日期之间的天数."""
-        if not isinstance(dt1, (dt_datetime, date)) or not isinstance(
-            dt2, (dt_datetime, date)
+        if not isinstance(dt1, dt_datetime | date) or not isinstance(
+            dt2, dt_datetime | date
         ):
             return None
         if isinstance(dt1, date):
@@ -300,7 +300,7 @@ class DateUtils:
     @staticmethod
     def format_duration(seconds: int) -> str:
         """格式化时间长度为人类可读格式."""
-        if not isinstance(seconds, (int, float)):
+        if not isinstance(seconds, int | float):
             return "0秒"
 
         try:

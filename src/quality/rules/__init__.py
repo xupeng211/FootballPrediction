@@ -9,9 +9,4 @@ from .range_rule import RangeRule
 from .type_rule import TypeRule
 from .logical_relation_rule import LogicalRelationRule
 
-__all__ = [
-    "MissingValueRule",
-    "RangeRule",
-    "TypeRule",
-    "LogicalRelationRule"
-]
+__all__ = ["MissingValueRule", "RangeRule", "TypeRule", "LogicalRelationRule"]

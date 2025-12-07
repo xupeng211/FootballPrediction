@@ -36,7 +36,9 @@ class BaseStrategy(ABC):
         self.logger = logging.getLogger(f"{__name__}.{name}")
 
     @abstractmethod
-    async def decide(self, match_data: Dict[str, Any], odds_data: Dict[str, Any]) -> BetDecision:
+    async def decide(
+        self, match_data: dict[str, Any], odds_data: dict[str, Any]
+    ) -> BetDecision:
         """
         根据比赛数据和赔率做出下注决策
 
@@ -65,7 +67,9 @@ class BaseStrategy(ABC):
         except (ZeroDivisionError, ValueError):
             return 0.0
 
-    def _decimal_from_value(self, value: Any, default: Decimal = Decimal("1.0")) -> Decimal:
+    def _decimal_from_value(
+        self, value: Any, default: Decimal = Decimal("1.0")
+    ) -> Decimal:
         """
         安全地将值转换为Decimal
 
@@ -81,7 +85,9 @@ class BaseStrategy(ABC):
                 return default
             return Decimal(str(value))
         except (ValueError, TypeError):
-            self.logger.warning(f"Cannot convert {value} to Decimal, using default {default}")
+            self.logger.warning(
+                f"Cannot convert {value} to Decimal, using default {default}"
+            )
             return default
 
 
@@ -104,7 +110,9 @@ class SimpleValueStrategy(BaseStrategy):
         self.value_threshold = value_threshold
         self.min_confidence = min_confidence
 
-    async def decide(self, match_data: Dict[str, Any], odds_data: Dict[str, Any]) -> BetDecision:
+    async def decide(
+        self, match_data: dict[str, Any], odds_data: dict[str, Any]
+    ) -> BetDecision:
         """
         做出下注决策
 
@@ -130,12 +138,16 @@ class SimpleValueStrategy(BaseStrategy):
         # 计算价值边际并找到最佳下注选择
         best_decision = self._find_best_value_bet(match_id, model_probs, odds)
 
-        self.logger.debug(f"Strategy decision for match {match_id}: {best_decision.bet_type.value}, "
-                         f"value_edge: {best_decision.value_edge:.3f}, confidence: {best_decision.confidence:.3f}")
+        self.logger.debug(
+            f"Strategy decision for match {match_id}: {best_decision.bet_type.value}, "
+            f"value_edge: {best_decision.value_edge:.3f}, confidence: {best_decision.confidence:.3f}"
+        )
 
         return best_decision
 
-    def _extract_model_probabilities(self, match_data: Dict[str, Any]) -> Optional[Dict[str, float]]:
+    def _extract_model_probabilities(
+        self, match_data: dict[str, Any]
+    ) -> Optional[dict[str, float]]:
         """
         提取模型预测概率
 
@@ -146,16 +158,14 @@ class SimpleValueStrategy(BaseStrategy):
             概率字典或None
         """
         # 尝试从不同字段提取概率
-        prob_sources = [
-            "predictions",  # 假设数据格式
-            "model_probs",
-            "probabilities"
-        ]
+        prob_sources = ["predictions", "model_probs", "probabilities"]  # 假设数据格式
 
         for source in prob_sources:
             if source in match_data and match_data[source]:
                 probs = match_data[source]
-                if isinstance(probs, dict) and all(k in probs for k in ["home_win", "draw", "away_win"]):
+                if isinstance(probs, dict) and all(
+                    k in probs for k in ["home_win", "draw", "away_win"]
+                ):
                     return probs
 
         # 如果没有找到标准格式，尝试从预测结果中提取
@@ -163,13 +173,15 @@ class SimpleValueStrategy(BaseStrategy):
             return {
                 "home_win": float(match_data.get("home_win_prob", 0)),
                 "draw": float(match_data.get("draw_prob", 0)),
-                "away_win": float(match_data.get("away_win_prob", 0))
+                "away_win": float(match_data.get("away_win_prob", 0)),
             }
 
-        self.logger.warning(f"Cannot extract model probabilities from match data: {list(match_data.keys())}")
+        self.logger.warning(
+            f"Cannot extract model probabilities from match data: {list(match_data.keys())}"
+        )
         return None
 
-    def _extract_odds(self, odds_data: Dict[str, Any]) -> Optional[Dict[str, Decimal]]:
+    def _extract_odds(self, odds_data: dict[str, Any]) -> Optional[dict[str, Decimal]]:
         """
         提取赔率
 
@@ -180,20 +192,18 @@ class SimpleValueStrategy(BaseStrategy):
             赔率字典或None
         """
         # 尝试从不同格式提取赔率
-        odds_sources = [
-            "odds",
-            "betting_odds",
-            "market_odds"
-        ]
+        odds_sources = ["odds", "betting_odds", "market_odds"]
 
         for source in odds_sources:
             if source in odds_data and odds_data[source]:
                 odds = odds_data[source]
-                if isinstance(odds, dict) and all(k in odds for k in ["home", "draw", "away"]):
+                if isinstance(odds, dict) and all(
+                    k in odds for k in ["home", "draw", "away"]
+                ):
                     return {
                         "home": self._decimal_from_value(odds["home"]),
                         "draw": self._decimal_from_value(odds["draw"]),
-                        "away": self._decimal_from_value(odds["away"])
+                        "away": self._decimal_from_value(odds["away"]),
                     }
 
         # 如果找到具体的赔率字段
@@ -201,14 +211,15 @@ class SimpleValueStrategy(BaseStrategy):
             return {
                 "home": self._decimal_from_value(odds_data.get("home_odds")),
                 "draw": self._decimal_from_value(odds_data.get("draw_odds")),
-                "away": self._decimal_from_value(odds_data.get("away_odds"))
+                "away": self._decimal_from_value(odds_data.get("away_odds")),
             }
 
         self.logger.warning(f"Cannot extract odds from data: {list(odds_data.keys())}")
         return None
 
-    def _find_best_value_bet(self, match_id: int, model_probs: Dict[str, float],
-                           odds: Dict[str, Decimal]) -> BetDecision:
+    def _find_best_value_bet(
+        self, match_id: int, model_probs: dict[str, float], odds: dict[str, Decimal]
+    ) -> BetDecision:
         """
         找到最有价值的下注选择
 
@@ -244,12 +255,16 @@ class SimpleValueStrategy(BaseStrategy):
             value_edge = model_prob - implied_prob
 
             # 计算置信度
-            confidence = self._calculate_confidence(model_prob, implied_prob, value_edge)
+            confidence = self._calculate_confidence(
+                model_prob, implied_prob, value_edge
+            )
 
             # 检查是否满足策略条件
-            if (value_edge >= self.value_threshold and
-                confidence >= self.min_confidence and
-                value_edge > best_value):
+            if (
+                value_edge >= self.value_threshold
+                and confidence >= self.min_confidence
+                and value_edge > best_value
+            ):
 
                 best_decision = BetDecision(
                     match_id=match_id,
@@ -258,7 +273,7 @@ class SimpleValueStrategy(BaseStrategy):
                     confidence=confidence,
                     implied_probability=implied_prob,
                     model_probability=model_prob,
-                    odds=odd
+                    odds=odd,
                 )
                 best_value = value_edge
 
@@ -268,7 +283,9 @@ class SimpleValueStrategy(BaseStrategy):
 
         return best_decision
 
-    def _calculate_confidence(self, model_prob: float, implied_prob: float, value_edge: float) -> float:
+    def _calculate_confidence(
+        self, model_prob: float, implied_prob: float, value_edge: float
+    ) -> float:
         """
         计算策略置信度
 
@@ -291,7 +308,9 @@ class SimpleValueStrategy(BaseStrategy):
 
         return min(base_confidence + value_confidence + divergence_confidence, 1.0)
 
-    def _create_skip_decision(self, match_id: int, odds_data: Dict[str, Any]) -> BetDecision:
+    def _create_skip_decision(
+        self, match_id: int, odds_data: dict[str, Any]
+    ) -> BetDecision:
         """
         创建跳过下注的决策
 
@@ -314,7 +333,9 @@ class SimpleValueStrategy(BaseStrategy):
         avg_odds = Decimal("2.0")  # 默认值
         if odds_values:
             # 过滤有效赔率并计算平均
-            valid_odds = [Decimal(str(o)) for o in odds_values if o and Decimal(str(o)) > 1]
+            valid_odds = [
+                Decimal(str(o)) for o in odds_values if o and Decimal(str(o)) > 1
+            ]
             if valid_odds:
                 avg_odds = sum(valid_odds) / len(valid_odds)
 
@@ -325,7 +346,7 @@ class SimpleValueStrategy(BaseStrategy):
             confidence=0.0,
             implied_probability=0.5,
             model_probability=0.5,
-            odds=avg_odds
+            odds=avg_odds,
         )
 
 
@@ -378,7 +399,7 @@ class StrategyFactory:
     _strategies = {
         "simple_value": SimpleValueStrategy,
         "conservative": ConservativeStrategy,
-        "aggressive": AggressiveStrategy
+        "aggressive": AggressiveStrategy,
     }
 
     @classmethod
@@ -394,7 +415,9 @@ class StrategyFactory:
             策略实例
         """
         if strategy_type not in cls._strategies:
-            raise ValueError(f"Unknown strategy type: {strategy_type}. Available: {list(cls._strategies.keys())}")
+            raise ValueError(
+                f"Unknown strategy type: {strategy_type}. Available: {list(cls._strategies.keys())}"
+            )
 
         strategy_class = cls._strategies[strategy_type]
         return strategy_class(**kwargs)

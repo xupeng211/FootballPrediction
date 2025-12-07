@@ -11,10 +11,12 @@ from typing import Any, Dict
 # 尝试导入 loguru，如果不可用则回退到标准库
 try:
     from loguru import logger
+
     LOGURU_AVAILABLE = True
 except ImportError:
     LOGURU_AVAILABLE = False
     import logging as _logging
+
     logger = _logging.getLogger(__name__)
 
 # 导入 Request ID 功能
@@ -40,10 +42,11 @@ class StructuredFormatter:
     def _get_env() -> str:
         """获取当前环境"""
         import os
+
         env = os.getenv("ENV", "development").lower()
         return env
 
-    def _serialize_record(self, record: dict) -> Dict[str, Any]:
+    def _serialize_record(self, record: dict) -> dict[str, Any]:
         """将 loguru 记录序列化为结构化字典"""
         extra = record.get("extra", {})
 
@@ -86,14 +89,17 @@ class StructuredFormatter:
             return json.dumps(structured_record, ensure_ascii=False, default=str)
         except Exception as e:
             # 如果 JSON 序列化失败，回退到简单格式
-            return json.dumps({
-                "timestamp": record["time"].isoformat(),
-                "level": record["level"].name,
-                "service": self.service_name,
-                "message": f"[LOG_SERIALIZATION_ERROR] {record['message']}",
-                "error": str(e),
-                "original": str(record),
-            }, ensure_ascii=False)
+            return json.dumps(
+                {
+                    "timestamp": record["time"].isoformat(),
+                    "level": record["level"].name,
+                    "service": self.service_name,
+                    "message": f"[LOG_SERIALIZATION_ERROR] {record['message']}",
+                    "error": str(e),
+                    "original": str(record),
+                },
+                ensure_ascii=False,
+            )
 
     def color_formatter(self, record: dict) -> str:
         """彩色文本格式化器（开发环境使用）"""
@@ -296,7 +302,7 @@ class LoggingConfig:
                         "WARNING": "yellow",
                         "ERROR": "red",
                         "CRITICAL": "red,bg_white",
-                    }
+                    },
                 )
             except ImportError:
                 # 回退到标准格式化器
@@ -310,7 +316,7 @@ class LoggingConfig:
 
                 formatter = RequestIDFormatter(
                     "%(asctime)s - %(levelname)s - %(request_id)s[%(name)s] %(message)s",
-                    datefmt="%Y-%m-%d %H:%M:%S"
+                    datefmt="%Y-%m-%d %H:%M:%S",
                 )
 
         # 配置根日志记录器
@@ -331,7 +337,7 @@ class LoggingConfig:
             self._logs_dir / "app.log",
             maxBytes=50 * 1024 * 1024,  # 50MB
             backupCount=5,
-            encoding="utf-8"
+            encoding="utf-8",
         )
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
@@ -341,7 +347,7 @@ class LoggingConfig:
             self._logs_dir / "error.log",
             maxBytes=50 * 1024 * 1024,  # 50MB
             backupCount=5,
-            encoding="utf-8"
+            encoding="utf-8",
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(formatter)
@@ -361,8 +367,7 @@ _logging_config: LoggingConfig | None = None
 
 
 def setup_logging(
-    service_name: str = "football-prediction",
-    log_level: str = "INFO"
+    service_name: str = "football-prediction", log_level: str = "INFO"
 ) -> None:
     """设置应用日志配置
 
@@ -391,6 +396,7 @@ def get_logger(name: str = None) -> "logger":
     else:
         # 回退到标准库
         import logging
+
         if name:
             return logging.getLogger(name)
         return logging.getLogger()

@@ -28,25 +28,31 @@ class FeatureExtractor:
 
     # 必需的基础特征（从数据库获取）
     BASE_FEATURES = [
-        'home_xg', 'away_xg',
-        'home_possession', 'away_possession',
-        'home_shots', 'away_shots',
-        'home_shots_on_target', 'away_shots_on_target'
+        "home_xg",
+        "away_xg",
+        "home_possession",
+        "away_possession",
+        "home_shots",
+        "away_shots",
+        "home_shots_on_target",
+        "away_shots_on_target",
     ]
 
     # 衍生特征（通过特征工程生成）
     DERIVED_FEATURES = [
-        'xg_difference', 'xg_ratio',
-        'possession_difference',
-        'shots_difference',
-        'home_shot_efficiency', 'away_shot_efficiency'
+        "xg_difference",
+        "xg_ratio",
+        "possession_difference",
+        "shots_difference",
+        "home_shot_efficiency",
+        "away_shot_efficiency",
     ]
 
     # 完整特征列表
     ALL_FEATURES = BASE_FEATURES + DERIVED_FEATURES
 
     @staticmethod
-    def extract_features_from_match(match_data: Dict[str, Any]) -> Dict[str, float]:
+    def extract_features_from_match(match_data: dict[str, Any]) -> dict[str, float]:
         """
         从比赛数据中提取特征
 
@@ -63,13 +69,13 @@ class FeatureExtractor:
             value = match_data.get(feature)
             if value is None or pd.isna(value):
                 # 使用默认值
-                if 'xg' in feature:
+                if "xg" in feature:
                     value = 1.2  # 默认xG值
-                elif 'possession' in feature:
+                elif "possession" in feature:
                     value = 50.0  # 默认控球率
-                elif 'shots' in feature and 'on_target' not in feature:
+                elif "shots" in feature and "on_target" not in feature:
                     value = 10  # 默认射门数
-                elif 'shots_on_target' in feature:
+                elif "shots_on_target" in feature:
                     value = 3  # 默认射正数
                 else:
                     value = 0.0
@@ -80,20 +86,26 @@ class FeatureExtractor:
 
         # 2. 生成衍生特征（与训练脚本逻辑一致）
         # xG差值
-        features['xg_difference'] = features['home_xg'] - features['away_xg']
+        features["xg_difference"] = features["home_xg"] - features["away_xg"]
 
         # xG比率
-        features['xg_ratio'] = features['home_xg'] / (features['away_xg'] + 0.001)
+        features["xg_ratio"] = features["home_xg"] / (features["away_xg"] + 0.001)
 
         # 控球率差值
-        features['possession_difference'] = features['home_possession'] - features['away_possession']
+        features["possession_difference"] = (
+            features["home_possession"] - features["away_possession"]
+        )
 
         # 射门差值
-        features['shots_difference'] = features['home_shots'] - features['away_shots']
+        features["shots_difference"] = features["home_shots"] - features["away_shots"]
 
         # 射门效率
-        features['home_shot_efficiency'] = features['home_shots_on_target'] / (features['home_shots'] + 0.001)
-        features['away_shot_efficiency'] = features['away_shots_on_target'] / (features['away_shots'] + 0.001)
+        features["home_shot_efficiency"] = features["home_shots_on_target"] / (
+            features["home_shots"] + 0.001
+        )
+        features["away_shot_efficiency"] = features["away_shots_on_target"] / (
+            features["away_shots"] + 0.001
+        )
 
         return features
 
@@ -120,13 +132,13 @@ class FeatureExtractor:
             logger.warning(f"DataFrame中缺少基础特征: {missing_features}")
             # 为缺失特征添加默认值
             for feature in missing_features:
-                if 'xg' in feature:
+                if "xg" in feature:
                     result_df[feature] = 1.2
-                elif 'possession' in feature:
+                elif "possession" in feature:
                     result_df[feature] = 50.0
-                elif 'shots' in feature and 'on_target' not in feature:
+                elif "shots" in feature and "on_target" not in feature:
                     result_df[feature] = 10
-                elif 'shots_on_target' in feature:
+                elif "shots_on_target" in feature:
                     result_df[feature] = 3
                 else:
                     result_df[feature] = 0.0
@@ -140,26 +152,34 @@ class FeatureExtractor:
 
         # 生成衍生特征
         # xG差值
-        result_df['xg_difference'] = result_df['home_xg'] - result_df['away_xg']
+        result_df["xg_difference"] = result_df["home_xg"] - result_df["away_xg"]
 
         # xG比率
-        result_df['xg_ratio'] = result_df['home_xg'] / (result_df['away_xg'] + 0.001)
+        result_df["xg_ratio"] = result_df["home_xg"] / (result_df["away_xg"] + 0.001)
 
         # 控球率差值
-        result_df['possession_difference'] = result_df['home_possession'] - result_df['away_possession']
+        result_df["possession_difference"] = (
+            result_df["home_possession"] - result_df["away_possession"]
+        )
 
         # 射门差值
-        result_df['shots_difference'] = result_df['home_shots'] - result_df['away_shots']
+        result_df["shots_difference"] = (
+            result_df["home_shots"] - result_df["away_shots"]
+        )
 
         # 射门效率
-        result_df['home_shot_efficiency'] = result_df['home_shots_on_target'] / (result_df['home_shots'] + 0.001)
-        result_df['away_shot_efficiency'] = result_df['away_shots_on_target'] / (result_df['away_shots'] + 0.001)
+        result_df["home_shot_efficiency"] = result_df["home_shots_on_target"] / (
+            result_df["home_shots"] + 0.001
+        )
+        result_df["away_shot_efficiency"] = result_df["away_shots_on_target"] / (
+            result_df["away_shots"] + 0.001
+        )
 
         logger.info(f"特征工程完成，总特征数: {len(result_df.columns)}")
         return result_df
 
     @staticmethod
-    def validate_features(features: Dict[str, float]) -> Dict[str, Any]:
+    def validate_features(features: dict[str, float]) -> dict[str, Any]:
         """
         验证特征数据的有效性
 
@@ -173,7 +193,7 @@ class FeatureExtractor:
             "is_valid": True,
             "missing_features": [],
             "invalid_features": [],
-            "warnings": []
+            "warnings": [],
         }
 
         # 检查必需特征
@@ -190,23 +210,33 @@ class FeatureExtractor:
                 continue
 
             # 检查数值范围
-            if 'possession' in feature:
+            if "possession" in feature:
                 if not (0 <= value <= 100):
-                    validation_result["warnings"].append(f"{feature}: 控球率应在0-100之间，当前值: {value}")
-            elif 'efficiency' in feature:
+                    validation_result["warnings"].append(
+                        f"{feature}: 控球率应在0-100之间，当前值: {value}"
+                    )
+            elif "efficiency" in feature:
                 if not (0 <= value <= 1):
-                    validation_result["warnings"].append(f"{feature}: 效率应在0-1之间，当前值: {value}")
-            elif 'xg' in feature:
+                    validation_result["warnings"].append(
+                        f"{feature}: 效率应在0-1之间，当前值: {value}"
+                    )
+            elif "xg" in feature:
                 if value < 0 or value > 10:
-                    validation_result["warnings"].append(f"{feature}: xG值异常，当前值: {value}")
-            elif 'shots' in feature:
+                    validation_result["warnings"].append(
+                        f"{feature}: xG值异常，当前值: {value}"
+                    )
+            elif "shots" in feature:
                 if value < 0 or value > 50:
-                    validation_result["warnings"].append(f"{feature}: 射门数异常，当前值: {value}")
+                    validation_result["warnings"].append(
+                        f"{feature}: 射门数异常，当前值: {value}"
+                    )
 
         return validation_result
 
     @staticmethod
-    def get_feature_vector(features: Dict[str, float], feature_order: Optional[List[str]] = None) -> List[float]:
+    def get_feature_vector(
+        features: dict[str, float], feature_order: Optional[list[str]] = None
+    ) -> list[float]:
         """
         将特征字典转换为特征向量
 
@@ -226,13 +256,13 @@ class FeatureExtractor:
                 feature_vector.append(float(features[feature]))
             else:
                 # 缺失特征使用默认值
-                if 'efficiency' in feature:
+                if "efficiency" in feature:
                     feature_vector.append(0.3)
-                elif 'difference' in feature or 'ratio' in feature:
+                elif "difference" in feature or "ratio" in feature:
                     feature_vector.append(0.0)
-                elif 'possession' in feature:
+                elif "possession" in feature:
                     feature_vector.append(50.0)
-                elif 'shots' in feature:
+                elif "shots" in feature:
                     feature_vector.append(10)
                 else:
                     feature_vector.append(1.0)
@@ -242,7 +272,9 @@ class FeatureExtractor:
         return feature_vector
 
     @staticmethod
-    def create_feature_dataframe(feature_dicts: List[Dict[str, float]], feature_order: Optional[List[str]] = None) -> pd.DataFrame:
+    def create_feature_dataframe(
+        feature_dicts: list[dict[str, float]], feature_order: Optional[list[str]] = None
+    ) -> pd.DataFrame:
         """
         从特征字典列表创建DataFrame
 
@@ -258,20 +290,20 @@ class FeatureExtractor:
 
         # 确保所有特征字典都有相同的特征
         standardized_dicts = []
-        for i, feature_dict in enumerate(feature_dicts):
+        for _i, feature_dict in enumerate(feature_dicts):
             standardized_dict = {}
             for feature in feature_order:
                 if feature in feature_dict:
                     standardized_dict[feature] = feature_dict[feature]
                 else:
                     # 使用默认值
-                    if 'efficiency' in feature:
+                    if "efficiency" in feature:
                         standardized_dict[feature] = 0.3
-                    elif 'difference' in feature or 'ratio' in feature:
+                    elif "difference" in feature or "ratio" in feature:
                         standardized_dict[feature] = 0.0
-                    elif 'possession' in feature:
+                    elif "possession" in feature:
                         standardized_dict[feature] = 50.0
-                    elif 'shots' in feature:
+                    elif "shots" in feature:
                         standardized_dict[feature] = 10
                     else:
                         standardized_dict[feature] = 1.0
@@ -281,7 +313,7 @@ class FeatureExtractor:
         return pd.DataFrame(standardized_dicts)
 
     @staticmethod
-    def get_default_features() -> Dict[str, float]:
+    def get_default_features() -> dict[str, float]:
         """
         获取默认特征值
 
@@ -290,19 +322,25 @@ class FeatureExtractor:
         """
         return {
             # 基础特征默认值
-            "home_xg": 1.5, "away_xg": 1.2,
-            "home_possession": 50.0, "away_possession": 50.0,
-            "home_shots": 12, "away_shots": 10,
-            "home_shots_on_target": 4, "away_shots_on_target": 3,
+            "home_xg": 1.5,
+            "away_xg": 1.2,
+            "home_possession": 50.0,
+            "away_possession": 50.0,
+            "home_shots": 12,
+            "away_shots": 10,
+            "home_shots_on_target": 4,
+            "away_shots_on_target": 3,
             # 衍生特征默认值
-            "xg_difference": 0.3, "xg_ratio": 1.25,
+            "xg_difference": 0.3,
+            "xg_ratio": 1.25,
             "possession_difference": 0.0,
             "shots_difference": 2,
-            "home_shot_efficiency": 0.33, "away_shot_efficiency": 0.30,
+            "home_shot_efficiency": 0.33,
+            "away_shot_efficiency": 0.30,
         }
 
     @staticmethod
-    def get_feature_descriptions() -> Dict[str, str]:
+    def get_feature_descriptions() -> dict[str, str]:
         """
         获取特征描述
 

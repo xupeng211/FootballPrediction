@@ -58,7 +58,7 @@ class Trainer:
         self.model_registry = model_registry
 
         # 训练历史
-        self.training_history: List[Dict[str, Any]] = []
+        self.training_history: list[dict[str, Any]] = []
 
         # 支持的算法
         self._algorithms = {
@@ -74,8 +74,8 @@ class Trainer:
         y: pd.Series,
         algorithm: Optional[str] = None,
         hyperparameter_tuning: bool = None,
-        validation_data: Optional[Tuple[pd.DataFrame, pd.Series]] = None,
-    ) -> Dict[str, Any]:
+        validation_data: Optional[tuple[pd.DataFrame, pd.Series]] = None,
+    ) -> dict[str, Any]:
         """
         训练模型.
 
@@ -141,12 +141,16 @@ class Trainer:
                 "data_shape": X.shape,
                 "hyperparameter_tuning": hyperparameter_tuning,
                 "metrics": training_metrics,
-                "model_params": model.get_params() if hasattr(model, "get_params") else {},
+                "model_params": (
+                    model.get_params() if hasattr(model, "get_params") else {}
+                ),
             }
 
             self.training_history.append(training_record)
 
-            logger.info(f"Training completed in {training_record['training_time']:.2f}s")
+            logger.info(
+                f"Training completed in {training_record['training_time']:.2f}s"
+            )
             logger.info(f"Final metrics: {training_metrics}")
 
             return {
@@ -163,7 +167,9 @@ class Trainer:
     def _validate_input_data(self, X: pd.DataFrame, y: pd.Series) -> None:
         """验证输入数据."""
         if len(X) != len(y):
-            raise ValueError(f"Feature data length ({len(X)}) != target length ({len(y)})")
+            raise ValueError(
+                f"Feature data length ({len(X)}) != target length ({len(y)})"
+            )
 
         if len(X) < self.training_config.batch_size:
             logger.warning(
@@ -182,7 +188,7 @@ class Trainer:
         X_val: pd.DataFrame,
         y_val: pd.Series,
         hyperparameter_tuning: bool,
-    ) -> Tuple[Any, Dict[str, Any]]:
+    ) -> tuple[Any, dict[str, Any]]:
         """训练XGBoost模型."""
         base_params = self.model_config.xgboost_params.copy()
 
@@ -222,19 +228,23 @@ class Trainer:
                 X_train,
                 y_train,
                 eval_set=eval_set,
-                early_stopping_rounds=self.model_config.early_stopping_rounds
-                if self.model_config.early_stopping
-                else None,
+                early_stopping_rounds=(
+                    self.model_config.early_stopping_rounds
+                    if self.model_config.early_stopping
+                    else None
+                ),
                 verbose=False,
             )
 
         # 验证集指标
-        y_pred = best_model.predict(X_val)
-        y_pred_proba = best_model.predict_proba(X_val)
+        best_model.predict(X_val)
+        best_model.predict_proba(X_val)
 
         metrics = {
             "best_params": best_params,
-            "feature_importance": dict(zip(X_train.columns, best_model.feature_importances_)),
+            "feature_importance": dict(
+                zip(X_train.columns, best_model.feature_importances_, strict=False)
+            ),
             "n_estimators": best_model.n_estimators,
             "best_iteration": getattr(best_model, "best_iteration", None),
         }
@@ -255,7 +265,7 @@ class Trainer:
 
     def _evaluate_model(
         self, model: Any, X_test: pd.DataFrame, y_test: pd.Series
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """评估模型."""
         y_pred = model.predict(X_test)
 
@@ -304,7 +314,7 @@ class Trainer:
 
         logger.info(f"Training history saved to {save_path}")
 
-    def get_best_model(self, metric: str = "f1_weighted") -> Optional[Dict[str, Any]]:
+    def get_best_model(self, metric: str = "f1_weighted") -> Optional[dict[str, Any]]:
         """获取历史训练中的最佳模型."""
         if not self.training_history:
             return None
@@ -313,7 +323,12 @@ class Trainer:
         best_score = -float("inf")
 
         for record in self.training_history:
-            score = record["metrics"].get("classification_report", {}).get("weighted avg", {}).get(metric, 0)
+            score = (
+                record["metrics"]
+                .get("classification_report", {})
+                .get("weighted avg", {})
+                .get(metric, 0)
+            )
             if score > best_score:
                 best_score = score
                 best_record = record

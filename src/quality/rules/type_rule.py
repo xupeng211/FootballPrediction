@@ -40,7 +40,7 @@ class TypeRule(TypeRuleProtocol):
         self,
         field_types: Optional[dict[str, type]] = None,
         strict_type_checking: bool = True,
-        allow_type_conversion: bool = True
+        allow_type_conversion: bool = True,
     ):
         """
         初始化数据类型检查规则。
@@ -60,66 +60,52 @@ class TypeRule(TypeRuleProtocol):
             "full_time_score_away": int,
             "half_time_score_home": int,
             "half_time_score_away": int,
-
             # xG相关 - 应该为浮点数
             "xg_home": float,
             "xg_away": float,
             "xg_draw": float,
-
             # 射门相关 - 应该为整数
             "shot_home": int,
             "shot_away": int,
             "shot_on_target_home": int,
             "shot_on_target_away": int,
-
             # 控球率 - 应该为浮点数（百分比）
             "possession_home": float,
             "possession_away": float,
-
             # 角球数 - 应该为整数
             "corners_home": int,
             "corners_away": int,
-
             # 犯规数 - 应该为整数
             "fouls_home": int,
             "fouls_away": int,
-
             # 牌牌数 - 应该为整数
             "cards_yellow_home": int,
             "cards_yellow_away": int,
             "cards_red_home": int,
             "cards_red_away": int,
-
             # 赔率相关 - 应该为浮点数
             "odds_b365_home": float,
             "odds_b365_draw": float,
             "odds_b365_away": float,
-
             # 传球数 - 应该为整数
             "passes_home": int,
             "passes_away": int,
             "passes_accurate_home": int,
             "passes_accurate_away": int,
-
             # 越位数 - 应该为整数
             "crosses_home": int,
             "crosses_away": int,
             "crosses_accurate_home": int,
             "crosses_accurate_away": int,
-
             # 比赛ID - 应该为整数
             "match_id": int,
-
             # 时间戳 - 应该为字符串或数字
             "match_time": str,  # ISO格式字符串
-
             # 比赛状态 - 应该为字符串
             "match_status": str,
-
             # 球队ID - 应该为整数
             "home_team_id": int,
             "away_team_id": int,
-
             # 联赛日 - 应该为字符串或数字
             "match_date": str,
         }
@@ -153,12 +139,10 @@ class TypeRule(TypeRuleProtocol):
                 continue  # 字段缺失由 MissingValueRule 检查
 
             value = features[field_name]
-            type_error = self._check_field_type(
-                field_name, value, expected_type
-            )
+            type_error = self._check_field_type(field_name, value, expected_type)
 
             if type_error:
-                severity = self._determine_severity(type_error)
+                self._determine_severity(type_error)
                 errors.append(type_error)
 
         logger.debug(
@@ -169,10 +153,7 @@ class TypeRule(TypeRuleProtocol):
         return errors
 
     def _check_field_type(
-        self,
-        field_name: str,
-        value: Any,
-        expected_type: type
+        self, field_name: str, value: Any, expected_type: type
     ) -> Optional[str]:
         """
         检查单个字段的数据类型。
@@ -240,20 +221,20 @@ class TypeRule(TypeRuleProtocol):
 
             # 转换到整数
             if target_type is int:
-                if isinstance(value, (int, float)):
+                if isinstance(value, int | float):
                     return int(float(value))
                 elif isinstance(value, str):
                     # 尝试解析字符串为整数
                     stripped_value = value.strip()
                     if stripped_value.isdigit() or (
-                        stripped_value.startswith('-') and stripped_value[1:].isdigit()
+                        stripped_value.startswith("-") and stripped_value[1:].isdigit()
                     ):
                         return int(stripped_value)
                 return None
 
             # 转换到浮点数
             elif target_type is float:
-                if isinstance(value, (int, float)):
+                if isinstance(value, int | float):
                     return float(value)
                 elif isinstance(value, str):
                     stripped_value = value.strip()
@@ -271,13 +252,13 @@ class TypeRule(TypeRuleProtocol):
             elif target_type is bool:
                 if isinstance(value, bool):
                     return value
-                elif isinstance(value, (int, float)):
+                elif isinstance(value, int | float):
                     return bool(value)
                 elif isinstance(value, str):
                     lowered = value.lower().strip()
-                    if lowered in ('true', '1', 'yes', 'on'):
+                    if lowered in ("true", "1", "yes", "on"):
                         return True
-                    elif lowered in ('false', '0', 'no', 'off'):
+                    elif lowered in ("false", "0", "no", "off"):
                         return False
                 return None
 
@@ -297,9 +278,14 @@ class TypeRule(TypeRuleProtocol):
             str: 严重程度
         """
         # 基于字段类型和错误类型确定严重性
-        if any(keyword in error_message.lower() for keyword in ["match_id", "team_id", "score"]):
+        if any(
+            keyword in error_message.lower()
+            for keyword in ["match_id", "team_id", "score"]
+        ):
             return RuleSeverity.HIGH
-        elif any(keyword in error_message.lower() for keyword in ["xg", "odds", "critical"]):
+        elif any(
+            keyword in error_message.lower() for keyword in ["xg", "odds", "critical"]
+        ):
             return RuleSeverity.MEDIUM
         else:
             return RuleSeverity.LOW
@@ -383,9 +369,7 @@ class TypeRule(TypeRuleProtocol):
                         f"字段 '{field_name}' 配置的类型 {expected_type} 不是有效的类型对象"
                     )
             except Exception as e:
-                errors.append(
-                    f"字段 '{field_name}' 类型配置错误: {str(e)}"
-                )
+                errors.append(f"字段 '{field_name}' 类型配置错误: {str(e)}")
 
         return errors
 
@@ -406,7 +390,7 @@ class TypeRule(TypeRuleProtocol):
             "type_mismatches": 0,
             "type_conversions": 0,
             "field_details": {},
-            "errors": []
+            "errors": [],
         }
 
         for field_name, expected_type in self.field_types.items():
@@ -422,7 +406,7 @@ class TypeRule(TypeRuleProtocol):
                 "expected_type": expected_type.__name__,
                 "value": self._format_value(value),
                 "type_match": isinstance(value, expected_type),
-                "can_convert": self._can_convert_type(value, expected_type)
+                "can_convert": self._can_convert_type(value, expected_type),
             }
 
             summary["field_details"][field_name] = field_detail
@@ -444,8 +428,9 @@ class TypeRule(TypeRuleProtocol):
         # 计算合规率
         if summary["checked_fields"] > 0:
             summary["compliance_rate"] = (
-                (summary["type_matches"] + summary["type_conversions"]) /
-                summary["checked_fields"] * 100
+                (summary["type_matches"] + summary["type_conversions"])
+                / summary["checked_fields"]
+                * 100
             )
         else:
             summary["compliance_rate"] = 0

@@ -3,6 +3,7 @@ FotMob 比赛匹配器
 用于将数据库中的 FBref 记录匹配到对应的 FotMob ID
 使用模糊匹配算法处理队名差异
 """
+
 import logging
 from difflib import SequenceMatcher
 import httpx
@@ -35,24 +36,20 @@ class FotmobMatchMatcher:
             "Accept": "application/json, text/plain, */*",
             "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8",
             "Accept-Encoding": "gzip, deflate, br, zstd",
-
             # 浏览器安全头 - 最新 Chrome 指纹
             "sec-ch-ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-ch-ua-arch": '"x86"',
             "sec-ch-ua-bitness": '"64"',
-
             # 来源和引用 - 模拟真实浏览
             "Referer": "https://www.fotmob.com/",
             "Origin": "https://www.fotmob.com",
-
             # Fetch API 相关头
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
             "sec-fetch-user": "?1",
-
             # 连接管理
             "Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1",
@@ -60,7 +57,12 @@ class FotmobMatchMatcher:
 
         # 常见队名映射表（用于标准化队名）
         self.team_name_mappings = {
-            "manchester united": ["man utd", "manchester utd", "man united", "manchester u"],
+            "manchester united": [
+                "man utd",
+                "manchester utd",
+                "man united",
+                "manchester u",
+            ],
             "manchester city": ["man city", "manchester citi", "manchester c"],
             "chelsea": ["chelsea fc", "chelsea football club"],
             "liverpool": ["liverpool fc", "liverpool football club"],
@@ -71,7 +73,9 @@ class FotmobMatchMatcher:
             "bayern munich": ["fc bayern munich", "bayern", "fc bayern"],
         }
 
-    async def find_match_by_fuzzy_match(self, fbref_record: dict[str, Any]) -> Optional[dict[str, Any]]:
+    async def find_match_by_fuzzy_match(
+        self, fbref_record: dict[str, Any]
+    ) -> Optional[dict[str, Any]]:
         """
         通过模糊匹配查找对应的 FotMob 比赛
 
@@ -107,7 +111,10 @@ class FotmobMatchMatcher:
             for match in matches_data["matches"]:
                 similarity = self._calculate_match_similarity(match, fbref_record)
 
-                if similarity > best_similarity and similarity >= self.similarity_threshold:
+                if (
+                    similarity > best_similarity
+                    and similarity >= self.similarity_threshold
+                ):
                     best_similarity = similarity
                     best_match = match
 
@@ -119,12 +126,16 @@ class FotmobMatchMatcher:
                     "similarity_score": best_similarity,
                     "tournament": best_match.get("tournament", {}).get("name", ""),
                     "status": best_match.get("status", {}),
-                    "date": best_match.get("date", "")
+                    "date": best_match.get("date", ""),
                 }
-                logger.info(f"找到匹配: {home_team} vs {away_team} -> {result['home_team']} vs {result['away_team']} (相似度: {best_similarity:.1f}%)")
+                logger.info(
+                    f"找到匹配: {home_team} vs {away_team} -> {result['home_team']} vs {result['away_team']} (相似度: {best_similarity:.1f}%)"
+                )
                 return result
             else:
-                logger.info(f"未找到匹配: {home_team} vs {away_team} (日期: {date_str})")
+                logger.info(
+                    f"未找到匹配: {home_team} vs {away_team} (日期: {date_str})"
+                )
                 return None
 
         except Exception as e:
@@ -144,26 +155,29 @@ class FotmobMatchMatcher:
         url = f"{self.base_url}/matches?date={date_str}"
 
         try:
-            async with httpx.AsyncClient(
-                headers=self.headers,
-                timeout=30.0
-            ) as client:
+            async with httpx.AsyncClient(headers=self.headers, timeout=30.0) as client:
                 logger.info(f"Fetching matches for date: {date_str}")
                 response = await client.get(url)
 
                 if response.status_code == 200:
                     data = response.json()
-                    logger.info(f"Successfully fetched {len(data.get('matches', []))} matches for {date_str}")
+                    logger.info(
+                        f"Successfully fetched {len(data.get('matches', []))} matches for {date_str}"
+                    )
                     return data
                 else:
-                    logger.error(f"HTTP {response.status_code} when fetching matches for {date_str}")
+                    logger.error(
+                        f"HTTP {response.status_code} when fetching matches for {date_str}"
+                    )
                     return None
 
         except Exception as e:
             logger.error(f"Error fetching matches for {date_str}: {str(e)}")
             return None
 
-    def _calculate_match_similarity(self, fotmob_match: dict[str, Any], fbref_record: dict[str, Any]) -> float:
+    def _calculate_match_similarity(
+        self, fotmob_match: dict[str, Any], fbref_record: dict[str, Any]
+    ) -> float:
         """
         计算两场比赛的相似度
 
@@ -221,7 +235,9 @@ class FotmobMatchMatcher:
                 return 100.0
 
             # 使用 difflib 计算相似度
-            similarity_ratio = SequenceMatcher(None, normalized_name1, normalized_name2).ratio()
+            similarity_ratio = SequenceMatcher(
+                None, normalized_name1, normalized_name2
+            ).ratio()
             similarity_score = similarity_ratio * 100
 
             # 检查是否在映射表中有匹配
@@ -253,20 +269,30 @@ class FotmobMatchMatcher:
 
         # 移除常见的足球俱乐部后缀
         suffixes_to_remove = [
-            "football club", "fc", "cf", "soccer club", "sc",
-            "athletic club", "ac", "sports club", "united",
-            "city", "hotspur", "rangers", "celtic"
+            "football club",
+            "fc",
+            "cf",
+            "soccer club",
+            "sc",
+            "athletic club",
+            "ac",
+            "sports club",
+            "united",
+            "city",
+            "hotspur",
+            "rangers",
+            "celtic",
         ]
 
         for suffix in suffixes_to_remove:
             if normalized.endswith(suffix):
-                normalized = normalized[:-len(suffix)].strip()
+                normalized = normalized[: -len(suffix)].strip()
 
         # 移除特殊字符
-        normalized = re.sub(r'[^\w\s]', '', normalized)
+        normalized = re.sub(r"[^\w\s]", "", normalized)
 
         # 合并多个空格
-        normalized = re.sub(r'\s+', ' ', normalized).strip()
+        normalized = re.sub(r"\s+", " ", normalized).strip()
 
         return normalized
 
@@ -285,8 +311,9 @@ class FotmobMatchMatcher:
             name1_variants = [standard_name] + variants
             name2_variants = [standard_name] + variants
 
-            if (name1 in name1_variants and name2 in name2_variants) or \
-               (name2 in name1_variants and name1 in name2_variants):
+            if (name1 in name1_variants and name2 in name2_variants) or (
+                name2 in name1_variants and name1 in name2_variants
+            ):
                 return 30.0  # 映射加分
 
         return 0.0
@@ -304,12 +331,12 @@ class FotmobMatchMatcher:
         """
         try:
             # 如果已经是正确的格式 (YYYYMMDD 字符串)
-            if isinstance(date_input, str) and re.match(r'^\d{8}$', date_input):
+            if isinstance(date_input, str) and re.match(r"^\d{8}$", date_input):
                 return date_input
 
             # 如果是 datetime 对象，直接格式化
-            if hasattr(date_input, 'strftime'):
-                return date_input.strftime('%Y%m%d')
+            if hasattr(date_input, "strftime"):
+                return date_input.strftime("%Y%m%d")
 
             # 确保转换为字符串
             if not isinstance(date_input, str):
@@ -318,30 +345,32 @@ class FotmobMatchMatcher:
                 date_str = date_input
 
             # 处理数据库日期格式: YYYY-MM-DD HH:MM:SS
-            if re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', date_str):
+            if re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", date_str):
                 # 提取日期部分，去掉时间部分
-                return date_str[:10].replace('-', '')
+                return date_str[:10].replace("-", "")
 
             # 处理简单日期格式: YYYY-MM-DD
-            if re.match(r'^\d{4}-\d{2}-\d{2}$', date_str):
-                return date_str.replace('-', '')
+            if re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
+                return date_str.replace("-", "")
 
             # 尝试使用 datetime 解析其他格式 (ISO格式等)
             dt = datetime.fromisoformat(date_str)
-            return dt.strftime('%Y%m%d')
+            return dt.strftime("%Y%m%d")
 
         except Exception as e:
-            logger.error(f"日期格式转换失败: {date_input} (类型: {type(date_input)}) -> {str(e)}")
+            logger.error(
+                f"日期格式转换失败: {date_input} (类型: {type(date_input)}) -> {str(e)}"
+            )
             # 最后的安全处理：尝试转换为字符串并处理
             try:
                 date_str = str(date_input)
                 if len(date_str) >= 10:
-                    return date_str[:10].replace('-', '')
+                    return date_str[:10].replace("-", "")
                 else:
-                    return date_str.replace('-', '')
+                    return date_str.replace("-", "")
             except:
                 # 最后的fallback：返回今天的日期
-                return datetime.now().strftime('%Y%m%d')
+                return datetime.now().strftime("%Y%m%d")
 
     async def health_check(self) -> bool:
         """
@@ -352,13 +381,10 @@ class FotmobMatchMatcher:
         """
         try:
             # 使用今天的日期进行测试
-            today = datetime.now().strftime('%Y%m%d')
+            today = datetime.now().strftime("%Y%m%d")
             test_url = f"{self.base_url}/matches?date={today}"
 
-            async with httpx.AsyncClient(
-                headers=self.headers,
-                timeout=10.0
-            ) as client:
+            async with httpx.AsyncClient(headers=self.headers, timeout=10.0) as client:
                 response = await client.get(test_url)
                 # 不要求 200，只要能连接上就行
                 return response.status_code in [200, 404, 400]
@@ -378,4 +404,6 @@ class FotmobMatchMatcher:
             self.similarity_threshold = threshold
             logger.info(f"Similarity threshold set to {threshold}%")
         else:
-            logger.warning(f"Invalid similarity threshold: {threshold}. Must be between 0 and 100")
+            logger.warning(
+                f"Invalid similarity threshold: {threshold}. Must be between 0 and 100"
+            )

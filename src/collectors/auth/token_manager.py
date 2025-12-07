@@ -27,6 +27,7 @@ import aiohttp
 
 class TokenType(Enum):
     """Token 类型"""
+
     BEARER = "bearer"
     API_KEY = "api_key"
     CUSTOM_HEADER = "custom_header"
@@ -46,9 +47,10 @@ class Token:
         usage_count: 使用次数
         provider: 提供者名称
     """
+
     value: str
     token_type: TokenType
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     expires_at: Optional[float] = None
     created_at: float = field(default_factory=time.monotonic)
     usage_count: int = 0
@@ -82,19 +84,21 @@ class Token:
         """记录令牌使用"""
         self.usage_count += 1
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            'value': self.value[:20] + "..." if len(self.value) > 20 else self.value,  # 隐藏完整token
-            'token_type': self.token_type.value,
-            'headers': self.headers,
-            'expires_at': self.expires_at,
-            'created_at': self.created_at,
-            'usage_count': self.usage_count,
-            'provider': self.provider,
-            'is_expired': self.is_expired,
-            'is_valid': self.is_valid,
-            'ttl': self.ttl,
+            "value": (
+                self.value[:20] + "..." if len(self.value) > 20 else self.value
+            ),  # 隐藏完整token
+            "token_type": self.token_type.value,
+            "headers": self.headers,
+            "expires_at": self.expires_at,
+            "created_at": self.created_at,
+            "usage_count": self.usage_count,
+            "provider": self.provider,
+            "is_expired": self.is_expired,
+            "is_valid": self.is_valid,
+            "ttl": self.ttl,
         }
 
     def __str__(self) -> str:
@@ -150,16 +154,19 @@ class AuthProvider(Protocol):
 
 class AuthenticationError(Exception):
     """认证错误基类"""
+
     pass
 
 
 class TokenExpiredError(AuthenticationError):
     """令牌过期错误"""
+
     pass
 
 
 class TokenRefreshError(AuthenticationError):
     """令牌刷新错误"""
+
     pass
 
 
@@ -192,9 +199,9 @@ class TokenManager:
         self.retry_delay = retry_delay
 
         # 令牌缓存: {provider_name: Token}
-        self.token_cache: Dict[str, Token] = {}
+        self.token_cache: dict[str, Token] = {}
         # 提供者缓存: {provider_name: AuthProvider}
-        self.provider_cache: Dict[str, AuthProvider] = {}
+        self.provider_cache: dict[str, AuthProvider] = {}
         self.lock = asyncio.Lock()
 
     async def register_provider(self, provider: AuthProvider) -> None:
@@ -217,7 +224,9 @@ class TokenManager:
                     print(f"🔑 Registered provider: {provider_name}")
                 except Exception as e:
                     print(f"❌ Failed to register provider {provider_name}: {e}")
-                    raise AuthenticationError(f"Failed to register provider {provider_name}: {e}")
+                    raise AuthenticationError(
+                        f"Failed to register provider {provider_name}: {e}"
+                    )
 
     async def get_token(self, provider_name: str, force_refresh: bool = False) -> Token:
         """
@@ -242,9 +251,11 @@ class TokenManager:
 
             # 检查是否需要刷新
             should_refresh = (
-                force_refresh or
-                not cached_token.is_valid or
-                (cached_token.ttl and cached_token.ttl < self.cache_refresh_threshold)
+                force_refresh
+                or not cached_token.is_valid
+                or (
+                    cached_token.ttl and cached_token.ttl < self.cache_refresh_threshold
+                )
             )
 
             if should_refresh:
@@ -253,7 +264,9 @@ class TokenManager:
                 # 实际实现中应该保存provider引用
                 provider = self._get_provider_by_name(provider_name)
                 if not provider:
-                    raise AuthenticationError(f"Provider {provider_name} not found for refresh")
+                    raise AuthenticationError(
+                        f"Provider {provider_name} not found for refresh"
+                    )
 
                 try:
                     new_token = await self._retry_token_refresh(provider, cached_token)
@@ -264,14 +277,18 @@ class TokenManager:
                     print(f"❌ Failed to refresh token for {provider_name}: {e}")
                     if not cached_token.is_valid:
                         # 缓存的token也无效了，抛出异常
-                        raise TokenRefreshError(f"Failed to refresh token for {provider_name}: {e}")
+                        raise TokenRefreshError(
+                            f"Failed to refresh token for {provider_name}: {e}"
+                        )
                     # 返回旧token（虽然快过期但仍然有效）
                     print(f"⚠️ Using old token for {provider_name} (will expire soon)")
                     return cached_token
             else:
                 cached_token.record_usage()
                 if cached_token.usage_count % 10 == 0:  # 每10次使用打印一次
-                    print(f"📊 Token usage for {provider_name}: {cached_token.usage_count} times")
+                    print(
+                        f"📊 Token usage for {provider_name}: {cached_token.usage_count} times"
+                    )
                 return cached_token
 
     def _get_provider_by_name(self, provider_name: str) -> Optional[AuthProvider]:
@@ -286,7 +303,9 @@ class TokenManager:
         """
         return self.provider_cache.get(provider_name)
 
-    async def _retry_token_refresh(self, provider: AuthProvider, old_token: Optional[Token] = None) -> Token:
+    async def _retry_token_refresh(
+        self, provider: AuthProvider, old_token: Optional[Token] = None
+    ) -> Token:
         """
         重试令牌刷新
 
@@ -310,9 +329,11 @@ class TokenManager:
                 last_error = e
                 print(f"⚠️ Token refresh attempt {attempt + 1} failed: {e}")
                 if attempt < self.max_retry_attempts - 1:
-                    await asyncio.sleep(self.retry_delay * (2 ** attempt))  # 指数退避
+                    await asyncio.sleep(self.retry_delay * (2**attempt))  # 指数退避
 
-        raise TokenRefreshError(f"Token refresh failed after {self.max_retry_attempts} attempts: {last_error}")
+        raise TokenRefreshError(
+            f"Token refresh failed after {self.max_retry_attempts} attempts: {last_error}"
+        )
 
     async def invalidate_token(self, provider_name: str) -> None:
         """
@@ -326,7 +347,9 @@ class TokenManager:
                 del self.token_cache[provider_name]
                 print(f"🗑️ Invalidated token for provider: {provider_name}")
 
-    async def get_token_info(self, provider_name: Optional[str] = None) -> Dict[str, Any]:
+    async def get_token_info(
+        self, provider_name: Optional[str] = None
+    ) -> dict[str, Any]:
         """
         获取令牌信息
 
@@ -344,11 +367,10 @@ class TokenManager:
                     return {"error": f"Provider {provider_name} not found"}
             else:
                 return {
-                    name: token.to_dict()
-                    for name, token in self.token_cache.items()
+                    name: token.to_dict() for name, token in self.token_cache.items()
                 }
 
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """
         获取管理器统计信息
 
@@ -357,18 +379,20 @@ class TokenManager:
         """
         async with self.lock:
             total_providers = len(self.token_cache)
-            valid_tokens = sum(1 for token in self.token_cache.values() if token.is_valid)
+            valid_tokens = sum(
+                1 for token in self.token_cache.values() if token.is_valid
+            )
             expired_tokens = total_providers - valid_tokens
 
             total_usage = sum(token.usage_count for token in self.token_cache.values())
 
             return {
-                'total_providers': total_providers,
-                'valid_tokens': valid_tokens,
-                'expired_tokens': expired_tokens,
-                'total_usage': total_usage,
-                'cache_refresh_threshold': self.cache_refresh_threshold,
-                'default_ttl': self.default_ttl,
+                "total_providers": total_providers,
+                "valid_tokens": valid_tokens,
+                "expired_tokens": expired_tokens,
+                "total_usage": total_usage,
+                "cache_refresh_threshold": self.cache_refresh_threshold,
+                "default_ttl": self.default_ttl,
             }
 
 
@@ -421,14 +445,16 @@ class FotMobAuthProvider:
             token_data = self._extract_token_from_html(html_content)
 
             if not token_data:
-                raise AuthenticationError("Failed to extract token from FotMob homepage")
+                raise AuthenticationError(
+                    "Failed to extract token from FotMob homepage"
+                )
 
             token = Token(
-                value=token_data['value'],
+                value=token_data["value"],
                 token_type=TokenType.CUSTOM_HEADER,
-                headers=token_data['headers'],
+                headers=token_data["headers"],
                 expires_at=time.monotonic() + self.token_ttl,
-                provider=self.provider_name
+                provider=self.provider_name,
             )
 
             print(f"🔑 Obtained FotMob token: {token.value[:20]}...")
@@ -454,7 +480,7 @@ class FotMobAuthProvider:
         try:
             print("🔄 Refreshing FotMob token...")
             new_token = await self.get_token()
-            print(f"✅ FotMob token refreshed successfully")
+            print("✅ FotMob token refreshed successfully")
             return new_token
         except Exception as e:
             print(f"❌ Failed to refresh FotMob token: {e}")
@@ -474,12 +500,12 @@ class FotMobAuthProvider:
             timeout = aiohttp.ClientTimeout(total=self.timeout)
 
             headers = {
-                'User-Agent': self.user_agent,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
+                "User-Agent": self.user_agent,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Accept-Encoding": "gzip, deflate",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
             }
 
             async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -487,12 +513,16 @@ class FotMobAuthProvider:
                     if response.status == 200:
                         return await response.text()
                     else:
-                        raise AuthenticationError(f"HTTP {response.status}: Failed to fetch FotMob homepage")
+                        raise AuthenticationError(
+                            f"HTTP {response.status}: Failed to fetch FotMob homepage"
+                        )
 
         except aiohttp.ClientError as e:
-            raise AuthenticationError(f"Network error while fetching FotMob homepage: {e}")
+            raise AuthenticationError(
+                f"Network error while fetching FotMob homepage: {e}"
+            )
 
-    def _extract_token_from_html(self, html_content: str) -> Optional[Dict[str, Any]]:
+    def _extract_token_from_html(self, html_content: str) -> Optional[dict[str, Any]]:
         """
         从 HTML 内容中提取认证令牌
 
@@ -508,26 +538,32 @@ class FotMobAuthProvider:
 
             # 模拟提取 x-mas header
             x_mas_match = re.search(r'"x-mas":"([^"]+)"', html_content)
-            x_mas_value = x_mas_match.group(1) if x_mas_match else self._generate_mock_x_mas()
+            x_mas_value = (
+                x_mas_match.group(1) if x_mas_match else self._generate_mock_x_mas()
+            )
 
             # 模拟提取 x-foo signature
             x_foo_match = re.search(r'"x-foo":"([^"]+)"', html_content)
-            x_foo_value = x_foo_match.group(1) if x_foo_match else self._generate_mock_x_foo()
+            x_foo_value = (
+                x_foo_match.group(1) if x_foo_match else self._generate_mock_x_foo()
+            )
 
             # 模拟提取 client version
             version_match = re.search(r'"clientVersion":"([^"]+)"', html_content)
-            client_version = version_match.group(1) if version_match else "production:mock_version"
+            client_version = (
+                version_match.group(1) if version_match else "production:mock_version"
+            )
 
             if not x_mas_value or not x_foo_value:
                 print("⚠️ Token extraction incomplete, using mock values")
 
             token_data = {
-                'value': f"{x_mas_value}:{x_foo_value}",
-                'headers': {
-                    'x-mas': x_mas_value,
-                    'x-foo': x_foo_value,
-                    'x-client-version': client_version,
-                }
+                "value": f"{x_mas_value}:{x_foo_value}",
+                "headers": {
+                    "x-mas": x_mas_value,
+                    "x-foo": x_foo_value,
+                    "x-client-version": client_version,
+                },
             }
 
             return token_data
@@ -554,18 +590,18 @@ class FotMobAuthProvider:
         signature = hashlib.sha256(payload).digest()
         return base64.b64encode(signature).decode()[:40]
 
-    def _generate_mock_token_data(self) -> Dict[str, Any]:
+    def _generate_mock_token_data(self) -> dict[str, Any]:
         """生成模拟令牌数据"""
         x_mas = self._generate_mock_x_mas()
         x_foo = self._generate_mock_x_foo()
 
         return {
-            'value': f"{x_mas}:{x_foo}",
-            'headers': {
-                'x-mas': x_mas,
-                'x-foo': x_foo,
-                'x-client-version': "production:mock_version",
-            }
+            "value": f"{x_mas}:{x_foo}",
+            "headers": {
+                "x-mas": x_mas,
+                "x-foo": x_foo,
+                "x-client-version": "production:mock_version",
+            },
         }
 
 
@@ -574,7 +610,9 @@ class MockAuthProvider:
     模拟认证提供者（用于测试）
     """
 
-    def __init__(self, provider_name: str, token_value: str = "mock_token", ttl: float = 300.0):
+    def __init__(
+        self, provider_name: str, token_value: str = "mock_token", ttl: float = 300.0
+    ):
         """
         初始化模拟认证提供者
 
@@ -598,7 +636,7 @@ class MockAuthProvider:
             value=self.token_value,
             token_type=TokenType.BEARER,
             expires_at=time.monotonic() + self.ttl,
-            provider=self.provider_name
+            provider=self.provider_name,
         )
 
     async def refresh_token(self, old_token: Optional[Token] = None) -> Token:
@@ -608,7 +646,7 @@ class MockAuthProvider:
             value=new_value,
             token_type=TokenType.BEARER,
             expires_at=time.monotonic() + self.ttl,
-            provider=self.provider_name
+            provider=self.provider_name,
         )
 
 
@@ -638,9 +676,7 @@ async def close_token_manager():
 
 # 便利函数
 def create_token_manager(
-    default_ttl: float = 3600.0,
-    cache_refresh_threshold: float = 300.0,
-    **kwargs
+    default_ttl: float = 3600.0, cache_refresh_threshold: float = 300.0, **kwargs
 ) -> TokenManager:
     """
     创建令牌管理器的便利函数
@@ -685,18 +721,18 @@ def create_mock_provider(provider_name: str, **kwargs) -> MockAuthProvider:
 
 # 模块导出
 __all__ = [
-    'Token',
-    'TokenType',
-    'AuthProvider',
-    'TokenManager',
-    'FotMobAuthProvider',
-    'MockAuthProvider',
-    'AuthenticationError',
-    'TokenExpiredError',
-    'TokenRefreshError',
-    'get_token_manager',
-    'close_token_manager',
-    'create_token_manager',
-    'create_fotmob_provider',
-    'create_mock_provider',
+    "Token",
+    "TokenType",
+    "AuthProvider",
+    "TokenManager",
+    "FotMobAuthProvider",
+    "MockAuthProvider",
+    "AuthenticationError",
+    "TokenExpiredError",
+    "TokenRefreshError",
+    "get_token_manager",
+    "close_token_manager",
+    "create_token_manager",
+    "create_fotmob_provider",
+    "create_mock_provider",
 ]

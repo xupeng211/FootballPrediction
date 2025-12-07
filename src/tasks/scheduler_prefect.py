@@ -21,13 +21,18 @@ from prefect.deployments import run_deployment
 from prefect.flows import load_flow_from_script
 from prefect.exceptions import ObjectNotFound
 
-from src.orchestration.flows.daily_data_collection_flow import daily_data_collection_flow, manual_data_collection_flow
-from src.orchestration.flows.weekly_model_retraining_flow import weekly_model_retraining_flow, emergency_model_retraining_flow
+from src.orchestration.flows.daily_data_collection_flow import (
+    daily_data_collection_flow,
+    manual_data_collection_flow,
+)
+from src.orchestration.flows.weekly_model_retraining_flow import (
+    weekly_model_retraining_flow,
+    emergency_model_retraining_flow,
+)
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -64,70 +69,72 @@ class PrefectFlowScheduler(Scheduler):
         logger.info("Setting up Prefect Flow Scheduler")
 
         # Daily data collection flow - runs every day at 2 AM UTC
-        self.schedule['daily-data-collection'] = {
-            'task': 'src.tasks.scheduler_prefect.trigger_prefect_flow',
-            'schedule': crontab(minute=0, hour=2),  # 2 AM UTC daily
-            'args': ('daily_data_collection_flow',),
-            'kwargs': {},
-            'options': {
-                'queue': 'scheduler',
-                'priority': 5,
-                'expires': 3600  # 1 hour expiration
-            }
+        self.schedule["daily-data-collection"] = {
+            "task": "src.tasks.scheduler_prefect.trigger_prefect_flow",
+            "schedule": crontab(minute=0, hour=2),  # 2 AM UTC daily
+            "args": ("daily_data_collection_flow",),
+            "kwargs": {},
+            "options": {
+                "queue": "scheduler",
+                "priority": 5,
+                "expires": 3600,  # 1 hour expiration
+            },
         }
 
         # Weekly model retraining flow - runs every Monday at 3 AM UTC
-        self.schedule['weekly-model-retraining'] = {
-            'task': 'src.tasks.scheduler_prefect.trigger_prefect_flow',
-            'schedule': crontab(minute=0, hour=3, day_of_week=1),  # Monday 3 AM UTC
-            'args': ('weekly_model_retraining_flow',),
-            'kwargs': {
-                'lookback_days': 30,
-                'experiment_name': 'weekly_retraining',
-                'force_retrain': False
+        self.schedule["weekly-model-retraining"] = {
+            "task": "src.tasks.scheduler_prefect.trigger_prefect_flow",
+            "schedule": crontab(minute=0, hour=3, day_of_week=1),  # Monday 3 AM UTC
+            "args": ("weekly_model_retraining_flow",),
+            "kwargs": {
+                "lookback_days": 30,
+                "experiment_name": "weekly_retraining",
+                "force_retrain": False,
             },
-            'options': {
-                'queue': 'scheduler',
-                'priority': 8,
-                'expires': 7200  # 2 hour expiration
-            }
+            "options": {
+                "queue": "scheduler",
+                "priority": 8,
+                "expires": 7200,  # 2 hour expiration
+            },
         }
 
         # Emergency retraining check - runs every 6 hours
-        self.schedule['emergency-retraining-check'] = {
-            'task': 'src.tasks.scheduler_prefect.check_model_performance',
-            'schedule': crontab(minute=0, hour='*/6'),  # Every 6 hours
-            'args': (),
-            'kwargs': {},
-            'options': {
-                'queue': 'scheduler',
-                'priority': 9,
-                'expires': 1800  # 30 minute expiration
-            }
+        self.schedule["emergency-retraining-check"] = {
+            "task": "src.tasks.scheduler_prefect.check_model_performance",
+            "schedule": crontab(minute=0, hour="*/6"),  # Every 6 hours
+            "args": (),
+            "kwargs": {},
+            "options": {
+                "queue": "scheduler",
+                "priority": 9,
+                "expires": 1800,  # 30 minute expiration
+            },
         }
 
         # Data quality monitoring - runs every 4 hours
-        self.schedule['data-quality-monitoring'] = {
-            'task': 'src.tasks.scheduler_prefect.monitor_data_quality',
-            'schedule': crontab(minute=0, hour='*/4'),  # Every 4 hours
-            'args': (),
-            'kwargs': {},
-            'options': {
-                'queue': 'scheduler',
-                'priority': 6,
-                'expires': 1200  # 20 minute expiration
-            }
+        self.schedule["data-quality-monitoring"] = {
+            "task": "src.tasks.scheduler_prefect.monitor_data_quality",
+            "schedule": crontab(minute=0, hour="*/4"),  # Every 4 hours
+            "args": (),
+            "kwargs": {},
+            "options": {
+                "queue": "scheduler",
+                "priority": 6,
+                "expires": 1200,  # 20 minute expiration
+            },
         }
 
-        logger.info(f"Scheduler setup complete with {len(self.schedule)} scheduled tasks")
+        logger.info(
+            f"Scheduler setup complete with {len(self.schedule)} scheduled tasks"
+        )
 
     async def trigger_prefect_flow(
         self,
         flow_name: str,
         flow_args: tuple = (),
         flow_kwargs: dict = None,
-        deployment_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        deployment_name: Optional[str] = None,
+    ) -> dict[str, Any]:
         """
         Trigger a Prefect flow execution.
 
@@ -152,27 +159,29 @@ class PrefectFlowScheduler(Scheduler):
             if deployment_name:
                 try:
                     flow_run_id = await run_deployment(
-                        name=deployment_name,
-                        parameters=flow_kwargs,
-                        timeout=30
+                        name=deployment_name, parameters=flow_kwargs, timeout=30
                     )
-                    logger.info(f"Flow triggered via deployment: {deployment_name}, run_id: {flow_run_id}")
+                    logger.info(
+                        f"Flow triggered via deployment: {deployment_name}, run_id: {flow_run_id}"
+                    )
                     return {
                         "status": "success",
                         "flow_name": flow_name,
                         "deployment_name": deployment_name,
                         "flow_run_id": flow_run_id,
-                        "trigger_method": "deployment"
+                        "trigger_method": "deployment",
                     }
                 except ObjectNotFound:
-                    logger.warning(f"Deployment {deployment_name} not found, falling back to direct flow execution")
+                    logger.warning(
+                        f"Deployment {deployment_name} not found, falling back to direct flow execution"
+                    )
 
             # Fallback to direct flow execution
             flow_module_map = {
                 "daily_data_collection_flow": "src.orchestration.flows.daily_data_collection_flow:daily_data_collection_flow",
                 "weekly_model_retraining_flow": "src.orchestration.flows.weekly_model_retraining_flow:weekly_model_retraining_flow",
                 "manual_data_collection_flow": "src.orchestration.flows.daily_data_collection_flow:manual_data_collection_flow",
-                "emergency_model_retraining_flow": "src.orchestration.flows.weekly_model_retraining_flow:emergency_model_retraining_flow"
+                "emergency_model_retraining_flow": "src.orchestration.flows.weekly_model_retraining_flow:emergency_model_retraining_flow",
             }
 
             if flow_name not in flow_module_map:
@@ -185,7 +194,7 @@ class PrefectFlowScheduler(Scheduler):
             flow_run = await client.create_flow_run_from_flow(
                 flow=flow,
                 parameters=flow_kwargs,
-                name=f"scheduled-{flow_name}-{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+                name=f"scheduled-{flow_name}-{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
             )
 
             logger.info(f"Flow triggered directly: {flow_name}, run_id: {flow_run.id}")
@@ -195,7 +204,7 @@ class PrefectFlowScheduler(Scheduler):
                 "flow_name": flow_name,
                 "flow_run_id": str(flow_run.id),
                 "trigger_method": "direct",
-                "flow_url": f"http://localhost:4200/flow-run/{flow_run.id}"
+                "flow_url": f"http://localhost:4200/flow-run/{flow_run.id}",
             }
 
         except Exception as e:
@@ -204,10 +213,10 @@ class PrefectFlowScheduler(Scheduler):
                 "status": "error",
                 "flow_name": flow_name,
                 "error": str(e),
-                "trigger_method": "failed"
+                "trigger_method": "failed",
             }
 
-    async def check_model_performance(self) -> Dict[str, Any]:
+    async def check_model_performance(self) -> dict[str, Any]:
         """
         Check model performance and trigger emergency retraining if needed.
 
@@ -224,7 +233,7 @@ class PrefectFlowScheduler(Scheduler):
             from src.ml.model_performance_monitor import ModelPerformanceMonitor
 
             # Get current model performance
-            inference_service = await get_inference_service()
+            await get_inference_service()
             performance_monitor = ModelPerformanceMonitor()
 
             # Check recent performance
@@ -237,7 +246,11 @@ class PrefectFlowScheduler(Scheduler):
             current_accuracy = performance_data.get("accuracy", 1.0)
 
             needs_retraining = current_accuracy < accuracy_threshold
-            reason = f"Accuracy {current_accuracy:.3f} below threshold {accuracy_threshold}" if needs_retraining else "Performance acceptable"
+            reason = (
+                f"Accuracy {current_accuracy:.3f} below threshold {accuracy_threshold}"
+                if needs_retraining
+                else "Performance acceptable"
+            )
 
             if needs_retraining:
                 logger.warning(f"Triggering emergency retraining: {reason}")
@@ -245,8 +258,8 @@ class PrefectFlowScheduler(Scheduler):
                     "emergency_model_retraining_flow",
                     flow_kwargs={
                         "reason": "performance_degradation",
-                        "lookback_days": 14
-                    }
+                        "lookback_days": 14,
+                    },
                 )
                 result["retraining_triggered"] = True
                 result["retraining_reason"] = reason
@@ -256,20 +269,16 @@ class PrefectFlowScheduler(Scheduler):
                     "status": "success",
                     "retraining_triggered": False,
                     "current_accuracy": current_accuracy,
-                    "reason": reason
+                    "reason": reason,
                 }
 
             return result
 
         except Exception as e:
             logger.error(f"Model performance check failed: {e}")
-            return {
-                "status": "error",
-                "error": str(e),
-                "retraining_triggered": False
-            }
+            return {"status": "error", "error": str(e), "retraining_triggered": False}
 
-    async def monitor_data_quality(self) -> Dict[str, Any]:
+    async def monitor_data_quality(self) -> dict[str, Any]:
         """
         Monitor data quality and trigger data collection if needed.
 
@@ -288,8 +297,7 @@ class PrefectFlowScheduler(Scheduler):
 
             # Run quality checks on recent data
             quality_report = await quality_monitor.run_quality_checks(
-                data_sources=["fotmob", "fbref"],
-                time_window_hours=4
+                data_sources=["fotmob", "fbref"], time_window_hours=4
             )
 
             # Determine if additional data collection is needed
@@ -297,7 +305,11 @@ class PrefectFlowScheduler(Scheduler):
             current_score = quality_report.overall_score
 
             needs_collection = current_score < quality_threshold
-            reason = f"Quality score {current_score:.3f} below threshold {quality_threshold}" if needs_collection else "Data quality acceptable"
+            reason = (
+                f"Quality score {current_score:.3f} below threshold {quality_threshold}"
+                if needs_collection
+                else "Data quality acceptable"
+            )
 
             if needs_collection:
                 logger.warning(f"Triggering additional data collection: {reason}")
@@ -305,7 +317,7 @@ class PrefectFlowScheduler(Scheduler):
                     "manual_data_collection_flow",
                     flow_kwargs={
                         "sources": ["fotmob_fixtures", "fotmob_details", "fbref"]
-                    }
+                    },
                 )
                 result["collection_triggered"] = True
                 result["collection_reason"] = reason
@@ -315,18 +327,14 @@ class PrefectFlowScheduler(Scheduler):
                     "status": "success",
                     "collection_triggered": False,
                     "quality_score": current_score,
-                    "reason": reason
+                    "reason": reason,
                 }
 
             return result
 
         except Exception as e:
             logger.error(f"Data quality monitoring failed: {e}")
-            return {
-                "status": "error",
-                "error": str(e),
-                "collection_triggered": False
-            }
+            return {"status": "error", "error": str(e), "collection_triggered": False}
 
     def close(self):
         """Clean up resources."""
@@ -341,7 +349,7 @@ class PrefectFlowScheduler(Scheduler):
 
 
 # Celery task for triggering Prefect flows
-def trigger_prefect_flow_task(flow_name: str, **kwargs) -> Dict[str, Any]:
+def trigger_prefect_flow_task(flow_name: str, **kwargs) -> dict[str, Any]:
     """
     Celery task to trigger a Prefect flow.
 
@@ -375,14 +383,10 @@ def trigger_prefect_flow_task(flow_name: str, **kwargs) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Failed to trigger flow {flow_name}: {e}")
-        return {
-            "status": "error",
-            "flow_name": flow_name,
-            "error": str(e)
-        }
+        return {"status": "error", "flow_name": flow_name, "error": str(e)}
 
 
-def check_model_performance_task() -> Dict[str, Any]:
+def check_model_performance_task() -> dict[str, Any]:
     """
     Celery task for model performance monitoring.
 
@@ -398,22 +402,17 @@ def check_model_performance_task() -> Dict[str, Any]:
         asyncio.set_event_loop(loop)
 
         try:
-            result = loop.run_until_complete(
-                scheduler.check_model_performance()
-            )
+            result = loop.run_until_complete(scheduler.check_model_performance())
             return result
         finally:
             loop.close()
 
     except Exception as e:
         logger.error(f"Model performance check failed: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 
-def monitor_data_quality_task() -> Dict[str, Any]:
+def monitor_data_quality_task() -> dict[str, Any]:
     """
     Celery task for data quality monitoring.
 
@@ -429,16 +428,11 @@ def monitor_data_quality_task() -> Dict[str, Any]:
         asyncio.set_event_loop(loop)
 
         try:
-            result = loop.run_until_complete(
-                scheduler.monitor_data_quality()
-            )
+            result = loop.run_until_complete(scheduler.monitor_data_quality())
             return result
         finally:
             loop.close()
 
     except Exception as e:
         logger.error(f"Data quality monitoring failed: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}

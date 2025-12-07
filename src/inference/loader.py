@@ -19,6 +19,7 @@ import hashlib
 
 try:
     import joblib
+
     HAVE_JOBLIB = True
 except ImportError:
     HAVE_JOBLIB = False
@@ -26,6 +27,7 @@ except ImportError:
 
 try:
     from cachetools import LRUCache
+
     HAVE_CACHETOOLS = True
 except ImportError:
     HAVE_CACHETOOLS = False
@@ -34,6 +36,7 @@ except ImportError:
 try:
     from watchdog.observers import Observer
     from watchdog.events import FileSystemEventHandler
+
     HAVE_WATCHDOG = True
 except ImportError:
     HAVE_WATCHDOG = False
@@ -89,7 +92,9 @@ class ModelMetadata:
     def update_metadata(self):
         """更新元数据"""
         if os.path.exists(self.file_path):
-            self.last_modified = datetime.fromtimestamp(os.path.getmtime(self.file_path))
+            self.last_modified = datetime.fromtimestamp(
+                os.path.getmtime(self.file_path)
+            )
             self.file_hash = self._calculate_file_hash(self.file_path)
 
 
@@ -118,11 +123,15 @@ class ModelLoader:
         self.max_loaded_models = max_loaded_models
 
         # 模型存储
-        self._loaded_models: LRUCache[str, LoadedModel] = LRUCache(maxsize=max_loaded_models) if HAVE_CACHETOOLS else {}
+        self._loaded_models: LRUCache[str, LoadedModel] = (
+            LRUCache(maxsize=max_loaded_models) if HAVE_CACHETOOLS else {}
+        )
         self._model_metadata: dict[str, ModelMetadata] = {}
 
         # 线程池和锁
-        self._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="model_loader")
+        self._executor = ThreadPoolExecutor(
+            max_workers=4, thread_name_prefix="model_loader"
+        )
         self._load_locks = ModelLoadLock()
 
         # 版本管理
@@ -134,7 +143,7 @@ class ModelLoader:
             "total_loads": 0,
             "cache_hits": 0,
             "cache_misses": 0,
-            "load_errors": 0
+            "load_errors": 0,
         }
 
     async def initialize(self):
@@ -186,7 +195,9 @@ class ModelLoader:
             return self._model_metadata[model_name].model_info
         return None
 
-    async def list_models(self, model_type: Optional[ModelType] = None) -> list[ModelInfo]:
+    async def list_models(
+        self, model_type: Optional[ModelType] = None
+    ) -> list[ModelInfo]:
         """列出所有可用模型"""
         models = [metadata.model_info for metadata in self._model_metadata.values()]
 
@@ -225,17 +236,20 @@ class ModelLoader:
 
     def get_load_stats(self) -> dict[str, Any]:
         """获取加载统计信息"""
-        total_requests = self._load_stats["cache_hits"] + self._load_stats["cache_misses"]
+        total_requests = (
+            self._load_stats["cache_hits"] + self._load_stats["cache_misses"]
+        )
         cache_hit_rate = (
             self._load_stats["cache_hits"] / total_requests * 100
-            if total_requests > 0 else 0
+            if total_requests > 0
+            else 0
         )
 
         return {
             **self._load_stats,
             "cache_hit_rate": round(cache_hit_rate, 2),
             "loaded_models": len(self._loaded_models),
-            "total_models": len(self._model_metadata)
+            "total_models": len(self._model_metadata),
         }
 
     async def _scan_models(self):
@@ -265,7 +279,7 @@ class ModelLoader:
                 model_version="1.0.0",  # 默认版本
                 model_type=model_type,
                 created_at=datetime.fromtimestamp(model_file.stat().st_ctime),
-                file_size=model_file.stat().st_size
+                file_size=model_file.stat().st_size,
             )
 
             # 创建元数据
@@ -282,7 +296,7 @@ class ModelLoader:
                 data = json.load(f)
 
             model_info = ModelInfo(**data)
-            model_file = json_file.with_suffix('.pkl')
+            model_file = json_file.with_suffix(".pkl")
 
             if model_file.exists():
                 metadata = ModelMetadata(model_info, str(model_file))
@@ -300,10 +314,7 @@ class ModelLoader:
                 await self.set_default_model(model_type, models_of_type[0].model_name)
 
     async def _load_model_internal(
-        self,
-        model_name: str,
-        version: Optional[str] = None,
-        force_reload: bool = False
+        self, model_name: str, version: Optional[str] = None, force_reload: bool = False
     ) -> LoadedModel:
         """内部模型加载方法"""
 
@@ -320,7 +331,7 @@ class ModelLoader:
             raise ModelLoadError(
                 f"Model '{model_name}' not found",
                 model_name=model_name,
-                details={"available_models": list(self._model_metadata.keys())}
+                details={"available_models": list(self._model_metadata.keys())},
             )
 
         metadata = self._model_metadata[model_name]
@@ -330,15 +341,13 @@ class ModelLoader:
             raise ModelLoadError(
                 f"Model file not found: {metadata.file_path}",
                 model_name=model_name,
-                details={"file_path": metadata.file_path}
+                details={"file_path": metadata.file_path},
             )
 
         try:
             # 在线程池中加载模型
             model = await asyncio.get_event_loop().run_in_executor(
-                self._executor,
-                self._load_model_sync,
-                metadata.file_path
+                self._executor, self._load_model_sync, metadata.file_path
             )
 
             # 创建加载的模型实例
@@ -359,18 +368,21 @@ class ModelLoader:
             raise ModelLoadError(
                 f"Failed to load model '{model_name}': {str(e)}",
                 model_name=model_name,
-                details={"file_path": metadata.file_path, "error_type": type(e).__name__}
+                details={
+                    "file_path": metadata.file_path,
+                    "error_type": type(e).__name__,
+                },
             )
 
     def _load_model_sync(self, file_path: str) -> Any:
         """同步加载模型"""
         try:
             # 尝试使用joblib加载
-            if file_path.endswith('.pkl'):
+            if file_path.endswith(".pkl"):
                 return joblib.load(file_path)
             else:
                 # 尝试使用pickle加载
-                with open(file_path, 'rb') as f:
+                with open(file_path, "rb") as f:
                     return pickle.load(f)
         except Exception as e:
             raise RuntimeError(f"Failed to load model from {file_path}: {str(e)}")
@@ -379,13 +391,13 @@ class ModelLoader:
         """检测模型类型"""
         file_name = model_file.name.lower()
 
-        if 'xgboost' in file_name or 'xgb' in file_name:
+        if "xgboost" in file_name or "xgb" in file_name:
             return ModelType.XGBOOST
-        elif 'lstm' in file_name or 'rnn' in file_name:
+        elif "lstm" in file_name or "rnn" in file_name:
             return ModelType.LSTM
-        elif 'ensemble' in file_name:
+        elif "ensemble" in file_name:
             return ModelType.ENSEMBLE
-        elif 'mock' in file_name:
+        elif "mock" in file_name:
             return ModelType.MOCK
         else:
             return ModelType.XGBOOST  # 默认类型
@@ -421,6 +433,8 @@ def get_model_loader_sync() -> ModelLoader:
     global _model_loader
 
     if _model_loader is None:
-        raise RuntimeError("ModelLoader not initialized. Call get_model_loader() first.")
+        raise RuntimeError(
+            "ModelLoader not initialized. Call get_model_loader() first."
+        )
 
     return _model_loader
