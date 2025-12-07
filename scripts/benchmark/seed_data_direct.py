@@ -90,7 +90,7 @@ class DirectSQLBenchmarkDataSeeder:
 
             print("   ✅ 数据库表创建完成")
 
-    async def generate_teams(self, count: int = 50) -> List[Dict[str, Any]]:
+    async def generate_teams(self, count: int = 50) -> list[dict[str, Any]]:
         """生成球队数据."""
         print(f"🏆 生成 {count} 个球队...")
 
@@ -111,7 +111,7 @@ class DirectSQLBenchmarkDataSeeder:
         print(f"✅ 生成 {len(teams)} 个球队")
         return teams
 
-    async def save_teams_to_db(self, teams: List[Dict[str, Any]]) -> int:
+    async def save_teams_to_db(self, teams: list[dict[str, Any]]) -> int:
         """保存球队到数据库."""
         print("💾 保存球队到数据库...")
 
@@ -156,7 +156,7 @@ class DirectSQLBenchmarkDataSeeder:
 
         return success_count
 
-    async def generate_matches(self, count: int = 1000) -> List[Dict[str, Any]]:
+    async def generate_matches(self, count: int = 1000) -> list[dict[str, Any]]:
         """生成比赛数据."""
         print(f"⚽ 生成 {count} 场比赛...")
 
@@ -226,7 +226,7 @@ class DirectSQLBenchmarkDataSeeder:
         print(f"✅ 生成 {len(matches)} 场比赛")
         return matches
 
-    async def save_matches_to_db(self, matches: List[Dict[str, Any]]) -> int:
+    async def save_matches_to_db(self, matches: list[dict[str, Any]]) -> int:
         """保存比赛到数据库."""
         print("💾 保存比赛到数据库...")
 
@@ -309,7 +309,7 @@ class DirectSQLBenchmarkDataSeeder:
             print(f"   📊 比赛数量: {matches_count}")
             print(f"   📊 特征数量: {features_count}")
             print(f"   📊 赛季分布: {season_list}")
-            print(f"   ✅ 数据生成完成")
+            print("   ✅ 数据生成完成")
 
         except Exception as e:
             print(f"   ⚠️ 报告处理: {e}")
@@ -391,7 +391,7 @@ class DirectSQLBenchmarkDataSeeder:
             )
 
             print(f"\n🏆 总体状态: {'✅ 全部成功' if overall_success else '⚠️ 部分失败'}")
-            print(f"🚀 P1-7压测数据已准备就绪！")
+            print("🚀 P1-7压测数据已准备就绪！")
 
             return overall_success
 

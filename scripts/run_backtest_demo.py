@@ -47,7 +47,7 @@ class BacktestDemo:
     def __init__(self):
         self.results = {}
 
-    async def run_strategy_comparison(self, days_back: int = 30) -> Dict[str, Any]:
+    async def run_strategy_comparison(self, days_back: int = 30) -> dict[str, Any]:
         """
         运行策略对比测试
 
@@ -260,7 +260,7 @@ class BacktestDemo:
 
             logger.info(f"💾 下注记录已保存到: {bets_file}")
 
-    def generate_visualization_data(self) -> Dict[str, Any]:
+    def generate_visualization_data(self) -> dict[str, Any]:
         """
         生成可视化数据
 

@@ -62,7 +62,7 @@ class SimpleCollectorBenchmarker:
     def __init__(self):
         """初始化基准测试器."""
         self.rate_limiter = None
-        self.results: List[RequestMetric] = []
+        self.results: list[RequestMetric] = []
 
     async def setup(self):
         """设置测试环境."""
@@ -85,7 +85,7 @@ class SimpleCollectorBenchmarker:
             self.rate_limiter = RateLimiter(rate_limit_config)
 
             print("✅ RateLimiter初始化完成")
-            print(f"   📊 配置: test_domain 10 QPS, default 5 QPS")
+            print("   📊 配置: test_domain 10 QPS, default 5 QPS")
 
         except Exception as e:
             print(f"❌ 初始化失败: {e}")
@@ -248,7 +248,7 @@ class SimpleCollectorBenchmarker:
             rate_limit_hits=rate_limit_hits
         )
 
-    async def generate_report(self, results: List[BenchmarkResult]) -> str:
+    async def generate_report(self, results: list[BenchmarkResult]) -> str:
         """生成基准测试报告."""
         print("\n📋 生成基准测试报告")
         print("-" * 50)
@@ -258,7 +258,7 @@ class SimpleCollectorBenchmarker:
             "# P1-7 Collector Benchmark Report",
             "",
             f"**测试时间**: {datetime.now().isoformat()}",
-            f"**测试版本**: P1-7 v1.0.0",
+            "**测试版本**: P1-7 v1.0.0",
             "",
             "## 📊 测试结果摘要",
             "",
@@ -357,7 +357,7 @@ class SimpleCollectorBenchmarker:
                 all_results.append(result)
 
                 # 打印即时结果
-                print(f"\n📊 即时结果:")
+                print("\n📊 即时结果:")
                 print(f"   ✅ 总请求数: {result.total_requests}")
                 print(f"   ✅ 成功请求: {result.successful_requests}")
                 print(f"   ❌ 失败请求: {result.failed_requests}")
@@ -369,7 +369,7 @@ class SimpleCollectorBenchmarker:
 
                 # 测试间隔
                 if concurrent_count != test_scenarios[-1][0]:
-                    print(f"\n⏳ 等待 3 秒后进行下一个测试...")
+                    print("\n⏳ 等待 3 秒后进行下一个测试...")
                     await asyncio.sleep(3)
 
             # 生成报告
@@ -416,13 +416,13 @@ async def main():
 
         # 性能评估
         if avg_rps >= 8 and avg_success_rate >= 90 and avg_p95 <= 500:
-            print(f"🏆 性能评级: 优秀")
+            print("🏆 性能评级: 优秀")
         elif avg_rps >= 5 and avg_success_rate >= 80 and avg_p95 <= 1000:
-            print(f"👍 性能评级: 良好")
+            print("👍 性能评级: 良好")
         else:
-            print(f"⚠️ 性能评级: 需要优化")
+            print("⚠️ 性能评级: 需要优化")
 
-        print(f"\n🚀 P1-7采集器压测数据已准备就绪！")
+        print("\n🚀 P1-7采集器压测数据已准备就绪！")
 
         return True
     else:

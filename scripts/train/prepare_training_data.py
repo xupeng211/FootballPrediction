@@ -171,7 +171,7 @@ class TrainingDataPreparer:
         # 删除重复记录
         df_cleaned = df_cleaned.drop_duplicates()
 
-        logger.info(f"   数据清洗完成:")
+        logger.info("   数据清洗完成:")
         logger.info(f"     删除空值记录: {original_count - len(df_cleaned)} 条")
         logger.info(f"     删除重复记录: {len(df) - len(df_cleaned)} 条")
         logger.info(f"     最终记录数: {len(df_cleaned)} 条")
@@ -322,12 +322,12 @@ async def main():
             output_path="data/training_set_v1.parquet"
         )
 
-        print(f"\n📊 数据准备完成:")
+        print("\n📊 数据准备完成:")
         print(f"   特征矩阵: {X.shape}")
         print(f"   标签向量: {y.shape}")
         print(f"   标签分布: Home(0): {np.sum(y == 0)}, Draw(1): {np.sum(y == 1)}, Away(2): {np.sum(y == 2)}")
 
-        print(f"\n💾 数据已保存到: data/training_set_v1.parquet")
+        print("\n💾 数据已保存到: data/training_set_v1.parquet")
         print("✅ 训练数据准备完成!")
 
         return 0

@@ -145,7 +145,7 @@ class AuthIntegrationTester:
             await self.proxy_pool.close()
         print("✅ 代理池已关闭")
 
-    async def simulate_request(self, request_id: int) -> Dict[str, Any]:
+    async def simulate_request(self, request_id: int) -> dict[str, Any]:
         """
         模拟单个HTTP请求
 
@@ -240,7 +240,7 @@ class AuthIntegrationTester:
         self.stats['total_requests'] += 1
         return result
 
-    async def _mock_http_request(self, token, proxy=None) -> Dict[str, Any]:
+    async def _mock_http_request(self, token, proxy=None) -> dict[str, Any]:
         """
         模拟HTTP请求
 
@@ -308,16 +308,16 @@ class AuthIntegrationTester:
         # 输出结果摘要
         await self._print_results_summary(successful_results, failed_results, results)
 
-    async def _print_results_summary(self, successful: List[Dict], failed: List[Dict], all_results: List[Any]) -> None:
+    async def _print_results_summary(self, successful: list[dict], failed: list[dict], all_results: list[Any]) -> None:
         """打印结果摘要"""
-        print(f"\n📊 请求结果摘要:")
+        print("\n📊 请求结果摘要:")
         print(f"   总请求数: {len(all_results)}")
         print(f"   成功请求: {len(successful)} ({len(successful)/len(all_results)*100:.1f}%)")
         print(f"   失败请求: {len(failed)} ({len(failed)/len(all_results)*100:.1f}%)")
 
         if self.verbose and successful:
             # 显示成功的请求
-            print(f"\n✅ 成功请求详情:")
+            print("\n✅ 成功请求详情:")
             for result in successful[:5]:  # 只显示前5个
                 print(f"   请求 {result['request_id']}: "
                       f"{result['response_time']:.3f}s, "
@@ -326,7 +326,7 @@ class AuthIntegrationTester:
 
         if self.verbose and failed:
             # 显示失败的请求
-            print(f"\n❌ 失败请求详情:")
+            print("\n❌ 失败请求详情:")
             for result in failed[:5]:  # 只显示前5个
                 print(f"   请求 {result['request_id']}: "
                       f"{result['response_time']:.3f}s, "
@@ -335,7 +335,7 @@ class AuthIntegrationTester:
         # 代理使用统计
         if self.use_proxies and self.proxy_pool:
             proxy_stats = self.proxy_pool.get_stats()
-            print(f"\n🌐 代理池统计:")
+            print("\n🌐 代理池统计:")
             print(f"   总代理: {proxy_stats['total']}")
             print(f"   活跃: {proxy_stats['active']}")
             print(f"   禁用: {proxy_stats['banned']}")
@@ -344,25 +344,25 @@ class AuthIntegrationTester:
         # Token Manager统计
         if self.token_manager:
             token_stats = await self.token_manager.get_stats()
-            print(f"\n🔑 认证管理器统计:")
+            print("\n🔑 认证管理器统计:")
             print(f"   提供者: {token_stats['total_providers']}")
             print(f"   有效令牌: {token_stats['valid_tokens']}")
             print(f"   过期令牌: {token_stats['expired_tokens']}")
             print(f"   总使用次数: {token_stats['total_usage']}")
 
         # 速率限制统计
-        print(f"\n🚦 速率限制统计:")
+        print("\n🚦 速率限制统计:")
         print(f"   被限流请求: {self.stats['rate_limited_requests']}")
         print(f"   限流率: {self.stats['rate_limited_requests']/self.stats['total_requests']*100:.1f}%")
 
     async def print_detailed_stats(self) -> None:
         """打印详细统计信息"""
-        print(f"\n📋 详细统计信息:")
+        print("\n📋 详细统计信息:")
         print(json.dumps(self.stats, indent=2, ensure_ascii=False))
 
         if self.token_info and self.token_manager:
             token_info = await self.token_manager.get_token_info()
-            print(f"\n🔑 令牌详细信息:")
+            print("\n🔑 令牌详细信息:")
             print(json.dumps(token_info, indent=2, ensure_ascii=False))
 
 

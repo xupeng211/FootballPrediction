@@ -153,7 +153,7 @@ class MockFeatureStore:
     def __init__(self):
         self._storage = {}
 
-    async def save_features(self, match_id: int, features: Dict[str, Any], version: str = "latest") -> None:
+    async def save_features(self, match_id: int, features: dict[str, Any], version: str = "latest") -> None:
         """模拟保存特征。"""
         key = f"{match_id}:{version}"
         self._storage[key] = {
@@ -164,12 +164,12 @@ class MockFeatureStore:
             "updated_at": datetime.now(timezone.utc)
         }
 
-    async def load_features(self, match_id: int, version: str = "latest") -> Dict[str, Any]:
+    async def load_features(self, match_id: int, version: str = "latest") -> dict[str, Any]:
         """模拟加载特征。"""
         key = f"{match_id}:{version}"
         return self._storage.get(key)
 
-    async def load_batch(self, match_ids: List[int], version: str = "latest") -> Dict[int, Dict[str, Any]]:
+    async def load_batch(self, match_ids: list[int], version: str = "latest") -> dict[int, dict[str, Any]]:
         """模拟批量加载。"""
         result = {}
         for match_id in match_ids:
@@ -239,7 +239,7 @@ try:
     # 统计代码行数
     total_lines = 0
     for file_path in key_files:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = len(f.readlines())
             total_lines += lines
             print(f"   {file_path}: {lines} 行")

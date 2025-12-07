@@ -28,10 +28,10 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("logs/fotmob_l2_v2.log")
+        logging.FileHandler("logs/fotmob_l2_v2.log"),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -63,11 +63,11 @@ def wait_random(min_sec: float = 15.0, max_sec: float = 35.0) -> None:
 
 
 async def exponential_backoff_request(
-    request_func
-    max_retries: int = 3
-    base_delay: float = 60.0
-    max_delay: float = 300.0
-    *args
+    request_func,
+    max_retries: int = 3,
+    base_delay: float = 60.0,
+    max_delay: float = 300.0,
+    *args,
     **kwargs
 ) -> Any:
     """
@@ -148,13 +148,13 @@ class FotMobL2CollectorV2:
 
         # 统计信息
         self.stats = {
-            "processed": 0
-            "matched": 0
-            "collected": 0
-            "saved": 0
-            "failed_match": 0
-            "failed_collection": 0
-            "failed_save": 0
+            "processed": 0,
+            "matched": 0,
+            "collected": 0,
+            "saved": 0,
+            "failed_match": 0,
+            "failed_collection": 0,
+            "failed_save": 0,
             "start_time": datetime.now()
         }
 
@@ -253,13 +253,13 @@ class FotMobL2CollectorV2:
                 for row in rows:
                     records.append(
                         {
-                            "id": row[0]
-                            "home_team": row[1]
-                            "away_team": row[2]
-                            "match_date": row[3]
-                            "competition": row[4]
-                            "season": row[5]
-                            "data_completeness": row[6]
+                            "id": row[0],
+                            "home_team": row[1],
+                            "away_team": row[2],
+                            "match_date": row[3],
+                            "competition": row[4],
+                            "season": row[5],
+                            "data_completeness": row[6],
                         }
                     )
 
@@ -343,9 +343,9 @@ class FotMobL2CollectorV2:
         try:
             # 准备匹配数据
             match_data = {
-                "home": fbref_record.get("home_team", "")
-                "away": fbref_record.get("away_team", "")
-                "date": fbref_record.get("match_date", "")
+                "home": fbref_record.get("home_team", ""),
+                "away": fbref_record.get("away_team", ""),
+                "date": fbref_record.get("match_date", ""),
             }
 
             # 执行模糊匹配，应用指数退避
@@ -384,25 +384,25 @@ class FotMobL2CollectorV2:
                     # 转换为现有格式
                     if result:
                         return {
-                            "matchId": result.match_id
+                            "matchId": result.match_id,
                             "match_info": {
-                                "home_team": result.home_team
-                                "away_team": result.away_team
-                                "home_score": result.home_score
-                                "away_score": result.away_score
-                                "status": result.status
-                                "start_time": result.start_time
-                            }
-                            "lineup": result.lineups
-                            "shots": result.shots
-                            "stats": result.stats
-                            "fetched_at": datetime.utcnow().isoformat()
+                                "home_team": result.home_team,
+                                "away_team": result.away_team,
+                                "home_score": result.home_score,
+                                "away_score": result.away_score,
+                                "status": result.status,
+                                "start_time": result.start_time,
+                            },
+                            "lineup": result.lineups,
+                            "shots": result.shots,
+                            "stats": result.stats,
+                            "fetched_at": datetime.utcnow().isoformat(),
                         }
                     return None
 
             # 执行浏览器采集 (浏览器操作需要更长时间)
             details = await exponential_backoff_request(
-                details_request
+                details_request,
                 max_retries=2,  # 减少重试次数
                 base_delay=15.0,  # 增加延迟适应浏览器操作
                 max_delay=45.0
@@ -461,18 +461,18 @@ class FotMobL2CollectorV2:
         try:
             for shot in shots:
                 shot_data = {
-                    "match_id": record_id
-                    "event_type": "shot"
-                    "minute": shot.get("minute")
-                    "team": shot.get("team")
-                    "player_name": shot.get("player", {}).get("name", "")
-                    "player_id": shot.get("player", {}).get("id")
-                    "xg": shot.get("xg", 0.0)
-                    "is_goal": shot.get("isGoal", False)
-                    "shot_type": shot.get("shotType")
-                    "body_part": shot.get("bodyPart")
-                    "situation": shot.get("situation")
-                    "raw_data": json.dumps(shot)
+                    "match_id": record_id,
+                    "event_type": "shot",
+                    "minute": shot.get("minute"),
+                    "team": shot.get("team"),
+                    "player_name": shot.get("player", {}).get("name", ""),
+                    "player_id": shot.get("player", {}).get("id"),
+                    "xg": shot.get("xg", 0.0),
+                    "is_goal": shot.get("isGoal", False),
+                    "shot_type": shot.get("shotType"),
+                    "body_part": shot.get("bodyPart"),
+                    "situation": shot.get("situation"),
+                    "raw_data": json.dumps(shot),
                 }
 
                 # 插入射门数据
@@ -516,16 +516,16 @@ class FotMobL2CollectorV2:
         # 保存首发阵容
         for i, player in enumerate(starters):
             player_data = {
-                "match_id": record_id
-                "team_side": team_side
-                "player_name": player.get("name", "")
-                "player_id": player.get("id")
-                "position": player.get("position", "")
-                "shirt_number": player.get("shirtNumber")
-                "is_starter": True
-                "is_captain": player.get("captain", False)
-                "formation_order": i + 1
-                "raw_data": json.dumps(player)
+                "match_id": record_id,
+                "team_side": team_side,
+                "player_name": player.get("name", ""),
+                "player_id": player.get("id"),
+                "position": player.get("position", ""),
+                "shirt_number": player.get("shirtNumber"),
+                "is_starter": True,
+                "is_captain": player.get("captain", False),
+                "formation_order": i + 1,
+                "raw_data": json.dumps(player),
             }
 
             await self._insert_lineup_record(session, player_data)
@@ -533,16 +533,16 @@ class FotMobL2CollectorV2:
         # 保存替补阵容
         for i, player in enumerate(substitutes):
             player_data = {
-                "match_id": record_id
-                "team_side": team_side
-                "player_name": player.get("name", "")
-                "player_id": player.get("id")
-                "position": player.get("position", "")
-                "shirt_number": player.get("shirtNumber")
-                "is_starter": False
-                "is_captain": player.get("captain", False)
-                "formation_order": None
-                "raw_data": json.dumps(player)
+                "match_id": record_id,
+                "team_side": team_side,
+                "player_name": player.get("name", ""),
+                "player_id": player.get("id"),
+                "position": player.get("position", ""),
+                "shirt_number": player.get("shirtNumber"),
+                "is_starter": False,
+                "is_captain": player.get("captain", False),
+                "formation_order": None,
+                "raw_data": json.dumps(player),
             }
 
             await self._insert_lineup_record(session, player_data)
@@ -586,19 +586,12 @@ class FotMobL2CollectorV2:
         duration = end_time - self.stats["start_time"]
 
         final_stats = {
-            **self.stats
-            "end_time": end_time
-            "duration_seconds": duration.total_seconds()
-            "success_rate": (self.stats["saved"] / max(self.stats["processed"], 1))
-            * 100
-            "match_success_rate": (
-                self.stats["matched"] / max(self.stats["processed"], 1)
-            )
-            * 100
-            "collection_success_rate": (
-                self.stats["collected"] / max(self.stats["matched"], 1)
-            )
-            * 100
+            **self.stats,
+            "end_time": end_time,
+            "duration_seconds": duration.total_seconds(),
+            "success_rate": (self.stats["saved"] / max(self.stats["processed"], 1)) * 100,
+            "match_success_rate": (self.stats["matched"] / max(self.stats["processed"], 1)) * 100,
+            "collection_success_rate": (self.stats["collected"] / max(self.stats["matched"], 1)) * 100,
         }
 
         return final_stats

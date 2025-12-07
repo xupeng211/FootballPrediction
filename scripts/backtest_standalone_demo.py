@@ -40,7 +40,7 @@ class MockMatchGenerator:
     """模拟比赛数据生成器"""
 
     @staticmethod
-    def generate_matches(count: int = 100) -> List[Dict[str, Any]]:
+    def generate_matches(count: int = 100) -> list[dict[str, Any]]:
         """生成模拟比赛数据"""
         matches = []
         start_date = datetime.now() - timedelta(days=count)
@@ -127,7 +127,7 @@ class StandaloneBacktestEngine:
         self.config = config
         self.portfolio = Portfolio(config)
 
-    async def run_backtest(self, matches: List[Dict[str, Any]], strategy) -> BacktestResult:
+    async def run_backtest(self, matches: list[dict[str, Any]], strategy) -> BacktestResult:
         """运行回测"""
         logger.info(f"开始回测 {len(matches)} 场比赛")
 
@@ -307,7 +307,7 @@ async def run_strategy_demo():
             recent_wins = sum(1 for bet in recent_bets if bet.profit_loss > 0)
             recent_profit = sum(bet.profit_loss for bet in recent_bets)
 
-            print(f"\n📈 最近10场表现:")
+            print("\n📈 最近10场表现:")
             print(f"   胜场: {recent_wins}/{len(recent_bets)} ({recent_wins/len(recent_bets):.1%})")
             print(f"   盈亏: {recent_profit:+.2f}")
 
@@ -315,7 +315,7 @@ async def run_strategy_demo():
         max_drawdown = best_result.initial_balance - best_result.min_balance
         drawdown_pct = (max_drawdown / best_result.initial_balance * 100)
 
-        print(f"\n⚠️ 风险指标:")
+        print("\n⚠️ 风险指标:")
         print(f"   最大回撤: {max_drawdown:,.2f} ({drawdown_pct:.2f}%)")
 
         # 保存结果
@@ -323,10 +323,10 @@ async def run_strategy_demo():
         summary_file = f"/tmp/backtest_standalone_{timestamp}.txt"
 
         with open(summary_file, 'w', encoding='utf-8') as f:
-            f.write(f"回测系统独立演示报告\n")
+            f.write("回测系统独立演示报告\n")
             f.write(f"生成时间: {datetime.now()}\n")
             f.write(f"策略: {best_strategy}\n")
-            f.write(f"="*50 + "\n\n")
+            f.write("="*50 + "\n\n")
             f.write(best_result.get_summary())
 
         logger.info(f"💾 报告已保存到: {summary_file}")

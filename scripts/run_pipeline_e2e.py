@@ -68,7 +68,7 @@ class E2EPipelineManager:
             "duration": None
         }
 
-    async def setup_collectors(self) -> Dict[str, Any]:
+    async def setup_collectors(self) -> dict[str, Any]:
         """设置采集器实例"""
         logger.info("🚀 初始化采集器组件...")
 
@@ -105,7 +105,7 @@ class E2EPipelineManager:
             "proxy_pool": proxy_pool
         }
 
-    async def collect_premier_league_fixtures(self, fotmob_collector) -> List[Dict[str, Any]]:
+    async def collect_premier_league_fixtures(self, fotmob_collector) -> list[dict[str, Any]]:
         """采集英超最近5轮比赛"""
         logger.info("📊 采集英超最近5轮比赛...")
 
@@ -155,7 +155,7 @@ class E2EPipelineManager:
 
         return []
 
-    async def collect_premier_league_season(self, fbref_collector) -> Dict[str, Any]:
+    async def collect_premier_league_season(self, fbref_collector) -> dict[str, Any]:
         """采集英超2023-2024赛季统计数据"""
         logger.info("📅 采集英超2023-2024赛季统计数据...")
 
@@ -192,7 +192,7 @@ class E2EPipelineManager:
 
         return {}
 
-    async def save_matches_to_database(self, matches: List[Dict[str, Any]]) -> List[int]:
+    async def save_matches_to_database(self, matches: list[dict[str, Any]]) -> list[int]:
         """保存比赛数据到数据库"""
         logger.info(f"💾 保存 {len(matches)} 场比赛到数据库...")
 
@@ -245,7 +245,7 @@ class E2EPipelineManager:
 
         return saved_match_ids
 
-    async def save_season_stats_to_database(self, season_data: Dict[str, Any]) -> bool:
+    async def save_season_stats_to_database(self, season_data: dict[str, Any]) -> bool:
         """保存赛季统计数据到数据库"""
         logger.info("💾 保存赛季统计数据到数据库...")
 
@@ -276,7 +276,7 @@ class E2EPipelineManager:
                 logger.error(f"❌ 保存赛季统计失败: {str(e)}")
                 return False
 
-    async def write_to_feature_store(self, match_ids: List[int]) -> List[Dict[str, Any]]:
+    async def write_to_feature_store(self, match_ids: list[int]) -> list[dict[str, Any]]:
         """写入数据到FeatureStore"""
         logger.info(f"🔄 写入 {len(match_ids)} 场比赛到FeatureStore...")
 
@@ -353,7 +353,7 @@ class E2EPipelineManager:
 
         return new_team.id
 
-    async def verify_api_endpoints(self, match_ids: List[int]) -> Dict[str, Any]:
+    async def verify_api_endpoints(self, match_ids: list[int]) -> dict[str, Any]:
         """验证API端点数据读取"""
         logger.info(f"🔍 验证API端点数据读取 (match_ids: {match_ids[:3]}...)")
 
@@ -422,7 +422,7 @@ class E2EPipelineManager:
 
         return api_verification
 
-    def generate_report(self) -> Dict[str, Any]:
+    def generate_report(self) -> dict[str, Any]:
         """生成测试报告"""
         self.stats["end_time"] = datetime.now()
         self.stats["duration"] = (
@@ -447,7 +447,7 @@ class E2EPipelineManager:
             }
         }
 
-    async def run_pipeline(self) -> Dict[str, Any]:
+    async def run_pipeline(self) -> dict[str, Any]:
         """运行完整的E2E Pipeline"""
         logger.info("🚀 开始E2E Pipeline执行...")
         logger.info("=" * 60)

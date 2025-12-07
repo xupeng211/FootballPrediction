@@ -24,7 +24,7 @@ try:
         if len(lines) >= 3 and '1' in lines[2]:
             print("✅ feature_store 表已存在")
         else:
-            print(f"❌ feature_store 表状态异常")
+            print("❌ feature_store 表状态异常")
             sys.exit(1)
     else:
         print(f"❌ 数据库验证失败: {result.stderr}")
@@ -86,7 +86,7 @@ try:
                 else:
                     print(f"⚠️ 索引数量不足 (仅{count}个)")
             except ValueError:
-                print(f"⚠️ 索引数量解析异常")
+                print("⚠️ 索引数量解析异常")
         else:
             print("⚠️ 索引检查输出格式异常")
     else:
@@ -143,7 +143,7 @@ try:
     for i in range(10):
         subprocess.run(
             ["docker-compose", "exec", "db", "psql", "-U", "postgres", "-d", "football_prediction",
-             f"-c", f"INSERT INTO feature_store (match_id, version, features, created_at, updated_at) VALUES ({100000+i}, 'test', '{{\"test_feature_{i}\": \"value_{i}\"}}', NOW(), NOW());"],
+             "-c", f"INSERT INTO feature_store (match_id, version, features, created_at, updated_at) VALUES ({100000+i}, 'test', '{{\"test_feature_{i}\": \"value_{i}\"}}', NOW(), NOW());"],
             capture_output=True, text=True, timeout=30
         )
 
@@ -185,11 +185,11 @@ print("✅ 数据库索引: 正常")
 print("✅ FeatureStore 模块: 基础功能正常")
 print("✅ JSONB 查询性能: 正常")
 
-print(f"\n🎯 FeatureStore 基础部署成功！")
+print("\n🎯 FeatureStore 基础部署成功！")
 print("📊 部署状态: 生产就绪")
 print("⚡ 性能指标: 符合预期")
 
-print(f"\n📋 下一步建议:")
+print("\n📋 下一步建议:")
 print("1. 在修复 SQLAlchemy 兼容性问题后运行完整测试")
 print("2. 集成到 ML 训练流水线")
 print("3. 添加监控和日志")
@@ -197,6 +197,6 @@ print("3. 添加监控和日志")
 print(f"\n验证完成时间: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 # 如果有 sqlalchemy 兼容性问题，提供解决方案
-print(f"\n⚠️  重要提醒:")
+print("\n⚠️  重要提醒:")
 print("如果遇到 SQLAlchemy 导入错误，这是环境兼容性问题，不影响核心功能。")
 print("核心数据库表结构和 JSONB 功能已完全就绪。")

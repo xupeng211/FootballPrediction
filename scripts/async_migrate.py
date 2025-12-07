@@ -43,7 +43,7 @@ class MigrationPattern:
     description: str
     priority: str  # "high", "medium", "low"
     requires_await: bool = True
-    target_files: List[str] = None  # 目标文件模式
+    target_files: list[str] = None  # 目标文件模式
 
 
 @dataclass
@@ -63,9 +63,9 @@ class AsyncMigrationAnalyzer:
     def __init__(self, root_dir: str = "src"):
         self.root_dir = Path(root_dir)
         self.migration_patterns = self._define_migration_patterns()
-        self.issues: List[MigrationIssue] = []
+        self.issues: list[MigrationIssue] = []
 
-    def _define_migration_patterns(self) -> List[MigrationPattern]:
+    def _define_migration_patterns(self) -> list[MigrationPattern]:
         """定义迁移模式"""
         return [
             # HTTP客户端迁移
@@ -147,12 +147,12 @@ class AsyncMigrationAnalyzer:
             )
         ]
 
-    def analyze_file(self, file_path: Path) -> List[MigrationIssue]:
+    def analyze_file(self, file_path: Path) -> list[MigrationIssue]:
         """分析单个文件的迁移需求"""
         issues = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
                 lines = content.split('\n')
 
@@ -187,8 +187,8 @@ class AsyncMigrationAnalyzer:
         self,
         file_path: Path,
         content: str,
-        lines: List[str]
-    ) -> List[MigrationIssue]:
+        lines: list[str]
+    ) -> list[MigrationIssue]:
         """检测缺失的await关键字"""
         issues = []
 
@@ -209,7 +209,7 @@ class AsyncMigrationAnalyzer:
                                 line_number=line_num,
                                 issue_type="missing_await",
                                 description="异步函数调用缺少await关键字",
-                                suggested_fix=f"在函数调用前添加'await '",
+                                suggested_fix="在函数调用前添加'await '",
                                 priority="high"
                             )
                             issues.append(issue)
@@ -250,7 +250,7 @@ class AsyncMigrationAnalyzer:
         else:
             return f"替换为 '{pattern.replacement}'"
 
-    def analyze_directory(self) -> List[MigrationIssue]:
+    def analyze_directory(self) -> list[MigrationIssue]:
         """分析整个目录"""
         all_issues = []
 
@@ -266,7 +266,7 @@ class AsyncMigrationAnalyzer:
 
         return all_issues
 
-    def generate_migration_report(self, issues: List[MigrationIssue]) -> str:
+    def generate_migration_report(self, issues: list[MigrationIssue]) -> str:
         """生成迁移报告"""
         report = []
         report.append("# 异步化迁移报告\n")
@@ -312,10 +312,10 @@ class AsyncMigrationGenerator:
     def __init__(self, root_dir: str = "src"):
         self.root_dir = Path(root_dir)
 
-    def generate_patch(self, file_path: Path, issues: List[MigrationIssue]) -> str:
+    def generate_patch(self, file_path: Path, issues: list[MigrationIssue]) -> str:
         """为单个文件生成补丁"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 original_content = f.read()
 
             modified_content = self._apply_modifications(original_content, issues)
@@ -338,7 +338,7 @@ class AsyncMigrationGenerator:
             logger.error(f"生成补丁失败 {file_path}: {e}")
             return f"# Error generating patch for {file_path}: {str(e)}"
 
-    def _apply_modifications(self, content: str, issues: List[MigrationIssue]) -> str:
+    def _apply_modifications(self, content: str, issues: list[MigrationIssue]) -> str:
         """应用代码修改"""
         lines = content.split('\n')
 
@@ -385,7 +385,7 @@ class AsyncMigrationGenerator:
 
         return '\n'.join(lines)
 
-    def generate_all_patches(self, all_issues: List[MigrationIssue]) -> Dict[str, str]:
+    def generate_all_patches(self, all_issues: list[MigrationIssue]) -> dict[str, str]:
         """为所有文件生成补丁"""
         patches = {}
 
@@ -404,7 +404,7 @@ class AsyncMigrationGenerator:
 
         return patches
 
-    def save_patches(self, patches: Dict[str, str], output_dir: str = "patches/async_unification"):
+    def save_patches(self, patches: dict[str, str], output_dir: str = "patches/async_unification"):
         """保存补丁文件"""
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -471,7 +471,7 @@ class AsyncMigrationTool:
 
         logger.info("🎉 异步化迁移分析完成!")
 
-    async def _generate_validation_script(self, issues: List[MigrationIssue]):
+    async def _generate_validation_script(self, issues: list[MigrationIssue]):
         """生成验证脚本"""
         validation_script = """#!/usr/bin/env python3
 \"\"\"

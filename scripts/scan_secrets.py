@@ -7,7 +7,8 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple, Pattern
+from typing import Dict, List, Tuple
+from re import Pattern
 
 
 class SecretScanner:
@@ -118,12 +119,12 @@ class SecretScanner:
             'logs', 'temp', 'tmp'
         }
 
-    def scan_file(self, file_path: Path) -> List[Dict]:
+    def scan_file(self, file_path: Path) -> list[dict]:
         """扫描单个文件"""
         findings = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding='utf-8', errors='ignore') as f:
                 content = f.read()
 
                 # 检查每一行
@@ -149,7 +150,7 @@ class SecretScanner:
                                     'context': line.strip(),
                                 })
 
-        except (UnicodeDecodeError, PermissionError, IOError) as e:
+        except (OSError, UnicodeDecodeError, PermissionError):
             # 记录但不要中断扫描
             pass
 
@@ -191,7 +192,7 @@ class SecretScanner:
 
         return True
 
-    def generate_report(self) -> Dict:
+    def generate_report(self) -> dict:
         """生成扫描报告"""
         high_count = len([f for f in self.findings if f['severity'] == 'HIGH'])
         medium_count = len([f for f in self.findings if f['severity'] == 'MEDIUM'])
@@ -226,7 +227,7 @@ class SecretScanner:
             'all_findings': self.findings,
         }
 
-    def print_report(self, report: Dict) -> None:
+    def print_report(self, report: dict) -> None:
         """打印扫描报告"""
         summary = report['summary']
 
@@ -234,19 +235,19 @@ class SecretScanner:
         print("🔍 敏感信息扫描报告")
         print(f"{'='*60}")
 
-        print(f"\n📊 扫描统计:")
+        print("\n📊 扫描统计:")
         print(f"  扫描文件数: {summary['scanned_files']}")
         print(f"  跳过文件数: {summary['skipped_files']}")
         print(f"  发现问题总数: {summary['total_findings']}")
 
-        print(f"\n🚨 严重程度分布:")
+        print("\n🚨 严重程度分布:")
         print(f"  🔴 高危: {summary['high_severity']}")
         print(f"  🟡 中危: {summary['medium_severity']}")
         print(f"  🟢 低危: {summary['low_severity']}")
 
         # 显示高危和部分中危问题
         if summary['high_severity'] > 0 or summary['medium_severity'] > 0:
-            print(f"\n❌ 发现的敏感信息:")
+            print("\n❌ 发现的敏感信息:")
 
             for severity in ['HIGH', 'MEDIUM']:
                 findings = report['findings_by_severity'].get(severity, [])
@@ -274,15 +275,15 @@ class SecretScanner:
 
         # 修复建议
         if summary['total_findings'] > 0:
-            print(f"\n💡 修复建议:")
-            print(f"  1. 将敏感信息移动到环境变量或配置文件中")
-            print(f"  2. 使用 os.getenv() 或类似的安全配置管理方式")
-            print(f"  3. 对于 API Keys，考虑使用密钥管理服务")
-            print(f"  4. 对于数据库密码，使用连接池或环境变量")
-            print(f"  5. 确保 .env 文件被添加到 .gitignore")
-            print(f"  6. 考虑使用 git-secrets 预提交钩子防止意外提交")
+            print("\n💡 修复建议:")
+            print("  1. 将敏感信息移动到环境变量或配置文件中")
+            print("  2. 使用 os.getenv() 或类似的安全配置管理方式")
+            print("  3. 对于 API Keys，考虑使用密钥管理服务")
+            print("  4. 对于数据库密码，使用连接池或环境变量")
+            print("  5. 确保 .env 文件被添加到 .gitignore")
+            print("  6. 考虑使用 git-secrets 预提交钩子防止意外提交")
 
-    def write_report(self, report: Dict, output_path: str) -> None:
+    def write_report(self, report: dict, output_path: str) -> None:
         """将报告写入文件"""
         import json
 
@@ -329,13 +330,13 @@ def main():
 
     # 返回适当的退出码
     if report['summary']['high_severity'] > 0:
-        print(f"\n❌ 发现高危敏感信息，请立即修复！")
+        print("\n❌ 发现高危敏感信息，请立即修复！")
         return 2
     elif report['summary']['medium_severity'] > 0:
-        print(f"\n⚠️ 发现中危敏感信息，建议修复")
+        print("\n⚠️ 发现中危敏感信息，建议修复")
         return 1
     else:
-        print(f"\n✅ 未发现严重敏感信息")
+        print("\n✅ 未发现严重敏感信息")
         return 0
 
 

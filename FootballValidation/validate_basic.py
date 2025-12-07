@@ -32,7 +32,7 @@ print(f"\n文件完整性: {len(existing_files)}/{len(key_files)}")
 # 2. 验证代码结构
 print("\n2. 验证代码结构...")
 if os.path.exists("src/features/feature_store_interface.py"):
-    with open("src/features/feature_store_interface.py", 'r') as f:
+    with open("src/features/feature_store_interface.py") as f:
         content = f.read()
 
     checks = {
@@ -50,7 +50,7 @@ if os.path.exists("src/features/feature_store_interface.py"):
 
 # 3. 验证实现文件
 if os.path.exists("src/features/feature_store.py"):
-    with open("src/features/feature_store.py", 'r') as f:
+    with open("src/features/feature_store.py") as f:
         content = f.read()
 
     impl_checks = {
@@ -68,7 +68,7 @@ if os.path.exists("src/features/feature_store.py"):
 
 # 4. 验证特征定义
 if os.path.exists("src/features/feature_definitions.py"):
-    with open("src/features/feature_definitions.py", 'r') as f:
+    with open("src/features/feature_definitions.py") as f:
         content = f.read()
 
     def_checks = {
@@ -95,7 +95,7 @@ test_files = [
 test_count = 0
 for test_file in test_files:
     if os.path.exists(test_file):
-        with open(test_file, 'r') as f:
+        with open(test_file) as f:
             content = f.read()
         lines_count = len(content.split('\n'))
         test_count += lines_count
@@ -112,7 +112,7 @@ total_size = 0
 
 for file_path in existing_files:
     if os.path.exists(file_path):
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             lines = len(f.readlines())
             size = os.path.getsize(file_path)
             total_lines += lines
@@ -123,7 +123,7 @@ print(f"总文件大小: {total_size} bytes")
 
 # 7. 生成总结报告
 print("\n=== 修复总结报告 ===")
-print(f"📊 修复统计:")
+print("📊 修复统计:")
 print(f"   - 创建/重构文件: {len(existing_files)} 个")
 print(f"   - 总代码行数: {total_lines} 行")
 print(f"   - 总文件大小: {total_size:,} bytes")
@@ -149,6 +149,6 @@ print("   ⚠️  运行完整测试套件验证")
 print("   ⚠️  部署数据库迁移到生产环境")
 print("   ⚠️  集成到 ML 训练流水线")
 
-print(f"\n🚀 P0-2 FeatureStore 核心修复完成！")
+print("\n🚀 P0-2 FeatureStore 核心修复完成！")
 success_rate = len(existing_files) / len(key_files) * 100
 print(f"修复成功率: {len(existing_files)}/{len(key_files)} ({success_rate:.0f}%)")

@@ -189,7 +189,7 @@ class TrainingRunner:
         logger.info("="*60)
 
         if result["status"] == "success":
-            logger.info(f"✅ 训练成功")
+            logger.info("✅ 训练成功")
             logger.info(f"   模型名称: {result['model_name']}")
             logger.info(f"   算法: {result['algorithm']}")
             logger.info(f"   赛季: {result['season']}")
@@ -215,7 +215,7 @@ class TrainingRunner:
                     logger.info(f"   {key}: {value}")
 
         else:
-            logger.error(f"❌ 训练失败")
+            logger.error("❌ 训练失败")
             logger.error(f"   错误: {result.get('error', '未知错误')}")
             logger.error(f"   模型名称: {result.get('model_name', '未知')}")
 

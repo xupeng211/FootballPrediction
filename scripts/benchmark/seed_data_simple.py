@@ -29,7 +29,7 @@ class SimpleBenchmarkDataSeeder:
         self.teams = []
         self.matches = []
 
-    async def generate_teams(self, count: int = 50) -> List[Dict[str, Any]]:
+    async def generate_teams(self, count: int = 50) -> list[dict[str, Any]]:
         """生成球队数据."""
         print(f"🏆 生成 {count} 个球队...")
 
@@ -50,7 +50,7 @@ class SimpleBenchmarkDataSeeder:
         print(f"✅ 生成 {len(teams)} 个球队")
         return teams
 
-    async def save_teams_to_db(self, teams: List[Dict[str, Any]]) -> int:
+    async def save_teams_to_db(self, teams: list[dict[str, Any]]) -> int:
         """保存球队到数据库."""
         print("💾 保存球队到数据库...")
 
@@ -96,7 +96,7 @@ class SimpleBenchmarkDataSeeder:
         print(f"✅ 成功保存 {success_count} 个球队")
         return success_count
 
-    async def generate_matches(self, count: int = 1000) -> List[Dict[str, Any]]:
+    async def generate_matches(self, count: int = 1000) -> list[dict[str, Any]]:
         """生成比赛数据."""
         print(f"⚽ 生成 {count} 场比赛...")
 
@@ -148,7 +148,7 @@ class SimpleBenchmarkDataSeeder:
         print(f"✅ 生成 {len(matches)} 场比赛")
         return matches
 
-    async def save_matches_to_db(self, matches: List[Dict[str, Any]]) -> int:
+    async def save_matches_to_db(self, matches: list[dict[str, Any]]) -> int:
         """保存比赛到数据库."""
         print("💾 保存比赛到数据库...")
 
@@ -206,7 +206,7 @@ class SimpleBenchmarkDataSeeder:
         print(f"✅ 成功保存 {success_count} 场比赛")
         return success_count
 
-    async def generate_simple_features(self, matches: List[Dict[str, Any]]) -> int:
+    async def generate_simple_features(self, matches: list[dict[str, Any]]) -> int:
         """生成简单特征数据到JSON字段."""
         print(f"📊 生成 {len(matches)} 组特征数据...")
 
@@ -364,7 +364,7 @@ class SimpleBenchmarkDataSeeder:
             print(f"\n🏆 总体状态: {'✅ 全部成功' if overall_success else '⚠️ 部分失败'}")
 
             if report:
-                print(f"📊 详细报告: artifacts/benchmark_seeding_report.json")
+                print("📊 详细报告: artifacts/benchmark_seeding_report.json")
 
             return overall_success
 

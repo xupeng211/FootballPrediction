@@ -252,7 +252,7 @@ class DeploymentValidator:
             import shutil
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def run_all_tests(self) -> Dict[str, Any]:
+    def run_all_tests(self) -> dict[str, Any]:
         """运行所有验证测试"""
         logger.info("🚀 Starting P0-4 ML Pipeline Deployment Validation")
         logger.info("=" * 60)

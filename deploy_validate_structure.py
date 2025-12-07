@@ -260,7 +260,7 @@ class StructureValidator:
             self.log_result("Code Quality", False, f"代码质量需要改进 ({passed}/{total})")
             return False
 
-    def generate_summary_report(self) -> Dict[str, Any]:
+    def generate_summary_report(self) -> dict[str, Any]:
         """生成总结报告"""
         print("\n" + "="*60)
         print("📊 P0-4 ML Pipeline 结构验证总结")
@@ -346,7 +346,7 @@ def main():
 """
 
     Path("P0_4_STRUCTURE_VALIDATION_REPORT.md").write_text(report_content)
-    print(f"\n📄 结构验证报告已保存: P0_4_STRUCTURE_VALIDATION_REPORT.md")
+    print("\n📄 结构验证报告已保存: P0_4_STRUCTURE_VALIDATION_REPORT.md")
 
     return results['status'] in ["PASSED", "PARTIAL"]
 

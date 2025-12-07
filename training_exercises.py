@@ -92,7 +92,7 @@ def exercise_2_feature_loading():
 
         # 任务2.2: 分析方法签名
         print("\n2.2 分析核心方法签名...")
-        load_method = getattr(FeatureLoader, "load_training_data")
+        load_method = FeatureLoader.load_training_data
         sig = inspect.signature(load_method)
         print(f"   load_training_data{sig}")
 
@@ -133,7 +133,7 @@ def exercise_3_trainer_interface():
         # 任务3.4: 分析训练方法
         print("\n3.4 分析训练方法...")
         import inspect
-        train_method = getattr(trainer, "train")
+        train_method = trainer.train
         sig = inspect.signature(train_method)
         print(f"   train方法签名: train{sig}")
 
@@ -165,19 +165,19 @@ def exercise_4_model_registry():
         # 任务4.2: 分析保存方法
         print("\n4.2 分析模型保存方法...")
         import inspect
-        save_method = getattr(registry, "save_model")
+        save_method = registry.save_model
         sig = inspect.signature(save_method)
         print(f"   save_model方法签名: save_model{sig}")
 
         # 任务4.3: 分析加载方法
         print("\n4.3 分析模型加载方法...")
-        load_method = getattr(registry, "load_model")
+        load_method = registry.load_model
         sig = inspect.signature(load_method)
         print(f"   load_model方法签名: load_model{sig}")
 
         # 任务4.4: 分析比较方法
         print("\n4.4 分析模型比较方法...")
-        compare_method = getattr(registry, "compare_models")
+        compare_method = registry.compare_models
         sig = inspect.signature(compare_method)
         print(f"   compare_models方法签名: compare_models{sig}")
 
@@ -307,7 +307,7 @@ def generate_training_report(results):
         print(f"  练习{i}: {exercise_name} - {status}")
 
     # 生成建议
-    print(f"\n培训建议:")
+    print("\n培训建议:")
     if success_rate >= 80:
         print("  🎉 优秀! 您已完全掌握P0-4 ML Pipeline的核心概念")
     elif success_rate >= 60:
@@ -372,7 +372,7 @@ def main():
 """
 
     Path("P0_4_TRAINING_EXERCISES_REPORT.md").write_text(report_content)
-    print(f"\n📄 培训报告已保存: P0_4_TRAINING_EXERCISES_REPORT.md")
+    print("\n📄 培训报告已保存: P0_4_TRAINING_EXERCISES_REPORT.md")
 
     return success_rate >= 60
 

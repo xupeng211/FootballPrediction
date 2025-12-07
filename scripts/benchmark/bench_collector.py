@@ -40,7 +40,7 @@ class BenchmarkResult:
     p99_response_time: float
     requests_per_second: float
     error_rate: float
-    error_messages: List[str]
+    error_messages: list[str]
 
 
 @dataclass
@@ -62,7 +62,7 @@ class CollectorBenchmarker:
         """初始化基准测试器."""
         self.collector = None
         self.rate_limiter = None
-        self.results: List[RequestMetric] = []
+        self.results: list[RequestMetric] = []
 
     async def setup(self):
         """设置测试环境."""
@@ -88,7 +88,7 @@ class CollectorBenchmarker:
             self.collector = FotMobCollectorV2(rate_limiter=self.rate_limiter)
 
             print("✅ 采集器和限流器初始化完成")
-            print(f"   📊 RateLimiter配置: 5 QPS (fotmob.com)")
+            print("   📊 RateLimiter配置: 5 QPS (fotmob.com)")
 
         except Exception as e:
             print(f"❌ 初始化失败: {e}")
@@ -251,12 +251,12 @@ class CollectorBenchmarker:
         avg_interval = statistics.mean(rate_limited_times) if rate_limited_times else 0
         expected_interval = 1000 / 5.0  # 200ms for 5 QPS
 
-        print(f"   ✅ RateLimiter验证:")
+        print("   ✅ RateLimiter验证:")
         print(f"      理论间隔: {expected_interval:.0f}ms")
         print(f"      实际平均间隔: {avg_interval*1000:.1f}ms")
         print(f"      限流效果: {'有效' if avg_interval >= expected_interval * 0.8 else '无效'}")
 
-    async def generate_report(self, results: List[BenchmarkResult]) -> str:
+    async def generate_report(self, results: list[BenchmarkResult]) -> str:
         """生成基准测试报告."""
         print("\n📋 生成基准测试报告")
         print("-" * 50)
@@ -266,7 +266,7 @@ class CollectorBenchmarker:
             "# P1-7 Collector Benchmark Report",
             "",
             f"**测试时间**: {datetime.now().isoformat()}",
-            f"**测试版本**: P1-7 v1.0.0",
+            "**测试版本**: P1-7 v1.0.0",
             "",
             "## 📊 测试结果摘要",
             "",
@@ -302,17 +302,17 @@ class CollectorBenchmarker:
         avg_rps = statistics.mean([r.requests_per_second for r in results])
         if avg_rps < 10:
             report_lines.append("- **性能瓶颈**: RPS较低，可能受RateLimiter限制影响")
-            report_lines.append(f"- **建议**: 调整RateLimiter配置或优化采集逻辑")
+            report_lines.append("- **建议**: 调整RateLimiter配置或优化采集逻辑")
 
         avg_error_rate = statistics.mean([r.error_rate for r in results])
         if avg_error_rate > 10:
             report_lines.append("- **稳定性瓶颈**: 错误率较高")
-            report_lines.append(f"- **建议**: 检查外部API可用性和网络连接")
+            report_lines.append("- **建议**: 检查外部API可用性和网络连接")
 
         avg_p95 = statistics.mean([r.p95_response_time*1000 for r in results])
         if avg_p95 > 5000:
             report_lines.append("- **延迟瓶颈**: P95响应时间较高")
-            report_lines.append(f"- **建议**: 优化数据采集逻辑或增加缓存")
+            report_lines.append("- **建议**: 优化数据采集逻辑或增加缓存")
 
         report_lines.extend([
             "",
@@ -352,7 +352,7 @@ class CollectorBenchmarker:
                 all_results.append(result)
 
                 # 打印即时结果
-                print(f"\n📊 即时结果:")
+                print("\n📊 即时结果:")
                 print(f"   ✅ 总请求数: {result.total_requests}")
                 print(f"   ✅ 成功请求: {result.successful_requests}")
                 print(f"   ❌ 失败请求: {result.failed_requests}")
@@ -372,7 +372,7 @@ class CollectorBenchmarker:
 
                 # 测试间隔
                 if concurrent_count != test_scenarios[-1]:
-                    print(f"\n⏳ 等待 3 秒后进行下一个测试...")
+                    print("\n⏳ 等待 3 秒后进行下一个测试...")
                     await asyncio.sleep(3)
 
             # 生成报告
@@ -417,11 +417,11 @@ async def main():
 
         # 性能评估
         if avg_rps >= 5 and avg_success_rate >= 90 and avg_p95 <= 5000:
-            print(f"🏆 性能评级: 优秀")
+            print("🏆 性能评级: 优秀")
         elif avg_rps >= 3 and avg_success_rate >= 80 and avg_p95 <= 10000:
-            print(f"👍 性能评级: 良好")
+            print("👍 性能评级: 良好")
         else:
-            print(f"⚠️ 性能评级: 需要优化")
+            print("⚠️ 性能评级: 需要优化")
 
         return True
     else:

@@ -73,7 +73,7 @@ class DryRunTester:
         try:
             # 获取工厂实例
             self.factory = get_http_client_factory()
-            print(f"   ✅ HTTP客户端工厂获取完成")
+            print("   ✅ HTTP客户端工厂获取完成")
 
             # 配置数据源
             if self.source == "fotmob":
@@ -172,7 +172,7 @@ class DryRunTester:
             collector = await self.factory.create_collector(self.source)
 
             # 采集英超联赛赛程 (league_id=47)
-            print(f"   📋 开始采集英超赛程数据...")
+            print("   📋 开始采集英超赛程数据...")
 
             fixtures = await collector.collect_fixtures(47, "2024-2025")
 
@@ -239,7 +239,7 @@ class DryRunTester:
                         successful_matches += 1
                         print(f"      ✅ 成功 - 比分: {details.get('home_score', 'N/A')}-{details.get('away_score', 'N/A')}")
                     else:
-                        print(f"      ⚠️ 数据不完整")
+                        print("      ⚠️ 数据不完整")
 
                 except Exception as e:
                     print(f"      ❌ 失败: {e}")
@@ -263,7 +263,7 @@ class DryRunTester:
         if not self.test_rate_limiting:
             return True
 
-        print(f"\n🚦 测试速率限制机制...")
+        print("\n🚦 测试速率限制机制...")
 
         try:
             # 创建采集器
@@ -288,10 +288,10 @@ class DryRunTester:
 
             # 验证速率限制是否生效
             if elapsed >= 3.0:  # 应该被速率限制延迟
-                print(f"   ✅ 速率限制生效")
+                print("   ✅ 速率限制生效")
                 rate_limit_test_passed = True
             else:
-                print(f"   ⚠️ 速率限制可能未生效")
+                print("   ⚠️ 速率限制可能未生效")
                 rate_limit_test_passed = False
 
             # 清理
@@ -307,7 +307,7 @@ class DryRunTester:
 
     async def run_concurrent_test(self) -> bool:
         """运行并发测试"""
-        print(f"\n🔄 运行并发测试...")
+        print("\n🔄 运行并发测试...")
 
         try:
             # 创建采集器
@@ -354,7 +354,7 @@ class DryRunTester:
 
     async def generate_report(self) -> None:
         """生成测试报告"""
-        print(f"\n📄 生成测试报告...")
+        print("\n📄 生成测试报告...")
 
         # 创建报告目录
         reports_dir = Path("reports")
@@ -383,22 +383,22 @@ class DryRunTester:
 
         with open(report_file, 'w', encoding='utf-8') as f:
             f.write("# 采集器 Dry-Run 测试报告\n\n")
-            f.write(f"## 测试概览\n")
+            f.write("## 测试概览\n")
             f.write(f"- **数据源**: {report['test_summary']['test_source']}\n")
             f.write(f"- **测试时长**: {report['test_summary']['test_duration']:.2f}秒\n")
             f.write(f"- **测试开始**: {report['test_summary']['test_start']}\n")
             if report['test_summary']['test_end']:
                 f.write(f"- **测试结束**: {report['test_summary']['test_end']}\n")
-            f.write(f"\n")
+            f.write("\n")
 
-            f.write(f"## 采集结果\n")
+            f.write("## 采集结果\n")
             f.write(f"- **赛程数据采集**: {report['collection_results']['fixtures_collected']} 场\n")
             f.write(f"- **比赛详情采集**: {report['collection_results']['matches_collected']} 场\n")
             f.write(f"- **球队信息采集**: {report['collection_results']['teams_collected']} 个\n")
             f.write(f"- **健康检查次数**: {report['collection_results']['health_checks']} 次\n")
-            f.write(f"\n")
+            f.write("\n")
 
-            f.write(f"## 监控统计\n")
+            f.write("## 监控统计\n")
             monitor_stats = report.get("monitoring_statistics", {})
             if monitor_stats:
                 f.write(f"- **总请求数**: {monitor_stats.get('total_requests', 0)}\n")
@@ -408,15 +408,15 @@ class DryRunTester:
                 f.write(f"- **平均响应时间**: {monitor_stats.get('avg_response_time_ms', 0):.2f}ms\n")
                 f.write(f"- **Token刷新次数**: {monitor_stats.get('token_refreshes', 0)}\n")
                 f.write(f"- **代理轮换次数**: {monitor_stats.get('proxy_rotations', 0)}\n")
-            f.write(f"\n")
+            f.write("\n")
 
             if report["errors"]:
-                f.write(f"## 错误信息\n")
+                f.write("## 错误信息\n")
                 for i, error in enumerate(report["errors"], 1):
                     f.write(f"{i}. {error}\n")
-                f.write(f"\n")
+                f.write("\n")
 
-            f.write(f"## 测试配置\n")
+            f.write("## 测试配置\n")
             f.write(f"- **数据源**: {self.source}\n")
             f.write(f"- **最大赛程数**: {self.max_fixtures}\n")
             f.write(f"- **最大比赛数**: {self.max_matches}\n")
@@ -430,7 +430,7 @@ class DryRunTester:
         with open(json_report_file, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
-        print(f"   ✅ 报告已保存:")
+        print("   ✅ 报告已保存:")
         print(f"      📄 Markdown: {report_file}")
         print(f"      📊 JSON: {json_report_file}")
 
@@ -475,23 +475,23 @@ class DryRunTester:
         # 生成测试结果摘要
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"\n📊 测试结果摘要:")
+        print("\n📊 测试结果摘要:")
         print(f"   总测试数: {total_tests}")
         print(f"   通过测试: {passed_tests} ({success_rate:.1f}%)")
         print(f"   失败测试: {total_tests - passed_tests} ({100 - success_rate:.1f}%)")
 
         if self.test_results["errors"]:
-            print(f"\n❌ 错误详情:")
+            print("\n❌ 错误详情:")
             for i, error in enumerate(self.test_results["errors"], 1):
                 print(f"   {i}. {error}")
 
         # 结果评估
         if success_rate >= 80:
-            print(f"\n🎉 测试结果: 优秀 (成功率 >= 80%)")
+            print("\n🎉 测试结果: 优秀 (成功率 >= 80%)")
         elif success_rate >= 60:
-            print(f"\n✅ 测试结果: 良好 (成功率 >= 60%)")
+            print("\n✅ 测试结果: 良好 (成功率 >= 60%)")
         else:
-            print(f"\n⚠️ 测试结果: 需要改进 (成功率 < 60%)")
+            print("\n⚠️ 测试结果: 需要改进 (成功率 < 60%)")
 
         # 生成报告
         await self.generate_report()

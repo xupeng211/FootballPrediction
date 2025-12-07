@@ -191,6 +191,31 @@ make db-migrate       # Run database migrations
 make db-shell         # Enter PostgreSQL interactive terminal
 ```
 
+### 🔧 Essential Scripts & Tools
+```bash
+# Data collection scripts
+python scripts/refresh_fotmob_tokens.py    # Refresh FotMob API tokens
+python scripts/daily_pipeline.py          # Run daily data collection
+python scripts/backfill_details_fotmob_v2.py  # Backfill missing match data
+
+# ML model scripts
+python scripts/train_model_v2.py          # Train ML models
+python scripts/tune_model_optuna.py       # Hyperparameter optimization
+python scripts/generate_predictions.py    # Generate match predictions
+
+# System maintenance
+python scripts/ops_monitor.py             # Operations monitoring dashboard
+python scripts/deploy_verify.py           # Deployment verification
+```
+
+### 📊 Monitoring Tools Access
+```bash
+# v2.5+ Enterprise Monitoring UIs
+http://localhost:4200  # Prefect UI - Workflow orchestration
+http://localhost:5555  # Flower UI - Celery task monitoring
+http://localhost:5000  # MLflow UI - ML experiment tracking
+```
+
 ## 🧪 Testing Strategy
 
 ### SWAT Testing Core Principles
@@ -249,16 +274,16 @@ frontend/
 │   │   └── client.ts          # Axios HTTP客户端配置
 │   ├── components/            # Vue组件
 │   │   ├── auth/              # 认证相关组件
-│   │   ├── charts/            # 图表组件
+│   │   ├── charts/            # 图表组件 (Chart.js + vue-chartjs)
 │   │   ├── match/             # 比赛相关组件
 │   │   └── profile/           # 用户资料组件
 │   ├── composables/           # Vue 3 Composition API
 │   │   └── useApi.ts          # API调用组合式函数
 │   ├── layouts/               # 页面布局
 │   ├── router/                # 路由配置
-│   │   └── index.ts           # Vue Router配置
+│   │   └── index.ts           # Vue Router 4配置
 │   ├── stores/                # Pinia状态管理
-│   │   └── auth.ts            # 认证状态
+│   │   └── auth.ts            # 认证状态管理
 │   ├── types/                 # TypeScript类型定义
 │   ├── views/                 # 页面视图
 │   │   ├── auth/              # 认证页面
@@ -269,8 +294,17 @@ frontend/
 ├── package.json               # 依赖配置
 ├── vite.config.ts            # Vite构建配置
 ├── tsconfig.json             # TypeScript配置
-└── tailwind.config.js        # Tailwind CSS配置
+├── tailwind.config.js        # Tailwind CSS配置
+└── scripts/                  # 前端工具脚本
 ```
+
+### Key Frontend Architecture Components
+- **Vue 3 Composition API**: Use `<script setup lang="ts">` syntax
+- **Pinia State Management**: Replace Vuex, use stores for global state
+- **TypeScript Integration**: Strong typing for all components and API calls
+- **Chart.js Integration**: Use vue-chartjs for data visualization
+- **Tailwind CSS**: Utility-first styling with responsive design
+- **Axios HTTP Client**: Configured in `src/api/client.ts` for API communication
 
 ### Frontend Development Workflow
 ```bash
@@ -532,6 +566,23 @@ npm run lint         # Check for linting issues
 # 3. Use Vue DevTools to inspect state
 ```
 
+#### 📊 Monitoring UI Issues
+```bash
+# Prefect UI not accessible?
+curl http://localhost:4200  # Direct access check
+docker-compose logs prefect  # Check Prefect service logs
+
+# Flower UI not showing tasks?
+curl http://localhost:5555  # Verify Celery status
+# Check worker processes:
+docker-compose exec celery celery -A src.tasks.celery_app inspect active
+
+# MLflow UI not loading experiments?
+curl http://localhost:5000  # Basic connectivity test
+# Check MLflow tracking server:
+docker-compose logs mlflow
+```
+
 ## 💡 Important Reminders
 
 1. **Test Golden Rule** - Always use Makefile commands, never run pytest directly
@@ -544,6 +595,7 @@ npm run lint         # Check for linting issues
 8. **Coverage Requirement** - Maintain minimum 6.0% test coverage for CI to pass
 9. **Security First** - Run `make security-check` before committing changes
 10. **Use `make help`** - Shows all available commands with descriptions - most useful command for newcomers
+11. **Monitoring Tools** - v2.5+ provides Prefect (4200), Flower (5555), MLflow (5000) UIs for system observability
 
 ---
 

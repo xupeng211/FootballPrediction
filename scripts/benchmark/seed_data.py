@@ -47,7 +47,7 @@ class BenchmarkDataSeeder:
         await self.feature_store.initialize()
         print("✅ 特征存储初始化完成")
 
-    async def generate_teams(self, count: int = 50) -> List[Dict[str, Any]]:
+    async def generate_teams(self, count: int = 50) -> list[dict[str, Any]]:
         """生成球队数据."""
         print(f"🏆 生成 {count} 个球队...")
 
@@ -70,7 +70,7 @@ class BenchmarkDataSeeder:
         print(f"✅ 生成 {len(teams)} 个球队")
         return teams
 
-    async def save_teams_to_db(self, teams: List[Dict[str, Any]]):
+    async def save_teams_to_db(self, teams: list[dict[str, Any]]):
         """保存球队到数据库."""
         print("💾 保存球队到数据库...")
 
@@ -118,7 +118,7 @@ class BenchmarkDataSeeder:
         print(f"✅ 成功保存 {success_count}/{len(teams)} 个球队")
         return success_count
 
-    async def generate_matches(self, count: int = 1000) -> List[Dict[str, Any]]:
+    async def generate_matches(self, count: int = 1000) -> list[dict[str, Any]]:
         """生成比赛数据."""
         print(f"⚽ 生成 {count} 场比赛...")
 
@@ -176,7 +176,7 @@ class BenchmarkDataSeeder:
         print(f"✅ 生成 {len(matches)} 场比赛")
         return matches
 
-    async def save_matches_to_db(self, matches: List[Dict[str, Any]]):
+    async def save_matches_to_db(self, matches: list[dict[str, Any]]):
         """保存比赛到数据库."""
         print("💾 保存比赛到数据库...")
 
@@ -241,7 +241,7 @@ class BenchmarkDataSeeder:
         print(f"✅ 成功保存 {success_count}/{len(matches)} 场比赛")
         return success_count
 
-    async def generate_features(self, matches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def generate_features(self, matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """生成特征数据."""
         print(f"📊 生成 {len(matches)} 组特征数据...")
 
@@ -328,7 +328,7 @@ class BenchmarkDataSeeder:
         print(f"✅ 生成 {len(features_list)} 组特征数据")
         return features_list
 
-    async def save_features_to_store(self, features_list: List[Dict[str, Any]]):
+    async def save_features_to_store(self, features_list: list[dict[str, Any]]):
         """保存特征到特征存储."""
         print("💾 保存特征到特征存储...")
 
@@ -466,7 +466,7 @@ class BenchmarkDataSeeder:
             print(f"\n🏆 总体状态: {'✅ 全部成功' if overall_success else '⚠️ 部分失败'}")
 
             if report:
-                print(f"📊 详细报告: artifacts/benchmark_seeding_report.json")
+                print("📊 详细报告: artifacts/benchmark_seeding_report.json")
 
             return overall_success
 

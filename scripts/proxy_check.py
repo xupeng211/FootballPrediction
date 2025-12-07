@@ -228,7 +228,7 @@ class ProxyCheckCLI:
         await self.pool.initialize()
 
         stats = self.pool.get_stats()
-        print(f"✅ 代理池初始化完成")
+        print("✅ 代理池初始化完成")
         print(f"   总代理数: {stats['total']}")
         print(f"   活跃代理: {stats['active']}")
         print(f"   健康代理: {stats['healthy']}")
@@ -386,13 +386,13 @@ class ProxyCheckCLI:
 
     def _print_results(self, results: dict) -> None:
         """以人类可读格式打印结果"""
-        print(f"\n📊 测试结果摘要:")
+        print("\n📊 测试结果摘要:")
         print(f"   总测试次数: {results['test_summary']['total_tests']}")
         print(f"   成功次数: {results['test_summary']['successful_tests']}")
         print(f"   失败次数: {results['test_summary']['failed_tests']}")
         print(f"   成功率: {results['test_summary']['success_rate']}%")
 
-        print(f"\n🏊 代理池最终状态:")
+        print("\n🏊 代理池最终状态:")
         stats = results['proxy_pool_stats']
         print(f"   总代理数: {stats['total']}")
         print(f"   活跃代理: {stats['active']}")
@@ -403,7 +403,7 @@ class ProxyCheckCLI:
             print(f"   平均响应时间: {stats['avg_response_time']}ms")
 
         if results['proxy_usage']:
-            print(f"\n📈 代理使用统计:")
+            print("\n📈 代理使用统计:")
             for proxy_url, usage in results['proxy_usage'].items():
                 success_rate = (usage['successes'] / usage['count']) * 100 if usage['count'] > 0 else 0
                 avg_response = sum(usage['response_times']) / len(usage['response_times']) if usage['response_times'] else 0
@@ -415,7 +415,7 @@ class ProxyCheckCLI:
                     print(f"     平均响应时间: {avg_response:.0f}ms")
 
         if self.args.verbose and results['test_results']:
-            print(f"\n📋 详细测试结果:")
+            print("\n📋 详细测试结果:")
             for result in results['test_results']:
                 status = "✅" if result.get("success", False) else "❌"
                 proxy = result.get("proxy", "N/A")
