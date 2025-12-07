@@ -3,9 +3,11 @@
 为所有API端点提供标准化的响应模型,确保API文档的一致性和完整性.
 """
 
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
+
+T = TypeVar('T')
 
 
 class APIResponse(BaseModel):
@@ -14,6 +16,27 @@ class APIResponse(BaseModel):
     success: bool = Field(..., description="请求是否成功")
     message: str = Field(..., description="响应消息")
     data: Any | None = Field(None, description="响应数据")
+    errors: list[str] | None = Field(None, description="错误信息列表")
+    timestamp: str | None = Field(None, description="响应时间戳")
+
+
+class StandardResponse(BaseModel, Generic[T]):
+    """标准化API响应模型."""
+
+    success: bool = Field(..., description="请求是否成功")
+    message: str = Field(..., description="响应消息")
+    data: T = Field(..., description="响应数据")
+    errors: list[str] | None = Field(None, description="错误信息列表")
+    timestamp: str | None = Field(None, description="响应时间戳")
+
+
+class PaginatedResponse(BaseModel):
+    """分页响应模型."""
+
+    success: bool = Field(..., description="请求是否成功")
+    message: str = Field(..., description="响应消息")
+    data: list[Any] = Field(..., description="响应数据列表")
+    pagination: dict[str, Any] = Field(..., description="分页信息")
     errors: list[str] | None = Field(None, description="错误信息列表")
     timestamp: str | None = Field(None, description="响应时间戳")
 
