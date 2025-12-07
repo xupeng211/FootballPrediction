@@ -92,7 +92,7 @@ class SeasonBackfillJob:
                         headers=self.html_collector._get_current_headers(),
                         timeout=self.html_collector.timeout,
                         allow_redirects=True,
-                        verify=False,
+                        verify=True,  # 启用 SSL 证书验证
                     )
 
                     self.logger.info(

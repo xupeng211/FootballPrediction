@@ -1,0 +1,1758 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 23fbf1b95..f3746eaa3 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -2,8 +2,18 @@
+ 
+ This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+ 
++## 🌐 Language Preference
++
++**IMPORTANT**: Please reply in Chinese (中文) for all communications in this repository. The user prefers Chinese responses for all interactions, including code explanations, documentation updates, and general discussions.
++
+ ## 📋 Latest Updates (2025-12-04)
+ 
++### v2.5.0 Backend Complete (2025-12-07)
++- **Complete Backend Architecture v2.5**: 16 services, 29.0% test coverage achieved
++- **Prefect + Celery Scheduler**: Enterprise-grade task orchestration with MLflow integration
++- **Vue.js 3 Frontend Migration**: Complete migration from React to Vue.js + Vite
++- **Enhanced Monitoring**: Prefect UI, MLflow tracking, and quality dashboard
++
+ ### v2.1.0 Improvements Applied
+ - **Updated Quality Metrics**: Real coverage increased from 6.5% to 29.0% (target achieved)
+ - **Enhanced FotMob Guidelines**: Added critical HTTP-only policy and authentication requirements
+@@ -77,6 +87,7 @@ make test.unit.ci                 # CI verification (fastest)
+ - ✅ All services healthy (app, db, redis)
+ - ✅ API accessible at http://localhost:8000
+ - ✅ Documentation at http://localhost:8000/docs
++- ✅ Frontend development server at http://localhost:5173 (Vite)
+ - ✅ Test coverage: 29.0% total (target achieved)
+ 
+ ## 🎯 Project Overview
+@@ -104,8 +115,10 @@ make test.unit.ci                 # CI verification (fastest)
+ 
+ ### Tech Stack
+ - **Backend**: FastAPI + PostgreSQL 15 + Redis 7.0+ + SQLAlchemy 2.0+
++- **Frontend**: Vue.js 3 + Vite + Pinia + Vue Router 4 + Tailwind CSS
+ - **Machine Learning**: XGBoost 2.0+ + TensorFlow 2.18.0 + MLflow + Optuna
+-- **Containerization**: Docker 27.0+ + 20+ Docker Compose configurations
++- **Task Orchestration**: Prefect + Celery hybrid system
++- **Containerization**: Docker 27.0+ + 10+ Docker Compose configurations
+ - **Dev Tools**: pytest 8.4.0+ + Ruff 0.14+ + Complete Makefile toolchain
+ 
+ ## 🏗️ Architecture
+@@ -210,6 +223,21 @@ FootballPrediction/         # Project root directory
+ - **Pydantic v2+** - Data validation and serialization
+ - **Uvicorn** - ASGI server
+ 
++#### Frontend Development
++```bash
++# Vue.js + Vite Development
++cd frontend
++npm run dev          # Start Vite development server (port 5173)
++npm run build        # Build for production
++npm run preview      # Preview production build
++npm run lint         # ESLint with Vue support
++npm run type-check   # TypeScript type checking
++
++# Quality Dashboard (separate React app)
++cd frontend/quality-dashboard
++npm start            # Start quality dashboard (port 3001)
++```
++
+ #### Machine Learning
+ - **XGBoost 2.0+** - Gradient boosting prediction algorithm
+ - **TensorFlow 2.18.0** - Deep learning (LSTM)
+@@ -222,7 +250,9 @@ FootballPrediction/         # Project root directory
+ - **Ruff** - Code checking and formatting (A+ grade)
+ - **Bandit** - Security scanning
+ - **Docker** - Containerized deployment with Playwright
+-- **Makefile** - 613-line standardized development toolchain
++- **Makefile** - 331-line standardized development toolchain
++- **Prefect** - Workflow orchestration and task management
++- **MLflow** - ML experiment tracking and model registry
+ 
+ ## 🚀 Core Development Commands
+ 
+@@ -244,8 +274,8 @@ make env-check        # Check if environment is properly configured
+ make help             # Show all available commands with descriptions ⭐
+ ```
+ 
+-### Docker Compose Variants (9 Available)
+-The project includes 9 specialized Docker configurations:
++### Docker Compose Variants (10 Available)
++The project includes 10 specialized Docker configurations:
+ 
+ ```bash
+ # Development Environments
+@@ -264,10 +294,12 @@ docker-compose.deploy.yml       # Deployment-specific settings
+ # Specialized Services
+ docker-compose.crawler.yml      # Web scraping focused setup
+ docker-compose.monitoring.yml   # Monitoring stack (Prometheus, Grafana)
++docker-compose.scheduler.yml   # Prefect + Celery task orchestration system
+ 
+ # Usage Examples:
+ docker-compose -f docker-compose.lightweight.yml up    # Minimal dev
+ docker-compose -f docker-compose.monitoring.yml up     # With monitoring
++docker-compose -f docker-compose.scheduler.yml up      # With task orchestration
+ ```
+ 
+ ### Data Collection Commands
+@@ -278,6 +310,16 @@ python scripts/backfill_details_fotmob_v2.py  # Primary FotMob data engine
+ python scripts/refresh_fotmob_tokens.py       # Update API authentication tokens
+ ```
+ 
++### Task Orchestration Commands
++```bash
++# Prefect + Celery Scheduler (docker-compose.scheduler.yml)
++make scheduler        # Start Prefect + Celery orchestration environment
++make scheduler-stop   # Stop scheduler services
++prefect deploy        # Deploy Prefect flows
++prefect work-queue    # Manage Prefect work queues
++mlflow ui            # Start MLflow experiment tracking UI
++```
++
+ ### 🔥 Test Golden Rule
+ **Never run pytest on single files directly!** Always use Makefile commands:
+ 
+@@ -372,11 +414,29 @@ ANTI_SCRAPING_LEVEL=medium  # low, medium, high
+ ADMIN_PASSWORD_HASH=240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
+ TEST_PASSWORD_HASH=ffc121a2210958bf74e5a874668f3d978d24b6a8241496ccff3c0ea245e4f126
+ 
++# Prefect + Celery Scheduler Configuration
++PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://postgres:postgres@prefect-db:5432/prefect
++PREFECT_SERVER_API_HOST=0.0.0.0
++PREFECT_SERVER_API_PORT=4200
++PREFECT_SERVER_UI_API_HOST=0.0.0.0
++
++# MLflow Configuration
++MLFLOW_BACKEND_STORE_URI=postgresql+psycopg2://postgres:postgres@prefect-db:5432/mlflow
++MLFLOW_DEFAULT_ARTIFACT_ROOT=mlflow/artifacts
++MLFLOW_S3_ENDPOINT_URL=http://minio:9000
++MLFLOW_S3_BUCKET_NAME=mlflow
++
++# Prefect Database (separate from main app)
++POSTGRES_PREFECT_USER=postgres
++POSTGRES_PREFECT_PASSWORD=postgres
++POSTGRES_PREFECT_DB=prefect
++
+ # Available environment files:
+ # .env.example - Template (copy to .env)
+ # .env.docker - Docker-specific configuration
+ # .env.ci - CI environment variables (auto-generated)
+ # .env.prod - Production environment variables
++# .env.scheduler - Scheduler-specific variables
+ ```
+ 
+ #### Container Operations
+@@ -1331,12 +1391,14 @@ Service Communication Patterns:
+ 
+ ## 📊 API Endpoints
+ 
+-- **Frontend Application**: http://localhost:3000
++- **Frontend Application**: http://localhost:5173 (Vue.js + Vite)
+ - **Backend API**: http://localhost:8000
+ - **API Documentation**: http://localhost:8000/docs
+ - **Health Check**: http://localhost:8000/health
+ - **WebSocket**: ws://localhost:8000/api/v1/realtime/ws
+ - **Prometheus Metrics**: http://localhost:8000/api/v1/metrics
++- **Prefect UI**: http://localhost:4200 (when scheduler running)
++- **MLflow UI**: http://localhost:5000 (when scheduler running)
+ 
+ ## 📈 Performance Monitoring & Debugging
+ 
+@@ -1352,8 +1414,11 @@ curl http://localhost:8000/api/v1/metrics       # Prometheus metrics
+ 
+ # External Monitoring Services
+ http://localhost:5555                           # Flower - Celery task monitoring
++http://localhost:4200                           # Prefect UI - Workflow orchestration
++http://localhost:5000                           # MLflow UI - ML experiment tracking
+ mlflow ui                                       # MLflow - ML experiment tracking
+ docker-compose -f docker-compose.monitoring.yml up  # Full monitoring stack
++docker-compose -f docker-compose.scheduler.yml up    # Scheduler stack with Prefect+MLflow
+ ```
+ 
+ ### Performance Monitoring Commands
+@@ -1418,8 +1483,8 @@ docker-compose exec worker celery -A src.tasks.celery_app inspect active  # Acti
+ ```
+ ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+ │   Frontend  │  │  Backend    │  │  Database   │
+-│   (React)   │  │  (FastAPI)  │  │(PostgreSQL) │
+-│  Port:3000  │  │  Port:8000  │  │  Port:5432  │
++│  (Vue.js)   │  │  (FastAPI)  │  │(PostgreSQL) │
++│ Port:5173   │  │  Port:8000  │  │  Port:5432  │
+ └─────────────┘  └─────────────┘  └─────────────┘
+        │                │                │
+        │       ┌─────────────┐          │
+@@ -1434,6 +1499,15 @@ docker-compose exec worker celery -A src.tasks.celery_app inspect active  # Acti
+               │  (Celery)   │
+               └─────────────┘
+                         │
++              ┌─────────────────────────┐
++              │   Scheduler Cluster     │
++              │ ┌─────┐ ┌─────┐ ┌─────┐ │
++              │ │Pref.│ │MLflow│ │Flower│ │
++              │ │Server│ │ UI  │ │ UI  │ │
++              │ └─────┘ └─────┘ └─────┘ │
++              │  4200    5000   5555    │
++              └─────────────────────────┘
++                        │
+               ┌─────────────┐
+               │    Nginx    │
+               │  Port: 80   │
+@@ -1554,12 +1628,17 @@ src/cqrs/                     # Command Query Responsibility Segregation
+ └── application.py            # CQRS application setup
+ ```
+ 
+-#### Background Tasks
++#### Background Tasks & Orchestration
+ ```
+ src/tasks/
+ ├── celery_app.py             # Celery configuration
+ ├── data_collection_tasks.py  # Background data collection
+ └── prediction_tasks.py       # Async prediction processing
++
++src/orchestration/
++├── flows/                    # Prefect workflow definitions
++├── scheduler_prefect.py      # Prefect + Celery hybrid scheduler
++└── prefect_config.py         # Prefect configuration
+ ```
+ 
+ #### Testing Structure
+@@ -1621,6 +1700,8 @@ grep -r "@pytest.mark" tests/
+ | **Coverage < 6.0%** | `make coverage` | Check specific test files coverage gaps |
+ | **Docker Build Failures** | Check `Dockerfile` | Verify requirements, build context |
+ | **FotMob 403 Errors** | Check `.env` auth | `python scripts/manual_token_test.py` |
++| **Prefect Flow Failures** | Check Prefect UI logs | `prefect flow-run ls` |
++| **MLflow Tracking Issues** | Check MLflow UI | Verify PostgreSQL connection |
+ | **Container Permissions** | `sudo chown -R $USER:$USER ./` | Check Docker user mapping |
+ 
+ ### Error-Specific Solutions
+@@ -1861,6 +1942,44 @@ make db-shell
+ EXPLAIN ANALYZE SELECT * FROM matches LIMIT 10;
+ ```
+ 
++#### 🔄 Prefect + Celery Scheduler Issues
++```bash
++# Symptom: Prefect flows failing or not scheduling
++# Diagnosis:
++curl http://localhost:4200/api/health     # Prefect API health
++prefect flow-run ls                      # List flow runs
++prefect work-queue ls                    # Check work queues
++
++# Solution 1: Restart Prefect services
++docker-compose -f docker-compose.scheduler.yml restart prefect-server
++
++# Solution 2: Check Prefect database connection
++docker-compose exec prefect-db psql -U postgres -d prefect -c "SELECT COUNT(*) FROM flow;"
++
++# Solution 3: Redeploy flows
++prefect deploy --all
++
++# Solution 4: Check Celery worker status
++docker-compose exec worker celery -A src.tasks.celery_app inspect active
++```
++
++#### 🧠 MLflow Tracking Problems
++```bash
++# Symptom: ML experiments not tracking properly
++# Diagnosis:
++curl http://localhost:5000              # MLflow UI accessibility
++mlflow experiments list                  # List experiments
++
++# Solution 1: Check MLflow database connection
++docker-compose exec prefect-db psql -U postgres -d mlflow -c "SELECT COUNT(*) FROM experiments;"
++
++# Solution 2: Reset MLflow storage
++docker-compose exec mlflow mlflow server --backend-store-uri postgresql+psycopg2://postgres:postgres@prefect-db:5432/mlflow --default-artifact-root mlflow/artifacts
++
++# Solution 3: Verify artifact storage
++docker-compose exec minio mc ls mlflow/artifacts
++```
++
+ ## 📜 Essential Scripts Guide
+ 
+ ### Critical Data Collection Scripts
+diff --git a/README.md b/README.md
+index d049e6a82..7fbceef1a 100644
+--- a/README.md
++++ b/README.md
+@@ -3,19 +3,22 @@
+ [![Test Improvement Guide](https://img.shields.io/badge/📊%20Test%20Improvement%20Guide-blue?style=flat-square)](docs/TEST_IMPROVEMENT_GUIDE.md)
+ [![Testing Guide](https://img.shields.io/badge/🛡️%20Testing%20Guide-green?style=flat-square)](docs/TESTING_GUIDE.md)
+ [![Kanban Check](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml/badge.svg)](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml)
++[![Security Audit](https://img.shields.io/badge/Security%20Audit-Passed-brightgreen?style=flat-square)](reports/security_audit.md)
+ 
+ > ✅ **Build Status: Stable (Green Baseline Established)** - CI/CD pipeline maintained with automated test recovery and flaky test isolation
+ 
+ # ⚽ FootballPrediction - 足球预测系统
+ 
+ [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
++[![Vue.js](https://img.shields.io/badge/Vue.js-3.0+-green?style=flat-square&logo=vue.js)](https://vuejs.org)
++[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)
+ [![Code Coverage](https://img.shields.io/badge/Coverage-29.0%25-yellow?style=flat-square&logo=codecov)](https://github.com/xupeng211/FootballPrediction)
+ [![Code Quality](https://img.shields.io/badge/Code%20Quality-A+-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
+ [![Tests](https://img.shields.io/badge/Tests-385%20passed-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
+-[![Security](https://img.shields.io/badge/Security-Validated-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
++[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-green?style=flat-square)](reports/security_audit.md)
+ [![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square&logo=docker)](https://docker.com)
+ 
+-基于现代Python技术栈的**企业级足球预测系统**，采用FastAPI构建，具备完整的开发基础设施和最佳实践配置。
++基于现代技术栈的**企业级足球预测系统**，采用 Python FastAPI + Vue.js 3 全栈架构，具备完整的开发基础设施和最佳实践配置。
+ 
+ > 🎯 **项目成熟度：⭐⭐⭐⭐⭐** - 已达到生产就绪标准
+ >
+@@ -33,6 +36,15 @@
+ - 📏 **代码质量** - 通过ruff、mypy等全套质量检查
+ - 🎯 **类型安全** - 完整的Python类型注解和静态检查
+ 
++### 🌟 前端 MVP 完成 (P3)
++
++- 🎨 **现代化前端架构** - Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS
++- 📱 **响应式设计** - 完美适配移动端、平板和桌面设备
++- 🎯 **完整用户旅程** - 从注册认证到数据分析的全流程体验
++- 📊 **数据可视化** - Chart.js 图表组件，直观展示预测分析
++- 🔐 **用户中心** - 个人信息管理、历史记录、统计分析、账户设置
++- 🚀 **高性能优化** - 代码分割、懒加载、状态管理优化
++
+ 
+ ### 🚀 技术架构 (v2.5)
+ 
+@@ -63,6 +75,26 @@
+ - **🧪 MLflow UI** - 实验跟踪和模型管理 (http://localhost:5000)
+ - **📈 实时质量监控** - 数据质量规则，性能指标，告警系统
+ 
++### 🔒 系统稳定性与安全加固 (v4.0)
++
++#### 📊 企业级监控与日志
++- **📈 Prometheus + Grafana** - 生产级监控仪表板，实时性能指标收集
++- **📋 结构化日志** - JSON格式日志，请求追踪ID，分布式日志聚合
++- **🚨 智能告警** - 基于阈值的自动告警，多渠道通知支持
++- **📊 健康检查** - 全面的系统健康端点，资源监控，依赖检查
++
++#### 🛡️ 企业级安全防护
++- **🔒 HTTP安全头** - CSP、HSTS、XSS防护、点击劫持防护完整实施
++- **🔍 安全审计** - 自动化漏洞扫描，47项安全问题识别与修复
++- **🔐 加密升级** - MD5算法全面升级至SHA256，SSL证书验证强化
++- **🚨 敏感信息保护** - 838个文件扫描，防止硬编码凭证泄露
++
++#### ⚡ 生产化部署优化
++- **🐳 容器编排** - 多环境Docker配置，服务发现，负载均衡
++- **🔄 配置管理** - 环境变量化配置，密钥管理，配置热更新
++- **📊 性能优化** - 数据库连接池，缓存策略，API响应优化
++- **🛠️ 运维工具** - 自动化部署脚本，故障恢复，备份策略
++
+ 
+ ### 🤖 开发体验
+ 
+@@ -77,6 +109,8 @@
+ ### 📋 新开发者必读（5分钟上手）
+ 
+ > ⚠️ **重要提醒**：请务必阅读 [测试运行指南](TEST_RUN_GUIDE.md) 了解正确的测试方法！
++>
++> 🔒 **安全配置**：生产部署前请配置环境变量，详见 [安全审计报告](reports/security_audit.md)
+ 
+ ### 1. 克隆项目
+ 
+@@ -85,17 +119,45 @@ git clone https://github.com/xupeng211/FootballPrediction.git
+ cd FootballPrediction
+ ```
+ 
+-### 2. 初始化环境
++### 2. 选择启动方式
+ 
++#### 🌐 完整全栈应用（推荐）
+ ```bash
+-make install      # 安装依赖
++# 启动后端服务
++make dev && make status
++
++# 启动前端服务（新终端）
++cd frontend
++npm install
++npm run dev
++```
++
++#### 🐳 Docker 一键启动
++```bash
++# 启动完整服务栈（包括前后端）
++docker-compose -f docker-compose.yml -f docker-compose.frontend.yml up
++```
++
++### 3. 后端环境初始化
++
++```bash
++make install      # 安装后端依赖
+ make context      # 加载项目上下文 (⭐ 最重要)
+ make test         # 运行测试 (385个测试用例)
+-make coverage     # 查看当前1.06%覆盖率报告
++make coverage     # 查看当前覆盖率报告
++```
++
++### 4. 前端环境初始化
++
++```bash
++cd frontend
++npm install       # 安装前端依赖
++npm run dev       # 启动开发服务器
+ ```
+ 
+-### 3. 验证测试环境 🧪
++### 5. 验证服务状态 🧪
+ 
++#### 后端服务验证
+ ```bash
+ # Phase 1 核心功能测试（最重要）
+ make test-phase1
+@@ -103,15 +165,35 @@ make test-phase1
+ # 查看实际覆盖率
+ open htmlcov/index.html  # macOS 或
+ xdg-open htmlcov/index.html  # Linux
++
++# 验证后端API
++curl http://localhost:8000/health
++```
++
++#### 前端服务验证
++```bash
++# 检查前端开发服务器
++curl http://localhost:5173
++
++# 前端冒烟测试
++cd frontend
++node scripts/frontend_smoke_test.cjs
+ ```
+ 
+ > 📌 **提示**：运行测试时**请使用 Makefile 命令**，不要直接运行 pytest 单个文件！详见 [测试运行指南](TEST_RUN_GUIDE.md)
+ 
+-### 3. 验证部署就绪
++### 6. 访问应用
++
++- **前端应用**: http://localhost:5173
++- **后端API**: http://localhost:8000
++- **API文档**: http://localhost:8000/docs
++- **健康检查**: http://localhost:8000/health
++
++### 7. 验证部署就绪
+ 
+ ```bash
+-./ci-verify.sh    # 本地CI验证
+-make ci           # 完整质量检查
++./ci-verify.sh    # 本地CI验证（后端）
++make ci           # 完整质量检查（后端）
+ ```
+ 
+ ### 4. 启动完整调度系统 (v2.5新功能)
+@@ -132,33 +214,88 @@ docker-compose ps
+ ## 📁 项目结构
+ 
+ ```text
+-MyProject/
+-├── src/myproject/          # 源代码
+-├── tests/                  # 测试文件
+-├── docs/                   # 文档
+-├── .github/workflows/      # CI/CD配置
+-├── Makefile               # 开发工具链
+-└── requirements.txt       # 依赖定义
++FootballPrediction/                     # 项目根目录
++├── src/                                # 后端源代码 (Python FastAPI)
++│   ├── api/                           # API 层
++│   ├── domain/                        # 领域层
++│   ├── features/                      # 特征存储
++│   ├── ml/                            # 机器学习
++│   ├── database/                      # 数据库层
++│   ├── services/                      # 业务服务
++│   └── ...                           # 其他后端模块
++├── frontend/                           # 前端源代码 (Vue.js 3)
++│   ├── src/                           # 前端源码
++│   │   ├── api/                       # API 客户端
++│   │   ├── components/                # Vue 组件
++│   │   │   ├── auth/                  # 认证组件
++│   │   │   ├── charts/                # 图表组件
++│   │   │   ├── match/                 # 比赛组件
++│   │   │   └── profile/               # 用户中心组件
++│   │   ├── layouts/                   # 页面布局
++│   │   ├── router/                    # 路由配置
++│   │   ├── stores/                    # Pinia 状态管理
++│   │   ├── types/                     # TypeScript 类型定义
++│   │   ├── views/                     # 页面视图
++│   │   ├── App.vue                    # 根组件
++│   │   └── main.ts                    # 应用入口
++│   ├── package.json                   # 前端依赖配置
++│   ├── vite.config.ts                 # Vite 构建配置
++│   ├── tsconfig.json                  # TypeScript 配置
++│   ├── tailwind.config.js             # Tailwind CSS 配置
++│   └── scripts/                       # 前端工具脚本
++├── tests/                             # 测试文件
++├── docs/                              # 文档
++├── .github/workflows/                 # CI/CD配置
++├── Makefile                          # 后端开发工具链
++├── docker-compose*.yml               # Docker 配置文件
++└── requirements*.txt                 # Python 依赖定义
+ ```
+ 
+ ## 🔧 开发工具链
+ 
+ ### 📋 快速命令
+ 
++#### 后端开发工具
+ ```bash
+-make help         # 显示所有可用命令 ⭐
++make help         # 显示所有可用后端命令 ⭐
+ make venv         # 创建虚拟环境
+-make install      # 安装依赖
+-make lint         # 代码检查
+-make test         # 运行测试
+-make ci           # 本地CI检查
++make install      # 安装后端依赖
++make lint         # 后端代码检查
++make test         # 运行后端测试
++make ci           # 后端本地CI检查
+ make sync-issues  # GitHub Issues 同步 🔄
+-./scripts/run_tests_in_docker.sh  # 在容器中执行测试，隔离本地依赖
++./scripts/run_tests_in_docker.sh  # 在容器中执行后端测试，隔离本地依赖
++```
++
++#### 前端开发工具
++```bash
++cd frontend
++npm install          # 安装前端依赖
++npm run dev          # 启动开发服务器
++npm run build        # 构建生产版本
++npm run preview      # 预览生产构建
++npm run lint         # 前端代码检查
++npm run type-check   # TypeScript 类型检查
++```
++
++#### 完整服务栈工具
++```bash
++# 启动完整服务（后端 + 前端）
++make dev && cd frontend && npm run dev
++
++# Docker 完整服务栈
++docker-compose -f docker-compose.yml -f docker-compose.frontend.yml up
++
++# 服务状态检查
++make status                    # 后端服务状态
++curl http://localhost:5173     # 前端服务状态
+ ```
+ 
+ ### 🛠️ 完整工具文档
+ 
+-**详细的工具使用指南**: 📖 [TOOLS.md](./TOOLS.md)
++**后端工具使用指南**: 📖 [TOOLS.md](./TOOLS.md)
++
++**前端架构文档**: 📖 [docs/architecture/v3_0_frontend_summary.md](./docs/architecture/v3_0_frontend_summary.md)
+ 
+ 包含：
+ 
+@@ -166,14 +303,25 @@ make sync-issues  # GitHub Issues 同步 🔄
+ - 代码质量和测试工具 ✨
+ - 环境管理和容器工具 🐳
+ - AI 助手使用指南 🤖
++- Vue.js 前端开发最佳实践 🎨
++- TypeScript 和组件化开发指南 📦
+ 
+ 
+ ## 📚 文档入口
+ 
++### 后端开发文档
+ - [Repository Guidelines](AGENTS.md) — 面向贡献者的结构、流程与安全基线快速上手手册。
+ - [测试改进机制指南](docs/TEST_IMPROVEMENT_GUIDE.md) — 了解 Kanban、CI Hook 与周报机制，快速上手测试优化流程。
+ - [🛡️ 测试实战指南](docs/TESTING_GUIDE.md) — SWAT行动成果，完整的测试方法论和最佳实践，涵盖Mock模式、CI/CD集成和安全网建设。
+ 
++### 前端开发文档
++- [🎨 P3 前端架构总览](docs/architecture/v3_0_frontend_summary.md) — 完整的前端 MVP 架构文档，包括技术栈、组件设计和最佳实践。
++- [📱 前端快速开发指南](frontend/README.md) — Vue.js 3 + TypeScript 开发环境搭建和组件开发指南。
++
++### 项目管理文档
++- [🚀 项目路线图](docs/ROADMAP.md) — 项目发展规划和里程碑计划。
++- [🔧 开发工具链](TOOLS.md) — 完整的开发工具使用指南和自动化脚本说明。
++
+ 
+ ## 🤖 AI辅助开发
+ 
+diff --git a/docker-compose.monitoring.yml b/docker-compose.monitoring.yml
+index 15b143ca5..e464fe3c6 100644
+--- a/docker-compose.monitoring.yml
++++ b/docker-compose.monitoring.yml
+@@ -1,57 +1,128 @@
+ 
++# P4-1: 监控体系搭建 - Prometheus + Grafana + Node Exporter
+ version: '3.8'
+ 
+ services:
+   prometheus:
+-    image: prom/prometheus:latest
+-    container_name: ml_pipeline_prometheus
++    image: prom/prometheus:v2.45.0
++    container_name: footballprediction-prometheus
+     ports:
+       - "9090:9090"
+     volumes:
+-      - ./monitoring/configs/prometheus.yml:/etc/prometheus/prometheus.yml
+-      - ./monitoring/configs/alert_rules.yml:/etc/prometheus/alert_rules.yml
++      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+       - prometheus_data:/prometheus
+     command:
+       - '--config.file=/etc/prometheus/prometheus.yml'
+       - '--storage.tsdb.path=/prometheus'
+       - '--web.console.libraries=/etc/prometheus/console_libraries'
+       - '--web.console.templates=/etc/prometheus/consoles'
+-      - '--storage.tsdb.retention.time=30d'
++      - '--storage.tsdb.retention.time=15d'
+       - '--web.enable-lifecycle'
++      - '--web.external-url=http://localhost:9090'
+     networks:
+-      - monitoring
++      - football-prediction
++    restart: unless-stopped
++    depends_on:
++      - app
++    healthcheck:
++      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
++      interval: 30s
++      timeout: 10s
++      retries: 3
++      start_period: 30s
+ 
+   grafana:
+-    image: grafana/grafana:latest
+-    container_name: ml_pipeline_grafana
++    image: grafana/grafana:10.1.0
++    container_name: footballprediction-grafana
+     ports:
+-      - "3000:3000"
++      - "3001:3000"
+     volumes:
+       - grafana_data:/var/lib/grafana
+-      - ./monitoring/dashboards:/etc/grafana/provisioning/dashboards
+-      - ./monitoring/configs:/etc/grafana/provisioning/datasources
++      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
++      - ./monitoring/grafana/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json:ro
+     environment:
++      - GF_SECURITY_ADMIN_USER=admin
+       - GF_SECURITY_ADMIN_PASSWORD=admin123
+       - GF_USERS_ALLOW_SIGN_UP=false
++      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
++      - GF_SERVER_DOMAIN=localhost:3001
++      - GF_SERVER_ROOT_URL=http://localhost:3001/
+     networks:
+-      - monitoring
++      - football-prediction
++    restart: unless-stopped
++    healthcheck:
++      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
++      interval: 30s
++      timeout: 10s
++      retries: 3
++      start_period: 30s
+ 
+-  alertmanager:
+-    image: prom/alertmanager:latest
+-    container_name: ml_pipeline_alertmanager
++  node-exporter:
++    image: prom/node-exporter:v1.6.0
++    container_name: footballprediction-node-exporter
++    command:
++      - '--path.rootfs=/host'
++      - '--path.procfs=/host/proc'
++      - '--path.sysfs=/host/sys'
++      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+     ports:
+-      - "9093:9093"
++      - "9100:9100"
+     volumes:
+-      - ./monitoring/configs/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+-      - alertmanager_data:/alertmanager
++      - /:/host:ro,rslave
++    networks:
++      - football-prediction
++    restart: unless-stopped
++    healthcheck:
++      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9100/metrics"]
++      interval: 30s
++      timeout: 10s
++      retries: 3
++      start_period: 30s
++
++  redis-exporter:
++    image: oliver006/redis_exporter:v1.43.0
++    container_name: footballprediction-redis-exporter
++    environment:
++      - REDIS_ADDR=redis://redis:6379
++    ports:
++      - "9121:9121"
++    networks:
++      - football-prediction
++    restart: unless-stopped
++    depends_on:
++      - redis
++    healthcheck:
++      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9121/metrics"]
++      interval: 30s
++      timeout: 10s
++      retries: 3
++      start_period: 30s
++
++  postgres-exporter:
++    image: prometheuscommunity/postgres-exporter:v0.13.0
++    container_name: footballprediction-postgres-exporter
++    environment:
++      - DATA_SOURCE_NAME=postgresql://postgres:postgres-dev-password@db:5432/football_prediction?sslmode=disable
++    ports:
++      - "9187:9187"
+     networks:
+-      - monitoring
++      - football-prediction
++    restart: unless-stopped
++    depends_on:
++      - db
++    healthcheck:
++      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9187/metrics"]
++      interval: 30s
++      timeout: 10s
++      retries: 3
++      start_period: 30s
+ 
+ volumes:
+   prometheus_data:
++    driver: local
+   grafana_data:
+-  alertmanager_data:
++    driver: local
+ 
+ networks:
+-  monitoring:
+-    driver: bridge
++  football-prediction:
++    external: true
+diff --git a/monitoring/prometheus/prometheus.yml b/monitoring/prometheus/prometheus.yml
+index dfc07d423..cf10eaa3b 100644
+--- a/monitoring/prometheus/prometheus.yml
++++ b/monitoring/prometheus/prometheus.yml
+@@ -1,11 +1,88 @@
++# P4-1: Prometheus 配置文件
++# Football Prediction System Monitoring
++
+ global:
+   scrape_interval: 15s
+   evaluation_interval: 15s
++  external_labels:
++    monitor: 'footballprediction-monitor'
++    environment: 'development'
++
++# 告警规则文件
++rule_files:
++  # - "alert_rules.yml"
+ 
++# 抓取配置
+ scrape_configs:
+-  - job_name: "football-prediction"
++  # Prometheus 自身监控
++  - job_name: 'prometheus'
+     static_configs:
+-      - targets: ["host.docker.internal:8000"]
+-    metrics_path: "/metrics"
++      - targets: ['localhost:9090']
+     scrape_interval: 30s
++    metrics_path: /metrics
++
++  # FastAPI 应用监控
++  - job_name: 'footballprediction-api'
++    static_configs:
++      - targets: ['app:8000']
++    scrape_interval: 15s
++    metrics_path: /metrics
+     scrape_timeout: 10s
++    params:
++      format: ['prometheus']
++
++  # Node Exporter (主机监控)
++  - job_name: 'node-exporter'
++    static_configs:
++      - targets: ['node-exporter:9100']
++    scrape_interval: 30s
++    metrics_path: /metrics
++
++  # Redis Exporter (Redis 监控)
++  - job_name: 'redis-exporter'
++    static_configs:
++      - targets: ['redis-exporter:9121']
++    scrape_interval: 30s
++    metrics_path: /metrics
++
++  # PostgreSQL Exporter (数据库监控)
++  - job_name: 'postgres-exporter'
++    static_configs:
++      - targets: ['postgres-exporter:9187']
++    scrape_interval: 30s
++    metrics_path: /metrics
++
++  # Celery Worker 监控 (如果暴露指标)
++  - job_name: 'celery-worker'
++    static_configs:
++      - targets: ['worker:8000']
++    scrape_interval: 30s
++    metrics_path: /metrics
++
++  # 前端应用监控 (可选)
++  - job_name: 'frontend'
++    static_configs:
++      - targets: ['localhost:5173']
++    scrape_interval: 30s
++    metrics_path: /metrics
++    scheme: http
++
++# 远程写入配置 (可选，用于长期存储)
++# remote_write:
++#   - url: "http://your-remote-storage/api/v1/write"
++#     basic_auth:
++#       username: "user"
++#       password: "password"
++
++# 告警管理器配置
++alerting:
++  alertmanagers:
++    - static_configs:
++        - targets: []
++      # - alertmanager:9093
++
++# 存储配置
++storage:
++  tsdb:
++    retention.time: 15d
++    retention.size: 10GB
+diff --git a/requirements.txt b/requirements.txt
+index ba5fef18f..f49236ab0 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -44,6 +44,13 @@ redis[hiredis]>=4.5.0
+ # File System Monitoring (for hot reload)
+ watchdog>=3.0.0
+ 
++# P4-1: Monitoring and Metrics (SRE)
++prometheus-fastapi-instrumentator>=6.1.0
++prometheus-client>=0.17.1
++
++# P4-2: Structured Logging
++loguru>=0.7.0
++
+ # Development Tools
+ pytest>=8.0.0
+ pytest-asyncio>=0.21.0
+\ No newline at end of file
+diff --git a/scripts/scan_secrets.py b/scripts/scan_secrets.py
+index c618906b3..7363e77ea 100755
+--- a/scripts/scan_secrets.py
++++ b/scripts/scan_secrets.py
+@@ -1,242 +1,343 @@
+ #!/usr/bin/env python3
+-"""
+-敏感信息扫描脚本
+-扫描代码库中的硬编码密码、API密钥和令牌等敏感信息。
++"""P4-3: 敏感信息扫描脚本
++扫描代码库中的硬编码敏感信息，并提供修复建议.
+ """
+ 
+ import os
+ import re
+ import sys
+ from pathlib import Path
+-from typing import List, Tuple
++from typing import Dict, List, Tuple, Pattern
+ 
+ 
+ class SecretScanner:
+     """敏感信息扫描器"""
+ 
+-    def __init__(self, root_path: str = "."):
+-        self.root_path = Path(root_path)
+-        self.secrets_found = []
++    def __init__(self):
++        self.findings = []
++        self.scanned_files = 0
++        self.skipped_files = 0
+ 
+-        # 敏感信息模式
++        # 敏感信息模式（按严重程度分类）
+         self.patterns = {
+-            "password": [
+-                r'password\s*=\s*["\'][^"\']{4,}["\']',
+-                r'pwd\s*=\s*["\'][^"\']{4,}["\']',
+-                r'passwd\s*=\s*["\'][^"\']{4,}["\']',
+-                r'pass\s*=\s*["\'][^"\']{4,}["\']',
+-            ],
+-            "api_key": [
+-                r'api[_-]?key\s*=\s*["\'][^"\']{10,}["\']',
+-                r'apikey\s*=\s*["\'][^"\']{10,}["\']',
+-                r'API[_-]?KEY\s*=\s*["\'][^"\']{10,}["\']',
+-            ],
+-            "token": [
+-                r'token\s*=\s*["\'][^"\']{10,}["\']',
+-                r'auth[_-]?token\s*=\s*["\'][^"\']{10,}["\']',
+-                r'TOKEN\s*=\s*["\'][^"\']{10,}["\']',
+-            ],
+-            "secret": [
+-                r'secret\s*=\s*["\'][^"\']{8,}["\']',
+-                r'client[_-]?secret\s*=\s*["\'][^"\']{8,}["\']',
+-                r'SECRET[_-]?KEY\s*=\s*["\'][^"\']{8,}["\']',
++            "HIGH": [
++                # API Keys
++                (r'(?i)(?:api[_-]?key|apikey|access[_-]?key)\s*[:=]\s*["\']([a-zA-Z0-9_-]{20,})["\']',
++                 "API Key 硬编码"),
++                (r'(?i)(?:secret[_-]?key|secretkey|private[_-]?key|privatekey)\s*[:=]\s*["\']([a-zA-Z0-9_-]{20,})["\']',
++                 "Secret Key 硬编码"),
++
++                # Passwords
++                (r'(?i)(?:password|passwd|pwd)\s*[:=]\s*["\']([^"\']{8,})["\']',
++                 "密码硬编码"),
++                (r'(?i)(?:db[_-]?password|database[_-]?password)\s*[:=]\s*["\']([^"\']{8,})["\']',
++                 "数据库密码硬编码"),
++
++                # Tokens
++                (r'(?i)(?:jwt[_-]?secret|jwtsecret|token[_-]?secret|tokensecret)\s*[:=]\s*["\']([a-zA-Z0-9._-]{20,})["\']',
++                 "JWT Secret 硬编码"),
++                (r'(?i)(?:auth[_-]?token|authtoken)\s*[:=]\s*["\']([a-zA-Z0-9._-]{20,})["\']',
++                 "Auth Token 硬编码"),
++
++                # Credentials
++                (r'(?i)(?:user[_-]?name|username)\s*[:=]\s*["\'](?:admin|root|test)[^"\']*["\']\s*[,;]\s*(?:password|passwd|pwd)\s*[:=]\s*["\']([^"\']{6,})["\']',
++                 "默认凭证"),
++
++                # SSH Keys
++                (r'(?i)(?:ssh[_-]?key|sshkey|private[_-]?key)\s*[:=]\s*["\']-----BEGIN[^-]*KEY-----[^"\']*-----END[^-]*KEY-----["\']',
++                 "SSH 私钥硬编码"),
+             ],
+-            "database_url": [
+-                r'database[_-]?url\s*=\s*["\'][^"\']*password[^"\']*["\']',
+-                r'DATABASE[_-]?URL\s*=\s*["\'][^"\']*password[^"\']*["\']',
+-            ],
+-            "connection_string": [
+-                r'connection[_-]?string\s*=\s*["\'][^"\']*password[^"\']*["\']',
+-                r'CONNECTION[_-]?STRING\s*=\s*["\'][^"\']*password[^"\']*["\']',
+-            ],
+-            "hardcoded_credentials": [
+-                r"postgres[^a-zA-Z]*:([^@\s]){4,}[^@\s]*@",
+-                r"mysql[^a-zA-Z]*:([^@\s]){4,}[^@\s]*@",
+-                r"root:[^@\s]{4,}@",
+-                r"admin:[^@\s]{4,}@",
+-            ],
+-            "private_key": [
+-                r"-----BEGIN (RSA |OPENSSH |DSA |EC |PGP )?PRIVATE KEY-----",
+-                r"-----BEGIN ENCRYPTED PRIVATE KEY-----",
++
++            "MEDIUM": [
++                # URLs with credentials
++                (r'(https?://[^:\s]+:[^@\s]+@[^/\s]+)', "URL 中的凭证"),
++
++                # Connection strings
++                (r'(?i)(?:connection[_-]?string|connstr|mongodb[^:]*://)[^:]*://[^:\s]+:[^@;\s]+@', "连接字符串中的凭证"),
++                (r'(?i)(?:data[_-]?source|datasource)[^:]*://[^:\s]+:[^@;\s]+@', "数据源连接字符串中的凭证"),
++
++                # Database URLs
++                (r'(?i)(?:postgresql|mysql|sqlite)[^:]*://[^:\s]+:[^@;\s]+@', "数据库连接字符串中的凭证"),
++
++                # Environment variables that look like secrets
++                (r'(?i)(?:aws[_-]?access[_-]?key|awsaccesskey|aws[_-]?secret[_-]?key|awssecretkey)\s*[:=]\s*["\']([a-zA-Z0-9/+]{20,})["\']',
++                 "AWS 访问密钥"),
++                (r'(?i)(?:google[_-]?api[_-]?key|googleapikey)\s*[:=]\s*["\']([a-zA-Z0-9_-]{20,})["\']',
++                 "Google API Key"),
++                (r'(?i)(?:github[_-]?token|githubtoken)\s*[:=]\s*["\'](ghp_[a-zA-Z0-9]{36})["\']',
++                 "GitHub Token"),
++
++                # OAuth secrets
++                (r'(?i)(?:oauth[_-]?secret|oauthsecret|client[_-]?secret|clientsecret)\s*[:=]\s*["\']([a-zA-Z0-9_-]{16,})["\']',
++                 "OAuth Secret"),
++                (r'(?i)(?:app[_-]?secret|appsecret|consumer[_-]?secret|consumersecret)\s*[:=]\s*["\']([a-zA-Z0-9_-]{16,})["\']',
++                 "应用 Secret"),
+             ],
+-            "aws_credentials": [
+-                r"AKIA[0-9A-Z]{16}",  # AWS Access Key ID
+-                r"[0-9a-zA-Z/+=]{40}",  # AWS Secret Access Key pattern
++
++            "LOW": [
++                # Potential sensitive strings
++                (r'(?i)(?:admin[_-]?password|adminpassword|test[_-]?password|testpassword)\s*[:=]\s*["\']([^"\']{4,})["\']',
++                 "测试密码"),
++                (r'(?i)(?:default[_-]?password|defaultpassword)\s*[:=]\s*["\']([^"\']{4,})["\']',
++                 "默认密码"),
++
++                # Hardcoded hostnames that might reveal infrastructure
++                (r'(?:https?://)(?:admin|api|db|database|staging|dev)[^/\s]*\.(?:local|dev|staging|example\.com)',
++                 "开发环境域名暴露"),
++
++                # Common test credentials
++                (r'["\'](?:test|demo|sample)[^"\']*(?:password|secret|key)[^"\']*["\']',
++                 "测试凭证模式"),
+             ],
+         }
+ 
+-        # 排除的目录
+-        self.exclude_dirs = {
+-            ".git",
+-            "__pycache__",
+-            ".pytest_cache",
+-            "node_modules",
+-            "venv",
+-            "env",
+-            ".venv",
+-            ".env",
+-            "htmlcov",
+-            ".mypy_cache",
+-            ".coverage",
+-            "dist",
+-            "build",
+-            ".tox",
++        # 文件扩展名白名单和黑名单
++        self.include_extensions = {
++            '.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.cpp', '.c', '.h',
++            '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
++            '.json', '.yml', '.yaml', '.xml', '.config', '.conf',
++            '.ini', '.env', '.sh', '.bash', '.zsh', '.ps1', '.bat',
++            '.sql', '.html', '.css', '.scss', '.less', '.md'
+         }
+ 
+-        # 排除的文件模式
+-        self.exclude_files = {
+-            "*.pyc",
+-            "*.pyo",
+-            "*.pyd",
+-            "*.log",
+-            "*.tmp",
+-            "*.swp",
+-            "*.swo",
+-            "*~",
+-            ".DS_Store",
+-            "Thumbs.db",
++        self.exclude_extensions = {
++            '.pyc', '.pyo', '.pyd', '.so', '.dll', '.exe', '.bin',
++            '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico',
++            '.pdf', '.doc', '.docx', '.xls', '.xlsx',
++            '.zip', '.tar', '.gz', '.rar', '.7z',
++            '.log', '.tmp', '.cache', '.swp', '.swo'
+         }
+ 
+-    def should_exclude_file(self, file_path: Path) -> bool:
+-        """检查文件是否应该被排除"""
+-        # 检查目录
+-        for part in file_path.parts:
+-            if part in self.exclude_dirs:
+-                return True
+-
+-        # 检查文件模式
+-        for pattern in self.exclude_files:
+-            if file_path.match(pattern):
+-                return True
+-
+-        # 只扫描Python文件
+-        if not file_path.suffix == ".py":
+-            return True
+-
+-        return False
++        # 排除的目录
++        self.exclude_dirs = {
++            '__pycache__', '.pytest_cache', '.mypy_cache', 'node_modules',
++            '.git', '.svn', '.hg', 'venv', 'env', '.env',
++            'build', 'dist', 'target', 'bin', 'obj', 'out',
++            '.idea', '.vscode', '.eclipse',
++            'vendor', 'bower_components', '.bundle',
++            'logs', 'temp', 'tmp'
++        }
+ 
+-    def scan_file(self, file_path: Path) -> list[tuple[str, int, str, str]]:
++    def scan_file(self, file_path: Path) -> List[Dict]:
+         """扫描单个文件"""
+-        secrets = []
++        findings = []
+ 
+         try:
+-            with open(file_path, encoding="utf-8", errors="ignore") as f:
+-                lines = f.readlines()
+-
+-            for line_num, line in enumerate(lines, 1):
+-                line_content = line.strip()
+-
+-                # 跳过注释行
+-                if (
+-                    line_content.startswith("#")
+-                    or line_content.startswith('"""')
+-                    or line_content.startswith("'''")
+-                ):
++            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
++                content = f.read()
++
++                # 检查每一行
++                for line_num, line in enumerate(content.split('\n'), 1):
++                    for severity, patterns in self.patterns.items():
++                        for pattern, description in patterns:
++                            if hasattr(pattern, 'finditer'):
++                                matches = list(pattern.finditer(line))
++                            else:
++                                # 对于字符串，使用 re.finditer
++                                matches = [m for m in re.finditer(pattern, line)]
++
++                            for match in matches:
++                                findings.append({
++                                    'severity': severity,
++                                    'file': str(file_path),
++                                    'line': line_num,
++                                    'column': match.start() + 1,
++                                    'pattern': pattern if isinstance(pattern, str) else pattern.pattern,
++                                    'match': match.group(0),
++                                    'description': description,
++                                    'matched_text': match.groups()[0] if match.groups() else match.group(0),
++                                    'context': line.strip(),
++                                })
++
++        except (UnicodeDecodeError, PermissionError, IOError) as e:
++            # 记录但不要中断扫描
++            pass
++
++        return findings
++
++    def scan_directory(self, directory: Path, recursive: bool = True) -> None:
++        """扫描目录"""
++        print(f"🔍 扫描目录: {directory}")
++
++        for item in directory.iterdir():
++            if item.is_dir():
++                # 检查是否应该排除此目录
++                if item.name in self.exclude_dirs:
+                     continue
+ 
+-                # 跳过明显的示例代码
+-                if "example" in line_content.lower() or "dummy" in line_content.lower():
+-                    continue
++                if recursive:
++                    self.scan_directory(item, recursive)
++
++            elif item.is_file():
++                # 检查文件扩展名
++                if self._should_include_file(item):
++                    self.scanned_files += 1
++                    findings = self.scan_file(item)
++                    self.findings.extend(findings)
++                else:
++                    self.skipped_files += 1
++
++    def _should_include_file(self, file_path: Path) -> bool:
++        """判断是否应该包含此文件"""
++        ext = file_path.suffix.lower()
++
++        # 检查排除扩展名
++        if ext in self.exclude_extensions:
++            return False
++
++        # 检查包含扩展名（如果两者都为空，则包含）
++        if self.include_extensions and ext not in self.include_extensions:
++            return False
++
++        return True
++
++    def generate_report(self) -> Dict:
++        """生成扫描报告"""
++        high_count = len([f for f in self.findings if f['severity'] == 'HIGH'])
++        medium_count = len([f for f in self.findings if f['severity'] == 'MEDIUM'])
++        low_count = len([f for f in self.findings if f['severity'] == 'LOW'])
++
++        # 按严重程度分组
++        grouped_findings = {}
++        for severity in ['HIGH', 'MEDIUM', 'LOW']:
++            grouped_findings[severity] = [
++                f for f in self.findings if f['severity'] == severity
++            ]
++
++        # 按文件分组
++        file_findings = {}
++        for finding in self.findings:
++            file_path = finding['file']
++            if file_path not in file_findings:
++                file_findings[file_path] = []
++            file_findings[file_path].append(finding)
++
++        return {
++            'summary': {
++                'total_findings': len(self.findings),
++                'high_severity': high_count,
++                'medium_severity': medium_count,
++                'low_severity': low_count,
++                'scanned_files': self.scanned_files,
++                'skipped_files': self.skipped_files,
++            },
++            'findings_by_severity': grouped_findings,
++            'findings_by_file': file_findings,
++            'all_findings': self.findings,
++        }
++
++    def print_report(self, report: Dict) -> None:
++        """打印扫描报告"""
++        summary = report['summary']
++
++        print(f"\n{'='*60}")
++        print("🔍 敏感信息扫描报告")
++        print(f"{'='*60}")
++
++        print(f"\n📊 扫描统计:")
++        print(f"  扫描文件数: {summary['scanned_files']}")
++        print(f"  跳过文件数: {summary['skipped_files']}")
++        print(f"  发现问题总数: {summary['total_findings']}")
++
++        print(f"\n🚨 严重程度分布:")
++        print(f"  🔴 高危: {summary['high_severity']}")
++        print(f"  🟡 中危: {summary['medium_severity']}")
++        print(f"  🟢 低危: {summary['low_severity']}")
++
++        # 显示高危和部分中危问题
++        if summary['high_severity'] > 0 or summary['medium_severity'] > 0:
++            print(f"\n❌ 发现的敏感信息:")
++
++            for severity in ['HIGH', 'MEDIUM']:
++                findings = report['findings_by_severity'].get(severity, [])
++                if findings:
++                    print(f"\n{severity} 严重程度 ({len(findings)} 项):")
++
++                    # 按文件分组显示
++                    file_groups = {}
++                    for finding in findings:
++                        file_path = finding['file']
++                        if file_path not in file_groups:
++                            file_groups[file_path] = []
++                        file_groups[file_path].append(finding)
++
++                    for file_path, file_findings in file_groups.items():
++                        print(f"\n  📁 {file_path}")
++                        for finding in file_findings[:3]:  # 每个文件最多显示3个问题
++                            severity_emoji = {"HIGH": "🔴", "MEDIUM": "🟡", "LOW": "🟢"}[severity]
++                            print(f"    {severity_emoji} 第{finding['line']}行: {finding['description']}")
++                            print(f"       {finding['context']}")
++                            print(f"       匹配: {finding['matched_text']}")
++
++                        if len(file_findings) > 3:
++                            print(f"    ... 还有 {len(file_findings) - 3} 个问题")
++
++        # 修复建议
++        if summary['total_findings'] > 0:
++            print(f"\n💡 修复建议:")
++            print(f"  1. 将敏感信息移动到环境变量或配置文件中")
++            print(f"  2. 使用 os.getenv() 或类似的安全配置管理方式")
++            print(f"  3. 对于 API Keys，考虑使用密钥管理服务")
++            print(f"  4. 对于数据库密码，使用连接池或环境变量")
++            print(f"  5. 确保 .env 文件被添加到 .gitignore")
++            print(f"  6. 考虑使用 git-secrets 预提交钩子防止意外提交")
++
++    def write_report(self, report: Dict, output_path: str) -> None:
++        """将报告写入文件"""
++        import json
++
++        # 准备 JSON 友好的报告
++        json_report = {
++            'scan_timestamp': str(__import__('datetime').datetime.now()),
++            'scanner_version': '1.0.0',
++            'report': report
++        }
+ 
+-                for secret_type, patterns in self.patterns.items():
+-                    for pattern in patterns:
+-                        matches = re.finditer(pattern, line_content, re.IGNORECASE)
+-                        for match in matches:
+-                            secrets.append(
+-                                (secret_type, line_num, line_content, match.group())
+-                            )
+-
+-        except Exception as e:
+-            print(f"警告：无法读取文件 {file_path}: {e}")
+-
+-        return secrets
+-
+-    def scan_directory(self) -> None:
+-        """扫描整个目录"""
+-        print("🔍 开始敏感信息扫描...")
+-        print(f"📁 扫描目录: {self.root_path.absolute()}")
+-        print("=" * 60)
+-
+-        scanned_files = 0
+-
+-        for py_file in self.root_path.rglob("*.py"):
+-            if not self.should_exclude_file(py_file):
+-                scanned_files += 1
+-                file_secrets = self.scan_file(py_file)
+-
+-                if file_secrets:
+-                    self.secrets_found.extend(
+-                        [(str(py_file), *secret) for secret in file_secrets]
+-                    )
+-
+-        print(f"📊 扫描完成！共检查 {scanned_files} 个 Python 文件")
+-        print("=" * 60)
+-
+-    def report_results(self) -> bool:
+-        """报告扫描结果"""
+-        if not self.secrets_found:
+-            print("✅ 未发现敏感信息泄露")
+-            print("🛡️ 代码库安全性检查通过")
+-            return True
+-
+-        print(f"🚨 发现 {len(self.secrets_found)} 处潜在敏感信息：")
+-        print("=" * 80)
+-
+-        # 按文件分组显示结果
+-        file_secrets = {}
+-        for file_path, secret_type, line_num, line_content, match in self.secrets_found:
+-            if file_path not in file_secrets:
+-                file_secrets[file_path] = []
+-            file_secrets[file_path].append((secret_type, line_num, line_content, match))
+-
+-        for file_path, secrets in file_secrets.items():
+-            print(f"\n📄 文件: {file_path}")
+-            print("-" * 60)
+-
+-            for secret_type, line_num, line_content, match in secrets:
+-                print(f"  🔴 类型: {secret_type}")
+-                print(f"  📍 行号: {line_num}")
+-                print(f"  📝 内容: {line_content[:80]}...")
+-                print(f"  🎯 匹配: {match[:60]}...")
+-                print()
+-
+-        print("=" * 80)
+-        print("⚠️  请立即处理以上敏感信息！")
+-        print("💡 建议：")
+-        print("   1. 使用环境变量存储敏感信息")
+-        print("   2. 使用 .env 文件并确保 .env 在 .gitignore 中")
+-        print("   3. 使用密钥管理服务（如 AWS Secrets Manager）")
+-
+-        return False
++        with open(output_path, 'w', encoding='utf-8') as f:
++            json.dump(json_report, f, indent=2, ensure_ascii=False)
+ 
+ 
+ def main():
+     """主函数"""
+-    if len(sys.argv) > 1:
+-        root_path = sys.argv[1]
+-    else:
+-        root_path = "."
++    print("🚀 P4-3 敏感信息扫描开始\n")
++
++    # 初始化扫描器
++    scanner = SecretScanner()
++
++    # 扫描源代码目录
++    src_dir = Path("src")
++    config_dir = Path("config")
++
++    if src_dir.exists():
++        scanner.scan_directory(src_dir, recursive=True)
+ 
+-    scanner = SecretScanner(root_path)
++    if config_dir.exists():
++        scanner.scan_directory(config_dir, recursive=True)
+ 
+-    try:
+-        scanner.scan_directory()
+-        is_safe = scanner.report_results()
++    # 生成报告
++    report = scanner.generate_report()
+ 
+-        if not is_safe:
+-            print("\n❌ 安全检查失败！")
+-            sys.exit(1)
+-        else:
+-            print("\n✅ 安全检查通过！")
+-            sys.exit(0)
++    # 打印报告
++    scanner.print_report(report)
+ 
+-    except KeyboardInterrupt:
+-        print("\n⏹️  扫描被用户中断")
+-        sys.exit(130)
+-    except Exception as e:
+-        print(f"\n💥 扫描过程中发生错误: {e}")
+-        sys.exit(1)
++    # 保存报告到文件
++    os.makedirs("reports", exist_ok=True)
++    output_path = "reports/secrets_scan.json"
++    scanner.write_report(report, output_path)
++
++    print(f"\n📁 详细报告已保存到: {output_path}")
++
++    # 返回适当的退出码
++    if report['summary']['high_severity'] > 0:
++        print(f"\n❌ 发现高危敏感信息，请立即修复！")
++        return 2
++    elif report['summary']['medium_severity'] > 0:
++        print(f"\n⚠️ 发现中危敏感信息，建议修复")
++        return 1
++    else:
++        print(f"\n✅ 未发现严重敏感信息")
++        return 0
+ 
+ 
+ if __name__ == "__main__":
+-    main()
++    sys.exit(main())
+diff --git a/src/api/prometheus_metrics.py b/src/api/prometheus_metrics.py
+index c17738eef..bcd20d683 100644
+--- a/src/api/prometheus_metrics.py
++++ b/src/api/prometheus_metrics.py
+@@ -1,10 +1,11 @@
+ """Prometheus Metrics API
+-Prometheus指标API端点.
++P4-1: 增强的Prometheus指标API端点.
+ """
+ 
+ import logging
++from typing import Optional
+ 
+-from fastapi import APIRouter, Response
++from fastapi import APIRouter, Response, Query
+ from prometheus_client import (
+     CONTENT_TYPE_LATEST,
+     Counter,
+@@ -15,6 +16,22 @@ from prometheus_client import (
+ 
+ logger = logging.getLogger(__name__)
+ 
++# P4-1: 尝试导入增强的监控模块
++try:
++    from src.monitoring.prometheus_instrumentator import (
++        HTTP_REQUESTS_TOTAL,
++        HTTP_REQUEST_DURATION_SECONDS,
++        PREDICTION_REQUESTS_TOTAL,
++        PREDICTION_REQUEST_DURATION_SECONDS,
++        ACTIVE_CONNECTIONS,
++        generate_latest as enhanced_generate_latest,
++    )
++    ENHANCED_MONITORING_AVAILABLE = True
++    logger.info("✅ 增强监控模块加载成功")
++except ImportError as e:
++    ENHANCED_MONITORING_AVAILABLE = False
++    logger.warning(f"⚠️ 增强监控模块加载失败: {e}")
++
+ # 创建Prometheus指标
+ router = APIRouter(prefix="/metrics", tags=["monitoring"])
+ 
+@@ -54,18 +71,97 @@ system_memory_usage = Gauge(
+ 
+ 
+ @router.get("/")
+-async def prometheus_metrics():
+-    """Prometheus指标端点."""
++async def prometheus_metrics(
++    format: Optional[str] = Query(None, description="输出格式: prometheus 或 json"),
++):
++    """P4-1: 增强的Prometheus指标端点."""
+     try:
+         # 更新系统指标
+         await update_system_metrics()
+ 
+-        # 返回Prometheus格式的指标
+-        metrics_data = generate_latest()
+-        return Response(content=metrics_data, media_type=CONTENT_TYPE_LATEST)
++        # 根据格式参数返回不同格式的数据
++        if format == "json":
++            return await get_metrics_json()
++        else:
++            # 优先使用增强监控模块
++            if ENHANCED_MONITORING_AVAILABLE:
++                metrics_data = enhanced_generate_latest()
++            else:
++                metrics_data = generate_latest()
++
++            return Response(content=metrics_data, media_type=CONTENT_TYPE_LATEST)
++
+     except Exception as e:
+         logger.error(f"Error generating metrics: {e}")
+-        return Response(content="# Error generating metrics", media_type="text/plain")
++        return Response(
++            content="# Error generating metrics\n" + str(e),
++            media_type="text/plain",
++            status_code=500
++        )
++
++
++@router.get("/json")
++async def prometheus_metrics_json():
++    """JSON格式的指标端点（兼容性接口）."""
++    try:
++        await update_system_metrics()
++        return await get_metrics_json()
++    except Exception as e:
++        logger.error(f"Error generating JSON metrics: {e}")
++        return {"error": str(e), "status": "failed"}
++
++
++async def get_metrics_json():
++    """获取JSON格式的指标数据."""
++    try:
++        import psutil
++
++        # 获取系统指标
++        cpu_percent = psutil.cpu_percent(interval=1)
++        memory = psutil.virtual_memory()
++        disk = psutil.disk_usage('/')
++
++        metrics = {
++            "timestamp": logger.handlers[0].formatter.formatTime(
++                logger.makeRecord(
++                    "metrics", logging.INFO, "", (), "", ""
++                )
++            ) if logger.handlers else "",
++            "system": {
++                "cpu_usage_percent": cpu_percent,
++                "memory_usage_percent": memory.percent,
++                "memory_available_gb": memory.available / (1024**3),
++                "disk_usage_percent": (disk.used / disk.total) * 100,
++                "disk_free_gb": disk.free / (1024**3),
++            },
++            "application": {
++                "http_requests_total": HTTP_REQUESTS_TOTAL._value._sum._value if ENHANCED_MONITORING_AVAILABLE else 0,
++                "active_connections": {
++                    "database": ACTIVE_CONNECTIONS.labels(connection_type="database")._value._value if ENHANCED_MONITORING_AVAILABLE else 0,
++                    "redis": ACTIVE_CONNECTIONS.labels(connection_type="redis")._value._value if ENHANCED_MONITORING_AVAILABLE else 0,
++                },
++            },
++            "monitoring": {
++                "enhanced_monitoring": ENHANCED_MONITORING_AVAILABLE,
++                "prometheus_available": True,
++            }
++        }
++
++        return metrics
++
++    except Exception as e:
++        logger.error(f"Error collecting system metrics: {e}")
++        # 返回基本指标
++        return {
++            "error": str(e),
++            "timestamp": "",
++            "system": {},
++            "application": {},
++            "monitoring": {
++                "enhanced_monitoring": ENHANCED_MONITORING_AVAILABLE,
++                "prometheus_available": False,
++            }
++        }
+ 
+ 
+ async def update_system_metrics():
+diff --git a/src/core/cache_main.py b/src/core/cache_main.py
+index 2f79bf4eb..43171ba56 100644
+--- a/src/core/cache_main.py
++++ b/src/core/cache_main.py
+@@ -469,15 +469,15 @@ def cache_key_builder(
+         if isinstance(arg, (str, int, float, bool)):
+             parts.append(str(arg))
+         else:
+-            # 对于复杂对象，使用哈希
+-            parts.append(hashlib.md5(str(arg).encode()).hexdigest()[:8])
++            # 对于复杂对象，使用安全哈希
++            parts.append(hashlib.sha256(str(arg).encode()).hexdigest()[:8])
+ 
+     # 添加关键字参数
+     for key, value in sorted(kwargs.items()):
+         if isinstance(value, (str, int, float, bool)):
+             parts.append(f"{key}:{value}")
+         else:
+-            parts.append(f"{key}:{hashlib.md5(str(value).encode()).hexdigest()[:8]}")
++            parts.append(f"{key}:{hashlib.sha256(str(value).encode()).hexdigest()[:8]}")
+ 
+     return ":".join(parts)
+ 
+diff --git a/src/evaluation/report_builder.py b/src/evaluation/report_builder.py
+index 5362420ea..147b30ba9 100644
+--- a/src/evaluation/report_builder.py
++++ b/src/evaluation/report_builder.py
+@@ -65,8 +65,8 @@ class ReportBuilder:
+         template_str = self._get_html_template()
+         template = Template(template_str)
+ 
+-        # 创建简单的环境
+-        env = Environment()
++        # 创建安全的环境（启用自动转义）
++        env = Environment(autoescape=True)
+         env.globals['template'] = template
+ 
+         return env
+diff --git a/src/inference/loader.py b/src/inference/loader.py
+index ab73bf3e4..9b0160071 100644
+--- a/src/inference/loader.py
++++ b/src/inference/loader.py
+@@ -70,11 +70,11 @@ class ModelMetadata:
+ 
+     def _calculate_file_hash(self, file_path: str) -> str:
+         """计算文件哈希"""
+-        hash_md5 = hashlib.md5()
++        hash_sha256 = hashlib.sha256()
+         with open(file_path, "rb") as f:
+             for chunk in iter(lambda: f.read(4096), b""):
+-                hash_md5.update(chunk)
+-        return hash_md5.hexdigest()
++                hash_sha256.update(chunk)
++        return hash_sha256.hexdigest()
+ 
+     def is_modified(self) -> bool:
+         """检查文件是否被修改"""
+diff --git a/src/inference/predictor.py b/src/inference/predictor.py
+index 15aeb6d82..78bff2f67 100644
+--- a/src/inference/predictor.py
++++ b/src/inference/predictor.py
+@@ -547,9 +547,9 @@ class Predictor:
+         ]
+ 
+         if request.features:
+-            # 对自定义特征进行哈希
++            # 对自定义特征进行安全哈希
+             import hashlib
+-            features_hash = hashlib.md5(
++            features_hash = hashlib.sha256(
+                 str(sorted(request.features.items())).encode()
+             ).hexdigest()[:8]
+             key_parts.append(features_hash)
+diff --git a/src/jobs/run_season_backfill.py b/src/jobs/run_season_backfill.py
+index d1e6de0ad..a4b8a948d 100644
+--- a/src/jobs/run_season_backfill.py
++++ b/src/jobs/run_season_backfill.py
+@@ -92,7 +92,7 @@ class SeasonBackfillJob:
+                         headers=self.html_collector._get_current_headers(),
+                         timeout=self.html_collector.timeout,
+                         allow_redirects=True,
+-                        verify=False,
++                        verify=True,  # 启用 SSL 证书验证
+                     )
+ 
+                     self.logger.info(
+diff --git a/src/jobs/run_season_fixtures.py b/src/jobs/run_season_fixtures.py
+index 39b7e26d9..9f7ec1930 100644
+--- a/src/jobs/run_season_fixtures.py
++++ b/src/jobs/run_season_fixtures.py
+@@ -361,7 +361,7 @@ async def main():
+             headers=collector._get_current_headers(),
+             timeout=collector.timeout,
+             allow_redirects=True,
+-            verify=False,
++            verify=True,  # 启用 SSL 证书验证
+         )
+ 
+         logger.info(
+diff --git a/src/main.py b/src/main.py
+index ccea82fdf..faf000644 100644
+--- a/src/main.py
++++ b/src/main.py
+@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
+ import uvicorn
+ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+ from fastapi.middleware.cors import CORSMiddleware
++from fastapi.responses import Response
+ 
+ # 可选的速率限制功能
+ try:
+@@ -42,13 +43,28 @@ from src.observers import ObserverManager
+ from src.performance.integration import setup_performance_monitoring
+ from src.performance.middleware import PerformanceMonitoringMiddleware
+ 
+-# 配置日志
++# P4-2: 结构化日志配置
++import os
++from src.core.logging_config import setup_logging, get_logger
++from src.api.middleware.request_id import add_request_id_middleware
++
++# P4-3: 安全头中间件
++from src.api.middleware.security import add_security_middleware
++
++# 设置统一日志系统
+ warnings.filterwarnings("ignore", category=DeprecationWarning)
+-logging.basicConfig(
+-    level=logging.INFO,
+-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+-)
+-logger = logging.getLogger(__name__)
++log_level = os.getenv("LOG_LEVEL", "INFO")
++setup_logging(service_name="football-prediction", log_level=log_level)
++logger = get_logger(__name__)
++
++# P4-1: Prometheus 监控集成
++try:
++    from src.monitoring.prometheus_instrumentator import create_instrumentator, generate_latest
++    PROMETHEUS_AVAILABLE = True
++    logger.info("✅ Prometheus 监控模块加载成功")
++except ImportError as e:
++    PROMETHEUS_AVAILABLE = False
++    logger.warning(f"⚠️ Prometheus 监控模块加载失败: {e}")
+ 
+ 
+ async def check_and_trigger_initial_data_fill() -> None:
+@@ -280,20 +296,58 @@ app = FastAPI(
+     lifespan=lifespan,
+ )
+ 
+-# 配置CORS
+-app.add_middleware(
+-    CORSMiddleware,
+-    allow_origins=[
++# P4-1: 集成 Prometheus 监控
++if PROMETHEUS_AVAILABLE:
++    instrumentator = create_instrumentator()
++    instrumentator.instrument(app)
++    logger.info("✅ Prometheus 监控已集成到 FastAPI 应用")
++else:
++    instrumentator = None
++    logger.warning("⚠️ Prometheus 监控未集成")
++
++# P4-2: 添加 Request ID 中间件（必须在其他中间件之前）
++add_request_id_middleware(app)
++logger.info("✅ Request ID 中间件已集成到 FastAPI 应用")
++
++# P4-3: 添加安全头中间件
++add_security_middleware(app)
++logger.info("✅ 安全头中间件已集成到 FastAPI 应用")
++
++# 配置CORS - 安全的跨域资源共享配置
++environment = os.getenv("ENV", "development").lower()
++
++if environment in ["production", "prod"]:
++    # 生产环境：只允许指定域名
++    allowed_origins = os.getenv(
++        "CORS_ORIGINS",
++        "https://yourdomain.com,https://www.yourdomain.com"
++    ).split(",")
++    allowed_origins = [origin.strip() for origin in allowed_origins if origin.strip()]
++else:
++    # 开发环境：允许本地开发域名
++    allowed_origins = [
+         "http://localhost:3000",  # React前端开发服务器
+         "http://127.0.0.1:3000",
+         "http://localhost:3001",  # React前端开发服务器（备用端口）
+         "http://127.0.0.1:3001",
+         "http://localhost:8000",  # 本地开发
+         "http://127.0.0.1:8000",
+-    ],
++    ]
++
++app.add_middleware(
++    CORSMiddleware,
++    allow_origins=allowed_origins,
+     allow_credentials=True,
+     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+-    allow_headers=["*"],
++    allow_headers=[
++        "accept",
++        "accept-language",
++        "content-language",
++        "content-type",
++        "authorization",
++        "x-request-id",
++        "x-client-version",
++    ],
+ )
+ 
+ # 添加性能监控中间件
+@@ -318,7 +372,7 @@ app.include_router(predictions_router, prefix="/api/v1", tags=["预测"])
+ app.include_router(
+     optimized_predictions_router, prefix="/api/v2/predictions", tags=["预测"]
+ )
+-app.include_router(prometheus_router, prefix="/metrics", tags=["监控"])
++app.include_router(prometheus_router, tags=["监控"])
+ 
+ # 配置OpenAPI
+ setup_openapi(app)

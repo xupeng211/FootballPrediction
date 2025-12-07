@@ -1,11 +1,88 @@
+# P4-1: Prometheus 配置文件
+# Football Prediction System Monitoring
+
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
+  external_labels:
+    monitor: 'footballprediction-monitor'
+    environment: 'development'
 
+# 告警规则文件
+rule_files:
+  # - "alert_rules.yml"
+
+# 抓取配置
 scrape_configs:
-  - job_name: "football-prediction"
+  # Prometheus 自身监控
+  - job_name: 'prometheus'
     static_configs:
-      - targets: ["host.docker.internal:8000"]
-    metrics_path: "/metrics"
+      - targets: ['localhost:9090']
     scrape_interval: 30s
+    metrics_path: /metrics
+
+  # FastAPI 应用监控
+  - job_name: 'footballprediction-api'
+    static_configs:
+      - targets: ['app:8000']
+    scrape_interval: 15s
+    metrics_path: /metrics
     scrape_timeout: 10s
+    params:
+      format: ['prometheus']
+
+  # Node Exporter (主机监控)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Redis Exporter (Redis 监控)
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # PostgreSQL Exporter (数据库监控)
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Celery Worker 监控 (如果暴露指标)
+  - job_name: 'celery-worker'
+    static_configs:
+      - targets: ['worker:8000']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # 前端应用监控 (可选)
+  - job_name: 'frontend'
+    static_configs:
+      - targets: ['localhost:5173']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    scheme: http
+
+# 远程写入配置 (可选，用于长期存储)
+# remote_write:
+#   - url: "http://your-remote-storage/api/v1/write"
+#     basic_auth:
+#       username: "user"
+#       password: "password"
+
+# 告警管理器配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+      # - alertmanager:9093
+
+# 存储配置
+storage:
+  tsdb:
+    retention.time: 15d
+    retention.size: 10GB

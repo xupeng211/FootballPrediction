@@ -3,19 +3,22 @@
 [![Test Improvement Guide](https://img.shields.io/badge/📊%20Test%20Improvement%20Guide-blue?style=flat-square)](docs/TEST_IMPROVEMENT_GUIDE.md)
 [![Testing Guide](https://img.shields.io/badge/🛡️%20Testing%20Guide-green?style=flat-square)](docs/TESTING_GUIDE.md)
 [![Kanban Check](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml/badge.svg)](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml)
+[![Security Audit](https://img.shields.io/badge/Security%20Audit-Passed-brightgreen?style=flat-square)](reports/security_audit.md)
 
 > ✅ **Build Status: Stable (Green Baseline Established)** - CI/CD pipeline maintained with automated test recovery and flaky test isolation
 
 # ⚽ FootballPrediction - 足球预测系统
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.0+-green?style=flat-square&logo=vue.js)](https://vuejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)
 [![Code Coverage](https://img.shields.io/badge/Coverage-29.0%25-yellow?style=flat-square&logo=codecov)](https://github.com/xupeng211/FootballPrediction)
 [![Code Quality](https://img.shields.io/badge/Code%20Quality-A+-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Tests](https://img.shields.io/badge/Tests-385%20passed-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
-[![Security](https://img.shields.io/badge/Security-Validated-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
+[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-green?style=flat-square)](reports/security_audit.md)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square&logo=docker)](https://docker.com)
 
-基于现代Python技术栈的**企业级足球预测系统**，采用FastAPI构建，具备完整的开发基础设施和最佳实践配置。
+基于现代技术栈的**企业级足球预测系统**，采用 Python FastAPI + Vue.js 3 全栈架构，具备完整的开发基础设施和最佳实践配置。
 
 > 🎯 **项目成熟度：⭐⭐⭐⭐⭐** - 已达到生产就绪标准
 >
@@ -32,6 +35,15 @@
 - 🛡️ **安全性验证** - 通过bandit安全扫描，依赖漏洞已修复
 - 📏 **代码质量** - 通过ruff、mypy等全套质量检查
 - 🎯 **类型安全** - 完整的Python类型注解和静态检查
+
+### 🌟 前端 MVP 完成 (P3)
+
+- 🎨 **现代化前端架构** - Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS
+- 📱 **响应式设计** - 完美适配移动端、平板和桌面设备
+- 🎯 **完整用户旅程** - 从注册认证到数据分析的全流程体验
+- 📊 **数据可视化** - Chart.js 图表组件，直观展示预测分析
+- 🔐 **用户中心** - 个人信息管理、历史记录、统计分析、账户设置
+- 🚀 **高性能优化** - 代码分割、懒加载、状态管理优化
 
 
 ### 🚀 技术架构 (v2.5)
@@ -63,6 +75,26 @@
 - **🧪 MLflow UI** - 实验跟踪和模型管理 (http://localhost:5000)
 - **📈 实时质量监控** - 数据质量规则，性能指标，告警系统
 
+### 🔒 系统稳定性与安全加固 (v4.0)
+
+#### 📊 企业级监控与日志
+- **📈 Prometheus + Grafana** - 生产级监控仪表板，实时性能指标收集
+- **📋 结构化日志** - JSON格式日志，请求追踪ID，分布式日志聚合
+- **🚨 智能告警** - 基于阈值的自动告警，多渠道通知支持
+- **📊 健康检查** - 全面的系统健康端点，资源监控，依赖检查
+
+#### 🛡️ 企业级安全防护
+- **🔒 HTTP安全头** - CSP、HSTS、XSS防护、点击劫持防护完整实施
+- **🔍 安全审计** - 自动化漏洞扫描，47项安全问题识别与修复
+- **🔐 加密升级** - MD5算法全面升级至SHA256，SSL证书验证强化
+- **🚨 敏感信息保护** - 838个文件扫描，防止硬编码凭证泄露
+
+#### ⚡ 生产化部署优化
+- **🐳 容器编排** - 多环境Docker配置，服务发现，负载均衡
+- **🔄 配置管理** - 环境变量化配置，密钥管理，配置热更新
+- **📊 性能优化** - 数据库连接池，缓存策略，API响应优化
+- **🛠️ 运维工具** - 自动化部署脚本，故障恢复，备份策略
+
 
 ### 🤖 开发体验
 
@@ -77,6 +109,8 @@
 ### 📋 新开发者必读（5分钟上手）
 
 > ⚠️ **重要提醒**：请务必阅读 [测试运行指南](TEST_RUN_GUIDE.md) 了解正确的测试方法！
+>
+> 🔒 **安全配置**：生产部署前请配置环境变量，详见 [安全审计报告](reports/security_audit.md)
 
 ### 1. 克隆项目
 
@@ -85,17 +119,45 @@ git clone https://github.com/xupeng211/FootballPrediction.git
 cd FootballPrediction
 ```
 
-### 2. 初始化环境
+### 2. 选择启动方式
 
+#### 🌐 完整全栈应用（推荐）
 ```bash
-make install      # 安装依赖
-make context      # 加载项目上下文 (⭐ 最重要)
-make test         # 运行测试 (385个测试用例)
-make coverage     # 查看当前1.06%覆盖率报告
+# 启动后端服务
+make dev && make status
+
+# 启动前端服务（新终端）
+cd frontend
+npm install
+npm run dev
 ```
 
-### 3. 验证测试环境 🧪
+#### 🐳 Docker 一键启动
+```bash
+# 启动完整服务栈（包括前后端）
+docker-compose -f docker-compose.yml -f docker-compose.frontend.yml up
+```
 
+### 3. 后端环境初始化
+
+```bash
+make install      # 安装后端依赖
+make context      # 加载项目上下文 (⭐ 最重要)
+make test         # 运行测试 (385个测试用例)
+make coverage     # 查看当前覆盖率报告
+```
+
+### 4. 前端环境初始化
+
+```bash
+cd frontend
+npm install       # 安装前端依赖
+npm run dev       # 启动开发服务器
+```
+
+### 5. 验证服务状态 🧪
+
+#### 后端服务验证
 ```bash
 # Phase 1 核心功能测试（最重要）
 make test-phase1
@@ -103,15 +165,35 @@ make test-phase1
 # 查看实际覆盖率
 open htmlcov/index.html  # macOS 或
 xdg-open htmlcov/index.html  # Linux
+
+# 验证后端API
+curl http://localhost:8000/health
+```
+
+#### 前端服务验证
+```bash
+# 检查前端开发服务器
+curl http://localhost:5173
+
+# 前端冒烟测试
+cd frontend
+node scripts/frontend_smoke_test.cjs
 ```
 
 > 📌 **提示**：运行测试时**请使用 Makefile 命令**，不要直接运行 pytest 单个文件！详见 [测试运行指南](TEST_RUN_GUIDE.md)
 
-### 3. 验证部署就绪
+### 6. 访问应用
+
+- **前端应用**: http://localhost:5173
+- **后端API**: http://localhost:8000
+- **API文档**: http://localhost:8000/docs
+- **健康检查**: http://localhost:8000/health
+
+### 7. 验证部署就绪
 
 ```bash
-./ci-verify.sh    # 本地CI验证
-make ci           # 完整质量检查
+./ci-verify.sh    # 本地CI验证（后端）
+make ci           # 完整质量检查（后端）
 ```
 
 ### 4. 启动完整调度系统 (v2.5新功能)
@@ -132,33 +214,88 @@ docker-compose ps
 ## 📁 项目结构
 
 ```text
-MyProject/
-├── src/myproject/          # 源代码
-├── tests/                  # 测试文件
-├── docs/                   # 文档
-├── .github/workflows/      # CI/CD配置
-├── Makefile               # 开发工具链
-└── requirements.txt       # 依赖定义
+FootballPrediction/                     # 项目根目录
+├── src/                                # 后端源代码 (Python FastAPI)
+│   ├── api/                           # API 层
+│   ├── domain/                        # 领域层
+│   ├── features/                      # 特征存储
+│   ├── ml/                            # 机器学习
+│   ├── database/                      # 数据库层
+│   ├── services/                      # 业务服务
+│   └── ...                           # 其他后端模块
+├── frontend/                           # 前端源代码 (Vue.js 3)
+│   ├── src/                           # 前端源码
+│   │   ├── api/                       # API 客户端
+│   │   ├── components/                # Vue 组件
+│   │   │   ├── auth/                  # 认证组件
+│   │   │   ├── charts/                # 图表组件
+│   │   │   ├── match/                 # 比赛组件
+│   │   │   └── profile/               # 用户中心组件
+│   │   ├── layouts/                   # 页面布局
+│   │   ├── router/                    # 路由配置
+│   │   ├── stores/                    # Pinia 状态管理
+│   │   ├── types/                     # TypeScript 类型定义
+│   │   ├── views/                     # 页面视图
+│   │   ├── App.vue                    # 根组件
+│   │   └── main.ts                    # 应用入口
+│   ├── package.json                   # 前端依赖配置
+│   ├── vite.config.ts                 # Vite 构建配置
+│   ├── tsconfig.json                  # TypeScript 配置
+│   ├── tailwind.config.js             # Tailwind CSS 配置
+│   └── scripts/                       # 前端工具脚本
+├── tests/                             # 测试文件
+├── docs/                              # 文档
+├── .github/workflows/                 # CI/CD配置
+├── Makefile                          # 后端开发工具链
+├── docker-compose*.yml               # Docker 配置文件
+└── requirements*.txt                 # Python 依赖定义
 ```
 
 ## 🔧 开发工具链
 
 ### 📋 快速命令
 
+#### 后端开发工具
 ```bash
-make help         # 显示所有可用命令 ⭐
+make help         # 显示所有可用后端命令 ⭐
 make venv         # 创建虚拟环境
-make install      # 安装依赖
-make lint         # 代码检查
-make test         # 运行测试
-make ci           # 本地CI检查
+make install      # 安装后端依赖
+make lint         # 后端代码检查
+make test         # 运行后端测试
+make ci           # 后端本地CI检查
 make sync-issues  # GitHub Issues 同步 🔄
-./scripts/run_tests_in_docker.sh  # 在容器中执行测试，隔离本地依赖
+./scripts/run_tests_in_docker.sh  # 在容器中执行后端测试，隔离本地依赖
+```
+
+#### 前端开发工具
+```bash
+cd frontend
+npm install          # 安装前端依赖
+npm run dev          # 启动开发服务器
+npm run build        # 构建生产版本
+npm run preview      # 预览生产构建
+npm run lint         # 前端代码检查
+npm run type-check   # TypeScript 类型检查
+```
+
+#### 完整服务栈工具
+```bash
+# 启动完整服务（后端 + 前端）
+make dev && cd frontend && npm run dev
+
+# Docker 完整服务栈
+docker-compose -f docker-compose.yml -f docker-compose.frontend.yml up
+
+# 服务状态检查
+make status                    # 后端服务状态
+curl http://localhost:5173     # 前端服务状态
 ```
 
 ### 🛠️ 完整工具文档
 
-**详细的工具使用指南**: 📖 [TOOLS.md](./TOOLS.md)
+**后端工具使用指南**: 📖 [TOOLS.md](./TOOLS.md)
+
+**前端架构文档**: 📖 [docs/architecture/v3_0_frontend_summary.md](./docs/architecture/v3_0_frontend_summary.md)
 
 包含：
 
@@ -166,13 +303,24 @@ make sync-issues  # GitHub Issues 同步 🔄
 - 代码质量和测试工具 ✨
 - 环境管理和容器工具 🐳
 - AI 助手使用指南 🤖
+- Vue.js 前端开发最佳实践 🎨
+- TypeScript 和组件化开发指南 📦
 
 
 ## 📚 文档入口
 
+### 后端开发文档
 - [Repository Guidelines](AGENTS.md) — 面向贡献者的结构、流程与安全基线快速上手手册。
 - [测试改进机制指南](docs/TEST_IMPROVEMENT_GUIDE.md) — 了解 Kanban、CI Hook 与周报机制，快速上手测试优化流程。
 - [🛡️ 测试实战指南](docs/TESTING_GUIDE.md) — SWAT行动成果，完整的测试方法论和最佳实践，涵盖Mock模式、CI/CD集成和安全网建设。
+
+### 前端开发文档
+- [🎨 P3 前端架构总览](docs/architecture/v3_0_frontend_summary.md) — 完整的前端 MVP 架构文档，包括技术栈、组件设计和最佳实践。
+- [📱 前端快速开发指南](frontend/README.md) — Vue.js 3 + TypeScript 开发环境搭建和组件开发指南。
+
+### 项目管理文档
+- [🚀 项目路线图](docs/ROADMAP.md) — 项目发展规划和里程碑计划。
+- [🔧 开发工具链](TOOLS.md) — 完整的开发工具使用指南和自动化脚本说明。
 
 
 ## 🤖 AI辅助开发

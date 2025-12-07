@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 
 # 可选的速率限制功能
 try:
@@ -42,13 +43,28 @@ from src.observers import ObserverManager
 from src.performance.integration import setup_performance_monitoring
 from src.performance.middleware import PerformanceMonitoringMiddleware
 
-# 配置日志
+# P4-2: 结构化日志配置
+import os
+from src.core.logging_config import setup_logging, get_logger
+from src.api.middleware.request_id import add_request_id_middleware
+
+# P4-3: 安全头中间件
+from src.api.middleware.security import add_security_middleware
+
+# 设置统一日志系统
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+log_level = os.getenv("LOG_LEVEL", "INFO")
+setup_logging(service_name="football-prediction", log_level=log_level)
+logger = get_logger(__name__)
+
+# P4-1: Prometheus 监控集成
+try:
+    from src.monitoring.prometheus_instrumentator import create_instrumentator, generate_latest
+    PROMETHEUS_AVAILABLE = True
+    logger.info("✅ Prometheus 监控模块加载成功")
+except ImportError as e:
+    PROMETHEUS_AVAILABLE = False
+    logger.warning(f"⚠️ Prometheus 监控模块加载失败: {e}")
 
 
 async def check_and_trigger_initial_data_fill() -> None:
@@ -280,20 +296,58 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# 配置CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+# P4-1: 集成 Prometheus 监控
+if PROMETHEUS_AVAILABLE:
+    instrumentator = create_instrumentator()
+    instrumentator.instrument(app)
+    logger.info("✅ Prometheus 监控已集成到 FastAPI 应用")
+else:
+    instrumentator = None
+    logger.warning("⚠️ Prometheus 监控未集成")
+
+# P4-2: 添加 Request ID 中间件（必须在其他中间件之前）
+add_request_id_middleware(app)
+logger.info("✅ Request ID 中间件已集成到 FastAPI 应用")
+
+# P4-3: 添加安全头中间件
+add_security_middleware(app)
+logger.info("✅ 安全头中间件已集成到 FastAPI 应用")
+
+# 配置CORS - 安全的跨域资源共享配置
+environment = os.getenv("ENV", "development").lower()
+
+if environment in ["production", "prod"]:
+    # 生产环境：只允许指定域名
+    allowed_origins = os.getenv(
+        "CORS_ORIGINS",
+        "https://yourdomain.com,https://www.yourdomain.com"
+    ).split(",")
+    allowed_origins = [origin.strip() for origin in allowed_origins if origin.strip()]
+else:
+    # 开发环境：允许本地开发域名
+    allowed_origins = [
         "http://localhost:3000",  # React前端开发服务器
         "http://127.0.0.1:3000",
         "http://localhost:3001",  # React前端开发服务器（备用端口）
         "http://127.0.0.1:3001",
         "http://localhost:8000",  # 本地开发
         "http://127.0.0.1:8000",
-    ],
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=[
+        "accept",
+        "accept-language",
+        "content-language",
+        "content-type",
+        "authorization",
+        "x-request-id",
+        "x-client-version",
+    ],
 )
 
 # 添加性能监控中间件
@@ -318,7 +372,7 @@ app.include_router(predictions_router, prefix="/api/v1", tags=["预测"])
 app.include_router(
     optimized_predictions_router, prefix="/api/v2/predictions", tags=["预测"]
 )
-app.include_router(prometheus_router, prefix="/metrics", tags=["监控"])
+app.include_router(prometheus_router, tags=["监控"])
 
 # 配置OpenAPI
 setup_openapi(app)

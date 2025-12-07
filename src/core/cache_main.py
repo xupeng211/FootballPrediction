@@ -469,15 +469,15 @@ def cache_key_builder(
         if isinstance(arg, (str, int, float, bool)):
             parts.append(str(arg))
         else:
-            # 对于复杂对象，使用哈希
-            parts.append(hashlib.md5(str(arg).encode()).hexdigest()[:8])
+            # 对于复杂对象，使用安全哈希
+            parts.append(hashlib.sha256(str(arg).encode()).hexdigest()[:8])
 
     # 添加关键字参数
     for key, value in sorted(kwargs.items()):
         if isinstance(value, (str, int, float, bool)):
             parts.append(f"{key}:{value}")
         else:
-            parts.append(f"{key}:{hashlib.md5(str(value).encode()).hexdigest()[:8]}")
+            parts.append(f"{key}:{hashlib.sha256(str(value).encode()).hexdigest()[:8]}")
 
     return ":".join(parts)
 

@@ -361,7 +361,7 @@ async def main():
             headers=collector._get_current_headers(),
             timeout=collector.timeout,
             allow_redirects=True,
-            verify=False,
+            verify=True,  # 启用 SSL 证书验证
         )
 
         logger.info(

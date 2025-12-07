@@ -65,8 +65,8 @@ class ReportBuilder:
         template_str = self._get_html_template()
         template = Template(template_str)
 
-        # 创建简单的环境
-        env = Environment()
+        # 创建安全的环境（启用自动转义）
+        env = Environment(autoescape=True)
         env.globals['template'] = template
 
         return env

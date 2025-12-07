@@ -2,7 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🌐 Language Preference
+
+**IMPORTANT**: Please reply in Chinese (中文) for all communications in this repository. The user prefers Chinese responses for all interactions, including code explanations, documentation updates, and general discussions.
+
 ## 📋 Latest Updates (2025-12-04)
+
+### v2.5.0 Backend Complete (2025-12-07)
+- **Complete Backend Architecture v2.5**: 16 services, 29.0% test coverage achieved
+- **Prefect + Celery Scheduler**: Enterprise-grade task orchestration with MLflow integration
+- **Vue.js 3 Frontend Migration**: Complete migration from React to Vue.js + Vite
+- **Enhanced Monitoring**: Prefect UI, MLflow tracking, and quality dashboard
 
 ### v2.1.0 Improvements Applied
 - **Updated Quality Metrics**: Real coverage increased from 6.5% to 29.0% (target achieved)
@@ -77,6 +87,7 @@ make test.unit.ci                 # CI verification (fastest)
 - ✅ All services healthy (app, db, redis)
 - ✅ API accessible at http://localhost:8000
 - ✅ Documentation at http://localhost:8000/docs
+- ✅ Frontend development server at http://localhost:5173 (Vite)
 - ✅ Test coverage: 29.0% total (target achieved)
 
 ## 🎯 Project Overview
@@ -104,8 +115,10 @@ make test.unit.ci                 # CI verification (fastest)
 
 ### Tech Stack
 - **Backend**: FastAPI + PostgreSQL 15 + Redis 7.0+ + SQLAlchemy 2.0+
+- **Frontend**: Vue.js 3 + Vite + Pinia + Vue Router 4 + Tailwind CSS
 - **Machine Learning**: XGBoost 2.0+ + TensorFlow 2.18.0 + MLflow + Optuna
-- **Containerization**: Docker 27.0+ + 20+ Docker Compose configurations
+- **Task Orchestration**: Prefect + Celery hybrid system
+- **Containerization**: Docker 27.0+ + 10+ Docker Compose configurations
 - **Dev Tools**: pytest 8.4.0+ + Ruff 0.14+ + Complete Makefile toolchain
 
 ## 🏗️ Architecture
@@ -210,6 +223,21 @@ FootballPrediction/         # Project root directory
 - **Pydantic v2+** - Data validation and serialization
 - **Uvicorn** - ASGI server
 
+#### Frontend Development
+```bash
+# Vue.js + Vite Development
+cd frontend
+npm run dev          # Start Vite development server (port 5173)
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # ESLint with Vue support
+npm run type-check   # TypeScript type checking
+
+# Quality Dashboard (separate React app)
+cd frontend/quality-dashboard
+npm start            # Start quality dashboard (port 3001)
+```
+
 #### Machine Learning
 - **XGBoost 2.0+** - Gradient boosting prediction algorithm
 - **TensorFlow 2.18.0** - Deep learning (LSTM)
@@ -222,7 +250,9 @@ FootballPrediction/         # Project root directory
 - **Ruff** - Code checking and formatting (A+ grade)
 - **Bandit** - Security scanning
 - **Docker** - Containerized deployment with Playwright
-- **Makefile** - 613-line standardized development toolchain
+- **Makefile** - 331-line standardized development toolchain
+- **Prefect** - Workflow orchestration and task management
+- **MLflow** - ML experiment tracking and model registry
 
 ## 🚀 Core Development Commands
 
@@ -244,8 +274,8 @@ make env-check        # Check if environment is properly configured
 make help             # Show all available commands with descriptions ⭐
 ```
 
-### Docker Compose Variants (9 Available)
-The project includes 9 specialized Docker configurations:
+### Docker Compose Variants (10 Available)
+The project includes 10 specialized Docker configurations:
 
 ```bash
 # Development Environments
@@ -264,10 +294,12 @@ docker-compose.deploy.yml       # Deployment-specific settings
 # Specialized Services
 docker-compose.crawler.yml      # Web scraping focused setup
 docker-compose.monitoring.yml   # Monitoring stack (Prometheus, Grafana)
+docker-compose.scheduler.yml   # Prefect + Celery task orchestration system
 
 # Usage Examples:
 docker-compose -f docker-compose.lightweight.yml up    # Minimal dev
 docker-compose -f docker-compose.monitoring.yml up     # With monitoring
+docker-compose -f docker-compose.scheduler.yml up      # With task orchestration
 ```
 
 ### Data Collection Commands
@@ -276,6 +308,16 @@ make run-l1           # L1: Fixtures data collection from FotMob
 make run-l2           # L2: Match details collection from FotMob
 python scripts/backfill_details_fotmob_v2.py  # Primary FotMob data engine
 python scripts/refresh_fotmob_tokens.py       # Update API authentication tokens
+```
+
+### Task Orchestration Commands
+```bash
+# Prefect + Celery Scheduler (docker-compose.scheduler.yml)
+make scheduler        # Start Prefect + Celery orchestration environment
+make scheduler-stop   # Stop scheduler services
+prefect deploy        # Deploy Prefect flows
+prefect work-queue    # Manage Prefect work queues
+mlflow ui            # Start MLflow experiment tracking UI
 ```
 
 ### 🔥 Test Golden Rule
@@ -372,11 +414,29 @@ ANTI_SCRAPING_LEVEL=medium  # low, medium, high
 ADMIN_PASSWORD_HASH=240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
 TEST_PASSWORD_HASH=ffc121a2210958bf74e5a874668f3d978d24b6a8241496ccff3c0ea245e4f126
 
+# Prefect + Celery Scheduler Configuration
+PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://postgres:postgres@prefect-db:5432/prefect
+PREFECT_SERVER_API_HOST=0.0.0.0
+PREFECT_SERVER_API_PORT=4200
+PREFECT_SERVER_UI_API_HOST=0.0.0.0
+
+# MLflow Configuration
+MLFLOW_BACKEND_STORE_URI=postgresql+psycopg2://postgres:postgres@prefect-db:5432/mlflow
+MLFLOW_DEFAULT_ARTIFACT_ROOT=mlflow/artifacts
+MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+MLFLOW_S3_BUCKET_NAME=mlflow
+
+# Prefect Database (separate from main app)
+POSTGRES_PREFECT_USER=postgres
+POSTGRES_PREFECT_PASSWORD=postgres
+POSTGRES_PREFECT_DB=prefect
+
 # Available environment files:
 # .env.example - Template (copy to .env)
 # .env.docker - Docker-specific configuration
 # .env.ci - CI environment variables (auto-generated)
 # .env.prod - Production environment variables
+# .env.scheduler - Scheduler-specific variables
 ```
 
 #### Container Operations
@@ -1331,12 +1391,14 @@ Service Communication Patterns:
 
 ## 📊 API Endpoints
 
-- **Frontend Application**: http://localhost:3000
+- **Frontend Application**: http://localhost:5173 (Vue.js + Vite)
 - **Backend API**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
 - **WebSocket**: ws://localhost:8000/api/v1/realtime/ws
 - **Prometheus Metrics**: http://localhost:8000/api/v1/metrics
+- **Prefect UI**: http://localhost:4200 (when scheduler running)
+- **MLflow UI**: http://localhost:5000 (when scheduler running)
 
 ## 📈 Performance Monitoring & Debugging
 
@@ -1352,8 +1414,11 @@ curl http://localhost:8000/api/v1/metrics       # Prometheus metrics
 
 # External Monitoring Services
 http://localhost:5555                           # Flower - Celery task monitoring
+http://localhost:4200                           # Prefect UI - Workflow orchestration
+http://localhost:5000                           # MLflow UI - ML experiment tracking
 mlflow ui                                       # MLflow - ML experiment tracking
 docker-compose -f docker-compose.monitoring.yml up  # Full monitoring stack
+docker-compose -f docker-compose.scheduler.yml up    # Scheduler stack with Prefect+MLflow
 ```
 
 ### Performance Monitoring Commands
@@ -1418,8 +1483,8 @@ docker-compose exec worker celery -A src.tasks.celery_app inspect active  # Acti
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
 │   Frontend  │  │  Backend    │  │  Database   │
-│   (React)   │  │  (FastAPI)  │  │(PostgreSQL) │
-│  Port:3000  │  │  Port:8000  │  │  Port:5432  │
+│  (Vue.js)   │  │  (FastAPI)  │  │(PostgreSQL) │
+│ Port:5173   │  │  Port:8000  │  │  Port:5432  │
 └─────────────┘  └─────────────┘  └─────────────┘
        │                │                │
        │       ┌─────────────┐          │
@@ -1433,6 +1498,15 @@ docker-compose exec worker celery -A src.tasks.celery_app inspect active  # Acti
               │   Worker    │
               │  (Celery)   │
               └─────────────┘
+                        │
+              ┌─────────────────────────┐
+              │   Scheduler Cluster     │
+              │ ┌─────┐ ┌─────┐ ┌─────┐ │
+              │ │Pref.│ │MLflow│ │Flower│ │
+              │ │Server│ │ UI  │ │ UI  │ │
+              │ └─────┘ └─────┘ └─────┘ │
+              │  4200    5000   5555    │
+              └─────────────────────────┘
                         │
               ┌─────────────┐
               │    Nginx    │
@@ -1554,12 +1628,17 @@ src/cqrs/                     # Command Query Responsibility Segregation
 └── application.py            # CQRS application setup
 ```
 
-#### Background Tasks
+#### Background Tasks & Orchestration
 ```
 src/tasks/
 ├── celery_app.py             # Celery configuration
 ├── data_collection_tasks.py  # Background data collection
 └── prediction_tasks.py       # Async prediction processing
+
+src/orchestration/
+├── flows/                    # Prefect workflow definitions
+├── scheduler_prefect.py      # Prefect + Celery hybrid scheduler
+└── prefect_config.py         # Prefect configuration
 ```
 
 #### Testing Structure
@@ -1621,6 +1700,8 @@ grep -r "@pytest.mark" tests/
 | **Coverage < 6.0%** | `make coverage` | Check specific test files coverage gaps |
 | **Docker Build Failures** | Check `Dockerfile` | Verify requirements, build context |
 | **FotMob 403 Errors** | Check `.env` auth | `python scripts/manual_token_test.py` |
+| **Prefect Flow Failures** | Check Prefect UI logs | `prefect flow-run ls` |
+| **MLflow Tracking Issues** | Check MLflow UI | Verify PostgreSQL connection |
 | **Container Permissions** | `sudo chown -R $USER:$USER ./` | Check Docker user mapping |
 
 ### Error-Specific Solutions
@@ -1859,6 +1940,44 @@ make logs | grep "memory"
 # 3. Optimize database queries:
 make db-shell
 EXPLAIN ANALYZE SELECT * FROM matches LIMIT 10;
+```
+
+#### 🔄 Prefect + Celery Scheduler Issues
+```bash
+# Symptom: Prefect flows failing or not scheduling
+# Diagnosis:
+curl http://localhost:4200/api/health     # Prefect API health
+prefect flow-run ls                      # List flow runs
+prefect work-queue ls                    # Check work queues
+
+# Solution 1: Restart Prefect services
+docker-compose -f docker-compose.scheduler.yml restart prefect-server
+
+# Solution 2: Check Prefect database connection
+docker-compose exec prefect-db psql -U postgres -d prefect -c "SELECT COUNT(*) FROM flow;"
+
+# Solution 3: Redeploy flows
+prefect deploy --all
+
+# Solution 4: Check Celery worker status
+docker-compose exec worker celery -A src.tasks.celery_app inspect active
+```
+
+#### 🧠 MLflow Tracking Problems
+```bash
+# Symptom: ML experiments not tracking properly
+# Diagnosis:
+curl http://localhost:5000              # MLflow UI accessibility
+mlflow experiments list                  # List experiments
+
+# Solution 1: Check MLflow database connection
+docker-compose exec prefect-db psql -U postgres -d mlflow -c "SELECT COUNT(*) FROM experiments;"
+
+# Solution 2: Reset MLflow storage
+docker-compose exec mlflow mlflow server --backend-store-uri postgresql+psycopg2://postgres:postgres@prefect-db:5432/mlflow --default-artifact-root mlflow/artifacts
+
+# Solution 3: Verify artifact storage
+docker-compose exec minio mc ls mlflow/artifacts
 ```
 
 ## 📜 Essential Scripts Guide

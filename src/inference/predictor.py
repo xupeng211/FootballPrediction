@@ -547,9 +547,9 @@ class Predictor:
         ]
 
         if request.features:
-            # 对自定义特征进行哈希
+            # 对自定义特征进行安全哈希
             import hashlib
-            features_hash = hashlib.md5(
+            features_hash = hashlib.sha256(
                 str(sorted(request.features.items())).encode()
             ).hexdigest()[:8]
             key_parts.append(features_hash)

@@ -44,6 +44,13 @@ redis[hiredis]>=4.5.0
 # File System Monitoring (for hot reload)
 watchdog>=3.0.0
 
+# P4-1: Monitoring and Metrics (SRE)
+prometheus-fastapi-instrumentator>=6.1.0
+prometheus-client>=0.17.1
+
+# P4-2: Structured Logging
+loguru>=0.7.0
+
 # Development Tools
 pytest>=8.0.0
 pytest-asyncio>=0.21.0

@@ -70,11 +70,11 @@ class ModelMetadata:
 
     def _calculate_file_hash(self, file_path: str) -> str:
         """计算文件哈希"""
-        hash_md5 = hashlib.md5()
+        hash_sha256 = hashlib.sha256()
         with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
-                hash_md5.update(chunk)
-        return hash_md5.hexdigest()
+                hash_sha256.update(chunk)
+        return hash_sha256.hexdigest()
 
     def is_modified(self) -> bool:
         """检查文件是否被修改"""
