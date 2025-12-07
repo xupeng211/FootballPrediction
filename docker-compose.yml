@@ -73,9 +73,9 @@ services:
     environment:
       - NODE_ENV=production
       - REACT_APP_API_BASE_URL=http://localhost/api
-    volumes:
-      - ./frontend:/app  # 开发模式热重载
-      - /app/node_modules  # 避免node_modules被覆盖
+    # volumes:
+    #   - ./frontend:/app  # 开发模式热重载 - 注释掉以使用构建的静态文件
+    #   - /app/node_modules  # 避免node_modules被覆盖
     restart: unless-stopped
     depends_on:
       - app
