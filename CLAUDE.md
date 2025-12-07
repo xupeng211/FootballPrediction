@@ -21,6 +21,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Daily Development Workflow**: Step-by-step checklist with morning, development, and end-of-day procedures
 - **Performance Monitoring**: Added system health checks and performance monitoring scripts
 
+### v4.0.3 Data Collection Enhancement (2025-12-07)
+- **New Fetcher Architecture**: Added OddsPortal fetcher with production-grade HTTP client
+- **Enhanced HTTP Client**: Async HTTP client with User-Agent rotation and retry mechanisms
+- **HTML Parser Integration**: OddsPortal parser for real-time odds data extraction
+- **Dry Run Testing Scripts**: Added `scripts/dry_run_fetcher.py` for testing new fetcher functionality
+- **Sample Data Generation**: Added `scripts/generate_oddsportal_sample.py` for test data creation
+
 ### v2.5.0 Backend Complete
 - **Complete Backend Architecture v2.5**: Enterprise-grade task orchestration with MLflow integration
 - **Prefect + Celery Scheduler**: Hybrid scheduling system for workflow orchestration
@@ -247,6 +254,10 @@ python scripts/daily_pipeline.py              # 运行每日数据采集
 python scripts/backfill_details_fotmob_v2.py   # 回填缺失的比赛数据
 python scripts/collect_l1_fixtures.py          # L1 基础数据采集
 python scripts/fbref_real_data_collector.py    # FBref 数据采集器
+
+# 新增数据采集脚本 (v4.0.3)
+python scripts/dry_run_fetcher.py             # OddsPortal fetcher 测试脚本
+python scripts/generate_oddsportal_sample.py   # OddsPortal 测试数据生成
 
 # 机器学习脚本
 python scripts/train_model_v2.py               # 训练 ML 模型
@@ -937,6 +948,9 @@ class PredictionRequest(BaseModel):
 - **Performance monitoring**: `src/performance/middleware.py`
 - **Health checks**: `src/api/health/` directory
 - **External adapters**: `src/adapters/factory.py` (data source factory pattern)
+- **New fetcher architecture**: `src/fetchers/oddsportal_fetcher.py` (v4.0.3)
+- **HTTP client utilities**: `src/utils/http_client.py` (async HTTP client)
+- **HTML parsers**: `src/fetchers/parsers/odds_parser.py` (OddsPortal data parsing)
 
 ### 🔍 Search Patterns for Quick Navigation
 ```bash
@@ -1234,6 +1248,36 @@ curl http://localhost:5000  # Basic connectivity test
 docker-compose logs mlflow
 ```
 
+#### 🌐 New Data Collection Issues (v4.0.3)
+```bash
+# OddsPortal fetcher not working?
+# 1. Test HTTP client functionality
+python scripts/dry_run_fetcher.py
+
+# 2. Generate sample data for testing
+python scripts/generate_oddsportal_sample.py
+
+# 3. Check HTTP client configuration
+# Verify async HTTP client is properly initialized
+docker-compose logs app | grep -E "http_client|OddsPortal"
+
+# 4. Parser errors?
+# Check HTML parser output and structure
+docker-compose exec app python -c "
+from src.fetchers.parsers.odds_parser import OddsParser
+parser = OddsParser()
+print('Parser initialized successfully')
+"
+
+# 5. Rate limiting issues?
+# Check if rate limiter is blocking requests
+docker-compose exec app python -c "
+from src.collectors.rate_limiter import RateLimiter
+limiter = RateLimiter()
+print(f'Rate limiter status: {limiter}')
+"
+```
+
 ## 💡 Important Reminders
 
 1. **Test Golden Rule** - Always use Makefile commands, never run pytest directly
@@ -1281,6 +1325,13 @@ docker-compose logs mlflow
 - **📝 TypeScript mandatory** - All new code must have proper type definitions
 - **📦 Follow component structure** - Use `<script setup lang="ts">` syntax
 - **🎯 Pinia for state management** - Use Pinia stores for application state
+
+### 6. Data Collection Standards (v4.0.3)
+- **🌐 Use HTTP-only approach** - Never use browser automation for data collection
+- **🔄 Implement proper retry logic** - Exponential backoff with jitter
+- **🎭 Rotate User-Agents** - Mix mobile and desktop patterns for anonymity
+- **🛡️ Respect rate limits** - Implement proper throttling and backpressure
+- **📊 Provide mock fallbacks** - Always have fallback data for testing
 
 **💡 Remember**: This is an enterprise-grade project with AI-first maintenance. Violating these critical rules will break the system's architectural integrity and quality standards.
 
@@ -1361,6 +1412,91 @@ docker-compose logs app | grep -E "feature|Feature"    # Feature computation log
 
 # Feature backfilling
 python scripts/backfill_features.py <date_range>     # Backfill missing features
+```
+
+## 🌐 Data Collection Architecture (v4.0.3)
+
+### New Fetcher System Overview
+The v4.0.3 release introduces a comprehensive data collection architecture with the following components:
+
+#### Core Components
+- **OddsPortal Fetcher** (`src/fetchers/oddsportal_fetcher.py`) - Production-grade data collector
+- **Async HTTP Client** (`src/utils/http_client.py`) - High-performance HTTP client with anti-detection
+- **HTML Parser** (`src/fetchers/parsers/odds_parser.py`) - Specialized odds data extraction
+- **Testing Framework** (`scripts/dry_run_fetcher.py`) - Comprehensive testing utilities
+
+### Fetcher Architecture Patterns
+```python
+# Factory pattern for fetcher creation
+from src.fetchers.fetcher_factory import FetcherFactory
+
+# Create configured fetcher instance
+fetcher = FetcherFactory.create_oddsportal_fetcher(
+    config={
+        "max_retries": 3,
+        "timeout": 30.0,
+        "enable_mock": True,
+        "rate_limit": 1.0  # requests per second
+    }
+)
+
+# Use async data collection
+async def collect_odds_data():
+    odds_data = await fetcher.fetch_odds("match_id")
+    return odds_data
+```
+
+### HTTP Client Features
+- **User-Agent Rotation**: Automatic switching between mobile and desktop patterns
+- **Exponential Backoff**: Smart retry logic with jitter for rate limiting
+- **Connection Pooling**: Reusable connections for better performance
+- **Error Handling**: Comprehensive error categorization and recovery
+- **Mock Fallbacks**: Automatic fallback to test data when production fails
+
+### Testing the New Architecture
+```bash
+# Test HTTP client and parser integration
+python scripts/dry_run_fetcher.py
+
+# Generate sample test data
+python scripts/generate_oddsportal_sample.py
+
+# Run specific fetcher tests
+make test.unit | grep test_oddsportal
+
+# Integration testing with real APIs
+docker-compose exec app python -c "
+import asyncio
+from src.fetchers.oddsportal_fetcher import OddsPortalFetcher
+
+async def test():
+    fetcher = OddsPortalFetcher(enable_mock=True)
+    result = await fetcher.test_connection()
+    print(f'Connection test: {result}')
+
+asyncio.run(test())
+"
+```
+
+### Mock vs Real Mode Configuration
+```python
+# Development/Testing - Mock mode
+fetcher = OddsPortalFetcher(
+    config={
+        "enable_mock": True,
+        "mock_data_path": "tests/fixtures/oddsportal_sample.json"
+    }
+)
+
+# Production - Real mode
+fetcher = OddsPortalFetcher(
+    config={
+        "enable_mock": False,
+        "timeout": 60.0,
+        "max_retries": 5,
+        "rate_limit_delay": 2.0
+    }
+)
 ```
 
 ## 🔒 Security Best Practices
