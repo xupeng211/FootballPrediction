@@ -292,3 +292,5 @@ simple_*.py
 *_REPORT*
 *_audit*
 *_ANALYSIS*
+frontend/src/**/*.js
+frontend/src/**/*.d.ts
