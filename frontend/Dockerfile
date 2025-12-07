@@ -5,6 +5,9 @@ FROM node:18-alpine AS builder
 # 设置工作目录
 WORKDIR /app
 
+# 配置npm镜像源以提高构建稳定性
+RUN npm config set registry https://registry.npmmirror.com
+
 # 复制 package.json 和 package-lock.json (如果存在)
 COPY package*.json ./
 
