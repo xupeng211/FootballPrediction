@@ -45,6 +45,7 @@ class Odds(BaseModel):
     id = Column(Integer, primary_key=True, index=True)
     match_id = Column(Integer, ForeignKey("matches.id"), nullable=False, index=True)
     bookmaker = Column(String(100), nullable=False, index=True)
+    provider = Column(String(50), nullable=True, index=True)  # 数据源标识
 
     # 基础赔率字段
     home_win = Column(Numeric(10, 4), nullable=True)

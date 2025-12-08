@@ -230,7 +230,7 @@ class FotMobL2CollectorV2:
             待处理记录列表
         """
         try:
-            # 构建查询 - 终极调度策略：只处理绝对安全的历史数据，彻底避免未来数据干扰
+            # 构建查询 - 未来赛程采集策略：优先处理未来和近期的比赛
             query = """
                 SELECT m.id, ht.name as home_team, at.name as away_team, m.match_date, l.name as competition, m.season, m.data_completeness
                 FROM matches m
@@ -238,9 +238,9 @@ class FotMobL2CollectorV2:
                 JOIN teams at ON m.away_team_id = at.id
                 LEFT JOIN leagues l ON m.league_id = l.id
                 WHERE m.data_completeness = 'partial'
-                  AND m.match_date < CURRENT_DATE - INTERVAL '7 days'  -- 【终极安全】只处理至少7天前的数据，100%避免未来数据
-                  AND m.match_date >= CURRENT_DATE - INTERVAL '2 years'  -- 时间窗口：最近2年（优化算力分配）
-                ORDER BY m.match_date DESC  -- 倒序：从最新向过去回溯，优先处理刚结束的比赛
+                  AND m.match_date >= CURRENT_DATE - INTERVAL '7 days'  -- 【未来导向】处理未来和7天内的近期比赛
+                  AND m.match_date <= CURRENT_DATE + INTERVAL '90 days'  -- 时间窗口：未来90天内
+                ORDER BY m.match_date ASC  -- 正序：从当前向未来，优先处理即将到来的比赛
             """
 
             if limit:

@@ -344,9 +344,8 @@ async def main():
 
     # 初始化采集器
     collector = HTMLFotMobCollector(
-        max_retries=3, timeout=(10, 30), enable_stealth=True
+        max_retries=3, timeout=30, enable_stealth=True
     )
-    await collector.initialize()
 
     try:
         # 联赛页面URL
@@ -355,14 +354,20 @@ async def main():
         )
         logger.info(f"🕷️ 访问英超联赛页面: {test_url}")
 
-        # 发起请求
-        response = requests.get(
-            test_url,
-            headers=collector._get_current_headers(),
-            timeout=collector.timeout,
-            allow_redirects=True,
-            verify=True,  # 启用 SSL 证书验证
-        )
+        # 简单的同步请求
+        import httpx
+        with httpx.Client(timeout=30) as client:
+            response = client.get(
+                test_url,
+                headers={
+                    'User-Agent': collector.user_manager.get_desktop_user_agent(),
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-GB,en;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1',
+                }
+            )
 
         logger.info(
             f"📊 响应状态: {response.status_code}, 大小: {len(response.text):,} 字符"
@@ -452,7 +457,8 @@ async def main():
         return 1
 
     finally:
-        await collector.close()
+        # 清理资源（如果需要）
+        pass
 
 
 if __name__ == "__main__":

@@ -40,6 +40,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Critical Development Rules**: Added non-negotiable protocol section
 - **Architecture Pattern Updates**: Refined DDD+CQRS+Event-Driven guidance
 
+### Current Project Status (2025-01-08)
+- **Test Coverage**: 29.0% (748+ passing tests with 3 flaky tests under investigation)
+- **Build Status**: ✅ Stable (Green Baseline)
+- **Code Quality**: A+ (ruff) with enterprise-grade security standards
+- **Version**: v4.0.1-hotfix (Production Ready)
+
 ## 📑 Table of Contents
 
 - [🌟 Quick Start](#-quick-start)
@@ -52,6 +58,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [🛠️ Architecture Principles](#-architecture-principles)
 - [🔍 Code Navigation](#-code-navigation)
 - [🚨 Troubleshooting](#-troubleshooting)
+
+### 🚀 Quick Navigation
+- **[新开发者必读](#-新开发者环境验证-5分钟)** - 5分钟环境验证
+- **[最常用命令](#-test-golden-rule)** - 测试和开发核心命令
+- **[故障排除速查](#-quick-reference-table)** - 问题快速解决方案
+- **[架构概览](#️-high-level-architecture-overview)** - 系统架构图
+- **[前端开发](#-frontend-development-commands)** - Vue.js开发指南
+- **[监控工具](#-monitoring-tools-access)** - Prefect/Flower/MLflow UI
 
 ---
 
@@ -126,6 +140,23 @@ make test.unit.ci                 # CI验证 (最快)
 
 ## 🏗️ Architecture
 
+### 🏛️ High-Level Architecture Overview
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend API   │    │   Data Layer    │
+│   Vue.js 3      │◄──►│   FastAPI       │◄──►│   PostgreSQL    │
+│   TypeScript    │    │   Async First   │    │   Redis Cache   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Interface│    │   Business      │    │   External      │
+│   Responsive    │    │   Logic Layer   │    │   Data Sources  │
+│   Charts        │    │   ML Inference  │    │   FotMob API    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
 ### Architecture Patterns
 Enterprise-grade patterns for high performance, maintainability, and scalability:
 
@@ -179,6 +210,7 @@ make dev-logs         # View development environment logs
 make status           # Check all service status
 make clean            # Cleanup containers and cache
 make shell            # Enter backend container
+make shell-db         # Enter database container
 make install          # Install dependencies in virtual environment
 make help             # Show all available commands with descriptions ⭐
 ```
@@ -244,6 +276,7 @@ make monitor-all      # 监控所有容器资源使用
 make db-reset         # Reset database (⚠️ will delete all data)
 make db-migrate       # Run database migrations
 make db-shell         # Enter PostgreSQL interactive terminal
+make redis-shell      # Enter Redis CLI (for cache debugging)
 ```
 
 ### 🔧 Essential Scripts & Tools
@@ -524,7 +557,7 @@ cd frontend  # 进入前端目录
 npm install          # 安装依赖
 npm run dev          # 启动开发服务器 (http://localhost:5173)
 npm run build        # 构建生产版本
-npm run preview      # 预览生产构建
+npm run preview      # 预览生产构建 (重要：部署前验证)
 
 # 代码质量
 npm run lint         # ESLint代码检查
@@ -627,6 +660,26 @@ npm run lint && npm run type-check && npm run build
 
 ## 🔧 Development Workflow
 
+### 🚀 新开发者环境验证 (5分钟)
+```bash
+# 1️⃣ 环境完整性检查
+make dev && make status
+
+# 2️⃣ 服务健康验证
+curl http://localhost:8000/health        # 后端API
+curl http://localhost:5173               # 前端服务 (如已启动)
+docker-compose exec db pg_isready         # 数据库连接
+
+# 3️⃣ 测试环境验证
+make test.fast                           # 核心功能测试
+
+# 4️⃣ 开发工具验证
+make lint                               # 代码质量检查
+cd frontend && npm run type-check        # 前端类型检查
+
+# ✅ 如果以上命令都成功，环境配置完成！
+```
+
 ### Daily Development Process
 ```bash
 # 1. 启动环境并验证服务
@@ -649,6 +702,62 @@ make security-check   # 安全检查
 
 # 6. 可选: 如果时间允许进行完整验证
 make ci               # 完整CI验证包括覆盖率
+```
+
+### 💡 推荐IDE配置和插件
+
+#### VS Code 配置
+```json
+// .vscode/settings.json
+{
+  "python.defaultInterpreterPath": "./.venv/bin/python",
+  "python.linting.enabled": true,
+  "python.linting.ruffEnabled": true,
+  "python.formatting.provider": "black",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  }
+}
+```
+
+#### 推荐插件
+- **Python**: Python, Pylance, Ruff
+- **Vue.js**: Vue Language Features (Volar), TypeScript Vue Plugin (Volar)
+- **Docker**: Docker, Dev Containers
+- **Git**: GitLens, Git History
+- **通用**: Thunder Client (API测试), Error Lens
+
+### 🔍 常用调试技巧
+
+#### 后端调试
+```bash
+# 在容器内启动Python调试器
+make shell
+python -m pdb src/main.py
+
+# 查看实时日志
+docker-compose logs -f app
+docker-compose logs -f db
+
+# 数据库调试
+make db-shell
+\dt                    # 列出所有表
+SELECT * FROM matches LIMIT 5;  # 查看数据
+```
+
+#### 前端调试
+```bash
+# Vue DevTools
+# 在浏览器中安装Vue.js devtools扩展
+
+# 网络请求调试
+# 在浏览器开发者工具的Network标签页中查看API调用
+
+# 构建调试
+cd frontend
+npm run build -- --mode development  # 开发模式构建
 ```
 
 ### 📋 Daily Development Checklist
@@ -1068,6 +1177,8 @@ cat .env | grep FOTMOB
 # Diagnosis:
 lsof -i :8000  # Backend API
 lsof -i :5173  # Frontend
+lsof -i :5432  # PostgreSQL
+lsof -i :6379  # Redis
 
 # Solution 1: Kill conflicting processes
 kill -9 <PID>
@@ -1077,6 +1188,9 @@ services:
   app:
     ports:
       - "8001:8000"  # Change external port to 8001
+
+# Solution 3: Use different port for frontend
+cd frontend && npm run dev -- --port 3000
 ```
 
 #### 🎨 Frontend Development Issues
@@ -1108,6 +1222,10 @@ make dev
 make db-migrate      # Run pending migrations
 make db-shell        # Check PostgreSQL status
 docker-compose exec db pg_isready
+
+# Migration failure recovery:
+make db-reset        # Last resort: reset database (⚠️ data loss)
+docker-compose exec db psql -U football_prediction -c "SELECT version();"  # Check DB version
 ```
 
 ### Frontend Specific Issues

@@ -81,6 +81,17 @@ class Match(BaseModel):
     odds = Column(JSON, nullable=True)     # 赔率信息
     match_metadata = Column(JSON, nullable=True)  # 其他元数据 (xG、rating等)
 
+    # 🔥 Greedy Mode 新增字段 - 全量数据采集
+    # 专门的JSON字段存储结构化数据，避免混合存储
+    stats_json = Column(JSON, nullable=True, comment="全量技术统计 (matchStats原始数据)")
+    lineups_json = Column(JSON, nullable=True, comment="完整阵容数据 (包含评分、伤停)")
+    odds_snapshot_json = Column(JSON, nullable=True, comment="赔率快照数据")
+    match_info = Column(JSON, nullable=True, comment="战意上下文 (排名、轮次等)")
+
+    # 🌟 Super Greedy Mode 新增字段 - 环境暗物质采集
+    # 捕获裁判、场地、天气、主帅等环境因素
+    environment_json = Column(JSON, nullable=True, comment="环境暗物质 (裁判、场地、天气、主帅、阵型)")
+
     # 🎯 高级统计字段 - P2-3.1 数据库结构修复
     # 期望进球数 (Expected Goals)
     home_xg = Column(Float, nullable=True, comment="主场期望进球数")

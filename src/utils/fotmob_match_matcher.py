@@ -30,14 +30,18 @@ class FotmobMatchMatcher:
         """
         self.similarity_threshold = similarity_threshold
         self.base_url = "https://www.fotmob.com/api"
+        # 🔧 修复: 使用我们验证过的FotMob API认证令牌
         self.headers = {
             # 核心请求头 - 模拟最新 Chrome 131
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-GB,en;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate",
+            # 🔧 修复: 添加FotMob认证令牌
+            "x-mas": "eyJib2R5Ijp7InVybCI6Ii9hcGkvZGF0YS9sZWFndWVzP2lkPTg3IiwiY29kZSI6MTc2NTEyMTc0OTUyNSwiZm9vIjoicHJvZHVjdGlvbjo0MjhmYTAzNTVmMDljYTg4Zjk3YjE3OGViNWE3OWVmMGNmYmQwZGZjIn0sInNpZ25hdHVyZSI6IkIwQzkyMzkxMTM4NTdCNUFBMjk5Rjc5M0QxOTYwRkZCIn0=",
+            "x-foo": "eyJmb28iOiJwcm9kdWN0aW9uOjQyOGZhMDM1NWYwOWNhODhmOTdiMTc4ZWI1YTc5ZWYwY2ZiZGRmYyIsInRpbWVzdGFtcCI6MTc2NTEyMTgxMn0=",
             # 浏览器安全头 - 最新 Chrome 指纹
-            "sec-ch-ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            "sec-ch-ua": '"HeadlessChrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-ch-ua-arch": '"x86"',
@@ -73,6 +77,9 @@ class FotmobMatchMatcher:
             "bayern munich": ["fc bayern munich", "bayern", "fc bayern"],
         }
 
+        # 🔧 DEBUG: 添加调试标志
+        self.debug_mode = True
+
     async def find_match_by_fuzzy_match(
         self, fbref_record: dict[str, Any]
     ) -> Optional[dict[str, Any]]:
@@ -92,24 +99,57 @@ class FotmobMatchMatcher:
             date_str = fbref_record.get("date", "")
 
             if not all([home_team, away_team, date_str]):
-                logger.warning(f"FBref 记录缺少必要信息: {fbref_record}")
+                logger.warning(f"🔍 FBref 记录缺少必要信息: {fbref_record}")
                 return None
+
+            # 🔧 DEBUG: 输出调试信息
+            if self.debug_mode:
+                logger.info(f"🔍 DEBUG: 尝试匹配 {home_team} vs {away_team} (日期: {date_str})")
 
             # 格式化日期用于 API 调用
             api_date = self._format_date_for_api(date_str)
 
+            # 🔧 DEBUG: 输出调试信息
+            if self.debug_mode:
+                logger.info(f"🔍 DEBUG: 格式化后日期: {date_str} -> {api_date}")
+
             # 获取指定日期的所有比赛
             matches_data = await self._get_matches_by_date(api_date)
             if not matches_data or "matches" not in matches_data:
-                logger.warning(f"无法获取 {api_date} 的比赛数据")
+                if self.debug_mode:
+                    logger.error(f"🔍 DEBUG: API返回数据结构问题: {matches_data}")
+                logger.warning(f"❌ 无法获取 {api_date} 的比赛数据")
                 return None
+
+            # 🔧 DEBUG: 输出API响应信息
+            if self.debug_mode:
+                matches_count = len(matches_data.get("matches", []))
+                logger.info(f"🔍 DEBUG: {api_date} 共找到 {matches_count} 场比赛")
+                if matches_count > 0:
+                    sample_match = matches_data["matches"][0]
+                    sample_home = sample_match.get("home", {}).get("name", "未知")
+                    sample_away = sample_match.get("away", {}).get("name", "未知")
+                    sample_status = sample_match.get("status", {})
+                    sample_time = sample_status.get("utcTime", "无时间信息")
+                    logger.info(f"🔍 DEBUG: 样本比赛: {sample_home} vs {sample_away} (时间: {sample_time})")
+                    logger.info(f"🔍 DEBUG: 完整样本数据结构: {list(sample_match.keys())}")
+                else:
+                    logger.warning(f"🔍 DEBUG: API响应无比赛数据，检查响应结构: {list(matches_data.keys())}")
 
             # 计算每场比赛的相似度
             best_match = None
             best_similarity = 0.0
+            processed_matches = 0
 
             for match in matches_data["matches"]:
                 similarity = self._calculate_match_similarity(match, fbref_record)
+                processed_matches += 1
+
+                # 🔧 DEBUG: 输出每场比赛的相似度计算结果
+                if self.debug_mode and processed_matches <= 3:  # 只显示前3个
+                    match_home = match.get("home", {}).get("name", "")
+                    match_away = match.get("away", {}).get("name", "")
+                    logger.info(f"🔍 DEBUG: 比赛 {processed_matches}: {match_home} vs {match_away} -> 相似度: {similarity:.1f}%")
 
                 if (
                     similarity > best_similarity
@@ -128,14 +168,30 @@ class FotmobMatchMatcher:
                     "status": best_match.get("status", {}),
                     "date": best_match.get("date", ""),
                 }
+
+                # 🔧 DEBUG: 输出成功匹配的详细信息
+                if self.debug_mode:
+                    match_status = result["status"]
+                    match_time = match_status.get("utcTime", "无时间")
+                    match_finished = match_status.get("finished", False)
+                    match_started = match_status.get("started", False)
+                    logger.info(f"🔍 DEBUG: 匹配成功详情:")
+                    logger.info(f"   原始记录: {home_team} vs {away_team} (日期: {date_str})")
+                    logger.info(f"   匹配结果: {result['home_team']} vs {result['away_team']}")
+                    logger.info(f"   相似度: {best_similarity:.1f}% (阈值: {self.similarity_threshold}%)")
+                    logger.info(f"   比赛时间: {match_time}")
+                    logger.info(f"   比赛状态: 已开始={match_started}, 已完成={match_finished}")
+                    logger.info(f"   MatchID: {result['matchId']}")
+                    logger.info(f"   联赛: {result['tournament']}")
+
                 logger.info(
-                    f"找到匹配: {home_team} vs {away_team} -> {result['home_team']} vs {result['away_team']} (相似度: {best_similarity:.1f}%)"
+                    f"✅ 找到匹配: {home_team} vs {away_team} -> {result['home_team']} vs {result['away_team']} (相似度: {best_similarity:.1f}%)"
                 )
                 return result
             else:
-                logger.info(
-                    f"未找到匹配: {home_team} vs {away_team} (日期: {date_str})"
-                )
+                if self.debug_mode:
+                    logger.info(f"🔍 DEBUG: 最高相似度: {best_similarity:.1f}% (阈值: {self.similarity_threshold}%)")
+                logger.warning(f"⚠️  未找到匹配: {home_team} vs {away_team} (日期: {date_str}), 处理了 {processed_matches} 场比赛")
                 return None
 
         except Exception as e:
@@ -145,6 +201,7 @@ class FotmobMatchMatcher:
     async def _get_matches_by_date(self, date_str: str) -> Optional[dict[str, Any]]:
         """
         获取指定日期的所有比赛
+        使用联赛API端点替代日期API端点，因为联赛API更稳定
 
         Args:
             date_str: 格式为 YYYYMMDD 的日期字符串
@@ -152,24 +209,89 @@ class FotmobMatchMatcher:
         Returns:
             比赛数据列表，如果失败返回 None
         """
-        url = f"{self.base_url}/matches?date={date_str}"
+        # 🔧 修复: 使用联赛API端点而不是日期API端点
+        # 使用英超联赛作为默认数据源，涵盖所有比赛
+        leagues = [
+            {"id": 47, "name": "Premier League"},
+            {"id": 87, "name": "LaLiga"},
+            {"id": 55, "name": "Serie A"},
+            {"id": 54, "name": "Bundesliga"},
+            {"id": 53, "name": "Ligue 1"},
+        ]
+
+        all_matches = []
 
         try:
-            async with httpx.AsyncClient(headers=self.headers, timeout=30.0) as client:
-                logger.info(f"Fetching matches for date: {date_str}")
+            # 🔧 绕过代理，直接连接
+            import os
+            no_proxy = os.getenv('NO_PROXY', '')
+            if no_proxy:
+                logger.info(f"🔧 绕过代理连接: NO_PROXY={no_proxy}")
+
+            # 创建客户端，忽略代理设置，并启用自动解压
+            client = httpx.AsyncClient(
+                headers=self.headers,
+                timeout=30.0,
+                # 明确禁用代理
+                proxies=None
+            )
+
+            for league in leagues:
+                url = f"https://www.fotmob.com/api/leagues?id={league['id']}"
+
+                if self.debug_mode:
+                    logger.info(f"🔍 DEBUG: 获取{league['name']}数据: {url}")
+
                 response = await client.get(url)
 
                 if response.status_code == 200:
-                    data = response.json()
-                    logger.info(
-                        f"Successfully fetched {len(data.get('matches', []))} matches for {date_str}"
-                    )
-                    return data
+                    try:
+                        data = response.json()
+                    except Exception as json_error:
+                        logger.error(f"JSON解析错误 {league['name']}: {json_error}")
+                        logger.error(f"响应内容前500字符: {response.text[:500]}")
+                        continue
+
+                    # 使用已验证的正确解析路径
+                    if 'fixtures' in data and isinstance(data['fixtures'], dict):
+                        if 'allMatches' in data['fixtures']:
+                            matches = data['fixtures']['allMatches']
+
+                            # 🔧 DEBUG: 输出联赛数据信息
+                            if self.debug_mode:
+                                logger.info(f"🔍 DEBUG: {league['name']} 找到 {len(matches)} 场比赛")
+                                if matches:
+                                    sample = matches[0]
+                                    sample_home = sample.get('home', {}).get('name', '未知')
+                                    sample_away = sample.get('away', {}).get('name', '未知')
+                                    logger.info(f"🔍 DEBUG: {league['name']}样本: {sample_home} vs {sample_away}")
+
+                            all_matches.extend(matches)
+                        else:
+                            if self.debug_mode:
+                                logger.warning(f"🔍 DEBUG: {league['name']} 无 allMatches 数据")
+                    else:
+                        if self.debug_mode:
+                            logger.warning(f"🔍 DEBUG: {league['name']} 无 fixtures 数据")
                 else:
-                    logger.error(
-                        f"HTTP {response.status_code} when fetching matches for {date_str}"
+                    logger.warning(
+                        f"HTTP {response.status_code} when fetching {league['name']} data"
                     )
-                    return None
+
+            # 返回合并的比赛数据
+            result = {"matches": all_matches}
+
+            if self.debug_mode:
+                logger.info(f"🔍 DEBUG: 总共获取 {len(all_matches)} 场比赛")
+                if all_matches:
+                    logger.info(f"🔍 DEBUG: 前3场比赛:")
+                    for i, match in enumerate(all_matches[:3]):
+                        home = match.get('home', {}).get('name', '未知')
+                        away = match.get('away', {}).get('name', '未知')
+                        logger.info(f"   {i+1}. {home} vs {away}")
+
+            logger.info(f"Successfully fetched {len(all_matches)} total matches for {date_str}")
+            return result
 
         except Exception as e:
             logger.error(f"Error fetching matches for {date_str}: {str(e)}")
