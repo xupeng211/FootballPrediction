@@ -52,19 +52,19 @@ class Match(BaseModel):
     # 基本字段
     id = Column(Integer, primary_key=True)
     fotmob_id = Column(String(50), nullable=True, index=True)  # FotMob外部ID
-    home_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
-    away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    home_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)  # 修复: 允许NULL，Team记录可异步补齐
+    away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)  # 修复: 允许NULL，Team记录可异步补齐
     home_score = Column(Integer, default=0)
     away_score = Column(Integer, default=0)
 
     # DAO层需要的字段
     home_team_name = Column(String(100), nullable=True)  # 主队名称 (用于DAO层)
     away_team_name = Column(String(100), nullable=True)  # 客队名称 (用于DAO层)
-    match_time = Column(DateTime, nullable=False, default=datetime.utcnow)  # 比赛时间
+    match_time = Column(DateTime, nullable=True, comment="比赛时间 (允许NULL，支持TBD/Postponed比赛)")  # 比赛时间
 
     # 保持向后兼容的字段
     status = Column(String(20), default="scheduled")
-    match_date = Column(DateTime, nullable=False)
+    match_date = Column(DateTime, nullable=True, comment="比赛日期 (允许NULL，支持TBD/Postponed比赛)")
     venue = Column(String(255))
     league_id = Column(Integer, ForeignKey("leagues.id"))
     season = Column(String(20))

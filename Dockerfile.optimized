@@ -136,8 +136,6 @@ COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY tests/ ./tests/
 COPY models/ ./models/
-# 🔧 修复: 复制配置文件目录
-COPY config/ ./config/
 
 # 复制启动脚本
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -167,8 +165,6 @@ FROM base as production
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY models/ ./models/
-# 🔧 修复: 复制配置文件目录 (生产环境也需要)
-COPY config/ ./config/
 
 # 复制启动脚本
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
