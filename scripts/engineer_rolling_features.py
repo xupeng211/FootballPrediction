@@ -280,9 +280,18 @@ class RollingFeatureEngineer:
             'league_id', 'league_name',
             'home_team_name', 'away_team_name',
             'result', 'result_numeric',  # 仅用于验证，不在训练中使用
-            # 赔率特征（如果存在）
+            # 赔率特征（如果存在）- 明确保留
             'home_win_odds', 'draw_odds', 'away_win_odds'
         ]
+
+        # 确保所有基础列都被保留（即使数据为空）
+        additional_features = []
+        for col in ['home_win_odds', 'draw_odds', 'away_win_odds']:
+            if col in df.columns:
+                additional_features.append(col)
+
+        # 合并基础特征和额外特征
+        base_safe_features.extend(additional_features)
 
         # 添加所有滚动特征（这些是安全的，因为是基于历史数据计算）
         rolling_features = [col for col in all_features if 'last_' in col]
