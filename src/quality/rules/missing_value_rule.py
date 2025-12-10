@@ -16,7 +16,7 @@ Missing Value Rule - 缺失值检查规则
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, dict, list
 
 from src.quality.quality_protocol import (
     MissingValueRule as MissingValueRuleProtocol,
@@ -116,7 +116,7 @@ class MissingValueRule(MissingValueRuleProtocol):
             features: 从 FeatureStore 加载的特征数据字典
 
         Returns:
-            List[str]: 发现的缺失值错误描述列表
+            list[str]: 发现的缺失值错误描述列表
         """
         errors = []
 
@@ -153,7 +153,7 @@ class MissingValueRule(MissingValueRuleProtocol):
             features: 特征数据字典
 
         Returns:
-            List[str]: 关键字段的缺失值错误列表
+            list[str]: 关键字段的缺失值错误列表
         """
         errors = []
 
@@ -178,7 +178,7 @@ class MissingValueRule(MissingValueRuleProtocol):
             features: 特征数据字典
 
         Returns:
-            List[str]: 可选字段的缺失值警告列表
+            list[str]: 可选字段的缺失值警告列表
         """
         warnings = []
 
@@ -259,7 +259,7 @@ class MissingValueRule(MissingValueRuleProtocol):
             features: 特征数据字典
 
         Returns:
-            Dict[str, Any]: 缺失字段摘要
+            dict[str, Any]: 缺失字段摘要
         """
         summary = {
             "total_fields": len(self.critical_fields + self.optional_fields),

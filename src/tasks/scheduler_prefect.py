@@ -10,7 +10,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import dict, Any, Optional
 
 from celery import schedules
 from celery.schedules import crontab
@@ -145,7 +145,7 @@ class PrefectFlowScheduler(Scheduler):
             deployment_name: Optional deployment name to use
 
         Returns:
-            Dict with trigger results
+            dict with trigger results
         """
         logger.info(f"Triggering Prefect flow: {flow_name}")
 
@@ -224,7 +224,7 @@ class PrefectFlowScheduler(Scheduler):
         emergency retraining if performance degrades below thresholds.
 
         Returns:
-            Dict with performance check results
+            dict with performance check results
         """
         logger.info("Checking model performance for emergency retraining")
 
@@ -286,7 +286,7 @@ class PrefectFlowScheduler(Scheduler):
         additional data collection if quality degrades.
 
         Returns:
-            Dict with quality monitoring results
+            dict with quality monitoring results
         """
         logger.info("Monitoring data quality")
 
@@ -361,7 +361,7 @@ def trigger_prefect_flow_task(flow_name: str, **kwargs) -> dict[str, Any]:
         **kwargs: Additional arguments for the flow
 
     Returns:
-        Dict with execution results
+        dict with execution results
     """
     logger.info(f"Celery task triggering Prefect flow: {flow_name}")
 
@@ -391,7 +391,7 @@ def check_model_performance_task() -> dict[str, Any]:
     Celery task for model performance monitoring.
 
     Returns:
-        Dict with performance check results
+        dict with performance check results
     """
     logger.info("Celery task checking model performance")
 
@@ -417,7 +417,7 @@ def monitor_data_quality_task() -> dict[str, Any]:
     Celery task for data quality monitoring.
 
     Returns:
-        Dict with quality monitoring results
+        dict with quality monitoring results
     """
     logger.info("Celery task monitoring data quality")
 

@@ -272,25 +272,25 @@ async def interactive_playground():
             }
         }
 
-        function addLog(message, type = 'info') {
+        function addLog(message, typing.Type = 'info') {
             const logsContainer = document.getElementById('test-logs');
             const timestamp = new Date().toLocaleTimeString();
 
             const logEntry = document.createElement('div');
             logEntry.className = `p-4 rounded-lg border-l-4 ${
-                type === 'success' ? 'bg-green-50 border-green-500' :
-                type === 'error' ? 'bg-red-50 border-red-500' :
-                type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
+                typing.Type === 'success' ? 'bg-green-50 border-green-500' :
+                typing.Type === 'error' ? 'bg-red-50 border-red-500' :
+                typing.Type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
                 'bg-gray-50 border-gray-300'
             }`;
 
-            const icon = type === 'success' ? 'check-circle' :
-                         type === 'error' ? 'exclamation-circle' :
-                         type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            const icon = typing.Type === 'success' ? 'check-circle' :
+                         typing.Type === 'error' ? 'exclamation-circle' :
+                         typing.Type === 'warning' ? 'exclamation-triangle' : 'info-circle';
 
-            const color = type === 'success' ? 'text-green-600' :
-                         type === 'error' ? 'text-red-600' :
-                         type === 'warning' ? 'text-yellow-600' : 'text-blue-600';
+            const color = typing.Type === 'success' ? 'text-green-600' :
+                         typing.Type === 'error' ? 'text-red-600' :
+                         typing.Type === 'warning' ? 'text-yellow-600' : 'text-blue-600';
 
             logEntry.innerHTML = `
                 <div class="flex items-start">
@@ -323,7 +323,7 @@ async def interactive_playground():
                 const options = {
                     method: method,
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-typing.Type': 'application/json',
                         'X-Test-Client': 'Interactive-Playground'
                     }
                 };
@@ -670,7 +670,7 @@ class FootballPredictionAPI {
         this.apiKey = apiKey;
         this.baseUrl = baseUrl;
         this.headers = {
-            'Content-Type': 'application/json',
+            'Content-typing.Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`
         };
     }
@@ -833,7 +833,7 @@ public class PredictionExample {
                         <div class="bg-gray-800 rounded-lg p-4">
                             <pre><code class="language-bash">curl -X POST "https://api.football-prediction.com/v1/predictions/enhanced" \\
   -H "Authorization: Bearer your_api_key" \\
-  -H "Content-Type: application/json" \\
+  -H "Content-typing.Type: application/json" \\
   -d '{
     "match_id": "match_123",
     "home_team": "Manchester United",
@@ -915,7 +915,7 @@ async def get_openapi_spec() -> dict[str, Any]:
         "components": {
             "securitySchemes": {
                 "bearerAuth": {
-                    "type": "http",
+                    "typing.Type": "http",
                     "scheme": "bearer",
                     "bearerFormat": "JWT",
                 }

@@ -26,10 +26,10 @@ class BaseAdapterFactory:
 
     def __init__(self):
         """初始化工厂."""
-        self.adapters: dict[str, type[BaseAdapter]] = {}
+        self.adapters: dict[str, typing.Type[BaseAdapter]] = {}
         self.singletons: dict[str, BaseAdapter] = {}
 
-    def register_adapter(self, name: str, adapter_class: type[BaseAdapter]) -> None:
+    def register_adapter(self, name: str, adapter_class: typing.Type[BaseAdapter]) -> None:
         """注册适配器类."""
         self.adapters[name] = adapter_class
 

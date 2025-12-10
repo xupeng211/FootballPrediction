@@ -91,7 +91,7 @@ class ConfigurationBinder:
             self.config = self._parse_config(data)
             logger.info(f"加载配置文件: {config_path}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             raise DependencyInjectionError(f"加载配置文件失败: {e}") from e
 
     def load_from_dict(self, config_data: dict[str, Any]) -> None:
@@ -189,7 +189,7 @@ class ConfigurationBinder:
             else:
                 logger.warning(f"导入路径不存在: {import_path}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导入配置失败 {import_path}: {e}")
 
     def _register_service(self, service_name: str, config: ServiceConfig) -> None:
@@ -235,10 +235,10 @@ class ConfigurationBinder:
                 # 没有指定实现,尝试自动绑定
                 self.auto_binder.bind_interface_to_implementations(service_type)
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"注册服务失败 {service_name}: {e}")
 
-    def _get_type(self, type_name: str) -> type:
+    def _get_type(self, type_name: str) -> typing.Type:
         """获取类型."""
         # 尝试导入类型
         module_path, class_name = type_name.rsplit(".", 1)
@@ -279,7 +279,7 @@ class ConfigurationBinder:
 
             return True
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"评估条件失败 {condition}: {e}")
             return False
 

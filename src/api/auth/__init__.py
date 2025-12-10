@@ -152,7 +152,7 @@ def get_user_by_id(user_id: int):
     for user in MOCK_USERS.values():
         if user["id"] == user_id:
             # 返回一个具有属性的对象，而不是字典
-            return type(
+            return typing.Type(
                 "UserObj",
                 (),
                 {

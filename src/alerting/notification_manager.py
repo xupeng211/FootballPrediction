@@ -34,7 +34,7 @@ class NotificationChannel:
 
     id: str
     name: str
-    type: str  # email, slack, wechat, dingtalk
+    typing.Type: str  # email, slack, wechat, dingtalk
     enabled: bool
     config: dict[str, Any]
     filters: dict[str, Any] | None = None  # 告警过滤条件
@@ -194,7 +194,7 @@ class EmailClient:
             <div class="alert-info">
                 <h3>告警详情</h3>
                 <p><strong>告警消息:</strong> {{ alert.message }}</p>
-                <p><strong>告警类型:</strong> {{ alert.type.value }}</p>
+                <p><strong>告警类型:</strong> {{ alert.typing.Type.value }}</p>
                 <p><strong>告警源:</strong> {{ alert.source }}</p>
     <p><strong>触发时间:</strong> {{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>;
 
@@ -244,7 +244,7 @@ class EmailClient:
 
 告警标题: {{ alert.title }}
 严重程度: {{ alert.severity.value.upper() }}
-告警类型: {{ alert.type.value }}
+告警类型: {{ alert.typing.Type.value }}
 告警消息: {{ alert.message }}
 告警源: {{ alert.source }}
 触发时间: {{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
@@ -306,7 +306,7 @@ class SlackClient:
                 async with session.post(
                     self.webhook_url,
                     json=payload,
-                    headers={"Content-Type": "application/json"},
+                    headers={"Content-typing.Type": "application/json"},
                 ) as response:
                     if response.status == 200:
                         self.logger.info(f"Slack告警已发送: {alert.id}")
@@ -341,7 +341,7 @@ class SlackClient:
                     "title": f"[{alert.severity.value.upper()}] {alert.title}",
                     "text": alert.message,
                     "fields": [
-                        {"title": "告警类型", "value": alert.type.value, "short": True},
+                        {"title": "告警类型", "value": alert.typing.Type.value, "short": True},
                         {"title": "告警源", "value": alert.source, "short": True},
                         {
                             "title": "触发时间",
@@ -401,7 +401,7 @@ class WeChatClient:
                 async with session.post(
                     self.webhook_url,
                     json=payload,
-                    headers={"Content-Type": "application/json"},
+                    headers={"Content-typing.Type": "application/json"},
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
@@ -437,7 +437,7 @@ class WeChatClient:
 **告警消息:** {alert.message}
 
 **告警详情:**
-- 告警类型: {alert.type.value}
+- 告警类型: {alert.typing.Type.value}
 - 告警源: {alert.source}
 - 触发时间: {alert.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
 """
@@ -489,7 +489,7 @@ class DingTalkClient:
                 async with session.post(
                     self.webhook_url,
                     json=payload,
-                    headers={"Content-Type": "application/json"},
+                    headers={"Content-typing.Type": "application/json"},
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
@@ -525,7 +525,7 @@ class DingTalkClient:
 **告警消息:** {alert.message}
 
 **告警详情:**
-- 告警类型: {alert.type.value}
+- 告警类型: {alert.typing.Type.value}
 - 告警源: {alert.source}
 - 触发时间: {alert.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
 """
@@ -576,7 +576,7 @@ class NotificationManager:
             # 默认通知渠道配置
             default_channels = [
                 NotificationChannel(
-                    id="log", name="日志记录", type="log", enabled=True, config={}
+                    id="log", name="日志记录", typing.Type="log", enabled=True, config={}
                 )
             ]
 
@@ -608,16 +608,16 @@ class NotificationManager:
         # 添加pass语句
         """初始化通知客户端"""
         try:
-            if channel.type == "email" and channel.enabled:
+            if channel.typing.Type == "email" and channel.enabled:
                 self.clients[channel.id] = EmailClient(channel.config)
-            elif channel.type == "slack" and channel.enabled:
+            elif channel.typing.Type == "slack" and channel.enabled:
                 self.clients[channel.id] = SlackClient(channel.config)
-            elif channel.type == "wechat" and channel.enabled:
+            elif channel.typing.Type == "wechat" and channel.enabled:
                 self.clients[channel.id] = WeChatClient(channel.config)
-            elif channel.type == "dingtalk" and channel.enabled:
+            elif channel.typing.Type == "dingtalk" and channel.enabled:
                 self.clients[channel.id] = DingTalkClient(channel.config)
 
-            self.logger.info(f"通知客户端已初始化: {channel.type} - {channel.id}")
+            self.logger.info(f"通知客户端已初始化: {channel.typing.Type} - {channel.id}")
 
         except Exception as e:
             self.logger.error(f"初始化通知客户端失败 {channel.id}: {e}")
@@ -665,7 +665,7 @@ class NotificationManager:
             # 告警类型过滤
             if "types" in filters:
                 allowed_types = filters["types"]
-                if alert.type.value not in allowed_types:
+                if alert.typing.Type.value not in allowed_types:
                     return False
 
             # 时间过滤
@@ -695,30 +695,30 @@ class NotificationManager:
                 f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
             )
 
-            if channel.type == "email":
+            if channel.typing.Type == "email":
                 client = self.clients.get(channel.id)
                 if client and channel.config.get("recipients"):
                     return await client.send_alert_email(
                         alert, channel.config["recipients"]
                     )
 
-            elif channel.type == "slack":
+            elif channel.typing.Type == "slack":
                 client = self.clients.get(channel.id)
                 if client:
                     return await client.send_alert_slack(alert)
 
-            elif channel.type == "wechat":
+            elif channel.typing.Type == "wechat":
                 client = self.clients.get(channel.id)
                 if client:
                     return await client.send_alert_wechat(alert)
 
-            elif channel.type == "dingtalk":
+            elif channel.typing.Type == "dingtalk":
                 client = self.clients.get(channel.id)
                 if client:
                     return await client.send_alert_dingtalk(alert)
 
             else:
-                self.logger.warning(f"未知的通知渠道类型: {channel.type}")
+                self.logger.warning(f"未知的通知渠道类型: {channel.typing.Type}")
                 return False
 
         except Exception as e:
@@ -745,7 +745,7 @@ class NotificationManager:
             for channel_id, channel in self.channels.items():
                 status[channel_id] = {
                     "name": channel.name,
-                    "type": channel.type,
+                    "typing.Type": channel.typing.Type,
                     "enabled": channel.enabled,
                     "has_client": channel_id in self.clients,
                 }

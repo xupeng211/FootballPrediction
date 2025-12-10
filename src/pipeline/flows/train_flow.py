@@ -15,7 +15,7 @@ Train Flow - 模型训练工作流
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
+from typing import list, Optional
 
 from prefect import flow, task
 

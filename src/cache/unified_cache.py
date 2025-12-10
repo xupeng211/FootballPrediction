@@ -268,7 +268,7 @@ class UnifiedCacheManager:
                     logger.error(f"Redis cache invalidation error: {e}")
 
             logger.info(
-                f"Cache invalidation completed: pattern='{pattern}', type='{cache_type}'"
+                f"Cache invalidation completed: pattern='{pattern}', typing.Type='{cache_type}'"
             )
 
         except Exception as e:

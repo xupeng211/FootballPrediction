@@ -19,7 +19,7 @@ import time
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, Optional, Union, List
+from typing import Any, dict, Optional, Union, list
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 
@@ -137,7 +137,7 @@ class AsyncBaseCollector(ABC):
         获取请求头
 
         Returns:
-            Dict[str, str]: HTTP请求头
+            dict[str, str]: HTTP请求头
         """
         return {
             "User-Agent": await self._get_user_agent(),
@@ -284,7 +284,7 @@ class AsyncBaseCollector(ABC):
             **kwargs: httpx请求参数
 
         Returns:
-            Dict[str, Any]: JSON响应数据
+            dict[str, Any]: JSON响应数据
         """
         response = await self.fetch_with_retry(url, method, **kwargs)
         return response.json()
@@ -294,7 +294,7 @@ class AsyncBaseCollector(ABC):
         获取采集器统计信息
 
         Returns:
-            Dict[str, Any]: 统计信息字典
+            dict[str, Any]: 统计信息字典
         """
         return {
             "name": self.name,
@@ -373,7 +373,7 @@ class AsyncBaseService(ABC):
         Args:
             operation (str): 操作名称
             duration_ms (float): 执行时间(毫秒)
-            details (Optional[Dict[str, Any]]): 详细信息
+            details (Optional[dict[str, Any]]): 详细信息
         """
         self.logger.info(f"Performance: {operation} completed in {duration_ms:.2f}ms")
         if details:
@@ -398,12 +398,12 @@ class AsyncBatchProcessor(AsyncBaseService):
         批量处理数据
 
         Args:
-            items (List[Any]): 待处理数据列表
+            items (list[Any]): 待处理数据列表
             processor_func (callable): 处理函数
             max_concurrent (int): 最大并发数
 
         Returns:
-            List[Any]: 处理结果列表
+            list[Any]: 处理结果列表
         """
         semaphore = asyncio.Semaphore(max_concurrent)
 
@@ -432,13 +432,13 @@ class AsyncBatchProcessor(AsyncBaseService):
 
 # 便捷函数
 async def create_async_collector(
-    collector_class: type, config: Optional[AsyncConfig] = None, **kwargs
+    collector_class: typing.Type, config: Optional[AsyncConfig] = None, **kwargs
 ) -> AsyncBaseCollector:
     """
     创建异步采集器实例
 
     Args:
-        collector_class (type): 采集器类
+        collector_class (typing.Type): 采集器类
         config (Optional[AsyncConfig]): 异步配置
         **kwargs: 采集器初始化参数
 

@@ -441,7 +441,7 @@ class FootballDataCacheManager:
             success = await self.redis.aset(key, json.dumps(status_data), ex=ttl)
 
             if success:
-                logger.debug(f"Set sync status: {sync_type}")
+                logger.debug(f"set sync status: {sync_type}")
             return success
 
         except Exception as e:

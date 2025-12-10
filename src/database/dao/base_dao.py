@@ -13,10 +13,10 @@ from typing import (
     Generic,
     Optional,
     Any,
-    Dict,
-    List,
+    dict,
+    list,
     Union,
-    Type,
+    typing.Type,
     cast,
 )
 from collections.abc import Sequence
@@ -96,7 +96,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     所有具体的DAO实现都应该继承此类并实现抽象方法。
     """
 
-    def __init__(self, model: type[ModelType], session: AsyncSession):
+    def __init__(self, model: typing.Type[ModelType], session: AsyncSession):
         """
         初始化DAO实例
 
@@ -190,7 +190,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             options: 预加载选项
 
         Returns:
-            List[ModelType]: 记录列表
+            list[ModelType]: 记录列表
 
         Raises:
             DatabaseConnectionError: 数据库连接错误
@@ -472,7 +472,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             batch_size: 批处理大小
 
         Returns:
-            List[ModelType]: 创建的记录列表
+            list[ModelType]: 创建的记录列表
 
         Raises:
             DatabaseConnectionError: 数据库连接错误
@@ -547,7 +547,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             query: SQLAlchemy查询对象
 
         Returns:
-            Dict[str, Any]: 查询信息
+            dict[str, Any]: 查询信息
         """
         return {
             "model": self.model_name,

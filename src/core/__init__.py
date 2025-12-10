@@ -10,7 +10,7 @@ from typing import Optional
 """
 
 # 导入配置管理
-from .config import Config, Settings, get_config, get_settings
+from .config import Config, settings, get_config, get_settings
 
 # 导入依赖注入
 from .di import (

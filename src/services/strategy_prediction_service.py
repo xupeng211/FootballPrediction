@@ -247,7 +247,7 @@ class StrategyPredictionService:
                 logger.info(
                     f"策略 {strategy_name} 预测结果: {output.predicted_home_score}:{output.predicted_away_score}"
                 )
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"策略 {strategy_name} 预测失败: {e}")
                 results[strategy_name] = None
 
@@ -333,7 +333,7 @@ class StrategyPredictionService:
         for name, strategy in self._strategy_factory.get_all_strategies().items():
             strategies_info[name] = {
                 "name": name,
-                "type": strategy.strategy_type.value,
+                "typing.Type": strategy.strategy_type.value,
                 "healthy": strategy.is_healthy(),
                 "is_default": name == self._default_strategy,
                 "metrics": (

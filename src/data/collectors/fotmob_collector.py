@@ -9,7 +9,7 @@ import logging
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Optional, Dict, List
+from typing import Any, Optional, dict, list
 
 try:
     from curl_cffi.requests import AsyncSession
@@ -178,7 +178,7 @@ class FotmobCollector(BaseCollector):
             url: 完整的API URL
 
         Returns:
-            Dict: API响应数据
+            dict: API响应数据
 
         Raises:
             Exception: 当请求失败时
@@ -228,7 +228,7 @@ class FotmobCollector(BaseCollector):
             data: Next.js API响应数据
 
         Returns:
-            List[Dict]: 标准化的比赛数据列表
+            list[dict]: 标准化的比赛数据列表
         """
         matches = []
 
@@ -262,7 +262,7 @@ class FotmobCollector(BaseCollector):
             raw_match: 原始比赛数据
 
         Returns:
-            Dict: 标准化的比赛数据
+            dict: 标准化的比赛数据
         """
         # 根据FotMob实际返回的数据结构进行标准化
         # 这里需要根据实际API响应结构进行调整

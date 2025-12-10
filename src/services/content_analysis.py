@@ -97,7 +97,7 @@ class ContentAnalysisService(SimpleService):
             # 这里可以加载ML模型
             self._models_loaded = True
             return True
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"初始化失败: {e}")
             return False
 
@@ -110,7 +110,7 @@ class ContentAnalysisService(SimpleService):
         """获取服务信息."""
         return {
             "name": self.name,
-            "type": self.__class__.__name__,
+            "typing.Type": self.__class__.__name__,
             "description": "Content analysis service for football prediction system",
             "version": "1.0.0",
             "models_loaded": self._models_loaded,
@@ -226,13 +226,13 @@ class ContentAnalysisService(SimpleService):
         ]
         for team in _teams:
             if team in text:
-                entities.append({"text": team, "type": "TEAM", "confidence": 0.9})
+                entities.append({"text": team, "typing.Type": "TEAM", "confidence": 0.9})
 
         # 提取球员名称（简化版）
         words = text.split()
         for word in words:
             if len(word) >= 2 and word.istitle():
-                entities.append({"text": word, "type": "PERSON", "confidence": 0.5})
+                entities.append({"text": word, "typing.Type": "PERSON", "confidence": 0.5})
 
         return entities[:10]  # 限制返回数量
 

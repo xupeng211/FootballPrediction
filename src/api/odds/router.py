@@ -17,7 +17,7 @@ Odds API Router
 
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import list, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -126,7 +126,7 @@ async def get_match_odds(
         odds_service: 赔率服务实例
 
     Returns:
-        StandardResponse[List[OddsResponse]]: 赔率数据列表
+        StandardResponse[list[OddsResponse]]: 赔率数据列表
 
     Raises:
         HTTPException: 当比赛不存在或数据获取失败时
@@ -269,7 +269,7 @@ async def get_odds_history(
         odds_service: 赔率服务实例
 
     Returns:
-        StandardResponse[List[OddsHistoryResponse]]: 历史变动列表
+        StandardResponse[list[OddsHistoryResponse]]: 历史变动列表
 
     Raises:
         HTTPException: 当赔率记录不存在或查询失败时
@@ -410,7 +410,7 @@ async def get_bookmakers(
         odds_service: 赔率服务实例
 
     Returns:
-        StandardResponse[List[str]]: 博彩公司列表
+        StandardResponse[list[str]]: 博彩公司列表
     """
     try:
         logger.info("获取博彩公司列表")

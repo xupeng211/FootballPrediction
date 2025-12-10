@@ -271,7 +271,7 @@ async def optimize_performance(
         # 分析响应时间问题
         suggestions = perf_middleware.optimizer.optimization_suggestions
         response_time_suggestions = [
-            s for s in suggestions if s["type"] in ["response_time", "slow_endpoint"]
+            s for s in suggestions if s["typing.Type"] in ["response_time", "slow_endpoint"]
         ]
 
         result["suggestions"] = response_time_suggestions

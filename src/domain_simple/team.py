@@ -86,7 +86,7 @@ class Team:
 
         # 近期状态
         self.recent_form: list[str] = []  # W/D/L序列
-        self.current_streak = {"type": "", "count": 0}
+        self.current_streak = {"typing.Type": "", "count": 0}
 
         # 实力评分
         self.strength_score = 50.0  # 0-100
@@ -147,7 +147,7 @@ class Team:
             else:
                 break
 
-        self.current_streak = {"type": streak_type, "count": streak_count}
+        self.current_streak = {"typing.Type": streak_type, "count": streak_count}
 
     def _update_strength_rating(self) -> None:
         """更新实力评分."""
@@ -250,7 +250,7 @@ class Team:
 
         # 设置近期状态
         team.recent_form = data.get("recent_form", [])
-        team.current_streak = data.get("current_streak", {"type": "", "count": 0})
+        team.current_streak = data.get("current_streak", {"typing.Type": "", "count": 0})
 
         # 设置时间
         if data.get("created_at"):

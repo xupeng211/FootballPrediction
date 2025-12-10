@@ -45,7 +45,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         """获取安全头配置."""
         return {
             "X-Frame-Options": os.getenv("X_FRAME_OPTIONS", "DENY"),
-            "X-Content-Type-Options": os.getenv("X_CONTENT_TYPE_OPTIONS", "nosniff"),
+            "X-Content-typing.Type-Options": os.getenv("X_CONTENT_TYPE_OPTIONS", "nosniff"),
             "X-XSS-Protection": os.getenv("X_XSS_PROTECTION", "1; mode=block"),
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "Permissions-Policy": "geolocation=(), microphone=(), camera=()",

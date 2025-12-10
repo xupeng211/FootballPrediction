@@ -27,7 +27,7 @@ class BaseRepository(ABC, Generic[T]):
     Provides standard CRUD operations, all concrete repositories should inherit from this class.
     """
 
-    def __init__(self, model_class: type[T], db_manager: DatabaseManager | None = None):
+    def __init__(self, model_class: typing.Type[T], db_manager: DatabaseManager | None = None):
         """初始化仓储.
 
         Args:
@@ -420,7 +420,7 @@ class BaseRepository(ABC, Generic[T]):
             关联数据
         """
 
-    def get_model_class(self) -> type[T]:
+    def get_model_class(self) -> typing.Type[T]:
         """获取模型类."""
         return self.model_class
 

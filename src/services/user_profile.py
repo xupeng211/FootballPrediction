@@ -61,7 +61,7 @@ class UserProfileService(SimpleService):
         try:
             # 这里可以加载用户数据
             return True
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"初始化失败: {e}")
             return False
 
@@ -74,7 +74,7 @@ class UserProfileService(SimpleService):
         """获取服务信息."""
         return {
             "name": self.name,
-            "type": self.__class__.__name__,
+            "typing.Type": self.__class__.__name__,
             "description": "User profile service for managing user preferences and behavior",
             "version": "1.0.0",
             "profiles_count": len(self._user_profiles),

@@ -11,7 +11,7 @@ These flows replace manual scripts with automated, scheduled, and monitored task
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import dict, list, Optional, Any
 from pathlib import Path
 
 from prefect import flow, task
@@ -51,7 +51,7 @@ async def collect_fotmob_fixtures_flow_task() -> dict[str, Any]:
     fetching upcoming match fixtures for prediction processing.
 
     Returns:
-        Dict with collection results and statistics
+        dict with collection results and statistics
     """
     logger.info("Starting FotMob fixtures collection")
 
@@ -96,7 +96,7 @@ async def collect_fotmob_details_flow_task() -> dict[str, Any]:
     including shots, xG, possession, and other advanced metrics.
 
     Returns:
-        Dict with collection results and statistics
+        dict with collection results and statistics
     """
     logger.info("Starting FotMob match details collection")
 
@@ -141,7 +141,7 @@ async def collect_fbref_flow_task() -> dict[str, Any]:
     from FBref to complement FotMob data.
 
     Returns:
-        Dict with collection results and statistics
+        dict with collection results and statistics
     """
     logger.info("Starting FBref data collection")
 
@@ -180,7 +180,7 @@ async def run_data_quality_checks() -> dict[str, Any]:
     the modern async quality monitor with protocol-based rules.
 
     Returns:
-        Dict with quality check results and statistics
+        dict with quality check results and statistics
     """
     logger.info("Starting data quality checks")
 
@@ -222,7 +222,7 @@ async def update_feature_store() -> dict[str, Any]:
     and stores them in the async feature store for ML consumption.
 
     Returns:
-        Dict with feature store update results
+        dict with feature store update results
     """
     logger.info("Starting feature store update")
 
@@ -274,7 +274,7 @@ async def daily_data_collection_flow() -> dict[str, Any]:
     - Comprehensive logging and monitoring
 
     Returns:
-        Dict with flow execution summary and statistics
+        dict with flow execution summary and statistics
     """
     logger.info("=" * 60)
     logger.info("🚀 Starting Daily Data Collection Flow")
@@ -412,11 +412,11 @@ async def manual_data_collection_flow(
     sources, useful for testing or backfilling missing data.
 
     Args:
-        sources: List of data sources to collect ['fotmob_fixtures', 'fotmob_details', 'fbref']
+        sources: list of data sources to collect ['fotmob_fixtures', 'fotmob_details', 'fbref']
                  If None, collects from all sources
 
     Returns:
-        Dict with manual collection results
+        dict with manual collection results
     """
     logger.info("🔧 Starting Manual Data Collection Flow")
 

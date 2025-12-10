@@ -15,7 +15,7 @@ Data Quality Rules Protocol - 数据质量规则标准接口
 作者: Data Engineering Lead
 """
 
-from typing import Protocol, Any, List
+from typing import Protocol, Any, list
 from src.features.feature_store_interface import FeatureStoreProtocol
 
 
@@ -225,7 +225,7 @@ class RuleFactory(Protocol):
 RULE_TYPES = {
     "missing_value": MissingValueRule,
     "range": RangeRule,
-    "type": TypeRule,
+    "typing.Type": TypeRule,
     "logical_relation": LogicalRelationRule,
     "consistency": ConsistencyRule,
     "completeness": CompletenessRule,
@@ -234,7 +234,7 @@ RULE_TYPES = {
 }
 
 
-def get_rule_class(rule_type: str) -> type[DataQualityRule]:
+def get_rule_class(rule_type: str) -> typing.Type[DataQualityRule]:
     """
     根据规则类型获取对应的规则类。
 
@@ -242,7 +242,7 @@ def get_rule_class(rule_type: str) -> type[DataQualityRule]:
         rule_type: 规则类型字符串
 
     Returns:
-        type[DataQualityRule]: 对应的规则类
+        typing.Type[DataQualityRule]: 对应的规则类
 
     Raises:
         ValueError: 当规则类型不存在时

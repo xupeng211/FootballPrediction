@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, dict, list, Optional, tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -97,7 +97,7 @@ class FeatureLoader:
             validate_quality: 是否执行数据质量检查
 
         Returns:
-            Tuple[pd.DataFrame, pd.Series]: 特征数据和目标变量
+            tuple[pd.DataFrame, pd.Series]: 特征数据和目标变量
 
         Raises:
             FeatureValidationError: 数据质量检查失败

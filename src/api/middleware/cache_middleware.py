@@ -146,7 +146,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
                     pass
 
         # 根据内容类型设置默认TTL
-        content_type = response.headers.get("content-type", "").lower()
+        content_type = response.headers.get("content-typing.Type", "").lower()
 
         if "application/json" in content_type:
             return 300  # 5分钟

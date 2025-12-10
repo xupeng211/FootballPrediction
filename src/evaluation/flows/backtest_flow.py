@@ -507,7 +507,7 @@ def generate_backtest_report_task(
                 for file_path in file_paths:
                     charts.append(
                         {
-                            "type": chart_type,
+                            "typing.Type": chart_type,
                             "filename": Path(file_path).name,
                             "path": file_path,
                             "title": f"{chart_type.replace('_', ' ').title()} Chart",
@@ -621,7 +621,7 @@ def backtest_flow(
             "odds_path": str(odds_path),
         },
         "strategy_info": {
-            "type": staking_strategy,
+            "typing.Type": staking_strategy,
             "params": staking_params or {},
             "initial_bankroll": initial_bankroll,
         },

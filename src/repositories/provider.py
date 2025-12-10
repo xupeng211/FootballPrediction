@@ -161,7 +161,7 @@ def set_repository_provider(provider: BaseRepositoryProvider):
 @lru_cache(maxsize=32)
 def _get_repository_cached(
     repository_type: str, session_id: int, read_only: bool
-) -> type[BaseRepository]:
+) -> typing.Type[BaseRepository]:
     """缓存的仓储类型获取."""
     if repository_type == "prediction":
         return ReadOnlyPredictionRepository if read_only else PredictionRepository
@@ -170,7 +170,7 @@ def _get_repository_cached(
     elif repository_type == "match":
         return ReadOnlyMatchRepository if read_only else MatchRepository
     else:
-        raise ValueError(f"Unknown repository type: {repository_type}")
+        raise ValueError(f"Unknown repository typing.Type: {repository_type}")
 
 
 # 便捷函数

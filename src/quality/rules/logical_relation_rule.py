@@ -17,7 +17,7 @@ Logical Relation Rule - 逻辑关系检查规则
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, dict, list, Optional, tuple
 from collections.abc import Callable
 
 from src.quality.quality_protocol import (
@@ -227,7 +227,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             features: 从 FeatureStore 加载的特征数据字典
 
         Returns:
-            List[str]: 发现的逻辑关系错误描述列表
+            list[str]: 发现的逻辑关系错误描述列表
         """
         errors = []
 
@@ -472,7 +472,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
             features: 特征数据字典
 
         Returns:
-            Dict[str, Any]: 逻辑关系检查摘要
+            dict[str, Any]: 逻辑关系检查摘要
         """
         summary = {
             "total_configured_relations": len(self.relations),
@@ -512,8 +512,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                     "reason": "non_numeric_fields",
                     "field_a": field_a,
                     "field_b": field_b,
-                    "value_a_type": type(value_a).__name__,
-                    "value_b_type": type(value_b).__name__,
+                    "value_a_type": typing.Type(value_a).__name__,
+                    "value_b_type": typing.Type(value_b).__name__,
                 }
                 continue
 
@@ -597,7 +597,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         获取所有已配置的逻辑关系名称。
 
         Returns:
-            List[str]: 逻辑关系名称列表
+            list[str]: 逻辑关系名称列表
         """
         return [relation.get("name", "unknown") for relation in self.relations]
 
@@ -629,7 +629,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         验证所有逻辑关系配置的有效性。
 
         Returns:
-            List[str]: 配置错误列表，空列表表示配置有效
+            list[str]: 配置错误列表，空列表表示配置有效
         """
         errors = []
         relation_names = []

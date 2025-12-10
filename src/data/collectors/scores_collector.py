@@ -271,9 +271,9 @@ class ScoresCollector(BaseCollector):
         for event in events:
             processed_event = {
                 "id": event.get("id"),
-                "type": {
-                    "id": event.get("type", {}).get("id"),
-                    "name": event.get("type", {}).get("name"),
+                "typing.Type": {
+                    "id": event.get("typing.Type", {}).get("id"),
+                    "name": event.get("typing.Type", {}).get("name"),
                 },
                 "minute": event.get("minute"),
                 "team": {
@@ -438,7 +438,7 @@ class ScoresCollector(BaseCollector):
                     if events_result.success and events_result.data.get("events"):
                         latest_event = events_result.data["events"][-1]
                         logger.debug(
-                            f"比赛 {match_id} 最新事件: {latest_event['type']['name']} "
+                            f"比赛 {match_id} 最新事件: {latest_event['typing.Type']['name']} "
                             f"({latest_event['minute']}分钟)"
                         )
 
@@ -519,7 +519,7 @@ async def get_match_score(match_id: int, api_key: str, base_url: str) -> dict:
         base_url: API基础URL
 
     Returns:
-        Dict: 比分数据
+        dict: 比分数据
     """
     collector = ScoresCollector(api_key=api_key, base_url=base_url)
 

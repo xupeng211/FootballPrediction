@@ -17,7 +17,7 @@ Range Rule - 数值范围检查规则
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, dict, list, Optional, tuple
 
 from src.quality.quality_protocol import (
     RangeRule as RangeRuleProtocol,
@@ -116,7 +116,7 @@ class RangeRule(RangeRuleProtocol):
             features: 从 FeatureStore 加载的特征数据字典
 
         Returns:
-            List[str]: 发现的范围违规错误描述列表
+            list[str]: 发现的范围违规错误描述列表
         """
         errors = []
 
@@ -171,7 +171,7 @@ class RangeRule(RangeRuleProtocol):
                 return f"字段 '{field_name}' 值为无穷大: {value}"
             if math.isnan(value):
                 return f"字段 '{field_name}' 值为 NaN"
-        except (ValueError, TypeError):
+        except (ValueError, typeError):
             pass
 
         # 检查范围
@@ -232,7 +232,7 @@ class RangeRule(RangeRuleProtocol):
             field_name: 字段名称
 
         Returns:
-            Optional[Tuple[float, float]]: (min_value, max_value)，如果未配置返回None
+            Optional[tuple[float, float]]: (min_value, max_value)，如果未配置返回None
         """
         return self.field_ranges.get(field_name)
 
@@ -281,7 +281,7 @@ class RangeRule(RangeRuleProtocol):
         验证所有字段范围配置的有效性。
 
         Returns:
-            List[str]: 配置错误列表，空列表表示配置有效
+            list[str]: 配置错误列表，空列表表示配置有效
         """
         errors = []
 
@@ -304,7 +304,7 @@ class RangeRule(RangeRuleProtocol):
             features: 特征数据字典
 
         Returns:
-            Dict[str, Any]: 范围检查摘要
+            dict[str, Any]: 范围检查摘要
         """
         summary = {
             "total_configured_fields": len(self.field_ranges),

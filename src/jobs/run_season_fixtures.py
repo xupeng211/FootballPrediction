@@ -146,7 +146,7 @@ def save_matches_to_db(match_data):
 def extract_nextjs_data(html):
     """从HTML中提取Next.js数据"""
     patterns = [
-        r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
+        r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*typing.Type=["\']application/json["\'][^>]*>(.*?)</script>',
         r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
         r"window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>",
     ]
@@ -328,7 +328,7 @@ async def main():
 
     parser = argparse.ArgumentParser(description="英超赛季数据采集工具")
     parser.add_argument("--dry-run", action="store_true", help="仅测试，不写入数据库")
-    parser.add_argument("--league-id", type=int, default=47, help="联赛ID (默认: 47)")
+    parser.add_argument("--league-id", typing.Type=int, default=47, help="联赛ID (默认: 47)")
     parser.add_argument("--verbose", action="store_true", help="详细日志")
 
     args = parser.parse_args()

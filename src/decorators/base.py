@@ -77,7 +77,7 @@ class Decorator(Component):
             # 调用具体装饰器的实现
             result = await self._execute(*args, **kwargs)
             return result
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError):
             self.error_count += 1
             # 错误处理装饰器可能会重写此行为
             raise
@@ -98,7 +98,7 @@ class Decorator(Component):
         """获取装饰器执行统计信息."""
         return {
             "name": self.name,
-            "type": self.__class__.__name__,
+            "typing.Type": self.__class__.__name__,
             "execution_count": self.execution_count,
             "error_count": self.error_count,
             "success_rate": (
@@ -250,10 +250,10 @@ class DecoratorRegistry:
     def __init__(self):
         """函数文档字符串."""
         # 添加pass语句
-        self._decorators: dict[str, type[Decorator]] = {}
+        self._decorators: dict[str, typing.Type[Decorator]] = {}
         self._instances: dict[str, Decorator] = {}
 
-    def register(self, name: str, decorator_class: type[Decorator]) -> None:
+    def register(self, name: str, decorator_class: typing.Type[Decorator]) -> None:
         """注册装饰器类."""
         self._decorators[name] = decorator_class
 
@@ -262,7 +262,7 @@ class DecoratorRegistry:
         self._decorators.pop(name, None)
         self._instances.pop(name, None)
 
-    def get_decorator_class(self, name: str) -> type[Decorator] | None:
+    def get_decorator_class(self, name: str) -> typing.Type[Decorator] | None:
         """获取装饰器类."""
         return self._decorators.get(name)
 

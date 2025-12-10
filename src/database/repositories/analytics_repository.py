@@ -51,7 +51,7 @@ class AnalyticsRepository:
             days: Number of days to look back
 
         Returns:
-            List of match dictionaries
+            list of match dictionaries
         """
         logger.debug(f"Querying matches for team {team_id} in last {days} days")
 
@@ -179,7 +179,7 @@ class AnalyticsRepository:
             season: Season identifier
 
         Returns:
-            List of standings data
+            list of standings data
         """
         logger.debug(f"Getting standings for league {league_id}, season {season}")
 
@@ -202,7 +202,7 @@ class AnalyticsRepository:
 
         Args:
             team_id: ID of the team
-            matches: List of matches to analyze
+            matches: list of matches to analyze
 
         Returns:
             Performance metrics dictionary
@@ -430,7 +430,7 @@ class AnalyticsRepository:
             season: Season identifier
 
         Returns:
-            List of standings data from real database
+            list of standings data from real database
         """
         logger.debug(
             f"Getting real league standings for league {league_id}, season {season}"

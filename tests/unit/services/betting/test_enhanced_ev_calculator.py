@@ -601,11 +601,11 @@ class TestEnhancedValueRatingCalculator:
         }
 
         result = value_calculator.calculate_enhanced_value_rating(
-            ev=0.08
-            probability=0.55
-            odds=2.2
-            confidence=0.7
-            historical_data=historical_data
+            ev=0.08,
+            probability=0.55,
+            odds=2.2,
+            confidence=0.7,
+            historical_data=historical_data,
         )
 
         # 有历史数据应该影响评级

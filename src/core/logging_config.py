@@ -6,7 +6,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, dict
 
 # 尝试导入 loguru，如果不可用则回退到标准库
 try:
@@ -69,7 +69,7 @@ class StructuredFormatter:
         # 添加异常信息（如果存在）
         if record.get("exception"):
             structured_record["exception"] = {
-                "type": record["exception"].type.__name__,
+                "typing.Type": record["exception"].typing.Type.__name__,
                 "value": str(record["exception"].value),
                 "traceback": record["exception"].traceback,
             }

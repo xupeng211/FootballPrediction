@@ -89,7 +89,7 @@ class BusinessRule(Rule):
         try:
             if not self.condition(obj):
                 result.add_error(self.error_message)
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             result.add_error(f"Error validating rule {self.name}: {str(e)}")
 
         return result

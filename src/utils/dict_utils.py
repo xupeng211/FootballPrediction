@@ -92,7 +92,7 @@ class DictUtils:
             for key in keys:
                 current = current[key]
             return current
-        except (KeyError, TypeError, AttributeError):
+        except (KeyError, typeError, AttributeError):
             return default
 
     @staticmethod
@@ -292,7 +292,7 @@ def get_nested_value(
         for key in keys:
             current = current[key]
         return current
-    except (KeyError, TypeError):
+    except (KeyError, typeError):
         return default
 
 

@@ -154,7 +154,7 @@ def configure_di(
 # 装饰器:自动注册服务
 def register_service(
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
-    interface: type | None = None,
+    interface: typing.Type | None = None,
     name: str | None = None,
 ):
     """自动注册服务装饰器."""

@@ -498,7 +498,7 @@ async def get_optimized_prediction(
                             {
                                 "loc": ["query", "limit"],
                                 "msg": "ensure this value is less than or equal to 50",
-                                "type": "value_error.number.not_le",
+                                "typing.Type": "value_error.number.not_le",
                                 "ctx": {"limit_value": 50},
                             }
                         ]
@@ -689,7 +689,7 @@ async def get_popular_predictions(
                             {
                                 "loc": ["query", "page"],
                                 "msg": "ensure this value is greater than or equal to 1",
-                                "type": "value_error.number.not_ge",
+                                "typing.Type": "value_error.number.not_ge",
                                 "ctx": {"limit_value": 1},
                             }
                         ]

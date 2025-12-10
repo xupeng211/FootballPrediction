@@ -25,7 +25,7 @@ OddsPortal Data Fetcher - Production Implementation
 import logging
 import random
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, dict, list, Optional
 
 from src.collectors.abstract_fetcher import (
     AbstractFetcher,
@@ -128,7 +128,7 @@ class OddsPortalFetcher(AbstractFetcher):
             **kwargs: 其他查询参数
 
         Returns:
-            List[Dict[str, Any]]: 获取到的数据列表
+            list[dict[str, Any]]: 获取到的数据列表
         """
         if resource_type == ResourceType.ODDS:
             odds_data_list = await self.fetch_odds(resource_id, **kwargs)
@@ -154,7 +154,7 @@ class OddsPortalFetcher(AbstractFetcher):
                 - force_mock: 强制使用Mock数据
 
         Returns:
-            List[OddsData]: 赔率数据列表
+            list[OddsData]: 赔率数据列表
 
         Raises:
             ValueError: 当match_id为空时
@@ -618,7 +618,7 @@ class OddsPortalFetcher(AbstractFetcher):
         获取支持的市场类型列表
 
         Returns:
-            List[str]: 支持的市场类型
+            list[str]: 支持的市场类型
         """
         return self.market_types.copy()
 
@@ -627,7 +627,7 @@ class OddsPortalFetcher(AbstractFetcher):
         获取支持的博彩公司列表
 
         Returns:
-            List[str]: 支持的博彩公司
+            list[str]: 支持的博彩公司
         """
         return self.bookmakers.copy()
 

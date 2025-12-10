@@ -198,7 +198,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
 
             logger.debug(f"发布预测创建事件: prediction_id={prediction.id}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布预测创建事件失败: {e}")
 
     async def _publish_prediction_updated_event(
@@ -253,7 +253,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
 
             logger.debug(f"发布预测更新事件: prediction_id={prediction.id}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布预测更新事件失败: {e}")
 
 
@@ -362,7 +362,7 @@ class EventDrivenMatchService:
 
             logger.debug(f"发布比赛创建事件: match_id={match.id}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布比赛创建事件失败: {e}")
 
 
@@ -464,7 +464,7 @@ class EventDrivenUserService:
 
             logger.debug(f"发布用户注册事件: user_id={user['id']}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布用户注册事件失败: {e}")
 
 

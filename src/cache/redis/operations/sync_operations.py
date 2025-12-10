@@ -40,7 +40,7 @@ class RedisSyncOperations:
             return None
 
     def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
-        """Set value in Redis."""
+        """set value in Redis."""
         if not self.client:
             return False
         try:

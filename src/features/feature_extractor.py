@@ -17,7 +17,7 @@
 
 import pandas as pd
 import numpy as np
-from typing import Dict, Any, List, Optional
+from typing import dict, Any, list, Optional
 import logging
 
 logger = logging.getLogger(__name__)

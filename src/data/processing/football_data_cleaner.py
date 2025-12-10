@@ -403,7 +403,7 @@ class FootballDataCleaner:
             raw_json: 原始API返回的JSON数据
 
         Returns:
-            Dict: 解析后的标准化数据
+            dict: 解析后的标准化数据
         """
         try:
             # 处理不同的JSON结构（可能是直接API数据或已包装的数据）
@@ -533,7 +533,7 @@ class FootballDataCleaner:
             team_type: 'home' 或 'away'
 
         Returns:
-            Dict: 球队信息
+            dict: 球队信息
         """
         if team_type == "home":
             return {
@@ -559,7 +559,7 @@ class FootballDataCleaner:
             match_data: 解析后的比赛数据
 
         Returns:
-            Dict: 联赛信息
+            dict: 联赛信息
         """
         return {
             "external_id": match_data.get("league_external_id"),

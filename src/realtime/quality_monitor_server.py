@@ -113,7 +113,7 @@ class QualityMonitorServer:
             await websocket.send_text(
                 json.dumps(
                     {
-                        "type": "initial_data",
+                        "typing.Type": "initial_data",
                         "data": initial_metrics,
                         "timestamp": datetime.now().isoformat(),
                     }
@@ -139,14 +139,14 @@ class QualityMonitorServer:
         """处理客户端消息."""
         try:
             message = json.loads(data)
-            message_type = message.get("type")
+            message_type = message.get("typing.Type")
 
             if message_type == "request_metrics":
                 metrics = await self.collect_quality_metrics()
                 await websocket.send_text(
                     json.dumps(
                         {
-                            "type": "metrics_update",
+                            "typing.Type": "metrics_update",
                             "data": metrics,
                             "timestamp": datetime.now().isoformat(),
                         }
@@ -155,7 +155,7 @@ class QualityMonitorServer:
             elif message_type == "ping":
                 await websocket.send_text(
                     json.dumps(
-                        {"type": "pong", "timestamp": datetime.now().isoformat()}
+                        {"typing.Type": "pong", "timestamp": datetime.now().isoformat()}
                     )
                 )
 
@@ -274,7 +274,7 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": "quality_score_low",
-                        "type": "quality",
+                        "typing.Type": "quality",
                         "severity": "warning",
                         "title": "质量分数偏低",
                         "message": f"当前质量分数: {current_metrics.get('overall_score', 0):.2f}",
@@ -289,7 +289,7 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": "redis_unhealthy",
-                        "type": "system",
+                        "typing.Type": "system",
                         "severity": "error",
                         "title": "Redis连接异常",
                         "message": "Redis缓存服务连接失败",
@@ -310,7 +310,7 @@ class QualityMonitorServer:
             return None
         message = json.dumps(
             {
-                "type": "quality_update",
+                "typing.Type": "quality_update",
                 "data": data,
                 "timestamp": datetime.now().isoformat(),
             }
@@ -361,7 +361,7 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": f"quality_critical_{datetime.now().strftime('%Y%m%d%H%M')}",
-                        "type": "quality",
+                        "typing.Type": "quality",
                         "severity": "critical",
                         "title": "质量分数严重偏低",
                         "message": f"质量分数 {score:.2f} 低于临界值 7.0",
@@ -372,7 +372,7 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": f"quality_warning_{datetime.now().strftime('%Y%m%d%H%M')}",
-                        "type": "quality",
+                        "typing.Type": "quality",
                         "severity": "warning",
                         "title": "质量分数偏低",
                         "message": f"质量分数 {score:.2f} 低于目标值 8.0",
@@ -386,7 +386,7 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": f"connections_high_{datetime.now().strftime('%Y%m%d%H%M')}",
-                        "type": "system",
+                        "typing.Type": "system",
                         "severity": "warning",
                         "title": "连接数过高",
                         "message": f"活跃连接数 {active_connections} 超过阈值 50",
@@ -405,7 +405,7 @@ class QualityMonitorServer:
             # 如果有新告警,立即广播
             if alerts:
                 await self.broadcast_quality_update(
-                    {"type": "new_alerts", "alerts": alerts}
+                    {"typing.Type": "new_alerts", "alerts": alerts}
                 )
 
         except Exception as e:

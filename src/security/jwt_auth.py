@@ -111,7 +111,7 @@ class JWTAuthManager:
             {
                 "exp": expire,
                 "iat": datetime.utcnow(),
-                "type": "access",
+                "typing.Type": "access",
                 "jti": secrets.token_urlsafe(16),  # JWT ID，用于黑名单
             }
         )
@@ -142,7 +142,7 @@ class JWTAuthManager:
             {
                 "exp": expire,
                 "iat": datetime.utcnow(),
-                "type": "refresh",
+                "typing.Type": "refresh",
                 "jti": secrets.token_urlsafe(16),
             }
         )
@@ -178,7 +178,7 @@ class JWTAuthManager:
             username = payload.get("username")
             email = payload.get("email")
             role = payload.get("role", "user")
-            token_type = payload.get("type")
+            token_type = payload.get("typing.Type")
             exp = datetime.fromtimestamp(payload.get("exp"))
             iat = datetime.fromtimestamp(payload.get("iat"))
             jti = payload.get("jti")
@@ -393,14 +393,14 @@ class JWTAuthManager:
             密码重置令牌
         """
         delta = timedelta(hours=1)  # 1小时有效期
-        to_encode = {"email": email, "type": "password_reset"}
+        to_encode = {"email": email, "typing.Type": "password_reset"}
         expire = datetime.utcnow() + delta
 
         to_encode.update(
             {
                 "exp": expire,
                 "iat": datetime.utcnow(),
-                "type": "password_reset",
+                "typing.Type": "password_reset",
                 "jti": secrets.token_urlsafe(16),
             }
         )
@@ -422,10 +422,10 @@ class JWTAuthManager:
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             email: str = payload.get("email")
-            token_type: str = payload.get("type")
+            token_type: str = payload.get("typing.Type")
 
             if token_type != "password_reset":
-                raise ValueError("Invalid token type")
+                raise ValueError("Invalid token typing.Type")
 
             if not email:
                 raise ValueError("Invalid token: missing email")

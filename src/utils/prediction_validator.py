@@ -82,12 +82,12 @@ class PredictionResultValidator:
         """
         if not predicted_result or not isinstance(predicted_result, str):
             raise ValidationError(
-                f"预测结果不能为空且必须是字符串，但得到: {type(predicted_result).__name__}"
+                f"预测结果不能为空且必须是字符串，但得到: {typing.Type(predicted_result).__name__}"
             )
 
         if not actual_result or not isinstance(actual_result, str):
             raise ValidationError(
-                f"实际结果不能为空且必须是字符串，但得到: {type(actual_result).__name__}"
+                f"实际结果不能为空且必须是字符串，但得到: {typing.Type(actual_result).__name__}"
             )
 
         if predicted_result not in VALID_PREDICTIONS:
@@ -133,7 +133,7 @@ class PredictionResultValidator:
         """获取验证统计信息.
 
         Returns:
-            Dict[str, Any]: 包含以下字段的字典:
+            dict[str, Any]: 包含以下字段的字典:
                 - total_validations: 总验证次数
                 - correct_predictions: 正确预测次数
                 - accuracy: 预测准确率 (0.0 到 1.0)

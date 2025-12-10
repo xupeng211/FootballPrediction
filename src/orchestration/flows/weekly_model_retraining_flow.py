@@ -8,7 +8,7 @@ integrating with the existing ML infrastructure for continuous model improvement
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import dict, list, Optional, Any
 from pathlib import Path
 
 from prefect import flow, task
@@ -49,7 +49,7 @@ async def validate_training_data_quality(lookback_days: int = 30) -> dict[str, A
         lookback_days: Number of days to look back for training data
 
     Returns:
-        Dict with validation results and quality metrics
+        dict with validation results and quality metrics
     """
     logger.info(
         f"Starting training data quality validation (last {lookback_days} days)"
@@ -111,7 +111,7 @@ async def prepare_training_features(
         feature_version: Version of features to use
 
     Returns:
-        Dict with feature preparation results
+        dict with feature preparation results
     """
     logger.info(f"Preparing training features (last {lookback_days} days)")
 
@@ -190,7 +190,7 @@ async def train_xgboost_model(
         experiment_name: MLflow experiment name
 
     Returns:
-        Dict with training results and model information
+        dict with training results and model information
     """
     logger.info("Starting XGBoost model training")
 
@@ -261,7 +261,7 @@ async def evaluate_model_performance(
         test_data_lookback_days: Number of days to use for test data
 
     Returns:
-        Dict with evaluation results and performance metrics
+        dict with evaluation results and performance metrics
     """
     logger.info(
         f"Evaluating model performance (test data: last {test_data_lookback_days} days)"
@@ -328,7 +328,7 @@ async def update_inference_service(
         performance_metrics: Model performance metrics
 
     Returns:
-        Dict with service update results
+        dict with service update results
     """
     logger.info(f"Updating inference service with model: {model_version}")
 
@@ -408,7 +408,7 @@ async def weekly_model_retraining_flow(
         force_retrain: Force retraining even if data quality is marginal
 
     Returns:
-        Dict with flow execution summary and results
+        dict with flow execution summary and results
     """
     logger.info("=" * 60)
     logger.info("🧠 Starting Weekly Model Retraining Flow")
@@ -561,7 +561,7 @@ async def emergency_model_retraining_flow(
         lookback_days: Reduced lookback period for faster training
 
     Returns:
-        Dict with emergency retraining results
+        dict with emergency retraining results
     """
     logger.info(f"🚨 Starting Emergency Model Retraining Flow - Reason: {reason}")
 

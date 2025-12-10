@@ -659,7 +659,7 @@ class DistributedCacheManager:
             health = await backend.health_check()
             status["levels"][level.value] = {
                 "healthy": health,
-                "type": "backend",
+                "typing.Type": "backend",
                 "metrics": getattr(backend, "metrics", {}),
             }
 

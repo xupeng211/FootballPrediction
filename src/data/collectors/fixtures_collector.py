@@ -112,35 +112,35 @@ class FixturesCollector:
                     "name": "Premier League",
                     "api_id": 2021,
                     "db_id": 11,
-                    "type": "Tier1",
+                    "typing.Type": "Tier1",
                     "priority": "critical",
                 },
                 {
                     "name": "La Liga",
                     "api_id": 2014,
                     "db_id": 12,
-                    "type": "Tier1",
+                    "typing.Type": "Tier1",
                     "priority": "critical",
                 },
                 {
                     "name": "Bundesliga",
                     "api_id": 2002,
                     "db_id": 13,
-                    "type": "Tier1",
+                    "typing.Type": "Tier1",
                     "priority": "critical",
                 },
                 {
                     "name": "Serie A",
                     "api_id": 2019,
                     "db_id": 14,
-                    "type": "Tier1",
+                    "typing.Type": "Tier1",
                     "priority": "critical",
                 },
                 {
                     "name": "Ligue 1",
                     "api_id": 2015,
                     "db_id": 15,
-                    "type": "Tier1",
+                    "typing.Type": "Tier1",
                     "priority": "critical",
                 },
             ],
@@ -163,7 +163,7 @@ class FixturesCollector:
                 league_info = {
                     "name": league_config["name"],
                     "country": league_config.get("country", "Unknown"),
-                    "type": league_config["type"],
+                    "typing.Type": league_config["typing.Type"],
                     "priority": league_config.get("priority", "medium"),
                     "api_id": league_config["api_id"],
                     "db_id": league_config["db_id"],
@@ -220,7 +220,7 @@ class FixturesCollector:
         return [
             league
             for league in self.target_leagues
-            if league.get("type", "Tier1") == league_type
+            if league.get("typing.Type", "Tier1") == league_type
         ]
 
     def get_leagues_by_priority(
@@ -259,7 +259,7 @@ class FixturesCollector:
         priority_count = {}
 
         for league in self.target_leagues:
-            league_type = league.get("type", "Unknown")
+            league_type = league.get("typing.Type", "Unknown")
             priority = league.get("priority", "medium")
 
             type_count[league_type] = type_count.get(league_type, 0) + 1
@@ -456,7 +456,7 @@ class FixturesCollector:
             league_name: 联赛名称
 
         Returns:
-            list[Dict]: 采集到的比赛数据列表
+            list[dict]: 采集到的比赛数据列表
         """
         max_retries = self.MAX_RETRIES
         retry_count = 0
@@ -634,7 +634,7 @@ class FixturesCollector:
             raw_fixture: 原始赛程数据
 
         Returns:
-            Optional[Dict]: 清洗后的数据,无效则返回None
+            Optional[dict]: 清洗后的数据,无效则返回None
         """
         try:
             # 基础字段验证
@@ -666,7 +666,7 @@ class FixturesCollector:
 
             return cleaned_data
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to clean fixture data: {str(e)}")
             return None
 

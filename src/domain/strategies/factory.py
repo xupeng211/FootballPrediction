@@ -55,7 +55,7 @@ class PredictionStrategyFactory:
         self._environment_overrides: dict[str, Any] = {}
 
         # 策略类型映射
-        self._strategy_registry: dict[str, type[PredictionStrategy]] = {
+        self._strategy_registry: dict[str, typing.Type[PredictionStrategy]] = {
             "ml_model": MLModelStrategy,
             "statistical": StatisticalStrategy,
             "historical": HistoricalStrategy,
@@ -66,7 +66,7 @@ class PredictionStrategyFactory:
         self._load_configuration()
 
     def register_strategy(
-        self, strategy_type: str, strategy_class: type[PredictionStrategy]
+        self, strategy_type: str, strategy_class: typing.Type[PredictionStrategy]
     ) -> None:
         """注册新的策略类型".
 
@@ -120,7 +120,7 @@ class PredictionStrategyFactory:
 
         # 获取策略类型
         if strategy_type is None:
-            strategy_type = config.get("type")
+            strategy_type = config.get("typing.Type")
             if not strategy_type:
                 raise StrategyConfigurationError(f"策略 '{strategy_name}' 未指定类型")
 
@@ -138,7 +138,7 @@ class PredictionStrategyFactory:
                 strategy = strategy_class(strategy_name)
                 await strategy.initialize(config)
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             raise StrategyCreationError(f"创建策略 '{strategy_name}' 失败: {e}") from e
 
         # 缓存策略实例
@@ -159,7 +159,7 @@ class PredictionStrategyFactory:
 
         for sub_config in sub_strategies_config:
             sub_name = sub_config.get("name")
-            sub_type = sub_config.get("type")
+            sub_type = sub_config.get("typing.Type")
 
             if sub_name and sub_type:
                 try:
@@ -242,7 +242,7 @@ class PredictionStrategyFactory:
                     strategy_name=strategy_name, config=config
                 )
                 created_strategies[strategy_name] = strategy
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"创建策略 '{strategy_name}' 失败: {e}")
 
         return created_strategies
@@ -307,7 +307,7 @@ class PredictionStrategyFactory:
 
             logger.info(f"成功加载策略配置: {config_path}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"加载策略配置失败: {e}")
             self._create_default_config()
 
@@ -317,7 +317,7 @@ class PredictionStrategyFactory:
             "default_strategies": [
                 {
                     "name": "ml_predictor",
-                    "type": "ml_model",
+                    "typing.Type": "ml_model",
                     "enabled": True,
                     "config": {
                         "mlflow_tracking_uri": "http://localhost:5002",
@@ -327,7 +327,7 @@ class PredictionStrategyFactory:
                 },
                 {
                     "name": "statistical_analyzer",
-                    "type": "statistical",
+                    "typing.Type": "statistical",
                     "enabled": True,
                     "config": {
                         "min_sample_size": 5,
@@ -337,7 +337,7 @@ class PredictionStrategyFactory:
                 },
                 {
                     "name": "historical_analyzer",
-                    "type": "historical",
+                    "typing.Type": "historical",
                     "enabled": True,
                     "config": {
                         "min_historical_matches": 3,
@@ -347,7 +347,7 @@ class PredictionStrategyFactory:
                 },
                 {
                     "name": "ensemble_predictor",
-                    "type": "ensemble",
+                    "typing.Type": "ensemble",
                     "enabled": True,
                     "config": {
                         "ensemble_method": "weighted_average",
@@ -355,19 +355,19 @@ class PredictionStrategyFactory:
                         "sub_strategies": [
                             {
                                 "name": "ml_ensemble",
-                                "type": "ml_model",
+                                "typing.Type": "ml_model",
                                 "enabled": True,
                                 "config": {},
                             },
                             {
                                 "name": "statistical_ensemble",
-                                "type": "statistical",
+                                "typing.Type": "statistical",
                                 "enabled": True,
                                 "config": {},
                             },
                             {
                                 "name": "historical_ensemble",
-                                "type": "historical",
+                                "typing.Type": "historical",
                                 "enabled": True,
                                 "config": {},
                             },
@@ -403,7 +403,7 @@ class PredictionStrategyFactory:
                     default_config, f, default_flow_style=False, allow_unicode=True
                 )
             logger.info(f"创建默认策略配置文件: {config_path}")
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"保存默认配置失败: {e}")
 
     def _apply_environment_overrides(self) -> None:
@@ -490,10 +490,10 @@ class PredictionStrategyFactory:
         # 检查必需字段
         if "name" not in config:
             errors.append("缺少策略名称")
-        if "type" not in config:
+        if "typing.Type" not in config:
             errors.append("缺少策略类型")
         else:
-            strategy_type = config["type"]
+            strategy_type = config["typing.Type"]
             if strategy_type not in self._strategy_registry:
                 errors.append(f"未知的策略类型: {strategy_type}")
 
@@ -502,12 +502,12 @@ class PredictionStrategyFactory:
             strategy_config = config["config"]
 
             # ML模型策略验证
-            if config.get("type") == "ml_model":
+            if config.get("typing.Type") == "ml_model":
                 if "mlflow_tracking_uri" not in strategy_config:
                     errors.append("ML模型策略缺少 mlflow_tracking_uri")
 
             # 集成策略验证
-            elif config.get("type") == "ensemble":
+            elif config.get("typing.Type") == "ensemble":
                 if "sub_strategies" not in strategy_config:
                     errors.append("集成策略缺少 sub_strategies 配置")
                 elif not isinstance(strategy_config["sub_strategies"], list):

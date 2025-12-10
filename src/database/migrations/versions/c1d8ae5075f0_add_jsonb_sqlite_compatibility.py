@@ -138,7 +138,7 @@ def _verify_postgresql_jsonb_config():
                             idx
                             for idx in indexes
                             if jsonb_column in idx["column_names"]
-                            and idx.get("type") == "gin"
+                            and idx.get("typing.Type") == "gin"
                         ),
                         None,
                     )

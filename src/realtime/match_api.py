@@ -554,7 +554,7 @@ async def _send_match_notification(
         websocket_manager = get_websocket_manager()
 
         notification = {
-            "type": "match_notification",
+            "typing.Type": "match_notification",
             "data": {
                 "match_id": match_id,
                 "action": action,

@@ -53,7 +53,7 @@ class DataPreprocessor:
             data_type: 数据类型 ('matches', 'teams', 'odds')
 
         Returns:
-            Dict: 预处理结果，包含清洗后的数据和处理报告
+            dict: 预处理结果，包含清洗后的数据和处理报告
         """
         logger.info(f"开始预处理 {data_type} 数据，形状: {raw_data.shape}")
 
@@ -160,7 +160,7 @@ class DataPreprocessor:
             data_type: 数据类型
 
         Returns:
-            Dict: 数据质量评估结果
+            dict: 数据质量评估结果
         """
         assessment = {
             "completeness_score": 0.0,
@@ -365,7 +365,7 @@ def preprocess_football_data(
         config: 配置参数
 
     Returns:
-        Dict: 预处理结果
+        dict: 预处理结果
     """
     preprocessor = DataPreprocessor(config)
     return preprocessor.preprocess_dataset(raw_data, data_type)

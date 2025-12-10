@@ -10,7 +10,7 @@
 
 import logging
 from decimal import Decimal, ROUND_DOWN
-from typing import Dict, List, Optional
+from typing import dict, list, Optional
 from datetime import datetime
 
 from .models import BetDecision, BetResult, BetOutcome, BacktestConfig
@@ -181,7 +181,7 @@ class Portfolio:
         self.pending_bets[decision.match_id] = decision
 
         logger.info(
-            f"Bet placed: match={decision.match_id}, type={decision.bet_type.value}, "
+            f"Bet placed: match={decision.match_id}, typing.Type={decision.bet_type.value}, "
             f"stake={stake}, odds={decision.odds}, balance={self.current_balance}"
         )
 

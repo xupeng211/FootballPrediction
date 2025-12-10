@@ -17,7 +17,7 @@ Async HTTP Client Module
 import asyncio
 import random
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, dict, list, Optional, Union
 
 import httpx
 from fake_useragent import UserAgent

@@ -25,7 +25,7 @@ class PrometheusMetrics:
         self.alerts_total = Counter(
             "alerts_total",
             "Total number of alerts",
-            ["severity", "type", "source"],
+            ["severity", "typing.Type", "source"],
             registry=self.registry,
         )
 
@@ -46,7 +46,7 @@ class PrometheusMetrics:
     def increment_counter(self, alert: Alert) -> None:
         """增加告警计数."""
         self.alerts_total.labels(
-            severity=alert.severity.value, type=alert.type.value, source=alert.source
+            severity=alert.severity.value, typing.Type=alert.typing.Type.value, source=alert.source
         ).inc()
 
     def set_active_gauge(self, alerts: list[Alert]) -> None:

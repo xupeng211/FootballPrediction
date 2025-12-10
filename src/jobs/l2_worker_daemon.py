@@ -19,7 +19,7 @@ import json
 import time
 import signal
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, dict, Any
 from datetime import datetime, timedelta
 
 # 添加项目路径

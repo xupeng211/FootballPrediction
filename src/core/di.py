@@ -35,12 +35,12 @@ class ServiceDescriptor:
     pass  # 添加pass语句
     """服务描述符"""
 
-    interface: type
-    implementation: type
+    interface: typing.Type
+    implementation: typing.Type
     lifetime: ServiceLifetime
     factory: Callable | None = None
     instance: Any | None = None
-    dependencies: list[type] | None = None
+    dependencies: list[typing.Type] | None = None
 
     def __post_init__(self):
         """函数文档字符串."""
@@ -59,16 +59,16 @@ class DIContainer:
         """函数文档字符串."""
         # 添加pass语句
         self.name = name
-        self._services: dict[type, ServiceDescriptor] = {}
-        self._singletons: dict[type, Any] = {}
-        self._scoped_instances: dict[str, dict[type, Any]] = {}
+        self._services: dict[typing.Type, ServiceDescriptor] = {}
+        self._singletons: dict[typing.Type, Any] = {}
+        self._scoped_instances: dict[str, dict[typing.Type, Any]] = {}
         self._current_scope: str | None = None
-        self._building: list[type] = []  # 用于检测循环依赖
+        self._building: list[typing.Type] = []  # 用于检测循环依赖
 
     def register_singleton(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
+        interface: typing.Type[T],
+        implementation: typing.Type[T] | None = None,
         instance: T | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
@@ -83,8 +83,8 @@ class DIContainer:
 
     def register_scoped(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
+        interface: typing.Type[T],
+        implementation: typing.Type[T] | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册作用域服务."""
@@ -97,8 +97,8 @@ class DIContainer:
 
     def register_transient(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
+        interface: typing.Type[T],
+        implementation: typing.Type[T] | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册瞬时服务."""
@@ -111,8 +111,8 @@ class DIContainer:
 
     def _register(
         self,
-        interface: type,
-        implementation: type | None = None,
+        interface: typing.Type,
+        implementation: typing.Type | None = None,
         lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
         instance: Any | None = None,
         factory: Callable | None = None,
@@ -153,7 +153,7 @@ class DIContainer:
 
         return self
 
-    def resolve(self, interface: type[T]) -> T:
+    def resolve(self, interface: typing.Type[T]) -> T:
         """解析服务."""
         if interface not in self._services:
             raise DependencyInjectionError(
@@ -231,7 +231,7 @@ class DIContainer:
             f"无法创建实例: {self._get_type_name(descriptor.interface)}"
         )
 
-    def _analyze_dependencies(self, cls: type) -> list[type]:
+    def _analyze_dependencies(self, cls: typing.Type) -> list[typing.Type]:
         """分析类的依赖."""
         dependencies = []
 
@@ -248,7 +248,7 @@ class DIContainer:
 
         return dependencies
 
-    def _get_constructor_params(self, cls: type) -> dict[str, Any]:
+    def _get_constructor_params(self, cls: typing.Type) -> dict[str, Any]:
         """获取构造函数参数."""
         params = {}
         sig = inspect.signature(cls.__init__)
@@ -285,7 +285,7 @@ class DIContainer:
                         logger.debug(
                             f"成功解析字符串类型注解: {param_name} -> {param_type}"
                         )
-                except (NameError, AttributeError, TypeError) as e:
+                except (NameError, AttributeError, typeError) as e:
                     # 如果无法解析，跳过这个参数（如果有默认值）
                     if param.default != inspect.Parameter.empty:
                         logger.warning(
@@ -340,17 +340,17 @@ class DIContainer:
                 if hasattr(instance, "cleanup") and callable(instance.cleanup):
                     try:
                         instance.cleanup()
-                    except (ValueError, TypeError, AttributeError, KeyError) as e:
+                    except (ValueError, typeError, AttributeError, KeyError) as e:
                         logger.error(f"清理资源失败: {e}")
 
             del self._scoped_instances[scope_name]
             logger.debug(f"清除作用域: {scope_name}")
 
-    def is_registered(self, interface: type) -> bool:
+    def is_registered(self, interface: typing.Type) -> bool:
         """检查服务是否已注册."""
         return interface in self._services
 
-    def get_registered_services(self) -> list[type]:
+    def get_registered_services(self) -> list[typing.Type]:
         """获取所有已注册的服务."""
         return list(self._services.keys())
 
@@ -404,8 +404,8 @@ class ServiceCollection:
 
     def add_singleton(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
+        interface: typing.Type[T],
+        implementation: typing.Type[T] | None = None,
         instance: T | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
@@ -419,8 +419,8 @@ class ServiceCollection:
 
     def add_scoped(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
+        interface: typing.Type[T],
+        implementation: typing.Type[T] | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加作用域服务."""
@@ -433,8 +433,8 @@ class ServiceCollection:
 
     def add_transient(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
+        interface: typing.Type[T],
+        implementation: typing.Type[T] | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加瞬时服务."""
@@ -482,13 +482,13 @@ def configure_services(
     return container
 
 
-def resolve(service_type: type[T]) -> T:
+def resolve(service_type: typing.Type[T]) -> T:
     """从默认容器解析服务."""
     return get_default_container().resolve(service_type)
 
 
 def inject(
-    service_type: type[T], container: DIContainer | None = None
+    service_type: typing.Type[T], container: DIContainer | None = None
 ) -> Callable[[Callable], Callable]:
     """依赖注入装饰器."""
 

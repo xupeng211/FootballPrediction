@@ -6,7 +6,7 @@
 import json
 from typing import Any
 
-from sqlalchemy import JSON, Text, TypeDecorator
+from sqlalchemy import JSON, Text, typeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.engine.interfaces import Dialect
 
@@ -67,7 +67,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             if isinstance(value, str):
                 try:
                     return json.loads(value)
-                except (json.JSONDecodeError, TypeError):
+                except (json.JSONDecodeError, typeError):
                     return value
             return value
 
@@ -105,7 +105,7 @@ class CompatibleJSON(TypeDecorator):
             if isinstance(value, str):
                 try:
                     return json.loads(value)
-                except (json.JSONDecodeError, TypeError):
+                except (json.JSONDecodeError, typeError):
                     return value
             return value
 

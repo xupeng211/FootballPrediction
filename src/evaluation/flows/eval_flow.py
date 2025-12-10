@@ -384,7 +384,7 @@ def generate_report_task(
                 for file_path in file_paths:
                     charts.append(
                         {
-                            "type": chart_type,
+                            "typing.Type": chart_type,
                             "filename": Path(file_path).name,
                             "path": file_path,
                             "title": f"{chart_type.replace('_', ' ').title()} Chart",

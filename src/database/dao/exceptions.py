@@ -5,7 +5,7 @@ Database Access Object (DAO) Module Exception Definitions
 定义DAO层的专用异常类型，提供更精确的错误处理和调试信息。
 """
 
-from typing import Optional, Any, Dict
+from typing import Optional, Any, dict
 
 
 class DAOException(Exception):

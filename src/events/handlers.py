@@ -213,7 +213,7 @@ class NotificationEventHandler(EventHandler):
     async def _handle_match_created(self, event: MatchCreatedEvent) -> None:
         """处理比赛创建通知."""
         notification = {
-            "type": "match_created",
+            "typing.Type": "match_created",
             "title": "New Match Available",
             "message": f"Match {event.data.home_team_id} vs {event.data.away_team_id}",
             "data": event.to_dict(),
@@ -223,7 +223,7 @@ class NotificationEventHandler(EventHandler):
     async def _handle_prediction_made(self, event: PredictionMadeEvent) -> None:
         """处理预测创建通知."""
         notification = {
-            "type": "prediction_made",
+            "typing.Type": "prediction_made",
             "title": "Prediction Submitted",
             "message": f"Your prediction for match {event.data.match_id} has been recorded",
             "data": event.to_dict(),
@@ -233,7 +233,7 @@ class NotificationEventHandler(EventHandler):
     async def _handle_user_registered(self, event: UserRegisteredEvent) -> None:
         """处理用户注册通知."""
         notification = {
-            "type": "user_registered",
+            "typing.Type": "user_registered",
             "title": "Welcome!",
             "message": f"Welcome to Football Prediction, {event.data.username}!",
             "data": event.to_dict(),

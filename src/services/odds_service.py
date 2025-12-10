@@ -19,7 +19,7 @@ Odds Business Service Layer
 
 import logging
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Tuple
+from typing import list, dict, Any, Optional, tuple
 from decimal import Decimal, InvalidOperation
 
 from src.collectors.abstract_fetcher import (
@@ -278,7 +278,7 @@ class OddsService:
             match_id: 比赛ID
 
         Returns:
-            List[OddsData]: 赔率数据列表
+            list[OddsData]: 赔率数据列表
 
         Raises:
             ConnectionError: 数据获取失败
@@ -316,7 +316,7 @@ class OddsService:
             result: 处理结果对象
 
         Returns:
-            List[OddsData]: 处理后的赔率数据列表
+            list[OddsData]: 处理后的赔率数据列表
         """
         processed_data = []
         seen_records = set()  # 用于去重
@@ -385,7 +385,7 @@ class OddsService:
                 odds_float = float(odds)
                 if not (1.0 <= odds_float <= 1000.0):
                     return False
-            except (ValueError, TypeError):
+            except (ValueError, typeError):
                 return False
 
         return True

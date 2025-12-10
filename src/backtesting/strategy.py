@@ -11,7 +11,7 @@
 import logging
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Dict, Any, Optional
+from typing import dict, Any, Optional
 
 from .models import BetDecision, BetType, StrategyProtocol
 
@@ -84,7 +84,7 @@ class BaseStrategy(ABC):
             if value is None:
                 return default
             return Decimal(str(value))
-        except (ValueError, TypeError):
+        except (ValueError, typeError):
             self.logger.warning(
                 f"Cannot convert {value} to Decimal, using default {default}"
             )
@@ -416,7 +416,7 @@ class StrategyFactory:
         """
         if strategy_type not in cls._strategies:
             raise ValueError(
-                f"Unknown strategy type: {strategy_type}. Available: {list(cls._strategies.keys())}"
+                f"Unknown strategy typing.Type: {strategy_type}. Available: {list(cls._strategies.keys())}"
             )
 
         strategy_class = cls._strategies[strategy_type]

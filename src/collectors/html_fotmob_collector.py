@@ -11,7 +11,7 @@ import json
 import logging
 import random
 import re
-from typing import Optional, Dict, Any, List
+from typing import Optional, dict, Any, list
 from datetime import datetime
 
 import httpx
@@ -124,7 +124,7 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
             match_id (str): 比赛ID
 
         Returns:
-            Optional[Dict[str, Any]]: 比赛数据
+            Optional[dict[str, Any]]: 比赛数据
         """
         try:
             url = f"https://www.fotmob.com/match/{match_id}"
@@ -208,12 +208,12 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
             match_id (str): 比赛ID
 
         Returns:
-            Optional[Dict[str, Any]]: Next.js数据
+            Optional[dict[str, Any]]: Next.js数据
         """
         try:
             # 改进的正则表达式，精确匹配script标签
             patterns = [
-                r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
+                r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*typing.Type=["\']application/json["\'][^>]*>(.*?)</script>',
                 r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
                 r"window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>",
             ]
@@ -256,11 +256,11 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
         从Next.js数据中提取content
 
         Args:
-            nextjs_data (Dict[str, Any]): Next.js数据
+            nextjs_data (dict[str, Any]): Next.js数据
             match_id (str): 比赛ID
 
         Returns:
-            Optional[Dict[str, Any]]: content数据
+            Optional[dict[str, Any]]: content数据
         """
         try:
             props = nextjs_data.get("props", {})

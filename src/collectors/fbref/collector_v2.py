@@ -30,7 +30,7 @@ import time
 from datetime import datetime, timedelta
 from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, dict, list, Optional, tuple
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -140,7 +140,7 @@ class FBrefCollectorV2(AsyncBaseCollector):
         获取 FBref 专用请求头
 
         Returns:
-            Dict[str, str]: HTTP请求头
+            dict[str, str]: HTTP请求头
         """
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",

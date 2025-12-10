@@ -370,7 +370,7 @@ class ModelLoader:
                 model_name=model_name,
                 details={
                     "file_path": metadata.file_path,
-                    "error_type": type(e).__name__,
+                    "error_type": typing.Type(e).__name__,
                 },
             )
 

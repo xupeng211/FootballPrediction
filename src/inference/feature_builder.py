@@ -67,13 +67,13 @@ class FeatureBuilder:
         for name, definition in self.feature_definitions.items():
             self.feature_columns.append(name)
 
-            if definition.type == FeatureType.NUMERIC:
+            if definition.typing.Type == FeatureType.NUMERIC:
                 self.numeric_features.append(name)
                 # 初始化数值特征的标准化器
                 self.feature_scalers[name] = StandardScaler()
                 self.feature_imputers[name] = SimpleImputer(strategy="mean")
 
-            elif definition.type == FeatureType.CATEGORICAL:
+            elif definition.typing.Type == FeatureType.CATEGORICAL:
                 self.categorical_features.append(name)
                 # 初始化分类特征的编码器
                 self.feature_encoders[name] = OneHotEncoder(
@@ -81,7 +81,7 @@ class FeatureBuilder:
                 )
                 self.feature_imputers[name] = SimpleImputer(strategy="most_frequent")
 
-            elif definition.type == FeatureType.TIME:
+            elif definition.typing.Type == FeatureType.TIME:
                 self.time_features.append(name)
 
     def _load_config(self, config_path: str):

@@ -200,7 +200,7 @@ class TestGlobalFunctions:
 
             # 验证会话创建失败时能正确抛出异常
             with pytest.raises(Exception):
-                async with get_db_session() as session:
+                async with get_db_session():
                     pass  # 不应该到达这里
 
 
@@ -342,7 +342,7 @@ class TestConvenienceMethods:
 
     async def test_execute_insert(self, test_db_with_data):
         """测试 execute 插入操作"""
-        result = await execute(
+        await execute(
             text("INSERT INTO test_users (name, email) VALUES (:name, :email)"),
             {"name": "Charlie", "email": "charlie@test.com"}
         )

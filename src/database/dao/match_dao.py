@@ -7,7 +7,7 @@ Match Data Access Object
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
+from typing import list, Optional, dict, Any
 
 from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -111,7 +111,7 @@ class MatchDAO(BaseDAO):
             league_id: 可选的联赛ID过滤
 
         Returns:
-            List[Match]: 即将开始的比赛列表
+            list[Match]: 即将开始的比赛列表
 
         Raises:
             DatabaseConnectionError: 数据库连接错误
@@ -177,7 +177,7 @@ class MatchDAO(BaseDAO):
             end_date: 可选的结束日期
 
         Returns:
-            List[Match]: 联赛比赛列表
+            list[Match]: 联赛比赛列表
 
         Raises:
             DatabaseConnectionError: 数据库连接错误
@@ -225,7 +225,7 @@ class MatchDAO(BaseDAO):
         获取正在进行的比赛
 
         Returns:
-            List[Match]: 正在进行的比赛列表
+            list[Match]: 正在进行的比赛列表
 
         Raises:
             DatabaseConnectionError: 数据库连接错误
@@ -263,7 +263,7 @@ class MatchDAO(BaseDAO):
             limit: 返回记录数限制
 
         Returns:
-            List[Match]: 已完成的比赛列表
+            list[Match]: 已完成的比赛列表
 
         Raises:
             DatabaseConnectionError: 数据库连接错误
@@ -321,7 +321,7 @@ class MatchDAO(BaseDAO):
             limit: 返回记录数限制
 
         Returns:
-            List[Match]: 匹配的比赛列表
+            list[Match]: 匹配的比赛列表
 
         Raises:
             DatabaseConnectionError: 数据库连接错误
@@ -374,7 +374,7 @@ class MatchDAO(BaseDAO):
             league_id: 可选的联赛ID过滤
 
         Returns:
-            Dict[str, int]: 各状态的比赛数量
+            dict[str, int]: 各状态的比赛数量
 
         Raises:
             DatabaseConnectionError: 数据库连接错误

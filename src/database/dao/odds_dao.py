@@ -7,7 +7,7 @@ Odds Data Access Object
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any, Union
+from typing import list, Optional, dict, Any, Union
 from decimal import Decimal
 
 from sqlalchemy import select, and_, or_, func, desc, asc
@@ -145,7 +145,7 @@ class OddsDAO(BaseDAO):
             live_only: 是否只获取实时赔率
 
         Returns:
-            List[Odds]: 赔率列表
+            list[Odds]: 赔率列表
 
         Raises:
             DatabaseConnectionError: 数据库连接错误
@@ -236,7 +236,7 @@ class OddsDAO(BaseDAO):
             match_ids: 可选的比赛ID列表
 
         Returns:
-            List[Odds]: 实时赔率列表
+            list[Odds]: 实时赔率列表
 
         Raises:
             DatabaseConnectionError: 数据库连接错误
@@ -278,7 +278,7 @@ class OddsDAO(BaseDAO):
             limit: 返回记录数限制
 
         Returns:
-            List[Odds]: 高置信度赔率列表
+            list[Odds]: 高置信度赔率列表
 
         Raises:
             ValidationError: 置信度参数无效
@@ -321,7 +321,7 @@ class OddsDAO(BaseDAO):
             limit: 返回记录数限制
 
         Returns:
-            List[Odds]: 匹配的赔率列表
+            list[Odds]: 匹配的赔率列表
 
         Raises:
             ValidationError: 关键词无效
@@ -359,7 +359,7 @@ class OddsDAO(BaseDAO):
         按博彩公司统计赔率数量
 
         Returns:
-            Dict[str, int]: 各博彩公司的赔率数量
+            dict[str, int]: 各博彩公司的赔率数量
 
         Raises:
             DatabaseConnectionError: 数据库连接错误

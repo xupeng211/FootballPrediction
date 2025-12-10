@@ -463,7 +463,7 @@ class FeatureValidator:
             # 类型验证
             if definition.feature_type == FeatureType.NUMERICAL:
                 if not isinstance(value, int | float):
-                    errors.append(f"Feature {key} must be numerical, got {type(value)}")
+                    errors.append(f"Feature {key} must be numerical, got {typing.Type(value)}")
                     continue
 
                 # 范围验证
@@ -500,7 +500,7 @@ class FeatureValidator:
                 if definition.feature_type == FeatureType.NUMERICAL:
                     try:
                         value = float(value)
-                    except (ValueError, TypeError):
+                    except (ValueError, typeError):
                         if definition.default_value is not None:
                             value = definition.default_value
                         else:

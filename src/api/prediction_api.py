@@ -8,7 +8,7 @@ Unified Prediction API
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, dict, list, Optional
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
@@ -297,7 +297,7 @@ async def list_models(
             model_type_enum = ModelType(model_type)
         except ValueError:
             raise HTTPException(
-                status_code=400, detail=f"Invalid model type: {model_type}"
+                status_code=400, detail=f"Invalid model typing.Type: {model_type}"
             )
 
     # 获取模型列表
@@ -330,7 +330,7 @@ async def get_model_info(
         model_loader: 模型加载器
 
     Returns:
-        Dict: 模型信息
+        dict: 模型信息
     """
     model_info = await model_loader.get_model_info(model_name)
     if not model_info:
@@ -357,7 +357,7 @@ async def reload_model(
         hot_reload_manager: 热更新管理器
 
     Returns:
-        Dict: 重载结果
+        dict: 重载结果
     """
     try:
         # 重载模型
@@ -390,7 +390,7 @@ async def clear_model_cache(
         cache: 缓存实例
 
     Returns:
-        Dict: 清除结果
+        dict: 清除结果
     """
     try:
         # 清除模型相关的缓存
@@ -430,7 +430,7 @@ async def clear_cache(
         cache: 缓存实例
 
     Returns:
-        Dict: 清除结果
+        dict: 清除结果
     """
     try:
         if pattern:
@@ -459,7 +459,7 @@ async def get_cache_stats(cache: PredictionCache = Depends(get_cache_dependency)
         cache: 缓存实例
 
     Returns:
-        Dict: 缓存统计
+        dict: 缓存统计
     """
     return cache.get_stats()
 
@@ -474,7 +474,7 @@ async def cache_health_check(cache: PredictionCache = Depends(get_cache_dependen
         cache: 缓存实例
 
     Returns:
-        Dict: 健康检查结果
+        dict: 健康检查结果
     """
     return await cache.health_check()
 
@@ -498,7 +498,7 @@ async def start_hot_reload(
         hot_reload_manager: 热更新管理器
 
     Returns:
-        Dict: 启动结果
+        dict: 启动结果
     """
     try:
         await hot_reload_manager.start_monitoring()
@@ -527,7 +527,7 @@ async def stop_hot_reload(
         hot_reload_manager: 热更新管理器
 
     Returns:
-        Dict: 停止结果
+        dict: 停止结果
     """
     try:
         await hot_reload_manager.stop_monitoring()
@@ -560,7 +560,7 @@ async def force_reload_model(
         hot_reload_manager: 热更新管理器
 
     Returns:
-        Dict: 重载结果
+        dict: 重载结果
     """
     try:
         await hot_reload_manager.force_reload(model_name)
@@ -591,7 +591,7 @@ async def get_hot_reload_stats(
         hot_reload_manager: 热更新管理器
 
     Returns:
-        Dict: 热更新统计
+        dict: 热更新统计
     """
     return hot_reload_manager.get_reload_stats()
 
@@ -662,7 +662,7 @@ async def get_prediction_stats(
         predictor: 预测器
 
     Returns:
-        Dict: 统计信息
+        dict: 统计信息
     """
     return predictor.get_prediction_stats()
 

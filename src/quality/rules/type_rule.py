@@ -1,5 +1,5 @@
 """
-Type Rule - 数据类型检查规则
+typing.Type Rule - 数据类型检查规则
 
 检查特征字段的数据类型是否正确。
 确保数值字段为float/int，字符串字段为str，防止类型错误导致的计算异常。
@@ -17,7 +17,7 @@ Type Rule - 数据类型检查规则
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, dict, list, Optional, typing.Type
 
 from src.quality.quality_protocol import (
     TypeRule as TypeRuleProtocol,
@@ -38,7 +38,7 @@ class TypeRule(TypeRuleProtocol):
 
     def __init__(
         self,
-        field_types: Optional[dict[str, type]] = None,
+        field_types: Optional[dict[str, typing.Type]] = None,
         strict_type_checking: bool = True,
         allow_type_conversion: bool = True,
     ):
@@ -126,7 +126,7 @@ class TypeRule(TypeRuleProtocol):
             features: 从 FeatureStore 加载的特征数据字典
 
         Returns:
-            List[str]: 发现的类型错误描述列表
+            list[str]: 发现的类型错误描述列表
         """
         errors = []
 
@@ -153,7 +153,7 @@ class TypeRule(TypeRuleProtocol):
         return errors
 
     def _check_field_type(
-        self, field_name: str, value: Any, expected_type: type
+        self, field_name: str, value: Any, expected_type: typing.Type
     ) -> Optional[str]:
         """
         检查单个字段的数据类型。
@@ -182,12 +182,12 @@ class TypeRule(TypeRuleProtocol):
                     # 转换成功，更新字段值（这里只是模拟，实际不会修改原数据）
                     logger.debug(
                         f"字段 '{field_name}' 类型转换成功: "
-                        f"{type(value).__name__} -> {expected_type.__name__}"
+                        f"{typing.Type(value).__name__} -> {expected_type.__name__}"
                     )
                     return None
             except Exception as e:
                 return (
-                    f"字段 '{field_name}' 类型转换失败: {type(value).__name__} -> {expected_type.__name__}, "
+                    f"字段 '{field_name}' 类型转换失败: {typing.Type(value).__name__} -> {expected_type.__name__}, "
                     f"错误: {str(e)}"
                 )
 
@@ -195,15 +195,15 @@ class TypeRule(TypeRuleProtocol):
         if self.strict_type_checking:
             return (
                 f"字段 '{field_name}' 类型错误: 期望 {expected_type.__name__}, "
-                f"实际 {type(value).__name__}, 值: {self._format_value(value)}"
+                f"实际 {typing.Type(value).__name__}, 值: {self._format_value(value)}"
             )
         else:
             return (
                 f"字段 '{field_name}' 类型警告: 期望 {expected_type.__name__}, "
-                f"实际 {type(value).__name__}, 值: {self._format_value(value)}"
+                f"实际 {typing.Type(value).__name__}, 值: {self._format_value(value)}"
             )
 
-    def _convert_type(self, value: Any, target_type: type) -> Optional[Any]:
+    def _convert_type(self, value: Any, target_type: typing.Type) -> Optional[Any]:
         """
         尝试将值转换为目标类型。
 
@@ -305,9 +305,9 @@ class TypeRule(TypeRuleProtocol):
         elif isinstance(value, str):
             return f"'{value}'"
         else:
-            return f"{value} ({type(value).__name__})"
+            return f"{value} ({typing.Type(value).__name__})"
 
-    def get_expected_type(self, field_name: str) -> Optional[type]:
+    def get_expected_type(self, field_name: str) -> Optional[typing.Type]:
         """
         获取指定字段的期望类型。
 
@@ -315,11 +315,11 @@ class TypeRule(TypeRuleProtocol):
             field_name: 字段名称
 
         Returns:
-            Optional[Type]: 期望的类型，如果未配置返回None
+            Optional[typing.Type]: 期望的类型，如果未配置返回None
         """
         return self.field_types.get(field_name)
 
-    def configure_field_type(self, field_name: str, expected_type: type) -> None:
+    def configure_field_type(self, field_name: str, expected_type: typing.Type) -> None:
         """
         配置字段的期望类型。
 
@@ -327,7 +327,7 @@ class TypeRule(TypeRuleProtocol):
             field_name: 字段名称
             expected_type: 期望的类型
         """
-        if not isinstance(expected_type, type):
+        if not isinstance(expected_type, typing.Type):
             raise ValueError("expected_type 必须是一个类型对象")
 
         self.field_types[field_name] = expected_type
@@ -358,13 +358,13 @@ class TypeRule(TypeRuleProtocol):
         验证类型配置的有效性。
 
         Returns:
-            List[str]: 配置错误列表，空列表表示配置有效
+            list[str]: 配置错误列表，空列表表示配置有效
         """
         errors = []
 
         for field_name, expected_type in self.field_types.items():
             try:
-                if not isinstance(expected_type, type):
+                if not isinstance(expected_type, typing.Type):
                     errors.append(
                         f"字段 '{field_name}' 配置的类型 {expected_type} 不是有效的类型对象"
                     )
@@ -381,7 +381,7 @@ class TypeRule(TypeRuleProtocol):
             features: 特征数据字典
 
         Returns:
-            Dict[str, Any]: 类型检查摘要
+            dict[str, Any]: 类型检查摘要
         """
         summary = {
             "total_configured_fields": len(self.field_types),
@@ -402,7 +402,7 @@ class TypeRule(TypeRuleProtocol):
 
             field_detail = {
                 "field_name": field_name,
-                "actual_type": type(value).__name__,
+                "actual_type": typing.Type(value).__name__,
                 "expected_type": expected_type.__name__,
                 "value": self._format_value(value),
                 "type_match": isinstance(value, expected_type),
@@ -437,7 +437,7 @@ class TypeRule(TypeRuleProtocol):
 
         return summary
 
-    def _can_convert_type(self, value: Any, target_type: type) -> bool:
+    def _can_convert_type(self, value: Any, target_type: typing.Type) -> bool:
         """
         检查值是否可以转换为目标类型。
 

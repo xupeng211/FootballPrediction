@@ -93,7 +93,7 @@ class AsyncCRUD:
             return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_all(model) -> List[Any]:
+    async def get_all(model) -> list[Any]:
         """
         获取所有记录
 
@@ -151,7 +151,7 @@ class AsyncCRUD:
             return result.rowcount > 0
 
     @staticmethod
-    async def execute_query(query, params: Optional[Dict] = None) -> Any:
+    async def execute_query(query, params: Optional[dict] = None) -> Any:
         """
         执行自定义查询
 
@@ -173,7 +173,7 @@ class AsyncBatchOperations:
     """异步批量操作接口"""
 
     @staticmethod
-    async def bulk_create(model_class, instances: List[Dict]) -> List[Any]:
+    async def bulk_create(model_class, instances: list[dict]) -> list[Any]:
         """
         批量创建记录
 
@@ -196,7 +196,7 @@ class AsyncBatchOperations:
             return db_instances
 
     @staticmethod
-    async def bulk_update(model_class, updates: List[Dict]) -> int:
+    async def bulk_update(model_class, updates: list[dict]) -> int:
         """
         批量更新记录
 
@@ -225,7 +225,7 @@ class AsyncBatchOperations:
             return updated_count
 
     @staticmethod
-    async def bulk_delete(model_class, pks: List[Any]) -> int:
+    async def bulk_delete(model_class, pks: list[Any]) -> int:
         """
         批量删除记录
 
@@ -258,7 +258,7 @@ class AsyncQuery:
     """异步查询接口"""
 
     @staticmethod
-    async def fetch_all(query, params: Optional[Dict] = None) -> List[Dict]:
+    async def fetch_all(query, params: Optional[dict] = None) -> list[dict]:
         """
         执行查询并返回所有结果
 
@@ -272,7 +272,7 @@ class AsyncQuery:
         return await fetch_all(query, params)
 
     @staticmethod
-    async def fetch_one(query, params: Optional[Dict] = None) -> Optional[Dict]:
+    async def fetch_one(query, params: Optional[dict] = None) -> Optional[dict]:
         """
         执行查询并返回单个结果
 
@@ -290,8 +290,8 @@ class AsyncQuery:
         query,
         page: int = 1,
         page_size: int = 20,
-        params: Optional[Dict] = None
-    ) -> Dict[str, Any]:
+        params: Optional[dict] = None
+    ) -> dict[str, Any]:
         """
         分页查询
 
@@ -327,7 +327,7 @@ class AsyncQuery:
             }
 
     @staticmethod
-    async def exists(query, params: Optional[Dict] = None) -> bool:
+    async def exists(query, params: Optional[dict] = None) -> bool:
         """
         检查记录是否存在
 

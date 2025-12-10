@@ -12,7 +12,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional, Any, Tuple
+from typing import dict, list, Optional, Any, tuple
 
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -70,7 +70,7 @@ class BacktestEngine:
         """
         self.strategy = strategy
         logger.info(
-            f"Strategy set: {strategy.name if hasattr(strategy, 'name') else type(strategy).__name__}"
+            f"Strategy set: {strategy.name if hasattr(strategy, 'name') else typing.Type(strategy).__name__}"
         )
 
     def set_progress_callback(self, callback: callable) -> None:

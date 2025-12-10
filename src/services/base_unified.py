@@ -63,7 +63,7 @@ class BaseService(ABC):
             else:
                 self.logger.error(f"服务 {self.name} 初始化失败")
             return success
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
+        except (ValueError, typeError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 初始化异常: {e}")
             return False
 
@@ -82,7 +82,7 @@ class BaseService(ABC):
             await self._on_shutdown()
             self._initialized = False
             self.logger.info(f"服务 {self.name} 已关闭")
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
+        except (ValueError, typeError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 关闭异常: {e}")
 
     def start(self) -> bool:
@@ -109,7 +109,7 @@ class BaseService(ABC):
             else:
                 self.logger.error(f"服务 {self.name} 启动失败")
             return success
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
+        except (ValueError, typeError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 启动异常: {e}")
             return False
 
@@ -123,7 +123,7 @@ class BaseService(ABC):
             await self._on_stop()
             self._running = False
             self.logger.info(f"服务 {self.name} 已停止")
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
+        except (ValueError, typeError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 停止异常: {e}")
 
     # ========================================
@@ -204,7 +204,7 @@ class BaseService(ABC):
         """获取详细的健康检查信息.
 
         Returns:
-            Dict: 包含健康状态的详细信息
+            dict: 包含健康状态的详细信息
         """
         return {
             "service": self.name,
@@ -222,7 +222,7 @@ class BaseService(ABC):
             with self.db_manager.get_session() as session:
                 session.execute("SELECT 1")
             return True
-        except (ValueError, TypeError, AttributeError):
+        except (ValueError, typeError, AttributeError):
             return False
 
     # ========================================
@@ -270,11 +270,11 @@ class BaseService(ABC):
         子类必须实现此方法,返回服务的基本信息
 
         Returns:
-            Dict: 服务信息
+            dict: 服务信息
         """
         return {
             "name": self.name,
-            "type": self.__class__.__name__,
+            "typing.Type": self.__class__.__name__,
             "description": "Service description not provided",
             "version": "1.0.0",
         }
@@ -290,7 +290,7 @@ class SimpleService(BaseService):
         """获取服务信息."""
         return {
             "name": self.name,
-            "type": self.__class__.__name__,
+            "typing.Type": self.__class__.__name__,
             "description": "Simple service implementation",
             "version": "1.0.0",
         }

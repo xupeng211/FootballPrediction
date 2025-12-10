@@ -62,7 +62,7 @@ class DecoratorFactory:
         # 获取装饰器类
         decorator_class = decorator_registry.get_decorator_class(decorator_type)
         if not decorator_class:
-            raise ValueError(f"Unknown decorator type: {decorator_type}")
+            raise ValueError(f"Unknown decorator typing.Type: {decorator_type}")
 
         # 创建实例
         return decorator_class(component, **kwargs)

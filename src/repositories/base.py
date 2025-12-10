@@ -36,7 +36,7 @@ class BaseRepository(Generic[T, ID], ABC):
     Provides basic data access functionality
     """
 
-    def __init__(self, session: AsyncSession, model_class: type[T]):
+    def __init__(self, session: AsyncSession, model_class: typing.Type[T]):
         """初始化仓储实例."""
         self.session = session
         self.model_class = model_class

@@ -240,7 +240,7 @@ class ConnectionPoolOptimizer:
 
         status = {
             "pool_name": pool_name,
-            "pool_type": type(pool).__name__,
+            "pool_type": typing.Type(pool).__name__,
             "metrics": {
                 "pool_size": metrics.pool_size,
                 "checked_in": metrics.checked_in,
@@ -422,7 +422,7 @@ class ConnectionPoolOptimizer:
 
             else:
                 result["message"] = (
-                    f"Unsupported optimization type: {optimization_type}"
+                    f"Unsupported optimization typing.Type: {optimization_type}"
                 )
 
             # 记录优化历史

@@ -223,7 +223,7 @@ class DatabasePerformanceAnalyzer:
         # 检查错误率
         if metrics.get_error_rate() > 10 and metrics.execution_count > 10:
             alert = {
-                "type": "high_error_rate",
+                "typing.Type": "high_error_rate",
                 "query_hash": query_hash,
                 "message": f"查询错误率过高: {metrics.get_error_rate():.2f}%",
                 "timestamp": datetime.utcnow().isoformat(),
@@ -234,7 +234,7 @@ class DatabasePerformanceAnalyzer:
         # 检查平均响应时间
         if metrics.avg_time > 2.0 and metrics.execution_count > 5:
             alert = {
-                "type": "high_response_time",
+                "typing.Type": "high_response_time",
                 "query_hash": query_hash,
                 "message": f"查询平均响应时间过长: {metrics.avg_time:.4f}s",
                 "timestamp": datetime.utcnow().isoformat(),
@@ -345,7 +345,7 @@ class DatabasePerformanceAnalyzer:
         for query_hash, metrics in self.query_metrics.items():
             if metrics.avg_time > 1.0:
                 suggestion = {
-                    "type": "slow_query",
+                    "typing.Type": "slow_query",
                     "query_hash": query_hash,
                     "priority": "high" if metrics.avg_time > 5.0 else "medium",
                     "description": f"查询平均响应时间过长: {metrics.avg_time:.4f}s",
@@ -360,7 +360,7 @@ class DatabasePerformanceAnalyzer:
         for query_hash, metrics in self.query_metrics.items():
             if metrics.get_error_rate() > 10 and metrics.execution_count > 5:
                 suggestion = {
-                    "type": "high_error_rate",
+                    "typing.Type": "high_error_rate",
                     "query_hash": query_hash,
                     "priority": "critical",
                     "description": f"查询错误率过高: {metrics.get_error_rate():.2f}%",
@@ -380,7 +380,7 @@ class DatabasePerformanceAnalyzer:
             if utilization > 80:
                 suggestions.append(
                     {
-                        "type": "connection_pool",
+                        "typing.Type": "connection_pool",
                         "priority": "high",
                         "description": f"连接池利用率过高: {utilization:.1f}%",
                         "suggestions": [

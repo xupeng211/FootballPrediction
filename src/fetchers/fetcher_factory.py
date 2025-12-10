@@ -16,7 +16,7 @@ Data Fetcher Factory
 """
 
 import logging
-from typing import Dict, List, Optional, Type, Any
+from typing import dict, list, Optional, typing.Type, Any
 
 from src.collectors.abstract_fetcher import AbstractFetcher, FetcherError
 from .oddsportal_fetcher import OddsPortalFetcher
@@ -33,14 +33,14 @@ class FetcherFactory:
     """
 
     # 注册表：存储获取器类和元数据
-    _registry: dict[str, type[AbstractFetcher]] = {}
+    _registry: dict[str, typing.Type[AbstractFetcher]] = {}
     _metadata: dict[str, dict[str, Any]] = {}
 
     @classmethod
     def register(
         cls,
         name: str,
-        fetcher_class: type[AbstractFetcher],
+        fetcher_class: typing.Type[AbstractFetcher],
         description: Optional[str] = None,
         version: str = "1.0.0",
         **metadata
@@ -134,7 +134,7 @@ class FetcherFactory:
         获取所有已注册的获取器名称列表
 
         Returns:
-            List[str]: 获取器名称列表
+            list[str]: 获取器名称列表
         """
         return list(cls._registry.keys())
 
@@ -147,7 +147,7 @@ class FetcherFactory:
             name: 获取器名称
 
         Returns:
-            Optional[Dict[str, Any]]: 元数据字典，如果不存在则返回None
+            Optional[dict[str, Any]]: 元数据字典，如果不存在则返回None
         """
         return cls._metadata.get(name)
 
@@ -157,7 +157,7 @@ class FetcherFactory:
         获取所有获取器的元数据
 
         Returns:
-            Dict[str, Dict[str, Any]]: 所有获取器的元数据字典
+            dict[str, dict[str, Any]]: 所有获取器的元数据字典
         """
         return cls._metadata.copy()
 
@@ -199,7 +199,7 @@ class FetcherFactory:
         获取注册表信息统计
 
         Returns:
-            Dict[str, Any]: 注册表统计信息
+            dict[str, Any]: 注册表统计信息
         """
         return {
             "total_registered": len(cls._registry),

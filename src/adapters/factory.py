@@ -96,7 +96,7 @@ class BaseAdapterFactory:
         adapter_class = self._adapters[name]
         return adapter_class(config or {}, **kwargs)
 
-    def register_adapter(self, name: str, adapter_class: type[BaseAdapter]) -> None:
+    def register_adapter(self, name: str, adapter_class: typing.Type[BaseAdapter]) -> None:
         """注册适配器类."""
         self._adapters[name] = adapter_class
 
@@ -125,7 +125,7 @@ _global_factory = BaseAdapterFactory()
 adapter_factory = _global_factory  # 导出全局工厂实例,兼容测试期望
 
 
-def register_adapter(name: str, adapter_class: type[BaseAdapter]) -> None:
+def register_adapter(name: str, adapter_class: typing.Type[BaseAdapter]) -> None:
     """注册适配器的便捷函数."""
     _global_factory.register_adapter(name, adapter_class)
 

@@ -30,7 +30,7 @@ class MissingDataHandler:
             data: 要分析的数据
 
         Returns:
-            Dict: 缺失模式分析结果
+            dict: 缺失模式分析结果
         """
         analysis = {
             "total_missing": data.isnull().sum().sum(),
@@ -46,7 +46,7 @@ class MissingDataHandler:
                 analysis["missing_by_column"][column] = {
                     "count": missing_count,
                     "percentage": missing_count / len(data) * 100,
-                    "type": self._classify_missing_type(data[column]),
+                    "typing.Type": self._classify_missing_type(data[column]),
                 }
 
         # 识别缺失模式
@@ -260,7 +260,7 @@ class MissingDataHandler:
             imputed_data: 插补后的数据
 
         Returns:
-            Dict: 插补质量评估结果
+            dict: 插补质量评估结果
         """
         validation = {
             "original_missing_count": original_data.isnull().sum().sum(),

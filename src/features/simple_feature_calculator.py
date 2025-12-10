@@ -311,7 +311,7 @@ class SimpleFeatureCalculator:
             row: 比赛数据行
 
         Returns:
-            Dict: 包含所有特征的字典
+            dict: 包含所有特征的字典
         """
         features = {}
 

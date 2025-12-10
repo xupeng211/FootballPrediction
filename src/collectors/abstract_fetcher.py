@@ -19,7 +19,7 @@ Abstract Data Source Fetcher Interface
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, dict, list, Optional, Union
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -129,7 +129,7 @@ class AbstractFetcher(ABC):
             **kwargs: 其他查询参数
 
         Returns:
-            List[Dict[str, Any]]: 返回数据记录列表
+            list[dict[str, Any]]: 返回数据记录列表
 
         Raises:
             NotImplementedError: 子类必须实现此方法
@@ -154,7 +154,7 @@ class AbstractFetcher(ABC):
             **kwargs: 其他查询参数
 
         Returns:
-            List[OddsData]: 赔率数据列表
+            list[OddsData]: 赔率数据列表
         """
         pass
 
@@ -173,7 +173,7 @@ class AbstractFetcher(ABC):
             **kwargs: 其他查询参数
 
         Returns:
-            Optional[Dict[str, Any]]: 单条记录或None
+            Optional[dict[str, Any]]: 单条记录或None
         """
         results = await self.fetch_data(resource_id, resource_type, **kwargs)
         return results[0] if results else None
@@ -236,10 +236,10 @@ class FetcherFactory:
     提供统一的获取器创建和管理接口
     """
 
-    _fetchers: dict[str, type[AbstractFetcher]] = {}
+    _fetchers: dict[str, typing.Type[AbstractFetcher]] = {}
 
     @classmethod
-    def register(cls, name: str, fetcher_class: type[AbstractFetcher]) -> None:
+    def register(cls, name: str, fetcher_class: typing.Type[AbstractFetcher]) -> None:
         """
         注册获取器类
 

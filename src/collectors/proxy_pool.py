@@ -21,7 +21,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+from typing import Any, dict, list, Optional, Protocol, runtime_checkable
 
 import aiohttp
 
@@ -249,7 +249,7 @@ class ProxyProvider(Protocol):
         加载代理列表
 
         Returns:
-            List[Proxy]: 代理列表
+            list[Proxy]: 代理列表
         """
         ...
 
@@ -259,7 +259,7 @@ class ProxyProvider(Protocol):
         刷新代理列表
 
         Returns:
-            List[Proxy]: 更新后的代理列表
+            list[Proxy]: 更新后的代理列表
         """
         ...
 

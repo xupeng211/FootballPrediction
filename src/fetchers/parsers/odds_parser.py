@@ -18,7 +18,7 @@ Odds Data Parser
 
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, dict, list, Optional, Union
 
 from bs4 import BeautifulSoup, Tag
 
@@ -133,7 +133,7 @@ class OddsParser:
 
             return odds
 
-        except (ValueError, TypeError):
+        except (ValueError, typeError):
             self.logger.warning(f"⚠️ 无效赔率值: {odds_str}")
             return None
 
@@ -250,7 +250,7 @@ class OddsParser:
                     odds = self._normalize_odds(odds_elem.get_text(strip=True))
                     market = self._normalize_market(
                         odds_elem.get("data-market") or
-                        odds_elem.get("data-type") or
+                        odds_elem.get("data-typing.Type") or
                         "Unknown"
                     )
                     selection = self._normalize_selection(

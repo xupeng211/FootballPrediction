@@ -10,7 +10,7 @@ import asyncio
 import sys
 import os
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+from typing import list, dict, Any, Optional
 import logging
 import json
 import re
@@ -215,7 +215,7 @@ class SeasonBackfillJob:
                             )
                     else:
                         self.logger.warning(
-                            f"   ⚠️ fixtureInfo.teams不是数组: {type(teams_data)}"
+                            f"   ⚠️ fixtureInfo.teams不是数组: {typing.Type(teams_data)}"
                         )
                 elif isinstance(fixture_info, list):
                     # 备选方案：如果fixtureInfo是列表
@@ -225,7 +225,7 @@ class SeasonBackfillJob:
                     )
                 else:
                     self.logger.warning(
-                        f"   ⚠️ fixtureInfo类型异常: {type(fixture_info)}"
+                        f"   ⚠️ fixtureInfo类型异常: {typing.Type(fixture_info)}"
                     )
 
                 # 提取当前赛季信息
@@ -395,7 +395,7 @@ class SeasonBackfillJob:
         """从HTML中提取Next.js数据"""
         try:
             patterns = [
-                r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
+                r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*typing.Type=["\']application/json["\'][^>]*>(.*?)</script>',
                 r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
                 r"window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>",
             ]

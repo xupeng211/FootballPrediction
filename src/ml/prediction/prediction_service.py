@@ -419,7 +419,7 @@ class PredictionService:
         models_info = {}
         for name, model in self.models.items():
             models_info[name] = {
-                "type": model.__class__.__name__,
+                "typing.Type": model.__class__.__name__,
                 "version": model.model_version,
                 "is_trained": model.is_trained,
                 "weight": self.model_weights.get(name, 1.0),

@@ -21,7 +21,7 @@ class ExternalCompetition(Base):
     )
     name = Column(String(100), nullable=False, comment="联赛名称")
     code = Column(String(10), nullable=True, comment="联赛代码")
-    type = Column(String(20), nullable=True, comment="联赛类型")
+    typing.Type = Column(String(20), nullable=True, comment="联赛类型")
     emblem = Column(Text, nullable=True, comment="联赛徽章URL")
     is_active = Column(Boolean, default=True, comment="是否激活")
     created_at = Column(DateTime, default=datetime.utcnow, comment="创建时间")

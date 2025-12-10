@@ -21,7 +21,7 @@ FotMob Collector V2 - Production-Grade Anti-Blocking Implementation
 import asyncio
 import json
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, dict, list, Optional, Union
 from urllib.parse import urljoin
 
 import httpx
@@ -155,7 +155,7 @@ class FotMobCollectorV2:
             provider_name: Token提供者名称
 
         Returns:
-            Dict[str, str]: 包含认证信息的请求头
+            dict[str, str]: 包含认证信息的请求头
         """
         try:
             token = await self.token_manager.get_token(provider_name)
@@ -320,7 +320,7 @@ class FotMobCollectorV2:
             season_id: 赛季ID (可选，如: "2024-2025")
 
         Returns:
-            List[Dict[str, Any]]: 赛程数据列表
+            list[dict[str, Any]]: 赛程数据列表
 
         Raises:
             CollectorError: 采集过程中的通用错误
@@ -371,7 +371,7 @@ class FotMobCollectorV2:
             match_id: 比赛唯一标识
 
         Returns:
-            Dict[str, Any]: 比赛详情数据
+            dict[str, Any]: 比赛详情数据
 
         Raises:
             CollectorError: 采集过程中的通用错误
@@ -462,7 +462,7 @@ class FotMobCollectorV2:
             team_id: 球队唯一标识
 
         Returns:
-            Dict[str, Any]: 球队信息
+            dict[str, Any]: 球队信息
 
         Raises:
             CollectorError: 采集过程中的通用错误
@@ -506,7 +506,7 @@ class FotMobCollectorV2:
         检查采集器健康状态
 
         Returns:
-            Dict[str, Any]: 健康状态信息
+            dict[str, Any]: 健康状态信息
 
         Raises:
             CollectorError: 健康检查失败

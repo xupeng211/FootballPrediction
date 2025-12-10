@@ -283,7 +283,7 @@ class FeatureService:
             calculation_date: 计算日期
 
         Returns:
-            Dict: 特征摘要
+            dict: 特征摘要
         """
         try:
             features = await self.get_match_features(match_id, calculation_date)

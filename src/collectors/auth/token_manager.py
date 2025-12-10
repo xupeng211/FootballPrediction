@@ -20,7 +20,7 @@ import time
 from abc import abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional, Protocol, runtime_checkable
+from typing import Any, dict, Optional, Protocol, runtime_checkable
 
 import aiohttp
 
@@ -357,7 +357,7 @@ class TokenManager:
             provider_name: 提供者名称，None表示获取所有
 
         Returns:
-            Dict[str, Any]: 令牌信息
+            dict[str, Any]: 令牌信息
         """
         async with self.lock:
             if provider_name:
@@ -375,7 +375,7 @@ class TokenManager:
         获取管理器统计信息
 
         Returns:
-            Dict[str, Any]: 统计信息
+            dict[str, Any]: 统计信息
         """
         async with self.lock:
             total_providers = len(self.token_cache)
@@ -530,7 +530,7 @@ class FotMobAuthProvider:
             html_content: HTML 内容
 
         Returns:
-            Optional[Dict[str, Any]]: 令牌数据，如果提取失败返回None
+            Optional[dict[str, Any]]: 令牌数据，如果提取失败返回None
         """
         try:
             # 模拟从 HTML 中提取认证信息

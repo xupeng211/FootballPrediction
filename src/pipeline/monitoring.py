@@ -9,7 +9,7 @@ import logging
 import time
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, dict, list, Optional
 from pathlib import Path
 from dataclasses import dataclass, asdict
 

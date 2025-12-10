@@ -135,7 +135,7 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
                 return result
             except Exception as api_error:
                 logger.error(
-                    f"❌ 真实API采集失败: {type(api_error).__name__}: {api_error}"
+                    f"❌ 真实API采集失败: {typing.Type(api_error).__name__}: {api_error}"
                 )
                 logger.error(f"🔍 详细错误: {str(api_error)}")
                 # 只有在真实API完全失败时才降级到Mock
@@ -145,7 +145,7 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
                     "collected_records": 5,
                     "message": "Daily fixtures collection completed successfully (mock fallback)",
                     "timestamp": datetime.now().isoformat(),
-                    "fallback_reason": f"API Error: {type(api_error).__name__}: {api_error}",
+                    "fallback_reason": f"API Error: {typing.Type(api_error).__name__}: {api_error}",
                 }
 
         result = asyncio.run(collect_data())

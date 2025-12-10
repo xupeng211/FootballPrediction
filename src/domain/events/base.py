@@ -57,7 +57,7 @@ class DomainEvent(ABC):
         """转换为字典格式."""
         return {
             "id": self.id,
-            "type": self.get_event_type(),
+            "typing.Type": self.get_event_type(),
             "aggregate_id": self.aggregate_id,
             "timestamp": self.timestamp.isoformat(),
             "data": self.data,

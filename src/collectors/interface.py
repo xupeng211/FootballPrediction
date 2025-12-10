@@ -14,7 +14,7 @@ Base Collector Protocol Definition
 """
 
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+from typing import Any, dict, list, Optional, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -45,7 +45,7 @@ class BaseCollectorProtocol(Protocol):
             season_id: 赛季ID (可选，如: "2024-2025")
 
         Returns:
-            List[Dict[str, Any]]: 赛程数据列表，每个字典包含:
+            list[dict[str, Any]]: 赛程数据列表，每个字典包含:
                 - match_id: str - 比赛唯一标识
                 - home_team: str - 主队名称
                 - away_team: str - 客队名称
@@ -70,17 +70,17 @@ class BaseCollectorProtocol(Protocol):
             match_id: 比赛唯一标识
 
         Returns:
-            Dict[str, Any]: 比赛详情数据，包含:
+            dict[str, Any]: 比赛详情数据，包含:
                 - match_id: str - 比赛ID
                 - home_score: Optional[int] - 主队得分
                 - away_score: Optional[int] - 客队得分
                 - home_xg: Optional[float] - 主队期望进球数
                 - away_xg: Optional[float] - 客队期望进球数
-                - shots: Dict[str, int] - 射门数据
-                - possession: Dict[str, float] - 控球率
-                - events: List[Dict] - 比赛事件列表
-                - lineups: Dict[str, List] - 阵容信息
-                - odds: Optional[Dict] - 赔率数据
+                - shots: dict[str, int] - 射门数据
+                - possession: dict[str, float] - 控球率
+                - events: list[dict] - 比赛事件列表
+                - lineups: dict[str, list] - 阵容信息
+                - odds: Optional[dict] - 赔率数据
 
         Raises:
             CollectorError: 采集过程中的通用错误
@@ -100,7 +100,7 @@ class BaseCollectorProtocol(Protocol):
             team_id: 球队唯一标识
 
         Returns:
-            Dict[str, Any]: 球队信息，包含:
+            dict[str, Any]: 球队信息，包含:
                 - team_id: str - 球队ID
                 - name: str - 球队名称
                 - country: str - 国家
@@ -126,12 +126,12 @@ class BaseCollectorProtocol(Protocol):
         4. 速率限制状态查询
 
         Returns:
-            Dict[str, Any]: 健康状态信息，包含:
+            dict[str, Any]: 健康状态信息，包含:
                 - status: str - "healthy" | "degraded" | "unhealthy"
                 - response_time_ms: float - 响应时间(毫秒)
                 - last_check: str - 最后检查时间
                 - error_count: int - 错误计数
-                - details: Dict[str, Any] - 额外详情
+                - details: dict[str, Any] - 额外详情
 
         Example:
             >>> health = await collector.check_health()
@@ -182,7 +182,7 @@ class ExtendedCollectorProtocol(BaseCollectorProtocol, Protocol):
             season_id: 赛季ID
 
         Returns:
-            Dict[int, List[Dict]]: 按联赛ID分组的赛程数据
+            dict[int, list[dict]]: 按联赛ID分组的赛程数据
         """
         ...
 
@@ -196,7 +196,7 @@ class ExtendedCollectorProtocol(BaseCollectorProtocol, Protocol):
             season_id: 赛季ID
 
         Yields:
-            Dict[str, Any]: 单个赛程数据
+            dict[str, Any]: 单个赛程数据
         """
         ...
 

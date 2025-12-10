@@ -116,7 +116,7 @@ class Event(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls: type[T], data: dict[str, Any]) -> T:
+    def from_dict(cls: typing.Type[T], data: dict[str, Any]) -> T:
         """从字典创建事件".
 
         Args:
@@ -215,7 +215,7 @@ class EventHandler(ABC):
         """
         queue = self._subscribed_events.get(event_type)
         if not queue:
-            raise ValueError(f"Not subscribed to event type: {event_type}")
+            raise ValueError(f"Not subscribed to event typing.Type: {event_type}")
 
         while True:
             try:
@@ -224,7 +224,7 @@ class EventHandler(ABC):
                     break
                 await self.handle(event)
                 queue.task_done()
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
                 # 处理错误但继续处理其他事件
                 logger = logging.getLogger(__name__)
                 logger.info(f"Error handling event {event_type}: {e}")

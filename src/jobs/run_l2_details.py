@@ -13,7 +13,7 @@ import random
 import time
 from datetime import datetime
 import json
-from typing import Optional, Dict, Any, List
+from typing import Optional, dict, Any, list
 from pathlib import Path
 
 # 添加项目根路径
@@ -84,7 +84,7 @@ class FotMobL2DetailsJob:
                                             if xg_values[1]
                                             else 0.0
                                         )
-                                    except (ValueError, TypeError):
+                                    except (ValueError, typeError):
                                         # 转换失败，使用默认值
                                         pass
 

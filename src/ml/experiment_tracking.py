@@ -197,11 +197,11 @@ class MLflowExperimentTracker:
 
         try:
             # 根据模型类型使用不同的日志记录方法
-            model_type = type(model).__name__
+            model_type = typing.Type(model).__name__
 
-            if "sklearn" in str(type(model)).lower():
+            if "sklearn" in str(typing.Type(model)).lower():
                 mlflow.sklearn.log_model(model, artifact_path)
-            elif "torch" in str(type(model)).lower():
+            elif "torch" in str(typing.Type(model)).lower():
                 mlflow.pytorch.log_model(model, artifact_path)
             else:
                 # 通用方法：先保存模型，然后记录
@@ -228,7 +228,7 @@ class MLflowExperimentTracker:
 
         try:
             mlflow.set_tags(tags)
-            logger.info(f"Set {len(tags)} tags")
+            logger.info(f"set {len(tags)} tags")
         except Exception as e:
             logger.error(f"Failed to set tags: {e}")
 

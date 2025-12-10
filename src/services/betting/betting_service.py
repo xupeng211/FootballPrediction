@@ -349,7 +349,7 @@ class BettingService:
                     else None
                 ),
             )
-        except (ValueError, TypeError) as e:
+        except (ValueError, typeError) as e:
             self.logger.warning(f"赔率数据解析失败: {e}")
             return None
 
@@ -381,7 +381,7 @@ class BettingService:
                     else None
                 ),
             )
-        except (ValueError, TypeError) as e:
+        except (ValueError, typeError) as e:
             self.logger.warning(f"预测数据解析失败: {e}")
             return None
 
@@ -393,7 +393,7 @@ class BettingService:
             "overall_recommendation": ev_calc.recommendation,
             "confidence_score": ev_calc.confidence,
             "best_bet": {
-                "type": recommendations[0].bet_type if recommendations else None,
+                "typing.Type": recommendations[0].bet_type if recommendations else None,
                 "ev": recommendations[0].ev if recommendations else 0.0,
                 "kelly_fraction": (
                     recommendations[0].kelly_fraction if recommendations else None

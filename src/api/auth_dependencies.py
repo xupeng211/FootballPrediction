@@ -30,7 +30,7 @@ class SecurityConfig:
     def get_headers(self) -> dict[str, str]:
         """获取安全头部."""
         return {
-            "x-Content-Type-Options": "nosniff",
+            "x-Content-typing.Type-Options": "nosniff",
             "x-Frame-Options": "DENY",
             "x-XSS-Protection": "1; mode=block",
         }

@@ -20,7 +20,7 @@ Data Quality Monitor - 数据质量监控器
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, dict, list, Optional
 from dataclasses import dataclass, field
 
 from tenacity import (
@@ -163,12 +163,12 @@ class DataQualityMonitor:
             match_id: 比赛ID
 
         Returns:
-            Dict[str, Any]: 包含检查结果的字典
+            dict[str, Any]: 包含检查结果的字典
                 {
                     "match_id": int,
                     "passed": bool,
-                    "results": List[Dict],  # 各规则的检查结果
-                    "summary": Dict,       # 检查摘要
+                    "results": list[dict],  # 各规则的检查结果
+                    "summary": dict,       # 检查摘要
                     "timestamp": str       # 检查时间
                 }
         """
@@ -296,7 +296,7 @@ class DataQualityMonitor:
             match_ids: 比赛ID列表
 
         Returns:
-            List[Dict]: 每个比赛的检查结果列表
+            list[dict]: 每个比赛的检查结果列表
         """
         if not match_ids:
             return []
@@ -352,7 +352,7 @@ class DataQualityMonitor:
             features: 特征数据字典
 
         Returns:
-            List[DataQualityResult]: 规则检查结果列表
+            list[DataQualityResult]: 规则检查结果列表
         """
         results = []
 
@@ -442,7 +442,7 @@ class DataQualityMonitor:
             results: 规则检查结果列表
 
         Returns:
-            Dict[str, Any]: 检查摘要
+            dict[str, Any]: 检查摘要
         """
         passed_count = sum(1 for r in results if r.passed)
         failed_count = len(results) - passed_count
@@ -478,7 +478,7 @@ class DataQualityMonitor:
         获取数据质量监控的统计信息。
 
         Returns:
-            Dict[str, Any]: 统计信息字典
+            dict[str, Any]: 统计信息字典
         """
         if not self.stats:
             return {"stats_enabled": False, "message": "统计信息收集未启用"}
@@ -490,7 +490,7 @@ class DataQualityMonitor:
         健康检查，评估DataQualityMonitor的状态。
 
         Returns:
-            Dict[str, Any]: 健康状态信息
+            dict[str, Any]: 健康状态信息
         """
         try:
             # 检查基本配置
@@ -578,6 +578,6 @@ class DataQualityMonitor:
         获取所有已配置的规则名称。
 
         Returns:
-            List[str]: 规则名称列表
+            list[str]: 规则名称列表
         """
         return [rule.rule_name for rule in self.rules]

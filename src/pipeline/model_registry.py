@@ -21,7 +21,7 @@ import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, dict, list, Optional, Union
 
 import joblib
 import pandas as pd
@@ -92,8 +92,8 @@ class ModelRegistry:
             "name": name,
             "version": version,
             "created_at": datetime.now().isoformat(),
-            "model_type": type(model).__name__,
-            "model_module": type(model).__module__,
+            "model_type": typing.Type(model).__name__,
+            "model_module": typing.Type(model).__module__,
             "file_path": str(model_path.relative_to(self.models_dir.parent)),
             "environment": self.config.environment,
         }
@@ -123,7 +123,7 @@ class ModelRegistry:
         name: str,
         version: Optional[str] = None,
         load_preprocessors: bool = True,
-    ) -> Tuple[Any, dict[str, Any]]:
+    ) -> tuple[Any, dict[str, Any]]:
         """
         加载模型.
 
@@ -133,7 +133,7 @@ class ModelRegistry:
             load_preprocessors: 是否加载预处理器
 
         Returns:
-            Tuple[模型, 元数据]
+            tuple[模型, 元数据]
         """
         # 获取模型路径
         if version is None:

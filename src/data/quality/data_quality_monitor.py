@@ -53,7 +53,7 @@ class DataQualityMonitor:
         """检查数据新鲜度.
 
         Returns:
-            Dict: 新鲜度检查结果
+            dict: 新鲜度检查结果
         """
         try:
             freshness_report: dict[str, Any] = {
@@ -98,7 +98,7 @@ class DataQualityMonitor:
 
             return freshness_report
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"数据新鲜度检查失败: {str(e)}")
             return {
                 "check_time": datetime.now().isoformat(),
@@ -110,7 +110,7 @@ class DataQualityMonitor:
         """异常检测.
 
         Returns:
-            list[Dict]: 检测到的异常列表
+            list[dict]: 检测到的异常列表
         """
         anomalies: list[Any] = []
 
@@ -131,11 +131,11 @@ class DataQualityMonitor:
             self.logger.info(f"异常检测完成,发现{len(anomalies)}个异常")
             return anomalies
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"异常检测失败: {str(e)}")
             return [
                 {
-                    "type": "detection_error",
+                    "typing.Type": "detection_error",
                     "message": f"异常检测过程出错: {str(e)}",
                     "timestamp": datetime.now().isoformat(),
                 }
@@ -174,7 +174,7 @@ class DataQualityMonitor:
                     "status": "no_data",
                 }
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"检查赛程数据年龄失败: {str(e)}")
             return {"status": "error", "error": str(e)}
 
@@ -207,7 +207,7 @@ class DataQualityMonitor:
                     "status": "no_data",
                 }
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"检查赔率数据年龄失败: {str(e)}")
             return {"status": "error", "error": str(e)}
 
@@ -219,7 +219,7 @@ class DataQualityMonitor:
 
             return {"count": 0, "matches": [], "check_time": datetime.now().isoformat()}
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"查找缺失比赛失败: {str(e)}")
             return {"count": 0, "error": str(e)}
 
@@ -258,7 +258,7 @@ class DataQualityMonitor:
             for row in abnormal_odds.fetchall():
                 suspicious_odds.append(
                     {
-                        "type": "abnormal_odds_value",
+                        "typing.Type": "abnormal_odds_value",
                         "odds_id": row.id,
                         "match_id": row.match_id,
                         "bookmaker": row.bookmaker,
@@ -276,7 +276,7 @@ class DataQualityMonitor:
 
             return suspicious_odds
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"查找可疑赔率失败: {str(e)}")
             return []
 
@@ -308,7 +308,7 @@ class DataQualityMonitor:
             for row in high_scores.fetchall():
                 unusual_scores.append(
                     {
-                        "type": "unusual_high_score",
+                        "typing.Type": "unusual_high_score",
                         "match_id": row.id,
                         "home_team_id": row.home_team_id,
                         "away_team_id": row.away_team_id,
@@ -320,7 +320,7 @@ class DataQualityMonitor:
 
             return unusual_scores
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"查找异常比分失败: {str(e)}")
             return []
 
@@ -344,7 +344,7 @@ class DataQualityMonitor:
             for row in time_issues.fetchall():
                 consistency_issues.append(
                     {
-                        "type": "inconsistent_match_time",
+                        "typing.Type": "inconsistent_match_time",
                         "match_id": row.id,
                         "match_time": row.match_time.isoformat(),
                         "created_at": row.created_at.isoformat(),
@@ -355,7 +355,7 @@ class DataQualityMonitor:
 
             return consistency_issues
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"检查数据一致性失败: {str(e)}")
             return []
 
@@ -363,7 +363,7 @@ class DataQualityMonitor:
         """生成完整的数据质量报告.
 
         Returns:
-            Dict: 质量报告
+            dict: 质量报告
         """
         try:
             self.logger.info("开始生成数据质量报告")
@@ -405,7 +405,7 @@ class DataQualityMonitor:
             )
             return report
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"生成数据质量报告失败: {str(e)}")
             return {
                 "report_time": datetime.now().isoformat(),

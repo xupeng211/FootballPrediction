@@ -26,7 +26,7 @@ class AdapterRegistry:
         self._registry: dict[str, dict] = {}
         self._instances: dict[str, Any] = {}
 
-    def register(self, name: str, adapter_class: type, **kwargs) -> None:
+    def register(self, name: str, adapter_class: typing.Type, **kwargs) -> None:
         """注册适配器."""
         self._registry[name] = {"class": adapter_class, **kwargs}
 
@@ -36,7 +36,7 @@ class AdapterRegistry:
             raise AdapterError(f"No adapter registered with name '{name}'")
         del self._registry[name]
 
-    def get_adapter_class(self, name: str) -> type | None:
+    def get_adapter_class(self, name: str) -> typing.Type | None:
         """获取适配器类."""
         if name in self._registry:
             return self._registry[name]["class"]

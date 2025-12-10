@@ -89,7 +89,7 @@ class Odds(BaseModel):
     def __repr__(self):
         """函数文档字符串."""
         # 添加pass语句
-        return f"<Odds(match_id={self.match_id}, bookmaker={self.bookmaker}, type={self.bet_type}, odds={self.odds_value})>"
+        return f"<Odds(match_id={self.match_id}, bookmaker={self.bookmaker}, typing.Type={self.bet_type}, odds={self.odds_value})>"
 
     @property
     def decimal_odds(self) -> Decimal:
@@ -172,7 +172,7 @@ class MarketAnalysis(BaseModel):
     def __repr__(self):
         """函数文档字符串."""
         # 添加pass语句
-        return f"<MarketAnalysis(match_id={self.match_id}, type={self.bet_type}, avg_odds={self.average_odds})>"
+        return f"<MarketAnalysis(match_id={self.match_id}, typing.Type={self.bet_type}, avg_odds={self.average_odds})>"
 
     @property
     def odds_range(self) -> Decimal:

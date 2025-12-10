@@ -23,7 +23,7 @@ import asyncio
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, dict, Optional
 
 
 @dataclass
@@ -311,7 +311,7 @@ class RateLimiter:
             domain: 特定域名，None表示所有域名
 
         Returns:
-            Dict[str, Any]: 状态信息
+            dict[str, Any]: 状态信息
         """
         if domain:
             if domain not in self.buckets:

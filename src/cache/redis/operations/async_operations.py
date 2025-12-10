@@ -51,7 +51,7 @@ class RedisAsyncOperations:
             return None
 
     async def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
-        """Set value in Redis."""
+        """set value in Redis."""
         if not self.client:
             await self.connect()
         try:
@@ -85,7 +85,7 @@ class RedisAsyncOperations:
             return False
 
     async def expire(self, key: str, ttl: int) -> bool:
-        """Set TTL for key."""
+        """set TTL for key."""
         if not self.client:
             await self.connect()
         try:
