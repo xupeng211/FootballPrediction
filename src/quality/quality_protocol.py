@@ -15,7 +15,7 @@ Data Quality Rules Protocol - 数据质量规则标准接口
 作者: Data Engineering Lead
 """
 
-from typing import Protocol, Any, list
+from typing import Protocol, Any, 
 from src.features.feature_store_interface import FeatureStoreProtocol
 
 

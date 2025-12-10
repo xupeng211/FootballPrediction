@@ -25,7 +25,7 @@ import logging
 import os
 import pandas as pd
 from pathlib import Path
-from typing import Optional, dict, Any, Union
+from typing import Optional, Any, Union
 import asyncio
 
 # 初始化logger

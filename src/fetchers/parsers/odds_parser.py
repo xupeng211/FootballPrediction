@@ -18,7 +18,7 @@ Odds Data Parser
 
 import re
 from datetime import datetime
-from typing import Any, dict, list, Optional, Union
+from typing import Any, , , Optional, Union
 
 from bs4 import BeautifulSoup, Tag
 

@@ -17,7 +17,7 @@ typing.Type Rule - 数据类型检查规则
 """
 
 import logging
-from typing import Any, dict, list, Optional, typing.Type
+from typing import Any, , , Optional, typing.Type
 
 from src.quality.quality_protocol import (
     TypeRule as TypeRuleProtocol,

@@ -21,7 +21,7 @@ FotMob Collector V2 - Production-Grade Anti-Blocking Implementation
 import asyncio
 import json
 import time
-from typing import Any, dict, list, Optional, Union
+from typing import Any, , , Optional, Union
 from urllib.parse import urljoin
 
 import httpx

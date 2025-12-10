@@ -11,7 +11,7 @@ OddsService Usage Examples
 
 import asyncio
 import logging
-from typing import list
+from typing import 
 
 from src.collectors.abstract_fetcher import OddsData, FetcherFactory
 from src.collectors.examples.example_fetcher import ExampleFetcher

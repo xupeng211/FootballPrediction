@@ -8,7 +8,7 @@ FeatureStore 标准接口定义.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional, Protocol, typeddict, runtime_checkable
+from typing import Any, Optional, Protocol, runtime_checkable, TypedDict
 from uuid import UUID
 
 

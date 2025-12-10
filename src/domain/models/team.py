@@ -196,7 +196,7 @@ class Team:
     name: str = ""
     short_name: str | None = None
     code: str | None = None
-    typing.Type: TeamType = TeamType.CLUB
+    type: TeamType = TeamType.CLUB
     country: str = ""
     founded_year: int | None = None
     stadium: str | None = None

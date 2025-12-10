@@ -6,7 +6,7 @@ Matches API Router.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, list, Optional
+from typing import Any, , Optional
 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field

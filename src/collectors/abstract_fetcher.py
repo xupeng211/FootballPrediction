@@ -19,7 +19,7 @@ Abstract Data Source Fetcher Interface
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, dict, list, Optional, Union
+from typing import Any, , , Optional, Union
 from enum import Enum
 
 from pydantic import BaseModel, Field
