@@ -113,7 +113,7 @@ class ModelInfoResponse(BaseModel):
     target_classes: list[str] = Field(..., description="目标类别", example=["Home", "Away", "Draw"])
 
     # 性能指标
-    performance_metrics: Optional[Dict[str, float]] = Field(None, description="性能指标",
+    performance_metrics: Optional[Dict[str, Any]] = Field(None, description="性能指标",
                                                           example={"accuracy": 0.5553, "log_loss": 1.0396})
 
     # 加载时间
