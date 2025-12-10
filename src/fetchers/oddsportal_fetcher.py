@@ -25,7 +25,7 @@ OddsPortal Data Fetcher - Production Implementation
 import logging
 import random
 from datetime import datetime, timedelta
-from typing import Any, , , Optional
+from typing import Any,  Optional
 
 from src.collectors.abstract_fetcher import (
     AbstractFetcher,

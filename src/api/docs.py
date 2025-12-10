@@ -272,25 +272,25 @@ async def interactive_playground():
             }
         }
 
-        function addLog(message, typing.Type = 'info') {
+        function addLog(message, : type = 'info') {
             const logsContainer = document.getElementById('test-logs');
             const timestamp = new Date().toLocaleTimeString();
 
             const logEntry = document.createElement('div');
             logEntry.className = `p-4 rounded-lg border-l-4 ${
-                typing.Type === 'success' ? 'bg-green-50 border-green-500' :
-                typing.Type === 'error' ? 'bg-red-50 border-red-500' :
-                typing.Type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
+                : type === 'success' ? 'bg-green-50 border-green-500' :
+                : type === 'error' ? 'bg-red-50 border-red-500' :
+                : type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
                 'bg-gray-50 border-gray-300'
             }`;
 
-            const icon = typing.Type === 'success' ? 'check-circle' :
-                         typing.Type === 'error' ? 'exclamation-circle' :
-                         typing.Type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            const icon = : type === 'success' ? 'check-circle' :
+                         : type === 'error' ? 'exclamation-circle' :
+                         : type === 'warning' ? 'exclamation-triangle' : 'info-circle';
 
-            const color = typing.Type === 'success' ? 'text-green-600' :
-                         typing.Type === 'error' ? 'text-red-600' :
-                         typing.Type === 'warning' ? 'text-yellow-600' : 'text-blue-600';
+            const color = : type === 'success' ? 'text-green-600' :
+                         : type === 'error' ? 'text-red-600' :
+                         : type === 'warning' ? 'text-yellow-600' : 'text-blue-600';
 
             logEntry.innerHTML = `
                 <div class="flex items-start">

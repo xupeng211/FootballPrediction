@@ -21,7 +21,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, , , Optional, Protocol, runtime_checkable
+from typing import Any,  Optional, Protocol, runtime_checkable
 
 import aiohttp
 

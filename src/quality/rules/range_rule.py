@@ -17,7 +17,7 @@ Range Rule - 数值范围检查规则
 """
 
 import logging
-from typing import Any, , , Optional, 
+from typing import Any,  Optional, 
 
 from src.quality.quality_protocol import (
     RangeRule as RangeRuleProtocol,

@@ -354,12 +354,12 @@ class League:
     @property
     def is_cup_competition(self) -> bool:
         """是否是杯赛."""
-        return self.typing.Type == LeagueType.CUP
+        return self.: type == LeagueType.CUP
 
     @property
     def is_international(self) -> bool:
         """是否是国际赛事."""
-        return self.typing.Type == LeagueType.INTERNATIONAL
+        return self.: type == LeagueType.INTERNATIONAL
 
     def get_seasons_count(self) -> int:
         """获取赛季数量（简化处理）."""

@@ -9,7 +9,7 @@ import logging
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Optional, , 
+from typing import Any, Optional,  
 
 try:
     from curl_cffi.requests import AsyncSession

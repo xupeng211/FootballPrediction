@@ -19,7 +19,7 @@ Database Compatibility Adapter (Temporary Migration Helper)
 
 import asyncio
 import logging
-from typing import Any, Optional, , 
+from typing import Any, Optional,  
 from sqlalchemy import text
 
 from .async_manager import fetch_all, fetch_one, execute

@@ -608,13 +608,13 @@ class NotificationManager:
         # 添加pass语句
         """初始化通知客户端"""
         try:
-            if channel.typing.Type == "email" and channel.enabled:
+            if channel.: type == "email" and channel.enabled:
                 self.clients[channel.id] = EmailClient(channel.config)
-            elif channel.typing.Type == "slack" and channel.enabled:
+            elif channel.: type == "slack" and channel.enabled:
                 self.clients[channel.id] = SlackClient(channel.config)
-            elif channel.typing.Type == "wechat" and channel.enabled:
+            elif channel.: type == "wechat" and channel.enabled:
                 self.clients[channel.id] = WeChatClient(channel.config)
-            elif channel.typing.Type == "dingtalk" and channel.enabled:
+            elif channel.: type == "dingtalk" and channel.enabled:
                 self.clients[channel.id] = DingTalkClient(channel.config)
 
             self.logger.info(f"通知客户端已初始化: {channel.typing.Type} - {channel.id}")
@@ -695,24 +695,24 @@ class NotificationManager:
                 f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
             )
 
-            if channel.typing.Type == "email":
+            if channel.: type == "email":
                 client = self.clients.get(channel.id)
                 if client and channel.config.get("recipients"):
                     return await client.send_alert_email(
                         alert, channel.config["recipients"]
                     )
 
-            elif channel.typing.Type == "slack":
+            elif channel.: type == "slack":
                 client = self.clients.get(channel.id)
                 if client:
                     return await client.send_alert_slack(alert)
 
-            elif channel.typing.Type == "wechat":
+            elif channel.: type == "wechat":
                 client = self.clients.get(channel.id)
                 if client:
                     return await client.send_alert_wechat(alert)
 
-            elif channel.typing.Type == "dingtalk":
+            elif channel.: type == "dingtalk":
                 client = self.clients.get(channel.id)
                 if client:
                     return await client.send_alert_dingtalk(alert)

@@ -16,7 +16,7 @@ Data Fetcher Factory
 """
 
 import logging
-from typing import , , Optional, typing.Type, Any
+from typing import ,  Optional, typing.Type, Any
 
 from src.collectors.abstract_fetcher import AbstractFetcher, FetcherError
 from .oddsportal_fetcher import OddsPortalFetcher

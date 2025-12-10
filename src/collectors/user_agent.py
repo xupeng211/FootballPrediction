@@ -7,7 +7,7 @@ User-Agent Manager
 """
 
 import random
-from typing import 
+from typing import Optional, List 
 
 
 class UserAgentManager:

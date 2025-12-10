@@ -19,7 +19,7 @@ Odds Business Service Layer
 
 import logging
 from datetime import datetime
-from typing import , , Any, Optional, 
+from typing import ,  Any, Optional, 
 from decimal import Decimal, InvalidOperation
 
 from src.collectors.abstract_fetcher import (

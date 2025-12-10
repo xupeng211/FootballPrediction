@@ -6,7 +6,7 @@
 import json
 from typing import Any
 
-from sqlalchemy import JSON, Text, typeDecorator
+from sqlalchemy import JSON, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.engine.interfaces import Dialect
 
