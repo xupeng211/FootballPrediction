@@ -71,7 +71,7 @@ async def process_l2_batch(limit=100):
             error_count = 0
 
             # 处理每场比赛
-            for i, (fotmob_id, home_team, away_team) in enumerate(matches, 1):
+            for i, (fotmob_id, _home_team, _away_team) in enumerate(matches, 1):
                 logger.info(f"🔄 [{i}/{len(matches)}] 处理: {fotmob_id}")
 
                 try:
@@ -79,7 +79,7 @@ async def process_l2_batch(limit=100):
                     match_data = await collector.collect_match_details(fotmob_id)
 
                     if match_data:
-                        logger.info(f"✅ 数据采集成功")
+                        logger.info("✅ 数据采集成功")
                         logger.info(f"   xG: 主队{match_data.xg_home} vs 客队{match_data.xg_away}")
                         logger.info(f"   比分: {match_data.home_score}-{match_data.away_score}")
 
@@ -116,10 +116,10 @@ async def process_l2_batch(limit=100):
                         })
 
                         await session.commit()
-                        logger.info(f"✅ 数据库更新成功")
+                        logger.info("✅ 数据库更新成功")
                         success_count += 1
                     else:
-                        logger.warning(f"⚠️ 数据采集失败")
+                        logger.warning("⚠️ 数据采集失败")
                         error_count += 1
 
                 except Exception as e:

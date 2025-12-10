@@ -72,7 +72,7 @@ class L2APIBatchJob:
             self.logger.error(f"❌ 初始化失败: {e}")
             raise
 
-    async def get_pending_matches(self, limit: int = 1000) -> List[str]:
+    async def get_pending_matches(self, limit: int = 1000) -> list[str]:
         """获取待处理的比赛ID列表"""
         try:
             async with get_db_session() as session:

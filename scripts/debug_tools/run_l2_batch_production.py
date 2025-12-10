@@ -48,7 +48,7 @@ class ProductionL2BatchJob:
             "start_time": self.start_time.isoformat(),
         }
 
-    async def get_batch_stats(self) -> Dict[str, Any]:
+    async def get_batch_stats(self) -> dict[str, Any]:
         """获取当前批次统计信息"""
         try:
             async with get_db_session() as session:

@@ -29,7 +29,7 @@ class LeagueConfigPatcher:
 
     def __init__(self, config_path: str = "config/target_leagues.json"):
         self.config_path = Path(config_path)
-        self.config_data: Dict[str, Any] = {}
+        self.config_data: dict[str, Any] = {}
 
         # 硬编码的准确FotMob联赛ID映射表
         self.patch_leagues = {
@@ -66,7 +66,7 @@ class LeagueConfigPatcher:
                 logger.error(f"❌ 配置文件不存在: {self.config_path}")
                 return False
 
-            with open(self.config_path, 'r', encoding='utf-8') as f:
+            with open(self.config_path, encoding='utf-8') as f:
                 self.config_data = json.load(f)
 
             logger.info(f"✅ 成功加载配置文件: {self.config_path}")
@@ -81,7 +81,7 @@ class LeagueConfigPatcher:
             logger.error(f"❌ 加载配置文件异常: {e}")
             return False
 
-    def patch_league_ids(self) -> Dict[str, Any]:
+    def patch_league_ids(self) -> dict[str, Any]:
         """
         修补联赛ID配置
 
@@ -146,7 +146,7 @@ class LeagueConfigPatcher:
 
         return patch_stats
 
-    def update_metadata(self, patch_stats: Dict[str, Any]):
+    def update_metadata(self, patch_stats: dict[str, Any]):
         """
         更新元数据信息
 
@@ -252,7 +252,7 @@ class LeagueConfigPatcher:
                 logger.info(f"   {status} {league['name']} -> ID {id_display} ({league.get('country', 'N/A')})")
 
         # 总体统计
-        logger.info(f"\n📊 总体统计:")
+        logger.info("\n📊 总体统计:")
         metadata = self.config_data['metadata']
         logger.info(f"   总联赛数: {metadata['total_leagues']}")
         logger.info(f"   成功获取ID: {metadata['successful_ids']}")
@@ -260,7 +260,7 @@ class LeagueConfigPatcher:
 
         if 'patch_statistics' in metadata:
             patch_stats = metadata['patch_statistics']
-            logger.info(f"\n🔧 补丁统计:")
+            logger.info("\n🔧 补丁统计:")
             logger.info(f"   更新: {patch_stats['updated']}")
             logger.info(f"   新增: {patch_stats['added']}")
             logger.info(f"   未变: {patch_stats['unchanged']}")

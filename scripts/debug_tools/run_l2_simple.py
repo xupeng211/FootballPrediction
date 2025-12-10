@@ -101,7 +101,7 @@ async def simple_batch_test():
                 logger.error(f"❌ 处理失败 {match_id}: {e}")
 
         # 统计结果
-        logger.info(f"🎉 测试完成!")
+        logger.info("🎉 测试完成!")
         logger.info(f"✅ 成功: {success_count}/{len(match_ids)}")
 
         # 显示采集器统计

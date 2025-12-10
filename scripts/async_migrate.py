@@ -489,7 +489,7 @@ class AsyncMigrationTool:
                 file_issues[file_path] = []
             file_issues[file_path].append(issue)
 
-        for file_path, file_issue_list in file_issues.items():
+        for file_path, _file_issue_list in file_issues.items():
             validation_script += f"""
 # 验证 {file_path}
 async def test_{Path(file_path).stem}():

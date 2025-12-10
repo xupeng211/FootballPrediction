@@ -53,7 +53,7 @@ class AuditResult:
     test_name: str
     status: str  # "PASS", "FAIL", "WARN"
     message: str
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[dict[str, Any]] = None
     timestamp: datetime = None
 
     def __post_init__(self):
@@ -64,13 +64,13 @@ class RealAPIHealthAuditor:
     """真实API系统健康度审计器"""
 
     def __init__(self):
-        self.results: List[AuditResult] = []
+        self.results: list[AuditResult] = []
         self.session = None
         self.headers = self._get_headers()
         self.league_fixtures = []
         self.sample_match = None
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """获取请求头"""
         return {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -83,7 +83,7 @@ class RealAPIHealthAuditor:
             # "x-foo": "production:your-secret-key",
         }
 
-    def add_result(self, phase: str, test_name: str, status: str, message: str, data: Optional[Dict[str, Any]] = None):
+    def add_result(self, phase: str, test_name: str, status: str, message: str, data: Optional[dict[str, Any]] = None):
         """添加审计结果"""
         result = AuditResult(phase=phase, test_name=test_name, status=status, message=message, data=data)
         self.results.append(result)
@@ -193,7 +193,7 @@ class RealAPIHealthAuditor:
             self.add_result("L1", "赛程获取", "FAIL", f"获取赛程异常: {e}")
             print(f"❌ 赛程获取异常: {e}")
 
-    async def _fetch_league_info(self) -> Optional[Dict[str, Any]]:
+    async def _fetch_league_info(self) -> Optional[dict[str, Any]]:
         """获取联赛基本信息"""
         try:
             url = f"{FOTMOB_BASE_URL}/leagues?id={AUDIT_LEAGUE_ID}"
@@ -214,7 +214,7 @@ class RealAPIHealthAuditor:
             logger.error(f"获取联赛信息失败: {e}")
             return None
 
-    async def _fetch_available_seasons(self, league_info: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+    async def _fetch_available_seasons(self, league_info: dict[str, Any]) -> Optional[list[dict[str, Any]]]:
         """获取可用赛季列表"""
         try:
             # FotMob没有直接的赛季列表API，我们尝试从联赛信息推断
@@ -238,7 +238,7 @@ class RealAPIHealthAuditor:
             logger.error(f"获取赛季列表失败: {e}")
             return None
 
-    def _find_target_season(self, seasons: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    def _find_target_season(self, seasons: list[dict[str, Any]]) -> Optional[dict[str, Any]]:
         """查找目标赛季"""
         target_name = AUDIT_SEASON
 
@@ -248,7 +248,7 @@ class RealAPIHealthAuditor:
 
         return None
 
-    async def _fetch_fixtures(self, league_info: Dict[str, Any], season: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+    async def _fetch_fixtures(self, league_info: dict[str, Any], season: dict[str, Any]) -> Optional[list[dict[str, Any]]]:
         """获取赛程数据"""
         try:
             # 尝试多种可能的API端点
@@ -291,7 +291,7 @@ class RealAPIHealthAuditor:
             logger.error(f"获取赛程数据失败: {e}")
             return self._create_mock_fixtures()
 
-    def _extract_fixtures_from_data(self, data: Any) -> Optional[List[Dict[str, Any]]]:
+    def _extract_fixtures_from_data(self, data: Any) -> Optional[list[dict[str, Any]]]:
         """从API数据中提取赛程信息"""
         try:
             fixtures = []
@@ -328,7 +328,7 @@ class RealAPIHealthAuditor:
             logger.error(f"提取赛程数据失败: {e}")
             return None
 
-    def _normalize_fixture(self, match_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _normalize_fixture(self, match_data: dict[str, Any]) -> Optional[dict[str, Any]]:
         """标准化比赛数据格式"""
         try:
             # 根据可能的字段名提取信息
@@ -358,7 +358,7 @@ class RealAPIHealthAuditor:
             logger.error(f"标准化比赛数据失败: {e}")
             return None
 
-    def _create_mock_fixtures(self) -> List[Dict[str, Any]]:
+    def _create_mock_fixtures(self) -> list[dict[str, Any]]:
         """创建模拟赛程数据（用于测试）"""
         print("📋 创建模拟赛程数据进行测试...")
 
@@ -488,7 +488,7 @@ class RealAPIHealthAuditor:
             self.add_result("L2", "数据采集", "FAIL", f"采集异常: {e}")
             print(f"❌ 数据采集异常: {e}")
 
-    async def _simulate_real_match_collection(self, match_id: str) -> Optional[Dict[str, Any]]:
+    async def _simulate_real_match_collection(self, match_id: str) -> Optional[dict[str, Any]]:
         """模拟真实比赛数据采集"""
         print("🔗 模拟 FotMobAPICollector.collect_match_details 调用...")
 
@@ -669,7 +669,7 @@ class RealAPIHealthAuditor:
             }
         }
 
-    async def _validate_match_details(self, match_data: Dict[str, Any], match_id: str):
+    async def _validate_match_details(self, match_data: dict[str, Any], match_id: str):
         """验证比赛详情数据"""
 
         print(f"\n🔍 验证比赛详情数据 (ID: {match_id}):")
@@ -901,7 +901,7 @@ class RealAPIHealthAuditor:
             print("✅  真实API测试: 全部通过")
 
         # Super Greedy Mode 数据维度检查
-        print(f"\n🔍 Super Greedy Mode 数据维度验证:")
+        print("\n🔍 Super Greedy Mode 数据维度验证:")
 
         expected_dimensions = [
             ("🏛️ 裁判信息", "environment_json.referee", "✅"),
@@ -984,7 +984,7 @@ async def main():
 
     try:
         # 运行完整审计
-        success = await auditor.run_full_audit()
+        await auditor.run_full_audit()
 
         # 根据审计结果设置退出码
         pass_count = len([r for r in auditor.results if r.status == "PASS"])

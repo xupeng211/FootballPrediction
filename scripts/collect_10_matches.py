@@ -176,7 +176,7 @@ async def main():
     logger.info("🚀 启动10场比赛数据采集验证任务")
 
     # 验证数据库状态
-    db_ok = await verify_database_state()
+    await verify_database_state()
 
     # 采集10场比赛
     collection_ok = await collect_10_matches()

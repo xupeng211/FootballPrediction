@@ -101,7 +101,7 @@ class MatchDAO(BaseDAO):
         hours: int = 24,
         limit: int = 100,
         league_id: Optional[int] = None
-    ) -> List[Any]:
+    ) -> list[Any]:
         """
         获取未来N小时内的比赛
 
@@ -164,7 +164,7 @@ class MatchDAO(BaseDAO):
         status: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None
-    ) -> List[Any]:
+    ) -> list[Any]:
         """
         根据联赛获取比赛列表
 
@@ -220,7 +220,7 @@ class MatchDAO(BaseDAO):
             logger.error(f"获取联赛{league_id}的比赛失败: {e}")
             raise DatabaseConnectionError(f"获取联赛比赛失败: {e}")
 
-    async def get_live_matches(self) -> List[Any]:
+    async def get_live_matches(self) -> list[Any]:
         """
         获取正在进行的比赛
 
@@ -252,7 +252,7 @@ class MatchDAO(BaseDAO):
         league_id: Optional[int] = None,
         skip: int = 0,
         limit: int = 100
-    ) -> List[Any]:
+    ) -> list[Any]:
         """
         获取最近已完成的比赛
 
@@ -310,7 +310,7 @@ class MatchDAO(BaseDAO):
         league_id: Optional[int] = None,
         skip: int = 0,
         limit: int = 50
-    ) -> List[Any]:
+    ) -> list[Any]:
         """
         搜索比赛（按球队名称）
 
@@ -366,7 +366,7 @@ class MatchDAO(BaseDAO):
     async def get_match_count_by_status(
         self,
         league_id: Optional[int] = None
-    ) -> Dict[str, int]:
+    ) -> dict[str, int]:
         """
         按状态统计比赛数量
 
@@ -393,7 +393,7 @@ class MatchDAO(BaseDAO):
             rows = result.all()
 
             # 转换为字典
-            status_counts = {status: count for status, count in rows}
+            status_counts = dict(rows)
 
             logger.debug(f"联赛{league_id or '全部'}比赛状态统计: {status_counts}")
             return status_counts

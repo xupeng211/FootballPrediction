@@ -50,7 +50,7 @@ async def test_data_collection():
                 continue
 
             # 检查数据内容
-            logger.info(f"✅ 成功获取比赛数据:")
+            logger.info("✅ 成功获取比赛数据:")
             logger.info(f"  - 比赛时间: {match_data.match_time}")
             logger.info(f"  - 主队: {match_data.home_team_name}")
             logger.info(f"  - 客队: {match_data.away_team_name}")

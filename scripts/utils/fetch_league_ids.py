@@ -40,7 +40,7 @@ class LeagueInfo:
     type: str  # "league" 或 "cup"
     search_query: str  # 用于搜索的查询字符串
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """转换为字典格式"""
         return {
             "name": self.name,
@@ -75,7 +75,7 @@ class FotMobLeagueFetcher:
         # 目标联赛配置
         self.target_leagues = self._get_target_leagues()
 
-    def _get_target_leagues(self) -> List[LeagueInfo]:
+    def _get_target_leagues(self) -> list[LeagueInfo]:
         """获取目标联赛配置列表"""
         return [
             # Tier 1 (Big 5 & European Elites)
@@ -135,7 +135,7 @@ class FotMobLeagueFetcher:
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1.5, min=2, max=10)
     )
-    async def _search_league(self, query: str) -> Optional[Dict]:
+    async def _search_league(self, query: str) -> Optional[dict]:
         """
         搜索联赛信息
 
@@ -184,7 +184,7 @@ class FotMobLeagueFetcher:
         logger.warning(f"❌ 搜索失败: {query}, 尝试备用方案")
         return await self._fallback_league_search(query)
 
-    async def _fallback_league_search(self, query: str) -> Optional[Dict]:
+    async def _fallback_league_search(self, query: str) -> Optional[dict]:
         """
         备用搜索方案 - 使用已知的FotMob联赛ID
 
@@ -229,7 +229,7 @@ class FotMobLeagueFetcher:
 
         return None
 
-    def _extract_league_id(self, search_result: Dict, league_info: LeagueInfo) -> Optional[int]:
+    def _extract_league_id(self, search_result: dict, league_info: LeagueInfo) -> Optional[int]:
         """
         从搜索结果中提取联赛ID
 
@@ -276,7 +276,7 @@ class FotMobLeagueFetcher:
 
         return None
 
-    async def fetch_all_league_ids(self) -> List[LeagueInfo]:
+    async def fetch_all_league_ids(self) -> list[LeagueInfo]:
         """
         获取所有目标联赛的ID
 
@@ -329,7 +329,7 @@ class FotMobLeagueFetcher:
 
         return updated_leagues
 
-    def save_config(self, leagues: List[LeagueInfo], output_path: str = "config/target_leagues.json"):
+    def save_config(self, leagues: list[LeagueInfo], output_path: str = "config/target_leagues.json"):
         """
         保存联赛配置到JSON文件
 
@@ -368,7 +368,7 @@ class FotMobLeagueFetcher:
             json.dump(config, f, indent=2, ensure_ascii=False)
 
         logger.info(f"✅ 配置文件已保存: {output_path}")
-        logger.info(f"📊 统计信息:")
+        logger.info("📊 统计信息:")
         for tier, stats in sorted(tier_stats.items()):
             logger.info(f"   Tier {tier}: {stats['successful']}/{stats['total']} 成功")
 

@@ -9,7 +9,7 @@ DAO Layer Pydantic Schema Definitions
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class MatchBase(BaseModel):
@@ -27,7 +27,8 @@ class MatchBase(BaseModel):
     home_score: Optional[int] = Field(0, description="主队得分")
     away_score: Optional[int] = Field(0, description="客队得分")
 
-    @validator('status')
+    @field_validator('status')
+    @classmethod
     def validate_status(cls, v):
         """验证比赛状态"""
         allowed_statuses = ['scheduled', 'live', 'finished', 'postponed', 'cancelled']
@@ -57,7 +58,8 @@ class MatchUpdate(BaseModel):
     home_score: Optional[int] = None
     away_score: Optional[int] = None
 
-    @validator('status')
+    @field_validator('status')
+    @classmethod
     def validate_status(cls, v):
         """验证比赛状态"""
         if v is None:
@@ -113,7 +115,8 @@ class OddsBase(BaseModel):
     data_quality_score: Optional[Decimal] = Field(None, ge=0.0, le=1.0, description="数据质量分数")
     source_reliability: Optional[str] = Field(None, max_length=20, description="数据源可靠性")
 
-    @validator('bookmaker')
+    @field_validator('bookmaker')
+    @classmethod
     def validate_bookmaker(cls, v):
         """验证博彩公司名称"""
         allowed_bookmakers = [
@@ -128,7 +131,8 @@ class OddsBase(BaseModel):
             logger.warning(f"未知博彩公司: {v}，请确认数据来源可靠性")
         return v
 
-    @validator('home_win', 'draw', 'away_win')
+    @field_validator('home_win', 'draw', 'away_win')
+    @classmethod
     def validate_odds_range(cls, v):
         """验证赔率范围合理性"""
         if v is not None:
@@ -146,7 +150,8 @@ class OddsCreate(OddsBase):
     bet_type: Optional[str] = Field(None, max_length=50, description="投注类型")
     odds_value: Optional[Decimal] = Field(None, ge=1.0, le=1000.0, description="原始赔率值")
 
-    @validator('last_updated')
+    @field_validator('last_updated')
+    @classmethod
     def validate_last_updated_not_future(cls, v):
         """验证最后更新时间不能是未来"""
         if v > datetime.utcnow():
@@ -181,7 +186,7 @@ class OddsResponse(OddsBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     is_active: bool = True
-    price_movement: Optional[Dict[str, Any]] = None
+    price_movement: Optional[dict[str, Any]] = None
 
     class Config:
         from_attributes = True
@@ -245,13 +250,14 @@ class MarketAnalysisBase(BaseModel):
 
     # 新增市场分析字段
     market_efficiency: Optional[Decimal] = Field(None, ge=0.0, le=1.0, description="市场效率")
-    implied_probabilities: Optional[Dict[str, Decimal]] = Field(None, description="隐含概率")
+    implied_probabilities: Optional[dict[str, Decimal]] = Field(None, description="隐含概率")
     market_bias: Optional[str] = Field(None, max_length=20, description="市场偏差")
     arbitrage_opportunity: bool = Field(default=False, description="套利机会")
     total_volume_analyzed: Optional[Decimal] = Field(None, ge=0, description="分析的总交易量")
-    volatility_analysis: Optional[Dict[str, Any]] = Field(None, description="波动性分析")
+    volatility_analysis: Optional[dict[str, Any]] = Field(None, description="波动性分析")
 
-    @validator('bet_type')
+    @field_validator('bet_type')
+    @classmethod
     def validate_bet_type(cls, v):
         """验证投注类型"""
         allowed_types = [

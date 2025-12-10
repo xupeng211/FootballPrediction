@@ -133,7 +133,7 @@ class DirectSQLBenchmarkDataSeeder:
             """
 
             try:
-                result = await conn.execute(query)
+                await conn.execute(query)
                 success_count = len(teams)  # 假设都成功，简化逻辑
                 print(f"✅ 成功保存 {success_count} 个球队")
             except Exception as e:
@@ -298,7 +298,6 @@ class DirectSQLBenchmarkDataSeeder:
         }
 
         # 保存报告
-        report_path = "/app/artifacts/benchmark_seeding_report.json"
 
         try:
             # 在容器内创建文件
@@ -370,7 +369,7 @@ class DirectSQLBenchmarkDataSeeder:
             matches_saved = await self.save_matches_to_db(matches)
 
             # 生成报告
-            report = await self.generate_summary_report()
+            await self.generate_summary_report()
 
             # 验证数据
             verification_passed = await self.verify_data()

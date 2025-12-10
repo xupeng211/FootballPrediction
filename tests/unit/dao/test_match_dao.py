@@ -187,7 +187,7 @@ class TestMatchDAO:
     # ==================== 业务方法测试 ====================
 
     @pytest.mark.asyncio
-    async def test_get_upcoming_matches(self, match_dao: MatchDAO, sample_matches: List[dict]):
+    async def test_get_upcoming_matches(self, match_dao: MatchDAO, sample_matches: list[dict]):
         """测试获取即将开始的比赛"""
         # 创建测试数据
         now = datetime.utcnow()
@@ -211,7 +211,7 @@ class TestMatchDAO:
             assert match.match_time <= now + timedelta(hours=12)
 
     @pytest.mark.asyncio
-    async def test_get_upcoming_matches_with_league_filter(self, match_dao: MatchDAO, sample_matches: List[dict]):
+    async def test_get_upcoming_matches_with_league_filter(self, match_dao: MatchDAO, sample_matches: list[dict]):
         """测试按联赛过滤获取即将开始的比赛"""
         # 创建测试数据
         for match_data in sample_matches:
@@ -227,7 +227,7 @@ class TestMatchDAO:
             assert match.status in ['scheduled', 'postponed']
 
     @pytest.mark.asyncio
-    async def test_get_matches_by_league(self, match_dao: MatchDAO, sample_matches: List[dict]):
+    async def test_get_matches_by_league(self, match_dao: MatchDAO, sample_matches: list[dict]):
         """测试根据联赛获取比赛"""
         # 创建测试数据
         for match_data in sample_matches:

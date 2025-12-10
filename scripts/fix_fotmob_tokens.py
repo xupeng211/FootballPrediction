@@ -63,7 +63,7 @@ def update_env_file(mas_token: str, foo_token: str):
 
     try:
         # 读取现有.env文件
-        with open(env_path, 'r', encoding='utf-8') as f:
+        with open(env_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         # 更新令牌

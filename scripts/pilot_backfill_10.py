@@ -372,7 +372,7 @@ class PilotBackfill10:
                                 referee = env.get("referee", {})
                                 weather = env.get("weather", {})
                                 managers = env.get("managers", {})
-                                venue_info = env.get("venue", {})
+                                env.get("venue", {})
 
                                 if referee and referee.get("name"):
                                     logger.info(f"   🌍 裁判: {referee.get('name')} ({referee.get('country')}) ✅")
@@ -423,7 +423,7 @@ class PilotBackfill10:
                                 round_info = info.get("round_info", {})
 
                                 if league_table:
-                                    logger.info(f"   🎯 战意信息: ✅ 联赛排名数据")
+                                    logger.info("   🎯 战意信息: ✅ 联赛排名数据")
                                 if round_info:
                                     logger.info(f"   🎯 战意信息: ✅ 轮次信息 ({round_info.get('round_name')})")
                             else:

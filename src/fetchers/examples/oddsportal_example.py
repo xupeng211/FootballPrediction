@@ -214,13 +214,13 @@ async def example_service_integration():
         # logger.info(f"OddsService 处理结果: {result.to_dict()}")
 
         # 显示数据摘要
-        market_types = set(odds.market_type for odds in odds_data_list)
-        bookmakers = set(odds.bookmaker for odds in odds_data_list)
+        market_types = {odds.market_type for odds in odds_data_list}
+        bookmakers = {odds.bookmaker for odds in odds_data_list}
 
-        logger.info(f"数据摘要:")
+        logger.info("数据摘要:")
         logger.info(f"  - 市场类型: {', '.join(market_types)}")
         logger.info(f"  - 博彩公司: {', '.join(bookmakers)}")
-        logger.info(f"  - 数据已准备就绪，可传递给OddsService处理")
+        logger.info("  - 数据已准备就绪，可传递给OddsService处理")
 
     except Exception as e:
         logger.error(f"OddsService集成示例失败: {e}")
@@ -238,7 +238,7 @@ async def example_fetcher_info():
         # 显示OddsPortal的详细信息
         metadata = FetcherFactory.get_metadata("oddsportal")
         if metadata:
-            logger.info(f"OddsPortal 获取器信息:")
+            logger.info("OddsPortal 获取器信息:")
             logger.info(f"  - 描述: {metadata['description']}")
             logger.info(f"  - 版本: {metadata['version']}")
             logger.info(f"  - 支持的市场: {metadata.get('supported_markets', [])}")
@@ -246,7 +246,7 @@ async def example_fetcher_info():
 
         # 创建获取器实例并查看其配置
         fetcher = FetcherFactory.create("oddsportal", timeout=15, max_retries=2)
-        logger.info(f"获取器配置:")
+        logger.info("获取器配置:")
         logger.info(f"  - 源名称: {fetcher.source_name}")
         logger.info(f"  - 基础URL: {fetcher.base_url}")
         logger.info(f"  - 超时时间: {fetcher.timeout}秒")

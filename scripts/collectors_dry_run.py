@@ -273,7 +273,7 @@ class DryRunTester:
             start_time = time.monotonic()
 
             tasks = []
-            for i in range(5):  # 5个并发请求
+            for _i in range(5):  # 5个并发请求
                 task = asyncio.create_task(collector.check_health())
                 tasks.append(task)
 

@@ -82,7 +82,7 @@ class OddsFetchRequest(BaseModel):
 class OddsStatsResponse(BaseModel):
     """赔率统计响应模型"""
     total_odds: int
-    active_bookmakers: List[str]
+    active_bookmakers: list[str]
     latest_update: Optional[datetime]
     avg_home_win: Optional[float]
     avg_draw: Optional[float]
@@ -102,7 +102,7 @@ async def get_odds_service(session: AsyncSession = Depends(get_db_session)) -> O
 
 @router.get(
     "/matches/{match_id}",
-    response_model=StandardResponse[List[OddsResponse]],
+    response_model=StandardResponse[list[OddsResponse]],
     summary="获取比赛赔率",
     description="获取指定比赛的所有可用赔率数据，支持按博彩公司过滤"
 )
@@ -113,7 +113,7 @@ async def get_match_odds(
     limit: int = Query(50, description="返回记录数限制", ge=1, le=1000),
     offset: int = Query(0, description="分页偏移量", ge=0),
     odds_service: OddsService = Depends(get_odds_service)
-) -> StandardResponse[List[OddsResponse]]:
+) -> StandardResponse[list[OddsResponse]]:
     """
     获取比赛赔率数据
 
@@ -159,7 +159,7 @@ async def get_match_odds(
 
         logger.info(f"成功获取赔率数据: count={len(odds_response)}")
 
-        return StandardResponse[List[OddsResponse]](
+        return StandardResponse[list[OddsResponse]](
             success=True,
             message=f"成功获取比赛 {match_id} 的赔率数据",
             data=odds_response,
@@ -251,7 +251,7 @@ async def fetch_match_odds(
 
 @router.get(
     "/history/{odds_id}",
-    response_model=StandardResponse[List[OddsHistoryResponse]],
+    response_model=StandardResponse[list[OddsHistoryResponse]],
     summary="获取赔率历史",
     description="获取特定赔率记录的历史变动信息"
 )
@@ -259,7 +259,7 @@ async def get_odds_history(
     odds_id: int = Path(..., description="赔率记录ID", ge=1),
     limit: int = Query(50, description="返回记录数限制", ge=1, le=1000),
     odds_service: OddsService = Depends(get_odds_service)
-) -> StandardResponse[List[OddsHistoryResponse]]:
+) -> StandardResponse[list[OddsHistoryResponse]]:
     """
     获取赔率历史变动
 
@@ -296,7 +296,7 @@ async def get_odds_history(
 
         logger.info(f"成功获取赔率历史: count={len(history_response)}")
 
-        return StandardResponse[List[OddsHistoryResponse]](
+        return StandardResponse[list[OddsHistoryResponse]](
             success=True,
             message=f"成功获取赔率 {odds_id} 的历史变动",
             data=history_response,
@@ -361,7 +361,7 @@ async def get_match_odds_stats(
             )
         else:
             # 计算统计信息
-            bookmakers = list(set(record.bookmaker for record in odds_records if record.bookmaker))
+            bookmakers = list({record.bookmaker for record in odds_records if record.bookmaker})
             home_wins = [record.home_win for record in odds_records if record.home_win]
             draws = [record.draw for record in odds_records if record.draw]
             away_wins = [record.away_win for record in odds_records if record.away_win]
@@ -396,13 +396,13 @@ async def get_match_odds_stats(
 
 @router.get(
     "/bookmakers",
-    response_model=StandardResponse[List[str]],
+    response_model=StandardResponse[list[str]],
     summary="获取博彩公司列表",
     description="获取系统中所有可用的博彩公司列表"
 )
 async def get_bookmakers(
     odds_service: OddsService = Depends(get_odds_service)
-) -> StandardResponse[List[str]]:
+) -> StandardResponse[list[str]]:
     """
     获取博彩公司列表
 
@@ -420,7 +420,7 @@ async def get_bookmakers(
 
         logger.info(f"成功获取博彩公司列表: count={len(bookmakers)}")
 
-        return StandardResponse[List[str]](
+        return StandardResponse[list[str]](
             success=True,
             message="成功获取博彩公司列表",
             data=bookmakers,

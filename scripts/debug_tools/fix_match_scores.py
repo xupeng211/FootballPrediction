@@ -64,7 +64,7 @@ class MatchScoreFixer:
             self.db_conn.close()
         logger.info("✅ 比分修复器关闭完成")
 
-    async def get_match_details(self, fotmob_id: str) -> Optional[Dict[str, Any]]:
+    async def get_match_details(self, fotmob_id: str) -> Optional[dict[str, Any]]:
         """获取比赛详情数据"""
         api_url = f"https://www.fotmob.com/api/matchDetails?matchId={fotmob_id}"
 
@@ -82,7 +82,7 @@ class MatchScoreFixer:
             logger.error(f"❌ 获取比赛 {fotmob_id} 详情异常: {e}")
             return None
 
-    def extract_match_score(self, match_details: Dict[str, Any]) -> Optional[Tuple[int, int]]:
+    def extract_match_score(self, match_details: dict[str, Any]) -> Optional[tuple[int, int]]:
         """从比赛详情中提取比分"""
         try:
             header = match_details.get('header', {})
@@ -110,7 +110,7 @@ class MatchScoreFixer:
             logger.error(f"❌ 提取比分异常: {e}")
             return None
 
-    def get_matches_to_fix(self) -> List[Dict[str, Any]]:
+    def get_matches_to_fix(self) -> list[dict[str, Any]]:
         """获取需要修复比分的比赛"""
         try:
             with self.db_conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -160,7 +160,7 @@ class MatchScoreFixer:
             if 'conn' in locals():
                 conn.close()
 
-    async def fix_match_scores(self) -> Dict[str, Any]:
+    async def fix_match_scores(self) -> dict[str, Any]:
         """修复所有比赛比分"""
         logger.info("🔄 开始修复比赛比分...")
 

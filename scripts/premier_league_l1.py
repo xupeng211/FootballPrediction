@@ -46,7 +46,7 @@ class PremierLeagueCollector:
             host='db'
         )
 
-    async def fetch_premier_league_matches(self) -> Optional[List[Dict]]:
+    async def fetch_premier_league_matches(self) -> Optional[list[dict]]:
         """获取英超比赛数据"""
         try:
             async with httpx.AsyncClient(timeout=30) as client:
@@ -68,14 +68,14 @@ class PremierLeagueCollector:
                         logger.info(f"✅ 找到 {len(matches)} 场英超比赛")
                         return matches
 
-                logger.error(f"❌ 未找到比赛数据")
+                logger.error("❌ 未找到比赛数据")
                 return None
 
         except Exception as e:
             logger.error(f"❌ 获取英超数据失败: {e}")
             return None
 
-    async def save_premier_league_data(self, matches: List[Dict]) -> bool:
+    async def save_premier_league_data(self, matches: list[dict]) -> bool:
         """保存英超数据到数据库"""
         try:
             conn = await self.get_db_connection()

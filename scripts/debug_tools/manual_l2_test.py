@@ -22,7 +22,7 @@ async def test_single_match():
     # 使用数据库中找到的真实比赛ID
     TEST_MATCH_ID = "87_14_5608"  # 从数据库中获取的ID
 
-    print(f"🚀 开始L2采集测试")
+    print("🚀 开始L2采集测试")
     print(f"📊 测试比赛ID: {TEST_MATCH_ID}")
     print("="*50)
 
@@ -66,7 +66,7 @@ async def test_single_match():
                 if 'away_team_name' in match_data.match_info:
                     print(f"  客队名称: {match_data.match_info['away_team_name']}")
 
-            print(f"\n🎯 Super Greedy Mode 环境数据:")
+            print("\n🎯 Super Greedy Mode 环境数据:")
             if match_data.environment_json:
                 env = match_data.environment_json
                 print(f"  裁判信息: {bool(env.get('referee'))}")
@@ -76,7 +76,7 @@ async def test_single_match():
 
             # 显示采集器统计
             stats = collector.get_stats()
-            print(f"\n📈 采集器统计:")
+            print("\n📈 采集器统计:")
             print(f"  请求次数: {stats['requests_made']}")
             print(f"  成功请求: {stats['successful_requests']}")
             print(f"  数据大小: {stats['total_data_size']} 字节")

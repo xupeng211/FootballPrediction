@@ -17,7 +17,7 @@ class DAOException(Exception):
     def __init__(
         self,
         message: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
         original_exception: Optional[Exception] = None
     ):
         self.message = message
@@ -25,7 +25,7 @@ class DAOException(Exception):
         self.original_exception = original_exception
         super().__init__(self.message)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式，便于API响应"""
         return {
             "error_type": self.__class__.__name__,
@@ -81,7 +81,7 @@ class ValidationError(DAOException):
     当数据不符合模型验证规则时抛出。
     """
 
-    def __init__(self, model: str, validation_errors: Dict[str, Any], message: Optional[str] = None):
+    def __init__(self, model: str, validation_errors: dict[str, Any], message: Optional[str] = None):
         self.model = model
         self.validation_errors = validation_errors
         if not message:

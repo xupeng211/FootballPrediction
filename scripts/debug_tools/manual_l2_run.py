@@ -78,7 +78,7 @@ async def main():
                     match_data = await collector.collect_match_details(fotmob_id)
 
                     if match_data:
-                        logger.info(f"✅ 数据采集成功")
+                        logger.info("✅ 数据采集成功")
                         logger.info(f"   xG: 主队{match_data.xg_home} vs 客队{match_data.xg_away}")
                         logger.info(f"   比分: {match_data.home_score}-{match_data.away_score}")
                         logger.info(f"   状态: {match_data.status}")
@@ -119,9 +119,9 @@ async def main():
                         })
 
                         await session.commit()
-                        logger.info(f"✅ 数据库更新成功")
+                        logger.info("✅ 数据库更新成功")
                     else:
-                        logger.warning(f"⚠️ 数据采集失败")
+                        logger.warning("⚠️ 数据采集失败")
 
                 except Exception as e:
                     logger.error(f"❌ 处理失败 {fotmob_id}: {e}")

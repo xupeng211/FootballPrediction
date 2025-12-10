@@ -147,7 +147,6 @@ class FotMobAPICollector:
             )
 
             # 配置代理（如果启用）
-            proxies = None
             # 注意：暂时禁用代理以避免异步调用问题
             # if self.proxy_pool:
             #     proxy = await self.proxy_pool.get_proxy()
@@ -602,7 +601,7 @@ class FotMobAPICollector:
                     "away_team": unavailable.get("awayTeam", [])
                 }
 
-            logger.debug(f"👥 完整阵容提取成功")
+            logger.debug("👥 完整阵容提取成功")
             return full_lineups
 
         except Exception as e:
@@ -680,7 +679,7 @@ class FotMobAPICollector:
             # 🔍 调试日志：显示主客队信息提取情况
             logger.info(f"🎯 战意上下文主客队: 主队={motivation_context['home_team_name']}({motivation_context['home_team_id']}), 客队={motivation_context['away_team_name']}({motivation_context['away_team_id']})")
 
-            logger.debug(f"🎯 战意上下文提取成功")
+            logger.debug("🎯 战意上下文提取成功")
             return motivation_context
 
         except Exception as e:
@@ -713,7 +712,7 @@ class FotMobAPICollector:
             # 记录赔率获取时间
             if odds_data:
                 odds_data["snapshot_time"] = datetime.now().isoformat()
-                logger.debug(f"💰 赔率快照提取成功")
+                logger.debug("💰 赔率快照提取成功")
             else:
                 logger.debug("📊 未找到赔率数据")
 
@@ -797,7 +796,7 @@ class FotMobAPICollector:
             }
 
             # 📅 比赛时间上下文
-            match_time = general.get("status", {})
+            general.get("status", {})
             environment_data["time_context"] = {
                 "match_date": general.get("startDate", {}).get("date"),
                 "match_time": general.get("startDate", {}).get("time"),
@@ -958,7 +957,7 @@ class FotMobAPICollector:
                     match_data.xg_away = xg_data.get("away", 0.0)
                     logger.info(f"✅ 使用旧stats结构赋值xG数据: 主队={match_data.xg_home}, 客队={match_data.xg_away}")
                 else:
-                    logger.warning(f"⚠️ 未找到任何xG数据，保持默认值0.0")
+                    logger.warning("⚠️ 未找到任何xG数据，保持默认值0.0")
 
             # 🔧 修复: referee数据从environment_json中提取
             if match_data.environment_json and "referee" in match_data.environment_json:
@@ -1206,13 +1205,6 @@ class FotMobAPICollector:
             logger.warning(f"⚠️ 无法解析比赛时间，状态: {status_text}")
 
             # 将时间信息存储在match_info中作为备注
-            time_context = {
-                "time_sources": found_times,
-                "status_text": status_text,
-                "status_long": status_long,
-                "parsing_failed": True,
-                "fallback_applied": True
-            }
 
             return None
 

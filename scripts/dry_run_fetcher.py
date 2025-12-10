@@ -50,7 +50,7 @@ async def test_http_client():
 
             # 获取统计信息
             stats = client.get_stats()
-            print(f"  📈 请求统计:")
+            print("  📈 请求统计:")
             print(f"     - 总请求数: {stats.get('requests_made', 0)}")
             print(f"     - 成功请求: {stats.get('successful_requests', 0)}")
             print(f"     - 失败请求: {stats.get('failed_requests', 0)}")
@@ -76,7 +76,7 @@ async def test_odds_parser():
             print(f"  ❌ 样本文件不存在: {sample_file}")
             return False
 
-        with open(sample_file, 'r', encoding='utf-8') as f:
+        with open(sample_file, encoding='utf-8') as f:
             html_content = f.read()
 
         # 创建解析器并测试
@@ -109,7 +109,7 @@ async def test_odds_parser():
         print(f"  🏛️ 博彩公司分布: {bookmaker_stats}")
 
         # 显示前3条记录
-        print(f"  📋 前3条记录:")
+        print("  📋 前3条记录:")
         for i, odds in enumerate(validated_odds[:3], 1):
             print(f"     {i}. {odds['bookmaker']} | {odds['market']} | {odds['selection']} | {odds['odds']}")
 
@@ -175,7 +175,7 @@ async def test_odds_fetcher_modes():
             # 获取元数据
             metadata = fetcher._metadata.get(test_match_id)
             if metadata:
-                print(f"    📊 操作元数据:")
+                print("    📊 操作元数据:")
                 print(f"       - 成功: {metadata.success}")
                 print(f"       - 记录数: {metadata.record_count}")
                 print(f"       - 处理时间: {metadata.processing_time_ms:.2f}ms")
@@ -185,7 +185,7 @@ async def test_odds_fetcher_modes():
             results['real'] = len(real_odds)
 
         # 对比结果
-        print(f"  📈 模式对比:")
+        print("  📈 模式对比:")
         print(f"     - Mock 模式: {results.get('mock', 0)} 条记录")
         print(f"     - 真实模式: {results.get('real', 0)} 条记录")
 
@@ -237,7 +237,7 @@ async def test_integration_workflow():
                 market_types[market] = market_types.get(market, 0) + 1
                 bookmakers[bookmaker] = bookmakers.get(bookmaker, 0) + 1
 
-            print(f"  📊 获取结果分析:")
+            print("  📊 获取结果分析:")
             print(f"     - 市场类型: {market_types}")
             print(f"     - 博彩公司: {bookmakers}")
             print(f"     - 数据源: {odds_data[0].source if odds_data else 'None'}")

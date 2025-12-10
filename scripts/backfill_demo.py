@@ -116,7 +116,7 @@ class DemoBackfillEngine:
             return
 
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, encoding='utf-8') as f:
                 config = json.load(f)
 
             self.leagues = config.get("leagues", [])
@@ -126,7 +126,7 @@ class DemoBackfillEngine:
 
             # 显示前5个联赛作为示例
             print("📊 联赛示例:")
-            for i, league in enumerate(self.leagues[:5]):
+            for _i, league in enumerate(self.leagues[:5]):
                 tier_icon = "🏆" if league.get("tier") == 1 else "🥈" if league.get("tier") == 2 else "🥉"
                 print(f"  {tier_icon} {league.get('name')} (ID: {league.get('id')}, {league.get('country')})")
 
@@ -188,8 +188,8 @@ class DemoBackfillEngine:
 
         for league in self.leagues:
             country = league.get("country", "")
-            league_name = league.get("name", "Unknown")
-            league_id = league.get("id")
+            league.get("name", "Unknown")
+            league.get("id")
 
             # 确定大洲
             if country in EUROPEAN_COUNTRIES:
@@ -222,7 +222,7 @@ class DemoBackfillEngine:
         self.stats.total_matches = total_matches
 
         print("📊 任务生成统计:")
-        print(f"  🌍 按大洲分布:")
+        print("  🌍 按大洲分布:")
         for continent, count in continent_stats.items():
             if count > 0:
                 print(f"    {continent}: {count} 个联赛")

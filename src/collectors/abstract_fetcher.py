@@ -82,7 +82,7 @@ class OddsData(BaseModel):
     last_updated: Optional[datetime] = Field(None, description="最后更新时间")
 
     # 原始数据(保留完整数据源信息)
-    raw_data: Optional[Dict[str, Any]] = Field(None, description="原始数据")
+    raw_data: Optional[dict[str, Any]] = Field(None, description="原始数据")
 
     class Config:
         json_encoders = {
@@ -101,7 +101,7 @@ class AbstractFetcher(ABC):
     4. 资源管理约定
     """
 
-    def __init__(self, source_name: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, source_name: str, config: Optional[dict[str, Any]] = None):
         """
         初始化获取器
 
@@ -111,7 +111,7 @@ class AbstractFetcher(ABC):
         """
         self.source_name = source_name
         self.config = config or {}
-        self._metadata: Dict[str, FetchMetadata] = {}
+        self._metadata: dict[str, FetchMetadata] = {}
 
     @abstractmethod
     async def fetch_data(
@@ -119,7 +119,7 @@ class AbstractFetcher(ABC):
         resource_id: str,
         resource_type: Optional[ResourceType] = None,
         **kwargs
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         获取数据的核心抽象方法
 
@@ -145,7 +145,7 @@ class AbstractFetcher(ABC):
         self,
         match_id: str,
         **kwargs
-    ) -> List[OddsData]:
+    ) -> list[OddsData]:
         """
         获取赔率数据的专用方法
 
@@ -163,7 +163,7 @@ class AbstractFetcher(ABC):
         resource_id: str,
         resource_type: Optional[ResourceType] = None,
         **kwargs
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         获取单条记录的便捷方法
 
@@ -208,7 +208,7 @@ class AbstractFetcher(ABC):
         """获取数据源名称"""
         return self.source_name
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         """获取配置信息"""
         return self.config.copy()
 
@@ -236,7 +236,7 @@ class FetcherFactory:
     提供统一的获取器创建和管理接口
     """
 
-    _fetchers: Dict[str, type[AbstractFetcher]] = {}
+    _fetchers: dict[str, type[AbstractFetcher]] = {}
 
     @classmethod
     def register(cls, name: str, fetcher_class: type[AbstractFetcher]) -> None:
@@ -253,7 +253,7 @@ class FetcherFactory:
         cls._fetchers[name] = fetcher_class
 
     @classmethod
-    def create(cls, name: str, config: Optional[Dict[str, Any]] = None) -> AbstractFetcher:
+    def create(cls, name: str, config: Optional[dict[str, Any]] = None) -> AbstractFetcher:
         """
         创建获取器实例
 
@@ -271,7 +271,7 @@ class FetcherFactory:
         return fetcher_class(source_name=name, config=config or {})
 
     @classmethod
-    def list_available(cls) -> List[str]:
+    def list_available(cls) -> list[str]:
         """获取所有可用的获取器名称"""
         return list(cls._fetchers.keys())
 

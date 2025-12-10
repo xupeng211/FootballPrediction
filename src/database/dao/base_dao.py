@@ -16,10 +16,10 @@ from typing import (
     Dict,
     List,
     Union,
-    Sequence,
     Type,
     cast
 )
+from collections.abc import Sequence
 from datetime import datetime
 from contextlib import asynccontextmanager
 
@@ -43,7 +43,7 @@ try:
 except ImportError:
     # 如果异常模块不存在，提供基础定义
     class DAOException(Exception):
-        def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        def __init__(self, message: str, details: Optional[dict[str, Any]] = None):
             self.message = message
             self.details = details or {}
             super().__init__(self.message)
@@ -62,7 +62,7 @@ except ImportError:
             self.value = value
 
     class ValidationError(DAOException):
-        def __init__(self, model: str, validation_errors: Dict[str, Any]):
+        def __init__(self, model: str, validation_errors: dict[str, Any]):
             super().__init__(f"{model}数据验证失败")
             self.model = model
             self.validation_errors = validation_errors
@@ -96,7 +96,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     所有具体的DAO实现都应该继承此类并实现抽象方法。
     """
 
-    def __init__(self, model: Type[ModelType], session: AsyncSession):
+    def __init__(self, model: type[ModelType], session: AsyncSession):
         """
         初始化DAO实例
 
@@ -127,7 +127,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         self,
         id: Any,
         *,
-        options: Optional[List] = None,
+        options: Optional[list] = None,
         for_update: bool = False
     ) -> Optional[ModelType]:
         """
@@ -175,10 +175,10 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         *,
         skip: int = 0,
         limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         order_by: Optional[str] = None,
-        options: Optional[List] = None
-    ) -> List[ModelType]:
+        options: Optional[list] = None
+    ) -> list[ModelType]:
         """
         获取多条记录
 
@@ -366,7 +366,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
             if soft_delete and hasattr(db_obj, 'deleted_at'):
                 # 软删除
-                setattr(db_obj, 'deleted_at', datetime.utcnow())
+                db_obj.deleted_at = datetime.utcnow()
                 self.session.add(db_obj)
                 logger.info(f"软删除{self.model_name}记录成功: {id}")
             else:
@@ -387,7 +387,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     async def count(
         self,
         *,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[dict[str, Any]] = None
     ) -> int:
         """
         统计记录数量
@@ -423,7 +423,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     async def exists(
         self,
         *,
-        filters: Dict[str, Any]
+        filters: dict[str, Any]
     ) -> bool:
         """
         检查记录是否存在
@@ -461,9 +461,9 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     async def bulk_create(
         self,
         *,
-        objects_in: List[CreateSchemaType],
+        objects_in: list[CreateSchemaType],
         batch_size: int = 1000
-    ) -> List[ModelType]:
+    ) -> list[ModelType]:
         """
         批量创建记录
 
@@ -539,7 +539,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
     # ==================== 调试和监控 ====================
 
-    def get_query_info(self, query: Select) -> Dict[str, Any]:
+    def get_query_info(self, query: Select) -> dict[str, Any]:
         """
         获取查询信息（用于调试）
 

@@ -391,7 +391,7 @@ class FotmobDetailsCollector:
 
             # 检查是否成功捕获到认证头
             if headers_captured:
-                self.logger.info(f"🎉 成功拦截到动态令牌，更新self.dynamic_headers")
+                self.logger.info("🎉 成功拦截到动态令牌，更新self.dynamic_headers")
                 self.dynamic_headers = headers_found
 
                 # 更新base_headers以包含动态令牌
@@ -529,7 +529,7 @@ class FotmobDetailsCollector:
                                 "source": "odds_tab"
                             }
 
-                except Exception as e:
+                except Exception:
                     continue
 
         except Exception as e:
@@ -621,7 +621,7 @@ class FotmobDetailsCollector:
                                 "source": "text_pattern"
                             }
 
-                    except (ValueError, IndexError) as e:
+                    except (ValueError, IndexError):
                         continue
 
         except Exception as e:
@@ -701,17 +701,17 @@ class FotmobDetailsCollector:
         """
         # 🎯 关键改进：先确保有有效的动态令牌
         if not self.dynamic_headers or ('x-mas' not in self.dynamic_headers):
-            self.logger.info(f"🔄 尚未捕获动态令牌，先通过Playwright访问页面获取令牌...")
+            self.logger.info("🔄 尚未捕获动态令牌，先通过Playwright访问页面获取令牌...")
             await self._extract_odds_from_page(match_id)
 
             # 检查是否成功获取到令牌
             if not self.dynamic_headers or ('x-mas' not in self.dynamic_headers):
-                self.logger.error(f"❌ 无法获取动态API令牌，跳过API请求")
+                self.logger.error("❌ 无法获取动态API令牌，跳过API请求")
                 return None
             else:
-                self.logger.info(f"✅ 成功获取动态API令牌，开始API数据采集")
+                self.logger.info("✅ 成功获取动态API令牌，开始API数据采集")
         else:
-            self.logger.info(f"✅ 已有动态API令牌，直接进行API请求")
+            self.logger.info("✅ 已有动态API令牌，直接进行API请求")
 
         # 🔧 尝试多个API端点，寻找有效的接口
         endpoints = [

@@ -39,7 +39,7 @@ class AuditResult:
     """审计结果数据类"""
     check_name: str
     status: str  # "PASS", "FAIL", "WARNING"
-    details: Dict[str, Any]
+    details: dict[str, Any]
     execution_time: float
     error_message: Optional[str] = None
 
@@ -48,7 +48,7 @@ class DataAssetAuditor:
 
     def __init__(self):
         self.db_manager = None
-        self.results: List[AuditResult] = []
+        self.results: list[AuditResult] = []
 
     async def initialize(self):
         """初始化审计器"""
@@ -443,7 +443,7 @@ class DataAssetAuditor:
                 error_message=str(e)
             )
 
-    async def run_full_audit(self) -> Dict[str, Any]:
+    async def run_full_audit(self) -> dict[str, Any]:
         """执行完整的数据资产审计"""
         logger.info("🚀 开始执行完整的数据资产审计...")
 
@@ -495,7 +495,7 @@ class DataAssetAuditor:
 
         return summary
 
-    def generate_markdown_report(self, audit_summary: Dict[str, Any]) -> str:
+    def generate_markdown_report(self, audit_summary: dict[str, Any]) -> str:
         """生成Markdown格式的可视化报告"""
         report = []
         report.append("# 📊 数据资产盘点审计报告")
@@ -579,7 +579,7 @@ class DataAssetAuditor:
             "WARNING": "⚠️"
         }.get(status, "❓")
 
-    def _extract_key_metrics(self, check_name: str, details: Dict[str, Any]) -> str:
+    def _extract_key_metrics(self, check_name: str, details: dict[str, Any]) -> str:
         """提取关键指标用于表格显示"""
         if check_name == "Schema Integrity Check":
             json_cols = len(details.get("json_columns", []))

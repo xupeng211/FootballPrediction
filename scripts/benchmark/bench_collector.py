@@ -234,8 +234,7 @@ class CollectorBenchmarker:
         # 测试无RateLimiter的响应时间
         print("   📊 测试无限流时的响应时间...")
         start_time = time.time()
-        dummy_result = {"match_id": 1, "data": "test"}
-        no_limit_time = time.time() - start_time
+        time.time() - start_time
 
         # 测试有RateLimiter的限制效果
         print("   📊 测试有限流时的请求间隔...")

@@ -57,7 +57,7 @@ class L2WorkerDaemon:
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """加载配置"""
         return {
             "batch_size": int(os.getenv("L2_WORKER_BATCH_SIZE", "20")),
@@ -98,7 +98,7 @@ class L2WorkerDaemon:
             logger.info("✅ FotMob采集器初始化完成")
 
             # 输出配置信息
-            logger.info(f"📋 Worker配置:")
+            logger.info("📋 Worker配置:")
             logger.info(f"   批量大小: {self.config['batch_size']}")
             logger.info(f"   休眠间隔: {self.config['sleep_interval']}秒")
             logger.info(f"   最大并发: {self.config['max_concurrent']}")
@@ -122,7 +122,7 @@ class L2WorkerDaemon:
             result = await session.execute(query, {"limit": limit})
             return result.fetchall()
 
-    async def process_match_batch(self, matches: list) -> Dict[str, int]:
+    async def process_match_batch(self, matches: list) -> dict[str, int]:
         """处理一批比赛"""
         if not matches:
             return {"success": 0, "failed": 0}
@@ -132,7 +132,7 @@ class L2WorkerDaemon:
 
         logger.info(f"🔄 开始处理批次: {len(matches)} 场比赛")
 
-        for i, (fotmob_id, home_team_id, away_team_id) in enumerate(matches, 1):
+        for i, (fotmob_id, _home_team_id, _away_team_id) in enumerate(matches, 1):
             if not self.running:
                 logger.info("🛑 收到停止信号，中断批次处理")
                 break
@@ -223,7 +223,7 @@ class L2WorkerDaemon:
             logger.error(f"❌ 健康检查失败: {e}")
             return False
 
-    async def get_database_stats(self) -> Dict[str, Any]:
+    async def get_database_stats(self) -> dict[str, Any]:
         """获取数据库统计信息"""
         async with get_db_session() as session:
             # 总体统计
@@ -291,7 +291,7 @@ class L2WorkerDaemon:
 
                     if matches:
                         # 处理批次
-                        result = await self.process_match_batch(matches)
+                        await self.process_match_batch(matches)
 
                         # 打印进度
                         db_stats = await self.get_database_stats()

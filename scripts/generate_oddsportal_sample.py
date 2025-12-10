@@ -339,7 +339,7 @@ def generate_oddsportal_sample():
 
     print(f"✅ OddsPortal HTML 样本文件已生成: {output_file}")
     print(f"📄 文件大小: {output_file.stat().st_size} bytes")
-    print(f"🎯 文件用途: 用于离线测试 OddsPortalFetcher 和 OddsParser")
+    print("🎯 文件用途: 用于离线测试 OddsPortalFetcher 和 OddsParser")
 
     return output_file
 

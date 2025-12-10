@@ -175,7 +175,7 @@ class FotmobMatchMatcher:
                     match_time = match_status.get("utcTime", "无时间")
                     match_finished = match_status.get("finished", False)
                     match_started = match_status.get("started", False)
-                    logger.info(f"🔍 DEBUG: 匹配成功详情:")
+                    logger.info("🔍 DEBUG: 匹配成功详情:")
                     logger.info(f"   原始记录: {home_team} vs {away_team} (日期: {date_str})")
                     logger.info(f"   匹配结果: {result['home_team']} vs {result['away_team']}")
                     logger.info(f"   相似度: {best_similarity:.1f}% (阈值: {self.similarity_threshold}%)")
@@ -284,7 +284,7 @@ class FotmobMatchMatcher:
             if self.debug_mode:
                 logger.info(f"🔍 DEBUG: 总共获取 {len(all_matches)} 场比赛")
                 if all_matches:
-                    logger.info(f"🔍 DEBUG: 前3场比赛:")
+                    logger.info("🔍 DEBUG: 前3场比赛:")
                     for i, match in enumerate(all_matches[:3]):
                         home = match.get('home', {}).get('name', '未知')
                         away = match.get('away', {}).get('name', '未知')

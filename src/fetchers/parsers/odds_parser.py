@@ -54,7 +54,7 @@ class OddsData:
         self.odds = odds
         self.timestamp = timestamp or datetime.now()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "bookmaker": self.bookmaker,
@@ -186,7 +186,7 @@ class OddsParser:
         normalized = str(selection_str).lower().strip()
         return self.selection_mapping.get(normalized, selection_str.title())
 
-    def _parse_odds_table(self, table: Tag) -> List[OddsData]:
+    def _parse_odds_table(self, table: Tag) -> list[OddsData]:
         """
         解析赔率表格
 
@@ -218,7 +218,7 @@ class OddsParser:
 
         return odds_data
 
-    def _parse_div_based_odds(self, container: Tag) -> List[OddsData]:
+    def _parse_div_based_odds(self, container: Tag) -> list[OddsData]:
         """
         解析基于 div 的赔率数据
 
@@ -267,7 +267,7 @@ class OddsParser:
 
         return odds_data
 
-    def parse_match_page(self, html_content: str) -> List[Dict[str, Any]]:
+    def parse_match_page(self, html_content: str) -> list[dict[str, Any]]:
         """
         解析比赛页面的赔率数据
 
@@ -312,11 +312,11 @@ class OddsParser:
             result = [odds.to_dict() for odds in all_odds_data]
 
             self.logger.info(
-                f"✅ 赔率解析完成",
+                "✅ 赔率解析完成",
                 extra={
                     "total_odds": len(result),
-                    "unique_bookmakers": len(set(d["bookmaker"] for d in result)),
-                    "markets": list(set(d["market"] for d in result)),
+                    "unique_bookmakers": len({d["bookmaker"] for d in result}),
+                    "markets": list({d["market"] for d in result}),
                 }
             )
 
@@ -326,7 +326,7 @@ class OddsParser:
             self.logger.error(f"❌ 解析比赛页面失败: {e}")
             return []
 
-    def parse_multiple_matches(self, html_content: str) -> List[Dict[str, Any]]:
+    def parse_multiple_matches(self, html_content: str) -> list[dict[str, Any]]:
         """
         解析包含多个比赛赔率的页面
 
@@ -362,7 +362,7 @@ class OddsParser:
             result = [odds.to_dict() for odds in all_odds_data]
 
             self.logger.info(
-                f"✅ 多比赛赔率解析完成",
+                "✅ 多比赛赔率解析完成",
                 extra={
                     "matches_processed": len(match_containers),
                     "total_odds": len(result),
@@ -375,7 +375,7 @@ class OddsParser:
             self.logger.error(f"❌ 解析多比赛页面失败: {e}")
             return []
 
-    def validate_odds_data(self, odds_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def validate_odds_data(self, odds_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         验证和清理赔率数据
 
@@ -410,7 +410,7 @@ class OddsParser:
                 self.logger.error(f"❌ 验证赔率数据失败: {e}, 数据: {data}")
 
         self.logger.info(
-            f"✅ 赔率数据验证完成",
+            "✅ 赔率数据验证完成",
             extra={
                 "original_count": len(odds_data),
                 "valid_count": len(valid_data),

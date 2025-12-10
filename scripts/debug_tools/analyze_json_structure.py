@@ -13,7 +13,7 @@ def analyze_structure():
     print("="*60)
 
     # 读取调试文件
-    with open('debug_fotmob_response.json', 'r', encoding='utf-8') as f:
+    with open('debug_fotmob_response.json', encoding='utf-8') as f:
         debug_data = json.load(f)
 
     # 解析实际的内容JSON

@@ -88,7 +88,7 @@ class HistoricalDataCollector:
             self.db_conn.close()
         logger.info("✅ 历史数据采集器关闭完成")
 
-    async def get_season_data(self, league_id: int, season: str) -> Optional[Dict[Any, Any]]:
+    async def get_season_data(self, league_id: int, season: str) -> Optional[dict[Any, Any]]:
         """获取指定赛季的数据"""
         # 对赛季参数进行URL编码，确保斜杠正确传递
         import urllib.parse
@@ -112,7 +112,7 @@ class HistoricalDataCollector:
             logger.error(f"❌ 获取赛季 {season} 异常: {e}")
             return None
 
-    def extract_finished_matches(self, season_data: Dict[Any, Any]) -> List[Dict[str, Any]]:
+    def extract_finished_matches(self, season_data: dict[Any, Any]) -> list[dict[str, Any]]:
         """提取完赛比赛数据"""
         finished_matches = []
 
@@ -142,7 +142,7 @@ class HistoricalDataCollector:
             logger.error(f"❌ 提取完赛数据异常: {e}")
             return []
 
-    def save_teams_if_not_exists(self, teams_data: List[Dict[str, Any]]) -> Dict[int, int]:
+    def save_teams_if_not_exists(self, teams_data: list[dict[str, Any]]) -> dict[int, int]:
         """保存球队数据并返回ID映射"""
         team_mapping = {}
 
@@ -187,7 +187,7 @@ class HistoricalDataCollector:
 
         return team_mapping
 
-    def save_matches(self, matches_data: List[Dict[str, Any]], season: str) -> int:
+    def save_matches(self, matches_data: list[dict[str, Any]], season: str) -> int:
         """保存比赛数据"""
         saved_count = 0
 
@@ -303,7 +303,7 @@ class HistoricalDataCollector:
 
         return saved_count
 
-async def backfill_season(league_config: Dict[str, Any], season: str) -> Dict[str, Any]:
+async def backfill_season(league_config: dict[str, Any], season: str) -> dict[str, Any]:
     """回溯单个赛季的数据"""
     logger.info(f"🔄 开始回溯赛季: {season}")
 
@@ -341,7 +341,7 @@ async def main():
 
     results = []
 
-    for league_name, league_config in LEAGUE_CONFIG.items():
+    for _league_name, league_config in LEAGUE_CONFIG.items():
         logger.info(f"🏆 开始处理联赛: {league_config['name']}")
 
         for season in TARGET_SEASONS:

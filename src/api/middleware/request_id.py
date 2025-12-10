@@ -4,7 +4,7 @@
 
 import uuid
 from contextvars import ContextVar
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware

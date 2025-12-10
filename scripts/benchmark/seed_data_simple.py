@@ -257,8 +257,8 @@ class SimpleBenchmarkDataSeeder:
             "data_summary": {
                 "teams_count": len(self.teams),
                 "matches_count": len(self.matches),
-                "seasons": sorted(list(set(m["season_id"] for m in self.matches))),
-                "competitions": sorted(list(set(m["competition"] for m in self.matches))),
+                "seasons": sorted({m["season_id"] for m in self.matches}),
+                "competitions": sorted({m["competition"] for m in self.matches}),
                 "match_status": {
                     "completed": len([m for m in self.matches if m["status"] == "completed"]),
                     "scheduled": len([m for m in self.matches if m["status"] == "scheduled"])

@@ -116,7 +116,7 @@ class BackfillStats:
     successful_matches: int = 0
     failed_matches: int = 0
     start_time: datetime = None
-    errors_by_type: Dict[str, int] = None
+    errors_by_type: dict[str, int] = None
 
     def __post_init__(self):
         if self.errors_by_type is None:
@@ -159,7 +159,7 @@ class SeasonFormatGenerator:
     """赛季格式生成器 - 智能处理不同联赛的赛季格式"""
 
     @staticmethod
-    def generate_season_string(year: int, league_info: Dict[str, Any]) -> List[str]:
+    def generate_season_string(year: int, league_info: dict[str, Any]) -> list[str]:
         """
         生成赛季字符串列表，按优先级排序
         """
@@ -225,8 +225,8 @@ class IndustrialBackfillEngine:
         self.stats = BackfillStats()
         self.semaphore = asyncio.Semaphore(CONCURRENT_LIMIT)
         self.collector = None
-        self.processed_match_ids: Set[str] = set()
-        self.league_cache: Dict[int, Dict[str, Any]] = {}
+        self.processed_match_ids: set[str] = set()
+        self.league_cache: dict[int, dict[str, Any]] = {}
 
     async def initialize(self):
         """初始化回填引擎"""
@@ -272,7 +272,7 @@ class IndustrialBackfillEngine:
             logger.warning(f"⚠️ 预加载比赛ID失败，将跳过断点续传: {e}")
             self.processed_match_ids = set()
 
-    async def load_league_config(self) -> List[Dict[str, Any]]:
+    async def load_league_config(self) -> list[dict[str, Any]]:
         """加载联赛配置并应用硬编码补丁"""
         logger.info("📋 加载联赛配置...")
 
@@ -283,7 +283,7 @@ class IndustrialBackfillEngine:
             return []
 
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, encoding='utf-8') as f:
                 config = json.load(f)
 
             leagues = config.get("leagues", [])
@@ -301,7 +301,7 @@ class IndustrialBackfillEngine:
             return []
 
     # 🔧 修复: 这个方法没有异步操作，改为同步函数
-    def _apply_hardcoded_patches(self, leagues: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _apply_hardcoded_patches(self, leagues: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """应用硬编码补丁"""
         logger.info("🔧 应用硬编码补丁...")
 
@@ -327,7 +327,7 @@ class IndustrialBackfillEngine:
         return leagues
 
     # 其余方法保持不变...
-    async def fetch_league_matches(self, league_id: int, season: str) -> List[str]:
+    async def fetch_league_matches(self, league_id: int, season: str) -> list[str]:
         """获取联赛指定赛季的比赛ID列表"""
         try:
             # 这里应该调用 FotMob API 获取联赛赛程
@@ -349,7 +349,7 @@ class IndustrialBackfillEngine:
             logger.error(f"❌ 获取联赛 {league_id} 赛季 {season} 比赛列表失败: {e}")
             return []
 
-    async def process_match(self, match_id: str, league_info: Dict[str, Any]) -> bool:
+    async def process_match(self, match_id: str, league_info: dict[str, Any]) -> bool:
         """处理单个比赛 - 智能429避障版"""
         async with self.semaphore:  # 控制并发
             try:
@@ -406,7 +406,7 @@ class IndustrialBackfillEngine:
 
                     # 如果不是最后一次尝试，继续重试
                     if attempt < max_retries - 1:
-                        logger.info(f"🔄 Retrying after cooldown...")
+                        logger.info("🔄 Retrying after cooldown...")
                         continue
                     else:
                         logger.error(f"❌ Max retries exceeded for {match_id} after 429 errors")
@@ -419,7 +419,7 @@ class IndustrialBackfillEngine:
 
         return None
 
-    async def _save_match_data(self, match_data, league_info: Dict[str, Any]):
+    async def _save_match_data(self, match_data, league_info: dict[str, Any]):
         """保存比赛数据到数据库"""
         try:
             async with get_db_session() as session:
@@ -429,7 +429,7 @@ class IndustrialBackfillEngine:
                 )
                 if existing.fetchone():
                     # 更新现有记录
-                    update_query = f"""
+                    update_query = """
                     UPDATE matches SET
                         stats_json = :stats_json,
                         lineups_json = :lineups_json,
@@ -449,7 +449,7 @@ class IndustrialBackfillEngine:
                     })
                 else:
                     # 插入新记录
-                    insert_query = f"""
+                    insert_query = """
                     INSERT INTO matches (
                         fotmob_id, home_score, away_score, status, match_time,
                         venue, attendance, referee,
@@ -517,7 +517,7 @@ class IndustrialBackfillEngine:
             logger.error(f"❌ 回填流程执行失败: {e}")
             return False
 
-    async def _generate_backfill_tasks(self, leagues: List[Dict[str, Any]]) -> List[Tuple[str, Dict[str, Any]]]:
+    async def _generate_backfill_tasks(self, leagues: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
         """生成回填任务列表"""
         logger.info("📋 生成回填任务...")
 
@@ -548,7 +548,7 @@ class IndustrialBackfillEngine:
         logger.info(f"✅ 生成回填任务: {len(tasks)} 个")
         return tasks
 
-    async def _execute_backfill_tasks(self, tasks: List[Tuple[str, Dict[str, Any]]]):
+    async def _execute_backfill_tasks(self, tasks: list[tuple[str, dict[str, Any]]]):
         """执行回填任务"""
         logger.info("🚀 开始执行回填任务...")
 
@@ -618,12 +618,12 @@ class IndustrialBackfillEngine:
             rate_429_count = self.stats.errors_by_type.get("rate_limit_429", 0)
             if rate_429_count > 0:
                 total_429_cooldown = rate_429_count * RATE_LIMIT_COOLDOWN
-                logger.info(f"\n🛡️ 风控报告:")
+                logger.info("\n🛡️ 风控报告:")
                 logger.info(f"  429触发次数: {rate_429_count}")
                 logger.info(f"  总冷却时间: {total_429_cooldown//60}分{total_429_cooldown%60}秒")
                 logger.info(f"  平均处理速度: ~{self.stats.successful_matches / max(1, (self.stats.elapsed_time.total_seconds() - total_429_cooldown) / 3600):.0f}场/小时 (不含冷却时间)")
             else:
-                logger.info(f"\n🛡️ 风控报告: 未触发429限制，安全运行")
+                logger.info("\n🛡️ 风控报告: 未触发429限制，安全运行")
 
         logger.info("="*60)
         logger.info("🎉 全历史数据回填任务完成!")

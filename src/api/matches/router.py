@@ -59,13 +59,13 @@ class UpcomingMatchesParams(BaseModel):
 # API Routes
 # ============================================================================
 
-@router.get("/upcoming", response_model=StandardResponse[List[MatchResponse]])
+@router.get("/upcoming", response_model=StandardResponse[list[MatchResponse]])
 async def get_upcoming_matches(
     hours: int = Query(default=24, ge=1, le=168, description="未来小时数"),
     limit: int = Query(default=50, ge=1, le=100, description="返回数量限制"),
     league_id: Optional[int] = Query(default=None, description="联赛ID过滤"),
     session: AsyncSession = Depends(get_db_session)
-) -> StandardResponse[List[MatchResponse]]:
+) -> StandardResponse[list[MatchResponse]]:
     """
     获取即将开始的比赛列表
 
@@ -97,10 +97,10 @@ async def get_upcoming_matches(
         logger.error(f"获取即将开始的比赛失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取比赛数据失败: {str(e)}")
 
-@router.get("/live", response_model=StandardResponse[List[MatchResponse]])
+@router.get("/live", response_model=StandardResponse[list[MatchResponse]])
 async def get_live_matches(
     session: AsyncSession = Depends(get_db_session)
-) -> StandardResponse[List[MatchResponse]]:
+) -> StandardResponse[list[MatchResponse]]:
     """
     获取正在进行的比赛列表
 
@@ -128,13 +128,13 @@ async def get_live_matches(
         logger.error(f"获取正在进行的比赛失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取比赛数据失败: {str(e)}")
 
-@router.get("/search", response_model=StandardResponse[List[MatchResponse]])
+@router.get("/search", response_model=StandardResponse[list[MatchResponse]])
 async def search_matches(
     keyword: str = Query(..., min_length=2, max_length=50, description="搜索关键词"),
     league_id: Optional[int] = Query(default=None, description="联赛ID过滤"),
     limit: int = Query(default=50, ge=1, le=100, description="返回数量限制"),
     session: AsyncSession = Depends(get_db_session)
-) -> StandardResponse[List[MatchResponse]]:
+) -> StandardResponse[list[MatchResponse]]:
     """
     搜索比赛
 
@@ -193,7 +193,7 @@ async def get_match_by_id(
 
         return StandardResponse(
             success=True,
-            message=f"成功获取比赛详情",
+            message="成功获取比赛详情",
             data=match_response
         )
 
@@ -203,14 +203,14 @@ async def get_match_by_id(
         logger.error(f"获取比赛详情失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取比赛详情失败: {str(e)}")
 
-@router.get("/", response_model=StandardResponse[List[MatchResponse]])
+@router.get("/", response_model=StandardResponse[list[MatchResponse]])
 async def get_matches(
     league_id: Optional[int] = Query(default=None, description="联赛ID过滤"),
     status: Optional[str] = Query(default=None, description="比赛状态过滤"),
     skip: int = Query(default=0, ge=0, description="跳过数量"),
     limit: int = Query(default=50, ge=1, le=100, description="返回数量限制"),
     session: AsyncSession = Depends(get_db_session)
-) -> StandardResponse[List[MatchResponse]]:
+) -> StandardResponse[list[MatchResponse]]:
     """
     获取比赛列表
 

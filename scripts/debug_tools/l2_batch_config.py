@@ -35,7 +35,7 @@ MONITORING_CONFIG = {
     "stats_save_interval": 100,     # 每100场比赛保存统计
 }
 
-def get_config_for_environment(env: str = "production") -> Dict[str, Any]:
+def get_config_for_environment(env: str = "production") -> dict[str, Any]:
     """根据环境获取配置"""
     if env.lower() == "development":
         # 开发环境 - 更激进的设置

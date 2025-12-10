@@ -376,8 +376,8 @@ class BenchmarkDataSeeder:
                 "features_count": len(self.features)
             },
             "data_distribution": {
-                "seasons": sorted(list(set(m["season_id"] for m in self.matches))),
-                "competitions": sorted(list(set(m["competition"] for m in self.matches))),
+                "seasons": sorted({m["season_id"] for m in self.matches}),
+                "competitions": sorted({m["competition"] for m in self.matches}),
                 "match_status": {
                     "completed": len([m for m in self.matches if m["status"] == "completed"]),
                     "scheduled": len([m for m in self.matches if m["status"] == "scheduled"])

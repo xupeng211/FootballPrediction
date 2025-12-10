@@ -56,7 +56,7 @@ class MultiLeagueCollector:
             host='db'
         )
 
-    async def fetch_league_matches(self, league_info: Dict) -> Optional[List[Dict]]:
+    async def fetch_league_matches(self, league_info: dict) -> Optional[list[dict]]:
         """获取联赛比赛数据"""
         try:
             async with httpx.AsyncClient(timeout=30) as client:
@@ -85,7 +85,7 @@ class MultiLeagueCollector:
             logger.error(f"❌ 获取{league_info['name']}数据失败: {e}")
             return None
 
-    async def save_league_data(self, league_info: Dict, matches: List[Dict]) -> Dict[str, int]:
+    async def save_league_data(self, league_info: dict, matches: list[dict]) -> dict[str, int]:
         """保存联赛数据到数据库"""
         try:
             conn = await self.get_db_connection()
@@ -243,7 +243,7 @@ class MultiLeagueCollector:
             else:
                 logger.warning(f"⚠️ {league_info['name']}: 保存失败")
 
-        logger.info(f"\n🎉 多联赛采集完成!")
+        logger.info("\n🎉 多联赛采集完成!")
         logger.info(f"📊 总计: {total_stats['successful_leagues']}个联赛, {total_stats['total_matches']}场总比赛, {total_stats['future_matches']}场未来比赛")
 
         return total_stats["successful_leagues"] > 0

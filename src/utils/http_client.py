@@ -75,7 +75,7 @@ class AsyncHttpClient:
         }
 
         logger.info(
-            f"🌐 AsyncHttpClient 初始化完成",
+            "🌐 AsyncHttpClient 初始化完成",
             extra={
                 "timeout": timeout,
                 "max_retries": max_retries,
@@ -97,7 +97,7 @@ class AsyncHttpClient:
             )
         return self._client
 
-    def _get_random_headers(self, additional_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    def _get_random_headers(self, additional_headers: Optional[dict[str, str]] = None) -> dict[str, str]:
         """
         获取随机请求头
 
@@ -144,7 +144,7 @@ class AsyncHttpClient:
         max_delay = min(base_delay, 60.0)
 
         logger.debug(
-            f"🔄 计算重试延迟",
+            "🔄 计算重试延迟",
             extra={
                 "attempt": attempt,
                 "base_delay": base_delay,
@@ -192,7 +192,7 @@ class AsyncHttpClient:
             self.stats["total_response_time"] += response_time
 
             logger.debug(
-                f"📡 HTTP 请求完成",
+                "📡 HTTP 请求完成",
                 extra={
                     "method": method,
                     "url": url,
@@ -209,7 +209,7 @@ class AsyncHttpClient:
             self.stats["failed_requests"] += 1
 
             logger.warning(
-                f"❌ HTTP 请求失败",
+                "❌ HTTP 请求失败",
                 extra={
                     "method": method,
                     "url": url,
@@ -250,7 +250,7 @@ class AsyncHttpClient:
                         delay = self._calculate_retry_delay(attempt)
 
                         logger.warning(
-                            f"🔄 触发重试",
+                            "🔄 触发重试",
                             extra={
                                 "attempt": attempt,
                                 "max_retries": self.max_retries,
@@ -274,7 +274,7 @@ class AsyncHttpClient:
                     delay = self._calculate_retry_delay(attempt)
 
                     logger.warning(
-                        f"🔄 网络错误重试",
+                        "🔄 网络错误重试",
                         extra={
                             "attempt": attempt,
                             "max_retries": self.max_retries,
@@ -295,8 +295,8 @@ class AsyncHttpClient:
     async def get(
         self,
         url: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
         **kwargs
     ) -> httpx.Response:
         """
@@ -316,9 +316,9 @@ class AsyncHttpClient:
     async def post(
         self,
         url: str,
-        data: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        data: Optional[dict[str, Any]] = None,
+        json: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
         **kwargs
     ) -> httpx.Response:
         """
@@ -357,7 +357,7 @@ class AsyncHttpClient:
         response.encoding = encoding
         return response.text
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取客户端统计信息
 

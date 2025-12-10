@@ -34,7 +34,7 @@ class AuditResult:
     test_name: str
     status: str  # "PASS", "FAIL", "WARN"
     message: str
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[dict[str, Any]] = None
     timestamp: datetime = None
 
     def __post_init__(self):
@@ -45,12 +45,12 @@ class HybridHealthAuditor:
     """混合认证系统健康度审计器"""
 
     def __init__(self):
-        self.results: List[AuditResult] = []
+        self.results: list[AuditResult] = []
         self.league_fixtures = []
         self.sample_match = None
         self.auth_available = False
 
-    def add_result(self, phase: str, test_name: str, status: str, message: str, data: Optional[Dict[str, Any]] = None):
+    def add_result(self, phase: str, test_name: str, status: str, message: str, data: Optional[dict[str, Any]] = None):
         """添加审计结果"""
         result = AuditResult(phase=phase, test_name=test_name, status=status, message=message, data=data)
         self.results.append(result)
@@ -161,7 +161,7 @@ class HybridHealthAuditor:
             # 模拟网络延迟
             await asyncio.sleep(1.0)
 
-            print(f"🔄 正在获取英超 2024/2025 赛程数据...")
+            print("🔄 正在获取英超 2024/2025 赛程数据...")
 
             # 创建模拟的赛程数据
             self.league_fixtures = self._create_sample_fixtures()
@@ -175,7 +175,7 @@ class HybridHealthAuditor:
             self.add_result("L1", "模拟赛程获取", "FAIL", f"模拟测试失败: {e}")
             print(f"❌ 赛程获取失败: {e}")
 
-    def _create_sample_fixtures(self) -> List[Dict[str, Any]]:
+    def _create_sample_fixtures(self) -> list[dict[str, Any]]:
         """创建样本赛程数据"""
         return [
             {
@@ -333,7 +333,7 @@ class HybridHealthAuditor:
             self.add_result("L2", "模拟高阶数据", "FAIL", f"模拟数据采集异常: {e}")
             print(f"❌ 数据采集异常: {e}")
 
-    async def _create_enhanced_match_details(self, match_id: str) -> Dict[str, Any]:
+    async def _create_enhanced_match_details(self, match_id: str) -> dict[str, Any]:
         """创建增强的比赛详情数据 (Super Greedy Mode)"""
         # 创建全面的 Super Greedy Mode 数据
         return {
@@ -473,7 +473,7 @@ class HybridHealthAuditor:
             }
         }
 
-    async def _validate_match_details(self, match_data: Dict[str, Any], match_id: str):
+    async def _validate_match_details(self, match_data: dict[str, Any], match_id: str):
         """验证比赛详情数据"""
 
         print(f"\n🔍 验证比赛详情数据 (ID: {match_id}):")
@@ -706,7 +706,7 @@ class HybridHealthAuditor:
                     print(f"  {emoji} {result.test_name}: {result.message}")
 
         # Super Greedy Mode 数据维度检查
-        print(f"\n🔍 Super Greedy Mode 数据维度验证:")
+        print("\n🔍 Super Greedy Mode 数据维度验证:")
 
         dimensions = [
             ("🏛️ 裁判信息", "environment_json.referee", "✅"),

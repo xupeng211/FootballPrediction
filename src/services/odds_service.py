@@ -63,9 +63,9 @@ class OddsIngestionResult:
         self.validation_errors = validation_errors
         self.database_errors = database_errors
         self.processing_time_ms = processing_time_ms
-        self.errors: List[Dict[str, Any]] = []
+        self.errors: list[dict[str, Any]] = []
 
-    def add_error(self, error_type: str, error_message: str, data: Dict[str, Any] = None):
+    def add_error(self, error_type: str, error_message: str, data: dict[str, Any] = None):
         """记录错误信息"""
         self.errors.append({
             "error_type": error_type,
@@ -74,7 +74,7 @@ class OddsIngestionResult:
             "timestamp": datetime.now().isoformat()
         })
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "total_processed": self.total_processed,
@@ -108,7 +108,7 @@ class OddsService:
         self.match_dao = match_dao
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    async def ingest_odds_data(self, odds_data_list: List[OddsData]) -> OddsIngestionResult:
+    async def ingest_odds_data(self, odds_data_list: list[OddsData]) -> OddsIngestionResult:
         """
         处理赔率数据摄取
 
@@ -176,7 +176,7 @@ class OddsService:
         """
         self.logger.info(f"开始从数据源 '{source_name}' 获取比赛 '{match_id}' 的赔率数据")
 
-        start_time = datetime.now()
+        datetime.now()
 
         try:
             # 验证比赛是否存在
@@ -196,7 +196,7 @@ class OddsService:
 
             return result
 
-        except RecordNotFoundError as e:
+        except RecordNotFoundError:
             self.logger.warning(f"比赛不存在: {match_id}")
             raise
 
@@ -269,7 +269,7 @@ class OddsService:
             self.logger.error(f"创建数据获取器时发生错误: source_name={source_name}, error={e}")
             raise DatabaseConnectionError(f"创建数据获取器失败: {e}")
 
-    async def _fetch_odds_data(self, fetcher: AbstractFetcher, match_id: str) -> List[OddsData]:
+    async def _fetch_odds_data(self, fetcher: AbstractFetcher, match_id: str) -> list[OddsData]:
         """
         从获取器获取赔率数据
 
@@ -303,9 +303,9 @@ class OddsService:
 
     async def _preprocess_odds_data(
         self,
-        odds_data_list: List[OddsData],
+        odds_data_list: list[OddsData],
         result: OddsIngestionResult
-    ) -> List[OddsData]:
+    ) -> list[OddsData]:
         """
         预处理赔率数据
 

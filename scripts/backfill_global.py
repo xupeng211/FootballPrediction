@@ -335,7 +335,7 @@ class GlobalBackfillService:
             else:
                 # 其他情况，返回默认值
                 return "SCHEDULED"[:20]
-        except Exception as e:
+        except Exception:
             # 解析失败时的安全默认值
             return "UNKNOWN"[:20]
 

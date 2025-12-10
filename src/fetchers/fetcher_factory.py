@@ -33,14 +33,14 @@ class FetcherFactory:
     """
 
     # 注册表：存储获取器类和元数据
-    _registry: Dict[str, Type[AbstractFetcher]] = {}
-    _metadata: Dict[str, Dict[str, Any]] = {}
+    _registry: dict[str, type[AbstractFetcher]] = {}
+    _metadata: dict[str, dict[str, Any]] = {}
 
     @classmethod
     def register(
         cls,
         name: str,
-        fetcher_class: Type[AbstractFetcher],
+        fetcher_class: type[AbstractFetcher],
         description: Optional[str] = None,
         version: str = "1.0.0",
         **metadata
@@ -88,7 +88,7 @@ class FetcherFactory:
     def create(
         cls,
         name: str,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
         **kwargs
     ) -> AbstractFetcher:
         """
@@ -129,7 +129,7 @@ class FetcherFactory:
             raise FetcherError(f"创建获取器 {name} 失败: {e}")
 
     @classmethod
-    def list_available(cls) -> List[str]:
+    def list_available(cls) -> list[str]:
         """
         获取所有已注册的获取器名称列表
 
@@ -139,7 +139,7 @@ class FetcherFactory:
         return list(cls._registry.keys())
 
     @classmethod
-    def get_metadata(cls, name: str) -> Optional[Dict[str, Any]]:
+    def get_metadata(cls, name: str) -> Optional[dict[str, Any]]:
         """
         获取指定获取器的元数据
 
@@ -152,7 +152,7 @@ class FetcherFactory:
         return cls._metadata.get(name)
 
     @classmethod
-    def list_metadata(cls) -> Dict[str, Dict[str, Any]]:
+    def list_metadata(cls) -> dict[str, dict[str, Any]]:
         """
         获取所有获取器的元数据
 
@@ -194,7 +194,7 @@ class FetcherFactory:
         return name in cls._registry
 
     @classmethod
-    def get_registry_info(cls) -> Dict[str, Any]:
+    def get_registry_info(cls) -> dict[str, Any]:
         """
         获取注册表信息统计
 

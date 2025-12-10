@@ -93,7 +93,7 @@ async def audit_real_data():
             print(f"   完整度: {real_record.data_completeness}")
 
             # 基础信息验证
-            print(f"\n🏟️  基础信息验证:")
+            print("\n🏟️  基础信息验证:")
             print(f"   比赛: {real_record.home_team_name} vs {real_record.away_team_name}")
             print(f"   状态: {real_record.status}")
             print(f"   场地: {real_record.venue}")
@@ -104,7 +104,7 @@ async def audit_real_data():
                 return False
 
             # 深度验证 - 裁判信息
-            print(f"\n👨‍⚖️  裁判信息验证:")
+            print("\n👨‍⚖️  裁判信息验证:")
             environment_data = real_record.environment_json
             if environment_data and 'referee' in environment_data:
                 referee = environment_data['referee']
@@ -120,7 +120,7 @@ async def audit_real_data():
                 return False
 
             # 深度验证 - 天气信息
-            print(f"\n🌤️  天气信息验证:")
+            print("\n🌤️  天气信息验证:")
             if environment_data and 'weather' in environment_data:
                 weather = environment_data['weather']
                 if weather:
@@ -136,7 +136,7 @@ async def audit_real_data():
                 return False
 
             # 深度验证 - xG数据
-            print(f"\n📊 xG数据验证:")
+            print("\n📊 xG数据验证:")
             if real_record.home_xg is not None and real_record.away_xg is not None:
                 print(f"   ✅ 主队xG: {real_record.home_xg}")
                 print(f"   ✅ 客队xG: {real_record.away_xg}")
@@ -145,7 +145,7 @@ async def audit_real_data():
                 return False
 
             # 深度验证 - 详细统计数据
-            print(f"\n📈 详细统计数据验证:")
+            print("\n📈 详细统计数据验证:")
             stats_data = real_record.stats_json
             if stats_data:
                 print(f"   ✅ 控球率数据: 主队 {real_record.home_possession}% - 客队 {real_record.away_possession}%")
@@ -159,7 +159,7 @@ async def audit_real_data():
                 return False
 
             # 深度验证 - 阵容信息
-            print(f"\n👥 阵容信息验证:")
+            print("\n👥 阵容信息验证:")
             lineups_data = real_record.lineups_json
             if lineups_data:
                 home_team = lineups_data.get('home_team', {})
@@ -181,7 +181,7 @@ async def audit_real_data():
                 return False
 
             # 深度验证 - 比赛事件
-            print(f"\n⚽ 比赛事件验证:")
+            print("\n⚽ 比赛事件验证:")
             events_data = real_record.events
             if events_data and 'goals' in events_data:
                 goals = events_data['goals']
@@ -196,7 +196,7 @@ async def audit_real_data():
                 print("   ⚠️  没有进球事件数据")
 
             # 数据完整性评分
-            print(f"\n🎯 数据完整性评分:")
+            print("\n🎯 数据完整性评分:")
             checks = [
                 real_record.home_team_name and real_record.away_team_name,  # 基础信息
                 environment_data and 'referee' in environment_data,         # 裁判
@@ -223,11 +223,11 @@ async def audit_real_data():
                 audit_result = False
 
             # 显示真实数据样本
-            print(f"\n🔍 真实数据样本展示:")
-            print(f"   match_info 样本:")
+            print("\n🔍 真实数据样本展示:")
+            print("   match_info 样本:")
             format_json_print(real_record.match_info)
 
-            print(f"   environment_json 样本:")
+            print("   environment_json 样本:")
             format_json_print(environment_data)
 
             return audit_result

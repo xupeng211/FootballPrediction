@@ -29,7 +29,7 @@ class AuditResult:
     test_name: str
     status: str  # "PASS", "FAIL", "WARN"
     message: str
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[dict[str, Any]] = None
     timestamp: datetime = None
 
     def __post_init__(self):
@@ -40,11 +40,11 @@ class SystemHealthAuditor:
     """系统健康度审计器 - 独立版本"""
 
     def __init__(self):
-        self.results: List[AuditResult] = []
+        self.results: list[AuditResult] = []
         self.league_fixtures = []
         self.sample_match = None
 
-    def add_result(self, phase: str, test_name: str, status: str, message: str, data: Optional[Dict[str, Any]] = None):
+    def add_result(self, phase: str, test_name: str, status: str, message: str, data: Optional[dict[str, Any]] = None):
         """添加审计结果"""
         result = AuditResult(phase=phase, test_name=test_name, status=status, message=message, data=data)
         self.results.append(result)
@@ -78,7 +78,7 @@ class SystemHealthAuditor:
             # 模拟网络延迟
             await asyncio.sleep(1.0)
 
-            print(f"🔄 正在获取英超 2024/2025 赛程数据...")
+            print("🔄 正在获取英超 2024/2025 赛程数据...")
 
             # 创建模拟的赛程数据
             self.league_fixtures = self._create_sample_fixtures()
@@ -90,7 +90,7 @@ class SystemHealthAuditor:
             self.add_result("L1", "赛程获取", "FAIL", f"获取赛程失败: {e}")
             print(f"❌ 赛程获取失败: {e}")
 
-    def _create_sample_fixtures(self) -> List[Dict[str, Any]]:
+    def _create_sample_fixtures(self) -> list[dict[str, Any]]:
         """创建样本赛程数据"""
         return [
             {
@@ -218,7 +218,7 @@ class SystemHealthAuditor:
             self.add_result("L2", "数据采集", "FAIL", f"采集异常: {e}")
             print(f"❌ 数据采集异常: {e}")
 
-    async def _simulate_match_details(self, match_id: str) -> Dict[str, Any]:
+    async def _simulate_match_details(self, match_id: str) -> dict[str, Any]:
         """模拟采集比赛详情数据"""
         # 创建模拟的 Super Greedy Mode 数据
         return {
@@ -281,7 +281,7 @@ class SystemHealthAuditor:
             }
         }
 
-    async def _validate_match_details(self, match_data: Dict[str, Any], match_id: str):
+    async def _validate_match_details(self, match_data: dict[str, Any], match_id: str):
         """验证比赛详情数据"""
 
         print(f"\n🔍 验证比赛详情数据 (ID: {match_id}):")
@@ -448,7 +448,7 @@ class SystemHealthAuditor:
                     print(f"  {emoji} {result.test_name}: {result.message}")
 
         # 数据完整性检查
-        print(f"\n🔍 Super Greedy Mode 数据维度验证:")
+        print("\n🔍 Super Greedy Mode 数据维度验证:")
 
         # 模拟的数据维度检查
         dimensions = [

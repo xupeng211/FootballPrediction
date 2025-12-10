@@ -135,7 +135,7 @@ class SecretScanner:
                                 matches = list(pattern.finditer(line))
                             else:
                                 # 对于字符串，使用 re.finditer
-                                matches = [m for m in re.finditer(pattern, line)]
+                                matches = list(re.finditer(pattern, line))
 
                             for match in matches:
                                 findings.append({

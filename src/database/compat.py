@@ -27,7 +27,7 @@ from .async_manager import fetch_all, fetch_one, execute
 logger = logging.getLogger(__name__)
 
 
-def fetch_all_sync(query, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+def fetch_all_sync(query, params: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
     """
     同步版本的 fetch_all（适配器）
 
@@ -48,7 +48,7 @@ def fetch_all_sync(query, params: Optional[Dict[str, Any]] = None) -> List[Dict[
     )
     try:
         # 尝试在现有事件循环中运行
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
         # 如果已有事件循环，创建任务
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -59,7 +59,7 @@ def fetch_all_sync(query, params: Optional[Dict[str, Any]] = None) -> List[Dict[
         return asyncio.run(fetch_all(query, params))
 
 
-def fetch_one_sync(query, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+def fetch_one_sync(query, params: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
     """
     同步版本的 fetch_one（适配器）
 
@@ -80,7 +80,7 @@ def fetch_one_sync(query, params: Optional[Dict[str, Any]] = None) -> Optional[D
     )
     try:
         # 尝试在现有事件循环中运行
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
         # 如果已有事件循环，创建任务
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -91,7 +91,7 @@ def fetch_one_sync(query, params: Optional[Dict[str, Any]] = None) -> Optional[D
         return asyncio.run(fetch_one(query, params))
 
 
-def execute_sync(query, params: Optional[Dict[str, Any]] = None) -> Any:
+def execute_sync(query, params: Optional[dict[str, Any]] = None) -> Any:
     """
     同步版本的 execute（适配器）
 
@@ -112,7 +112,7 @@ def execute_sync(query, params: Optional[Dict[str, Any]] = None) -> Any:
     )
     try:
         # 尝试在现有事件循环中运行
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
         # 如果已有事件循环，创建任务
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as executor:

@@ -160,7 +160,7 @@ async def example_batch_processing():
         total_successful = sum(r.get("successful_inserts", 0) + r.get("successful_updates", 0)
                               for r in total_results.values() if isinstance(r, dict))
 
-        logger.info(f"批量处理完成:")
+        logger.info("批量处理完成:")
         logger.info(f"  - 总处理记录数: {total_processed}")
         logger.info(f"  - 总成功记录数: {total_successful}")
         logger.info(f"  - 成功率: {(total_successful / max(total_processed, 1)) * 100:.2f}%")

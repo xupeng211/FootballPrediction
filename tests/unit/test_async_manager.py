@@ -12,14 +12,14 @@ from sqlalchemy import text, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from typing import Any
 from src.database.async_manager import (
-    AsyncDatabaseManager
-    initialize_database
-    get_database_manager
-    get_db_session
-    fetch_all
-    fetch_one
-    execute
-    DatabaseRole
+    AsyncDatabaseManager,
+    initialize_database,
+    get_database_manager,
+    get_db_session,
+    fetch_all,
+    fetch_one,
+    execute,
+    DatabaseRole,
 )
 
 
@@ -136,9 +136,9 @@ class TestAsyncDatabaseManager:
         manager = AsyncDatabaseManager()
 
         custom_config = {
-            "pool_size": 5
-            "max_overflow": 10
-            "echo": True
+            "pool_size": 5,
+            "max_overflow": 10,
+            "echo": True,
         }
 
         manager.initialize(test_db_url, **custom_config)
@@ -290,16 +290,16 @@ class TestConvenienceMethods:
 
         # 插入测试数据
         async with get_db_session() as session:
-            await session.execute(text("""
+            await session.execute(text(f"""
                 INSERT INTO test_users (name, email) VALUES
-                ('Alice', 'alice_{}@test.com')
-                ('Bob', 'bob_{}@test.com')
-            """.format(timestamp, timestamp)))
+                ('Alice', 'alice_{timestamp}@test.com')
+                ('Bob', 'bob_{timestamp}@test.com')
+            """))
             await session.commit()
 
         # 测试带参数的查询
         results = await fetch_all(
-            text("SELECT * FROM test_users WHERE name = :name")
+            text("SELECT * FROM test_users WHERE name = :name"),
             {"name": "Alice"}
         )
 
@@ -322,10 +322,10 @@ class TestConvenienceMethods:
 
         # 插入测试数据
         async with get_db_session() as session:
-            await session.execute(text("""
+            await session.execute(text(f"""
                 INSERT INTO test_users (name, email) VALUES
-                ('Alice', 'alice_{}@test.com')
-            """.format(timestamp)))
+                ('Alice', 'alice_{timestamp}@test.com')
+            """))
             await session.commit()
 
         # 测试 fetch_one
@@ -343,7 +343,7 @@ class TestConvenienceMethods:
     async def test_execute_insert(self, test_db_with_data):
         """测试 execute 插入操作"""
         result = await execute(
-            text("INSERT INTO test_users (name, email) VALUES (:name, :email)")
+            text("INSERT INTO test_users (name, email) VALUES (:name, :email)"),
             {"name": "Charlie", "email": "charlie@test.com"}
         )
 
@@ -356,13 +356,13 @@ class TestConvenienceMethods:
         """测试 execute 更新操作"""
         # 插入初始数据
         await execute(
-            text("INSERT INTO test_users (name, email) VALUES (:name, :email)")
+            text("INSERT INTO test_users (name, email) VALUES (:name, :email)"),
             {"name": "Dave", "email": "dave@old.com"}
         )
 
         # 更新数据
         await execute(
-            text("UPDATE test_users SET email = :new_email WHERE name = :name")
+            text("UPDATE test_users SET email = :new_email WHERE name = :name"),
             {"name": "Dave", "new_email": "dave@new.com"}
         )
 
@@ -374,7 +374,7 @@ class TestConvenienceMethods:
         """测试 execute 删除操作"""
         # 插入初始数据
         await execute(
-            text("INSERT INTO test_users (name, email) VALUES (:name, :email)")
+            text("INSERT INTO test_users (name, email) VALUES (:name, :email)"),
             {"name": "Eve", "email": "eve@test.com"}
         )
 
@@ -389,7 +389,7 @@ class TestConvenienceMethods:
         """测试字符串SQL查询"""
         # 插入测试数据
         await execute(
-            "INSERT INTO test_users (name, email) VALUES (:name, :email)"
+            "INSERT INTO test_users (name, email) VALUES (:name, :email)",
             {"name": "Frank", "email": "frank@test.com"}
         )
 
@@ -447,15 +447,15 @@ class TestErrorHandling:
 
         # 插入第一条记录
         await execute(
-            text("INSERT INTO test_unique (email) VALUES (:email)")
+            text("INSERT INTO test_unique (email) VALUES (:email)"),
             {"email": "test@example.com"}
         )
 
         # 尝试插入重复记录应该失败
         with pytest.raises(Exception):
             await execute(
-                text("INSERT INTO test_unique (email) VALUES (:email)")
-                {"email": "test@example.com"}
+                text("INSERT INTO test_unique (email) VALUES (:email)"),
+            {"email": "test@example.com"}
             )
 
 
@@ -484,8 +484,8 @@ class TestPerformance:
         # 并发插入测试
         async def insert_record(record_id):
             await execute(
-                text("INSERT INTO test_concurrent (id, value) VALUES (:id, :value)")
-                {"id": record_id, "value": f"record_{record_id}"}
+                text("INSERT INTO test_concurrent (id, value) VALUES (:id, :value)"),
+            {"id": record_id, "value": f"record_{record_id}"}
             )
 
         # 并发执行插入
@@ -530,7 +530,7 @@ class TestPerformance:
             text("""
                 INSERT INTO test_batch (id, name, value)
                 VALUES (:id, :name, :value)
-            """)
+            """),
             batch_data
         )
 

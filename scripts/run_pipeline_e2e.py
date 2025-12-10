@@ -250,10 +250,10 @@ class E2EPipelineManager:
         logger.info("💾 保存赛季统计数据到数据库...")
 
         # 这里简化处理，实际应用中可能需要更复杂的赛季数据表
-        async with get_db_session() as session:
+        async with get_db_session():
             try:
                 # 示例：保存赛季统计摘要
-                season_summary = {
+                {
                     "season_year": season_data.get("season_year"),
                     "total_matches": season_data.get("shape", (0, 0))[0],
                     "columns_count": len(season_data.get("columns", [])),
