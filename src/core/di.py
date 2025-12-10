@@ -285,7 +285,7 @@ class DIContainer:
                         logger.debug(
                             f"成功解析字符串类型注解: {param_name} -> {param_type}"
                         )
-                except (NameError, AttributeErrorError) as e:
+                except (NameError, AttributeError) as e:
                     # 如果无法解析，跳过这个参数（如果有默认值）
                     if param.default != inspect.Parameter.empty:
                         logger.warning(
