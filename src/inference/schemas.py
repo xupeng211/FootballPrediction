@@ -1,222 +1,140 @@
 """
-Inference Service Schemas
-推理服务数据模型和Schema定义
+推理API的Pydantic数据模型
+定义请求和响应的数据结构
 
-使用Pydantic v2定义请求和响应的数据模型，确保类型安全和数据验证。
+作者: Backend Engineer
+创建时间: 2025-12-10
+版本: 1.0.0 - Phase 3 Inference
 """
 
+from typing import Dict, Any, Optional
+from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Any, Optional
-from enum import Enum
-
-from pydantic import BaseModel, Field, field_validator, ConfigDict
-
-
-class ModelType(str, Enum):
-    """模型类型枚举"""
-
-    XGBOOST = "xgboost"
-    LSTM = "lstm"
-    ENSEMBLE = "ensemble"
-    MOCK = "mock"
-
-
-class PredictionType(str, Enum):
-    """预测类型枚举"""
-
-    WINNER = "winner"
-    SCORE = "score"
-    OVER_UNDER = "over_under"
-    PROBABILITY = "probability"
-
-
-class ModelInfo(BaseModel):
-    """模型信息"""
-
-    model_name: str = Field(..., description="模型名称")
-    model_version: str = Field(..., description="模型版本")
-    model_type: ModelType = Field(..., description="模型类型")
-    created_at: datetime = Field(..., description="创建时间")
-    file_size: Optional[int] = Field(None, description="模型文件大小（字节）")
-    accuracy: Optional[float] = Field(None, ge=0.0, le=1.0, description="模型准确率")
-    features: list[str] = Field(default_factory=list, description="使用的特征列表")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="额外元数据")
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "model_name": "xgboost_football_v1",
-                "model_version": "1.0.0",
-                "model_type": "xgboost",
-                "created_at": "2025-12-06T10:00:00Z",
-                "file_size": 1048576,
-                "accuracy": 0.75,
-                "features": ["home_goals", "away_goals", "home_possession"],
-                "metadata": {"training_dataset": "epl_2024", "framework": "xgboost"},
-            }
-        }
-    )
 
 
 class PredictionRequest(BaseModel):
-    """预测请求"""
+    """预测请求模型"""
 
-    match_id: str = Field(..., min_length=1, max_length=50, description="比赛ID")
-    model_name: str = Field(default="default", description="使用的模型名称")
-    model_version: Optional[str] = Field(None, description="指定的模型版本")
-    prediction_type: PredictionType = Field(
-        default=PredictionType.WINNER, description="预测类型"
-    )
-    features: Optional[dict[str, Any]] = Field(None, description="自定义特征（可选）")
-    force_recalculate: bool = Field(default=False, description="是否强制重新计算")
+    # 基础比赛信息
+    match_id: int = Field(..., description="比赛ID", example=12345)
 
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "match_id": "match_12345",
-                "model_name": "xgboost_football_v1",
-                "model_version": "1.0.0",
-                "prediction_type": "winner",
-                "features": {"home_goals": 2, "away_goals": 1},
-                "force_recalculate": False,
-            }
+    # 球队信息
+    home_team_name: str = Field(..., description="主队名称", example="Manchester United")
+    away_team_name: str = Field(..., description="客队名称", example="Liverpool")
+
+    # 比赛时间
+    match_date: datetime = Field(..., description="比赛时间", example="2024-01-15T15:00:00")
+
+    # 当前比分 (如果是直播中的比赛)
+    home_score: Optional[int] = Field(None, description="主队当前比分", example=0)
+    away_score: Optional[int] = Field(None, description="客队当前比分", example=0)
+
+    # 比赛统计 (从数据库或API获取的实时数据)
+    home_xg: Optional[float] = Field(None, description="主队期望进球", example=1.8)
+    away_xg: Optional[float] = Field(None, description="客队期望进球", example=1.2)
+
+    # 基础统计 (如果可用)
+    home_total_shots: Optional[int] = Field(None, description="主队总射门数", example=15)
+    away_total_shots: Optional[int] = Field(None, description="客队总射门数", example=12)
+    home_shots_on_target: Optional[int] = Field(None, description="主队射正数", example=6)
+    away_shots_on_target: Optional[int] = Field(None, description="客队射正数", example=4)
+
+    # 比赛上下文
+    league_id: Optional[str] = Field(None, description="联赛ID", example="PL")
+    league_name: Optional[str] = Field(None, description="联赛名称", example="Premier League")
+
+    # 其他统计数据 (JSON格式)
+    stats_json: Optional[Dict[str, Any]] = Field(None, description="比赛统计数据JSON",
+                                               example={"possession": {"home": 55, "away": 45}})
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
         }
-    )
 
 
 class PredictionResponse(BaseModel):
-    """预测响应"""
+    """预测响应模型"""
 
-    request_id: str = Field(..., description="请求ID")
-    match_id: str = Field(..., description="比赛ID")
-    predicted_at: datetime = Field(..., description="预测时间")
+    # 基础信息
+    match_id: int = Field(..., description="比赛ID", example=12345)
 
     # 预测结果
-    home_win_prob: float = Field(..., ge=0.0, le=1.0, description="主队获胜概率")
-    draw_prob: float = Field(..., ge=0.0, le=1.0, description="平局概率")
-    away_win_prob: float = Field(..., ge=0.0, le=1.0, description="客队获胜概率")
-    predicted_outcome: str = Field(..., description="预测结果")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="预测置信度")
+    prediction: str = Field(...,
+                          description="预测的比赛结果: Home(主胜)/Away(客胜)/Draw(平局)",
+                          example="Home")
+
+    # 概率分布
+    probabilities: Dict[str, float] = Field(
+        ...,
+        description="各类别概率",
+        example={"Home": 0.55, "Away": 0.25, "Draw": 0.20}
+    )
+
+    # 置信度
+    confidence: float = Field(...,
+                         description="最高概率值，表示模型置信度",
+                         example=0.55,
+                         ge=0.0, le=1.0)
 
     # 模型信息
-    model_name: str = Field(..., description="使用的模型名称")
-    model_version: str = Field(..., description="使用的模型版本")
-    model_type: ModelType = Field(..., description="模型类型")
+    model_version: str = Field(..., description="模型版本", example="v1.0.0")
 
     # 元数据
-    features_used: list[str] = Field(default_factory=list, description="使用的特征列表")
-    prediction_time_ms: Optional[float] = Field(None, description="预测耗时（毫秒）")
-    cached: bool = Field(default=False, description="是否来自缓存")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="额外元数据")
+    timestamp: datetime = Field(..., description="预测时间", example="2024-01-10T10:30:00")
 
-    @field_validator("predicted_outcome")
-    @classmethod
-    def validate_predicted_outcome(cls, v):
-        if v not in ["home_win", "draw", "away_win"]:
-            raise ValueError(
-                "predicted_outcome must be one of: home_win, draw, away_win"
-            )
-        return v
+    # 特征信息
+    feature_count: int = Field(..., description="使用的特征数量", example=52)
+    missing_features: int = Field(..., description="缺失特征数量", example=0)
 
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "request_id": "req_12345",
-                "match_id": "match_12345",
-                "predicted_at": "2025-12-06T10:00:00Z",
-                "home_win_prob": 0.65,
-                "draw_prob": 0.25,
-                "away_win_prob": 0.10,
-                "predicted_outcome": "home_win",
-                "confidence": 0.75,
-                "model_name": "xgboost_football_v1",
-                "model_version": "1.0.0",
-                "model_type": "xgboost",
-                "features_used": ["home_goals", "away_goals", "home_possession"],
-                "prediction_time_ms": 45.2,
-                "cached": False,
-                "metadata": {"calibrated": True, "ensemble_weight": 0.8},
-            }
+    # 处理时间
+    processing_time_ms: Optional[float] = Field(None, description="处理时间(毫秒)", example=15.5)
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
         }
-    )
 
 
-class BatchPredictionRequest(BaseModel):
-    """批量预测请求"""
+class ModelInfoResponse(BaseModel):
+    """模型信息响应模型"""
 
-    requests: list[PredictionRequest] = Field(
-        ..., min_items=1, max_items=100, description="预测请求列表"
-    )
-    batch_id: Optional[str] = Field(None, description="批次ID（可选）")
-    parallel: bool = Field(default=True, description="是否并行处理")
+    # 模型状态
+    status: str = Field(..., description="模型状态", example="loaded")
 
-    @field_validator("requests")
-    @classmethod
-    def validate_requests(cls, v):
-        if len(v) == 0:
-            raise ValueError("requests cannot be empty")
-        return v
+    # 模型详情
+    model_type: str = Field(..., description="模型类型", example="XGBoost Classifier")
+    model_version: str = Field(..., description="模型版本", example="v1.0.0")
 
+    # 特征信息
+    feature_count: int = Field(..., description="特征数量", example=52)
 
-class BatchPredictionResponse(BaseModel):
-    """批量预测响应"""
+    # 目标类别
+    target_classes: list[str] = Field(..., description="目标类别", example=["Home", "Away", "Draw"])
 
-    batch_id: str = Field(..., description="批次ID")
-    total_requests: int = Field(..., description="总请求数")
-    successful_predictions: int = Field(..., description="成功预测数")
-    failed_predictions: int = Field(..., description="失败预测数")
-    predictions: list[PredictionResponse] = Field(..., description="预测结果列表")
-    errors: list[dict[str, Any]] = Field(
-        default_factory=list, description="错误信息列表"
-    )
-    batch_time_ms: float = Field(..., description="批次处理时间（毫秒）")
-    cached_count: int = Field(default=0, description="缓存命中数量")
+    # 性能指标
+    performance_metrics: Optional[Dict[str, float]] = Field(None, description="性能指标",
+                                                          example={"accuracy": 0.5553, "log_loss": 1.0396})
+
+    # 加载时间
+    loaded_at: datetime = Field(..., description="模型加载时间", example="2024-01-10T09:00:00")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 
 class ErrorResponse(BaseModel):
-    """错误响应"""
+    """错误响应模型"""
 
-    error: str = Field(..., description="错误码")
-    message: str = Field(..., description="错误消息")
-    details: dict[str, Any] = Field(default_factory=dict, description="错误详情")
-    request_id: Optional[str] = Field(None, description="请求ID")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="错误时间")
+    error: str = Field(..., description="错误类型", example="ValidationError")
+    message: str = Field(..., description="错误信息", example="Invalid input data")
+    details: Optional[Dict[str, Any]] = Field(None, description="错误详情")
 
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "error": "MODEL_LOAD_FAILED",
-                "message": "Failed to load model 'xgboost_football_v1'",
-                "details": {
-                    "model_name": "xgboost_football_v1",
-                    "model_path": "/app/models/xgboost_football_v1.pkl",
-                    "error_type": "FileNotFoundError",
-                },
-                "request_id": "req_12345",
-                "timestamp": "2025-12-06T10:00:00Z",
-            }
+    timestamp: datetime = Field(..., description="错误发生时间", example="2024-01-10T10:30:00")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
         }
-    )
-
-
-class HealthCheckResponse(BaseModel):
-    """健康检查响应"""
-
-    status: str = Field(..., description="服务状态")
-    model_loaded: bool = Field(..., description="模型是否已加载")
-    cache_status: str = Field(..., description="缓存状态")
-    hot_reload_enabled: bool = Field(..., description="热更新是否启用")
-    loaded_models: list[ModelInfo] = Field(
-        default_factory=list, description="已加载的模型"
-    )
-    uptime_seconds: float = Field(..., description="运行时间（秒）")
-    memory_usage_mb: float = Field(..., description="内存使用量（MB）")
-    last_prediction_time: Optional[datetime] = Field(None, description="最后预测时间")
-
-
-class ModelListResponse(BaseModel):
-    """模型列表响应"""
-
-    models: list[ModelInfo] = Field(..., description="可用模型列表")
-    total_models: int = Field(..., description="总模型数")
-    default_model: Optional[str] = Field(None, description="默认模型名称")

@@ -35,6 +35,9 @@ from src.api.matches import router as matches_router
 from src.api.prometheus_metrics import router as prometheus_router
 from src.api.schemas import RootResponse
 from src.api.system import router as system_router
+
+# Phase 3: 推理服务
+from src.inference import router as inference_router, startup_load_model, shutdown_cleanup
 from src.config.openapi_config import setup_openapi
 from src.config.swagger_ui_config import setup_enhanced_docs
 from src.core.event_application import initialize_event_system, shutdown_event_system
@@ -276,6 +279,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         else:
             logger.warning("⚠️ 测试环境，跳过冷启动数据填充")
 
+        # Phase 3: 加载推理模型
+        try:
+            logger.info("🤖 加载Phase 3推理模型...")
+            await startup_load_model()
+            logger.info("✅ 推理模型加载成功")
+        except Exception as e:
+            logger.error(f"❌ 推理模型加载失败: {e}")
+            logger.warning("⚠️ 推理API将不可用，但其他服务正常运行")
+
         logger.info("🚀 足球预测系统启动完成!")
 
     except Exception as e:
@@ -287,6 +299,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # 清理资源
     logger.info("正在关闭足球预测系统...")
     try:
+        # Phase 3: 关闭推理服务
+        try:
+            await shutdown_cleanup()
+            logger.info("✅ 推理服务已关闭")
+        except Exception as e:
+            logger.warning(f"⚠️ 推理服务关闭时出错: {e}")
+
         await shutdown_event_system()
         logger.info("✅ 事件系统已关闭")
         logger.info("👋 足球预测系统已安全关闭")
@@ -380,6 +399,9 @@ app.include_router(
 )
 app.include_router(matches_router, prefix="/api/v1", tags=["比赛"])
 app.include_router(prometheus_router, tags=["监控"])
+
+# Phase 3: 推理服务路由
+app.include_router(inference_router, tags=["推理服务"])
 
 # 配置OpenAPI
 setup_openapi(app)

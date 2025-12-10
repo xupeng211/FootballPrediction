@@ -15,7 +15,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 # 导入标准响应模型
-from src.inference.schemas import PredictionResponse, ModelType
+from src.inference.schemas import PredictionResponse
 
 # 创建路由器
 router = APIRouter(prefix="/predictions", tags=["predictions"])
@@ -310,7 +310,7 @@ async def get_match_predictions(match_id: int):
     try:
         # 导入推理服务和响应模型
         from src.services.inference_service import inference_service
-        from src.inference.schemas import PredictionResponse, ModelType
+        from src.inference.schemas import PredictionResponse
         import uuid
         from datetime import datetime
 
@@ -366,9 +366,9 @@ async def get_match_predictions(match_id: int):
             model_name=response_data.get("model_name", "default_xgboost"),
             model_version=response_data.get("model_version", "mock_v1"),
             model_type=(
-                ModelType.MOCK
+                "MOCK"
                 if response_data.get("status") == "mock_data"
-                else ModelType.XGBOOST
+                else "XGBOOST"
             ),
             # 元数据
             features_used=response_data.get("features_used", []),
