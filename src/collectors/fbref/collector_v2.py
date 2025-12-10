@@ -30,7 +30,8 @@ import time
 from datetime import datetime, timedelta
 from io import StringIO
 from pathlib import Path
-from typing import Any,  Optional, 
+from typing import Any,  Optional
+
 
 import pandas as pd
 from bs4 import BeautifulSoup

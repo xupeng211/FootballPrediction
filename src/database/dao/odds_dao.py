@@ -7,7 +7,7 @@ Odds Data Access Object
 
 import logging
 from datetime import datetime, timedelta
-from typing import , Optional,  Any, Union
+from typing import Optional,  Any, Union
 from decimal import Decimal
 
 from sqlalchemy import select, and_, or_, func, desc, asc

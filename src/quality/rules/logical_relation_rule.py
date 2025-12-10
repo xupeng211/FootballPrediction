@@ -17,7 +17,8 @@ Logical Relation Rule - 逻辑关系检查规则
 """
 
 import logging
-from typing import Any,  Optional, 
+from typing import Any,  Optional
+
 from collections.abc import Callable
 
 from src.quality.quality_protocol import (

@@ -8,7 +8,8 @@ DAO Layer Pydantic Schema Definitions
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional,  Any, 
+from typing import Optional,  Any
+
 from pydantic import BaseModel, Field, field_validator
 
 

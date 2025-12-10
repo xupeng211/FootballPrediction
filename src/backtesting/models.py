@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import ,  Optional, Any
+from typing import  Optional, Any
 
 import numpy as np
 

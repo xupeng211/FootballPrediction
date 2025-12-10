@@ -6,7 +6,8 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, 
+from typing import Any
+
 
 # 尝试导入 loguru，如果不可用则回退到标准库
 try:

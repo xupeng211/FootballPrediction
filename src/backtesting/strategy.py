@@ -11,7 +11,7 @@
 import logging
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import , Any, Optional
+from typing import Any, Optional
 
 from .models import BetDecision, BetType, StrategyProtocol
 

@@ -34,7 +34,7 @@ class ExternalLeague(Base):
     # 联赛基本信息
     name = Column(String(100), nullable=False, comment="联赛名称")
     code = Column(String(10), nullable=True, comment="联赛代码")
-    : type = Column(String(20), nullable=True, comment="联赛类型(LEAGUE/CUP)")
+    type = Column(String(20), nullable=True, comment="联赛类型(LEAGUE/CUP)")
     emblem = Column(Text, nullable=True, comment="联赛标志URL")
 
     # 地理信息
@@ -260,7 +260,7 @@ class ExternalLeague(Base):
             # 更新基础信息
             self.name = data.get("name", self.name)
             self.code = data.get("code", self.code)
-            self.: type = data.get("type", self.typing.Type)
+            self.type = data.get("type", self.type)
             self.emblem = data.get("emblem", self.emblem)
 
             # 更新地理信息
