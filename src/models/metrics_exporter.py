@@ -131,7 +131,7 @@ class ModelMetricsExporter:
                 f"已导出预测指标:match_id={result.match_id}, result ={result.predicted_result}"
             )
 
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导出预测指标失败: {e}")
 
     def export_accuracy_metrics(
@@ -160,7 +160,7 @@ class ModelMetricsExporter:
                 f"已导出准确率指标:{model_name} v{model_version} = {accuracy:.3f}"
             )
 
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导出准确率指标失败: {e}")
 
     def export_duration_metrics(
@@ -178,7 +178,7 @@ class ModelMetricsExporter:
                 model_name=model_name, model_version=model_version
             ).observe(duration)
 
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导出响应时间指标失败: {e}")
 
     def export_coverage_metrics(
@@ -196,7 +196,7 @@ class ModelMetricsExporter:
                 model_name=model_name, model_version=model_version
             ).set(coverage_rate)
 
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导出覆盖率指标失败: {e}")
 
     def export_error_metrics(
@@ -216,7 +216,7 @@ class ModelMetricsExporter:
                 error_type=error_type,
             ).inc()
 
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导出错误指标失败: {e}")
 
     def export_model_load_duration(
@@ -234,7 +234,7 @@ class ModelMetricsExporter:
                 model_name=model_name, model_version=model_version
             ).observe(duration)
 
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导出模型加载时间指标失败: {e}")
 
     def get_metrics_summary(self) -> dict[str, Any]:
@@ -254,6 +254,6 @@ class ModelMetricsExporter:
                 "model_load_duration": "模型加载时间",
                 "prediction_errors_total": "预测错误统计",
             }
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"获取指标摘要失败: {e}")
             return {}

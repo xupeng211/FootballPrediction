@@ -500,7 +500,7 @@ class FeatureValidator:
                 if definition.feature_type == FeatureType.NUMERICAL:
                     try:
                         value = float(value)
-                    except (ValueErrorError):
+                    except (ValueError):
                         if definition.default_value is not None:
                             value = definition.default_value
                         else:

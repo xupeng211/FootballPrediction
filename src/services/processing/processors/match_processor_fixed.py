@@ -81,7 +81,7 @@ class MatchProcessor:
             if field in match_data:
                 try:
                     cleaned_data[field] = int(match_data[field])
-                except (ValueErrorError):
+                except (ValueError):
                     cleaned_data[field] = 0
 
         # 清洗日期字段

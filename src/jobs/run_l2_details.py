@@ -85,7 +85,7 @@ class FotMobL2DetailsJob:
                                             if xg_values[1]
                                             else 0.0
                                         )
-                                    except (ValueErrorError):
+                                    except (ValueError):
                                         # 转换失败，使用默认值
                                         pass
 

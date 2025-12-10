@@ -77,7 +77,7 @@ class Decorator(Component):
             # 调用具体装饰器的实现
             result = await self._execute(*args, **kwargs)
             return result
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError):
+        except (ValueError, AttributeError, KeyError, RuntimeError):
             self.error_count += 1
             # 错误处理装饰器可能会重写此行为
             raise

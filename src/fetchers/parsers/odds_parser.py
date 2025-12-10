@@ -133,7 +133,7 @@ class OddsParser:
 
             return odds
 
-        except (ValueErrorError):
+        except (ValueError):
             self.logger.warning(f"⚠️ 无效赔率值: {odds_str}")
             return None
 

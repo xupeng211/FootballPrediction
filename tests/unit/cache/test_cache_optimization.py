@@ -525,7 +525,7 @@ class TestAccessPatternAnalyzer:
         for i in range(5):
             access_time = now + timedelta(hours=i * 2)
             analyzer.patterns["key1"] = analyzer.patterns.get(
-                "key1"("", (), {"access_times": [], "last_access": None})()
+                "key1", (), {"access_times": [], "last_access": None}
             )
             analyzer.patterns["key1"].access_times.append(access_time)
             analyzer.patterns["key1"].last_access = access_time

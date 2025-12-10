@@ -261,7 +261,7 @@ class PredictionRepository(PredictionRepositoryInterface):
             await self.session.delete(entity)
             await self.session.commit()
             return True
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError):
+        except (ValueError, AttributeError, KeyError, RuntimeError):
             await self.session.rollback()
             return False
 

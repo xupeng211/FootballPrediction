@@ -79,7 +79,7 @@ class ServiceManager:
                 if not result:
                     success = False
                     self.logger.error(f"服务初始化失败: {service.name}")
-            except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, AttributeError, KeyError, RuntimeError) as e:
                 # 捕获异常避免整个初始化流程中断
                 success = False
                 self.logger.error(f"服务初始化异常: {service.name}, {e}")
@@ -91,7 +91,7 @@ class ServiceManager:
         for service in self._services.values():
             try:
                 await service.shutdown()
-            except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, AttributeError, KeyError, RuntimeError) as e:
                 # 关闭失败不应阻止其他服务的正常关闭
                 self.logger.error(f"服务关闭异常: {service.name}, {e}")
 

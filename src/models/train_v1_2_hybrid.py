@@ -173,7 +173,7 @@ class HybridModelTrainer:
 
             return {"xg_home": xg_home, "xg_away": xg_away}
 
-        except (json.JSONDecodeError, ValueErrorError) as e:
+        except (json.JSONDecodeError, ValueError) as e:
             logger.debug(f"解析xG数据失败: {e}")
             return {"xg_home": None, "xg_away": None}
 

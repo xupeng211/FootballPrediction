@@ -31,7 +31,7 @@ class DataValidator:
         """验证数字."""
         try:
             num = float(value)
-        except (ValueErrorError):
+        except (ValueError):
             return False
 
         if min_value is not None and num < min_value:
@@ -238,7 +238,7 @@ class DataValidator:
         try:
             num = float(value)
             return num > 0
-        except (ValueErrorError):
+        except (ValueError):
             return False
 
     @staticmethod

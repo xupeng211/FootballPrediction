@@ -67,7 +67,7 @@ class StreamProcessor:
 
                 yield result
 
-            except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, AttributeError, KeyError, RuntimeError) as e:
                 self.metrics["messages_failed"] += 1
                 if error_handler:
                     await error_handler(e, message)
@@ -101,7 +101,7 @@ class StreamProcessor:
                     self.metrics["messages_processed"] += len(batch)
                     yield result
                     batch = []
-                except (ValueErrorError, AttributeError, KeyError, RuntimeError):
+                except (ValueError, AttributeError, KeyError, RuntimeError):
                     self.metrics["messages_failed"] += len(batch)
                     batch = []
 
@@ -111,7 +111,7 @@ class StreamProcessor:
                 result = await batch_func(batch)
                 self.metrics["messages_processed"] += len(batch)
                 yield result
-            except (ValueErrorError, AttributeError, KeyError, RuntimeError):
+            except (ValueError, AttributeError, KeyError, RuntimeError):
                 self.metrics["messages_failed"] += len(batch)
 
     async def transform_message(
@@ -160,7 +160,7 @@ class StreamProcessor:
                 try:
                     result = await aggregate_func(batch["key"], batch["messages"])
                     yield result
-                except (ValueErrorError, AttributeError, KeyError, RuntimeError):
+                except (ValueError, AttributeError, KeyError, RuntimeError):
                     self.metrics["messages_failed"] += len(batch["messages"])
 
     async def filter(self, filter_func: Callable) -> AsyncIterator[dict[str, Any]]:

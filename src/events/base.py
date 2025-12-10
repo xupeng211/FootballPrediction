@@ -224,7 +224,7 @@ class EventHandler(ABC):
                     break
                 await self.handle(event)
                 queue.task_done()
-            except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, AttributeError, KeyError, RuntimeError) as e:
                 # 处理错误但继续处理其他事件
                 logger = logging.getLogger(__name__)
                 logger.info(f"Error handling event {event_type}: {e}")

@@ -84,7 +84,7 @@ class BaseStrategy(ABC):
             if value is None:
                 return default
             return Decimal(str(value))
-        except (ValueErrorError):
+        except (ValueError):
             self.logger.warning(
                 f"Cannot convert {value} to Decimal, using default {default}"
             )

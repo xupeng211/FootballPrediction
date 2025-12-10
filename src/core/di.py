@@ -340,7 +340,7 @@ class DIContainer:
                 if hasattr(instance, "cleanup") and callable(instance.cleanup):
                     try:
                         instance.cleanup()
-                    except (ValueErrorError, AttributeError, KeyError) as e:
+                    except (ValueError, AttributeError, KeyError) as e:
                         logger.error(f"清理资源失败: {e}")
 
             del self._scoped_instances[scope_name]

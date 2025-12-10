@@ -188,7 +188,7 @@ class DataValidator:
             if field in record and record[field] is not None:
                 try:
                     float(record[field])
-                except (ValueErrorError):
+                except (ValueError):
                     errors.append(f"字段 {field} 不是有效的数值: {record[field]}")
         return errors
 
@@ -228,7 +228,7 @@ class DataValidator:
                         errors.append(
                             f"字段 {field} 值 {value} 超出范围 [{min_val}, {max_val}]"
                         )
-                except (ValueErrorError):
+                except (ValueError):
                     errors.append(f"字段 {field} 不是有效数值: {record[field]}")
         return errors
 
@@ -378,7 +378,7 @@ class DataValidator:
                         if datetime.utcnow() - timestamp <= timedelta(days=30):
                             timely_records += 1
                         break
-                    except (ValueErrorError):
+                    except (ValueError):
                         continue
 
         return (

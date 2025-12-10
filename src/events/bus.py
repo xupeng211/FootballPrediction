@@ -458,7 +458,7 @@ class EventBus:
                     handler.name = getattr(handler, "name", "MockHandler")
                 await handler.handle(event)
 
-        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             # 获取事件类型
             event_type = (
                 event.get_event_type()

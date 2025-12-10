@@ -183,7 +183,7 @@ class RealisticModelTrainer:
                             xg_home = value
                         elif "away" in field:
                             xg_away = value
-                    except (ValueErrorError):
+                    except (ValueError):
                         continue
 
             # 严格验证：xG值必须在合理范围内
@@ -197,7 +197,7 @@ class RealisticModelTrainer:
 
             return {"xg_home": xg_home, "xg_away": xg_away}
 
-        except (json.JSONDecodeError, ValueErrorError) as e:
+        except (json.JSONDecodeError, ValueError) as e:
             logger.debug(f"解析xG数据失败: {e}")
             return {"xg_home": None, "xg_away": None}
 
@@ -224,7 +224,7 @@ class RealisticModelTrainer:
                         try:
                             odds["home_win"] = float(odds_data[field])
                             break
-                        except (ValueErrorError):
+                        except (ValueError):
                             continue
 
                 for field in away_odds_fields:
@@ -232,7 +232,7 @@ class RealisticModelTrainer:
                         try:
                             odds["away_win"] = float(odds_data[field])
                             break
-                        except (ValueErrorError):
+                        except (ValueError):
                             continue
 
                 for field in draw_odds_fields:
@@ -240,10 +240,10 @@ class RealisticModelTrainer:
                         try:
                             odds["draw"] = float(odds_data[field])
                             break
-                        except (ValueErrorError):
+                        except (ValueError):
                             continue
 
-        except (json.JSONDecodeError, ValueErrorError):
+        except (json.JSONDecodeError, ValueError):
             pass
 
         # 如果odds字段没有数据，尝试从metadata获取
@@ -265,7 +265,7 @@ class RealisticModelTrainer:
                         odds["draw"] = betting_odds.get("draw")
                         odds["away_win"] = betting_odds.get("away")
 
-            except (json.JSONDecodeError, ValueErrorError):
+            except (json.JSONDecodeError, ValueError):
                 pass
 
         # 验证赔率合理性
@@ -277,7 +277,7 @@ class RealisticModelTrainer:
                         odds[key] = None
                     else:
                         odds[key] = value
-                except (ValueErrorError):
+                except (ValueError):
                     odds[key] = None
 
         return odds
