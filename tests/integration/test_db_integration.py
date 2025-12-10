@@ -15,13 +15,13 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from unittest.mock import patch
 
 from src.database.async_manager import (
-    initialize_database
-    get_database_manager
-    get_db_session
-    fetch_all
-    fetch_one
-    execute
-    AsyncDatabaseManager
+    initialize_database,
+    get_database_manager,
+    get_db_session,
+    fetch_all,
+    fetch_one,
+    execute,
+    AsyncDatabaseManager,
 )
 
 
@@ -142,17 +142,17 @@ class TestDatabaseIntegration:
                 INSERT INTO integration_test_users (username, email, is_active)
                 VALUES (:username, :email, :is_active)
                 RETURNING id, username, email
-            """)
+            """),
             {
-                "username": "testuser1"
-                "email": "testuser1@example.com"
+                "username": "testuser1",
+                "email": "testuser1@example.com",
                 "is_active": True
             }
         )
 
         # 读取用户
         user = await fetch_one(
-            text("SELECT * FROM integration_test_users WHERE username = :username")
+            text("SELECT * FROM integration_test_users WHERE username = :username"),
             {"username": "testuser1"}
         )
 
@@ -163,26 +163,26 @@ class TestDatabaseIntegration:
 
         # 更新用户
         await execute(
-            text("UPDATE integration_test_users SET email = :new_email WHERE username = :username")
+            text("UPDATE integration_test_users SET email = :new_email WHERE username = :username"),
             {"username": "testuser1", "new_email": "updated@example.com"}
         )
 
         # 验证更新
         updated_user = await fetch_one(
-            text("SELECT * FROM integration_test_users WHERE username = :username")
+            text("SELECT * FROM integration_test_users WHERE username = :username"),
             {"username": "testuser1"}
         )
         assert updated_user["email"] == "updated@example.com", "邮箱应该已更新"
 
         # 删除用户
         await execute(
-            text("DELETE FROM integration_test_users WHERE username = :username")
+            text("DELETE FROM integration_test_users WHERE username = :username"),
             {"username": "testuser1"}
         )
 
         # 验证删除
         deleted_user = await fetch_one(
-            text("SELECT * FROM integration_test_users WHERE username = :username")
+            text("SELECT * FROM integration_test_users WHERE username = :username"),
             {"username": "testuser1"}
         )
         assert deleted_user is None, "用户应该被删除"
@@ -199,7 +199,7 @@ class TestDatabaseIntegration:
             text("""
                 INSERT INTO integration_test_users (username, email, is_active)
                 VALUES (:username, :email, :is_active)
-            """)
+            """),
             users_data
         )
 
@@ -242,11 +242,11 @@ class TestDatabaseIntegration:
                         INSERT INTO integration_test_predictions
                         (match_id, predicted_home_score, predicted_away_score, confidence)
                         VALUES (:match_id, :home_score, :away_score, :confidence)
-                    """)
+                    """),
                     {
-                        "match_id": match_id
-                        "home_score": 2
-                        "away_score": 1
+                        "match_id": match_id,
+                        "home_score": 2,
+                        "away_score": 1,
                         "confidence": 0.85
                     }
                 )
@@ -257,7 +257,7 @@ class TestDatabaseIntegration:
 
         # 验证事务提交
         prediction = await fetch_one(
-            text("SELECT * FROM integration_test_predictions WHERE match_id = :match_id")
+            text("SELECT * FROM integration_test_predictions WHERE match_id = :match_id"),
             {"match_id": match_id}
         )
         assert prediction is not None, "预测应该被提交"

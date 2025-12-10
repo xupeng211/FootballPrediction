@@ -28,7 +28,7 @@ from src.collectors.abstract_fetcher import (
     FetcherFactory,
     FetcherError,
     DataNotFoundError,
-    ConnectionError
+    ConnectionError,
 )
 from src.database.dao.odds_dao import OddsDAO
 from src.database.dao.match_dao import MatchDAO
@@ -36,7 +36,7 @@ from src.database.dao.exceptions import (
     RecordNotFoundError,
     DatabaseConnectionError,
     ValidationError,
-    DuplicateRecordError
+    DuplicateRecordError,
 )
 from src.database.models.odds import Odds
 

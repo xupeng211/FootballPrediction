@@ -8,7 +8,7 @@ Provides backward compatible exports for the modular retry system.
 
 from ._retry import (
     BackoffStrategy,
-    CircuitBreaker,  # 重新导出主要类和函数
+    CircuitBreaker,  # 重新导出主要类和函数,
     CircuitState,
     ExponentialBackoffStrategy,
     FixedBackoffStrategy,

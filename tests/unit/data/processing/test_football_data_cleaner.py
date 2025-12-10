@@ -33,8 +33,8 @@ sys.path.insert(0, str(project_root))
 # 导入测试目标
 try:
     from src.data.processing.football_data_cleaner import (
-        FootballDataCleaner
-        clean_football_data
+        FootballDataCleaner,
+        clean_football_data,
     )
 
     IMPORTS_AVAILABLE = True
@@ -55,45 +55,45 @@ class TestFootballDataCleaner:
     def perfect_api_response(self):
         """完美的API响应fixture - 基准测试数据"""
         return {
-            "id": 12345
-            "utcDate": "2025-01-15T15:00:00Z"
-            "status": "FINISHED"
-            "matchday": 21
+            "id": 12345,
+            "utcDate": "2025-01-15T15:00:00Z",
+            "status": "FINISHED",
+            "matchday": 21,
             "season": {
-                "id": 2024
-                "startDate": "2024-08-01"
-                "endDate": "2025-05-01"
+                "id": 2024,
+                "startDate": "2024-08-01",
+                "endDate": "2025-05-01",
                 "currentMatchday": 21
-            }
+            },
             "score": {
-                "winner": "HOME_TEAM"
-                "duration": "REGULAR"
-                "fullTime": {"home": 3, "away": 1}
-                "halfTime": {"home": 1, "away": 1}
-                "extraTime": None
+                "winner": "HOME_TEAM",
+                "duration": "REGULAR",
+                "fullTime": {"home": 3, "away": 1},
+                "halfTime": {"home": 1, "away": 1},
+                "extraTime": None,
                 "penalties": None
-            }
+            },
             "homeTeam": {
-                "id": 57
-                "name": "Arsenal FC"
-                "shortName": "Arsenal"
-                "tla": "ARS"
+                "id": 57,
+                "name": "Arsenal FC",
+                "shortName": "Arsenal",
+                "tla": "ARS",
                 "crest": "https://crests.football-data.org/arsenal.svg"
-            }
+            },
             "awayTeam": {
-                "id": 61
-                "name": "Chelsea FC"
-                "shortName": "Chelsea"
-                "tla": "CHE"
+                "id": 61,
+                "name": "Chelsea FC",
+                "shortName": "Chelsea",
+                "tla": "CHE",
                 "crest": "https://crests.football-data.org/chelsea.svg"
-            }
+            },
             "competition": {
-                "id": 39
-                "name": "Premier League"
-                "code": "PL"
-                "type": "LEAGUE"
+                "id": 39,
+                "name": "Premier League",
+                "code": "PL",
+                "type": "LEAGUE",
                 "emblem": "https://crests.football-data.org/pl.png"
-            }
+            },
             "venue": "Emirates Stadium"
         }
 
@@ -102,18 +102,18 @@ class TestFootballDataCleaner:
         """样本比赛DataFrame fixture"""
         return pd.DataFrame(
             {
-                "match_id": [1, 2, 3]
-                "home_team_id": [1, 2, 3]
-                "away_team_id": [2, 3, 1]
-                "home_score": [2, 1, 0]
-                "away_score": [1, 1, 2]
+                "match_id": [1, 2, 3],
+                "home_team_id": [1, 2, 3],
+                "away_team_id": [2, 3, 1],
+                "home_score": [2, 1, 0],
+                "away_score": [1, 1, 2],
                 "match_date": [
-                    pd.Timestamp("2025-01-01")
-                    pd.Timestamp("2025-01-02")
+                    pd.Timestamp("2025-01-01"),
+                    pd.Timestamp("2025-01-02"),
                     pd.Timestamp("2025-01-03")
-                ]
-                "home_win_odds": [2.1, 1.8, 3.2]
-                "draw_odds": [3.4, 3.6, 3.1]
+                ],
+                "home_win_odds": [2.1, 1.8, 3.2],
+                "draw_odds": [3.4, 3.6, 3.1],
                 "away_win_odds": [3.5, 4.2, 2.3]
             }
         )
@@ -135,8 +135,8 @@ class TestFootballDataCleaner:
     def test_cleaner_initialization_custom_config(self):
         """测试清洗器自定义配置初始化"""
         custom_config = {
-            "remove_duplicates": False
-            "outlier_method": "zscore"
+            "remove_duplicates": False,
+            "outlier_method": "zscore",
             "missing_strategy": "drop_rows"
         }
         cleaner = FootballDataCleaner(custom_config)
@@ -208,12 +208,12 @@ class TestFootballDataCleaner:
         duplicated_data = pd.DataFrame(
             {
                 "match_id": [1, 1, 2, 2, 3],  # 重复的match_id
-                "home_team_id": [1, 1, 2, 2, 3]
-                "away_team_id": [2, 2, 3, 3, 1]
+                "home_team_id": [1, 1, 2, 2, 3],
+                "away_team_id": [2, 2, 3, 3, 1],
                 "match_date": [
-                    pd.Timestamp("2025-01-01")
+                    pd.Timestamp("2025-01-01"),
                     pd.Timestamp("2025-01-01"),  # 重复
-                    pd.Timestamp("2025-01-02")
+                    pd.Timestamp("2025-01-02"),
                     pd.Timestamp("2025-01-02"),  # 重复
                     pd.Timestamp("2025-01-03")
                 ]
@@ -222,10 +222,10 @@ class TestFootballDataCleaner:
 
         # 创建包含所有必要配置的cleaner
         config = {
-            "remove_duplicates": True
-            "validate_data": True,  # 添加缺失的配置
-            "handle_missing": True
-            "detect_outliers": True
+            "remove_duplicates": True,
+            "validate_data": True,  # 添加缺失的配置,
+            "handle_missing": True,
+            "detect_outliers": True,
             "outlier_method": "iqr",  # 异常值检测方法
         }
         cleaner = FootballDataCleaner(config)
@@ -580,16 +580,16 @@ class TestFootballDataCleaner:
                 "int16_range": [1000, 30000, 50000, 60000],  # 可以转换为uint16
                 "float_col": [1.1, 2.2, 3.3, 4.4],  # 可以优化为float32
                 "date_str_col": [
-                    "2025-01-01"
-                    "invalid"
-                    "2025-01-03"
-                    "2025-01-04"
+                    "2025-01-01",
+                    "invalid",
+                    "2025-01-03",
+                    "2025-01-04",
                 ],  # 日期字符串
                 "datetime_col": [
-                    "2025-01-01T10:00:00"
-                    "2025-01-02T11:00:00"
+                    "2025-01-01T10:00:00",
+                    "2025-01-02T11:00:00",
                     None
-                    "2025-01-04T12:00:00"
+                    "2025-01-04T12:00:00",
                 ],  # datetime
             }
         )

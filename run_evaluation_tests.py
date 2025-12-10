@@ -95,7 +95,7 @@ def test_backtest():
     """测试回测模块"""
     from src.evaluation.backtest import (
         Backtester, FlatStakingStrategy, KellyStakingStrategy,
-        PercentageStakingStrategy, ValueBettingStrategy
+        PercentageStakingStrategy, ValueBettingStrategy,
     )
     import numpy as np
     import pandas as pd

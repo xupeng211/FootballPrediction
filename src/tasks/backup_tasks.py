@@ -64,7 +64,7 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
 
 # 为了向后兼容性,从新的模块化结构中导入所有内容
 from .backup_tasks_new import (
-    DatabaseBackupTask,  # 基础类和指标; 数据库备份任务; 维护任务; 服务备份任务; 手动任务
+    DatabaseBackupTask,  # 基础类和指标; 数据库备份任务; 维护任务; 服务备份任务; 手动任务,
     backup_config_task,
     backup_database_task,
     backup_failures_total,

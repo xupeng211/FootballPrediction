@@ -17,7 +17,7 @@ from typing import (
     List,
     Union,
     Type,
-    cast
+    cast,
 )
 from collections.abc import Sequence
 from datetime import datetime
@@ -38,7 +38,7 @@ try:
         DuplicateRecordError,
         ValidationError,
         DatabaseConnectionError,
-        handle_sqlalchemy_exception
+        handle_sqlalchemy_exception,
     )
 except ImportError:
     # 如果异常模块不存在，提供基础定义

@@ -543,3 +543,40 @@ def validate_features_object(features_obj) -> list[str]:
     if hasattr(features_obj, "validate"):
         return features_obj.validate()
     return []
+
+
+@dataclass
+class HistoricalMatchupFeatures:
+    """历史对战特征数据结构."""
+
+    total_matches: int = 0
+    home_wins: int = 0
+    away_wins: int = 0
+    draws: int = 0
+    home_win_rate: float = 0.0
+    away_win_rate: float = 0.0
+    draw_rate: float = 0.0
+    avg_home_goals: float = 0.0
+    avg_away_goals: float = 0.0
+    total_goals: int = 0
+    last_match_date: Optional[datetime] = None
+    h2h_trend: str = ""  # recent form trend
+
+    def validate(self) -> list[str]:
+        """验证历史对战特征数据完整性。"""
+        errors = []
+
+        if self.total_matches < 0:
+            errors.append("总比赛场次不能为负数")
+        if self.home_wins < 0 or self.away_wins < 0 or self.draws < 0:
+            errors.append("胜平负数据不能为负数")
+        if self.total_matches != (self.home_wins + self.away_wins + self.draws):
+            errors.append("胜平负数据与总场次不一致")
+        if not (0 <= self.home_win_rate <= 1):
+            errors.append("主队胜率必须在0-1之间")
+        if not (0 <= self.away_win_rate <= 1):
+            errors.append("客队胜率必须在0-1之间")
+        if not (0 <= self.draw_rate <= 1):
+            errors.append("平局率必须在0-1之间")
+
+        return errors

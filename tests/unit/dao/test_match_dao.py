@@ -20,7 +20,7 @@ from src.database.models.match import Match
 from src.database.dao.exceptions import (
     RecordNotFoundError,
     ValidationError,
-    DatabaseConnectionError
+    DatabaseConnectionError,
 )
 
 

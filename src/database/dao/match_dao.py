@@ -18,7 +18,7 @@ from .schemas import MatchCreate, MatchUpdate
 from .exceptions import (
     RecordNotFoundError,
     ValidationError,
-    DatabaseConnectionError
+    DatabaseConnectionError,
 )
 
 # 导入Match模型

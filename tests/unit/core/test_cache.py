@@ -23,7 +23,7 @@ from src.core.cache_main import (
     CacheConnectionError,
     cache_get,
     cache_set,
-    cache_delete
+    cache_delete,
 )
 from src.core.cache_decorators import (
     cached,
@@ -31,7 +31,7 @@ from src.core.cache_decorators import (
     cached_short,
     cached_method,
     BatchCache,
-    invalidate_pattern
+    invalidate_pattern,
 )
 
 

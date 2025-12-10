@@ -16,7 +16,7 @@ from src.inference.errors import (
     CacheError,
     HotReloadError,
     ErrorCode,
-    handle_inference_error
+    handle_inference_error,
 )
 
 

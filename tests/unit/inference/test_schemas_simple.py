@@ -19,7 +19,7 @@ from src.inference.schemas import (
     ModelInfo,
     ErrorResponse,
     ModelType,
-    PredictionType
+    PredictionType,
 )
 
 

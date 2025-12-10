@@ -18,10 +18,10 @@ from datetime import datetime
 # 机器学习库
 import xgboost as xgb
 from sklearn.metrics import (
-    accuracy_score
-    log_loss
-    classification_report
-    confusion_matrix
+    accuracy_score,
+    log_loss,
+    classification_report,
+    confusion_matrix,
 )
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt

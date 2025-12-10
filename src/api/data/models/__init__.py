@@ -36,27 +36,27 @@ try:
         EnhancedMatchCreateRequest,
         EnhancedMatchUpdateRequest,
         EnhancedMatchResponse,
-        MatchDataQualityReport
+        MatchDataQualityReport,
     )
     from .enhanced_odds_models import (
         EnhancedOddsQueryParams,
         EnhancedOddsCreateRequest,
         EnhancedOddsUpdateRequest,
         EnhancedOddsResponse,
-        OddsDataQualityReport
+        OddsDataQualityReport,
     )
     from .enhanced_team_models import (
         EnhancedTeamQueryParams,
         EnhancedTeamCreateRequest,
         EnhancedTeamUpdateRequest,
         EnhancedTeamResponse,
-        TeamDataQualityReport
+        TeamDataQualityReport,
     )
     from .data_quality import (
         DataQualityReport,
         DataQualityConfig,
         create_quality_report,
-        validate_dataset
+        validate_dataset,
     )
 except ImportError as e:
     print(f"Warning: Could not import enhanced models: {e}")

@@ -18,7 +18,7 @@ from .data_collection_tasks import (
     collect_daily_fixtures,
     collect_live_scores,
     collect_odds_data,
-    collect_fotmob_data,  # 新增 FotMob 数据采集
+    collect_fotmob_data,  # 新增 FotMob 数据采集,
 )
 
 
