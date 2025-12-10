@@ -292,7 +292,7 @@ def get_nested_value(
         for key in keys:
             current = current[key]
         return current
-    except (KeyErrorError):
+    except (KeyError, TypeError, AttributeError):
         return default
 
 
