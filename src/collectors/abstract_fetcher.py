@@ -19,7 +19,7 @@ Abstract Data Source Fetcher Interface
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any,  Optional, Union
+from typing import Any,  Optional, Union, Dict
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -236,7 +236,7 @@ class FetcherFactory:
     提供统一的获取器创建和管理接口
     """
 
-    _fetchers: dict[str[AbstractFetcher]] = {}
+    _fetchers: Dict[str, AbstractFetcher] = {}
 
     @classmethod
     def register(cls, name: str, fetcher_class: type[AbstractFetcher]) -> None:
