@@ -235,7 +235,7 @@ class EventBus:
                         else:
                             handler.handle(event)
                 except Exception as e:
-                    handler_name = getattr(handler, "name"(handler).__name__)
+                    handler_name = getattr(handler, "__name__", str(handler))
                     logger.error(
                         f"Handler {handler_name} failed to process event {event_type}: {e}"
                     )
@@ -328,7 +328,7 @@ class EventBus:
                     # 对于同步处理器，直接调用
                     handler.handle(event)
             except Exception as e:
-                handler_name = getattr(handler, "name"(handler).__name__)
+                handler_name = getattr(handler, "__name__", str(handler))
                 logger.error(
                     f"Handler {handler_name} failed to process event {event_type}: {e}"
                 )
@@ -369,7 +369,7 @@ class EventBus:
                     )
                     self._tasks.append(task)
 
-                handler_name = getattr(handler, "name"(handler).__name__)
+                handler_name = getattr(handler, "__name__", str(handler))
                 logger.info(f"Handler {handler_name} subscribed to {event_type}")
 
     def subscribe_sync(self, event_type: str, handler: EventHandler) -> None:
@@ -379,14 +379,14 @@ class EventBus:
 
         if handler not in self._subscribers[event_type]:
             self._subscribers[event_type].append(handler)
-            handler_name = getattr(handler, "name"(handler).__name__)
+            handler_name = getattr(handler, "__name__", str(handler))
             logger.info(f"Handler {handler_name} subscribed to {event_type}")
 
     def unsubscribe_sync(self, event_type: str, handler: EventHandler) -> None:
         """同步取消订阅事件."""
         if event_type in self._subscribers and handler in self._subscribers[event_type]:
             self._subscribers[event_type].remove(handler)
-            handler_name = getattr(handler, "name"(handler).__name__)
+            handler_name = getattr(handler, "__name__", str(handler))
             logger.info(f"Handler {handler_name} unsubscribed from {event_type}")
 
     async def unsubscribe(self, event_type: str, handler: EventHandler) -> None:
@@ -402,7 +402,7 @@ class EventBus:
                 if handler in self._filters:
                     del self._filters[handler]
 
-                handler_name = getattr(handler, "name"(handler).__name__)
+                handler_name = getattr(handler, "__name__", str(handler))
                 logger.info(f"Handler {handler_name} unsubscribed from {event_type}")
 
     async def _run_handler(
@@ -465,7 +465,7 @@ class EventBus:
                 if hasattr(event, "get_event_type")
                 else type(event).__name__
             )
-            handler_name = getattr(handler, "name"(handler).__name__)
+            handler_name = getattr(handler, "__name__", str(handler))
             logger.error(
                 f"Handler {handler_name} failed to process event {event_type}: {e}",
                 exc_info=True,

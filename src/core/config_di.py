@@ -238,10 +238,10 @@ class ConfigurationBinder:
         except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"注册服务失败 {service_name}: {e}")
 
-    def _get_type(self_name: str) -> type:
+    def _get_type(self, service_name: str) -> type:
         """获取类型."""
         # 尝试导入类型
-        module_path, class_name = type_name.rsplit(".", 1)
+        module_path, class_name = service_name.rsplit(".", 1)
         module = __import__(module_path, fromlist=[class_name])
         return getattr(module, class_name)
 

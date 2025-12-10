@@ -39,6 +39,7 @@ brotli>=1.2.0
 
 # Machine Learning & Inference Dependencies
 scikit-learn>=1.3.0
+sklearn>=1.0.0  # Alias for scikit-learn
 joblib>=1.3.0
 
 # Caching and Performance
