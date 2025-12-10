@@ -55,11 +55,11 @@ class FacadeFactory:
 
     def __init__(self):
         """初始化工厂."""
-        self._subsystem_registry: dict[str, typing.Type[Subsystem]] = {}
-        self._facade_registry: dict[str, typing.Type[Facade]] = {}
+        self._subsystem_registry: dict[str, type[Subsystem]] = {}
+        self._facade_registry: dict[str, type[Facade]] = {}
         self._created_instances: dict[str, Facade] = {}
 
-    def register_subsystem(self, name: str, subsystem_class: typing.Type[Subsystem]) -> None:
+    def register_subsystem(self, name: str, subsystem_class: type[Subsystem]) -> None:
         """注册子系统类型.
 
         Args:
@@ -68,7 +68,7 @@ class FacadeFactory:
         """
         self._subsystem_registry[name] = subsystem_class
 
-    def register_facade(self, name: str, facade_class: typing.Type[Facade]) -> None:
+    def register_facade(self, name: str, facade_class: type[Facade]) -> None:
         """注册外观类型.
 
         Args:

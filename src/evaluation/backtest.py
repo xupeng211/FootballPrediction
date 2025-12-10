@@ -710,7 +710,7 @@ class Backtester:
             metadata={
                 "random_seed": self.random_seed,
                 "backtest_date": datetime.now().isoformat(),
-                "strategy_type": typing.Type(stake_strategy).__name__,
+                "strategy_type": type(stake_strategy).__name__,
             },
         )
 

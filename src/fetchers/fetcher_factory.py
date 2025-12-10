@@ -33,14 +33,14 @@ class FetcherFactory:
     """
 
     # 注册表：存储获取器类和元数据
-    _registry: dict[str, typing.Type[AbstractFetcher]] = {}
+    _registry: dict[str, type[AbstractFetcher]] = {}
     _metadata: dict[str, dict[str, Any]] = {}
 
     @classmethod
     def register(
         cls,
         name: str,
-        fetcher_class: typing.Type[AbstractFetcher],
+        fetcher_class: type[AbstractFetcher],
         description: Optional[str] = None,
         version: str = "1.0.0",
         **metadata

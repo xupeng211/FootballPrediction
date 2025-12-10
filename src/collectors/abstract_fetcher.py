@@ -236,10 +236,10 @@ class FetcherFactory:
     提供统一的获取器创建和管理接口
     """
 
-    _fetchers: dict[str, typing.Type[AbstractFetcher]] = {}
+    _fetchers: dict[str, type[AbstractFetcher]] = {}
 
     @classmethod
-    def register(cls, name: str, fetcher_class: typing.Type[AbstractFetcher]) -> None:
+    def register(cls, name: str, fetcher_class: type[AbstractFetcher]) -> None:
         """
         注册获取器类
 

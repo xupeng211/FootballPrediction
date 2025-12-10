@@ -177,7 +177,7 @@ class League:
     name: str = ""
     short_name: str | None = None
     code: str | None = None
-    typing.Type: LeagueType = LeagueType.DOMESTIC_LEAGUE
+    type: LeagueType = LeagueType.DOMESTIC_LEAGUE
     country: str = ""
     level: int = 1  # 联赛级别
     is_active: bool = True

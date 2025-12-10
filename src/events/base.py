@@ -116,7 +116,7 @@ class Event(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls: typing.Type[T], data: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], data: dict[str, Any]) -> T:
         """从字典创建事件".
 
         Args:

@@ -55,7 +55,7 @@ class PredictionStrategyFactory:
         self._environment_overrides: dict[str, Any] = {}
 
         # 策略类型映射
-        self._strategy_registry: dict[str, typing.Type[PredictionStrategy]] = {
+        self._strategy_registry: dict[str, type[PredictionStrategy]] = {
             "ml_model": MLModelStrategy,
             "statistical": StatisticalStrategy,
             "historical": HistoricalStrategy,
@@ -66,7 +66,7 @@ class PredictionStrategyFactory:
         self._load_configuration()
 
     def register_strategy(
-        self, strategy_type: str, strategy_class: typing.Type[PredictionStrategy]
+        self, strategy_type: str, strategy_class: type[PredictionStrategy]
     ) -> None:
         """注册新的策略类型".
 

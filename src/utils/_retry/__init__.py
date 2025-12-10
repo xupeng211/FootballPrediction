@@ -135,7 +135,7 @@ class CircuitBreaker:
         self,
         failure_threshold: int = 5,
         recovery_timeout: float = 60.0,
-        expected_exception: typing.Type = Exception,
+        expected_exception: type = Exception,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
@@ -266,7 +266,7 @@ def retry_sync(config: RetryConfig | None = None):
         self,
         failure_threshold: int = 5,
         recovery_timeout: float = 60.0,
-        expected_exception: typing.Type = Exception,
+        expected_exception: type = Exception,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout

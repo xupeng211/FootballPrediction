@@ -26,11 +26,11 @@ class CommandBus:
     def __init__(self):
         """函数文档字符串."""
         # 添加pass语句
-        self._handlers: dict[typing.Type[Command], CommandHandler] = {}
+        self._handlers: dict[type[Command], CommandHandler] = {}
         self._middleware: list = []
 
     def register_handler(
-        self, command_type: typing.Type[Command], handler: CommandHandler
+        self, command_type: type[Command], handler: CommandHandler
     ) -> None:
         """注册命令处理器."""
         self._handlers[command_type] = handler
@@ -91,10 +91,10 @@ class QueryBus:
     def __init__(self):
         """函数文档字符串."""
         # 添加pass语句
-        self._handlers: dict[typing.Type[Query], QueryHandler] = {}
+        self._handlers: dict[type[Query], QueryHandler] = {}
         self._middleware: list = []
 
-    def register_handler(self, query_type: typing.Type[Query], handler: QueryHandler) -> None:
+    def register_handler(self, query_type: type[Query], handler: QueryHandler) -> None:
         """注册查询处理器."""
         self._handlers[query_type] = handler
         logger.info(

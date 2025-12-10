@@ -50,7 +50,7 @@ def deep_search_json(obj, path="", target_keys=None, results=None):
                             "path": current_path,
                             "key": key,
                             "value": value,
-                            "typing.Type": typing.Type(value).__name__,
+                            "typing.Type": type(value).__name__,
                         }
                     )
 

@@ -250,10 +250,10 @@ class DecoratorRegistry:
     def __init__(self):
         """函数文档字符串."""
         # 添加pass语句
-        self._decorators: dict[str, typing.Type[Decorator]] = {}
+        self._decorators: dict[str, type[Decorator]] = {}
         self._instances: dict[str, Decorator] = {}
 
-    def register(self, name: str, decorator_class: typing.Type[Decorator]) -> None:
+    def register(self, name: str, decorator_class: type[Decorator]) -> None:
         """注册装饰器类."""
         self._decorators[name] = decorator_class
 
@@ -262,7 +262,7 @@ class DecoratorRegistry:
         self._decorators.pop(name, None)
         self._instances.pop(name, None)
 
-    def get_decorator_class(self, name: str) -> typing.Type[Decorator] | None:
+    def get_decorator_class(self, name: str) -> type[Decorator] | None:
         """获取装饰器类."""
         return self._decorators.get(name)
 

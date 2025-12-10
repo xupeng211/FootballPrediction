@@ -96,7 +96,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     所有具体的DAO实现都应该继承此类并实现抽象方法。
     """
 
-    def __init__(self, model: typing.Type[ModelType], session: AsyncSession):
+    def __init__(self, model: type[ModelType], session: AsyncSession):
         """
         初始化DAO实例
 

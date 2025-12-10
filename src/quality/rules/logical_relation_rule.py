@@ -512,8 +512,8 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
                     "reason": "non_numeric_fields",
                     "field_a": field_a,
                     "field_b": field_b,
-                    "value_a_type": typing.Type(value_a).__name__,
-                    "value_b_type": typing.Type(value_b).__name__,
+                    "value_a_type": type(value_a).__name__,
+                    "value_b_type": type(value_b).__name__,
                 }
                 continue
 

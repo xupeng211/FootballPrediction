@@ -432,7 +432,7 @@ class AsyncBatchProcessor(AsyncBaseService):
 
 # 便捷函数
 async def create_async_collector(
-    collector_class: typing.Type, config: Optional[AsyncConfig] = None, **kwargs
+    collector_class: type, config: Optional[AsyncConfig] = None, **kwargs
 ) -> AsyncBaseCollector:
     """
     创建异步采集器实例

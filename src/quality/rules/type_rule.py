@@ -153,7 +153,7 @@ class TypeRule(TypeRuleProtocol):
         return errors
 
     def _check_field_type(
-        self, field_name: str, value: Any, expected_type: typing.Type
+        self, field_name: str, value: Any, expected_type: type
     ) -> Optional[str]:
         """
         检查单个字段的数据类型。
@@ -203,7 +203,7 @@ class TypeRule(TypeRuleProtocol):
                 f"实际 {typing.Type(value).__name__}, 值: {self._format_value(value)}"
             )
 
-    def _convert_type(self, value: Any, target_type: typing.Type) -> Optional[Any]:
+    def _convert_type(self, value: Any, target_type: type) -> Optional[Any]:
         """
         尝试将值转换为目标类型。
 
@@ -319,7 +319,7 @@ class TypeRule(TypeRuleProtocol):
         """
         return self.field_types.get(field_name)
 
-    def configure_field_type(self, field_name: str, expected_type: typing.Type) -> None:
+    def configure_field_type(self, field_name: str, expected_type: type) -> None:
         """
         配置字段的期望类型。
 
@@ -402,7 +402,7 @@ class TypeRule(TypeRuleProtocol):
 
             field_detail = {
                 "field_name": field_name,
-                "actual_type": typing.Type(value).__name__,
+                "actual_type": type(value).__name__,
                 "expected_type": expected_type.__name__,
                 "value": self._format_value(value),
                 "type_match": isinstance(value, expected_type),
@@ -437,7 +437,7 @@ class TypeRule(TypeRuleProtocol):
 
         return summary
 
-    def _can_convert_type(self, value: Any, target_type: typing.Type) -> bool:
+    def _can_convert_type(self, value: Any, target_type: type) -> bool:
         """
         检查值是否可以转换为目标类型。
 

@@ -66,7 +66,7 @@ class TaskErrorLogger:
             error_details = {
                 "task_name": task_name,
                 "task_id": task_id,
-                "error_type": typing.Type(error).__name__,
+                "error_type": type(error).__name__,
                 "error_message": error_message,
                 "traceback": error_traceback,
                 "retry_count": retry_count,
@@ -85,7 +85,7 @@ class TaskErrorLogger:
                     "task_name": task_name,
                     "task_id": task_id,
                     "retry_count": retry_count,
-                    "error_type": typing.Type(error).__name__,
+                    "error_type": type(error).__name__,
                 },
             )
 

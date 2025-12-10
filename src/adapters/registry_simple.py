@@ -26,7 +26,7 @@ class AdapterRegistry:
         self._registry: dict[str, dict] = {}
         self._instances: dict[str, Any] = {}
 
-    def register(self, name: str, adapter_class: typing.Type, **kwargs) -> None:
+    def register(self, name: str, adapter_class: type, **kwargs) -> None:
         """注册适配器."""
         self._registry[name] = {"class": adapter_class, **kwargs}
 

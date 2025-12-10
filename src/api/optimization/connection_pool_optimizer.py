@@ -240,7 +240,7 @@ class ConnectionPoolOptimizer:
 
         status = {
             "pool_name": pool_name,
-            "pool_type": typing.Type(pool).__name__,
+            "pool_type": type(pool).__name__,
             "metrics": {
                 "pool_size": metrics.pool_size,
                 "checked_in": metrics.checked_in,

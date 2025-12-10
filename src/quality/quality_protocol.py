@@ -234,7 +234,7 @@ RULE_TYPES = {
 }
 
 
-def get_rule_class(rule_type: str) -> typing.Type[DataQualityRule]:
+def get_rule_class(rule_type: str) -> type[DataQualityRule]:
     """
     根据规则类型获取对应的规则类。
 
@@ -242,7 +242,7 @@ def get_rule_class(rule_type: str) -> typing.Type[DataQualityRule]:
         rule_type: 规则类型字符串
 
     Returns:
-        typing.Type[DataQualityRule]: 对应的规则类
+        type[DataQualityRule]: 对应的规则类
 
     Raises:
         ValueError: 当规则类型不存在时

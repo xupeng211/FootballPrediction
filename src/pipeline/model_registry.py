@@ -92,8 +92,8 @@ class ModelRegistry:
             "name": name,
             "version": version,
             "created_at": datetime.now().isoformat(),
-            "model_type": typing.Type(model).__name__,
-            "model_module": typing.Type(model).__module__,
+            "model_type": type(model).__name__,
+            "model_module": type(model).__module__,
             "file_path": str(model_path.relative_to(self.models_dir.parent)),
             "environment": self.config.environment,
         }
