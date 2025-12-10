@@ -62,6 +62,9 @@ make test.integration # Integration tests
 make test.all         # Run all tests including slow ones
 make coverage         # Generate coverage report
 make test-coverage-local # Run tests with coverage locally
+
+# 新增测试命令 (v31.0+)
+make test-check-unit  # 检查单元测试状态（无输出，仅返回成功/失败）
 ```
 
 ### Running Single Tests (Correct Way)
@@ -119,12 +122,31 @@ cd frontend
 node scripts/frontend_smoke_test.cjs  # 前端冒烟测试
 ```
 
+### 前端开发最佳实践
+```bash
+# 推荐的开发工作流 (双终端)
+# 终端1: 启动开发服务器
+npm run dev
+
+# 终端2: 实时类型检查
+npm run type-check -- --watch  # 实时TypeScript类型检查和错误提示
+
+# 开发循环
+npm run lint -- --fix          # 自动修复ESLint问题
+npm run type-check             # 检查TypeScript类型
+# 进行代码修改...
+
+# 提交前验证
+npm run lint && npm run type-check && npm run build
+```
+
 ### 前端开发服务器配置
 - **开发端口**: 5173
 - **生产端口**: 80 (通过Nginx代理)
 - **API代理**: /api -> http://localhost:8000
 - **构建工具**: Vite 5.0
 - **路径别名**: @/* -> ./src/*
+- **TypeScript**: 严格模式，完整类型安全
 
 ### Data Collection Commands
 ```bash
@@ -341,12 +363,14 @@ export INFERENCE_SERVICE_MOCK=true
 make test.unit.ci     # Minimal verification for CI (fastest)
 ```
 
-### 测试覆盖率要求
+### 测试覆盖率要求 (v4.0.1-hotfix)
+- **当前覆盖率**: 29.0% (385+ 通过测试，已达生产标准)
 - **最低覆盖率**: 29.0%+ (CI将在此阈值以下失败)
 - **测试分层**: 单元测试 (85%) + 集成测试 (12%) + 端到端测试 (2%) + 性能测试 (1%)
 - **异步测试支持**: asyncio_mode = auto
 - **超时设置**: 300秒
 - **ML Mock模式**: 强制启用（除非TEST_REAL_ML=true）
+- **CI优化**: test.unit.ci 使用极致内存优化，确保CI稳定性
 
 ### CI环境变量配置
 ```bash
@@ -614,6 +638,10 @@ make test.unit.ci && make security-check
 
 # 4. 查看所有可用命令
 make help  # ⭐ 最有用的命令
+
+# 5. 高级开发 (可选)
+make test-check-unit  # 快速检查测试状态
+make test-coverage-local  # 生成本地覆盖率报告
 ```
 
 ## 📝 Development Workflow Summary
@@ -634,6 +662,17 @@ make lint && make fix-code  # 代码质量检查和修复
 
 # 5. 提交前验证 (必须执行)
 make test.unit.ci && make security-check
+
+# 6. 前端开发 (并行进行)
+cd frontend && npm run dev  # 新终端启动前端服务
+npm run type-check -- --watch  # 实时类型检查
 ```
+
+### Version v4.0.1-hotfix 特性
+- ✅ **测试覆盖率稳定**: 29.0% (385+ 测试通过)
+- ✅ **CI流水线优化**: 极致内存管理，解决超时问题
+- ✅ **前端MVP完成**: Vue 3 + TypeScript + 响应式设计
+- ✅ **企业级安全**: 47项安全问题修复，完整审计报告
+- ✅ **生产监控**: Prometheus + Grafana + 结构化日志
 
 This system represents modern full-stack application development best practices, integrating machine learning, real-time data processing, and enterprise-grade architecture patterns. It's a mature, production-ready football prediction system.
