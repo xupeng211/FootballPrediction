@@ -226,8 +226,8 @@ class TestConvenienceMethods:
             # test_users 表
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS test_users (
-                    id INTEGER PRIMARY KEY
-                    name TEXT NOT NULL
+                    id INTEGER PRIMARY KEY,
+                    name TEXT NOT NULL,
                     email TEXT UNIQUE
                 )
             """))
@@ -235,7 +235,7 @@ class TestConvenienceMethods:
             # test_unique 表（用于约束测试）
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS test_unique (
-                    id INTEGER PRIMARY KEY
+                    id INTEGER PRIMARY KEY,
                     email TEXT UNIQUE NOT NULL
                 )
             """))
@@ -243,7 +243,7 @@ class TestConvenienceMethods:
             # test_concurrent 表（用于并发测试）
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS test_concurrent (
-                    id INTEGER PRIMARY KEY
+                    id INTEGER PRIMARY KEY,
                     value TEXT NOT NULL
                 )
             """))
@@ -251,8 +251,8 @@ class TestConvenienceMethods:
             # test_batch 表（用于批量操作测试）
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS test_batch (
-                    id INTEGER PRIMARY KEY
-                    name TEXT NOT NULL
+                    id INTEGER PRIMARY KEY,
+                    name TEXT NOT NULL,
                     value INTEGER NOT NULL
                 )
             """))
@@ -267,7 +267,7 @@ class TestConvenienceMethods:
         async with get_db_session() as session:
             await session.execute(text("""
                 INSERT INTO test_users (name, email) VALUES
-                ('Alice', 'alice@test.com')
+                ('Alice', 'alice@test.com'),
                 ('Bob', 'bob@test.com')
             """))
             await session.commit()
@@ -292,7 +292,7 @@ class TestConvenienceMethods:
         async with get_db_session() as session:
             await session.execute(text(f"""
                 INSERT INTO test_users (name, email) VALUES
-                ('Alice', 'alice_{timestamp}@test.com')
+                ('Alice', 'alice_{timestamp}@test.com'),
                 ('Bob', 'bob_{timestamp}@test.com')
             """))
             await session.commit()
@@ -439,7 +439,7 @@ class TestErrorHandling:
         async with get_db_session() as session:
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS test_unique (
-                    id INTEGER PRIMARY KEY
+                    id INTEGER PRIMARY KEY,
                     email TEXT UNIQUE NOT NULL
                 )
             """))
@@ -475,7 +475,7 @@ class TestPerformance:
         async with get_db_session() as session:
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS test_concurrent (
-                    id INTEGER PRIMARY KEY
+                    id INTEGER PRIMARY KEY,
                     value TEXT
                 )
             """))
@@ -509,8 +509,8 @@ class TestPerformance:
         async with get_db_session() as session:
             await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS test_batch (
-                    id INTEGER PRIMARY KEY
-                    name TEXT
+                    id INTEGER PRIMARY KEY,
+                    name TEXT,
                     value INTEGER
                 )
             """))
