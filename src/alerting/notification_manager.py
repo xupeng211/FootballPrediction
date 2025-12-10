@@ -576,7 +576,7 @@ class NotificationManager:
             # 默认通知渠道配置
             default_channels = [
                 NotificationChannel(
-                    id="log", name="日志记录", type="log", enabled=True, config={}
+                    id="log", name="日志记录"="log", enabled=True, config={}
                 )
             ]
 

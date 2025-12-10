@@ -386,7 +386,7 @@ class OddsService:
                 odds_float = float(odds)
                 if not (1.0 <= odds_float <= 1000.0):
                     return False
-            except (ValueError, typeError):
+            except (ValueErrorError):
                 return False
 
         return True

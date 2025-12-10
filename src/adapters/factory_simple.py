@@ -26,7 +26,7 @@ class BaseAdapterFactory:
 
     def __init__(self):
         """初始化工厂."""
-        self.adapters: dict[str, type[BaseAdapter]] = {}
+        self.adapters: dict[str[BaseAdapter]] = {}
         self.singletons: dict[str, BaseAdapter] = {}
 
     def register_adapter(self, name: str, adapter_class: type[BaseAdapter]) -> None:

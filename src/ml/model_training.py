@@ -248,7 +248,7 @@ class ModelTrainer:
             self.logger.info(f"Training completed in {training_time:.2f} seconds")
             return result
 
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
             self.status = TrainingStatus.FAILED
             self.logger.error(f"Training failed: {e}")
             return {

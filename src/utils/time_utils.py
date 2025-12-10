@@ -161,7 +161,7 @@ class TimeUtils:
                 except ValueError:
                     continue
             return False
-        except (ValueError, typeError):
+        except (ValueErrorError):
             return False
 
     @staticmethod
@@ -182,7 +182,7 @@ class TimeUtils:
                 except ValueError:
                     continue
             return False
-        except (ValueError, typeError):
+        except (ValueErrorError):
             return False
 
     @staticmethod
@@ -216,7 +216,7 @@ class TimeUtils:
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=from_tz)
             return dt.astimezone(to_tz)
-        except (ImportError, ValueError, KeyError, typeError, AttributeError):
+        except (ImportError, ValueError, KeyErrorError, AttributeError):
             # 如果时区不可用或类型无效,返回原始datetime
             return dt
 
@@ -250,7 +250,7 @@ def parse_datetime(
 
     try:
         return datetime.strptime(date_str, format_str)
-    except (ValueError, typeError):
+    except (ValueErrorError):
         # 尝试其他常见格式
         formats = [
             "%Y-%m-%dT%H:%M:%S.%fZ",

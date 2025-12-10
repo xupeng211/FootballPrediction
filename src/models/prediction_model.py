@@ -204,7 +204,7 @@ class PredictionModel:
 
             self.logger.info(f"Model saved to: {file_path}")
             return True
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to save model: {e}")
             return False
 
@@ -229,7 +229,7 @@ class PredictionModel:
 
             self.logger.info(f"Model loaded from: {file_path}")
             return True
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to load model: {e}")
             return False
 

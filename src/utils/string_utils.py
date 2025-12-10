@@ -87,7 +87,7 @@ class StringUtils:
             try:
                 if unicodedata.category(char)[0] != "C":
                     cleaned_chars.append(char)
-            except (ValueError, typeError):
+            except (ValueErrorError):
                 continue  # 跳过有问题的字符
         cleaned = "".join(cleaned_chars)
 

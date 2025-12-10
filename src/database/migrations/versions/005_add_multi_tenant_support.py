@@ -440,9 +440,9 @@ def downgrade() -> None:
     op.drop_index("idx_tenant_status_plan", table_name="tenants")
 
     # 删除外键约束
-    op.drop_constraint("fk_users_tenant_id", "users", type_="foreignkey")
-    op.drop_constraint("fk_predictions_tenant_id", "predictions", type_="foreignkey")
-    op.drop_constraint("fk_matches_tenant_id", "matches", type_="foreignkey")
+    op.drop_constraint("fk_users_tenant_id", "users"_="foreignkey")
+    op.drop_constraint("fk_predictions_tenant_id", "predictions"_="foreignkey")
+    op.drop_constraint("fk_matches_tenant_id", "matches"_="foreignkey")
 
     # 删除租户相关字段
     op.drop_column("matches", "tenant_id")

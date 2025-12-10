@@ -172,7 +172,7 @@ class RangeRule(RangeRuleProtocol):
                 return f"字段 '{field_name}' 值为无穷大: {value}"
             if math.isnan(value):
                 return f"字段 '{field_name}' 值为 NaN"
-        except (ValueError, typeError):
+        except (ValueErrorError):
             pass
 
         # 检查范围

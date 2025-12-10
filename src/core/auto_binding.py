@@ -157,7 +157,7 @@ class AutoBinder:
                 module = importlib.import_module(module_name)
                 self._scan_module(module)
                 self._scanned_modules.append(module_name)
-            except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"扫描模块失败 {module_name}: {e}")
 
         if recursive:
@@ -235,7 +235,7 @@ class AutoBinder:
 
                     if self._is_implementation(obj, interface):
                         implementations.append(obj)
-            except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"查找实现失败 {module_name}: {e}")
 
         # 缓存结果

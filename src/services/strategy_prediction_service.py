@@ -247,7 +247,7 @@ class StrategyPredictionService:
                 logger.info(
                     f"策略 {strategy_name} 预测结果: {output.predicted_home_score}:{output.predicted_away_score}"
                 )
-            except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"策略 {strategy_name} 预测失败: {e}")
                 results[strategy_name] = None
 

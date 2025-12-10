@@ -666,7 +666,7 @@ class FixturesCollector:
 
             return cleaned_data
 
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to clean fixture data: {str(e)}")
             return None
 

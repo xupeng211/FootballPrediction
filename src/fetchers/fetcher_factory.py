@@ -16,7 +16,7 @@ Data Fetcher Factory
 """
 
 import logging
-from typing import  Optional, type, Any
+from typing import  Optional, Any
 
 from src.collectors.abstract_fetcher import AbstractFetcher, FetcherError
 from .oddsportal_fetcher import OddsPortalFetcher
@@ -33,7 +33,7 @@ class FetcherFactory:
     """
 
     # 注册表：存储获取器类和元数据
-    _registry: dict[str, type[AbstractFetcher]] = {}
+    _registry: dict[str[AbstractFetcher]] = {}
     _metadata: dict[str, dict[str, Any]] = {}
 
     @classmethod

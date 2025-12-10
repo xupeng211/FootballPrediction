@@ -14,7 +14,6 @@ from typing import (
     Optional,
     Any,
     Union,
-    type,
     cast,
 )
 from collections.abc import Sequence

@@ -455,7 +455,7 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
                         match_time_str.replace("Z", "+00:00")
                     )
                     match_date = aware_dt.replace(tzinfo=None)
-                except (ValueError, typeError):
+                except (ValueErrorError):
                     match_date = None
 
             # 如果没有有效时间，使用默认时间

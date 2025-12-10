@@ -17,7 +17,7 @@ type Rule - 数据类型检查规则
 """
 
 import logging
-from typing import Any,  Optional, type
+from typing import Any,  Optional
 
 from src.quality.quality_protocol import (
     TypeRule as TypeRuleProtocol,
@@ -38,7 +38,7 @@ class TypeRule(TypeRuleProtocol):
 
     def __init__(
         self,
-        field_types: Optional[dict[str, type]] = None,
+        field_types: Optional[dict[str]] = None,
         strict_type_checking: bool = True,
         allow_type_conversion: bool = True,
     ):
@@ -327,7 +327,7 @@ class TypeRule(TypeRuleProtocol):
             field_name: 字段名称
             expected_type: 期望的类型
         """
-        if not isinstance(expected_type, type):
+        if not isinstance(expected_type):
             raise ValueError("expected_type 必须是一个类型对象")
 
         self.field_types[field_name] = expected_type
@@ -364,7 +364,7 @@ class TypeRule(TypeRuleProtocol):
 
         for field_name, expected_type in self.field_types.items():
             try:
-                if not isinstance(expected_type, type):
+                if not isinstance(expected_type):
                     errors.append(
                         f"字段 '{field_name}' 配置的类型 {expected_type} 不是有效的类型对象"
                     )

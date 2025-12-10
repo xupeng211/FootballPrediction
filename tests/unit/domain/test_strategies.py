@@ -571,5 +571,5 @@ def assert_valid_prediction_output(output: PredictionOutput):
     assert output.predicted_home_score >= 0
     assert output.predicted_away_score >= 0
     assert 0.0 <= output.confidence <= 1.0
-    assert isinstance(output.strategy_used, (str, type(None)))
-    assert isinstance(output.execution_time_ms, (float, int, type(None)))
+    assert isinstance(output.strategy_used, (str(None)))
+    assert isinstance(output.execution_time_ms, (float, int(None)))

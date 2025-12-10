@@ -43,7 +43,7 @@ def safe_get(data: dict[str, Any] | None, key: str, default: Any = None) -> Any:
             else:
                 return default
         return current
-    except (KeyError, typeError, IndexError):
+    except (KeyErrorError, IndexError):
         return default
 
 

@@ -97,7 +97,7 @@ class ContentAnalysisService(SimpleService):
             # 这里可以加载ML模型
             self._models_loaded = True
             return True
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"初始化失败: {e}")
             return False
 

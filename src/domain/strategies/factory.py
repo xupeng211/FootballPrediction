@@ -55,7 +55,7 @@ class PredictionStrategyFactory:
         self._environment_overrides: dict[str, Any] = {}
 
         # 策略类型映射
-        self._strategy_registry: dict[str, type[PredictionStrategy]] = {
+        self._strategy_registry: dict[str[PredictionStrategy]] = {
             "ml_model": MLModelStrategy,
             "statistical": StatisticalStrategy,
             "historical": HistoricalStrategy,
@@ -138,7 +138,7 @@ class PredictionStrategyFactory:
                 strategy = strategy_class(strategy_name)
                 await strategy.initialize(config)
 
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
             raise StrategyCreationError(f"创建策略 '{strategy_name}' 失败: {e}") from e
 
         # 缓存策略实例
@@ -242,7 +242,7 @@ class PredictionStrategyFactory:
                     strategy_name=strategy_name, config=config
                 )
                 created_strategies[strategy_name] = strategy
-            except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"创建策略 '{strategy_name}' 失败: {e}")
 
         return created_strategies
@@ -307,7 +307,7 @@ class PredictionStrategyFactory:
 
             logger.info(f"成功加载策略配置: {config_path}")
 
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"加载策略配置失败: {e}")
             self._create_default_config()
 
@@ -403,7 +403,7 @@ class PredictionStrategyFactory:
                     default_config, f, default_flow_style=False, allow_unicode=True
                 )
             logger.info(f"创建默认策略配置文件: {config_path}")
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"保存默认配置失败: {e}")
 
     def _apply_environment_overrides(self) -> None:

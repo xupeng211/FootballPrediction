@@ -55,8 +55,8 @@ class FacadeFactory:
 
     def __init__(self):
         """初始化工厂."""
-        self._subsystem_registry: dict[str, type[Subsystem]] = {}
-        self._facade_registry: dict[str, type[Facade]] = {}
+        self._subsystem_registry: dict[str[Subsystem]] = {}
+        self._facade_registry: dict[str[Facade]] = {}
         self._created_instances: dict[str, Facade] = {}
 
     def register_subsystem(self, name: str, subsystem_class: type[Subsystem]) -> None:

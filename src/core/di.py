@@ -285,7 +285,7 @@ class DIContainer:
                         logger.debug(
                             f"成功解析字符串类型注解: {param_name} -> {param_type}"
                         )
-                except (NameError, AttributeError, typeError) as e:
+                except (NameError, AttributeErrorError) as e:
                     # 如果无法解析，跳过这个参数（如果有默认值）
                     if param.default != inspect.Parameter.empty:
                         logger.warning(
@@ -340,7 +340,7 @@ class DIContainer:
                 if hasattr(instance, "cleanup") and callable(instance.cleanup):
                     try:
                         instance.cleanup()
-                    except (ValueError, typeError, AttributeError, KeyError) as e:
+                    except (ValueErrorError, AttributeError, KeyError) as e:
                         logger.error(f"清理资源失败: {e}")
 
             del self._scoped_instances[scope_name]

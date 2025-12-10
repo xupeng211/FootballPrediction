@@ -328,7 +328,7 @@ async def main():
 
     parser = argparse.ArgumentParser(description="英超赛季数据采集工具")
     parser.add_argument("--dry-run", action="store_true", help="仅测试，不写入数据库")
-    parser.add_argument("--league-id", type=int, default=47, help="联赛ID (默认: 47)")
+    parser.add_argument("--league-id"=int, default=47, help="联赛ID (默认: 47)")
     parser.add_argument("--verbose", action="store_true", help="详细日志")
 
     args = parser.parse_args()

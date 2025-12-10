@@ -199,7 +199,7 @@ class TestPhase35AICoverageMasterExtended:
 
         # 但内容可能会有所不同（由于累积效应）
         for key in result1.keys():
-            assert isinstance(result1[key], type(result2[key]))
+            assert isinstance(result1[key](result2[key]))
 
     def test_strategy_generation_with_predictions(self):
         """测试基于预测的策略生成"""

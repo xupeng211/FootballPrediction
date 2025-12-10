@@ -63,7 +63,7 @@ class BaseService(ABC):
             else:
                 self.logger.error(f"服务 {self.name} 初始化失败")
             return success
-        except (ValueError, typeError, AttributeError, KeyError) as e:
+        except (ValueErrorError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 初始化异常: {e}")
             return False
 
@@ -82,7 +82,7 @@ class BaseService(ABC):
             await self._on_shutdown()
             self._initialized = False
             self.logger.info(f"服务 {self.name} 已关闭")
-        except (ValueError, typeError, AttributeError, KeyError) as e:
+        except (ValueErrorError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 关闭异常: {e}")
 
     def start(self) -> bool:
@@ -109,7 +109,7 @@ class BaseService(ABC):
             else:
                 self.logger.error(f"服务 {self.name} 启动失败")
             return success
-        except (ValueError, typeError, AttributeError, KeyError) as e:
+        except (ValueErrorError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 启动异常: {e}")
             return False
 
@@ -123,7 +123,7 @@ class BaseService(ABC):
             await self._on_stop()
             self._running = False
             self.logger.info(f"服务 {self.name} 已停止")
-        except (ValueError, typeError, AttributeError, KeyError) as e:
+        except (ValueErrorError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 停止异常: {e}")
 
     # ========================================
@@ -222,7 +222,7 @@ class BaseService(ABC):
             with self.db_manager.get_session() as session:
                 session.execute("SELECT 1")
             return True
-        except (ValueError, typeError, AttributeError):
+        except (ValueErrorError, AttributeError):
             return False
 
     # ========================================

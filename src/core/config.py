@@ -92,7 +92,7 @@ class Config:
             try:
                 with open(self.config_file, encoding="utf-8") as f:
                     self.config = json.load(f)
-            except (ValueError, typeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueErrorError, AttributeError, KeyError, RuntimeError) as e:
                 # 配置文件损坏时记录警告,但不中断程序执行
                 logging.warning(f"配置文件加载失败: {e}")
 
@@ -232,7 +232,7 @@ class Settings(SettingsClass):
                 "env_strict": False,  # 禁用严格模式，避免自动类型转换
                 "env_parse_none_str": "null",  # 禁用自动解析
             }
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError):
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError):
             # Fallback for older versions
             class Config:
                 """类文档字符串."""
@@ -258,7 +258,7 @@ class Settings(SettingsClass):
                 else:
                     logging.warning(f"API_PORT: '{v}' 超出范围，回退到 {DEFAULT_PORT}")
                     return DEFAULT_PORT
-            except (ValueError, typeError):
+            except (ValueErrorError):
                 logging.warning(
                     f"API_PORT: '{v}' 不是有效端口号，回退到 {DEFAULT_PORT}"
                 )
@@ -342,7 +342,7 @@ class Settings(SettingsClass):
                             f"API_PORT: '{env_value}' 超出范围，回退到默认值8000"
                         )
                         env_value = 8000
-                except (ValueError, typeError):
+                except (ValueErrorError):
                     logging.warning(
                         f"API_PORT: '{env_value}' 不是有效端口号，回退到默认值8000"
                     )

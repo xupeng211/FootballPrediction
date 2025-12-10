@@ -164,7 +164,7 @@ class MockRedis:
         current = self.get(key) or 0
         try:
             new_value = int(current) + 1
-        except (ValueError, typeError):
+        except (ValueErrorError):
             new_value = 1
         self.set(key, new_value)
         return new_value
@@ -174,7 +174,7 @@ class MockRedis:
         current = self.get(key) or 0
         try:
             new_value = int(current) - 1
-        except (ValueError, typeError):
+        except (ValueErrorError):
             new_value = -1
         self.set(key, new_value)
         return new_value

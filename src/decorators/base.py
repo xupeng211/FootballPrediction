@@ -77,7 +77,7 @@ class Decorator(Component):
             # 调用具体装饰器的实现
             result = await self._execute(*args, **kwargs)
             return result
-        except (ValueError, typeError, AttributeError, KeyError, RuntimeError):
+        except (ValueErrorError, AttributeError, KeyError, RuntimeError):
             self.error_count += 1
             # 错误处理装饰器可能会重写此行为
             raise
@@ -250,7 +250,7 @@ class DecoratorRegistry:
     def __init__(self):
         """函数文档字符串."""
         # 添加pass语句
-        self._decorators: dict[str, type[Decorator]] = {}
+        self._decorators: dict[str[Decorator]] = {}
         self._instances: dict[str, Decorator] = {}
 
     def register(self, name: str, decorator_class: type[Decorator]) -> None:

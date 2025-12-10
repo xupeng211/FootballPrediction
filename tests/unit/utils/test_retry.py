@@ -118,10 +118,10 @@ class TestRetryExports:
         """测试向后兼容性"""
         # 验证导入的符号类型正确
 
-        assert isinstance(RetryConfig, type)
-        assert isinstance(BackoffStrategy, type)
-        assert isinstance(CircuitBreaker, type)
-        assert isinstance(CircuitState, type)
+        assert isinstance(RetryConfig)
+        assert isinstance(BackoffStrategy)
+        assert isinstance(CircuitBreaker)
+        assert isinstance(CircuitState)
 
         # 验证策略类是BackoffStrategy的子类（如果有的话）
         strategy_classes = [
@@ -132,7 +132,7 @@ class TestRetryExports:
         ]
 
         for strategy_class in strategy_classes:
-            assert isinstance(strategy_class, type)
+            assert isinstance(strategy_class)
 
     def test_import_from_retry_module(self):
         """测试从_retry模块导入功能正常"""

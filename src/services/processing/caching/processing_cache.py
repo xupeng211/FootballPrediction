@@ -259,7 +259,7 @@ class ProcessingCache:
             await self.redis_client.setex(cache_key, ttl, serialized_data)
             return True
 
-        except (RedisError, json.JSONEncodeError, typeError) as e:
+        except (RedisError, json.JSONEncodeErrorError) as e:
             self.logger.warning(f"Redis设置失败 {cache_key}: {e}")
             return False
 
