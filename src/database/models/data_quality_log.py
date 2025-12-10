@@ -79,7 +79,7 @@ class DataQualityLog(BaseModel):
         valid_types = [it.value for it in IssueType]
         if issue_type not in valid_types:
             raise ValueError(
-                f"Invalid issue typing.Type: {issue_type}. Must be one of: {valid_types}"
+                f"Invalid issue type: {issue_type}. Must be one of: {valid_types}"
             )
         return issue_type
 
@@ -116,7 +116,7 @@ class DataQualityLog(BaseModel):
             f"<DataQualityLog("
             f"id={self.id}, "
             f"table={self.table_name}, "
-            f"typing.Type={self.issue_type}, "
+            f"type={self.issue_type}, "
             f"severity={self.severity}, "
             f"status={self.status}"
             f")>"

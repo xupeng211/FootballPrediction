@@ -205,7 +205,7 @@ class QueryExecutionAnalyzer:
             # 返回一个基本的执行计划结构
             return {
                 "Plan": {
-                    "Node typing.Type": "Result",
+                    "Node type": "Result",
                     "Total Cost": 0.0,
                     "Plan Rows": 0,
                     "Actual Total Time": 0.0,
@@ -236,7 +236,7 @@ class QueryExecutionAnalyzer:
         # 创建基本的执行计划结构
         return {
             "Plan": {
-                "Node typing.Type": "Unknown",
+                "Node type": "Unknown",
                 "Total Cost": 0.0,
                 "Plan Rows": 0,
                 "Actual Total Time": execution_time,
@@ -258,7 +258,7 @@ class QueryExecutionAnalyzer:
     def _parse_plan_node(self, node_data: dict[str, Any]) -> ExecutionPlanNode:
         """解析单个执行计划节点."""
         node = ExecutionPlanNode(
-            node_type=node_data.get("Node typing.Type", "Unknown"),
+            node_type=node_data.get("Node type", "Unknown"),
             relation_name=node_data.get("Relation Name"),
             alias=node_data.get("Alias"),
             startup_cost=float(node_data.get("Startup Cost", 0.0)),
@@ -270,7 +270,7 @@ class QueryExecutionAnalyzer:
             actual_total_time=float(node_data.get("Actual Total Time", 0.0)),
             actual_startup_time=float(node_data.get("Actual Startup Time", 0.0)),
             parent_relationship=node_data.get("Parent Relationship"),
-            join_type=node_data.get("Join typing.Type"),
+            join_type=node_data.get("Join type"),
             index_name=node_data.get("Index Name"),
             index_condition=node_data.get("Index Condition"),
             hash_condition=node_data.get("Hash Condition"),
@@ -436,7 +436,7 @@ class QueryExecutionAnalyzer:
         if execution_time > 5.0:
             issues.append(
                 {
-                    "typing.Type": "slow_execution",
+                    "type": "slow_execution",
                     "severity": "high",
                     "description": f"查询执行时间过长: {execution_time:.4f}s",
                     "threshold": 5.0,
@@ -445,7 +445,7 @@ class QueryExecutionAnalyzer:
         elif execution_time > 1.0:
             issues.append(
                 {
-                    "typing.Type": "moderate_slow_execution",
+                    "type": "moderate_slow_execution",
                     "severity": "medium",
                     "description": f"查询执行时间较长: {execution_time:.4f}s",
                     "threshold": 1.0,
@@ -466,7 +466,7 @@ class QueryExecutionAnalyzer:
         if node.node_type == "Seq Scan" and node.rows > 10000:
             issues.append(
                 {
-                    "typing.Type": "full_table_scan",
+                    "type": "full_table_scan",
                     "severity": "high",
                     "description": f"对表 {node.relation_name} 进行全表扫描，预估行数: {node.rows}",
                     "table": node.relation_name,
@@ -478,7 +478,7 @@ class QueryExecutionAnalyzer:
         if node.node_type == "Nested Loop" and node.total_cost > 1000:
             issues.append(
                 {
-                    "typing.Type": "expensive_nested_loop",
+                    "type": "expensive_nested_loop",
                     "severity": "medium",
                     "description": f"昂贵的嵌套循环连接，成本: {node.total_cost:.2f}",
                     "cost": node.total_cost,
@@ -489,7 +489,7 @@ class QueryExecutionAnalyzer:
         if node.node_type == "Hash Join" and node.actual_total_time > 1.0:
             issues.append(
                 {
-                    "typing.Type": "slow_hash_join",
+                    "type": "slow_hash_join",
                     "severity": "medium",
                     "description": f"哈希连接时间过长: {node.actual_total_time:.4f}s",
                     "execution_time": node.actual_total_time,
@@ -514,7 +514,7 @@ class QueryExecutionAnalyzer:
         # 基于缺失索引的建议
         for missing_index in missing_indexes:
             suggestion = {
-                "typing.Type": "add_index",
+                "type": "add_index",
                 "priority": missing_index["priority"],
                 "description": f"在表 {missing_index['table']} 上创建索引",
                 "details": {
@@ -528,10 +528,10 @@ class QueryExecutionAnalyzer:
 
         # 基于性能问题的建议
         for issue in performance_issues:
-            if issue["typing.Type"] == "full_table_scan":
+            if issue["type"] == "full_table_scan":
                 suggestions.append(
                     {
-                        "typing.Type": "optimize_query",
+                        "type": "optimize_query",
                         "priority": "high",
                         "description": "优化查询以避免全表扫描",
                         "details": {
@@ -540,10 +540,10 @@ class QueryExecutionAnalyzer:
                         },
                     }
                 )
-            elif issue["typing.Type"] == "slow_execution":
+            elif issue["type"] == "slow_execution":
                 suggestions.append(
                     {
-                        "typing.Type": "query_rewrite",
+                        "type": "query_rewrite",
                         "priority": "high",
                         "description": "重写查询以提高性能",
                         "details": {
@@ -573,7 +573,7 @@ class QueryExecutionAnalyzer:
         if "select *" in query_lower:
             suggestions.append(
                 {
-                    "typing.Type": "select_specific_fields",
+                    "type": "select_specific_fields",
                     "priority": "medium",
                     "description": "避免使用SELECT *，只查询需要的字段",
                     "details": {
@@ -587,7 +587,7 @@ class QueryExecutionAnalyzer:
         if "like" in query_lower and "'%" in query:
             suggestions.append(
                 {
-                    "typing.Type": "optimize_like_query",
+                    "type": "optimize_like_query",
                     "priority": "high",
                     "description": "优化LIKE查询以使用索引",
                     "details": {
@@ -601,7 +601,7 @@ class QueryExecutionAnalyzer:
         if "order by" in query_lower and "limit" not in query_lower:
             suggestions.append(
                 {
-                    "typing.Type": "add_limit",
+                    "type": "add_limit",
                     "priority": "low",
                     "description": "为ORDER BY查询添加LIMIT",
                     "details": {
@@ -622,7 +622,7 @@ class QueryExecutionAnalyzer:
 
         for suggestion in suggestions:
             # 创建唯一的标识符
-            identifier = f"{suggestion['typing.Type']}_{suggestion.get('description', '')}"
+            identifier = f"{suggestion['type']}_{suggestion.get('description', '')}"
             if identifier not in seen:
                 seen.add(identifier)
                 unique_suggestions.append(suggestion)

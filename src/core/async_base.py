@@ -438,7 +438,7 @@ async def create_async_collector(
     创建异步采集器实例
 
     Args:
-        collector_class (typing.Type): 采集器类
+        collector_class (type): 采集器类
         config (Optional[AsyncConfig]): 异步配置
         **kwargs: 采集器初始化参数
 

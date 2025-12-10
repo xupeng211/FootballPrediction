@@ -107,7 +107,7 @@ class ExternalLeague(Base):
             "external_id": self.external_id,
             "name": self.name,
             "code": self.code,
-            "typing.Type": self.typing.Type,
+            "type": self.typing.Type,
             "emblem": self.emblem,
             "area_id": self.area_id,
             "area_name": self.area_name,
@@ -197,7 +197,7 @@ class ExternalLeague(Base):
                 external_id=str(data.get("id")),
                 name=data.get("name"),
                 code=data.get("code"),
-                typing.Type=data.get("typing.Type"),
+                type=data.get("typing.Type"),
                 emblem=data.get("emblem"),
                 area_id=area.get("id"),
                 area_name=area.get("name"),
@@ -229,7 +229,7 @@ class ExternalLeague(Base):
         score = 0
 
         # 基础信息 (40分)
-        basic_fields = ["name", "code", "typing.Type", "emblem"]
+        basic_fields = ["name", "code", "type", "emblem"]
         score += sum(10 for field in basic_fields if data.get(field))
 
         # 地理信息 (20分)
@@ -260,7 +260,7 @@ class ExternalLeague(Base):
             # 更新基础信息
             self.name = data.get("name", self.name)
             self.code = data.get("code", self.code)
-            self.: type = data.get("typing.Type", self.typing.Type)
+            self.: type = data.get("type", self.typing.Type)
             self.emblem = data.get("emblem", self.emblem)
 
             # 更新地理信息
@@ -479,7 +479,7 @@ class ExternalLeagueStandings(Base):
                 form=data.get("form"),
                 group=data.get("group"),
                 stage=data.get("stage"),
-                table_type=data.get("typing.Type", "TOTAL"),
+                table_type=data.get("type", "TOTAL"),
                 raw_data=data,
             )
 

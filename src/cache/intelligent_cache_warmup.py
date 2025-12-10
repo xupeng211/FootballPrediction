@@ -883,7 +883,7 @@ class IntelligentCacheWarmupManager:
             "total_plans": len(self.warmup_plans),
             "pattern_analysis": analysis,
             "model_info": {
-                "typing.Type": type(self.predictive_model).__name__,
+                "type": type(self.predictive_model).__name__,
                 "feature_importance": self.predictive_model.get_feature_importance(),
             },
             "executor_status": {

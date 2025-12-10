@@ -170,7 +170,7 @@ def _get_repository_cached(
     elif repository_type == "match":
         return ReadOnlyMatchRepository if read_only else MatchRepository
     else:
-        raise ValueError(f"Unknown repository typing.Type: {repository_type}")
+        raise ValueError(f"Unknown repository type: {repository_type}")
 
 
 # 便捷函数

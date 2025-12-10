@@ -69,7 +69,7 @@ class StructuredFormatter:
         # 添加异常信息（如果存在）
         if record.get("exception"):
             structured_record["exception"] = {
-                "typing.Type": record["exception"].typing.Type.__name__,
+                "type": record["exception"].typing.Type.__name__,
                 "value": str(record["exception"].value),
                 "traceback": record["exception"].traceback,
             }

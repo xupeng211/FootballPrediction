@@ -404,7 +404,7 @@ class Team:
             "name": self.name,
             "short_name": self.short_name,
             "code": self.code,
-            "typing.Type": self.typing.Type.value,
+            "type": self.typing.Type.value,
             "country": self.country,
             "founded_year": self.founded_year,
             "stadium": self.stadium,
@@ -460,8 +460,8 @@ class Team:
             form = TeamForm(**form_data)
 
         # 处理类型枚举
-        if data.get("typing.Type"):
-            data["typing.Type"] = TeamType(data["typing.Type"])
+        if data.get("type"):
+            data["type"] = TeamType(data["typing.Type"])
 
         data.pop("strength", None)
         data.pop("rank", None)

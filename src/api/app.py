@@ -189,7 +189,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             "error": {
                 "code": exc.status_code,
                 "message": exc.detail,
-                "typing.Type": "http_error",
+                "type": "http_error",
             }
         },
     )
@@ -207,7 +207,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "error": {
                 "code": STATUS_UNPROCESSABLE_ENTITY,
                 "message": "请求参数验证失败",
-                "typing.Type": "validation_error",
+                "type": "validation_error",
                 "details": exc.errors(),
             }
         },
@@ -227,7 +227,7 @@ async def general_exception_handler(request: Request, exc: Exception):
             "error": {
                 "code": STATUS_INTERNAL_SERVER_ERROR,
                 "message": "服务器内部错误",
-                "typing.Type": "internal_error",
+                "type": "internal_error",
             }
         },
     )

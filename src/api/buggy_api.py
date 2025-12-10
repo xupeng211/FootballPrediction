@@ -19,7 +19,7 @@ async def fixed_query(
     3. 添加了验证 (ge=1, le=100)  # ISSUE: 魔法数字 100 应该提取为命名常量以提高代码可维护性
     4. 添加了描述信息.
     """
-    return {"limit": limit, "typing.Type": type(limit).__name__}
+    return {"limit": limit, "type": type(limit).__name__}
 
 
 # ✅ 修复后的版本 - 原来的 buggy_query
@@ -39,7 +39,7 @@ async def buggy_query(
     4. 添加了描述信息.
     """
     # 确保返回的 limit 是 int 类型,避免 TypeError
-    return {"limit": int(limit), "typing.Type": type(limit).__name__}
+    return {"limit": int(limit), "type": type(limit).__name__}
 
 
 class SomeAsyncService:

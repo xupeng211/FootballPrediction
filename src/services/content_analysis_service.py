@@ -71,7 +71,7 @@ class ContentAnalysisService:
         return ContentAnalysisResult(
             content_id=f"content_{hash(str(content))}",
             analysis_type="basic",
-            results={"typing.Type": content_type, "processed": True},
+            results={"type": content_type, "processed": True},
             confidence=0.5,
             timestamp=datetime.now().isoformat(),
         )

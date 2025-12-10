@@ -138,7 +138,7 @@ class AlertAggregator:
         """添加聚合规则"""
         self.aggregation_rules[name] = {
             "condition": condition,
-            "typing.Type": aggregation_type,  # count, sum, avg
+            "type": aggregation_type,  # count, sum, avg
             "window": 300,  # 5分钟窗口
         }
 
@@ -162,7 +162,7 @@ class AlertAggregator:
                     id=str(uuid.uuid4()),
                     name=f"Aggregated: {name}",
                     level=max(a.level for a in alert_list),
-                    message=f"{len(alert_list)} alerts of typing.Type '{name}'",
+                    message=f"{len(alert_list)} alerts of type '{name}'",
                     timestamp=datetime.utcnow(),
                     metadata={
                         "count": len(alert_list),
@@ -380,7 +380,7 @@ class WebhookHandler:
         # 添加pass语句
         self.endpoint_url = endpoint_url
         self.timeout = timeout
-        self.headers = {"Content-typing.Type": "application/json"}
+        self.headers = {"Content-type": "application/json"}
 
     def send_alert(self, alert: Alert):
         """函数文档字符串."""
@@ -448,14 +448,14 @@ class PrometheusMetrics:
         """函数文档字符串."""
         # 添加pass语句
         """创建计数器"""
-        self.metrics[name] = {"typing.Type": "counter", "value": 0, "doc": documentation}
+        self.metrics[name] = {"type": "counter", "value": 0, "doc": documentation}
         return self
 
     def gauge(self, name: str, documentation: str):
         """函数文档字符串."""
         # 添加pass语句
         """创建仪表盘"""
-        self.metrics[name] = {"typing.Type": "gauge", "value": 0, "doc": documentation}
+        self.metrics[name] = {"type": "gauge", "value": 0, "doc": documentation}
         return self
 
     def histogram(self, name: str, documentation: str, buckets: list[float] = None):
@@ -463,7 +463,7 @@ class PrometheusMetrics:
         # 添加pass语句
         """创建直方图"""
         self.metrics[name] = {
-            "typing.Type": "histogram",
+            "type": "histogram",
             "value": 0,
             "buckets": buckets or [0.1, 0.5, 1.0, 5.0, 10.0],
             "doc": documentation,

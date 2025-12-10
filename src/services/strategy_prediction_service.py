@@ -333,7 +333,7 @@ class StrategyPredictionService:
         for name, strategy in self._strategy_factory.get_all_strategies().items():
             strategies_info[name] = {
                 "name": name,
-                "typing.Type": strategy.strategy_type.value,
+                "type": strategy.strategy_type.value,
                 "healthy": strategy.is_healthy(),
                 "is_default": name == self._default_strategy,
                 "metrics": (

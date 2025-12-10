@@ -188,7 +188,7 @@ class PredictionStrategy(ABC):
         return output
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(name='{self.name}', typing.Type='{self.strategy_type.value}')"
+        return f"{self.__class__.__name__}(name='{self.name}', type='{self.strategy_type.value}')"
 
     def __repr__(self) -> str:
         return self.__str__()

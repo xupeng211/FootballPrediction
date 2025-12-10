@@ -40,7 +40,7 @@ class ServiceDescriptor:
     lifetime: ServiceLifetime
     factory: Callable | None = None
     instance: Any | None = None
-    dependencies: list[typing.Type] | None = None
+    dependencies: list[type] | None = None
 
     def __post_init__(self):
         """函数文档字符串."""
@@ -59,11 +59,11 @@ class DIContainer:
         """函数文档字符串."""
         # 添加pass语句
         self.name = name
-        self._services: dict[typing.Type, ServiceDescriptor] = {}
-        self._singletons: dict[typing.Type, Any] = {}
-        self._scoped_instances: dict[str, dict[typing.Type, Any]] = {}
+        self._services: dict[type, ServiceDescriptor] = {}
+        self._singletons: dict[type, Any] = {}
+        self._scoped_instances: dict[str, dict[type, Any]] = {}
         self._current_scope: str | None = None
-        self._building: list[typing.Type] = []  # 用于检测循环依赖
+        self._building: list[type] = []  # 用于检测循环依赖
 
     def register_singleton(
         self,
@@ -231,7 +231,7 @@ class DIContainer:
             f"无法创建实例: {self._get_type_name(descriptor.interface)}"
         )
 
-    def _analyze_dependencies(self, cls: type) -> list[typing.Type]:
+    def _analyze_dependencies(self, cls: type) -> list[type]:
         """分析类的依赖."""
         dependencies = []
 
@@ -350,7 +350,7 @@ class DIContainer:
         """检查服务是否已注册."""
         return interface in self._services
 
-    def get_registered_services(self) -> list[typing.Type]:
+    def get_registered_services(self) -> list[type]:
         """获取所有已注册的服务."""
         return list(self._services.keys())
 

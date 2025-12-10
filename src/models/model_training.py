@@ -306,7 +306,7 @@ class BaselineModelTrainer:
 
             return LogisticRegression(**params)
         else:
-            raise ValueError(f"Unsupported model typing.Type: {self.model_type}")
+            raise ValueError(f"Unsupported model type: {self.model_type}")
 
     def _evaluate_model(
         self, X_test: pd.DataFrame, y_test: pd.Series

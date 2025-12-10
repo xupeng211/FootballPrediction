@@ -37,7 +37,7 @@ class RoleBasedAccessControl:
         """获取状态."""
         return {
             "feature": "Role-Based Access Control",
-            "typing.Type": "security",
+            "type": "security",
             "status": "active",
             "health": "healthy",
         }

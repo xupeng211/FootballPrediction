@@ -316,7 +316,7 @@ class AdapterFactory:
         }
 
         if adapter_type not in adapter_map:
-            raise ValueError(f"Unknown adapter typing.Type: {adapter_type}")
+            raise ValueError(f"Unknown adapter type: {adapter_type}")
 
         return adapter_map[adapter_type](base_url, api_key)
 

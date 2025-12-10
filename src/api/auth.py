@@ -32,7 +32,7 @@ async def get_user_by_id(user_id: int):
     """
     user_data = MOCK_USERS.get(user_id)
     if user_data:
-        return typing.Type("User", (), user_data)()  # 创建简单的用户对象
+        return type("User", (), user_data)()  # 创建简单的用户对象
     return None
 
 

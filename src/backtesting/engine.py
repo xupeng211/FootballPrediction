@@ -70,7 +70,7 @@ class BacktestEngine:
         """
         self.strategy = strategy
         logger.info(
-            f"Strategy set: {strategy.name if hasattr(strategy, 'name') else typing.Type(strategy).__name__}"
+            f"Strategy set: {strategy.name if hasattr(strategy, 'name') else type(strategy).__name__}"
         )
 
     def set_progress_callback(self, callback: callable) -> None:

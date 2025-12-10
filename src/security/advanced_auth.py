@@ -37,7 +37,7 @@ class AdvancedAuthenticationSystem:
         """获取状态."""
         return {
             "feature": "Advanced Authentication System",
-            "typing.Type": "security",
+            "type": "security",
             "status": "active",
             "health": "healthy",
         }

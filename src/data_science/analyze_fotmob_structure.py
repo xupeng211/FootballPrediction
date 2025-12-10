@@ -50,7 +50,7 @@ def deep_search_json(obj, path="", target_keys=None, results=None):
                             "path": current_path,
                             "key": key,
                             "value": value,
-                            "typing.Type": type(value).__name__,
+                            "type": type(value).__name__,
                         }
                     )
 
@@ -115,7 +115,7 @@ def analyze_fotmob_structure():
                             print(f"\n🎯 {category}:")
                             for result in results[:5]:  # 只显示前5个结果
                                 print(
-                                    f"   {result['path']}: {result['value']} ({result['typing.Type']})"
+                                    f"   {result['path']}: {result['value']} ({result['type']})"
                                 )
 
                 except Exception as e:
@@ -152,7 +152,7 @@ def analyze_fotmob_structure():
                             if len(lineup) > 0:
                                 first_player = lineup[0]
                                 print(
-                                    f"   球员数据结构: {list(first_player.keys()) if isinstance(first_player, dict) else typing.Type(first_player).__name__}"
+                                    f"   球员数据结构: {list(first_player.keys()) if isinstance(first_player, dict) else type(first_player).__name__}"
                                 )
 
                     if away_team:

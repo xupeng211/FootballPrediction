@@ -45,7 +45,7 @@ class AutoBinder:
         self.container = container
         self._binding_rules: list[BindingRule] = []
         self._scanned_modules: list[str] = []
-        self._implementation_cache: dict[typing.Type, list[typing.Type]] = {}
+        self._implementation_cache: dict[type, list[typing.Type]] = {}
 
     def add_binding_rule(self, rule: BindingRule) -> None:
         """添加绑定规则."""
@@ -217,7 +217,7 @@ class AutoBinder:
                     self.container.register_transient(base, cls)
                     logger.debug(f"自动绑定: {base.__name__} -> {cls.__name__}")
 
-    def _find_implementations(self, interface: type) -> list[typing.Type]:
+    def _find_implementations(self, interface: type) -> list[type]:
         """查找接口的实现."""
         implementations = []
 
@@ -250,8 +250,8 @@ class AutoBinder:
             return False
 
     def _select_primary_implementation(
-        self, interface: type, implementations: list[typing.Type]
-    ) -> typing.Type | None:
+        self, interface: type, implementations: list[type]
+    ) -> type | None:
         """选择主要实现."""
         # 优先级规则：
         # 1. 类名以接口名结尾的
@@ -274,8 +274,8 @@ class AutoBinder:
         return implementations[0] if implementations else None
 
     def _select_default_implementation(
-        self, interface: type, implementations: list[typing.Type]
-    ) -> typing.Type | None:
+        self, interface: type, implementations: list[type]
+    ) -> type | None:
         """选择默认实现."""
         return self._select_primary_implementation(interface, implementations)
 
@@ -380,7 +380,7 @@ def primary_implementation():
     pass  # 添加pass语句
     """主要实现装饰器"""
 
-    def decorator(cls) -> typing.Type:
+    def decorator(cls) -> type:
         # 将类标记为主要实现
         cls.__primary_implementation__ = True
         return cls

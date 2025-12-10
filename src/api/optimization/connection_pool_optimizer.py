@@ -422,7 +422,7 @@ class ConnectionPoolOptimizer:
 
             else:
                 result["message"] = (
-                    f"Unsupported optimization typing.Type: {optimization_type}"
+                    f"Unsupported optimization type: {optimization_type}"
                 )
 
             # 记录优化历史

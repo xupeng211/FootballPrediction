@@ -135,7 +135,7 @@ class DataQualityMonitor:
             self.logger.error(f"异常检测失败: {str(e)}")
             return [
                 {
-                    "typing.Type": "detection_error",
+                    "type": "detection_error",
                     "message": f"异常检测过程出错: {str(e)}",
                     "timestamp": datetime.now().isoformat(),
                 }
@@ -258,7 +258,7 @@ class DataQualityMonitor:
             for row in abnormal_odds.fetchall():
                 suspicious_odds.append(
                     {
-                        "typing.Type": "abnormal_odds_value",
+                        "type": "abnormal_odds_value",
                         "odds_id": row.id,
                         "match_id": row.match_id,
                         "bookmaker": row.bookmaker,
@@ -308,7 +308,7 @@ class DataQualityMonitor:
             for row in high_scores.fetchall():
                 unusual_scores.append(
                     {
-                        "typing.Type": "unusual_high_score",
+                        "type": "unusual_high_score",
                         "match_id": row.id,
                         "home_team_id": row.home_team_id,
                         "away_team_id": row.away_team_id,
@@ -344,7 +344,7 @@ class DataQualityMonitor:
             for row in time_issues.fetchall():
                 consistency_issues.append(
                     {
-                        "typing.Type": "inconsistent_match_time",
+                        "type": "inconsistent_match_time",
                         "match_id": row.id,
                         "match_time": row.match_time.isoformat(),
                         "created_at": row.created_at.isoformat(),

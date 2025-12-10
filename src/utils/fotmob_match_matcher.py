@@ -481,7 +481,7 @@ class FotmobMatchMatcher:
 
         except Exception as e:
             logger.error(
-                f"日期格式转换失败: {date_input} (类型: {typing.Type(date_input)}) -> {str(e)}"
+                f"日期格式转换失败: {date_input} (类型: {type(date_input)}) -> {str(e)}"
             )
             # 最后的安全处理：尝试转换为字符串并处理
             try:

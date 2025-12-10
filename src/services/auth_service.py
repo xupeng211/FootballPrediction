@@ -67,7 +67,7 @@ class AuthService:
         else:
             expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-        to_encode.update({"exp": expire, "typing.Type": "access"})
+        to_encode.update({"exp": expire, "type": "access"})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
@@ -81,7 +81,7 @@ class AuthService:
         else:
             expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
-        to_encode.update({"exp": expire, "typing.Type": "refresh"})
+        to_encode.update({"exp": expire, "type": "refresh"})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
@@ -91,7 +91,7 @@ class AuthService:
         """验证令牌."""
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            if payload.get("typing.Type") != token_type:
+            if payload.get("type") != token_type:
                 return None
             return payload
         except JWTError:
@@ -259,7 +259,7 @@ class AuthService:
         reset_token_data = {
             "sub": user.username,
             "user_id": user.id,
-            "typing.Type": "password_reset",
+            "type": "password_reset",
         }
         reset_token = self.create_access_token(reset_token_data, timedelta(hours=1))
         return reset_token
@@ -267,7 +267,7 @@ class AuthService:
     async def reset_password(self, reset_token: str, new_password: str) -> bool:
         """重置密码."""
         payload = self.verify_token(reset_token, "access")
-        if not payload or payload.get("typing.Type") != "password_reset":
+        if not payload or payload.get("type") != "password_reset":
             return False
 
         username = payload.get("sub")
@@ -282,7 +282,7 @@ class AuthService:
     async def verify_email(self, verification_token: str) -> bool:
         """验证邮箱."""
         payload = self.verify_token(verification_token, "access")
-        if not payload or payload.get("typing.Type") != "email_verification":
+        if not payload or payload.get("type") != "email_verification":
             return False
 
         username = payload.get("sub")
@@ -299,6 +299,6 @@ class AuthService:
         verification_data = {
             "sub": user.username,
             "user_id": user.id,
-            "typing.Type": "email_verification",
+            "type": "email_verification",
         }
         return self.create_access_token(verification_data, timedelta(hours=24))

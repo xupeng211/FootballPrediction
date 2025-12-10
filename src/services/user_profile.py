@@ -74,7 +74,7 @@ class UserProfileService(SimpleService):
         """获取服务信息."""
         return {
             "name": self.name,
-            "typing.Type": self.__class__.__name__,
+            "type": self.__class__.__name__,
             "description": "User profile service for managing user preferences and behavior",
             "version": "1.0.0",
             "profiles_count": len(self._user_profiles),

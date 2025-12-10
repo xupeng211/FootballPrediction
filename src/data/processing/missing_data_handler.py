@@ -46,7 +46,7 @@ class MissingDataHandler:
                 analysis["missing_by_column"][column] = {
                     "count": missing_count,
                     "percentage": missing_count / len(data) * 100,
-                    "typing.Type": self._classify_missing_type(data[column]),
+                    "type": self._classify_missing_type(data[column]),
                 }
 
         # 识别缺失模式

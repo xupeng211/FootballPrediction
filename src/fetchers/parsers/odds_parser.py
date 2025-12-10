@@ -250,7 +250,7 @@ class OddsParser:
                     odds = self._normalize_odds(odds_elem.get_text(strip=True))
                     market = self._normalize_market(
                         odds_elem.get("data-market") or
-                        odds_elem.get("data-typing.Type") or
+                        odds_elem.get("data-type") or
                         "Unknown"
                     )
                     selection = self._normalize_selection(

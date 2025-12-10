@@ -344,7 +344,7 @@ class TaskMonitor:
                 health_status["overall_status"] = "warning"
                 health_status["issues"].append(
                     {
-                        "typing.Type": "high_error_rate",
+                        "type": "high_error_rate",
                         "tasks": high_error_tasks,
                         "message": f"任务错误率过高: {high_error_tasks}",
                     }
@@ -364,7 +364,7 @@ class TaskMonitor:
                 health_status["overall_status"] = "warning"
                 health_status["issues"].append(
                     {
-                        "typing.Type": "queue_backlog",
+                        "type": "queue_backlog",
                         "queues": large_queues,
                         "message": f"队列积压严重: {large_queues}",
                     }
@@ -384,7 +384,7 @@ class TaskMonitor:
                 health_status["overall_status"] = "unhealthy"
                 health_status["issues"].append(
                     {
-                        "typing.Type": "task_delays",
+                        "type": "task_delays",
                         "tasks": delayed_tasks,
                         "message": f"任务执行延迟过高: {delayed_tasks}",
                     }
@@ -399,7 +399,7 @@ class TaskMonitor:
             return {
                 "overall_status": "unknown",
                 "error": str(e),
-                "issues": [{"typing.Type": "monitoring_error", "message": str(e)}],
+                "issues": [{"type": "monitoring_error", "message": str(e)}],
             }
 
     async def _get_queue_sizes(self) -> dict[str, int]:

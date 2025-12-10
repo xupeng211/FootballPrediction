@@ -271,9 +271,9 @@ class ScoresCollector(BaseCollector):
         for event in events:
             processed_event = {
                 "id": event.get("id"),
-                "typing.Type": {
-                    "id": event.get("typing.Type", {}).get("id"),
-                    "name": event.get("typing.Type", {}).get("name"),
+                "type": {
+                    "id": event.get("type", {}).get("id"),
+                    "name": event.get("type", {}).get("name"),
                 },
                 "minute": event.get("minute"),
                 "team": {
@@ -438,7 +438,7 @@ class ScoresCollector(BaseCollector):
                     if events_result.success and events_result.data.get("events"):
                         latest_event = events_result.data["events"][-1]
                         logger.debug(
-                            f"比赛 {match_id} 最新事件: {latest_event['typing.Type']['name']} "
+                            f"比赛 {match_id} 最新事件: {latest_event['type']['name']} "
                             f"({latest_event['minute']}分钟)"
                         )
 

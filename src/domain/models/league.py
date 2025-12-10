@@ -354,12 +354,12 @@ class League:
     @property
     def is_cup_competition(self) -> bool:
         """是否是杯赛."""
-        return self.: type == LeagueType.CUP
+        return self.type == LeagueType.CUP
 
     @property
     def is_international(self) -> bool:
         """是否是国际赛事."""
-        return self.: type == LeagueType.INTERNATIONAL
+        return self.type == LeagueType.INTERNATIONAL
 
     def get_seasons_count(self) -> int:
         """获取赛季数量（简化处理）."""
@@ -399,7 +399,7 @@ class League:
             "name": self.name,
             "short_name": self.short_name,
             "code": self.code,
-            "typing.Type": self.typing.Type.value,
+            "type": self.type.value,
             "country": self.country,
             "level": self.level,
             "is_active": self.is_active,
@@ -460,8 +460,8 @@ class League:
 
         # 处理类型枚举
         data.pop("prestige", None)
-        if data.get("typing.Type"):
-            data["typing.Type"] = LeagueType(data["typing.Type"])
+        if data.get("type"):
+            data["type"] = LeagueType(data["type"])
 
         # 处理日期
         if data.get("created_at"):

@@ -24,7 +24,7 @@ class PrometheusCollector:
         """函数文档字符串."""
         # 添加pass语句
         """注册指标"""
-        self.metrics[name] = {"typing.Type": metric_type, "help": help_text, "value": 0}
+        self.metrics[name] = {"type": metric_type, "help": help_text, "value": 0}
 
     def set_metric(self, name: str, value: float):
         """函数文档字符串."""
@@ -55,7 +55,7 @@ class PrometheusExporter:
         output: list[Any] = []
         for name, metric in self.collector.get_metrics().items():
             output.append(f"# HELP {name} {metric['help']}")
-            output.append(f"# TYPE {name} {metric['typing.Type']}")
+            output.append(f"# TYPE {name} {metric['type']}")
             output.append(f"{name} {metric['value']}")
         return "\n".join(output)
 

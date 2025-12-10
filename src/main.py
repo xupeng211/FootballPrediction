@@ -213,7 +213,7 @@ async def check_and_trigger_initial_data_fill() -> None:
 
     except Exception as e:
         logger.error(f"❌ 智能冷启动检查失败: {e}")
-        logger.error(f"❌ 错误详情: {typing.Type(e).__name__}: {str(e)}")
+        logger.error(f"❌ 错误详情: {type(e).__name__}: {str(e)}")
         logger.warning(
             "⚠️ 系统将继续启动，但无法自动检查数据状态。请确保数据管道已手动触发。"
         )
@@ -249,7 +249,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
             except Exception as e:
                 logger.error(f"❌ 数据库初始化失败: {e}")
-                logger.error(f"❌ 错误详情: {typing.Type(e).__name__}: {str(e)}")
+                logger.error(f"❌ 错误详情: {type(e).__name__}: {str(e)}")
                 raise
         else:
             logger.warning("⚠️ 测试环境，跳过数据库初始化")
@@ -348,7 +348,7 @@ app.add_middleware(
         "accept",
         "accept-language",
         "content-language",
-        "content-typing.Type",
+        "content-type",
         "authorization",
         "x-request-id",
         "x-client-version",
@@ -442,20 +442,20 @@ async def websocket_endpoint(websocket: WebSocket):
                 import json
 
                 message = json.loads(data)
-                message_type = message.get("typing.Type")
+                message_type = message.get("type")
 
                 # 处理不同类型的消息
                 if message_type == "ping":
                     await websocket.send_text(
                         json.dumps(
-                            {"typing.Type": "pong", "timestamp": "2025-01-20T00:00:00Z"}
+                            {"type": "pong", "timestamp": "2025-01-20T00:00:00Z"}
                         )
                     )
                 elif message_type == "subscribe":
                     await websocket.send_text(
                         json.dumps(
                             {
-                                "typing.Type": "subscription_confirmed",
+                                "type": "subscription_confirmed",
                                 "event_types": message.get("event_types", []),
                                 "timestamp": "2025-01-20T00:00:00Z",
                             }
@@ -465,7 +465,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_text(
                         json.dumps(
                             {
-                                "typing.Type": "stats_response",
+                                "type": "stats_response",
                                 "data": {
                                     "total_connections": 1,
                                     "total_users": 1,
@@ -480,8 +480,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_text(
                         json.dumps(
                             {
-                                "typing.Type": "error",
-                                "message": f"Unknown message typing.Type: {message_type}",
+                                "type": "error",
+                                "message": f"Unknown message type: {message_type}",
                                 "timestamp": "2025-01-20T00:00:00Z",
                             }
                         )
@@ -491,7 +491,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text(
                     json.dumps(
                         {
-                            "typing.Type": "error",
+                            "type": "error",
                             "message": "Invalid JSON format",
                             "timestamp": "2025-01-20T00:00:00Z",
                         }
@@ -705,7 +705,7 @@ async def health_check_system() -> dict:
             # 创建完整的Mock对象，包含所有需要的属性
             total_memory = 8 * 1024**3  # 8GB
             used_memory = total_memory * 0.452  # 45.2%
-            memory = typing.Type(
+            memory = type(
                 "MockMemory",
                 (),
                 {
@@ -715,7 +715,7 @@ async def health_check_system() -> dict:
                     "available": total_memory - used_memory,
                 },
             )()
-            disk = typing.Type("MockDisk", (), {"percent": 60.1})()
+            disk = type("MockDisk", (), {"percent": 60.1})()
         else:
             # 获取系统信息
             cpu_percent = psutil.cpu_percent(interval=0.1)  # 减少等待时间

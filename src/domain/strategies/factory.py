@@ -120,7 +120,7 @@ class PredictionStrategyFactory:
 
         # 获取策略类型
         if strategy_type is None:
-            strategy_type = config.get("typing.Type")
+            strategy_type = config.get("type")
             if not strategy_type:
                 raise StrategyConfigurationError(f"策略 '{strategy_name}' 未指定类型")
 
@@ -159,7 +159,7 @@ class PredictionStrategyFactory:
 
         for sub_config in sub_strategies_config:
             sub_name = sub_config.get("name")
-            sub_type = sub_config.get("typing.Type")
+            sub_type = sub_config.get("type")
 
             if sub_name and sub_type:
                 try:
@@ -317,7 +317,7 @@ class PredictionStrategyFactory:
             "default_strategies": [
                 {
                     "name": "ml_predictor",
-                    "typing.Type": "ml_model",
+                    "type": "ml_model",
                     "enabled": True,
                     "config": {
                         "mlflow_tracking_uri": "http://localhost:5002",
@@ -327,7 +327,7 @@ class PredictionStrategyFactory:
                 },
                 {
                     "name": "statistical_analyzer",
-                    "typing.Type": "statistical",
+                    "type": "statistical",
                     "enabled": True,
                     "config": {
                         "min_sample_size": 5,
@@ -337,7 +337,7 @@ class PredictionStrategyFactory:
                 },
                 {
                     "name": "historical_analyzer",
-                    "typing.Type": "historical",
+                    "type": "historical",
                     "enabled": True,
                     "config": {
                         "min_historical_matches": 3,
@@ -347,7 +347,7 @@ class PredictionStrategyFactory:
                 },
                 {
                     "name": "ensemble_predictor",
-                    "typing.Type": "ensemble",
+                    "type": "ensemble",
                     "enabled": True,
                     "config": {
                         "ensemble_method": "weighted_average",
@@ -355,19 +355,19 @@ class PredictionStrategyFactory:
                         "sub_strategies": [
                             {
                                 "name": "ml_ensemble",
-                                "typing.Type": "ml_model",
+                                "type": "ml_model",
                                 "enabled": True,
                                 "config": {},
                             },
                             {
                                 "name": "statistical_ensemble",
-                                "typing.Type": "statistical",
+                                "type": "statistical",
                                 "enabled": True,
                                 "config": {},
                             },
                             {
                                 "name": "historical_ensemble",
-                                "typing.Type": "historical",
+                                "type": "historical",
                                 "enabled": True,
                                 "config": {},
                             },
@@ -490,10 +490,10 @@ class PredictionStrategyFactory:
         # 检查必需字段
         if "name" not in config:
             errors.append("缺少策略名称")
-        if "typing.Type" not in config:
+        if "type" not in config:
             errors.append("缺少策略类型")
         else:
-            strategy_type = config["typing.Type"]
+            strategy_type = config["type"]
             if strategy_type not in self._strategy_registry:
                 errors.append(f"未知的策略类型: {strategy_type}")
 
@@ -502,12 +502,12 @@ class PredictionStrategyFactory:
             strategy_config = config["config"]
 
             # ML模型策略验证
-            if config.get("typing.Type") == "ml_model":
+            if config.get("type") == "ml_model":
                 if "mlflow_tracking_uri" not in strategy_config:
                     errors.append("ML模型策略缺少 mlflow_tracking_uri")
 
             # 集成策略验证
-            elif config.get("typing.Type") == "ensemble":
+            elif config.get("type") == "ensemble":
                 if "sub_strategies" not in strategy_config:
                     errors.append("集成策略缺少 sub_strategies 配置")
                 elif not isinstance(strategy_config["sub_strategies"], list):

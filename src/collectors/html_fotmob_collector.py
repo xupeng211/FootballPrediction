@@ -213,7 +213,7 @@ class AsyncHTMLFotMobCollector(AsyncBaseCollector):
         try:
             # 改进的正则表达式，精确匹配script标签
             patterns = [
-                r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*typing.Type=["\']application/json["\'][^>]*>(.*?)</script>',
+                r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*type=["\']application/json["\'][^>]*>(.*?)</script>',
                 r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
                 r"window\.__NEXT_DATA__\s*=\s*(\{.*?\});?\s*<\/script>",
             ]

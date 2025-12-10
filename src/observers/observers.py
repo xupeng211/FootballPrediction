@@ -482,7 +482,7 @@ class PerformanceObserver(Observer):
 
     async def _handle_performance_degradation(self, event: ObservableEvent) -> None:
         """处理性能下降事件."""
-        degradation_type = event.data.get("typing.Type")
+        degradation_type = event.data.get("type")
         degradation_value = event.data.get("value")
 
         logger.warning(

@@ -297,7 +297,7 @@ async def list_models(
             model_type_enum = ModelType(model_type)
         except ValueError:
             raise HTTPException(
-                status_code=400, detail=f"Invalid model typing.Type: {model_type}"
+                status_code=400, detail=f"Invalid model type: {model_type}"
             )
 
     # 获取模型列表

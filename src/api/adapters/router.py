@@ -48,14 +48,14 @@ async def get_registry_status() -> dict[str, Any]:
         "adapters": [
             {
                 "name": "football_adapter",
-                "typing.Type": "data",
+                "type": "data",
                 "status": "active",
                 "initialized": True,
                 "last_check": datetime.utcnow().isoformat() + "Z",
             },
             {
                 "name": "demo_adapter",
-                "typing.Type": "demo",
+                "type": "demo",
                 "status": "active",
                 "initialized": True,
                 "last_check": datetime.utcnow().isoformat() + "Z",

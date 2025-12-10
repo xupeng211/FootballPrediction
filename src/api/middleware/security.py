@@ -13,7 +13,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """安全头中间件
 
     为所有响应添加安全 HTTP 头，包括：
-    - X-Content-typing.Type-Options: nosniff
+    - X-Content-type-Options: nosniff
     - X-Frame-Options: DENY
     - X-XSS-Protection: 1; mode=block
     - Strict-Transport-Security: (仅生产环境)
@@ -39,8 +39,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     def _add_security_headers(self, request: Request, response: Response) -> None:
         """添加安全 HTTP 头到响应"""
 
-        # 1. X-Content-typing.Type-Options: 防止 MIME 类型嗅探攻击
-        response.headers["X-Content-typing.Type-Options"] = "nosniff"
+        # 1. X-Content-type-Options: 防止 MIME 类型嗅探攻击
+        response.headers["X-Content-type-Options"] = "nosniff"
 
         # 2. X-Frame-Options: 防止点击劫持攻击
         response.headers["X-Frame-Options"] = "DENY"
@@ -156,7 +156,7 @@ def apply_security_headers(response: Response, is_sensitive: bool = False) -> Re
     is_production = environment in ["production", "prod"]
 
     # 基础安全头
-    response.headers["X-Content-typing.Type-Options"] = "nosniff"
+    response.headers["X-Content-type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"

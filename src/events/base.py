@@ -215,7 +215,7 @@ class EventHandler(ABC):
         """
         queue = self._subscribed_events.get(event_type)
         if not queue:
-            raise ValueError(f"Not subscribed to event typing.Type: {event_type}")
+            raise ValueError(f"Not subscribed to event type: {event_type}")
 
         while True:
             try:

@@ -78,7 +78,7 @@ class RedisKeyManager:
     @staticmethod
     def team_stats_key(team_id: int, stat_type: str) -> str:
         """球队统计键."""
-        return f"team:{team_id}:stats:typing.Type:{stat_type}"
+        return f"team:{team_id}:stats:type:{stat_type}"
 
     @staticmethod
     def odds_key(match_id: int, odds_type: str) -> str:

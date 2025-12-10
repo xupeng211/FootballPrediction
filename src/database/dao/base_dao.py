@@ -16,7 +16,7 @@ from typing import (
     dict,
     list,
     Union,
-    typing.Type,
+    type,
     cast,
 )
 from collections.abc import Sequence

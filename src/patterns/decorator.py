@@ -317,7 +317,7 @@ def unstable_function(should_fail: bool = False) -> str:
 
 # 便捷函数
 def create_component_chain(
-    base_component: Component, decorators: list[typing.Type]
+    base_component: Component, decorators: list[type]
 ) -> Component:
     """创建组件装饰链.
 

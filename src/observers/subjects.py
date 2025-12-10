@@ -264,7 +264,7 @@ class PredictionMetricsSubject(Subject):
                     source="PredictionMetrics",
                     severity="warning",
                     data={
-                        "typing.Type": "response_time",
+                        "type": "response_time",
                         "value": avg_time,
                         "threshold": 1000,
                     },
@@ -280,7 +280,7 @@ class PredictionMetricsSubject(Subject):
                     source=f"PredictionMetrics:{strategy_name}",
                     severity="warning",
                     data={
-                        "typing.Type": "success_rate",
+                        "type": "success_rate",
                         "value": success_rate,
                         "threshold": 0.9,
                     },

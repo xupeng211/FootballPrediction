@@ -393,7 +393,7 @@ class BettingService:
             "overall_recommendation": ev_calc.recommendation,
             "confidence_score": ev_calc.confidence,
             "best_bet": {
-                "typing.Type": recommendations[0].bet_type if recommendations else None,
+                "type": recommendations[0].bet_type if recommendations else None,
                 "ev": recommendations[0].ev if recommendations else 0.0,
                 "kelly_fraction": (
                     recommendations[0].kelly_fraction if recommendations else None

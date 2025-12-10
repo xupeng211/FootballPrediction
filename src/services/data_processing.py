@@ -28,7 +28,7 @@ class MatchDataProcessor(DataProcessor):
         """处理比赛数据."""
         logger.debug(f"Processing match data: {data.get('id')}")
 
-        return {**data, "processed_at": datetime.utcnow(), "typing.Type": "match"}
+        return {**data, "processed_at": datetime.utcnow(), "type": "match"}
 
 
 class OddsDataProcessor(DataProcessor):
@@ -38,7 +38,7 @@ class OddsDataProcessor(DataProcessor):
         """处理赔率数据."""
         logger.debug(f"Processing odds data: {data.get('match_id')}")
 
-        return {**data, "processed_at": datetime.utcnow(), "typing.Type": "odds"}
+        return {**data, "processed_at": datetime.utcnow(), "type": "odds"}
 
 
 class ScoresDataProcessor(DataProcessor):
@@ -48,7 +48,7 @@ class ScoresDataProcessor(DataProcessor):
         """处理比分数据."""
         logger.debug(f"Processing scores data: {data.get('match_id')}")
 
-        return {**data, "processed_at": datetime.utcnow(), "typing.Type": "scores"}
+        return {**data, "processed_at": datetime.utcnow(), "type": "scores"}
 
 
 class FeaturesDataProcessor(DataProcessor):
@@ -58,7 +58,7 @@ class FeaturesDataProcessor(DataProcessor):
         """处理特征数据."""
         logger.debug(f"Processing features data: {data.get('match_id')}")
 
-        return {**data, "processed_at": datetime.utcnow(), "typing.Type": "features"}
+        return {**data, "processed_at": datetime.utcnow(), "type": "features"}
 
 
 class DataQualityValidator:
@@ -108,7 +108,7 @@ class AnomalyDetector:
         if "value" in data:
             value = data["value"]
             if not isinstance(value, int | float):
-                anomalies.append(f"Invalid value typing.Type: {typing.Type(value)}")
+                anomalies.append(f"Invalid value type: {typing.Type(value)}")
             elif abs(value) > 1000:  # 简单的阈值检查
                 anomalies.append(f"Value too large: {value}")
 
@@ -193,7 +193,7 @@ class DataProcessingService:
             await self.initialize()
 
         # 简化的数据处理逻辑
-        data_type = data.get("typing.Type", "match")
+        data_type = data.get("type", "match")
         processor = self.processors.get(data_type)
 
         if processor:

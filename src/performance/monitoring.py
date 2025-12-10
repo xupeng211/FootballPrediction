@@ -193,7 +193,7 @@ class SystemMonitor:
         if current_metrics.cpu_percent > 80:
             alerts.append(
                 {
-                    "typing.Type": "cpu_high",
+                    "type": "cpu_high",
                     "severity": (
                         "warning" if current_metrics.cpu_percent < 90 else "critical"
                     ),
@@ -207,7 +207,7 @@ class SystemMonitor:
         if current_metrics.memory_percent > 85:
             alerts.append(
                 {
-                    "typing.Type": "memory_high",
+                    "type": "memory_high",
                     "severity": (
                         "warning" if current_metrics.memory_percent < 95 else "critical"
                     ),
@@ -221,7 +221,7 @@ class SystemMonitor:
         if current_metrics.disk_usage_percent > 90:
             alerts.append(
                 {
-                    "typing.Type": "disk_high",
+                    "type": "disk_high",
                     "severity": "warning",
                     "message": f"磁盘使用率过高: {current_metrics.disk_usage_percent:.1f}%",
                     "value": current_metrics.disk_usage_percent,
@@ -233,7 +233,7 @@ class SystemMonitor:
         if current_metrics.response_time_avg > 2.0:
             alerts.append(
                 {
-                    "typing.Type": "response_time_high",
+                    "type": "response_time_high",
                     "severity": (
                         "warning"
                         if current_metrics.response_time_avg < 5.0
@@ -249,7 +249,7 @@ class SystemMonitor:
         if current_metrics.error_rate > 0.05:  # 5%
             alerts.append(
                 {
-                    "typing.Type": "error_rate_high",
+                    "type": "error_rate_high",
                     "severity": (
                         "warning" if current_metrics.error_rate < 0.1 else "critical"
                     ),

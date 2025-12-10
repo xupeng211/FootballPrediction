@@ -147,7 +147,7 @@ match_features_view = MockFeatureView(
     entities=[match_entity],
     ttl=timedelta(days=30),
     source=match_features_source,
-    tags={"team": "data", "typing.Type": "match_context"},
+    tags={"team": "data", "type": "match_context"},
 )
 
 team_recent_stats_view = MockFeatureView(
@@ -155,7 +155,7 @@ team_recent_stats_view = MockFeatureView(
     entities=[team_entity],
     ttl=timedelta(days=7),
     source=team_stats_source,
-    tags={"team": "data", "typing.Type": "team_performance"},
+    tags={"team": "data", "type": "team_performance"},
 )
 
 odds_features_view = MockFeatureView(
@@ -163,7 +163,7 @@ odds_features_view = MockFeatureView(
     entities=[match_entity],
     ttl=timedelta(hours=6),
     source=odds_features_source,
-    tags={"team": "data", "typing.Type": "betting_odds"},
+    tags={"team": "data", "type": "betting_odds"},
 )
 
 head_to_head_features_view = MockFeatureView(
@@ -171,7 +171,7 @@ head_to_head_features_view = MockFeatureView(
     entities=[match_entity],
     ttl=timedelta(days=365),
     source=odds_features_source,  # 复用数据源
-    tags={"team": "data", "typing.Type": "historical_matchup"},
+    tags={"team": "data", "type": "historical_matchup"},
 )
 
 

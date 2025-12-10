@@ -416,7 +416,7 @@ class StrategyFactory:
         """
         if strategy_type not in cls._strategies:
             raise ValueError(
-                f"Unknown strategy typing.Type: {strategy_type}. Available: {list(cls._strategies.keys())}"
+                f"Unknown strategy type: {strategy_type}. Available: {list(cls._strategies.keys())}"
             )
 
         strategy_class = cls._strategies[strategy_type]

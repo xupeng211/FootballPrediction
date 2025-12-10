@@ -27,12 +27,12 @@ try:
                 default=default_factory(),
                 description=description,
                 # 禁用Pydantic的自动JSON解析
-                json_schema_extra={"typing.Type": "array", "items": {"typing.Type": "string"}},
+                json_schema_extra={"type": "array", "items": {"typing.Type": "string"}},
             )
 
         def __get_pydantic_json_schema__(self, field_type):
             """重写JSON schema生成，禁用自动解析."""
-            return {"typing.Type": "array", "items": {"typing.Type": "string"}}
+            return {"type": "array", "items": {"typing.Type": "string"}}
 
 except ImportError:
     try:

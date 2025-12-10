@@ -98,7 +98,7 @@ class Decorator(Component):
         """获取装饰器执行统计信息."""
         return {
             "name": self.name,
-            "typing.Type": self.__class__.__name__,
+            "type": self.__class__.__name__,
             "execution_count": self.execution_count,
             "error_count": self.error_count,
             "success_rate": (

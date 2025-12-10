@@ -587,7 +587,7 @@ class FootballFeatureStore(FeatureStoreProtocol):
         """验证features字典的有效性."""
         if not isinstance(features, dict):
             raise FeatureValidationError(
-                f"Features must be a dictionary, got {typing.Type(features)}"
+                f"Features must be a dictionary, got {type(features)}"
             )
 
         if not features:

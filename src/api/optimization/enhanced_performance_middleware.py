@@ -182,7 +182,7 @@ class PerformanceOptimizer:
         if global_stats["avg_response_time"] > 0.5:  # 500ms
             suggestions.append(
                 {
-                    "typing.Type": "response_time",
+                    "type": "response_time",
                     "severity": "high",
                     "message": f"平均响应时间过高 ({global_stats['avg_response_time']:.2f}s)，建议优化数据库查询和缓存策略",
                     "current_value": global_stats["avg_response_time"],
@@ -200,7 +200,7 @@ class PerformanceOptimizer:
         if global_stats["error_rate"] > 5:  # 5%
             suggestions.append(
                 {
-                    "typing.Type": "error_rate",
+                    "type": "error_rate",
                     "severity": "critical",
                     "message": f"错误率过高 ({global_stats['error_rate']:.2f}%)，需要立即处理",
                     "current_value": global_stats["error_rate"],
@@ -220,7 +220,7 @@ class PerformanceOptimizer:
             if endpoint["avg_response_time"] > 1.0:  # 1秒
                 suggestions.append(
                     {
-                        "typing.Type": "slow_endpoint",
+                        "type": "slow_endpoint",
                         "severity": "high",
                         "message": f"端点 {endpoint['endpoint']} 响应时间过慢 ({endpoint['avg_response_time']:.2f}s)",
                         "endpoint": endpoint["endpoint"],
@@ -241,7 +241,7 @@ class PerformanceOptimizer:
             if endpoint["error_rate"] > 10:  # 10%
                 suggestions.append(
                     {
-                        "typing.Type": "error_endpoint",
+                        "type": "error_endpoint",
                         "severity": "critical",
                         "message": f"端点 {endpoint['endpoint']} 错误率过高 ({endpoint['error_rate']:.2f}%)",
                         "endpoint": endpoint["endpoint"],

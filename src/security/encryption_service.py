@@ -37,7 +37,7 @@ class EncryptionService:
         """获取状态."""
         return {
             "feature": "Encryption Service",
-            "typing.Type": "security",
+            "type": "security",
             "status": "active",
             "health": "healthy",
         }

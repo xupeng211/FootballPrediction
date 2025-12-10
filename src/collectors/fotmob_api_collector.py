@@ -242,7 +242,7 @@ class FotMobAPICollector:
                         try:
                             logger.info("🔧 使用httpx自动解压缩和JSON解析...")
                             data = response.json()
-                            logger.info(f"✅ httpx自动JSON解析成功，数据类型: {typing.Type(data)}")
+                            logger.info(f"✅ httpx自动JSON解析成功，数据类型: {type(data)}")
                         except Exception as httpx_error:
                             logger.warning(f"⚠️ httpx自动解析失败: {httpx_error}")
                             logger.info("🔧 尝试手动解析...")
@@ -262,7 +262,7 @@ class FotMobAPICollector:
                                 data = json.loads(raw_text)
                                 logger.info("✅ 直接UTF-8解析成功")
 
-                        logger.info(f"✅ JSON解析成功，数据类型: {typing.Type(data)}")
+                        logger.info(f"✅ JSON解析成功，数据类型: {type(data)}")
                         self.stats["successful_requests"] += 1
                         return data, APIResponseStatus.SUCCESS
                     except json.JSONDecodeError as e:
@@ -271,7 +271,7 @@ class FotMobAPICollector:
                         self.stats["failed_requests"] += 1
                         return None, APIResponseStatus.SERVER_ERROR
                     except Exception as e:
-                        logger.warning(f"⚠️ 解析时发生未知错误: {match_id}, 错误类型: {typing.Type(e).__name__}, 信息: {e}")
+                        logger.warning(f"⚠️ 解析时发生未知错误: {match_id}, 错误类型: {type(e).__name__}, 信息: {e}")
                         self.stats["failed_requests"] += 1
                         return None, APIResponseStatus.SERVER_ERROR
 
@@ -427,13 +427,13 @@ class FotMobAPICollector:
             all_stats = periods.get("All", {})
             stats_data = all_stats.get("stats", [])
 
-            logger.debug(f"🔍 stats_data 类型: {typing.Type(stats_data)}")
+            logger.debug(f"🔍 stats_data 类型: {type(stats_data)}")
             if isinstance(stats_data, list) and len(stats_data) > 0:
                 logger.debug(f"🔍 stats_data 第一项结构: {stats_data[0] if stats_data else 'Empty'}")
 
             # 🔥 核心修复: 确认 stats_data 是列表，直接遍历
             if not isinstance(stats_data, list):
-                logger.warning(f"⚠️ stats_data 不是列表: {typing.Type(stats_data)}, 尝试兼容处理")
+                logger.warning(f"⚠️ stats_data 不是列表: {type(stats_data)}, 尝试兼容处理")
                 # 如果是字典，尝试获取其values
                 if isinstance(stats_data, dict):
                     stats_data = list(stats_data.values())
@@ -851,7 +851,7 @@ class FotMobAPICollector:
                 position_count[position] = position_count.get(position, 0) + 1
 
             return {
-                "primary_formation": formation.get("typing.Type", "unknown"),  # 主阵型
+                "primary_formation": formation.get("type", "unknown"),  # 主阵型
                 "position_distribution": position_count,  # 位置分布
                 "total_starters": len(starters),  # 首发人数
                 "formation_changes": formation.get("changes", []),  # 阵型变化
@@ -1079,7 +1079,7 @@ class FotMobAPICollector:
             return [
                 {
                     "id": event.get("id"),
-                    "typing.Type": event.get("typing.Type"),
+                    "type": event.get("typing.Type"),
                     "player": event.get("player", {}),
                     "team": event.get("team"),
                     "minute": event.get("minute"),

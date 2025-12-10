@@ -74,7 +74,7 @@ class SwaggerUIConfig:
 <!DOCTYPE html>
 <html>
 <head>
-    <link typing.Type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.11.0/swagger-ui.css" />
+    <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.11.0/swagger-ui.css" />
     <link rel="shortcut icon" href="https://fastapi.tiangolo.com/img/favicon.png">
     <title>{title} - Swagger UI</title>
     <style>
@@ -395,7 +395,7 @@ class SwaggerUIConfig:
                 .then(response => response.json())
                 .then(data => {{
                     const blob = new Blob([JSON.stringify(data, null, 2)], {{
-                        typing.Type: 'application/json'
+                        type: 'application/json'
                     }});
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');

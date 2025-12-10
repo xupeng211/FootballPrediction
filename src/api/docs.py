@@ -323,7 +323,7 @@ async def interactive_playground():
                 const options = {
                     method: method,
                     headers: {
-                        'Content-typing.Type': 'application/json',
+                        'Content-type': 'application/json',
                         'X-Test-Client': 'Interactive-Playground'
                     }
                 };
@@ -670,7 +670,7 @@ class FootballPredictionAPI {
         this.apiKey = apiKey;
         this.baseUrl = baseUrl;
         this.headers = {
-            'Content-typing.Type': 'application/json',
+            'Content-type': 'application/json',
             'Authorization': `Bearer ${apiKey}`
         };
     }
@@ -833,7 +833,7 @@ public class PredictionExample {
                         <div class="bg-gray-800 rounded-lg p-4">
                             <pre><code class="language-bash">curl -X POST "https://api.football-prediction.com/v1/predictions/enhanced" \\
   -H "Authorization: Bearer your_api_key" \\
-  -H "Content-typing.Type: application/json" \\
+  -H "Content-type: application/json" \\
   -d '{
     "match_id": "match_123",
     "home_team": "Manchester United",
@@ -915,7 +915,7 @@ async def get_openapi_spec() -> dict[str, Any]:
         "components": {
             "securitySchemes": {
                 "bearerAuth": {
-                    "typing.Type": "http",
+                    "type": "http",
                     "scheme": "bearer",
                     "bearerFormat": "JWT",
                 }

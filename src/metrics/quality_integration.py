@@ -151,7 +151,7 @@ class QualityMetricsIntegrator:
         if complexity.get("avg_cyclomatic_complexity", 0) > 10:
             recommendations.append(
                 {
-                    "typing.Type": "complexity",
+                    "type": "complexity",
                     "priority": "high",
                     "message": "平均圈复杂度过高,建议重构复杂函数",
                 }
@@ -160,7 +160,7 @@ class QualityMetricsIntegrator:
         if complexity.get("max_nesting_depth", 0) > 5:
             recommendations.append(
                 {
-                    "typing.Type": "complexity",
+                    "type": "complexity",
                     "priority": "medium",
                     "message": "嵌套深度过深,建议提取子函数减少嵌套",
                 }
@@ -171,7 +171,7 @@ class QualityMetricsIntegrator:
         if debt.get("debt_score", 100) < 70:
             recommendations.append(
                 {
-                    "typing.Type": "technical_debt",
+                    "type": "technical_debt",
                     "priority": "high",
                     "message": "技术债务分数较低,建议优先处理代码异味和安全问题",
                 }
@@ -180,7 +180,7 @@ class QualityMetricsIntegrator:
         if debt.get("security_issues_count", 0) > 0:
             recommendations.append(
                 {
-                    "typing.Type": "security",
+                    "type": "security",
                     "priority": "critical",
                     "message": f"发现{debt['security_issues_count']}个安全问题,需要立即处理",
                 }
@@ -191,7 +191,7 @@ class QualityMetricsIntegrator:
         if performance.get("cpu_percent", 0) > 80:
             recommendations.append(
                 {
-                    "typing.Type": "performance",
+                    "type": "performance",
                     "priority": "medium",
                     "message": "CPU使用率较高,建议优化算法或增加缓存",
                 }
@@ -200,7 +200,7 @@ class QualityMetricsIntegrator:
         if performance.get("memory_percent", 0) > 80:
             recommendations.append(
                 {
-                    "typing.Type": "performance",
+                    "type": "performance",
                     "priority": "medium",
                     "message": "内存使用率较高,建议检查内存泄漏",
                 }

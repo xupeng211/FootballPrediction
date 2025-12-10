@@ -197,11 +197,11 @@ class MLflowExperimentTracker:
 
         try:
             # 根据模型类型使用不同的日志记录方法
-            model_type = typing.Type(model).__name__
+            model_type = type(model).__name__
 
-            if "sklearn" in str(typing.Type(model)).lower():
+            if "sklearn" in str(type(model)).lower():
                 mlflow.sklearn.log_model(model, artifact_path)
-            elif "torch" in str(typing.Type(model)).lower():
+            elif "torch" in str(type(model)).lower():
                 mlflow.pytorch.log_model(model, artifact_path)
             else:
                 # 通用方法：先保存模型，然后记录

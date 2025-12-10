@@ -76,7 +76,7 @@ class CommandHandler(ABC, Generic[CommandResultType]):
 
     @property
     @abstractmethod
-    def command_type(self) -> typing.Type:
+    def command_type(self) -> type:
         """支持的命令类型."""
 
 
@@ -93,7 +93,7 @@ class QueryHandler(ABC, Generic[QueryResultType]):
 
     @property
     @abstractmethod
-    def query_type(self) -> typing.Type:
+    def query_type(self) -> type:
         """支持的查询类型."""
 
 

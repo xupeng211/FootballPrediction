@@ -44,7 +44,7 @@ class CommandBus:
 
     async def dispatch(self, command: Command) -> Any:
         """分发命令."""
-        command_type = typing.Type(command)
+        command_type = type(command)
 
         if command_type not in self._handlers:
             raise ValueError(f"没有找到命令 {command_type.__name__} 的处理器")
@@ -107,7 +107,7 @@ class QueryBus:
 
     async def dispatch(self, query: Query) -> Any:
         """分发查询."""
-        query_type = typing.Type(query)
+        query_type = type(query)
 
         if query_type not in self._handlers:
             raise ValueError(f"没有找到查询 {query_type.__name__} 的处理器")
@@ -171,7 +171,7 @@ class LoggingMiddleware:
 
     async def process(self, message):
         """处理消息."""
-        message_type = typing.Type(message).__name__
+        message_type = type(message).__name__
         logger.info(f"处理消息: {message_type} (ID: {message.message_id})")
         return message
 

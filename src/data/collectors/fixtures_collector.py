@@ -112,35 +112,35 @@ class FixturesCollector:
                     "name": "Premier League",
                     "api_id": 2021,
                     "db_id": 11,
-                    "typing.Type": "Tier1",
+                    "type": "Tier1",
                     "priority": "critical",
                 },
                 {
                     "name": "La Liga",
                     "api_id": 2014,
                     "db_id": 12,
-                    "typing.Type": "Tier1",
+                    "type": "Tier1",
                     "priority": "critical",
                 },
                 {
                     "name": "Bundesliga",
                     "api_id": 2002,
                     "db_id": 13,
-                    "typing.Type": "Tier1",
+                    "type": "Tier1",
                     "priority": "critical",
                 },
                 {
                     "name": "Serie A",
                     "api_id": 2019,
                     "db_id": 14,
-                    "typing.Type": "Tier1",
+                    "type": "Tier1",
                     "priority": "critical",
                 },
                 {
                     "name": "Ligue 1",
                     "api_id": 2015,
                     "db_id": 15,
-                    "typing.Type": "Tier1",
+                    "type": "Tier1",
                     "priority": "critical",
                 },
             ],
@@ -163,7 +163,7 @@ class FixturesCollector:
                 league_info = {
                     "name": league_config["name"],
                     "country": league_config.get("country", "Unknown"),
-                    "typing.Type": league_config["typing.Type"],
+                    "type": league_config["typing.Type"],
                     "priority": league_config.get("priority", "medium"),
                     "api_id": league_config["api_id"],
                     "db_id": league_config["db_id"],
@@ -220,7 +220,7 @@ class FixturesCollector:
         return [
             league
             for league in self.target_leagues
-            if league.get("typing.Type", "Tier1") == league_type
+            if league.get("type", "Tier1") == league_type
         ]
 
     def get_leagues_by_priority(
@@ -259,7 +259,7 @@ class FixturesCollector:
         priority_count = {}
 
         for league in self.target_leagues:
-            league_type = league.get("typing.Type", "Unknown")
+            league_type = league.get("type", "Unknown")
             priority = league.get("priority", "medium")
 
             type_count[league_type] = type_count.get(league_type, 0) + 1

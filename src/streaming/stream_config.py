@@ -140,7 +140,7 @@ class StreamConfig:
             "retry.backoff.ms": self.kafka_config.producer_retry_backoff_ms,
             "linger.ms": self.kafka_config.producer_linger_ms,
             "batch.size": self.kafka_config.producer_batch_size,
-            "compression.typing.Type": "gzip",  # 使用gzip压缩
+            "compression.type": "gzip",  # 使用gzip压缩
             "max.in.flight.requests.per.connection": 1,  # 保证消息顺序
         }
 

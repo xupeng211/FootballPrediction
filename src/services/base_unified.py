@@ -274,7 +274,7 @@ class BaseService(ABC):
         """
         return {
             "name": self.name,
-            "typing.Type": self.__class__.__name__,
+            "type": self.__class__.__name__,
             "description": "Service description not provided",
             "version": "1.0.0",
         }
@@ -290,7 +290,7 @@ class SimpleService(BaseService):
         """获取服务信息."""
         return {
             "name": self.name,
-            "typing.Type": self.__class__.__name__,
+            "type": self.__class__.__name__,
             "description": "Simple service implementation",
             "version": "1.0.0",
         }

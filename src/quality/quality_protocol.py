@@ -225,7 +225,7 @@ class RuleFactory(Protocol):
 RULE_TYPES = {
     "missing_value": MissingValueRule,
     "range": RangeRule,
-    "typing.Type": TypeRule,
+    "type": TypeRule,
     "logical_relation": LogicalRelationRule,
     "consistency": ConsistencyRule,
     "completeness": CompletenessRule,

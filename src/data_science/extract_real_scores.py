@@ -96,7 +96,7 @@ def extract_real_scores():
                     # 检查teamForm或其他字段
                     if "teamForm" in stats_data:
                         team_form = stats_data["teamForm"]
-                        print(f"   TeamForm数据类型: {typing.Type(team_form)}")
+                        print(f"   TeamForm数据类型: {type(team_form)}")
 
                     if real_score:
                         print(f"   ✅ 发现真实比分: {real_score}")

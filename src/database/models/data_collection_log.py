@@ -78,7 +78,7 @@ class DataCollectionLog(BaseModel):
         valid_types = [ct.value for ct in CollectionType]
         if collection_type not in valid_types:
             raise ValueError(
-                f"Invalid collection typing.Type: {collection_type}. Must be one of: {valid_types}"
+                f"Invalid collection type: {collection_type}. Must be one of: {valid_types}"
             )
         return collection_type
 
@@ -157,7 +157,7 @@ class DataCollectionLog(BaseModel):
             f"<DataCollectionLog("
             f"id={self.id}, "
             f"source={self.data_source}, "
-            f"typing.Type={self.collection_type}, "
+            f"type={self.collection_type}, "
             f"status={self.status}, "
             f"records={self.records_collected}"
             f")>"

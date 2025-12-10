@@ -767,7 +767,7 @@ class FotmobDetailsCollector:
                             self.logger.info(f"Successfully fetched details for match {match_id} using endpoint {i}")
                             return structured_data
                         else:
-                            self.logger.warning(f"⚠️ 端点 {i} 返回的数据结构不正确: {typing.Type(data)}")
+                            self.logger.warning(f"⚠️ 端点 {i} 返回的数据结构不正确: {type(data)}")
                             continue
 
                     except json.JSONDecodeError as e:
@@ -997,13 +997,13 @@ class FotmobDetailsCollector:
 
             processed_stats = []
             for stat_group in stats:
-                stat_type = stat_group.get("typing.Type", "")
+                stat_type = stat_group.get("type", "")
                 stat_values = stat_group.get("stats", [])
 
                 for stat in stat_values:
                     processed_stat = {
-                        "typing.Type": stat_type,
-                        "statType": stat.get("typing.Type", ""),
+                        "type": stat_type,
+                        "statType": stat.get("type", ""),
                         "value": stat.get("value", "")
                     }
                     processed_stats.append(processed_stat)
@@ -1430,7 +1430,7 @@ class FotmobDetailsCollector:
             for stat_group in stats_list:
                 if isinstance(stat_group, dict) and "stats" in stat_group:
                     for stat in stat_group.get("stats", []):
-                        stat_type = stat.get("typing.Type", "").lower()
+                        stat_type = stat.get("type", "").lower()
                         stats_values = stat.get("stats", {})
 
                         if "possession" in stat_type:
@@ -2051,7 +2051,7 @@ class FotmobDetailsCollector:
                 if diff_change > 15:
                     key_moments.append({
                         "minute": curr_moment.get("minute"),
-                        "typing.Type": "momentum_shift",
+                        "type": "momentum_shift",
                         "change_magnitude": round(diff_change, 2),
                         "new_leader": curr_moment.get("dominant_team"),
                         "description": f"压力转向{curr_moment.get('dominant_team')}"
