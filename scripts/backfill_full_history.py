@@ -338,64 +338,54 @@ class IndustrialBackfillEngine:
         return leagues
 
     async def fetch_league_matches(self, league_id: int, season: str) -> List[str]:
-        """获取联赛指定赛季的比赛ID列表 - 使用真实FotMob API"""
+        """获取联赛指定赛季的比赛ID列表 - 使用FotMob fixtures API"""
         try:
             logger.debug(f"🔍 获取联赛 {league_id} 赛季 {season} 的比赛列表...")
 
-            # 🔥 修复：使用真实FotMob API获取比赛ID
+            # 使用FotMob fixtures API
             league_url = f"https://www.fotmob.com/api/leagues?id={league_id}&timezone=Europe/London"
 
             # 使用采集器发送请求
             data, status = await self.collector._make_request(league_url, f"league_{league_id}")
 
-            if status.name == "SUCCESS" and data:
-                # 🔥 修复：使用正确的API数据结构
-                # FotMob联赛API返回的是 fixtures.allMatches，不是 content.matches
-                matches_data = []
-
-                # 主要数据路径：fixtures.allMatches
-                if "fixtures" in data:
-                    matches_data = data["fixtures"].get("allMatches", [])
-                    logger.info(f"✅ 从fixtures.allMatches找到: {len(matches_data)}场比赛")
-                else:
-                    # 备用数据路径
-                    content = data.get("content", {})
-                    if "matches" in content:
-                        matches_data = content["matches"].get("allMatches", [])
-                    elif "leagueMatches" in content:
-                        matches_data = content["leagueMatches"]
-
-                # 🔥 关键修复：提取真实的FotMob比赛ID
-                match_ids = []
-                for match in matches_data:
-                    if isinstance(match, dict):
-                        # 优先使用真实的比赛ID字段
-                        match_id = match.get("id")
-                        if not match_id:
-                            match_id = match.get("matchId")
-                        if not match_id:
-                            match_id = match.get("match_id")
-
-                        if match_id:
-                            # 确保是纯数字ID
-                            clean_id = str(match_id).strip()
-                            if clean_id.isdigit():
-                                match_ids.append(clean_id)
-                            else:
-                                logger.warning(f"⚠️ 跳过非数字ID: {clean_id}")
-
-                await asyncio.sleep(uniform(0.1, 0.3))  # 网络延迟
-
-                if match_ids:
-                    logger.info(f"✅ 联赛 {league_id} 赛季 {season}: 找到 {len(match_ids)} 场真实比赛")
-                    logger.debug(f"🔍 前5个比赛ID示例: {match_ids[:5]}")
-                    return match_ids
-                else:
-                    logger.warning(f"⚠️ 联赛 {league_id} 赛季 {season}: 未找到比赛ID，API响应结构可能已变化")
-                    logger.debug(f"🔍 API响应内容: {str(content)[:200]}...")
-                    return []
-            else:
+            if status.name != "SUCCESS" or not data:
                 logger.warning(f"⚠️ 联赛 {league_id} API请求失败: {status}")
+                return []
+
+            # 从fixtures.allMatches提取比赛数据
+            matches_data = []
+            if "fixtures" in data:
+                matches_data = data["fixtures"].get("allMatches", [])
+                logger.info(f"✅ 从fixtures.allMatches找到: {len(matches_data)}场比赛")
+
+            if not matches_data:
+                logger.warning(f"⚠️ 联赛 {league_id} 赛季 {season}: 未找到比赛数据")
+                return []
+
+            # 提取纯数字比赛ID
+            match_ids = []
+            for match in matches_data:
+                if not isinstance(match, dict):
+                    continue
+
+                match_id = match.get("id")
+                if not match_id:
+                    match_id = match.get("matchId") or match.get("match_id")
+
+                if match_id:
+                    clean_id = str(match_id).strip()
+                    if clean_id.isdigit():
+                        match_ids.append(clean_id)
+                    else:
+                        logger.warning(f"⚠️ 跳过非数字ID: {clean_id}")
+
+            await asyncio.sleep(uniform(0.1, 0.3))  # 网络延迟
+
+            if match_ids:
+                logger.info(f"✅ 联赛 {league_id} 赛季 {season}: 找到 {len(match_ids)} 场比赛")
+                return match_ids
+            else:
+                logger.warning(f"⚠️ 联赛 {league_id} 赛季 {season}: 未找到有效比赛ID")
                 return []
 
         except Exception as e:

@@ -114,7 +114,7 @@ def _init_orm_models():
 
         print("✅ 所有 ORM 模型初始化成功 - 无循环依赖")
 
-    except Exception:
+    except Exception as e:
         print(f"⚠️ ORM模型初始化失败: {e}")
         import traceback
 
@@ -285,7 +285,7 @@ class GlobalBackfillService:
 
             logger.info("✅ 数据库连接初始化成功")
 
-        except Exception:
+        except Exception as e:
             logger.error(f"❌ 数据库连接初始化失败: {e}")
             raise
 
@@ -319,7 +319,7 @@ class GlobalBackfillService:
 
             logger.info("✅ 数据采集器初始化完成")
 
-        except Exception:
+        except Exception as e:
             logger.error(f"❌ 数据采集器初始化失败: {e}")
             raise
 
@@ -335,7 +335,7 @@ class GlobalBackfillService:
             else:
                 # 其他情况，返回默认值
                 return "SCHEDULED"[:20]
-        except Exception:
+        except Exception as e:
             # 解析失败时的安全默认值
             return "UNKNOWN"[:20]
 
@@ -408,7 +408,7 @@ class GlobalBackfillService:
                     logger.error(f"❌ Match {match.id} 赔率收集异常: {match_error}")
                     continue
 
-        except Exception:
+        except Exception as e:
             logger.error(f"❌ 赔率收集过程异常: {e}")
             raise
 
@@ -440,7 +440,7 @@ class GlobalBackfillService:
                         f"🔄 发现恢复状态: 上次处理到 {state.get('last_processed_date', 'Unknown')}"
                     )
                     return state
-            except Exception:
+            except Exception as e:
                 logger.warning(f"⚠️ 无法加载恢复状态: {e}")
         return None
 
@@ -457,7 +457,7 @@ class GlobalBackfillService:
             with open(self.state_file, "w", encoding="utf-8") as f:
                 json.dump(state, f, indent=2, ensure_ascii=False)
 
-        except Exception:
+        except Exception as e:
             logger.error(f"❌ 保存恢复状态失败: {e}")
 
     async def collect_daily_data(
@@ -500,7 +500,7 @@ class GlobalBackfillService:
                         result.errors.append(error_msg)
                         logger.error(error_msg)
 
-                except Exception:
+                except Exception as e:
                     error_msg = f"Football-Data.org异常: {e}"
                     result.errors.append(error_msg)
                     logger.error(error_msg)
@@ -542,7 +542,7 @@ class GlobalBackfillService:
                         result.errors.append(error_msg)
                         logger.error(error_msg)
 
-                except Exception:
+                except Exception as e:
                     error_msg = f"FotMob异常: {e}"
                     result.errors.append(error_msg)
                     logger.error(error_msg)
@@ -564,7 +564,7 @@ class GlobalBackfillService:
                 f"📊 {date_str} 采集完成: {result.total_matches} 场比赛, {len(result.errors)} 个错误"
             )
 
-        except Exception:
+        except Exception as e:
             error_msg = f"日期 {date_str} 采集异常: {e}"
             result.errors.append(error_msg)
             logger.error(error_msg)
@@ -921,7 +921,7 @@ class GlobalBackfillService:
                     except Exception as odds_error:
                         logger.warning(f"⚠️ 赔率收集失败: {odds_error}")
 
-        except Exception:
+        except Exception as e:
             logger.error(f"FATAL COMMIT FAILURE: {e}")
             import traceback
 
@@ -1124,7 +1124,7 @@ class GlobalBackfillService:
                             f"✅ {result_date}: {result.total_matches} 场比赛采集完成"
                         )
 
-                    except Exception:
+                    except Exception as e:
                         logger.error(f"❌ 日期 {date_str} 处理失败: {e}")
                         self.stats.failed_days += 1
                         continue
@@ -1134,7 +1134,7 @@ class GlobalBackfillService:
 
         except KeyboardInterrupt:
             logger.info("⚠️ 用户中断执行，状态已保存")
-        except Exception:
+        except Exception as e:
             logger.error(f"❌ 回填执行异常: {e}")
             raise
         finally:
@@ -1270,7 +1270,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("⚠️ 用户中断执行")
         return 1
-    except Exception:
+    except Exception as e:
         logger.error(f"❌ 执行失败: {e}")
         import traceback
 

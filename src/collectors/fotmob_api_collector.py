@@ -165,7 +165,6 @@ class FotMobAPICollector:
                 timeout=timeout,
                 limits=limits,
                 headers=headers_for_init,
-                proxies=proxies,
                 follow_redirects=True
             )
 
@@ -251,12 +250,13 @@ class FotMobAPICollector:
 
                             # 手动检查是否真的是压缩数据
                             content_encoding = response.headers.get('content-encoding', '').lower()
-                            if content_encoding == 'br' and response.content.startswith(b'\x1f\x8b'):
-                                # 伪装成gzip的brotli数据
+                            if content_encoding == 'br':
+                                # Brotli压缩数据
                                 import brotli
                                 logger.info("🔧 手动Brotli解压缩...")
                                 decompressed_data = brotli.decompress(response.content).decode('utf-8')
                                 data = json.loads(decompressed_data)
+                                logger.info("✅ Brotli解压缩和JSON解析成功")
                             else:
                                 # 尝试直接解析
                                 raw_text = response.content.decode('utf-8')
@@ -354,9 +354,8 @@ class FotMobAPICollector:
                 away_score=away_team_info.get("score", 0),
                 # 状态从header.status获取
                 status=status_info.get("reason", {}).get("short", "scheduled"),
-                # 🔧 修复3: 增强时间解析的容错性
-                # 时间从多个字段获取，增加TBD/Postponed的容错处理
-                match_time=self._extract_match_time_with_fallback(general, header),
+                # 🔧 修复: 直接使用正确的字段路径
+                match_time=general.get("matchTimeUTCDate"),  # 直接从general获取
                 venue=general.get("venue", {}).get("name"),
                 attendance=general.get("attendance"),
                 referee=general.get("referee", {}).get("name"),
@@ -735,30 +734,44 @@ class FotMobAPICollector:
             general = data.get("general", {})
             content = data.get("content", {})
 
-            # 🏛️ 裁判信息 (Referee)
-            referee_data = general.get("referee", {})
+            # 🔧 修复: 使用正确的JSON路径提取环境数据
+            match_facts = content.get("matchFacts", {})
+            info_box = match_facts.get("infoBox", {})
+
+            # 🏛️ 裁判信息 (Referee) - 修复路径
+            referee_data = info_box.get("Referee", {})
             environment_data["referee"] = {
                 "id": referee_data.get("id"),
-                "name": referee_data.get("name"),
+                "name": referee_data.get("text", referee_data.get("name")),  # 优先使用text字段
                 "country": referee_data.get("country"),  # 国籍（用于分析执法风格）
                 "cards_this_season": referee_data.get("cardsThisSeason", {}),  # 本季执法统计
             }
 
-            # 🏟️ 场地信息 (Venue)
-            venue_data = general.get("venue", {})
+            # 🏟️ 场地信息 (Venue) - 修复路径
+            venue_data = info_box.get("Stadium", {})
             environment_data["venue"] = {
                 "id": venue_data.get("id"),
                 "name": venue_data.get("name"),
                 "city": venue_data.get("city"),
                 "country": venue_data.get("country"),
                 "capacity": venue_data.get("capacity"),  # 容量（用于计算上座率）
-                "attendance": general.get("attendance"),  # 实际观众人数
+                "attendance": match_facts.get("attendance"),  # 实际观众人数
                 "surface": venue_data.get("surface"),  # 草皮类型
                 "coordinates": {
                     "lat": venue_data.get("lat"),
                     "lng": venue_data.get("lng")
                 }
             }
+
+            # 🎯 赔率数据 (Odds) - 新增提取
+            poll_data = match_facts.get("poll", {})
+            odds_data = poll_data.get("oddspoll", {})
+            if odds_data:
+                environment_data["odds"] = {
+                    "poll_name": odds_data.get("PollName"),
+                    "poll_title": odds_data.get("PollTitle"),
+                    "facts": odds_data.get("Facts", [])
+                }
 
             # 🌤️ 天气信息 (Weather)
             weather_data = general.get("weather", {})
@@ -915,11 +928,52 @@ class FotMobAPICollector:
             match_data.home_team_rating = general.get("homeTeam", {}).get("rating", 0.0)
             match_data.away_team_rating = general.get("awayTeam", {}).get("rating", 0.0)
 
-            # xG数据（兼容性）
-            xg_data = stats.get("xg", {})
-            if xg_data:
-                match_data.xg_home = xg_data.get("home", 0.0)
-                match_data.xg_away = xg_data.get("away", 0.0)
+            # 🔧 修复: xG数据从新的stats_json结构中提取（不再使用旧stats结构）
+            if match_data.stats_json and "xg" in match_data.stats_json:
+                xg_stats = match_data.stats_json["xg"]
+                # 优先使用expected_goals，如果不存在则尝试其他xG相关字段
+                if "expected_goals" in xg_stats:
+                    xg_values = xg_stats["expected_goals"]
+                    if isinstance(xg_values, list) and len(xg_values) >= 2:
+                        match_data.xg_home = float(xg_values[0])
+                        match_data.xg_away = float(xg_values[1])
+                        logger.info(f"✅ xG数据赋值成功: 主队={match_data.xg_home}, 客队={match_data.xg_away}")
+                    else:
+                        logger.warning(f"⚠️ xG数据格式异常: {xg_values}")
+                else:
+                    # 尝试其他可能的xG字段
+                    for xg_key in ["xg", "xgot", "post_shot_xg"]:
+                        if xg_key in xg_stats:
+                            xg_values = xg_stats[xg_key]
+                            if isinstance(xg_values, list) and len(xg_values) >= 2:
+                                match_data.xg_home = float(xg_values[0])
+                                match_data.xg_away = float(xg_values[1])
+                                logger.info(f"✅ 使用 {xg_key} 赋值xG数据: 主队={match_data.xg_home}, 客队={match_data.xg_away}")
+                                break
+            else:
+                # 降级到旧的stats结构（向后兼容）
+                xg_data = stats.get("xg", {})
+                if xg_data:
+                    match_data.xg_home = xg_data.get("home", 0.0)
+                    match_data.xg_away = xg_data.get("away", 0.0)
+                    logger.info(f"✅ 使用旧stats结构赋值xG数据: 主队={match_data.xg_home}, 客队={match_data.xg_away}")
+                else:
+                    logger.warning(f"⚠️ 未找到任何xG数据，保持默认值0.0")
+
+            # 🔧 修复: referee数据从environment_json中提取
+            if match_data.environment_json and "referee" in match_data.environment_json:
+                referee_info = match_data.environment_json["referee"]
+                match_data.referee = referee_info.get("name")
+                if match_data.referee:
+                    logger.info(f"✅ 裁判数据赋值成功: {match_data.referee}")
+                else:
+                    logger.warning("⚠️ 裁判数据为空")
+            elif general.get("referee", {}).get("name"):
+                # 降级到general结构
+                match_data.referee = general.get("referee", {}).get("name")
+                logger.info(f"✅ 使用general结构赋值裁判数据: {match_data.referee}")
+            else:
+                logger.warning("⚠️ 未找到任何裁判数据")
 
             # 球员评分（兼容性）
             ratings = stats.get("playerRating", {})

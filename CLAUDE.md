@@ -56,7 +56,7 @@ make help             # Show all available commands with descriptions ⭐
 # 🔥 Test Golden Rule - Never run pytest directly! Always use Makefile commands
 make test.fast        # Quick core tests (API/Utils/Cache/Events only)
 make test-fast        # 快速单元测试（开发日常使用）
-make test.unit        # Unit tests (278 test files)
+make test.unit        # Unit tests (278+ test files)
 make test.unit.ci     # CI verification (ultimate stable solution)
 make test.integration # Integration tests
 make test.all         # Run all tests including slow ones
@@ -66,6 +66,8 @@ make test-coverage-local # Run tests with coverage locally
 
 ### Running Single Tests (Correct Way)
 ```bash
+# IMPORTANT: Services must be running first (make dev)
+
 # Run specific test module (use path relative to project root)
 docker-compose exec app bash -c "cd /app && pytest tests/test_api_health.py -v"
 
@@ -74,6 +76,11 @@ docker-compose exec app bash -c "cd /app && pytest tests/test_utils/ -v"
 
 # Run with coverage for specific file
 docker-compose exec app bash -c "cd /app && pytest tests/test_collectors/test_fotmob_adapter.py --cov=src.collectors.fotmob -v"
+
+# Run tests in CI mode (mock external dependencies)
+export FOOTBALL_PREDICTION_ML_MODE=mock
+export SKIP_ML_MODEL_LOADING=true
+docker-compose exec app bash -c "cd /app && pytest tests/unit/ -v"
 ```
 
 ### Code Quality
@@ -420,30 +427,36 @@ frontend/
 - **✅ Always use rate limiting** - `src/collectors/rate_limiter.py`
 - **🔐 Proper authentication required** - x-mas and x-foo headers mandatory
 - **🔄 Rotate User-Agents** - Mix mobile/desktop patterns
+- **🌐 Proxy configuration** - WSL environments use Clash proxy at `host.docker.internal:7890`
 
 ### 2. Database Operations (Mandatory)
 - **📌 Always use `src/database/async_manager.py`** - "One Way to do it" principle
 - **🚫 NEVER use `src/database/connection.py`** - Deprecated interface
 - **⚡ All operations must be async** - Use `async/await` consistently
 - **🔒 Use proper session management** - Context managers or dependency injection
+- **🏗️ Database roles** - READER/WRITER roles for access control
 
 ### 3. Testing Protocol (Non-negotiable)
 - **🛡️ ALWAYS use Makefile commands** - Never pytest directly on files
 - **🎯 Mock all external dependencies** - Database, network, filesystem
 - **📊 Maintain 29.0%+ coverage** - CI will fail below this threshold
 - **⚡ Use mock ML mode in CI** - Set `FOOTBALL_PREDICTION_ML_MODE=mock`
+- **🔧 Test environment setup** - Docker required for consistent testing
+- **📋 Test layers** - Unit (85%) + Integration (12%) + E2E (2%) + Performance (1%)
 
 ### 4. Architecture Integrity (Enterprise Standards)
 - **🏗️ Follow DDD patterns** - Domain layer purity essential
 - **📡 Implement CQRS separation** - Commands vs queries distinct
 - **🔄 Event-driven communication** - Use event system for loose coupling
 - **🎯 Type safety mandatory** - Complete type annotations required
+- **🏛️ Clean Architecture** - Layer separation with dependency inversion
 
 ### 5. Frontend Development Standards
 - **🎨 Use Vue 3 Composition API** - Prefer Composition API over Options API
 - **📝 TypeScript mandatory** - All new code must have proper type definitions
 - **📦 Follow component structure** - Use `<script setup lang="ts">` syntax
 - **🎯 Pinia for state management** - Use Pinia stores for application state
+- **🔧 Development workflow** - Separate terminal for `npm run dev` and `npm run type-check -- --watch`
 
 ## 🔍 Code Navigation Guide
 
@@ -555,6 +568,54 @@ grep -r -i "password\|secret\|token\|key" src/ --include="*.py" | grep -v "test"
 
 ---
 
+## 🚀 Quick Start for New Developers
+
+### 第一步：环境验证 (5分钟)
+```bash
+# 1. 确保Docker运行
+docker --version && docker-compose --version
+
+# 2. 克隆并进入项目
+git clone <repository-url>
+cd FootballPrediction
+
+# 3. 启动开发环境
+make dev && make status
+
+# 4. 验证后端服务
+curl http://localhost:8000/health
+```
+
+### 第二步：前端开发环境
+```bash
+# 1. 进入前端目录
+cd frontend
+
+# 2. 安装依赖
+npm install
+
+# 3. 启动开发服务器 (新终端)
+npm run dev
+
+# 4. 验证前端服务
+curl http://localhost:5173
+```
+
+### 第三步：开发工作流
+```bash
+# 1. 运行测试确保环境正常
+make test-fast
+
+# 2. 代码质量检查
+make lint && make fix-code
+
+# 3. 提交前验证 (必须执行)
+make test.unit.ci && make security-check
+
+# 4. 查看所有可用命令
+make help  # ⭐ 最有用的命令
+```
+
 ## 📝 Development Workflow Summary
 
 ### Daily Development Process
@@ -566,7 +627,7 @@ make dev && make status
 curl http://localhost:8000/health
 
 # 3. 运行核心测试确保环境正常
-make test.fast
+make test-fast
 
 # 4. 开发过程中
 make lint && make fix-code  # 代码质量检查和修复
