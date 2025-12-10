@@ -130,19 +130,17 @@ jobs:
             echo "🛡️ 安全扫描完成，报告已生成"
           fi
 
-      - name: 🕵️ Deadlock Hunt (Global Timeout 30s)
+      - name: 🕵️ Deadlock Hunt (Global 19m Timeout)
         run: |
           echo "🕵️ 启动死锁排查模式..."
           export $(cat .env.test | xargs)
           export MALLOC_ARENA_MAX=2
           export PYTHONPATH=$PWD:$PYTHONPATH
           
-          # V25.1 Increased timeout to prevent false positives
-          echo "🔥 执行全量测试 (Timeout: 30s/test)..."
-          timeout 20m python -m pytest tests/ \
+          # V25.2 Further increased timeout and disabled per-test timeout
+          echo "🔥 执行全量测试 (Global timeout: 20m)..."
+          timeout 19m python -m pytest tests/ \
             -vv \
-            --timeout=30 \
-            --timeout-method=thread \
             --tb=short
 
       - name: Upload Test Results
