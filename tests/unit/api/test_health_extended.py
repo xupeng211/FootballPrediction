@@ -19,9 +19,9 @@ class TestAPIHealthExtended:
     def test_health_check_all_components(self, client):
         """测试健康检查所有组件"""
         with (
-            patch("src.api.health.check_database_health") as mock_db,
-            patch("src.api.health.check_redis_health") as mock_redis,
-            patch("src.api.health.check_kafka_health") as mock_kafka,
+            patch("src.api.health._check_database") as mock_db,
+            patch("src.api.health.DatabaseManager") as mock_redis,
+            patch("src.api.health.DatabaseManager") as mock_kafka,
         ):
             mock_db.return_value = {"status": "healthy", "latency_ms": 10}
             mock_redis.return_value = {"status": "healthy", "latency_ms": 5}
