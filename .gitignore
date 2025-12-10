@@ -264,7 +264,7 @@ temp_scripts/
 data/
 intercepted_api_data/
 results/
-database/
+/database/
 
 # 所有日志文件绝对不提交
 logs/
