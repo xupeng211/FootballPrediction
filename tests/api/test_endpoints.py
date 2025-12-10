@@ -101,7 +101,7 @@ class TestHealthEndpoints:
     @pytest.mark.asyncio
     async def test_health_check_basic(self):
         """测试基础健康检查"""
-        with patch("src.api.health.get_database_status") as mock_db_status:
+        with patch("src.api.health._check_database") as mock_db_status:
             mock_db_status.return_value = {"status": "healthy", "response_time_ms": 5}
 
             response = client.get("/health")
@@ -141,12 +141,13 @@ class TestHealthEndpoints:
             }
             mock_db.return_value = mock_instance
 
-            response = client.get("/health/database")
+            response = client.get("/health/detailed")
             assert response.status_code == 200
 
             data = response.json()
-            assert "database" in data
-            assert data["database"]["connection"] == "healthy"
+            assert "checks" in data
+            assert "database" in data["checks"]
+            assert data["checks"]["database"]["status"] == "ok"
 
 
 class TestPredictionEndpoints:

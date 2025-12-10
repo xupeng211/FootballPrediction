@@ -79,6 +79,52 @@ class TestMatchDAO:
         match_create = MatchCreate(**sample_match_data)
         return await match_dao.create(obj_in=match_create)
 
+    @pytest_asyncio.fixture
+    async def sample_matches(self) -> List[dict]:
+        """测试比赛数据列表"""
+        now = datetime.utcnow()
+        return [
+            {
+                "home_team_id": 201,
+                "away_team_id": 202,
+                "home_team_name": "Team A",
+                "away_team_name": "Team B",
+                "league_id": 1,
+                "match_time": now + timedelta(hours=12),
+                "match_date": now + timedelta(hours=12),
+                "venue": "Stadium A",
+                "status": "scheduled",
+                "home_score": 0,
+                "away_score": 0
+            },
+            {
+                "home_team_id": 203,
+                "away_team_id": 204,
+                "home_team_name": "Team C",
+                "away_team_name": "Team D",
+                "league_id": 2,
+                "match_time": now + timedelta(hours=36),
+                "match_date": now + timedelta(hours=36),
+                "venue": "Stadium B",
+                "status": "scheduled",
+                "home_score": 0,
+                "away_score": 0
+            },
+            {
+                "home_team_id": 205,
+                "away_team_id": 206,
+                "home_team_name": "Team E",
+                "away_team_name": "Team F",
+                "league_id": 1,
+                "match_time": now + timedelta(hours=1),
+                "match_date": now + timedelta(hours=1),
+                "venue": "Stadium C",
+                "status": "scheduled",
+                "home_score": 0,
+                "away_score": 0
+            }
+        ]
+
     # ==================== 基础CRUD测试 ====================
 
     @pytest.mark.asyncio
@@ -255,15 +301,19 @@ class TestMatchDAO:
         now = datetime.utcnow()
         matches_data = [
             {
-                "home_team": "Team A",
-                "away_team": "Team B",
+                "home_team_id": 101,
+                "away_team_id": 102,
+                "home_team_name": "Team A",
+                "away_team_name": "Team B",
                 "league_id": 1,
                 "match_time": now + timedelta(hours=1),
                 "status": "scheduled"
             },
             {
-                "home_team": "Team C",
-                "away_team": "Team D",
+                "home_team_id": 103,
+                "away_team_id": 104,
+                "home_team_name": "Team C",
+                "away_team_name": "Team D",
                 "league_id": 1,
                 "match_time": now - timedelta(hours=1),
                 "status": "finished"
@@ -291,8 +341,10 @@ class TestMatchDAO:
         """测试获取正在进行的比赛"""
         # 创建正在进行的比赛
         live_match_data = {
-            "home_team": "Live Team 1",
-            "away_team": "Live Team 2",
+            "home_team_id": 105,
+            "away_team_id": 106,
+            "home_team_name": "Live Team 1",
+            "away_team_name": "Live Team 2",
             "league_id": 1,
             "match_time": datetime.utcnow(),
             "status": "live"
@@ -314,8 +366,10 @@ class TestMatchDAO:
         """测试获取已完成的比赛"""
         # 创建已完成的比赛
         finished_match_data = {
-            "home_team": "Finished Team 1",
-            "away_team": "Finished Team 2",
+            "home_team_id": 107,
+            "away_team_id": 108,
+            "home_team_name": "Finished Team 1",
+            "away_team_name": "Finished Team 2",
             "league_id": 1,
             "match_time": datetime.utcnow() - timedelta(hours=2),
             "status": "finished"
@@ -337,8 +391,10 @@ class TestMatchDAO:
         """测试搜索比赛"""
         # 创建测试比赛
         search_match_data = {
-            "home_team": "Arsenal",
-            "away_team": "Chelsea",
+            "home_team_id": 109,
+            "away_team_id": 110,
+            "home_team_name": "Arsenal",
+            "away_team_name": "Chelsea",
             "league_id": 1,
             "match_time": datetime.utcnow() + timedelta(hours=24),
             "status": "scheduled"
@@ -361,8 +417,10 @@ class TestMatchDAO:
         # 创建不同状态的比赛
         status_matches = [
             {
-                "home_team": f"Team {i}",
-                "away_team": f"Opponent {i}",
+                "home_team_id": 111 + i,
+                "away_team_id": 114 + i,
+                "home_team_name": f"Team {i}",
+                "away_team_name": f"Opponent {i}",
                 "league_id": 1,
                 "match_time": datetime.utcnow(),
                 "status": status
@@ -486,8 +544,10 @@ class TestMatchDAO:
         # 准备批量数据
         match_data_list = [
             MatchCreate(**{
-                "home_team": f"Team {i}",
-                "away_team": f"Opponent {i}",
+                "home_team_id": 117 + i,
+                "away_team_id": 120 + i,
+                "home_team_name": f"Team {i}",
+                "away_team_name": f"Opponent {i}",
                 "league_id": 1,
                 "match_time": datetime.utcnow() + timedelta(hours=i),
                 "status": "scheduled"
@@ -512,8 +572,10 @@ class TestMatchDAO:
         now = datetime.utcnow()
         for i in range(3):
             match_data = {
-                "home_team": f"Team {i}",
-                "away_team": f"Opponent {i}",
+                "home_team_id": 123 + i,
+                "away_team_id": 126 + i,
+                "home_team_name": f"Team {i}",
+                "away_team_name": f"Opponent {i}",
                 "league_id": 1,
                 "match_time": now + timedelta(hours=i),
                 "status": "scheduled"
