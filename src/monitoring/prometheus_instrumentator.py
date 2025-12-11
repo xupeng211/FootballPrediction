@@ -145,8 +145,6 @@ def create_instrumentator() -> Instrumentator:
         env_var_name="PROMETHEUS_FASTAPI_INSTRUMENTATOR",
         inprogress_name="football_prediction_http_requests_inprogress",
         inprogress_labels=True,
-        latency_low_histogram_bucket=0.01,
-        latency_high_histogram_bucket=1.0,
     )
 
     # 添加自定义指标

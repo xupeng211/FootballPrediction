@@ -120,7 +120,7 @@ class StructuredFormatter:
         # 格式化：[时间] [级别] [Request-ID] [模块] 消息
         return (
             f"<green>{record['time'].strftime('%Y-%m-%d %H:%M:%S')}</green> "
-            f"{level_color}<{record['level'].name}></level_color> "
+            f"{level_color}{record['level'].name}</> "
             f"<blue>{request_id_str}</blue>"
             f"<cyan>[{record['name']}]</cyan> "
             f"{record['message']}"
