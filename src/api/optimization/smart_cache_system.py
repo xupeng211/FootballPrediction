@@ -42,7 +42,7 @@ class CacheEntry:
         """计算条目大小."""
         try:
             return len(json.dumps(self.value, default=str))
-        except Exception:
+        except Exception as e:
             return len(str(self.value))
 
     def is_expired(self) -> bool:

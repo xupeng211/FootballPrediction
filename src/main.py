@@ -525,11 +525,11 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         # 客户端正常断开连接
         pass
-    except Exception:
+    except Exception as e:
         # 发生错误时尝试清理连接
         try:
             await websocket.close()
-        except Exception:
+        except Exception as e:
             pass
 
 

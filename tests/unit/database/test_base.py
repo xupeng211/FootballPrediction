@@ -26,7 +26,7 @@ class TestDatabaseBase:
 
             model = BaseModel()
             assert model is not None
-        except Exception:
+        except Exception as e:
             pytest.skip("BaseModel creation failed")
 
     def test_base_model_attributes(self):
@@ -41,7 +41,7 @@ class TestDatabaseBase:
             for attr in common_attributes:
                 hasattr(model, attr)
                 # 不强制要求所有属性都存在
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot test BaseModel attributes")
 
     def test_database_module_import(self):
@@ -68,7 +68,7 @@ class TestDatabaseBase:
                 assert model.created_at is None or model.created_at is not None
         except ImportError:
             pytest.skip("TimestampMixin not available")
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot test timestamp functionality")
 
     def test_model_validation(self):
@@ -82,7 +82,7 @@ class TestDatabaseBase:
             if hasattr(model, "validate"):
                 result = model.validate()
                 assert isinstance(result, bool) or result is None
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot test model validation")
 
     def test_database_configuration(self):
@@ -94,7 +94,7 @@ class TestDatabaseBase:
             assert config is not None
         except ImportError:
             pytest.skip("DatabaseConfig not available")
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot create DatabaseConfig")
 
     def test_connection_management(self):
@@ -106,5 +106,5 @@ class TestDatabaseBase:
             assert manager is not None
         except ImportError:
             pytest.skip("ConnectionManager not available")
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot create ConnectionManager")

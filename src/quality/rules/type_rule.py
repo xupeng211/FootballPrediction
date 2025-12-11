@@ -263,7 +263,7 @@ class TypeRule(TypeRuleProtocol):
 
             return None
 
-        except Exception:
+        except Exception as e:
             return None
 
     def _determine_severity(self, error_message: str) -> str:
@@ -451,7 +451,7 @@ class TypeRule(TypeRuleProtocol):
             try:
                 converted = self._convert_type(value, target_type)
                 return converted is not None
-            except Exception:
+            except Exception as e:
                 # 类型转换失败是预期的行为，返回False即可
                 return False
 

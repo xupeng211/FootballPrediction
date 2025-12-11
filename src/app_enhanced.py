@@ -27,7 +27,7 @@ async def init_db_pool():
     global db_pool
     try:
         db_pool = await asyncpg.create_pool(DATABASE_URL)
-    except Exception:
+    except Exception as e:
         raise
 
 

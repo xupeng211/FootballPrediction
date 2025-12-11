@@ -41,7 +41,7 @@ def run_coverage_test():
         else:
             return False
 
-    except Exception:
+    except Exception as e:
         return False
 
 

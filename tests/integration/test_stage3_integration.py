@@ -63,7 +63,7 @@ class Stage3IntegrationTester:
             # 注意：由于可能没有数据库连接，我们将使用简化的测试方式
             logger.info("⚠️ 使用简化测试模式，跳过数据库初始化")
 
-        except Exception:
+        except Exception as e:
             logger.error(f"❌ 初始化失败: {e}")
             self.test_results["errors"].append(f"初始化失败: {e}")
 
@@ -165,7 +165,7 @@ class Stage3IntegrationTester:
 
             return True
 
-        except Exception:
+        except Exception as e:
             logger.error(f"  ❌ 缓存功能测试失败: {e}")
             return False
 
@@ -291,7 +291,7 @@ class Stage3IntegrationTester:
 
             return True
 
-        except Exception:
+        except Exception as e:
             logger.error(f"  ❌ 数据模型测试失败: {e}")
             return False
 
@@ -354,7 +354,7 @@ class Stage3IntegrationTester:
 
                 return True
 
-        except Exception:
+        except Exception as e:
             logger.error(f"  ❌ 数据采集器集成测试失败: {e}")
             return False
 
@@ -407,7 +407,7 @@ class Stage3IntegrationTester:
 
             return True
 
-        except Exception:
+        except Exception as e:
             logger.error(f"  ❌ 缓存失效机制测试失败: {e}")
             return False
 
@@ -443,7 +443,7 @@ class Stage3IntegrationTester:
 
             return True
 
-        except Exception:
+        except Exception as e:
             logger.error(f"  ❌ 同步状态跟踪测试失败: {e}")
             return False
 
@@ -473,7 +473,7 @@ class Stage3IntegrationTester:
                 else:
                     logger.debug(f"❌ {test_name}测试失败")
                     self.test_results["failed_tests"] += 1
-            except Exception:
+            except Exception as e:
                 logger.debug(f"❌ {test_name}测试异常: {e}")
                 self.test_results["failed_tests"] += 1
                 self.test_results["errors"].append(f"{test_name}: {e}")
@@ -485,7 +485,7 @@ class Stage3IntegrationTester:
         try:
             await self.cache_manager.clear_all_football_cache()
             logger.info("✅ 测试数据清理完成")
-        except Exception:
+        except Exception as e:
             logger.warning(f"⚠️ 测试数据清理失败: {e}")
 
         logger.debug("\n" + "=" * 60)
@@ -536,7 +536,7 @@ async def main():
         logger.debug(f"\n退出码: {0 if success else 1}")
         return success
 
-    except Exception:
+    except Exception as e:
         logger.error(f"测试执行失败: {e}")
         logger.debug(f"\n❌ 测试执行异常: {e}")
         return False

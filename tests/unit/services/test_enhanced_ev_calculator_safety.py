@@ -70,7 +70,7 @@ class TestEnhancedEVCalculatorSafetyNet:
         ):
             try:
                 return EnhancedEVCalculator()
-            except Exception:
+            except Exception as e:
                 pytest.skip(f"Cannot create EnhancedEVCalculator: {e}")
 
     @pytest.fixture
@@ -157,7 +157,7 @@ class TestEnhancedEVCalculatorSafetyNet:
                 # EV值应该是合理的范围（-1到10之间）
                 assert -1.0 <= result.ev <= 10.0
 
-        except Exception:
+        except Exception as e:
             pytest.fail(
                 f"calculate_enhanced_ev() should not crash with valid inputs: {e}"
             )
@@ -190,7 +190,7 @@ class TestEnhancedEVCalculatorSafetyNet:
                 assert isinstance(result.optimal_fraction, (int, float))
                 assert 0.0 <= result.optimal_fraction <= 1.0
 
-        except Exception:
+        except Exception as e:
             pytest.fail(
                 f"calculate_fractional_kelly() should not crash with valid inputs: {e}"
             )
@@ -223,7 +223,7 @@ class TestEnhancedEVCalculatorSafetyNet:
                 assert isinstance(result.overall_rating, (int, float))
                 assert 0.0 <= result.overall_rating <= 10.0
 
-        except Exception:
+        except Exception as e:
             pytest.fail(
                 f"calculate_enhanced_value_rating() should not crash with valid inputs: {e}"
             )
@@ -276,7 +276,7 @@ class TestEnhancedEVCalculatorSafetyNet:
                 has_valid_key = any(key in result for key in possible_keys)
                 assert has_valid_key or len(result) > 0  # 应该有一些数据
 
-        except Exception:
+        except Exception as e:
             pytest.fail(f"backtest_strategy() should not crash with valid inputs: {e}")
 
     # ==================== P1 优先级 Unhappy Path 测试 ====================
@@ -446,7 +446,7 @@ class TestEnhancedEVCalculatorSafetyNet:
                 calculator = EnhancedEVCalculator()
                 # 如果初始化成功，应该有降级处理
                 assert calculator is not None
-            except Exception:
+            except Exception as e:
                 # 抛出异常是可以接受的，但应该是明确的异常类型
                 assert "redis" in str(e).lower() or "connection" in str(e).lower()
 
@@ -490,7 +490,7 @@ class TestEnhancedEVCalculatorSafetyNet:
         except (ValueError, OverflowError):
             # 对于极端值，抛出数学错误是可以接受的
             pass
-        except Exception:
+        except Exception as e:
             pytest.fail(
                 f"Should handle extreme values gracefully, but got unexpected error: {e}"
             )
@@ -506,7 +506,7 @@ class TestEnhancedKellyCalculatorSafety:
         """创建EnhancedKellyCalculator实例"""
         try:
             return EnhancedKellyCalculator()
-        except Exception:
+        except Exception as e:
             pytest.skip(f"Cannot create EnhancedKellyCalculator: {e}")
 
     @pytest.mark.unit
@@ -543,7 +543,7 @@ class TestEnhancedKellyCalculatorSafety:
                     or 0.0 <= result.optimal_fraction < 0.01
                 )
 
-        except Exception:
+        except Exception as e:
             pytest.fail(f"Should handle zero edge gracefully: {e}")
 
 
@@ -557,7 +557,7 @@ class TestEnhancedValueRatingCalculatorSafety:
         """创建EnhancedValueRatingCalculator实例"""
         try:
             return EnhancedValueRatingCalculator()
-        except Exception:
+        except Exception as e:
             pytest.skip(f"Cannot create EnhancedValueRatingCalculator: {e}")
 
     @pytest.mark.unit
@@ -592,5 +592,5 @@ class TestEnhancedValueRatingCalculatorSafety:
             elif hasattr(result, "overall_rating"):
                 assert 0.0 <= result.overall_rating <= 2.0
 
-        except Exception:
+        except Exception as e:
             pytest.fail(f"Should handle negative EV gracefully: {e}")

@@ -83,7 +83,7 @@ class Subject(ABC):
         for observer in self._observers:
             try:
                 observer.update(self, data)
-            except Exception:
+            except Exception as e:
                 # 记录通知失败但不影响其他观察者
                 pass
 
@@ -94,7 +94,7 @@ class Subject(ABC):
         for observer in self._observers:
             try:
                 observer.update(self, event)
-            except Exception:
+            except Exception as e:
                 pass
 
     def get_observers(self) -> list[Observer]:
@@ -147,7 +147,7 @@ class EventManager:
         for observer in self._global_observers:
             try:
                 observer.update(None, event)
-            except Exception:
+            except Exception as e:
                 pass
 
     def get_all_subjects(self) -> dict[str, Subject]:

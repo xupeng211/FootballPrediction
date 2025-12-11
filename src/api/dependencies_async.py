@@ -79,7 +79,7 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
         try:
             yield session
             await session.commit()
-        except Exception:
+        except Exception as e:
             await session.rollback()
             raise
         finally:
@@ -135,7 +135,7 @@ async def get_current_user(
 
     except JWTError:
         raise credentials_exception from None
-    except Exception:
+    except Exception as e:
         # 开发环境的容错处理
         if os.getenv("ENV") == "development":
             return User(id=1, username="dev_user", is_active=True)
@@ -342,7 +342,7 @@ def create_access_token(data: dict, expires_delta: Optional = None) -> str:
 
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
-    except Exception:
+    except Exception as e:
         # 开发环境的容错处理
         return "mock_token_" + str(data.get("sub", "user"))
 
@@ -367,7 +367,7 @@ def verify_token(token: str) -> Optional[TokenData]:
         return TokenData(username=username, user_id=user_id)
     except JWTError:
         return None
-    except Exception:
+    except Exception as e:
         return None
 
 

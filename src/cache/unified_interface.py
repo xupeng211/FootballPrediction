@@ -86,7 +86,7 @@ class MemoryCacheAdapter(CacheInterface):
         try:
             self._cache.set(key, value, ttl)
             return True
-        except Exception:
+        except Exception as e:
             return False
 
     def delete(self, key: str) -> bool:
@@ -151,7 +151,7 @@ class RedisCacheAdapter(CacheInterface):
             import pickle
 
             return pickle.loads(base64.b64decode(value.encode()))
-        except Exception:
+        except Exception as e:
             pass
 
         # 返回原始字符串
@@ -358,7 +358,7 @@ class UnifiedCacheManager:
                     else:
                         # 如果是同步函数，直接调用
                         pass
-                except Exception:
+                except Exception as e:
                     # 忽略一致性管理器的错误，不影响缓存清空
                     pass
 

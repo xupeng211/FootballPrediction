@@ -94,7 +94,7 @@ class TestBasicConfiguration:
             import sys
 
             assert "src" in sys.path or "." in sys.path
-        except Exception:
+        except Exception as e:
             pytest.skip("Python路径配置异常")
 
 

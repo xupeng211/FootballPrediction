@@ -98,7 +98,7 @@ class DataConsistencyTester:
             self.log_test("测试用户设置", True, "测试用户创建和登录成功", duration)
             return True
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test("测试用户设置", False, f"异常: {str(e)}", duration)
             return False
@@ -198,7 +198,7 @@ class DataConsistencyTester:
             self.log_test("预测创建一致性", True, details, duration)
             return True
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test("预测创建一致性", False, f"异常: {str(e)}", duration)
             return False
@@ -291,7 +291,7 @@ class DataConsistencyTester:
             self.log_test("批量预测一致性", True, details, duration)
             return True
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test("批量预测一致性", False, f"异常: {str(e)}", duration)
             return False
@@ -367,7 +367,7 @@ class DataConsistencyTester:
             self.log_test("历史数据一致性", True, details, duration)
             return True
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test("历史数据一致性", False, f"异常: {str(e)}", duration)
             return False
@@ -440,7 +440,7 @@ class DataConsistencyTester:
             self.log_test("并发操作一致性", len(failed_checks) == 0, details, duration)
             return len(failed_checks) == 0
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test("并发操作一致性", False, f"异常: {str(e)}", duration)
             return False
@@ -494,7 +494,7 @@ class DataConsistencyTester:
                                         f"{endpoint}: predictions不是数组格式"
                                     )
 
-                    except Exception:
+                    except Exception as e:
                         logger.warning(f"测试端点 {endpoint} 时异常: {e}")
 
             success = len(format_errors) == 0
@@ -507,7 +507,7 @@ class DataConsistencyTester:
             self.log_test("数据格式一致性", success, details, duration)
             return success
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test("数据格式一致性", False, f"异常: {str(e)}", duration)
             return False
@@ -542,7 +542,7 @@ class DataConsistencyTester:
                 if await test_method():
                     passed_tests += 1
                 await asyncio.sleep(0.1)  # 避免请求过快
-            except Exception:
+            except Exception as e:
                 logger.error(f"测试方法 {test_name} 执行异常: {e}")
 
         # 生成测试报告

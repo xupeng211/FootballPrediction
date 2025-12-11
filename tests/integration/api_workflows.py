@@ -82,7 +82,7 @@ class WorkflowTester:
             self.log_test(f"创建用户{user_id}", success, details, duration)
             return success
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test(f"创建用户{user_id}", False, f"异常: {str(e)}", duration)
             return False
@@ -118,7 +118,7 @@ class WorkflowTester:
             self.log_test(f"用户{user_id}登录", success, details, duration)
             return success
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test(f"用户{user_id}登录", False, f"异常: {str(e)}", duration)
             return False
@@ -154,7 +154,7 @@ class WorkflowTester:
             self.log_test(f"用户{user_id}创建预测", success, details, duration)
             return success
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test(f"用户{user_id}创建预测", False, f"异常: {str(e)}", duration)
             return False
@@ -185,7 +185,7 @@ class WorkflowTester:
             self.log_test(f"用户{user_id}查询历史", success, details, duration)
             return success
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test(f"用户{user_id}查询历史", False, f"异常: {str(e)}", duration)
             return False
@@ -229,7 +229,7 @@ class WorkflowTester:
             self.log_test(f"用户{user_id}验证预测", success, details, duration)
             return success
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test(f"用户{user_id}验证预测", False, f"异常: {str(e)}", duration)
             return False
@@ -260,7 +260,7 @@ class WorkflowTester:
                 if await step_func():
                     passed_steps += 1
                 await asyncio.sleep(0.1)  # 避免请求过快
-            except Exception:
+            except Exception as e:
                 logger.error(f"工作流步骤 {step_name} 执行异常: {e}")
 
         success_rate = (passed_steps / len(workflow_steps)) * 100
@@ -315,7 +315,7 @@ class WorkflowTester:
             self.log_test("并发用户测试", success, details, duration)
             return success
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test("并发用户测试", False, f"异常: {str(e)}", duration)
             return False
@@ -341,7 +341,7 @@ class WorkflowTester:
             self.log_test("无效token处理", success, details, duration)
             return success
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test("无效token处理", False, f"异常: {str(e)}", duration)
             return False
@@ -367,7 +367,7 @@ class WorkflowTester:
             self.log_test("过期token处理", success, details, duration)
             return success
 
-        except Exception:
+        except Exception as e:
             duration = time.time() - start_time
             self.log_test("过期token处理", False, f"异常: {str(e)}", duration)
             return False
@@ -395,7 +395,7 @@ class WorkflowTester:
             try:
                 if await test_method():
                     passed_tests += 1
-            except Exception:
+            except Exception as e:
                 logger.error(f"测试方法 {test_name} 执行异常: {e}")
 
         # 生成测试报告

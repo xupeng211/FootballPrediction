@@ -40,7 +40,7 @@ def test_critical_imports():
                 failed_modules.append((module_name, f"缺少 {expected_class}"))
         except ImportError as e:
             failed_modules.append((module_name, str(e)))
-        except Exception:
+        except Exception as e:
             failed_modules.append((module_name, str(e)))
 
     if failed_modules:
@@ -66,7 +66,7 @@ def test_pytest_availability():
             return True
         else:
             return False
-    except Exception:
+    except Exception as e:
         return False
 
 
@@ -82,7 +82,7 @@ def test_basic_functionality():
         # 测试一个简单的方法调用
 
         return True
-    except Exception:
+    except Exception as e:
         return False
 
 

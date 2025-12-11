@@ -38,7 +38,7 @@ class TestContentAnalysisService:
 
             # 检查结果结构
             assert isinstance(result, dict)
-        except Exception:
+        except Exception as e:
             # 如果方法不存在或有异常，跳过测试
             pytest.skip("analyze_text method not available")
 
@@ -49,7 +49,7 @@ class TestContentAnalysisService:
 
             result = service.analyze_match(match_data)
             assert isinstance(result, dict)
-        except Exception:
+        except Exception as e:
             pytest.skip("analyze_match method not available")
 
     def test_extract_keywords(self, service):
@@ -59,7 +59,7 @@ class TestContentAnalysisService:
             keywords = service.extract_keywords(text)
 
             assert isinstance(keywords, list)
-        except Exception:
+        except Exception as e:
             pytest.skip("extract_keywords method not available")
 
     def test_content_classification(self, service):
@@ -69,7 +69,7 @@ class TestContentAnalysisService:
             category = service.classify_content(content)
 
             assert isinstance(category, str)
-        except Exception:
+        except Exception as e:
             pytest.skip("classify_content method not available")
 
     def test_service_dependency_injection(self, mock_session):
@@ -83,7 +83,7 @@ class TestContentAnalysisService:
             # 测试空内容处理
             result = service.analyze_text("")
             assert isinstance(result, dict)
-        except Exception:
+        except Exception as e:
             pytest.skip("Error handling method not available")
 
     def test_service_module_import(self):
@@ -115,5 +115,5 @@ class TestContentAnalysisService:
                 assert isinstance(result, dict)
             else:
                 pytest.skip("Async analysis method not available")
-        except Exception:
+        except Exception as e:
             pytest.skip("Async method test failed")

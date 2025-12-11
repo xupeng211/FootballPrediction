@@ -43,7 +43,7 @@ def test_intelligent_analyzer():
 
         return simple_report
 
-    except Exception:
+    except Exception as e:
         return None
 
 
@@ -106,7 +106,7 @@ def test_auto_generator():
 
         return results
 
-    except Exception:
+    except Exception as e:
         return None
 
 

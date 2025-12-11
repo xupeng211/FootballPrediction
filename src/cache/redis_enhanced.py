@@ -497,7 +497,7 @@ class EnhancedRedisManager:
         try:
             result = self.sync_client.ping()
             return result
-        except Exception:
+        except Exception as e:
             return False
 
     async def aping(self) -> bool:
@@ -505,7 +505,7 @@ class EnhancedRedisManager:
         try:
             result = await self.async_client.ping()
             return result
-        except Exception:
+        except Exception as e:
             return False
 
     def info(self) -> dict[str, Any]:

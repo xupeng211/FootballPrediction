@@ -23,7 +23,7 @@ class TestPathManager:
         try:
             manager = PathManager()
             assert manager is not None
-        except Exception:
+        except Exception as e:
             pytest.skip("PathManager requires specific initialization")
 
     def test_project_root_detection(self):
@@ -32,7 +32,7 @@ class TestPathManager:
             manager = PathManager()
             if hasattr(manager, "project_root"):
                 assert manager.project_root is not None
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot test project root detection")
 
     def test_src_path_configuration(self):
@@ -41,7 +41,7 @@ class TestPathManager:
             manager = PathManager()
             if hasattr(manager, "src_path"):
                 assert manager.src_path is not None
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot test src path configuration")
 
     def test_path_manager_methods(self):
@@ -65,7 +65,7 @@ class TestPathManager:
             if hasattr(manager, "is_valid_path"):
                 result = manager.is_valid_path("/some/path")
                 assert isinstance(result, bool)
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot test path validation")
 
     def test_path_creation(self):
@@ -77,7 +77,7 @@ class TestPathManager:
             if hasattr(manager, "create_path"):
                 # 不实际创建路径，只测试方法存在
                 assert callable(manager.create_path)
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot test path creation")
 
     def test_core_module_import(self):

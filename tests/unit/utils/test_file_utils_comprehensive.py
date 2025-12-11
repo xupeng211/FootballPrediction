@@ -288,7 +288,7 @@ class TestFileUtilsComprehensive:
                     FileUtils.write_json({"test": "data"}, json_file)
                 except PermissionError:
                     pass  # 预期的权限错误
-            except Exception:
+            except Exception as e:
                 pytest.skip("Cannot simulate permission error")
 
     def test_performance_considerations(self):

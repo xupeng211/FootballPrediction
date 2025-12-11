@@ -529,7 +529,7 @@ class FotmobDetailsCollector:
                                 "source": "odds_tab"
                             }
 
-                except Exception:
+                except Exception as e:
                     continue
 
         except Exception as e:
@@ -560,7 +560,7 @@ class FotmobDetailsCollector:
                         if away_win:
                             odds_data['away_win'] = float(away_win)
 
-                    except Exception:
+                    except Exception as e:
                         continue
 
                 if all(key in odds_data for key in ['home_win', 'draw', 'away_win']):
@@ -838,7 +838,7 @@ class FotmobDetailsCollector:
         """提取比赛 ID"""
         try:
             return data.get("match", {}).get("matchId", "")
-        except Exception:
+        except Exception as e:
             return ""
 
     def _extract_match_info(self, data: dict[str, Any]) -> dict[str, Any]:

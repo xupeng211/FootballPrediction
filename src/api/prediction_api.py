@@ -307,7 +307,7 @@ async def list_models(
     default_model = None
     try:
         default_model = await model_loader.get_default_model(ModelType.XGBOOST)
-    except Exception:
+    except Exception as e:
         pass
 
     return ModelListResponse(
@@ -635,7 +635,7 @@ async def health_check(
             last_prediction_time=datetime.utcnow(),  # 这里应该是实际的最后预测时间
         )
 
-    except Exception:
+    except Exception as e:
         return HealthCheckResponse(
             status="unhealthy",
             model_loaded=False,

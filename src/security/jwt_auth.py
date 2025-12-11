@@ -264,7 +264,7 @@ class JWTAuthManager:
             )
             jti = payload.get("jti")
             return await self._is_token_blacklisted(jti)
-        except Exception:
+        except Exception as e:
             # 解析失败时，假设不在黑名单中
             return False
 

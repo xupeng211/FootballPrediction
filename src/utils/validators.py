@@ -83,7 +83,7 @@ def is_valid_url(url: str) -> bool:
         if not re.search(r"[a-zA-Z0-9]", domain_part):
             return False
 
-    except Exception:
+    except Exception as e:
         return False
 
     return True

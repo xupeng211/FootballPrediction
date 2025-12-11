@@ -92,7 +92,7 @@ class TestRedisClusterManager:
         try:
             manager = RedisClusterManager(mock_cluster_config)
             return manager
-        except Exception:
+        except Exception as e:
             # 创建Mock管理器
             manager = Mock()
             manager.nodes = []
@@ -121,7 +121,7 @@ class TestRedisClusterManager:
         try:
             metrics = cluster_manager.get_metrics()
             assert metrics is not None
-        except Exception:
+        except Exception as e:
             # Mock管理器没有get_metrics方法
             pass
 
@@ -137,7 +137,7 @@ class TestConsistentHashRing:
         try:
             ring = ConsistentHashRing()
             assert ring is not None
-        except Exception:
+        except Exception as e:
             # 创建Mock对象
             ring = Mock()
             assert ring is not None
@@ -149,7 +149,7 @@ class TestConsistentHashRing:
             node = ClusterNode("node_1", "localhost", 6379, "master")
             ring.add_node(node)
             assert True  # 如果没有异常就算通过
-        except Exception:
+        except Exception as e:
             # Mock测试
             assert True
 

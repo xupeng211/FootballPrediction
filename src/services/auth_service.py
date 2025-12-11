@@ -44,7 +44,7 @@ class AuthService:
             return bcrypt.checkpw(
                 plain_password.encode("utf-8"), hashed_password.encode("utf-8")
             )
-        except Exception:
+        except Exception as e:
             return False
 
     @staticmethod

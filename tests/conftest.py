@@ -163,7 +163,7 @@ def setup_integration_test_environment():
             try:
                 # 尝试使用默认事件循环策略
                 asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
-            except Exception:
+            except Exception as e:
                 # 如果失败，静默处理
                 pass
 
@@ -180,6 +180,6 @@ async def ensure_db_initialized():
             db_manager.initialized = True
             db_manager._session_factory = MagicMock()
             db_manager._async_session_factory = MagicMock()
-    except Exception:
+    except Exception as e:
         # 静默处理，避免干扰测试执行
         pass

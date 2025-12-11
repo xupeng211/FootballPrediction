@@ -169,5 +169,5 @@ def setup_openapi(app: FastAPI) -> None:
         openapi_schema = app.openapi()
         if openapi_schema and "paths" not in openapi_schema:
             openapi_schema["paths"] = {}
-    except Exception:
+    except Exception as e:
         pass  # 忽略配置错误

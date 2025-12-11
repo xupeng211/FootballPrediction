@@ -752,7 +752,7 @@ except ImportError:
         try:
             prediction = trained_model.predict(unknown_match)
             assert isinstance(prediction, PredictionResult)
-        except Exception:
+        except Exception as e:
             # 如果抛出异常，应该是可预期的异常
             assert isinstance(e, (ValueError, KeyError))
 

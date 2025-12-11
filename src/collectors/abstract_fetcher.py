@@ -179,7 +179,7 @@ class AbstractFetcher(ABC):
             # 默认实现: 尝试获取一个简单的资源
             await self.fetch_data("health_check")
             return True
-        except Exception:
+        except Exception as e:
             return False
 
     def get_metadata(self, resource_id: str) -> Optional[FetchMetadata]:

@@ -60,7 +60,7 @@ async def test_data_sources_directly():
                 for _i, _match in enumerate(matches[:2], 1):
                     pass
 
-        except Exception:
+        except Exception as e:
             pass
     else:
         pass

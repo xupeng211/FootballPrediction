@@ -391,5 +391,5 @@ class TestFormattersEdgeCases:
 
             # 如果没有异常，测试通过
             assert True
-        except Exception:
+        except Exception as e:
             pytest.fail(f"格式化函数不应该抛出异常: {e}")

@@ -92,7 +92,7 @@ class DictUtils:
             for key in keys:
                 current = current[key]
             return current
-        except (KeyErrorError, AttributeError):
+        except (KeyError, AttributeError):
             return default
 
     @staticmethod

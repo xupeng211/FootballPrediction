@@ -268,7 +268,7 @@ class BettingCoreTester:
 
             return self.test_results
 
-        except Exception:
+        except Exception as e:
             self.test_results["test_status"] = "error"
             self.test_results["error"] = str(e)
             return self.test_results
@@ -443,7 +443,7 @@ class BettingCoreTester:
                 else:
                     pass
 
-            except Exception:
+            except Exception as e:
                 pass
 
         accuracy = passed / len(strategies)
@@ -508,7 +508,7 @@ class BettingCoreTester:
                 else:
                     pass
 
-            except Exception:
+            except Exception as e:
                 pass
 
         accuracy = passed / len(scenarios)

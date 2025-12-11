@@ -37,7 +37,7 @@ class TestTimeUtils:
             # 测试带格式参数
             result_with_format = format_datetime(dt, "%Y-%m-%d")
             assert "2024-01-01" in result_with_format
-        except Exception:
+        except Exception as e:
             pytest.skip("format_datetime method not available")
 
     def test_parse_datetime(self):
@@ -52,7 +52,7 @@ class TestTimeUtils:
             common_format = "2024-01-01 12:00:00"
             result2 = parse_datetime(common_format)
             assert isinstance(result2, datetime)
-        except Exception:
+        except Exception as e:
             pytest.skip("parse_datetime method not available")
 
     def test_calculate_duration(self):
@@ -63,7 +63,7 @@ class TestTimeUtils:
 
             duration = calculate_duration(start, end)
             assert duration == 7200  # 2小时 = 7200秒
-        except Exception:
+        except Exception as e:
             pytest.skip("calculate_duration method not available")
 
     def test_get_current_timestamp(self):
@@ -72,7 +72,7 @@ class TestTimeUtils:
             timestamp = get_current_timestamp()
             assert isinstance(timestamp, (int, float))
             assert timestamp > 0
-        except Exception:
+        except Exception as e:
             pytest.skip("get_current_timestamp method not available")
 
     def test_is_valid_datetime_format(self):
@@ -95,7 +95,7 @@ class TestTimeUtils:
             for fmt in invalid_formats:
                 result = is_valid_datetime_format(fmt)
                 assert result is False
-        except Exception:
+        except Exception as e:
             pytest.skip("is_valid_datetime_format method not available")
 
     def test_time_zone_handling(self):
@@ -106,7 +106,7 @@ class TestTimeUtils:
             # 测试UTC时间处理
             result = format_datetime(dt)
             assert isinstance(result, str)
-        except Exception:
+        except Exception as e:
             pytest.skip("Timezone handling not available")
 
     def test_time_arithmetic(self):
@@ -121,7 +121,7 @@ class TestTimeUtils:
             # 测试减法
             past_time = base_time - timedelta(hours=1)
             assert past_time.hour == 11
-        except Exception:
+        except Exception as e:
             pytest.skip("Time arithmetic test failed")
 
     def test_edge_cases(self):
@@ -135,7 +135,7 @@ class TestTimeUtils:
             future_date = datetime(2099, 12, 31, 23, 59, 59)
             result = format_datetime(future_date)
             assert isinstance(result, str)
-        except Exception:
+        except Exception as e:
             pytest.skip("Edge case handling not available")
 
     def test_time_utils_module_import(self):
@@ -165,5 +165,5 @@ class TestTimeUtils:
             for dt in times:
                 result = format_datetime(dt)
                 assert isinstance(result, str)
-        except Exception:
+        except Exception as e:
             pytest.skip("Performance test failed")

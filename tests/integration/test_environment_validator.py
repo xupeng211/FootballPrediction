@@ -99,7 +99,7 @@ def test_basic_functionality():
         os.unlink(temp_path)
         assert content == "test content"
 
-    except Exception:
+    except Exception as e:
         pass
 
 
@@ -109,7 +109,7 @@ def test_import_issues():
     # 测试pytest相关问题
     try:
         pass
-    except Exception:
+    except Exception as e:
         pass
 
     # 测试其他工具

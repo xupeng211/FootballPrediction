@@ -625,7 +625,7 @@ class TestDatabaseTransactions:
             assert updated_user is not None
             assert updated_user.full_name == "Transaction User"
 
-        except Exception:
+        except Exception as e:
             # 回滚事务
             raise AssertionError("事务不应该失败") from None
 
@@ -690,7 +690,7 @@ class TestDatabaseTransactions:
                 inner_user = await user_repository.get_by_id(user2.id)
                 assert inner_user is not None
 
-            except Exception:
+            except Exception as e:
                 # 内层事务回滚
                 pass
 
@@ -698,7 +698,7 @@ class TestDatabaseTransactions:
             outer_user = await user_repository.get_by_id(user1.id)
             assert outer_user is not None
 
-        except Exception:
+        except Exception as e:
             # 外层事务回滚
             raise AssertionError("外层事务不应该失败") from None
 

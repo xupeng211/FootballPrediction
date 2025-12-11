@@ -155,7 +155,7 @@ def logging_decorator(log_level: str = "INFO") -> Callable:
             try:
                 result = func(*args, **kwargs)
                 return result
-            except Exception:
+            except Exception as e:
                 raise
 
         return wrapper
@@ -357,12 +357,12 @@ def demonstrate_decorator_pattern():
 
     try:
         unstable_function(False)
-    except Exception:
+    except Exception as e:
         pass
 
     try:
         unstable_function(True)
-    except Exception:
+    except Exception as e:
         pass
 
 
@@ -572,7 +572,7 @@ def async_log(log_level: str = "INFO"):
             try:
                 result = await func(*args, **kwargs)
                 return result
-            except Exception:
+            except Exception as e:
                 raise
 
         return wrapper
@@ -590,7 +590,7 @@ def async_metrics(func):
             result = await func(*args, **kwargs)
             time.time() - start_time
             return result
-        except Exception:
+        except Exception as e:
             time.time() - start_time
             raise
 

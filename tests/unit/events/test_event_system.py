@@ -502,7 +502,7 @@ class TestEventIntegration:
         # 应该不会因为一个处理器失败而影响其他处理器
         try:
             event_bus.publish_sync("test_event", test_event)
-        except Exception:
+        except Exception as e:
             pass  # 可能会抛出异常，但不应该中断整个流程
 
         # 验证正常处理器仍然被调用

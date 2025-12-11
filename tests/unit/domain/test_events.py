@@ -29,7 +29,7 @@ class TestDomainEvents:
                 assert event.event_id == "test-123"
             if hasattr(event, "timestamp"):
                 assert event.timestamp == "2024-01-01T12:00:00"
-        except Exception:
+        except Exception as e:
             pytest.skip("DomainEvent initialization failed")
 
     def test_match_events(self):
@@ -53,7 +53,7 @@ class TestDomainEvents:
                 match_id=123, home_score=2, away_score=1, end_time="2024-01-01T14:00:00"
             )
             assert ended_event is not None
-        except Exception:
+        except Exception as e:
             pytest.skip("MatchEvents not available")
 
     def test_prediction_events(self):
@@ -72,7 +72,7 @@ class TestDomainEvents:
                 confidence=0.85,
             )
             assert created_event is not None
-        except Exception:
+        except Exception as e:
             pytest.skip("PredictionEvents not available")
 
     def test_event_inheritance(self):
@@ -81,7 +81,7 @@ class TestDomainEvents:
             # 测试事件类继承
             assert issubclass(MatchEvent, DomainEvent)
             assert issubclass(PredictionEvent, DomainEvent)
-        except Exception:
+        except Exception as e:
             pytest.skip("Cannot test event inheritance")
 
     def test_event_serialization(self):
@@ -99,7 +99,7 @@ class TestDomainEvents:
                 event_dict = event.to_dict()
                 assert isinstance(event_dict, dict)
                 assert "match_id" in event_dict or "matchId" in event_dict
-        except Exception:
+        except Exception as e:
             pytest.skip("Event serialization not available")
 
     def test_event_validation(self):
@@ -115,7 +115,7 @@ class TestDomainEvents:
             if hasattr(valid_event, "is_valid"):
                 is_valid = valid_event.is_valid()
                 assert isinstance(is_valid, bool)
-        except Exception:
+        except Exception as e:
             pytest.skip("Event validation not available")
 
     def test_domain_events_import(self):
@@ -164,7 +164,7 @@ class TestDomainEvents:
             for event in events:
                 assert event is not None
                 assert hasattr(event, "event_id") or hasattr(event, "eventId")
-        except Exception:
+        except Exception as e:
             pytest.skip("Event creation patterns not available")
 
     def test_event_aggregation(self):
@@ -182,5 +182,5 @@ class TestDomainEvents:
                 e for e in events if hasattr(e, "match_id") and e.match_id == 1
             ]
             assert len(match_events) >= 2
-        except Exception:
+        except Exception as e:
             pytest.skip("Event aggregation not available")

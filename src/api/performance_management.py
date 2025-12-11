@@ -501,7 +501,7 @@ async def _run_database_optimization(
 
             # 这里应该将结果保存到任务存储中
 
-        except Exception:
+        except Exception as e:
             pass
 
 

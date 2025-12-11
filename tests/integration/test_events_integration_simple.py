@@ -49,7 +49,7 @@ class TestSimpleEventSystem:
                                 await handler(event)
                             else:
                                 handler(event)
-                        except Exception:
+                        except Exception as e:
                             pass
 
             def get_events(self):
@@ -233,7 +233,7 @@ class TestSimpleSystemIntegration:
             try:
                 result = await mock_services["database"].query("SELECT * FROM test")
                 break
-            except Exception:
+            except Exception as e:
                 if attempt == max_retries - 1:
                     raise
                 await asyncio.sleep(0.01)  # 等待后重试

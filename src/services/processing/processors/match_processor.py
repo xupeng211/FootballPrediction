@@ -1,12 +1,11 @@
-"""import pandas as pd.
-
-比赛数据处理器 - 重写版本
+"""比赛数据处理器 - 重写版本
 
 处理原始比赛数据的清洗、转换和标准化
 Match Data Processor - Rewritten Version
 """
 
 import logging
+import pandas as pd
 from datetime import datetime, timedelta
 from typing import Any
 

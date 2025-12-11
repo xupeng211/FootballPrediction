@@ -43,7 +43,7 @@ class TestDIContainerSingleton:
             try:
                 instance = container.resolve(str)
                 results.append(id(instance))
-            except Exception:
+            except Exception as e:
                 errors.append(e)
 
         # 注册单例服务
@@ -519,7 +519,7 @@ class TestEdgeCasesAndAdvancedFeatures:
                 for _ in range(10):
                     result = container.resolve(str)
                     results.append(result)
-            except Exception:
+            except Exception as e:
                 errors.append(e)
 
         # 创建多个线程

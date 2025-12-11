@@ -280,7 +280,7 @@ class HotReloadManager:
 
             return model_name
 
-        except Exception:
+        except Exception as e:
             return None
 
     async def _validate_new_model(self, file_path: str):

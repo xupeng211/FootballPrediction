@@ -279,7 +279,7 @@ class TestPerformanceIntegration:
                 total = sum(i * i for i in range(1000))
                 end_time = time.time()
                 results.append((worker_id, total, end_time - start_time))
-            except Exception:
+            except Exception as e:
                 errors.append((worker_id, str(e)))
 
         # 创建多个线程

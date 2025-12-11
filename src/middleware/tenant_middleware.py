@@ -200,7 +200,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
                             context["permissions"] = permission_result.permissions
                             context["restrictions"] = permission_result.restrictions
 
-            except Exception:
+            except Exception as e:
                 # Token解析失败,继续其他验证方式
                 pass
 

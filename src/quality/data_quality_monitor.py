@@ -506,7 +506,7 @@ class DataQualityMonitor:
                 test_match_id = 1  # 使用一个可能存在的ID
                 await self.feature_store.load_features(test_match_id)
                 feature_store_status = "healthy"
-            except Exception:
+            except Exception as e:
                 feature_store_status = "warning"
 
             # 获取统计信息

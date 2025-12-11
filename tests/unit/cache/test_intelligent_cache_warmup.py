@@ -75,7 +75,7 @@ class TestCacheWarmupManager:
         try:
             manager = CacheWarmupManager(cache_client=mock_cache_client)
             return manager
-        except Exception:
+        except Exception as e:
             manager = Mock()
             manager.cache_client = mock_cache_client
             manager.tasks = {}

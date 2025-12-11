@@ -300,7 +300,7 @@ class TestCQRSHandlersSafetyNet:
             result = asyncio.run(handler.handle(mock_command))
             # 如果没有抛出异常，检查结果
             assert result is not None
-        except Exception:
+        except Exception as e:
             # 如果抛出异常，也是可接受的
             pass
 

@@ -532,7 +532,7 @@ class StringUtils:
                 words.append("".join(current_word))
 
             return len(words)
-        except Exception:
+        except Exception as e:
             # 如果出现错误，使用简单的split作为后备
             return len(text.split())
 
@@ -815,7 +815,7 @@ def strip_html(text: str) -> str:
                     tag_content_length = 0
 
         return "".join(result)
-    except Exception:
+    except Exception as e:
         # 如果出现任何错误，返回原文本的基本清理
         return "".join(char for char in text if char != "<" and char != ">")
 

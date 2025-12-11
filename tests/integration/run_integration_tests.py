@@ -41,7 +41,7 @@ def run_integration_tests():
 
         return result.returncode == 0
 
-    except Exception:
+    except Exception as e:
         return False
 
 
@@ -95,7 +95,7 @@ def generate_coverage_report():
         else:
             pass
 
-    except Exception:
+    except Exception as e:
         pass
 
 

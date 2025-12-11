@@ -440,7 +440,7 @@ class TestStrategyIntegration:
             with pytest.raises(Exception, match="Prediction failed"):
                 await strategy.predict(input_data)
 
-        except Exception:
+        except Exception as e:
             # 如果注册失败，跳过测试
             pytest.skip(f"Strategy registration failed: {e}")
 

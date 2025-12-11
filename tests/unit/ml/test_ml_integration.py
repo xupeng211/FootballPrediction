@@ -174,7 +174,7 @@ def create_batch_prediction_data(num_predictions: int = 10) -> list[dict[str, An
             try:
                 prediction = poisson_model.predict(request)
                 predictions.append(prediction)
-            except Exception:
+            except Exception as e:
                 # 记录预测失败的情况
                 pass
 

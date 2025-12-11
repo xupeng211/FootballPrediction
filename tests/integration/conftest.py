@@ -317,7 +317,7 @@ async def sample_predictions(test_db_session: AsyncSession, sample_match):
                 predicted_home=2, predicted_away=1, confidence=0.85
             )
             predictions[2].evaluate(actual_home=2, actual_away=1)
-        except Exception:
+        except Exception as e:
             # 如果领域方法不可用，手动设置属性
             predictions[2].predicted_home = 2
             predictions[2].predicted_away = 1
@@ -708,7 +708,7 @@ async def cleanup_test_data(test_db_session: AsyncSession):
         try:
             if test_db_session and not test_db_session.closed:
                 await test_db_session.close()
-        except Exception:
+        except Exception as e:
             pass
 
 

@@ -68,7 +68,7 @@ async def get_current_user(
         token_data = TokenData(username=username, user_id=user_id)
     except JWTError:
         raise credentials_exception from None
-    except Exception:
+    except Exception as e:
         # 如果JWT解析失败，返回一个模拟用户
         token_data = TokenData(username="test_user", user_id=1)
 
@@ -97,7 +97,7 @@ def create_access_token(data: dict, expires_delta: Optional = None):
         to_encode.update({"exp": datetime.utcnow() + expire})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
-    except Exception:
+    except Exception as e:
         # 如果JWT创建失败，返回一个模拟token
         return "mock_token_" + str(data.get("sub", "user"))
 

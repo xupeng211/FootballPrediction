@@ -45,13 +45,13 @@ class CacheHitUser(PerformanceTestUser):
         for user_id in self.user_ids:
             try:
                 self.client.get(f"/api/users/{user_id}", name="Cache-Hit Warmup")
-            except Exception:
+            except Exception as e:
                 pass  # 忽略预热错误
 
         for pred_id in self.prediction_ids:
             try:
                 self.client.get(f"/api/predictions/{pred_id}", name="Cache-Hit Warmup")
-            except Exception:
+            except Exception as e:
                 pass  # 忽略预热错误
 
     @task(60)  # 60%概率进行用户信息查询
@@ -286,7 +286,7 @@ class CacheOnlyUser(HttpUser):
                 )
                 if response.status_code == 200:
                     pass
-            except Exception:
+            except Exception as e:
                 pass
 
         # 预热预测数据缓存
@@ -297,7 +297,7 @@ class CacheOnlyUser(HttpUser):
                 )
                 if response.status_code == 200:
                     pass
-            except Exception:
+            except Exception as e:
                 pass
 
         # 预热比赛列表缓存
@@ -305,7 +305,7 @@ class CacheOnlyUser(HttpUser):
             response = self.client.get("/api/matches", name="Cache-Only Warmup")
             if response.status_code == 200:
                 pass
-        except Exception:
+        except Exception as e:
             pass
 
     @task(70)  # 70%概率进行用户信息查询 (主要缓存命中测试)
@@ -375,7 +375,7 @@ class MixedLoadUser(HttpUser):
         for user_id in self.cache_user_ids:
             try:
                 self.client.get(f"/api/users/{user_id}", name="Mixed-Load Warmup")
-            except Exception:
+            except Exception as e:
                 pass
 
     @task(49)  # 49% = 70% * 70% 读-命中

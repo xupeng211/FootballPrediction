@@ -99,7 +99,7 @@ class TestServiceLifecycleManager:
         """每个测试方法后的清理"""
         try:
             self.manager.shutdown_all()
-        except Exception:
+        except Exception as e:
             pass
 
     def test_manager_initialization(self):
@@ -396,7 +396,7 @@ class TestServiceLifecycleManagerAsync:
     def teardown_method(self):
         try:
             self.manager.shutdown_all()
-        except Exception:
+        except Exception as e:
             pass
 
     @pytest.mark.asyncio
@@ -576,7 +576,7 @@ class TestServiceLifecycleManagerMonitoring:
         try:
             self.manager.stop_monitoring()
             self.manager.shutdown_all()
-        except Exception:
+        except Exception as e:
             pass
 
     def test_start_monitoring_success(self):

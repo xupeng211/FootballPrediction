@@ -97,7 +97,7 @@ class CacheEntry:
                 return len(json.dumps(self.value, default=str))
             else:
                 return len(str(self.value))
-        except Exception:
+        except Exception as e:
             return len(str(self.value))
 
     def is_expired(self) -> bool:

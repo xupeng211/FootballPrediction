@@ -605,7 +605,7 @@ class ProxyPool:
                         proxy.record_failure()
                         return False
 
-        except Exception:
+        except Exception as e:
             proxy.record_failure()
             return False
 

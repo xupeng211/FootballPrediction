@@ -431,7 +431,7 @@ class QualityMonitorServer:
         for connection in self.active_connections.copy():
             try:
                 asyncio.create_task(connection.close())
-            except Exception:
+            except Exception as e:
                 pass
 
         self.active_connections.clear()

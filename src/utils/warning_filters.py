@@ -1,6 +1,4 @@
-"""import sklearn.
-
-警告过滤器设置
+"""警告过滤器设置
 Warning Filters Setup
 """
 
@@ -21,7 +19,7 @@ def setup_warning_filters():
         )
         warnings.filterwarnings("ignore", category=FutureWarning, module="pandas.*")
         warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
-    except (ValueError, KeyErrorError, AttributeError) as e:
+    except (ValueError, KeyError, AttributeError) as e:
         # 如果设置失败,记录日志但不抛出异常
         logger.info(f"⚠️  警告过滤器设置失败: {e}")
 
@@ -33,6 +31,6 @@ def setup_warning_filters():
 if "pytest" not in sys.modules:
     try:
         setup_warning_filters()
-    except (ValueError, KeyErrorError, AttributeError) as e:
+    except (ValueError, KeyError, AttributeError) as e:
         # 如果自动设置失败,不要影响应用启动
         logger.info(f"⚠️  警告过滤器自动设置失败: {e}")

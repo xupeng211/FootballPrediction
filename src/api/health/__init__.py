@@ -127,7 +127,7 @@ async def liveness_check():
         # 安全地获取时间戳
         try:
             timestamp = time.time()
-        except Exception:
+        except Exception as e:
             # 如果时间函数失败,使用默认值
             timestamp = 0.0
 

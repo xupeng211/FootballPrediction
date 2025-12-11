@@ -370,7 +370,7 @@ class RedisCache:
                 "connected_clients": info.get("connected_clients", "N/A"),
                 "total_commands_processed": info.get("total_commands_processed", "N/A"),
             }
-        except Exception:
+        except Exception as e:
             stats["redis_info"] = "N/A"
 
         return stats

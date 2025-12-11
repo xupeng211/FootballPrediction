@@ -713,14 +713,14 @@ class TestIntegration:
         try:
             await analyzer.analyze_query("", 0.1)  # 空查询
             assert True  # 应该不抛出异常
-        except Exception:
+        except Exception as e:
             pytest.fail("Empty query should not raise exception")
 
         # 测试负执行时间处理
         try:
             await analyzer.analyze_query("SELECT 1", -0.1)  # 负时间
             assert True  # 应该不抛出异常
-        except Exception:
+        except Exception as e:
             pytest.fail("Negative execution time should not raise exception")
 
 

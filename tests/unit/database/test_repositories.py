@@ -170,7 +170,7 @@ class MockRepository(BaseRepository):
             yield mock_session
             # 模拟事务提交 - 设置mock状态而不是验证
             mock_session.commit.return_value = None
-        except Exception:
+        except Exception as e:
             # 模拟事务回滚 - 设置mock状态而不是验证
             mock_session.rollback.return_value = None
             raise

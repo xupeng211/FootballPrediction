@@ -755,5 +755,5 @@ class TestAutoBinderEdgeCases:
                     # 应该捕获异常并记录
                     try:
                         self.binder.bind_interface_to_implementations(TestInterface)
-                    except Exception:
+                    except Exception as e:
                         pass

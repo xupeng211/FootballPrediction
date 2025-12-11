@@ -33,6 +33,6 @@ def load_config_from_file(file_path: str) -> dict[str, Any]:
                 return {}
     except (ValueError, KeyError, RuntimeError, ImportError, json.JSONDecodeError):
         return {}
-    except Exception:
+    except Exception as e:
         # 捕获YAML解析错误和其他可能的异常
         return {}

@@ -410,7 +410,7 @@ class Metrics:
                     )
 
             return ece
-        except Exception:
+        except Exception as e:
             return 0.0
 
     def evaluate_all(

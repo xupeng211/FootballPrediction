@@ -50,7 +50,7 @@ class CryptoUtils:
 
             # 默认使用bcrypt验证
             return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
-        except Exception:
+        except Exception as e:
             return False
 
     @staticmethod
@@ -92,7 +92,7 @@ class CryptoUtils:
             if length % 2 == 1:
                 length += 1  # 调整为偶数
             return secrets.token_hex(length // 2)[:length]
-        except Exception:
+        except Exception as e:
             return ""
 
     @staticmethod
@@ -102,7 +102,7 @@ class CryptoUtils:
             if not data:
                 return ""
             return base64.b64encode(data.encode("utf-8")).decode("utf-8")
-        except Exception:
+        except Exception as e:
             return ""
 
     @staticmethod
@@ -112,7 +112,7 @@ class CryptoUtils:
             if not data:
                 return ""
             return base64.b64decode(data.encode("utf-8")).decode("utf-8")
-        except Exception:
+        except Exception as e:
             return ""
 
     @staticmethod
@@ -126,7 +126,7 @@ class CryptoUtils:
                 return ""
             # 空字符串也要产生哈希值
             return hashlib.sha256(data.encode("utf-8")).hexdigest()
-        except Exception:
+        except Exception as e:
             return ""
 
     @staticmethod
@@ -134,7 +134,7 @@ class CryptoUtils:
         """生成随机字符串."""
         try:
             return secrets.token_urlsafe(length)[:length]
-        except Exception:
+        except Exception as e:
             return ""
 
     @staticmethod
@@ -143,7 +143,7 @@ class CryptoUtils:
         try:
             random_part = secrets.token_urlsafe(24)
             return f"{prefix}_{random_part}"
-        except Exception:
+        except Exception as e:
             return f"{prefix}_default"
 
     @staticmethod
@@ -153,7 +153,7 @@ class CryptoUtils:
             if not data:
                 return ""
             return urllib.parse.quote(data)
-        except Exception:
+        except Exception as e:
             return ""
 
     @staticmethod
@@ -163,7 +163,7 @@ class CryptoUtils:
             if not data:
                 return ""
             return urllib.parse.unquote(data)
-        except Exception:
+        except Exception as e:
             return ""
 
     @staticmethod
@@ -180,7 +180,7 @@ class CryptoUtils:
             if not password or not hashed:
                 return False
             return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
-        except Exception:
+        except Exception as e:
             return False
 
 

@@ -330,7 +330,7 @@ class TestDataQualityMonitorIntegration:
         # 模拟处理失败的数据
         try:
             await monitor.validate_data(None)  # 可能导致异常
-        except Exception:
+        except Exception as e:
             pass
 
         # 尝试验证会产生异常的数据

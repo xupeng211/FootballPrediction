@@ -339,7 +339,7 @@ class AsyncBaseService(ABC):
             try:
                 yield session
                 await session.commit()
-            except Exception:
+            except Exception as e:
                 await session.rollback()
                 raise
             finally:

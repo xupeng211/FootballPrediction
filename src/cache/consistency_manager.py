@@ -407,7 +407,7 @@ class CacheConsistencyManager:
         if store and hasattr(store, "get_ttl"):
             try:
                 return store.get_ttl(key)
-            except Exception:
+            except Exception as e:
                 pass
         return 3600  # 默认TTL
 

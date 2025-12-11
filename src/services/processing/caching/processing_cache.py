@@ -216,7 +216,7 @@ class ProcessingCache:
 
             return self._memory_cache.get(cache_key)
 
-        except Exception:
+        except Exception as e:
             return None
 
     async def _set_memory_cache(

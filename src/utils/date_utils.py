@@ -321,7 +321,7 @@ class DateUtils:
                 parts.append(f"{remaining_seconds}秒")
 
             return " ".join(parts)
-        except Exception:
+        except Exception as e:
             return "0秒"
 
     @staticmethod
@@ -333,7 +333,7 @@ class DateUtils:
         try:
             duration_seconds = int((end - start).total_seconds())
             return DateUtils.format_duration(duration_seconds)
-        except Exception:
+        except Exception as e:
             return "0秒"
 
 

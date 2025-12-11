@@ -20,7 +20,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_2(self):
@@ -29,7 +29,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_3(self):
@@ -38,7 +38,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_4(self):
@@ -47,7 +47,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_5(self):
@@ -56,7 +56,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_6(self):
@@ -65,7 +65,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_7(self):
@@ -74,7 +74,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_8(self):
@@ -83,7 +83,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_9(self):
@@ -92,7 +92,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_10(self):
@@ -101,7 +101,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_11(self):
@@ -110,7 +110,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_12(self):
@@ -119,7 +119,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_13(self):
@@ -128,7 +128,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_14(self):
@@ -137,7 +137,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_15(self):
@@ -146,7 +146,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_16(self):
@@ -155,7 +155,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_17(self):
@@ -164,7 +164,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_18(self):
@@ -173,7 +173,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_19(self):
@@ -182,7 +182,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_20(self):
@@ -191,7 +191,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_21(self):
@@ -200,7 +200,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_22(self):
@@ -209,7 +209,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_23(self):
@@ -218,7 +218,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_24(self):
@@ -227,7 +227,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_25(self):
@@ -236,7 +236,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_26(self):
@@ -245,7 +245,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_27(self):
@@ -254,7 +254,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_28(self):
@@ -263,7 +263,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_29(self):
@@ -272,7 +272,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_30(self):
@@ -281,7 +281,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_31(self):
@@ -290,7 +290,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_32(self):
@@ -299,7 +299,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_33(self):
@@ -308,7 +308,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_34(self):
@@ -317,7 +317,7 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")
 
     def test_generic_test_35(self):
@@ -326,5 +326,5 @@ except ImportError as e:
             # 尝试导入和使用模块
             exec("import core.config_di")
             assert True
-        except Exception:
+        except Exception as e:
             pytest.skip("模块 core.config_di 测试跳过")

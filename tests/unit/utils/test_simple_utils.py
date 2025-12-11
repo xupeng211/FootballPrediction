@@ -51,7 +51,7 @@ class TestSimpleUtils:
             # 测试秒数格式化
             result = format_duration(3661)  # 1小时1分1秒
             assert "1" in result  # 应该包含小时
-        except Exception:
+        except Exception as e:
             # 如果函数不存在或有异常，跳过测试
             pytest.skip("format_duration function not available")
 
@@ -61,7 +61,7 @@ class TestSimpleUtils:
             # 测试ISO时间格式解析
             result = parse_iso_datetime("2024-01-01T12:00:00")
             assert result is not None
-        except Exception:
+        except Exception as e:
             # 如果函数不存在或有异常，跳过测试
             pytest.skip("parse_iso_datetime function not available")
 
@@ -72,7 +72,7 @@ class TestSimpleUtils:
 
             # 测试基本验证功能
             assert validator is not None
-        except Exception:
+        except Exception as e:
             # 如果DataValidator不可用，跳过测试
             pytest.skip("DataValidator class not available")
 

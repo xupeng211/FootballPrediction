@@ -216,7 +216,7 @@ class TimeUtils:
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=from_tz)
             return dt.astimezone(to_tz)
-        except (ImportError, ValueError, KeyErrorError, AttributeError):
+        except (ImportError, ValueError, KeyError, AttributeError):
             # 如果时区不可用或类型无效,返回原始datetime
             return dt
 

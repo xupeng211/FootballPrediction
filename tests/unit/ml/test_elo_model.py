@@ -488,7 +488,7 @@ except ImportError:
             features = elo_model.prepare_features(match_data)
             assert isinstance(features, np.ndarray)
             assert len(features) >= 2
-        except Exception:
+        except Exception as e:
             # 如果抛出异常，应该是可预期的异常
             assert isinstance(e, (ValueError, KeyError))
 

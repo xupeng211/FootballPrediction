@@ -209,7 +209,7 @@ class TestSimpleDatabaseOperations:
                 # 故意抛出异常触发回滚
                 raise Exception("Test rollback")
 
-        except Exception:
+        except Exception as e:
             pass  # 预期的异常
 
         # 验证数据未被保存

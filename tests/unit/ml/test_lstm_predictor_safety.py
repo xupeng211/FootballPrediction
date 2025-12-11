@@ -53,7 +53,7 @@ class TestLSTMPredictorSafetyNet:
         try:
             # 使用默认配置创建实例
             return LSTMPredictor()
-        except Exception:
+        except Exception as e:
             pytest.skip(f"Cannot create LSTMPredictor: {e}")
 
     @pytest.fixture
@@ -151,7 +151,7 @@ class TestLSTMPredictorSafetyNet:
             assert x.ndim == 3  # LSTM期望3维输入 (samples, timesteps, features)
             assert y.ndim == 3  # 目标也是3维 (samples, timesteps, features)
 
-        except Exception:
+        except Exception as e:
             pytest.fail(
                 f"prepare_data() should not crash with valid dict list input: {e}"
             )
@@ -195,7 +195,7 @@ class TestLSTMPredictorSafetyNet:
                 pass  # 预期的行为
             else:
                 pytest.fail(f"predict() should handle sequence data gracefully: {e}")
-        except Exception:
+        except Exception as e:
             # 允许TensorFlow相关异常
             if (
                 "tensorflow" in str(e).lower()
@@ -266,7 +266,7 @@ class TestLSTMPredictorSafetyNet:
             # 验证模型被标记为已训练
             assert lstm_predictor.is_trained
 
-        except Exception:
+        except Exception as e:
             # TensorFlow相关的异常是可以接受的
             if (
                 "tensorflow" in str(e).lower()
@@ -302,7 +302,7 @@ class TestLSTMPredictorSafetyNet:
         except (OSError, FileNotFoundError):
             # 预期的文件系统异常
             pass
-        except Exception:
+        except Exception as e:
             # 其他异常应该是可处理的
             assert "model" in str(e).lower() or "file" in str(e).lower()
 
@@ -491,7 +491,7 @@ class TestLSTMPredictorSafetyNet:
             assert isinstance(result.model_version, str)
             assert isinstance(result.prediction_horizon, int)
 
-        except Exception:
+        except Exception as e:
             pytest.fail(f"PredictionResult should be properly defined: {e}")
 
     @pytest.mark.unit
@@ -538,7 +538,7 @@ class TestLSTMPredictorSafetyNet:
             assert isinstance(config.validation_split, (int, float))
             assert isinstance(config.early_stopping_patience, int)
 
-        except Exception:
+        except Exception as e:
             pytest.fail(f"TrainingConfig should be properly defined: {e}")
 
     @pytest.mark.unit
@@ -573,7 +573,7 @@ class TestLSTMPredictorSafetyNet:
         except (ValueError, OverflowError):
             # 对于极端值，抛出数学错误是可以接受的
             pass
-        except Exception:
+        except Exception as e:
             # 其他异常应该包含相关信息
             assert "value" in str(e).lower() or "invalid" in str(e).lower()
 
@@ -601,5 +601,5 @@ class TestLSTMPredictorSafetyNet:
         except (MemoryError, ValueError):
             # 内存错误和模型未训练错误都是可以接受的
             pass
-        except Exception:
+        except Exception as e:
             pytest.fail(f"Should handle large datasets gracefully, but got: {e}")

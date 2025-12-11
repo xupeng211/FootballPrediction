@@ -262,7 +262,7 @@ class FeatureBuilder:
             if isinstance(match_date, str):
                 try:
                     match_date = pd.to_datetime(match_date)
-                except Exception:
+                except Exception as e:
                     match_date = datetime.now()
             elif isinstance(match_date, int | float):
                 match_date = datetime.fromtimestamp(match_date)

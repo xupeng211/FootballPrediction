@@ -60,7 +60,7 @@ async def test_football_data_api():
 
         return True
 
-    except Exception:
+    except Exception as e:
         import traceback
 
         traceback.print_exc()

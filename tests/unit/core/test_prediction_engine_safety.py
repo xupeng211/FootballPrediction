@@ -455,7 +455,7 @@ class TestPredictionEngineSafetyNet:
         # 验证模块可以被重新导入
         try:
             importlib.reload(src.core.prediction_engine)
-        except Exception:
+        except Exception as e:
             pytest.fail(f"模块重新导入失败: {e}")
 
         # 验证重新导入后状态正常

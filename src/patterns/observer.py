@@ -81,7 +81,7 @@ class Subject(ABC):
         for observer in observers_copy:
             try:
                 observer.update(self, data)
-            except Exception:
+            except Exception as e:
                 pass
 
     def clear_observers(self) -> None:
@@ -243,7 +243,7 @@ class ConcreteObserver(Observer):
         if self.callback:
             try:
                 self.callback(subject, data)
-            except Exception:
+            except Exception as e:
                 pass
 
     def get_observer_id(self) -> str:
@@ -419,7 +419,7 @@ class AlertingObserver(Observer):
                         "message": f"告警条件 {i} 被触发",
                     }
                     self.alerts.append(alert)
-            except Exception:
+            except Exception as e:
                 pass
 
     def get_observer_id(self) -> str:
@@ -494,14 +494,14 @@ class EventQueue:
 
                 try:
                     observer.update(subject, data)
-                except Exception:
+                except Exception as e:
                     pass
 
                 self._queue.task_done()
 
             except queue.Empty:
                 continue
-            except Exception:
+            except Exception as e:
                 pass
 
 

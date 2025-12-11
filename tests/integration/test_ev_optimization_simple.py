@@ -527,7 +527,7 @@ def main():
         with open("ev_optimization_results.json", "w", encoding="utf-8") as f:
             json.dump(test_results, f, indent=2, ensure_ascii=False, default=str)
         logger.info("📄 测试结果已保存到 ev_optimization_results.json")
-    except Exception:
+    except Exception as e:
         logger.error(f"保存测试结果失败: {e}")
 
     logger.info("=" * 60)

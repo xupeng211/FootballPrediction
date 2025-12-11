@@ -473,7 +473,7 @@ class BackfillManager:
                     # 等待取消完成
                     try:
                         await asyncio.gather(*tasks, return_exceptions=True)
-                    except Exception:
+                    except Exception as e:
                         pass
 
             progress_bar.close()
