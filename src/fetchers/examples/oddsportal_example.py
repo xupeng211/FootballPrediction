@@ -17,7 +17,7 @@ OddsPortalFetcher Usage Example
 
 import asyncio
 import logging
-from typing import 
+from typing import Any 
 
 from src.fetchers.fetcher_factory import FetcherFactory
 from src.fetchers.oddsportal_fetcher import OddsPortalFetcher

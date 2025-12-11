@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.8
+    hooks:
+      - id: ruff
+        args: [--fix, --show-fixes]
+        files: ^src/api/app\.py$|^src/database/async_manager\.py$|^src/services/prediction_service\.py$
+      - id: ruff
+        name: ruff-all-files
+        args: [--select=E402]
+        exclude: ^tests/|^src/.*__init__\.py$
+
+  - repo: local
+    hooks:
+      - id: import-order-check
+        name: Import Order Check (Critical Files Only)
+        entry: python -m ruff check --select=E402 --quiet
+        language: system
+        files: ^src/api/app\.py$|^src/database/async_manager\.py$|^src/core/prediction_engine\.py$|^src/tasks/pipeline_tasks\.py$

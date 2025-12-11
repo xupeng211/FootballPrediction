@@ -618,7 +618,7 @@ def data_cleaning_task(self, collection_result: dict[str, Any]) -> dict[str, Any
                     # 使用新的批量清洗逻辑
                     import asyncio
 
-                    cleaned_count = asyncio.run(batch_data_cleaning())
+                    cleaned_count, _ = asyncio.run(batch_data_cleaning_with_ids())
 
         # 🔥 增强返回结果：包含新处理的比赛ID列表
         cleaning_result = {

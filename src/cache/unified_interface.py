@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Any
 
 from .consistency_manager import get_consistency_manager
-from .decorators import cache_invalidate
+from .decorators import cached, cache_invalidate
 from .redis_enhanced import EnhancedRedisManager, RedisConfig
 from .ttl_cache_enhanced.ttl_cache import TTLCache
 

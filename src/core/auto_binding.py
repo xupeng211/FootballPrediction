@@ -9,6 +9,7 @@ Provides automatic binding from interfaces to implementations.
 import importlib
 import inspect
 import logging
+import typing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TypeVar
