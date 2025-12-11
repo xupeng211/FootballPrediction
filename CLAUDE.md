@@ -28,10 +28,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 前端技术栈
 - **框架**: Vue.js 3 + Composition API
-- **语言**: TypeScript 5.0+ (完全类型安全)
+- **语言**: TypeScript 5.7.2 (完全类型安全)
 - **构建工具**: Vite 5.0 (快速开发和构建)
 - **状态管理**: Pinia (Vuex现代替代品)
-- **路由**: Vue Router 4
+- **路由**: Vue Router 4.2.5
 - **UI框架**: Tailwind CSS (实用优先的CSS框架)
 - **图表**: Chart.js + vue-chartjs
 
@@ -293,7 +293,7 @@ services:
   app:                 # FastAPI主应用 (8000)
   db:                  # PostgreSQL 15 (5432)
   redis:               # Redis缓存 (6379)
-  frontend:            # Vue.js前端应用 (3000)
+  frontend:            # Vue.js前端应用 (5173)
   nginx:               # 反向代理 (80)
   worker:              # Celery异步任务处理
   beat:                # Celery定时任务调度
@@ -504,6 +504,10 @@ frontend/
 - **Performance monitoring**: `src/performance/middleware.py`
 - **Health checks**: `src/api/health/` directory
 - **External adapters**: `src/adapters/factory.py` (data source factory pattern)
+- **Inference service**: `src/inference/` (ML inference service)
+- **Quality monitoring**: `src/quality_dashboard/` (data quality monitoring)
+- **System monitoring**: `src/monitoring/` (performance monitoring)
+- **Internationalization**: `src/locales/` (i18n configuration)
 
 ## 🚨 Troubleshooting
 

@@ -1,335 +1,326 @@
-# 🚀 FootballPrediction 项目路线图
+# FotMob 数据采集寻路指南
+# FotMob Data Collection Roadmap
 
-> **项目愿景**: 构建企业级足球预测系统，提供专业的数据分析和预测服务
-> **当前版本**: v3.0.0 - 前端 MVP 完整交付
-> **开发状态**: ✅ MVP 阶段完成 | 🚧 P4 规划中
-
----
-
-## 📊 项目进度概览
-
-| 阶段 | 版本 | 状态 | 完成时间 | 主要成就 |
-|------|------|------|----------|----------|
-| **P0** | v1.0 | ✅ 完成 | 2024年11月 | 基础架构搭建 |
-| **P1** | v1.5 | ✅ 完成 | 2024年11月 | 异步标准化改造 |
-| **P2** | v2.5 | ✅ 完成 | 2024年12月 | 后端架构完整 |
-| **P3** | v3.0 | ✅ 完成 | 2025年12月 | 前端 MVP 交付 |
-| **P4** | v4.0 | 🚧 规划中 | 2026年Q1 | 系统稳定性与生产化 |
-| **P5** | v5.0 | 📋 计划中 | 2026年Q2 | 高级功能与AI增强 |
+> **🚨 重要警告**：本文档包含**绝对真理**和**血泪教训**，所有后续开发必须严格遵守！
+>
+> **⚡ 核心成就**：经过漫长的攻坚，我们终于打通了 FotMob 的全链路采集，从 API 废墟中杀出了一条血路！
 
 ---
 
-## 🏗️ 阶段详情
+## 🎯 战略总览 (Strategic Overview)
 
-### ✅ Phase 1: 基础设施建设 (已完成)
-**版本**: v1.0.0 - v1.5.0
-**完成时间**: 2024年11月
+### 📊 采集架构
+```
+FotMob 数据采集 = L1 (赛程) + L2 (详情) + 核心技术栈
+    ↓              ↓              ↓
+联赛页面策略    HTML 解析策略    统一技术栈
+```
 
-#### 主要成就
-- **✅ 项目初始化** - Git 仓库、开发环境、CI/CD 基础
-- **✅ 数据库架构** - PostgreSQL 15 + SQLAlchemy 2.0
-- **✅ 异步架构** - 完全异步化设计
-- **✅ API 框架** - FastAPI 基础架构
-- **✅ 测试体系** - pytest + 测试覆盖率
-
-#### 技术栈
-- **后端**: FastAPI + SQLAlchemy 2.0 + PostgreSQL
-- **开发工具**: Docker + pytest + Makefile
-- **代码质量**: ESLint + Black + MyPy
+### 🏆 核心突破
+- **L1 赛程采集**: 弃用按日期查询，改用**直接解析联赛总览页**
+- **L2 详情采集**: HTML 解析 + 手动 GZIP 解压，从 `__NEXT_DATA__` 中提取
+- **统一技术**: `requests` + `manual_decompress_response` + 隐身 Header
 
 ---
 
-### ✅ Phase 2: 后端核心功能 (已完成)
-**版本**: v2.0.0 - v2.5.0
-**完成时间**: 2024年12月
+## 🔥 绝对真理 (Absolute Truths)
 
-#### 主要成就
-- **✅ 机器学习流水线** - XGBoost 2.0 + TensorFlow 2.18.0
-- **✅ 特征存储系统** - 生产级 Feature Store
-- **✅ 数据质量监控** - 现代化质量规则系统
-- **✅ 异步任务调度** - Prefect + Celery 混合架构
-- **✅ 监控系统** - Prometheus + 健康检查
+### ❌ 严禁尝试 (Do NOT Attempt)
 
-#### 核心组件
-- **ML Pipeline**: 自动化模型训练和部署
-- **Feature Store**: 14个核心特征，数据质量监控
-- **调度系统**: Prefect 2.x + Celery Beat
-- **数据采集**: FotMob API 集成，智能重试机制
+#### 1. **严禁 API 路径**
+```bash
+# 这些都是死亡陷阱！全部返回 404/401
+/api/matches/xxxxxx
+/api/leagues/47/matches
+/api/teams/xxxxxx
+/api/fixtures?date=20240217
 
-#### 技术成就
-- 测试覆盖率: 29.0%
-- 代码质量: A+ (ruff)
-- 安全扫描: Bandit 通过
-- 性能基准: API < 200ms 响应时间
+# 结果：404 Not Found 或 401 Unauthorized
+```
 
----
+#### 2. **严禁 Playwright**
+```python
+# 🚫 错误示例：Playwright 太慢且不稳定
+from playwright import sync_playwright
+# 问题：
+# - 启动慢 (3-5秒)
+# - 资源消耗大
+# - Docker 环境不稳定
+# - 容易被反爬检测
+```
 
-### ✅ Phase 3: 前端 MVP 开发 (已完成)
-**版本**: v3.0.0
-**完成时间**: 2025年12月7日
+#### 3. **严禁复杂 User-Agent 轮换**
+```python
+# 🚫 错误：过于复杂的伪装
+user_agents = [...100个不同UA...]
+headers = {"User-Agent": random.choice(user_agents)}
+# 问题：过度工程化，反而增加被检测风险
+```
 
-#### 主要成就
-- **✅ Vue.js 3 前端应用** - 现代化响应式用户界面
-- **✅ 用户认证系统** - JWT Token 安全认证
-- **✅ 数据可视化** - Chart.js 专业图表组件
-- **✅ 用户中心** - 完整的用户管理功能
-- **✅ 响应式设计** - 移动端、平板、桌面全适配
+### ✅ 必须遵守 (Must Follow)
 
-#### 功能模块
-- **🔐 认证系统**: 登录注册、权限管理、路由守卫
-- **📊 数据可视化**: 胜率饼图、雷达分析、统计面板
-- **👤 用户中心**: 个人信息、历史记录、账户设置
-- **🏠 核心页面**: 仪表板、比赛详情、导航系统
+#### 1. **GZIP 陷阱处理**
+```python
+# ✅ 正确：必须手动处理 GZIP
+def _manual_decompress_response(self, response) -> str:
+    """FotMob 返回的 HTML 可能是 GZIP 压缩的二进制流"""
+    if response.content[:2] == b'\x1f\x8b':  # GZIP 魔数
+        import gzip, io
+        decompressed = gzip.GzipFile(fileobj=io.BytesIO(response.content)).read().decode('utf-8')
+        return decompressed
+    return response.text  # 回退到正常文本
+```
 
-#### 技术成就
-- **现代化技术栈**: Vue 3 + TypeScript + Vite + Pinia
-- **代码质量**: 100% TypeScript 覆盖，95.4% 冒烟测试通过率
-- **用户体验**: 完美的响应式设计和交互动效
-- **开发效率**: Vite 快速构建和热重载
+#### 2. **纯 HTTP 解析 HTML**
+```python
+# ✅ 正确：纯 HTTP 请求 + HTML 解析
+import requests
+response = requests.get(url, headers=get_stealth_headers(), verify=False)
+html_content = _manual_decompress_response(response)
+nextjs_data = extract_nextjs_data(html_content)  # 提取 __NEXT_DATA__
+```
 
-#### 验证结果
-- **冷启动部署**: 100% 成功
-- **前端冒烟测试**: 95.4% 通过率
-- **发布验证测试**: 75.0% 通过率 (核心功能正常)
-- **代码安全检查**: 100% 通过
-
----
-
-### 🚧 Phase 4: 系统稳定性与生产化 (规划中)
-**预计版本**: v4.0.0
-**预计时间**: 2026年Q1 (3个月)
-
-#### 目标概述
-将 MVP 系统升级为生产级应用，确保高可用性、高性能和高安全性。
-
-#### 主要任务
-
-##### 4.1 监控与日志系统 (4.0.0-alpha)
-- **📊 监控系统增强**
-  - [ ] Prometheus + Grafana 完整部署
-  - [ ] 自定义业务指标监控
-  - [ ] 告警规则配置
-  - [ ] 性能监控仪表板
-
-- **📝 日志聚合系统**
-  - [ ] ELK Stack 部署 (Elasticsearch + Logstash + Kibana)
-  - [ ] 结构化日志记录
-  - [ ] 日志分析和搜索
-  - [ ] 错误追踪和报警
-
-- **🔍 应用性能监控**
-  - [ ] APM 工具集成 (Sentry/Zipkin)
-  - [ ] 分布式追踪
-  - [ ] 性能瓶颈分析
-  - [ ] 用户体验监控
-
-##### 4.2 高可用架构 (4.0.0-beta)
-- **🏗️ 负载均衡**
-  - [ ] Nginx 负载均衡配置
-  - [ ] 多实例部署支持
-  - [ ] 健康检查和故障转移
-  - [ ] 自动扩缩容
-
-- **🗄️ 数据库高可用**
-  - [ ] PostgreSQL 主从复制
-  - [ ] 读写分离配置
-  - [ ] 连接池优化
-  - [ ] 数据备份策略
-
-- **📦 缓存优化**
-  - [ ] Redis 集群部署
-  - [ ] 缓存策略优化
-  - [ ] 分布式缓存一致性
-  - [ ] 缓存性能监控
-
-##### 4.3 安全加固 (4.0.0-rc)
-- **🔐 安全基础设施**
-  - [ ] HTTPS 证书配置
-  - [ ] WAF (Web Application Firewall)
-  - [ ] API 访问限制
-  - [ ] DDoS 防护
-
-- **🛡️ 应用安全**
-  - [ ] JWT Token 安全策略
-  - [ ] CSRF 防护
-  - [ ] XSS 防护增强
-  - [ ] SQL 注入防护
-
-- **🔑 权限管理**
-  - [ ] RBAC (基于角色的访问控制)
-  - [ ] API 权限精细化
-  - [ ] 审计日志记录
-  - [ ] 安全事件监控
-
-##### 4.4 CI/CD 流水线 (4.0.0)
-- **🚀 自动化部署**
-  - [ ] GitHub Actions CI/CD
-  - [ ] 自动化测试集成
-  - [ ] 多环境部署支持
-  - [ ] 回滚机制
-
-- **🧪 质量保证**
-  - [ ] 自动化代码质量检查
-  - [ ] 安全扫描集成
-  - [ ] 性能测试自动化
-  - [ ] 部署验证测试
-
-- **📋 版本管理**
-  - [ ] 语义化版本控制
-  - [ ] 变更日志自动化
-  - [ ] 发布流程标准化
-  - [ ] 热更新支持
-
-#### 技术债务清理
-- [ ] 代码重构和优化
-- [ ] 性能瓶颈解决
-- [ ] 技术栈升级
-- [ ] 文档完善
+#### 3. **标准隐身 Header**
+```python
+# ✅ 正确：简洁有效的请求头
+def get_stealth_headers():
+    return {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-GB,en;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+    }
+```
 
 ---
 
-### 📋 Phase 5: 高级功能与 AI 增强 (计划中)
-**预计版本**: v5.0.0
-**预计时间**: 2026年Q2 (3个月)
+## 🛣️ 数据路径 (Data Paths)
 
-#### 目标概述
-引入高级 AI 功能和数据分析能力，提升预测准确性和用户体验。
+### L1 赛程数据提取路径
+```javascript
+// URL: https://www.fotmob.com/leagues/47/overview/premier-league
+// 数据路径：
+props.pageProps.overview.matches.fixtureInfo.teams[]
 
-#### 主要任务
+// 示例数据结构：
+{
+  "id": 8456,
+  "name": "Manchester City"
+}
+// 获取：完整的 20 支英超球队列表
+```
 
-##### 5.1 AI 模型增强
-- **🧠 深度学习模型**
-  - [ ] LSTM 时序预测模型优化
-  - [ ] Transformer 架构探索
-  - [ ] 多模型集成策略
-  - [ ] 在线学习能力
+### L2 详情数据提取路径
+```javascript
+// URL: https://www.fotmob.com/match/{match_id}
+// 数据路径：
+props.pageProps.content.matchFacts  // 比赛事实
+props.pageProps.content.stats        // 统计数据 (含 xG)
+props.pageProps.content.lineup       // 阵容信息
+props.pageProps.content.shotmap      // 射门图
+props.pageProps.content.playerStats  // 球员统计
 
-- **📈 预测准确性提升**
-  - [ ] 更多特征工程
-  - [ ] 模型调参自动化
-  - [ ] A/B 测试框架
-  - [ ] 预测置信度优化
-
-##### 5.2 实时功能
-- **⚡ 实时数据流**
-  - [ ] WebSocket 实时更新
-  - [ ] 比赛实时比分推送
-  - [ ] 实时赔率更新
-  - [ ] 实时预测调整
-
-- **📱 移动端增强**
-  - [ ] PWA 支持
-  - [ ] 推送通知
-  - [ ] 离线功能
-  - [ ] 原生应用 (React Native)
-
-##### 5.3 社交与协作
-- **👥 社区功能**
-  - [ ] 用户讨论系统
-  - [ ] 预测分享
-  - [ ] 专家排行榜
-  - [ ] 社交登录集成
-
-- **📊 高级分析**
-  - [ ] 用户行为分析
-  - [ ] 趋势预测分析
-  - [ ] 个性化推荐
-  - [ ] 智能报表生成
+// xG 数据位置：
+props.pageProps.content.stats.Periods.All.stats[].stats[]
+{
+  "title": "Expected Goals (xG)",
+  "stats": [home_xg, away_xg]  // 主客队 xG 值
+}
+```
 
 ---
 
-## 🎯 发展战略
+## ⚡ 生产工具链 (Production Toolchain)
 
-### 技术发展路线
-1. **现代化架构** - 持续采用最新技术栈
-2. **AI 驱动** - 逐步增加 AI 功能比重
-3. **云原生** - 向云原生架构演进
-4. **开源贡献** - 贡献开源项目，提升影响力
+### 核心文件 (Core Files)
+```bash
+# 🎯 生产脚本 (切勿修改)
+src/jobs/run_season_backfill.py          # L1 赛程回填
+src/collectors/html_fotmob_collector.py   # 核心采集器 (含 GZIP 处理)
+scripts/run_fotmob_scraper.py            # 主采集入口
+scripts/backfill_details_fotmob.py       # L2 详情采集
 
-### 产品发展路线
-1. **MVP → 产品** - 从原型到商业化产品
-2. **单一 → 多元** - 扩展到更多体育领域
-3. **国内 → 国际** - 支持多语言和国际化
-4. **免费 → 付费** - 建立可持续的商业模式
+# 🔧 配置文件
+.env.example                              # 环境变量模板
+src/config/                              # 配置目录
+```
 
-### 团队发展路线
-1. **技术深度** - 持续技术学习和成长
-2. **架构能力** - 培养系统架构设计能力
-3. **产品思维** - 理解用户需求和产品设计
-4. **领导能力** - 建立团队管理和领导力
+### 执行命令 (Execution Commands)
+```bash
+# 🚀 启动完整采集
+make dev                                  # 启动开发环境
+python scripts/run_fotmob_scraper.py     # 采集主入口
 
----
+# 📊 赛季回填 (L1)
+python src/jobs/run_season_backfill.py   # 完整赛季数据
 
-## 📊 成功指标
-
-### 技术指标
-- **代码质量**: 测试覆盖率 > 80%，代码质量等级 A+
-- **性能指标**: API 响应时间 < 100ms，系统可用性 > 99.9%
-- **安全标准**: 0 高危漏洞，定期安全审计通过
-- **开发效率**: CI/CD 通过率 > 95%，部署时间 < 10分钟
-
-### 产品指标
-- **用户满意度**: 用户评分 > 4.5/5
-- **预测准确率**: 整体准确率 > 70%
-- **系统性能**: 支持 1000+ 并发用户
-- **功能完整性**: 核心功能覆盖率 100%
-
-### 业务指标
-- **用户增长**: 月活跃用户增长率 > 20%
-- **技术债务**: 技术债务比例 < 10%
-- **文档完整性**: API 文档覆盖率 100%
-- **社区参与**: GitHub Stars > 100，贡献者 > 10
+# 🎯 详情采集 (L2)
+python scripts/backfill_details_fotmob.py # 单场比赛详情
+```
 
 ---
 
-## 🔮 长期愿景
+## 🔧 技术细节 (Technical Details)
 
-### 3年目标 (2026-2028)
-- 成为足球预测领域的标杆产品
-- 建立活跃的开源社区
-- 实现商业化和可持续发展
-- 扩展到更多体育预测领域
+### GZIP 压缩处理
+```python
+# FotMob 的 GZIP 陷阱
+# 问题：某些情况下返回 GZIP 压缩的二进制流，而不是 HTML 文本
+# 解决：检测魔数 0x1f8b，手动解压
 
-### 5年目标 (2026-2030)
-- 成为全球领先的体育预测平台
-- 拥有多元化的 AI 预测能力
-- 建立完整的生态系统
-- 实现国际化和全球化部署
+def handle_fotmob_response(response):
+    if response.content and response.content[:2] == b'\x1f\x8b':
+        # GZIP 压缩
+        return manual_decompress(response)
+    else:
+        # 正常 HTML
+        return response.text
+```
 
----
+### Next.js SSR 数据提取
+```python
+# 从 HTML 中提取 __NEXT_DATA__
+def extract_nextjs_data(html):
+    pattern = r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>'
+    matches = re.findall(pattern, html, re.DOTALL)
+    if matches:
+        return json.loads(matches[0])
+    return None
+```
 
-## 📚 相关文档
+### Docker 环境优化
+```python
+# Docker 环境反爬检测对抗
+# 1. 禁用 SSL 验证 (避免证书问题)
+# 2. 使用标准浏览器 Header (避免异常特征)
+# 3. 简化请求头 (避免过度伪装)
+# 4. 不使用 Session (避免连接池特征)
 
-- **[README.md](../README.md)** - 项目概述和快速开始
-- **[RELEASE_NOTES.md](../RELEASE_NOTES.md)** - 版本发布说明
-- **[架构文档](architecture/)** - 详细技术架构说明
-- **[开发指南](../TOOLS.md)** - 开发工具和最佳实践
-- **[API 文档](http://localhost:8000/docs)** - 交互式 API 文档
-
----
-
-## 🤝 参与贡献
-
-### 贡献方式
-- **代码贡献** - 提交 Pull Request
-- **问题反馈** - 创建 GitHub Issue
-- **文档改进** - 完善项目文档
-- **功能建议** - 提出新的功能想法
-
-### 开发流程
-1. Fork 项目仓库
-2. 创建功能分支
-3. 提交代码变更
-4. 创建 Pull Request
-5. 代码审查和合并
+requests.get(url, verify=False, headers=standard_headers)
+```
 
 ---
 
-**路线图维护者**: Claude Code AI Assistant
-**最后更新**: 2025年12月7日
-**版本**: v1.0
-**项目状态**: 🚀 MVP 完成，P4 规划中
+## 🎯 成功案例 (Success Stories)
+
+### 完整工作流程
+```python
+# 1. 初始化采集器
+collector = HTMLFotMobCollector(enable_stealth=True)
+await collector.initialize()
+
+# 2. 采集 L1 赛程数据
+season_url = "https://www.fotmob.com/leagues/47/overview/premier-league"
+response = requests.get(season_url, headers=collector._get_current_headers())
+html_content = collector._manual_decompress_response(response)
+nextjs_data = extract_nextjs_data(html_content)
+teams = nextjs_data["props"]["pageProps"]["overview"]["matches"]["fixtureInfo"]["teams"]
+
+# 3. 采集 L2 详情数据
+for team in teams:
+    match_url = f"https://www.fotmob.com/match/{match_id}"
+    # 同样的流程，提取 xG 等详细数据
+```
+
+### 验证结果
+```bash
+# 成功标志
+✅ 20/20 支球队完整获取
+✅ GZIP 解压正常工作
+✅ Next.js 数据成功解析
+✅ xG 数据提取完整
+```
 
 ---
 
-> 💡 **提示**: 本路线图是动态文档，会根据项目进展和需求变化进行调整。欢迎社区参与讨论和贡献建议！
+## ⚠️ 常见陷阱 (Common Pitfalls)
+
+### 1. API 404 错误
+```python
+# ❌ 错误：尝试已废弃的 API
+url = "https://www.fotmob.com/api/matches/123456"
+# 结果：404 Not Found
+
+# ✅ 正确：使用 HTML 页面
+url = "https://www.fotmob.com/match/123456"
+```
+
+### 2. GZIP 乱码
+```python
+# ❌ 错误：直接使用 response.text
+html = response.text  # 可能是乱码二进制
+
+# ✅ 正确：检测并处理 GZIP
+html = collector._manual_decompress_response(response)
+```
+
+### 3. 数据路径错误
+```python
+# ❌ 错误：API 路径思维
+matches = data["matches"]  # API 才有的结构
+
+# ✅ 正确：Next.js 路径
+matches = data["props"]["pageProps"]["content"]  # HTML SSR 结构
+```
+
+---
+
+## 🚀 未来扩展 (Future Extensions)
+
+### 其他联赛支持
+```bash
+# 英超: /leagues/47/overview/premier-league
+# 西甲: /leagues/87/overview/laliga
+# 德甲: /leagues/54/overview/bundesliga
+# 意甲: /leagues/55/overview/serie-a
+# 法甲: /leagues/60/overview/ligue-1
+```
+
+### 历史数据采集
+```python
+# 利用 pageProps 中的赛季信息
+seasons = data["props"]["pageProps"]["allAvailableSeasons"]
+for season in seasons:
+    # 切换赛季采集历史数据
+    season_url = f"/leagues/47/overview/premier-league?season={season['id']}"
+```
+
+---
+
+## 📋 检查清单 (Checklist)
+
+### 开发前必读
+- [ ] 熟读本文档 **3 遍**
+- [ ] 理解 **GZIP 陷阱**
+- [ ] 记住 **数据路径**
+- [ ] 确认 **不使用 API**
+
+### 代码审查要点
+- [ ] 是否包含 `_manual_decompress_response`？
+- [ ] 是否使用正确的数据路径？
+- [ ] 是否避免了 Playwright？
+- [ ] 是否使用了标准隐身 Header？
+
+### 测试验证
+- [ ] 能获取 20 支英超球队？
+- [ ] GZIP 解压是否正常？
+- [ ] xG 数据是否完整？
+- [ ] Docker 环境是否稳定？
+
+---
+
+## 💡 终极原则 (Ultimate Principles)
+
+1. **简单胜过复杂**：纯 HTTP 请求 > Playwright
+2. **稳定胜过速度**：正确解压 > 快速失败
+3. **直接胜过间接**：HTML 页面 > 废弃 API
+4. **标准胜过伪装**：正常 Header > 过度 UA 轮换
+
+> **🎯 记住**：我们是从失败中找到的唯一成功路径，不要轻易偏离！
+
+---
+
+**📅 文档版本**: v1.0
+**🏷️ 标签**: 血泪经验 | 绝对真理 | 生产就绪
+**🔒 状态**: 绝对稳定 | 严禁修改

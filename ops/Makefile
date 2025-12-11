@@ -1,0 +1,385 @@
+# 🐳 Football Prediction Docker Makefile
+# 用于标准化 Docker 开发环境的管理工具
+# 支持 CI 环境自动适配
+
+.PHONY: help dev prod clean shell logs db-shell test lint build
+
+# 默认目标
+.DEFAULT_GOAL := help
+
+# 检测是否在 CI 环境中
+ifdef CI
+    # CI 环境：直接运行命令
+    EXEC_CMD :=
+    EXEC_PREFIX :=
+    PYTEST_PREFIX :=
+    RUFF_PREFIX :=
+    BANDIT_PREFIX :=
+else
+    # 本地环境：在容器内运行
+    EXEC_CMD := docker-compose exec app
+    EXEC_PREFIX := docker-compose exec app bash -c
+    PYTEST_PREFIX := 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest'
+    RUFF_PREFIX := 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff'
+    BANDIT_PREFIX := 'export PATH=$$PATH:/home/app/.local/bin && cd /app && bandit'
+endif
+
+# 颜色定义
+GREEN := \033[32m
+YELLOW := \033[33m
+BLUE := \033[34m
+RED := \033[31m
+RESET := \033[0m
+
+# 项目配置
+PROJECT_NAME := football-prediction
+APP_NAME := $(PROJECT_NAME)_app
+DB_NAME := $(PROJECT_NAME)_db
+REDIS_NAME := $(PROJECT_NAME)_redis
+
+# .PHONY声明所有命令
+.PHONY: help dev prod clean shell logs db-shell install test lint build format fix-code type-check security-check coverage test.unit test.all test-fast test-integration test-coverage-local run-l1 run-l2
+
+help: ## 📋 显示可用命令
+	@echo "$(BLUE)🐳 Football Prediction Docker Commands$(RESET)"
+	@echo "$(YELLOW)开发环境:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*开发/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)生产环境:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*生产/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)管理工具:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*管理/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)L2数据回填:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*脚本/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+# 开发环境命令
+dev: ## 开发/启动完整的开发环境 (app + db + redis + nginx)
+	@echo "$(YELLOW)🚀 启动开发环境...$(RESET)"
+	docker-compose up -d
+	@echo "$(GREEN)✅ 开发环境已启动$(RESET)"
+	@echo "$(BLUE)📝 前端: http://localhost:3000$(RESET)"
+	@echo "$(BLUE)🔧 后端 API: http://localhost:8000$(RESET)"
+	@echo "$(BLUE)📊 API 文档: http://localhost:8000/docs$(RESET)"
+
+dev-rebuild: ## 开发/重新构建镜像并启动开发环境
+	@echo "$(YELLOW)🔨 重新构建并启动开发环境...$(RESET)"
+	docker-compose up --build -d
+	@echo "$(GREEN)✅ 开发环境已重新构建并启动$(RESET)"
+
+dev-logs: ## 开发/查看开发环境日志
+	docker-compose logs -f
+
+dev-stop: ## 开发/停止开发环境
+	@echo "$(YELLOW)⏹️ 停止开发环境...$(RESET)"
+	docker-compose down
+	@echo "$(GREEN)✅ 开发环境已停止$(RESET)"
+
+# 依赖管理
+install: ## 📦 安装项目依赖
+	@echo "$(YELLOW)📦 安装项目依赖...$(RESET)"
+	pip install -r requirements.txt
+	@echo "$(GREEN)✅ 依赖安装完成$(RESET)"
+
+# 生产环境命令
+prod: ## 生产/启动生产环境 (使用 docker-compose.prod.yml)
+	@echo "$(YELLOW)🚀 启动生产环境...$(RESET)"
+	docker-compose -f docker-compose.prod.yml up -d
+	@echo "$(GREEN)✅ 生产环境已启动$(RESET)"
+
+prod-rebuild: ## 生产/重新构建生产环境
+	@echo "$(YELLOW)🔨 重新构建并启动生产环境...$(RESET)"
+	docker-compose -f docker-compose.prod.yml up --build -d
+	@echo "$(GREEN)✅ 生产环境已重新构建并启动$(RESET)"
+
+# 管理工具
+shell: ## 管理/进入后端容器终端
+	@echo "$(YELLOW)🐚 进入后端容器...$(RESET)"
+	docker-compose exec app /bin/bash
+
+shell-db: ## 管理/进入数据库容器
+	@echo "$(YELLOW)🐚 进入数据库容器...$(RESET)"
+	docker-compose exec db /bin/bash
+
+db-shell: ## 管理/连接到 PostgreSQL 数据库
+	@echo "$(YELLOW)🗄️ 连接到 PostgreSQL...$(RESET)"
+	docker-compose exec db psql -U postgres -d football_prediction
+
+redis-shell: ## 管理/连接到 Redis
+	@echo "$(YELLOW)🔴 连接到 Redis...$(RESET)"
+	docker-compose exec redis redis-cli
+
+logs: ## 管理/查看应用日志
+	docker-compose logs -f app
+
+logs-db: ## 管理/查看数据库日志
+	docker-compose logs -f db
+
+logs-redis: ## 管理/查看 Redis 日志
+	docker-compose logs -f redis
+
+status: ## 管理/查看所有服务状态
+	@echo "$(BLUE)📊 容器状态:$(RESET)"
+	docker-compose ps
+	@echo "$(BLUE)🔍 健康检查:$(RESET)"
+	@docker-compose exec app python -c "import urllib.request; print('✅ API健康')" 2>/dev/null || echo "❌ API不可访问"
+
+test: ## 管理/运行测试 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🧪 运行测试...$(RESET)"
+ifdef CI
+	pytest tests/ -v --tb=short
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ -v --tb=short'
+endif
+
+lint: ## 管理/运行代码检查 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🔍 运行代码检查...$(RESET)"
+ifdef CI
+	ruff check .
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff check .'
+endif
+
+format: ## 管理/运行代码格式化 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🎨 运行代码格式化...$(RESET)"
+ifdef CI
+	ruff format .
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff format .'
+endif
+
+fix-code: ## 管理/运行代码自动修复 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🔧 运行代码自动修复...$(RESET)"
+ifdef CI
+	ruff check --fix .
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && ruff check --fix .'
+endif
+
+type-check: ## 管理/运行类型检查 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🔍 运行类型检查...$(RESET)"
+ifdef CI
+	mypy src/ --ignore-missing-imports
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && mypy src/ --ignore-missing-imports'
+endif
+
+security-check: ## 管理/运行安全检查 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🔒 运行安全检查...$(RESET)"
+ifdef CI
+	bandit -r src/
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && bandit -r src/'
+endif
+
+coverage: ## 管理/生成覆盖率报告 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)📊 生成覆盖率报告...$(RESET)"
+ifdef CI
+	pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ --cov=src --cov-report=html --cov-report=term-missing'
+endif
+
+test.unit: ## 管理/运行单元测试 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🧪 运行单元测试...$(RESET)"
+ifdef CI
+	pytest tests/unit/ -v --cov=src --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml --maxfail=3 -x --tb=short
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -v'
+endif
+
+test.fast: ## 管理/运行快速核心测试 (仅API/Utils/Cache/Events模块，避免加载ML模型)
+	@echo "$(GREEN)⚡ 运行快速核心测试...$(RESET)"
+ifdef CI
+	pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ -v --tb=short --maxfail=3 --ignore=tests/unit/api/test_analytics.py --ignore=tests/unit/api/test_analytics_v2.py
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/api/ tests/unit/utils/ tests/unit/cache/ tests/unit/events/ -v --tb=short --maxfail=3 --ignore=tests/unit/api/test_analytics.py --ignore=tests/unit/api/test_analytics_v2.py'
+endif
+
+test.unit.ci: ## 管理/运行CI最小化验证 (终极稳定方案)
+	@echo "$(YELLOW)🚀 运行CI最小化验证...$(RESET)"
+ifdef CI
+	# 设置极致内存和CPU优化参数
+	export PYTEST_CURRENT_TEST=1
+	export MALLOC_ARENA_MAX=2
+	export MALLOC_TRIM_THRESHOLD_=100000
+	export PYTHONPATH=$PWD:$PYTHONPATH
+	# 运行最小化Python验证，完全绕过pytest
+	python3 scripts/ci-minimal-test.py
+else
+	$(EXEC_PREFIX) 'cd /app && python3 scripts/ci-minimal-test.py'
+endif
+
+test.integration: ## 管理/运行集成测试 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🧪 运行集成测试...$(RESET)"
+ifdef CI
+	pytest tests/integration/ -v
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/integration/ -v'
+endif
+
+test.all: ## 管理/运行所有测试 (CI环境直接运行，本地环境使用容器)
+	@echo "$(YELLOW)🧪 运行所有测试...$(RESET)"
+ifdef CI
+	pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml --maxfail=5 -x
+else
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/ -v'
+endif
+
+# 清理命令
+clean: ## 管理/清理容器和缓存
+	@echo "$(YELLOW)🧹 清理 Docker 资源...$(RESET)"
+	docker-compose down -v --remove-orphans
+	docker system prune -f
+	@echo "$(GREEN)✅ 清理完成$(RESET)"
+
+clean-all: ## 管理/彻底清理所有相关资源
+	@echo "$(RED)⚠️ 彻底清理所有资源...$(RESET)"
+	docker-compose down -v --remove-orphans --rmi all
+	docker system prune -af --volumes
+	docker volume prune -f
+	@echo "$(GREEN)✅ 彻底清理完成$(RESET)"
+
+# 构建命令
+build: ## 管理/构建应用镜像
+	@echo "$(YELLOW)🔨 构建应用镜像...$(RESET)"
+	docker-compose build app
+	@echo "$(GREEN)✅ 镜像构建完成$(RESET)"
+
+build-no-cache: ## 管理/无缓存构建镜像
+	@echo "$(YELLOW)🔨 无缓存构建镜像...$(RESET)"
+	docker-compose build --no-cache app
+	@echo "$(GREEN)✅ 无缓存构建完成$(RESET)"
+
+# 数据库管理
+db-reset: ## 管理/清空比赛数据表 (matches)
+	@echo "$(YELLOW)🗄️ 清空比赛数据表...$(RESET)"
+	docker-compose exec db psql -U postgres -d football_prediction -c "DELETE FROM matches;"
+	docker-compose exec db psql -U postgres -d football_prediction -c "DELETE FROM teams WHERE fotmob_external_id IS NOT NULL;"
+	@echo "$(GREEN)✅ 比赛数据表已清空$(RESET)"
+
+db-migrate: ## 管理/运行数据库迁移
+	@echo "$(YELLOW)🔄 运行数据库迁移...$(RESET)"
+	docker-compose exec app python -m alembic upgrade head
+	@echo "$(GREEN)✅ 数据库迁移完成$(RESET)"
+
+# 数据采集命令
+run-l1: ## 🏃 运行 L1 赛季数据采集
+	@echo "$(YELLOW)🏃 运行 L1 赛季数据采集...$(RESET)"
+	docker-compose exec app python3 src/jobs/run_season_fixtures.py
+
+run-l2: ## 🎯 运行 L2 详情数据采集 (旧版HTML解析)
+	@echo "$(YELLOW)🎯 运行 L2 详情数据采集 (旧版)...$(RESET)"
+	docker-compose exec app python3 src/jobs/run_l2_details.py
+
+# L2 API采集器命令 (已移至legacy)
+run-l2-api: ## 🚀 运行 L2 API 详情数据采集
+	@echo "$(YELLOW)🚀 运行 L2 API 详情数据采集...$(RESET)"
+	docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py full
+
+run-l2-api-dry: ## 🔍 试运行 L2 API 采集 (不写入数据库)
+	@echo "$(YELLOW)🔍 试运行 L2 API 采集...$(RESET)"
+	docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py dry-run
+
+run-l2-api-backfill: ## 🔄 运行 L2 API 增量回填
+	@echo "$(YELLOW)🔄 运行 L2 API 增量回填...$(RESET)"
+	docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py backfill
+
+run-l2-api-debug: ## 🐛 调试模式 L2 API 采集 (少量数据)
+	@echo "$(YELLOW)🐛 调试模式 L2 API 采集...$(RESET)"
+	LIMIT=10 BATCH_SIZE=5 MAX_CONCURRENT=1 docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py dry-run
+
+run-l2-api-performance: ## ⚡ 高性能 L2 API 采集
+	@echo "$(YELLOW)⚡ 高性能 L2 API 采集...$(RESET)"
+	LIMIT=50000 BATCH_SIZE=200 MAX_CONCURRENT=20 docker-compose exec app python3 legacy/src/jobs/run_l2_api_details.py full
+
+# 监控命令
+monitor: ## 管理/实时监控应用资源使用
+	docker stats $(APP_NAME)
+
+monitor-all: ## 管理/监控所有容器资源使用
+	docker stats
+
+# 快捷命令
+quick-start: dev ## 快捷/快速启动开发环境 (别名)
+quick-stop: dev-stop ## 快捷/快速停止开发环境 (别名)
+quick-clean: clean ## 快捷/快速清理 (别名)
+
+# ============================================================================
+# 🧪 V31.0 测试分层与标准化命令 (新增)
+# ============================================================================
+
+test-fast: ## 测试/运行快速单元测试 (开发日常使用)
+	@echo "$(YELLOW)⚡ 运行快速单元测试...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -v --tb=short --durations=10'
+
+test-unit: test-fast ## 测试/运行单元测试 (别名)
+
+test-integration: ## 测试/运行集成测试
+	@echo "$(YELLOW)🔗 运行集成测试...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/integration/ -v --tb=short --maxfail=5'
+
+test-coverage-local: ## 测试/生成本地覆盖率报告
+	@echo "$(YELLOW)📊 生成本地覆盖率报告...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ --cov=src --cov-report=html --cov-report=term-missing'
+
+test-check-unit: ## 测试/检查单元测试状态 (无输出)
+	@$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && pytest tests/unit/ -q --tb=no > /dev/null 2>&1 && echo "$(GREEN)✅ 单元测试通过$(RESET)" || echo "$(RED)❌ 单元测试失败$(RESET)"'
+
+# 使用独立的测试Makefile进行高级操作
+test-full:
+	@echo "$(YELLOW)🧪 使用完整测试配置...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && make -f Makefile.test test'
+
+test-quality:
+	@echo "$(YELLOW)🛡️ 运行测试质量检查...$(RESET)"
+	$(EXEC_PREFIX) 'export PATH=$$PATH:/home/app/.local/bin && cd /app && make -f Makefile.test check'
+
+# ============================================================================
+# 🚀 L2数据回填命令 (新增)
+# ============================================================================
+
+.PHONY: backfill-demo backfill-create-sample backfill-small backfill-large
+
+backfill-demo: ## 脚本/运行L2数据回填演示
+	@echo "$(YELLOW)🎯 运行L2数据回填演示...$(RESET)"
+	$(EXEC_PREFIX) 'cd /app && python src/scripts/run_backfill_demo.py'
+
+backfill-create-sample: ## 脚本/创建L2回填示例文件
+	@echo "$(YELLOW)📝 创建L2回填示例文件...$(RESET)"
+	$(EXEC_PREFIX) 'cd /app && python src/scripts/backfill_l2_matches.py --create-sample'
+
+backfill-small: ## 脚本/运行小规模L2数据回填 (测试用)
+	@echo "$(YELLOW)🔄 运行小规模L2数据回填...$(RESET)"
+	$(EXEC_PREFIX) 'cd /app && python src/scripts/backfill_l2_matches.py --concurrent 3 --output data/l2_output_small'
+
+backfill-large: ## 脚本/运行大规模L2数据回填 (生产用)
+	@echo "$(YELLOW)🚀 运行大规模L2数据回填...$(RESET)"
+	$(EXEC_PREFIX) 'cd /app && python src/scripts/backfill_l2_matches.py --concurrent 20 --output data/l2_output_large'
+
+backfill-status: ## 脚本/查看L2回填状态
+	@echo "$(YELLOW)📊 L2数据回填状态报告...$(RESET)"
+	@if [ -f "logs/backfill.log" ]; then \
+		echo "=== 最近10条日志 ==="; \
+		tail -n 10 logs/backfill.log; \
+	else \
+		echo "$(RED)❌ 未找到日志文件 logs/backfill.log$(RESET)"; \
+	fi
+	@if [ -f "logs/failed_ids.txt" ]; then \
+		echo "=== 失败数量 ==="; \
+		wc -l logs/failed_ids.txt; \
+	else \
+		echo "$(GREEN)✅ 无失败记录$(RESET)"; \
+	fi
+	@if [ -d "data/l2_output" ]; then \
+		echo "=== 输出文件数量 ==="; \
+		find data/l2_output -name "*.json" | wc -l; \
+	else \
+		echo "$(YELLOW)⚠️  未找到输出目录 data/l2_output$(RESET)"; \
+	fi
+
+backfill-clean: ## 脚本/清理L2回填临时文件
+	@echo "$(YELLOW)🧹 清理L2回填临时文件...$(RESET)"
+	$(EXEC_PREFIX) 'cd /app && rm -rf data/demo_output data/error_demo_output data/l2_output_* logs/failed_ids.txt'
+	@echo "$(GREEN)✅ 清理完成$(RESET)"
+
+# 联合命令
+backfill-test: backfill-create-sample backfill-small backfill-status ## 脚本/完整测试L2回填流程

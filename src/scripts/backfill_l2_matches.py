@@ -36,7 +36,8 @@ import tqdm
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, str(Path(__file__).parent.parent))
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 from src.collectors.l2_fetcher import L2Fetcher, L2FetchError
 from src.collectors.l2_parser import L2Parser

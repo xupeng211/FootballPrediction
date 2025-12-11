@@ -1,0 +1,206 @@
+# Ultra-Slim Dockerfile - 足球预测系统 (极致优化版)
+# 策略: Multi-stage + Alpine 基础 + 最小化依赖
+# 目标: 从 7GB 减少到 <1GB
+
+# ================== Build 阶段 ==================
+FROM python:3.11-slim as builder
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装构建依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    make \
+    libffi-dev \
+    libssl-dev \
+    python3-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# 复制依赖文件
+COPY requirements.txt .
+
+# 升级 pip 并安装所有依赖到临时位置
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --prefer-binary \
+    --target /opt/python-packages \
+    fastapi==0.121.2 \
+    uvicorn[standard]==0.38.0 \
+    sqlalchemy==2.0.44 \
+    pydantic==2.12.4 \
+    email-validator==2.0.0 \
+    aiosqlite==0.17.0 \
+    redis==7.0.1 \
+    psycopg2-binary==2.9.11 \
+    python-multipart==0.0.20 \
+    passlib[bcrypt]==1.7.4 \
+    python-dotenv==1.2.1 \
+    httpx==0.25.0 \
+    aiohttp==3.10.5 \
+    backoff==2.2.0 \
+    tenacity==8.2.0 \
+    pandas==2.2.3 \
+    numpy==1.26.4 \
+    scikit-learn==1.5.2 \
+    xgboost==2.0.3 \
+    requests==2.31.0 \
+    psutil==5.9.8 \
+    PyJWT==2.10.1 \
+    prometheus-client==0.14.0 \
+    mlflow==2.22.2 \
+    alembic==1.12.0 \
+    asyncpg==0.29.0 \
+    celery==5.4.0 \
+    playwright==1.56.0 \
+    curl_cffi==0.13.0 \
+    beautifulsoup4==4.12.3
+
+# 安装开发工具到不同位置
+RUN pip install --no-cache-dir --prefer-binary \
+    --target /opt/python-packages-dev \
+    pytest==8.4.0 \
+    pytest-asyncio==1.2.0 \
+    pytest-cov==7.0.0 \
+    pytest-mock==3.14.0 \
+    pytest-xdist==3.6.0 \
+    factory-boy==3.3.1 \
+    ruff==0.14.0 \
+    mypy==1.18.2 \
+    bandit==1.8.6 \
+    black==24.10.0 \
+    isort==5.13.2 \
+    pre-commit==4.0.1 \
+    pip-audit==2.6.0 \
+    ipython==8.31.0
+
+# ================== Runtime Base 阶段 ==================
+FROM python:3.11-slim as runtime-base
+
+# 设置环境变量
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    PATH="/home/app/.local/bin:$PATH" \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    PYTHONPATH="/opt/python-packages:$PYTHONPATH"
+
+# 只安装运行时必需的系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Chromium 运行时依赖
+    libglib2.0-0 \
+    libnspr4 \
+    libnss3 \
+    libdbus-1-3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libxcb1 \
+    libxkbcommon0 \
+    libatspi2.0-0 \
+    libx11-6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libcairo2 \
+    libpango-1.0-0 \
+    libasound2 \
+    # 基础工具
+    curl \
+    wget \
+    ca-certificates \
+    # 清理
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# 从构建阶段复制 Python 包
+COPY --from=builder /opt/python-packages /opt/python-packages
+COPY --from=builder /opt/python-packages-dev /opt/python-packages-dev
+
+# 设置 Python 路径
+ENV PYTHONPATH="/opt/python-packages:/opt/python-packages-dev:$PYTHONPATH"
+
+# 精准安装 Playwright (只安装 Chromium)
+RUN python -c "import playwright; playwright.install() install chromium --with-deps" || \
+    (playwright install chromium --with-deps && \
+     playwright install-deps chromium && \
+     echo "Playwright Chromium installation completed successfully")
+
+# 清理缓存和不必要文件
+RUN find /ms-playwright -name "*.zip" -delete 2>/dev/null || true && \
+    find /ms-playwright -name "*.tar.gz" -delete 2>/dev/null || true && \
+    rm -rf /tmp/* /var/tmp/* 2>/dev/null || true && \
+    python -m pip cache purge
+
+# ================== Development 阶段 ==================
+FROM runtime-base as development
+
+# 设置开发环境变量
+ENV ENV=development \
+    TESTING=false \
+    PYTHONPATH="/opt/python-packages:/opt/python-packages-dev:$PYTHONPATH"
+
+# 复制应用代码
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+COPY tests/ ./tests/
+COPY models/ ./models/
+
+# 复制启动脚本
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY scripts/crontab /etc/cron.d/football-cron
+RUN chmod +x /usr/local/bin/entrypoint.sh && \
+    chmod 0644 /etc/cron.d/football-cron
+
+# 创建用户并设置权限
+RUN useradd --create-home --shell /bin/bash app && \
+    chown -R app:app /app
+USER app
+
+# 暴露端口
+EXPOSE 8000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+# 开发环境命令
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# ================== Production 阶段 ==================
+FROM runtime-base as production
+
+# 设置生产环境变量 (不包含开发包)
+ENV ENV=production \
+    PYTHONPATH="/opt/python-packages:$PYTHONPATH"
+
+# 只复制生产必要文件
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+COPY models/ ./models/
+
+# 复制启动脚本
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY scripts/crontab /etc/cron.d/football-cron
+RUN chmod +x /usr/local/bin/entrypoint.sh && \
+    chmod 0644 /etc/cron.d/football-cron
+
+# 创建用户并设置权限
+RUN useradd --create-home --shell /bin/bash app && \
+    chown -R app:app /app
+USER app
+
+# 暴露端口
+EXPOSE 8000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+# 生产环境入口点
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

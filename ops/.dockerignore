@@ -1,0 +1,122 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.pytest_cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.mypy_cache
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+logs/
+backup/
+*.log
+.env
+.env.local
+.env.*.local
+
+# Documentation
+docs/_build/
+site/
+
+# Node.js (if used)
+node_modules/
+npm-debug.log*
+
+# Temporary files
+tmp/
+temp/
+
+# Test files and coverage reports
+htmlcov/
+htmlcov_*/
+.coverage
+coverage.xml
+coverage.json
+test-report.html
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# Development scripts
+scripts/test/
+scripts/archive/
+scripts/fixes/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# MLflow artifacts
+mlruns/
+mlflow_artifacts/
+
+# Docker files
+docker-compose.*.yml
+Dockerfile.dev
+
+# Virtual environment
+.venv/
+.venv*/
+
+# 允许开发依赖文件用于开发环境构建
+!requirements/dev.txt
+!requirements/prod.txt
+
+# 排除CI/CD配置和脚本
+.github/
+scripts/archive/
+scripts/fixes/
+
+# 排除文档目录和生成文件
+docs/_build/
+site/
+htmlcov/
+htmlcov_*/
+*.xml
+
+# 排除大型数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 排除ML相关目录
+mlruns/
+mlflow_artifacts/

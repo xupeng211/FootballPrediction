@@ -1,0 +1,24 @@
+# 🏗️ CI专用Dockerfile - 完全隔离的测试环境
+FROM python:3.11-slim
+
+# 设置环境变量
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制requirements文件
+COPY requirements.txt requirements-ci.txt ./
+
+# 安装核心依赖
+RUN pip install --upgrade pip && \
+    pip install -r requirements-ci.txt
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import sys; exit(0)" || exit 1
+
+# 设置默认命令（将被docker-compose.yml覆盖）
+CMD ["/bin/bash"]

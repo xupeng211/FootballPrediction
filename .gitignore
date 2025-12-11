@@ -294,3 +294,33 @@ simple_*.py
 *_ANALYSIS*
 frontend/src/**/*.js
 frontend/src/**/*.d.ts
+
+# ===========================================
+# 🔧 DevOps 优化补充规则 (2024-12-11)
+# ===========================================
+
+# 一次性验证和演示脚本（已移动至scripts/temp/）
+scripts/temp/*.py
+scripts/temp/*.sh
+
+# 过程文档（已移动至reports/）
+*_REPORT*.md
+*_VERIFICATION*.md
+*_COMPLETION*.md
+*_AUDIT*.md
+*_ANALYSIS*.md
+
+# 异常命名的文件
+=*
+
+# 备份的配置文件
+*.bak.*
+Dockerfile.bak.*
+
+# 临时环境变量文件
+.env.*.tmp
+
+# 运行时日志文件（确保覆盖）
+*_*.log
+backfill_*.log
+l2_*.log

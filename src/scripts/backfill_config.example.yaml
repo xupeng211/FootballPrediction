@@ -1,0 +1,42 @@
+# L2数据回填配置示例
+# L2 Data Backfill Configuration Example
+
+# 并发控制
+concurrency:
+  max_concurrent: 15          # 最大并发请求数
+  batch_size: 1000            # 每批读取的记录数
+  request_timeout: 30.0       # HTTP请求超时时间(秒)
+  max_retries: 5              # 最大重试次数
+  rate_limit_delay: 0.1       # 请求间隔延迟(秒)
+
+# 文件路径
+paths:
+  input_file: "data/l2_backfill_queue.csv"    # 输入CSV文件
+  output_dir: "data/l2_output"                # 输出目录
+  log_file: "logs/backfill.log"               # 主日志文件
+  failed_ids_file: "logs/failed_ids.txt"      # 失败ID记录文件
+  progress_file: "data/l2_output/progress.txt" # 进度文件
+
+# 控制参数
+control:
+  enable_progress_bar: true     # 是否显示进度条
+  save_interval: 10            # 每N个成功保存一次进度
+  resume_from_progress: true   # 是否从进度文件恢复
+
+# 日志配置
+logging:
+  level: "INFO"                # 日志级别 (DEBUG, INFO, WARNING, ERROR)
+  max_file_size: 10485760      # 日志文件最大大小(10MB)
+  backup_count: 5             # 保留的日志文件数量
+
+# 错误处理
+error_handling:
+  skip_on_fatal_error: false   # 遇到致命错误时是否跳过
+  retry_on_network_error: true # 网络错误时是否重试
+  max_consecutive_failures: 50 # 最大连续失败次数
+
+# 数据验证
+validation:
+  skip_invalid_ids: true      # 跳过无效的match_id
+  validate_output: true       # 验证输出数据完整性
+  compression: "none"         # 输出压缩格式 (none, gzip)

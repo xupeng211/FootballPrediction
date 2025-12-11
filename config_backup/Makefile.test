@@ -1,0 +1,179 @@
+# 🧪 测试分层与标准化 Makefile
+# Test Stratification and Standardization Makefile
+# V31.0 - 工程效能专家出品
+
+.PHONY: help test test-fast test-unit test-all test-integration test-performance test-coverage lint lint-fix clean check
+
+# 默认目标
+.DEFAULT_GOAL := help
+
+# 颜色定义
+GREEN := \033[32m
+YELLOW := \033[33m
+BLUE := \033[34m
+RED := \033[31m
+PURPLE := \033[35m
+CYAN := \033[36m
+RESET := \033[0m
+
+help: ## 📋 显示测试相关命令
+	@echo "$(CYAN)🧪 测试分层与标准化命令$(RESET)"
+	@echo "$(YELLOW)快速测试 (开发阶段):$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*快速/ {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)完整测试 (验证阶段):$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*完整/ {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)代码质量 (持续阶段):$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*质量/ {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)工具命令 (维护阶段):$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*工具/ {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+# ============================================================================
+# 快速测试 (开发阶段) - 绿灯区，必须全绿
+# ============================================================================
+
+test-fast: ## 快速/运行单元测试 (开发日常使用)
+	@echo "$(YELLOW)⚡ 运行快速单元测试...$(RESET)"
+	pytest tests/unit/ -v --tb=short --durations=10
+
+test-unit: ## 快速/运行单元测试 (别名)
+	@make test-fast
+
+test-unit-quiet: ## 快速/静默运行单元测试 (CI使用)
+	@echo "$(YELLOW)🤫 静默运行单元测试...$(RESET)"
+	pytest tests/unit/ -q --tb=no
+
+test-watch: ## 快速/监视模式运行单元测试
+	@echo "$(YELLOW)👀 监视模式运行单元测试...$(RESET)"
+	pytest-watch tests/unit/ -v --tb=short
+
+# ============================================================================
+# 完整测试 (验证阶段) - 允许存在技术债
+# ============================================================================
+
+test: ## 完整/运行所有测试 (验证用)
+	@echo "$(YELLOW)🧪 运行完整测试套件...$(RESET)"
+	pytest tests/ -v --tb=short --maxfail=10
+
+test-all: ## 完整/运行所有测试 (别名)
+	@make test
+
+test-integration: ## 完整/运行集成测试
+	@echo "$(YELLOW)🔗 运行集成测试...$(RESET)"
+	pytest tests/integration/ -v --tb=short --maxfail=5
+
+test-performance: ## 完整/运行性能测试
+	@echo "$(YELLOW)🚀 运行性能测试...$(RESET)"
+	pytest tests/performance/ -v --tb=short --maxfail=3
+
+test-coverage: ## 完整/生成覆盖率报告
+	@echo "$(YELLOW)📊 生成覆盖率报告...$(RESET)"
+	pytest tests/ --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=70
+
+# ============================================================================
+# 代码质量 (持续阶段) - 保持零技术债
+# ============================================================================
+
+lint: ## 质量/运行代码质量检查
+	@echo "$(YELLOW)🔍 运行代码质量检查...$(RESET)"
+	ruff check . --statistics
+
+lint-fix: ## 质量/自动修复代码问题
+	@echo "$(YELLOW)🔧 自动修复代码问题...$(RESET)"
+	ruff check . --fix
+
+format: ## 质量/格式化代码
+	@echo "$(YELLOW)🎨 格式化代码...$(RESET)"
+	ruff format .
+
+check: ## 质量/完整代码质量检查
+	@echo "$(YELLOW)🛡️ 完整代码质量检查...$(RESET)"
+	@make lint
+	@make test-unit-quiet
+	@echo "$(GREEN)✅ 所有检查通过$(RESET)"
+
+# ============================================================================
+# 工具命令 (维护阶段)
+# ============================================================================
+
+clean: ## 工具/清理测试缓存和临时文件
+	@echo "$(YELLOW)🧹 清理缓存文件...$(RESET)"
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	rm -rf .pytest_cache htmlcov .coverage coverage.xml .ruff_cache 2>/dev/null || true
+	@echo "$(GREEN)✅ 清理完成$(RESET)"
+
+clean-all: ## 工具/彻底清理所有缓存文件
+	@echo "$(RED)🧹 彻底清理...$(RESET)"
+	@make clean
+	rm -rf build dist *.egg-info 2>/dev/null || true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	@echo "$(GREEN)✅ 彻底清理完成$(RESET)"
+
+install-dev: ## 工具/安装开发依赖
+	@echo "$(YELLOW)📦 安装开发依赖...$(RESET)"
+	pip install -e ".[dev]"
+	pip install pytest pytest-watch pytest-cov pytest-mock pytest-asyncio
+	@echo "$(GREEN)✅ 开发环境安装完成$(RESET)"
+
+# ============================================================================
+# 报告和分析
+# ============================================================================
+
+test-report: ## 报告/生成详细测试报告
+	@echo "$(YELLOW)📋 生成详细测试报告...$(RESET)"
+	pytest tests/ --html=report.html --self-contained-html --tb=short
+	@echo "$(GREEN)📊 报告已生成: report.html$(RESET)"
+
+test-benchmark: ## 报告/运行性能基准测试
+	@echo "$(YELLOW)⏱️ 运行性能基准测试...$(RESET)"
+	pytest tests/performance/ -v --benchmark-only --benchmark-json=benchmark.json
+	@echo "$(GREEN)📊 基准测试结果已保存$(RESET)"
+
+# ============================================================================
+# 开发工作流
+# ============================================================================
+
+dev-setup: install-dev clean ## 工作流/完整开发环境设置
+	@echo "$(GREEN)🚀 开发环境设置完成$(RESET)"
+
+pre-commit: ## 工作流/提交前检查 (git hook)
+	@echo "$(YELLOW)🔒 提交前检查...$(RESET)"
+	@make lint
+	@make test-unit-quiet
+	@echo "$(GREEN)✅ 提交前检查通过$(RESET)"
+
+ci-check: ## 工作流/CI环境检查
+	@echo "$(YELLOW)🤖 CI环境检查...$(RESET)"
+	@make clean
+	@make lint
+	@make test-unit-quiet
+	@echo "$(GREEN)✅ CI检查通过$(RESET)"
+
+# ============================================================================
+# 特殊命令
+# ============================================================================
+
+test-unstable: ## 完整/运行不稳定测试 (技术债分析)
+	@echo "$(YELLOW)⚠️ 运行不稳定测试...$(RESET)"
+	pytest tests/ -m "unstable" -v --tb=short
+
+test-tech-debt: ## 完整/运行技术债务测试
+	@echo "$(YELLOW)🏗️ 运行技术债务测试...$(RESET)"
+	pytest tests/ -m "tech_debt" -v --tb=short
+
+dry-run: ## 工具/测试收集但不执行 (检查配置)
+	@echo "$(YELLOW)🔍 测试收集检查...$(RESET)"
+	pytest tests/ --collect-only
+
+# ============================================================================
+# 说明信息
+# ============================================================================
+
+info: ## 工具/显示测试配置信息
+	@echo "$(CYAN)📋 测试配置信息$(RESET)"
+	@echo "$(BLUE)Python版本:$(RESET) $(shell python --version)"
+	@echo "$(BLUE)pytest版本:$(RESET) $(shell pytest --version)"
+	@echo "$(BLUE)ruff版本:$(RESET) $(shell ruff --version)"
+	@echo "$(BLUE)测试目录结构:$(RESET)"
+	@find tests/ -type d -maxdepth 2 | sort
